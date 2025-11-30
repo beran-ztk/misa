@@ -1,0 +1,46 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Misa.Api", "Misa.Api\Misa.Api.csproj", "{19CFCD29-061C-45DF-819C-6408B7737F6D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Misa.Ui.Avalonia", "Misa.Ui.Avalonia\Misa.Ui.Avalonia.csproj", "{1F5C5312-D4AF-4A53-9946-2584E2A45D51}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Misa.Domain", "Misa.Domain\Misa.Domain.csproj", "{2AFA362A-A485-416B-86BC-194E08613FD7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Misa.Infrastructure", "Misa.Infrastructure\Misa.Infrastructure.csproj", "{2A9D0946-1962-4612-B305-94F61BF2FBC5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Misa.Application", "Misa.Application\Misa.Application.csproj", "{D60537F1-AFB1-472C-8B9A-A8C67FBCAD54}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Misa.Contract", "Misa.Contract\Misa.Contract.csproj", "{33F3256C-6EAF-4567-9DE6-CCBC759652DD}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{19CFCD29-061C-45DF-819C-6408B7737F6D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{19CFCD29-061C-45DF-819C-6408B7737F6D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{19CFCD29-061C-45DF-819C-6408B7737F6D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{19CFCD29-061C-45DF-819C-6408B7737F6D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1F5C5312-D4AF-4A53-9946-2584E2A45D51}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1F5C5312-D4AF-4A53-9946-2584E2A45D51}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1F5C5312-D4AF-4A53-9946-2584E2A45D51}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1F5C5312-D4AF-4A53-9946-2584E2A45D51}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2AFA362A-A485-416B-86BC-194E08613FD7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2AFA362A-A485-416B-86BC-194E08613FD7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2AFA362A-A485-416B-86BC-194E08613FD7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2AFA362A-A485-416B-86BC-194E08613FD7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2A9D0946-1962-4612-B305-94F61BF2FBC5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2A9D0946-1962-4612-B305-94F61BF2FBC5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2A9D0946-1962-4612-B305-94F61BF2FBC5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2A9D0946-1962-4612-B305-94F61BF2FBC5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D60537F1-AFB1-472C-8B9A-A8C67FBCAD54}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D60537F1-AFB1-472C-8B9A-A8C67FBCAD54}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D60537F1-AFB1-472C-8B9A-A8C67FBCAD54}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D60537F1-AFB1-472C-8B9A-A8C67FBCAD54}.Release|Any CPU.Build.0 = Release|Any CPU
+		{33F3256C-6EAF-4567-9DE6-CCBC759652DD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{33F3256C-6EAF-4567-9DE6-CCBC759652DD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{33F3256C-6EAF-4567-9DE6-CCBC759652DD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{33F3256C-6EAF-4567-9DE6-CCBC759652DD}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
