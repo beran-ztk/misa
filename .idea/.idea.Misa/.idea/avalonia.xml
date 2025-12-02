@@ -10,6 +10,7 @@
         <entry key="Misa.Ui.Avalonia/Views/Shells/InfoBarView.axaml" value="Misa.Ui.Avalonia/Misa.Ui.Avalonia.csproj" />
         <entry key="Misa.Ui.Avalonia/Views/Shells/MainWindow.axaml" value="Misa.Ui.Avalonia/Misa.Ui.Avalonia.csproj" />
         <entry key="Misa.Ui.Avalonia/Views/Shells/NavigationView.axaml" value="Misa.Ui.Avalonia/Misa.Ui.Avalonia.csproj" />
+        <entry key="Misa.Ui.Avalonia/Views/Shells/StatusBarView.axaml" value="Misa.Ui.Avalonia/Misa.Ui.Avalonia.csproj" />
         <entry key="Misa.Ui.Avalonia/Views/Shells/TitleBarView.axaml" value="Misa.Ui.Avalonia/Misa.Ui.Avalonia.csproj" />
       </map>
     </option>

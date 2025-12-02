@@ -7,8 +7,8 @@
              xmlns:vm="clr-namespace:Misa.Ui.Avalonia.ViewModels.Shells"
              x:DataType="vm:StatusBarViewModel">
     
-    <Border Background="{StaticResource ColorPrimaryBackground}"
-            BorderBrush="{StaticResource BrushBorder}"
+    <Border Background="{StaticResource BrushPrimaryBackground}"
+            BorderBrush="{StaticResource BrushSecondaryBackground}"
             BorderThickness="0,1,0,0">
         
         <TextBlock Text="{Binding Meow}"

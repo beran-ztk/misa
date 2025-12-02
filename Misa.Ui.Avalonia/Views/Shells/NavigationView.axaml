@@ -7,65 +7,66 @@
              xmlns:vm="clr-namespace:Misa.Ui.Avalonia.ViewModels.Shells"
              x:DataType="vm:NavigationViewModel">
     
-    <UserControl.Resources>
-        <Style x:Key="NavButtonStyle" Selector="Button.nav">
+    <UserControl.Styles>
+        
+        <Style Selector="Button.MainNavigation">
             <Setter Property="HorizontalAlignment" Value="Stretch" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             <Setter Property="Padding" Value="8" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Background" Value="Transparent" />
-            <Setter Property="Template">
-            </Setter>
-
-            <Style Selector="Button.nav:pointerover">
-                <Setter Property="Background" Value="#20FFFFFF" />
-            </Style>
-            <Style Selector="Button.nav:pressed">
-                <Setter Property="Background" Value="#40FFFFFF" />
-            </Style>
+        </Style>
+        
+        <Style Selector="Button.MainNavigation:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="Red" />
         </Style>
 
-    </UserControl.Resources>
+        <!-- Pressed -->
+        <Style Selector="Button.MainNavigation:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="Blue" />
+        </Style>
+        
+        <Style Selector="TextBlock.MainNavigation">
+            <Setter Property="FontSize" Value="{StaticResource FontSizeMedium}"/>
+            <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
+        </Style>
+        
+    </UserControl.Styles>
     
     
     <Border Background="{StaticResource BrushPrimaryBackground}"
             BorderBrush="{StaticResource BrushSecondaryBackground}"
             BorderThickness="0,0,1,0">
+        
         <Grid RowDefinitions="*,Auto">
         
             <StackPanel Grid.Row="0" 
-                        Spacing="{StaticResource SpacingMedium}">
+                        Spacing="{StaticResource SpacingSmall}">
                 
                 <TextBlock Text="Navigation" 
                            FontSize="10"
                            Margin="2,2,0,0"
                            Foreground="{StaticResource BrushTextFaded}"/>
                 
-                <Button Classes="nav" 
-                        Background="Transparent"
-                        HorizontalAlignment="Stretch"
+                <Button Classes="MainNavigation"
                         Command="{Binding ShowItemsCommand}">
                     <StackPanel Orientation="Horizontal" 
                                 Spacing="{StaticResource SpacingSmall}">
                         <Image Width="16" Height="16"
                                Source="{SvgImage /Assets/Images/MainNavigation/chart-bar.svg}"/>
                         <TextBlock Text="Items" 
-                                   FontSize="{StaticResource FontSizeMedium}"
-                                   Foreground="{StaticResource BrushTextSecondary}"/>
+                                   Classes="MainNavigation"/>
                     </StackPanel>
                 </Button>
                 
-                <Button Classes="nav" 
-                        Background="Transparent"
-                        HorizontalAlignment="Stretch"
+                <Button Classes="MainNavigation"
                         Command="{Binding ShowItemsCommand}">
                     <StackPanel Orientation="Horizontal" 
                                 Spacing="{StaticResource SpacingSmall}">
                         <Image Width="16" Height="16"
                                Source="{SvgImage /Assets/Images/MainNavigation/calendar-dots.svg}"/>
                         <TextBlock Text="Calendar" 
-                                   FontSize="{StaticResource FontSizeMedium}"
-                                   Foreground="{StaticResource BrushTextSecondary}"/>
+                                   Classes="MainNavigation"/>
                     </StackPanel>
                 </Button>
                 
@@ -73,17 +74,14 @@
 
             <!-- Settings unten -->
             <Button Grid.Row="1" 
-                    Classes="nav" 
-                    Background="Transparent"
-                    HorizontalAlignment="Stretch"
+                    Classes="MainNavigation"
                     Command="{Binding ShowItemsCommand}">
                 <StackPanel Orientation="Horizontal"
                             Spacing="{StaticResource SpacingSmall}">
                     <Image Width="16" Height="16"
                            Source="{SvgImage /Assets/Images/MainNavigation/faders-horizontal.svg}"/>
                     <TextBlock Text="Settings" 
-                               FontSize="{StaticResource FontSizeMedium}"
-                               Foreground="{StaticResource BrushTextSecondary}"/>
+                               Classes="MainNavigation"/>
                 </StackPanel>
             </Button>
         </Grid>

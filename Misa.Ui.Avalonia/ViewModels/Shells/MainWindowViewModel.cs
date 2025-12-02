@@ -68,9 +68,7 @@ public partial class MainWindowViewModel : ViewModelBase
             if (!response.IsSuccessStatusCode)
             {
                 var body = await response.Content.ReadAsStringAsync();
-                // Hier kannst du dir ansehen, was der Server sagt
                 Console.WriteLine($"Server returned {response.StatusCode}: {body}");
-                // Kein Throw – du entscheidest, wie du reagierst
             }
         }
         catch (Exception e)

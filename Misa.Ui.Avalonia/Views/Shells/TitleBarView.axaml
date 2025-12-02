@@ -7,8 +7,8 @@
              xmlns:vm="clr-namespace:Misa.Ui.Avalonia.ViewModels.Shells"
              x:DataType="vm:TitleBarViewModel">
     
-    <Border Background="{StaticResource ColorPrimaryBackground}"
-            BorderBrush="{StaticResource BrushBorder}"
+    <Border Background="{StaticResource BrushPrimaryBackground}"
+            BorderBrush="{StaticResource BrushSecondaryBackground}"
             BorderThickness="0,0,0,1">
         
         <TextBlock Text="{Binding AppName}"
