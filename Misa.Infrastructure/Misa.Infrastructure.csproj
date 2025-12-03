@@ -16,8 +16,4 @@
       <ProjectReference Include="..\Misa.Domain\Misa.Domain.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Configurations\" />
-    </ItemGroup>
-
 </Project>
