@@ -1,108 +1,73 @@
-INSERT INTO lu_states (name)
+INSERT INTO item_states (name, synopsis, sort_order)
 VALUES
-    ('Draft'),('Open'),
-    ('Active'),('Paused'),
-    ('Blocked'),('Done'),
-    ('Canceled'),('Failed'),
-    ('Archived'),('Removed'),
-    ('Expired');
+    ('Draft',     'Entwurf; noch nicht freigegeben',                    1),
+    ('Open',      'Offen; bereit zur Bearbeitung',                      2),
+    ('Active',    'In Bearbeitung; aktueller Fokus',                    3),
+    ('Paused',    'Kurzfristig gestoppt; jederzeit fortsetzbar',        4),
+    ('Blocked',   'Blockiert durch externe Abhängigkeiten',             5),
+    ('Done',      'Erledigt und abgeschlossen',                         6),
+    ('Canceled',  'Abgebrochen; wird nicht mehr bearbeitet',            7),
+    ('Failed',    'Gescheitert; Ziel wurde nicht erreicht',             8),
+    ('Archived',  'Aus dem aktiven Bereich ausgelagert',                9),
+    ('Removed',   'Entfernt; praktisch gelöscht',                      10),
+    ('Expired',   'Abgelaufen; nicht rechtzeitig abgeschlossen',       11);
 
-INSERT INTO lu_priorities (name)
+INSERT INTO item_priorities (name, synopsis, sort_order)
 VALUES
-    ('Unassigned'),
-    ('Minor'),('Normal'),
-    ('Important'),('Critical');
+    ('None',     'Keine Priorität vergeben',      1),
+    ('Low',      'Geringe Wichtigkeit',           2),
+    ('Medium',   'Normale Priorität',             3),
+    ('High',     'Wichtig; zeitnah bearbeiten',   4),
+    ('Urgent',   'Dringend; sofortige Aktion',    5),
+    ('Critical', 'Kritische Eskalation',          6);
 
-INSERT INTO lu_categories (id, domain, name, synopsis)
+INSERT INTO item_relations (name, synopsis, sort_order)
 VALUES
-    (100,'Task','Personal',                 'Private oder persönliche Aufgaben'),
-    (101,'Task','School',                   'Aufgaben aus der Ausbildung oder Studium'),
-    (102,'Task','Work',                     'Berufliche Aufgaben'),
+    ('contains',  'Parent-Item beinhaltet das Child-Item',                           1),
+    ('follows',   'Child folgt logisch oder zeitlich nach Parent',                   2),
+    ('triggers',  'Parent löst das Child-Item aus (z.B. Event → Action)',            3),
+    ('blocks',    'Parent verhindert oder verzögert die Ausführung des Child-Items', 4);
 
-    (200,'Entry','Calendar',                'Kalendereintrag oder Termin'),
-    (201,'Entry','Event',                   'Kalenderereignis'),
-    (203,'Entry','Module',                 'Moduleintrag'),
-    (204,'Entry','Notification',                 'Benachrichtigung'),
+INSERT INTO item_categories (name, synopsis)
+VALUES
+    ('Task',         'Konkrete Aufgaben oder To-Dos'),
+    ('Calendar',     'Kalendereintrag, Termin oder zeitliche Planung'),
+    ('Event',        'Ereignis mit festem Zeitpunkt'),
+    ('Notification', 'Benachrichtigung oder Reminder'),
+    ('Journal',      'Persönliche oder berufliche Notizen'),
+    ('Module',       'Übergeordnetes Lern- oder Projektmodul'),
+    ('Unit',         'Einzelne Lerneinheit oder Arbeitsschritt');
 
-    (400,'Journal','General',                 'Tagebucheintrag'),
-    (401,'Journal','Personal',                 'Persönliche Geschehen'),
-    (402,'Journal','Work',                 'Berufliche  Geschehen'),
-    (404,'Journal','School',                 'Schulische Geschehen'),
 
-    (300,'Knowledge','Read_Theory',         'Lies theoretische Inhalte oder Artikel zum Modul'),
-    (301,'Knowledge','Watch_Video',         'Schau ein erklärendes Video oder Vortrag'),
-    (302,'Knowledge','Read_ResearchPaper',  'Lies und analysiere wissenschaftliche Publikation'),
-    (303,'Knowledge','Study_Example',       'Analysiere ein konkretes Beispiel oder Fallstudie'),
-    (304,'Knowledge','Compare_Concepts',    'Vergleiche ähnliche Konzepte oder Theorien'),
-    (305,'Knowledge','Define_Glossary',     'Zentrale Fachbegriffe präzise definieren'),
-    (306,'Knowledge','Write_Questions',     'Offene Fragen und Wissenslücken sammeln'),
+-- CREATE UNIQUE INDEX ux_item_categories_name
+--     ON item_categories((id/100), name);
+-- CREATE UNIQUE INDEX ux_item_categories_sort_order
+--     ON item_categories((id/100), sort_order);
 
-    (307,'Knowledge','Write_Summary',       'Erstelle eine Zusammenfassung des Gelernten'),
-    (308,'Knowledge','Create_Diagram',      'Visualisiere Wissen als Mindmap, Grafik oder Schaubild'),
-    (309,'Knowledge','Create_CheatSheet',   'Kompakter 1-Pager mit Kernpunkten/Formeln'),
+-- INSERT INTO item_categories (id, name, synopsis, sort_order)
+-- VALUES
+--     (100, 'Personal',       'Private oder persönliche Aufgaben',            1),
+--     (101, 'School',         'Aufgaben aus Ausbildung oder Studium',         2),
+--     (102, 'Work',           'Berufliche Aufgaben',                          3),
+-- 
+--     (200, 'Calendar',       'Kalendereintrag oder Termin',                  1),
+--     (201, 'Event',          'Kalenderereignis',                             2),
+--     (203, 'Module',         'Moduleintrag',                                 3),
+--     (204, 'Notification',   'Benachrichtigung',                             4),
+-- 
+--     (300, 'General',        'Allgemeiner Tagebucheintrag',                  1),
+--     (301, 'Personal',       'Persönliche Ereignisse und Gedanken',          2),
+--     (302, 'Work',           'Berufliche Ereignisse oder Reflexionen',       3),
+--     (304, 'School',         'Schulische Ereignisse und Gedanken',           4),
+-- 
+--     (400, 'Task',           'Einfache oder neutrale Aufgabe im Lernkontext',                1),
+--     (401, 'Read',           'Theorie, Artikel oder Dokumentation lesen',                    2),
+--     (402, 'Watch',          'Videos, Vorträge oder Präsentationen anschauen',               3),
+--     (403, 'Analysis',       'Beispiele, Fehlerquellen oder Konzepte analysieren',           4),
+--     (404, 'Summarize',      'Definitionen, Zusammenfassungen oder Glossare erstellen',      5),
+--     (405, 'Brainstorm',     'Ideen sammeln, Fragen erzeugen oder Ansätze entwickeln',       6),
+--     (406, 'Exploration',    'Freies Lernen ohne Ziel, neue Ideen und Wege entdecken',       7),
+--     (407, 'Review',         'Wissen wiederholen, testen oder Feedback einholen',            8),
+--     (408, 'Output',         'Ergebnisse produzieren, erklären, veröffentlichen, testen',    9),
+--     (409, 'Implementation', 'Praktisch umsetzen oder programmieren',                        10);
 
-    (310,'Knowledge','Solve_Task',          'Löse Übungsaufgaben oder Anwendungsfragen'),
-    (311,'Knowledge','Code_Implementation', 'Implementiere Konzepte in Code oder Experiment'),
-    (312,'Knowledge','Conduct_Experiment',  'Führe einen praktischen Versuch oder Test durch'),
-    (313,'Knowledge','Replicate_Tutorial',  'Beispiel/Tutorial exakt reproduzieren'),
-    (314,'Knowledge','Prototype_Solution',  'Entwirf oder implementiere eine Lösung für ein reales Problem'),
-    (315,'Knowledge','Design_API',          'APIs/Contracts für Konzepte entwerfen'),
-    (316,'Knowledge','Build_TestSuite',     'Tests schreiben, um Verständnis/Code abzusichern'),
-    (317,'Knowledge','Code_Refactor',       'Verbessere oder modernisiere bestehenden Code'),
-    (318,'Knowledge','Performance_Test',    'Messe Leistungskennzahlen einer Lösung oder Theorie'),
-    (319,'Knowledge','Optimization',        'Verbessere bestehende Arbeit oder Implementierung'),
-    (320,'Knowledge','Reverse_Engineering', 'Analysiere und zerlege existierende Systeme oder Konzepte'),
-    (321,'Knowledge','Create_Template',     'Vorlage/Template für wiederkehrende Arbeit erstellen'),
-
-    (322,'Knowledge','Review_Content',      'Wiederhole Wissen aus früheren Units'),
-    (323,'Knowledge','Knowledge_Check',     'Selbsttest zur Überprüfung des Verständnisses'),
-    (324,'Knowledge','Rebuild_From_Memory', 'Rekonstruiere Wissen ohne Notizen'),
-
-    (325,'Knowledge','Apply_To_RealWorld',  'Übertrage das Wissen auf ein reales Szenario oder Problem'),
-    (326,'Knowledge','Synthesize_Knowledge','Führe Erkenntnisse aus mehreren Units zusammen'),
-    (327,'Knowledge','Create_Index',        'Erstelle einen thematischen Index für das Modul'),
-    (328,'Knowledge','Teach_Person',        'Erkläre das Thema einer anderen Person'),
-    (329,'Knowledge','Peer_Review',         'Ergebnis von anderer Person reviewen lassen'),
-    (330,'Knowledge','Contribute_Community','Teile Wissen in einer Community oder Plattform'),
-    (331,'Knowledge','Write_Paper',         'Schreibe einen Essay, Bericht oder Blogartikel'),
-
-    (332,'Knowledge','Error_Analysis',      'Untersuche Fehlerquellen oder Missverständnisse'),
-    (333,'Knowledge','Brainstorm',          'Generiere neue Fragen oder Forschungsansätze'),
-    (334,'Knowledge','Free_Exploration',    'Lerne ohne festes Ziel, um neue Ideen zu entdecken'),
-    (335,'Knowledge','Cleanup_Notes',       'Überarbeite Notizen, Markdown oder Obsidian-Einträge');
-
-insert into lu_relations (name, synopsis) values
--- Hierarchische / strukturelle Beziehungen
-('contains',               'Parent-Item beinhaltet das Child-Item, z.B. Modul → Unit'),
-('part_of',                'Child-Item ist Teil des Parent-Items, inverse von contains'),
-('depends_on',             'Child benötigt Parent als Voraussetzung (Abhängigkeit)'),
-('follows',                'Child folgt logisch oder zeitlich nach Parent'),
-('refers_to',              'Child bezieht sich auf Parent, aber ohne direkte Hierarchie'),
-
--- Lern- und Wissensbeziehungen
-('prerequisite',           'Parent ist notwendige Voraussetzung, um Child zu verstehen'),
-('reinforces',             'Child wiederholt oder stärkt Wissen des Parent-Items'),
-('contradicts',            'Child steht im Gegensatz oder überprüft die Gültigkeit von Parent'),
-('derived_from',           'Child wurde aus Inhalten des Parent abgeleitet oder zusammengefasst'),
-('evaluates',              'Child bewertet, überprüft oder testet Inhalte des Parent'),
-
--- Semantische / inhaltliche Beziehungen
-('related_to',             'Lose semantische Verbindung zwischen zwei Items'),
-('alternative_to',         'Alternative Lösung oder Sichtweise auf dasselbe Thema'),
-('expands',                'Child erweitert den Inhalt des Parent'),
-('specializes',            'Child ist eine spezifischere Form oder Unterkategorie des Parent'),
-('generalizes',            'Child ist eine allgemeinere oder abstraktere Form von Parent'),
-
--- Prozess- / Workflow-Beziehungen
-('triggers',               'Parent löst das Child-Item aus (z.B. Event → Action)'),
-('blocks',                 'Parent verhindert oder verzögert die Ausführung des Child-Items'),
-('mirrors',                'Child spiegelt den Fortschritt oder Zustand des Parent wider'),
-('records',                'Child dokumentiert oder protokolliert Aktivitäten des Parent'),
-('supersedes',             'Child ersetzt oder überarbeitet den Parent'),
-
--- Soziale / kollaborative Beziehungen (optional)
-('authored_by',            'Child wurde von einer Person oder Quelle erstellt'),
-('assigned_to',            'Child wurde einer Person, Gruppe oder Rolle zugewiesen'),
-('discusses',              'Child behandelt oder analysiert das Thema des Parent'),
-('summarizes',             'Child fasst den Inhalt des Parent zusammen'),
-('teaches',                'Child dient der Vermittlung des Parent-Inhalts an andere');
