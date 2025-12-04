@@ -14,7 +14,7 @@ CREATE TABLE item_priorities
     sort_order  INT NOT NULL UNIQUE
 );
 
-CREATE TABLE item_categories
+CREATE TABLE workflows
 (
     id          INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     name        TEXT NOT NULL UNIQUE,
@@ -29,7 +29,7 @@ CREATE TABLE item_relations_types
     sort_order  INT NOT NULL UNIQUE
 );
 
-CREATE TABLE item_description_types
+CREATE TABLE description_types
 (
     id          INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     name        TEXT NOT NULL UNIQUE,
