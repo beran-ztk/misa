@@ -1,17 +1,18 @@
 ﻿using Misa.Contract.Entities;
+using Misa.Contract.Entities.Lookups;
 
 namespace Misa.Application.Entities.Mappings;
 
 public static class EntityDtoMapper
 {
-    public static Misa.Domain.Entities.Entity ToDomain(this Misa.Contract.Entities.EntityDto entity)
+    public static Misa.Domain.Entities.Entity ToDomain(this Misa.Contract.Entities.CreateEntityDto createEntity)
         => new
         (
-            ownerId: entity.OwnerId,
-            workflowId: entity.WorkflowId
+            ownerId: createEntity.OwnerId,
+            workflowId: createEntity.WorkflowId
         );
-    public static Misa.Contract.Entities.EntityDto ToDto(this Misa.Domain.Entities.Entity entity)
-        => new EntityDto()
+    public static Misa.Contract.Entities.CreateEntityDto ToDto(this Misa.Domain.Entities.Entity entity)
+        => new CreateEntityDto()
         {
             Id = entity.Id,
             OwnerId = entity.OwnerId,
@@ -20,5 +21,25 @@ public static class EntityDtoMapper
             CreatedAt = entity.CreatedAt,
             UpdatedAt = entity.UpdatedAt,
             InteractedAt = entity.InteractedAt
+        };
+
+    public static ReadEntityDto ToReadEntityDto(this Misa.Domain.Entities.Entity entity)
+        => new()
+        {
+            Id = entity.Id,
+            OwnerId = entity.OwnerId,
+            Workflow = entity.Workflow.ToDto(),
+            IsDeleted = entity.IsDeleted,
+            CreatedAt = entity.CreatedAt,
+            UpdatedAt = entity.UpdatedAt,
+            InteractedAt = entity.InteractedAt
+        };
+
+    public static WorkflowDto ToDto(this Misa.Domain.Entities.Workflow workflow)
+        => new()
+        {
+            Id = workflow.Id,
+            Name = workflow.Name,
+            Synopsis = workflow.Synopsis
         };
 }

@@ -12,7 +12,7 @@
             <TextBlock Text="{Binding Parent.SelectedEntity.Id}"/>
             <ContentControl Content="{Binding Parent.SelectedEntity}">
                 <ContentControl.ContentTemplate>
-                    <DataTemplate x:DataType="entities:EntityDto">
+                    <DataTemplate x:DataType="entities:CreateEntityDto">
 
                         <Grid ColumnDefinitions="Auto,*"
                               RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto"

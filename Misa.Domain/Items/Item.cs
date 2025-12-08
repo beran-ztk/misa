@@ -1,19 +1,43 @@
-﻿namespace Misa.Domain.Items;
+﻿using Misa.Domain.Entities;
+
+namespace Misa.Domain.Items;
 
 public class Item
 {
-    private Item() {}
+    // Für EF Core
+    private Item() { }
 
-    public Item(Guid id, int stateId, int priorityId, string title)
+    public Item(
+        Entity entity,
+        int stateId,
+        int priorityId,
+        int categoryId,
+        string title)
     {
-        EntityId = id;
+        Entity = entity ?? throw new ArgumentNullException(nameof(entity));
+
         StateId = stateId;
         PriorityId = priorityId;
-        Title = title;
+        CategoryId = categoryId;
+        Title = title ?? throw new ArgumentNullException(nameof(title));
     }
-    
-    public Guid EntityId { get; private set; }
-    public int StateId { get; private set; } 
+    // Member
+    public Guid EntityId { get; set; }
+    public int StateId { get; private set; }
     public int PriorityId { get; private set; }
+    public int CategoryId { get; private set; }
     public string Title { get; private set; }
+    
+    // Modelle
+    public Entity Entity { get; private set; }
+    public State State { get; private set; }
+    public Priority Priority { get; private set; }
+    public Category Category { get; private set; }
+    
+    public void Rename(string title)
+    {
+        Title = string.IsNullOrWhiteSpace(title)
+            ? throw new ArgumentException("Title cannot be empty.", nameof(title))
+            : title;
+    }
 }

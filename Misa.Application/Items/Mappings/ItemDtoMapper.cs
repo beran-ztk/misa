@@ -1,4 +1,6 @@
-﻿using Misa.Contract.Items;
+﻿using Misa.Application.Entities.Mappings;
+using Misa.Contract.Items;
+using Misa.Contract.Items.Lookups;
 using Misa.Domain.Entities;
 using Misa.Domain.Items;
 
@@ -6,14 +8,47 @@ namespace Misa.Application.Items.Mappings;
 
 public static class ItemDtoMapper
 {
-    public static Item ToDomain(this ItemDto dto, Entity entity)
+    public static Item ToDomain(this CreateItemDto dto, Entity entity)
     {
         return new Item
             (
-                id: entity.Id,
+                entity: entity,
+                
                 stateId:  dto.StateId,
                 priorityId:  dto.PriorityId,
+                categoryId:  dto.CategoryId,
                 title:  dto.Title
             );
     }
+
+    public static ReadItemDto ToReadItemDto(this Item domain)
+        => new ReadItemDto
+        {
+            Entity = domain.Entity.ToReadEntityDto(),
+            State = domain.State.ToDto(),
+            Priority = domain.Priority.ToDto(),
+            Category = domain.Category.ToDto(),
+            Title = domain.Title
+        };
+    public static StateDto ToDto(this Misa.Domain.Items.State state)
+        => new()
+        {
+            Id = state.Id,
+            Name = state.Name,
+            Synopsis = state.Synopsis
+        };
+    public static PriorityDto ToDto(this Misa.Domain.Items.Priority priority)
+        => new()
+        {
+            Id = priority.Id,
+            Name = priority.Name,
+            Synopsis = priority.Synopsis
+        };
+    public static CategoryDto ToDto(this Misa.Domain.Items.Category category)
+        => new()
+        {
+            Id = category.Id,
+            Name = category.Name,
+            Synopsis = category.Synopsis
+        };
 }

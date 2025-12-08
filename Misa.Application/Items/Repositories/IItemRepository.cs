@@ -4,5 +4,7 @@ namespace Misa.Application.Items.Repositories;
 
 public interface IItemRepository
 {
-    Task<Item> AddAsync(Item item, CancellationToken ct = default);
+    Task<Item> AddAsync(Item item, CancellationToken ct);
+    Task<List<Item>> GetAllAsync(CancellationToken ct = default);
+    Task<Item?> LoadAsync(Guid entityId, CancellationToken ct = default);
 }

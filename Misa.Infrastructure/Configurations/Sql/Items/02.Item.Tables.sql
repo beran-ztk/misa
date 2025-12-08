@@ -16,6 +16,7 @@ CREATE TABLE items
     entity_id       UUID PRIMARY KEY REFERENCES entities(id)    ON DELETE CASCADE,
     state_id        INT NOT NULL REFERENCES item_states(id)     ON DELETE RESTRICT,
     priority_id     INT NOT NULL REFERENCES item_priorities(id) ON DELETE RESTRICT,
+    category_id     INT REFERENCES workflow_category_types(id) ON DELETE RESTRICT,
     
     title           TEXT NOT NULL
 );

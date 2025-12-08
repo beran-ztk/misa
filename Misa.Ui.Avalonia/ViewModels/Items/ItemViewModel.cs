@@ -36,10 +36,10 @@ public class ItemViewModel : ViewModelBase
             .ThrownExceptions
             .Subscribe(Console.WriteLine);
     }
-    private EntityDto? _selectedEntity;
+    private CreateEntityDto? _selectedEntity;
     public NavigationStore NavigationStore { get; }
     private readonly INavigationService _navigationService;
-    public EntityDto? SelectedEntity
+    public CreateEntityDto? SelectedEntity
     {
         get => _selectedEntity;
         set => SetProperty(ref _selectedEntity, value);
@@ -56,7 +56,7 @@ public class ItemViewModel : ViewModelBase
     {
         try
         {
-            var entity = new EntityDto
+            var entity = new CreateEntityDto
             {
                 OwnerId = null,
                 WorkflowId = 1

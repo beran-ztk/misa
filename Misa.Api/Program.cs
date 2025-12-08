@@ -7,7 +7,6 @@ using Misa.Application.Entities.Add;
 using Misa.Application.Entities.Get;
 using Misa.Application.Entities.Repositories;
 using Misa.Application.Items.Add;
-using Misa.Application.Tasks.Add;
 using Misa.Contract.Entities;
 using Misa.Infrastructure.Entities;
 
@@ -19,8 +18,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<MisaDbContext>(options =>
     options.UseNpgsql(connectionString));
 
-builder.Services.AddScoped<AddItemHandler>();
-builder.Services.AddScoped<AddTaskHandler>();
+builder.Services.AddScoped<CreateItemHandler>();
+builder.Services.AddScoped<CreateItemHandler>();
 builder.Services.AddScoped<IItemRepository, ItemRepository>();
 
 // Entity
@@ -40,7 +39,7 @@ app.MapGet("/api/entities/get", async (
 });
 
 app.MapPost("/api/entities/add", async (
-    EntityDto dto,
+    CreateEntityDto dto,
     AddEntityHandler handler,
     CancellationToken ct) =>
 {
@@ -49,14 +48,14 @@ app.MapPost("/api/entities/add", async (
     return Results.Ok();
 });
 
-app.MapPost("/api/tasks/add", async (
-    AddEntityHandler entityHandler,
-    AddItemHandler itemHandler, 
-    AddTaskHandler taskHandler, 
+// Tasks
+app.MapPost("/api/tasks", async ( CreateItemDto dto, CreateItemHandler itemHandler, CancellationToken ct) 
+    => await itemHandler.AddTaskAsync(dto, ct));
+
+app.MapGet("/api/tasks", async (
+    GetEntitiesHandler handler,
     CancellationToken ct) =>
 {
-    await taskHandler.AddAsync(entityHandler, itemHandler, ct);
-    return Results.Ok();
 });
 
 app.Run();

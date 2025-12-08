@@ -21,6 +21,15 @@ CREATE TABLE entity_workflow_types
     synopsis    TEXT
 );
 
+CREATE TABLE workflow_category_types
+(
+    id          INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    workflow_id INT NOT NULL REFERENCES entity_workflow_types(id) ON DELETE RESTRICT,
+    name        TEXT NOT NULL UNIQUE,
+    synopsis    TEXT,
+    sort_order  INT NOT NULL UNIQUE
+);
+
 CREATE TABLE item_relations_types
 (
     id          INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,

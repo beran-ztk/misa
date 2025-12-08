@@ -6,9 +6,9 @@ namespace Misa.Application.Entities.Get;
 
 public class GetEntitiesHandler(IEntityRepository repository)
 {
-    public async Task<List<EntityDto>> GetAllAsync(CancellationToken ct = default)
+    public async Task<List<CreateEntityDto>> GetAllAsync(CancellationToken ct = default)
     {
-        List<Misa.Contract.Entities.EntityDto> dto = [];
+        List<Misa.Contract.Entities.CreateEntityDto> dto = [];
         
         var entities = await repository.GetAllAsync(ct);
 

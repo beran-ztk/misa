@@ -46,5 +46,10 @@ public class Entity : IEntityTypeConfiguration<Domain.Entities.Entity>
             .HasDatabaseName("ix_entities_workflow");
         builder.HasIndex(e => e.CreatedAt)
             .HasDatabaseName("ix_entities_created");
+        
+        builder.HasOne(i => i.Workflow)
+            .WithMany()
+            .HasForeignKey(i => i.WorkflowId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

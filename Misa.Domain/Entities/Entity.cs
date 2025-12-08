@@ -22,6 +22,8 @@ public class Entity
     public DateTimeOffset? UpdatedAt { get; private set; }
     public DateTimeOffset InteractedAt { get; private set; }
 
+    public Workflow Workflow { get; private set; }
+    
     public void Interact() => InteractedAt =  DateTimeOffset.UtcNow;
     public void Update() => UpdatedAt = DateTimeOffset.UtcNow;
     public void Delete() => IsDeleted = true;

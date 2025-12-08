@@ -22,7 +22,7 @@ public class ItemListViewModel : ViewModelBase
         _ = LoadAsync();
     }
     private readonly HttpClient _httpClient;
-    public ObservableCollection<EntityDto> Entities { get; set; } = [];
+    public ObservableCollection<CreateEntityDto> Entities { get; set; } = [];
     public ItemViewModel MainViewModel { get; set; }
     
     private async Task LoadAsync()
@@ -30,7 +30,7 @@ public class ItemListViewModel : ViewModelBase
         try
         {
             var entities = await _httpClient
-                .GetFromJsonAsync<EntityDto[]>(requestUri: "api/entities/get");
+                .GetFromJsonAsync<CreateEntityDto[]>(requestUri: "api/entities/get");
 
             if (entities == null)
                 return;

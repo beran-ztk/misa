@@ -22,7 +22,6 @@ public partial class MainWindowViewModel : ViewModelBase
     public InfoBarViewModel InfoBar { get; }
     public TitleBarViewModel TitleBar { get; }
     public StatusBarViewModel StatusBar { get; }
-    public ReactiveCommand<Unit, Unit> CreateItemCommand { get; }
 
     public MainWindowViewModel(NavigationStore navigationStore, NavigationService navigationService)
     {
@@ -51,29 +50,5 @@ public partial class MainWindowViewModel : ViewModelBase
                 OnPropertyChanged(nameof(CurrentInfoViewModel));
             }
         };
-        
-        
-        CreateItemCommand = ReactiveCommand.CreateFromTask(CreateItemAsync);
-        CreateItemCommand
-            .ThrownExceptions
-            .Subscribe(Console.WriteLine);
-    }
-
-    private async Task CreateItemAsync()
-    {
-        try
-        {
-            var item = new ItemDto();
-            var response = await _httpClient.PostAsJsonAsync(requestUri: "api/items", item);
-            if (!response.IsSuccessStatusCode)
-            {
-                var body = await response.Content.ReadAsStringAsync();
-                Console.WriteLine($"Server returned {response.StatusCode}: {body}");
-            }
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-        }
     }
 }

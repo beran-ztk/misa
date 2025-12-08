@@ -9,6 +9,7 @@
              x:DataType="vm:TaskViewModel">
     <Border>
         <Grid ColumnDefinitions="*,*">
+            
             <Border Grid.Column="0"
                     BorderThickness="0,0,1,0"
                     BorderBrush="{StaticResource BrushBorder}">
@@ -21,7 +22,9 @@
                 </Grid>
             </Border>
             
-            
+            <ContentControl Grid.Column="1"
+                            Background="{StaticResource BrushPrimaryBackground}"
+                            Content="{Binding CurrentInfoModel}" />
         </Grid>
     </Border>
 </UserControl>

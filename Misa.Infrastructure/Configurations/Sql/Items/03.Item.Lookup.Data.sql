@@ -31,6 +31,13 @@ VALUES
     ('Unit',         'Einzelne Lerneinheit oder Arbeitsschritt'),
     ('Session',      'Aktive Sitzung');
 
+INSERT INTO workflow_category_types (workflow_id, name, synopsis, sort_order)
+VALUES
+    (1, 'Work',        'Berufliche Aufgaben, IT-Projekte, Ausbildung im Betrieb',  1),
+    (1, 'School',      'Berufsschule, Klausuren, Lernaufgaben, Abgaben',           2),
+    (1, 'Personal',    'Private Aufgaben, Haushalt, persönliche Organisation',     3);
+
+
 INSERT INTO item_relations_types (name, synopsis, sort_order)
 VALUES
     ('contains',  'Parent-Item beinhaltet das Child-Item',                      1),
