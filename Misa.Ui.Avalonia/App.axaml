@@ -24,6 +24,8 @@
             
         <!-- Primäre Basistöne -->
         <Color x:Key="ColorPrimaryBackground">#121417</Color>
+        <Color x:Key="ColorPrimaryBackgroundLight">#1A1D21</Color>
+        <Color x:Key="ColorPrimaryBackgroundLighter">#2A2F36</Color>
         <Color x:Key="ColorSecondaryBackground">#161916</Color>
         <Color x:Key="ColorPanelBackground">#233549</Color>
         <Color x:Key="ColorHover">#2F4762</Color>               <!-- Hover für Buttons -->
@@ -49,6 +51,8 @@
 
         <!-- Brushes -->
         <SolidColorBrush x:Key="BrushPrimaryBackground" Color="{StaticResource ColorPrimaryBackground}" />
+        <SolidColorBrush x:Key="BrushPrimaryBackgroundLight" Color="{StaticResource ColorPrimaryBackgroundLight}" />
+        <SolidColorBrush x:Key="BrushPrimaryBackgroundLighter" Color="{StaticResource ColorPrimaryBackgroundLighter}" />
         <SolidColorBrush x:Key="BrushSecondaryBackground" Color="{StaticResource ColorSecondaryBackground}" />
         <SolidColorBrush x:Key="BrushPanelBackground" Color="{StaticResource ColorPanelBackground}" />
         <SolidColorBrush x:Key="BrushHover" Color="{StaticResource ColorHover}" />
@@ -136,5 +140,49 @@
             <Setter Property="FontSize" Value="{StaticResource FontSizeMedium}" />
             <Setter Property="HorizontalAlignment" Value="Right" />
         </Style>
+         
+         
+         
+         <!-- MISA DataGrid Basis-Style -->
+        <Style Selector="DataGrid.misa-grid">
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            
+            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLight}" />
+            <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}" />
+            <Setter Property="RowBackground" Value="{StaticResource BrushPrimaryBackgroundLight}" />
+            <Setter Property="GridLinesVisibility" Value="Horizontal" />
+            <Setter Property="HeadersVisibility" Value="All" />
+            <Setter Property="CanUserReorderColumns" Value="True" />
+            <Setter Property="CanUserResizeColumns" Value="True" />
+            <Setter Property="CanUserSortColumns" Value="True" />
+            <Setter Property="RowHeight" Value="28" />
+            <Setter Property="HorizontalGridLinesBrush" Value="{StaticResource BrushBorder}" />
+            <Setter Property="VerticalGridLinesBrush" Value="{StaticResource BrushBorder}" />
+        </Style>
+
+        <!-- Header-Style -->
+        <Style Selector="DataGrid.misa-grid DataGridColumnHeader">
+            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackground}" />
+            <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}" />
+            <Setter Property="FontSize" Value="{StaticResource FontSizeMedium}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}" />
+            <Setter Property="BorderThickness" Value="0,0,0,1" />
+
+            <Setter Property="Padding" Value="8,4" />
+        </Style>
+
+        <!-- Zeilen-Styles -->
+        <Style Selector="DataGrid.misa-grid DataGridRow">
+            <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}" />
+        </Style>
+
+        <!-- Zellen-Style -->
+        <Style Selector="DataGrid.misa-grid DataGridCell">
+            <Setter Property="Padding" Value="0,6" />
+            <Setter Property="FontSize" Value="{StaticResource FontSizeMedium}" />
+        </Style>
+
      </Application.Styles>
 </Application>

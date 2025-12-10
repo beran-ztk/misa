@@ -7,6 +7,7 @@ using Misa.Application.Entities.Add;
 using Misa.Application.Entities.Get;
 using Misa.Application.Entities.Repositories;
 using Misa.Application.Items.Add;
+using Misa.Application.Items.Get;
 using Misa.Application.Main.Get;
 using Misa.Application.Main.Repositories;
 using Misa.Contract.Entities;
@@ -23,6 +24,7 @@ builder.Services.AddDbContext<MisaDbContext>(options =>
 
 builder.Services.AddScoped<CreateItemHandler>();
 builder.Services.AddScoped<GetLookupsHandler>();
+builder.Services.AddScoped<GetItemsHandler>();
 builder.Services.AddScoped<IItemRepository, ItemRepository>();
 builder.Services.AddScoped<IMainRepository, MainRepository>();
 
@@ -50,13 +52,10 @@ app.MapPost("/api/entities/add", async (
 });
 
 // Tasks
+app.MapGet("/api/tasks", async ( GetItemsHandler handler, CancellationToken ct) 
+     => await handler.GetTasksAsync(ct));
 app.MapPost("/api/tasks", async ( CreateItemDto dto, CreateItemHandler itemHandler, CancellationToken ct) 
     => await itemHandler.AddTaskAsync(dto, ct));
 
-app.MapGet("/api/tasks", async (
-    GetEntitiesHandler handler,
-    CancellationToken ct) =>
-{
-});
 
 app.Run();

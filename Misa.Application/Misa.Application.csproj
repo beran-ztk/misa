@@ -10,8 +10,4 @@
       <ProjectReference Include="..\Misa.Domain\Misa.Domain.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Items\Get\" />
-    </ItemGroup>
-
 </Project>

@@ -5,75 +5,128 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="Misa.Ui.Avalonia.Views.Entities.EntityInformationView"
              xmlns:vm="clr-namespace:Misa.Ui.Avalonia.ViewModels.Entities"
-             xmlns:entities="clr-namespace:Misa.Contract.Entities;assembly=Misa.Contract"
+             xmlns:items="clr-namespace:Misa.Contract.Items;assembly=Misa.Contract"
              x:DataType="vm:EntityInformationViewModel">
-    <Border>
+
+    <Border Padding="12"
+            Background="{StaticResource BrushSecondaryBackground}">
         <StackPanel>
-            <TextBlock Text="{Binding Parent.SelectedEntity.Id}"/>
-            <ContentControl Content="{Binding Parent.SelectedEntity}">
+            <ContentControl Content="{Binding EntityDetail.SelectedEntity}">
                 <ContentControl.ContentTemplate>
-                    <DataTemplate x:DataType="entities:CreateEntityDto">
+                    <DataTemplate x:DataType="items:ReadItemDto">
 
-                        <Grid ColumnDefinitions="Auto,*"
-                              RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto"
-                              ColumnSpacing="10"
-                              RowSpacing="4">
+                        <StackPanel Spacing="12">
 
-                            <TextBlock Grid.Row="0" Grid.Column="0"
-                                       Text="Id:"
-                                       FontWeight="Bold"
-                                       Foreground="{StaticResource BrushTextPrimary}" />
-                            <TextBlock Grid.Row="0" Grid.Column="1"
-                                       Text="{Binding Id}"
-                                       Foreground="{StaticResource BrushTextPrimary}" />
+                            <!-- Header: Title + State/Priority -->
+                            <StackPanel Spacing="4">
+                                <!-- Title -->
+                                <TextBlock Text="{Binding Title, FallbackValue='(No title)'}"
+                                           FontSize="{StaticResource FontSizeBig}"
+                                           FontWeight="SemiBold"
+                                           Foreground="{StaticResource BrushTextPrimary}" />
 
-                            <TextBlock Grid.Row="1" Grid.Column="0"
-                                       Text="Owner:"
-                                       FontWeight="Bold"
-                                       Foreground="{StaticResource BrushTextPrimary}" />
-                            <TextBlock Grid.Row="1" Grid.Column="1"
-                                       Text="{Binding OwnerId}"
-                                       Foreground="{StaticResource BrushTextPrimary}" />
+                                <!-- Workflow / Category / Priority in einer Zeile -->
+                                <StackPanel Orientation="Horizontal"
+                                            Spacing="8">
+                                    <TextBlock Text="{Binding Entity.Workflow.Name}"
+                                               Foreground="{StaticResource BrushTextSecondary}"
+                                               FontSize="{StaticResource FontSizeSmall}" />
 
-                            <TextBlock Grid.Row="2" Grid.Column="0"
-                                       Text="Workflow:"
-                                       FontWeight="Bold"
-                                       Foreground="{StaticResource BrushTextPrimary}" />
-                            <TextBlock Grid.Row="2" Grid.Column="1"
-                                       Text="{Binding WorkflowId}"
-                                       Foreground="{StaticResource BrushTextPrimary}" />
+                                    <TextBlock Text="•"
+                                               Foreground="{StaticResource BrushTextFaded}" />
 
-                            <TextBlock Grid.Row="3" Grid.Column="0"
-                                       Text="Created:"
-                                       FontWeight="Bold"
-                                       Foreground="{StaticResource BrushTextPrimary}" />
-                            <TextBlock Grid.Row="3" Grid.Column="1"
-                                       Text="{Binding CreatedAt, StringFormat='yyyy-MM-dd HH:mm'}"
-                                       Foreground="{StaticResource BrushTextPrimary}" />
+                                    <TextBlock Text="{Binding Category.Name, FallbackValue='No category'}"
+                                               Foreground="{StaticResource BrushTextSecondary}"
+                                               FontSize="{StaticResource FontSizeSmall}" />
 
-                            <TextBlock Grid.Row="4" Grid.Column="0"
-                                       Text="Updated:"
-                                       FontWeight="Bold"
-                                       Foreground="{StaticResource BrushTextPrimary}" />
-                            <TextBlock Grid.Row="4" Grid.Column="1"
-                                       Text="{Binding UpdatedAt}"
-                                       Foreground="{StaticResource BrushTextPrimary}" />
+                                    <TextBlock Text="•"
+                                               Foreground="{StaticResource BrushTextFaded}" />
 
-                            <TextBlock Grid.Row="5" Grid.Column="0"
-                                       Text="Interacted:"
-                                       FontWeight="Bold"
-                                       Foreground="{StaticResource BrushTextPrimary}" />
-                            <TextBlock Grid.Row="5" Grid.Column="1"
-                                       Text="{Binding InteractedAt}"
-                                       Foreground="{StaticResource BrushTextPrimary}" />
+                                    <TextBlock Text="{Binding Priority.Name}"
+                                               Foreground="{StaticResource BrushTextSecondary}"
+                                               FontSize="{StaticResource FontSizeSmall}" />
+                                </StackPanel>
 
-                        </Grid>
+                                <!-- State als „Pill“ -->
+                                <Border Background="{StaticResource BrushActive}"
+                                        CornerRadius="4"
+                                        Padding="6,2"
+                                        Margin="0,4,0,0">
+                                    <TextBlock Text="{Binding State.Name}"
+                                               Foreground="{StaticResource BrushTextPrimary}"
+                                               FontSize="{StaticResource FontSizeSmall}" />
+                                </Border>
+                            </StackPanel>
+
+                            <Separator Margin="0,4,0,4"
+                                       HorizontalAlignment="Stretch"
+                                       Background="{StaticResource BrushBorder}" />
+
+                            <!-- Meta-Daten: GUID, Owner, Zeiten -->
+                            <Grid ColumnDefinitions="Auto,*"
+                                  RowDefinitions="Auto,Auto,Auto,Auto,Auto"
+                                  ColumnSpacing="10"
+                                  RowSpacing="4">
+
+                                <!-- GUID -->
+                                <TextBlock Grid.Row="0" Grid.Column="0"
+                                           Text="GUID:"
+                                           FontWeight="Bold"
+                                           Foreground="{StaticResource BrushTextSecondary}" />
+                                <TextBlock Grid.Row="0" Grid.Column="1"
+                                           Text="{Binding Entity.Id}"
+                                           Foreground="{StaticResource BrushTextPrimary}"
+                                           FontSize="{StaticResource FontSizeSmall}" />
+
+                                <!-- Owner -->
+                                <TextBlock Grid.Row="1" Grid.Column="0"
+                                           Text="Owner:"
+                                           FontWeight="Bold"
+                                           Foreground="{StaticResource BrushTextSecondary}" />
+                                <TextBlock Grid.Row="1" Grid.Column="1"
+                                           Text="{Binding Entity.OwnerId, FallbackValue='None'}"
+                                           Foreground="{StaticResource BrushTextPrimary}"
+                                           FontSize="{StaticResource FontSizeSmall}" />
+
+                                <!-- Created -->
+                                <TextBlock Grid.Row="2" Grid.Column="0"
+                                           Text="Created:"
+                                           FontWeight="Bold"
+                                           Foreground="{StaticResource BrushTextSecondary}" />
+                                <TextBlock Grid.Row="2" Grid.Column="1"
+                                           Text="{Binding Entity.CreatedAt, StringFormat='yyyy-MM-dd HH:mm'}"
+                                           Foreground="{StaticResource BrushTextPrimary}" />
+
+                                <!-- Updated -->
+                                <TextBlock Grid.Row="3" Grid.Column="0"
+                                           Text="Updated:"
+                                           FontWeight="Bold"
+                                           Foreground="{StaticResource BrushTextSecondary}" />
+                                <TextBlock Grid.Row="3" Grid.Column="1"
+                                           Text="{Binding Entity.UpdatedAt, 
+                                                          StringFormat='yyyy-MM-dd HH:mm', 
+                                                          FallbackValue='Not updated yet'}"
+                                           Foreground="{StaticResource BrushTextPrimary}" />
+
+                                <!-- Interacted -->
+                                <TextBlock Grid.Row="4" Grid.Column="0"
+                                           Text="Last activity:"
+                                           FontWeight="Bold"
+                                           Foreground="{StaticResource BrushTextSecondary}" />
+                                <TextBlock Grid.Row="4" Grid.Column="1"
+                                           Text="{Binding Entity.InteractedAt, StringFormat='yyyy-MM-dd HH:mm'}"
+                                           Foreground="{StaticResource BrushTextPrimary}" />
+
+                            </Grid>
+
+                        </StackPanel>
 
                     </DataTemplate>
                 </ContentControl.ContentTemplate>
             </ContentControl>
+            
+            <TextBlock Text="Descriptions"/>
         </StackPanel>
+        
     </Border>
-    
-    
 </UserControl>

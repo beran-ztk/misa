@@ -16,11 +16,14 @@ public class ItemRepository(MisaDbContext db) : IItemRepository
         return loaded 
                ?? throw new InvalidOperationException("Item wurde gespeichert, konnte aber nicht wieder geladen werden.");
     }
-    public async Task<List<Item>> GetAllAsync(CancellationToken ct)
+    public async Task<List<Item>> GetAllTasksAsync(CancellationToken ct)
     {
         return await db.Items
             .Include(i => i.Entity)
+            .ThenInclude(e => e.Workflow)
             .Include(i => i.State)
+            .Include(i => i.Priority)
+            .Include(i => i.Category)
             .Where(i => i.Entity.WorkflowId == (int)Misa.Domain.Dictionaries.Entities.EntityWorkflows.Task)
             .ToListAsync(ct);
     }

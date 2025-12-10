@@ -10,6 +10,7 @@ using Avalonia.Metadata;
 using ExCSS;
 using Misa.Contract.Entities;
 using Misa.Contract.Items;
+using Misa.Ui.Avalonia.Interfaces;
 using Misa.Ui.Avalonia.Services.Navigation;
 using Misa.Ui.Avalonia.Stores;
 using Misa.Ui.Avalonia.ViewModels.Entities;
@@ -25,7 +26,6 @@ public class ItemViewModel : ViewModelBase
     {
         _navigationService = navigationService;
         NavigationStore = navigationStore;
-        EntityViewModel = new EntityMainDetailViewModel(this, NavigationStore);
         
         _httpClient = NavigationStore.MisaHttpClient;
         ListModel = new ItemListViewModel(this, NavigationStore);

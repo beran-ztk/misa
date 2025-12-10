@@ -30,6 +30,16 @@ public static class ItemDtoMapper
             Category = domain.Category.ToDto(),
             Title = domain.Title
         };
+
+    public static List<ReadItemDto> ToReadItemDto(this List<Item> items)
+        => items.Select(i => new ReadItemDto
+        {
+            Entity = i.Entity.ToReadEntityDto(),
+            State = i.State.ToDto(),
+            Priority = i.Priority.ToDto(),
+            Category = i.Category.ToDto(),
+            Title = i.Title
+        }).ToList();
     public static StateDto ToDto(this Misa.Domain.Items.State state)
         => new()
         {

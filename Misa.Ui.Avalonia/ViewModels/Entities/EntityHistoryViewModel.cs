@@ -1,8 +1,8 @@
-﻿using Misa.Ui.Avalonia.ViewModels.Shells;
+﻿using Misa.Ui.Avalonia.Interfaces;
+using Misa.Ui.Avalonia.ViewModels.Shells;
 
 namespace Misa.Ui.Avalonia.ViewModels.Entities;
 
-public class EntityHistoryViewModel : ViewModelBase
+public class EntityHistoryViewModel(IEntityDetail EntityDetail) : ViewModelBase
 {
-    
 }

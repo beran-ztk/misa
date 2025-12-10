@@ -24,16 +24,16 @@ public class TaskListViewModel : ViewModelBase
     {
         try
         {
-            var items = await MainViewModel.NavigationService.NavigationStore.MisaHttpClient
+            var response = await MainViewModel.NavigationService.NavigationStore.MisaHttpClient
                 .GetFromJsonAsync<ReadItemDto[]>(requestUri: "api/tasks");
-
-            if (items == null)
+            
+            if (response == null)
                 return;
             
             await Dispatcher.UIThread.InvokeAsync(() =>
             {
                 MainViewModel.Items.Clear();
-                foreach (var item in items)
+                foreach (var item in response)
                 {
                     MainViewModel.Items.Add(item);
                 }
