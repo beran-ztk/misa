@@ -6,7 +6,7 @@
              x:Class="Misa.Ui.Avalonia.Views.Items.ItemView"
              xmlns:vm="clr-namespace:Misa.Ui.Avalonia.ViewModels.Items"
              xmlns:views="clr-namespace:Misa.Ui.Avalonia.Views.Items"
-             xmlns:entityViews="clr-namespace:Misa.Ui.Avalonia.Views.Entities"
+             xmlns:entityViews="clr-namespace:Misa.Ui.Avalonia.Views.Details"
              x:DataType="vm:ItemViewModel">
     
     <Border>
@@ -24,9 +24,9 @@
             </Border>
             
             
-            <entityViews:EntityMainDetailView
+            <entityViews:DetailMainDetailView
                 Grid.Column="1"
-                DataContext="{Binding EntityViewModel}"/>
+                DataContext="{Binding DetailViewModel}"/>
             
         </Grid>
     </Border>

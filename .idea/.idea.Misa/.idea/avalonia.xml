@@ -4,6 +4,8 @@
     <option name="projectPerEditor">
       <map>
         <entry key="Misa.Ui.Avalonia/App.axaml" value="Misa.Ui.Avalonia/Misa.Ui.Avalonia.csproj" />
+        <entry key="Misa.Ui.Avalonia/Views/Details/DetailRelationView.axaml" value="Misa.Ui.Avalonia/Misa.Ui.Avalonia.csproj" />
+        <entry key="Misa.Ui.Avalonia/Views/Details/DetailSessionView.axaml" value="Misa.Ui.Avalonia/Misa.Ui.Avalonia.csproj" />
         <entry key="Misa.Ui.Avalonia/Views/Entities/EntityHistoryView.axaml" value="Misa.Ui.Avalonia/Misa.Ui.Avalonia.csproj" />
         <entry key="Misa.Ui.Avalonia/Views/Entities/EntityInformationView.axaml" value="Misa.Ui.Avalonia/Misa.Ui.Avalonia.csproj" />
         <entry key="Misa.Ui.Avalonia/Views/Entities/EntityMainDetailView.axaml" value="Misa.Ui.Avalonia/Misa.Ui.Avalonia.csproj" />

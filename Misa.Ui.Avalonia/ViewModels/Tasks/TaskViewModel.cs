@@ -3,7 +3,7 @@ using Misa.Contract.Entities;
 using Misa.Contract.Items;
 using Misa.Ui.Avalonia.Interfaces;
 using Misa.Ui.Avalonia.Services.Navigation;
-using Misa.Ui.Avalonia.ViewModels.Entities;
+using Misa.Ui.Avalonia.ViewModels.Details;
 using Misa.Ui.Avalonia.ViewModels.Shells;
 
 namespace Misa.Ui.Avalonia.ViewModels.Tasks;
@@ -32,7 +32,7 @@ public class TaskViewModel : ViewModelBase, IEntityDetail
         
         ListModel = new TaskListViewModel(this);
         Navigation = new TaskNavigationViewModel(this);
-        CurrentInfoModel = new EntityMainDetailViewModel(this);
+        CurrentInfoModel = new DetailMainDetailViewModel(this);
     }
     
     public ViewModelBase? CurrentInfoModel

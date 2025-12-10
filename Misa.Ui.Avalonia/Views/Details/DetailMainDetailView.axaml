@@ -5,28 +5,29 @@
              mc:Ignorable="d"
              d:DesignWidth="800"
              d:DesignHeight="450"
-             x:Class="Misa.Ui.Avalonia.Views.Entities.EntityMainDetailView"
-             xmlns:views="clr-namespace:Misa.Ui.Avalonia.Views.Entities"
-             xmlns:vm="clr-namespace:Misa.Ui.Avalonia.ViewModels.Entities"
-             x:DataType="vm:EntityMainDetailViewModel">
+             x:Class="Misa.Ui.Avalonia.Views.Details.DetailMainDetailView"
+             xmlns:views="clr-namespace:Misa.Ui.Avalonia.Views.Details"
+             xmlns:vm="clr-namespace:Misa.Ui.Avalonia.ViewModels.Details"
+             xmlns:entities="clr-namespace:Misa.Ui.Avalonia.Views.Details"
+             x:DataType="vm:DetailMainDetailViewModel">
 
     <Border>
         <TabControl SelectedIndex="{Binding SelectedTabIndex}">
                 <TabItem Header="Information">
-                    <views:EntityInformationView 
+                    <views:DetailInformationView 
                         DataContext="{Binding InformationViewModel}"/>
                 </TabItem>
 
                 <TabItem Header="Relations">
-                    <views:EntityRelationView />
+                    <entities:DetailRelationView />
                 </TabItem>
 
                 <TabItem Header="Sessions">
-                    <views:EntitySessionView />
+                    <entities:DetailSessionView />
                 </TabItem>
 
                 <TabItem Header="History">
-                    <views:EntityHistoryView />
+                    <views:DetailHistoryView />
                 </TabItem>
             </TabControl>
     </Border>

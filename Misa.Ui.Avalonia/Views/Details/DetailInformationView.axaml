@@ -3,10 +3,10 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="Misa.Ui.Avalonia.Views.Entities.EntityInformationView"
-             xmlns:vm="clr-namespace:Misa.Ui.Avalonia.ViewModels.Entities"
+             x:Class="Misa.Ui.Avalonia.Views.Details.DetailInformationView"
+             xmlns:vm="clr-namespace:Misa.Ui.Avalonia.ViewModels.Details"
              xmlns:items="clr-namespace:Misa.Contract.Items;assembly=Misa.Contract"
-             x:DataType="vm:EntityInformationViewModel">
+             x:DataType="vm:DetailInformationViewModel">
 
     <Border Padding="12"
             Background="{StaticResource BrushSecondaryBackground}">

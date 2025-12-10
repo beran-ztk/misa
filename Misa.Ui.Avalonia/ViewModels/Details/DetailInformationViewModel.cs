@@ -5,13 +5,13 @@ using Misa.Ui.Avalonia.Stores;
 using Misa.Ui.Avalonia.ViewModels.Items;
 using Misa.Ui.Avalonia.ViewModels.Shells;
 
-namespace Misa.Ui.Avalonia.ViewModels.Entities;
+namespace Misa.Ui.Avalonia.ViewModels.Details;
 
-public class EntityInformationViewModel : ViewModelBase
+public class DetailInformationViewModel : ViewModelBase
 {
     public IEntityDetail EntityDetail { get; }
 
-    public EntityInformationViewModel(EntityMainDetailViewModel parent)
+    public DetailInformationViewModel(DetailMainDetailViewModel parent)
     {
         EntityDetail = parent.EntityDetail;
     }

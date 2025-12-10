@@ -13,7 +13,7 @@ using Misa.Contract.Items;
 using Misa.Ui.Avalonia.Interfaces;
 using Misa.Ui.Avalonia.Services.Navigation;
 using Misa.Ui.Avalonia.Stores;
-using Misa.Ui.Avalonia.ViewModels.Entities;
+using Misa.Ui.Avalonia.ViewModels.Details;
 using Misa.Ui.Avalonia.ViewModels.Shells;
 using Misa.Ui.Avalonia.Views.Items;
 using ReactiveUI;
@@ -46,7 +46,7 @@ public class ItemViewModel : ViewModelBase
     }
     public ItemListViewModel ListModel { get; }
     public ItemNavigationViewModel Navigation { get; }
-    public EntityMainDetailViewModel EntityViewModel { get; }
+    public DetailMainDetailViewModel DetailViewModel { get; }
     private readonly HttpClient _httpClient;
 
     
