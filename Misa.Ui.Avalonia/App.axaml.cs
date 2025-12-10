@@ -30,12 +30,13 @@ public partial class App : Application
             
             var httpClient = new HttpClient { BaseAddress = new Uri("http://localhost:4500") };
 
-            var navigationState = new NavigationStore(httpClient);
-            var navigationService = new NavigationService(navigationState);
+            var navigationStore = new NavigationStore(httpClient);
+            var lookupsStore = new LookupsStore(httpClient);
+            INavigationService navigationService = new NavigationService(navigationStore, lookupsStore);
             
             desktop.MainWindow = new MainWindow
             {
-                DataContext = new MainWindowViewModel(navigationState, navigationService),
+                DataContext = new MainWindowViewModel(navigationService, lookupsStore),
             };
         }
 

@@ -6,9 +6,105 @@
              x:Class="Misa.Ui.Avalonia.Views.Tasks.TaskCreateView"
              xmlns:vm="clr-namespace:Misa.Ui.Avalonia.ViewModels.Tasks"
              x:DataType="vm:TaskCreateViewModel">
-    
-    <Border Background="Aqua">
-        <TextBox Text="Create"/>
+
+    <Border Classes="misa-control">
+        <Grid RowDefinitions="Auto,Auto,Auto"
+              RowSpacing="{StaticResource SpacingLarge}">
+
+            <!-- Header -->
+            <StackPanel Orientation="Horizontal"
+                        Spacing="{StaticResource SpacingMedium}"
+                        Grid.Row="0">
+                <TextBlock Classes="misa-header"
+                           Text="Create Task" />
+            </StackPanel>
+
+            <!-- Form -->
+            <Grid Grid.Row="1"
+                  ColumnDefinitions="Auto,*"
+                  RowDefinitions="Auto,Auto,Auto,Auto"
+                  RowSpacing="{StaticResource SpacingMedium}"
+                  ColumnSpacing="{StaticResource SpacingLarge}">
+
+                <!-- Title -->
+                <TextBlock Grid.Row="0" Grid.Column="0"
+                           Classes="misa-label"
+                           Text="Title" />
+
+                <StackPanel Grid.Row="0" Grid.Column="1"
+                            Spacing="{StaticResource SpacingSmall}">
+                    <!-- <TextBox Classes="misa-input" -->
+                    <!--          Watermark="Task title..." -->
+                    <!--          Text="{Binding Title, UpdateSourceTrigger=PropertyChanged}" /> -->
+
+                    <TextBox Classes="misa-input"
+                             Watermark="Task title..."
+                             BorderBrush="{Binding TitleBorderBrush, Mode=OneWay}"
+                             Text="{Binding Title, UpdateSourceTrigger=PropertyChanged}"
+                             TextChanged="TitleTextChangedEvent">
+                    </TextBox>
+                    
+                    <ContentControl Content="{Binding ErrorMessageTitle}">
+                        <ContentControl.DataTemplates>
+                            <DataTemplate x:DataType="x:String">
+                                <TextBlock Classes="misa-error"
+                                           Text="{Binding}"/>
+                            </DataTemplate>
+                        </ContentControl.DataTemplates>
+                    </ContentControl>
+                    
+                    <Separator Foreground="{StaticResource BrushBorder}" HorizontalAlignment="Stretch"/>
+                    
+                </StackPanel>
+
+                
+                <!-- State -->
+                <TextBlock Grid.Row="1" Grid.Column="0"
+                           Classes="misa-label"
+                           Text="State" />
+
+                <ComboBox Grid.Row="1" Grid.Column="1"
+                          Classes="misa-input"
+                          ItemsSource="{Binding States}"
+                          SelectedValue="{Binding StateId}"
+                          SelectedValueBinding="{Binding Id}"
+                          DisplayMemberBinding="{Binding Name}" />
+
+                <!-- Priority -->
+                <TextBlock Grid.Row="2" Grid.Column="0"
+                           Classes="misa-label"
+                           Text="Priority" />
+
+                <ComboBox Grid.Row="2" Grid.Column="1"
+                          Classes="misa-input"
+                          ItemsSource="{Binding Priorities}"
+                          SelectedValue="{Binding PriorityId}"
+                          SelectedValueBinding="{Binding Id}"
+                          DisplayMemberBinding="{Binding Name}" />
+
+                <!-- Category -->
+                <TextBlock Grid.Row="3" Grid.Column="0"
+                           Classes="misa-label"
+                           Text="Category" />
+
+                <ComboBox Grid.Row="3" Grid.Column="1"
+                          Classes="misa-input"
+                          ItemsSource="{Binding Categories}"
+                          SelectedValue="{Binding CategoryId}"
+                          SelectedValueBinding="{Binding Id}"
+                          DisplayMemberBinding="{Binding Name}" />
+            </Grid>
+
+            <!-- Footer / Actions -->
+            <StackPanel Grid.Row="2"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Right"
+                        Margin="0,8,0,0">
+                <Button Classes="misa-primary"
+                        Content="Create"
+                        Command="{Binding CreateTaskCommand}" />
+            </StackPanel>
+        </Grid>
     </Border>
-    
+
 </UserControl>

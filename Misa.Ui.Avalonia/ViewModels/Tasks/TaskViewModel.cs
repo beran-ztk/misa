@@ -21,22 +21,19 @@ public enum TaskDetailMode
 }
 public class TaskViewModel : ViewModelBase
 {
-    public TaskViewModel(NavigationStore navigationStore)
+    public TaskViewModel(INavigationService navigationService)
     {
-        NavigationStore = navigationStore;
+        NavigationService = navigationService;
         
-        _httpClient = NavigationStore.MisaHttpClient;
-        ListModel = new TaskListViewModel(this, navigationStore);
-        Navigation = new TaskNavigationViewModel(this, NavigationStore);
+        ListModel = new TaskListViewModel(this);
+        Navigation = new TaskNavigationViewModel(this);
     }
-    private readonly HttpClient _httpClient;
+    public INavigationService NavigationService;
     public TaskListViewModel ListModel { get; }
     public TaskNavigationViewModel Navigation { get; }
-    public NavigationStore NavigationStore { get; }
     public ObservableCollection<ReadItemDto> Items { get; set; } = [];
     
     private ReadItemDto? _selectedEntity;
-    private readonly INavigationService _navigationService;
     
     private ViewModelBase? _currentInfoModel;
     public ViewModelBase? CurrentInfoModel

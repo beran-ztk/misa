@@ -7,21 +7,25 @@ namespace Misa.Ui.Avalonia.Services.Navigation;
 
 public class NavigationService : INavigationService
 {
-    public NavigationService(NavigationStore navigationStore)
+    public NavigationStore NavigationStore { get; init; }
+    public LookupsStore LookupsStore { get; init; }
+    public NavigationService(NavigationStore navigationStore, LookupsStore lookupsStore)
     {
-        _navigationStore = navigationStore;
+        NavigationStore = navigationStore;
+        LookupsStore = lookupsStore;
     }
-    private readonly NavigationStore _navigationStore;
+
+
     public void ShowItems()
     {
-        _navigationStore.CurrentViewModel = new ItemViewModel(this, _navigationStore);
+        NavigationStore.CurrentViewModel = new ItemViewModel(this, NavigationStore);
     }
     public void ShowNotifications()
     {
-        _navigationStore.CurrentInfoViewModel = new NotificationViewModel();
+        NavigationStore.CurrentInfoViewModel = new NotificationViewModel();
     }
     public void ShowTasks()
     {
-        _navigationStore.CurrentViewModel = new TaskViewModel(_navigationStore);
+        NavigationStore.CurrentViewModel = new TaskViewModel(this);
     }
 }

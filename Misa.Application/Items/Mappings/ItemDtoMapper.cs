@@ -37,6 +37,13 @@ public static class ItemDtoMapper
             Name = state.Name,
             Synopsis = state.Synopsis
         };
+    public static List<StateDto> ToDto(this List<State> states)
+        => states.Select(s => new StateDto
+        {
+            Id = s.Id,
+            Name = s.Name,
+            Synopsis = s.Synopsis
+        }).ToList();
     public static PriorityDto ToDto(this Misa.Domain.Items.Priority priority)
         => new()
         {
@@ -44,6 +51,14 @@ public static class ItemDtoMapper
             Name = priority.Name,
             Synopsis = priority.Synopsis
         };
+
+    public static List<PriorityDto> ToDto(this List<Priority> priorities)
+        => priorities.Select(p => new PriorityDto
+        {
+            Id = p.Id,
+            Name = p.Name,
+            Synopsis = p.Synopsis
+        }).ToList();
     public static CategoryDto ToDto(this Misa.Domain.Items.Category category)
         => new()
         {
@@ -51,4 +66,12 @@ public static class ItemDtoMapper
             Name = category.Name,
             Synopsis = category.Synopsis
         };
+
+    public static List<CategoryDto> ToDto(this List<Category> categories)
+        => categories.Select(c => new CategoryDto
+        {
+            Id = c.Id,
+            Name = c.Name,
+            Synopsis = c.Synopsis
+        }).ToList();
 }

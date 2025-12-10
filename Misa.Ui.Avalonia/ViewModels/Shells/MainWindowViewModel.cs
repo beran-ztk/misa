@@ -13,29 +13,29 @@ namespace Misa.Ui.Avalonia.ViewModels.Shells;
 public partial class MainWindowViewModel : ViewModelBase
 {
     private readonly HttpClient _httpClient;
-    private readonly NavigationStore _navigationStore;
-    private readonly INavigationService _navigationService;
+    private readonly LookupsStore _lookupsStore;
+    public INavigationService NavigationService { get; set; }
 
-    public ViewModelBase? CurrentViewModel => _navigationStore.CurrentViewModel;
-    public ViewModelBase? CurrentInfoViewModel => _navigationStore.CurrentInfoViewModel;
+    public ViewModelBase? CurrentViewModel => NavigationService.NavigationStore.CurrentViewModel;
+    public ViewModelBase? CurrentInfoViewModel => NavigationService.NavigationStore.CurrentInfoViewModel;
     public NavigationViewModel Navigation { get; }
     public InfoBarViewModel InfoBar { get; }
     public TitleBarViewModel TitleBar { get; }
     public StatusBarViewModel StatusBar { get; }
 
-    public MainWindowViewModel(NavigationStore navigationStore, NavigationService navigationService)
+    public MainWindowViewModel(INavigationService navigationService, LookupsStore lookupsStore)
     {
-        _navigationStore = navigationStore;
-        _navigationService = navigationService;
+        NavigationService = navigationService;
+        _lookupsStore = lookupsStore;
         
-        _httpClient = _navigationStore.MisaHttpClient;
+        _httpClient = NavigationService.NavigationStore.MisaHttpClient;
 
-        Navigation = new NavigationViewModel(navigationService);
-        InfoBar = new InfoBarViewModel(navigationService);
-        TitleBar = new TitleBarViewModel(navigationService);
-        StatusBar = new StatusBarViewModel(navigationService);
+        Navigation = new NavigationViewModel(NavigationService);
+        InfoBar = new InfoBarViewModel(NavigationService);
+        TitleBar = new TitleBarViewModel(NavigationService);
+        StatusBar = new StatusBarViewModel(NavigationService);
         
-        _navigationStore.PropertyChanged += (_, e) =>
+        NavigationService.NavigationStore.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(NavigationStore.CurrentViewModel))
             {
@@ -43,7 +43,7 @@ public partial class MainWindowViewModel : ViewModelBase
             }
         };
         
-        _navigationStore.PropertyChanged += (_, e) =>
+        NavigationService.NavigationStore.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(NavigationStore.CurrentInfoViewModel))
             {

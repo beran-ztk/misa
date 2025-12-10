@@ -9,12 +9,6 @@
         <local:ViewLocator/>
     </Application.DataTemplates>
              
-     <Application.Styles>
-         <FluentTheme />
-         <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
-
-     </Application.Styles>
-             
     <Application.Resources>
 
         <x:Double x:Key="FontSizeSmall">10</x:Double>
@@ -71,4 +65,76 @@
         <SolidColorBrush x:Key="BrushError" Color="{StaticResource ColorError}" />
 
     </Application.Resources>
+             
+     <Application.Styles>
+         <FluentTheme />
+         <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
+
+         <Style Selector="TextBlock.misa-header">
+             <Setter Property="FontSize" Value="28" />
+             <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}" />
+             <Setter Property="FontWeight" Value="Medium" />
+             <Setter Property="Opacity" Value="0.9" />
+             <Setter Property="Margin" Value="0,0,0,16" />
+         </Style>
+
+    <!-- MISA: Card Container -->
+        <Style Selector="Border.misa-control">
+            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackground}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="26" />
+            <Setter Property="Margin" Value="8" />
+        </Style>
+
+        <!-- MISA: Labels -->
+        <Style Selector="TextBlock.misa-label">
+            <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}" />
+            <Setter Property="FontSize" Value="{StaticResource FontSizeMedium}" />
+            <Setter Property="Margin" Value="0,8,0,2" />
+        </Style>
+
+        <!-- MISA: Error Text -->
+        <Style Selector="TextBlock.misa-error">
+            <Setter Property="Foreground" Value="{StaticResource BrushError}" />
+            <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}" />
+            <Setter Property="Margin" Value="0,2,0,4" />
+        </Style>
+
+        <!-- MISA: Input-TextBox -->
+        <Style Selector="TextBox.misa-input">
+            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackground}" />
+            <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Padding" Value="8,8" />
+            <Setter Property="FontSize" Value="{StaticResource FontSizeMedium}" />
+        </Style>
+
+        <!-- MISA: ComboBox -->
+        <Style Selector="ComboBox.misa-input">
+            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackground}" />
+            <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Padding" Value="8,8" />
+            <Setter Property="FontSize" Value="{StaticResource FontSizeMedium}" />
+            <Setter Property="Width" Value="180" />
+        </Style>
+
+        <!-- MISA: Primary Button -->
+        <Style Selector="Button.misa-primary">
+            <Setter Property="Background" Value="{StaticResource BrushAccent}" />
+            <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BrushAccentDim}" />
+            <Setter Property="BorderThickness" Value="3" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="10,4" />
+            <Setter Property="FontSize" Value="{StaticResource FontSizeMedium}" />
+            <Setter Property="HorizontalAlignment" Value="Right" />
+        </Style>
+     </Application.Styles>
 </Application>

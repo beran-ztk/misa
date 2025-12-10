@@ -12,13 +12,11 @@ namespace Misa.Ui.Avalonia.ViewModels.Tasks;
 
 public class TaskListViewModel : ViewModelBase
 {
-    public TaskListViewModel(TaskViewModel vm, NavigationStore navigationStore)
+    public TaskListViewModel(TaskViewModel vm)
     {
-        _httpClient = navigationStore.MisaHttpClient;
         MainViewModel = vm;
         _ = LoadAsync();
     }
-    private readonly HttpClient _httpClient;
     public TaskViewModel MainViewModel { get; }
     
     
@@ -26,7 +24,7 @@ public class TaskListViewModel : ViewModelBase
     {
         try
         {
-            var items = await _httpClient
+            var items = await MainViewModel.NavigationService.NavigationStore.MisaHttpClient
                 .GetFromJsonAsync<ReadItemDto[]>(requestUri: "api/tasks");
 
             if (items == null)
