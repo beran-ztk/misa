@@ -54,15 +54,15 @@ public partial class DetailInformationViewModel : ViewModelBase
     [ObservableProperty] private int efficiency;
     [ObservableProperty] private int concentration;
     [ObservableProperty] private string summary;
-    
+
 
     [RelayCommand]
-    private void ShowSessionStartForm() => IsStartFormOpen = true;
+    private void ShowSessionStartForm() => IsStartFormOpen = !IsStartFormOpen;
     [RelayCommand]
     private void CloseSessionStartForm() => IsStartFormOpen = false;
 
     [RelayCommand]
-    private void ShowSessionPauseForm() => IsPauseFormOpen = true;
+    private void ShowSessionPauseForm() => IsPauseFormOpen = !IsPauseFormOpen;
 
     [RelayCommand]
     private void CloseSessionPauseForm() => IsPauseFormOpen = false;

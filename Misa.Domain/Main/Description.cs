@@ -18,5 +18,6 @@ public class Description
     public Guid EntityId { get; set; }
     public int TypeId { get; set; }
     public string Content { get; set; }
+    public DateTimeOffset CreatedAtUtc { get; set; }
     public DescriptionTypes Type { get; set; }
 }

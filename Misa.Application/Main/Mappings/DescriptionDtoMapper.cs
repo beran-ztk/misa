@@ -13,7 +13,8 @@ public static class DescriptionDtoMapper
             Id = dto.Id,
             EntityId = dto.EntityId,
             TypeId = dto.TypeId,
-            Content = dto.Content
+            Content = dto.Content,
+            CreatedAtUtc = dto.CreatedAtUtc
         };
     public static List<DescriptionDto> ToDto(this ICollection<Description> dto)
         => dto.Select(x => new DescriptionDto
@@ -21,6 +22,17 @@ public static class DescriptionDtoMapper
             Id = x.Id,
             EntityId = x.EntityId,
             TypeId = x.TypeId,
-            Content = x.Content
+            Content = x.Content,
+            CreatedAtUtc = x.CreatedAtUtc,
+            Type = x.Type.ToDto()
         }).ToList();
+
+    public static DescriptionTypeDto ToDto(this DescriptionTypes x)
+        => new DescriptionTypeDto
+        {
+            Id = x.Id,
+            Name = x.Name,
+            Synopsis = x.Synopsis,
+            SortOrder = x.SortOrder
+        };
 }

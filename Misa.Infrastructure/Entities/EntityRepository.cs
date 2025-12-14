@@ -32,7 +32,7 @@ public class EntityRepository(Misa.Infrastructure.Data.MisaDbContext db) : Misa.
             
             // Description
             .Include(e => e.Descriptions)
-                // .ThenInclude(d => d.Type)
+                .ThenInclude(d => d.Type)
 
             .FirstOrDefaultAsync(e => e.Id == id, ct);
     }

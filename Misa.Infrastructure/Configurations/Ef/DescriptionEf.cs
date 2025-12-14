@@ -24,6 +24,10 @@ public class DescriptionEf : IEntityTypeConfiguration<Misa.Domain.Main.Descripti
             .IsRequired()
             .HasColumnName("content");
         
+        builder.Property(x => x.CreatedAtUtc)
+            .IsRequired()
+            .HasColumnName("created_at_utc");
+        
         builder.HasOne(x => x.Type)
             .WithMany()
             .HasForeignKey(x => x.TypeId)
