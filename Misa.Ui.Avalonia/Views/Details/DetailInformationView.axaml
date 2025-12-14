@@ -392,8 +392,7 @@
                         <TextBox Grid.Column="0"
                                  Classes="misa-input"
                                  Watermark="Description..."
-                                 Foreground="{StaticResource BrushPrimaryBackground}"
-                                 Background="{StaticResource BrushTextSecondary}"
+                                 Foreground="{StaticResource BrushTextPrimary}"
                                  Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}" />
 
                         <Button Grid.Column="1"

@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml.MarkupExtensions;
 using Avalonia.Media;
+using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Items;
 using Misa.Contract.Items.Lookups;
 using Misa.Ui.Avalonia.ViewModels.Shells;
@@ -14,7 +15,7 @@ using ReactiveUI;
 
 namespace Misa.Ui.Avalonia.ViewModels.Tasks;
 
-public class TaskCreateViewModel : ViewModelBase
+public partial class TaskCreateViewModel : ViewModelBase
 {
     public TaskViewModel MainViewModel { get; }
     public ReactiveCommand<Unit, Unit> CreateTaskCommand { get; }
@@ -82,6 +83,13 @@ public class TaskCreateViewModel : ViewModelBase
         ErrorMessageTitle = "Please specify a title";
         TitleBorderBrush = Brushes.Red;
     }
+
+    [RelayCommand]
+    private void CancelTask()
+    {
+        MainViewModel.IsCreateTaskFormOpen = false;
+        MainViewModel.CurrentInfoModel = null;
+    }
     private async Task CreateTaskCommandAsync()
     {
         try
@@ -116,6 +124,8 @@ public class TaskCreateViewModel : ViewModelBase
             {
                 if (createdItem != null)
                     MainViewModel.Items.Add(createdItem);
+                MainViewModel.IsCreateTaskFormOpen = false;
+                MainViewModel.SelectedEntity = createdItem?.Entity;
             }
         }
         catch (Exception e)

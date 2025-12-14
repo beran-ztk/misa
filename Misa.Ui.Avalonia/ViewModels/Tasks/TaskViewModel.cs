@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using Misa.Contract.Entities;
 using Misa.Contract.Items;
 using Misa.Ui.Avalonia.Interfaces;
@@ -15,7 +16,7 @@ public enum TaskDetailMode
     View,
     Edit
 }
-public class TaskViewModel : ViewModelBase, IEntityDetail
+public partial class TaskViewModel : ViewModelBase, IEntityDetail
 {
     private ReadEntityDto? _selectedEntity;
     
@@ -23,16 +24,19 @@ public class TaskViewModel : ViewModelBase, IEntityDetail
     
     private ViewModelBase? _currentInfoModel;
     public INavigationService NavigationService;
+    public DetailMainDetailViewModel DetailViewModel { get; } 
     public TaskListViewModel ListModel { get; }
     public TaskNavigationViewModel Navigation { get; }
     public ObservableCollection<ReadItemDto> Items { get; set; } = [];
+    
+    [ObservableProperty] private bool _isCreateTaskFormOpen;
     public TaskViewModel(INavigationService navigationService)
     {
         NavigationService = navigationService;
         
         ListModel = new TaskListViewModel(this);
         Navigation = new TaskNavigationViewModel(this);
-        CurrentInfoModel = new DetailMainDetailViewModel(this, NavigationService);
+        DetailViewModel = new DetailMainDetailViewModel(this, NavigationService);
     }
     
     public ViewModelBase? CurrentInfoModel
@@ -43,8 +47,13 @@ public class TaskViewModel : ViewModelBase, IEntityDetail
     public ReadEntityDto? SelectedEntity
     {
         get => _selectedEntity;
-        set => SetProperty(ref _selectedEntity, value);
+        set
+        {
+            SetProperty(ref _selectedEntity, value);
+            ShowDetails();
+        }
     }
+    public void ShowDetails() => CurrentInfoModel = DetailViewModel;
     public ReadItemDto? SelectedTask
     {
         get => _selectedTask;

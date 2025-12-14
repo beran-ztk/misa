@@ -19,6 +19,7 @@ public class TaskNavigationViewModel : ViewModelBase
     }
     private void AddTaskCommandAsync()
     {
+        MainViewModel.IsCreateTaskFormOpen = true;
         MainViewModel.CurrentInfoModel = new TaskCreateViewModel(MainViewModel);
     }
 }

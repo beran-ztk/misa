@@ -101,6 +101,9 @@
                         HorizontalAlignment="Right"
                         Margin="0,8,0,0">
                 <Button Classes="misa-primary"
+                        Content="Cancel"
+                        Command="{Binding CancelTaskCommand}" />
+                <Button Classes="misa-primary"
                         Content="Create"
                         Command="{Binding CreateTaskCommand}" />
             </StackPanel>
