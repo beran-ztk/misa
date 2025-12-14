@@ -235,7 +235,7 @@
                            Margin="10"
                            FontWeight="SemiBold"/>
                 <!-- Top meta -->
-                <Grid ColumnDefinitions="140,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="6">
+                <Grid ColumnDefinitions="140,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="6">
                     <TextBlock Grid.Row="0" Grid.Column="0" Text="ID" Opacity="0.7"/>
                     <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Parent.DetailedEntity.Id}"/>
 
@@ -249,14 +249,15 @@
                     <TextBlock Grid.Row="3" Grid.Column="0" Text="Updated" Opacity="0.7"/>
                     <TextBlock Grid.Row="3" Grid.Column="1"
                                Text="{Binding Parent.DetailedEntity.UpdatedAt, StringFormat={}{0:yyyy-MM-dd HH:mm}}"/>
+                    <TextBlock Grid.Row="4" Grid.Column="0" Text="Interacted" Opacity="0.7"/>
+                    <TextBlock Grid.Row="4" Grid.Column="1"
+                               Text="{Binding Parent.DetailedEntity.InteractedAt, StringFormat={}{0:yyyy-MM-dd HH:mm}}"/>
+                    
+                    <TextBlock Grid.Row="5" Grid.Column="0" Text="Session Count" Opacity="0.7"/>
+                    <TextBlock Grid.Row="5" Grid.Column="1"
+                               Text="{Binding Parent.DetailedEntity.Sessions.Count}"/>
                 </Grid>
 
-                <!-- Optional interacted -->
-                <Grid ColumnDefinitions="140,*" IsVisible="{Binding Parent.DetailedEntity.InteractedAt}">
-                    <TextBlock Grid.Column="0" Text="Interacted" Opacity="0.7"/>
-                    <TextBlock Grid.Column="1"
-                               Text="{Binding Parent.DetailedEntity.InteractedAt, StringFormat={}{0:yyyy-MM-dd HH:mm}}"/>
-                </Grid>
 
                 <!-- Cards -->
                 <UniformGrid Columns="2" Rows="2" HorizontalAlignment="Stretch">

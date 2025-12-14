@@ -24,6 +24,7 @@ public class DetailMainDetailViewModel : ViewModelBase
     public DetailInformationViewModel SessionViewModel { get; }
     public DetailInformationViewModel HistoryViewModel { get; }
     public INavigationService NavigationService;
+    
     public DetailMainDetailViewModel(IEntityDetail parent, INavigationService navigationService)
     {
         EntityDetail = parent;
