@@ -4,8 +4,8 @@ public class SessionDto
 {
     public Guid Id { get; set; }
     public Guid EntityId { get; set; }
-    public int EfficiencyId { get; set; } 
-    public int ConcentrationId { get; set; } 
+    public int? EfficiencyId { get; set; } 
+    public int? ConcentrationId { get; set; } 
 
     public Lookups.SessionEfficiencyTypeDto? Efficiency { get; set; } = new();
     public Lookups.SessionConcentrationTypeDto? Concentration { get; set; }

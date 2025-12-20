@@ -47,14 +47,14 @@ public partial class DetailInformationViewModel : ViewModelBase
     [ObservableProperty] private bool isStartFormOpen;
     [ObservableProperty] private bool isPauseFormOpen;
     
-    [ObservableProperty] private int plannedMinutes;
-    [ObservableProperty] private string objective;
-    [ObservableProperty] private bool stopAutomatically;
-    [ObservableProperty] private string autoStopReason;
+    [ObservableProperty] private int? plannedMinutes;
+    [ObservableProperty] private string? objective;
+    [ObservableProperty] private bool? stopAutomatically;
+    [ObservableProperty] private string? autoStopReason;
     
-    [ObservableProperty] private int efficiency;
-    [ObservableProperty] private int concentration;
-    [ObservableProperty] private string summary;
+    [ObservableProperty] private int? efficiency;
+    [ObservableProperty] private int? concentration;
+    [ObservableProperty] private string? summary;
 
     [ObservableProperty] private bool isEditTitleFormOpen;
     [ObservableProperty] private string title;
@@ -98,18 +98,40 @@ public partial class DetailInformationViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void ShowSessionStartForm() => IsStartFormOpen = !IsStartFormOpen;
-    [RelayCommand]
-    private void CloseSessionStartForm() => IsStartFormOpen = false;
+    private void ShowSessionStartForm()
+    {
+        IsStartFormOpen = !IsStartFormOpen;
+        PlannedMinutes = null;
+        Objective = null;
+        StopAutomatically = false;
+        AutoStopReason = null;
+    }
 
     [RelayCommand]
-    private void ShowSessionPauseForm() => IsPauseFormOpen = !IsPauseFormOpen;
+    private void CloseSessionStartForm()
+    {
+        IsStartFormOpen = false;
+    }
 
     [RelayCommand]
-    private void CloseSessionPauseForm() => IsPauseFormOpen = false;
+    private void ShowSessionPauseForm()
+    {
+        IsPauseFormOpen = !IsPauseFormOpen;
+        Summary = null;
+        Efficiency = null;
+        Concentration = null;
+        EfficiencyId = null;
+        ConcentrationId = null;
+    } 
+
+    [RelayCommand]
+    private void CloseSessionPauseForm()
+    {
+        IsPauseFormOpen = false;
+    } 
     
-    [ObservableProperty] private int efficiencyId; 
-    [ObservableProperty] private int concentrationId; 
+    [ObservableProperty] private int? efficiencyId; 
+    [ObservableProperty] private int? concentrationId; 
     public IReadOnlyList<SessionEfficiencyTypeDto> EfficiencyTypes =>
         Parent.NavigationService.LookupsStore.EfficiencyTypes;
     public IReadOnlyList<SessionConcentrationTypeDto> ConcentrationTypes =>
@@ -134,9 +156,11 @@ public partial class DetailInformationViewModel : ViewModelBase
             SessionDto dto = new()
             {
                 EntityId = Parent.DetailedEntity.Id,
-                PlannedDuration = TimeSpan.FromMinutes(plannedMinutes),
+                PlannedDuration = PlannedMinutes.HasValue 
+                    ? TimeSpan.FromMinutes(Convert.ToInt32(PlannedMinutes)) 
+                    : null,
                 Objective = Objective,
-                StopAutomatically = StopAutomatically,
+                StopAutomatically = StopAutomatically ?? false,
                 AutoStopReason = AutoStopReason
             };
             var response = await Parent.NavigationService.NavigationStore
@@ -146,7 +170,7 @@ public partial class DetailInformationViewModel : ViewModelBase
                 Console.WriteLine($"Server returned {response.StatusCode}: {response.ReasonPhrase}");
 
             Parent.Refresh();
-            IsStartFormOpen = false;
+            CloseSessionStartForm();
         }
         catch (Exception e)
         {
