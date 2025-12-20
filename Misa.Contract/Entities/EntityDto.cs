@@ -18,7 +18,7 @@ public class EntityDto
     public DateTimeOffset InteractedAt { get; set; }
 
     public ReadItemDto? Item { get; set; }
-
+    public int DescriptionCount { get; set; } = 0;
     public List<DescriptionDto> Descriptions { get; set; } = new();
     public List<SessionDto> Sessions { get; set; } = new();
 }

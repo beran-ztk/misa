@@ -136,8 +136,7 @@ public partial class DetailInformationViewModel : ViewModelBase
         Parent.NavigationService.LookupsStore.EfficiencyTypes;
     public IReadOnlyList<SessionConcentrationTypeDto> ConcentrationTypes =>
         Parent.NavigationService.LookupsStore.ConcentrationTypes;
-
-    public int GetDescriptionCount => Parent.DetailedEntity?.Descriptions.Count ?? 0;
+    
     public string Description
     {
         get => _description;
@@ -212,14 +211,14 @@ public partial class DetailInformationViewModel : ViewModelBase
         {
             var trimmedDescription = Description?.Trim();
 
-            if (string.IsNullOrWhiteSpace(trimmedDescription) || EntityDetail.SelectedEntity == null)
+            if (string.IsNullOrWhiteSpace(trimmedDescription) || !EntityDetail.SelectedEntity.HasValue)
             {
                 return;
             }
             
             var dto = new DescriptionDto()
             {
-                EntityId = EntityDetail.SelectedEntity.Id, 
+                EntityId = (Guid)EntityDetail.SelectedEntity, 
                 Content = trimmedDescription
             };
             

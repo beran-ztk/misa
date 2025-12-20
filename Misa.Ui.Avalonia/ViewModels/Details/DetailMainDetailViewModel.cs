@@ -70,7 +70,7 @@ public class DetailMainDetailViewModel : ViewModelBase
         try
         {
             var response = await NavigationService.NavigationStore.MisaHttpClient
-                .GetFromJsonAsync<EntityDto>(requestUri: $"api/entities/{EntityDetail.SelectedEntity.Id}");
+                .GetFromJsonAsync<EntityDto>(requestUri: $"api/entities/{EntityDetail.SelectedEntity}");
             
             if (response == null)
                 return;

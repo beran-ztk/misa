@@ -1,4 +1,5 @@
-﻿using System.Collections.ObjectModel;
+﻿using System;
+using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Misa.Contract.Entities;
 using Misa.Contract.Items;
@@ -18,7 +19,7 @@ public enum TaskDetailMode
 }
 public partial class TaskViewModel : ViewModelBase, IEntityDetail
 {
-    private ReadEntityDto? _selectedEntity;
+    private ReadEntityDto? _readEntity;
     
     private ReadItemDto? _selectedTask;
     
@@ -38,20 +39,14 @@ public partial class TaskViewModel : ViewModelBase, IEntityDetail
         Navigation = new TaskNavigationViewModel(this);
         DetailViewModel = new DetailMainDetailViewModel(this, NavigationService);
     }
-    
+
+    [ObservableProperty] public Guid? _selectedEntity;
+
     public ViewModelBase? CurrentInfoModel
     {
         get => _currentInfoModel;
         set => SetProperty(ref _currentInfoModel, value);
-    }
-    public ReadEntityDto? SelectedEntity
-    {
-        get => _selectedEntity;
-        set
-        {
-            SetProperty(ref _selectedEntity, value);
-            ShowDetails();
-        }
+        
     }
     public void ShowDetails() => CurrentInfoModel = DetailViewModel;
     public ReadItemDto? SelectedTask
@@ -60,7 +55,8 @@ public partial class TaskViewModel : ViewModelBase, IEntityDetail
         set
         {
             SetProperty(ref _selectedTask, value);
-            SelectedEntity = value?.Entity;
+            SelectedEntity = value?.Entity.Id;
+            ShowDetails();
         }
     }
 }

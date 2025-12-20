@@ -29,6 +29,7 @@ public class Entity
 
     public Workflow Workflow { get;  set; }
     public Item? Item { get; set; }
+    public int DescriptionCount => Descriptions.Count;
     public ICollection<Description> Descriptions { get; set; } = new List<Description>();
     public ICollection<Session> Sessions { get; set; } = new List<Session>();
     

@@ -434,7 +434,7 @@
                 IsVisible="{Binding Parent.HasDetailedEntity}">
             
             <StackPanel Spacing="12">
-                <TextBlock Text="{Binding GetDescriptionCount, StringFormat='Descriptions ({0})'}"
+                <TextBlock Text="{Binding Parent.DetailedEntity.DescriptionCount, StringFormat='Descriptions ({0})'}"
                            FontSize="16"
                            FontWeight="SemiBold"
                            Margin="10"/>

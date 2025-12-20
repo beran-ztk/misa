@@ -125,7 +125,7 @@ public partial class TaskCreateViewModel : ViewModelBase
                 if (createdItem != null)
                     MainViewModel.Items.Add(createdItem);
                 MainViewModel.IsCreateTaskFormOpen = false;
-                MainViewModel.SelectedEntity = createdItem?.Entity;
+                MainViewModel.SelectedEntity = createdItem?.Entity.Id;
             }
         }
         catch (Exception e)
