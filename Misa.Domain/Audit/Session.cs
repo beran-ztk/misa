@@ -17,6 +17,7 @@ public class Session
 
     public TimeSpan? PlannedDuration { get; private set; }
 
+    public TimeSpan? ActualDuration => EndedAtUtc - StartedAtUtc;
     public bool StopAutomatically { get; private set; }
 
     public DateTimeOffset StartedAtUtc { get; private set; }

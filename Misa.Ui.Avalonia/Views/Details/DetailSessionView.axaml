@@ -82,11 +82,12 @@
                                             </StackPanel>
                     
                                             <!-- Planned / Autostop -->
-                                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
-                                                <TextBlock Text="{Binding PlannedDuration, StringFormat='Planned: {0}'}"
+                                            <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*" ColumnSpacing="10">
+                                                <TextBlock Grid.Row="0" Text="{Binding PlannedDuration, StringFormat='Planned Duration: {0:hh\\:mm\\:ss}'}"
                                                            Opacity="0.75"/>
-                                                <TextBlock Grid.Column="1" Text="{Binding StopAutomatically, StringFormat='AutoStop: {0}'}"
-                                                           Opacity="0.75"/>
+                                                
+                                                <TextBlock Grid.Row="1" Text="{Binding ActualDuration, StringFormat='Actual Duration: {0:hh\\:mm\\:ss}'}" Opacity="0.75"/>
+                                                <TextBlock Grid.Row="2" Text="{Binding StopAutomatically, StringFormat='AutoStop: {0}'}" Opacity="0.75"/>
                                             </Grid>
                     
                                             <TextBlock Text="{Binding AutoStopReason, StringFormat='Reason: {0}'}"

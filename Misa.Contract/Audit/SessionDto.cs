@@ -15,6 +15,7 @@ public class SessionDto
     public string? AutoStopReason { get; set; }
 
     public TimeSpan? PlannedDuration { get; set; }
+    public TimeSpan? ActualDuration { get; set; }
 
     public bool StopAutomatically { get; set; }
 

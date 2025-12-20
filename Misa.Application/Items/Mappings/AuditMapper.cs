@@ -51,6 +51,7 @@ public static class AuditMapper
         Summary = x.Summary,
         AutoStopReason = x.AutoStopReason,
         PlannedDuration = x.PlannedDuration,
+        ActualDuration = x.ActualDuration,
         StopAutomatically = x.StopAutomatically,
         StartedAtUtc = x.StartedAtUtc,
         EndedAtUtc = x.EndedAtUtc
