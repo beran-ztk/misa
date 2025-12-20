@@ -13,4 +13,6 @@ public class ActionDto
     public string? Reason { get; set; }
 
     public DateTimeOffset CreatedAtUtc { get; set; }
+    public string GetValueBefore => ValueBefore ?? "No Value";
+    public string GetValueAfter => ValueAfter ?? "No Value";
 }

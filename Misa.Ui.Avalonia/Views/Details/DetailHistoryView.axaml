@@ -2,7 +2,109 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="Misa.Ui.Avalonia.Views.Details.DetailHistoryView">
-    Welcome to Avalonia!
+             mc:Ignorable="d"
+             x:Class="Misa.Ui.Avalonia.Views.Details.DetailHistoryView"
+             xmlns:vm="clr-namespace:Misa.Ui.Avalonia.ViewModels.Details"
+             x:DataType="vm:DetailMainDetailViewModel">
+
+    <ScrollViewer>
+        <StackPanel>
+
+            <Border Padding="12"
+                    Margin="10"
+                    CornerRadius="10"
+                    BorderThickness="1"
+                    BorderBrush="{StaticResource BrushBorder}"
+                    Background="{StaticResource BrushPrimaryBackgroundLighter}">
+
+                <StackPanel Spacing="12">
+
+                    <TextBlock Text="{Binding DetailedEntity.Actions.Count, StringFormat='Actions ({0})'}"
+                               FontSize="16"
+                               FontWeight="SemiBold"
+                               Margin="10"/>
+
+                    <ItemsControl ItemsSource="{Binding DetailedEntity.Actions}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+
+                                <Border Margin="10,6"
+                                        Background="{StaticResource BrushPrimaryBackground}"
+                                        CornerRadius="10"
+                                        BorderThickness="1"
+                                        BorderBrush="{StaticResource BrushBorder}">
+
+                                    <Grid ColumnDefinitions="6,*">
+
+                                        <!-- Accent bar -->
+                                        <Border Background="{StaticResource BrushAccent}"
+                                                CornerRadius="10,0,0,10"
+                                                Padding="12"/>
+
+                                        <StackPanel Grid.Column="1" Spacing="6" Margin="10">
+
+                                            <!-- Top line: timestamp + type -->
+                                            <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
+                                                <TextBlock Grid.Row="0" Grid.Column="0"
+                                                           Text="{Binding CreatedAtUtc, StringFormat={}{0:yyyy-MM-dd HH:mm}}"
+                                                           Opacity="0.85"/>
+
+                                                <!-- Type label on the right -->
+                                                <TextBlock Grid.Row="0" Grid.Column="1"
+                                                           Text="{Binding Type.Name}"
+                                                           FontWeight="SemiBold"
+                                                           Opacity="0.85"/>
+                                            </Grid>
+
+                                            <!-- Before / After -->
+                                            <StackPanel Spacing="4">
+
+                                                <TextBlock Text="Value change"
+                                                           FontSize="11"
+                                                           Opacity="0.6"/>
+
+                                                <Grid ColumnDefinitions="*,Auto,*"
+                                                      ColumnSpacing="10">
+
+                                                    <TextBlock Grid.Column="0"
+                                                               Text="{Binding GetValueBefore}"
+                                                               TextWrapping="Wrap"
+                                                               Opacity="0.75"/>
+
+                                                    <TextBlock Grid.Column="1"
+                                                               Text="→"
+                                                               Opacity="0.7"
+                                                               VerticalAlignment="Center"/>
+
+                                                    <TextBlock Grid.Column="2"
+                                                               Text="{Binding GetValueAfter}"
+                                                               TextWrapping="Wrap"
+                                                               FontWeight="SemiBold"
+                                                               Opacity="0.9"/>
+                                                </Grid>
+
+                                            </StackPanel>
+
+                                            <!-- Reason -->
+                                            <StackPanel Spacing="2"
+                                                        Margin="0,6,0,0"
+                                                        IsVisible="{Binding Reason}">
+                                                <TextBlock Text="Reason" FontSize="11" Opacity="0.6"/>
+                                                <TextBlock Text="{Binding Reason}"
+                                                           TextWrapping="Wrap"
+                                                           Opacity="0.75"/>
+                                            </StackPanel>
+
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
 </UserControl>

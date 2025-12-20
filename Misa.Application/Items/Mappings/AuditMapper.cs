@@ -29,16 +29,17 @@ public static class AuditMapper
         SortOrder = x.SortOrder
     };
 
-    public static ActionDto ToDto(this Misa.Domain.Audit.Action x) => new()
-    {
-        Id = x.Id,
-        EntityId = x.EntityId,
-        Type = x.Type.ToDto(),
-        ValueBefore = x.ValueBefore,
-        ValueAfter = x.ValueAfter,
-        Reason = x.Reason,
-        CreatedAtUtc = x.CreatedAtUtc
-    };
+    public static List<ActionDto> ToDto(this ICollection<Misa.Domain.Audit.Action> a)
+        => a.Select(x => new ActionDto()
+        {
+            Id = x.Id,
+            EntityId = x.EntityId,
+            Type = x.Type.ToDto(),
+            ValueBefore = x.ValueBefore,
+            ValueAfter = x.ValueAfter,
+            Reason = x.Reason,
+            CreatedAtUtc = x.CreatedAtUtc
+        }).ToList();
 
     public static List<SessionDto> ToDto(this ICollection<Session> s) 
         => s.Select(x => new SessionDto()

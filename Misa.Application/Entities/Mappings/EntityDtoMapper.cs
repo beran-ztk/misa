@@ -40,7 +40,8 @@ public static class EntityDtoMapper
              Item = entity.Item?.ToReadItemDto(),
              DescriptionCount = entity.DescriptionCount,
              Descriptions = entity.Descriptions.ToDto(),
-             Sessions = entity.Sessions.ToDto()
+             Sessions = entity.Sessions.ToDto(),
+             Actions = entity.Actions.ToDto()
         };
     public static ReadEntityDto ToReadEntityDto(this Misa.Domain.Entities.Entity entity)
         => new()

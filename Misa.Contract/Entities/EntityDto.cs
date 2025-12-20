@@ -21,4 +21,5 @@ public class EntityDto
     public int DescriptionCount { get; set; } = 0;
     public List<DescriptionDto> Descriptions { get; set; } = new();
     public List<SessionDto> Sessions { get; set; } = new();
+    public List<ActionDto> Actions { get; set; } = new();
 }
