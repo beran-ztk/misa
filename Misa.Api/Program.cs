@@ -5,6 +5,7 @@ using Misa.Contract.Items;
 using Microsoft.EntityFrameworkCore;
 using Misa.Application.Entities.Add;
 using Misa.Application.Entities.Get;
+using Misa.Application.Entities.Patch;
 using Misa.Application.Entities.Repositories;
 using Misa.Application.Items.Add;
 using Misa.Application.Items.Get;
@@ -37,6 +38,7 @@ builder.Services.AddScoped<GetEntitiesHandler>();
 builder.Services.AddScoped<SessionHandler>();
 builder.Services.AddScoped<CreateDescriptionHandler>();
 builder.Services.AddScoped<AddEntityHandler>();
+builder.Services.AddScoped<PatchEntityHandler>();
 builder.Services.AddScoped<UpdateItemHandler>();
 builder.Services.AddScoped<IEntityRepository, EntityRepository>();
 
@@ -45,6 +47,10 @@ var app = builder.Build();
 app.MapGet("/api/entities/{id:guid}", 
     async (Guid id, GetEntitiesHandler entityHandler, CancellationToken ct) 
     => await entityHandler.GetDetailedEntityAsync(id, ct));
+app.MapPatch("/Entity/Delete", async (Guid entityId, PatchEntityHandler handler, CancellationToken ct = default) 
+    => await handler.DeleteEntityAsync(entityId, ct));
+app.MapPatch("/Entity/Archive", async (Guid entityId, PatchEntityHandler handler, CancellationToken ct = default) 
+    => await handler.ArchiveEntityAsync(entityId, ct));
 
 app.MapGet("/api/lookups", async ( GetLookupsHandler lookupsHandler, CancellationToken ct) 
     => await lookupsHandler.GetAllAsync(ct));

@@ -10,6 +10,8 @@ public class ItemRepository(MisaDbContext db) : IItemRepository
 {
     public async Task<Item> GetTrackedItemAsync(Guid id)
         => await db.Items.Include(e => e.Entity).FirstAsync(i => i.EntityId == id);
+    public async Task SaveChangesAsync(CancellationToken  ct = default)
+        => await db.SaveChangesAsync(ct);
 
     public async Task<Session> GetTrackedSessionAsync(Guid id)
     {
@@ -62,6 +64,5 @@ public class ItemRepository(MisaDbContext db) : IItemRepository
             .SingleOrDefaultAsync(i => i.EntityId == entityId, ct);
     }
 
-    public async Task SaveChangesAsync(CancellationToken  ct = default)
-        => await db.SaveChangesAsync(ct);
+
 }

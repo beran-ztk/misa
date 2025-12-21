@@ -321,4 +321,37 @@ public partial class DetailInformationViewModel : ViewModelBase
             Console.WriteLine(e);
         }
     }
+
+    [RelayCommand]
+    private async Task DeleteEntity()
+    {
+        try
+        {
+            var id = Parent.DetailedEntity!.Id;
+            await Parent.NavigationService.NavigationStore
+                .MisaHttpClient.PatchAsync(requestUri: $"Entity/Delete?entityId={id}", content: null);
+            
+            Parent.Refresh(true, false);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
+    }
+    [RelayCommand]
+    private async Task ArchiveEntity()
+    {
+        try
+        {
+            var id = Parent.DetailedEntity!.Id;
+            await Parent.NavigationService.NavigationStore
+                .MisaHttpClient.PatchAsync(requestUri: $"Entity/Archive?entityId={id}", content: null);
+            
+            Parent.Refresh(true, false);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
+    }
 }

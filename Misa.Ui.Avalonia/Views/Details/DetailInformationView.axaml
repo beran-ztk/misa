@@ -101,7 +101,6 @@
                     <StackPanel Grid.Column="1"
                                 Orientation="Horizontal"
                                 Spacing="8">
-                    <!-- TODO: Quick-Action Delete Entity -->
                         <Button Classes="misa-action"
                                 Content="Start Session"
                                 Command="{Binding ShowSessionStartFormCommand}"
@@ -111,8 +110,18 @@
                                 Content="Pause Session"
                                 Command="{Binding ShowSessionPauseFormCommand}"
                                 IsVisible="{Binding Parent.DetailedEntity.Item.HasActiveSession}"/>
-                    
-                    
+                        
+                        <Button Classes="misa-action"
+                                Command="{Binding ArchiveEntityCommand}">
+                            <Image Width="16" Height="16"
+                                   Source="{SvgImage /Assets/Images/Details/archive.svg}"/>
+                        </Button>
+                        
+                        <Button Classes="misa-action"
+                                Command="{Binding DeleteEntityCommand}">
+                            <Image Width="16" Height="16"
+                                   Source="{SvgImage /Assets/Images/Details/trash.svg}"/>
+                        </Button>
                     </StackPanel>
                 </Grid>
                         

@@ -1,10 +1,17 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Security.Cryptography.X509Certificates;
+using Microsoft.EntityFrameworkCore;
 using Misa.Infrastructure.Configurations.Ef;
+using Entity = Misa.Domain.Entities.Entity;
 
 namespace Misa.Infrastructure.Entities;
 
 public class EntityRepository(Misa.Infrastructure.Data.MisaDbContext db) : Misa.Application.Entities.Repositories.IEntityRepository
 {
+    public async Task<Entity> GetTrackedEntityAsync(Guid id)
+        => await db.Entities.FirstAsync(e => e.Id == id);
+
+    public async Task SaveChangesAsync() => await db.SaveChangesAsync();
+
     public async Task<Misa.Domain.Entities.Entity> AddAsync(Misa.Domain.Entities.Entity entity, CancellationToken ct)
     {
         await db.Entities.AddAsync(entity, ct);

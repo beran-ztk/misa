@@ -40,5 +40,15 @@ public class Entity
     
     public void Interact() => InteractedAt =  DateTimeOffset.UtcNow;
     public void Update() => UpdatedAt = DateTimeOffset.UtcNow;
-    public void Delete() => IsDeleted = true;
+
+    public void Delete()
+    {
+        IsDeleted = true;
+        DeletedAt = DateTimeOffset.UtcNow;
+    }
+    public void Archive()
+    {
+        IsArchived = true;
+        ArchivedAt = DateTimeOffset.UtcNow;
+    }
 }

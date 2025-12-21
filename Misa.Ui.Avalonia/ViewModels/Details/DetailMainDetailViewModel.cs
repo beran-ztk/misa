@@ -57,14 +57,21 @@ public class DetailMainDetailViewModel : ViewModelBase
 
     public bool HasDetailedEntity => DetailedEntity is not null;
 
-    public void Refresh(bool dataHasBeenChanged = false)
+    public void Refresh(bool dataHasBeenChanged = false, bool reloadDetails = true)
     {
         if (dataHasBeenChanged)
             EntityDetail.ReloadList();
+
+        if (!reloadDetails)
+        {
+            EntityDetail.SelectedEntity = null;
+            DetailedEntity = null;
+            return;
+        }
+            
         
         var id = EntityDetail.SelectedEntity;
         _ = OnSelectedEntityChanged(DetailedEntity?.Id);
-        
     }
     private async Task OnSelectedEntityChanged(Guid? id = null)
     {
