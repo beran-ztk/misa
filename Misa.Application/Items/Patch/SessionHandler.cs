@@ -8,7 +8,7 @@ public class SessionHandler(IItemRepository repository)
 {
     public async Task StartSessionAsync(SessionDto dto)
     {
-        bool hasBeenChanged = false;
+        var hasBeenChanged = false;
         var item = await repository.GetTrackedItemAsync(dto.EntityId);
         item.StartSession(ref hasBeenChanged);
 
@@ -27,7 +27,7 @@ public class SessionHandler(IItemRepository repository)
     }
     public async Task PauseSessionAsync(SessionDto dto)
     {
-        bool hasBeenChanged = false;
+        var hasBeenChanged = false;
         var item = await repository.GetTrackedItemAsync(dto.EntityId);
         item.PauseSession(ref hasBeenChanged);
 

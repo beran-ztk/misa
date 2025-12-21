@@ -48,6 +48,8 @@ app.MapGet("/api/entities/{id:guid}",
 
 app.MapGet("/api/lookups", async ( GetLookupsHandler lookupsHandler, CancellationToken ct) 
     => await lookupsHandler.GetAllAsync(ct));
+app.MapGet("/Lookups/UserSettableStates", async ( int stateId, GetLookupsHandler lookupsHandler, CancellationToken ct ) 
+    => await lookupsHandler.GetUserSettableStates(stateId, ct));
 
 app.MapGet("/api/entities/get", async ( GetEntitiesHandler handler, CancellationToken ct) 
     => await handler.GetAllAsync(ct));
@@ -62,7 +64,6 @@ app.MapPost("/api/entities/add", async (
     return Results.Ok();
 });
 
-// Tasks
 app.MapGet("/api/tasks/{id:guid}",
     async (Guid id, GetItemsHandler handler, CancellationToken ct)
         => await handler.GetTaskAsync(id, ct));

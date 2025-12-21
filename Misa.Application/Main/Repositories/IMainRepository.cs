@@ -1,6 +1,7 @@
 ﻿using Misa.Contract.Audit.Lookups;
 using Misa.Contract.Items.Lookups;
 using Misa.Domain.Audit;
+using Misa.Domain.Dictionaries.Items;
 using Misa.Domain.Items;
 using Misa.Domain.Main;
 
@@ -13,4 +14,5 @@ public interface IMainRepository
     public Task<List<Category>> GetTaskCategories(CancellationToken ct);
     public Task<List<SessionEfficiencyType>> GetEfficiencyTypes(CancellationToken ct);
     public Task<List<SessionConcentrationType>> GetConcentrationTypes(CancellationToken ct);
+    public Task<List<State>> GetStatesByIds(IReadOnlyCollection<ItemStates> states, CancellationToken ct = default);
 }

@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Data;
+using System.Linq;
 using System.Net.Http.Json;
 using System.Reactive;
 using System.Threading.Tasks;
@@ -25,6 +27,7 @@ public partial class DetailInformationViewModel : ViewModelBase
     public ReactiveCommand<Unit, Unit> AddDescriptionCommand { get; }
     public ReactiveCommand<Unit, Unit> StartSessionCommand { get; }
     public ReactiveCommand<Unit, Unit> PauseSessionCommand { get; }
+    
 
     public DetailInformationViewModel(DetailMainDetailViewModel parent)
     {
@@ -43,7 +46,84 @@ public partial class DetailInformationViewModel : ViewModelBase
         this.WhenAnyValue(x => x.EntityDetail.SelectedEntity)
             .Subscribe(_ => ResetDescription());
     }
+    // Edit State
+    [ObservableProperty] private bool _isEditStateOpen;
+    [ObservableProperty] private int _stateId;
+    [ObservableProperty] private List<StateDto> _settableStates = []; 
 
+    [RelayCommand]
+    private async Task EditState()
+    {
+        await SetUserSettableStates();
+        if (SettableStates.Count < 1)
+            return;
+
+        StateId = SettableStates.First().Id;
+        IsEditStateOpen = true;
+    }
+
+    [RelayCommand]
+    private void CloseEditState()
+    {
+        StateId = 0;
+        SettableStates.Clear();
+        IsEditStateOpen = false;
+    }
+
+    [RelayCommand]
+    private async Task SaveEditState()
+    {
+        var currentId = Parent.DetailedEntity?.Item?.State.Id;
+        var selectedId = StateId;
+
+        if (currentId == null)
+            return;
+        if (currentId == selectedId)
+        {
+            CloseEditState();
+            return;
+        }
+
+        var currentEntityId = Parent.DetailedEntity?.Id;
+        if (currentEntityId == null)
+            return;
+
+        UpdateItemDto itemDto = new()
+        {
+            EntityId = (Guid)currentEntityId,
+            StateId = selectedId
+        };
+        var response = await Parent.NavigationService.NavigationStore
+            .MisaHttpClient.PatchAsJsonAsync(requestUri: "tasks", itemDto);
+        
+        if (!response.IsSuccessStatusCode)
+            Console.WriteLine($"Server returned {response.StatusCode}: {response.ReasonPhrase}");
+
+        CloseEditState();
+    }
+    
+    private async Task SetUserSettableStates()
+    {
+        try
+        {
+            var currentStateId = Parent.DetailedEntity?.Item?.State.Id;
+            if (currentStateId == null)
+                return;
+            
+            var states = await Parent.NavigationService.NavigationStore
+                .MisaHttpClient.GetFromJsonAsync<List<StateDto>>(requestUri: $"Lookups/UserSettableStates?stateId={currentStateId}");
+
+            if (states == null)
+                return;
+            
+            SettableStates = states;
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
+    }
+    // Session
     [ObservableProperty] private bool isStartFormOpen;
     [ObservableProperty] private bool isPauseFormOpen;
     
@@ -58,7 +138,6 @@ public partial class DetailInformationViewModel : ViewModelBase
 
     [ObservableProperty] private bool isEditTitleFormOpen;
     [ObservableProperty] private string title;
-    [ObservableProperty] private int stateId;
     [RelayCommand]
     private void ShowEditTitleForm()
     {
@@ -176,7 +255,7 @@ public partial class DetailInformationViewModel : ViewModelBase
             Console.WriteLine(e);
         }
     }
-
+    
     private async Task EndSessionAsync()
     {
         try

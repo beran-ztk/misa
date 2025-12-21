@@ -4,6 +4,7 @@ public enum ItemStates
 {
     // Base
     Draft      = 1,   // Noch nie daran gearbeitet (System)
+    
     Undefined  = 2,   // Unklar / muss präzisiert werden (User → Draft)
     Scheduled  = 3,   // Für Zukunft geplant (System)
 
