@@ -99,8 +99,8 @@ public partial class DetailInformationViewModel : ViewModelBase
         if (!response.IsSuccessStatusCode)
             Console.WriteLine($"Server returned {response.StatusCode}: {response.ReasonPhrase}");
 
-        CloseEditState();
         Parent.Refresh(true);
+        CloseEditState();
     }
     
     private async Task SetUserSettableStates()

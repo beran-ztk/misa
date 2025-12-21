@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
 using Avalonia.Threading;
@@ -58,22 +59,28 @@ public class DetailMainDetailViewModel : ViewModelBase
 
     public void Refresh(bool dataHasBeenChanged = false)
     {
-        _ = OnSelectedEntityChanged();
-        
         if (dataHasBeenChanged)
             EntityDetail.ReloadList();
+        
+        var id = EntityDetail.SelectedEntity;
+        _ = OnSelectedEntityChanged(DetailedEntity?.Id);
+        
     }
-    private async Task OnSelectedEntityChanged()
+    private async Task OnSelectedEntityChanged(Guid? id = null)
     {
-        if (EntityDetail.SelectedEntity == null)
-        {
+        Guid entityId;
+        
+        if (EntityDetail.SelectedEntity != null)
+            entityId = (Guid)EntityDetail.SelectedEntity;
+        else if (id != null)
+            entityId = (Guid)id;
+        else
             return;
-        }
         
         try
         {
             var response = await NavigationService.NavigationStore.MisaHttpClient
-                .GetFromJsonAsync<EntityDto>(requestUri: $"api/entities/{EntityDetail.SelectedEntity}");
+                .GetFromJsonAsync<EntityDto>(requestUri: $"api/entities/{entityId}");
             
             if (response == null)
                 return;

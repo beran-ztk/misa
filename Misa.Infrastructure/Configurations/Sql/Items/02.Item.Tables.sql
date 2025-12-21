@@ -21,7 +21,10 @@ CREATE TABLE items
     priority_id     INT NOT NULL REFERENCES item_priorities(id) ON DELETE RESTRICT,
     category_id     INT REFERENCES workflow_category_types(id) ON DELETE RESTRICT,
     
-    title           TEXT NOT NULL
+    title           TEXT NOT NULL,
+
+    is_blocked      BOOL DEFAULT FALSE,
+    is_scheduled    BOOL DEFAULT FALSE
 );
 CREATE INDEX idx_items_state
     ON items(state_id);

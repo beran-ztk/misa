@@ -6,7 +6,6 @@ public enum ItemStates
     Draft      = 1,   // Noch nie daran gearbeitet (System)
     
     Undefined  = 2,   // Unklar / muss präzisiert werden (User → Draft)
-    Scheduled  = 3,   // Für Zukunft geplant (System)
 
     // Work
     InProgress = 4,   // Wurde bereits bearbeitet
@@ -16,7 +15,6 @@ public enum ItemStates
 
     // Blocked
     WaitForResponse       = 8,   // Wartet auf Antwort (Person/Kontakt)
-    BlockedByRelationship = 9,   // Blockiert durch Relation/Dependency
 
     // Final
     Done      = 10,  // Erfolgreich abgeschlossen
