@@ -12,5 +12,6 @@ public interface IItemRepository
     Task SaveChangesAsync(CancellationToken ct = default);
     Task<Item> GetTrackedItemAsync(Guid id);
     Task<Session> GetTrackedSessionAsync(Guid id);
-    Task AddAsync(Session session);
+    Task<Session> AddSessionAsync(Session session);
+    Task AddAsync(SessionSegment segment);
 }

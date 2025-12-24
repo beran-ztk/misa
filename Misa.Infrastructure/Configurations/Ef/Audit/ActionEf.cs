@@ -7,7 +7,7 @@ public class ActionEf : IEntityTypeConfiguration<Misa.Domain.Audit.Action>
 {
     public void Configure(EntityTypeBuilder<Misa.Domain.Audit.Action> builder)
     {
-        builder.ToTable("audit_actions");
+        builder.ToTable("actions");
 
         builder.HasKey(x => x.Id);
 

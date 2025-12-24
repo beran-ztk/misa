@@ -15,7 +15,9 @@ public class ItemRepository(MisaDbContext db) : IItemRepository
 
     public async Task<Session> GetTrackedSessionAsync(Guid id)
     {
-        return await db.Sessions.FirstAsync(i => i.EntityId == id && i.EndedAtUtc == null);
+        return await db.Sessions
+            .OrderByDescending(s => s.CreatedAtUtc)
+            .FirstAsync(i => i.EntityId == id);
     }
     public async Task<Item> AddAsync(Item item, CancellationToken ct = default)
     {
@@ -26,10 +28,20 @@ public class ItemRepository(MisaDbContext db) : IItemRepository
         return loaded 
                ?? throw new InvalidOperationException("Item wurde gespeichert, konnte aber nicht wieder geladen werden.");
     }
-
-    public async Task AddAsync(Session session)
+    public async Task AddAsync(SessionSegment segment)
+    {
+        await db.SessionSegments.AddAsync(segment);
+        await db.SaveChangesAsync();
+    }
+    public async Task<Session> AddSessionAsync(Session session)
     {
         await db.Sessions.AddAsync(session);
+        await db.SaveChangesAsync();
+
+        var loaded = await GetTrackedSessionAsync(session.EntityId);
+        return loaded
+               ?? throw new InvalidOperationException(
+                   "Session wurde gespeichert, aber konnte nicht wieder geladen werden");
     }
     public async Task<Item?> GetTaskAsync(Guid id, CancellationToken ct)
     {

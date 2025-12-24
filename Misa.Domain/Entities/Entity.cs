@@ -1,5 +1,7 @@
 ﻿using System.Security.Cryptography.X509Certificates;
+using Misa.Contract.Audit;
 using Misa.Domain.Audit;
+using Misa.Domain.Dictionaries.Items;
 using Misa.Domain.Items;
 using Misa.Domain.Main;
 using Action = Misa.Domain.Audit.Action;
@@ -36,8 +38,60 @@ public class Entity
     public int DescriptionCount => Descriptions.Count;
     public ICollection<Description> Descriptions { get; set; } = new List<Description>();
     public ICollection<Session> Sessions { get; set; } = new List<Session>();
-    public ICollection<Domain.Audit.Action> Actions { get; set; } = new List<Action>(); 
-    
+    public ICollection<Domain.Audit.Action> Actions { get; set; } = new List<Action>();
+
+    public bool HasActiveSession 
+        => Item?.StateId == (int)Dictionaries.Items.ItemStates.Active;
+    public bool CanStartSession
+        => Item?.StateId 
+            is (int)Dictionaries.Items.ItemStates.Draft
+            or (int)Dictionaries.Items.ItemStates.Undefined
+            or (int)Dictionaries.Items.ItemStates.InProgress
+            or (int)Dictionaries.Items.ItemStates.Pending
+            or (int)Dictionaries.Items.ItemStates.WaitForResponse;
+    public bool HasRunningSession()
+    {
+        var session = GetLatestSession();
+        if (session == null)
+            return false;
+        return session.StateId == (int)Dictionaries.Audit.SessionState.Running;
+    }
+    public bool HasPausedSession()
+    {
+        var session = GetLatestSession();
+        if (session == null)
+            return false;
+        return session.StateId == (int)Dictionaries.Audit.SessionState.Paused;
+    }
+    public Session? GetLatestSession()
+    {
+        return Sessions.Count == 0 ? new Session() 
+            : Sessions.MaxBy(s => s.CreatedAtUtc);
+            // var singleSession = Sessions.OrderByDescending(s => s.CreatedAtUtc).First();
+    }
+    public Session? GetLatestActiveSession() 
+        => Sessions
+            .Where(s => 
+                s.StateId is (int)Dictionaries.Audit.SessionState.Running 
+            or (int)Dictionaries.Audit.SessionState.Paused )
+            .MaxBy(s => s.CreatedAtUtc);
+    public void EndSession(StopSessionDto dto)
+    {
+        var latestActiveSession = GetLatestActiveSession();
+        if (latestActiveSession == null)
+            return;
+
+        Item?.ChangeState((int)ItemStates.InProgress);
+        latestActiveSession.StateId = (int)Dictionaries.Audit.SessionState.Completed;
+        latestActiveSession.EfficiencyId = dto.Efficiency;
+        latestActiveSession.ConcentrationId = dto.Concentration;
+        latestActiveSession.Summary = dto.Summary;
+
+        var latestActiveSegment = latestActiveSession.GetLatestActiveSegment();
+        if (latestActiveSegment == null)
+            return;
+        latestActiveSegment.CloseSegment(null, DateTimeOffset.UtcNow);
+    }
     public void Interact() => InteractedAt =  DateTimeOffset.UtcNow;
     public void Update() => UpdatedAt = DateTimeOffset.UtcNow;
 

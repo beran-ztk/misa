@@ -4,10 +4,12 @@ public class SessionDto
 {
     public Guid Id { get; set; }
     public Guid EntityId { get; set; }
+    public int StateId { get; set; }
     public int? EfficiencyId { get; set; } 
-    public int? ConcentrationId { get; set; } 
+    public int? ConcentrationId { get; set; }
 
-    public Lookups.SessionEfficiencyTypeDto? Efficiency { get; set; } = new();
+    public Lookups.SessionStateDto State { get; set; } = new();
+    public Lookups.SessionEfficiencyTypeDto? Efficiency { get; set; }
     public Lookups.SessionConcentrationTypeDto? Concentration { get; set; }
 
     public string? Objective { get; set; }
@@ -15,10 +17,10 @@ public class SessionDto
     public string? AutoStopReason { get; set; }
 
     public TimeSpan? PlannedDuration { get; set; }
-    public TimeSpan? ActualDuration { get; set; }
 
     public bool StopAutomatically { get; set; }
+    public bool? WasAutomaticallyStopped { get; set; }
 
-    public DateTimeOffset StartedAtUtc { get; set; }
-    public DateTimeOffset? EndedAtUtc { get; set; }
+    public DateTimeOffset CreatedAtUtc { get; set; }
+    public List<SessionSegmentDto> Segments { get; set; } = new();
 }

@@ -10,7 +10,7 @@ public enum ItemStates
     // Work
     InProgress = 4,   // Wurde bereits bearbeitet
     Active     = 5,   // Aktive Session läuft
-    Paused     = 6,   // Session pausiert (max 6h → Auto InProgress)
+    
     Pending    = 7,   // Auto: lange nicht angefasst / zurückgestellt
 
     // Blocked

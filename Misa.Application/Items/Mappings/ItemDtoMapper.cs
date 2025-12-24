@@ -30,9 +30,7 @@ public static class ItemDtoMapper
             State = domain.State.ToDto(),
             Priority = domain.Priority.ToDto(),
             Category = domain.Category.ToDto(),
-            Title = domain.Title,
-            HasActiveSession = domain.HasActiveSession,
-            CanStartSession = domain.CanStartSession
+            Title = domain.Title
         };
 
     public static List<ReadItemDto> ToReadItemDto(this List<Item> items)

@@ -24,7 +24,7 @@ public class EntityRepository(Misa.Infrastructure.Data.MisaDbContext db) : Misa.
         return await db.Entities.ToListAsync(ct);
     }
 
-    public async Task<Domain.Entities.Entity?> GetDetailedEntityAsync(Guid id, CancellationToken ct)
+    public async Task<Domain.Entities.Entity?> GetDetailedEntityAsync(Guid id, CancellationToken ct = default)
     {
         return await db.Entities
             .Include(e => e.Workflow)
@@ -43,9 +43,13 @@ public class EntityRepository(Misa.Infrastructure.Data.MisaDbContext db) : Misa.
             
             // Sessions
             .Include(e => e.Sessions)
+                .ThenInclude(s => s.State)
+            .Include(e => e.Sessions)
                 .ThenInclude(s => s.Efficiency)
             .Include(e => e.Sessions)
                 .ThenInclude(s => s.Concentration)
+            .Include(e => e.Sessions)
+                .ThenInclude(s => s.Segments)
             
             // Actions
             .Include(e => e.Actions)

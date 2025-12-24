@@ -12,6 +12,4 @@ public class ReadItemDto
     public PriorityDto Priority { get; set; } = null!;
     public CategoryDto Category { get; set; } = null!;
     public string Title { get; set; } = null!;
-    public bool HasActiveSession { get; set; }
-    public bool CanStartSession { get; set; }
 }

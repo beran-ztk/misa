@@ -101,15 +101,33 @@
                     <StackPanel Grid.Column="1"
                                 Orientation="Horizontal"
                                 Spacing="8">
+                        
                         <Button Classes="misa-action"
-                                Content="Start Session"
                                 Command="{Binding ShowSessionStartFormCommand}"
-                                IsVisible="{Binding Parent.DetailedEntity.Item.CanStartSession}"/>
-
+                                IsVisible="{Binding Parent.DetailedEntity.CanStartSession}">
+                            <Image Width="16" Height="16"
+                                   Source="{SvgImage /Assets/Images/Details/play.svg}"/>
+                        </Button>
                         <Button Classes="misa-action"
-                                Content="Pause Session"
                                 Command="{Binding ShowSessionPauseFormCommand}"
-                                IsVisible="{Binding Parent.DetailedEntity.Item.HasActiveSession}"/>
+                                IsVisible="{Binding Parent.DetailedEntity.HasRunningSession}">
+                            <Image Width="16" Height="16"
+                                   Source="{SvgImage /Assets/Images/Details/pause.svg}"/>
+                        </Button>
+                        
+                        <Button Classes="misa-action"
+                                Command="{Binding SessionContinueCommand}"
+                                IsVisible="{Binding Parent.DetailedEntity.HasPausedSession}">
+                            <Image Width="16" Height="16"
+                                   Source="{SvgImage /Assets/Images/Details/play-pause.svg}"/>
+                        </Button>
+                        
+                        <Button Classes="misa-action"
+                                Command="{Binding ShowSessionStopFormCommand}"
+                                IsVisible="{Binding Parent.DetailedEntity.HasActiveSession}">
+                            <Image Width="16" Height="16"
+                                   Source="{SvgImage /Assets/Images/Details/stop.svg}"/>
+                        </Button>
                         
                         <Button Classes="misa-action"
                                 Command="{Binding ArchiveEntityCommand}">
@@ -196,35 +214,18 @@
                         <TextBlock Text="Pause session"
                                    FontWeight="SemiBold"/>
 
-                        <Grid ColumnDefinitions="140,*"
-                              RowDefinitions="Auto,Auto,Auto"
+                        <Grid ColumnDefinitions="*"
+                              RowDefinitions="Auto,Auto"
                               RowSpacing="8"
                               ColumnSpacing="10">
 
-                            <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="Efficiency" />
-                            <ComboBox Grid.Row="0" Grid.Column="1"
-                                      Classes="misa-input"
-                                      ItemsSource="{Binding EfficiencyTypes}"
-                                      SelectedValue="{Binding EfficiencyId}"
-                                      SelectedValueBinding="{Binding Id}"
-                                      DisplayMemberBinding="{Binding Name}"/>
-
-                            <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Text="Concentration" />
-                            <ComboBox Grid.Row="1" Grid.Column="1"
-                                      Classes="misa-input"
-                                      ItemsSource="{Binding ConcentrationTypes}"
-                                      SelectedValue="{Binding ConcentrationId}"
-                                      SelectedValueBinding="{Binding Id}"
-                                      DisplayMemberBinding="{Binding Name}" />
-
-                            <TextBlock Grid.Row="2" Grid.Column="0" VerticalAlignment="Top" Text="Summary" />
-                            <StackPanel Grid.Row="2" Grid.Column="1" Spacing="8">
+                            <TextBlock Grid.Row="0" VerticalAlignment="Top" Text="What is the reason to pause your session?" />
+                            <StackPanel Grid.Row="1" Spacing="8">
                                 <TextBox Classes="misa-input"
-                                         Text="{Binding Summary, Mode=TwoWay}"
+                                         Text="{Binding PauseReason, Mode=TwoWay}"
                                          AcceptsReturn="True"
                                          TextWrapping="Wrap"
-                                         MinHeight="80"
-                                         Watermark="What happened? Short summary." />
+                                         MinHeight="80"/>
 
                                 <StackPanel Orientation="Horizontal"
                                             Spacing="8"
@@ -240,6 +241,65 @@
 
                         </Grid>
 
+                    </StackPanel>
+                </Border>
+                
+                <!-- Stop form -->
+                <Border Padding="10"
+                        CornerRadius="10"
+                        BorderThickness="1"
+                        BorderBrush="{StaticResource BrushBorder}"
+                        Background="{StaticResource BrushPrimaryBackground}"
+                        IsVisible="{Binding IsStopFormOpen}">
+                    <StackPanel Spacing="10">
+                
+                        <TextBlock Text="Stop session"
+                                   FontWeight="SemiBold"/>
+                
+                        <Grid ColumnDefinitions="140,*"
+                              RowDefinitions="Auto,Auto,Auto"
+                              RowSpacing="8"
+                              ColumnSpacing="10">
+                
+                            <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="Efficiency" />
+                            <ComboBox Grid.Row="0" Grid.Column="1"
+                                      Classes="misa-input"
+                                      ItemsSource="{Binding EfficiencyTypes}"
+                                      SelectedValue="{Binding EfficiencyId}"
+                                      SelectedValueBinding="{Binding Id}"
+                                      DisplayMemberBinding="{Binding Name}"/>
+                
+                            <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Text="Concentration" />
+                            <ComboBox Grid.Row="1" Grid.Column="1"
+                                      Classes="misa-input"
+                                      ItemsSource="{Binding ConcentrationTypes}"
+                                      SelectedValue="{Binding ConcentrationId}"
+                                      SelectedValueBinding="{Binding Id}"
+                                      DisplayMemberBinding="{Binding Name}" />
+                
+                            <TextBlock Grid.Row="2" Grid.Column="0" VerticalAlignment="Top" Text="Summary" />
+                            <StackPanel Grid.Row="2" Grid.Column="1" Spacing="8">
+                                <TextBox Classes="misa-input"
+                                         Text="{Binding Summary, Mode=TwoWay}"
+                                         AcceptsReturn="True"
+                                         TextWrapping="Wrap"
+                                         MinHeight="80"
+                                         Watermark="What happened? Short summary." />
+                
+                                <StackPanel Orientation="Horizontal"
+                                            Spacing="8"
+                                            HorizontalAlignment="Right">
+                                    <Button Classes="misa-action"
+                                            Content="Cancel"
+                                            Command="{Binding CloseSessionStopFormCommand}" />
+                                    <Button Classes="misa-action"
+                                            Content="Save"
+                                            Command="{Binding StopSessionCommand}" />
+                                </StackPanel>
+                            </StackPanel>
+                
+                        </Grid>
+                
                     </StackPanel>
                 </Border>
             </StackPanel>

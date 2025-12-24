@@ -8,7 +8,7 @@ public class SessionEf : IEntityTypeConfiguration<Session>
 {
     public void Configure(EntityTypeBuilder<Session> builder)
     {
-        builder.ToTable("audit_sessions");
+        builder.ToTable("sessions");
 
         builder.HasKey(x => x.Id);
 
@@ -18,6 +18,9 @@ public class SessionEf : IEntityTypeConfiguration<Session>
         builder.Property(x => x.EntityId)
             .HasColumnName("entity_id");
 
+        builder.Property(x => x.StateId)
+            .HasColumnName("state_id");
+        
         builder.Property(x => x.EfficiencyId)
             .HasColumnName("efficiency_id");
 
@@ -33,7 +36,6 @@ public class SessionEf : IEntityTypeConfiguration<Session>
         builder.Property(x => x.AutoStopReason)
             .HasColumnName("auto_stop_reason");
 
-        // Postgres INTERVAL -> Npgsql mappt sauber auf TimeSpan
         builder.Property(x => x.PlannedDuration)
             .HasColumnName("planned_duration")
             .HasColumnType("interval");
@@ -41,14 +43,19 @@ public class SessionEf : IEntityTypeConfiguration<Session>
         builder.Property(x => x.StopAutomatically)
             .HasColumnName("stop_automatically")
             .IsRequired();
+        
+        builder.Property(x => x.WasAutomaticallyStopped)
+            .HasColumnName("was_automatically_stopped");
 
-        builder.Property(x => x.StartedAtUtc)
-            .HasColumnName("started_at_utc")
+        builder.Property(x => x.CreatedAtUtc)
+            .HasColumnName("created_at_utc")
             .IsRequired();
 
-        builder.Property(x => x.EndedAtUtc)
-            .HasColumnName("ended_at_utc");
-
+        builder.HasOne(x => x.State)
+            .WithMany()
+            .HasForeignKey(x => x.StateId)
+            .OnDelete(DeleteBehavior.Restrict); 
+        
         builder.HasOne(x => x.Efficiency)
             .WithMany()
             .HasForeignKey(x => x.EfficiencyId)
@@ -58,5 +65,10 @@ public class SessionEf : IEntityTypeConfiguration<Session>
             .WithMany()
             .HasForeignKey(x => x.ConcentrationId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasMany(s => s.Segments)
+            .WithOne()
+            .HasForeignKey(s => s.SessionId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

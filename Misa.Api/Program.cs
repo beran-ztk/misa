@@ -88,8 +88,18 @@ app.MapPost("/api/descriptions", async ( DescriptionDto dto, CreateDescriptionHa
     => await descriptionHandler.CreateAsync(dto));
 
 // Session
-app.MapPost("/sessions/start", async (SessionDto dto, SessionHandler handler) 
+app.MapPost("/Sessions/Start", async (SessionDto dto, SessionHandler handler) 
     => await handler.StartSessionAsync(dto));
-app.MapPost("/sessions/pause", async (SessionDto dto, SessionHandler handler) 
+app.MapPost("/Sessions/Pause", async (PauseSessionDto dto, SessionHandler handler) 
     => await handler.PauseSessionAsync(dto));
+app.MapPost(
+    "/Sessions/Continue/{entityId:guid}",
+    async (Guid entityId, SessionHandler handler)
+        => await handler.ContinueSessionAsync(entityId)
+);
+app.MapPost(
+    "/Sessions/Stop",
+    async (StopSessionDto dto, SessionHandler handler)
+        => await handler.StopSessionAsync(dto)
+);
 app.Run();

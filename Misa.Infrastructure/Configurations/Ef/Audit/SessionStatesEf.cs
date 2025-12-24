@@ -4,11 +4,11 @@ using Misa.Domain.Audit;
 
 namespace Misa.Infrastructure.Configurations.Ef.Audit;
 
-public class SessionConcentrationTypeEf : IEntityTypeConfiguration<SessionConcentrationType>
+public class SessionStatesEf : IEntityTypeConfiguration<SessionStates>
 {
-    public void Configure(EntityTypeBuilder<SessionConcentrationType> builder)
+    public void Configure(EntityTypeBuilder<SessionStates> builder)
     {
-        builder.ToTable("session_concentration_types");
+        builder.ToTable("session_states");
 
         builder.HasKey(x => x.Id);
 
@@ -23,11 +23,7 @@ public class SessionConcentrationTypeEf : IEntityTypeConfiguration<SessionConcen
         builder.Property(x => x.Synopsis)
             .HasColumnName("synopsis");
 
-        builder.Property(x => x.SortOrder)
-            .HasColumnName("sort_order")
-            .IsRequired();
-
-        builder.HasIndex(x => x.Name).IsUnique();
-        builder.HasIndex(x => x.SortOrder).IsUnique();
+        builder.HasIndex(x => x.Name)
+            .IsUnique();
     }
 }

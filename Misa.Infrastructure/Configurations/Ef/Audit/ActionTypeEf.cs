@@ -8,7 +8,7 @@ public class ActionTypeEf : IEntityTypeConfiguration<ActionType>
 {
     public void Configure(EntityTypeBuilder<ActionType> builder)
     {
-        builder.ToTable("audit_action_types");
+        builder.ToTable("action_types");
 
         builder.HasKey(x => x.Id);
 

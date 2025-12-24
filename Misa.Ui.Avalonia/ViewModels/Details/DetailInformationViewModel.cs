@@ -127,15 +127,19 @@ public partial class DetailInformationViewModel : ViewModelBase
     // Session
     [ObservableProperty] private bool isStartFormOpen;
     [ObservableProperty] private bool isPauseFormOpen;
+    [ObservableProperty] private bool _isStopFormOpen;
     
     [ObservableProperty] private int? plannedMinutes;
     [ObservableProperty] private string? objective;
     [ObservableProperty] private bool? stopAutomatically;
     [ObservableProperty] private string? autoStopReason;
     
+    [ObservableProperty] private string? _pauseReason;
+    
     [ObservableProperty] private int? efficiency;
     [ObservableProperty] private int? concentration;
     [ObservableProperty] private string? summary;
+    
 
     [ObservableProperty] private bool isEditTitleFormOpen;
     [ObservableProperty] private string title;
@@ -180,7 +184,7 @@ public partial class DetailInformationViewModel : ViewModelBase
     [RelayCommand]
     private void ShowSessionStartForm()
     {
-        IsStartFormOpen = !IsStartFormOpen;
+        IsStartFormOpen = true;
         PlannedMinutes = null;
         Objective = null;
         StopAutomatically = false;
@@ -197,11 +201,6 @@ public partial class DetailInformationViewModel : ViewModelBase
     private void ShowSessionPauseForm()
     {
         IsPauseFormOpen = !IsPauseFormOpen;
-        Summary = null;
-        Efficiency = null;
-        Concentration = null;
-        EfficiencyId = null;
-        ConcentrationId = null;
     } 
 
     [RelayCommand]
@@ -209,6 +208,22 @@ public partial class DetailInformationViewModel : ViewModelBase
     {
         IsPauseFormOpen = false;
     } 
+    
+    [RelayCommand]
+    private void ShowSessionStopForm()
+    {
+        Summary = null;
+        Concentration = null;
+        EfficiencyId = null;
+        ConcentrationId = null;
+        IsStopFormOpen = true;
+    }
+
+    [RelayCommand]
+    private void CloseSessionStopForm()
+    {
+        IsStopFormOpen = false;
+    }
     
     [ObservableProperty] private int? efficiencyId; 
     [ObservableProperty] private int? concentrationId; 
@@ -225,6 +240,62 @@ public partial class DetailInformationViewModel : ViewModelBase
     public void ResetDescription()
         => Description = string.Empty;
 
+    [RelayCommand]
+    private async Task SessionContinue()
+    {
+        try
+        {
+            if (Parent.DetailedEntity == null)
+                return;
+
+            var response = await Parent.NavigationService.NavigationStore
+                .MisaHttpClient.PostAsync(
+                    requestUri: $"Sessions/Continue/{Parent.DetailedEntity.Id}",
+                    content: null
+                );
+
+
+            if (!response.IsSuccessStatusCode)
+                Console.WriteLine($"Server returned {response.StatusCode}: {response.ReasonPhrase}");
+
+            Parent.Refresh();
+            CloseSessionStartForm();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
+    }
+    
+    [RelayCommand]
+    private async Task StopSession()
+    {
+        try
+        {
+            if (Parent.DetailedEntity == null)
+                return;
+
+            var stopSession = new StopSessionDto
+            {
+                EntityId = Parent.DetailedEntity.Id,
+                Efficiency = EfficiencyId,
+                Concentration = ConcentrationId,
+                Summary = Summary
+            };
+            var response = await Parent.NavigationService.NavigationStore
+                .MisaHttpClient.PostAsJsonAsync( requestUri: $"Sessions/Stop", stopSession );
+            
+            if (!response.IsSuccessStatusCode)
+                Console.WriteLine($"Server returned {response.StatusCode}: {response.ReasonPhrase}");
+
+            Parent.Refresh();
+            CloseSessionStopForm();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
+    }
     private async Task StartSessionAsync()
     {
         try
@@ -243,7 +314,7 @@ public partial class DetailInformationViewModel : ViewModelBase
                 AutoStopReason = AutoStopReason
             };
             var response = await Parent.NavigationService.NavigationStore
-                .MisaHttpClient.PostAsJsonAsync(requestUri: "sessions/start", dto);
+                .MisaHttpClient.PostAsJsonAsync(requestUri: "Sessions/Start", dto);
 
             if (!response.IsSuccessStatusCode)
                 Console.WriteLine($"Server returned {response.StatusCode}: {response.ReasonPhrase}");
@@ -264,21 +335,16 @@ public partial class DetailInformationViewModel : ViewModelBase
             if (Parent.DetailedEntity == null)
                 return;
 
-            SessionDto dto = new()
-            {
-                EntityId = Parent.DetailedEntity.Id,
-                EfficiencyId = EfficiencyId,
-                ConcentrationId = ConcentrationId,
-                Summary = Summary,
-            };
+            var dto = new PauseSessionDto(Parent.DetailedEntity.Id, PauseReason);
+            
             var response = await Parent.NavigationService.NavigationStore
-                .MisaHttpClient.PostAsJsonAsync(requestUri: "sessions/pause", dto);
+                .MisaHttpClient.PostAsJsonAsync(requestUri: "Sessions/Pause", dto);
 
             if (!response.IsSuccessStatusCode)
                 Console.WriteLine($"Server returned {response.StatusCode}: {response.ReasonPhrase}");
 
             Parent.Refresh();
-            IsPauseFormOpen = false;
+            CloseSessionPauseForm();
         }
         catch (Exception e)
         {

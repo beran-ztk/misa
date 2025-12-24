@@ -21,6 +21,8 @@ public class MisaDbContext : DbContext
     public DbSet<Misa.Domain.Main.DescriptionTypes> DescriptionTypes { get; set; } = null;
     
     public DbSet<Misa.Domain.Audit.Session> Sessions { get; set; } = null;
+    public DbSet<Misa.Domain.Audit.SessionSegment> SessionSegments { get; set; } = null;
+    public DbSet<Misa.Domain.Audit.SessionStates> SessionStates { get; set; } = null;
     public DbSet<Misa.Domain.Audit.SessionEfficiencyType> EfficiencyTypes { get; set; } = null;
     public DbSet<Misa.Domain.Audit.SessionConcentrationType> ConcentrationTypes { get; set; } = null;
     public DbSet<Misa.Domain.Audit.Action> Actions { get; set; } = null;

@@ -8,7 +8,7 @@ public class SessionEfficiencyTypeEf : IEntityTypeConfiguration<SessionEfficienc
 {
     public void Configure(EntityTypeBuilder<SessionEfficiencyType> builder)
     {
-        builder.ToTable("audit_session_efficiency_types");
+        builder.ToTable("session_efficiency_types");
 
         builder.HasKey(x => x.Id);
 

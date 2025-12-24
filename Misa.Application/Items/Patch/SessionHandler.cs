@@ -1,10 +1,11 @@
-﻿using Misa.Application.Items.Repositories;
+﻿using Misa.Application.Entities.Repositories;
+using Misa.Application.Items.Repositories;
 using Misa.Contract.Audit;
 using Misa.Domain.Audit;
 
 namespace Misa.Application.Items.Patch;
 
-public class SessionHandler(IItemRepository repository)
+public class SessionHandler(IItemRepository repository, IEntityRepository entityRepository)
 {
     public async Task StartSessionAsync(SessionDto dto)
     {
@@ -22,22 +23,56 @@ public class SessionHandler(IItemRepository repository)
             return;
         
         item.Entity.Update();
-        await repository.AddAsync(session);
-        await repository.SaveChangesAsync();
+        var loadedSession = await repository.AddSessionAsync(session);
+
+        var segment = new SessionSegment(loadedSession.Id, DateTimeOffset.UtcNow);
+        
+        await repository.AddAsync(segment);
     }
-    public async Task PauseSessionAsync(SessionDto dto)
+    public async Task PauseSessionAsync(PauseSessionDto dto)
     {
-        var hasBeenChanged = false;
-        var item = await repository.GetTrackedItemAsync(dto.EntityId);
-        item.PauseSession(ref hasBeenChanged);
+        var entity = await entityRepository.GetDetailedEntityAsync(dto.EntityId);
+        if (entity == null)
+            return;
 
-        var session = await repository.GetTrackedSessionAsync(dto.EntityId);
-        session.Pause(dto.EfficiencyId, dto.ConcentrationId, dto.Summary, DateTimeOffset.UtcNow);
-
-        if (!hasBeenChanged)
+        var latestSession = entity.GetLatestSession();
+        if (latestSession == null)
             return;
         
-        item.Entity.Update();
+        latestSession.PauseSession();
+
+        var latestSegment = latestSession.GetLatestSegment();
+        if (latestSegment == null)
+            return;
+        latestSegment.CloseSegment(dto.PauseReason, DateTimeOffset.UtcNow);
+        
+        entity.Update();
+        await repository.SaveChangesAsync();
+    }
+    public async Task StopSessionAsync(StopSessionDto dto)
+    {
+        var entity = await entityRepository.GetDetailedEntityAsync(dto.EntityId);
+        if (entity == null)
+            return;
+
+        entity.EndSession(dto);
+        entity.Update();
+        await repository.SaveChangesAsync();
+    }
+
+    public async Task ContinueSessionAsync(Guid id)
+    {
+        var entity = await entityRepository.GetDetailedEntityAsync(id);
+        if (entity == null)
+            return;
+
+        var latestSession = entity.GetLatestSession();
+        if (latestSession == null)
+            return;
+
+        latestSession.ContinueSession();
+        entity.Update();
+        latestSession.AddSegment(id, DateTimeOffset.UtcNow);
         await repository.SaveChangesAsync();
     }
 }

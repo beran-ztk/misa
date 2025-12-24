@@ -22,4 +22,8 @@ public class EntityDto
     public List<DescriptionDto> Descriptions { get; set; } = new();
     public List<SessionDto> Sessions { get; set; } = new();
     public List<ActionDto> Actions { get; set; } = new();
+    public bool HasRunningSession { get; set; }
+    public bool HasPausedSession { get; set; }
+    public bool HasActiveSession { get; set; }
+    public bool CanStartSession { get; set; }
 }

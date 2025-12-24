@@ -38,13 +38,6 @@ public class Item : ChangeEvent
     public Priority Priority { get; private set; }
     public Category Category { get; private set; }
 
-    public bool HasActiveSession 
-        => StateId == (int)Dictionaries.Items.ItemStates.Active;
-    public bool CanStartSession
-        => StateId is (int)Dictionaries.Items.ItemStates.Draft
-           or (int)Dictionaries.Items.ItemStates.InProgress
-           or (int)Dictionaries.Items.ItemStates.Paused;
-
     public void ChangeState(int? optionalNewValue, ref bool changed,  string? reason = null)
     {
         if (StateId == optionalNewValue || optionalNewValue is null)
@@ -63,8 +56,23 @@ public class Item : ChangeEvent
         
         changed = true;
     }
+    public void ChangeState(int? optionalNewValue,  string? reason = null)
+    {
+        if (StateId == optionalNewValue || optionalNewValue is null)
+            return;
+
+        var newValue = Convert.ToInt32(optionalNewValue);
+        
+        AddDomainEvent(new PropertyChangedEvent(
+            EntityId: EntityId,
+            ActionType: (int)ActionTypes.State,
+            OldValue: StateId.ToString(),
+            NewValue: newValue.ToString(),
+            Reason: reason
+        ));
+        StateId = newValue;
+    }
     public void StartSession(ref bool hasBeenChanged) => ChangeState((int)Dictionaries.Items.ItemStates.Active, ref hasBeenChanged);
-    public void PauseSession(ref bool hasBeenChanged) => ChangeState((int)Dictionaries.Items.ItemStates.Paused, ref hasBeenChanged);
     public void ChangePriority(int? optionalNewValue, ref bool changed, string? reason = null)
     {
         if (PriorityId == optionalNewValue || optionalNewValue is null)
