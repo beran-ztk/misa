@@ -10,4 +10,10 @@
       <ProjectReference Include="..\Misa.Domain\Misa.Domain.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Common\Abstractions\Time\" />
+      <Folder Include="Common\Behaviors\" />
+      <Folder Include="Common\Errors\" />
+    </ItemGroup>
+
 </Project>
