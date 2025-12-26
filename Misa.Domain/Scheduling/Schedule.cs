@@ -3,7 +3,6 @@
 public sealed class Schedule
 {
     private Schedule() {} // EF Core
-
     public Schedule(Guid entityId, DateTimeOffset startAtUtc, DateTimeOffset? endAtUtc)
     {
         if (entityId == Guid.Empty)
@@ -20,11 +19,7 @@ public sealed class Schedule
     public DateTimeOffset StartAtUtc { get; private set; }
     public DateTimeOffset? EndAtUtc { get; private set; }
 
-    private static void ValidateScheduleWindow(DateTimeOffset startAtUtc, DateTimeOffset? endAtUtc)
-    {
-        if (endAtUtc.HasValue && endAtUtc.Value <= startAtUtc)
-            throw new ArgumentException("EndAtUtc must be greater than StartAtUtc.", nameof(endAtUtc));
-    }
+    public bool HasTimeSpan => EndAtUtc.HasValue;
     
     public void Reschedule(DateTimeOffset startAtUtc, DateTimeOffset? endAtUtc)
     {
@@ -32,5 +27,11 @@ public sealed class Schedule
 
         StartAtUtc = startAtUtc;
         EndAtUtc = endAtUtc;
+    }
+    
+    private static void ValidateScheduleWindow(DateTimeOffset startAtUtc, DateTimeOffset? endAtUtc)
+    {
+        if (endAtUtc.HasValue && endAtUtc.Value <= startAtUtc)
+            throw new ArgumentException("EndAtUtc must be greater than StartAtUtc.", nameof(endAtUtc));
     }
 }
