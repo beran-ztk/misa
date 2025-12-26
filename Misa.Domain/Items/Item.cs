@@ -29,8 +29,6 @@ public class Item : ChangeEvent
     public int PriorityId { get; private set; }
     public int CategoryId { get; private set; }
     public string Title { get; private set; }
-    public bool IsBlocked { get; private set; }
-    public bool IsScheduled { get; private set; }
     
     // Modelle
     public Entity Entity { get; set; }

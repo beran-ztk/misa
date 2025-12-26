@@ -31,11 +31,6 @@ public class Item : IEntityTypeConfiguration<Misa.Domain.Items.Item>
         builder.Property(x => x.Title)
             .IsRequired()
             .HasColumnName("title");
-
-        builder.Property(x => x.IsBlocked)
-            .HasColumnName("is_blocked");
-        builder.Property(x => x.IsScheduled)
-            .HasColumnName("is_scheduled");
         
         // State n:1
         builder.HasOne(i => i.State)

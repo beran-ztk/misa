@@ -34,7 +34,7 @@ VALUES
 INSERT INTO entity_workflow_types (name, synopsis)
 VALUES
     ('Task',         'Konkrete Aufgaben oder To-Dos'),
-    ('Calendar',     'Kalendereintrag, Termin oder zeitliche Planung'),
+    ('Schedule',     'Kalendereintrag, Termin oder zeitliche Planung'),
     ('Event',        'Ereignis mit festem Zeitpunkt'),
     ('Notification', 'Benachrichtigung oder Reminder'),
     ('Journal',      'Persönliche oder berufliche Notizen'),
@@ -47,7 +47,9 @@ INSERT INTO workflow_category_types (workflow_id, name, synopsis, sort_order)
 VALUES
     (1, 'Work',        'Berufliche Aufgaben, IT-Projekte, Ausbildung im Betrieb',  1),
     (1, 'School',      'Berufsschule, Klausuren, Lernaufgaben, Abgaben',           2),
-    (1, 'Personal',    'Private Aufgaben, Haushalt, persönliche Organisation',     3);
+    (1, 'Personal',    'Private Aufgaben, Haushalt, persönliche Organisation',     3),
+    
+    (2, 'Deadline', 'Deadline eines Items',  1);
 
 
 INSERT INTO item_relations_types (name, synopsis, sort_order)

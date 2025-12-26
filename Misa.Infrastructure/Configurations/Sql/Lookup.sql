@@ -1,10 +1,3 @@
-create table lu_recurrings
-(
-    id      int generated always as identity primary key,
-    name    text not null unique
-);
-INSERT INTO lu_recurrings (name)
-VALUES ('Minutes'),('Hours'),('Days'),('Months'),('Years');
 
 
 

@@ -17,19 +17,13 @@ CREATE TABLE entities
 CREATE TABLE items
 (
     entity_id       UUID PRIMARY KEY REFERENCES entities(id)    ON DELETE CASCADE,
+    
     state_id        INT NOT NULL REFERENCES item_states(id)     ON DELETE RESTRICT,
     priority_id     INT NOT NULL REFERENCES item_priorities(id) ON DELETE RESTRICT,
     category_id     INT REFERENCES workflow_category_types(id) ON DELETE RESTRICT,
     
-    title           TEXT NOT NULL,
-
-    is_blocked      BOOL DEFAULT FALSE,
-    is_scheduled    BOOL DEFAULT FALSE
+    title           TEXT NOT NULL
 );
-CREATE INDEX idx_items_state
-    ON items(state_id);
-CREATE INDEX idx_items_priority
-    ON items(priority_id);
 
 CREATE TABLE relations
 (
@@ -45,12 +39,6 @@ CREATE TABLE relations
     CONSTRAINT unique_link UNIQUE (entity_parent_id, entity_child_id, relation_id),
     CONSTRAINT unique_sort_order UNIQUE (entity_parent_id, relation_id, sort_order)
 );
-CREATE INDEX idx_relations_parent 
-    ON relations(entity_parent_id);
-CREATE INDEX idx_relations_child
-    ON relations(entity_child_id);
-CREATE INDEX idx_relations_relation
-    ON relations(relation_id);
 
 CREATE TABLE descriptions
 (
