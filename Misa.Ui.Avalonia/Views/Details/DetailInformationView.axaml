@@ -327,8 +327,10 @@
 
                     <TextBlock Grid.Row="0" VerticalAlignment="Top" Text="When do you want to set the deadline for?" />
                     <StackPanel Grid.Row="1" Spacing="8">
-                        <DatePicker SelectedDate="{Binding DeadlineDate, Mode=TwoWay}"/>
-                        <TimePicker SelectedTime="{Binding DeadlineTime, Mode=TwoWay}"/>
+                        <DatePicker 
+                            SelectedDate="{Binding DeadlineDate, Mode=TwoWay}"/>
+                        <TimePicker 
+                            SelectedTime="{Binding DeadlineTime, Mode=TwoWay}"/>
 
                         <StackPanel Orientation="Horizontal"
                                     Spacing="8"

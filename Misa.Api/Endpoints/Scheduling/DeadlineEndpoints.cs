@@ -12,8 +12,10 @@ public static class DeadlineEndpoints
 
     private static async Task<IResult> SetDeadline(ScheduleDto scheduleDto, SetEntityDeadlineHandler handler)
     {
+        var utc = scheduleDto.StartAtUtc.ToUniversalTime();
+        
         await handler.Handle(
-            new SetEntityDeadlineCommand(scheduleDto.EntityId, scheduleDto.StartAtUtc)
+            new SetEntityDeadlineCommand(scheduleDto.EntityId, utc)
         );
         
         return Results.NoContent();
