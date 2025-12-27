@@ -3,6 +3,7 @@ using Misa.Infrastructure.Items;
 using Misa.Application.Items.Repositories;
 using Misa.Contract.Items;
 using Microsoft.EntityFrameworkCore;
+using Misa.Api.Endpoints.Scheduling;
 using Misa.Application.Entities.Add;
 using Misa.Application.Entities.Get;
 using Misa.Application.Entities.Patch;
@@ -102,4 +103,8 @@ app.MapPost(
     async (StopSessionDto dto, SessionHandler handler)
         => await handler.StopSessionAsync(dto)
 );
+
+// Scheduling Endpoints
+DeadlineEndpoints.Map(app);
+
 app.Run();
