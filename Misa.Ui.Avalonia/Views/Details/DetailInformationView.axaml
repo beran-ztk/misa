@@ -130,6 +130,10 @@
                         </Button>
                         
                         <Button Classes="misa-action"
+                                Content="Set/Update Deadline"
+                                Command="{Binding ShowDeadlineFormCommand}"/>
+                        
+                        <Button Classes="misa-action"
                                 Command="{Binding ArchiveEntityCommand}">
                             <Image Width="16" Height="16"
                                    Source="{SvgImage /Assets/Images/Details/archive.svg}"/>
@@ -305,6 +309,44 @@
             </StackPanel>
         </Border>
 
+        <Border Padding="10"
+                CornerRadius="10"
+                BorderThickness="1"
+                BorderBrush="{StaticResource BrushBorder}"
+                Background="{StaticResource BrushPrimaryBackground}"
+                IsVisible="{Binding IsDeadlineFormOpen}">
+            <StackPanel Spacing="10">
+
+                <TextBlock Text="Set Deadline"
+                           FontWeight="SemiBold"/>
+
+                <Grid ColumnDefinitions="*"
+                      RowDefinitions="Auto,Auto"
+                      RowSpacing="8"
+                      ColumnSpacing="10">
+
+                    <TextBlock Grid.Row="0" VerticalAlignment="Top" Text="When do you want to set the deadline for?" />
+                    <StackPanel Grid.Row="1" Spacing="8">
+                        <DatePicker SelectedDate="{Binding DeadlineDate, Mode=TwoWay}"/>
+                        <TimePicker SelectedTime="{Binding DeadlineTime, Mode=TwoWay}"/>
+
+                        <StackPanel Orientation="Horizontal"
+                                    Spacing="8"
+                                    HorizontalAlignment="Right">
+                            <Button Classes="misa-action"
+                                    Content="Cancel"
+                                    Command="{Binding CloseDeadlineFormCommand}" />
+                            <Button Classes="misa-action"
+                                    Content="Save"
+                                    Command="{Binding UpsertDeadlineCommand}" />
+                        </StackPanel>
+                    </StackPanel>
+
+                </Grid>
+
+            </StackPanel>
+        </Border>
+        
         <!-- Edit -->
         <!-- <Border Padding="10" -->
         <!--         CornerRadius="10" -->

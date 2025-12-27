@@ -420,4 +420,26 @@ public partial class DetailInformationViewModel : ViewModelBase
             Console.WriteLine(e);
         }
     }
+    // Deadline
+    [ObservableProperty] private bool _isDeadlineFormOpen;
+    [ObservableProperty] private DateOnly _deadlineDate;
+    [ObservableProperty] private TimeOnly _deadlineTime;
+
+    [RelayCommand]
+    private void ShowDeadlineForm()
+    {
+        IsDeadlineFormOpen = true;
+        DeadlineDate = DateOnly.FromDateTime(DateTime.Now);
+        DeadlineTime = TimeOnly.FromDateTime(DateTime.Now);
+    }
+    [RelayCommand]
+    private void CloseDeadlineForm()
+    {
+        IsDeadlineFormOpen = false;
+    }
+    [RelayCommand]
+    private void UpsertDeadline()
+    {
+        
+    }
 }
