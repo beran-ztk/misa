@@ -13,6 +13,7 @@ using Misa.Contract.Audit.Lookups;
 using Misa.Contract.Items;
 using Misa.Contract.Items.Lookups;
 using Misa.Contract.Main;
+using Misa.Contract.Scheduling;
 using Misa.Ui.Avalonia.Interfaces;
 using Misa.Ui.Avalonia.ViewModels.Shells;
 using ReactiveUI;
@@ -414,6 +415,46 @@ public partial class DetailInformationViewModel : ViewModelBase
                 .MisaHttpClient.PatchAsync(requestUri: $"Entity/Archive?entityId={id}", content: null);
             
             Parent.Refresh(true, false);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
+    }
+    // Deadline
+    [ObservableProperty] private bool _isDeadlineFormOpen;
+    [ObservableProperty] private DateTimeOffset? _deadlineDate;
+    [ObservableProperty] private TimeSpan? _deadlineTime;
+
+    [RelayCommand]
+    private void ShowDeadlineForm()
+    {
+        IsDeadlineFormOpen = true;
+        DeadlineDate = DateTimeOffset.UtcNow.Date;
+        DeadlineTime = DateTimeOffset.Now.TimeOfDay;
+    }
+    [RelayCommand]
+    private void CloseDeadlineForm()
+    {
+        IsDeadlineFormOpen = false;
+    }
+    [RelayCommand]
+    private async Task UpsertDeadline()
+    {
+        try
+        {
+            if (Parent.DetailedEntity is null || DeadlineDate is null || DeadlineTime is null)
+                return;
+
+            var deadline = DeadlineDate.Value.DateTime.Date + DeadlineTime.Value;
+
+            var scheduleDto = new ScheduleDto(Parent.DetailedEntity.Id, deadline, null);
+            
+            await Parent.NavigationService.NavigationStore
+                .MisaHttpClient.PutAsJsonAsync(requestUri: "entities/deadline", scheduleDto);
+            
+            Parent.Refresh();
+            CloseDeadlineForm();
         }
         catch (Exception e)
         {
