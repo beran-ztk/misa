@@ -34,7 +34,8 @@ public static class ItemDtoMapper
             Priority = domain.Priority.ToDto(),
             Category = domain.Category.ToDto(),
             Title = domain.Title,
-            ScheduledDeadline = ToDto(domain.ScheduledDeadline)
+            ScheduledDeadline = ToDto(domain.ScheduledDeadline),
+            HasDeadline = domain.ScheduledDeadline is not null
         };
 
     public static ScheduleDeadlineDto? ToDto(ScheduledDeadline? deadline)

@@ -15,5 +15,6 @@ public class ReadItemDto
     public CategoryDto Category { get; set; } = null!;
     public string Title { get; set; } = null!;
     public ScheduleDeadlineDto? ScheduledDeadline { get; set; }
+    public bool HasDeadline { get; set; }
 
 }

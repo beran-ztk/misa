@@ -5,6 +5,7 @@ using System.Data;
 using System.Linq;
 using System.Net.Http.Json;
 using System.Reactive;
+using System.Reactive.Disposables;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -45,7 +46,10 @@ public partial class DetailInformationViewModel : ViewModelBase
         PauseSessionCommand.Subscribe();
         
         this.WhenAnyValue(x => x.EntityDetail.SelectedEntity)
-            .Subscribe(_ => ResetDescription());
+            .Subscribe(_ =>
+            {
+                ResetDescription();
+            });
     }
     // Edit State
     [ObservableProperty] private bool _isEditStateOpen;
@@ -431,9 +435,11 @@ public partial class DetailInformationViewModel : ViewModelBase
     {
         IsDeadlineFormOpen = true;
 
-        var nowLocal = DateTimeOffset.Now;
-        DeadlineDate = nowLocal.Date;
-        DeadlineTime = nowLocal.TimeOfDay;
+        var existingUtc = Parent.DetailedEntity?.Item?.ScheduledDeadline?.DeadlineAtUtc;
+        var local = existingUtc?.ToLocalTime() ?? DateTimeOffset.Now;
+
+        DeadlineDate = local.Date;
+        DeadlineTime = local.TimeOfDay;
     }
 
     [RelayCommand]
