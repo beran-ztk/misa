@@ -336,6 +336,9 @@
                                     Spacing="8"
                                     HorizontalAlignment="Right">
                             <Button Classes="misa-action"
+                                    Content="Remove"
+                                    Command="{Binding RemoveDeadlineCommand}" />
+                            <Button Classes="misa-action"
                                     Content="Cancel"
                                     Command="{Binding CloseDeadlineFormCommand}" />
                             <Button Classes="misa-action"
@@ -474,9 +477,12 @@
                     <TextBlock Grid.Row="4" Grid.Column="1"
                                Text="{Binding Parent.DetailedEntity.InteractedAt, StringFormat={}{0:yyyy-MM-dd HH:mm}}"/>
                     
-                    <TextBlock Grid.Row="5" Grid.Column="0" Text="Session Count" Opacity="0.7"/>
+                    <!-- <TextBlock Grid.Row="5" Grid.Column="0" Text="Session Count" Opacity="0.7"/> -->
+                    <!-- <TextBlock Grid.Row="5" Grid.Column="1" -->
+                    <!--            Text="{Binding Parent.DetailedEntity.Sessions.Count}"/> -->
+                    <TextBlock Grid.Row="5" Grid.Column="0" Text="Deadline" Opacity="0.7"/>
                     <TextBlock Grid.Row="5" Grid.Column="1"
-                               Text="{Binding Parent.DetailedEntity.Sessions.Count}"/>
+                               Text="{Binding Parent.DetailedEntity.Item.ScheduledDeadline.DeadlineAtUtc}"/>
                 </Grid>
 
 

@@ -1,5 +1,6 @@
 ﻿using Misa.Domain.Audit;
 using Misa.Domain.Items;
+using Misa.Domain.Scheduling;
 
 namespace Misa.Application.Items.Repositories;
 
@@ -11,7 +12,13 @@ public interface IItemRepository
     Task<Item?> LoadAsync(Guid entityId, CancellationToken ct = default);
     Task SaveChangesAsync(CancellationToken ct = default);
     Task<Item> GetTrackedItemAsync(Guid id);
+
+    // Sessions
     Task<Session> GetTrackedSessionAsync(Guid id);
     Task<Session> AddSessionAsync(Session session);
     Task AddAsync(SessionSegment segment);
+
+    // Deadlines (Item-owned)
+    Task UpsertDeadlineAsync(Guid itemId, DateTimeOffset dueAtUtc, CancellationToken ct = default);
+    Task RemoveDeadlineAsync(Guid itemId, CancellationToken ct = default);
 }

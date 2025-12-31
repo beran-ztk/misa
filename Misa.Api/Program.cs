@@ -12,7 +12,7 @@ using Misa.Application.Items.Commands;
 using Misa.Application.Items.Queries;
 using Misa.Application.Main.Repositories;
 using Misa.Application.ReferenceData.Queries;
-using Misa.Application.Scheduling.Commands.SetEntityDeadline;
+using Misa.Application.Scheduling.Commands.UpsertItemDeadline;
 using Misa.Contract.Audit;
 using Misa.Contract.Entities;
 using Misa.Contract.Main;
@@ -42,9 +42,8 @@ builder.Services.AddScoped<UpdateItemHandler>();
 builder.Services.AddScoped<GetSingleDetailedEntityHandler>();
 builder.Services.AddScoped<IEntityRepository, EntityRepository>();
 
-// Scheduler
-builder.Services.AddScoped<IScheduleRepository, ScheduleRepository>();
-builder.Services.AddScoped<SetEntityDeadlineHandler>();
+builder.Services.AddScoped<UpsertItemDeadlineHandler>();
+builder.Services.AddScoped<RemoveItemDeadlineHandler>();
 
 var app = builder.Build();
 

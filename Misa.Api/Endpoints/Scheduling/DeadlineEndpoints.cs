@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Misa.Application.Scheduling.Commands.SetEntityDeadline;
-using Misa.Contract.Scheduling;
+using Misa.Application.Scheduling.Commands.UpsertItemDeadline;
 
 namespace Misa.Api.Endpoints.Scheduling;
 
@@ -8,20 +7,31 @@ public static class DeadlineEndpoints
 {
     public static void Map(WebApplication app)
     {
-        app.MapPut("/entities/deadline", SetDeadline);
+        app.MapPut("/items/{itemId:guid}/deadline", UpsertDeadline);
+        app.MapDelete("/items/{itemId:guid}/deadline", RemoveDeadline);
     }
 
-    private static async Task<IResult> SetDeadline(
-        [FromQuery] Guid entityId,
-        [FromQuery] DateTimeOffset deadline,
-        SetEntityDeadlineHandler handler)
+    private static async Task<IResult> UpsertDeadline(
+        [FromRoute] Guid itemId,
+        [FromBody] ScheduleDeadlineDto dto,
+        UpsertItemDeadlineHandler handler)
     {
-        var utc = deadline.ToUniversalTime();
+        if (dto.ItemId != itemId)
+            return Results.BadRequest("Route itemId must match body ItemId.");
 
-        await handler.Handle(
-            new SetEntityDeadlineCommand(entityId, utc)
-        );
+        var dueAtUtc = dto.DeadlineAtUtc.ToUniversalTime();
 
+        await handler.Handle(new UpsertItemDeadlineCommand(itemId, dueAtUtc));
+        return Results.NoContent();
+    }
+
+    private static async Task<IResult> RemoveDeadline(
+        [FromRoute] Guid itemId,
+        RemoveItemDeadlineHandler handler)
+    {
+        await handler.Handle(new RemoveItemDeadlineCommand(itemId));
         return Results.NoContent();
     }
 }
+
+public record ScheduleDeadlineDto(Guid ItemId, DateTimeOffset DeadlineAtUtc);

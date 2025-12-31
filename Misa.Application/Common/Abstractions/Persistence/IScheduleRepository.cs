@@ -4,6 +4,6 @@ namespace Misa.Application.Common.Abstractions.Persistence;
 
 public interface IScheduleRepository
 {
-    Task Upsert(Schedule schedule, Guid childItem);
+    Task Upsert(ScheduledDeadline scheduledDeadline, Guid childItem);
     Task<bool> HasDeadline(Guid entityId);
 }

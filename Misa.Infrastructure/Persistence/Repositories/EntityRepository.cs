@@ -34,6 +34,8 @@ public class EntityRepository(Misa.Infrastructure.Data.MisaDbContext db) : Misa.
                 .ThenInclude(i => i.Priority)
             .Include(e => e.Item)
                 .ThenInclude(i => i.Category)
+            .Include(e => e.Item)
+                .ThenInclude(i => i.ScheduledDeadline)
             
             // Descriptions
             .Include(e => e.Descriptions)

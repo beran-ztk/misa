@@ -2,9 +2,11 @@
 using Misa.Contract.Audit.Lookups;
 using Misa.Contract.Items;
 using Misa.Contract.Items.Lookups;
+using Misa.Contract.Scheduling;
 using Misa.Domain.Audit;
 using Misa.Domain.Entities;
 using Misa.Domain.Items;
+using Misa.Domain.Scheduling;
 
 namespace Misa.Application.Items.Mappings;
 
@@ -26,13 +28,17 @@ public static class ItemDtoMapper
     public static ReadItemDto ToReadItemDto(this Item domain)
         => new()
         {
+            EntityId = domain.EntityId,
             Entity = domain.Entity.ToReadEntityDto(),
             State = domain.State.ToDto(),
             Priority = domain.Priority.ToDto(),
             Category = domain.Category.ToDto(),
-            Title = domain.Title
+            Title = domain.Title,
+            ScheduledDeadline = ToDto(domain.ScheduledDeadline)
         };
 
+    public static ScheduleDeadlineDto? ToDto(ScheduledDeadline? deadline)
+        => deadline == null ? null : new ScheduleDeadlineDto(deadline.ItemId, deadline.DeadlineAtUtc);
     public static List<ReadItemDto> ToReadItemDto(this List<Item> items)
         => items.Select(i => new ReadItemDto
         {

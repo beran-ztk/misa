@@ -1,6 +1,7 @@
 ﻿using Misa.Domain.Dictionaries.Audit;
 using Misa.Domain.Entities;
 using Misa.Domain.Main;
+using Misa.Domain.Scheduling;
 
 namespace Misa.Domain.Items;
 
@@ -35,6 +36,8 @@ public class Item : ChangeEvent
     public State State { get; private set; }
     public Priority Priority { get; private set; }
     public Category Category { get; private set; }
+    
+    public ScheduledDeadline? ScheduledDeadline { get; private set; }
 
     public void ChangeState(int? optionalNewValue, ref bool changed,  string? reason = null)
     {

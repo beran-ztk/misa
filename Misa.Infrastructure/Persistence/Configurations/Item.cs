@@ -49,5 +49,12 @@ public class Item : IEntityTypeConfiguration<Misa.Domain.Items.Item>
             .WithMany()
             .HasForeignKey(i => i.CategoryId)
             .OnDelete(DeleteBehavior.Restrict);
+        
+        // Deadline 1:0..1
+        builder.HasOne(i => i.ScheduledDeadline)
+            .WithOne()
+            .HasForeignKey<Misa.Domain.Scheduling.ScheduledDeadline>(d => d.ItemId)
+            .OnDelete(DeleteBehavior.Cascade);
+
     }
 }

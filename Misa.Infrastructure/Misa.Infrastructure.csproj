@@ -20,4 +20,8 @@
       <ProjectReference Include="..\Misa.Domain\Misa.Domain.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Persistence\Configurations\Extensions\" />
+    </ItemGroup>
+
 </Project>

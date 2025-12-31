@@ -430,29 +430,44 @@ public partial class DetailInformationViewModel : ViewModelBase
     private void ShowDeadlineForm()
     {
         IsDeadlineFormOpen = true;
-        DeadlineDate = DateTimeOffset.UtcNow.Date;
-        DeadlineTime = DateTimeOffset.Now.TimeOfDay;
+
+        var nowLocal = DateTimeOffset.Now;
+        DeadlineDate = nowLocal.Date;
+        DeadlineTime = nowLocal.TimeOfDay;
     }
+
     [RelayCommand]
     private void CloseDeadlineForm()
     {
         IsDeadlineFormOpen = false;
     }
+
     [RelayCommand]
     private async Task UpsertDeadline()
     {
         try
         {
-            if (Parent.DetailedEntity is null || DeadlineDate is null || DeadlineTime is null)
+            if (Parent.DetailedEntity?.Item is null || DeadlineDate is null || DeadlineTime is null)
                 return;
 
-            var deadline = DeadlineDate.Value.DateTime.Date + DeadlineTime.Value;
-            
-            await Parent.NavigationService.NavigationStore
-                .MisaHttpClient.PutAsync
-                    (requestUri: $"entities/deadline?entityId={Parent.DetailedEntity.Id}&deadline={deadline}",
-                        null);
-            
+            var localDateTime = DeadlineDate.Value.Date + DeadlineTime.Value;
+            var localOffset = TimeZoneInfo.Local.GetUtcOffset(localDateTime);
+            var deadlineUtc = new DateTimeOffset(localDateTime, localOffset).ToUniversalTime();
+
+            var dto = new ScheduleDeadlineDto(
+                ItemId: Parent.DetailedEntity.Item.EntityId,
+                DeadlineAtUtc: deadlineUtc
+            );
+
+            var response = await Parent.NavigationService.NavigationStore
+                .MisaHttpClient.PutAsJsonAsync(
+                    requestUri: $"items/{dto.ItemId}/deadline",
+                    dto
+                );
+
+            if (!response.IsSuccessStatusCode)
+                Console.WriteLine($"Server returned {response.StatusCode}: {response.ReasonPhrase}");
+
             Parent.Refresh();
             CloseDeadlineForm();
         }
@@ -461,4 +476,30 @@ public partial class DetailInformationViewModel : ViewModelBase
             Console.WriteLine(e);
         }
     }
+
+    [RelayCommand]
+    private async Task RemoveDeadline()
+    {
+        try
+        {
+            if (Parent.DetailedEntity?.Item is null)
+                return;
+
+            var itemId = Parent.DetailedEntity.Item.EntityId;
+
+            var response = await Parent.NavigationService.NavigationStore
+                .MisaHttpClient.DeleteAsync($"items/{itemId}/deadline");
+
+            if (!response.IsSuccessStatusCode)
+                Console.WriteLine($"Server returned {response.StatusCode}: {response.ReasonPhrase}");
+
+            Parent.Refresh();
+            CloseDeadlineForm();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
+    }
+
 }

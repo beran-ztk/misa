@@ -14,12 +14,16 @@ VALUES
     ('Months'),
     ('Years');
 
-CREATE TABLE schedule
+CREATE TABLE scheduled_deadlines
 (
-    entity_id        UUID PRIMARY KEY REFERENCES entities(id) ON DELETE CASCADE,
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    item_id         UUID NOT NULL REFERENCES items(entity_id) ON DELETE CASCADE,
 
-    start_at_utc     TIMESTAMPTZ NOT NULL,
-    end_at_utc       TIMESTAMPTZ NULL
+    deadline_at_utc TIMESTAMPTZ NOT NULL,
+
+    created_at_utc  TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+    CONSTRAINT uq_scheduled_deadlines_item UNIQUE (item_id)
 );
 
 CREATE TABLE schedule_recurrence_rules
