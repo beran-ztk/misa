@@ -28,6 +28,7 @@ public class MisaDbContext : DbContext
     public DbSet<Misa.Domain.Audit.Action> Actions { get; set; } = null;
     public DbSet<Misa.Domain.Audit.ActionType> ActionTypes { get; set; } = null;
     public DbSet<Misa.Domain.Scheduling.Schedule> Schedules { get; set; } = null;
+    public DbSet<Misa.Domain.Extensions.Relations> Relations { get; set; } = null;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

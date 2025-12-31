@@ -1,3 +1,3 @@
 ﻿namespace Misa.Contract.Scheduling;
 
-public record ScheduleDto(Guid EntityId, DateTimeOffset StartAtUtc, DateTimeOffset? EndAtUtc);
+public record ScheduleDto(Guid? EntityId, DateTimeOffset StartAtUtc, DateTimeOffset? EndAtUtc);

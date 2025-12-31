@@ -1,4 +1,5 @@
-﻿using Misa.Application.Scheduling.Commands.SetEntityDeadline;
+﻿using Microsoft.AspNetCore.Mvc;
+using Misa.Application.Scheduling.Commands.SetEntityDeadline;
 using Misa.Contract.Scheduling;
 
 namespace Misa.Api.Endpoints.Scheduling;
@@ -10,14 +11,17 @@ public static class DeadlineEndpoints
         app.MapPut("/entities/deadline", SetDeadline);
     }
 
-    private static async Task<IResult> SetDeadline(ScheduleDto scheduleDto, SetEntityDeadlineHandler handler)
+    private static async Task<IResult> SetDeadline(
+        [FromQuery] Guid entityId,
+        [FromQuery] DateTimeOffset deadline,
+        SetEntityDeadlineHandler handler)
     {
-        var utc = scheduleDto.StartAtUtc.ToUniversalTime();
-        
+        var utc = deadline.ToUniversalTime();
+
         await handler.Handle(
-            new SetEntityDeadlineCommand(scheduleDto.EntityId, utc)
+            new SetEntityDeadlineCommand(entityId, utc)
         );
-        
+
         return Results.NoContent();
     }
 }

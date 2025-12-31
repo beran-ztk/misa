@@ -7,7 +7,6 @@ public class SetEntityDeadlineHandler(IScheduleRepository repository)
 {
     public async Task Handle(SetEntityDeadlineCommand command)
     {
-        var schedule = new Schedule(command.EntityId, command.DueAtUtc, null);
-        await repository.Upsert(schedule);
+        await repository.Upsert(command.EntityIdOfItem, command.DueAtUtc);
     }
 }

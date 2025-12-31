@@ -447,11 +447,11 @@ public partial class DetailInformationViewModel : ViewModelBase
                 return;
 
             var deadline = DeadlineDate.Value.DateTime.Date + DeadlineTime.Value;
-
-            var scheduleDto = new ScheduleDto(Parent.DetailedEntity.Id, deadline, null);
             
             await Parent.NavigationService.NavigationStore
-                .MisaHttpClient.PutAsJsonAsync(requestUri: "entities/deadline", scheduleDto);
+                .MisaHttpClient.PutAsync
+                    (requestUri: $"entities/deadline?entityId={Parent.DetailedEntity.Id}&deadline={deadline}",
+                        null);
             
             Parent.Refresh();
             CloseDeadlineForm();
