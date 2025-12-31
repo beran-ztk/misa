@@ -52,13 +52,15 @@ VALUES
     (2, 'Deadline', 'Deadline eines Items',  1);
 
 
-INSERT INTO item_relations_types (name, synopsis, sort_order)
+INSERT INTO relation_types (name, synopsis)
 VALUES
-    ('contains',  'Parent-Item beinhaltet das Child-Item',                      1),
-    ('follows',   'Child folgt logisch oder zeitlich nach Parent',              2),
-    ('triggers',  'Parent löst das Child-Item aus (z.B. Event → Action)',       3),
-    ('blocks',    'Parent verhindert die Ausführung des Child-Items',           4),
-    ('session_of','Child ist eine Session von Parent',                          5);
+    ('has_deadline',  'Parent-Item hat eine Deadline'),
+    
+    ('contains',  'Parent-Item beinhaltet das Child-Item'),
+    ('follows',   'Child folgt logisch oder zeitlich nach Parent'),
+    ('triggers',  'Parent löst das Child-Item aus (z.B. Event → Action)'),
+    ('blocks',    'Parent verhindert die Ausführung des Child-Items'),
+    ('session_of','Child ist eine Session von Parent');
 
 INSERT INTO description_types (name, synopsis, sort_order)
 VALUES

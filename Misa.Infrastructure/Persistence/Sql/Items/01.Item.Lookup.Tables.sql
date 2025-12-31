@@ -30,12 +30,11 @@ CREATE TABLE workflow_category_types
     sort_order  INT NOT NULL UNIQUE
 );
 
-CREATE TABLE item_relations_types
+CREATE TABLE relation_types
 (
     id          INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     name        TEXT NOT NULL UNIQUE,
-    synopsis    TEXT,
-    sort_order  INT NOT NULL UNIQUE
+    synopsis    TEXT
 );
 
 CREATE TABLE description_types

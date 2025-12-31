@@ -31,13 +31,10 @@ CREATE TABLE relations
 
     entity_parent_id    UUID NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
     entity_child_id     UUID NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
-    relation_id         INT  NOT NULL REFERENCES item_relations_types(id) ON DELETE RESTRICT,
-
-    sort_order          INT
+    relation_id         INT  NOT NULL REFERENCES relation_types(id) ON DELETE RESTRICT,
     
     CONSTRAINT ck_no_self_link CHECK (entity_parent_id != entity_child_id),
-    CONSTRAINT unique_link UNIQUE (entity_parent_id, entity_child_id, relation_id),
-    CONSTRAINT unique_sort_order UNIQUE (entity_parent_id, relation_id, sort_order)
+    CONSTRAINT unique_link UNIQUE (entity_parent_id, entity_child_id, relation_id)
 );
 
 CREATE TABLE descriptions
