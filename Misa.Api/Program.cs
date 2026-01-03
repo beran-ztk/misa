@@ -1,5 +1,4 @@
 using Misa.Infrastructure.Data;
-using Misa.Application.Items.Repositories;
 using Misa.Contract.Items;
 using Microsoft.EntityFrameworkCore;
 using Misa.Api.Common.Exceptions;
@@ -13,7 +12,7 @@ using Misa.Application.Items.Commands;
 using Misa.Application.Items.Queries;
 using Misa.Application.Main.Repositories;
 using Misa.Application.ReferenceData.Queries;
-using Misa.Application.Scheduling.Commands.UpsertItemDeadline;
+using Misa.Application.Scheduling.Commands.Deadlines;
 using Misa.Contract.Audit;
 using Misa.Contract.Entities;
 using Misa.Contract.Main;
@@ -25,7 +24,10 @@ const string connectionString =
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Host.UseWolverine();
+builder.Host.UseWolverine(opts =>
+{
+    opts.Discovery.IncludeAssembly(typeof(RemoveItemDeadlineHandler).Assembly);
+});
 builder.Services.AddControllers();
 builder.Services.AddTransient<ExceptionMappingMiddleware>();
 builder.Services.AddDbContext<MisaDbContext>(options => options.UseNpgsql(connectionString));

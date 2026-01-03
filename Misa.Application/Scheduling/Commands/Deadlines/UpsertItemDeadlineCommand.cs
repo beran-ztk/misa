@@ -1,3 +1,3 @@
-﻿namespace Misa.Application.Scheduling.Commands.UpsertItemDeadline;
+﻿namespace Misa.Application.Scheduling.Commands.Deadlines;
 
 public record UpsertItemDeadlineCommand(Guid ItemId, DateTimeOffset DueAtUtc);

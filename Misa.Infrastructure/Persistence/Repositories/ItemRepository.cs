@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
+using Misa.Application.Common.Abstractions.Persistence;
 using Misa.Application.Common.Exceptions;
-using Misa.Application.Items.Repositories;
 using Misa.Domain.Audit;
 using Misa.Domain.Scheduling;
 using Misa.Infrastructure.Data;
@@ -11,11 +11,11 @@ namespace Misa.Infrastructure.Persistence.Repositories;
 
 public class ItemRepository(MisaDbContext db) : IItemRepository
 {
-    public async Task<Item> GetTrackedItemAsync(Guid id)
+    public async Task<Item?> GetTrackedItemAsync(Guid id)
     {
         return await db.Items
             .Include(e => e.Entity)
-            .FirstAsync(i => i.EntityId == id);
+            .SingleOrDefaultAsync(i => i.EntityId == id);
     }
     public async Task SaveChangesAsync(CancellationToken  ct = default)
         => await db.SaveChangesAsync(ct);

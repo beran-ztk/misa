@@ -1,8 +1,7 @@
 ﻿using Misa.Domain.Audit;
 using Misa.Domain.Items;
-using Misa.Domain.Scheduling;
 
-namespace Misa.Application.Items.Repositories;
+namespace Misa.Application.Common.Abstractions.Persistence;
 
 public interface IItemRepository
 {
@@ -11,7 +10,7 @@ public interface IItemRepository
     Task<List<Item>> GetAllTasksAsync(CancellationToken ct = default);
     Task<Item?> LoadAsync(Guid entityId, CancellationToken ct = default);
     Task SaveChangesAsync(CancellationToken ct = default);
-    Task<Item> GetTrackedItemAsync(Guid id);
+    Task<Item?> GetTrackedItemAsync(Guid id);
 
     // Sessions
     Task<Session> GetTrackedSessionAsync(Guid id);

@@ -1,8 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Misa.Application.Common.Abstractions.Persistence;
 using Misa.Application.Common.Exceptions;
-using Misa.Application.Items.Repositories;
 
-namespace Misa.Application.Scheduling.Commands.UpsertItemDeadline;
+namespace Misa.Application.Scheduling.Commands.Deadlines;
 
 public sealed class RemoveItemDeadlineHandler(IItemRepository repository)
 {

@@ -1,5 +1,5 @@
-﻿using Misa.Application.Entities.Repositories;
-using Misa.Application.Items.Repositories;
+﻿using Misa.Application.Common.Abstractions.Persistence;
+using Misa.Application.Entities.Repositories;
 using Misa.Contract.Audit;
 using Misa.Domain.Audit;
 
