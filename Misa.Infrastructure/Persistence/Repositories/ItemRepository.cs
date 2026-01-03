@@ -81,19 +81,15 @@ public class ItemRepository(MisaDbContext db) : IItemRepository
             .Include(i => i.Category)
             .SingleOrDefaultAsync(i => i.EntityId == entityId, ct);
     }
-    public async Task UpsertDeadlineAsync(Guid itemId, DateTimeOffset dueAtUtc, CancellationToken ct = default)
-    {
-        var existing = await db.Set<ScheduledDeadline>()
+    public async Task<ScheduledDeadline?> GetSingleTrackedDeadlineAsync(Guid itemId, CancellationToken ct = default)
+        => await db.Set<ScheduledDeadline>()
             .SingleOrDefaultAsync(d => d.ItemId == itemId, ct);
 
-        if (existing is null)
-        {
-            db.Set<ScheduledDeadline>().Add(new ScheduledDeadline(itemId, dueAtUtc));
-            return;
-        }
-
-        existing.Reschedule(dueAtUtc);
+    public async Task AddDeadlineAsync(ScheduledDeadline deadline)
+    {
+        await db.Set<ScheduledDeadline>().AddAsync(deadline);
     }
+
     public async Task RemoveDeadlineAsync(Guid itemId, CancellationToken ct = default)
     {
         var existing = await db
@@ -105,6 +101,7 @@ public class ItemRepository(MisaDbContext db) : IItemRepository
             return;   
         }
 
+        existing.Remove();
         db.Set<ScheduledDeadline>().Remove(existing);
     }
 }

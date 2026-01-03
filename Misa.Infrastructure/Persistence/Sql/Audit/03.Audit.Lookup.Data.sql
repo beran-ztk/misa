@@ -3,7 +3,8 @@ VALUES
     (100, 'State',    'Change of item state'),
     (101, 'Priority', 'Change of item priority'),
     (102, 'Category', 'Change of item category'),
-    (103, 'Title',    'Change of item title');
+    (103, 'Title',    'Change of item title'),
+    (104, 'Deadline', 'Change of item deadline');
 
 INSERT INTO session_efficiency_types (name, synopsis, sort_order)
 VALUES

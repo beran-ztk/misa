@@ -3,6 +3,7 @@ using Misa.Application.Common.Abstractions.Persistence;
 using Misa.Application.Common.Exceptions;
 using Misa.Application.Scheduling.Events;
 using Misa.Application.Scheduling.Events.Commands;
+using Misa.Domain.Scheduling;
 using Wolverine;
 
 namespace Misa.Application.Scheduling.Commands.Deadlines;
@@ -25,7 +26,16 @@ public sealed class UpsertItemDeadlineHandler(IItemRepository repository, IMessa
         if (dueAtUtc < DateTimeOffset.UtcNow)
             throw new ValidationException("DueAt must not be in the past."); 
         
-        await repository.UpsertDeadlineAsync(command.ItemId, dueAtUtc, ct);
+        var deadline = await repository.GetSingleTrackedDeadlineAsync(command.ItemId, ct);
+        
+        if (deadline is null)
+        {
+            await repository.AddDeadlineAsync(new ScheduledDeadline(command.ItemId, dueAtUtc));
+        }
+        else
+        {
+            deadline.Reschedule(dueAtUtc);
+        }
         
         await repository.SaveChangesAsync(ct);
 

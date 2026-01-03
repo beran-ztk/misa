@@ -1,5 +1,6 @@
 ﻿using Misa.Domain.Audit;
 using Misa.Domain.Items;
+using Misa.Domain.Scheduling;
 
 namespace Misa.Application.Common.Abstractions.Persistence;
 
@@ -18,6 +19,7 @@ public interface IItemRepository
     Task AddAsync(SessionSegment segment);
 
     // Deadlines (Item-owned)
-    Task UpsertDeadlineAsync(Guid itemId, DateTimeOffset dueAtUtc, CancellationToken ct = default);
+    Task<ScheduledDeadline?> GetSingleTrackedDeadlineAsync(Guid itemId, CancellationToken ct = default);
+    Task AddDeadlineAsync(ScheduledDeadline deadline);
     Task RemoveDeadlineAsync(Guid itemId, CancellationToken ct = default);
 }
