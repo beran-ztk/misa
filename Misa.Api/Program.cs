@@ -18,14 +18,18 @@ using Misa.Contract.Audit;
 using Misa.Contract.Entities;
 using Misa.Contract.Main;
 using Misa.Infrastructure.Persistence.Repositories;
+using Wolverine;
 
 const string connectionString =
     "Host=localhost;Port=5432;Database=misa;Username=postgres;Password=meow";
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddDbContext<MisaDbContext>(options =>
-    options.UseNpgsql(connectionString));
+builder.Host.UseWolverine();
+builder.Services.AddControllers();
+builder.Services.AddTransient<ExceptionMappingMiddleware>();
+builder.Services.AddDbContext<MisaDbContext>(options => options.UseNpgsql(connectionString));
+
 
 builder.Services.AddScoped<CreateItemHandler>();
 builder.Services.AddScoped<GetLookupsHandler>();
@@ -46,9 +50,10 @@ builder.Services.AddScoped<IEntityRepository, EntityRepository>();
 builder.Services.AddScoped<UpsertItemDeadlineHandler>();
 builder.Services.AddScoped<RemoveItemDeadlineHandler>();
 
-builder.Services.AddTransient<ExceptionMappingMiddleware>();
+
 
 var app = builder.Build();
+app.MapControllers();
 app.UseMiddleware<ExceptionMappingMiddleware>();
 
 app.MapGet("/api/entities/{id:guid}", 
