@@ -46,6 +46,8 @@ builder.Services.AddScoped<IEntityRepository, EntityRepository>();
 builder.Services.AddScoped<UpsertItemDeadlineHandler>();
 builder.Services.AddScoped<RemoveItemDeadlineHandler>();
 
+builder.Services.AddTransient<ExceptionMappingMiddleware>();
+
 var app = builder.Build();
 app.UseMiddleware<ExceptionMappingMiddleware>();
 
