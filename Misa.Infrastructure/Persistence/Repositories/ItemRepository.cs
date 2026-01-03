@@ -83,10 +83,8 @@ public class ItemRepository(MisaDbContext db) : IItemRepository
     }
     public async Task UpsertDeadlineAsync(Guid itemId, DateTimeOffset dueAtUtc, CancellationToken ct = default)
     {
-        var item = GetTrackedItemAsync(itemId);
         var utc = dueAtUtc.ToUniversalTime();
-
-
+        
         var existing = await db.Set<ScheduledDeadline>()
             .SingleOrDefaultAsync(d => d.ItemId == itemId, ct);
 
@@ -100,13 +98,14 @@ public class ItemRepository(MisaDbContext db) : IItemRepository
     }
     public async Task RemoveDeadlineAsync(Guid itemId, CancellationToken ct = default)
     {
-        var item = GetTrackedItemAsync(itemId);
-
-        var existing = await db.Set<ScheduledDeadline>()
+        var existing = await db
+            .Set<ScheduledDeadline>()
             .SingleOrDefaultAsync(d => d.ItemId == itemId, ct);
-
+        
         if (existing is null)
-            throw NotFoundException.For("Item", itemId);
+        {
+            return;   
+        }
 
         db.Set<ScheduledDeadline>().Remove(existing);
     }
