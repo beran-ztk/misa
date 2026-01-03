@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Misa.Application.Common.Exceptions;
 using Misa.Application.Items.Repositories;
 using Misa.Domain.Audit;
 using Misa.Domain.Scheduling;
@@ -110,7 +111,7 @@ public class ItemRepository(MisaDbContext db) : IItemRepository
             .SingleOrDefaultAsync(d => d.ItemId == itemId, ct);
 
         if (existing is null)
-            return;
+            throw NotFoundException.For("Item", itemId);
 
         db.Set<ScheduledDeadline>().Remove(existing);
     }
