@@ -1,0 +1,215 @@
+type: collection.insomnia.rest/5.0
+schema_version: "5.1"
+name: misa
+meta:
+  id: wrk_e5aafbcf87d54be886be34c968ce13ce
+  created: 1767450526180
+  modified: 1767470751694
+  description: ""
+collection:
+  - url: localhost:4500/items/019b3e16-0efb-7656-92b3-820cecbd7362/deadline
+    name: Delete Deadline with existing Guid
+    meta:
+      id: req_454b861a770949fdb7fe2b6ab71a4e61
+      created: 1767459328001
+      modified: 1767469732148
+      isPrivate: false
+      description: ""
+      sortKey: -1767459328001
+    method: DELETE
+    headers:
+      - name: User-Agent
+        value: insomnia/12.2.0
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: localhost:4500/items/00000000-0000-0000-0000-000000000000/deadline
+    name: Delete Deadline with empty Guid
+    meta:
+      id: req_665fee3cd8a14300bfd7147efd7c899b
+      created: 1767461964355
+      modified: 1767469725673
+      isPrivate: false
+      description: ""
+      sortKey: -1767461964355
+    method: DELETE
+    headers:
+      - name: User-Agent
+        value: insomnia/12.2.0
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: localhost:4500/items/019b3e16-0efb-7656-92b3-820cecbd7361/deadline
+    name: Delete Deadline with non-existing Guid
+    meta:
+      id: req_b85d79918b0f4a3a9d57200decd5f932
+      created: 1767469354121
+      modified: 1767469720431
+      isPrivate: false
+      description: ""
+      sortKey: -1767469354121
+    method: DELETE
+    headers:
+      - name: User-Agent
+        value: insomnia/12.2.0
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: localhost:4500/items/019b3e16-0efb-7656-92b3-820cecbd7362/deadline
+    name: Upsert Deadline with valid Timestamp and valid Guid
+    meta:
+      id: req_a7d76f5fe147434f9734857f94554696
+      created: 1767469429832
+      modified: 1767469711485
+      isPrivate: false
+      description: ""
+      sortKey: -1767469429832
+    method: PUT
+    body:
+      mimeType: application/json
+      text: |
+        {
+          "deadlineAt": "2028-01-15T10:00:00+01:00"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: User-Agent
+        value: insomnia/12.2.0
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: localhost:4500/items/019b3e16-0efb-7656-92b3-820cecbd7362/deadline
+    name: Upsert Deadline with invalid Timestamp and Guid
+    meta:
+      id: req_60c6b3c06b824d859794ecf7eb117e0d
+      created: 1767469626964
+      modified: 1767469662280
+      isPrivate: false
+      description: ""
+      sortKey: -1767469626964
+    method: PUT
+    body:
+      mimeType: application/json
+      text: |
+        {
+          "deadlineAt": "2024-01-15T10:00:00+01:00"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: User-Agent
+        value: insomnia/12.2.0
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: localhost:4500/items/00000000-0000-0000-0000-000000000000/deadline
+    name: Upsert Deadline with valid Timestamp and empty Guid
+    meta:
+      id: req_307768cabdab4ed0b7287ef300ee44c2
+      created: 1767469703471
+      modified: 1767469756977
+      isPrivate: false
+      description: ""
+      sortKey: -1767469391976.5
+    method: PUT
+    body:
+      mimeType: application/json
+      text: |
+        {
+          "deadlineAt": "2028-01-15T10:00:00+01:00"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: User-Agent
+        value: insomnia/12.2.0
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: localhost:4500/items/019b3e16-0efb-7656-92b3-820cecbd7361/deadline
+    name: Upsert Deadline with valid Timestamp and invalid Guid
+    meta:
+      id: req_3ca7047925a441218443a328c11dce0b
+      created: 1767469783030
+      modified: 1767469795044
+      isPrivate: false
+      description: ""
+      sortKey: -1767469410904.25
+    method: PUT
+    body:
+      mimeType: application/json
+      text: |
+        {
+          "deadlineAt": "2028-01-15T10:00:00+01:00"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: User-Agent
+        value: insomnia/12.2.0
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+cookieJar:
+  name: Default Jar
+  meta:
+    id: jar_1f03858e5508febb14c2ec6567933a8cfd2b8e8a
+    created: 1767450526184
+    modified: 1767450526184
+environments:
+  name: Base Environment
+  meta:
+    id: env_1f03858e5508febb14c2ec6567933a8cfd2b8e8a
+    created: 1767450526182
+    modified: 1767450526182
+    isPrivate: false
