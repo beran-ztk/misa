@@ -31,7 +31,7 @@ public class DetailMainDetailViewModel : ViewModelBase
         EntityDetail = parent;
         NavigationService = navigationService;
 
-        InformationViewModel = new DetailInformationViewModel(this);
+        InformationViewModel = new DetailInformationViewModel(this, true);
         RelationViewModel = new DetailInformationViewModel(this);
         SessionViewModel = new DetailInformationViewModel(this);
         HistoryViewModel = new DetailInformationViewModel(this);

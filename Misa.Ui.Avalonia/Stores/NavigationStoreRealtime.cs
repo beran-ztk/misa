@@ -18,16 +18,37 @@ public partial class NavigationStore : ObservableObject
 
     public event Action<EventDto>? RealtimeEventReceived;
 
+    private bool _realtimeWired;
+    private Action<EventDto>? _realtimeHandler;
+
     public void WireRealtimeHandlers()
     {
+        if (_realtimeWired)
+            return;
+
+        _realtimeWired = true;
+
         Console.WriteLine($"[NavStore] got event, store={GetHashCode()}");
 
-        Realtime.EventReceived += evt =>
+        _realtimeHandler = evt =>
         {
             RealtimeEventReceived?.Invoke(evt);
-
             HandleGlobalRefresh(evt);
         };
+
+        Realtime.EventReceived += _realtimeHandler;
+    }
+
+    public void UnwireRealtimeHandlers()
+    {
+        if (!_realtimeWired)
+            return;
+
+        if (_realtimeHandler is not null)
+            Realtime.EventReceived -= _realtimeHandler;
+
+        _realtimeHandler = null;
+        _realtimeWired = false;
     }
 
     private void HandleGlobalRefresh(EventDto evt)

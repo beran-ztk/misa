@@ -34,16 +34,20 @@ public partial class DetailInformationViewModel : ViewModelBase, IDisposable
     public ReactiveCommand<Unit, Unit> StartSessionCommand { get; }
     public ReactiveCommand<Unit, Unit> PauseSessionCommand { get; }
     private readonly NavigationStore _nav;
-    
+    private bool _disposed;
 
-    public DetailInformationViewModel(DetailMainDetailViewModel parent)
+    public DetailInformationViewModel(DetailMainDetailViewModel parent, bool listenRealtime = false)
     {
         Parent = parent;
         EntityDetail = parent.EntityDetail;
         
         _nav = parent.NavigationService.NavigationStore;
-        Console.WriteLine($"[VM] subscribe nav={_nav.GetHashCode()}");
-        _nav.RealtimeEventReceived += OnRealtimeEvent;
+        
+        if (listenRealtime)
+        {
+            Console.WriteLine($"[VM] subscribe nav={_nav.GetHashCode()}");
+            _nav.RealtimeEventReceived += OnRealtimeEvent;
+        }
         
         AddDescriptionCommand = ReactiveCommand.CreateFromTask(AddDescriptionAsync);
         AddDescriptionCommand.Subscribe();
@@ -72,6 +76,7 @@ public partial class DetailInformationViewModel : ViewModelBase, IDisposable
         {
             using var doc = JsonDocument.Parse(evt.Payload);
             itemId = doc.RootElement.GetProperty("itemId").GetGuid();
+            Console.WriteLine($"[Information] item={itemId}, store={GetHashCode()}");
         }
         catch { return; }
 
@@ -81,7 +86,7 @@ public partial class DetailInformationViewModel : ViewModelBase, IDisposable
 
         Dispatcher.UIThread.Post(() =>
         {
-            // Minimal Reaktion:
+            Console.WriteLine($"[InformationView] refresh Ui, store={GetHashCode()}");
             Parent.Refresh();
             CloseDeadlineForm(); // optional
         });
@@ -89,6 +94,9 @@ public partial class DetailInformationViewModel : ViewModelBase, IDisposable
 
     public void Dispose()
     {
+        if (_disposed) return;
+        _disposed = true;
+
         _nav.RealtimeEventReceived -= OnRealtimeEvent;
     }
     // Edit State
