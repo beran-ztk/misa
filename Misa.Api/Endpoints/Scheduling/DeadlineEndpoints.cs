@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Misa.Application.Scheduling.Commands.UpsertItemDeadline;
+using Misa.Contract.Scheduling;
 
 namespace Misa.Api.Endpoints.Scheduling;
 
@@ -34,4 +35,3 @@ public static class DeadlineEndpoints
     }
 }
 
-public record ScheduleDeadlineDto(Guid ItemId, DateTimeOffset DeadlineAtUtc);

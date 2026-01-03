@@ -2,6 +2,7 @@ using Misa.Infrastructure.Data;
 using Misa.Application.Items.Repositories;
 using Misa.Contract.Items;
 using Microsoft.EntityFrameworkCore;
+using Misa.Api.Common.Exceptions;
 using Misa.Api.Endpoints.Scheduling;
 using Misa.Application.Common.Abstractions.Persistence;
 using Misa.Application.Entities.Commands;
@@ -45,7 +46,10 @@ builder.Services.AddScoped<IEntityRepository, EntityRepository>();
 builder.Services.AddScoped<UpsertItemDeadlineHandler>();
 builder.Services.AddScoped<RemoveItemDeadlineHandler>();
 
+builder.Services.AddTransient<ExceptionMappingMiddleware>();
+
 var app = builder.Build();
+app.UseMiddleware<ExceptionMappingMiddleware>();
 
 app.MapGet("/api/entities/{id:guid}", 
     async (Guid id, GetSingleDetailedEntityHandler handler) 
