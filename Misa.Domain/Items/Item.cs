@@ -1,11 +1,11 @@
-﻿using Misa.Domain.Dictionaries.Audit;
+﻿using Misa.Domain.Common.DomainEvents;
+using Misa.Domain.Dictionaries.Audit;
 using Misa.Domain.Entities;
-using Misa.Domain.Main;
 using Misa.Domain.Scheduling;
 
 namespace Misa.Domain.Items;
 
-public class Item : ChangeEvent
+public class Item : DomainEventEntity
 {
     // Für EF Core
     private Item() { }

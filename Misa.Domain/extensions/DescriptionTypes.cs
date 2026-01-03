@@ -1,4 +1,4 @@
-namespace Misa.Domain.Main;
+namespace Misa.Domain.Extensions;
 
 public class DescriptionTypes
 {

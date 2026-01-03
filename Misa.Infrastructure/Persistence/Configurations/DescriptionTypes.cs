@@ -3,9 +3,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Misa.Infrastructure.Persistence.Configurations;
 
-public class DescriptionTypes : IEntityTypeConfiguration<Misa.Domain.Main.DescriptionTypes>
+public class DescriptionTypes : IEntityTypeConfiguration<Domain.Extensions.DescriptionTypes>
 {
-    public void Configure(EntityTypeBuilder<Misa.Domain.Main.DescriptionTypes> builder)
+    public void Configure(EntityTypeBuilder<Domain.Extensions.DescriptionTypes> builder)
     {
         builder.ToTable("description_types");
         builder.HasKey(x => x.Id);

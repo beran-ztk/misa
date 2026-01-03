@@ -2,7 +2,7 @@
 using Misa.Application.Main.Repositories;
 using Misa.Domain.Audit;
 using Misa.Domain.Dictionaries.Items;
-using Misa.Domain.Main;
+using Misa.Domain.Extensions;
 using Misa.Infrastructure.Data;
 using Category = Misa.Domain.Items.Category;
 using Priority = Misa.Domain.Items.Priority;

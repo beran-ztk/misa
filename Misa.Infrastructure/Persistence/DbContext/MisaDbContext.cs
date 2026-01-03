@@ -1,8 +1,8 @@
 ﻿using System.Security.AccessControl;
 using Misa.Domain.Items;
 using Microsoft.EntityFrameworkCore;
+using Misa.Domain.Common.DomainEvents;
 using Misa.Domain.Entities;
-using Misa.Domain.Main;
 
 namespace Misa.Infrastructure.Data;
 
@@ -17,8 +17,8 @@ public class MisaDbContext : DbContext
     public DbSet<Misa.Domain.Items.Priority> Priorities { get; set; } = null;
     public DbSet<Misa.Domain.Items.Category> Categories { get; set; } = null;
     public DbSet<Misa.Domain.Entities.Workflow> Workflows { get; set; } = null;
-    public DbSet<Misa.Domain.Main.Description> Descriptions { get; set; } = null;
-    public DbSet<Misa.Domain.Main.DescriptionTypes> DescriptionTypes { get; set; } = null;
+    public DbSet<Misa.Domain.Extensions.Description> Descriptions { get; set; } = null;
+    public DbSet<Misa.Domain.Extensions.DescriptionTypes> DescriptionTypes { get; set; } = null;
     
     public DbSet<Misa.Domain.Audit.Session> Sessions { get; set; } = null;
     public DbSet<Misa.Domain.Audit.SessionSegment> SessionSegments { get; set; } = null;

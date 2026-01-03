@@ -1,6 +1,6 @@
 ﻿using Misa.Application.Main.Repositories;
 using Misa.Contract.Main;
-using Misa.Domain.Main;
+using Misa.Domain.Extensions;
 
 namespace Misa.Application.Entities.Commands;
 

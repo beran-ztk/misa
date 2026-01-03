@@ -1,7 +1,4 @@
-﻿using System.Runtime.InteropServices;
-using Misa.Domain.Entities;
-
-namespace Misa.Domain.Main;
+﻿namespace Misa.Domain.Extensions;
 
 public class Description
 {
