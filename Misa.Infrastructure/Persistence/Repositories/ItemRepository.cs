@@ -83,18 +83,16 @@ public class ItemRepository(MisaDbContext db) : IItemRepository
     }
     public async Task UpsertDeadlineAsync(Guid itemId, DateTimeOffset dueAtUtc, CancellationToken ct = default)
     {
-        var utc = dueAtUtc.ToUniversalTime();
-        
         var existing = await db.Set<ScheduledDeadline>()
             .SingleOrDefaultAsync(d => d.ItemId == itemId, ct);
 
         if (existing is null)
         {
-            db.Set<ScheduledDeadline>().Add(new ScheduledDeadline(itemId, utc));
+            db.Set<ScheduledDeadline>().Add(new ScheduledDeadline(itemId, dueAtUtc));
             return;
         }
 
-        existing.Reschedule(utc);
+        existing.Reschedule(dueAtUtc);
     }
     public async Task RemoveDeadlineAsync(Guid itemId, CancellationToken ct = default)
     {

@@ -168,7 +168,7 @@
                         <StackPanel Grid.Column="1" Spacing="2">
                             <TextBlock Text="Deadline"
                                        FontWeight="SemiBold"/>
-                            <TextBlock Text="{Binding Parent.DetailedEntity.Item.ScheduledDeadline.DeadlineAtUtc, StringFormat={}{0:yyyy-MM-dd HH:mm}}"
+                            <TextBlock Text="{Binding Parent.DetailedEntity.Item.ScheduledDeadline.DeadlineAt, StringFormat={}{0:yyyy-MM-dd HH:mm}}"
                                        Opacity="0.85"/>
                         </StackPanel>
 

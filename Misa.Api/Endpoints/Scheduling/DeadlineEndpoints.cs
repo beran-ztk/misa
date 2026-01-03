@@ -18,10 +18,7 @@ public static class DeadlineEndpoints
         [FromBody] ScheduleDeadlineDto dto,
         UpsertItemDeadlineHandler handler)
     {
-        if (dto.ItemId != itemId)
-            return Results.BadRequest("Route itemId must match body ItemId.");
-
-        var dueAtUtc = dto.DeadlineAtUtc.ToUniversalTime();
+        var dueAtUtc = dto.DeadlineAt.ToUniversalTime();
 
         await handler.Handle(new UpsertItemDeadlineCommand(itemId, dueAtUtc));
         return Results.NoContent();

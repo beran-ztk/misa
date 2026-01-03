@@ -435,7 +435,7 @@ public partial class DetailInformationViewModel : ViewModelBase
     {
         IsDeadlineFormOpen = true;
 
-        var existingUtc = Parent.DetailedEntity?.Item?.ScheduledDeadline?.DeadlineAtUtc;
+        var existingUtc = Parent.DetailedEntity?.Item?.ScheduledDeadline?.DeadlineAt;
         var local = existingUtc?.ToLocalTime() ?? DateTimeOffset.Now;
 
         DeadlineDate = local.Date;
@@ -458,16 +458,13 @@ public partial class DetailInformationViewModel : ViewModelBase
 
             var localDateTime = DeadlineDate.Value.Date + DeadlineTime.Value;
             var localOffset = TimeZoneInfo.Local.GetUtcOffset(localDateTime);
-            var deadlineUtc = new DateTimeOffset(localDateTime, localOffset).ToUniversalTime();
+            var deadlineAt = new DateTimeOffset(localDateTime, localOffset);
 
-            var dto = new ScheduleDeadlineDto(
-                ItemId: Parent.DetailedEntity.Item.EntityId,
-                DeadlineAtUtc: deadlineUtc
-            );
+            var dto = new ScheduleDeadlineDto(DeadlineAt: deadlineAt);
 
             var response = await Parent.NavigationService.NavigationStore
                 .MisaHttpClient.PutAsJsonAsync(
-                    requestUri: $"items/{dto.ItemId}/deadline",
+                    requestUri: $"items/{Parent.DetailedEntity.Item.EntityId}/deadline",
                     dto
                 );
 

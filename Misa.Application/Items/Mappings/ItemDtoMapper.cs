@@ -39,7 +39,7 @@ public static class ItemDtoMapper
         };
 
     public static ScheduleDeadlineDto? ToDto(ScheduledDeadline? deadline)
-        => deadline == null ? null : new ScheduleDeadlineDto(deadline.ItemId, deadline.DeadlineAtUtc);
+        => deadline == null ? null : new ScheduleDeadlineDto(deadline.DeadlineAtUtc);
     public static List<ReadItemDto> ToReadItemDto(this List<Item> items)
         => items.Select(i => new ReadItemDto
         {
