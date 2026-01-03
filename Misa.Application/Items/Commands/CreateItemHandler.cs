@@ -1,6 +1,6 @@
-﻿using Misa.Application.Entities.Mappings;
+﻿using Misa.Application.Common.Abstractions.Persistence;
+using Misa.Application.Entities.Mappings;
 using Misa.Application.Items.Mappings;
-using Misa.Application.Items.Repositories;
 using Misa.Contract.Entities;
 using Misa.Contract.Items;
 using Misa.Domain.Dictionaries.Items;

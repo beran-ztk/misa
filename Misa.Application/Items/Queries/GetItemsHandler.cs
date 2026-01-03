@@ -1,5 +1,5 @@
-﻿using Misa.Application.Items.Mappings;
-using Misa.Application.Items.Repositories;
+﻿using Misa.Application.Common.Abstractions.Persistence;
+using Misa.Application.Items.Mappings;
 using Misa.Contract.Items;
 
 namespace Misa.Application.Items.Queries;

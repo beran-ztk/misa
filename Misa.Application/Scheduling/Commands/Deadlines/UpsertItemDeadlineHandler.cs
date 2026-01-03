@@ -1,6 +1,6 @@
-﻿using Misa.Application.Items.Repositories;
+﻿using Misa.Application.Common.Abstractions.Persistence;
 
-namespace Misa.Application.Scheduling.Commands.UpsertItemDeadline;
+namespace Misa.Application.Scheduling.Commands.Deadlines;
 
 public sealed class UpsertItemDeadlineHandler(IItemRepository items)
 {

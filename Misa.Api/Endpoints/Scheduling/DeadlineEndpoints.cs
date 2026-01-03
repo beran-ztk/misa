@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Misa.Application.Scheduling.Commands.UpsertItemDeadline;
+using Misa.Application.Scheduling.Commands.Deadlines;
 using Misa.Contract.Scheduling;
+using Wolverine;
 
 namespace Misa.Api.Endpoints.Scheduling;
 
@@ -28,9 +29,10 @@ public static class DeadlineEndpoints
 
     private static async Task<IResult> RemoveDeadline(
         [FromRoute] Guid itemId,
-        RemoveItemDeadlineHandler handler)
+        IMessageBus bus,
+        CancellationToken ct)
     {
-        await handler.Handle(new RemoveItemDeadlineCommand(itemId));
+        await bus.InvokeAsync(new RemoveItemDeadlineCommand(itemId), ct);
         return Results.NoContent();
     }
 }
