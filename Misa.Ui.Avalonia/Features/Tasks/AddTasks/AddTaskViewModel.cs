@@ -1,21 +1,19 @@
-﻿using Avalonia.Media;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Net.Http.Json;
 using System.Reactive;
 using System.Threading.Tasks;
-using Avalonia.Controls;
-using Avalonia.Markup.Xaml.MarkupExtensions;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Items;
 using Misa.Contract.Items.Lookups;
 using Misa.Ui.Avalonia.ViewModels.Shells;
 using ReactiveUI;
+using TaskViewModel = Misa.Ui.Avalonia.Features.Tasks.TasksHub.TaskViewModel;
 
-namespace Misa.Ui.Avalonia.ViewModels.Tasks;
+namespace Misa.Ui.Avalonia.Features.Tasks.AddTasks;
 
-public partial class TaskCreateViewModel : ViewModelBase
+public partial class AddTaskViewModel : ViewModelBase
 {
     public TaskViewModel MainViewModel { get; }
     public ReactiveCommand<Unit, Unit> CreateTaskCommand { get; }
@@ -25,7 +23,7 @@ public partial class TaskCreateViewModel : ViewModelBase
     private int _categoryId = 1;
     private string? _errorMessageTitle = null;
     private IBrush? _titleBorderBrush;
-    public TaskCreateViewModel(TaskViewModel vm)
+    public AddTaskViewModel(TaskViewModel vm)
     {
         MainViewModel = vm;
         

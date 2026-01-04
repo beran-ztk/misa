@@ -1,18 +1,16 @@
 ﻿using System;
-using System.Collections.ObjectModel;
-using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
 using Avalonia.Threading;
 using Misa.Contract.Items;
-using Misa.Ui.Avalonia.Stores;
 using Misa.Ui.Avalonia.ViewModels.Shells;
+using TaskViewModel = Misa.Ui.Avalonia.Features.Tasks.TasksHub.TaskViewModel;
 
-namespace Misa.Ui.Avalonia.ViewModels.Tasks;
+namespace Misa.Ui.Avalonia.Features.Tasks.GetTasks;
 
-public class TaskListViewModel : ViewModelBase
+public class GetTaskViewModel : ViewModelBase
 {
-    public TaskListViewModel(TaskViewModel vm)
+    public GetTaskViewModel(TaskViewModel vm)
     {
         MainViewModel = vm;
         _ = LoadAsync();

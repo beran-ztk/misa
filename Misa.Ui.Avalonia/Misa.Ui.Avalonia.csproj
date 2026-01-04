@@ -9,9 +9,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Folder Include="Feature\Tasks\" />
-        <Folder Include="Interfaces\" />
-        <Folder Include="Models\"/>
+        <Folder Include="Infrastructure\" />
         <AvaloniaResource Include="Assets\**"/>
     </ItemGroup>
 
@@ -43,6 +41,22 @@
     <ItemGroup>
       <Compile Update="Views\Shells\MainWindow.axaml.cs">
         <DependentUpon>MainWindow.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+      <Compile Update="Features\Tasks\AddTasks\AddTaskView.axaml.cs">
+        <DependentUpon>TaskCreateView.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+      <Compile Update="Features\Tasks\GetTasks\GetTaskView.axaml.cs">
+        <DependentUpon>TaskListView.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+      <Compile Update="Features\Tasks\TasksHub\TaskView.axaml.cs">
+        <DependentUpon>TaskView.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+      <Compile Update="Features\Tasks\TaskNavigation\TaskNavigationView.axaml.cs">
+        <DependentUpon>TaskNavigationView.axaml</DependentUpon>
         <SubType>Code</SubType>
       </Compile>
     </ItemGroup>

@@ -1,5 +1,5 @@
 ﻿using Misa.Ui.Avalonia.Stores;
-using Misa.Ui.Avalonia.ViewModels.Tasks;
+using TaskViewModel = Misa.Ui.Avalonia.Features.Tasks.TasksHub.TaskViewModel;
 
 namespace Misa.Ui.Avalonia.Services.Navigation;
 

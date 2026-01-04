@@ -1,20 +1,16 @@
-﻿using Avalonia;
-using Avalonia.Controls;
-using Avalonia.Markup.Xaml;
-using Avalonia.Media;
-using Misa.Ui.Avalonia.ViewModels.Tasks;
+﻿using Avalonia.Controls;
 
-namespace Misa.Ui.Avalonia.Views.Tasks;
+namespace Misa.Ui.Avalonia.Features.Tasks.AddTasks;
 
-public partial class TaskCreateView : UserControl
+public partial class AddTaskView : UserControl
 {
-    public TaskCreateView()
+    public AddTaskView()
     {
         InitializeComponent();
     }
     public void TitleTextChangedEvent(object sender, TextChangedEventArgs e)
     {
-        if (DataContext is not TaskCreateViewModel viewModel) return;
+        if (DataContext is not AddTaskViewModel viewModel) return;
         
         if (!string.IsNullOrEmpty(viewModel.Title))
         {

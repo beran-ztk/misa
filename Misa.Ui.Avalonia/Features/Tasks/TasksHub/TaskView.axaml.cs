@@ -1,8 +1,6 @@
-﻿using Avalonia;
-using Avalonia.Controls;
-using Avalonia.Markup.Xaml;
+﻿using Avalonia.Controls;
 
-namespace Misa.Ui.Avalonia.Views.Tasks;
+namespace Misa.Ui.Avalonia.Features.Tasks.TasksHub;
 
 public partial class TaskView : UserControl
 {

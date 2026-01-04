@@ -1,15 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Misa.Contract.Entities;
 using Misa.Contract.Items;
+using Misa.Ui.Avalonia.Features.Tasks.GetTasks;
+using Misa.Ui.Avalonia.Features.Tasks.TaskNavigation;
 using Misa.Ui.Avalonia.Interfaces;
 using Misa.Ui.Avalonia.Services.Navigation;
 using Misa.Ui.Avalonia.ViewModels.Details;
 using Misa.Ui.Avalonia.ViewModels.Shells;
 
-namespace Misa.Ui.Avalonia.ViewModels.Tasks;
+namespace Misa.Ui.Avalonia.Features.Tasks.TasksHub;
 
 public enum TaskDetailMode
 {
@@ -27,7 +28,7 @@ public partial class TaskViewModel : ViewModelBase, IEntityDetail
     private ViewModelBase? _currentInfoModel;
     public INavigationService NavigationService;
     public DetailMainDetailViewModel DetailViewModel { get; } 
-    public TaskListViewModel ListModel { get; }
+    public GetTaskViewModel Model { get; }
     public TaskNavigationViewModel Navigation { get; }
     public ObservableCollection<ReadItemDto> Items { get; set; } = [];
     
@@ -36,7 +37,7 @@ public partial class TaskViewModel : ViewModelBase, IEntityDetail
     {
         NavigationService = navigationService;
         
-        ListModel = new TaskListViewModel(this);
+        Model = new GetTaskViewModel(this);
         Navigation = new TaskNavigationViewModel(this);
         DetailViewModel = new DetailMainDetailViewModel(this, NavigationService);
     }
@@ -44,7 +45,7 @@ public partial class TaskViewModel : ViewModelBase, IEntityDetail
     [ObservableProperty] public Guid? _selectedEntity;
     public void ReloadList()
     {
-        _ = ListModel.LoadAsync();
+        _ = Model.LoadAsync();
     }
 
     public ViewModelBase? CurrentInfoModel

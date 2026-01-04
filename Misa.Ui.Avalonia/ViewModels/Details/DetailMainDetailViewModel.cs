@@ -1,14 +1,9 @@
 ﻿using System;
-using System.ComponentModel;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
-using Avalonia.Threading;
 using Misa.Contract.Entities;
-using Misa.Contract.Items;
 using Misa.Ui.Avalonia.Interfaces;
 using Misa.Ui.Avalonia.Services.Navigation;
-using Misa.Ui.Avalonia.Stores;
-using Misa.Ui.Avalonia.ViewModels.Items;
 using Misa.Ui.Avalonia.ViewModels.Shells;
 using ReactiveUI;
 

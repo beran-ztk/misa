@@ -3,13 +3,13 @@ using System.Reactive;
 using Misa.Ui.Avalonia.ViewModels.Shells;
 using ReactiveUI;
 
-namespace Misa.Ui.Avalonia.ViewModels.Tasks;
+namespace Misa.Ui.Avalonia.Features.Tasks.TaskNavigation;
 
 public class TaskNavigationViewModel : ViewModelBase
 {
-    public TaskViewModel MainViewModel { get; }
+    public Features.Tasks.TasksHub.TaskViewModel MainViewModel { get; }
     public ReactiveCommand<Unit, Unit> AddTaskCommand { get; }
-    public TaskNavigationViewModel(TaskViewModel vm)
+    public TaskNavigationViewModel(Features.Tasks.TasksHub.TaskViewModel vm)
     {
         MainViewModel = vm;
         AddTaskCommand = ReactiveCommand.Create(AddTaskCommandAsync);
@@ -20,6 +20,6 @@ public class TaskNavigationViewModel : ViewModelBase
     private void AddTaskCommandAsync()
     {
         MainViewModel.IsCreateTaskFormOpen = true;
-        MainViewModel.CurrentInfoModel = new TaskCreateViewModel(MainViewModel);
+        MainViewModel.CurrentInfoModel = new Features.Tasks.AddTasks.AddTaskViewModel(MainViewModel);
     }
 }

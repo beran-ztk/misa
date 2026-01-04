@@ -3,9 +3,9 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="Misa.Ui.Avalonia.Views.Tasks.TaskListView"
-             xmlns:vm="clr-namespace:Misa.Ui.Avalonia.ViewModels.Tasks"
-             x:DataType="vm:TaskListViewModel">
+             x:Class="Misa.Ui.Avalonia.Features.Tasks.GetTasks.GetTaskView"
+             xmlns:getTasks="clr-namespace:Misa.Ui.Avalonia.Features.Tasks.GetTasks"
+             x:DataType="getTasks:GetTaskViewModel">
     
     <Border Padding="8"
             Background="{StaticResource ColorPrimaryBackground}">

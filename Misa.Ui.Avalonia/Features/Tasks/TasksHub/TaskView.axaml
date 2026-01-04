@@ -3,10 +3,11 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="Misa.Ui.Avalonia.Views.Tasks.TaskView"
-             xmlns:views="clr-namespace:Misa.Ui.Avalonia.Views.Tasks"
-             xmlns:vm="clr-namespace:Misa.Ui.Avalonia.ViewModels.Tasks"
-             x:DataType="vm:TaskViewModel">
+             x:Class="Misa.Ui.Avalonia.Features.Tasks.TasksHub.TaskView"
+             xmlns:getTasks="clr-namespace:Misa.Ui.Avalonia.Features.Tasks.GetTasks"
+             xmlns:tasksHub="clr-namespace:Misa.Ui.Avalonia.Features.Tasks.TasksHub"
+             xmlns:taskNavigation="clr-namespace:Misa.Ui.Avalonia.Features.Tasks.TaskNavigation"
+             x:DataType="tasksHub:TaskViewModel">
     <Border>
         <Grid ColumnDefinitions="*,1,*">
             
@@ -15,10 +16,10 @@
                     BorderBrush="{StaticResource BrushBorder}">
                 <Grid RowDefinitions="50,*">
                 
-                    <views:TaskNavigationView Grid.Row="0"
+                    <taskNavigation:TaskNavigationView Grid.Row="0"
                                               DataContext="{Binding Navigation}" />
-                    <views:TaskListView Grid.Row="1"
-                                        DataContext="{Binding ListModel}" />
+                    <getTasks:GetTaskView Grid.Row="1"
+                                        DataContext="{Binding Model}" />
                 </Grid>
             </Border>
             <GridSplitter Grid.Column="1"
