@@ -1,6 +1,4 @@
 ﻿using Misa.Ui.Avalonia.Stores;
-using Misa.Ui.Avalonia.ViewModels.Informations;
-using Misa.Ui.Avalonia.ViewModels.Items;
 using Misa.Ui.Avalonia.ViewModels.Tasks;
 
 namespace Misa.Ui.Avalonia.Services.Navigation;
@@ -13,16 +11,6 @@ public class NavigationService : INavigationService
     {
         NavigationStore = navigationStore;
         LookupsStore = lookupsStore;
-    }
-
-
-    public void ShowItems()
-    {
-        NavigationStore.CurrentViewModel = new ItemViewModel(this, NavigationStore);
-    }
-    public void ShowNotifications()
-    {
-        NavigationStore.CurrentInfoViewModel = new NotificationViewModel();
     }
     public void ShowTasks()
     {

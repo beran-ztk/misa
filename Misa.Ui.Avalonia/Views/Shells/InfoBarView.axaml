@@ -11,11 +11,7 @@
             BorderBrush="{StaticResource BrushSecondaryBackground}"
             BorderThickness="1,0,0,0">
         
-        <StackPanel Spacing="8">
-            <Button Command="{Binding ShowNotificationsCommand}">
-                <Image Source="{SvgImage /Assets/Images/InfoNavigation/notification.svg}" Width="16" Height="16"/>
-            </Button>
-        </StackPanel>
+
         
     </Border>
 </UserControl>

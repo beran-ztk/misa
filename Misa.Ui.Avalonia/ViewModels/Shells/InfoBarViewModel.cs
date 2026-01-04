@@ -10,10 +10,4 @@ public partial class InfoBarViewModel : ViewModelBase
         _navigationService  = navigationService;
     }
     private readonly INavigationService _navigationService;
-    
-    [RelayCommand]
-    public void ShowNotifications()
-    {
-        _navigationService.ShowNotifications();
-    }
 }
