@@ -1,110 +1,62 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Net.Http.Json;
-using System.Reactive;
 using System.Threading.Tasks;
 using Avalonia.Media;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Items;
 using Misa.Contract.Items.Lookups;
 using Misa.Ui.Avalonia.Features.Tasks.Shared;
-using Misa.Ui.Avalonia.Features.Tasks.Shared;
 using Misa.Ui.Avalonia.Presentation.Mapping;
-using ReactiveUI;
 using PageViewModel = Misa.Ui.Avalonia.Features.Tasks.Page.PageViewModel;
 
 namespace Misa.Ui.Avalonia.Features.Tasks.Create;
 
 public partial class CreateViewModel : ViewModelBase
 {
-    public PageViewModel MainViewModel { get; }
+    private PageViewModel MainViewModel { get; }
     private readonly IEventBus _bus;
-
-    public ReactiveCommand<Unit, Unit> CreateTaskCommand { get; }
-
-    private string _title = string.Empty;
-    private int _priorityId = 1;
-    private int _categoryId = 1;
-    private string? _errorMessageTitle = null;
-    private IBrush? _titleBorderBrush;
-
+    
     public CreateViewModel(PageViewModel vm, IEventBus bus)
     {
         MainViewModel = vm;
         _bus = bus;
-
-        CreateTaskCommand = ReactiveCommand.CreateFromTask(
-            execute: CreateTaskCommandAsync,
-            canExecute: this.WhenAnyValue(x => x.Title, t => !string.IsNullOrWhiteSpace(t))
-        );
-
-        CreateTaskCommand.ThrownExceptions.Subscribe(_ =>
-        {
-            ErrorMessageTitle = "Unexpected error while creating the task.";
-            TitleBorderBrush = Brushes.Red;
-        });
     }
 
-    public string Title
-    {
-        get => _title;
-        set => SetProperty(ref _title, value);
-    }
+    [ObservableProperty] private string _title = string.Empty;
+    [ObservableProperty] private int _priorityId = 1;
+    [ObservableProperty] private int _categoryId = 1;
 
-    public int PriorityId
-    {
-        get => _priorityId;
-        set => SetProperty(ref _priorityId, value);
-    }
-
-    public int CategoryId
-    {
-        get => _categoryId;
-        set => SetProperty(ref _categoryId, value);
-    }
-
-    public string? ErrorMessageTitle
-    {
-        get => _errorMessageTitle;
-        set => SetProperty(ref _errorMessageTitle, value);
-    }
-
-    public IBrush? TitleBorderBrush
-    {
-        get => _titleBorderBrush;
-        set => SetProperty(ref _titleBorderBrush, value);
-    }
-
+    [ObservableProperty] private bool _titleHasValidationError;
+    [ObservableProperty] private string _errorMessageTitle = string.Empty;
+    
     public IReadOnlyList<PriorityDto> Priorities =>
         MainViewModel.NavigationService.LookupsStore.Priorities;
 
     public IReadOnlyList<CategoryDto> Categories =>
         MainViewModel.NavigationService.LookupsStore.TaskCategories;
 
-    private void TitleError(string message)
+    private void TitleValidationError(string message)
     {
+        TitleHasValidationError = true;
         ErrorMessageTitle = message;
-        TitleBorderBrush = Brushes.Red;
     }
 
     [RelayCommand]
-    private void CancelTask()
+    private void Cancel()
     {
         _bus.Publish(new CloseRightPaneRequested());
     }
-
-    private async Task CreateTaskCommandAsync()
+    [RelayCommand]
+    private async Task Create()
     {
-        var trimmedTitle = Title?.Trim();
+        var trimmedTitle = Title.Trim();
 
         if (string.IsNullOrWhiteSpace(trimmedTitle))
         {
-            TitleError("Please specify a title.");
+            TitleValidationError("Please specify a title.");
             return;
         }
-
-        ErrorMessageTitle = null;
-        TitleBorderBrush = null;
 
         var dto = new CreateItemDto
         {
@@ -124,7 +76,7 @@ public partial class CreateViewModel : ViewModelBase
                 ? $"Server returned {response.StatusCode}."
                 : $"Server returned {response.StatusCode}: {body}";
 
-            TitleError(msg);
+            TitleValidationError(msg);
             _bus.Publish(new TaskCreateFailed(msg));
             return;
         }
@@ -132,7 +84,7 @@ public partial class CreateViewModel : ViewModelBase
         var createdItem = await response.Content.ReadFromJsonAsync<ReadItemDto>();
         if (createdItem == null)
         {
-            TitleError("Server returned success but no task payload.");
+            TitleValidationError("Server returned success but no task payload.");
             _bus.Publish(new TaskCreateFailed("Server returned success but no task payload."));
             return;
         }

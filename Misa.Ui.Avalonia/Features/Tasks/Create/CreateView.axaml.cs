@@ -13,7 +13,6 @@ public partial class CreateView : UserControl
         if (DataContext is not CreateViewModel viewModel) return;
 
         if (string.IsNullOrEmpty(viewModel.Title)) return;
-        viewModel.ErrorMessageTitle = null;
-        viewModel.TitleBorderBrush = null;
+        viewModel.TitleHasValidationError = false;
     }
 }

@@ -36,19 +36,12 @@
 
                     <TextBox Classes="misa-input"
                              Watermark="Task title..."
-                             BorderBrush="{Binding TitleBorderBrush, Mode=OneWay}"
-                             Text="{Binding Title, UpdateSourceTrigger=PropertyChanged}"
-                             TextChanged="TitleTextChangedEvent">
-                    </TextBox>
+                             Text="{Binding Title, Mode=TwoWay}"
+                             TextChanged="TitleTextChangedEvent" />
                     
-                    <ContentControl Content="{Binding ErrorMessageTitle}">
-                        <ContentControl.DataTemplates>
-                            <DataTemplate x:DataType="x:String">
-                                <TextBlock Classes="misa-error"
-                                           Text="{Binding}"/>
-                            </DataTemplate>
-                        </ContentControl.DataTemplates>
-                    </ContentControl>
+                    <TextBlock Classes="misa-error"
+                               Text="{Binding ErrorMessageTitle}"
+                               IsVisible="{Binding TitleHasValidationError}" />
                     
                     <Separator Foreground="{StaticResource BrushBorder}" HorizontalAlignment="Stretch"/>
                     
@@ -86,10 +79,10 @@
                         Margin="0,8,0,0">
                 <Button Classes="misa-primary"
                         Content="Cancel"
-                        Command="{Binding CancelTaskCommand}" />
+                        Command="{Binding CancelCommand}" />
                 <Button Classes="misa-primary"
                         Content="Create"
-                        Command="{Binding CreateTaskCommand}" />
+                        Command="{Binding CreateCommand}" />
             </StackPanel>
         </Grid>
     </Border>
