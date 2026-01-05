@@ -1,12 +1,17 @@
 # MISA
 
-MISA is a personal meta-organization and orchestration system.  
-It is designed to model, connect, and control all workflows in a structured and explicit way.
+MISA is a personal meta-organization and orchestration system.
+Its purpose is to make work, knowledge, and decisions explicitly modelable, traceable, and evolvable over time.
+
+Instead of managing isolated tasks or notes, MISA focuses on controlling how things relate, depend on each other, and progress.
 
 ## Concept & Direction
-MISA treats work and knowledge as **Items** with clearly defined lifecycles, dependencies, and state transitions that can be orchestrated.
-It includes a deeply integrated calendar used for orchestration rather than scheduling.  
-Its long-term goal is to manage a Zettelkasten-like knowledge system where topics, work units, and decisions can be critically evaluated over time.
+
+MISA models all work and knowledge as Items with explicit lifecycles, states, and dependencies. These Items can represent tasks, topics, decisions, sessions, or any other unit of work or thought.
+
+A central calendar is used as an orchestration layer, not as a simple scheduler. It coordinates when and how Items progress, interact, or trigger follow-up actions.
+
+Long-term, MISA aims to function as a critically evaluable, Zettelkasten-like knowledge system where ideas, work units, and decisions can be reviewed, revised, and connected across time.
 
 ## Tech Stack
 • .NET  
