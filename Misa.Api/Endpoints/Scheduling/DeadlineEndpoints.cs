@@ -27,10 +27,10 @@ public static class DeadlineEndpoints
     private static async Task<IResult> RemoveDeadline(
         [FromRoute] Guid itemId,
         IMessageBus bus,
-        CancellationToken ct)
+        CancellationToken userCt)
     {
         using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct, timeoutCts.Token);
+        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(userCt, timeoutCts.Token);
 
         try
         {
@@ -38,11 +38,11 @@ public static class DeadlineEndpoints
 
             return result.ToIResult();
         }
-        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        catch (OperationCanceledException) when (userCt.IsCancellationRequested)
         {
-            return Results.StatusCode(499);
+            return Results.StatusCode(StatusCodes.Status499ClientClosedRequest);
         }
-        catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested)
+        catch (OperationCanceledException) when (linkedCts.IsCancellationRequested)
         {
             return Results.Problem(
                 title: "Request timed out", 
