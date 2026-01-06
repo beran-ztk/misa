@@ -29,9 +29,26 @@ public static class DeadlineEndpoints
         IMessageBus bus,
         CancellationToken ct)
     {
-        var result = await bus.InvokeAsync<Result>(new RemoveItemDeadlineCommand(itemId), ct);
+        using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct, timeoutCts.Token);
 
-        return result.ToIResult();
+        try
+        {
+            var result = await bus.InvokeAsync<Result>(new RemoveItemDeadlineCommand(itemId), linkedCts.Token);
+
+            return result.ToIResult();
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            return Results.StatusCode(499);
+        }
+        catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested)
+        {
+            return Results.Problem(
+                title: "Request timed out", 
+                statusCode: StatusCodes.Status504GatewayTimeout
+            );
+        }
     }
 }
 
