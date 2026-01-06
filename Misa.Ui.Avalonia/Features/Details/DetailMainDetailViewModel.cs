@@ -14,12 +14,8 @@ public class DetailMainDetailViewModel : ViewModelBase
 {
     public IEntityDetail EntityDetail { get; }
     public EntityDto? _detailedEntity;
-    public ViewModelBase? EntityInformationView { get; set; }
     private int _selectedTabIndex;
-    public Features.Details.DetailInformationViewModel InformationViewModel { get; }
-    public Features.Details.DetailInformationViewModel RelationViewModel { get; }
-    public Features.Details.DetailInformationViewModel SessionViewModel { get; }
-    public Features.Details.DetailInformationViewModel HistoryViewModel { get; }
+    public DetailInformationViewModel InformationViewModel { get; }
     public INavigationService NavigationService { get; }
     
     public DetailMainDetailViewModel(IEntityDetail parent, INavigationService navigationService)
@@ -27,10 +23,7 @@ public class DetailMainDetailViewModel : ViewModelBase
         EntityDetail = parent;
         NavigationService = navigationService;
 
-        InformationViewModel = new Features.Details.DetailInformationViewModel(this, true);
-        RelationViewModel = new Features.Details.DetailInformationViewModel(this);
-        SessionViewModel = new Features.Details.DetailInformationViewModel(this);
-        HistoryViewModel = new Features.Details.DetailInformationViewModel(this);
+        InformationViewModel = new DetailInformationViewModel(this);
         
         this.WhenAnyValue(x => x.EntityDetail.SelectedEntity)
             .Subscribe(_ => OnSelectedEntityChanged());
