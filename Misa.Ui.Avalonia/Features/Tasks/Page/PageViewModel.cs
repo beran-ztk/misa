@@ -1,32 +1,40 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.Reactive.Disposables;
+using System.Reactive.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Misa.Contract.Items;
-using Misa.Ui.Avalonia.Features.Details;
-using Misa.Ui.Avalonia.Features.Tasks.Shared;
+using Misa.Ui.Avalonia.Features.Details.Page;
 using Misa.Ui.Avalonia.Features.Tasks.Create;
 using Misa.Ui.Avalonia.Features.Tasks.List;
+using Misa.Ui.Avalonia.Features.Tasks.Shared;
 using Misa.Ui.Avalonia.Infrastructure.Services.Interfaces;
 using Misa.Ui.Avalonia.Infrastructure.Services.Navigation;
 using Misa.Ui.Avalonia.Presentation.Mapping;
+using ReactiveUI;
 using NavigationViewModel = Misa.Ui.Avalonia.Features.Tasks.Navigation.NavigationViewModel;
 
 namespace Misa.Ui.Avalonia.Features.Tasks.Page;
 
-public partial class PageViewModel : ViewModelBase, IEntityDetail, IDisposable
+public partial class PageViewModel : ViewModelBase, IEntityDetailHost, IDisposable
 {
-    private ReadItemDto? _selectedTask;
-    private ViewModelBase? _currentInfoModel;
+    [ObservableProperty] private Guid _activeEntityId = Guid.Empty;
 
-    public INavigationService NavigationService;
-    public DetailMainDetailViewModel DetailViewModel { get; }
+    public INavigationService NavigationService { get; }
+
+    [ObservableProperty] private ReadItemDto? _selectedItem;
+
+    partial void OnSelectedItemChanged(ReadItemDto? value)
+    {
+        ActiveEntityId = value?.EntityId ?? Guid.Empty;
+    }
+
+    private ViewModelBase? _currentInfoModel;
+    private readonly DetailPageViewModel _detailViewModel;
 
     public ListViewModel Model { get; }
     public NavigationViewModel Navigation { get; }
-
     public ObservableCollection<ReadItemDto> Items { get; } = [];
-
-    [ObservableProperty] public Guid? _selectedEntity;
 
     [ObservableProperty] private string? _pageError;
 
@@ -46,7 +54,12 @@ public partial class PageViewModel : ViewModelBase, IEntityDetail, IDisposable
 
         Model = new ListViewModel(this, Bus);
         Navigation = new NavigationViewModel(this, Bus);
-        DetailViewModel = new DetailMainDetailViewModel(this, NavigationService);
+        _detailViewModel = new DetailPageViewModel(this);
+        
+        this.WhenAnyValue(x => x.ActiveEntityId)
+            // .Where(id => id != Guid.Empty)
+            // .DistinctUntilChanged()
+            .Subscribe(_ => ShowDetails());
 
         _subOpenCreate = Bus.Subscribe<OpenCreateRequested>(_ =>
         {
@@ -60,7 +73,7 @@ public partial class PageViewModel : ViewModelBase, IEntityDetail, IDisposable
             CurrentInfoModel = null;
         });
 
-        _subReload = Bus.Subscribe<ReloadTasksRequested>(evt =>
+        _subReload = Bus.Subscribe<ReloadTasksRequested>(x =>
         {
             PageError = null;
             _ = Model.LoadAsync();
@@ -69,10 +82,8 @@ public partial class PageViewModel : ViewModelBase, IEntityDetail, IDisposable
         _subCreated = Bus.Subscribe<TaskCreated>(e =>
         {
             PageError = null;
-
             Items.Add(e.Created);
-
-            SelectedTask = e.Created;
+            SelectedItem = e.Created; // triggert ActiveEntityId über OnSelectedItemChanged
         });
 
         _subCreateFailed = Bus.Subscribe<TaskCreateFailed>(e =>
@@ -89,18 +100,8 @@ public partial class PageViewModel : ViewModelBase, IEntityDetail, IDisposable
         set => SetProperty(ref _currentInfoModel, value);
     }
 
-    public void ShowDetails() => CurrentInfoModel = DetailViewModel;
+    public void ShowDetails() => CurrentInfoModel = _detailViewModel;
 
-    public ReadItemDto? SelectedTask
-    {
-        get => _selectedTask;
-        set
-        {
-            SetProperty(ref _selectedTask, value);
-            SelectedEntity = value?.Entity.Id;
-            ShowDetails();
-        }
-    }
     public void Dispose()
     {
         _subOpenCreate.Dispose();
@@ -108,5 +109,7 @@ public partial class PageViewModel : ViewModelBase, IEntityDetail, IDisposable
         _subReload.Dispose();
         _subCreated.Dispose();
         _subCreateFailed.Dispose();
+
+        _detailViewModel.Dispose();
     }
 }
