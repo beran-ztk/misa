@@ -178,12 +178,19 @@
                                     HorizontalAlignment="Right">
 
                             <Button Classes="misa-action"
+                                    Content="Cancel"
+                                    IsVisible="{Binding IsRemovingDeadline}"
+                                    Command="{Binding CancelRemoveDeadlineCommand}"/>
+                            
+                            <Button Classes="misa-action"
                                     Content="Update"
                                     Command="{Binding ShowDeadlineFormCommand}"/>
 
                             <Button Classes="misa-action"
                                     Content="Remove"
+                                    IsEnabled="{Binding !IsRemovingDeadline}"
                                     Command="{Binding RemoveDeadlineCommand}"/>
+
                         </StackPanel>
                     </Grid>
                 </Border>

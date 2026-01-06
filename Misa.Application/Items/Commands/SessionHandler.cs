@@ -10,7 +10,7 @@ public class SessionHandler(IItemRepository repository, IEntityRepository entity
     public async Task StartSessionAsync(SessionDto dto)
     {
         var hasBeenChanged = false;
-        var item = await repository.TryGetItemAsync(dto.EntityId);
+        var item = await repository.TryGetItemAsync(dto.EntityId, CancellationToken.None);
         item.StartSession(ref hasBeenChanged);
 
         var session = Session.Start

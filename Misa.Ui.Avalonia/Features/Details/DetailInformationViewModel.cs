@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Net.Http.Json;
 using System.Reactive;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -525,26 +527,62 @@ public partial class DetailInformationViewModel : ViewModelBase, IDisposable
         }
     }
 
+    // Remove Deadline
+    private CancellationTokenSource? _removeDeadlineCts;
+    
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(RemoveDeadlineCommand))]
+    [NotifyCanExecuteChangedFor(nameof(CancelRemoveDeadlineCommand))]
+    private bool _isRemovingDeadline;
+    private bool CanCancelRemoveDeadline() => IsRemovingDeadline;
+
+    [RelayCommand(CanExecute = nameof(CanCancelRemoveDeadline))]
+    private void CancelRemoveDeadline()
+    {
+        _removeDeadlineCts?.Cancel();
+    }
+    
     [RelayCommand]
     private async Task RemoveDeadline()
     {
+        if (Parent.DetailedEntity?.Item is null)
+        {
+            return;
+        }
+        
+        _removeDeadlineCts?.Dispose();
+        _removeDeadlineCts = new CancellationTokenSource();
+
+        IsRemovingDeadline = true;
+        
         try
         {
-            if (Parent.DetailedEntity?.Item is null)
-                return;
-
             var itemId = Parent.DetailedEntity.Item.EntityId;
 
+            using var request = new HttpRequestMessage(HttpMethod.Delete, $"items/{itemId}/deadline");
+
             var response = await Parent.NavigationService.NavigationStore
-                .MisaHttpClient.DeleteAsync($"items/{itemId}/deadline");
+                .MisaHttpClient.SendAsync(request, _removeDeadlineCts.Token);
 
             if (!response.IsSuccessStatusCode)
+            {
                 Console.WriteLine($"Server returned {response.StatusCode}: {response.ReasonPhrase}");
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            Console.WriteLine("RemoveDeadline canceled by user.");
         }
         catch (Exception e)
         {
             Console.WriteLine(e);
         }
+        finally
+        {
+            _removeDeadlineCts?.Dispose();
+            _removeDeadlineCts = null;
+            
+            IsRemovingDeadline = false;
+        }
     }
-
 }

@@ -10,6 +10,7 @@ public sealed class RemoveItemDeadlineHandler(IItemRepository repository, IMessa
 {
     public async Task<Result> Handle(RemoveItemDeadlineCommand command, CancellationToken ct)
     {
+        Thread.Sleep(3000);
         if (command.ItemId == Guid.Empty)
         {
             return Result.Invalid(DeadlineErrorCodes.ItemIdEmpty, "ItemId must not be empty.");

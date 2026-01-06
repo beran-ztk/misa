@@ -18,7 +18,7 @@ public sealed class UpsertItemDeadlineHandler(IItemRepository repository, IMessa
         if (command.DueAt == default)
             throw new ValidationException("DueAt must be specified.");
 
-        var item = await repository.TryGetItemAsync(command.ItemId);
+        var item = await repository.TryGetItemAsync(command.ItemId, CancellationToken.None);
         if (item is null)
             throw NotFoundException.For("Item", command.ItemId);
 
