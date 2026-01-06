@@ -10,6 +10,7 @@
 
     <ItemGroup>
         <AvaloniaResource Include="Assets\**"/>
+        <Folder Include="Features\Details\History\" />
         <Folder Include="Infrastructure\Logging\" />
         <Folder Include="Presentation\Behaviors\" />
         <Folder Include="Presentation\Controls\" />
@@ -60,26 +61,6 @@
         <DependentUpon>TaskNavigationView.axaml</DependentUpon>
         <SubType>Code</SubType>
       </Compile>
-      <Compile Update="Features\Details\DetailHistoryView.axaml.cs">
-        <DependentUpon>DetailHistoryView.axaml</DependentUpon>
-        <SubType>Code</SubType>
-      </Compile>
-      <Compile Update="Features\Details\DetailInformationView.axaml.cs">
-        <DependentUpon>DetailInformationView.axaml</DependentUpon>
-        <SubType>Code</SubType>
-      </Compile>
-      <Compile Update="Features\Details\DetailMainDetailView.axaml.cs">
-        <DependentUpon>DetailMainDetailView.axaml</DependentUpon>
-        <SubType>Code</SubType>
-      </Compile>
-      <Compile Update="Features\Details\DetailRelationView.axaml.cs">
-        <DependentUpon>DetailRelationView.axaml</DependentUpon>
-        <SubType>Code</SubType>
-      </Compile>
-      <Compile Update="Features\Details\DetailSessionView.axaml.cs">
-        <DependentUpon>DetailSessionView.axaml</DependentUpon>
-        <SubType>Code</SubType>
-      </Compile>
       <Compile Update="App\Shell\InfoBarView.axaml.cs">
         <DependentUpon>InfoBarView.axaml</DependentUpon>
         <SubType>Code</SubType>
@@ -102,6 +83,14 @@
       </Compile>
       <Compile Update="App\App.axaml.cs">
         <DependentUpon>App.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+      <Compile Update="Features\Details\Page\DetailPageView.axaml.cs">
+        <DependentUpon>DetailMainDetailView.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+      <Compile Update="Features\Details\Information\InformationView.axaml.cs">
+        <DependentUpon>DetailInformationView.axaml</DependentUpon>
         <SubType>Code</SubType>
       </Compile>
     </ItemGroup>

@@ -3,9 +3,9 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="1300"
-             x:Class="Misa.Ui.Avalonia.Features.Details.DetailInformationView"
-             xmlns:details="clr-namespace:Misa.Ui.Avalonia.Features.Details"
-             x:DataType="details:DetailInformationViewModel">
+             x:Class="Misa.Ui.Avalonia.Features.Details.InformationView"
+             xmlns:information="clr-namespace:Misa.Ui.Avalonia.Features.Details.Information"
+             x:DataType="information:InformationViewModel">
 
     <UserControl.Styles>
 
@@ -89,7 +89,7 @@
     <StackPanel>
         
         <Border Classes="misa-card"
-                IsVisible="{Binding Parent.HasDetailedEntity}">
+                IsVisible="{Binding Parent.DetailedEntity}">
             <StackPanel Spacing="12">
                 <Grid Classes="misa-card-header"
                       ColumnDefinitions="*,Auto"
@@ -640,7 +640,7 @@
                 BorderThickness="1"
                 BorderBrush="{StaticResource BrushBorder}"
                 Background="{StaticResource BrushPrimaryBackgroundLighter}"
-                IsVisible="{Binding Parent.HasDetailedEntity}">
+                IsVisible="{Binding Parent.DetailedEntity}">
             
             <StackPanel Spacing="12">
                 <TextBlock Text="{Binding Parent.DetailedEntity.DescriptionCount, StringFormat='Descriptions ({0})'}"

@@ -17,17 +17,18 @@ using Misa.Contract.Items;
 using Misa.Contract.Items.Lookups;
 using Misa.Contract.Main;
 using Misa.Contract.Scheduling;
+using Misa.Ui.Avalonia.Features.Details.Page;
 using Misa.Ui.Avalonia.Infrastructure.Services.Interfaces;
 using Misa.Ui.Avalonia.Presentation.Mapping;
 using ReactiveUI;
 using NavigationStore = Misa.Ui.Avalonia.Infrastructure.Stores.NavigationStore;
 
-namespace Misa.Ui.Avalonia.Features.Details;
+namespace Misa.Ui.Avalonia.Features.Details.Information;
 
-public partial class DetailInformationViewModel : ViewModelBase, IDisposable
+public partial class InformationViewModel : ViewModelBase, IDisposable
 {
-    public IEntityDetail EntityDetail { get; }
-    public DetailMainDetailViewModel Parent { get; }
+    public IEntityDetailHost EntityDetailHost { get; }
+    public DetailPageViewModel Parent { get; }
     private string _description = string.Empty;
     public ReactiveCommand<Unit, Unit> AddDescriptionCommand { get; }
     public ReactiveCommand<Unit, Unit> StartSessionCommand { get; }
@@ -35,10 +36,10 @@ public partial class DetailInformationViewModel : ViewModelBase, IDisposable
     private readonly NavigationStore _nav;
     private bool _disposed;
 
-    public DetailInformationViewModel(DetailMainDetailViewModel parent)
+    public InformationViewModel(DetailPageViewModel parent)
     {
         Parent = parent;
-        EntityDetail = parent.EntityDetail;
+        EntityDetailHost = parent.EntityDetailHost;
         
         _nav = parent.NavigationService.NavigationStore;
         
@@ -53,12 +54,6 @@ public partial class DetailInformationViewModel : ViewModelBase, IDisposable
         
         PauseSessionCommand = ReactiveCommand.CreateFromTask(EndSessionAsync);
         PauseSessionCommand.Subscribe();
-        
-        this.WhenAnyValue(x => x.EntityDetail.SelectedEntity)
-            .Subscribe(_ =>
-            {
-                ResetDescription();
-            });
     }
     private void OnRealtimeEvent(EventDto evt)
     {
@@ -83,7 +78,7 @@ public partial class DetailInformationViewModel : ViewModelBase, IDisposable
         Dispatcher.UIThread.Post(() =>
         {
             Console.WriteLine($"[InformationView] refresh Ui, store={GetHashCode()}");
-            Parent.Refresh();
+            _ = Parent.Reload();
             CloseDeadlineForm();
         });
     }
@@ -107,7 +102,7 @@ public partial class DetailInformationViewModel : ViewModelBase, IDisposable
         if (SettableStates.Count < 1)
             return;
 
-        StateId = SettableStates.First().Id;
+        StateId = Enumerable.First<StateDto>(SettableStates).Id;
         IsEditStateOpen = true;
     }
 
@@ -148,7 +143,7 @@ public partial class DetailInformationViewModel : ViewModelBase, IDisposable
         if (!response.IsSuccessStatusCode)
             Console.WriteLine($"Server returned {response.StatusCode}: {response.ReasonPhrase}");
 
-        Parent.Refresh(true);
+        await Parent.Reload();
         CloseEditState();
     }
     
@@ -206,18 +201,12 @@ public partial class DetailInformationViewModel : ViewModelBase, IDisposable
     [RelayCommand]
     private async Task UpdateTitleTask()
     {
-        if (Parent.DetailedEntity == null)
-            return;
-        
         var dto = new UpdateItemDto
         {
             EntityId = Parent.DetailedEntity.Id,
             Title = Title == Parent.DetailedEntity?.Item?.Title
                 ? null 
                 : Title
-            // StateId = StateId == Parent.DetailedEntity?.Item?.State.Id 
-            //     ? null 
-            //     : StateId
         };
 
         var response = await Parent.NavigationService.NavigationStore
@@ -226,7 +215,7 @@ public partial class DetailInformationViewModel : ViewModelBase, IDisposable
         if (!response.IsSuccessStatusCode)
             Console.WriteLine($"Server returned {response.StatusCode}: {response.ReasonPhrase}");
 
-        Parent.Refresh(true);
+        await Parent.Reload();
         IsEditTitleFormOpen = false;
     }
 
@@ -294,9 +283,6 @@ public partial class DetailInformationViewModel : ViewModelBase, IDisposable
     {
         try
         {
-            if (Parent.DetailedEntity == null)
-                return;
-
             var response = await Parent.NavigationService.NavigationStore
                 .MisaHttpClient.PostAsync(
                     requestUri: $"Sessions/Continue/{Parent.DetailedEntity.Id}",
@@ -307,7 +293,7 @@ public partial class DetailInformationViewModel : ViewModelBase, IDisposable
             if (!response.IsSuccessStatusCode)
                 Console.WriteLine($"Server returned {response.StatusCode}: {response.ReasonPhrase}");
 
-            Parent.Refresh();
+            await Parent.Reload();
             CloseSessionStartForm();
         }
         catch (Exception e)
@@ -321,9 +307,6 @@ public partial class DetailInformationViewModel : ViewModelBase, IDisposable
     {
         try
         {
-            if (Parent.DetailedEntity == null)
-                return;
-
             var stopSession = new StopSessionDto
             {
                 EntityId = Parent.DetailedEntity.Id,
@@ -337,7 +320,7 @@ public partial class DetailInformationViewModel : ViewModelBase, IDisposable
             if (!response.IsSuccessStatusCode)
                 Console.WriteLine($"Server returned {response.StatusCode}: {response.ReasonPhrase}");
 
-            Parent.Refresh();
+            await Parent.Reload();
             CloseSessionStopForm();
         }
         catch (Exception e)
@@ -349,9 +332,6 @@ public partial class DetailInformationViewModel : ViewModelBase, IDisposable
     {
         try
         {
-            if (Parent.DetailedEntity == null)
-                return;
-
             SessionDto dto = new()
             {
                 EntityId = Parent.DetailedEntity.Id,
@@ -368,7 +348,7 @@ public partial class DetailInformationViewModel : ViewModelBase, IDisposable
             if (!response.IsSuccessStatusCode)
                 Console.WriteLine($"Server returned {response.StatusCode}: {response.ReasonPhrase}");
 
-            Parent.Refresh();
+            await Parent.Reload();
             CloseSessionStartForm();
         }
         catch (Exception e)
@@ -381,9 +361,6 @@ public partial class DetailInformationViewModel : ViewModelBase, IDisposable
     {
         try
         {
-            if (Parent.DetailedEntity == null)
-                return;
-
             var dto = new PauseSessionDto(Parent.DetailedEntity.Id, PauseReason);
             
             var response = await Parent.NavigationService.NavigationStore
@@ -392,7 +369,7 @@ public partial class DetailInformationViewModel : ViewModelBase, IDisposable
             if (!response.IsSuccessStatusCode)
                 Console.WriteLine($"Server returned {response.StatusCode}: {response.ReasonPhrase}");
 
-            Parent.Refresh();
+            await Parent.Reload();
             CloseSessionPauseForm();
         }
         catch (Exception e)
@@ -406,14 +383,14 @@ public partial class DetailInformationViewModel : ViewModelBase, IDisposable
         {
             var trimmedDescription = Description?.Trim();
 
-            if (string.IsNullOrWhiteSpace(trimmedDescription) || !EntityDetail.SelectedEntity.HasValue)
+            if (string.IsNullOrWhiteSpace(trimmedDescription))
             {
                 return;
             }
             
             var dto = new DescriptionDto()
             {
-                EntityId = (Guid)EntityDetail.SelectedEntity, 
+                EntityId = (Guid)EntityDetailHost.ActiveEntityId, 
                 Content = trimmedDescription
             };
             
@@ -427,7 +404,7 @@ public partial class DetailInformationViewModel : ViewModelBase, IDisposable
             }
             else
             {
-                Parent.Refresh();
+                await Parent.Reload();
                 ResetDescription();
             }
         }
@@ -446,7 +423,7 @@ public partial class DetailInformationViewModel : ViewModelBase, IDisposable
             await Parent.NavigationService.NavigationStore
                 .MisaHttpClient.PatchAsync(requestUri: $"Entity/Delete?entityId={id}", content: null);
             
-            Parent.Refresh(true, false);
+            await Parent.Reload();
         }
         catch (Exception e)
         {
@@ -462,7 +439,7 @@ public partial class DetailInformationViewModel : ViewModelBase, IDisposable
             await Parent.NavigationService.NavigationStore
                 .MisaHttpClient.PatchAsync(requestUri: $"Entity/Archive?entityId={id}", content: null);
             
-            Parent.Refresh(true, false);
+            await Parent.Reload();
         }
         catch (Exception e)
         {
@@ -515,7 +492,7 @@ public partial class DetailInformationViewModel : ViewModelBase, IDisposable
             if (!response.IsSuccessStatusCode)
                 Console.WriteLine($"Server returned {response.StatusCode}: {response.ReasonPhrase}");
 
-            Parent.Refresh();
+            await Parent.Reload();
             CloseDeadlineForm();
         }
         catch (Exception e)

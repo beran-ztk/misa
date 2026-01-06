@@ -33,8 +33,6 @@
                                 Spacing="12">
                         <TextBlock Text="Current:"
                                    Foreground="{StaticResource BrushTextSecondary}" />
-                        <TextBlock Text="{Binding MainViewModel.SelectedTask.Title, FallbackValue='None'}"
-                                   Foreground="{StaticResource BrushTextPrimary}" />
                     </StackPanel>
                     
                 </Grid>
@@ -45,7 +43,7 @@
                 
                 <DataGrid Classes="misa-grid"
                           ItemsSource="{Binding MainViewModel.Items}"
-                          SelectedItem="{Binding MainViewModel.SelectedTask, Mode=TwoWay}"
+                          SelectedItem="{Binding MainViewModel.SelectedItem, Mode=TwoWay}"
                           AutoGenerateColumns="False"
                           SelectionMode="Extended"
                           IsReadOnly="True">

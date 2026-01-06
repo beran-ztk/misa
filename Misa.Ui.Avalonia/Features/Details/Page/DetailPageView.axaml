@@ -5,27 +5,16 @@
              mc:Ignorable="d"
              d:DesignWidth="800"
              d:DesignHeight="450"
-             x:Class="Misa.Ui.Avalonia.Features.Details.DetailMainDetailView"
+             x:Class="Misa.Ui.Avalonia.Features.Details.Page.DetailPageView"
              xmlns:details="clr-namespace:Misa.Ui.Avalonia.Features.Details"
-             x:DataType="details:DetailMainDetailViewModel">
+             xmlns:page="clr-namespace:Misa.Ui.Avalonia.Features.Details.Page"
+             x:DataType="page:DetailPageViewModel">
 
     <Border>
         <TabControl SelectedIndex="{Binding SelectedTabIndex}">
                 <TabItem Header="Information">
-                    <details:DetailInformationView 
+                    <details:InformationView 
                         DataContext="{Binding InformationViewModel}"/>
-                </TabItem>
-
-                <TabItem Header="Relations">
-                    <details:DetailRelationView />
-                </TabItem>
-
-                <TabItem Header="Sessions">
-                    <details:DetailSessionView />
-                </TabItem>
-
-                <TabItem Header="History">
-                    <details:DetailHistoryView />
                 </TabItem>
             </TabControl>
     </Border>

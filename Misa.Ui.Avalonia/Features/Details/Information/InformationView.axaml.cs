@@ -2,9 +2,9 @@
 
 namespace Misa.Ui.Avalonia.Features.Details;
 
-public partial class DetailSessionView : UserControl
+public partial class InformationView : UserControl
 {
-    public DetailSessionView()
+    public InformationView()
     {
         InitializeComponent();
     }
