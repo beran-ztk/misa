@@ -13,7 +13,7 @@ public sealed class ScheduledDeadline : DomainEventEntity
         
         ItemId = itemId;
         
-        Reschedule(deadlineAtUtc);
+        RescheduleDeadlineAndAuditChanges(deadlineAtUtc);
     }
 
     public Guid Id { get; private set; }
@@ -21,7 +21,7 @@ public sealed class ScheduledDeadline : DomainEventEntity
 
     public DateTimeOffset DeadlineAtUtc { get; private set; }
 
-    public void Reschedule(DateTimeOffset deadlineAtUtc)
+    public void RescheduleDeadlineAndAuditChanges(DateTimeOffset? deadlineAtUtc)
     {
         AddDomainEvent(new PropertyChangedEvent(
             EntityId: ItemId,
@@ -30,17 +30,10 @@ public sealed class ScheduledDeadline : DomainEventEntity
             NewValue: deadlineAtUtc.ToString(),
             Reason: null
         ));
-        
-        DeadlineAtUtc = deadlineAtUtc;
-    }
-    public void Remove()
-    {
-        AddDomainEvent(new PropertyChangedEvent(
-            EntityId: ItemId,
-            ActionType: (int)ActionTypes.Deadline,
-            OldValue: DeadlineAtUtc.ToString(),
-            NewValue: null,
-            Reason: null
-        ));
+
+        if (deadlineAtUtc is not null)
+        {
+            DeadlineAtUtc = (DateTimeOffset)deadlineAtUtc;   
+        }
     }
 }

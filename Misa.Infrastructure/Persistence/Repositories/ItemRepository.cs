@@ -11,7 +11,7 @@ namespace Misa.Infrastructure.Persistence.Repositories;
 
 public class ItemRepository(MisaDbContext db) : IItemRepository
 {
-    public async Task<Item?> GetTrackedItemAsync(Guid id)
+    public async Task<Item?> TryGetItemAsync(Guid id)
     {
         return await db.Items
             .Include(e => e.Entity)
@@ -81,27 +81,20 @@ public class ItemRepository(MisaDbContext db) : IItemRepository
             .Include(i => i.Category)
             .SingleOrDefaultAsync(i => i.EntityId == entityId, ct);
     }
-    public async Task<ScheduledDeadline?> GetSingleTrackedDeadlineAsync(Guid itemId, CancellationToken ct = default)
-        => await db.Set<ScheduledDeadline>()
+    
+    public async Task<ScheduledDeadline?> TryGetScheduledDeadlineForItemAsync(Guid itemId, CancellationToken ct)
+    {
+        return await db.Deadlines
             .SingleOrDefaultAsync(d => d.ItemId == itemId, ct);
-
+    }
     public async Task AddDeadlineAsync(ScheduledDeadline deadline)
     {
-        await db.Set<ScheduledDeadline>().AddAsync(deadline);
+        await db.Deadlines.AddAsync(deadline);
     }
-
-    public async Task RemoveDeadlineAsync(Guid itemId, CancellationToken ct = default)
+    public Task RemoveScheduledDeadlineAsync(ScheduledDeadline obj, CancellationToken ct)
     {
-        var existing = await db
-            .Set<ScheduledDeadline>()
-            .SingleOrDefaultAsync(d => d.ItemId == itemId, ct);
+        db.Deadlines.Remove(obj);
         
-        if (existing is null)
-        {
-            return;   
-        }
-
-        existing.Remove();
-        db.Set<ScheduledDeadline>().Remove(existing);
+        return Task.CompletedTask;
     }
 }

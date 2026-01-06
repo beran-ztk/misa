@@ -18,7 +18,7 @@ public sealed class UpsertItemDeadlineHandler(IItemRepository repository, IMessa
         if (command.DueAt == default)
             throw new ValidationException("DueAt must be specified.");
 
-        var item = await repository.GetTrackedItemAsync(command.ItemId);
+        var item = await repository.TryGetItemAsync(command.ItemId);
         if (item is null)
             throw NotFoundException.For("Item", command.ItemId);
 
@@ -26,7 +26,7 @@ public sealed class UpsertItemDeadlineHandler(IItemRepository repository, IMessa
         if (dueAtUtc < DateTimeOffset.UtcNow)
             throw new ValidationException("DueAt must not be in the past."); 
         
-        var deadline = await repository.GetSingleTrackedDeadlineAsync(command.ItemId, ct);
+        var deadline = await repository.TryGetScheduledDeadlineForItemAsync(command.ItemId, ct);
         
         if (deadline is null)
         {
@@ -34,7 +34,7 @@ public sealed class UpsertItemDeadlineHandler(IItemRepository repository, IMessa
         }
         else
         {
-            deadline.Reschedule(dueAtUtc);
+            deadline.RescheduleDeadlineAndAuditChanges(dueAtUtc);
         }
         
         await repository.SaveChangesAsync(ct);

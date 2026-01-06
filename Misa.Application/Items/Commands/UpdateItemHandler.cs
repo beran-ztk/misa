@@ -7,7 +7,7 @@ public class UpdateItemHandler(IItemRepository repository)
 {
     public async Task UpdateAsync(UpdateItemDto dto)
     {
-        var item = await repository.GetTrackedItemAsync(dto.EntityId);
+        var item = await repository.TryGetItemAsync(dto.EntityId);
         var hasBeenChanged = false;
         
         if (dto.Title != null)

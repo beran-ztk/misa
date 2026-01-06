@@ -15,7 +15,6 @@ using Misa.Contract.Items;
 using Misa.Contract.Items.Lookups;
 using Misa.Contract.Main;
 using Misa.Contract.Scheduling;
-using Misa.Ui.Avalonia.App.Shell;
 using Misa.Ui.Avalonia.Interfaces;
 using Misa.Ui.Avalonia.Presentation.Mapping;
 using Misa.Ui.Avalonia.Stores;
@@ -86,7 +85,7 @@ public partial class DetailInformationViewModel : ViewModelBase, IDisposable
         {
             Console.WriteLine($"[InformationView] refresh Ui, store={GetHashCode()}");
             Parent.Refresh();
-            CloseDeadlineForm(); // optional
+            CloseDeadlineForm();
         });
     }
 
@@ -109,7 +108,7 @@ public partial class DetailInformationViewModel : ViewModelBase, IDisposable
         if (SettableStates.Count < 1)
             return;
 
-        StateId = Enumerable.First<StateDto>(SettableStates).Id;
+        StateId = SettableStates.First().Id;
         IsEditStateOpen = true;
     }
 
@@ -541,9 +540,6 @@ public partial class DetailInformationViewModel : ViewModelBase, IDisposable
 
             if (!response.IsSuccessStatusCode)
                 Console.WriteLine($"Server returned {response.StatusCode}: {response.ReasonPhrase}");
-
-            // Parent.Refresh();
-            CloseDeadlineForm();
         }
         catch (Exception e)
         {
