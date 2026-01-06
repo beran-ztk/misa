@@ -10,6 +10,7 @@
         <entry key="Misa.Ui.Avalonia/Features/Details/DetailHistoryView.axaml" value="Misa.Ui.Avalonia/Misa.Ui.Avalonia.csproj" />
         <entry key="Misa.Ui.Avalonia/Features/Details/DetailInformationView.axaml" value="Misa.Ui.Avalonia/Misa.Ui.Avalonia.csproj" />
         <entry key="Misa.Ui.Avalonia/Features/Details/DetailMainDetailView.axaml" value="Misa.Ui.Avalonia/Misa.Ui.Avalonia.csproj" />
+        <entry key="Misa.Ui.Avalonia/Features/Details/DetailSessionView.axaml" value="Misa.Ui.Avalonia/Misa.Ui.Avalonia.csproj" />
         <entry key="Misa.Ui.Avalonia/Features/Tasks/AddTasks/TaskCreateView.axaml" value="Misa.Ui.Avalonia/Misa.Ui.Avalonia.csproj" />
         <entry key="Misa.Ui.Avalonia/Features/Tasks/Create/AddTaskView.axaml" value="Misa.Ui.Avalonia/Misa.Ui.Avalonia.csproj" />
         <entry key="Misa.Ui.Avalonia/Features/Tasks/Create/CreateView.axaml" value="Misa.Ui.Avalonia/Misa.Ui.Avalonia.csproj" />

@@ -35,18 +35,15 @@ public partial class DetailInformationViewModel : ViewModelBase, IDisposable
     private readonly NavigationStore _nav;
     private bool _disposed;
 
-    public DetailInformationViewModel(DetailMainDetailViewModel parent, bool listenRealtime = false)
+    public DetailInformationViewModel(DetailMainDetailViewModel parent)
     {
         Parent = parent;
         EntityDetail = parent.EntityDetail;
         
         _nav = parent.NavigationService.NavigationStore;
         
-        if (listenRealtime)
-        {
-            Console.WriteLine($"[VM] subscribe nav={_nav.GetHashCode()}");
-            _nav.RealtimeEventReceived += OnRealtimeEvent;
-        }
+        Console.WriteLine($"[VM] subscribe nav={_nav.GetHashCode()}");
+        _nav.RealtimeEventReceived += OnRealtimeEvent;
         
         AddDescriptionCommand = ReactiveCommand.CreateFromTask(AddDescriptionAsync);
         AddDescriptionCommand.Subscribe();
@@ -194,7 +191,7 @@ public partial class DetailInformationViewModel : ViewModelBase, IDisposable
     
 
     [ObservableProperty] private bool isEditTitleFormOpen;
-    [ObservableProperty] private string title;
+    [ObservableProperty] private string title = string.Empty;
     [RelayCommand]
     private void ShowEditTitleForm()
     {
