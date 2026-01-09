@@ -44,28 +44,6 @@ public class ItemRepository(MisaDbContext db) : IItemRepository
                ?? throw new InvalidOperationException(
                    "Session wurde gespeichert, aber konnte nicht wieder geladen werden");
     }
-    public async Task<Item?> GetTaskAsync(Guid id, CancellationToken ct)
-    {
-        return await db.Items
-            .Include(i => i.Entity)
-            .ThenInclude(e => e.Workflow)
-            .Include(i => i.State)
-            .Include(i => i.Priority)
-            .Include(i => i.Category)
-            .FirstOrDefaultAsync( i => i.EntityId == id, ct );
-    }
-    public async Task<List<Item>> GetAllTasksAsync(CancellationToken ct)
-    {
-        return await db.Items
-            .Include(i => i.Entity)
-            .ThenInclude(e => e.Workflow)
-            .Include(i => i.State)
-            .Include(i => i.Priority)
-            .Include(i => i.Category)
-            .Where(i => i.Entity.WorkflowId == (int)Misa.Domain.Dictionaries.Entities.EntityWorkflows.Task)
-            .ToListAsync(ct);
-    }
-
     public async Task<List<Item>> TryGetTasksAsync(CancellationToken ct)
     {
         return await db.Items

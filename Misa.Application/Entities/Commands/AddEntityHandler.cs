@@ -1,4 +1,4 @@
-﻿using Misa.Application.Entities.Repositories;
+﻿using Misa.Application.Common.Abstractions.Persistence;
 using Misa.Domain.Entities;
 
 namespace Misa.Application.Entities.Commands;

@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.SignalR;
 using Misa.Infrastructure.Data;
 using Misa.Contract.Items;
 using Microsoft.EntityFrameworkCore;
@@ -11,14 +10,10 @@ using Misa.Application.Common.Abstractions.Persistence;
 using Misa.Application.Entities.Commands;
 using Misa.Application.Entities.Queries;
 using Misa.Application.Entities.Queries.GetSingleDetailedEntity;
-using Misa.Application.Entities.Repositories;
 using Misa.Application.Items.Commands;
-using Misa.Application.Items.Queries;
 using Misa.Application.Items.Tasks.Queries;
-using Misa.Application.Main.Repositories;
 using Misa.Application.ReferenceData.Queries;
 using Misa.Application.Scheduling.Commands.Deadlines;
-using Misa.Contract.Audit;
 using Misa.Contract.Entities;
 using Misa.Contract.Main;
 using Misa.Infrastructure.Persistence.Repositories;
@@ -48,7 +43,6 @@ builder.Services.AddScoped<IEventPublisher, SignalREventPublisher>();
 
 builder.Services.AddScoped<CreateItemHandler>();
 builder.Services.AddScoped<GetLookupsHandler>();
-builder.Services.AddScoped<GetItemsHandler>();
 builder.Services.AddScoped<IItemRepository, ItemRepository>();
 builder.Services.AddScoped<IMainRepository, MainRepository>();
 
@@ -98,11 +92,6 @@ app.MapPost("/api/entities/add", async (
     return Results.Ok();
 });
 
-app.MapGet("/api/tasks/{id:guid}",
-    async (Guid id, GetItemsHandler handler, CancellationToken ct)
-        => await handler.GetTaskAsync(id, ct));
-app.MapGet("/api/tasks", async ( GetItemsHandler handler, CancellationToken ct) 
-     => await handler.GetTasksAsync(ct));
 app.MapPost("/api/tasks", async ( CreateItemDto dto, CreateItemHandler itemHandler, CancellationToken ct) 
     => await itemHandler.AddTaskAsync(dto, ct));
 app.MapPatch("/tasks", async (UpdateItemDto dto, UpdateItemHandler handler) =>

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Net.Cache;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -17,24 +18,21 @@ namespace Misa.Ui.Avalonia.Features.Tasks.ListTask;
 public class ListViewModel : ViewModelBase
 {
     public PageViewModel Parent { get; }
-    private readonly IEventBus _bus;
 
-    public ListViewModel(PageViewModel vm, IEventBus bus)
+    public ListViewModel(PageViewModel vm)
     {
         Parent = vm;
-        _bus = bus;
 
         _ = LoadAsync();
     }
 
     public async Task LoadAsync()
     {
-        
         try
         {
             using var request = new HttpRequestMessage(HttpMethod.Get, "items/tasks");
             
-            var response = await Parent.NavigationService.NavigationStore.MisaHttpClient
+            using var response = await Parent.NavigationService.NavigationStore.MisaHttpClient
                 .SendAsync(request, CancellationToken.None);
 
             response.EnsureSuccessStatusCode();
@@ -57,9 +55,9 @@ public class ListViewModel : ViewModelBase
                 }
             });
         }
-        catch
+        catch (Exception ex)
         {
-            _bus.Publish(new TaskCreateFailed("Failed to load tasks list."));
+            Console.WriteLine(ex);
         }
     }
 }

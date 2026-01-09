@@ -1,9 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Misa.Application.Common.Abstractions.Persistence;
 using Entity = Misa.Domain.Entities.Entity;
 
 namespace Misa.Infrastructure.Persistence.Repositories;
 
-public class EntityRepository(Misa.Infrastructure.Data.MisaDbContext db) : Misa.Application.Entities.Repositories.IEntityRepository
+public class EntityRepository(Misa.Infrastructure.Data.MisaDbContext db) : IEntityRepository
 {
     public async Task<Entity> GetTrackedEntityAsync(Guid id)
         => await db.Entities.FirstAsync(e => e.Id == id);

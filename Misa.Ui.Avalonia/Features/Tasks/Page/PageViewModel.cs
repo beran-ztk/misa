@@ -54,7 +54,7 @@ public partial class PageViewModel : ViewModelBase, IEntityDetailHost, IDisposab
 
         Bus = new EventBus();
 
-        Model = new ListViewModel(this, Bus);
+        Model = new ListViewModel(this);
         Navigation = new NavigationViewModel(this, Bus);
         _detailViewModel = new DetailPageViewModel(this);
         

@@ -7,8 +7,6 @@ namespace Misa.Application.Common.Abstractions.Persistence;
 public interface IItemRepository
 {
     Task<Item> AddAsync(Item item, CancellationToken ct);
-    Task<Item?> GetTaskAsync(Guid id, CancellationToken ct = default);
-    Task<List<Item>> GetAllTasksAsync(CancellationToken ct = default);
     Task SaveChangesAsync(CancellationToken ct = default);
     Task<Item?> TryGetItemAsync(Guid id, CancellationToken ct);
 

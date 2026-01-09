@@ -1,11 +1,9 @@
-﻿using Misa.Contract.Audit.Lookups;
-using Misa.Contract.Items.Lookups;
-using Misa.Domain.Audit;
+﻿using Misa.Domain.Audit;
 using Misa.Domain.Dictionaries.Items;
 using Misa.Domain.Extensions;
 using Misa.Domain.Items;
 
-namespace Misa.Application.Main.Repositories;
+namespace Misa.Application.Common.Abstractions.Persistence;
 
 public interface IMainRepository
 {

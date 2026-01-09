@@ -1,7 +1,6 @@
-﻿using Misa.Contract.Entities;
-using Misa.Domain.Entities;
+﻿using Misa.Domain.Entities;
 
-namespace Misa.Application.Entities.Repositories;
+namespace Misa.Application.Common.Abstractions.Persistence;
 
 public interface IEntityRepository
 {

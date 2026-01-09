@@ -1,4 +1,4 @@
-﻿using Misa.Application.Main.Repositories;
+﻿using Misa.Application.Common.Abstractions.Persistence;
 using Misa.Contract.Main;
 using Misa.Domain.Extensions;
 

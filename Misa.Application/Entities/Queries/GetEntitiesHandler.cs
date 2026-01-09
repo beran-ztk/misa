@@ -1,5 +1,5 @@
-﻿using Misa.Application.Entities.Mappings;
-using Misa.Application.Entities.Repositories;
+﻿using Misa.Application.Common.Abstractions.Persistence;
+using Misa.Application.Entities.Mappings;
 using Misa.Contract.Entities;
 
 namespace Misa.Application.Entities.Queries;
