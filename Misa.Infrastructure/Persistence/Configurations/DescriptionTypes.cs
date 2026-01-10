@@ -18,9 +18,5 @@ public class DescriptionTypes : IEntityTypeConfiguration<Domain.Extensions.Descr
         
         builder.Property(x => x.Synopsis)
             .HasColumnName("synopsis");
-        
-        builder.Property(x => x.SortOrder)
-            .IsRequired()
-            .HasColumnName("sort_order");
     }
 }

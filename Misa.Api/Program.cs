@@ -3,18 +3,20 @@ using Misa.Contract.Items;
 using Microsoft.EntityFrameworkCore;
 using Misa.Api.Common.Exceptions;
 using Misa.Api.Common.Realtime;
+using Misa.Api.Endpoints.Items;
 using Misa.Api.Endpoints.Scheduling;
-using Misa.Api.Endpoints.Tasks;
 using Misa.Application.Common.Abstractions.Events;
 using Misa.Application.Common.Abstractions.Persistence;
 using Misa.Application.Entities.Commands;
 using Misa.Application.Entities.Queries;
 using Misa.Application.Entities.Queries.GetSingleDetailedEntity;
 using Misa.Application.Items.Commands;
-using Misa.Application.Items.Tasks.Queries;
+using Misa.Application.Items.Queries;
 using Misa.Application.ReferenceData.Queries;
 using Misa.Application.Scheduling.Commands.Deadlines;
+using Misa.Contract.Descriptions;
 using Misa.Contract.Entities;
+using Misa.Contract.Items.Common;
 using Misa.Contract.Main;
 using Misa.Infrastructure.Persistence.Repositories;
 using Wolverine;
@@ -34,6 +36,7 @@ builder.Host.UseWolverine(opts =>
     opts.Discovery.IncludeAssembly(typeof(RemoveItemDeadlineHandler).Assembly);
     opts.Discovery.IncludeAssembly(typeof(UpsertItemDeadlineHandler).Assembly);
     opts.Discovery.IncludeAssembly(typeof(GetTasksHandler).Assembly);
+    opts.Discovery.IncludeAssembly(typeof(GetItemDetailsHandler).Assembly);
 });
 
 builder.Services.AddScoped<EventsHub>();
@@ -101,8 +104,8 @@ app.MapPatch("/tasks", async (UpdateItemDto dto, UpdateItemHandler handler) =>
 });
 
 // Description
-app.MapPost("/api/descriptions", async ( DescriptionDto dto, CreateDescriptionHandler descriptionHandler, CancellationToken ct) 
-    => await descriptionHandler.CreateAsync(dto));
+app.MapPost("/api/descriptions", async ( DescriptionResolvedDto resolvedDto, CreateDescriptionHandler descriptionHandler, CancellationToken ct) 
+    => await descriptionHandler.CreateAsync(resolvedDto));
 
 // Session
 // app.MapPost("/Sessions/Start", async (SessionDto dto, SessionHandler handler) 
@@ -121,6 +124,7 @@ app.MapPost("/api/descriptions", async ( DescriptionDto dto, CreateDescriptionHa
 // );
 
 TaskEndpoints.Map(app);
+ItemDetailEndpoints.Map(app);
 DeadlineEndpoints.Map(app);
 
 app.Run();

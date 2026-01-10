@@ -1,9 +1,9 @@
-﻿using Misa.Application.Items.Tasks.Queries;
+﻿using Misa.Application.Items.Queries;
 using Misa.Contract.Common.Results;
-using Misa.Contract.Items;
+using Misa.Contract.Items.Common;
 using Wolverine;
 
-namespace Misa.Api.Endpoints.Tasks;
+namespace Misa.Api.Endpoints.Items;
 
 public static class TaskEndpoints
 {

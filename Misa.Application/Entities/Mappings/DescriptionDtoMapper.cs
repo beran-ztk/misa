@@ -1,36 +1,20 @@
-﻿using Misa.Contract.Main;
+﻿using Misa.Contract.Descriptions;
 using Misa.Domain.Extensions;
 
 namespace Misa.Application.Entities.Mappings;
 
 public static class DescriptionDtoMapper
 {
-    public static DescriptionDto ToDto(this Description dto)
-        => new DescriptionDto
+    public static List<DescriptionResolvedDto> ToDto(this ICollection<Description> dto)
+        => dto.Select(x => x.ToDto()).ToList();
+    private static DescriptionResolvedDto ToDto(this Description dto)
+        => new()
         {
             Id = dto.Id,
             EntityId = dto.EntityId,
-            TypeId = dto.TypeId,
+            Type = dto.Type.ToDto(),
             Content = dto.Content,
             CreatedAtUtc = dto.CreatedAtUtc
         };
-    public static List<DescriptionDto> ToDto(this ICollection<Description> dto)
-        => dto.Select(x => new DescriptionDto
-        {
-            Id = x.Id,
-            EntityId = x.EntityId,
-            TypeId = x.TypeId,
-            Content = x.Content,
-            CreatedAtUtc = x.CreatedAtUtc,
-            Type = x.Type.ToDto()
-        }).ToList();
-
-    public static DescriptionTypeDto ToDto(this DescriptionTypes x)
-        => new DescriptionTypeDto
-        {
-            Id = x.Id,
-            Name = x.Name,
-            Synopsis = x.Synopsis,
-            SortOrder = x.SortOrder
-        };
+    private static DescriptionTypeDto ToDto(this DescriptionTypes x) => new(x.Id, x.Name, x.Synopsis);
 }

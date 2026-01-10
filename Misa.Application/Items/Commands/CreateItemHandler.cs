@@ -3,6 +3,7 @@ using Misa.Application.Entities.Mappings;
 using Misa.Application.Items.Mappings;
 using Misa.Contract.Entities;
 using Misa.Contract.Items;
+using Misa.Contract.Items.Common;
 using Misa.Domain.Dictionaries.Items;
 
 namespace Misa.Application.Items.Commands;

@@ -1,6 +1,7 @@
 ﻿using Misa.Application.Entities.Mappings;
 using Misa.Contract.Audit.Lookups;
 using Misa.Contract.Items;
+using Misa.Contract.Items.Common;
 using Misa.Contract.Items.Lookups;
 using Misa.Contract.Scheduling;
 using Misa.Domain.Audit;
@@ -40,59 +41,21 @@ public static class ItemDtoMapper
 
     public static ScheduleDeadlineDto? ToDto(ScheduledDeadline? deadline)
         => deadline == null ? null : new ScheduleDeadlineDto(deadline.DeadlineAtUtc);
-    public static List<ReadItemDto> ToReadItemDto(this List<Item> items)
-        => items.Select(i => new ReadItemDto
-        {
-            Entity = i.Entity.ToReadEntityDto(),
-            State = i.State.ToDto(),
-            Priority = i.Priority.ToDto(),
-            Category = i.Category.ToDto(),
-            Title = i.Title
-        }).ToList();
-    public static StateDto ToDto(this Misa.Domain.Items.State state)
-        => new()
-        {
-            Id = state.Id,
-            Name = state.Name,
-            Synopsis = state.Synopsis
-        };
+    public static StateDto ToDto(this State s)
+        => new(s.Id, s.Name, s.Synopsis);
     public static List<StateDto> ToDto(this List<State> states)
-        => states.Select(s => new StateDto
-        {
-            Id = s.Id,
-            Name = s.Name,
-            Synopsis = s.Synopsis
-        }).ToList();
-    public static PriorityDto ToDto(this Misa.Domain.Items.Priority priority)
-        => new()
-        {
-            Id = priority.Id,
-            Name = priority.Name,
-            Synopsis = priority.Synopsis
-        };
+        => states.Select(s => s.ToDto()).ToList();
+    public static PriorityDto ToDto(this Misa.Domain.Items.Priority s)
+        => new(s.Id, s.Name, s.Synopsis);
 
     public static List<PriorityDto> ToDto(this List<Priority> priorities)
-        => priorities.Select(p => new PriorityDto
-        {
-            Id = p.Id,
-            Name = p.Name,
-            Synopsis = p.Synopsis
-        }).ToList();
-    public static CategoryDto ToDto(this Misa.Domain.Items.Category category)
-        => new()
-        {
-            Id = category.Id,
-            Name = category.Name,
-            Synopsis = category.Synopsis
-        };
+        => priorities.Select(p => p.ToDto()).ToList();
+    public static CategoryDto ToDto(this Misa.Domain.Items.Category s)
+        => new(s.Id, s.Name, s.Synopsis);
 
     public static List<CategoryDto> ToDto(this List<Category> categories)
-        => categories.Select(c => new CategoryDto
-        {
-            Id = c.Id,
-            Name = c.Name,
-            Synopsis = c.Synopsis
-        }).ToList();
+        => categories.Select(c => c.ToDto()).ToList();
+    
     public static List<SessionEfficiencyTypeDto> ToDto(this List<SessionEfficiencyType> categories)
         => categories.Select(c => new SessionEfficiencyTypeDto
         {

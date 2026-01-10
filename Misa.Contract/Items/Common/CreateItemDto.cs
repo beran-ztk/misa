@@ -1,4 +1,4 @@
-﻿namespace Misa.Contract.Items;
+﻿namespace Misa.Contract.Items.Common;
 
 public sealed class CreateItemDto
 {

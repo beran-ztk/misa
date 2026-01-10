@@ -1,4 +1,5 @@
 ﻿using Misa.Domain.Audit;
+using Misa.Domain.Entities;
 using Misa.Domain.Items;
 using Misa.Domain.Scheduling;
 
@@ -10,6 +11,7 @@ public interface IItemRepository
     Task SaveChangesAsync(CancellationToken ct = default);
     Task<Item?> TryGetItemAsync(Guid id, CancellationToken ct);
 
+    Task<Item?> TryGetItemDetailsAsync(Guid id, CancellationToken ct);
     // Tasks
     Task<List<Item>> TryGetTasksAsync(CancellationToken ct);
     // Sessions

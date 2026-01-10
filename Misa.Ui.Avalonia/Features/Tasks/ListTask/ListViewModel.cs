@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Avalonia.Threading;
 using Misa.Contract.Common.Results;
 using Misa.Contract.Items;
+using Misa.Contract.Items.Common;
 using Misa.Ui.Avalonia.Features.Tasks.Shared;
 using Misa.Ui.Avalonia.Presentation.Mapping;
 using ReactiveUI;

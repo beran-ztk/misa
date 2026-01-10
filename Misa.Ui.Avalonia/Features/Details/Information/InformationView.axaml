@@ -88,273 +88,273 @@
 <ScrollViewer>
     <StackPanel>
         
-        <Border Classes="misa-card"
-                IsVisible="{Binding Parent.DetailedEntity}">
-            <StackPanel Spacing="12">
-                <Grid Classes="misa-card-header"
-                      ColumnDefinitions="*,Auto"
-                      RowDefinitions="Auto">
-                    <TextBlock Grid.Column="0"
-                               Classes="misa-card-title"
-                               Text="Quick Actions"/>
-
-                    <StackPanel Grid.Column="1"
-                                Orientation="Horizontal"
-                                Spacing="8">
-                        
-                        <Button Classes="misa-action"
-                                Command="{Binding ShowSessionStartFormCommand}"
-                                IsVisible="{Binding Parent.DetailedEntity.CanStartSession}">
-                            <Image Width="16" Height="16"
-                                   Source="{SvgImage /Assets/Images/Details/play.svg}"/>
-                        </Button>
-                        <Button Classes="misa-action"
-                                Command="{Binding ShowSessionPauseFormCommand}"
-                                IsVisible="{Binding Parent.DetailedEntity.HasRunningSession}">
-                            <Image Width="16" Height="16"
-                                   Source="{SvgImage /Assets/Images/Details/pause.svg}"/>
-                        </Button>
-                        
-                        <Button Classes="misa-action"
-                                Command="{Binding SessionContinueCommand}"
-                                IsVisible="{Binding Parent.DetailedEntity.HasPausedSession}">
-                            <Image Width="16" Height="16"
-                                   Source="{SvgImage /Assets/Images/Details/play-pause.svg}"/>
-                        </Button>
-                        
-                        <Button Classes="misa-action"
-                                Command="{Binding ShowSessionStopFormCommand}"
-                                IsVisible="{Binding Parent.DetailedEntity.HasActiveSession}">
-                            <Image Width="16" Height="16"
-                                   Source="{SvgImage /Assets/Images/Details/stop.svg}"/>
-                        </Button>
-                        
-                        <Button Classes="misa-action"
-                                Content="Set Deadline"
-                                Command="{Binding ShowDeadlineFormCommand}"
-                                IsVisible="{Binding !Parent.DetailedEntity.Item.HasDeadline}"/>
-
-                        
-                        <Button Classes="misa-action"
-                                Command="{Binding ArchiveEntityCommand}">
-                            <Image Width="16" Height="16"
-                                   Source="{SvgImage /Assets/Images/Details/archive.svg}"/>
-                        </Button>
-                        
-                        <Button Classes="misa-action"
-                                Command="{Binding DeleteEntityCommand}">
-                            <Image Width="16" Height="16"
-                                   Source="{SvgImage /Assets/Images/Details/trash.svg}"/>
-                        </Button>
-                    </StackPanel>
-                </Grid>
-                        
-                <Border Padding="10"
-                        CornerRadius="10"
-                        BorderThickness="1"
-                        BorderBrush="{StaticResource BrushBorder}"
-                        Background="{StaticResource BrushPrimaryBackground}"
-                        IsVisible="{Binding Parent.DetailedEntity.Item.HasDeadline}">
-
-                    <Grid ColumnDefinitions="6,*,Auto"
-                          ColumnSpacing="10"
-                          VerticalAlignment="Center">
-
-                        <!-- roter Akzentstreifen -->
-                        <Border Grid.Column="0"
-                                Background="Red"
-                                CornerRadius="10,0,0,10"/>
-
-                        <StackPanel Grid.Column="1" Spacing="2">
-                            <TextBlock Text="Deadline"
-                                       FontWeight="SemiBold"/>
-                            <TextBlock Text="{Binding Parent.DetailedEntity.Item.ScheduledDeadline.DeadlineAt, StringFormat={}{0:yyyy-MM-dd HH:mm}}"
-                                       Opacity="0.85"/>
-                        </StackPanel>
-
-                        <StackPanel Grid.Column="2"
-                                    Orientation="Horizontal"
-                                    Spacing="8"
-                                    HorizontalAlignment="Right">
-
-                            <Button Classes="misa-action"
-                                    Content="Cancel"
-                                    IsVisible="{Binding IsRemovingDeadline}"
-                                    Command="{Binding CancelRemoveDeadlineCommand}"/>
-                            
-                            <Button Classes="misa-action"
-                                    Content="Update"
-                                    Command="{Binding ShowDeadlineFormCommand}"/>
-
-                            <Button Classes="misa-action"
-                                    Content="Remove"
-                                    IsEnabled="{Binding !IsRemovingDeadline}"
-                                    Command="{Binding RemoveDeadlineCommand}"/>
-
-                        </StackPanel>
-                    </Grid>
-                </Border>
-
-                <Border Padding="10"
-                            CornerRadius="10"
-                            BorderThickness="1"
-                            BorderBrush="{StaticResource BrushBorder}"
-                            Background="{StaticResource BrushPrimaryBackground}"
-                            IsVisible="{Binding IsStartFormOpen}">
-                    <StackPanel Spacing="10">
-
-                        <TextBlock Text="Start session"
-                                   FontWeight="SemiBold"/>
-
-                        <Grid ColumnDefinitions="140,*"
-                              RowDefinitions="Auto,Auto,Auto,Auto,Auto"
-                              RowSpacing="8"
-                              ColumnSpacing="10">
-
-                            <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="Planned (min)" />
-                            <NumericUpDown Grid.Row="0" Grid.Column="1"
-                                           Classes="misa-input"
-                                           Minimum="1" Maximum="600"
-                                           Value="{Binding PlannedMinutes, Mode=TwoWay}" />
-
-                            <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Text="Objective" />
-                            <TextBox Grid.Row="1" Grid.Column="1"
-                                     Classes="misa-input"
-                                     Text="{Binding Objective, Mode=TwoWay}"
-                                     Watermark="What are you doing?" />
-
-                            <TextBlock Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Text="Auto stop" />
-                            <CheckBox Grid.Row="2" Grid.Column="1"
-                                      IsChecked="{Binding StopAutomatically, Mode=TwoWay}"
-                                      Content="Stop automatically after planned duration" />
-
-                            <TextBlock Grid.Row="3" Grid.Column="0" VerticalAlignment="Center" Text="Reason" />
-                            <TextBox Grid.Row="3" Grid.Column="1"
-                                     Classes="misa-input"
-                                     IsEnabled="{Binding StopAutomatically}"
-                                     Text="{Binding AutoStopReason, Mode=TwoWay}"
-                                     Watermark="Optional reason" />
-
-                            <TextBlock Grid.Row="4" Grid.Column="0" Text=" " />
-                            <StackPanel Grid.Row="4" Grid.Column="1"
-                                        Orientation="Horizontal"
-                                        Spacing="8"
-                                        HorizontalAlignment="Right">
-                                <Button Classes="misa-action"
-                                        Content="Cancel"
-                                        Command="{Binding CloseSessionStartFormCommand}" />
-                                <Button Classes="misa-action"
-                                        Content="Save"
-                                        Command="{Binding StartSessionCommand}" />
-                            </StackPanel>
-                        </Grid>
-
-                    </StackPanel>
-                </Border>
-                        
-                        
-                <!-- Pause form -->
-                <Border Padding="10"
-                        CornerRadius="10"
-                        BorderThickness="1"
-                        BorderBrush="{StaticResource BrushBorder}"
-                        Background="{StaticResource BrushPrimaryBackground}"
-                        IsVisible="{Binding IsPauseFormOpen}">
-                    <StackPanel Spacing="10">
-
-                        <TextBlock Text="Pause session"
-                                   FontWeight="SemiBold"/>
-
-                        <Grid ColumnDefinitions="*"
-                              RowDefinitions="Auto,Auto"
-                              RowSpacing="8"
-                              ColumnSpacing="10">
-
-                            <TextBlock Grid.Row="0" VerticalAlignment="Top" Text="What is the reason to pause your session?" />
-                            <StackPanel Grid.Row="1" Spacing="8">
-                                <TextBox Classes="misa-input"
-                                         Text="{Binding PauseReason, Mode=TwoWay}"
-                                         AcceptsReturn="True"
-                                         TextWrapping="Wrap"
-                                         MinHeight="80"/>
-
-                                <StackPanel Orientation="Horizontal"
-                                            Spacing="8"
-                                            HorizontalAlignment="Right">
-                                    <Button Classes="misa-action"
-                                            Content="Cancel"
-                                            Command="{Binding CloseSessionPauseFormCommand}" />
-                                    <Button Classes="misa-action"
-                                            Content="Save"
-                                            Command="{Binding PauseSessionCommand}" />
-                                </StackPanel>
-                            </StackPanel>
-
-                        </Grid>
-
-                    </StackPanel>
-                </Border>
-                
-                <!-- Stop form -->
-                <Border Padding="10"
-                        CornerRadius="10"
-                        BorderThickness="1"
-                        BorderBrush="{StaticResource BrushBorder}"
-                        Background="{StaticResource BrushPrimaryBackground}"
-                        IsVisible="{Binding IsStopFormOpen}">
-                    <StackPanel Spacing="10">
-                
-                        <TextBlock Text="Stop session"
-                                   FontWeight="SemiBold"/>
-                
-                        <Grid ColumnDefinitions="140,*"
-                              RowDefinitions="Auto,Auto,Auto"
-                              RowSpacing="8"
-                              ColumnSpacing="10">
-                
-                            <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="Efficiency" />
-                            <ComboBox Grid.Row="0" Grid.Column="1"
-                                      Classes="misa-input"
-                                      ItemsSource="{Binding EfficiencyTypes}"
-                                      SelectedValue="{Binding EfficiencyId}"
-                                      SelectedValueBinding="{Binding Id}"
-                                      DisplayMemberBinding="{Binding Name}"/>
-                
-                            <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Text="Concentration" />
-                            <ComboBox Grid.Row="1" Grid.Column="1"
-                                      Classes="misa-input"
-                                      ItemsSource="{Binding ConcentrationTypes}"
-                                      SelectedValue="{Binding ConcentrationId}"
-                                      SelectedValueBinding="{Binding Id}"
-                                      DisplayMemberBinding="{Binding Name}" />
-                
-                            <TextBlock Grid.Row="2" Grid.Column="0" VerticalAlignment="Top" Text="Summary" />
-                            <StackPanel Grid.Row="2" Grid.Column="1" Spacing="8">
-                                <TextBox Classes="misa-input"
-                                         Text="{Binding Summary, Mode=TwoWay}"
-                                         AcceptsReturn="True"
-                                         TextWrapping="Wrap"
-                                         MinHeight="80"
-                                         Watermark="What happened? Short summary." />
-                
-                                <StackPanel Orientation="Horizontal"
-                                            Spacing="8"
-                                            HorizontalAlignment="Right">
-                                    <Button Classes="misa-action"
-                                            Content="Cancel"
-                                            Command="{Binding CloseSessionStopFormCommand}" />
-                                    <Button Classes="misa-action"
-                                            Content="Save"
-                                            Command="{Binding StopSessionCommand}" />
-                                </StackPanel>
-                            </StackPanel>
-                
-                        </Grid>
-                
-                    </StackPanel>
-                </Border>
-            </StackPanel>
-        </Border>
+        <!-- <Border Classes="misa-card" -->
+        <!--         IsVisible="{Binding Parent.DetailedEntity}"> -->
+        <!--     <StackPanel Spacing="12"> -->
+        <!--         <Grid Classes="misa-card-header" -->
+        <!--               ColumnDefinitions="*,Auto" -->
+        <!--               RowDefinitions="Auto"> -->
+        <!--             <TextBlock Grid.Column="0" -->
+        <!--                        Classes="misa-card-title" -->
+        <!--                        Text="Quick Actions"/> -->
+        <!-- -->
+        <!--             <StackPanel Grid.Column="1" -->
+        <!--                         Orientation="Horizontal" -->
+        <!--                         Spacing="8"> -->
+        <!--                  -->
+        <!--                 <Button Classes="misa-action" -->
+        <!--                         Command="{Binding ShowSessionStartFormCommand}" -->
+        <!--                         IsVisible="{Binding Parent.DetailedEntity.CanStartSession}"> -->
+        <!--                     <Image Width="16" Height="16" -->
+        <!--                            Source="{SvgImage /Assets/Images/Details/play.svg}"/> -->
+        <!--                 </Button> -->
+        <!--                 <Button Classes="misa-action" -->
+        <!--                         Command="{Binding ShowSessionPauseFormCommand}" -->
+        <!--                         IsVisible="{Binding Parent.DetailedEntity.HasRunningSession}"> -->
+        <!--                     <Image Width="16" Height="16" -->
+        <!--                            Source="{SvgImage /Assets/Images/Details/pause.svg}"/> -->
+        <!--                 </Button> -->
+        <!--                  -->
+        <!--                 <Button Classes="misa-action" -->
+        <!--                         Command="{Binding SessionContinueCommand}" -->
+        <!--                         IsVisible="{Binding Parent.DetailedEntity.HasPausedSession}"> -->
+        <!--                     <Image Width="16" Height="16" -->
+        <!--                            Source="{SvgImage /Assets/Images/Details/play-pause.svg}"/> -->
+        <!--                 </Button> -->
+        <!--                  -->
+        <!--                 <Button Classes="misa-action" -->
+        <!--                         Command="{Binding ShowSessionStopFormCommand}" -->
+        <!--                         IsVisible="{Binding Parent.DetailedEntity.HasActiveSession}"> -->
+        <!--                     <Image Width="16" Height="16" -->
+        <!--                            Source="{SvgImage /Assets/Images/Details/stop.svg}"/> -->
+        <!--                 </Button> -->
+        <!--                  -->
+        <!--                 <Button Classes="misa-action" -->
+        <!--                         Content="Set Deadline" -->
+        <!--                         Command="{Binding ShowDeadlineFormCommand}" -->
+        <!--                         IsVisible="{Binding !Parent.DetailedEntity.Item.HasDeadline}"/> -->
+        <!-- -->
+        <!--                  -->
+        <!--                 <Button Classes="misa-action" -->
+        <!--                         Command="{Binding ArchiveEntityCommand}"> -->
+        <!--                     <Image Width="16" Height="16" -->
+        <!--                            Source="{SvgImage /Assets/Images/Details/archive.svg}"/> -->
+        <!--                 </Button> -->
+        <!--                  -->
+        <!--                 <Button Classes="misa-action" -->
+        <!--                         Command="{Binding DeleteEntityCommand}"> -->
+        <!--                     <Image Width="16" Height="16" -->
+        <!--                            Source="{SvgImage /Assets/Images/Details/trash.svg}"/> -->
+        <!--                 </Button> -->
+        <!--             </StackPanel> -->
+        <!--         </Grid> -->
+        <!--                  -->
+        <!--         <Border Padding="10" -->
+        <!--                 CornerRadius="10" -->
+        <!--                 BorderThickness="1" -->
+        <!--                 BorderBrush="{StaticResource BrushBorder}" -->
+        <!--                 Background="{StaticResource BrushPrimaryBackground}" -->
+        <!--                 IsVisible="{Binding Parent.DetailedEntity.Item.HasDeadline}"> -->
+        <!-- -->
+        <!--             <Grid ColumnDefinitions="6,*,Auto" -->
+        <!--                   ColumnSpacing="10" -->
+        <!--                   VerticalAlignment="Center"> -->
+        <!-- -->
+        <!--                 ~1~ roter Akzentstreifen @1@ -->
+        <!--                 <Border Grid.Column="0" -->
+        <!--                         Background="Red" -->
+        <!--                         CornerRadius="10,0,0,10"/> -->
+        <!-- -->
+        <!--                 <StackPanel Grid.Column="1" Spacing="2"> -->
+        <!--                     <TextBlock Text="Deadline" -->
+        <!--                                FontWeight="SemiBold"/> -->
+        <!--                     <TextBlock Text="{Binding Parent.DetailedEntity.Item.ScheduledDeadline.DeadlineAt, StringFormat={}{0:yyyy-MM-dd HH:mm}}" -->
+        <!--                                Opacity="0.85"/> -->
+        <!--                 </StackPanel> -->
+        <!-- -->
+        <!--                 <StackPanel Grid.Column="2" -->
+        <!--                             Orientation="Horizontal" -->
+        <!--                             Spacing="8" -->
+        <!--                             HorizontalAlignment="Right"> -->
+        <!-- -->
+        <!--                     <Button Classes="misa-action" -->
+        <!--                             Content="Cancel" -->
+        <!--                             IsVisible="{Binding IsRemovingDeadline}" -->
+        <!--                             Command="{Binding CancelRemoveDeadlineCommand}"/> -->
+        <!--                      -->
+        <!--                     <Button Classes="misa-action" -->
+        <!--                             Content="Update" -->
+        <!--                             Command="{Binding ShowDeadlineFormCommand}"/> -->
+        <!-- -->
+        <!--                     <Button Classes="misa-action" -->
+        <!--                             Content="Remove" -->
+        <!--                             IsEnabled="{Binding !IsRemovingDeadline}" -->
+        <!--                             Command="{Binding RemoveDeadlineCommand}"/> -->
+        <!-- -->
+        <!--                 </StackPanel> -->
+        <!--             </Grid> -->
+        <!--         </Border> -->
+        <!-- -->
+        <!--         <Border Padding="10" -->
+        <!--                     CornerRadius="10" -->
+        <!--                     BorderThickness="1" -->
+        <!--                     BorderBrush="{StaticResource BrushBorder}" -->
+        <!--                     Background="{StaticResource BrushPrimaryBackground}" -->
+        <!--                     IsVisible="{Binding IsStartFormOpen}"> -->
+        <!--             <StackPanel Spacing="10"> -->
+        <!-- -->
+        <!--                 <TextBlock Text="Start session" -->
+        <!--                            FontWeight="SemiBold"/> -->
+        <!-- -->
+        <!--                 <Grid ColumnDefinitions="140,*" -->
+        <!--                       RowDefinitions="Auto,Auto,Auto,Auto,Auto" -->
+        <!--                       RowSpacing="8" -->
+        <!--                       ColumnSpacing="10"> -->
+        <!-- -->
+        <!--                     <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="Planned (min)" /> -->
+        <!--                     <NumericUpDown Grid.Row="0" Grid.Column="1" -->
+        <!--                                    Classes="misa-input" -->
+        <!--                                    Minimum="1" Maximum="600" -->
+        <!--                                    Value="{Binding PlannedMinutes, Mode=TwoWay}" /> -->
+        <!-- -->
+        <!--                     <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Text="Objective" /> -->
+        <!--                     <TextBox Grid.Row="1" Grid.Column="1" -->
+        <!--                              Classes="misa-input" -->
+        <!--                              Text="{Binding Objective, Mode=TwoWay}" -->
+        <!--                              Watermark="What are you doing?" /> -->
+        <!-- -->
+        <!--                     <TextBlock Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Text="Auto stop" /> -->
+        <!--                     <CheckBox Grid.Row="2" Grid.Column="1" -->
+        <!--                               IsChecked="{Binding StopAutomatically, Mode=TwoWay}" -->
+        <!--                               Content="Stop automatically after planned duration" /> -->
+        <!-- -->
+        <!--                     <TextBlock Grid.Row="3" Grid.Column="0" VerticalAlignment="Center" Text="Reason" /> -->
+        <!--                     <TextBox Grid.Row="3" Grid.Column="1" -->
+        <!--                              Classes="misa-input" -->
+        <!--                              IsEnabled="{Binding StopAutomatically}" -->
+        <!--                              Text="{Binding AutoStopReason, Mode=TwoWay}" -->
+        <!--                              Watermark="Optional reason" /> -->
+        <!-- -->
+        <!--                     <TextBlock Grid.Row="4" Grid.Column="0" Text=" " /> -->
+        <!--                     <StackPanel Grid.Row="4" Grid.Column="1" -->
+        <!--                                 Orientation="Horizontal" -->
+        <!--                                 Spacing="8" -->
+        <!--                                 HorizontalAlignment="Right"> -->
+        <!--                         <Button Classes="misa-action" -->
+        <!--                                 Content="Cancel" -->
+        <!--                                 Command="{Binding CloseSessionStartFormCommand}" /> -->
+        <!--                         <Button Classes="misa-action" -->
+        <!--                                 Content="Save" -->
+        <!--                                 Command="{Binding StartSessionCommand}" /> -->
+        <!--                     </StackPanel> -->
+        <!--                 </Grid> -->
+        <!-- -->
+        <!--             </StackPanel> -->
+        <!--         </Border> -->
+        <!--                  -->
+        <!--                  -->
+        <!--         ~1~ Pause form @1@ -->
+        <!--         <Border Padding="10" -->
+        <!--                 CornerRadius="10" -->
+        <!--                 BorderThickness="1" -->
+        <!--                 BorderBrush="{StaticResource BrushBorder}" -->
+        <!--                 Background="{StaticResource BrushPrimaryBackground}" -->
+        <!--                 IsVisible="{Binding IsPauseFormOpen}"> -->
+        <!--             <StackPanel Spacing="10"> -->
+        <!-- -->
+        <!--                 <TextBlock Text="Pause session" -->
+        <!--                            FontWeight="SemiBold"/> -->
+        <!-- -->
+        <!--                 <Grid ColumnDefinitions="*" -->
+        <!--                       RowDefinitions="Auto,Auto" -->
+        <!--                       RowSpacing="8" -->
+        <!--                       ColumnSpacing="10"> -->
+        <!-- -->
+        <!--                     <TextBlock Grid.Row="0" VerticalAlignment="Top" Text="What is the reason to pause your session?" /> -->
+        <!--                     <StackPanel Grid.Row="1" Spacing="8"> -->
+        <!--                         <TextBox Classes="misa-input" -->
+        <!--                                  Text="{Binding PauseReason, Mode=TwoWay}" -->
+        <!--                                  AcceptsReturn="True" -->
+        <!--                                  TextWrapping="Wrap" -->
+        <!--                                  MinHeight="80"/> -->
+        <!-- -->
+        <!--                         <StackPanel Orientation="Horizontal" -->
+        <!--                                     Spacing="8" -->
+        <!--                                     HorizontalAlignment="Right"> -->
+        <!--                             <Button Classes="misa-action" -->
+        <!--                                     Content="Cancel" -->
+        <!--                                     Command="{Binding CloseSessionPauseFormCommand}" /> -->
+        <!--                             <Button Classes="misa-action" -->
+        <!--                                     Content="Save" -->
+        <!--                                     Command="{Binding PauseSessionCommand}" /> -->
+        <!--                         </StackPanel> -->
+        <!--                     </StackPanel> -->
+        <!-- -->
+        <!--                 </Grid> -->
+        <!-- -->
+        <!--             </StackPanel> -->
+        <!--         </Border> -->
+        <!--          -->
+        <!--         ~1~ Stop form @1@ -->
+        <!--         <Border Padding="10" -->
+        <!--                 CornerRadius="10" -->
+        <!--                 BorderThickness="1" -->
+        <!--                 BorderBrush="{StaticResource BrushBorder}" -->
+        <!--                 Background="{StaticResource BrushPrimaryBackground}" -->
+        <!--                 IsVisible="{Binding IsStopFormOpen}"> -->
+        <!--             <StackPanel Spacing="10"> -->
+        <!--          -->
+        <!--                 <TextBlock Text="Stop session" -->
+        <!--                            FontWeight="SemiBold"/> -->
+        <!--          -->
+        <!--                 <Grid ColumnDefinitions="140,*" -->
+        <!--                       RowDefinitions="Auto,Auto,Auto" -->
+        <!--                       RowSpacing="8" -->
+        <!--                       ColumnSpacing="10"> -->
+        <!--          -->
+        <!--                     <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="Efficiency" /> -->
+        <!--                     <ComboBox Grid.Row="0" Grid.Column="1" -->
+        <!--                               Classes="misa-input" -->
+        <!--                               ItemsSource="{Binding EfficiencyTypes}" -->
+        <!--                               SelectedValue="{Binding EfficiencyId}" -->
+        <!--                               SelectedValueBinding="{Binding Id}" -->
+        <!--                               DisplayMemberBinding="{Binding Name}"/> -->
+        <!--          -->
+        <!--                     <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Text="Concentration" /> -->
+        <!--                     <ComboBox Grid.Row="1" Grid.Column="1" -->
+        <!--                               Classes="misa-input" -->
+        <!--                               ItemsSource="{Binding ConcentrationTypes}" -->
+        <!--                               SelectedValue="{Binding ConcentrationId}" -->
+        <!--                               SelectedValueBinding="{Binding Id}" -->
+        <!--                               DisplayMemberBinding="{Binding Name}" /> -->
+        <!--          -->
+        <!--                     <TextBlock Grid.Row="2" Grid.Column="0" VerticalAlignment="Top" Text="Summary" /> -->
+        <!--                     <StackPanel Grid.Row="2" Grid.Column="1" Spacing="8"> -->
+        <!--                         <TextBox Classes="misa-input" -->
+        <!--                                  Text="{Binding Summary, Mode=TwoWay}" -->
+        <!--                                  AcceptsReturn="True" -->
+        <!--                                  TextWrapping="Wrap" -->
+        <!--                                  MinHeight="80" -->
+        <!--                                  Watermark="What happened? Short summary." /> -->
+        <!--          -->
+        <!--                         <StackPanel Orientation="Horizontal" -->
+        <!--                                     Spacing="8" -->
+        <!--                                     HorizontalAlignment="Right"> -->
+        <!--                             <Button Classes="misa-action" -->
+        <!--                                     Content="Cancel" -->
+        <!--                                     Command="{Binding CloseSessionStopFormCommand}" /> -->
+        <!--                             <Button Classes="misa-action" -->
+        <!--                                     Content="Save" -->
+        <!--                                     Command="{Binding StopSessionCommand}" /> -->
+        <!--                         </StackPanel> -->
+        <!--                     </StackPanel> -->
+        <!--          -->
+        <!--                 </Grid> -->
+        <!--          -->
+        <!--             </StackPanel> -->
+        <!--         </Border> -->
+        <!--     </StackPanel> -->
+        <!-- </Border> -->
 
         <Border Padding="10"
                 CornerRadius="10"
@@ -461,7 +461,7 @@
                 <!-- Top meta -->
                 <Grid ColumnDefinitions="140,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="6">
                     <TextBlock Grid.Row="0" Grid.Column="0" Text="ID" Opacity="0.7"/>
-                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Parent.DetailedEntity.Id}"/>
+                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Parent.EntityDetailHost.Id}"/>
 
                     <TextBlock Grid.Row="1" Grid.Column="0" Text="Title" Opacity="0.7"/>
 
@@ -634,84 +634,84 @@
 
 
         <!-- Descriptions Header (nur wenn Liste nicht leer) -->
-        <Border Padding="12"
-                Margin="10"
-                CornerRadius="10"
-                BorderThickness="1"
-                BorderBrush="{StaticResource BrushBorder}"
-                Background="{StaticResource BrushPrimaryBackgroundLighter}"
-                IsVisible="{Binding Parent.DetailedEntity}">
-            
-            <StackPanel Spacing="12">
-                <TextBlock Text="{Binding Parent.DetailedEntity.DescriptionCount, StringFormat='Descriptions ({0})'}"
-                           FontSize="16"
-                           FontWeight="SemiBold"
-                           Margin="10"/>
-
-                <ItemsControl ItemsSource="{Binding Parent.DetailedEntity.Descriptions}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Border Margin="10,6"
-                                    Padding="0"
-                                    Background="{StaticResource BrushPrimaryBackground}"
-                                    CornerRadius="10"
-                                    BorderThickness="1"
-                                    BorderBrush="{StaticResource BrushBorder}">
-
-                                <Grid ColumnDefinitions="6,*">
-                                    <!-- Accent bar -->
-                                    <Border Background="{StaticResource BrushAccent}"
-                                            CornerRadius="10,0,0,10"
-                                            Padding="12"/>
-
-                                    <StackPanel Grid.Column="1"  Spacing="2" Margin="10">
-                                        <TextBlock Text="{Binding Type.Name}"
-                                                   FontSize="12"
-                                                   Opacity="0.7"/>
-
-                                        <TextBlock Text="{Binding Content}"
-                                                   FontSize="13"
-                                                   TextWrapping="Wrap"/>
-
-                                        <TextBlock Text="{Binding CreatedAtUtc, StringFormat={}{0:yyyy-MM-dd HH:mm}}"
-                                                   HorizontalAlignment="Right"
-                                                   Opacity="0.6"
-                                                   FontSize="11"/>
-                                    </StackPanel>
-                                </Grid>
-                            </Border>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-
-
-                <!-- Add Description -->
-                <Border Padding="10">
-                    <Grid ColumnDefinitions="*,Auto"
-                          ColumnSpacing="10"
-                          VerticalAlignment="Center">
-
-                        <TextBox Grid.Column="0"
-                                 Classes="misa-input"
-                                 Watermark="Description..."
-                                 Foreground="{StaticResource BrushTextPrimary}"
-                                 Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}" />
-
-                        <Button Grid.Column="1"
-                                Width="38"
-                                Height="38"
-                                Background="{StaticResource BrushPrimaryBackground}"
-                                BorderBrush="{StaticResource BrushBorder}"
-                                BorderThickness="1"
-                                Command="{Binding AddDescriptionCommand}">
-                            <Image Width="16"
-                                   Height="16"
-                                   Source="{SvgImage /Assets/Images/MainNavigation/plus-circle.svg}" />
-                        </Button>
-                    </Grid>
-                </Border>
-            </StackPanel>
-        </Border>
+        <!-- <Border Padding="12" -->
+        <!--         Margin="10" -->
+        <!--         CornerRadius="10" -->
+        <!--         BorderThickness="1" -->
+        <!--         BorderBrush="{StaticResource BrushBorder}" -->
+        <!--         Background="{StaticResource BrushPrimaryBackgroundLighter}" -->
+        <!--         IsVisible="{Binding Parent.DetailedEntity}"> -->
+        <!--      -->
+        <!--     <StackPanel Spacing="12"> -->
+        <!--         <TextBlock Text="{Binding Parent.DetailedEntity.DescriptionCount, StringFormat='Descriptions ({0})'}" -->
+        <!--                    FontSize="16" -->
+        <!--                    FontWeight="SemiBold" -->
+        <!--                    Margin="10"/> -->
+        <!-- -->
+        <!--         <ItemsControl ItemsSource="{Binding Parent.DetailedEntity.Descriptions}"> -->
+        <!--             <ItemsControl.ItemTemplate> -->
+        <!--                 <DataTemplate> -->
+        <!--                     <Border Margin="10,6" -->
+        <!--                             Padding="0" -->
+        <!--                             Background="{StaticResource BrushPrimaryBackground}" -->
+        <!--                             CornerRadius="10" -->
+        <!--                             BorderThickness="1" -->
+        <!--                             BorderBrush="{StaticResource BrushBorder}"> -->
+        <!-- -->
+        <!--                         <Grid ColumnDefinitions="6,*"> -->
+        <!--                             ~1~ Accent bar @1@ -->
+        <!--                             <Border Background="{StaticResource BrushAccent}" -->
+        <!--                                     CornerRadius="10,0,0,10" -->
+        <!--                                     Padding="12"/> -->
+        <!-- -->
+        <!--                             <StackPanel Grid.Column="1"  Spacing="2" Margin="10"> -->
+        <!--                                 <TextBlock Text="{Binding Type.Name}" -->
+        <!--                                            FontSize="12" -->
+        <!--                                            Opacity="0.7"/> -->
+        <!-- -->
+        <!--                                 <TextBlock Text="{Binding Content}" -->
+        <!--                                            FontSize="13" -->
+        <!--                                            TextWrapping="Wrap"/> -->
+        <!-- -->
+        <!--                                 <TextBlock Text="{Binding CreatedAtUtc, StringFormat={}{0:yyyy-MM-dd HH:mm}}" -->
+        <!--                                            HorizontalAlignment="Right" -->
+        <!--                                            Opacity="0.6" -->
+        <!--                                            FontSize="11"/> -->
+        <!--                             </StackPanel> -->
+        <!--                         </Grid> -->
+        <!--                     </Border> -->
+        <!--                 </DataTemplate> -->
+        <!--             </ItemsControl.ItemTemplate> -->
+        <!--         </ItemsControl> -->
+        <!-- -->
+        <!-- -->
+        <!--         ~1~ Add Description @1@ -->
+        <!--         <Border Padding="10"> -->
+        <!--             <Grid ColumnDefinitions="*,Auto" -->
+        <!--                   ColumnSpacing="10" -->
+        <!--                   VerticalAlignment="Center"> -->
+        <!-- -->
+        <!--                 <TextBox Grid.Column="0" -->
+        <!--                          Classes="misa-input" -->
+        <!--                          Watermark="Description..." -->
+        <!--                          Foreground="{StaticResource BrushTextPrimary}" -->
+        <!--                          Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}" /> -->
+        <!-- -->
+        <!--                 <Button Grid.Column="1" -->
+        <!--                         Width="38" -->
+        <!--                         Height="38" -->
+        <!--                         Background="{StaticResource BrushPrimaryBackground}" -->
+        <!--                         BorderBrush="{StaticResource BrushBorder}" -->
+        <!--                         BorderThickness="1" -->
+        <!--                         Command="{Binding AddDescriptionCommand}"> -->
+        <!--                     <Image Width="16" -->
+        <!--                            Height="16" -->
+        <!--                            Source="{SvgImage /Assets/Images/MainNavigation/plus-circle.svg}" /> -->
+        <!--                 </Button> -->
+        <!--             </Grid> -->
+        <!--         </Border> -->
+        <!--     </StackPanel> -->
+        <!-- </Border> -->
         
         
     </StackPanel>

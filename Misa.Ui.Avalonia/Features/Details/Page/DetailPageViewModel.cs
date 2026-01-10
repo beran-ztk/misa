@@ -1,13 +1,14 @@
 ﻿using System;
+using System.Net.Http;
 using System.Net.Http.Json;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
-using Misa.Contract.Entities;
+using Misa.Contract.Common.Results;
+using Misa.Contract.Items.Details;
 using Misa.Ui.Avalonia.Infrastructure.Services.Interfaces;
-using Misa.Ui.Avalonia.Infrastructure.Services.Navigation;
 using Misa.Ui.Avalonia.Presentation.Mapping;
 using ReactiveUI;
 
@@ -17,7 +18,7 @@ public partial class DetailPageViewModel : ViewModelBase, IDisposable
 {
     public IEntityDetailHost EntityDetailHost { get; }
 
-    [ObservableProperty] private EntityDto _detailedEntity = new();
+    [ObservableProperty] private ItemOverviewDto _itemOverview = new();
     [ObservableProperty] private int _selectedTabIndex;
 
     public Information.InformationViewModel InformationViewModel { get; }
@@ -41,21 +42,36 @@ public partial class DetailPageViewModel : ViewModelBase, IDisposable
     {
         await LoadEntityAsync(EntityDetailHost.ActiveEntityId);
     }
-    private async Task LoadEntityAsync(Guid entityId)
+    private async Task LoadEntityAsync(Guid itemId)
     {
-        Console.WriteLine("Entity change detected!");
-        
-        await _loadCts?.CancelAsync();
+        if (_loadCts != null)
+        {
+            await _loadCts.CancelAsync();
+        }
         _loadCts?.Dispose();
         _loadCts = new CancellationTokenSource();
 
         try
         {
-            var response = await EntityDetailHost.NavigationService.NavigationStore.MisaHttpClient
-                .GetFromJsonAsync<EntityDto>($"api/entities/{entityId}", _loadCts.Token);
+            using var request = new HttpRequestMessage(
+                HttpMethod.Get,
+                $"items/{itemId}/overview"
+            );
+            
+            using var response = await EntityDetailHost.NavigationService.NavigationStore.MisaHttpClient
+                .SendAsync(request, _loadCts.Token);
 
-            if (response != null)
-                DetailedEntity = response;
+            response.EnsureSuccessStatusCode();
+
+            var result = await response.Content
+                .ReadFromJsonAsync<Result<ItemOverviewDto>>(cancellationToken: _loadCts.Token);
+
+            if (result?.Value is null)
+            {
+                return;
+            }
+            
+            ItemOverview = result.Value;
         }
         catch (OperationCanceledException)
         {

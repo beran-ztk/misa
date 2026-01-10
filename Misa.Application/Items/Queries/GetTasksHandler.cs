@@ -1,8 +1,8 @@
 ﻿using Misa.Application.Common.Abstractions.Persistence;
 using Misa.Contract.Common.Results;
-using Misa.Contract.Items;
+using Misa.Contract.Items.Common;
 
-namespace Misa.Application.Items.Tasks.Queries;
+namespace Misa.Application.Items.Queries;
 
 public class GetTasksHandler(IItemRepository repository)
 {

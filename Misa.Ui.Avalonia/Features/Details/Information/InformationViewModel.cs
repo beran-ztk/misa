@@ -12,10 +12,10 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Audit;
 using Misa.Contract.Audit.Lookups;
+using Misa.Contract.Descriptions;
 using Misa.Contract.Events;
 using Misa.Contract.Items;
 using Misa.Contract.Items.Lookups;
-using Misa.Contract.Main;
 using Misa.Contract.Scheduling;
 using Misa.Ui.Avalonia.Features.Details.Page;
 using Misa.Ui.Avalonia.Infrastructure.Services.Interfaces;
@@ -388,7 +388,7 @@ public partial class InformationViewModel : ViewModelBase, IDisposable
                 return;
             }
             
-            var dto = new DescriptionDto()
+            var dto = new DescriptionResolvedDto()
             {
                 EntityId = (Guid)EntityDetailHost.ActiveEntityId, 
                 Content = trimmedDescription

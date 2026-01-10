@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Misa.Application.Common.Abstractions.Persistence;
 using Misa.Application.Common.Exceptions;
 using Misa.Domain.Audit;
+using Misa.Domain.Entities;
 using Misa.Domain.Scheduling;
 using Misa.Infrastructure.Data;
 using Item = Misa.Domain.Items.Item;
@@ -53,6 +54,25 @@ public class ItemRepository(MisaDbContext db) : IItemRepository
             .Include(i => i.Category)
             .Where(i => i.Entity.WorkflowId == (int)Domain.Dictionaries.Entities.EntityWorkflows.Task)
             .ToListAsync(ct);
+    }
+
+    public async Task<Item?> TryGetItemDetailsAsync(Guid id, CancellationToken ct)
+    {
+        return await db.Items
+            .Include(e => e.Entity)
+                .ThenInclude(e => e.Workflow)
+
+            // Item (alles LEFT JOIN)
+            .Include(e => e.Priority)
+            .Include(i => i.Priority)
+            .Include(e => e.Category)
+            
+            // Descriptions
+            .Include(e => e.Entity)
+                .ThenInclude(e => e.Descriptions)
+                    .ThenInclude(d => d.Type)
+            
+            .FirstOrDefaultAsync(e => e.EntityId == id, ct);
     }
 
     public async Task<Item?> LoadAsync(Guid entityId, CancellationToken ct = default)

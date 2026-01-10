@@ -41,6 +41,5 @@ CREATE TABLE description_types
 (
     id          INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     name        TEXT NOT NULL UNIQUE,
-    synopsis    TEXT,
-    sort_order  INT NOT NULL UNIQUE
+    synopsis    TEXT
 );

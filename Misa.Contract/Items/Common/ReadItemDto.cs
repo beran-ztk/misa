@@ -2,7 +2,7 @@
 using Misa.Contract.Items.Lookups;
 using Misa.Contract.Scheduling;
 
-namespace Misa.Contract.Items;
+namespace Misa.Contract.Items.Common;
 
 public class ReadItemDto
 {

@@ -64,8 +64,8 @@ VALUES
 
 INSERT INTO description_types (name, synopsis, sort_order)
 VALUES
-    ('Text',            'Einfacher Fließtext ohne Formatierung',                               1),
-    ('Markdown',        'Formatierter Text mit Überschriften, Listen und Hervorhebungen',      2),
-    ('Url',             'Referenz auf externe Inhalte, Webseiten oder Dateien',                3),
-    ('Picture',         'Grafiken, Screenshots oder eingebettete Bilder',                      4);
+    ('Text',            'Einfacher Fließtext ohne Formatierung'),
+    ('Markdown',        'Formatierter Text mit Überschriften, Listen und Hervorhebungen'),
+    ('Url',             'Referenz auf externe Inhalte, Webseiten oder Dateien'),
+    ('Picture',         'Grafiken, Screenshots oder eingebettete Bilder');
 
