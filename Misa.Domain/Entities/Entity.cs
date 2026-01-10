@@ -1,9 +1,7 @@
-﻿using System.Security.Cryptography.X509Certificates;
-using Misa.Contract.Audit;
+﻿using Misa.Contract.Audit;
 using Misa.Domain.Audit;
-using Misa.Domain.Dictionaries;
 using Misa.Domain.Dictionaries.Items;
-using Misa.Domain.Extensions;
+using Misa.Domain.Entities.Extensions;
 using Misa.Domain.Items;
 using Action = Misa.Domain.Audit.Action;
 
@@ -36,8 +34,9 @@ public class Entity
 
     public Workflow Workflow { get;  set; }
     public Item? Item { get; set; }
-    public int DescriptionCount => Descriptions.Count;
+    
     public ICollection<Description> Descriptions { get; set; } = new List<Description>();
+    
     public ICollection<Session> Sessions { get; set; } = new List<Session>();
     public ICollection<Domain.Audit.Action> Actions { get; set; } = new List<Action>();
 

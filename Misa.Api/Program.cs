@@ -14,7 +14,6 @@ using Misa.Application.Items.Commands;
 using Misa.Application.Items.Queries;
 using Misa.Application.ReferenceData.Queries;
 using Misa.Application.Scheduling.Commands.Deadlines;
-using Misa.Contract.Descriptions;
 using Misa.Contract.Entities;
 using Misa.Contract.Items.Common;
 using Misa.Infrastructure.Persistence.Repositories;
@@ -52,7 +51,6 @@ builder.Services.AddScoped<IMainRepository, MainRepository>();
 
 builder.Services.AddScoped<GetEntitiesHandler>();
 builder.Services.AddScoped<SessionHandler>();
-builder.Services.AddScoped<CreateDescriptionHandler>();
 builder.Services.AddScoped<AddEntityHandler>();
 builder.Services.AddScoped<PatchEntityHandler>();
 builder.Services.AddScoped<UpdateItemHandler>();
@@ -103,8 +101,7 @@ app.MapPatch("/tasks", async (UpdateItemDto dto, UpdateItemHandler handler) =>
 });
 
 // Description
-app.MapPost("/api/descriptions", async ( DescriptionResolvedDto resolvedDto, CreateDescriptionHandler descriptionHandler, CancellationToken ct) 
-    => await descriptionHandler.CreateAsync(resolvedDto));
+
 
 // Session
 // app.MapPost("/Sessions/Start", async (SessionDto dto, SessionHandler handler) 

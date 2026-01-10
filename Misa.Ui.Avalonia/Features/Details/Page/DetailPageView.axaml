@@ -8,12 +8,13 @@
              x:Class="Misa.Ui.Avalonia.Features.Details.Page.DetailPageView"
              xmlns:details="clr-namespace:Misa.Ui.Avalonia.Features.Details"
              xmlns:page="clr-namespace:Misa.Ui.Avalonia.Features.Details.Page"
+             xmlns:information="clr-namespace:Misa.Ui.Avalonia.Features.Details.Information"
              x:DataType="page:DetailPageViewModel">
 
     <Border>
         <TabControl SelectedIndex="{Binding SelectedTabIndex}">
                 <TabItem Header="Information">
-                    <details:InformationView 
+                    <information:InformationView 
                         DataContext="{Binding InformationViewModel}"/>
                 </TabItem>
             </TabControl>

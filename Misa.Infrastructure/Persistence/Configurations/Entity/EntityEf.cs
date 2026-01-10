@@ -1,9 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Misa.Infrastructure.Persistence.Configurations;
+namespace Misa.Infrastructure.Persistence.Configurations.Entity;
 
-public class Entity : IEntityTypeConfiguration<Domain.Entities.Entity>
+public class EntityEf : IEntityTypeConfiguration<Domain.Entities.Entity>
 {
     public void Configure(EntityTypeBuilder<Domain.Entities.Entity> builder)
     {

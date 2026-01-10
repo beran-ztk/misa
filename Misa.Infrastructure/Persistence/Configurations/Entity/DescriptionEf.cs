@@ -1,11 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Misa.Domain.Entities.Extensions;
 
-namespace Misa.Infrastructure.Persistence.Configurations;
+namespace Misa.Infrastructure.Persistence.Configurations.Entity;
 
-public class DescriptionEf : IEntityTypeConfiguration<Misa.Domain.Extensions.Description>
+public class DescriptionEf : IEntityTypeConfiguration<Description>
 {
-    public void Configure(EntityTypeBuilder<Misa.Domain.Extensions.Description> builder)
+    public void Configure(EntityTypeBuilder<Description> builder)
     {
         builder.ToTable("descriptions");
         builder.HasKey(x => x.Id);
@@ -16,10 +17,6 @@ public class DescriptionEf : IEntityTypeConfiguration<Misa.Domain.Extensions.Des
         builder.Property(x => x.EntityId)
             .HasColumnName("entity_id");
         
-        builder.Property(x => x.TypeId)
-            .IsRequired()
-            .HasColumnName("type_id");
-        
         builder.Property(x => x.Content)
             .IsRequired()
             .HasColumnName("content");
@@ -27,10 +24,5 @@ public class DescriptionEf : IEntityTypeConfiguration<Misa.Domain.Extensions.Des
         builder.Property(x => x.CreatedAtUtc)
             .IsRequired()
             .HasColumnName("created_at_utc");
-        
-        builder.HasOne(x => x.Type)
-            .WithMany()
-            .HasForeignKey(x => x.TypeId)
-            .OnDelete(DeleteBehavior.Restrict);
     }
 }

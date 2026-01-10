@@ -1,0 +1,85 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="Misa.Ui.Avalonia.Features.Details.Information.Extensions.DescriptionView"
+             xmlns:parent="clr-namespace:Misa.Ui.Avalonia.Features.Details.Information.Extensions"
+             x:DataType="parent:DescriptionViewModel">
+    
+        <Border Padding="12"
+            Margin="10"
+            CornerRadius="10"
+            BorderThickness="1"
+            BorderBrush="{StaticResource BrushBorder}"
+            Background="{StaticResource BrushPrimaryBackgroundLighter}"
+            IsVisible="{Binding Parent.Parent.ItemOverview}">
+    
+        <StackPanel Spacing="12">
+            <TextBlock Text="{Binding Parent.Parent.ItemOverview.Descriptions.Count, StringFormat='Descriptions ({0})'}"
+                       FontSize="16"
+                       FontWeight="SemiBold"
+                       Margin="10"/>
+    
+            <ItemsControl ItemsSource="{Binding Parent.Parent.ItemOverview.Descriptions}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Margin="10,6"
+                                Padding="0"
+                                Background="{StaticResource BrushPrimaryBackground}"
+                                CornerRadius="10"
+                                BorderThickness="1"
+                                BorderBrush="{StaticResource BrushBorder}">
+    
+                            <Grid ColumnDefinitions="6,*">
+                                <!-- Accent bar -->
+                                <Border Background="{StaticResource BrushAccent}"
+                                        CornerRadius="10,0,0,10"
+                                        Padding="12"/>
+    
+                                <StackPanel Grid.Column="1"  Spacing="2" Margin="10">
+                                    <TextBlock Text="{Binding Content}"
+                                               FontSize="13"
+                                               TextWrapping="Wrap"/>
+    
+                                    <TextBlock Text="{Binding CreatedAtUtc, StringFormat={}{0:yyyy-MM-dd HH:mm}}"
+                                               HorizontalAlignment="Right"
+                                               Opacity="0.6"
+                                               FontSize="11"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+    
+    
+            <!-- Add Description -->
+            <Border Padding="10">
+                <Grid ColumnDefinitions="*,Auto"
+                      ColumnSpacing="10"
+                      VerticalAlignment="Center">
+    
+                    <TextBox Grid.Column="0"
+                             Classes="misa-input"
+                             Watermark="Description..."
+                             Foreground="{StaticResource BrushTextPrimary}"
+                             Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}" />
+    
+                    <!-- <Button Grid.Column="1" -->
+                    <!--         Width="38" -->
+                    <!--         Height="38" -->
+                    <!--         Background="{StaticResource BrushPrimaryBackground}" -->
+                    <!--         BorderBrush="{StaticResource BrushBorder}" -->
+                    <!--         BorderThickness="1" -->
+                    <!--         Command="{Binding AddDescriptionCommand}"> -->
+                    <!--     <Image Width="16" -->
+                    <!--            Height="16" -->
+                    <!--            Source="{SvgImage /Assets/Images/MainNavigation/plus-circle.svg}" /> -->
+                    <!-- </Button> -->
+                </Grid>
+            </Border>
+        </StackPanel>
+    </Border>
+    
+</UserControl>

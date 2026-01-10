@@ -7,19 +7,24 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Audit;
 using Misa.Contract.Audit.Lookups;
-using Misa.Contract.Descriptions;
 using Misa.Contract.Items;
 using Misa.Contract.Items.Lookups;
+using Misa.Ui.Avalonia.Features.Details.Information.Extensions;
 using Misa.Ui.Avalonia.Features.Details.Page;
 using Misa.Ui.Avalonia.Presentation.Mapping;
 
 namespace Misa.Ui.Avalonia.Features.Details.Information;
 
-public partial class InformationViewModel(DetailPageViewModel parent) : ViewModelBase
+public partial class InformationViewModel : ViewModelBase
 {
-    public DetailPageViewModel Parent { get; } = parent;
-    private string _description = string.Empty;
+    public DetailPageViewModel Parent { get; }
+    public DescriptionViewModel Description { get; }
 
+    public InformationViewModel(DetailPageViewModel parent)
+    {
+        Parent = parent;
+        Description = new DescriptionViewModel(this);
+    }
     // Edit State
     [ObservableProperty] private bool _isEditStateOpen;
     [ObservableProperty] private int _stateId;
@@ -190,13 +195,7 @@ public partial class InformationViewModel(DetailPageViewModel parent) : ViewMode
     public IReadOnlyList<SessionConcentrationTypeDto> ConcentrationTypes =>
         Parent.EntityDetailHost.NavigationService.LookupsStore.ConcentrationTypes;
     
-    public string Description
-    {
-        get => _description;
-        set => SetProperty(ref _description, value);
-    }
-    public void ResetDescription()
-        => Description = string.Empty;
+ 
 
     [RelayCommand]
     private async Task SessionContinue()
@@ -297,42 +296,7 @@ public partial class InformationViewModel(DetailPageViewModel parent) : ViewMode
             Console.WriteLine(e);
         }
     }
-    private async Task AddDescriptionAsync()
-    {
-        try
-        {
-            var trimmedDescription = Description?.Trim();
-
-            if (string.IsNullOrWhiteSpace(trimmedDescription))
-            {
-                return;
-            }
-            
-            var dto = new DescriptionResolvedDto()
-            {
-                EntityId = Parent.ItemOverview.Item.Id, 
-                Content = trimmedDescription
-            };
-            
-            var response = await Parent.EntityDetailHost.NavigationService.NavigationStore
-                .MisaHttpClient.PostAsJsonAsync(requestUri: "api/descriptions", dto);
-            
-            if (!response.IsSuccessStatusCode)
-            {
-                var body = await response.Content.ReadAsStringAsync();
-                Console.WriteLine($"Server returned {response.StatusCode}: {body}");
-            }
-            else
-            {
-                await Parent.Reload();
-                ResetDescription();
-            }
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-        }
-    }
+    
 
     [RelayCommand]
     private async Task DeleteEntity()

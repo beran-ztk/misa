@@ -1,4 +1,4 @@
-﻿namespace Misa.Domain.Extensions;
+﻿namespace Misa.Domain.Entities.Extensions;
 
 public class Description
 {
@@ -7,15 +7,11 @@ public class Description
     public Description( Guid guid, int typeId, string content, DateTimeOffset? createdAtUtc)
     {
         EntityId = guid;
-        TypeId = typeId;
         Content = content;
         CreatedAtUtc = createdAtUtc ?? DateTimeOffset.UtcNow;
     }
     public Guid Id { get; set; }
     public Guid EntityId { get; set; }
-    public int TypeId { get; set; }
     public string Content { get; set; }
     public DateTimeOffset CreatedAtUtc { get; set; }
-    
-    public DescriptionTypes Type { get; set; }
 }

@@ -40,7 +40,6 @@ public class EntityRepository(Misa.Infrastructure.Data.MisaDbContext db) : IEnti
             
             // Descriptions
             .Include(e => e.Descriptions)
-                .ThenInclude(d => d.Type)
             
             // Sessions
             .Include(e => e.Sessions)

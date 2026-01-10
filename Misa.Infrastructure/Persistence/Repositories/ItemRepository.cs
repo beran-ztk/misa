@@ -59,16 +59,14 @@ public class ItemRepository(MisaDbContext db) : IItemRepository
     public async Task<Item?> TryGetItemDetailsAsync(Guid id, CancellationToken ct)
     {
         return await db.Items
-            .Include(e => e.Entity)
-                .ThenInclude(e => e.Workflow)
-
             .Include(i => i.State)
             .Include(i => i.Priority)
             .Include(i => i.Category)
             
             .Include(e => e.Entity)
+                .ThenInclude(e => e.Workflow)
+            .Include(e => e.Entity)
                 .ThenInclude(e => e.Descriptions)
-                    .ThenInclude(d => d.Type)
             
             .FirstOrDefaultAsync(e => e.EntityId == id, ct);
     }

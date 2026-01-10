@@ -1,6 +1,6 @@
 ﻿using Misa.Domain.Audit;
 using Misa.Domain.Dictionaries.Items;
-using Misa.Domain.Extensions;
+using Misa.Domain.Entities.Extensions;
 using Misa.Domain.Items;
 
 namespace Misa.Application.Common.Abstractions.Persistence;

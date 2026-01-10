@@ -36,8 +36,6 @@ public static class EntityDtoMapper
              UpdatedAt = entity.UpdatedAt,
              InteractedAt = entity.InteractedAt,
              Item = entity.Item?.ToReadItemDto(),
-             DescriptionCount = entity.DescriptionCount,
-             Descriptions = entity.Descriptions.ToDto(),
              Sessions = entity.Sessions.ToDto(),
              Actions = entity.Actions.ToDto(),
              HasRunningSession = entity.HasRunningSession(),
