@@ -16,7 +16,7 @@
 CREATE TABLE sessions
 (
     id                  UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    entity_id           UUID NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
+    item_id             UUID NOT NULL REFERENCES items(entity_id) ON DELETE CASCADE,
     
     state_id            INT NOT NULL REFERENCES session_states(id) ON DELETE RESTRICT,
     efficiency_id       INT REFERENCES session_efficiency_types(id) ON DELETE RESTRICT,
