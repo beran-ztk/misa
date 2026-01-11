@@ -10,6 +10,7 @@ public interface IItemRepository
     Task<Item> AddAsync(Item item, CancellationToken ct);
     Task AddAsync(Session session, CancellationToken ct);
     Task<Session?> TryGetActiveSessionByItemIdAsync(Guid id, CancellationToken ct);
+    Task<Session?> TryGetPausedSessionByItemIdAsync(Guid id, CancellationToken ct);
     
     Task SaveChangesAsync(CancellationToken ct = default);
     Task<Item?> TryGetItemAsync(Guid id, CancellationToken ct);

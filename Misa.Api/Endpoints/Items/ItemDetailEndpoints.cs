@@ -15,6 +15,7 @@ public static class ItemDetailEndpoints
         app.MapGet("items/{itemId:guid}/overview", GetDetails);
         app.MapPost("items/{itemId:guid}/sessions/start", StartSession);
         app.MapPost("items/{itemId:guid}/sessions/pause", PauseSession);
+        app.MapPost("items/{itemId:guid}/sessions/continue", ContinueSession);
     }
 
     private static async Task<Result<ItemOverviewDto>> GetDetails(
@@ -56,6 +57,16 @@ public static class ItemDetailEndpoints
             dto.ItemId,
             dto.PauseReason
         );
+
+        var res = await bus.InvokeAsync<Result>(cmd, ct);
+        return res;
+    }
+    private static async Task<Result> ContinueSession(
+        [FromRoute] Guid itemId,
+        IMessageBus bus,
+        CancellationToken ct)
+    {
+        var cmd = new ContinueSessionCommand(itemId);
 
         var res = await bus.InvokeAsync<Result>(cmd, ct);
         return res;

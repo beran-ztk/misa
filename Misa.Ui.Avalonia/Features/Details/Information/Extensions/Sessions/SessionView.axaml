@@ -29,13 +29,11 @@
                                Source="{SvgImage /Assets/Images/Details/pause.svg}"/>
                     </Button>
 
-                <!--     <Button Classes="misa-action" -->
-                <!--             Command="{Binding SessionContinueCommand}" -->
-                <!--             IsEnabled="{Binding Overview.CanContinueSession}"> -->
-                <!--         <Image Width="16" Height="16" -->
-                <!--                Source="{SvgImage /Assets/Images/Details/play-pause.svg}"/> -->
-                <!--     </Button> -->
-                <!-- -->
+                    <Button Command="{Binding ContinueSessionCommand}">
+                        <Image Width="16" Height="16"
+                               Source="{SvgImage /Assets/Images/Details/play-pause.svg}"/>
+                    </Button>
+                
                 <!--     <Button Classes="misa-action" -->
                 <!--             Command="{Binding ShowSessionStopFormCommand}" -->
                 <!--             IsEnabled="{Binding Overview.CanStopSession}"> -->

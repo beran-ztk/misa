@@ -24,6 +24,15 @@ public class ItemRepository(MisaDbContext db) : IItemRepository
             .Include(s => s.Segments.Where(seg => seg.EndedAtUtc == null))
             .OrderByDescending(s => s.CreatedAtUtc)
             .FirstOrDefaultAsync(ct);
+    }  
+    public async Task<Session?> TryGetPausedSessionByItemIdAsync(Guid id, CancellationToken ct)
+    {
+        return await db.Sessions
+            .Where(s =>
+                s.ItemId == id
+                && s.StateId == (int)Domain.Dictionaries.Audit.SessionState.Paused)
+            .OrderByDescending(s => s.CreatedAtUtc)
+            .FirstOrDefaultAsync(ct);
     }
 
     public async Task<Item> AddAsync(Item item, CancellationToken ct = default)
