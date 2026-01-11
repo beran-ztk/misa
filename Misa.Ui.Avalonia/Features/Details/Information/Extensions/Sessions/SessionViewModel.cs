@@ -8,6 +8,8 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Audit.Lookups;
 using Misa.Contract.Audit.Session;
+using Misa.Contract.Common.Results;
+using Misa.Contract.Items.Details;
 using Misa.Ui.Avalonia.Presentation.Mapping;
 
 namespace Misa.Ui.Avalonia.Features.Details.Information.Extensions.Sessions;
@@ -15,10 +17,45 @@ namespace Misa.Ui.Avalonia.Features.Details.Information.Extensions.Sessions;
 public partial class SessionViewModel : ViewModelBase
 {
     private InformationViewModel Parent { get; }
+    [ObservableProperty] private CurrentSessionOverviewDto _currentSessionOverviewDto;
+    public bool HasActiveSession => CurrentSessionOverviewDto.ActiveSession != null;
+    public bool HasLatestClosedSession => CurrentSessionOverviewDto.LatestClosedSession != null;
     
     public SessionViewModel(InformationViewModel parent)
     {
         Parent = parent;
+    }
+
+    public async Task LoadCurrentSessionAsync()
+    {
+        try
+        {
+            using var request = new HttpRequestMessage(
+                HttpMethod.Get,
+                $"items/{Parent.Parent.ItemOverview.Item.Id}/overview/session");
+
+            var response = await Parent.Parent.EntityDetailHost.NavigationService.NavigationStore
+                .MisaHttpClient
+                .SendAsync(request, CancellationToken.None);
+
+            response.EnsureSuccessStatusCode();
+            
+            var result = await response.Content
+                .ReadFromJsonAsync<Result<CurrentSessionOverviewDto>>(cancellationToken: CancellationToken.None);
+
+            if (result?.Value is null)
+            {
+                return;
+            }
+            
+            CurrentSessionOverviewDto = result.Value;
+            OnPropertyChanged(nameof(HasActiveSession));
+            OnPropertyChanged(nameof(HasLatestClosedSession));
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
     }
 
     // Start Session

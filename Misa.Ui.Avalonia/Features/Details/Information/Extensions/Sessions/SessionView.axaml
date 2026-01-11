@@ -6,10 +6,12 @@
              d:DesignWidth="800" d:DesignHeight="450"
              x:Class="Misa.Ui.Avalonia.Features.Details.Information.Extensions.Sessions.SessionView"
              xmlns:information="clr-namespace:Misa.Ui.Avalonia.Features.Details.Information.Extensions.Sessions"
-             x:DataType="information:SessionViewModel">
+             x:DataType="information:SessionViewModel"
+             x:Name="Root">
 
     <StackPanel Spacing="12">
 
+        <!-- Actions + Overview -->
         <Border Padding="12"
                 Margin="10"
                 CornerRadius="10"
@@ -17,30 +19,169 @@
                 BorderBrush="{StaticResource BrushBorder}"
                 Background="{StaticResource BrushPrimaryBackgroundLighter}">
 
-            <StackPanel Spacing="12">
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                    <Button Command="{Binding ShowStartSessionFormCommand}">
-                        <Image Width="16" Height="16"
-                               Source="{SvgImage /Assets/Images/Details/play.svg}"/>
-                    </Button>
+          <StackPanel Spacing="12">
 
-                    <Button Command="{Binding ShowPauseSessionFormCommand}">
-                        <Image Width="16" Height="16"
-                               Source="{SvgImage /Assets/Images/Details/pause.svg}"/>
-                    </Button>
+            <!-- Action bar -->
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <Button Command="{Binding ShowStartSessionFormCommand}"
+                      IsEnabled="{Binding CurrentSessionOverviewDto.CanStartSession}">
+                <Image Width="16" Height="16"
+                       Source="{SvgImage /Assets/Images/Details/play.svg}"/>
+              </Button>
 
-                    <Button Command="{Binding ContinueSessionCommand}">
-                        <Image Width="16" Height="16"
-                               Source="{SvgImage /Assets/Images/Details/play-pause.svg}"/>
-                    </Button>
-                
-                    <Button Command="{Binding ShowStopSessionFormCommand}">
-                        <Image Width="16" Height="16"
-                               Source="{SvgImage /Assets/Images/Details/stop.svg}"/>
-                    </Button>
-                </StackPanel>
+              <Button Command="{Binding ShowPauseSessionFormCommand}"
+                      IsEnabled="{Binding CurrentSessionOverviewDto.CanPauseSession}">
+                <Image Width="16" Height="16"
+                       Source="{SvgImage /Assets/Images/Details/pause.svg}"/>
+              </Button>
+
+              <Button Command="{Binding ContinueSessionCommand}"
+                      IsEnabled="{Binding CurrentSessionOverviewDto.CanContinueSession}">
+                <Image Width="16" Height="16"
+                       Source="{SvgImage /Assets/Images/Details/play-pause.svg}"/>
+              </Button>
+
+              <Button Command="{Binding ShowStopSessionFormCommand}"
+                      IsEnabled="{Binding CurrentSessionOverviewDto.CanStopSession}">
+                <Image Width="16" Height="16"
+                       Source="{SvgImage /Assets/Images/Details/stop.svg}"/>
+              </Button>
             </StackPanel>
+
+            <Separator/>
+
+            <StackPanel Spacing="8">
+
+              <TextBlock Text="Current session" FontWeight="SemiBold"/>
+
+              <!-- Current session card -->
+              <Border Padding="10"
+                      CornerRadius="8"
+                      BorderThickness="1"
+                      BorderBrush="{StaticResource BrushBorder}"
+                      Background="{StaticResource BrushPrimaryBackgroundLighter}">
+                <StackPanel>
+                  <!-- Active session content -->
+                  <Border IsVisible="{Binding HasActiveSession}">
+                      <Grid ColumnDefinitions="Auto,*"
+                            RowDefinitions="Auto,Auto,Auto,Auto,Auto"
+                            RowSpacing="6"
+                            ColumnSpacing="12"
+                            DataContext="{Binding CurrentSessionOverviewDto.ActiveSession}">
+
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="State" Opacity="0.7"/>
+                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding State.Name}" FontWeight="SemiBold"/>
+
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Objective" Opacity="0.7"/>
+                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Objective}" TextWrapping="Wrap"/>
+
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Planned" Opacity="0.7"/>
+                        <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal" Spacing="6">
+                          <TextBlock Text="{Binding PlannedDuration}"/>
+                          <TextBlock Text="(auto stop)" Opacity="0.7"
+                                     IsVisible="{Binding StopAutomatically}"/>
+                          <TextBlock Text="{Binding AutoStopReason}" Opacity="0.7"
+                                     IsVisible="{Binding StopAutomatically}"/>
+                        </StackPanel>
+
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Created" Opacity="0.7"/>
+                        <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding CreatedAtUtc}"/>
+
+                        <TextBlock Grid.Row="4" Grid.Column="0" Text="Segments" Opacity="0.7"/>
+                        <ItemsControl Grid.Row="4" Grid.Column="1" ItemsSource="{Binding Segments}">
+                          <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                              <Border Padding="8"
+                                      Margin="0,0,0,6"
+                                      CornerRadius="6"
+                                      BorderThickness="1"
+                                      BorderBrush="{StaticResource BrushBorder}"
+                                      Background="{StaticResource BrushPrimaryBackgroundLighter}">
+                                <Grid ColumnDefinitions="Auto,*,Auto"
+                                      RowDefinitions="Auto,Auto"
+                                      ColumnSpacing="10"
+                                      RowSpacing="4">
+                                  <TextBlock Grid.Row="0" Grid.Column="0" Text="Start" Opacity="0.7"/>
+                                  <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding StartedAtUtc}"/>
+
+                                  <TextBlock Grid.Row="1" Grid.Column="0" Text="End" Opacity="0.7"/>
+                                  <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding EndedAtUtc}"/>
+
+                                  <TextBlock Grid.Row="1" Grid.Column="2"
+                                             Text="{Binding PauseReason}"
+                                             Opacity="0.7"
+                                             TextWrapping="Wrap"
+                                             HorizontalAlignment="Right"/>
+                                </Grid>
+                              </Border>
+                            </DataTemplate>
+                          </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                      </Grid>
+                  </Border>
+                  
+
+                  <!-- Current empty state -->
+                  <Border IsVisible="{Binding !HasActiveSession}">
+                      <TextBlock Text="No active session."
+                                 Opacity="0.7"/>
+                  </Border>
+                </StackPanel>
+              </Border>
+
+              <TextBlock Text="Latest closed session" FontWeight="SemiBold" Margin="0,8,0,0"/>
+
+              <!-- Latest closed session card -->
+              <Border Padding="10"
+                      CornerRadius="8"
+                      BorderThickness="1"
+                      BorderBrush="{StaticResource BrushBorder}"
+                      Background="{StaticResource BrushPrimaryBackgroundLighter}">
+                <StackPanel>
+                  <!-- Latest session content -->
+                  <Border IsVisible="{Binding HasLatestClosedSession}">
+                      <Grid ColumnDefinitions="Auto,*"
+                            RowDefinitions="Auto,Auto,Auto,Auto,Auto"
+                            RowSpacing="6"
+                            ColumnSpacing="12"
+                            DataContext="{Binding CurrentSessionOverviewDto.LatestClosedSession}">
+
+                          <TextBlock Grid.Row="0" Grid.Column="0" Text="State" Opacity="0.7"/>
+                          <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding State.Name}" FontWeight="SemiBold"/>
+
+                          <TextBlock Grid.Row="1" Grid.Column="0" Text="Efficiency" Opacity="0.7"/>
+                          <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="8" DataContext="{Binding Efficiency}">
+                              <TextBlock Text="{Binding Name}"/>
+                              <TextBlock Text="{Binding Synopsis}" Opacity="0.7"/>
+                          </StackPanel>
+
+                          <TextBlock Grid.Row="2" Grid.Column="0" Text="Concentration" Opacity="0.7"/>
+                          <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal" Spacing="8" DataContext="{Binding Concentration}">
+                              <TextBlock Text="{Binding Name}"/>
+                              <TextBlock Text="{Binding Synopsis}" Opacity="0.7"/>
+                          </StackPanel>
+
+                          <TextBlock Grid.Row="3" Grid.Column="0" Text="Summary" Opacity="0.7"/>
+                          <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding Summary}" TextWrapping="Wrap"/>
+
+                          <TextBlock Grid.Row="4" Grid.Column="0" Text="Created" Opacity="0.7"/>
+                          <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding CreatedAtUtc}"/>
+                      </Grid>
+                  </Border>
+
+                  <!-- Latest empty state -->
+                  <Border IsVisible="{Binding !HasLatestClosedSession}">
+                      <TextBlock Text="No closed session yet."
+                                 Opacity="0.7"/>
+                  </Border>
+                </StackPanel>
+              </Border>
+
+            </StackPanel>
+
+          </StackPanel>
         </Border>
+
 
         <!-- Start-Session Form -->
         <Border Padding="12"

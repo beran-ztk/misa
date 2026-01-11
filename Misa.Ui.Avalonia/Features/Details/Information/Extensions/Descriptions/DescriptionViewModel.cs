@@ -19,10 +19,10 @@ public partial class DescriptionViewModel : ViewModelBase
     public DescriptionViewModel(InformationViewModel parent)
     {
         Parent = parent;
-        this.WhenAnyValue(x => x.Parent.Parent.EntityDetailHost.ActiveEntityId)
-            .Where(id => id != Guid.Empty)
-            .DistinctUntilChanged()
-            .Subscribe(id => Load());
+        // this.WhenAnyValue(x => x.Parent.Parent.EntityDetailHost.ActiveEntityId)
+        //     .Where(id => id != Guid.Empty)
+        //     .DistinctUntilChanged()
+        //     .Subscribe(id => Load());
     }
 
     public void Load()
