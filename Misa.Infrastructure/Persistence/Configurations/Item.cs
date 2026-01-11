@@ -59,7 +59,7 @@ public class Item : IEntityTypeConfiguration<Misa.Domain.Items.Item>
         // Session 1:0..1
         builder.HasMany(e => e.Sessions)
             .WithOne()
-            .HasForeignKey(s => s.EntityId)
+            .HasForeignKey(s => s.ItemId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }

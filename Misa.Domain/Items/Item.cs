@@ -64,7 +64,7 @@ public class Item : DomainEventEntity
         if (latestActiveSession == null)
             return;
 
-        ChangeState((int)ItemStates.InProgress);
+        ChangeState(ItemStates.InProgress);
         latestActiveSession.StateId = (int)Dictionaries.Audit.SessionState.Completed;
         latestActiveSession.EfficiencyId = dto.Efficiency;
         latestActiveSession.ConcentrationId = dto.Concentration;
@@ -78,95 +78,64 @@ public class Item : DomainEventEntity
     
     public ScheduledDeadline? ScheduledDeadline { get; private set; }
 
-    public void ChangeState(int? optionalNewValue, ref bool changed,  string? reason = null)
+    public void ChangeState(ItemStates state)
     {
-        if (StateId == optionalNewValue || optionalNewValue is null)
+        var value = (int)state;
+        if (StateId == value)
             return;
-
-        var newValue = Convert.ToInt32(optionalNewValue);
         
         AddDomainEvent(new PropertyChangedEvent(
             EntityId: EntityId,
             ActionType: (int)ActionTypes.State,
             OldValue: StateId.ToString(),
-            NewValue: newValue.ToString(),
-            Reason: reason
+            NewValue: value.ToString(),
+            Reason: null
         ));
-        StateId = newValue;
-        
-        changed = true;
+        StateId = value;
     }
-    public void ChangeState(int? optionalNewValue,  string? reason = null)
-    {
-        if (StateId == optionalNewValue || optionalNewValue is null)
-            return;
 
-        var newValue = Convert.ToInt32(optionalNewValue);
-        
-        AddDomainEvent(new PropertyChangedEvent(
-            EntityId: EntityId,
-            ActionType: (int)ActionTypes.State,
-            OldValue: StateId.ToString(),
-            NewValue: newValue.ToString(),
-            Reason: reason
-        ));
-        StateId = newValue;
-    }
-    public void StartSession(ref bool hasBeenChanged) => ChangeState((int)Dictionaries.Items.ItemStates.Active, ref hasBeenChanged);
-    public void ChangePriority(int? optionalNewValue, ref bool changed, string? reason = null)
+    public void ChangePriority(int newValue)
     {
-        if (PriorityId == optionalNewValue || optionalNewValue is null)
+        if (PriorityId == newValue)
             return;
-
-        var newValue = Convert.ToInt32(optionalNewValue);
         
         AddDomainEvent(new PropertyChangedEvent(
             EntityId: EntityId,
             ActionType: (int)ActionTypes.Priority,
             OldValue: Priority.ToString(),
             NewValue: newValue.ToString(),
-            Reason: reason
+            Reason: null
         ));
         PriorityId = newValue;
-        
-        changed = true;
     }
-    public void ChangeCategory(int? optionalNewValue, ref bool changed,  string? reason = null)
+    public void ChangeCategory(int newValue)
     {
-        if (PriorityId == optionalNewValue || optionalNewValue is null)
+        if (PriorityId == newValue)
             return;
-
-        var newValue = Convert.ToInt32(optionalNewValue);
         
         AddDomainEvent(new PropertyChangedEvent(
             EntityId: EntityId,
             ActionType: (int)ActionTypes.Category,
             OldValue: Category.ToString(),
             NewValue: newValue.ToString(),
-            Reason: reason
+            Reason: null
         ));
         CategoryId = newValue;
-        
-        changed = true;
     }
-    public void Rename(string? optionalNewTitle, ref bool changed,  string? reason = null)
+    public void Rename(string newValue)
     {
-        if (Title == optionalNewTitle || string.IsNullOrWhiteSpace(optionalNewTitle))
+        if (Title == newValue)
         {
             return;
         }
-
-        var newValue = Convert.ToString(optionalNewTitle).Trim();
         
         AddDomainEvent(new PropertyChangedEvent(
             EntityId: EntityId,
             ActionType: (int)ActionTypes.Title,
             OldValue: Title,
             NewValue: newValue,
-            Reason: reason
+            Reason: null
         ));
         Title = newValue;
-        
-        changed = true;
     }
 }

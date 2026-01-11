@@ -1,6 +1,5 @@
 ﻿using Misa.Application.Common.Abstractions.Persistence;
 using Misa.Application.Scheduling.Events.Commands;
-using Misa.Application.Scheduling.Results;
 using Misa.Contract.Common.Results;
 using Wolverine;
 
@@ -12,13 +11,13 @@ public sealed class RemoveItemDeadlineHandler(IItemRepository repository, IMessa
     {
         if (command.ItemId == Guid.Empty)
         {
-            return Result.Invalid(DeadlineErrorCodes.ItemIdEmpty, "ItemId must not be empty.");
+            return Result.Invalid(ItemErrorCodes.ItemIdEmpty, "ItemId must not be empty.");
         }
 
         var item = await repository.TryGetItemAsync(command.ItemId, ct);
         if (item is null)
         {
-            return Result.NotFound(DeadlineErrorCodes.ItemNotFound, "Item not found.");
+            return Result.NotFound(ItemErrorCodes.ItemNotFound, "Item not found.");
         }
 
         var deadlineEntry = await repository.TryGetScheduledDeadlineForItemAsync(command.ItemId, ct);

@@ -5,7 +5,7 @@ namespace Misa.Domain.Audit;
 public class Session
 {
     public Guid Id { get; private set; }
-    public Guid EntityId { get; private set; }
+    public Guid ItemId { get; private set; }
 
     public int StateId { get; set; } = 1;
     public SessionStates State { get; private set; }
@@ -29,7 +29,7 @@ public class Session
     public bool? WasAutomaticallyStopped { get; private set; }
 
     public DateTimeOffset CreatedAtUtc { get; private set; }
-    public ICollection<SessionSegment> Segments { get; private set; } = new List<SessionSegment>();
+    public ICollection<SessionSegment> Segments { get; set; } = [];
 
     public SessionSegment? GetLatestSegment()
     {
@@ -41,23 +41,28 @@ public class Session
         => Segments
             .Where(s => s.EndedAtUtc == null)
             .MaxBy(s => s.StartedAtUtc);
-    
-    public void AddSegment(Guid id, DateTimeOffset startedAtUtc) 
-        => Segments.Add(new SessionSegment(id, startedAtUtc));
+
+    public void AddStartSegment()
+    {
+        var segment = new SessionSegment(Id, CreatedAtUtc);
+        Segments.Add(segment);
+    }
 
     public static Session Start(
-        Guid entityId, TimeSpan? plannedDuration, string? objective,
-        bool stopAutomatically, string? autoStopReason, DateTimeOffset nowUtc
-    )
-        => new()
-        {
-            EntityId = entityId,
-            PlannedDuration = plannedDuration,
-            Objective = objective,
-            StopAutomatically = stopAutomatically,
-            AutoStopReason = autoStopReason,
-            StateId = (int)SessionState.Running,
-            CreatedAtUtc = nowUtc
-        };
+        Guid entityId, 
+        TimeSpan? plannedDuration, 
+        string? objective,
+        bool stopAutomatically, 
+        string? autoStopReason, 
+        DateTimeOffset nowUtc) => new()
+    {
+        ItemId = entityId,
+        PlannedDuration = plannedDuration,
+        Objective = objective,
+        StopAutomatically = stopAutomatically,
+        AutoStopReason = autoStopReason,
+        StateId = (int)SessionState.Running,
+        CreatedAtUtc = nowUtc
+    };
 
 }

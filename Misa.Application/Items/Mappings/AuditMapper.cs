@@ -53,7 +53,7 @@ public static class AuditMapper
         => s.Select(x => new SessionResolvedDto()
     {
         Id = x.Id,
-        EntityId = x.EntityId,
+        EntityId = x.ItemId,
         
         State = x.State?.ToDto(),
         Efficiency = x.Efficiency?.ToDto(),

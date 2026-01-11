@@ -15,8 +15,8 @@ public class SessionEf : IEntityTypeConfiguration<Session>
         builder.Property(x => x.Id)
             .HasColumnName("id");
 
-        builder.Property(x => x.EntityId)
-            .HasColumnName("entity_id");
+        builder.Property(x => x.ItemId)
+            .HasColumnName("item_id");
 
         builder.Property(x => x.StateId)
             .HasColumnName("state_id");

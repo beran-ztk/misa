@@ -8,6 +8,9 @@ namespace Misa.Application.Common.Abstractions.Persistence;
 public interface IItemRepository
 {
     Task<Item> AddAsync(Item item, CancellationToken ct);
+    Task AddAsync(Session session, CancellationToken ct);
+    Task AddAsync(SessionSegment segment, CancellationToken ct);
+    
     Task SaveChangesAsync(CancellationToken ct = default);
     Task<Item?> TryGetItemAsync(Guid id, CancellationToken ct);
 
@@ -15,8 +18,6 @@ public interface IItemRepository
     // Tasks
     Task<List<Item>> TryGetTasksAsync(CancellationToken ct);
     // Sessions
-    Task<Session> AddSessionAsync(Session session);
-    Task AddAsync(SessionSegment segment);
 
     // Deadlines
     Task AddDeadlineAsync(ScheduledDeadline deadline);
