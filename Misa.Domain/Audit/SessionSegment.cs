@@ -21,4 +21,13 @@ public class SessionSegment
         PauseReason = pauseReason;
         EndedAtUtc = endedAtUtc ?? DateTimeOffset.UtcNow;
     }
+    public void End(DateTimeOffset endedAtUtc, string? pauseReason)
+    {
+        if (EndedAtUtc != null)
+            throw new InvalidOperationException("Segment already ended.");
+
+        EndedAtUtc = endedAtUtc;
+        PauseReason = pauseReason;
+    }
+
 }

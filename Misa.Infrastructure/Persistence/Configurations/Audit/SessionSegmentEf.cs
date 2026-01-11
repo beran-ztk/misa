@@ -27,8 +27,6 @@ public class SessionSegmentEf : IEntityTypeConfiguration<SessionSegment>
             .IsRequired();
         
         builder.Property(x => x.EndedAtUtc)
-            .HasColumnName("ended_at_utc")
-            .IsRequired();
-
+            .HasColumnName("ended_at_utc");
     }
 }

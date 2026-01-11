@@ -1,13 +1,6 @@
 ﻿namespace Misa.Contract.Audit.Session;
 
-public class PauseSessionDto
-{
-    public Guid EntityId { get; set; }
-    public string? PauseReason { get; set; }
-
-    public PauseSessionDto( Guid entityId, string? pauseReason )
-    {
-        EntityId = entityId;
-        PauseReason = pauseReason;
-    }
-}
+public record PauseSessionDto(
+    Guid ItemId,
+    string? PauseReason
+);

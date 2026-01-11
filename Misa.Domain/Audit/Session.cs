@@ -30,13 +30,7 @@ public class Session
 
     public DateTimeOffset CreatedAtUtc { get; private set; }
     public ICollection<SessionSegment> Segments { get; set; } = [];
-
-    public SessionSegment? GetLatestSegment()
-    {
-        return Segments.Count == 0
-            ? new SessionSegment()
-            : Segments.MaxBy(s => s.StartedAtUtc);
-    }
+    
     public SessionSegment? GetLatestActiveSegment() 
         => Segments
             .Where(s => s.EndedAtUtc == null)
@@ -46,6 +40,26 @@ public class Session
     {
         var segment = new SessionSegment(Id, CreatedAtUtc);
         Segments.Add(segment);
+    }
+    public void Pause(string? pauseReason, DateTimeOffset nowUtc)
+    {
+        if (StateId != (int)SessionState.Running)
+            throw new InvalidOperationException("Session is not running.");
+
+        var openSegments = Segments.Where(s => s.EndedAtUtc == null).ToList();
+
+        switch (openSegments.Count)
+        {
+            case 0:
+                throw new InvalidOperationException("No active segment found to pause.");
+            case > 1:
+                throw new InvalidOperationException("Multiple active segments found (data corruption).");
+        }
+
+        var segment = openSegments[0];
+        segment.End(nowUtc, pauseReason);
+
+        StateId = (int)SessionState.Paused;
     }
 
     public static Session Start(

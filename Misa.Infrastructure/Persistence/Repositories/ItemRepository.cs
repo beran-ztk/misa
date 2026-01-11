@@ -15,12 +15,17 @@ public class ItemRepository(MisaDbContext db) : IItemRepository
     public async Task SaveChangesAsync(CancellationToken  ct = default)
         => await db.SaveChangesAsync(ct);
 
-    public async Task<Session> GetTrackedSessionAsync(Guid id)
+    public async Task<Session?> TryGetActiveSessionByItemIdAsync(Guid id, CancellationToken ct)
     {
         return await db.Sessions
+            .Where(s =>
+                s.ItemId == id
+                && s.StateId == (int)Domain.Dictionaries.Audit.SessionState.Running)
+            .Include(s => s.Segments.Where(seg => seg.EndedAtUtc == null))
             .OrderByDescending(s => s.CreatedAtUtc)
-            .FirstAsync(i => i.ItemId == id);
+            .FirstOrDefaultAsync(ct);
     }
+
     public async Task<Item> AddAsync(Item item, CancellationToken ct = default)
     {
         await db.Items.AddAsync(item, ct);
