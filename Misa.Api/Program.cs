@@ -36,8 +36,9 @@ builder.Host.UseWolverine(opts =>
     opts.Discovery.IncludeAssembly(typeof(RemoveItemDeadlineHandler).Assembly);
     opts.Discovery.IncludeAssembly(typeof(UpsertItemDeadlineHandler).Assembly);
     opts.Discovery.IncludeAssembly(typeof(GetTasksHandler).Assembly);
-    opts.Discovery.IncludeAssembly(typeof(GetItemDetailsHandler).Assembly);
     opts.Discovery.IncludeAssembly(typeof(AddDescriptionHandler).Assembly);
+    opts.Discovery.IncludeAssembly(typeof(GetItemDetailsHandler).Assembly);
+    opts.Discovery.IncludeAssembly(typeof(GetCurrentSessionDetailsHandler).Assembly);
     opts.Discovery.IncludeAssembly(typeof(StartSessionHandler).Assembly);
     opts.Discovery.IncludeAssembly(typeof(PauseSessionHandler).Assembly);
     opts.Discovery.IncludeAssembly(typeof(ContinueSessionHandler).Assembly);

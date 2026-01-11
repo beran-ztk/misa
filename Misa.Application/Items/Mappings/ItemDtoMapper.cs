@@ -55,19 +55,4 @@ public static class ItemDtoMapper
 
     public static List<CategoryDto> ToDto(this List<Category> categories)
         => categories.Select(c => c.ToDto()).ToList();
-    
-    public static List<SessionEfficiencyTypeDto> ToDto(this List<SessionEfficiencyType> categories)
-        => categories.Select(c => new SessionEfficiencyTypeDto
-        {
-            Id = c.Id,
-            Name = c.Name,
-            Synopsis = c.Synopsis
-        }).ToList();
-    public static List<SessionConcentrationTypeDto> ToDto(this List<SessionConcentrationType> categories)
-        => categories.Select(c => new SessionConcentrationTypeDto
-        {
-            Id = c.Id,
-            Name = c.Name,
-            Synopsis = c.Synopsis
-        }).ToList();
 }

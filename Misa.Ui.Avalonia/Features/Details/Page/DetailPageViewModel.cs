@@ -76,6 +76,7 @@ public partial class DetailPageViewModel : ViewModelBase, IDisposable
             
             ItemOverview = result.Value;
             InformationViewModel.Description.Load();
+            await InformationViewModel.Session.LoadCurrentSessionAsync();
         }
         catch (OperationCanceledException)
         {

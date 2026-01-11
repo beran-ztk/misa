@@ -4,7 +4,7 @@ public class SessionResolvedDto
 {
     public Guid Id { get; set; }
     public Guid EntityId { get; set; }
-    public Lookups.SessionStateDto State { get; set; } = new();
+    public required Lookups.SessionStateDto State { get; set; }
     public Lookups.SessionEfficiencyTypeDto? Efficiency { get; set; }
     public Lookups.SessionConcentrationTypeDto? Concentration { get; set; }
 
