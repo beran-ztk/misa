@@ -12,7 +12,7 @@ namespace Misa.Ui.Avalonia.Features.Details.Information.Extensions.Sessions;
 
 public partial class SessionViewModel : ViewModelBase
 {
-    public InformationViewModel Parent { get; }
+    private InformationViewModel Parent { get; }
     
     public SessionViewModel(InformationViewModel parent)
     {
@@ -39,6 +39,12 @@ public partial class SessionViewModel : ViewModelBase
     private void ShowStartSessionForm()
     {
         IsStartSessionFormOpen = true;
+        ResetStartSessionContext();
+    }
+    [RelayCommand]
+    private void CloseStartSessionForm()
+    {
+        IsStartSessionFormOpen = false;
         ResetStartSessionContext();
     }
     [RelayCommand]
@@ -69,6 +75,7 @@ public partial class SessionViewModel : ViewModelBase
 
             response.EnsureSuccessStatusCode();
             
+            CloseStartSessionForm();
             await Parent.Parent.Reload();
         }
         catch (Exception e)
@@ -77,7 +84,58 @@ public partial class SessionViewModel : ViewModelBase
         }
     }
     
+    // Pause Session
+    [ObservableProperty] private bool _isPauseSessionFormOpen;
+    [ObservableProperty] private string? _pauseReason;
+    private void ResetPauseSessionContext()
+    {
+        PauseReason = null;
+    }
+    [RelayCommand]
+    private void ShowPauseSessionForm()
+    {
+        IsPauseSessionFormOpen = true;
+        ResetPauseSessionContext();
+    }
+    [RelayCommand]
+    private void ClosePauseSessionForm()
+    {
+        IsPauseSessionFormOpen = false;
+        ResetPauseSessionContext();
+    }
     
+    [RelayCommand]
+    private async Task PauseSession()
+    {
+        try
+        {
+            var dto = new PauseSessionDto(
+                Parent.Parent.ItemOverview.Item.Id,
+                PauseReason
+            );
+
+            using var request = new HttpRequestMessage(
+                HttpMethod.Post,
+                $"items/{Parent.Parent.ItemOverview.Item.Id}/sessions/pause");
+            request.Content = JsonContent.Create(dto);
+
+            var response = await Parent.Parent.EntityDetailHost.NavigationService.NavigationStore
+                .MisaHttpClient
+                .SendAsync(request, CancellationToken.None);
+
+            response.EnsureSuccessStatusCode();
+
+            ClosePauseSessionForm();
+            await Parent.Parent.Reload();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
+    }
+
+    
+    // Continue Session
     // [RelayCommand]
     // private async Task SessionContinue()
     // {

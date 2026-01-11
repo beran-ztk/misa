@@ -39,6 +39,7 @@ builder.Host.UseWolverine(opts =>
     opts.Discovery.IncludeAssembly(typeof(GetItemDetailsHandler).Assembly);
     opts.Discovery.IncludeAssembly(typeof(AddDescriptionHandler).Assembly);
     opts.Discovery.IncludeAssembly(typeof(StartSessionHandler).Assembly);
+    opts.Discovery.IncludeAssembly(typeof(PauseSessionHandler).Assembly);
 });
 
 builder.Services.AddScoped<EventsHub>();
@@ -68,6 +69,13 @@ var app = builder.Build();
 app.MapControllers();
 app.MapHub<EventsHub>("/hubs/events");
 app.UseMiddleware<ExceptionMappingMiddleware>();
+
+TaskEndpoints.Map(app);
+ItemDetailEndpoints.Map(app);
+DeadlineEndpoints.Map(app);
+DescriptionEndpoints.Map(app);
+
+
 
 app.MapGet("/api/entities/{id:guid}", 
     async (Guid id, GetSingleDetailedEntityHandler handler) 
@@ -104,25 +112,6 @@ app.MapPatch("/tasks", async (UpdateItemDto dto, UpdateItemHandler handler) =>
     return Results.Ok();
 });
 
-// Session
-// app.MapPost("/Sessions/Start", async (SessionDto dto, SessionHandler handler) 
-//     => await handler.StartSessionAsync(dto));
-// app.MapPost("/Sessions/Pause", async (PauseSessionDto dto, SessionHandler handler) 
-//     => await handler.PauseSessionAsync(dto));
-// app.MapPost(
-//     "/Sessions/Continue/{entityId:guid}",
-//     async (Guid entityId, SessionHandler handler)
-//         => await handler.ContinueSessionAsync(entityId)
-// );
-// app.MapPost(
-//     "/Sessions/Stop",
-//     async (StopSessionDto dto, SessionHandler handler)
-//         => await handler.StopSessionAsync(dto)
-// );
 
-TaskEndpoints.Map(app);
-ItemDetailEndpoints.Map(app);
-DeadlineEndpoints.Map(app);
-DescriptionEndpoints.Map(app);
 
 app.Run();
