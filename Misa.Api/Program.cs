@@ -40,6 +40,7 @@ builder.Host.UseWolverine(opts =>
     opts.Discovery.IncludeAssembly(typeof(AddDescriptionHandler).Assembly);
     opts.Discovery.IncludeAssembly(typeof(StartSessionHandler).Assembly);
     opts.Discovery.IncludeAssembly(typeof(PauseSessionHandler).Assembly);
+    opts.Discovery.IncludeAssembly(typeof(ContinueSessionHandler).Assembly);
 });
 
 builder.Services.AddScoped<EventsHub>();

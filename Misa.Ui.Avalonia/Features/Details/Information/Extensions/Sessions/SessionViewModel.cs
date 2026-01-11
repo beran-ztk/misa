@@ -136,26 +136,26 @@ public partial class SessionViewModel : ViewModelBase
 
     
     // Continue Session
-    // [RelayCommand]
-    // private async Task SessionContinue()
-    // {
-    //     try
-    //     {
-    //         var response = await Parent.Parent.EntityDetailHost.NavigationService.NavigationStore
-    //             .MisaHttpClient.PostAsync(
-    //                 requestUri: $"Sessions/Continue/{Parent.Parent.ItemOverview.Item.Id}",
-    //                 content: null
-    //             );
-    //
-    //
-    //         if (!response.IsSuccessStatusCode)
-    //             Console.WriteLine($"Server returned {response.StatusCode}: {response.ReasonPhrase}");
-    //
-    //         await Parent.Parent.Reload();
-    //     }
-    //     catch (Exception e)
-    //     {
-    //         Console.WriteLine(e);
-    //     }
-    // }
+    [RelayCommand]
+    private async Task ContinueSession()
+    {
+        try
+        {
+            using var request = new HttpRequestMessage(
+                HttpMethod.Post,
+                $"items/{Parent.Parent.ItemOverview.Item.Id}/sessions/continue");
+
+            var response = await Parent.Parent.EntityDetailHost.NavigationService.NavigationStore
+                .MisaHttpClient
+                .SendAsync(request, CancellationToken.None);
+
+            response.EnsureSuccessStatusCode();
+
+            await Parent.Parent.Reload();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
+    }
 }

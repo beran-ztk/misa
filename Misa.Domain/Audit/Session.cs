@@ -62,6 +62,16 @@ public class Session
         StateId = (int)SessionState.Paused;
     }
 
+    public void Continue(DateTimeOffset startedAtUtc)
+    {
+        if (StateId != (int)SessionState.Paused)
+            throw new InvalidOperationException("Session is not paused.");
+        
+        StateId = (int)SessionState.Running;
+        
+        var segment = new SessionSegment(Id, startedAtUtc);
+        Segments.Add(segment);
+    }
     public static Session Start(
         Guid entityId, 
         TimeSpan? plannedDuration, 
