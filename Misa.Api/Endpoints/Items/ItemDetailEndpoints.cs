@@ -16,6 +16,7 @@ public static class ItemDetailEndpoints
         app.MapPost("items/{itemId:guid}/sessions/start", StartSession);
         app.MapPost("items/{itemId:guid}/sessions/pause", PauseSession);
         app.MapPost("items/{itemId:guid}/sessions/continue", ContinueSession);
+        app.MapPost("items/{itemId:guid}/sessions/stop", StopSession);
     }
 
     private static async Task<Result<ItemOverviewDto>> GetDetails(
@@ -67,6 +68,22 @@ public static class ItemDetailEndpoints
         CancellationToken ct)
     {
         var cmd = new ContinueSessionCommand(itemId);
+
+        var res = await bus.InvokeAsync<Result>(cmd, ct);
+        return res;
+    }
+    private static async Task<Result> StopSession(
+        [FromRoute] Guid itemId,
+        [FromBody] StopSessionDto dto,
+        IMessageBus bus,
+        CancellationToken ct)
+    {
+        var cmd = new StopSessionCommand(
+            dto.ItemId,
+            dto.EfficiencyId,
+            dto.ConcentrationId,
+            dto.Summary
+        );
 
         var res = await bus.InvokeAsync<Result>(cmd, ct);
         return res;

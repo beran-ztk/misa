@@ -29,7 +29,7 @@ public class SessionHandler(IItemRepository repository, IEntityRepository entity
     }
     public async Task StopSessionAsync(StopSessionDto dto)
     {
-        var entity = await entityRepository.GetDetailedEntityAsync(dto.EntityId);
+        var entity = await entityRepository.GetDetailedEntityAsync(dto.ItemId);
         if (entity == null)
             return;
 

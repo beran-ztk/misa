@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Misa.Contract.Audit.Lookups;
 using Misa.Contract.Audit.Session;
 using Misa.Ui.Avalonia.Presentation.Mapping;
 
@@ -133,7 +135,6 @@ public partial class SessionViewModel : ViewModelBase
             Console.WriteLine(e);
         }
     }
-
     
     // Continue Session
     [RelayCommand]
@@ -151,6 +152,66 @@ public partial class SessionViewModel : ViewModelBase
 
             response.EnsureSuccessStatusCode();
 
+            await Parent.Parent.Reload();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
+    }
+    
+    // Stop Session
+    [ObservableProperty] private bool _isStopSessionFormOpen;
+    
+    [ObservableProperty] private string? _summary;
+    [ObservableProperty] private int? _efficiencyId; 
+    [ObservableProperty] private int? _concentrationId;
+    public IReadOnlyList<SessionEfficiencyTypeDto> EfficiencyTypes =>
+        Parent.Parent.EntityDetailHost.NavigationService.LookupsStore.EfficiencyTypes;
+    public IReadOnlyList<SessionConcentrationTypeDto> ConcentrationTypes =>
+        Parent.Parent.EntityDetailHost.NavigationService.LookupsStore.ConcentrationTypes;
+    private void ResetStopSessionContext()
+    {
+        Summary = null;
+        EfficiencyId = null;
+        ConcentrationId = null;
+    }
+    [RelayCommand]
+    private void ShowStopSessionForm()
+    {
+        IsStopSessionFormOpen = true;
+        ResetStopSessionContext();
+    }
+    [RelayCommand]
+    private void CloseStopSessionForm()
+    {
+        IsStopSessionFormOpen = false;
+        ResetStopSessionContext();
+    }
+    [RelayCommand]
+    private async Task StopSession()
+    {
+        try
+        {
+            var dto = new StopSessionDto(
+                Parent.Parent.ItemOverview.Item.Id,
+                EfficiencyId,
+                ConcentrationId,
+                Summary
+            );
+
+            using var request = new HttpRequestMessage(
+                HttpMethod.Post,
+                $"items/{Parent.Parent.ItemOverview.Item.Id}/sessions/stop");
+            request.Content = JsonContent.Create(dto);
+
+            var response = await Parent.Parent.EntityDetailHost.NavigationService.NavigationStore
+                .MisaHttpClient
+                .SendAsync(request, CancellationToken.None);
+
+            response.EnsureSuccessStatusCode();
+
+            CloseStopSessionForm();
             await Parent.Parent.Reload();
         }
         catch (Exception e)

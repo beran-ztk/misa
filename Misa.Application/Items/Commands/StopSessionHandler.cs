@@ -3,9 +3,9 @@ using Misa.Contract.Common.Results;
 
 namespace Misa.Application.Items.Commands;
 
-public class PauseSessionHandler(IItemRepository repository)
+public class StopSessionHandler(IItemRepository repository)
 {
-    public async Task<Result> Handle(PauseSessionCommand command, CancellationToken ct)
+    public async Task<Result> Handle(StopSessionCommand command, CancellationToken ct)
     {
         if (command.ItemId == Guid.Empty)
         {
@@ -18,21 +18,27 @@ public class PauseSessionHandler(IItemRepository repository)
             return Result.NotFound(ItemErrorCodes.ItemNotFound, "Item not found.");
         }
 
-        if (item.StateId != (int)Domain.Dictionaries.Items.ItemStates.Active)
+        if (item.StateId is not (int)Domain.Dictionaries.Items.ItemStates.Active 
+            && item.StateId is not (int)Domain.Dictionaries.Items.ItemStates.Paused)
         {
-            return Result.Invalid("item.not_active", "Item is not active and cannot be paused.");
+            return Result.Invalid("item.no_session_state", "Item is not active or paused and cannot be stopped.");
         }
 
-        var session = await repository.TryGetRunningSessionByItemIdAsync(command.ItemId, ct);
+        var session = await repository.TryGetActiveSessionByItemIdAsync(command.ItemId, ct);
         if (session is null)
         {
             return Result.NotFound("session.not_found", "Active session not found.");
         }
 
-        session.Pause(command.PauseReason, DateTimeOffset.UtcNow);
+        session.Stop(
+            DateTimeOffset.UtcNow,
+            command.EfficiencyId,
+            command.ConcentrationId,
+            command.Summary
+        );
 
         item.Entity.Update();
-        item.ChangeState(Domain.Dictionaries.Items.ItemStates.Paused);
+        item.ChangeState(Domain.Dictionaries.Items.ItemStates.InProgress);
 
         await repository.SaveChangesAsync(ct);
 

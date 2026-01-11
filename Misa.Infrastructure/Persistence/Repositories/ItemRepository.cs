@@ -20,6 +20,18 @@ public class ItemRepository(MisaDbContext db) : IItemRepository
         return await db.Sessions
             .Where(s =>
                 s.ItemId == id
+                && (s.StateId == (int)Domain.Dictionaries.Audit.SessionState.Running
+                || s.StateId == (int)Domain.Dictionaries.Audit.SessionState.Paused)) 
+            .Include(s => s.Segments.Where(seg => seg.EndedAtUtc == null))
+            .OrderByDescending(s => s.CreatedAtUtc)
+            .FirstOrDefaultAsync(ct);
+    }
+
+    public async Task<Session?> TryGetRunningSessionByItemIdAsync(Guid id, CancellationToken ct)
+    {
+        return await db.Sessions
+            .Where(s =>
+                s.ItemId == id
                 && s.StateId == (int)Domain.Dictionaries.Audit.SessionState.Running)
             .Include(s => s.Segments.Where(seg => seg.EndedAtUtc == null))
             .OrderByDescending(s => s.CreatedAtUtc)

@@ -72,6 +72,30 @@ public class Session
         var segment = new SessionSegment(Id, startedAtUtc);
         Segments.Add(segment);
     }
+    public void Stop(
+        DateTimeOffset nowUtc,
+        int? efficiencyId,
+        int? concentrationId,
+        string? summary)
+    {
+        var openSegments = Segments.Where(s => s.EndedAtUtc == null).ToList();
+
+        switch (openSegments.Count)
+        {
+            case > 1:
+                return;
+            case 1:
+                openSegments[0].End(nowUtc, null);
+                break;
+        }
+
+        EfficiencyId = efficiencyId;
+        ConcentrationId = concentrationId;
+        Summary = summary;
+
+        StateId = (int)SessionState.Completed;
+    }
+
     public static Session Start(
         Guid entityId, 
         TimeSpan? plannedDuration, 

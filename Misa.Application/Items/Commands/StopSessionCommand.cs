@@ -1,6 +1,6 @@
-﻿namespace Misa.Contract.Audit.Session;
+﻿namespace Misa.Application.Items.Commands;
 
-public record StopSessionDto(
+public record StopSessionCommand(
     Guid ItemId,
     int? EfficiencyId,
     int? ConcentrationId,

@@ -66,8 +66,8 @@ public class Item : DomainEventEntity
 
         ChangeState(ItemStates.InProgress);
         latestActiveSession.StateId = (int)Dictionaries.Audit.SessionState.Completed;
-        latestActiveSession.EfficiencyId = dto.Efficiency;
-        latestActiveSession.ConcentrationId = dto.Concentration;
+        latestActiveSession.EfficiencyId = dto.EfficiencyId;
+        latestActiveSession.ConcentrationId = dto.ConcentrationId;
         latestActiveSession.Summary = dto.Summary;
 
         var latestActiveSegment = latestActiveSession.GetLatestActiveSegment();
