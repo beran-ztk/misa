@@ -27,13 +27,12 @@ public partial class PageViewModel : ViewModelBase, IEntityDetailHost, IDisposab
 
     partial void OnSelectedTaskChanged(ListTaskDto? value)
     {
-        Console.WriteLine("OnSelectedItemChanged called!");
+        DetailViewModel ??= new DetailPageViewModel(this);
         ActiveEntityId = value?.EntityId ?? Guid.Empty;
-        Console.WriteLine($"OnSelectedItemChanged set ActiveEntityId to {ActiveEntityId}!");
     }
 
     private ViewModelBase? _currentInfoModel;
-    private readonly DetailPageViewModel _detailViewModel;
+    private DetailPageViewModel? DetailViewModel { get; set; }
 
     public ListViewModel Model { get; }
     public NavigationViewModel Navigation { get; }
@@ -57,7 +56,6 @@ public partial class PageViewModel : ViewModelBase, IEntityDetailHost, IDisposab
 
         Model = new ListViewModel(this);
         Navigation = new NavigationViewModel(this, Bus);
-        _detailViewModel = new DetailPageViewModel(this);
         
         this.WhenAnyValue(x => x.ActiveEntityId)
             // .Where(id => id != Guid.Empty)
@@ -103,7 +101,7 @@ public partial class PageViewModel : ViewModelBase, IEntityDetailHost, IDisposab
         set => SetProperty(ref _currentInfoModel, value);
     }
 
-    public void ShowDetails() => CurrentInfoModel = _detailViewModel;
+    public void ShowDetails() => CurrentInfoModel = DetailViewModel;
 
     public void Dispose()
     {
@@ -113,6 +111,6 @@ public partial class PageViewModel : ViewModelBase, IEntityDetailHost, IDisposab
         _subCreated.Dispose();
         _subCreateFailed.Dispose();
 
-        _detailViewModel.Dispose();
+        DetailViewModel.Dispose();
     }
 }
