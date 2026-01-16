@@ -7,6 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\Misa.Contract\Misa.Contract.csproj" />
       <ProjectReference Include="..\Misa.Domain\Misa.Domain.csproj" />
     </ItemGroup>
 

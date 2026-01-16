@@ -1,6 +1,4 @@
-﻿using Misa.Contract.Audit;
-using Misa.Contract.Audit.Session;
-using Misa.Domain.Audit;
+﻿using Misa.Domain.Audit;
 using Misa.Domain.Common.DomainEvents;
 using Misa.Domain.Dictionaries.Audit;
 using Misa.Domain.Dictionaries.Items;
@@ -58,24 +56,6 @@ public class Item : DomainEventEntity
                 s.StateId is (int)Dictionaries.Audit.SessionState.Running 
             or (int)Dictionaries.Audit.SessionState.Paused )
             .MaxBy(s => s.CreatedAtUtc);
-    public void EndSession(StopSessionDto dto)
-    {
-        var latestActiveSession = GetLatestActiveSession();
-        if (latestActiveSession == null)
-            return;
-
-        ChangeState(ItemStates.InProgress);
-        latestActiveSession.StateId = (int)Dictionaries.Audit.SessionState.Completed;
-        latestActiveSession.EfficiencyId = dto.EfficiencyId;
-        latestActiveSession.ConcentrationId = dto.ConcentrationId;
-        latestActiveSession.Summary = dto.Summary;
-
-        var latestActiveSegment = latestActiveSession.GetLatestActiveSegment();
-        if (latestActiveSegment == null)
-            return;
-        latestActiveSegment.CloseSegment(null, DateTimeOffset.UtcNow);
-    }
-    
     public ScheduledDeadline? ScheduledDeadline { get; private set; }
 
     public void ChangeState(ItemStates state)
