@@ -30,6 +30,30 @@ public class Session
 
     public DateTimeOffset CreatedAtUtc { get; private set; }
     public ICollection<SessionSegment> Segments { get; set; } = [];
+
+    public TimeSpan? ElapsedTime =>
+        Segments.Aggregate(TimeSpan.Zero, (sum, s) =>
+        {
+            var end = s.EndedAtUtc ?? DateTimeOffset.UtcNow;
+            return sum + (end - s.StartedAtUtc);
+        });
+    
+    public string? FormattedElapsedTime =>
+        ElapsedTime switch
+        {
+            null => null,
+
+            { TotalDays: >= 1 } ts
+                => $"{(int)ts.TotalDays}:{ts.Hours:00}:{ts.Minutes:00}:{ts.Seconds:00} d",
+
+            { TotalHours: >= 1 and < 24 } ts
+                => $"{(int)ts.TotalHours}:{ts.Minutes:00}:{ts.Seconds:00} h",
+
+            { TotalMinutes: >= 1 and < 60 } ts
+                => $"{(int)ts.TotalMinutes}:{ts.Seconds:00} min",
+
+            _ => null
+        };
     
     public SessionSegment? GetLatestActiveSegment() 
         => Segments
@@ -112,5 +136,4 @@ public class Session
         StateId = (int)SessionState.Running,
         CreatedAtUtc = nowUtc
     };
-
 }

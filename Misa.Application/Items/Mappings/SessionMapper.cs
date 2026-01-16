@@ -52,7 +52,9 @@ public static class SessionMapper
             StopAutomatically = x.StopAutomatically,
             WasAutomaticallyStopped = x.WasAutomaticallyStopped,
             CreatedAtUtc = x.CreatedAtUtc,
-            Segments = x.Segments.ToDto()
+            Segments = x.Segments.ToDto(),
+            
+            ElapsedTime = x.FormattedElapsedTime
         };
     
     public static SessionSegmentDto ToDto(this SessionSegment x) =>

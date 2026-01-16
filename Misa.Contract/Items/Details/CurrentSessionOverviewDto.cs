@@ -1,5 +1,4 @@
-﻿using Misa.Contract.Audit.Lookups;
-using Misa.Contract.Audit.Session;
+﻿using Misa.Contract.Audit.Session;
 
 namespace Misa.Contract.Items.Details;
 
@@ -13,6 +12,7 @@ public class CurrentSessionOverviewDto
     public bool CanContinueSession { get; set; }
     public bool CanStopSession { get; set; }
     
+    public TimeSpan? ElapsedTime { get; set; }
     public int ItemSessionCount { get; set; }
     public double? AvgEfficiency { get; set; }
     public double? AvgConcentration { get; set; }

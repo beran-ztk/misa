@@ -64,10 +64,10 @@
                       BorderThickness="1"
                       BorderBrush="{StaticResource BrushBorder}"
                       Background="{StaticResource BrushPrimaryBackgroundLighter}">
-                <StackPanel>
+                <StackPanel x:Name="Roots">
                   <!-- Active session content -->
                   <Border IsVisible="{Binding HasActiveSession}">
-                      <Grid ColumnDefinitions="Auto,*"
+                      <Grid ColumnDefinitions="Auto,*,Auto"
                             RowDefinitions="Auto,Auto,Auto,Auto,Auto"
                             RowSpacing="6"
                             ColumnSpacing="12"
@@ -75,7 +75,12 @@
 
                         <TextBlock Grid.Row="0" Grid.Column="0" Text="State" Opacity="0.7"/>
                         <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding State.Name}" FontWeight="SemiBold" Foreground="Chocolate"/>
-
+                        <TextBlock Grid.Row="0" Grid.Column="2" 
+                                   Text="{Binding ElapsedTime}" 
+                                   Foreground="Crimson"
+                                   FontWeight="SemiBold" 
+                                   HorizontalAlignment="Right"/>
+                        
                         <TextBlock Grid.Row="1" Grid.Column="0" Text="Objective" Opacity="0.7"/>
                         <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Objective}" TextWrapping="Wrap"/>
 
