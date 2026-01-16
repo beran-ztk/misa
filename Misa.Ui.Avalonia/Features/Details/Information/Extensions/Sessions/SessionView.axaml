@@ -24,25 +24,29 @@
             <!-- Action bar -->
             <StackPanel Orientation="Horizontal" Spacing="8">
               <Button Command="{Binding ShowStartSessionFormCommand}"
-                      IsEnabled="{Binding CurrentSessionOverviewDto.CanStartSession}">
+                      IsEnabled="{Binding CurrentSessionOverviewDto.CanStartSession}"
+                      IsVisible="{Binding CurrentSessionOverviewDto.CanStartSession}">
                 <Image Width="16" Height="16"
                        Source="{SvgImage /Assets/Images/Details/play.svg}"/>
               </Button>
 
               <Button Command="{Binding ShowPauseSessionFormCommand}"
-                      IsEnabled="{Binding CurrentSessionOverviewDto.CanPauseSession}">
+                      IsEnabled="{Binding CurrentSessionOverviewDto.CanPauseSession}"
+                      IsVisible="{Binding CurrentSessionOverviewDto.CanPauseSession}">
                 <Image Width="16" Height="16"
                        Source="{SvgImage /Assets/Images/Details/pause.svg}"/>
               </Button>
 
               <Button Command="{Binding ContinueSessionCommand}"
-                      IsEnabled="{Binding CurrentSessionOverviewDto.CanContinueSession}">
+                      IsEnabled="{Binding CurrentSessionOverviewDto.CanContinueSession}"
+                      IsVisible="{Binding CurrentSessionOverviewDto.CanContinueSession}">
                 <Image Width="16" Height="16"
                        Source="{SvgImage /Assets/Images/Details/play-pause.svg}"/>
               </Button>
 
               <Button Command="{Binding ShowStopSessionFormCommand}"
-                      IsEnabled="{Binding CurrentSessionOverviewDto.CanStopSession}">
+                      IsEnabled="{Binding CurrentSessionOverviewDto.CanStopSession}"
+                      IsVisible="{Binding CurrentSessionOverviewDto.CanStopSession}">
                 <Image Width="16" Height="16"
                        Source="{SvgImage /Assets/Images/Details/stop.svg}"/>
               </Button>
@@ -70,7 +74,7 @@
                             DataContext="{Binding CurrentSessionOverviewDto.ActiveSession}">
 
                         <TextBlock Grid.Row="0" Grid.Column="0" Text="State" Opacity="0.7"/>
-                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding State.Name}" FontWeight="SemiBold"/>
+                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding State.Name}" FontWeight="SemiBold" Foreground="Chocolate"/>
 
                         <TextBlock Grid.Row="1" Grid.Column="0" Text="Objective" Opacity="0.7"/>
                         <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Objective}" TextWrapping="Wrap"/>
