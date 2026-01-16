@@ -23,7 +23,7 @@ public interface IItemRepository
     // Sessions
 
     // Deadlines
-    Task AddDeadlineAsync(ScheduledDeadline deadline);
+    Task AddDeadlineAsync(ScheduledDeadline deadline, CancellationToken ct = default);
     Task<ScheduledDeadline?> TryGetScheduledDeadlineForItemAsync(Guid itemId, CancellationToken ct);
     Task RemoveScheduledDeadlineAsync(ScheduledDeadline obj, CancellationToken ct);
 }

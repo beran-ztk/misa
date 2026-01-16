@@ -130,9 +130,9 @@ public class ItemRepository(MisaDbContext db) : IItemRepository
         return await db.Deadlines
             .SingleOrDefaultAsync(d => d.ItemId == itemId, ct);
     }
-    public async Task AddDeadlineAsync(ScheduledDeadline deadline)
+    public async Task AddDeadlineAsync(ScheduledDeadline deadline, CancellationToken ct = default)
     {
-        await db.Deadlines.AddAsync(deadline);
+        await db.Deadlines.AddAsync(deadline, ct);
     }
     public Task RemoveScheduledDeadlineAsync(ScheduledDeadline obj, CancellationToken ct)
     {
