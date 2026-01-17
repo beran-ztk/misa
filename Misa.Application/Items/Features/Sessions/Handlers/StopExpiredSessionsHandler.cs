@@ -7,30 +7,16 @@ namespace Misa.Application.Items.Features.Sessions.Handlers;
 
 public class StopExpiredSessionsHandler(IItemRepository repository, IMessageBus bus)
 {
-    public async Task<int> Handle(StopExpiredSessionsCommand command, CancellationToken ct)
+    public async Task Handle(StopExpiredSessionsCommand command, CancellationToken ct)
     {
-        var stopped = 0;
-        
-        var dueSessions = await repository.GetActiveSessionsWithAutostopAsync(ct);
+        var oldestAllowedTimestamp = DateTimeOffset.UtcNow - TimeSpan.FromHours(18);
+        var expiredSessions = await repository.GetInactiveSessionsAsync(oldestAllowedTimestamp, ct);
 
-        foreach (var s in dueSessions.Where(s => s.ElapsedTime >= s.PlannedDuration))
+        foreach (var cmd in expiredSessions.Select(s => new PauseSessionCommand(
+                     s.ItemId, 
+                     "Session-Segment was automatically paused for running over 18 hours.")))
         {
-            s.Autostop();
-            
-            var stopCommand = new StopSessionCommand(
-                s.ItemId, 
-                null, 
-                null, 
-                "Automatically stopped.");
-            
-            await bus.InvokeAsync<Result>(stopCommand, ct);
-
-            stopped++;
+            await bus.InvokeAsync<Result>(cmd, ct);
         }
-
-        if (stopped > 0)
-            await repository.SaveChangesAsync(ct);
-        
-        return stopped;
     }
 }

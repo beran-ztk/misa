@@ -35,6 +35,7 @@ builder.Services.AddTransient<ExceptionMappingMiddleware>();
 builder.Services.AddDbContext<MisaDbContext>(options => options.UseNpgsql(connectionString));
 
 builder.Services.AddHostedService<SessionAutostopWorker>();
+builder.Services.AddHostedService<SessionStopPastMaxTimeWorker>();
 
 builder.Services.AddSignalR();
 builder.Services.AddScoped<EventsHub>();
@@ -52,6 +53,7 @@ builder.Host.UseWolverine(opts =>
     opts.Discovery.IncludeAssembly(typeof(PauseSessionHandler).Assembly);
     opts.Discovery.IncludeAssembly(typeof(ContinueSessionHandler).Assembly);
     opts.Discovery.IncludeAssembly(typeof(StopSessionHandler).Assembly);
+    opts.Discovery.IncludeAssembly(typeof(StopDueSessionsHandler).Assembly);
     opts.Discovery.IncludeAssembly(typeof(StopExpiredSessionsHandler).Assembly);
 });
 
