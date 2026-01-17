@@ -277,9 +277,13 @@
                            Margin="10"
                            FontWeight="SemiBold"/>
                 <!-- Top meta -->
-                <Grid ColumnDefinitions="140,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="6">
+                <Grid ColumnDefinitions="140,*,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="6">
                     <TextBlock Grid.Row="0" Grid.Column="0" Text="ID" Opacity="0.7"/>
                     <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Parent.ItemOverview.Item.Id}"/>
+                    <Button Grid.Row="0" Grid.Column="2"
+                            Content="Copy"
+                            Command="{Binding CopyIdCommand}"
+                            Margin="8,0,0,0"/>
 
                     <TextBlock Grid.Row="1" Grid.Column="0" Text="Title" Opacity="0.7"/>
 

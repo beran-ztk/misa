@@ -26,6 +26,13 @@ public partial class InformationViewModel : ViewModelBase
         Description = new DescriptionViewModel(this);
         Session = new SessionViewModel(this);
     }
+
+    [RelayCommand]
+    private void CopyId()
+    {
+        Parent.EntityDetailHost.NavigationService.ClipboardService.SetTextAsync(Parent.ItemOverview.Item.Id.ToString());
+    }
+    
     // Edit State
     [ObservableProperty] private bool _isEditStateOpen;
     [ObservableProperty] private int _stateId;

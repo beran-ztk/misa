@@ -7,6 +7,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
 using Misa.Ui.Avalonia.App.Shell;
+using Misa.Ui.Avalonia.Infrastructure.Services.Interfaces;
 using Misa.Ui.Avalonia.Infrastructure.Services.Navigation;
 using Misa.Ui.Avalonia.Infrastructure.Stores;
 using NavigationStore = Misa.Ui.Avalonia.Infrastructure.Stores.NavigationStore;
@@ -46,7 +47,7 @@ public partial class App : Application
             });
             
             var lookupsStore = new LookupsStore(httpClient);
-            INavigationService navigationService = new NavigationService(navigationStore, lookupsStore);
+            INavigationService navigationService = new NavigationService(navigationStore, lookupsStore, new AvaloniaClipboardService());
             
             desktop.MainWindow = new MainWindow
             {
