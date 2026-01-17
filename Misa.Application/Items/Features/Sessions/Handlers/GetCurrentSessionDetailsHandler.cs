@@ -1,10 +1,11 @@
 ﻿using Misa.Application.Common.Abstractions.Persistence;
+using Misa.Application.Items.Features.Sessions.Queries;
 using Misa.Application.Items.Mappings;
 using Misa.Contract.Common.Results;
 using Misa.Contract.Items.Details;
 using Misa.Domain.Dictionaries.Audit;
 
-namespace Misa.Application.Items.Queries;
+namespace Misa.Application.Items.Features.Sessions.Handlers;
 
 public class GetCurrentSessionDetailsHandler(IItemRepository repository)
 {

@@ -12,8 +12,9 @@ using Misa.Application.Entities.Commands;
 using Misa.Application.Entities.Commands.Description;
 using Misa.Application.Entities.Queries;
 using Misa.Application.Entities.Queries.GetSingleDetailedEntity;
-using Misa.Application.Items.Commands;
-using Misa.Application.Items.Queries;
+using Misa.Application.Items.Base.Handlers;
+using Misa.Application.Items.Extensions.Tasks.Handlers;
+using Misa.Application.Items.Features.Sessions.Handlers;
 using Misa.Application.ReferenceData.Queries;
 using Misa.Application.Scheduling.Commands.Deadlines;
 using Misa.Contract.Entities;
@@ -43,6 +44,7 @@ builder.Host.UseWolverine(opts =>
     opts.Discovery.IncludeAssembly(typeof(PauseSessionHandler).Assembly);
     opts.Discovery.IncludeAssembly(typeof(ContinueSessionHandler).Assembly);
     opts.Discovery.IncludeAssembly(typeof(StopSessionHandler).Assembly);
+    opts.Discovery.IncludeAssembly(typeof(StopExpiredSessionsHandler).Assembly);
 });
 
 builder.Services.AddScoped<EventsHub>();
@@ -58,7 +60,6 @@ builder.Services.AddScoped<IMainRepository, MainRepository>();
 // Entity
 
 builder.Services.AddScoped<GetEntitiesHandler>();
-builder.Services.AddScoped<SessionHandler>();
 builder.Services.AddScoped<AddEntityHandler>();
 builder.Services.AddScoped<PatchEntityHandler>();
 builder.Services.AddScoped<UpdateItemHandler>();

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Misa.Application.Items.Commands;
-using Misa.Application.Items.Queries;
+using Misa.Application.Items.Base.Queries;
+using Misa.Application.Items.Features.Sessions.Commands;
+using Misa.Application.Items.Features.Sessions.Queries;
 using Misa.Contract.Audit.Session;
 using Misa.Contract.Common.Results;
 using Misa.Contract.Items.Details;

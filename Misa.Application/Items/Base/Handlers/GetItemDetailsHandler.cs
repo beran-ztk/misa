@@ -1,9 +1,10 @@
 ﻿using Misa.Application.Common.Abstractions.Persistence;
+using Misa.Application.Items.Base.Queries;
 using Misa.Application.Items.Mappings;
 using Misa.Contract.Common.Results;
 using Misa.Contract.Items.Details;
 
-namespace Misa.Application.Items.Queries;
+namespace Misa.Application.Items.Base.Handlers;
 
 public class GetItemDetailsHandler(IItemRepository repository)
 {
