@@ -1,11 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
-using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Features.Entities.Extensions.Items.Base;
-using Misa.Contract.Items;
 using Misa.Ui.Avalonia.Features.Tasks.Shared;
 using Misa.Ui.Avalonia.Presentation.Mapping;
 using PageViewModel = Misa.Ui.Avalonia.Features.Tasks.Page.PageViewModel;

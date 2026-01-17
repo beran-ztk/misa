@@ -7,6 +7,8 @@ public class EntityConfiguration : IEntityTypeConfiguration<Domain.Features.Enti
 {
     public void Configure(EntityTypeBuilder<Domain.Features.Entities.Base.Entity> builder)
     {
+        builder.ToTable("entities");
+        
         builder.HasKey(e => e.Id);
         
         builder.Property(e => e.Id)
