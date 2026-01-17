@@ -1,7 +1,7 @@
 ﻿using Misa.Application.Items.Features.Sessions.Commands;
 using Wolverine;
 
-namespace Misa.Api.Services;
+namespace Misa.Api.Services.Features.Items.Features.Sessions;
 
 public sealed class SessionAutostopWorker : BackgroundService
 {

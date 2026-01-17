@@ -7,6 +7,8 @@ using Misa.Api.Endpoints.Entities;
 using Misa.Api.Endpoints.Items;
 using Misa.Api.Endpoints.Scheduling;
 using Misa.Api.Services;
+using Misa.Api.Services.Features.Items.Features;
+using Misa.Api.Services.Features.Items.Features.Sessions;
 using Misa.Application.Common.Abstractions.Events;
 using Misa.Application.Common.Abstractions.Persistence;
 using Misa.Application.Entities.Commands;
