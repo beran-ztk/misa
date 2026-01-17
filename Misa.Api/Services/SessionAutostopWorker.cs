@@ -5,12 +5,12 @@ namespace Misa.Api.Services;
 
 public sealed class SessionAutostopWorker : BackgroundService
 {
-    private readonly IMessageBus _bus;
+    private readonly IServiceProvider _services;
     private readonly ILogger<SessionAutostopWorker> _logger;
 
-    public SessionAutostopWorker(IMessageBus bus, ILogger<SessionAutostopWorker> logger)
+    public SessionAutostopWorker(IServiceProvider services, ILogger<SessionAutostopWorker> logger)
     {
-        _bus = bus;
+        _services = services;
         _logger = logger;
     }
 
@@ -18,7 +18,7 @@ public sealed class SessionAutostopWorker : BackgroundService
     {
         _logger.LogInformation("SessionAutostopWorker started.");
 
-        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(30));
+        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(15));
 
         try
         {
@@ -29,7 +29,7 @@ public sealed class SessionAutostopWorker : BackgroundService
         }
         catch (OperationCanceledException)
         {
-            // normal shutdown
+            
         }
         finally
         {
@@ -41,7 +41,10 @@ public sealed class SessionAutostopWorker : BackgroundService
     {
         try
         {
-            var stoppedCount = await _bus.InvokeAsync<int>(new StopExpiredSessionsCommand(), ct);
+            var scope = _services.CreateScope();
+            var bus = scope.ServiceProvider.GetRequiredService<IMessageBus>();
+            
+            var stoppedCount = await bus.InvokeAsync<int>(new StopExpiredSessionsCommand(), ct);
 
             if (stoppedCount > 0)
                 _logger.LogInformation("Autostop: stopped {Count} session(s).", stoppedCount);
