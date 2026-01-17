@@ -1,16 +1,15 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Misa.Application.Common.Abstractions.Persistence;
-using Misa.Domain.Audit;
-using Misa.Domain.Dictionaries.Items;
-using Misa.Domain.Entities.Extensions;
-using Misa.Infrastructure.Data;
-using Category = Misa.Domain.Items.Category;
-using Priority = Misa.Domain.Items.Priority;
-using State = Misa.Domain.Items.State;
+using Misa.Domain.Features.Entities.Extensions.Items.Base;
+using Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions;
+using Misa.Infrastructure.Persistence.Context;
+using Category = Misa.Domain.Features.Entities.Extensions.Items.Base.Category;
+using Priority = Misa.Domain.Features.Entities.Extensions.Items.Base.Priority;
+using State = Misa.Domain.Features.Entities.Extensions.Items.Base.State;
 
 namespace Misa.Infrastructure.Persistence.Repositories;
 
-public class MainRepository(MisaDbContext db) : IMainRepository
+public class MainRepository(DefaultContext db) : IMainRepository
 {
     public async Task<List<Priority>> GetPriorities(CancellationToken ct)
         => await db.Priorities.ToListAsync(ct);

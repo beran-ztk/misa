@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Misa.Application.Entities.Commands.Description;
+using Misa.Application.Features.Entities.Features.Descriptions.Commands;
 using Misa.Contract.Common.Results;
-using Misa.Contract.Entities.Features;
+using Misa.Contract.Features.Entities.Features;
 using Wolverine;
 
 namespace Misa.Api.Endpoints.Entities;

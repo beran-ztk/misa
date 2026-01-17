@@ -1,7 +1,6 @@
-﻿using Misa.Application.Items.Base.Queries;
-using Misa.Application.Items.Extensions.Tasks.Queries;
+﻿using Misa.Application.Features.Entities.Extensions.Items.Extensions.Tasks.Queries;
 using Misa.Contract.Common.Results;
-using Misa.Contract.Items.Common;
+using Misa.Contract.Features.Entities.Extensions.Items.Base;
 using Wolverine;
 
 namespace Misa.Api.Endpoints.Items;

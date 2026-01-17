@@ -1,23 +1,21 @@
-﻿using System.ComponentModel.DataAnnotations;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Misa.Application.Common.Abstractions.Persistence;
-using Misa.Application.Common.Exceptions;
-using Misa.Domain.Audit;
-using Misa.Domain.Entities;
-using Misa.Domain.Scheduling;
-using Misa.Infrastructure.Data;
-using Item = Misa.Domain.Items.Item;
+using Misa.Domain.Features.Entities.Base;
+using Misa.Domain.Features.Entities.Extensions.Items.Features.Deadlines;
+using Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions;
+using Misa.Infrastructure.Persistence.Context;
+using Item = Misa.Domain.Features.Entities.Extensions.Items.Base.Item;
 
 namespace Misa.Infrastructure.Persistence.Repositories;
 
-public class ItemRepository(MisaDbContext db) : IItemRepository
+public class ItemRepository(DefaultContext db) : IItemRepository
 {
     public async Task<List<Session>> GetActiveSessionsWithAutostopAsync(CancellationToken ct)
     {
         return await db.Sessions
             .Where(s =>
                 s.StopAutomatically == true
-                && s.StateId != (int)Domain.Dictionaries.Audit.SessionState.Completed
+                && s.StateId != (int)SessionState.Completed
                 && s.PlannedDuration != null)
             .Include(s => s.Segments)
             .ToListAsync(ct);
@@ -26,7 +24,7 @@ public class ItemRepository(MisaDbContext db) : IItemRepository
     public async Task<List<Session>> GetInactiveSessionsAsync(DateTimeOffset oldestDateAllowed, CancellationToken ct)
     {
         return await db.Sessions
-            .Where(s => s.StateId != (int)Domain.Dictionaries.Audit.SessionState.Completed
+            .Where(s => s.StateId != (int)SessionState.Completed
             && s.Segments.Any(
                 seg => seg.EndedAtUtc == null 
                        && seg.StartedAtUtc <= oldestDateAllowed)
@@ -43,7 +41,7 @@ public class ItemRepository(MisaDbContext db) : IItemRepository
         return await db.Sessions
             .Where(s =>
                 s.ItemId == id
-                && s.StateId == (int)Domain.Dictionaries.Audit.SessionState.Completed) 
+                && s.StateId == (int)SessionState.Completed) 
             .Include(s => s.Segments)
             .Include(s => s.State)
             .Include(s => s.Efficiency)
@@ -57,8 +55,8 @@ public class ItemRepository(MisaDbContext db) : IItemRepository
         return await db.Sessions
             .Where(s =>
                 s.ItemId == id
-                && (s.StateId == (int)Domain.Dictionaries.Audit.SessionState.Running
-                || s.StateId == (int)Domain.Dictionaries.Audit.SessionState.Paused)) 
+                && (s.StateId == (int)SessionState.Running
+                || s.StateId == (int)SessionState.Paused)) 
             .Include(s => s.Segments)
             .Include(s => s.State)
             .Include(s => s.Efficiency)
@@ -72,7 +70,7 @@ public class ItemRepository(MisaDbContext db) : IItemRepository
         return await db.Sessions
             .Where(s =>
                 s.ItemId == id
-                && s.StateId == (int)Domain.Dictionaries.Audit.SessionState.Running)
+                && s.StateId == (int)SessionState.Running)
             .Include(s => s.Segments.Where(seg => seg.EndedAtUtc == null))
             .OrderByDescending(s => s.CreatedAtUtc)
             .FirstOrDefaultAsync(ct);
@@ -82,7 +80,7 @@ public class ItemRepository(MisaDbContext db) : IItemRepository
         return await db.Sessions
             .Where(s =>
                 s.ItemId == id
-                && s.StateId == (int)Domain.Dictionaries.Audit.SessionState.Paused)
+                && s.StateId == (int)SessionState.Paused)
             .OrderByDescending(s => s.CreatedAtUtc)
             .FirstOrDefaultAsync(ct);
     }
@@ -111,7 +109,7 @@ public class ItemRepository(MisaDbContext db) : IItemRepository
             .Include(i => i.State)
             .Include(i => i.Priority)
             .Include(i => i.Category)
-            .Where(i => i.Entity.WorkflowId == (int)Domain.Dictionaries.Entities.EntityWorkflows.Task)
+            .Where(i => i.Entity.WorkflowId == (int)EntityWorkflows.Task)
             .ToListAsync(ct);
     }
 

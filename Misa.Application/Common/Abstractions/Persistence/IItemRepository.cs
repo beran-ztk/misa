@@ -1,7 +1,6 @@
-﻿using Misa.Domain.Audit;
-using Misa.Domain.Entities;
-using Misa.Domain.Items;
-using Misa.Domain.Scheduling;
+﻿using Misa.Domain.Features.Entities.Extensions.Items.Base;
+using Misa.Domain.Features.Entities.Extensions.Items.Features.Deadlines;
+using Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions;
 
 namespace Misa.Application.Common.Abstractions.Persistence;
 

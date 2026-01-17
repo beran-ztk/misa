@@ -16,7 +16,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Items\Features\" />
+      <Folder Include="Features\Entities\Extensions\Items\" />
     </ItemGroup>
 
 </Project>

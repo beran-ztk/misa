@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Misa.Api.Common;
-using Misa.Application.Scheduling.Commands.Deadlines;
+using Misa.Application.Features.Entities.Extensions.Items.Features.Deadlines.Commands;
 using Misa.Contract.Common.Results;
-using Misa.Contract.Scheduling;
+using Misa.Contract.Features.Entities.Extensions.Items.Features.Deadlines;
 using Wolverine;
 
 namespace Misa.Api.Endpoints.Scheduling;
