@@ -34,6 +34,11 @@ public partial class DescriptionViewModel : ViewModelBase
     }
     public ObservableCollection<DescriptionDto> Descriptions { get; } = [];
     [ObservableProperty] private string _description = string.Empty;
+    public bool IsDescriptionValid => !string.IsNullOrWhiteSpace(Description); 
+    partial void OnDescriptionChanged(string value)
+    {
+        OnPropertyChanged(nameof(IsDescriptionValid));
+    }
     public InformationViewModel Parent { get; }
     [RelayCommand]
     private async Task AddDescription()

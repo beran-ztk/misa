@@ -72,7 +72,8 @@
                             Background="{StaticResource BrushPrimaryBackground}"
                             BorderBrush="{StaticResource BrushBorder}"
                             BorderThickness="1"
-                            Command="{Binding AddDescriptionCommand}">
+                            Command="{Binding AddDescriptionCommand}"
+                            IsEnabled="{Binding IsDescriptionValid}">
                         <Image Width="16"
                                Height="16"
                                Source="{SvgImage /Assets/Images/MainNavigation/plus-circle.svg}" />
