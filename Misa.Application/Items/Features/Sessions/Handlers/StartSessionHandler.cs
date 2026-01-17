@@ -1,8 +1,9 @@
 ﻿using Misa.Application.Common.Abstractions.Persistence;
+using Misa.Application.Items.Features.Sessions.Commands;
 using Misa.Contract.Common.Results;
 using Misa.Domain.Audit;
 
-namespace Misa.Application.Items.Commands;
+namespace Misa.Application.Items.Features.Sessions.Handlers;
 
 public class StartSessionHandler(IItemRepository repository)
 {

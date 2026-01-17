@@ -1,7 +1,8 @@
 ﻿using Misa.Application.Common.Abstractions.Persistence;
+using Misa.Application.Items.Features.Sessions.Commands;
 using Misa.Contract.Common.Results;
 
-namespace Misa.Application.Items.Commands;
+namespace Misa.Application.Items.Features.Sessions.Handlers;
 
 public class StopSessionHandler(IItemRepository repository)
 {

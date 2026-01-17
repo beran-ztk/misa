@@ -13,6 +13,7 @@ public interface IItemRepository
     Task<Session?> TryGetActiveSessionByItemIdAsync(Guid id, CancellationToken ct);
     Task<Session?> TryGetRunningSessionByItemIdAsync(Guid id, CancellationToken ct);
     Task<Session?> TryGetPausedSessionByItemIdAsync(Guid id, CancellationToken ct);
+    Task<List<Session>> GetActiveSessionsWithAutostopAsync(CancellationToken ct);
     
     Task SaveChangesAsync(CancellationToken ct = default);
     Task<Item?> TryGetItemAsync(Guid id, CancellationToken ct);

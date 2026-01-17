@@ -1,7 +1,7 @@
 ﻿using Misa.Application.Common.Abstractions.Persistence;
 using Misa.Contract.Items;
 
-namespace Misa.Application.Items.Commands;
+namespace Misa.Application.Items.Features.Sessions.Handlers;
 
 public class UpdateItemHandler(IItemRepository repository)
 {

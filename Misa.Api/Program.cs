@@ -6,14 +6,16 @@ using Misa.Api.Common.Realtime;
 using Misa.Api.Endpoints.Entities;
 using Misa.Api.Endpoints.Items;
 using Misa.Api.Endpoints.Scheduling;
+using Misa.Api.Services;
 using Misa.Application.Common.Abstractions.Events;
 using Misa.Application.Common.Abstractions.Persistence;
 using Misa.Application.Entities.Commands;
 using Misa.Application.Entities.Commands.Description;
 using Misa.Application.Entities.Queries;
 using Misa.Application.Entities.Queries.GetSingleDetailedEntity;
-using Misa.Application.Items.Commands;
-using Misa.Application.Items.Queries;
+using Misa.Application.Items.Base.Handlers;
+using Misa.Application.Items.Extensions.Tasks.Handlers;
+using Misa.Application.Items.Features.Sessions.Handlers;
 using Misa.Application.ReferenceData.Queries;
 using Misa.Application.Scheduling.Commands.Deadlines;
 using Misa.Contract.Entities;
@@ -27,9 +29,14 @@ const string connectionString =
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
-builder.Services.AddSignalR();
 builder.Services.AddTransient<ExceptionMappingMiddleware>();
 builder.Services.AddDbContext<MisaDbContext>(options => options.UseNpgsql(connectionString));
+
+builder.Services.AddHostedService<SessionAutostopWorker>();
+
+builder.Services.AddSignalR();
+builder.Services.AddScoped<EventsHub>();
+builder.Services.AddScoped<IEventPublisher, SignalREventPublisher>();
 
 builder.Host.UseWolverine(opts =>
 {
@@ -43,22 +50,17 @@ builder.Host.UseWolverine(opts =>
     opts.Discovery.IncludeAssembly(typeof(PauseSessionHandler).Assembly);
     opts.Discovery.IncludeAssembly(typeof(ContinueSessionHandler).Assembly);
     opts.Discovery.IncludeAssembly(typeof(StopSessionHandler).Assembly);
+    opts.Discovery.IncludeAssembly(typeof(StopExpiredSessionsHandler).Assembly);
 });
 
-builder.Services.AddScoped<EventsHub>();
-builder.Services.AddScoped<IEventPublisher, SignalREventPublisher>();
 
 
-
+// Registrations
 builder.Services.AddScoped<CreateItemHandler>();
 builder.Services.AddScoped<GetLookupsHandler>();
 builder.Services.AddScoped<IItemRepository, ItemRepository>();
 builder.Services.AddScoped<IMainRepository, MainRepository>();
-
-// Entity
-
 builder.Services.AddScoped<GetEntitiesHandler>();
-builder.Services.AddScoped<SessionHandler>();
 builder.Services.AddScoped<AddEntityHandler>();
 builder.Services.AddScoped<PatchEntityHandler>();
 builder.Services.AddScoped<UpdateItemHandler>();

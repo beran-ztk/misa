@@ -12,6 +12,17 @@ namespace Misa.Infrastructure.Persistence.Repositories;
 
 public class ItemRepository(MisaDbContext db) : IItemRepository
 {
+    public async Task<List<Session>> GetActiveSessionsWithAutostopAsync(CancellationToken ct)
+    {
+        return await db.Sessions
+            .Where(s =>
+                s.StopAutomatically == true
+                && s.StateId != (int)Domain.Dictionaries.Audit.SessionState.Completed
+                && s.PlannedDuration != null)
+            .Include(s => s.Segments)
+            .ToListAsync(ct);
+    }
+
     public async Task SaveChangesAsync(CancellationToken  ct = default)
         => await db.SaveChangesAsync(ct);
 

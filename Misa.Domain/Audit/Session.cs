@@ -54,7 +54,11 @@ public class Session
 
             _ => null
         };
-    
+
+    public void Autostop()
+    {
+        WasAutomaticallyStopped = true;
+    }
     public SessionSegment? GetLatestActiveSegment() 
         => Segments
             .Where(s => s.EndedAtUtc == null)
