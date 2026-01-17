@@ -9,7 +9,7 @@ Rather than managing isolated tasks or notes, MISA focuses on how things relate 
 
 MISA models all work and knowledge as Items with explicit lifecycles, states, and dependencies. Items can represent tasks, topics, decisions, sessions, or any other unit of work or thought.
 
-A central calendar acts as an orchestration layer rather than a simple scheduler. It coordinates when and how Items progress, interact, or trigger follow-up actions.
+The scheduler functions as an orchestration layer, not merely a notification mechanism, coordinating timing, state transitions, and follow-up actions across items.
 
 ## Direction
 
