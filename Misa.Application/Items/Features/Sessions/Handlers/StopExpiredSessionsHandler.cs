@@ -9,15 +9,12 @@ public class StopExpiredSessionsHandler(IItemRepository repository, IMessageBus 
 {
     public async Task<int> Handle(StopExpiredSessionsCommand command, CancellationToken ct)
     {
-        Console.WriteLine("Start StopExpiredSessionsHandler");
-        
         var stopped = 0;
         
         var dueSessions = await repository.GetActiveSessionsWithAutostopAsync(ct);
 
         foreach (var s in dueSessions.Where(s => s.ElapsedTime >= s.PlannedDuration))
         {
-            Console.WriteLine($"Autostop {s.ItemId}.");
             s.Autostop();
             
             var stopCommand = new StopSessionCommand(
