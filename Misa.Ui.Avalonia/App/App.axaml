@@ -24,9 +24,9 @@
         <x:Double x:Key="SpacingLarge">12</x:Double>
             
         <!-- Primäre Basistöne -->
-        <Color x:Key="ColorPrimaryBackground">#121417</Color>
-        <Color x:Key="ColorPrimaryBackgroundLight">#1A1D21</Color>
-        <Color x:Key="ColorPrimaryBackgroundLighter">#2A2F36</Color>
+        <Color x:Key="ColorPrimaryBackground">#010409</Color>
+        <Color x:Key="ColorPrimaryBackgroundLight">#0d1117</Color>
+        <Color x:Key="ColorPrimaryBackgroundLighter">#151b23</Color>
         <Color x:Key="ColorSecondaryBackground">#161916</Color>
         <Color x:Key="ColorPanelBackground">#233549</Color>
         <Color x:Key="ColorHover">#2F4762</Color>               <!-- Hover für Buttons -->

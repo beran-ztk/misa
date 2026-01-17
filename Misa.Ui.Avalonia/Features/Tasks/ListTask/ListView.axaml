@@ -8,7 +8,7 @@
              x:DataType="listTask:ListViewModel">
     
     <Border Padding="8"
-            Background="{StaticResource ColorPrimaryBackground}">
+            Background="{StaticResource BrushPrimaryBackgroundLight}">
         <Grid RowDefinitions="Auto,*" 
               ColumnSpacing="16">
             

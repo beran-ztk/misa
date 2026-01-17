@@ -11,7 +11,7 @@
              xmlns:information="clr-namespace:Misa.Ui.Avalonia.Features.Details.Information"
              x:DataType="page:DetailPageViewModel">
 
-    <Border>
+    <Border Background="{StaticResource BrushPrimaryBackgroundLight}">
         <TabControl SelectedIndex="{Binding SelectedTabIndex}">
                 <TabItem Header="Information">
                     <information:InformationView 
