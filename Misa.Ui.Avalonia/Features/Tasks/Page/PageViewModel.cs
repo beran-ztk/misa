@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.ObjectModel;
-using System.Reactive.Disposables;
-using System.Reactive.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
-using Misa.Contract.Items;
-using Misa.Contract.Items.Common;
+using Misa.Contract.Features.Entities.Extensions.Items.Base;
 using Misa.Ui.Avalonia.Features.Details.Page;
 using Misa.Ui.Avalonia.Features.Tasks.Create;
 using Misa.Ui.Avalonia.Features.Tasks.ListTask;

@@ -1,10 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Misa.Application.Items.Base.Queries;
-using Misa.Application.Items.Features.Sessions.Commands;
-using Misa.Application.Items.Features.Sessions.Queries;
-using Misa.Contract.Audit.Session;
+using Misa.Application.Features.Entities.Extensions.Items.Base.Queries;
+using Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Commands;
+using Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Queries;
 using Misa.Contract.Common.Results;
-using Misa.Contract.Items.Details;
+using Misa.Contract.Features.Entities.Extensions.Items.Base;
+using Misa.Contract.Features.Entities.Extensions.Items.Features.Session;
 using Wolverine;
 
 namespace Misa.Api.Endpoints.Items;

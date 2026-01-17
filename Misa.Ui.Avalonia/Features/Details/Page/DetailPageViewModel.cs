@@ -7,7 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Misa.Contract.Common.Results;
-using Misa.Contract.Items.Details;
+using Misa.Contract.Features.Entities.Extensions.Items.Base;
 using Misa.Ui.Avalonia.Infrastructure.Services.Interfaces;
 using Misa.Ui.Avalonia.Presentation.Mapping;
 using ReactiveUI;

@@ -1,8 +1,9 @@
 ﻿using Misa.Application.Common.Abstractions.Persistence;
-using Misa.Application.Items.Mappings;
-using Misa.Contract.Items.Lookups;
-using Misa.Contract.Main;
-using Misa.Domain.Dictionaries.Items;
+using Misa.Application.Features.Entities.Extensions.Items.Base.Mappings;
+using Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Mappings;
+using Misa.Contract.Features.Entities.Extensions.Items.Base;
+using Misa.Contract.Features.Lookups;
+using Misa.Domain.Features.Entities.Extensions.Items.Base;
 
 namespace Misa.Application.ReferenceData.Queries;
 

@@ -2,9 +2,9 @@
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
-using Misa.Contract.Audit.Lookups;
-using Misa.Contract.Items.Lookups;
-using Misa.Contract.Main;
+using Misa.Contract.Features.Entities.Extensions.Items.Base;
+using Misa.Contract.Features.Entities.Extensions.Items.Features.Session;
+using Misa.Contract.Features.Lookups;
 
 namespace Misa.Ui.Avalonia.Infrastructure.Stores;
 

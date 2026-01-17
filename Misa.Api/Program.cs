@@ -1,27 +1,25 @@
-using Misa.Infrastructure.Data;
-using Misa.Contract.Items;
 using Microsoft.EntityFrameworkCore;
 using Misa.Api.Common.Exceptions;
 using Misa.Api.Common.Realtime;
 using Misa.Api.Endpoints.Entities;
 using Misa.Api.Endpoints.Items;
 using Misa.Api.Endpoints.Scheduling;
-using Misa.Api.Services;
-using Misa.Api.Services.Features.Items.Features;
 using Misa.Api.Services.Features.Items.Features.Sessions;
 using Misa.Application.Common.Abstractions.Events;
 using Misa.Application.Common.Abstractions.Persistence;
-using Misa.Application.Entities.Commands;
-using Misa.Application.Entities.Commands.Description;
-using Misa.Application.Entities.Queries;
-using Misa.Application.Entities.Queries.GetSingleDetailedEntity;
-using Misa.Application.Items.Base.Handlers;
-using Misa.Application.Items.Extensions.Tasks.Handlers;
-using Misa.Application.Items.Features.Sessions.Handlers;
+using Misa.Application.Features.Entities.Base.Commands;
+using Misa.Application.Features.Entities.Base.Queries;
+using Misa.Application.Features.Entities.Extensions.Items.Base.Commands;
+using Misa.Application.Features.Entities.Extensions.Items.Base.Queries;
+using Misa.Application.Features.Entities.Extensions.Items.Extensions.Tasks.Queries;
+using Misa.Application.Features.Entities.Extensions.Items.Features.Deadlines.Commands;
+using Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Commands;
+using Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Queries;
+using Misa.Application.Features.Entities.Features.Descriptions.Commands;
 using Misa.Application.ReferenceData.Queries;
-using Misa.Application.Scheduling.Commands.Deadlines;
-using Misa.Contract.Entities;
-using Misa.Contract.Items.Common;
+using Misa.Contract.Features.Entities.Base;
+using Misa.Contract.Features.Entities.Extensions.Items.Base;
+using Misa.Infrastructure.Persistence.Context;
 using Misa.Infrastructure.Persistence.Repositories;
 using Wolverine;
 
@@ -32,7 +30,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddTransient<ExceptionMappingMiddleware>();
-builder.Services.AddDbContext<MisaDbContext>(options => options.UseNpgsql(connectionString));
+builder.Services.AddDbContext<DefaultContext>(options => options.UseNpgsql(connectionString));
 
 builder.Services.AddHostedService<SessionAutostopWorker>();
 builder.Services.AddHostedService<SessionPastMaxTimeWorker>();

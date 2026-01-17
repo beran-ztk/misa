@@ -1,5 +1,5 @@
 ﻿using Misa.Application.Common.Abstractions.Events;
-using Misa.Application.Scheduling.Events.Commands;
+using Misa.Application.Features.Entities.Extensions.Items.Features.Deadlines.Events;
 using Misa.Contract.Events;
 
 namespace Misa.Api.Endpoints.Scheduling;
