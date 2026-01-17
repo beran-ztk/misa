@@ -3,23 +3,21 @@ using Wolverine;
 
 namespace Misa.Api.Services.Features.Items.Features.Sessions;
 
-public sealed class SessionAutostopWorker : BackgroundService
+public class SessionPastMaxTimeWorker : BackgroundService
 {
     private readonly IServiceProvider _services;
     private readonly ILogger<SessionAutostopWorker> _logger;
 
-    public SessionAutostopWorker(IServiceProvider services, ILogger<SessionAutostopWorker> logger)
+    public SessionPastMaxTimeWorker(IServiceProvider services, ILogger<SessionAutostopWorker> logger)
     {
         _services = services;
         _logger = logger;
     }
-
+    
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("SessionAutostopWorker started.");
-
-        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(15));
-
+        var timer = new PeriodicTimer(TimeSpan.FromSeconds(60));
+        
         try
         {
             while (await timer.WaitForNextTickAsync(stoppingToken))
@@ -43,11 +41,8 @@ public sealed class SessionAutostopWorker : BackgroundService
         {
             var scope = _services.CreateScope();
             var bus = scope.ServiceProvider.GetRequiredService<IMessageBus>();
-            
-            var stoppedCount = await bus.InvokeAsync<int>(new PauseDueSessionsCommand(), ct);
 
-            if (stoppedCount > 0)
-                _logger.LogInformation("Autostop: stopped {Count} session(s).", stoppedCount);
+            await bus.InvokeAsync(new PauseExpiredSessionsCommand(), ct);
         }
         catch (Exception ex)
         {

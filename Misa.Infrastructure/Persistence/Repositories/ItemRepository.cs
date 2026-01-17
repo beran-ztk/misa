@@ -23,6 +23,18 @@ public class ItemRepository(MisaDbContext db) : IItemRepository
             .ToListAsync(ct);
     }
 
+    public async Task<List<Session>> GetInactiveSessionsAsync(DateTimeOffset oldestDateAllowed, CancellationToken ct)
+    {
+        return await db.Sessions
+            .Where(s => s.StateId != (int)Domain.Dictionaries.Audit.SessionState.Completed
+            && s.Segments.Any(
+                seg => seg.EndedAtUtc == null 
+                       && seg.StartedAtUtc <= oldestDateAllowed)
+            )
+            .Include(s => s.Segments.Where(seg => seg.EndedAtUtc == null))
+            .ToListAsync(ct);
+    }
+
     public async Task SaveChangesAsync(CancellationToken  ct = default)
         => await db.SaveChangesAsync(ct);
 
