@@ -3,12 +3,12 @@ using Wolverine;
 
 namespace Misa.Api.Services.Features.Items.Features.Sessions;
 
-public class SessionStopPastMaxTimeWorker : BackgroundService
+public class SessionPastMaxTimeWorker : BackgroundService
 {
     private readonly IServiceProvider _services;
     private readonly ILogger<SessionAutostopWorker> _logger;
 
-    public SessionStopPastMaxTimeWorker(IServiceProvider services, ILogger<SessionAutostopWorker> logger)
+    public SessionPastMaxTimeWorker(IServiceProvider services, ILogger<SessionAutostopWorker> logger)
     {
         _services = services;
         _logger = logger;
@@ -42,7 +42,7 @@ public class SessionStopPastMaxTimeWorker : BackgroundService
             var scope = _services.CreateScope();
             var bus = scope.ServiceProvider.GetRequiredService<IMessageBus>();
 
-            await bus.InvokeAsync(new StopExpiredSessionsCommand(), ct);
+            await bus.InvokeAsync(new PauseExpiredSessionsCommand(), ct);
         }
         catch (Exception ex)
         {

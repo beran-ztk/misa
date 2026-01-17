@@ -44,7 +44,7 @@ public sealed class SessionAutostopWorker : BackgroundService
             var scope = _services.CreateScope();
             var bus = scope.ServiceProvider.GetRequiredService<IMessageBus>();
             
-            var stoppedCount = await bus.InvokeAsync<int>(new StopDueSessionsCommand(), ct);
+            var stoppedCount = await bus.InvokeAsync<int>(new PauseDueSessionsCommand(), ct);
 
             if (stoppedCount > 0)
                 _logger.LogInformation("Autostop: stopped {Count} session(s).", stoppedCount);

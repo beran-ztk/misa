@@ -1,3 +1,3 @@
 ﻿namespace Misa.Application.Items.Features.Sessions.Commands;
 
-public record StopDueSessionsCommand();
+public record PauseDueSessionsCommand();

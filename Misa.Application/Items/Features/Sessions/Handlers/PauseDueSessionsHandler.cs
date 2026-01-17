@@ -5,9 +5,9 @@ using Wolverine;
 
 namespace Misa.Application.Items.Features.Sessions.Handlers;
 
-public class StopDueSessionsHandler(IItemRepository repository, IMessageBus bus)
+public class PauseDueSessionsHandler(IItemRepository repository, IMessageBus bus)
 {
-    public async Task<int> Handle(StopDueSessionsCommand command, CancellationToken ct)
+    public async Task<int> Handle(PauseDueSessionsCommand command, CancellationToken ct)
     {
         var stopped = 0;
         
@@ -17,13 +17,11 @@ public class StopDueSessionsHandler(IItemRepository repository, IMessageBus bus)
         {
             s.Autostop();
             
-            var stopCommand = new StopSessionCommand(
-                s.ItemId, 
-                null, 
-                null, 
-                "Automatically stopped.");
+            var cmd = new PauseSessionCommand(
+                s.ItemId,
+                "Autostop has been triggered. Elapsed time exceeds planned Duration");
             
-            await bus.InvokeAsync<Result>(stopCommand, ct);
+            await bus.InvokeAsync<Result>(cmd, ct);
 
             stopped++;
         }

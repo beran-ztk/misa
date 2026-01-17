@@ -5,9 +5,9 @@ using Wolverine;
 
 namespace Misa.Application.Items.Features.Sessions.Handlers;
 
-public class StopExpiredSessionsHandler(IItemRepository repository, IMessageBus bus)
+public class PauseExpiredSessionsHandler(IItemRepository repository, IMessageBus bus)
 {
-    public async Task Handle(StopExpiredSessionsCommand command, CancellationToken ct)
+    public async Task Handle(PauseExpiredSessionsCommand command, CancellationToken ct)
     {
         var oldestAllowedTimestamp = DateTimeOffset.UtcNow - TimeSpan.FromHours(18);
         var expiredSessions = await repository.GetInactiveSessionsAsync(oldestAllowedTimestamp, ct);
