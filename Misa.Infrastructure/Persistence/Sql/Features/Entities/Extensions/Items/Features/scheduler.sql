@@ -1,4 +1,20 @@
-﻿CREATE TYPE schedule_misfire_policy AS ENUM ('skip', 'run_once', 'catchup');
+﻿CREATE OR REPLACE FUNCTION array_all_between(
+    arr int[],
+    min_val int,
+    max_val int
+)
+RETURNS boolean
+LANGUAGE sql
+IMMUTABLE
+AS $$
+SELECT NOT EXISTS (
+    SELECT 1
+    FROM unnest(arr) v
+    WHERE v < min_val OR v > max_val
+);
+$$;
+
+CREATE TYPE scheduler_misfire_policy AS ENUM ('skip', 'run_once', 'catchup');
 
 CREATE TABLE scheduler_frequency_types
 (
@@ -12,6 +28,15 @@ VALUES
     ('Once'),('Minutes'),('Hours'),
     ('Days'),('Weeks'),('Months'),('Years');
 
+CREATE TYPE scheduler_execution_status AS ENUM
+    (
+    'pending',      -- Fälligkeit ist registriert, aber noch nicht von einem Runner beansprucht
+    'claimed',      -- Ein Runner hat die Fälligkeit reserviert
+    'running',      -- Ausführung läuft
+    'succeeded',    -- Erfolgreich abgeschlossen
+    'failed',       -- Fehler, kann evtl. retryt werden
+    'skipped'       -- Bewusst nicht ausgeführt (z. B. misfire=skip)
+);
 
 CREATE TABLE scheduler
 (
@@ -28,7 +53,7 @@ CREATE TABLE scheduler
     by_month                INT[] NULL, -- 1..12
 
     -- Regel für verpassten Trigger
-    misfire_policy          schedule_misfire_policy NOT NULL DEFAULT 'catchup',
+    misfire_policy          scheduler_misfire_policy NOT NULL DEFAULT 'catchup',
 
     lookahead_count         INT NOT NULL DEFAULT 1 CHECK (lookahead_count >= 0), -- zukünftige Triggers
 
@@ -58,19 +83,9 @@ CREATE TABLE scheduler
     CHECK (occurrence_count_limit IS NULL OR occurrence_count_limit >= 1),
     CHECK (next_due_at_utc IS NULL OR last_run_at_utc IS NULL OR next_due_at_utc >= last_run_at_utc),
 
-    CHECK (by_day IS NULL OR (1 <= ALL(by_day) AND ALL(by_day) <= 7)),
-    CHECK (by_month_day IS NULL OR (1 <= ALL(by_month_day) AND ALL(by_month_day) <= 31)),
-    CHECK (by_month IS NULL OR (1 <= ALL(by_month) AND ALL(by_month) <= 12))
-);
-
-CREATE TYPE scheduler_execution_status AS ENUM
-    (
-    'pending',      -- Fälligkeit ist registriert, aber noch nicht von einem Runner beansprucht
-    'claimed',      -- Ein Runner hat die Fälligkeit reserviert
-    'running',      -- Ausführung läuft
-    'succeeded',    -- Erfolgreich abgeschlossen
-    'failed',       -- Fehler, kann evtl. retryt werden
-    'skipped'       -- Bewusst nicht ausgeführt (z. B. misfire=skip)
+    CHECK (by_day IS NULL OR array_all_between(by_day, 1, 7)),
+    CHECK (by_month_day IS NULL OR array_all_between(by_month_day, 1, 31)),
+    CHECK (by_month IS NULL OR array_all_between(by_month, 1, 12))
 );
 
 CREATE TABLE scheduler_execution_log
