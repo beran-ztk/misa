@@ -41,7 +41,6 @@ public class DefaultContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(DefaultContext).Assembly);
-        modelBuilder.HasPostgresEnum("scheduler_misfire_policy", ["Skip", "RunOnce", "Catchup"]);
     }
 
     private void WriteAuditFromDomainEvents()
