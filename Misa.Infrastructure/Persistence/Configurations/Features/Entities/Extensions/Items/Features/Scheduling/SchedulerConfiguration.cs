@@ -44,7 +44,7 @@ public sealed class SchedulerConfiguration : IEntityTypeConfiguration<Scheduler>
         builder.Property(s => s.MisfirePolicy)
             .IsRequired()
             .HasColumnName("misfire_policy")
-            .HasConversion<string>()
+            .HasColumnType("scheduler_misfire_policy")
             .HasDefaultValue(ScheduleMisfirePolicy.Catchup);
 
         builder.Property(s => s.LookaheadCount)

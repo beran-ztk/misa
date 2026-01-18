@@ -1,3 +1,5 @@
+using Misa.Domain.Features.Entities.Extensions.Items.Base;
+
 namespace Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
 
 /// <summary>
@@ -6,6 +8,22 @@ namespace Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
 public sealed class Scheduler
 {
     private Scheduler() { } // EF Core
+
+    public static Scheduler CreateAndInitDefaultValues(Item item)
+    {
+        var scheduler = new Scheduler
+        {
+            ItemId = item.EntityId,
+            FrequencyTypeId = (int)ScheduleFrequencyTypes.Minutes,
+            FrequencyInterval = 1,
+            MisfirePolicy = ScheduleMisfirePolicy.Catchup,
+            LookaheadCount = 1,
+            ActiveFromUtc = DateTimeOffset.UtcNow,
+            Timezone = "utc"
+        };
+        
+        return scheduler;
+    }
 
     public Guid Id { get; private set; }
     public Guid ItemId { get; private set; }
