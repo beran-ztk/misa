@@ -4,6 +4,7 @@ using Misa.Domain.Features.Actions;
 using Misa.Domain.Features.Entities.Base;
 using Misa.Domain.Features.Entities.Extensions.Items.Base;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Deadlines;
+using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions;
 using Misa.Domain.Features.Entities.Features.Descriptions;
 using Action = Misa.Domain.Features.Actions.Action;
@@ -31,6 +32,10 @@ public class DefaultContext : DbContext
     public DbSet<Action> Actions { get; set; } = null;
     public DbSet<ActionType> ActionTypes { get; set; } = null;
     public DbSet<ScheduledDeadline> Deadlines { get; set; } = null;
+    
+    public DbSet<Scheduler> Scheduler { get; set; }
+    public DbSet<SchedulerExecutionLog> SchedulerExecutionLog { get; set; }
+    public DbSet<SchedulerFrequencyType> SchedulerFrequencyType { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

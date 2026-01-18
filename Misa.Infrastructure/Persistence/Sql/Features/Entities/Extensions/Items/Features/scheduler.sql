@@ -14,7 +14,23 @@ SELECT NOT EXISTS (
 );
 $$;
 
-CREATE TYPE scheduler_misfire_policy AS ENUM ('skip', 'run_once', 'catchup');
+DROP TABLE scheduler_execution_log;
+DROP TABLE scheduler;
+DROP TABLE scheduler_frequency_types;
+DROP TYPE scheduler_misfire_policy;
+DROP TYPE scheduler_execution_status;
+
+CREATE TYPE scheduler_misfire_policy AS ENUM ('skip', 'runOnce', 'catchup');
+
+CREATE TYPE scheduler_execution_status AS ENUM
+    (
+    'pending',      -- Fälligkeit ist registriert, aber noch nicht von einem Runner beansprucht
+    'claimed',      -- Ein Runner hat die Fälligkeit reserviert
+    'running',      -- Ausführung läuft
+    'succeeded',    -- Erfolgreich abgeschlossen
+    'failed',       -- Fehler, kann evtl. retryt werden
+    'skipped'       -- Bewusst nicht ausgeführt (z. B. misfire=skip)
+);
 
 CREATE TABLE scheduler_frequency_types
 (
@@ -27,16 +43,6 @@ INSERT INTO scheduler_frequency_types (name)
 VALUES
     ('Once'),('Minutes'),('Hours'),
     ('Days'),('Weeks'),('Months'),('Years');
-
-CREATE TYPE scheduler_execution_status AS ENUM
-    (
-    'pending',      -- Fälligkeit ist registriert, aber noch nicht von einem Runner beansprucht
-    'claimed',      -- Ein Runner hat die Fälligkeit reserviert
-    'running',      -- Ausführung läuft
-    'succeeded',    -- Erfolgreich abgeschlossen
-    'failed',       -- Fehler, kann evtl. retryt werden
-    'skipped'       -- Bewusst nicht ausgeführt (z. B. misfire=skip)
-);
 
 CREATE TABLE scheduler
 (
@@ -74,6 +80,12 @@ CREATE TABLE scheduler
 
     last_run_at_utc        TIMESTAMPTZ NULL, -- Letzter Trigger-Zeitpunkt
     next_due_at_utc        TIMESTAMPTZ NULL, -- Nächster Trigger-Zeitpunkt
+    
+    locked_by               TEXT NULL,
+    locked_until_utc        TIMESTAMPTZ NULL,
+    
+    last_error              TEXT NULL,
+    last_error_at_utc       TIMESTAMPTZ NULL,
 
     CHECK (
         (start_time IS NULL AND end_time IS NULL)

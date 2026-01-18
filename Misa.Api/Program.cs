@@ -13,12 +13,14 @@ using Misa.Application.Features.Entities.Extensions.Items.Base.Commands;
 using Misa.Application.Features.Entities.Extensions.Items.Base.Queries;
 using Misa.Application.Features.Entities.Extensions.Items.Extensions.Tasks.Queries;
 using Misa.Application.Features.Entities.Extensions.Items.Features.Deadlines.Commands;
+using Misa.Application.Features.Entities.Extensions.Items.Features.Scheduling.Commands;
 using Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Commands;
 using Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Queries;
 using Misa.Application.Features.Entities.Features.Descriptions.Commands;
 using Misa.Application.ReferenceData.Queries;
 using Misa.Contract.Features.Entities.Base;
 using Misa.Contract.Features.Entities.Extensions.Items.Base;
+using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
 using Misa.Infrastructure.Persistence.Context;
 using Misa.Infrastructure.Persistence.Repositories;
 using Wolverine;
@@ -30,7 +32,15 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddTransient<ExceptionMappingMiddleware>();
-builder.Services.AddDbContext<DefaultContext>(options => options.UseNpgsql(connectionString));
+builder.Services.AddDbContext<DefaultContext>(options =>
+    options.UseNpgsql(
+        connectionString,
+        npgsql =>
+        {
+            npgsql.MapEnum<ScheduleMisfirePolicy>("scheduler_misfire_policy");
+        }
+    ));
+
 
 builder.Services.AddHostedService<SessionAutostopWorker>();
 builder.Services.AddHostedService<SessionPastMaxTimeWorker>();
@@ -53,21 +63,23 @@ builder.Host.UseWolverine(opts =>
     opts.Discovery.IncludeAssembly(typeof(StopSessionHandler).Assembly);
     opts.Discovery.IncludeAssembly(typeof(PauseDueSessionsHandler).Assembly);
     opts.Discovery.IncludeAssembly(typeof(PauseExpiredSessionsHandler).Assembly);
+    
+    opts.Discovery.IncludeAssembly(typeof(AddScheduleHandler).Assembly);
 });
-
-
 
 // Registrations
 builder.Services.AddScoped<CreateItemHandler>();
 builder.Services.AddScoped<GetLookupsHandler>();
-builder.Services.AddScoped<IItemRepository, ItemRepository>();
-builder.Services.AddScoped<IMainRepository, MainRepository>();
 builder.Services.AddScoped<GetEntitiesHandler>();
 builder.Services.AddScoped<AddEntityHandler>();
 builder.Services.AddScoped<PatchEntityHandler>();
 builder.Services.AddScoped<UpdateItemHandler>();
 builder.Services.AddScoped<GetSingleDetailedEntityHandler>();
+
 builder.Services.AddScoped<IEntityRepository, EntityRepository>();
+builder.Services.AddScoped<IItemRepository, ItemRepository>();
+builder.Services.AddScoped<IScheduleRepository, ScheduleRepository>();
+builder.Services.AddScoped<IMainRepository, MainRepository>();
 
 
 
@@ -81,6 +93,7 @@ TaskEndpoints.Map(app);
 ItemDetailEndpoints.Map(app);
 DeadlineEndpoints.Map(app);
 DescriptionEndpoints.Map(app);
+SchedulingEndpoints.Map(app);
 
 
 
