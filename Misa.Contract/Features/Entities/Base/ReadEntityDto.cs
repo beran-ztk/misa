@@ -3,7 +3,6 @@
 public class ReadEntityDto
 {
     public Guid Id { get; set; }
-    public Guid? OwnerId { get; set; }
     public string Workflow { get; set; }
     public bool IsDeleted { get; set; }
     

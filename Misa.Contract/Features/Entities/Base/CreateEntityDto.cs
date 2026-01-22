@@ -3,8 +3,6 @@
 public class CreateEntityDto
 {
     public Guid Id { get; set; }
-    public Guid? OwnerId { get; set; }
-    public int WorkflowId { get; set; }
     public string Workflow { get; set; } = null!;
     public bool IsDeleted { get; set; }
     

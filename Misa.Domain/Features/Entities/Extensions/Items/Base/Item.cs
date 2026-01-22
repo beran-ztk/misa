@@ -13,14 +13,11 @@ public class Item : DomainEventEntity
     private Item() { }
 
     public Item(
-        Entity entity,
         int stateId,
         Priority priority,
         int categoryId,
         string title)
     {
-        Entity = entity ?? throw new ArgumentNullException(nameof(entity));
-
         StateId = stateId;
         Priority = priority;
         CategoryId = categoryId;

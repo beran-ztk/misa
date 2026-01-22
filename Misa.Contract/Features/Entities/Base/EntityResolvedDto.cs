@@ -3,7 +3,6 @@
 public record EntityResolvedDto
 (
     Guid Id,
-    Guid? OwnerId,
 
     string Workflow,
     bool IsDeleted,

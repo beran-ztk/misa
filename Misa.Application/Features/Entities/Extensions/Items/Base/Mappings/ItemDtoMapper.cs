@@ -10,12 +10,10 @@ namespace Misa.Application.Features.Entities.Extensions.Items.Base.Mappings;
 
 public static class ItemDtoMapper
 {
-    public static Item ToDomain(this CreateItemDto dto, Entity entity)
+    public static Item ToDomain(this CreateItemDto dto)
     {
         return new Item
             (
-                entity: entity,
-                
                 stateId:  dto.StateId,
                 priority:  dto.Priority.ToDomain(),
                 categoryId:  dto.CategoryId,

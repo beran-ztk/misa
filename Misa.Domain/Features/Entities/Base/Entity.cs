@@ -8,17 +8,15 @@ public class Entity
 {
     private Entity () { }
 
-    public Entity(Guid? ownerId, Workflow workflow)
+    public Entity(Workflow workflow)
     {
-        OwnerId = ownerId;
         Workflow = workflow;
         
         CreatedAt = DateTimeOffset.UtcNow;
         InteractedAt = DateTimeOffset.UtcNow;
     }
     
-    public Guid Id { get; set; }
-    public Guid? OwnerId { get; set; }
+    public Guid Id { get; init; }
     public Workflow Workflow { get; init; }
     public bool IsDeleted { get; set; }
     public bool IsArchived { get; set; }

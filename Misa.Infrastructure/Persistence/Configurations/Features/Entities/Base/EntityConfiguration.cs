@@ -15,9 +15,6 @@ public class EntityConfiguration : IEntityTypeConfiguration<Domain.Features.Enti
             .HasColumnName("id")
             .HasDefaultValueSql("gen_random_uuid()");
         
-        builder.Property(e => e.OwnerId)
-            .HasColumnName("owner_id");
-
         builder.Property(e => e.Workflow)
             .IsRequired()
             .HasColumnName("workflow")

@@ -8,7 +8,6 @@ public static class EntityDtoMapper
     public static Entity ToDomain(this CreateEntityDto createEntity)
         => new
         (
-            ownerId: createEntity.OwnerId,
             workflow: Workflow.Task
         );
 
@@ -16,7 +15,6 @@ public static class EntityDtoMapper
         => new()
         {
             Id = entity.Id,
-            OwnerId = entity.OwnerId,
             Workflow = entity.Workflow.ToString(),
             IsDeleted = entity.IsDeleted,
             CreatedAt = entity.CreatedAt,

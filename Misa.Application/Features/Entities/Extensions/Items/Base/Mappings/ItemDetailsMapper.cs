@@ -34,7 +34,6 @@ public static class ItemDetailsMapper
     {
         return new EntityResolvedDto(
             domain.Id,
-            domain.OwnerId,
 
             domain.Workflow.ToString(),
             domain.IsDeleted,
