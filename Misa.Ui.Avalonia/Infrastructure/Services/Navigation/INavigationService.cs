@@ -7,7 +7,6 @@ namespace Misa.Ui.Avalonia.Infrastructure.Services.Navigation;
 public interface INavigationService
 {
     public NavigationStore NavigationStore { get; }
-    public LookupsStore LookupsStore { get; }
     public IClipboardService ClipboardService { get; }
     public void ShowTasks();
 }

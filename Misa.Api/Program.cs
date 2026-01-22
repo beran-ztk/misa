@@ -27,16 +27,15 @@ using Misa.Infrastructure.Persistence.Repositories;
 using Wolverine;
 using Priority = Misa.Domain.Features.Entities.Extensions.Items.Base.Priority;
 
-const string connectionString =
-    "Host=localhost;Port=5432;Database=misa;Username=postgres;Password=meow";
-
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddTransient<ExceptionMappingMiddleware>();
+
 builder.Services.AddDbContext<DefaultContext>(options =>
     options.UseNpgsql(
-        connectionString,
+        // "Host=localhost;Port=5432;Database=misa;Username=postgres;Password=meow",
+        "Host=localhost;Port=5432;Database=misa;Username=misa;Password=misa",
         npgsql =>
         {
             npgsql.MapEnum<ScheduleMisfirePolicy>("schedule_misfire_policy");
@@ -49,7 +48,6 @@ builder.Services.AddDbContext<DefaultContext>(options =>
             npgsql.MapEnum<SessionConcentrationType>("session_concentration_type");
         }
     ));
-
 
 builder.Services.AddHostedService<SessionAutostopWorker>();
 builder.Services.AddHostedService<SessionPastMaxTimeWorker>();

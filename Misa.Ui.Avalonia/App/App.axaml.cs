@@ -33,25 +33,12 @@ public partial class App : Application
             var httpClient = new HttpClient { BaseAddress = new Uri(uri) };
 
             var navigationStore = new NavigationStore(httpClient);
-            navigationStore.WireRealtimeHandlers();
-            _ = Task.Run(async () =>
-            {
-                try
-                {
-                    await navigationStore.Realtime.StartAsync(baseUrl: uri);
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine($"[SignalR] Start failed: {e}");
-                }
-            });
             
-            var lookupsStore = new LookupsStore(httpClient);
-            INavigationService navigationService = new NavigationService(navigationStore, lookupsStore, new AvaloniaClipboardService());
+            INavigationService navigationService = new NavigationService(navigationStore, new AvaloniaClipboardService());
             
             desktop.MainWindow = new MainWindow
             {
-                DataContext = new MainWindowViewModel(navigationService, lookupsStore),
+                DataContext = new MainWindowViewModel(navigationService),
             };
         }
 

@@ -1,10 +1,15 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Misa.Domain.Features.Audit;
+using Misa.Domain.Features.Entities.Base;
 using Misa.Domain.Features.Entities.Extensions.Items.Base;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
+using Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
+
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
 
 namespace Misa.Infrastructure.Migrations
 {
@@ -15,104 +20,21 @@ namespace Misa.Infrastructure.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AlterDatabase()
+                .Annotation("Npgsql:Enum:change_type", "category,deadline,priority,state,title")
                 .Annotation("Npgsql:Enum:priority", "critical,high,low,medium,none,urgent")
                 .Annotation("Npgsql:Enum:schedule_frequency_type", "days,hours,minutes,months,once,weeks,years")
-                .Annotation("Npgsql:Enum:schedule_misfire_policy", "catchup,run_once,skip");
-
-            migrationBuilder.CreateTable(
-                name: "action_types",
-                columns: table => new
-                {
-                    id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    name = table.Column<string>(type: "text", nullable: false),
-                    synopsis = table.Column<string>(type: "text", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_action_types", x => x.id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "entity_workflow_types",
-                columns: table => new
-                {
-                    id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    name = table.Column<string>(type: "text", nullable: false),
-                    synopsis = table.Column<string>(type: "text", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_entity_workflow_types", x => x.id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "item_states",
-                columns: table => new
-                {
-                    id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    name = table.Column<string>(type: "text", nullable: false),
-                    synopsis = table.Column<string>(type: "text", nullable: true),
-                    sort_order = table.Column<int>(type: "integer", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_item_states", x => x.id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "session_concentration_types",
-                columns: table => new
-                {
-                    id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    name = table.Column<string>(type: "text", nullable: false),
-                    synopsis = table.Column<string>(type: "text", nullable: true),
-                    sort_order = table.Column<int>(type: "integer", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_session_concentration_types", x => x.id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "session_efficiency_types",
-                columns: table => new
-                {
-                    id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    name = table.Column<string>(type: "text", nullable: false),
-                    synopsis = table.Column<string>(type: "text", nullable: true),
-                    sort_order = table.Column<int>(type: "integer", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_session_efficiency_types", x => x.id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "session_states",
-                columns: table => new
-                {
-                    id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    name = table.Column<string>(type: "text", nullable: false),
-                    synopsis = table.Column<string>(type: "text", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_session_states", x => x.id);
-                });
+                .Annotation("Npgsql:Enum:schedule_misfire_policy", "catchup,run_once,skip")
+                .Annotation("Npgsql:Enum:session_concentration_type", "deep_focus,distracted,focused,hyperfocus,none,unfocused_but_calm")
+                .Annotation("Npgsql:Enum:session_efficiency_type", "high_output,low_output,none,peak_performance,steady_output")
+                .Annotation("Npgsql:Enum:session_state", "ended,paused,running")
+                .Annotation("Npgsql:Enum:workflow", "deadline,task");
 
             migrationBuilder.CreateTable(
                 name: "entities",
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
-                    owner_id = table.Column<Guid>(type: "uuid", nullable: true),
-                    workflow_id = table.Column<int>(type: "integer", nullable: false),
+                    workflow = table.Column<Workflow>(type: "workflow", nullable: false),
                     is_deleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
                     is_archived = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
                     created_at_utc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
@@ -124,43 +46,29 @@ namespace Misa.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_entities", x => x.id);
-                    table.ForeignKey(
-                        name: "FK_entities_entity_workflow_types_workflow_id",
-                        column: x => x.workflow_id,
-                        principalTable: "entity_workflow_types",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
-                name: "workflow_category_types",
+                name: "item_states",
                 columns: table => new
                 {
                     id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    workflow_id = table.Column<int>(type: "integer", nullable: false),
                     name = table.Column<string>(type: "text", nullable: false),
-                    synopsis = table.Column<string>(type: "text", nullable: true),
-                    sort_order = table.Column<int>(type: "integer", nullable: false)
+                    synopsis = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_workflow_category_types", x => x.id);
-                    table.ForeignKey(
-                        name: "FK_workflow_category_types_entity_workflow_types_workflow_id",
-                        column: x => x.workflow_id,
-                        principalTable: "entity_workflow_types",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Restrict);
+                    table.PrimaryKey("PK_item_states", x => x.id);
                 });
 
             migrationBuilder.CreateTable(
-                name: "actions",
+                name: "audit_changes",
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
                     entity_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    type_id = table.Column<int>(type: "integer", nullable: false),
+                    field = table.Column<ChangeType>(type: "change_type", nullable: false),
                     value_before = table.Column<string>(type: "text", nullable: true),
                     value_after = table.Column<string>(type: "text", nullable: true),
                     reason = table.Column<string>(type: "text", nullable: true),
@@ -168,15 +76,9 @@ namespace Misa.Infrastructure.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_actions", x => x.id);
+                    table.PrimaryKey("PK_audit_changes", x => x.id);
                     table.ForeignKey(
-                        name: "FK_actions_action_types_type_id",
-                        column: x => x.type_id,
-                        principalTable: "action_types",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_actions_entities_entity_id",
+                        name: "FK_audit_changes_entities_entity_id",
                         column: x => x.entity_id,
                         principalTable: "entities",
                         principalColumn: "id",
@@ -207,18 +109,18 @@ namespace Misa.Infrastructure.Migrations
                 name: "items",
                 columns: table => new
                 {
-                    entity_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
                     state_id = table.Column<int>(type: "integer", nullable: false, defaultValue: 1),
                     priority = table.Column<Priority>(type: "priority", nullable: false, defaultValue: Priority.None),
-                    category_id = table.Column<int>(type: "integer", nullable: false),
-                    title = table.Column<string>(type: "text", nullable: false)
+                    title = table.Column<string>(type: "text", nullable: false),
+                    EntityId = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_items", x => x.entity_id);
+                    table.PrimaryKey("PK_items", x => x.id);
                     table.ForeignKey(
-                        name: "FK_items_entities_entity_id",
-                        column: x => x.entity_id,
+                        name: "FK_items_entities_EntityId",
+                        column: x => x.EntityId,
                         principalTable: "entities",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
@@ -226,12 +128,6 @@ namespace Misa.Infrastructure.Migrations
                         name: "FK_items_item_states_state_id",
                         column: x => x.state_id,
                         principalTable: "item_states",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_items_workflow_category_types_category_id",
-                        column: x => x.category_id,
-                        principalTable: "workflow_category_types",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -251,7 +147,7 @@ namespace Misa.Infrastructure.Migrations
                         name: "FK_scheduled_deadlines_items_item_id",
                         column: x => x.item_id,
                         principalTable: "items",
-                        principalColumn: "entity_id",
+                        principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -286,7 +182,7 @@ namespace Misa.Infrastructure.Migrations
                         name: "FK_scheduler_items_item_id",
                         column: x => x.item_id,
                         principalTable: "items",
-                        principalColumn: "entity_id",
+                        principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -296,9 +192,9 @@ namespace Misa.Infrastructure.Migrations
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
                     item_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    state_id = table.Column<int>(type: "integer", nullable: false),
-                    efficiency_id = table.Column<int>(type: "integer", nullable: true),
-                    concentration_id = table.Column<int>(type: "integer", nullable: true),
+                    state = table.Column<SessionState>(type: "session_state", nullable: false, defaultValue: SessionState.Running),
+                    efficiency = table.Column<SessionEfficiencyType>(type: "session_efficiency_type", nullable: false, defaultValue: SessionEfficiencyType.None),
+                    concentration = table.Column<SessionConcentrationType>(type: "session_concentration_type", nullable: false, defaultValue: SessionConcentrationType.None),
                     objective = table.Column<string>(type: "text", nullable: true),
                     summary = table.Column<string>(type: "text", nullable: true),
                     auto_stop_reason = table.Column<string>(type: "text", nullable: true),
@@ -310,30 +206,13 @@ namespace Misa.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_sessions", x => x.id);
+                    table.CheckConstraint("ck_planned_duration", "planned_duration IS NULL OR (planned_duration > INTERVAL '0 seconds' AND planned_duration < INTERVAL '1 day')");
                     table.ForeignKey(
                         name: "FK_sessions_items_item_id",
                         column: x => x.item_id,
                         principalTable: "items",
-                        principalColumn: "entity_id",
+                        principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_sessions_session_concentration_types_concentration_id",
-                        column: x => x.concentration_id,
-                        principalTable: "session_concentration_types",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_sessions_session_efficiency_types_efficiency_id",
-                        column: x => x.efficiency_id,
-                        principalTable: "session_efficiency_types",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_sessions_session_states_state_id",
-                        column: x => x.state_id,
-                        principalTable: "session_states",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -375,6 +254,7 @@ namespace Misa.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_session_segments", x => x.id);
+                    table.CheckConstraint("ck_session_segments_ended_after_started", "ended_at_utc IS NULL OR started_at_utc <= ended_at_utc");
                     table.ForeignKey(
                         name: "FK_session_segments_sessions_session_id",
                         column: x => x.session_id,
@@ -383,21 +263,30 @@ namespace Misa.Infrastructure.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
-            migrationBuilder.CreateIndex(
-                name: "IX_action_types_name",
-                table: "action_types",
-                column: "name",
-                unique: true);
+            migrationBuilder.InsertData(
+                table: "item_states",
+                columns: new[] { "id", "name", "synopsis" },
+                values: new object[,]
+                {
+                    { 1, "Draft", "Entwurf; noch nie daran gearbeitet" },
+                    { 2, "Undefined", "Unklar; muss präzisiert werden" },
+                    { 3, "Scheduled", "Geplant für einen zukünftigen Zeitpunkt" },
+                    { 4, "InProgress", "Bereits bearbeitet, aktuell keine aktive Session" },
+                    { 5, "Active", "Aktive Session läuft" },
+                    { 6, "Paused", "Session pausiert (max. 6h, danach Auto-Fortsetzung)" },
+                    { 7, "Pending", "Zurückgestellt; lange nicht bearbeitet" },
+                    { 8, "WaitForResponse", "Wartet auf Rückmeldung einer Person oder Stelle" },
+                    { 9, "BlockedByRelationship", "Blockiert durch Relation oder Abhängigkeit" },
+                    { 10, "Done", "Erfolgreich abgeschlossen" },
+                    { 11, "Canceled", "Abgebrochen; nicht weiter erforderlich" },
+                    { 12, "Failed", "Gescheitert; Ziel nicht erreicht" },
+                    { 13, "Expired", "Automatisch abgelaufen (Deadline überschritten)" }
+                });
 
             migrationBuilder.CreateIndex(
-                name: "IX_actions_entity_id",
-                table: "actions",
+                name: "IX_audit_changes_entity_id",
+                table: "audit_changes",
                 column: "entity_id");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_actions_type_id",
-                table: "actions",
-                column: "type_id");
 
             migrationBuilder.CreateIndex(
                 name: "IX_descriptions_entity_id",
@@ -405,14 +294,9 @@ namespace Misa.Infrastructure.Migrations
                 column: "entity_id");
 
             migrationBuilder.CreateIndex(
-                name: "IX_entities_workflow_id",
-                table: "entities",
-                column: "workflow_id");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_items_category_id",
+                name: "IX_items_EntityId",
                 table: "items",
-                column: "category_id");
+                column: "EntityId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_items_state_id",
@@ -436,71 +320,21 @@ namespace Misa.Infrastructure.Migrations
                 column: "scheduler_id");
 
             migrationBuilder.CreateIndex(
-                name: "IX_session_concentration_types_name",
-                table: "session_concentration_types",
-                column: "name",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_session_concentration_types_sort_order",
-                table: "session_concentration_types",
-                column: "sort_order",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_session_efficiency_types_name",
-                table: "session_efficiency_types",
-                column: "name",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_session_efficiency_types_sort_order",
-                table: "session_efficiency_types",
-                column: "sort_order",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
                 name: "IX_session_segments_session_id",
                 table: "session_segments",
                 column: "session_id");
 
             migrationBuilder.CreateIndex(
-                name: "IX_session_states_name",
-                table: "session_states",
-                column: "name",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_sessions_concentration_id",
-                table: "sessions",
-                column: "concentration_id");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_sessions_efficiency_id",
-                table: "sessions",
-                column: "efficiency_id");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_sessions_item_id",
                 table: "sessions",
                 column: "item_id");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_sessions_state_id",
-                table: "sessions",
-                column: "state_id");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_workflow_category_types_workflow_id",
-                table: "workflow_category_types",
-                column: "workflow_id");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "actions");
+                name: "audit_changes");
 
             migrationBuilder.DropTable(
                 name: "descriptions");
@@ -515,9 +349,6 @@ namespace Misa.Infrastructure.Migrations
                 name: "session_segments");
 
             migrationBuilder.DropTable(
-                name: "action_types");
-
-            migrationBuilder.DropTable(
                 name: "scheduler");
 
             migrationBuilder.DropTable(
@@ -527,25 +358,10 @@ namespace Misa.Infrastructure.Migrations
                 name: "items");
 
             migrationBuilder.DropTable(
-                name: "session_concentration_types");
-
-            migrationBuilder.DropTable(
-                name: "session_efficiency_types");
-
-            migrationBuilder.DropTable(
-                name: "session_states");
-
-            migrationBuilder.DropTable(
                 name: "entities");
 
             migrationBuilder.DropTable(
                 name: "item_states");
-
-            migrationBuilder.DropTable(
-                name: "workflow_category_types");
-
-            migrationBuilder.DropTable(
-                name: "entity_workflow_types");
         }
     }
 }

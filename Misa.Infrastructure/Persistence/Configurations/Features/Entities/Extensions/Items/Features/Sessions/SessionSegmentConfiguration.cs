@@ -29,5 +29,11 @@ public class SessionSegmentConfiguration : IEntityTypeConfiguration<SessionSegme
         
         builder.Property(x => x.EndedAtUtc)
             .HasColumnName("ended_at_utc");
+
+        // Constraints
+        builder.HasCheckConstraint( 
+            "ck_session_segments_ended_after_started", 
+            "ended_at_utc IS NULL OR started_at_utc <= ended_at_utc" 
+        );
     }
 }

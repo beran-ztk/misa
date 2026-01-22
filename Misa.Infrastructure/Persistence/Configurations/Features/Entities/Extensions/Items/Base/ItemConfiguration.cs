@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Misa.Domain.Features.Entities.Base;
 using Misa.Domain.Features.Entities.Extensions.Items.Base;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Deadlines;
 
@@ -12,7 +13,6 @@ public class ItemConfiguration : IEntityTypeConfiguration<Item>
         builder.ToTable("items");
         
         builder.HasKey(x => x.Id);
-        
         
         builder.Property(x => x.Id)
             .HasColumnName("id");
@@ -32,19 +32,22 @@ public class ItemConfiguration : IEntityTypeConfiguration<Item>
             .IsRequired()
             .HasColumnName("title");
         
-        // State n:1
+        // Relations
+        builder.HasOne(i => i.Entity)
+            .WithOne()
+            .HasForeignKey<Item>(i => i.Id)
+            .OnDelete(DeleteBehavior.Cascade);
+
         builder.HasOne(i => i.State)
             .WithMany()
             .HasForeignKey(i => i.StateId)
             .OnDelete(DeleteBehavior.Restrict);
         
-        // Deadline 1:0..1
         builder.HasOne(i => i.ScheduledDeadline)
             .WithOne()
             .HasForeignKey<ScheduledDeadline>(d => d.ItemId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Session 1:0..1
         builder.HasMany(e => e.Sessions)
             .WithOne()
             .HasForeignKey(s => s.ItemId)

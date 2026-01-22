@@ -201,10 +201,6 @@ public partial class SessionViewModel : ViewModelBase
     [ObservableProperty] private string? _summary;
     [ObservableProperty] private int? _efficiencyId; 
     [ObservableProperty] private int? _concentrationId;
-    public IReadOnlyList<SessionEfficiencyTypeDto> EfficiencyTypes =>
-        Parent.Parent.EntityDetailHost.NavigationService.LookupsStore.EfficiencyTypes;
-    public IReadOnlyList<SessionConcentrationTypeDto> ConcentrationTypes =>
-        Parent.Parent.EntityDetailHost.NavigationService.LookupsStore.ConcentrationTypes;
     private void ResetStopSessionContext()
     {
         Summary = null;

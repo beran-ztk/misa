@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Misa.Domain.Features.Audit;
 using Misa.Domain.Features.Entities.Base;
@@ -16,9 +17,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Misa.Infrastructure.Migrations
 {
     [DbContext(typeof(DefaultContext))]
-    partial class DefaultContextModelSnapshot : ModelSnapshot
+    [Migration("20260122225626_Initial")]
+    partial class Initial
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -126,8 +129,12 @@ namespace Misa.Infrastructure.Migrations
             modelBuilder.Entity("Misa.Domain.Features.Entities.Extensions.Items.Base.Item", b =>
                 {
                     b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("id");
+
+                    b.Property<Guid>("EntityId")
+                        .HasColumnType("uuid");
 
                     b.Property<Priority>("Priority")
                         .ValueGeneratedOnAdd()
@@ -147,6 +154,8 @@ namespace Misa.Infrastructure.Migrations
                         .HasColumnName("title");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("EntityId");
 
                     b.HasIndex("StateId");
 
@@ -576,8 +585,8 @@ namespace Misa.Infrastructure.Migrations
             modelBuilder.Entity("Misa.Domain.Features.Entities.Extensions.Items.Base.Item", b =>
                 {
                     b.HasOne("Misa.Domain.Features.Entities.Base.Entity", "Entity")
-                        .WithOne()
-                        .HasForeignKey("Misa.Domain.Features.Entities.Extensions.Items.Base.Item", "Id")
+                        .WithMany()
+                        .HasForeignKey("EntityId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

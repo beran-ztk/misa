@@ -4,8 +4,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Misa.Domain.Features.Audit;
+using Misa.Domain.Features.Entities.Base;
 using Misa.Domain.Features.Entities.Extensions.Items.Base;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
+using Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions;
 using Misa.Infrastructure.Persistence.Context;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -14,8 +17,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Misa.Infrastructure.Migrations
 {
     [DbContext(typeof(DefaultContext))]
-    [Migration("20260122185147_Initial")]
-    partial class Initial
+    [Migration("20260122232208_ItemEntityRs")]
+    partial class ItemEntityRs
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -25,18 +28,27 @@ namespace Misa.Infrastructure.Migrations
                 .HasAnnotation("ProductVersion", "9.0.4")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
+            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "change_type", new[] { "category", "deadline", "priority", "state", "title" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "priority", new[] { "critical", "high", "low", "medium", "none", "urgent" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "schedule_frequency_type", new[] { "days", "hours", "minutes", "months", "once", "weeks", "years" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "schedule_misfire_policy", new[] { "catchup", "run_once", "skip" });
+            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "session_concentration_type", new[] { "deep_focus", "distracted", "focused", "hyperfocus", "none", "unfocused_but_calm" });
+            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "session_efficiency_type", new[] { "high_output", "low_output", "none", "peak_performance", "steady_output" });
+            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "session_state", new[] { "ended", "paused", "running" });
+            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "workflow", new[] { "deadline", "task" });
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("Misa.Domain.Features.Actions.Action", b =>
+            modelBuilder.Entity("Misa.Domain.Features.Audit.AuditChange", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("id")
                         .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<ChangeType>("ChangeType")
+                        .HasColumnType("change_type")
+                        .HasColumnName("field");
 
                     b.Property<DateTimeOffset>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone")
@@ -50,10 +62,6 @@ namespace Misa.Infrastructure.Migrations
                         .HasColumnType("text")
                         .HasColumnName("reason");
 
-                    b.Property<int>("TypeId")
-                        .HasColumnType("integer")
-                        .HasColumnName("type_id");
-
                     b.Property<string>("ValueAfter")
                         .HasColumnType("text")
                         .HasColumnName("value_after");
@@ -66,35 +74,7 @@ namespace Misa.Infrastructure.Migrations
 
                     b.HasIndex("EntityId");
 
-                    b.HasIndex("TypeId");
-
-                    b.ToTable("actions", (string)null);
-                });
-
-            modelBuilder.Entity("Misa.Domain.Features.Actions.ActionType", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("name");
-
-                    b.Property<string>("Synopsis")
-                        .HasColumnType("text")
-                        .HasColumnName("synopsis");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Name")
-                        .IsUnique();
-
-                    b.ToTable("action_types", (string)null);
+                    b.ToTable("audit_changes", (string)null);
                 });
 
             modelBuilder.Entity("Misa.Domain.Features.Entities.Base.Entity", b =>
@@ -133,90 +113,24 @@ namespace Misa.Infrastructure.Migrations
                         .HasDefaultValue(false)
                         .HasColumnName("is_deleted");
 
-                    b.Property<Guid?>("OwnerId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("owner_id");
-
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at_utc");
 
-                    b.Property<int>("WorkflowId")
-                        .HasColumnType("integer")
-                        .HasColumnName("workflow_id");
+                    b.Property<Workflow>("Workflow")
+                        .HasColumnType("workflow")
+                        .HasColumnName("workflow");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("WorkflowId");
 
                     b.ToTable("entities", (string)null);
                 });
 
-            modelBuilder.Entity("Misa.Domain.Features.Entities.Base.Workflow", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("name");
-
-                    b.Property<string>("Synopsis")
-                        .HasColumnType("text")
-                        .HasColumnName("synopsis");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("entity_workflow_types", (string)null);
-                });
-
-            modelBuilder.Entity("Misa.Domain.Features.Entities.Extensions.Items.Base.Category", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("name");
-
-                    b.Property<int>("SortOrder")
-                        .HasColumnType("integer")
-                        .HasColumnName("sort_order");
-
-                    b.Property<string>("Synopsis")
-                        .HasColumnType("text")
-                        .HasColumnName("synopsis");
-
-                    b.Property<int>("WorkflowId")
-                        .HasColumnType("integer")
-                        .HasColumnName("workflow_id");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("WorkflowId");
-
-                    b.ToTable("workflow_category_types", (string)null);
-                });
-
             modelBuilder.Entity("Misa.Domain.Features.Entities.Extensions.Items.Base.Item", b =>
                 {
-                    b.Property<Guid>("EntityId")
+                    b.Property<Guid>("Id")
                         .HasColumnType("uuid")
-                        .HasColumnName("entity_id");
-
-                    b.Property<int>("CategoryId")
-                        .HasColumnType("integer")
-                        .HasColumnName("category_id");
+                        .HasColumnName("id");
 
                     b.Property<Priority>("Priority")
                         .ValueGeneratedOnAdd()
@@ -235,9 +149,7 @@ namespace Misa.Infrastructure.Migrations
                         .HasColumnType("text")
                         .HasColumnName("title");
 
-                    b.HasKey("EntityId");
-
-                    b.HasIndex("CategoryId");
+                    b.HasKey("Id");
 
                     b.HasIndex("StateId");
 
@@ -258,10 +170,6 @@ namespace Misa.Infrastructure.Migrations
                         .HasColumnType("text")
                         .HasColumnName("name");
 
-                    b.Property<int>("SortOrder")
-                        .HasColumnType("integer")
-                        .HasColumnName("sort_order");
-
                     b.Property<string>("Synopsis")
                         .HasColumnType("text")
                         .HasColumnName("synopsis");
@@ -269,6 +177,86 @@ namespace Misa.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("item_states", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "Draft",
+                            Synopsis = "Entwurf; noch nie daran gearbeitet"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Undefined",
+                            Synopsis = "Unklar; muss präzisiert werden"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "Scheduled",
+                            Synopsis = "Geplant für einen zukünftigen Zeitpunkt"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Name = "InProgress",
+                            Synopsis = "Bereits bearbeitet, aktuell keine aktive Session"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Name = "Active",
+                            Synopsis = "Aktive Session läuft"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Name = "Paused",
+                            Synopsis = "Session pausiert (max. 6h, danach Auto-Fortsetzung)"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Name = "Pending",
+                            Synopsis = "Zurückgestellt; lange nicht bearbeitet"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Name = "WaitForResponse",
+                            Synopsis = "Wartet auf Rückmeldung einer Person oder Stelle"
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Name = "BlockedByRelationship",
+                            Synopsis = "Blockiert durch Relation oder Abhängigkeit"
+                        },
+                        new
+                        {
+                            Id = 10,
+                            Name = "Done",
+                            Synopsis = "Erfolgreich abgeschlossen"
+                        },
+                        new
+                        {
+                            Id = 11,
+                            Name = "Canceled",
+                            Synopsis = "Abgebrochen; nicht weiter erforderlich"
+                        },
+                        new
+                        {
+                            Id = 12,
+                            Name = "Failed",
+                            Synopsis = "Gescheitert; Ziel nicht erreicht"
+                        },
+                        new
+                        {
+                            Id = 13,
+                            Name = "Expired",
+                            Synopsis = "Automatisch abgelaufen (Deadline überschritten)"
+                        });
                 });
 
             modelBuilder.Entity("Misa.Domain.Features.Entities.Extensions.Items.Features.Deadlines.ScheduledDeadline", b =>
@@ -461,17 +449,21 @@ namespace Misa.Infrastructure.Migrations
                         .HasColumnType("text")
                         .HasColumnName("auto_stop_reason");
 
-                    b.Property<int?>("ConcentrationId")
-                        .HasColumnType("integer")
-                        .HasColumnName("concentration_id");
+                    b.Property<SessionConcentrationType>("Concentration")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("session_concentration_type")
+                        .HasDefaultValue(SessionConcentrationType.None)
+                        .HasColumnName("concentration");
 
                     b.Property<DateTimeOffset>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at_utc");
 
-                    b.Property<int?>("EfficiencyId")
-                        .HasColumnType("integer")
-                        .HasColumnName("efficiency_id");
+                    b.Property<SessionEfficiencyType>("Efficiency")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("session_efficiency_type")
+                        .HasDefaultValue(SessionEfficiencyType.None)
+                        .HasColumnName("efficiency");
 
                     b.Property<Guid>("ItemId")
                         .HasColumnType("uuid")
@@ -485,9 +477,11 @@ namespace Misa.Infrastructure.Migrations
                         .HasColumnType("interval")
                         .HasColumnName("planned_duration");
 
-                    b.Property<int>("StateId")
-                        .HasColumnType("integer")
-                        .HasColumnName("state_id");
+                    b.Property<SessionState>("State")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("session_state")
+                        .HasDefaultValue(SessionState.Running)
+                        .HasColumnName("state");
 
                     b.Property<bool>("StopAutomatically")
                         .HasColumnType("boolean")
@@ -503,81 +497,12 @@ namespace Misa.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ConcentrationId");
-
-                    b.HasIndex("EfficiencyId");
-
                     b.HasIndex("ItemId");
 
-                    b.HasIndex("StateId");
-
-                    b.ToTable("sessions", (string)null);
-                });
-
-            modelBuilder.Entity("Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions.SessionConcentrationType", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("name");
-
-                    b.Property<int>("SortOrder")
-                        .HasColumnType("integer")
-                        .HasColumnName("sort_order");
-
-                    b.Property<string>("Synopsis")
-                        .HasColumnType("text")
-                        .HasColumnName("synopsis");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Name")
-                        .IsUnique();
-
-                    b.HasIndex("SortOrder")
-                        .IsUnique();
-
-                    b.ToTable("session_concentration_types", (string)null);
-                });
-
-            modelBuilder.Entity("Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions.SessionEfficiencyType", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("name");
-
-                    b.Property<int>("SortOrder")
-                        .HasColumnType("integer")
-                        .HasColumnName("sort_order");
-
-                    b.Property<string>("Synopsis")
-                        .HasColumnType("text")
-                        .HasColumnName("synopsis");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Name")
-                        .IsUnique();
-
-                    b.HasIndex("SortOrder")
-                        .IsUnique();
-
-                    b.ToTable("session_efficiency_types", (string)null);
+                    b.ToTable("sessions", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_planned_duration", "planned_duration IS NULL OR (planned_duration > INTERVAL '0 seconds' AND planned_duration < INTERVAL '1 day')");
+                        });
                 });
 
             modelBuilder.Entity("Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions.SessionSegment", b =>
@@ -608,33 +533,10 @@ namespace Misa.Infrastructure.Migrations
 
                     b.HasIndex("SessionId");
 
-                    b.ToTable("session_segments", (string)null);
-                });
-
-            modelBuilder.Entity("Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions.SessionStates", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("name");
-
-                    b.Property<string>("Synopsis")
-                        .HasColumnType("text")
-                        .HasColumnName("synopsis");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Name")
-                        .IsUnique();
-
-                    b.ToTable("session_states", (string)null);
+                    b.ToTable("session_segments", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_session_segments_ended_after_started", "ended_at_utc IS NULL OR started_at_utc <= ended_at_utc");
+                        });
                 });
 
             modelBuilder.Entity("Misa.Domain.Features.Entities.Features.Descriptions.Description", b =>
@@ -665,56 +567,20 @@ namespace Misa.Infrastructure.Migrations
                     b.ToTable("descriptions", (string)null);
                 });
 
-            modelBuilder.Entity("Misa.Domain.Features.Actions.Action", b =>
+            modelBuilder.Entity("Misa.Domain.Features.Audit.AuditChange", b =>
                 {
                     b.HasOne("Misa.Domain.Features.Entities.Base.Entity", null)
-                        .WithMany("Actions")
+                        .WithMany("Changes")
                         .HasForeignKey("EntityId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("Misa.Domain.Features.Actions.ActionType", "Type")
-                        .WithMany()
-                        .HasForeignKey("TypeId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Type");
-                });
-
-            modelBuilder.Entity("Misa.Domain.Features.Entities.Base.Entity", b =>
-                {
-                    b.HasOne("Misa.Domain.Features.Entities.Base.Workflow", "Workflow")
-                        .WithMany()
-                        .HasForeignKey("WorkflowId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Workflow");
-                });
-
-            modelBuilder.Entity("Misa.Domain.Features.Entities.Extensions.Items.Base.Category", b =>
-                {
-                    b.HasOne("Misa.Domain.Features.Entities.Base.Workflow", "Workflow")
-                        .WithMany()
-                        .HasForeignKey("WorkflowId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Workflow");
                 });
 
             modelBuilder.Entity("Misa.Domain.Features.Entities.Extensions.Items.Base.Item", b =>
                 {
-                    b.HasOne("Misa.Domain.Features.Entities.Extensions.Items.Base.Category", "Category")
-                        .WithMany()
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("Misa.Domain.Features.Entities.Base.Entity", "Entity")
-                        .WithOne("Item")
-                        .HasForeignKey("Misa.Domain.Features.Entities.Extensions.Items.Base.Item", "EntityId")
+                        .WithOne()
+                        .HasForeignKey("Misa.Domain.Features.Entities.Extensions.Items.Base.Item", "Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -723,8 +589,6 @@ namespace Misa.Infrastructure.Migrations
                         .HasForeignKey("StateId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.Navigation("Category");
 
                     b.Navigation("Entity");
 
@@ -762,33 +626,11 @@ namespace Misa.Infrastructure.Migrations
 
             modelBuilder.Entity("Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions.Session", b =>
                 {
-                    b.HasOne("Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions.SessionConcentrationType", "Concentration")
-                        .WithMany()
-                        .HasForeignKey("ConcentrationId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions.SessionEfficiencyType", "Efficiency")
-                        .WithMany()
-                        .HasForeignKey("EfficiencyId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("Misa.Domain.Features.Entities.Extensions.Items.Base.Item", null)
                         .WithMany("Sessions")
                         .HasForeignKey("ItemId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions.SessionStates", "State")
-                        .WithMany()
-                        .HasForeignKey("StateId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Concentration");
-
-                    b.Navigation("Efficiency");
-
-                    b.Navigation("State");
                 });
 
             modelBuilder.Entity("Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions.SessionSegment", b =>
@@ -811,11 +653,9 @@ namespace Misa.Infrastructure.Migrations
 
             modelBuilder.Entity("Misa.Domain.Features.Entities.Base.Entity", b =>
                 {
-                    b.Navigation("Actions");
+                    b.Navigation("Changes");
 
                     b.Navigation("Descriptions");
-
-                    b.Navigation("Item");
                 });
 
             modelBuilder.Entity("Misa.Domain.Features.Entities.Extensions.Items.Base.Item", b =>
