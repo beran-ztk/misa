@@ -29,12 +29,8 @@ public class Entity
     public DateTimeOffset? ArchivedAt { get; set; }
     public DateTimeOffset InteractedAt { get; set; }
     
-    public Item? Item { get; set; }
-    
-    public ICollection<Description> Descriptions { get; init; } = new List<Description>();
-    
-    
     public ICollection<AuditChange> Changes { get; init; } = new List<AuditChange>();
+    public ICollection<Description> Descriptions { get; init; } = new List<Description>();
 
    
     public void Interact() => InteractedAt =  DateTimeOffset.UtcNow;

@@ -49,11 +49,6 @@ public class EntityConfiguration : IEntityTypeConfiguration<Domain.Features.Enti
             .IsRequired();
         
         // Relations
-        builder.HasOne(i => i.Item)
-            .WithOne(i => i.Entity)
-            .HasForeignKey<Domain.Features.Entities.Extensions.Items.Base.Item>(i => i.EntityId)
-            .OnDelete(DeleteBehavior.Cascade);
-
         builder.HasMany(i => i.Descriptions)
             .WithOne()
             .HasForeignKey(i => i.EntityId)
