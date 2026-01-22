@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -22,14 +23,13 @@ public partial class CreateViewModel : ViewModelBase
     }
 
     [ObservableProperty] private string _title = string.Empty;
-    [ObservableProperty] private int _priorityId = 1;
+    [ObservableProperty] private Priority _selectedPriority;
     [ObservableProperty] private int _categoryId = 1;
 
     [ObservableProperty] private bool _titleHasValidationError;
     [ObservableProperty] private string _errorMessageTitle = string.Empty;
-    
-    public IReadOnlyList<PriorityDto> Priorities =>
-        MainViewModel.NavigationService.LookupsStore.Priorities;
+
+    public IReadOnlyList<Priority> Priorities { get; } = Enum.GetValues<Priority>();
 
     public IReadOnlyList<CategoryDto> Categories =>
         MainViewModel.NavigationService.LookupsStore.TaskCategories;
@@ -59,7 +59,7 @@ public partial class CreateViewModel : ViewModelBase
         var dto = new CreateItemDto
         {
             OwnerId = null,
-            PriorityId = PriorityId,
+            Priority = SelectedPriority,
             CategoryId = CategoryId,
             Title = trimmedTitle
         };

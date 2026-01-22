@@ -4,7 +4,7 @@ public record ItemResolvedDto
 (
     Guid Id,
     StateDto State,
-    PriorityDto Priority,
+    string Priority,
     CategoryDto Category,
     string Title    
 );

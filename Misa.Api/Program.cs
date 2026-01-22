@@ -20,10 +20,12 @@ using Misa.Application.Features.Entities.Features.Descriptions.Commands;
 using Misa.Application.ReferenceData.Queries;
 using Misa.Contract.Features.Entities.Base;
 using Misa.Contract.Features.Entities.Extensions.Items.Base;
+using Misa.Domain.Features.Entities.Extensions.Items.Base;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
 using Misa.Infrastructure.Persistence.Context;
 using Misa.Infrastructure.Persistence.Repositories;
 using Wolverine;
+using Priority = Misa.Domain.Features.Entities.Extensions.Items.Base.Priority;
 
 const string connectionString =
     "Host=localhost;Port=5432;Database=misa;Username=postgres;Password=meow";
@@ -39,6 +41,7 @@ builder.Services.AddDbContext<DefaultContext>(options =>
         {
             npgsql.MapEnum<ScheduleMisfirePolicy>("schedule_misfire_policy");
             npgsql.MapEnum<ScheduleFrequencyType>("schedule_frequency_type");
+            npgsql.MapEnum<Priority>("priority");
         }
     ));
 

@@ -19,7 +19,6 @@ public class DefaultContext : DbContext
     public DbSet<Entity> Entities { get; set; } = null;
     public DbSet<Item> Items { get; set; } = null;
     public DbSet<State> States { get; set; } = null;
-    public DbSet<Priority> Priorities { get; set; } = null;
     public DbSet<Category> Categories { get; set; } = null;
     public DbSet<Workflow> Workflows { get; set; } = null;
     public DbSet<Description> Descriptions { get; set; } = null;

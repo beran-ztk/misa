@@ -22,9 +22,11 @@ public class ItemConfiguration : IEntityTypeConfiguration<Domain.Features.Entiti
             .HasColumnName("state_id")
             .HasDefaultValue((int)ItemStates.Draft);
         
-        builder.Property(x => x.PriorityId)
+        builder.Property(x => x.Priority)
             .IsRequired()
-            .HasColumnName("priority_id");
+            .HasColumnName("priority")
+            .HasColumnType("priority")
+            .HasDefaultValue(Priority.None);
         
         builder.Property(x => x.CategoryId)
             .IsRequired()
@@ -40,12 +42,6 @@ public class ItemConfiguration : IEntityTypeConfiguration<Domain.Features.Entiti
             .HasForeignKey(i => i.StateId)
             .OnDelete(DeleteBehavior.Restrict);
         
-        // Priority n:1
-        builder.HasOne(i => i.Priority)
-            .WithMany()
-            .HasForeignKey(i => i.PriorityId)
-            .OnDelete(DeleteBehavior.Restrict);
-
         // Category n:1
         builder.HasOne(i => i.Category)
             .WithMany()

@@ -13,7 +13,7 @@ public class ScheduleRepository(DefaultContext db) : IScheduleRepository
         var entity = new Entity(null, 2);
         await db.Entities.AddAsync(entity, ct);
         
-        var item = new Item(entity, 1,1,1,"Default-Schedule-1");
+        var item = new Item(entity, 1, Priority.None,1,"Default-Schedule-1");
         await db.Items.AddAsync(item, ct);
         
         var schedulingRule = Scheduler.CreateAndInitDefaultValues(item);

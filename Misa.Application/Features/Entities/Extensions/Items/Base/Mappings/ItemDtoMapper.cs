@@ -4,6 +4,7 @@ using Misa.Contract.Features.Entities.Extensions.Items.Features.Deadlines;
 using Misa.Domain.Features.Entities.Base;
 using Misa.Domain.Features.Entities.Extensions.Items.Base;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Deadlines;
+using Priority = Misa.Domain.Features.Entities.Extensions.Items.Base.Priority;
 
 namespace Misa.Application.Features.Entities.Extensions.Items.Base.Mappings;
 
@@ -16,19 +17,21 @@ public static class ItemDtoMapper
                 entity: entity,
                 
                 stateId:  dto.StateId,
-                priorityId:  dto.PriorityId,
+                priority:  dto.Priority.ToDomain(),
                 categoryId:  dto.CategoryId,
                 title:  dto.Title
             );
     }
 
+    public static Priority ToDomain(this Misa.Contract.Features.Entities.Extensions.Items.Base.Priority priority) =>
+        (Priority)priority;
     public static ReadItemDto ToReadItemDto(this Item domain)
         => new()
         {
             EntityId = domain.EntityId,
             Entity = domain.Entity.ToReadEntityDto(),
             State = domain.State.ToDto(),
-            Priority = domain.Priority.ToDto(),
+            Priority = domain.Priority.ToString(),
             Category = domain.Category.ToDto(),
             Title = domain.Title,
             ScheduledDeadline = ToDto(domain.ScheduledDeadline),
@@ -41,11 +44,6 @@ public static class ItemDtoMapper
         => new(s.Id, s.Name, s.Synopsis);
     public static List<StateDto> ToDto(this List<State> states)
         => states.Select(s => s.ToDto()).ToList();
-    public static PriorityDto ToDto(this Priority s)
-        => new(s.Id, s.Name, s.Synopsis);
-
-    public static List<PriorityDto> ToDto(this List<Priority> priorities)
-        => priorities.Select(p => p.ToDto()).ToList();
     public static CategoryDto ToDto(this Category s)
         => new(s.Id, s.Name, s.Synopsis);
 

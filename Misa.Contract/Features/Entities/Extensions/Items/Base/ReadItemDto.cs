@@ -10,7 +10,7 @@ public class ReadItemDto
     
 
     public StateDto State { get; set; } = null!;
-    public PriorityDto Priority { get; set; } = null!;
+    public string Priority { get; set; } = null!;
     public CategoryDto Category { get; set; } = null!;
     public string Title { get; set; } = null!;
     public ScheduleDeadlineDto? ScheduledDeadline { get; set; }

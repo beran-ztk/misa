@@ -1,5 +1,6 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Misa.Domain.Features.Entities.Extensions.Items.Base;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -8,12 +9,13 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Misa.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class Initial : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AlterDatabase()
+                .Annotation("Npgsql:Enum:priority", "critical,high,low,medium,none,urgent")
                 .Annotation("Npgsql:Enum:schedule_frequency_type", "days,hours,minutes,months,once,weeks,years")
                 .Annotation("Npgsql:Enum:schedule_misfire_policy", "catchup,run_once,skip");
 
@@ -43,21 +45,6 @@ namespace Misa.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_entity_workflow_types", x => x.id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "item_priorities",
-                columns: table => new
-                {
-                    id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    name = table.Column<string>(type: "text", nullable: false),
-                    synopsis = table.Column<string>(type: "text", nullable: true),
-                    sort_order = table.Column<int>(type: "integer", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_item_priorities", x => x.id);
                 });
 
             migrationBuilder.CreateTable(
@@ -222,7 +209,7 @@ namespace Misa.Infrastructure.Migrations
                 {
                     entity_id = table.Column<Guid>(type: "uuid", nullable: false),
                     state_id = table.Column<int>(type: "integer", nullable: false, defaultValue: 1),
-                    priority_id = table.Column<int>(type: "integer", nullable: false),
+                    priority = table.Column<Priority>(type: "priority", nullable: false, defaultValue: Priority.None),
                     category_id = table.Column<int>(type: "integer", nullable: false),
                     title = table.Column<string>(type: "text", nullable: false)
                 },
@@ -235,12 +222,6 @@ namespace Misa.Infrastructure.Migrations
                         principalTable: "entities",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_items_item_priorities_priority_id",
-                        column: x => x.priority_id,
-                        principalTable: "item_priorities",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_items_item_states_state_id",
                         column: x => x.state_id,
@@ -434,11 +415,6 @@ namespace Misa.Infrastructure.Migrations
                 column: "category_id");
 
             migrationBuilder.CreateIndex(
-                name: "IX_items_priority_id",
-                table: "items",
-                column: "priority_id");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_items_state_id",
                 table: "items",
                 column: "state_id");
@@ -561,9 +537,6 @@ namespace Misa.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "entities");
-
-            migrationBuilder.DropTable(
-                name: "item_priorities");
 
             migrationBuilder.DropTable(
                 name: "item_states");

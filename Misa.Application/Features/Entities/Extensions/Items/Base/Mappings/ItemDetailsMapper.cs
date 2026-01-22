@@ -25,7 +25,7 @@ public static class ItemDetailsMapper
         return new ItemResolvedDto(
             domain.EntityId,
             domain.State.ToDto(),
-            domain.Priority.ToDto(),
+            domain.Priority.ToString(),
             domain.Category.ToDto(),
             domain.Title
         );

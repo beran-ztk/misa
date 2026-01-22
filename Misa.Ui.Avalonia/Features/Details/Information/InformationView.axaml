@@ -431,10 +431,7 @@
                     <Border Classes="misa-detail-information-item">
                         <StackPanel Spacing="6">
                             <TextBlock Text="Priority" Opacity="0.7" FontSize="12"/>
-                            <TextBlock Text="{Binding Parent.ItemOverview.Item.Priority.Name}" FontWeight="SemiBold"/>
-                            <TextBlock Text="{Binding Parent.ItemOverview.Item.Priority.Synopsis}"
-                                       TextWrapping="Wrap"
-                                       Opacity="0.85"/>
+                            <TextBlock Text="{Binding Parent.ItemOverview.Item.Priority}" FontWeight="SemiBold"/>
                         </StackPanel>
                     </Border>
 

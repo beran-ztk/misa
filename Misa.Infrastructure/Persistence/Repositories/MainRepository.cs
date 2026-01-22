@@ -11,8 +11,6 @@ namespace Misa.Infrastructure.Persistence.Repositories;
 
 public class MainRepository(DefaultContext db) : IMainRepository
 {
-    public async Task<List<Priority>> GetPriorities(CancellationToken ct)
-        => await db.Priorities.ToListAsync(ct);
     public async Task<List<Category>> GetTaskCategories(CancellationToken ct)
         => await db.Categories.ToListAsync(ct);
     public async Task<List<SessionEfficiencyType>> GetEfficiencyTypes(CancellationToken ct)

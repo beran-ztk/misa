@@ -107,7 +107,6 @@ public class ItemRepository(DefaultContext db) : IItemRepository
         return await db.Items
             .Include(e => e.Entity)
             .Include(i => i.State)
-            .Include(i => i.Priority)
             .Include(i => i.Category)
             .Where(i => i.Entity.WorkflowId == (int)EntityWorkflows.Task)
             .ToListAsync(ct);
@@ -117,7 +116,6 @@ public class ItemRepository(DefaultContext db) : IItemRepository
     {
         return await db.Items
             .Include(i => i.State)
-            .Include(i => i.Priority)
             .Include(i => i.Category)
             
             .Include(e => e.Entity)
@@ -134,7 +132,6 @@ public class ItemRepository(DefaultContext db) : IItemRepository
             .Include(i => i.Entity)
             .ThenInclude(e => e.Workflow)
             .Include(i => i.State)
-            .Include(i => i.Priority)
             .Include(i => i.Category)
             .SingleOrDefaultAsync(i => i.EntityId == entityId, ct);
     }
