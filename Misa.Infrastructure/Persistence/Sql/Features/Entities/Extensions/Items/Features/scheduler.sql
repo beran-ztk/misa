@@ -16,14 +16,14 @@ $$;
 
 DROP TABLE IF EXISTS scheduler_execution_log;
 DROP TABLE IF EXISTS scheduler;
-DROP TABLE IF EXISTS scheduler_frequency_types;
+DROP TYPE IF EXISTS scheduler_frequency_type;
 DROP TYPE IF EXISTS scheduler_misfire_policy;
 DROP TYPE IF EXISTS scheduler_execution_status;
 
 CREATE TYPE scheduler_misfire_policy AS ENUM ('catchup', 'skip', 'runOnce');
 
 CREATE TYPE scheduler_execution_status AS ENUM
-    (
+(
     'pending',      -- Fälligkeit ist registriert, aber noch nicht von einem Runner beansprucht
     'claimed',      -- Ein Runner hat die Fälligkeit reserviert
     'running',      -- Ausführung läuft
@@ -32,17 +32,16 @@ CREATE TYPE scheduler_execution_status AS ENUM
     'skipped'       -- Bewusst nicht ausgeführt (z. B. misfire=skip)
 );
 
-CREATE TABLE scheduler_frequency_types
+CREATE TYPE scheduler_frequency_type AS ENUM 
 (
-    id        INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    name      TEXT NOT NULL UNIQUE,
-    synopsis  TEXT
+    'once',
+    'minutes',
+    'hours',
+    'days',
+    'weeks',
+    'months',
+    'years'
 );
-
-INSERT INTO scheduler_frequency_types (name)
-VALUES
-    ('Once'),('Minutes'),('Hours'),
-    ('Days'),('Weeks'),('Months'),('Years');
 
 CREATE TABLE scheduler
 (

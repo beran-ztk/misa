@@ -14,7 +14,7 @@ public sealed class Scheduler
         var scheduler = new Scheduler
         {
             ItemId = item.EntityId,
-            FrequencyTypeId = (int)ScheduleFrequencyTypes.Minutes,
+            ScheduleFrequencyType = ScheduleFrequencyType.Minutes,
             FrequencyInterval = 1,
             MisfirePolicy = ScheduleMisfirePolicy.Catchup,
             LookaheadCount = 1,
@@ -28,9 +28,9 @@ public sealed class Scheduler
     public Guid Id { get; private set; }
     public Guid ItemId { get; private set; }
     
-    public int FrequencyTypeId { get; private set; }
+    public ScheduleFrequencyType ScheduleFrequencyType { get; private set; }
     public int FrequencyInterval { get; private set; }
-    
+
     public int? OccurrenceCountLimit { get; private set; }
     
     public int[]? ByDay { get; private set; }
