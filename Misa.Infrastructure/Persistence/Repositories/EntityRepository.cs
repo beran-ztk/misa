@@ -12,20 +12,8 @@ public class EntityRepository(DefaultContext db) : IEntityRepository
     public async Task<Entity> GetTrackedEntityAsync(Guid id)
         => await db.Entities.FirstAsync(e => e.Id == id);
 
-
-    public async Task<Entity> AddAsync(Entity entity, CancellationToken ct)
-    {
-        await db.Entities.AddAsync(entity, ct);
-        await db.SaveChangesAsync(ct);
-        return entity;
-    }
-
     public async Task AddDescriptionAsync(Description description, CancellationToken ct)
     {
         await db.Descriptions.AddAsync(description, ct);
-    }
-    public async Task<List<Entity>> GetAllAsync(CancellationToken ct)
-    {
-        return await db.Entities.ToListAsync(ct);
     }
 }

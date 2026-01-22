@@ -1,5 +1,4 @@
-﻿using Misa.Application.Features.Entities.Base.Mappings;
-using Misa.Contract.Features.Entities.Base;
+﻿using Misa.Contract.Features.Entities.Base;
 using Misa.Contract.Features.Entities.Extensions.Items.Base;
 using Misa.Contract.Features.Entities.Features;
 using Misa.Domain.Features.Entities.Base;
