@@ -4,7 +4,7 @@ public class SessionResolvedDto
 {
     public Guid Id { get; set; }
     public Guid EntityId { get; set; }
-    public required SessionStateDto State { get; set; }
+    public string State { get; set; } = string.Empty;
     public SessionEfficiencyTypeDto? Efficiency { get; set; }
     public SessionConcentrationTypeDto? Concentration { get; set; }
 

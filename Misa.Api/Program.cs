@@ -21,6 +21,7 @@ using Misa.Contract.Features.Entities.Extensions.Items.Base;
 using Misa.Domain.Features.Audit;
 using Misa.Domain.Features.Entities.Base;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
+using Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions;
 using Misa.Infrastructure.Persistence.Context;
 using Misa.Infrastructure.Persistence.Repositories;
 using Wolverine;
@@ -43,6 +44,7 @@ builder.Services.AddDbContext<DefaultContext>(options =>
             npgsql.MapEnum<Priority>("priority");
             npgsql.MapEnum<ChangeType>("change_type");
             npgsql.MapEnum<Workflow>("workflow");
+            npgsql.MapEnum<SessionState>("session_state");
         }
     ));
 

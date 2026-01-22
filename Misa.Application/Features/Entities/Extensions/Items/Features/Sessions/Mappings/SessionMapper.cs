@@ -21,23 +21,17 @@ public static class SessionMapper
             x.SortOrder
         );
 
-    public static SessionStateDto ToDto(this SessionStates x) =>
-        new(
-            x.Id,
-            x.Name,
-            x.Synopsis
-        );
     public static List<SessionEfficiencyTypeDto> ToDto(this List<SessionEfficiencyType> ef)
         => ef.Select(c => c.ToDto()).ToList();
     public static List<SessionConcentrationTypeDto> ToDto(this List<SessionConcentrationType> co)
         => co.Select(c => c.ToDto()).ToList();
     public static SessionResolvedDto ToDto(this Session x) 
-        => new SessionResolvedDto()
+        => new()
         {
             Id = x.Id,
             EntityId = x.ItemId,
         
-            State = x.State.ToDto(),
+            State = x.State.ToString(),
             Efficiency = x.Efficiency?.ToDto(),
             Concentration = x.Concentration?.ToDto(),
         

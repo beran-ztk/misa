@@ -15,7 +15,7 @@ public class ItemRepository(DefaultContext db) : IItemRepository
         return await db.Sessions
             .Where(s =>
                 s.StopAutomatically == true
-                && s.StateId != (int)SessionState.Completed
+                && s.State != SessionState.Ended
                 && s.PlannedDuration != null)
             .Include(s => s.Segments)
             .ToListAsync(ct);
@@ -24,7 +24,7 @@ public class ItemRepository(DefaultContext db) : IItemRepository
     public async Task<List<Session>> GetInactiveSessionsAsync(DateTimeOffset oldestDateAllowed, CancellationToken ct)
     {
         return await db.Sessions
-            .Where(s => s.StateId != (int)SessionState.Completed
+            .Where(s => s.State != SessionState.Ended
             && s.Segments.Any(
                 seg => seg.EndedAtUtc == null 
                        && seg.StartedAtUtc <= oldestDateAllowed)
@@ -41,7 +41,7 @@ public class ItemRepository(DefaultContext db) : IItemRepository
         return await db.Sessions
             .Where(s =>
                 s.ItemId == id
-                && s.StateId == (int)SessionState.Completed) 
+                && s.State == SessionState.Ended) 
             .Include(s => s.Segments)
             .Include(s => s.State)
             .Include(s => s.Efficiency)
@@ -55,8 +55,8 @@ public class ItemRepository(DefaultContext db) : IItemRepository
         return await db.Sessions
             .Where(s =>
                 s.ItemId == id
-                && (s.StateId == (int)SessionState.Running
-                || s.StateId == (int)SessionState.Paused)) 
+                && (s.State == SessionState.Running
+                || s.State == SessionState.Paused)) 
             .Include(s => s.Segments)
             .Include(s => s.State)
             .Include(s => s.Efficiency)
@@ -70,7 +70,7 @@ public class ItemRepository(DefaultContext db) : IItemRepository
         return await db.Sessions
             .Where(s =>
                 s.ItemId == id
-                && s.StateId == (int)SessionState.Running)
+                && s.State == SessionState.Running)
             .Include(s => s.Segments.Where(seg => seg.EndedAtUtc == null))
             .OrderByDescending(s => s.CreatedAtUtc)
             .FirstOrDefaultAsync(ct);
@@ -80,7 +80,7 @@ public class ItemRepository(DefaultContext db) : IItemRepository
         return await db.Sessions
             .Where(s =>
                 s.ItemId == id
-                && s.StateId == (int)SessionState.Paused)
+                && s.State == SessionState.Paused)
             .OrderByDescending(s => s.CreatedAtUtc)
             .FirstOrDefaultAsync(ct);
     }

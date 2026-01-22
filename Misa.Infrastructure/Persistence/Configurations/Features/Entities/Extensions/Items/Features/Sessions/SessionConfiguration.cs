@@ -19,8 +19,11 @@ public class SessionConfiguration : IEntityTypeConfiguration<Session>
         builder.Property(x => x.ItemId)
             .HasColumnName("item_id");
 
-        builder.Property(x => x.StateId)
-            .HasColumnName("state_id");
+        builder.Property(x => x.State)
+            .IsRequired()
+            .HasColumnName("state")
+            .HasColumnType("session_state")
+            .HasDefaultValue(SessionState.Running);
         
         builder.Property(x => x.EfficiencyId)
             .HasColumnName("efficiency_id");
@@ -51,12 +54,8 @@ public class SessionConfiguration : IEntityTypeConfiguration<Session>
         builder.Property(x => x.CreatedAtUtc)
             .HasColumnName("created_at_utc")
             .IsRequired();
-
-        builder.HasOne(x => x.State)
-            .WithMany()
-            .HasForeignKey(x => x.StateId)
-            .OnDelete(DeleteBehavior.Restrict); 
         
+        // Relations
         builder.HasOne(x => x.Efficiency)
             .WithMany()
             .HasForeignKey(x => x.EfficiencyId)

@@ -4,13 +4,11 @@ public class Session
 {
     public Guid Id { get; private set; }
     public Guid ItemId { get; private set; }
-
-    public int StateId { get; set; } = 1;
-    public SessionStates State { get; private set; }
+    public SessionState State { get; private set; }
     public void PauseSession() 
-        => StateId = (int)SessionState.Paused;
+        => State = SessionState.Paused;
     public void ContinueSession() 
-        => StateId = (int)SessionState.Running;
+        => State = SessionState.Running;
     public int? EfficiencyId { get; set; }
     public SessionEfficiencyType? Efficiency { get; private set; }
 
@@ -69,7 +67,7 @@ public class Session
     }
     public void Pause(string? pauseReason, DateTimeOffset nowUtc)
     {
-        if (StateId != (int)SessionState.Running)
+        if (State != SessionState.Running)
             throw new InvalidOperationException("Session is not running.");
 
         var openSegments = Segments.Where(s => s.EndedAtUtc == null).ToList();
@@ -85,15 +83,15 @@ public class Session
         var segment = openSegments[0];
         segment.End(nowUtc, pauseReason);
 
-        StateId = (int)SessionState.Paused;
+        State = SessionState.Paused;
     }
 
     public void Continue(DateTimeOffset startedAtUtc)
     {
-        if (StateId != (int)SessionState.Paused)
+        if (State != SessionState.Paused)
             throw new InvalidOperationException("Session is not paused.");
         
-        StateId = (int)SessionState.Running;
+        State = SessionState.Running;
         
         var segment = new SessionSegment(Id, startedAtUtc);
         Segments.Add(segment);
@@ -119,7 +117,7 @@ public class Session
         ConcentrationId = concentrationId;
         Summary = summary;
 
-        StateId = (int)SessionState.Completed;
+        State = SessionState.Ended;
     }
 
     public static Session Start(
@@ -135,7 +133,7 @@ public class Session
         Objective = objective,
         StopAutomatically = stopAutomatically,
         AutoStopReason = autoStopReason,
-        StateId = (int)SessionState.Running,
+        State = SessionState.Running,
         CreatedAtUtc = nowUtc
     };
 }
