@@ -20,11 +20,14 @@ CREATE TABLE entities
     archived_at_utc     TIMESTAMPTZ,
     interacted_at_utc   TIMESTAMPTZ NOT NULL
 );
-
-INSERT INTO entity_workflow_types (workflow_id, name, synopsis, sort_order)
+INSERT INTO entity_workflow_types (name, synopsis)
 VALUES
-    (1, 'Work',        'Berufliche Aufgaben, IT-Projekte, Ausbildung im Betrieb',  1),
-    (1, 'School',      'Berufsschule, Klausuren, Lernaufgaben, Abgaben',           2),
-    (1, 'Personal',    'Private Aufgaben, Haushalt, persönliche Organisation',     3),
-
-    (2, 'Deadline', 'Deadline eines Items',  1);
+    ('Task',         'Konkrete Aufgaben oder To-Dos'),
+    ('Schedule',     'Kalendereintrag, Termin oder zeitliche Planung'),
+    ('Event',        'Ereignis mit festem Zeitpunkt'),
+    ('Notification', 'Benachrichtigung oder Reminder'),
+    ('Journal',      'Persönliche oder berufliche Notizen'),
+    ('Module',       'Übergeordnetes Lern- oder Projektmodul'),
+    ('Unit',         'Einzelne Lerneinheit oder Arbeitsschritt'),
+    ('Session',      'Aktive Sitzung'),
+    ('Description',  'Unterschiedliche Zusatzinformationen für Entitäten');

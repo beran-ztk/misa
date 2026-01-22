@@ -31,14 +31,11 @@ VALUES
     ('Urgent',   'Dringend; sofortige Aktion',    5),
     ('Critical', 'Kritische Eskalation',          6);
 
-INSERT INTO entity_workflow_types (name, synopsis)
+
+INSERT INTO workflow_category_types (workflow_id, name, synopsis, sort_order)
 VALUES
-    ('Task',         'Konkrete Aufgaben oder To-Dos'),
-    ('Schedule',     'Kalendereintrag, Termin oder zeitliche Planung'),
-    ('Event',        'Ereignis mit festem Zeitpunkt'),
-    ('Notification', 'Benachrichtigung oder Reminder'),
-    ('Journal',      'Persönliche oder berufliche Notizen'),
-    ('Module',       'Übergeordnetes Lern- oder Projektmodul'),
-    ('Unit',         'Einzelne Lerneinheit oder Arbeitsschritt'),
-    ('Session',      'Aktive Sitzung'),
-    ('Description',  'Unterschiedliche Zusatzinformationen für Entitäten');
+    (1, 'Work',        'Berufliche Aufgaben, IT-Projekte, Ausbildung im Betrieb',  1),
+    (1, 'School',      'Berufsschule, Klausuren, Lernaufgaben, Abgaben',           2),
+    (1, 'Personal',    'Private Aufgaben, Haushalt, persönliche Organisation',     3),
+
+    (2, 'Deadline', 'Deadline eines Items',  1);

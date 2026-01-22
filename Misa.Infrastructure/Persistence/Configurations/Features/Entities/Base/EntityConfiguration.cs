@@ -12,7 +12,9 @@ public class EntityConfiguration : IEntityTypeConfiguration<Domain.Features.Enti
         builder.HasKey(e => e.Id);
         
         builder.Property(e => e.Id)
-            .HasColumnName("id");
+            .HasColumnName("id")
+            .HasDefaultValueSql("gen_random_uuid()");
+        
         builder.Property(e => e.OwnerId)
             .HasColumnName("owner_id");
         builder.Property(e => e.WorkflowId)

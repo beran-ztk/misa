@@ -123,7 +123,7 @@ namespace Misa.Infrastructure.Migrations
                 name: "entities",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
                     owner_id = table.Column<Guid>(type: "uuid", nullable: true),
                     workflow_id = table.Column<int>(type: "integer", nullable: false),
                     is_deleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
@@ -171,7 +171,7 @@ namespace Misa.Infrastructure.Migrations
                 name: "actions",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
                     entity_id = table.Column<Guid>(type: "uuid", nullable: false),
                     type_id = table.Column<int>(type: "integer", nullable: false),
                     value_before = table.Column<string>(type: "text", nullable: true),
@@ -200,7 +200,7 @@ namespace Misa.Infrastructure.Migrations
                 name: "descriptions",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
                     entity_id = table.Column<Guid>(type: "uuid", nullable: false),
                     content = table.Column<string>(type: "text", nullable: false),
                     created_at_utc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
@@ -259,7 +259,7 @@ namespace Misa.Infrastructure.Migrations
                 name: "scheduled_deadlines",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
                     item_id = table.Column<Guid>(type: "uuid", nullable: false),
                     deadline_at_utc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
@@ -313,7 +313,7 @@ namespace Misa.Infrastructure.Migrations
                 name: "sessions",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
                     item_id = table.Column<Guid>(type: "uuid", nullable: false),
                     state_id = table.Column<int>(type: "integer", nullable: false),
                     efficiency_id = table.Column<int>(type: "integer", nullable: true),
@@ -385,7 +385,7 @@ namespace Misa.Infrastructure.Migrations
                 name: "session_segments",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
                     session_id = table.Column<Guid>(type: "uuid", nullable: false),
                     pause_reason = table.Column<string>(type: "text", nullable: true),
                     started_at_utc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),

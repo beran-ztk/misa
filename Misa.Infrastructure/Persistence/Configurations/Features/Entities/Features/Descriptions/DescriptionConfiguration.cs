@@ -12,7 +12,8 @@ public class DescriptionConfiguration : IEntityTypeConfiguration<Description>
         builder.HasKey(x => x.Id);
         
         builder.Property(x => x.Id)
-            .HasColumnName("id");
+            .HasColumnName("id")
+            .HasDefaultValueSql("gen_random_uuid()");
         
         builder.Property(x => x.EntityId)
             .HasColumnName("entity_id");
