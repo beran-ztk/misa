@@ -20,9 +20,11 @@ public sealed class SchedulerConfiguration : IEntityTypeConfiguration<Scheduler>
             .IsRequired()
             .HasColumnName("item_id");
 
-        builder.Property(s => s.FrequencyTypeId)
+        builder.Property(s => s.ScheduleFrequencyType)
             .IsRequired()
-            .HasColumnName("frequency_type_id");
+            .HasColumnName("frequency_type")
+            .HasColumnType("schedule_frequency_type")
+            .HasDefaultValue(ScheduleFrequencyType.Once);
 
         builder.Property(s => s.FrequencyInterval)
             .IsRequired()
@@ -44,7 +46,7 @@ public sealed class SchedulerConfiguration : IEntityTypeConfiguration<Scheduler>
         builder.Property(s => s.MisfirePolicy)
             .IsRequired()
             .HasColumnName("misfire_policy")
-            .HasColumnType("scheduler_misfire_policy")
+            .HasColumnType("schedule_misfire_policy")
             .HasDefaultValue(ScheduleMisfirePolicy.Catchup);
 
         builder.Property(s => s.LookaheadCount)
@@ -83,11 +85,6 @@ public sealed class SchedulerConfiguration : IEntityTypeConfiguration<Scheduler>
             .HasColumnName("next_due_at_utc");
 
         // Relationships
-        builder.HasOne(s => s.FrequencyType)
-            .WithMany()
-            .HasForeignKey(s => s.FrequencyTypeId)
-            .OnDelete(DeleteBehavior.Restrict);
-
         builder.HasOne<Domain.Features.Entities.Extensions.Items.Base.Item>()
             .WithMany()
             .HasForeignKey(s => s.ItemId)

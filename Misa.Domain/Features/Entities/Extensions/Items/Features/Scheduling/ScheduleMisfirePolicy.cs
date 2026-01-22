@@ -8,6 +8,11 @@ namespace Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
 public enum ScheduleMisfirePolicy
 {
     /// <summary>
+    /// Execute all missed triggers that should have occurred.
+    /// </summary>
+    Catchup,
+    
+    /// <summary>
     /// Skip the missed execution entirely.
     /// </summary>
     Skip,
@@ -15,10 +20,5 @@ public enum ScheduleMisfirePolicy
     /// <summary>
     /// Execute the missed trigger once immediately.
     /// </summary>
-    RunOnce,
-    
-    /// <summary>
-    /// Execute all missed triggers that should have occurred.
-    /// </summary>
-    Catchup
+    RunOnce
 }

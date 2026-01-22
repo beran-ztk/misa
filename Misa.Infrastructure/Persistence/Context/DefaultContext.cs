@@ -35,7 +35,6 @@ public class DefaultContext : DbContext
     
     public DbSet<Scheduler> Scheduler { get; set; }
     public DbSet<SchedulerExecutionLog> SchedulerExecutionLog { get; set; }
-    public DbSet<SchedulerFrequencyType> SchedulerFrequencyType { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -12,7 +12,9 @@ public class EntityConfiguration : IEntityTypeConfiguration<Domain.Features.Enti
         builder.HasKey(e => e.Id);
         
         builder.Property(e => e.Id)
-            .HasColumnName("id");
+            .HasColumnName("id")
+            .HasDefaultValueSql("gen_random_uuid()");
+        
         builder.Property(e => e.OwnerId)
             .HasColumnName("owner_id");
         builder.Property(e => e.WorkflowId)
@@ -43,8 +45,6 @@ public class EntityConfiguration : IEntityTypeConfiguration<Domain.Features.Enti
         builder.Property(e => e.InteractedAt)
             .HasColumnName("interacted_at_utc")
             .IsRequired();
-
-        builder.HasQueryFilter(e => !e.IsDeleted);
         
         builder.HasOne(i => i.Workflow)
             .WithMany()

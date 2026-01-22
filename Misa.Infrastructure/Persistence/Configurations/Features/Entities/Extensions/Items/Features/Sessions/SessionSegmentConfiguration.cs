@@ -13,7 +13,8 @@ public class SessionSegmentConfiguration : IEntityTypeConfiguration<SessionSegme
         builder.HasKey(x => x.Id);
 
         builder.Property(x => x.Id)
-            .HasColumnName("id");
+            .HasColumnName("id")
+            .HasDefaultValueSql("gen_random_uuid()");
 
         builder.Property(x => x.SessionId)
             .HasColumnName("session_id");

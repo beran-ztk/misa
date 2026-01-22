@@ -13,7 +13,8 @@ public sealed class DeadlineConfiguration : IEntityTypeConfiguration<ScheduledDe
         builder.HasKey(d => d.Id);
 
         builder.Property(d => d.Id)
-            .HasColumnName("id");
+            .HasColumnName("id")
+            .HasDefaultValueSql("gen_random_uuid()");
 
         builder.Property(d => d.ItemId)
             .IsRequired()
