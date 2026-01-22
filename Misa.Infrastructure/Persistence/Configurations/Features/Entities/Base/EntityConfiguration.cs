@@ -43,8 +43,6 @@ public class EntityConfiguration : IEntityTypeConfiguration<Domain.Features.Enti
         builder.Property(e => e.InteractedAt)
             .HasColumnName("interacted_at_utc")
             .IsRequired();
-
-        builder.HasQueryFilter(e => !e.IsDeleted);
         
         builder.HasOne(i => i.Workflow)
             .WithMany()
