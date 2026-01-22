@@ -3,9 +3,13 @@
 public class State
 {
     private State() { }
-    
-    public int Id { get; set; }
-    public string Name { get; set; }
-    public string? Synopsis { get; set; }
-    public int SortOrder { get; set; }
+    public State(int id, string name, string? synopsis)
+    {
+        Id = id;
+        Name = name;
+        Synopsis = synopsis;
+    }
+    public int Id { get; init; }
+    public string Name { get; init; }
+    public string? Synopsis { get; init; }
 }

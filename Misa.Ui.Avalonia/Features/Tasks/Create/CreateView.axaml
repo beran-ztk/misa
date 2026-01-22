@@ -56,18 +56,6 @@
                           Classes="misa-input"
                           ItemsSource="{Binding Priorities}"
                           SelectedValue="{Binding SelectedPriority}"/>
-
-                <!-- Category -->
-                <TextBlock Grid.Row="2" Grid.Column="0"
-                           Classes="misa-label"
-                           Text="Category" />
-
-                <ComboBox Grid.Row="2" Grid.Column="1"
-                          Classes="misa-input"
-                          ItemsSource="{Binding Categories}"
-                          SelectedValue="{Binding CategoryId}"
-                          SelectedValueBinding="{Binding Id}"
-                          DisplayMemberBinding="{Binding Name}" />
             </Grid>
 
             <!-- Footer / Actions -->
@@ -76,8 +64,7 @@
                         HorizontalAlignment="Right"
                         Margin="0,8,0,0">
                 <Button Classes="misa-primary"
-                        Content="Cancel"
-                        Command="{Binding CancelCommand}" />
+                        Content="Cancel"/>
                 <Button Classes="misa-primary"
                         Content="Create"
                         Command="{Binding CreateCommand}" />

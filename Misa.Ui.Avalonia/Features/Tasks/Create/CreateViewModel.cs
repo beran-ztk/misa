@@ -5,34 +5,22 @@ using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Features.Entities.Extensions.Items.Base;
-using Misa.Ui.Avalonia.Features.Tasks.Shared;
 using Misa.Ui.Avalonia.Presentation.Mapping;
 using PageViewModel = Misa.Ui.Avalonia.Features.Tasks.Page.PageViewModel;
 
 namespace Misa.Ui.Avalonia.Features.Tasks.Create;
 
-public partial class CreateViewModel : ViewModelBase
+public partial class CreateViewModel(PageViewModel vm) : ViewModelBase
 {
-    private PageViewModel MainViewModel { get; }
-    private readonly IEventBus _bus;
-    
-    public CreateViewModel(PageViewModel vm, IEventBus bus)
-    {
-        MainViewModel = vm;
-        _bus = bus;
-    }
+    private PageViewModel MainViewModel { get; } = vm;
 
     [ObservableProperty] private string _title = string.Empty;
     [ObservableProperty] private Priority _selectedPriority;
-    [ObservableProperty] private int _categoryId = 1;
 
     [ObservableProperty] private bool _titleHasValidationError;
     [ObservableProperty] private string _errorMessageTitle = string.Empty;
 
     public IReadOnlyList<Priority> Priorities { get; } = Enum.GetValues<Priority>();
-
-    public IReadOnlyList<CategoryDto> Categories =>
-        MainViewModel.NavigationService.LookupsStore.TaskCategories;
 
     private void TitleValidationError(string message)
     {
@@ -40,11 +28,6 @@ public partial class CreateViewModel : ViewModelBase
         ErrorMessageTitle = message;
     }
 
-    [RelayCommand]
-    private void Cancel()
-    {
-        _bus.Publish(new CloseRightPaneRequested());
-    }
     [RelayCommand]
     private async Task Create()
     {
@@ -60,7 +43,6 @@ public partial class CreateViewModel : ViewModelBase
         {
             OwnerId = null,
             Priority = SelectedPriority,
-            CategoryId = CategoryId,
             Title = trimmedTitle
         };
 
@@ -75,7 +57,6 @@ public partial class CreateViewModel : ViewModelBase
                 : $"Server returned {response.StatusCode}: {body}";
 
             TitleValidationError(msg);
-            _bus.Publish(new TaskCreateFailed(msg));
             return;
         }
 
@@ -83,10 +64,6 @@ public partial class CreateViewModel : ViewModelBase
         if (createdItem == null)
         {
             TitleValidationError("Server returned success but no task payload.");
-            _bus.Publish(new TaskCreateFailed("Server returned success but no task payload."));
-            return;
         }
-
-        _bus.Publish(new TaskCreated(createdItem));
     }
 }

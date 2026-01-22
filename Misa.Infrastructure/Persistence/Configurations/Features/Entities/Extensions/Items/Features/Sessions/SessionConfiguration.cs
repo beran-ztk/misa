@@ -60,6 +60,12 @@ public class SessionConfiguration : IEntityTypeConfiguration<Session>
         builder.Property(x => x.CreatedAtUtc)
             .HasColumnName("created_at_utc")
             .IsRequired();
+
+        // Constraints
+        builder.HasCheckConstraint(
+            "ck_planned_duration", 
+            "planned_duration IS NULL OR (planned_duration > INTERVAL '0 seconds' AND planned_duration < INTERVAL '1 day')"
+        );
         
         // Relations
         builder.HasMany(s => s.Segments)

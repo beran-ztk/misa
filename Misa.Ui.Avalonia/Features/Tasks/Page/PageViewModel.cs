@@ -3,9 +3,7 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Misa.Contract.Features.Entities.Extensions.Items.Base;
 using Misa.Ui.Avalonia.Features.Details.Page;
-using Misa.Ui.Avalonia.Features.Tasks.Create;
 using Misa.Ui.Avalonia.Features.Tasks.ListTask;
-using Misa.Ui.Avalonia.Features.Tasks.Shared;
 using Misa.Ui.Avalonia.Infrastructure.Services.Interfaces;
 using Misa.Ui.Avalonia.Infrastructure.Services.Navigation;
 using Misa.Ui.Avalonia.Presentation.Mapping;
@@ -37,7 +35,6 @@ public partial class PageViewModel : ViewModelBase, IEntityDetailHost, IDisposab
 
     [ObservableProperty] private string? _pageError;
 
-    public IEventBus Bus { get; }
 
     private readonly IDisposable _subOpenCreate;
     private readonly IDisposable _subCloseRight;
@@ -49,48 +46,14 @@ public partial class PageViewModel : ViewModelBase, IEntityDetailHost, IDisposab
     {
         NavigationService = navigationService;
 
-        Bus = new EventBus();
-
         Model = new ListViewModel(this);
-        Navigation = new NavigationViewModel(this, Bus);
+        Navigation = new NavigationViewModel(this);
         
         this.WhenAnyValue(x => x.ActiveEntityId)
             // .Where(id => id != Guid.Empty)
             // .DistinctUntilChanged()
             .Subscribe(_ => ShowDetails());
-
-        _subOpenCreate = Bus.Subscribe<OpenCreateRequested>(_ =>
-        {
-            PageError = null;
-            CurrentInfoModel = new CreateViewModel(this, Bus);
-        });
-
-        _subCloseRight = Bus.Subscribe<CloseRightPaneRequested>(_ =>
-        {
-            PageError = null;
-            CurrentInfoModel = null;
-        });
-
-        _subReload = Bus.Subscribe<ReloadTasksRequested>(x =>
-        {
-            PageError = null;
-            _ = Model.LoadAsync();
-        });
-
-        // _subCreated = Bus.Subscribe<TaskCreated>(e =>
-        // {
-        //     PageError = null;
-        //     Tasks.Add(e.Created);
-        //     SelectedTask = e.Created; // triggert ActiveEntityId über OnSelectedItemChanged
-        // });
-
-        _subCreateFailed = Bus.Subscribe<TaskCreateFailed>(e =>
-        {
-            PageError = e.Message;
-        });
     }
-
-    public void ReloadList() => Bus.Publish(new ReloadTasksRequested());
 
     public ViewModelBase? CurrentInfoModel
     {
