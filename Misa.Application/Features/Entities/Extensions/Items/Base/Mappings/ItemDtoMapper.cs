@@ -24,7 +24,7 @@ public static class ItemDtoMapper
     public static ReadItemDto ToReadItemDto(this Item domain)
         => new()
         {
-            EntityId = domain.EntityId,
+            Id = domain.Id,
             Entity = domain.Entity.ToReadEntityDto(),
             State = domain.State.ToDto(),
             Priority = domain.Priority.ToString(),

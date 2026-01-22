@@ -23,7 +23,7 @@ public static class ItemDetailsMapper
     public static ItemResolvedDto ToResolvedDto(this Item domain)
     {
         return new ItemResolvedDto(
-            domain.EntityId,
+            domain.Id,
             domain.State.ToDto(),
             domain.Priority.ToString(),
             domain.Title

@@ -280,7 +280,7 @@
                 <Grid ColumnDefinitions="140,*,Auto" 
                       RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" 
                       RowSpacing="6">
-                    <TextBlock Grid.Row="0" Grid.Column="0" Text="ID" Opacity="0.7"/>
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Id" Opacity="0.7"/>
                     <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Parent.ItemOverview.Item.Id}"/>
                     <Button Grid.Row="0" Grid.Column="2" 
                             Classes="misa-action"

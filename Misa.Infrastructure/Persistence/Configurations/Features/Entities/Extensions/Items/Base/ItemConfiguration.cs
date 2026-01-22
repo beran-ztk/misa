@@ -11,11 +11,11 @@ public class ItemConfiguration : IEntityTypeConfiguration<Item>
     {
         builder.ToTable("items");
         
-        builder.HasKey(x => x.EntityId);
+        builder.HasKey(x => x.Id);
         
         
-        builder.Property(x => x.EntityId)
-            .HasColumnName("entity_id");
+        builder.Property(x => x.Id)
+            .HasColumnName("id");
         
         builder.Property(x => x.StateId)
             .IsRequired()

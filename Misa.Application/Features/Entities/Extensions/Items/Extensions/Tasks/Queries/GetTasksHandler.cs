@@ -14,7 +14,7 @@ public class GetTasksHandler(IItemRepository repository)
         var result = tasks
             .Select(t => new ListTaskDto()
             {
-                EntityId = t.EntityId,
+                Id = t.Id,
                 StateName = t.State.Name,
                 PriorityName = t.Priority.ToString(),
                 Title = t.Title

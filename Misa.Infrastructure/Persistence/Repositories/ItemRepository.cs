@@ -89,7 +89,7 @@ public class ItemRepository(DefaultContext db) : IItemRepository
     {
         await db.Items.AddAsync(item, ct);
         await db.SaveChangesAsync(ct);
-        var loaded = await LoadAsync(item.EntityId, ct);
+        var loaded = await LoadAsync(item.Id, ct);
         
         return loaded 
                ?? throw new InvalidOperationException("Item wurde gespeichert, konnte aber nicht wieder geladen werden.");
@@ -117,7 +117,7 @@ public class ItemRepository(DefaultContext db) : IItemRepository
             .Include(e => e.Entity)
                 .ThenInclude(e => e.Descriptions)
             
-            .FirstOrDefaultAsync(e => e.EntityId == id, ct);
+            .FirstOrDefaultAsync(e => e.Id == id, ct);
     }
 
     public async Task<Item?> LoadAsync(Guid entityId, CancellationToken ct = default)
@@ -126,7 +126,7 @@ public class ItemRepository(DefaultContext db) : IItemRepository
             .Include(i => i.Entity)
             .ThenInclude(e => e.Workflow)
             .Include(i => i.State)
-            .SingleOrDefaultAsync(i => i.EntityId == entityId, ct);
+            .SingleOrDefaultAsync(i => i.Id == entityId, ct);
     }
     
     
@@ -134,7 +134,7 @@ public class ItemRepository(DefaultContext db) : IItemRepository
     {
         return await db.Items
             .Include(e => e.Entity)
-            .SingleOrDefaultAsync(i => i.EntityId == id, ct);
+            .SingleOrDefaultAsync(i => i.Id == id, ct);
     }
     public async Task<ScheduledDeadline?> TryGetScheduledDeadlineForItemAsync(Guid itemId, CancellationToken ct)
     {

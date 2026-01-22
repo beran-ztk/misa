@@ -13,7 +13,7 @@ public sealed class Scheduler
     {
         var scheduler = new Scheduler
         {
-            ItemId = item.EntityId,
+            ItemId = item.Id,
             ScheduleFrequencyType = ScheduleFrequencyType.Minutes,
             FrequencyInterval = 1,
             MisfirePolicy = ScheduleMisfirePolicy.Catchup,

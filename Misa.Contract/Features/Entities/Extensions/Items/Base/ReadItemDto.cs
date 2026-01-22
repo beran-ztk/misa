@@ -5,7 +5,7 @@ namespace Misa.Contract.Features.Entities.Extensions.Items.Base;
 
 public class ReadItemDto
 {
-    public Guid EntityId { get; set; }
+    public Guid Id { get; set; }
     public ReadEntityDto Entity { get; set; } = null!;
     
 

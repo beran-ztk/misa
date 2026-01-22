@@ -21,7 +21,7 @@ public class Item : DomainEventEntity
         Title = title ?? throw new ArgumentNullException(nameof(title));
     }
     // Member
-    public Guid EntityId { get; set; }
+    public Guid Id { get; set; }
     public int StateId { get; private set; }
     public Priority Priority { get; private set; }
     public string Title { get; private set; }
@@ -49,7 +49,7 @@ public class Item : DomainEventEntity
             return;
         
         AddDomainEvent(new PropertyChangedEvent(
-            EntityId: EntityId,
+            EntityId: Id,
             ChangeType: ChangeType.State,
             OldValue: StateId.ToString(),
             NewValue: value.ToString(),
