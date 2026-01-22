@@ -23,7 +23,6 @@ public class DescriptionConfiguration : IEntityTypeConfiguration<Description>
         
         builder.Property(x => x.CreatedAtUtc)
             .IsRequired()
-            .HasDefaultValue(DateTimeOffset.Now)
             .HasColumnName("created_at_utc");
     }
 }
