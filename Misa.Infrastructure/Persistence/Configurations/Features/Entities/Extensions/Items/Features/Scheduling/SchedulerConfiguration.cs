@@ -22,8 +22,8 @@ public sealed class SchedulerConfiguration : IEntityTypeConfiguration<Scheduler>
 
         builder.Property(s => s.ScheduleFrequencyType)
             .IsRequired()
-            .HasColumnName("frequency_type_id")
-            .HasColumnType("scheduler_frequency_type")
+            .HasColumnName("frequency_type")
+            .HasColumnType("schedule_frequency_type")
             .HasDefaultValue(ScheduleFrequencyType.Once);
 
         builder.Property(s => s.FrequencyInterval)
@@ -46,7 +46,7 @@ public sealed class SchedulerConfiguration : IEntityTypeConfiguration<Scheduler>
         builder.Property(s => s.MisfirePolicy)
             .IsRequired()
             .HasColumnName("misfire_policy")
-            .HasColumnType("scheduler_misfire_policy")
+            .HasColumnType("schedule_misfire_policy")
             .HasDefaultValue(ScheduleMisfirePolicy.Catchup);
 
         builder.Property(s => s.LookaheadCount)

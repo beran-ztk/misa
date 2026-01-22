@@ -56,6 +56,5 @@ public sealed class Scheduler
     public DateTimeOffset? LastRunAtUtc { get; private set; }
     public DateTimeOffset? NextDueAtUtc { get; private set; }
     
-    public SchedulerFrequencyType FrequencyType { get; private set; } = null!;
     public ICollection<SchedulerExecutionLog> ExecutionLogs { get; private set; } = new List<SchedulerExecutionLog>();
 }
