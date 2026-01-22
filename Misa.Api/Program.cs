@@ -8,7 +8,6 @@ using Misa.Api.Services.Features.Items.Features.Sessions;
 using Misa.Application.Common.Abstractions.Events;
 using Misa.Application.Common.Abstractions.Persistence;
 using Misa.Application.Features.Entities.Base.Commands;
-using Misa.Application.Features.Entities.Base.Queries;
 using Misa.Application.Features.Entities.Extensions.Items.Base.Commands;
 using Misa.Application.Features.Entities.Extensions.Items.Base.Queries;
 using Misa.Application.Features.Entities.Extensions.Items.Extensions.Tasks.Queries;
@@ -18,12 +17,15 @@ using Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Comm
 using Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Queries;
 using Misa.Application.Features.Entities.Features.Descriptions.Commands;
 using Misa.Application.ReferenceData.Queries;
-using Misa.Contract.Features.Entities.Base;
 using Misa.Contract.Features.Entities.Extensions.Items.Base;
+using Misa.Domain.Features.Audit;
+using Misa.Domain.Features.Entities.Base;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
+using Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions;
 using Misa.Infrastructure.Persistence.Context;
 using Misa.Infrastructure.Persistence.Repositories;
 using Wolverine;
+using Priority = Misa.Domain.Features.Entities.Extensions.Items.Base.Priority;
 
 const string connectionString =
     "Host=localhost;Port=5432;Database=misa;Username=postgres;Password=meow";
@@ -39,6 +41,12 @@ builder.Services.AddDbContext<DefaultContext>(options =>
         {
             npgsql.MapEnum<ScheduleMisfirePolicy>("schedule_misfire_policy");
             npgsql.MapEnum<ScheduleFrequencyType>("schedule_frequency_type");
+            npgsql.MapEnum<Priority>("priority");
+            npgsql.MapEnum<ChangeType>("change_type");
+            npgsql.MapEnum<Workflow>("workflow");
+            npgsql.MapEnum<SessionState>("session_state");
+            npgsql.MapEnum<SessionEfficiencyType>("session_efficiency_type");
+            npgsql.MapEnum<SessionConcentrationType>("session_concentration_type");
         }
     ));
 
@@ -70,12 +78,7 @@ builder.Host.UseWolverine(opts =>
 
 // Registrations
 builder.Services.AddScoped<CreateItemHandler>();
-builder.Services.AddScoped<GetLookupsHandler>();
-builder.Services.AddScoped<GetEntitiesHandler>();
-builder.Services.AddScoped<AddEntityHandler>();
 builder.Services.AddScoped<PatchEntityHandler>();
-builder.Services.AddScoped<UpdateItemHandler>();
-builder.Services.AddScoped<GetSingleDetailedEntityHandler>();
 
 builder.Services.AddScoped<IEntityRepository, EntityRepository>();
 builder.Services.AddScoped<IItemRepository, ItemRepository>();
@@ -96,43 +99,16 @@ DeadlineEndpoints.Map(app);
 DescriptionEndpoints.Map(app);
 SchedulingEndpoints.Map(app);
 
-
-
-app.MapGet("/api/entities/{id:guid}", 
-    async (Guid id, GetSingleDetailedEntityHandler handler) 
-    => await handler.Handle(id));
-
 app.MapPatch("/Entity/Delete", async (Guid entityId, PatchEntityHandler handler, CancellationToken ct = default) 
     => await handler.DeleteEntityAsync(entityId, ct));
 app.MapPatch("/Entity/Archive", async (Guid entityId, PatchEntityHandler handler, CancellationToken ct = default) 
     => await handler.ArchiveEntityAsync(entityId, ct));
 
-app.MapGet("/api/lookups", async ( GetLookupsHandler lookupsHandler, CancellationToken ct) 
-    => await lookupsHandler.GetAllAsync(ct));
 app.MapGet("/Lookups/UserSettableStates", async ( int stateId, GetLookupsHandler lookupsHandler, CancellationToken ct ) 
     => await lookupsHandler.GetUserSettableStates(stateId, ct));
 
-app.MapGet("/api/entities/get", async ( GetEntitiesHandler handler, CancellationToken ct) 
-    => await handler.GetAllAsync(ct));
-
-app.MapPost("/api/entities/add", async (
-    CreateEntityDto dto,
-    AddEntityHandler handler,
-    CancellationToken ct) =>
-{
-    var entity = dto.Transform();
-    await handler.AddAsync(entity, ct);
-    return Results.Ok();
-});
-
 app.MapPost("/api/tasks", async ( CreateItemDto dto, CreateItemHandler itemHandler, CancellationToken ct) 
     => await itemHandler.AddTaskAsync(dto, ct));
-app.MapPatch("/tasks", async (UpdateItemDto dto, UpdateItemHandler handler) =>
-{
-    await handler.UpdateAsync(dto);
-    return Results.Ok();
-});
-
 
 
 app.Run();

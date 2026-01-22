@@ -2,7 +2,7 @@
 
 public enum SessionState
 {
-    Running = 1,
-    Paused = 2,
-    Completed = 3
+    Running,
+    Paused,
+    Ended
 }

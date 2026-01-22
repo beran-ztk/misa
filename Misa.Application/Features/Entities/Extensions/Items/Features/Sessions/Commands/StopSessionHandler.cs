@@ -1,6 +1,7 @@
 ﻿using Misa.Application.Common.Abstractions.Persistence;
 using Misa.Contract.Common.Results;
 using Misa.Domain.Features.Entities.Extensions.Items.Base;
+using Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions;
 
 namespace Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Commands;
 
@@ -33,8 +34,8 @@ public class StopSessionHandler(IItemRepository repository)
 
         session.Stop(
             DateTimeOffset.UtcNow,
-            command.EfficiencyId,
-            command.ConcentrationId,
+            SessionEfficiencyType.None,
+            SessionConcentrationType.None,
             command.Summary
         );
 

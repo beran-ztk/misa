@@ -10,10 +10,10 @@ public class ScheduleRepository(DefaultContext db) : IScheduleRepository
 {
     public async Task<Scheduler> AddSchedulingRule(CancellationToken ct)
     {
-        var entity = new Entity(null, 2);
-        await db.Entities.AddAsync(entity, ct);
-        
-        var item = new Item(entity, 1,1,1,"Default-Schedule-1");
+        var item = new Item(1, Priority.None,"Default-Schedule-1")
+        {
+            Entity = new Entity(Workflow.Deadline)
+        };
         await db.Items.AddAsync(item, ct);
         
         var schedulingRule = Scheduler.CreateAndInitDefaultValues(item);

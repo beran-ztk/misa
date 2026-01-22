@@ -55,9 +55,7 @@
                 <ComboBox Grid.Row="1" Grid.Column="1"
                           Classes="misa-input"
                           ItemsSource="{Binding Priorities}"
-                          SelectedValue="{Binding PriorityId}"
-                          SelectedValueBinding="{Binding Id}"
-                          DisplayMemberBinding="{Binding Name}" />
+                          SelectedValue="{Binding SelectedPriority}"/>
 
                 <!-- Category -->
                 <TextBlock Grid.Row="2" Grid.Column="0"

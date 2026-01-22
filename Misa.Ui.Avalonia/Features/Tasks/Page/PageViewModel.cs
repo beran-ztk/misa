@@ -25,7 +25,7 @@ public partial class PageViewModel : ViewModelBase, IEntityDetailHost, IDisposab
     partial void OnSelectedTaskChanged(ListTaskDto? value)
     {
         DetailViewModel ??= new DetailPageViewModel(this);
-        ActiveEntityId = value?.EntityId ?? Guid.Empty;
+        ActiveEntityId = value?.Id ?? Guid.Empty;
     }
 
     private ViewModelBase? _currentInfoModel;

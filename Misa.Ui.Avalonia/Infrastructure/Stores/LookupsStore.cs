@@ -13,7 +13,6 @@ public class LookupsStore
     private readonly HttpClient _httpClient;
     private bool _isLoaded;
     
-    public IReadOnlyList<PriorityDto> Priorities { get; private set; } = [];
     public IReadOnlyList<CategoryDto> TaskCategories { get; private set; } = [];
     public IReadOnlyList<SessionEfficiencyTypeDto> EfficiencyTypes { get; private set; } = [];
     public IReadOnlyList<SessionConcentrationTypeDto> ConcentrationTypes { get; private set; } = [];
@@ -29,8 +28,6 @@ public class LookupsStore
         var dto = await _httpClient.GetFromJsonAsync<LookupsDto>("api/lookups");
         if (dto is null) return;
 
-        Priorities = dto.Priorities;
-        TaskCategories = dto.TaskCategories;
         EfficiencyTypes = dto.EfficiencyTypes;
         ConcentrationTypes = dto.ConcentrationTypes;
 

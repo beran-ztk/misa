@@ -3,23 +3,12 @@ using Misa.Application.Common.Abstractions.Persistence;
 using Misa.Domain.Features.Entities.Extensions.Items.Base;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions;
 using Misa.Infrastructure.Persistence.Context;
-using Category = Misa.Domain.Features.Entities.Extensions.Items.Base.Category;
-using Priority = Misa.Domain.Features.Entities.Extensions.Items.Base.Priority;
 using State = Misa.Domain.Features.Entities.Extensions.Items.Base.State;
 
 namespace Misa.Infrastructure.Persistence.Repositories;
 
 public class MainRepository(DefaultContext db) : IMainRepository
 {
-    public async Task<List<Priority>> GetPriorities(CancellationToken ct)
-        => await db.Priorities.ToListAsync(ct);
-    public async Task<List<Category>> GetTaskCategories(CancellationToken ct)
-        => await db.Categories.ToListAsync(ct);
-    public async Task<List<SessionEfficiencyType>> GetEfficiencyTypes(CancellationToken ct)
-        => await db.EfficiencyTypes.ToListAsync(ct);
-    public async Task<List<SessionConcentrationType>> GetConcentrationTypes(CancellationToken ct)
-        => await db.ConcentrationTypes.ToListAsync(ct);
-
     public async Task<List<State>> GetStatesByIds(
         IReadOnlyCollection<ItemStates> states, 
         CancellationToken ct = default)

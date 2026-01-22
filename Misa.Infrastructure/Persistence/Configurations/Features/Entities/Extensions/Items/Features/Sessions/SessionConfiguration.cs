@@ -19,14 +19,23 @@ public class SessionConfiguration : IEntityTypeConfiguration<Session>
         builder.Property(x => x.ItemId)
             .HasColumnName("item_id");
 
-        builder.Property(x => x.StateId)
-            .HasColumnName("state_id");
-        
-        builder.Property(x => x.EfficiencyId)
-            .HasColumnName("efficiency_id");
+        builder.Property(x => x.State)
+            .IsRequired()
+            .HasColumnName("state")
+            .HasColumnType("session_state")
+            .HasDefaultValue(SessionState.Running);
 
-        builder.Property(x => x.ConcentrationId)
-            .HasColumnName("concentration_id");
+        builder.Property(x => x.Efficiency)
+            .IsRequired()
+            .HasColumnName("efficiency")
+            .HasColumnType("session_efficiency_type")
+            .HasDefaultValue(SessionEfficiencyType.None);
+
+        builder.Property(x => x.Concentration)
+            .IsRequired()
+            .HasColumnName("concentration")
+            .HasColumnType("session_concentration_type")
+            .HasDefaultValue(SessionConcentrationType.None);
 
         builder.Property(x => x.Objective)
             .HasColumnName("objective");
@@ -51,22 +60,8 @@ public class SessionConfiguration : IEntityTypeConfiguration<Session>
         builder.Property(x => x.CreatedAtUtc)
             .HasColumnName("created_at_utc")
             .IsRequired();
-
-        builder.HasOne(x => x.State)
-            .WithMany()
-            .HasForeignKey(x => x.StateId)
-            .OnDelete(DeleteBehavior.Restrict); 
         
-        builder.HasOne(x => x.Efficiency)
-            .WithMany()
-            .HasForeignKey(x => x.EfficiencyId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.HasOne(x => x.Concentration)
-            .WithMany()
-            .HasForeignKey(x => x.ConcentrationId)
-            .OnDelete(DeleteBehavior.Restrict);
-
+        // Relations
         builder.HasMany(s => s.Segments)
             .WithOne()
             .HasForeignKey(s => s.SessionId)

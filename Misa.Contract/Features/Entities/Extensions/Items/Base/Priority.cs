@@ -1,4 +1,4 @@
-﻿namespace Misa.Domain.Features.Entities.Extensions.Items.Base;
+﻿namespace Misa.Contract.Features.Entities.Extensions.Items.Base;
 
 public enum Priority
 {

@@ -1,5 +1,3 @@
-using System.Runtime.Serialization;
-
 namespace Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
 
 /// <summary>

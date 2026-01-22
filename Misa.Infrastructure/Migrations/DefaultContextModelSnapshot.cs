@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Misa.Domain.Features.Entities.Extensions.Items.Base;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
 using Misa.Infrastructure.Persistence.Context;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -21,6 +22,7 @@ namespace Misa.Infrastructure.Migrations
                 .HasAnnotation("ProductVersion", "9.0.4")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
+            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "priority", new[] { "critical", "high", "low", "medium", "none", "urgent" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "schedule_frequency_type", new[] { "days", "hours", "minutes", "months", "once", "weeks", "years" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "schedule_misfire_policy", new[] { "catchup", "run_once", "skip" });
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -213,9 +215,11 @@ namespace Misa.Infrastructure.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("category_id");
 
-                    b.Property<int>("PriorityId")
-                        .HasColumnType("integer")
-                        .HasColumnName("priority_id");
+                    b.Property<Priority>("Priority")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("priority")
+                        .HasDefaultValue(Priority.None)
+                        .HasColumnName("priority");
 
                     b.Property<int>("StateId")
                         .ValueGeneratedOnAdd()
@@ -232,79 +236,9 @@ namespace Misa.Infrastructure.Migrations
 
                     b.HasIndex("CategoryId");
 
-                    b.HasIndex("PriorityId");
-
                     b.HasIndex("StateId");
 
                     b.ToTable("items", (string)null);
-                });
-
-            modelBuilder.Entity("Misa.Domain.Features.Entities.Extensions.Items.Base.Priority", b =>
-                {
-                    b.Property<int>("Id")
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("name");
-
-                    b.Property<int>("SortOrder")
-                        .HasColumnType("integer")
-                        .HasColumnName("sort_order");
-
-                    b.Property<string>("Synopsis")
-                        .HasColumnType("text")
-                        .HasColumnName("synopsis");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("item_priorities", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Name = "None",
-                            SortOrder = 1,
-                            Synopsis = "Keine Priorität vergeben"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Name = "Low",
-                            SortOrder = 2,
-                            Synopsis = "Geringe Wichtigkeit"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Name = "Medium",
-                            SortOrder = 3,
-                            Synopsis = "Normale Priorität"
-                        },
-                        new
-                        {
-                            Id = 4,
-                            Name = "High",
-                            SortOrder = 4,
-                            Synopsis = "Wichtig; zeitnah bearbeiten"
-                        },
-                        new
-                        {
-                            Id = 5,
-                            Name = "Urgent",
-                            SortOrder = 5,
-                            Synopsis = "Dringend; sofortige Aktion"
-                        },
-                        new
-                        {
-                            Id = 6,
-                            Name = "Critical",
-                            SortOrder = 6,
-                            Synopsis = "Kritische Eskalation"
-                        });
                 });
 
             modelBuilder.Entity("Misa.Domain.Features.Entities.Extensions.Items.Base.State", b =>
@@ -781,12 +715,6 @@ namespace Misa.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Misa.Domain.Features.Entities.Extensions.Items.Base.Priority", "Priority")
-                        .WithMany()
-                        .HasForeignKey("PriorityId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("Misa.Domain.Features.Entities.Extensions.Items.Base.State", "State")
                         .WithMany()
                         .HasForeignKey("StateId")
@@ -796,8 +724,6 @@ namespace Misa.Infrastructure.Migrations
                     b.Navigation("Category");
 
                     b.Navigation("Entity");
-
-                    b.Navigation("Priority");
 
                     b.Navigation("State");
                 });

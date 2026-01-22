@@ -15,11 +15,10 @@ public class EntityConfiguration : IEntityTypeConfiguration<Domain.Features.Enti
             .HasColumnName("id")
             .HasDefaultValueSql("gen_random_uuid()");
         
-        builder.Property(e => e.OwnerId)
-            .HasColumnName("owner_id");
-        builder.Property(e => e.WorkflowId)
-            .HasColumnName("workflow_id")
-            .IsRequired();
+        builder.Property(e => e.Workflow)
+            .IsRequired()
+            .HasColumnName("workflow")
+            .HasColumnType("workflow");
         
         builder.Property(e => e.IsDeleted)
             .HasColumnName("is_deleted")
@@ -46,22 +45,13 @@ public class EntityConfiguration : IEntityTypeConfiguration<Domain.Features.Enti
             .HasColumnName("interacted_at_utc")
             .IsRequired();
         
-        builder.HasOne(i => i.Workflow)
-            .WithMany()
-            .HasForeignKey(i => i.WorkflowId)
-            .OnDelete(DeleteBehavior.Restrict);
-        
-        builder.HasOne(i => i.Item)
-            .WithOne(i => i.Entity)
-            .HasForeignKey<Domain.Features.Entities.Extensions.Items.Base.Item>(i => i.EntityId)
-            .OnDelete(DeleteBehavior.Cascade);
-
+        // Relations
         builder.HasMany(i => i.Descriptions)
             .WithOne()
             .HasForeignKey(i => i.EntityId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasMany(e => e.Actions)
+        builder.HasMany(e => e.Changes)
             .WithOne()
             .HasForeignKey(a => a.EntityId)
             .OnDelete(DeleteBehavior.Cascade);

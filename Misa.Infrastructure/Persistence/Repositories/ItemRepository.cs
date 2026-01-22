@@ -15,7 +15,7 @@ public class ItemRepository(DefaultContext db) : IItemRepository
         return await db.Sessions
             .Where(s =>
                 s.StopAutomatically == true
-                && s.StateId != (int)SessionState.Completed
+                && s.State != SessionState.Ended
                 && s.PlannedDuration != null)
             .Include(s => s.Segments)
             .ToListAsync(ct);
@@ -24,7 +24,7 @@ public class ItemRepository(DefaultContext db) : IItemRepository
     public async Task<List<Session>> GetInactiveSessionsAsync(DateTimeOffset oldestDateAllowed, CancellationToken ct)
     {
         return await db.Sessions
-            .Where(s => s.StateId != (int)SessionState.Completed
+            .Where(s => s.State != SessionState.Ended
             && s.Segments.Any(
                 seg => seg.EndedAtUtc == null 
                        && seg.StartedAtUtc <= oldestDateAllowed)
@@ -41,7 +41,7 @@ public class ItemRepository(DefaultContext db) : IItemRepository
         return await db.Sessions
             .Where(s =>
                 s.ItemId == id
-                && s.StateId == (int)SessionState.Completed) 
+                && s.State == SessionState.Ended) 
             .Include(s => s.Segments)
             .Include(s => s.State)
             .Include(s => s.Efficiency)
@@ -55,8 +55,8 @@ public class ItemRepository(DefaultContext db) : IItemRepository
         return await db.Sessions
             .Where(s =>
                 s.ItemId == id
-                && (s.StateId == (int)SessionState.Running
-                || s.StateId == (int)SessionState.Paused)) 
+                && (s.State == SessionState.Running
+                || s.State == SessionState.Paused)) 
             .Include(s => s.Segments)
             .Include(s => s.State)
             .Include(s => s.Efficiency)
@@ -70,7 +70,7 @@ public class ItemRepository(DefaultContext db) : IItemRepository
         return await db.Sessions
             .Where(s =>
                 s.ItemId == id
-                && s.StateId == (int)SessionState.Running)
+                && s.State == SessionState.Running)
             .Include(s => s.Segments.Where(seg => seg.EndedAtUtc == null))
             .OrderByDescending(s => s.CreatedAtUtc)
             .FirstOrDefaultAsync(ct);
@@ -80,7 +80,7 @@ public class ItemRepository(DefaultContext db) : IItemRepository
         return await db.Sessions
             .Where(s =>
                 s.ItemId == id
-                && s.StateId == (int)SessionState.Paused)
+                && s.State == SessionState.Paused)
             .OrderByDescending(s => s.CreatedAtUtc)
             .FirstOrDefaultAsync(ct);
     }
@@ -89,14 +89,10 @@ public class ItemRepository(DefaultContext db) : IItemRepository
     {
         await db.Items.AddAsync(item, ct);
         await db.SaveChangesAsync(ct);
-        var loaded = await LoadAsync(item.EntityId, ct);
+        var loaded = await LoadAsync(item.Id, ct);
         
         return loaded 
                ?? throw new InvalidOperationException("Item wurde gespeichert, konnte aber nicht wieder geladen werden.");
-    }
-    public async Task AddAsync(SessionSegment segment, CancellationToken ct)
-    {
-        await db.SessionSegments.AddAsync(segment, ct);
     }
     public async Task AddAsync(Session session, CancellationToken ct)
     {
@@ -107,9 +103,7 @@ public class ItemRepository(DefaultContext db) : IItemRepository
         return await db.Items
             .Include(e => e.Entity)
             .Include(i => i.State)
-            .Include(i => i.Priority)
-            .Include(i => i.Category)
-            .Where(i => i.Entity.WorkflowId == (int)EntityWorkflows.Task)
+            .Where(i => i.Entity.Workflow == Workflow.Task)
             .ToListAsync(ct);
     }
 
@@ -117,15 +111,13 @@ public class ItemRepository(DefaultContext db) : IItemRepository
     {
         return await db.Items
             .Include(i => i.State)
-            .Include(i => i.Priority)
-            .Include(i => i.Category)
             
             .Include(e => e.Entity)
                 .ThenInclude(e => e.Workflow)
             .Include(e => e.Entity)
                 .ThenInclude(e => e.Descriptions)
             
-            .FirstOrDefaultAsync(e => e.EntityId == id, ct);
+            .FirstOrDefaultAsync(e => e.Id == id, ct);
     }
 
     public async Task<Item?> LoadAsync(Guid entityId, CancellationToken ct = default)
@@ -134,9 +126,7 @@ public class ItemRepository(DefaultContext db) : IItemRepository
             .Include(i => i.Entity)
             .ThenInclude(e => e.Workflow)
             .Include(i => i.State)
-            .Include(i => i.Priority)
-            .Include(i => i.Category)
-            .SingleOrDefaultAsync(i => i.EntityId == entityId, ct);
+            .SingleOrDefaultAsync(i => i.Id == entityId, ct);
     }
     
     
@@ -144,7 +134,7 @@ public class ItemRepository(DefaultContext db) : IItemRepository
     {
         return await db.Items
             .Include(e => e.Entity)
-            .SingleOrDefaultAsync(i => i.EntityId == id, ct);
+            .SingleOrDefaultAsync(i => i.Id == id, ct);
     }
     public async Task<ScheduledDeadline?> TryGetScheduledDeadlineForItemAsync(Guid itemId, CancellationToken ct)
     {

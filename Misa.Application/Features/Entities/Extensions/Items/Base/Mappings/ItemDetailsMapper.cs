@@ -1,5 +1,4 @@
-﻿using Misa.Application.Features.Entities.Base.Mappings;
-using Misa.Contract.Features.Entities.Base;
+﻿using Misa.Contract.Features.Entities.Base;
 using Misa.Contract.Features.Entities.Extensions.Items.Base;
 using Misa.Contract.Features.Entities.Features;
 using Misa.Domain.Features.Entities.Base;
@@ -23,10 +22,9 @@ public static class ItemDetailsMapper
     public static ItemResolvedDto ToResolvedDto(this Item domain)
     {
         return new ItemResolvedDto(
-            domain.EntityId,
+            domain.Id,
             domain.State.ToDto(),
-            domain.Priority.ToDto(),
-            domain.Category.ToDto(),
+            domain.Priority.ToString(),
             domain.Title
         );
     }
@@ -34,9 +32,8 @@ public static class ItemDetailsMapper
     {
         return new EntityResolvedDto(
             domain.Id,
-            domain.OwnerId,
 
-            domain.Workflow.ToDto(),
+            domain.Workflow.ToString(),
             domain.IsDeleted,
             domain.IsArchived,
 

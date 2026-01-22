@@ -1,14 +1,14 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Action = Misa.Domain.Features.Actions.Action;
+using Misa.Domain.Features.Audit;
 
-namespace Misa.Infrastructure.Persistence.Configurations.Features.Actions;
+namespace Misa.Infrastructure.Persistence.Configurations.Features.Audit;
 
-public class ActionConfiguration : IEntityTypeConfiguration<Action>
+public class AuditChangeConfiguration : IEntityTypeConfiguration<AuditChange>
 {
-    public void Configure(EntityTypeBuilder<Action> builder)
+    public void Configure(EntityTypeBuilder<AuditChange> builder)
     {
-        builder.ToTable("actions");
+        builder.ToTable("audit_changes");
 
         builder.HasKey(x => x.Id);
 
@@ -19,9 +19,10 @@ public class ActionConfiguration : IEntityTypeConfiguration<Action>
         builder.Property(x => x.EntityId)
             .HasColumnName("entity_id");
 
-        builder.Property(x => x.TypeId)
-            .HasColumnName("type_id")
-            .IsRequired();
+        builder.Property(x => x.ChangeType)
+            .IsRequired()
+            .HasColumnName("field")
+            .HasColumnType("change_type");
 
         builder.Property(x => x.ValueBefore)
             .HasColumnName("value_before");
@@ -35,11 +36,5 @@ public class ActionConfiguration : IEntityTypeConfiguration<Action>
         builder.Property(x => x.CreatedAtUtc)
             .HasColumnName("created_at_utc")
             .IsRequired();
-
-        // FK to lookup
-        builder.HasOne(x => x.Type)
-            .WithMany()
-            .HasForeignKey(x => x.TypeId)
-            .OnDelete(DeleteBehavior.Restrict);
     }
 }

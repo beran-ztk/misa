@@ -1,5 +1,5 @@
 ﻿using Misa.Domain.Common.DomainEvents;
-using Misa.Domain.Features.Actions;
+using Misa.Domain.Features.Audit;
 
 namespace Misa.Domain.Features.Entities.Extensions.Items.Features.Deadlines;
 
@@ -25,7 +25,7 @@ public sealed class ScheduledDeadline : DomainEventEntity
     {
         AddDomainEvent(new PropertyChangedEvent(
             EntityId: ItemId,
-            ActionType: (int)ActionTypes.Deadline,
+            ChangeType: ChangeType.Deadline,
             OldValue: DeadlineAtUtc == default ? null : DeadlineAtUtc.ToString(),
             NewValue: deadlineAtUtc.ToString(),
             Reason: null
