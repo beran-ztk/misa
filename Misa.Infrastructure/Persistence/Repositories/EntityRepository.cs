@@ -28,29 +28,4 @@ public class EntityRepository(DefaultContext db) : IEntityRepository
     {
         return await db.Entities.ToListAsync(ct);
     }
-
-    public async Task<Entity?> GetDetailedEntityAsync(Guid id, CancellationToken ct = default)
-    {
-        return await db.Entities
-            .Include(e => e.Workflow)
-
-            // Item (alles LEFT JOIN)
-            .Include(e => e.Item)
-                .ThenInclude(i => i.State)
-            .Include(e => e.Item)
-                .ThenInclude(i => i.Priority)
-            .Include(e => e.Item)
-                .ThenInclude(i => i.Category)
-            .Include(e => e.Item)
-                .ThenInclude(i => i.ScheduledDeadline)
-            
-            // Descriptions
-            .Include(e => e.Descriptions)
-            
-            // Actions
-            .Include(e => e.Actions)
-                .ThenInclude(a => a.Type)
-            
-            .FirstOrDefaultAsync(e => e.Id == id, ct);
-    }
 }
