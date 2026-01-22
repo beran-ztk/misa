@@ -17,7 +17,6 @@ using Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Comm
 using Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Queries;
 using Misa.Application.Features.Entities.Features.Descriptions.Commands;
 using Misa.Application.ReferenceData.Queries;
-using Misa.Contract.Features.Entities.Base;
 using Misa.Contract.Features.Entities.Extensions.Items.Base;
 using Misa.Domain.Features.Audit;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
@@ -75,7 +74,6 @@ builder.Host.UseWolverine(opts =>
 builder.Services.AddScoped<CreateItemHandler>();
 builder.Services.AddScoped<GetLookupsHandler>();
 builder.Services.AddScoped<PatchEntityHandler>();
-builder.Services.AddScoped<UpdateItemHandler>();
 
 builder.Services.AddScoped<IEntityRepository, EntityRepository>();
 builder.Services.AddScoped<IItemRepository, ItemRepository>();
@@ -108,12 +106,6 @@ app.MapGet("/Lookups/UserSettableStates", async ( int stateId, GetLookupsHandler
 
 app.MapPost("/api/tasks", async ( CreateItemDto dto, CreateItemHandler itemHandler, CancellationToken ct) 
     => await itemHandler.AddTaskAsync(dto, ct));
-app.MapPatch("/tasks", async (UpdateItemDto dto, UpdateItemHandler handler) =>
-{
-    await handler.UpdateAsync(dto);
-    return Results.Ok();
-});
-
 
 
 app.Run();

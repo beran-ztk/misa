@@ -94,10 +94,6 @@ public class ItemRepository(DefaultContext db) : IItemRepository
         return loaded 
                ?? throw new InvalidOperationException("Item wurde gespeichert, konnte aber nicht wieder geladen werden.");
     }
-    public async Task AddAsync(SessionSegment segment, CancellationToken ct)
-    {
-        await db.SessionSegments.AddAsync(segment, ct);
-    }
     public async Task AddAsync(Session session, CancellationToken ct)
     {
         await db.Sessions.AddAsync(session, ct);
