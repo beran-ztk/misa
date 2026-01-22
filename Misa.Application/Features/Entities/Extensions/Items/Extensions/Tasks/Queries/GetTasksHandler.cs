@@ -17,7 +17,6 @@ public class GetTasksHandler(IItemRepository repository)
                 EntityId = t.EntityId,
                 StateName = t.State.Name,
                 PriorityName = t.Priority.ToString(),
-                CategoryName = t.Category.Name,
                 Title = t.Title
             }).ToList();
 

@@ -9,31 +9,26 @@ namespace Misa.Domain.Features.Entities.Extensions.Items.Base;
 
 public class Item : DomainEventEntity
 {
-    // Für EF Core
     private Item() { }
 
     public Item(
         int stateId,
         Priority priority,
-        int categoryId,
         string title)
     {
         StateId = stateId;
         Priority = priority;
-        CategoryId = categoryId;
         Title = title ?? throw new ArgumentNullException(nameof(title));
     }
     // Member
     public Guid EntityId { get; set; }
     public int StateId { get; private set; }
     public Priority Priority { get; private set; }
-    public int CategoryId { get; private set; }
     public string Title { get; private set; }
     
     // Modelle
     public Entity Entity { get; set; }
     public State State { get; private set; }
-    public Category Category { get; private set; }
     
     public ICollection<Session> Sessions { get; set; } = new List<Session>();
      public bool HasActiveSession 

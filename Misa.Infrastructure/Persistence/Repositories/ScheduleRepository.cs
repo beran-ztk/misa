@@ -10,7 +10,7 @@ public class ScheduleRepository(DefaultContext db) : IScheduleRepository
 {
     public async Task<Scheduler> AddSchedulingRule(CancellationToken ct)
     {
-        var item = new Item(1, Priority.None,1,"Default-Schedule-1")
+        var item = new Item(1, Priority.None,"Default-Schedule-1")
         {
             Entity = new Entity(Workflow.Deadline)
         };

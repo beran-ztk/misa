@@ -6,7 +6,6 @@ namespace Misa.Contract.Features.Lookups;
 public class LookupsDto
 {
     public List<StateDto> States { get; set; }
-    public List<CategoryDto> TaskCategories { get; set; }
     public List<SessionEfficiencyTypeDto> EfficiencyTypes { get; set; }
     public List<SessionConcentrationTypeDto> ConcentrationTypes { get; set; }
 }

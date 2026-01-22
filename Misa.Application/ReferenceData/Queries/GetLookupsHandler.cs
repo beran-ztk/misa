@@ -21,7 +21,6 @@ public class GetLookupsHandler(IMainRepository repository)
     {
         return new LookupsDto
         {
-            TaskCategories = (await repository.GetTaskCategories(ct)).ToDto(),
             EfficiencyTypes = (await repository.GetEfficiencyTypes(ct)).ToDto(),
             ConcentrationTypes = (await repository.GetConcentrationTypes(ct)).ToDto()
         };   

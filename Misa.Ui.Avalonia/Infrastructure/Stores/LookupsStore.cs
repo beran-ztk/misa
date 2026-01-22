@@ -28,7 +28,6 @@ public class LookupsStore
         var dto = await _httpClient.GetFromJsonAsync<LookupsDto>("api/lookups");
         if (dto is null) return;
 
-        TaskCategories = dto.TaskCategories;
         EfficiencyTypes = dto.EfficiencyTypes;
         ConcentrationTypes = dto.ConcentrationTypes;
 

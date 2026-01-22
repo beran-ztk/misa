@@ -5,9 +5,9 @@ using Misa.Domain.Features.Entities.Extensions.Items.Features.Deadlines;
 
 namespace Misa.Infrastructure.Persistence.Configurations.Features.Entities.Extensions.Items.Base;
 
-public class ItemConfiguration : IEntityTypeConfiguration<Domain.Features.Entities.Extensions.Items.Base.Item>
+public class ItemConfiguration : IEntityTypeConfiguration<Item>
 {
-    public void Configure(EntityTypeBuilder<Domain.Features.Entities.Extensions.Items.Base.Item> builder)
+    public void Configure(EntityTypeBuilder<Item> builder)
     {
         builder.ToTable("items");
         
@@ -28,10 +28,6 @@ public class ItemConfiguration : IEntityTypeConfiguration<Domain.Features.Entiti
             .HasColumnType("priority")
             .HasDefaultValue(Priority.None);
         
-        builder.Property(x => x.CategoryId)
-            .IsRequired()
-            .HasColumnName("category_id");
-        
         builder.Property(x => x.Title)
             .IsRequired()
             .HasColumnName("title");
@@ -40,12 +36,6 @@ public class ItemConfiguration : IEntityTypeConfiguration<Domain.Features.Entiti
         builder.HasOne(i => i.State)
             .WithMany()
             .HasForeignKey(i => i.StateId)
-            .OnDelete(DeleteBehavior.Restrict);
-        
-        // Category n:1
-        builder.HasOne(i => i.Category)
-            .WithMany()
-            .HasForeignKey(i => i.CategoryId)
             .OnDelete(DeleteBehavior.Restrict);
         
         // Deadline 1:0..1

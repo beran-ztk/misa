@@ -432,17 +432,6 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- Category -->
-                    <Border Classes="misa-detail-information-item">
-                        <StackPanel Spacing="6">
-                            <TextBlock Text="Category" Opacity="0.7" FontSize="12"/>
-                            <TextBlock Text="{Binding Parent.ItemOverview.Item.Category.Name}" FontWeight="SemiBold"/>
-                            <TextBlock Text="{Binding Parent.ItemOverview.Item.Category.Synopsis}"
-                                       TextWrapping="Wrap"
-                                       Opacity="0.85"/>
-                        </StackPanel>
-                    </Border>
-
                 </UniformGrid>
 
             </StackPanel>

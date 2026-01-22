@@ -26,7 +26,6 @@ public static class ItemDetailsMapper
             domain.EntityId,
             domain.State.ToDto(),
             domain.Priority.ToString(),
-            domain.Category.ToDto(),
             domain.Title
         );
     }
