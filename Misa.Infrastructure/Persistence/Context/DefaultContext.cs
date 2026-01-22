@@ -19,8 +19,6 @@ public class DefaultContext(DbContextOptions<DefaultContext> options) : DbContex
     
     public DbSet<Session> Sessions { get; set; } = null!;
     public DbSet<SessionSegment> SessionSegments { get; set; } = null!;
-    public DbSet<SessionEfficiencyType> EfficiencyTypes { get; set; } = null!;
-    public DbSet<SessionConcentrationType> ConcentrationTypes { get; set; } = null!;
     public DbSet<AuditChange> AuditChanges { get; set; } = null!;
     public DbSet<ScheduledDeadline> Deadlines { get; set; } = null!;
 

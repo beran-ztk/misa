@@ -5,15 +5,8 @@ public class Session
     public Guid Id { get; private set; }
     public Guid ItemId { get; private set; }
     public SessionState State { get; private set; }
-    public void PauseSession() 
-        => State = SessionState.Paused;
-    public void ContinueSession() 
-        => State = SessionState.Running;
-    public int? EfficiencyId { get; set; }
-    public SessionEfficiencyType? Efficiency { get; private set; }
-
-    public int? ConcentrationId { get; set; }
-    public SessionConcentrationType? Concentration { get; private set; }
+    public SessionEfficiencyType Efficiency { get; private set; }
+    public SessionConcentrationType Concentration { get; private set; }
 
     public string? Objective { get; private set; }
     public string? Summary { get; set; }
@@ -98,8 +91,8 @@ public class Session
     }
     public void Stop(
         DateTimeOffset nowUtc,
-        int? efficiencyId,
-        int? concentrationId,
+        SessionEfficiencyType efficiency,
+        SessionConcentrationType concentration,
         string? summary)
     {
         var openSegments = Segments.Where(s => s.EndedAtUtc == null).ToList();
@@ -113,8 +106,8 @@ public class Session
                 break;
         }
 
-        EfficiencyId = efficiencyId;
-        ConcentrationId = concentrationId;
+        Efficiency = efficiency;
+        Concentration = concentration;
         Summary = summary;
 
         State = SessionState.Ended;

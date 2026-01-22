@@ -45,6 +45,8 @@ builder.Services.AddDbContext<DefaultContext>(options =>
             npgsql.MapEnum<ChangeType>("change_type");
             npgsql.MapEnum<Workflow>("workflow");
             npgsql.MapEnum<SessionState>("session_state");
+            npgsql.MapEnum<SessionEfficiencyType>("session_efficiency_type");
+            npgsql.MapEnum<SessionConcentrationType>("session_concentration_type");
         }
     ));
 
@@ -76,7 +78,6 @@ builder.Host.UseWolverine(opts =>
 
 // Registrations
 builder.Services.AddScoped<CreateItemHandler>();
-builder.Services.AddScoped<GetLookupsHandler>();
 builder.Services.AddScoped<PatchEntityHandler>();
 
 builder.Services.AddScoped<IEntityRepository, EntityRepository>();
@@ -103,8 +104,6 @@ app.MapPatch("/Entity/Delete", async (Guid entityId, PatchEntityHandler handler,
 app.MapPatch("/Entity/Archive", async (Guid entityId, PatchEntityHandler handler, CancellationToken ct = default) 
     => await handler.ArchiveEntityAsync(entityId, ct));
 
-app.MapGet("/api/lookups", async ( GetLookupsHandler lookupsHandler, CancellationToken ct) 
-    => await lookupsHandler.GetAllAsync(ct));
 app.MapGet("/Lookups/UserSettableStates", async ( int stateId, GetLookupsHandler lookupsHandler, CancellationToken ct ) 
     => await lookupsHandler.GetUserSettableStates(stateId, ct));
 

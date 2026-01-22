@@ -5,26 +5,6 @@ namespace Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.
 
 public static class SessionMapper
 {
-    public static SessionEfficiencyTypeDto ToDto(this SessionEfficiencyType x) =>
-        new(
-            x.Id,
-            x.Name,
-            x.Synopsis,
-            x.SortOrder
-        );
-
-    public static SessionConcentrationTypeDto ToDto(this SessionConcentrationType x) =>
-        new(
-            x.Id,
-            x.Name,
-            x.Synopsis,
-            x.SortOrder
-        );
-
-    public static List<SessionEfficiencyTypeDto> ToDto(this List<SessionEfficiencyType> ef)
-        => ef.Select(c => c.ToDto()).ToList();
-    public static List<SessionConcentrationTypeDto> ToDto(this List<SessionConcentrationType> co)
-        => co.Select(c => c.ToDto()).ToList();
     public static SessionResolvedDto ToDto(this Session x) 
         => new()
         {
@@ -32,8 +12,8 @@ public static class SessionMapper
             EntityId = x.ItemId,
         
             State = x.State.ToString(),
-            Efficiency = x.Efficiency?.ToDto(),
-            Concentration = x.Concentration?.ToDto(),
+            Efficiency = nameof(x.Efficiency),
+            Concentration = nameof(x.Concentration),
         
             Objective = x.Objective,
             Summary = x.Summary,
