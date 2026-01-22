@@ -20,7 +20,7 @@ DROP TABLE IF EXISTS scheduler_frequency_types;
 DROP TYPE IF EXISTS scheduler_misfire_policy;
 DROP TYPE IF EXISTS scheduler_execution_status;
 
-CREATE TYPE scheduler_misfire_policy AS ENUM ('skip', 'runOnce', 'catchup');
+CREATE TYPE scheduler_misfire_policy AS ENUM ('catchup', 'skip', 'runOnce');
 
 CREATE TYPE scheduler_execution_status AS ENUM
     (
