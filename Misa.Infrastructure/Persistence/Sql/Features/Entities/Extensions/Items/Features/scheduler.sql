@@ -14,11 +14,11 @@ SELECT NOT EXISTS (
 );
 $$;
 
-DROP TABLE scheduler_execution_log;
-DROP TABLE scheduler;
-DROP TABLE scheduler_frequency_types;
-DROP TYPE scheduler_misfire_policy;
-DROP TYPE scheduler_execution_status;
+DROP TABLE IF EXISTS scheduler_execution_log;
+DROP TABLE IF EXISTS scheduler;
+DROP TABLE IF EXISTS scheduler_frequency_types;
+DROP TYPE IF EXISTS scheduler_misfire_policy;
+DROP TYPE IF EXISTS scheduler_execution_status;
 
 CREATE TYPE scheduler_misfire_policy AS ENUM ('skip', 'runOnce', 'catchup');
 
