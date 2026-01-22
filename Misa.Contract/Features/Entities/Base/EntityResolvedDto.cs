@@ -5,7 +5,7 @@ public record EntityResolvedDto
     Guid Id,
     Guid? OwnerId,
 
-    WorkflowDto Workflow,
+    string Workflow,
     bool IsDeleted,
     bool IsArchived,
 

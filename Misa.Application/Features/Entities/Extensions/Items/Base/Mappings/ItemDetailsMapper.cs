@@ -36,7 +36,7 @@ public static class ItemDetailsMapper
             domain.Id,
             domain.OwnerId,
 
-            domain.Workflow.ToDto(),
+            domain.Workflow.ToString(),
             domain.IsDeleted,
             domain.IsArchived,
 

@@ -359,10 +359,7 @@
                     <Border Classes="misa-detail-information-item">
                         <StackPanel Spacing="6">
                             <TextBlock Text="Workflow" Opacity="0.7" FontSize="12"/>
-                            <TextBlock Text="{Binding Parent.ItemOverview.Entity.Workflow.Name}" FontWeight="SemiBold"/>
-                            <TextBlock Text="{Binding Parent.ItemOverview.Entity.Workflow.Synopsis}"
-                                       TextWrapping="Wrap"
-                                       Opacity="0.85"/>
+                            <TextBlock Text="{Binding Parent.ItemOverview.Entity.Workflow}" FontWeight="SemiBold"/>
                         </StackPanel>
                     </Border>
 

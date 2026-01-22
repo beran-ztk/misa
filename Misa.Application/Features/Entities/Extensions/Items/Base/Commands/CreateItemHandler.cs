@@ -17,7 +17,7 @@ public class CreateItemHandler(IItemRepository repository)
         var entityDto = new CreateEntityDto
         {
             OwnerId = itemDto.OwnerId,
-            WorkflowId = (int)EntityWorkflows.Task
+            WorkflowId = (int)Workflow.Task
         };
 
         itemDto.StateId = (int)ItemStates.Draft;

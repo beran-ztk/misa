@@ -16,7 +16,6 @@ public class DefaultContext(DbContextOptions<DefaultContext> options) : DbContex
     public DbSet<Item> Items { get; set; } = null!;
     public DbSet<State> States { get; set; } = null!;
     public DbSet<Category> Categories { get; set; } = null!;
-    public DbSet<Workflow> Workflows { get; set; } = null!;
     public DbSet<Description> Descriptions { get; set; } = null!;
     
     public DbSet<Session> Sessions { get; set; } = null!;

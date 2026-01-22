@@ -104,7 +104,7 @@ public class ItemRepository(DefaultContext db) : IItemRepository
             .Include(e => e.Entity)
             .Include(i => i.State)
             .Include(i => i.Category)
-            .Where(i => i.Entity.WorkflowId == (int)EntityWorkflows.Task)
+            .Where(i => i.Entity.Workflow == Workflow.Task)
             .ToListAsync(ct);
     }
 

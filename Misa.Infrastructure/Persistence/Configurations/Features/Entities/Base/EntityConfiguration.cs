@@ -17,9 +17,11 @@ public class EntityConfiguration : IEntityTypeConfiguration<Domain.Features.Enti
         
         builder.Property(e => e.OwnerId)
             .HasColumnName("owner_id");
-        builder.Property(e => e.WorkflowId)
-            .HasColumnName("workflow_id")
-            .IsRequired();
+
+        builder.Property(e => e.Workflow)
+            .IsRequired()
+            .HasColumnName("workflow")
+            .HasColumnType("workflow");
         
         builder.Property(e => e.IsDeleted)
             .HasColumnName("is_deleted")
@@ -46,11 +48,7 @@ public class EntityConfiguration : IEntityTypeConfiguration<Domain.Features.Enti
             .HasColumnName("interacted_at_utc")
             .IsRequired();
         
-        builder.HasOne(i => i.Workflow)
-            .WithMany()
-            .HasForeignKey(i => i.WorkflowId)
-            .OnDelete(DeleteBehavior.Restrict);
-        
+        // Relations
         builder.HasOne(i => i.Item)
             .WithOne(i => i.Entity)
             .HasForeignKey<Domain.Features.Entities.Extensions.Items.Base.Item>(i => i.EntityId)

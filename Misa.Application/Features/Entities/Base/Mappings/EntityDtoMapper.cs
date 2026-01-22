@@ -9,7 +9,7 @@ public static class EntityDtoMapper
         => new
         (
             ownerId: createEntity.OwnerId,
-            workflowId: createEntity.WorkflowId
+            workflow: Workflow.Task
         );
 
     public static ReadEntityDto ToReadEntityDto(this Entity entity)
@@ -17,18 +17,11 @@ public static class EntityDtoMapper
         {
             Id = entity.Id,
             OwnerId = entity.OwnerId,
-            Workflow = entity.Workflow.ToDto(),
+            Workflow = entity.Workflow.ToString(),
             IsDeleted = entity.IsDeleted,
             CreatedAt = entity.CreatedAt,
             UpdatedAt = entity.UpdatedAt,
             InteractedAt = entity.InteractedAt
         };
 
-    public static WorkflowDto ToDto(this Workflow workflow)
-        => new()
-        {
-            Id = workflow.Id,
-            Name = workflow.Name,
-            Synopsis = workflow.Synopsis
-        };
 }

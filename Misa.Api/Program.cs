@@ -19,6 +19,7 @@ using Misa.Application.Features.Entities.Features.Descriptions.Commands;
 using Misa.Application.ReferenceData.Queries;
 using Misa.Contract.Features.Entities.Extensions.Items.Base;
 using Misa.Domain.Features.Audit;
+using Misa.Domain.Features.Entities.Base;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
 using Misa.Infrastructure.Persistence.Context;
 using Misa.Infrastructure.Persistence.Repositories;
@@ -41,6 +42,7 @@ builder.Services.AddDbContext<DefaultContext>(options =>
             npgsql.MapEnum<ScheduleFrequencyType>("schedule_frequency_type");
             npgsql.MapEnum<Priority>("priority");
             npgsql.MapEnum<ChangeType>("change_type");
+            npgsql.MapEnum<Workflow>("workflow");
         }
     ));
 

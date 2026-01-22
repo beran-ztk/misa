@@ -26,10 +26,5 @@ public class ItemCategoryConfiguration : IEntityTypeConfiguration<Domain.Feature
         builder.Property(x => x.SortOrder)
             .IsRequired()
             .HasColumnName("sort_order");
-        
-        builder.HasOne(x => x.Workflow)
-            .WithMany()
-            .HasForeignKey(x => x.WorkflowId)
-            .OnDelete(DeleteBehavior.Restrict);
     }
 }
