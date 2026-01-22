@@ -1,39 +1,34 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Misa.Domain.Common.DomainEvents;
-using Misa.Domain.Features.Actions;
+using Misa.Domain.Features.Audit;
 using Misa.Domain.Features.Entities.Base;
 using Misa.Domain.Features.Entities.Extensions.Items.Base;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Deadlines;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions;
 using Misa.Domain.Features.Entities.Features.Descriptions;
-using Action = Misa.Domain.Features.Actions.Action;
 
 namespace Misa.Infrastructure.Persistence.Context;
 
-public class DefaultContext : DbContext
+public class DefaultContext(DbContextOptions<DefaultContext> options) : DbContext(options)
 {
-    public DefaultContext(DbContextOptions<DefaultContext> options) 
-        : base(options) {}
+    public DbSet<Entity> Entities { get; set; } = null!;
+    public DbSet<Item> Items { get; set; } = null!;
+    public DbSet<State> States { get; set; } = null!;
+    public DbSet<Category> Categories { get; set; } = null!;
+    public DbSet<Workflow> Workflows { get; set; } = null!;
+    public DbSet<Description> Descriptions { get; set; } = null!;
+    
+    public DbSet<Session> Sessions { get; set; } = null!;
+    public DbSet<SessionSegment> SessionSegments { get; set; } = null!;
+    public DbSet<SessionStates> SessionStates { get; set; } = null!;
+    public DbSet<SessionEfficiencyType> EfficiencyTypes { get; set; } = null!;
+    public DbSet<SessionConcentrationType> ConcentrationTypes { get; set; } = null!;
+    public DbSet<AuditChange> AuditChanges { get; set; } = null!;
+    public DbSet<ScheduledDeadline> Deadlines { get; set; } = null!;
 
-    public DbSet<Entity> Entities { get; set; } = null;
-    public DbSet<Item> Items { get; set; } = null;
-    public DbSet<State> States { get; set; } = null;
-    public DbSet<Category> Categories { get; set; } = null;
-    public DbSet<Workflow> Workflows { get; set; } = null;
-    public DbSet<Description> Descriptions { get; set; } = null;
-    
-    public DbSet<Session> Sessions { get; set; } = null;
-    public DbSet<SessionSegment> SessionSegments { get; set; } = null;
-    public DbSet<SessionStates> SessionStates { get; set; } = null;
-    public DbSet<SessionEfficiencyType> EfficiencyTypes { get; set; } = null;
-    public DbSet<SessionConcentrationType> ConcentrationTypes { get; set; } = null;
-    public DbSet<Action> Actions { get; set; } = null;
-    public DbSet<ActionType> ActionTypes { get; set; } = null;
-    public DbSet<ScheduledDeadline> Deadlines { get; set; } = null;
-    
-    public DbSet<Scheduler> Scheduler { get; set; }
-    public DbSet<SchedulerExecutionLog> SchedulerExecutionLog { get; set; }
+    public DbSet<Scheduler> Scheduler { get; set; } = null!;
+    public DbSet<SchedulerExecutionLog> SchedulerExecutionLog { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -56,18 +51,22 @@ public class DefaultContext : DbContext
 
         foreach (var ev in events)
         {
-            Actions.Add(new Action
-            {
-                EntityId = ev.EntityId,
-                TypeId = ev.ActionType,
-                ValueBefore = ev.OldValue,
-                ValueAfter = ev.NewValue,
-                CreatedAtUtc = DateTimeOffset.UtcNow
-            });
+            AuditChanges.Add(
+                new AuditChange(
+                    ev.EntityId,
+                    ev.ChangeType,
+                    ev.OldValue,
+                    ev.NewValue,
+                    null,
+                    DateTimeOffset.UtcNow
+                )
+            );
         }
-        
+
         foreach (var e in tracked)
+        {
             e.ClearDomainEvents();
+        }
     }
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {

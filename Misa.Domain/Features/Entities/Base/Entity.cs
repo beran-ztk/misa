@@ -1,6 +1,6 @@
-﻿using Misa.Domain.Features.Entities.Extensions.Items.Base;
+﻿using Misa.Domain.Features.Audit;
+using Misa.Domain.Features.Entities.Extensions.Items.Base;
 using Misa.Domain.Features.Entities.Features.Descriptions;
-using Action = Misa.Domain.Features.Actions.Action;
 
 namespace Misa.Domain.Features.Entities.Base;
 
@@ -32,10 +32,10 @@ public class Entity
     public Workflow Workflow { get;  set; }
     public Item? Item { get; set; }
     
-    public ICollection<Description> Descriptions { get; set; } = new List<Description>();
+    public ICollection<Description> Descriptions { get; init; } = new List<Description>();
     
     
-    public ICollection<Action> Actions { get; set; } = new List<Action>();
+    public ICollection<AuditChange> Changes { get; init; } = new List<AuditChange>();
 
    
     public void Interact() => InteractedAt =  DateTimeOffset.UtcNow;

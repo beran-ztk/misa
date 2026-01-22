@@ -1,5 +1,5 @@
 ﻿using Misa.Domain.Common.DomainEvents;
-using Misa.Domain.Features.Actions;
+using Misa.Domain.Features.Audit;
 using Misa.Domain.Features.Entities.Base;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Deadlines;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
@@ -58,7 +58,7 @@ public class Item : DomainEventEntity
         
         AddDomainEvent(new PropertyChangedEvent(
             EntityId: EntityId,
-            ActionType: (int)ActionTypes.State,
+            ChangeType: ChangeType.State,
             OldValue: StateId.ToString(),
             NewValue: value.ToString(),
             Reason: null
