@@ -14,6 +14,7 @@ using Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Quer
 using Misa.Application.Features.Entities.Features.Descriptions.Commands;
 using Misa.Domain.Features.Audit;
 using Misa.Domain.Features.Entities.Base;
+using Misa.Domain.Features.Entities.Extensions.Items.Extensions.Tasks;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions;
 using Misa.Infrastructure.Persistence.Context;
@@ -39,6 +40,7 @@ builder.Services.AddDbContext<DefaultContext>(options =>
             npgsql.MapEnum<SessionState>("session_state");
             npgsql.MapEnum<SessionEfficiencyType>("session_efficiency_type");
             npgsql.MapEnum<SessionConcentrationType>("session_concentration_type");
+            npgsql.MapEnum<TaskCategory>("task_category");
         }
     ));
 

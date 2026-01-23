@@ -1,4 +1,6 @@
-﻿namespace Misa.Domain.Features.Entities.Extensions.Items.Extensions.Tasks;
+﻿using Misa.Domain.Features.Entities.Extensions.Items.Base;
+
+namespace Misa.Domain.Features.Entities.Extensions.Items.Extensions.Tasks;
 
 public class Task
 {
@@ -11,4 +13,6 @@ public class Task
     
     public Guid Id { get; private set; }
     public TaskCategory Category { get; private set; }
+    
+    public Item Item { get; private set; }
 }
