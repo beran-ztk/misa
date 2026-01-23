@@ -25,7 +25,7 @@ public class Entity
     public DateTimeOffset? UpdatedAt { get; set; }
     public DateTimeOffset? DeletedAt { get; set; }
     public DateTimeOffset? ArchivedAt { get; set; }
-    public DateTimeOffset InteractedAt { get; set; }
+    public DateTimeOffset? InteractedAt { get; set; }
     
     public ICollection<AuditChange> Changes { get; init; } = new List<AuditChange>();
     public ICollection<Description> Descriptions { get; init; } = new List<Description>();

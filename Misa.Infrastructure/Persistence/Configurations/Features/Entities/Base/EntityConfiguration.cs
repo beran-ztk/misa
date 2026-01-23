@@ -43,7 +43,7 @@ public class EntityConfiguration : IEntityTypeConfiguration<Domain.Features.Enti
             .IsRequired(false);
         builder.Property(e => e.InteractedAt)
             .HasColumnName("interacted_at_utc")
-            .IsRequired();
+            .IsRequired(false);
         
         // Relations
         builder.HasMany(i => i.Descriptions)

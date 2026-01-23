@@ -12,5 +12,5 @@ public record EntityResolvedDto
     DateTimeOffset? UpdatedAt,
     DateTimeOffset? DeletedAt,
     DateTimeOffset? ArchivedAt,
-    DateTimeOffset InteractedAt
+    DateTimeOffset? InteractedAt
 );
