@@ -4,7 +4,13 @@ using Misa.Domain.Features.Entities.Extensions.Items.Base;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions;
 
 namespace Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Commands;
-
+public record StartSessionCommand(
+    Guid ItemId, 
+    TimeSpan? PlannedDuration,
+    string? Objective, 
+    bool StopAutomatically, 
+    string? AutoStopReason
+);
 public class StartSessionHandler(IItemRepository repository)
 {
     public async Task<Result> Handle(StartSessionCommand command, CancellationToken ct)

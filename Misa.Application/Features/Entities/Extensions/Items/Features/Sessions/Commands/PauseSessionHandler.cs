@@ -3,7 +3,10 @@ using Misa.Contract.Common.Results;
 using Misa.Domain.Features.Entities.Extensions.Items.Base;
 
 namespace Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Commands;
-
+public record PauseSessionCommand(
+    Guid ItemId,
+    string? PauseReason
+);
 public class PauseSessionHandler(IItemRepository repository)
 {
     public async Task<Result> Handle(PauseSessionCommand command, CancellationToken ct)

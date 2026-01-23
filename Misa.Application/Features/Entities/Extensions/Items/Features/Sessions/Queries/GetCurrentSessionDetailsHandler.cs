@@ -5,7 +5,7 @@ using Misa.Contract.Features.Entities.Extensions.Items.Features.Session;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions;
 
 namespace Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Queries;
-
+public record GetCurrentSessionDetailsQuery(Guid ItemId);
 public class GetCurrentSessionDetailsHandler(IItemRepository repository)
 {
     public async Task<Result<CurrentSessionOverviewDto>> Handle(GetCurrentSessionDetailsQuery command, CancellationToken ct)

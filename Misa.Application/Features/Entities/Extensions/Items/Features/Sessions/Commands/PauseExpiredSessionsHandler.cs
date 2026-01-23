@@ -3,7 +3,7 @@ using Misa.Contract.Common.Results;
 using Wolverine;
 
 namespace Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Commands;
-
+public record PauseExpiredSessionsCommand;
 public class PauseExpiredSessionsHandler(IItemRepository repository, IMessageBus bus)
 {
     public async Task Handle(PauseExpiredSessionsCommand command, CancellationToken ct)

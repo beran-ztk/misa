@@ -3,7 +3,7 @@ using Misa.Contract.Common.Results;
 using Misa.Contract.Features.Entities.Extensions.Items.Base;
 
 namespace Misa.Application.Features.Entities.Extensions.Items.Extensions.Tasks.Queries;
-
+public record GetTasksQuery;
 public class GetTasksHandler(IItemRepository repository)
 {
     public async Task<Result<List<ListTaskDto>>> Handle(

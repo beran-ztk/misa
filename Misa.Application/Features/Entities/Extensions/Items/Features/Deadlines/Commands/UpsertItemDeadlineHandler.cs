@@ -1,13 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Misa.Application.Common.Abstractions.Persistence;
 using Misa.Application.Common.Exceptions;
-using Misa.Application.Features.Entities.Extensions.Items.Features.Deadlines.Events;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Deadlines;
-using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
 using Wolverine;
 
 namespace Misa.Application.Features.Entities.Extensions.Items.Features.Deadlines.Commands;
-
+public record UpsertItemDeadlineCommand(Guid ItemId, DateTimeOffset DueAt);
 public sealed class UpsertItemDeadlineHandler(IItemRepository repository, IMessageBus bus)
 {
     public async Task Handle(UpsertItemDeadlineCommand command, CancellationToken ct = default)
@@ -38,7 +36,5 @@ public sealed class UpsertItemDeadlineHandler(IItemRepository repository, IMessa
         }
         
         await repository.SaveChangesAsync(ct);
-
-        await bus.PublishAsync(new ItemDeadlineUpsertedEvent(command.ItemId, dueAtUtc));
     }
 }

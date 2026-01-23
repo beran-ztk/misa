@@ -4,7 +4,7 @@ using Misa.Contract.Common.Results;
 using Misa.Contract.Features.Entities.Extensions.Items.Base;
 
 namespace Misa.Application.Features.Entities.Extensions.Items.Base.Queries;
-
+public record GetItemDetailsQuery(Guid Id);
 public class GetItemDetailsHandler(IItemRepository repository)
 {
     public async Task<Result<ItemOverviewDto>> Handle(GetItemDetailsQuery cmd, CancellationToken ct)

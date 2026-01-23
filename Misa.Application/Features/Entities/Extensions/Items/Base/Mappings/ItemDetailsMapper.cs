@@ -28,6 +28,7 @@ public static class ItemDetailsMapper
             domain.Title
         );
     }
+    public static StateDto ToDto(this State state) => new(state.Id, state.Name, state.Synopsis);
     public static EntityResolvedDto ToResolvedDto(this Entity domain)
     {
         return new EntityResolvedDto(

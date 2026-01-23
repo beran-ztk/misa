@@ -3,7 +3,7 @@ using Misa.Contract.Common.Results;
 using Misa.Domain.Features.Entities.Extensions.Items.Base;
 
 namespace Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Commands;
-
+public record ContinueSessionCommand(Guid ItemId);
 public class ContinueSessionHandler(IItemRepository repository)
 {
     public async Task<Result> Handle(ContinueSessionCommand command, CancellationToken ct)
