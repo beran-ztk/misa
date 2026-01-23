@@ -8,9 +8,9 @@ using Misa.Contract.Features.Entities.Extensions.Items.Base;
 using Misa.Ui.Avalonia.Presentation.Mapping;
 using PageViewModel = Misa.Ui.Avalonia.Features.Tasks.Page.PageViewModel;
 
-namespace Misa.Ui.Avalonia.Features.Tasks.Create;
+namespace Misa.Ui.Avalonia.Features.Tasks.Add;
 
-public partial class CreateViewModel(PageViewModel vm) : ViewModelBase
+public partial class AddTaskViewModel(PageViewModel vm) : ViewModelBase
 {
     private PageViewModel MainViewModel { get; } = vm;
 
@@ -29,7 +29,7 @@ public partial class CreateViewModel(PageViewModel vm) : ViewModelBase
     }
 
     [RelayCommand]
-    private async Task Create()
+    private async Task AddTask()
     {
         var trimmedTitle = Title.Trim();
 

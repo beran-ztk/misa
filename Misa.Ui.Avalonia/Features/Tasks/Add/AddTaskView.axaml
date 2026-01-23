@@ -3,20 +3,19 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="Misa.Ui.Avalonia.Features.Tasks.Create.CreateView"
-             xmlns:create="clr-namespace:Misa.Ui.Avalonia.Features.Tasks.Create"
-             x:DataType="create:CreateViewModel">
+             x:Class="Misa.Ui.Avalonia.Features.Tasks.Add.AddTaskView"
+             xmlns:add="clr-namespace:Misa.Ui.Avalonia.Features.Tasks.Add"
+             x:DataType="add:AddTaskViewModel">
 
     <Border Classes="misa-control">
         <Grid RowDefinitions="Auto,Auto,Auto"
               RowSpacing="{StaticResource SpacingLarge}">
 
             <!-- Header -->
-            <StackPanel Orientation="Horizontal"
-                        Spacing="{StaticResource SpacingMedium}"
-                        Grid.Row="0">
-                <TextBlock Classes="misa-header"
-                           Text="Create Task" />
+            <StackPanel Grid.Row="0" 
+                        Orientation="Horizontal"
+                        Spacing="{StaticResource SpacingMedium}">
+                <TextBlock Classes="misa-header" Text="Add Task" />
             </StackPanel>
 
             <!-- Form -->
@@ -27,12 +26,9 @@
                   ColumnSpacing="{StaticResource SpacingLarge}">
 
                 <!-- Title -->
-                <TextBlock Grid.Row="0" Grid.Column="0"
-                           Classes="misa-label"
-                           Text="Title" />
+                <TextBlock Grid.Row="0" Grid.Column="0" Classes="misa-label" Text="Title" />
 
-                <StackPanel Grid.Row="0" Grid.Column="1"
-                            Spacing="{StaticResource SpacingSmall}">
+                <StackPanel Grid.Row="0" Grid.Column="1" Spacing="{StaticResource SpacingSmall}">
 
                     <TextBox Classes="misa-input"
                              Watermark="Task title..."
@@ -66,8 +62,8 @@
                 <Button Classes="misa-primary"
                         Content="Cancel"/>
                 <Button Classes="misa-primary"
-                        Content="Create"
-                        Command="{Binding CreateCommand}" />
+                        Content="Add"
+                        Command="{Binding AddTaskCommand}" />
             </StackPanel>
         </Grid>
     </Border>
