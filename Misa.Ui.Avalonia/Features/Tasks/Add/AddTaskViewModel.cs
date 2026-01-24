@@ -18,6 +18,7 @@ public partial class AddTaskViewModel(PageViewModel vm) : ViewModelBase
 {
     private PageViewModel Parent { get; } = vm;
 
+    [ObservableProperty] private bool _createMore;
     [ObservableProperty] private string _title = string.Empty;
     [ObservableProperty] private TaskCategoryContract _selectedCategoryContract;
     [ObservableProperty] private PriorityContract _selectedPriorityContract;
@@ -61,7 +62,14 @@ public partial class AddTaskViewModel(PageViewModel vm) : ViewModelBase
             if (createdTask?.Value != null)
             {
                 await Parent.AddToCollection(createdTask.Value);
-                Close(createdTask.Value);
+                if (CreateMore)
+                {
+                    Title = string.Empty;
+                }
+                else
+                {
+                    Close(createdTask.Value);   
+                }
             }
         }
         catch (Exception e)
@@ -72,6 +80,7 @@ public partial class AddTaskViewModel(PageViewModel vm) : ViewModelBase
     [RelayCommand]
     private void Close(TaskDto? dto = null)
     {
+        Title = string.Empty;
         Parent.CurrentInfoModel = null;
 
         if (dto != null)
