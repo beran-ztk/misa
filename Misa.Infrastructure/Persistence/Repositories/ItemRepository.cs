@@ -94,19 +94,16 @@ public class ItemRepository(DefaultContext db) : IItemRepository
         return loaded 
                ?? throw new InvalidOperationException("Item wurde gespeichert, konnte aber nicht wieder geladen werden.");
     }
+
+    public async Task AddAsync(Domain.Features.Entities.Extensions.Items.Extensions.Tasks.Task task, CancellationToken ct)
+    {
+        await db.Tasks.AddAsync(task, ct);
+    }
+
     public async Task AddAsync(Session session, CancellationToken ct)
     {
         await db.Sessions.AddAsync(session, ct);
     }
-    public async Task<List<Item>> TryGetTasksAsync(CancellationToken ct)
-    {
-        return await db.Items
-            .Include(e => e.Entity)
-            .Include(i => i.State)
-            .Where(i => i.Entity.Workflow == Workflow.Task)
-            .ToListAsync(ct);
-    }
-
     public async Task<Item?> TryGetItemDetailsAsync(Guid id, CancellationToken ct)
     {
         return await db.Items

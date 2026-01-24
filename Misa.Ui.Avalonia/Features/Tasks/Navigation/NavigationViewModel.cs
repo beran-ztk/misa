@@ -1,14 +1,14 @@
-﻿using Misa.Ui.Avalonia.Features.Tasks.Page;
+﻿using CommunityToolkit.Mvvm.Input;
+using Misa.Ui.Avalonia.Features.Tasks.Add;
+using Misa.Ui.Avalonia.Features.Tasks.Page;
 using Misa.Ui.Avalonia.Presentation.Mapping;
 
 namespace Misa.Ui.Avalonia.Features.Tasks.Navigation;
 
-public class NavigationViewModel : ViewModelBase
+public partial class NavigationViewModel(PageViewModel vm) : ViewModelBase
 {
-    public PageViewModel MainViewModel { get; }
+    private PageViewModel Parent { get; } = vm;
 
-    public NavigationViewModel(PageViewModel vm)
-    {
-        MainViewModel = vm;
-    }
+    [RelayCommand]
+    private void ShowAddItemForm() => Parent.CurrentInfoModel = new AddTaskViewModel(Parent);
 }

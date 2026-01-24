@@ -20,15 +20,28 @@ public class Item : DomainEventEntity
         Priority = priority;
         Title = title ?? throw new ArgumentNullException(nameof(title));
     }
+
+    public Item(Entity entity, string title, Priority priority, ItemStates state)
+    {
+        Entity = entity;
+        Title = title;
+        Priority = priority;
+        StateId = (int)state;
+    }
+    public static Item Create(Workflow workflow, string title, Priority priority)
+    {
+        var entity = Entity.Create(workflow);
+        return new Item(entity, title, priority, ItemStates.Draft);
+    }
     // Member
-    public Guid Id { get; set; }
+    public Guid Id { get; init; }
     public int StateId { get; private set; }
     public Priority Priority { get; private set; }
     public string Title { get; private set; }
     
     // Modelle
     public Entity Entity { get; set; }
-    public State State { get; private set; }
+    public State? State { get; private set; }
     
     public ICollection<Session> Sessions { get; set; } = new List<Session>();
      public bool HasActiveSession 

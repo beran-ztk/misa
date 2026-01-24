@@ -43,15 +43,25 @@
                     
                 </StackPanel>
 
-                <!-- Priority -->
+                <!-- Category -->
                 <TextBlock Grid.Row="1" Grid.Column="0"
                            Classes="misa-label"
-                           Text="Priority" />
+                           Text="Category" />
 
                 <ComboBox Grid.Row="1" Grid.Column="1"
                           Classes="misa-input"
+                          ItemsSource="{Binding Categories}"
+                          SelectedValue="{Binding SelectedCategoryContract}"/>
+                
+                <!-- Priority -->
+                <TextBlock Grid.Row="2" Grid.Column="0"
+                           Classes="misa-label"
+                           Text="Priority" />
+
+                <ComboBox Grid.Row="2" Grid.Column="1"
+                          Classes="misa-input"
                           ItemsSource="{Binding Priorities}"
-                          SelectedValue="{Binding SelectedPriority}"/>
+                          SelectedValue="{Binding SelectedPriorityContract}"/>
             </Grid>
 
             <!-- Footer / Actions -->

@@ -5,7 +5,7 @@ using Misa.Contract.Common.Results;
 using Misa.Contract.Features.Entities.Extensions.Items.Features.Deadlines;
 using Wolverine;
 
-namespace Misa.Api.Endpoints.Scheduling;
+namespace Misa.Api.Endpoints.Features.Entities.Extensions.Items.Features;
 public static class DeadlineEndpoints
 {
     public static void Map(WebApplication app)
