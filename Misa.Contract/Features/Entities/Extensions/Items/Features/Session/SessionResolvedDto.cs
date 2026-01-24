@@ -5,8 +5,8 @@ public class SessionResolvedDto
     public Guid Id { get; set; }
     public Guid EntityId { get; set; }
     public string State { get; set; } = string.Empty;
-    public string Efficiency { get; set; } = string.Empty;
-    public string Concentration { get; set; } = string.Empty;
+    public EfficiencyContract Efficiency { get; set; }
+    public ConcentrationContract Concentration { get; set; }
 
     public string? Objective { get; set; }
     public string? Summary { get; set; }

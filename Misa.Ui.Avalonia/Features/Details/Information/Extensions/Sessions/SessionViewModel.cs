@@ -194,13 +194,13 @@ public partial class SessionViewModel(InformationViewModel parent) : ViewModelBa
     [ObservableProperty] private bool _isStopSessionFormOpen;
     
     [ObservableProperty] private string? _summary;
-    [ObservableProperty] private int? _efficiencyId; 
-    [ObservableProperty] private int? _concentrationId;
+    [ObservableProperty] private EfficiencyContract _selectedEfficiency; 
+    [ObservableProperty] private ConcentrationContract _selectedConcentration;
+    public IReadOnlyList<EfficiencyContract> Efficiencies { get; } = Enum.GetValues<EfficiencyContract>();
+    public IReadOnlyList<ConcentrationContract> Concentrations { get; } = Enum.GetValues<ConcentrationContract>();
     private void ResetStopSessionContext()
     {
         Summary = null;
-        EfficiencyId = null;
-        ConcentrationId = null;
     }
     [RelayCommand]
     private void ShowStopSessionForm()
@@ -221,8 +221,8 @@ public partial class SessionViewModel(InformationViewModel parent) : ViewModelBa
         {
             var dto = new StopSessionDto(
                 Parent.Parent.Item.Id,
-                EfficiencyId,
-                ConcentrationId,
+                SelectedEfficiency,
+                SelectedConcentration,
                 Summary
             );
 

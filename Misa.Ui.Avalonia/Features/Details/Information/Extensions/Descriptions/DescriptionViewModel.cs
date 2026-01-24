@@ -19,9 +19,9 @@ public partial class DescriptionViewModel(InformationViewModel parent) : ViewMod
     public void Load()
     {
         Descriptions.Clear();
-        // Parent.Parent.Descriptions
-        //     .ToList()
-        //     .ForEach(d => Descriptions.Add(d));
+        Parent.Parent.Item.Entity.Descriptions
+            .ToList()
+            .ForEach(d => Descriptions.Add(d));
     }
     public ObservableCollection<DescriptionDto> Descriptions { get; } = [];
     [ObservableProperty] private string _description = string.Empty;

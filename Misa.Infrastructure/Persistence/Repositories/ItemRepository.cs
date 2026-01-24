@@ -64,9 +64,6 @@ public class ItemRepository(DefaultContext db) : IItemRepository
                 s.ItemId == id
                 && s.State == SessionState.Ended) 
             .Include(s => s.Segments)
-            .Include(s => s.State)
-            .Include(s => s.Efficiency)
-            .Include(s => s.Concentration)
             .OrderByDescending(s => s.CreatedAtUtc)
             .FirstOrDefaultAsync(ct);
     }
@@ -79,9 +76,6 @@ public class ItemRepository(DefaultContext db) : IItemRepository
                 && (s.State == SessionState.Running
                 || s.State == SessionState.Paused)) 
             .Include(s => s.Segments)
-            .Include(s => s.State)
-            .Include(s => s.Efficiency)
-            .Include(s => s.Concentration)
             .OrderByDescending(s => s.CreatedAtUtc)
             .FirstOrDefaultAsync(ct);
     }

@@ -2,7 +2,7 @@
 
 public record StopSessionDto(
     Guid ItemId,
-    int? EfficiencyId,
-    int? ConcentrationId,
+    EfficiencyContract Efficiency,
+    ConcentrationContract Concentration,
     string? Summary
 );

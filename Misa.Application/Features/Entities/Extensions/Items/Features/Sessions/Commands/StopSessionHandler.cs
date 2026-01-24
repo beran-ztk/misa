@@ -1,13 +1,15 @@
 ﻿using Misa.Application.Common.Abstractions.Persistence;
+using Misa.Application.Common.Mappings;
 using Misa.Contract.Common.Results;
+using Misa.Contract.Features.Entities.Extensions.Items.Features.Session;
 using Misa.Domain.Features.Entities.Extensions.Items.Base;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions;
 
 namespace Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Commands;
 public record StopSessionCommand(
     Guid ItemId,
-    int? EfficiencyId,
-    int? ConcentrationId,
+    EfficiencyContract Efficiency,
+    ConcentrationContract Concentration,
     string? Summary
 );
 
@@ -40,8 +42,8 @@ public class StopSessionHandler(IItemRepository repository)
 
         session.Stop(
             DateTimeOffset.UtcNow,
-            SessionEfficiencyType.None,
-            SessionConcentrationType.None,
+            command.Efficiency.MapToDomain(),
+            command.Concentration.MapToDomain(),
             command.Summary
         );
 

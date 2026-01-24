@@ -19,13 +19,13 @@ public partial class InformationViewModel : ViewModelBase
 {
     public DetailPageViewModel Parent { get; }
     public DescriptionViewModel Description { get; }
-    public SessionViewModel? Session { get; }
+    public SessionViewModel Session { get; }
 
     public InformationViewModel(DetailPageViewModel parent)
     {
         Parent = parent;
         Description = new DescriptionViewModel(this);
-        // Session = new SessionViewModel(this);
+        Session = new SessionViewModel(this);
         
         Parent.WhenAnyValue(x => x.Extension)
             .Subscribe(_ =>

@@ -1,4 +1,5 @@
-﻿using Misa.Contract.Features.Entities.Base;
+﻿using Misa.Application.Features.Entities.Extensions.Items.Base.Mappings;
+using Misa.Contract.Features.Entities.Base;
 using Misa.Domain.Features.Entities.Base;
 
 namespace Misa.Application.Common.Mappings;
@@ -18,7 +19,8 @@ public static class EntityMappings
             UpdatedAt = entity.UpdatedAt,
             DeletedAt = entity.DeletedAt,
             ArchivedAt = entity.ArchivedAt,
-            InteractedAt = entity.InteractedAt
+            InteractedAt = entity.InteractedAt,
+            Descriptions = entity.Descriptions.ToDto()
         };
     }
 }

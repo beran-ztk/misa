@@ -64,8 +64,8 @@ public partial class DetailPageViewModel : ViewModelBase, IDisposable
             Item = result.Value.Item;
             Extension = _extensionFactory.Create(result.Value);
 
-            // await InformationViewModel.Description.LoadAsync(ct);
-            // await InformationViewModel.Session.LoadCurrentSessionAsync(ct);
+            InformationViewModel.Description.Load();
+            await InformationViewModel.Session.LoadCurrentSessionAsync();
         }
         catch (OperationCanceledException)
         {
