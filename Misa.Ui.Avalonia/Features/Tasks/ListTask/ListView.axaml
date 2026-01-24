@@ -50,19 +50,19 @@
                     
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Title"
-                                            Binding="{Binding Title}"
+                                            Binding="{Binding Item.Title}"
                                             Width="*" />
 
                         <DataGridTextColumn Header="State"
-                                            Binding="{Binding StateName}"
+                                            Binding="{Binding Item.StateId}"
                                             Width="150" />
 
                         <DataGridTextColumn Header="Priority"
-                                            Binding="{Binding PriorityName}"
+                                            Binding="{Binding Item.Priority}"
                                             Width="150" />
                         
                         <DataGridTextColumn Header="Category"
-                                            Binding="{Binding CategoryName}"
+                                            Binding="{Binding Category}"
                                             Width="150" />
                     </DataGrid.Columns>
 

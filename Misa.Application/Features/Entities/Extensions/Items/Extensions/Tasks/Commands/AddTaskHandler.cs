@@ -1,5 +1,5 @@
 ﻿using Misa.Application.Common.Abstractions.Persistence;
-using Misa.Application.Features.Entities.Extensions.Items.Mappings;
+using Misa.Application.Common.Mappings;
 using Misa.Contract.Common.Results;
 using Misa.Contract.Features.Entities.Extensions.Items.Base;
 using Misa.Contract.Features.Entities.Extensions.Items.Extensions.Tasks;

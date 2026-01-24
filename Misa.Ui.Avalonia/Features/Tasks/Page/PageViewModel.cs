@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Features.Entities.Extensions.Items.Base;
+using Misa.Contract.Features.Entities.Extensions.Items.Extensions.Tasks;
 using Misa.Ui.Avalonia.Features.Details.Page;
 using Misa.Ui.Avalonia.Features.Tasks.Add;
 using Misa.Ui.Avalonia.Features.Tasks.ListTask;
@@ -20,9 +21,9 @@ public partial class PageViewModel : ViewModelBase, IEntityDetailHost
 
     public INavigationService NavigationService { get; }
 
-    [ObservableProperty] private ListTaskDto? _selectedTask;
+    [ObservableProperty] private TaskDto? _selectedTask;
 
-    partial void OnSelectedTaskChanged(ListTaskDto? value)
+    partial void OnSelectedTaskChanged(TaskDto? value)
     {
         DetailViewModel ??= new DetailPageViewModel(this);
         ActiveEntityId = value?.Id ?? Guid.Empty;
@@ -32,7 +33,7 @@ public partial class PageViewModel : ViewModelBase, IEntityDetailHost
     private DetailPageViewModel? DetailViewModel { get; set; }
     public ListViewModel Model { get; }
     public NavigationViewModel Navigation { get; }
-    public ObservableCollection<ListTaskDto> Tasks { get; } = [];
+    public ObservableCollection<TaskDto> Tasks { get; } = [];
 
     [ObservableProperty] private string? _pageError;
 

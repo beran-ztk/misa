@@ -3,8 +3,8 @@
 namespace Misa.Contract.Features.Entities.Extensions.Items.Extensions.Tasks;
 public class TaskDto
 {
-    public Guid Id { get; set; }
-    public TaskCategoryContract CategoryContract { get; set; }
+    public required Guid Id { get; init; }
+    public required TaskCategoryContract Category { get; init; }
     
-    public ItemDto Item { get; set; }
+    public required ItemDto Item { get; init; }
 }

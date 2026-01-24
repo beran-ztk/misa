@@ -4,10 +4,10 @@ namespace Misa.Contract.Features.Entities.Extensions.Items.Base;
 
 public class ItemDto
 {
-    public Guid Id { get; set; }
-    public int StateId { get; set; }
-    public PriorityContract PriorityContract { get; set; }
-    public string Title { get; set; } = string.Empty;
+    public required Guid Id { get; init; }
+    public required int StateId { get; init; }
+    public required  PriorityContract Priority { get; init; }
+    public required string Title { get; init; }
     
-    public EntityDto Entity { get; set; }
+    public required EntityDto Entity { get; init; }
 }
