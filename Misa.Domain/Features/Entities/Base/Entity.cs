@@ -15,7 +15,11 @@ public class Entity
         CreatedAt = DateTimeOffset.UtcNow;
         InteractedAt = DateTimeOffset.UtcNow;
     }
-    
+
+    public static Entity Create(Workflow workflow)
+    {
+        return new Entity(workflow);
+    }
     public Guid Id { get; init; }
     public Workflow Workflow { get; init; }
     public bool IsDeleted { get; set; }

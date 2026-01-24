@@ -1,7 +1,7 @@
 ﻿using Misa.Application.Features.Entities.Extensions.Items.Features.Scheduling.Commands;
 using Wolverine;
 
-namespace Misa.Api.Endpoints.Scheduling;
+namespace Misa.Api.Endpoints.Features.Entities.Extensions.Items.Features;
 
 public static class SchedulingEndpoints
 {

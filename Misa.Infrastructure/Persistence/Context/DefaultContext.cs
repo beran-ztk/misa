@@ -7,6 +7,7 @@ using Misa.Domain.Features.Entities.Extensions.Items.Features.Deadlines;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions;
 using Misa.Domain.Features.Entities.Features.Descriptions;
+using Task = Misa.Domain.Features.Entities.Extensions.Items.Extensions.Tasks.Task;
 
 namespace Misa.Infrastructure.Persistence.Context;
 
@@ -14,6 +15,7 @@ public class DefaultContext(DbContextOptions<DefaultContext> options) : DbContex
 {
     public DbSet<Entity> Entities { get; set; } = null!;
     public DbSet<Item> Items { get; set; } = null!;
+    public DbSet<Task> Tasks { get; set; } = null!;
     public DbSet<State> States { get; set; } = null!;
     public DbSet<Description> Descriptions { get; set; } = null!;
     

@@ -7,7 +7,7 @@ using Misa.Contract.Features.Entities.Extensions.Items.Base;
 using Misa.Contract.Features.Entities.Extensions.Items.Features.Session;
 using Wolverine;
 
-namespace Misa.Api.Endpoints.Items;
+namespace Misa.Api.Endpoints.Features.Entities.Extensions.Items.Base;
 
 public static class ItemDetailEndpoints
 {

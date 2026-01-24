@@ -1,6 +1,6 @@
 ﻿namespace Misa.Contract.Features.Entities.Extensions.Items.Base;
 
-public enum Priority
+public enum PriorityContract
 {
     None,
     Low,

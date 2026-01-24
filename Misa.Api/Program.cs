@@ -1,12 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using Misa.Api.Common.Exceptions;
-using Misa.Api.Endpoints.Entities;
-using Misa.Api.Endpoints.Items;
-using Misa.Api.Endpoints.Scheduling;
+using Misa.Api.Endpoints.Features.Entities.Extensions.Items.Base;
+using Misa.Api.Endpoints.Features.Entities.Extensions.Items.Extensions;
+using Misa.Api.Endpoints.Features.Entities.Extensions.Items.Features;
+using Misa.Api.Endpoints.Features.Entities.Features;
 using Misa.Api.Services.Features.Items.Features.Sessions;
 using Misa.Application.Common.Abstractions.Persistence;
 using Misa.Application.Features.Entities.Extensions.Items.Base.Queries;
-using Misa.Application.Features.Entities.Extensions.Items.Extensions.Tasks.Queries;
+using Misa.Application.Features.Entities.Extensions.Items.Extensions.Tasks.Commands;
 using Misa.Application.Features.Entities.Extensions.Items.Features.Deadlines.Commands;
 using Misa.Application.Features.Entities.Extensions.Items.Features.Scheduling.Commands;
 using Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Commands;
@@ -14,6 +15,7 @@ using Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Quer
 using Misa.Application.Features.Entities.Features.Descriptions.Commands;
 using Misa.Domain.Features.Audit;
 using Misa.Domain.Features.Entities.Base;
+using Misa.Domain.Features.Entities.Extensions.Items.Extensions.Tasks;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions;
 using Misa.Infrastructure.Persistence.Context;
@@ -39,6 +41,7 @@ builder.Services.AddDbContext<DefaultContext>(options =>
             npgsql.MapEnum<SessionState>("session_state");
             npgsql.MapEnum<SessionEfficiencyType>("session_efficiency_type");
             npgsql.MapEnum<SessionConcentrationType>("session_concentration_type");
+            npgsql.MapEnum<TaskCategory>("task_category");
         }
     ));
 
@@ -54,7 +57,6 @@ builder.Host.UseWolverine(opts =>
 {
     opts.Discovery.IncludeAssembly(typeof(RemoveItemDeadlineHandler).Assembly);
     opts.Discovery.IncludeAssembly(typeof(UpsertItemDeadlineHandler).Assembly);
-    opts.Discovery.IncludeAssembly(typeof(GetTasksHandler).Assembly);
     opts.Discovery.IncludeAssembly(typeof(AddDescriptionHandler).Assembly);
     opts.Discovery.IncludeAssembly(typeof(GetItemDetailsHandler).Assembly);
     opts.Discovery.IncludeAssembly(typeof(GetCurrentSessionDetailsHandler).Assembly);
@@ -66,6 +68,7 @@ builder.Host.UseWolverine(opts =>
     opts.Discovery.IncludeAssembly(typeof(PauseExpiredSessionsHandler).Assembly);
     
     opts.Discovery.IncludeAssembly(typeof(AddScheduleHandler).Assembly);
+    opts.Discovery.IncludeAssembly(typeof(AddTaskHandler).Assembly);
 });
 
 // build app
