@@ -90,8 +90,8 @@ public static class ItemDetailEndpoints
     {
         var cmd = new StopSessionCommand(
             dto.ItemId,
-            dto.EfficiencyId,
-            dto.ConcentrationId,
+            dto.Efficiency,
+            dto.Concentration,
             dto.Summary
         );
 

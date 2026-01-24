@@ -1,4 +1,5 @@
-﻿using Misa.Contract.Features.Entities.Extensions.Items.Features.Session;
+﻿using Misa.Application.Common.Mappings;
+using Misa.Contract.Features.Entities.Extensions.Items.Features.Session;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions;
 
 namespace Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Mappings;
@@ -12,8 +13,8 @@ public static class SessionMapper
             EntityId = x.ItemId,
         
             State = x.State.ToString(),
-            Efficiency = nameof(x.Efficiency),
-            Concentration = nameof(x.Concentration),
+            Efficiency = x.Efficiency.MapToDto(),
+            Concentration = x.Concentration.MapToDto(),
         
             Objective = x.Objective,
             Summary = x.Summary,

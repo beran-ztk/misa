@@ -7,19 +7,18 @@
              xmlns:descriptions="clr-namespace:Misa.Ui.Avalonia.Features.Details.Information.Extensions.Descriptions"
              x:DataType="descriptions:DescriptionViewModel">
     
-        <Border Padding="12"
-            Margin="10"
-            CornerRadius="10"
-            BorderThickness="1"
-            BorderBrush="{StaticResource BrushBorder}"
-            Background="{StaticResource BrushPrimaryBackgroundLighter}"
-            IsVisible="{Binding Parent.Parent.Item}">
+    <Border Padding="12"
+        Margin="10"
+        CornerRadius="10"
+        BorderThickness="1"
+        BorderBrush="{StaticResource BrushBorder}"
+        Background="{StaticResource BrushPrimaryBackgroundLighter}">
     
         <StackPanel Spacing="12">
-            <!-- <TextBlock Text="{Binding Parent.Parent.DetailedItem.Descriptions.Count, StringFormat='Descriptions ({0})'}" -->
-            <!--            FontSize="16" -->
-            <!--            FontWeight="SemiBold" -->
-            <!--            Margin="10"/> -->
+            <TextBlock Text="{Binding Descriptions.Count, StringFormat='Descriptions ({0})'}"
+                       FontSize="16"
+                       FontWeight="SemiBold"
+                       Margin="10"/>
     
             <ItemsControl ItemsSource="{Binding Descriptions}">
                 <ItemsControl.ItemTemplate>

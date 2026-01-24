@@ -312,11 +312,15 @@
 
                     <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="Efficiency" />
                     <ComboBox Grid.Row="0" Grid.Column="1"
-                              Classes="misa-input"/>
+                              Classes="misa-input"
+                              ItemsSource="{Binding Efficiencies}"
+                              SelectedItem="{Binding SelectedEfficiency}"/>
 
                     <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Text="Concentration" />
                     <ComboBox Grid.Row="1" Grid.Column="1"
-                              Classes="misa-input" />
+                              Classes="misa-input"
+                              ItemsSource="{Binding Concentrations}"
+                              SelectedItem="{Binding SelectedConcentration}"/>
 
                     <TextBlock Grid.Row="2" Grid.Column="0" VerticalAlignment="Top" Text="Summary" />
                     <StackPanel Grid.Row="2" Grid.Column="1" Spacing="8">

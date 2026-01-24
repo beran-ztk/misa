@@ -14,7 +14,7 @@ public class EntityDto
     public required DateTimeOffset? DeletedAt { get; init; }
     public required DateTimeOffset? ArchivedAt { get; init; }
     public required DateTimeOffset? InteractedAt { get; init; }
-    
+    public ICollection<DescriptionDto> Descriptions { get; init; }
     public static EntityDto Empty() => new()
     {
         Id = Guid.Empty,
