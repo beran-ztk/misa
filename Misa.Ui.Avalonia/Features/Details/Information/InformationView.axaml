@@ -281,7 +281,7 @@
                       RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" 
                       RowSpacing="6">
                     <TextBlock Grid.Row="0" Grid.Column="0" Text="Id" Opacity="0.7"/>
-                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Parent.ItemOverview.Item.Id}"/>
+                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Parent.DetailedItem.Item.Id}"/>
                     <Button Grid.Row="0" Grid.Column="2" 
                             Classes="misa-action"
                             ToolTip.Tip="Copy"
@@ -299,7 +299,7 @@
 
                         <!-- Display mode -->
                         <TextBlock Grid.Row="0" Grid.Column="0"
-                                   Text="{Binding Parent.ItemOverview.Item.Title}"
+                                   Text="{Binding Parent.DetailedItem.Item.Title}"
                                    TextWrapping="Wrap"
                                    IsVisible="{Binding !IsEditTitleFormOpen}"/>
 
@@ -341,14 +341,14 @@
 
                     <TextBlock Grid.Row="2" Grid.Column="0" Text="Created" Opacity="0.7"/>
                     <TextBlock Grid.Row="2" Grid.Column="1"
-                               Text="{Binding Parent.ItemOverview.Entity.CreatedAt, StringFormat={}{0:yyyy-MM-dd HH:mm}}"/>
+                               Text="{Binding Parent.DetailedItem.Entity.CreatedAt, StringFormat={}{0:yyyy-MM-dd HH:mm}}"/>
 
                     <TextBlock Grid.Row="3" Grid.Column="0" Text="Updated" Opacity="0.7"/>
                     <TextBlock Grid.Row="3" Grid.Column="1"
-                               Text="{Binding Parent.ItemOverview.Entity.UpdatedAt, StringFormat={}{0:yyyy-MM-dd HH:mm}}"/>
+                               Text="{Binding Parent.DetailedItem.Entity.UpdatedAt, StringFormat={}{0:yyyy-MM-dd HH:mm}}"/>
                     <TextBlock Grid.Row="4" Grid.Column="0" Text="Interacted" Opacity="0.7"/>
                     <TextBlock Grid.Row="4" Grid.Column="1"
-                               Text="{Binding Parent.ItemOverview.Entity.InteractedAt, StringFormat={}{0:yyyy-MM-dd HH:mm}}"/>
+                               Text="{Binding Parent.DetailedItem.Entity.InteractedAt, StringFormat={}{0:yyyy-MM-dd HH:mm}}"/>
                 </Grid>
 
 
@@ -359,7 +359,7 @@
                     <Border Classes="misa-detail-information-item">
                         <StackPanel Spacing="6">
                             <TextBlock Text="Workflow" Opacity="0.7" FontSize="12"/>
-                            <TextBlock Text="{Binding Parent.ItemOverview.Entity.Workflow}" FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding Parent.DetailedItem.Entity.Workflow}" FontWeight="SemiBold"/>
                         </StackPanel>
                     </Border>
 
@@ -369,9 +369,9 @@
                             <!-- Content -->
                             <StackPanel Spacing="6">
                                 <TextBlock Text="State" Opacity="0.7" FontSize="12"/>
-                                <TextBlock Text="{Binding Parent.ItemOverview.Item.State.Name}"
+                                <TextBlock Text="{Binding Parent.DetailedItem.Item.State.Name}"
                                            FontWeight="SemiBold"/>
-                                <TextBlock Text="{Binding Parent.ItemOverview.Item.State.Synopsis}"
+                                <TextBlock Text="{Binding Parent.DetailedItem.Item.State.Synopsis}"
                                            TextWrapping="Wrap"
                                            Opacity="0.85"/>
                             </StackPanel>
@@ -397,7 +397,7 @@
                             
                                 <StackPanel Spacing="10">
                             
-                                    <TextBlock Text="{Binding Parent.ItemOverview.Item.State.Name, StringFormat='Edit State → {0}'}"
+                                    <TextBlock Text="{Binding Parent.DetailedItem.Item.State.Name, StringFormat='Edit State → {0}'}"
                                                FontWeight="SemiBold"/>
                             
                                     <ComboBox Classes="misa-input"
@@ -428,7 +428,7 @@
                     <Border Classes="misa-detail-information-item">
                         <StackPanel Spacing="6">
                             <TextBlock Text="Priority" Opacity="0.7" FontSize="12"/>
-                            <TextBlock Text="{Binding Parent.ItemOverview.Item.Priority}" FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding Parent.DetailedItem.Item.Priority}" FontWeight="SemiBold"/>
                         </StackPanel>
                     </Border>
 

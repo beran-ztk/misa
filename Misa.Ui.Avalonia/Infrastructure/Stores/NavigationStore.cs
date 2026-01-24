@@ -4,14 +4,9 @@ using Misa.Ui.Avalonia.Presentation.Mapping;
 
 namespace Misa.Ui.Avalonia.Infrastructure.Stores;
 
-public partial class NavigationStore : ObservableObject
+public partial class NavigationStore(HttpClient httpClient) : ObservableObject
 {
-    public NavigationStore(HttpClient httpClient)
-    {
-        MisaHttpClient = httpClient;
-    }
-
-    public HttpClient MisaHttpClient { get; set; }
+    public HttpClient MisaHttpClient { get; set; } = httpClient;
     private ViewModelBase? _currentViewModel;
     private ViewModelBase? _currentInfoViewModel;
 

@@ -29,7 +29,7 @@ public partial class InformationViewModel : ViewModelBase
     [RelayCommand]
     private void CopyId()
     {
-        Parent.EntityDetailHost.NavigationService.ClipboardService.SetTextAsync(Parent.ItemOverview.Item.Id.ToString());
+        Parent.EntityDetailHost.NavigationService.ClipboardService.SetTextAsync(Parent.DetailedItem.Item.Id.ToString());
     }
     
     // Edit State
@@ -59,7 +59,7 @@ public partial class InformationViewModel : ViewModelBase
     [RelayCommand]
     private async Task SaveEditState()
     {
-        var currentId = Parent.ItemOverview.Item.State.Id;
+        var currentId = Parent.DetailedItem.Item.State.Id;
         var selectedId = StateId;
 
         if (currentId == selectedId)
@@ -68,7 +68,7 @@ public partial class InformationViewModel : ViewModelBase
             return;
         }
 
-        var currentEntityId = Parent.ItemOverview.Item.Id;
+        var currentEntityId = Parent.DetailedItem.Item.Id;
 
         UpdateItemDto itemDto = new()
         {
@@ -90,7 +90,7 @@ public partial class InformationViewModel : ViewModelBase
         try
         {
             var states = await Parent.EntityDetailHost.NavigationService.NavigationStore
-                .MisaHttpClient.GetFromJsonAsync<List<StateDto>>(requestUri: $"Lookups/UserSettableStates?stateId={Parent.ItemOverview.Item.Id}");
+                .MisaHttpClient.GetFromJsonAsync<List<StateDto>>(requestUri: $"Lookups/UserSettableStates?stateId={Parent.DetailedItem.Item.Id}");
 
             if (states == null)
                 return;
@@ -108,7 +108,7 @@ public partial class InformationViewModel : ViewModelBase
     [RelayCommand]
     private void ShowEditTitleForm()
     {
-        Title = Parent.ItemOverview.Item.Title;
+        Title = Parent.DetailedItem.Item.Title;
         IsEditTitleFormOpen = true;
     }
     [RelayCommand]
@@ -119,8 +119,8 @@ public partial class InformationViewModel : ViewModelBase
     {
         var dto = new UpdateItemDto
         {
-            EntityId = Parent.ItemOverview.Item.Id,
-            Title = Title == Parent.ItemOverview.Item.Title
+            EntityId = Parent.DetailedItem.Item.Id,
+            Title = Title == Parent.DetailedItem.Item.Title
                 ? null 
                 : Title
         };
@@ -150,7 +150,7 @@ public partial class InformationViewModel : ViewModelBase
     {
         try
         {
-            var id = Parent.ItemOverview.Item.Id;
+            var id = Parent.DetailedItem.Item.Id;
             await Parent.EntityDetailHost.NavigationService.NavigationStore
                 .MisaHttpClient.PatchAsync(requestUri: $"Entity/Delete?entityId={id}", content: null);
             
@@ -166,7 +166,7 @@ public partial class InformationViewModel : ViewModelBase
     {
         try
         {
-            var id = Parent.ItemOverview.Item.Id;
+            var id = Parent.DetailedItem.Item.Id;
             await Parent.EntityDetailHost.NavigationService.NavigationStore
                 .MisaHttpClient.PatchAsync(requestUri: $"Entity/Archive?entityId={id}", content: null);
             

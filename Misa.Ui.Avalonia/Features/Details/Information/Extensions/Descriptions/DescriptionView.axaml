@@ -13,10 +13,10 @@
             BorderThickness="1"
             BorderBrush="{StaticResource BrushBorder}"
             Background="{StaticResource BrushPrimaryBackgroundLighter}"
-            IsVisible="{Binding Parent.Parent.ItemOverview}">
+            IsVisible="{Binding Parent.Parent.DetailedItem}">
     
         <StackPanel Spacing="12">
-            <TextBlock Text="{Binding Parent.Parent.ItemOverview.Descriptions.Count, StringFormat='Descriptions ({0})'}"
+            <TextBlock Text="{Binding Parent.Parent.DetailedItem.Descriptions.Count, StringFormat='Descriptions ({0})'}"
                        FontSize="16"
                        FontWeight="SemiBold"
                        Margin="10"/>

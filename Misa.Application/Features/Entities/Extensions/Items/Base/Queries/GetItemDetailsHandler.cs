@@ -7,16 +7,16 @@ namespace Misa.Application.Features.Entities.Extensions.Items.Base.Queries;
 public record GetItemDetailsQuery(Guid Id);
 public class GetItemDetailsHandler(IItemRepository repository)
 {
-    public async Task<Result<ItemOverviewDto>> Handle(GetItemDetailsQuery cmd, CancellationToken ct)
+    public async Task<Result<DetailedItemDto>> Handle(GetItemDetailsQuery cmd, CancellationToken ct)
     {
         var details = await repository.TryGetItemDetailsAsync(cmd.Id, ct);
 
         if (details == null)
-            return Result<ItemOverviewDto>.NotFound("Item-Details", "Details not found.");
+            return Result<DetailedItemDto>.NotFound("Item-Details", "Details not found.");
         
         var result = details.ToOverviewDto();
 
-        return Result<ItemOverviewDto>
+        return Result<DetailedItemDto>
             .Ok(result);
     }
 }

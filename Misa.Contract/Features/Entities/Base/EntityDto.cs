@@ -1,4 +1,6 @@
-﻿namespace Misa.Contract.Features.Entities.Base;
+﻿using Misa.Contract.Features.Entities.Features;
+
+namespace Misa.Contract.Features.Entities.Base;
 
 public class EntityDto
 {

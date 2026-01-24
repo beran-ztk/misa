@@ -28,7 +28,7 @@ public partial class DescriptionViewModel : ViewModelBase
     public void Load()
     {
         Descriptions.Clear();
-        Parent.Parent.ItemOverview.Descriptions
+        Parent.Parent.DetailedItem.Descriptions
             .ToList()
             .ForEach(d => Descriptions.Add(d));
     }
@@ -46,7 +46,7 @@ public partial class DescriptionViewModel : ViewModelBase
         try
         {
             var dto = new DescriptionCreateDto(
-                Parent.Parent.ItemOverview.Item.Id,
+                Parent.Parent.DetailedItem.Item.Id,
                 Description.Trim()
             );
 

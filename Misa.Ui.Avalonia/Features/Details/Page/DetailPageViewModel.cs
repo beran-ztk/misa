@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Net.Http;
 using System.Net.Http.Json;
-using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,16 +13,15 @@ using ReactiveUI;
 
 namespace Misa.Ui.Avalonia.Features.Details.Page;
 
-public partial class DetailPageViewModel : ViewModelBase, IDisposable
+public partial class DetailPageViewModel : ViewModelBase
 {
     public IEntityDetailHost EntityDetailHost { get; }
 
-    [ObservableProperty] private ItemOverviewDto _itemOverview = new();
+    [ObservableProperty] private DetailedItemDto _detailedItem = new();
     [ObservableProperty] private int _selectedTabIndex;
 
     public Information.InformationViewModel InformationViewModel { get; }
 
-    private readonly CompositeDisposable _disposables = new();
     private CancellationTokenSource? _loadCts;
 
     public DetailPageViewModel(IEntityDetailHost entityDetailHost)
@@ -67,14 +65,14 @@ public partial class DetailPageViewModel : ViewModelBase, IDisposable
             response.EnsureSuccessStatusCode();
 
             var result = await response.Content
-                .ReadFromJsonAsync<Result<ItemOverviewDto>>(cancellationToken: _loadCts.Token);
+                .ReadFromJsonAsync<Result<DetailedItemDto>>(cancellationToken: _loadCts.Token);
 
             if (result?.Value is null)
             {
                 return;
             }
             
-            ItemOverview = result.Value;
+            DetailedItem = result.Value;
             InformationViewModel.Description.Load();
             await InformationViewModel.Session.LoadCurrentSessionAsync();
         }
@@ -86,12 +84,5 @@ public partial class DetailPageViewModel : ViewModelBase, IDisposable
         {
             Console.WriteLine(e);
         }
-    }
-
-    public void Dispose()
-    {
-        _loadCts?.Cancel();
-        _loadCts?.Dispose();
-        _disposables.Dispose();
     }
 }

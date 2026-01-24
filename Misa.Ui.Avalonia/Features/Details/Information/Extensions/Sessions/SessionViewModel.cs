@@ -30,7 +30,7 @@ public partial class SessionViewModel : ViewModelBase
         {
             using var request = new HttpRequestMessage(
                 HttpMethod.Get,
-                $"items/{Parent.Parent.ItemOverview.Item.Id}/overview/session");
+                $"items/{Parent.Parent.DetailedItem.Item.Id}/overview/session");
 
             var response = await Parent.Parent.EntityDetailHost.NavigationService.NavigationStore
                 .MisaHttpClient
@@ -94,7 +94,7 @@ public partial class SessionViewModel : ViewModelBase
                 : null;
             
             var dto = new StartSessionDto(
-                Parent.Parent.ItemOverview.Item.Id, 
+                Parent.Parent.DetailedItem.Item.Id, 
                 plannedDuration, 
                 Objective,
                 StopAutomatically, 
@@ -103,7 +103,7 @@ public partial class SessionViewModel : ViewModelBase
 
             using var request = new HttpRequestMessage(
                 HttpMethod.Post,
-                $"items/{Parent.Parent.ItemOverview.Item.Id}/sessions/start");
+                $"items/{Parent.Parent.DetailedItem.Item.Id}/sessions/start");
             request.Content = JsonContent.Create(dto);
             
             var response = await Parent.Parent.EntityDetailHost.NavigationService.NavigationStore
@@ -147,13 +147,13 @@ public partial class SessionViewModel : ViewModelBase
         try
         {
             var dto = new PauseSessionDto(
-                Parent.Parent.ItemOverview.Item.Id,
+                Parent.Parent.DetailedItem.Item.Id,
                 PauseReason
             );
 
             using var request = new HttpRequestMessage(
                 HttpMethod.Post,
-                $"items/{Parent.Parent.ItemOverview.Item.Id}/sessions/pause");
+                $"items/{Parent.Parent.DetailedItem.Item.Id}/sessions/pause");
             request.Content = JsonContent.Create(dto);
 
             var response = await Parent.Parent.EntityDetailHost.NavigationService.NavigationStore
@@ -179,7 +179,7 @@ public partial class SessionViewModel : ViewModelBase
         {
             using var request = new HttpRequestMessage(
                 HttpMethod.Post,
-                $"items/{Parent.Parent.ItemOverview.Item.Id}/sessions/continue");
+                $"items/{Parent.Parent.DetailedItem.Item.Id}/sessions/continue");
 
             var response = await Parent.Parent.EntityDetailHost.NavigationService.NavigationStore
                 .MisaHttpClient
@@ -225,7 +225,7 @@ public partial class SessionViewModel : ViewModelBase
         try
         {
             var dto = new StopSessionDto(
-                Parent.Parent.ItemOverview.Item.Id,
+                Parent.Parent.DetailedItem.Item.Id,
                 EfficiencyId,
                 ConcentrationId,
                 Summary
@@ -233,7 +233,7 @@ public partial class SessionViewModel : ViewModelBase
 
             using var request = new HttpRequestMessage(
                 HttpMethod.Post,
-                $"items/{Parent.Parent.ItemOverview.Item.Id}/sessions/stop");
+                $"items/{Parent.Parent.DetailedItem.Item.Id}/sessions/stop");
             request.Content = JsonContent.Create(dto);
 
             var response = await Parent.Parent.EntityDetailHost.NavigationService.NavigationStore
