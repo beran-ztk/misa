@@ -65,16 +65,28 @@
             </Grid>
 
             <!-- Footer / Actions -->
-            <StackPanel Grid.Row="2"
-                        Orientation="Horizontal"
-                        HorizontalAlignment="Right"
-                        Margin="0,8,0,0">
-                <Button Classes="misa-primary"
-                        Content="Cancel"/>
-                <Button Classes="misa-primary"
-                        Content="Add"
-                        Command="{Binding AddTaskCommand}" />
-            </StackPanel>
+            <Grid Grid.Row="2"
+                  Margin="0,8,0,0"
+                  ColumnDefinitions="Auto,*,Auto,Auto"
+                  VerticalAlignment="Center">
+
+                <CheckBox Grid.Column="0"
+                          Content="Create more"
+                          IsChecked="{Binding CreateMore, Mode=TwoWay}"
+                          VerticalAlignment="Center" />
+
+                <StackPanel Grid.Column="2"
+                            Orientation="Horizontal"
+                            Spacing="8"
+                            HorizontalAlignment="Right">
+                    <Button Classes="misa-primary"
+                            Content="Cancel" />
+                    <Button Classes="misa-primary"
+                            Content="Add"
+                            Command="{Binding AddTaskCommand}" />
+                </StackPanel>
+            </Grid>
+            
         </Grid>
     </Border>
 
