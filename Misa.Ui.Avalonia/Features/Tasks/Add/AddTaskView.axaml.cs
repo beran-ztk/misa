@@ -1,16 +1,15 @@
 ﻿using Avalonia.Controls;
 
-namespace Misa.Ui.Avalonia.Features.Tasks.Create;
-
-public partial class CreateView : UserControl
+namespace Misa.Ui.Avalonia.Features.Tasks.Add;
+public partial class AddTaskView : UserControl
 {
-    public CreateView()
+    public AddTaskView()
     {
         InitializeComponent();
     }
     public void TitleTextChangedEvent(object sender, TextChangedEventArgs e)
     {
-        if (DataContext is not CreateViewModel viewModel) return;
+        if (DataContext is not AddTaskViewModel viewModel) return;
 
         if (string.IsNullOrEmpty(viewModel.Title)) return;
         viewModel.TitleHasValidationError = false;

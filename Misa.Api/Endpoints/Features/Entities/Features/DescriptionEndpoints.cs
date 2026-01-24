@@ -4,7 +4,7 @@ using Misa.Contract.Common.Results;
 using Misa.Contract.Features.Entities.Features;
 using Wolverine;
 
-namespace Misa.Api.Endpoints.Entities;
+namespace Misa.Api.Endpoints.Features.Entities.Features;
 
 public static class DescriptionEndpoints
 {

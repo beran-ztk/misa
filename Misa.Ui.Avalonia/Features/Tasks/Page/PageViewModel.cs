@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Features.Entities.Extensions.Items.Base;
 using Misa.Ui.Avalonia.Features.Details.Page;
+using Misa.Ui.Avalonia.Features.Tasks.Add;
 using Misa.Ui.Avalonia.Features.Tasks.ListTask;
 using Misa.Ui.Avalonia.Infrastructure.Services.Interfaces;
 using Misa.Ui.Avalonia.Infrastructure.Services.Navigation;
@@ -12,7 +14,7 @@ using NavigationViewModel = Misa.Ui.Avalonia.Features.Tasks.Navigation.Navigatio
 
 namespace Misa.Ui.Avalonia.Features.Tasks.Page;
 
-public partial class PageViewModel : ViewModelBase, IEntityDetailHost, IDisposable
+public partial class PageViewModel : ViewModelBase, IEntityDetailHost
 {
     [ObservableProperty] private Guid _activeEntityId = Guid.Empty;
 
@@ -28,19 +30,11 @@ public partial class PageViewModel : ViewModelBase, IEntityDetailHost, IDisposab
 
     private ViewModelBase? _currentInfoModel;
     private DetailPageViewModel? DetailViewModel { get; set; }
-
     public ListViewModel Model { get; }
     public NavigationViewModel Navigation { get; }
     public ObservableCollection<ListTaskDto> Tasks { get; } = [];
 
     [ObservableProperty] private string? _pageError;
-
-
-    private readonly IDisposable _subOpenCreate;
-    private readonly IDisposable _subCloseRight;
-    private readonly IDisposable _subReload;
-    private readonly IDisposable _subCreated;
-    private readonly IDisposable _subCreateFailed;
 
     public PageViewModel(INavigationService navigationService)
     {
@@ -61,16 +55,6 @@ public partial class PageViewModel : ViewModelBase, IEntityDetailHost, IDisposab
         set => SetProperty(ref _currentInfoModel, value);
     }
 
-    public void ShowDetails() => CurrentInfoModel = DetailViewModel;
-
-    public void Dispose()
-    {
-        _subOpenCreate.Dispose();
-        _subCloseRight.Dispose();
-        _subReload.Dispose();
-        _subCreated.Dispose();
-        _subCreateFailed.Dispose();
-
-        DetailViewModel.Dispose();
-    }
+    private void ShowDetails() => CurrentInfoModel = DetailViewModel;
+    
 }

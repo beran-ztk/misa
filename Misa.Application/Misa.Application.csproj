@@ -15,8 +15,4 @@
       <PackageReference Include="WolverineFx" Version="5.9.2" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Features\Entities\Extensions\Items\" />
-    </ItemGroup>
-
 </Project>
