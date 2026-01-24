@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Threading.Tasks;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Features.Entities.Extensions.Items.Base;
@@ -34,6 +37,21 @@ public partial class PageViewModel : ViewModelBase, IEntityDetailHost
     public ListViewModel Model { get; }
     public NavigationViewModel Navigation { get; }
     public ObservableCollection<TaskDto> Tasks { get; } = [];
+
+    public async Task AddToCollection(List<TaskDto> tasks)
+    {
+        foreach (var task in tasks)
+        {
+            await AddToCollection(task);
+        }
+    }
+    public async Task AddToCollection(TaskDto task)
+    {
+        await Dispatcher.UIThread.InvokeAsync(() => 
+        {
+            Tasks.Add(task);
+        });
+    }
 
     [ObservableProperty] private string? _pageError;
 

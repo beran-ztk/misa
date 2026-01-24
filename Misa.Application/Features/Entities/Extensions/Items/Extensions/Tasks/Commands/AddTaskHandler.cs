@@ -10,7 +10,7 @@ public record AddTaskCommand(string Title, TaskCategoryContract CategoryContract
 
 public class AddTaskHandler(IItemRepository repository)
 {
-    public async Task<Result> HandleAsync(AddTaskCommand command, CancellationToken ct)
+    public async Task<Result<TaskDto>> HandleAsync(AddTaskCommand command, CancellationToken ct)
     {
         var task = ItemTask.Create(
             command.Title, 
@@ -21,6 +21,6 @@ public class AddTaskHandler(IItemRepository repository)
         await repository.AddAsync(task, ct);
         await repository.SaveChangesAsync(ct);
         
-        return Result.Ok();
+        return Result<TaskDto>.Ok(task.ToDto());
     }
 }

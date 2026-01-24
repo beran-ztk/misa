@@ -36,15 +36,8 @@ public class ListViewModel : ViewModelBase
             var result = await response.Content
                 .ReadFromJsonAsync<Result<List<TaskDto>>>(cancellationToken: CancellationToken.None);
 
-            await Dispatcher.UIThread.InvokeAsync(() => 
-            {
-                Parent.Tasks.Clear();
-            
-                foreach (var task in result?.Value ?? [])
-                {
-                    Parent.Tasks.Add(task);   
-                }
-            });
+            Parent.Tasks.Clear();
+            await Parent.AddToCollection(result?.Value ?? []);
         }
         catch (Exception ex)
         {
