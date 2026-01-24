@@ -6,7 +6,9 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
+using Microsoft.Extensions.DependencyInjection;
 using Misa.Ui.Avalonia.App.Shell;
+using Misa.Ui.Avalonia.Features.Details.Page;
 using Misa.Ui.Avalonia.Infrastructure.Services.Interfaces;
 using Misa.Ui.Avalonia.Infrastructure.Services.Navigation;
 using Misa.Ui.Avalonia.Infrastructure.Stores;
@@ -16,6 +18,7 @@ namespace Misa.Ui.Avalonia.App;
 
 public partial class App : Application
 {
+    public static IServiceProvider Services { get; private set; } = null!;
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
@@ -23,6 +26,11 @@ public partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
+        var sc = new ServiceCollection();
+        sc.AddSingleton<IItemExtensionVmFactory, ItemExtensionVmFactory>();
+        sc.AddTransient<DetailPageViewModel>();
+        Services = sc.BuildServiceProvider();
+        
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             // Avoid duplicate validations from both Avalonia and the CommunityToolkit. 
@@ -34,7 +42,7 @@ public partial class App : Application
 
             var navigationStore = new NavigationStore(httpClient);
             
-            INavigationService navigationService = new NavigationService(navigationStore, new AvaloniaClipboardService());
+            INavigationService navigationService = new NavigationService(navigationStore, new AvaloniaClipboardService(), Services);
             
             desktop.MainWindow = new MainWindow
             {

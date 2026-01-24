@@ -13,7 +13,7 @@ public static class ItemDetailEndpoints
 {
     public static void Map(WebApplication app)
     {
-        app.MapGet("items/{itemId:guid}/overview", GetDetails);
+        app.MapGet("items/{itemId:guid}/details", GetDetails);
         app.MapGet("items/{itemId:guid}/overview/session", GetCurrentSessionDetails);
         app.MapPost("items/{itemId:guid}/sessions/start", StartSession);
         app.MapPost("items/{itemId:guid}/sessions/pause", PauseSession);
@@ -21,15 +21,13 @@ public static class ItemDetailEndpoints
         app.MapPost("items/{itemId:guid}/sessions/stop", StopSession);
     }
 
-    private static async Task<Result<ItemOverviewDto>> GetDetails(
+    private static async Task<Result<DetailedItemDto>> GetDetails(
         [FromRoute] Guid itemId,
         IMessageBus bus,
         CancellationToken ct)
     {
-        var res = await bus.InvokeAsync<Result<ItemOverviewDto>>(
-            new GetItemDetailsQuery(itemId), ct);
-
-        return res;
+        var response = await bus.InvokeAsync<Result<DetailedItemDto>>(new GetItemDetailsQuery(itemId), ct);
+        return response;
     }
     private static async Task<Result<CurrentSessionOverviewDto>> GetCurrentSessionDetails(
         [FromRoute] Guid itemId,

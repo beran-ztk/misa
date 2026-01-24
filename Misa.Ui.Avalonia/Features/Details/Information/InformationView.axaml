@@ -1,12 +1,9 @@
 ﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="1300"
              x:Class="Misa.Ui.Avalonia.Features.Details.Information.InformationView"
              xmlns:information="clr-namespace:Misa.Ui.Avalonia.Features.Details.Information"
              x:DataType="information:InformationViewModel">
-
+    
     <UserControl.Styles>
 
     <!-- Einheitlicher Card-Look -->
@@ -81,9 +78,6 @@
         <Setter Property="Opacity" Value="0.6"/>
     </Style>
 </UserControl.Styles>
-
-    
-    
     
 <ScrollViewer>
     <StackPanel>
@@ -281,7 +275,7 @@
                       RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" 
                       RowSpacing="6">
                     <TextBlock Grid.Row="0" Grid.Column="0" Text="Id" Opacity="0.7"/>
-                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Parent.ItemOverview.Item.Id}"/>
+                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Parent.Item.Id}"/>
                     <Button Grid.Row="0" Grid.Column="2" 
                             Classes="misa-action"
                             ToolTip.Tip="Copy"
@@ -299,7 +293,7 @@
 
                         <!-- Display mode -->
                         <TextBlock Grid.Row="0" Grid.Column="0"
-                                   Text="{Binding Parent.ItemOverview.Item.Title}"
+                                   Text="{Binding Parent.Item.Title}"
                                    TextWrapping="Wrap"
                                    IsVisible="{Binding !IsEditTitleFormOpen}"/>
 
@@ -341,14 +335,14 @@
 
                     <TextBlock Grid.Row="2" Grid.Column="0" Text="Created" Opacity="0.7"/>
                     <TextBlock Grid.Row="2" Grid.Column="1"
-                               Text="{Binding Parent.ItemOverview.Entity.CreatedAt, StringFormat={}{0:yyyy-MM-dd HH:mm}}"/>
+                               Text="{Binding Parent.Item.Entity.CreatedAt, StringFormat={}{0:yyyy-MM-dd HH:mm}}"/>
 
                     <TextBlock Grid.Row="3" Grid.Column="0" Text="Updated" Opacity="0.7"/>
                     <TextBlock Grid.Row="3" Grid.Column="1"
-                               Text="{Binding Parent.ItemOverview.Entity.UpdatedAt, StringFormat={}{0:yyyy-MM-dd HH:mm}}"/>
+                               Text="{Binding Parent.Item.Entity.UpdatedAt, StringFormat={}{0:yyyy-MM-dd HH:mm}}"/>
                     <TextBlock Grid.Row="4" Grid.Column="0" Text="Interacted" Opacity="0.7"/>
                     <TextBlock Grid.Row="4" Grid.Column="1"
-                               Text="{Binding Parent.ItemOverview.Entity.InteractedAt, StringFormat={}{0:yyyy-MM-dd HH:mm}}"/>
+                               Text="{Binding Parent.Item.Entity.InteractedAt, StringFormat={}{0:yyyy-MM-dd HH:mm}}"/>
                 </Grid>
 
 
@@ -359,7 +353,7 @@
                     <Border Classes="misa-detail-information-item">
                         <StackPanel Spacing="6">
                             <TextBlock Text="Workflow" Opacity="0.7" FontSize="12"/>
-                            <TextBlock Text="{Binding Parent.ItemOverview.Entity.Workflow}" FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding Parent.Item.Entity.Workflow}" FontWeight="SemiBold"/>
                         </StackPanel>
                     </Border>
 
@@ -369,11 +363,11 @@
                             <!-- Content -->
                             <StackPanel Spacing="6">
                                 <TextBlock Text="State" Opacity="0.7" FontSize="12"/>
-                                <TextBlock Text="{Binding Parent.ItemOverview.Item.State.Name}"
+                                <TextBlock Text="{Binding Parent.Item.StateId}"
                                            FontWeight="SemiBold"/>
-                                <TextBlock Text="{Binding Parent.ItemOverview.Item.State.Synopsis}"
-                                           TextWrapping="Wrap"
-                                           Opacity="0.85"/>
+                                <!-- <TextBlock Text="{Binding Parent.DetailedItem.Item.State.Synopsis}" -->
+                                <!--            TextWrapping="Wrap" -->
+                                <!--            Opacity="0.85"/> -->
                             </StackPanel>
 
                             <Button Classes="misa-detail-information-item"
@@ -388,39 +382,39 @@
                             </Button>
                             
                             <!-- Edit overlay (shown only when editing) -->
-                            <Border IsVisible="{Binding IsEditStateOpen}"
-                                    Background="{StaticResource BrushPrimaryBackground}"
-                                    BorderBrush="{StaticResource BrushBorder}"
-                                    BorderThickness="1"
-                                    CornerRadius="10"
-                                    Padding="12">
-                            
-                                <StackPanel Spacing="10">
-                            
-                                    <TextBlock Text="{Binding Parent.ItemOverview.Item.State.Name, StringFormat='Edit State → {0}'}"
-                                               FontWeight="SemiBold"/>
-                            
-                                    <ComboBox Classes="misa-input"
-                                              ItemsSource="{Binding SettableStates}"
-                                              SelectedValue="{Binding StateId}"
-                                              SelectedValueBinding="{Binding Id}"
-                                              DisplayMemberBinding="{Binding Name}" />
-                            
-                                    <StackPanel Orientation="Horizontal"
-                                                HorizontalAlignment="Right"
-                                                Spacing="8">
-                            
-                                        <Button Classes="misa-action"
-                                                Content="Cancel"
-                                                Command="{Binding CloseEditStateCommand}"/>
-                            
-                                        <Button Classes="misa-action"
-                                                Content="Save"
-                                                Command="{Binding SaveEditStateCommand}"/>
-                                    </StackPanel>
-                            
-                                </StackPanel>
-                            </Border>
+                            <!-- <Border IsVisible="{Binding IsEditStateOpen}" -->
+                            <!--         Background="{StaticResource BrushPrimaryBackground}" -->
+                            <!--         BorderBrush="{StaticResource BrushBorder}" -->
+                            <!--         BorderThickness="1" -->
+                            <!--         CornerRadius="10" -->
+                            <!--         Padding="12"> -->
+                            <!-- -->
+                            <!--     <StackPanel Spacing="10"> -->
+                            <!-- -->
+                            <!--         <TextBlock Text="{Binding Parent.DetailedItem.Item.State.Name, StringFormat='Edit State → {0}'}" -->
+                            <!--                    FontWeight="SemiBold"/> -->
+                            <!-- -->
+                            <!--         <ComboBox Classes="misa-input" -->
+                            <!--                   ItemsSource="{Binding SettableStates}" -->
+                            <!--                   SelectedValue="{Binding StateId}" -->
+                            <!--                   SelectedValueBinding="{Binding Id}" -->
+                            <!--                   DisplayMemberBinding="{Binding Name}" /> -->
+                            <!-- -->
+                            <!--         <StackPanel Orientation="Horizontal" -->
+                            <!--                     HorizontalAlignment="Right" -->
+                            <!--                     Spacing="8"> -->
+                            <!-- -->
+                            <!--             <Button Classes="misa-action" -->
+                            <!--                     Content="Cancel" -->
+                            <!--                     Command="{Binding CloseEditStateCommand}"/> -->
+                            <!-- -->
+                            <!--             <Button Classes="misa-action" -->
+                            <!--                     Content="Save" -->
+                            <!--                     Command="{Binding SaveEditStateCommand}"/> -->
+                            <!--         </StackPanel> -->
+                            <!-- -->
+                            <!--     </StackPanel> -->
+                            <!-- </Border> -->
                         </Grid>
                     </Border>
 
@@ -428,15 +422,25 @@
                     <Border Classes="misa-detail-information-item">
                         <StackPanel Spacing="6">
                             <TextBlock Text="Priority" Opacity="0.7" FontSize="12"/>
-                            <TextBlock Text="{Binding Parent.ItemOverview.Item.Priority}" FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding Parent.Item.Priority}" FontWeight="SemiBold"/>
                         </StackPanel>
                     </Border>
-
+                    
+                    <Border Classes="misa-detail-information-item"
+                            IsVisible="{Binding HasTaskExtension}">
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="Category" Opacity="0.7" FontSize="12"/>
+                            <TextBlock Text="{Binding TaskExtension.Category}" FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </Border>
+                    
                 </UniformGrid>
 
             </StackPanel>
         </Border>
         
+        
+
         <ContentControl Content="{Binding Description}"/>
         
     </StackPanel>

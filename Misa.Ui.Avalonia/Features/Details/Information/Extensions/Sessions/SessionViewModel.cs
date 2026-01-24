@@ -12,17 +12,12 @@ using Misa.Ui.Avalonia.Presentation.Mapping;
 
 namespace Misa.Ui.Avalonia.Features.Details.Information.Extensions.Sessions;
 
-public partial class SessionViewModel : ViewModelBase
+public partial class SessionViewModel(InformationViewModel parent) : ViewModelBase
 {
-    private InformationViewModel Parent { get; }
-    [ObservableProperty] private CurrentSessionOverviewDto _currentSessionOverviewDto;
+    private InformationViewModel Parent { get; } = parent;
+    [ObservableProperty] private CurrentSessionOverviewDto _currentSessionOverviewDto = null!;
     public bool HasActiveSession => CurrentSessionOverviewDto.ActiveSession != null;
     public bool HasLatestClosedSession => CurrentSessionOverviewDto.LatestClosedSession != null;
-    
-    public SessionViewModel(InformationViewModel parent)
-    {
-        Parent = parent;
-    }
 
     public async Task LoadCurrentSessionAsync()
     {
@@ -30,7 +25,7 @@ public partial class SessionViewModel : ViewModelBase
         {
             using var request = new HttpRequestMessage(
                 HttpMethod.Get,
-                $"items/{Parent.Parent.ItemOverview.Item.Id}/overview/session");
+                $"items/{Parent.Parent.Item.Id}/overview/session");
 
             var response = await Parent.Parent.EntityDetailHost.NavigationService.NavigationStore
                 .MisaHttpClient
@@ -94,7 +89,7 @@ public partial class SessionViewModel : ViewModelBase
                 : null;
             
             var dto = new StartSessionDto(
-                Parent.Parent.ItemOverview.Item.Id, 
+                Parent.Parent.Item.Id, 
                 plannedDuration, 
                 Objective,
                 StopAutomatically, 
@@ -103,7 +98,7 @@ public partial class SessionViewModel : ViewModelBase
 
             using var request = new HttpRequestMessage(
                 HttpMethod.Post,
-                $"items/{Parent.Parent.ItemOverview.Item.Id}/sessions/start");
+                $"items/{Parent.Parent.Item.Id}/sessions/start");
             request.Content = JsonContent.Create(dto);
             
             var response = await Parent.Parent.EntityDetailHost.NavigationService.NavigationStore
@@ -147,13 +142,13 @@ public partial class SessionViewModel : ViewModelBase
         try
         {
             var dto = new PauseSessionDto(
-                Parent.Parent.ItemOverview.Item.Id,
+                Parent.Parent.Item.Id,
                 PauseReason
             );
 
             using var request = new HttpRequestMessage(
                 HttpMethod.Post,
-                $"items/{Parent.Parent.ItemOverview.Item.Id}/sessions/pause");
+                $"items/{Parent.Parent.Item.Id}/sessions/pause");
             request.Content = JsonContent.Create(dto);
 
             var response = await Parent.Parent.EntityDetailHost.NavigationService.NavigationStore
@@ -179,7 +174,7 @@ public partial class SessionViewModel : ViewModelBase
         {
             using var request = new HttpRequestMessage(
                 HttpMethod.Post,
-                $"items/{Parent.Parent.ItemOverview.Item.Id}/sessions/continue");
+                $"items/{Parent.Parent.Item.Id}/sessions/continue");
 
             var response = await Parent.Parent.EntityDetailHost.NavigationService.NavigationStore
                 .MisaHttpClient
@@ -225,7 +220,7 @@ public partial class SessionViewModel : ViewModelBase
         try
         {
             var dto = new StopSessionDto(
-                Parent.Parent.ItemOverview.Item.Id,
+                Parent.Parent.Item.Id,
                 EfficiencyId,
                 ConcentrationId,
                 Summary
@@ -233,7 +228,7 @@ public partial class SessionViewModel : ViewModelBase
 
             using var request = new HttpRequestMessage(
                 HttpMethod.Post,
-                $"items/{Parent.Parent.ItemOverview.Item.Id}/sessions/stop");
+                $"items/{Parent.Parent.Item.Id}/sessions/stop");
             request.Content = JsonContent.Create(dto);
 
             var response = await Parent.Parent.EntityDetailHost.NavigationService.NavigationStore

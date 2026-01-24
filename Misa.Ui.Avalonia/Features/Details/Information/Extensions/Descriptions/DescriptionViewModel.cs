@@ -14,23 +14,14 @@ using ReactiveUI;
 
 namespace Misa.Ui.Avalonia.Features.Details.Information.Extensions.Descriptions;
 
-public partial class DescriptionViewModel : ViewModelBase
+public partial class DescriptionViewModel(InformationViewModel parent) : ViewModelBase
 {
-    public DescriptionViewModel(InformationViewModel parent)
-    {
-        Parent = parent;
-        // this.WhenAnyValue(x => x.Parent.Parent.EntityDetailHost.ActiveEntityId)
-        //     .Where(id => id != Guid.Empty)
-        //     .DistinctUntilChanged()
-        //     .Subscribe(id => Load());
-    }
-
     public void Load()
     {
         Descriptions.Clear();
-        Parent.Parent.ItemOverview.Descriptions
-            .ToList()
-            .ForEach(d => Descriptions.Add(d));
+        // Parent.Parent.Descriptions
+        //     .ToList()
+        //     .ForEach(d => Descriptions.Add(d));
     }
     public ObservableCollection<DescriptionDto> Descriptions { get; } = [];
     [ObservableProperty] private string _description = string.Empty;
@@ -39,14 +30,15 @@ public partial class DescriptionViewModel : ViewModelBase
     {
         OnPropertyChanged(nameof(IsDescriptionValid));
     }
-    public InformationViewModel Parent { get; }
+    public InformationViewModel Parent { get; } = parent;
+
     [RelayCommand]
     private async Task AddDescription()
     {
         try
         {
             var dto = new DescriptionCreateDto(
-                Parent.Parent.ItemOverview.Item.Id,
+                Parent.Parent.Item.Id,
                 Description.Trim()
             );
 

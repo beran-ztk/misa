@@ -36,6 +36,16 @@ public class ItemRepository(DefaultContext db) : IItemRepository
     public async Task SaveChangesAsync(CancellationToken  ct = default)
         => await db.SaveChangesAsync(ct);
 
+    public async Task<Domain.Features.Entities.Extensions.Items.Extensions.Tasks.Task?> TryGetTaskAsync(Guid id, CancellationToken ct)
+    {
+        return await db.Tasks
+            .Include(t => t.Item)
+            .ThenInclude(i => i.State)
+            .Include(t => t.Item)
+            .ThenInclude(i => i.Entity)
+            .FirstOrDefaultAsync(t => t.Id == id, cancellationToken: ct);
+    }
+
     public async Task<List<Domain.Features.Entities.Extensions.Items.Extensions.Tasks.Task>> GetTasksAsync(CancellationToken ct)
     {
         return await db.Tasks
@@ -120,8 +130,6 @@ public class ItemRepository(DefaultContext db) : IItemRepository
         return await db.Items
             .Include(i => i.State)
             
-            .Include(e => e.Entity)
-                .ThenInclude(e => e.Workflow)
             .Include(e => e.Entity)
                 .ThenInclude(e => e.Descriptions)
             

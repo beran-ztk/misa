@@ -6,9 +6,11 @@ using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Features.Entities.Extensions.Items.Base;
+using Misa.Ui.Avalonia.Features.Details.Common;
 using Misa.Ui.Avalonia.Features.Details.Information.Extensions.Sessions;
 using Misa.Ui.Avalonia.Features.Details.Page;
 using Misa.Ui.Avalonia.Presentation.Mapping;
+using ReactiveUI;
 using DescriptionViewModel = Misa.Ui.Avalonia.Features.Details.Information.Extensions.Descriptions.DescriptionViewModel;
 
 namespace Misa.Ui.Avalonia.Features.Details.Information;
@@ -17,19 +19,28 @@ public partial class InformationViewModel : ViewModelBase
 {
     public DetailPageViewModel Parent { get; }
     public DescriptionViewModel Description { get; }
-    public SessionViewModel Session { get; }
+    public SessionViewModel? Session { get; }
 
     public InformationViewModel(DetailPageViewModel parent)
     {
         Parent = parent;
         Description = new DescriptionViewModel(this);
-        Session = new SessionViewModel(this);
+        // Session = new SessionViewModel(this);
+        
+        Parent.WhenAnyValue(x => x.Extension)
+            .Subscribe(_ =>
+            {
+                OnPropertyChanged(nameof(TaskExtension));
+                OnPropertyChanged(nameof(HasTaskExtension));
+            });
     }
+    public TaskExtensionVm? TaskExtension => Parent.Extension as TaskExtensionVm;
+    public bool HasTaskExtension => TaskExtension is not null;
 
     [RelayCommand]
     private void CopyId()
     {
-        Parent.EntityDetailHost.NavigationService.ClipboardService.SetTextAsync(Parent.ItemOverview.Item.Id.ToString());
+        Parent.EntityDetailHost.NavigationService.ClipboardService.SetTextAsync(Parent.Item.Id.ToString());
     }
     
     // Edit State
@@ -59,7 +70,7 @@ public partial class InformationViewModel : ViewModelBase
     [RelayCommand]
     private async Task SaveEditState()
     {
-        var currentId = Parent.ItemOverview.Item.State.Id;
+        var currentId = Parent.Item.StateId;
         var selectedId = StateId;
 
         if (currentId == selectedId)
@@ -68,7 +79,7 @@ public partial class InformationViewModel : ViewModelBase
             return;
         }
 
-        var currentEntityId = Parent.ItemOverview.Item.Id;
+        var currentEntityId = Parent.Item.Id;
 
         UpdateItemDto itemDto = new()
         {
@@ -89,8 +100,8 @@ public partial class InformationViewModel : ViewModelBase
     {
         try
         {
-            var states = await Parent.EntityDetailHost.NavigationService.NavigationStore
-                .MisaHttpClient.GetFromJsonAsync<List<StateDto>>(requestUri: $"Lookups/UserSettableStates?stateId={Parent.ItemOverview.Item.Id}");
+            var states = await Parent.EntityDetailHost.NavigationService.NavigationStore.MisaHttpClient
+                .GetFromJsonAsync<List<StateDto>>(requestUri: $"Lookups/UserSettableStates?stateId={Parent.Item.Id}");
 
             if (states == null)
                 return;
@@ -108,7 +119,7 @@ public partial class InformationViewModel : ViewModelBase
     [RelayCommand]
     private void ShowEditTitleForm()
     {
-        Title = Parent.ItemOverview.Item.Title;
+        Title = Parent.Item.Title;
         IsEditTitleFormOpen = true;
     }
     [RelayCommand]
@@ -119,10 +130,8 @@ public partial class InformationViewModel : ViewModelBase
     {
         var dto = new UpdateItemDto
         {
-            EntityId = Parent.ItemOverview.Item.Id,
-            Title = Title == Parent.ItemOverview.Item.Title
-                ? null 
-                : Title
+            EntityId = Parent.Item.Id,
+            Title = Parent.Item.Title
         };
 
         var response = await Parent.EntityDetailHost.NavigationService.NavigationStore
@@ -134,23 +143,13 @@ public partial class InformationViewModel : ViewModelBase
         await Parent.Reload();
         IsEditTitleFormOpen = false;
     }
-
     
-
-    
- 
-
-
-    
-
-    
-
     [RelayCommand]
     private async Task DeleteEntity()
     {
         try
         {
-            var id = Parent.ItemOverview.Item.Id;
+            var id = Parent.Item.Id;
             await Parent.EntityDetailHost.NavigationService.NavigationStore
                 .MisaHttpClient.PatchAsync(requestUri: $"Entity/Delete?entityId={id}", content: null);
             
@@ -166,7 +165,7 @@ public partial class InformationViewModel : ViewModelBase
     {
         try
         {
-            var id = Parent.ItemOverview.Item.Id;
+            var id = Parent.Item.Id;
             await Parent.EntityDetailHost.NavigationService.NavigationStore
                 .MisaHttpClient.PatchAsync(requestUri: $"Entity/Archive?entityId={id}", content: null);
             
