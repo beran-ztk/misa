@@ -1,5 +1,5 @@
 ﻿using Misa.Application.Common.Abstractions.Persistence;
-using Misa.Application.Features.Entities.Extensions.Items.Mappings;
+using Misa.Application.Common.Mappings;
 using Misa.Contract.Common.Results;
 using Misa.Contract.Features.Entities.Extensions.Items.Base;
 using Misa.Contract.Features.Entities.Extensions.Items.Extensions.Tasks;
@@ -10,7 +10,7 @@ public record AddTaskCommand(string Title, TaskCategoryContract CategoryContract
 
 public class AddTaskHandler(IItemRepository repository)
 {
-    public async Task<Result> HandleAsync(AddTaskCommand command, CancellationToken ct)
+    public async Task<Result<TaskDto>> HandleAsync(AddTaskCommand command, CancellationToken ct)
     {
         var task = ItemTask.Create(
             command.Title, 
@@ -21,6 +21,6 @@ public class AddTaskHandler(IItemRepository repository)
         await repository.AddAsync(task, ct);
         await repository.SaveChangesAsync(ct);
         
-        return Result.Ok();
+        return Result<TaskDto>.Ok(task.ToDto());
     }
 }

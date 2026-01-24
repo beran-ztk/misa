@@ -8,6 +8,7 @@ using Misa.Api.Services.Features.Items.Features.Sessions;
 using Misa.Application.Common.Abstractions.Persistence;
 using Misa.Application.Features.Entities.Extensions.Items.Base.Queries;
 using Misa.Application.Features.Entities.Extensions.Items.Extensions.Tasks.Commands;
+using Misa.Application.Features.Entities.Extensions.Items.Extensions.Tasks.Queries;
 using Misa.Application.Features.Entities.Extensions.Items.Features.Deadlines.Commands;
 using Misa.Application.Features.Entities.Extensions.Items.Features.Scheduling.Commands;
 using Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Commands;
@@ -66,9 +67,11 @@ builder.Host.UseWolverine(opts =>
     opts.Discovery.IncludeAssembly(typeof(StopSessionHandler).Assembly);
     opts.Discovery.IncludeAssembly(typeof(PauseDueSessionsHandler).Assembly);
     opts.Discovery.IncludeAssembly(typeof(PauseExpiredSessionsHandler).Assembly);
-    
     opts.Discovery.IncludeAssembly(typeof(AddScheduleHandler).Assembly);
+    
+    // Tasks
     opts.Discovery.IncludeAssembly(typeof(AddTaskHandler).Assembly);
+    opts.Discovery.IncludeAssembly(typeof(GetTasksHandler).Assembly);
 });
 
 // build app

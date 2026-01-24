@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Misa.Contract.Common.Results;
 using Misa.Contract.Features.Entities.Extensions.Items.Base;
 using Misa.Contract.Features.Entities.Extensions.Items.Extensions.Tasks;
 using Misa.Ui.Avalonia.Presentation.Mapping;
@@ -15,7 +16,7 @@ namespace Misa.Ui.Avalonia.Features.Tasks.Add;
 
 public partial class AddTaskViewModel(PageViewModel vm) : ViewModelBase
 {
-    private PageViewModel MainViewModel { get; } = vm;
+    private PageViewModel Parent { get; } = vm;
 
     [ObservableProperty] private string _title = string.Empty;
     [ObservableProperty] private TaskCategoryContract _selectedCategoryContract;
@@ -51,20 +52,31 @@ public partial class AddTaskViewModel(PageViewModel vm) : ViewModelBase
             using var request = new HttpRequestMessage(HttpMethod.Post, "tasks");
             request.Content = JsonContent.Create(addTaskDto);
             
-            var response = await MainViewModel.NavigationService.NavigationStore
-                .MisaHttpClient.SendAsync(request, CancellationToken.None);
+            using var response = await Parent.NavigationService.NavigationStore.MisaHttpClient
+                .SendAsync(request, CancellationToken.None);
 
             response.EnsureSuccessStatusCode();
 
-            var createdTask = await response.Content.ReadFromJsonAsync<TaskDto>();
-            if (createdTask == null)
+            var createdTask = await response.Content.ReadFromJsonAsync<Result<TaskDto>>(CancellationToken.None);
+            if (createdTask?.Value != null)
             {
-                Console.WriteLine("Server returned success but no task payload.");
+                await Parent.AddToCollection(createdTask.Value);
+                Close(createdTask.Value);
             }
         }
         catch (Exception e)
         {
             Console.WriteLine(e);
+        }
+    }
+    [RelayCommand]
+    private void Close(TaskDto? dto = null)
+    {
+        Parent.CurrentInfoModel = null;
+
+        if (dto != null)
+        {
+            Parent.SelectedTask = dto;
         }
     }
 }

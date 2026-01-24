@@ -36,6 +36,17 @@ public class ItemRepository(DefaultContext db) : IItemRepository
     public async Task SaveChangesAsync(CancellationToken  ct = default)
         => await db.SaveChangesAsync(ct);
 
+    public async Task<List<Domain.Features.Entities.Extensions.Items.Extensions.Tasks.Task>> GetTasksAsync(CancellationToken ct)
+    {
+        return await db.Tasks
+            .Include(t => t.Item)
+                .ThenInclude(i => i.State)
+            .Include(t => t.Item)
+                .ThenInclude(i => i.Entity)
+            .OrderByDescending(t => t.Item.Entity.CreatedAt)
+            .ToListAsync(ct);
+    }
+
     public async Task<Session?> TryGetLatestCompletedSessionByItemIdAsync(Guid id, CancellationToken ct)
     {
         return await db.Sessions

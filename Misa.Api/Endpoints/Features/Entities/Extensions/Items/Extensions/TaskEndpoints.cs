@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Misa.Application.Features.Entities.Extensions.Items.Extensions.Tasks.Commands;
+using Misa.Application.Features.Entities.Extensions.Items.Extensions.Tasks.Queries;
 using Misa.Contract.Common.Results;
 using Misa.Contract.Features.Entities.Extensions.Items.Extensions.Tasks;
 using Wolverine;
@@ -10,6 +11,7 @@ public static class TaskEndpoints
 {
     public static void Map(WebApplication app)
     {
+        app.MapGet("tasks", GetTasks);
         app.MapPost("tasks", AddTask);
     }
     private static async Task<Result<TaskDto>> AddTask([FromBody] AddTaskDto dto, IMessageBus bus, CancellationToken ct)
@@ -26,7 +28,20 @@ public static class TaskEndpoints
         }
         catch (Exception ex)
         {
-            return Result<TaskDto>.Invalid("", "");
+            return Result<TaskDto>.Invalid("", ex.ToString());
+        }
+    }
+    private static async Task<Result<List<TaskDto>>> GetTasks(IMessageBus bus, CancellationToken ct)
+    {
+        try
+        {
+            var result = await bus.InvokeAsync<Result<List<TaskDto>>>(new GetTasksQuery(), ct);
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            return Result<List<TaskDto>>.Invalid("", ex.ToString());
         }
     }
 }
