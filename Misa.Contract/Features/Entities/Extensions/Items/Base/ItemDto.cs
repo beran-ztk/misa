@@ -10,4 +10,13 @@ public class ItemDto
     public required string Title { get; init; }
     
     public required EntityDto Entity { get; init; }
+    
+    public static ItemDto Empty() => new()
+    {
+        Id = Guid.Empty,
+        StateId = 0,
+        Priority = default!,
+        Title = string.Empty,
+        Entity = EntityDto.Empty()
+    };
 }

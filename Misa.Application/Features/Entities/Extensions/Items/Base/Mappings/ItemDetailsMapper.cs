@@ -9,16 +9,6 @@ namespace Misa.Application.Features.Entities.Extensions.Items.Base.Mappings;
 
 public static class ItemDetailsMapper
 {
-    public static DetailedItemDto ToOverviewDto(this Item domain)
-    {
-        return new DetailedItemDto
-        {
-            Entity = domain.Entity.ToResolvedDto(),
-            Item = domain.ToResolvedDto(),
-            Descriptions = domain.Entity.Descriptions.ToDto()
-        };
-    }
-
     public static ItemResolvedDto ToResolvedDto(this Item domain)
     {
         return new ItemResolvedDto(
