@@ -116,7 +116,7 @@ CREATE TABLE scheduler_execution_log
 
     created_at_utc      TIMESTAMPTZ NOT NULL DEFAULT now(),
 
-    UNIQUE (scheduler_id, scheduled_for_utc),
+    
 
     CHECK (started_at_utc IS NULL OR claimed_at_utc <= started_at_utc),
     CHECK (finished_at_utc IS NULL OR started_at_utc <= finished_at_utc),
