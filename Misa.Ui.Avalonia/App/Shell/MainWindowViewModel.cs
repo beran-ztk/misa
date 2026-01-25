@@ -24,7 +24,7 @@ public partial class MainWindowViewModel : ViewModelBase
         Navigation = new NavigationViewModel(NavigationService);
         InfoBar = new InfoBarViewModel(NavigationService);
         TitleBar = new TitleBarViewModel(NavigationService);
-        StatusBar = new StatusBarViewModel(NavigationService);
+        StatusBar = new StatusBarViewModel();
         
         NavigationService.NavigationStore.PropertyChanged += (_, e) =>
         {

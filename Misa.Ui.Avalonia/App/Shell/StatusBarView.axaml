@@ -11,9 +11,6 @@
             BorderBrush="{StaticResource BrushSecondaryBackground}"
             BorderThickness="0,1,0,0">
         
-        <TextBlock Text="{Binding Meow}"
-                   VerticalAlignment="Center"
-                   FontSize="{StaticResource FontSizeSmall}"/>
     </Border>
     
 </UserControl>

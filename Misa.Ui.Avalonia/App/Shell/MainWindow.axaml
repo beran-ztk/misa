@@ -9,10 +9,6 @@
         Icon="/Assets/Images/Shells/nanoparticle.png"
         Title="Misa">
 
-    <Design.DataContext>
-        <shell:MainWindowViewModel/>
-    </Design.DataContext>
-    
     <Grid RowDefinitions="40,*,20">
 
         <shell:TitleBarView Grid.Row="0"

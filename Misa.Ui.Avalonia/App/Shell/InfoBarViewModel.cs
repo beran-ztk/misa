@@ -3,11 +3,7 @@ using Misa.Ui.Avalonia.Presentation.Mapping;
 
 namespace Misa.Ui.Avalonia.App.Shell;
 
-public partial class InfoBarViewModel : ViewModelBase
+public partial class InfoBarViewModel(INavigationService navigationService) : ViewModelBase
 {
-    public InfoBarViewModel(INavigationService navigationService)
-    {
-        _navigationService  = navigationService;
-    }
-    private readonly INavigationService _navigationService;
+    private readonly INavigationService _navigationService = navigationService;
 }
