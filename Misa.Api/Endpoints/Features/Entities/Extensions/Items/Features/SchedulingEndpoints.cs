@@ -7,7 +7,7 @@ public static class SchedulingEndpoints
 {
     public static void Map(WebApplication app)
     {
-        app.MapPut("/scheduling", AddSchedulingRule);
+        app.MapPut("scheduling", AddSchedulingRule);
     }
 
     private static async Task<IResult> AddSchedulingRule(IMessageBus bus, CancellationToken ct)
