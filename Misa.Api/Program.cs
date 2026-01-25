@@ -4,6 +4,7 @@ using Misa.Api.Endpoints.Features.Entities.Extensions.Items.Base;
 using Misa.Api.Endpoints.Features.Entities.Extensions.Items.Extensions;
 using Misa.Api.Endpoints.Features.Entities.Extensions.Items.Features;
 using Misa.Api.Endpoints.Features.Entities.Features;
+using Misa.Api.Services.Features.Items.Features.Scheduler;
 using Misa.Api.Services.Features.Items.Features.Sessions;
 using Misa.Application.Common.Abstractions.Persistence;
 using Misa.Application.Features.Entities.Extensions.Items.Base.Queries;
@@ -48,6 +49,7 @@ builder.Services.AddDbContext<DefaultContext>(options =>
 
 builder.Services.AddHostedService<SessionAutostopWorker>();
 builder.Services.AddHostedService<SessionPastMaxTimeWorker>();
+builder.Services.AddHostedService<SchedulePlanningWorker>();
 
 builder.Services.AddScoped<IEntityRepository, EntityRepository>();
 builder.Services.AddScoped<IItemRepository, ItemRepository>();
