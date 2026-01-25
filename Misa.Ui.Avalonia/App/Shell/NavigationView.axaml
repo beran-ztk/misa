@@ -58,6 +58,16 @@
                     </StackPanel>
                 </Button>
                 
+                <Button Classes="MainNavigation"
+                        Command="{Binding OpenSchedulerPanelCommand}">
+                    <StackPanel Orientation="Horizontal" 
+                                Spacing="{StaticResource SpacingSmall}">
+                        <Image Width="16" Height="16"
+                               Source="{SvgImage /Assets/Images/MainNavigation/calendar-dots.svg}"/>
+                        <TextBlock Text="Scheduler" 
+                                   Classes="MainNavigation"/>
+                    </StackPanel>
+                </Button>
             </StackPanel>
         </Grid>
     </Border>

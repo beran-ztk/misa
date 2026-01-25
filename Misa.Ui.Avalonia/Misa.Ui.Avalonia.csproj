@@ -59,24 +59,12 @@
         <DependentUpon>TaskNavigationView.axaml</DependentUpon>
         <SubType>Code</SubType>
       </Compile>
-      <Compile Update="App\Shell\InfoBarView.axaml.cs">
-        <DependentUpon>InfoBarView.axaml</DependentUpon>
-        <SubType>Code</SubType>
-      </Compile>
       <Compile Update="App\Shell\MainWindow.axaml.cs">
         <DependentUpon>MainWindow.axaml</DependentUpon>
         <SubType>Code</SubType>
       </Compile>
       <Compile Update="App\Shell\NavigationView.axaml.cs">
         <DependentUpon>NavigationView.axaml</DependentUpon>
-        <SubType>Code</SubType>
-      </Compile>
-      <Compile Update="App\Shell\StatusBarView.axaml.cs">
-        <DependentUpon>StatusBarView.axaml</DependentUpon>
-        <SubType>Code</SubType>
-      </Compile>
-      <Compile Update="App\Shell\TitleBarView.axaml.cs">
-        <DependentUpon>TitleBarView.axaml</DependentUpon>
         <SubType>Code</SubType>
       </Compile>
       <Compile Update="App\App.axaml.cs">

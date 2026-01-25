@@ -1,0 +1,89 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="Misa.Ui.Avalonia.Features.Scheduler.Add.AddScheduleView"
+             xmlns:vm="clr-namespace:Misa.Ui.Avalonia.Features.Scheduler.Add"
+             x:DataType="vm:AddScheduleViewModel">
+     
+    <Border Classes="misa-control">
+        <Grid RowDefinitions="Auto,Auto,Auto,Auto"
+              RowSpacing="{StaticResource SpacingLarge}">
+
+            <!-- Header -->
+            <StackPanel Grid.Row="0" 
+                        Orientation="Horizontal"
+                        Spacing="{StaticResource SpacingMedium}">
+                <TextBlock Classes="misa-header" Text="Add Schedule" />
+            </StackPanel>
+
+            <!-- Validation Error -->
+            <TextBlock Grid.Row="1"
+                       Classes="misa-error"
+                       Text="{Binding ErrorMessage}"
+                       IsVisible="{Binding HasValidationError}"
+                       Margin="0,8,0,0" />
+            
+            <!-- Form -->
+            <Grid Grid.Row="2"
+                  ColumnDefinitions="Auto,*"
+                  RowDefinitions="Auto,Auto,Auto"
+                  RowSpacing="{StaticResource SpacingMedium}"
+                  ColumnSpacing="{StaticResource SpacingLarge}">
+
+                <!-- Title -->
+                <TextBlock Grid.Row="0" Grid.Column="0" Classes="misa-label" Text="Title" />
+                <StackPanel Grid.Row="0" Grid.Column="1" Spacing="{StaticResource SpacingSmall}">
+                    <TextBox Classes="misa-input"
+                             Watermark="Schedule title..."
+                             Text="{Binding Title, Mode=TwoWay}" />
+                </StackPanel>
+
+                <!-- Frequency Type -->
+                <TextBlock Grid.Row="1" Grid.Column="0"
+                           Classes="misa-label"
+                           Text="Frequency Type" />
+
+                <ComboBox Grid.Row="1" Grid.Column="1"
+                          Classes="misa-input"
+                          ItemsSource="{Binding FrequencyTypes}"
+                          SelectedValue="{Binding SelectedFrequencyType}"/>
+                
+                <!-- Frequency Interval -->
+                <TextBlock Grid.Row="2" Grid.Column="0"
+                           Classes="misa-label"
+                           Text="Interval" />
+
+                <NumericUpDown Grid.Row="2" Grid.Column="1"
+                               Classes="misa-input"
+                               Value="{Binding FrequencyInterval, Mode=TwoWay}"
+                               Minimum="1"
+                               Maximum="1000"
+                               Increment="1"
+                               FormatString="N0" />
+            </Grid>
+
+            <!-- Footer / Actions -->
+            <Grid Grid.Row="3"
+                  Margin="0,8,0,0"
+                  ColumnDefinitions="*,Auto,Auto"
+                  VerticalAlignment="Center">
+
+                <StackPanel Grid.Column="1"
+                            Orientation="Horizontal"
+                            Spacing="8"
+                            HorizontalAlignment="Right">
+                    <Button Classes="misa-primary"
+                            Content="Cancel"
+                            Command="{Binding CloseCommand}" />
+                    <Button Classes="misa-primary"
+                            Content="Save"
+                            Command="{Binding SaveScheduleCommand}" />
+                </StackPanel>
+            </Grid>
+            
+        </Grid>
+    </Border>
+
+</UserControl>

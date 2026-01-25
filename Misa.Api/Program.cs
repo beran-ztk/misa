@@ -51,7 +51,6 @@ builder.Services.AddHostedService<SessionPastMaxTimeWorker>();
 
 builder.Services.AddScoped<IEntityRepository, EntityRepository>();
 builder.Services.AddScoped<IItemRepository, ItemRepository>();
-builder.Services.AddScoped<IScheduleRepository, ScheduleRepository>();
 
 // DI
 builder.Host.UseWolverine(opts =>
