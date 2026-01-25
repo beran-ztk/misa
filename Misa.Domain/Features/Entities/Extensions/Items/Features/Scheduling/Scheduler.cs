@@ -1,3 +1,4 @@
+using Misa.Domain.Features.Entities.Base;
 using Misa.Domain.Features.Entities.Extensions.Items.Base;
 
 namespace Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
@@ -8,25 +9,31 @@ namespace Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
 public sealed class Scheduler
 {
     private Scheduler() { } // EF Core
-
-    public static Scheduler CreateAndInitDefaultValues(Item item)
+    
+    private Scheduler(Item item)
     {
-        var scheduler = new Scheduler
+        Item = item;
+    }
+
+    public static Scheduler Create(string title, ScheduleFrequencyType frequencyType, int frequencyInterval)
+    {
+        if (frequencyInterval <= 0)
+            throw new ArgumentException("Frequency interval must be greater than 0", nameof(frequencyInterval));
+        
+        var item = Item.Create(Workflow.Scheduling, title, Priority.None);
+        
+        return new Scheduler(item)
         {
-            ItemId = item.Id,
-            ScheduleFrequencyType = ScheduleFrequencyType.Minutes,
-            FrequencyInterval = 1,
+            ScheduleFrequencyType = frequencyType,
+            FrequencyInterval = frequencyInterval,
             MisfirePolicy = ScheduleMisfirePolicy.Catchup,
             LookaheadCount = 1,
             ActiveFromUtc = DateTimeOffset.UtcNow,
             Timezone = "utc"
         };
-        
-        return scheduler;
     }
 
     public Guid Id { get; private set; }
-    public Guid ItemId { get; private set; }
     
     public ScheduleFrequencyType ScheduleFrequencyType { get; private set; }
     public int FrequencyInterval { get; private set; }
@@ -56,5 +63,6 @@ public sealed class Scheduler
     public DateTimeOffset? LastRunAtUtc { get; private set; }
     public DateTimeOffset? NextDueAtUtc { get; private set; }
     
+    public Item Item { get; private set; } = null!;
     public ICollection<SchedulerExecutionLog> ExecutionLogs { get; private set; } = new List<SchedulerExecutionLog>();
 }

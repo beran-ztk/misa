@@ -119,6 +119,11 @@ public class ItemRepository(DefaultContext db) : IItemRepository
     {
         await db.Sessions.AddAsync(session, ct);
     }
+    
+    public async Task AddAsync(Domain.Features.Entities.Extensions.Items.Features.Scheduling.Scheduler scheduler, CancellationToken ct)
+    {
+        await db.Scheduler.AddAsync(scheduler, ct);
+    }
     public async Task<Item?> TryGetItemDetailsAsync(Guid id, CancellationToken ct)
     {
         return await db.Items

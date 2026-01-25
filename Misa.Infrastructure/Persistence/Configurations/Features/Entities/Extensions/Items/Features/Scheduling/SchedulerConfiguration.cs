@@ -16,9 +16,7 @@ public sealed class SchedulerConfiguration : IEntityTypeConfiguration<Scheduler>
             .HasColumnName("id")
             .HasDefaultValueSql("gen_random_uuid()");
 
-        builder.Property(s => s.ItemId)
-            .IsRequired()
-            .HasColumnName("item_id");
+
 
         builder.Property(s => s.ScheduleFrequencyType)
             .IsRequired()
@@ -85,9 +83,9 @@ public sealed class SchedulerConfiguration : IEntityTypeConfiguration<Scheduler>
             .HasColumnName("next_due_at_utc");
 
         // Relationships
-        builder.HasOne<Domain.Features.Entities.Extensions.Items.Base.Item>()
-            .WithMany()
-            .HasForeignKey(s => s.ItemId)
+        builder.HasOne(s => s.Item)
+            .WithOne()
+            .HasForeignKey<Scheduler>(s => s.Id)
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasMany(s => s.ExecutionLogs)

@@ -6,5 +6,24 @@
              x:Class="Misa.Ui.Avalonia.Features.Scheduler.Main.SchedulerMainWindowView"
              xmlns:vm="clr-namespace:Misa.Ui.Avalonia.Features.Scheduler.Main"
              x:DataType="vm:SchedulerMainWindowViewModel">
-    
+     
+    <Grid RowDefinitions="Auto,*">
+        <!-- Header with Add Button -->
+        <StackPanel Grid.Row="0" 
+                    Orientation="Horizontal"
+                    Spacing="16"
+                    Margin="16">
+            <TextBlock Classes="misa-header" Text="Scheduler" />
+            <Button Classes="misa-primary"
+                    Content="Add Schedule"
+                    Command="{Binding OpenAddScheduleCommand}"
+                    HorizontalAlignment="Right" />
+        </StackPanel>
+
+        <!-- Content Area - shows current view -->
+        <ContentControl Grid.Row="1"
+                        Content="{Binding CurrentView}"
+                        Margin="16" />
+    </Grid>
+
 </UserControl>
