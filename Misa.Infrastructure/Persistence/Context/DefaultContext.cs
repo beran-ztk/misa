@@ -24,8 +24,8 @@ public class DefaultContext(DbContextOptions<DefaultContext> options) : DbContex
     public DbSet<AuditChange> AuditChanges { get; set; } = null!;
     public DbSet<ScheduledDeadline> Deadlines { get; set; } = null!;
 
-    public DbSet<Scheduler> Scheduler { get; set; } = null!;
-    public DbSet<SchedulerExecutionLog> SchedulerExecutionLog { get; set; } = null!;
+    public DbSet<Scheduler> Schedulers { get; set; } = null!;
+    public DbSet<SchedulerExecutionLog> SchedulerExecutionLogs { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

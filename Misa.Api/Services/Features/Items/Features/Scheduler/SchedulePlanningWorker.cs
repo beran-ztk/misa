@@ -9,7 +9,7 @@ public class SchedulePlanningWorker(IServiceProvider provider, ILogger<ScheduleP
     {
         logger.LogInformation("Schedule planning worker activated.");
         
-        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(5));
+        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(10));
 
         try
         {

@@ -1,9 +1,10 @@
-﻿using Misa.Application.Common.Abstractions.Persistence;
+﻿using System.Data.Common;
+using Misa.Application.Common.Abstractions.Persistence;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
 
 namespace Misa.Application.Features.Entities.Extensions.Items.Features.Scheduling.Commands;
 public record SchedulePlanningCommand;
-public class SchedulePlanningHandler(IItemRepository repository)
+public class SchedulePlanningHandler(ISchedulerPlanningRepository repository)
 {
     public async Task HandleAsync(SchedulePlanningCommand command, CancellationToken stoppingToken)
     {
@@ -11,27 +12,25 @@ public class SchedulePlanningHandler(IItemRepository repository)
 
         foreach (var schedule in schedules)
         {
-            DateTimeOffset? scheduledFor = schedule.ScheduleFrequencyType switch
-            {   
-                ScheduleFrequencyType.Once => null,
-                
-                ScheduleFrequencyType.Minutes => 
-                    schedule.ActiveFromUtc + TimeSpan.FromMinutes(schedule.FrequencyInterval),
-                
-                _ => null
-            };
-
-            if (scheduledFor is null)
+            while (schedule.SchedulingAnchorUtc < DateTimeOffset.UtcNow)
             {
-                continue;
+                var anchor = schedule.SchedulingAnchorUtc;
+                
+                var log = SchedulerExecutionLog.Create(schedule.Id, anchor);
+            
+                switch (schedule.ScheduleFrequencyType) 
+                { 
+                    case ScheduleFrequencyType.Minutes:
+                        schedule.NextDueAtUtc = anchor + TimeSpan.FromMinutes(schedule.FrequencyInterval);
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                };
+            
+                await repository.TryAddExecutionLogAsync(log, stoppingToken);
+                
+                await repository.SaveChangesAsync(stoppingToken);
             }
-            
-            var plannedEntry = SchedulerExecutionLog.Create(
-                schedulerId: schedule.Id,
-                scheduledForUtc: scheduledFor.Value);
-            
-            await repository.AddAsync(plannedEntry, stoppingToken);
         }
-        await repository.SaveChangesAsync(stoppingToken);
     }
 }

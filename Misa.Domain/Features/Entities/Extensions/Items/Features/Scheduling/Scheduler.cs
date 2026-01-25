@@ -61,7 +61,10 @@ public sealed class Scheduler
     public DateTimeOffset? ActiveUntilUtc { get; private set; }
     
     public DateTimeOffset? LastRunAtUtc { get; private set; }
-    public DateTimeOffset? NextDueAtUtc { get; private set; }
+    public DateTimeOffset? NextDueAtUtc { get; set; }
+
+    public DateTimeOffset SchedulingAnchorUtc =>
+        NextDueAtUtc ?? ActiveFromUtc;
     
     public Item Item { get; private set; } = null!;
     public ICollection<SchedulerExecutionLog> ExecutionLogs { get; private set; } = new List<SchedulerExecutionLog>();
