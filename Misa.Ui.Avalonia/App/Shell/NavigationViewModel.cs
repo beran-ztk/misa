@@ -1,20 +1,20 @@
 ﻿using CommunityToolkit.Mvvm.Input;
+using Misa.Ui.Avalonia.Features.Scheduler.Main;
+using Misa.Ui.Avalonia.Features.Tasks.Page;
 using Misa.Ui.Avalonia.Infrastructure.Services.Navigation;
 using Misa.Ui.Avalonia.Presentation.Mapping;
 
 namespace Misa.Ui.Avalonia.App.Shell;
 
-public partial class NavigationViewModel : ViewModelBase
+public partial class NavigationViewModel(INavigationService navigationService) : ViewModelBase
 {
-    public NavigationViewModel(INavigationService navigationService)
-    {
-        _navigationService = navigationService;
-    }
-    private readonly INavigationService _navigationService;
-    
     [RelayCommand]
-    public void ShowTasks()
+    private void ShowTasks()
     {
-        _navigationService.ShowTasks();
+        navigationService.NavigationStore.CurrentViewModel = new PageViewModel(navigationService);
     }
+
+    [RelayCommand]
+    private void OpenSchedulerPanel() =>
+        navigationService.NavigationStore.CurrentViewModel = new SchedulerMainWindowViewModel(navigationService);
 }

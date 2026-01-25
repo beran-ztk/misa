@@ -6,7 +6,6 @@
              d:DesignWidth="800"
              d:DesignHeight="450"
              x:Class="Misa.Ui.Avalonia.Features.Details.Page.DetailPageView"
-             xmlns:details="clr-namespace:Misa.Ui.Avalonia.Features.Details"
              xmlns:page="clr-namespace:Misa.Ui.Avalonia.Features.Details.Page"
              xmlns:information="clr-namespace:Misa.Ui.Avalonia.Features.Details.Information"
              x:DataType="page:DetailPageViewModel">

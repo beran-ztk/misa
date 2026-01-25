@@ -9,39 +9,21 @@
         Icon="/Assets/Images/Shells/nanoparticle.png"
         Title="Misa">
 
-    <Grid RowDefinitions="40,*,20">
+    <Grid ColumnDefinitions="100,*,1,Auto">
 
-        <shell:TitleBarView Grid.Row="0"
-                            DataContext="{Binding TitleBar}" />
+        <ContentControl Grid.Column="0"
+                        Content="{Binding Navigation}" 
+                        Background="{StaticResource BrushPrimaryBackground}"/>
 
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="100" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="1" />
-                <ColumnDefinition Width="Auto" MaxWidth="780"/>
-                <ColumnDefinition Width="40" />
-            </Grid.ColumnDefinitions>
-                
-            <shell:NavigationView Grid.Column="0"
-                                  DataContext="{Binding Navigation}" />
-
-            <ContentControl Grid.Column="1"
-                            Background="{StaticResource BrushPrimaryBackground}"
-                            Content="{Binding CurrentViewModel}" />
+        <ContentControl Grid.Column="1"
+                        Background="{StaticResource BrushPrimaryBackground}"
+                        Content="{Binding CurrentViewModel}" />
         
-            <GridSplitter Grid.Column="2"
-                          Background="{StaticResource BrushPanelBackground}"/>
+        <GridSplitter Grid.Column="2"
+                      Background="{StaticResource BrushPanelBackground}"/>
         
-            <ContentControl Grid.Column="3"
-                            Background="{StaticResource BrushPrimaryBackground}"
-                            Content="{Binding CurrentInfoViewModel}" />
-
-            <shell:InfoBarView Grid.Column="4"
-                               DataContext="{Binding InfoBar}" />
-        </Grid>
-        
-        <shell:StatusBarView Grid.Row="2"
-                             DataContext="{Binding StatusBar}" />
+        <ContentControl Grid.Column="3"
+                        Background="{StaticResource BrushPrimaryBackground}"
+                        Content="{Binding CurrentInfoViewModel}" />
     </Grid>
 </Window>

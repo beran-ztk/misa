@@ -9,5 +9,4 @@ public interface INavigationService
     public NavigationStore NavigationStore { get; }
     public IClipboardService ClipboardService { get; }
     public IServiceProvider ServiceProvider { get; }
-    public void ShowTasks();
 }
