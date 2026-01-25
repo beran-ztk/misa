@@ -53,6 +53,7 @@ builder.Services.AddHostedService<SchedulePlanningWorker>();
 
 builder.Services.AddScoped<IEntityRepository, EntityRepository>();
 builder.Services.AddScoped<IItemRepository, ItemRepository>();
+builder.Services.AddScoped<ISchedulerPlanningRepository, SchedulerPlanningRepository>();
 
 // DI
 builder.Host.UseWolverine(opts =>

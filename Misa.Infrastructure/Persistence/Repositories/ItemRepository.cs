@@ -11,6 +11,9 @@ namespace Misa.Infrastructure.Persistence.Repositories;
 
 public class ItemRepository(DefaultContext context) : IItemRepository
 {
+    public async Task SaveChangesAsync(CancellationToken  ct = default)
+        => await context.SaveChangesAsync(ct);
+
     public async Task<List<Session>> GetActiveSessionsWithAutostopAsync(CancellationToken ct)
     {
         return await context.Sessions
@@ -32,14 +35,6 @@ public class ItemRepository(DefaultContext context) : IItemRepository
             )
             .Include(s => s.Segments.Where(seg => seg.EndedAtUtc == null))
             .ToListAsync(ct);
-    }
-
-    public async Task SaveChangesAsync(CancellationToken  ct = default)
-        => await context.SaveChangesAsync(ct);
-
-    public async Task AddAsync(SchedulerExecutionLog executionLog, CancellationToken ct)
-    {
-        await context.SchedulerExecutionLog.AddAsync(executionLog, ct);
     }
 
     public async Task<Domain.Features.Entities.Extensions.Items.Extensions.Tasks.Task?> TryGetTaskAsync(Guid id, CancellationToken ct)
@@ -128,7 +123,7 @@ public class ItemRepository(DefaultContext context) : IItemRepository
     
     public async Task AddAsync(Domain.Features.Entities.Extensions.Items.Features.Scheduling.Scheduler scheduler, CancellationToken ct)
     {
-        await context.Scheduler.AddAsync(scheduler, ct);
+        await context.Schedulers.AddAsync(scheduler, ct);
     }
     public async Task<Item?> TryGetItemDetailsAsync(Guid id, CancellationToken ct)
     {
@@ -171,11 +166,5 @@ public class ItemRepository(DefaultContext context) : IItemRepository
         context.Deadlines.Remove(obj);
         
         return Task.CompletedTask;
-    }
-
-    public async Task<List<Scheduler>> GetActiveSchedulesAsync(CancellationToken ct)
-    {
-        return await context.Scheduler
-            .ToListAsync(ct);
     }
 }
