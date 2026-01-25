@@ -6,9 +6,9 @@ namespace Misa.Api.Services.Features.Items.Features.Sessions;
 public class SessionPastMaxTimeWorker : BackgroundService
 {
     private readonly IServiceProvider _services;
-    private readonly ILogger<SessionAutostopWorker> _logger;
+    private readonly ILogger<SessionPastMaxTimeWorker> _logger;
 
-    public SessionPastMaxTimeWorker(IServiceProvider services, ILogger<SessionAutostopWorker> logger)
+    public SessionPastMaxTimeWorker(IServiceProvider services, ILogger<SessionPastMaxTimeWorker> logger)
     {
         _services = services;
         _logger = logger;
@@ -16,7 +16,7 @@ public class SessionPastMaxTimeWorker : BackgroundService
     
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var timer = new PeriodicTimer(TimeSpan.FromSeconds(60));
+        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(60));
         
         try
         {

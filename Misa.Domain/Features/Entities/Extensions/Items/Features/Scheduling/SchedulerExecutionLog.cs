@@ -6,6 +6,20 @@ namespace Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
 public sealed class SchedulerExecutionLog
 {
     private SchedulerExecutionLog() { } // EF Core
+    public static SchedulerExecutionLog Create(
+        Guid schedulerId,
+        DateTimeOffset scheduledForUtc)
+    {
+        return new SchedulerExecutionLog
+        {
+            SchedulerId = schedulerId,
+            ScheduledForUtc = scheduledForUtc,
+            
+            Status = SchedulerExecutionStatus.Pending,
+            Attempts = 0,
+            CreatedAtUtc = DateTimeOffset.UtcNow
+        };
+    }
 
     public Guid Id { get; private set; }
     public Guid SchedulerId { get; private set; }

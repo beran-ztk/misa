@@ -28,7 +28,7 @@
             <!-- Form -->
             <Grid Grid.Row="2"
                   ColumnDefinitions="Auto,*"
-                  RowDefinitions="Auto,Auto,Auto"
+                  RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
                   RowSpacing="{StaticResource SpacingMedium}"
                   ColumnSpacing="{StaticResource SpacingLarge}">
 
@@ -62,6 +62,107 @@
                                Maximum="1000"
                                Increment="1"
                                FormatString="N0" />
+                
+                <!-- Occurrence Count Limit -->
+                <TextBlock Grid.Row="3" Grid.Column="0" Classes="misa-label" Text="Occurrence Limit" />
+                <NumericUpDown Grid.Row="3" Grid.Column="1"
+                               Classes="misa-input"
+                               Value="{Binding OccurrenceCountLimit, Mode=TwoWay}"
+                               Minimum="0"
+                               Maximum="100000"
+                               Increment="1"
+                               FormatString="N0" />
+
+                <!-- Misfire Policy -->
+                <TextBlock Grid.Row="4" Grid.Column="0" Classes="misa-label" Text="Misfire Policy" />
+                <ComboBox Grid.Row="4" Grid.Column="1"
+                          Classes="misa-input"
+                          ItemsSource="{Binding MisfirePolicies}"
+                          SelectedValue="{Binding SelectedMisfirePolicy, Mode=TwoWay}" />
+
+                <!-- Occurrence TTL -->
+                <TextBlock Grid.Row="5" Grid.Column="0"
+                           Classes="misa-label"
+                           Text="Occurrence TTL" />
+
+                <Grid Grid.Row="5" Grid.Column="1"
+                      ColumnDefinitions="140,*"
+                      RowDefinitions="Auto,Auto,Auto"
+                      RowSpacing="{StaticResource SpacingSmall}"
+                      ColumnSpacing="{StaticResource SpacingMedium}">
+
+                    <TextBlock Grid.Row="0" Grid.Column="0"
+                               VerticalAlignment="Center"
+                               Text="Days" />
+                    <NumericUpDown Grid.Row="0" Grid.Column="1"
+                                   Classes="misa-input"
+                                   Minimum="0"
+                                   Increment="1"
+                                   Value="{Binding OccurrenceTtlDays, Mode=TwoWay}" />
+
+                    <TextBlock Grid.Row="1" Grid.Column="0"
+                               VerticalAlignment="Center"
+                               Text="Hours" />
+                    <NumericUpDown Grid.Row="1" Grid.Column="1"
+                                   Classes="misa-input"
+                                   Minimum="0"
+                                   Maximum="23"
+                                   Increment="1"
+                                   Value="{Binding OccurrenceTtlHours, Mode=TwoWay}" />
+
+                    <TextBlock Grid.Row="2" Grid.Column="0"
+                               VerticalAlignment="Center"
+                               Text="Minutes" />
+                    <NumericUpDown Grid.Row="2" Grid.Column="1"
+                                   Classes="misa-input"
+                                   Minimum="0"
+                                   Maximum="59"
+                                   Increment="1"
+                                   Value="{Binding OccurrenceTtlMinutes, Mode=TwoWay}" />
+                </Grid>
+
+                <!-- Start Time -->
+                <TextBlock Grid.Row="6" Grid.Column="0"
+                           Classes="misa-label"
+                           Text="Start Time" />
+
+                <TimePicker Grid.Row="6" Grid.Column="1"
+                            Classes="misa-input"
+                            SelectedTime="{Binding StartTime, Mode=TwoWay}" />
+
+                <!-- End Time -->
+                <TextBlock Grid.Row="7" Grid.Column="0"
+                           Classes="misa-label"
+                           Text="End Time" />
+
+                <TimePicker Grid.Row="7" Grid.Column="1"
+                            Classes="misa-input"
+                            SelectedTime="{Binding EndTime, Mode=TwoWay}" />
+                
+                <!-- Active From -->
+                <TextBlock Grid.Row="8" Grid.Column="0"
+                           Classes="misa-label"
+                           Text="Active From" />
+
+                <StackPanel Grid.Row="8" Grid.Column="1"
+                            Orientation="Horizontal"
+                            Spacing="{StaticResource SpacingSmall}">
+                    <DatePicker SelectedDate="{Binding ActiveFromDate, Mode=TwoWay}" />
+                    <TimePicker SelectedTime="{Binding ActiveFromTime, Mode=TwoWay}" />
+                </StackPanel>
+                
+                <!-- Active Until -->
+                <TextBlock Grid.Row="9" Grid.Column="0"
+                           Classes="misa-label"
+                           Text="Active Until" />
+
+                <StackPanel Grid.Row="9" Grid.Column="1"
+                            Orientation="Horizontal"
+                            Spacing="{StaticResource SpacingSmall}">
+                    <DatePicker SelectedDate="{Binding ActiveUntilDate, Mode=TwoWay}" />
+                    <TimePicker SelectedTime="{Binding ActiveUntilTime, Mode=TwoWay}" />
+                </StackPanel>
+
             </Grid>
 
             <!-- Footer / Actions -->

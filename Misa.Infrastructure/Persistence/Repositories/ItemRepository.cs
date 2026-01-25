@@ -2,17 +2,21 @@
 using Misa.Application.Common.Abstractions.Persistence;
 using Misa.Domain.Features.Entities.Base;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Deadlines;
+using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions;
 using Misa.Infrastructure.Persistence.Context;
 using Item = Misa.Domain.Features.Entities.Extensions.Items.Base.Item;
 
 namespace Misa.Infrastructure.Persistence.Repositories;
 
-public class ItemRepository(DefaultContext db) : IItemRepository
+public class ItemRepository(DefaultContext context) : IItemRepository
 {
+    public async Task SaveChangesAsync(CancellationToken  ct = default)
+        => await context.SaveChangesAsync(ct);
+
     public async Task<List<Session>> GetActiveSessionsWithAutostopAsync(CancellationToken ct)
     {
-        return await db.Sessions
+        return await context.Sessions
             .Where(s =>
                 s.StopAutomatically == true
                 && s.State != SessionState.Ended
@@ -23,7 +27,7 @@ public class ItemRepository(DefaultContext db) : IItemRepository
 
     public async Task<List<Session>> GetInactiveSessionsAsync(DateTimeOffset oldestDateAllowed, CancellationToken ct)
     {
-        return await db.Sessions
+        return await context.Sessions
             .Where(s => s.State != SessionState.Ended
             && s.Segments.Any(
                 seg => seg.EndedAtUtc == null 
@@ -33,12 +37,9 @@ public class ItemRepository(DefaultContext db) : IItemRepository
             .ToListAsync(ct);
     }
 
-    public async Task SaveChangesAsync(CancellationToken  ct = default)
-        => await db.SaveChangesAsync(ct);
-
     public async Task<Domain.Features.Entities.Extensions.Items.Extensions.Tasks.Task?> TryGetTaskAsync(Guid id, CancellationToken ct)
     {
-        return await db.Tasks
+        return await context.Tasks
             .Include(t => t.Item)
             .ThenInclude(i => i.State)
             .Include(t => t.Item)
@@ -48,7 +49,7 @@ public class ItemRepository(DefaultContext db) : IItemRepository
 
     public async Task<List<Domain.Features.Entities.Extensions.Items.Extensions.Tasks.Task>> GetTasksAsync(CancellationToken ct)
     {
-        return await db.Tasks
+        return await context.Tasks
             .Include(t => t.Item)
                 .ThenInclude(i => i.State)
             .Include(t => t.Item)
@@ -59,7 +60,7 @@ public class ItemRepository(DefaultContext db) : IItemRepository
 
     public async Task<Session?> TryGetLatestCompletedSessionByItemIdAsync(Guid id, CancellationToken ct)
     {
-        return await db.Sessions
+        return await context.Sessions
             .Where(s =>
                 s.ItemId == id
                 && s.State == SessionState.Ended) 
@@ -70,7 +71,7 @@ public class ItemRepository(DefaultContext db) : IItemRepository
 
     public async Task<Session?> TryGetActiveSessionByItemIdAsync(Guid id, CancellationToken ct)
     {
-        return await db.Sessions
+        return await context.Sessions
             .Where(s =>
                 s.ItemId == id
                 && (s.State == SessionState.Running
@@ -82,7 +83,7 @@ public class ItemRepository(DefaultContext db) : IItemRepository
 
     public async Task<Session?> TryGetRunningSessionByItemIdAsync(Guid id, CancellationToken ct)
     {
-        return await db.Sessions
+        return await context.Sessions
             .Where(s =>
                 s.ItemId == id
                 && s.State == SessionState.Running)
@@ -92,7 +93,7 @@ public class ItemRepository(DefaultContext db) : IItemRepository
     }  
     public async Task<Session?> TryGetPausedSessionByItemIdAsync(Guid id, CancellationToken ct)
     {
-        return await db.Sessions
+        return await context.Sessions
             .Where(s =>
                 s.ItemId == id
                 && s.State == SessionState.Paused)
@@ -102,8 +103,8 @@ public class ItemRepository(DefaultContext db) : IItemRepository
 
     public async Task<Item> AddAsync(Item item, CancellationToken ct = default)
     {
-        await db.Items.AddAsync(item, ct);
-        await db.SaveChangesAsync(ct);
+        await context.Items.AddAsync(item, ct);
+        await context.SaveChangesAsync(ct);
         var loaded = await LoadAsync(item.Id, ct);
         
         return loaded 
@@ -112,21 +113,21 @@ public class ItemRepository(DefaultContext db) : IItemRepository
 
     public async Task AddAsync(Domain.Features.Entities.Extensions.Items.Extensions.Tasks.Task task, CancellationToken ct)
     {
-        await db.Tasks.AddAsync(task, ct);
+        await context.Tasks.AddAsync(task, ct);
     }
 
     public async Task AddAsync(Session session, CancellationToken ct)
     {
-        await db.Sessions.AddAsync(session, ct);
+        await context.Sessions.AddAsync(session, ct);
     }
     
     public async Task AddAsync(Domain.Features.Entities.Extensions.Items.Features.Scheduling.Scheduler scheduler, CancellationToken ct)
     {
-        await db.Scheduler.AddAsync(scheduler, ct);
+        await context.Schedulers.AddAsync(scheduler, ct);
     }
     public async Task<Item?> TryGetItemDetailsAsync(Guid id, CancellationToken ct)
     {
-        return await db.Items
+        return await context.Items
             .Include(i => i.State)
             
             .Include(e => e.Entity)
@@ -137,7 +138,7 @@ public class ItemRepository(DefaultContext db) : IItemRepository
 
     public async Task<Item?> LoadAsync(Guid entityId, CancellationToken ct = default)
     {
-        return await db.Items
+        return await context.Items
             .Include(i => i.Entity)
             .ThenInclude(e => e.Workflow)
             .Include(i => i.State)
@@ -147,22 +148,22 @@ public class ItemRepository(DefaultContext db) : IItemRepository
     
     public async Task<Item?> TryGetItemAsync(Guid id, CancellationToken ct)
     {
-        return await db.Items
+        return await context.Items
             .Include(e => e.Entity)
             .SingleOrDefaultAsync(i => i.Id == id, ct);
     }
     public async Task<ScheduledDeadline?> TryGetScheduledDeadlineForItemAsync(Guid itemId, CancellationToken ct)
     {
-        return await db.Deadlines
+        return await context.Deadlines
             .SingleOrDefaultAsync(d => d.ItemId == itemId, ct);
     }
     public async Task AddDeadlineAsync(ScheduledDeadline deadline, CancellationToken ct = default)
     {
-        await db.Deadlines.AddAsync(deadline, ct);
+        await context.Deadlines.AddAsync(deadline, ct);
     }
     public Task RemoveScheduledDeadlineAsync(ScheduledDeadline obj, CancellationToken ct)
     {
-        db.Deadlines.Remove(obj);
+        context.Deadlines.Remove(obj);
         
         return Task.CompletedTask;
     }

@@ -30,7 +30,14 @@ public static class SchedulingEndpoints
             var command = new AddScheduleCommand(
                 title,
                 dto.ScheduleFrequencyType,
-                dto.FrequencyInterval
+                dto.FrequencyInterval,
+                dto.OccurrenceCountLimit,
+                dto.MisfirePolicy,
+                dto.OccurrenceTtl,
+                dto.StartTime,
+                dto.EndTime,
+                dto.ActiveFromUtc,
+                dto.ActiveUntilUtc
             );
             
             var result = await bus.InvokeAsync<Result>(command, linkedCts.Token);

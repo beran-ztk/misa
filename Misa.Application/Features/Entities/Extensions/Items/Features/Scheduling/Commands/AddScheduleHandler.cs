@@ -9,7 +9,14 @@ namespace Misa.Application.Features.Entities.Extensions.Items.Features.Schedulin
 public record AddScheduleCommand(
     string Title,
     ScheduleFrequencyTypeContract ScheduleFrequencyType,
-    int FrequencyInterval
+    int FrequencyInterval,
+    int? OccurrenceCountLimit,
+    ScheduleMisfirePolicyContract MisfirePolicy,
+    TimeSpan? OccurrenceTtl,
+    TimeOnly? StartTime,
+    TimeOnly? EndTime,
+    DateTimeOffset ActiveFromUtc,
+    DateTimeOffset? ActiveUntilUtc
 );
 
 public class AddScheduleHandler(IItemRepository repository)
@@ -18,23 +25,24 @@ public class AddScheduleHandler(IItemRepository repository)
     {
         try
         {
-            // Validate FrequencyInterval
             if (command.FrequencyInterval <= 0)
             {
                 return Result.Invalid("FrequencyInterval", "Frequency interval must be greater than 0");
             }
 
-            // Map contract enum to domain enum
-            var frequencyType = command.ScheduleFrequencyType.MapToDomain();
-
-            // Create Scheduler using domain Create method
             var scheduler = Scheduler.Create(
-                command.Title,
-                frequencyType,
-                command.FrequencyInterval
+                title: command.Title,
+                frequencyType: command.ScheduleFrequencyType.MapToDomain(),
+                frequencyInterval: command.FrequencyInterval,
+                occurrenceCountLimit: command.OccurrenceCountLimit,
+                misfirePolicy: command.MisfirePolicy.MapToDomain(),
+                occurrenceTtl: command.OccurrenceTtl,
+                startTime: command.StartTime,
+                endTime: command.EndTime,
+                activeFromUtc: command.ActiveFromUtc,
+                activeUntilUtc: command.ActiveUntilUtc
             );
 
-            // Persist via repository
             await repository.AddAsync(scheduler, ct);
             await repository.SaveChangesAsync(ct);
 

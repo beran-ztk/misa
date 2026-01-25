@@ -51,7 +51,11 @@ public sealed class SchedulerExecutionLogConfiguration : IEntityTypeConfiguratio
             .IsRequired()
             .HasColumnName("created_at_utc")
             .HasDefaultValueSql("now()");
-
+        
+        // Constraints
+        builder.HasIndex(e => new { e.SchedulerId, e.ScheduledForUtc })
+            .IsUnique();
+            
         // Relationship
         builder.HasOne(e => e.Scheduler)
             .WithMany(s => s.ExecutionLogs)
