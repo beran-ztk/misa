@@ -15,24 +15,6 @@ public sealed class Scheduler
         Item = item;
     }
 
-    public static Scheduler Create(string title, ScheduleFrequencyType frequencyType, int frequencyInterval)
-    {
-        if (frequencyInterval <= 0)
-            throw new ArgumentException("Frequency interval must be greater than 0", nameof(frequencyInterval));
-        
-        var item = Item.Create(Workflow.Scheduling, title, Priority.None);
-        
-        return new Scheduler(item)
-        {
-            ScheduleFrequencyType = frequencyType,
-            FrequencyInterval = frequencyInterval,
-            MisfirePolicy = ScheduleMisfirePolicy.Catchup,
-            LookaheadCount = 1,
-            ActiveFromUtc = DateTimeOffset.UtcNow,
-            Timezone = "utc"
-        };
-    }
-
     public Guid Id { get; private set; }
     
     public ScheduleFrequencyType ScheduleFrequencyType { get; private set; }
@@ -68,4 +50,64 @@ public sealed class Scheduler
     
     public Item Item { get; private set; } = null!;
     public ICollection<SchedulerExecutionLog> ExecutionLogs { get; private set; } = new List<SchedulerExecutionLog>();
+    
+    public static Scheduler Create(
+        string title,
+        ScheduleFrequencyType frequencyType,
+        int frequencyInterval,
+        int? occurrenceCountLimit,
+        ScheduleMisfirePolicy misfirePolicy,
+        TimeSpan? occurrenceTtl,
+        TimeOnly? startTime,
+        TimeOnly? endTime,
+        DateTimeOffset activeFromUtc,
+        DateTimeOffset? activeUntilUtc,
+        string timezone = "utc",
+        int lookaheadCount = 1)
+    {
+        if (string.IsNullOrWhiteSpace(title))
+            throw new ArgumentException("Title must not be empty.", nameof(title));
+
+        if (frequencyInterval <= 0)
+            throw new ArgumentException("Frequency interval must be greater than 0.", nameof(frequencyInterval));
+
+        if (lookaheadCount <= 0)
+            throw new ArgumentException("LookaheadCount must be greater than 0.", nameof(lookaheadCount));
+
+        if (occurrenceCountLimit is <= 0)
+            throw new ArgumentException("OccurrenceCountLimit must be greater than 0 when provided.", nameof(occurrenceCountLimit));
+
+        if (occurrenceTtl is { } ttl && ttl <= TimeSpan.Zero)
+            throw new ArgumentException("OccurrenceTtl must be greater than 0 when provided.", nameof(occurrenceTtl));
+
+        if (activeUntilUtc is { } until && until <= activeFromUtc)
+            throw new ArgumentException("ActiveUntilUtc must be greater than ActiveFromUtc when provided.", nameof(activeUntilUtc));
+
+        if (startTime is { } st && endTime is { } et && et <= st)
+            throw new ArgumentException("EndTime must be greater than StartTime when both are provided.", nameof(endTime));
+
+        if (string.IsNullOrWhiteSpace(timezone))
+            throw new ArgumentException("Timezone must not be empty.", nameof(timezone));
+
+        var item = Item.Create(Workflow.Scheduling, title, Priority.None);
+
+        return new Scheduler(item)
+        {
+            ScheduleFrequencyType = frequencyType,
+            FrequencyInterval = frequencyInterval,
+
+            OccurrenceCountLimit = occurrenceCountLimit,
+            MisfirePolicy = misfirePolicy,
+            OccurrenceTtl = occurrenceTtl,
+
+            StartTime = startTime,
+            EndTime = endTime,
+
+            ActiveFromUtc = activeFromUtc,
+            ActiveUntilUtc = activeUntilUtc,
+
+            LookaheadCount = lookaheadCount,
+            Timezone = timezone
+        };
+    }
 }

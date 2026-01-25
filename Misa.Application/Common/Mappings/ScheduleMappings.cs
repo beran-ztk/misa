@@ -29,4 +29,20 @@ public static class ScheduleMappings
             ScheduleFrequencyType.Years   => ScheduleFrequencyTypeContract.Years,
             _ => throw new ArgumentOutOfRangeException(nameof(domain), domain, null)
         };
+    public static ScheduleMisfirePolicy MapToDomain(this ScheduleMisfirePolicyContract contract) => 
+        contract switch
+        {
+            ScheduleMisfirePolicyContract.Catchup => ScheduleMisfirePolicy.Catchup,
+            ScheduleMisfirePolicyContract.Skip    => ScheduleMisfirePolicy.Skip,
+            ScheduleMisfirePolicyContract.RunOnce => ScheduleMisfirePolicy.RunOnce,
+            _ => throw new ArgumentOutOfRangeException(nameof(contract), contract, null)
+        };
+    public static ScheduleMisfirePolicyContract MapToDto(this ScheduleMisfirePolicy domain) => 
+        domain switch
+        {
+            ScheduleMisfirePolicy.Catchup => ScheduleMisfirePolicyContract.Catchup,
+            ScheduleMisfirePolicy.Skip    => ScheduleMisfirePolicyContract.Skip,
+            ScheduleMisfirePolicy.RunOnce => ScheduleMisfirePolicyContract.RunOnce,
+            _ => throw new ArgumentOutOfRangeException(nameof(domain), domain, null)
+        };
 }

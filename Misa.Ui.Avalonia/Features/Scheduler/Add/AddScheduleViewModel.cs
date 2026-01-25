@@ -23,6 +23,38 @@ public partial class AddScheduleViewModel(INavigationService navigationService) 
 
     [ObservableProperty] private bool _hasValidationError;
     [ObservableProperty] private string _errorMessage = string.Empty;
+    [ObservableProperty] private int? _occurrenceCountLimit;
+
+    [ObservableProperty] private ScheduleMisfirePolicyContract _selectedMisfirePolicy 
+        = ScheduleMisfirePolicyContract.Catchup;
+
+    private TimeSpan? OccurrenceTtl =>
+        OccurrenceTtlDays == 0 &&
+        OccurrenceTtlHours == 0 &&
+        OccurrenceTtlMinutes == 0
+            ? null
+            : new TimeSpan(
+                OccurrenceTtlDays,
+                OccurrenceTtlHours,
+                OccurrenceTtlMinutes,
+                0);
+
+    [ObservableProperty] private int _occurrenceTtlDays;
+    [ObservableProperty] private int _occurrenceTtlHours;
+    [ObservableProperty] private int _occurrenceTtlMinutes;
+
+
+    [ObservableProperty] private TimeSpan? _startTime;
+    [ObservableProperty] private TimeSpan? _endTime;
+
+    [ObservableProperty] private DateTimeOffset _activeFromDate = DateTimeOffset.UtcNow.Date;
+    [ObservableProperty] private TimeSpan _activeFromTime = DateTimeOffset.UtcNow.TimeOfDay;
+
+    [ObservableProperty] private DateTimeOffset? _activeUntilDate;
+    [ObservableProperty] private TimeSpan? _activeUntilTime;
+
+    public IReadOnlyList<ScheduleMisfirePolicyContract> MisfirePolicies { get; } 
+        = Enum.GetValues<ScheduleMisfirePolicyContract>();
 
     public IReadOnlyList<ScheduleFrequencyTypeContract> FrequencyTypes { get; } = Enum.GetValues<ScheduleFrequencyTypeContract>();
 
@@ -44,7 +76,7 @@ public partial class AddScheduleViewModel(INavigationService navigationService) 
         try
         {
             ClearValidationError();
-
+            
             if (FrequencyInterval <= 0)
             {
                 ShowValidationError("Frequency interval must be greater than 0");
@@ -55,7 +87,15 @@ public partial class AddScheduleViewModel(INavigationService navigationService) 
             {
                 Title = Title,
                 ScheduleFrequencyType = SelectedFrequencyType,
-                FrequencyInterval = FrequencyInterval
+                FrequencyInterval = FrequencyInterval,
+
+                OccurrenceCountLimit = OccurrenceCountLimit,
+                MisfirePolicy = SelectedMisfirePolicy,
+                OccurrenceTtl = OccurrenceTtl,
+                StartTime = StartTime is null ? null : TimeOnly.FromTimeSpan(StartTime.Value),
+                EndTime = EndTime is null ? null : TimeOnly.FromTimeSpan(EndTime.Value),
+                ActiveFromUtc = ActiveFromDate.Add(ActiveFromTime).ToUniversalTime(),
+                ActiveUntilUtc = ActiveUntilDate?.Add(ActiveUntilTime ?? TimeSpan.Zero).ToUniversalTime()
             };
 
             using var request = new HttpRequestMessage(HttpMethod.Post, "scheduling");
@@ -87,6 +127,23 @@ public partial class AddScheduleViewModel(INavigationService navigationService) 
         Title = string.Empty;
         SelectedFrequencyType = ScheduleFrequencyTypeContract.Minutes;
         FrequencyInterval = 1;
+        
+        OccurrenceCountLimit = null;
+        SelectedMisfirePolicy = ScheduleMisfirePolicyContract.Catchup;
+        
+        OccurrenceTtlDays = 0;
+        OccurrenceTtlHours = 0;
+        OccurrenceTtlMinutes = 0;
+        
+        StartTime = null;
+        EndTime = null;
+        
+        ActiveFromDate = DateTime.UtcNow.Date;
+        ActiveFromTime = TimeSpan.Zero;
+
+        ActiveUntilDate = null;
+        ActiveUntilTime = null;
+        
         ClearValidationError();
     }
 }

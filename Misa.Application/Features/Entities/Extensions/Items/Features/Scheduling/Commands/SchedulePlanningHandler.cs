@@ -1,5 +1,4 @@
-﻿using System.Data.Common;
-using Misa.Application.Common.Abstractions.Persistence;
+﻿using Misa.Application.Common.Abstractions.Persistence;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
 
 namespace Misa.Application.Features.Entities.Extensions.Items.Features.Scheduling.Commands;
