@@ -7,28 +7,54 @@ public class SchedulePlanningHandler(ISchedulerPlanningRepository repository)
 {
     public async Task HandleAsync(SchedulePlanningCommand command, CancellationToken stoppingToken)
     {
-        var schedules = await repository.GetActiveSchedulesAsync(stoppingToken);
+        var schedules = await repository.GetActiveSchedulesAsync(DateTimeOffset.UtcNow, stoppingToken);
 
         foreach (var schedule in schedules)
         {
-            while (schedule.SchedulingAnchorUtc < DateTimeOffset.UtcNow)
+            var lookaheadUntil = DateTimeOffset.UtcNow;
+            
+            switch (schedule.ScheduleFrequencyType) 
+            { 
+                case ScheduleFrequencyType.Minutes:
+                    lookaheadUntil += TimeSpan.FromMinutes(schedule.FrequencyInterval) * schedule.LookaheadCount;
+                    break;
+                case ScheduleFrequencyType.Hours:
+                    lookaheadUntil += TimeSpan.FromHours(schedule.FrequencyInterval) * schedule.LookaheadCount;
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(
+                        nameof(ScheduleFrequencyType), 
+                        schedule.ScheduleFrequencyType.ToString(), 
+                        null);
+            }
+            
+            while (schedule.SchedulingAnchorUtc < lookaheadUntil)
             {
-                var anchor = schedule.SchedulingAnchorUtc;
-                
-                var log = SchedulerExecutionLog.Create(schedule.Id, anchor);
+                var log = schedule.CreateExecutionLog();
             
                 switch (schedule.ScheduleFrequencyType) 
                 { 
                     case ScheduleFrequencyType.Minutes:
-                        schedule.NextDueAtUtc = anchor + TimeSpan.FromMinutes(schedule.FrequencyInterval);
+                        schedule.NextDueAtUtc = schedule.SchedulingAnchorUtc + TimeSpan.FromMinutes(schedule.FrequencyInterval);
+                        break;
+                    case ScheduleFrequencyType.Hours:
+                        schedule.NextDueAtUtc = schedule.SchedulingAnchorUtc + TimeSpan.FromHours(schedule.FrequencyInterval);
                         break;
                     default:
-                        throw new ArgumentOutOfRangeException();
-                };
+                        throw new ArgumentOutOfRangeException(
+                            nameof(ScheduleFrequencyType), 
+                            schedule.ScheduleFrequencyType.ToString(), 
+                            null);
+                }
             
                 await repository.TryAddExecutionLogAsync(log, stoppingToken);
                 
                 await repository.SaveChangesAsync(stoppingToken);
+
+                if (schedule.OccurrenceCountLimit == 0)
+                {
+                    break;
+                }
             }
         }
     }

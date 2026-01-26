@@ -50,11 +50,24 @@ public sealed class Scheduler
     
     public Item Item { get; private set; } = null!;
     public ICollection<SchedulerExecutionLog> ExecutionLogs { get; private set; } = new List<SchedulerExecutionLog>();
-    
+
+    private void ReduceOccurrenceCount()
+    {
+        if (OccurrenceCountLimit is > 0)
+        {
+            OccurrenceCountLimit -= 1;
+        }
+    }
+    public SchedulerExecutionLog CreateExecutionLog()
+    {
+        ReduceOccurrenceCount();
+        return SchedulerExecutionLog.Create(Id, SchedulingAnchorUtc);
+    }
     public static Scheduler Create(
         string title,
         ScheduleFrequencyType frequencyType,
         int frequencyInterval,
+        int lookaheadCount,
         int? occurrenceCountLimit,
         ScheduleMisfirePolicy misfirePolicy,
         TimeSpan? occurrenceTtl,
@@ -62,8 +75,7 @@ public sealed class Scheduler
         TimeOnly? endTime,
         DateTimeOffset activeFromUtc,
         DateTimeOffset? activeUntilUtc,
-        string timezone = "utc",
-        int lookaheadCount = 1)
+        string timezone = "utc")
     {
         if (string.IsNullOrWhiteSpace(title))
             throw new ArgumentException("Title must not be empty.", nameof(title));

@@ -9,8 +9,13 @@ public sealed class SchedulerPlanningRepository(DefaultContext context) : ISched
 {
     public Task SaveChangesAsync(CancellationToken ct) => context.SaveChangesAsync(ct);
     
-    public Task<List<Scheduler>> GetActiveSchedulesAsync(CancellationToken ct)
-        => context.Schedulers.ToListAsync(ct);
+    public Task<List<Scheduler>> GetActiveSchedulesAsync(DateTimeOffset now, CancellationToken ct)
+        => context.Schedulers
+            .Where(s => 
+                (s.OccurrenceCountLimit == null || s.OccurrenceCountLimit > 0)
+                && s.ActiveFromUtc <= now && (s.ActiveUntilUtc == null || s.ActiveUntilUtc >= now)
+            )
+            .ToListAsync(ct);
     
     public async Task<bool> TryAddExecutionLogAsync(SchedulerExecutionLog log, CancellationToken ct)
     {
