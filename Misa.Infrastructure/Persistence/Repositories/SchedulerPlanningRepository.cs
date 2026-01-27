@@ -14,9 +14,15 @@ public sealed class SchedulerPlanningRepository(DefaultContext context) : ISched
             .Where(s => 
                 (s.OccurrenceCountLimit == null || s.OccurrenceCountLimit > 0)
                 && s.ActiveFromUtc <= now && (s.ActiveUntilUtc == null || s.ActiveUntilUtc >= now)
+                && (s.NextAllowedExecutionAtUtc <= now || s.NextAllowedExecutionAtUtc == null)
             )
             .ToListAsync(ct);
-    
+
+    public async Task<int> GetExecutionCountPlannedAheadAsync(Guid id, DateTimeOffset utcNow, CancellationToken ct)
+        => await context.SchedulerExecutionLogs
+            .Where(s => s.Scheduler.Id == id && s.ScheduledForUtc >= utcNow)
+            .CountAsync(ct);
+
     public async Task<bool> TryAddExecutionLogAsync(SchedulerExecutionLog log, CancellationToken ct)
     {
         context.SchedulerExecutionLogs.Add(log);

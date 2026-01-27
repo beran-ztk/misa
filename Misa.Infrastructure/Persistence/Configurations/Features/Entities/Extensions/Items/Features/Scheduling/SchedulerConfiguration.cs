@@ -47,9 +47,9 @@ public sealed class SchedulerConfiguration : IEntityTypeConfiguration<Scheduler>
             .HasColumnType("schedule_misfire_policy")
             .HasDefaultValue(ScheduleMisfirePolicy.Catchup);
 
-        builder.Property(s => s.LookaheadCount)
+        builder.Property(s => s.LookaheadLimit)
             .IsRequired()
-            .HasColumnName("lookahead_count")
+            .HasColumnName("lookahead_limit")
             .HasDefaultValue(1);
 
         builder.Property(s => s.OccurrenceTtl)
@@ -82,6 +82,9 @@ public sealed class SchedulerConfiguration : IEntityTypeConfiguration<Scheduler>
         builder.Property(s => s.NextDueAtUtc)
             .HasColumnName("next_due_at_utc");
 
+        builder.Property(s => s.NextAllowedExecutionAtUtc)
+            .HasColumnName("next_allowed_execution_at_utc");
+        
         // Relationships
         builder.HasOne(s => s.Item)
             .WithOne()

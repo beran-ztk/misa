@@ -28,7 +28,7 @@ public sealed class Scheduler
     
     public ScheduleMisfirePolicy MisfirePolicy { get; private set; }
     
-    public int LookaheadCount { get; private set; }
+    public int LookaheadLimit { get; private set; }
     
     public TimeSpan? OccurrenceTtl { get; private set; }
     
@@ -44,6 +44,7 @@ public sealed class Scheduler
     
     public DateTimeOffset? LastRunAtUtc { get; private set; }
     public DateTimeOffset? NextDueAtUtc { get; set; }
+    public DateTimeOffset? NextAllowedExecutionAtUtc { get; set; }
 
     public DateTimeOffset SchedulingAnchorUtc =>
         NextDueAtUtc ?? ActiveFromUtc;
@@ -51,7 +52,11 @@ public sealed class Scheduler
     public Item Item { get; private set; } = null!;
     public ICollection<SchedulerExecutionLog> ExecutionLogs { get; private set; } = new List<SchedulerExecutionLog>();
 
-    private void ReduceOccurrenceCount()
+    public void CheckAndUpdateNextAllowedExecution(DateTimeOffset utcNow)
+        => NextAllowedExecutionAtUtc = NextAllowedExecutionAtUtc >= utcNow 
+            ? NextAllowedExecutionAtUtc 
+            : SchedulingAnchorUtc;
+    public void ReduceOccurrenceCount()
     {
         if (OccurrenceCountLimit is > 0)
         {
@@ -60,14 +65,13 @@ public sealed class Scheduler
     }
     public SchedulerExecutionLog CreateExecutionLog()
     {
-        ReduceOccurrenceCount();
         return SchedulerExecutionLog.Create(Id, SchedulingAnchorUtc);
     }
     public static Scheduler Create(
         string title,
         ScheduleFrequencyType frequencyType,
         int frequencyInterval,
-        int lookaheadCount,
+        int lookaheadLimit,
         int? occurrenceCountLimit,
         ScheduleMisfirePolicy misfirePolicy,
         TimeSpan? occurrenceTtl,
@@ -83,8 +87,8 @@ public sealed class Scheduler
         if (frequencyInterval <= 0)
             throw new ArgumentException("Frequency interval must be greater than 0.", nameof(frequencyInterval));
 
-        if (lookaheadCount <= 0)
-            throw new ArgumentException("LookaheadCount must be greater than 0.", nameof(lookaheadCount));
+        if (lookaheadLimit <= 0)
+            throw new ArgumentException("LookaheadCount must be greater than 0.", nameof(lookaheadLimit));
 
         if (occurrenceCountLimit is <= 0)
             throw new ArgumentException("OccurrenceCountLimit must be greater than 0 when provided.", nameof(occurrenceCountLimit));
@@ -118,7 +122,7 @@ public sealed class Scheduler
             ActiveFromUtc = activeFromUtc,
             ActiveUntilUtc = activeUntilUtc,
 
-            LookaheadCount = lookaheadCount,
+            LookaheadLimit = lookaheadLimit,
             Timezone = timezone
         };
     }

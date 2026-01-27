@@ -35,7 +35,7 @@ public class AddScheduleHandler(IItemRepository repository)
                 title: command.Title,
                 frequencyType: command.ScheduleFrequencyType.MapToDomain(),
                 frequencyInterval: command.FrequencyInterval,
-                lookaheadCount: command.LookaheadCount,
+                lookaheadLimit: command.LookaheadCount,
                 occurrenceCountLimit: command.OccurrenceCountLimit,
                 misfirePolicy: command.MisfirePolicy.MapToDomain(),
                 occurrenceTtl: command.OccurrenceTtl,

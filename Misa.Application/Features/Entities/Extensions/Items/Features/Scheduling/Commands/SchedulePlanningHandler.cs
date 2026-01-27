@@ -7,31 +7,23 @@ public class SchedulePlanningHandler(ISchedulerPlanningRepository repository)
 {
     public async Task HandleAsync(SchedulePlanningCommand command, CancellationToken stoppingToken)
     {
-        var schedules = await repository.GetActiveSchedulesAsync(DateTimeOffset.UtcNow, stoppingToken);
+        var utcNow = DateTimeOffset.UtcNow;
+        var furthestLookaheadTimeAllowed = utcNow.AddYears(1);
+        
+        var schedules = await repository.GetActiveSchedulesAsync(utcNow, stoppingToken);
 
         foreach (var schedule in schedules)
         {
-            var lookaheadUntil = DateTimeOffset.UtcNow;
+            var currentLookaheadCount = await  repository.GetExecutionCountPlannedAheadAsync(schedule.Id, utcNow, stoppingToken);
             
-            switch (schedule.ScheduleFrequencyType) 
-            { 
-                case ScheduleFrequencyType.Minutes:
-                    lookaheadUntil += TimeSpan.FromMinutes(schedule.FrequencyInterval) * schedule.LookaheadCount;
-                    break;
-                case ScheduleFrequencyType.Hours:
-                    lookaheadUntil += TimeSpan.FromHours(schedule.FrequencyInterval) * schedule.LookaheadCount;
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(
-                        nameof(ScheduleFrequencyType), 
-                        schedule.ScheduleFrequencyType.ToString(), 
-                        null);
-            }
-            
-            while (schedule.SchedulingAnchorUtc < lookaheadUntil)
+            while (schedule.OccurrenceCountLimit != 0 
+                   && currentLookaheadCount <= schedule.LookaheadLimit
+                   && schedule.SchedulingAnchorUtc < furthestLookaheadTimeAllowed)
             {
                 var log = schedule.CreateExecutionLog();
-            
+                schedule.ReduceOccurrenceCount();
+                schedule.CheckAndUpdateNextAllowedExecution(utcNow);
+                
                 switch (schedule.ScheduleFrequencyType) 
                 { 
                     case ScheduleFrequencyType.Minutes:
@@ -51,9 +43,9 @@ public class SchedulePlanningHandler(ISchedulerPlanningRepository repository)
                 
                 await repository.SaveChangesAsync(stoppingToken);
 
-                if (schedule.OccurrenceCountLimit == 0)
+                if (schedule.SchedulingAnchorUtc > utcNow)
                 {
-                    break;
+                    currentLookaheadCount++;
                 }
             }
         }
