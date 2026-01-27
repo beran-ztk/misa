@@ -7,25 +7,72 @@ public class SchedulePlanningHandler(ISchedulerPlanningRepository repository)
 {
     public async Task HandleAsync(SchedulePlanningCommand command, CancellationToken stoppingToken)
     {
-        var schedules = await repository.GetActiveSchedulesAsync(stoppingToken);
+        var now = DateTimeOffset.UtcNow;
+        
+        var schedules = await repository.GetActiveSchedulesAsync(now, stoppingToken);
 
         foreach (var schedule in schedules)
         {
-            while (schedule.SchedulingAnchorUtc < DateTimeOffset.UtcNow)
+            if (schedule.ScheduleFrequencyType != ScheduleFrequencyType.Minutes
+                && schedule.ScheduleFrequencyType != ScheduleFrequencyType.Hours
+                && schedule.ScheduleFrequencyType != ScheduleFrequencyType.Days)
             {
-                var anchor = schedule.SchedulingAnchorUtc;
+                break;
+            }
+            
+            var currentLookaheadCount = await  repository.GetExecutionCountPlannedAheadAsync(schedule.Id, now, stoppingToken);
+            
+            var furthestLookaheadTimeAllowed = schedule.ScheduleFrequencyType switch
+            {
+                ScheduleFrequencyType.Minutes => now.AddDays(1),
+                ScheduleFrequencyType.Hours => now.AddDays(30),
+                ScheduleFrequencyType.Days => now.AddDays(180),
+                _ => now
+            };
+            
+            while (schedule.OccurrenceCountLimit != 0 
+                   && currentLookaheadCount < schedule.LookaheadLimit
+                   && schedule.SchedulingAnchorUtc < furthestLookaheadTimeAllowed)
+            {
+                var log = schedule.CreateExecutionLog();
+                schedule.ReduceOccurrenceCount();
+                schedule.CheckAndUpdateNextAllowedExecution(now);
                 
-                var log = SchedulerExecutionLog.Create(schedule.Id, anchor);
-            
-                switch (schedule.ScheduleFrequencyType) 
-                { 
-                    case ScheduleFrequencyType.Minutes:
-                        schedule.NextDueAtUtc = anchor + TimeSpan.FromMinutes(schedule.FrequencyInterval);
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException();
+                var delta = schedule.ScheduleFrequencyType switch
+                {
+                    ScheduleFrequencyType.Minutes => TimeSpan.FromMinutes(schedule.FrequencyInterval),
+                    ScheduleFrequencyType.Hours => TimeSpan.FromHours(schedule.FrequencyInterval),
+                    ScheduleFrequencyType.Days => TimeSpan.FromDays(schedule.FrequencyInterval),
+                    
+                    _ => throw new ArgumentOutOfRangeException(
+                        nameof(ScheduleFrequencyType),
+                        schedule.ScheduleFrequencyType.ToString(),
+                        null)
                 };
-            
+
+                do
+                {
+                    schedule.NextDueAtUtc = schedule.SchedulingAnchorUtc.Add(delta);
+
+                    if (schedule.StartTime == null || schedule.EndTime == null)
+                    {
+                        break;
+                    }
+                    
+                    if (schedule is {StartTime: not null, EndTime: not null}
+                        && TimeOnly.FromTimeSpan(schedule.SchedulingAnchorUtc.TimeOfDay) > schedule.StartTime
+                        && TimeOnly.FromTimeSpan(schedule.SchedulingAnchorUtc.TimeOfDay) < schedule.EndTime)
+                    {
+                        break;
+                    }
+                } 
+                while (true);
+
+                if (schedule.SchedulingAnchorUtc > now)
+                {
+                    currentLookaheadCount++;
+                }
+                
                 await repository.TryAddExecutionLogAsync(log, stoppingToken);
                 
                 await repository.SaveChangesAsync(stoppingToken);

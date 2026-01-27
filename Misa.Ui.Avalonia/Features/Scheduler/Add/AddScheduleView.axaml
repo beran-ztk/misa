@@ -28,7 +28,7 @@
             <!-- Form -->
             <Grid Grid.Row="2"
                   ColumnDefinitions="Auto,*"
-                  RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
+                  RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
                   RowSpacing="{StaticResource SpacingMedium}"
                   ColumnSpacing="{StaticResource SpacingLarge}">
 
@@ -163,6 +163,15 @@
                     <TimePicker SelectedTime="{Binding ActiveUntilTime, Mode=TwoWay}" />
                 </StackPanel>
 
+                <!-- Lookahead Count -->
+                <TextBlock Grid.Row="10" Grid.Column="0" Classes="misa-label" Text="Lookahead Count" />
+                <NumericUpDown Grid.Row="10" Grid.Column="1"
+                               Classes="misa-input"
+                               Value="{Binding LookaheadCount, Mode=TwoWay}"
+                               Minimum="1"
+                               Maximum="100"
+                               Increment="1"
+                               FormatString="N0" />
             </Grid>
 
             <!-- Footer / Actions -->

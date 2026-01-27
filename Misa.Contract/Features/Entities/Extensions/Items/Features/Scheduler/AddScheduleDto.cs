@@ -6,6 +6,7 @@ public sealed class AddScheduleDto
     public required ScheduleFrequencyTypeContract ScheduleFrequencyType { get; init; }
     public required int FrequencyInterval { get; init; }
 
+    public int LookaheadCount { get; init; }
     public int? OccurrenceCountLimit { get; init; }
     public ScheduleMisfirePolicyContract MisfirePolicy { get; init; } = ScheduleMisfirePolicyContract.Catchup;
 
