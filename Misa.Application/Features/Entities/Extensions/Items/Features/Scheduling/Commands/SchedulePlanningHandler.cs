@@ -7,22 +7,22 @@ public class SchedulePlanningHandler(ISchedulerPlanningRepository repository)
 {
     public async Task HandleAsync(SchedulePlanningCommand command, CancellationToken stoppingToken)
     {
-        var utcNow = DateTimeOffset.UtcNow;
-        var furthestLookaheadTimeAllowed = utcNow.AddYears(1);
+        var now = DateTimeOffset.UtcNow;
+        var furthestLookaheadTimeAllowed = now.AddYears(1);
         
-        var schedules = await repository.GetActiveSchedulesAsync(utcNow, stoppingToken);
+        var schedules = await repository.GetActiveSchedulesAsync(now, stoppingToken);
 
         foreach (var schedule in schedules)
         {
-            var currentLookaheadCount = await  repository.GetExecutionCountPlannedAheadAsync(schedule.Id, utcNow, stoppingToken);
+            var currentLookaheadCount = await  repository.GetExecutionCountPlannedAheadAsync(schedule.Id, now, stoppingToken);
             
             while (schedule.OccurrenceCountLimit != 0 
-                   && currentLookaheadCount <= schedule.LookaheadLimit
+                   && currentLookaheadCount < schedule.LookaheadLimit
                    && schedule.SchedulingAnchorUtc < furthestLookaheadTimeAllowed)
             {
                 var log = schedule.CreateExecutionLog();
                 schedule.ReduceOccurrenceCount();
-                schedule.CheckAndUpdateNextAllowedExecution(utcNow);
+                schedule.CheckAndUpdateNextAllowedExecution(now);
                 
                 switch (schedule.ScheduleFrequencyType) 
                 { 
@@ -38,15 +38,15 @@ public class SchedulePlanningHandler(ISchedulerPlanningRepository repository)
                             schedule.ScheduleFrequencyType.ToString(), 
                             null);
                 }
-            
-                await repository.TryAddExecutionLogAsync(log, stoppingToken);
-                
-                await repository.SaveChangesAsync(stoppingToken);
 
-                if (schedule.SchedulingAnchorUtc > utcNow)
+                if (schedule.SchedulingAnchorUtc > now)
                 {
                     currentLookaheadCount++;
                 }
+                
+                await repository.TryAddExecutionLogAsync(log, stoppingToken);
+                
+                await repository.SaveChangesAsync(stoppingToken);
             }
         }
     }
