@@ -53,15 +53,20 @@ public class SchedulePlanningHandler(ISchedulerPlanningRepository repository)
                 do
                 {
                     schedule.NextDueAtUtc = schedule.SchedulingAnchorUtc.Add(delta);
+
+                    if (schedule.StartTime == null || schedule.EndTime == null)
+                    {
+                        break;
+                    }
+                    
+                    if (schedule is {StartTime: not null, EndTime: not null}
+                        && TimeOnly.FromTimeSpan(schedule.SchedulingAnchorUtc.TimeOfDay) > schedule.StartTime
+                        && TimeOnly.FromTimeSpan(schedule.SchedulingAnchorUtc.TimeOfDay) < schedule.EndTime)
+                    {
+                        break;
+                    }
                 } 
-                while 
-                (
-                    (schedule.StartTime.HasValue && TimeOnly.FromTimeSpan(schedule.SchedulingAnchorUtc.TimeOfDay) <
-                        schedule.StartTime)
-                    &&
-                    (schedule.EndTime.HasValue && TimeOnly.FromTimeSpan(schedule.SchedulingAnchorUtc.TimeOfDay) >
-                        schedule.EndTime)
-                );
+                while (true);
 
                 if (schedule.SchedulingAnchorUtc > now)
                 {
