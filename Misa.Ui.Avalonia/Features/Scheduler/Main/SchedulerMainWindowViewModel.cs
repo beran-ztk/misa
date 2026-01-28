@@ -21,7 +21,6 @@ public partial class SchedulerMainWindowViewModel : ViewModelBase
 
     private ViewModelBase? _infoView;
 
-    /// <inheritdoc/>
     public SchedulerMainWindowViewModel(INavigationService navigationService)
     {
         NavigationService = navigationService;

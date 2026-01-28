@@ -20,7 +20,7 @@ public partial class AddScheduleViewModel(INavigationService navigationService) 
     [ObservableProperty] private string _title = string.Empty;
     [ObservableProperty] private ScheduleFrequencyTypeDto _selectedFrequencyType = ScheduleFrequencyTypeDto.Minutes;
     [ObservableProperty] private int _frequencyInterval = 1;
-    [ObservableProperty] private int _lookaheadCount  = 1;
+    [ObservableProperty] private int _lookaheadLimit  = 1;
 
     [ObservableProperty] private bool _hasValidationError;
     [ObservableProperty] private string _errorMessage = string.Empty;
@@ -90,7 +90,7 @@ public partial class AddScheduleViewModel(INavigationService navigationService) 
                 ScheduleFrequencyType = SelectedFrequencyType,
                 FrequencyInterval = FrequencyInterval,
                 
-                LookaheadCount = LookaheadCount,
+                LookaheadLimit = LookaheadLimit,
                 OccurrenceCountLimit = OccurrenceCountLimit,
                 MisfirePolicy = SelectedMisfirePolicy,
                 OccurrenceTtl = OccurrenceTtl,

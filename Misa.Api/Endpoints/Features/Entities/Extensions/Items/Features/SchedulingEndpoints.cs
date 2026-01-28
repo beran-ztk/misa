@@ -33,7 +33,7 @@ public static class SchedulingEndpoints
                 dto.Title,
                 dto.ScheduleFrequencyType,
                 dto.FrequencyInterval,
-                dto.LookaheadCount,
+                dto.LookaheadLimit,
                 dto.OccurrenceCountLimit,
                 dto.MisfirePolicy,
                 dto.OccurrenceTtl,

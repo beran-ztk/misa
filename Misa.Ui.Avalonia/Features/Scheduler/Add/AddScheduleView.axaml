@@ -167,7 +167,7 @@
                 <TextBlock Grid.Row="10" Grid.Column="0" Classes="misa-label" Text="Lookahead Count" />
                 <NumericUpDown Grid.Row="10" Grid.Column="1"
                                Classes="misa-input"
-                               Value="{Binding LookaheadCount, Mode=TwoWay}"
+                               Value="{Binding LookaheadLimit, Mode=TwoWay}"
                                Minimum="1"
                                Maximum="100"
                                Increment="1"
