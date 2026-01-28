@@ -18,7 +18,7 @@ public partial class AddScheduleViewModel(INavigationService navigationService) 
     private INavigationService NavigationService { get; } = navigationService;
 
     [ObservableProperty] private string _title = string.Empty;
-    [ObservableProperty] private ScheduleFrequencyTypeContract _selectedFrequencyType = ScheduleFrequencyTypeContract.Minutes;
+    [ObservableProperty] private ScheduleFrequencyTypeDto _selectedFrequencyType = ScheduleFrequencyTypeDto.Minutes;
     [ObservableProperty] private int _frequencyInterval = 1;
     [ObservableProperty] private int _lookaheadCount  = 1;
 
@@ -26,8 +26,8 @@ public partial class AddScheduleViewModel(INavigationService navigationService) 
     [ObservableProperty] private string _errorMessage = string.Empty;
     [ObservableProperty] private int? _occurrenceCountLimit;
 
-    [ObservableProperty] private ScheduleMisfirePolicyContract _selectedMisfirePolicy 
-        = ScheduleMisfirePolicyContract.Catchup;
+    [ObservableProperty] private ScheduleMisfirePolicyDto _selectedMisfirePolicy 
+        = ScheduleMisfirePolicyDto.Catchup;
 
     private TimeSpan? OccurrenceTtl =>
         OccurrenceTtlDays == 0 &&
@@ -54,10 +54,10 @@ public partial class AddScheduleViewModel(INavigationService navigationService) 
     [ObservableProperty] private DateTimeOffset? _activeUntilDate;
     [ObservableProperty] private TimeSpan? _activeUntilTime;
 
-    public IReadOnlyList<ScheduleMisfirePolicyContract> MisfirePolicies { get; } 
-        = Enum.GetValues<ScheduleMisfirePolicyContract>();
+    public IReadOnlyList<ScheduleMisfirePolicyDto> MisfirePolicies { get; } 
+        = Enum.GetValues<ScheduleMisfirePolicyDto>();
 
-    public IReadOnlyList<ScheduleFrequencyTypeContract> FrequencyTypes { get; } = Enum.GetValues<ScheduleFrequencyTypeContract>();
+    public IReadOnlyList<ScheduleFrequencyTypeDto> FrequencyTypes { get; } = Enum.GetValues<ScheduleFrequencyTypeDto>();
 
     private void ShowValidationError(string message)
     {
@@ -127,11 +127,11 @@ public partial class AddScheduleViewModel(INavigationService navigationService) 
     private void Close()
     {
         Title = string.Empty;
-        SelectedFrequencyType = ScheduleFrequencyTypeContract.Minutes;
+        SelectedFrequencyType = ScheduleFrequencyTypeDto.Minutes;
         FrequencyInterval = 1;
         
         OccurrenceCountLimit = null;
-        SelectedMisfirePolicy = ScheduleMisfirePolicyContract.Catchup;
+        SelectedMisfirePolicy = ScheduleMisfirePolicyDto.Catchup;
         
         OccurrenceTtlDays = 0;
         OccurrenceTtlHours = 0;

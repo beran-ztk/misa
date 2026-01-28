@@ -10,9 +10,15 @@ public static class SchedulingEndpoints
 {
     public static void Map(WebApplication app)
     {
+        app.MapGet("scheduling", GetSchedulingRules);
         app.MapPost("scheduling", AddSchedulingRule);
     }
 
+    private static async Task<Result<List<ScheduleDto>>> GetSchedulingRules(IMessageBus bus, CancellationToken ct)
+    {
+        var result = await bus.InvokeAsync<Result<List<ScheduleDto>>>(new GetScheduleQuery(), ct);
+        return result;
+    }
     private static async Task<IResult> AddSchedulingRule(
         [FromBody] AddScheduleDto dto, 
         IMessageBus bus, 

@@ -8,11 +8,11 @@ namespace Misa.Application.Features.Entities.Extensions.Items.Features.Schedulin
 
 public record AddScheduleCommand(
     string Title,
-    ScheduleFrequencyTypeContract ScheduleFrequencyType,
+    ScheduleFrequencyTypeDto ScheduleFrequencyType,
     int FrequencyInterval,
     int LookaheadCount,
     int? OccurrenceCountLimit,
-    ScheduleMisfirePolicyContract MisfirePolicy,
+    ScheduleMisfirePolicyDto MisfirePolicy,
     TimeSpan? OccurrenceTtl,
     TimeOnly? StartTime,
     TimeOnly? EndTime,

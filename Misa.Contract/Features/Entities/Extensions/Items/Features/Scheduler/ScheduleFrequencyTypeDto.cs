@@ -1,6 +1,6 @@
 ﻿namespace Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;
 
-public enum ScheduleFrequencyTypeContract
+public enum ScheduleFrequencyTypeDto
 {
     Once,
     Minutes,

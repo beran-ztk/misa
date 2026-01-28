@@ -27,4 +27,6 @@ public interface IItemRepository
     Task AddDeadlineAsync(ScheduledDeadline deadline, CancellationToken ct = default);
     Task<ScheduledDeadline?> TryGetScheduledDeadlineForItemAsync(Guid itemId, CancellationToken ct);
     Task RemoveScheduledDeadlineAsync(ScheduledDeadline obj, CancellationToken ct);
+    
+    Task<List<Scheduler>> GetSchedulingRulesAsync(CancellationToken ct);
 }

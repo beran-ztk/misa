@@ -167,4 +167,12 @@ public class ItemRepository(DefaultContext context) : IItemRepository
         
         return Task.CompletedTask;
     }
+
+    public async Task<List<Scheduler>> GetSchedulingRulesAsync(CancellationToken ct)
+    {
+        return await context.Schedulers
+            .Include(s => s.Item)
+            .ThenInclude(i => i.Entity)
+            .ToListAsync(ct);
+    }
 }
