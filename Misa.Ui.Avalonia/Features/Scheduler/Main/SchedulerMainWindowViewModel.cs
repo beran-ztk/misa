@@ -8,17 +8,17 @@ public partial class SchedulerMainWindowViewModel(INavigationService navigationS
 {
     private INavigationService NavigationService { get; } = navigationService;
 
-    private ViewModelBase? _currentView;
-    public ViewModelBase? CurrentView
+    private ViewModelBase? _infoView;
+    public ViewModelBase? InfoView
     {
-        get => _currentView;
-        set => SetProperty(ref _currentView, value);
+        get => _infoView;
+        set => SetProperty(ref _infoView, value);
     }
 
     [RelayCommand]
     private void OpenAddSchedule()
     {
         var addScheduleVm = new Add.AddScheduleViewModel(NavigationService);
-        CurrentView = addScheduleVm;
+        InfoView = addScheduleVm;
     }
 }
