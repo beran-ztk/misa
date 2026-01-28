@@ -10,10 +10,16 @@ public static class SchedulingEndpoints
 {
     public static void Map(WebApplication app)
     {
+        app.MapGet("scheduling", GetSchedulingRules);
         app.MapPost("scheduling", AddSchedulingRule);
     }
 
-    private static async Task<IResult> AddSchedulingRule(
+    private static async Task<Result<List<ScheduleDto>>> GetSchedulingRules(IMessageBus bus, CancellationToken ct)
+    {
+        var result = await bus.InvokeAsync<Result<List<ScheduleDto>>>(new GetScheduleQuery(), ct);
+        return result;
+    }
+    private static async Task<Result<ScheduleDto>> AddSchedulingRule(
         [FromBody] AddScheduleDto dto, 
         IMessageBus bus, 
         CancellationToken ct)
@@ -23,15 +29,11 @@ public static class SchedulingEndpoints
 
         try
         {
-            var title = string.IsNullOrWhiteSpace(dto.Title) 
-                ? $"Schedule-{DateTime.UtcNow:yyyy-MM-dd-HH-mm-ss}" 
-                : dto.Title;
-                
             var command = new AddScheduleCommand(
-                title,
+                dto.Title,
                 dto.ScheduleFrequencyType,
                 dto.FrequencyInterval,
-                dto.LookaheadCount,
+                dto.LookaheadLimit,
                 dto.OccurrenceCountLimit,
                 dto.MisfirePolicy,
                 dto.OccurrenceTtl,
@@ -41,13 +43,11 @@ public static class SchedulingEndpoints
                 dto.ActiveUntilUtc
             );
             
-            var result = await bus.InvokeAsync<Result>(command, linkedCts.Token);
-            
-            return Results.Ok(result);
+            return await bus.InvokeAsync<Result<ScheduleDto>>(command, linkedCts.Token);
         }
         catch (Exception ex)
         {
-            return Results.Problem(ex.Message);
+            return Result<ScheduleDto>.Conflict("", ex.Message);
         }
     }
 }

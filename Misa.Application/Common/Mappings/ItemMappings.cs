@@ -39,11 +39,12 @@ public static class ItemMappings
             Priority.Critical => PriorityContract.Critical,
             _ => throw new ArgumentOutOfRangeException(nameof(priority), priority, null)
         };
-    public static WorkflowContract MapToDto(this Workflow workflow) =>
+    public static WorkflowDto MapToDto(this Workflow workflow) =>
         workflow switch
         {
-            Workflow.Task => WorkflowContract.Task,
-            Workflow.Deadline => WorkflowContract.Deadline,
+            Workflow.Task => WorkflowDto.Task,
+            Workflow.Deadline => WorkflowDto.Deadline,
+            Workflow.Scheduling => WorkflowDto.Scheduling,
             _ => throw new ArgumentOutOfRangeException(nameof(workflow), workflow, null)
         };
 }

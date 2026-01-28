@@ -8,26 +8,27 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Common.Results;
 using Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;
+using Misa.Ui.Avalonia.Features.Scheduler.Main;
 using Misa.Ui.Avalonia.Infrastructure.Services.Navigation;
 using Misa.Ui.Avalonia.Presentation.Mapping;
 
 namespace Misa.Ui.Avalonia.Features.Scheduler.Add;
 
-public partial class AddScheduleViewModel(INavigationService navigationService) : ViewModelBase
+public partial class AddScheduleViewModel(INavigationService navigationService, SchedulerMainWindowViewModel parent) : ViewModelBase
 {
     private INavigationService NavigationService { get; } = navigationService;
 
     [ObservableProperty] private string _title = string.Empty;
-    [ObservableProperty] private ScheduleFrequencyTypeContract _selectedFrequencyType = ScheduleFrequencyTypeContract.Minutes;
+    [ObservableProperty] private ScheduleFrequencyTypeDto _selectedFrequencyType = ScheduleFrequencyTypeDto.Minutes;
     [ObservableProperty] private int _frequencyInterval = 1;
-    [ObservableProperty] private int _lookaheadCount  = 1;
+    [ObservableProperty] private int _lookaheadLimit  = 1;
 
     [ObservableProperty] private bool _hasValidationError;
     [ObservableProperty] private string _errorMessage = string.Empty;
     [ObservableProperty] private int? _occurrenceCountLimit;
 
-    [ObservableProperty] private ScheduleMisfirePolicyContract _selectedMisfirePolicy 
-        = ScheduleMisfirePolicyContract.Catchup;
+    [ObservableProperty] private ScheduleMisfirePolicyDto _selectedMisfirePolicy 
+        = ScheduleMisfirePolicyDto.Catchup;
 
     private TimeSpan? OccurrenceTtl =>
         OccurrenceTtlDays == 0 &&
@@ -54,10 +55,10 @@ public partial class AddScheduleViewModel(INavigationService navigationService) 
     [ObservableProperty] private DateTimeOffset? _activeUntilDate;
     [ObservableProperty] private TimeSpan? _activeUntilTime;
 
-    public IReadOnlyList<ScheduleMisfirePolicyContract> MisfirePolicies { get; } 
-        = Enum.GetValues<ScheduleMisfirePolicyContract>();
+    public IReadOnlyList<ScheduleMisfirePolicyDto> MisfirePolicies { get; } 
+        = Enum.GetValues<ScheduleMisfirePolicyDto>();
 
-    public IReadOnlyList<ScheduleFrequencyTypeContract> FrequencyTypes { get; } = Enum.GetValues<ScheduleFrequencyTypeContract>();
+    public IReadOnlyList<ScheduleFrequencyTypeDto> FrequencyTypes { get; } = Enum.GetValues<ScheduleFrequencyTypeDto>();
 
     private void ShowValidationError(string message)
     {
@@ -90,7 +91,7 @@ public partial class AddScheduleViewModel(INavigationService navigationService) 
                 ScheduleFrequencyType = SelectedFrequencyType,
                 FrequencyInterval = FrequencyInterval,
                 
-                LookaheadCount = LookaheadCount,
+                LookaheadLimit = LookaheadLimit,
                 OccurrenceCountLimit = OccurrenceCountLimit,
                 MisfirePolicy = SelectedMisfirePolicy,
                 OccurrenceTtl = OccurrenceTtl,
@@ -106,10 +107,11 @@ public partial class AddScheduleViewModel(INavigationService navigationService) 
             using var response = await NavigationService.NavigationStore.MisaHttpClient
                 .SendAsync(request, CancellationToken.None);
             
-            var result = await response.Content.ReadFromJsonAsync<Result>(CancellationToken.None);
+            var result = await response.Content.ReadFromJsonAsync<Result<ScheduleDto>>(CancellationToken.None);
             
-            if (result?.IsSuccess == true)
+            if (result?.IsSuccess == true && result.Value != null)
             {
+                await parent.AddToCollection(result.Value);
                 Close();
             }
             else
@@ -127,11 +129,11 @@ public partial class AddScheduleViewModel(INavigationService navigationService) 
     private void Close()
     {
         Title = string.Empty;
-        SelectedFrequencyType = ScheduleFrequencyTypeContract.Minutes;
+        SelectedFrequencyType = ScheduleFrequencyTypeDto.Minutes;
         FrequencyInterval = 1;
         
         OccurrenceCountLimit = null;
-        SelectedMisfirePolicy = ScheduleMisfirePolicyContract.Catchup;
+        SelectedMisfirePolicy = ScheduleMisfirePolicyDto.Catchup;
         
         OccurrenceTtlDays = 0;
         OccurrenceTtlHours = 0;

@@ -5,44 +5,82 @@ namespace Misa.Application.Common.Mappings;
 
 public static class ScheduleMappings
 {
-    public static ScheduleFrequencyType MapToDomain(this ScheduleFrequencyTypeContract contract) =>
-        contract switch
+    public static ScheduleFrequencyType MapToDomain(this ScheduleFrequencyTypeDto dto) =>
+        dto switch
         {
-            ScheduleFrequencyTypeContract.Once    => ScheduleFrequencyType.Once,
-            ScheduleFrequencyTypeContract.Minutes => ScheduleFrequencyType.Minutes,
-            ScheduleFrequencyTypeContract.Hours   => ScheduleFrequencyType.Hours,
-            ScheduleFrequencyTypeContract.Days    => ScheduleFrequencyType.Days,
-            ScheduleFrequencyTypeContract.Weeks   => ScheduleFrequencyType.Weeks,
-            ScheduleFrequencyTypeContract.Months  => ScheduleFrequencyType.Months,
-            ScheduleFrequencyTypeContract.Years   => ScheduleFrequencyType.Years,
-            _ => throw new ArgumentOutOfRangeException(nameof(contract), contract, null)
+            ScheduleFrequencyTypeDto.Once    => ScheduleFrequencyType.Once,
+            ScheduleFrequencyTypeDto.Minutes => ScheduleFrequencyType.Minutes,
+            ScheduleFrequencyTypeDto.Hours   => ScheduleFrequencyType.Hours,
+            ScheduleFrequencyTypeDto.Days    => ScheduleFrequencyType.Days,
+            ScheduleFrequencyTypeDto.Weeks   => ScheduleFrequencyType.Weeks,
+            ScheduleFrequencyTypeDto.Months  => ScheduleFrequencyType.Months,
+            ScheduleFrequencyTypeDto.Years   => ScheduleFrequencyType.Years,
+            _ => throw new ArgumentOutOfRangeException(nameof(dto), dto, null)
         };
-    public static ScheduleFrequencyTypeContract MapToDto(this ScheduleFrequencyType domain) =>
+    public static ScheduleFrequencyTypeDto MapToDto(this ScheduleFrequencyType domain) =>
         domain switch
         {
-            ScheduleFrequencyType.Once    => ScheduleFrequencyTypeContract.Once,
-            ScheduleFrequencyType.Minutes => ScheduleFrequencyTypeContract.Minutes,
-            ScheduleFrequencyType.Hours   => ScheduleFrequencyTypeContract.Hours,
-            ScheduleFrequencyType.Days    => ScheduleFrequencyTypeContract.Days,
-            ScheduleFrequencyType.Weeks   => ScheduleFrequencyTypeContract.Weeks,
-            ScheduleFrequencyType.Months  => ScheduleFrequencyTypeContract.Months,
-            ScheduleFrequencyType.Years   => ScheduleFrequencyTypeContract.Years,
+            ScheduleFrequencyType.Once    => ScheduleFrequencyTypeDto.Once,
+            ScheduleFrequencyType.Minutes => ScheduleFrequencyTypeDto.Minutes,
+            ScheduleFrequencyType.Hours   => ScheduleFrequencyTypeDto.Hours,
+            ScheduleFrequencyType.Days    => ScheduleFrequencyTypeDto.Days,
+            ScheduleFrequencyType.Weeks   => ScheduleFrequencyTypeDto.Weeks,
+            ScheduleFrequencyType.Months  => ScheduleFrequencyTypeDto.Months,
+            ScheduleFrequencyType.Years   => ScheduleFrequencyTypeDto.Years,
             _ => throw new ArgumentOutOfRangeException(nameof(domain), domain, null)
         };
-    public static ScheduleMisfirePolicy MapToDomain(this ScheduleMisfirePolicyContract contract) => 
-        contract switch
+    public static ScheduleMisfirePolicy MapToDomain(this ScheduleMisfirePolicyDto dto) => 
+        dto switch
         {
-            ScheduleMisfirePolicyContract.Catchup => ScheduleMisfirePolicy.Catchup,
-            ScheduleMisfirePolicyContract.Skip    => ScheduleMisfirePolicy.Skip,
-            ScheduleMisfirePolicyContract.RunOnce => ScheduleMisfirePolicy.RunOnce,
-            _ => throw new ArgumentOutOfRangeException(nameof(contract), contract, null)
+            ScheduleMisfirePolicyDto.Catchup => ScheduleMisfirePolicy.Catchup,
+            ScheduleMisfirePolicyDto.Skip    => ScheduleMisfirePolicy.Skip,
+            ScheduleMisfirePolicyDto.RunOnce => ScheduleMisfirePolicy.RunOnce,
+            _ => throw new ArgumentOutOfRangeException(nameof(dto), dto, null)
         };
-    public static ScheduleMisfirePolicyContract MapToDto(this ScheduleMisfirePolicy domain) => 
+    public static ScheduleMisfirePolicyDto MapToDto(this ScheduleMisfirePolicy domain) => 
         domain switch
         {
-            ScheduleMisfirePolicy.Catchup => ScheduleMisfirePolicyContract.Catchup,
-            ScheduleMisfirePolicy.Skip    => ScheduleMisfirePolicyContract.Skip,
-            ScheduleMisfirePolicy.RunOnce => ScheduleMisfirePolicyContract.RunOnce,
+            ScheduleMisfirePolicy.Catchup => ScheduleMisfirePolicyDto.Catchup,
+            ScheduleMisfirePolicy.Skip    => ScheduleMisfirePolicyDto.Skip,
+            ScheduleMisfirePolicy.RunOnce => ScheduleMisfirePolicyDto.RunOnce,
             _ => throw new ArgumentOutOfRangeException(nameof(domain), domain, null)
+        };
+    
+    public static List<ScheduleDto> ToDto(this List<Scheduler> schedulers)
+        => schedulers.Select(ToDto).ToList();
+
+    public static ScheduleDto ToDto(this Scheduler scheduler)
+        => new()
+        {
+            Id = scheduler.Id,
+
+            FrequencyType = scheduler.ScheduleFrequencyType.MapToDto(),
+            FrequencyInterval = scheduler.FrequencyInterval,
+
+            OccurrenceCountLimit = scheduler.OccurrenceCountLimit,
+
+            ByDay = scheduler.ByDay,
+            ByMonthDay = scheduler.ByMonthDay,
+            ByMonth = scheduler.ByMonth,
+
+            MisfirePolicy = scheduler.MisfirePolicy.MapToDto(),
+
+            LookaheadLimit = scheduler.LookaheadLimit,
+            OccurrenceTtl = scheduler.OccurrenceTtl,
+
+            Payload = scheduler.Payload,
+            Timezone = scheduler.Timezone,
+
+            StartTime = scheduler.StartTime,
+            EndTime = scheduler.EndTime,
+
+            ActiveFromUtc = scheduler.ActiveFromUtc,
+            ActiveUntilUtc = scheduler.ActiveUntilUtc,
+
+            LastRunAtUtc = scheduler.LastRunAtUtc,
+            NextDueAtUtc = scheduler.NextDueAtUtc,
+            NextAllowedExecutionAtUtc = scheduler.NextAllowedExecutionAtUtc,
+
+            Item = scheduler.Item.ToDto()
         };
 }

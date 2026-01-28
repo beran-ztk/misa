@@ -30,9 +30,6 @@ public partial class PageViewModel : ViewModelBase, IEntityDetailHost
 
         Model = new ListViewModel(this);
         Navigation = new NavigationViewModel(this);
-        
-        this.WhenAnyValue(x => x.ActiveEntityId)
-            .Subscribe(_ => ShowDetails());
     }
 
     partial void OnSelectedTaskChanged(TaskDto? value)
@@ -40,6 +37,7 @@ public partial class PageViewModel : ViewModelBase, IEntityDetailHost
         DetailViewModel ??= CreateDetailVm();
         ActiveEntityId = value?.Id ?? Guid.Empty;
         _ = DetailViewModel.LoadAsync(value?.Id ?? Guid.Empty);
+        ShowDetails();
     }
     private DetailPageViewModel CreateDetailVm() => 
         ActivatorUtilities.CreateInstance<DetailPageViewModel>(_services, this);
@@ -73,7 +71,5 @@ public partial class PageViewModel : ViewModelBase, IEntityDetailHost
         get => _currentInfoModel;
         set => SetProperty(ref _currentInfoModel, value);
     }
-
     private void ShowDetails() => CurrentInfoModel = DetailViewModel;
-    
 }

@@ -8,11 +8,11 @@ namespace Misa.Application.Features.Entities.Extensions.Items.Features.Schedulin
 
 public record AddScheduleCommand(
     string Title,
-    ScheduleFrequencyTypeContract ScheduleFrequencyType,
+    ScheduleFrequencyTypeDto ScheduleFrequencyType,
     int FrequencyInterval,
-    int LookaheadCount,
+    int LookaheadLimit,
     int? OccurrenceCountLimit,
-    ScheduleMisfirePolicyContract MisfirePolicy,
+    ScheduleMisfirePolicyDto MisfirePolicy,
     TimeSpan? OccurrenceTtl,
     TimeOnly? StartTime,
     TimeOnly? EndTime,
@@ -22,20 +22,15 @@ public record AddScheduleCommand(
 
 public class AddScheduleHandler(IItemRepository repository)
 {
-    public async Task<Result> Handle(AddScheduleCommand command, CancellationToken ct)
+    public async Task<Result<ScheduleDto>> Handle(AddScheduleCommand command, CancellationToken ct)
     {
         try
         {
-            if (command.FrequencyInterval <= 0)
-            {
-                return Result.Invalid("FrequencyInterval", "Frequency interval must be greater than 0");
-            }
-
             var scheduler = Scheduler.Create(
                 title: command.Title,
                 frequencyType: command.ScheduleFrequencyType.MapToDomain(),
                 frequencyInterval: command.FrequencyInterval,
-                lookaheadLimit: command.LookaheadCount,
+                lookaheadLimit: command.LookaheadLimit,
                 occurrenceCountLimit: command.OccurrenceCountLimit,
                 misfirePolicy: command.MisfirePolicy.MapToDomain(),
                 occurrenceTtl: command.OccurrenceTtl,
@@ -48,11 +43,11 @@ public class AddScheduleHandler(IItemRepository repository)
             await repository.AddAsync(scheduler, ct);
             await repository.SaveChangesAsync(ct);
 
-            return Result.Ok();
+            return Result<ScheduleDto>.Ok(scheduler.ToDto());
         }
         catch (ArgumentException ex)
         {
-            return Result.Invalid("", ex.Message);
+            return Result<ScheduleDto>.Invalid("", ex.Message);
         }
     }
 }

@@ -5,7 +5,7 @@ namespace Misa.Contract.Features.Entities.Base;
 public class EntityDto
 {
     public required Guid Id { get; init; }
-    public required WorkflowContract Workflow { get; init; }
+    public required WorkflowDto Workflow { get; init; }
     public required bool IsDeleted { get; init; }
     public required bool IsArchived { get; init; }
 
