@@ -19,7 +19,7 @@ public static class SchedulingEndpoints
         var result = await bus.InvokeAsync<Result<List<ScheduleDto>>>(new GetScheduleQuery(), ct);
         return result;
     }
-    private static async Task<IResult> AddSchedulingRule(
+    private static async Task<Result<ScheduleDto>> AddSchedulingRule(
         [FromBody] AddScheduleDto dto, 
         IMessageBus bus, 
         CancellationToken ct)
@@ -43,13 +43,11 @@ public static class SchedulingEndpoints
                 dto.ActiveUntilUtc
             );
             
-            var result = await bus.InvokeAsync<Result>(command, linkedCts.Token);
-            
-            return Results.Ok(result);
+            return await bus.InvokeAsync<Result<ScheduleDto>>(command, linkedCts.Token);
         }
         catch (Exception ex)
         {
-            return Results.Problem(ex.Message);
+            return Result<ScheduleDto>.Conflict("", ex.Message);
         }
     }
 }

@@ -49,7 +49,7 @@ public static class ScheduleMappings
     public static List<ScheduleDto> ToDto(this List<Scheduler> schedulers)
         => schedulers.Select(ToDto).ToList();
 
-    private static ScheduleDto ToDto(this Scheduler scheduler)
+    public static ScheduleDto ToDto(this Scheduler scheduler)
         => new()
         {
             Id = scheduler.Id,

@@ -6,17 +6,23 @@ using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Threading;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.DependencyInjection;
 using Misa.Contract.Common.Results;
 using Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;
+using Misa.Ui.Avalonia.Features.Details.Page;
+using Misa.Ui.Avalonia.Infrastructure.Services.Interfaces;
 using Misa.Ui.Avalonia.Infrastructure.Services.Navigation;
 using Misa.Ui.Avalonia.Presentation.Mapping;
 
 namespace Misa.Ui.Avalonia.Features.Scheduler.Main;
 
-public partial class SchedulerMainWindowViewModel : ViewModelBase
+public partial class SchedulerMainWindowViewModel : ViewModelBase, IEntityDetailHost
 {
-    private INavigationService NavigationService { get; }
+    public Guid ActiveEntityId { get; set; }
+    [ObservableProperty] private ScheduleDto? _selectedItem;
+    public INavigationService NavigationService { get; }
     public ObservableCollection<ScheduleDto> Schedules { get; } = [];
 
     private ViewModelBase? _infoView;
@@ -27,7 +33,18 @@ public partial class SchedulerMainWindowViewModel : ViewModelBase
         
         _ = LoadSchedulesAsync();
     }
+    private DetailPageViewModel? DetailViewModel { get; set; }
+    private void ShowDetails() => InfoView = DetailViewModel;
 
+    partial void OnSelectedItemChanged(ScheduleDto? value)
+    {
+        DetailViewModel ??= CreateDetailVm();
+        ActiveEntityId = value?.Id ?? Guid.Empty;
+        _ = DetailViewModel.LoadAsync(value?.Id ?? Guid.Empty);
+        ShowDetails();
+    }
+    private DetailPageViewModel CreateDetailVm() => 
+        ActivatorUtilities.CreateInstance<DetailPageViewModel>(NavigationService.ServiceProvider, this);
     public ViewModelBase? InfoView
     {
         get => _infoView;
@@ -37,7 +54,7 @@ public partial class SchedulerMainWindowViewModel : ViewModelBase
     [RelayCommand]
     private void OpenAddSchedule()
     {
-        var addScheduleVm = new Add.AddScheduleViewModel(NavigationService);
+        var addScheduleVm = new Add.AddScheduleViewModel(NavigationService, this);
         InfoView = addScheduleVm;
     }
 
@@ -48,7 +65,7 @@ public partial class SchedulerMainWindowViewModel : ViewModelBase
             await AddToCollection(schedule);
         }
     }
-    private async Task AddToCollection(ScheduleDto schedule)
+    public async Task AddToCollection(ScheduleDto schedule)
     {
         await Dispatcher.UIThread.InvokeAsync(() => 
         {
