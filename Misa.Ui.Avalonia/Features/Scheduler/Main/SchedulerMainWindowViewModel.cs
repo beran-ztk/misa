@@ -17,7 +17,7 @@ namespace Misa.Ui.Avalonia.Features.Scheduler.Main;
 public partial class SchedulerMainWindowViewModel : ViewModelBase
 {
     private INavigationService NavigationService { get; }
-    private ObservableCollection<ScheduleDto> Schedules { get; } = [];
+    public ObservableCollection<ScheduleDto> Schedules { get; } = [];
 
     private ViewModelBase? _infoView;
 

@@ -6,7 +6,7 @@ namespace Misa.Contract.Features.Entities.Extensions.Items.Base;
 
 public sealed class DetailedItemDto
 {
-    public required WorkflowContract Kind { get; init; }
+    public required WorkflowDto Kind { get; init; }
     public required ItemDto Item { get; init; } // Has Entity + Descriptions
     
     public JsonElement? Extension { get; init; }

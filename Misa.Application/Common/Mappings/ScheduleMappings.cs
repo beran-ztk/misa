@@ -46,7 +46,7 @@ public static class ScheduleMappings
             _ => throw new ArgumentOutOfRangeException(nameof(domain), domain, null)
         };
     
-    public static List<ScheduleDto> ToDto(this IEnumerable<Scheduler> schedulers)
+    public static List<ScheduleDto> ToDto(this List<Scheduler> schedulers)
         => schedulers.Select(ToDto).ToList();
 
     private static ScheduleDto ToDto(this Scheduler scheduler)

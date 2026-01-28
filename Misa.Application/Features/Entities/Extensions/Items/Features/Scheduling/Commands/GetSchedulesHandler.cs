@@ -8,10 +8,11 @@ namespace Misa.Application.Features.Entities.Extensions.Items.Features.Schedulin
 public record GetScheduleQuery;
 public class GetSchedulesHandler(IItemRepository repository)
 {
-    public async Task<Result<List<ScheduleDto>>> HandleAsync(CancellationToken ct)
+    public async Task<Result<List<ScheduleDto>>> HandleAsync(GetScheduleQuery query, CancellationToken ct)
     {
         var result = await repository.GetSchedulingRulesAsync(ct);
         var schedules = result.ToDto();
-        return Result<List<ScheduleDto>>.Ok(schedules);
+        var x = Result<List<ScheduleDto>>.Ok(schedules);
+        return x;
     }
 }

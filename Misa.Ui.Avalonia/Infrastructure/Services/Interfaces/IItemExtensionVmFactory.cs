@@ -19,7 +19,7 @@ public sealed class ItemExtensionVmFactory : IItemExtensionVmFactory
 
         return dto.Kind switch
         {
-            WorkflowContract.Task => new TaskExtensionVm(dto.Extension.Value.Deserialize<TaskDetailsDto>()!),
+            WorkflowDto.Task => new TaskExtensionVm(dto.Extension.Value.Deserialize<TaskDetailsDto>()!),
             _ => null
         };
     }

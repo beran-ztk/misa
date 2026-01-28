@@ -29,12 +29,8 @@ public static class SchedulingEndpoints
 
         try
         {
-            var title = string.IsNullOrWhiteSpace(dto.Title) 
-                ? $"Schedule-{DateTime.UtcNow:yyyy-MM-dd-HH-mm-ss}" 
-                : dto.Title;
-                
             var command = new AddScheduleCommand(
-                title,
+                dto.Title,
                 dto.ScheduleFrequencyType,
                 dto.FrequencyInterval,
                 dto.LookaheadCount,

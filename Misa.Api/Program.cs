@@ -74,6 +74,7 @@ builder.Host.UseWolverine(opts =>
     // Tasks
     opts.Discovery.IncludeAssembly(typeof(AddTaskHandler).Assembly);
     opts.Discovery.IncludeAssembly(typeof(GetTasksHandler).Assembly);
+    opts.Discovery.IncludeAssembly(typeof(GetSchedulesHandler).Assembly);
 });
 
 // build app

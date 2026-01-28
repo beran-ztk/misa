@@ -2,9 +2,60 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="Misa.Ui.Avalonia.Features.Scheduler.Content.SchedulerContentView"
              xmlns:vm="clr-namespace:Misa.Ui.Avalonia.Features.Scheduler.Main"
-             x:DataType="vm:SchedulerMainWindowViewModel">
-    
+             xmlns:scheduler="clr-namespace:Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;assembly=Misa.Contract"
+             x:Class="Misa.Ui.Avalonia.Features.Scheduler.Content.SchedulerContentView"
+             x:DataType="vm:SchedulerMainWindowViewModel"
+             mc:Ignorable="d"
+             d:DesignWidth="800"
+             d:DesignHeight="450">
+
+    <Border Padding="12">
+        <ListBox ItemsSource="{Binding Schedules}">
+            <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="scheduler:ScheduleDto">
+                    <Border Margin="0,0,0,8"
+                            Padding="12"
+                            BorderBrush="{StaticResource BrushBorder}"
+                            BorderThickness="1"
+                            Background="{StaticResource BrushPrimaryBackground}">
+                        <Grid ColumnDefinitions="Auto,*"
+                              RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto"
+                              RowSpacing="6"
+                              ColumnSpacing="12">
+
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Item" Opacity="0.7"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Item.Title}" FontWeight="SemiBold"/>
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Frequenz" Opacity="0.7"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1"
+                                       Text="{Binding FrequencyType}" />
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Intervall" Opacity="0.7"/>
+                            <TextBlock Grid.Row="2" Grid.Column="1"
+                                       Text="{Binding FrequencyInterval}" />
+
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Misfire" Opacity="0.7"/>
+                            <TextBlock Grid.Row="3" Grid.Column="1"
+                                       Text="{Binding MisfirePolicy}" />
+
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Aktiv" Opacity="0.7"/>
+                            <StackPanel Grid.Row="4" Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="{Binding ActiveFromUtc}" />
+                                <TextBlock Text="→" Opacity="0.6"/>
+                                <TextBlock Text="{Binding ActiveUntilUtc}" />
+                            </StackPanel>
+
+                            <TextBlock Grid.Row="5" Grid.Column="0" Text="Next" Opacity="0.7"/>
+                            <StackPanel Grid.Row="5" Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="{Binding NextDueAtUtc}" />
+                                <TextBlock Text="|" Opacity="0.4"/>
+                                <TextBlock Text="{Binding NextAllowedExecutionAtUtc}" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+    </Border>
 </UserControl>
