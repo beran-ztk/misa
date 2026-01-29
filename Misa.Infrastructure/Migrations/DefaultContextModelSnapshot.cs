@@ -28,6 +28,7 @@ namespace Misa.Infrastructure.Migrations
 
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "change_type", new[] { "category", "deadline", "priority", "state", "title" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "priority", new[] { "critical", "high", "low", "medium", "none", "urgent" });
+            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "schedule_execution_state", new[] { "claimed", "failed", "pending", "running", "skipped", "succeeded" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "schedule_frequency_type", new[] { "days", "hours", "minutes", "months", "once", "weeks", "years" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "schedule_misfire_policy", new[] { "catchup", "run_once", "skip" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "session_concentration_type", new[] { "deep_focus", "distracted", "focused", "hyperfocus", "none", "unfocused_but_calm" });
@@ -388,7 +389,20 @@ namespace Misa.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("scheduler", (string)null);
+                    b.ToTable("scheduler", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_scheduler_active_date", "active_until_utc IS NULL OR active_until_utc > active_from_utc");
+
+                            t.HasCheckConstraint("ck_scheduler_active_time", "(start_time IS NULL AND end_time IS NULL) OR (start_time IS NOT NULL AND end_time IS NOT NULL AND start_time < end_time)");
+
+                            t.HasCheckConstraint("ck_scheduler_lookahead_limit_gt_0", "lookahead_limit > 0");
+
+                            t.HasCheckConstraint("ck_scheduler_next_due_ge_last_run", "next_due_at_utc IS NULL OR last_run_at_utc IS NULL OR next_due_at_utc >= last_run_at_utc");
+
+                            t.HasCheckConstraint("ck_scheduler_occurrence_count_limit_ge_1", "occurrence_count_limit IS NULL OR occurrence_count_limit >= 1");
+
+                            t.HasCheckConstraint("ck_scheduler_ttl_timespan", "occurrence_ttl IS NULL OR occurrence_ttl > INTERVAL '0'");
+                        });
                 });
 
             modelBuilder.Entity("Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling.SchedulerExecutionLog", b =>
@@ -435,11 +449,10 @@ namespace Misa.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("started_at_utc");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
+                    b.Property<SchedulerExecutionStatus>("Status")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("text")
-                        .HasDefaultValue("Pending")
+                        .HasColumnType("schedule_execution_state")
+                        .HasDefaultValue(SchedulerExecutionStatus.Pending)
                         .HasColumnName("status");
 
                     b.HasKey("Id");
@@ -447,7 +460,20 @@ namespace Misa.Infrastructure.Migrations
                     b.HasIndex("SchedulerId", "ScheduledForUtc")
                         .IsUnique();
 
-                    b.ToTable("scheduler_execution_log", (string)null);
+                    b.ToTable("scheduler_execution_log", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_schedexec_after_claimed_requires_started", "status IN ('pending','claimed') OR started_at_utc IS NOT NULL");
+
+                            t.HasCheckConstraint("ck_schedexec_claimed_le_started_or_started_null", "started_at_utc IS NULL OR claimed_at_utc <= started_at_utc");
+
+                            t.HasCheckConstraint("ck_schedexec_done_requires_finished", "status NOT IN ('succeeded','failed','skipped') OR finished_at_utc IS NOT NULL");
+
+                            t.HasCheckConstraint("ck_schedexec_not_pending_requires_claimed", "status = 'pending' OR claimed_at_utc IS NOT NULL");
+
+                            t.HasCheckConstraint("ck_schedexec_pending_has_no_timestamps", "status <> 'pending' OR (claimed_at_utc IS NULL AND started_at_utc IS NULL AND finished_at_utc IS NULL)");
+
+                            t.HasCheckConstraint("ck_schedexec_started_le_finished_or_finished_null", "finished_at_utc IS NULL OR started_at_utc <= finished_at_utc");
+                        });
                 });
 
             modelBuilder.Entity("Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions.Session", b =>
