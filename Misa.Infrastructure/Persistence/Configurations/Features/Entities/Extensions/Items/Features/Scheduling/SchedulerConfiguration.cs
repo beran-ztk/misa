@@ -8,16 +8,32 @@ public sealed class SchedulerConfiguration : IEntityTypeConfiguration<Scheduler>
 {
     public void Configure(EntityTypeBuilder<Scheduler> builder)
     {
-        builder.ToTable("scheduler");
+        builder.ToTable("scheduler", t =>
+        {
+            t.HasCheckConstraint("ck_scheduler_lookahead_limit_gt_0", "lookahead_limit > 0");
+            t.HasCheckConstraint("ck_scheduler_ttl_timespan", "occurrence_ttl IS NULL OR occurrence_ttl > INTERVAL '0'");
+            t.HasCheckConstraint("ck_scheduler_active_time", 
+                "(start_time IS NULL AND end_time IS NULL) " +
+                "OR (start_time IS NOT NULL AND end_time IS NOT NULL AND start_time < end_time)"
+            );
+            t.HasCheckConstraint("ck_scheduler_active_date",
+                "active_until_utc IS NULL OR active_until_utc > active_from_utc");
+            t.HasCheckConstraint(
+                "ck_scheduler_occurrence_count_limit_ge_1",
+                "occurrence_count_limit IS NULL OR occurrence_count_limit >= 1"
+            );
+            t.HasCheckConstraint(
+                "ck_scheduler_next_due_ge_last_run",
+                "next_due_at_utc IS NULL OR last_run_at_utc IS NULL OR next_due_at_utc >= last_run_at_utc"
+            );
+        });
 
         builder.HasKey(s => s.Id);
 
         builder.Property(s => s.Id)
             .HasColumnName("id")
             .HasDefaultValueSql("gen_random_uuid()");
-
-
-
+        
         builder.Property(s => s.ScheduleFrequencyType)
             .IsRequired()
             .HasColumnName("frequency_type")

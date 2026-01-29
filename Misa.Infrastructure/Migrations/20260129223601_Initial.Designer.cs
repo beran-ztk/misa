@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Misa.Domain.Features.Audit;
 using Misa.Domain.Features.Entities.Base;
 using Misa.Domain.Features.Entities.Extensions.Items.Base;
+using Misa.Domain.Features.Entities.Extensions.Items.Extensions.Tasks;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions;
 using Misa.Infrastructure.Persistence.Context;
@@ -17,8 +18,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Misa.Infrastructure.Migrations
 {
     [DbContext(typeof(DefaultContext))]
-    [Migration("20260122232208_ItemEntityRs")]
-    partial class ItemEntityRs
+    [Migration("20260129223601_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -30,12 +31,14 @@ namespace Misa.Infrastructure.Migrations
 
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "change_type", new[] { "category", "deadline", "priority", "state", "title" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "priority", new[] { "critical", "high", "low", "medium", "none", "urgent" });
+            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "schedule_execution_state", new[] { "claimed", "failed", "pending", "running", "skipped", "succeeded" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "schedule_frequency_type", new[] { "days", "hours", "minutes", "months", "once", "weeks", "years" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "schedule_misfire_policy", new[] { "catchup", "run_once", "skip" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "session_concentration_type", new[] { "deep_focus", "distracted", "focused", "hyperfocus", "none", "unfocused_but_calm" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "session_efficiency_type", new[] { "high_output", "low_output", "none", "peak_performance", "steady_output" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "session_state", new[] { "ended", "paused", "running" });
-            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "workflow", new[] { "deadline", "task" });
+            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "task_category", new[] { "other", "personal", "school", "work" });
+            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "workflow", new[] { "deadline", "scheduling", "task" });
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("Misa.Domain.Features.Audit.AuditChange", b =>
@@ -97,7 +100,7 @@ namespace Misa.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("deleted_at_utc");
 
-                    b.Property<DateTimeOffset>("InteractedAt")
+                    b.Property<DateTimeOffset?>("InteractedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("interacted_at_utc");
 
@@ -259,6 +262,21 @@ namespace Misa.Infrastructure.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Misa.Domain.Features.Entities.Extensions.Items.Extensions.Tasks.Task", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<TaskCategory>("Category")
+                        .HasColumnType("task_category")
+                        .HasColumnName("category");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("tasks", (string)null);
+                });
+
             modelBuilder.Entity("Misa.Domain.Features.Entities.Extensions.Items.Features.Deadlines.ScheduledDeadline", b =>
                 {
                     b.Property<Guid>("Id")
@@ -321,25 +339,25 @@ namespace Misa.Infrastructure.Migrations
                         .HasDefaultValue(1)
                         .HasColumnName("frequency_interval");
 
-                    b.Property<Guid>("ItemId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("item_id");
-
                     b.Property<DateTimeOffset?>("LastRunAtUtc")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("last_run_at_utc");
 
-                    b.Property<int>("LookaheadCount")
+                    b.Property<int>("LookaheadLimit")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasDefaultValue(1)
-                        .HasColumnName("lookahead_count");
+                        .HasColumnName("lookahead_limit");
 
                     b.Property<ScheduleMisfirePolicy>("MisfirePolicy")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("schedule_misfire_policy")
                         .HasDefaultValue(ScheduleMisfirePolicy.Catchup)
                         .HasColumnName("misfire_policy");
+
+                    b.Property<DateTimeOffset?>("NextAllowedExecutionAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("next_allowed_execution_at_utc");
 
                     b.Property<DateTimeOffset?>("NextDueAtUtc")
                         .HasColumnType("timestamp with time zone")
@@ -374,9 +392,20 @@ namespace Misa.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ItemId");
+                    b.ToTable("scheduler", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_scheduler_active_date", "active_until_utc IS NULL OR active_until_utc > active_from_utc");
 
-                    b.ToTable("scheduler", (string)null);
+                            t.HasCheckConstraint("ck_scheduler_active_time", "(start_time IS NULL AND end_time IS NULL) OR (start_time IS NOT NULL AND end_time IS NOT NULL AND start_time < end_time)");
+
+                            t.HasCheckConstraint("ck_scheduler_lookahead_limit_gt_0", "lookahead_limit > 0");
+
+                            t.HasCheckConstraint("ck_scheduler_next_due_ge_last_run", "next_due_at_utc IS NULL OR last_run_at_utc IS NULL OR next_due_at_utc >= last_run_at_utc");
+
+                            t.HasCheckConstraint("ck_scheduler_occurrence_count_limit_ge_1", "occurrence_count_limit IS NULL OR occurrence_count_limit >= 1");
+
+                            t.HasCheckConstraint("ck_scheduler_ttl_timespan", "occurrence_ttl IS NULL OR occurrence_ttl > INTERVAL '0'");
+                        });
                 });
 
             modelBuilder.Entity("Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling.SchedulerExecutionLog", b =>
@@ -423,18 +452,31 @@ namespace Misa.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("started_at_utc");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
+                    b.Property<SchedulerExecutionStatus>("Status")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("text")
-                        .HasDefaultValue("Pending")
+                        .HasColumnType("schedule_execution_state")
+                        .HasDefaultValue(SchedulerExecutionStatus.Pending)
                         .HasColumnName("status");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("SchedulerId");
+                    b.HasIndex("SchedulerId", "ScheduledForUtc")
+                        .IsUnique();
 
-                    b.ToTable("scheduler_execution_log", (string)null);
+                    b.ToTable("scheduler_execution_log", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_schedexec_after_claimed_requires_started", "status IN ('pending','claimed') OR started_at_utc IS NOT NULL");
+
+                            t.HasCheckConstraint("ck_schedexec_claimed_le_started_or_started_null", "started_at_utc IS NULL OR claimed_at_utc <= started_at_utc");
+
+                            t.HasCheckConstraint("ck_schedexec_done_requires_finished", "status NOT IN ('succeeded','failed','skipped') OR finished_at_utc IS NOT NULL");
+
+                            t.HasCheckConstraint("ck_schedexec_not_pending_requires_claimed", "status = 'pending' OR claimed_at_utc IS NOT NULL");
+
+                            t.HasCheckConstraint("ck_schedexec_pending_has_no_timestamps", "status <> 'pending' OR (claimed_at_utc IS NULL AND started_at_utc IS NULL AND finished_at_utc IS NULL)");
+
+                            t.HasCheckConstraint("ck_schedexec_started_le_finished_or_finished_null", "finished_at_utc IS NULL OR started_at_utc <= finished_at_utc");
+                        });
                 });
 
             modelBuilder.Entity("Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions.Session", b =>
@@ -595,6 +637,17 @@ namespace Misa.Infrastructure.Migrations
                     b.Navigation("State");
                 });
 
+            modelBuilder.Entity("Misa.Domain.Features.Entities.Extensions.Items.Extensions.Tasks.Task", b =>
+                {
+                    b.HasOne("Misa.Domain.Features.Entities.Extensions.Items.Base.Item", "Item")
+                        .WithOne()
+                        .HasForeignKey("Misa.Domain.Features.Entities.Extensions.Items.Extensions.Tasks.Task", "Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Item");
+                });
+
             modelBuilder.Entity("Misa.Domain.Features.Entities.Extensions.Items.Features.Deadlines.ScheduledDeadline", b =>
                 {
                     b.HasOne("Misa.Domain.Features.Entities.Extensions.Items.Base.Item", null)
@@ -606,11 +659,13 @@ namespace Misa.Infrastructure.Migrations
 
             modelBuilder.Entity("Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling.Scheduler", b =>
                 {
-                    b.HasOne("Misa.Domain.Features.Entities.Extensions.Items.Base.Item", null)
-                        .WithMany()
-                        .HasForeignKey("ItemId")
+                    b.HasOne("Misa.Domain.Features.Entities.Extensions.Items.Base.Item", "Item")
+                        .WithOne()
+                        .HasForeignKey("Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling.Scheduler", "Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Item");
                 });
 
             modelBuilder.Entity("Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling.SchedulerExecutionLog", b =>

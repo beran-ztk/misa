@@ -8,7 +8,33 @@ public sealed class SchedulerExecutionLogConfiguration : IEntityTypeConfiguratio
 {
     public void Configure(EntityTypeBuilder<SchedulerExecutionLog> builder)
     {
-        builder.ToTable("scheduler_execution_log");
+        builder.ToTable("scheduler_execution_log", t =>
+        {
+            t.HasCheckConstraint(
+                "ck_schedexec_claimed_le_started_or_started_null",
+                "started_at_utc IS NULL OR claimed_at_utc <= started_at_utc"
+            );
+            t.HasCheckConstraint(
+                "ck_schedexec_started_le_finished_or_finished_null",
+                "finished_at_utc IS NULL OR started_at_utc <= finished_at_utc"
+            );
+            t.HasCheckConstraint(
+                "ck_schedexec_pending_has_no_timestamps",
+                "status <> 'pending' OR (claimed_at_utc IS NULL AND started_at_utc IS NULL AND finished_at_utc IS NULL)"
+            );
+            t.HasCheckConstraint(
+                "ck_schedexec_not_pending_requires_claimed",
+                "status = 'pending' OR claimed_at_utc IS NOT NULL"
+            );
+            t.HasCheckConstraint(
+                "ck_schedexec_after_claimed_requires_started",
+                "status IN ('pending','claimed') OR started_at_utc IS NOT NULL"
+            );
+            t.HasCheckConstraint(
+                "ck_schedexec_done_requires_finished",
+                "status NOT IN ('succeeded','failed','skipped') OR finished_at_utc IS NOT NULL"
+            );
+        });
 
         builder.HasKey(e => e.Id);
 
@@ -36,7 +62,7 @@ public sealed class SchedulerExecutionLogConfiguration : IEntityTypeConfiguratio
         builder.Property(e => e.Status)
             .IsRequired()
             .HasColumnName("status")
-            .HasConversion<string>()
+            .HasColumnType("schedule_execution_state")
             .HasDefaultValue(SchedulerExecutionStatus.Pending);
 
         builder.Property(e => e.Error)
