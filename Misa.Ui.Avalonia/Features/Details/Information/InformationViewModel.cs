@@ -40,7 +40,7 @@ public partial class InformationViewModel : ViewModelBase
     [RelayCommand]
     private void CopyId()
     {
-        Parent.EntityDetailHost.NavigationService.ClipboardService.SetTextAsync(Parent.Item.Id.ToString());
+        // Parent.EntityDetailHost.NavigationService.ClipboardService.SetTextAsync(Parent.Item.Id.ToString());
     }
     
     // Edit State
@@ -70,48 +70,48 @@ public partial class InformationViewModel : ViewModelBase
     [RelayCommand]
     private async Task SaveEditState()
     {
-        var currentId = Parent.Item.StateId;
-        var selectedId = StateId;
-
-        if (currentId == selectedId)
-        {
-            CloseEditState();
-            return;
-        }
-
-        var currentEntityId = Parent.Item.Id;
-
-        UpdateItemDto itemDto = new()
-        {
-            EntityId = currentEntityId,
-            StateId = selectedId
-        };
-        var response = await Parent.EntityDetailHost.NavigationService.NavigationStore
-            .MisaHttpClient.PatchAsJsonAsync(requestUri: "tasks", itemDto);
-        
-        if (!response.IsSuccessStatusCode)
-            Console.WriteLine($"Server returned {response.StatusCode}: {response.ReasonPhrase}");
-
-        await Parent.Reload();
-        CloseEditState();
+        // var currentId = Parent.Item.StateId;
+        // var selectedId = StateId;
+        //
+        // if (currentId == selectedId)
+        // {
+        //     CloseEditState();
+        //     return;
+        // }
+        //
+        // var currentEntityId = Parent.Item.Id;
+        //
+        // UpdateItemDto itemDto = new()
+        // {
+        //     EntityId = currentEntityId,
+        //     StateId = selectedId
+        // };
+        // var response = await Parent.EntityDetailHost.NavigationService.NavigationStore
+        //     .MisaHttpClient.PatchAsJsonAsync(requestUri: "tasks", itemDto);
+        //
+        // if (!response.IsSuccessStatusCode)
+        //     Console.WriteLine($"Server returned {response.StatusCode}: {response.ReasonPhrase}");
+        //
+        // await Parent.Reload();
+        // CloseEditState();
     }
     
     private async Task SetUserSettableStates()
     {
-        try
-        {
-            var states = await Parent.EntityDetailHost.NavigationService.NavigationStore.MisaHttpClient
-                .GetFromJsonAsync<List<StateDto>>(requestUri: $"Lookups/UserSettableStates?stateId={Parent.Item.Id}");
-
-            if (states == null)
-                return;
-            
-            SettableStates = states;
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-        }
+        // try
+        // {
+        //     var states = await Parent.EntityDetailHost.NavigationService.NavigationStore.MisaHttpClient
+        //         .GetFromJsonAsync<List<StateDto>>(requestUri: $"Lookups/UserSettableStates?stateId={Parent.Item.Id}");
+        //
+        //     if (states == null)
+        //         return;
+        //     
+        //     SettableStates = states;
+        // }
+        // catch (Exception e)
+        // {
+        //     Console.WriteLine(e);
+        // }
     }
     
     [ObservableProperty] private bool _isEditTitleFormOpen;
@@ -128,53 +128,53 @@ public partial class InformationViewModel : ViewModelBase
     [RelayCommand]
     private async Task UpdateTitleTask()
     {
-        var dto = new UpdateItemDto
-        {
-            EntityId = Parent.Item.Id,
-            Title = Parent.Item.Title
-        };
-
-        var response = await Parent.EntityDetailHost.NavigationService.NavigationStore
-            .MisaHttpClient.PatchAsJsonAsync(requestUri: "tasks", dto);
-
-        if (!response.IsSuccessStatusCode)
-            Console.WriteLine($"Server returned {response.StatusCode}: {response.ReasonPhrase}");
-
-        await Parent.Reload();
-        IsEditTitleFormOpen = false;
+        // var dto = new UpdateItemDto
+        // {
+        //     EntityId = Parent.Item.Id,
+        //     Title = Parent.Item.Title
+        // };
+        //
+        // var response = await Parent.EntityDetailHost.NavigationService.NavigationStore
+        //     .MisaHttpClient.PatchAsJsonAsync(requestUri: "tasks", dto);
+        //
+        // if (!response.IsSuccessStatusCode)
+        //     Console.WriteLine($"Server returned {response.StatusCode}: {response.ReasonPhrase}");
+        //
+        // await Parent.Reload();
+        // IsEditTitleFormOpen = false;
     }
     
     [RelayCommand]
     private async Task DeleteEntity()
     {
-        try
-        {
-            var id = Parent.Item.Id;
-            await Parent.EntityDetailHost.NavigationService.NavigationStore
-                .MisaHttpClient.PatchAsync(requestUri: $"Entity/Delete?entityId={id}", content: null);
-            
-            await Parent.Reload();
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-        }
+        // try
+        // {
+        //     var id = Parent.Item.Id;
+        //     await Parent.EntityDetailHost.NavigationService.NavigationStore
+        //         .MisaHttpClient.PatchAsync(requestUri: $"Entity/Delete?entityId={id}", content: null);
+        //     
+        //     await Parent.Reload();
+        // }
+        // catch (Exception e)
+        // {
+        //     Console.WriteLine(e);
+        // }
     }
     [RelayCommand]
     private async Task ArchiveEntity()
     {
-        try
-        {
-            var id = Parent.Item.Id;
-            await Parent.EntityDetailHost.NavigationService.NavigationStore
-                .MisaHttpClient.PatchAsync(requestUri: $"Entity/Archive?entityId={id}", content: null);
-            
-            await Parent.Reload();
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-        }
+        // try
+        // {
+        //     var id = Parent.Item.Id;
+        //     await Parent.EntityDetailHost.NavigationService.NavigationStore
+        //         .MisaHttpClient.PatchAsync(requestUri: $"Entity/Archive?entityId={id}", content: null);
+        //     
+        //     await Parent.Reload();
+        // }
+        // catch (Exception e)
+        // {
+        //     Console.WriteLine(e);
+        // }
     }
     // Deadline
     [ObservableProperty] private bool _isDeadlineFormOpen;

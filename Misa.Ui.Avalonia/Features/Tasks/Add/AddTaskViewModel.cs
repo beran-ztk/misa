@@ -81,7 +81,7 @@ public partial class AddTaskViewModel(PageViewModel vm) : ViewModelBase
     private void Close(TaskDto? dto = null)
     {
         Title = string.Empty;
-        Parent.CurrentInfoModel = null;
+        Parent.InfoView = null;
 
         if (dto != null)
         {

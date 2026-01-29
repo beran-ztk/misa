@@ -16,36 +16,51 @@ using NavigationViewModel = Misa.Ui.Avalonia.Features.Tasks.Navigation.Navigatio
 
 namespace Misa.Ui.Avalonia.Features.Tasks.Page;
 
-public partial class PageViewModel : ViewModelBase, IEntityDetailHost
+public partial class PageViewModel : ViewModelBase
 {
-    [ObservableProperty] private Guid _activeEntityId = Guid.Empty;
+    private readonly IServiceProvider _sp;
+    private readonly IActiveEntitySelection _selection;
+    
+    public ObservableCollection<TaskDto> Tasks { get; } = [];
+    
     [ObservableProperty] private TaskDto? _selectedTask;
+    [ObservableProperty] private ViewModelBase? _infoView;
     public INavigationService NavigationService { get; }
-    private DetailPageViewModel? DetailViewModel { get; set; }
-    private readonly IServiceProvider _services;
-    public PageViewModel(INavigationService navigationService)
+    
+    private DetailPageViewModel? _detailVm;
+    private IDetailCoordinator? _detailCoordinator;
+    
+    public ListViewModel Model { get; }
+    public NavigationViewModel Navigation { get; }
+    [ObservableProperty] private string? _pageError;
+    public PageViewModel(
+        IServiceProvider sp,
+        IActiveEntitySelection selection,
+        INavigationService navigationService)
     {
+        _sp = sp;
+        _selection = selection;
         NavigationService = navigationService;
-        _services = navigationService.ServiceProvider;
-
+        
         Model = new ListViewModel(this);
         Navigation = new NavigationViewModel(this);
     }
+    private void EnsureDetail()
+    {
+        if (_detailVm is not null) return;
 
+        _detailVm = ActivatorUtilities.CreateInstance<DetailPageViewModel>(_sp);
+        
+        _detailCoordinator = ActivatorUtilities.CreateInstance<DetailCoordinator>(_sp, _detailVm);
+        _ = _detailCoordinator.ActivateAsync();
+    }
     partial void OnSelectedTaskChanged(TaskDto? value)
     {
-        DetailViewModel ??= CreateDetailVm();
-        ActiveEntityId = value?.Id ?? Guid.Empty;
-        _ = DetailViewModel.LoadAsync(value?.Id ?? Guid.Empty);
-        ShowDetails();
+        EnsureDetail();
+        
+        _selection.SetActive(value?.Id);
+        InfoView = _detailVm;
     }
-    private DetailPageViewModel CreateDetailVm() => 
-        ActivatorUtilities.CreateInstance<DetailPageViewModel>(_services, this);
-    
-    private ViewModelBase? _currentInfoModel;
-    public ListViewModel Model { get; }
-    public NavigationViewModel Navigation { get; }
-    public ObservableCollection<TaskDto> Tasks { get; } = [];
 
     public async Task AddToCollection(List<TaskDto> tasks)
     {
@@ -62,14 +77,4 @@ public partial class PageViewModel : ViewModelBase, IEntityDetailHost
         });
     }
 
-    [ObservableProperty] private string? _pageError;
-
-    
-
-    public ViewModelBase? CurrentInfoModel
-    {
-        get => _currentInfoModel;
-        set => SetProperty(ref _currentInfoModel, value);
-    }
-    private void ShowDetails() => CurrentInfoModel = DetailViewModel;
 }
