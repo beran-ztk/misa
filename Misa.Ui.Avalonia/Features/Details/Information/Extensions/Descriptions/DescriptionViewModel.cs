@@ -35,42 +35,42 @@ public partial class DescriptionViewModel(InformationViewModel parent) : ViewMod
     [RelayCommand]
     private async Task AddDescription()
     {
-        try
-        {
-            var dto = new DescriptionCreateDto(
-                Parent.Parent.Item.Id,
-                Description.Trim()
-            );
-
-            using var request = new HttpRequestMessage(
-                HttpMethod.Post,
-                "entities/description"
-            );
-            request.Content = JsonContent.Create(dto);
-
-            var response = await Parent.Parent.EntityDetailHost.NavigationService.NavigationStore
-                .MisaHttpClient
-                .SendAsync(request);
-
-            response.EnsureSuccessStatusCode();
-
-            var result = await response.Content
-                .ReadFromJsonAsync<Result<DescriptionDto>>();
-
-            if (result?.Value is null)
-            {
-                return;
-            }
-
-            Descriptions.Add(result.Value);
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-        }
-        finally
-        {
-            Description = string.Empty;
-        }
+        // try
+        // {
+        //     var dto = new DescriptionCreateDto(
+        //         Parent.Parent.Item.Id,
+        //         Description.Trim()
+        //     );
+        //
+        //     using var request = new HttpRequestMessage(
+        //         HttpMethod.Post,
+        //         "entities/description"
+        //     );
+        //     request.Content = JsonContent.Create(dto);
+        //
+        //     var response = await Parent.Parent.EntityDetailHost.NavigationService.NavigationStore
+        //         .MisaHttpClient
+        //         .SendAsync(request);
+        //
+        //     response.EnsureSuccessStatusCode();
+        //
+        //     var result = await response.Content
+        //         .ReadFromJsonAsync<Result<DescriptionDto>>();
+        //
+        //     if (result?.Value is null)
+        //     {
+        //         return;
+        //     }
+        //
+        //     Descriptions.Add(result.Value);
+        // }
+        // catch (Exception e)
+        // {
+        //     Console.WriteLine(e);
+        // }
+        // finally
+        // {
+        //     Description = string.Empty;
+        // }
     }
 }

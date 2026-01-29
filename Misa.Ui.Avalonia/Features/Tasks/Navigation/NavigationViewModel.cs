@@ -10,5 +10,5 @@ public partial class NavigationViewModel(PageViewModel vm) : ViewModelBase
     private PageViewModel Parent { get; } = vm;
 
     [RelayCommand]
-    private void ShowAddItemForm() => Parent.CurrentInfoModel = new AddTaskViewModel(Parent);
+    private void ShowAddItemForm() => Parent.InfoView = new AddTaskViewModel(Parent);
 }

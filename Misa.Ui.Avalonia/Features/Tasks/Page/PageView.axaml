@@ -26,7 +26,7 @@
                           Background="{StaticResource BrushBorder}"/>
             <ContentControl Grid.Column="2"
                             Background="{StaticResource BrushPrimaryBackground}"
-                            Content="{Binding CurrentInfoModel}" />
+                            Content="{Binding InfoView}" />
         </Grid>
     </Border>
 </UserControl>

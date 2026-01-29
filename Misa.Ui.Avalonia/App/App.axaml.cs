@@ -9,6 +9,8 @@ using Avalonia.Markup.Xaml;
 using Microsoft.Extensions.DependencyInjection;
 using Misa.Ui.Avalonia.App.Shell;
 using Misa.Ui.Avalonia.Features.Details.Page;
+using Misa.Ui.Avalonia.Features.Scheduler.Main;
+using Misa.Ui.Avalonia.Features.Tasks.Page;
 using Misa.Ui.Avalonia.Infrastructure.Services.Interfaces;
 using Misa.Ui.Avalonia.Infrastructure.Services.Navigation;
 using Misa.Ui.Avalonia.Infrastructure.Stores;
@@ -27,31 +29,59 @@ public partial class App : Application
     public override void OnFrameworkInitializationCompleted()
     {
         var sc = new ServiceCollection();
+
+        // -------------------------
+        // Infrastructure / Core
+        // -------------------------
+        sc.AddSingleton(new HttpClient
+        {
+            BaseAddress = new Uri("http://localhost:4500")
+        });
+
+        sc.AddSingleton<NavigationStore>();
+        sc.AddSingleton<IClipboardService, ClipboardService>();
+        sc.AddSingleton<INavigationService, NavigationService>();
+
+        // -------------------------
+        // Details (Selection + Clients + VMs)
+        // -------------------------
+        sc.AddSingleton<IActiveEntitySelection, ActiveEntitySelection>();
+
         sc.AddSingleton<IItemExtensionVmFactory, ItemExtensionVmFactory>();
+        sc.AddTransient<IItemDetailClient, ItemDetailClient>();
+
         sc.AddTransient<DetailPageViewModel>();
+        sc.AddTransient<IDetailCoordinator, DetailCoordinator>();
+
+        // -------------------------
+        // Feature VMs
+        // -------------------------
+        sc.AddTransient<SchedulerMainWindowViewModel>();
+        sc.AddTransient<PageViewModel>();
+
+        // -------------------------
+        // Shell / Window
+        // -------------------------
+        sc.AddTransient<MainWindowViewModel>();
+
+        sc.AddSingleton<MainWindow>(sp =>
+            new MainWindow
+            {
+                DataContext = sp.GetRequiredService<MainWindowViewModel>()
+            });
+
         Services = sc.BuildServiceProvider();
-        
+
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            // Avoid duplicate validations from both Avalonia and the CommunityToolkit. 
-            // More info: https://docs.avaloniaui.net/docs/guides/development-guides/data-validation#manage-validationplugins
             DisableAvaloniaDataAnnotationValidation();
 
-            const string uri = "http://localhost:4500";
-            var httpClient = new HttpClient { BaseAddress = new Uri(uri) };
-
-            var navigationStore = new NavigationStore(httpClient);
-            
-            INavigationService navigationService = new NavigationService(navigationStore, new AvaloniaClipboardService(), Services);
-            
-            desktop.MainWindow = new MainWindow
-            {
-                DataContext = new MainWindowViewModel(navigationService),
-            };
+            desktop.MainWindow = Services.GetRequiredService<MainWindow>();
         }
 
         base.OnFrameworkInitializationCompleted();
     }
+
 
     private void DisableAvaloniaDataAnnotationValidation()
     {
