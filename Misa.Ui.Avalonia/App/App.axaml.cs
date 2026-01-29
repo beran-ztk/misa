@@ -1,20 +1,18 @@
 using System;
 using System.Linq;
 using System.Net.Http;
-using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
 using Microsoft.Extensions.DependencyInjection;
 using Misa.Ui.Avalonia.App.Shell;
-using Misa.Ui.Avalonia.Features.Details.Page;
 using Misa.Ui.Avalonia.Features.Scheduler.Main;
-using Misa.Ui.Avalonia.Features.Tasks.Page;
 using Misa.Ui.Avalonia.Infrastructure.Services.Interfaces;
 using Misa.Ui.Avalonia.Infrastructure.Services.Navigation;
-using Misa.Ui.Avalonia.Infrastructure.Stores;
+using DetailMainWindowViewModel = Misa.Ui.Avalonia.Features.Details.Main.DetailMainWindowViewModel;
 using NavigationStore = Misa.Ui.Avalonia.Infrastructure.Stores.NavigationStore;
+using TaskMainWindowViewModel = Misa.Ui.Avalonia.Features.Tasks.Main.TaskMainWindowViewModel;
 
 namespace Misa.Ui.Avalonia.App;
 
@@ -50,14 +48,14 @@ public partial class App : Application
         sc.AddSingleton<IItemExtensionVmFactory, ItemExtensionVmFactory>();
         sc.AddTransient<IItemDetailClient, ItemDetailClient>();
 
-        sc.AddTransient<DetailPageViewModel>();
+        sc.AddTransient<DetailMainWindowViewModel>();
         sc.AddTransient<IDetailCoordinator, DetailCoordinator>();
 
         // -------------------------
         // Feature VMs
         // -------------------------
         sc.AddTransient<SchedulerMainWindowViewModel>();
-        sc.AddTransient<PageViewModel>();
+        sc.AddTransient<TaskMainWindowViewModel>();
 
         // -------------------------
         // Shell / Window

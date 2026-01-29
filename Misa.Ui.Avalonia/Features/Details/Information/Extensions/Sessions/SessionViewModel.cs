@@ -12,9 +12,9 @@ using Misa.Ui.Avalonia.Presentation.Mapping;
 
 namespace Misa.Ui.Avalonia.Features.Details.Information.Extensions.Sessions;
 
-public partial class SessionViewModel(InformationViewModel parent) : ViewModelBase
+public partial class SessionViewModel(Base.DetailInformationViewModel parent) : ViewModelBase
 {
-    private InformationViewModel Parent { get; } = parent;
+    private Base.DetailInformationViewModel Parent { get; } = parent;
     [ObservableProperty] private CurrentSessionOverviewDto _currentSessionOverviewDto = null!;
     public bool HasActiveSession => CurrentSessionOverviewDto.ActiveSession != null;
     public bool HasLatestClosedSession => CurrentSessionOverviewDto.LatestClosedSession != null;

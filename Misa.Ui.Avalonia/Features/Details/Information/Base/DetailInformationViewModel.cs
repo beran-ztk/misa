@@ -1,27 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http.Json;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Features.Entities.Extensions.Items.Base;
 using Misa.Ui.Avalonia.Features.Details.Common;
 using Misa.Ui.Avalonia.Features.Details.Information.Extensions.Sessions;
-using Misa.Ui.Avalonia.Features.Details.Page;
 using Misa.Ui.Avalonia.Presentation.Mapping;
 using ReactiveUI;
 using DescriptionViewModel = Misa.Ui.Avalonia.Features.Details.Information.Extensions.Descriptions.DescriptionViewModel;
+using DetailMainWindowViewModel = Misa.Ui.Avalonia.Features.Details.Main.DetailMainWindowViewModel;
 
-namespace Misa.Ui.Avalonia.Features.Details.Information;
+namespace Misa.Ui.Avalonia.Features.Details.Information.Base;
 
-public partial class InformationViewModel : ViewModelBase
+public partial class DetailInformationViewModel : ViewModelBase
 {
-    public DetailPageViewModel Parent { get; }
+    public DetailMainWindowViewModel Parent { get; }
     public DescriptionViewModel Description { get; }
     public SessionViewModel Session { get; }
 
-    public InformationViewModel(DetailPageViewModel parent)
+    public DetailInformationViewModel(DetailMainWindowViewModel parent)
     {
         Parent = parent;
         Description = new DescriptionViewModel(this);
@@ -55,7 +54,7 @@ public partial class InformationViewModel : ViewModelBase
         if (SettableStates.Count < 1)
             return;
 
-        StateId = SettableStates.First().Id;
+        StateId = Enumerable.First<StateDto>(SettableStates).Id;
         IsEditStateOpen = true;
     }
 

@@ -2,7 +2,7 @@
 using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
-using Misa.Ui.Avalonia.Features.Details.Page;
+using DetailMainWindowViewModel = Misa.Ui.Avalonia.Features.Details.Main.DetailMainWindowViewModel;
 
 namespace Misa.Ui.Avalonia.Infrastructure.Services.Interfaces;
 
@@ -10,7 +10,7 @@ public interface IDetailCoordinator : IDisposable
 {
     Task ActivateAsync();
 }
-public sealed class DetailCoordinator(IActiveEntitySelection selection, DetailPageViewModel detailVm) : IDetailCoordinator
+public sealed class DetailCoordinator(IActiveEntitySelection selection, DetailMainWindowViewModel detailVm) : IDetailCoordinator
 {
     private CancellationTokenSource? _cts;
     private bool _isActive;

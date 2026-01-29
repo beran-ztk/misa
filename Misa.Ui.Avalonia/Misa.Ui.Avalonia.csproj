@@ -75,12 +75,12 @@
         <DependentUpon>DetailMainDetailView.axaml</DependentUpon>
         <SubType>Code</SubType>
       </Compile>
-      <Compile Update="Features\Details\Information\InformationView.axaml.cs">
-        <DependentUpon>DetailInformationView.axaml</DependentUpon>
-        <SubType>Code</SubType>
-      </Compile>
       <Compile Update="Features\Details\Information\Extensions\Descriptions\DescriptionView.axaml.cs">
         <DependentUpon>DescriptionView.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+      <Compile Update="Features\Details\Information\Base\DetailInformationView.axaml.cs">
+        <DependentUpon>InformationView.axaml</DependentUpon>
         <SubType>Code</SubType>
       </Compile>
     </ItemGroup>

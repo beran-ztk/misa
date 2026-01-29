@@ -4,20 +4,18 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Avalonia.Threading;
 using Misa.Contract.Common.Results;
-using Misa.Contract.Features.Entities.Extensions.Items.Base;
 using Misa.Contract.Features.Entities.Extensions.Items.Extensions.Tasks;
 using Misa.Ui.Avalonia.Presentation.Mapping;
-using PageViewModel = Misa.Ui.Avalonia.Features.Tasks.Page.PageViewModel;
+using TaskMainWindowViewModel = Misa.Ui.Avalonia.Features.Tasks.Main.TaskMainWindowViewModel;
 
-namespace Misa.Ui.Avalonia.Features.Tasks.ListTask;
+namespace Misa.Ui.Avalonia.Features.Tasks.Content;
 
-public class ListViewModel : ViewModelBase
+public class TaskContentViewModel : ViewModelBase
 {
-    public PageViewModel Parent { get; }
+    public TaskMainWindowViewModel Parent { get; }
 
-    public ListViewModel(PageViewModel vm)
+    public TaskContentViewModel(TaskMainWindowViewModel vm)
     {
         Parent = vm;
         _ = LoadAsync();

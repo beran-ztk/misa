@@ -6,17 +6,16 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.Extensions.DependencyInjection;
 using Misa.Contract.Features.Entities.Extensions.Items.Extensions.Tasks;
-using Misa.Ui.Avalonia.Features.Details.Page;
-using Misa.Ui.Avalonia.Features.Tasks.ListTask;
+using Misa.Ui.Avalonia.Features.Tasks.Content;
 using Misa.Ui.Avalonia.Infrastructure.Services.Interfaces;
 using Misa.Ui.Avalonia.Infrastructure.Services.Navigation;
 using Misa.Ui.Avalonia.Presentation.Mapping;
-using ReactiveUI;
-using NavigationViewModel = Misa.Ui.Avalonia.Features.Tasks.Navigation.NavigationViewModel;
+using DetailMainWindowViewModel = Misa.Ui.Avalonia.Features.Details.Main.DetailMainWindowViewModel;
+using TaskHeaderViewModel = Misa.Ui.Avalonia.Features.Tasks.Header.TaskHeaderViewModel;
 
-namespace Misa.Ui.Avalonia.Features.Tasks.Page;
+namespace Misa.Ui.Avalonia.Features.Tasks.Main;
 
-public partial class PageViewModel : ViewModelBase
+public partial class TaskMainWindowViewModel : ViewModelBase
 {
     private readonly IServiceProvider _sp;
     private readonly IActiveEntitySelection _selection;
@@ -27,13 +26,13 @@ public partial class PageViewModel : ViewModelBase
     [ObservableProperty] private ViewModelBase? _infoView;
     public INavigationService NavigationService { get; }
     
-    private DetailPageViewModel? _detailVm;
+    private DetailMainWindowViewModel? _detailVm;
     private IDetailCoordinator? _detailCoordinator;
     
-    public ListViewModel Model { get; }
-    public NavigationViewModel Navigation { get; }
+    public TaskContentViewModel Model { get; }
+    public TaskHeaderViewModel TaskHeader { get; }
     [ObservableProperty] private string? _pageError;
-    public PageViewModel(
+    public TaskMainWindowViewModel(
         IServiceProvider sp,
         IActiveEntitySelection selection,
         INavigationService navigationService)
@@ -42,14 +41,14 @@ public partial class PageViewModel : ViewModelBase
         _selection = selection;
         NavigationService = navigationService;
         
-        Model = new ListViewModel(this);
-        Navigation = new NavigationViewModel(this);
+        Model = new TaskContentViewModel(this);
+        TaskHeader = new TaskHeaderViewModel(this);
     }
     private void EnsureDetail()
     {
         if (_detailVm is not null) return;
 
-        _detailVm = ActivatorUtilities.CreateInstance<DetailPageViewModel>(_sp);
+        _detailVm = ActivatorUtilities.CreateInstance<DetailMainWindowViewModel>(_sp);
         
         _detailCoordinator = ActivatorUtilities.CreateInstance<DetailCoordinator>(_sp, _detailVm);
         _ = _detailCoordinator.ActivateAsync();

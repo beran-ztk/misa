@@ -14,7 +14,7 @@ using ReactiveUI;
 
 namespace Misa.Ui.Avalonia.Features.Details.Information.Extensions.Descriptions;
 
-public partial class DescriptionViewModel(InformationViewModel parent) : ViewModelBase
+public partial class DescriptionViewModel(Base.DetailInformationViewModel parent) : ViewModelBase
 {
     public void Load()
     {
@@ -30,7 +30,7 @@ public partial class DescriptionViewModel(InformationViewModel parent) : ViewMod
     {
         OnPropertyChanged(nameof(IsDescriptionValid));
     }
-    public InformationViewModel Parent { get; } = parent;
+    public Base.DetailInformationViewModel Parent { get; } = parent;
 
     [RelayCommand]
     private async Task AddDescription()

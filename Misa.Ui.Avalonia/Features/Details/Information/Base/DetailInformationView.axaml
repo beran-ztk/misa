@@ -1,8 +1,8 @@
 ﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Class="Misa.Ui.Avalonia.Features.Details.Information.InformationView"
-             xmlns:information="clr-namespace:Misa.Ui.Avalonia.Features.Details.Information"
-             x:DataType="information:InformationViewModel">
+             x:Class="Misa.Ui.Avalonia.Features.Details.Information.Base.DetailInformationView"
+             xmlns:base="clr-namespace:Misa.Ui.Avalonia.Features.Details.Information.Base"
+             x:DataType="base:DetailInformationViewModel">
     
     <UserControl.Styles>
 

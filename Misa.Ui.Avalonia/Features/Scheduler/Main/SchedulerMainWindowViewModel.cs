@@ -11,10 +11,10 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
 using Misa.Contract.Common.Results;
 using Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;
-using Misa.Ui.Avalonia.Features.Details.Page;
 using Misa.Ui.Avalonia.Infrastructure.Services.Interfaces;
 using Misa.Ui.Avalonia.Infrastructure.Services.Navigation;
 using Misa.Ui.Avalonia.Presentation.Mapping;
+using DetailMainWindowViewModel = Misa.Ui.Avalonia.Features.Details.Main.DetailMainWindowViewModel;
 
 namespace Misa.Ui.Avalonia.Features.Scheduler.Main;
 
@@ -29,7 +29,7 @@ public partial class SchedulerMainWindowViewModel : ViewModelBase
     [ObservableProperty] private ViewModelBase? _infoView;
     public INavigationService NavigationService { get; }
     
-    private DetailPageViewModel? _detailVm;
+    private DetailMainWindowViewModel? _detailVm;
     private IDetailCoordinator? _detailCoordinator;
     public SchedulerMainWindowViewModel(
         IServiceProvider sp,
@@ -47,7 +47,7 @@ public partial class SchedulerMainWindowViewModel : ViewModelBase
     {
         if (_detailVm is not null) return;
 
-        _detailVm = ActivatorUtilities.CreateInstance<DetailPageViewModel>(_sp);
+        _detailVm = ActivatorUtilities.CreateInstance<DetailMainWindowViewModel>(_sp);
         
         _detailCoordinator = ActivatorUtilities.CreateInstance<DetailCoordinator>(_sp, _detailVm);
         _ = _detailCoordinator.ActivateAsync();

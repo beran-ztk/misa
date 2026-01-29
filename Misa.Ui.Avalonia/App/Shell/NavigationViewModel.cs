@@ -1,9 +1,9 @@
 ﻿using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
 using Misa.Ui.Avalonia.Features.Scheduler.Main;
-using Misa.Ui.Avalonia.Features.Tasks.Page;
 using Misa.Ui.Avalonia.Infrastructure.Services.Navigation;
 using Misa.Ui.Avalonia.Presentation.Mapping;
+using TaskMainWindowViewModel = Misa.Ui.Avalonia.Features.Tasks.Main.TaskMainWindowViewModel;
 
 namespace Misa.Ui.Avalonia.App.Shell;
 
@@ -13,7 +13,7 @@ public partial class NavigationViewModel(INavigationService navigationService) :
     private void ShowTasks()
     {
         navigationService.NavigationStore.CurrentViewModel =
-            navigationService.ServiceProvider.GetRequiredService<PageViewModel>();
+            navigationService.ServiceProvider.GetRequiredService<TaskMainWindowViewModel>();
     }
 
     [RelayCommand]

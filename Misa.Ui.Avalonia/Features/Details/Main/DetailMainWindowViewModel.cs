@@ -1,35 +1,35 @@
 ﻿using System;
-using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Misa.Contract.Common.Results;
 using Misa.Contract.Features.Entities.Extensions.Items.Base;
 using Misa.Ui.Avalonia.Features.Details.Common;
+using Misa.Ui.Avalonia.Features.Details.Information.Base;
 using Misa.Ui.Avalonia.Infrastructure.Services.Interfaces;
 using Misa.Ui.Avalonia.Presentation.Mapping;
 
-namespace Misa.Ui.Avalonia.Features.Details.Page;
+namespace Misa.Ui.Avalonia.Features.Details.Main;
 
-public partial class DetailPageViewModel : ViewModelBase
+public partial class DetailMainWindowViewModel : ViewModelBase
 {
     [ObservableProperty] private int _selectedTabIndex;
 
     [ObservableProperty] private ItemDto _item;
     [ObservableProperty] private IItemExtensionVm? _extension;
 
-    public Information.InformationViewModel InformationViewModel { get; }
+    public DetailInformationViewModel DetailInformationViewModel { get; }
 
     private readonly IItemDetailClient _client;
     private readonly IItemExtensionVmFactory _extensionFactory;
 
-    public DetailPageViewModel(IItemDetailClient client, IItemExtensionVmFactory extensionFactory)
+    public DetailMainWindowViewModel(IItemDetailClient client, IItemExtensionVmFactory extensionFactory)
     {
         _client = client;
         _extensionFactory = extensionFactory;
 
         Item = ItemDto.Empty();
-        InformationViewModel = new Information.InformationViewModel(this);
+        DetailInformationViewModel = new DetailInformationViewModel(this);
     }
 
     public Task ResetAsync()
@@ -64,7 +64,7 @@ public partial class DetailPageViewModel : ViewModelBase
         Item = result.Value.Item;
         Extension = _extensionFactory.Create(result.Value);
 
-        InformationViewModel.Description.Load();
-        await InformationViewModel.Session.LoadCurrentSessionAsync();
+        DetailInformationViewModel.Description.Load();
+        await DetailInformationViewModel.Session.LoadCurrentSessionAsync();
     }
 }

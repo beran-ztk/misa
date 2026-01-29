@@ -10,13 +10,13 @@ using Misa.Contract.Common.Results;
 using Misa.Contract.Features.Entities.Extensions.Items.Base;
 using Misa.Contract.Features.Entities.Extensions.Items.Extensions.Tasks;
 using Misa.Ui.Avalonia.Presentation.Mapping;
-using PageViewModel = Misa.Ui.Avalonia.Features.Tasks.Page.PageViewModel;
+using TaskMainWindowViewModel = Misa.Ui.Avalonia.Features.Tasks.Main.TaskMainWindowViewModel;
 
 namespace Misa.Ui.Avalonia.Features.Tasks.Add;
 
-public partial class AddTaskViewModel(PageViewModel vm) : ViewModelBase
+public partial class AddTaskViewModel(TaskMainWindowViewModel vm) : ViewModelBase
 {
-    private PageViewModel Parent { get; } = vm;
+    private TaskMainWindowViewModel Parent { get; } = vm;
 
     [ObservableProperty] private bool _createMore;
     [ObservableProperty] private string _title = string.Empty;

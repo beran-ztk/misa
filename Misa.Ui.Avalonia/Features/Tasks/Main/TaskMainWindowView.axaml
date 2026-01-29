@@ -3,11 +3,11 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="Misa.Ui.Avalonia.Features.Tasks.Page.PageView"
-             xmlns:navigation="clr-namespace:Misa.Ui.Avalonia.Features.Tasks.Navigation"
-             xmlns:page="clr-namespace:Misa.Ui.Avalonia.Features.Tasks.Page"
-             xmlns:listTask="clr-namespace:Misa.Ui.Avalonia.Features.Tasks.ListTask"
-             x:DataType="page:PageViewModel">
+             x:Class="Misa.Ui.Avalonia.Features.Tasks.Main.TaskMainWindowView"
+             xmlns:content="clr-namespace:Misa.Ui.Avalonia.Features.Tasks.Content"
+             xmlns:header="clr-namespace:Misa.Ui.Avalonia.Features.Tasks.Header"
+             xmlns:main="clr-namespace:Misa.Ui.Avalonia.Features.Tasks.Main"
+             x:DataType="main:TaskMainWindowViewModel">
     <Border>
         <Grid ColumnDefinitions="*,1,*">
             
@@ -16,9 +16,9 @@
                     BorderBrush="{StaticResource BrushBorder}">
                 <Grid RowDefinitions="50,*">
                 
-                    <navigation:NavigationView Grid.Row="0"
-                                              DataContext="{Binding Navigation}" />
-                    <listTask:ListView Grid.Row="1"
+                    <header:TaskHeaderView Grid.Row="0"
+                                              DataContext="{Binding TaskHeader}" />
+                    <content:TaskContentView Grid.Row="1"
                                         DataContext="{Binding Model}" />
                 </Grid>
             </Border>
