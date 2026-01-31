@@ -60,6 +60,8 @@ public static class SchedulingEndpoints
                 dto.OccurrenceCountLimit,
                 dto.MisfirePolicy,
                 dto.OccurrenceTtl,
+                dto.ActionType,
+                dto.Payload,
                 dto.StartTime,
                 dto.EndTime,
                 dto.ActiveFromUtc,

@@ -47,6 +47,7 @@ public static class ScheduleMappings
         };
     public static ScheduleActionType ToDomain(this ScheduleActionTypeDto dto) => dto switch
     {
+        ScheduleActionTypeDto.None   => ScheduleActionType.None,
         ScheduleActionTypeDto.Deadline   => ScheduleActionType.Deadline,
         ScheduleActionTypeDto.Recurring   => ScheduleActionType.Recurring,
         ScheduleActionTypeDto.CreateItem => ScheduleActionType.CreateItem,
@@ -55,6 +56,7 @@ public static class ScheduleMappings
 
     public static ScheduleActionTypeDto ToDto(this ScheduleActionType domain) => domain switch
     {
+        ScheduleActionType.None   => ScheduleActionTypeDto.None,
         ScheduleActionType.Deadline   => ScheduleActionTypeDto.Deadline,
         ScheduleActionType.Recurring   => ScheduleActionTypeDto.Recurring,
         ScheduleActionType.CreateItem => ScheduleActionTypeDto.CreateItem,

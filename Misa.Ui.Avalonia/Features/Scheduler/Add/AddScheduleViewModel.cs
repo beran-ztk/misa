@@ -28,6 +28,10 @@ public partial class AddScheduleViewModel(INavigationService navigationService, 
     [ObservableProperty] private string _errorMessage = string.Empty;
     [ObservableProperty] private int? _occurrenceCountLimit;
 
+    [ObservableProperty] private ScheduleActionTypeDto _selectedActionType = ScheduleActionTypeDto.None;
+    public IReadOnlyList<ScheduleActionTypeDto> ActionTypes { get; } 
+        = Enum.GetValues<ScheduleActionTypeDto>();
+    
     [ObservableProperty] private ScheduleMisfirePolicyDto _selectedMisfirePolicy 
         = ScheduleMisfirePolicyDto.Catchup;
 
@@ -59,6 +63,7 @@ public partial class AddScheduleViewModel(INavigationService navigationService, 
     public IReadOnlyList<ScheduleMisfirePolicyDto> MisfirePolicies { get; } 
         = Enum.GetValues<ScheduleMisfirePolicyDto>();
 
+
     public IReadOnlyList<ScheduleFrequencyTypeDto> FrequencyTypes { get; } = Enum.GetValues<ScheduleFrequencyTypeDto>();
 
     private void ShowValidationError(string message)
@@ -86,6 +91,8 @@ public partial class AddScheduleViewModel(INavigationService navigationService, 
                 return;
             }
             
+            
+            
             var addScheduleDto = new AddScheduleDto
             {
                 Title = Title,
@@ -95,6 +102,8 @@ public partial class AddScheduleViewModel(INavigationService navigationService, 
 
                 LookaheadLimit = LookaheadLimit,
                 OccurrenceCountLimit = OccurrenceCountLimit,
+                ActionType = SelectedActionType,
+                Payload = string.Empty,
                 MisfirePolicy = SelectedMisfirePolicy,
                 OccurrenceTtl = OccurrenceTtl,
                 StartTime = StartTime is null ? null : TimeOnly.FromTimeSpan(StartTime.Value),

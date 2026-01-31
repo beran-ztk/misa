@@ -78,6 +78,8 @@ public sealed class Scheduler
         int? occurrenceCountLimit,
         ScheduleMisfirePolicy misfirePolicy,
         TimeSpan? occurrenceTtl,
+        ScheduleActionType actionType,
+        string? payload,
         TimeOnly? startTime,
         TimeOnly? endTime,
         DateTimeOffset activeFromUtc,
@@ -126,6 +128,8 @@ public sealed class Scheduler
             OccurrenceCountLimit = occurrenceCountLimit,
             MisfirePolicy = misfirePolicy,
             OccurrenceTtl = occurrenceTtl,
+            ActionType = actionType,
+            Payload = payload,
 
             StartTime = startTime,
             EndTime = endTime,
@@ -176,7 +180,8 @@ public sealed class Scheduler
             OccurrenceCountLimit = 1,
             LookaheadLimit = 1,
             
-            MisfirePolicy = ScheduleMisfirePolicy.Catchup
+            MisfirePolicy = ScheduleMisfirePolicy.Catchup,
+            ActionType = ScheduleActionType.Deadline
         };
     }
 }
