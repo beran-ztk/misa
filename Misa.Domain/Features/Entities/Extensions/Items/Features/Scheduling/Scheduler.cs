@@ -153,4 +153,29 @@ public sealed class Scheduler
             return distinct;
         }
     }
+    
+    public static Scheduler CreateOnce(
+        Guid targetItemId,
+        DateTimeOffset dueAtUtc)
+    {
+        var item = Item.Create(Workflow.Scheduling, "Deadline", Priority.None);
+        
+        return new Scheduler(item)
+        {
+            Id = Guid.NewGuid(),
+
+            ScheduleFrequencyType = ScheduleFrequencyType.Once,
+            FrequencyInterval = 1,
+
+            TargetItemId = targetItemId,
+
+            ActiveFromUtc = dueAtUtc,
+            ActiveUntilUtc = null,
+
+            OccurrenceCountLimit = 1,
+            LookaheadLimit = 1,
+            
+            MisfirePolicy = ScheduleMisfirePolicy.Catchup
+        };
+    }
 }

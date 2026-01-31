@@ -5,6 +5,7 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="Misa.Ui.Avalonia.Features.Tasks.Add.AddTaskView"
              xmlns:add="clr-namespace:Misa.Ui.Avalonia.Features.Tasks.Add"
+             xmlns:deadline="clr-namespace:Misa.Ui.Avalonia.Features.Common.Deadline"
              x:DataType="add:AddTaskViewModel">
 
     <Border Classes="misa-control">
@@ -21,7 +22,7 @@
             <!-- Form -->
             <Grid Grid.Row="1"
                   ColumnDefinitions="Auto,*"
-                  RowDefinitions="Auto,Auto,Auto,Auto"
+                  RowDefinitions="Auto,Auto,Auto,Auto,Auto"
                   RowSpacing="{StaticResource SpacingMedium}"
                   ColumnSpacing="{StaticResource SpacingLarge}">
 
@@ -62,6 +63,14 @@
                           Classes="misa-input"
                           ItemsSource="{Binding Priorities}"
                           SelectedValue="{Binding SelectedPriorityContract}"/>
+                
+                <!-- Deadline -->
+                <TextBlock Grid.Row="3" Grid.Column="0"
+                           Classes="misa-label"
+                           Text="Deadline" />
+
+                <deadline:DeadlineInputView Grid.Row="3" Grid.Column="1"
+                                            DataContext="{Binding Deadline}" />
             </Grid>
 
             <!-- Footer / Actions -->

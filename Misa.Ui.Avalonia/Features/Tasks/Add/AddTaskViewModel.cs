@@ -9,6 +9,7 @@ using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Common.Results;
 using Misa.Contract.Features.Entities.Extensions.Items.Base;
 using Misa.Contract.Features.Entities.Extensions.Items.Extensions.Tasks;
+using Misa.Ui.Avalonia.Features.Common.Deadline;
 using Misa.Ui.Avalonia.Presentation.Mapping;
 using TaskMainWindowViewModel = Misa.Ui.Avalonia.Features.Tasks.Main.TaskMainWindowViewModel;
 
@@ -17,6 +18,7 @@ namespace Misa.Ui.Avalonia.Features.Tasks.Add;
 public partial class AddTaskViewModel(TaskMainWindowViewModel vm) : ViewModelBase
 {
     private TaskMainWindowViewModel Parent { get; } = vm;
+    public DeadlineInputViewModel Deadline { get; } = new();
 
     [ObservableProperty] private bool _createMore;
     [ObservableProperty] private string _title = string.Empty;
@@ -47,8 +49,8 @@ public partial class AddTaskViewModel(TaskMainWindowViewModel vm) : ViewModelBas
                 TitleValidationError("Please specify a title.");
                 return;
             }
-            
-            var addTaskDto = new AddTaskDto(Title, SelectedCategoryContract, SelectedPriorityContract);
+            var deadlineDto = Deadline.ToDtoOrNull();
+            var addTaskDto = new AddTaskDto(Title, SelectedCategoryContract, SelectedPriorityContract, deadlineDto);
 
             using var request = new HttpRequestMessage(HttpMethod.Post, "tasks");
             request.Content = JsonContent.Create(addTaskDto);

@@ -12,8 +12,21 @@ public static class SchedulingEndpoints
     {
         app.MapGet("scheduling", GetSchedulingRules);
         app.MapPost("scheduling", AddSchedulingRule);
+        
+        app.MapPost("scheduling/once", CreateOnceScheduler);
     }
+    private static async Task<Result> CreateOnceScheduler(
+        CreateOnceScheduleDto dto,
+        IMessageBus bus,
+        CancellationToken ct)
+    {
+        var command = new CreateOnceScheduleCommand(
+            dto.TargetItemId,
+            dto.DueAtUtc
+        );
 
+        return await bus.InvokeAsync<Result>(command, ct);
+    }
     private static async Task<Result<List<ScheduleDto>>> GetSchedulingRules(IMessageBus bus, CancellationToken ct)
     {
         var result = await bus.InvokeAsync<Result<List<ScheduleDto>>>(new GetScheduleQuery(), ct);
