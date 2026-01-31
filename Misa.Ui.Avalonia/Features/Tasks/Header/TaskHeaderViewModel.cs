@@ -14,7 +14,7 @@ public partial class TaskHeaderViewModel(TaskMainWindowViewModel vm) : ViewModel
     private TaskMainWindowViewModel Parent { get; } = vm;
 
     [RelayCommand]
-    private async Task ShowAddItemForm()
+    private async Task ShowAddTaskWindow()
     {
         var vm = new AddTaskViewModel();
         var window = new AddTaskView

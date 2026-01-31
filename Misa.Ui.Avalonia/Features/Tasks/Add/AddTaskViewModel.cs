@@ -38,8 +38,7 @@ public partial class AddTaskViewModel : ViewModelBase
         var trimmed = Title.Trim();
         if (string.IsNullOrWhiteSpace(trimmed))
         {
-            TitleHasValidationError = true;
-            ErrorMessageTitle = "Please specify a title.";
+            TitleValidationError("Please specify a title.");
             return;
         }
 
