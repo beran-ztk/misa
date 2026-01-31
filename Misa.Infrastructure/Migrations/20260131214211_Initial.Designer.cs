@@ -18,8 +18,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Misa.Infrastructure.Migrations
 {
     [DbContext(typeof(DefaultContext))]
-    [Migration("20260131201625_AddSchedulerActionType")]
-    partial class AddSchedulerActionType
+    [Migration("20260131214211_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -31,7 +31,7 @@ namespace Misa.Infrastructure.Migrations
 
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "change_type", new[] { "category", "deadline", "priority", "state", "title" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "priority", new[] { "critical", "high", "low", "medium", "none", "urgent" });
-            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "schedule_action_type", new[] { "create_item", "deadline", "recurring" });
+            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "schedule_action_type", new[] { "create_task", "deadline", "none", "recurring" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "schedule_execution_state", new[] { "claimed", "failed", "pending", "running", "skipped", "succeeded" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "schedule_frequency_type", new[] { "days", "hours", "minutes", "months", "once", "weeks", "years" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "schedule_misfire_policy", new[] { "catchup", "run_once", "skip" });

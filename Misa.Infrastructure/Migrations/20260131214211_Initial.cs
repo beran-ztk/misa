@@ -23,6 +23,7 @@ namespace Misa.Infrastructure.Migrations
             migrationBuilder.AlterDatabase()
                 .Annotation("Npgsql:Enum:change_type", "category,deadline,priority,state,title")
                 .Annotation("Npgsql:Enum:priority", "critical,high,low,medium,none,urgent")
+                .Annotation("Npgsql:Enum:schedule_action_type", "create_task,deadline,none,recurring")
                 .Annotation("Npgsql:Enum:schedule_execution_state", "claimed,failed,pending,running,skipped,succeeded")
                 .Annotation("Npgsql:Enum:schedule_frequency_type", "days,hours,minutes,months,once,weeks,years")
                 .Annotation("Npgsql:Enum:schedule_misfire_policy", "catchup,run_once,skip")
@@ -135,25 +136,6 @@ namespace Misa.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "scheduled_deadlines",
-                columns: table => new
-                {
-                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
-                    item_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    deadline_at_utc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_scheduled_deadlines", x => x.id);
-                    table.ForeignKey(
-                        name: "FK_scheduled_deadlines_items_item_id",
-                        column: x => x.item_id,
-                        principalTable: "items",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "scheduler",
                 columns: table => new
                 {
@@ -168,6 +150,7 @@ namespace Misa.Infrastructure.Migrations
                     misfire_policy = table.Column<ScheduleMisfirePolicy>(type: "schedule_misfire_policy", nullable: false, defaultValue: ScheduleMisfirePolicy.Catchup),
                     lookahead_limit = table.Column<int>(type: "integer", nullable: false, defaultValue: 1),
                     occurrence_ttl = table.Column<TimeSpan>(type: "interval", nullable: true),
+                    action_type = table.Column<ScheduleActionType>(type: "schedule_action_type", nullable: false),
                     payload = table.Column<string>(type: "jsonb", nullable: true),
                     timezone = table.Column<string>(type: "text", nullable: false),
                     start_time = table.Column<TimeOnly>(type: "time without time zone", nullable: true),
@@ -332,12 +315,6 @@ namespace Misa.Infrastructure.Migrations
                 column: "state_id");
 
             migrationBuilder.CreateIndex(
-                name: "IX_scheduled_deadlines_item_id",
-                table: "scheduled_deadlines",
-                column: "item_id",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
                 name: "IX_scheduler_execution_log_scheduler_id_scheduled_for_utc",
                 table: "scheduler_execution_log",
                 columns: new[] { "scheduler_id", "scheduled_for_utc" },
@@ -362,9 +339,6 @@ namespace Misa.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "descriptions");
-
-            migrationBuilder.DropTable(
-                name: "scheduled_deadlines");
 
             migrationBuilder.DropTable(
                 name: "scheduler_execution_log");
