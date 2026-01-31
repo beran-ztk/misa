@@ -1,10 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Net.Http;
+using System.Net.Http.Json;
+using System.Threading;
 using System.Threading.Tasks;
+using Avalonia.Controls;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
+using Misa.Contract.Common.Results;
 using Misa.Contract.Features.Entities.Extensions.Items.Extensions.Tasks;
 using Misa.Ui.Avalonia.Features.Tasks.Content;
 using Misa.Ui.Avalonia.Infrastructure.Services.Interfaces;
@@ -19,7 +25,7 @@ public partial class TaskMainWindowViewModel : ViewModelBase
 {
     private readonly IServiceProvider _sp;
     private readonly IActiveEntitySelection _selection;
-    
+    public Window? HostWindow { get; set; }
     public ObservableCollection<TaskDto> Tasks { get; } = [];
     
     [ObservableProperty] private TaskDto? _selectedTask;
@@ -75,5 +81,27 @@ public partial class TaskMainWindowViewModel : ViewModelBase
             Tasks.Add(task);
         });
     }
-
+    public async Task CreateTask(AddTaskDto dto)
+    {
+        try
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Post, "tasks");
+            request.Content = JsonContent.Create(dto);
+            
+            using var response = await NavigationService.NavigationStore.MisaHttpClient
+                .SendAsync(request, CancellationToken.None);
+    
+            response.EnsureSuccessStatusCode();
+    
+            var createdTask = await response.Content.ReadFromJsonAsync<Result<TaskDto>>(CancellationToken.None);
+            if (createdTask?.Value != null)
+            {
+                await AddToCollection(createdTask.Value);
+            }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
+    }
 }

@@ -33,6 +33,7 @@ public sealed class Scheduler
     
     public TimeSpan? OccurrenceTtl { get; private set; }
     
+    public ScheduleActionType ActionType { get; private set; }
     public string? Payload { get; private set; }
     
     public string Timezone { get; private set; } = string.Empty;
@@ -77,6 +78,8 @@ public sealed class Scheduler
         int? occurrenceCountLimit,
         ScheduleMisfirePolicy misfirePolicy,
         TimeSpan? occurrenceTtl,
+        ScheduleActionType actionType,
+        string? payload,
         TimeOnly? startTime,
         TimeOnly? endTime,
         DateTimeOffset activeFromUtc,
@@ -125,6 +128,8 @@ public sealed class Scheduler
             OccurrenceCountLimit = occurrenceCountLimit,
             MisfirePolicy = misfirePolicy,
             OccurrenceTtl = occurrenceTtl,
+            ActionType = actionType,
+            Payload = payload,
 
             StartTime = startTime,
             EndTime = endTime,
@@ -175,7 +180,8 @@ public sealed class Scheduler
             OccurrenceCountLimit = 1,
             LookaheadLimit = 1,
             
-            MisfirePolicy = ScheduleMisfirePolicy.Catchup
+            MisfirePolicy = ScheduleMisfirePolicy.Catchup,
+            ActionType = ScheduleActionType.Deadline
         };
     }
 }

@@ -28,7 +28,7 @@
             <!-- Form -->
             <Grid Grid.Row="2"
                   ColumnDefinitions="Auto,*"
-                  RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
+                  RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
                   RowSpacing="{StaticResource SpacingMedium}"
                   ColumnSpacing="{StaticResource SpacingLarge}">
 
@@ -220,6 +220,16 @@
 
                     </StackPanel>
                 </Expander>
+                
+                <!-- Action Type -->
+                <TextBlock Grid.Row="12" Grid.Column="0"
+                           Classes="misa-label"
+                           Text="Action Type" />
+
+                <ComboBox Grid.Row="12" Grid.Column="1"
+                          Classes="misa-input"
+                          ItemsSource="{Binding ActionTypes}"
+                          SelectedValue="{Binding SelectedActionType}"/>
             </Grid>
 
             <!-- Footer / Actions -->

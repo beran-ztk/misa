@@ -74,6 +74,11 @@ public sealed class SchedulerConfiguration : IEntityTypeConfiguration<Scheduler>
         builder.Property(s => s.OccurrenceTtl)
             .HasColumnName("occurrence_ttl");
 
+        builder.Property(s => s.ActionType)
+            .IsRequired()
+            .HasColumnName("action_type")
+            .HasColumnType("schedule_action_type");
+        
         builder.Property(s => s.Payload)
             .HasColumnName("payload")
             .HasColumnType("jsonb");

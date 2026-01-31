@@ -12,6 +12,8 @@ public sealed class AddScheduleDto
     public required ScheduleMisfirePolicyDto MisfirePolicy { get; init; } = ScheduleMisfirePolicyDto.Catchup;
 
     public TimeSpan? OccurrenceTtl { get; init; }
+    public required ScheduleActionTypeDto ActionType { get; init; }
+    public string? Payload { get; init; }
     
     public TimeOnly? StartTime { get; init; }
     public TimeOnly? EndTime { get; init; }
