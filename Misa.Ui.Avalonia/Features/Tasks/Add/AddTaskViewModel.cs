@@ -1,23 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Net.Http;
-using System.Net.Http.Json;
-using System.Threading;
-using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Misa.Contract.Common.Results;
 using Misa.Contract.Features.Entities.Extensions.Items.Base;
 using Misa.Contract.Features.Entities.Extensions.Items.Extensions.Tasks;
 using Misa.Ui.Avalonia.Features.Common.Deadline;
 using Misa.Ui.Avalonia.Presentation.Mapping;
-using TaskMainWindowViewModel = Misa.Ui.Avalonia.Features.Tasks.Main.TaskMainWindowViewModel;
 
 namespace Misa.Ui.Avalonia.Features.Tasks.Add;
 
-public partial class AddTaskViewModel(TaskMainWindowViewModel vm) : ViewModelBase
+public partial class AddTaskViewModel : ViewModelBase
 {
-    private TaskMainWindowViewModel Parent { get; } = vm;
     public DeadlineInputViewModel Deadline { get; } = new();
 
     [ObservableProperty] private bool _createMore;
@@ -37,57 +30,30 @@ public partial class AddTaskViewModel(TaskMainWindowViewModel vm) : ViewModelBas
         ErrorMessageTitle = message;
     }
 
+    public event Action<AddTaskDto>? Completed;
+    public event Action? Cancelled;
     [RelayCommand]
-    private async Task AddTask()
+    private void Confirm()
     {
-        try
+        var trimmed = Title.Trim();
+        if (string.IsNullOrWhiteSpace(trimmed))
         {
-            var trimmedTitle = Title.Trim();
-
-            if (string.IsNullOrWhiteSpace(trimmedTitle))
-            {
-                TitleValidationError("Please specify a title.");
-                return;
-            }
-            var deadlineDto = Deadline.ToDtoOrNull();
-            var addTaskDto = new AddTaskDto(Title, SelectedCategoryContract, SelectedPriorityContract, deadlineDto);
-
-            using var request = new HttpRequestMessage(HttpMethod.Post, "tasks");
-            request.Content = JsonContent.Create(addTaskDto);
-            
-            using var response = await Parent.NavigationService.NavigationStore.MisaHttpClient
-                .SendAsync(request, CancellationToken.None);
-
-            response.EnsureSuccessStatusCode();
-
-            var createdTask = await response.Content.ReadFromJsonAsync<Result<TaskDto>>(CancellationToken.None);
-            if (createdTask?.Value != null)
-            {
-                await Parent.AddToCollection(createdTask.Value);
-                if (CreateMore)
-                {
-                    Title = string.Empty;
-                }
-                else
-                {
-                    Close(createdTask.Value);   
-                }
-            }
+            TitleHasValidationError = true;
+            ErrorMessageTitle = "Please specify a title.";
+            return;
         }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-        }
+
+        var deadlineDto = Deadline.ToDtoOrNull();
+        var dto = new AddTaskDto(
+            trimmed,
+            SelectedCategoryContract,
+            SelectedPriorityContract,
+            deadlineDto
+        );
+
+        Completed?.Invoke(dto);
     }
     [RelayCommand]
-    private void Close(TaskDto? dto = null)
-    {
-        Title = string.Empty;
-        Parent.InfoView = null;
-
-        if (dto != null)
-        {
-            Parent.SelectedTask = dto;
-        }
-    }
+    private void Cancel()
+        => Cancelled?.Invoke();
 }

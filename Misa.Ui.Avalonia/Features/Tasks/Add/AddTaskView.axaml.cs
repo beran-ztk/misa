@@ -1,7 +1,7 @@
 ﻿using Avalonia.Controls;
 
 namespace Misa.Ui.Avalonia.Features.Tasks.Add;
-public partial class AddTaskView : UserControl
+public partial class AddTaskView : Window
 {
     public AddTaskView()
     {

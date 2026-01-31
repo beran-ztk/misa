@@ -1,4 +1,4 @@
-﻿<UserControl xmlns="https://github.com/avaloniaui"
+﻿<Window xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -6,7 +6,15 @@
              x:Class="Misa.Ui.Avalonia.Features.Tasks.Add.AddTaskView"
              xmlns:add="clr-namespace:Misa.Ui.Avalonia.Features.Tasks.Add"
              xmlns:deadline="clr-namespace:Misa.Ui.Avalonia.Features.Common.Deadline"
-             x:DataType="add:AddTaskViewModel">
+             x:DataType="add:AddTaskViewModel"
+             
+             Width="800"
+             Height="500"
+             CanResize="False"
+             WindowStartupLocation="CenterOwner"
+             ShowInTaskbar="False"
+             SystemDecorations="BorderOnly"
+             Title="Add Task">
 
     <Border Classes="misa-control">
         <Grid RowDefinitions="Auto,Auto,Auto"
@@ -89,14 +97,15 @@
                             Spacing="8"
                             HorizontalAlignment="Right">
                     <Button Classes="misa-primary"
-                            Content="Cancel" />
+                            Content="Cancel"
+                            Command="{Binding CancelCommand}"/>
                     <Button Classes="misa-primary"
                             Content="Add"
-                            Command="{Binding AddTaskCommand}" />
+                            Command="{Binding ConfirmCommand}" />
                 </StackPanel>
             </Grid>
             
         </Grid>
     </Border>
 
-</UserControl>
+</Window>
