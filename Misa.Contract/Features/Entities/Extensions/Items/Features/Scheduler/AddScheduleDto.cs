@@ -17,4 +17,8 @@ public sealed class AddScheduleDto
 
     public required DateTimeOffset ActiveFromUtc { get; init; }
     public DateTimeOffset? ActiveUntilUtc { get; init; }
+    
+    public int[]? ByDay { get; init; }        // 1..7 (Mo..So)
+    public int[]? ByMonthDay { get; init; }   // 1..31
+    public int[]? ByMonth { get; init; }      // 1..12
 }

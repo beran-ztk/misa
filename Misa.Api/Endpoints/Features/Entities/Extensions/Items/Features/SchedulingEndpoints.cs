@@ -40,7 +40,10 @@ public static class SchedulingEndpoints
                 dto.StartTime,
                 dto.EndTime,
                 dto.ActiveFromUtc,
-                dto.ActiveUntilUtc
+                dto.ActiveUntilUtc,
+                dto.ByDay,
+                dto.ByMonthDay,
+                dto.ByMonth
             );
             
             return await bus.InvokeAsync<Result<ScheduleDto>>(command, linkedCts.Token);

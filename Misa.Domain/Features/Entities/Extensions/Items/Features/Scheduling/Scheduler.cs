@@ -79,6 +79,9 @@ public sealed class Scheduler
         TimeOnly? endTime,
         DateTimeOffset activeFromUtc,
         DateTimeOffset? activeUntilUtc,
+        int[]? byDay,
+        int[]? byMonthDay,
+        int[]? byMonth,
         string timezone = "utc")
     {
         if (string.IsNullOrWhiteSpace(title))
@@ -105,6 +108,10 @@ public sealed class Scheduler
         if (string.IsNullOrWhiteSpace(timezone))
             throw new ArgumentException("Timezone must not be empty.", nameof(timezone));
 
+        var normalizedByDay = Normalize(byDay, 1, 7, nameof(byDay));
+        var normalizedByMonthDay = Normalize(byMonthDay, 1, 31, nameof(byMonthDay));
+        var normalizedByMonth = Normalize(byMonth, 1, 12, nameof(byMonth));
+
         var item = Item.Create(Workflow.Scheduling, title, Priority.None);
 
         return new Scheduler(item)
@@ -123,7 +130,24 @@ public sealed class Scheduler
             ActiveUntilUtc = activeUntilUtc,
 
             LookaheadLimit = lookaheadLimit,
-            Timezone = timezone
+            Timezone = timezone,
+
+            // NEW
+            ByDay = normalizedByDay,
+            ByMonthDay = normalizedByMonthDay,
+            ByMonth = normalizedByMonth
         };
+
+        static int[]? Normalize(int[]? values, int min, int max, string name)
+        {
+            if (values is null || values.Length == 0) return null;
+
+            var distinct = values.Distinct().ToArray();
+            if (distinct.Any(v => v < min || v > max))
+                throw new ArgumentException($"{name} contains invalid values.", name);
+
+            Array.Sort(distinct);
+            return distinct;
+        }
     }
 }

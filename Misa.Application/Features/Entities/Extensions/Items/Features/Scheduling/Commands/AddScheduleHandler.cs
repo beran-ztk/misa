@@ -17,7 +17,10 @@ public record AddScheduleCommand(
     TimeOnly? StartTime,
     TimeOnly? EndTime,
     DateTimeOffset ActiveFromUtc,
-    DateTimeOffset? ActiveUntilUtc
+    DateTimeOffset? ActiveUntilUtc,
+    int[]? ByDay,
+    int[]? ByMonthDay,
+    int[]? ByMonth
 );
 
 public class AddScheduleHandler(IItemRepository repository)
@@ -37,7 +40,10 @@ public class AddScheduleHandler(IItemRepository repository)
                 startTime: command.StartTime,
                 endTime: command.EndTime,
                 activeFromUtc: command.ActiveFromUtc,
-                activeUntilUtc: command.ActiveUntilUtc
+                activeUntilUtc: command.ActiveUntilUtc,
+                byDay: command.ByDay,
+                byMonthDay: command.ByMonthDay,
+                byMonth: command.ByMonth
             );
 
             await repository.AddAsync(scheduler, ct);
