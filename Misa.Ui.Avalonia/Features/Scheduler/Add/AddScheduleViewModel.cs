@@ -89,6 +89,7 @@ public partial class AddScheduleViewModel(INavigationService navigationService, 
             var addScheduleDto = new AddScheduleDto
             {
                 Title = Title,
+                TargetItemId = null,
                 ScheduleFrequencyType = SelectedFrequencyType,
                 FrequencyInterval = FrequencyInterval,
 

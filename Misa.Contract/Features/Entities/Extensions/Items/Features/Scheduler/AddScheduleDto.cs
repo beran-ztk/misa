@@ -3,6 +3,7 @@
 public sealed class AddScheduleDto
 {
     public required string Title { get; init; } = string.Empty;
+    public Guid? TargetItemId { get; init; }
     public required ScheduleFrequencyTypeDto ScheduleFrequencyType { get; init; }
     public required int FrequencyInterval { get; init; }
 

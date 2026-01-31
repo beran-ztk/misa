@@ -8,6 +8,7 @@ namespace Misa.Application.Features.Entities.Extensions.Items.Features.Schedulin
 
 public record AddScheduleCommand(
     string Title,
+    Guid? TargetItemId,
     ScheduleFrequencyTypeDto ScheduleFrequencyType,
     int FrequencyInterval,
     int LookaheadLimit,
@@ -31,6 +32,7 @@ public class AddScheduleHandler(IItemRepository repository)
         {
             var scheduler = Scheduler.Create(
                 title: command.Title,
+                targetItemId: command.TargetItemId,
                 frequencyType: command.ScheduleFrequencyType.MapToDomain(),
                 frequencyInterval: command.FrequencyInterval,
                 lookaheadLimit: command.LookaheadLimit,

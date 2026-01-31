@@ -16,6 +16,7 @@ public sealed class Scheduler
     }
 
     public Guid Id { get; private set; }
+    public Guid? TargetItemId { get; private set; }
     
     public ScheduleFrequencyType ScheduleFrequencyType { get; private set; }
     public int FrequencyInterval { get; private set; }
@@ -69,6 +70,7 @@ public sealed class Scheduler
     }
     public static Scheduler Create(
         string title,
+        Guid? targetItemId,
         ScheduleFrequencyType frequencyType,
         int frequencyInterval,
         int lookaheadLimit,
@@ -116,6 +118,7 @@ public sealed class Scheduler
 
         return new Scheduler(item)
         {
+            TargetItemId = targetItemId,
             ScheduleFrequencyType = frequencyType,
             FrequencyInterval = frequencyInterval,
 

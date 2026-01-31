@@ -31,6 +31,7 @@ public static class SchedulingEndpoints
         {
             var command = new AddScheduleCommand(
                 dto.Title,
+                dto.TargetItemId,
                 dto.ScheduleFrequencyType,
                 dto.FrequencyInterval,
                 dto.LookaheadLimit,

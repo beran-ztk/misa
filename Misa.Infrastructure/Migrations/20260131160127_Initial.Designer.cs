@@ -18,7 +18,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Misa.Infrastructure.Migrations
 {
     [DbContext(typeof(DefaultContext))]
-    [Migration("20260129223601_Initial")]
+    [Migration("20260131160127_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -384,6 +384,10 @@ namespace Misa.Infrastructure.Migrations
                     b.Property<TimeOnly?>("StartTime")
                         .HasColumnType("time without time zone")
                         .HasColumnName("start_time");
+
+                    b.Property<Guid?>("TargetItemId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("target_item_id");
 
                     b.Property<string>("Timezone")
                         .IsRequired()
