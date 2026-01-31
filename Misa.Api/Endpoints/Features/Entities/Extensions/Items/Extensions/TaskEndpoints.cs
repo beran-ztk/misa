@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Misa.Application.Common.Mappings;
 using Misa.Application.Features.Entities.Extensions.Items.Extensions.Tasks.Commands;
 using Misa.Application.Features.Entities.Extensions.Items.Extensions.Tasks.Queries;
 using Misa.Contract.Common.Results;
@@ -21,12 +22,7 @@ public static class TaskEndpoints
 
         try
         {
-            var command = new AddTaskCommand(
-                dto.Title,
-                dto.CategoryContract,
-                dto.PriorityContract,
-                dto.Deadline
-            );            
+            var command = dto.ToCommand();
             var result = await bus.InvokeAsync<Result<TaskDto>>(command, linkedCts.Token);
 
             return result;
