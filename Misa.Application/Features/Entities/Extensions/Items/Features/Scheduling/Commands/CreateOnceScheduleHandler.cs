@@ -13,15 +13,21 @@ public sealed class CreateOnceScheduleHandler(ISchedulerRepository repository)
 {
     public async Task<Result> HandleAsync(CreateOnceScheduleCommand command, CancellationToken ct)
     {
-        if (await repository.ExistsOnceForTargetAsync(command.TargetItemId, ct))
-            return Result.Invalid("","Once-Scheduler für dieses Item existiert bereits.");
+        var deadline = await repository.TryGetDeadlineFromTargetItemIdAsync(command.TargetItemId, ct);
+        if (deadline is not null)
+        {
+            deadline.ActiveFromUtc = command.DueAtUtc;
+        }
+        else
+        {
+            var scheduler = Scheduler.CreateOnce(
+                targetItemId: command.TargetItemId,
+                dueAtUtc: command.DueAtUtc
+            );
+            
+            await repository.AddAsync(scheduler, ct);
+        }
         
-        var scheduler = Scheduler.CreateOnce(
-            targetItemId: command.TargetItemId,
-            dueAtUtc: command.DueAtUtc
-        );
-
-        await repository.AddAsync(scheduler, ct);
         await repository.SaveChangesAsync(ct);
 
         return Result.Ok();

@@ -40,7 +40,7 @@ public sealed class Scheduler
     public TimeOnly? StartTime { get; private set; }
     public TimeOnly? EndTime { get; private set; }
     
-    public DateTimeOffset ActiveFromUtc { get; private set; }
+    public DateTimeOffset ActiveFromUtc { get; set; }
     public DateTimeOffset? ActiveUntilUtc { get; private set; }
     
     public DateTimeOffset? LastRunAtUtc { get; private set; }

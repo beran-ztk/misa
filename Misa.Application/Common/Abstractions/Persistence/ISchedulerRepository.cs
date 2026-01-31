@@ -4,7 +4,8 @@ namespace Misa.Application.Common.Abstractions.Persistence;
 
 public interface ISchedulerRepository
 {
-    Task<bool> ExistsOnceForTargetAsync(Guid targetItemId, CancellationToken ct);
+    Task<Scheduler?> TryGetDeadlineFromTargetItemIdAsync(Guid targetItemId, CancellationToken ct);
     Task AddAsync(Scheduler scheduler, CancellationToken ct);
+    void Remove(Scheduler scheduler);
     Task SaveChangesAsync(CancellationToken ct);
 }
