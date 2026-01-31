@@ -134,6 +134,16 @@ public class ItemRepository(DefaultContext context) : IItemRepository
             .FirstOrDefaultAsync(e => e.Id == id, ct);
     }
 
+    public Task<Scheduler?> TryGetDeadlineByItemIdAsync(Guid id, CancellationToken ct)
+    {
+        return context.Schedulers
+            .Where(s =>
+                s.TargetItemId == id &&
+                s.ScheduleFrequencyType == ScheduleFrequencyType.Once)
+            .OrderByDescending(s => s.ActiveFromUtc) // falls es je mehrere gab
+            .FirstOrDefaultAsync(ct);
+    }
+
     public async Task<Item?> LoadAsync(Guid entityId, CancellationToken ct = default)
     {
         return await context.Items

@@ -7,6 +7,7 @@
 
     <StackPanel Spacing="8">
         <CheckBox Content="Deadline setzen"
+                  IsVisible="{Binding CreateWithParent}"
                   IsChecked="{Binding IsEnabled}" />
 
         <StackPanel IsEnabled="{Binding IsEnabled}"

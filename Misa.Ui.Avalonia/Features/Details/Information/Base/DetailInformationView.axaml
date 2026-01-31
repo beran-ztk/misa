@@ -160,7 +160,7 @@
         <!-- -->
         <!--     </StackPanel> -->
         <!-- </Border> -->
-        
+        <ContentControl Content="{Binding DeadlineSection}"/>
         <ContentControl Content="{Binding Session}"/>
         
         <Border Padding="12"

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Features.Entities.Extensions.Items.Base;
+using Misa.Ui.Avalonia.Features.Common.Deadline;
 using Misa.Ui.Avalonia.Features.Details.Common;
 using Misa.Ui.Avalonia.Features.Details.Information.Extensions.Sessions;
 using Misa.Ui.Avalonia.Presentation.Mapping;
@@ -19,22 +20,25 @@ public partial class DetailInformationViewModel : ViewModelBase
     public DetailMainWindowViewModel Parent { get; }
     public DescriptionViewModel Description { get; }
     public SessionViewModel Session { get; }
-
+    public DeadlineSectionViewModel DeadlineSection { get; }
     public DetailInformationViewModel(DetailMainWindowViewModel parent)
     {
         Parent = parent;
         Description = new DescriptionViewModel(this);
         Session = new SessionViewModel(this);
+        DeadlineSection = new DeadlineSectionViewModel(this);
         
         Parent.WhenAnyValue(x => x.Extension)
             .Subscribe(_ =>
             {
                 OnPropertyChanged(nameof(TaskExtension));
                 OnPropertyChanged(nameof(HasTaskExtension));
+                OnPropertyChanged(nameof(HasDeadline));
             });
     }
     public TaskExtensionVm? TaskExtension => Parent.Extension as TaskExtensionVm;
     public bool HasTaskExtension => TaskExtension is not null;
+    public bool HasDeadline => Parent.Deadline.DueAtUtc is not null;
 
     [RelayCommand]
     private void CopyId()

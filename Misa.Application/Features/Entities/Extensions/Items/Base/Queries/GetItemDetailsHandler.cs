@@ -4,6 +4,7 @@ using Misa.Application.Common.Abstractions.Persistence;
 using Misa.Application.Common.Mappings;
 using Misa.Contract.Common.Results;
 using Misa.Contract.Features.Entities.Extensions.Items.Base;
+using Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;
 using Misa.Domain.Features.Entities.Base;
 
 namespace Misa.Application.Features.Entities.Extensions.Items.Base.Queries;
@@ -29,10 +30,13 @@ public sealed class GetItemDetailsHandler(IItemRepository repository)
             _ => null
         };
         
+        var deadline = await repository.TryGetDeadlineByItemIdAsync(itemDto.Id, ct);
+        
         var detailedItemDto = new DetailedItemDto
         {
             Kind = itemDto.Entity.Workflow,
             Item = itemDto,
+            Deadline = new DeadlineDto(deadline?.ActiveFromUtc),
             Extension = extension
         };
         
