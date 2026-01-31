@@ -1,4 +1,5 @@
-﻿using Misa.Contract.Features.Entities.Extensions.Items.Extensions.Tasks;
+﻿using Misa.Application.Features.Entities.Extensions.Items.Extensions.Tasks.Commands;
+using Misa.Contract.Features.Entities.Extensions.Items.Extensions.Tasks;
 using Misa.Domain.Features.Entities.Extensions.Items.Extensions.Tasks;
 using Task = Misa.Domain.Features.Entities.Extensions.Items.Extensions.Tasks.Task;
 
@@ -19,6 +20,13 @@ public static class TaskMappings
             Item = task.Item.ToDto()
         };
     }
+    public static AddTaskCommand ToCommand(this AddTaskDto dto)
+        => new(
+            dto.Title,
+            dto.CategoryContract,
+            dto.PriorityContract,
+            dto.Deadline
+        );
     public static TaskCategory MapToDomain(this TaskCategoryContract categoryContract) =>
         categoryContract switch
         {

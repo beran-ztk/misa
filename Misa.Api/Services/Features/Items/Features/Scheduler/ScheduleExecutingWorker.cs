@@ -9,7 +9,7 @@ public class ScheduleExecutingWorker(IServiceProvider provider, ILogger<Schedule
     {
         logger.LogInformation("Schedule executing worker activated.");
         
-        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(10));
+        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(30));
 
         try
         {
