@@ -51,10 +51,12 @@ builder.Services.AddDbContext<DefaultContext>(options =>
 builder.Services.AddHostedService<SessionAutostopWorker>();
 builder.Services.AddHostedService<SessionPastMaxTimeWorker>();
 builder.Services.AddHostedService<SchedulePlanningWorker>();
+builder.Services.AddHostedService<ScheduleExecutingWorker>();
 
 builder.Services.AddScoped<IEntityRepository, EntityRepository>();
 builder.Services.AddScoped<IItemRepository, ItemRepository>();
 builder.Services.AddScoped<ISchedulerPlanningRepository, SchedulerPlanningRepository>();
+builder.Services.AddScoped<ISchedulerExecutingRepository, SchedulerExecutingRepository>();
 builder.Services.AddScoped<ISchedulerRepository, SchedulerRepository>();
 
 // DI
@@ -76,6 +78,9 @@ builder.Host.UseWolverine(opts =>
     opts.Discovery.IncludeAssembly(typeof(GetTasksHandler).Assembly);
     opts.Discovery.IncludeAssembly(typeof(GetSchedulesHandler).Assembly);
     opts.Discovery.IncludeAssembly(typeof(CreateOnceScheduleHandler).Assembly);
+    
+    opts.Discovery.IncludeAssembly(typeof(SchedulePlanningHandler).Assembly);
+    opts.Discovery.IncludeAssembly(typeof(ScheduleExecutingHandler).Assembly);
 });
 
 // build app
