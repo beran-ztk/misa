@@ -36,6 +36,7 @@ builder.Services.AddDbContext<DefaultContext>(options =>
         {
             npgsql.MapEnum<ScheduleMisfirePolicy>("schedule_misfire_policy");
             npgsql.MapEnum<ScheduleFrequencyType>("schedule_frequency_type");
+            npgsql.MapEnum<ScheduleActionType>("schedule_action_type");
             npgsql.MapEnum<SchedulerExecutionStatus>("schedule_execution_state");
             npgsql.MapEnum<Priority>("priority");
             npgsql.MapEnum<ChangeType>("change_type");

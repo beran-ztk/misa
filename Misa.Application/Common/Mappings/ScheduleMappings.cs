@@ -45,7 +45,21 @@ public static class ScheduleMappings
             ScheduleMisfirePolicy.RunOnce => ScheduleMisfirePolicyDto.RunOnce,
             _ => throw new ArgumentOutOfRangeException(nameof(domain), domain, null)
         };
-    
+    public static ScheduleActionType ToDomain(this ScheduleActionTypeDto dto) => dto switch
+    {
+        ScheduleActionTypeDto.Deadline   => ScheduleActionType.Deadline,
+        ScheduleActionTypeDto.Recurring   => ScheduleActionType.Recurring,
+        ScheduleActionTypeDto.CreateItem => ScheduleActionType.CreateItem,
+        _ => throw new ArgumentOutOfRangeException(nameof(dto), dto, "Unknown ScheduleActionTypeDto.")
+    };
+
+    public static ScheduleActionTypeDto ToDto(this ScheduleActionType domain) => domain switch
+    {
+        ScheduleActionType.Deadline   => ScheduleActionTypeDto.Deadline,
+        ScheduleActionType.Recurring   => ScheduleActionTypeDto.Recurring,
+        ScheduleActionType.CreateItem => ScheduleActionTypeDto.CreateItem,
+        _ => throw new ArgumentOutOfRangeException(nameof(domain), domain, "Unknown ScheduleActionType.")
+    };
     public static List<ScheduleDto> ToDto(this List<Scheduler> schedulers)
         => schedulers.Select(ToDto).ToList();
 

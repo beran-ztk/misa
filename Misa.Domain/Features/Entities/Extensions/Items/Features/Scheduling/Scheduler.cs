@@ -33,6 +33,7 @@ public sealed class Scheduler
     
     public TimeSpan? OccurrenceTtl { get; private set; }
     
+    public ScheduleActionType ActionType { get; private set; }
     public string? Payload { get; private set; }
     
     public string Timezone { get; private set; } = string.Empty;
