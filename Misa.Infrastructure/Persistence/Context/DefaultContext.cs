@@ -3,7 +3,6 @@ using Misa.Domain.Common.DomainEvents;
 using Misa.Domain.Features.Audit;
 using Misa.Domain.Features.Entities.Base;
 using Misa.Domain.Features.Entities.Extensions.Items.Base;
-using Misa.Domain.Features.Entities.Extensions.Items.Features.Deadlines;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions;
 using Misa.Domain.Features.Entities.Features.Descriptions;
@@ -22,7 +21,6 @@ public class DefaultContext(DbContextOptions<DefaultContext> options) : DbContex
     public DbSet<Session> Sessions { get; set; } = null!;
     public DbSet<SessionSegment> SessionSegments { get; set; } = null!;
     public DbSet<AuditChange> AuditChanges { get; set; } = null!;
-    public DbSet<ScheduledDeadline> Deadlines { get; set; } = null!;
 
     public DbSet<Scheduler> Schedulers { get; set; } = null!;
     public DbSet<SchedulerExecutionLog> SchedulerExecutionLogs { get; set; } = null!;

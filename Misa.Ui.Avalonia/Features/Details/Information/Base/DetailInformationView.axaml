@@ -96,12 +96,6 @@
         <!--                         Orientation="Horizontal" -->
         <!--                         Spacing="8"> -->
         <!-- -->
-        <!--                  -->
-        <!-- -->
-        <!--                 <Button Classes="misa-action" -->
-        <!--                         Content="Set Deadline" -->
-        <!--                         Command="{Binding ShowDeadlineFormCommand}" -->
-        <!--                         IsVisible="{Binding !Parent.DetailedEntity.Item.HasDeadline}"/> -->
         <!-- -->
         <!-- -->
         <!--                 <Button Classes="misa-action" -->
@@ -117,98 +111,9 @@
         <!--                 </Button> -->
         <!--             </StackPanel> -->
         <!--         </Grid> -->
-        <!-- -->
-        <!--         <Border Padding="10" -->
-        <!--                 CornerRadius="10" -->
-        <!--                 BorderThickness="1" -->
-        <!--                 BorderBrush="{StaticResource BrushBorder}" -->
-        <!--                 Background="{StaticResource BrushPrimaryBackground}" -->
-        <!--                 IsVisible="{Binding Parent.DetailedEntity.Item.HasDeadline}"> -->
-        <!-- -->
-        <!--             <Grid ColumnDefinitions="6,*,Auto" -->
-        <!--                   ColumnSpacing="10" -->
-        <!--                   VerticalAlignment="Center"> -->
-        <!-- -->
-        <!--                 ~1~ roter Akzentstreifen @1@ -->
-        <!--                 <Border Grid.Column="0" -->
-        <!--                         Background="Red" -->
-        <!--                         CornerRadius="10,0,0,10"/> -->
-        <!-- -->
-        <!--                 <StackPanel Grid.Column="1" Spacing="2"> -->
-        <!--                     <TextBlock Text="Deadline" -->
-        <!--                                FontWeight="SemiBold"/> -->
-        <!--                     <TextBlock Text="{Binding Parent.DetailedEntity.Item.ScheduledDeadline.DeadlineAt, StringFormat={}{0:yyyy-MM-dd HH:mm}}" -->
-        <!--                                Opacity="0.85"/> -->
-        <!--                 </StackPanel> -->
-        <!-- -->
-        <!--                 <StackPanel Grid.Column="2" -->
-        <!--                             Orientation="Horizontal" -->
-        <!--                             Spacing="8" -->
-        <!--                             HorizontalAlignment="Right"> -->
-        <!-- -->
-        <!--                     <Button Classes="misa-action" -->
-        <!--                             Content="Cancel" -->
-        <!--                             IsVisible="{Binding IsRemovingDeadline}" -->
-        <!--                             Command="{Binding CancelRemoveDeadlineCommand}"/> -->
-        <!-- -->
-        <!--                     <Button Classes="misa-action" -->
-        <!--                             Content="Update" -->
-        <!--                             Command="{Binding ShowDeadlineFormCommand}"/> -->
-        <!-- -->
-        <!--                     <Button Classes="misa-action" -->
-        <!--                             Content="Remove" -->
-        <!--                             IsEnabled="{Binding !IsRemovingDeadline}" -->
-        <!--                             Command="{Binding RemoveDeadlineCommand}"/> -->
-        <!-- -->
-        <!--                 </StackPanel> -->
-        <!--             </Grid> -->
-        <!--         </Border> -->
-        <!-- -->
         <!--     </StackPanel> -->
         <!-- </Border> -->
 
-        <!-- <Border Padding="10" -->
-        <!--         CornerRadius="10" -->
-        <!--         BorderThickness="1" -->
-        <!--         BorderBrush="{StaticResource BrushBorder}" -->
-        <!--         Background="{StaticResource BrushPrimaryBackground}" -->
-        <!--         IsVisible="{Binding IsDeadlineFormOpen}"> -->
-        <!--     <StackPanel Spacing="10"> -->
-        <!-- -->
-        <!--         <TextBlock Text="Set Deadline" -->
-        <!--                    FontWeight="SemiBold"/> -->
-        <!-- -->
-        <!--         <Grid ColumnDefinitions="*" -->
-        <!--               RowDefinitions="Auto,Auto" -->
-        <!--               RowSpacing="8" -->
-        <!--               ColumnSpacing="10"> -->
-        <!-- -->
-        <!--             <TextBlock Grid.Row="0" VerticalAlignment="Top" Text="When do you want to set the deadline for?" /> -->
-        <!--             <StackPanel Grid.Row="1" Spacing="8"> -->
-        <!--                 <DatePicker -->
-        <!--                     SelectedDate="{Binding DeadlineDate, Mode=TwoWay}"/> -->
-        <!--                 <TimePicker -->
-        <!--                     SelectedTime="{Binding DeadlineTime, Mode=TwoWay}"/> -->
-        <!-- -->
-        <!--                 <StackPanel Orientation="Horizontal" -->
-        <!--                             Spacing="8" -->
-        <!--                             HorizontalAlignment="Right"> -->
-        <!--                     <Button Classes="misa-action" -->
-        <!--                             Content="Remove" -->
-        <!--                             Command="{Binding RemoveDeadlineCommand}" /> -->
-        <!--                     <Button Classes="misa-action" -->
-        <!--                             Content="Cancel" -->
-        <!--                             Command="{Binding CloseDeadlineFormCommand}" /> -->
-        <!--                     <Button Classes="misa-action" -->
-        <!--                             Content="Save" -->
-        <!--                             Command="{Binding UpsertDeadlineCommand}" /> -->
-        <!--                 </StackPanel> -->
-        <!--             </StackPanel> -->
-        <!-- -->
-        <!--         </Grid> -->
-        <!-- -->
-        <!--     </StackPanel> -->
-        <!-- </Border> -->
         
         <!-- <Border Padding="10" -->
         <!--         CornerRadius="10" -->

@@ -1,5 +1,4 @@
 ﻿using Misa.Domain.Features.Entities.Extensions.Items.Base;
-using Misa.Domain.Features.Entities.Extensions.Items.Features.Deadlines;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions;
 
@@ -23,10 +22,6 @@ public interface IItemRepository
     Task<Item?> TryGetItemAsync(Guid id, CancellationToken ct);
 
     Task<Item?> TryGetItemDetailsAsync(Guid id, CancellationToken ct);
-    // Deadlines
-    Task AddDeadlineAsync(ScheduledDeadline deadline, CancellationToken ct = default);
-    Task<ScheduledDeadline?> TryGetScheduledDeadlineForItemAsync(Guid itemId, CancellationToken ct);
-    Task RemoveScheduledDeadlineAsync(ScheduledDeadline obj, CancellationToken ct);
     
     Task<List<Scheduler>> GetSchedulingRulesAsync(CancellationToken ct);
 }

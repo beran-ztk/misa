@@ -10,7 +10,6 @@ using Misa.Application.Common.Abstractions.Persistence;
 using Misa.Application.Features.Entities.Extensions.Items.Base.Queries;
 using Misa.Application.Features.Entities.Extensions.Items.Extensions.Tasks.Commands;
 using Misa.Application.Features.Entities.Extensions.Items.Extensions.Tasks.Queries;
-using Misa.Application.Features.Entities.Extensions.Items.Features.Deadlines.Commands;
 using Misa.Application.Features.Entities.Extensions.Items.Features.Scheduling.Commands;
 using Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Commands;
 using Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Queries;
@@ -59,8 +58,6 @@ builder.Services.AddScoped<ISchedulerPlanningRepository, SchedulerPlanningReposi
 // DI
 builder.Host.UseWolverine(opts =>
 {
-    opts.Discovery.IncludeAssembly(typeof(RemoveItemDeadlineHandler).Assembly);
-    opts.Discovery.IncludeAssembly(typeof(UpsertItemDeadlineHandler).Assembly);
     opts.Discovery.IncludeAssembly(typeof(AddDescriptionHandler).Assembly);
     opts.Discovery.IncludeAssembly(typeof(GetItemDetailsHandler).Assembly);
     opts.Discovery.IncludeAssembly(typeof(GetCurrentSessionDetailsHandler).Assembly);
@@ -85,7 +82,6 @@ app.UseMiddleware<ExceptionMappingMiddleware>();
 
 TaskEndpoints.Map(app);
 ItemDetailEndpoints.Map(app);
-DeadlineEndpoints.Map(app);
 DescriptionEndpoints.Map(app);
 SchedulingEndpoints.Map(app);
 
