@@ -50,7 +50,7 @@ public static class ScheduleMappings
         ScheduleActionTypeDto.None   => ScheduleActionType.None,
         ScheduleActionTypeDto.Deadline   => ScheduleActionType.Deadline,
         ScheduleActionTypeDto.Recurring   => ScheduleActionType.Recurring,
-        ScheduleActionTypeDto.CreateItem => ScheduleActionType.CreateItem,
+        ScheduleActionTypeDto.CreateTask => ScheduleActionType.CreateTask,
         _ => throw new ArgumentOutOfRangeException(nameof(dto), dto, "Unknown ScheduleActionTypeDto.")
     };
 
@@ -59,7 +59,7 @@ public static class ScheduleMappings
         ScheduleActionType.None   => ScheduleActionTypeDto.None,
         ScheduleActionType.Deadline   => ScheduleActionTypeDto.Deadline,
         ScheduleActionType.Recurring   => ScheduleActionTypeDto.Recurring,
-        ScheduleActionType.CreateItem => ScheduleActionTypeDto.CreateItem,
+        ScheduleActionType.CreateTask => ScheduleActionTypeDto.CreateTask,
         _ => throw new ArgumentOutOfRangeException(nameof(domain), domain, "Unknown ScheduleActionType.")
     };
     public static List<ScheduleDto> ToDto(this List<Scheduler> schedulers)

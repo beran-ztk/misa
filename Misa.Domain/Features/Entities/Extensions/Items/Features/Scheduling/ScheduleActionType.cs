@@ -5,5 +5,5 @@ public enum ScheduleActionType
     None,
     Deadline,
     Recurring,
-    CreateItem
+    CreateTask
 }

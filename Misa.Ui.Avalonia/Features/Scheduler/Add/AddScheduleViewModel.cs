@@ -41,7 +41,7 @@ public partial class AddScheduleViewModel(INavigationService navigationService, 
     
     partial void OnSelectedActionTypeChanged(ScheduleActionTypeDto value)
     {
-        if (value == ScheduleActionTypeDto.CreateItem)
+        if (value == ScheduleActionTypeDto.CreateTask)
         {
             _ = ShowAddTaskWindow();
         }
