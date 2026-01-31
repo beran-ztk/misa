@@ -28,7 +28,7 @@
             <!-- Form -->
             <Grid Grid.Row="2"
                   ColumnDefinitions="Auto,*"
-                  RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
+                  RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
                   RowSpacing="{StaticResource SpacingMedium}"
                   ColumnSpacing="{StaticResource SpacingLarge}">
 
@@ -172,6 +172,54 @@
                                Maximum="100"
                                Increment="1"
                                FormatString="N0" />
+                
+                <!-- Specific Restrictions -->
+                <TextBlock Grid.Row="11" Grid.Column="0"
+                           Classes="misa-label"
+                           Text="Restrictions" />
+                <Expander Grid.Row="11" Grid.Column="1"
+                          Header="By day / month / monthday"
+                          IsExpanded="False">
+
+                    <StackPanel Spacing="{StaticResource SpacingMedium}" Margin="0,8,0,0">
+
+                        <!-- Weekdays -->
+                        <TextBlock Text="Weekdays (Mon–Sun)" />
+                        <WrapPanel>
+                            <CheckBox Content="Mon" IsChecked="{Binding ByDayMon, Mode=TwoWay}" />
+                            <CheckBox Content="Tue" IsChecked="{Binding ByDayTue, Mode=TwoWay}" />
+                            <CheckBox Content="Wed" IsChecked="{Binding ByDayWed, Mode=TwoWay}" />
+                            <CheckBox Content="Thu" IsChecked="{Binding ByDayThu, Mode=TwoWay}" />
+                            <CheckBox Content="Fri" IsChecked="{Binding ByDayFri, Mode=TwoWay}" />
+                            <CheckBox Content="Sat" IsChecked="{Binding ByDaySat, Mode=TwoWay}" />
+                            <CheckBox Content="Sun" IsChecked="{Binding ByDaySun, Mode=TwoWay}" />
+                        </WrapPanel>
+
+                        <!-- Months -->
+                        <TextBlock Text="Months (Jan–Dec)" />
+                        <WrapPanel>
+                            <CheckBox Content="Jan" IsChecked="{Binding ByMonthJan, Mode=TwoWay}" />
+                            <CheckBox Content="Feb" IsChecked="{Binding ByMonthFeb, Mode=TwoWay}" />
+                            <CheckBox Content="Mar" IsChecked="{Binding ByMonthMar, Mode=TwoWay}" />
+                            <CheckBox Content="Apr" IsChecked="{Binding ByMonthApr, Mode=TwoWay}" />
+                            <CheckBox Content="May" IsChecked="{Binding ByMonthMay, Mode=TwoWay}" />
+                            <CheckBox Content="Jun" IsChecked="{Binding ByMonthJun, Mode=TwoWay}" />
+                            <CheckBox Content="Jul" IsChecked="{Binding ByMonthJul, Mode=TwoWay}" />
+                            <CheckBox Content="Aug" IsChecked="{Binding ByMonthAug, Mode=TwoWay}" />
+                            <CheckBox Content="Sep" IsChecked="{Binding ByMonthSep, Mode=TwoWay}" />
+                            <CheckBox Content="Oct" IsChecked="{Binding ByMonthOct, Mode=TwoWay}" />
+                            <CheckBox Content="Nov" IsChecked="{Binding ByMonthNov, Mode=TwoWay}" />
+                            <CheckBox Content="Dec" IsChecked="{Binding ByMonthDec, Mode=TwoWay}" />
+                        </WrapPanel>
+                        
+                        <!-- Monthdays -->
+                        <TextBlock Text="Monthdays (comma separated, e.g. 1,15,31)" />
+                        <TextBox Classes="misa-input"
+                                 Watermark="1,15,31"
+                                 Text="{Binding ByMonthDayCsv, Mode=TwoWay}" />
+
+                    </StackPanel>
+                </Expander>
             </Grid>
 
             <!-- Footer / Actions -->

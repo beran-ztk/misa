@@ -34,6 +34,9 @@ public sealed class SchedulerConfiguration : IEntityTypeConfiguration<Scheduler>
             .HasColumnName("id")
             .HasDefaultValueSql("gen_random_uuid()");
         
+        builder.Property(s => s.TargetItemId)
+            .HasColumnName("target_item_id");
+        
         builder.Property(s => s.ScheduleFrequencyType)
             .IsRequired()
             .HasColumnName("frequency_type")

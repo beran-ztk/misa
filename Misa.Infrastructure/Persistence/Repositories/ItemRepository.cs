@@ -1,7 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Misa.Application.Common.Abstractions.Persistence;
-using Misa.Domain.Features.Entities.Base;
-using Misa.Domain.Features.Entities.Extensions.Items.Features.Deadlines;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions;
 using Misa.Infrastructure.Persistence.Context;
@@ -121,7 +119,7 @@ public class ItemRepository(DefaultContext context) : IItemRepository
         await context.Sessions.AddAsync(session, ct);
     }
     
-    public async Task AddAsync(Domain.Features.Entities.Extensions.Items.Features.Scheduling.Scheduler scheduler, CancellationToken ct)
+    public async Task AddAsync(Scheduler scheduler, CancellationToken ct)
     {
         await context.Schedulers.AddAsync(scheduler, ct);
     }
@@ -134,6 +132,16 @@ public class ItemRepository(DefaultContext context) : IItemRepository
                 .ThenInclude(e => e.Descriptions)
             
             .FirstOrDefaultAsync(e => e.Id == id, ct);
+    }
+
+    public Task<Scheduler?> TryGetDeadlineByItemIdAsync(Guid id, CancellationToken ct)
+    {
+        return context.Schedulers
+            .Where(s =>
+                s.TargetItemId == id &&
+                s.ScheduleFrequencyType == ScheduleFrequencyType.Once)
+            .OrderByDescending(s => s.ActiveFromUtc) // falls es je mehrere gab
+            .FirstOrDefaultAsync(ct);
     }
 
     public async Task<Item?> LoadAsync(Guid entityId, CancellationToken ct = default)
@@ -151,21 +159,6 @@ public class ItemRepository(DefaultContext context) : IItemRepository
         return await context.Items
             .Include(e => e.Entity)
             .SingleOrDefaultAsync(i => i.Id == id, ct);
-    }
-    public async Task<ScheduledDeadline?> TryGetScheduledDeadlineForItemAsync(Guid itemId, CancellationToken ct)
-    {
-        return await context.Deadlines
-            .SingleOrDefaultAsync(d => d.ItemId == itemId, ct);
-    }
-    public async Task AddDeadlineAsync(ScheduledDeadline deadline, CancellationToken ct = default)
-    {
-        await context.Deadlines.AddAsync(deadline, ct);
-    }
-    public Task RemoveScheduledDeadlineAsync(ScheduledDeadline obj, CancellationToken ct)
-    {
-        context.Deadlines.Remove(obj);
-        
-        return Task.CompletedTask;
     }
 
     public async Task<List<Scheduler>> GetSchedulingRulesAsync(CancellationToken ct)

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading;
@@ -84,13 +85,14 @@ public partial class AddScheduleViewModel(INavigationService navigationService, 
                 ShowValidationError("Frequency interval must be greater than 0");
                 return;
             }
-
+            
             var addScheduleDto = new AddScheduleDto
             {
                 Title = Title,
+                TargetItemId = null,
                 ScheduleFrequencyType = SelectedFrequencyType,
                 FrequencyInterval = FrequencyInterval,
-                
+
                 LookaheadLimit = LookaheadLimit,
                 OccurrenceCountLimit = OccurrenceCountLimit,
                 MisfirePolicy = SelectedMisfirePolicy,
@@ -98,7 +100,11 @@ public partial class AddScheduleViewModel(INavigationService navigationService, 
                 StartTime = StartTime is null ? null : TimeOnly.FromTimeSpan(StartTime.Value),
                 EndTime = EndTime is null ? null : TimeOnly.FromTimeSpan(EndTime.Value),
                 ActiveFromUtc = ActiveFromDate.Add(ActiveFromTime).ToUniversalTime(),
-                ActiveUntilUtc = ActiveUntilDate?.Add(ActiveUntilTime ?? TimeSpan.Zero).ToUniversalTime()
+                ActiveUntilUtc = ActiveUntilDate?.Add(ActiveUntilTime ?? TimeSpan.Zero).ToUniversalTime(),
+
+                ByDay = BuildByDay(),
+                ByMonth = BuildByMonth(),
+                ByMonthDay = ParseByMonthDay()
             };
 
             using var request = new HttpRequestMessage(HttpMethod.Post, "scheduling");
@@ -148,6 +154,87 @@ public partial class AddScheduleViewModel(INavigationService navigationService, 
         ActiveUntilDate = null;
         ActiveUntilTime = null;
         
+        ByDayMon = ByDayTue = ByDayWed = ByDayThu = ByDayFri = ByDaySat = ByDaySun = false;
+        ByMonthJan = ByMonthFeb = ByMonthMar = ByMonthApr = ByMonthMay = ByMonthJun =
+            ByMonthJul = ByMonthAug = ByMonthSep = ByMonthOct = ByMonthNov = ByMonthDec = false;
+        ByMonthDayCsv = string.Empty;
+
+        
         ClearValidationError();
+    }
+    
+    // Monthdays as Input "1,15,31"
+    [ObservableProperty] private string _byMonthDayCsv = string.Empty;
+    
+    // Weekdays (Mo..So) and Months (Jan..Dez)
+    [ObservableProperty] private bool _byDayMon;
+    [ObservableProperty] private bool _byDayTue;
+    [ObservableProperty] private bool _byDayWed;
+    [ObservableProperty] private bool _byDayThu;
+    [ObservableProperty] private bool _byDayFri;
+    [ObservableProperty] private bool _byDaySat;
+    [ObservableProperty] private bool _byDaySun;
+
+    [ObservableProperty] private bool _byMonthJan;
+    [ObservableProperty] private bool _byMonthFeb;
+    [ObservableProperty] private bool _byMonthMar;
+    [ObservableProperty] private bool _byMonthApr;
+    [ObservableProperty] private bool _byMonthMay;
+    [ObservableProperty] private bool _byMonthJun;
+    [ObservableProperty] private bool _byMonthJul;
+    [ObservableProperty] private bool _byMonthAug;
+    [ObservableProperty] private bool _byMonthSep;
+    [ObservableProperty] private bool _byMonthOct;
+    [ObservableProperty] private bool _byMonthNov;
+    [ObservableProperty] private bool _byMonthDec;
+    
+    private int[]? BuildByDay()
+    {
+        var list = new List<int>(7);
+        if (ByDayMon) list.Add(1);
+        if (ByDayTue) list.Add(2);
+        if (ByDayWed) list.Add(3);
+        if (ByDayThu) list.Add(4);
+        if (ByDayFri) list.Add(5);
+        if (ByDaySat) list.Add(6);
+        if (ByDaySun) list.Add(7);
+        return list.Count == 0 ? null : list.ToArray();
+    }
+    private int[]? BuildByMonth()
+    {
+        var list = new List<int>(12);
+        if (ByMonthJan) list.Add(1);
+        if (ByMonthFeb) list.Add(2);
+        if (ByMonthMar) list.Add(3);
+        if (ByMonthApr) list.Add(4);
+        if (ByMonthMay) list.Add(5);
+        if (ByMonthJun) list.Add(6);
+        if (ByMonthJul) list.Add(7);
+        if (ByMonthAug) list.Add(8);
+        if (ByMonthSep) list.Add(9);
+        if (ByMonthOct) list.Add(10);
+        if (ByMonthNov) list.Add(11);
+        if (ByMonthDec) list.Add(12);
+        return list.Count == 0 ? null : list.ToArray();
+    }
+    private int[]? ParseByMonthDay()
+    {
+        var s = ByMonthDayCsv.Trim();
+        if (string.IsNullOrWhiteSpace(s)) return null;
+
+        var parts = s.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var values = new List<int>(parts.Length);
+
+        foreach (var p in parts)
+        {
+            if (!int.TryParse(p, out var v) || v < 1 || v > 31)
+            {
+                ShowValidationError("Monthdays must be a comma-separated list of numbers between 1 and 31.");
+                return null;
+            }
+            values.Add(v);
+        }
+
+        return values.Distinct().OrderBy(x => x).ToArray();
     }
 }

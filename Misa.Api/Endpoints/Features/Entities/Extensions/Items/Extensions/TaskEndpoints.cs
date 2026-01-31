@@ -21,7 +21,12 @@ public static class TaskEndpoints
 
         try
         {
-            var command = new AddTaskCommand(dto.Title, dto.CategoryContract, dto.PriorityContract);
+            var command = new AddTaskCommand(
+                dto.Title,
+                dto.CategoryContract,
+                dto.PriorityContract,
+                dto.Deadline
+            );            
             var result = await bus.InvokeAsync<Result<TaskDto>>(command, linkedCts.Token);
 
             return result;

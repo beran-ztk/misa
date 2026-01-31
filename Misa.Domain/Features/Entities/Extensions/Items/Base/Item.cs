@@ -1,8 +1,6 @@
 ﻿using Misa.Domain.Common.DomainEvents;
 using Misa.Domain.Features.Audit;
 using Misa.Domain.Features.Entities.Base;
-using Misa.Domain.Features.Entities.Extensions.Items.Features.Deadlines;
-using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions;
 
 namespace Misa.Domain.Features.Entities.Extensions.Items.Base;
@@ -53,7 +51,6 @@ public class Item : DomainEventEntity
             or (int)ItemStates.InProgress
             or (int)ItemStates.Pending
             or (int)ItemStates.WaitForResponse;
-    public ScheduledDeadline? ScheduledDeadline { get; private set; }
 
     public void ChangeState(ItemStates state)
     {

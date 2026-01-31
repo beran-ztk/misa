@@ -10,7 +10,6 @@ using Misa.Application.Common.Abstractions.Persistence;
 using Misa.Application.Features.Entities.Extensions.Items.Base.Queries;
 using Misa.Application.Features.Entities.Extensions.Items.Extensions.Tasks.Commands;
 using Misa.Application.Features.Entities.Extensions.Items.Extensions.Tasks.Queries;
-using Misa.Application.Features.Entities.Extensions.Items.Features.Deadlines.Commands;
 using Misa.Application.Features.Entities.Extensions.Items.Features.Scheduling.Commands;
 using Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Commands;
 using Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Queries;
@@ -55,12 +54,11 @@ builder.Services.AddHostedService<SchedulePlanningWorker>();
 builder.Services.AddScoped<IEntityRepository, EntityRepository>();
 builder.Services.AddScoped<IItemRepository, ItemRepository>();
 builder.Services.AddScoped<ISchedulerPlanningRepository, SchedulerPlanningRepository>();
+builder.Services.AddScoped<ISchedulerRepository, SchedulerRepository>();
 
 // DI
 builder.Host.UseWolverine(opts =>
 {
-    opts.Discovery.IncludeAssembly(typeof(RemoveItemDeadlineHandler).Assembly);
-    opts.Discovery.IncludeAssembly(typeof(UpsertItemDeadlineHandler).Assembly);
     opts.Discovery.IncludeAssembly(typeof(AddDescriptionHandler).Assembly);
     opts.Discovery.IncludeAssembly(typeof(GetItemDetailsHandler).Assembly);
     opts.Discovery.IncludeAssembly(typeof(GetCurrentSessionDetailsHandler).Assembly);
@@ -76,6 +74,7 @@ builder.Host.UseWolverine(opts =>
     opts.Discovery.IncludeAssembly(typeof(AddTaskHandler).Assembly);
     opts.Discovery.IncludeAssembly(typeof(GetTasksHandler).Assembly);
     opts.Discovery.IncludeAssembly(typeof(GetSchedulesHandler).Assembly);
+    opts.Discovery.IncludeAssembly(typeof(CreateOnceScheduleHandler).Assembly);
 });
 
 // build app
@@ -85,7 +84,6 @@ app.UseMiddleware<ExceptionMappingMiddleware>();
 
 TaskEndpoints.Map(app);
 ItemDetailEndpoints.Map(app);
-DeadlineEndpoints.Map(app);
 DescriptionEndpoints.Map(app);
 SchedulingEndpoints.Map(app);
 

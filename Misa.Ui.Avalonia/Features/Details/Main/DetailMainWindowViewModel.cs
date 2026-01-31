@@ -4,9 +4,11 @@ using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Misa.Contract.Common.Results;
 using Misa.Contract.Features.Entities.Extensions.Items.Base;
+using Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;
 using Misa.Ui.Avalonia.Features.Details.Common;
 using Misa.Ui.Avalonia.Features.Details.Information.Base;
 using Misa.Ui.Avalonia.Infrastructure.Services.Interfaces;
+using Misa.Ui.Avalonia.Infrastructure.Services.Navigation;
 using Misa.Ui.Avalonia.Presentation.Mapping;
 
 namespace Misa.Ui.Avalonia.Features.Details.Main;
@@ -16,17 +18,20 @@ public partial class DetailMainWindowViewModel : ViewModelBase
     [ObservableProperty] private int _selectedTabIndex;
 
     [ObservableProperty] private ItemDto _item;
+    [ObservableProperty] private DeadlineDto _deadline;
     [ObservableProperty] private IItemExtensionVm? _extension;
 
     public DetailInformationViewModel DetailInformationViewModel { get; }
 
     private readonly IItemDetailClient _client;
     private readonly IItemExtensionVmFactory _extensionFactory;
+    public readonly INavigationService NavigationService;
 
-    public DetailMainWindowViewModel(IItemDetailClient client, IItemExtensionVmFactory extensionFactory)
+    public DetailMainWindowViewModel(IItemDetailClient client, IItemExtensionVmFactory extensionFactory, INavigationService navigationService)
     {
         _client = client;
         _extensionFactory = extensionFactory;
+        NavigationService = navigationService;
 
         Item = ItemDto.Empty();
         DetailInformationViewModel = new DetailInformationViewModel(this);
@@ -40,6 +45,10 @@ public partial class DetailMainWindowViewModel : ViewModelBase
         return Task.CompletedTask;
     }
 
+    public async Task Reload()
+    {
+        await LoadAsync(Item.Id, CancellationToken.None);
+    }
     public async Task LoadAsync(Guid itemId, CancellationToken ct)
     {
         Result<DetailedItemDto>? result;
@@ -62,6 +71,7 @@ public partial class DetailMainWindowViewModel : ViewModelBase
         }
 
         Item = result.Value.Item;
+        Deadline = result.Value.Deadline;
         Extension = _extensionFactory.Create(result.Value);
 
         DetailInformationViewModel.Description.Load();

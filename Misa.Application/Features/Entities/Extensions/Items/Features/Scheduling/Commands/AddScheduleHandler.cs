@@ -8,6 +8,7 @@ namespace Misa.Application.Features.Entities.Extensions.Items.Features.Schedulin
 
 public record AddScheduleCommand(
     string Title,
+    Guid? TargetItemId,
     ScheduleFrequencyTypeDto ScheduleFrequencyType,
     int FrequencyInterval,
     int LookaheadLimit,
@@ -17,7 +18,10 @@ public record AddScheduleCommand(
     TimeOnly? StartTime,
     TimeOnly? EndTime,
     DateTimeOffset ActiveFromUtc,
-    DateTimeOffset? ActiveUntilUtc
+    DateTimeOffset? ActiveUntilUtc,
+    int[]? ByDay,
+    int[]? ByMonthDay,
+    int[]? ByMonth
 );
 
 public class AddScheduleHandler(IItemRepository repository)
@@ -28,6 +32,7 @@ public class AddScheduleHandler(IItemRepository repository)
         {
             var scheduler = Scheduler.Create(
                 title: command.Title,
+                targetItemId: command.TargetItemId,
                 frequencyType: command.ScheduleFrequencyType.MapToDomain(),
                 frequencyInterval: command.FrequencyInterval,
                 lookaheadLimit: command.LookaheadLimit,
@@ -37,7 +42,10 @@ public class AddScheduleHandler(IItemRepository repository)
                 startTime: command.StartTime,
                 endTime: command.EndTime,
                 activeFromUtc: command.ActiveFromUtc,
-                activeUntilUtc: command.ActiveUntilUtc
+                activeUntilUtc: command.ActiveUntilUtc,
+                byDay: command.ByDay,
+                byMonthDay: command.ByMonthDay,
+                byMonth: command.ByMonth
             );
 
             await repository.AddAsync(scheduler, ct);

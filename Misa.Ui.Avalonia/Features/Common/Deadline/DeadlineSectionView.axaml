@@ -1,0 +1,48 @@
+﻿<UserControl
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="clr-namespace:Misa.Ui.Avalonia.Features.Common.Deadline"
+    xmlns:deadline="clr-namespace:Misa.Ui.Avalonia.Features.Common.Deadline"
+    x:Class="Misa.Ui.Avalonia.Features.Common.Deadline.DeadlineSectionView"
+    x:DataType="vm:DeadlineSectionViewModel">
+
+    <Border Margin="10"
+            Padding="12"
+            CornerRadius="10"
+            BorderThickness="1"
+            BorderBrush="{StaticResource BrushBorder}"
+            Background="{StaticResource BrushPrimaryBackgroundLighter}">
+        <StackPanel Spacing="10">
+
+            <Grid ColumnDefinitions="*,Auto,Auto,Auto" VerticalAlignment="Center">
+                <TextBlock Grid.Column="0"
+                           Text="Deadline"
+                           FontSize="16"
+                           FontWeight="SemiBold"/>
+
+                <Button Grid.Column="1"
+                        Content="{Binding PrimaryButtonText}"
+                        Command="{Binding ToggleEditCommand}" />
+
+                <Button Grid.Column="2"
+                        Content="Save"
+                        Command="{Binding SaveCommand}"
+                        IsVisible="{Binding IsEditOpen}" />
+
+                <Button Grid.Column="3"
+                        Content="Delete"
+                        Command="{Binding DeleteCommand}"
+                        IsVisible="{Binding HasDeadline}" />
+            </Grid>
+
+            <!-- Anzeige -->
+            <TextBlock Text="{Binding DeadlineText}"
+                       Opacity="0.85"
+                       IsVisible="{Binding !IsEditOpen}" />
+
+            <!-- Edit/Add -->
+            <ContentControl Content="{Binding Input}"
+                            IsVisible="{Binding IsEditOpen}"/>
+        </StackPanel>
+    </Border>
+</UserControl>

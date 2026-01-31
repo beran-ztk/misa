@@ -16,6 +16,7 @@ public sealed class Scheduler
     }
 
     public Guid Id { get; private set; }
+    public Guid? TargetItemId { get; private set; }
     
     public ScheduleFrequencyType ScheduleFrequencyType { get; private set; }
     public int FrequencyInterval { get; private set; }
@@ -39,7 +40,7 @@ public sealed class Scheduler
     public TimeOnly? StartTime { get; private set; }
     public TimeOnly? EndTime { get; private set; }
     
-    public DateTimeOffset ActiveFromUtc { get; private set; }
+    public DateTimeOffset ActiveFromUtc { get; set; }
     public DateTimeOffset? ActiveUntilUtc { get; private set; }
     
     public DateTimeOffset? LastRunAtUtc { get; private set; }
@@ -69,6 +70,7 @@ public sealed class Scheduler
     }
     public static Scheduler Create(
         string title,
+        Guid? targetItemId,
         ScheduleFrequencyType frequencyType,
         int frequencyInterval,
         int lookaheadLimit,
@@ -79,6 +81,9 @@ public sealed class Scheduler
         TimeOnly? endTime,
         DateTimeOffset activeFromUtc,
         DateTimeOffset? activeUntilUtc,
+        int[]? byDay,
+        int[]? byMonthDay,
+        int[]? byMonth,
         string timezone = "utc")
     {
         if (string.IsNullOrWhiteSpace(title))
@@ -105,10 +110,15 @@ public sealed class Scheduler
         if (string.IsNullOrWhiteSpace(timezone))
             throw new ArgumentException("Timezone must not be empty.", nameof(timezone));
 
+        var normalizedByDay = Normalize(byDay, 1, 7, nameof(byDay));
+        var normalizedByMonthDay = Normalize(byMonthDay, 1, 31, nameof(byMonthDay));
+        var normalizedByMonth = Normalize(byMonth, 1, 12, nameof(byMonth));
+
         var item = Item.Create(Workflow.Scheduling, title, Priority.None);
 
         return new Scheduler(item)
         {
+            TargetItemId = targetItemId,
             ScheduleFrequencyType = frequencyType,
             FrequencyInterval = frequencyInterval,
 
@@ -123,7 +133,49 @@ public sealed class Scheduler
             ActiveUntilUtc = activeUntilUtc,
 
             LookaheadLimit = lookaheadLimit,
-            Timezone = timezone
+            Timezone = timezone,
+
+            // NEW
+            ByDay = normalizedByDay,
+            ByMonthDay = normalizedByMonthDay,
+            ByMonth = normalizedByMonth
+        };
+
+        static int[]? Normalize(int[]? values, int min, int max, string name)
+        {
+            if (values is null || values.Length == 0) return null;
+
+            var distinct = values.Distinct().ToArray();
+            if (distinct.Any(v => v < min || v > max))
+                throw new ArgumentException($"{name} contains invalid values.", name);
+
+            Array.Sort(distinct);
+            return distinct;
+        }
+    }
+    
+    public static Scheduler CreateOnce(
+        Guid targetItemId,
+        DateTimeOffset dueAtUtc)
+    {
+        var item = Item.Create(Workflow.Scheduling, "Deadline", Priority.None);
+        
+        return new Scheduler(item)
+        {
+            Id = Guid.NewGuid(),
+
+            ScheduleFrequencyType = ScheduleFrequencyType.Once,
+            FrequencyInterval = 1,
+
+            TargetItemId = targetItemId,
+
+            ActiveFromUtc = dueAtUtc,
+            ActiveUntilUtc = null,
+
+            OccurrenceCountLimit = 1,
+            LookaheadLimit = 1,
+            
+            MisfirePolicy = ScheduleMisfirePolicy.Catchup
         };
     }
 }

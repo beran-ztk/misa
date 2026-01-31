@@ -382,6 +382,10 @@ namespace Misa.Infrastructure.Migrations
                         .HasColumnType("time without time zone")
                         .HasColumnName("start_time");
 
+                    b.Property<Guid?>("TargetItemId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("target_item_id");
+
                     b.Property<string>("Timezone")
                         .IsRequired()
                         .HasColumnType("text")

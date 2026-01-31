@@ -1,0 +1,20 @@
+﻿<UserControl
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    x:Class="Misa.Ui.Avalonia.Features.Common.Deadline.DeadlineInputView"
+    xmlns:vm="clr-namespace:Misa.Ui.Avalonia.Features.Common.Deadline"
+    x:DataType="vm:DeadlineInputViewModel">
+
+    <StackPanel Spacing="8">
+        <CheckBox Content="Deadline setzen"
+                  IsVisible="{Binding CreateWithParent}"
+                  IsChecked="{Binding IsEnabled}" />
+
+        <StackPanel IsEnabled="{Binding IsEnabled}"
+                    Orientation="Horizontal"
+                    Spacing="{StaticResource SpacingSmall}">
+            <DatePicker SelectedDate="{Binding DueDate, Mode=TwoWay}" />
+            <TimePicker SelectedTime="{Binding DueTime, Mode=TwoWay}" />
+        </StackPanel>
+    </StackPanel>
+</UserControl>

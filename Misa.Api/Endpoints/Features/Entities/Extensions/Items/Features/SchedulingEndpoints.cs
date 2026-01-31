@@ -12,8 +12,30 @@ public static class SchedulingEndpoints
     {
         app.MapGet("scheduling", GetSchedulingRules);
         app.MapPost("scheduling", AddSchedulingRule);
+        
+        app.MapPost("scheduling/once", CreateOnceScheduler);
+        app.MapDelete("scheduling/once/{targetItemId:guid}", DeleteDeadline);
     }
+    private static async Task<Result> CreateOnceScheduler(
+        CreateOnceScheduleDto dto,
+        IMessageBus bus,
+        CancellationToken ct)
+    {
+        var command = new CreateOnceScheduleCommand(
+            dto.TargetItemId,
+            dto.DueAtUtc
+        );
 
+        return await bus.InvokeAsync<Result>(command, ct);
+    }
+    private static async Task<Result> DeleteDeadline(
+        Guid targetItemId,
+        IMessageBus bus,
+        CancellationToken ct)
+    {
+        var command = new DeleteDeadlineCommand(targetItemId);
+        return await bus.InvokeAsync<Result>(command, ct);
+    }
     private static async Task<Result<List<ScheduleDto>>> GetSchedulingRules(IMessageBus bus, CancellationToken ct)
     {
         var result = await bus.InvokeAsync<Result<List<ScheduleDto>>>(new GetScheduleQuery(), ct);
@@ -31,6 +53,7 @@ public static class SchedulingEndpoints
         {
             var command = new AddScheduleCommand(
                 dto.Title,
+                dto.TargetItemId,
                 dto.ScheduleFrequencyType,
                 dto.FrequencyInterval,
                 dto.LookaheadLimit,
@@ -40,7 +63,10 @@ public static class SchedulingEndpoints
                 dto.StartTime,
                 dto.EndTime,
                 dto.ActiveFromUtc,
-                dto.ActiveUntilUtc
+                dto.ActiveUntilUtc,
+                dto.ByDay,
+                dto.ByMonthDay,
+                dto.ByMonth
             );
             
             return await bus.InvokeAsync<Result<ScheduleDto>>(command, linkedCts.Token);

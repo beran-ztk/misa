@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Features.Entities.Extensions.Items.Base;
+using Misa.Ui.Avalonia.Features.Common.Deadline;
 using Misa.Ui.Avalonia.Features.Details.Common;
 using Misa.Ui.Avalonia.Features.Details.Information.Extensions.Sessions;
 using Misa.Ui.Avalonia.Presentation.Mapping;
@@ -19,22 +20,25 @@ public partial class DetailInformationViewModel : ViewModelBase
     public DetailMainWindowViewModel Parent { get; }
     public DescriptionViewModel Description { get; }
     public SessionViewModel Session { get; }
-
+    public DeadlineSectionViewModel DeadlineSection { get; }
     public DetailInformationViewModel(DetailMainWindowViewModel parent)
     {
         Parent = parent;
         Description = new DescriptionViewModel(this);
         Session = new SessionViewModel(this);
+        DeadlineSection = new DeadlineSectionViewModel(this);
         
         Parent.WhenAnyValue(x => x.Extension)
             .Subscribe(_ =>
             {
                 OnPropertyChanged(nameof(TaskExtension));
                 OnPropertyChanged(nameof(HasTaskExtension));
+                OnPropertyChanged(nameof(HasDeadline));
             });
     }
     public TaskExtensionVm? TaskExtension => Parent.Extension as TaskExtensionVm;
     public bool HasTaskExtension => TaskExtension is not null;
+    public bool HasDeadline => Parent.Deadline.DueAtUtc is not null;
 
     [RelayCommand]
     private void CopyId()
@@ -175,117 +179,4 @@ public partial class DetailInformationViewModel : ViewModelBase
         //     Console.WriteLine(e);
         // }
     }
-    // Deadline
-    [ObservableProperty] private bool _isDeadlineFormOpen;
-    [ObservableProperty] private DateTimeOffset? _deadlineDate;
-    [ObservableProperty] private TimeSpan? _deadlineTime;
-
-    // [RelayCommand]
-    // private void ShowDeadlineForm()
-    // {
-    //     IsDeadlineFormOpen = true;
-    //
-    //     var existingUtc = parent.DetailedEntity?.Item?.ScheduledDeadline?.DeadlineAt;
-    //     var local = existingUtc?.ToLocalTime() ?? DateTimeOffset.Now;
-    //
-    //     DeadlineDate = local.Date;
-    //     DeadlineTime = local.TimeOfDay;
-    // }
-    //
-    // [RelayCommand]
-    // private void CloseDeadlineForm()
-    // {
-    //     IsDeadlineFormOpen = false;
-    // }
-    //
-    // [RelayCommand]
-    // private async Task UpsertDeadline()
-    // {
-    //     try
-    //     {
-    //         if (parent.DetailedEntity?.Item is null || DeadlineDate is null || DeadlineTime is null)
-    //             return;
-    //
-    //         var localDateTime = DeadlineDate.Value.Date + DeadlineTime.Value;
-    //         var localOffset = TimeZoneInfo.Local.GetUtcOffset((DateTime)localDateTime);
-    //         var deadlineAt = new DateTimeOffset(localDateTime, localOffset);
-    //
-    //         var dto = new ScheduleDeadlineDto(DeadlineAt: deadlineAt);
-    //
-    //         var response = await parent.EntityDetailHost.NavigationService.NavigationStore
-    //             .MisaHttpClient.PutAsJsonAsync(
-    //                 requestUri: $"items/{parent.DetailedEntity.Item.EntityId}/deadline",
-    //                 dto
-    //             );
-    //
-    //         if (!response.IsSuccessStatusCode)
-    //             Console.WriteLine($"Server returned {response.StatusCode}: {response.ReasonPhrase}");
-    //
-    //         await parent.Reload();
-    //         CloseDeadlineForm();
-    //     }
-    //     catch (Exception e)
-    //     {
-    //         Console.WriteLine(e);
-    //     }
-    // }
-    //
-    // // Remove Deadline
-    // private CancellationTokenSource? _removeDeadlineCts;
-    //
-    // [ObservableProperty]
-    // [NotifyCanExecuteChangedFor(nameof(RemoveDeadlineCommand))]
-    // [NotifyCanExecuteChangedFor(nameof(CancelRemoveDeadlineCommand))]
-    // private bool _isRemovingDeadline;
-    // private bool CanCancelRemoveDeadline() => IsRemovingDeadline;
-    //
-    // [RelayCommand(CanExecute = nameof(CanCancelRemoveDeadline))]
-    // private void CancelRemoveDeadline()
-    // {
-    //     _removeDeadlineCts?.Cancel();
-    // }
-    //
-    // [RelayCommand]
-    // private async Task RemoveDeadline()
-    // {
-    //     if (parent.DetailedEntity?.Item is null)
-    //     {
-    //         return;
-    //     }
-    //     
-    //     _removeDeadlineCts?.Dispose();
-    //     _removeDeadlineCts = new CancellationTokenSource();
-    //
-    //     IsRemovingDeadline = true;
-    //     
-    //     try
-    //     {
-    //         var itemId = parent.DetailedEntity.Item.EntityId;
-    //
-    //         using var request = new HttpRequestMessage(HttpMethod.Delete, $"items/{itemId}/deadline");
-    //
-    //         var response = await parent.EntityDetailHost.NavigationService.NavigationStore
-    //             .MisaHttpClient.SendAsync(request, _removeDeadlineCts.Token);
-    //
-    //         if (!response.IsSuccessStatusCode)
-    //         {
-    //             Console.WriteLine($"Server returned {response.StatusCode}: {response.ReasonPhrase}");
-    //         }
-    //     }
-    //     catch (OperationCanceledException)
-    //     {
-    //         Console.WriteLine("RemoveDeadline canceled by user.");
-    //     }
-    //     catch (Exception e)
-    //     {
-    //         Console.WriteLine(e);
-    //     }
-    //     finally
-    //     {
-    //         _removeDeadlineCts?.Dispose();
-    //         _removeDeadlineCts = null;
-    //         
-    //         IsRemovingDeadline = false;
-    //     }
-    // }
 }

@@ -158,6 +158,7 @@ namespace Misa.Infrastructure.Migrations
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    target_item_id = table.Column<Guid>(type: "uuid", nullable: true),
                     frequency_type = table.Column<ScheduleFrequencyType>(type: "schedule_frequency_type", nullable: false, defaultValue: ScheduleFrequencyType.Once),
                     frequency_interval = table.Column<int>(type: "integer", nullable: false, defaultValue: 1),
                     occurrence_count_limit = table.Column<int>(type: "integer", nullable: true),
