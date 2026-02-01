@@ -10,9 +10,7 @@
 
     <ItemGroup>
         <AvaloniaResource Include="Assets\**"/>
-        <Folder Include="Presentation\Behaviors\" />
         <Folder Include="Presentation\Controls\" />
-        <Folder Include="Presentation\Converters\" />
         <Folder Include="Presentation\Styles\" />
         <Folder Include="Presentation\Validators\" />
     </ItemGroup>

@@ -63,6 +63,7 @@ builder.Services.AddScoped<ISchedulerRepository, SchedulerRepository>();
 builder.Host.UseWolverine(opts =>
 {
     opts.Discovery.IncludeAssembly(typeof(AddDescriptionHandler).Assembly);
+    opts.Discovery.IncludeAssembly(typeof(DeleteDescriptionHandler).Assembly);
     opts.Discovery.IncludeAssembly(typeof(GetItemDetailsHandler).Assembly);
     opts.Discovery.IncludeAssembly(typeof(GetCurrentSessionDetailsHandler).Assembly);
     opts.Discovery.IncludeAssembly(typeof(StartSessionHandler).Assembly);

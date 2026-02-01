@@ -16,4 +16,9 @@ public class Description
     public Guid EntityId { get; set; }
     public string Content { get; set; }
     public DateTimeOffset CreatedAtUtc { get; set; }
+    
+    public void UpdateContent(string content)
+    {
+        Content = content;
+    }
 }
