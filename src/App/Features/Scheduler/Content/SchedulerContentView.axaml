@@ -3,7 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:Misa.Ui.Avalonia.Features.Scheduler.Main"
-             xmlns:scheduler="clr-namespace:Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;assembly=Misa.Contract"
+             xmlns:scheduler="clr-namespace:Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;assembly=Contract"
              x:Class="Misa.Ui.Avalonia.Features.Scheduler.Content.SchedulerContentView"
              x:DataType="vm:SchedulerMainWindowViewModel"
              mc:Ignorable="d"

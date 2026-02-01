@@ -72,7 +72,7 @@
      <Application.Styles>
          <FluentTheme />
          <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
-         <StyleInclude Source="avares://Misa.Ui.Avalonia/Assets/Styles/Details.axaml"/>
+         <StyleInclude Source="avares://App/Assets/Styles/Details.axaml"/>
          
          <Style Selector="TextBlock.misa-header">
              <Setter Property="FontSize" Value="28" />

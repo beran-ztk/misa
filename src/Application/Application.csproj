@@ -4,11 +4,12 @@
         <TargetFramework>net9.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <RootNamespace>Misa.Application</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Misa.Contract\Misa.Contract.csproj" />
-      <ProjectReference Include="..\Misa.Domain\Misa.Domain.csproj" />
+      <ProjectReference Include="..\Contract\Contract.csproj" />
+      <ProjectReference Include="..\Domain\Domain.csproj" />
     </ItemGroup>
 
     <ItemGroup>
