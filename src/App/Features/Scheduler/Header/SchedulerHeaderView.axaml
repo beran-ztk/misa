@@ -6,17 +6,51 @@
              x:Class="Misa.Ui.Avalonia.Features.Scheduler.Header.SchedulerHeaderView"
              xmlns:vm="clr-namespace:Misa.Ui.Avalonia.Features.Scheduler.Main"
              x:DataType="vm:SchedulerMainWindowViewModel">
-    
-    <Border BorderThickness="0,0,0,1"
-            Padding="12"
-            Background="{StaticResource BrushPrimaryBackground}"
-            BorderBrush="{StaticResource BrushBorder}">
 
-        <Button Command="{Binding OpenAddScheduleCommand}">
-            <Image Width="16"
-                   Height="16"
-                   Source="{SvgImage /Assets/Images/MainNavigation/plus-circle.svg}" />
-        </Button>
+    <UserControl.Styles>
+
+        <!-- Add Button: pill + icon + text (Task-Look) -->
+        <Style Selector="Button.SchedulerAddButton">
+            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="999" />
+            <Setter Property="Padding" Value="10,6" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <Style Selector="Button.SchedulerAddButton:pointerover">
+            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLight}" />
+        </Style>
+
+    </UserControl.Styles>
+
+    <Border Padding="12"
+            Background="{StaticResource BrushPrimaryBackground}">
+
+        <Grid ColumnDefinitions="Auto,*"
+              ColumnSpacing="10"
+              VerticalAlignment="Center">
+
+            <!-- Add -->
+            <Button Grid.Column="0"
+                    Classes="SchedulerAddButton"
+                    Command="{Binding OpenAddScheduleCommand}">
+                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <Image Width="16"
+                           Height="16"
+                           Source="{SvgImage /Assets/Images/MainNavigation/plus-circle.svg}" />
+                    <TextBlock Text="Add"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource BrushTextPrimary}"
+                               VerticalAlignment="Center"/>
+                </StackPanel>
+            </Button>
+
+            <!-- Right side reserved (keeps spacing consistent with Task header) -->
+            <ContentControl Grid.Column="1" />
+
+        </Grid>
     </Border>
-    
+
 </UserControl>
