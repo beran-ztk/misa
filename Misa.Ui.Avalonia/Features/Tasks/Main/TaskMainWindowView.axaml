@@ -8,25 +8,68 @@
              xmlns:header="clr-namespace:Misa.Ui.Avalonia.Features.Tasks.Header"
              xmlns:main="clr-namespace:Misa.Ui.Avalonia.Features.Tasks.Main"
              x:DataType="main:TaskMainWindowViewModel">
-    <Border>
-        <Grid ColumnDefinitions="*,1,*">
-            
-            <Border Grid.Column="0"
-                    BorderThickness="0,0,1,0"
-                    BorderBrush="{StaticResource BrushBorder}">
-                <Grid RowDefinitions="50,*">
-                
-                    <header:TaskHeaderView Grid.Row="0"
-                                              DataContext="{Binding TaskHeader}" />
-                    <content:TaskContentView Grid.Row="1"
-                                        DataContext="{Binding Model}" />
+
+    <!-- Außenfläche -->
+    <Border Background="{StaticResource BrushPrimaryBackground}"
+            Padding="12">
+
+        <!-- 2 Zeilen: Header / Content -->
+        <Grid RowDefinitions="Auto,*"
+              RowSpacing="12">
+
+            <!-- Header über volle Breite -->
+            <Border Grid.Row="0"
+                    Background="{StaticResource BrushPrimaryBackground}"
+                    BorderBrush="{StaticResource BrushBorder}"
+                    BorderThickness="0,0,0,1"
+                    CornerRadius="12"
+                    Padding="12">
+                <header:TaskHeaderView DataContext="{Binding TaskHeader}" />
+            </Border>
+
+            <!-- Contentfläche: "Card"-Look -->
+            <Border Grid.Row="1"
+                    Background="{StaticResource BrushPrimaryBackgroundLight}"
+                    CornerRadius="16"
+                    Padding="12">
+
+                <!-- 2 Spalten + dünner Splitter -->
+                <Grid ColumnDefinitions="*,8,*"
+                      ColumnSpacing="0">
+
+                    <!-- Links: Liste-Container (greift optisch rein) -->
+                    <Border Grid.Column="0"
+                            Background="{StaticResource BrushPrimaryBackground}"
+                            CornerRadius="14,0,0,14"
+                            Padding="0"
+                            Margin="0,0,-10,0"
+                            BorderBrush="{StaticResource BrushBorder}"
+                            BorderThickness="1">
+
+                        <content:TaskContentView DataContext="{Binding Model}" />
+                    </Border>
+
+                    <!-- Splitter als "weichere" Zone -->
+                    <GridSplitter Grid.Column="1"
+                                  Width="8"
+                                  Background="Transparent"
+                                  HorizontalAlignment="Stretch" />
+
+                    <!-- Rechts: Details-Container (links abgerundet, damit es "andockt") -->
+                    <Border Grid.Column="2"
+                            Background="{StaticResource BrushPrimaryBackground}"
+                            CornerRadius="0,14,14,14"
+                            Padding="12"
+                            Margin="0,0,0,0"
+                            BorderBrush="{StaticResource BrushBorder}"
+                            BorderThickness="1">
+
+                        <ContentControl Content="{Binding InfoView}" />
+                    </Border>
+
                 </Grid>
             </Border>
-            <GridSplitter Grid.Column="1"
-                          Background="{StaticResource BrushBorder}"/>
-            <ContentControl Grid.Column="2"
-                            Background="{StaticResource BrushPrimaryBackground}"
-                            Content="{Binding InfoView}" />
+
         </Grid>
     </Border>
 </UserControl>

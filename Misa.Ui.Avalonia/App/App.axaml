@@ -1,10 +1,8 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="Misa.Ui.Avalonia.App.App"
-             xmlns:local="using:Misa.Ui.Avalonia"
              xmlns:mapping="clr-namespace:Misa.Ui.Avalonia.Presentation.Mapping"
              RequestedThemeVariant="Default">
-             <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
 
     <Application.DataTemplates>
         <mapping:ViewLocator/>
@@ -29,11 +27,11 @@
         <Color x:Key="ColorPrimaryBackgroundLighter">#151b23</Color>
         <Color x:Key="ColorSecondaryBackground">#161916</Color>
         <Color x:Key="ColorPanelBackground">#233549</Color>
-        <Color x:Key="ColorHover">#2F4762</Color>               <!-- Hover für Buttons -->
-        <Color x:Key="ColorActive">#3D5A80</Color>              <!-- Active / Selected-Element -->
+        <Color x:Key="ColorHover">#2F4762</Color>
+        <Color x:Key="ColorActive">#3D5A80</Color>
 
         <!-- Textfarben -->
-        <Color x:Key="ColorTextPrimary">#E6EAF0</Color>
+        <Color x:Key="ColorTextPrimary">#daf6cf</Color>
         <Color x:Key="ColorTextSecondary">#B5C0CC</Color>
         <Color x:Key="ColorTextFaded">#8090A0</Color>
 
