@@ -21,34 +21,34 @@ public partial class SessionViewModel(Base.DetailInformationViewModel parent) : 
 
     public async Task LoadCurrentSessionAsync()
     {
-        // try
-        // {
-        //     using var request = new HttpRequestMessage(
-        //         HttpMethod.Get,
-        //         $"items/{Parent.Parent.Item.Id}/overview/session");
-        //
-        //     var response = await Parent.Parent.EntityDetailHost.NavigationService.NavigationStore
-        //         .MisaHttpClient
-        //         .SendAsync(request, CancellationToken.None);
-        //
-        //     response.EnsureSuccessStatusCode();
-        //     
-        //     var result = await response.Content
-        //         .ReadFromJsonAsync<Result<CurrentSessionOverviewDto>>(cancellationToken: CancellationToken.None);
-        //
-        //     if (result?.Value is null)
-        //     {
-        //         return;
-        //     }
-        //     
-        //     CurrentSessionOverviewDto = result.Value;
-        //     OnPropertyChanged(nameof(HasActiveSession));
-        //     OnPropertyChanged(nameof(HasLatestClosedSession));
-        // }
-        // catch (Exception e)
-        // {
-        //     Console.WriteLine(e);
-        // }
+        try
+        {
+            using var request = new HttpRequestMessage(
+                HttpMethod.Get,
+                $"items/{Parent.Parent.Item.Id}/overview/session");
+        
+            var response = await Parent.Parent.NavigationService.NavigationStore
+                .MisaHttpClient
+                .SendAsync(request, CancellationToken.None);
+        
+            response.EnsureSuccessStatusCode();
+            
+            var result = await response.Content
+                .ReadFromJsonAsync<Result<CurrentSessionOverviewDto>>(cancellationToken: CancellationToken.None);
+        
+            if (result?.Value is null)
+            {
+                return;
+            }
+            
+            CurrentSessionOverviewDto = result.Value;
+            OnPropertyChanged(nameof(HasActiveSession));
+            OnPropertyChanged(nameof(HasLatestClosedSession));
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
     }
 
     // Start Session
@@ -82,38 +82,38 @@ public partial class SessionViewModel(Base.DetailInformationViewModel parent) : 
     [RelayCommand]
     private async Task StartSession()
     {
-        // try
-        // {
-        //     TimeSpan? plannedDuration = PlannedMinutes.HasValue
-        //         ? TimeSpan.FromMinutes(Convert.ToInt32(PlannedMinutes))
-        //         : null;
-        //     
-        //     var dto = new StartSessionDto(
-        //         Parent.Parent.Item.Id, 
-        //         plannedDuration, 
-        //         Objective,
-        //         StopAutomatically, 
-        //         AutoStopReason
-        //     );
-        //
-        //     using var request = new HttpRequestMessage(
-        //         HttpMethod.Post,
-        //         $"items/{Parent.Parent.Item.Id}/sessions/start");
-        //     request.Content = JsonContent.Create(dto);
-        //     
-        //     var response = await Parent.Parent.EntityDetailHost.NavigationService.NavigationStore
-        //         .MisaHttpClient
-        //         .SendAsync(request, CancellationToken.None);
-        //
-        //     response.EnsureSuccessStatusCode();
-        //     
-        //     CloseStartSessionForm();
-        //     await Parent.Parent.Reload();
-        // }
-        // catch (Exception e)
-        // {
-        //     Console.WriteLine(e);
-        // }
+        try
+        {
+            TimeSpan? plannedDuration = PlannedMinutes.HasValue
+                ? TimeSpan.FromMinutes(Convert.ToInt32(PlannedMinutes))
+                : null;
+            
+            var dto = new StartSessionDto(
+                Parent.Parent.Item.Id, 
+                plannedDuration, 
+                Objective,
+                StopAutomatically, 
+                AutoStopReason
+            );
+        
+            using var request = new HttpRequestMessage(
+                HttpMethod.Post,
+                $"items/{Parent.Parent.Item.Id}/sessions/start");
+            request.Content = JsonContent.Create(dto);
+            
+            var response = await Parent.Parent.NavigationService.NavigationStore
+                .MisaHttpClient
+                .SendAsync(request, CancellationToken.None);
+        
+            response.EnsureSuccessStatusCode();
+            
+            CloseStartSessionForm();
+            await Parent.Parent.Reload();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
     }
     
     // Pause Session
@@ -139,55 +139,55 @@ public partial class SessionViewModel(Base.DetailInformationViewModel parent) : 
     [RelayCommand]
     private async Task PauseSession()
     {
-        // try
-        // {
-        //     var dto = new PauseSessionDto(
-        //         Parent.Parent.Item.Id,
-        //         PauseReason
-        //     );
-        //
-        //     using var request = new HttpRequestMessage(
-        //         HttpMethod.Post,
-        //         $"items/{Parent.Parent.Item.Id}/sessions/pause");
-        //     request.Content = JsonContent.Create(dto);
-        //
-        //     var response = await Parent.Parent.EntityDetailHost.NavigationService.NavigationStore
-        //         .MisaHttpClient
-        //         .SendAsync(request, CancellationToken.None);
-        //
-        //     response.EnsureSuccessStatusCode();
-        //
-        //     ClosePauseSessionForm();
-        //     await Parent.Parent.Reload();
-        // }
-        // catch (Exception e)
-        // {
-        //     Console.WriteLine(e);
-        // }
+        try
+        {
+            var dto = new PauseSessionDto(
+                Parent.Parent.Item.Id,
+                PauseReason
+            );
+        
+            using var request = new HttpRequestMessage(
+                HttpMethod.Post,
+                $"items/{Parent.Parent.Item.Id}/sessions/pause");
+            request.Content = JsonContent.Create(dto);
+        
+            var response = await Parent.Parent.NavigationService.NavigationStore
+                .MisaHttpClient
+                .SendAsync(request, CancellationToken.None);
+        
+            response.EnsureSuccessStatusCode();
+        
+            ClosePauseSessionForm();
+            await Parent.Parent.Reload();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
     }
     
     // Continue Session
     [RelayCommand]
     private async Task ContinueSession()
     {
-        // try
-        // {
-        //     using var request = new HttpRequestMessage(
-        //         HttpMethod.Post,
-        //         $"items/{Parent.Parent.Item.Id}/sessions/continue");
-        //
-        //     var response = await Parent.Parent.EntityDetailHost.NavigationService.NavigationStore
-        //         .MisaHttpClient
-        //         .SendAsync(request, CancellationToken.None);
-        //
-        //     response.EnsureSuccessStatusCode();
-        //
-        //     await Parent.Parent.Reload();
-        // }
-        // catch (Exception e)
-        // {
-        //     Console.WriteLine(e);
-        // }
+        try
+        {
+            using var request = new HttpRequestMessage(
+                HttpMethod.Post,
+                $"items/{Parent.Parent.Item.Id}/sessions/continue");
+        
+            var response = await Parent.Parent.NavigationService.NavigationStore
+                .MisaHttpClient
+                .SendAsync(request, CancellationToken.None);
+        
+            response.EnsureSuccessStatusCode();
+        
+            await Parent.Parent.Reload();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
     }
     
     // Stop Session
@@ -217,32 +217,32 @@ public partial class SessionViewModel(Base.DetailInformationViewModel parent) : 
     [RelayCommand]
     private async Task StopSession()
     {
-        // try
-        // {
-        //     var dto = new StopSessionDto(
-        //         Parent.Parent.Item.Id,
-        //         SelectedEfficiency,
-        //         SelectedConcentration,
-        //         Summary
-        //     );
-        //
-        //     using var request = new HttpRequestMessage(
-        //         HttpMethod.Post,
-        //         $"items/{Parent.Parent.Item.Id}/sessions/stop");
-        //     request.Content = JsonContent.Create(dto);
-        //
-        //     var response = await Parent.Parent.EntityDetailHost.NavigationService.NavigationStore
-        //         .MisaHttpClient
-        //         .SendAsync(request, CancellationToken.None);
-        //
-        //     response.EnsureSuccessStatusCode();
-        //
-        //     CloseStopSessionForm();
-        //     await Parent.Parent.Reload();
-        // }
-        // catch (Exception e)
-        // {
-        //     Console.WriteLine(e);
-        // }
+        try
+        {
+            var dto = new StopSessionDto(
+                Parent.Parent.Item.Id,
+                SelectedEfficiency,
+                SelectedConcentration,
+                Summary
+            );
+        
+            using var request = new HttpRequestMessage(
+                HttpMethod.Post,
+                $"items/{Parent.Parent.Item.Id}/sessions/stop");
+            request.Content = JsonContent.Create(dto);
+        
+            var response = await Parent.Parent.NavigationService.NavigationStore
+                .MisaHttpClient
+                .SendAsync(request, CancellationToken.None);
+        
+            response.EnsureSuccessStatusCode();
+        
+            CloseStopSessionForm();
+            await Parent.Parent.Reload();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
     }
 }
