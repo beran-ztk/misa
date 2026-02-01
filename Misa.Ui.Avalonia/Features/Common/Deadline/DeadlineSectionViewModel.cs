@@ -25,12 +25,17 @@ public sealed partial class DeadlineSectionViewModel : ViewModelBase
                 OnPropertyChanged(nameof(HasDeadline));
                 OnPropertyChanged(nameof(DeadlineText));
                 OnPropertyChanged(nameof(PrimaryButtonText));
+                OnPropertyChanged(nameof(ShowAddIcon));
+                OnPropertyChanged(nameof(ShowEditIcon));
             });
     }
 
     public DeadlineInputViewModel Input { get; } = new();
 
     public bool HasDeadline => Parent.Parent.Deadline.DueAtUtc is not null;
+    public bool ShowAddIcon => !IsEditOpen && !HasDeadline;
+
+    public bool ShowEditIcon => !IsEditOpen && HasDeadline;
 
     public string DeadlineText
         => HasDeadline
@@ -40,7 +45,11 @@ public sealed partial class DeadlineSectionViewModel : ViewModelBase
     public string PrimaryButtonText
         => IsEditOpen ? "Cancel" : (HasDeadline ? "Edit" : "Add");
 
-    [ObservableProperty] private bool _isEditOpen;
+    [ObservableProperty] 
+    [NotifyPropertyChangedFor(nameof(PrimaryButtonText))]
+    [NotifyPropertyChangedFor(nameof(ShowAddIcon))]
+    [NotifyPropertyChangedFor(nameof(ShowEditIcon))]
+    private bool _isEditOpen;
 
     [RelayCommand]
     private void ToggleEdit()

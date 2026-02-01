@@ -9,7 +9,10 @@ public partial class NavigationStore(HttpClient httpClient) : ObservableObject
     public HttpClient MisaHttpClient { get; set; } = httpClient;
     private ViewModelBase? _currentViewModel;
     private ViewModelBase? _currentInfoViewModel;
+    
+    public string BreadCrumbsBase { get; } = "Misa  →  Main  →  Navigation → ";
 
+    [ObservableProperty] private string _breadCrumbsNavigation = string.Empty;
     public ViewModelBase? CurrentViewModel
     {
         get => _currentViewModel;

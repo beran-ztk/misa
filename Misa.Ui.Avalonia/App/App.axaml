@@ -1,15 +1,13 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="Misa.Ui.Avalonia.App.App"
-             xmlns:local="using:Misa.Ui.Avalonia"
              xmlns:mapping="clr-namespace:Misa.Ui.Avalonia.Presentation.Mapping"
              RequestedThemeVariant="Default">
-             <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
 
     <Application.DataTemplates>
         <mapping:ViewLocator/>
     </Application.DataTemplates>
-             
+    
     <Application.Resources>
 
         <x:Double x:Key="FontSizeSmall">10</x:Double>
@@ -29,11 +27,11 @@
         <Color x:Key="ColorPrimaryBackgroundLighter">#151b23</Color>
         <Color x:Key="ColorSecondaryBackground">#161916</Color>
         <Color x:Key="ColorPanelBackground">#233549</Color>
-        <Color x:Key="ColorHover">#2F4762</Color>               <!-- Hover für Buttons -->
-        <Color x:Key="ColorActive">#3D5A80</Color>              <!-- Active / Selected-Element -->
+        <Color x:Key="ColorHover">#2F4762</Color>
+        <Color x:Key="ColorActive">#3D5A80</Color>
 
         <!-- Textfarben -->
-        <Color x:Key="ColorTextPrimary">#E6EAF0</Color>
+        <Color x:Key="ColorTextPrimary">#daf6cf</Color>
         <Color x:Key="ColorTextSecondary">#B5C0CC</Color>
         <Color x:Key="ColorTextFaded">#8090A0</Color>
 
@@ -74,7 +72,8 @@
      <Application.Styles>
          <FluentTheme />
          <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
-
+         <StyleInclude Source="avares://Misa.Ui.Avalonia/Assets/Styles/Details.axaml"/>
+         
          <Style Selector="TextBlock.misa-header">
              <Setter Property="FontSize" Value="28" />
              <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}" />
@@ -141,49 +140,5 @@
             <Setter Property="FontSize" Value="{StaticResource FontSizeMedium}" />
             <Setter Property="HorizontalAlignment" Value="Right" />
         </Style>
-         
-         
-         
-         <!-- MISA DataGrid Basis-Style -->
-        <Style Selector="DataGrid.misa-grid">
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="BorderBrush" Value="Transparent" />
-            
-            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLight}" />
-            <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}" />
-            <Setter Property="RowBackground" Value="{StaticResource BrushPrimaryBackgroundLight}" />
-            <Setter Property="GridLinesVisibility" Value="Horizontal" />
-            <Setter Property="HeadersVisibility" Value="All" />
-            <Setter Property="CanUserReorderColumns" Value="True" />
-            <Setter Property="CanUserResizeColumns" Value="True" />
-            <Setter Property="CanUserSortColumns" Value="True" />
-            <Setter Property="RowHeight" Value="28" />
-            <Setter Property="HorizontalGridLinesBrush" Value="{StaticResource BrushBorder}" />
-            <Setter Property="VerticalGridLinesBrush" Value="{StaticResource BrushBorder}" />
-        </Style>
-
-        <!-- Header-Style -->
-        <Style Selector="DataGrid.misa-grid DataGridColumnHeader">
-            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackground}" />
-            <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}" />
-            <Setter Property="FontSize" Value="{StaticResource FontSizeMedium}" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}" />
-            <Setter Property="BorderThickness" Value="0,0,0,1" />
-
-            <Setter Property="Padding" Value="8,4" />
-        </Style>
-
-        <!-- Zeilen-Styles -->
-        <Style Selector="DataGrid.misa-grid DataGridRow">
-            <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}" />
-        </Style>
-
-        <!-- Zellen-Style -->
-        <Style Selector="DataGrid.misa-grid DataGridCell">
-            <Setter Property="Padding" Value="0,6" />
-            <Setter Property="FontSize" Value="{StaticResource FontSizeMedium}" />
-        </Style>
-
      </Application.Styles>
 </Application>

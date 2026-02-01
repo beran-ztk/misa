@@ -1,48 +1,104 @@
-﻿<UserControl
-    xmlns="https://github.com/avaloniaui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:vm="clr-namespace:Misa.Ui.Avalonia.Features.Common.Deadline"
-    xmlns:deadline="clr-namespace:Misa.Ui.Avalonia.Features.Common.Deadline"
-    x:Class="Misa.Ui.Avalonia.Features.Common.Deadline.DeadlineSectionView"
-    x:DataType="vm:DeadlineSectionViewModel">
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:Misa.Ui.Avalonia.Features.Common.Deadline"
+             x:Class="Misa.Ui.Avalonia.Features.Common.Deadline.DeadlineSectionView"
+             x:DataType="vm:DeadlineSectionViewModel">
 
-    <Border Margin="10"
-            Padding="12"
-            CornerRadius="10"
-            BorderThickness="1"
-            BorderBrush="{StaticResource BrushBorder}"
-            Background="{StaticResource BrushPrimaryBackgroundLighter}">
-        <StackPanel Spacing="10">
+  <Border Classes="misa-section">
+    <StackPanel Spacing="10">
 
-            <Grid ColumnDefinitions="*,Auto,Auto,Auto" VerticalAlignment="Center">
-                <TextBlock Grid.Column="0"
-                           Text="Deadline"
-                           FontSize="16"
-                           FontWeight="SemiBold"/>
+      <!-- Header row -->
+      <Grid ColumnDefinitions="*,Auto"
+            ColumnSpacing="12"
+            VerticalAlignment="Center">
 
-                <Button Grid.Column="1"
-                        Content="{Binding PrimaryButtonText}"
-                        Command="{Binding ToggleEditCommand}" />
+        <StackPanel Spacing="2">
+          <TextBlock Text="Deadline" Opacity="0.7" FontSize="12"/>
 
-                <Button Grid.Column="2"
-                        Content="Save"
-                        Command="{Binding SaveCommand}"
-                        IsVisible="{Binding IsEditOpen}" />
+          <TextBlock Text="{Binding DeadlineText}"
+                     FontWeight="SemiBold"
+                     IsVisible="{Binding HasDeadline}"
+                     TextWrapping="Wrap"/>
 
-                <Button Grid.Column="3"
-                        Content="Delete"
-                        Command="{Binding DeleteCommand}"
-                        IsVisible="{Binding HasDeadline}" />
-            </Grid>
-
-            <!-- Anzeige -->
-            <TextBlock Text="{Binding DeadlineText}"
-                       Opacity="0.85"
-                       IsVisible="{Binding !IsEditOpen}" />
-
-            <!-- Edit/Add -->
-            <ContentControl Content="{Binding Input}"
-                            IsVisible="{Binding IsEditOpen}"/>
+          <TextBlock Text="Not set"
+                     Opacity="0.6"
+                     IsVisible="{Binding !HasDeadline}"/>
         </StackPanel>
-    </Border>
+
+        <!-- Icon actions -->
+        <StackPanel Grid.Column="1"
+                    Orientation="Horizontal"
+                    Spacing="8"
+                    VerticalAlignment="Center">
+
+          <!-- Set/Edit (Primary) -->
+          <Button Classes="misa-icon-button"
+                  Command="{Binding ToggleEditCommand}">
+
+            <StackPanel Orientation="Horizontal" Spacing="0">
+              <!-- Add -->
+              <Image Width="16"
+                     Height="16"
+                     Source="{SvgImage /Assets/Images/MainNavigation/plus-circle.svg}"
+                     IsVisible="{Binding ShowAddIcon}" />
+            
+              <!-- Edit -->
+              <Image Width="16"
+                     Height="16"
+                     Source="{SvgImage /Assets/Images/Details/pencil.svg}"
+                     IsVisible="{Binding ShowEditIcon}" />
+            
+              <!-- Cancel -->
+              <Image Width="16"
+                     Height="16"
+                     Source="{SvgImage /Assets/Images/Details/cancel.svg}"
+                     IsVisible="{Binding IsEditOpen}" />
+            </StackPanel>
+
+          </Button>
+
+
+          <!-- Delete only if exists -->
+          <Button Classes="misa-icon-button"
+                  ToolTip.Tip="Delete"
+                  Command="{Binding DeleteCommand}"
+                  IsVisible="{Binding HasDeadline}">
+              <Image Width="16"
+                     Height="16"
+                     Source="{SvgImage /Assets/Images/Details/trash.svg}" />
+          </Button>
+
+        </StackPanel>
+      </Grid>
+
+      <!-- Inline editor: divider + content, no extra border -->
+      <Border IsVisible="{Binding IsEditOpen}"
+              BorderBrush="{StaticResource BrushBorder}"
+              BorderThickness="0,1,0,0"
+              Opacity="0.6"
+              Margin="0,2,0,0"/>
+
+      <StackPanel IsVisible="{Binding IsEditOpen}"
+                  Spacing="10">
+
+        <ContentControl Content="{Binding Input}"/>
+
+        <StackPanel Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Spacing="8">
+
+          <!-- Save as subtle text button (or icon too) -->
+          <Button Classes="misa-action-subtle"
+                  Content="Save"
+                  Command="{Binding SaveCommand}" />
+
+          <Button Classes="misa-action-subtle"
+                  Content="Cancel"
+                  Command="{Binding ToggleEditCommand}" />
+        </StackPanel>
+
+      </StackPanel>
+
+    </StackPanel>
+  </Border>
 </UserControl>

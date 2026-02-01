@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Misa.Contract.Common.Results;
 using Misa.Contract.Features.Entities.Extensions.Items.Base;
@@ -40,6 +41,7 @@ public partial class DetailMainWindowViewModel : ViewModelBase
     public Task ResetAsync()
     {
         Item = ItemDto.Empty();
+        DetailInformationViewModel.Description.Descriptions.Clear();
         Extension = null;
         SelectedTabIndex = 0;
         return Task.CompletedTask;
@@ -55,26 +57,25 @@ public partial class DetailMainWindowViewModel : ViewModelBase
         
         try
         {
-            result = await _client.GetDetailsAsync(itemId, ct).ConfigureAwait(false);
+            result = await _client.GetDetailsAsync(itemId, ct);
         }
         catch (OperationCanceledException)
         {
             return;
         }
-
-        if (ct.IsCancellationRequested) return;
         
         if (result is null || !result.IsSuccess || result.Value is null)
         {
             await ResetAsync().ConfigureAwait(false);
             return;
         }
-
+        
         Item = result.Value.Item;
         Deadline = result.Value.Deadline;
         Extension = _extensionFactory.Create(result.Value);
 
         DetailInformationViewModel.Description.Load();
+        
         await DetailInformationViewModel.Session.LoadCurrentSessionAsync();
     }
 }

@@ -5,7 +5,8 @@ namespace Misa.Application.Common.Abstractions.Persistence;
 
 public interface IEntityRepository
 {
-    public Task<Entity> GetTrackedEntityAsync(Guid id);
+    Task<Description?> GetDescriptionByIdAsync(Guid descriptionId, CancellationToken ct);
+    void RemoveDescription(Description description);
     public Task SaveChangesAsync();
     public Task AddDescriptionAsync(Description description, CancellationToken ct);
 }

@@ -11,6 +11,8 @@ public static class DescriptionEndpoints
     public static void Map(WebApplication app)
     {
         app.MapPost("entities/description", AddDescription);
+        app.MapPut("entities/description", UpdateDescription);
+        app.MapDelete("entities/description/{descriptionId:guid}", DeleteDescription);
     }
 
     private static async Task<Result<DescriptionDto>> AddDescription(
@@ -23,5 +25,23 @@ public static class DescriptionEndpoints
         var res = await bus.InvokeAsync<Result<DescriptionDto>>(cmd, ct);
         
         return res;
+    }
+    private static async Task<Result<DescriptionDto>> UpdateDescription(
+        [FromBody] DescriptionUpdateDto dto,
+        IMessageBus bus,
+        CancellationToken ct = default)
+    {
+        var cmd = new UpdateDescriptionCommand(dto.Id, dto.Content);
+
+        return await bus.InvokeAsync<Result<DescriptionDto>>(cmd, ct);
+    }
+
+    private static async Task<Result> DeleteDescription(
+        [FromRoute] Guid descriptionId,
+        IMessageBus bus,
+        CancellationToken ct = default)
+    {
+        var cmd = new DeleteDescriptionCommand(descriptionId);
+        return await bus.InvokeAsync<Result>(cmd, ct);
     }
 }

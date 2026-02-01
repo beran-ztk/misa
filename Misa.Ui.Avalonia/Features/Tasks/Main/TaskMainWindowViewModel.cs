@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading;
@@ -11,10 +12,12 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
 using Misa.Contract.Common.Results;
+using Misa.Contract.Features.Entities.Extensions.Items.Base;
 using Misa.Contract.Features.Entities.Extensions.Items.Extensions.Tasks;
 using Misa.Ui.Avalonia.Features.Tasks.Content;
 using Misa.Ui.Avalonia.Infrastructure.Services.Interfaces;
 using Misa.Ui.Avalonia.Infrastructure.Services.Navigation;
+using Misa.Ui.Avalonia.Presentation.Behaviors;
 using Misa.Ui.Avalonia.Presentation.Mapping;
 using DetailMainWindowViewModel = Misa.Ui.Avalonia.Features.Details.Main.DetailMainWindowViewModel;
 using TaskHeaderViewModel = Misa.Ui.Avalonia.Features.Tasks.Header.TaskHeaderViewModel;
@@ -25,8 +28,11 @@ public partial class TaskMainWindowViewModel : ViewModelBase
 {
     private readonly IServiceProvider _sp;
     private readonly IActiveEntitySelection _selection;
-    public Window? HostWindow { get; set; }
     public ObservableCollection<TaskDto> Tasks { get; } = [];
+    public ObservableCollection<TaskDto> FilteredTasks { get; } = [];
+    
+    public ObservableCollection<PriorityFilterOption> PriorityFilters { get; } = [];
+
     
     [ObservableProperty] private TaskDto? _selectedTask;
     [ObservableProperty] private ViewModelBase? _infoView;
@@ -46,9 +52,41 @@ public partial class TaskMainWindowViewModel : ViewModelBase
         _sp = sp;
         _selection = selection;
         NavigationService = navigationService;
+
+        foreach (var p in Enum.GetValues<PriorityContract>())
+        {
+            var opt = new PriorityFilterOption(p, isSelected: true);
+            opt.PropertyChanged += (s, e) =>
+            {
+                if (e.PropertyName == nameof(PriorityFilterOption.IsSelected))
+                    ApplyFilters();
+            };
+            
+            PriorityFilters.Add(opt);
+        }
         
         Model = new TaskContentViewModel(this);
         TaskHeader = new TaskHeaderViewModel(this);
+        
+        NavigationService.NavigationStore.BreadCrumbsNavigation = "Tasks → List → Details";
+    }
+
+    private void ApplyFilters()
+    {
+        var activePriorities = PriorityFilters
+            .Where(f => f.IsSelected)
+            .Select(f => f.Priority)
+            .ToHashSet();
+        
+        FilteredTasks.Clear();
+        
+        foreach (var t in Tasks)
+        {
+            if (activePriorities.Contains(t.Item.Priority))
+            {
+                _ = AddToFilteredCollection(t);
+            }
+        }
     }
     private void EnsureDetail()
     {
@@ -79,6 +117,14 @@ public partial class TaskMainWindowViewModel : ViewModelBase
         await Dispatcher.UIThread.InvokeAsync(() => 
         {
             Tasks.Add(task);
+            FilteredTasks.Add(task);
+        });
+    }
+    public async Task AddToFilteredCollection(TaskDto task)
+    {
+        await Dispatcher.UIThread.InvokeAsync(() => 
+        {
+            FilteredTasks.Add(task);
         });
     }
     public async Task CreateTask(AddTaskDto dto)

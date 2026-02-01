@@ -6,14 +6,18 @@ using Entity = Misa.Domain.Features.Entities.Base.Entity;
 
 namespace Misa.Infrastructure.Persistence.Repositories;
 
-public class EntityRepository(DefaultContext db) : IEntityRepository
+public class EntityRepository(DefaultContext context) : IEntityRepository
 {
-    public async Task SaveChangesAsync() => await db.SaveChangesAsync();
+    public async Task SaveChangesAsync() => await context.SaveChangesAsync();
     public async Task<Entity> GetTrackedEntityAsync(Guid id)
-        => await db.Entities.FirstAsync(e => e.Id == id);
+        => await context.Entities.FirstAsync(e => e.Id == id);
+    public Task<Description?> GetDescriptionByIdAsync(Guid descriptionId, CancellationToken ct)
+        => context.Descriptions.FirstOrDefaultAsync(d => d.Id == descriptionId, ct);
 
+    public void RemoveDescription(Description description)
+        => context.Descriptions.Remove(description);
     public async Task AddDescriptionAsync(Description description, CancellationToken ct)
     {
-        await db.Descriptions.AddAsync(description, ct);
+        await context.Descriptions.AddAsync(description, ct);
     }
 }

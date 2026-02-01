@@ -1,0 +1,120 @@
+﻿<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Design.PreviewWith>
+        <Border Padding="20">
+            <!-- Add Controls for Previewer Here -->
+        </Border>
+    </Design.PreviewWith>
+
+    <!-- Add Styles Here -->
+    <!-- Section / Card -->
+  <Style Selector="Border.misa-section">
+    <Setter Property="Margin" Value="10"/>
+    <Setter Property="Padding" Value="12"/>
+    <Setter Property="CornerRadius" Value="10"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}"/>
+    <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}"/>
+  </Style>
+
+  <Style Selector="Grid.misa-section-header">
+    <Setter Property="VerticalAlignment" Value="Center"/>
+  </Style>
+
+  <Style Selector="TextBlock.misa-section-title">
+    <Setter Property="FontSize" Value="16"/>
+    <Setter Property="FontWeight" Value="SemiBold"/>
+  </Style>
+
+  <!-- Header actions (rechts) -->
+  <Style Selector="StackPanel.misa-section-actions">
+    <Setter Property="Orientation" Value="Horizontal"/>
+    <Setter Property="Spacing" Value="8"/>
+    <Setter Property="HorizontalAlignment" Value="Right"/>
+    <Setter Property="VerticalAlignment" Value="Center"/>
+  </Style>
+
+  <!-- Inputs -->
+  <Style Selector="TextBox.misa-input">
+    <Setter Property="Background" Value="{StaticResource BrushPrimaryBackground}"/>
+    <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="CornerRadius" Value="8"/>
+    <Setter Property="Padding" Value="10,8"/>
+  </Style>
+
+  <Style Selector="ComboBox.misa-input">
+    <Setter Property="Background" Value="{StaticResource BrushPrimaryBackground}"/>
+    <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="CornerRadius" Value="8"/>
+    <Setter Property="Padding" Value="10,6"/>
+  </Style>
+
+  <Style Selector="NumericUpDown.misa-input">
+    <Setter Property="Background" Value="{StaticResource BrushPrimaryBackground}"/>
+    <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="CornerRadius" Value="8"/>
+    <Setter Property="Padding" Value="10,6"/>
+  </Style>
+
+  <!-- Für DatePicker/TimePicker (Avalonia hat je nach Version leicht unterschiedliche Template-Parts;
+       der sichere, einfache Weg ist: grundlegende Border/Padding hier setzen) -->
+  <Style Selector="DatePicker.misa-input">
+    <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="CornerRadius" Value="8"/>
+    <Setter Property="Padding" Value="10,6"/>
+  </Style>
+
+  <Style Selector="TimePicker.misa-input">
+    <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="CornerRadius" Value="8"/>
+    <Setter Property="Padding" Value="10,6"/>
+  </Style>
+
+  <!-- Buttons -->
+  <Style Selector="Button.misa-action">
+    <Setter Property="Height" Value="34"/>
+    <Setter Property="Padding" Value="10,6"/>
+    <Setter Property="CornerRadius" Value="8"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}"/>
+    <Setter Property="Background" Value="{StaticResource BrushPrimaryBackground}"/>
+    <Setter Property="VerticalAlignment" Value="Center"/>
+  </Style>
+
+  <!-- Optionale, kleine Icon-Variante -->
+  <Style Selector="Button.misa-action-icon">
+    <Setter Property="Width" Value="34"/>
+    <Setter Property="Height" Value="34"/>
+    <Setter Property="Padding" Value="6"/>
+    <Setter Property="CornerRadius" Value="8"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}"/>
+    <Setter Property="Background" Value="{StaticResource BrushPrimaryBackground}"/>
+    <Setter Property="VerticalAlignment" Value="Center"/>
+  </Style>
+    <Style Selector="Button.misa-icon-button">
+      <Setter Property="Width" Value="34"/>
+      <Setter Property="Height" Value="34"/>
+      <Setter Property="Padding" Value="6"/>
+      <Setter Property="CornerRadius" Value="10"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}"/>
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="Opacity" Value="0.9"/>
+    </Style>
+
+    <Style Selector="Button.misa-action-subtle">
+      <Setter Property="Height" Value="34"/>
+      <Setter Property="Padding" Value="10,6"/>
+      <Setter Property="CornerRadius" Value="10"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}"/>
+      <Setter Property="Background" Value="Transparent"/>
+    </Style>
+
+</Styles>

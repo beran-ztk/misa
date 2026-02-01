@@ -9,21 +9,51 @@
         Icon="/Assets/Images/Shells/nanoparticle.png"
         Title="Misa">
 
-    <Grid ColumnDefinitions="100,*,1,Auto">
+    <Grid RowDefinitions="38,*,24"
+          Background="{StaticResource BrushPrimaryBackground}">
 
-        <ContentControl Grid.Column="0"
-                        Content="{Binding Navigation}" 
-                        Background="{StaticResource BrushPrimaryBackground}"/>
+        <!-- Header -->
+        <Border Grid.Row="0"
+                Background="{StaticResource BrushPrimaryBackground}">
+        </Border>
 
-        <ContentControl Grid.Column="1"
-                        Background="{StaticResource BrushPrimaryBackground}"
-                        Content="{Binding CurrentViewModel}" />
-        
-        <GridSplitter Grid.Column="2"
-                      Background="{StaticResource BrushPanelBackground}"/>
-        
-        <ContentControl Grid.Column="3"
-                        Background="{StaticResource BrushPrimaryBackground}"
-                        Content="{Binding CurrentInfoViewModel}" />
+        <!-- Main: Nav + Content + Info -->
+        <Grid Grid.Row="1" ColumnDefinitions="150,*,33">
+
+            <!-- Navigation -->
+            <ContentControl Grid.Column="0"
+                            Content="{Binding Navigation}"
+                            Background="{StaticResource BrushPrimaryBackground}" />
+
+            <!-- Main Content  -->
+            <Border Grid.Column="1"
+                    Background="{StaticResource BrushPrimaryBackground}">
+                <ContentControl Content="{Binding CurrentViewModel}" />
+            </Border>
+
+            <!-- Info bar -->
+            <Border Grid.Column="2"
+                    Background="{StaticResource BrushPrimaryBackground}"
+                    BorderBrush="{StaticResource BrushSecondaryBackground}"
+                    BorderThickness="1,0,0,0">
+            </Border>
+        </Grid>
+
+        <!-- Footer -->
+        <Border Grid.Row="2"
+                Background="{StaticResource BrushPrimaryBackground}">
+            <Grid Margin="12,0" ColumnDefinitions="*,Auto">
+                <TextBlock Grid.Column="0"
+                           FontSize="10"
+                           VerticalAlignment="Center"
+                           Foreground="{StaticResource BrushTextSecondary}"
+                           Text="{Binding BreadCrumbs}" />
+                <TextBlock Grid.Column="1"
+                           VerticalAlignment="Center"
+                           Foreground="{StaticResource BrushTextSecondary}"
+                           Text="{Binding Version}" />
+            </Grid>
+        </Border>
+
     </Grid>
 </Window>

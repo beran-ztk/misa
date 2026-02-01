@@ -6,70 +6,102 @@
              x:Class="Misa.Ui.Avalonia.App.Shell.NavigationView"
              xmlns:shell="clr-namespace:Misa.Ui.Avalonia.App.Shell"
              x:DataType="shell:NavigationViewModel">
-    
+
     <UserControl.Styles>
-        
+
+        <!-- Buttons: full width, nicer hitbox, rounded hover -->
         <Style Selector="Button.MainNavigation">
             <Setter Property="HorizontalAlignment" Value="Stretch" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-            <Setter Property="Padding" Value="8" />
+            <Setter Property="Padding" Value="10,8" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Background" Value="Transparent" />
         </Style>
-        
+
+        <Style Selector="Button.MainNavigation /template/ ContentPresenter">
+            <Setter Property="CornerRadius" Value="8" />
+        </Style>
+
         <Style Selector="Button.MainNavigation:pointerover /template/ ContentPresenter">
             <Setter Property="Background" Value="{StaticResource BrushPanelBackground}" />
         </Style>
 
         <Style Selector="Button.MainNavigation:pressed /template/ ContentPresenter">
-            <Setter Property="Background" Value="{StaticResource ColorActive}" />
+            <Setter Property="Background" Value="{StaticResource BrushPanelBackground}" />
+            <Setter Property="Opacity" Value="0.9" />
         </Style>
-        
+
+        <!-- Icon + label -->
         <Style Selector="TextBlock.MainNavigation">
-            <Setter Property="FontSize" Value="{StaticResource FontSizeMedium}"/>
-            <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
+            <Setter Property="FontSize" Value="{StaticResource FontSizeMedium}" />
+            <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}" />
+            <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
-        
+
     </UserControl.Styles>
-    
-    
+
     <Border Background="{StaticResource BrushPrimaryBackground}"
             BorderBrush="{StaticResource BrushSecondaryBackground}"
             BorderThickness="0,0,1,0">
-        
-        <Grid RowDefinitions="*,Auto">
-        
-            <StackPanel Grid.Row="0" 
+
+        <Grid RowDefinitions="Auto,*,Auto" Margin="8">
+
+            <Border Grid.Row="0" Height="8" Background="Transparent"/>
+
+            <!-- Main nav -->
+            <StackPanel Grid.Row="1"
                         Spacing="{StaticResource SpacingSmall}">
-                
-                <TextBlock Text="Navigation" 
-                           FontSize="10"
-                           Margin="2,2,0,0"
-                           Foreground="{StaticResource BrushTextFaded}"/>
-                
+
                 <Button Classes="MainNavigation"
+                        ToolTip.Tip="Tasks"
                         Command="{Binding ShowTasksCommand}">
-                    <StackPanel Orientation="Horizontal" 
-                                Spacing="{StaticResource SpacingSmall}">
+                    <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
                         <Image Width="16" Height="16"
                                Source="{SvgImage /Assets/Images/MainNavigation/list-dashes.svg}"/>
-                        <TextBlock Text="Tasks" 
-                                   Classes="MainNavigation"/>
-                    </StackPanel>
+                        <TextBlock Grid.Column="1"
+                                   Classes="MainNavigation"
+                                   Text="Tasks" />
+                    </Grid>
                 </Button>
-                
+
                 <Button Classes="MainNavigation"
+                        ToolTip.Tip="Scheduler"
                         Command="{Binding OpenSchedulerPanelCommand}">
-                    <StackPanel Orientation="Horizontal" 
-                                Spacing="{StaticResource SpacingSmall}">
+                    <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
                         <Image Width="16" Height="16"
                                Source="{SvgImage /Assets/Images/MainNavigation/calendar-dots.svg}"/>
-                        <TextBlock Text="Scheduler" 
-                                   Classes="MainNavigation"/>
-                    </StackPanel>
+                        <TextBlock Grid.Column="1"
+                                   Classes="MainNavigation"
+                                   Text="Scheduler" />
+                    </Grid>
                 </Button>
+
             </StackPanel>
+
+            <!-- Bottom: Settings -->
+            <StackPanel Grid.Row="2"
+                        Spacing="{StaticResource SpacingSmall}"
+                        VerticalAlignment="Bottom">
+
+                <Border Height="1"
+                        Margin="0,8,0,8"
+                        Background="{StaticResource BrushSecondaryBackground}"
+                        Opacity="0.6" />
+
+                <Button Classes="MainNavigation"
+                        ToolTip.Tip="Settings">
+                    <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
+                        <Image Width="16" Height="16"
+                               Source="{SvgImage /Assets/Images/MainNavigation/nut.svg}"/>
+                        <TextBlock Grid.Column="1"
+                                   Classes="MainNavigation"
+                                   Text="Settings" />
+                    </Grid>
+                </Button>
+
+            </StackPanel>
+
         </Grid>
     </Border>
-    
+
 </UserControl>
