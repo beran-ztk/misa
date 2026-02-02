@@ -8,6 +8,21 @@
         x:DataType="shell:MainWindowViewModel"
         Icon="/Assets/Images/Shells/nanoparticle.png"
         Title="Misa">
+    
+    <Window.Styles>
+        <Style Selector="Button.overlay-backdrop">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+        </Style>
+
+        <Style Selector="Button.overlay-backdrop:pointerover">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+
+        <Style Selector="Button.overlay-backdrop:pressed">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+    </Window.Styles>
 
     <Grid RowDefinitions="38,*,24"
           Background="{StaticResource BrushPrimaryBackground}">
@@ -18,27 +33,23 @@
         </Border>
 
         <!-- Main: Nav + Content + Info -->
-        <Grid Grid.Row="1" ColumnDefinitions="150,*,33">
+        <Grid Grid.Row="1" ColumnDefinitions="150,*,Auto,33">
 
-            <!-- Navigation -->
-            <ContentControl Grid.Column="0"
-                            Content="{Binding Navigation}"
-                            Background="{StaticResource BrushPrimaryBackground}" />
+            <!-- Content -->
+            <ContentControl Grid.Column="0" Content="{Binding Navigation}"/>
+            <ContentControl Grid.Column="1" Content="{Binding CurrentViewModel}" />
+            <ContentControl Grid.Column="2" Content="{Binding CurrentOverlay}" />
+            <ContentControl Grid.Column="3" Content="{Binding Information}" />
 
-            <!-- Main Content  -->
+            <!-- 1) Visuelles Backdrop (nur abdunkeln) -->
             <Border Grid.Column="1"
-                    Background="{StaticResource BrushPrimaryBackground}">
-                <ContentControl Content="{Binding CurrentViewModel}" />
-            </Border>
-
-            <!-- Info bar -->
-            <Border Grid.Column="2"
-                    Background="{StaticResource BrushPrimaryBackground}"
-                    BorderBrush="{StaticResource BrushSecondaryBackground}"
-                    BorderThickness="1,0,0,0">
-            </Border>
+                    Background="#88000000"
+                    CornerRadius="20"
+                    Margin="10"
+                    IsVisible="{Binding CurrentOverlayOpen}"
+                    PointerPressed="OverlayBackdrop_PointerPressed"/>
         </Grid>
-
+        
         <!-- Footer -->
         <Border Grid.Row="2"
                 Background="{StaticResource BrushPrimaryBackground}">
@@ -54,6 +65,6 @@
                            Text="{Binding Version}" />
             </Grid>
         </Border>
-
+        
     </Grid>
 </Window>

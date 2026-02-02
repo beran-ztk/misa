@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Misa.Api.Common.Exceptions;
 using Misa.Api.Common.Hubs;
@@ -15,6 +16,7 @@ using Misa.Application.Features.Entities.Extensions.Items.Features.Scheduling.Co
 using Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Commands;
 using Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Queries;
 using Misa.Application.Features.Entities.Features.Descriptions.Commands;
+using Misa.Contract.Common.Results;
 using Misa.Domain.Features.Audit;
 using Misa.Domain.Features.Entities.Base;
 using Misa.Domain.Features.Entities.Extensions.Items.Extensions.Tasks;
@@ -63,6 +65,7 @@ builder.Services.AddScoped<IItemRepository, ItemRepository>();
 builder.Services.AddScoped<ISchedulerPlanningRepository, SchedulerPlanningRepository>();
 builder.Services.AddScoped<ISchedulerExecutingRepository, SchedulerExecutingRepository>();
 builder.Services.AddScoped<ISchedulerRepository, SchedulerRepository>();
+builder.Services.AddScoped<ISchedulerRepository, SchedulerRepository>();
 
 // DI
 builder.Host.UseWolverine(opts =>
@@ -94,6 +97,12 @@ var app = builder.Build();
 app.MapHub<UpdatesHub>("/hubs/updates");
 app.MapControllers();
 app.UseMiddleware<ExceptionMappingMiddleware>();
+
+app.MapPost("/test/signalr", async (IHubContext<UpdatesHub> context) =>
+{
+    await context.Clients.All.SendAsync("OutboxEvent", "Hii");
+    return Result.Ok();
+});
 
 TaskEndpoints.Map(app);
 ItemDetailEndpoints.Map(app);
