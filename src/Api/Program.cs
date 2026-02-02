@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Misa.Api.Common.Exceptions;
+using Misa.Api.Common.Hubs;
 using Misa.Api.Endpoints.Features.Entities.Extensions.Items.Base;
 using Misa.Api.Endpoints.Features.Entities.Extensions.Items.Extensions;
 using Misa.Api.Endpoints.Features.Entities.Extensions.Items.Features;
@@ -27,6 +28,7 @@ using Priority = Misa.Domain.Features.Entities.Extensions.Items.Base.Priority;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddSignalR();
 builder.Services.AddControllers();
 builder.Services.AddTransient<ExceptionMappingMiddleware>();
 
@@ -89,6 +91,7 @@ builder.Host.UseWolverine(opts =>
 
 // build app
 var app = builder.Build();
+app.MapHub<UpdatesHub>("/hubs/updates");
 app.MapControllers();
 app.UseMiddleware<ExceptionMappingMiddleware>();
 
