@@ -11,7 +11,7 @@ public class OutboxConfiguration : IEntityTypeConfiguration<Outbox>
         builder.HasKey(x => x.EventId);
 
         builder.Property(x => x.EventId)
-            .ValueGeneratedNever();
+            .HasDefaultValueSql("gen_random_uuid()");
 
         builder.Property(x => x.EventType)
             .IsRequired();
