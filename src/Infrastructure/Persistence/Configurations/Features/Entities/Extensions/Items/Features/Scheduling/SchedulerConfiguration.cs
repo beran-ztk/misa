@@ -89,7 +89,7 @@ public sealed class SchedulerConfiguration : IEntityTypeConfiguration<Scheduler>
 
         builder.HasCheckConstraint(
             "ck_scheduler_occurrence_count_limit_ge_1",
-            "\"OccurrenceCountLimit\" IS NULL OR \"OccurrenceCountLimit\" >= 1"
+            "\"OccurrenceCountLimit\" IS NULL OR \"OccurrenceCountLimit\" >= 0"
         );
 
         builder.HasCheckConstraint(
