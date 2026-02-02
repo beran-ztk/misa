@@ -47,6 +47,7 @@ builder.Services.AddDbContext<DefaultContext>(options =>
             npgsql.MapEnum<SessionConcentrationType>();
             npgsql.MapEnum<TaskCategory>();
             npgsql.MapEnum<EventType>();
+            npgsql.MapEnum<OutboxEventState>();
         }
     ));
 

@@ -15,6 +15,10 @@ public class OutboxConfiguration : IEntityTypeConfiguration<Outbox>
 
         builder.Property(x => x.EventType)
             .IsRequired();
+        
+        builder.Property(x => x.EventState)
+            .IsRequired()
+            .HasDefaultValue(OutboxEventState.Pending);
 
         builder.Property(x => x.Payload)
             .HasColumnType("jsonb")
