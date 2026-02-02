@@ -8,17 +8,14 @@ public class ItemStateConfiguration : IEntityTypeConfiguration<State>
 {
     public void Configure(EntityTypeBuilder<State> builder)
     {
-        builder.ToTable("item_states");
         builder.HasKey(x => x.Id);
-        builder.Property(x => x.Id)
-            .HasColumnName("id");
+        
+        builder.Property(x => x.Id);
         
         builder.Property(x => x.Name)
-            .IsRequired()
-            .HasColumnName("name");
+            .IsRequired();
         
-        builder.Property(x => x.Synopsis)
-            .HasColumnName("synopsis");
+        builder.Property(x => x.Synopsis);
         
         builder.HasData(
             new State(1,  "Draft",     "Entwurf; noch nie daran gearbeitet"),

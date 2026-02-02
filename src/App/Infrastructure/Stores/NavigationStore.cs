@@ -7,20 +7,10 @@ namespace Misa.Ui.Avalonia.Infrastructure.Stores;
 public partial class NavigationStore(HttpClient httpClient) : ObservableObject
 {
     public HttpClient MisaHttpClient { get; set; } = httpClient;
-    private ViewModelBase? _currentViewModel;
-    private ViewModelBase? _currentInfoViewModel;
+    [ObservableProperty] private ViewModelBase? _currentViewModel;
+    [ObservableProperty] private ViewModelBase? _currentOverlay;
     
     public string BreadCrumbsBase { get; } = "Misa  →  Main  →  Navigation → ";
 
     [ObservableProperty] private string _breadCrumbsNavigation = string.Empty;
-    public ViewModelBase? CurrentViewModel
-    {
-        get => _currentViewModel;
-        set => SetProperty(ref _currentViewModel, value);
-    }
-    public ViewModelBase? CurrentInfoViewModel
-    {
-        get => _currentInfoViewModel;
-        set => SetProperty(ref _currentInfoViewModel, value);
-    }
 }

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Misa.Domain.Features.Audit;
 using Misa.Domain.Features.Entities.Base;
@@ -18,9 +19,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Misa.Infrastructure.Migrations
 {
     [DbContext(typeof(DefaultContext))]
-    partial class DefaultContextModelSnapshot : ModelSnapshot
+    [Migration("20260202151048_GenerateonAddOutboxId")]
+    partial class GenerateonAddOutboxId
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -29,7 +32,6 @@ namespace Misa.Infrastructure.Migrations
 
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "change_type", new[] { "category", "deadline", "priority", "state", "title" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "event_type", new[] { "scheduler_created_task" });
-            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "outbox_event_state", new[] { "pending", "processed" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "priority", new[] { "critical", "high", "low", "medium", "none", "urgent" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "schedule_action_type", new[] { "create_task", "deadline", "none", "recurring" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "schedule_frequency_type", new[] { "days", "hours", "minutes", "months", "once", "weeks", "years" });
@@ -341,7 +343,7 @@ namespace Misa.Infrastructure.Migrations
 
                             t.HasCheckConstraint("ck_scheduler_next_due_ge_last_run", "\"NextDueAtUtc\" IS NULL OR \"LastRunAtUtc\" IS NULL OR \"NextDueAtUtc\" >= \"LastRunAtUtc\"");
 
-                            t.HasCheckConstraint("ck_scheduler_occurrence_count_limit_ge_1", "\"OccurrenceCountLimit\" IS NULL OR \"OccurrenceCountLimit\" >= 0");
+                            t.HasCheckConstraint("ck_scheduler_occurrence_count_limit_ge_1", "\"OccurrenceCountLimit\" IS NULL OR \"OccurrenceCountLimit\" >= 1");
 
                             t.HasCheckConstraint("ck_scheduler_ttl_timespan", "\"OccurrenceTtl\" IS NULL OR \"OccurrenceTtl\" > INTERVAL '0'");
                         });
@@ -518,13 +520,8 @@ namespace Misa.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasDefaultValueSql("gen_random_uuid()");
 
-                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                    b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<OutboxEventState>("EventState")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("outbox_event_state")
-                        .HasDefaultValue(OutboxEventState.Pending);
 
                     b.Property<EventType>("EventType")
                         .HasColumnType("event_type");

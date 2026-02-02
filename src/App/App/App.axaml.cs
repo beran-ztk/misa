@@ -6,9 +6,11 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
 using Microsoft.Extensions.DependencyInjection;
+using Misa.Ui.Avalonia.App.Notifications;
 using Misa.Ui.Avalonia.App.Shell;
 using Misa.Ui.Avalonia.Features.Scheduler.Main;
 using Misa.Ui.Avalonia.Infrastructure.Services.Interfaces;
+using Misa.Ui.Avalonia.Infrastructure.Services.Messaging;
 using Misa.Ui.Avalonia.Infrastructure.Services.Navigation;
 using DetailMainWindowViewModel = Misa.Ui.Avalonia.Features.Details.Main.DetailMainWindowViewModel;
 using NavigationStore = Misa.Ui.Avalonia.Infrastructure.Stores.NavigationStore;
@@ -26,14 +28,18 @@ public partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
+        const string baseAddress = "http://localhost:4500";
         var sc = new ServiceCollection();
-
+        
         // -------------------------
         // Infrastructure / Core
         // -------------------------
+        sc.AddSingleton<NotificationViewModel>();
+        sc.AddSingleton<SignalRNotificationClient>();
+        
         sc.AddSingleton(new HttpClient
         {
-            BaseAddress = new Uri("http://localhost:4500")
+            BaseAddress = new Uri(baseAddress)
         });
 
         sc.AddSingleton<NavigationStore>();
@@ -60,14 +66,16 @@ public partial class App : Application
         // -------------------------
         // Shell / Window
         // -------------------------
-        sc.AddTransient<MainWindowViewModel>();
+        sc.AddSingleton<MainWindowViewModel>();
+        sc.AddSingleton<NavigationViewModel>();
+        sc.AddSingleton<InformationViewModel>();
 
         sc.AddSingleton<MainWindow>(sp =>
-            new MainWindow
-            {
-                DataContext = sp.GetRequiredService<MainWindowViewModel>()
-            });
-
+        {
+            var vm = sp.GetRequiredService<MainWindowViewModel>();
+            return new MainWindow { DataContext = vm };
+        });
+        
         Services = sc.BuildServiceProvider();
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
@@ -75,6 +83,9 @@ public partial class App : Application
             DisableAvaloniaDataAnnotationValidation();
 
             desktop.MainWindow = Services.GetRequiredService<MainWindow>();
+            
+            var signal = Services.GetRequiredService<SignalRNotificationClient>();
+            _ = signal.StartAsync(baseAddress);
         }
 
         base.OnFrameworkInitializationCompleted();

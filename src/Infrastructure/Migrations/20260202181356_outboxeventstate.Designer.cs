@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Misa.Domain.Features.Audit;
 using Misa.Domain.Features.Entities.Base;
@@ -18,9 +19,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Misa.Infrastructure.Migrations
 {
     [DbContext(typeof(DefaultContext))]
-    partial class DefaultContextModelSnapshot : ModelSnapshot
+    [Migration("20260202181356_outboxeventstate")]
+    partial class outboxeventstate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -341,7 +344,7 @@ namespace Misa.Infrastructure.Migrations
 
                             t.HasCheckConstraint("ck_scheduler_next_due_ge_last_run", "\"NextDueAtUtc\" IS NULL OR \"LastRunAtUtc\" IS NULL OR \"NextDueAtUtc\" >= \"LastRunAtUtc\"");
 
-                            t.HasCheckConstraint("ck_scheduler_occurrence_count_limit_ge_1", "\"OccurrenceCountLimit\" IS NULL OR \"OccurrenceCountLimit\" >= 0");
+                            t.HasCheckConstraint("ck_scheduler_occurrence_count_limit_ge_1", "\"OccurrenceCountLimit\" IS NULL OR \"OccurrenceCountLimit\" >= 1");
 
                             t.HasCheckConstraint("ck_scheduler_ttl_timespan", "\"OccurrenceTtl\" IS NULL OR \"OccurrenceTtl\" > INTERVAL '0'");
                         });

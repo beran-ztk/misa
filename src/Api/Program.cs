@@ -1,5 +1,7 @@
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Misa.Api.Common.Exceptions;
+using Misa.Api.Common.Hubs;
 using Misa.Api.Endpoints.Features.Entities.Extensions.Items.Base;
 using Misa.Api.Endpoints.Features.Entities.Extensions.Items.Extensions;
 using Misa.Api.Endpoints.Features.Entities.Extensions.Items.Features;
@@ -14,11 +16,13 @@ using Misa.Application.Features.Entities.Extensions.Items.Features.Scheduling.Co
 using Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Commands;
 using Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Queries;
 using Misa.Application.Features.Entities.Features.Descriptions.Commands;
+using Misa.Contract.Common.Results;
 using Misa.Domain.Features.Audit;
 using Misa.Domain.Features.Entities.Base;
 using Misa.Domain.Features.Entities.Extensions.Items.Extensions.Tasks;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions;
+using Misa.Domain.Features.Messaging;
 using Misa.Infrastructure.Persistence.Context;
 using Misa.Infrastructure.Persistence.Repositories;
 using Wolverine;
@@ -26,6 +30,7 @@ using Priority = Misa.Domain.Features.Entities.Extensions.Items.Base.Priority;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddSignalR();
 builder.Services.AddControllers();
 builder.Services.AddTransient<ExceptionMappingMiddleware>();
 
@@ -34,17 +39,19 @@ builder.Services.AddDbContext<DefaultContext>(options =>
         "Host=localhost;Port=5432;Database=misa;Username=postgres;Password=meow",
         npgsql =>
         {
-            npgsql.MapEnum<ScheduleMisfirePolicy>("schedule_misfire_policy");
-            npgsql.MapEnum<ScheduleFrequencyType>("schedule_frequency_type");
-            npgsql.MapEnum<ScheduleActionType>("schedule_action_type");
-            npgsql.MapEnum<SchedulerExecutionStatus>("schedule_execution_state");
-            npgsql.MapEnum<Priority>("priority");
-            npgsql.MapEnum<ChangeType>("change_type");
-            npgsql.MapEnum<Workflow>("workflow");
-            npgsql.MapEnum<SessionState>("session_state");
-            npgsql.MapEnum<SessionEfficiencyType>("session_efficiency_type");
-            npgsql.MapEnum<SessionConcentrationType>("session_concentration_type");
-            npgsql.MapEnum<TaskCategory>("task_category");
+            npgsql.MapEnum<ScheduleMisfirePolicy>();
+            npgsql.MapEnum<ScheduleFrequencyType>();
+            npgsql.MapEnum<ScheduleActionType>();
+            npgsql.MapEnum<SchedulerExecutionStatus>();
+            npgsql.MapEnum<Priority>();
+            npgsql.MapEnum<ChangeType>();
+            npgsql.MapEnum<Workflow>();
+            npgsql.MapEnum<SessionState>();
+            npgsql.MapEnum<SessionEfficiencyType>();
+            npgsql.MapEnum<SessionConcentrationType>();
+            npgsql.MapEnum<TaskCategory>();
+            npgsql.MapEnum<EventType>();
+            npgsql.MapEnum<OutboxEventState>();
         }
     ));
 
@@ -57,6 +64,7 @@ builder.Services.AddScoped<IEntityRepository, EntityRepository>();
 builder.Services.AddScoped<IItemRepository, ItemRepository>();
 builder.Services.AddScoped<ISchedulerPlanningRepository, SchedulerPlanningRepository>();
 builder.Services.AddScoped<ISchedulerExecutingRepository, SchedulerExecutingRepository>();
+builder.Services.AddScoped<ISchedulerRepository, SchedulerRepository>();
 builder.Services.AddScoped<ISchedulerRepository, SchedulerRepository>();
 
 // DI
@@ -86,8 +94,15 @@ builder.Host.UseWolverine(opts =>
 
 // build app
 var app = builder.Build();
+app.MapHub<UpdatesHub>("/hubs/updates");
 app.MapControllers();
 app.UseMiddleware<ExceptionMappingMiddleware>();
+
+app.MapPost("/test/signalr", async (IHubContext<UpdatesHub> context) =>
+{
+    await context.Clients.All.SendAsync("OutboxEvent", "Hii");
+    return Result.Ok();
+});
 
 TaskEndpoints.Map(app);
 ItemDetailEndpoints.Map(app);

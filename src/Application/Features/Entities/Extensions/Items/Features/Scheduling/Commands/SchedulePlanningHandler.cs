@@ -17,7 +17,7 @@ public class SchedulePlanningHandler(ISchedulerPlanningRepository repository)
                 && schedule.ScheduleFrequencyType != ScheduleFrequencyType.Hours
                 && schedule.ScheduleFrequencyType != ScheduleFrequencyType.Days)
             {
-                break;
+                continue;
             }
             
             var currentLookaheadCount = await  repository.GetExecutionCountPlannedAheadAsync(schedule.Id, now, stoppingToken);
