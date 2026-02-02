@@ -4,6 +4,7 @@ using Misa.Application.Common.Mappings;
 using Misa.Contract.Common.Results;
 using Misa.Contract.Features.Entities.Extensions.Items.Extensions.Tasks;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
+using Misa.Domain.Features.Messaging;
 using Wolverine;
 
 namespace Misa.Application.Features.Entities.Extensions.Items.Features.Scheduling.Commands;
@@ -39,6 +40,11 @@ public class ScheduleExecutingHandler(ISchedulerExecutingRepository repository)
             if (result.Status == ResultStatus.Success)
             {
                 log.Succeeded(DateTimeOffset.UtcNow);
+                await repository.AddOutboxMessageAsync(
+                    new Outbox(EventType.SchedulerCreatedTask,
+                        JsonSerializer.Serialize("Blabla"), 
+                        DateTimeOffset.UtcNow), 
+                    stoppingToken);
             }
             else
             {

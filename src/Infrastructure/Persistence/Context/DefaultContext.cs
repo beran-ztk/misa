@@ -6,6 +6,7 @@ using Misa.Domain.Features.Entities.Extensions.Items.Base;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions;
 using Misa.Domain.Features.Entities.Features.Descriptions;
+using Misa.Domain.Features.Messaging;
 using Task = Misa.Domain.Features.Entities.Extensions.Items.Extensions.Tasks.Task;
 
 namespace Misa.Infrastructure.Persistence.Context;
@@ -24,6 +25,7 @@ public class DefaultContext(DbContextOptions<DefaultContext> options) : DbContex
 
     public DbSet<Scheduler> Schedulers { get; set; } = null!;
     public DbSet<SchedulerExecutionLog> SchedulerExecutionLogs { get; set; } = null!;
+    public DbSet<Outbox> Outbox { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
