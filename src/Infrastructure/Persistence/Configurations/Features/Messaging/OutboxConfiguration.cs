@@ -8,8 +8,6 @@ public class OutboxConfiguration : IEntityTypeConfiguration<Outbox>
 {
     public void Configure(EntityTypeBuilder<Outbox> builder)
     {
-        builder.ToTable("outbox");
-
         builder.HasKey(x => x.EventId);
 
         builder.Property(x => x.EventId)
