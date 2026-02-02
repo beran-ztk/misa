@@ -8,22 +8,17 @@ public class DescriptionConfiguration : IEntityTypeConfiguration<Description>
 {
     public void Configure(EntityTypeBuilder<Description> builder)
     {
-        builder.ToTable("descriptions");
         builder.HasKey(x => x.Id);
         
         builder.Property(x => x.Id)
-            .HasColumnName("id")
             .HasDefaultValueSql("gen_random_uuid()");
         
-        builder.Property(x => x.EntityId)
-            .HasColumnName("entity_id");
+        builder.Property(x => x.EntityId);
         
         builder.Property(x => x.Content)
-            .IsRequired()
-            .HasColumnName("content");
+            .IsRequired();
         
         builder.Property(x => x.CreatedAtUtc)
-            .IsRequired()
-            .HasColumnName("created_at_utc");
+            .IsRequired();
     }
 }

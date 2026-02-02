@@ -8,65 +8,41 @@ public class SessionConfiguration : IEntityTypeConfiguration<Session>
 {
     public void Configure(EntityTypeBuilder<Session> builder)
     {
-        builder.ToTable("sessions");
-
         builder.HasKey(x => x.Id);
 
         builder.Property(x => x.Id)
-            .HasColumnName("id")
             .HasDefaultValueSql("gen_random_uuid()");
 
-        builder.Property(x => x.ItemId)
-            .HasColumnName("item_id");
+        builder.Property(x => x.ItemId);
 
         builder.Property(x => x.State)
             .IsRequired()
-            .HasColumnName("state")
-            .HasColumnType("session_state")
             .HasDefaultValue(SessionState.Running);
 
         builder.Property(x => x.Efficiency)
             .IsRequired()
-            .HasColumnName("efficiency")
-            .HasColumnType("session_efficiency_type")
             .HasDefaultValue(SessionEfficiencyType.None);
 
         builder.Property(x => x.Concentration)
             .IsRequired()
-            .HasColumnName("concentration")
-            .HasColumnType("session_concentration_type")
             .HasDefaultValue(SessionConcentrationType.None);
 
-        builder.Property(x => x.Objective)
-            .HasColumnName("objective");
+        builder.Property(x => x.Objective);
 
-        builder.Property(x => x.Summary)
-            .HasColumnName("summary");
+        builder.Property(x => x.Summary);
 
-        builder.Property(x => x.AutoStopReason)
-            .HasColumnName("auto_stop_reason");
+        builder.Property(x => x.AutoStopReason);
 
-        builder.Property(x => x.PlannedDuration)
-            .HasColumnName("planned_duration")
-            .HasColumnType("interval");
+        builder.Property(x => x.PlannedDuration);
 
         builder.Property(x => x.StopAutomatically)
-            .HasColumnName("stop_automatically")
             .IsRequired();
         
-        builder.Property(x => x.WasAutomaticallyStopped)
-            .HasColumnName("was_automatically_stopped");
+        builder.Property(x => x.WasAutomaticallyStopped);
 
         builder.Property(x => x.CreatedAtUtc)
-            .HasColumnName("created_at_utc")
             .IsRequired();
 
-        // Constraints
-        builder.HasCheckConstraint(
-            "ck_planned_duration", 
-            "planned_duration IS NULL OR (planned_duration > INTERVAL '0 seconds' AND planned_duration < INTERVAL '1 day')"
-        );
-        
         // Relations
         builder.HasMany(s => s.Segments)
             .WithOne()

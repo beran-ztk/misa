@@ -31,9 +31,9 @@ namespace Misa.Infrastructure.Migrations
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "event_type", new[] { "scheduler_created_task" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "priority", new[] { "critical", "high", "low", "medium", "none", "urgent" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "schedule_action_type", new[] { "create_task", "deadline", "none", "recurring" });
-            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "schedule_execution_state", new[] { "claimed", "failed", "pending", "running", "skipped", "succeeded" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "schedule_frequency_type", new[] { "days", "hours", "minutes", "months", "once", "weeks", "years" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "schedule_misfire_policy", new[] { "catchup", "run_once", "skip" });
+            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "scheduler_execution_status", new[] { "claimed", "failed", "pending", "running", "skipped", "succeeded" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "session_concentration_type", new[] { "deep_focus", "distracted", "focused", "hyperfocus", "none", "unfocused_but_calm" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "session_efficiency_type", new[] { "high_output", "low_output", "none", "peak_performance", "steady_output" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "session_state", new[] { "ended", "paused", "running" });
@@ -46,38 +46,31 @@ namespace Misa.Infrastructure.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("id")
                         .HasDefaultValueSql("gen_random_uuid()");
 
                     b.Property<ChangeType>("ChangeType")
-                        .HasColumnType("change_type")
-                        .HasColumnName("field");
+                        .HasColumnType("change_type");
 
                     b.Property<DateTimeOffset>("CreatedAtUtc")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at_utc");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid>("EntityId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("entity_id");
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Reason")
-                        .HasColumnType("text")
-                        .HasColumnName("reason");
+                        .HasColumnType("text");
 
                     b.Property<string>("ValueAfter")
-                        .HasColumnType("text")
-                        .HasColumnName("value_after");
+                        .HasColumnType("text");
 
                     b.Property<string>("ValueBefore")
-                        .HasColumnType("text")
-                        .HasColumnName("value_before");
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
                     b.HasIndex("EntityId");
 
-                    b.ToTable("audit_changes", (string)null);
+                    b.ToTable("AuditChanges");
                 });
 
             modelBuilder.Entity("Misa.Domain.Features.Entities.Base.Entity", b =>
@@ -85,101 +78,85 @@ namespace Misa.Infrastructure.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("id")
                         .HasDefaultValueSql("gen_random_uuid()");
 
                     b.Property<DateTimeOffset?>("ArchivedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("archived_at_utc");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at_utc");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTimeOffset?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("deleted_at_utc");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTimeOffset?>("InteractedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("interacted_at_utc");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("IsArchived")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
-                        .HasDefaultValue(false)
-                        .HasColumnName("is_archived");
+                        .HasDefaultValue(false);
 
                     b.Property<bool>("IsDeleted")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
-                        .HasDefaultValue(false)
-                        .HasColumnName("is_deleted");
+                        .HasDefaultValue(false);
 
                     b.Property<DateTimeOffset?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at_utc");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<Workflow>("Workflow")
-                        .HasColumnType("workflow")
-                        .HasColumnName("workflow");
+                        .HasColumnType("workflow");
 
                     b.HasKey("Id");
 
-                    b.ToTable("entities", (string)null);
+                    b.ToTable("Entities");
                 });
 
             modelBuilder.Entity("Misa.Domain.Features.Entities.Extensions.Items.Base.Item", b =>
                 {
                     b.Property<Guid>("Id")
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
+                        .HasColumnType("uuid");
 
                     b.Property<Priority>("Priority")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("priority")
-                        .HasDefaultValue(Priority.None)
-                        .HasColumnName("priority");
+                        .HasDefaultValue(Priority.None);
 
                     b.Property<int>("StateId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasDefaultValue(1)
-                        .HasColumnName("state_id");
+                        .HasDefaultValue(1);
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("title");
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
                     b.HasIndex("StateId");
 
-                    b.ToTable("items", (string)null);
+                    b.ToTable("Items");
                 });
 
             modelBuilder.Entity("Misa.Domain.Features.Entities.Extensions.Items.Base.State", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
+                        .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("name");
+                        .HasColumnType("text");
 
                     b.Property<string>("Synopsis")
-                        .HasColumnType("text")
-                        .HasColumnName("synopsis");
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
-                    b.ToTable("item_states", (string)null);
+                    b.ToTable("States");
 
                     b.HasData(
                         new
@@ -265,16 +242,14 @@ namespace Misa.Infrastructure.Migrations
             modelBuilder.Entity("Misa.Domain.Features.Entities.Extensions.Items.Extensions.Tasks.Task", b =>
                 {
                     b.Property<Guid>("Id")
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
+                        .HasColumnType("uuid");
 
                     b.Property<TaskCategory>("Category")
-                        .HasColumnType("task_category")
-                        .HasColumnName("category");
+                        .HasColumnType("task_category");
 
                     b.HasKey("Id");
 
-                    b.ToTable("tasks", (string)null);
+                    b.ToTable("Tasks");
                 });
 
             modelBuilder.Entity("Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling.Scheduler", b =>
@@ -282,113 +257,92 @@ namespace Misa.Infrastructure.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("id")
                         .HasDefaultValueSql("gen_random_uuid()");
 
                     b.Property<ScheduleActionType>("ActionType")
-                        .HasColumnType("schedule_action_type")
-                        .HasColumnName("action_type");
+                        .HasColumnType("schedule_action_type");
 
                     b.Property<DateTimeOffset>("ActiveFromUtc")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("active_from_utc");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTimeOffset?>("ActiveUntilUtc")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("active_until_utc");
+                        .HasColumnType("timestamp with time zone");
 
                     b.PrimitiveCollection<int[]>("ByDay")
-                        .HasColumnType("integer[]")
-                        .HasColumnName("by_day");
+                        .HasColumnType("integer[]");
 
                     b.PrimitiveCollection<int[]>("ByMonth")
-                        .HasColumnType("integer[]")
-                        .HasColumnName("by_month");
+                        .HasColumnType("integer[]");
 
                     b.PrimitiveCollection<int[]>("ByMonthDay")
-                        .HasColumnType("integer[]")
-                        .HasColumnName("by_month_day");
+                        .HasColumnType("integer[]");
 
                     b.Property<TimeOnly?>("EndTime")
-                        .HasColumnType("time without time zone")
-                        .HasColumnName("end_time");
+                        .HasColumnType("time without time zone");
 
                     b.Property<int>("FrequencyInterval")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasDefaultValue(1)
-                        .HasColumnName("frequency_interval");
+                        .HasDefaultValue(1);
 
                     b.Property<DateTimeOffset?>("LastRunAtUtc")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("last_run_at_utc");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("LookaheadLimit")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasDefaultValue(1)
-                        .HasColumnName("lookahead_limit");
+                        .HasDefaultValue(1);
 
                     b.Property<ScheduleMisfirePolicy>("MisfirePolicy")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("schedule_misfire_policy")
-                        .HasDefaultValue(ScheduleMisfirePolicy.Catchup)
-                        .HasColumnName("misfire_policy");
+                        .HasDefaultValue(ScheduleMisfirePolicy.Catchup);
 
                     b.Property<DateTimeOffset?>("NextAllowedExecutionAtUtc")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("next_allowed_execution_at_utc");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTimeOffset?>("NextDueAtUtc")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("next_due_at_utc");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int?>("OccurrenceCountLimit")
-                        .HasColumnType("integer")
-                        .HasColumnName("occurrence_count_limit");
+                        .HasColumnType("integer");
 
                     b.Property<TimeSpan?>("OccurrenceTtl")
-                        .HasColumnType("interval")
-                        .HasColumnName("occurrence_ttl");
+                        .HasColumnType("interval");
 
                     b.Property<string>("Payload")
-                        .HasColumnType("jsonb")
-                        .HasColumnName("payload");
+                        .HasColumnType("jsonb");
 
                     b.Property<ScheduleFrequencyType>("ScheduleFrequencyType")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("schedule_frequency_type")
-                        .HasDefaultValue(ScheduleFrequencyType.Once)
-                        .HasColumnName("frequency_type");
+                        .HasDefaultValue(ScheduleFrequencyType.Once);
 
                     b.Property<TimeOnly?>("StartTime")
-                        .HasColumnType("time without time zone")
-                        .HasColumnName("start_time");
+                        .HasColumnType("time without time zone");
 
                     b.Property<Guid?>("TargetItemId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("target_item_id");
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Timezone")
                         .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("timezone");
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
-                    b.ToTable("scheduler", null, t =>
+                    b.ToTable("Schedulers", t =>
                         {
-                            t.HasCheckConstraint("ck_scheduler_active_date", "active_until_utc IS NULL OR active_until_utc > active_from_utc");
+                            t.HasCheckConstraint("ck_scheduler_active_date", "\"ActiveUntilUtc\" IS NULL OR \"ActiveUntilUtc\" > \"ActiveFromUtc\"");
 
-                            t.HasCheckConstraint("ck_scheduler_active_time", "(start_time IS NULL AND end_time IS NULL) OR (start_time IS NOT NULL AND end_time IS NOT NULL AND start_time < end_time)");
+                            t.HasCheckConstraint("ck_scheduler_active_time", "(\"StartTime\" IS NULL AND \"EndTime\" IS NULL) OR (\"StartTime\" IS NOT NULL AND \"EndTime\" IS NOT NULL AND \"StartTime\" < \"EndTime\")");
 
-                            t.HasCheckConstraint("ck_scheduler_lookahead_limit_gt_0", "lookahead_limit > 0");
+                            t.HasCheckConstraint("ck_scheduler_lookahead_limit_gt_0", "\"LookaheadLimit\" > 0");
 
-                            t.HasCheckConstraint("ck_scheduler_next_due_ge_last_run", "next_due_at_utc IS NULL OR last_run_at_utc IS NULL OR next_due_at_utc >= last_run_at_utc");
+                            t.HasCheckConstraint("ck_scheduler_next_due_ge_last_run", "\"NextDueAtUtc\" IS NULL OR \"LastRunAtUtc\" IS NULL OR \"NextDueAtUtc\" >= \"LastRunAtUtc\"");
 
-                            t.HasCheckConstraint("ck_scheduler_occurrence_count_limit_ge_1", "occurrence_count_limit IS NULL OR occurrence_count_limit >= 1");
+                            t.HasCheckConstraint("ck_scheduler_occurrence_count_limit_ge_1", "\"OccurrenceCountLimit\" IS NULL OR \"OccurrenceCountLimit\" >= 1");
 
-                            t.HasCheckConstraint("ck_scheduler_ttl_timespan", "occurrence_ttl IS NULL OR occurrence_ttl > INTERVAL '0'");
+                            t.HasCheckConstraint("ck_scheduler_ttl_timespan", "\"OccurrenceTtl\" IS NULL OR \"OccurrenceTtl\" > INTERVAL '0'");
                         });
                 });
 
@@ -397,69 +351,59 @@ namespace Misa.Infrastructure.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("id")
                         .HasDefaultValueSql("gen_random_uuid()");
 
                     b.Property<int>("Attempts")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasDefaultValue(0)
-                        .HasColumnName("attempts");
+                        .HasDefaultValue(0);
 
                     b.Property<DateTimeOffset?>("ClaimedAtUtc")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("claimed_at_utc");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTimeOffset>("CreatedAtUtc")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at_utc")
                         .HasDefaultValueSql("now()");
 
                     b.Property<string>("Error")
-                        .HasColumnType("text")
-                        .HasColumnName("error");
+                        .HasColumnType("text");
 
                     b.Property<DateTimeOffset?>("FinishedAtUtc")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("finished_at_utc");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTimeOffset>("ScheduledForUtc")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("scheduled_for_utc");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid>("SchedulerId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("scheduler_id");
+                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset?>("StartedAtUtc")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("started_at_utc");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<SchedulerExecutionStatus>("Status")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("schedule_execution_state")
-                        .HasDefaultValue(SchedulerExecutionStatus.Pending)
-                        .HasColumnName("status");
+                        .HasColumnType("scheduler_execution_status")
+                        .HasDefaultValue(SchedulerExecutionStatus.Pending);
 
                     b.HasKey("Id");
 
                     b.HasIndex("SchedulerId", "ScheduledForUtc")
                         .IsUnique();
 
-                    b.ToTable("scheduler_execution_log", null, t =>
+                    b.ToTable("SchedulerExecutionLogs", t =>
                         {
-                            t.HasCheckConstraint("ck_schedexec_after_claimed_requires_started", "status IN ('pending','claimed') OR started_at_utc IS NOT NULL");
+                            t.HasCheckConstraint("ck_schedexec_after_claimed_requires_started", "\"Status\" IN ('pending','claimed') OR \"StartedAtUtc\" IS NOT NULL");
 
-                            t.HasCheckConstraint("ck_schedexec_claimed_le_started_or_started_null", "started_at_utc IS NULL OR claimed_at_utc <= started_at_utc");
+                            t.HasCheckConstraint("ck_schedexec_claimed_le_started_or_started_null", "\"StartedAtUtc\" IS NULL OR \"ClaimedAtUtc\" <= \"StartedAtUtc\"");
 
-                            t.HasCheckConstraint("ck_schedexec_done_requires_finished", "status NOT IN ('succeeded','failed','skipped') OR finished_at_utc IS NOT NULL");
+                            t.HasCheckConstraint("ck_schedexec_done_requires_finished", "\"Status\" NOT IN ('succeeded','failed','skipped') OR \"FinishedAtUtc\" IS NOT NULL");
 
-                            t.HasCheckConstraint("ck_schedexec_not_pending_requires_claimed", "status = 'pending' OR claimed_at_utc IS NOT NULL");
+                            t.HasCheckConstraint("ck_schedexec_not_pending_requires_claimed", "\"Status\" = 'pending' OR \"ClaimedAtUtc\" IS NOT NULL");
 
-                            t.HasCheckConstraint("ck_schedexec_pending_has_no_timestamps", "status <> 'pending' OR (claimed_at_utc IS NULL AND started_at_utc IS NULL AND finished_at_utc IS NULL)");
+                            t.HasCheckConstraint("ck_schedexec_pending_has_no_timestamps", "\"Status\" <> 'pending' OR (\"ClaimedAtUtc\" IS NULL AND \"StartedAtUtc\" IS NULL AND \"FinishedAtUtc\" IS NULL)");
 
-                            t.HasCheckConstraint("ck_schedexec_started_le_finished_or_finished_null", "finished_at_utc IS NULL OR started_at_utc <= finished_at_utc");
+                            t.HasCheckConstraint("ck_schedexec_started_le_finished_or_finished_null", "\"FinishedAtUtc\" IS NULL OR \"StartedAtUtc\" <= \"FinishedAtUtc\"");
                         });
                 });
 
@@ -468,67 +412,52 @@ namespace Misa.Infrastructure.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("id")
                         .HasDefaultValueSql("gen_random_uuid()");
 
                     b.Property<string>("AutoStopReason")
-                        .HasColumnType("text")
-                        .HasColumnName("auto_stop_reason");
+                        .HasColumnType("text");
 
                     b.Property<SessionConcentrationType>("Concentration")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("session_concentration_type")
-                        .HasDefaultValue(SessionConcentrationType.None)
-                        .HasColumnName("concentration");
+                        .HasDefaultValue(SessionConcentrationType.None);
 
                     b.Property<DateTimeOffset>("CreatedAtUtc")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at_utc");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<SessionEfficiencyType>("Efficiency")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("session_efficiency_type")
-                        .HasDefaultValue(SessionEfficiencyType.None)
-                        .HasColumnName("efficiency");
+                        .HasDefaultValue(SessionEfficiencyType.None);
 
                     b.Property<Guid>("ItemId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("item_id");
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Objective")
-                        .HasColumnType("text")
-                        .HasColumnName("objective");
+                        .HasColumnType("text");
 
                     b.Property<TimeSpan?>("PlannedDuration")
-                        .HasColumnType("interval")
-                        .HasColumnName("planned_duration");
+                        .HasColumnType("interval");
 
                     b.Property<SessionState>("State")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("session_state")
-                        .HasDefaultValue(SessionState.Running)
-                        .HasColumnName("state");
+                        .HasDefaultValue(SessionState.Running);
 
                     b.Property<bool>("StopAutomatically")
-                        .HasColumnType("boolean")
-                        .HasColumnName("stop_automatically");
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Summary")
-                        .HasColumnType("text")
-                        .HasColumnName("summary");
+                        .HasColumnType("text");
 
                     b.Property<bool?>("WasAutomaticallyStopped")
-                        .HasColumnType("boolean")
-                        .HasColumnName("was_automatically_stopped");
+                        .HasColumnType("boolean");
 
                     b.HasKey("Id");
 
                     b.HasIndex("ItemId");
 
-                    b.ToTable("sessions", null, t =>
-                        {
-                            t.HasCheckConstraint("ck_planned_duration", "planned_duration IS NULL OR (planned_duration > INTERVAL '0 seconds' AND planned_duration < INTERVAL '1 day')");
-                        });
+                    b.ToTable("Sessions");
                 });
 
             modelBuilder.Entity("Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions.SessionSegment", b =>
@@ -536,33 +465,25 @@ namespace Misa.Infrastructure.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("id")
                         .HasDefaultValueSql("gen_random_uuid()");
 
                     b.Property<DateTimeOffset?>("EndedAtUtc")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("ended_at_utc");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("PauseReason")
-                        .HasColumnType("text")
-                        .HasColumnName("pause_reason");
+                        .HasColumnType("text");
 
                     b.Property<Guid>("SessionId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("session_id");
+                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("StartedAtUtc")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("started_at_utc");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
                     b.HasIndex("SessionId");
 
-                    b.ToTable("session_segments", null, t =>
-                        {
-                            t.HasCheckConstraint("ck_session_segments_ended_after_started", "ended_at_utc IS NULL OR started_at_utc <= ended_at_utc");
-                        });
+                    b.ToTable("SessionSegments");
                 });
 
             modelBuilder.Entity("Misa.Domain.Features.Entities.Features.Descriptions.Description", b =>
@@ -570,27 +491,23 @@ namespace Misa.Infrastructure.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("id")
                         .HasDefaultValueSql("gen_random_uuid()");
 
                     b.Property<string>("Content")
                         .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("content");
+                        .HasColumnType("text");
 
                     b.Property<DateTimeOffset>("CreatedAtUtc")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at_utc");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid>("EntityId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("entity_id");
+                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
                     b.HasIndex("EntityId");
 
-                    b.ToTable("descriptions", (string)null);
+                    b.ToTable("Descriptions");
                 });
 
             modelBuilder.Entity("Misa.Domain.Features.Messaging.Outbox", b =>
@@ -610,7 +527,7 @@ namespace Misa.Infrastructure.Migrations
 
                     b.HasKey("EventId");
 
-                    b.ToTable("outbox", (string)null);
+                    b.ToTable("Outbox");
                 });
 
             modelBuilder.Entity("Misa.Domain.Features.Audit.AuditChange", b =>

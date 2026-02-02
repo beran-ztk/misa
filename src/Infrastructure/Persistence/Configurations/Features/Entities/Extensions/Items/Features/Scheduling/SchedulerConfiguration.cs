@@ -8,106 +8,94 @@ public sealed class SchedulerConfiguration : IEntityTypeConfiguration<Scheduler>
 {
     public void Configure(EntityTypeBuilder<Scheduler> builder)
     {
-        builder.ToTable("scheduler", t =>
-        {
-            t.HasCheckConstraint("ck_scheduler_lookahead_limit_gt_0", "lookahead_limit > 0");
-            t.HasCheckConstraint("ck_scheduler_ttl_timespan", "occurrence_ttl IS NULL OR occurrence_ttl > INTERVAL '0'");
-            t.HasCheckConstraint("ck_scheduler_active_time", 
-                "(start_time IS NULL AND end_time IS NULL) " +
-                "OR (start_time IS NOT NULL AND end_time IS NOT NULL AND start_time < end_time)"
-            );
-            t.HasCheckConstraint("ck_scheduler_active_date",
-                "active_until_utc IS NULL OR active_until_utc > active_from_utc");
-            t.HasCheckConstraint(
-                "ck_scheduler_occurrence_count_limit_ge_1",
-                "occurrence_count_limit IS NULL OR occurrence_count_limit >= 1"
-            );
-            t.HasCheckConstraint(
-                "ck_scheduler_next_due_ge_last_run",
-                "next_due_at_utc IS NULL OR last_run_at_utc IS NULL OR next_due_at_utc >= last_run_at_utc"
-            );
-        });
-
         builder.HasKey(s => s.Id);
 
         builder.Property(s => s.Id)
-            .HasColumnName("id")
             .HasDefaultValueSql("gen_random_uuid()");
         
-        builder.Property(s => s.TargetItemId)
-            .HasColumnName("target_item_id");
+        builder.Property(s => s.TargetItemId);
         
         builder.Property(s => s.ScheduleFrequencyType)
             .IsRequired()
-            .HasColumnName("frequency_type")
-            .HasColumnType("schedule_frequency_type")
             .HasDefaultValue(ScheduleFrequencyType.Once);
 
         builder.Property(s => s.FrequencyInterval)
             .IsRequired()
-            .HasColumnName("frequency_interval")
             .HasDefaultValue(1);
 
-        builder.Property(s => s.OccurrenceCountLimit)
-            .HasColumnName("occurrence_count_limit");
+        builder.Property(s => s.OccurrenceCountLimit);
 
-        builder.Property(s => s.ByDay)
-            .HasColumnName("by_day");
+        builder.Property(s => s.ByDay);
 
-        builder.Property(s => s.ByMonthDay)
-            .HasColumnName("by_month_day");
+        builder.Property(s => s.ByMonthDay);
 
-        builder.Property(s => s.ByMonth)
-            .HasColumnName("by_month");
+        builder.Property(s => s.ByMonth);
 
         builder.Property(s => s.MisfirePolicy)
             .IsRequired()
-            .HasColumnName("misfire_policy")
-            .HasColumnType("schedule_misfire_policy")
             .HasDefaultValue(ScheduleMisfirePolicy.Catchup);
 
         builder.Property(s => s.LookaheadLimit)
             .IsRequired()
-            .HasColumnName("lookahead_limit")
             .HasDefaultValue(1);
 
-        builder.Property(s => s.OccurrenceTtl)
-            .HasColumnName("occurrence_ttl");
+        builder.Property(s => s.OccurrenceTtl);
 
         builder.Property(s => s.ActionType)
-            .IsRequired()
-            .HasColumnName("action_type")
-            .HasColumnType("schedule_action_type");
+            .IsRequired();
         
         builder.Property(s => s.Payload)
-            .HasColumnName("payload")
             .HasColumnType("jsonb");
 
         builder.Property(s => s.Timezone)
-            .IsRequired()
-            .HasColumnName("timezone");
+            .IsRequired();
 
-        builder.Property(s => s.StartTime)
-            .HasColumnName("start_time");
+        builder.Property(s => s.StartTime);
 
-        builder.Property(s => s.EndTime)
-            .HasColumnName("end_time");
+        builder.Property(s => s.EndTime);
 
         builder.Property(s => s.ActiveFromUtc)
-            .IsRequired()
-            .HasColumnName("active_from_utc");
+            .IsRequired();
 
-        builder.Property(s => s.ActiveUntilUtc)
-            .HasColumnName("active_until_utc");
+        builder.Property(s => s.ActiveUntilUtc);
 
-        builder.Property(s => s.LastRunAtUtc)
-            .HasColumnName("last_run_at_utc");
+        builder.Property(s => s.LastRunAtUtc);
 
-        builder.Property(s => s.NextDueAtUtc)
-            .HasColumnName("next_due_at_utc");
+        builder.Property(s => s.NextDueAtUtc);
 
-        builder.Property(s => s.NextAllowedExecutionAtUtc)
-            .HasColumnName("next_allowed_execution_at_utc");
+        builder.Property(s => s.NextAllowedExecutionAtUtc);
+        
+        // Constraints
+        builder.HasCheckConstraint(
+            "ck_scheduler_lookahead_limit_gt_0",
+            "\"LookaheadLimit\" > 0"
+        );
+
+        builder.HasCheckConstraint(
+            "ck_scheduler_ttl_timespan",
+            "\"OccurrenceTtl\" IS NULL OR \"OccurrenceTtl\" > INTERVAL '0'"
+        );
+
+        builder.HasCheckConstraint(
+            "ck_scheduler_active_time",
+            "(\"StartTime\" IS NULL AND \"EndTime\" IS NULL) " +
+            "OR (\"StartTime\" IS NOT NULL AND \"EndTime\" IS NOT NULL AND \"StartTime\" < \"EndTime\")"
+        );
+
+        builder.HasCheckConstraint(
+            "ck_scheduler_active_date",
+            "\"ActiveUntilUtc\" IS NULL OR \"ActiveUntilUtc\" > \"ActiveFromUtc\""
+        );
+
+        builder.HasCheckConstraint(
+            "ck_scheduler_occurrence_count_limit_ge_1",
+            "\"OccurrenceCountLimit\" IS NULL OR \"OccurrenceCountLimit\" >= 1"
+        );
+
+        builder.HasCheckConstraint(
+            "ck_scheduler_next_due_ge_last_run",
+            "\"NextDueAtUtc\" IS NULL OR \"LastRunAtUtc\" IS NULL OR \"NextDueAtUtc\" >= \"LastRunAtUtc\""
+        );
         
         // Relationships
         builder.HasOne(s => s.Item)

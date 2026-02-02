@@ -8,27 +8,20 @@ public class ItemConfiguration : IEntityTypeConfiguration<Item>
 {
     public void Configure(EntityTypeBuilder<Item> builder)
     {
-        builder.ToTable("items");
-        
         builder.HasKey(x => x.Id);
         
-        builder.Property(x => x.Id)
-            .HasColumnName("id");
+        builder.Property(x => x.Id);
         
         builder.Property(x => x.StateId)
             .IsRequired()
-            .HasColumnName("state_id")
             .HasDefaultValue((int)ItemStates.Draft);
         
         builder.Property(x => x.Priority)
             .IsRequired()
-            .HasColumnName("priority")
-            .HasColumnType("priority")
             .HasDefaultValue(Priority.None);
         
         builder.Property(x => x.Title)
-            .IsRequired()
-            .HasColumnName("title");
+            .IsRequired();
         
         // Relations
         builder.HasOne(i => i.Entity)
