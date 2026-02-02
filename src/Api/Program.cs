@@ -35,18 +35,18 @@ builder.Services.AddDbContext<DefaultContext>(options =>
         "Host=localhost;Port=5432;Database=misa;Username=postgres;Password=meow",
         npgsql =>
         {
-            npgsql.MapEnum<ScheduleMisfirePolicy>("schedule_misfire_policy");
-            npgsql.MapEnum<ScheduleFrequencyType>("schedule_frequency_type");
-            npgsql.MapEnum<ScheduleActionType>("schedule_action_type");
-            npgsql.MapEnum<SchedulerExecutionStatus>("schedule_execution_state");
-            npgsql.MapEnum<Priority>("priority");
-            npgsql.MapEnum<ChangeType>("change_type");
-            npgsql.MapEnum<Workflow>("workflow");
-            npgsql.MapEnum<SessionState>("session_state");
-            npgsql.MapEnum<SessionEfficiencyType>("session_efficiency_type");
-            npgsql.MapEnum<SessionConcentrationType>("session_concentration_type");
-            npgsql.MapEnum<TaskCategory>("task_category");
-            npgsql.MapEnum<EventType>("event_type");
+            npgsql.MapEnum<ScheduleMisfirePolicy>();
+            npgsql.MapEnum<ScheduleFrequencyType>();
+            npgsql.MapEnum<ScheduleActionType>();
+            npgsql.MapEnum<SchedulerExecutionStatus>();
+            npgsql.MapEnum<Priority>();
+            npgsql.MapEnum<ChangeType>();
+            npgsql.MapEnum<Workflow>();
+            npgsql.MapEnum<SessionState>();
+            npgsql.MapEnum<SessionEfficiencyType>();
+            npgsql.MapEnum<SessionConcentrationType>();
+            npgsql.MapEnum<TaskCategory>();
+            npgsql.MapEnum<EventType>();
         }
     ));
 
