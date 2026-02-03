@@ -59,6 +59,7 @@ builder.Services.AddHostedService<SessionAutostopWorker>();
 builder.Services.AddHostedService<SessionPastMaxTimeWorker>();
 builder.Services.AddHostedService<SchedulePlanningWorker>();
 builder.Services.AddHostedService<ScheduleExecutingWorker>();
+builder.Services.AddHostedService<SchedulePublishingWorker>();
 
 builder.Services.AddScoped<IEntityRepository, EntityRepository>();
 builder.Services.AddScoped<IItemRepository, ItemRepository>();

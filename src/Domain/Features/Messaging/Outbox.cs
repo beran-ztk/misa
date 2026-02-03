@@ -20,4 +20,6 @@ public class Outbox
     public string Payload { get; private set; } = string.Empty;
     
     public DateTimeOffset CreatedAtUtc { get; private set; }
+    
+    public void Process() => EventState = OutboxEventState.Processed;
 }
