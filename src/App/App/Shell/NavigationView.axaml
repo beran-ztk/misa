@@ -52,6 +52,7 @@
             <StackPanel Grid.Row="1"
                         Spacing="{StaticResource SpacingSmall}">
 
+                <!-- Tasks -->
                 <Button Classes="MainNavigation"
                         ToolTip.Tip="Tasks"
                         Command="{Binding ShowTasksCommand}">
@@ -64,6 +65,7 @@
                     </Grid>
                 </Button>
 
+                <!-- Scheduler -->
                 <Button Classes="MainNavigation"
                         ToolTip.Tip="Scheduler"
                         Command="{Binding OpenSchedulerPanelCommand}">
@@ -73,6 +75,18 @@
                         <TextBlock Grid.Column="1"
                                    Classes="MainNavigation"
                                    Text="Scheduler" />
+                    </Grid>
+                </Button>
+                
+                <!-- Credentials -->
+                <Button Classes="MainNavigation"
+                        ToolTip.Tip="Credentials">
+                    <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
+                        <Image Width="16" Height="16"
+                               Source="{SvgImage /Assets/Images/MainNavigation/fingerprint-simple.svg}"/>
+                        <TextBlock Grid.Column="1"
+                                   Classes="MainNavigation"
+                                   Text="Credentials" />
                     </Grid>
                 </Button>
 
