@@ -2,11 +2,12 @@ using Microsoft.AspNetCore.SignalR;
 using Misa.Application.Features.Entities.Extensions.Items.Features.Scheduling.Commands;
 using Wolverine;
 using Misa.Api.Common.Hubs;
+using Misa.Contract.Features.Messaging;
 
 namespace Misa.Api.Services.Features.Items.Features.Scheduler;
 
 public class SchedulePublishingWorker(
-    IHubContext<UpdatesHub> hub,
+    IHubContext<EventHub> hub,
     IServiceProvider provider, 
     ILogger<SchedulePublishingWorker> logger)
     : BackgroundService
@@ -45,11 +46,14 @@ public class SchedulePublishingWorker(
             var scope = provider.CreateScope();
             var bus = scope.ServiceProvider.GetRequiredService<IMessageBus>();
 
-            var messages = await bus.InvokeAsync<List<string>>(new SchedulePublishingCommand(), stoppingToken);
+            var notifications = await bus.InvokeAsync<List<NotificationDto>>(new SchedulePublishingCommand(), stoppingToken);
 
-            foreach (var message in messages)
+            foreach (var notification in notifications)
             {
-                await hub.Clients.All.SendAsync("OutboxEvent", message, stoppingToken);
+                await hub.Clients.All.SendAsync(
+                    nameof(PublisherDto.Scheduler), 
+                    notification, 
+                    stoppingToken);
             }
         }
         catch (Exception ex)

@@ -95,15 +95,9 @@ builder.Host.UseWolverine(opts =>
 
 // build app
 var app = builder.Build();
-app.MapHub<UpdatesHub>("/hubs/updates");
+app.MapHub<EventHub>("/hubs/updates");
 app.MapControllers();
 app.UseMiddleware<ExceptionMappingMiddleware>();
-
-app.MapPost("/test/signalr", async (IHubContext<UpdatesHub> context) =>
-{
-    await context.Clients.All.SendAsync("OutboxEvent", "Hii");
-    return Result.Ok();
-});
 
 TaskEndpoints.Map(app);
 ItemDetailEndpoints.Map(app);

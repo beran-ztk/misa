@@ -1,17 +1,13 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
+using Misa.Contract.Features.Messaging;
 using Misa.Ui.Avalonia.App.Notifications;
 
 namespace Misa.Ui.Avalonia.Infrastructure.Services.Messaging;
 
-public sealed class SignalRNotificationClient
+public sealed class SignalRNotificationClient(NotificationViewModel notifications)
 {
-    private readonly NotificationViewModel _notifications;
     private HubConnection? _connection;
-    public SignalRNotificationClient(NotificationViewModel notifications)
-    {
-        _notifications = notifications;
-    }
 
     public async Task StartAsync(string baseAddress)
     {
@@ -23,12 +19,8 @@ public sealed class SignalRNotificationClient
             .WithAutomaticReconnect()
             .Build();
         
-        _connection.On<string>("OutboxEvent", payload =>
-        {
-            _notifications.Publish(NotificationLevel.Info, payload);
-        });
+        _connection.On<NotificationDto>(nameof(PublisherDto.Scheduler), notifications.Publish);
         
         await _connection.StartAsync();
-        _notifications.Publish(NotificationLevel.Success, "SignalR Notification Client successfully started");
     }
 }

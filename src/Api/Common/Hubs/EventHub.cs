@@ -2,7 +2,4 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace Misa.Api.Common.Hubs;
 
-public sealed class UpdatesHub : Hub
-{
-    
-}
+public sealed class EventHub : Hub;

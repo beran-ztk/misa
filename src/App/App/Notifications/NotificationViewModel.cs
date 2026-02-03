@@ -4,32 +4,28 @@ using System.Linq;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Misa.Contract.Features.Messaging;
 using Misa.Ui.Avalonia.Presentation.Mapping;
 
 namespace Misa.Ui.Avalonia.App.Notifications;
 
-public enum NotificationLevel
-{
-    Info,
-    Success,
-    Warning,
-    Error
-}
-
 public sealed partial class NotificationItem : ObservableObject
 {
-    public NotificationItem(NotificationLevel level, string message)
+    public NotificationItem(NotificationDto notification)
     {
-        Id = Guid.NewGuid();
-        Level = level;
-        Message = message;
-        Timestamp = DateTimeOffset.Now;
+        Type = notification.NotificationType;
+        Severity = notification.NotificationSeverity;
+        Payload = notification.Payload;
+        Timestamp = notification.Timestamp;
     }
 
-    public Guid Id { get; }
-    public NotificationLevel Level { get; }
-    public string Message { get; }
-    public DateTimeOffset Timestamp { get; }
+    public Guid Id { get; } = Guid.NewGuid();
+    public NotificationTypeDto Type { get; private set; }
+    public string TypeToString => Type.ToString();
+    public NotificationSeverityDto Severity { get; private set; }
+    public string SeverityToString => Severity.ToString();
+    public string Payload { get; private set; }
+    public DateTimeOffset Timestamp { get; private set; }
 
     [ObservableProperty] private bool _isRead;
     
@@ -38,11 +34,11 @@ public sealed partial class NotificationItem : ObservableObject
 public sealed partial class NotificationViewModel : ViewModelBase
 {
     public ObservableCollection<NotificationItem> Notifications { get; } = [];
-    public void Publish(NotificationLevel level, string message)
+    public void Publish(NotificationDto notification)
     {
         Dispatcher.UIThread.Post(() =>
         {
-            Notifications.Insert(0, new NotificationItem(level, message));
+            Notifications.Insert(0, new NotificationItem(notification));
         });
     }
     [RelayCommand]
