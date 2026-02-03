@@ -59,6 +59,7 @@ builder.Services.AddHostedService<SessionAutostopWorker>();
 builder.Services.AddHostedService<SessionPastMaxTimeWorker>();
 builder.Services.AddHostedService<SchedulePlanningWorker>();
 builder.Services.AddHostedService<ScheduleExecutingWorker>();
+builder.Services.AddHostedService<SchedulePublishingWorker>();
 
 builder.Services.AddScoped<IEntityRepository, EntityRepository>();
 builder.Services.AddScoped<IItemRepository, ItemRepository>();
@@ -94,15 +95,9 @@ builder.Host.UseWolverine(opts =>
 
 // build app
 var app = builder.Build();
-app.MapHub<UpdatesHub>("/hubs/updates");
+app.MapHub<EventHub>("/hubs/updates");
 app.MapControllers();
 app.UseMiddleware<ExceptionMappingMiddleware>();
-
-app.MapPost("/test/signalr", async (IHubContext<UpdatesHub> context) =>
-{
-    await context.Clients.All.SendAsync("OutboxEvent", "Hii");
-    return Result.Ok();
-});
 
 TaskEndpoints.Map(app);
 ItemDetailEndpoints.Map(app);
