@@ -12,23 +12,28 @@
   <UserControl.Styles>
     <!-- Card look -->
     <Style Selector="Border.notification-card">
-      <Setter Property="CornerRadius" Value="12" />
-      <Setter Property="Padding" Value="10" />
-      <Setter Property="Margin" Value="0,0,0,8" />
+      <Setter Property="CornerRadius" Value="14" />
+      <Setter Property="Padding" Value="12" />
+      <Setter Property="Margin" Value="0,0,0,10" />
       <Setter Property="BorderThickness" Value="1" />
       <Setter Property="Background" Value="{DynamicResource BrushPrimaryBackgroundLight}" />
       <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}" />
     </Style>
 
-    <!-- Unread emphasis -->
+    <!-- Hover (subtil) -->
+    <Style Selector="Border.notification-card:pointerover">
+      <Setter Property="Background" Value="{DynamicResource BrushPrimaryBackgroundLighter}" />
+    </Style>
+
+    <!-- Unread emphasis (leichter) -->
     <Style Selector="Border.notification-card.unread">
       <Setter Property="Background" Value="{DynamicResource BrushPrimaryBackgroundLighter}" />
     </Style>
 
     <!-- Small badge -->
     <Style Selector="Border.level-badge">
-      <Setter Property="CornerRadius" Value="10" />
-      <Setter Property="Padding" Value="6,2" />
+      <Setter Property="CornerRadius" Value="12" />
+      <Setter Property="Padding" Value="8,3" />
       <Setter Property="BorderThickness" Value="1" />
       <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}" />
       <Setter Property="Background" Value="{DynamicResource BrushPrimaryBackgroundLighter}" />
@@ -37,21 +42,28 @@
     <!-- Simple icon button -->
     <Style Selector="Button.icon">
       <Setter Property="Padding" Value="6" />
-      <Setter Property="MinWidth" Value="28" />
-      <Setter Property="MinHeight" Value="28" />
+      <Setter Property="MinWidth" Value="30" />
+      <Setter Property="MinHeight" Value="30" />
       <Setter Property="Background" Value="Transparent" />
       <Setter Property="BorderThickness" Value="0" />
       <Setter Property="CornerRadius" Value="10" />
+      <Setter Property="Opacity" Value="0.85" />
+    </Style>
+
+    <Style Selector="Button.icon:pointerover">
+      <Setter Property="Opacity" Value="1" />
     </Style>
   </UserControl.Styles>
 
-  <Border Padding="12"
-          CornerRadius="14"
+  <!-- Außenabstand, damit es nicht an Nachbar-Controls klebt -->
+  <Border Margin="10"
+          Padding="14"
+          CornerRadius="16"
           Background="{DynamicResource BrushPrimaryBackgroundLight}"
           BorderBrush="{DynamicResource BrushBorder}"
           BorderThickness="1">
 
-    <Grid RowDefinitions="Auto,*" ColumnDefinitions="*,Auto,Auto">
+    <Grid RowDefinitions="Auto,*" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6">
       <!-- Header -->
       <TextBlock Grid.Row="0" Grid.Column="0"
                  Text="Notifications"
@@ -75,7 +87,7 @@
 
       <!-- List -->
       <ScrollViewer Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="3"
-                    Margin="0,10,0,0"
+                    Margin="0,12,0,0"
                     VerticalScrollBarVisibility="Auto">
         <ItemsControl ItemsSource="{Binding Notifications}">
           <ItemsControl.ItemTemplate>
@@ -83,12 +95,12 @@
               <Border Classes="notification-card"
                       x:Name="Card">
 
-                <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto">
+                <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="10">
                   <!-- Level badge -->
                   <Border Grid.RowSpan="2"
                           Classes="level-badge"
                           VerticalAlignment="Top"
-                          Margin="0,0,10,0">
+                          Margin="0,0,0,0">
                     <TextBlock Text="{Binding Level}"
                                FontSize="12"
                                FontWeight="SemiBold"/>
@@ -125,7 +137,6 @@
                 </Grid>
 
               </Border>
-
             </DataTemplate>
           </ItemsControl.ItemTemplate>
         </ItemsControl>
