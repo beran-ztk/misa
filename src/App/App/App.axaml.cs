@@ -6,6 +6,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
 using Microsoft.Extensions.DependencyInjection;
+using Misa.Ui.Avalonia.App.Authentication;
 using Misa.Ui.Avalonia.App.Notifications;
 using Misa.Ui.Avalonia.App.Shell;
 using Misa.Ui.Avalonia.Features.Scheduler.Main;
@@ -62,6 +63,7 @@ public partial class App : Application
         // -------------------------
         sc.AddTransient<SchedulerMainWindowViewModel>();
         sc.AddTransient<TaskMainWindowViewModel>();
+        sc.AddTransient<AuthenticationViewModel>();
 
         // -------------------------
         // Shell / Window

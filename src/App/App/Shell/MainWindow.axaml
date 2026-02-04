@@ -24,47 +24,54 @@
         </Style>
     </Window.Styles>
 
-    <Grid RowDefinitions="38,*,24"
-          Background="{StaticResource BrushPrimaryBackground}">
-
-        <!-- Header -->
-        <Border Grid.Row="0"
-                Background="{StaticResource BrushPrimaryBackground}">
-        </Border>
-
-        <!-- Main: Nav + Content + Info -->
-        <Grid Grid.Row="1" ColumnDefinitions="150,*,Auto,33">
-
-            <!-- Content -->
-            <ContentControl Grid.Column="0" Content="{Binding Navigation}"/>
-            <ContentControl Grid.Column="1" Content="{Binding CurrentViewModel}" />
-            <ContentControl Grid.Column="2" Content="{Binding CurrentOverlay}" />
-            <ContentControl Grid.Column="3" Content="{Binding Information}" />
-
-            <!-- 1) Visuelles Backdrop (nur abdunkeln) -->
-            <Border Grid.Column="1"
-                    Background="#88000000"
-                    CornerRadius="20"
-                    Margin="10"
-                    IsVisible="{Binding CurrentOverlayOpen}"
-                    PointerPressed="OverlayBackdrop_PointerPressed"/>
-        </Grid>
+    <StackPanel>
         
-        <!-- Footer -->
-        <Border Grid.Row="2"
-                Background="{StaticResource BrushPrimaryBackground}">
-            <Grid Margin="12,0" ColumnDefinitions="*,Auto">
-                <TextBlock Grid.Column="0"
-                           FontSize="10"
-                           VerticalAlignment="Center"
-                           Foreground="{StaticResource BrushTextSecondary}"
-                           Text="{Binding BreadCrumbs}" />
-                <TextBlock Grid.Column="1"
-                           VerticalAlignment="Center"
-                           Foreground="{StaticResource BrushTextSecondary}"
-                           Text="{Binding Version}" />
+        <ContentControl Content="{Binding MainWindowOverlay}"
+                        IsVisible="{Binding CurrentMainOverlayOpen}"/>
+        
+        <Grid RowDefinitions="38,*,24"
+              Background="{StaticResource BrushPrimaryBackground}"
+              IsVisible="{Binding !CurrentMainOverlayOpen}">
+
+            <!-- Header -->
+            <Border Grid.Row="0"
+                    Background="{StaticResource BrushPrimaryBackground}">
+            </Border>
+
+            <!-- Main: Nav + Content + Info -->
+            <Grid Grid.Row="1" ColumnDefinitions="150,*,Auto,33">
+
+                <!-- Content -->
+                <ContentControl Grid.Column="0" Content="{Binding Navigation}"/>
+                <ContentControl Grid.Column="1" Content="{Binding NavigationService.NavigationStore.CurrentViewModel}" />
+                <ContentControl Grid.Column="2" Content="{Binding NavigationService.NavigationStore.CurrentOverlay}" />
+                <ContentControl Grid.Column="3" Content="{Binding Information}" />
+
+                <!-- 1) Visuelles Backdrop (nur abdunkeln) -->
+                <Border Grid.Column="1"
+                        Background="#88000000"
+                        CornerRadius="20"
+                        Margin="10"
+                        IsVisible="{Binding CurrentOverlayOpen}"
+                        PointerPressed="OverlayBackdrop_PointerPressed"/>
             </Grid>
-        </Border>
-        
-    </Grid>
+            
+            <!-- Footer -->
+            <Border Grid.Row="2"
+                    Background="{StaticResource BrushPrimaryBackground}">
+                <Grid Margin="12,0" ColumnDefinitions="*,Auto">
+                    <TextBlock Grid.Column="0"
+                               FontSize="10"
+                               VerticalAlignment="Center"
+                               Foreground="{StaticResource BrushTextSecondary}"
+                               Text="{Binding BreadCrumbs}" />
+                    <TextBlock Grid.Column="1"
+                               VerticalAlignment="Center"
+                               Foreground="{StaticResource BrushTextSecondary}"
+                               Text="{Binding Version}" />
+                </Grid>
+            </Border>
+            
+        </Grid>
+    </StackPanel>
 </Window>
