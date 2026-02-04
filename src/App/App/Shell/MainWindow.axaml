@@ -55,19 +55,27 @@
                             CornerRadius="12"
                             Padding="10,4"
                             VerticalAlignment="Center">
-                        <StackPanel Orientation="Horizontal"
-                                    Spacing="6"
-                                    VerticalAlignment="Center">
 
-                            <!-- optional Icon -->
-                            <TextBlock Text="👤"
-                                       Opacity="0.8"/>
+                        <Button Command="{Binding SignOutCommand}"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Padding="0"
+                                HorizontalContentAlignment="Stretch"
+                                VerticalContentAlignment="Center">
 
-                            <!-- Username (Binding machst du später) -->
-                            <TextBlock Text="{Binding User.Username}"
-                                       FontSize="13"
-                                       FontWeight="Medium"/>
-                        </StackPanel>
+                            <StackPanel Orientation="Horizontal"
+                                        Spacing="6"
+                                        VerticalAlignment="Center">
+            
+                                <TextBlock Text="👤"
+                                           Opacity="0.8"/>
+
+                                <TextBlock Text="{Binding User.Username}"
+                                           FontSize="11"
+                                           FontWeight="Light"/>
+                            </StackPanel>
+
+                        </Button>
                     </Border>
 
                 </Grid>

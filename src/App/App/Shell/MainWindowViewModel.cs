@@ -58,4 +58,9 @@ public partial class MainWindowViewModel : ViewModelBase
             }
         };
     }
+    [RelayCommand]
+    private void SignOut()
+    {
+        NavigationService.NavigationStore.MainWindowOverlay = NavigationService.ServiceProvider.GetRequiredService<AuthenticationViewModel>();
+    }
 }
