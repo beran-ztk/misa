@@ -10,6 +10,7 @@ using Misa.Api.Endpoints.Features.Entities.Features;
 using Misa.Api.Services.Features.Items.Features.Scheduler;
 using Misa.Api.Services.Features.Items.Features.Sessions;
 using Misa.Application.Common.Abstractions.Persistence;
+using Misa.Application.Common.Abstractions.Time;
 using Misa.Application.Features.Authentication;
 using Misa.Application.Features.Entities.Extensions.Items.Base.Queries;
 using Misa.Application.Features.Entities.Extensions.Items.Extensions.Tasks.Commands;
@@ -27,6 +28,7 @@ using Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions;
 using Misa.Domain.Features.Messaging;
 using Misa.Infrastructure.Persistence.Context;
 using Misa.Infrastructure.Persistence.Repositories;
+using Misa.Infrastructure.Services.Time;
 using Wolverine;
 using Priority = Misa.Domain.Features.Entities.Extensions.Items.Base.Priority;
 
@@ -70,6 +72,7 @@ builder.Services.AddScoped<ISchedulerExecutingRepository, SchedulerExecutingRepo
 builder.Services.AddScoped<ISchedulerRepository, SchedulerRepository>();
 builder.Services.AddScoped<ISchedulerRepository, SchedulerRepository>();
 builder.Services.AddScoped<IAuthenticationRepository, AuthenticationRepository>();
+builder.Services.AddScoped<ITimeZoneProvider, TimeZoneProvider>();
 
 // DI
 builder.Host.UseWolverine(opts =>

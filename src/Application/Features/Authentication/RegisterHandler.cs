@@ -1,4 +1,5 @@
 using Misa.Application.Common.Abstractions.Persistence;
+using Misa.Application.Common.Abstractions.Time;
 using Misa.Contract.Common.Results;
 using Misa.Contract.Features.Authentication;
 using Misa.Domain.Features.Users;
@@ -6,7 +7,7 @@ using Misa.Domain.Features.Users;
 namespace Misa.Application.Features.Authentication;
 public sealed record RegisterCommand(string Username, string Password, string TimeZone);
 
-public sealed class RegisterHandler(IAuthenticationRepository repository)
+public sealed class RegisterHandler(IAuthenticationRepository repository, ITimeZoneProvider timeZoneProvider)
 {
     public async Task<Result<AuthResponseDto>> Handle(RegisterCommand cmd, CancellationToken ct)
     {
@@ -19,9 +20,10 @@ public sealed class RegisterHandler(IAuthenticationRepository repository)
         if (existing is not null)
             return Result<AuthResponseDto>.Conflict("","Username ist bereits vergeben.");
 
-        var tz = string.IsNullOrWhiteSpace(cmd.TimeZone) ? "Europe/Berlin" : cmd.TimeZone.Trim();
-
-        var user = new User(username, cmd.Password, tz);
+        if (!timeZoneProvider.IsValid(cmd.TimeZone))
+            return Result<AuthResponseDto>.Conflict("","Ungültige Zeitzone.");
+        
+        var user = new User(username, cmd.Password, cmd.TimeZone);
         await repository.AddAsync(user, ct);
 
         var dto = new UserDto(user.Id, user.Username, user.TimeZone);
