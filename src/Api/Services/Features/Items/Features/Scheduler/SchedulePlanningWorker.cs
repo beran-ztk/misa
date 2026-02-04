@@ -11,7 +11,7 @@ public class SchedulePlanningWorker(IServiceProvider provider, ILogger<ScheduleP
     {
         logger.LogInformation("Schedule planning worker activated.");
         
-        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(30));
+        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(15));
         
         try
         {

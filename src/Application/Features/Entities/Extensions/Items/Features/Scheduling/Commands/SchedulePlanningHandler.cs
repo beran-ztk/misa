@@ -40,10 +40,6 @@ public class SchedulePlanningHandler(ISchedulerPlanningRepository repository, IT
                    && currentLookaheadCount < schedule.LookaheadLimit
                    && schedule.SchedulingAnchorUtc.UtcToLocal(schedule.Timezone) < maxLocalLookaheadTime)
             {
-                var log = schedule.CreateExecutionLog();
-                schedule.ReduceOccurrenceCount();
-                schedule.CheckAndUpdateNextAllowedExecution(utcNow);
-                
                 var delta = schedule.ScheduleFrequencyType switch
                 {
                     ScheduleFrequencyType.Minutes => TimeSpan.FromMinutes(schedule.FrequencyInterval),
@@ -54,26 +50,35 @@ public class SchedulePlanningHandler(ISchedulerPlanningRepository repository, IT
 
                 do
                 {
-                    schedule.NextDueAtUtc = schedule.SchedulingAnchorUtc.Add(delta);
-
-                    if (schedule.StartTime == null || schedule.EndTime == null)
-                    {
-                        break;
-                    }
+                    schedule.NextDueAtUtc = schedule.NextDueAtUtc is null 
+                        ? schedule.ActiveFromUtc
+                        : schedule.SchedulingAnchorUtc.Add(delta);
                     
-                    if (schedule is {StartTime: not null, EndTime: not null}
-                        && TimeOnly.FromTimeSpan(schedule.SchedulingAnchorUtc.TimeOfDay) > schedule.StartTime
-                        && TimeOnly.FromTimeSpan(schedule.SchedulingAnchorUtc.TimeOfDay) < schedule.EndTime)
+                    var localScheduledTime = 
+                        TimeOnly.FromTimeSpan(
+                            schedule.SchedulingAnchorUtc
+                                .UtcToLocal(schedule.Timezone)
+                                    .TimeOfDay
+                        );
+                    
+                    if ((schedule.StartTime is not null && localScheduledTime < schedule.StartTime) 
+                        || (schedule.EndTime is not null && localScheduledTime > schedule.EndTime))
                     {
-                        break;
+                        continue;
                     }
-                } 
-                while (true);
 
-                if (schedule.SchedulingAnchorUtc > utcNow)
+                    break;
+                } 
+                while (schedule.SchedulingAnchorUtc.UtcToLocal(schedule.Timezone) < maxLocalLookaheadTime);
+
+                if (schedule.SchedulingAnchorUtc.UtcToLocal(schedule.Timezone) > localNow)
                 {
                     currentLookaheadCount++;
                 }
+                
+                var log = schedule.CreateExecutionLog();
+                schedule.ReduceOccurrenceCount();
+                schedule.CheckAndUpdateNextAllowedExecution(utcNow);
                 
                 await repository.TryAddExecutionLogAsync(log, stoppingToken);
                 
