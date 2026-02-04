@@ -11,7 +11,7 @@ public static class SchedulingEndpoints
     public static void Map(WebApplication app)
     {
         app.MapGet("scheduling", GetSchedulingRules);
-        app.MapPost("scheduling", AddSchedulingRule);
+        app.MapPost("scheduling/{userId:guid}", AddSchedulingRule);
         
         app.MapPost("scheduling/once", CreateOnceScheduler);
         app.MapDelete("scheduling/once/{targetItemId:guid}", DeleteDeadline);
@@ -42,6 +42,7 @@ public static class SchedulingEndpoints
         return result;
     }
     private static async Task<Result<ScheduleDto>> AddSchedulingRule(
+        Guid userId,
         [FromBody] AddScheduleDto dto, 
         IMessageBus bus, 
         CancellationToken ct)
@@ -52,6 +53,7 @@ public static class SchedulingEndpoints
         try
         {
             var command = new AddScheduleCommand(
+                userId,
                 dto.Title,
                 dto.TargetItemId,
                 dto.ScheduleFrequencyType,
@@ -64,8 +66,8 @@ public static class SchedulingEndpoints
                 dto.Payload,
                 dto.StartTime,
                 dto.EndTime,
-                dto.ActiveFromUtc,
-                dto.ActiveUntilUtc,
+                dto.ActiveFromLocal,
+                dto.ActiveUntilLocal,
                 dto.ByDay,
                 dto.ByMonthDay,
                 dto.ByMonth

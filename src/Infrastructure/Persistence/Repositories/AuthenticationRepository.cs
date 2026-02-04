@@ -7,6 +7,11 @@ namespace Misa.Infrastructure.Persistence.Repositories;
 
 public sealed class AuthenticationRepository(DefaultContext context) : IAuthenticationRepository
 {
+    public Task<User?> FindByIdAsync(Guid id, CancellationToken ct = default)
+        => context.User
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == id, ct);
+
     public Task<User?> FindByUsernameAsync(string username, CancellationToken ct = default)
         => context.User
             .AsNoTracking()

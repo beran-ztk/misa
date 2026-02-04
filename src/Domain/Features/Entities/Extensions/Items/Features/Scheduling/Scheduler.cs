@@ -87,7 +87,7 @@ public sealed class Scheduler
         int[]? byDay,
         int[]? byMonthDay,
         int[]? byMonth,
-        string timezone = "utc")
+        string timezone)
     {
         if (string.IsNullOrWhiteSpace(title))
             throw new ArgumentException("Title must not be empty.", nameof(title));
@@ -109,9 +109,6 @@ public sealed class Scheduler
 
         if (startTime is { } st && endTime is { } et && et <= st)
             throw new ArgumentException("EndTime must be greater than StartTime when both are provided.", nameof(endTime));
-
-        if (string.IsNullOrWhiteSpace(timezone))
-            throw new ArgumentException("Timezone must not be empty.", nameof(timezone));
 
         var normalizedByDay = Normalize(byDay, 1, 7, nameof(byDay));
         var normalizedByMonthDay = Normalize(byMonthDay, 1, 31, nameof(byMonthDay));

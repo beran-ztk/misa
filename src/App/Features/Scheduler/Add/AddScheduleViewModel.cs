@@ -105,8 +105,8 @@ public partial class AddScheduleViewModel(INavigationService navigationService, 
     [ObservableProperty] private TimeSpan? _startTime;
     [ObservableProperty] private TimeSpan? _endTime;
 
-    [ObservableProperty] private DateTimeOffset _activeFromDate = DateTimeOffset.UtcNow.Date;
-    [ObservableProperty] private TimeSpan _activeFromTime = DateTimeOffset.UtcNow.TimeOfDay;
+    [ObservableProperty] private DateTimeOffset _activeFromDate = DateTimeOffset.Now.Date;
+    [ObservableProperty] private TimeSpan _activeFromTime = DateTimeOffset.Now.TimeOfDay;
 
     [ObservableProperty] private DateTimeOffset? _activeUntilDate;
     [ObservableProperty] private TimeSpan? _activeUntilTime;
@@ -151,15 +151,15 @@ public partial class AddScheduleViewModel(INavigationService navigationService, 
                 OccurrenceTtl = OccurrenceTtl,
                 StartTime = StartTime is null ? null : TimeOnly.FromTimeSpan(StartTime.Value),
                 EndTime = EndTime is null ? null : TimeOnly.FromTimeSpan(EndTime.Value),
-                ActiveFromUtc = ActiveFromDate.Add(ActiveFromTime).ToUniversalTime(),
-                ActiveUntilUtc = ActiveUntilDate?.Add(ActiveUntilTime ?? TimeSpan.Zero).ToUniversalTime(),
+                ActiveFromLocal = ActiveFromDate.Add(ActiveFromTime),
+                ActiveUntilLocal = ActiveUntilDate?.Add(ActiveUntilTime ?? TimeSpan.Zero),
 
                 ByDay = BuildByDay(),
                 ByMonth = BuildByMonth(),
                 ByMonthDay = ParseByMonthDay()
             };
 
-            using var request = new HttpRequestMessage(HttpMethod.Post, "scheduling");
+            using var request = new HttpRequestMessage(HttpMethod.Post, $"scheduling/{NavigationService.NavigationStore.User.Id}");
             request.Content = JsonContent.Create(addScheduleDto);
 
             using var response = await NavigationService.NavigationStore.HttpClient
