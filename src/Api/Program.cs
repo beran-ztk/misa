@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Misa.Api.Common.Exceptions;
 using Misa.Api.Common.Hubs;
@@ -19,7 +18,6 @@ using Misa.Application.Features.Entities.Extensions.Items.Features.Scheduling.Co
 using Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Commands;
 using Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Queries;
 using Misa.Application.Features.Entities.Features.Descriptions.Commands;
-using Misa.Contract.Common.Results;
 using Misa.Domain.Features.Audit;
 using Misa.Domain.Features.Entities.Base;
 using Misa.Domain.Features.Entities.Extensions.Items.Extensions.Tasks;
@@ -37,6 +35,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSignalR();
 builder.Services.AddControllers();
 builder.Services.AddTransient<ExceptionMappingMiddleware>();
+
+builder.Services.AddSingleton<ITimeProvider, Misa.Infrastructure.Services.Time.TimeProvider>();
+builder.Services.AddSingleton<ITimeZoneProvider, TimeZoneProvider>();
 
 builder.Services.AddDbContext<DefaultContext>(options =>
     options.UseNpgsql(
@@ -72,7 +73,6 @@ builder.Services.AddScoped<ISchedulerExecutingRepository, SchedulerExecutingRepo
 builder.Services.AddScoped<ISchedulerRepository, SchedulerRepository>();
 builder.Services.AddScoped<ISchedulerRepository, SchedulerRepository>();
 builder.Services.AddScoped<IAuthenticationRepository, AuthenticationRepository>();
-builder.Services.AddScoped<ITimeZoneProvider, TimeZoneProvider>();
 
 // DI
 builder.Host.UseWolverine(opts =>
