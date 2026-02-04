@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+<UserControl xmlns="https://github.com/avaloniaui" 
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -17,7 +17,6 @@
                  FontSize="20"
                  FontWeight="SemiBold"/>
 
-      <!-- Mode Switch -->
       <Grid ColumnDefinitions="*,*" Height="38">
         <Button Grid.Column="0"
                 Content="Anmelden"
@@ -47,6 +46,13 @@
                    PasswordChar="•"
                    Watermark="Passwort wiederholen"
                    IsEnabled="{Binding IsNotBusy}"/>
+
+          <TextBlock Text="Timezone"/>
+          <ComboBox ItemsSource="{Binding TimeZoneIds}"
+                    SelectedItem="{Binding SelectedTimeZoneId, Mode=TwoWay}"
+                    IsEnabled="{Binding IsNotBusy}"
+                    Height="34"
+                    Width="300"/>
         </StackPanel>
       </StackPanel>
 

@@ -48,6 +48,7 @@ public partial class App : Application
         sc.AddSingleton<IClipboardService, ClipboardService>();
         sc.AddSingleton<INavigationService, NavigationService>();
         sc.AddSingleton<IAuthenticationService, AuthenticationService>();
+        sc.AddSingleton<TimeZoneService>();
 
         // -------------------------
         // Details (Selection + Clients + VMs)

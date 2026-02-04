@@ -1,9 +1,12 @@
 using System;
+using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Features.Authentication;
 using Misa.Ui.Avalonia.Infrastructure.Services.Navigation;
+using Misa.Ui.Avalonia.Infrastructure.Services.Startup;
 using Misa.Ui.Avalonia.Presentation.Mapping;
 
 namespace Misa.Ui.Avalonia.App.Authentication;
@@ -12,19 +15,27 @@ public partial class AuthenticationViewModel : ViewModelBase
 {
     private INavigationService NavigationService { get; }
     private IAuthenticationService AuthService { get; }
+    private TimeZoneService TimeZoneService { get; }
 
     public AuthenticationViewModel(
         INavigationService navigationService,
-        IAuthenticationService authService)
+        IAuthenticationService authService,
+        TimeZoneService timeZoneService)
     {
         NavigationService = navigationService;
         AuthService = authService;
+        TimeZoneService = timeZoneService;
+
+        TimeZoneIds = new ObservableCollection<string>(TimeZoneService.Ids);
+        SelectedTimeZoneId = TimeZoneIds.Contains("Europe/Berlin") ? "Europe/Berlin" : TimeZoneIds.FirstOrDefault();
 
         IsRegisterMode = false;
     }
 
-    [ObservableProperty] private bool _isRegisterMode;
+    public ObservableCollection<string> TimeZoneIds { get; }
+    [ObservableProperty] private string? _selectedTimeZoneId;
 
+    [ObservableProperty] private bool _isRegisterMode;
     public bool IsLoginMode => !IsRegisterMode;
 
     [ObservableProperty] private string _username = string.Empty;
@@ -49,8 +60,8 @@ public partial class AuthenticationViewModel : ViewModelBase
 
             if (IsRegisterMode)
             {
-                if (Password.Length < 1) return false;
                 if (!string.Equals(Password, ConfirmPassword, StringComparison.Ordinal)) return false;
+                if (string.IsNullOrWhiteSpace(SelectedTimeZoneId)) return false;
             }
 
             return true;
@@ -61,6 +72,10 @@ public partial class AuthenticationViewModel : ViewModelBase
     {
         ErrorMessage = null;
         ConfirmPassword = string.Empty;
+
+        if (value && string.IsNullOrWhiteSpace(SelectedTimeZoneId))
+            SelectedTimeZoneId = TimeZoneIds.Contains("Europe/Berlin") ? "Europe/Berlin" : TimeZoneIds.FirstOrDefault();
+
         OnPropertyChanged(nameof(IsLoginMode));
         OnPropertyChanged(nameof(PrimaryButtonText));
         OnPropertyChanged(nameof(CanSubmit));
@@ -69,15 +84,15 @@ public partial class AuthenticationViewModel : ViewModelBase
     partial void OnUsernameChanged(string value) => OnPropertyChanged(nameof(CanSubmit));
     partial void OnPasswordChanged(string value) => OnPropertyChanged(nameof(CanSubmit));
     partial void OnConfirmPasswordChanged(string value) => OnPropertyChanged(nameof(CanSubmit));
+    partial void OnSelectedTimeZoneIdChanged(string? value) => OnPropertyChanged(nameof(CanSubmit));
+
     partial void OnIsBusyChanged(bool value)
     {
         OnPropertyChanged(nameof(IsNotBusy));
         OnPropertyChanged(nameof(CanSubmit));
     }
-    partial void OnErrorMessageChanged(string? value)
-    {
-        OnPropertyChanged(nameof(HasError));
-    }
+
+    partial void OnErrorMessageChanged(string? value) => OnPropertyChanged(nameof(HasError));
 
     [RelayCommand]
     private void SetLoginMode() => IsRegisterMode = false;
@@ -108,7 +123,7 @@ public partial class AuthenticationViewModel : ViewModelBase
                 var req = new RegisterRequestDto(
                     Username.Trim(),
                     Password,
-                    "Europe/Berlin");
+                    SelectedTimeZoneId ?? "Europe/Berlin");
 
                 responseDto = await AuthService.RegisterAsync(req);
             }
@@ -122,7 +137,6 @@ public partial class AuthenticationViewModel : ViewModelBase
             }
 
             NavigationService.NavigationStore.User = responseDto.User;
-            
             NavigationService.NavigationStore.CloseOverlay();
         }
         catch (Exception ex)
