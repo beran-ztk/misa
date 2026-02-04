@@ -53,13 +53,9 @@ public class SchedulePlanningHandler(ISchedulerPlanningRepository repository, IT
                     schedule.NextDueAtUtc = schedule.NextDueAtUtc is null 
                         ? schedule.ActiveFromUtc
                         : schedule.SchedulingAnchorUtc.Add(delta);
-                    
-                    var localScheduledTime = 
-                        TimeOnly.FromTimeSpan(
-                            schedule.SchedulingAnchorUtc
-                                .UtcToLocal(schedule.Timezone)
-                                    .TimeOfDay
-                        );
+
+                    var localScheduledTimestamp = schedule.SchedulingAnchorUtc.UtcToLocal(schedule.Timezone);
+                    var localScheduledTime = TimeOnly.FromTimeSpan(localScheduledTimestamp.TimeOfDay);
                     
                     if ((schedule.StartTime is not null && localScheduledTime < schedule.StartTime) 
                         || (schedule.EndTime is not null && localScheduledTime > schedule.EndTime))
@@ -67,6 +63,22 @@ public class SchedulePlanningHandler(ISchedulerPlanningRepository repository, IT
                         continue;
                     }
 
+                    if (schedule.ByDay is not null &&
+                        !schedule.ByDay.Contains((int)localScheduledTimestamp.DayOfWeek))
+                    {
+                        continue;   
+                    }
+
+                    if (schedule.ByMonthDay is not null && !schedule.ByMonthDay.Contains(localScheduledTimestamp.Day))
+                    {
+                        continue;
+                    }
+
+                    if (schedule.ByMonth is not null && !schedule.ByMonth.Contains(localScheduledTimestamp.Month))
+                    {
+                        continue;
+                    }
+                    
                     break;
                 } 
                 while (schedule.SchedulingAnchorUtc.UtcToLocal(schedule.Timezone) < maxLocalLookaheadTime);

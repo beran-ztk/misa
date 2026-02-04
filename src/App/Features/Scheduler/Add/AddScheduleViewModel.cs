@@ -249,7 +249,7 @@ public partial class AddScheduleViewModel(INavigationService navigationService, 
         if (ByDayThu) list.Add(4);
         if (ByDayFri) list.Add(5);
         if (ByDaySat) list.Add(6);
-        if (ByDaySun) list.Add(7);
+        if (ByDaySun) list.Add(0);
         return list.Count == 0 ? null : list.ToArray();
     }
     private int[]? BuildByMonth()

@@ -110,7 +110,7 @@ public sealed class Scheduler
         if (startTime is { } st && endTime is { } et && et <= st)
             throw new ArgumentException("EndTime must be greater than StartTime when both are provided.", nameof(endTime));
 
-        var normalizedByDay = Normalize(byDay, 1, 7, nameof(byDay));
+        var normalizedByDay = Normalize(byDay, 0, 6, nameof(byDay));
         var normalizedByMonthDay = Normalize(byMonthDay, 1, 31, nameof(byMonthDay));
         var normalizedByMonth = Normalize(byMonth, 1, 12, nameof(byMonth));
 
