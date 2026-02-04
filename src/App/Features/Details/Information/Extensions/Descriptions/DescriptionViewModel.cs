@@ -54,7 +54,7 @@ public partial class DescriptionViewModel(Base.DetailInformationViewModel parent
             };
 
             using var response = await Parent.Parent.NavigationService.NavigationStore
-                .MisaHttpClient
+                .HttpClient
                 .SendAsync(request, CancellationToken.None);
 
             response.EnsureSuccessStatusCode();
@@ -147,7 +147,7 @@ public sealed partial class DescriptionItemViewModel : ViewModelBase
         };
 
         using var response = await Parent.Parent.Parent.NavigationService.NavigationStore
-            .MisaHttpClient
+            .HttpClient
             .SendAsync(request, CancellationToken.None);
 
         response.EnsureSuccessStatusCode();
@@ -161,7 +161,7 @@ public sealed partial class DescriptionItemViewModel : ViewModelBase
     private async Task Delete()
     {
         using var response = await Parent.Parent.Parent.NavigationService.NavigationStore
-            .MisaHttpClient
+            .HttpClient
             .DeleteAsync($"entities/description/{Id}", CancellationToken.None);
 
         response.EnsureSuccessStatusCode();

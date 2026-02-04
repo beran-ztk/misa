@@ -6,12 +6,14 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
 using Microsoft.Extensions.DependencyInjection;
+using Misa.Ui.Avalonia.App.Authentication;
 using Misa.Ui.Avalonia.App.Notifications;
 using Misa.Ui.Avalonia.App.Shell;
 using Misa.Ui.Avalonia.Features.Scheduler.Main;
 using Misa.Ui.Avalonia.Infrastructure.Services.Interfaces;
 using Misa.Ui.Avalonia.Infrastructure.Services.Messaging;
 using Misa.Ui.Avalonia.Infrastructure.Services.Navigation;
+using Misa.Ui.Avalonia.Infrastructure.Services.Startup;
 using DetailMainWindowViewModel = Misa.Ui.Avalonia.Features.Details.Main.DetailMainWindowViewModel;
 using NavigationStore = Misa.Ui.Avalonia.Infrastructure.Stores.NavigationStore;
 using TaskMainWindowViewModel = Misa.Ui.Avalonia.Features.Tasks.Main.TaskMainWindowViewModel;
@@ -45,6 +47,8 @@ public partial class App : Application
         sc.AddSingleton<NavigationStore>();
         sc.AddSingleton<IClipboardService, ClipboardService>();
         sc.AddSingleton<INavigationService, NavigationService>();
+        sc.AddSingleton<IAuthenticationService, AuthenticationService>();
+        sc.AddSingleton<TimeZoneService>();
 
         // -------------------------
         // Details (Selection + Clients + VMs)
@@ -62,6 +66,7 @@ public partial class App : Application
         // -------------------------
         sc.AddTransient<SchedulerMainWindowViewModel>();
         sc.AddTransient<TaskMainWindowViewModel>();
+        sc.AddTransient<AuthenticationViewModel>();
 
         // -------------------------
         // Shell / Window

@@ -18,8 +18,8 @@ public sealed class AddScheduleDto
     public TimeOnly? StartTime { get; init; }
     public TimeOnly? EndTime { get; init; }
 
-    public required DateTimeOffset ActiveFromUtc { get; init; }
-    public DateTimeOffset? ActiveUntilUtc { get; init; }
+    public required DateTimeOffset ActiveFromLocal { get; init; }
+    public DateTimeOffset? ActiveUntilLocal { get; init; }
     
     public int[]? ByDay { get; init; }        // 1..7 (Mo..So)
     public int[]? ByMonthDay { get; init; }   // 1..31

@@ -28,7 +28,7 @@ public partial class SessionViewModel(Base.DetailInformationViewModel parent) : 
                 $"items/{Parent.Parent.Item.Id}/overview/session");
         
             var response = await Parent.Parent.NavigationService.NavigationStore
-                .MisaHttpClient
+                .HttpClient
                 .SendAsync(request, CancellationToken.None);
         
             response.EnsureSuccessStatusCode();
@@ -102,7 +102,7 @@ public partial class SessionViewModel(Base.DetailInformationViewModel parent) : 
             request.Content = JsonContent.Create(dto);
             
             var response = await Parent.Parent.NavigationService.NavigationStore
-                .MisaHttpClient
+                .HttpClient
                 .SendAsync(request, CancellationToken.None);
         
             response.EnsureSuccessStatusCode();
@@ -152,7 +152,7 @@ public partial class SessionViewModel(Base.DetailInformationViewModel parent) : 
             request.Content = JsonContent.Create(dto);
         
             var response = await Parent.Parent.NavigationService.NavigationStore
-                .MisaHttpClient
+                .HttpClient
                 .SendAsync(request, CancellationToken.None);
         
             response.EnsureSuccessStatusCode();
@@ -177,7 +177,7 @@ public partial class SessionViewModel(Base.DetailInformationViewModel parent) : 
                 $"items/{Parent.Parent.Item.Id}/sessions/continue");
         
             var response = await Parent.Parent.NavigationService.NavigationStore
-                .MisaHttpClient
+                .HttpClient
                 .SendAsync(request, CancellationToken.None);
         
             response.EnsureSuccessStatusCode();
@@ -232,7 +232,7 @@ public partial class SessionViewModel(Base.DetailInformationViewModel parent) : 
             request.Content = JsonContent.Create(dto);
         
             var response = await Parent.Parent.NavigationService.NavigationStore
-                .MisaHttpClient
+                .HttpClient
                 .SendAsync(request, CancellationToken.None);
         
             response.EnsureSuccessStatusCode();

@@ -1,4 +1,6 @@
-﻿namespace Misa.Contract.Common.Results;
+﻿using System.Net;
+
+namespace Misa.Contract.Common.Results;
 
 public enum ResultStatus
 {
@@ -18,7 +20,6 @@ public class Result
     public bool IsSuccess => Status == ResultStatus.Success;
 
     public static Result Ok() => new() { Status = ResultStatus.Success };
-    
     public static Result Invalid(string code, string message) => new() { Status = ResultStatus.Invalid, Error = new Error(code, message)};
     
     public static Result Conflict(string code, string message) => new() { Status = ResultStatus.Conflict, Error = new Error(code, message)};

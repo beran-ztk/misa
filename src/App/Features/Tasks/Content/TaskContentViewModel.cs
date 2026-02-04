@@ -26,7 +26,7 @@ public class TaskContentViewModel : ViewModelBase
         {
             using var request = new HttpRequestMessage(HttpMethod.Get, "tasks");
             
-            using var response = await Parent.NavigationService.NavigationStore.MisaHttpClient
+            using var response = await Parent.NavigationService.NavigationStore.HttpClient
                 .SendAsync(request, CancellationToken.None);
 
             response.EnsureSuccessStatusCode();

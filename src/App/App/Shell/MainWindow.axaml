@@ -24,47 +24,98 @@
         </Style>
     </Window.Styles>
 
-    <Grid RowDefinitions="38,*,24"
-          Background="{StaticResource BrushPrimaryBackground}">
-
-        <!-- Header -->
-        <Border Grid.Row="0"
-                Background="{StaticResource BrushPrimaryBackground}">
-        </Border>
-
-        <!-- Main: Nav + Content + Info -->
-        <Grid Grid.Row="1" ColumnDefinitions="150,*,Auto,33">
-
-            <!-- Content -->
-            <ContentControl Grid.Column="0" Content="{Binding Navigation}"/>
-            <ContentControl Grid.Column="1" Content="{Binding CurrentViewModel}" />
-            <ContentControl Grid.Column="2" Content="{Binding CurrentOverlay}" />
-            <ContentControl Grid.Column="3" Content="{Binding Information}" />
-
-            <!-- 1) Visuelles Backdrop (nur abdunkeln) -->
-            <Border Grid.Column="1"
-                    Background="#88000000"
-                    CornerRadius="20"
-                    Margin="10"
-                    IsVisible="{Binding CurrentOverlayOpen}"
-                    PointerPressed="OverlayBackdrop_PointerPressed"/>
-        </Grid>
+    <Grid RowDefinitions="*">
         
-        <!-- Footer -->
-        <Border Grid.Row="2"
-                Background="{StaticResource BrushPrimaryBackground}">
-            <Grid Margin="12,0" ColumnDefinitions="*,Auto">
-                <TextBlock Grid.Column="0"
-                           FontSize="10"
-                           VerticalAlignment="Center"
-                           Foreground="{StaticResource BrushTextSecondary}"
-                           Text="{Binding BreadCrumbs}" />
-                <TextBlock Grid.Column="1"
-                           VerticalAlignment="Center"
-                           Foreground="{StaticResource BrushTextSecondary}"
-                           Text="{Binding Version}" />
+        <ContentControl Grid.Row="0" 
+            Content="{Binding MainWindowOverlay}"
+                        IsVisible="{Binding CurrentMainOverlayOpen}"/>
+        
+        <Grid Grid.Row="0"
+              RowDefinitions="38,*,24"
+              Background="{StaticResource BrushPrimaryBackground}"
+              IsVisible="{Binding !CurrentMainOverlayOpen}">
+
+            <!-- Header -->
+            <Border Grid.Row="0"
+                    Background="{StaticResource BrushPrimaryBackground}"
+                    Padding="12,8">
+                <Grid ColumnDefinitions="*,Auto"
+                      VerticalAlignment="Center">
+
+                    <!-- Links: optionaler Titel / Breadcrumb / leer -->
+                    <TextBlock Grid.Column="0"
+                               Text="MISA"
+                               FontSize="16"
+                               FontWeight="SemiBold"
+                               VerticalAlignment="Center"/>
+
+                    <!-- Rechts: User-Bereich -->
+                    <Border Grid.Column="1"
+                            Background="{StaticResource BrushPrimaryBackgroundLight}"
+                            CornerRadius="12"
+                            Padding="10,4"
+                            VerticalAlignment="Center">
+
+                        <Button Command="{Binding SignOutCommand}"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Padding="0"
+                                HorizontalContentAlignment="Stretch"
+                                VerticalContentAlignment="Center">
+
+                            <StackPanel Orientation="Horizontal"
+                                        Spacing="6"
+                                        VerticalAlignment="Center">
+            
+                                <TextBlock Text="👤"
+                                           Opacity="0.8"/>
+
+                                <TextBlock Text="{Binding User.Username}"
+                                           FontSize="11"
+                                           FontWeight="Light"/>
+                            </StackPanel>
+
+                        </Button>
+                    </Border>
+
+                </Grid>
+            </Border>
+
+
+            <!-- Main: Nav + Content + Info -->
+            <Grid Grid.Row="1" ColumnDefinitions="150,*,Auto,33">
+
+                <!-- Content -->
+                <ContentControl Grid.Column="0" Content="{Binding Navigation}"/>
+                <ContentControl Grid.Column="1" Content="{Binding CurrentViewModel}" />
+                <ContentControl Grid.Column="2" Content="{Binding NavigationService.NavigationStore.CurrentOverlay}" />
+                <ContentControl Grid.Column="3" Content="{Binding Information}" />
+
+                <!-- 1) Visuelles Backdrop (nur abdunkeln) -->
+                <Border Grid.Column="1"
+                        Background="#88000000"
+                        CornerRadius="20"
+                        Margin="10"
+                        IsVisible="{Binding CurrentOverlayOpen}"
+                        PointerPressed="OverlayBackdrop_PointerPressed"/>
             </Grid>
-        </Border>
-        
+            
+            <!-- Footer -->
+            <Border Grid.Row="2"
+                    Background="{StaticResource BrushPrimaryBackground}">
+                <Grid Margin="12,0" ColumnDefinitions="*,Auto">
+                    <TextBlock Grid.Column="0"
+                               FontSize="10"
+                               VerticalAlignment="Center"
+                               Foreground="{StaticResource BrushTextSecondary}"
+                               Text="{Binding BreadCrumbs}" />
+                    <TextBlock Grid.Column="1"
+                               VerticalAlignment="Center"
+                               Foreground="{StaticResource BrushTextSecondary}"
+                               Text="{Binding Version}" />
+                </Grid>
+            </Border>
+            
+        </Grid>
     </Grid>
 </Window>
