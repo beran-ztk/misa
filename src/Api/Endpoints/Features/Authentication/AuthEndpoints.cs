@@ -1,4 +1,3 @@
-// Misa.Api/Endpoints/Features/Authentication/AuthEndpoints.cs
 using Microsoft.AspNetCore.Mvc;
 using Misa.Application.Features.Authentication;
 using Misa.Contract.Common.Results;
