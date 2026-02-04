@@ -87,7 +87,7 @@ public partial class SchedulerMainWindowViewModel : ViewModelBase
         {
             using var request = new HttpRequestMessage(HttpMethod.Get, "scheduling");
             
-            using var response = await NavigationService.NavigationStore.MisaHttpClient
+            using var response = await NavigationService.NavigationStore.HttpClient
                 .SendAsync(request, CancellationToken.None);
 
             response.EnsureSuccessStatusCode();

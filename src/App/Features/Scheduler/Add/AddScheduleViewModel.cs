@@ -162,7 +162,7 @@ public partial class AddScheduleViewModel(INavigationService navigationService, 
             using var request = new HttpRequestMessage(HttpMethod.Post, "scheduling");
             request.Content = JsonContent.Create(addScheduleDto);
 
-            using var response = await NavigationService.NavigationStore.MisaHttpClient
+            using var response = await NavigationService.NavigationStore.HttpClient
                 .SendAsync(request, CancellationToken.None);
             
             var result = await response.Content.ReadFromJsonAsync<Result<ScheduleDto>>(CancellationToken.None);

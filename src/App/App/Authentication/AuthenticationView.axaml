@@ -2,7 +2,68 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="Misa.Ui.Avalonia.App.Authentication.AuthenticationView">
-    Welcome to Avalonia!
+             mc:Ignorable="d"
+             x:Class="Misa.Ui.Avalonia.App.Authentication.AuthenticationView"
+             xmlns:vm="clr-namespace:Misa.Ui.Avalonia.App.Authentication"
+             x:DataType="vm:AuthenticationViewModel">
+
+  <Border Padding="16"
+          Margin="10"
+          CornerRadius="16"
+          BorderThickness="1">
+    <StackPanel Spacing="12" Width="360">
+
+      <TextBlock Text="MISA"
+                 FontSize="20"
+                 FontWeight="SemiBold"/>
+
+      <!-- Mode Switch -->
+      <Grid ColumnDefinitions="*,*" Height="38">
+        <Button Grid.Column="0"
+                Content="Anmelden"
+                Command="{Binding SetLoginModeCommand}"
+                IsEnabled="{Binding IsRegisterMode}" />
+        <Button Grid.Column="1"
+                Content="Registrieren"
+                Command="{Binding SetRegisterModeCommand}"
+                IsEnabled="{Binding IsLoginMode}" />
+      </Grid>
+
+      <StackPanel Spacing="8">
+        <TextBlock Text="Username"/>
+        <TextBox Text="{Binding Username, Mode=TwoWay}"
+                 Watermark="z.B. beran"
+                 IsEnabled="{Binding IsNotBusy}"/>
+
+        <TextBlock Text="Password"/>
+        <TextBox Text="{Binding Password, Mode=TwoWay}"
+                 PasswordChar="•"
+                 Watermark="Passwort"
+                 IsEnabled="{Binding IsNotBusy}"/>
+
+        <StackPanel IsVisible="{Binding IsRegisterMode}" Spacing="8">
+          <TextBlock Text="Password bestätigen"/>
+          <TextBox Text="{Binding ConfirmPassword, Mode=TwoWay}"
+                   PasswordChar="•"
+                   Watermark="Passwort wiederholen"
+                   IsEnabled="{Binding IsNotBusy}"/>
+        </StackPanel>
+      </StackPanel>
+
+      <TextBlock Text="{Binding ErrorMessage}"
+                 IsVisible="{Binding HasError}"
+                 Opacity="0.9"
+                 TextWrapping="Wrap"/>
+
+      <Button Content="{Binding PrimaryButtonText}"
+              Command="{Binding SubmitCommand}"
+              IsEnabled="{Binding CanSubmit}"
+              Height="40"/>
+
+      <Button Content="Schließen"
+              Command="{Binding CloseCommand}"
+              IsEnabled="{Binding IsNotBusy}" />
+
+    </StackPanel>
+  </Border>
 </UserControl>

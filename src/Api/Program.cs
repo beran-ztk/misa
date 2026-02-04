@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Misa.Api.Common.Exceptions;
 using Misa.Api.Common.Hubs;
+using Misa.Api.Endpoints.Features.Authentication;
 using Misa.Api.Endpoints.Features.Entities.Extensions.Items.Base;
 using Misa.Api.Endpoints.Features.Entities.Extensions.Items.Extensions;
 using Misa.Api.Endpoints.Features.Entities.Extensions.Items.Features;
@@ -9,6 +10,7 @@ using Misa.Api.Endpoints.Features.Entities.Features;
 using Misa.Api.Services.Features.Items.Features.Scheduler;
 using Misa.Api.Services.Features.Items.Features.Sessions;
 using Misa.Application.Common.Abstractions.Persistence;
+using Misa.Application.Features.Authentication;
 using Misa.Application.Features.Entities.Extensions.Items.Base.Queries;
 using Misa.Application.Features.Entities.Extensions.Items.Extensions.Tasks.Commands;
 using Misa.Application.Features.Entities.Extensions.Items.Extensions.Tasks.Queries;
@@ -67,6 +69,7 @@ builder.Services.AddScoped<ISchedulerPlanningRepository, SchedulerPlanningReposi
 builder.Services.AddScoped<ISchedulerExecutingRepository, SchedulerExecutingRepository>();
 builder.Services.AddScoped<ISchedulerRepository, SchedulerRepository>();
 builder.Services.AddScoped<ISchedulerRepository, SchedulerRepository>();
+builder.Services.AddScoped<IAuthenticationRepository, AuthenticationRepository>();
 
 // DI
 builder.Host.UseWolverine(opts =>
@@ -91,6 +94,9 @@ builder.Host.UseWolverine(opts =>
     
     opts.Discovery.IncludeAssembly(typeof(SchedulePlanningHandler).Assembly);
     opts.Discovery.IncludeAssembly(typeof(ScheduleExecutingHandler).Assembly);
+    
+    opts.Discovery.IncludeAssembly(typeof(LoginHandler).Assembly);
+    opts.Discovery.IncludeAssembly(typeof(RegisterHandler).Assembly);
 });
 
 // build app
@@ -103,5 +109,6 @@ TaskEndpoints.Map(app);
 ItemDetailEndpoints.Map(app);
 DescriptionEndpoints.Map(app);
 SchedulingEndpoints.Map(app);
+AuthEndpoints.Map(app);
 
 app.Run();

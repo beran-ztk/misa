@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
+using Misa.Contract.Features.Authentication;
 using Misa.Ui.Avalonia.App.Authentication;
 using Misa.Ui.Avalonia.Infrastructure.Services.Navigation;
 using Misa.Ui.Avalonia.Presentation.Mapping;
@@ -14,12 +15,16 @@ public partial class MainWindowViewModel : ViewModelBase
     public string Version => "v1.0.0";
     public string BreadCrumbs => NavigationService.NavigationStore.BreadCrumbsBase + NavigationService.NavigationStore.BreadCrumbsNavigation;
     
-    public ViewModelBase? MainWindowOverlay => NavigationService.NavigationStore.MainWindowOverlay;
+    public ViewModelBase? CurrentViewModel => NavigationService.NavigationStore.CurrentViewModel;
+
     public bool CurrentOverlayOpen => NavigationService.NavigationStore.CurrentOverlay != null;
-    public bool CurrentMainOverlayOpen => NavigationService.NavigationStore.MainWindowOverlay != null;
+    
+    public ViewModelBase? MainWindowOverlay => NavigationService.NavigationStore.MainWindowOverlay;
+    public bool CurrentMainOverlayOpen => MainWindowOverlay != null;
 
     [RelayCommand]
     private void CloseOverlay() => NavigationService.NavigationStore.CurrentOverlay = null;
+    public UserDto User => NavigationService.NavigationStore.User;
 
     public MainWindowViewModel(INavigationService navigationService)
     {
@@ -34,8 +39,18 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             switch (e.PropertyName)
             {
+                case nameof(NavigationService.NavigationStore.CurrentViewModel):
+                    OnPropertyChanged(nameof(CurrentViewModel));
+                    break;
                 case nameof(NavigationService.NavigationStore.CurrentOverlay):
                     OnPropertyChanged(nameof(CurrentOverlayOpen));
+                    break;
+                case nameof(NavigationService.NavigationStore.User):
+                    OnPropertyChanged(nameof(User));
+                    break;
+                case nameof(NavigationService.NavigationStore.MainWindowOverlay):
+                    OnPropertyChanged(nameof(MainWindowOverlay));
+                    OnPropertyChanged(nameof(CurrentMainOverlayOpen));
                     break;
                 case nameof(NavigationService.NavigationStore.BreadCrumbsNavigation):
                     OnPropertyChanged(nameof(BreadCrumbs));

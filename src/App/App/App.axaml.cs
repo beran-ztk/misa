@@ -13,6 +13,7 @@ using Misa.Ui.Avalonia.Features.Scheduler.Main;
 using Misa.Ui.Avalonia.Infrastructure.Services.Interfaces;
 using Misa.Ui.Avalonia.Infrastructure.Services.Messaging;
 using Misa.Ui.Avalonia.Infrastructure.Services.Navigation;
+using Misa.Ui.Avalonia.Infrastructure.Services.Startup;
 using DetailMainWindowViewModel = Misa.Ui.Avalonia.Features.Details.Main.DetailMainWindowViewModel;
 using NavigationStore = Misa.Ui.Avalonia.Infrastructure.Stores.NavigationStore;
 using TaskMainWindowViewModel = Misa.Ui.Avalonia.Features.Tasks.Main.TaskMainWindowViewModel;
@@ -46,6 +47,7 @@ public partial class App : Application
         sc.AddSingleton<NavigationStore>();
         sc.AddSingleton<IClipboardService, ClipboardService>();
         sc.AddSingleton<INavigationService, NavigationService>();
+        sc.AddSingleton<IAuthenticationService, AuthenticationService>();
 
         // -------------------------
         // Details (Selection + Clients + VMs)

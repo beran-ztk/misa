@@ -24,7 +24,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Endpoints\Features\" />
       <Folder Include="Endpoints\Features\Entities\Extensions\" />
     </ItemGroup>
 

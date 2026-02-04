@@ -134,7 +134,7 @@ public partial class TaskMainWindowViewModel : ViewModelBase
             using var request = new HttpRequestMessage(HttpMethod.Post, "tasks");
             request.Content = JsonContent.Create(dto);
             
-            using var response = await NavigationService.NavigationStore.MisaHttpClient
+            using var response = await NavigationService.NavigationStore.HttpClient
                 .SendAsync(request, CancellationToken.None);
     
             response.EnsureSuccessStatusCode();
