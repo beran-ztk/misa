@@ -62,7 +62,8 @@
                             BorderBrush="{StaticResource BrushBorder}"
                             BorderThickness="1"
                             ClipToBounds="True"
-                            Padding="10">
+                            Padding="10"
+                            IsVisible="{Binding IsTaskSelected}">
 
                         <!-- Innenfläche, damit der Content nicht an der Rundung klebt -->
                         <Border Background="{StaticResource BrushPrimaryBackgroundLighter}"
