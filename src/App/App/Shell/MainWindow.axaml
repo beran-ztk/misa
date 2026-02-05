@@ -7,6 +7,8 @@
         x:Class="Misa.Ui.Avalonia.App.Shell.MainWindow"
         x:DataType="shell:MainWindowViewModel"
         Icon="/Assets/Images/Shells/nanoparticle.png"
+        Height="800"
+        Width="1500"
         Title="Misa">
 
     <Grid>
