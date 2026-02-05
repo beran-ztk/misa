@@ -71,6 +71,7 @@
             <TextBox Grid.Column="1"
                      Classes="TaskSearchBox"
                      Watermark="Search tasks..."
+                     Text="{Binding SearchText, Mode=TwoWay}"
                      HorizontalAlignment="Right" />
         </Grid>
     </Border>

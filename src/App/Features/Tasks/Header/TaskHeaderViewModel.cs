@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Features.Entities.Extensions.Items.Extensions.Tasks;
 using Misa.Ui.Avalonia.Features.Tasks.Add;
@@ -12,7 +13,8 @@ namespace Misa.Ui.Avalonia.Features.Tasks.Header;
 public partial class TaskHeaderViewModel(TaskMainWindowViewModel vm) : ViewModelBase
 {
     private TaskMainWindowViewModel Parent { get; } = vm;
-
+    [ObservableProperty] private string _searchText = string.Empty;
+    partial void OnSearchTextChanged(string value) => Parent.ApplyFilters();
     [RelayCommand]
     private async Task ShowAddTaskWindow()
     {

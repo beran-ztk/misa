@@ -24,7 +24,7 @@
                     BorderThickness="0,1,0,1"
                     CornerRadius="12"
                     Padding="12">
-                <header:TaskHeaderView DataContext="{Binding TaskHeader}" />
+                <header:TaskHeaderView DataContext="{Binding Header}" />
             </Border>
 
             <!-- Contentfläche: "Card"-Look -->
