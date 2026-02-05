@@ -2,6 +2,8 @@ using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
+using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Features.Authentication;
@@ -104,9 +106,18 @@ public partial class AuthenticationViewModel : ViewModelBase
     private void SetRegisterMode() => IsRegisterMode = true;
 
     [RelayCommand]
-    private void Close()
+    private void Bypass()
     {
         NavigationService.NavigationStore.CloseOverlay();
+        
+    }
+    [RelayCommand]
+    private void Close()
+    {
+        if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+        {
+            desktop.Shutdown();
+        }
     }
 
     [RelayCommand]

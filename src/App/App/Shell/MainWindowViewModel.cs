@@ -1,4 +1,5 @@
-﻿using CommunityToolkit.Mvvm.Input;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
 using Misa.Contract.Features.Authentication;
 using Misa.Ui.Avalonia.App.Authentication;
@@ -57,6 +58,18 @@ public partial class MainWindowViewModel : ViewModelBase
                     break;
             }
         };
+    }
+    [ObservableProperty]
+    private bool _isUserMenuOpen;
+    [RelayCommand]
+    private void ToggleUserMenu()
+    {
+        IsUserMenuOpen = !IsUserMenuOpen;
+    }
+    [RelayCommand]
+    private void CloseUserMenu()
+    {
+        IsUserMenuOpen = false;
     }
     [RelayCommand]
     private void SignOut()

@@ -121,12 +121,26 @@
 
                 </StackPanel>
                 
-                <!-- Actions: side-by-side, consistent sizing -->
-                <Grid ColumnDefinitions="Auto,Auto"
+                <!-- Actions: left (Bypass) + right (Close / Primary) -->
+                <Grid ColumnDefinitions="Auto,*,Auto,Auto"
                       ColumnSpacing="10"
-                      HorizontalAlignment="Right">
+                      HorizontalAlignment="Stretch">
 
+                    <!-- Left side -->
                     <Button Grid.Column="0"
+                            Content="Bypass"
+                            Command="{Binding BypassCommand}"
+                            IsEnabled="{Binding IsNotBusy}"
+                            Classes="misa-secondary"
+                            Height="40"
+                            VerticalContentAlignment="Center"
+                            MinWidth="100"/>
+
+                    <!-- spacer -->
+                    <Border Grid.Column="1"/>
+
+                    <!-- Right side -->
+                    <Button Grid.Column="2"
                             Content="Close"
                             Command="{Binding CloseCommand}"
                             IsEnabled="{Binding IsNotBusy}"
@@ -135,7 +149,7 @@
                             VerticalContentAlignment="Center"
                             MinWidth="100"/>
 
-                    <Button Grid.Column="1"
+                    <Button Grid.Column="3"
                             Content="{Binding PrimaryButtonText}"
                             Command="{Binding SubmitCommand}"
                             IsEnabled="{Binding CanSubmit}"
