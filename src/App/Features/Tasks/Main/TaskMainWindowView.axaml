@@ -46,7 +46,7 @@
                             BorderBrush="{StaticResource BrushBorder}"
                             BorderThickness="0">
 
-                        <content:TaskContentView DataContext="{Binding Model}" />
+                        <content:TaskContentView DataContext="{Binding Content}" />
                     </Border>
 
                     <!-- Splitter als "weichere" Zone -->

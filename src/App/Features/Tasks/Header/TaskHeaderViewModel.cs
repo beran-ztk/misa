@@ -13,6 +13,14 @@ namespace Misa.Ui.Avalonia.Features.Tasks.Header;
 public partial class TaskHeaderViewModel(TaskMainWindowViewModel vm) : ViewModelBase
 {
     private TaskMainWindowViewModel Parent { get; } = vm;
+
+    [RelayCommand]
+    private void RefreshTaskWindow()
+    {
+        Parent.SelectedTask = null;
+        _ = Parent.Content.LoadAsync();
+    }
+
     [ObservableProperty] private string _searchText = string.Empty;
     partial void OnSearchTextChanged(string value) => Parent.ApplyFilters();
     [RelayCommand]

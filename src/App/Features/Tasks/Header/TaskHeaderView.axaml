@@ -22,6 +22,25 @@
         <Style Selector="Button.TaskAddButton:pointerover">
             <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLight}" />
         </Style>
+        
+        <!-- Refresh Button: icon chip -->
+        <Style Selector="Button.TaskRefreshButton">
+            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLight}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="999" />
+            <Setter Property="Padding" Value="8" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="MinWidth" Value="34" />
+            <Setter Property="MinHeight" Value="34" />
+        </Style>
+
+        <Style Selector="Button.TaskRefreshButton:pointerover">
+            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}" />
+        </Style>
+        <Style Selector="Button.TaskRefreshButton:pressed">
+            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackground}" />
+        </Style>
 
         <!-- Search box: chip look -->
         <Style Selector="TextBox.TaskSearchBox">
@@ -48,7 +67,7 @@
     <Border Padding="12"
             Background="{StaticResource BrushPrimaryBackground}">
 
-        <Grid ColumnDefinitions="Auto,*"
+        <Grid ColumnDefinitions="Auto,Auto,*"
               ColumnSpacing="10"
               VerticalAlignment="Center">
 
@@ -66,9 +85,18 @@
                                VerticalAlignment="Center"/>
                 </StackPanel>
             </Button>
+            
+            <!-- Refresh -->
+            <Button Grid.Column="1"
+                    Classes="TaskRefreshButton"
+                    ToolTip.Tip="Refresh"
+                    Command="{Binding RefreshTaskWindowCommand}">
+                <Image Width="16" Height="16"
+                       Source="{SvgImage /Assets/Images/MainNavigation/refresh.svg}" />
+            </Button>
 
             <!-- Search -->
-            <TextBox Grid.Column="1"
+            <TextBox Grid.Column="2"
                      Classes="TaskSearchBox"
                      Watermark="Search tasks..."
                      Text="{Binding SearchText, Mode=TwoWay}"

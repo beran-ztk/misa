@@ -44,7 +44,7 @@ public partial class TaskMainWindowViewModel : ViewModelBase
     private DetailMainWindowViewModel? _detailVm;
     private IDetailCoordinator? _detailCoordinator;
     
-    public TaskContentViewModel Model { get; }
+    public TaskContentViewModel Content { get; }
     public TaskHeaderViewModel Header { get; }
     [ObservableProperty] private string? _pageError;
     public TaskMainWindowViewModel(
@@ -69,7 +69,7 @@ public partial class TaskMainWindowViewModel : ViewModelBase
         }
 
         
-        Model = new TaskContentViewModel(this);
+        Content = new TaskContentViewModel(this);
         Header = new TaskHeaderViewModel(this);
         
         NavigationService.NavigationStore.BreadCrumbsNavigation = "Tasks → List → Details";
