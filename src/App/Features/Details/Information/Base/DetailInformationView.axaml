@@ -16,7 +16,7 @@
             <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}"/>
             <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}"/>
             <Setter Property="Padding" Value="14"/>
-            <Setter Property="Margin" Value="10"/>
+            <Setter Property="Margin" Value="0"/>
         </Style>
 
         <!-- Header -->
@@ -102,7 +102,7 @@
 
     </UserControl.Styles>
 
-    <ScrollViewer Padding="0"
+    <ScrollViewer Padding="14"
                   HorizontalScrollBarVisibility="Disabled">
         <StackPanel Spacing="12">
 
