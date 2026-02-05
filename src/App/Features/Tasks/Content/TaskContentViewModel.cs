@@ -20,7 +20,7 @@ public class TaskContentViewModel : ViewModelBase
         Parent = vm;
         _ = LoadAsync();
     }
-    private async Task LoadAsync()
+    public async Task LoadAsync()
     {
         try
         {

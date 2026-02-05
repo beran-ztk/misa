@@ -10,12 +10,43 @@
              xmlns:base="clr-namespace:Misa.Ui.Avalonia.Features.Details.Information.Base"
              x:DataType="main:DetailMainWindowViewModel">
 
-    <Border Background="{StaticResource BrushPrimaryBackgroundLighter}">
-        <TabControl SelectedIndex="{Binding SelectedTabIndex}">
-                <TabItem Header="Information">
-                    <base:DetailInformationView 
-                        DataContext="{Binding DetailInformationViewModel}"/>
-                </TabItem>
-            </TabControl>
+    <UserControl.Styles>
+
+        <Style Selector="TabControl.GitHubTabs">
+            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLight}" />
+        </Style>
+
+        <!-- Unselected tabs -->
+        <Style Selector="TabControl.GitHubTabs TabItem">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Padding" Value="12,8" />
+            <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}" />
+        </Style>
+
+        <Style Selector="TabControl.GitHubTabs TabItem:pointerover">
+            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLight}" />
+            <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}" />
+        </Style>
+
+
+        <!-- Selected tab: same background as content, borders left/top/right, no bottom -->
+        <Style Selector="TabControl.GitHubTabs TabItem:selected">
+            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLight}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}" />
+            <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}" />
+        </Style>
+
+    </UserControl.Styles>
+
+    <Border Background="{StaticResource BrushPrimaryBackgroundLight}">
+        <TabControl Classes="GitHubTabs"
+                    SelectedIndex="{Binding SelectedTabIndex}">
+            <TabItem Header="Inspector">
+                <base:DetailInformationView DataContext="{Binding DetailInformationViewModel}"/>
+            </TabItem>
+            <TabItem Header="Discussion"/>
+            <TabItem Header="Activity"/>
+            <TabItem Header="Related"/>
+        </TabControl>
     </Border>
 </UserControl>

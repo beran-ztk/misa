@@ -1,4 +1,5 @@
-﻿using CommunityToolkit.Mvvm.Input;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
 using Misa.Contract.Features.Authentication;
 using Misa.Ui.Avalonia.App.Authentication;
@@ -17,10 +18,11 @@ public partial class MainWindowViewModel : ViewModelBase
     
     public ViewModelBase? CurrentViewModel => NavigationService.NavigationStore.CurrentViewModel;
 
-    public bool CurrentOverlayOpen => NavigationService.NavigationStore.CurrentOverlay != null;
     
     public ViewModelBase? MainWindowOverlay => NavigationService.NavigationStore.MainWindowOverlay;
     public bool CurrentMainOverlayOpen => MainWindowOverlay != null;
+    public ViewModelBase? CurrentOverlay => NavigationService.NavigationStore.CurrentOverlay;
+    public bool CurrentOverlayOpen => NavigationService.NavigationStore.CurrentOverlay != null;
 
     [RelayCommand]
     private void CloseOverlay() => NavigationService.NavigationStore.CurrentOverlay = null;
@@ -43,6 +45,7 @@ public partial class MainWindowViewModel : ViewModelBase
                     OnPropertyChanged(nameof(CurrentViewModel));
                     break;
                 case nameof(NavigationService.NavigationStore.CurrentOverlay):
+                    OnPropertyChanged(nameof(CurrentOverlay));
                     OnPropertyChanged(nameof(CurrentOverlayOpen));
                     break;
                 case nameof(NavigationService.NavigationStore.User):
@@ -57,6 +60,18 @@ public partial class MainWindowViewModel : ViewModelBase
                     break;
             }
         };
+    }
+    [ObservableProperty]
+    private bool _isUserMenuOpen;
+    [RelayCommand]
+    private void ToggleUserMenu()
+    {
+        IsUserMenuOpen = !IsUserMenuOpen;
+    }
+    [RelayCommand]
+    private void CloseUserMenu()
+    {
+        IsUserMenuOpen = false;
     }
     [RelayCommand]
     private void SignOut()

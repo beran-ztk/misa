@@ -11,7 +11,6 @@ public class Task
         Item = item;
         Category = category;
     }
-    public static Task Create() => new();
     public static Task Create(string title, TaskCategory category, Priority priority)
     {
         var item = Item.Create(Workflow.Task, title, priority);

@@ -33,16 +33,19 @@ public partial class TaskMainWindowViewModel : ViewModelBase
     
     public ObservableCollection<PriorityFilterOption> PriorityFilters { get; } = [];
 
+    public bool IsTaskSelected => SelectedTask is not null;
     
-    [ObservableProperty] private TaskDto? _selectedTask;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsTaskSelected))]
+    private TaskDto? _selectedTask;
     [ObservableProperty] private ViewModelBase? _infoView;
     public INavigationService NavigationService { get; }
     
     private DetailMainWindowViewModel? _detailVm;
     private IDetailCoordinator? _detailCoordinator;
     
-    public TaskContentViewModel Model { get; }
-    public TaskHeaderViewModel TaskHeader { get; }
+    public TaskContentViewModel Content { get; }
+    public TaskHeaderViewModel Header { get; }
     [ObservableProperty] private string? _pageError;
     public TaskMainWindowViewModel(
         IServiceProvider sp,
@@ -64,14 +67,14 @@ public partial class TaskMainWindowViewModel : ViewModelBase
             
             PriorityFilters.Add(opt);
         }
+
         
-        Model = new TaskContentViewModel(this);
-        TaskHeader = new TaskHeaderViewModel(this);
+        Content = new TaskContentViewModel(this);
+        Header = new TaskHeaderViewModel(this);
         
         NavigationService.NavigationStore.BreadCrumbsNavigation = "Tasks → List → Details";
     }
-
-    private void ApplyFilters()
+    public void ApplyFilters()
     {
         var activePriorities = PriorityFilters
             .Where(f => f.IsSelected)
@@ -82,7 +85,8 @@ public partial class TaskMainWindowViewModel : ViewModelBase
         
         foreach (var t in Tasks)
         {
-            if (activePriorities.Contains(t.Item.Priority))
+            if (activePriorities.Contains(t.Item.Priority) 
+                && (t.Item.Title.Contains(Header.SearchText, StringComparison.OrdinalIgnoreCase) || string.IsNullOrEmpty(Header.SearchText)))
             {
                 _ = AddToFilteredCollection(t);
             }

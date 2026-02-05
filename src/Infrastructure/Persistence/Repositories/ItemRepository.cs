@@ -42,6 +42,7 @@ public class ItemRepository(DefaultContext context) : IItemRepository
             .ThenInclude(i => i.State)
             .Include(t => t.Item)
             .ThenInclude(i => i.Entity)
+            .AsNoTracking()
             .FirstOrDefaultAsync(t => t.Id == id, cancellationToken: ct);
     }
 
@@ -53,6 +54,7 @@ public class ItemRepository(DefaultContext context) : IItemRepository
             .Include(t => t.Item)
                 .ThenInclude(i => i.Entity)
             .OrderByDescending(t => t.Item.Entity.CreatedAt)
+            .AsNoTracking()
             .ToListAsync(ct);
     }
 
@@ -64,6 +66,7 @@ public class ItemRepository(DefaultContext context) : IItemRepository
                 && s.State == SessionState.Ended) 
             .Include(s => s.Segments)
             .OrderByDescending(s => s.CreatedAtUtc)
+            .AsNoTracking()
             .FirstOrDefaultAsync(ct);
     }
 
@@ -99,16 +102,6 @@ public class ItemRepository(DefaultContext context) : IItemRepository
             .FirstOrDefaultAsync(ct);
     }
 
-    public async Task<Item> AddAsync(Item item, CancellationToken ct = default)
-    {
-        await context.Items.AddAsync(item, ct);
-        await context.SaveChangesAsync(ct);
-        var loaded = await LoadAsync(item.Id, ct);
-        
-        return loaded 
-               ?? throw new InvalidOperationException("Item wurde gespeichert, konnte aber nicht wieder geladen werden.");
-    }
-
     public async Task AddAsync(Domain.Features.Entities.Extensions.Items.Extensions.Tasks.Task task, CancellationToken ct)
     {
         await context.Tasks.AddAsync(task, ct);
@@ -140,19 +133,10 @@ public class ItemRepository(DefaultContext context) : IItemRepository
             .Where(s =>
                 s.TargetItemId == id &&
                 s.ScheduleFrequencyType == ScheduleFrequencyType.Once)
-            .OrderByDescending(s => s.ActiveFromUtc) // falls es je mehrere gab
+            .OrderByDescending(s => s.ActiveFromUtc)
+            .AsNoTracking()
             .FirstOrDefaultAsync(ct);
     }
-
-    public async Task<Item?> LoadAsync(Guid entityId, CancellationToken ct = default)
-    {
-        return await context.Items
-            .Include(i => i.Entity)
-            .ThenInclude(e => e.Workflow)
-            .Include(i => i.State)
-            .SingleOrDefaultAsync(i => i.Id == entityId, ct);
-    }
-    
     
     public async Task<Item?> TryGetItemAsync(Guid id, CancellationToken ct)
     {
@@ -166,6 +150,7 @@ public class ItemRepository(DefaultContext context) : IItemRepository
         return await context.Schedulers
             .Include(s => s.Item)
             .ThenInclude(i => i.Entity)
+            .AsNoTracking()
             .ToListAsync(ct);
     }
 }

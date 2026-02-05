@@ -102,6 +102,30 @@
                     </Grid>
                 </Button>
                 
+                <!-- Chronicle -->
+                <Button Classes="MainNavigation"
+                        ToolTip.Tip="Chronicle">
+                    <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
+                        <Image Grid.Column="0" Width="16" Height="16"
+                               Source="{SvgImage /Assets/Images/MainNavigation/notebook.svg}"/>
+                        <TextBlock Grid.Column="1"
+                                   Classes="MainNavigation"
+                                   Text="Chronicle" />
+                    </Grid>
+                </Button>
+                
+                <!-- Index -->
+                <Button Classes="MainNavigation"
+                        ToolTip.Tip="Index">
+                    <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
+                        <Image Grid.Column="0" Width="16" Height="16"
+                               Source="{SvgImage /Assets/Images/MainNavigation/asterisk.svg}"/>
+                        <TextBlock Grid.Column="1"
+                                   Classes="MainNavigation"
+                                   Text="Index" />
+                    </Grid>
+                </Button>
+                
                 <!-- Initiatives -->
                 <Button Classes="MainNavigation"
                         ToolTip.Tip="Initiatives">
@@ -181,6 +205,18 @@
                         Spacing="{StaticResource SpacingSmall}"
                         VerticalAlignment="Bottom">
 
+                <!-- Ledger -->
+                <Button Classes="MainNavigation"
+                        ToolTip.Tip="Ledger">
+                    <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
+                        <Image Grid.Column="0" Width="16" Height="16"
+                               Source="{SvgImage /Assets/Images/MainNavigation/hourglass.svg}"/>
+                        <TextBlock Grid.Column="1"
+                                   Classes="MainNavigation"
+                                   Text="Ledger" />
+                    </Grid>
+                </Button>
+                
                 <Border Height="1"
                         Margin="0,8,0,8"
                         Background="{StaticResource BrushSecondaryBackground}"

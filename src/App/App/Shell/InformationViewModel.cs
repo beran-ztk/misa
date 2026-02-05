@@ -6,27 +6,18 @@ using Misa.Ui.Avalonia.Presentation.Mapping;
 
 namespace Misa.Ui.Avalonia.App.Shell;
 
-public sealed partial class InformationViewModel : ViewModelBase
+public sealed partial class InformationViewModel(INavigationService navigationService) : ViewModelBase
 {
-    private INavigationService NavigationService { get; }
-
-    public InformationViewModel(INavigationService navigationService)
-    {
-        NavigationService = navigationService;
-    }
-
     [RelayCommand]
     private void ToggleNotifications()
     {
-        var store = NavigationService.NavigationStore;
-
-        if (store.CurrentOverlay is NotificationViewModel)
+        if (navigationService.NavigationStore.CurrentOverlay is NotificationViewModel)
         {
-            store.CurrentOverlay = null;
+            navigationService.NavigationStore.CurrentOverlay = null;
             return;
         }
 
-        store.CurrentOverlay =
-            NavigationService.ServiceProvider.GetRequiredService<NotificationViewModel>();
+        navigationService.NavigationStore.CurrentOverlay =
+            navigationService.ServiceProvider.GetRequiredService<NotificationViewModel>();
     }
 }

@@ -259,8 +259,9 @@
                             <StackPanel Grid.Column="1"
                                         Orientation="Horizontal"
                                         Spacing="12">
-                                <TextBlock Text="Current:"
-                                           Foreground="{StaticResource BrushTextSecondary}" />
+                                <TextBlock Text="{Binding Parent.SelectedTask.Id, StringFormat='Current: {0}'}"
+                                           Foreground="{StaticResource BrushTextSecondary}"
+                                           IsVisible="{Binding Parent.IsTaskSelected}"/>
                             </StackPanel>
 
                         </Grid>
