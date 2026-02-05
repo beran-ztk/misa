@@ -9,8 +9,6 @@ namespace Misa.Infrastructure.Persistence.Repositories;
 public class EntityRepository(DefaultContext context) : IEntityRepository
 {
     public async Task SaveChangesAsync() => await context.SaveChangesAsync();
-    public async Task<Entity> GetTrackedEntityAsync(Guid id)
-        => await context.Entities.FirstAsync(e => e.Id == id);
     public Task<Description?> GetDescriptionByIdAsync(Guid descriptionId, CancellationToken ct)
         => context.Descriptions.FirstOrDefaultAsync(d => d.Id == descriptionId, ct);
 
