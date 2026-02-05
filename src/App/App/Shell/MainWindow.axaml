@@ -8,30 +8,14 @@
         x:DataType="shell:MainWindowViewModel"
         Icon="/Assets/Images/Shells/nanoparticle.png"
         Title="Misa">
-    
-    <Window.Styles>
-        <Style Selector="Button.overlay-backdrop">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderBrush" Value="Transparent"/>
-        </Style>
 
-        <Style Selector="Button.overlay-backdrop:pointerover">
-            <Setter Property="Background" Value="Transparent"/>
-        </Style>
-
-        <Style Selector="Button.overlay-backdrop:pressed">
-            <Setter Property="Background" Value="Transparent"/>
-        </Style>
-    </Window.Styles>
-
-    <Grid RowDefinitions="*">
+    <Grid>
+        <ContentControl Content="{Binding MainWindowOverlay}"
+                        IsVisible="{Binding CurrentMainOverlayOpen}"
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Stretch"/>
         
-        <ContentControl Grid.Row="0" 
-            Content="{Binding MainWindowOverlay}"
-                        IsVisible="{Binding CurrentMainOverlayOpen}"/>
-        
-        <Grid Grid.Row="0"
-              RowDefinitions="38,*,24"
+        <Grid RowDefinitions="38,*,24"
               Background="{StaticResource BrushPrimaryBackground}"
               IsVisible="{Binding !CurrentMainOverlayOpen}">
 
@@ -83,7 +67,7 @@
 
 
             <!-- Main: Nav + Content + Info -->
-            <Grid Grid.Row="1" ColumnDefinitions="150,*,Auto,33">
+            <Grid Grid.Row="1" ColumnDefinitions="150,*,Auto,40">
 
                 <!-- Content -->
                 <ContentControl Grid.Column="0" Content="{Binding Navigation}"/>
