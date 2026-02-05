@@ -139,7 +139,7 @@
                 <!-- Content -->
                 <ContentControl Grid.Column="0" Content="{Binding Navigation}"/>
                 <ContentControl Grid.Column="1" Content="{Binding CurrentViewModel}" />
-                <ContentControl Grid.Column="2" Content="{Binding NavigationService.NavigationStore.CurrentOverlay}" />
+                <ContentControl Grid.Column="2" Content="{Binding CurrentOverlay}" />
                 <ContentControl Grid.Column="3" Content="{Binding Information}" />
 
                 <!-- 1) Visuelles Backdrop (nur abdunkeln) -->
