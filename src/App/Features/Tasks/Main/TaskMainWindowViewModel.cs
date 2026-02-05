@@ -33,8 +33,11 @@ public partial class TaskMainWindowViewModel : ViewModelBase
     
     public ObservableCollection<PriorityFilterOption> PriorityFilters { get; } = [];
 
+    public bool IsTaskSelected => SelectedTask is not null;
     
-    [ObservableProperty] private TaskDto? _selectedTask;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsTaskSelected))]
+    private TaskDto? _selectedTask;
     [ObservableProperty] private ViewModelBase? _infoView;
     public INavigationService NavigationService { get; }
     
