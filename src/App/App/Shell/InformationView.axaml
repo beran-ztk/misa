@@ -19,7 +19,7 @@
                     ToolTip.Tip="Notifications"
                     Command="{Binding ToggleNotificationsCommand}">
                 <Image Width="16" Height="16"
-                       Source="{SvgImage /Assets/Images/InfoNavigation/notification.svg}" />
+                       Source="{SvgImage /Assets/Images/MainNavigation/bell.svg}" />
             </Button>
         </StackPanel>
     </Border>

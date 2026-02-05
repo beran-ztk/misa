@@ -57,7 +57,7 @@
                         ToolTip.Tip="Tasks"
                         Command="{Binding ShowTasksCommand}">
                     <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
-                        <Image Width="16" Height="16"
+                        <Image Grid.Column="0" Width="16" Height="16"
                                Source="{SvgImage /Assets/Images/MainNavigation/list-dashes.svg}"/>
                         <TextBlock Grid.Column="1"
                                    Classes="MainNavigation"
@@ -70,7 +70,7 @@
                         ToolTip.Tip="Scheduler"
                         Command="{Binding OpenSchedulerPanelCommand}">
                     <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
-                        <Image Width="16" Height="16"
+                        <Image Grid.Column="0" Width="16" Height="16"
                                Source="{SvgImage /Assets/Images/MainNavigation/calendar-dots.svg}"/>
                         <TextBlock Grid.Column="1"
                                    Classes="MainNavigation"
@@ -82,11 +82,95 @@
                 <Button Classes="MainNavigation"
                         ToolTip.Tip="Credentials">
                     <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
-                        <Image Width="16" Height="16"
+                        <Image Grid.Column="0" Width="16" Height="16"
                                Source="{SvgImage /Assets/Images/MainNavigation/fingerprint-simple.svg}"/>
                         <TextBlock Grid.Column="1"
                                    Classes="MainNavigation"
                                    Text="Credentials" />
+                    </Grid>
+                </Button>
+                
+                <!-- Contacts -->
+                <Button Classes="MainNavigation"
+                        ToolTip.Tip="Contacts">
+                    <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
+                        <Image Grid.Column="0" Width="16" Height="16"
+                               Source="{SvgImage /Assets/Images/MainNavigation/users-three.svg}"/>
+                        <TextBlock Grid.Column="1"
+                                   Classes="MainNavigation"
+                                   Text="Contacts" />
+                    </Grid>
+                </Button>
+                
+                <!-- Initiatives -->
+                <Button Classes="MainNavigation"
+                        ToolTip.Tip="Initiatives">
+                    <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
+                        <Image Grid.Column="0" Width="16" Height="16"
+                               Source="{SvgImage /Assets/Images/MainNavigation/notches.svg}"/>
+                        <TextBlock Grid.Column="1"
+                                   Classes="MainNavigation"
+                                   Text="Initiatives" />
+                    </Grid>
+                </Button>
+                
+                <!-- Zettelkasten -->
+                <Button Classes="MainNavigation"
+                        ToolTip.Tip="Zettelkasten">
+                    <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
+                        <Image Grid.Column="0" Width="16" Height="16"
+                               Source="{SvgImage /Assets/Images/MainNavigation/scroll.svg}"/>
+                        <TextBlock Grid.Column="1"
+                                   Classes="MainNavigation"
+                                   Text="Zettelkasten" />
+                    </Grid>
+                </Button>
+                
+                <!-- Evidences -->
+                <Button Classes="MainNavigation"
+                        ToolTip.Tip="Evidences">
+                    <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
+                        <Image Grid.Column="0" Width="16" Height="16"
+                               Source="{SvgImage /Assets/Images/MainNavigation/bookmarks.svg}"/>
+                        <TextBlock Grid.Column="1"
+                                   Classes="MainNavigation"
+                                   Text="Evidences" />
+                    </Grid>
+                </Button>
+                
+                <!-- RSS Feed -->
+                <Button Classes="MainNavigation"
+                        ToolTip.Tip="RSS Feed">
+                    <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
+                        <Image Grid.Column="0" Width="16" Height="16"
+                               Source="{SvgImage /Assets/Images/MainNavigation/rss.svg}"/>
+                        <TextBlock Grid.Column="1"
+                                   Classes="MainNavigation"
+                                   Text="RSS Feed" />
+                    </Grid>
+                </Button>
+                
+                <!-- URLs -->
+                <Button Classes="MainNavigation"
+                        ToolTip.Tip="URLs">
+                    <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
+                        <Image Grid.Column="0" Width="16" Height="16"
+                               Source="{SvgImage /Assets/Images/MainNavigation/paperclip.svg}"/>
+                        <TextBlock Grid.Column="1"
+                                   Classes="MainNavigation"
+                                   Text="URLs" />
+                    </Grid>
+                </Button>
+                
+                <!-- Agents -->
+                <Button Classes="MainNavigation"
+                        ToolTip.Tip="Agents">
+                    <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
+                        <Image Grid.Column="0" Width="16" Height="16"
+                               Source="{SvgImage /Assets/Images/MainNavigation/agents-head-circuit.svg}"/>
+                        <TextBlock Grid.Column="1"
+                                   Classes="MainNavigation"
+                                   Text="Agents" />
                     </Grid>
                 </Button>
 
