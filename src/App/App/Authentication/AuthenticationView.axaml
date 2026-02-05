@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui" 
+<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -7,69 +7,145 @@
              xmlns:vm="clr-namespace:Misa.Ui.Avalonia.App.Authentication"
              x:DataType="vm:AuthenticationViewModel">
 
-  <Border Padding="16"
-          Margin="10"
-          CornerRadius="16"
-          BorderThickness="1">
-    <StackPanel Spacing="12" Width="360">
+    <!-- Full-screen "auth screen" background, not black -->
+    <Grid Background="{StaticResource BrushPrimaryBackgroundLighter}">
 
-      <TextBlock Text="MISA"
-                 FontSize="20"
-                 FontWeight="SemiBold"/>
+        <!-- Centered surface (no harsh border look; rely on background contrast) -->
+        <Border Background="{StaticResource BrushPrimaryBackgroundLight}"
+                CornerRadius="10"
+                Padding="30"
+                Width="520"
+                MaxWidth="640"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center">
 
-      <Grid ColumnDefinitions="*,*" Height="38">
-        <Button Grid.Column="0"
-                Content="Anmelden"
-                Command="{Binding SetLoginModeCommand}"
-                IsEnabled="{Binding IsRegisterMode}" />
-        <Button Grid.Column="1"
-                Content="Registrieren"
-                Command="{Binding SetRegisterModeCommand}"
-                IsEnabled="{Binding IsLoginMode}" />
-      </Grid>
+            <StackPanel Spacing="14">
 
-      <StackPanel Spacing="8">
-        <TextBlock Text="Username"/>
-        <TextBox Text="{Binding Username, Mode=TwoWay}"
-                 Watermark="z.B. beran"
-                 IsEnabled="{Binding IsNotBusy}"/>
+                <!-- Header -->
+                <StackPanel Spacing="4">
+                    <TextBlock Text="MISA"
+                               FontSize="{StaticResource FontSizeLarge}"
+                               Foreground="{StaticResource BrushTextFaded}"
+                               Margin="0"/>
 
-        <TextBlock Text="Password"/>
-        <TextBox Text="{Binding Password, Mode=TwoWay}"
-                 PasswordChar="•"
-                 Watermark="Passwort"
-                 IsEnabled="{Binding IsNotBusy}"/>
+                    <TextBlock Text="{Binding SubtitleText}"
+                               Classes="misa-subtitle"
+                               Margin="0"/>
+                </StackPanel>
 
-        <StackPanel IsVisible="{Binding IsRegisterMode}" Spacing="8">
-          <TextBlock Text="Password bestätigen"/>
-          <TextBox Text="{Binding ConfirmPassword, Mode=TwoWay}"
-                   PasswordChar="•"
-                   Watermark="Passwort wiederholen"
-                   IsEnabled="{Binding IsNotBusy}"/>
+                <!-- subtle separator -->
+                <Border Height="1"
+                        Background="{StaticResource BrushBorder}"
+                        Opacity="0.35"/>
 
-          <TextBlock Text="Timezone"/>
-          <ComboBox ItemsSource="{Binding TimeZoneIds}"
-                    SelectedItem="{Binding SelectedTimeZoneId, Mode=TwoWay}"
-                    IsEnabled="{Binding IsNotBusy}"
-                    Height="34"
-                    Width="300"/>
-        </StackPanel>
-      </StackPanel>
+                
 
-      <TextBlock Text="{Binding ErrorMessage}"
-                 IsVisible="{Binding HasError}"
-                 Opacity="0.9"
-                 TextWrapping="Wrap"/>
+                <!-- Form -->
+                <StackPanel Spacing="10">
 
-      <Button Content="{Binding PrimaryButtonText}"
-              Command="{Binding SubmitCommand}"
-              IsEnabled="{Binding CanSubmit}"
-              Height="40"/>
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="Username" Classes="misa-label" Margin="0"/>
+                        <TextBox Text="{Binding Username, Mode=TwoWay}"
+                                 Classes="misa-input"
+                                 IsEnabled="{Binding IsNotBusy}"/>
+                    </StackPanel>
 
-      <Button Content="Schließen"
-              Command="{Binding CloseCommand}"
-              IsEnabled="{Binding IsNotBusy}" />
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="Password" Classes="misa-label" Margin="0"/>
+                        <TextBox Text="{Binding Password, Mode=TwoWay}"
+                                 Classes="misa-input"
+                                 PasswordChar="•"
+                                 IsEnabled="{Binding IsNotBusy}"/>
+                    </StackPanel>
 
-    </StackPanel>
-  </Border>
+                    <StackPanel IsVisible="{Binding IsRegisterMode}"
+                                Spacing="10">
+
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="Confirm password" Classes="misa-label" Margin="0"/>
+                            <TextBox Text="{Binding ConfirmPassword, Mode=TwoWay}"
+                                     Classes="misa-input"
+                                     PasswordChar="•"
+                                     Watermark="Repeat password"
+                                     IsEnabled="{Binding IsNotBusy}"/>
+                        </StackPanel>
+
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="Time zone" Classes="misa-label" Margin="0"/>
+                            <ComboBox ItemsSource="{Binding TimeZoneIds}"
+                                      SelectedItem="{Binding SelectedTimeZoneId, Mode=TwoWay}"
+                                      Classes="misa-input"
+                                      IsEnabled="{Binding IsNotBusy}"
+                                      Height="38"
+                                      HorizontalAlignment="Stretch"/>
+                        </StackPanel>
+
+                    </StackPanel>
+
+                </StackPanel>
+
+                <!-- Error banner -->
+                <Border Classes="misa-error-banner"
+                        IsVisible="{Binding HasError}">
+                    <TextBlock Text="{Binding ErrorMessage}"
+                               Foreground="{StaticResource BrushError}"
+                               TextWrapping="Wrap"/>
+                </Border>
+                
+                <!-- Mode switch (modern auth pattern) -->
+                <StackPanel Spacing="6" HorizontalAlignment="Center">
+
+                    <!-- Login mode: show "Create account" -->
+                    <StackPanel Orientation="Horizontal"
+                                Spacing="6"
+                                HorizontalAlignment="Center"
+                                IsVisible="{Binding IsLoginMode}">
+                        <TextBlock Text="No account?"
+                                   Classes="misa-muted"/>
+                        <Button Content="Create one"
+                                Classes="misa-link"
+                                Command="{Binding SetRegisterModeCommand}"/>
+                    </StackPanel>
+
+                    <!-- Register mode: show "Back to sign in" -->
+                    <StackPanel Orientation="Horizontal"
+                                Spacing="6"
+                                HorizontalAlignment="Center"
+                                IsVisible="{Binding IsRegisterMode}">
+                        <TextBlock Text="Already have an account?"
+                                   Classes="misa-muted"/>
+                        <Button Content="Sign in"
+                                Classes="misa-link"
+                                Command="{Binding SetLoginModeCommand}"/>
+                    </StackPanel>
+
+                </StackPanel>
+                
+                <!-- Actions: side-by-side, consistent sizing -->
+                <Grid ColumnDefinitions="Auto,Auto"
+                      ColumnSpacing="10"
+                      HorizontalAlignment="Right">
+
+                    <Button Grid.Column="0"
+                            Content="Close"
+                            Command="{Binding CloseCommand}"
+                            IsEnabled="{Binding IsNotBusy}"
+                            Classes="misa-secondary"
+                            Height="40"
+                            VerticalContentAlignment="Center"
+                            MinWidth="100"/>
+
+                    <Button Grid.Column="1"
+                            Content="{Binding PrimaryButtonText}"
+                            Command="{Binding SubmitCommand}"
+                            IsEnabled="{Binding CanSubmit}"
+                            Classes="misa-primary misa-auth-primary"
+                            Height="40"
+                            VerticalContentAlignment="Center"
+                            MinWidth="100"/>
+                </Grid>
+
+            </StackPanel>
+        </Border>
+    </Grid>
 </UserControl>

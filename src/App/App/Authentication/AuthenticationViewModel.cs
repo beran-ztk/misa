@@ -35,7 +35,10 @@ public partial class AuthenticationViewModel : ViewModelBase
     public ObservableCollection<string> TimeZoneIds { get; }
     [ObservableProperty] private string? _selectedTimeZoneId;
 
-    [ObservableProperty] private bool _isRegisterMode;
+    [ObservableProperty] 
+    [NotifyPropertyChangedFor(nameof(SubtitleText))]
+    private bool _isRegisterMode;
+    public string SubtitleText => IsRegisterMode ? "Create your account" : "Sign in to continue";
     public bool IsLoginMode => !IsRegisterMode;
 
     [ObservableProperty] private string _username = string.Empty;
@@ -48,7 +51,7 @@ public partial class AuthenticationViewModel : ViewModelBase
     [ObservableProperty] private string? _errorMessage;
     public bool HasError => !string.IsNullOrWhiteSpace(ErrorMessage);
 
-    public string PrimaryButtonText => IsRegisterMode ? "Registrieren" : "Anmelden";
+    public string PrimaryButtonText => IsRegisterMode ? "Register" : "Sign in";
 
     public bool CanSubmit
     {

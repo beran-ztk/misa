@@ -6,6 +6,19 @@
         </Border>
     </Design.PreviewWith>
 
+    <Style Selector="Button.overlay-backdrop">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="0"/>
+    </Style>
+    <Style Selector="Button.overlay-backdrop:pointerover">
+        <Setter Property="Background" Value="Transparent"/>
+    </Style>
+    <Style Selector="Button.overlay-backdrop:pressed">
+        <Setter Property="Background" Value="Transparent"/>
+    </Style>
+    
     <!-- MISA: Secondary Button (neutral) -->
     <Style Selector="Button.misa-secondary">
         <Setter Property="Background" Value="Transparent" />
@@ -77,6 +90,22 @@
     <Style Selector="Button.misa-auth-primary">
         <Setter Property="HorizontalAlignment" Value="Stretch" />
         <Setter Property="Padding" Value="12,10" />
+    </Style>
+    <Style Selector="Button.misa-link">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="Foreground" Value="{StaticResource BrushAccent}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeMedium}" />
+    </Style>
+    <Style Selector="Button.misa-link:pointerover">
+        <Setter Property="Opacity" Value="0.85" />
+    </Style>
+
+    <Style Selector="TextBlock.misa-muted">
+        <Setter Property="Foreground" Value="{StaticResource BrushTextFaded}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeMedium}" />
     </Style>
 
 </Styles>
