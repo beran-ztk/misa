@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Misa.Api.Middleware;
 using Misa.Api.Services.Features.Items.Features.Scheduler;
 using Misa.Api.Services.Features.Items.Features.Sessions;
+using Misa.Application.Abstractions.Ids;
 using Misa.Application.Abstractions.Persistence;
 using Misa.Application.Abstractions.Time;
 using Misa.Domain.Features.Audit;
@@ -13,6 +14,7 @@ using Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions;
 using Misa.Domain.Features.Messaging;
 using Misa.Infrastructure.Persistence.Context;
 using Misa.Infrastructure.Persistence.Repositories;
+using Misa.Infrastructure.Services.Ids;
 using Misa.Infrastructure.Services.Time;
 using TimeProvider = System.TimeProvider;
 
@@ -20,11 +22,11 @@ namespace Misa.Api.Composition;
 
 public static class ServiceRegistration
 {
-    public static IServiceCollection RegisterServicesToBaseDI(this IServiceCollection services)
+    public static IServiceCollection RegisterServices(this IServiceCollection services)
     {
         services.AddApiCore();
         services.AddApiMiddleware();
-        services.AddTimeServices();
+        services.AddCoreServices();
         services.AddDataAccess();
         services.AddWorkers();
         services.AddRepositories();
@@ -45,14 +47,35 @@ public static class ServiceRegistration
         return services;
     }
 
-    private static IServiceCollection AddTimeServices(this IServiceCollection services)
+    private static IServiceCollection AddCoreServices(this IServiceCollection services)
     {
         services.AddSingleton<ITimeProvider, Misa.Infrastructure.Services.Time.TimeProvider>();
         services.AddSingleton<ITimeZoneProvider, TimeZoneProvider>();
         services.AddSingleton<ITimeZoneConverter, TimeZoneConverter>();
+        services.AddSingleton<IIdGenerator, GuidIdGenerator>();
         return services;
     }
 
+    private static IServiceCollection AddWorkers(this IServiceCollection services)
+    {
+        services.AddHostedService<SessionAutostopWorker>();
+        services.AddHostedService<SessionPastMaxTimeWorker>();
+        services.AddHostedService<SchedulePlanningWorker>();
+        services.AddHostedService<ScheduleExecutingWorker>();
+        services.AddHostedService<SchedulePublishingWorker>();
+        return services;
+    }
+
+    private static IServiceCollection AddRepositories(this IServiceCollection services)
+    {
+        services.AddScoped<IEntityRepository, EntityRepository>();
+        services.AddScoped<IItemRepository, ItemRepository>();
+        services.AddScoped<ISchedulerPlanningRepository, SchedulerPlanningRepository>();
+        services.AddScoped<ISchedulerExecutingRepository, SchedulerExecutingRepository>();
+        services.AddScoped<ISchedulerRepository, SchedulerRepository>();
+        services.AddScoped<IAuthenticationRepository, AuthenticationRepository>();
+        return services;
+    }
     private static IServiceCollection AddDataAccess(this IServiceCollection services)
     {
         services.AddDbContext<DefaultContext>((sp, options) =>
@@ -80,24 +103,4 @@ public static class ServiceRegistration
         return services;
     }
 
-    private static IServiceCollection AddWorkers(this IServiceCollection services)
-    {
-        services.AddHostedService<SessionAutostopWorker>();
-        services.AddHostedService<SessionPastMaxTimeWorker>();
-        services.AddHostedService<SchedulePlanningWorker>();
-        services.AddHostedService<ScheduleExecutingWorker>();
-        services.AddHostedService<SchedulePublishingWorker>();
-        return services;
-    }
-
-    private static IServiceCollection AddRepositories(this IServiceCollection services)
-    {
-        services.AddScoped<IEntityRepository, EntityRepository>();
-        services.AddScoped<IItemRepository, ItemRepository>();
-        services.AddScoped<ISchedulerPlanningRepository, SchedulerPlanningRepository>();
-        services.AddScoped<ISchedulerExecutingRepository, SchedulerExecutingRepository>();
-        services.AddScoped<ISchedulerRepository, SchedulerRepository>();
-        services.AddScoped<IAuthenticationRepository, AuthenticationRepository>();
-        return services;
-    }
 }

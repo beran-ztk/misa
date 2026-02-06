@@ -3,7 +3,7 @@ using Misa.Api.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.RegisterServicesToBaseDI();
+builder.Services.RegisterServices();
 builder.Host.RegisterHandlersToWolverine();
 
 var app = builder.Build();

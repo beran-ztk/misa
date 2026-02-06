@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using Misa.Application.Abstractions.Ids;
 using Misa.Application.Abstractions.Persistence;
 using Misa.Application.Abstractions.Time;
 using Misa.Application.Mappings;
@@ -11,7 +12,7 @@ using Wolverine;
 namespace Misa.Application.Features.Entities.Extensions.Items.Features.Scheduling.Commands;
 
 public sealed record ScheduleExecutingCommand;
-public class ScheduleExecutingHandler(ISchedulerExecutingRepository repository, ITimeProvider  timeProvider)
+public class ScheduleExecutingHandler(ISchedulerExecutingRepository repository, ITimeProvider  timeProvider, IIdGenerator idGenerator)
 {
     public async Task HandleAsync(
         ScheduleExecutingCommand command, 
@@ -42,7 +43,9 @@ public class ScheduleExecutingHandler(ISchedulerExecutingRepository repository, 
             {
                 log.Succeeded(timeProvider.UtcNow);
                 await repository.AddOutboxMessageAsync(
-                    new Outbox(EventType.SchedulerCreatedTask,
+                    new Outbox(
+                        idGenerator.New(),
+                        EventType.SchedulerCreatedTask,
                         JsonSerializer.Serialize("Blabla"), 
                         timeProvider.UtcNow), 
                     stoppingToken);
