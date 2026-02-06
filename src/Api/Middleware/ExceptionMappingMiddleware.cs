@@ -3,7 +3,7 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Misa.Application.Common.Exceptions;
 
-namespace Misa.Api.Common.Exceptions;
+namespace Misa.Api.Middleware;
 
 public sealed class ExceptionMappingMiddleware : IMiddleware
 {

@@ -1,6 +1,6 @@
 ﻿using Misa.Contract.Common.Results;
 
-namespace Misa.Api.Common;
+namespace Misa.Api.Middleware;
 
 public static class ResultHttpMapper
 {

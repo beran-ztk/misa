@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.SignalR;
 
-namespace Misa.Api.Common.Hubs;
+namespace Misa.Api.Middleware;
 
 public sealed class EventHub : Hub;
