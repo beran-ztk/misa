@@ -38,8 +38,7 @@ public class SchedulePlanningWorker(IServiceProvider provider, ILogger<ScheduleP
         
         try
         {
-            logger.LogInformation("Schedule planning worker running at {DateTimeOffset:HH:mm:ss}.",
-                DateTimeOffset.UtcNow);
+            logger.LogInformation("Schedule planning worker running at.");
 
             var scope = provider.CreateScope();
             var bus = scope.ServiceProvider.GetRequiredService<IMessageBus>();
@@ -48,13 +47,11 @@ public class SchedulePlanningWorker(IServiceProvider provider, ILogger<ScheduleP
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Schedule planning worker failed at {DateTimeOffset:HH:mm:ss}.", 
-                DateTimeOffset.UtcNow);
+            logger.LogError(ex, "Schedule planning worker failed at.");
         }
         finally
         {
-            logger.LogInformation("Schedule planning worker finished at {DateTimeOffset:HH:mm:ss}.",
-                DateTimeOffset.UtcNow);
+            logger.LogInformation("Schedule planning worker finished at.");
             
             Interlocked.Exchange(ref _isRunning, 0);
         }

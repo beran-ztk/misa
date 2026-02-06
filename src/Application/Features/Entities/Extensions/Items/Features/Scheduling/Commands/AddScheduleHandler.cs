@@ -31,6 +31,7 @@ public record AddScheduleCommand(
 public class AddScheduleHandler(
     IItemRepository repository, 
     IAuthenticationRepository authenticationRepository,
+    ITimeProvider timeProvider,
     ITimeZoneConverter timeZoneConverter)
 {
     public async Task<Result<ScheduleDto>> Handle(AddScheduleCommand command, CancellationToken ct)
@@ -59,7 +60,8 @@ public class AddScheduleHandler(
                 byDay: command.ByDay,
                 byMonthDay: command.ByMonthDay,
                 byMonth: command.ByMonth,
-                timezone: user.TimeZone
+                timezone: user.TimeZone,
+                createdAt: timeProvider.UtcNow
             );
 
             await repository.AddAsync(scheduler, ct);

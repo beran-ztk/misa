@@ -8,44 +8,30 @@ public class Entity
 {
     private Entity () { }
 
-    public Entity(Workflow workflow)
+    private Entity(Workflow workflow, DateTimeOffset createdAt)
     {
         Workflow = workflow;
-        
-        CreatedAt = DateTimeOffset.UtcNow;
-        InteractedAt = DateTimeOffset.UtcNow;
+        CreatedAt = createdAt;
     }
 
-    public static Entity Create(Workflow workflow)
+    public static Entity Create(Workflow workflow, DateTimeOffset createdAtUtc)
     {
-        return new Entity(workflow);
+        return new Entity(workflow, createdAtUtc);
     }
     public Guid Id { get; init; }
     public Workflow Workflow { get; init; }
-    public bool IsDeleted { get; set; }
-    public bool IsArchived { get; set; }
+    public bool IsDeleted { get; init; }
+    public bool IsArchived { get; init; }
     
-    public DateTimeOffset CreatedAt { get; set; }
-    public DateTimeOffset? UpdatedAt { get; set; }
-    public DateTimeOffset? DeletedAt { get; set; }
-    public DateTimeOffset? ArchivedAt { get; set; }
-    public DateTimeOffset? InteractedAt { get; set; }
+    public DateTimeOffset CreatedAt { get; init; }
+    public DateTimeOffset? UpdatedAt { get; private set; }
+    public DateTimeOffset? DeletedAt { get; init; }
+    public DateTimeOffset? ArchivedAt { get; init; }
+    public DateTimeOffset? InteractedAt { get; init; }
     
     public ICollection<AuditChange> Changes { get; init; } = new List<AuditChange>();
     public ICollection<Description> Descriptions { get; init; } = new List<Description>();
 
-   
-    public void Interact() => InteractedAt =  DateTimeOffset.UtcNow;
-    public void Update() => UpdatedAt = DateTimeOffset.UtcNow;
-
-    public void Delete()
-    {
-        IsDeleted = true;
-        DeletedAt = DateTimeOffset.UtcNow;
-    }
-    public void Archive()
-    {
-        IsArchived = true;
-        ArchivedAt = DateTimeOffset.UtcNow;
-    }
+    public void Update(DateTimeOffset utcNow) 
+        => UpdatedAt = utcNow;
 }

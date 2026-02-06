@@ -8,7 +8,8 @@ public sealed class SchedulerExecutionLog
     private SchedulerExecutionLog() { } // EF Core
     public static SchedulerExecutionLog Create(
         Guid schedulerId,
-        DateTimeOffset scheduledForUtc)
+        DateTimeOffset scheduledForUtc,
+        DateTimeOffset createdAtUtc)
     {
         return new SchedulerExecutionLog
         {
@@ -17,7 +18,7 @@ public sealed class SchedulerExecutionLog
             
             Status = SchedulerExecutionStatus.Pending,
             Attempts = 0,
-            CreatedAtUtc = DateTimeOffset.UtcNow
+            CreatedAtUtc = createdAtUtc
         };
     }
 

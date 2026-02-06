@@ -10,8 +10,8 @@ public sealed partial class DeadlineInputViewModel : ViewModelBase
     [ObservableProperty] private bool _isEnabled;
     [ObservableProperty] private bool _createWithParent = true;
 
-    [ObservableProperty] private DateTimeOffset _dueDate = DateTimeOffset.UtcNow.Date;
-    [ObservableProperty] private TimeSpan _dueTime = DateTimeOffset.UtcNow.TimeOfDay;
+    [ObservableProperty] private DateTimeOffset _dueDate = DateTimeOffset.Now.Date;
+    [ObservableProperty] private TimeSpan _dueTime = DateTimeOffset.Now.TimeOfDay;
 
     public DeadlineInputDto? ToDtoOrNull()
     {
@@ -28,7 +28,7 @@ public sealed partial class DeadlineInputViewModel : ViewModelBase
     public void Reset()
     {
         IsEnabled = false;
-        DueDate = DateTimeOffset.UtcNow.Date;
-        DueTime = DateTimeOffset.UtcNow.TimeOfDay;
+        DueDate = DateTimeOffset.Now.Date;
+        DueTime = DateTimeOffset.Now.TimeOfDay;
     }
 }

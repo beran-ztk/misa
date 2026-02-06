@@ -40,8 +40,7 @@ public class SchedulePublishingWorker(
     {
         try
         {
-            logger.LogInformation("Schedule executing worker running at {DateTimeOffset:HH:mm:ss}.",
-                DateTimeOffset.UtcNow);
+            logger.LogInformation("Schedule executing worker running at.");
 
             var scope = provider.CreateScope();
             var bus = scope.ServiceProvider.GetRequiredService<IMessageBus>();
@@ -58,13 +57,11 @@ public class SchedulePublishingWorker(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Schedule executing worker failed at {DateTimeOffset:HH:mm:ss}.", 
-                DateTimeOffset.UtcNow);
+            logger.LogError(ex, "Schedule executing worker failed at.");
         }
         finally
         {
-            logger.LogInformation("Schedule executing worker finished at {DateTimeOffset:HH:mm:ss}.",
-                DateTimeOffset.UtcNow);
+            logger.LogInformation("Schedule executing worker finished at.");
         }
     }
 }

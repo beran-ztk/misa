@@ -1,4 +1,5 @@
 ﻿using Misa.Application.Abstractions.Persistence;
+using Misa.Application.Abstractions.Time;
 using Misa.Contract.Common.Results;
 using Misa.Domain.Features.Entities.Extensions.Items.Base;
 
@@ -7,7 +8,7 @@ public record PauseSessionCommand(
     Guid ItemId,
     string? PauseReason
 );
-public class PauseSessionHandler(IItemRepository repository)
+public class PauseSessionHandler(IItemRepository repository, ITimeProvider timeProvider)
 {
     public async Task<Result> Handle(PauseSessionCommand command, CancellationToken ct)
     {
@@ -33,9 +34,9 @@ public class PauseSessionHandler(IItemRepository repository)
             return Result.NotFound("session.not_found", "Active session not found.");
         }
 
-        session.Pause(command.PauseReason, DateTimeOffset.UtcNow);
+        session.Pause(command.PauseReason, timeProvider.UtcNow);
 
-        item.Entity.Update();
+        item.Entity.Update(timeProvider.UtcNow);
         item.ChangeState(ItemStates.Paused);
 
         await repository.SaveChangesAsync(ct);

@@ -1,4 +1,5 @@
 ﻿using Misa.Application.Abstractions.Persistence;
+using Misa.Application.Abstractions.Time;
 using Misa.Application.Mappings;
 using Misa.Contract.Common.Results;
 using Misa.Contract.Features.Entities.Extensions.Items.Features.Session;
@@ -13,7 +14,7 @@ public record StopSessionCommand(
     string? Summary
 );
 
-public class StopSessionHandler(IItemRepository repository)
+public class StopSessionHandler(IItemRepository repository, ITimeProvider timeProvider)
 {
     public async Task<Result> Handle(StopSessionCommand command, CancellationToken ct)
     {
@@ -41,13 +42,13 @@ public class StopSessionHandler(IItemRepository repository)
         }
 
         session.Stop(
-            DateTimeOffset.UtcNow,
+            timeProvider.UtcNow,
             command.Efficiency.MapToDomain(),
             command.Concentration.MapToDomain(),
             command.Summary
         );
 
-        item.Entity.Update();
+        item.Entity.Update(timeProvider.UtcNow);
         item.ChangeState(ItemStates.InProgress);
 
         await repository.SaveChangesAsync(ct);

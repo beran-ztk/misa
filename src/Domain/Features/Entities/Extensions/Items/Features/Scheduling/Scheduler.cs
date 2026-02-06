@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices.JavaScript;
 using Misa.Domain.Features.Entities.Base;
 using Misa.Domain.Features.Entities.Extensions.Items.Base;
 
@@ -65,9 +66,9 @@ public sealed class Scheduler
             OccurrenceCountLimit -= 1;
         }
     }
-    public SchedulerExecutionLog CreateExecutionLog()
+    public SchedulerExecutionLog CreateExecutionLog(DateTimeOffset utcNow)
     {
-        return SchedulerExecutionLog.Create(Id, SchedulingAnchorUtc);
+        return SchedulerExecutionLog.Create(Id, SchedulingAnchorUtc, utcNow);
     }
     public static Scheduler Create(
         string title,
@@ -87,7 +88,8 @@ public sealed class Scheduler
         int[]? byDay,
         int[]? byMonthDay,
         int[]? byMonth,
-        string timezone)
+        string timezone,
+        DateTimeOffset createdAt)
     {
         if (string.IsNullOrWhiteSpace(title))
             throw new ArgumentException("Title must not be empty.", nameof(title));
@@ -114,7 +116,7 @@ public sealed class Scheduler
         var normalizedByMonthDay = Normalize(byMonthDay, 1, 31, nameof(byMonthDay));
         var normalizedByMonth = Normalize(byMonth, 1, 12, nameof(byMonth));
 
-        var item = Item.Create(Workflow.Scheduling, title, Priority.None);
+        var item = Item.Create(Workflow.Scheduling, title, Priority.None, createdAt);
 
         return new Scheduler(item)
         {
@@ -158,9 +160,10 @@ public sealed class Scheduler
     
     public static Scheduler CreateOnce(
         Guid targetItemId,
-        DateTimeOffset dueAtUtc)
+        DateTimeOffset dueAtUtc,
+        DateTimeOffset createdAtUtc)
     {
-        var item = Item.Create(Workflow.Scheduling, "Deadline", Priority.None);
+        var item = Item.Create(Workflow.Scheduling, "Deadline", Priority.None, createdAtUtc);
         
         return new Scheduler(item)
         {

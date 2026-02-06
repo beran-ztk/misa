@@ -1,23 +1,13 @@
-﻿using Misa.Domain.Common.DomainEvents;
-using Misa.Domain.Features.Audit;
+﻿using Misa.Domain.Features.Audit;
 using Misa.Domain.Features.Entities.Base;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions;
+using Misa.Domain.Shared.DomainEvents;
 
 namespace Misa.Domain.Features.Entities.Extensions.Items.Base;
 
 public class Item : DomainEventEntity
 {
     private Item() { }
-
-    public Item(
-        int stateId,
-        Priority priority,
-        string title)
-    {
-        StateId = stateId;
-        Priority = priority;
-        Title = title ?? throw new ArgumentNullException(nameof(title));
-    }
 
     public Item(Entity entity, string title, Priority priority, ItemStates state)
     {
@@ -26,9 +16,9 @@ public class Item : DomainEventEntity
         Priority = priority;
         StateId = (int)state;
     }
-    public static Item Create(Workflow workflow, string title, Priority priority)
+    public static Item Create(Workflow workflow, string title, Priority priority, DateTimeOffset createdAtUtc)
     {
-        var entity = Entity.Create(workflow);
+        var entity = Entity.Create(workflow, createdAtUtc);
         return new Item(entity, title, priority, ItemStates.Draft);
     }
     // Member
@@ -38,7 +28,7 @@ public class Item : DomainEventEntity
     public string Title { get; private set; }
     
     // Modelle
-    public Entity Entity { get; set; }
+    public Entity Entity { get; init; }
     public State? State { get; private set; }
     
     public ICollection<Session> Sessions { get; set; } = new List<Session>();

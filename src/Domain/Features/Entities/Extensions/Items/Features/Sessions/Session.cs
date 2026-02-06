@@ -17,18 +17,18 @@ public class Session
     public bool StopAutomatically { get; private set; }
     public bool? WasAutomaticallyStopped { get; private set; }
 
-    public DateTimeOffset CreatedAtUtc { get; private set; }
-    public ICollection<SessionSegment> Segments { get; set; } = [];
+    public DateTimeOffset CreatedAtUtc { get; private init; }
+    public ICollection<SessionSegment> Segments { get; init; } = [];
 
-    public TimeSpan? ElapsedTime =>
+    public TimeSpan? ElapsedTime(DateTimeOffset utcNow) =>
         Segments.Aggregate(TimeSpan.Zero, (sum, s) =>
         {
-            var end = s.EndedAtUtc ?? DateTimeOffset.UtcNow;
+            var end = s.EndedAtUtc ?? utcNow;
             return sum + (end - s.StartedAtUtc);
         });
     
-    public string? FormattedElapsedTime =>
-        ElapsedTime switch
+    public string? FormattedElapsedTime(DateTimeOffset utcNow) =>
+        ElapsedTime(utcNow) switch
         {
             null => null,
 

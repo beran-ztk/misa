@@ -1,10 +1,11 @@
 ﻿using Misa.Application.Abstractions.Persistence;
+using Misa.Application.Abstractions.Time;
 using Misa.Contract.Common.Results;
 using Misa.Domain.Features.Entities.Extensions.Items.Base;
 
 namespace Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Commands;
 public record ContinueSessionCommand(Guid ItemId);
-public class ContinueSessionHandler(IItemRepository repository)
+public class ContinueSessionHandler(IItemRepository repository, ITimeProvider timeProvider)
 {
     public async Task<Result> Handle(ContinueSessionCommand command, CancellationToken ct)
     {
@@ -30,9 +31,9 @@ public class ContinueSessionHandler(IItemRepository repository)
             return Result.NotFound("session.not_found", "Paused session not found.");
         }
 
-        session.Continue(DateTimeOffset.UtcNow);
+        session.Continue(timeProvider.UtcNow);
 
-        item.Entity.Update();
+        item.Entity.Update(timeProvider.UtcNow);
         item.ChangeState(ItemStates.Active);
 
         await repository.SaveChangesAsync(ct);

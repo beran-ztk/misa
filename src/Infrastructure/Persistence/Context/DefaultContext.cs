@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Misa.Domain.Common.DomainEvents;
+using Misa.Application.Abstractions.Time;
 using Misa.Domain.Features.Audit;
 using Misa.Domain.Features.Entities.Base;
 using Misa.Domain.Features.Entities.Extensions.Items.Base;
@@ -8,11 +8,12 @@ using Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions;
 using Misa.Domain.Features.Entities.Features.Descriptions;
 using Misa.Domain.Features.Messaging;
 using Misa.Domain.Features.Users;
+using Misa.Domain.Shared.DomainEvents;
 using Task = Misa.Domain.Features.Entities.Extensions.Items.Extensions.Tasks.Task;
 
 namespace Misa.Infrastructure.Persistence.Context;
 
-public class DefaultContext(DbContextOptions<DefaultContext> options) : DbContext(options)
+public class DefaultContext(DbContextOptions<DefaultContext> options, ITimeProvider timeProvider) : DbContext(options)
 {
     public DbSet<Entity> Entities { get; set; } = null!;
     public DbSet<Item> Items { get; set; } = null!;
@@ -57,7 +58,7 @@ public class DefaultContext(DbContextOptions<DefaultContext> options) : DbContex
                     ev.OldValue,
                     ev.NewValue,
                     null,
-                    DateTimeOffset.UtcNow
+                    timeProvider.UtcNow
                 )
             );
         }

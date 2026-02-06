@@ -1,6 +1,6 @@
 ﻿using Misa.Domain.Features.Audit;
 
-namespace Misa.Domain.Common.DomainEvents;
+namespace Misa.Domain.Shared.DomainEvents;
 
 public sealed record PropertyChangedEvent(
     Guid EntityId,

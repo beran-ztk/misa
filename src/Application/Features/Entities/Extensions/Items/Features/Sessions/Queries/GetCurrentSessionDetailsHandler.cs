@@ -1,4 +1,5 @@
 ﻿using Misa.Application.Abstractions.Persistence;
+using Misa.Application.Abstractions.Time;
 using Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Mappings;
 using Misa.Contract.Common.Results;
 using Misa.Contract.Features.Entities.Extensions.Items.Features.Session;
@@ -6,7 +7,7 @@ using Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions;
 
 namespace Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Queries;
 public record GetCurrentSessionDetailsQuery(Guid ItemId);
-public class GetCurrentSessionDetailsHandler(IItemRepository repository)
+public class GetCurrentSessionDetailsHandler(IItemRepository repository, ITimeProvider timeProvider) 
 {
     public async Task<Result<CurrentSessionOverviewDto>> Handle(GetCurrentSessionDetailsQuery command, CancellationToken ct)
     {
@@ -25,11 +26,11 @@ public class GetCurrentSessionDetailsHandler(IItemRepository repository)
         
         var latestCompletedSession = await repository.TryGetLatestCompletedSessionByItemIdAsync(command.ItemId, ct);
         if (latestCompletedSession != null)
-            dto.LatestClosedSession = latestCompletedSession.ToDto();
+            dto.LatestClosedSession = latestCompletedSession.ToDto(timeProvider.UtcNow);
         
         var activeSession = await repository.TryGetActiveSessionByItemIdAsync(command.ItemId, ct);
         if (activeSession != null)
-            dto.ActiveSession = activeSession.ToDto();
+            dto.ActiveSession = activeSession.ToDto(timeProvider.UtcNow);
 
         dto.CanStartSession = dto.ActiveSession == null;
         dto.CanStopSession = dto.ActiveSession != null;

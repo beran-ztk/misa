@@ -92,7 +92,7 @@ public class SchedulePlanningHandler(
                     currentLookaheadCount++;
                 }
                 
-                var log = schedule.CreateExecutionLog();
+                var log = schedule.CreateExecutionLog(timeProvider.UtcNow);
                 schedule.ReduceOccurrenceCount();
                 schedule.CheckAndUpdateNextAllowedExecution(utcNow);
                 

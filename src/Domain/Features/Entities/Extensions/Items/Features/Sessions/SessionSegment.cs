@@ -15,12 +15,6 @@ public class SessionSegment
         SessionId = sessionId;
         StartedAtUtc = startedAtUtc;
     }
-
-    public void CloseSegment(string? pauseReason, DateTimeOffset? endedAtUtc)
-    {
-        PauseReason = pauseReason;
-        EndedAtUtc = endedAtUtc ?? DateTimeOffset.UtcNow;
-    }
     public void End(DateTimeOffset endedAtUtc, string? pauseReason)
     {
         if (EndedAtUtc != null)

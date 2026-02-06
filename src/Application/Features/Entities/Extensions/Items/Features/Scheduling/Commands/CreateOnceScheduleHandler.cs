@@ -1,4 +1,5 @@
 ﻿using Misa.Application.Abstractions.Persistence;
+using Misa.Application.Abstractions.Time;
 using Misa.Contract.Common.Results;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
 
@@ -9,7 +10,7 @@ public sealed record CreateOnceScheduleCommand(
     DateTimeOffset DueAtUtc
 );
 
-public sealed class CreateOnceScheduleHandler(ISchedulerRepository repository)
+public sealed class CreateOnceScheduleHandler(ISchedulerRepository repository, ITimeProvider timeProvider)
 {
     public async Task<Result> HandleAsync(CreateOnceScheduleCommand command, CancellationToken ct)
     {
@@ -22,7 +23,8 @@ public sealed class CreateOnceScheduleHandler(ISchedulerRepository repository)
         {
             var scheduler = Scheduler.CreateOnce(
                 targetItemId: command.TargetItemId,
-                dueAtUtc: command.DueAtUtc
+                dueAtUtc: command.DueAtUtc,
+                createdAtUtc: timeProvider.UtcNow
             );
             
             await repository.AddAsync(scheduler, ct);

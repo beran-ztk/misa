@@ -1,8 +1,8 @@
-﻿namespace Misa.Domain.Common.DomainEvents;
+﻿namespace Misa.Domain.Shared.DomainEvents;
 
 public abstract class DomainEventEntity : IHasDomainEvents
 {
-    private readonly List<IDomainEvent> _domainEvents = new();
+    private readonly List<IDomainEvent> _domainEvents = [];
     public IReadOnlyList<IDomainEvent> DomainEvents => _domainEvents;
 
     protected void AddDomainEvent(IDomainEvent ev) => _domainEvents.Add(ev);
