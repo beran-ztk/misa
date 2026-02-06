@@ -1,5 +1,5 @@
 using System.Text.Json;
-using Misa.Application.Common.Abstractions.Persistence;
+using Misa.Application.Abstractions.Persistence;
 using Misa.Contract.Features.Messaging;
 using Misa.Domain.Features.Messaging;
 

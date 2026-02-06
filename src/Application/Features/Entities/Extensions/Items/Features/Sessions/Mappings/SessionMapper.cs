@@ -1,4 +1,4 @@
-﻿using Misa.Application.Common.Mappings;
+﻿using Misa.Application.Mappings;
 using Misa.Contract.Features.Entities.Extensions.Items.Features.Session;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions;
 

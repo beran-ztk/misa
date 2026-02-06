@@ -3,7 +3,7 @@ using Misa.Contract.Features.Entities.Extensions.Items.Extensions.Tasks;
 using Misa.Domain.Features.Entities.Extensions.Items.Extensions.Tasks;
 using Task = Misa.Domain.Features.Entities.Extensions.Items.Extensions.Tasks.Task;
 
-namespace Misa.Application.Common.Mappings;
+namespace Misa.Application.Mappings;
 
 public static class TaskMappings
 {

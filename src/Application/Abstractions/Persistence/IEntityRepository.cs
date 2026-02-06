@@ -1,7 +1,6 @@
-﻿using Misa.Domain.Features.Entities.Base;
-using Misa.Domain.Features.Entities.Features.Descriptions;
+﻿using Misa.Domain.Features.Entities.Features.Descriptions;
 
-namespace Misa.Application.Common.Abstractions.Persistence;
+namespace Misa.Application.Abstractions.Persistence;
 
 public interface IEntityRepository
 {

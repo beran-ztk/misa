@@ -2,7 +2,7 @@
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions;
 
-namespace Misa.Application.Common.Abstractions.Persistence;
+namespace Misa.Application.Abstractions.Persistence;
 
 public interface IItemRepository
 {

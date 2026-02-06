@@ -1,4 +1,4 @@
-﻿namespace Misa.Application.Common.Exceptions;
+﻿namespace Misa.Application.Exceptions;
 
 public sealed class NotFoundException : Exception
 {

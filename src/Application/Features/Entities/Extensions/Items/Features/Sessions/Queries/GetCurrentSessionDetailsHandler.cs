@@ -1,4 +1,4 @@
-﻿using Misa.Application.Common.Abstractions.Persistence;
+﻿using Misa.Application.Abstractions.Persistence;
 using Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Mappings;
 using Misa.Contract.Common.Results;
 using Misa.Contract.Features.Entities.Extensions.Items.Features.Session;

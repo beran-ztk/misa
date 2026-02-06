@@ -1,6 +1,6 @@
-﻿using Misa.Application.Common.Abstractions.Persistence;
-using Misa.Application.Common.Abstractions.Time;
-using Misa.Application.Common.Mappings;
+﻿using Misa.Application.Abstractions.Persistence;
+using Misa.Application.Abstractions.Time;
+using Misa.Application.Mappings;
 using Misa.Contract.Common.Results;
 using Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
@@ -28,7 +28,10 @@ public record AddScheduleCommand(
     int[]? ByMonth
 );
 
-public class AddScheduleHandler(IItemRepository repository, IAuthenticationRepository authenticationRepository)
+public class AddScheduleHandler(
+    IItemRepository repository, 
+    IAuthenticationRepository authenticationRepository,
+    ITimeZoneConverter timeZoneConverter)
 {
     public async Task<Result<ScheduleDto>> Handle(AddScheduleCommand command, CancellationToken ct)
     {
@@ -51,8 +54,8 @@ public class AddScheduleHandler(IItemRepository repository, IAuthenticationRepos
                 payload: command.Payload,
                 startTime: command.StartTime,
                 endTime: command.EndTime,
-                activeFromUtc: command.ActiveFromLocal.LocalToUtc(user.TimeZone),
-                activeUntilUtc: command.ActiveUntilLocal.LocalToUtc(user.TimeZone),
+                activeFromUtc: timeZoneConverter.LocalToUtc(command.ActiveFromLocal, user.TimeZone),
+                activeUntilUtc: timeZoneConverter.LocalToUtc(command.ActiveUntilLocal, user.TimeZone),
                 byDay: command.ByDay,
                 byMonthDay: command.ByMonthDay,
                 byMonth: command.ByMonth,

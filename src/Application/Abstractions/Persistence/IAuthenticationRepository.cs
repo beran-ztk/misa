@@ -1,6 +1,6 @@
 using Misa.Domain.Features.Users;
 
-namespace Misa.Application.Common.Abstractions.Persistence;
+namespace Misa.Application.Abstractions.Persistence;
 
 public interface IAuthenticationRepository
 {

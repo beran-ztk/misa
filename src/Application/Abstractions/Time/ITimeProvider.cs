@@ -1,6 +1,6 @@
 using NodaTime;
 
-namespace Misa.Application.Common.Abstractions.Time;
+namespace Misa.Application.Abstractions.Time;
 
 public interface ITimeProvider
 {

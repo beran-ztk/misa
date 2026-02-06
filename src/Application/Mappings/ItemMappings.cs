@@ -3,7 +3,7 @@ using Misa.Contract.Features.Entities.Extensions.Items.Base;
 using Misa.Domain.Features.Entities.Base;
 using Misa.Domain.Features.Entities.Extensions.Items.Base;
 
-namespace Misa.Application.Common.Mappings;
+namespace Misa.Application.Mappings;
 public static class ItemMappings
 {
     public static ItemDto ToDto(this Item item)

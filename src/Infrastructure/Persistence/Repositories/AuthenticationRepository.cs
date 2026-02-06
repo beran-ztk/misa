@@ -1,5 +1,5 @@
-using Misa.Application.Common.Abstractions.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Misa.Application.Abstractions.Persistence;
 using Misa.Domain.Features.Users;
 using Misa.Infrastructure.Persistence.Context;
 

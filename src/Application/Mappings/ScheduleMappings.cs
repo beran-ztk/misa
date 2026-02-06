@@ -1,7 +1,7 @@
 ﻿using Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
 
-namespace Misa.Application.Common.Mappings;
+namespace Misa.Application.Mappings;
 
 public static class ScheduleMappings
 {

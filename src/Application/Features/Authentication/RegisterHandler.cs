@@ -1,5 +1,5 @@
-using Misa.Application.Common.Abstractions.Persistence;
-using Misa.Application.Common.Abstractions.Time;
+using Misa.Application.Abstractions.Persistence;
+using Misa.Application.Abstractions.Time;
 using Misa.Contract.Common.Results;
 using Misa.Contract.Features.Authentication;
 using Misa.Domain.Features.Users;

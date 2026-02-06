@@ -2,7 +2,7 @@
 using Misa.Contract.Features.Entities.Base;
 using Misa.Domain.Features.Entities.Base;
 
-namespace Misa.Application.Common.Mappings;
+namespace Misa.Application.Mappings;
 
 public static class EntityMappings
 {

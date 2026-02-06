@@ -2,8 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using Misa.Api.Middleware;
 using Misa.Api.Services.Features.Items.Features.Scheduler;
 using Misa.Api.Services.Features.Items.Features.Sessions;
-using Misa.Application.Common.Abstractions.Persistence;
-using Misa.Application.Common.Abstractions.Time;
+using Misa.Application.Abstractions.Persistence;
+using Misa.Application.Abstractions.Time;
 using Misa.Domain.Features.Audit;
 using Misa.Domain.Features.Entities.Base;
 using Misa.Domain.Features.Entities.Extensions.Items.Base;
@@ -49,6 +49,7 @@ public static class ServiceRegistration
     {
         services.AddSingleton<ITimeProvider, Misa.Infrastructure.Services.Time.TimeProvider>();
         services.AddSingleton<ITimeZoneProvider, TimeZoneProvider>();
+        services.AddSingleton<ITimeZoneConverter, TimeZoneConverter>();
         return services;
     }
 
