@@ -1,8 +1,8 @@
 ﻿using Misa.Application.Abstractions.Persistence;
 using Misa.Application.Abstractions.Time;
 using Misa.Application.Mappings;
-using Misa.Contract.Common.Results;
 using Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;
+using Misa.Contract.Shared.Results;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
 
 namespace Misa.Application.Features.Entities.Extensions.Items.Features.Scheduling.Commands;

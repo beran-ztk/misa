@@ -1,6 +1,4 @@
-﻿using System.Net;
-
-namespace Misa.Contract.Common.Results;
+﻿namespace Misa.Contract.Shared.Results;
 
 public enum ResultStatus
 {

@@ -1,6 +1,6 @@
 using Misa.Application.Abstractions.Persistence;
-using Misa.Contract.Common.Results;
 using Misa.Contract.Features.Authentication;
+using Misa.Contract.Shared.Results;
 
 namespace Misa.Application.Features.Authentication;
 public sealed record LoginCommand(string Username, string Password);

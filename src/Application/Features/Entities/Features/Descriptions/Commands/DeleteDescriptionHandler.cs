@@ -1,5 +1,5 @@
 ﻿using Misa.Application.Abstractions.Persistence;
-using Misa.Contract.Common.Results;
+using Misa.Contract.Shared.Results;
 
 namespace Misa.Application.Features.Entities.Features.Descriptions.Commands;
 

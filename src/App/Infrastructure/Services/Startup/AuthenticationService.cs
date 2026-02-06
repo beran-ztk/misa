@@ -3,8 +3,8 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Misa.Contract.Common.Results;
 using Misa.Contract.Features.Authentication;
+using Misa.Contract.Shared.Results;
 using Misa.Ui.Avalonia.App.Authentication;
 using Misa.Ui.Avalonia.Infrastructure.Services.Navigation;
 

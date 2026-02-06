@@ -1,7 +1,7 @@
 ﻿using Misa.Application.Abstractions.Persistence;
 using Misa.Application.Features.Entities.Extensions.Items.Base.Mappings;
-using Misa.Contract.Common.Results;
 using Misa.Contract.Features.Entities.Features;
+using Misa.Contract.Shared.Results;
 using Misa.Domain.Features.Entities.Features.Descriptions;
 
 namespace Misa.Application.Features.Entities.Features.Descriptions.Commands;

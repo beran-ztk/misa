@@ -1,7 +1,7 @@
 using Misa.Application.Abstractions.Persistence;
 using Misa.Application.Abstractions.Time;
-using Misa.Contract.Common.Results;
 using Misa.Contract.Features.Authentication;
+using Misa.Contract.Shared.Results;
 using Misa.Domain.Features.Users;
 
 namespace Misa.Application.Features.Authentication;
