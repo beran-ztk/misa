@@ -16,9 +16,9 @@ public class Item : DomainEventEntity
         Priority = priority;
         StateId = (int)state;
     }
-    public static Item Create(Workflow workflow, string title, Priority priority, DateTimeOffset createdAtUtc)
+    public static Item Create(Guid id, Workflow workflow, string title, Priority priority, DateTimeOffset createdAtUtc)
     {
-        var entity = Entity.Create(workflow, createdAtUtc);
+        var entity = Entity.Create(id, workflow, createdAtUtc);
         return new Item(entity, title, priority, ItemStates.Draft);
     }
     // Member

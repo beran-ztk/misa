@@ -1,4 +1,4 @@
-﻿using Misa.Domain.Features.Entities.Features.Descriptions;
+﻿using Misa.Domain.Features.Entities.Features;
 
 namespace Misa.Application.Abstractions.Persistence;
 

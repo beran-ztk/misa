@@ -4,6 +4,7 @@ public class AuditChange
 {
     private AuditChange() { }
     public AuditChange(
+        Guid id,
         Guid entityId,
         ChangeType changeType,
         string? before,
@@ -11,6 +12,7 @@ public class AuditChange
         string? reason,
         DateTimeOffset createdAtUtc)
     {
+        Id = id;
         EntityId = entityId;
         ChangeType = changeType;
         ValueBefore = before;
@@ -19,7 +21,7 @@ public class AuditChange
         CreatedAtUtc = createdAtUtc;
     }
 
-    public Guid Id { get; private set; }
+    public Guid Id { get; init; }
     public Guid EntityId { get; init; }
 
     public ChangeType ChangeType { get; init; }

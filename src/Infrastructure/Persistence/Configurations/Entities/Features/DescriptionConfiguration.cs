@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Misa.Domain.Features.Entities.Features.Descriptions;
+using Misa.Domain.Features.Entities.Features;
 
 namespace Misa.Infrastructure.Persistence.Configurations.Entities.Features;
 

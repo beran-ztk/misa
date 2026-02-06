@@ -1,6 +1,6 @@
 ﻿using Misa.Domain.Features.Audit;
 using Misa.Domain.Features.Entities.Extensions.Items.Base;
-using Misa.Domain.Features.Entities.Features.Descriptions;
+using Misa.Domain.Features.Entities.Features;
 
 namespace Misa.Domain.Features.Entities.Base;
 
@@ -8,15 +8,15 @@ public class Entity
 {
     private Entity () { }
 
-    private Entity(Workflow workflow, DateTimeOffset createdAt)
+    private Entity(Guid id, Workflow workflow, DateTimeOffset createdAt)
     {
         Workflow = workflow;
         CreatedAt = createdAt;
     }
 
-    public static Entity Create(Workflow workflow, DateTimeOffset createdAtUtc)
+    public static Entity Create(Guid id, Workflow workflow, DateTimeOffset createdAtUtc)
     {
-        return new Entity(workflow, createdAtUtc);
+        return new Entity(id, workflow, createdAtUtc);
     }
     public Guid Id { get; init; }
     public Workflow Workflow { get; init; }

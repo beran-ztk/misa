@@ -6,7 +6,8 @@ public class Outbox
 
     public Outbox(Guid id, EventType eventType, string payload, DateTimeOffset createdAtUtc)
     {
-        if (string.IsNullOrWhiteSpace(payload)) throw new ArgumentException("Payload must not be empty.", nameof(payload));
+        if (string.IsNullOrWhiteSpace(payload)) 
+            throw new ArgumentException("Payload must not be empty.", nameof(payload));
     
         Id = id;
         EventType = eventType;

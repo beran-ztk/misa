@@ -5,7 +5,7 @@ using Misa.Domain.Features.Entities.Base;
 using Misa.Domain.Features.Entities.Extensions.Items.Base;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions;
-using Misa.Domain.Features.Entities.Features.Descriptions;
+using Misa.Domain.Features.Entities.Features;
 using Misa.Domain.Features.Messaging;
 using Misa.Domain.Features.Users;
 using Misa.Domain.Shared.DomainEvents;

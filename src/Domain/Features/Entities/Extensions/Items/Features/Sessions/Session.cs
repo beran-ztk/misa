@@ -114,6 +114,7 @@ public class Session
     }
 
     public static Session Start(
+        Guid id,
         Guid entityId, 
         TimeSpan? plannedDuration, 
         string? objective,
@@ -121,6 +122,7 @@ public class Session
         string? autoStopReason, 
         DateTimeOffset nowUtc) => new()
     {
+        Id = id,
         ItemId = entityId,
         PlannedDuration = plannedDuration,
         Objective = objective,

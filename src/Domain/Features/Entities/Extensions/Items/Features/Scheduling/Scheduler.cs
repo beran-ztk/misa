@@ -68,9 +68,10 @@ public sealed class Scheduler
     }
     public SchedulerExecutionLog CreateExecutionLog(DateTimeOffset utcNow)
     {
-        return SchedulerExecutionLog.Create(Id, SchedulingAnchorUtc, utcNow);
+        return new SchedulerExecutionLog(Id, SchedulingAnchorUtc, utcNow);
     }
     public static Scheduler Create(
+        Guid id,
         string title,
         Guid? targetItemId,
         ScheduleFrequencyType frequencyType,
@@ -116,7 +117,7 @@ public sealed class Scheduler
         var normalizedByMonthDay = Normalize(byMonthDay, 1, 31, nameof(byMonthDay));
         var normalizedByMonth = Normalize(byMonth, 1, 12, nameof(byMonth));
 
-        var item = Item.Create(Workflow.Scheduling, title, Priority.None, createdAt);
+        var item = Item.Create(id, Workflow.Scheduling, title, Priority.None, createdAt);
 
         return new Scheduler(item)
         {
@@ -159,11 +160,12 @@ public sealed class Scheduler
     }
     
     public static Scheduler CreateOnce(
+        Guid id,
         Guid targetItemId,
         DateTimeOffset dueAtUtc,
         DateTimeOffset createdAtUtc)
     {
-        var item = Item.Create(Workflow.Scheduling, "Deadline", Priority.None, createdAtUtc);
+        var item = Item.Create(id, Workflow.Scheduling, "Deadline", Priority.None, createdAtUtc);
         
         return new Scheduler(item)
         {
