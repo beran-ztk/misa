@@ -4,8 +4,8 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Misa.Contract.Common.Results;
 using Misa.Contract.Features.Entities.Extensions.Items.Extensions.Tasks;
+using Misa.Contract.Shared.Results;
 using Misa.Ui.Avalonia.Presentation.Mapping;
 using TaskMainWindowViewModel = Misa.Ui.Avalonia.Features.Tasks.Main.TaskMainWindowViewModel;
 

@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.SignalR;
+using Misa.Api.Middleware;
 using Misa.Application.Features.Entities.Extensions.Items.Features.Scheduling.Commands;
 using Wolverine;
-using Misa.Api.Common.Hubs;
 using Misa.Contract.Features.Messaging;
 
 namespace Misa.Api.Services.Features.Items.Features.Scheduler;
@@ -40,8 +40,7 @@ public class SchedulePublishingWorker(
     {
         try
         {
-            logger.LogInformation("Schedule executing worker running at {DateTimeOffset:HH:mm:ss}.",
-                DateTimeOffset.UtcNow);
+            logger.LogInformation("Schedule executing worker running at.");
 
             var scope = provider.CreateScope();
             var bus = scope.ServiceProvider.GetRequiredService<IMessageBus>();
@@ -58,13 +57,11 @@ public class SchedulePublishingWorker(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Schedule executing worker failed at {DateTimeOffset:HH:mm:ss}.", 
-                DateTimeOffset.UtcNow);
+            logger.LogError(ex, "Schedule executing worker failed at.");
         }
         finally
         {
-            logger.LogInformation("Schedule executing worker finished at {DateTimeOffset:HH:mm:ss}.",
-                DateTimeOffset.UtcNow);
+            logger.LogInformation("Schedule executing worker finished at.");
         }
     }
 }

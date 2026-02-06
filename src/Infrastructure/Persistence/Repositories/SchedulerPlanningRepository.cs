@@ -1,6 +1,6 @@
 ﻿using Npgsql;
 using Microsoft.EntityFrameworkCore;
-using Misa.Application.Common.Abstractions.Persistence;
+using Misa.Application.Abstractions.Persistence;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
 using Misa.Infrastructure.Persistence.Context;
 

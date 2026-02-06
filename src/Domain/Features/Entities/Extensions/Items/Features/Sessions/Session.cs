@@ -17,18 +17,18 @@ public class Session
     public bool StopAutomatically { get; private set; }
     public bool? WasAutomaticallyStopped { get; private set; }
 
-    public DateTimeOffset CreatedAtUtc { get; private set; }
-    public ICollection<SessionSegment> Segments { get; set; } = [];
+    public DateTimeOffset CreatedAtUtc { get; private init; }
+    public ICollection<SessionSegment> Segments { get; init; } = [];
 
-    public TimeSpan? ElapsedTime =>
+    public TimeSpan? ElapsedTime(DateTimeOffset utcNow) =>
         Segments.Aggregate(TimeSpan.Zero, (sum, s) =>
         {
-            var end = s.EndedAtUtc ?? DateTimeOffset.UtcNow;
+            var end = s.EndedAtUtc ?? utcNow;
             return sum + (end - s.StartedAtUtc);
         });
     
-    public string? FormattedElapsedTime =>
-        ElapsedTime switch
+    public string? FormattedElapsedTime(DateTimeOffset utcNow) =>
+        ElapsedTime(utcNow) switch
         {
             null => null,
 
@@ -48,14 +48,10 @@ public class Session
     {
         WasAutomaticallyStopped = true;
     }
-    public SessionSegment? GetLatestActiveSegment() 
-        => Segments
-            .Where(s => s.EndedAtUtc == null)
-            .MaxBy(s => s.StartedAtUtc);
 
-    public void AddStartSegment()
+    public void AddStartSegment(Guid segmentId)
     {
-        var segment = new SessionSegment(Id, CreatedAtUtc);
+        var segment = new SessionSegment(segmentId, Id, CreatedAtUtc);
         Segments.Add(segment);
     }
     public void Pause(string? pauseReason, DateTimeOffset nowUtc)
@@ -79,14 +75,14 @@ public class Session
         State = SessionState.Paused;
     }
 
-    public void Continue(DateTimeOffset startedAtUtc)
+    public void Continue(Guid segmentId, DateTimeOffset startedAtUtc)
     {
         if (State != SessionState.Paused)
             throw new InvalidOperationException("Session is not paused.");
         
         State = SessionState.Running;
         
-        var segment = new SessionSegment(Id, startedAtUtc);
+        var segment = new SessionSegment(segmentId, Id, startedAtUtc);
         Segments.Add(segment);
     }
     public void Stop(
@@ -114,6 +110,7 @@ public class Session
     }
 
     public static Session Start(
+        Guid id,
         Guid entityId, 
         TimeSpan? plannedDuration, 
         string? objective,
@@ -121,6 +118,7 @@ public class Session
         string? autoStopReason, 
         DateTimeOffset nowUtc) => new()
     {
+        Id = id,
         ItemId = entityId,
         PlannedDuration = plannedDuration,
         Objective = objective,

@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Misa.Application.Common.Abstractions.Persistence;
-using Misa.Domain.Features.Entities.Features.Descriptions;
+using Misa.Application.Abstractions.Persistence;
+using Misa.Domain.Features.Entities.Features;
 using Misa.Infrastructure.Persistence.Context;
 using Entity = Misa.Domain.Features.Entities.Base.Entity;
 

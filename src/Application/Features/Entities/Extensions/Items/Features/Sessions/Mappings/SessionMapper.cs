@@ -1,4 +1,4 @@
-﻿using Misa.Application.Common.Mappings;
+﻿using Misa.Application.Mappings;
 using Misa.Contract.Features.Entities.Extensions.Items.Features.Session;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions;
 
@@ -6,7 +6,7 @@ namespace Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.
 
 public static class SessionMapper
 {
-    public static SessionResolvedDto ToDto(this Session x) 
+    public static SessionResolvedDto ToDto(this Session x, DateTimeOffset nowUtc) 
         => new()
         {
             Id = x.Id,
@@ -27,10 +27,10 @@ public static class SessionMapper
             CreatedAtUtc = x.CreatedAtUtc,
             Segments = x.Segments.ToDto(),
             
-            ElapsedTime = x.FormattedElapsedTime
+            ElapsedTime = x.FormattedElapsedTime(nowUtc)
         };
-    
-    public static SessionSegmentDto ToDto(this SessionSegment x) =>
+
+    private static SessionSegmentDto ToDto(this SessionSegment x) =>
         new(
             x.Id,
             x.SessionId,
@@ -38,6 +38,7 @@ public static class SessionMapper
             x.StartedAtUtc,
             x.EndedAtUtc
         );
-    public static List<SessionSegmentDto> ToDto(this ICollection<SessionSegment> segments) =>
+
+    private static List<SessionSegmentDto> ToDto(this ICollection<SessionSegment> segments) =>
         segments.Select(x => x.ToDto()).ToList();
 }

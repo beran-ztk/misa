@@ -1,18 +1,20 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Misa.Domain.Common.DomainEvents;
+using Misa.Application.Abstractions.Ids;
+using Misa.Application.Abstractions.Time;
 using Misa.Domain.Features.Audit;
 using Misa.Domain.Features.Entities.Base;
 using Misa.Domain.Features.Entities.Extensions.Items.Base;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions;
-using Misa.Domain.Features.Entities.Features.Descriptions;
+using Misa.Domain.Features.Entities.Features;
 using Misa.Domain.Features.Messaging;
 using Misa.Domain.Features.Users;
+using Misa.Domain.Shared.DomainEvents;
 using Task = Misa.Domain.Features.Entities.Extensions.Items.Extensions.Tasks.Task;
 
 namespace Misa.Infrastructure.Persistence.Context;
 
-public class DefaultContext(DbContextOptions<DefaultContext> options) : DbContext(options)
+public class DefaultContext(DbContextOptions<DefaultContext> options, ITimeProvider timeProvider, IIdGenerator idGenerator) : DbContext(options)
 {
     public DbSet<Entity> Entities { get; set; } = null!;
     public DbSet<Item> Items { get; set; } = null!;
@@ -52,12 +54,13 @@ public class DefaultContext(DbContextOptions<DefaultContext> options) : DbContex
         {
             AuditChanges.Add(
                 new AuditChange(
+                    idGenerator.New(), 
                     ev.EntityId,
                     ev.ChangeType,
                     ev.OldValue,
                     ev.NewValue,
                     null,
-                    DateTimeOffset.UtcNow
+                    timeProvider.UtcNow
                 )
             );
         }

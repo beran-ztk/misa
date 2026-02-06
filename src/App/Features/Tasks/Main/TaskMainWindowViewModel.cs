@@ -11,9 +11,9 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
-using Misa.Contract.Common.Results;
 using Misa.Contract.Features.Entities.Extensions.Items.Base;
 using Misa.Contract.Features.Entities.Extensions.Items.Extensions.Tasks;
+using Misa.Contract.Shared.Results;
 using Misa.Ui.Avalonia.Features.Tasks.Content;
 using Misa.Ui.Avalonia.Infrastructure.Services.Interfaces;
 using Misa.Ui.Avalonia.Infrastructure.Services.Navigation;
@@ -111,6 +111,9 @@ public partial class TaskMainWindowViewModel : ViewModelBase
 
     public async Task AddToCollection(List<TaskDto> tasks)
     {
+        Tasks.Clear();
+        FilteredTasks.Clear();
+        
         foreach (var task in tasks)
         {
             await AddToCollection(task);

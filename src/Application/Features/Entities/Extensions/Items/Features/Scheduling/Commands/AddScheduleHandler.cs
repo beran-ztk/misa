@@ -1,8 +1,9 @@
-﻿using Misa.Application.Common.Abstractions.Persistence;
-using Misa.Application.Common.Abstractions.Time;
-using Misa.Application.Common.Mappings;
-using Misa.Contract.Common.Results;
+﻿using Misa.Application.Abstractions.Ids;
+using Misa.Application.Abstractions.Persistence;
+using Misa.Application.Abstractions.Time;
+using Misa.Application.Mappings;
 using Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;
+using Misa.Contract.Shared.Results;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
 
 namespace Misa.Application.Features.Entities.Extensions.Items.Features.Scheduling.Commands;
@@ -28,7 +29,12 @@ public record AddScheduleCommand(
     int[]? ByMonth
 );
 
-public class AddScheduleHandler(IItemRepository repository, IAuthenticationRepository authenticationRepository)
+public class AddScheduleHandler(
+    IItemRepository repository, 
+    IAuthenticationRepository authenticationRepository,
+    ITimeProvider timeProvider,
+    ITimeZoneConverter timeZoneConverter, 
+    IIdGenerator idGenerator)
 {
     public async Task<Result<ScheduleDto>> Handle(AddScheduleCommand command, CancellationToken ct)
     {
@@ -39,6 +45,7 @@ public class AddScheduleHandler(IItemRepository repository, IAuthenticationRepos
                 return Result<ScheduleDto>.Invalid("", "No user found");
             
             var scheduler = Scheduler.Create(
+                id: idGenerator.New(), 
                 title: command.Title,
                 targetItemId: command.TargetItemId,
                 frequencyType: command.ScheduleFrequencyType.MapToDomain(),
@@ -51,12 +58,13 @@ public class AddScheduleHandler(IItemRepository repository, IAuthenticationRepos
                 payload: command.Payload,
                 startTime: command.StartTime,
                 endTime: command.EndTime,
-                activeFromUtc: command.ActiveFromLocal.LocalToUtc(user.TimeZone),
-                activeUntilUtc: command.ActiveUntilLocal.LocalToUtc(user.TimeZone),
+                activeFromUtc: timeZoneConverter.LocalToUtc(command.ActiveFromLocal, user.TimeZone),
+                activeUntilUtc: timeZoneConverter.LocalToUtc(command.ActiveUntilLocal, user.TimeZone),
                 byDay: command.ByDay,
                 byMonthDay: command.ByMonthDay,
                 byMonth: command.ByMonth,
-                timezone: user.TimeZone
+                timezone: user.TimeZone,
+                createdAt: timeProvider.UtcNow
             );
 
             await repository.AddAsync(scheduler, ct);

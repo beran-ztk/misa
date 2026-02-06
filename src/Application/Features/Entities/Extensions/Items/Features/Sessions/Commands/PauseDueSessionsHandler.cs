@@ -1,10 +1,11 @@
-﻿using Misa.Application.Common.Abstractions.Persistence;
-using Misa.Contract.Common.Results;
+﻿using Misa.Application.Abstractions.Persistence;
+using Misa.Application.Abstractions.Time;
+using Misa.Contract.Shared.Results;
 using Wolverine;
 
 namespace Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Commands;
 public record PauseDueSessionsCommand;
-public class PauseDueSessionsHandler(IItemRepository repository, IMessageBus bus)
+public class PauseDueSessionsHandler(IItemRepository repository, IMessageBus bus, ITimeProvider  timeProvider)
 {
     public async Task<int> Handle(PauseDueSessionsCommand command, CancellationToken ct)
     {
@@ -12,7 +13,7 @@ public class PauseDueSessionsHandler(IItemRepository repository, IMessageBus bus
         
         var dueSessions = await repository.GetActiveSessionsWithAutostopAsync(ct);
 
-        foreach (var s in dueSessions.Where(s => s.ElapsedTime >= s.PlannedDuration))
+        foreach (var s in dueSessions.Where(s => s.ElapsedTime(timeProvider.UtcNow) >= s.PlannedDuration))
         {
             s.Autostop();
             

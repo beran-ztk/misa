@@ -45,9 +45,7 @@ namespace Misa.Infrastructure.Migrations
             modelBuilder.Entity("Misa.Domain.Features.Audit.AuditChange", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnType("uuid");
 
                     b.Property<ChangeType>("ChangeType")
                         .HasColumnType("change_type");
@@ -77,9 +75,7 @@ namespace Misa.Infrastructure.Migrations
             modelBuilder.Entity("Misa.Domain.Features.Entities.Base.Entity", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset?>("ArchivedAt")
                         .HasColumnType("timestamp with time zone");
@@ -256,9 +252,7 @@ namespace Misa.Infrastructure.Migrations
             modelBuilder.Entity("Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling.Scheduler", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnType("uuid");
 
                     b.Property<ScheduleActionType>("ActionType")
                         .HasColumnType("schedule_action_type");
@@ -350,9 +344,7 @@ namespace Misa.Infrastructure.Migrations
             modelBuilder.Entity("Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling.SchedulerExecutionLog", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnType("uuid");
 
                     b.Property<int>("Attempts")
                         .ValueGeneratedOnAdd()
@@ -411,9 +403,7 @@ namespace Misa.Infrastructure.Migrations
             modelBuilder.Entity("Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions.Session", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnType("uuid");
 
                     b.Property<string>("AutoStopReason")
                         .HasColumnType("text");
@@ -464,9 +454,7 @@ namespace Misa.Infrastructure.Migrations
             modelBuilder.Entity("Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions.SessionSegment", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset?>("EndedAtUtc")
                         .HasColumnType("timestamp with time zone");
@@ -490,9 +478,7 @@ namespace Misa.Infrastructure.Migrations
             modelBuilder.Entity("Misa.Domain.Features.Entities.Features.Descriptions.Description", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Content")
                         .IsRequired()
@@ -513,10 +499,8 @@ namespace Misa.Infrastructure.Migrations
 
             modelBuilder.Entity("Misa.Domain.Features.Messaging.Outbox", b =>
                 {
-                    b.Property<Guid>("EventId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone");
@@ -533,7 +517,7 @@ namespace Misa.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("jsonb");
 
-                    b.HasKey("EventId");
+                    b.HasKey("Id");
 
                     b.ToTable("Outbox");
                 });
@@ -541,7 +525,6 @@ namespace Misa.Infrastructure.Migrations
             modelBuilder.Entity("Misa.Domain.Features.Users.User", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<string>("Password")

@@ -1,10 +1,16 @@
-﻿using Misa.Application.Common.Abstractions.Persistence;
-using Misa.Application.Common.Abstractions.Time;
+﻿using Misa.Application.Abstractions.Ids;
+using Misa.Application.Abstractions.Persistence;
+using Misa.Application.Abstractions.Time;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
 
 namespace Misa.Application.Features.Entities.Extensions.Items.Features.Scheduling.Commands;
 public record SchedulePlanningCommand;
-public class SchedulePlanningHandler(ISchedulerPlanningRepository repository, ITimeProvider timeProvider, ITimeZoneProvider timeZoneProvider)
+public class SchedulePlanningHandler(
+    ISchedulerPlanningRepository repository, 
+    ITimeProvider timeProvider, 
+    ITimeZoneProvider timeZoneProvider,
+    ITimeZoneConverter timeZoneConverter, 
+    IIdGenerator idGenerator)
 {
     private static readonly HashSet<ScheduleFrequencyType> AllowedFrequencies =
     [
@@ -24,7 +30,7 @@ public class SchedulePlanningHandler(ISchedulerPlanningRepository repository, IT
                 throw new InvalidCastException("Timezone is not valid.");
             
             var utcNow = timeProvider.UtcNow;
-            var localNow = utcNow.UtcToLocal(schedule.Timezone);
+            var localNow = timeZoneConverter.UtcToLocal(utcNow, schedule.Timezone);
             
             var currentLookaheadCount = await repository.GetExecutionCountPlannedAheadAsync(schedule.Id, utcNow, stoppingToken);
             
@@ -38,7 +44,7 @@ public class SchedulePlanningHandler(ISchedulerPlanningRepository repository, IT
             
             while (schedule.OccurrenceCountLimit != 0 
                    && currentLookaheadCount < schedule.LookaheadLimit
-                   && schedule.SchedulingAnchorUtc.UtcToLocal(schedule.Timezone) < maxLocalLookaheadTime)
+                   && timeZoneConverter.UtcToLocal(schedule.SchedulingAnchorUtc, schedule.Timezone) < maxLocalLookaheadTime)
             {
                 var delta = schedule.ScheduleFrequencyType switch
                 {
@@ -54,7 +60,7 @@ public class SchedulePlanningHandler(ISchedulerPlanningRepository repository, IT
                         ? schedule.ActiveFromUtc
                         : schedule.SchedulingAnchorUtc.Add(delta);
 
-                    var localScheduledTimestamp = schedule.SchedulingAnchorUtc.UtcToLocal(schedule.Timezone);
+                    var localScheduledTimestamp = timeZoneConverter.UtcToLocal(schedule.SchedulingAnchorUtc, schedule.Timezone);
                     var localScheduledTime = TimeOnly.FromTimeSpan(localScheduledTimestamp.TimeOfDay);
                     
                     if ((schedule.StartTime is not null && localScheduledTime < schedule.StartTime) 
@@ -81,14 +87,14 @@ public class SchedulePlanningHandler(ISchedulerPlanningRepository repository, IT
                     
                     break;
                 } 
-                while (schedule.SchedulingAnchorUtc.UtcToLocal(schedule.Timezone) < maxLocalLookaheadTime);
+                while (timeZoneConverter.UtcToLocal(schedule.SchedulingAnchorUtc, schedule.Timezone) < maxLocalLookaheadTime);
 
-                if (schedule.SchedulingAnchorUtc.UtcToLocal(schedule.Timezone) > localNow)
+                if (timeZoneConverter.UtcToLocal(schedule.SchedulingAnchorUtc, schedule.Timezone) > localNow)
                 {
                     currentLookaheadCount++;
                 }
                 
-                var log = schedule.CreateExecutionLog();
+                var log = schedule.CreateExecutionLog(idGenerator.New(), timeProvider.UtcNow);
                 schedule.ReduceOccurrenceCount();
                 schedule.CheckAndUpdateNextAllowedExecution(utcNow);
                 
