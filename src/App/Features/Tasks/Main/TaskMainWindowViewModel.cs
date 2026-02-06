@@ -111,6 +111,9 @@ public partial class TaskMainWindowViewModel : ViewModelBase
 
     public async Task AddToCollection(List<TaskDto> tasks)
     {
+        Tasks.Clear();
+        FilteredTasks.Clear();
+        
         foreach (var task in tasks)
         {
             await AddToCollection(task);
