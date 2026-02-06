@@ -66,9 +66,9 @@ public sealed class Scheduler
             OccurrenceCountLimit -= 1;
         }
     }
-    public SchedulerExecutionLog CreateExecutionLog(DateTimeOffset utcNow)
+    public SchedulerExecutionLog CreateExecutionLog(Guid executionLogId, DateTimeOffset utcNow)
     {
-        return new SchedulerExecutionLog(Id, SchedulingAnchorUtc, utcNow);
+        return new SchedulerExecutionLog(executionLogId, Id, SchedulingAnchorUtc, utcNow);
     }
     public static Scheduler Create(
         Guid id,

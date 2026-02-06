@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Misa.Application.Abstractions.Ids;
 using Misa.Application.Abstractions.Time;
 using Misa.Domain.Features.Audit;
 using Misa.Domain.Features.Entities.Base;
@@ -13,7 +14,7 @@ using Task = Misa.Domain.Features.Entities.Extensions.Items.Extensions.Tasks.Tas
 
 namespace Misa.Infrastructure.Persistence.Context;
 
-public class DefaultContext(DbContextOptions<DefaultContext> options, ITimeProvider timeProvider) : DbContext(options)
+public class DefaultContext(DbContextOptions<DefaultContext> options, ITimeProvider timeProvider, IIdGenerator idGenerator) : DbContext(options)
 {
     public DbSet<Entity> Entities { get; set; } = null!;
     public DbSet<Item> Items { get; set; } = null!;
@@ -53,6 +54,7 @@ public class DefaultContext(DbContextOptions<DefaultContext> options, ITimeProvi
         {
             AuditChanges.Add(
                 new AuditChange(
+                    idGenerator.New(), 
                     ev.EntityId,
                     ev.ChangeType,
                     ev.OldValue,

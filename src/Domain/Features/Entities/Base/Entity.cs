@@ -10,6 +10,7 @@ public class Entity
 
     private Entity(Guid id, Workflow workflow, DateTimeOffset createdAt)
     {
+        Id = id;
         Workflow = workflow;
         CreatedAt = createdAt;
     }

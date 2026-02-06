@@ -1,4 +1,5 @@
-﻿using Misa.Application.Abstractions.Persistence;
+﻿using Misa.Application.Abstractions.Ids;
+using Misa.Application.Abstractions.Persistence;
 using Misa.Application.Abstractions.Time;
 using Misa.Application.Mappings;
 using Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;
@@ -32,7 +33,8 @@ public class AddScheduleHandler(
     IItemRepository repository, 
     IAuthenticationRepository authenticationRepository,
     ITimeProvider timeProvider,
-    ITimeZoneConverter timeZoneConverter)
+    ITimeZoneConverter timeZoneConverter, 
+    IIdGenerator idGenerator)
 {
     public async Task<Result<ScheduleDto>> Handle(AddScheduleCommand command, CancellationToken ct)
     {
@@ -43,6 +45,7 @@ public class AddScheduleHandler(
                 return Result<ScheduleDto>.Invalid("", "No user found");
             
             var scheduler = Scheduler.Create(
+                id: idGenerator.New(), 
                 title: command.Title,
                 targetItemId: command.TargetItemId,
                 frequencyType: command.ScheduleFrequencyType.MapToDomain(),

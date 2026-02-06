@@ -1,4 +1,5 @@
-﻿using Misa.Application.Abstractions.Persistence;
+﻿using Misa.Application.Abstractions.Ids;
+using Misa.Application.Abstractions.Persistence;
 using Misa.Application.Abstractions.Time;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
 
@@ -8,7 +9,8 @@ public class SchedulePlanningHandler(
     ISchedulerPlanningRepository repository, 
     ITimeProvider timeProvider, 
     ITimeZoneProvider timeZoneProvider,
-    ITimeZoneConverter timeZoneConverter)
+    ITimeZoneConverter timeZoneConverter, 
+    IIdGenerator idGenerator)
 {
     private static readonly HashSet<ScheduleFrequencyType> AllowedFrequencies =
     [
@@ -92,7 +94,7 @@ public class SchedulePlanningHandler(
                     currentLookaheadCount++;
                 }
                 
-                var log = schedule.CreateExecutionLog(timeProvider.UtcNow);
+                var log = schedule.CreateExecutionLog(idGenerator.New(), timeProvider.UtcNow);
                 schedule.ReduceOccurrenceCount();
                 schedule.CheckAndUpdateNextAllowedExecution(utcNow);
                 

@@ -22,7 +22,7 @@ namespace Misa.Api.Composition;
 
 public static class ServiceRegistration
 {
-    public static IServiceCollection RegisterServices(this IServiceCollection services)
+    public static void RegisterServices(this IServiceCollection services)
     {
         services.AddApiCore();
         services.AddApiMiddleware();
@@ -30,43 +30,37 @@ public static class ServiceRegistration
         services.AddDataAccess();
         services.AddWorkers();
         services.AddRepositories();
-
-        return services;
     }
 
-    private static IServiceCollection AddApiCore(this IServiceCollection services)
+    private static void AddApiCore(this IServiceCollection services)
     {
         services.AddSignalR();
         services.AddControllers();
-        return services;
     }
 
-    private static IServiceCollection AddApiMiddleware(this IServiceCollection services)
+    private static void AddApiMiddleware(this IServiceCollection services)
     {
         services.AddTransient<ExceptionMappingMiddleware>();
-        return services;
     }
 
-    private static IServiceCollection AddCoreServices(this IServiceCollection services)
+    private static void AddCoreServices(this IServiceCollection services)
     {
         services.AddSingleton<ITimeProvider, Misa.Infrastructure.Services.Time.TimeProvider>();
         services.AddSingleton<ITimeZoneProvider, TimeZoneProvider>();
         services.AddSingleton<ITimeZoneConverter, TimeZoneConverter>();
         services.AddSingleton<IIdGenerator, GuidIdGenerator>();
-        return services;
     }
 
-    private static IServiceCollection AddWorkers(this IServiceCollection services)
+    private static void AddWorkers(this IServiceCollection services)
     {
         services.AddHostedService<SessionAutostopWorker>();
         services.AddHostedService<SessionPastMaxTimeWorker>();
         services.AddHostedService<SchedulePlanningWorker>();
         services.AddHostedService<ScheduleExecutingWorker>();
         services.AddHostedService<SchedulePublishingWorker>();
-        return services;
     }
 
-    private static IServiceCollection AddRepositories(this IServiceCollection services)
+    private static void AddRepositories(this IServiceCollection services)
     {
         services.AddScoped<IEntityRepository, EntityRepository>();
         services.AddScoped<IItemRepository, ItemRepository>();
@@ -74,9 +68,8 @@ public static class ServiceRegistration
         services.AddScoped<ISchedulerExecutingRepository, SchedulerExecutingRepository>();
         services.AddScoped<ISchedulerRepository, SchedulerRepository>();
         services.AddScoped<IAuthenticationRepository, AuthenticationRepository>();
-        return services;
     }
-    private static IServiceCollection AddDataAccess(this IServiceCollection services)
+    private static void AddDataAccess(this IServiceCollection services)
     {
         services.AddDbContext<DefaultContext>((sp, options) =>
         {
@@ -99,8 +92,5 @@ public static class ServiceRegistration
                     npgsql.MapEnum<OutboxEventState>();
                 });
         });
-
-        return services;
     }
-
 }

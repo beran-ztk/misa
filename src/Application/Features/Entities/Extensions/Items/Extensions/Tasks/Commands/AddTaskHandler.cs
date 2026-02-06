@@ -1,4 +1,5 @@
-﻿using Misa.Application.Abstractions.Persistence;
+﻿using Misa.Application.Abstractions.Ids;
+using Misa.Application.Abstractions.Persistence;
 using Misa.Application.Abstractions.Time;
 using Misa.Application.Features.Entities.Extensions.Items.Features.Scheduling.Commands;
 using Misa.Application.Mappings;
@@ -16,11 +17,12 @@ public sealed record AddTaskCommand(
     PriorityContract PriorityContract,
     DeadlineInputDto? Deadline
 );
-public class AddTaskHandler(IItemRepository repository, IMessageBus bus, ITimeProvider timeProvider)
+public class AddTaskHandler(IItemRepository repository, IMessageBus bus, ITimeProvider timeProvider, IIdGenerator idGenerator)
 {
     public async Task<Result<TaskDto>> HandleAsync(AddTaskCommand command, CancellationToken ct)
     {
         var task = ItemTask.Create(
+            idGenerator.New(), 
             command.Title, 
             command.CategoryContract.MapToDomain(), 
             command.PriorityContract.MapToDomain(),

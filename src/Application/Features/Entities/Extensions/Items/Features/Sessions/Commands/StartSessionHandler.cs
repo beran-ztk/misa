@@ -1,4 +1,5 @@
-﻿using Misa.Application.Abstractions.Persistence;
+﻿using Misa.Application.Abstractions.Ids;
+using Misa.Application.Abstractions.Persistence;
 using Misa.Application.Abstractions.Time;
 using Misa.Contract.Shared.Results;
 using Misa.Domain.Features.Entities.Extensions.Items.Base;
@@ -12,7 +13,7 @@ public record StartSessionCommand(
     bool StopAutomatically, 
     string? AutoStopReason
 );
-public class StartSessionHandler(IItemRepository repository, ITimeProvider timeProvider)
+public class StartSessionHandler(IItemRepository repository, ITimeProvider timeProvider, IIdGenerator idGenerator)
 {
     public async Task<Result> Handle(StartSessionCommand command, CancellationToken ct)
     {
@@ -34,6 +35,7 @@ public class StartSessionHandler(IItemRepository repository, ITimeProvider timeP
 
         var session = Session.Start
         (
+            idGenerator.New(),
             command.ItemId, 
             command.PlannedDuration, 
             command.Objective, 
@@ -49,7 +51,7 @@ public class StartSessionHandler(IItemRepository repository, ITimeProvider timeP
 
         await repository.SaveChangesAsync(ct);
         
-        session.AddStartSegment();
+        session.AddStartSegment(idGenerator.New());
         await repository.SaveChangesAsync(ct);
 
         return Result.Ok();
