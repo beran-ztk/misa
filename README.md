@@ -1,8 +1,12 @@
 # MISA
 
-I built MISA because I didn’t want to manage a Zettelkasten by hand. I didn’t want to worry about tags, links, formats, or whether things were structured “correctly”. I wanted a system that could take care of structure and consistency for me, and help me see where I understand things well and where I don’t.
+MISA is a personal orchestration system for work, knowledge, and decisions.
 
-While the current focus is on task planning and scheduling, the long-term direction is to work with connected knowledge and topics that can evolve over time.
+It models tasks, schedules, projects, topics, sources, and priorities as connected entities rather than isolated tools. Instead of manually maintaining structure, MISA is designed to make structure explicit, evaluable, and evolvable over time.
+
+Tasks, initiatives, knowledge indices, sources, and feeds share a common execution and prioritization model. This allows actions, scheduling, evaluation, and context to interact consistently across domains.
+
+The long-term goal of MISA is to support autonomous agents and decision-making systems that operate on the user’s knowledge, policies, and priorities, using the full system state as context.
 
 ## Tech stack
 
