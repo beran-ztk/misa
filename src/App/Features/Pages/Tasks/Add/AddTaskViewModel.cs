@@ -11,9 +11,6 @@ namespace Misa.Ui.Avalonia.Features.Pages.Tasks.Add;
 
 public partial class AddTaskViewModel : ViewModelBase
 {
-    public DeadlineInputViewModel Deadline { get; } = new();
-
-    [ObservableProperty] private bool _createMore;
     [ObservableProperty] private string _title = string.Empty;
     [ObservableProperty] private TaskCategoryContract _selectedCategoryContract;
     [ObservableProperty] private PriorityContract _selectedPriorityContract;
@@ -42,12 +39,11 @@ public partial class AddTaskViewModel : ViewModelBase
             return;
         }
 
-        var deadlineDto = Deadline.ToDtoOrNull();
         var dto = new AddTaskDto(
             trimmed,
             SelectedCategoryContract,
             SelectedPriorityContract,
-            deadlineDto
+            null
         );
 
         Completed?.Invoke(dto);

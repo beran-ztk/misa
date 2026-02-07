@@ -3,9 +3,9 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="Misa.Ui.Avalonia.Features.Pages.Tasks.Header.TaskHeaderView"
-             xmlns:header1="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Tasks.Header"
-             x:DataType="header1:TaskHeaderViewModel">
+             x:Class="Misa.Ui.Avalonia.Features.Pages.Tasks.Toolbar.TaskToolbarView"
+             xmlns:toolbar="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Tasks.Toolbar"
+             x:DataType="toolbar:TaskToolbarViewModel">
 
     <UserControl.Styles>
 
@@ -74,7 +74,7 @@
             <!-- Add -->
             <Button Grid.Column="0"
                     Classes="TaskAddButton"
-                    Command="{Binding ShowAddTaskWindowCommand}">
+                    Command="{Binding ShowAddTaskCommand}">
                 <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                     <Image Width="16"
                            Height="16"

@@ -48,35 +48,35 @@ public partial class AddScheduleViewModel(INavigationService navigationService, 
     }
     private async Task ShowAddTaskWindow()
     {
-        var vm = new AddTaskViewModel();
-        var window = new AddTaskView()
-        {
-            DataContext = vm
-        };
-        
-        AddTaskDto? result = null;
-
-        vm.Completed += dto =>
-        {
-            result = dto;
-            window.Close();
-        };
-        
-        vm.Cancelled += () => window.Close();
-        
-        var owner = (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
-        if (owner == null)
-        {
-            window.Show();
-            return;
-        }
-
-        await window.ShowDialog(owner);
-
-        if (result != null)
-        {
-            Payload = JsonSerializer.Serialize(result);
-        }
+        // var vm = new AddTaskViewModel();
+        // var window = new AddTaskView()
+        // {
+        //     DataContext = vm
+        // };
+        //
+        // AddTaskDto? result = null;
+        //
+        // vm.Completed += dto =>
+        // {
+        //     result = dto;
+        //     window.Close();
+        // };
+        //
+        // vm.Cancelled += () => window.Close();
+        //
+        // var owner = (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
+        // if (owner == null)
+        // {
+        //     window.Show();
+        //     return;
+        // }
+        //
+        // await window.ShowDialog(owner);
+        //
+        // if (result != null)
+        // {
+        //     Payload = JsonSerializer.Serialize(result);
+        // }
     }
     [ObservableProperty] private ScheduleMisfirePolicyDto _selectedMisfirePolicy = ScheduleMisfirePolicyDto.Catchup;
     public IReadOnlyList<ScheduleMisfirePolicyDto> MisfirePolicies { get; } 

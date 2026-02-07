@@ -1,10 +1,6 @@
 using System;
 using Microsoft.Extensions.DependencyInjection;
-using Misa.Ui.Avalonia.Features.Pages.Scheduling.Content;
-using Misa.Ui.Avalonia.Features.Pages.Scheduling.Header;
 using Misa.Ui.Avalonia.Features.Pages.Scheduling.Main;
-using Misa.Ui.Avalonia.Features.Pages.Tasks.Content;
-using Misa.Ui.Avalonia.Features.Pages.Tasks.Header;
 using Misa.Ui.Avalonia.Features.Pages.Tasks.Root;
 using Misa.Ui.Avalonia.Infrastructure.States;
 

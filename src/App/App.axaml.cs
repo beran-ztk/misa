@@ -8,8 +8,8 @@ using Avalonia.Markup.Xaml;
 using Microsoft.Extensions.DependencyInjection;
 using Misa.Ui.Avalonia.Features.Inspector.Common;
 using Misa.Ui.Avalonia.Features.Pages.Common;
+using Misa.Ui.Avalonia.Features.Pages.Tasks.Add;
 using Misa.Ui.Avalonia.Features.Pages.Tasks.Content;
-using Misa.Ui.Avalonia.Features.Pages.Tasks.Header;
 using Misa.Ui.Avalonia.Features.Pages.Tasks.Root;
 using Misa.Ui.Avalonia.Infrastructure.Client;
 using Misa.Ui.Avalonia.Infrastructure.Composition;
@@ -26,6 +26,7 @@ using NavigationStore = Misa.Ui.Avalonia.Infrastructure.States.NavigationStore;
 using NotificationViewModel = Misa.Ui.Avalonia.Features.Utilities.Notifications.NotificationViewModel;
 using SchedulerMainWindowViewModel = Misa.Ui.Avalonia.Features.Pages.Scheduling.Main.SchedulerMainWindowViewModel;
 using SelectionContextState = Misa.Ui.Avalonia.Infrastructure.States.SelectionContextState;
+using TaskToolbarViewModel = Misa.Ui.Avalonia.Features.Pages.Tasks.Toolbar.TaskToolbarViewModel;
 
 namespace Misa.Ui.Avalonia;
 
@@ -94,8 +95,9 @@ public class App : Application
         // Features
         sc.AddSingleton<TaskState>();
         sc.AddSingleton<TaskCoordinator>();
-        sc.AddSingleton<TaskHeaderViewModel>();
+        sc.AddSingleton<TaskToolbarViewModel>();
         sc.AddSingleton<TaskContentViewModel>();
+        sc.AddTransient<AddTaskViewModel>();
         
         sc.AddSingleton<SchedulerMainWindowViewModel>();
         

@@ -47,7 +47,11 @@
         
         <Grid x:Name="PanelLayer"
               ZIndex="20">
-            <ContentControl Content="{Binding Panel}"/>
+            <ContentControl Content="{Binding Panel}"
+                            Width="420"
+                            Margin="80"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Stretch"/>
         </Grid>
         
         <Grid x:Name="ModalLayer"

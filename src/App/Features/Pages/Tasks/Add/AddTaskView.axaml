@@ -1,91 +1,17 @@
-﻿<Window xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-        x:Class="Misa.Ui.Avalonia.Features.Pages.Tasks.Add.AddTaskView"
-        xmlns:deadline="clr-namespace:Misa.Ui.Avalonia.Features.Common.Deadline"
-        xmlns:add1="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Tasks.Add"
-        x:DataType="add1:AddTaskViewModel"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="Misa.Ui.Avalonia.Features.Pages.Tasks.Add.AddTaskView"
+             xmlns:add1="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Tasks.Add"
+             x:DataType="add1:AddTaskViewModel">
 
-        Width="800"
-        Height="500"
-        CanResize="False"
-        WindowStartupLocation="CenterOwner"
-        ShowInTaskbar="False"
-
-        Title="Add Task">
-
-    <Window.Styles>
-
-        <!-- Dialog Card -->
-        <Style Selector="Border.AddTaskCard">
-            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackground}" />
-            <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Padding" Value="16" />
-        </Style>
-
-        <!-- Header Bar -->
-        <Style Selector="Border.AddTaskHeader">
-            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLight}" />
-            <Setter Property="CornerRadius" Value="12" />
-            <Setter Property="Padding" Value="12" />
-        </Style>
-
-        <!-- Inputs: chip look -->
-        <Style Selector="TextBox.AddTaskInput, ComboBox.AddTaskInput">
-            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLight}" />
-            <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="10" />
-            <Setter Property="Padding" Value="12,8" />
-        </Style>
-
-        <Style Selector="TextBox.AddTaskInput:focus, ComboBox.AddTaskInput:focus">
-            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}" />
-        </Style>
-
-        <!-- Labels -->
-        <Style Selector="TextBlock.AddTaskLabel">
-            <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="VerticalAlignment" Value="Center" />
-        </Style>
-
-        <!-- Buttons -->
-        <Style Selector="Button.AddTaskButton">
-            <Setter Property="CornerRadius" Value="10" />
-            <Setter Property="Padding" Value="12,8" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}" />
-            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLight}" />
-        </Style>
-
-        <Style Selector="Button.AddTaskButton:pointerover">
-            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}" />
-        </Style>
-
-        <Style Selector="Button.AddTaskButtonPrimary">
-            <Setter Property="CornerRadius" Value="10" />
-            <Setter Property="Padding" Value="14,8" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}" />
-        </Style>
-
-        <Style Selector="Button.AddTaskButtonPrimary:pointerover">
-            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLight}" />
-        </Style>
-
-    </Window.Styles>
-
-    <Border Classes="AddTaskCard">
-
-        <Grid RowDefinitions="Auto,*,Auto"
-              RowSpacing="14">
+    <Border Background="{StaticResource BrushPrimaryBackground}">
+        <Grid RowDefinitions="Auto,*,Auto" RowSpacing="14">
 
             <!-- Header -->
-            <Border Grid.Row="0" Classes="AddTaskHeader">
+            <Border Grid.Row="0">
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
                     <StackPanel Spacing="2">
                         <TextBlock Text="Add Task"
@@ -96,9 +22,7 @@
                                    Foreground="{StaticResource BrushTextSecondary}" />
                     </StackPanel>
 
-                    <!-- Close -->
                     <Button Grid.Column="1"
-                            Classes="AddTaskButton"
                             Content="Close"
                             Command="{Binding CancelCommand}" />
                 </Grid>
@@ -107,59 +31,32 @@
             <!-- Form -->
             <Grid Grid.Row="1"
                   ColumnDefinitions="160,*"
-                  RowDefinitions="Auto,Auto,Auto,Auto"
+                  RowDefinitions="Auto,Auto,Auto"
                   ColumnSpacing="14"
                   RowSpacing="12">
 
-                <!-- Title -->
-                <TextBlock Grid.Row="0" Grid.Column="0"
-                           Classes="AddTaskLabel"
-                           Text="Title" />
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="Title" />
 
                 <StackPanel Grid.Row="0" Grid.Column="1" Spacing="6">
-                    <TextBox Classes="AddTaskInput"
-                             Watermark="Task title…"
-                             Text="{Binding Title, Mode=TwoWay}"
-                             TextChanged="TitleTextChangedEvent" />
+                    <TextBox Watermark="Task title…"
+                             Text="{Binding Title, Mode=TwoWay}" />
 
                     <TextBlock Text="{Binding ErrorMessageTitle}"
                                Foreground="{StaticResource BrushError}"
                                IsVisible="{Binding TitleHasValidationError}" />
                 </StackPanel>
 
-                <!-- Category -->
-                <TextBlock Grid.Row="1" Grid.Column="0"
-                           Classes="AddTaskLabel"
-                           Text="Category" />
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="Category" />
 
                 <ComboBox Grid.Row="1" Grid.Column="1"
-                          Classes="AddTaskInput"
                           ItemsSource="{Binding Categories}"
                           SelectedValue="{Binding SelectedCategoryContract}" />
 
-                <!-- Priority -->
-                <TextBlock Grid.Row="2" Grid.Column="0"
-                           Classes="AddTaskLabel"
-                           Text="Priority" />
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="Priority" />
 
                 <ComboBox Grid.Row="2" Grid.Column="1"
-                          Classes="AddTaskInput"
                           ItemsSource="{Binding Priorities}"
                           SelectedValue="{Binding SelectedPriorityContract}" />
-
-                <!-- Deadline -->
-                <TextBlock Grid.Row="3" Grid.Column="0"
-                           Classes="AddTaskLabel"
-                           Text="Deadline" />
-
-                <Border Grid.Row="3" Grid.Column="1"
-                        Background="{StaticResource BrushPrimaryBackgroundLight}"
-                        BorderBrush="{StaticResource BrushBorder}"
-                        BorderThickness="1"
-                        CornerRadius="10"
-                        Padding="10">
-                    <deadline:DeadlineInputView DataContext="{Binding Deadline}" />
-                </Border>
             </Grid>
 
             <!-- Footer -->
@@ -168,27 +65,19 @@
                     CornerRadius="12"
                     Padding="12">
 
-                <Grid ColumnDefinitions="Auto,*,Auto,Auto"
+                <Grid ColumnDefinitions="Auto,*,Auto"
                       ColumnSpacing="10"
                       VerticalAlignment="Center">
-
-                    <CheckBox Grid.Column="0"
-                              Content="Create more"
-                              IsChecked="{Binding CreateMore, Mode=TwoWay}"
-                              VerticalAlignment="Center" />
 
                     <StackPanel Grid.Column="2"
                                 Orientation="Horizontal"
                                 Spacing="8"
                                 HorizontalAlignment="Right">
 
-                        <Button Classes="AddTaskButton"
-                                Content="Cancel"
+                        <Button Content="Cancel"
                                 Command="{Binding CancelCommand}" />
 
-                        <Button Grid.Column="3"
-                                Classes="AddTaskButtonPrimary"
-                                Content="Add"
+                        <Button Content="Add"
                                 Command="{Binding ConfirmCommand}" />
                     </StackPanel>
 
@@ -197,4 +86,4 @@
 
         </Grid>
     </Border>
-</Window>
+</UserControl>
