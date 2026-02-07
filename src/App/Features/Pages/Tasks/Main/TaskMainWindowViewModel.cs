@@ -70,8 +70,6 @@ public partial class TaskMainWindowViewModel : ViewModelBase
         
         Content = new TaskContentViewModel(this);
         Header = new TaskHeaderViewModel(this);
-        
-        NavigationService.NavigationStore.BreadCrumbsNavigation = "Tasks → List → Details";
     }
     public void ApplyFilters()
     {

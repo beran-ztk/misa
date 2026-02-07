@@ -109,8 +109,6 @@ public partial class AuthenticationViewModel : ViewModelBase
     [RelayCommand]
     private void Bypass()
     {
-        NavigationService.NavigationStore.CloseOverlay();
-        
     }
     [RelayCommand]
     private void Close()
@@ -152,7 +150,6 @@ public partial class AuthenticationViewModel : ViewModelBase
             }
 
             NavigationService.NavigationStore.User = responseDto.User;
-            NavigationService.NavigationStore.CloseOverlay();
         }
         catch (Exception ex)
         {

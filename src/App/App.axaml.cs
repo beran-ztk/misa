@@ -43,8 +43,8 @@ public class App : Application
         // -------------------------
         // Infrastructure / Core
         // -------------------------
-        sc.AddSingleton<NotificationViewModel>();
         sc.AddSingleton<SignalRNotificationClient>();
+        sc.AddTransient<AuthenticationViewModel>();
         
         sc.AddSingleton(new HttpClient
         {
@@ -85,12 +85,12 @@ public class App : Application
         sc.AddTransient<InspectorViewModel>();
         sc.AddTransient<IInspectorCoordinator, InspectorCoordinator>();
 
-        // -------------------------
-        // Feature VMs
-        // -------------------------
-        sc.AddTransient<SchedulerMainWindowViewModel>();
-        sc.AddTransient<TaskMainWindowViewModel>();
-        sc.AddTransient<AuthenticationViewModel>();
+        // Features
+        sc.AddSingleton<TaskMainWindowViewModel>();
+        sc.AddSingleton<SchedulerMainWindowViewModel>();
+        
+        // Utility
+        sc.AddSingleton<NotificationViewModel>();
         
         Services = sc.BuildServiceProvider();
 

@@ -1,23 +1,22 @@
 ﻿using CommunityToolkit.Mvvm.Input;
-using Microsoft.Extensions.DependencyInjection;
 using Misa.Ui.Avalonia.Common.Mappings;
-using Misa.Ui.Avalonia.Infrastructure.Navigation;
+using Misa.Ui.Avalonia.Infrastructure.States;
 using SchedulerMainWindowViewModel = Misa.Ui.Avalonia.Features.Pages.Scheduling.Main.SchedulerMainWindowViewModel;
 using TaskMainWindowViewModel = Misa.Ui.Avalonia.Features.Pages.Tasks.Main.TaskMainWindowViewModel;
 
 namespace Misa.Ui.Avalonia.Shell.Components;
 
-public partial class WorkspaceNavigationViewModel(INavigationService navigationService) : ViewModelBase
+public partial class WorkspaceNavigationViewModel(
+    ShellState shellState,
+    TaskMainWindowViewModel taskVm,
+    SchedulerMainWindowViewModel schedulerVm
+    ) : ViewModelBase
 {
     [RelayCommand]
     private void ShowTasks()
-    {
-        navigationService.NavigationStore.CurrentViewModel =
-            navigationService.ServiceProvider.GetRequiredService<TaskMainWindowViewModel>();
-    }
+        => shellState.Workspace = taskVm;
 
     [RelayCommand]
-    private void OpenSchedulerPanel() =>
-        navigationService.NavigationStore.CurrentViewModel =
-            navigationService.ServiceProvider.GetRequiredService<SchedulerMainWindowViewModel>();
+    private void ShowScheduler()
+        => shellState.Workspace = schedulerVm;
 }

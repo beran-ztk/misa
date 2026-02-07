@@ -68,7 +68,7 @@
                 <!-- Scheduler -->
                 <Button Classes="MainNavigation"
                         ToolTip.Tip="Scheduler"
-                        Command="{Binding OpenSchedulerPanelCommand}">
+                        Command="{Binding ShowSchedulerCommand}">
                     <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
                         <Image Grid.Column="0" Width="16" Height="16"
                                Source="{SvgImage /Assets/Icons/Shell/Navigation/calendar-dots.svg}"/>
