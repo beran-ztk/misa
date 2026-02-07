@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Misa.Ui.Avalonia.Features.Inspector.Common;
 using Misa.Ui.Avalonia.Features.Pages.Common;
 using Misa.Ui.Avalonia.Infrastructure.Client;
+using Misa.Ui.Avalonia.Infrastructure.Composition;
 using Misa.Ui.Avalonia.Infrastructure.Messaging;
 using Misa.Ui.Avalonia.Infrastructure.Navigation;
 using Misa.Ui.Avalonia.Infrastructure.Platform;
@@ -50,6 +51,23 @@ public class App : Application
             BaseAddress = new Uri(baseAddress)
         });
 
+        // Shell
+        sc.AddSingleton<AppState>();
+        sc.AddSingleton<ShellState>();
+        
+        sc.AddSingleton<ShellWindowViewModel>();
+        sc.AddSingleton<HeaderViewModel>();
+        sc.AddSingleton<WorkspaceNavigationViewModel>();
+        sc.AddSingleton<UtilityNavigationViewModel>();
+        sc.AddSingleton<FooterViewModel>();
+
+        sc.AddSingleton<ShellWindow>(sp =>
+        {
+            var vm = sp.GetRequiredService<ShellWindowViewModel>();
+            return new ShellWindow { DataContext = vm };
+        });
+        
+        // Infrastructure
         sc.AddSingleton<NavigationStore>();
         sc.AddSingleton<IClipboardService, ClipboardService>();
         sc.AddSingleton<INavigationService, NavigationService>();
@@ -73,19 +91,6 @@ public class App : Application
         sc.AddTransient<SchedulerMainWindowViewModel>();
         sc.AddTransient<TaskMainWindowViewModel>();
         sc.AddTransient<AuthenticationViewModel>();
-
-        // -------------------------
-        // Shell / Window
-        // -------------------------
-        sc.AddSingleton<MainWindowViewModel>();
-        sc.AddSingleton<NavigationViewModel>();
-        sc.AddSingleton<InformationViewModel>();
-
-        sc.AddSingleton<MainWindow>(sp =>
-        {
-            var vm = sp.GetRequiredService<MainWindowViewModel>();
-            return new MainWindow { DataContext = vm };
-        });
         
         Services = sc.BuildServiceProvider();
 
@@ -93,7 +98,7 @@ public class App : Application
         {
             DisableAvaloniaDataAnnotationValidation();
 
-            desktop.MainWindow = Services.GetRequiredService<MainWindow>();
+            desktop.MainWindow = Services.GetRequiredService<ShellWindow>();
             
             var signal = Services.GetRequiredService<SignalRNotificationClient>();
             _ = signal.StartAsync(baseAddress);

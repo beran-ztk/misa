@@ -1,0 +1,69 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:base="clr-namespace:Misa.Ui.Avalonia.Shell.Base"
+        x:Class="Misa.Ui.Avalonia.Shell.Base.ShellWindow"
+        x:DataType="base:ShellWindowViewModel"
+        Icon="/Assets/Icons/Shell/App/nanoparticle.png"
+        Title="Misa"
+        MinWidth="1000"
+        MinHeight="650"
+        WindowStartupLocation="CenterScreen">
+    
+    <Grid DataContext="{Binding AppState.ShellState}">
+        
+        <Grid x:Name="ShellLayer"
+              ZIndex="10"
+              RowDefinitions="40,*">
+            
+            <ContentControl Grid.Row="0" 
+                            Content="{Binding Header}"/>
+            
+            <Grid Grid.Row="1" 
+                  RowDefinitions="*,25"
+                  ColumnDefinitions="150,*,Auto,40">
+                
+                <ContentControl Grid.Column="0"
+                                Grid.Row="0" Grid.RowSpan="2"
+                                Content="{Binding WorkspaceNavigation}"/>
+                
+                <ContentControl Grid.Column="1"
+                                Grid.Row="0"
+                                Content="{Binding Workspace}"/>
+                
+                <ContentControl Grid.Column="2"
+                                Grid.Row="0"
+                                MaxWidth="600"
+                                Content="{Binding Utility}"/>
+                
+                <ContentControl Grid.Column="3"
+                                Grid.Row="0"
+                                Content="{Binding UtilityNavigation}"/>
+                
+                <ContentControl Grid.Column="1" Grid.ColumnSpan="3"
+                                Grid.Row="1" 
+                                Content="{Binding Footer}"/>
+            </Grid>
+        </Grid>
+        
+        <Grid x:Name="PanelLayer"
+              ZIndex="20">
+            <ContentControl Content="{Binding Panel}"/>
+        </Grid>
+        
+        <Grid x:Name="ModalLayer"
+              ZIndex="30">
+            <ContentControl Content="{Binding Modal}"/>
+        </Grid>
+        
+        <Grid x:Name="ToastLayer"
+              ZIndex="40">
+            <ContentControl Content="{Binding Toast}"/>
+        </Grid>
+        
+        <Grid x:Name="BusyLayer"
+              ZIndex="50">
+            <ContentControl Content="{Binding Busy}"/>
+        </Grid>
+        
+    </Grid>
+</Window>

@@ -2,9 +2,9 @@
 
 namespace Misa.Ui.Avalonia.Shell.Components;
 
-public partial class NavigationView : UserControl
+public partial class WorkspaceNavigationView : UserControl
 {
-    public NavigationView()
+    public WorkspaceNavigationView()
     {
         InitializeComponent();
     }

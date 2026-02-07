@@ -2,9 +2,9 @@ using Avalonia.Controls;
 
 namespace Misa.Ui.Avalonia.Shell.Components;
 
-public partial class InformationView : UserControl
+public partial class HeaderView : UserControl
 {
-    public InformationView()
+    public HeaderView()
     {
         InitializeComponent();
     }

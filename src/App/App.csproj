@@ -75,11 +75,11 @@
         <DependentUpon>App.axaml</DependentUpon>
         <SubType>Code</SubType>
       </Compile>
-      <Compile Update="Shell\Components\NavigationView.axaml.cs">
+      <Compile Update="Shell\Components\WorkspaceNavigationView.axaml.cs">
         <DependentUpon>NavigationView.axaml</DependentUpon>
         <SubType>Code</SubType>
       </Compile>
-      <Compile Update="Shell\Components\InformationView.axaml.cs">
+      <Compile Update="Shell\Components\UtilityNavigationView.axaml.cs">
         <DependentUpon>InformationView.axaml</DependentUpon>
         <SubType>Code</SubType>
       </Compile>

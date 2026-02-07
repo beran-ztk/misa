@@ -7,7 +7,7 @@ using TaskMainWindowViewModel = Misa.Ui.Avalonia.Features.Pages.Tasks.Main.TaskM
 
 namespace Misa.Ui.Avalonia.Shell.Components;
 
-public partial class NavigationViewModel(INavigationService navigationService) : ViewModelBase
+public partial class WorkspaceNavigationViewModel(INavigationService navigationService) : ViewModelBase
 {
     [RelayCommand]
     private void ShowTasks()

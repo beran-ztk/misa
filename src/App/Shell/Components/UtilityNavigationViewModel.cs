@@ -6,7 +6,7 @@ using NotificationViewModel = Misa.Ui.Avalonia.Features.Utilities.Notifications.
 
 namespace Misa.Ui.Avalonia.Shell.Components;
 
-public sealed partial class InformationViewModel(INavigationService navigationService) : ViewModelBase
+public sealed partial class UtilityNavigationViewModel(INavigationService navigationService) : ViewModelBase
 {
     [RelayCommand]
     private void ToggleNotifications()

@@ -3,8 +3,8 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d"
-             x:Class="Misa.Ui.Avalonia.Shell.Components.InformationView"
-             x:DataType="components:InformationViewModel"
+             x:Class="Misa.Ui.Avalonia.Shell.Components.UtilityNavigationView"
+             x:DataType="components:UtilityNavigationViewModel"
              xmlns:components="clr-namespace:Misa.Ui.Avalonia.Shell.Components">
 
     <Border Background="{StaticResource BrushPrimaryBackground}"
