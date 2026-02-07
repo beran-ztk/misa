@@ -58,7 +58,7 @@
                         Command="{Binding ShowTasksCommand}">
                     <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
                         <Image Grid.Column="0" Width="16" Height="16"
-                               Source="{SvgImage /Assets/Images/MainNavigation/list-dashes.svg}"/>
+                               Source="{SvgImage /Assets/Icons/Shell/Navigation/list-dashes.svg}"/>
                         <TextBlock Grid.Column="1"
                                    Classes="MainNavigation"
                                    Text="Tasks" />
@@ -71,7 +71,7 @@
                         Command="{Binding OpenSchedulerPanelCommand}">
                     <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
                         <Image Grid.Column="0" Width="16" Height="16"
-                               Source="{SvgImage /Assets/Images/MainNavigation/calendar-dots.svg}"/>
+                               Source="{SvgImage /Assets/Icons/Shell/Navigation/calendar-dots.svg}"/>
                         <TextBlock Grid.Column="1"
                                    Classes="MainNavigation"
                                    Text="Scheduler" />
@@ -83,7 +83,7 @@
                         ToolTip.Tip="Credentials">
                     <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
                         <Image Grid.Column="0" Width="16" Height="16"
-                               Source="{SvgImage /Assets/Images/MainNavigation/fingerprint-simple.svg}"/>
+                               Source="{SvgImage /Assets/Icons/Shell/Navigation/fingerprint-simple.svg}"/>
                         <TextBlock Grid.Column="1"
                                    Classes="MainNavigation"
                                    Text="Credentials" />
@@ -95,7 +95,7 @@
                         ToolTip.Tip="Contacts">
                     <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
                         <Image Grid.Column="0" Width="16" Height="16"
-                               Source="{SvgImage /Assets/Images/MainNavigation/users-three.svg}"/>
+                               Source="{SvgImage /Assets/Icons/Shell/Navigation/users-three.svg}"/>
                         <TextBlock Grid.Column="1"
                                    Classes="MainNavigation"
                                    Text="Contacts" />
@@ -107,7 +107,7 @@
                         ToolTip.Tip="Chronicle">
                     <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
                         <Image Grid.Column="0" Width="16" Height="16"
-                               Source="{SvgImage /Assets/Images/MainNavigation/notebook.svg}"/>
+                               Source="{SvgImage /Assets/Icons/Shell/Navigation/notebook.svg}"/>
                         <TextBlock Grid.Column="1"
                                    Classes="MainNavigation"
                                    Text="Chronicle" />
@@ -119,7 +119,7 @@
                         ToolTip.Tip="Index">
                     <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
                         <Image Grid.Column="0" Width="16" Height="16"
-                               Source="{SvgImage /Assets/Images/MainNavigation/asterisk.svg}"/>
+                               Source="{SvgImage /Assets/Icons/Shell/Navigation/asterisk.svg}"/>
                         <TextBlock Grid.Column="1"
                                    Classes="MainNavigation"
                                    Text="Index" />
@@ -131,7 +131,7 @@
                         ToolTip.Tip="Initiatives">
                     <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
                         <Image Grid.Column="0" Width="16" Height="16"
-                               Source="{SvgImage /Assets/Images/MainNavigation/notches.svg}"/>
+                               Source="{SvgImage /Assets/Icons/Shell/Navigation/notches.svg}"/>
                         <TextBlock Grid.Column="1"
                                    Classes="MainNavigation"
                                    Text="Initiatives" />
@@ -143,7 +143,7 @@
                         ToolTip.Tip="Zettelkasten">
                     <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
                         <Image Grid.Column="0" Width="16" Height="16"
-                               Source="{SvgImage /Assets/Images/MainNavigation/scroll.svg}"/>
+                               Source="{SvgImage /Assets/Icons/Shell/Navigation/scroll.svg}"/>
                         <TextBlock Grid.Column="1"
                                    Classes="MainNavigation"
                                    Text="Zettelkasten" />
@@ -155,7 +155,7 @@
                         ToolTip.Tip="Evidences">
                     <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
                         <Image Grid.Column="0" Width="16" Height="16"
-                               Source="{SvgImage /Assets/Images/MainNavigation/bookmarks.svg}"/>
+                               Source="{SvgImage /Assets/Icons/Shell/Navigation/bookmarks.svg}"/>
                         <TextBlock Grid.Column="1"
                                    Classes="MainNavigation"
                                    Text="Evidences" />
@@ -167,7 +167,7 @@
                         ToolTip.Tip="RSS Feed">
                     <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
                         <Image Grid.Column="0" Width="16" Height="16"
-                               Source="{SvgImage /Assets/Images/MainNavigation/rss.svg}"/>
+                               Source="{SvgImage /Assets/Icons/Shell/Navigation/rss.svg}"/>
                         <TextBlock Grid.Column="1"
                                    Classes="MainNavigation"
                                    Text="RSS Feed" />
@@ -179,7 +179,7 @@
                         ToolTip.Tip="URLs">
                     <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
                         <Image Grid.Column="0" Width="16" Height="16"
-                               Source="{SvgImage /Assets/Images/MainNavigation/paperclip.svg}"/>
+                               Source="{SvgImage /Assets/Icons/Shell/Navigation/paperclip.svg}"/>
                         <TextBlock Grid.Column="1"
                                    Classes="MainNavigation"
                                    Text="URLs" />
@@ -191,7 +191,7 @@
                         ToolTip.Tip="Agents">
                     <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
                         <Image Grid.Column="0" Width="16" Height="16"
-                               Source="{SvgImage /Assets/Images/MainNavigation/agents-head-circuit.svg}"/>
+                               Source="{SvgImage /Assets/Icons/Shell/Navigation/agents-head-circuit.svg}"/>
                         <TextBlock Grid.Column="1"
                                    Classes="MainNavigation"
                                    Text="Agents" />
@@ -210,7 +210,7 @@
                         ToolTip.Tip="Ledger">
                     <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
                         <Image Grid.Column="0" Width="16" Height="16"
-                               Source="{SvgImage /Assets/Images/MainNavigation/hourglass.svg}"/>
+                               Source="{SvgImage /Assets/Icons/Shell/Navigation/hourglass.svg}"/>
                         <TextBlock Grid.Column="1"
                                    Classes="MainNavigation"
                                    Text="Ledger" />
@@ -226,7 +226,7 @@
                         ToolTip.Tip="Settings">
                     <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
                         <Image Width="16" Height="16"
-                               Source="{SvgImage /Assets/Images/MainNavigation/nut.svg}"/>
+                               Source="{SvgImage /Assets/Icons/Shell/Navigation/nut.svg}"/>
                         <TextBlock Grid.Column="1"
                                    Classes="MainNavigation"
                                    Text="Settings" />

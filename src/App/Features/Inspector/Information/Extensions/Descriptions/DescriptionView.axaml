@@ -133,10 +133,10 @@
                                             ToolTip.Tip="{Binding ToggleEditToolTip}">
                                         <StackPanel Orientation="Horizontal">
                                             <Image Width="16" Height="16"
-                                                   Source="{SvgImage /Assets/Images/Details/pencil.svg}"
+                                                   Source="{SvgImage /Assets/Icons/Common/edit.svg}"
                                                    IsVisible="{Binding !IsEditOpen}" />
                                             <Image Width="16" Height="16"
-                                                   Source="{SvgImage /Assets/Images/Details/cancel.svg}"
+                                                   Source="{SvgImage /Assets/Icons/Common/cancel.svg}"
                                                    IsVisible="{Binding IsEditOpen}" />
                                         </StackPanel>
                                     </Button>
@@ -147,14 +147,14 @@
                                             IsVisible="{Binding IsEditOpen}"
                                             ToolTip.Tip="Save">
                                         <Image Width="16" Height="16"
-                                               Source="{SvgImage /Assets/Images/Details/check.svg}" />
+                                               Source="{SvgImage /Assets/Icons/Common/check.svg}" />
                                     </Button>
 
                                     <Button Classes="misa-icon-button"
                                             Command="{Binding DeleteCommand}"
                                             ToolTip.Tip="Delete">
                                         <Image Width="16" Height="16"
-                                               Source="{SvgImage /Assets/Images/Details/trash.svg}" />
+                                               Source="{SvgImage /Assets/Icons/Common/trash.svg}" />
                                     </Button>
                                 </StackPanel>
                             </Grid>
@@ -182,7 +182,7 @@
                             ToolTip.Tip="Add">
                         <Image Width="16"
                                Height="16"
-                               Source="{SvgImage /Assets/Images/MainNavigation/plus-circle.svg}" />
+                               Source="{SvgImage /Assets/Icons/Shell/Navigation/plus-circle.svg}" />
                     </Button>
                 </Grid>
             </Border>

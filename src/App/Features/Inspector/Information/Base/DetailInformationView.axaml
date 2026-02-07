@@ -134,7 +134,7 @@
                                 ToolTip.Tip="Copy"
                                 Command="{Binding CopyIdCommand}">
                             <Image Width="16" Height="16"
-                                   Source="{SvgImage /Assets/Images/Details/copy.svg}"/>
+                                   Source="{SvgImage /Assets/Icons/Common/copy.svg}"/>
                         </Button>
 
                         <!-- Title -->
@@ -180,7 +180,7 @@
                                 Command="{Binding ShowEditTitleFormCommand}"
                                 IsVisible="{Binding !IsEditTitleFormOpen}">
                             <Image Width="16" Height="16"
-                                   Source="{SvgImage /Assets/Images/Details/pencil.svg}"/>
+                                   Source="{SvgImage /Assets/Icons/Common/edit.svg}"/>
                         </Button>
 
                         <!-- Created -->
@@ -239,7 +239,7 @@
                                         ToolTip.Tip="Edit">
                                     <Image Width="14"
                                            Height="14"
-                                           Source="{SvgImage /Assets/Images/Details/pencil.svg}"/>
+                                           Source="{SvgImage /Assets/Icons/Common/edit.svg}"/>
                                 </Button>
                             </Grid>
                         </Border>

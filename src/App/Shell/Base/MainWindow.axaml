@@ -6,7 +6,7 @@
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="Misa.Ui.Avalonia.Shell.Base.MainWindow"
         x:DataType="base:MainWindowViewModel"
-        Icon="/Assets/Images/Shells/nanoparticle.png"
+        Icon="/Assets/Icons/Shell/App/nanoparticle.png"
         Height="800"
         Width="1500"
         Title="Misa">
@@ -61,7 +61,7 @@
 
                                     <Image Width="16"
                                            Height="16"
-                                           Source="{SvgImage /Assets/Images/MainNavigation/user.svg}" />
+                                           Source="{SvgImage /Assets/Icons/Shell/Navigation/user.svg}" />
 
                                     <TextBlock Text="{Binding User.Username}"
                                                FontSize="11"
@@ -72,7 +72,7 @@
                                     <Image Width="12"
                                            Height="12"
                                            Opacity="0.75"
-                                           Source="{SvgImage /Assets/Images/MainNavigation/caret-down.svg}" />
+                                           Source="{SvgImage /Assets/Icons/Shell/Navigation/caret-down.svg}" />
                                 </StackPanel>
                             </Button>
                         </Border>
@@ -95,7 +95,7 @@
                                 <StackPanel Orientation="Horizontal" Spacing="8" Margin="8,6">
                                     <Image Width="14" Height="14"
                                            Opacity="0.8"
-                                           Source="{SvgImage /Assets/Images/MainNavigation/user.svg}" />
+                                           Source="{SvgImage /Assets/Icons/Shell/Navigation/user.svg}" />
                                     <TextBlock Text="{Binding User.Username}"
                                                FontSize="11"
                                                Foreground="{StaticResource BrushTextSecondary}"/>
@@ -116,7 +116,7 @@
 
                                     <StackPanel Orientation="Horizontal" Spacing="8">
                                         <Image Width="14" Height="14"
-                                               Source="{SvgImage /Assets/Images/MainNavigation/sign-out.svg}" />
+                                               Source="{SvgImage /Assets/Icons/Shell/Navigation/sign-out.svg}" />
                                         <TextBlock Text="Sign out"
                                                    FontSize="12"
                                                    Foreground="{StaticResource BrushTextPrimary}"/>

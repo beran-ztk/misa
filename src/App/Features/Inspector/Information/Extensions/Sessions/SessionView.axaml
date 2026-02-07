@@ -90,7 +90,7 @@
                                 IsEnabled="{Binding CurrentSessionOverviewDto.CanStartSession}"
                                 IsVisible="{Binding CurrentSessionOverviewDto.CanStartSession}">
                             <Image Width="16" Height="16"
-                                   Source="{SvgImage /Assets/Images/Details/play.svg}"/>
+                                   Source="{SvgImage /Assets/Icons/Inspector/Session/play.svg}"/>
                         </Button>
 
                         <Button Classes="session-icon"
@@ -98,7 +98,7 @@
                                 IsEnabled="{Binding CurrentSessionOverviewDto.CanPauseSession}"
                                 IsVisible="{Binding CurrentSessionOverviewDto.CanPauseSession}">
                             <Image Width="16" Height="16"
-                                   Source="{SvgImage /Assets/Images/Details/pause.svg}"/>
+                                   Source="{SvgImage /Assets/Icons/Inspector/Session/pause.svg}"/>
                         </Button>
 
                         <Button Classes="session-icon"
@@ -106,7 +106,7 @@
                                 IsEnabled="{Binding CurrentSessionOverviewDto.CanContinueSession}"
                                 IsVisible="{Binding CurrentSessionOverviewDto.CanContinueSession}">
                             <Image Width="16" Height="16"
-                                   Source="{SvgImage /Assets/Images/Details/play-pause.svg}"/>
+                                   Source="{SvgImage /Assets/Icons/Inspector/Session/play-pause.svg}"/>
                         </Button>
 
                         <Button Classes="session-icon"
@@ -114,7 +114,7 @@
                                 IsEnabled="{Binding CurrentSessionOverviewDto.CanStopSession}"
                                 IsVisible="{Binding CurrentSessionOverviewDto.CanStopSession}">
                             <Image Width="16" Height="16"
-                                   Source="{SvgImage /Assets/Images/Details/stop.svg}"/>
+                                   Source="{SvgImage /Assets/Icons/Inspector/Session/stop.svg}"/>
                         </Button>
 
                     </StackPanel>

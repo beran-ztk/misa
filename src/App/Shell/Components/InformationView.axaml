@@ -34,7 +34,7 @@
 
                     <Image Width="16"
                            Height="16"
-                           Source="{SvgImage /Assets/Images/MainNavigation/bell.svg}" />
+                           Source="{SvgImage /Assets/Icons/Shell/Utility/bell.svg}" />
                 </Button>
 
             </StackPanel>
