@@ -1,0 +1,83 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:main1="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Scheduling.Main"
+             xmlns:header="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Scheduling.Header"
+             xmlns:content="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Scheduling.Content"
+             x:Class="Misa.Ui.Avalonia.Features.Pages.Scheduling.Main.SchedulerMainWindowView"
+             x:DataType="main1:SchedulerMainWindowViewModel"
+             mc:Ignorable="d"
+             d:DesignWidth="1500"
+             d:DesignHeight="450">
+
+    <!-- Außenfläche (wie Tasks) -->
+    <Border Background="{StaticResource BrushPrimaryBackground}"
+            Padding="12">
+
+        <!-- 2 Zeilen: Header / Content -->
+        <Grid RowDefinitions="Auto,*"
+              RowSpacing="12">
+
+            <!-- Header über volle Breite -->
+            <Border Grid.Row="0"
+                    Background="{StaticResource BrushPrimaryBackground}"
+                    BorderBrush="{StaticResource BrushBorder}"
+                    BorderThickness="0,1,0,1"
+                    CornerRadius="12"
+                    Padding="12">
+                <header:SchedulerHeaderView />
+            </Border>
+
+            <!-- Contentfläche: Card-Look -->
+            <Border Grid.Row="1"
+                    Background="{StaticResource BrushPrimaryBackgroundLight}"
+                    CornerRadius="16"
+                    Padding="12">
+
+                <!-- Links: Liste / Mitte: Split / Rechts: Info -->
+                <Grid ColumnDefinitions="Auto,8,*"
+                      ColumnSpacing="0">
+
+                    <!-- Links: Liste-Container -->
+                    <Border Grid.Column="0"
+                            Background="{StaticResource BrushPrimaryBackgroundLight}"
+                            CornerRadius="14,0,0,14"
+                            Padding="0"
+                            Margin="0,0,-10,0"
+                            BorderBrush="{StaticResource BrushBorder}"
+                            BorderThickness="0">
+                        <content:SchedulerContentView />
+                    </Border>
+
+                    <!-- Dünner Splitter -->
+                    <GridSplitter Grid.Column="1"
+                                  Width="8"
+                                  Background="Transparent" />
+
+                    <!-- Rechts: Details-Container -->
+                    <Border Grid.Column="2"
+                            Background="{StaticResource BrushPrimaryBackgroundLighter}"
+                            CornerRadius="30,15,15,30"
+                            BorderBrush="{StaticResource BrushBorder}"
+                            BorderThickness="1"
+                            ClipToBounds="True"
+                            Padding="10">
+
+                        <!-- Innenfläche, damit der Content nicht an der Rundung klebt -->
+                        <Border Background="{StaticResource BrushPrimaryBackgroundLighter}"
+                                CornerRadius="22,10,10,22"
+                                ClipToBounds="True"
+                                Padding="12">
+
+                            <ContentControl Content="{Binding InfoView}" />
+                        </Border>
+                    </Border>
+
+                </Grid>
+            </Border>
+
+        </Grid>
+    </Border>
+
+</UserControl>

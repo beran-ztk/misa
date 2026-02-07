@@ -6,16 +6,16 @@ using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;
-using Misa.Ui.Avalonia.Features.Details.Information.Base;
-using Misa.Ui.Avalonia.Presentation.Mapping;
+using Misa.Ui.Avalonia.Common.Mappings;
+using Misa.Ui.Avalonia.Features.Inspector.Features.Overview.Base;
 using ReactiveUI;
 
 namespace Misa.Ui.Avalonia.Features.Common.Deadline;
 
 public sealed partial class DeadlineSectionViewModel : ViewModelBase
 {
-    private DetailInformationViewModel Parent { get; }
-    public DeadlineSectionViewModel(DetailInformationViewModel parent)
+    private InspectorOverViewModel Parent { get; }
+    public DeadlineSectionViewModel(InspectorOverViewModel parent)
     {
         Parent = parent;
 

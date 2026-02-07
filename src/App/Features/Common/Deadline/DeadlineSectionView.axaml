@@ -39,19 +39,19 @@
               <!-- Add -->
               <Image Width="16"
                      Height="16"
-                     Source="{SvgImage /Assets/Images/MainNavigation/plus-circle.svg}"
+                     Source="{SvgImage /Assets/Icons/Shell/Navigation/plus-circle.svg}"
                      IsVisible="{Binding ShowAddIcon}" />
             
               <!-- Edit -->
               <Image Width="16"
                      Height="16"
-                     Source="{SvgImage /Assets/Images/Details/pencil.svg}"
+                     Source="{SvgImage /Assets/Icons/Common/edit.svg}"
                      IsVisible="{Binding ShowEditIcon}" />
             
               <!-- Cancel -->
               <Image Width="16"
                      Height="16"
-                     Source="{SvgImage /Assets/Images/Details/cancel.svg}"
+                     Source="{SvgImage /Assets/Icons/Common/cancel.svg}"
                      IsVisible="{Binding IsEditOpen}" />
             </StackPanel>
 
@@ -65,7 +65,7 @@
                   IsVisible="{Binding HasDeadline}">
               <Image Width="16"
                      Height="16"
-                     Source="{SvgImage /Assets/Images/Details/trash.svg}" />
+                     Source="{SvgImage /Assets/Icons/Common/trash.svg}" />
           </Button>
 
         </StackPanel>

@@ -1,7 +1,7 @@
 ﻿using System;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;
-using Misa.Ui.Avalonia.Presentation.Mapping;
+using Misa.Ui.Avalonia.Common.Mappings;
 
 namespace Misa.Ui.Avalonia.Features.Common.Deadline;
 

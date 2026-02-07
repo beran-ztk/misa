@@ -11,7 +11,7 @@ public static class Program
         .StartWithClassicDesktopLifetime(args);
     
     private static AppBuilder BuildAvaloniaApp()
-        => AppBuilder.Configure<App.App>()
+        => AppBuilder.Configure<App>()
             .UsePlatformDetect()
             .WithInterFont()
             .UseReactiveUI()

@@ -11,9 +11,9 @@
 
     <ItemGroup>
         <AvaloniaResource Include="Assets\**"/>
-        <Folder Include="Presentation\Controls\" />
-        <Folder Include="Presentation\Styles\" />
-        <Folder Include="Presentation\Validators\" />
+        <Folder Include="Assets\Controls\" />
+        <Folder Include="Features\Inspector\Features\" />
+        <Folder Include="Features\Utilities\" />
     </ItemGroup>
 
     <ItemGroup>
@@ -67,21 +67,32 @@
         <DependentUpon>NavigationView.axaml</DependentUpon>
         <SubType>Code</SubType>
       </Compile>
-      <Compile Update="App\App.axaml.cs">
-        <DependentUpon>App.axaml</DependentUpon>
-        <SubType>Code</SubType>
-      </Compile>
       <Compile Update="Features\Details\Page\DetailPageView.axaml.cs">
         <DependentUpon>DetailMainDetailView.axaml</DependentUpon>
         <SubType>Code</SubType>
       </Compile>
-      <Compile Update="Features\Details\Information\Extensions\Descriptions\DescriptionView.axaml.cs">
-        <DependentUpon>DescriptionView.axaml</DependentUpon>
+      <Compile Update="App.axaml.cs">
+        <DependentUpon>App.axaml</DependentUpon>
         <SubType>Code</SubType>
       </Compile>
-      <Compile Update="Features\Details\Information\Base\DetailInformationView.axaml.cs">
+      <Compile Update="Shell\Components\WorkspaceNavigationView.axaml.cs">
+        <DependentUpon>NavigationView.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+      <Compile Update="Shell\Components\UtilityNavigationView.axaml.cs">
         <DependentUpon>InformationView.axaml</DependentUpon>
         <SubType>Code</SubType>
       </Compile>
+    </ItemGroup>
+
+    <ItemGroup>
+      <AdditionalFiles Include="Features\Pages\Scheduling\Add\AddScheduleView.axaml" />
+      <AdditionalFiles Include="Features\Pages\Scheduling\Content\SchedulerContentView.axaml" />
+      <AdditionalFiles Include="Features\Pages\Scheduling\Header\SchedulerHeaderView.axaml" />
+      <AdditionalFiles Include="Features\Pages\Scheduling\Main\SchedulerMainWindowView.axaml" />
+      <AdditionalFiles Include="Features\Pages\Tasks\Add\AddTaskView.axaml" />
+      <AdditionalFiles Include="Features\Pages\Tasks\Content\TaskContentView.axaml" />
+      <AdditionalFiles Include="Features\Pages\Tasks\Toolbar\TaskHeaderView.axaml" />
+      <AdditionalFiles Include="Features\Utilities\Notifications\NotificationView.axaml" />
     </ItemGroup>
 </Project>
