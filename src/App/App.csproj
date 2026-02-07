@@ -93,7 +93,6 @@
       <AdditionalFiles Include="Features\Pages\Tasks\Add\AddTaskView.axaml" />
       <AdditionalFiles Include="Features\Pages\Tasks\Content\TaskContentView.axaml" />
       <AdditionalFiles Include="Features\Pages\Tasks\Header\TaskHeaderView.axaml" />
-      <AdditionalFiles Include="Features\Pages\Tasks\Main\TaskMainWindowView.axaml" />
       <AdditionalFiles Include="Features\Utilities\Notifications\NotificationView.axaml" />
     </ItemGroup>
 </Project>

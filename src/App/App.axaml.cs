@@ -8,6 +8,9 @@ using Avalonia.Markup.Xaml;
 using Microsoft.Extensions.DependencyInjection;
 using Misa.Ui.Avalonia.Features.Inspector.Common;
 using Misa.Ui.Avalonia.Features.Pages.Common;
+using Misa.Ui.Avalonia.Features.Pages.Tasks.Content;
+using Misa.Ui.Avalonia.Features.Pages.Tasks.Header;
+using Misa.Ui.Avalonia.Features.Pages.Tasks.Root;
 using Misa.Ui.Avalonia.Infrastructure.Client;
 using Misa.Ui.Avalonia.Infrastructure.Composition;
 using Misa.Ui.Avalonia.Infrastructure.Messaging;
@@ -23,7 +26,6 @@ using NavigationStore = Misa.Ui.Avalonia.Infrastructure.States.NavigationStore;
 using NotificationViewModel = Misa.Ui.Avalonia.Features.Utilities.Notifications.NotificationViewModel;
 using SchedulerMainWindowViewModel = Misa.Ui.Avalonia.Features.Pages.Scheduling.Main.SchedulerMainWindowViewModel;
 using SelectionContextState = Misa.Ui.Avalonia.Infrastructure.States.SelectionContextState;
-using TaskMainWindowViewModel = Misa.Ui.Avalonia.Features.Pages.Tasks.Main.TaskMainWindowViewModel;
 
 namespace Misa.Ui.Avalonia;
 
@@ -54,10 +56,14 @@ public class App : Application
         // Shell
         sc.AddSingleton<AppState>();
         sc.AddSingleton<ShellState>();
+        sc.AddSingleton<WorkspaceState>();
+        
+        sc.AddSingleton<WorkspaceRouter>();
         
         sc.AddSingleton<ShellWindowViewModel>();
         sc.AddSingleton<HeaderViewModel>();
         sc.AddSingleton<WorkspaceNavigationViewModel>();
+        sc.AddSingleton<WorkspaceViewModel>();
         sc.AddSingleton<UtilityNavigationViewModel>();
         sc.AddSingleton<FooterViewModel>();
 
@@ -86,7 +92,11 @@ public class App : Application
         sc.AddTransient<IInspectorCoordinator, InspectorCoordinator>();
 
         // Features
-        sc.AddSingleton<TaskMainWindowViewModel>();
+        sc.AddSingleton<TaskState>();
+        sc.AddSingleton<TaskCoordinator>();
+        sc.AddSingleton<TaskHeaderViewModel>();
+        sc.AddSingleton<TaskContentViewModel>();
+        
         sc.AddSingleton<SchedulerMainWindowViewModel>();
         
         // Utility

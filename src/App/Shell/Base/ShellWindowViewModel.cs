@@ -19,5 +19,6 @@ public partial class ShellWindowViewModel : ViewModelBase
        AppState.ShellState.Footer = ServiceProvider.GetRequiredService<FooterViewModel>();
        AppState.ShellState.WorkspaceNavigation = ServiceProvider.GetRequiredService<WorkspaceNavigationViewModel>();
        AppState.ShellState.UtilityNavigation = ServiceProvider.GetRequiredService<UtilityNavigationViewModel>();
+       AppState.ShellState.Workspace = ServiceProvider.GetRequiredService<WorkspaceViewModel>();
     }
 }

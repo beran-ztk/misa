@@ -1,29 +1,46 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Collections.ObjectModel;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
-using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Misa.Contract.Features.Entities.Extensions.Items.Base;
 using Misa.Contract.Features.Entities.Extensions.Items.Extensions.Tasks;
+using Misa.Ui.Avalonia.Common.Behaviors;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Pages.Tasks.Add;
+using Misa.Ui.Avalonia.Features.Pages.Tasks.Root;
 using AddTaskViewModel = Misa.Ui.Avalonia.Features.Pages.Tasks.Add.AddTaskViewModel;
-using TaskMainWindowViewModel = Misa.Ui.Avalonia.Features.Pages.Tasks.Main.TaskMainWindowViewModel;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Tasks.Header;
 
-public partial class TaskHeaderViewModel(TaskMainWindowViewModel vm) : ViewModelBase
+public partial class TaskHeaderViewModel : ViewModelBase
 {
-    private TaskMainWindowViewModel Parent { get; } = vm;
-
+    public TaskState TaskState { get; }
+    public TaskHeaderViewModel(TaskState taskState)
+    {
+        TaskState = taskState;
+        
+        foreach (var p in Enum.GetValues<PriorityContract>())
+        {
+            var opt = new PriorityFilterOption(p, isSelected: true);
+            opt.PropertyChanged += (s, e) =>
+            {
+                if (e.PropertyName == nameof(PriorityFilterOption.IsSelected))
+                    TaskState.ApplyFilters();
+            };
+            
+            TaskState.PriorityFilters.Add(opt);
+        }
+    }
+    
     [RelayCommand]
     private void RefreshTaskWindow()
     {
-        Parent.SelectedTask = null;
-        _ = Parent.Content.LoadAsync();
+        TaskState.SelectedTask = null;
+        _ = TaskState.LoadAsync();
     }
-
-    [ObservableProperty] private string _searchText = string.Empty;
-    partial void OnSearchTextChanged(string value) => Parent.ApplyFilters();
+    
     [RelayCommand]
     private async Task ShowAddTaskWindow()
     {
@@ -54,6 +71,6 @@ public partial class TaskHeaderViewModel(TaskMainWindowViewModel vm) : ViewModel
         await window.ShowDialog(owner);
 
         if (result != null)
-            await Parent.CreateTask(result);
+            await TaskState.CreateTask(result);
     }
 }

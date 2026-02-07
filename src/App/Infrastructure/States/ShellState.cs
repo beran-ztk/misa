@@ -4,14 +4,15 @@ using Misa.Ui.Avalonia.Common.Mappings;
 
 namespace Misa.Ui.Avalonia.Infrastructure.States;
 
-public partial class ShellState : ObservableObject
+public partial class ShellState(WorkspaceState workspaceState) : ObservableObject
 {
+    [ObservableProperty] private WorkspaceState _workspaceState = workspaceState;
     
     [ObservableProperty] private ViewModelBase _header;
     [ObservableProperty] private ViewModelBase _footer;
     
     [ObservableProperty] private ViewModelBase _workspaceNavigation;
-    [ObservableProperty] private ViewModelBase? _workspace;
+    [ObservableProperty] private ViewModelBase _workspace;
 
     [ObservableProperty] private ViewModelBase _utilityNavigation;
     [ObservableProperty] private ViewModelBase? _utility;
