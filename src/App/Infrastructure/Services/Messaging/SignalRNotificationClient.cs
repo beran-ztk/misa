@@ -1,7 +1,7 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
 using Misa.Contract.Features.Messaging;
-using Misa.Ui.Avalonia.App.Notifications;
+using NotificationViewModel = Misa.Ui.Avalonia.Features.Utilities.Notifications.NotificationViewModel;
 
 namespace Misa.Ui.Avalonia.Infrastructure.Services.Messaging;
 

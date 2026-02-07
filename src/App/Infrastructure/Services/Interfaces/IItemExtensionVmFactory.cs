@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
 using Misa.Contract.Features.Entities.Base;
 using Misa.Contract.Features.Entities.Extensions.Items.Base;
-using Misa.Ui.Avalonia.Features.Details.Common;
+using Misa.Ui.Avalonia.Features.Inspector.Common;
 
 namespace Misa.Ui.Avalonia.Infrastructure.Services.Interfaces;
 

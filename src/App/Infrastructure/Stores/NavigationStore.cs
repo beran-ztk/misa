@@ -2,7 +2,7 @@
 using System.Net.Http;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Misa.Contract.Features.Authentication;
-using Misa.Ui.Avalonia.Presentation.Mapping;
+using Misa.Ui.Avalonia.Common.Mapping;
 
 namespace Misa.Ui.Avalonia.Infrastructure.Stores;
 

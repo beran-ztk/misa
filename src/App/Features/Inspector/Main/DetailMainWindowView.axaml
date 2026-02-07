@@ -1,0 +1,52 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignWidth="800"
+             d:DesignHeight="450"
+             x:Class="Misa.Ui.Avalonia.Features.Inspector.Main.DetailMainWindowView"
+             xmlns:base="clr-namespace:Misa.Ui.Avalonia.Features.Inspector.Information.Base"
+             xmlns:main1="clr-namespace:Misa.Ui.Avalonia.Features.Inspector.Main"
+             x:DataType="main1:DetailMainWindowViewModel">
+
+    <UserControl.Styles>
+
+        <Style Selector="TabControl.GitHubTabs">
+            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLight}" />
+        </Style>
+
+        <!-- Unselected tabs -->
+        <Style Selector="TabControl.GitHubTabs TabItem">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Padding" Value="12,8" />
+            <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}" />
+        </Style>
+
+        <Style Selector="TabControl.GitHubTabs TabItem:pointerover">
+            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLight}" />
+            <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}" />
+        </Style>
+
+
+        <!-- Selected tab: same background as content, borders left/top/right, no bottom -->
+        <Style Selector="TabControl.GitHubTabs TabItem:selected">
+            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLight}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}" />
+            <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}" />
+        </Style>
+
+    </UserControl.Styles>
+
+    <Border Background="{StaticResource BrushPrimaryBackgroundLight}">
+        <TabControl Classes="GitHubTabs"
+                    SelectedIndex="{Binding SelectedTabIndex}">
+            <TabItem Header="Inspector">
+                <base:DetailInformationView DataContext="{Binding DetailInformationViewModel}"/>
+            </TabItem>
+            <TabItem Header="Discussion"/>
+            <TabItem Header="Activity"/>
+            <TabItem Header="Related"/>
+        </TabControl>
+    </Border>
+</UserControl>

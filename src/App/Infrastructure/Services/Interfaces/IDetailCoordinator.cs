@@ -2,7 +2,7 @@
 using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
-using DetailMainWindowViewModel = Misa.Ui.Avalonia.Features.Details.Main.DetailMainWindowViewModel;
+using DetailMainWindowViewModel = Misa.Ui.Avalonia.Features.Inspector.Main.DetailMainWindowViewModel;
 
 namespace Misa.Ui.Avalonia.Infrastructure.Services.Interfaces;
 

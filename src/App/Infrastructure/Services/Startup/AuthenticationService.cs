@@ -5,7 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Misa.Contract.Features.Authentication;
 using Misa.Contract.Shared.Results;
-using Misa.Ui.Avalonia.App.Authentication;
+using Misa.Ui.Avalonia.Infrastructure.Services.Interfaces;
 using Misa.Ui.Avalonia.Infrastructure.Services.Navigation;
 
 namespace Misa.Ui.Avalonia.Infrastructure.Services.Startup;
