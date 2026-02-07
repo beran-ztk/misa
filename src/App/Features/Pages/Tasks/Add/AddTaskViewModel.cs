@@ -4,7 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Features.Entities.Extensions.Items.Base;
 using Misa.Contract.Features.Entities.Extensions.Items.Extensions.Tasks;
-using Misa.Ui.Avalonia.Common.Mapping;
+using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Common.Deadline;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Tasks.Add;

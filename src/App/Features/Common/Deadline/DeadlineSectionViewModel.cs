@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;
-using Misa.Ui.Avalonia.Common.Mapping;
+using Misa.Ui.Avalonia.Common.Mappings;
 using ReactiveUI;
 using DetailInformationViewModel = Misa.Ui.Avalonia.Features.Inspector.Information.Base.DetailInformationViewModel;
 

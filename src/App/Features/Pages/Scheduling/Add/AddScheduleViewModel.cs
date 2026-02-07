@@ -13,7 +13,7 @@ using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Features.Entities.Extensions.Items.Extensions.Tasks;
 using Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;
 using Misa.Contract.Shared.Results;
-using Misa.Ui.Avalonia.Common.Mapping;
+using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Pages.Tasks.Add;
 using Misa.Ui.Avalonia.Infrastructure.Services.Navigation;
 using AddTaskViewModel = Misa.Ui.Avalonia.Features.Pages.Tasks.Add.AddTaskViewModel;

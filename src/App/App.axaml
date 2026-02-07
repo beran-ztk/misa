@@ -1,11 +1,11 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="Misa.Ui.Avalonia.App"
-             xmlns:mapping1="clr-namespace:Misa.Ui.Avalonia.Common.Mapping"
+             xmlns:mappings="clr-namespace:Misa.Ui.Avalonia.Common.Mappings"
              RequestedThemeVariant="Default">
 
     <Application.DataTemplates>
-        <mapping1:ViewLocator/>
+        <mappings:ViewLocator/>
     </Application.DataTemplates>
     
     <Application.Resources>

@@ -1,6 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
-using Misa.Ui.Avalonia.Common.Mapping;
+using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Infrastructure.Services.Navigation;
 using SchedulerMainWindowViewModel = Misa.Ui.Avalonia.Features.Pages.Scheduling.Main.SchedulerMainWindowViewModel;
 using TaskMainWindowViewModel = Misa.Ui.Avalonia.Features.Pages.Tasks.Main.TaskMainWindowViewModel;

@@ -6,7 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Misa.Contract.Features.Entities.Extensions.Items.Extensions.Tasks;
 using Misa.Contract.Shared.Results;
-using Misa.Ui.Avalonia.Common.Mapping;
+using Misa.Ui.Avalonia.Common.Mappings;
 using TaskMainWindowViewModel = Misa.Ui.Avalonia.Features.Pages.Tasks.Main.TaskMainWindowViewModel;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Tasks.Content;

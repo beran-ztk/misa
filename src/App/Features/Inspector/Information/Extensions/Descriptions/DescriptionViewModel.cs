@@ -9,7 +9,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Features.Entities.Features;
 using Misa.Contract.Shared.Results;
-using Misa.Ui.Avalonia.Common.Mapping;
+using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Inspector.Information.Base;
 
 namespace Misa.Ui.Avalonia.Features.Inspector.Information.Extensions.Descriptions;

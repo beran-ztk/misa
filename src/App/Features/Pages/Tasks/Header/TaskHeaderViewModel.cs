@@ -4,7 +4,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Features.Entities.Extensions.Items.Extensions.Tasks;
-using Misa.Ui.Avalonia.Common.Mapping;
+using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Pages.Tasks.Add;
 using AddTaskViewModel = Misa.Ui.Avalonia.Features.Pages.Tasks.Add.AddTaskViewModel;
 using TaskMainWindowViewModel = Misa.Ui.Avalonia.Features.Pages.Tasks.Main.TaskMainWindowViewModel;

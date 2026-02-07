@@ -5,7 +5,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using Misa.Contract.Features.Entities.Extensions.Items.Base;
 using Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;
 using Misa.Contract.Shared.Results;
-using Misa.Ui.Avalonia.Common.Mapping;
+using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Inspector.Common;
 using Misa.Ui.Avalonia.Infrastructure.Services.Interfaces;
 using Misa.Ui.Avalonia.Infrastructure.Services.Navigation;

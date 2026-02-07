@@ -2,7 +2,7 @@ using System;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 
-namespace Misa.Ui.Avalonia.Common.Mapping;
+namespace Misa.Ui.Avalonia.Common.Mappings;
 
 public class ViewLocator : IDataTemplate
 {
