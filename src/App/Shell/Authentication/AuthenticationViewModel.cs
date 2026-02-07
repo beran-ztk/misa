@@ -8,9 +8,9 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Features.Authentication;
 using Misa.Ui.Avalonia.Common.Mappings;
-using Misa.Ui.Avalonia.Infrastructure.Services.Interfaces;
-using Misa.Ui.Avalonia.Infrastructure.Services.Navigation;
-using Misa.Ui.Avalonia.Infrastructure.Services.Startup;
+using Misa.Ui.Avalonia.Infrastructure.Client;
+using Misa.Ui.Avalonia.Infrastructure.Navigation;
+using Misa.Ui.Avalonia.Infrastructure.Time;
 
 namespace Misa.Ui.Avalonia.Shell.Authentication;
 

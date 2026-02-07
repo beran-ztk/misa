@@ -12,8 +12,7 @@
     <ItemGroup>
         <AvaloniaResource Include="Assets\**"/>
         <Folder Include="Assets\Controls\" />
-        <Folder Include="Features\Inspector\" />
-        <Folder Include="Features\Pages\" />
+        <Folder Include="Features\Inspector\Features\" />
         <Folder Include="Features\Utilities\" />
     </ItemGroup>
 
@@ -87,10 +86,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <AdditionalFiles Include="Features\Inspector\Information\Base\DetailInformationView.axaml" />
-      <AdditionalFiles Include="Features\Inspector\Information\Extensions\Descriptions\DescriptionView.axaml" />
-      <AdditionalFiles Include="Features\Inspector\Information\Extensions\Sessions\SessionView.axaml" />
-      <AdditionalFiles Include="Features\Inspector\Main\DetailMainWindowView.axaml" />
       <AdditionalFiles Include="Features\Pages\Scheduling\Add\AddScheduleView.axaml" />
       <AdditionalFiles Include="Features\Pages\Scheduling\Content\SchedulerContentView.axaml" />
       <AdditionalFiles Include="Features\Pages\Scheduling\Header\SchedulerHeaderView.axaml" />

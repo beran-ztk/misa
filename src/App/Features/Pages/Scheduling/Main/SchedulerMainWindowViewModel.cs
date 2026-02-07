@@ -12,17 +12,18 @@ using Microsoft.Extensions.DependencyInjection;
 using Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;
 using Misa.Contract.Shared.Results;
 using Misa.Ui.Avalonia.Common.Mappings;
+using Misa.Ui.Avalonia.Features.Pages.Common;
 using Misa.Ui.Avalonia.Features.Pages.Scheduling.Add;
-using Misa.Ui.Avalonia.Infrastructure.Services.Interfaces;
-using Misa.Ui.Avalonia.Infrastructure.Services.Navigation;
-using DetailMainWindowViewModel = Misa.Ui.Avalonia.Features.Inspector.Main.DetailMainWindowViewModel;
+using Misa.Ui.Avalonia.Infrastructure.Navigation;
+using Misa.Ui.Avalonia.Infrastructure.States;
+using InspectorViewModel = Misa.Ui.Avalonia.Features.Inspector.Base.InspectorViewModel;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Scheduling.Main;
 
 public partial class SchedulerMainWindowViewModel : ViewModelBase
 {
     private readonly IServiceProvider _sp;
-    private readonly IActiveEntitySelection _selection;
+    private readonly ISelectionContextState _selectionContextState;
 
     public ObservableCollection<ScheduleDto> Schedules { get; } = [];
 
@@ -30,15 +31,15 @@ public partial class SchedulerMainWindowViewModel : ViewModelBase
     [ObservableProperty] private ViewModelBase? _infoView;
     public INavigationService NavigationService { get; }
     
-    private DetailMainWindowViewModel? _detailVm;
-    private IDetailCoordinator? _detailCoordinator;
+    private InspectorViewModel? _detailVm;
+    private IInspectorCoordinator? _detailCoordinator;
     public SchedulerMainWindowViewModel(
         IServiceProvider sp,
-        IActiveEntitySelection selection,
+        ISelectionContextState selectionContextState,
         INavigationService navigationService)
     {
         _sp = sp;
-        _selection = selection;
+        _selectionContextState = selectionContextState;
         NavigationService = navigationService;
         
         _ = LoadSchedulesAsync();
@@ -48,9 +49,9 @@ public partial class SchedulerMainWindowViewModel : ViewModelBase
     {
         if (_detailVm is not null) return;
 
-        _detailVm = ActivatorUtilities.CreateInstance<DetailMainWindowViewModel>(_sp);
+        _detailVm = ActivatorUtilities.CreateInstance<InspectorViewModel>(_sp);
         
-        _detailCoordinator = ActivatorUtilities.CreateInstance<DetailCoordinator>(_sp, _detailVm);
+        _detailCoordinator = ActivatorUtilities.CreateInstance<InspectorCoordinator>(_sp, _detailVm);
         _ = _detailCoordinator.ActivateAsync();
     }
 
@@ -58,7 +59,7 @@ public partial class SchedulerMainWindowViewModel : ViewModelBase
     {
         EnsureDetail();
         
-        _selection.SetActive(value?.Id);
+        _selectionContextState.SetActive(value?.Id);
         InfoView = _detailVm;
     }
     [RelayCommand]

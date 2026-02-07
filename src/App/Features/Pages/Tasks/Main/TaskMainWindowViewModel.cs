@@ -13,10 +13,11 @@ using Misa.Contract.Features.Entities.Extensions.Items.Base;
 using Misa.Contract.Features.Entities.Extensions.Items.Extensions.Tasks;
 using Misa.Contract.Shared.Results;
 using Misa.Ui.Avalonia.Common.Mappings;
+using Misa.Ui.Avalonia.Features.Pages.Common;
 using Misa.Ui.Avalonia.Features.Pages.Tasks.Content;
-using Misa.Ui.Avalonia.Infrastructure.Services.Interfaces;
-using Misa.Ui.Avalonia.Infrastructure.Services.Navigation;
-using DetailMainWindowViewModel = Misa.Ui.Avalonia.Features.Inspector.Main.DetailMainWindowViewModel;
+using Misa.Ui.Avalonia.Infrastructure.Navigation;
+using Misa.Ui.Avalonia.Infrastructure.States;
+using InspectorViewModel = Misa.Ui.Avalonia.Features.Inspector.Base.InspectorViewModel;
 using PriorityFilterOption = Misa.Ui.Avalonia.Common.Behaviors.PriorityFilterOption;
 using TaskHeaderViewModel = Misa.Ui.Avalonia.Features.Pages.Tasks.Header.TaskHeaderViewModel;
 
@@ -25,7 +26,7 @@ namespace Misa.Ui.Avalonia.Features.Pages.Tasks.Main;
 public partial class TaskMainWindowViewModel : ViewModelBase
 {
     private readonly IServiceProvider _sp;
-    private readonly IActiveEntitySelection _selection;
+    private readonly ISelectionContextState _selectionContextState;
     public ObservableCollection<TaskDto> Tasks { get; } = [];
     public ObservableCollection<TaskDto> FilteredTasks { get; } = [];
     
@@ -39,19 +40,19 @@ public partial class TaskMainWindowViewModel : ViewModelBase
     [ObservableProperty] private ViewModelBase? _infoView;
     public INavigationService NavigationService { get; }
     
-    private DetailMainWindowViewModel? _detailVm;
-    private IDetailCoordinator? _detailCoordinator;
+    private InspectorViewModel? _detailVm;
+    private IInspectorCoordinator? _detailCoordinator;
     
     public TaskContentViewModel Content { get; }
     public TaskHeaderViewModel Header { get; }
     [ObservableProperty] private string? _pageError;
     public TaskMainWindowViewModel(
         IServiceProvider sp,
-        IActiveEntitySelection selection,
+        ISelectionContextState selectionContextState,
         INavigationService navigationService)
     {
         _sp = sp;
-        _selection = selection;
+        _selectionContextState = selectionContextState;
         NavigationService = navigationService;
 
         foreach (var p in Enum.GetValues<PriorityContract>())
@@ -94,16 +95,16 @@ public partial class TaskMainWindowViewModel : ViewModelBase
     {
         if (_detailVm is not null) return;
 
-        _detailVm = ActivatorUtilities.CreateInstance<DetailMainWindowViewModel>(_sp);
+        _detailVm = ActivatorUtilities.CreateInstance<InspectorViewModel>(_sp);
         
-        _detailCoordinator = ActivatorUtilities.CreateInstance<DetailCoordinator>(_sp, _detailVm);
+        _detailCoordinator = ActivatorUtilities.CreateInstance<InspectorCoordinator>(_sp, _detailVm);
         _ = _detailCoordinator.ActivateAsync();
     }
     partial void OnSelectedTaskChanged(TaskDto? value)
     {
         EnsureDetail();
         
-        _selection.SetActive(value?.Id);
+        _selectionContextState.SetActive(value?.Id);
         InfoView = _detailVm;
     }
 

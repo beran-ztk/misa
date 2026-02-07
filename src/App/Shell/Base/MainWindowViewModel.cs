@@ -3,7 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
 using Misa.Contract.Features.Authentication;
 using Misa.Ui.Avalonia.Common.Mappings;
-using Misa.Ui.Avalonia.Infrastructure.Services.Navigation;
+using Misa.Ui.Avalonia.Infrastructure.Navigation;
 using Misa.Ui.Avalonia.Shell.Authentication;
 using Misa.Ui.Avalonia.Shell.Components;
 

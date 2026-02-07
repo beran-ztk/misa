@@ -1,7 +1,7 @@
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
 using Misa.Ui.Avalonia.Common.Mappings;
-using Misa.Ui.Avalonia.Infrastructure.Services.Navigation;
+using Misa.Ui.Avalonia.Infrastructure.Navigation;
 using NotificationViewModel = Misa.Ui.Avalonia.Features.Utilities.Notifications.NotificationViewModel;
 
 namespace Misa.Ui.Avalonia.Shell.Components;

@@ -6,17 +6,22 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
 using Microsoft.Extensions.DependencyInjection;
-using Misa.Ui.Avalonia.Infrastructure.Services.Interfaces;
-using Misa.Ui.Avalonia.Infrastructure.Services.Messaging;
-using Misa.Ui.Avalonia.Infrastructure.Services.Navigation;
-using Misa.Ui.Avalonia.Infrastructure.Services.Startup;
+using Misa.Ui.Avalonia.Features.Inspector.Common;
+using Misa.Ui.Avalonia.Features.Pages.Common;
+using Misa.Ui.Avalonia.Infrastructure.Client;
+using Misa.Ui.Avalonia.Infrastructure.Messaging;
+using Misa.Ui.Avalonia.Infrastructure.Navigation;
+using Misa.Ui.Avalonia.Infrastructure.Platform;
+using Misa.Ui.Avalonia.Infrastructure.States;
+using Misa.Ui.Avalonia.Infrastructure.Time;
 using Misa.Ui.Avalonia.Shell.Authentication;
 using Misa.Ui.Avalonia.Shell.Base;
 using Misa.Ui.Avalonia.Shell.Components;
-using DetailMainWindowViewModel = Misa.Ui.Avalonia.Features.Inspector.Main.DetailMainWindowViewModel;
-using NavigationStore = Misa.Ui.Avalonia.Infrastructure.Stores.NavigationStore;
+using InspectorViewModel = Misa.Ui.Avalonia.Features.Inspector.Base.InspectorViewModel;
+using NavigationStore = Misa.Ui.Avalonia.Infrastructure.States.NavigationStore;
 using NotificationViewModel = Misa.Ui.Avalonia.Features.Utilities.Notifications.NotificationViewModel;
 using SchedulerMainWindowViewModel = Misa.Ui.Avalonia.Features.Pages.Scheduling.Main.SchedulerMainWindowViewModel;
+using SelectionContextState = Misa.Ui.Avalonia.Infrastructure.States.SelectionContextState;
 using TaskMainWindowViewModel = Misa.Ui.Avalonia.Features.Pages.Tasks.Main.TaskMainWindowViewModel;
 
 namespace Misa.Ui.Avalonia;
@@ -54,13 +59,13 @@ public class App : Application
         // -------------------------
         // Details (Selection + Clients + VMs)
         // -------------------------
-        sc.AddSingleton<IActiveEntitySelection, ActiveEntitySelection>();
+        sc.AddSingleton<ISelectionContextState, SelectionContextState>();
 
-        sc.AddSingleton<IItemExtensionVmFactory, ItemExtensionVmFactory>();
-        sc.AddTransient<IItemDetailClient, ItemDetailClient>();
+        sc.AddSingleton<IInspectorItemExtensionVmFactory, InspectorItemExtensionVmFactory>();
+        sc.AddTransient<IInspectorClient, InspectorClient>();
 
-        sc.AddTransient<DetailMainWindowViewModel>();
-        sc.AddTransient<IDetailCoordinator, DetailCoordinator>();
+        sc.AddTransient<InspectorViewModel>();
+        sc.AddTransient<IInspectorCoordinator, InspectorCoordinator>();
 
         // -------------------------
         // Feature VMs
