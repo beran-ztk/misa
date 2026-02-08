@@ -88,8 +88,7 @@
     <ItemGroup>
       <AdditionalFiles Include="Features\Pages\Scheduling\Add\AddScheduleView.axaml" />
       <AdditionalFiles Include="Features\Pages\Scheduling\Content\SchedulerContentView.axaml" />
-      <AdditionalFiles Include="Features\Pages\Scheduling\Header\SchedulerHeaderView.axaml" />
-      <AdditionalFiles Include="Features\Pages\Scheduling\Main\SchedulerMainWindowView.axaml" />
+      <AdditionalFiles Include="Features\Pages\Scheduling\Toolbar\SchedulerHeaderView.axaml" />
       <AdditionalFiles Include="Features\Pages\Tasks\Add\AddTaskView.axaml" />
       <AdditionalFiles Include="Features\Pages\Tasks\Content\TaskContentView.axaml" />
       <AdditionalFiles Include="Features\Utilities\Notifications\NotificationView.axaml" />

@@ -3,9 +3,9 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="Misa.Ui.Avalonia.Features.Pages.Scheduling.Header.SchedulerHeaderView"
-             xmlns:main="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Scheduling.Main"
-             x:DataType="main:SchedulerMainWindowViewModel">
+             x:Class="Misa.Ui.Avalonia.Features.Pages.Scheduling.Toolbar.SchedulerToolbarView"
+             xmlns:vm="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Scheduling.Toolbar"
+             x:DataType="vm:SchedulerToolbarViewModel">
 
     <UserControl.Styles>
 
@@ -35,7 +35,7 @@
             <!-- Add -->
             <Button Grid.Column="0"
                     Classes="SchedulerAddButton"
-                    Command="{Binding OpenAddScheduleCommand}">
+                    Command="{Binding ShowAddScheduleCommand}">
                 <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                     <TextBlock Text="Add"
                                FontWeight="SemiBold"
