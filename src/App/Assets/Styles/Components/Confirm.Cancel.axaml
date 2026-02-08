@@ -1,0 +1,30 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Style Selector="StackPanel.confirm-cancel">
+        <Setter Property="Orientation" Value="Horizontal"/>
+        <Setter Property="HorizontalAlignment" Value="Right"/>
+        <Setter Property="Spacing" Value="8"/>
+    </Style>
+
+    <Style Selector="Button.confirm-cancel-cancel">
+        <Setter Property="Foreground" Value="{DynamicResource BrushTextSecondary}"/>
+        <Setter Property="Background" Value="{DynamicResource BrushPrimaryBackgroundLight}"/>
+        
+        <Setter Property="MinWidth" Value="90"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorderLight}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="6"/>
+    </Style>
+
+    <Style Selector="Button.confirm-cancel-confirm">
+        <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
+        <Setter Property="Background" Value="{DynamicResource BrushSuccess}"/>
+        
+        <Setter Property="MinWidth" Value="90"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorderLight}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="6"/>
+    </Style>
+
+</Styles>

@@ -18,6 +18,7 @@ public partial class ShellState(WorkspaceState workspaceState) : ObservableObjec
     
     
     [ObservableProperty] private ViewModelBase? _panel;
+    
     [ObservableProperty] private ViewModelBase? _modal;
     [ObservableProperty] private ViewModelBase? _toast;
     [ObservableProperty] private ViewModelBase? _busy;

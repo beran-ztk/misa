@@ -1,0 +1,20 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+        
+        <Style Selector="Grid.workspace-toolbar">
+                <Setter Property="Background" Value="{StaticResource BrushPrimaryBackground}"/>
+                <Setter Property="Height" Value="40" />
+        </Style>
+        
+        <Style Selector="StackPanel.workspace-toolbar-left">
+                <Setter Property="Orientation" Value="Horizontal" />
+        </Style>
+
+        <Style Selector="StackPanel.workspace-toolbar-center">
+                <Setter Property="Orientation" Value="Horizontal" />
+        </Style>
+
+        <Style Selector="StackPanel.workspace-toolbar-right">
+                <Setter Property="Orientation" Value="Horizontal" />
+        </Style>
+</Styles>

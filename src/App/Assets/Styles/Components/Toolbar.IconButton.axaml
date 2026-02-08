@@ -1,0 +1,41 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    
+    <Style Selector="Button.workspace-toolbar-icon">
+        <Setter Property="Width" Value="26"/>
+        <Setter Property="Height" Value="26"/>
+        <Setter Property="Background" Value="Transparent"/>
+        
+        <Setter Property="Opacity" Value="0.5"/>
+            
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+    </Style>
+    
+    <Style Selector="Button.workspace-toolbar-icon Image">
+        <Setter Property="Width" Value="18" />
+        <Setter Property="Height" Value="18" />
+    </Style>
+    
+    <Style Selector="Button.workspace-toolbar-icon:pointerover">
+        <Setter Property="Opacity" Value="0.7"/>
+    </Style>
+    
+    <Style Selector="Button.workspace-toolbar-icon:pressed">
+        <Setter Property="RenderTransform" Value="scale(0.85)"/>
+    </Style>
+    
+    <Style Selector="Button.workspace-toolbar-icon /template/ ContentPresenter">
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}"/>
+    </Style>
+    
+    <Style Selector="Button.workspace-toolbar-icon:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushNavigationHover}" />
+    </Style>
+    
+    <Style Selector="Button.workspace-toolbar-icon:pressed /template/ ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushNavigationPressed}" />
+    </Style>
+</Styles>

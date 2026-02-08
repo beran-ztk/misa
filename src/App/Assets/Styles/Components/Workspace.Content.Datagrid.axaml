@@ -1,0 +1,37 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Style Selector="Border.workspace-content-frame">
+        <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLight}" />
+    </Style>
+
+    <!-- DataGrid baseline -->
+    <Style Selector="DataGrid.workspace-datagrid">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="GridLinesVisibility" Value="None" />
+        <Setter Property="IsReadOnly" Value="True" />
+        <Setter Property="RowHeight" Value="34" />
+    </Style>
+
+    <!-- Column header -->
+    <Style Selector="DataGrid.workspace-datagrid DataGridColumnHeader">
+    </Style>
+
+    <!-- Row -->
+    <Style Selector="DataGrid.workspace-datagrid DataGridRow">
+    </Style>
+
+    <!-- Cell -->
+    <Style Selector="DataGrid.workspace-datagrid DataGridCell">
+    </Style>
+
+    <!-- Hover / Selected -->
+    <Style Selector="DataGrid.workspace-datagrid DataGridRow:pointerover DataGridCell">
+        <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}" />
+    </Style>
+
+    <Style Selector="DataGrid.workspace-datagrid DataGridRow:selected DataGridCell">
+        <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}" />
+    </Style>
+
+</Styles>

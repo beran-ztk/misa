@@ -6,252 +6,270 @@
              x:Class="Misa.Ui.Avalonia.Features.Pages.Scheduling.Add.AddScheduleView"
              xmlns:add="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Scheduling.Add"
              x:DataType="add:AddScheduleViewModel">
-     
-    <Border Classes="misa-control">
-        <Grid RowDefinitions="Auto,Auto,Auto,Auto"
-              RowSpacing="{StaticResource SpacingLarge}">
+
+    <Border Classes="workspace-addpanel">
+
+        <Grid RowDefinitions="Auto,Auto,*,Auto,Auto"
+              Classes="workspace-addpanel">
 
             <!-- Header -->
-            <StackPanel Grid.Row="0" 
-                        Orientation="Horizontal"
-                        Spacing="{StaticResource SpacingMedium}">
-                <TextBlock Classes="misa-header" Text="Add Schedule" />
-            </StackPanel>
+            <Grid Grid.Row="0"
+                  ColumnDefinitions="*,Auto">
 
-            <!-- Validation Error -->
-            <TextBlock Grid.Row="1"
-                       Classes="misa-error"
-                       Text="{Binding ErrorMessage}"
-                       IsVisible="{Binding HasValidationError}"
-                       Margin="0,8,0,0" />
-            
-            <!-- Form -->
-            <Grid Grid.Row="2"
-                  ColumnDefinitions="Auto,*"
-                  RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
-                  RowSpacing="{StaticResource SpacingMedium}"
-                  ColumnSpacing="{StaticResource SpacingLarge}">
+                <TextBlock Text="Create new Schedule"
+                           Classes="workspace-addpanel-title"/>
 
-                <!-- Title -->
-                <TextBlock Grid.Row="0" Grid.Column="0" Classes="misa-label" Text="Title" />
-                <StackPanel Grid.Row="0" Grid.Column="1" Spacing="{StaticResource SpacingSmall}">
-                    <TextBox Classes="misa-input"
-                             Watermark="Schedule title..."
-                             Text="{Binding Title, Mode=TwoWay}" />
-                </StackPanel>
-
-                <!-- Frequency Type -->
-                <TextBlock Grid.Row="1" Grid.Column="0"
-                           Classes="misa-label"
-                           Text="Frequency Type" />
-
-                <ComboBox Grid.Row="1" Grid.Column="1"
-                          Classes="misa-input"
-                          ItemsSource="{Binding FrequencyTypes}"
-                          SelectedValue="{Binding SelectedFrequencyType}"/>
-                
-                <!-- Frequency Interval -->
-                <TextBlock Grid.Row="2" Grid.Column="0"
-                           Classes="misa-label"
-                           Text="Interval" />
-
-                <NumericUpDown Grid.Row="2" Grid.Column="1"
-                               Classes="misa-input"
-                               Value="{Binding FrequencyInterval, Mode=TwoWay}"
-                               Minimum="1"
-                               Maximum="1000"
-                               Increment="1"
-                               FormatString="N0" />
-                
-                <!-- Occurrence Count Limit -->
-                <TextBlock Grid.Row="3" Grid.Column="0" Classes="misa-label" Text="Occurrence Limit" />
-                <NumericUpDown Grid.Row="3" Grid.Column="1"
-                               Classes="misa-input"
-                               Value="{Binding OccurrenceCountLimit, Mode=TwoWay}"
-                               Minimum="0"
-                               Maximum="100000"
-                               Increment="1"
-                               FormatString="N0" />
-
-                <!-- Misfire Policy -->
-                <TextBlock Grid.Row="4" Grid.Column="0" Classes="misa-label" Text="Misfire Policy" />
-                <ComboBox Grid.Row="4" Grid.Column="1"
-                          Classes="misa-input"
-                          ItemsSource="{Binding MisfirePolicies}"
-                          SelectedValue="{Binding SelectedMisfirePolicy, Mode=TwoWay}" />
-
-                <!-- Occurrence TTL -->
-                <TextBlock Grid.Row="5" Grid.Column="0"
-                           Classes="misa-label"
-                           Text="Occurrence TTL" />
-
-                <Grid Grid.Row="5" Grid.Column="1"
-                      ColumnDefinitions="140,*"
-                      RowDefinitions="Auto,Auto,Auto"
-                      RowSpacing="{StaticResource SpacingSmall}"
-                      ColumnSpacing="{StaticResource SpacingMedium}">
-
-                    <TextBlock Grid.Row="0" Grid.Column="0"
-                               VerticalAlignment="Center"
-                               Text="Days" />
-                    <NumericUpDown Grid.Row="0" Grid.Column="1"
-                                   Classes="misa-input"
-                                   Minimum="0"
-                                   Increment="1"
-                                   Value="{Binding OccurrenceTtlDays, Mode=TwoWay}" />
-
-                    <TextBlock Grid.Row="1" Grid.Column="0"
-                               VerticalAlignment="Center"
-                               Text="Hours" />
-                    <NumericUpDown Grid.Row="1" Grid.Column="1"
-                                   Classes="misa-input"
-                                   Minimum="0"
-                                   Maximum="23"
-                                   Increment="1"
-                                   Value="{Binding OccurrenceTtlHours, Mode=TwoWay}" />
-
-                    <TextBlock Grid.Row="2" Grid.Column="0"
-                               VerticalAlignment="Center"
-                               Text="Minutes" />
-                    <NumericUpDown Grid.Row="2" Grid.Column="1"
-                                   Classes="misa-input"
-                                   Minimum="0"
-                                   Maximum="59"
-                                   Increment="1"
-                                   Value="{Binding OccurrenceTtlMinutes, Mode=TwoWay}" />
-                </Grid>
-
-                <!-- Start Time -->
-                <TextBlock Grid.Row="6" Grid.Column="0"
-                           Classes="misa-label"
-                           Text="Start Time" />
-
-                <TimePicker Grid.Row="6" Grid.Column="1"
-                            Classes="misa-input"
-                            SelectedTime="{Binding StartTime, Mode=TwoWay}" />
-
-                <!-- End Time -->
-                <TextBlock Grid.Row="7" Grid.Column="0"
-                           Classes="misa-label"
-                           Text="End Time" />
-
-                <TimePicker Grid.Row="7" Grid.Column="1"
-                            Classes="misa-input"
-                            SelectedTime="{Binding EndTime, Mode=TwoWay}" />
-                
-                <!-- Active From -->
-                <TextBlock Grid.Row="8" Grid.Column="0"
-                           Classes="misa-label"
-                           Text="Active From" />
-
-                <StackPanel Grid.Row="8" Grid.Column="1"
-                            Orientation="Horizontal"
-                            Spacing="{StaticResource SpacingSmall}">
-                    <DatePicker SelectedDate="{Binding ActiveFromDate, Mode=TwoWay}" />
-                    <TimePicker SelectedTime="{Binding ActiveFromTime, Mode=TwoWay}" />
-                </StackPanel>
-                
-                <!-- Active Until -->
-                <TextBlock Grid.Row="9" Grid.Column="0"
-                           Classes="misa-label"
-                           Text="Active Until" />
-
-                <StackPanel Grid.Row="9" Grid.Column="1"
-                            Orientation="Horizontal"
-                            Spacing="{StaticResource SpacingSmall}">
-                    <DatePicker SelectedDate="{Binding ActiveUntilDate, Mode=TwoWay}" />
-                    <TimePicker SelectedTime="{Binding ActiveUntilTime, Mode=TwoWay}" />
-                </StackPanel>
-
-                <!-- Lookahead Count -->
-                <TextBlock Grid.Row="10" Grid.Column="0" Classes="misa-label" Text="Lookahead Count" />
-                <NumericUpDown Grid.Row="10" Grid.Column="1"
-                               Classes="misa-input"
-                               Value="{Binding LookaheadLimit, Mode=TwoWay}"
-                               Minimum="1"
-                               Maximum="100"
-                               Increment="1"
-                               FormatString="N0" />
-                
-                <!-- Specific Restrictions -->
-                <TextBlock Grid.Row="11" Grid.Column="0"
-                           Classes="misa-label"
-                           Text="Restrictions" />
-                <Expander Grid.Row="11" Grid.Column="1"
-                          Header="By day / month / monthday"
-                          IsExpanded="False">
-
-                    <StackPanel Spacing="{StaticResource SpacingMedium}" Margin="0,8,0,0">
-
-                        <!-- Weekdays -->
-                        <TextBlock Text="Weekdays (Mon–Sun)" />
-                        <WrapPanel>
-                            <CheckBox Content="Mon" IsChecked="{Binding ByDayMon, Mode=TwoWay}" />
-                            <CheckBox Content="Tue" IsChecked="{Binding ByDayTue, Mode=TwoWay}" />
-                            <CheckBox Content="Wed" IsChecked="{Binding ByDayWed, Mode=TwoWay}" />
-                            <CheckBox Content="Thu" IsChecked="{Binding ByDayThu, Mode=TwoWay}" />
-                            <CheckBox Content="Fri" IsChecked="{Binding ByDayFri, Mode=TwoWay}" />
-                            <CheckBox Content="Sat" IsChecked="{Binding ByDaySat, Mode=TwoWay}" />
-                            <CheckBox Content="Sun" IsChecked="{Binding ByDaySun, Mode=TwoWay}" />
-                        </WrapPanel>
-
-                        <!-- Months -->
-                        <TextBlock Text="Months (Jan–Dec)" />
-                        <WrapPanel>
-                            <CheckBox Content="Jan" IsChecked="{Binding ByMonthJan, Mode=TwoWay}" />
-                            <CheckBox Content="Feb" IsChecked="{Binding ByMonthFeb, Mode=TwoWay}" />
-                            <CheckBox Content="Mar" IsChecked="{Binding ByMonthMar, Mode=TwoWay}" />
-                            <CheckBox Content="Apr" IsChecked="{Binding ByMonthApr, Mode=TwoWay}" />
-                            <CheckBox Content="May" IsChecked="{Binding ByMonthMay, Mode=TwoWay}" />
-                            <CheckBox Content="Jun" IsChecked="{Binding ByMonthJun, Mode=TwoWay}" />
-                            <CheckBox Content="Jul" IsChecked="{Binding ByMonthJul, Mode=TwoWay}" />
-                            <CheckBox Content="Aug" IsChecked="{Binding ByMonthAug, Mode=TwoWay}" />
-                            <CheckBox Content="Sep" IsChecked="{Binding ByMonthSep, Mode=TwoWay}" />
-                            <CheckBox Content="Oct" IsChecked="{Binding ByMonthOct, Mode=TwoWay}" />
-                            <CheckBox Content="Nov" IsChecked="{Binding ByMonthNov, Mode=TwoWay}" />
-                            <CheckBox Content="Dec" IsChecked="{Binding ByMonthDec, Mode=TwoWay}" />
-                        </WrapPanel>
-                        
-                        <!-- Monthdays -->
-                        <TextBlock Text="Monthdays (comma separated, e.g. 1,15,31)" />
-                        <TextBox Classes="misa-input"
-                                 Watermark="1,15,31"
-                                 Text="{Binding ByMonthDayCsv, Mode=TwoWay}" />
-
-                    </StackPanel>
-                </Expander>
-                
-                <!-- Action Type -->
-                <TextBlock Grid.Row="12" Grid.Column="0"
-                           Classes="misa-label"
-                           Text="Action Type" />
-
-                <ComboBox Grid.Row="12" Grid.Column="1"
-                          Classes="misa-input"
-                          ItemsSource="{Binding ActionTypes}"
-                          SelectedValue="{Binding SelectedActionType}"/>
+                <Button Grid.Column="1"
+                        Classes="workspace-addpanel-icon"
+                        Command="{Binding CancelCommand}">
+                    <Image Source="{SvgImage /Assets/Icons/Common/cancel.svg}" />
+                </Button>
             </Grid>
 
-            <!-- Footer / Actions -->
-            <Grid Grid.Row="3"
-                  Margin="0,8,0,0"
-                  ColumnDefinitions="*,Auto,Auto"
+            <Border Grid.Row="1"
+                    Classes="panel-divider"/>
+
+            <!-- Body -->
+            <ScrollViewer Grid.Row="2">
+                <StackPanel Classes="workspace-addpanel-body"
+                            Spacing="16">
+
+                    <!-- Title -->
+                    <StackPanel Classes="workspace-addpanel-body">
+                        <TextBlock Text="Add a title"
+                                   Classes="workspace-addpanel-body"/>
+
+                        <TextBox Classes="workspace-addpanel-body-text-oneliner"
+                                 Watermark="Title…"
+                                 Text="{Binding Title, Mode=TwoWay}" />
+
+                        <TextBlock Text="{Binding ErrorMessage}"
+                                   IsVisible="{Binding HasValidationError}" />
+                    </StackPanel>
+
+                    <!-- Frequency -->
+                    <StackPanel Classes="workspace-addpanel-body">
+                        <TextBlock Text="Select the frequency type"
+                                   Classes="workspace-addpanel-body"/>
+
+                        <ComboBox Classes="workspace-addpanel-body-selector"
+                                  ItemsSource="{Binding FrequencyTypes}"
+                                  SelectedValue="{Binding SelectedFrequencyType}" />
+                    </StackPanel>
+
+                    <StackPanel Classes="workspace-addpanel-body">
+                        <TextBlock Text="Set the interval"
+                                   Classes="workspace-addpanel-body"/>
+
+                        <NumericUpDown Classes="workspace-addpanel-body-selector"
+                                       Value="{Binding FrequencyInterval, Mode=TwoWay}"
+                                       Minimum="1"
+                                       Maximum="1000"
+                                       Increment="1"
+                                       FormatString="N0" />
+                    </StackPanel>
+
+                    <!-- Lookahead -->
+                    <StackPanel Classes="workspace-addpanel-body">
+                        <TextBlock Text="Lookahead limit"
+                                   Classes="workspace-addpanel-body"/>
+
+                        <NumericUpDown Classes="workspace-addpanel-body-selector"
+                                       Value="{Binding LookaheadLimit, Mode=TwoWay}"
+                                       Minimum="1"
+                                       Maximum="100"
+                                       Increment="1"
+                                       FormatString="N0" />
+                    </StackPanel>
+
+                    <!-- Occurrence limit -->
+                    <StackPanel Classes="workspace-addpanel-body">
+                        <TextBlock Text="Occurrence count limit (optional)"
+                                   Classes="workspace-addpanel-body"/>
+
+                        <NumericUpDown Classes="workspace-addpanel-body-selector"
+                                       Value="{Binding OccurrenceCountLimit, Mode=TwoWay}"
+                                       Minimum="0"
+                                       Maximum="100000"
+                                       Increment="1"
+                                       FormatString="N0" />
+                    </StackPanel>
+
+                    <!-- Misfire policy -->
+                    <StackPanel Classes="workspace-addpanel-body">
+                        <TextBlock Text="Select misfire policy"
+                                   Classes="workspace-addpanel-body"/>
+
+                        <ComboBox Classes="workspace-addpanel-body-selector"
+                                  ItemsSource="{Binding MisfirePolicies}"
+                                  SelectedValue="{Binding SelectedMisfirePolicy, Mode=TwoWay}" />
+                    </StackPanel>
+
+                    <!-- Occurrence TTL -->
+                    <StackPanel Classes="workspace-addpanel-body">
+                        <TextBlock Text="Occurrence TTL (optional)"
+                                   Classes="workspace-addpanel-body"/>
+
+                        <Grid ColumnDefinitions="Auto,*"
+                              RowDefinitions="Auto,Auto,Auto"
+                              ColumnSpacing="12"
+                              RowSpacing="10">
+
+                            <TextBlock Grid.Row="0" Grid.Column="0"
+                                       VerticalAlignment="Center"
+                                       Text="Days"
+                                       Classes="workspace-addpanel-body"/>
+                            <NumericUpDown Grid.Row="0" Grid.Column="1"
+                                           Classes="workspace-addpanel-body-selector"
+                                           Minimum="0"
+                                           Increment="1"
+                                           Value="{Binding OccurrenceTtlDays, Mode=TwoWay}" />
+
+                            <TextBlock Grid.Row="1" Grid.Column="0"
+                                       VerticalAlignment="Center"
+                                       Text="Hours"
+                                       Classes="workspace-addpanel-body"/>
+                            <NumericUpDown Grid.Row="1" Grid.Column="1"
+                                           Classes="workspace-addpanel-body-selector"
+                                           Minimum="0"
+                                           Maximum="23"
+                                           Increment="1"
+                                           Value="{Binding OccurrenceTtlHours, Mode=TwoWay}" />
+
+                            <TextBlock Grid.Row="2" Grid.Column="0"
+                                       VerticalAlignment="Center"
+                                       Text="Minutes"
+                                       Classes="workspace-addpanel-body"/>
+                            <NumericUpDown Grid.Row="2" Grid.Column="1"
+                                           Classes="workspace-addpanel-body-selector"
+                                           Minimum="0"
+                                           Maximum="59"
+                                           Increment="1"
+                                           Value="{Binding OccurrenceTtlMinutes, Mode=TwoWay}" />
+                        </Grid>
+                    </StackPanel>
+
+                    <!-- Time window -->
+                    <StackPanel Classes="workspace-addpanel-body">
+                        <TextBlock Text="Start time (optional)"
+                                   Classes="workspace-addpanel-body"/>
+                        <TimePicker Classes="workspace-addpanel-body-selector"
+                                    SelectedTime="{Binding StartTime, Mode=TwoWay}" />
+                    </StackPanel>
+
+                    <StackPanel Classes="workspace-addpanel-body">
+                        <TextBlock Text="End time (optional)"
+                                   Classes="workspace-addpanel-body"/>
+                        <TimePicker Classes="workspace-addpanel-body-selector"
+                                    SelectedTime="{Binding EndTime, Mode=TwoWay}" />
+                    </StackPanel>
+
+                    <!-- Active range -->
+                    <StackPanel Classes="workspace-addpanel-body">
+                        <TextBlock Text="Active from"
+                                   Classes="workspace-addpanel-body"/>
+
+                        <StackPanel Orientation="Horizontal"
+                                    Spacing="10">
+                            <DatePicker SelectedDate="{Binding ActiveFromDate, Mode=TwoWay}" />
+                            <TimePicker SelectedTime="{Binding ActiveFromTime, Mode=TwoWay}" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <StackPanel Classes="workspace-addpanel-body">
+                        <TextBlock Text="Active until (optional)"
+                                   Classes="workspace-addpanel-body"/>
+
+                        <StackPanel Orientation="Horizontal"
+                                    Spacing="10">
+                            <DatePicker SelectedDate="{Binding ActiveUntilDate, Mode=TwoWay}" />
+                            <TimePicker SelectedTime="{Binding ActiveUntilTime, Mode=TwoWay}" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Restrictions -->
+                    <StackPanel Classes="workspace-addpanel-body">
+                        <TextBlock Text="Restrictions (optional)"
+                                   Classes="workspace-addpanel-body"/>
+
+                        <Expander Header="By day / month / monthday"
+                                  IsExpanded="False">
+
+                            <StackPanel Spacing="12" Margin="0,8,0,0">
+
+                                <TextBlock Text="Weekdays (Mon–Sun)"
+                                           Classes="workspace-addpanel-body"/>
+
+                                <WrapPanel>
+                                    <CheckBox Content="Mon" IsChecked="{Binding ByDayMon, Mode=TwoWay}" />
+                                    <CheckBox Content="Tue" IsChecked="{Binding ByDayTue, Mode=TwoWay}" />
+                                    <CheckBox Content="Wed" IsChecked="{Binding ByDayWed, Mode=TwoWay}" />
+                                    <CheckBox Content="Thu" IsChecked="{Binding ByDayThu, Mode=TwoWay}" />
+                                    <CheckBox Content="Fri" IsChecked="{Binding ByDayFri, Mode=TwoWay}" />
+                                    <CheckBox Content="Sat" IsChecked="{Binding ByDaySat, Mode=TwoWay}" />
+                                    <CheckBox Content="Sun" IsChecked="{Binding ByDaySun, Mode=TwoWay}" />
+                                </WrapPanel>
+
+                                <TextBlock Text="Months (Jan–Dec)"
+                                           Classes="workspace-addpanel-body"/>
+
+                                <WrapPanel>
+                                    <CheckBox Content="Jan" IsChecked="{Binding ByMonthJan, Mode=TwoWay}" />
+                                    <CheckBox Content="Feb" IsChecked="{Binding ByMonthFeb, Mode=TwoWay}" />
+                                    <CheckBox Content="Mar" IsChecked="{Binding ByMonthMar, Mode=TwoWay}" />
+                                    <CheckBox Content="Apr" IsChecked="{Binding ByMonthApr, Mode=TwoWay}" />
+                                    <CheckBox Content="May" IsChecked="{Binding ByMonthMay, Mode=TwoWay}" />
+                                    <CheckBox Content="Jun" IsChecked="{Binding ByMonthJun, Mode=TwoWay}" />
+                                    <CheckBox Content="Jul" IsChecked="{Binding ByMonthJul, Mode=TwoWay}" />
+                                    <CheckBox Content="Aug" IsChecked="{Binding ByMonthAug, Mode=TwoWay}" />
+                                    <CheckBox Content="Sep" IsChecked="{Binding ByMonthSep, Mode=TwoWay}" />
+                                    <CheckBox Content="Oct" IsChecked="{Binding ByMonthOct, Mode=TwoWay}" />
+                                    <CheckBox Content="Nov" IsChecked="{Binding ByMonthNov, Mode=TwoWay}" />
+                                    <CheckBox Content="Dec" IsChecked="{Binding ByMonthDec, Mode=TwoWay}" />
+                                </WrapPanel>
+
+                                <TextBlock Text="Monthdays (comma separated, e.g. 1,15,31)"
+                                           Classes="workspace-addpanel-body"/>
+                                <TextBox Classes="workspace-addpanel-body-text-oneliner"
+                                         Watermark="1,15,31"
+                                         Text="{Binding ByMonthDayCsv, Mode=TwoWay}" />
+                            </StackPanel>
+                        </Expander>
+                    </StackPanel>
+
+                    <!-- Action type -->
+                    <StackPanel Classes="workspace-addpanel-body">
+                        <TextBlock Text="Select action type"
+                                   Classes="workspace-addpanel-body"/>
+
+                        <ComboBox Classes="workspace-addpanel-body-selector"
+                                  ItemsSource="{Binding ActionTypes}"
+                                  SelectedValue="{Binding SelectedActionType}" />
+                    </StackPanel>
+
+                </StackPanel>
+            </ScrollViewer>
+
+            <Border Grid.Row="3"
+                    Classes="panel-divider"/>
+
+            <!-- Footer -->
+            <Grid Grid.Row="4"
+                  ColumnDefinitions="*,Auto"
                   VerticalAlignment="Center">
 
                 <StackPanel Grid.Column="1"
-                            Orientation="Horizontal"
-                            Spacing="8"
-                            HorizontalAlignment="Right">
-                    <Button Classes="misa-primary"
-                            Content="Cancel"
-                            Command="{Binding CloseCommand}" />
-                    <Button Classes="misa-primary"
-                            Content="Save"
-                            Command="{Binding SaveScheduleCommand}" />
+                            Classes="confirm-cancel">
+                    <Button Content="Cancel"
+                            Classes="confirm-cancel-cancel"
+                            Command="{Binding CancelCommand}"/>
+                    <Button Content="Create"
+                            Classes="confirm-cancel-confirm"
+                            Command="{Binding ConfirmCommand}"/>
                 </StackPanel>
+
             </Grid>
-            
+
         </Grid>
     </Border>
-
 </UserControl>

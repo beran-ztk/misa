@@ -1,0 +1,50 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Styles.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="avares://App/Assets/Styles/Views/Navigation/NavigationButtons.axaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Styles.Resources>
+
+    <!-- Main navigation buttons -->
+    <Style Selector="Button.workspace-nav">
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+        <Setter Property="Padding" Value="10,8"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Cursor" Value="Hand"/>
+    </Style>
+
+    <Style Selector="Button.workspace-nav:pointerover">
+        <Setter Property="Opacity" Value="0.7"/>
+    </Style>
+    
+    <Style Selector="Button.workspace-nav:pressed">
+        <Setter Property="RenderTransform" Value="scale(0.90)"/>
+    </Style>
+    
+    <Style Selector="Button.workspace-nav /template/ ContentPresenter">
+        <Setter Property="CornerRadius" Value="{StaticResource CornerRadiusButtons}"/>
+    </Style>
+
+    <Style Selector="Button.workspace-nav:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushNavigationHover}"/>
+    </Style>
+
+    <Style Selector="Button.workspace-nav:pressed /template/ ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushNavigationPressed}"/>
+        <Setter Property="Opacity" Value="0.9"/>
+    </Style>
+
+    <!-- Label -->
+    <Style Selector="TextBlock.workspace-nav">
+        <Setter Property="FontSize" Value="{StaticResource FontSizeMedium}"/>
+        <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+
+</Styles>

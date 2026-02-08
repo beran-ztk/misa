@@ -4,252 +4,57 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:converters="clr-namespace:Misa.Ui.Avalonia.Common.Converters"
              xmlns:content="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Tasks.Content"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             mc:Ignorable="d"
              x:Class="Misa.Ui.Avalonia.Features.Pages.Tasks.Content.TaskContentView"
              x:DataType="content:TaskContentViewModel">
-    
+
     <UserControl.Resources>
         <converters:PriorityToBrushConverter x:Key="PriorityToBrushConverter" />
     </UserControl.Resources>
 
-   <UserControl.Styles>
+    <Grid>
+        <Border Classes="workspace-content-frame">
+            <DataGrid Classes="workspace-datagrid"
+                      HorizontalAlignment="Left"
+                      ItemsSource="{Binding TaskState.FilteredTasks}"
+                      SelectedItem="{Binding TaskState.SelectedTask, Mode=TwoWay}"
+                      AutoGenerateColumns="False"
+                      SelectionMode="Extended"
+                      IsReadOnly="True"
+                      ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                      ScrollViewer.VerticalScrollBarVisibility="Auto">
 
-        <!-- DataGrid: clean base -->
-        <Style Selector="DataGrid.misa-grid">
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="BorderBrush" Value="Transparent" />
+                <DataGrid.Columns>
 
-            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLight}" />
-            <Setter Property="RowBackground" Value="{StaticResource BrushPrimaryBackgroundLight}" />
+                    <DataGridTemplateColumn Header="Title" Width="320">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Item.Title}"
+                                           TextTrimming="CharacterEllipsis"
+                                           TextWrapping="NoWrap" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
 
-            <!-- Keine Linien -->
-            <Setter Property="GridLinesVisibility" Value="None" />
-            <Setter Property="HorizontalGridLinesBrush" Value="Transparent" />
-            <Setter Property="VerticalGridLinesBrush" Value="Transparent" />
+                    <DataGridTextColumn Header="State" Binding="{Binding Item.StateId}" Width="160" />
+                    <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="160" />
 
-            <!-- Header optional: wenn du ihn behalten willst, lass "All" -->
-            <Setter Property="HeadersVisibility" Value="Column" />
+                    <DataGridTemplateColumn Header="Priority" Width="160">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <Ellipse Fill="{Binding Item.Priority, Converter={StaticResource PriorityToBrushConverter}}" />
+                                    <TextBlock Text="{Binding Item.Priority}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
 
-            <Setter Property="RowHeight" Value="34" />
-            <Setter Property="IsReadOnly" Value="True" />
-            <!-- optional: Fokus-Rahmen killen -->
-            <Setter Property="FocusAdorner" Value="{x:Null}" />
-        </Style>
+                </DataGrid.Columns>
 
-        <!-- Header sehr zurückhaltend -->
-        <Style Selector="DataGrid.misa-grid DataGridColumnHeader">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Padding" Value="8,6" />
-            <Setter Property="FontSize" Value="{StaticResource FontSizeMedium}" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-        </Style>
+            </DataGrid>
+        </Border>
 
-        <!-- Row: keine Borders, eigener Hover/Selection -->
-        <Style Selector="DataGrid.misa-grid DataGridRow">
-            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLight}" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="CornerRadius" Value="10" />
-            <Setter Property="Margin" Value="0,2" />
-        </Style>
+    </Grid>
 
-        <!-- Cells: keine Zell-Borders, besseres Padding -->
-        <Style Selector="DataGrid.misa-grid DataGridCell">
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Padding" Value="10,6" />
-            <Setter Property="FontSize" Value="{StaticResource FontSizeMedium}" />
-            <Setter Property="VerticalContentAlignment" Value="Center" />
-        </Style>
-        
-        <Style Selector="DataGrid.misa-grid DataGridCell:selected">
-            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}" />
-            <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}" />
-            <Setter Property="BorderThickness" Value="0" />
-        </Style>
-
-        <Style Selector="DataGrid.misa-grid DataGridCell:selected:pointerover">
-            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}" />
-            <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}" />
-        </Style>
-        
-
-        <!-- Optional: wenn Fokus/Inactive Selection anders eingefärbt wird -->
-        <Style Selector="DataGrid.misa-grid DataGridRow:selected:inactive DataGridCell">
-            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}" />
-            <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}" />
-        </Style>
-
-        <!-- Baseline: jede Cell hat den Listen-Background -->
-        <Style Selector="DataGrid.misa-grid DataGridRow DataGridCell">
-            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLight}" />
-            <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}" />
-            <Setter Property="BorderThickness" Value="0" />
-        </Style>
-
-        <!-- Row selected: alle Cells gleich -->
-        <Style Selector="DataGrid.misa-grid DataGridRow:selected DataGridCell">
-            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}" />
-            <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}" />
-        </Style>
-
-        <!-- Hover (nicht selected) -->
-        <Style Selector="DataGrid.misa-grid DataGridRow:pointerover DataGridCell">
-            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}" />
-        </Style>
-
-        <!-- Hover auf selected soll stabil bleiben -->
-        <Style Selector="DataGrid.misa-grid DataGridRow:selected:pointerover DataGridCell">
-            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}" />
-        </Style>
-
-        <!-- Wenn DataGrid den "current cell" / Fokus-Zustand anders färbt -->
-        <Style Selector="DataGrid.misa-grid DataGridCell:focus">
-            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}" />
-            <Setter Property="BorderThickness" Value="0" />
-        </Style>
-
-        <!-- Falls es einen getrennten Current/Pointer-Zustand gibt -->
-        <Style Selector="DataGrid.misa-grid DataGridCell:current">
-            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}" />
-        </Style>
-
-        <!-- Filter Button -->
-        <Style Selector="ToggleButton.FilterButton">
-            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackground}" />
-            <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="999" />
-            <Setter Property="Padding" Value="10,4" />
-        </Style>
-
-        <!-- Hover -->
-        <Style Selector="ToggleButton.FilterButton:pointerover">
-            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}" />
-        </Style>
-
-        <!-- Open / Checked -->
-        <Style Selector="ToggleButton.FilterButton:checked">
-            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}" />
-            <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}" />
-        </Style>
-
-    </UserControl.Styles>
-
-    
-    <Border Padding="8"
-            Background="{StaticResource BrushPrimaryBackgroundLight}">
-        <Grid RowDefinitions="Auto,*" 
-              ColumnSpacing="16">
-            
-            <Border Grid.Row="0"
-                    Margin="12"
-                    Background="{StaticResource BrushPrimaryBackground}"
-                    CornerRadius="14"
-                    BorderBrush="{StaticResource BrushBorder}"
-                    BorderThickness="1"
-                    ClipToBounds="True">
-
-                <Grid RowDefinitions="Auto,Auto">
-
-                    
-
-                    <!-- ROW 1: META -->
-                    <Border Grid.Row="1"
-                            Background="{StaticResource BrushPrimaryBackground}"
-                            Padding="10">
-
-                        <Grid ColumnDefinitions="*,Auto"
-                              ColumnSpacing="16"
-                              VerticalAlignment="Center">
-
-                            <StackPanel Orientation="Horizontal"
-                                        Spacing="12">
-                                <TextBlock Text="Tasks:"
-                                           Foreground="{StaticResource BrushTextSecondary}" />
-                                <TextBlock Text="{Binding TaskState.Tasks.Count}"
-                                           FontWeight="SemiBold"
-                                           Foreground="{StaticResource BrushTextPrimary}" />
-                            </StackPanel>
-
-                            <StackPanel Grid.Column="1"
-                                        Orientation="Horizontal"
-                                        Spacing="12">
-                                <TextBlock Text="{Binding TaskState.SelectedTask.Id, StringFormat='Current: {0}'}"
-                                           Foreground="{StaticResource BrushTextSecondary}"
-                                           IsVisible="{Binding TaskState.IsTaskSelected}"/>
-                            </StackPanel>
-
-                        </Grid>
-                    </Border>
-
-                </Grid>
-            </Border>
-            
-            <Border Grid.Row="1"
-                    Padding="16">
-                
-                <!-- Fester Rahmen / hartes Ende -->
-                <Border Background="{StaticResource BrushPrimaryBackgroundLight}"
-                        CornerRadius="12"
-                        ClipToBounds="True"
-                        MaxWidth="820"
-                        HorizontalAlignment="Left">
-
-                    <DataGrid Classes="misa-grid"
-                              ItemsSource="{Binding TaskState.FilteredTasks}"
-                              SelectedItem="{Binding TaskState.SelectedTask, Mode=TwoWay}"
-                              AutoGenerateColumns="False"
-                              SelectionMode="Extended"
-                              IsReadOnly="True"
-                              HorizontalAlignment="Stretch"
-                              ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                              ScrollViewer.VerticalScrollBarVisibility="Auto">
-                    
-                        <DataGrid.Columns>
-
-                            <!-- Title: fixe Breite + Trimming (kein Umbruch) -->
-                            <DataGridTemplateColumn Header="Title" Width="320">
-                                <DataGridTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <TextBlock Text="{Binding Item.Title}"
-                                                   TextTrimming="CharacterEllipsis"
-                                                   TextWrapping="NoWrap"
-                                                   FontWeight="SemiBold"
-                                                   Foreground="{StaticResource BrushTextPrimary}" />
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellTemplate>
-                            </DataGridTemplateColumn>
-
-                            <DataGridTextColumn Header="State" Binding="{Binding Item.StateId}" Width="140" />
-                            <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="160" />
-                            
-                            
-                            <!-- <DataGridTextColumn Header="Priority" Binding="{Binding Item.Priority}" Width="140" /> -->
-                            <DataGridTemplateColumn Header="Priority" Width="140">
-                                <DataGridTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <StackPanel Orientation="Horizontal"
-                                                    Spacing="6"
-                                                    VerticalAlignment="Center">
-
-                                            <Ellipse Width="8"
-                                                     Height="8"
-                                                     Fill="{Binding Item.Priority,
-                                                     Converter={StaticResource PriorityToBrushConverter}}" />
-
-                                            <TextBlock Text="{Binding Item.Priority}"
-                                                       Foreground="{StaticResource BrushTextPrimary}" />
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellTemplate>
-                            </DataGridTemplateColumn>
-                            
-                        </DataGrid.Columns>
-
-                    </DataGrid>
-                </Border>
-            </Border>
-        </Grid>
-    </Border>
 </UserControl>

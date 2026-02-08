@@ -7,82 +7,87 @@
              xmlns:add1="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Tasks.Add"
              x:DataType="add1:AddTaskViewModel">
 
-    <Border Background="{StaticResource BrushPrimaryBackground}">
-        <Grid RowDefinitions="Auto,*,Auto" RowSpacing="14">
+    <Border Classes="workspace-addpanel">
+        
+        <Grid RowDefinitions="Auto,Auto,*,Auto,Auto"
+              Classes="workspace-addpanel">
 
             <!-- Header -->
-            <Border Grid.Row="0">
-                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
-                    <StackPanel Spacing="2">
-                        <TextBlock Text="Add Task"
-                                   FontSize="{StaticResource FontSizeLarge}"
-                                   FontWeight="Bold"
-                                   Foreground="{StaticResource BrushTextPrimary}" />
-                        <TextBlock Text="Create a new task with optional deadline."
-                                   Foreground="{StaticResource BrushTextSecondary}" />
-                    </StackPanel>
+            <Grid Grid.Row="0"
+                  ColumnDefinitions="*,Auto">
 
-                    <Button Grid.Column="1"
-                            Content="Close"
-                            Command="{Binding CancelCommand}" />
-                </Grid>
-            </Border>
+                <TextBlock Text="Create new Task"
+                           Classes="workspace-addpanel-title"/>
 
-            <!-- Form -->
-            <Grid Grid.Row="1"
-                  ColumnDefinitions="160,*"
-                  RowDefinitions="Auto,Auto,Auto"
-                  ColumnSpacing="14"
-                  RowSpacing="12">
-
-                <TextBlock Grid.Row="0" Grid.Column="0" Text="Title" />
-
-                <StackPanel Grid.Row="0" Grid.Column="1" Spacing="6">
-                    <TextBox Watermark="Task title…"
-                             Text="{Binding Title, Mode=TwoWay}" />
-
-                    <TextBlock Text="{Binding ErrorMessageTitle}"
-                               Foreground="{StaticResource BrushError}"
-                               IsVisible="{Binding TitleHasValidationError}" />
-                </StackPanel>
-
-                <TextBlock Grid.Row="1" Grid.Column="0" Text="Category" />
-
-                <ComboBox Grid.Row="1" Grid.Column="1"
-                          ItemsSource="{Binding Categories}"
-                          SelectedValue="{Binding SelectedCategoryContract}" />
-
-                <TextBlock Grid.Row="2" Grid.Column="0" Text="Priority" />
-
-                <ComboBox Grid.Row="2" Grid.Column="1"
-                          ItemsSource="{Binding Priorities}"
-                          SelectedValue="{Binding SelectedPriorityContract}" />
+                <Button Grid.Column="1"
+                        Classes="workspace-addpanel-icon"
+                        Command="{Binding CancelCommand}">
+                    <Image Source="{SvgImage /Assets/Icons/Common/cancel.svg}" />
+                </Button>
             </Grid>
 
-            <!-- Footer -->
-            <Border Grid.Row="2"
-                    Background="{StaticResource BrushPrimaryBackgroundLight}"
-                    CornerRadius="12"
-                    Padding="12">
+            <Border Grid.Row="1" 
+                    Classes="panel-divider"/>
+            
+            <!-- Body -->
+            <ScrollViewer Grid.Row="2">
+                <Grid RowDefinitions="Auto,Auto,Auto"
+                      Classes="workspace-addpanel-body">
 
-                <Grid ColumnDefinitions="Auto,*,Auto"
-                      ColumnSpacing="10"
-                      VerticalAlignment="Center">
-
-                    <StackPanel Grid.Column="2"
-                                Orientation="Horizontal"
-                                Spacing="8"
-                                HorizontalAlignment="Right">
-
-                        <Button Content="Cancel"
-                                Command="{Binding CancelCommand}" />
-
-                        <Button Content="Add"
-                                Command="{Binding ConfirmCommand}" />
+                    <StackPanel Grid.Row="0"
+                                Classes="workspace-addpanel-body">
+                        <TextBlock Text="Add a title"
+                                   Classes="workspace-addpanel-body" />
+                        
+                        <TextBox Classes="workspace-addpanel-body-text-oneliner" 
+                                 Watermark="Title…"
+                                 Text="{Binding Title, Mode=TwoWay}" />
+                        
+                        <TextBlock Text="{Binding ErrorMessageTitle}"
+                                   IsVisible="{Binding TitleHasValidationError}" />
                     </StackPanel>
 
+                    <StackPanel Grid.Row="1"
+                                Classes="workspace-addpanel-body">
+                        <TextBlock Text="Select the category" 
+                                   Classes="workspace-addpanel-body"/>
+                        
+                        <ComboBox Classes="workspace-addpanel-body-selector" 
+                                  ItemsSource="{Binding Categories}"
+                                  SelectedValue="{Binding SelectedCategoryContract}" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="2"
+                                Classes="workspace-addpanel-body">
+                        <TextBlock Text="Choose a priority for the task" 
+                                   Classes="workspace-addpanel-body"/>
+                        
+                        <ComboBox Classes="workspace-addpanel-body-selector" 
+                                  ItemsSource="{Binding Priorities}"
+                                  SelectedValue="{Binding SelectedPriorityContract}" />
+                    </StackPanel>
                 </Grid>
-            </Border>
+            </ScrollViewer>
+
+            <Border Grid.Row="3" 
+                    Classes="panel-divider"/>
+
+            <!-- Footer -->
+            <Grid Grid.Row="4"
+                  ColumnDefinitions="*,Auto"
+                  VerticalAlignment="Center">
+
+                <StackPanel Grid.Column="1" 
+                            Classes="confirm-cancel">
+                    <Button Content="Cancel"
+                            Classes="confirm-cancel-cancel"
+                            Command="{Binding CancelCommand}"/>
+                    <Button Content="Create"
+                            Classes="confirm-cancel-confirm"
+                            Command="{Binding ConfirmCommand}"/>
+                </StackPanel>
+
+            </Grid>
 
         </Grid>
     </Border>

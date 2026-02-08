@@ -6,28 +6,33 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.DependencyInjection;
 using Misa.Contract.Features.Authentication;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Infrastructure.Client;
-using Misa.Ui.Avalonia.Infrastructure.Navigation;
+using Misa.Ui.Avalonia.Infrastructure.Composition;
 using Misa.Ui.Avalonia.Infrastructure.Time;
+using Misa.Ui.Avalonia.Shell.Base;
 
 namespace Misa.Ui.Avalonia.Shell.Authentication;
 
-public partial class AuthenticationViewModel : ViewModelBase
+public partial class AuthenticationWindowViewModel : ViewModelBase
 {
-    private INavigationService NavigationService { get; }
     private IAuthenticationService AuthService { get; }
     private TimeZoneService TimeZoneService { get; }
+    private AppState AppState { get; }
+    private IServiceProvider Services { get; }
 
-    public AuthenticationViewModel(
-        INavigationService navigationService,
+    public AuthenticationWindowViewModel(
         IAuthenticationService authService,
-        TimeZoneService timeZoneService)
+        TimeZoneService timeZoneService,
+        AppState appState,
+        IServiceProvider services)
     {
-        NavigationService = navigationService;
         AuthService = authService;
         TimeZoneService = timeZoneService;
+        AppState = appState;
+        Services = services;
 
         TimeZoneIds = new ObservableCollection<string>(TimeZoneService.Ids);
         SelectedTimeZoneId = TimeZoneIds.Contains("Europe/Berlin") ? "Europe/Berlin" : TimeZoneIds.FirstOrDefault();
@@ -38,9 +43,10 @@ public partial class AuthenticationViewModel : ViewModelBase
     public ObservableCollection<string> TimeZoneIds { get; }
     [ObservableProperty] private string? _selectedTimeZoneId;
 
-    [ObservableProperty] 
+    [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(SubtitleText))]
     private bool _isRegisterMode;
+
     public string SubtitleText => IsRegisterMode ? "Create your account" : "Sign in to continue";
     public bool IsLoginMode => !IsRegisterMode;
 
@@ -109,14 +115,15 @@ public partial class AuthenticationViewModel : ViewModelBase
     [RelayCommand]
     private void Bypass()
     {
+        // Optional: Wenn du Bypass behalten willst, hier entweder Dummy-User setzen oder einfach Shell öffnen.
+        OpenShellAndCloseAuth();
     }
+
     [RelayCommand]
     private void Close()
     {
         if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-        {
             desktop.Shutdown();
-        }
     }
 
     [RelayCommand]
@@ -149,7 +156,9 @@ public partial class AuthenticationViewModel : ViewModelBase
                 responseDto = await AuthService.LoginAsync(req);
             }
 
-            NavigationService.NavigationStore.User = responseDto.User;
+            AppState.UserState.User = responseDto.User;
+
+            OpenShellAndCloseAuth();
         }
         catch (Exception ex)
         {
@@ -159,5 +168,19 @@ public partial class AuthenticationViewModel : ViewModelBase
         {
             IsBusy = false;
         }
+    }
+
+    private void OpenShellAndCloseAuth()
+    {
+        if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop)
+            return;
+
+        var authWindow = desktop.MainWindow;
+
+        var shellWindow = Services.GetRequiredService<ShellWindow>();
+        desktop.MainWindow = shellWindow;
+        shellWindow.Show();
+
+        authWindow?.Close();
     }
 }

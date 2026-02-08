@@ -1,6 +1,5 @@
 using System;
-using Microsoft.Extensions.DependencyInjection;
-using Misa.Ui.Avalonia.Features.Pages.Scheduling.Main;
+using Misa.Ui.Avalonia.Features.Pages.Scheduling.Root;
 using Misa.Ui.Avalonia.Features.Pages.Tasks.Root;
 using Misa.Ui.Avalonia.Infrastructure.States;
 
@@ -16,7 +15,8 @@ public sealed class WorkspaceRouter(
     ShellState shell, 
     IServiceProvider sp,
     
-    TaskCoordinator taskVm)
+    TaskCoordinator taskVm,
+    SchedulerCoordinator scheduleVm)
 {
     public void Show(WorkspaceKind kind)
     {
@@ -28,11 +28,7 @@ public sealed class WorkspaceRouter(
                 taskVm.Attach(ws);
                 break;
             case WorkspaceKind.Scheduler:
-                ws.Toolbar = null;
-                ws.Navigation = null;
-                ws.Content = sp.GetRequiredService<SchedulerMainWindowViewModel>();
-                ws.ContextPanel = null;
-                ws.StatusBar = null;
+                scheduleVm.Attach(ws);
                 break;
             default:
                 throw new ArgumentOutOfRangeException(nameof(kind), kind, null);

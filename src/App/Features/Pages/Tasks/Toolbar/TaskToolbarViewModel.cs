@@ -3,9 +3,9 @@ using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Features.Entities.Extensions.Items.Base;
 using Misa.Ui.Avalonia.Common.Behaviors;
 using Misa.Ui.Avalonia.Common.Mappings;
+using Misa.Ui.Avalonia.Features.Pages.Tasks.Add;
 using Misa.Ui.Avalonia.Features.Pages.Tasks.Root;
 using Misa.Ui.Avalonia.Infrastructure.States;
-using AddTaskViewModel = Misa.Ui.Avalonia.Features.Pages.Tasks.Add.AddTaskViewModel;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Tasks.Toolbar;
 
@@ -55,6 +55,6 @@ public partial class TaskToolbarViewModel : ViewModelBase
             ShellState.Panel = null;
         };
 
-        ShellState.Panel = vm;
+        ShellState.Panel = vm; 
     }
 }

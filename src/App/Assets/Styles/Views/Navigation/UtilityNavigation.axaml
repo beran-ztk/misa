@@ -1,0 +1,46 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Styles.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="avares://App/Assets/Styles/Views/Navigation/NavigationButtons.axaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Styles.Resources>
+    
+    <Style Selector="Image.utility-nav">
+        <Setter Property="Stretch" Value="Uniform"/>    
+    </Style>
+    
+    <Style Selector="Button.utility-nav">
+        <Setter Property="Width" Value="33"/>
+        <Setter Property="Height" Value="33"/>
+        <Setter Property="Background" Value="Transparent"/>
+            
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        
+        <Setter Property="Cursor" Value="Hand"/>
+    </Style>
+    
+    <Style Selector="Button.utility-nav:pointerover">
+        <Setter Property="Opacity" Value="0.7"/>
+    </Style>
+    
+    <Style Selector="Button.utility-nav:pressed">
+        <Setter Property="RenderTransform" Value="scale(0.85)"/>
+    </Style>
+    
+    <Style Selector="Button.utility-nav /template/ ContentPresenter">
+        <Setter Property="CornerRadius" Value="{StaticResource CornerRadiusButtons}"/>
+    </Style>
+    
+    <Style Selector="Button.utility-nav:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushNavigationHover}" />
+    </Style>
+    
+    <Style Selector="Button.utility-nav:pressed /template/ ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushNavigationPressed}" />
+    </Style>
+</Styles>

@@ -1,16 +1,20 @@
-<UserControl xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d"
-             x:Class="Misa.Ui.Avalonia.Shell.Authentication.AuthenticationView"
-             xmlns:authentication="clr-namespace:Misa.Ui.Avalonia.Shell.Authentication"
-             x:DataType="authentication:AuthenticationViewModel">
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        x:Class="Misa.Ui.Avalonia.Shell.Authentication.AuthenticationWindow"
+        xmlns:authentication="clr-namespace:Misa.Ui.Avalonia.Shell.Authentication"
+        x:DataType="authentication:AuthenticationWindowViewModel"
+        Width="900"
+        Height="600"
+        MinWidth="720"
+        MinHeight="520"
+        WindowStartupLocation="CenterScreen"
+        CanResize="False">
 
-    <!-- Full-screen "auth screen" background, not black -->
     <Grid Background="{StaticResource BrushPrimaryBackgroundLighter}">
 
-        <!-- Centered surface (no harsh border look; rely on background contrast) -->
         <Border Background="{StaticResource BrushPrimaryBackgroundLight}"
                 CornerRadius="10"
                 Padding="30"
@@ -29,31 +33,25 @@
                                Margin="0"/>
 
                     <TextBlock Text="{Binding SubtitleText}"
-                               Classes="misa-subtitle"
                                Margin="0"/>
                 </StackPanel>
 
-                <!-- subtle separator -->
                 <Border Height="1"
                         Background="{StaticResource BrushBorder}"
                         Opacity="0.35"/>
-
-                
 
                 <!-- Form -->
                 <StackPanel Spacing="10">
 
                     <StackPanel Spacing="6">
-                        <TextBlock Text="Username" Classes="misa-label" Margin="0"/>
+                        <TextBlock Text="Username" Margin="0"/>
                         <TextBox Text="{Binding Username, Mode=TwoWay}"
-                                 Classes="misa-input"
                                  IsEnabled="{Binding IsNotBusy}"/>
                     </StackPanel>
 
                     <StackPanel Spacing="6">
-                        <TextBlock Text="Password" Classes="misa-label" Margin="0"/>
+                        <TextBlock Text="Password" Margin="0"/>
                         <TextBox Text="{Binding Password, Mode=TwoWay}"
-                                 Classes="misa-input"
                                  PasswordChar="•"
                                  IsEnabled="{Binding IsNotBusy}"/>
                     </StackPanel>
@@ -62,19 +60,17 @@
                                 Spacing="10">
 
                         <StackPanel Spacing="6">
-                            <TextBlock Text="Confirm password" Classes="misa-label" Margin="0"/>
+                            <TextBlock Text="Confirm password" Margin="0"/>
                             <TextBox Text="{Binding ConfirmPassword, Mode=TwoWay}"
-                                     Classes="misa-input"
                                      PasswordChar="•"
                                      Watermark="Repeat password"
                                      IsEnabled="{Binding IsNotBusy}"/>
                         </StackPanel>
 
                         <StackPanel Spacing="6">
-                            <TextBlock Text="Time zone" Classes="misa-label" Margin="0"/>
+                            <TextBlock Text="Time zone" Margin="0"/>
                             <ComboBox ItemsSource="{Binding TimeZoneIds}"
                                       SelectedItem="{Binding SelectedTimeZoneId, Mode=TwoWay}"
-                                      Classes="misa-input"
                                       IsEnabled="{Binding IsNotBusy}"
                                       Height="38"
                                       HorizontalAlignment="Stretch"/>
@@ -85,66 +81,54 @@
                 </StackPanel>
 
                 <!-- Error banner -->
-                <Border Classes="misa-error-banner"
-                        IsVisible="{Binding HasError}">
+                <Border IsVisible="{Binding HasError}">
                     <TextBlock Text="{Binding ErrorMessage}"
                                Foreground="{StaticResource BrushError}"
                                TextWrapping="Wrap"/>
                 </Border>
-                
-                <!-- Mode switch (modern auth pattern) -->
+
+                <!-- Mode switch -->
                 <StackPanel Spacing="6" HorizontalAlignment="Center">
 
-                    <!-- Login mode: show "Create account" -->
                     <StackPanel Orientation="Horizontal"
                                 Spacing="6"
                                 HorizontalAlignment="Center"
                                 IsVisible="{Binding IsLoginMode}">
-                        <TextBlock Text="No account?"
-                                   Classes="misa-muted"/>
+                        <TextBlock Text="No account?"/>
                         <Button Content="Create one"
-                                Classes="misa-link"
                                 Command="{Binding SetRegisterModeCommand}"/>
                     </StackPanel>
 
-                    <!-- Register mode: show "Back to sign in" -->
                     <StackPanel Orientation="Horizontal"
                                 Spacing="6"
                                 HorizontalAlignment="Center"
                                 IsVisible="{Binding IsRegisterMode}">
-                        <TextBlock Text="Already have an account?"
-                                   Classes="misa-muted"/>
+                        <TextBlock Text="Already have an account?"/>
                         <Button Content="Sign in"
-                                Classes="misa-link"
                                 Command="{Binding SetLoginModeCommand}"/>
                     </StackPanel>
 
                 </StackPanel>
-                
-                <!-- Actions: left (Bypass) + right (Close / Primary) -->
+
+                <!-- Actions -->
                 <Grid ColumnDefinitions="Auto,*,Auto,Auto"
                       ColumnSpacing="10"
                       HorizontalAlignment="Stretch">
 
-                    <!-- Left side -->
                     <Button Grid.Column="0"
                             Content="Bypass"
                             Command="{Binding BypassCommand}"
                             IsEnabled="{Binding IsNotBusy}"
-                            Classes="misa-secondary"
                             Height="40"
                             VerticalContentAlignment="Center"
                             MinWidth="100"/>
 
-                    <!-- spacer -->
                     <Border Grid.Column="1"/>
 
-                    <!-- Right side -->
                     <Button Grid.Column="2"
                             Content="Close"
                             Command="{Binding CloseCommand}"
                             IsEnabled="{Binding IsNotBusy}"
-                            Classes="misa-secondary"
                             Height="40"
                             VerticalContentAlignment="Center"
                             MinWidth="100"/>
@@ -153,7 +137,6 @@
                             Content="{Binding PrimaryButtonText}"
                             Command="{Binding SubmitCommand}"
                             IsEnabled="{Binding CanSubmit}"
-                            Classes="misa-primary misa-auth-primary"
                             Height="40"
                             VerticalContentAlignment="Center"
                             MinWidth="100"/>
@@ -162,4 +145,4 @@
             </StackPanel>
         </Border>
     </Grid>
-</UserControl>
+</Window>

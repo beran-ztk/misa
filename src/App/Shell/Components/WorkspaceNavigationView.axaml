@@ -7,229 +7,139 @@
              xmlns:components="clr-namespace:Misa.Ui.Avalonia.Shell.Components"
              x:DataType="components:WorkspaceNavigationViewModel">
 
-    <UserControl.Styles>
-
-        <!-- Buttons: full width, nicer hitbox, rounded hover -->
-        <Style Selector="Button.MainNavigation">
-            <Setter Property="HorizontalAlignment" Value="Stretch" />
-            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-            <Setter Property="Padding" Value="10,8" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Background" Value="Transparent" />
-        </Style>
-
-        <Style Selector="Button.MainNavigation /template/ ContentPresenter">
-            <Setter Property="CornerRadius" Value="8" />
-        </Style>
-
-        <Style Selector="Button.MainNavigation:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="{StaticResource BrushPanelBackground}" />
-        </Style>
-
-        <Style Selector="Button.MainNavigation:pressed /template/ ContentPresenter">
-            <Setter Property="Background" Value="{StaticResource BrushPanelBackground}" />
-            <Setter Property="Opacity" Value="0.9" />
-        </Style>
-
-        <!-- Icon + label -->
-        <Style Selector="TextBlock.MainNavigation">
-            <Setter Property="FontSize" Value="{StaticResource FontSizeMedium}" />
-            <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}" />
-            <Setter Property="VerticalAlignment" Value="Center" />
-        </Style>
-
-    </UserControl.Styles>
-
     <Border Background="{StaticResource BrushPrimaryBackground}"
             BorderBrush="{StaticResource BrushSecondaryBackground}"
             BorderThickness="0,0,1,0">
 
-        <Grid RowDefinitions="Auto,*,Auto" Margin="8">
+        <Grid RowDefinitions="*,Auto" Margin="8,20,8,8">
 
-            <Border Grid.Row="0" Height="8" Background="Transparent"/>
-
-            <!-- Main nav -->
-            <StackPanel Grid.Row="1"
+            <StackPanel Grid.Row="0"
                         Spacing="{StaticResource SpacingSmall}">
 
-                <!-- Tasks -->
-                <Button Classes="MainNavigation"
+                <Button Classes="workspace-nav"
                         ToolTip.Tip="Tasks"
                         Command="{Binding ShowTasksCommand}">
                     <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
                         <Image Grid.Column="0" Width="16" Height="16"
                                Source="{SvgImage /Assets/Icons/Shell/Navigation/list-dashes.svg}"/>
-                        <TextBlock Grid.Column="1"
-                                   Classes="MainNavigation"
-                                   Text="Tasks" />
+                        <TextBlock Grid.Column="1" Classes="workspace-nav" Text="Tasks"/>
                     </Grid>
                 </Button>
 
-                <!-- Scheduler -->
-                <Button Classes="MainNavigation"
+                <Button Classes="workspace-nav"
                         ToolTip.Tip="Scheduler"
                         Command="{Binding ShowSchedulerCommand}">
                     <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
                         <Image Grid.Column="0" Width="16" Height="16"
                                Source="{SvgImage /Assets/Icons/Shell/Navigation/calendar-dots.svg}"/>
-                        <TextBlock Grid.Column="1"
-                                   Classes="MainNavigation"
-                                   Text="Scheduler" />
+                        <TextBlock Grid.Column="1" Classes="workspace-nav" Text="Scheduler"/>
                     </Grid>
                 </Button>
-                
-                <!-- Credentials -->
-                <Button Classes="MainNavigation"
-                        ToolTip.Tip="Credentials">
+
+                <Button Classes="workspace-nav" ToolTip.Tip="Credentials">
                     <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
                         <Image Grid.Column="0" Width="16" Height="16"
                                Source="{SvgImage /Assets/Icons/Shell/Navigation/fingerprint-simple.svg}"/>
-                        <TextBlock Grid.Column="1"
-                                   Classes="MainNavigation"
-                                   Text="Credentials" />
+                        <TextBlock Grid.Column="1" Classes="workspace-nav" Text="Credentials"/>
                     </Grid>
                 </Button>
-                
-                <!-- Contacts -->
-                <Button Classes="MainNavigation"
-                        ToolTip.Tip="Contacts">
+
+                <Button Classes="workspace-nav" ToolTip.Tip="Contacts">
                     <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
                         <Image Grid.Column="0" Width="16" Height="16"
                                Source="{SvgImage /Assets/Icons/Shell/Navigation/users-three.svg}"/>
-                        <TextBlock Grid.Column="1"
-                                   Classes="MainNavigation"
-                                   Text="Contacts" />
+                        <TextBlock Grid.Column="1" Classes="workspace-nav" Text="Contacts"/>
                     </Grid>
                 </Button>
-                
-                <!-- Chronicle -->
-                <Button Classes="MainNavigation"
-                        ToolTip.Tip="Chronicle">
+
+                <Button Classes="workspace-nav" ToolTip.Tip="Chronicle">
                     <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
                         <Image Grid.Column="0" Width="16" Height="16"
                                Source="{SvgImage /Assets/Icons/Shell/Navigation/notebook.svg}"/>
-                        <TextBlock Grid.Column="1"
-                                   Classes="MainNavigation"
-                                   Text="Chronicle" />
+                        <TextBlock Grid.Column="1" Classes="workspace-nav" Text="Chronicle"/>
                     </Grid>
                 </Button>
-                
-                <!-- Index -->
-                <Button Classes="MainNavigation"
-                        ToolTip.Tip="Index">
+
+                <Button Classes="workspace-nav" ToolTip.Tip="Index">
                     <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
                         <Image Grid.Column="0" Width="16" Height="16"
                                Source="{SvgImage /Assets/Icons/Shell/Navigation/asterisk.svg}"/>
-                        <TextBlock Grid.Column="1"
-                                   Classes="MainNavigation"
-                                   Text="Index" />
+                        <TextBlock Grid.Column="1" Classes="workspace-nav" Text="Index"/>
                     </Grid>
                 </Button>
-                
-                <!-- Initiatives -->
-                <Button Classes="MainNavigation"
-                        ToolTip.Tip="Initiatives">
+
+                <Button Classes="workspace-nav" ToolTip.Tip="Initiatives">
                     <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
                         <Image Grid.Column="0" Width="16" Height="16"
                                Source="{SvgImage /Assets/Icons/Shell/Navigation/notches.svg}"/>
-                        <TextBlock Grid.Column="1"
-                                   Classes="MainNavigation"
-                                   Text="Initiatives" />
+                        <TextBlock Grid.Column="1" Classes="workspace-nav" Text="Initiatives"/>
                     </Grid>
                 </Button>
-                
-                <!-- Zettelkasten -->
-                <Button Classes="MainNavigation"
-                        ToolTip.Tip="Zettelkasten">
+
+                <Button Classes="workspace-nav" ToolTip.Tip="Zettelkasten">
                     <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
                         <Image Grid.Column="0" Width="16" Height="16"
                                Source="{SvgImage /Assets/Icons/Shell/Navigation/scroll.svg}"/>
-                        <TextBlock Grid.Column="1"
-                                   Classes="MainNavigation"
-                                   Text="Zettelkasten" />
+                        <TextBlock Grid.Column="1" Classes="workspace-nav" Text="Zettelkasten"/>
                     </Grid>
                 </Button>
-                
-                <!-- Evidences -->
-                <Button Classes="MainNavigation"
-                        ToolTip.Tip="Evidences">
+
+                <Button Classes="workspace-nav" ToolTip.Tip="Evidences">
                     <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
                         <Image Grid.Column="0" Width="16" Height="16"
                                Source="{SvgImage /Assets/Icons/Shell/Navigation/bookmarks.svg}"/>
-                        <TextBlock Grid.Column="1"
-                                   Classes="MainNavigation"
-                                   Text="Evidences" />
+                        <TextBlock Grid.Column="1" Classes="workspace-nav" Text="Evidences"/>
                     </Grid>
                 </Button>
-                
-                <!-- RSS Feed -->
-                <Button Classes="MainNavigation"
-                        ToolTip.Tip="RSS Feed">
+
+                <Button Classes="workspace-nav" ToolTip.Tip="RSS Feed">
                     <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
                         <Image Grid.Column="0" Width="16" Height="16"
                                Source="{SvgImage /Assets/Icons/Shell/Navigation/rss.svg}"/>
-                        <TextBlock Grid.Column="1"
-                                   Classes="MainNavigation"
-                                   Text="RSS Feed" />
+                        <TextBlock Grid.Column="1" Classes="workspace-nav" Text="RSS Feed"/>
                     </Grid>
                 </Button>
-                
-                <!-- URLs -->
-                <Button Classes="MainNavigation"
-                        ToolTip.Tip="URLs">
+
+                <Button Classes="workspace-nav" ToolTip.Tip="URLs">
                     <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
                         <Image Grid.Column="0" Width="16" Height="16"
                                Source="{SvgImage /Assets/Icons/Shell/Navigation/paperclip.svg}"/>
-                        <TextBlock Grid.Column="1"
-                                   Classes="MainNavigation"
-                                   Text="URLs" />
+                        <TextBlock Grid.Column="1" Classes="workspace-nav" Text="URLs"/>
                     </Grid>
                 </Button>
-                
-                <!-- Agents -->
-                <Button Classes="MainNavigation"
-                        ToolTip.Tip="Agents">
+
+                <Button Classes="workspace-nav" ToolTip.Tip="Agents">
                     <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
                         <Image Grid.Column="0" Width="16" Height="16"
                                Source="{SvgImage /Assets/Icons/Shell/Navigation/agents-head-circuit.svg}"/>
-                        <TextBlock Grid.Column="1"
-                                   Classes="MainNavigation"
-                                   Text="Agents" />
+                        <TextBlock Grid.Column="1" Classes="workspace-nav" Text="Agents"/>
                     </Grid>
                 </Button>
 
             </StackPanel>
 
-            <!-- Bottom: Settings -->
-            <StackPanel Grid.Row="2"
+            <StackPanel Grid.Row="1"
                         Spacing="{StaticResource SpacingSmall}"
                         VerticalAlignment="Bottom">
 
-                <!-- Ledger -->
-                <Button Classes="MainNavigation"
-                        ToolTip.Tip="Ledger">
+                <Button Classes="workspace-nav" ToolTip.Tip="Ledger">
                     <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
                         <Image Grid.Column="0" Width="16" Height="16"
                                Source="{SvgImage /Assets/Icons/Shell/Navigation/hourglass.svg}"/>
-                        <TextBlock Grid.Column="1"
-                                   Classes="MainNavigation"
-                                   Text="Ledger" />
+                        <TextBlock Grid.Column="1" Classes="workspace-nav" Text="Ledger"/>
                     </Grid>
                 </Button>
-                
+
                 <Border Height="1"
                         Margin="0,8,0,8"
                         Background="{StaticResource BrushSecondaryBackground}"
-                        Opacity="0.6" />
+                        Opacity="0.6"/>
 
-                <Button Classes="MainNavigation"
-                        ToolTip.Tip="Settings">
+                <Button Classes="workspace-nav" ToolTip.Tip="Settings">
                     <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
                         <Image Width="16" Height="16"
                                Source="{SvgImage /Assets/Icons/Shell/Navigation/nut.svg}"/>
-                        <TextBlock Grid.Column="1"
-                                   Classes="MainNavigation"
-                                   Text="Settings" />
+                        <TextBlock Grid.Column="1" Classes="workspace-nav" Text="Settings"/>
                     </Grid>
                 </Button>
 

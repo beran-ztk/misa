@@ -8,6 +8,10 @@ using Avalonia.Markup.Xaml;
 using Microsoft.Extensions.DependencyInjection;
 using Misa.Ui.Avalonia.Features.Inspector.Common;
 using Misa.Ui.Avalonia.Features.Pages.Common;
+using Misa.Ui.Avalonia.Features.Pages.Scheduling.Add;
+using Misa.Ui.Avalonia.Features.Pages.Scheduling.Content;
+using Misa.Ui.Avalonia.Features.Pages.Scheduling.Root;
+using Misa.Ui.Avalonia.Features.Pages.Scheduling.Toolbar;
 using Misa.Ui.Avalonia.Features.Pages.Tasks.Add;
 using Misa.Ui.Avalonia.Features.Pages.Tasks.Content;
 using Misa.Ui.Avalonia.Features.Pages.Tasks.Root;
@@ -24,7 +28,6 @@ using Misa.Ui.Avalonia.Shell.Components;
 using InspectorViewModel = Misa.Ui.Avalonia.Features.Inspector.Base.InspectorViewModel;
 using NavigationStore = Misa.Ui.Avalonia.Infrastructure.States.NavigationStore;
 using NotificationViewModel = Misa.Ui.Avalonia.Features.Utilities.Notifications.NotificationViewModel;
-using SchedulerMainWindowViewModel = Misa.Ui.Avalonia.Features.Pages.Scheduling.Main.SchedulerMainWindowViewModel;
 using SelectionContextState = Misa.Ui.Avalonia.Infrastructure.States.SelectionContextState;
 using TaskToolbarViewModel = Misa.Ui.Avalonia.Features.Pages.Tasks.Toolbar.TaskToolbarViewModel;
 
@@ -47,7 +50,7 @@ public class App : Application
         // Infrastructure / Core
         // -------------------------
         sc.AddSingleton<SignalRNotificationClient>();
-        sc.AddTransient<AuthenticationViewModel>();
+        sc.AddTransient<AuthenticationWindowViewModel>();
         
         sc.AddSingleton(new HttpClient
         {
@@ -58,9 +61,11 @@ public class App : Application
         sc.AddSingleton<AppState>();
         sc.AddSingleton<ShellState>();
         sc.AddSingleton<WorkspaceState>();
+        sc.AddSingleton<UserState>();
         
         sc.AddSingleton<WorkspaceRouter>();
         
+        sc.AddSingleton<AuthenticationWindowViewModel>();
         sc.AddSingleton<ShellWindowViewModel>();
         sc.AddSingleton<HeaderViewModel>();
         sc.AddSingleton<WorkspaceNavigationViewModel>();
@@ -68,6 +73,11 @@ public class App : Application
         sc.AddSingleton<UtilityNavigationViewModel>();
         sc.AddSingleton<FooterViewModel>();
 
+        sc.AddSingleton<AuthenticationWindow>(sp =>
+        {
+            var vm = sp.GetRequiredService<AuthenticationWindowViewModel>();
+            return new AuthenticationWindow { DataContext = vm };
+        });
         sc.AddSingleton<ShellWindow>(sp =>
         {
             var vm = sp.GetRequiredService<ShellWindowViewModel>();
@@ -99,7 +109,11 @@ public class App : Application
         sc.AddSingleton<TaskContentViewModel>();
         sc.AddTransient<AddTaskViewModel>();
         
-        sc.AddSingleton<SchedulerMainWindowViewModel>();
+        sc.AddSingleton<SchedulerState>();
+        sc.AddSingleton<SchedulerCoordinator>();
+        sc.AddSingleton<SchedulerToolbarViewModel>();
+        sc.AddSingleton<SchedulerContentViewModel>();
+        sc.AddSingleton<AddScheduleViewModel>();
         
         // Utility
         sc.AddSingleton<NotificationViewModel>();
@@ -110,7 +124,7 @@ public class App : Application
         {
             DisableAvaloniaDataAnnotationValidation();
 
-            desktop.MainWindow = Services.GetRequiredService<ShellWindow>();
+            desktop.MainWindow = Services.GetRequiredService<AuthenticationWindow>();
             
             var signal = Services.GetRequiredService<SignalRNotificationClient>();
             _ = signal.StartAsync(baseAddress);

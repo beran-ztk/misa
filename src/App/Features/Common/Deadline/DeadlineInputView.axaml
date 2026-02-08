@@ -4,21 +4,17 @@
              x:Class="Misa.Ui.Avalonia.Features.Common.Deadline.DeadlineInputView"
              x:DataType="vm:DeadlineInputViewModel">
 
-    <StackPanel Spacing="8">
+    <StackPanel>
 
         <CheckBox Content="Enable deadline"
                   IsVisible="{Binding CreateWithParent}"
                   IsChecked="{Binding IsEnabled}" />
 
-        <StackPanel IsEnabled="{Binding IsEnabled}"
-                    Orientation="Horizontal"
-                    Spacing="6">
+        <StackPanel IsEnabled="{Binding IsEnabled}">
 
-            <DatePicker Classes="misa-input"
-                        SelectedDate="{Binding DueDate, Mode=TwoWay}" />
+            <DatePicker SelectedDate="{Binding DueDate, Mode=TwoWay}" />
 
-            <TimePicker Classes="misa-input"
-                        SelectedTime="{Binding DueTime, Mode=TwoWay}" />
+            <TimePicker SelectedTime="{Binding DueTime, Mode=TwoWay}" />
         </StackPanel>
 
     </StackPanel>
