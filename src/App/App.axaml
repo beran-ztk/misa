@@ -21,6 +21,9 @@
          <FluentTheme />
          <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
          
+         <StyleInclude Source="avares://App/Assets/Styles/Components/Divider.axaml"/>
+         <StyleInclude Source="avares://App/Assets/Styles/Components/Confirm.Cancel.axaml"/>
+         
          <!-- Navigation -->
          <StyleInclude Source="avares://App/Assets/Styles/Views/Navigation/UtilityNavigation.axaml"/>
          <StyleInclude Source="avares://App/Assets/Styles/Views/Navigation/WorkspaceNavigation.axaml"/>
@@ -30,6 +33,7 @@
          <StyleInclude Source="avares://App/Assets/Styles/Components/Toolbar.Search.axaml"/>
          
          <StyleInclude Source="avares://App/Assets/Styles/Components/Workspace.Content.Datagrid.axaml"/>
+         <StyleInclude Source="avares://App/Assets/Styles/Components/Workspace.AddPanel.axaml"/>
      </Application.Styles>
     
 </Application>
