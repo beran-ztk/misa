@@ -16,7 +16,6 @@ using Misa.Contract.Shared.Results;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Pages.Tasks.Add;
 using Misa.Ui.Avalonia.Infrastructure.Navigation;
-using AddTaskViewModel = Misa.Ui.Avalonia.Features.Pages.Tasks.Add.AddTaskViewModel;
 using SchedulerMainWindowViewModel = Misa.Ui.Avalonia.Features.Pages.Scheduling.Main.SchedulerMainWindowViewModel;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Scheduling.Add;
