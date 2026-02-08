@@ -47,7 +47,7 @@ public class App : Application
         // Infrastructure / Core
         // -------------------------
         sc.AddSingleton<SignalRNotificationClient>();
-        sc.AddTransient<AuthenticationViewModel>();
+        sc.AddTransient<AuthenticationWindowViewModel>();
         
         sc.AddSingleton(new HttpClient
         {
@@ -58,9 +58,11 @@ public class App : Application
         sc.AddSingleton<AppState>();
         sc.AddSingleton<ShellState>();
         sc.AddSingleton<WorkspaceState>();
+        sc.AddSingleton<UserState>();
         
         sc.AddSingleton<WorkspaceRouter>();
         
+        sc.AddSingleton<AuthenticationWindowViewModel>();
         sc.AddSingleton<ShellWindowViewModel>();
         sc.AddSingleton<HeaderViewModel>();
         sc.AddSingleton<WorkspaceNavigationViewModel>();
@@ -68,6 +70,11 @@ public class App : Application
         sc.AddSingleton<UtilityNavigationViewModel>();
         sc.AddSingleton<FooterViewModel>();
 
+        sc.AddSingleton<AuthenticationWindow>(sp =>
+        {
+            var vm = sp.GetRequiredService<AuthenticationWindowViewModel>();
+            return new AuthenticationWindow { DataContext = vm };
+        });
         sc.AddSingleton<ShellWindow>(sp =>
         {
             var vm = sp.GetRequiredService<ShellWindowViewModel>();
@@ -110,7 +117,7 @@ public class App : Application
         {
             DisableAvaloniaDataAnnotationValidation();
 
-            desktop.MainWindow = Services.GetRequiredService<ShellWindow>();
+            desktop.MainWindow = Services.GetRequiredService<AuthenticationWindow>();
             
             var signal = Services.GetRequiredService<SignalRNotificationClient>();
             _ = signal.StartAsync(baseAddress);

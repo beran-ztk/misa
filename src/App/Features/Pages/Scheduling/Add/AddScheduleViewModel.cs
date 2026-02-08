@@ -3,24 +3,25 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia;
-using Avalonia.Controls.ApplicationLifetimes;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Misa.Contract.Features.Entities.Extensions.Items.Extensions.Tasks;
 using Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;
 using Misa.Contract.Shared.Results;
 using Misa.Ui.Avalonia.Common.Mappings;
-using Misa.Ui.Avalonia.Features.Pages.Tasks.Add;
 using Misa.Ui.Avalonia.Infrastructure.Navigation;
+using Misa.Ui.Avalonia.Infrastructure.States;
 using SchedulerMainWindowViewModel = Misa.Ui.Avalonia.Features.Pages.Scheduling.Main.SchedulerMainWindowViewModel;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Scheduling.Add;
 
-public partial class AddScheduleViewModel(INavigationService navigationService, SchedulerMainWindowViewModel parent) : ViewModelBase
+public partial class AddScheduleViewModel(
+    INavigationService navigationService, 
+    SchedulerMainWindowViewModel parent,
+    UserState userState
+    ) : ViewModelBase
 {
     private INavigationService NavigationService { get; } = navigationService;
 
@@ -158,7 +159,7 @@ public partial class AddScheduleViewModel(INavigationService navigationService, 
                 ByMonthDay = ParseByMonthDay()
             };
 
-            using var request = new HttpRequestMessage(HttpMethod.Post, $"scheduling/{NavigationService.NavigationStore.User.Id}");
+            using var request = new HttpRequestMessage(HttpMethod.Post, $"scheduling/{userState.User.Id}");
             request.Content = JsonContent.Create(addScheduleDto);
 
             using var response = await NavigationService.NavigationStore.HttpClient

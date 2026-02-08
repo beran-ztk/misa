@@ -36,15 +36,17 @@ public partial class SchedulerMainWindowViewModel : ViewModelBase
     public SchedulerMainWindowViewModel(
         IServiceProvider sp,
         ISelectionContextState selectionContextState,
-        INavigationService navigationService)
+        INavigationService navigationService,
+        UserState  userState)
     {
+        UserState = userState;
         _sp = sp;
         _selectionContextState = selectionContextState;
         NavigationService = navigationService;
         
         _ = LoadSchedulesAsync();
     }
-
+private UserState UserState { get; set; }
     private void EnsureDetail()
     {
         if (_detailVm is not null) return;
@@ -65,7 +67,7 @@ public partial class SchedulerMainWindowViewModel : ViewModelBase
     [RelayCommand]
     private void OpenAddSchedule()
     {
-        var addScheduleVm = new AddScheduleViewModel(NavigationService, this);
+        var addScheduleVm = new AddScheduleViewModel(NavigationService, this, UserState);
         InfoView = addScheduleVm;
     }
 
