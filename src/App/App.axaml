@@ -24,6 +24,10 @@
          <!-- Navigation -->
          <StyleInclude Source="avares://App/Assets/Styles/Views/Navigation/UtilityNavigation.axaml"/>
          <StyleInclude Source="avares://App/Assets/Styles/Views/Navigation/WorkspaceNavigation.axaml"/>
+         <StyleInclude Source="avares://App/Assets/Styles/Components/Toolbar.axaml"/>
+         <StyleInclude Source="avares://App/Assets/Styles/Components/Toolbar.IconButton.axaml"/>
+         <StyleInclude Source="avares://App/Assets/Styles/Components/Toolbar.FilterDropdown.axaml"/>
+         <StyleInclude Source="avares://App/Assets/Styles/Components/Toolbar.Search.axaml"/>
      </Application.Styles>
     
 </Application>

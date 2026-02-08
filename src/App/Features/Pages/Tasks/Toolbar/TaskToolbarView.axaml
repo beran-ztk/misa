@@ -7,49 +7,60 @@
              xmlns:toolbar="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Tasks.Toolbar"
              x:DataType="toolbar:TaskToolbarViewModel">
 
-    <Grid ColumnDefinitions="Auto,Auto,Auto,*">
+    <Grid Classes="workspace-toolbar" 
+        ColumnDefinitions="Auto,*,Auto">
 
-        <Button Grid.Column="0"
-                Command="{Binding ShowAddTaskCommand}">
-            <StackPanel Orientation="Horizontal">
-                <Image Source="{SvgImage /Assets/Icons/Shell/Navigation/plus-circle.svg}" />
-                <TextBlock Text="Add" />
-            </StackPanel>
-        </Button>
+        <!-- LEFT: Primary actions -->
+        <StackPanel Grid.Column="0"
+                    Classes="workspace-toolbar-left">
+            <!-- Add -->
+            <Button Classes="workspace-toolbar-icon"
+                    Command="{Binding ShowAddTaskCommand}">
+                <Image Source="{SvgImage /Assets/Icons/Common/plus.svg}" />
+            </Button>
 
-        <Button Grid.Column="1"
-                Command="{Binding RefreshTaskWindowCommand}">
-            <Image Source="{SvgImage /Assets/Icons/Shell/Navigation/refresh.svg}" />
-        </Button>
+            <!-- Refresh -->
+            <Button Classes="workspace-toolbar-icon"
+                    Command="{Binding RefreshTaskWindowCommand}">
+                <Image Source="{SvgImage /Assets/Icons/Common/refresh.svg}" />
+            </Button>
+        </StackPanel>
 
-        <Grid Grid.Column="2">
-
-            <ToggleButton x:Name="PriorityFilterButton">
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="Priority" />
-                    <TextBlock Text="▾" />
-                </StackPanel>
+        <!-- CENTER: Context / Filters -->
+        <StackPanel Grid.Column="1"
+                    Classes="workspace-toolbar-center">
+            <!-- Priority Filter -->
+            <ToggleButton x:Name="PriorityFilterButton"
+                          Classes="workspace-toolbar-filter-trigger">
+                <TextBlock Text="Priority  ▾" />
             </ToggleButton>
 
-            <Popup PlacementTarget="{Binding ElementName=PriorityFilterButton}"
-                   IsOpen="{Binding IsChecked, ElementName=PriorityFilterButton}">
-
-                <ItemsControl ItemsSource="{Binding TaskState.PriorityFilters}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <CheckBox Content="{Binding Priority}"
-                                      IsChecked="{Binding IsSelected}" />
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-
+            <Popup Classes="workspace-toolbar-filter-popup"
+                   PlacementTarget="{Binding ElementName=PriorityFilterButton}"
+                   IsOpen="{Binding IsChecked, ElementName=PriorityFilterButton}"
+                   Placement="Bottom">
+                <Border Classes="workspace-toolbar-filter-popup-frame">
+                    <ItemsControl ItemsSource="{Binding TaskState.PriorityFilters}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <CheckBox Content="{Binding Priority}"
+                                          IsChecked="{Binding IsSelected}" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Border>
             </Popup>
 
-        </Grid>
+        </StackPanel>
 
-        <TextBox Grid.Column="3"
-                 Watermark="Search tasks..."
-                 Text="{Binding TaskState.SearchText, Mode=TwoWay}" />
+        <!-- RIGHT: Secondary actions + Search -->
+        <StackPanel Grid.Column="2"
+                    Classes="workspace-toolbar-right">
+            <TextBox Classes="workspace-toolbar-search"
+                     Watermark="Search tasks..."
+                     Text="{Binding TaskState.SearchText, Mode=TwoWay}" />
+        </StackPanel>
+
     </Grid>
 
 </UserControl>

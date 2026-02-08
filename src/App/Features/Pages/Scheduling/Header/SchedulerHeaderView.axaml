@@ -37,9 +37,6 @@
                     Classes="SchedulerAddButton"
                     Command="{Binding OpenAddScheduleCommand}">
                 <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                    <Image Width="16"
-                           Height="16"
-                           Source="{SvgImage /Assets/Icons/Shell/Navigation/plus-circle.svg}" />
                     <TextBlock Text="Add"
                                FontWeight="SemiBold"
                                Foreground="{StaticResource BrushTextPrimary}"
