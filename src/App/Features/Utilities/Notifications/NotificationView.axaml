@@ -9,116 +9,53 @@
              xmlns:notifications1="clr-namespace:Misa.Ui.Avalonia.Features.Utilities.Notifications"
              x:DataType="notifications1:NotificationViewModel">
 
-  <UserControl.Styles>
-    <!-- Card look -->
-    <Style Selector="Border.notification-card">
-      <Setter Property="CornerRadius" Value="12" />
-      <Setter Property="Padding" Value="10" />
-      <Setter Property="Margin" Value="0,0,0,10" />
-      <Setter Property="BorderThickness" Value="1" />
-      <Setter Property="Background" Value="{DynamicResource BrushPrimaryBackgroundLight}" />
-      <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}" />
-    </Style>
+  <Border>
 
-    <!-- Unread emphasis -->
-    <Style Selector="Border.notification-card.unread">
-      <Setter Property="Background" Value="{DynamicResource BrushPrimaryBackgroundLighter}" />
-    </Style>
-
-    <!-- Small badge -->
-    <Style Selector="Border.level-badge">
-      <Setter Property="CornerRadius" Value="12" />
-      <Setter Property="Padding" Value="8,3" />
-      <Setter Property="BorderThickness" Value="1" />
-      <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}" />
-      <Setter Property="Background" Value="{DynamicResource BrushPrimaryBackgroundLighter}" />
-    </Style>
-
-    <!-- Simple icon button -->
-    <Style Selector="Button.icon">
-      <Setter Property="Padding" Value="6" />
-      <Setter Property="MinWidth" Value="30" />
-      <Setter Property="MinHeight" Value="30" />
-      <Setter Property="Background" Value="Transparent" />
-      <Setter Property="BorderThickness" Value="0" />
-      <Setter Property="CornerRadius" Value="10" />
-      <Setter Property="Opacity" Value="0.85" />
-    </Style>
-
-    <Style Selector="Button.icon:pointerover">
-      <Setter Property="Opacity" Value="1" />
-    </Style>
-  </UserControl.Styles>
-
-  <!-- Outer container (mit Abstand zu Nachbar-Controls) -->
-  <Border Margin="10"
-          Padding="14"
-          CornerRadius="16"
-          Background="{DynamicResource BrushPrimaryBackgroundLight}"
-          BorderBrush="{DynamicResource BrushBorder}"
-          BorderThickness="1">
-
-    <Grid RowDefinitions="Auto,*" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6">
+    <Grid RowDefinitions="Auto,*" ColumnDefinitions="*,Auto,Auto">
 
       <!-- Header -->
       <TextBlock Grid.Row="0" Grid.Column="0"
-                 Text="Notifications"
-                 FontSize="16"
-                 FontWeight="SemiBold"
-                 VerticalAlignment="Center"/>
+                 Text="Notifications"/>
 
       <Button Grid.Row="0" Grid.Column="1"
-              Classes="icon"
               ToolTip.Tip="Mark all read"
               Command="{Binding MarkAllReadCommand}">
-        <TextBlock Text="✓" FontSize="14"/>
+        <TextBlock Text="✓"/>
       </Button>
 
       <Button Grid.Row="0" Grid.Column="2"
-              Classes="icon"
               ToolTip.Tip="Clear"
               Command="{Binding ClearCommand}">
-        <TextBlock Text="✕" FontSize="14"/>
+        <TextBlock Text="✕"/>
       </Button>
 
       <!-- List -->
       <ScrollViewer Grid.Column="0"
                     Grid.Row="1"
-                    Grid.ColumnSpan="3"
-                    Margin="0,12,0,0"
-                    VerticalScrollBarVisibility="Auto">
+                    Grid.ColumnSpan="3">
 
         <ItemsControl ItemsSource="{Binding Notifications}">
           <ItemsControl.ItemTemplate>
             <DataTemplate x:DataType="notifications1:NotificationItem">
 
-              <Border Classes="notification-card"
-                      x:Name="Card">
+              <Border x:Name="Card">
 
                 <Grid ColumnDefinitions="Auto,*,Auto"
-                      RowDefinitions="Auto,Auto"
-                      ColumnSpacing="10">
+                      RowDefinitions="Auto,Auto">
 
                   <!-- Severity badge -->
-                  <Border Grid.RowSpan="2"
-                          Classes="level-badge"
-                          VerticalAlignment="Top">
-                    <TextBlock Text="{Binding SeverityToString}"
-                               FontSize="12"
-                               FontWeight="SemiBold" />
+                  <Border Grid.RowSpan="2">
+                    <TextBlock Text="{Binding SeverityToString}" />
                   </Border>
 
                   <!-- Message -->
                   <TextBlock Grid.Column="1"
                              Grid.Row="0"
-                             Text="{Binding Payload}"
-                             TextWrapping="Wrap"
-                             FontSize="13" />
+                             Text="{Binding Payload}" />
 
                   <!-- Dismiss -->
                   <Button Grid.Column="2"
                           Grid.Row="0"
-                          Classes="icon"
                           ToolTip.Tip="Dismiss"
                           Command="{Binding $parent[notifications1:NotificationViewModel].DismissCommand}"
                           CommandParameter="{Binding Id}">
@@ -129,40 +66,26 @@
                   <!-- Meta row -->
                   <Grid Grid.Column="1"
                         Grid.Row="1"
-                        ColumnDefinitions="*,Auto"
-                        Margin="0,6,0,0">
+                        ColumnDefinitions="*,Auto">
 
                     <!-- Timestamp + read -->
-                    <StackPanel Orientation="Horizontal"
-                                Spacing="10">
-                      <TextBlock Text="{Binding Timestamp}"
-                                 FontSize="11"
-                                 Opacity="0.7" />
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="{Binding Timestamp}"/>
                       <TextBlock Text="Unread"
-                                 FontSize="11"
-                                 Opacity="0.7"
                                  IsVisible="{Binding IsRead,
                                    Converter={x:Static converters1:BooleanNotConverter.Instance}}" />
                     </StackPanel>
 
                     <!-- Notification type -->
                     <TextBlock Grid.Column="1"
-                               Text="{Binding TypeToString}"
-                               FontSize="11"
-                               Opacity="0.6"
-                               VerticalAlignment="Bottom"
-                               HorizontalAlignment="Right" />
+                               Text="{Binding TypeToString}" />
                   </Grid>
-
                 </Grid>
               </Border>
-
             </DataTemplate>
           </ItemsControl.ItemTemplate>
         </ItemsControl>
       </ScrollViewer>
-
-
     </Grid>
   </Border>
 </UserControl>

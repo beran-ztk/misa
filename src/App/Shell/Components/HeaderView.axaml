@@ -4,5 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="Misa.Ui.Avalonia.Shell.Components.HeaderView">
-    I am your Header muhehehe
+    
+    Me is Header muhehehe
+    
 </UserControl>

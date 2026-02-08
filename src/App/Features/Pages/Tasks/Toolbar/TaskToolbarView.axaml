@@ -2,192 +2,54 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             mc:Ignorable="d"
              x:Class="Misa.Ui.Avalonia.Features.Pages.Tasks.Toolbar.TaskToolbarView"
              xmlns:toolbar="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Tasks.Toolbar"
              x:DataType="toolbar:TaskToolbarViewModel">
 
-    <UserControl.Styles>
+    <Grid ColumnDefinitions="Auto,Auto,Auto,*">
 
-        <!-- Add Button: pill + icon + text -->
-        <Style Selector="Button.TaskAddButton">
-            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}" />
-            <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="999" />
-            <Setter Property="Padding" Value="10,6" />
-            <Setter Property="VerticalAlignment" Value="Center" />
-        </Style>
+        <Button Grid.Column="0"
+                Command="{Binding ShowAddTaskCommand}">
+            <StackPanel Orientation="Horizontal">
+                <Image Source="{SvgImage /Assets/Icons/Shell/Navigation/plus-circle.svg}" />
+                <TextBlock Text="Add" />
+            </StackPanel>
+        </Button>
 
-        <Style Selector="Button.TaskAddButton:pointerover">
-            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLight}" />
-        </Style>
-        
-        <!-- Refresh Button: icon chip -->
-        <Style Selector="Button.TaskRefreshButton">
-            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLight}" />
-            <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="999" />
-            <Setter Property="Padding" Value="8" />
-            <Setter Property="VerticalAlignment" Value="Center" />
-            <Setter Property="MinWidth" Value="34" />
-            <Setter Property="MinHeight" Value="34" />
-        </Style>
+        <Button Grid.Column="1"
+                Command="{Binding RefreshTaskWindowCommand}">
+            <Image Source="{SvgImage /Assets/Icons/Shell/Navigation/refresh.svg}" />
+        </Button>
 
-        <Style Selector="Button.TaskRefreshButton:pointerover">
-            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}" />
-        </Style>
-        <Style Selector="Button.TaskRefreshButton:pressed">
-            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackground}" />
-        </Style>
+        <Grid Grid.Column="2">
 
-        <!-- Search box: chip look -->
-        <Style Selector="TextBox.TaskSearchBox">
-            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLight}" />
-            <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="999" />
-            <Setter Property="Padding" Value="12,6" />
-            <Setter Property="VerticalContentAlignment" Value="Center" />
-            <Setter Property="VerticalAlignment" Value="Center" />
-            <Setter Property="Width" Value="240" />
-        </Style>
-
-        <Style Selector="TextBox.TaskSearchBox:pointerover">
-            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}" />
-        </Style>
-
-        <Style Selector="TextBox.TaskSearchBox:focus">
-            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}" />
-        </Style>
-
-    </UserControl.Styles>
-
-    <Border Padding="12"
-            Background="{StaticResource BrushPrimaryBackground}">
-
-        <Grid ColumnDefinitions="Auto,Auto,Auto,*"
-              ColumnSpacing="10"
-              VerticalAlignment="Center">
-
-            <!-- Add -->
-            <Button Grid.Column="0"
-                    Classes="TaskAddButton"
-                    Command="{Binding ShowAddTaskCommand}">
-                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                    <Image Width="16"
-                           Height="16"
-                           Source="{SvgImage /Assets/Icons/Shell/Navigation/plus-circle.svg}" />
-                    <TextBlock Text="Add"
-                               FontWeight="SemiBold"
-                               Foreground="{StaticResource BrushTextPrimary}"
-                               VerticalAlignment="Center"/>
+            <ToggleButton x:Name="PriorityFilterButton">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Priority" />
+                    <TextBlock Text="▾" />
                 </StackPanel>
-            </Button>
-            
-            <!-- Refresh -->
-            <Button Grid.Column="1"
-                    Classes="TaskRefreshButton"
-                    ToolTip.Tip="Refresh"
-                    Command="{Binding RefreshTaskWindowCommand}">
-                <Image Width="16" Height="16"
-                       Source="{SvgImage /Assets/Icons/Shell/Navigation/refresh.svg}" />
-            </Button>
+            </ToggleButton>
 
-            <Border Grid.Column="2"
-                    Background="{StaticResource BrushPrimaryBackgroundLight}"
-                    Padding="10"
-                    BorderThickness="0,0,0,1"
-                    BorderBrush="{StaticResource BrushBorderLight}">
+            <Popup PlacementTarget="{Binding ElementName=PriorityFilterButton}"
+                   IsOpen="{Binding IsChecked, ElementName=PriorityFilterButton}">
 
-                <Grid ColumnDefinitions="Auto"
-                      ColumnSpacing="10"
-                      VerticalAlignment="Center">
+                <ItemsControl ItemsSource="{Binding TaskState.PriorityFilters}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <CheckBox Content="{Binding Priority}"
+                                      IsChecked="{Binding IsSelected}" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
 
-                    <!-- Left: Filter group -->
-                    <StackPanel Grid.Column="0"
-                                Orientation="Horizontal"
-                                Spacing="10"
-                                VerticalAlignment="Center">
+            </Popup>
 
-                        <!-- Filter Chip (ToggleButton) -->
-                        <ToggleButton x:Name="PriorityFilterButton"
-                                      Background="Transparent"
-                                      BorderThickness="0"
-                                      Padding="0">
-
-                            <Border Background="{StaticResource BrushPrimaryBackground}"
-                                    BorderBrush="{StaticResource BrushBorder}"
-                                    BorderThickness="1"
-                                    CornerRadius="999"
-                                    Padding="10,5">
-
-                                <Grid ColumnDefinitions="Auto,Auto"
-                                      ColumnSpacing="8"
-                                      VerticalAlignment="Center">
-
-                                    <TextBlock Grid.Column="0"
-                                               Text="Priority"
-                                               FontWeight="SemiBold"
-                                               Foreground="{StaticResource BrushTextPrimary}" />
-
-                                    <!-- kleiner "Arrow"-Bereich -->
-                                    <Border Grid.Column="1"
-                                            Background="{StaticResource BrushPrimaryBackgroundLight}"
-                                            CornerRadius="999"
-                                            Padding="6,2">
-                                        <TextBlock Text="▾"
-                                                   Foreground="{StaticResource BrushTextSecondary}" />
-                                    </Border>
-
-                                </Grid>
-                            </Border>
-                        </ToggleButton>
-
-                    </StackPanel>
-                    
-                    <!-- Popup OVERLAY -->
-                    <Popup Grid.Column="0" PlacementTarget="{Binding ElementName=PriorityFilterButton}"
-                           Placement="Bottom"
-                           IsOpen="{Binding IsChecked, ElementName=PriorityFilterButton}">
-
-                        <Border Background="{StaticResource BrushPrimaryBackground}"
-                                CornerRadius="12"
-                                Padding="10"
-                                BorderBrush="{StaticResource BrushBorder}"
-                                BorderThickness="1">
-
-                            <StackPanel Spacing="6">
-
-                                <TextBlock Text="Select priorities"
-                                           Foreground="{StaticResource BrushTextSecondary}"
-                                           FontSize="{StaticResource FontSizeSmall}"
-                                           Margin="2,0,0,6"/>
-
-                                <ItemsControl ItemsSource="{Binding TaskState.PriorityFilters}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <CheckBox Content="{Binding Priority}"
-                                                      IsChecked="{Binding IsSelected}" />
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-
-                            </StackPanel>
-                        </Border>
-                    </Popup>
-
-                </Grid>
-            </Border>
-            
-            <!-- Search -->
-            <TextBox Grid.Column="3"
-                     Classes="TaskSearchBox"
-                     Watermark="Search tasks..."
-                     Text="{Binding TaskState.SearchText, Mode=TwoWay}"
-                     HorizontalAlignment="Right" />
         </Grid>
-    </Border>
+
+        <TextBox Grid.Column="3"
+                 Watermark="Search tasks..."
+                 Text="{Binding TaskState.SearchText, Mode=TwoWay}" />
+    </Grid>
 
 </UserControl>

@@ -44,14 +44,14 @@
                 <StackPanel Spacing="10">
 
                     <StackPanel Spacing="6">
-                        <TextBlock Text="Username" Classes="misa-label" Margin="0"/>
+                        <TextBlock Text="Username" Margin="0"/>
                         <TextBox Text="{Binding Username, Mode=TwoWay}"
                                  Classes="misa-input"
                                  IsEnabled="{Binding IsNotBusy}"/>
                     </StackPanel>
 
                     <StackPanel Spacing="6">
-                        <TextBlock Text="Password" Classes="misa-label" Margin="0"/>
+                        <TextBlock Text="Password" Margin="0"/>
                         <TextBox Text="{Binding Password, Mode=TwoWay}"
                                  Classes="misa-input"
                                  PasswordChar="•"
@@ -62,7 +62,7 @@
                                 Spacing="10">
 
                         <StackPanel Spacing="6">
-                            <TextBlock Text="Confirm password" Classes="misa-label" Margin="0"/>
+                            <TextBlock Text="Confirm password" Margin="0"/>
                             <TextBox Text="{Binding ConfirmPassword, Mode=TwoWay}"
                                      Classes="misa-input"
                                      PasswordChar="•"
@@ -71,7 +71,7 @@
                         </StackPanel>
 
                         <StackPanel Spacing="6">
-                            <TextBlock Text="Time zone" Classes="misa-label" Margin="0"/>
+                            <TextBlock Text="Time zone" Margin="0"/>
                             <ComboBox ItemsSource="{Binding TimeZoneIds}"
                                       SelectedItem="{Binding SelectedTimeZoneId, Mode=TwoWay}"
                                       Classes="misa-input"
