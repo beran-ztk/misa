@@ -28,6 +28,8 @@
          <StyleInclude Source="avares://App/Assets/Styles/Components/Toolbar.IconButton.axaml"/>
          <StyleInclude Source="avares://App/Assets/Styles/Components/Toolbar.FilterDropdown.axaml"/>
          <StyleInclude Source="avares://App/Assets/Styles/Components/Toolbar.Search.axaml"/>
+         
+         <StyleInclude Source="avares://App/Assets/Styles/Components/Workspace.Content.Datagrid.axaml"/>
      </Application.Styles>
     
 </Application>
