@@ -48,7 +48,7 @@ public sealed class PanelFactory(IServiceProvider sp) : IPanelFactory
 
                 var formVm = (context as IHostedForm<TResult>)
                              ?? sp.GetRequiredService<CreateScheduleViewModel>() as IHostedForm<TResult>;
-
+                if (formVm == null) throw new ArgumentNullException();
                 body.DataContext = formVm;
 
                 var tcs = new TaskCompletionSource<TResult?>();
