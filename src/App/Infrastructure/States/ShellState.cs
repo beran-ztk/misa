@@ -1,25 +1,29 @@
+using Avalonia.Controls;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using Misa.Ui.Avalonia.Common.Mappings;
 
 namespace Misa.Ui.Avalonia.Infrastructure.States;
 
-public partial class ShellState(WorkspaceState workspaceState) : ObservableObject
+public partial class ShellState : ObservableObject
 {
-    [ObservableProperty] private WorkspaceState _workspaceState = workspaceState;
     
     [ObservableProperty] private ViewModelBase _header;
     [ObservableProperty] private ViewModelBase _footer;
     
     [ObservableProperty] private ViewModelBase _workspaceNavigation;
-    [ObservableProperty] private ViewModelBase _workspace;
+    [ObservableProperty] private ViewModelBase? _workspace;
 
     [ObservableProperty] private ViewModelBase _utilityNavigation;
     [ObservableProperty] private ViewModelBase? _utility;
     
+    [ObservableProperty] private Control? _panel;
     
-    [ObservableProperty] private ViewModelBase? _panel;
-    
-    [ObservableProperty] private ViewModelBase? _modal;
+    [ObservableProperty] 
+    [NotifyPropertyChangedFor((nameof(IsModalOpen)))]
+    private Control? _modal;
+    public bool IsModalOpen => Modal is not null;
+    [RelayCommand] private void CloseModal() => Modal = null;
     [ObservableProperty] private ViewModelBase? _toast;
     [ObservableProperty] private ViewModelBase? _busy;
 }

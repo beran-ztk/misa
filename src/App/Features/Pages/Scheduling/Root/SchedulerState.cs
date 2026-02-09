@@ -1,89 +1,63 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Net.Http;
-using System.Net.Http.Json;
-using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;
-using Misa.Contract.Shared.Results;
-using Misa.Ui.Avalonia.Features.Pages.Scheduling.Add;
 using Misa.Ui.Avalonia.Infrastructure.States;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Scheduling.Root;
 
 public sealed partial class SchedulerState(
-    ISelectionContextState selectionContextState, 
-    HttpClient httpClient,
-    AddScheduleViewModel addScheduleViewModel,
-    UserState userState)
+    ISelectionContextState selectionContextState,
+    CreateScheduleState createState)
     : ObservableObject
 {
-    public AddScheduleViewModel AddScheduleViewModel { get; } = addScheduleViewModel;
-
-    public ObservableCollection<ScheduleDto> Schedules { get; } = [];
+    public CreateScheduleState CreateState { get; } = createState;
+    public ObservableCollection<ScheduleDto> Items { get; } = [];
+    public ObservableCollection<ScheduleDto> FilteredItems { get; } = [];
 
     [ObservableProperty] private ScheduleDto? _selectedItem;
     partial void OnSelectedItemChanged(ScheduleDto? value)
     {
         selectionContextState.SetActive(value?.Id);
     }
-    private async Task AddToCollection(List<ScheduleDto> schedules)
+    [ObservableProperty] private string _searchText = string.Empty;
+    partial void OnSearchTextChanged(string value) => ApplyFilters();
+    private void ApplyFilters()
     {
-        foreach (var schedule in schedules)
+        FilteredItems.Clear();
+        
+        foreach (var t in Items)
         {
-            await AddToCollection(schedule);
-        }
-    }
-    public async Task AddToCollection(ScheduleDto schedule)
-    {
-        await Dispatcher.UIThread.InvokeAsync(() => 
-        {
-            Schedules.Add(schedule);
-        });
-    }
-    public async Task LoadSchedulesAsync()
-    {
-        try
-        {
-            using var request = new HttpRequestMessage(HttpMethod.Get, "scheduling");
-            
-            using var response = await httpClient.SendAsync(request, CancellationToken.None);
-
-            response.EnsureSuccessStatusCode();
-            
-            var result = await response.Content
-                .ReadFromJsonAsync<Result<List<ScheduleDto>>>(cancellationToken: CancellationToken.None);
-
-            Schedules.Clear();
-            await AddToCollection(result?.Value ?? []);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex);
-        }
-    }
-    public async Task CreateSchedule(AddScheduleDto dto)
-    {
-        try
-        {
-            using var request = new HttpRequestMessage(HttpMethod.Post, $"scheduling/{userState.User.Id}");
-            request.Content = JsonContent.Create(dto);
-
-            using var response = await httpClient.SendAsync(request, CancellationToken.None);
-            response.EnsureSuccessStatusCode();
-
-            var created = await response.Content.ReadFromJsonAsync<Result<ScheduleDto>>(CancellationToken.None);
-            if (created?.Value != null)
+            if (t.Item.Title.Contains(SearchText, StringComparison.OrdinalIgnoreCase) || string.IsNullOrEmpty(SearchText))
             {
-                await AddToCollection(created.Value);
+                _ = Dispatcher.UIThread.InvokeAsync(() => 
+                {
+                    FilteredItems.Add(t);
+                });
             }
         }
-        catch (Exception e)
+    }
+    public async Task AddToCollection(List<ScheduleDto> items)
+    {
+        Items.Clear();
+        FilteredItems.Clear();
+        
+        foreach (var item in items)
         {
-            Console.WriteLine(e);
+            await AddToCollection(item);
         }
+    }
+    public async Task AddToCollection(ScheduleDto? item)
+    {
+        if (item is null) return;
+        
+        await Dispatcher.UIThread.InvokeAsync(() => 
+        {
+            Items.Add(item);
+            FilteredItems.Add(item);
+        });
     }
 }

@@ -2,39 +2,57 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Net.Http;
-using System.Net.Http.Json;
-using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Misa.Contract.Features.Entities.Extensions.Items.Base;
 using Misa.Contract.Features.Entities.Extensions.Items.Extensions.Tasks;
-using Misa.Contract.Shared.Results;
 using Misa.Ui.Avalonia.Common.Behaviors;
+using Misa.Ui.Avalonia.Features.Pages.Common;
 using Misa.Ui.Avalonia.Infrastructure.States;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Tasks.Root;
 
-public sealed partial class TaskState(ISelectionContextState selectionContextState, HttpClient httpClient)
-    : ObservableObject
+public sealed partial class TaskState : ObservableObject
 {
-    /// <summary>
-    /// Task Collections
-    /// </summary>
-    public ObservableCollection<TaskDto> Tasks { get; } = [];
-    public ObservableCollection<TaskDto> FilteredTasks { get; } = [];
+    public ShellState ShellState { get; }
+    public CreateTaskState CreateState { get; }
+    private ISelectionContextState SelectionContextState { get; }
+    private ObservableCollection<TaskDto> Items { get; } = [];
+    public ObservableCollection<TaskDto> FilteredItems { get; } = [];
+
+    public TaskState(
+        ShellState shellState,
+        CreateTaskState createState,
+        ISelectionContextState selectionContextState)
+    {
+        ShellState = shellState;
+        CreateState = createState;
+        SelectionContextState = selectionContextState;
+        
+        foreach (var p in Enum.GetValues<PriorityContract>())
+        {
+            var opt = new PriorityFilterOption(p, isSelected: true);
+            opt.PropertyChanged += (_, e) =>
+            {
+                if (e.PropertyName == nameof(PriorityFilterOption.IsSelected))
+                    ApplyFilters();
+            };
+            PriorityFilters.Add(opt);
+        }
+    }
     
     /// <summary>
     /// Selected Task
     /// </summary>
-    public bool IsTaskSelected => SelectedTask is not null;
+    public bool IsItemSelected => SelectedItem is not null;
     
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsTaskSelected))]
-    private TaskDto? _selectedTask;
-    partial void OnSelectedTaskChanged(TaskDto? value)
+    [NotifyPropertyChangedFor(nameof(IsItemSelected))]
+    private TaskDto? _selectedItem;
+    partial void OnSelectedItemChanged(TaskDto? value)
     {
-        selectionContextState.SetActive(value?.Id);
+        SelectionContextState.SetActive(value?.Id);
     }
     
     /// <summary>
@@ -43,101 +61,50 @@ public sealed partial class TaskState(ISelectionContextState selectionContextSta
     [ObservableProperty] private string _searchText = string.Empty;
     partial void OnSearchTextChanged(string value) => ApplyFilters();
     public ObservableCollection<PriorityFilterOption> PriorityFilters { get; } = [];
-    public void ApplyFilters()
+    
+    private void ApplyFilters()
     {
         var activePriorities = PriorityFilters
             .Where(f => f.IsSelected)
             .Select(f => f.Priority)
             .ToHashSet();
         
-        FilteredTasks.Clear();
+        FilteredItems.Clear();
         
-        foreach (var t in Tasks)
+        foreach (var t in Items)
         {
             if (activePriorities.Contains(t.Item.Priority) 
                 && (t.Item.Title.Contains(SearchText, StringComparison.OrdinalIgnoreCase) || string.IsNullOrEmpty(SearchText)))
             {
-                _ = AddToFilteredCollection(t);
+                _ = Dispatcher.UIThread.InvokeAsync(() => 
+                {
+                    FilteredItems.Add(t);
+                });
             }
         }
     }
-
+    
     /// <summary>
     /// Adders
     /// </summary>
-    private async Task AddToCollection(List<TaskDto> tasks)
+    public async Task AddToCollection(List<TaskDto> items)
     {
-        Tasks.Clear();
-        FilteredTasks.Clear();
+        Items.Clear();
+        FilteredItems.Clear();
         
-        foreach (var task in tasks)
+        foreach (var item in items)
         {
-            await AddToCollection(task);
+            await AddToCollection(item);
         }
     }
-
-    private async Task AddToCollection(TaskDto task)
+    public async Task AddToCollection(TaskDto? item)
     {
+        if (item is null) return;
+        
         await Dispatcher.UIThread.InvokeAsync(() => 
         {
-            Tasks.Add(task);
-            FilteredTasks.Add(task);
+            Items.Add(item);
+            FilteredItems.Add(item);
         });
-    }
-
-    private async Task AddToFilteredCollection(TaskDto task)
-    {
-        await Dispatcher.UIThread.InvokeAsync(() => 
-        {
-            FilteredTasks.Add(task);
-        });
-    }
-    /// <summary>
-    /// Create Task Command
-    /// </summary>
-    public async Task CreateTask(AddTaskDto dto)
-    {
-        try
-        {
-            using var request = new HttpRequestMessage(HttpMethod.Post, "tasks");
-            request.Content = JsonContent.Create(dto);
-            
-            using var response = await httpClient.SendAsync(request, CancellationToken.None);
-        
-            response.EnsureSuccessStatusCode();
-        
-            var createdTask = await response.Content.ReadFromJsonAsync<Result<TaskDto>>(CancellationToken.None);
-            if (createdTask?.Value != null)
-            {
-                await AddToCollection(createdTask.Value);
-            }
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-        }
-    }
-    /// <summary>
-    /// Load Tasks
-    /// </summary>
-    public async Task LoadAsync()
-    {
-        try
-        {
-            using var request = new HttpRequestMessage(HttpMethod.Get, "tasks");
-            
-            using var response = await httpClient.SendAsync(request, CancellationToken.None);
-        
-            response.EnsureSuccessStatusCode();
-            
-            var result = await response.Content
-                .ReadFromJsonAsync<Result<List<TaskDto>>>(cancellationToken: CancellationToken.None);
-        
-            await AddToCollection(result?.Value ?? []);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex);
-        }
     }
 }
