@@ -1,8 +1,10 @@
 using System;
+using System.Threading.Tasks;
 using Avalonia.Controls;
 using Microsoft.Extensions.DependencyInjection;
 using Misa.Ui.Avalonia.Features.Pages.Tasks.Create;
 using Misa.Ui.Avalonia.Features.Pages.Tasks.Root;
+using Misa.Ui.Avalonia.Shell.Components;
 
 namespace Misa.Ui.Avalonia.Infrastructure.UI;
 
@@ -12,25 +14,36 @@ public enum ModalKey
 }
 public interface IModalFactory
 {
-    Control Create(ModalKey key, object? context);
+    (Control Control, Task<TResult?> ResultTask) CreateHosted<TResult>(ModalKey key, object? context);
 }
-
-public sealed class ModalFactory(IServiceProvider serviceProvider) : IModalFactory
+public sealed class ModalFactory(IServiceProvider sp) : IModalFactory
 {
-    public Control Create(ModalKey key, object? context)
+
+    public (Control Control, Task<TResult?> ResultTask) CreateHosted<TResult>(ModalKey key, object? context)
     {
-        Control view;
-        
+        var hostView = sp.GetRequiredService<ModalHostView>();
+        var closer = sp.GetRequiredService<IOverlayCloser>();
+
         switch (key)
         {
             case ModalKey.Task:
-                view = serviceProvider.GetRequiredService<CreateTaskView>();
-                view.DataContext = context ?? serviceProvider.GetRequiredService<TaskFacadeViewModel>();
-                break;
+            {
+                var body = sp.GetRequiredService<CreateTaskView>();
+
+                var formVm =
+                    (context as IHostedForm<TResult>)
+                    ?? sp.GetRequiredService<CreateTaskViewModel>() as IHostedForm<TResult>;
+
+                body.DataContext = formVm;
+
+                var tcs = new TaskCompletionSource<TResult?>();
+                hostView.DataContext = new ModalHostViewModel<TResult>(closer, body, formVm, tcs);
+
+                return (hostView, tcs.Task);
+            }
+
             default:
                 throw new ArgumentOutOfRangeException(nameof(key));
         }
-
-        return view;
     }
 }

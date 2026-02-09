@@ -1,94 +1,35 @@
 ﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Tasks.Create"
              x:Class="Misa.Ui.Avalonia.Features.Pages.Tasks.Create.CreateTaskView"
-             xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Tasks.Root"
-             x:DataType="root:TaskFacadeViewModel">
+             x:DataType="root:CreateTaskViewModel">
 
-    <Border Classes="workspace-addpanel">
-        
-        <Grid RowDefinitions="Auto,Auto,*,Auto,Auto"
-              Classes="workspace-addpanel">
+    <ScrollViewer>
+        <Grid RowDefinitions="Auto,Auto,Auto"
+              Classes="workspace-addpanel-body">
 
-            <!-- Header -->
-            <Grid Grid.Row="0"
-                  ColumnDefinitions="*,Auto">
+            <StackPanel Grid.Row="0" Classes="workspace-addpanel-body">
+                <TextBlock Text="Add a title" Classes="workspace-addpanel-body" />
+                <TextBox Classes="workspace-addpanel-body-text-oneliner"
+                         Watermark="Title…"
+                         Text="{Binding State.Title, Mode=TwoWay}" />
+                <TextBlock Text="{Binding State.ErrorMessageTitle}"
+                           IsVisible="{Binding State.TitleHasValidationError}" />
+            </StackPanel>
 
-                <TextBlock Text="Create new Task"
-                           Classes="workspace-addpanel-title"/>
+            <StackPanel Grid.Row="1" Classes="workspace-addpanel-body">
+                <TextBlock Text="Select the category" Classes="workspace-addpanel-body"/>
+                <ComboBox Classes="workspace-addpanel-body-selector"
+                          ItemsSource="{Binding State.Categories}"
+                          SelectedValue="{Binding State.SelectedCategoryContract}" />
+            </StackPanel>
 
-                <Button Grid.Column="1"
-                        Classes="workspace-addpanel-icon"
-                        Command="{Binding ClosePanelCommand}">
-                    <Image Source="{SvgImage /Assets/Icons/Common/cancel.svg}" />
-                </Button>
-            </Grid>
-
-            <Border Grid.Row="1" 
-                    Classes="panel-divider"/>
-            
-            <!-- Body -->
-            <ScrollViewer Grid.Row="2">
-                <Grid RowDefinitions="Auto,Auto,Auto"
-                      Classes="workspace-addpanel-body">
-
-                    <StackPanel Grid.Row="0"
-                                Classes="workspace-addpanel-body">
-                        <TextBlock Text="Add a title"
-                                   Classes="workspace-addpanel-body" />
-                        
-                        <TextBox Classes="workspace-addpanel-body-text-oneliner" 
-                                 Watermark="Title…"
-                                 Text="{Binding State.CreateState.Title, Mode=TwoWay}" />
-                        
-                        <TextBlock Text="{Binding State.CreateState.ErrorMessageTitle}"
-                                   IsVisible="{Binding State.CreateState.TitleHasValidationError}" />
-                    </StackPanel>
-
-                    <StackPanel Grid.Row="1"
-                                Classes="workspace-addpanel-body">
-                        <TextBlock Text="Select the category" 
-                                   Classes="workspace-addpanel-body"/>
-                        
-                        <ComboBox Classes="workspace-addpanel-body-selector" 
-                                  ItemsSource="{Binding State.CreateState.Categories}"
-                                  SelectedValue="{Binding State.CreateState.SelectedCategoryContract}" />
-                    </StackPanel>
-
-                    <StackPanel Grid.Row="2"
-                                Classes="workspace-addpanel-body">
-                        <TextBlock Text="Choose a priority for the task" 
-                                   Classes="workspace-addpanel-body"/>
-                        
-                        <ComboBox Classes="workspace-addpanel-body-selector" 
-                                  ItemsSource="{Binding State.CreateState.Priorities}"
-                                  SelectedValue="{Binding State.CreateState.SelectedPriorityContract}" />
-                    </StackPanel>
-                </Grid>
-            </ScrollViewer>
-
-            <Border Grid.Row="3" 
-                    Classes="panel-divider"/>
-
-            <!-- Footer -->
-            <Grid Grid.Row="4"
-                  ColumnDefinitions="*,Auto"
-                  VerticalAlignment="Center">
-
-                <StackPanel Grid.Column="1" 
-                            Classes="confirm-cancel">
-                    <Button Content="Cancel"
-                            Classes="confirm-cancel-cancel"
-                            Command="{Binding ClosePanelCommand}"/>
-                    <Button Content="Create"
-                            Classes="confirm-cancel-confirm"
-                            Command="{Binding SubmitCreateCommand}"/>
-                </StackPanel>
-
-            </Grid>
-
+            <StackPanel Grid.Row="2" Classes="workspace-addpanel-body">
+                <TextBlock Text="Choose a priority for the task" Classes="workspace-addpanel-body"/>
+                <ComboBox Classes="workspace-addpanel-body-selector"
+                          ItemsSource="{Binding State.Priorities}"
+                          SelectedValue="{Binding State.SelectedPriorityContract}" />
+            </StackPanel>
         </Grid>
-    </Border>
+    </ScrollViewer>
 </UserControl>

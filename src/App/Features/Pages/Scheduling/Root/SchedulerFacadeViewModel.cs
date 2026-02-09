@@ -1,42 +1,59 @@
+using System.ComponentModel;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Input;
+using Misa.Contract.Features.Entities.Extensions.Items.Extensions.Tasks;
 using Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;
 using Misa.Ui.Avalonia.Common.Mappings;
-using Misa.Ui.Avalonia.Features.Pages.Common;
-using Misa.Ui.Avalonia.Infrastructure.Client;
+using Misa.Ui.Avalonia.Features.Pages.Scheduling.Create;
 using Misa.Ui.Avalonia.Infrastructure.UI;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Scheduling.Root;
 
-public sealed partial class SchedulerFacadeViewModel : ViewModelBase, IItemFacade
+public sealed partial class SchedulerFacadeViewModel : ViewModelBase
 {
-    public SchedulerState State { get; } 
+    public SchedulerState State { get; }
     private SchedulerGateway Gateway { get; }
     private PanelProxy PanelProxy { get; }
     private ModalProxy ModalProxy { get; }
 
-    public SchedulerFacadeViewModel(SchedulerState state, SchedulerGateway gateway, PanelProxy panelProxy, ModalProxy modalProxy)
+    public SchedulerFacadeViewModel(
+        SchedulerState state,
+        SchedulerGateway gateway,
+        PanelProxy panelProxy,
+        ModalProxy modalProxy)
     {
         State = state;
         Gateway = gateway;
         PanelProxy = panelProxy;
         ModalProxy = modalProxy;
 
-        State.CreateState.PropertyChanged += (_, e) =>
+        State.CreateState.PropertyChanged += (s, e) =>
         {
             if (e.PropertyName == nameof(State.CreateState.SelectedActionType))
-                ActionTypeChanged();
+                _ = ActionTypeChangedAsync();
         };
     }
-    private void ActionTypeChanged()
+
+    private async Task ActionTypeChangedAsync()
     {
-        switch (State.CreateState.SelectedActionType)
+        if (State.CreateState.SelectedActionType != ScheduleActionTypeDto.CreateTask)
+            return;
+
+        var taskState = new Misa.Ui.Avalonia.Features.Pages.Tasks.Root.CreateTaskState();
+        var taskForm = new Misa.Ui.Avalonia.Features.Pages.Tasks.Create.CreateTaskViewModel(taskState);
+
+        var dto = await ModalProxy.OpenAsync<AddTaskDto>(ModalKey.Task, taskForm);
+        if (dto is null)
         {
-            case ScheduleActionTypeDto.CreateTask:
-                ModalProxy.Open(ModalKey.Task, null);
-                break;
+            State.CreateState.SelectedActionType = ScheduleActionTypeDto.None;
+            return;
         }
+
+        State.CreateState.Payload = JsonSerializer.Serialize(dto);
     }
+
     public async Task InitializeWorkspaceAsync()
         => await GetAllAsync();
 
@@ -54,25 +71,16 @@ public sealed partial class SchedulerFacadeViewModel : ViewModelBase, IItemFacad
     }
 
     [RelayCommand]
-    public void ShowAddPanel()
+    public async Task ShowAddPanelAsync()
     {
         State.CreateState.Reset();
-        PanelProxy.Open(PanelKey.Schedule, this);
-    }
 
-    [RelayCommand]
-    public void ClosePanel()
-        => PanelProxy.Close();
+        var formVm = new CreateScheduleViewModel(State.CreateState);
 
-    [RelayCommand]
-    public async Task SubmitCreateAsync()
-    {
-        var dto = State.CreateState.TryGetValidatedRequestObject();
-        if (dto is null) return;
+        var dto = await PanelProxy.OpenAsync<AddScheduleDto>(PanelKey.Schedule, formVm);
+        if (dto is null) return; // Cancel/X
 
         var item = await Gateway.CreateAsync(dto);
         await State.AddToCollection(item);
-
-        ClosePanel();
     }
 }

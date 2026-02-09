@@ -51,11 +51,14 @@ public class App : Application
         // Infrastructure / Core
         // -------------------------
         sc.AddSingleton<PanelProxy>();
+        sc.AddSingleton<IOverlayCloser, OverlayCloser>();
         sc.AddSingleton<ModalProxy>();
         sc.AddSingleton<IPanelFactory, PanelFactory>();
         sc.AddSingleton<IModalFactory, ModalFactory>();
         sc.AddSingleton<RemoteProxy>();
         sc.AddSingleton<SignalRNotificationClient>();
+        sc.AddTransient<PanelHostView>();
+        sc.AddTransient<ModalHostView>();
         
         sc.AddTransient<AuthenticationWindowViewModel>();
         
@@ -114,7 +117,9 @@ public class App : Application
         sc.AddSingleton<TaskGateway>();
         sc.AddSingleton<TaskToolbarView>();
         sc.AddSingleton<TaskContentView>();
-        sc.AddSingleton<CreateTaskView>();
+        
+        sc.AddTransient<CreateTaskView>();
+        sc.AddTransient<CreateTaskViewModel>();
         
         // Feature - Schedule
         sc.AddSingleton<SchedulerState>();
@@ -123,7 +128,9 @@ public class App : Application
         sc.AddSingleton<SchedulerGateway>();
         sc.AddSingleton<SchedulerToolbarView>();
         sc.AddSingleton<SchedulerContentView>();
-        sc.AddSingleton<CreateScheduleView>();
+        
+        sc.AddTransient<CreateScheduleView>();
+        sc.AddTransient<CreateScheduleViewModel>();
         
         // Utility
         sc.AddSingleton<NotificationViewModel>();

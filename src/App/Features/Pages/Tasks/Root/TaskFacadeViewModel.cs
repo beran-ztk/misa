@@ -1,20 +1,21 @@
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Input;
+using Misa.Contract.Features.Entities.Extensions.Items.Extensions.Tasks;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Pages.Common;
-using Misa.Ui.Avalonia.Infrastructure.Client;
+using Misa.Ui.Avalonia.Features.Pages.Tasks.Create;
 using Misa.Ui.Avalonia.Infrastructure.UI;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Tasks.Root;
 
 public sealed partial class TaskFacadeViewModel(
-    TaskState state, 
+    TaskState state,
     TaskGateway gateway,
-    PanelProxy panelProxy) 
-    : ViewModelBase, IItemFacade
+    PanelProxy panelProxy)
+    : ViewModelBase
 {
     public TaskState State { get; } = state;
-    
+
     public async Task InitializeWorkspaceAsync()
         => await GetAllAsync();
 
@@ -24,7 +25,7 @@ public sealed partial class TaskFacadeViewModel(
         State.SelectedItem = null;
         await GetAllAsync();
     }
-    
+
     private async Task GetAllAsync()
     {
         var tasks = await gateway.GetAllAsync();
@@ -32,22 +33,14 @@ public sealed partial class TaskFacadeViewModel(
     }
 
     [RelayCommand]
-    public void ShowAddPanel()
-        => panelProxy.Open(PanelKey.Task, this);
-
-    [RelayCommand]
-    public void ClosePanel()
-        => panelProxy.Close();
-
-    [RelayCommand]
-    public async Task SubmitCreateAsync()
+    public async Task ShowAddPanelAsync()
     {
-        var dto = State.CreateState.TryGetValidatedRequestObject();
+        var formVm = new CreateTaskViewModel(State.CreateState);
+
+        var dto = await panelProxy.OpenAsync<AddTaskDto>(PanelKey.Task, formVm);
         if (dto is null) return;
 
-        var task = await gateway.CreateAsync(dto);
-        await State.AddToCollection(task);
-
-        ClosePanel();
+        var created = await gateway.CreateAsync(dto);
+        await State.AddToCollection(created);
     }
 }

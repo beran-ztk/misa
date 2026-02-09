@@ -1,0 +1,48 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="Misa.Ui.Avalonia.Shell.Components.PanelHostView"
+             xmlns:ui="clr-namespace:Misa.Ui.Avalonia.Infrastructure.UI"
+             x:DataType="ui:IPanelHostViewModel">
+    
+    <Border Classes="workspace-addpanel">
+        <Grid RowDefinitions="Auto,Auto,*,Auto,Auto"
+              Classes="workspace-addpanel">
+
+            <!-- Header -->
+            <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+                <TextBlock Text="{Binding Title}"
+                           Classes="workspace-addpanel-title"/>
+
+                <Button Grid.Column="1"
+                        Classes="workspace-addpanel-icon"
+                        Command="{Binding CloseCommand}">
+                    <Image Source="{SvgImage /Assets/Icons/Common/cancel.svg}" />
+                </Button>
+            </Grid>
+
+            <Border Grid.Row="1" Classes="panel-divider"/>
+
+            <!-- Body -->
+            <ContentControl Grid.Row="2"
+                            Content="{Binding ContentView}" />
+
+            <Border Grid.Row="3" Classes="panel-divider"/>
+
+            <!-- Footer -->
+            <Grid Grid.Row="4" ColumnDefinitions="*,Auto" VerticalAlignment="Center">
+                <StackPanel Grid.Column="1" Classes="confirm-cancel">
+                    <Button Content="{Binding CancelText}"
+                            Classes="confirm-cancel-cancel"
+                            Command="{Binding CancelCommand}"/>
+                    <Button Content="{Binding SubmitText}"
+                            Classes="confirm-cancel-confirm"
+                            IsEnabled="{Binding CanSubmit}"
+                            Command="{Binding SubmitCommand}"/>
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>
