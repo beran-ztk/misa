@@ -23,6 +23,7 @@ using Misa.Ui.Avalonia.Infrastructure.Navigation;
 using Misa.Ui.Avalonia.Infrastructure.Platform;
 using Misa.Ui.Avalonia.Infrastructure.States;
 using Misa.Ui.Avalonia.Infrastructure.Time;
+using Misa.Ui.Avalonia.Infrastructure.UI;
 using Misa.Ui.Avalonia.Shell.Authentication;
 using Misa.Ui.Avalonia.Shell.Base;
 using Misa.Ui.Avalonia.Shell.Components;
@@ -50,6 +51,7 @@ public class App : Application
         // Infrastructure / Core
         // -------------------------
         sc.AddSingleton<PanelProxy>();
+        sc.AddSingleton<IPanelFactory, PanelFactory>();
         sc.AddSingleton<RemoteProxy>();
         sc.AddSingleton<SignalRNotificationClient>();
         

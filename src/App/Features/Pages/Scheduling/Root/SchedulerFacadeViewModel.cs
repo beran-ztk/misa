@@ -4,6 +4,7 @@ using Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Pages.Common;
 using Misa.Ui.Avalonia.Infrastructure.Client;
+using Misa.Ui.Avalonia.Infrastructure.UI;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Scheduling.Root;
 
@@ -53,7 +54,7 @@ public sealed partial class SchedulerFacadeViewModel : ViewModelBase, IItemFacad
     public void ShowAddPanel()
     {
         State.CreateState.Reset();
-        PanelProxy.OpenAddSchedule(this);
+        PanelProxy.Open(PanelKey.Schedule);
     }
 
     [RelayCommand]

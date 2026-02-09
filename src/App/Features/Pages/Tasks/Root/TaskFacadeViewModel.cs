@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Pages.Common;
 using Misa.Ui.Avalonia.Infrastructure.Client;
+using Misa.Ui.Avalonia.Infrastructure.UI;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Tasks.Root;
 
@@ -32,7 +33,7 @@ public sealed partial class TaskFacadeViewModel(
 
     [RelayCommand]
     public void ShowAddPanel()
-        => panelProxy.OpenAddTask(this);
+        => panelProxy.Open(PanelKey.Task);
 
     [RelayCommand]
     public void ClosePanel()
