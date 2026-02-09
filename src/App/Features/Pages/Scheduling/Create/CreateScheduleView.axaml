@@ -3,7 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="Misa.Ui.Avalonia.Features.Pages.Scheduling.Add.CreateScheduleView"
+             x:Class="Misa.Ui.Avalonia.Features.Pages.Scheduling.Create.CreateScheduleView"
              xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Scheduling.Root"
              x:DataType="root:SchedulerFacadeViewModel">
 
@@ -21,7 +21,7 @@
 
                 <Button Grid.Column="1"
                         Classes="workspace-addpanel-icon"
-                        Command="{Binding CloseAddPanelCommand}">
+                        Command="{Binding ClosePanelCommand}">
                     <Image Source="{SvgImage /Assets/Icons/Common/cancel.svg}" />
                 </Button>
             </Grid>
@@ -32,7 +32,7 @@
             <!-- Body -->
             <ScrollViewer Grid.Row="2"
                           Padding="10"
-                          DataContext="{Binding State.CreateScheduleState}">
+                          DataContext="{Binding State.CreateState}">
                 <StackPanel Classes="workspace-addpanel-body"
                             Spacing="16">
 
@@ -264,10 +264,10 @@
                             Classes="confirm-cancel">
                     <Button Content="Cancel"
                             Classes="confirm-cancel-cancel"
-                            Command="{Binding CloseAddPanelCommand}"/>
+                            Command="{Binding ClosePanelCommand}"/>
                     <Button Content="Create"
                             Classes="confirm-cancel-confirm"
-                            Command="{Binding SubmitCreateScheduleCommand}"/>
+                            Command="{Binding SubmitCreateCommand}"/>
                 </StackPanel>
 
             </Grid>

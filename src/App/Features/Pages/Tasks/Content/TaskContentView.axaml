@@ -16,8 +16,8 @@
         <Border Classes="workspace-content-frame">
             <DataGrid Classes="workspace-datagrid"
                       HorizontalAlignment="Left"
-                      ItemsSource="{Binding TaskState.FilteredTasks}"
-                      SelectedItem="{Binding TaskState.SelectedTask, Mode=TwoWay}"
+                      ItemsSource="{Binding State.FilteredItems}"
+                      SelectedItem="{Binding State.SelectedItem, Mode=TwoWay}"
                       AutoGenerateColumns="False"
                       SelectionMode="Extended"
                       IsReadOnly="True"

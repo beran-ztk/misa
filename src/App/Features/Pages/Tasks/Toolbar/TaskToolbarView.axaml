@@ -15,13 +15,13 @@
                     Classes="workspace-toolbar-left">
             <!-- Add -->
             <Button Classes="workspace-toolbar-icon"
-                    Command="{Binding ShowAddTaskPanelCommand}">
+                    Command="{Binding ShowAddPanelCommand}">
                 <Image Source="{SvgImage /Assets/Icons/Common/plus.svg}" />
             </Button>
 
             <!-- Refresh -->
             <Button Classes="workspace-toolbar-icon"
-                    Command="{Binding RefreshTaskWindowCommand}">
+                    Command="{Binding RefreshWorkspaceCommand}">
                 <Image Source="{SvgImage /Assets/Icons/Common/refresh.svg}" />
             </Button>
         </StackPanel>
@@ -40,7 +40,7 @@
                    IsOpen="{Binding IsChecked, ElementName=PriorityFilterButton}"
                    Placement="Bottom">
                 <Border Classes="workspace-toolbar-filter-popup-frame">
-                    <ItemsControl ItemsSource="{Binding TaskState.PriorityFilters}">
+                    <ItemsControl ItemsSource="{Binding State.PriorityFilters}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <CheckBox Content="{Binding Priority}"
@@ -58,7 +58,7 @@
                     Classes="workspace-toolbar-right">
             <TextBox Classes="workspace-toolbar-search"
                      Watermark="Search tasks..."
-                     Text="{Binding TaskState.SearchText, Mode=TwoWay}" />
+                     Text="{Binding State.SearchText, Mode=TwoWay}" />
         </StackPanel>
 
     </Grid>

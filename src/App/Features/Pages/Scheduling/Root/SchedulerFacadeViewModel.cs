@@ -1,54 +1,55 @@
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Ui.Avalonia.Common.Mappings;
+using Misa.Ui.Avalonia.Features.Pages.Common;
 using Misa.Ui.Avalonia.Infrastructure.Client;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Scheduling.Root;
 
 public sealed partial class SchedulerFacadeViewModel(
-    SchedulerState state, 
+    SchedulerState state,
     SchedulerGateway gateway,
-    PanelProxy panelProxy) 
-    : ViewModelBase
+    PanelProxy panelProxy)
+    : ViewModelBase, IItemFacade
 {
     public SchedulerState State { get; } = state;
-    private SchedulerGateway Gateway { get; } = gateway;
-    
-    public async Task InitializeWorkspace()
-    {
-        await GetAllTasksAsync();
-    }
+
+    public async Task InitializeWorkspaceAsync()
+        => await GetAllAsync();
 
     [RelayCommand]
-    private void RefreshTaskWindow()
+    public async Task RefreshWorkspaceAsync()
     {
-        _ = GetAllTasksAsync();
         State.SelectedItem = null;
+        await GetAllAsync();
     }
 
-    private async Task GetAllTasksAsync()
+    private async Task GetAllAsync()
     {
-        var items = await Gateway.GetAllAsync();
-        
+        var items = await gateway.GetAllAsync();
         await State.AddToCollection(items);
     }
-    // Create Schedule
+
     [RelayCommand]
-    private void ShowAddPanel()
+    public void ShowAddPanel()
     {
-        State.CreateScheduleState.Reset();
+        State.CreateState.Reset();
         panelProxy.OpenAddSchedule(this);
     }
+
     [RelayCommand]
-    private void CloseAddPanel() => panelProxy.Close();
+    public void ClosePanel()
+        => panelProxy.Close();
+
     [RelayCommand]
-    private async Task SubmitCreateSchedule()
+    public async Task SubmitCreateAsync()
     {
-        var dto = State.CreateScheduleState.TryGetValidatedRequestObject();
+        var dto = State.CreateState.TryGetValidatedRequestObject();
         if (dto is null) return;
 
-        var item = await Gateway.CreateAsync(dto);
+        var item = await gateway.CreateAsync(dto);
         await State.AddToCollection(item);
-        CloseAddPanel();
+
+        ClosePanel();
     }
 }

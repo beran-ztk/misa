@@ -8,6 +8,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using Misa.Contract.Features.Entities.Extensions.Items.Base;
 using Misa.Contract.Features.Entities.Extensions.Items.Extensions.Tasks;
 using Misa.Ui.Avalonia.Common.Behaviors;
+using Misa.Ui.Avalonia.Features.Pages.Common;
 using Misa.Ui.Avalonia.Infrastructure.States;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Tasks.Root;
@@ -15,18 +16,18 @@ namespace Misa.Ui.Avalonia.Features.Pages.Tasks.Root;
 public sealed partial class TaskState : ObservableObject
 {
     public ShellState ShellState { get; }
-    public CreateTaskState CreateTaskState { get; }
+    public CreateTaskState CreateState { get; }
     private ISelectionContextState SelectionContextState { get; }
-    private ObservableCollection<TaskDto> Tasks { get; } = [];
-    public ObservableCollection<TaskDto> FilteredTasks { get; } = [];
+    private ObservableCollection<TaskDto> Items { get; } = [];
+    public ObservableCollection<TaskDto> FilteredItems { get; } = [];
 
     public TaskState(
         ShellState shellState,
-        CreateTaskState createTaskState,
+        CreateTaskState createState,
         ISelectionContextState selectionContextState)
     {
         ShellState = shellState;
-        CreateTaskState = createTaskState;
+        CreateState = createState;
         SelectionContextState = selectionContextState;
         
         foreach (var p in Enum.GetValues<PriorityContract>())
@@ -44,12 +45,12 @@ public sealed partial class TaskState : ObservableObject
     /// <summary>
     /// Selected Task
     /// </summary>
-    public bool IsTaskSelected => SelectedTask is not null;
+    public bool IsItemSelected => SelectedItem is not null;
     
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsTaskSelected))]
-    private TaskDto? _selectedTask;
-    partial void OnSelectedTaskChanged(TaskDto? value)
+    [NotifyPropertyChangedFor(nameof(IsItemSelected))]
+    private TaskDto? _selectedItem;
+    partial void OnSelectedItemChanged(TaskDto? value)
     {
         SelectionContextState.SetActive(value?.Id);
     }
@@ -68,16 +69,16 @@ public sealed partial class TaskState : ObservableObject
             .Select(f => f.Priority)
             .ToHashSet();
         
-        FilteredTasks.Clear();
+        FilteredItems.Clear();
         
-        foreach (var t in Tasks)
+        foreach (var t in Items)
         {
             if (activePriorities.Contains(t.Item.Priority) 
                 && (t.Item.Title.Contains(SearchText, StringComparison.OrdinalIgnoreCase) || string.IsNullOrEmpty(SearchText)))
             {
                 _ = Dispatcher.UIThread.InvokeAsync(() => 
                 {
-                    FilteredTasks.Add(t);
+                    FilteredItems.Add(t);
                 });
             }
         }
@@ -86,24 +87,24 @@ public sealed partial class TaskState : ObservableObject
     /// <summary>
     /// Adders
     /// </summary>
-    public async Task AddToCollection(List<TaskDto> tasks)
+    public async Task AddToCollection(List<TaskDto> items)
     {
-        Tasks.Clear();
-        FilteredTasks.Clear();
+        Items.Clear();
+        FilteredItems.Clear();
         
-        foreach (var task in tasks)
+        foreach (var item in items)
         {
-            await AddToCollection(task);
+            await AddToCollection(item);
         }
     }
-    public async Task AddToCollection(TaskDto? task)
+    public async Task AddToCollection(TaskDto? item)
     {
-        if (task is null) return;
+        if (item is null) return;
         
         await Dispatcher.UIThread.InvokeAsync(() => 
         {
-            Tasks.Add(task);
-            FilteredTasks.Add(task);
+            Items.Add(item);
+            FilteredItems.Add(item);
         });
     }
 }

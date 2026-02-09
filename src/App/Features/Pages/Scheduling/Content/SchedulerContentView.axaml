@@ -13,7 +13,7 @@
 
     <ScrollViewer>
         <Border Padding="12">
-            <ListBox ItemsSource="{Binding State.Schedules}"
+            <ListBox ItemsSource="{Binding State.FilteredItems}"
                      SelectedItem="{Binding State.SelectedItem}"
                      BorderThickness="0"
                      Background="Transparent">

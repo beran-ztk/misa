@@ -24,11 +24,11 @@ public sealed class WorkspaceRouter(
         switch (kind)
         {
             case WorkspaceKind.Tasks:
-                await task.InitializeWorkspace();
+                await task.InitializeWorkspaceAsync();
                 shell.Workspace = task;
                 break;
             case WorkspaceKind.Scheduler:
-                await schedule.InitializeWorkspace();
+                await schedule.InitializeWorkspaceAsync();
                 shell.Workspace = schedule;
                 break;
             default:
