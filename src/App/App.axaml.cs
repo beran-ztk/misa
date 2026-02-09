@@ -12,8 +12,8 @@ using Misa.Ui.Avalonia.Features.Pages.Scheduling.Add;
 using Misa.Ui.Avalonia.Features.Pages.Scheduling.Content;
 using Misa.Ui.Avalonia.Features.Pages.Scheduling.Root;
 using Misa.Ui.Avalonia.Features.Pages.Scheduling.Toolbar;
-using Misa.Ui.Avalonia.Features.Pages.Tasks.Add;
 using Misa.Ui.Avalonia.Features.Pages.Tasks.Content;
+using Misa.Ui.Avalonia.Features.Pages.Tasks.Create;
 using Misa.Ui.Avalonia.Features.Pages.Tasks.Root;
 using Misa.Ui.Avalonia.Features.Pages.Tasks.Toolbar;
 using Misa.Ui.Avalonia.Infrastructure.Client;
@@ -110,7 +110,7 @@ public class App : Application
         sc.AddTransient<CreateTaskState>();
         sc.AddSingleton<TaskToolbarView>();
         sc.AddSingleton<TaskContentView>();
-        sc.AddSingleton<AddTaskView>();
+        sc.AddSingleton<CreateTaskView>();
         
         
         sc.AddSingleton<SchedulerState>();
