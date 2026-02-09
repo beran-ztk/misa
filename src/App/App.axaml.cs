@@ -114,7 +114,7 @@ public class App : Application
         
         // Feature - Schedule
         sc.AddSingleton<SchedulerState>();
-        sc.AddSingleton<CreateScheduleState>();
+        sc.AddTransient<CreateScheduleState>();
         sc.AddSingleton<SchedulerFacadeViewModel>();
         sc.AddSingleton<SchedulerGateway>();
         sc.AddSingleton<SchedulerToolbarView>();

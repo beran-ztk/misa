@@ -1,19 +1,38 @@
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Input;
+using Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Pages.Common;
 using Misa.Ui.Avalonia.Infrastructure.Client;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Scheduling.Root;
 
-public sealed partial class SchedulerFacadeViewModel(
-    SchedulerState state,
-    SchedulerGateway gateway,
-    PanelProxy panelProxy)
-    : ViewModelBase, IItemFacade
+public sealed partial class SchedulerFacadeViewModel : ViewModelBase, IItemFacade
 {
-    public SchedulerState State { get; } = state;
+    public SchedulerState State { get; } 
+    private SchedulerGateway Gateway { get; }
+    private PanelProxy PanelProxy { get; }
 
+    public SchedulerFacadeViewModel(SchedulerState state, SchedulerGateway gateway, PanelProxy panelProxy)
+    {
+        State = state;
+        Gateway = gateway;
+        PanelProxy = panelProxy;
+
+        State.CreateState.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(State.CreateState.SelectedActionType))
+                ActionTypeChanged();
+        };
+    }
+    private void ActionTypeChanged()
+    {
+        switch (State.CreateState.SelectedActionType)
+        {
+            case ScheduleActionTypeDto.CreateTask:
+                break;
+        }
+    }
     public async Task InitializeWorkspaceAsync()
         => await GetAllAsync();
 
@@ -26,7 +45,7 @@ public sealed partial class SchedulerFacadeViewModel(
 
     private async Task GetAllAsync()
     {
-        var items = await gateway.GetAllAsync();
+        var items = await Gateway.GetAllAsync();
         await State.AddToCollection(items);
     }
 
@@ -34,12 +53,12 @@ public sealed partial class SchedulerFacadeViewModel(
     public void ShowAddPanel()
     {
         State.CreateState.Reset();
-        panelProxy.OpenAddSchedule(this);
+        PanelProxy.OpenAddSchedule(this);
     }
 
     [RelayCommand]
     public void ClosePanel()
-        => panelProxy.Close();
+        => PanelProxy.Close();
 
     [RelayCommand]
     public async Task SubmitCreateAsync()
@@ -47,7 +66,7 @@ public sealed partial class SchedulerFacadeViewModel(
         var dto = State.CreateState.TryGetValidatedRequestObject();
         if (dto is null) return;
 
-        var item = await gateway.CreateAsync(dto);
+        var item = await Gateway.CreateAsync(dto);
         await State.AddToCollection(item);
 
         ClosePanel();

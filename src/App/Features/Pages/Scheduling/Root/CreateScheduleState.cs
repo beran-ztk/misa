@@ -67,7 +67,10 @@ public sealed partial class CreateScheduleState : ViewModelBase
 
     partial void OnSelectedActionTypeChanged(ScheduleActionTypeDto value)
     {
-        // später: payload picker / task builder etc.
+        if (value == ScheduleActionTypeDto.CreateTask)
+        {
+            // Open Dialog
+        }
     }
 
     private TimeSpan? OccurrenceTtl =>
