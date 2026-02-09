@@ -51,7 +51,9 @@ public class App : Application
         // Infrastructure / Core
         // -------------------------
         sc.AddSingleton<PanelProxy>();
+        sc.AddSingleton<ModalProxy>();
         sc.AddSingleton<IPanelFactory, PanelFactory>();
+        sc.AddSingleton<IModalFactory, ModalFactory>();
         sc.AddSingleton<RemoteProxy>();
         sc.AddSingleton<SignalRNotificationClient>();
         

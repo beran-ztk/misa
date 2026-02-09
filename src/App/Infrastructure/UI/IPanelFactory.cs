@@ -21,7 +21,6 @@ public interface IPanelFactory
 
 public sealed class PanelFactory(IServiceProvider serviceProvider) : IPanelFactory
 {
-
     public Control Create(PanelKey key, object? context)
     {
         Control view;

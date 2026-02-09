@@ -18,7 +18,7 @@ public partial class ShellState : ObservableObject
     
     [ObservableProperty] private Control? _panel;
     
-    [ObservableProperty] private ViewModelBase? _modal;
+    [ObservableProperty] private Control? _modal;
     [ObservableProperty] private ViewModelBase? _toast;
     [ObservableProperty] private ViewModelBase? _busy;
 }

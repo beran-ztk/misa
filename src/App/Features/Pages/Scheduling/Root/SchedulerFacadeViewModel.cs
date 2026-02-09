@@ -13,12 +13,14 @@ public sealed partial class SchedulerFacadeViewModel : ViewModelBase, IItemFacad
     public SchedulerState State { get; } 
     private SchedulerGateway Gateway { get; }
     private PanelProxy PanelProxy { get; }
+    private ModalProxy ModalProxy { get; }
 
-    public SchedulerFacadeViewModel(SchedulerState state, SchedulerGateway gateway, PanelProxy panelProxy)
+    public SchedulerFacadeViewModel(SchedulerState state, SchedulerGateway gateway, PanelProxy panelProxy, ModalProxy modalProxy)
     {
         State = state;
         Gateway = gateway;
         PanelProxy = panelProxy;
+        ModalProxy = modalProxy;
 
         State.CreateState.PropertyChanged += (_, e) =>
         {
@@ -31,6 +33,7 @@ public sealed partial class SchedulerFacadeViewModel : ViewModelBase, IItemFacad
         switch (State.CreateState.SelectedActionType)
         {
             case ScheduleActionTypeDto.CreateTask:
+                ModalProxy.Open(ModalKey.Task, null);
                 break;
         }
     }
