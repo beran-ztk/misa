@@ -33,7 +33,7 @@ public sealed partial class TaskFacadeViewModel(
 
     [RelayCommand]
     public void ShowAddPanel()
-        => panelProxy.Open(PanelKey.Task);
+        => panelProxy.Open(PanelKey.Task, this);
 
     [RelayCommand]
     public void ClosePanel()

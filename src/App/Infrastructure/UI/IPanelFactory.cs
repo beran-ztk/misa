@@ -16,13 +16,13 @@ public enum PanelKey
 
 public interface IPanelFactory
 {
-    Control Create(PanelKey key);
+    Control Create(PanelKey key, object? context);
 }
 
 public sealed class PanelFactory(IServiceProvider serviceProvider) : IPanelFactory
 {
 
-    public Control Create(PanelKey key)
+    public Control Create(PanelKey key, object? context)
     {
         Control view;
         
@@ -30,11 +30,11 @@ public sealed class PanelFactory(IServiceProvider serviceProvider) : IPanelFacto
         {
             case PanelKey.Task:
                 view = serviceProvider.GetRequiredService<CreateTaskView>();
-                view.DataContext = serviceProvider.GetRequiredService<TaskFacadeViewModel>();
+                view.DataContext = context ?? serviceProvider.GetRequiredService<TaskFacadeViewModel>();
                 break;
             case PanelKey.Schedule:
                 view = serviceProvider.GetRequiredService<CreateScheduleView>();
-                view.DataContext = serviceProvider.GetRequiredService<SchedulerFacadeViewModel>();
+                view.DataContext = context ?? serviceProvider.GetRequiredService<SchedulerFacadeViewModel>();
                 break;
             default:
                 throw new ArgumentOutOfRangeException(nameof(key), key, null);

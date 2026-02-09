@@ -54,7 +54,7 @@ public sealed partial class SchedulerFacadeViewModel : ViewModelBase, IItemFacad
     public void ShowAddPanel()
     {
         State.CreateState.Reset();
-        PanelProxy.Open(PanelKey.Schedule);
+        PanelProxy.Open(PanelKey.Schedule, this);
     }
 
     [RelayCommand]
