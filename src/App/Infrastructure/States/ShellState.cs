@@ -1,3 +1,4 @@
+using Avalonia.Controls;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Misa.Ui.Avalonia.Common.Mappings;
 
@@ -15,8 +16,7 @@ public partial class ShellState : ObservableObject
     [ObservableProperty] private ViewModelBase _utilityNavigation;
     [ObservableProperty] private ViewModelBase? _utility;
     
-    
-    [ObservableProperty] private ViewModelBase? _panel;
+    [ObservableProperty] private Control? _panel;
     
     [ObservableProperty] private ViewModelBase? _modal;
     [ObservableProperty] private ViewModelBase? _toast;

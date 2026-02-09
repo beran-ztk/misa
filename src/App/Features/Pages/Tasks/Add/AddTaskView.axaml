@@ -4,8 +4,8 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="Misa.Ui.Avalonia.Features.Pages.Tasks.Add.AddTaskView"
-             xmlns:add1="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Tasks.Add"
-             x:DataType="add1:AddTaskViewModel">
+             xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Tasks.Root"
+             x:DataType="root:TaskFacadeViewModel">
 
     <Border Classes="workspace-addpanel">
         
@@ -21,7 +21,7 @@
 
                 <Button Grid.Column="1"
                         Classes="workspace-addpanel-icon"
-                        Command="{Binding CancelCommand}">
+                        Command="{Binding CloseCommand}">
                     <Image Source="{SvgImage /Assets/Icons/Common/cancel.svg}" />
                 </Button>
             </Grid>
@@ -41,10 +41,10 @@
                         
                         <TextBox Classes="workspace-addpanel-body-text-oneliner" 
                                  Watermark="Title…"
-                                 Text="{Binding Title, Mode=TwoWay}" />
+                                 Text="{Binding TaskState.CreateTaskState.Title, Mode=TwoWay}" />
                         
-                        <TextBlock Text="{Binding ErrorMessageTitle}"
-                                   IsVisible="{Binding TitleHasValidationError}" />
+                        <TextBlock Text="{Binding TaskState.CreateTaskState.ErrorMessageTitle}"
+                                   IsVisible="{Binding TaskState.CreateTaskState.TitleHasValidationError}" />
                     </StackPanel>
 
                     <StackPanel Grid.Row="1"
@@ -53,8 +53,8 @@
                                    Classes="workspace-addpanel-body"/>
                         
                         <ComboBox Classes="workspace-addpanel-body-selector" 
-                                  ItemsSource="{Binding Categories}"
-                                  SelectedValue="{Binding SelectedCategoryContract}" />
+                                  ItemsSource="{Binding TaskState.CreateTaskState.Categories}"
+                                  SelectedValue="{Binding TaskState.CreateTaskState.SelectedCategoryContract}" />
                     </StackPanel>
 
                     <StackPanel Grid.Row="2"
@@ -63,8 +63,8 @@
                                    Classes="workspace-addpanel-body"/>
                         
                         <ComboBox Classes="workspace-addpanel-body-selector" 
-                                  ItemsSource="{Binding Priorities}"
-                                  SelectedValue="{Binding SelectedPriorityContract}" />
+                                  ItemsSource="{Binding TaskState.CreateTaskState.Priorities}"
+                                  SelectedValue="{Binding TaskState.CreateTaskState.SelectedPriorityContract}" />
                     </StackPanel>
                 </Grid>
             </ScrollViewer>
@@ -81,10 +81,10 @@
                             Classes="confirm-cancel">
                     <Button Content="Cancel"
                             Classes="confirm-cancel-cancel"
-                            Command="{Binding CancelCommand}"/>
+                            Command="{Binding CloseCommand}"/>
                     <Button Content="Create"
                             Classes="confirm-cancel-confirm"
-                            Command="{Binding ConfirmCommand}"/>
+                            Command="{Binding SubmitCreateTaskCommand}"/>
                 </StackPanel>
 
             </Grid>

@@ -49,7 +49,8 @@ public class App : Application
         // -------------------------
         // Infrastructure / Core
         // -------------------------
-        sc.AddTransient<RemoteProxy>();
+        sc.AddSingleton<PanelProxy>();
+        sc.AddSingleton<RemoteProxy>();
         sc.AddSingleton<SignalRNotificationClient>();
         
         sc.AddTransient<AuthenticationWindowViewModel>();
@@ -103,12 +104,13 @@ public class App : Application
         sc.AddTransient<IInspectorCoordinator, InspectorCoordinator>();
 
         // Feature - Task
-        sc.AddSingleton<TaskState>();
         sc.AddSingleton<TaskFacadeViewModel>();
         sc.AddSingleton<TaskGateway>();
-        sc.AddTransient<AddTaskViewModel>();
+        sc.AddSingleton<TaskState>();
+        sc.AddTransient<CreateTaskState>();
         sc.AddSingleton<TaskToolbarView>();
         sc.AddSingleton<TaskContentView>();
+        sc.AddSingleton<AddTaskView>();
         
         
         sc.AddSingleton<SchedulerState>();

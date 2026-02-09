@@ -1,15 +1,12 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Features.Entities.Extensions.Items.Base;
 using Misa.Contract.Features.Entities.Extensions.Items.Extensions.Tasks;
-using Misa.Ui.Avalonia.Common.Mappings;
-using Misa.Ui.Avalonia.Features.Common.Deadline;
 
-namespace Misa.Ui.Avalonia.Features.Pages.Tasks.Add;
+namespace Misa.Ui.Avalonia.Features.Pages.Tasks.Root;
 
-public partial class AddTaskViewModel : ViewModelBase
+public sealed partial class CreateTaskState : ObservableObject
 {
     [ObservableProperty] private string _title = string.Empty;
     [ObservableProperty] private TaskCategoryContract _selectedCategoryContract;
@@ -26,29 +23,20 @@ public partial class AddTaskViewModel : ViewModelBase
         TitleHasValidationError = true;
         ErrorMessageTitle = message;
     }
-
-    public event Action<AddTaskDto>? Completed;
-    public event Action? Cancelled;
-    [RelayCommand]
-    private void Confirm()
+    public AddTaskDto? TryGetValidatedRequestObject()
     {
         var trimmed = Title.Trim();
         if (string.IsNullOrWhiteSpace(trimmed))
         {
             TitleValidationError("Please specify a title.");
-            return;
+            return null;
         }
 
-        var dto = new AddTaskDto(
+        return new AddTaskDto(
             trimmed,
             SelectedCategoryContract,
             SelectedPriorityContract,
             null
         );
-
-        Completed?.Invoke(dto);
     }
-    [RelayCommand]
-    private void Cancel()
-        => Cancelled?.Invoke();
 }

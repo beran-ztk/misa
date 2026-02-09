@@ -33,6 +33,6 @@ public sealed partial class SchedulerToolbarViewModel : ViewModelBase
             ShellState.Panel = null;
         };
 
-        ShellState.Panel = vm;
+        // ShellState.Panel = vm;
     }
 }

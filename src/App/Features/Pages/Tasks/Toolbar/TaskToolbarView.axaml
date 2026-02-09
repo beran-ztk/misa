@@ -15,7 +15,7 @@
                     Classes="workspace-toolbar-left">
             <!-- Add -->
             <Button Classes="workspace-toolbar-icon"
-                    Command="{Binding ShowAddTaskCommand}">
+                    Command="{Binding ShowAddTaskPanelCommand}">
                 <Image Source="{SvgImage /Assets/Icons/Common/plus.svg}" />
             </Button>
 
