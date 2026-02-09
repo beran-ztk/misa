@@ -5,7 +5,7 @@
              mc:Ignorable="d"
              x:Class="Misa.Ui.Avalonia.Features.Pages.Tasks.Toolbar.TaskToolbarView"
              xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Tasks.Root"
-             x:DataType="root:TaskFacade">
+             x:DataType="root:TaskFacadeViewModel">
 
     <Grid Classes="workspace-toolbar" 
         ColumnDefinitions="Auto,*,Auto">

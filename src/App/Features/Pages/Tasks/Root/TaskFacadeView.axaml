@@ -1,0 +1,20 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="Misa.Ui.Avalonia.Features.Pages.Tasks.Root.TaskFacadeView"
+             xmlns:toolbar="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Tasks.Toolbar"
+             xmlns:content="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Tasks.Content"
+             xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Tasks.Root"
+             x:DataType="root:TaskFacadeViewModel">
+    
+    <Grid RowDefinitions="Auto,*">
+
+        <toolbar:TaskToolbarView Grid.Row="0" />
+
+        <content:TaskContentView Grid.Row="1"/>
+        
+    </Grid>
+    
+</UserControl>

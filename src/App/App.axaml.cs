@@ -60,7 +60,6 @@ public class App : Application
         // Shell
         sc.AddSingleton<AppState>();
         sc.AddSingleton<ShellState>();
-        sc.AddSingleton<WorkspaceState>();
         sc.AddSingleton<UserState>();
         
         sc.AddSingleton<WorkspaceRouter>();
@@ -69,7 +68,6 @@ public class App : Application
         sc.AddSingleton<ShellWindowViewModel>();
         sc.AddSingleton<HeaderViewModel>();
         sc.AddSingleton<WorkspaceNavigationViewModel>();
-        sc.AddSingleton<WorkspaceViewModel>();
         sc.AddSingleton<UtilityNavigationViewModel>();
         sc.AddSingleton<FooterViewModel>();
 
@@ -104,15 +102,14 @@ public class App : Application
 
         // Feature - Task
         sc.AddSingleton<TaskState>();
-        sc.AddSingleton<TaskFacade>();
-        sc.AddSingleton<TaskCoordinator>();
+        sc.AddSingleton<TaskFacadeViewModel>();
+        sc.AddSingleton<TaskGateway>();
         sc.AddTransient<AddTaskViewModel>();
         sc.AddSingleton<TaskToolbarView>();
         sc.AddSingleton<TaskContentView>();
         
         
         sc.AddSingleton<SchedulerState>();
-        sc.AddSingleton<SchedulerCoordinator>();
         sc.AddSingleton<SchedulerToolbarViewModel>();
         sc.AddSingleton<SchedulerContentViewModel>();
         sc.AddSingleton<AddScheduleViewModel>();

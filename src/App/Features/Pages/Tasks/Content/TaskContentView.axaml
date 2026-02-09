@@ -6,7 +6,7 @@
              mc:Ignorable="d"
              x:Class="Misa.Ui.Avalonia.Features.Pages.Tasks.Content.TaskContentView"
              xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Tasks.Root"
-             x:DataType="root:TaskFacade">
+             x:DataType="root:TaskFacadeViewModel">
 
     <UserControl.Resources>
         <converters:PriorityToBrushConverter x:Key="PriorityToBrushConverter" />

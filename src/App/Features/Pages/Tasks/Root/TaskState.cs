@@ -5,18 +5,36 @@ using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Misa.Contract.Features.Entities.Extensions.Items.Base;
 using Misa.Contract.Features.Entities.Extensions.Items.Extensions.Tasks;
 using Misa.Ui.Avalonia.Common.Behaviors;
 using Misa.Ui.Avalonia.Infrastructure.States;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Tasks.Root;
 
-public sealed partial class TaskState(ISelectionContextState selectionContextState, ShellState shellState)
-    : ObservableObject
+public sealed partial class TaskState : ObservableObject
 {
-    public ShellState ShellState { get; init; } = shellState;
+    public ShellState ShellState { get; }
+    private ISelectionContextState SelectionContextState { get; }
     private ObservableCollection<TaskDto> Tasks { get; } = [];
     public ObservableCollection<TaskDto> FilteredTasks { get; } = [];
+
+    public TaskState(ISelectionContextState selectionContextState, ShellState shellState)
+    {
+        ShellState = shellState;
+        SelectionContextState = selectionContextState;
+        
+        foreach (var p in Enum.GetValues<PriorityContract>())
+        {
+            var opt = new PriorityFilterOption(p, isSelected: true);
+            opt.PropertyChanged += (_, e) =>
+            {
+                if (e.PropertyName == nameof(PriorityFilterOption.IsSelected))
+                    ApplyFilters();
+            };
+            PriorityFilters.Add(opt);
+        }
+    }
     
     /// <summary>
     /// Selected Task
@@ -28,7 +46,7 @@ public sealed partial class TaskState(ISelectionContextState selectionContextSta
     private TaskDto? _selectedTask;
     partial void OnSelectedTaskChanged(TaskDto? value)
     {
-        selectionContextState.SetActive(value?.Id);
+        SelectionContextState.SetActive(value?.Id);
     }
     
     /// <summary>
@@ -38,7 +56,7 @@ public sealed partial class TaskState(ISelectionContextState selectionContextSta
     partial void OnSearchTextChanged(string value) => ApplyFilters();
     public ObservableCollection<PriorityFilterOption> PriorityFilters { get; } = [];
     
-    public void ApplyFilters()
+    private void ApplyFilters()
     {
         var activePriorities = PriorityFilters
             .Where(f => f.IsSelected)
@@ -73,8 +91,10 @@ public sealed partial class TaskState(ISelectionContextState selectionContextSta
             await AddToCollection(task);
         }
     }
-    public async Task AddToCollection(TaskDto task)
+    public async Task AddToCollection(TaskDto? task)
     {
+        if (task is null) return;
+        
         await Dispatcher.UIThread.InvokeAsync(() => 
         {
             Tasks.Add(task);
