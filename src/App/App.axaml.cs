@@ -15,6 +15,7 @@ using Misa.Ui.Avalonia.Features.Pages.Scheduling.Toolbar;
 using Misa.Ui.Avalonia.Features.Pages.Tasks.Add;
 using Misa.Ui.Avalonia.Features.Pages.Tasks.Content;
 using Misa.Ui.Avalonia.Features.Pages.Tasks.Root;
+using Misa.Ui.Avalonia.Features.Pages.Tasks.Toolbar;
 using Misa.Ui.Avalonia.Infrastructure.Client;
 using Misa.Ui.Avalonia.Infrastructure.Composition;
 using Misa.Ui.Avalonia.Infrastructure.Messaging;
@@ -29,7 +30,6 @@ using InspectorViewModel = Misa.Ui.Avalonia.Features.Inspector.Base.InspectorVie
 using NavigationStore = Misa.Ui.Avalonia.Infrastructure.States.NavigationStore;
 using NotificationViewModel = Misa.Ui.Avalonia.Features.Utilities.Notifications.NotificationViewModel;
 using SelectionContextState = Misa.Ui.Avalonia.Infrastructure.States.SelectionContextState;
-using TaskToolbarViewModel = Misa.Ui.Avalonia.Features.Pages.Tasks.Toolbar.TaskToolbarViewModel;
 
 namespace Misa.Ui.Avalonia;
 
@@ -102,12 +102,14 @@ public class App : Application
         sc.AddTransient<InspectorViewModel>();
         sc.AddTransient<IInspectorCoordinator, InspectorCoordinator>();
 
-        // Features
+        // Feature - Task
         sc.AddSingleton<TaskState>();
+        sc.AddSingleton<TaskFacade>();
         sc.AddSingleton<TaskCoordinator>();
-        sc.AddSingleton<TaskToolbarViewModel>();
-        sc.AddSingleton<TaskContentViewModel>();
         sc.AddTransient<AddTaskViewModel>();
+        sc.AddSingleton<TaskToolbarView>();
+        sc.AddSingleton<TaskContentView>();
+        
         
         sc.AddSingleton<SchedulerState>();
         sc.AddSingleton<SchedulerCoordinator>();

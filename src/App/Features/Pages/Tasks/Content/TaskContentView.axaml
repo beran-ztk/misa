@@ -3,10 +3,10 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:converters="clr-namespace:Misa.Ui.Avalonia.Common.Converters"
-             xmlns:content="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Tasks.Content"
              mc:Ignorable="d"
              x:Class="Misa.Ui.Avalonia.Features.Pages.Tasks.Content.TaskContentView"
-             x:DataType="content:TaskContentViewModel">
+             xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Tasks.Root"
+             x:DataType="root:TaskFacade">
 
     <UserControl.Resources>
         <converters:PriorityToBrushConverter x:Key="PriorityToBrushConverter" />

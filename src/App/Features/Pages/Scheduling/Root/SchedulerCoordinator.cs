@@ -11,9 +11,9 @@ public class SchedulerCoordinator(SchedulerToolbarViewModel toolbarVm, Scheduler
 
     public void Attach(WorkspaceState ws)
     {
-        ws.Toolbar = Toolbar;
+        ws.Toolbar = null;
         ws.Navigation = null;
-        ws.Content = Content;
+        ws.Content = null;
         ws.ContextPanel = null;
         ws.StatusBar = null;
     }

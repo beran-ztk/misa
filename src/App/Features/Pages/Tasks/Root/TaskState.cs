@@ -2,26 +2,20 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Net.Http;
-using System.Net.Http.Json;
-using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Misa.Contract.Features.Entities.Extensions.Items.Extensions.Tasks;
-using Misa.Contract.Shared.Results;
 using Misa.Ui.Avalonia.Common.Behaviors;
 using Misa.Ui.Avalonia.Infrastructure.States;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Tasks.Root;
 
-public sealed partial class TaskState(ISelectionContextState selectionContextState, HttpClient httpClient)
+public sealed partial class TaskState(ISelectionContextState selectionContextState, ShellState shellState)
     : ObservableObject
 {
-    /// <summary>
-    /// Task Collections
-    /// </summary>
-    public ObservableCollection<TaskDto> Tasks { get; } = [];
+    public ShellState ShellState { get; init; } = shellState;
+    private ObservableCollection<TaskDto> Tasks { get; } = [];
     public ObservableCollection<TaskDto> FilteredTasks { get; } = [];
     
     /// <summary>
@@ -43,6 +37,7 @@ public sealed partial class TaskState(ISelectionContextState selectionContextSta
     [ObservableProperty] private string _searchText = string.Empty;
     partial void OnSearchTextChanged(string value) => ApplyFilters();
     public ObservableCollection<PriorityFilterOption> PriorityFilters { get; } = [];
+    
     public void ApplyFilters()
     {
         var activePriorities = PriorityFilters
@@ -57,15 +52,18 @@ public sealed partial class TaskState(ISelectionContextState selectionContextSta
             if (activePriorities.Contains(t.Item.Priority) 
                 && (t.Item.Title.Contains(SearchText, StringComparison.OrdinalIgnoreCase) || string.IsNullOrEmpty(SearchText)))
             {
-                _ = AddToFilteredCollection(t);
+                _ = Dispatcher.UIThread.InvokeAsync(() => 
+                {
+                    FilteredTasks.Add(t);
+                });
             }
         }
     }
-
+    
     /// <summary>
     /// Adders
     /// </summary>
-    private async Task AddToCollection(List<TaskDto> tasks)
+    public async Task AddToCollection(List<TaskDto> tasks)
     {
         Tasks.Clear();
         FilteredTasks.Clear();
@@ -75,69 +73,12 @@ public sealed partial class TaskState(ISelectionContextState selectionContextSta
             await AddToCollection(task);
         }
     }
-
-    private async Task AddToCollection(TaskDto task)
+    public async Task AddToCollection(TaskDto task)
     {
         await Dispatcher.UIThread.InvokeAsync(() => 
         {
             Tasks.Add(task);
             FilteredTasks.Add(task);
         });
-    }
-
-    private async Task AddToFilteredCollection(TaskDto task)
-    {
-        await Dispatcher.UIThread.InvokeAsync(() => 
-        {
-            FilteredTasks.Add(task);
-        });
-    }
-    /// <summary>
-    /// Create Task Command
-    /// </summary>
-    public async Task CreateTask(AddTaskDto dto)
-    {
-        try
-        {
-            using var request = new HttpRequestMessage(HttpMethod.Post, "tasks");
-            request.Content = JsonContent.Create(dto);
-            
-            using var response = await httpClient.SendAsync(request, CancellationToken.None);
-        
-            response.EnsureSuccessStatusCode();
-        
-            var createdTask = await response.Content.ReadFromJsonAsync<Result<TaskDto>>(CancellationToken.None);
-            if (createdTask?.Value != null)
-            {
-                await AddToCollection(createdTask.Value);
-            }
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-        }
-    }
-    /// <summary>
-    /// Load Tasks
-    /// </summary>
-    public async Task LoadAsync()
-    {
-        try
-        {
-            using var request = new HttpRequestMessage(HttpMethod.Get, "tasks");
-            
-            using var response = await httpClient.SendAsync(request, CancellationToken.None);
-        
-            response.EnsureSuccessStatusCode();
-            
-            var result = await response.Content
-                .ReadFromJsonAsync<Result<List<TaskDto>>>(cancellationToken: CancellationToken.None);
-        
-            await AddToCollection(result?.Value ?? []);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex);
-        }
     }
 }
