@@ -104,19 +104,22 @@ public class App : Application
         sc.AddTransient<IInspectorCoordinator, InspectorCoordinator>();
 
         // Feature - Task
-        sc.AddSingleton<TaskFacadeViewModel>();
-        sc.AddSingleton<TaskGateway>();
         sc.AddSingleton<TaskState>();
         sc.AddTransient<CreateTaskState>();
+        sc.AddSingleton<TaskFacadeViewModel>();
+        sc.AddSingleton<TaskGateway>();
         sc.AddSingleton<TaskToolbarView>();
         sc.AddSingleton<TaskContentView>();
         sc.AddSingleton<CreateTaskView>();
         
-        
+        // Feature - Schedule
         sc.AddSingleton<SchedulerState>();
-        sc.AddSingleton<SchedulerToolbarViewModel>();
-        sc.AddSingleton<SchedulerContentViewModel>();
-        sc.AddSingleton<AddScheduleViewModel>();
+        sc.AddSingleton<CreateScheduleState>();
+        sc.AddSingleton<SchedulerFacadeViewModel>();
+        sc.AddSingleton<SchedulerGateway>();
+        sc.AddSingleton<SchedulerToolbarView>();
+        sc.AddSingleton<SchedulerContentView>();
+        sc.AddSingleton<CreateScheduleView>();
         
         // Utility
         sc.AddSingleton<NotificationViewModel>();

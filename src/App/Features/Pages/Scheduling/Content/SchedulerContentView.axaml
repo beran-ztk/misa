@@ -3,9 +3,9 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:scheduler="clr-namespace:Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;assembly=Contract"
-             xmlns:vm="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Scheduling.Content"
              x:Class="Misa.Ui.Avalonia.Features.Pages.Scheduling.Content.SchedulerContentView"
-             x:DataType="vm:SchedulerContentViewModel"
+             xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Scheduling.Root"
+             x:DataType="root:SchedulerFacadeViewModel"
              mc:Ignorable="d"
              Width="500"
              d:DesignWidth="800"
@@ -13,8 +13,8 @@
 
     <ScrollViewer>
         <Border Padding="12">
-            <ListBox ItemsSource="{Binding SchedulerState.Schedules}"
-                     SelectedItem="{Binding SchedulerState.SelectedItem}"
+            <ListBox ItemsSource="{Binding State.Schedules}"
+                     SelectedItem="{Binding State.SelectedItem}"
                      BorderThickness="0"
                      Background="Transparent">
                 <ListBox.ItemTemplate>

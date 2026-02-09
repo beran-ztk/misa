@@ -3,9 +3,9 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="Misa.Ui.Avalonia.Features.Pages.Scheduling.Add.AddScheduleView"
-             xmlns:add="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Scheduling.Add"
-             x:DataType="add:AddScheduleViewModel">
+             x:Class="Misa.Ui.Avalonia.Features.Pages.Scheduling.Add.CreateScheduleView"
+             xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Scheduling.Root"
+             x:DataType="root:SchedulerFacadeViewModel">
 
     <Border Classes="workspace-addpanel">
 
@@ -21,7 +21,7 @@
 
                 <Button Grid.Column="1"
                         Classes="workspace-addpanel-icon"
-                        Command="{Binding CancelCommand}">
+                        Command="{Binding CloseAddPanelCommand}">
                     <Image Source="{SvgImage /Assets/Icons/Common/cancel.svg}" />
                 </Button>
             </Grid>
@@ -30,7 +30,9 @@
                     Classes="panel-divider"/>
 
             <!-- Body -->
-            <ScrollViewer Grid.Row="2">
+            <ScrollViewer Grid.Row="2"
+                          Padding="10"
+                          DataContext="{Binding State.CreateScheduleState}">
                 <StackPanel Classes="workspace-addpanel-body"
                             Spacing="16">
 
@@ -262,10 +264,10 @@
                             Classes="confirm-cancel">
                     <Button Content="Cancel"
                             Classes="confirm-cancel-cancel"
-                            Command="{Binding CancelCommand}"/>
+                            Command="{Binding CloseAddPanelCommand}"/>
                     <Button Content="Create"
                             Classes="confirm-cancel-confirm"
-                            Command="{Binding ConfirmCommand}"/>
+                            Command="{Binding SubmitCreateScheduleCommand}"/>
                 </StackPanel>
 
             </Grid>

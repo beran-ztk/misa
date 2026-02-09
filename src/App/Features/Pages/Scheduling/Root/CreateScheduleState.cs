@@ -1,14 +1,13 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;
 using Misa.Ui.Avalonia.Common.Mappings;
 
-namespace Misa.Ui.Avalonia.Features.Pages.Scheduling.Add;
+namespace Misa.Ui.Avalonia.Features.Pages.Scheduling.Root;
 
-public partial class AddScheduleViewModel : ViewModelBase
+public sealed partial class CreateScheduleState : ViewModelBase
 {
     [ObservableProperty] private string _title = string.Empty;
     [ObservableProperty] private string? _payload;
@@ -66,9 +65,6 @@ public partial class AddScheduleViewModel : ViewModelBase
     [ObservableProperty] private bool _byMonthNov;
     [ObservableProperty] private bool _byMonthDec;
 
-    public event Action<AddScheduleDto>? Completed;
-    public event Action? Cancelled;
-
     partial void OnSelectedActionTypeChanged(ScheduleActionTypeDto value)
     {
         // später: payload picker / task builder etc.
@@ -91,72 +87,6 @@ public partial class AddScheduleViewModel : ViewModelBase
     {
         HasValidationError = false;
         ErrorMessage = string.Empty;
-    }
-
-    [RelayCommand]
-    private void Confirm()
-    {
-        try
-        {
-            ClearValidationError();
-
-            var trimmedTitle = Title.Trim();
-            if (string.IsNullOrWhiteSpace(trimmedTitle))
-            {
-                ShowValidationError("Please specify a title.");
-                return;
-            }
-
-            if (FrequencyInterval <= 0)
-            {
-                ShowValidationError("Frequency interval must be greater than 0");
-                return;
-            }
-
-            var byMonthDay = ParseByMonthDay();
-            if (HasValidationError) return;
-
-            var dto = new AddScheduleDto
-            {
-                Title = trimmedTitle,
-                TargetItemId = null,
-
-                ScheduleFrequencyType = SelectedFrequencyType,
-                FrequencyInterval = FrequencyInterval,
-
-                LookaheadLimit = LookaheadLimit,
-                OccurrenceCountLimit = OccurrenceCountLimit,
-
-                ActionType = SelectedActionType,
-                Payload = Payload,
-
-                MisfirePolicy = SelectedMisfirePolicy,
-                OccurrenceTtl = OccurrenceTtl,
-
-                StartTime = StartTime is null ? null : TimeOnly.FromTimeSpan(StartTime.Value),
-                EndTime = EndTime is null ? null : TimeOnly.FromTimeSpan(EndTime.Value),
-
-                ActiveFromLocal = ActiveFromDate.Add(ActiveFromTime),
-                ActiveUntilLocal = ActiveUntilDate?.Add(ActiveUntilTime ?? TimeSpan.Zero),
-
-                ByDay = BuildByDay(),
-                ByMonth = BuildByMonth(),
-                ByMonthDay = byMonthDay
-            };
-
-            Completed?.Invoke(dto);
-        }
-        catch (Exception e)
-        {
-            ShowValidationError($"Error: {e.Message}");
-        }
-    }
-
-    [RelayCommand]
-    private void Cancel()
-    {
-        Reset();
-        Cancelled?.Invoke();
     }
 
     public void Reset()
@@ -246,5 +176,47 @@ public partial class AddScheduleViewModel : ViewModelBase
         }
 
         return values.Distinct().OrderBy(x => x).ToArray();
+    }
+
+    public AddScheduleDto? TryGetValidatedRequestObject()
+    {
+        ClearValidationError();
+
+        var trimmedTitle = Title.Trim();
+        if (string.IsNullOrWhiteSpace(trimmedTitle))
+        {
+            ShowValidationError("Please specify a title.");
+            return null;
+        }
+        var byMonthDay = ParseByMonthDay();
+        if (HasValidationError) return null;
+
+        return new AddScheduleDto
+        {
+            Title = trimmedTitle,
+            TargetItemId = null,
+
+            ScheduleFrequencyType = SelectedFrequencyType,
+            FrequencyInterval = FrequencyInterval,
+
+            LookaheadLimit = LookaheadLimit,
+            OccurrenceCountLimit = OccurrenceCountLimit,
+
+            ActionType = SelectedActionType,
+            Payload = Payload,
+
+            MisfirePolicy = SelectedMisfirePolicy,
+            OccurrenceTtl = OccurrenceTtl,
+
+            StartTime = StartTime is null ? null : TimeOnly.FromTimeSpan(StartTime.Value),
+            EndTime = EndTime is null ? null : TimeOnly.FromTimeSpan(EndTime.Value),
+
+            ActiveFromLocal = ActiveFromDate.Add(ActiveFromTime),
+            ActiveUntilLocal = ActiveUntilDate?.Add(ActiveUntilTime ?? TimeSpan.Zero),
+
+            ByDay = BuildByDay(),
+            ByMonth = BuildByMonth(),
+            ByMonthDay = byMonthDay
+        };
     }
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Misa.Ui.Avalonia.Features.Pages.Scheduling.Content;
+using Misa.Ui.Avalonia.Features.Pages.Scheduling.Root;
 using Misa.Ui.Avalonia.Features.Pages.Tasks.Root;
 using Misa.Ui.Avalonia.Infrastructure.States;
 
@@ -16,7 +17,7 @@ public sealed class WorkspaceRouter(
     ShellState shell, 
     
     TaskFacadeViewModel task,
-    SchedulerContentViewModel sch)
+    SchedulerFacadeViewModel schedule)
 {
     public async Task Show(WorkspaceKind kind)
     {
@@ -27,7 +28,8 @@ public sealed class WorkspaceRouter(
                 shell.Workspace = task;
                 break;
             case WorkspaceKind.Scheduler:
-                shell.Workspace = sch;
+                await schedule.InitializeWorkspace();
+                shell.Workspace = schedule;
                 break;
             default:
                 throw new ArgumentOutOfRangeException(nameof(kind), kind, null);

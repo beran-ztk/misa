@@ -22,8 +22,8 @@ public sealed partial class TaskFacadeViewModel(
     [RelayCommand]
     private void RefreshTaskWindow()
     {
-        TaskState.SelectedTask = null;
         _ = GetAllTasksAsync();
+        TaskState.SelectedTask = null;
     }
 
     private async Task GetAllTasksAsync()
