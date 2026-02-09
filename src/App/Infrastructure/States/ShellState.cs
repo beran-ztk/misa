@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using Misa.Ui.Avalonia.Common.Mappings;
 
 namespace Misa.Ui.Avalonia.Infrastructure.States;
@@ -18,7 +19,11 @@ public partial class ShellState : ObservableObject
     
     [ObservableProperty] private Control? _panel;
     
-    [ObservableProperty] private Control? _modal;
+    [ObservableProperty] 
+    [NotifyPropertyChangedFor((nameof(IsModalOpen)))]
+    private Control? _modal;
+    public bool IsModalOpen => Modal is not null;
+    [RelayCommand] private void CloseModal() => Modal = null;
     [ObservableProperty] private ViewModelBase? _toast;
     [ObservableProperty] private ViewModelBase? _busy;
 }
