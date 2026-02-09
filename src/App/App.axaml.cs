@@ -49,7 +49,9 @@ public class App : Application
         // -------------------------
         // Infrastructure / Core
         // -------------------------
+        sc.AddTransient<RemoteProxy>();
         sc.AddSingleton<SignalRNotificationClient>();
+        
         sc.AddTransient<AuthenticationWindowViewModel>();
         
         sc.AddSingleton(new HttpClient

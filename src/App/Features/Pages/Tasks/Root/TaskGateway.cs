@@ -1,59 +1,30 @@
-using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Json;
-using System.Threading;
 using System.Threading.Tasks;
 using Misa.Contract.Features.Entities.Extensions.Items.Extensions.Tasks;
-using Misa.Contract.Shared.Results;
+using Misa.Ui.Avalonia.Infrastructure.Client;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Tasks.Root;
 
-public sealed class TaskGateway(HttpClient httpClient)
+public sealed class TaskGateway(RemoteProxy remoteProxy)
 {
-    public async Task<List<TaskDto>?> GetAllTasksAsync()
+    public async Task<List<TaskDto>> GetAllTasksAsync()
     {
-        try
-        {
-            using var request = new HttpRequestMessage(HttpMethod.Get, "tasks");
-
-            using var response = await httpClient.SendAsync(request, CancellationToken.None);
-
-            response.EnsureSuccessStatusCode();
-
-            var result = await response.Content
-                .ReadFromJsonAsync<Result<List<TaskDto>>>(cancellationToken: CancellationToken.None);
-
-            return result?.Value ?? [];
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex);
-        }
+        var request = new HttpRequestMessage(HttpMethod.Get, "tasks");
         
-        return null;
+        var response = await remoteProxy.SendAsync<List<TaskDto>?>(request);
+        
+        return response?.Value ?? [];
     }
     
     public async Task<TaskDto?> CreateTaskAsync(AddTaskDto dto)
     {
-        try
-        {
-            using var request = new HttpRequestMessage(HttpMethod.Post, "tasks");
-            request.Content = JsonContent.Create(dto);
-            
-            using var response = await httpClient.SendAsync(request, CancellationToken.None);
+        var request = new HttpRequestMessage(HttpMethod.Post, "tasks");
+        request.Content = JsonContent.Create(dto);
         
-            response.EnsureSuccessStatusCode();
-        
-            var createdTask = await response.Content.ReadFromJsonAsync<Result<TaskDto>>(CancellationToken.None);
+        var response = await remoteProxy.SendAsync<TaskDto?>(request);
             
-            return createdTask?.Value;
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-        }
-
-        return null;
+        return response?.Value;
     }
 }
