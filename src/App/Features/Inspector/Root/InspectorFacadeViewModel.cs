@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Net.Http;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using Misa.Contract.Features.Entities.Extensions.Items.Base;
 using Misa.Ui.Avalonia.Common.Mappings;
-using Misa.Ui.Avalonia.Features.Inspector.Features.Overview.Base;
+using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Base;
 using Misa.Ui.Avalonia.Infrastructure.States;
 
 namespace Misa.Ui.Avalonia.Features.Inspector.Root;
@@ -12,10 +13,9 @@ namespace Misa.Ui.Avalonia.Features.Inspector.Root;
 public sealed partial class InspectorFacadeViewModel : ViewModelBase
 {
     private ISelectionContextState ContextState { get; }
-    
     public InspectorGateway Gateway { get; }
-
     public InspectorState State { get; }
+    public InspectorEntryViewModel Entry { get; }
     public InspectorFacadeViewModel(
         ISelectionContextState  selectionContextState,
         InspectorGateway gateway, 
@@ -25,7 +25,7 @@ public sealed partial class InspectorFacadeViewModel : ViewModelBase
         Gateway = gateway;
         State = inspectorState;
         
-        State.Item = ItemDto.Empty();
+        Entry = new InspectorEntryViewModel(this);
 
         ContextState.PropertyChanged += (s, e) =>
         {
@@ -58,6 +58,6 @@ public sealed partial class InspectorFacadeViewModel : ViewModelBase
         State.Item = result.Item;
         State.Deadline = result.Deadline;
         
-        await InspectorOverViewModel.Session.LoadCurrentSessionAsync();
+        await Entry.Session.LoadCurrentSessionAsync();
     }
 }

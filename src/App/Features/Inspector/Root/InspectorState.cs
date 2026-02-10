@@ -9,9 +9,8 @@ public sealed partial class InspectorState : ObservableObject
 {
     [ObservableProperty] private int _selectedTabIndex;
 
-    [ObservableProperty] private ItemDto _item;
-    [ObservableProperty] private DeadlineDto _deadline;
+    [ObservableProperty] private ItemDto _item = ItemDto.Empty();
+    [ObservableProperty] private DeadlineDto? _deadline;
     
     [ObservableProperty] private CurrentSessionOverviewDto? _currentSessionOverview;
-
 }

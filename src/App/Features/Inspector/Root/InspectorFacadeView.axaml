@@ -1,62 +1,32 @@
 ﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d"
-             d:DesignWidth="800"
-             d:DesignHeight="450"
              x:Class="Misa.Ui.Avalonia.Features.Inspector.Root.InspectorFacadeView"
              xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Inspector.Root"
              x:DataType="root:InspectorFacadeViewModel">
 
-    <Border Padding="12"
-            BorderThickness="1"
-            CornerRadius="8">
+    <Border BorderThickness="1,0,0,0"
+            BorderBrush="{StaticResource BrushBorder}"
+            Background="{StaticResource BrushPrimaryBackground}">
 
         <TabControl SelectedIndex="{Binding State.SelectedTabIndex}">
 
-            <TabItem Header="Overview">
-                <ScrollViewer>
-                    <Border Padding="12"
-                            BorderThickness="1"
-                            CornerRadius="6">
-                        <TextBlock Text="Overview content placeholder"
-                                   TextWrapping="Wrap" />
-                    </Border>
-                </ScrollViewer>
+            <TabItem Header="Entry">
+                <ContentControl Content="{Binding Entry}"/>
             </TabItem>
 
             <TabItem Header="Discussion">
-                <ScrollViewer>
-                    <Border Padding="12"
-                            BorderThickness="1"
-                            CornerRadius="6">
-                        <TextBlock Text="Discussion content placeholder"
-                                   TextWrapping="Wrap" />
-                    </Border>
-                </ScrollViewer>
+                <TextBlock Text="Discussion content placeholder"
+                           TextWrapping="Wrap" />
             </TabItem>
 
             <TabItem Header="Activity">
-                <ScrollViewer>
-                    <Border Padding="12"
-                            BorderThickness="1"
-                            CornerRadius="6">
-                        <TextBlock Text="Activity content placeholder"
-                                   TextWrapping="Wrap" />
-                    </Border>
-                </ScrollViewer>
+                <TextBlock Text="Activity content placeholder"
+                           TextWrapping="Wrap" />
             </TabItem>
 
             <TabItem Header="Related">
-                <ScrollViewer>
-                    <Border Padding="12"
-                            BorderThickness="1"
-                            CornerRadius="6">
-                        <TextBlock Text="Related content placeholder"
-                                   TextWrapping="Wrap" />
-                    </Border>
-                </ScrollViewer>
+                <TextBlock Text="Related content placeholder"
+                           TextWrapping="Wrap" />
             </TabItem>
 
         </TabControl>

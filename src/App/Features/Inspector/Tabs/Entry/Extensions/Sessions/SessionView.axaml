@@ -1,12 +1,8 @@
 ﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d"
-             d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="Misa.Ui.Avalonia.Features.Inspector.Features.Overview.Extensions.Sessions.SessionView"
-             xmlns:sessions1="clr-namespace:Misa.Ui.Avalonia.Features.Inspector.Features.Overview.Extensions.Sessions"
-             x:DataType="sessions1:SessionViewModel"
+             x:Class="Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions.SessionView"
+             xmlns:sessions="clr-namespace:Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions"
+             x:DataType="sessions:SessionViewModel"
              x:Name="Root">
 
     <UserControl.Styles>
@@ -74,14 +70,12 @@
 
     <StackPanel Spacing="12">
 
-        <!-- Actions + Overview -->
         <Border Classes="session-card"
                 Margin="10">
 
             <StackPanel Spacing="12">
 
-                <!-- Action bar -->
-                <Border Classes="session-subcard">
+                <Border>
                     <StackPanel Orientation="Horizontal"
                                 Classes="session-actions">
 
@@ -255,42 +249,34 @@
                                       ColumnSpacing="12"
                                       DataContext="{Binding CurrentSessionOverviewDto.LatestClosedSession}">
 
+
                                     <TextBlock Grid.Row="0" Grid.Column="0"
                                                Classes="session-label"
-                                               Text="State"/>
-                                    <Border Grid.Row="0" Grid.Column="1"
-                                            Classes="session-pill">
-                                        <TextBlock Text="{Binding State}"
-                                                   Classes="session-value-strong"/>
-                                    </Border>
-
-                                    <TextBlock Grid.Row="1" Grid.Column="0"
-                                               Classes="session-label"
                                                Text="Efficiency"/>
-                                    <Border Grid.Row="1" Grid.Column="1"
+                                    <Border Grid.Row="0" Grid.Column="1"
                                             Classes="session-pill">
                                         <TextBlock Text="{Binding Efficiency}"/>
                                     </Border>
 
-                                    <TextBlock Grid.Row="2" Grid.Column="0"
+                                    <TextBlock Grid.Row="1" Grid.Column="0"
                                                Classes="session-label"
                                                Text="Concentration"/>
-                                    <Border Grid.Row="2" Grid.Column="1"
+                                    <Border Grid.Row="1" Grid.Column="1"
                                             Classes="session-pill">
                                         <TextBlock Text="{Binding Concentration}"/>
                                     </Border>
 
-                                    <TextBlock Grid.Row="3" Grid.Column="0"
+                                    <TextBlock Grid.Row="2" Grid.Column="0"
                                                Classes="session-label"
                                                Text="Summary"/>
-                                    <TextBlock Grid.Row="3" Grid.Column="1"
+                                    <TextBlock Grid.Row="2" Grid.Column="1"
                                                Text="{Binding Summary}"
                                                TextWrapping="Wrap"/>
 
-                                    <TextBlock Grid.Row="4" Grid.Column="0"
+                                    <TextBlock Grid.Row="3" Grid.Column="0"
                                                Classes="session-label"
                                                Text="Created"/>
-                                    <TextBlock Grid.Row="4" Grid.Column="1"
+                                    <TextBlock Grid.Row="3" Grid.Column="1"
                                                Text="{Binding CreatedAtUtc}"/>
                                 </Grid>
                             </Border>

@@ -5,16 +5,16 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Features.Entities.Extensions.Items.Features.Session;
 using Misa.Ui.Avalonia.Common.Mappings;
-using Misa.Ui.Avalonia.Features.Inspector.Features.Overview.Base;
+using Misa.Ui.Avalonia.Features.Inspector.Root;
 
-namespace Misa.Ui.Avalonia.Features.Inspector.Features.Overview.Extensions.Sessions;
+namespace Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions;
 
-public partial class SessionViewModel(InspectorOverViewModel parent) : ViewModelBase
+public partial class SessionViewModel(InspectorFacadeViewModel facade) : ViewModelBase
 {
-    private InspectorOverViewModel Parent { get; } = parent;
+    private InspectorFacadeViewModel Facade { get; } = facade;
 
     public CurrentSessionOverviewDto? CurrentSessionOverviewDto
-        => Parent.Parent.State.CurrentSessionOverview;
+        => Facade.State.CurrentSessionOverview;
 
     public bool HasActiveSession => CurrentSessionOverviewDto?.ActiveSession != null;
     public bool HasLatestClosedSession => CurrentSessionOverviewDto?.LatestClosedSession != null;
@@ -23,11 +23,11 @@ public partial class SessionViewModel(InspectorOverViewModel parent) : ViewModel
     {
         try
         {
-            var itemId = Parent.Parent.State.Item.Id;
+            var itemId = Facade.State.Item.Id;
 
-            var dto = await Parent.Parent.Gateway.GetCurrentSessionOverviewAsync(itemId);
+            var dto = await Facade.Gateway.GetCurrentSessionOverviewAsync(itemId);
 
-            Parent.Parent.State.CurrentSessionOverview = dto;
+            Facade.State.CurrentSessionOverview = dto;
             OnPropertyChanged(nameof(CurrentSessionOverviewDto));
             OnPropertyChanged(nameof(HasActiveSession));
             OnPropertyChanged(nameof(HasLatestClosedSession));
@@ -73,7 +73,7 @@ public partial class SessionViewModel(InspectorOverViewModel parent) : ViewModel
     {
         try
         {
-            var itemId = Parent.Parent.State.Item.Id;
+            var itemId = Facade.State.Item.Id;
 
             TimeSpan? plannedDuration = PlannedMinutes.HasValue
                 ? TimeSpan.FromMinutes(Convert.ToInt32(PlannedMinutes))
@@ -87,10 +87,10 @@ public partial class SessionViewModel(InspectorOverViewModel parent) : ViewModel
                 AutoStopReason
             );
 
-            await Parent.Parent.Gateway.StartSessionAsync(itemId, dto);
+            await Facade.Gateway.StartSessionAsync(itemId, dto);
 
             CloseStartSessionForm();
-            await Parent.Parent.Reload();
+            await Facade.Reload();
         }
         catch (Exception e)
         {
@@ -123,14 +123,14 @@ public partial class SessionViewModel(InspectorOverViewModel parent) : ViewModel
     {
         try
         {
-            var itemId = Parent.Parent.State.Item.Id;
+            var itemId = Facade.State.Item.Id;
 
             var dto = new PauseSessionDto(itemId, PauseReason);
 
-            await Parent.Parent.Gateway.PauseSessionAsync(itemId, dto);
+            await Facade.Gateway.PauseSessionAsync(itemId, dto);
 
             ClosePauseSessionForm();
-            await Parent.Parent.Reload();
+            await Facade.Reload();
         }
         catch (Exception e)
         {
@@ -144,11 +144,11 @@ public partial class SessionViewModel(InspectorOverViewModel parent) : ViewModel
     {
         try
         {
-            var itemId = Parent.Parent.State.Item.Id;
+            var itemId = Facade.State.Item.Id;
 
-            await Parent.Parent.Gateway.ContinueSessionAsync(itemId);
+            await Facade.Gateway.ContinueSessionAsync(itemId);
 
-            await Parent.Parent.Reload();
+            await Facade.Reload();
         }
         catch (Exception e)
         {
@@ -187,7 +187,7 @@ public partial class SessionViewModel(InspectorOverViewModel parent) : ViewModel
     {
         try
         {
-            var itemId = Parent.Parent.State.Item.Id;
+            var itemId = Facade.State.Item.Id;
 
             var dto = new StopSessionDto(
                 itemId,
@@ -196,10 +196,10 @@ public partial class SessionViewModel(InspectorOverViewModel parent) : ViewModel
                 Summary
             );
 
-            await Parent.Parent.Gateway.StopSessionAsync(itemId, dto);
+            await Facade.Gateway.StopSessionAsync(itemId, dto);
 
             CloseStopSessionForm();
-            await Parent.Parent.Reload();
+            await Facade.Reload();
         }
         catch (Exception e)
         {

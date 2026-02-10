@@ -1,0 +1,51 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:base="clr-namespace:Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Base"
+             x:Class="Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Base.InspectorEntryView"
+             x:DataType="base:InspectorEntryViewModel">
+
+    <Border Background="{StaticResource BrushPrimaryBackground}">
+        <Grid RowDefinitions="Auto,*">
+
+            <!-- Header -->
+            <Border Grid.Row="0"
+                    Height="45"
+                    BorderBrush="{StaticResource BrushBorder}"
+                    BorderThickness="1"
+                    Background="{StaticResource BrushPrimaryBackgroundLight}">
+
+                <Grid ColumnDefinitions="*,Auto">
+                    <!-- Title area -->
+                    <TextBlock Grid.Column="0"
+                               Text="{Binding Facade.State.Item.Title}"
+                               VerticalAlignment="Center" />
+
+                    <!-- Quick actions area -->
+                    <StackPanel Grid.Column="1"
+                                Orientation="Horizontal"
+                                VerticalAlignment="Center">
+                        <Button Classes="workspace-toolbar-icon">
+                            <Image Source="{SvgImage /Assets/Icons/Common/archive.svg}" />
+                        </Button>
+                        <Button Classes="workspace-toolbar-icon">
+                            <Image Source="{SvgImage /Assets/Icons/Common/trash.svg}" />
+                        </Button>
+                    </StackPanel>
+                </Grid>
+
+            </Border>
+
+            <!-- Body -->
+            <ScrollViewer Grid.Row="1"
+                          VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled">
+
+                <StackPanel Spacing="12">
+                    <ContentControl Content="{Binding Session}"/>
+                </StackPanel>
+            </ScrollViewer>
+
+        </Grid>
+    </Border>
+
+</UserControl>

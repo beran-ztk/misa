@@ -1,6 +1,6 @@
 ﻿using Avalonia.Controls;
 
-namespace Misa.Ui.Avalonia.Features.Inspector.Features.Overview.Extensions.Sessions;
+namespace Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions;
 
 public partial class SessionView : UserControl
 {
