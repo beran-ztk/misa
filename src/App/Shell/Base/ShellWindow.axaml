@@ -32,7 +32,10 @@
                 
                 <ContentControl Grid.Column="2"
                                 Grid.Row="0"
-                                Content="{Binding Inspector}"/>
+                                Width="600"
+                                MaxWidth="1000"
+                                Content="{Binding Inspector}"
+                                IsVisible="{Binding SelectionContextHasId}"/>
                 
                 <ContentControl Grid.Column="3"
                                 Grid.Row="0"
