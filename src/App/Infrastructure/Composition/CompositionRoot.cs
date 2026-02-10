@@ -103,6 +103,7 @@ public static class CompositionRoot
 
         sc.AddTransient<InspectorViewModel>();
         sc.AddSingleton<InspectorGateway>();
+        sc.AddSingleton<InspectorState>();
     }
 
     private static void AddTasksFeature(this IServiceCollection sc)

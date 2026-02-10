@@ -16,7 +16,9 @@ public sealed partial class InspectorViewModel : ViewModelBase
     private readonly IInspectorItemExtensionVmFactory _extensionFactory;
     public InspectorOverViewModel InspectorOverViewModel { get; }
     private ISelectionContextState ContextState { get; }
-    private readonly InspectorGateway _gateway;
+    
+    public InspectorGateway Gateway { get; }
+
     public InspectorState State { get; }
     public HttpClient HttpClient { get; }
     public InspectorViewModel(
@@ -27,7 +29,7 @@ public sealed partial class InspectorViewModel : ViewModelBase
         HttpClient httpClient)
     {
         ContextState = selectionContextState;
-        _gateway = gateway;
+        Gateway = gateway;
         State = inspectorState;
         _extensionFactory = extensionFactory;
         HttpClient = httpClient;
@@ -48,6 +50,8 @@ public sealed partial class InspectorViewModel : ViewModelBase
         InspectorOverViewModel.Description.Descriptions.Clear();
         State.Extension = null;
         State.SelectedTabIndex = 0;
+        
+        State.CurrentSessionOverview = null;
     }
     public async Task Reload()
     {
@@ -56,7 +60,7 @@ public sealed partial class InspectorViewModel : ViewModelBase
     public async Task LoadAsync(Guid? itemId, CancellationToken ct)
     {
         if (itemId is null) return;
-        var result = await _gateway.GetDetailsAsync((Guid)itemId);
+        var result = await Gateway.GetDetailsAsync((Guid)itemId);
         
         if (result is null)
         {

@@ -1,13 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Net.Http;
-using System.Net.Http.Json;
-using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Features.Entities.Extensions.Items.Features.Session;
-using Misa.Contract.Shared.Results;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Inspector.Features.Overview.Base;
 
@@ -16,32 +12,23 @@ namespace Misa.Ui.Avalonia.Features.Inspector.Features.Overview.Extensions.Sessi
 public partial class SessionViewModel(InspectorOverViewModel parent) : ViewModelBase
 {
     private InspectorOverViewModel Parent { get; } = parent;
-    [ObservableProperty] private CurrentSessionOverviewDto _currentSessionOverviewDto = null!;
-    public bool HasActiveSession => CurrentSessionOverviewDto.ActiveSession != null;
-    public bool HasLatestClosedSession => CurrentSessionOverviewDto.LatestClosedSession != null;
+
+    public CurrentSessionOverviewDto? CurrentSessionOverviewDto
+        => Parent.Parent.State.CurrentSessionOverview;
+
+    public bool HasActiveSession => CurrentSessionOverviewDto?.ActiveSession != null;
+    public bool HasLatestClosedSession => CurrentSessionOverviewDto?.LatestClosedSession != null;
 
     public async Task LoadCurrentSessionAsync()
     {
         try
         {
-            using var request = new HttpRequestMessage(
-                HttpMethod.Get,
-                $"items/{Parent.Parent.State.Item.Id}/overview/session");
-        
-            var response = await Parent.Parent.HttpClient
-                .SendAsync(request, CancellationToken.None);
-        
-            response.EnsureSuccessStatusCode();
-            
-            var result = await response.Content
-                .ReadFromJsonAsync<Result<CurrentSessionOverviewDto>>(cancellationToken: CancellationToken.None);
-        
-            if (result?.Value is null)
-            {
-                return;
-            }
-            
-            CurrentSessionOverviewDto = result.Value;
+            var itemId = Parent.Parent.State.Item.Id;
+
+            var dto = await Parent.Parent.Gateway.GetCurrentSessionOverviewAsync(itemId);
+
+            Parent.Parent.State.CurrentSessionOverview = dto;
+            OnPropertyChanged(nameof(CurrentSessionOverviewDto));
             OnPropertyChanged(nameof(HasActiveSession));
             OnPropertyChanged(nameof(HasLatestClosedSession));
         }
@@ -53,7 +40,7 @@ public partial class SessionViewModel(InspectorOverViewModel parent) : ViewModel
 
     // Start Session
     [ObservableProperty] private bool _isStartSessionFormOpen;
-    
+
     [ObservableProperty] private int? _plannedMinutes;
     [ObservableProperty] private string? _objective;
     [ObservableProperty] private bool _stopAutomatically;
@@ -66,46 +53,42 @@ public partial class SessionViewModel(InspectorOverViewModel parent) : ViewModel
         StopAutomatically = false;
         AutoStopReason = null;
     }
-    
+
     [RelayCommand]
     private void ShowStartSessionForm()
     {
         IsStartSessionFormOpen = true;
         ResetStartSessionContext();
     }
+
     [RelayCommand]
     private void CloseStartSessionForm()
     {
         IsStartSessionFormOpen = false;
         ResetStartSessionContext();
     }
+
     [RelayCommand]
     private async Task StartSession()
     {
         try
         {
+            var itemId = Parent.Parent.State.Item.Id;
+
             TimeSpan? plannedDuration = PlannedMinutes.HasValue
                 ? TimeSpan.FromMinutes(Convert.ToInt32(PlannedMinutes))
                 : null;
-            
+
             var dto = new StartSessionDto(
-                Parent.Parent.State.Item.Id, 
-                plannedDuration, 
+                itemId,
+                plannedDuration,
                 Objective,
-                StopAutomatically, 
+                StopAutomatically,
                 AutoStopReason
             );
-        
-            using var request = new HttpRequestMessage(
-                HttpMethod.Post,
-                $"items/{Parent.Parent.State.Item.Id}/sessions/start");
-            request.Content = JsonContent.Create(dto);
-            
-            var response = await Parent.Parent.HttpClient
-                .SendAsync(request, CancellationToken.None);
-        
-            response.EnsureSuccessStatusCode();
-            
+
+            await Parent.Parent.Gateway.StartSessionAsync(itemId, dto);
+
             CloseStartSessionForm();
             await Parent.Parent.Reload();
         }
@@ -114,47 +97,38 @@ public partial class SessionViewModel(InspectorOverViewModel parent) : ViewModel
             Console.WriteLine(e);
         }
     }
-    
+
     // Pause Session
     [ObservableProperty] private bool _isPauseSessionFormOpen;
     [ObservableProperty] private string? _pauseReason;
-    private void ResetPauseSessionContext()
-    {
-        PauseReason = null;
-    }
+
+    private void ResetPauseSessionContext() => PauseReason = null;
+
     [RelayCommand]
     private void ShowPauseSessionForm()
     {
         IsPauseSessionFormOpen = true;
         ResetPauseSessionContext();
     }
+
     [RelayCommand]
     private void ClosePauseSessionForm()
     {
         IsPauseSessionFormOpen = false;
         ResetPauseSessionContext();
     }
-    
+
     [RelayCommand]
     private async Task PauseSession()
     {
         try
         {
-            var dto = new PauseSessionDto(
-                Parent.Parent.State.Item.Id,
-                PauseReason
-            );
-        
-            using var request = new HttpRequestMessage(
-                HttpMethod.Post,
-                $"items/{Parent.Parent.State.Item.Id}/sessions/pause");
-            request.Content = JsonContent.Create(dto);
-        
-            var response = await Parent.Parent.HttpClient
-                .SendAsync(request, CancellationToken.None);
-        
-            response.EnsureSuccessStatusCode();
-        
+            var itemId = Parent.Parent.State.Item.Id;
+
+            var dto = new PauseSessionDto(itemId, PauseReason);
+
+            await Parent.Parent.Gateway.PauseSessionAsync(itemId, dto);
+
             ClosePauseSessionForm();
             await Parent.Parent.Reload();
         }
@@ -163,22 +137,17 @@ public partial class SessionViewModel(InspectorOverViewModel parent) : ViewModel
             Console.WriteLine(e);
         }
     }
-    
+
     // Continue Session
     [RelayCommand]
     private async Task ContinueSession()
     {
         try
         {
-            using var request = new HttpRequestMessage(
-                HttpMethod.Post,
-                $"items/{Parent.Parent.State.Item.Id}/sessions/continue");
-        
-            var response = await Parent.Parent.HttpClient
-                .SendAsync(request, CancellationToken.None);
-        
-            response.EnsureSuccessStatusCode();
-        
+            var itemId = Parent.Parent.State.Item.Id;
+
+            await Parent.Parent.Gateway.ContinueSessionAsync(itemId);
+
             await Parent.Parent.Reload();
         }
         catch (Exception e)
@@ -186,53 +155,49 @@ public partial class SessionViewModel(InspectorOverViewModel parent) : ViewModel
             Console.WriteLine(e);
         }
     }
-    
+
     // Stop Session
     [ObservableProperty] private bool _isStopSessionFormOpen;
-    
+
     [ObservableProperty] private string? _summary;
-    [ObservableProperty] private EfficiencyContract _selectedEfficiency; 
+    [ObservableProperty] private EfficiencyContract _selectedEfficiency;
     [ObservableProperty] private ConcentrationContract _selectedConcentration;
+
     public IReadOnlyList<EfficiencyContract> Efficiencies { get; } = Enum.GetValues<EfficiencyContract>();
     public IReadOnlyList<ConcentrationContract> Concentrations { get; } = Enum.GetValues<ConcentrationContract>();
-    private void ResetStopSessionContext()
-    {
-        Summary = null;
-    }
+
+    private void ResetStopSessionContext() => Summary = null;
+
     [RelayCommand]
     private void ShowStopSessionForm()
     {
         IsStopSessionFormOpen = true;
         ResetStopSessionContext();
     }
+
     [RelayCommand]
     private void CloseStopSessionForm()
     {
         IsStopSessionFormOpen = false;
         ResetStopSessionContext();
     }
+
     [RelayCommand]
     private async Task StopSession()
     {
         try
         {
+            var itemId = Parent.Parent.State.Item.Id;
+
             var dto = new StopSessionDto(
-                Parent.Parent.State.Item.Id,
+                itemId,
                 SelectedEfficiency,
                 SelectedConcentration,
                 Summary
             );
-        
-            using var request = new HttpRequestMessage(
-                HttpMethod.Post,
-                $"items/{Parent.Parent.State.Item.Id}/sessions/stop");
-            request.Content = JsonContent.Create(dto);
-        
-            var response = await Parent.Parent.HttpClient
-                .SendAsync(request, CancellationToken.None);
-        
-            response.EnsureSuccessStatusCode();
-        
+
+            await Parent.Parent.Gateway.StopSessionAsync(itemId, dto);
+
             CloseStopSessionForm();
             await Parent.Parent.Reload();
         }
