@@ -40,12 +40,6 @@ public partial class InspectorOverViewModel : ViewModelBase
     public bool HasTaskExtension => TaskExtension is not null;
     public bool HasDeadline => Parent.State.Deadline.DueAtUtc is not null;
 
-    [RelayCommand]
-    private void CopyId()
-    {
-        // Parent.EntityDetailHost.NavigationService.ClipboardService.SetTextAsync(Parent.Item.Id.ToString());
-    }
-    
     // Edit State
     [ObservableProperty] private bool _isEditStateOpen;
     [ObservableProperty] private int _stateId;

@@ -47,26 +47,23 @@ public partial class DescriptionViewModel(InspectorOverViewModel parent) : ViewM
 
         try
         {
-            var dto = new DescriptionCreateDto(Parent.Parent.State.Item.Id, Description.Trim());
+            var dto = new DescriptionCreateDto(
+                Parent.Parent.State.Item.Id,
+                Description.Trim()
+            );
 
-            using var request = new HttpRequestMessage(HttpMethod.Post, "entities/description")
-            {
-                Content = JsonContent.Create(dto)
-            };
-
-            using var response = await Parent.Parent.HttpClient.SendAsync(request, CancellationToken.None);
-
-            response.EnsureSuccessStatusCode();
-
-            var result = await response.Content.ReadFromJsonAsync<Result<DescriptionDto>>();
-            if (result?.Value is null)
+            var created = await Parent.Parent.Gateway.CreateDescriptionAsync(dto);
+            if (created is null)
                 return;
 
-            // Schutz: falls der gleiche Eintrag schon existiert, nicht nochmal hinzufügen
-            if (Descriptions.Any(x => x.Id == result.Value.Id))
+            if (Descriptions.Any(x => x.Id == created.Id))
                 return;
 
-            Descriptions.Add(new DescriptionItemViewModel(this, result.Value));
+            Descriptions.Add(new DescriptionItemViewModel(this, created));
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
         }
         finally
         {
@@ -133,36 +130,38 @@ public sealed partial class DescriptionItemViewModel : ViewModelBase
         if (!CanSave)
             return;
 
-        var newText = EditText.Trim();
-
-        var dto = new DescriptionUpdateDto(
-            Id: Id,
-            Content: newText
-        );
-
-        using var request = new HttpRequestMessage(HttpMethod.Put, "entities/description")
+        try
         {
-            Content = JsonContent.Create(dto)
-        };
+            var newText = EditText.Trim();
 
-        using var response = await Parent.Parent.Parent.HttpClient
-            .SendAsync(request, CancellationToken.None);
+            var dto = new DescriptionUpdateDto(
+                Id: Id,
+                Content: newText
+            );
 
-        response.EnsureSuccessStatusCode();
+            await Parent.Parent.Parent.Gateway.UpdateDescriptionAsync(dto);
 
-        Content = newText;
-        IsEditOpen = false;
-        EditText = newText;
+            Content = newText;
+            IsEditOpen = false;
+            EditText = newText;
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
     }
 
     [RelayCommand]
     private async Task Delete()
     {
-        using var response = await Parent.Parent.Parent.HttpClient
-            .DeleteAsync($"entities/description/{Id}", CancellationToken.None);
-
-        response.EnsureSuccessStatusCode();
-
-        Parent.Descriptions.Remove(this);
+        try
+        {
+            await Parent.Parent.Parent.Gateway.DeleteDescriptionAsync(Id);
+            Parent.Descriptions.Remove(this);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
     }
 }

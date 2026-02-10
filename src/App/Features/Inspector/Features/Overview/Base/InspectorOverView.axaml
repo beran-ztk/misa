@@ -129,13 +129,6 @@
                                    Text="{Binding Parent.State.Item.Id}"
                                    Classes="misa-value"
                                    TextWrapping="Wrap"/>
-                        <Button Grid.Row="0" Grid.Column="2"
-                                Classes="misa-action"
-                                ToolTip.Tip="Copy"
-                                Command="{Binding CopyIdCommand}">
-                            <Image Width="16" Height="16"
-                                   Source="{SvgImage /Assets/Icons/Common/copy.svg}"/>
-                        </Button>
 
                         <!-- Title -->
                         <TextBlock Grid.Row="1" Grid.Column="0"
