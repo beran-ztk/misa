@@ -54,9 +54,7 @@ public partial class DescriptionViewModel(InspectorOverViewModel parent) : ViewM
                 Content = JsonContent.Create(dto)
             };
 
-            using var response = await Parent.Parent.NavigationService.NavigationStore
-                .HttpClient
-                .SendAsync(request, CancellationToken.None);
+            using var response = await Parent.Parent.HttpClient.SendAsync(request, CancellationToken.None);
 
             response.EnsureSuccessStatusCode();
 
@@ -147,8 +145,7 @@ public sealed partial class DescriptionItemViewModel : ViewModelBase
             Content = JsonContent.Create(dto)
         };
 
-        using var response = await Parent.Parent.Parent.NavigationService.NavigationStore
-            .HttpClient
+        using var response = await Parent.Parent.Parent.HttpClient
             .SendAsync(request, CancellationToken.None);
 
         response.EnsureSuccessStatusCode();
@@ -161,8 +158,7 @@ public sealed partial class DescriptionItemViewModel : ViewModelBase
     [RelayCommand]
     private async Task Delete()
     {
-        using var response = await Parent.Parent.Parent.NavigationService.NavigationStore
-            .HttpClient
+        using var response = await Parent.Parent.Parent.HttpClient
             .DeleteAsync($"entities/description/{Id}", CancellationToken.None);
 
         response.EnsureSuccessStatusCode();

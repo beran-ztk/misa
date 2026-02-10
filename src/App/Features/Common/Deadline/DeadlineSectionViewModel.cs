@@ -83,7 +83,7 @@ public sealed partial class DeadlineSectionViewModel : ViewModelBase
             Content = JsonContent.Create(dto)
         };
 
-        using var response = await Parent.Parent.NavigationService.NavigationStore.HttpClient
+        using var response = await Parent.Parent.HttpClient
             .SendAsync(request, CancellationToken.None);
 
         response.EnsureSuccessStatusCode();
@@ -102,7 +102,7 @@ public sealed partial class DeadlineSectionViewModel : ViewModelBase
 
         var targetId = Parent.Parent.Item.Id;
 
-        using var response = await Parent.Parent.NavigationService.NavigationStore.HttpClient
+        using var response = await Parent.Parent.HttpClient
             .DeleteAsync($"scheduling/once/{targetId}", CancellationToken.None);
 
         response.EnsureSuccessStatusCode();

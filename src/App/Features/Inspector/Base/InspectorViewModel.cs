@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Net;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -8,7 +10,6 @@ using Misa.Contract.Shared.Results;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Inspector.Common;
 using Misa.Ui.Avalonia.Features.Inspector.Features.Overview.Base;
-using Misa.Ui.Avalonia.Infrastructure.Navigation;
 
 namespace Misa.Ui.Avalonia.Features.Inspector.Base;
 
@@ -24,13 +25,13 @@ public partial class InspectorViewModel : ViewModelBase
 
     private readonly IInspectorClient _client;
     private readonly IInspectorItemExtensionVmFactory _extensionFactory;
-    public readonly INavigationService NavigationService;
-
-    public InspectorViewModel(IInspectorClient client, IInspectorItemExtensionVmFactory extensionFactory, INavigationService navigationService)
+public HttpClient HttpClient { get; }
+    public InspectorViewModel(IInspectorClient client, IInspectorItemExtensionVmFactory extensionFactory, HttpClient httpClient)
     {
         _client = client;
         _extensionFactory = extensionFactory;
-        NavigationService = navigationService;
+        HttpClient = httpClient;
+        
 
         Item = ItemDto.Empty();
         InspectorOverViewModel = new InspectorOverViewModel(this);

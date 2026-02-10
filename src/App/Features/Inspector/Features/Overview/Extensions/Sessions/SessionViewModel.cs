@@ -28,8 +28,7 @@ public partial class SessionViewModel(InspectorOverViewModel parent) : ViewModel
                 HttpMethod.Get,
                 $"items/{Parent.Parent.Item.Id}/overview/session");
         
-            var response = await Parent.Parent.NavigationService.NavigationStore
-                .HttpClient
+            var response = await Parent.Parent.HttpClient
                 .SendAsync(request, CancellationToken.None);
         
             response.EnsureSuccessStatusCode();
@@ -86,7 +85,7 @@ public partial class SessionViewModel(InspectorOverViewModel parent) : ViewModel
         try
         {
             TimeSpan? plannedDuration = PlannedMinutes.HasValue
-                ? TimeSpan.FromMinutes(Convert.ToInt32((object?)PlannedMinutes))
+                ? TimeSpan.FromMinutes(Convert.ToInt32(PlannedMinutes))
                 : null;
             
             var dto = new StartSessionDto(
@@ -102,8 +101,7 @@ public partial class SessionViewModel(InspectorOverViewModel parent) : ViewModel
                 $"items/{Parent.Parent.Item.Id}/sessions/start");
             request.Content = JsonContent.Create(dto);
             
-            var response = await Parent.Parent.NavigationService.NavigationStore
-                .HttpClient
+            var response = await Parent.Parent.HttpClient
                 .SendAsync(request, CancellationToken.None);
         
             response.EnsureSuccessStatusCode();
@@ -152,8 +150,7 @@ public partial class SessionViewModel(InspectorOverViewModel parent) : ViewModel
                 $"items/{Parent.Parent.Item.Id}/sessions/pause");
             request.Content = JsonContent.Create(dto);
         
-            var response = await Parent.Parent.NavigationService.NavigationStore
-                .HttpClient
+            var response = await Parent.Parent.HttpClient
                 .SendAsync(request, CancellationToken.None);
         
             response.EnsureSuccessStatusCode();
@@ -177,8 +174,7 @@ public partial class SessionViewModel(InspectorOverViewModel parent) : ViewModel
                 HttpMethod.Post,
                 $"items/{Parent.Parent.Item.Id}/sessions/continue");
         
-            var response = await Parent.Parent.NavigationService.NavigationStore
-                .HttpClient
+            var response = await Parent.Parent.HttpClient
                 .SendAsync(request, CancellationToken.None);
         
             response.EnsureSuccessStatusCode();
@@ -232,8 +228,7 @@ public partial class SessionViewModel(InspectorOverViewModel parent) : ViewModel
                 $"items/{Parent.Parent.Item.Id}/sessions/stop");
             request.Content = JsonContent.Create(dto);
         
-            var response = await Parent.Parent.NavigationService.NavigationStore
-                .HttpClient
+            var response = await Parent.Parent.HttpClient
                 .SendAsync(request, CancellationToken.None);
         
             response.EnsureSuccessStatusCode();

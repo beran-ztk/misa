@@ -1,36 +1,13 @@
 using System;
 using System.Linq;
-using System.Net.Http;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
 using Microsoft.Extensions.DependencyInjection;
-using Misa.Ui.Avalonia.Features.Inspector.Common;
-using Misa.Ui.Avalonia.Features.Pages.Common;
-using Misa.Ui.Avalonia.Features.Pages.Scheduling.Content;
-using Misa.Ui.Avalonia.Features.Pages.Scheduling.Create;
-using Misa.Ui.Avalonia.Features.Pages.Scheduling.Root;
-using Misa.Ui.Avalonia.Features.Pages.Scheduling.Toolbar;
-using Misa.Ui.Avalonia.Features.Pages.Tasks.Content;
-using Misa.Ui.Avalonia.Features.Pages.Tasks.Create;
-using Misa.Ui.Avalonia.Features.Pages.Tasks.Root;
-using Misa.Ui.Avalonia.Features.Pages.Tasks.Toolbar;
-using Misa.Ui.Avalonia.Infrastructure.Client;
 using Misa.Ui.Avalonia.Infrastructure.Composition;
 using Misa.Ui.Avalonia.Infrastructure.Messaging;
-using Misa.Ui.Avalonia.Infrastructure.Navigation;
-using Misa.Ui.Avalonia.Infrastructure.Platform;
-using Misa.Ui.Avalonia.Infrastructure.States;
-using Misa.Ui.Avalonia.Infrastructure.Time;
-using Misa.Ui.Avalonia.Infrastructure.UI;
 using Misa.Ui.Avalonia.Shell.Authentication;
-using Misa.Ui.Avalonia.Shell.Base;
-using Misa.Ui.Avalonia.Shell.Components;
-using InspectorViewModel = Misa.Ui.Avalonia.Features.Inspector.Base.InspectorViewModel;
-using NavigationStore = Misa.Ui.Avalonia.Infrastructure.States.NavigationStore;
-using NotificationViewModel = Misa.Ui.Avalonia.Features.Utilities.Notifications.NotificationViewModel;
-using SelectionContextState = Misa.Ui.Avalonia.Infrastructure.States.SelectionContextState;
 
 namespace Misa.Ui.Avalonia;
 
@@ -45,111 +22,20 @@ public class App : Application
     public override void OnFrameworkInitializationCompleted()
     {
         const string baseAddress = "http://localhost:4500";
-        var sc = new ServiceCollection();
-        
-        // -------------------------
-        // Infrastructure / Core
-        // -------------------------
-        sc.AddSingleton<PanelProxy>();
-        sc.AddSingleton<IOverlayCloser, OverlayCloser>();
-        sc.AddSingleton<ModalProxy>();
-        sc.AddSingleton<IPanelFactory, PanelFactory>();
-        sc.AddSingleton<IModalFactory, ModalFactory>();
-        sc.AddSingleton<RemoteProxy>();
-        sc.AddSingleton<SignalRNotificationClient>();
-        sc.AddTransient<PanelHostView>();
-        sc.AddTransient<ModalHostView>();
-        
-        sc.AddTransient<AuthenticationWindowViewModel>();
-        
-        sc.AddSingleton(new HttpClient
-        {
-            BaseAddress = new Uri(baseAddress)
-        });
-
-        // Shell
-        sc.AddSingleton<AppState>();
-        sc.AddSingleton<ShellState>();
-        sc.AddSingleton<UserState>();
-        
-        sc.AddSingleton<WorkspaceRouter>();
-        
-        sc.AddSingleton<AuthenticationWindowViewModel>();
-        sc.AddSingleton<ShellWindowViewModel>();
-        sc.AddSingleton<HeaderViewModel>();
-        sc.AddSingleton<WorkspaceNavigationViewModel>();
-        sc.AddSingleton<UtilityNavigationViewModel>();
-        sc.AddSingleton<FooterViewModel>();
-
-        sc.AddSingleton<AuthenticationWindow>(sp =>
-        {
-            var vm = sp.GetRequiredService<AuthenticationWindowViewModel>();
-            return new AuthenticationWindow { DataContext = vm };
-        });
-        sc.AddSingleton<ShellWindow>(sp =>
-        {
-            var vm = sp.GetRequiredService<ShellWindowViewModel>();
-            return new ShellWindow { DataContext = vm };
-        });
-        
-        // Infrastructure
-        sc.AddSingleton<NavigationStore>();
-        sc.AddSingleton<IClipboardService, ClipboardService>();
-        sc.AddSingleton<INavigationService, NavigationService>();
-        sc.AddSingleton<IAuthenticationService, AuthenticationService>();
-        sc.AddSingleton<TimeZoneService>();
-
-        // -------------------------
-        // Details (Selection + Clients + VMs)
-        // -------------------------
-        sc.AddSingleton<ISelectionContextState, SelectionContextState>();
-
-        sc.AddSingleton<IInspectorItemExtensionVmFactory, InspectorItemExtensionVmFactory>();
-        sc.AddTransient<IInspectorClient, InspectorClient>();
-
-        sc.AddTransient<InspectorViewModel>();
-        sc.AddTransient<IInspectorCoordinator, InspectorCoordinator>();
-
-        // Feature - Task
-        sc.AddSingleton<TaskState>();
-        sc.AddTransient<CreateTaskState>();
-        sc.AddSingleton<TaskFacadeViewModel>();
-        sc.AddSingleton<TaskGateway>();
-        sc.AddSingleton<TaskToolbarView>();
-        sc.AddSingleton<TaskContentView>();
-        
-        sc.AddTransient<CreateTaskView>();
-        sc.AddTransient<CreateTaskViewModel>();
-        
-        // Feature - Schedule
-        sc.AddSingleton<SchedulerState>();
-        sc.AddTransient<CreateScheduleState>();
-        sc.AddSingleton<SchedulerFacadeViewModel>();
-        sc.AddSingleton<SchedulerGateway>();
-        sc.AddSingleton<SchedulerToolbarView>();
-        sc.AddSingleton<SchedulerContentView>();
-        
-        sc.AddTransient<CreateScheduleView>();
-        sc.AddTransient<CreateScheduleViewModel>();
-        
-        // Utility
-        sc.AddSingleton<NotificationViewModel>();
-        
-        Services = sc.BuildServiceProvider();
+        Services = CompositionRoot.Build(baseAddress);
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             DisableAvaloniaDataAnnotationValidation();
 
             desktop.MainWindow = Services.GetRequiredService<AuthenticationWindow>();
-            
+
             var signal = Services.GetRequiredService<SignalRNotificationClient>();
             _ = signal.StartAsync(baseAddress);
         }
 
         base.OnFrameworkInitializationCompleted();
     }
-
 
     private void DisableAvaloniaDataAnnotationValidation()
     {

@@ -5,24 +5,17 @@ using System.Threading;
 using System.Threading.Tasks;
 using Misa.Contract.Features.Authentication;
 using Misa.Contract.Shared.Results;
-using Misa.Ui.Avalonia.Infrastructure.Navigation;
 
 namespace Misa.Ui.Avalonia.Infrastructure.Client;
 
-public sealed class AuthenticationService : IAuthenticationService
+public sealed class AuthenticationService(HttpClient httpClient) : IAuthenticationService
 {
-    private INavigationService NavigationService { get; }
-
-    public AuthenticationService(INavigationService navigationService)
-    {
-        NavigationService = navigationService;
-    }
     public async Task<AuthResponseDto> RegisterAsync(RegisterRequestDto requestDto, CancellationToken ct = default)
     {
         using var request = new HttpRequestMessage(HttpMethod.Post,"auth/register");
         request.Content = JsonContent.Create(requestDto);
         
-        var response = await NavigationService.NavigationStore.HttpClient
+        var response = await httpClient
             .SendAsync(request, CancellationToken.None);
 
         if (!response.IsSuccessStatusCode)
@@ -39,7 +32,7 @@ public sealed class AuthenticationService : IAuthenticationService
         using var request = new HttpRequestMessage(HttpMethod.Post,"auth/login");
         request.Content = JsonContent.Create(requestDto);
         
-        var response = await NavigationService.NavigationStore.HttpClient
+        var response = await httpClient
             .SendAsync(request, CancellationToken.None);
 
         var payload = await response.Content.ReadFromJsonAsync<Result<AuthResponseDto>>(cancellationToken: ct)
