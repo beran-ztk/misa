@@ -52,7 +52,7 @@ public sealed partial class TaskState : ObservableObject
     private TaskDto? _selectedItem;
     partial void OnSelectedItemChanged(TaskDto? value)
     {
-        SelectionContextState.SetActive(value?.Id);
+        SelectionContextState.Set(value?.Id);
     }
     
     /// <summary>

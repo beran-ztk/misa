@@ -20,7 +20,7 @@
             
             <Grid Grid.Row="1" 
                   RowDefinitions="*,25"
-                  ColumnDefinitions="150,*,Auto,40">
+                  ColumnDefinitions="150,*,Auto,Auto,40">
                 
                 <ContentControl Grid.Column="0"
                                 Grid.Row="0" Grid.RowSpan="2"
@@ -32,10 +32,14 @@
                 
                 <ContentControl Grid.Column="2"
                                 Grid.Row="0"
+                                Content="{Binding Inspector}"/>
+                
+                <ContentControl Grid.Column="3"
+                                Grid.Row="0"
                                 MaxWidth="600"
                                 Content="{Binding Utility}"/>
                 
-                <ContentControl Grid.Column="3"
+                <ContentControl Grid.Column="4"
                                 Grid.Row="0"
                                 Content="{Binding UtilityNavigation}"/>
                 

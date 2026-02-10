@@ -13,6 +13,8 @@ public partial class ShellState : ObservableObject
     
     [ObservableProperty] private ViewModelBase _workspaceNavigation;
     [ObservableProperty] private ViewModelBase? _workspace;
+    
+    [ObservableProperty] private ViewModelBase _inspector;
 
     [ObservableProperty] private ViewModelBase _utilityNavigation;
     [ObservableProperty] private ViewModelBase? _utility;

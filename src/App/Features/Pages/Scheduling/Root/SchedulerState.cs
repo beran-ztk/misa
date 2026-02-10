@@ -21,7 +21,7 @@ public sealed partial class SchedulerState(
     [ObservableProperty] private ScheduleDto? _selectedItem;
     partial void OnSelectedItemChanged(ScheduleDto? value)
     {
-        selectionContextState.SetActive(value?.Id);
+        selectionContextState.Set(value?.Id);
     }
     [ObservableProperty] private string _searchText = string.Empty;
     partial void OnSearchTextChanged(string value) => ApplyFilters();

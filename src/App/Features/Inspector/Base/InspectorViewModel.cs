@@ -10,6 +10,7 @@ using Misa.Contract.Shared.Results;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Inspector.Common;
 using Misa.Ui.Avalonia.Features.Inspector.Features.Overview.Base;
+using Misa.Ui.Avalonia.Infrastructure.States;
 
 namespace Misa.Ui.Avalonia.Features.Inspector.Base;
 
@@ -25,16 +26,27 @@ public partial class InspectorViewModel : ViewModelBase
 
     private readonly IInspectorClient _client;
     private readonly IInspectorItemExtensionVmFactory _extensionFactory;
+    private ISelectionContextState ContextState { get; }
 public HttpClient HttpClient { get; }
-    public InspectorViewModel(IInspectorClient client, IInspectorItemExtensionVmFactory extensionFactory, HttpClient httpClient)
+    public InspectorViewModel(
+        ISelectionContextState  selectionContextState,
+        IInspectorClient client, 
+        IInspectorItemExtensionVmFactory extensionFactory, 
+        HttpClient httpClient)
     {
+        ContextState = selectionContextState;
         _client = client;
         _extensionFactory = extensionFactory;
         HttpClient = httpClient;
         
-
         Item = ItemDto.Empty();
         InspectorOverViewModel = new InspectorOverViewModel(this);
+
+        ContextState.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName == nameof(ContextState.ActiveEntityId))
+                _ = LoadAsync(ContextState.ActiveEntityId, CancellationToken.None);
+        };
     }
 
     public Task ResetAsync()
@@ -50,13 +62,14 @@ public HttpClient HttpClient { get; }
     {
         await LoadAsync(Item.Id, CancellationToken.None);
     }
-    public async Task LoadAsync(Guid itemId, CancellationToken ct)
+    public async Task LoadAsync(Guid? itemId, CancellationToken ct)
     {
+        if (itemId is null) return;
         Result<DetailedItemDto>? result;
         
         try
         {
-            result = await _client.GetDetailsAsync(itemId, ct);
+            result = await _client.GetDetailsAsync((Guid)itemId, ct);
         }
         catch (OperationCanceledException)
         {

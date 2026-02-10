@@ -7,7 +7,7 @@ namespace Misa.Ui.Avalonia.Infrastructure.States;
 public interface ISelectionContextState : INotifyPropertyChanged
 {
     Guid? ActiveEntityId { get; }
-    void SetActive(Guid? id);
+    void Set(Guid? id);
     void Clear();
 }
 
@@ -15,6 +15,6 @@ public sealed partial class SelectionContextState : ObservableObject, ISelection
 {
     [ObservableProperty] private Guid? _activeEntityId;
 
-    public void SetActive(Guid? id) => ActiveEntityId = id;
+    public void Set(Guid? id) => ActiveEntityId = id;
     public void Clear() => ActiveEntityId = null;
 }

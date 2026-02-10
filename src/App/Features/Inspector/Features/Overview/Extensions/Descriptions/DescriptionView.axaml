@@ -182,7 +182,7 @@
                             ToolTip.Tip="Add">
                         <Image Width="16"
                                Height="16"
-                               Source="{SvgImage /Assets/Icons/Shell/Navigation/plus-circle.svg}" />
+                               Source="{SvgImage /Assets/Icons/Common/plus.svg}" />
                     </Button>
                 </Grid>
             </Border>
