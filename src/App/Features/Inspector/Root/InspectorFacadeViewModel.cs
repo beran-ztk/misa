@@ -4,38 +4,28 @@ using System.Threading;
 using System.Threading.Tasks;
 using Misa.Contract.Features.Entities.Extensions.Items.Base;
 using Misa.Ui.Avalonia.Common.Mappings;
-using Misa.Ui.Avalonia.Features.Inspector.Common;
 using Misa.Ui.Avalonia.Features.Inspector.Features.Overview.Base;
-using Misa.Ui.Avalonia.Features.Inspector.Root;
 using Misa.Ui.Avalonia.Infrastructure.States;
 
-namespace Misa.Ui.Avalonia.Features.Inspector.Base;
+namespace Misa.Ui.Avalonia.Features.Inspector.Root;
 
-public sealed partial class InspectorViewModel : ViewModelBase
+public sealed partial class InspectorFacadeViewModel : ViewModelBase
 {
-    private readonly IInspectorItemExtensionVmFactory _extensionFactory;
-    public InspectorOverViewModel InspectorOverViewModel { get; }
     private ISelectionContextState ContextState { get; }
     
     public InspectorGateway Gateway { get; }
 
     public InspectorState State { get; }
-    public HttpClient HttpClient { get; }
-    public InspectorViewModel(
+    public InspectorFacadeViewModel(
         ISelectionContextState  selectionContextState,
         InspectorGateway gateway, 
-        InspectorState inspectorState,
-        IInspectorItemExtensionVmFactory extensionFactory, 
-        HttpClient httpClient)
+        InspectorState inspectorState)
     {
         ContextState = selectionContextState;
         Gateway = gateway;
         State = inspectorState;
-        _extensionFactory = extensionFactory;
-        HttpClient = httpClient;
         
         State.Item = ItemDto.Empty();
-        InspectorOverViewModel = new InspectorOverViewModel(this);
 
         ContextState.PropertyChanged += (s, e) =>
         {
@@ -47,8 +37,6 @@ public sealed partial class InspectorViewModel : ViewModelBase
     public void Clear()
     {
         State.Item = ItemDto.Empty();
-        InspectorOverViewModel.Description.Descriptions.Clear();
-        State.Extension = null;
         State.SelectedTabIndex = 0;
         
         State.CurrentSessionOverview = null;
@@ -69,9 +57,6 @@ public sealed partial class InspectorViewModel : ViewModelBase
         }
         State.Item = result.Item;
         State.Deadline = result.Deadline;
-        State.Extension = _extensionFactory.Create(result);
-
-        InspectorOverViewModel.Description.Load();
         
         await InspectorOverViewModel.Session.LoadCurrentSessionAsync();
     }

@@ -106,7 +106,6 @@
                   HorizontalScrollBarVisibility="Disabled">
         <StackPanel Spacing="12">
 
-            <ContentControl Content="{Binding DeadlineSection}"/>
             <ContentControl Content="{Binding Session}"/>
 
             <Border Classes="misa-card">
@@ -134,47 +133,6 @@
                         <TextBlock Grid.Row="1" Grid.Column="0"
                                    Text="Title"
                                    Classes="misa-label"/>
-
-                        <Grid Grid.Row="1" Grid.Column="1"
-                              RowDefinitions="Auto,Auto"
-                              RowSpacing="8">
-
-                            <TextBlock Grid.Row="0"
-                                       Text="{Binding Parent.State.Item.Title}"
-                                       Classes="misa-value"
-                                       TextWrapping="Wrap"
-                                       IsVisible="{Binding !IsEditTitleFormOpen}"/>
-
-                            <TextBox Grid.Row="0"
-                                     Classes="misa-input"
-                                     Text="{Binding Title, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                     IsVisible="{Binding IsEditTitleFormOpen}"/>
-
-                            <StackPanel Grid.Row="1"
-                                        Orientation="Horizontal"
-                                        Spacing="8"
-                                        IsVisible="{Binding IsEditTitleFormOpen}">
-
-                                <Button Classes="misa-action-text"
-                                        Command="{Binding CloseEditTitleFormCommand}">
-                                    <TextBlock Text="Cancel"/>
-                                </Button>
-
-                                <Button Classes="misa-action-text"
-                                        Command="{Binding UpdateTitleTaskCommand}">
-                                    <TextBlock Text="Save"/>
-                                </Button>
-                            </StackPanel>
-                        </Grid>
-
-                        <Button Grid.Row="1" Grid.Column="2"
-                                Classes="misa-action"
-                                ToolTip.Tip="Edit"
-                                Command="{Binding ShowEditTitleFormCommand}"
-                                IsVisible="{Binding !IsEditTitleFormOpen}">
-                            <Image Width="16" Height="16"
-                                   Source="{SvgImage /Assets/Icons/Common/edit.svg}"/>
-                        </Button>
 
                         <!-- Created -->
                         <TextBlock Grid.Row="2" Grid.Column="0"
@@ -223,17 +181,6 @@
                                     <TextBlock Text="{Binding Parent.State.Item.StateId}"
                                                FontWeight="SemiBold"/>
                                 </StackPanel>
-
-                                <Button Classes="misa-detail-information-item-button"
-                                        HorizontalAlignment="Right"
-                                        VerticalAlignment="Top"
-                                        Command="{Binding EditStateCommand}"
-                                        Margin="2"
-                                        ToolTip.Tip="Edit">
-                                    <Image Width="14"
-                                           Height="14"
-                                           Source="{SvgImage /Assets/Icons/Common/edit.svg}"/>
-                                </Button>
                             </Grid>
                         </Border>
 
@@ -246,23 +193,11 @@
                             </StackPanel>
                         </Border>
 
-                        <!-- Category -->
-                        <Border Classes="misa-detail-information-item"
-                                IsVisible="{Binding HasTaskExtension}">
-                            <StackPanel Spacing="6">
-                                <TextBlock Text="Category" Classes="misa-label"/>
-                                <TextBlock Text="{Binding TaskExtension.Category}"
-                                           FontWeight="SemiBold"/>
-                            </StackPanel>
-                        </Border>
-
                     </UniformGrid>
 
                 </StackPanel>
             </Border>
-
-            <ContentControl Content="{Binding Description}"/>
-
+            
         </StackPanel>
     </ScrollViewer>
 </UserControl>

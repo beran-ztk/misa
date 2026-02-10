@@ -83,6 +83,10 @@
         <DependentUpon>InformationView.axaml</DependentUpon>
         <SubType>Code</SubType>
       </Compile>
+      <Compile Update="Features\Inspector\Root\InspectorFacadeView.axaml.cs">
+        <DependentUpon>InspectorFacadeView.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
     </ItemGroup>
 
     <ItemGroup>

@@ -1,7 +1,7 @@
 ﻿using System;
 using Microsoft.Extensions.DependencyInjection;
 using Misa.Ui.Avalonia.Common.Mappings;
-using Misa.Ui.Avalonia.Features.Inspector.Base;
+using Misa.Ui.Avalonia.Features.Inspector.Root;
 using Misa.Ui.Avalonia.Infrastructure.Composition;
 using Misa.Ui.Avalonia.Shell.Components;
 
@@ -19,7 +19,7 @@ public partial class ShellWindowViewModel : ViewModelBase
        AppState.ShellState.Header = ServiceProvider.GetRequiredService<HeaderViewModel>();
        AppState.ShellState.Footer = ServiceProvider.GetRequiredService<FooterViewModel>();
        AppState.ShellState.WorkspaceNavigation = ServiceProvider.GetRequiredService<WorkspaceNavigationViewModel>();
-       AppState.ShellState.Inspector = ServiceProvider.GetRequiredService<InspectorViewModel>();
+       AppState.ShellState.Inspector = ServiceProvider.GetRequiredService<InspectorFacadeViewModel>();
        AppState.ShellState.UtilityNavigation = ServiceProvider.GetRequiredService<UtilityNavigationViewModel>();
     }
 }
