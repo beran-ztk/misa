@@ -1,17 +1,19 @@
 using System;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using Misa.Contract.Features.Entities.Extensions.Items.Base;
+using Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;
 using Misa.Contract.Features.Entities.Extensions.Items.Features.Session;
 using Misa.Contract.Features.Entities.Features;
+using Misa.Contract.Shared.Results;
 using Misa.Ui.Avalonia.Infrastructure.Client;
 
 namespace Misa.Ui.Avalonia.Features.Inspector.Root;
 
 public sealed class InspectorGateway(RemoteProxy remoteProxy)
 {
-    // Details
     public async Task<DetailedItemDto?> GetDetailsAsync(Guid id)
     {
         var request = new HttpRequestMessage(HttpMethod.Get, $"items/{id}/details");
@@ -63,31 +65,23 @@ public sealed class InspectorGateway(RemoteProxy remoteProxy)
 
         await remoteProxy.SendAsync(request);
     }
-    // Descriptions
-    public async Task<DescriptionDto?> CreateDescriptionAsync(DescriptionCreateDto dto)
+    public async Task<Result?> CreateDeadlineAsync(Guid targetItemId, DateTimeOffset dueAtUtc, CancellationToken ct = default)
     {
-        var request = new HttpRequestMessage(HttpMethod.Post, "entities/description")
+        var dto = new CreateOnceScheduleDto(targetItemId, dueAtUtc);
+
+        var request = new HttpRequestMessage(HttpMethod.Post, "scheduling/once")
         {
             Content = JsonContent.Create(dto)
         };
 
-        var response = await remoteProxy.SendAsync<DescriptionDto?>(request);
+        var response = await remoteProxy.SendAsync<Result>(request);
         return response?.Value;
     }
 
-    public async Task UpdateDescriptionAsync(DescriptionUpdateDto dto)
+    public async Task<Result?> DeleteDeadlineAsync(Guid targetItemId, CancellationToken ct = default)
     {
-        var request = new HttpRequestMessage(HttpMethod.Put, "entities/description")
-        {
-            Content = JsonContent.Create(dto)
-        };
-
-        await remoteProxy.SendAsync(request);
-    }
-
-    public async Task DeleteDescriptionAsync(Guid descriptionId)
-    {
-        var request = new HttpRequestMessage(HttpMethod.Delete, $"entities/description/{descriptionId}");
-        await remoteProxy.SendAsync(request);
+        var request = new HttpRequestMessage(HttpMethod.Delete, $"scheduling/once/{targetItemId}");
+        var response = await remoteProxy.SendAsync<Result>(request);
+        return response?.Value;
     }
 }

@@ -56,7 +56,7 @@ public sealed partial class InspectorFacadeViewModel : ViewModelBase
             return;
         }
         State.Item = result.Item;
-        State.Deadline = result.Deadline;
+        Entry.Deadline = result.Deadline.DueAtUtc?.ToLocalTime().DateTime;
         
         await Entry.Session.LoadCurrentSessionAsync();
     }

@@ -5,11 +5,10 @@
              x:DataType="base:InspectorEntryViewModel">
 
     <Border Background="{StaticResource BrushPrimaryBackground}">
-        <Grid RowDefinitions="Auto,*">
-
+        <Grid RowDefinitions="50,Auto,Auto,*">
+            
             <!-- Header -->
             <Border Grid.Row="0"
-                    Height="45"
                     BorderBrush="{StaticResource BrushBorder}"
                     BorderThickness="1"
                     Background="{StaticResource BrushPrimaryBackgroundLight}">
@@ -34,9 +33,70 @@
                 </Grid>
 
             </Border>
+            
+            <!-- Deadline -->
+            <Grid Grid.Row="1"
+                  RowDefinitions="Auto,Auto"
+                  ColumnDefinitions="*,Auto"
+                  ColumnSpacing="12">
 
+                <!-- Exists -->
+                <Border Grid.Row="0"
+                        Grid.Column="0"
+                        Grid.ColumnSpan="2"
+                        Background="DarkRed"
+                        IsVisible="{Binding HasDeadline}">
+                    <DockPanel LastChildFill="True">
+                        <TextBlock DockPanel.Dock="Left"
+                                   Text="{Binding Deadline}" />
+
+                        <Button DockPanel.Dock="Right"
+                                Classes="workspace-toolbar-icon"
+                                Command="{Binding DeleteDeadlineCommand}">
+                            <Image Source="{SvgImage /Assets/Icons/Common/trash.svg}" />
+                        </Button>
+                    </DockPanel>
+                </Border>
+
+                <!-- Not exists -->
+                <Border Grid.Row="0"
+                        Grid.Column="0"
+                        Grid.ColumnSpan="2"
+                        BorderThickness="0,0,0,1"
+                        BorderBrush="{StaticResource BrushBorder}"
+                        IsVisible="{Binding !HasDeadline}">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Currently has no Deadline set up." />
+
+                        <Grid ColumnDefinitions="*,*"
+                              ColumnSpacing="12">
+                            <DatePicker Grid.Column="0"
+                                        SelectedDate="{Binding DeadlineDate}" />
+                            <TimePicker Grid.Column="1"
+                                        SelectedTime="{Binding DeadlineTime}" />
+                        </Grid>
+
+                        <StackPanel Orientation="Horizontal"
+                                    Spacing="8">
+                            <Button Content="Create"
+                                    Command="{Binding CreateDeadlineCommand}"
+                                    IsEnabled="{Binding CanCreateDeadline}"/>
+
+                            <Button Content="Cancel"
+                                    Command="{Binding CancelDeadlineDraftCommand}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+            </Grid>
+            
+            <!-- Session -->
+            <Border Grid.Row="2">
+                <TextBlock Text="Currently has no active Session."/>
+            </Border>
+            
             <!-- Body -->
-            <ScrollViewer Grid.Row="1"
+            <ScrollViewer Grid.Row="3"
                           VerticalScrollBarVisibility="Auto"
                           HorizontalScrollBarVisibility="Disabled">
 
