@@ -10,6 +10,7 @@ using Misa.Contract.Shared.Results;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Inspector.Common;
 using Misa.Ui.Avalonia.Features.Inspector.Features.Overview.Base;
+using Misa.Ui.Avalonia.Features.Inspector.Root;
 using Misa.Ui.Avalonia.Infrastructure.States;
 
 namespace Misa.Ui.Avalonia.Features.Inspector.Base;
@@ -22,20 +23,23 @@ public partial class InspectorViewModel : ViewModelBase
     [ObservableProperty] private DeadlineDto _deadline;
     [ObservableProperty] private IItemExtensionVm? _extension;
 
-    public InspectorOverViewModel InspectorOverViewModel { get; }
 
-    private readonly IInspectorClient _client;
     private readonly IInspectorItemExtensionVmFactory _extensionFactory;
+    public InspectorOverViewModel InspectorOverViewModel { get; }
     private ISelectionContextState ContextState { get; }
-public HttpClient HttpClient { get; }
+    private readonly InspectorGateway _gateway;
+    public readonly InspectorState State;
+    public HttpClient HttpClient { get; }
     public InspectorViewModel(
         ISelectionContextState  selectionContextState,
-        IInspectorClient client, 
+        InspectorGateway gateway, 
+        InspectorState inspectorState,
         IInspectorItemExtensionVmFactory extensionFactory, 
         HttpClient httpClient)
     {
         ContextState = selectionContextState;
-        _client = client;
+        _gateway = gateway;
+        State = inspectorState;
         _extensionFactory = extensionFactory;
         HttpClient = httpClient;
         
@@ -49,7 +53,7 @@ public HttpClient HttpClient { get; }
         };
     }
 
-    public Task ResetAsync()
+    public Task Clear()
     {
         Item = ItemDto.Empty();
         InspectorOverViewModel.Description.Descriptions.Clear();
@@ -65,26 +69,17 @@ public HttpClient HttpClient { get; }
     public async Task LoadAsync(Guid? itemId, CancellationToken ct)
     {
         if (itemId is null) return;
-        Result<DetailedItemDto>? result;
+        var result = await _gateway.GetDetailsAsync((Guid)itemId);
         
-        try
+        if (result is null)
         {
-            result = await _client.GetDetailsAsync((Guid)itemId, ct);
-        }
-        catch (OperationCanceledException)
-        {
+            await Clear();
             return;
         }
         
-        if (result is null || !result.IsSuccess || result.Value is null)
-        {
-            await ResetAsync().ConfigureAwait(false);
-            return;
-        }
-        
-        Item = result.Value.Item;
-        Deadline = result.Value.Deadline;
-        Extension = _extensionFactory.Create(result.Value);
+        Item = result.Item;
+        Deadline = result.Deadline;
+        Extension = _extensionFactory.Create(result);
 
         InspectorOverViewModel.Description.Load();
         

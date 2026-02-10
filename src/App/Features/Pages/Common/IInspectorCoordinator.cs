@@ -38,7 +38,7 @@ public sealed class InspectorCoordinator(ISelectionContextState selectionContext
 
         if (id is null)
         {
-            await detailVm.ResetAsync().ConfigureAwait(false);
+            await detailVm.Clear().ConfigureAwait(false);
             return;
         }
         
