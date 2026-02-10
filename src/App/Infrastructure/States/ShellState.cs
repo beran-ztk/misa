@@ -17,10 +17,13 @@ public partial class ShellState : ObservableObject
     [ObservableProperty] private ViewModelBase _utilityNavigation;
     [ObservableProperty] private ViewModelBase? _utility;
     
-    [ObservableProperty] private Control? _panel;
-    
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsPanelOpen))]
+    private Control? _panel;
+    public bool IsPanelOpen => Panel is not null;
+    [RelayCommand] private void ClosePanel() => Modal = null;
     [ObservableProperty] 
-    [NotifyPropertyChangedFor((nameof(IsModalOpen)))]
+    [NotifyPropertyChangedFor(nameof(IsModalOpen))]
     private Control? _modal;
     public bool IsModalOpen => Modal is not null;
     [RelayCommand] private void CloseModal() => Modal = null;
