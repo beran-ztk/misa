@@ -4,32 +4,30 @@
              x:Class="Misa.Ui.Avalonia.Features.Pages.Tasks.Create.CreateTaskView"
              x:DataType="root:CreateTaskViewModel">
 
-    <ScrollViewer>
-        <Grid RowDefinitions="Auto,Auto,Auto"
-              Classes="workspace-addpanel-body">
+    <Grid RowDefinitions="Auto,Auto,Auto"
+          Classes="workspace-addpanel-body">
 
-            <StackPanel Grid.Row="0" Classes="workspace-addpanel-body">
-                <TextBlock Text="Add a title" Classes="workspace-addpanel-body" />
-                <TextBox Classes="workspace-addpanel-body-text-oneliner"
-                         Watermark="Title…"
-                         Text="{Binding State.Title, Mode=TwoWay}" />
-                <TextBlock Text="{Binding State.ErrorMessageTitle}"
-                           IsVisible="{Binding State.TitleHasValidationError}" />
-            </StackPanel>
+        <StackPanel Grid.Row="0" Classes="workspace-addpanel-body">
+            <TextBlock Text="Add a title" Classes="workspace-addpanel-body" />
+            <TextBox Classes="workspace-addpanel-body-text-oneliner"
+                     Watermark="Title…"
+                     Text="{Binding State.Title, Mode=TwoWay}" />
+            <TextBlock Text="{Binding State.ErrorMessageTitle}"
+                       IsVisible="{Binding State.TitleHasValidationError}" />
+        </StackPanel>
 
-            <StackPanel Grid.Row="1" Classes="workspace-addpanel-body">
-                <TextBlock Text="Select the category" Classes="workspace-addpanel-body"/>
-                <ComboBox Classes="workspace-addpanel-body-selector"
-                          ItemsSource="{Binding State.Categories}"
-                          SelectedValue="{Binding State.SelectedCategoryContract}" />
-            </StackPanel>
+        <StackPanel Grid.Row="1" Classes="workspace-addpanel-body">
+            <TextBlock Text="Select the category" Classes="workspace-addpanel-body"/>
+            <ComboBox Classes="workspace-addpanel-body-selector"
+                      ItemsSource="{Binding State.Categories}"
+                      SelectedValue="{Binding State.SelectedCategoryContract}" />
+        </StackPanel>
 
-            <StackPanel Grid.Row="2" Classes="workspace-addpanel-body">
-                <TextBlock Text="Choose a priority for the task" Classes="workspace-addpanel-body"/>
-                <ComboBox Classes="workspace-addpanel-body-selector"
-                          ItemsSource="{Binding State.Priorities}"
-                          SelectedValue="{Binding State.SelectedPriorityContract}" />
-            </StackPanel>
-        </Grid>
-    </ScrollViewer>
+        <StackPanel Grid.Row="2" Classes="workspace-addpanel-body">
+            <TextBlock Text="Choose a priority for the task" Classes="workspace-addpanel-body"/>
+            <ComboBox Classes="workspace-addpanel-body-selector"
+                      ItemsSource="{Binding State.Priorities}"
+                      SelectedValue="{Binding State.SelectedPriorityContract}" />
+        </StackPanel>
+    </Grid>
 </UserControl>

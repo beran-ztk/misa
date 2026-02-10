@@ -9,7 +9,9 @@
     
     <Border Classes="workspace-addpanel">
         <Grid RowDefinitions="Auto,Auto,*,Auto,Auto"
-              Classes="workspace-addpanel">
+              Classes="workspace-addpanel"
+              ClipToBounds="True">
+
 
             <!-- Header -->
             <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
@@ -26,8 +28,24 @@
             <Border Grid.Row="1" Classes="panel-divider"/>
 
             <!-- Body -->
-            <ContentControl Grid.Row="2"
-                            Content="{Binding ContentView}" />
+            <ScrollViewer Grid.Row="2"
+                          VerticalAlignment="Stretch"
+                          HorizontalAlignment="Stretch"
+                          VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled"
+                          Padding="10"
+                          ClipToBounds="True">
+                <StackPanel>
+                    <ContentControl Content="{Binding ContentView}"
+                                    VerticalAlignment="Top"
+                                    HorizontalAlignment="Stretch"/>
+
+                    <!-- Spacer damit das letzte Element sicher sichtbar bleibt -->
+                    <Border Height="56"/>
+                </StackPanel>
+            </ScrollViewer>
+
+
 
             <Border Grid.Row="3" Classes="panel-divider"/>
 
