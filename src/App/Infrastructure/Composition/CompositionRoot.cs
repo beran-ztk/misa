@@ -102,7 +102,6 @@ public static class CompositionRoot
         sc.AddSingleton<IInspectorItemExtensionVmFactory, InspectorItemExtensionVmFactory>();
 
         sc.AddTransient<InspectorViewModel>();
-        sc.AddTransient<IInspectorCoordinator, InspectorCoordinator>();
         sc.AddSingleton<InspectorGateway>();
     }
 

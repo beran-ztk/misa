@@ -19,7 +19,7 @@ public sealed partial class DeadlineSectionViewModel : ViewModelBase
     {
         Parent = parent;
 
-        Parent.WhenAnyValue(x => x.Parent.Deadline)
+        Parent.WhenAnyValue(x => x.Parent.State.Deadline)
             .Subscribe(_ =>
             {
                 OnPropertyChanged(nameof(HasDeadline));
@@ -32,14 +32,14 @@ public sealed partial class DeadlineSectionViewModel : ViewModelBase
 
     public DeadlineInputViewModel Input { get; } = new();
 
-    public bool HasDeadline => Parent.Parent.Deadline.DueAtUtc is not null;
+    public bool HasDeadline => Parent.Parent.State.Deadline.DueAtUtc is not null;
     public bool ShowAddIcon => !IsEditOpen && !HasDeadline;
 
     public bool ShowEditIcon => !IsEditOpen && HasDeadline;
 
     public string DeadlineText
         => HasDeadline
-            ? Parent.Parent.Deadline!.DueAtUtc!.Value.ToString("yyyy-MM-dd HH:mm 'UTC'")
+            ? Parent.Parent.State.Deadline!.DueAtUtc!.Value.ToString("yyyy-MM-dd HH:mm 'UTC'")
             : "No deadline set.";
 
     public string PrimaryButtonText
@@ -74,7 +74,7 @@ public sealed partial class DeadlineSectionViewModel : ViewModelBase
             return;
 
         var dto = new CreateOnceScheduleDto(
-            TargetItemId: Parent.Parent.Item.Id,
+            TargetItemId: Parent.Parent.State.Item.Id,
             DueAtUtc: deadline.DueAtUtc
         );
 
@@ -100,7 +100,7 @@ public sealed partial class DeadlineSectionViewModel : ViewModelBase
         if (!HasDeadline)
             return;
 
-        var targetId = Parent.Parent.Item.Id;
+        var targetId = Parent.Parent.State.Item.Id;
 
         using var response = await Parent.Parent.HttpClient
             .DeleteAsync($"scheduling/once/{targetId}", CancellationToken.None);

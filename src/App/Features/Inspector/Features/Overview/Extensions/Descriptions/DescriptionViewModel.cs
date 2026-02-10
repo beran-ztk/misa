@@ -31,7 +31,7 @@ public partial class DescriptionViewModel(InspectorOverViewModel parent) : ViewM
     {
         Descriptions.Clear();
 
-        foreach (var d in Parent.Parent.Item.Entity.Descriptions
+        foreach (var d in Parent.Parent.State.Item.Entity.Descriptions
                      .GroupBy(x => x.Id)
                      .Select(g => g.First()))
         {
@@ -47,7 +47,7 @@ public partial class DescriptionViewModel(InspectorOverViewModel parent) : ViewM
 
         try
         {
-            var dto = new DescriptionCreateDto(Parent.Parent.Item.Id, Description.Trim());
+            var dto = new DescriptionCreateDto(Parent.Parent.State.Item.Id, Description.Trim());
 
             using var request = new HttpRequestMessage(HttpMethod.Post, "entities/description")
             {

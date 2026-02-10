@@ -26,7 +26,7 @@ public partial class SessionViewModel(InspectorOverViewModel parent) : ViewModel
         {
             using var request = new HttpRequestMessage(
                 HttpMethod.Get,
-                $"items/{Parent.Parent.Item.Id}/overview/session");
+                $"items/{Parent.Parent.State.Item.Id}/overview/session");
         
             var response = await Parent.Parent.HttpClient
                 .SendAsync(request, CancellationToken.None);
@@ -89,7 +89,7 @@ public partial class SessionViewModel(InspectorOverViewModel parent) : ViewModel
                 : null;
             
             var dto = new StartSessionDto(
-                Parent.Parent.Item.Id, 
+                Parent.Parent.State.Item.Id, 
                 plannedDuration, 
                 Objective,
                 StopAutomatically, 
@@ -98,7 +98,7 @@ public partial class SessionViewModel(InspectorOverViewModel parent) : ViewModel
         
             using var request = new HttpRequestMessage(
                 HttpMethod.Post,
-                $"items/{Parent.Parent.Item.Id}/sessions/start");
+                $"items/{Parent.Parent.State.Item.Id}/sessions/start");
             request.Content = JsonContent.Create(dto);
             
             var response = await Parent.Parent.HttpClient
@@ -141,13 +141,13 @@ public partial class SessionViewModel(InspectorOverViewModel parent) : ViewModel
         try
         {
             var dto = new PauseSessionDto(
-                Parent.Parent.Item.Id,
+                Parent.Parent.State.Item.Id,
                 PauseReason
             );
         
             using var request = new HttpRequestMessage(
                 HttpMethod.Post,
-                $"items/{Parent.Parent.Item.Id}/sessions/pause");
+                $"items/{Parent.Parent.State.Item.Id}/sessions/pause");
             request.Content = JsonContent.Create(dto);
         
             var response = await Parent.Parent.HttpClient
@@ -172,7 +172,7 @@ public partial class SessionViewModel(InspectorOverViewModel parent) : ViewModel
         {
             using var request = new HttpRequestMessage(
                 HttpMethod.Post,
-                $"items/{Parent.Parent.Item.Id}/sessions/continue");
+                $"items/{Parent.Parent.State.Item.Id}/sessions/continue");
         
             var response = await Parent.Parent.HttpClient
                 .SendAsync(request, CancellationToken.None);
@@ -217,7 +217,7 @@ public partial class SessionViewModel(InspectorOverViewModel parent) : ViewModel
         try
         {
             var dto = new StopSessionDto(
-                Parent.Parent.Item.Id,
+                Parent.Parent.State.Item.Id,
                 SelectedEfficiency,
                 SelectedConcentration,
                 Summary
@@ -225,7 +225,7 @@ public partial class SessionViewModel(InspectorOverViewModel parent) : ViewModel
         
             using var request = new HttpRequestMessage(
                 HttpMethod.Post,
-                $"items/{Parent.Parent.Item.Id}/sessions/stop");
+                $"items/{Parent.Parent.State.Item.Id}/sessions/stop");
             request.Content = JsonContent.Create(dto);
         
             var response = await Parent.Parent.HttpClient

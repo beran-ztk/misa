@@ -1,12 +1,8 @@
 ﻿using System;
-using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using CommunityToolkit.Mvvm.ComponentModel;
 using Misa.Contract.Features.Entities.Extensions.Items.Base;
-using Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;
-using Misa.Contract.Shared.Results;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Inspector.Common;
 using Misa.Ui.Avalonia.Features.Inspector.Features.Overview.Base;
@@ -15,20 +11,13 @@ using Misa.Ui.Avalonia.Infrastructure.States;
 
 namespace Misa.Ui.Avalonia.Features.Inspector.Base;
 
-public partial class InspectorViewModel : ViewModelBase
+public sealed partial class InspectorViewModel : ViewModelBase
 {
-    [ObservableProperty] private int _selectedTabIndex;
-
-    [ObservableProperty] private ItemDto _item;
-    [ObservableProperty] private DeadlineDto _deadline;
-    [ObservableProperty] private IItemExtensionVm? _extension;
-
-
     private readonly IInspectorItemExtensionVmFactory _extensionFactory;
     public InspectorOverViewModel InspectorOverViewModel { get; }
     private ISelectionContextState ContextState { get; }
     private readonly InspectorGateway _gateway;
-    public readonly InspectorState State;
+    public InspectorState State { get; }
     public HttpClient HttpClient { get; }
     public InspectorViewModel(
         ISelectionContextState  selectionContextState,
@@ -43,7 +32,7 @@ public partial class InspectorViewModel : ViewModelBase
         _extensionFactory = extensionFactory;
         HttpClient = httpClient;
         
-        Item = ItemDto.Empty();
+        State.Item = ItemDto.Empty();
         InspectorOverViewModel = new InspectorOverViewModel(this);
 
         ContextState.PropertyChanged += (s, e) =>
@@ -53,18 +42,16 @@ public partial class InspectorViewModel : ViewModelBase
         };
     }
 
-    public Task Clear()
+    public void Clear()
     {
-        Item = ItemDto.Empty();
+        State.Item = ItemDto.Empty();
         InspectorOverViewModel.Description.Descriptions.Clear();
-        Extension = null;
-        SelectedTabIndex = 0;
-        return Task.CompletedTask;
+        State.Extension = null;
+        State.SelectedTabIndex = 0;
     }
-
     public async Task Reload()
     {
-        await LoadAsync(Item.Id, CancellationToken.None);
+        await LoadAsync(State.Item.Id, CancellationToken.None);
     }
     public async Task LoadAsync(Guid? itemId, CancellationToken ct)
     {
@@ -73,13 +60,12 @@ public partial class InspectorViewModel : ViewModelBase
         
         if (result is null)
         {
-            await Clear();
+            Clear();
             return;
         }
-        
-        Item = result.Item;
-        Deadline = result.Deadline;
-        Extension = _extensionFactory.Create(result);
+        State.Item = result.Item;
+        State.Deadline = result.Deadline;
+        State.Extension = _extensionFactory.Create(result);
 
         InspectorOverViewModel.Description.Load();
         

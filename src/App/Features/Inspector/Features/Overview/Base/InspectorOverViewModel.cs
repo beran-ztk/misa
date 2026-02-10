@@ -28,7 +28,7 @@ public partial class InspectorOverViewModel : ViewModelBase
         Session = new SessionViewModel(this);
         DeadlineSection = new DeadlineSectionViewModel(this);
         
-        Parent.WhenAnyValue(x => x.Extension)
+        Parent.WhenAnyValue(x => x.State.Extension)
             .Subscribe(_ =>
             {
                 OnPropertyChanged(nameof(TaskExtension));
@@ -36,9 +36,9 @@ public partial class InspectorOverViewModel : ViewModelBase
                 OnPropertyChanged(nameof(HasDeadline));
             });
     }
-    public TaskExtensionVm? TaskExtension => Parent.Extension as TaskExtensionVm;
+    public TaskExtensionVm? TaskExtension => Parent.State.Extension as TaskExtensionVm;
     public bool HasTaskExtension => TaskExtension is not null;
-    public bool HasDeadline => Parent.Deadline.DueAtUtc is not null;
+    public bool HasDeadline => Parent.State.Deadline.DueAtUtc is not null;
 
     [RelayCommand]
     private void CopyId()
@@ -122,7 +122,7 @@ public partial class InspectorOverViewModel : ViewModelBase
     [RelayCommand]
     private void ShowEditTitleForm()
     {
-        Title = Parent.Item.Title;
+        Title = Parent.State.Item.Title;
         IsEditTitleFormOpen = true;
     }
     [RelayCommand]

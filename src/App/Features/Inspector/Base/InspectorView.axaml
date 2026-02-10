@@ -40,7 +40,7 @@
 
     <Border Background="{StaticResource BrushPrimaryBackgroundLight}">
         <TabControl Classes="GitHubTabs"
-                    SelectedIndex="{Binding SelectedTabIndex}">
+                    SelectedIndex="{Binding State.SelectedTabIndex}">
             <TabItem Header="Inspector">
                 <base1:InspectorOverView DataContext="{Binding InspectorOverViewModel}"/>
             </TabItem>

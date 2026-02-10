@@ -126,7 +126,7 @@
                                    Text="Id"
                                    Classes="misa-label"/>
                         <TextBlock Grid.Row="0" Grid.Column="1"
-                                   Text="{Binding Parent.Item.Id}"
+                                   Text="{Binding Parent.State.Item.Id}"
                                    Classes="misa-value"
                                    TextWrapping="Wrap"/>
                         <Button Grid.Row="0" Grid.Column="2"
@@ -147,7 +147,7 @@
                               RowSpacing="8">
 
                             <TextBlock Grid.Row="0"
-                                       Text="{Binding Parent.Item.Title}"
+                                       Text="{Binding Parent.State.Item.Title}"
                                        Classes="misa-value"
                                        TextWrapping="Wrap"
                                        IsVisible="{Binding !IsEditTitleFormOpen}"/>
@@ -188,7 +188,7 @@
                                    Text="Created"
                                    Classes="misa-label"/>
                         <TextBlock Grid.Row="2" Grid.Column="1"
-                                   Text="{Binding Parent.Item.Entity.CreatedAt, StringFormat={}{0:yyyy-MM-dd HH:mm}}"
+                                   Text="{Binding Parent.State.Item.Entity.CreatedAt, StringFormat={}{0:yyyy-MM-dd HH:mm}}"
                                    Classes="misa-value"/>
 
                         <!-- Updated -->
@@ -196,7 +196,7 @@
                                    Text="Updated"
                                    Classes="misa-label"/>
                         <TextBlock Grid.Row="3" Grid.Column="1"
-                                   Text="{Binding Parent.Item.Entity.UpdatedAt, StringFormat={}{0:yyyy-MM-dd HH:mm}}"
+                                   Text="{Binding Parent.State.Item.Entity.UpdatedAt, StringFormat={}{0:yyyy-MM-dd HH:mm}}"
                                    Classes="misa-value"/>
 
                         <!-- Interacted -->
@@ -204,7 +204,7 @@
                                    Text="Interacted"
                                    Classes="misa-label"/>
                         <TextBlock Grid.Row="4" Grid.Column="1"
-                                   Text="{Binding Parent.Item.Entity.InteractedAt, StringFormat={}{0:yyyy-MM-dd HH:mm}}"
+                                   Text="{Binding Parent.State.Item.Entity.InteractedAt, StringFormat={}{0:yyyy-MM-dd HH:mm}}"
                                    Classes="misa-value"/>
 
                     </Grid>
@@ -217,7 +217,7 @@
                         <Border Classes="misa-detail-information-item">
                             <StackPanel Spacing="6">
                                 <TextBlock Text="Workflow" Classes="misa-label"/>
-                                <TextBlock Text="{Binding Parent.Item.Entity.Workflow}"
+                                <TextBlock Text="{Binding Parent.State.Item.Entity.Workflow}"
                                            FontWeight="SemiBold"/>
                             </StackPanel>
                         </Border>
@@ -227,7 +227,7 @@
                             <Grid>
                                 <StackPanel Spacing="6">
                                     <TextBlock Text="State" Classes="misa-label"/>
-                                    <TextBlock Text="{Binding Parent.Item.StateId}"
+                                    <TextBlock Text="{Binding Parent.State.Item.StateId}"
                                                FontWeight="SemiBold"/>
                                 </StackPanel>
 
@@ -248,7 +248,7 @@
                         <Border Classes="misa-detail-information-item">
                             <StackPanel Spacing="6">
                                 <TextBlock Text="Priority" Classes="misa-label"/>
-                                <TextBlock Text="{Binding Parent.Item.Priority}"
+                                <TextBlock Text="{Binding Parent.State.Item.Priority}"
                                            FontWeight="SemiBold"/>
                             </StackPanel>
                         </Border>
