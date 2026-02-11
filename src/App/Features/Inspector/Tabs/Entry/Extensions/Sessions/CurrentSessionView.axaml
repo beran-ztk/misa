@@ -4,68 +4,6 @@
              xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Base"
              x:DataType="root:InspectorEntryViewModel">
 
-    <UserControl.Styles>
-        <!-- Small, modern “card” language without touching logic/bindings -->
-        <Style Selector="Border.session-card">
-            <Setter Property="Padding" Value="12"/>
-            <Setter Property="CornerRadius" Value="12"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}"/>
-            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}"/>
-        </Style>
-
-        <Style Selector="TextBlock.session-title">
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="Margin" Value="0,2,0,6"/>
-        </Style>
-
-        <Style Selector="TextBlock.session-label">
-            <Setter Property="Opacity" Value="0.7"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-        </Style>
-
-        <Style Selector="TextBlock.session-value-strong">
-            <Setter Property="FontWeight" Value="SemiBold"/>
-        </Style>
-
-        <Style Selector="StackPanel.session-actions">
-            <Setter Property="Spacing" Value="8"/>
-        </Style>
-
-        <Style Selector="Button.session-icon">
-            <Setter Property="Width" Value="34"/>
-            <Setter Property="Height" Value="34"/>
-            <Setter Property="CornerRadius" Value="10"/>
-            <Setter Property="Padding" Value="0"/>
-            <Setter Property="HorizontalContentAlignment" Value="Center"/>
-            <Setter Property="VerticalContentAlignment" Value="Center"/>
-        </Style>
-
-        <Style Selector="Border.session-subcard">
-            <Setter Property="Padding" Value="10"/>
-            <Setter Property="CornerRadius" Value="10"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}"/>
-            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}"/>
-        </Style>
-
-        <Style Selector="Border.session-pill">
-            <Setter Property="CornerRadius" Value="999"/>
-            <Setter Property="Padding" Value="8,4"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}"/>
-            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}"/>
-        </Style>
-
-        <Style Selector="TextBlock.session-muted">
-            <Setter Property="Opacity" Value="0.7"/>
-        </Style>
-
-        <Style Selector="StackPanel.session-form-buttons">
-            <Setter Property="Spacing" Value="8"/>
-        </Style>
-    </UserControl.Styles>
 
     <StackPanel Spacing="12">
 
@@ -97,13 +35,6 @@
                                     <Border Grid.Row="0" Grid.Column="1"
                                             Classes="session-pill">
                                         <TextBlock Text="{Binding State}"
-                                                   Classes="session-value-strong"/>
-                                    </Border>
-
-                                    <Border Grid.Row="0" Grid.Column="2"
-                                            Classes="session-pill"
-                                            HorizontalAlignment="Right">
-                                        <TextBlock Text="{Binding ElapsedTime}"
                                                    Classes="session-value-strong"/>
                                     </Border>
 
@@ -182,12 +113,6 @@
                                     </ItemsControl>
 
                                 </Grid>
-                            </Border>
-
-                            <!-- Current empty state -->
-                            <Border IsVisible="{Binding !HasActiveSession}">
-                                <TextBlock Text="No active session."
-                                           Classes="session-muted"/>
                             </Border>
 
                         </StackPanel>

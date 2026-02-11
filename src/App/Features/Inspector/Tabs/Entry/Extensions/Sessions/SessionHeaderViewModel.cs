@@ -17,10 +17,6 @@ public partial class InspectorEntryViewModel
      public bool CanContinueSession => CurrentSession?.State == SessionStateDto.Paused;
      public bool CanEndSession => CurrentSession != null;
      
-    
-    public string ActiveSessionElapsedDisplay
-        => CurrentSession?.ElapsedTime ?? string.Empty;
-
     public string ActiveSessionSegmentDisplay => $"Segment {CurrentSession?.Segments.Count} - {CurrentSession?.State}";
     
     [RelayCommand]

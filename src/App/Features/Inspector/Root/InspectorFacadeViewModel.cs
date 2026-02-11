@@ -3,6 +3,7 @@ using System.Net.Http;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
+using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Features.Entities.Extensions.Items.Base;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Base;
@@ -39,6 +40,7 @@ public sealed partial class InspectorFacadeViewModel : ViewModelBase
             }
         };
     }
+    [RelayCommand]
     public async Task Reload()
     {
         await GetEntryDataAsync(State.Item.Id);

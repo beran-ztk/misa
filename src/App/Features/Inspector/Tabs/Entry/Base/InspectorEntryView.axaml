@@ -6,38 +6,71 @@
              xmlns:session="clr-namespace:Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions"
              x:DataType="root:InspectorEntryViewModel">
 
-    <Border Background="{StaticResource BrushPrimaryBackground}">
+    <Border Background="{StaticResource BrushPrimaryBackground}"
+            Margin="0,20,0,0"
+            Padding="12">
         <Grid RowDefinitions="50,Auto,Auto,*">
             
             <!-- Header -->
             <Border Grid.Row="0"
                     BorderBrush="{StaticResource BrushBorder}"
-                    BorderThickness="1"
-                    Background="{StaticResource BrushPrimaryBackgroundLight}">
+                    BorderThickness="0,0,0,5"
+                    Padding="12,8">
 
-                <Grid ColumnDefinitions="*,Auto">
-                    <!-- Title area -->
+                <Grid ColumnDefinitions="*,Auto"
+                      ColumnSpacing="12">
+
                     <TextBlock Grid.Column="0"
                                Text="{Binding Facade.State.Item.Title}"
-                               VerticalAlignment="Center" />
+                               VerticalAlignment="Center"
+                               FontSize="20"
+                               FontWeight="Regular"/>
 
-                    <!-- Quick actions area -->
                     <StackPanel Grid.Column="1"
-                                Orientation="Horizontal"
-                                VerticalAlignment="Center">
-                        <Button Classes="workspace-toolbar-icon">
-                            <Image Source="{SvgImage /Assets/Icons/Common/archive.svg}" />
-                        </Button>
-                        <Button Classes="workspace-toolbar-icon">
-                            <Image Source="{SvgImage /Assets/Icons/Common/trash.svg}" />
-                        </Button>
+                                Spacing="10"
+                                Orientation="Horizontal">
+                        <!-- Refresh -->
                         <Button Classes="workspace-toolbar-icon"
-                                Content="Set Deadline"
-                                Command="{Binding ShowUpsertDeadlinePanelCommand}">
+                                Command="{Binding Facade.ReloadCommand}">
+                            <Image Source="{SvgImage /Assets/Icons/Common/refresh.svg}" />
+                        </Button>
+                        
+                        <!-- 3-dots menu -->
+                        <Button Classes="workspace-toolbar-icon"
+                                VerticalAlignment="Center">
+                            <Image Source="{SvgImage /Assets/Icons/Common/dots-three-vertical.svg}" />
+                            <Button.Flyout>
+                                <MenuFlyout>
+                                    <MenuItem Header="Set/Edit deadline"
+                                              Command="{Binding ShowUpsertDeadlinePanelCommand}" />
+                                    <MenuItem Header="Remove deadline"
+                                              Command="{Binding DeleteDeadlineCommand}"
+                                              IsVisible="{Binding HasDeadline}" />
+                                    
+                                    <MenuItem>
+                                        <MenuItem.Header>
+                                            <StackPanel Spacing="8" Orientation="Horizontal">
+                                                <Image Width="16" Height="16" Source="{SvgImage /Assets/Icons/Common/archive.svg}"/>
+                                                <TextBlock Text="Archive Item"/>
+                                            </StackPanel>
+                                        </MenuItem.Header>
+                                    </MenuItem>
+                                    
+                                    <MenuItem>
+                                        <MenuItem.Header>
+                                            <StackPanel Spacing="8" Orientation="Horizontal">
+                                                <Image Width="16" Height="16" Source="{SvgImage /Assets/Icons/Common/trash.svg}"/>
+                                                <TextBlock Text="Delete Item"/>
+                                            </StackPanel>
+                                        </MenuItem.Header>
+                                    </MenuItem>
+
+                                </MenuFlyout>
+                            </Button.Flyout>
                         </Button>
                     </StackPanel>
+                    
                 </Grid>
-
             </Border>
             
             <!-- Deadline -->

@@ -19,7 +19,4 @@ public class SessionResolvedDto
 
     public DateTimeOffset CreatedAtUtc { get; set; }
     public required ICollection<SessionSegmentDto> Segments { get; set; }
-    
-    public string? ElapsedTime { get; set; }
-
 }

@@ -27,11 +27,13 @@
                         Spacing="8"
                         VerticalAlignment="Center">
 
-                <Button Command="{Binding ShowUpsertDeadlinePanelCommand}">
+                <Button Classes="workspace-toolbar-icon"
+                        Command="{Binding ShowUpsertDeadlinePanelCommand}">
                     <Image Source="{SvgImage /Assets/Icons/Common/edit.svg}" />
                 </Button>
 
-                <Button Command="{Binding DeleteDeadlineCommand}">
+                <Button Classes="workspace-toolbar-icon"
+                        Command="{Binding DeleteDeadlineCommand}">
                     <Image Source="{SvgImage /Assets/Icons/Common/trash.svg}" />
                 </Button>
 

@@ -26,11 +26,11 @@ public class GetCurrentSessionDetailsHandler(IItemRepository repository, ITimePr
         
         var latestCompletedSession = await repository.TryGetLatestCompletedSessionByItemIdAsync(command.ItemId, ct);
         if (latestCompletedSession != null)
-            dto.LatestClosedSession = latestCompletedSession.ToDto(timeProvider.UtcNow);
+            dto.LatestClosedSession = latestCompletedSession.ToDto();
         
         var activeSession = await repository.TryGetActiveSessionByItemIdAsync(command.ItemId, ct);
         if (activeSession != null)
-            dto.ActiveSession = activeSession.ToDto(timeProvider.UtcNow);
+            dto.ActiveSession = activeSession.ToDto();
 
         return Result<CurrentSessionOverviewDto>.Ok(dto);
     }

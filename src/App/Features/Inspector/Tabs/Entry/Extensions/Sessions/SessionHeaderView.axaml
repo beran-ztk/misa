@@ -9,8 +9,7 @@
             BorderThickness="0,0,0,1"
             BorderBrush="{StaticResource BrushBorder}">
         
-        <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto"
-              ColumnSpacing="12"
+        <Grid ColumnDefinitions="Auto,*,Auto"
               VerticalAlignment="Center">
 
             <!-- Has none active Session -->
@@ -61,26 +60,25 @@
                            Source="{SvgImage /Assets/Icons/Inspector/Session/stop.svg}"/>
                 </Button>
 
+                <!-- Dropdown (nur wenn Session läuft) -->
+                <DropDownButton IsVisible="{Binding HasActiveSession}"
+                                VerticalAlignment="Center">
+
+                    <DropDownButton.Content>
+                        <TextBlock Text="▾" FontSize="16" />
+                    </DropDownButton.Content>
+
+                    <DropDownButton.Flyout>
+                        <Flyout Placement="Bottom">
+                            <StackPanel>
+                                <sessions:CurrentSessionView />
+                            </StackPanel>
+                        </Flyout>
+                    </DropDownButton.Flyout>
+
+                </DropDownButton>
+                
             </StackPanel>
-
-            <!-- Dropdown (nur wenn Session läuft) -->
-            <DropDownButton Grid.Column="3"
-                            IsVisible="{Binding HasActiveSession}"
-                            VerticalAlignment="Center">
-
-                <DropDownButton.Content>
-                    <TextBlock Text="▾" FontSize="16" />
-                </DropDownButton.Content>
-
-                <DropDownButton.Flyout>
-                    <Flyout Placement="Bottom">
-                        <StackPanel>
-                            <sessions:CurrentSessionView />
-                        </StackPanel>
-                    </Flyout>
-                </DropDownButton.Flyout>
-
-            </DropDownButton>
         </Grid>
     </Border>
 </UserControl>
