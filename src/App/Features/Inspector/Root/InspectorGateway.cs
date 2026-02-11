@@ -22,7 +22,7 @@ public sealed class InspectorGateway(RemoteProxy remoteProxy)
     }
 
     // Sessions (Overview)
-    public async Task<CurrentSessionOverviewDto?> GetCurrentSessionOverviewAsync(Guid itemId)
+    public async Task<CurrentSessionOverviewDto?> GetCurrentAndLatestSessionAsync(Guid itemId)
     {
         var request = new HttpRequestMessage(HttpMethod.Get, $"items/{itemId}/overview/session");
         var response = await remoteProxy.SendAsync<CurrentSessionOverviewDto?>(request);

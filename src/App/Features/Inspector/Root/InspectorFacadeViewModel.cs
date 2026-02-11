@@ -7,6 +7,7 @@ using Misa.Contract.Features.Entities.Extensions.Items.Base;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Base;
 using Misa.Ui.Avalonia.Infrastructure.States;
+using Misa.Ui.Avalonia.Infrastructure.UI;
 
 namespace Misa.Ui.Avalonia.Features.Inspector.Root;
 
@@ -16,48 +17,42 @@ public sealed partial class InspectorFacadeViewModel : ViewModelBase
     public InspectorGateway Gateway { get; }
     public InspectorState State { get; }
     public InspectorEntryViewModel Entry { get; }
+    public PanelProxy PanelProxy { get; }
     public InspectorFacadeViewModel(
         ISelectionContextState  selectionContextState,
         InspectorGateway gateway, 
-        InspectorState inspectorState)
+        InspectorState inspectorState,
+        PanelProxy panelProxy)
     {
         ContextState = selectionContextState;
         Gateway = gateway;
         State = inspectorState;
+        PanelProxy = panelProxy;
         
         Entry = new InspectorEntryViewModel(this);
 
         ContextState.PropertyChanged += (s, e) =>
         {
             if (e.PropertyName == nameof(ContextState.ActiveEntityId))
-                _ = LoadAsync(ContextState.ActiveEntityId, CancellationToken.None);
+            {
+                _ = GetEntryDataAsync(ContextState.ActiveEntityId);   
+            }
         };
-    }
-
-    public void Clear()
-    {
-        State.Item = ItemDto.Empty();
-        State.SelectedTabIndex = 0;
-        
-        State.CurrentSessionOverview = null;
     }
     public async Task Reload()
     {
-        await LoadAsync(State.Item.Id, CancellationToken.None);
+        await GetEntryDataAsync(State.Item.Id);
     }
-    public async Task LoadAsync(Guid? itemId, CancellationToken ct)
+
+    private async Task GetEntryDataAsync(Guid? id)
     {
-        if (itemId is null) return;
-        var result = await Gateway.GetDetailsAsync((Guid)itemId);
+        if (id is null) return;
         
-        if (result is null)
-        {
-            Clear();
-            return;
-        }
+        var result = await Gateway.GetDetailsAsync((Guid)id);
+        if (result is null) return;
+        
         State.Item = result.Item;
         Entry.Deadline = result.Deadline.DueAtUtc?.ToLocalTime().DateTime;
-        
-        await Entry.Session.LoadCurrentSessionAsync();
+        State.CurrentSessionOverview = await Gateway.GetCurrentAndLatestSessionAsync(State.Item.Id);
     }
 }

@@ -2,9 +2,9 @@
 
 namespace Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions;
 
-public partial class SessionView : UserControl
+public partial class CurrentSessionView : UserControl
 {
-    public SessionView()
+    public CurrentSessionView()
     {
         InitializeComponent();
     }

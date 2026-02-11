@@ -1,0 +1,90 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions.SessionHeaderView"
+             xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Base"
+             xmlns:sessions="clr-namespace:Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions"
+             x:DataType="root:InspectorEntryViewModel">
+
+    <Border Padding="10"
+            BorderThickness="0,0,0,1"
+            BorderBrush="{StaticResource BrushBorder}">
+        
+        <!-- Wenn eine Session läuft -->
+        <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto"
+              ColumnSpacing="12"
+              VerticalAlignment="Center">
+
+            <!-- Wenn keine Session läuft -->
+            <TextBlock Grid.Column="0"
+                       Text="Currently has no active Session."
+                       IsVisible="{Binding !HasActiveSession}" />
+            
+            <!-- Segment -->
+            <TextBlock Grid.Column="0"
+                       VerticalAlignment="Center"
+                       Text="{Binding ActiveSessionSegmentDisplay}"
+                       IsVisible="{Binding HasActiveSession}"/>
+
+            <!-- Elapsed -->
+            <TextBlock Grid.Column="1"
+                       VerticalAlignment="Center"
+                       HorizontalAlignment="Center"
+                       Text="{Binding ActiveSessionElapsedDisplay}" />
+
+            <!-- Quick Actions -->
+            <StackPanel Grid.Column="2"
+                        Orientation="Horizontal"
+                        Spacing="8"
+                        VerticalAlignment="Center">
+
+                <Button Command="{Binding ShowStartSessionFormCommand}"
+                        IsEnabled="{Binding CurrentSession.CanStartSession}"
+                        IsVisible="{Binding CurrentSession.CanStartSession}">
+                    <Image Width="16" Height="16"
+                           Source="{SvgImage /Assets/Icons/Inspector/Session/play.svg}"/>
+                </Button>
+
+                <Button Command="{Binding ShowPauseSessionFormCommand}"
+                        IsEnabled="{Binding CurrentSession.CanPauseSession}"
+                        IsVisible="{Binding CurrentSession.CanPauseSession}">
+                    <Image Width="16" Height="16"
+                           Source="{SvgImage /Assets/Icons/Inspector/Session/pause.svg}"/>
+                </Button>
+
+                <Button Command="{Binding ContinueSessionCommand}"
+                        IsEnabled="{Binding CurrentSession.CanContinueSession}"
+                        IsVisible="{Binding CurrentSession.CanContinueSession}">
+                    <Image Width="16" Height="16"
+                           Source="{SvgImage /Assets/Icons/Inspector/Session/play-pause.svg}"/>
+                </Button>
+
+                <Button Command="{Binding ShowStopSessionFormCommand}"
+                        IsEnabled="{Binding CurrentSession.CanStopSession}"
+                        IsVisible="{Binding CurrentSession.CanStopSession}">
+                    <Image Width="16" Height="16"
+                           Source="{SvgImage /Assets/Icons/Inspector/Session/stop.svg}"/>
+                </Button>
+
+            </StackPanel>
+
+            <!-- Dropdown (nur wenn Session läuft) -->
+            <DropDownButton Grid.Column="3"
+                            IsVisible="{Binding HasActiveSession}"
+                            VerticalAlignment="Center">
+
+                <DropDownButton.Content>
+                    <TextBlock Text="▾" FontSize="16" />
+                </DropDownButton.Content>
+
+                <DropDownButton.Flyout>
+                    <Flyout Placement="Bottom">
+                        <StackPanel>
+                            <sessions:CurrentSessionView />
+                        </StackPanel>
+                    </Flyout>
+                </DropDownButton.Flyout>
+
+            </DropDownButton>
+        </Grid>
+    </Border>
+</UserControl>
