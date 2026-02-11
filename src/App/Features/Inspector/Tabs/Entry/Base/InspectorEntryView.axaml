@@ -31,6 +31,10 @@
                         <Button Classes="workspace-toolbar-icon">
                             <Image Source="{SvgImage /Assets/Icons/Common/trash.svg}" />
                         </Button>
+                        <Button Classes="workspace-toolbar-icon"
+                                Content="Set Deadline"
+                                Command="{Binding ShowUpsertDeadlinePanelCommand}">
+                        </Button>
                     </StackPanel>
                 </Grid>
 

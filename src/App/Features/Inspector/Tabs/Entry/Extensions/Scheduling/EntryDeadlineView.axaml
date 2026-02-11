@@ -6,58 +6,37 @@
              x:Class="Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Scheduling.EntryDeadlineView"
              xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Base"
              x:DataType="root:InspectorEntryViewModel">
-    
-    <Grid RowDefinitions="Auto,Auto"
-          ColumnDefinitions="*,Auto"
-          ColumnSpacing="12">
 
-        <!-- Exists -->
-        <Border Grid.Row="0"
-                Grid.Column="0"
-                Grid.ColumnSpan="2"
-                Background="DarkRed"
-                IsVisible="{Binding HasDeadline}">
-            <DockPanel LastChildFill="True">
-                <TextBlock DockPanel.Dock="Left"
-                           Text="{Binding Deadline}" />
+    <Border IsVisible="{Binding HasDeadline}"
+            BorderThickness="0,0,0,1"
+            BorderBrush="{StaticResource BrushBorder}"
+            Padding="10,8">
 
-                <Button DockPanel.Dock="Right"
-                        Classes="workspace-toolbar-icon"
-                        Command="{Binding DeleteDeadlineCommand}">
+        <Grid ColumnDefinitions="*,Auto"
+              ColumnSpacing="12"
+              VerticalAlignment="Center">
+
+            <StackPanel Spacing="2">
+                <TextBlock Text="Deadline"
+                           Opacity="0.7" />
+                <TextBlock Text="{Binding DeadlineDisplay}" />
+            </StackPanel>
+
+            <StackPanel Grid.Column="1"
+                        Orientation="Horizontal"
+                        Spacing="8"
+                        VerticalAlignment="Center">
+
+                <Button Command="{Binding ShowUpsertDeadlinePanelCommand}">
+                    <Image Source="{SvgImage /Assets/Icons/Common/edit.svg}" />
+                </Button>
+
+                <Button Command="{Binding DeleteDeadlineCommand}">
                     <Image Source="{SvgImage /Assets/Icons/Common/trash.svg}" />
                 </Button>
-            </DockPanel>
-        </Border>
 
-        <!-- Not exists -->
-        <Border Grid.Row="0"
-                Grid.Column="0"
-                Grid.ColumnSpan="2"
-                BorderThickness="0,0,0,1"
-                BorderBrush="{StaticResource BrushBorder}"
-                IsVisible="{Binding !HasDeadline}">
-            <StackPanel Spacing="8">
-                <TextBlock Text="Currently has no Deadline set up." />
-
-                <Grid ColumnDefinitions="*,*"
-                      ColumnSpacing="12">
-                    <DatePicker Grid.Column="0"
-                                SelectedDate="{Binding DeadlineDate}" />
-                    <TimePicker Grid.Column="1"
-                                SelectedTime="{Binding DeadlineTime}" />
-                </Grid>
-
-                <StackPanel Orientation="Horizontal"
-                            Spacing="8">
-                    <Button Content="Create"
-                            Command="{Binding CreateDeadlineCommand}"
-                            IsEnabled="{Binding CanCreateDeadline}"/>
-
-                    <Button Content="Cancel"
-                            Command="{Binding CancelDeadlineDraftCommand}" />
-                </StackPanel>
             </StackPanel>
-        </Border>
+        </Grid>
+    </Border>
 
-    </Grid>
 </UserControl>

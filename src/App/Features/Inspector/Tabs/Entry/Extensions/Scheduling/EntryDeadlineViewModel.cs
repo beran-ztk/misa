@@ -1,65 +1,47 @@
 using System;
+using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Misa.Ui.Avalonia.Common.Mappings;
+using Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;
+using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Scheduling.Forms;
+using Misa.Ui.Avalonia.Infrastructure.UI;
 
 namespace Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Base;
 
 public partial class InspectorEntryViewModel
 {
-    [ObservableProperty]
+    [ObservableProperty] 
     [NotifyPropertyChangedFor(nameof(HasDeadline))]
+    [NotifyPropertyChangedFor(nameof(DeadlineDisplay))]
     private DateTime? _deadline;
-
     public bool HasDeadline => Deadline is not null;
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(CanCreateDeadline))]
-    private DateTimeOffset? _deadlineDate;
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(CanCreateDeadline))]
-    private TimeSpan? _deadlineTime;
-    public bool CanCreateDeadline => DeadlineDate is not null && DeadlineTime is not null;
-
-    private void ResetDeadlineDraft()
-    {
-        DeadlineDate = null;
-        DeadlineTime = null;
-    }
+    public string DeadlineDisplay
+        => Deadline is null
+            ? string.Empty
+            : Deadline.Value.ToString("ddd, dd MMM yyyy • HH:mm", CultureInfo.CurrentCulture);
 
     [RelayCommand]
-    private async Task CreateDeadlineAsync(CancellationToken ct)
+    public async Task ShowUpsertDeadlinePanelAsync()
     {
-        if (DeadlineDate is null || DeadlineTime is null)
-            return;
+        var itemId = Facade.State.Item.Id;
 
-        var localDate = DeadlineDate.Value.Date;
-        var localDateTime = localDate + DeadlineTime.Value;
+        var formVm = new UpsertDeadlineViewModel(itemId, Deadline);
 
-        var local = DateTime.SpecifyKind(localDateTime, DateTimeKind.Local);
-        var dueAtUtc = new DateTimeOffset(local).ToUniversalTime();
+        var dto = await Facade.PanelProxy.OpenAsync<UpsertDeadlineDto>(PanelKey.UpsertDeadline, formVm);
+        if (dto is null) return;
 
-        await Facade.Gateway.CreateDeadlineAsync(Facade.State.Item.Id, dueAtUtc, ct);
-
+        await Facade.Gateway.UpsertDeadlineAsync(dto);
         await Facade.Reload();
-        ResetDeadlineDraft();
     }
 
     [RelayCommand]
-    private void CancelDeadlineDraft()
+    public async Task DeleteDeadlineAsync(CancellationToken ct)
     {
-        ResetDeadlineDraft();
-    }
+        var itemId = Facade.State.Item.Id;
 
-    [RelayCommand]
-    private async Task DeleteDeadlineAsync(CancellationToken ct)
-    {
-        await Facade.Gateway.DeleteDeadlineAsync(Facade.State.Item.Id, ct);
-
+        await Facade.Gateway.DeleteDeadlineAsync(itemId);
         await Facade.Reload();
-        ResetDeadlineDraft();
     }
 }

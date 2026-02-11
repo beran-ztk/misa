@@ -65,23 +65,19 @@ public sealed class InspectorGateway(RemoteProxy remoteProxy)
 
         await remoteProxy.SendAsync(request);
     }
-    public async Task<Result?> CreateDeadlineAsync(Guid targetItemId, DateTimeOffset dueAtUtc, CancellationToken ct = default)
+    public async Task UpsertDeadlineAsync(UpsertDeadlineDto dto)
     {
-        var dto = new CreateOnceScheduleDto(targetItemId, dueAtUtc);
-
         var request = new HttpRequestMessage(HttpMethod.Post, "scheduling/once")
         {
             Content = JsonContent.Create(dto)
         };
 
-        var response = await remoteProxy.SendAsync<Result>(request);
-        return response?.Value;
+        await remoteProxy.SendAsync<Result>(request);
     }
 
-    public async Task<Result?> DeleteDeadlineAsync(Guid targetItemId, CancellationToken ct = default)
+    public async Task DeleteDeadlineAsync(Guid targetItemId)
     {
         var request = new HttpRequestMessage(HttpMethod.Delete, $"scheduling/once/{targetItemId}");
-        var response = await remoteProxy.SendAsync<Result>(request);
-        return response?.Value;
+        await remoteProxy.SendAsync<Result>(request);
     }
 }

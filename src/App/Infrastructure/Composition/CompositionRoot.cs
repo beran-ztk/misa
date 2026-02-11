@@ -2,6 +2,7 @@ using System;
 using System.Net.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Misa.Ui.Avalonia.Features.Inspector.Root;
+using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Scheduling.Forms;
 using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions.Forms;
 using Misa.Ui.Avalonia.Features.Pages.Common;
 using Misa.Ui.Avalonia.Features.Pages.Scheduling.Content;
@@ -105,6 +106,7 @@ public static class CompositionRoot
         sc.AddTransient<StartSessionView>();
         sc.AddTransient<PauseSessionView>();
         sc.AddTransient<EndSessionView>();
+        sc.AddTransient<UpsertDeadlineView>();
     }
 
     private static void AddTasksFeature(this IServiceCollection sc)

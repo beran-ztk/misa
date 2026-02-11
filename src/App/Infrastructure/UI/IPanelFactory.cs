@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Microsoft.Extensions.DependencyInjection;
+using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Scheduling.Forms;
 using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions.Forms;
 using Misa.Ui.Avalonia.Features.Pages.Scheduling.Create;
 using Misa.Ui.Avalonia.Features.Pages.Tasks.Create;
@@ -15,7 +16,8 @@ public enum PanelKey
     Schedule,
     StartSession,
     PauseSession,
-    EndSession
+    EndSession,
+    UpsertDeadline
 }
 
 public interface IPanelFactory
@@ -94,6 +96,20 @@ public sealed class PanelFactory(IServiceProvider sp) : IPanelFactory
 
                 var formVm = (context as IHostedForm<TResult>)
                              ?? sp.GetRequiredService<EndSessionViewModel>() as IHostedForm<TResult>;
+                if (formVm == null) throw new ArgumentNullException();
+                body.DataContext = formVm;
+
+                var tcs = new TaskCompletionSource<TResult?>();
+                hostView.DataContext = new PanelHostViewModel<TResult>(closer, body, formVm, tcs);
+
+                return (hostView, tcs.Task);
+            }
+            case PanelKey.UpsertDeadline:
+            {
+                var body = sp.GetRequiredService<UpsertDeadlineView>();
+
+                var formVm = (context as IHostedForm<TResult>)
+                             ?? sp.GetRequiredService<UpsertDeadlineViewModel>() as IHostedForm<TResult>;
                 if (formVm == null) throw new ArgumentNullException();
                 body.DataContext = formVm;
 

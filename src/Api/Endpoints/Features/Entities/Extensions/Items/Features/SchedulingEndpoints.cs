@@ -17,12 +17,12 @@ public static class SchedulingEndpoints
         app.MapDelete("scheduling/once/{targetItemId:guid}", DeleteDeadline);
     }
     private static async Task<Result> CreateOnceScheduler(
-        CreateOnceScheduleDto dto,
+        UpsertDeadlineDto dto,
         IMessageBus bus,
         CancellationToken ct)
     {
         var command = new CreateOnceScheduleCommand(
-            dto.TargetItemId,
+            dto.ItemId,
             dto.DueAtUtc
         );
 
