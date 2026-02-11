@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Misa.Ui.Avalonia.Common.Formatting;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Inspector.Root;
 
@@ -86,20 +87,17 @@ public partial class InspectorEntryViewModel : ViewModelBase
             return sum + (end - s.StartedAtUtc);
         });
     
-    public string ActiveSessionElapsedDisplay =>
-        ElapsedTime() switch
+    public string ActiveSessionElapsedDisplay
+    {
+        get
         {
-            null => "Not yet calculated.",
+            var baseText = DurationFormatter.FormatDuration(ElapsedTime());
 
-            { TotalDays: >= 1 } ts
-                => $"{(int)ts.TotalDays}:{ts.Hours:00}:{ts.Minutes:00}:{ts.Seconds:00} d",
+            var plannedText = CurrentSession?.PlannedDuration is not null
+                ? $" / {DurationFormatter.FormatDuration(CurrentSession.PlannedDuration)}"
+                : string.Empty;
 
-            { TotalHours: >= 1 and < 24 } ts
-                => $"{(int)ts.TotalHours}:{ts.Minutes:00}:{ts.Seconds:00} h",
-
-            { TotalMinutes: >= 1 and < 60 } ts
-                => $"{(int)ts.TotalMinutes}:{ts.Seconds:00} min",
-
-            _ => "Not yet calculated."
-        };
+            return baseText + plannedText;
+        }
+    }
 }
