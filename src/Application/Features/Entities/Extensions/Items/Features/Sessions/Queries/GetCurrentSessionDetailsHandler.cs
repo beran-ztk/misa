@@ -32,11 +32,6 @@ public class GetCurrentSessionDetailsHandler(IItemRepository repository, ITimePr
         if (activeSession != null)
             dto.ActiveSession = activeSession.ToDto(timeProvider.UtcNow);
 
-        dto.CanStartSession = dto.ActiveSession == null;
-        dto.CanStopSession = dto.ActiveSession != null;
-        dto.CanPauseSession = dto.ActiveSession?.State == nameof(SessionState.Running);
-        dto.CanContinueSession = dto.ActiveSession?.State == nameof(SessionState.Paused);
-
         return Result<CurrentSessionOverviewDto>.Ok(dto);
     }
 }

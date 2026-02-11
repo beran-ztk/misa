@@ -1,0 +1,43 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions.Forms.EndSessionView"
+             xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions.Forms"
+             x:DataType="root:EndSessionViewModel">
+
+    <Grid ColumnDefinitions="*">
+
+        <StackPanel Grid.Column="0"
+                    Classes="workspace-addpanel-body"
+                    Spacing="16">
+
+            <StackPanel Classes="workspace-addpanel-body">
+                <TextBlock Text="Efficiency"
+                           Classes="workspace-addpanel-body"/>
+                <ComboBox ItemsSource="{Binding Efficiencies}"
+                          SelectedItem="{Binding SelectedEfficiency}" />
+            </StackPanel>
+
+            <StackPanel Classes="workspace-addpanel-body">
+                <TextBlock Text="Concentration"
+                           Classes="workspace-addpanel-body"/>
+                <ComboBox ItemsSource="{Binding Concentrations}"
+                          SelectedItem="{Binding SelectedConcentration}" />
+            </StackPanel>
+
+            <StackPanel Classes="workspace-addpanel-body">
+                <TextBlock Text="Summary"
+                           Classes="workspace-addpanel-body"/>
+                <TextBox Text="{Binding Summary, Mode=TwoWay}"
+                         AcceptsReturn="True"
+                         TextWrapping="Wrap"
+                         MinHeight="90"
+                         Watermark="What happened? Short summary." />
+            </StackPanel>
+
+        </StackPanel>
+
+    </Grid>
+</UserControl>

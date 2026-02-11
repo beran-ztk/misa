@@ -103,6 +103,8 @@ public static class CompositionRoot
         sc.AddSingleton<InspectorFacadeViewModel>();
         
         sc.AddTransient<StartSessionView>();
+        sc.AddTransient<PauseSessionView>();
+        sc.AddTransient<EndSessionView>();
     }
 
     private static void AddTasksFeature(this IServiceCollection sc)

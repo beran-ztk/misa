@@ -89,7 +89,7 @@
                                       RowDefinitions="Auto,Auto,Auto,Auto,Auto"
                                       RowSpacing="8"
                                       ColumnSpacing="12"
-                                      DataContext="{Binding CurrentSession.ActiveSession}">
+                                      DataContext="{Binding CurrentSession}">
 
                                     <TextBlock Grid.Row="0" Grid.Column="0"
                                                Classes="session-label"
@@ -197,101 +197,6 @@
 
             </StackPanel>
 
-        </Border>
-        
-        <!-- Pause-Session Form -->
-        <Border Classes="session-card"
-                Margin="10,0,10,10"
-                IsVisible="{Binding IsPauseSessionFormOpen}">
-
-            <StackPanel Spacing="10">
-                <TextBlock Classes="session-title"
-                           Text="Pause session"/>
-
-                <Grid ColumnDefinitions="*"
-                      RowDefinitions="Auto,Auto"
-                      RowSpacing="10">
-
-                    <TextBlock Grid.Row="0"
-                               Classes="session-muted"
-                               Text="What is the reason to pause your session?" />
-
-                    <StackPanel Grid.Row="1" Spacing="8">
-                        <TextBox Classes="misa-input"
-                                 Text="{Binding PauseReason, Mode=TwoWay}"
-                                 AcceptsReturn="True"
-                                 TextWrapping="Wrap"
-                                 MinHeight="90"/>
-
-                        <StackPanel Orientation="Horizontal"
-                                    Classes="session-form-buttons"
-                                    HorizontalAlignment="Right">
-                            <Button Command="{Binding ClosePauseSessionFormCommand}"
-                                    Content="Cancel"/>
-                            <Button Content="Save"
-                                    Command="{Binding PauseSessionCommand}" />
-                        </StackPanel>
-                    </StackPanel>
-
-                </Grid>
-            </StackPanel>
-        </Border>
-
-
-        <!-- Stop-Session Form -->
-        <Border Classes="session-card"
-                Margin="10,0,10,10"
-                IsVisible="{Binding IsStopSessionFormOpen}">
-
-            <StackPanel Spacing="10">
-                <TextBlock Classes="session-title"
-                           Text="Stop session"/>
-
-                <Grid ColumnDefinitions="140,*"
-                      RowDefinitions="Auto,Auto,Auto"
-                      RowSpacing="10"
-                      ColumnSpacing="10">
-
-                    <TextBlock Grid.Row="0" Grid.Column="0"
-                               Classes="session-label"
-                               Text="Efficiency" />
-                    <ComboBox Grid.Row="0" Grid.Column="1"
-                              Classes="misa-input"
-                              ItemsSource="{Binding Efficiencies}"
-                              SelectedItem="{Binding SelectedEfficiency}"/>
-
-                    <TextBlock Grid.Row="1" Grid.Column="0"
-                               Classes="session-label"
-                               Text="Concentration" />
-                    <ComboBox Grid.Row="1" Grid.Column="1"
-                              Classes="misa-input"
-                              ItemsSource="{Binding Concentrations}"
-                              SelectedItem="{Binding SelectedConcentration}"/>
-
-                    <TextBlock Grid.Row="2" Grid.Column="0"
-                               Classes="session-label"
-                               Text="Summary" />
-
-                    <StackPanel Grid.Row="2" Grid.Column="1" Spacing="8">
-                        <TextBox Classes="misa-input"
-                                 Text="{Binding Summary, Mode=TwoWay}"
-                                 AcceptsReturn="True"
-                                 TextWrapping="Wrap"
-                                 MinHeight="90"
-                                 Watermark="What happened? Short summary." />
-
-                        <StackPanel Orientation="Horizontal"
-                                    Classes="session-form-buttons"
-                                    HorizontalAlignment="Right">
-                            <Button Content="Cancel"
-                                    Command="{Binding CloseStopSessionFormCommand}"/>
-                            <Button Content="Save"
-                                    Command="{Binding StopSessionCommand}" />
-                        </StackPanel>
-                    </StackPanel>
-
-                </Grid>
-            </StackPanel>
         </Border>
 
     </StackPanel>

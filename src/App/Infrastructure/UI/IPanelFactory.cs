@@ -13,7 +13,9 @@ public enum PanelKey
 {
     Task,
     Schedule,
-    StartSession
+    StartSession,
+    PauseSession,
+    EndSession
 }
 
 public interface IPanelFactory
@@ -64,6 +66,34 @@ public sealed class PanelFactory(IServiceProvider sp) : IPanelFactory
 
                 var formVm = (context as IHostedForm<TResult>)
                              ?? sp.GetRequiredService<StartSessionViewModel>() as IHostedForm<TResult>;
+                if (formVm == null) throw new ArgumentNullException();
+                body.DataContext = formVm;
+
+                var tcs = new TaskCompletionSource<TResult?>();
+                hostView.DataContext = new PanelHostViewModel<TResult>(closer, body, formVm, tcs);
+
+                return (hostView, tcs.Task);
+            }
+            case PanelKey.PauseSession:
+            {
+                var body = sp.GetRequiredService<PauseSessionView>();
+
+                var formVm = (context as IHostedForm<TResult>)
+                             ?? sp.GetRequiredService<PauseSessionViewModel>() as IHostedForm<TResult>;
+                if (formVm == null) throw new ArgumentNullException();
+                body.DataContext = formVm;
+
+                var tcs = new TaskCompletionSource<TResult?>();
+                hostView.DataContext = new PanelHostViewModel<TResult>(closer, body, formVm, tcs);
+
+                return (hostView, tcs.Task);
+            }
+            case PanelKey.EndSession:
+            {
+                var body = sp.GetRequiredService<EndSessionView>();
+
+                var formVm = (context as IHostedForm<TResult>)
+                             ?? sp.GetRequiredService<EndSessionViewModel>() as IHostedForm<TResult>;
                 if (formVm == null) throw new ArgumentNullException();
                 body.DataContext = formVm;
 

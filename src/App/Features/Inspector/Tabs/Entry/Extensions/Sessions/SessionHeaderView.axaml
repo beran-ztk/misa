@@ -9,14 +9,14 @@
             BorderThickness="0,0,0,1"
             BorderBrush="{StaticResource BrushBorder}">
         
-        <!-- Wenn eine Session läuft -->
         <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto"
               ColumnSpacing="12"
               VerticalAlignment="Center">
 
-            <!-- Wenn keine Session läuft -->
+            <!-- Has none active Session -->
             <TextBlock Grid.Column="0"
                        Text="Currently has no active Session."
+                       VerticalAlignment="Center"
                        IsVisible="{Binding !HasActiveSession}" />
             
             <!-- Segment -->
@@ -38,29 +38,25 @@
                         VerticalAlignment="Center">
 
                 <Button Command="{Binding ShowStartSessionPanelCommand}"
-                        IsEnabled="{Binding CurrentSession.CanStartSession}"
-                        IsVisible="{Binding CurrentSession.CanStartSession}">
+                        IsVisible="{Binding CanStartSession}">
                     <Image Width="16" Height="16"
                            Source="{SvgImage /Assets/Icons/Inspector/Session/play.svg}"/>
                 </Button>
 
-                <Button Command="{Binding ShowPauseSessionFormCommand}"
-                        IsEnabled="{Binding CurrentSession.CanPauseSession}"
-                        IsVisible="{Binding CurrentSession.CanPauseSession}">
+                <Button Command="{Binding ShowPauseSessionPanelCommand}"
+                        IsVisible="{Binding CanPauseSession}">
                     <Image Width="16" Height="16"
                            Source="{SvgImage /Assets/Icons/Inspector/Session/pause.svg}"/>
                 </Button>
 
                 <Button Command="{Binding ContinueSessionCommand}"
-                        IsEnabled="{Binding CurrentSession.CanContinueSession}"
-                        IsVisible="{Binding CurrentSession.CanContinueSession}">
+                        IsVisible="{Binding CanContinueSession}">
                     <Image Width="16" Height="16"
                            Source="{SvgImage /Assets/Icons/Inspector/Session/play-pause.svg}"/>
                 </Button>
 
-                <Button Command="{Binding ShowStopSessionFormCommand}"
-                        IsEnabled="{Binding CurrentSession.CanStopSession}"
-                        IsVisible="{Binding CurrentSession.CanStopSession}">
+                <Button Command="{Binding ShowEndSessionPanelCommand}"
+                        IsVisible="{Binding CanEndSession}">
                     <Image Width="16" Height="16"
                            Source="{SvgImage /Assets/Icons/Inspector/Session/stop.svg}"/>
                 </Button>

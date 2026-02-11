@@ -12,7 +12,7 @@ public static class SessionMapper
             Id = x.Id,
             EntityId = x.ItemId,
         
-            State = x.State.ToString(),
+            State = x.State.ToDto(),
             Efficiency = x.Efficiency.MapToDto(),
             Concentration = x.Concentration.MapToDto(),
         
@@ -29,7 +29,8 @@ public static class SessionMapper
             
             ElapsedTime = x.FormattedElapsedTime(nowUtc)
         };
-
+    private static SessionStateDto ToDto(this SessionState state)
+        => (SessionStateDto)state;
     private static SessionSegmentDto ToDto(this SessionSegment x) =>
         new(
             x.Id,
