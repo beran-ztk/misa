@@ -37,7 +37,7 @@
                         Spacing="8"
                         VerticalAlignment="Center">
 
-                <Button Command="{Binding ShowStartSessionFormCommand}"
+                <Button Command="{Binding ShowStartSessionPanelCommand}"
                         IsEnabled="{Binding CurrentSession.CanStartSession}"
                         IsVisible="{Binding CurrentSession.CanStartSession}">
                     <Image Width="16" Height="16"

@@ -35,15 +35,23 @@
                           HorizontalScrollBarVisibility="Disabled"
                           Padding="10"
                           ClipToBounds="True">
-                <StackPanel>
-                    <ContentControl Content="{Binding ContentView}"
+
+                <Grid RowDefinitions="Auto,Auto"
+                      ColumnDefinitions="*">
+
+                    <ContentControl Grid.Row="0"
+                                    Grid.Column="0"
+                                    Content="{Binding ContentView}"
                                     VerticalAlignment="Top"
-                                    HorizontalAlignment="Stretch"/>
+                                    HorizontalAlignment="Stretch" />
 
                     <!-- Spacer damit das letzte Element sicher sichtbar bleibt -->
-                    <Border Height="56"/>
-                </StackPanel>
+                    <Border Grid.Row="1"
+                            Grid.Column="0"
+                            Height="50"/>
+                </Grid>
             </ScrollViewer>
+
 
 
 

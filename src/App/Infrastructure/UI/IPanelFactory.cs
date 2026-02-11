@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Microsoft.Extensions.DependencyInjection;
+using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions.Forms;
 using Misa.Ui.Avalonia.Features.Pages.Scheduling.Create;
 using Misa.Ui.Avalonia.Features.Pages.Tasks.Create;
 using Misa.Ui.Avalonia.Shell.Components;
@@ -11,7 +12,8 @@ namespace Misa.Ui.Avalonia.Infrastructure.UI;
 public enum PanelKey
 {
     Task,
-    Schedule
+    Schedule,
+    StartSession
 }
 
 public interface IPanelFactory
@@ -56,7 +58,20 @@ public sealed class PanelFactory(IServiceProvider sp) : IPanelFactory
 
                 return (hostView, tcs.Task);
             }
+            case PanelKey.StartSession:
+            {
+                var body = sp.GetRequiredService<StartSessionView>();
 
+                var formVm = (context as IHostedForm<TResult>)
+                             ?? sp.GetRequiredService<StartSessionViewModel>() as IHostedForm<TResult>;
+                if (formVm == null) throw new ArgumentNullException();
+                body.DataContext = formVm;
+
+                var tcs = new TaskCompletionSource<TResult?>();
+                hostView.DataContext = new PanelHostViewModel<TResult>(closer, body, formVm, tcs);
+
+                return (hostView, tcs.Task);
+            }
             default:
                 throw new ArgumentOutOfRangeException(nameof(key));
         }

@@ -2,6 +2,7 @@ using System;
 using System.Net.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Misa.Ui.Avalonia.Features.Inspector.Root;
+using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions.Forms;
 using Misa.Ui.Avalonia.Features.Pages.Common;
 using Misa.Ui.Avalonia.Features.Pages.Scheduling.Content;
 using Misa.Ui.Avalonia.Features.Pages.Scheduling.Create;
@@ -100,6 +101,8 @@ public static class CompositionRoot
         sc.AddSingleton<InspectorGateway>();
         sc.AddSingleton<InspectorState>();
         sc.AddSingleton<InspectorFacadeViewModel>();
+        
+        sc.AddTransient<StartSessionView>();
     }
 
     private static void AddTasksFeature(this IServiceCollection sc)

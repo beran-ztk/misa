@@ -4,56 +4,46 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions.Forms.StartSessionView"
-             xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Base"
-             x:DataType="root:InspectorEntryViewModel">
+             xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions.Forms"
+             x:DataType="root:StartSessionViewModel">
     
-    <Border Margin="10,0,10,10"
-            IsVisible="{Binding IsStartSessionFormOpen}">
+    <Grid ColumnDefinitions="*">
+    
+        <StackPanel Grid.Column="0"
+                    Classes="workspace-addpanel-body"
+                    Spacing="16">
 
-        <StackPanel Spacing="10">
-            <TextBlock Text="Start session"/>
-
-            <Grid ColumnDefinitions="140,*"
-                  RowDefinitions="Auto,Auto,Auto,Auto,Auto"
-                  RowSpacing="10"
-                  ColumnSpacing="10">
-
-                <TextBlock Grid.Row="0" Grid.Column="0"
-                           Text="Planned (min)" />
-                <NumericUpDown Grid.Row="0" Grid.Column="1"
-                               Minimum="1" Maximum="600"
+            <StackPanel Classes="workspace-addpanel-body">
+                <TextBlock Text="How many Minutes do you Plan in?"
+                           Classes="workspace-addpanel-body" />
+                <NumericUpDown Minimum="1" Maximum="600"
                                Value="{Binding PlannedMinutes, Mode=TwoWay}" />
+            </StackPanel>
 
-                <TextBlock Grid.Row="1" Grid.Column="0"
-                           Text="Objective" />
-                <TextBox Grid.Row="1" Grid.Column="1"
-                         Text="{Binding Objective, Mode=TwoWay}"
+            <StackPanel Classes="workspace-addpanel-body">
+                <TextBlock Text="What is your Objective?"
+                           Classes="workspace-addpanel-body"/>
+                <TextBox Text="{Binding Objective, Mode=TwoWay}"
                          Watermark="What are you doing?" />
+            </StackPanel>
 
-                <TextBlock Grid.Row="2" Grid.Column="0"
-                           Text="Auto stop" />
-                <CheckBox Grid.Row="2" Grid.Column="1"
-                          IsChecked="{Binding StopAutomatically, Mode=TwoWay}"
+            <StackPanel Classes="workspace-addpanel-body">
+                <TextBlock Text="Do you want the session to auto-stop and notify you at the planned time?"
+                           Classes="workspace-addpanel-body"/>
+                <CheckBox IsChecked="{Binding StopAutomatically, Mode=TwoWay}"
                           Content="Stop automatically after planned duration" />
+            </StackPanel>
 
-                <TextBlock Grid.Row="3" Grid.Column="0"
-                           Text="Reason" />
-                <TextBox Grid.Row="3" Grid.Column="1"
-                         IsEnabled="{Binding StopAutomatically}"
+            <StackPanel Classes="workspace-addpanel-body">
+                <TextBlock Text="If you have a reason for Auto-Stop, note it here!"
+                           Classes="workspace-addpanel-body"/>
+                <TextBox IsEnabled="{Binding StopAutomatically}"
                          Text="{Binding AutoStopReason, Mode=TwoWay}"
                          Watermark="Optional reason" />
+            </StackPanel>
 
-                <TextBlock Grid.Row="4" Grid.Column="0" Text=" " />
-                <StackPanel Grid.Row="4" Grid.Column="1"
-                            Orientation="Horizontal"
-                            HorizontalAlignment="Right">
-                    <Button Content="Cancel"
-                            Command="{Binding CloseStartSessionFormCommand}" />
-                    <Button Content="Save"
-                            Command="{Binding StartSessionCommand}" />
-                </StackPanel>
-            </Grid>
         </StackPanel>
-    </Border>
-    
+
+    </Grid>
+
 </UserControl>
