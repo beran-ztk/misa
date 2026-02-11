@@ -6,13 +6,13 @@ namespace Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.
 
 public static class SessionMapper
 {
-    public static SessionResolvedDto ToDto(this Session x, DateTimeOffset nowUtc) 
+    public static SessionResolvedDto ToDto(this Session x) 
         => new()
         {
             Id = x.Id,
             EntityId = x.ItemId,
         
-            State = x.State.ToString(),
+            State = x.State.ToDto(),
             Efficiency = x.Efficiency.MapToDto(),
             Concentration = x.Concentration.MapToDto(),
         
@@ -25,11 +25,10 @@ public static class SessionMapper
             StopAutomatically = x.StopAutomatically,
             WasAutomaticallyStopped = x.WasAutomaticallyStopped,
             CreatedAtUtc = x.CreatedAtUtc,
-            Segments = x.Segments.ToDto(),
-            
-            ElapsedTime = x.FormattedElapsedTime(nowUtc)
+            Segments = x.Segments.ToDto()
         };
-
+    private static SessionStateDto ToDto(this SessionState state)
+        => (SessionStateDto)state;
     private static SessionSegmentDto ToDto(this SessionSegment x) =>
         new(
             x.Id,

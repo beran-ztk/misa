@@ -23,7 +23,7 @@ public class PauseSessionHandler(IItemRepository repository, ITimeProvider timeP
             return Result.NotFound(ItemErrorCodes.ItemNotFound, "Item not found.");
         }
 
-        if (item.StateId != (int)ItemStates.Active)
+        if (item.State != ItemState.Active)
         {
             return Result.Invalid("item.not_active", "Item is not active and cannot be paused.");
         }
@@ -37,7 +37,7 @@ public class PauseSessionHandler(IItemRepository repository, ITimeProvider timeP
         session.Pause(command.PauseReason, timeProvider.UtcNow);
 
         item.Entity.Update(timeProvider.UtcNow);
-        item.ChangeState(ItemStates.Paused);
+        item.ChangeState(ItemState.Paused);
 
         await repository.SaveChangesAsync(ct);
 

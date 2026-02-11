@@ -4,17 +4,125 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="Misa.Ui.Avalonia.Features.Pages.Tasks.Root.TaskFacadeView"
-             xmlns:toolbar="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Tasks.Toolbar"
-             xmlns:content="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Tasks.Content"
              xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Tasks.Root"
+             xmlns:converters="clr-namespace:Misa.Ui.Avalonia.Common.Converters"
              x:DataType="root:TaskFacadeViewModel">
-    
+
+    <UserControl.Resources>
+        <converters:PriorityToBrushConverter x:Key="PriorityToBrushConverter" />
+    </UserControl.Resources>
+
     <Grid RowDefinitions="Auto,*">
 
-        <toolbar:TaskToolbarView Grid.Row="0" />
+        <!-- Toolbar (2 rows) -->
+        <Border Grid.Row="0"
+                Classes="workspace-toolbar-frame">
+            <Grid Classes="workspace-toolbar"
+                  RowDefinitions="Auto,Auto,Auto"
+                  ColumnDefinitions="*,Auto">
 
-        <content:TaskContentView Grid.Row="1"/>
-        
+                <!-- Row 0: Quick actions (left) -->
+                <StackPanel Grid.Row="0" Grid.Column="0"
+                            Classes="workspace-toolbar-left">
+                    <Button Classes="workspace-toolbar-icon"
+                            Command="{Binding ShowAddPanelCommand}">
+                        <Image Source="{SvgImage /Assets/Icons/Common/plus.svg}" />
+                    </Button>
+
+                    <Button Classes="workspace-toolbar-icon"
+                            Command="{Binding RefreshWorkspaceCommand}">
+                        <Image Source="{SvgImage /Assets/Icons/Common/refresh.svg}" />
+                    </Button>
+                </StackPanel>
+
+                <!-- Row 0: Search (right) -->
+                <StackPanel Grid.Row="0" Grid.Column="1"
+                            Classes="workspace-toolbar-right">
+                    <TextBox Classes="workspace-toolbar-search"
+                             Watermark="Search tasks..."
+                             Text="{Binding State.SearchText, Mode=TwoWay}" />
+                </StackPanel>
+
+                <!-- Row 1: Filters (left) -->
+                <StackPanel Grid.Row="1" Grid.Column="0"
+                            Classes="workspace-toolbar-center">
+                    <ToggleButton x:Name="PriorityFilterButton"
+                                  Classes="workspace-toolbar-filter-trigger">
+                        <TextBlock Text="Priority  ▾" />
+                    </ToggleButton>
+
+                    <Popup Classes="workspace-toolbar-filter-popup"
+                           PlacementTarget="{Binding ElementName=PriorityFilterButton}"
+                           IsOpen="{Binding IsChecked, ElementName=PriorityFilterButton}"
+                           Placement="Bottom">
+                        <Border Classes="workspace-toolbar-filter-popup-frame">
+                            <ItemsControl ItemsSource="{Binding State.PriorityFilters}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <CheckBox Content="{Binding Priority}"
+                                                  IsChecked="{Binding IsSelected}" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Border>
+                    </Popup>
+                </StackPanel>
+
+                <!-- Thin separator (not full width, centered-ish via margins) -->
+                <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Classes="workspace-toolbar-separator" />
+            </Grid>
+            
+        </Border>
+
+        <!-- Content -->
+        <Grid Grid.Row="1">
+            <Border Classes="workspace-content-frame">
+                <DataGrid Classes="workspace-datagrid"
+                          HorizontalAlignment="Center"
+                          ItemsSource="{Binding State.FilteredItems}"
+                          SelectedItem="{Binding State.SelectedItem, Mode=TwoWay}"
+                          AutoGenerateColumns="False"
+                          SelectionMode="Extended"
+                          IsReadOnly="True"
+                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                          ScrollViewer.VerticalScrollBarVisibility="Auto">
+
+                    <DataGrid.Columns>
+
+                        <DataGridTemplateColumn Header="Title" Width="320">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Item.Title}"
+                                               TextTrimming="CharacterEllipsis"
+                                               TextWrapping="NoWrap" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTextColumn Header="State" Binding="{Binding Item.State}" Width="120" />
+                        <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="120" />
+
+                        <DataGridTemplateColumn Header="Priority" Width="120">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <Ellipse Width="8" Height="8"
+                                                 Fill="{Binding Item.Priority, Converter={StaticResource PriorityToBrushConverter}}" />
+                                        <TextBlock Text="{Binding Item.Priority}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        
+                        <DataGridTextColumn Header="Created"
+                                            Binding="{Binding Item.Entity.CreatedAt, StringFormat='dd.MM.yyyy HH:mm'}"
+                                            Width="180" />
+
+                    </DataGrid.Columns>
+
+                </DataGrid>
+            </Border>
+        </Grid>
+
     </Grid>
-    
 </UserControl>

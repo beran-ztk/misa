@@ -1,0 +1,128 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions.CurrentSessionView"
+             xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Base"
+             x:DataType="root:InspectorEntryViewModel">
+
+
+    <StackPanel Spacing="12">
+
+        <Border Classes="session-card"
+                Margin="10">
+
+            <StackPanel Spacing="12">
+
+                <StackPanel Spacing="10">
+
+                    <TextBlock Classes="session-title"
+                               Text="Current session"/>
+
+                    <!-- Current session card -->
+                    <Border Classes="session-subcard">
+                        <StackPanel>
+
+                            <!-- Active session content -->
+                            <Border IsVisible="{Binding HasActiveSession}">
+                                <Grid ColumnDefinitions="Auto,*,Auto"
+                                      RowDefinitions="Auto,Auto,Auto,Auto,Auto"
+                                      RowSpacing="8"
+                                      ColumnSpacing="12"
+                                      DataContext="{Binding CurrentSession}">
+
+                                    <TextBlock Grid.Row="0" Grid.Column="0"
+                                               Classes="session-label"
+                                               Text="State"/>
+                                    <Border Grid.Row="0" Grid.Column="1"
+                                            Classes="session-pill">
+                                        <TextBlock Text="{Binding State}"
+                                                   Classes="session-value-strong"/>
+                                    </Border>
+
+                                    <TextBlock Grid.Row="1" Grid.Column="0"
+                                               Classes="session-label"
+                                               Text="Objective"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="1"
+                                               Grid.ColumnSpan="2"
+                                               Text="{Binding Objective}"
+                                               TextWrapping="Wrap"/>
+
+                                    <TextBlock Grid.Row="2" Grid.Column="0"
+                                               Classes="session-label"
+                                               Text="Planned"/>
+                                    <StackPanel Grid.Row="2" Grid.Column="1"
+                                                Grid.ColumnSpan="2"
+                                                Orientation="Horizontal"
+                                                Spacing="8">
+                                        <TextBlock Text="{Binding PlannedDuration}"/>
+                                        <Border Classes="session-pill"
+                                                IsVisible="{Binding StopAutomatically}">
+                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                <TextBlock Text="auto stop"/>
+                                                <TextBlock Text="{Binding AutoStopReason}"
+                                                           Classes="session-muted"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </StackPanel>
+
+                                    <TextBlock Grid.Row="3" Grid.Column="0"
+                                               Classes="session-label"
+                                               Text="Created"/>
+                                    <TextBlock Grid.Row="3" Grid.Column="1"
+                                               Grid.ColumnSpan="2"
+                                               Text="{Binding CreatedAtUtc}"/>
+
+                                    <TextBlock Grid.Row="4" Grid.Column="0"
+                                               Classes="session-label"
+                                               Text="Segments"/>
+
+                                    <ItemsControl Grid.Row="4" Grid.Column="1"
+                                                  Grid.ColumnSpan="2"
+                                                  ItemsSource="{Binding Segments}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Classes="session-subcard"
+                                                        Margin="0,0,0,8">
+                                                    <Grid ColumnDefinitions="Auto,*,Auto"
+                                                          RowDefinitions="Auto,Auto"
+                                                          ColumnSpacing="12"
+                                                          RowSpacing="6">
+
+                                                        <TextBlock Grid.Row="0" Grid.Column="0"
+                                                                   Classes="session-label"
+                                                                   Text="Start"/>
+                                                        <TextBlock Grid.Row="0" Grid.Column="1"
+                                                                   Text="{Binding StartedAtUtc}"/>
+
+                                                        <TextBlock Grid.Row="1" Grid.Column="0"
+                                                                   Classes="session-label"
+                                                                   Text="End"/>
+                                                        <TextBlock Grid.Row="1" Grid.Column="1"
+                                                                   Text="{Binding EndedAtUtc}"/>
+
+                                                        <TextBlock Grid.Row="0" Grid.Column="2"
+                                                                   Grid.RowSpan="2"
+                                                                   Text="{Binding PauseReason}"
+                                                                   Classes="session-muted"
+                                                                   TextWrapping="Wrap"
+                                                                   HorizontalAlignment="Right"
+                                                                   VerticalAlignment="Center"/>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+
+                                </Grid>
+                            </Border>
+
+                        </StackPanel>
+                    </Border>
+
+                </StackPanel>
+
+            </StackPanel>
+
+        </Border>
+
+    </StackPanel>
+</UserControl>

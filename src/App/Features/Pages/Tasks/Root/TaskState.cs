@@ -30,7 +30,7 @@ public sealed partial class TaskState : ObservableObject
         CreateState = createState;
         SelectionContextState = selectionContextState;
         
-        foreach (var p in Enum.GetValues<PriorityContract>())
+        foreach (var p in Enum.GetValues<PriorityDto>())
         {
             var opt = new PriorityFilterOption(p, isSelected: true);
             opt.PropertyChanged += (_, e) =>
@@ -52,7 +52,7 @@ public sealed partial class TaskState : ObservableObject
     private TaskDto? _selectedItem;
     partial void OnSelectedItemChanged(TaskDto? value)
     {
-        SelectionContextState.SetActive(value?.Id);
+        SelectionContextState.Set(value?.Id);
     }
     
     /// <summary>

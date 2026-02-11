@@ -1,0 +1,31 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Scheduling.Forms.UpsertDeadlineView"
+             xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Scheduling.Forms"
+             x:DataType="root:UpsertDeadlineViewModel">
+
+    <Grid ColumnDefinitions="*">
+
+        <StackPanel Grid.Column="0"
+                    Classes="workspace-addpanel-body"
+                    Spacing="16">
+
+            <StackPanel Classes="workspace-addpanel-body">
+                <TextBlock Text="Select a date"
+                           Classes="workspace-addpanel-body"/>
+                <DatePicker SelectedDate="{Binding DeadlineDate}" />
+            </StackPanel>
+
+            <StackPanel Classes="workspace-addpanel-body">
+                <TextBlock Text="Select a time"
+                           Classes="workspace-addpanel-body"/>
+                <TimePicker SelectedTime="{Binding DeadlineTime}" />
+            </StackPanel>
+
+        </StackPanel>
+
+    </Grid>
+</UserControl>

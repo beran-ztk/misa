@@ -21,7 +21,7 @@ public class ContinueSessionHandler(IItemRepository repository, ITimeProvider ti
             return Result.NotFound(ItemErrorCodes.ItemNotFound, "Item not found.");
         }
 
-        if (item.StateId != (int)ItemStates.Paused)
+        if (item.State != ItemState.Paused)
         {
             return Result.Invalid("item.not_paused", "Item is not paused and cannot be continued.");
         }
@@ -35,7 +35,7 @@ public class ContinueSessionHandler(IItemRepository repository, ITimeProvider ti
         session.Continue(idGenerator.New(), timeProvider.UtcNow);
 
         item.Entity.Update(timeProvider.UtcNow);
-        item.ChangeState(ItemStates.Active);
+        item.ChangeState(ItemState.Active);
 
         await repository.SaveChangesAsync(ct);
 

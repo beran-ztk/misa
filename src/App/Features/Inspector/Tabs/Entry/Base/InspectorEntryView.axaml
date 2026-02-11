@@ -1,0 +1,91 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Base.InspectorEntryView"
+             xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Base"
+             xmlns:deadline="clr-namespace:Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Scheduling"
+             xmlns:session="clr-namespace:Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions"
+             x:DataType="root:InspectorEntryViewModel">
+
+    <Border Background="{StaticResource BrushPrimaryBackground}"
+            Margin="0,20,0,0"
+            Padding="12">
+        <Grid RowDefinitions="50,Auto,Auto,*">
+            
+            <!-- Header -->
+            <Border Grid.Row="0"
+                    BorderBrush="{StaticResource BrushBorder}"
+                    BorderThickness="0,0,0,5"
+                    Padding="12,8">
+
+                <Grid ColumnDefinitions="*,Auto"
+                      ColumnSpacing="12">
+
+                    <TextBlock Grid.Column="0"
+                               Text="{Binding Facade.State.Item.Title}"
+                               VerticalAlignment="Center"
+                               FontSize="20"
+                               FontWeight="Regular"/>
+
+                    <StackPanel Grid.Column="1"
+                                Spacing="10"
+                                Orientation="Horizontal">
+                        <!-- Refresh -->
+                        <Button Classes="workspace-toolbar-icon"
+                                Command="{Binding Facade.ReloadCommand}">
+                            <Image Source="{SvgImage /Assets/Icons/Common/refresh.svg}" />
+                        </Button>
+                        
+                        <!-- 3-dots menu -->
+                        <Button Classes="workspace-toolbar-icon"
+                                VerticalAlignment="Center">
+                            <Image Source="{SvgImage /Assets/Icons/Common/dots-three-vertical.svg}" />
+                            <Button.Flyout>
+                                <MenuFlyout>
+                                    <MenuItem Header="Set/Edit deadline"
+                                              Command="{Binding ShowUpsertDeadlinePanelCommand}" />
+                                    <MenuItem Header="Remove deadline"
+                                              Command="{Binding DeleteDeadlineCommand}"
+                                              IsVisible="{Binding HasDeadline}" />
+                                    
+                                    <MenuItem>
+                                        <MenuItem.Header>
+                                            <StackPanel Spacing="8" Orientation="Horizontal">
+                                                <Image Width="16" Height="16" Source="{SvgImage /Assets/Icons/Common/archive.svg}"/>
+                                                <TextBlock Text="Archive Item"/>
+                                            </StackPanel>
+                                        </MenuItem.Header>
+                                    </MenuItem>
+                                    
+                                    <MenuItem>
+                                        <MenuItem.Header>
+                                            <StackPanel Spacing="8" Orientation="Horizontal">
+                                                <Image Width="16" Height="16" Source="{SvgImage /Assets/Icons/Common/trash.svg}"/>
+                                                <TextBlock Text="Delete Item"/>
+                                            </StackPanel>
+                                        </MenuItem.Header>
+                                    </MenuItem>
+
+                                </MenuFlyout>
+                            </Button.Flyout>
+                        </Button>
+                    </StackPanel>
+                    
+                </Grid>
+            </Border>
+            
+            <!-- Deadline -->
+            <deadline:EntryDeadlineView Grid.Row="1"/>
+            
+            <!-- Session -->
+            <session:SessionHeaderView Grid.Row="2"/>
+            
+            <!-- Body -->
+            <ScrollViewer Grid.Row="3"
+                          VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled">
+            </ScrollViewer>
+
+        </Grid>
+    </Border>
+
+</UserControl>

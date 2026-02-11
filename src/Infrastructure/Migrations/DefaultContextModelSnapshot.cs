@@ -120,10 +120,10 @@ namespace Misa.Infrastructure.Migrations
                         .HasColumnType("priority")
                         .HasDefaultValue(Priority.None);
 
-                    b.Property<int>("StateId")
+                    b.Property<int>("State")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasDefaultValue(1);
+                        .HasDefaultValue(0);
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -131,109 +131,7 @@ namespace Misa.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("StateId");
-
                     b.ToTable("Items");
-                });
-
-            modelBuilder.Entity("Misa.Domain.Features.Entities.Extensions.Items.Base.State", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Synopsis")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("States");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Name = "Draft",
-                            Synopsis = "Entwurf; noch nie daran gearbeitet"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Name = "Undefined",
-                            Synopsis = "Unklar; muss präzisiert werden"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Name = "Scheduled",
-                            Synopsis = "Geplant für einen zukünftigen Zeitpunkt"
-                        },
-                        new
-                        {
-                            Id = 4,
-                            Name = "InProgress",
-                            Synopsis = "Bereits bearbeitet, aktuell keine aktive Session"
-                        },
-                        new
-                        {
-                            Id = 5,
-                            Name = "Active",
-                            Synopsis = "Aktive Session läuft"
-                        },
-                        new
-                        {
-                            Id = 6,
-                            Name = "Paused",
-                            Synopsis = "Session pausiert (max. 6h, danach Auto-Fortsetzung)"
-                        },
-                        new
-                        {
-                            Id = 7,
-                            Name = "Pending",
-                            Synopsis = "Zurückgestellt; lange nicht bearbeitet"
-                        },
-                        new
-                        {
-                            Id = 8,
-                            Name = "WaitForResponse",
-                            Synopsis = "Wartet auf Rückmeldung einer Person oder Stelle"
-                        },
-                        new
-                        {
-                            Id = 9,
-                            Name = "BlockedByRelationship",
-                            Synopsis = "Blockiert durch Relation oder Abhängigkeit"
-                        },
-                        new
-                        {
-                            Id = 10,
-                            Name = "Done",
-                            Synopsis = "Erfolgreich abgeschlossen"
-                        },
-                        new
-                        {
-                            Id = 11,
-                            Name = "Canceled",
-                            Synopsis = "Abgebrochen; nicht weiter erforderlich"
-                        },
-                        new
-                        {
-                            Id = 12,
-                            Name = "Failed",
-                            Synopsis = "Gescheitert; Ziel nicht erreicht"
-                        },
-                        new
-                        {
-                            Id = 13,
-                            Name = "Expired",
-                            Synopsis = "Automatisch abgelaufen (Deadline überschritten)"
-                        });
                 });
 
             modelBuilder.Entity("Misa.Domain.Features.Entities.Extensions.Items.Extensions.Tasks.Task", b =>
@@ -475,7 +373,7 @@ namespace Misa.Infrastructure.Migrations
                     b.ToTable("SessionSegments");
                 });
 
-            modelBuilder.Entity("Misa.Domain.Features.Entities.Features.Descriptions.Description", b =>
+            modelBuilder.Entity("Misa.Domain.Features.Entities.Features.Description", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
@@ -561,15 +459,7 @@ namespace Misa.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Misa.Domain.Features.Entities.Extensions.Items.Base.State", "State")
-                        .WithMany()
-                        .HasForeignKey("StateId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.Navigation("Entity");
-
-                    b.Navigation("State");
                 });
 
             modelBuilder.Entity("Misa.Domain.Features.Entities.Extensions.Items.Extensions.Tasks.Task", b =>
@@ -623,7 +513,7 @@ namespace Misa.Infrastructure.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Misa.Domain.Features.Entities.Features.Descriptions.Description", b =>
+            modelBuilder.Entity("Misa.Domain.Features.Entities.Features.Description", b =>
                 {
                     b.HasOne("Misa.Domain.Features.Entities.Base.Entity", null)
                         .WithMany("Descriptions")

@@ -1,31 +1,46 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <!-- Trigger -->
+    <!-- Trigger: größer, weniger rund, breiter -->
     <Style Selector="ToggleButton.workspace-toolbar-filter-trigger">
-        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="MinWidth" Value="120" />
+        <Setter Property="Height" Value="32" />
+        <Setter Property="Padding" Value="12,6" />
+        <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLight}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
     </Style>
 
+    <!-- Nur leicht gerundet -->
     <Style Selector="ToggleButton.workspace-toolbar-filter-trigger /template/ ContentPresenter">
-        <Setter Property="CornerRadius" Value="4" />
-    </Style>
-    
-    <Style Selector="ToggleButton.workspace-toolbar-filter-trigger TextBlock">
+        <Setter Property="CornerRadius" Value="4"/>
     </Style>
 
-    <Style Selector="Popup.workspace-toolbar-filter-popup">
+    <Style Selector="ToggleButton.workspace-toolbar-filter-trigger:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}" />
     </Style>
 
+    <Style Selector="ToggleButton.workspace-toolbar-filter-trigger:checked /template/ ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BrushNavigationPressed}" />
+    </Style>
+
+
+    <!-- Popup Frame: größer, subtil, nicht zu rund -->
     <Style Selector="Border.workspace-toolbar-filter-popup-frame">
         <Setter Property="Background" Value="{StaticResource BrushPrimaryBackground}" />
         <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="Padding" Value="14,12" />
+        <Setter Property="MinWidth" Value="220" />
     </Style>
-    
+
+    <!-- Checkboxes etwas luftiger -->
     <Style Selector="Border.workspace-toolbar-filter-popup-frame CheckBox">
+        <Setter Property="Margin" Value="0,4" />
     </Style>
 
 </Styles>

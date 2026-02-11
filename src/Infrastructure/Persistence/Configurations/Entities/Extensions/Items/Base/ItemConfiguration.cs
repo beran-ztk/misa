@@ -12,9 +12,9 @@ public class ItemConfiguration : IEntityTypeConfiguration<Item>
 
         builder.Property(x => x.Id);
         
-        builder.Property(x => x.StateId)
+        builder.Property(x => x.State)
             .IsRequired()
-            .HasDefaultValue((int)ItemStates.Draft);
+            .HasDefaultValue(ItemState.Draft);
         
         builder.Property(x => x.Priority)
             .IsRequired()
@@ -28,11 +28,6 @@ public class ItemConfiguration : IEntityTypeConfiguration<Item>
             .WithOne()
             .HasForeignKey<Item>(i => i.Id)
             .OnDelete(DeleteBehavior.Cascade);
-
-        builder.HasOne(i => i.State)
-            .WithMany()
-            .HasForeignKey(i => i.StateId)
-            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasMany(e => e.Sessions)
             .WithOne()

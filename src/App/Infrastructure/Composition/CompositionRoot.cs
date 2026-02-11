@@ -1,17 +1,16 @@
 using System;
 using System.Net.Http;
 using Microsoft.Extensions.DependencyInjection;
-using Misa.Ui.Avalonia.Features.Inspector.Base;
-using Misa.Ui.Avalonia.Features.Inspector.Common;
+using Misa.Ui.Avalonia.Features.Inspector.Root;
+using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Scheduling.Forms;
+using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions.Forms;
 using Misa.Ui.Avalonia.Features.Pages.Common;
 using Misa.Ui.Avalonia.Features.Pages.Scheduling.Content;
 using Misa.Ui.Avalonia.Features.Pages.Scheduling.Create;
 using Misa.Ui.Avalonia.Features.Pages.Scheduling.Root;
 using Misa.Ui.Avalonia.Features.Pages.Scheduling.Toolbar;
-using Misa.Ui.Avalonia.Features.Pages.Tasks.Content;
 using Misa.Ui.Avalonia.Features.Pages.Tasks.Create;
 using Misa.Ui.Avalonia.Features.Pages.Tasks.Root;
-using Misa.Ui.Avalonia.Features.Pages.Tasks.Toolbar;
 using Misa.Ui.Avalonia.Features.Utilities.Notifications;
 using Misa.Ui.Avalonia.Infrastructure.Client;
 using Misa.Ui.Avalonia.Infrastructure.Messaging;
@@ -97,12 +96,15 @@ public static class CompositionRoot
     private static void AddInspector(this IServiceCollection sc)
     {
         sc.AddSingleton<ISelectionContextState, SelectionContextState>();
-
-        sc.AddSingleton<IInspectorItemExtensionVmFactory, InspectorItemExtensionVmFactory>();
-        sc.AddTransient<IInspectorClient, InspectorClient>();
-
-        sc.AddTransient<InspectorViewModel>();
-        sc.AddTransient<IInspectorCoordinator, InspectorCoordinator>();
+        
+        sc.AddSingleton<InspectorGateway>();
+        sc.AddSingleton<InspectorState>();
+        sc.AddSingleton<InspectorFacadeViewModel>();
+        
+        sc.AddTransient<StartSessionView>();
+        sc.AddTransient<PauseSessionView>();
+        sc.AddTransient<EndSessionView>();
+        sc.AddTransient<UpsertDeadlineView>();
     }
 
     private static void AddTasksFeature(this IServiceCollection sc)
@@ -111,8 +113,6 @@ public static class CompositionRoot
         sc.AddTransient<CreateTaskState>();
         sc.AddSingleton<TaskFacadeViewModel>();
         sc.AddSingleton<TaskGateway>();
-        sc.AddSingleton<TaskToolbarView>();
-        sc.AddSingleton<TaskContentView>();
 
         sc.AddTransient<CreateTaskView>();
         sc.AddTransient<CreateTaskViewModel>();

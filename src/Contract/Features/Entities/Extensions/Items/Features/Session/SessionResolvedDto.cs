@@ -4,7 +4,7 @@ public class SessionResolvedDto
 {
     public Guid Id { get; set; }
     public Guid EntityId { get; set; }
-    public string State { get; set; } = string.Empty;
+    public SessionStateDto State { get; set; }
     public EfficiencyContract Efficiency { get; set; }
     public ConcentrationContract Concentration { get; set; }
 
@@ -19,7 +19,4 @@ public class SessionResolvedDto
 
     public DateTimeOffset CreatedAtUtc { get; set; }
     public required ICollection<SessionSegmentDto> Segments { get; set; }
-    
-    public string? ElapsedTime { get; set; }
-
 }

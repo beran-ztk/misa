@@ -10,13 +10,13 @@ public sealed partial class CreateTaskState : ObservableObject
 {
     [ObservableProperty] private string _title = string.Empty;
     [ObservableProperty] private TaskCategoryContract _selectedCategoryContract;
-    [ObservableProperty] private PriorityContract _selectedPriorityContract;
+    [ObservableProperty] private PriorityDto _selectedPriorityDto;
 
     [ObservableProperty] private bool _titleHasValidationError;
     [ObservableProperty] private string _errorMessageTitle = string.Empty;
 
     public IReadOnlyList<TaskCategoryContract> Categories { get; } = Enum.GetValues<TaskCategoryContract>();
-    public IReadOnlyList<PriorityContract> Priorities { get; } = Enum.GetValues<PriorityContract>();
+    public IReadOnlyList<PriorityDto> Priorities { get; } = Enum.GetValues<PriorityDto>();
 
     private void TitleValidationError(string message)
     {
@@ -35,7 +35,7 @@ public sealed partial class CreateTaskState : ObservableObject
         return new AddTaskDto(
             trimmed,
             SelectedCategoryContract,
-            SelectedPriorityContract,
+            SelectedPriorityDto,
             null
         );
     }

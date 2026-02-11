@@ -24,7 +24,7 @@ public static class TaskMappings
         => new(
             dto.Title,
             dto.CategoryContract,
-            dto.PriorityContract,
+            dto.PriorityDto,
             dto.Deadline
         );
     public static TaskCategory MapToDomain(this TaskCategoryContract categoryContract) =>

@@ -5,10 +5,10 @@ namespace Misa.Ui.Avalonia.Common.Behaviors;
 
 public sealed partial class PriorityFilterOption : ObservableObject
 {
-    public PriorityContract Priority { get; }
+    public PriorityDto Priority { get; }
     [ObservableProperty] private bool _isSelected;
 
-    public PriorityFilterOption(PriorityContract priority, bool isSelected = true)
+    public PriorityFilterOption(PriorityDto priority, bool isSelected = true)
     {
         Priority = priority;
         IsSelected = isSelected;

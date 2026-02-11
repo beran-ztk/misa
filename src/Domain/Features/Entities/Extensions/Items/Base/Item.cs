@@ -9,52 +9,50 @@ public class Item : DomainEventEntity
 {
     private Item() { }
 
-    public Item(Entity entity, string title, Priority priority, ItemStates state)
+    public Item(Entity entity, string title, Priority priority, ItemState state)
     {
         Entity = entity;
         Title = title;
         Priority = priority;
-        StateId = (int)state;
+        State = state;
     }
     public static Item Create(Guid id, Workflow workflow, string title, Priority priority, DateTimeOffset createdAtUtc)
     {
         var entity = Entity.Create(id, workflow, createdAtUtc);
-        return new Item(entity, title, priority, ItemStates.Draft);
+        return new Item(entity, title, priority, ItemState.Draft);
     }
     // Member
     public Guid Id { get; init; }
-    public int StateId { get; private set; }
+    public ItemState State { get; private set; }
     public Priority Priority { get; private set; }
     public string Title { get; private set; }
     
     // Modelle
     public Entity Entity { get; init; }
-    public State? State { get; private set; }
     
     public ICollection<Session> Sessions { get; set; } = new List<Session>();
      public bool HasActiveSession 
-        => StateId == (int)ItemStates.Active;
+        => State == ItemState.Active;
     public bool CanStartSession
-        => StateId 
-            is (int)ItemStates.Draft
-            or (int)ItemStates.Undefined
-            or (int)ItemStates.InProgress
-            or (int)ItemStates.Pending
-            or (int)ItemStates.WaitForResponse;
+        => State 
+            is ItemState.Draft
+            or ItemState.Undefined
+            or ItemState.InProgress
+            or ItemState.Pending
+            or ItemState.WaitForResponse;
 
-    public void ChangeState(ItemStates state)
+    public void ChangeState(ItemState state)
     {
-        var value = (int)state;
-        if (StateId == value)
+        if (State == state)
             return;
         
         AddDomainEvent(new PropertyChangedEvent(
             EntityId: Id,
             ChangeType: ChangeType.State,
-            OldValue: StateId.ToString(),
-            NewValue: value.ToString(),
+            OldValue: State.ToString(),
+            NewValue: state.ToString(),
             Reason: null
         ));
-        StateId = value;
+        State = state;
     }
 }
