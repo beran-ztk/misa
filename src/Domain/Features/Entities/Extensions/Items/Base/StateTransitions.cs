@@ -2,73 +2,73 @@
 
 public static class StateTransitions
 {
-    private static readonly Dictionary<ItemStates, ItemStates[]> Allowed = new()
+    private static readonly Dictionary<ItemState, ItemState[]> Allowed = new()
     {
-        [ItemStates.Draft] =
+        [ItemState.Draft] =
             [
-                ItemStates.Undefined,
-                ItemStates.WaitForResponse,
-                ItemStates.Done,
-                ItemStates.Canceled,
-                ItemStates.Failed
+                ItemState.Undefined,
+                ItemState.WaitForResponse,
+                ItemState.Done,
+                ItemState.Canceled,
+                ItemState.Failed
             ],
-        [ItemStates.Undefined] =
+        [ItemState.Undefined] =
             [
-                ItemStates.Draft,
-                ItemStates.WaitForResponse,
-                ItemStates.Done,
-                ItemStates.Canceled,
-                ItemStates.Failed
+                ItemState.Draft,
+                ItemState.WaitForResponse,
+                ItemState.Done,
+                ItemState.Canceled,
+                ItemState.Failed
             ],
-        [ItemStates.InProgress] =
+        [ItemState.InProgress] =
             [
-                ItemStates.WaitForResponse,
-                ItemStates.Done,
-                ItemStates.Canceled,
-                ItemStates.Failed
+                ItemState.WaitForResponse,
+                ItemState.Done,
+                ItemState.Canceled,
+                ItemState.Failed
             ],
-        [ItemStates.Pending] =
+        [ItemState.Pending] =
             [
-                ItemStates.WaitForResponse,
-                ItemStates.Done,
-                ItemStates.Canceled,
-                ItemStates.Failed
+                ItemState.WaitForResponse,
+                ItemState.Done,
+                ItemState.Canceled,
+                ItemState.Failed
             ],
-        [ItemStates.WaitForResponse] =
+        [ItemState.WaitForResponse] =
             [
-                ItemStates.InProgress,
-                ItemStates.Done,
-                ItemStates.Canceled,
-                ItemStates.Failed
+                ItemState.InProgress,
+                ItemState.Done,
+                ItemState.Canceled,
+                ItemState.Failed
             ],
-        [ItemStates.Done] =
+        [ItemState.Done] =
             [
-                ItemStates.InProgress
+                ItemState.InProgress
             ],
-        [ItemStates.Canceled] =
+        [ItemState.Canceled] =
             [
-                ItemStates.InProgress
+                ItemState.InProgress
             ],
-        [ItemStates.Failed] =
+        [ItemState.Failed] =
             [
-                ItemStates.InProgress
+                ItemState.InProgress
             ],
-        [ItemStates.Expired] =
+        [ItemState.Expired] =
             [
-                ItemStates.InProgress
+                ItemState.InProgress
             ]
     };
     
-    public static IReadOnlyCollection<ItemStates> From(ItemStates state)
+    public static IReadOnlyCollection<ItemState> From(ItemState state)
         => Allowed.TryGetValue(state, out var next)
             ? next
             : [];
 
-    public static ItemStates GetEnumFromId(int stateId)
+    public static ItemState GetEnumFromId(int stateId)
     {
-        if (!Enum.IsDefined(typeof(ItemStates), stateId))
+        if (!Enum.IsDefined(typeof(ItemState), stateId))
             throw new InvalidCastException($"{stateId} does not Exist");
 
-        return (ItemStates)stateId;
+        return (ItemState)stateId;
     }
 }

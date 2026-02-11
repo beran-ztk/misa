@@ -11,32 +11,32 @@ public static class ItemMappings
         return new ItemDto
         {
             Id = item.Id,
-            StateId = item.StateId,
+            State = (ItemStateDto)item.State,
             Priority = item.Priority.MapToDto(),
             Title = item.Title,
             Entity = item.Entity.ToDto()
         };
     }
-    public static Priority MapToDomain(this PriorityContract priorityContract) =>
-        priorityContract switch
+    public static Priority MapToDomain(this PriorityDto priorityDto) =>
+        priorityDto switch
         {
-            PriorityContract.None => Priority.None,
-            PriorityContract.Low => Priority.Low,
-            PriorityContract.Medium => Priority.Medium,
-            PriorityContract.High => Priority.High,
-            PriorityContract.Urgent => Priority.Urgent,
-            PriorityContract.Critical => Priority.Critical,
-            _ => throw new ArgumentOutOfRangeException(nameof(priorityContract), priorityContract, null)
+            PriorityDto.None => Priority.None,
+            PriorityDto.Low => Priority.Low,
+            PriorityDto.Medium => Priority.Medium,
+            PriorityDto.High => Priority.High,
+            PriorityDto.Urgent => Priority.Urgent,
+            PriorityDto.Critical => Priority.Critical,
+            _ => throw new ArgumentOutOfRangeException(nameof(priorityDto), priorityDto, null)
         };
-    public static PriorityContract MapToDto(this Priority priority) =>
+    public static PriorityDto MapToDto(this Priority priority) =>
         priority switch
         {
-            Priority.None     => PriorityContract.None,
-            Priority.Low      => PriorityContract.Low,
-            Priority.Medium   => PriorityContract.Medium,
-            Priority.High     => PriorityContract.High,
-            Priority.Urgent   => PriorityContract.Urgent,
-            Priority.Critical => PriorityContract.Critical,
+            Priority.None     => PriorityDto.None,
+            Priority.Low      => PriorityDto.Low,
+            Priority.Medium   => PriorityDto.Medium,
+            Priority.High     => PriorityDto.High,
+            Priority.Urgent   => PriorityDto.Urgent,
+            Priority.Critical => PriorityDto.Critical,
             _ => throw new ArgumentOutOfRangeException(nameof(priority), priority, null)
         };
     public static WorkflowDto MapToDto(this Workflow workflow) =>

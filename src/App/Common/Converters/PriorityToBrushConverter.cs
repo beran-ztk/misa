@@ -12,18 +12,18 @@ public sealed class PriorityToBrushConverter : IValueConverter
 
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        if (value is not PriorityContract priority)
+        if (value is not PriorityDto priority)
             return Brushes.Transparent;
 
         return priority switch
         {
-            PriorityContract.None     => Brushes.Transparent,
+            PriorityDto.None     => Brushes.Transparent,
 
-            PriorityContract.Low      => new SolidColorBrush(Color.Parse("#9AA5B1")), // muted gray-blue
-            PriorityContract.Medium   => new SolidColorBrush(Color.Parse("#5B8DEF")), // calm blue
-            PriorityContract.High     => new SolidColorBrush(Color.Parse("#E2A03F")), // soft amber
-            PriorityContract.Urgent   => new SolidColorBrush(Color.Parse("#E06C3C")), // warm orange
-            PriorityContract.Critical => new SolidColorBrush(Color.Parse("#C44536")), // deep red
+            PriorityDto.Low      => new SolidColorBrush(Color.Parse("#9AA5B1")), // muted gray-blue
+            PriorityDto.Medium   => new SolidColorBrush(Color.Parse("#5B8DEF")), // calm blue
+            PriorityDto.High     => new SolidColorBrush(Color.Parse("#E2A03F")), // soft amber
+            PriorityDto.Urgent   => new SolidColorBrush(Color.Parse("#E06C3C")), // warm orange
+            PriorityDto.Critical => new SolidColorBrush(Color.Parse("#C44536")), // deep red
 
             _ => Brushes.Transparent
         };

@@ -27,7 +27,7 @@
             <TextBlock Text="Choose a priority for the task" Classes="workspace-addpanel-body"/>
             <ComboBox Classes="workspace-addpanel-body-selector"
                       ItemsSource="{Binding State.Priorities}"
-                      SelectedValue="{Binding State.SelectedPriorityContract}" />
+                      SelectedValue="{Binding State.SelectedPriorityDto}" />
         </StackPanel>
     </StackPanel>
 </UserControl>

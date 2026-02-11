@@ -28,7 +28,7 @@ public class StartSessionHandler(IItemRepository repository, ITimeProvider timeP
             return Result.NotFound(ItemErrorCodes.ItemNotFound, "Item not found.");
         }
 
-        if (item.StateId == (int)ItemStates.Active)
+        if (item.State == ItemState.Active)
         {
             return Result.Invalid("item.already_active", "ItemId is already active!");
         }
@@ -45,7 +45,7 @@ public class StartSessionHandler(IItemRepository repository, ITimeProvider timeP
         );
         
         item.Entity.Update(timeProvider.UtcNow);
-        item.ChangeState(ItemStates.Active);
+        item.ChangeState(ItemState.Active);
         
         await repository.AddAsync(session, ct);
 
