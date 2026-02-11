@@ -39,8 +39,6 @@ public class ItemRepository(DefaultContext context) : IItemRepository
     {
         return await context.Tasks
             .Include(t => t.Item)
-            .ThenInclude(i => i.State)
-            .Include(t => t.Item)
             .ThenInclude(i => i.Entity)
             .AsNoTracking()
             .FirstOrDefaultAsync(t => t.Id == id, cancellationToken: ct);
@@ -49,8 +47,6 @@ public class ItemRepository(DefaultContext context) : IItemRepository
     public async Task<List<Domain.Features.Entities.Extensions.Items.Extensions.Tasks.Task>> GetTasksAsync(CancellationToken ct)
     {
         return await context.Tasks
-            .Include(t => t.Item)
-                .ThenInclude(i => i.State)
             .Include(t => t.Item)
                 .ThenInclude(i => i.Entity)
             .OrderByDescending(t => t.Item.Entity.CreatedAt)
@@ -119,8 +115,6 @@ public class ItemRepository(DefaultContext context) : IItemRepository
     public async Task<Item?> TryGetItemDetailsAsync(Guid id, CancellationToken ct)
     {
         return await context.Items
-            .Include(i => i.State)
-            
             .Include(e => e.Entity)
                 .ThenInclude(e => e.Descriptions)
             

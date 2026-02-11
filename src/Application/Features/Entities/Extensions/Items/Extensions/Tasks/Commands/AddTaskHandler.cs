@@ -14,7 +14,7 @@ namespace Misa.Application.Features.Entities.Extensions.Items.Extensions.Tasks.C
 public sealed record AddTaskCommand(
     string Title,
     TaskCategoryContract CategoryContract,
-    PriorityContract PriorityContract,
+    PriorityDto PriorityDto,
     DeadlineInputDto? Deadline
 );
 public class AddTaskHandler(IItemRepository repository, IMessageBus bus, ITimeProvider timeProvider, IIdGenerator idGenerator)
@@ -25,7 +25,7 @@ public class AddTaskHandler(IItemRepository repository, IMessageBus bus, ITimePr
             idGenerator.New(), 
             command.Title, 
             command.CategoryContract.MapToDomain(), 
-            command.PriorityContract.MapToDomain(),
+            command.PriorityDto.MapToDomain(),
             timeProvider.UtcNow
         );
 

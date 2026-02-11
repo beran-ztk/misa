@@ -99,7 +99,7 @@
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
 
-                        <DataGridTextColumn Header="State" Binding="{Binding Item.StateId}" Width="120" />
+                        <DataGridTextColumn Header="State" Binding="{Binding Item.State}" Width="120" />
                         <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="120" />
 
                         <DataGridTemplateColumn Header="Priority" Width="120">
