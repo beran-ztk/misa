@@ -7,74 +7,78 @@
              xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Tasks.Root"
              xmlns:converters="clr-namespace:Misa.Ui.Avalonia.Common.Converters"
              x:DataType="root:TaskFacadeViewModel">
-    
+
     <UserControl.Resources>
         <converters:PriorityToBrushConverter x:Key="PriorityToBrushConverter" />
     </UserControl.Resources>
-    
+
     <Grid RowDefinitions="Auto,*">
 
-        <Grid Grid.Row="0"
-              Classes="workspace-toolbar" 
-              ColumnDefinitions="Auto,*,Auto">
+        <!-- Toolbar (2 rows) -->
+        <Border Grid.Row="0"
+                Classes="workspace-toolbar-frame">
+            <Grid Classes="workspace-toolbar"
+                  RowDefinitions="Auto,Auto,Auto"
+                  ColumnDefinitions="*,Auto">
 
-            <!-- LEFT: Primary actions -->
-            <StackPanel Grid.Column="0"
-                        Classes="workspace-toolbar-left">
-                <!-- Add -->
-                <Button Classes="workspace-toolbar-icon"
-                        Command="{Binding ShowAddPanelCommand}">
-                    <Image Source="{SvgImage /Assets/Icons/Common/plus.svg}" />
-                </Button>
+                <!-- Row 0: Quick actions (left) -->
+                <StackPanel Grid.Row="0" Grid.Column="0"
+                            Classes="workspace-toolbar-left">
+                    <Button Classes="workspace-toolbar-icon"
+                            Command="{Binding ShowAddPanelCommand}">
+                        <Image Source="{SvgImage /Assets/Icons/Common/plus.svg}" />
+                    </Button>
 
-                <!-- Refresh -->
-                <Button Classes="workspace-toolbar-icon"
-                        Command="{Binding RefreshWorkspaceCommand}">
-                    <Image Source="{SvgImage /Assets/Icons/Common/refresh.svg}" />
-                </Button>
-            </StackPanel>
+                    <Button Classes="workspace-toolbar-icon"
+                            Command="{Binding RefreshWorkspaceCommand}">
+                        <Image Source="{SvgImage /Assets/Icons/Common/refresh.svg}" />
+                    </Button>
+                </StackPanel>
 
-            <!-- CENTER: Context / Filters -->
-            <StackPanel Grid.Column="1"
-                        Classes="workspace-toolbar-center">
-                <!-- Priority Filter -->
-                <ToggleButton x:Name="PriorityFilterButton"
-                              Classes="workspace-toolbar-filter-trigger">
-                    <TextBlock Text="Priority  ▾" />
-                </ToggleButton>
+                <!-- Row 0: Search (right) -->
+                <StackPanel Grid.Row="0" Grid.Column="1"
+                            Classes="workspace-toolbar-right">
+                    <TextBox Classes="workspace-toolbar-search"
+                             Watermark="Search tasks..."
+                             Text="{Binding State.SearchText, Mode=TwoWay}" />
+                </StackPanel>
 
-                <Popup Classes="workspace-toolbar-filter-popup"
-                       PlacementTarget="{Binding ElementName=PriorityFilterButton}"
-                       IsOpen="{Binding IsChecked, ElementName=PriorityFilterButton}"
-                       Placement="Bottom">
-                    <Border Classes="workspace-toolbar-filter-popup-frame">
-                        <ItemsControl ItemsSource="{Binding State.PriorityFilters}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <CheckBox Content="{Binding Priority}"
-                                              IsChecked="{Binding IsSelected}" />
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </Border>
-                </Popup>
+                <!-- Row 1: Filters (left) -->
+                <StackPanel Grid.Row="1" Grid.Column="0"
+                            Classes="workspace-toolbar-center">
+                    <ToggleButton x:Name="PriorityFilterButton"
+                                  Classes="workspace-toolbar-filter-trigger">
+                        <TextBlock Text="Priority  ▾" />
+                    </ToggleButton>
 
-            </StackPanel>
+                    <Popup Classes="workspace-toolbar-filter-popup"
+                           PlacementTarget="{Binding ElementName=PriorityFilterButton}"
+                           IsOpen="{Binding IsChecked, ElementName=PriorityFilterButton}"
+                           Placement="Bottom">
+                        <Border Classes="workspace-toolbar-filter-popup-frame">
+                            <ItemsControl ItemsSource="{Binding State.PriorityFilters}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <CheckBox Content="{Binding Priority}"
+                                                  IsChecked="{Binding IsSelected}" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Border>
+                    </Popup>
+                </StackPanel>
 
-            <!-- RIGHT: Secondary actions + Search -->
-            <StackPanel Grid.Column="2"
-                        Classes="workspace-toolbar-right">
-                <TextBox Classes="workspace-toolbar-search"
-                         Watermark="Search tasks..."
-                         Text="{Binding State.SearchText, Mode=TwoWay}" />
-            </StackPanel>
+                <!-- Thin separator (not full width, centered-ish via margins) -->
+                <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Classes="workspace-toolbar-separator" />
+            </Grid>
+            
+        </Border>
 
-        </Grid>
-
+        <!-- Content -->
         <Grid Grid.Row="1">
             <Border Classes="workspace-content-frame">
                 <DataGrid Classes="workspace-datagrid"
-                          HorizontalAlignment="Left"
+                          HorizontalAlignment="Center"
                           ItemsSource="{Binding State.FilteredItems}"
                           SelectedItem="{Binding State.SelectedItem, Mode=TwoWay}"
                           AutoGenerateColumns="False"
@@ -95,25 +99,30 @@
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
 
-                        <DataGridTextColumn Header="State" Binding="{Binding Item.StateId}" Width="160" />
-                        <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="160" />
+                        <DataGridTextColumn Header="State" Binding="{Binding Item.StateId}" Width="120" />
+                        <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="120" />
 
-                        <DataGridTemplateColumn Header="Priority" Width="160">
+                        <DataGridTemplateColumn Header="Priority" Width="120">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <StackPanel Orientation="Horizontal">
-                                        <Ellipse Fill="{Binding Item.Priority, Converter={StaticResource PriorityToBrushConverter}}" />
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <Ellipse Width="8" Height="8"
+                                                 Fill="{Binding Item.Priority, Converter={StaticResource PriorityToBrushConverter}}" />
                                         <TextBlock Text="{Binding Item.Priority}" />
                                     </StackPanel>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
+                        
+                        <DataGridTextColumn Header="Created"
+                                            Binding="{Binding Item.Entity.CreatedAt, StringFormat='dd.MM.yyyy HH:mm'}"
+                                            Width="180" />
 
                     </DataGrid.Columns>
 
                 </DataGrid>
             </Border>
-
         </Grid>
+
     </Grid>
 </UserControl>

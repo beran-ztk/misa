@@ -3,29 +3,43 @@
 
     <Style Selector="Border.workspace-content-frame">
         <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLight}" />
+        <Setter Property="Padding" Value="0,10,0,0" />
     </Style>
 
     <!-- DataGrid baseline -->
     <Style Selector="DataGrid.workspace-datagrid">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="GridLinesVisibility" Value="None" />
-        <Setter Property="IsReadOnly" Value="True" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="HeadersVisibility" Value="Column" />
         <Setter Property="RowHeight" Value="34" />
+        <Setter Property="Margin" Value="24,0" />
     </Style>
 
-    <!-- Column header -->
+    <!-- Column header: no vertical separators, only a bottom line -->
     <Style Selector="DataGrid.workspace-datagrid DataGridColumnHeader">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0,0,0,1" />
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="AreSeparatorsVisible" Value="false" />
     </Style>
-
-    <!-- Row -->
+    
+    <!-- Rows: no borders -->
     <Style Selector="DataGrid.workspace-datagrid DataGridRow">
+        <Setter Property="BorderThickness" Value="0" />
     </Style>
 
-    <!-- Cell -->
+    <!-- Cells: no borders, no gridlines -->
     <Style Selector="DataGrid.workspace-datagrid DataGridCell">
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
     </Style>
 
-    <!-- Hover / Selected -->
+    <!-- Hover / Selected (still subtle) -->
     <Style Selector="DataGrid.workspace-datagrid DataGridRow:pointerover DataGridCell">
         <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}" />
     </Style>
