@@ -4,17 +4,116 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="Misa.Ui.Avalonia.Features.Pages.Tasks.Root.TaskFacadeView"
-             xmlns:toolbar="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Tasks.Toolbar"
-             xmlns:content="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Tasks.Content"
              xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Tasks.Root"
+             xmlns:converters="clr-namespace:Misa.Ui.Avalonia.Common.Converters"
              x:DataType="root:TaskFacadeViewModel">
+    
+    <UserControl.Resources>
+        <converters:PriorityToBrushConverter x:Key="PriorityToBrushConverter" />
+    </UserControl.Resources>
     
     <Grid RowDefinitions="Auto,*">
 
-        <toolbar:TaskToolbarView Grid.Row="0" />
+        <Grid Grid.Row="0"
+              Classes="workspace-toolbar" 
+              ColumnDefinitions="Auto,*,Auto">
 
-        <content:TaskContentView Grid.Row="1"/>
-        
+            <!-- LEFT: Primary actions -->
+            <StackPanel Grid.Column="0"
+                        Classes="workspace-toolbar-left">
+                <!-- Add -->
+                <Button Classes="workspace-toolbar-icon"
+                        Command="{Binding ShowAddPanelCommand}">
+                    <Image Source="{SvgImage /Assets/Icons/Common/plus.svg}" />
+                </Button>
+
+                <!-- Refresh -->
+                <Button Classes="workspace-toolbar-icon"
+                        Command="{Binding RefreshWorkspaceCommand}">
+                    <Image Source="{SvgImage /Assets/Icons/Common/refresh.svg}" />
+                </Button>
+            </StackPanel>
+
+            <!-- CENTER: Context / Filters -->
+            <StackPanel Grid.Column="1"
+                        Classes="workspace-toolbar-center">
+                <!-- Priority Filter -->
+                <ToggleButton x:Name="PriorityFilterButton"
+                              Classes="workspace-toolbar-filter-trigger">
+                    <TextBlock Text="Priority  ▾" />
+                </ToggleButton>
+
+                <Popup Classes="workspace-toolbar-filter-popup"
+                       PlacementTarget="{Binding ElementName=PriorityFilterButton}"
+                       IsOpen="{Binding IsChecked, ElementName=PriorityFilterButton}"
+                       Placement="Bottom">
+                    <Border Classes="workspace-toolbar-filter-popup-frame">
+                        <ItemsControl ItemsSource="{Binding State.PriorityFilters}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <CheckBox Content="{Binding Priority}"
+                                              IsChecked="{Binding IsSelected}" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Border>
+                </Popup>
+
+            </StackPanel>
+
+            <!-- RIGHT: Secondary actions + Search -->
+            <StackPanel Grid.Column="2"
+                        Classes="workspace-toolbar-right">
+                <TextBox Classes="workspace-toolbar-search"
+                         Watermark="Search tasks..."
+                         Text="{Binding State.SearchText, Mode=TwoWay}" />
+            </StackPanel>
+
+        </Grid>
+
+        <Grid Grid.Row="1">
+            <Border Classes="workspace-content-frame">
+                <DataGrid Classes="workspace-datagrid"
+                          HorizontalAlignment="Left"
+                          ItemsSource="{Binding State.FilteredItems}"
+                          SelectedItem="{Binding State.SelectedItem, Mode=TwoWay}"
+                          AutoGenerateColumns="False"
+                          SelectionMode="Extended"
+                          IsReadOnly="True"
+                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                          ScrollViewer.VerticalScrollBarVisibility="Auto">
+
+                    <DataGrid.Columns>
+
+                        <DataGridTemplateColumn Header="Title" Width="320">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Item.Title}"
+                                               TextTrimming="CharacterEllipsis"
+                                               TextWrapping="NoWrap" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTextColumn Header="State" Binding="{Binding Item.StateId}" Width="160" />
+                        <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="160" />
+
+                        <DataGridTemplateColumn Header="Priority" Width="160">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Ellipse Fill="{Binding Item.Priority, Converter={StaticResource PriorityToBrushConverter}}" />
+                                        <TextBlock Text="{Binding Item.Priority}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                    </DataGrid.Columns>
+
+                </DataGrid>
+            </Border>
+
+        </Grid>
     </Grid>
-    
 </UserControl>

@@ -9,10 +9,8 @@ using Misa.Ui.Avalonia.Features.Pages.Scheduling.Content;
 using Misa.Ui.Avalonia.Features.Pages.Scheduling.Create;
 using Misa.Ui.Avalonia.Features.Pages.Scheduling.Root;
 using Misa.Ui.Avalonia.Features.Pages.Scheduling.Toolbar;
-using Misa.Ui.Avalonia.Features.Pages.Tasks.Content;
 using Misa.Ui.Avalonia.Features.Pages.Tasks.Create;
 using Misa.Ui.Avalonia.Features.Pages.Tasks.Root;
-using Misa.Ui.Avalonia.Features.Pages.Tasks.Toolbar;
 using Misa.Ui.Avalonia.Features.Utilities.Notifications;
 using Misa.Ui.Avalonia.Infrastructure.Client;
 using Misa.Ui.Avalonia.Infrastructure.Messaging;
@@ -115,8 +113,6 @@ public static class CompositionRoot
         sc.AddTransient<CreateTaskState>();
         sc.AddSingleton<TaskFacadeViewModel>();
         sc.AddSingleton<TaskGateway>();
-        sc.AddSingleton<TaskToolbarView>();
-        sc.AddSingleton<TaskContentView>();
 
         sc.AddTransient<CreateTaskView>();
         sc.AddTransient<CreateTaskViewModel>();

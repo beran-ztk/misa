@@ -91,7 +91,6 @@
 
     <ItemGroup>
       <AdditionalFiles Include="Features\Pages\Scheduling\Content\SchedulerContentView.axaml" />
-      <AdditionalFiles Include="Features\Pages\Tasks\Content\TaskContentView.axaml" />
       <AdditionalFiles Include="Features\Utilities\Notifications\NotificationView.axaml" />
     </ItemGroup>
 </Project>
