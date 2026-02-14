@@ -51,7 +51,7 @@ public class StartSessionHandler(IItemRepository repository, ITimeProvider timeP
         session.AddStartSegment(idGenerator.New());
         await repository.SaveChangesAsync(ct);
 
-        var createdSession = await repository.TryGetActiveSessionByItemIdAsync(session.Id, ct);
+        var createdSession = await repository.TryGetActiveSessionByItemIdAsync(session.ItemId, ct);
         return createdSession is null 
             ? Result<SessionResolvedDto>.NotFound("session", "session not found.") 
             : Result<SessionResolvedDto>.Ok(createdSession.ToDto());

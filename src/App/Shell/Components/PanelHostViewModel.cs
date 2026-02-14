@@ -48,7 +48,7 @@ public partial class PanelHostViewModel<TResult>(
     {
         switch (Form)
         {
-            case IHostedForm<TResult> form:
+            case IHostedForm<TResult>:
             {
                 tcs.TrySetResult(default);
                 panelCloser.Close();

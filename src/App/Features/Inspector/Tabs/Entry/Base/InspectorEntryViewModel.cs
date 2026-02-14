@@ -24,6 +24,11 @@ public partial class InspectorEntryViewModel : ViewModelBase
         if (e.PropertyName != nameof(Facade.State.CurrentSessionOverview))
             return;
 
+        CurrentSessionPropertyChanged();
+    }
+
+    private void CurrentSessionPropertyChanged()
+    {
         OnPropertyChanged(nameof(CurrentSession));
         OnPropertyChanged(nameof(HasActiveSession));
 
