@@ -27,7 +27,7 @@ public partial class InspectorEntryViewModel
 
         var formVm = new StartSessionViewModel(itemId, Facade.Gateway);
 
-        var result = await Facade.PanelProxy.OpenAsync<SessionResolvedDto>(PanelKey.StartSession, formVm);
+        var result = await Facade.PanelProxy.OpenAsync(Panels.StartSession, formVm);
 
         if (Facade.State.CurrentSessionOverview is not null)
         {
@@ -43,7 +43,7 @@ public partial class InspectorEntryViewModel
 
         var formVm = new PauseSessionViewModel(itemId, Facade.Gateway);
 
-        var result = await Facade.PanelProxy.OpenAsync<SessionResolvedDto?>(PanelKey.PauseSession, formVm);
+        var result = await Facade.PanelProxy.OpenAsync(Panels.PauseSession, formVm);
 
         if (Facade.State.CurrentSessionOverview is not null)
         {
@@ -64,8 +64,9 @@ public partial class InspectorEntryViewModel
         if (result is { IsSuccess: true } && Facade.State.CurrentSessionOverview is not null)
         {
             Facade.State.CurrentSessionOverview.ActiveSession = null;
-            CurrentSessionPropertyChanged();
         }
+        
+        CurrentSessionPropertyChanged();
     }
     [RelayCommand]
     private async Task ContinueSessionAsync()

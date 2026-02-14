@@ -29,11 +29,14 @@ public class PanelProxy(ShellState shellState, IPanelFactory panelFactory) : IPa
         shellState.Panel = null;
         _activePanelTcs = null;
         
-        return completed == bridgeTcs.Task ? Result.Ok() : Result.Failure();
+        if (completed == bridgeTcs.Task)
+            return Result.Failure("Canceled.");
+
+        return await task;
     }
-    public async Task<TResult?> OpenAsync<TResult>(PanelKey key, object? context)
+    public async Task<TResult?> OpenAsync<TResult>(PanelKey<TResult> key, IHostedForm<TResult>? context)
     {
-        var (control, task) = panelFactory.CreateHosted<TResult>(key, context);
+        var (control, task) = panelFactory.CreateHosted(key, context);
         
         var bridgeTcs = new TaskCompletionSource<object?>();
         _activePanelTcs = bridgeTcs;

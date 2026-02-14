@@ -2,7 +2,10 @@ using System;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Microsoft.Extensions.DependencyInjection;
+using Misa.Contract.Features.Common.Deadlines;
 using Misa.Contract.Features.Entities.Extensions.Items.Extensions.Tasks;
+using Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;
+using Misa.Contract.Features.Entities.Extensions.Items.Features.Session;
 using Misa.Contract.Shared.Results;
 using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Scheduling.Forms;
 using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions.Forms;
@@ -14,39 +17,55 @@ namespace Misa.Ui.Avalonia.Infrastructure.UI;
 
 public enum PanelKey
 {
-    Task,
-    Schedule,
-    StartSession,
-    PauseSession,
     EndSession,
-    UpsertDeadline
+}
+
+public readonly record struct PanelKey<TResult>(
+    string Id,
+    Func<IServiceProvider, Control> ViewFactory,
+    Func<IServiceProvider, IHostedForm<TResult>> FormFactory
+);
+public static class Panels
+{
+    public static readonly PanelKey<TaskDto> Task =
+        new("Task",
+            sp => sp.GetRequiredService<CreateTaskView>(),
+            sp => sp.GetRequiredService<CreateTaskViewModel>());
+
+    public static readonly PanelKey<ScheduleDto> Schedule =
+        new("Schedule",
+            sp => sp.GetRequiredService<CreateScheduleView>(),
+            sp => sp.GetRequiredService<CreateScheduleViewModel>());
+
+    public static readonly PanelKey<SessionResolvedDto> StartSession =
+        new("StartSession",
+            sp => sp.GetRequiredService<StartSessionView>(),
+            sp => sp.GetRequiredService<StartSessionViewModel>());
+
+    public static readonly PanelKey<SessionResolvedDto> PauseSession =
+        new("PauseSession",
+            sp => sp.GetRequiredService<PauseSessionView>(),
+            sp => sp.GetRequiredService<PauseSessionViewModel>());
+
+    public static readonly PanelKey<DeadlineDto> UpsertDeadline =
+        new("UpsertDeadline",
+            sp => sp.GetRequiredService<UpsertDeadlineView>(),
+            sp => sp.GetRequiredService<UpsertDeadlineViewModel>());
 }
 
 public interface IPanelFactory
 {
-    (Control Control, Task ResultTask) CreateHosted(PanelKey key, object? context);
-    (Control Control, Task<TResult?> ResultTask) CreateHosted<TResult>(PanelKey key, object? context);
+    (Control Control, Task<Result> ResultTask) CreateHosted(PanelKey key, object? context);
+    (Control Control, Task<TResult?> ResultTask) CreateHosted<TResult>(PanelKey<TResult> key, IHostedForm<TResult>? context);
 }
 
 public sealed class PanelFactory(IServiceProvider sp) : IPanelFactory
 {
-    public (Control Control, Task ResultTask) CreateHosted(PanelKey key, object? context)
+    public (Control Control, Task<Result> ResultTask) CreateHosted(PanelKey key, object? context)
     {
         return key switch
         {
             PanelKey.EndSession => CreateHosted<EndSessionView, EndSessionViewModel>(context),
-            _ => throw new ArgumentOutOfRangeException(nameof(key), key, null)
-        };
-    }
-    public (Control Control, Task<TResult?> ResultTask) CreateHosted<TResult>(PanelKey key, object? context)
-    {
-        return key switch
-        {
-            PanelKey.Task           => CreateHosted<TResult, CreateTaskView,          CreateTaskViewModel>(context),
-            PanelKey.Schedule       => CreateHosted<TResult, CreateScheduleView,      CreateScheduleViewModel>(context),
-            PanelKey.StartSession   => CreateHosted<TResult, StartSessionView,        StartSessionViewModel>(context),
-            PanelKey.PauseSession   => CreateHosted<TResult, PauseSessionView,        PauseSessionViewModel>(context),
-            PanelKey.UpsertDeadline => CreateHosted<TResult, UpsertDeadlineView,      UpsertDeadlineViewModel>(context),
             _ => throw new ArgumentOutOfRangeException(nameof(key), key, null)
         };
     }
@@ -67,15 +86,17 @@ public sealed class PanelFactory(IServiceProvider sp) : IPanelFactory
         
         return (hostView, tcs.Task);
     }
-    private (Control Control, Task<TResult?> ResultTask) CreateHosted<TResult, TView, TViewModel>(object? context)
-        where TView : Control
-        where TViewModel : class, IHostedForm<TResult>
+    
+    // Generic
+    public (Control Control, Task<TResult?> ResultTask) CreateHosted<TResult>(
+        PanelKey<TResult> key,
+        IHostedForm<TResult>? context)
     {
         var hostView = sp.GetRequiredService<PanelHostView>();
         var panelCloser = sp.GetRequiredService<IPanelCloser>();
 
-        var body = sp.GetRequiredService<TView>();
-        var formVm = context as IHostedForm<TResult> ?? sp.GetRequiredService<TViewModel>();
+        var body = key.ViewFactory(sp);
+        var formVm = context ?? key.FormFactory(sp);
         
         body.DataContext = formVm;
         

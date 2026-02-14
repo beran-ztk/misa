@@ -31,7 +31,7 @@ public partial class InspectorEntryViewModel
 
         var formVm = new UpsertDeadlineViewModel(itemId, Deadline, Facade.Gateway);
 
-        var result = await Facade.PanelProxy.OpenAsync<DeadlineDto>(PanelKey.UpsertDeadline, formVm);
+        var result = await Facade.PanelProxy.OpenAsync(Panels.UpsertDeadline, formVm);
 
         if (result is null) return;
 

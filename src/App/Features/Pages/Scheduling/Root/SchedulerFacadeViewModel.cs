@@ -42,7 +42,7 @@ public sealed partial class SchedulerFacadeViewModel(
 
         var formVm = new CreateScheduleViewModel(State.CreateState, Gateway);
 
-        var created = await PanelProxy.OpenAsync<ScheduleDto>(PanelKey.Schedule, formVm);
+        var created = await PanelProxy.OpenAsync(Panels.Schedule, formVm);
         if (created is null) return;
 
         await State.AddToCollection(created);
