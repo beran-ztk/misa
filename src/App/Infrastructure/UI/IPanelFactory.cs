@@ -45,7 +45,7 @@ public sealed class PanelFactory(IServiceProvider sp) : IPanelFactory
         where TViewModel : class
     {
         var hostView = sp.GetRequiredService<PanelHostView>();
-        var closer = sp.GetRequiredService<IOverlayCloser>();
+        var panelCloser = sp.GetRequiredService<IPanelCloser>();
 
         var body = sp.GetRequiredService<TView>();
         var formVm = context as TViewModel ?? sp.GetRequiredService<TViewModel>();
@@ -53,7 +53,7 @@ public sealed class PanelFactory(IServiceProvider sp) : IPanelFactory
         body.DataContext = formVm;
         
         var tcs = new TaskCompletionSource<TResult?>();
-        hostView.DataContext = new PanelHostViewModel<TResult>(closer, body, formVm, tcs);
+        hostView.DataContext = new PanelHostViewModel<TResult>(body, formVm, tcs, panelCloser);
         
         return (hostView, tcs.Task);
     }

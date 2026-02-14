@@ -1,4 +1,3 @@
-using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using CommunityToolkit.Mvvm.Input;
@@ -8,10 +7,10 @@ using Misa.Ui.Avalonia.Infrastructure.UI;
 namespace Misa.Ui.Avalonia.Shell.Components;
 
 public partial class PanelHostViewModel<TResult>(
-    IOverlayCloser closer,
     Control contentView,
     object form,
-    TaskCompletionSource<TResult?> tcs)
+    TaskCompletionSource<TResult?> tcs,
+    IPanelCloser panelCloser)
     : ViewModelBase, IPanelHostViewModel
 {
     public Control ContentView { get; } = contentView;
@@ -21,7 +20,6 @@ public partial class PanelHostViewModel<TResult>(
         Form switch
         {
             IHostedForm<TResult> f => f.Title,
-            IHostedCommitForm<TResult> f => f.Title,
             _ => string.Empty
         };
 
@@ -29,14 +27,12 @@ public partial class PanelHostViewModel<TResult>(
         Form switch
         {
             IHostedForm<TResult> f => f.SubmitText,
-            IHostedCommitForm<TResult> f => f.SubmitText,
             _ => "Submit"
         };
     public string CancelText =>
         Form switch
         {
             IHostedForm<TResult> f => f.CancelText,
-            IHostedCommitForm<TResult> f => f.CancelText,
             _ => "Cancel"
         };
 
@@ -44,15 +40,21 @@ public partial class PanelHostViewModel<TResult>(
         Form switch
         {
             IHostedForm<TResult> f => f.CanSubmit,
-            IHostedCommitForm<TResult> f => f.CanSubmit,
             _ => false
         };
 
     [RelayCommand]
     private void Close()
     {
-        tcs.TrySetResult(default);
-        closer.ClosePanel();
+        switch (Form)
+        {
+            case IHostedForm<TResult> form:
+            {
+                tcs.TrySetResult(default);
+                panelCloser.Close();
+                return;
+            }
+        }
     }
 
     [RelayCommand]
@@ -63,24 +65,14 @@ public partial class PanelHostViewModel<TResult>(
     {
         switch (Form)
         {
-            case IHostedForm<TResult> collectForm:
+            case IHostedForm<TResult> form:
             {
-                var value = collectForm.TrySubmit();
-                if (value is null)
-                    return;
-
-                tcs.TrySetResult(value);
-                closer.ClosePanel();
-                break;
-            }
-            case IHostedCommitForm<TResult> commitForm:
-            {
-                var result = await commitForm.SubmitAsync();
+                var result = await form.SubmitAsync();
                 if (!result.IsSuccess)
                     return;
 
                 tcs.TrySetResult(result.Value);
-                closer.ClosePanel();
+                panelCloser.Close();
                 return;
             }
         }

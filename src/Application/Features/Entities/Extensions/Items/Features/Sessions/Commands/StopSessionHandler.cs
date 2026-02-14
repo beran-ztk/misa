@@ -1,5 +1,6 @@
 ﻿using Misa.Application.Abstractions.Persistence;
 using Misa.Application.Abstractions.Time;
+using Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Mappings;
 using Misa.Application.Mappings;
 using Misa.Contract.Features.Entities.Extensions.Items.Features.Session;
 using Misa.Contract.Shared.Results;
@@ -16,12 +17,12 @@ public record StopSessionCommand(
 
 public class StopSessionHandler(IItemRepository repository, ITimeProvider timeProvider)
 {
-    public async Task<Result> Handle(StopSessionCommand command, CancellationToken ct)
+    public async Task<Result<SessionResolvedDto>> Handle(StopSessionCommand command, CancellationToken ct)
     {
         var item = await repository.TryGetItemAsync(command.ItemId, ct);
         if (item is null)
         {
-            return Result.NotFound(ItemErrorCodes.ItemNotFound, "Item not found.");
+            return Result<SessionResolvedDto>.NotFound(ItemErrorCodes.ItemNotFound, "Item not found.");
         }
 
         if (item.State is not ItemState.Active 
@@ -33,7 +34,7 @@ public class StopSessionHandler(IItemRepository repository, ITimeProvider timePr
         var session = await repository.TryGetActiveSessionByItemIdAsync(command.ItemId, ct);
         if (session is null)
         {
-            return Result.NotFound("session.not_found", "Active session not found.");
+            return Result<SessionResolvedDto>.NotFound("session.not_found", "Active session not found.");
         }
 
         session.Stop(
@@ -48,6 +49,9 @@ public class StopSessionHandler(IItemRepository repository, ITimeProvider timePr
 
         await repository.SaveChangesAsync(ct);
 
-        return Result.Ok();
+        var createdSession = await repository.TryGetActiveSessionByItemIdAsync(session.Id, ct);
+        return createdSession is null 
+            ? Result<SessionResolvedDto>.NotFound("session", "session not found.") 
+            : Result<SessionResolvedDto>.Ok(createdSession.ToDto());
     }
 }

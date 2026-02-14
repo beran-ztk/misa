@@ -44,14 +44,11 @@ public static class CompositionRoot
     private static void AddCore(this IServiceCollection sc, string baseAddress)
     {
         sc.AddSingleton<PanelProxy>();
-        sc.AddSingleton<IOverlayCloser, OverlayCloser>();
-        sc.AddSingleton<ModalProxy>();
         sc.AddSingleton<IPanelFactory, PanelFactory>();
-        sc.AddSingleton<IModalFactory, ModalFactory>();
+        sc.AddSingleton<IPanelCloser, PanelProxy>();
         sc.AddSingleton<RemoteProxy>();
         sc.AddSingleton<SignalRNotificationClient>();
         sc.AddTransient<PanelHostView>();
-        sc.AddTransient<ModalHostView>();
 
         sc.AddSingleton(new HttpClient { BaseAddress = new Uri(baseAddress) });
     }
@@ -115,7 +112,6 @@ public static class CompositionRoot
         sc.AddSingleton<TaskGateway>();
 
         sc.AddTransient<CreateTaskView>();
-        sc.AddTransient<CreateTaskReturnViewModel>();
     }
 
     private static void AddSchedulingFeature(this IServiceCollection sc)

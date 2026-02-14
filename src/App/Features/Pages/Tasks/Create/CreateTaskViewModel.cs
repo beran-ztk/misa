@@ -9,7 +9,8 @@ namespace Misa.Ui.Avalonia.Features.Pages.Tasks.Create;
 
 public sealed partial class CreateTaskViewModel(
     CreateTaskState state,
-    TaskGateway gateway) : ObservableObject, IHostedCommitForm<TaskDto>
+    TaskGateway gateway) 
+    : ObservableObject, IHostedForm<TaskDto>
 {
     public CreateTaskState State { get; } = state;
 

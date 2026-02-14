@@ -6,9 +6,9 @@ namespace Misa.Api.Endpoints.Deadlines;
 
 public static class DeleteDeadlineEndpoint
 {
-    public static void Map(WebApplication app)
+    public static void Map(IEndpointRouteBuilder api)
     {
-        app.MapDelete("deadlines/{targetItemId:guid}", DeleteDeadline);
+        api.MapDelete("deadlines/{targetItemId:guid}", DeleteDeadline);
     }
     private static async Task<Result> DeleteDeadline(
         Guid targetItemId,

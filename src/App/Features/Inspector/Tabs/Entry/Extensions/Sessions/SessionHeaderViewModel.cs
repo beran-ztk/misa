@@ -20,30 +20,29 @@ public partial class InspectorEntryViewModel
     public string ActiveSessionSegmentDisplay => $"Segment {CurrentSession?.Segments.Count} - {CurrentSession?.State}";
     
     [RelayCommand]
-    public async Task ShowStartSessionPanelAsync()
+    private async Task ShowStartSessionPanelAsync()
     {
         var itemId = Facade.State.Item.Id;
-        
-        var formVm = new StartSessionViewModel(itemId);
-        
-        var dto = await Facade.PanelProxy.OpenAsync<StartSessionDto>(PanelKey.StartSession, formVm);
-        if (dto is null) return;
-        
-        await Facade.Gateway.StartSessionAsync(itemId, dto);
-        await Facade.Reload();
+
+        var formVm = new StartSessionViewModel(itemId, Facade.Gateway);
+
+        var result = await Facade.PanelProxy.OpenAsync<SessionResolvedDto>(PanelKey.StartSession, formVm);
+
+        if (Facade.State.CurrentSessionOverview is not null)
+            Facade.State.CurrentSessionOverview.ActiveSession = result;
     }
+
     [RelayCommand]
-    public async Task ShowPauseSessionPanelAsync()
+    private async Task ShowPauseSessionPanelAsync()
     {
         var itemId = Facade.State.Item.Id;
 
-        var formVm = new PauseSessionViewModel(itemId);
+        var formVm = new PauseSessionViewModel(itemId, Facade.Gateway);
 
-        var dto = await Facade.PanelProxy.OpenAsync<PauseSessionDto>(PanelKey.PauseSession, formVm);
-        if (dto is null) return;
+        var result = await Facade.PanelProxy.OpenAsync<SessionResolvedDto>(PanelKey.PauseSession, formVm);
 
-        await Facade.Gateway.PauseSessionAsync(itemId, dto);
-        await Facade.Reload();
+        if (Facade.State.CurrentSessionOverview is not null)
+            Facade.State.CurrentSessionOverview.ActiveSession = result;
     }
     // Aufrufer (wie Start/Pause als Panel)
     [RelayCommand]
@@ -51,13 +50,12 @@ public partial class InspectorEntryViewModel
     {
         var itemId = Facade.State.Item.Id;
 
-        var formVm = new EndSessionViewModel(itemId);
+        var formVm = new EndSessionViewModel(itemId, Facade.Gateway);
 
-        var dto = await Facade.PanelProxy.OpenAsync<StopSessionDto>(PanelKey.EndSession, formVm);
-        if (dto is null) return;
+        var result = await Facade.PanelProxy.OpenAsync<SessionResolvedDto>(PanelKey.EndSession, formVm);
 
-        await Facade.Gateway.StopSessionAsync(itemId, dto);
-        await Facade.Reload();
+        if (Facade.State.CurrentSessionOverview is not null)
+            Facade.State.CurrentSessionOverview.ActiveSession = result;
     }
     [RelayCommand]
     public async Task ContinueSessionAsync()

@@ -1,4 +1,5 @@
 using Misa.Application.Features.Common.Deadlines;
+using Misa.Contract.Features.Common.Deadlines;
 using Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;
 using Misa.Contract.Shared.Results;
 using Wolverine;
@@ -7,11 +8,11 @@ namespace Misa.Api.Endpoints.Deadlines;
 
 public static class UpsertDeadlineEndpoint
 {
-    public static void Map(WebApplication app)
+    public static void Map(IEndpointRouteBuilder api)
     {
-        app.MapPut("deadlines", UpsertDeadline);
+        api.MapPut("deadlines", UpsertDeadline);
     }
-    private static async Task<Result> UpsertDeadline(
+    private static async Task<Result<DeadlineDto>> UpsertDeadline(
         UpsertDeadlineDto dto,
         IMessageBus bus,
         CancellationToken ct)
@@ -21,6 +22,6 @@ public static class UpsertDeadlineEndpoint
             dto.DueAtUtc
         );
 
-        return await bus.InvokeAsync<Result>(command, ct);
+        return await bus.InvokeAsync<Result<DeadlineDto>>(command, ct);
     }
 }

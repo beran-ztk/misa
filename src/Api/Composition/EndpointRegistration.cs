@@ -1,5 +1,6 @@
 using Misa.Api.Endpoints;
 using Misa.Api.Endpoints.Deadlines;
+using Misa.Api.Endpoints.Sessions;
 using Misa.Api.Endpoints.Tasks;
 using Misa.Api.Middleware;
 
@@ -17,9 +18,10 @@ public static class EndpointRegistration
         api.AddEndpointFilter<ResultExceptionFilter>();
 
         api.MapTaskEndpoints();
+        api.MapDeadlineEndpoints();
+        api.MapSessionEndpoints();
 
         // Andere Endpoints
-        app.MapDeadlineEndpoints();
         ItemDetailEndpoints.Map(app);
         DescriptionEndpoints.Map(app);
         SchedulingEndpoints.Map(app);
@@ -32,9 +34,15 @@ public static class EndpointRegistration
         GetTasksEndpoint.Map(api);
     }
 
-    private static void MapDeadlineEndpoints(this WebApplication app)
+    private static void MapDeadlineEndpoints(this IEndpointRouteBuilder api)
     {
-        UpsertDeadlineEndpoint.Map(app);
-        DeleteDeadlineEndpoint.Map(app);
+        UpsertDeadlineEndpoint.Map(api);
+        DeleteDeadlineEndpoint.Map(api);
+    }
+    private static void MapSessionEndpoints(this IEndpointRouteBuilder api)
+    {
+        StartSessionEndpoint.Map(api);
+        PauseSessionEndpoint.Map(api);
+        StopSessionEndpoint.Map(api);
     }
 }

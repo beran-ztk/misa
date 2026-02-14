@@ -1,3 +1,4 @@
+using Misa.Contract.Features.Common.Deadlines;
 using Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;
 using Misa.Domain.Features.Common;
 
