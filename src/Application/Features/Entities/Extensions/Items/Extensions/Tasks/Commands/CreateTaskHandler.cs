@@ -30,7 +30,10 @@ public class CreateTaskHandler(
         
         await repository.AddAsync(task, ct);
         await repository.SaveChangesAsync(ct);
+
+        var formattedTask = task.ToDto();
         
-        return Result<TaskDto>.Ok(task.ToDto());
+        return Result<TaskDto>
+            .Ok(formattedTask);
     }
 }

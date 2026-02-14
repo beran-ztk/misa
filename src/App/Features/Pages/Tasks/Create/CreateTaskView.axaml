@@ -2,11 +2,14 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Tasks.Create"
              x:Class="Misa.Ui.Avalonia.Features.Pages.Tasks.Create.CreateTaskView"
-             x:DataType="root:CreateTaskViewModel">
+             x:DataType="root:CreateTaskCommitViewModel">
 
     <StackPanel Classes="workspace-addpanel-body"
                 Spacing="16">
 
+        <TextBlock Text="{Binding State.SubmitErrorMessage}"
+                   IsVisible="{Binding State.HasSubmitError}" />
+        
         <StackPanel Classes="workspace-addpanel-body">
             <TextBlock Text="Add a title" Classes="workspace-addpanel-body" />
             <TextBox Classes="workspace-addpanel-body-text-oneliner"

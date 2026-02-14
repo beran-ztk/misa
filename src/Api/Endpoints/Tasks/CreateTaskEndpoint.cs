@@ -26,6 +26,7 @@ public static class CreateTaskEndpoint
             dto.CategoryDto,
             dto.PriorityDto);
 
-        return await bus.InvokeAsync<Result<TaskDto>>(command, linkedCts.Token);
+        var result = await bus.InvokeAsync<Result<TaskDto>>(command, linkedCts.Token);
+        return result;
     }
 }

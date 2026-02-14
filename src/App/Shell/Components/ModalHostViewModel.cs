@@ -41,7 +41,7 @@ public partial class ModalHostViewModel<TResult> : ViewModelBase, IPanelHostView
     [RelayCommand] private void Cancel() => Close();
 
     [RelayCommand]
-    private void Submit()
+    private async Task Submit()
     {
         var result = Form.TrySubmit();
         if (result is null) return;

@@ -1,3 +1,4 @@
+using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using CommunityToolkit.Mvvm.Input;
@@ -6,50 +7,82 @@ using Misa.Ui.Avalonia.Infrastructure.UI;
 
 namespace Misa.Ui.Avalonia.Shell.Components;
 
-public partial class PanelHostViewModel<TResult> : ViewModelBase, IPanelHostViewModel
+public partial class PanelHostViewModel<TResult>(
+    IOverlayCloser closer,
+    Control contentView,
+    object form,
+    TaskCompletionSource<TResult?> tcs)
+    : ViewModelBase, IPanelHostViewModel
 {
-    private readonly IOverlayCloser _closer;
-    private readonly TaskCompletionSource<TResult?> _tcs;
-
-    public PanelHostViewModel(
-        IOverlayCloser closer,
-        Control contentView,
-        IHostedForm<TResult> form,
-        TaskCompletionSource<TResult?> tcs)
-    {
-        _closer = closer;
-        _tcs = tcs;
-
-        ContentView = contentView;
-        Form = form;
-    }
-
-    public Control ContentView { get; }
-    public IHostedForm<TResult> Form { get; }
+    public Control ContentView { get; } = contentView;
+    private object Form { get; } = form;
     
-    public string Title => Form.Title;
-    public string SubmitText => Form.SubmitText;
-    public string CancelText => Form.CancelText;
-    public bool CanSubmit => Form.CanSubmit;
+    public string Title =>
+        Form switch
+        {
+            IHostedForm<TResult> f => f.Title,
+            IHostedCommitForm<TResult> f => f.Title,
+            _ => string.Empty
+        };
+
+    public string SubmitText => 
+        Form switch
+        {
+            IHostedForm<TResult> f => f.SubmitText,
+            IHostedCommitForm<TResult> f => f.SubmitText,
+            _ => "Submit"
+        };
+    public string CancelText =>
+        Form switch
+        {
+            IHostedForm<TResult> f => f.CancelText,
+            IHostedCommitForm<TResult> f => f.CancelText,
+            _ => "Cancel"
+        };
+
+    public bool CanSubmit =>
+        Form switch
+        {
+            IHostedForm<TResult> f => f.CanSubmit,
+            IHostedCommitForm<TResult> f => f.CanSubmit,
+            _ => false
+        };
 
     [RelayCommand]
     private void Close()
     {
-        _tcs.TrySetResult(default);
-        _closer.ClosePanel();
+        tcs.TrySetResult(default);
+        closer.ClosePanel();
     }
 
     [RelayCommand]
     private void Cancel() => Close();
 
     [RelayCommand]
-    private void Submit()
+    private async Task Submit()
     {
-        var result = Form.TrySubmit();
-        if (result is null)
-            return;
-        
-        _tcs.TrySetResult(result);
-        _closer.ClosePanel();
+        switch (Form)
+        {
+            case IHostedForm<TResult> collectForm:
+            {
+                var value = collectForm.TrySubmit();
+                if (value is null)
+                    return;
+
+                tcs.TrySetResult(value);
+                closer.ClosePanel();
+                break;
+            }
+            case IHostedCommitForm<TResult> commitForm:
+            {
+                var result = await commitForm.SubmitAsync();
+                if (!result.IsSuccess)
+                    return;
+
+                tcs.TrySetResult(result.Value);
+                closer.ClosePanel();
+                return;
+            }
+        }
     }
 }
