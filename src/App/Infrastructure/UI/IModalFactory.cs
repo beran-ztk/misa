@@ -33,7 +33,7 @@ public sealed class ModalFactory(IServiceProvider sp) : IModalFactory
 
                 var formVm =
                     (context as IHostedForm<TResult>)
-                    ?? sp.GetRequiredService<CreateTaskViewModel>() as IHostedForm<TResult>;
+                    ?? sp.GetRequiredService<CreateTaskReturnViewModel>() as IHostedForm<TResult>;
                 if (formVm is null) throw new NoNullAllowedException();
                 body.DataContext = formVm;
 

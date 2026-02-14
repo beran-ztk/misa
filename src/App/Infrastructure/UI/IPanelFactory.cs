@@ -31,7 +31,7 @@ public sealed class PanelFactory(IServiceProvider sp) : IPanelFactory
     {
         return key switch
         {
-            PanelKey.Task           => CreateHosted<TResult, CreateTaskView,          CreateTaskCommitViewModel>(context),
+            PanelKey.Task           => CreateHosted<TResult, CreateTaskView,          CreateTaskViewModel>(context),
             PanelKey.Schedule       => CreateHosted<TResult, CreateScheduleView,      CreateScheduleViewModel>(context),
             PanelKey.StartSession   => CreateHosted<TResult, StartSessionView,        StartSessionViewModel>(context),
             PanelKey.PauseSession   => CreateHosted<TResult, PauseSessionView,        PauseSessionViewModel>(context),
@@ -48,7 +48,7 @@ public sealed class PanelFactory(IServiceProvider sp) : IPanelFactory
         var closer = sp.GetRequiredService<IOverlayCloser>();
 
         var body = sp.GetRequiredService<TView>();
-        var formVm = (context as TViewModel) ?? sp.GetRequiredService<TViewModel>();
+        var formVm = context as TViewModel ?? sp.GetRequiredService<TViewModel>();
         
         body.DataContext = formVm;
         

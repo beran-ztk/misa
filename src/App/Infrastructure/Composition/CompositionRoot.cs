@@ -115,7 +115,7 @@ public static class CompositionRoot
         sc.AddSingleton<TaskGateway>();
 
         sc.AddTransient<CreateTaskView>();
-        sc.AddTransient<CreateTaskViewModel>();
+        sc.AddTransient<CreateTaskReturnViewModel>();
     }
 
     private static void AddSchedulingFeature(this IServiceCollection sc)

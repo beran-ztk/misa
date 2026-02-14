@@ -2,7 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Tasks.Create"
              x:Class="Misa.Ui.Avalonia.Features.Pages.Tasks.Create.CreateTaskView"
-             x:DataType="root:CreateTaskCommitViewModel">
+             x:DataType="root:CreateTaskViewModel">
 
     <StackPanel Classes="workspace-addpanel-body"
                 Spacing="16">

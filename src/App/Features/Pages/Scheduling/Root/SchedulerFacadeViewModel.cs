@@ -42,7 +42,7 @@ public sealed partial class SchedulerFacadeViewModel : ViewModelBase
             return;
 
         var taskState = new Misa.Ui.Avalonia.Features.Pages.Tasks.Root.CreateTaskState();
-        var taskForm = new Misa.Ui.Avalonia.Features.Pages.Tasks.Create.CreateTaskViewModel(taskState);
+        var taskForm = new Misa.Ui.Avalonia.Features.Pages.Tasks.Create.CreateTaskReturnViewModel(taskState);
 
         var dto = await ModalProxy.OpenAsync<CreateTaskDto>(ModalKey.Task, taskForm);
         if (dto is null)

@@ -38,7 +38,7 @@ public sealed partial class TaskFacadeViewModel(
     [RelayCommand]
     private async Task ShowAddPanelAsync()
     {
-        var formVm = new CreateTaskCommitViewModel(State.CreateState, gateway);
+        var formVm = new CreateTaskViewModel(State.CreateState, gateway);
 
         var created = await panelProxy.OpenAsync<TaskDto>(PanelKey.Task, formVm);
         if (created is null) return;
