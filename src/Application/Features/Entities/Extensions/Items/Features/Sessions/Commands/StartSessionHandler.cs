@@ -1,6 +1,8 @@
 ﻿using Misa.Application.Abstractions.Ids;
 using Misa.Application.Abstractions.Persistence;
 using Misa.Application.Abstractions.Time;
+using Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Mappings;
+using Misa.Contract.Features.Entities.Extensions.Items.Features.Session;
 using Misa.Contract.Shared.Results;
 using Misa.Domain.Features.Entities.Extensions.Items.Base;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions;
@@ -15,22 +17,17 @@ public record StartSessionCommand(
 );
 public class StartSessionHandler(IItemRepository repository, ITimeProvider timeProvider, IIdGenerator idGenerator)
 {
-    public async Task<Result> Handle(StartSessionCommand command, CancellationToken ct)
+    public async Task<Result<SessionResolvedDto>> Handle(StartSessionCommand command, CancellationToken ct)
     {
-        if (command.ItemId == Guid.Empty)
-        {
-            return Result.Invalid(ItemErrorCodes.ItemIdEmpty, "ItemId must not be empty.");
-        }
-        
         var item = await repository.TryGetItemAsync(command.ItemId, ct);
         if (item is null)
         {
-            return Result.NotFound(ItemErrorCodes.ItemNotFound, "Item not found.");
+            return Result<SessionResolvedDto>.NotFound("session.item", "session not found.");
         }
 
         if (item.State == ItemState.Active)
         {
-            return Result.Invalid("item.already_active", "ItemId is already active!");
+            // return Result.Invalid("item.already_active", "ItemId is already active!");
         }
 
         var session = Session.Start
@@ -54,6 +51,9 @@ public class StartSessionHandler(IItemRepository repository, ITimeProvider timeP
         session.AddStartSegment(idGenerator.New());
         await repository.SaveChangesAsync(ct);
 
-        return Result.Ok();
+        var createdSession = await repository.TryGetActiveSessionByItemIdAsync(session.ItemId, ct);
+        return createdSession is null 
+            ? Result<SessionResolvedDto>.NotFound("session", "session not found.") 
+            : Result<SessionResolvedDto>.Ok(createdSession.ToDto());
     }
 }

@@ -3,7 +3,6 @@
 public enum ScheduleActionTypeDto
 {
     None,
-    Deadline,
     Recurring,
     CreateTask
 }

@@ -87,8 +87,10 @@ public sealed partial class TaskState : ObservableObject
     /// <summary>
     /// Adders
     /// </summary>
-    public async Task AddToCollection(List<TaskDto> items)
+    public async Task AddToCollection(List<TaskDto>? items)
     {
+        if (items is null) return;
+        
         Items.Clear();
         FilteredItems.Clear();
         

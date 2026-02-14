@@ -2,6 +2,11 @@ using System;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Microsoft.Extensions.DependencyInjection;
+using Misa.Contract.Features.Common.Deadlines;
+using Misa.Contract.Features.Entities.Extensions.Items.Extensions.Tasks;
+using Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;
+using Misa.Contract.Features.Entities.Extensions.Items.Features.Session;
+using Misa.Contract.Shared.Results;
 using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Scheduling.Forms;
 using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions.Forms;
 using Misa.Ui.Avalonia.Features.Pages.Scheduling.Create;
@@ -12,114 +17,92 @@ namespace Misa.Ui.Avalonia.Infrastructure.UI;
 
 public enum PanelKey
 {
-    Task,
-    Schedule,
-    StartSession,
-    PauseSession,
     EndSession,
-    UpsertDeadline
+}
+
+public readonly record struct PanelKey<TResult>(
+    string Id,
+    Func<IServiceProvider, Control> ViewFactory,
+    Func<IServiceProvider, IHostedForm<TResult>> FormFactory
+);
+public static class Panels
+{
+    public static readonly PanelKey<TaskDto> Task =
+        new("Task",
+            sp => sp.GetRequiredService<CreateTaskView>(),
+            sp => sp.GetRequiredService<CreateTaskViewModel>());
+
+    public static readonly PanelKey<ScheduleDto> Schedule =
+        new("Schedule",
+            sp => sp.GetRequiredService<CreateScheduleView>(),
+            sp => sp.GetRequiredService<CreateScheduleViewModel>());
+
+    public static readonly PanelKey<SessionResolvedDto> StartSession =
+        new("StartSession",
+            sp => sp.GetRequiredService<StartSessionView>(),
+            sp => sp.GetRequiredService<StartSessionViewModel>());
+
+    public static readonly PanelKey<SessionResolvedDto> PauseSession =
+        new("PauseSession",
+            sp => sp.GetRequiredService<PauseSessionView>(),
+            sp => sp.GetRequiredService<PauseSessionViewModel>());
+
+    public static readonly PanelKey<DeadlineDto> UpsertDeadline =
+        new("UpsertDeadline",
+            sp => sp.GetRequiredService<UpsertDeadlineView>(),
+            sp => sp.GetRequiredService<UpsertDeadlineViewModel>());
 }
 
 public interface IPanelFactory
 {
-    (Control Control, Task<TResult?> ResultTask) CreateHosted<TResult>(PanelKey key, object? context);
+    (Control Control, Task<Result> ResultTask) CreateHosted(PanelKey key, object? context);
+    (Control Control, Task<TResult?> ResultTask) CreateHosted<TResult>(PanelKey<TResult> key, IHostedForm<TResult>? context);
 }
 
 public sealed class PanelFactory(IServiceProvider sp) : IPanelFactory
 {
-    public (Control Control, Task<TResult?> ResultTask) CreateHosted<TResult>(PanelKey key, object? context)
+    public (Control Control, Task<Result> ResultTask) CreateHosted(PanelKey key, object? context)
+    {
+        return key switch
+        {
+            PanelKey.EndSession => CreateHosted<EndSessionView, EndSessionViewModel>(context),
+            _ => throw new ArgumentOutOfRangeException(nameof(key), key, null)
+        };
+    }
+    private (Control Control, Task<Result> ResultTask) CreateHosted<TView, TViewModel>(object? context)
+        where TView : Control
+        where TViewModel : class, IHostedForm
     {
         var hostView = sp.GetRequiredService<PanelHostView>();
-        var closer = sp.GetRequiredService<IOverlayCloser>();
+        var panelCloser = sp.GetRequiredService<IPanelCloser>();
 
-        switch (key)
-        {
-            case PanelKey.Task:
-            {
-                var body = sp.GetRequiredService<CreateTaskView>();
+        var body = sp.GetRequiredService<TView>();
+        var formVm = context as IHostedForm ?? sp.GetRequiredService<TViewModel>();
+        
+        body.DataContext = formVm;
+        
+        var tcs = new TaskCompletionSource<Result>();
+        hostView.DataContext = new PanelHostViewModel(body, formVm, tcs, panelCloser);
+        
+        return (hostView, tcs.Task);
+    }
+    
+    // Generic
+    public (Control Control, Task<TResult?> ResultTask) CreateHosted<TResult>(
+        PanelKey<TResult> key,
+        IHostedForm<TResult>? context)
+    {
+        var hostView = sp.GetRequiredService<PanelHostView>();
+        var panelCloser = sp.GetRequiredService<IPanelCloser>();
 
-                var formVm = (context as IHostedForm<TResult>) 
-                             ?? sp.GetRequiredService<CreateTaskViewModel>() as IHostedForm<TResult>;
-                if (formVm == null) throw new ArgumentNullException();
-                body.DataContext = formVm;
-                
-                var tcs = new TaskCompletionSource<TResult?>();
-                hostView.DataContext = new PanelHostViewModel<TResult>(closer, body, formVm, tcs);
-                
-                return (hostView, tcs.Task);
-            }
-            case PanelKey.Schedule:
-            {
-                var body = sp.GetRequiredService<CreateScheduleView>();
-
-                var formVm = (context as IHostedForm<TResult>)
-                             ?? sp.GetRequiredService<CreateScheduleViewModel>() as IHostedForm<TResult>;
-                if (formVm == null) throw new ArgumentNullException();
-                body.DataContext = formVm;
-
-                var tcs = new TaskCompletionSource<TResult?>();
-                hostView.DataContext = new PanelHostViewModel<TResult>(closer, body, formVm, tcs);
-
-                return (hostView, tcs.Task);
-            }
-            case PanelKey.StartSession:
-            {
-                var body = sp.GetRequiredService<StartSessionView>();
-
-                var formVm = (context as IHostedForm<TResult>)
-                             ?? sp.GetRequiredService<StartSessionViewModel>() as IHostedForm<TResult>;
-                if (formVm == null) throw new ArgumentNullException();
-                body.DataContext = formVm;
-
-                var tcs = new TaskCompletionSource<TResult?>();
-                hostView.DataContext = new PanelHostViewModel<TResult>(closer, body, formVm, tcs);
-
-                return (hostView, tcs.Task);
-            }
-            case PanelKey.PauseSession:
-            {
-                var body = sp.GetRequiredService<PauseSessionView>();
-
-                var formVm = (context as IHostedForm<TResult>)
-                             ?? sp.GetRequiredService<PauseSessionViewModel>() as IHostedForm<TResult>;
-                if (formVm == null) throw new ArgumentNullException();
-                body.DataContext = formVm;
-
-                var tcs = new TaskCompletionSource<TResult?>();
-                hostView.DataContext = new PanelHostViewModel<TResult>(closer, body, formVm, tcs);
-
-                return (hostView, tcs.Task);
-            }
-            case PanelKey.EndSession:
-            {
-                var body = sp.GetRequiredService<EndSessionView>();
-
-                var formVm = (context as IHostedForm<TResult>)
-                             ?? sp.GetRequiredService<EndSessionViewModel>() as IHostedForm<TResult>;
-                if (formVm == null) throw new ArgumentNullException();
-                body.DataContext = formVm;
-
-                var tcs = new TaskCompletionSource<TResult?>();
-                hostView.DataContext = new PanelHostViewModel<TResult>(closer, body, formVm, tcs);
-
-                return (hostView, tcs.Task);
-            }
-            case PanelKey.UpsertDeadline:
-            {
-                var body = sp.GetRequiredService<UpsertDeadlineView>();
-
-                var formVm = (context as IHostedForm<TResult>)
-                             ?? sp.GetRequiredService<UpsertDeadlineViewModel>() as IHostedForm<TResult>;
-                if (formVm == null) throw new ArgumentNullException();
-                body.DataContext = formVm;
-
-                var tcs = new TaskCompletionSource<TResult?>();
-                hostView.DataContext = new PanelHostViewModel<TResult>(closer, body, formVm, tcs);
-
-                return (hostView, tcs.Task);
-            }
-            default:
-                throw new ArgumentOutOfRangeException(nameof(key));
-        }
+        var body = key.ViewFactory(sp);
+        var formVm = context ?? key.FormFactory(sp);
+        
+        body.DataContext = formVm;
+        
+        var tcs = new TaskCompletionSource<TResult?>();
+        hostView.DataContext = new PanelHostViewModel<TResult>(body, formVm, tcs, panelCloser);
+        
+        return (hostView, tcs.Task);
     }
 }

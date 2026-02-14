@@ -9,7 +9,10 @@ using Misa.Domain.Features.Entities.Base;
 
 namespace Misa.Application.Features.Entities.Extensions.Items.Base.Queries;
 public record GetItemDetailsQuery(Guid Id);
-public sealed class GetItemDetailsHandler(IItemRepository repository)
+public sealed class GetItemDetailsHandler(
+    IItemRepository repository, 
+    ITaskRepository taskRepository,
+    IDeadlineRepository deadlineRepository)
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -30,13 +33,13 @@ public sealed class GetItemDetailsHandler(IItemRepository repository)
             _ => null
         };
         
-        var deadline = await repository.TryGetDeadlineByItemIdAsync(itemDto.Id, ct);
+        var deadline = await deadlineRepository.TryGetDeadlineAsync(itemDto.Id, ct);
         
         var detailedItemDto = new DetailedItemDto
         {
             Kind = itemDto.Entity.Workflow,
             Item = itemDto,
-            Deadline = new DeadlineDto(deadline?.ActiveFromUtc),
+            Deadline = deadline?.ToDto(),
             Extension = extension
         };
         
@@ -45,7 +48,7 @@ public sealed class GetItemDetailsHandler(IItemRepository repository)
 
     private async Task<JsonElement?> BuildTaskExtensionAsync(Guid itemId, CancellationToken ct)
     {
-        var task = await repository.TryGetTaskAsync(itemId, ct);
+        var task = await taskRepository.TryGetTaskAsync(itemId, ct);
         if (task == null)
             return null;
 

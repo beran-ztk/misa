@@ -20,29 +20,22 @@ public static class TaskMappings
             Item = task.Item.ToDto()
         };
     }
-    public static AddTaskCommand ToCommand(this AddTaskDto dto)
-        => new(
-            dto.Title,
-            dto.CategoryContract,
-            dto.PriorityDto,
-            dto.Deadline
-        );
-    public static TaskCategory MapToDomain(this TaskCategoryContract categoryContract) =>
-        categoryContract switch
+    public static TaskCategory MapToDomain(this TaskCategoryDto categoryDto) =>
+        categoryDto switch
         {
-            TaskCategoryContract.Personal => TaskCategory.Personal,
-            TaskCategoryContract.School => TaskCategory.School,
-            TaskCategoryContract.Work => TaskCategory.Work,
-            TaskCategoryContract.Other => TaskCategory.Other,
-            _ => throw new ArgumentOutOfRangeException(nameof(categoryContract), categoryContract, null)
+            TaskCategoryDto.Personal => TaskCategory.Personal,
+            TaskCategoryDto.School => TaskCategory.School,
+            TaskCategoryDto.Work => TaskCategory.Work,
+            TaskCategoryDto.Other => TaskCategory.Other,
+            _ => throw new ArgumentOutOfRangeException(nameof(categoryDto), categoryDto, null)
         };
-    public static TaskCategoryContract MapToDto(this TaskCategory domainCategory) =>
+    public static TaskCategoryDto MapToDto(this TaskCategory domainCategory) =>
         domainCategory switch
         {
-            TaskCategory.Personal => TaskCategoryContract.Personal,
-            TaskCategory.School   => TaskCategoryContract.School,
-            TaskCategory.Work     => TaskCategoryContract.Work,
-            TaskCategory.Other    => TaskCategoryContract.Other,
+            TaskCategory.Personal => TaskCategoryDto.Personal,
+            TaskCategory.School   => TaskCategoryDto.School,
+            TaskCategory.Work     => TaskCategoryDto.Work,
+            TaskCategory.Other    => TaskCategoryDto.Other,
             _ => throw new ArgumentOutOfRangeException(nameof(domainCategory), domainCategory, null)
         };
 }

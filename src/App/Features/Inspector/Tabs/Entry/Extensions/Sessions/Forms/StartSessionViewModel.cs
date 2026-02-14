@@ -1,12 +1,16 @@
 using System;
+using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Misa.Contract.Features.Entities.Extensions.Items.Features.Session;
+using Misa.Contract.Shared.Results;
 using Misa.Ui.Avalonia.Common.Mappings;
+using Misa.Ui.Avalonia.Features.Inspector.Root;
 using Misa.Ui.Avalonia.Infrastructure.UI;
 
 namespace Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions.Forms;
 
-public partial class StartSessionViewModel(Guid itemId) : ViewModelBase, IHostedForm<StartSessionDto>
+public sealed partial class StartSessionViewModel(Guid itemId, InspectorGateway gateway)
+    : ViewModelBase, IHostedForm<SessionResolvedDto>
 {
     // Host
     public string Title => "Start a Session";
@@ -14,26 +18,26 @@ public partial class StartSessionViewModel(Guid itemId) : ViewModelBase, IHosted
     public string CancelText => "Cancel";
     public bool CanSubmit => true;
 
-    public StartSessionDto TrySubmit() => Submit();
-    
     // Content
     [ObservableProperty] private int? _plannedMinutes;
     [ObservableProperty] private string? _objective;
     [ObservableProperty] private bool _stopAutomatically;
     [ObservableProperty] private string? _autoStopReason;
 
-    private StartSessionDto Submit()
+    public async Task<Result<SessionResolvedDto>> SubmitAsync()
     {
         TimeSpan? plannedDuration = PlannedMinutes.HasValue
-            ? TimeSpan.FromMinutes(Convert.ToInt32(PlannedMinutes))
+            ? TimeSpan.FromMinutes(Convert.ToInt32(PlannedMinutes.Value))
             : null;
 
-        return new StartSessionDto(
+        var dto = new StartSessionDto(
             itemId,
             plannedDuration,
             Objective,
             StopAutomatically,
             AutoStopReason
         );
+        
+        return await gateway.StartSessionAsync(dto);
     }
 }

@@ -15,5 +15,5 @@ public interface IPanelHostViewModel
 
     IRelayCommand CloseCommand { get; }
     IRelayCommand CancelCommand { get; }
-    IRelayCommand SubmitCommand { get; }
+    IAsyncRelayCommand SubmitCommand { get; }
 }

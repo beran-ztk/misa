@@ -10,11 +10,6 @@ public class ContinueSessionHandler(IItemRepository repository, ITimeProvider ti
 {
     public async Task<Result> Handle(ContinueSessionCommand command, CancellationToken ct)
     {
-        if (command.ItemId == Guid.Empty)
-        {
-            return Result.Invalid(ItemErrorCodes.ItemIdEmpty, "ItemId must not be empty.");
-        }
-
         var item = await repository.TryGetItemAsync(command.ItemId, ct);
         if (item is null)
         {
@@ -23,7 +18,7 @@ public class ContinueSessionHandler(IItemRepository repository, ITimeProvider ti
 
         if (item.State != ItemState.Paused)
         {
-            return Result.Invalid("item.not_paused", "Item is not paused and cannot be continued.");
+            // return Result.Invalid("item.not_paused", "Item is not paused and cannot be continued.");
         }
         
         var session = await repository.TryGetPausedSessionByItemIdAsync(command.ItemId, ct);

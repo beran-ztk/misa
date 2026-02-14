@@ -1,12 +1,11 @@
 using System;
 using System.Net.Http;
 using System.Net.Http.Json;
-using System.Threading;
 using System.Threading.Tasks;
+using Misa.Contract.Features.Common.Deadlines;
 using Misa.Contract.Features.Entities.Extensions.Items.Base;
 using Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;
 using Misa.Contract.Features.Entities.Extensions.Items.Features.Session;
-using Misa.Contract.Features.Entities.Features;
 using Misa.Contract.Shared.Results;
 using Misa.Ui.Avalonia.Infrastructure.Client;
 
@@ -14,70 +13,69 @@ namespace Misa.Ui.Avalonia.Features.Inspector.Root;
 
 public sealed class InspectorGateway(RemoteProxy remoteProxy)
 {
-    public async Task<DetailedItemDto?> GetDetailsAsync(Guid id)
+    public Task<Result<DetailedItemDto>> GetDetailsAsync(Guid id)
     {
         var request = new HttpRequestMessage(HttpMethod.Get, $"items/{id}/details");
-        var response = await remoteProxy.SendAsync<DetailedItemDto?>(request);
-        return response?.Value;
+        return remoteProxy.SendAsync<DetailedItemDto>(request);
     }
 
     // Sessions (Overview)
-    public async Task<CurrentSessionOverviewDto?> GetCurrentAndLatestSessionAsync(Guid itemId)
+    public Task<Result<CurrentSessionOverviewDto>> GetCurrentAndLatestSessionAsync(Guid itemId)
     {
         var request = new HttpRequestMessage(HttpMethod.Get, $"items/{itemId}/overview/session");
-        var response = await remoteProxy.SendAsync<CurrentSessionOverviewDto?>(request);
-        return response?.Value;
+        return remoteProxy.SendAsync<CurrentSessionOverviewDto>(request);
     }
 
     // Sessions (Commands)
-    public async Task StartSessionAsync(Guid itemId, StartSessionDto dto)
+    public Task<Result<SessionResolvedDto>> StartSessionAsync(StartSessionDto dto)
     {
-        var request = new HttpRequestMessage(HttpMethod.Post, $"items/{itemId}/sessions/start")
+        var request = new HttpRequestMessage(HttpMethod.Post, $"items/{dto.ItemId}/sessions/start")
         {
             Content = JsonContent.Create(dto)
         };
 
-        await remoteProxy.SendAsync(request);
+        return remoteProxy.SendAsync<SessionResolvedDto>(request);
     }
 
-    public async Task PauseSessionAsync(Guid itemId, PauseSessionDto dto)
+    public Task<Result<SessionResolvedDto>> PauseSessionAsync(PauseSessionDto dto)
     {
-        var request = new HttpRequestMessage(HttpMethod.Post, $"items/{itemId}/sessions/pause")
+        var request = new HttpRequestMessage(HttpMethod.Post, $"items/{dto.ItemId}/sessions/pause")
         {
             Content = JsonContent.Create(dto)
         };
 
-        await remoteProxy.SendAsync(request);
+        return remoteProxy.SendAsync<SessionResolvedDto>(request);
     }
 
-    public async Task ContinueSessionAsync(Guid itemId)
+    public Task<Result> ContinueSessionAsync(Guid itemId)
     {
         var request = new HttpRequestMessage(HttpMethod.Post, $"items/{itemId}/sessions/continue");
-        await remoteProxy.SendAsync(request);
+        return remoteProxy.SendAsync(request);
     }
 
-    public async Task StopSessionAsync(Guid itemId, StopSessionDto dto)
+    public Task<Result> EndSessionAsync(StopSessionDto dto)
     {
-        var request = new HttpRequestMessage(HttpMethod.Post, $"items/{itemId}/sessions/stop")
+        var request = new HttpRequestMessage(HttpMethod.Post, $"items/{dto.ItemId}/sessions/stop")
         {
             Content = JsonContent.Create(dto)
         };
 
-        await remoteProxy.SendAsync(request);
+        return remoteProxy.SendAsync(request);
     }
-    public async Task UpsertDeadlineAsync(UpsertDeadlineDto dto)
+
+    public Task<Result<DeadlineDto>> UpsertDeadlineAsync(UpsertDeadlineDto dto)
     {
-        var request = new HttpRequestMessage(HttpMethod.Post, "scheduling/once")
+        var request = new HttpRequestMessage(HttpMethod.Put, "deadlines")
         {
             Content = JsonContent.Create(dto)
         };
 
-        await remoteProxy.SendAsync<Result>(request);
+        return remoteProxy.SendAsync<DeadlineDto>(request);
     }
 
-    public async Task DeleteDeadlineAsync(Guid targetItemId)
+    public Task<Result> DeleteDeadlineAsync(Guid targetItemId)
     {
-        var request = new HttpRequestMessage(HttpMethod.Delete, $"scheduling/once/{targetItemId}");
-        await remoteProxy.SendAsync<Result>(request);
+        var request = new HttpRequestMessage(HttpMethod.Delete, $"deadlines/{targetItemId}");
+        return remoteProxy.SendAsync(request);
     }
 }

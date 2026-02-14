@@ -9,34 +9,42 @@ namespace Misa.Ui.Avalonia.Features.Pages.Tasks.Root;
 public sealed partial class CreateTaskState : ObservableObject
 {
     [ObservableProperty] private string _title = string.Empty;
-    [ObservableProperty] private TaskCategoryContract _selectedCategoryContract;
+    [ObservableProperty] private TaskCategoryDto _selectedCategoryDto;
     [ObservableProperty] private PriorityDto _selectedPriorityDto;
 
     [ObservableProperty] private bool _titleHasValidationError;
     [ObservableProperty] private string _errorMessageTitle = string.Empty;
 
-    public IReadOnlyList<TaskCategoryContract> Categories { get; } = Enum.GetValues<TaskCategoryContract>();
+    public IReadOnlyList<TaskCategoryDto> Categories { get; } = Enum.GetValues<TaskCategoryDto>();
     public IReadOnlyList<PriorityDto> Priorities { get; } = Enum.GetValues<PriorityDto>();
 
+    [ObservableProperty] private bool _isBusy;
+    [ObservableProperty] private bool _hasSubmitError;
+    [ObservableProperty] private string _submitErrorMessage = string.Empty;
+    public void ClearSubmitError()
+    {
+        HasSubmitError = false;
+        SubmitErrorMessage = string.Empty;
+    }
+    public void SetSubmitError(string message)
+    {
+        HasSubmitError = true;
+        SubmitErrorMessage = message;
+    }
     private void TitleValidationError(string message)
     {
         TitleHasValidationError = true;
         ErrorMessageTitle = message;
     }
-    public AddTaskDto? TryGetValidatedRequestObject()
+    public CreateTaskDto? TryGetValidatedRequestObject()
     {
-        var trimmed = Title.Trim();
-        if (string.IsNullOrWhiteSpace(trimmed))
-        {
-            TitleValidationError("Please specify a title.");
-            return null;
-        }
+        TitleHasValidationError = false;
+        ErrorMessageTitle = string.Empty;
 
-        return new AddTaskDto(
-            trimmed,
-            SelectedCategoryContract,
-            SelectedPriorityDto,
-            null
-        );
+        if (!string.IsNullOrWhiteSpace(Title))
+            return new CreateTaskDto(Title, SelectedCategoryDto, SelectedPriorityDto);
+
+        TitleValidationError("Please specify a title.");
+        return null;
     }
 }

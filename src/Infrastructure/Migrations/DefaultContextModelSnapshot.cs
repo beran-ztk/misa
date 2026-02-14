@@ -31,7 +31,7 @@ namespace Misa.Infrastructure.Migrations
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "event_type", new[] { "scheduler_created_task" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "outbox_event_state", new[] { "pending", "processed" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "priority", new[] { "critical", "high", "low", "medium", "none", "urgent" });
-            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "schedule_action_type", new[] { "create_task", "deadline", "none", "recurring" });
+            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "schedule_action_type", new[] { "create_task", "none", "recurring" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "schedule_frequency_type", new[] { "days", "hours", "minutes", "months", "once", "weeks", "years" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "schedule_misfire_policy", new[] { "catchup", "run_once", "skip" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "scheduler_execution_status", new[] { "claimed", "failed", "pending", "running", "skipped", "succeeded" });
@@ -70,6 +70,22 @@ namespace Misa.Infrastructure.Migrations
                     b.HasIndex("EntityId");
 
                     b.ToTable("AuditChanges");
+                });
+
+            modelBuilder.Entity("Misa.Domain.Features.Common.Deadline", b =>
+                {
+                    b.Property<Guid>("ItemId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("DueAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("ItemId");
+
+                    b.ToTable("Deadline");
                 });
 
             modelBuilder.Entity("Misa.Domain.Features.Entities.Base.Entity", b =>
@@ -451,6 +467,15 @@ namespace Misa.Infrastructure.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Misa.Domain.Features.Common.Deadline", b =>
+                {
+                    b.HasOne("Misa.Domain.Features.Entities.Extensions.Items.Base.Item", null)
+                        .WithOne("Deadline")
+                        .HasForeignKey("Misa.Domain.Features.Common.Deadline", "ItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Misa.Domain.Features.Entities.Extensions.Items.Base.Item", b =>
                 {
                     b.HasOne("Misa.Domain.Features.Entities.Base.Entity", "Entity")
@@ -531,6 +556,8 @@ namespace Misa.Infrastructure.Migrations
 
             modelBuilder.Entity("Misa.Domain.Features.Entities.Extensions.Items.Base.Item", b =>
                 {
+                    b.Navigation("Deadline");
+
                     b.Navigation("Sessions");
                 });
 

@@ -2,6 +2,7 @@
 using Misa.Application.Abstractions.Ids;
 using Misa.Application.Abstractions.Persistence;
 using Misa.Application.Abstractions.Time;
+using Misa.Application.Features.Entities.Extensions.Items.Extensions.Tasks.Commands;
 using Misa.Application.Mappings;
 using Misa.Contract.Features.Entities.Extensions.Items.Extensions.Tasks;
 using Misa.Contract.Shared.Results;
@@ -32,10 +33,14 @@ public class ScheduleExecutingHandler(ISchedulerExecutingRepository repository, 
             await repository.SaveChangesAsync(stoppingToken);
 
             if (log.Scheduler.Payload == null) continue; // Implement error
-            var dto = JsonSerializer.Deserialize<AddTaskDto>(log.Scheduler.Payload);
+            var dto = JsonSerializer.Deserialize<CreateTaskDto>(log.Scheduler.Payload);
             
             if (dto == null) continue; // Implement error
-            var addTaskCommand = dto.ToCommand();
+            var addTaskCommand = new CreateTaskCommand(
+                dto.Title,
+                dto.CategoryDto,
+                dto.PriorityDto
+            );
             
             var result = await bus.InvokeAsync<Result<TaskDto>>(addTaskCommand, stoppingToken);
 

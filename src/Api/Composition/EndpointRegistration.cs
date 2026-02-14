@@ -1,26 +1,48 @@
-using Misa.Api.Endpoints.Features.Authentication;
-using Misa.Api.Endpoints.Features.Entities.Extensions.Items.Base;
-using Misa.Api.Endpoints.Features.Entities.Extensions.Items.Extensions;
-using Misa.Api.Endpoints.Features.Entities.Extensions.Items.Features;
-using Misa.Api.Endpoints.Features.Entities.Features;
+using Misa.Api.Endpoints;
+using Misa.Api.Endpoints.Deadlines;
+using Misa.Api.Endpoints.Sessions;
+using Misa.Api.Endpoints.Tasks;
 using Misa.Api.Middleware;
 
 namespace Misa.Api.Composition;
 
 public static class EndpointRegistration
 {
-    public static WebApplication MapAllEndpoints(this WebApplication app)
+    public static void MapAllEndpoints(this WebApplication app)
     {
         app.MapControllers();
-
         app.MapHub<EventHub>("/hubs/updates");
 
-        TaskEndpoints.Map(app);
+        // Group für Result-basierte Endpoints
+        var api = app.MapGroup("");
+        api.AddEndpointFilter<ResultExceptionFilter>();
+
+        api.MapTaskEndpoints();
+        api.MapDeadlineEndpoints();
+        api.MapSessionEndpoints();
+
+        // Andere Endpoints
         ItemDetailEndpoints.Map(app);
         DescriptionEndpoints.Map(app);
         SchedulingEndpoints.Map(app);
         AuthEndpoints.Map(app);
+    }
 
-        return app;
+    private static void MapTaskEndpoints(this IEndpointRouteBuilder api)
+    {
+        CreateTaskEndpoint.Map(api);
+        GetTasksEndpoint.Map(api);
+    }
+
+    private static void MapDeadlineEndpoints(this IEndpointRouteBuilder api)
+    {
+        UpsertDeadlineEndpoint.Map(api);
+        DeleteDeadlineEndpoint.Map(api);
+    }
+    private static void MapSessionEndpoints(this IEndpointRouteBuilder api)
+    {
+        StartSessionEndpoint.Map(api);
+        PauseSessionEndpoint.Map(api);
+        StopSessionEndpoint.Map(api);
     }
 }

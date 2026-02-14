@@ -7,6 +7,9 @@
     <StackPanel Classes="workspace-addpanel-body"
                 Spacing="16">
 
+        <TextBlock Text="{Binding State.SubmitErrorMessage}"
+                   IsVisible="{Binding State.HasSubmitError}" />
+        
         <StackPanel Classes="workspace-addpanel-body">
             <TextBlock Text="Add a title" Classes="workspace-addpanel-body" />
             <TextBox Classes="workspace-addpanel-body-text-oneliner"
@@ -20,7 +23,7 @@
             <TextBlock Text="Select the category" Classes="workspace-addpanel-body"/>
             <ComboBox Classes="workspace-addpanel-body-selector"
                       ItemsSource="{Binding State.Categories}"
-                      SelectedValue="{Binding State.SelectedCategoryContract}" />
+                      SelectedValue="{Binding State.SelectedCategoryDto}" />
         </StackPanel>
 
         <StackPanel Classes="workspace-addpanel-body">

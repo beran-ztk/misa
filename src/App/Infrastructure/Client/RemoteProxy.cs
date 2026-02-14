@@ -8,41 +8,50 @@ namespace Misa.Ui.Avalonia.Infrastructure.Client;
 
 public class RemoteProxy(HttpClient httpClient)
 {
-    public async Task<Result?> SendAsync(HttpRequestMessage requestMessage)
+    public async Task<Result<T>> SendAsync<T>(HttpRequestMessage request)
     {
         try
         {
-            using var request = requestMessage;
             using var response = await httpClient.SendAsync(request);
-            
-            response.EnsureSuccessStatusCode();
-
-            var result = await response.Content.ReadFromJsonAsync<Result>();
-            return result;
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-            return null;
-        }
-    }
-    public async Task<Result<T>?> SendAsync<T>(HttpRequestMessage requestMessage)
-    {
-        try
-        {
-            using var request = requestMessage;
-            using var response = await httpClient.SendAsync(request);
-            
-            response.EnsureSuccessStatusCode();
 
             var result = await response.Content.ReadFromJsonAsync<Result<T>>();
-            return result;
+
+            return result ?? Result<T>.Failure(message: "Empty response from server.");
         }
-        catch (Exception e)
+        catch (HttpRequestException ex)
         {
-            Console.WriteLine(e);
+            return Result<T>.Failure(message: $"HTTP error: {ex.Message}");
         }
-        
-        return null;
+        catch (TaskCanceledException ex)
+        {
+            return Result<T>.Failure(message: $"Request timeout: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            return Result<T>.Failure(message: $"Unexpected error: {ex.Message}");
+        }
+    }
+    public async Task<Result> SendAsync(HttpRequestMessage request)
+    {
+        try
+        {
+            using var response = await httpClient.SendAsync(request);
+
+            var result = await response.Content.ReadFromJsonAsync<Result>();
+
+            return result ?? Result.Failure(message: "Empty response from server.");
+        }
+        catch (HttpRequestException ex)
+        {
+            return Result.Failure(message: $"HTTP error: {ex.Message}");
+        }
+        catch (TaskCanceledException ex)
+        {
+            return Result.Failure(message: $"Request timeout: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            return Result.Failure(message: $"Unexpected error: {ex.Message}");
+        }
     }
 }

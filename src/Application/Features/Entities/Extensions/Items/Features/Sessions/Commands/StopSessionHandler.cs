@@ -1,5 +1,6 @@
 ﻿using Misa.Application.Abstractions.Persistence;
 using Misa.Application.Abstractions.Time;
+using Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Mappings;
 using Misa.Application.Mappings;
 using Misa.Contract.Features.Entities.Extensions.Items.Features.Session;
 using Misa.Contract.Shared.Results;
@@ -18,11 +19,6 @@ public class StopSessionHandler(IItemRepository repository, ITimeProvider timePr
 {
     public async Task<Result> Handle(StopSessionCommand command, CancellationToken ct)
     {
-        if (command.ItemId == Guid.Empty)
-        {
-            return Result.Invalid(ItemErrorCodes.ItemIdEmpty, "ItemId must not be empty.");
-        }
-
         var item = await repository.TryGetItemAsync(command.ItemId, ct);
         if (item is null)
         {
@@ -32,7 +28,7 @@ public class StopSessionHandler(IItemRepository repository, ITimeProvider timePr
         if (item.State is not ItemState.Active 
             && item.State is not ItemState.Paused)
         {
-            return Result.Invalid("item.no_session_state", "Item is not active or paused and cannot be stopped.");
+            // return Result.Invalid("item.no_session_state", "Item is not active or paused and cannot be stopped.");
         }
 
         var session = await repository.TryGetActiveSessionByItemIdAsync(command.ItemId, ct);

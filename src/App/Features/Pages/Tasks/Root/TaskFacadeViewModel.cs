@@ -17,10 +17,12 @@ public sealed partial class TaskFacadeViewModel(
     public TaskState State { get; } = state;
 
     public async Task InitializeWorkspaceAsync()
-        => await GetAllAsync();
+    {
+        await GetAllAsync();
+    }
 
     [RelayCommand]
-    public async Task RefreshWorkspaceAsync()
+    private async Task RefreshWorkspaceAsync()
     {
         State.SelectedItem = null;
         await GetAllAsync();
@@ -28,19 +30,19 @@ public sealed partial class TaskFacadeViewModel(
 
     private async Task GetAllAsync()
     {
-        var tasks = await gateway.GetAllAsync();
-        await State.AddToCollection(tasks);
+        var result = await gateway.GetAllAsync();
+        if (result.IsSuccess)
+            await State.AddToCollection(result.Value);
     }
 
     [RelayCommand]
-    public async Task ShowAddPanelAsync()
+    private async Task ShowAddPanelAsync()
     {
-        var formVm = new CreateTaskViewModel(State.CreateState);
+        var formVm = new CreateTaskViewModel(State.CreateState, gateway);
 
-        var dto = await panelProxy.OpenAsync<AddTaskDto>(PanelKey.Task, formVm);
-        if (dto is null) return;
+        var created = await panelProxy.OpenAsync(Panels.Task, formVm);
+        if (created is null) return;
 
-        var created = await gateway.CreateAsync(dto);
         await State.AddToCollection(created);
     }
 }

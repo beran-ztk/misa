@@ -11,11 +11,6 @@ public class GetCurrentSessionDetailsHandler(IItemRepository repository, ITimePr
 {
     public async Task<Result<CurrentSessionOverviewDto>> Handle(GetCurrentSessionDetailsQuery command, CancellationToken ct)
     {
-        if (command.ItemId == Guid.Empty)
-        {
-            return Result<CurrentSessionOverviewDto>.Invalid(ItemErrorCodes.ItemIdEmpty, "ItemId must not be empty.");
-        }
-
         var item = await repository.TryGetItemAsync(command.ItemId, ct);
         if (item is null)
         {

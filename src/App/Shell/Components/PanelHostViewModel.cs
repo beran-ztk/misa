@@ -1,32 +1,21 @@
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using CommunityToolkit.Mvvm.Input;
+using Misa.Contract.Shared.Results;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Infrastructure.UI;
 
 namespace Misa.Ui.Avalonia.Shell.Components;
-
-public partial class PanelHostViewModel<TResult> : ViewModelBase, IPanelHostViewModel
+public sealed partial class PanelHostViewModel(
+    Control contentView,
+    IHostedForm form,
+    TaskCompletionSource<Result> tcs,
+    IPanelCloser panelCloser)
+    : ViewModelBase, IPanelHostViewModel
 {
-    private readonly IOverlayCloser _closer;
-    private readonly TaskCompletionSource<TResult?> _tcs;
+    public Control ContentView { get; } = contentView;
+    private IHostedForm Form { get; } = form;
 
-    public PanelHostViewModel(
-        IOverlayCloser closer,
-        Control contentView,
-        IHostedForm<TResult> form,
-        TaskCompletionSource<TResult?> tcs)
-    {
-        _closer = closer;
-        _tcs = tcs;
-
-        ContentView = contentView;
-        Form = form;
-    }
-
-    public Control ContentView { get; }
-    public IHostedForm<TResult> Form { get; }
-    
     public string Title => Form.Title;
     public string SubmitText => Form.SubmitText;
     public string CancelText => Form.CancelText;
@@ -35,21 +24,58 @@ public partial class PanelHostViewModel<TResult> : ViewModelBase, IPanelHostView
     [RelayCommand]
     private void Close()
     {
-        _tcs.TrySetResult(default);
-        _closer.ClosePanel();
+        tcs.TrySetResult(Result.Failure("Closed."));
+        panelCloser.Close();
     }
 
     [RelayCommand]
     private void Cancel() => Close();
 
     [RelayCommand]
-    private void Submit()
+    private async Task Submit()
     {
-        var result = Form.TrySubmit();
-        if (result is null)
+        var result = await Form.SubmitAsync();
+        if (!result.IsSuccess)
             return;
-        
-        _tcs.TrySetResult(result);
-        _closer.ClosePanel();
+
+        tcs.TrySetResult(result);
+        panelCloser.Close();
+    }
+}
+
+public sealed partial class PanelHostViewModel<TResult>(
+    Control contentView,
+    IHostedForm<TResult> form,
+    TaskCompletionSource<TResult?> tcs,
+    IPanelCloser panelCloser)
+    : ViewModelBase, IPanelHostViewModel
+{
+    public Control ContentView { get; } = contentView;
+    private IHostedForm<TResult> Form { get; } = form;
+
+    public string Title => Form.Title;
+    public string SubmitText => Form.SubmitText;
+    public string CancelText => Form.CancelText;
+    public bool CanSubmit => Form.CanSubmit;
+
+    [RelayCommand]
+    private void Close()
+    {
+        tcs.TrySetResult(default);
+        panelCloser.Close();
+    }
+
+    [RelayCommand]
+    private void Cancel() => Close();
+
+    [RelayCommand]
+    private async Task Submit()
+    {
+        var result = await Form.SubmitAsync();
+        if (!result.IsSuccess)
+            return;
+
+        tcs.TrySetResult(result.Value);
+        panelCloser.Close();
     }
 }
