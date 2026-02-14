@@ -63,6 +63,7 @@ public static class ServiceRegistration
         services.AddScoped<ISchedulerRepository, SchedulerRepository>();
         services.AddScoped<IAuthenticationRepository, AuthenticationRepository>();
         services.AddScoped<IDeadlineRepository, DeadlineRepository>();
+        services.AddScoped<ITaskRepository, TaskRepository>();
     }
     private static void AddDataAccess(this IServiceCollection services)
     {

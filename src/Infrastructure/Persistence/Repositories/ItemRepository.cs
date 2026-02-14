@@ -35,25 +35,6 @@ public class ItemRepository(DefaultContext context) : IItemRepository
             .ToListAsync(ct);
     }
 
-    public async Task<Domain.Features.Entities.Extensions.Items.Extensions.Tasks.Task?> TryGetTaskAsync(Guid id, CancellationToken ct)
-    {
-        return await context.Tasks
-            .Include(t => t.Item)
-            .ThenInclude(i => i.Entity)
-            .AsNoTracking()
-            .FirstOrDefaultAsync(t => t.Id == id, cancellationToken: ct);
-    }
-
-    public async Task<List<Domain.Features.Entities.Extensions.Items.Extensions.Tasks.Task>> GetTasksAsync(CancellationToken ct)
-    {
-        return await context.Tasks
-            .Include(t => t.Item)
-                .ThenInclude(i => i.Entity)
-            .OrderByDescending(t => t.Item.Entity.CreatedAt)
-            .AsNoTracking()
-            .ToListAsync(ct);
-    }
-
     public async Task<Session?> TryGetLatestCompletedSessionByItemIdAsync(Guid id, CancellationToken ct)
     {
         return await context.Sessions
@@ -96,11 +77,6 @@ public class ItemRepository(DefaultContext context) : IItemRepository
                 && s.State == SessionState.Paused)
             .OrderByDescending(s => s.CreatedAtUtc)
             .FirstOrDefaultAsync(ct);
-    }
-
-    public async Task AddAsync(Domain.Features.Entities.Extensions.Items.Extensions.Tasks.Task task, CancellationToken ct)
-    {
-        await context.Tasks.AddAsync(task, ct);
     }
 
     public async Task AddAsync(Session session, CancellationToken ct)

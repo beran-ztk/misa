@@ -14,7 +14,7 @@ public sealed record CreateTaskCommand(
     PriorityDto PriorityDto
 );
 public class CreateTaskHandler(
-    IItemRepository repository,
+    ITaskRepository repository,
     ITimeProvider timeProvider, 
     IIdGenerator idGenerator)
 {

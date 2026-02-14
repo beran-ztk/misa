@@ -5,7 +5,7 @@ using Misa.Contract.Shared.Results;
 
 namespace Misa.Application.Features.Entities.Extensions.Items.Extensions.Tasks.Queries;
 public record GetTasksQuery;
-public class GetTasksHandler(IItemRepository repository)
+public class GetTasksHandler(ITaskRepository repository)
 {
     public async Task<Result<List<TaskDto>>> HandleAsync(GetTasksQuery query, CancellationToken ct)
     {
