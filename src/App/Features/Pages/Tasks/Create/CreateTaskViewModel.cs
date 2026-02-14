@@ -5,7 +5,7 @@ using Misa.Ui.Avalonia.Infrastructure.UI;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Tasks.Create;
 
-public sealed partial class CreateTaskViewModel(CreateTaskState state) : ObservableObject, IHostedForm<AddTaskDto>
+public sealed partial class CreateTaskViewModel(CreateTaskState state) : ObservableObject, IHostedForm<CreateTaskDto>
 {
     public CreateTaskState State { get; } = state;
 
@@ -15,5 +15,5 @@ public sealed partial class CreateTaskViewModel(CreateTaskState state) : Observa
 
     public bool CanSubmit => true;
 
-    public AddTaskDto? TrySubmit() => State.TryGetValidatedRequestObject();
+    public CreateTaskDto? TrySubmit() => State.TryGetValidatedRequestObject();
 }

@@ -19,7 +19,7 @@ public sealed class TaskGateway(RemoteProxy remoteProxy)
         return response?.Value ?? [];
     }
     
-    public async Task<TaskDto?> CreateAsync(AddTaskDto dto)
+    public async Task<TaskDto?> CreateAsync(CreateTaskDto dto)
     {
         var request = new HttpRequestMessage(HttpMethod.Post, "tasks");
         request.Content = JsonContent.Create(dto);

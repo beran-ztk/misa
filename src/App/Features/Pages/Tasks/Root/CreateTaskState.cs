@@ -9,13 +9,13 @@ namespace Misa.Ui.Avalonia.Features.Pages.Tasks.Root;
 public sealed partial class CreateTaskState : ObservableObject
 {
     [ObservableProperty] private string _title = string.Empty;
-    [ObservableProperty] private TaskCategoryContract _selectedCategoryContract;
+    [ObservableProperty] private TaskCategoryDto _selectedCategoryDto;
     [ObservableProperty] private PriorityDto _selectedPriorityDto;
 
     [ObservableProperty] private bool _titleHasValidationError;
     [ObservableProperty] private string _errorMessageTitle = string.Empty;
 
-    public IReadOnlyList<TaskCategoryContract> Categories { get; } = Enum.GetValues<TaskCategoryContract>();
+    public IReadOnlyList<TaskCategoryDto> Categories { get; } = Enum.GetValues<TaskCategoryDto>();
     public IReadOnlyList<PriorityDto> Priorities { get; } = Enum.GetValues<PriorityDto>();
 
     private void TitleValidationError(string message)
@@ -23,7 +23,7 @@ public sealed partial class CreateTaskState : ObservableObject
         TitleHasValidationError = true;
         ErrorMessageTitle = message;
     }
-    public AddTaskDto? TryGetValidatedRequestObject()
+    public CreateTaskDto? TryGetValidatedRequestObject()
     {
         var trimmed = Title.Trim();
         if (string.IsNullOrWhiteSpace(trimmed))
@@ -32,9 +32,9 @@ public sealed partial class CreateTaskState : ObservableObject
             return null;
         }
 
-        return new AddTaskDto(
+        return new CreateTaskDto(
             trimmed,
-            SelectedCategoryContract,
+            SelectedCategoryDto,
             SelectedPriorityDto,
             null
         );

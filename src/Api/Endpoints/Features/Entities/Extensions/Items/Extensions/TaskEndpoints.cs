@@ -15,23 +15,6 @@ public static class TaskEndpoints
         app.MapGet("tasks", GetTasks);
         app.MapPost("tasks", AddTask);
     }
-    private static async Task<Result<TaskDto>> AddTask([FromBody] AddTaskDto dto, IMessageBus bus, CancellationToken ct)
-    {
-        using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
-        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct, timeoutCts.Token);
-
-        try
-        {
-            var command = dto.ToCommand();
-            var result = await bus.InvokeAsync<Result<TaskDto>>(command, linkedCts.Token);
-
-            return result;
-        }
-        catch (Exception ex)
-        {
-            return Result<TaskDto>.Invalid("", ex.ToString());
-        }
-    }
     private static async Task<Result<List<TaskDto>>> GetTasks(IMessageBus bus, CancellationToken ct)
     {
         try
@@ -43,6 +26,32 @@ public static class TaskEndpoints
         catch (Exception ex)
         {
             return Result<List<TaskDto>>.Invalid("", ex.ToString());
+        }
+    }
+    private static async Task<Result<TaskDto>> AddTask(
+        [FromBody] CreateTaskDto dto, 
+        IMessageBus bus, 
+        CancellationToken ct)
+    {
+        using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct, timeoutCts.Token);
+
+        try
+        {
+            var command = new CreateTaskCommand(
+                dto.Title,
+                dto.CategoryDto,
+                dto.PriorityDto,
+                dto.Deadline
+            );
+             
+            var result = await bus.InvokeAsync<Result<TaskDto>>(command, linkedCts.Token);
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            return Result<TaskDto>.Invalid("", ex.ToString());
         }
     }
 }

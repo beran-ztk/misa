@@ -11,20 +11,20 @@ using Wolverine;
 using ItemTask = Misa.Domain.Features.Entities.Extensions.Items.Extensions.Tasks.Task;
 
 namespace Misa.Application.Features.Entities.Extensions.Items.Extensions.Tasks.Commands;
-public sealed record AddTaskCommand(
+public sealed record CreateTaskCommand(
     string Title,
-    TaskCategoryContract CategoryContract,
+    TaskCategoryDto CategoryDto,
     PriorityDto PriorityDto,
-    DeadlineInputDto? Deadline
+    DeadlineInputDto? DeadlineDto
 );
-public class AddTaskHandler(IItemRepository repository, IMessageBus bus, ITimeProvider timeProvider, IIdGenerator idGenerator)
+public class CreateTaskHandler(IItemRepository repository, IMessageBus bus, ITimeProvider timeProvider, IIdGenerator idGenerator)
 {
-    public async Task<Result<TaskDto>> HandleAsync(AddTaskCommand command, CancellationToken ct)
+    public async Task<Result<TaskDto>> HandleAsync(CreateTaskCommand command, CancellationToken ct)
     {
         var task = ItemTask.Create(
             idGenerator.New(), 
             command.Title, 
-            command.CategoryContract.MapToDomain(), 
+            command.CategoryDto.MapToDomain(), 
             command.PriorityDto.MapToDomain(),
             timeProvider.UtcNow
         );
@@ -32,9 +32,9 @@ public class AddTaskHandler(IItemRepository repository, IMessageBus bus, ITimePr
         await repository.AddAsync(task, ct);
         await repository.SaveChangesAsync(ct);
         
-        if (command.Deadline is not null)
+        if (command.DeadlineDto is not null)
         {
-            var createOnce = new CreateOnceScheduleCommand(task.Id, command.Deadline.DueAtUtc);
+            var createOnce = new CreateOnceScheduleCommand(task.Id, command.DeadlineDto.DueAtUtc);
             await bus.InvokeAsync<Result>(createOnce, ct);
         }
         

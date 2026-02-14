@@ -20,7 +20,7 @@
             <TextBlock Text="Select the category" Classes="workspace-addpanel-body"/>
             <ComboBox Classes="workspace-addpanel-body-selector"
                       ItemsSource="{Binding State.Categories}"
-                      SelectedValue="{Binding State.SelectedCategoryContract}" />
+                      SelectedValue="{Binding State.SelectedCategoryDto}" />
         </StackPanel>
 
         <StackPanel Classes="workspace-addpanel-body">

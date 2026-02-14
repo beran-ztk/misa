@@ -1,6 +1,6 @@
 ﻿namespace Misa.Contract.Features.Entities.Extensions.Items.Extensions.Tasks;
 
-public enum TaskCategoryContract
+public enum TaskCategoryDto
 {
     Personal,
     School,

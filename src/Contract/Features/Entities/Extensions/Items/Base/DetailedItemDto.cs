@@ -14,5 +14,5 @@ public sealed class DetailedItemDto
 }
 public sealed class TaskDetailsDto
 {
-    public required TaskCategoryContract Category { get; init; }
+    public required TaskCategoryDto Category { get; init; }
 }
