@@ -7,11 +7,8 @@ using Misa.Domain.Features.Entities.Extensions.Items.Extensions.Tasks;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions;
 using Misa.Domain.Features.Messaging;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
-
-#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
 
 namespace Misa.Infrastructure.Migrations
 {
@@ -26,7 +23,7 @@ namespace Misa.Infrastructure.Migrations
                 .Annotation("Npgsql:Enum:event_type", "scheduler_created_task")
                 .Annotation("Npgsql:Enum:outbox_event_state", "pending,processed")
                 .Annotation("Npgsql:Enum:priority", "critical,high,low,medium,none,urgent")
-                .Annotation("Npgsql:Enum:schedule_action_type", "create_task,deadline,none,recurring")
+                .Annotation("Npgsql:Enum:schedule_action_type", "create_task,none,recurring")
                 .Annotation("Npgsql:Enum:schedule_frequency_type", "days,hours,minutes,months,once,weeks,years")
                 .Annotation("Npgsql:Enum:schedule_misfire_policy", "catchup,run_once,skip")
                 .Annotation("Npgsql:Enum:scheduler_execution_status", "claimed,failed,pending,running,skipped,succeeded")
@@ -68,20 +65,6 @@ namespace Misa.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Outbox", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "States",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Name = table.Column<string>(type: "text", nullable: false),
-                    Synopsis = table.Column<string>(type: "text", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_States", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -146,7 +129,7 @@ namespace Misa.Infrastructure.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    StateId = table.Column<int>(type: "integer", nullable: false, defaultValue: 1),
+                    State = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
                     Priority = table.Column<Priority>(type: "priority", nullable: false, defaultValue: Priority.None),
                     Title = table.Column<string>(type: "text", nullable: false)
                 },
@@ -159,12 +142,25 @@ namespace Misa.Infrastructure.Migrations
                         principalTable: "Entities",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Deadline",
+                columns: table => new
+                {
+                    ItemId = table.Column<Guid>(type: "uuid", nullable: false),
+                    DueAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Deadline", x => x.ItemId);
                     table.ForeignKey(
-                        name: "FK_Items_States_StateId",
-                        column: x => x.StateId,
-                        principalTable: "States",
+                        name: "FK_Deadline_Items_ItemId",
+                        column: x => x.ItemId,
+                        principalTable: "Items",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -309,26 +305,6 @@ namespace Misa.Infrastructure.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
-            migrationBuilder.InsertData(
-                table: "States",
-                columns: new[] { "Id", "Name", "Synopsis" },
-                values: new object[,]
-                {
-                    { 1, "Draft", "Entwurf; noch nie daran gearbeitet" },
-                    { 2, "Undefined", "Unklar; muss präzisiert werden" },
-                    { 3, "Scheduled", "Geplant für einen zukünftigen Zeitpunkt" },
-                    { 4, "InProgress", "Bereits bearbeitet, aktuell keine aktive Session" },
-                    { 5, "Active", "Aktive Session läuft" },
-                    { 6, "Paused", "Session pausiert (max. 6h, danach Auto-Fortsetzung)" },
-                    { 7, "Pending", "Zurückgestellt; lange nicht bearbeitet" },
-                    { 8, "WaitForResponse", "Wartet auf Rückmeldung einer Person oder Stelle" },
-                    { 9, "BlockedByRelationship", "Blockiert durch Relation oder Abhängigkeit" },
-                    { 10, "Done", "Erfolgreich abgeschlossen" },
-                    { 11, "Canceled", "Abgebrochen; nicht weiter erforderlich" },
-                    { 12, "Failed", "Gescheitert; Ziel nicht erreicht" },
-                    { 13, "Expired", "Automatisch abgelaufen (Deadline überschritten)" }
-                });
-
             migrationBuilder.CreateIndex(
                 name: "IX_AuditChanges_EntityId",
                 table: "AuditChanges",
@@ -338,11 +314,6 @@ namespace Misa.Infrastructure.Migrations
                 name: "IX_Descriptions_EntityId",
                 table: "Descriptions",
                 column: "EntityId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Items_StateId",
-                table: "Items",
-                column: "StateId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_SchedulerExecutionLogs_SchedulerId_ScheduledForUtc",
@@ -366,6 +337,9 @@ namespace Misa.Infrastructure.Migrations
         {
             migrationBuilder.DropTable(
                 name: "AuditChanges");
+
+            migrationBuilder.DropTable(
+                name: "Deadline");
 
             migrationBuilder.DropTable(
                 name: "Descriptions");
@@ -396,9 +370,6 @@ namespace Misa.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "Entities");
-
-            migrationBuilder.DropTable(
-                name: "States");
         }
     }
 }

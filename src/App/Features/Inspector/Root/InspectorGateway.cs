@@ -67,7 +67,7 @@ public sealed class InspectorGateway(RemoteProxy remoteProxy)
     }
     public async Task UpsertDeadlineAsync(UpsertDeadlineDto dto)
     {
-        var request = new HttpRequestMessage(HttpMethod.Post, "scheduling/once")
+        var request = new HttpRequestMessage(HttpMethod.Put, "deadlines")
         {
             Content = JsonContent.Create(dto)
         };
@@ -77,7 +77,7 @@ public sealed class InspectorGateway(RemoteProxy remoteProxy)
 
     public async Task DeleteDeadlineAsync(Guid targetItemId)
     {
-        var request = new HttpRequestMessage(HttpMethod.Delete, $"scheduling/once/{targetItemId}");
+        var request = new HttpRequestMessage(HttpMethod.Delete, $"deadlines/{targetItemId}");
         await remoteProxy.SendAsync<Result>(request);
     }
 }

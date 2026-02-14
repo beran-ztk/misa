@@ -12,30 +12,8 @@ public static class SchedulingEndpoints
     {
         app.MapGet("scheduling", GetSchedulingRules);
         app.MapPost("scheduling/{userId:guid}", AddSchedulingRule);
-        
-        app.MapPost("scheduling/once", CreateOnceScheduler);
-        app.MapDelete("scheduling/once/{targetItemId:guid}", DeleteDeadline);
     }
-    private static async Task<Result> CreateOnceScheduler(
-        UpsertDeadlineDto dto,
-        IMessageBus bus,
-        CancellationToken ct)
-    {
-        var command = new CreateOnceScheduleCommand(
-            dto.ItemId,
-            dto.DueAtUtc
-        );
-
-        return await bus.InvokeAsync<Result>(command, ct);
-    }
-    private static async Task<Result> DeleteDeadline(
-        Guid targetItemId,
-        IMessageBus bus,
-        CancellationToken ct)
-    {
-        var command = new DeleteDeadlineCommand(targetItemId);
-        return await bus.InvokeAsync<Result>(command, ct);
-    }
+    
     private static async Task<Result<List<ScheduleDto>>> GetSchedulingRules(IMessageBus bus, CancellationToken ct)
     {
         var result = await bus.InvokeAsync<Result<List<ScheduleDto>>>(new GetScheduleQuery(), ct);

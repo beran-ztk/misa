@@ -22,7 +22,6 @@ public interface IItemRepository
     Task<Item?> TryGetItemAsync(Guid id, CancellationToken ct);
 
     Task<Item?> TryGetItemDetailsAsync(Guid id, CancellationToken ct);
-    Task<Scheduler?> TryGetDeadlineByItemIdAsync(Guid id, CancellationToken ct);
     
     Task<List<Scheduler>> GetSchedulingRulesAsync(CancellationToken ct);
 }

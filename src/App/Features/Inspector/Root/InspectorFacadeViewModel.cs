@@ -54,7 +54,7 @@ public sealed partial class InspectorFacadeViewModel : ViewModelBase
         if (result is null) return;
         
         State.Item = result.Item;
-        Entry.Deadline = result.Deadline.DueAtUtc?.ToLocalTime().DateTime;
+        Entry.Deadline = result.Deadline?.DueAt.ToLocalTime().DateTime;
         State.CurrentSessionOverview = await Gateway.GetCurrentAndLatestSessionAsync(State.Item.Id);
     }
 }

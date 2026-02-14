@@ -1,4 +1,5 @@
 using Misa.Application.Features.Authentication;
+using Misa.Application.Features.Common.Deadlines;
 using Misa.Application.Features.Entities.Extensions.Items.Base.Queries;
 using Misa.Application.Features.Entities.Extensions.Items.Extensions.Tasks.Commands;
 using Misa.Application.Features.Entities.Extensions.Items.Extensions.Tasks.Queries;
@@ -28,16 +29,21 @@ public static class WolverineRegistration
             opts.Discovery.IncludeAssembly(typeof(PauseExpiredSessionsHandler).Assembly);
             opts.Discovery.IncludeAssembly(typeof(AddScheduleHandler).Assembly);
 
-            opts.Discovery.IncludeAssembly(typeof(CreateTaskHandler).Assembly);
-            opts.Discovery.IncludeAssembly(typeof(GetTasksHandler).Assembly);
             opts.Discovery.IncludeAssembly(typeof(GetSchedulesHandler).Assembly);
-            opts.Discovery.IncludeAssembly(typeof(CreateOnceScheduleHandler).Assembly);
 
             opts.Discovery.IncludeAssembly(typeof(SchedulePlanningHandler).Assembly);
             opts.Discovery.IncludeAssembly(typeof(ScheduleExecutingHandler).Assembly);
             
             opts.Discovery.IncludeAssembly(typeof(LoginHandler).Assembly); 
             opts.Discovery.IncludeAssembly(typeof(RegisterHandler).Assembly);
+            
+            // Task
+            opts.Discovery.IncludeAssembly(typeof(CreateTaskHandler).Assembly);
+            opts.Discovery.IncludeAssembly(typeof(GetTasksHandler).Assembly);
+            
+            // Deadline
+            opts.Discovery.IncludeAssembly(typeof(UpsertDeadlineHandler).Assembly);
+            opts.Discovery.IncludeAssembly(typeof(DeleteDeadlineHandler).Assembly);
         });
 
         return host;

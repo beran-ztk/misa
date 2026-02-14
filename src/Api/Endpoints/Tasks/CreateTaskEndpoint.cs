@@ -25,8 +25,7 @@ public static class CreateTaskEndpoint
             var command = new CreateTaskCommand(
                 dto.Title,
                 dto.CategoryDto,
-                dto.PriorityDto,
-                dto.Deadline
+                dto.PriorityDto
             );
              
             var result = await bus.InvokeAsync<Result<TaskDto>>(command, linkedCts.Token);

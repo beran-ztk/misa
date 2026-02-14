@@ -35,8 +35,7 @@ public sealed partial class CreateTaskState : ObservableObject
         return new CreateTaskDto(
             trimmed,
             SelectedCategoryDto,
-            SelectedPriorityDto,
-            null
+            SelectedPriorityDto
         );
     }
 }

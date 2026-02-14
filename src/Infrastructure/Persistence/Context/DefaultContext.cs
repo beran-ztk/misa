@@ -2,6 +2,7 @@
 using Misa.Application.Abstractions.Ids;
 using Misa.Application.Abstractions.Time;
 using Misa.Domain.Features.Audit;
+using Misa.Domain.Features.Common;
 using Misa.Domain.Features.Entities.Base;
 using Misa.Domain.Features.Entities.Extensions.Items.Base;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
@@ -29,6 +30,7 @@ public class DefaultContext(DbContextOptions<DefaultContext> options, ITimeProvi
     public DbSet<SchedulerExecutionLog> SchedulerExecutionLogs { get; set; } = null!;
     public DbSet<Outbox> Outbox { get; set; } = null!;
     public DbSet<User> User { get; set; } = null!;
+    public DbSet<Deadline> Deadline { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

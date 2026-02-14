@@ -39,8 +39,7 @@ public class ScheduleExecutingHandler(ISchedulerExecutingRepository repository, 
             var addTaskCommand = new CreateTaskCommand(
                 dto.Title,
                 dto.CategoryDto,
-                dto.PriorityDto,
-                dto.Deadline
+                dto.PriorityDto
             );
             
             var result = await bus.InvokeAsync<Result<TaskDto>>(addTaskCommand, stoppingToken);

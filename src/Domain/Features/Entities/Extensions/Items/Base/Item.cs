@@ -1,4 +1,5 @@
 ﻿using Misa.Domain.Features.Audit;
+using Misa.Domain.Features.Common;
 using Misa.Domain.Features.Entities.Base;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions;
 using Misa.Domain.Shared.DomainEvents;
@@ -29,6 +30,7 @@ public class Item : DomainEventEntity
     
     // Modelle
     public Entity Entity { get; init; }
+    public Deadline? Deadline { get; private set; }
     
     public ICollection<Session> Sessions { get; set; } = new List<Session>();
      public bool HasActiveSession 

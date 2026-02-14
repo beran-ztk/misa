@@ -9,7 +9,7 @@ public sealed class DetailedItemDto
 {
     public required WorkflowDto Kind { get; init; }
     public required ItemDto Item { get; init; }
-    public required DeadlineDto Deadline { get; init; }
+    public DeadlineDto? Deadline { get; init; }
     public JsonElement? Extension { get; init; }
 }
 public sealed class TaskDetailsDto

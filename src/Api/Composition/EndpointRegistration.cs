@@ -1,4 +1,5 @@
 using Misa.Api.Endpoints;
+using Misa.Api.Endpoints.Deadlines;
 using Misa.Api.Endpoints.Tasks;
 using Misa.Api.Middleware;
 
@@ -13,6 +14,7 @@ public static class EndpointRegistration
         app.MapHub<EventHub>("/hubs/updates");
 
         app.MapTaskEndpoints();
+        app.MapDeadlineEndpoints();
         
         ItemDetailEndpoints.Map(app);
         DescriptionEndpoints.Map(app);
@@ -25,4 +27,10 @@ public static class EndpointRegistration
         CreateTaskEndpoint.Map(app);
         GetTasksEndpoint.Map(app);
     }
+    private static void MapDeadlineEndpoints(this WebApplication app)
+    {
+        UpsertDeadlineEndpoint.Map(app);
+        DeleteDeadlineEndpoint.Map(app);
+    }
+    
 }
