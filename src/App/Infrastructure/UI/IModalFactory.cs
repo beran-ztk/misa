@@ -1,4 +1,5 @@
 using System;
+using System.Data;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Microsoft.Extensions.DependencyInjection;
@@ -33,7 +34,7 @@ public sealed class ModalFactory(IServiceProvider sp) : IModalFactory
                 var formVm =
                     (context as IHostedForm<TResult>)
                     ?? sp.GetRequiredService<CreateTaskViewModel>() as IHostedForm<TResult>;
-
+                if (formVm is null) throw new NoNullAllowedException();
                 body.DataContext = formVm;
 
                 var tcs = new TaskCompletionSource<TResult?>();

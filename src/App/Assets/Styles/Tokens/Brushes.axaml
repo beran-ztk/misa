@@ -1,9 +1,9 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     
-    <SolidColorBrush x:Key="BrushPrimaryBackground" Color="#010409"/>
-    <SolidColorBrush x:Key="BrushPrimaryBackgroundLight" Color="#0d1117"/>
-    <SolidColorBrush x:Key="BrushPrimaryBackgroundLighter" Color="#151b23"/>
+    <SolidColorBrush x:Key="BrushPrimaryBackground" Color="#0f141c"/>
+    <SolidColorBrush x:Key="BrushPrimaryBackgroundLight" Color="#151c26"/>
+    <SolidColorBrush x:Key="BrushPrimaryBackgroundLighter" Color="#1c2532"/>
     
     <SolidColorBrush x:Key="BrushInnerControlsBackground" Color="#191a1c"/>
     <SolidColorBrush x:Key="BrushInnerContentBackgroundBackground" Color="#1e1f22"/>
@@ -15,11 +15,11 @@
     <SolidColorBrush x:Key="BrushHover" Color="#2F4762"/>
     <SolidColorBrush x:Key="BrushActive" Color="#3D5A80"/>
 
-    <SolidColorBrush x:Key="BrushTextPrimary" Color="#daf6cf"/>
-    <SolidColorBrush x:Key="BrushTextSecondary" Color="#B5C0CC"/>
+    <SolidColorBrush x:Key="BrushTextPrimary" Color="#e6edf3"/>
+    <SolidColorBrush x:Key="BrushTextSecondary" Color="#9da7b3"/>
     <SolidColorBrush x:Key="BrushTextFaded" Color="#8090A0"/>
 
-    <SolidColorBrush x:Key="BrushBorder" Color="#4F5A66"/>
+    <SolidColorBrush x:Key="BrushBorder" Color="#263041"/>
     <SolidColorBrush x:Key="BrushBorderLight" Color="#6B7682"/>
 
     <SolidColorBrush x:Key="BrushAccent" Color="#4A90E2"/>

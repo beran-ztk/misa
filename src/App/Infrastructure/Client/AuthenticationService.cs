@@ -21,10 +21,14 @@ public sealed class AuthenticationService(HttpClient httpClient) : IAuthenticati
         if (!response.IsSuccessStatusCode)
             throw await CreateError(response, ct);
 
-        var payload = await response.Content.ReadFromJsonAsync<Result<AuthResponseDto>>(cancellationToken: ct)
-                      ?? throw new InvalidOperationException("Empty response.");
+        var payload = 
+            await response.Content.ReadFromJsonAsync<Result<AuthResponseDto>>(
+                cancellationToken: ct
+            )
+            ?? throw new InvalidOperationException("Empty response.");
 
-        return payload.Value ?? throw new InvalidOperationException("Empty User-Data.");
+        return payload.Value 
+               ?? throw new InvalidOperationException("Empty User-Data.");
     }
 
     public async Task<AuthResponseDto> LoginAsync(LoginRequestDto requestDto, CancellationToken ct = default)
@@ -35,10 +39,14 @@ public sealed class AuthenticationService(HttpClient httpClient) : IAuthenticati
         var response = await httpClient
             .SendAsync(request, CancellationToken.None);
 
-        var payload = await response.Content.ReadFromJsonAsync<Result<AuthResponseDto>>(cancellationToken: ct)
-                      ?? throw new InvalidOperationException("Empty response.");
+        var payload = 
+            await response.Content.ReadFromJsonAsync<Result<AuthResponseDto>>(
+                cancellationToken: ct
+            ) 
+            ?? throw new InvalidOperationException("Empty response.");
 
-        return payload.Value ?? throw new InvalidOperationException("Empty User-Data.");
+        return payload.Value 
+               ?? throw new InvalidOperationException("Empty User-Data.");
     }
     private static async Task<Exception> CreateError(HttpResponseMessage response, CancellationToken ct)
     {
