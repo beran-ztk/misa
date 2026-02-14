@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Features.Entities.Extensions.Items.Features.Session;
+using Misa.Contract.Shared.Results;
 using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions.Forms;
 using Misa.Ui.Avalonia.Infrastructure.UI;
 
@@ -58,11 +59,11 @@ public partial class InspectorEntryViewModel
 
         var formVm = new EndSessionViewModel(itemId, Facade.Gateway);
 
-        var result = await Facade.PanelProxy.OpenAsync<SessionResolvedDto>(PanelKey.EndSession, formVm);
+        var result = await Facade.PanelProxy.OpenAsync(PanelKey.EndSession, formVm);
 
-        if (Facade.State.CurrentSessionOverview is not null)
+        if (result is { IsSuccess: true } && Facade.State.CurrentSessionOverview is not null)
         {
-            Facade.State.CurrentSessionOverview.ActiveSession = result;
+            Facade.State.CurrentSessionOverview.ActiveSession = null;
             CurrentSessionPropertyChanged();
         }
     }

@@ -10,7 +10,7 @@ using Misa.Ui.Avalonia.Infrastructure.UI;
 
 namespace Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions.Forms;
 
-public partial class EndSessionViewModel(Guid itemId, InspectorGateway gateway) : ViewModelBase, IHostedForm<SessionResolvedDto?>
+public partial class EndSessionViewModel(Guid itemId, InspectorGateway gateway) : ViewModelBase, IHostedForm
 {
     // Host
     public string Title => "End session";
@@ -26,7 +26,7 @@ public partial class EndSessionViewModel(Guid itemId, InspectorGateway gateway) 
     public IReadOnlyList<EfficiencyContract> Efficiencies { get; } = Enum.GetValues<EfficiencyContract>();
     public IReadOnlyList<ConcentrationContract> Concentrations { get; } = Enum.GetValues<ConcentrationContract>();
 
-    public async Task<Result<SessionResolvedDto?>> SubmitAsync()
+    public async Task<Result> SubmitAsync()
     {
 
         var dto = new StopSessionDto(
@@ -36,6 +36,6 @@ public partial class EndSessionViewModel(Guid itemId, InspectorGateway gateway) 
             Summary
         );
         
-        return await gateway.StopSessionAsync(dto);
+        return await gateway.EndSessionAsync(dto);
     }
 }

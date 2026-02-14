@@ -1,60 +1,31 @@
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using CommunityToolkit.Mvvm.Input;
+using Misa.Contract.Shared.Results;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Infrastructure.UI;
 
 namespace Misa.Ui.Avalonia.Shell.Components;
-
-public partial class PanelHostViewModel<TResult>(
+public sealed partial class PanelHostViewModel(
     Control contentView,
-    object form,
-    TaskCompletionSource<TResult?> tcs,
+    IHostedForm form,
+    TaskCompletionSource<Result> tcs,
     IPanelCloser panelCloser)
     : ViewModelBase, IPanelHostViewModel
 {
     public Control ContentView { get; } = contentView;
-    private object Form { get; } = form;
-    
-    public string Title =>
-        Form switch
-        {
-            IHostedForm<TResult> f => f.Title,
-            _ => string.Empty
-        };
+    private IHostedForm Form { get; } = form;
 
-    public string SubmitText => 
-        Form switch
-        {
-            IHostedForm<TResult> f => f.SubmitText,
-            _ => "Submit"
-        };
-    public string CancelText =>
-        Form switch
-        {
-            IHostedForm<TResult> f => f.CancelText,
-            _ => "Cancel"
-        };
-
-    public bool CanSubmit =>
-        Form switch
-        {
-            IHostedForm<TResult> f => f.CanSubmit,
-            _ => false
-        };
+    public string Title => Form.Title;
+    public string SubmitText => Form.SubmitText;
+    public string CancelText => Form.CancelText;
+    public bool CanSubmit => Form.CanSubmit;
 
     [RelayCommand]
     private void Close()
     {
-        switch (Form)
-        {
-            case IHostedForm<TResult>:
-            {
-                tcs.TrySetResult(default);
-                panelCloser.Close();
-                return;
-            }
-        }
+        tcs.TrySetResult(Result.Failure("Closed."));
+        panelCloser.Close();
     }
 
     [RelayCommand]
@@ -63,18 +34,48 @@ public partial class PanelHostViewModel<TResult>(
     [RelayCommand]
     private async Task Submit()
     {
-        switch (Form)
-        {
-            case IHostedForm<TResult> form:
-            {
-                var result = await form.SubmitAsync();
-                if (!result.IsSuccess)
-                    return;
+        var result = await Form.SubmitAsync();
+        if (!result.IsSuccess)
+            return;
 
-                tcs.TrySetResult(result.Value);
-                panelCloser.Close();
-                return;
-            }
-        }
+        tcs.TrySetResult(result);
+        panelCloser.Close();
+    }
+}
+
+public sealed partial class PanelHostViewModel<TResult>(
+    Control contentView,
+    IHostedForm<TResult> form,
+    TaskCompletionSource<TResult?> tcs,
+    IPanelCloser panelCloser)
+    : ViewModelBase, IPanelHostViewModel
+{
+    public Control ContentView { get; } = contentView;
+    private IHostedForm<TResult> Form { get; } = form;
+
+    public string Title => Form.Title;
+    public string SubmitText => Form.SubmitText;
+    public string CancelText => Form.CancelText;
+    public bool CanSubmit => Form.CanSubmit;
+
+    [RelayCommand]
+    private void Close()
+    {
+        tcs.TrySetResult(default);
+        panelCloser.Close();
+    }
+
+    [RelayCommand]
+    private void Cancel() => Close();
+
+    [RelayCommand]
+    private async Task Submit()
+    {
+        var result = await Form.SubmitAsync();
+        if (!result.IsSuccess)
+            return;
+
+        tcs.TrySetResult(result.Value);
+        panelCloser.Close();
     }
 }

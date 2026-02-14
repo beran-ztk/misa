@@ -13,7 +13,7 @@ public static class StopSessionEndpoint
         api.MapPost("items/{itemId:guid}/sessions/stop", StopSession);
     }
 
-    private static async Task<Result<SessionResolvedDto?>> StopSession(
+    private static async Task<Result> StopSession(
         [FromRoute] Guid itemId,
         [FromBody] StopSessionDto dto,
         IMessageBus bus,
@@ -26,7 +26,7 @@ public static class StopSessionEndpoint
             dto.Summary
         );
 
-        var res = await bus.InvokeAsync<Result<SessionResolvedDto?>>(cmd, ct);
+        var res = await bus.InvokeAsync<Result>(cmd, ct);
         return res;
     }
 }

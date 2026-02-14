@@ -53,14 +53,14 @@ public sealed class InspectorGateway(RemoteProxy remoteProxy)
         return remoteProxy.SendAsync(request);
     }
 
-    public Task<Result<SessionResolvedDto?>> StopSessionAsync(StopSessionDto dto)
+    public Task<Result> EndSessionAsync(StopSessionDto dto)
     {
         var request = new HttpRequestMessage(HttpMethod.Post, $"items/{dto.ItemId}/sessions/stop")
         {
             Content = JsonContent.Create(dto)
         };
 
-        return remoteProxy.SendAsync<SessionResolvedDto?>(request);
+        return remoteProxy.SendAsync(request);
     }
 
     public Task<Result<DeadlineDto>> UpsertDeadlineAsync(UpsertDeadlineDto dto)
