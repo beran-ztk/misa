@@ -38,43 +38,34 @@ public class AddScheduleHandler(
 {
     public async Task<Result<ScheduleDto>> Handle(AddScheduleCommand command, CancellationToken ct)
     {
-        try
-        {
-            var user = await authenticationRepository.FindByIdAsync(command.UserId, ct);
-            if (user == null)
-                return Result<ScheduleDto>.Invalid("", "No user found");
+        var user = await authenticationRepository.FindByIdAsync(command.UserId, ct);
             
-            var scheduler = Scheduler.Create(
-                id: idGenerator.New(), 
-                title: command.Title,
-                targetItemId: command.TargetItemId,
-                frequencyType: command.ScheduleFrequencyType.MapToDomain(),
-                frequencyInterval: command.FrequencyInterval,
-                lookaheadLimit: command.LookaheadLimit,
-                occurrenceCountLimit: command.OccurrenceCountLimit,
-                misfirePolicy: command.MisfirePolicy.MapToDomain(),
-                occurrenceTtl: command.OccurrenceTtl,
-                actionType: command.ActionType.ToDomain(),
-                payload: command.Payload,
-                startTime: command.StartTime,
-                endTime: command.EndTime,
-                activeFromUtc: timeZoneConverter.LocalToUtc(command.ActiveFromLocal, user.TimeZone),
-                activeUntilUtc: timeZoneConverter.LocalToUtc(command.ActiveUntilLocal, user.TimeZone),
-                byDay: command.ByDay,
-                byMonthDay: command.ByMonthDay,
-                byMonth: command.ByMonth,
-                timezone: user.TimeZone,
-                createdAt: timeProvider.UtcNow
-            );
+        var scheduler = Scheduler.Create(
+            id: idGenerator.New(), 
+            title: command.Title,
+            targetItemId: command.TargetItemId,
+            frequencyType: command.ScheduleFrequencyType.MapToDomain(),
+            frequencyInterval: command.FrequencyInterval,
+            lookaheadLimit: command.LookaheadLimit,
+            occurrenceCountLimit: command.OccurrenceCountLimit,
+            misfirePolicy: command.MisfirePolicy.MapToDomain(),
+            occurrenceTtl: command.OccurrenceTtl,
+            actionType: command.ActionType.ToDomain(),
+            payload: command.Payload,
+            startTime: command.StartTime,
+            endTime: command.EndTime,
+            activeFromUtc: timeZoneConverter.LocalToUtc(command.ActiveFromLocal, user.TimeZone),
+            activeUntilUtc: timeZoneConverter.LocalToUtc(command.ActiveUntilLocal, user.TimeZone),
+            byDay: command.ByDay,
+            byMonthDay: command.ByMonthDay,
+            byMonth: command.ByMonth,
+            timezone: user.TimeZone,
+            createdAt: timeProvider.UtcNow
+        );
 
-            await repository.AddAsync(scheduler, ct);
-            await repository.SaveChangesAsync(ct);
+        await repository.AddAsync(scheduler, ct);
+        await repository.SaveChangesAsync(ct);
 
-            return Result<ScheduleDto>.Ok(scheduler.ToDto());
-        }
-        catch (ArgumentException ex)
-        {
-            return Result<ScheduleDto>.Invalid("", ex.Message);
-        }
+        return Result<ScheduleDto>.Ok(scheduler.ToDto());
     }
 }

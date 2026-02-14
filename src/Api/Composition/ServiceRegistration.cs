@@ -25,7 +25,6 @@ public static class ServiceRegistration
     public static void RegisterServices(this IServiceCollection services)
     {
         services.AddApiCore();
-        services.AddApiMiddleware();
         services.AddCoreServices();
         services.AddDataAccess();
         services.AddWorkers();
@@ -36,11 +35,6 @@ public static class ServiceRegistration
     {
         services.AddSignalR();
         services.AddControllers();
-    }
-
-    private static void AddApiMiddleware(this IServiceCollection services)
-    {
-        services.AddTransient<ExceptionMappingMiddleware>();
     }
 
     private static void AddCoreServices(this IServiceCollection services)

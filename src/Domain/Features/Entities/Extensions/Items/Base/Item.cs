@@ -1,4 +1,5 @@
-﻿using Misa.Domain.Features.Audit;
+﻿using Misa.Domain.Exceptions;
+using Misa.Domain.Features.Audit;
 using Misa.Domain.Features.Common;
 using Misa.Domain.Features.Entities.Base;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions;
@@ -12,6 +13,9 @@ public class Item : DomainEventEntity
 
     public Item(Entity entity, string title, Priority priority, ItemState state)
     {
+        if (string.IsNullOrWhiteSpace(title))
+            throw new DomainValidationException("title", "title_required", "Title is required.");
+
         Entity = entity;
         Title = title;
         Priority = priority;

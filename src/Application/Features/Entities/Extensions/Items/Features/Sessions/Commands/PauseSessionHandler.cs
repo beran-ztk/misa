@@ -12,11 +12,6 @@ public class PauseSessionHandler(IItemRepository repository, ITimeProvider timeP
 {
     public async Task<Result> Handle(PauseSessionCommand command, CancellationToken ct)
     {
-        if (command.ItemId == Guid.Empty)
-        {
-            return Result.Invalid(ItemErrorCodes.ItemIdEmpty, "ItemId must not be empty.");
-        }
-
         var item = await repository.TryGetItemAsync(command.ItemId, ct);
         if (item is null)
         {
@@ -25,7 +20,7 @@ public class PauseSessionHandler(IItemRepository repository, ITimeProvider timeP
 
         if (item.State != ItemState.Active)
         {
-            return Result.Invalid("item.not_active", "Item is not active and cannot be paused.");
+            // return Result.Invalid("item.not_active", "Item is not active and cannot be paused.");
         }
 
         var session = await repository.TryGetRunningSessionByItemIdAsync(command.ItemId, ct);

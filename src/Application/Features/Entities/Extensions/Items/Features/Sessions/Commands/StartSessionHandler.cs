@@ -17,11 +17,6 @@ public class StartSessionHandler(IItemRepository repository, ITimeProvider timeP
 {
     public async Task<Result> Handle(StartSessionCommand command, CancellationToken ct)
     {
-        if (command.ItemId == Guid.Empty)
-        {
-            return Result.Invalid(ItemErrorCodes.ItemIdEmpty, "ItemId must not be empty.");
-        }
-        
         var item = await repository.TryGetItemAsync(command.ItemId, ct);
         if (item is null)
         {
@@ -30,7 +25,7 @@ public class StartSessionHandler(IItemRepository repository, ITimeProvider timeP
 
         if (item.State == ItemState.Active)
         {
-            return Result.Invalid("item.already_active", "ItemId is already active!");
+            // return Result.Invalid("item.already_active", "ItemId is already active!");
         }
 
         var session = Session.Start

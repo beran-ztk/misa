@@ -8,33 +8,24 @@ namespace Misa.Api.Endpoints.Tasks;
 
 public static class CreateTaskEndpoint
 {
-    public static void Map(WebApplication app)
+    public static void Map(IEndpointRouteBuilder api)
     {
-        app.MapPost("tasks", AddTask);
+        api.MapPost("tasks", AddTask);
     }
+
     private static async Task<Result<TaskDto>> AddTask(
-        [FromBody] CreateTaskDto dto, 
-        IMessageBus bus, 
+        [FromBody] CreateTaskDto dto,
+        IMessageBus bus,
         CancellationToken ct)
     {
         using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
         using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct, timeoutCts.Token);
 
-        try
-        {
-            var command = new CreateTaskCommand(
-                dto.Title,
-                dto.CategoryDto,
-                dto.PriorityDto
-            );
-             
-            var result = await bus.InvokeAsync<Result<TaskDto>>(command, linkedCts.Token);
+        var command = new CreateTaskCommand(
+            dto.Title,
+            dto.CategoryDto,
+            dto.PriorityDto);
 
-            return result;
-        }
-        catch (Exception ex)
-        {
-            return Result<TaskDto>.Invalid("", ex.ToString());
-        }
+        return await bus.InvokeAsync<Result<TaskDto>>(command, linkedCts.Token);
     }
 }

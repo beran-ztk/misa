@@ -5,7 +5,6 @@ using Misa.Application.Mappings;
 using Misa.Contract.Features.Entities.Extensions.Items.Base;
 using Misa.Contract.Features.Entities.Extensions.Items.Extensions.Tasks;
 using Misa.Contract.Shared.Results;
-using Wolverine;
 using ItemTask = Misa.Domain.Features.Entities.Extensions.Items.Extensions.Tasks.Task;
 
 namespace Misa.Application.Features.Entities.Extensions.Items.Extensions.Tasks.Commands;
@@ -28,7 +27,7 @@ public class CreateTaskHandler(
             command.PriorityDto.MapToDomain(),
             timeProvider.UtcNow
         );
-
+        
         await repository.AddAsync(task, ct);
         await repository.SaveChangesAsync(ct);
         
