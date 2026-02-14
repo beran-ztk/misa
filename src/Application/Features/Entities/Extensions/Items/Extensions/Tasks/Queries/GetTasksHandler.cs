@@ -11,6 +11,9 @@ public class GetTasksHandler(ITaskRepository repository)
     {
         var tasks = await repository.GetTasksAsync(ct);
 
-        return Result<List<TaskDto>>.Ok(tasks.ToDto());
+        var formattedTasks = tasks.ToDto();
+        
+        return Result<List<TaskDto>>
+            .Ok(formattedTasks);
     }
 }

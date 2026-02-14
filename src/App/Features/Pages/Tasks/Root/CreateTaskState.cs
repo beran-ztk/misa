@@ -25,17 +25,14 @@ public sealed partial class CreateTaskState : ObservableObject
     }
     public CreateTaskDto? TryGetValidatedRequestObject()
     {
-        var trimmed = Title.Trim();
-        if (string.IsNullOrWhiteSpace(trimmed))
-        {
-            TitleValidationError("Please specify a title.");
-            return null;
-        }
-
-        return new CreateTaskDto(
-            trimmed,
-            SelectedCategoryDto,
-            SelectedPriorityDto
-        );
+        if (!string.IsNullOrWhiteSpace(Title))
+            return new CreateTaskDto(
+                Title,
+                SelectedCategoryDto,
+                SelectedPriorityDto
+            );
+        
+        TitleValidationError("Please specify a title.");
+        return null;
     }
 }

@@ -3,29 +3,27 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
 using Misa.Contract.Features.Entities.Extensions.Items.Extensions.Tasks;
-using Misa.Ui.Avalonia.Features.Pages.Common;
+using Misa.Contract.Shared.Results;
 using Misa.Ui.Avalonia.Infrastructure.Client;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Tasks.Root;
 
 public sealed class TaskGateway(RemoteProxy remoteProxy)
 {
-    public async Task<List<TaskDto>> GetAllAsync()
+    public async Task<Result<List<TaskDto>>> GetAllAsync()
     {
         var request = new HttpRequestMessage(HttpMethod.Get, "tasks");
-        
-        var response = await remoteProxy.SendAsync<List<TaskDto>?>(request);
-        
-        return response?.Value ?? [];
+
+        return await remoteProxy.SendAsync<List<TaskDto>>(request);
     }
-    
-    public async Task<TaskDto?> CreateAsync(CreateTaskDto dto)
+
+    public async Task<Result<TaskDto>> CreateAsync(CreateTaskDto dto)
     {
-        var request = new HttpRequestMessage(HttpMethod.Post, "tasks");
-        request.Content = JsonContent.Create(dto);
-        
-        var response = await remoteProxy.SendAsync<TaskDto?>(request);
-            
-        return response?.Value;
+        var request = new HttpRequestMessage(HttpMethod.Post, "tasks")
+        {
+            Content = JsonContent.Create(dto)
+        };
+
+        return await remoteProxy.SendAsync<TaskDto>(request);
     }
 }
