@@ -17,7 +17,11 @@ public sealed record CreateTaskCommand(
     PriorityDto PriorityDto,
     DeadlineInputDto? DeadlineDto
 );
-public class CreateTaskHandler(IItemRepository repository, IMessageBus bus, ITimeProvider timeProvider, IIdGenerator idGenerator)
+public class CreateTaskHandler(
+    IItemRepository repository, 
+    IMessageBus bus, 
+    ITimeProvider timeProvider, 
+    IIdGenerator idGenerator)
 {
     public async Task<Result<TaskDto>> HandleAsync(CreateTaskCommand command, CancellationToken ct)
     {

@@ -4,7 +4,7 @@ using Misa.Contract.Features.Authentication;
 using Misa.Contract.Shared.Results;
 using Wolverine;
 
-namespace Misa.Api.Endpoints.Features.Authentication;
+namespace Misa.Api.Endpoints;
 
 public static class AuthEndpoints
 {

@@ -1,32 +1,16 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Misa.Application.Features.Entities.Extensions.Items.Extensions.Tasks.Commands;
-using Misa.Application.Features.Entities.Extensions.Items.Extensions.Tasks.Queries;
-using Misa.Application.Mappings;
 using Misa.Contract.Features.Entities.Extensions.Items.Extensions.Tasks;
 using Misa.Contract.Shared.Results;
 using Wolverine;
 
-namespace Misa.Api.Endpoints.Features.Entities.Extensions.Items.Extensions;
+namespace Misa.Api.Endpoints.Tasks;
 
-public static class TaskEndpoints
+public static class CreateTaskEndpoint
 {
     public static void Map(WebApplication app)
     {
-        app.MapGet("tasks", GetTasks);
         app.MapPost("tasks", AddTask);
-    }
-    private static async Task<Result<List<TaskDto>>> GetTasks(IMessageBus bus, CancellationToken ct)
-    {
-        try
-        {
-            var result = await bus.InvokeAsync<Result<List<TaskDto>>>(new GetTasksQuery(), ct);
-
-            return result;
-        }
-        catch (Exception ex)
-        {
-            return Result<List<TaskDto>>.Invalid("", ex.ToString());
-        }
     }
     private static async Task<Result<TaskDto>> AddTask(
         [FromBody] CreateTaskDto dto, 
