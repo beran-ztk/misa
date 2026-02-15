@@ -1,19 +1,22 @@
 using System.Threading.Tasks;
+using System.Windows.Input;
+using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Shared.Results;
 using Misa.Ui.Avalonia.Infrastructure.States;
 
 namespace Misa.Ui.Avalonia.Infrastructure.UI;
 
-public class PanelProxy(ShellState shellState, IPanelFactory panelFactory) : IPanelCloser
+public partial class PanelProxy(ShellState shellState, IPanelFactory panelFactory) : IPanelCloser
 {
     private TaskCompletionSource<object?>? _activePanelTcs;
-    
+    [RelayCommand]
     public void Close()
     {
         shellState.Panel = null;
-        _activePanelTcs?.TrySetResult(null);
+        _activePanelTcs?.TrySetResult(default);
         _activePanelTcs = null;
     }
+    ICommand IPanelCloser.CloseCommand => CloseCommand;
 
     public async Task<Result> OpenAsync(PanelKey key, object? context)
     {

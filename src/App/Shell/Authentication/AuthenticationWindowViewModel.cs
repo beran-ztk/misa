@@ -11,6 +11,7 @@ using Misa.Contract.Features.Authentication;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Infrastructure.Client;
 using Misa.Ui.Avalonia.Infrastructure.Composition;
+using Misa.Ui.Avalonia.Infrastructure.States;
 using Misa.Ui.Avalonia.Infrastructure.Time;
 using Misa.Ui.Avalonia.Shell.Base;
 
@@ -20,18 +21,18 @@ public partial class AuthenticationWindowViewModel : ViewModelBase
 {
     private IAuthenticationService AuthService { get; }
     private TimeZoneService TimeZoneService { get; }
-    private AppState AppState { get; }
+    private UserState UserState { get; }
     private IServiceProvider Services { get; }
 
     public AuthenticationWindowViewModel(
         IAuthenticationService authService,
         TimeZoneService timeZoneService,
-        AppState appState,
+        UserState userState,
         IServiceProvider services)
     {
         AuthService = authService;
         TimeZoneService = timeZoneService;
-        AppState = appState;
+        UserState = userState;
         Services = services;
 
         TimeZoneIds = new ObservableCollection<string>(TimeZoneService.Ids);
@@ -156,7 +157,7 @@ public partial class AuthenticationWindowViewModel : ViewModelBase
                 responseDto = await AuthService.LoginAsync(req);
             }
 
-            AppState.UserState.User = responseDto.User;
+            UserState.User = responseDto.User;
 
             OpenShellAndCloseAuth();
         }
