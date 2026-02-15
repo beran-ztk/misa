@@ -44,8 +44,8 @@ public static class CompositionRoot
     private static void AddCore(this IServiceCollection sc, string baseAddress)
     {
         sc.AddSingleton<PanelProxy>();
+        sc.AddSingleton<IPanelCloser>(sp => sp.GetRequiredService<PanelProxy>());
         sc.AddSingleton<IPanelFactory, PanelFactory>();
-        sc.AddSingleton<IPanelCloser, PanelProxy>();
         sc.AddSingleton<RemoteProxy>();
         sc.AddSingleton<SignalRNotificationClient>();
         sc.AddTransient<PanelHostView>();
