@@ -21,10 +21,15 @@ public partial class InspectorEntryViewModel : ViewModelBase
     }
     private void OnFacadeStatePropertyChanged(object? s, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName != nameof(Facade.State.CurrentSessionOverview))
-            return;
-
-        CurrentSessionPropertyChanged();
+        switch (e.PropertyName)
+        {
+            case nameof(Facade.State.CurrentSessionOverview):
+                CurrentSessionPropertyChanged();
+                break;
+            case nameof(Facade.State.Deadline):
+                DeadlinePropertyChanged();
+                break;
+        }
     }
 
     private void CurrentSessionPropertyChanged()
@@ -41,6 +46,12 @@ public partial class InspectorEntryViewModel : ViewModelBase
         OnPropertyChanged(nameof(ActiveSessionSegmentDisplay));
 
         RunElapsedLoop();
+    }
+    private void DeadlinePropertyChanged()
+    {
+        OnPropertyChanged(nameof(Deadline));
+        OnPropertyChanged(nameof(HasDeadline));
+        OnPropertyChanged(nameof(DeadlineDisplay));
     }
     private void RunElapsedLoop()
     {
