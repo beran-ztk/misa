@@ -25,6 +25,8 @@
          
          <StyleInclude Source="avares://App/Assets/Styles/Components/Confirm.Cancel.axaml"/>
          
+         <StyleInclude Source="avares://App/Assets/Styles/Views/Scheduler/Schedule.Content.Card.axaml"/>
+         
          <!-- Navigation -->
          <StyleInclude Source="avares://App/Assets/Styles/Views/Navigation/UtilityNavigation.axaml"/>
          <StyleInclude Source="avares://App/Assets/Styles/Views/Navigation/WorkspaceNavigation.axaml"/>

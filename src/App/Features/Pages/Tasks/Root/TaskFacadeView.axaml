@@ -51,11 +51,10 @@
                         <TextBlock Text="Priority  ▾" />
                     </ToggleButton>
 
-                    <Popup Classes="workspace-toolbar-filter-popup"
-                           PlacementTarget="{Binding ElementName=PriorityFilterButton}"
+                    <Popup PlacementTarget="{Binding ElementName=PriorityFilterButton}"
                            IsOpen="{Binding IsChecked, ElementName=PriorityFilterButton}"
                            Placement="Bottom">
-                        <Border Classes="workspace-toolbar-filter-popup-frame">
+                        <Border Classes="filter-popup-frame">
                             <ItemsControl ItemsSource="{Binding State.PriorityFilters}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
