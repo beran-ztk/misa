@@ -4,17 +4,193 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="Misa.Ui.Avalonia.Features.Pages.Scheduling.Root.SchedulerFacadeView"
-             xmlns:toolbar="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Scheduling.Toolbar"
-             xmlns:content="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Scheduling.Content"
              xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Scheduling.Root"
+             xmlns:scheduler="clr-namespace:Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;assembly=Contract"
              x:DataType="root:SchedulerFacadeViewModel">
-    
+
     <Grid RowDefinitions="Auto,*">
 
-        <toolbar:SchedulerToolbarView Grid.Row="0" />
+        <!-- Toolbar (match TaskFacadeView) -->
+        <Border Grid.Row="0"
+                Classes="workspace-toolbar-frame">
+            <Grid Classes="workspace-toolbar"
+                  RowDefinitions="Auto,Auto,Auto"
+                  ColumnDefinitions="*,Auto">
 
-        <content:SchedulerContentView Grid.Row="1"/>
-        
+                <!-- Row 0: Quick actions (left) -->
+                <StackPanel Grid.Row="0" Grid.Column="0"
+                            Classes="workspace-toolbar-left">
+                    <Button Classes="workspace-toolbar-icon"
+                            Command="{Binding ShowAddPanelCommand}">
+                        <Image Source="{SvgImage /Assets/Icons/Common/plus.svg}" />
+                    </Button>
+
+                    <Button Classes="workspace-toolbar-icon"
+                            Command="{Binding RefreshWorkspaceCommand}">
+                        <Image Source="{SvgImage /Assets/Icons/Common/refresh.svg}" />
+                    </Button>
+                </StackPanel>
+
+                <!-- Row 0: Search (right) -->
+                <StackPanel Grid.Row="0" Grid.Column="1"
+                            Classes="workspace-toolbar-right">
+                    <TextBox Classes="workspace-toolbar-search"
+                             Watermark="Search schedules..."
+                             Text="{Binding State.SearchText, Mode=TwoWay}" />
+                </StackPanel>
+
+                <!-- Row 1: Filters (left) - placeholder to keep identical structure -->
+                <StackPanel Grid.Row="1" Grid.Column="0"
+                            Classes="workspace-toolbar-center">
+                    <!-- Add scheduler filters here later (frequency, misfire, etc.) -->
+                </StackPanel>
+
+                <!-- Thin separator -->
+                <Border Grid.Row="2"
+                        Grid.Column="0"
+                        Grid.ColumnSpan="2"
+                        Classes="workspace-toolbar-separator" />
+            </Grid>
+        </Border>
+
+        <!-- Content (match Task: workspace-content-frame wrapper) -->
+        <Grid Grid.Row="1">
+            <Border Classes="workspace-content-frame">
+                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <Border Padding="12">
+                        <ListBox ItemsSource="{Binding State.FilteredItems}"
+                                 SelectedItem="{Binding State.SelectedItem, Mode=TwoWay}"
+                                 BorderThickness="0"
+                                 Background="Transparent">
+
+                            <ListBox.ItemTemplate>
+                                <DataTemplate x:DataType="scheduler:ScheduleDto">
+                                    <Border Margin="0,0,0,10"
+                                            Padding="12"
+                                            BorderBrush="{StaticResource BrushBorder}"
+                                            BorderThickness="1"
+                                            CornerRadius="10"
+                                            Background="{StaticResource BrushPrimaryBackground}">
+
+                                        <Grid RowDefinitions="Auto,Auto,Auto"
+                                              RowSpacing="10">
+
+                                            <!-- Header -->
+                                            <Grid Grid.Row="0"
+                                                  ColumnDefinitions="*,Auto"
+                                                  ColumnSpacing="12">
+                                                <StackPanel Spacing="2">
+                                                    <TextBlock Text="{Binding Item.Title}"
+                                                               FontSize="16"
+                                                               FontWeight="SemiBold" />
+
+                                                    <TextBlock Text="{Binding Item.Entity.CreatedAt, StringFormat='dd.MM.yyyy HH:mm'}"
+                                                               Opacity="0.65"
+                                                               FontSize="12" />
+                                                </StackPanel>
+
+                                                <Border Grid.Column="1"
+                                                        Padding="8,4"
+                                                        CornerRadius="8"
+                                                        BorderThickness="1"
+                                                        BorderBrush="{StaticResource BrushBorder}">
+                                                    <StackPanel Orientation="Horizontal"
+                                                                Spacing="6">
+                                                        <TextBlock Text="{Binding FrequencyInterval}"
+                                                                   FontWeight="SemiBold" />
+                                                        <TextBlock Text="×" Opacity="0.6"/>
+                                                        <TextBlock Text="{Binding FrequencyType}" />
+                                                    </StackPanel>
+                                                </Border>
+                                            </Grid>
+
+                                            <!-- Main values -->
+                                            <Grid Grid.Row="1"
+                                                  ColumnDefinitions="*,*"
+                                                  ColumnSpacing="16"
+                                                  RowDefinitions="Auto,Auto,Auto,Auto"
+                                                  RowSpacing="6">
+
+                                                <StackPanel Grid.Column="0" Spacing="6">
+                                                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                                        <TextBlock Text="Occurrence Limit" Opacity="0.7"/>
+                                                        <TextBlock Grid.Column="1" Text="{Binding OccurrenceCountLimit}" />
+                                                    </Grid>
+
+                                                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                                        <TextBlock Text="Misfire Policy" Opacity="0.7"/>
+                                                        <TextBlock Grid.Column="1" Text="{Binding MisfirePolicy}" />
+                                                    </Grid>
+
+                                                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                                        <TextBlock Text="Lookahead Limit" Opacity="0.7"/>
+                                                        <TextBlock Grid.Column="1" Text="{Binding LookaheadLimit}" />
+                                                    </Grid>
+
+                                                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                                        <TextBlock Text="Occurrence TTL" Opacity="0.7"/>
+                                                        <TextBlock Grid.Column="1" Text="{Binding OccurrenceTtl}" />
+                                                    </Grid>
+                                                </StackPanel>
+
+                                                <StackPanel Grid.Column="1" Spacing="6">
+                                                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                                        <TextBlock Text="Start Time" Opacity="0.7"/>
+                                                        <TextBlock Grid.Column="1" Text="{Binding StartTime}" />
+                                                    </Grid>
+
+                                                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                                        <TextBlock Text="End Time" Opacity="0.7"/>
+                                                        <TextBlock Grid.Column="1" Text="{Binding EndTime}" />
+                                                    </Grid>
+
+                                                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                                        <TextBlock Text="Timezone" Opacity="0.7"/>
+                                                        <TextBlock Grid.Column="1" Text="{Binding Timezone}" />
+                                                    </Grid>
+                                                </StackPanel>
+                                            </Grid>
+
+                                            <!-- Timeline / execution -->
+                                            <Border Grid.Row="2"
+                                                    Padding="10"
+                                                    CornerRadius="8"
+                                                    BorderThickness="1"
+                                                    BorderBrush="{StaticResource BrushBorder}">
+                                                <Grid ColumnDefinitions="Auto,*"
+                                                      RowDefinitions="Auto,Auto,Auto,Auto"
+                                                      RowSpacing="6"
+                                                      ColumnSpacing="12">
+
+                                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Active" Opacity="0.7"/>
+                                                    <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                                                        <TextBlock Text="{Binding ActiveFromUtc}" />
+                                                        <TextBlock Text="→" Opacity="0.6"/>
+                                                        <TextBlock Text="{Binding ActiveUntilUtc}" />
+                                                    </StackPanel>
+
+                                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Last Run" Opacity="0.7"/>
+                                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding LastRunAtUtc}" />
+
+                                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Next Due" Opacity="0.7"/>
+                                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding NextDueAtUtc}" />
+
+                                                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Next Allowed" Opacity="0.7"/>
+                                                    <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding NextAllowedExecutionAtUtc}" />
+                                                </Grid>
+                                            </Border>
+
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+
+                        </ListBox>
+                    </Border>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+
     </Grid>
-    
 </UserControl>

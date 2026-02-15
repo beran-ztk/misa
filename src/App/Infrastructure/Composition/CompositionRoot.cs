@@ -5,10 +5,8 @@ using Misa.Ui.Avalonia.Features.Inspector.Root;
 using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Scheduling.Forms;
 using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions.Forms;
 using Misa.Ui.Avalonia.Features.Pages.Common;
-using Misa.Ui.Avalonia.Features.Pages.Scheduling.Content;
 using Misa.Ui.Avalonia.Features.Pages.Scheduling.Create;
 using Misa.Ui.Avalonia.Features.Pages.Scheduling.Root;
-using Misa.Ui.Avalonia.Features.Pages.Scheduling.Toolbar;
 using Misa.Ui.Avalonia.Features.Pages.Tasks.Create;
 using Misa.Ui.Avalonia.Features.Pages.Tasks.Root;
 using Misa.Ui.Avalonia.Features.Utilities.Notifications;
@@ -120,8 +118,6 @@ public static class CompositionRoot
         sc.AddTransient<CreateScheduleState>();
         sc.AddSingleton<SchedulerFacadeViewModel>();
         sc.AddSingleton<SchedulerGateway>();
-        sc.AddSingleton<SchedulerToolbarView>();
-        sc.AddSingleton<SchedulerContentView>();
 
         sc.AddTransient<CreateScheduleView>();
         sc.AddTransient<CreateScheduleViewModel>();
