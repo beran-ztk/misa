@@ -21,6 +21,8 @@
          <FluentTheme />
          <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
          
+         <StyleInclude Source="avares://App/Assets/Styles/Controls/Overlays.axaml"/>
+         
          <StyleInclude Source="avares://App/Assets/Styles/Components/Divider.axaml"/>
          <StyleInclude Source="avares://App/Assets/Styles/Components/Confirm.Cancel.axaml"/>
          

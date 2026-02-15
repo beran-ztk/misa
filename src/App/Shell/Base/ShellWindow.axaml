@@ -56,18 +56,17 @@
               ZIndex="20"
               IsVisible="{Binding ShellState.IsPanelOpen}">
 
-            <!-- Halb-dunkles Overlay, blockt Klicks -->
-            <Border Background="#80000000"
+            <!-- Overlay -->
+            <Border Background="{StaticResource BrushOverlay}"
                     HorizontalAlignment="Stretch"
                     VerticalAlignment="Stretch">
 
-                <!-- Click-catcher -->
-                <Button Background="Transparent"
-                        BorderThickness="0"
+                <Button Classes="overlay"
                         HorizontalAlignment="Stretch"
                         VerticalAlignment="Stretch"
                         Command="{Binding PanelCloser.BackdropCloseCommand}"/>
             </Border>
+
 
             <!-- Panel content -->
             <Border ZIndex="22"
