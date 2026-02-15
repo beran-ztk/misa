@@ -23,7 +23,6 @@
          
          <StyleInclude Source="avares://App/Assets/Styles/Controls/Overlays.axaml"/>
          
-         <StyleInclude Source="avares://App/Assets/Styles/Components/Divider.axaml"/>
          <StyleInclude Source="avares://App/Assets/Styles/Components/Confirm.Cancel.axaml"/>
          
          <!-- Navigation -->

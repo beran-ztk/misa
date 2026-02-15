@@ -7,59 +7,49 @@
              xmlns:ui="clr-namespace:Misa.Ui.Avalonia.Infrastructure.UI"
              x:DataType="ui:IPanelHostViewModel">
     
-    <Border Classes="workspace-addpanel">
+    <Border Classes="addpanel-main-border">
         <Grid RowDefinitions="Auto,Auto,*,Auto,Auto"
-              Classes="workspace-addpanel"
-              ClipToBounds="True">
-
+              Classes="addpanel-main-grid">
 
             <!-- Header -->
             <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
-                <TextBlock Text="{Binding Title}"
-                           Classes="workspace-addpanel-title"/>
+                <TextBlock Grid.Column="0" 
+                           Text="{Binding Title}"
+                           FontSize="20"
+                           FontWeight="Medium"
+                           Foreground="{StaticResource BrushTextPrimary}"/>
 
                 <Button Grid.Column="1"
-                        Classes="workspace-addpanel-icon"
+                        Classes="addpanel-icon"
                         Command="{Binding CloseCommand}">
                     <Image Source="{SvgImage /Assets/Icons/Common/cancel.svg}" />
                 </Button>
             </Grid>
 
-            <Border Grid.Row="1" Classes="panel-divider"/>
+            <!-- Separator -->
+            <Border Grid.Row="1" 
+                    Classes="panel-divider"/>
 
             <!-- Body -->
-            <ScrollViewer Grid.Row="2"
-                          VerticalAlignment="Stretch"
-                          HorizontalAlignment="Stretch"
-                          VerticalScrollBarVisibility="Auto"
-                          HorizontalScrollBarVisibility="Disabled"
-                          Padding="10"
-                          ClipToBounds="True">
-
-                <Grid RowDefinitions="Auto,Auto"
-                      ColumnDefinitions="*">
-
-                    <ContentControl Grid.Row="0"
-                                    Grid.Column="0"
-                                    Content="{Binding ContentView}"
-                                    VerticalAlignment="Top"
-                                    HorizontalAlignment="Stretch" />
-
-                    <!-- Spacer damit das letzte Element sicher sichtbar bleibt -->
-                    <Border Grid.Row="1"
-                            Grid.Column="0"
-                            Height="50"/>
-                </Grid>
+            <ScrollViewer Grid.Row="2" 
+                          VerticalScrollBarVisibility="Auto">
+                
+                <ContentControl Padding="20, 0" 
+                    Content="{Binding ContentView}"/>
             </ScrollViewer>
-
-
-
-
-            <Border Grid.Row="3" Classes="panel-divider"/>
+            
+            <!-- Separator -->
+            <Border Grid.Row="3" 
+                    Classes="panel-divider"/>
 
             <!-- Footer -->
-            <Grid Grid.Row="4" ColumnDefinitions="*,Auto" VerticalAlignment="Center">
-                <StackPanel Grid.Column="1" Classes="confirm-cancel">
+            <Grid Grid.Row="4" 
+                  ColumnDefinitions="*,Auto" 
+                  VerticalAlignment="Center">
+                
+                <StackPanel Grid.Column="1" 
+                            Classes="confirm-cancel">
+                    
                     <Button Content="{Binding CancelText}"
                             Classes="confirm-cancel-cancel"
                             Command="{Binding CancelCommand}"/>

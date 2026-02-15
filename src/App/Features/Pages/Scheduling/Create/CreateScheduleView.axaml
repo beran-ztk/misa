@@ -7,15 +7,14 @@
              xmlns:create="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Scheduling.Create"
              x:DataType="create:CreateScheduleViewModel">
 
-    <StackPanel Classes="workspace-addpanel-body"
-                Spacing="16">
+    <StackPanel Classes="addpanel-body">
 
         <!-- Title -->
-        <StackPanel Classes="workspace-addpanel-body">
+        <StackPanel Classes="addpanel-controls">
             <TextBlock Text="Add a title"
-                       Classes="workspace-addpanel-body"/>
+                       Classes="addpanel-text"/>
 
-            <TextBox Classes="workspace-addpanel-body-text-oneliner"
+            <TextBox Classes="addpanel-oneliner"
                      Watermark="Title…"
                      Text="{Binding State.Title, Mode=TwoWay}" />
 
@@ -24,20 +23,20 @@
         </StackPanel>
 
         <!-- Frequency -->
-        <StackPanel Classes="workspace-addpanel-body">
+        <StackPanel Classes="addpanel-controls">
             <TextBlock Text="Select the frequency type"
-                       Classes="workspace-addpanel-body"/>
+                       Classes="addpanel-text"/>
 
-            <ComboBox Classes="workspace-addpanel-body-selector"
+            <ComboBox Classes="addpanel-combo"
                       ItemsSource="{Binding State.FrequencyTypes}"
                       SelectedValue="{Binding State.SelectedFrequencyType}" />
         </StackPanel>
 
-        <StackPanel Classes="workspace-addpanel-body">
+        <StackPanel Classes="addpanel-controls">
             <TextBlock Text="Set the interval"
-                       Classes="workspace-addpanel-body"/>
+                       Classes="addpanel-text"/>
 
-            <NumericUpDown Classes="workspace-addpanel-body-selector"
+            <NumericUpDown Classes="addpanel-num"
                            Value="{Binding State.FrequencyInterval, Mode=TwoWay}"
                            Minimum="1"
                            Maximum="1000"
@@ -46,11 +45,11 @@
         </StackPanel>
 
         <!-- Lookahead -->
-        <StackPanel Classes="workspace-addpanel-body">
+        <StackPanel Classes="addpanel-controls">
             <TextBlock Text="Lookahead limit"
-                       Classes="workspace-addpanel-body"/>
+                       Classes="addpanel-text"/>
 
-            <NumericUpDown Classes="workspace-addpanel-body-selector"
+            <NumericUpDown Classes="addpanel-num"
                            Value="{Binding State.LookaheadLimit, Mode=TwoWay}"
                            Minimum="1"
                            Maximum="100"
@@ -59,11 +58,11 @@
         </StackPanel>
 
         <!-- Occurrence limit -->
-        <StackPanel Classes="workspace-addpanel-body">
+        <StackPanel Classes="addpanel-controls">
             <TextBlock Text="Occurrence count limit (optional)"
-                       Classes="workspace-addpanel-body"/>
+                       Classes="addpanel-text"/>
 
-            <NumericUpDown Classes="workspace-addpanel-body-selector"
+            <NumericUpDown Classes="addpanel-num"
                            Value="{Binding State.OccurrenceCountLimit, Mode=TwoWay}"
                            Minimum="0"
                            Maximum="100000"
@@ -72,19 +71,19 @@
         </StackPanel>
 
         <!-- Misfire policy -->
-        <StackPanel Classes="workspace-addpanel-body">
+        <StackPanel Classes="addpanel-controls">
             <TextBlock Text="Select misfire policy"
-                       Classes="workspace-addpanel-body"/>
+                       Classes="addpanel-text"/>
 
-            <ComboBox Classes="workspace-addpanel-body-selector"
+            <ComboBox Classes="addpanel-combo"
                       ItemsSource="{Binding State.MisfirePolicies}"
                       SelectedValue="{Binding State.SelectedMisfirePolicy, Mode=TwoWay}" />
         </StackPanel>
 
         <!-- Occurrence TTL -->
-        <StackPanel Classes="workspace-addpanel-body">
+        <StackPanel Classes="addpanel-controls">
             <TextBlock Text="Occurrence TTL (optional)"
-                       Classes="workspace-addpanel-body"/>
+                       Classes="addpanel-text"/>
 
             <Grid ColumnDefinitions="Auto,*"
                   RowDefinitions="Auto,Auto,Auto"
@@ -94,9 +93,9 @@
                 <TextBlock Grid.Row="0" Grid.Column="0"
                            VerticalAlignment="Center"
                            Text="Days"
-                           Classes="workspace-addpanel-body"/>
+                           Classes="addpanel-text"/>
                 <NumericUpDown Grid.Row="0" Grid.Column="1"
-                               Classes="workspace-addpanel-body-selector"
+                               Classes="addpanel-num"
                                Minimum="0"
                                Increment="1"
                                Value="{Binding State.OccurrenceTtlDays, Mode=TwoWay}" />
@@ -104,9 +103,9 @@
                 <TextBlock Grid.Row="1" Grid.Column="0"
                            VerticalAlignment="Center"
                            Text="Hours"
-                           Classes="workspace-addpanel-body"/>
+                           Classes="addpanel-text"/>
                 <NumericUpDown Grid.Row="1" Grid.Column="1"
-                               Classes="workspace-addpanel-body-selector"
+                               Classes="addpanel-num"
                                Minimum="0"
                                Maximum="23"
                                Increment="1"
@@ -115,9 +114,9 @@
                 <TextBlock Grid.Row="2" Grid.Column="0"
                            VerticalAlignment="Center"
                            Text="Minutes"
-                           Classes="workspace-addpanel-body"/>
+                           Classes="addpanel-text"/>
                 <NumericUpDown Grid.Row="2" Grid.Column="1"
-                               Classes="workspace-addpanel-body-selector"
+                               Classes="addpanel-num"
                                Minimum="0"
                                Maximum="59"
                                Increment="1"
@@ -126,99 +125,135 @@
         </StackPanel>
 
         <!-- Time window -->
-        <StackPanel Classes="workspace-addpanel-body">
+        <StackPanel Classes="addpanel-controls">
             <TextBlock Text="Start time (optional)"
-                       Classes="workspace-addpanel-body"/>
-            <TimePicker Classes="workspace-addpanel-body-selector"
+                       Classes="addpanel-text"/>
+            <TimePicker Classes="addpanel-time"
                         SelectedTime="{Binding State.StartTime, Mode=TwoWay}" />
         </StackPanel>
 
-        <StackPanel Classes="workspace-addpanel-body">
+        <StackPanel Classes="addpanel-controls">
             <TextBlock Text="End time (optional)"
-                       Classes="workspace-addpanel-body"/>
-            <TimePicker Classes="workspace-addpanel-body-selector"
+                       Classes="addpanel-text"/>
+            <TimePicker Classes="addpanel-time"
                         SelectedTime="{Binding State.EndTime, Mode=TwoWay}" />
         </StackPanel>
 
         <!-- Active range -->
-        <StackPanel Classes="workspace-addpanel-body">
+        <StackPanel Classes="addpanel-controls">
             <TextBlock Text="Active from"
-                       Classes="workspace-addpanel-body"/>
+                       Classes="addpanel-text"/>
 
-            <StackPanel Orientation="Horizontal" Spacing="10">
-                <DatePicker SelectedDate="{Binding State.ActiveFromDate, Mode=TwoWay}" />
-                <TimePicker SelectedTime="{Binding State.ActiveFromTime, Mode=TwoWay}" />
+            <StackPanel Orientation="Vertical" Spacing="10">
+                <DatePicker Classes="addpanel-date"
+                            SelectedDate="{Binding State.ActiveFromDate, Mode=TwoWay}" />
+                <TimePicker Classes="addpanel-time"
+                            SelectedTime="{Binding State.ActiveFromTime, Mode=TwoWay}" />
             </StackPanel>
         </StackPanel>
 
-        <StackPanel Classes="workspace-addpanel-body">
+        <StackPanel Classes="addpanel-controls">
             <TextBlock Text="Active until (optional)"
-                       Classes="workspace-addpanel-body"/>
+                       Classes="addpanel-text"/>
 
-            <StackPanel Orientation="Horizontal" Spacing="10">
-                <DatePicker SelectedDate="{Binding State.ActiveUntilDate, Mode=TwoWay}" />
-                <TimePicker SelectedTime="{Binding State.ActiveUntilTime, Mode=TwoWay}" />
+            <StackPanel Orientation="Vertical" Spacing="10">
+                <DatePicker Classes="addpanel-date"
+                            SelectedDate="{Binding State.ActiveUntilDate, Mode=TwoWay}" />
+                <TimePicker Classes="addpanel-time"
+                            SelectedTime="{Binding State.ActiveUntilTime, Mode=TwoWay}" />
             </StackPanel>
         </StackPanel>
 
         <!-- Restrictions -->
-        <StackPanel Classes="workspace-addpanel-body">
+        <StackPanel Classes="addpanel-controls">
             <TextBlock Text="Restrictions (optional)"
-                       Classes="workspace-addpanel-body"/>
+                       Classes="addpanel-text"/>
 
-            <Expander Header="By day / month / monthday"
-                      IsExpanded="False">
+            <!-- By day -->
+            <Expander IsExpanded="False"
+                      Classes="addpanel-expander"
+                      Header="By weekday">
 
-                <StackPanel Spacing="12" Margin="0,8,0,0">
-                    <TextBlock Text="Weekdays (Mon–Sun)"
-                               Classes="workspace-addpanel-body"/>
+                <StackPanel>
+                    <CheckBox Content="Monday"    
+                              IsChecked="{Binding State.ByDayMon, Mode=TwoWay}" />
+                    <CheckBox Content="Tuesday"   
+                              IsChecked="{Binding State.ByDayTue, Mode=TwoWay}" />
+                    <CheckBox Content="Wednesday" 
+                              IsChecked="{Binding State.ByDayWed, Mode=TwoWay}" />
+                    <CheckBox Content="Thursday"  
+                              IsChecked="{Binding State.ByDayThu, Mode=TwoWay}" />
+                    <CheckBox Content="Friday"    
+                              IsChecked="{Binding State.ByDayFri, Mode=TwoWay}" />
+                    <CheckBox Content="Saturday"  
+                              IsChecked="{Binding State.ByDaySat, Mode=TwoWay}" />
+                    <CheckBox Content="Sunday"    
+                              IsChecked="{Binding State.ByDaySun, Mode=TwoWay}" />
+                </StackPanel>
+            </Expander>
 
-                    <WrapPanel>
-                        <CheckBox Content="Mon" IsChecked="{Binding State.ByDayMon, Mode=TwoWay}" />
-                        <CheckBox Content="Tue" IsChecked="{Binding State.ByDayTue, Mode=TwoWay}" />
-                        <CheckBox Content="Wed" IsChecked="{Binding State.ByDayWed, Mode=TwoWay}" />
-                        <CheckBox Content="Thu" IsChecked="{Binding State.ByDayThu, Mode=TwoWay}" />
-                        <CheckBox Content="Fri" IsChecked="{Binding State.ByDayFri, Mode=TwoWay}" />
-                        <CheckBox Content="Sat" IsChecked="{Binding State.ByDaySat, Mode=TwoWay}" />
-                        <CheckBox Content="Sun" IsChecked="{Binding State.ByDaySun, Mode=TwoWay}" />
-                    </WrapPanel>
+            <!-- By month -->
+            <Expander IsExpanded="False"
+                      Classes="addpanel-expander"
+                      Header="By month">
 
-                    <TextBlock Text="Months (Jan–Dec)"
-                               Classes="workspace-addpanel-body"/>
+                <StackPanel>
+                    <CheckBox Content="January"
+                              IsChecked="{Binding State.ByMonthJan, Mode=TwoWay}" />
+                    <CheckBox Content="February"
+                              IsChecked="{Binding State.ByMonthFeb, Mode=TwoWay}" />
+                    <CheckBox Content="March"
+                              IsChecked="{Binding State.ByMonthMar, Mode=TwoWay}" />
+                    <CheckBox Content="April"
+                              IsChecked="{Binding State.ByMonthApr, Mode=TwoWay}" />
+                    <CheckBox Content="May"
+                              IsChecked="{Binding State.ByMonthMay, Mode=TwoWay}" />
+                    <CheckBox Content="June"
+                              IsChecked="{Binding State.ByMonthJun, Mode=TwoWay}" />
+                    <CheckBox Content="July"
+                              IsChecked="{Binding State.ByMonthJul, Mode=TwoWay}" />
+                    <CheckBox Content="August"
+                              IsChecked="{Binding State.ByMonthAug, Mode=TwoWay}" />
+                    <CheckBox Content="September"
+                              IsChecked="{Binding State.ByMonthSep, Mode=TwoWay}" />
+                    <CheckBox Content="October"
+                              IsChecked="{Binding State.ByMonthOct, Mode=TwoWay}" />
+                    <CheckBox Content="November"
+                              IsChecked="{Binding State.ByMonthNov, Mode=TwoWay}" />
+                    <CheckBox Content="December"
+                              IsChecked="{Binding State.ByMonthDec, Mode=TwoWay}" />
+                </StackPanel>
+            </Expander>
 
-                    <WrapPanel>
-                        <CheckBox Content="Jan" IsChecked="{Binding State.ByMonthJan, Mode=TwoWay}" />
-                        <CheckBox Content="Feb" IsChecked="{Binding State.ByMonthFeb, Mode=TwoWay}" />
-                        <CheckBox Content="Mar" IsChecked="{Binding State.ByMonthMar, Mode=TwoWay}" />
-                        <CheckBox Content="Apr" IsChecked="{Binding State.ByMonthApr, Mode=TwoWay}" />
-                        <CheckBox Content="May" IsChecked="{Binding State.ByMonthMay, Mode=TwoWay}" />
-                        <CheckBox Content="Jun" IsChecked="{Binding State.ByMonthJun, Mode=TwoWay}" />
-                        <CheckBox Content="Jul" IsChecked="{Binding State.ByMonthJul, Mode=TwoWay}" />
-                        <CheckBox Content="Aug" IsChecked="{Binding State.ByMonthAug, Mode=TwoWay}" />
-                        <CheckBox Content="Sep" IsChecked="{Binding State.ByMonthSep, Mode=TwoWay}" />
-                        <CheckBox Content="Oct" IsChecked="{Binding State.ByMonthOct, Mode=TwoWay}" />
-                        <CheckBox Content="Nov" IsChecked="{Binding State.ByMonthNov, Mode=TwoWay}" />
-                        <CheckBox Content="Dec" IsChecked="{Binding State.ByMonthDec, Mode=TwoWay}" />
-                    </WrapPanel>
+            <!-- By month day -->
+            <Expander IsExpanded="False"
+                      Classes="addpanel-expander"
+                      Header="By month day">
 
-                    <TextBlock Text="Monthdays (comma separated, e.g. 1,15,31)"
-                               Classes="workspace-addpanel-body"/>
-                    <TextBox Classes="workspace-addpanel-body-text-oneliner"
-                             Watermark="1,15,31"
+                <StackPanel>
+                    <TextBlock Text="Enter one or more days of the month as a comma separated list (for example: 1, 15, 31)"
+                               Width="300"
+                               Classes="addpanel-text"/>
+
+                    <TextBox Classes="addpanel-oneliner"
+                             Watermark="1, 15, 31"
                              Text="{Binding State.ByMonthDayCsv, Mode=TwoWay}" />
                 </StackPanel>
             </Expander>
+
         </StackPanel>
 
-        <!-- Action type -->
-        <StackPanel Classes="workspace-addpanel-body">
-            <TextBlock Text="Select action type"
-                       Classes="workspace-addpanel-body"/>
 
-            <ComboBox Classes="workspace-addpanel-body-selector"
+        <!-- Action type -->
+        <StackPanel Classes="addpanel-controls">
+            <TextBlock Text="Select action type"
+                       Classes="addpanel-text"/>
+
+            <ComboBox Classes="addpanel-combo"
                       ItemsSource="{Binding State.ActionTypes}"
                       SelectedValue="{Binding State.SelectedActionType}" />
         </StackPanel>
 
     </StackPanel>
+    
 </UserControl>
