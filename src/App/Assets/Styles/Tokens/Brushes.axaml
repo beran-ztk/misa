@@ -5,6 +5,10 @@
     <SolidColorBrush x:Key="BrushPrimaryBackgroundLight" Color="#151c26"/>
     <SolidColorBrush x:Key="BrushPrimaryBackgroundLighter" Color="#1c2532"/>
     
+    <SolidColorBrush x:Key="BrushBackgroundControl" Color="#090c11"/>
+    
+    <SolidColorBrush x:Key="BrushOverlay" Color="#B0000000"/>
+    
     <SolidColorBrush x:Key="BrushInnerControlsBackground" Color="#191a1c"/>
     <SolidColorBrush x:Key="BrushInnerContentBackgroundBackground" Color="#1e1f22"/>
     <SolidColorBrush x:Key="BrushOuterControlBackground" Color="#2b2d30"/>

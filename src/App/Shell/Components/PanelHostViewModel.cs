@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using System.Windows.Input;
 using Avalonia.Controls;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Shared.Results;
@@ -46,7 +47,6 @@ public sealed partial class PanelHostViewModel(
 public sealed partial class PanelHostViewModel<TResult>(
     Control contentView,
     IHostedForm<TResult> form,
-    TaskCompletionSource<TResult?> tcs,
     IPanelCloser panelCloser)
     : ViewModelBase, IPanelHostViewModel
 {
@@ -61,7 +61,6 @@ public sealed partial class PanelHostViewModel<TResult>(
     [RelayCommand]
     private void Close()
     {
-        tcs.TrySetResult(default);
         panelCloser.Close();
     }
 
@@ -75,7 +74,6 @@ public sealed partial class PanelHostViewModel<TResult>(
         if (!result.IsSuccess)
             return;
 
-        tcs.TrySetResult(result.Value);
-        panelCloser.Close();
+        panelCloser.Close(result.Value);
     }
 }

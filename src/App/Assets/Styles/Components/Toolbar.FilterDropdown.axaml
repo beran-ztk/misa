@@ -29,18 +29,19 @@
 
 
     <!-- Popup Frame: größer, subtil, nicht zu rund -->
-    <Style Selector="Border.workspace-toolbar-filter-popup-frame">
+    <Style Selector="Border.filter-popup-frame">
         <Setter Property="Background" Value="{StaticResource BrushPrimaryBackground}" />
         <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="6" />
         <Setter Property="Padding" Value="14,12" />
         <Setter Property="MinWidth" Value="220" />
+        
+        <!-- Checkboxes etwas luftiger -->
+        <Style Selector="^ CheckBox">
+            <Setter Property="Margin" Value="0,4" />
+        </Style>
     </Style>
 
-    <!-- Checkboxes etwas luftiger -->
-    <Style Selector="Border.workspace-toolbar-filter-popup-frame CheckBox">
-        <Setter Property="Margin" Value="0,4" />
-    </Style>
 
 </Styles>

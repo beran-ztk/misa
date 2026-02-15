@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Features.Common.Deadlines;
 using Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;
+using Misa.Ui.Avalonia.Features.Inspector.Root;
 using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Scheduling.Forms;
 using Misa.Ui.Avalonia.Infrastructure.UI;
 using ReactiveUI;
@@ -14,10 +15,7 @@ namespace Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Base;
 
 public partial class InspectorEntryViewModel
 {
-    [ObservableProperty] 
-    [NotifyPropertyChangedFor(nameof(HasDeadline))]
-    [NotifyPropertyChangedFor(nameof(DeadlineDisplay))]
-    private DateTime? _deadline;
+    public DateTime? Deadline => Facade.State.Deadline?.DueAt.ToLocalTime().DateTime;
     public bool HasDeadline => Deadline is not null;
     public string DeadlineDisplay
         => Deadline is null
@@ -43,7 +41,9 @@ public partial class InspectorEntryViewModel
     {
         var itemId = Facade.State.Item.Id;
 
-        await Facade.Gateway.DeleteDeadlineAsync(itemId);
-        await Facade.Reload();
+        var result = await Facade.Gateway.DeleteDeadlineAsync(itemId);
+
+        if (result.IsSuccess)
+            Facade.State.Deadline = null;
     }
 }

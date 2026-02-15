@@ -6,44 +6,41 @@
              x:Class="Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions.Forms.StartSessionView"
              xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions.Forms"
              x:DataType="root:StartSessionViewModel">
-    
-    <Grid ColumnDefinitions="*">
-    
-        <StackPanel Grid.Column="0"
-                    Classes="workspace-addpanel-body"
-                    Spacing="16">
 
-            <StackPanel Classes="workspace-addpanel-body">
-                <TextBlock Text="How many Minutes do you Plan in?"
-                           Classes="workspace-addpanel-body" />
-                <NumericUpDown Minimum="1" Maximum="600"
-                               Value="{Binding PlannedMinutes, Mode=TwoWay}" />
-            </StackPanel>
+    <StackPanel Classes="addpanel-body">
 
-            <StackPanel Classes="workspace-addpanel-body">
-                <TextBlock Text="What is your Objective?"
-                           Classes="workspace-addpanel-body"/>
-                <TextBox Text="{Binding Objective, Mode=TwoWay}"
-                         Watermark="What are you doing?" />
-            </StackPanel>
-
-            <StackPanel Classes="workspace-addpanel-body">
-                <TextBlock Text="Do you want the session to auto-stop and notify you at the planned time?"
-                           Classes="workspace-addpanel-body"/>
-                <CheckBox IsChecked="{Binding StopAutomatically, Mode=TwoWay}"
-                          Content="Stop automatically after planned duration" />
-            </StackPanel>
-
-            <StackPanel Classes="workspace-addpanel-body">
-                <TextBlock Text="If you have a reason for Auto-Stop, note it here!"
-                           Classes="workspace-addpanel-body"/>
-                <TextBox IsEnabled="{Binding StopAutomatically}"
-                         Text="{Binding AutoStopReason, Mode=TwoWay}"
-                         Watermark="Optional reason" />
-            </StackPanel>
-
+        <StackPanel Classes="addpanel-controls">
+            <TextBlock Text="How many minutes do you plan in?"
+                       Classes="addpanel-text"/>
+            <NumericUpDown Classes="addpanel-num"
+                           Minimum="1"
+                           Maximum="600"
+                           Value="{Binding PlannedMinutes, Mode=TwoWay}" />
         </StackPanel>
 
-    </Grid>
+        <StackPanel Classes="addpanel-controls">
+            <TextBlock Text="What is your objective?"
+                       Classes="addpanel-text"/>
+            <TextBox Classes="addpanel-oneliner"
+                     Text="{Binding Objective, Mode=TwoWay}"
+                     Watermark="What are you doing?" />
+        </StackPanel>
 
+        <StackPanel Classes="addpanel-controls">
+            <TextBlock Text="Do you want the session to auto-stop and notify you at the planned time?"
+                       Classes="addpanel-text"/>
+            <CheckBox IsChecked="{Binding StopAutomatically, Mode=TwoWay}"
+                      Content="Stop automatically after planned duration" />
+        </StackPanel>
+
+        <StackPanel Classes="addpanel-controls">
+            <TextBlock Text="If you have a reason for auto-stop, note it here (optional)."
+                       Classes="addpanel-text"/>
+            <TextBox Classes="addpanel-oneliner"
+                     IsEnabled="{Binding StopAutomatically}"
+                     Text="{Binding AutoStopReason, Mode=TwoWay}"
+                     Watermark="Optional reason" />
+        </StackPanel>
+
+    </StackPanel>
 </UserControl>

@@ -1,10 +1,8 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
         
-        <Style Selector="Grid.workspace-addpanel">
-                <Setter Property="RowSpacing" Value="12"/>
-        </Style>
-        <Style Selector="Border.workspace-addpanel">
+        <!-- Layout -->
+        <Style Selector="Border.addpanel-main-border">
                 <Setter Property="Background" Value="{StaticResource BrushPrimaryBackground}"/>
                 <Setter Property="CornerRadius" Value="10"/>
                 <Setter Property="BorderBrush" Value="{StaticResource BrushBorderLight}"/>
@@ -12,58 +10,150 @@
                 <Setter Property="Padding" Value="20"/>
         </Style>
         
-        <Style Selector="TextBlock.workspace-addpanel-title">
-                <Setter Property="FontSize" Value="18"/>
-                <Setter Property="FontWeight" Value="SemiBold"/>
-                <Setter Property="Foreground" Value="{DynamicResource BrushTextPrimary}"/>
-                <Setter Property="VerticalAlignment" Value="Center"/>
+        <Style Selector="Grid.addpanel-main-grid">
+                <Setter Property="RowSpacing" Value="26"/>
         </Style>
         
-        <Style Selector="Button.workspace-addpanel-icon">
+        <Style Selector="StackPanel.addpanel-body">
+                <Setter Property="Spacing" Value="20"/>
+        </Style>
+        
+        <Style Selector="StackPanel.addpanel-controls">
+                <Setter Property="Spacing" Value="4"/>
+        </Style>
+        
+        <Style Selector="Border.panel-divider">
+                <Setter Property="Height" Value="2"/>
+                <Setter Property="CornerRadius" Value="100"/>
+                <Setter Property="Background" Value="{DynamicResource BrushBorderLight}"/>
+                <Setter Property="Opacity" Value="0.7"/>
+        </Style>
+        
+        <!-- Button with image -->
+        <Style Selector="Button.addpanel-icon">
                 <Setter Property="Width" Value="26"/>
                 <Setter Property="Height" Value="26"/>
                 <Setter Property="Background" Value="Transparent"/>
             
                 <Setter Property="VerticalContentAlignment" Value="Center"/>
                 <Setter Property="HorizontalContentAlignment" Value="Center"/>
-        </Style>
-    
-        <Style Selector="Button.workspace-addpanel-icon Image">
-                <Setter Property="Width" Value="18" />
-                <Setter Property="Height" Value="18" />
+                
+                <Style Selector="^ Image">
+                        <Setter Property="Width" Value="18" />
+                        <Setter Property="Height" Value="18" />
+                </Style>
         </Style>
         
         <!-- Content -->
-        <Style Selector="Grid.workspace-addpanel-body">
-                <Setter Property="RowSpacing" Value="16"/>
-        </Style>
-        <Style Selector="StackPanel.workspace-addpanel-body">
-                <Setter Property="Spacing" Value="4"/>
-        </Style>
-        <Style Selector="TextBlock.workspace-addpanel-body">
+        <Style Selector="TextBlock.addpanel-text">
                 <Setter Property="FontSize" Value="{StaticResource FontSizeMedium}"/>
                 <Setter Property="Foreground" Value="{DynamicResource BrushTextFaded}"/>
+                <Setter Property="TextWrapping" Value="Wrap"/>
+                <Setter Property="HorizontalAlignment" Value="Stretch"/>
         </Style>
         
-        <Style Selector="TextBox.workspace-addpanel-body-text-oneliner">
+        <!-- Single-Line Textbox -->
+        <Style Selector="TextBox.addpanel-oneliner">
                 <Setter Property="MinHeight" Value="36"/>
-                <Setter Property="Padding" Value="10,6"/>
+                <Setter Property="MinWidth" Value="300"/>
                 <Setter Property="FontSize" Value="14"/>
-                <Setter Property="VerticalContentAlignment" Value="Center"/>
                 <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}"/>
                 <Setter Property="BorderThickness" Value="1"/>
                 <Setter Property="CornerRadius" Value="4"/>
+                <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
         
-        <Style Selector="ComboBox.workspace-addpanel-body-selector">
-                <Setter Property="MinHeight" Value="36"/>
-                <Setter Property="MinWidth" Value="140"/>
-                <Setter Property="Padding" Value="10,6"/>
+        <!-- Multi-Line Textbox -->
+        <Style Selector="TextBox.addpanel-multiline">
+                <Setter Property="MinHeight" Value="90"/>
+                <Setter Property="MinWidth" Value="300"/>
                 <Setter Property="FontSize" Value="14"/>
-                <Setter Property="VerticalContentAlignment" Value="Center"/>
                 <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}"/>
                 <Setter Property="BorderThickness" Value="1"/>
                 <Setter Property="CornerRadius" Value="4"/>
+                <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                <Setter Property="TextWrapping" Value="Wrap"/>
         </Style>
 
+        <!-- Combo-Box -->
+        <Style Selector="ComboBox.addpanel-combo">
+                <Setter Property="MinHeight" Value="36"/>
+                <Setter Property="MinWidth" Value="180"/>
+                
+                <Setter Property="FontSize" Value="13"/>
+                
+                <Setter Property="Padding" Value="14,6"/>
+                <Setter Property="VerticalContentAlignment" Value="Center"/>
+                
+                <Setter Property="CornerRadius" Value="4"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}"/>
+        </Style>
+
+        <!-- Numeric-Up-Down -->
+        <Style Selector="NumericUpDown.addpanel-num">
+                <Setter Property="MinHeight" Value="32"/>
+                <Setter Property="MinWidth" Value="180"/>
+                
+                <Setter Property="FontSize" Value="13"/>
+                
+                <Setter Property="Padding" Value="14,6"/>
+                <Setter Property="VerticalContentAlignment" Value="Center"/>
+                
+                <Setter Property="CornerRadius" Value="4"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}"/>
+        </Style>
+        
+        <!-- Time -->
+        <Style Selector="TimePicker.addpanel-time">
+                <Setter Property="MinWidth" Value="300"/>
+                
+                <Setter Property="FontSize" Value="13"/>
+                
+                <Setter Property="CornerRadius" Value="4"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}"/>
+        </Style>
+        
+        <!-- Date -->
+        <Style Selector="DatePicker.addpanel-date">
+                <Setter Property="MinWidth" Value="300"/>
+                
+                <Setter Property="FontSize" Value="13"/>
+                
+                <Setter Property="CornerRadius" Value="4"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}"/>
+        </Style>
+        
+        <!-- Expander -->
+        <Style Selector="Expander.addpanel-expander">
+                <Setter Property="MinWidth" Value="180"/>
+                
+                <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLight}"/>
+                
+                <Setter Property="FontSize" Value="13"/>
+                <Setter Property="FontWeight" Value="Regular"/>
+                
+                <Setter Property="Padding" Value="14,6"/>
+                <Setter Property="VerticalContentAlignment" Value="Center"/>
+                
+                <Setter Property="CornerRadius" Value="4"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}"/>
+                
+                <!-- Header Background -->
+                <Style Selector="^ ToggleButton /template/ Border">
+                        <Setter Property="Background" Value="{StaticResource BrushBackgroundControl}"/>
+                </Style>
+                
+                <!-- Checkbox as chip -->
+                <Style Selector="^ CheckBox">
+                        <Setter Property="FontSize" Value="12"/>
+                        <Setter Property="Foreground" Value="{DynamicResource BrushTextFaded}"/>
+                </Style>
+        </Style>
+        
 </Styles>

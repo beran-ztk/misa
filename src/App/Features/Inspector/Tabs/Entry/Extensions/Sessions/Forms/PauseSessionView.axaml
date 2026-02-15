@@ -7,23 +7,19 @@
              xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions.Forms"
              x:DataType="root:PauseSessionViewModel">
 
-    <Grid ColumnDefinitions="*">
+    <StackPanel Classes="addpanel-body">
 
-        <StackPanel Grid.Column="0"
-                    Classes="workspace-addpanel-body"
-                    Spacing="16">
+        <StackPanel Classes="addpanel-controls">
+            <TextBlock Text="Why do you want to pause the session?"
+                       Classes="addpanel-text"/>
 
-            <StackPanel Classes="workspace-addpanel-body">
-                <TextBlock Text="Why do you want to pause the session?"
-                           Classes="workspace-addpanel-body"
-                           TextWrapping="Wrap"/>
-                <TextBox Text="{Binding PauseReason, Mode=TwoWay}"
-                         AcceptsReturn="True"
-                         TextWrapping="Wrap"
-                         MinHeight="90"/>
-            </StackPanel>
-
+            <TextBox Classes="addpanel-multiline"
+                     Text="{Binding PauseReason, Mode=TwoWay}"
+                     AcceptsReturn="True"
+                     TextWrapping="Wrap"
+                     MinHeight="90"
+                     Watermark="Optional reason" />
         </StackPanel>
 
-    </Grid>
+    </StackPanel>
 </UserControl>

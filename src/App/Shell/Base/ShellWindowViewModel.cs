@@ -3,23 +3,28 @@ using Microsoft.Extensions.DependencyInjection;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Inspector.Root;
 using Misa.Ui.Avalonia.Infrastructure.Composition;
+using Misa.Ui.Avalonia.Infrastructure.States;
+using Misa.Ui.Avalonia.Infrastructure.UI;
 using Misa.Ui.Avalonia.Shell.Components;
 
 namespace Misa.Ui.Avalonia.Shell.Base;
 
 public partial class ShellWindowViewModel : ViewModelBase
 {
-    public AppState AppState { get; }
+    public ShellState ShellState { get; }
     private IServiceProvider ServiceProvider { get; }
-    public ShellWindowViewModel(AppState appState, IServiceProvider serviceProvider)
+    public required IPanelCloser PanelCloser { get; init; }
+    public ShellWindowViewModel(ShellState shellState, IServiceProvider serviceProvider)
     {
-       AppState = appState;
-       ServiceProvider = serviceProvider;
-       
-       AppState.ShellState.Header = ServiceProvider.GetRequiredService<HeaderViewModel>();
-       AppState.ShellState.Footer = ServiceProvider.GetRequiredService<FooterViewModel>();
-       AppState.ShellState.WorkspaceNavigation = ServiceProvider.GetRequiredService<WorkspaceNavigationViewModel>();
-       AppState.ShellState.Inspector = ServiceProvider.GetRequiredService<InspectorFacadeViewModel>();
-       AppState.ShellState.UtilityNavigation = ServiceProvider.GetRequiredService<UtilityNavigationViewModel>();
+        ShellState = shellState; 
+        ServiceProvider = serviceProvider;
+        
+        PanelCloser = ServiceProvider.GetRequiredService<IPanelCloser>();
+        
+        ShellState.Header = ServiceProvider.GetRequiredService<HeaderViewModel>(); 
+        ShellState.Footer = ServiceProvider.GetRequiredService<FooterViewModel>(); 
+        ShellState.WorkspaceNavigation = ServiceProvider.GetRequiredService<WorkspaceNavigationViewModel>(); 
+        ShellState.Inspector = ServiceProvider.GetRequiredService<InspectorFacadeViewModel>(); 
+        ShellState.UtilityNavigation = ServiceProvider.GetRequiredService<UtilityNavigationViewModel>();
     }
 }

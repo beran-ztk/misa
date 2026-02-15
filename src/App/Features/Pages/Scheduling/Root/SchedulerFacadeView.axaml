@@ -4,17 +4,130 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="Misa.Ui.Avalonia.Features.Pages.Scheduling.Root.SchedulerFacadeView"
-             xmlns:toolbar="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Scheduling.Toolbar"
-             xmlns:content="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Scheduling.Content"
              xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Scheduling.Root"
+             xmlns:scheduler="clr-namespace:Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;assembly=Contract"
              x:DataType="root:SchedulerFacadeViewModel">
-    
+
     <Grid RowDefinitions="Auto,*">
 
-        <toolbar:SchedulerToolbarView Grid.Row="0" />
+        <!-- Toolbar (match TaskFacadeView) -->
+        <Border Grid.Row="0"
+                Classes="workspace-toolbar-frame">
+            <Grid Classes="workspace-toolbar"
+                  RowDefinitions="Auto,Auto,Auto"
+                  ColumnDefinitions="*,Auto">
 
-        <content:SchedulerContentView Grid.Row="1"/>
-        
+                <!-- Row 0: Quick actions (left) -->
+                <StackPanel Grid.Row="0" Grid.Column="0"
+                            Classes="workspace-toolbar-left">
+                    <Button Classes="workspace-toolbar-icon"
+                            Command="{Binding ShowAddPanelCommand}">
+                        <Image Source="{SvgImage /Assets/Icons/Common/plus.svg}" />
+                    </Button>
+
+                    <Button Classes="workspace-toolbar-icon"
+                            Command="{Binding RefreshWorkspaceCommand}">
+                        <Image Source="{SvgImage /Assets/Icons/Common/refresh.svg}" />
+                    </Button>
+                </StackPanel>
+
+                <!-- Row 0: Search (right) -->
+                <StackPanel Grid.Row="0" Grid.Column="1"
+                            Classes="workspace-toolbar-right">
+                    <TextBox Classes="workspace-toolbar-search"
+                             Watermark="Search schedules..."
+                             Text="{Binding State.SearchText, Mode=TwoWay}" />
+                </StackPanel>
+
+                <!-- Row 1: Filters (left) - placeholder to keep identical structure -->
+                <StackPanel Grid.Row="1" Grid.Column="0"
+                            Classes="workspace-toolbar-center">
+                    <!-- Add scheduler filters here later (frequency, misfire, etc.) -->
+                </StackPanel>
+
+                <!-- Thin separator -->
+                <Border Grid.Row="2"
+                        Grid.Column="0"
+                        Grid.ColumnSpan="2"
+                        Classes="workspace-toolbar-separator" />
+            </Grid>
+        </Border>
+
+        <!-- Content (match Task: workspace-content-frame wrapper) -->
+        <Grid Grid.Row="1">
+            <Border Classes="workspace-content-frame">
+
+                <ListBox ItemsSource="{Binding State.FilteredItems}"
+                         SelectedItem="{Binding State.SelectedItem, Mode=TwoWay}"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                         ScrollViewer.VerticalScrollBarVisibility="Auto">
+
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="scheduler:ScheduleDto">
+                            <Border Margin="0,0,0,10"
+                                    Padding="12"
+                                    BorderBrush="{StaticResource BrushBorder}"
+                                    BorderThickness="1"
+                                    CornerRadius="10"
+                                    Background="{StaticResource BrushPrimaryBackground}">
+
+                                <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto"
+                                      RowSpacing="8">
+
+                                    <!-- Header -->
+                                    <Grid Grid.Row="0"
+                                          ColumnDefinitions="*,Auto"
+                                          ColumnSpacing="12">
+                                        <StackPanel Spacing="2">
+                                            <TextBlock Text="{Binding Title}"
+                                                       FontSize="16"
+                                                       FontWeight="SemiBold" />
+
+                                            <TextBlock Text="{Binding Item.Entity.CreatedAt, StringFormat='dd.MM.yyyy HH:mm'}"
+                                                       Opacity="0.65"
+                                                       FontSize="12" />
+                                        </StackPanel>
+
+                                        <!-- Optional compact meta -->
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding Timezone}"
+                                                   Opacity="0.65"
+                                                   FontSize="12"
+                                                   VerticalAlignment="Top" />
+                                    </Grid>
+
+                                    <!-- Schedule activity (frequency + active-from) -->
+                                    <TextBlock Grid.Row="1"
+                                               Text="{Binding ScheduleActivity}" />
+
+                                    <!-- Coming activity (last run + next due) -->
+                                    <TextBlock Grid.Row="2"
+                                               Text="{Binding ComingActivity}" />
+
+                                    <!-- Activity behaviour (occurrence limit + active until) -->
+                                    <TextBlock Grid.Row="3"
+                                               Text="{Binding ActivityBehaviour}" />
+
+                                    <!-- Details (operational + restrictions + availability) -->
+                                    <StackPanel Grid.Row="4"
+                                                Spacing="4">
+                                        <TextBlock Text="{Binding OperationalBehaviour}"
+                                                   IsVisible="{Binding OperationalBehaviour, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+
+                                        <TextBlock Text="{Binding RestrictionsBehaviour}"
+                                                   IsVisible="{Binding RestrictionsBehaviour, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+
+                                        <TextBlock Text="{Binding ExecutionAvailability}"
+                                                   IsVisible="{Binding ExecutionAvailability, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                    </StackPanel>
+
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Border>
+        </Grid>
+
     </Grid>
-    
 </UserControl>

@@ -11,7 +11,6 @@
 
     <ItemGroup>
         <AvaloniaResource Include="Assets\**"/>
-        <Folder Include="Assets\Styles\Views\" />
         <Folder Include="Features\Inspector\Tabs\" />
         <Folder Include="Features\Utilities\" />
     </ItemGroup>
@@ -90,7 +89,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <AdditionalFiles Include="Features\Pages\Scheduling\Content\SchedulerContentView.axaml" />
       <AdditionalFiles Include="Features\Utilities\Notifications\NotificationView.axaml" />
     </ItemGroup>
 </Project>

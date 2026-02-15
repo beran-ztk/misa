@@ -56,7 +56,7 @@ public static class Panels
 public interface IPanelFactory
 {
     (Control Control, Task<Result> ResultTask) CreateHosted(PanelKey key, object? context);
-    (Control Control, Task<TResult?> ResultTask) CreateHosted<TResult>(PanelKey<TResult> key, IHostedForm<TResult>? context);
+    Control CreateHosted<TResult>(PanelKey<TResult> key, IHostedForm<TResult>? context, IPanelCloser panelCloser);
 }
 
 public sealed class PanelFactory(IServiceProvider sp) : IPanelFactory
@@ -88,21 +88,20 @@ public sealed class PanelFactory(IServiceProvider sp) : IPanelFactory
     }
     
     // Generic
-    public (Control Control, Task<TResult?> ResultTask) CreateHosted<TResult>(
+    public Control CreateHosted<TResult>(
         PanelKey<TResult> key,
-        IHostedForm<TResult>? context)
+        IHostedForm<TResult>? context,
+        IPanelCloser panelCloser)
     {
         var hostView = sp.GetRequiredService<PanelHostView>();
-        var panelCloser = sp.GetRequiredService<IPanelCloser>();
 
         var body = key.ViewFactory(sp);
         var formVm = context ?? key.FormFactory(sp);
         
         body.DataContext = formVm;
         
-        var tcs = new TaskCompletionSource<TResult?>();
-        hostView.DataContext = new PanelHostViewModel<TResult>(body, formVm, tcs, panelCloser);
+        hostView.DataContext = new PanelHostViewModel<TResult>(body, formVm, panelCloser);
         
-        return (hostView, tcs.Task);
+        return hostView;
     }
 }
