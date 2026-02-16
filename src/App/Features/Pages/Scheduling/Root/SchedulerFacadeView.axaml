@@ -79,7 +79,7 @@
                                           ColumnDefinitions="*,Auto"
                                           ColumnSpacing="12">
                                         <StackPanel Spacing="2">
-                                            <TextBlock Text="{Binding Title}"
+                                            <TextBlock Text="{Binding Item.Title}"
                                                        FontSize="16"
                                                        FontWeight="SemiBold" />
 
@@ -98,7 +98,7 @@
 
                                     <!-- Schedule activity (frequency + active-from) -->
                                     <TextBlock Grid.Row="1"
-                                               Text="{Binding ScheduleActivity}" />
+                                               Text="{Binding TriggerFrequency}" />
 
                                     <!-- Coming activity (last run + next due) -->
                                     <TextBlock Grid.Row="2"
@@ -116,9 +116,6 @@
 
                                         <TextBlock Text="{Binding RestrictionsBehaviour}"
                                                    IsVisible="{Binding RestrictionsBehaviour, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
-
-                                        <TextBlock Text="{Binding ExecutionAvailability}"
-                                                   IsVisible="{Binding ExecutionAvailability, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                     </StackPanel>
 
                                 </Grid>
