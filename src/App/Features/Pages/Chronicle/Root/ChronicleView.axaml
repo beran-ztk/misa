@@ -1,0 +1,73 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="Misa.Ui.Avalonia.Features.Pages.Chronicle.Root.ChronicleView"
+             xmlns:root1="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Chronicle.Root"
+             x:DataType="root1:ChronicleViewModel">
+
+    <Grid RowDefinitions="Auto,*">
+
+        <!-- Toolbar (2 rows) -->
+        <Border Grid.Row="0"
+                Classes="workspace-toolbar-frame">
+            <Grid Classes="workspace-toolbar"
+                  RowDefinitions="Auto,Auto,Auto"
+                  ColumnDefinitions="*,Auto">
+
+                <!-- Row 0: Quick actions (left) -->
+                <StackPanel Grid.Row="0" Grid.Column="0"
+                            Classes="workspace-toolbar-left">
+                    <Button Classes="workspace-toolbar-icon"
+                            Command="{Binding ShowAddPanelCommand}">
+                        <Image Source="{SvgImage /Assets/Icons/Common/plus.svg}" />
+                    </Button>
+
+                    <Button Classes="workspace-toolbar-icon"
+                            Command="{Binding RefreshWorkspaceCommand}">
+                        <Image Source="{SvgImage /Assets/Icons/Common/refresh.svg}" />
+                    </Button>
+                </StackPanel>
+
+                <!-- Row 0: Search (right) -->
+                <StackPanel Grid.Row="0" Grid.Column="1"
+                            Classes="workspace-toolbar-right">
+                    <TextBox Classes="workspace-toolbar-search"
+                             Watermark="Search tasks..."
+                             Text="{Binding State.SearchText, Mode=TwoWay}" />
+                </StackPanel>
+
+                <!-- Thin separator (not full width, centered-ish via margins) -->
+                <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Classes="workspace-toolbar-separator" />
+            </Grid>
+            
+        </Border>
+
+        <!-- Content -->
+        <Grid Grid.Row="1">
+            <Border Classes="workspace-content-frame">
+                <DataGrid Classes="workspace-datagrid"
+                          HorizontalAlignment="Center"
+                          ItemsSource="{Binding State.JournalEntries}"
+                          AutoGenerateColumns="False"
+                          SelectionMode="Extended"
+                          IsReadOnly="True"
+                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                          ScrollViewer.VerticalScrollBarVisibility="Auto">
+
+                    <DataGrid.Columns>
+                        
+                        <DataGridTextColumn Header="Occurred"
+                                            Binding="{Binding OccurredAt}"
+                                            Width="180" />
+                        
+                    </DataGrid.Columns>
+
+                </DataGrid>
+                
+            </Border>
+        </Grid>
+
+    </Grid>
+</UserControl>

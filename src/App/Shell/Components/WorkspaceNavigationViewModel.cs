@@ -6,8 +6,7 @@ namespace Misa.Ui.Avalonia.Shell.Components;
 
 public partial class WorkspaceNavigationViewModel(WorkspaceRouter router) : ViewModelBase
 {
-    [RelayCommand]
-    private void ShowTasks() => router.Show(WorkspaceKind.Tasks);
-    [RelayCommand]
-    private void ShowScheduler() => router.Show(WorkspaceKind.Scheduler);
+    [RelayCommand] private void ShowTasks() => router.Show(WorkspaceKind.Tasks);
+    [RelayCommand] private void ShowScheduler() => router.Show(WorkspaceKind.Scheduler);
+    [RelayCommand] private void ShowChronicles() => router.Show(WorkspaceKind.Chronicle);
 }
