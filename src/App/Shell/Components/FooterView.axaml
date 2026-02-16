@@ -5,6 +5,9 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="Misa.Ui.Avalonia.Shell.Components.FooterView">
     
-    Me is Footer wiwiwi
+    <Border Background="{StaticResource BrushPrimaryBackground}"
+            Padding="20,0"
+            BorderThickness="0,1,0,0"
+            BorderBrush="{StaticResource BrushBorder}"/>
     
 </UserControl>

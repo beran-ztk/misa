@@ -46,7 +46,7 @@
                                 Grid.Row="0"
                                 Content="{Binding ShellState.UtilityNavigation}"/>
                 
-                <ContentControl Grid.Column="1" Grid.ColumnSpan="3"
+                <ContentControl Grid.Column="1" Grid.ColumnSpan="4"
                                 Grid.Row="1" 
                                 Content="{Binding ShellState.Footer}"/>
             </Grid>

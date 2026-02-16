@@ -28,7 +28,7 @@
         <Setter Property="VerticalAlignment" Value="Center" />
     </Style>
 
-    <!-- Separator bleibt wie gehabt, nur optisch besser zum neuen Padding passend -->
+    <!-- Separator -->
     <Style Selector="Border.workspace-toolbar-separator">
         <Setter Property="Height" Value="2" />
         <Setter Property="Background" Value="{StaticResource BrushBorder}" />

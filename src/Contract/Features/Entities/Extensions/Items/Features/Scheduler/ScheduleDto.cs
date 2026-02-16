@@ -60,39 +60,17 @@ public sealed class ScheduleDto
         }
     }
 
+    public bool HasNoRestrictions => !HasSoftRestrictions && !HasHardRestrictions;
     // Soft restrictions (lifecycle/limits)
     public bool HasSoftRestrictions =>
         OccurrenceCountLimit is not null || ActiveUntilUtc is not null;
 
     // Hard restrictions (schedule constraints)
     public bool HasHardRestrictions =>
-        StartTime is not null ||
-        EndTime is not null ||
-        (ByDay is not null && ByDay.Length != 0) ||
-        (ByMonth is not null && ByMonth.Length != 0) ||
-        (ByMonthDay is not null && ByMonthDay.Length != 0);
-
-    public bool HasAnyRestrictions => HasSoftRestrictions || HasHardRestrictions;
-
-    private string SoftRestrictionClause
-    {
-        get
-        {
-            // Keep this compact; it’s meant to be merged into the main line.
-            if (OccurrenceCountLimit is null && ActiveUntilUtc is null)
-                return "no limits";
-
-            if (OccurrenceCountLimit is not null && ActiveUntilUtc is null)
-                return $"up to {OccurrenceCountLimit} more time(s)";
-
-            if (OccurrenceCountLimit is null && ActiveUntilUtc is not null)
-                return ActiveUntilUtc >= UtcNow
-                    ? $"until {FmtLocal(ActiveUntilUtc)}"
-                    : $"ended at {FmtLocal(ActiveUntilUtc)}";
-
-            return $"up to {OccurrenceCountLimit} more time(s), but no later than {FmtLocal(ActiveUntilUtc)}";
-        }
-    }
+        ConstraintTimeWindow is not null ||
+        ConstraintWeekdays is not null ||
+        ConstraintMonths is not null ||
+        ConstraintMonthDays is not null;
 
     private static IEnumerable<string> WeekdayNames(int[] days) =>
         days.Select(d => d switch
@@ -127,59 +105,68 @@ public sealed class ScheduleDto
             })
             .Where(n => n is not null)!;
 
+    private string SoftRestrictionClause
+    {
+        get
+        {
+            if (OccurrenceCountLimit is null && ActiveUntilUtc is null)
+                return "with no limits";
+
+            if (OccurrenceCountLimit is not null && ActiveUntilUtc is null)
+                return $"up to {OccurrenceCountLimit} more time(s)";
+
+            if (OccurrenceCountLimit is null && ActiveUntilUtc is not null)
+                return ActiveUntilUtc >= UtcNow
+                    ? $"until {FmtLocal(ActiveUntilUtc)}"
+                    : $"ended at {FmtLocal(ActiveUntilUtc)}";
+
+            return $"up to {OccurrenceCountLimit} more time(s), but no later than {FmtLocal(ActiveUntilUtc)}";
+        }
+    }
     public string TriggerSummary
     {
         get
         {
+            var restriction = HasHardRestrictions ? " restricted" : string.Empty;
+            
             var start = ActiveFromUtc <= UtcNow
-                ? $"Runs every {FrequencyString} since {FmtLocal(ActiveFromUtc)}"
-                : $"Will run every {FrequencyString}, starting at {FmtLocal(ActiveFromUtc)}";
+                ? $"Runs{restriction} every {FrequencyString} since {FmtLocal(ActiveFromUtc)}"
+                : $"Will run {restriction} every {FrequencyString}, starting at {FmtLocal(ActiveFromUtc)}";
 
-            // Merge “ActivityBehaviour” into the first line (soft restrictions).
-            // If it’s truly unlimited, keep it short.
-            var limits = SoftRestrictionClause == "no limits"
-                ? "with no limits"
-                : $"({SoftRestrictionClause})";
-
-            // Optional hint about hard restrictions without duplicating the full text here.
-            var hardHint = HasHardRestrictions ? "Hard restrictions apply." : string.Empty;
-
-            return $"{start} {limits}. {hardHint}";
+            return $"{start} {SoftRestrictionClause}.";
         }
     }
-
-    public string ScheduleConstraints
+    public string? ConstraintTimeWindow
     {
         get
         {
-            if (!HasHardRestrictions)
-                return "No schedule constraints.";
+            if (StartTime is null && EndTime is null)
+                return null;
 
-            var parts = new List<string>();
-
-            // Time window
             if (StartTime is not null && EndTime is null)
-                parts.Add($"From {StartTime} onwards");
-            else if (StartTime is null && EndTime is not null)
-                parts.Add($"Until {EndTime}");
-            else if (StartTime is not null && EndTime is not null)
-                parts.Add($"Between {StartTime}–{EndTime}");
+                return $"From {StartTime} onwards";
 
-            // Days
-            if (ByDay is not null && ByDay.Length != 0)
-                parts.Add($"On {string.Join(", ", WeekdayNames(ByDay))}");
+            if (StartTime is null && EndTime is not null)
+                return $"Until {EndTime}";
 
-            // Months
-            if (ByMonth is not null && ByMonth.Length != 0)
-                parts.Add($"In {string.Join(", ", MonthNames(ByMonth))}");
-
-            // Month days
-            if (ByMonthDay is not null && ByMonthDay.Length != 0)
-                parts.Add($"On day {string.Join(", ", ByMonthDay)}");
-
-            return string.Join(". ", parts) + ".";
+            return $"Between {StartTime}–{EndTime}";
         }
     }
+
+    public string? ConstraintWeekdays =>
+        ByDay is { Length: > 0 }
+            ? $"On {string.Join(", ", WeekdayNames(ByDay))}"
+            : null;
+
+    public string? ConstraintMonths =>
+        ByMonth is { Length: > 0 }
+            ? $"In {string.Join(", ", MonthNames(ByMonth))}"
+            : null;
+
+    public string? ConstraintMonthDays =>
+        ByMonthDay is { Length: > 0 }
+            ? $"On day {string.Join(", ", ByMonthDay)}"
+            : null;
 
     public string ExecutionStatus
     {
@@ -215,10 +202,4 @@ public sealed class ScheduleDto
             return string.Join(". ", parts) + ".";
         }
     }
-
-    public string? ExecutionAvailability =>
-        NextAllowedExecutionAtUtc is null
-            ? null
-            : $"Blocked until {FmtLocal(NextAllowedExecutionAtUtc)}.";
-
 }
