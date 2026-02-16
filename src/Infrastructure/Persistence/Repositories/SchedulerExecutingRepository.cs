@@ -10,7 +10,7 @@ public class SchedulerExecutingRepository(DefaultContext context) : ISchedulerEx
 {
     public async Task AddOutboxMessageAsync(Outbox outbox, CancellationToken ct)
     {
-        await context.Outbox.AddAsync(outbox, ct);
+        await context.Outboxes.AddAsync(outbox, ct);
     }
 
     public async Task<List<SchedulerExecutionLog>> GetPendingExecutionLogsAsync(CancellationToken ct)

@@ -86,6 +86,7 @@ public static class ServiceRegistration
                     npgsql.MapEnum<TaskCategory>();
                     npgsql.MapEnum<EventType>();
                     npgsql.MapEnum<OutboxEventState>();
+                    npgsql.MapEnum<JournalSystemType>();
                 });
         });
     }
