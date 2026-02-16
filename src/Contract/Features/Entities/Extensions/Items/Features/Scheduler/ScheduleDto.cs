@@ -38,11 +38,15 @@ public sealed class ScheduleDto
     
     // Derived Summary
     private DateTimeOffset UtcNow { get; } = DateTimeOffset.UtcNow;
+
     private const string DateTimeFormat = "dd/MM/yyyy HH:mm:ss";
+
     private static string FmtLocal(DateTimeOffset utc)
         => utc.ToLocalTime().ToString(DateTimeFormat);
+
     private static string? FmtLocal(DateTimeOffset? utc)
         => utc is null ? null : FmtLocal(utc.Value);
+
     private string FrequencyString
     {
         get
@@ -50,51 +54,147 @@ public sealed class ScheduleDto
             var value = FrequencyType.ToString();
 
             if (FrequencyInterval == 1)
-                return value.EndsWith("s")
-                    ? value[..^1]
-                    : value;
+                return value.EndsWith("s") ? value[..^1] : value;
 
             return $"{FrequencyInterval} {value}";
         }
     }
-    
-    public string TriggerFrequency =>
-        ActiveFromUtc <= UtcNow
-            ? $"Runs every {FrequencyString} since {FmtLocal(ActiveFromUtc)}."
-            : $"Will run every {FrequencyString}, starting at {FmtLocal(ActiveFromUtc)}.";
-    
-    public string ComingActivity
+
+    // Soft restrictions (lifecycle/limits)
+    public bool HasSoftRestrictions =>
+        OccurrenceCountLimit is not null || ActiveUntilUtc is not null;
+
+    // Hard restrictions (schedule constraints)
+    public bool HasHardRestrictions =>
+        StartTime is not null ||
+        EndTime is not null ||
+        (ByDay is not null && ByDay.Length != 0) ||
+        (ByMonth is not null && ByMonth.Length != 0) ||
+        (ByMonthDay is not null && ByMonthDay.Length != 0);
+
+    public bool HasAnyRestrictions => HasSoftRestrictions || HasHardRestrictions;
+
+    private string SoftRestrictionClause
+    {
+        get
+        {
+            // Keep this compact; it’s meant to be merged into the main line.
+            if (OccurrenceCountLimit is null && ActiveUntilUtc is null)
+                return "no limits";
+
+            if (OccurrenceCountLimit is not null && ActiveUntilUtc is null)
+                return $"up to {OccurrenceCountLimit} more time(s)";
+
+            if (OccurrenceCountLimit is null && ActiveUntilUtc is not null)
+                return ActiveUntilUtc >= UtcNow
+                    ? $"until {FmtLocal(ActiveUntilUtc)}"
+                    : $"ended at {FmtLocal(ActiveUntilUtc)}";
+
+            return $"up to {OccurrenceCountLimit} more time(s), but no later than {FmtLocal(ActiveUntilUtc)}";
+        }
+    }
+
+    private static IEnumerable<string> WeekdayNames(int[] days) =>
+        days.Select(d => d switch
+            {
+                0 => "Sunday",
+                1 => "Monday",
+                2 => "Tuesday",
+                3 => "Wednesday",
+                4 => "Thursday",
+                5 => "Friday",
+                6 => "Saturday",
+                _ => null
+            })
+            .Where(n => n is not null)!;
+
+    private static IEnumerable<string> MonthNames(int[] months) =>
+        months.Select(m => m switch
+            {
+                1 => "January",
+                2 => "February",
+                3 => "March",
+                4 => "April",
+                5 => "May",
+                6 => "June",
+                7 => "July",
+                8 => "August",
+                9 => "September",
+                10 => "October",
+                11 => "November",
+                12 => "December",
+                _ => null
+            })
+            .Where(n => n is not null)!;
+
+    public string TriggerSummary
+    {
+        get
+        {
+            var start = ActiveFromUtc <= UtcNow
+                ? $"Runs every {FrequencyString} since {FmtLocal(ActiveFromUtc)}"
+                : $"Will run every {FrequencyString}, starting at {FmtLocal(ActiveFromUtc)}";
+
+            // Merge “ActivityBehaviour” into the first line (soft restrictions).
+            // If it’s truly unlimited, keep it short.
+            var limits = SoftRestrictionClause == "no limits"
+                ? "with no limits"
+                : $"({SoftRestrictionClause})";
+
+            // Optional hint about hard restrictions without duplicating the full text here.
+            var hardHint = HasHardRestrictions ? "Hard restrictions apply." : string.Empty;
+
+            return $"{start} {limits}. {hardHint}";
+        }
+    }
+
+    public string ScheduleConstraints
+    {
+        get
+        {
+            if (!HasHardRestrictions)
+                return "No schedule constraints.";
+
+            var parts = new List<string>();
+
+            // Time window
+            if (StartTime is not null && EndTime is null)
+                parts.Add($"From {StartTime} onwards");
+            else if (StartTime is null && EndTime is not null)
+                parts.Add($"Until {EndTime}");
+            else if (StartTime is not null && EndTime is not null)
+                parts.Add($"Between {StartTime}–{EndTime}");
+
+            // Days
+            if (ByDay is not null && ByDay.Length != 0)
+                parts.Add($"On {string.Join(", ", WeekdayNames(ByDay))}");
+
+            // Months
+            if (ByMonth is not null && ByMonth.Length != 0)
+                parts.Add($"In {string.Join(", ", MonthNames(ByMonth))}");
+
+            // Month days
+            if (ByMonthDay is not null && ByMonthDay.Length != 0)
+                parts.Add($"On day {string.Join(", ", ByMonthDay)}");
+
+            return string.Join(". ", parts) + ".";
+        }
+    }
+
+    public string ExecutionStatus
     {
         get
         {
             if (LastRunAtUtc is null && NextDueAtUtc is null)
-                return "No executions have occurred and none are currently scheduled.";
+                return "No executions yet; none scheduled.";
 
             if (LastRunAtUtc is not null && NextDueAtUtc is null)
-                return $"Last execution was at {FmtLocal(LastRunAtUtc)}. No further executions are scheduled.";
+                return $"Last: {FmtLocal(LastRunAtUtc)}. Next: none scheduled.";
 
             if (LastRunAtUtc is null && NextDueAtUtc is not null)
-                return $"No executions have occurred yet. First execution is scheduled for {FmtLocal(NextDueAtUtc)}.";
+                return $"First scheduled: {FmtLocal(NextDueAtUtc)}.";
 
-            return $"Last execution was at {FmtLocal(LastRunAtUtc)}. Next execution is scheduled for {FmtLocal(NextDueAtUtc)}.";
-        }
-    }
-    public string ActivityBehaviour
-    {
-        get
-        {
-            if (OccurrenceCountLimit is null && ActiveUntilUtc is null)
-                return "Runs indefinitely.";
-
-            if (OccurrenceCountLimit is not null && ActiveUntilUtc is null)
-                return $"Will run {OccurrenceCountLimit} more times.";
-
-            if (OccurrenceCountLimit is null && ActiveUntilUtc is not null)
-                return ActiveUntilUtc >= UtcNow
-                    ? $"Active until {FmtLocal(ActiveUntilUtc)}."
-                    : $"Ended at {FmtLocal(ActiveUntilUtc)} due to the configured time limit.";
-
-            return $"Could run {OccurrenceCountLimit} more times, but no later than {FmtLocal(ActiveUntilUtc)}.";
+            return $"Last: {FmtLocal(LastRunAtUtc)}. Next: {FmtLocal(NextDueAtUtc)}.";
         }
     }
 
@@ -105,79 +205,20 @@ public sealed class ScheduleDto
             var parts = new List<string>();
 
             if (LookaheadLimit > 1)
-                parts.Add($"Precomputes {LookaheadLimit} future occurrences.");
+                parts.Add($"Precomputes {LookaheadLimit} occurrence(s)");
 
             if (OccurrenceTtl is not null)
-                parts.Add($"Occurrences expire after {OccurrenceTtl}.");
+                parts.Add($"TTL {OccurrenceTtl}");
 
-            parts.Add($"Misfire policy: {MisfirePolicy}.");
+            parts.Add($"Misfire {MisfirePolicy}");
 
-            return string.Join(" ", parts);
+            return string.Join(". ", parts) + ".";
         }
     }
-    public string RestrictionsBehaviour
-    {
-        get
-        {
-            var parts = new List<string>();
 
-            if (StartTime is not null && EndTime is null)
-                parts.Add($"Daily from {StartTime} onwards.");
-            else if (StartTime is null && EndTime is not null)
-                parts.Add($"Daily until {EndTime}.");
-            else if (StartTime is not null && EndTime is not null)
-                parts.Add($"Daily between {StartTime} and {EndTime}.");
+    public string? ExecutionAvailability =>
+        NextAllowedExecutionAtUtc is null
+            ? null
+            : $"Blocked until {FmtLocal(NextAllowedExecutionAtUtc)}.";
 
-            // Weekdays (0 = Sunday, 1 = Monday, ...)
-            if (ByDay is not null && ByDay.Length != 0)
-            {
-                var weekdayNames = ByDay
-                    .Select(d => d switch
-                    {
-                        0 => "Sunday",
-                        1 => "Monday",
-                        2 => "Tuesday",
-                        3 => "Wednesday",
-                        4 => "Thursday",
-                        5 => "Friday",
-                        6 => "Saturday",
-                        _ => null
-                    })
-                    .Where(n => n is not null);
-
-                parts.Add($"On {string.Join(", ", weekdayNames)}.");
-            }
-
-            // Months (1–12)
-            if (ByMonth is not null && ByMonth.Length != 0)
-            {
-                var monthNames = ByMonth
-                    .Select(m => m switch
-                    {
-                        1 => "January",
-                        2 => "February",
-                        3 => "March",
-                        4 => "April",
-                        5 => "May",
-                        6 => "June",
-                        7 => "July",
-                        8 => "August",
-                        9 => "September",
-                        10 => "October",
-                        11 => "November",
-                        12 => "December",
-                        _ => null
-                    })
-                    .Where(n => n is not null);
-
-                parts.Add($"On {string.Join(", ", monthNames)}.");
-            }
-
-            // Month days (1–31)
-            if (ByMonthDay is not null && ByMonthDay.Length != 0)
-                parts.Add($"Only on day {string.Join(", ", ByMonthDay)} of the month.");
-
-            return string.Join("\n", parts);
-        }
-    }
 }

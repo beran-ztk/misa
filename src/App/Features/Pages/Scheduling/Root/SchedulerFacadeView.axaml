@@ -71,7 +71,7 @@
                                     CornerRadius="10"
                                     Background="{StaticResource BrushPrimaryBackground}">
 
-                                <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto"
+                                <Grid RowDefinitions="Auto,Auto,Auto,Auto"
                                       RowSpacing="8">
 
                                     <!-- Header -->
@@ -88,7 +88,6 @@
                                                        FontSize="12" />
                                         </StackPanel>
 
-                                        <!-- Optional compact meta -->
                                         <TextBlock Grid.Column="1"
                                                    Text="{Binding Timezone}"
                                                    Opacity="0.65"
@@ -96,26 +95,25 @@
                                                    VerticalAlignment="Top" />
                                     </Grid>
 
-                                    <!-- Schedule activity (frequency + active-from) -->
+                                    <!-- Core summary (frequency + limits merged) -->
                                     <TextBlock Grid.Row="1"
-                                               Text="{Binding TriggerFrequency}" />
+                                               Text="{Binding TriggerSummary}" />
 
-                                    <!-- Coming activity (last run + next due) -->
+                                    <!-- Execution state -->
                                     <TextBlock Grid.Row="2"
-                                               Text="{Binding ComingActivity}" />
+                                               Text="{Binding ExecutionStatus}"
+                                               Opacity="0.85" />
 
-                                    <!-- Activity behaviour (occurrence limit + active until) -->
-                                    <TextBlock Grid.Row="3"
-                                               Text="{Binding ActivityBehaviour}" />
-
-                                    <!-- Details (operational + restrictions + availability) -->
-                                    <StackPanel Grid.Row="4"
+                                    <!-- Constraints + engine behaviour -->
+                                    <StackPanel Grid.Row="3"
                                                 Spacing="4">
-                                        <TextBlock Text="{Binding OperationalBehaviour}"
-                                                   IsVisible="{Binding OperationalBehaviour, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
 
-                                        <TextBlock Text="{Binding RestrictionsBehaviour}"
-                                                   IsVisible="{Binding RestrictionsBehaviour, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                        <TextBlock Text="{Binding ScheduleConstraints}"
+                                                   IsVisible="{Binding HasHardRestrictions}" />
+
+                                        <TextBlock Text="{Binding OperationalBehaviour}"
+                                                   Opacity="0.75" />
+
                                     </StackPanel>
 
                                 </Grid>
@@ -125,6 +123,5 @@
                 </ListBox>
             </Border>
         </Grid>
-
     </Grid>
 </UserControl>
