@@ -23,6 +23,12 @@ public sealed class JournalConfiguration : IEntityTypeConfiguration<Journal>
         builder.Property(x => x.CreatedAt)
             .IsRequired();
 
+        // Journal (1) → User (1)
+        builder.HasOne(x => x.User)
+            .WithOne()
+            .HasForeignKey<Journal>(x => x.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+        
         // Journal (1) -> Entries (N)
         builder.HasMany(x => x.Entries)
             .WithOne()

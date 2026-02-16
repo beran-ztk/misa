@@ -1,3 +1,5 @@
+using Misa.Domain.Features.Users;
+
 namespace Misa.Domain.Features.Audit;
 
 // System-Types
@@ -57,6 +59,8 @@ public sealed class Journal(JournalId id, Guid userId, DateTimeOffset createdAt)
 {
     public List<JournalEntry> Entries = [];
     public List<JournalCategory> Categories = [];
+    public User User { get; init; }
+    
     public JournalId Id { get; } = id;
     public Guid UserId { get; } = userId;
     public DateTimeOffset CreatedAt { get; } = createdAt;
