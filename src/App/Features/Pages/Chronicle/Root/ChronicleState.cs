@@ -12,7 +12,7 @@ public sealed partial class ChronicleState(ShellState shellState, CreateJournalS
 {
     public ShellState ShellState { get; } = shellState;
     public CreateJournalState CreateState { get; } = createJournalState;
-    private ObservableCollection<JournalEntryDto> JournalEntries { get; } = [];
+    public ObservableCollection<JournalEntryDto> JournalEntries { get; } = [];
 
     [ObservableProperty] private string _searchText = string.Empty;
     
