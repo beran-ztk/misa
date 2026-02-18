@@ -1,6 +1,9 @@
 using Misa.Api.Endpoints;
+using Misa.Api.Endpoints.Authentication;
 using Misa.Api.Endpoints.Deadlines;
-using Misa.Api.Endpoints.Journals;
+using Misa.Api.Endpoints.Descriptions;
+using Misa.Api.Endpoints.Inspector;
+using Misa.Api.Endpoints.Schedules;
 using Misa.Api.Endpoints.Sessions;
 using Misa.Api.Endpoints.Tasks;
 using Misa.Api.Middleware;
@@ -21,13 +24,10 @@ public static class EndpointRegistration
         api.MapTaskEndpoints();
         api.MapDeadlineEndpoints();
         api.MapSessionEndpoints();
-        api.MapChronicleEndpoints();
-
-        // Andere Endpoints
-        ItemDetailEndpoints.Map(app);
-        DescriptionEndpoints.Map(app);
-        SchedulingEndpoints.Map(app);
-        AuthEndpoints.Map(app);
+        api.MapScheduleEndpoints();
+        api.MapDescriptionEndpoints();
+        api.MapAuthenticationEndpoints();
+        api.MapInspectorEndpoints();
     }
 
     private static void MapTaskEndpoints(this IEndpointRouteBuilder api)
@@ -45,11 +45,28 @@ public static class EndpointRegistration
     {
         StartSessionEndpoint.Map(api);
         PauseSessionEndpoint.Map(api);
+        ContinueSessionEndpoint.Map(api);
         StopSessionEndpoint.Map(api);
-    }    
-    private static void MapChronicleEndpoints(this IEndpointRouteBuilder api)
+    }
+    private static void MapScheduleEndpoints(this IEndpointRouteBuilder api)
     {
-        CreateJournalEndpoint.Map(api);
-        GetJournalsEndpoint.Map(api);
+        CreateScheduleEndpoint.Map(api);
+        GetSchedulesEndpoint.Map(api);
+    }
+    private static void MapDescriptionEndpoints(this IEndpointRouteBuilder api)
+    {
+        CreateDescriptionEndpoint.Map(api);
+        UpdateDescriptionEndpoint.Map(api);
+        DeleteDescriptionEndpoint.Map(api);
+    }
+    private static void MapAuthenticationEndpoints(this IEndpointRouteBuilder api)
+    {
+        RegisterEndpoint.Map(api);
+        LoginEndpoint.Map(api);
+    }
+    private static void MapInspectorEndpoints(this IEndpointRouteBuilder api)
+    {
+        GetItemDetailsEndpoint.Map(api);
+        GetSessionDetailsEndpoint.Map(api);
     }
 }

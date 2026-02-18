@@ -4,31 +4,20 @@ using Misa.Contract.Features.Authentication;
 using Misa.Contract.Shared.Results;
 using Wolverine;
 
-namespace Misa.Api.Endpoints;
+namespace Misa.Api.Endpoints.Authentication;
 
-public static class AuthEndpoints
+public static class RegisterEndpoint
 {
-    public static void Map(WebApplication app)
+    public static void Map(IEndpointRouteBuilder endpoints)
     {
-        app.MapPost("auth/register", Register);
-        app.MapPost("auth/login", Login);
+        endpoints.MapPost("auth/register", Register);
     }
-
     private static async Task<Result<AuthResponseDto>> Register(
         [FromBody] RegisterRequestDto dto,
         IMessageBus bus,
         CancellationToken ct = default)
     {
         var cmd = new RegisterCommand(dto.Username, dto.Password, dto.TimeZone);
-        return await bus.InvokeAsync<Result<AuthResponseDto>>(cmd, ct);
-    }
-
-    private static async Task<Result<AuthResponseDto>> Login(
-        [FromBody] LoginRequestDto dto,
-        IMessageBus bus,
-        CancellationToken ct = default)
-    {
-        var cmd = new LoginCommand(dto.Username, dto.Password);
         return await bus.InvokeAsync<Result<AuthResponseDto>>(cmd, ct);
     }
 }
