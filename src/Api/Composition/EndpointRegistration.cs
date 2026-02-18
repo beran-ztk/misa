@@ -1,4 +1,5 @@
 using Misa.Api.Endpoints;
+using Misa.Api.Endpoints.Authentication;
 using Misa.Api.Endpoints.Deadlines;
 using Misa.Api.Endpoints.Descriptions;
 using Misa.Api.Endpoints.Schedules;
@@ -24,9 +25,9 @@ public static class EndpointRegistration
         api.MapSessionEndpoints();
         api.MapScheduleEndpoints();
         api.MapDescriptionEndpoints();
+        api.MapAuthenticationEndpoints();
         
         ItemDetailEndpoints.Map(app);
-        AuthEndpoints.Map(app);
     }
 
     private static void MapTaskEndpoints(this IEndpointRouteBuilder api)
@@ -56,5 +57,10 @@ public static class EndpointRegistration
         CreateDescriptionEndpoint.Map(api);
         UpdateDescriptionEndpoint.Map(api);
         DeleteDescriptionEndpoint.Map(api);
+    }
+    private static void MapAuthenticationEndpoints(this IEndpointRouteBuilder api)
+    {
+        RegisterEndpoint.Map(api);
+        LoginEndpoint.Map(api);
     }
 }
