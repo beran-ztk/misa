@@ -8,5 +8,7 @@ builder.Host.RegisterHandlersToWolverine();
 var app = builder.Build();
 
 app.MapAllEndpoints();
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.Run();

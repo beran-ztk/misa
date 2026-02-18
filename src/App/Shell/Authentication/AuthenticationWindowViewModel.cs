@@ -140,6 +140,7 @@ public partial class AuthenticationWindowViewModel : ViewModelBase
         try
         {
             AuthResponseDto responseDto;
+            AuthTokenResponseDto tokenResponseDto;
 
             if (IsRegisterMode)
             {
@@ -150,6 +151,7 @@ public partial class AuthenticationWindowViewModel : ViewModelBase
                     SelectedTimeZoneId ?? "Europe/Berlin");
 
                 responseDto = await AuthService.RegisterAsync(req);
+                UserState.User = responseDto.User;
             }
             else
             {
@@ -157,10 +159,8 @@ public partial class AuthenticationWindowViewModel : ViewModelBase
                     Username.Trim(),
                     Password);
 
-                responseDto = await AuthService.LoginAsync(req);
+                tokenResponseDto = await AuthService.LoginAsync(req);
             }
-
-            UserState.User = responseDto.User;
 
             OpenShellAndCloseAuth();
         }

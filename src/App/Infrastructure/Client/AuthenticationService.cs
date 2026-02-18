@@ -11,14 +11,11 @@ public sealed class AuthenticationService(RemoteProxy remoteProxy) : IAuthentica
 {
     public async Task<AuthResponseDto> RegisterAsync(RegisterRequestDto requestDto, CancellationToken ct = default)
     {
-        using var request = new HttpRequestMessage(HttpMethod.Post, "auth/register")
-        {
-            Content = JsonContent.Create(requestDto)
-        };
+        using var request = new HttpRequestMessage(HttpMethod.Post, "auth/register");
+        request.Content = JsonContent.Create(requestDto);
 
         var result = await remoteProxy.SendAsync<AuthResponseDto>(request);
 
-        // Falls dein Result<T> anders heißt: hier anpassen
         if (!result.IsSuccess)
             throw new InvalidOperationException(result.Error?.Message ?? "Register failed.");
 
@@ -26,14 +23,12 @@ public sealed class AuthenticationService(RemoteProxy remoteProxy) : IAuthentica
                ?? throw new InvalidOperationException("Empty User-Data.");
     }
 
-    public async Task<AuthResponseDto> LoginAsync(LoginRequestDto requestDto, CancellationToken ct = default)
+    public async Task<AuthTokenResponseDto> LoginAsync(LoginRequestDto requestDto, CancellationToken ct = default)
     {
-        using var request = new HttpRequestMessage(HttpMethod.Post, "auth/login")
-        {
-            Content = JsonContent.Create(requestDto)
-        };
+        using var request = new HttpRequestMessage(HttpMethod.Post, "auth/login");
+        request.Content = JsonContent.Create(requestDto);
 
-        var result = await remoteProxy.SendAsync<AuthResponseDto>(request);
+        var result = await remoteProxy.SendAsync<AuthTokenResponseDto>(request);
 
         if (!result.IsSuccess)
             throw new InvalidOperationException(result.Error?.Message ?? "Login failed.");

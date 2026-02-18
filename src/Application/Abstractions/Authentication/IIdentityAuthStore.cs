@@ -13,6 +13,15 @@ public interface IIdentityAuthStore
         string password,
         string timeZone,
         CancellationToken ct);
+    
+    Task<Result<IdentityLoginResult>> LoginAsync(
+        string username,
+        string password,
+        CancellationToken ct);
 }
 
 public sealed record IdentityUserCreated(Guid UserId, string Username, string Email);
+public sealed record IdentityLoginResult(
+    Guid UserId,
+    string Username,
+    string Token);

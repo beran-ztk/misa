@@ -1,5 +1,7 @@
+using System.Text;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Misa.Api.Services.Features.Items.Features.Scheduler;
 using Misa.Api.Services.Features.Items.Features.Sessions;
 using Misa.Application.Abstractions.Authentication;
@@ -37,7 +39,6 @@ public static class ServiceRegistration
     private static void AddIdentity(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddAuthorization();
-        services.AddAuthentication();
         
         services.AddDbContext<AuthContext>(opt =>
             opt.UseNpgsql(configuration.GetConnectionString("Default")));
@@ -53,6 +54,26 @@ public static class ServiceRegistration
             .AddSignInManager();
         
         services.AddScoped<IIdentityAuthStore, IdentityAuthStore>();
+        
+        services.AddAuthentication("Bearer")
+            .AddJwtBearer("Bearer", options =>
+            {
+                var jwt = configuration.GetSection("Jwt");
+
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidateLifetime = true,
+                    ValidIssuer = jwt["Issuer"],
+                    ValidAudience = jwt["Audience"],
+                    IssuerSigningKey =
+                        new SymmetricSecurityKey(
+                            Encoding.UTF8.GetBytes(jwt["Key"]!))
+                };
+            });
+
     }
     private static void AddApiCore(this IServiceCollection services)
     {
