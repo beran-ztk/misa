@@ -38,7 +38,7 @@
                              Text="{Binding State.SearchText, Mode=TwoWay}" />
                 </StackPanel>
 
-                <!-- Thin separator (not full width, centered-ish via margins) -->
+                <!-- Thin separator -->
                 <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Classes="workspace-toolbar-separator" />
             </Grid>
             
@@ -58,8 +58,20 @@
 
                     <DataGrid.Columns>
                         
+                        <DataGridTextColumn Header="Desc"
+                                            Binding="{Binding Description}"
+                                            Width="180" />
+                        
                         <DataGridTextColumn Header="Occurred"
                                             Binding="{Binding OccurredAt}"
+                                            Width="180" />
+                        
+                        <DataGridTextColumn Header="Until"
+                                            Binding="{Binding UntilAt}"
+                                            Width="180" />
+                        
+                        <DataGridTextColumn Header="Cat"
+                                            Binding="{Binding CategoryId}"
                                             Width="180" />
                         
                     </DataGrid.Columns>
