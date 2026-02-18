@@ -6,3 +6,4 @@ riderModule.iml
 /.idea/
 *.DotSettings.user
 /Misa.Infrastructure/Migrations
+/src/Infrastructure/Migrations
