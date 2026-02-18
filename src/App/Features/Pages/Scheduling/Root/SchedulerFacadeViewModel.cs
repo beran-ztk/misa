@@ -1,6 +1,5 @@
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Input;
-using Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Pages.Scheduling.Create;
 using Misa.Ui.Avalonia.Infrastructure.UI;

@@ -28,9 +28,14 @@ public class DefaultContext(DbContextOptions<DefaultContext> options, ITimeProvi
 
     public DbSet<Scheduler> Schedulers { get; set; } = null!;
     public DbSet<SchedulerExecutionLog> SchedulerExecutionLogs { get; set; } = null!;
-    public DbSet<Outbox> Outbox { get; set; } = null!;
-    public DbSet<User> User { get; set; } = null!;
-    public DbSet<Deadline> Deadline { get; set; } = null!;
+    public DbSet<Outbox> Outboxes { get; set; } = null!;
+    public DbSet<User> Users { get; set; } = null!;
+    public DbSet<Deadline> Deadlines { get; set; } = null!;
+    
+    // Chronicle
+    public DbSet<Journal> Journals { get; set; } = null!;
+    public DbSet<JournalEntry> JournalEntries { get; set; } = null!;
+    public DbSet<JournalCategory> JournalCategories { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -64,6 +64,7 @@ public static class ServiceRegistration
         services.AddScoped<IAuthenticationRepository, AuthenticationRepository>();
         services.AddScoped<IDeadlineRepository, DeadlineRepository>();
         services.AddScoped<ITaskRepository, TaskRepository>();
+        services.AddScoped<IChronicleRepository, ChronicleRepository>();
     }
     private static void AddDataAccess(this IServiceCollection services)
     {
@@ -86,6 +87,7 @@ public static class ServiceRegistration
                     npgsql.MapEnum<TaskCategory>();
                     npgsql.MapEnum<EventType>();
                     npgsql.MapEnum<OutboxEventState>();
+                    npgsql.MapEnum<JournalSystemType>();
                 });
         });
     }

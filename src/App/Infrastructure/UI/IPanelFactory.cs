@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Microsoft.Extensions.DependencyInjection;
+using Misa.Contract.Features.Chronicle;
 using Misa.Contract.Features.Common.Deadlines;
 using Misa.Contract.Features.Entities.Extensions.Items.Extensions.Tasks;
 using Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;
@@ -9,6 +10,7 @@ using Misa.Contract.Features.Entities.Extensions.Items.Features.Session;
 using Misa.Contract.Shared.Results;
 using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Scheduling.Forms;
 using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions.Forms;
+using Misa.Ui.Avalonia.Features.Pages.Chronicle.Create;
 using Misa.Ui.Avalonia.Features.Pages.Scheduling.Create;
 using Misa.Ui.Avalonia.Features.Pages.Tasks.Create;
 using Misa.Ui.Avalonia.Shell.Components;
@@ -36,6 +38,11 @@ public static class Panels
         new("Schedule",
             sp => sp.GetRequiredService<CreateScheduleView>(),
             sp => sp.GetRequiredService<CreateScheduleViewModel>());
+    
+    public static readonly PanelKey<JournalEntryDto> Journal =
+        new("Journal",
+            sp => sp.GetRequiredService<CreateJournalView>(),
+            sp => sp.GetRequiredService<CreateJournalViewModel>());
 
     public static readonly PanelKey<SessionResolvedDto> StartSession =
         new("StartSession",

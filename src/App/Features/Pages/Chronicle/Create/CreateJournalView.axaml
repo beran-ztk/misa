@@ -1,0 +1,63 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Chronicle.Create"
+             x:Class="Misa.Ui.Avalonia.Features.Pages.Chronicle.Create.CreateJournalView"
+             x:DataType="root:CreateJournalViewModel">
+
+    <StackPanel>
+
+        <TextBlock Text="{Binding State.SubmitErrorMessage}"
+                   IsVisible="{Binding State.HasSubmitError}" />
+
+        <!-- Description -->
+        <StackPanel>
+            <TextBlock Text="Description" />
+
+            <TextBox Text="{Binding State.Description, Mode=TwoWay}"
+                     AcceptsReturn="True"
+                     TextWrapping="Wrap"
+                     MinHeight="120" />
+
+            <TextBlock Text="{Binding State.ErrorMessageDescription}"
+                       IsVisible="{Binding State.DescriptionHasValidationError}" />
+        </StackPanel>
+
+        <!-- Occurred -->
+        <StackPanel>
+            <TextBlock Text="Occurred" />
+
+            <StackPanel Orientation="Vertical" Spacing="10">
+                <DatePicker SelectedDate="{Binding State.OccurredDate, Mode=TwoWay}" />
+                <TimePicker SelectedTime="{Binding State.OccurredTime, Mode=TwoWay}" />
+            </StackPanel>
+
+            <TextBlock Text="{Binding State.ErrorMessageOccurred}"
+                       IsVisible="{Binding State.OccurredHasValidationError}" />
+        </StackPanel>
+
+        <!-- Until (optional) -->
+        <StackPanel>
+            <TextBlock Text="Until (optional)" />
+
+            <StackPanel Orientation="Vertical" Spacing="10">
+                <DatePicker SelectedDate="{Binding State.UntilDate, Mode=TwoWay}" />
+                <TimePicker SelectedTime="{Binding State.UntilTime, Mode=TwoWay}" />
+            </StackPanel>
+
+            <TextBlock Text="{Binding State.ErrorMessageUntil}"
+                       IsVisible="{Binding State.UntilHasValidationError}" />
+        </StackPanel>
+
+        <!-- Category -->
+        <StackPanel>
+            <TextBlock Text="Category" />
+
+            <ComboBox ItemsSource="{Binding State.Categories}"
+                      SelectedValue="{Binding State.SelectedCategory, Mode=TwoWay}" />
+
+            <TextBlock Text="{Binding State.ErrorMessageCategory}"
+                       IsVisible="{Binding State.CategoryHasValidationError}" />
+        </StackPanel>
+
+    </StackPanel>
+</UserControl>

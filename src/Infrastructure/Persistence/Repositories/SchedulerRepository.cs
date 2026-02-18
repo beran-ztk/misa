@@ -17,7 +17,7 @@ public class SchedulerRepository(DefaultContext context) : ISchedulerRepository
 
     public async Task<List<Outbox>> GetPendingOutboxesAsync(CancellationToken ct)
     {
-        return await context.Outbox
+        return await context.Outboxes
             .Where(o => o.EventState == OutboxEventState.Pending)
             .ToListAsync(ct);
     }

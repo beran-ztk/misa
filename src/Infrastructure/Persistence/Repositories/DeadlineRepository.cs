@@ -9,18 +9,18 @@ public class DeadlineRepository(DefaultContext context) : IDeadlineRepository
 {
     public async Task<Deadline?> TryGetDeadlineAsync(Guid itemId, CancellationToken ct)
     {
-        return await context.Deadline
+        return await context.Deadlines
             .FirstOrDefaultAsync(d => d.ItemId == itemId, ct);
     }
 
     public async Task AddAsync(Deadline entity, CancellationToken ct)
     {
-        await context.Deadline.AddAsync(entity, ct);
+        await context.Deadlines.AddAsync(entity, ct);
     }
 
     public Task Remove(Deadline entity)
     {
-        context.Deadline.Remove(entity);
+        context.Deadlines.Remove(entity);
         return Task.CompletedTask;
     }
 

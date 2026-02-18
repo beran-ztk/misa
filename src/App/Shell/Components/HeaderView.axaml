@@ -2,9 +2,38 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             mc:Ignorable="d"
+             d:DesignWidth="800"
+             d:DesignHeight="60"
              x:Class="Misa.Ui.Avalonia.Shell.Components.HeaderView">
-    
-    Me is Header muhehehe
-    
+
+    <Border Background="{StaticResource BrushPrimaryBackground}"
+            Padding="20,0"
+            BorderThickness="0,0,0,1"
+            BorderBrush="{StaticResource BrushBorder}">
+
+        <Grid ColumnDefinitions="*,Auto"
+              VerticalAlignment="Center">
+
+            <!-- Left: Title -->
+            <TextBlock Text="MISA"
+                       FontSize="18"
+                       FontWeight="SemiBold"
+                       VerticalAlignment="Center" />
+
+            <StackPanel Grid.Column="1"
+                        Orientation="Horizontal"
+                        Spacing="16"
+                        VerticalAlignment="Center">
+
+                <TextBlock Text="User"
+                           Opacity="0.8" />
+                <TextBlock Text="Workspace"
+                           Opacity="0.8" />
+
+            </StackPanel>
+
+        </Grid>
+    </Border>
+
 </UserControl>
