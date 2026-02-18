@@ -23,17 +23,19 @@ public partial class AuthenticationWindowViewModel : ViewModelBase
     private TimeZoneService TimeZoneService { get; }
     private UserState UserState { get; }
     private IServiceProvider Services { get; }
-
+    private RemoteProxy RemoteProxy { get; }
     public AuthenticationWindowViewModel(
         IAuthenticationService authService,
         TimeZoneService timeZoneService,
         UserState userState,
-        IServiceProvider services)
+        IServiceProvider services,
+        RemoteProxy remoteProxy)
     {
         AuthService = authService;
         TimeZoneService = timeZoneService;
         UserState = userState;
         Services = services;
+        RemoteProxy = remoteProxy;
 
         TimeZoneIds = new ObservableCollection<string>(TimeZoneService.Ids);
         SelectedTimeZoneId = TimeZoneIds.Contains("Europe/Berlin") ? "Europe/Berlin" : TimeZoneIds.FirstOrDefault();
@@ -142,6 +144,7 @@ public partial class AuthenticationWindowViewModel : ViewModelBase
             if (IsRegisterMode)
             {
                 var req = new RegisterRequestDto(
+                    "beran@misa.com",
                     Username.Trim(),
                     Password,
                     SelectedTimeZoneId ?? "Europe/Berlin");

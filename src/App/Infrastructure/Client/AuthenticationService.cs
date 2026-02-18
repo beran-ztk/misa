@@ -4,57 +4,41 @@ using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Misa.Contract.Features.Authentication;
-using Misa.Contract.Shared.Results;
 
 namespace Misa.Ui.Avalonia.Infrastructure.Client;
 
-public sealed class AuthenticationService(HttpClient httpClient) : IAuthenticationService
+public sealed class AuthenticationService(RemoteProxy remoteProxy) : IAuthenticationService
 {
     public async Task<AuthResponseDto> RegisterAsync(RegisterRequestDto requestDto, CancellationToken ct = default)
     {
-        using var request = new HttpRequestMessage(HttpMethod.Post,"auth/register");
-        request.Content = JsonContent.Create(requestDto);
-        
-        var response = await httpClient
-            .SendAsync(request, CancellationToken.None);
+        using var request = new HttpRequestMessage(HttpMethod.Post, "auth/register")
+        {
+            Content = JsonContent.Create(requestDto)
+        };
 
-        if (!response.IsSuccessStatusCode)
-            throw await CreateError(response, ct);
+        var result = await remoteProxy.SendAsync<AuthResponseDto>(request);
 
-        var payload = 
-            await response.Content.ReadFromJsonAsync<Result<AuthResponseDto>>(
-                cancellationToken: ct
-            )
-            ?? throw new InvalidOperationException("Empty response.");
+        // Falls dein Result<T> anders heißt: hier anpassen
+        if (!result.IsSuccess)
+            throw new InvalidOperationException(result.Error?.Message ?? "Register failed.");
 
-        return payload.Value 
+        return result.Value
                ?? throw new InvalidOperationException("Empty User-Data.");
     }
 
     public async Task<AuthResponseDto> LoginAsync(LoginRequestDto requestDto, CancellationToken ct = default)
     {
-        using var request = new HttpRequestMessage(HttpMethod.Post,"auth/login");
-        request.Content = JsonContent.Create(requestDto);
-        
-        var response = await httpClient
-            .SendAsync(request, CancellationToken.None);
+        using var request = new HttpRequestMessage(HttpMethod.Post, "auth/login")
+        {
+            Content = JsonContent.Create(requestDto)
+        };
 
-        var payload = 
-            await response.Content.ReadFromJsonAsync<Result<AuthResponseDto>>(
-                cancellationToken: ct
-            ) 
-            ?? throw new InvalidOperationException("Empty response.");
+        var result = await remoteProxy.SendAsync<AuthResponseDto>(request);
 
-        return payload.Value 
+        if (!result.IsSuccess)
+            throw new InvalidOperationException(result.Error?.Message ?? "Login failed.");
+
+        return result.Value
                ?? throw new InvalidOperationException("Empty User-Data.");
-    }
-    private static async Task<Exception> CreateError(HttpResponseMessage response, CancellationToken ct)
-    {
-        var body = await response.Content.ReadAsStringAsync(ct);
-        var msg = string.IsNullOrWhiteSpace(body)
-            ? $"Request failed: {(int)response.StatusCode} {response.ReasonPhrase}"
-            : body;
-
-        return new InvalidOperationException(msg);
     }
 }

@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Misa.Infrastructure.Persistence.Models;
+using Misa.Infrastructure.Auth;
 
 namespace Misa.Infrastructure.Persistence.Context;
 

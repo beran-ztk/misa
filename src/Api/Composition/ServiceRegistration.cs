@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Misa.Api.Middleware;
 using Misa.Api.Services.Features.Items.Features.Scheduler;
 using Misa.Api.Services.Features.Items.Features.Sessions;
+using Misa.Application.Abstractions.Authentication;
 using Misa.Application.Abstractions.Ids;
 using Misa.Application.Abstractions.Persistence;
 using Misa.Application.Abstractions.Time;
@@ -13,11 +13,12 @@ using Misa.Domain.Features.Entities.Extensions.Items.Extensions.Tasks;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions;
 using Misa.Domain.Features.Messaging;
+using Misa.Infrastructure.Auth;
 using Misa.Infrastructure.Persistence.Context;
 using Misa.Infrastructure.Persistence.Repositories;
 using Misa.Infrastructure.Services.Ids;
 using Misa.Infrastructure.Services.Time;
-using User = Misa.Infrastructure.Persistence.Models.User;
+using User = Misa.Infrastructure.Auth.User;
 
 namespace Misa.Api.Composition;
 
@@ -50,6 +51,8 @@ public static class ServiceRegistration
             })
             .AddEntityFrameworkStores<AuthContext>()
             .AddSignInManager();
+        
+        services.AddScoped<IIdentityAuthStore, IdentityAuthStore>();
     }
     private static void AddApiCore(this IServiceCollection services)
     {

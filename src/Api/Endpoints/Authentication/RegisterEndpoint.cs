@@ -17,7 +17,7 @@ public static class RegisterEndpoint
         IMessageBus bus,
         CancellationToken ct = default)
     {
-        var cmd = new RegisterCommand(dto.Username, dto.Password, dto.TimeZone);
+        var cmd = new RegisterCommand(dto.Email, dto.Username, dto.Password, dto.TimeZone);
         return await bus.InvokeAsync<Result<AuthResponseDto>>(cmd, ct);
     }
 }
