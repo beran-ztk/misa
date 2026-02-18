@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Misa.Api.Middleware;
 using Misa.Api.Services.Features.Items.Features.Scheduler;
@@ -16,26 +17,46 @@ using Misa.Infrastructure.Persistence.Context;
 using Misa.Infrastructure.Persistence.Repositories;
 using Misa.Infrastructure.Services.Ids;
 using Misa.Infrastructure.Services.Time;
-using TimeProvider = System.TimeProvider;
+using User = Misa.Infrastructure.Persistence.Models.User;
 
 namespace Misa.Api.Composition;
 
 public static class ServiceRegistration
 {
-    public static void RegisterServices(this IServiceCollection services)
+    public static void RegisterServices(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddApiCore();
         services.AddCoreServices();
-        services.AddDataAccess();
+        services.AddDataAccess(configuration);
         services.AddWorkers();
         services.AddRepositories();
+        services.AddIdentity(configuration);
     }
 
+    private static void AddIdentity(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddAuthorization();
+        services.AddAuthentication();
+        
+        services.AddDbContext<AuthContext>(opt =>
+            opt.UseNpgsql(configuration.GetConnectionString("Default")));
+
+        services
+            .AddIdentityCore<User>(opt =>
+            {
+                opt.Password.RequiredLength = 8;
+                opt.Password.RequireNonAlphanumeric = false;
+                opt.User.RequireUniqueEmail = true;
+            })
+            .AddEntityFrameworkStores<AuthContext>()
+            .AddSignInManager();
+    }
     private static void AddApiCore(this IServiceCollection services)
     {
         services.AddSignalR();
         services.AddControllers();
     }
+    
 
     private static void AddCoreServices(this IServiceCollection services)
     {
@@ -66,12 +87,12 @@ public static class ServiceRegistration
         services.AddScoped<ITaskRepository, TaskRepository>();
         services.AddScoped<IChronicleRepository, ChronicleRepository>();
     }
-    private static void AddDataAccess(this IServiceCollection services)
+    private static void AddDataAccess(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddDbContext<DefaultContext>((sp, options) =>
         {
             options.UseNpgsql(
-                "Host=localhost;Port=5432;Database=misa;Username=postgres;Password=meow",
+                configuration.GetConnectionString("Default"),
                 npgsql =>
                 {
                     npgsql.MapEnum<ScheduleMisfirePolicy>();
