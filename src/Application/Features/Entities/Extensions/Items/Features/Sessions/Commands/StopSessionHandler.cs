@@ -4,8 +4,7 @@ using Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Mapp
 using Misa.Application.Mappings;
 using Misa.Contract.Features.Entities.Extensions.Items.Features.Session;
 using Misa.Contract.Shared.Results;
-using Misa.Domain.Features.Entities.Extensions.Items.Base;
-using Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions;
+using Misa.Domain.Items.Components.Activities;
 
 namespace Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Commands;
 public record StopSessionCommand(
@@ -25,8 +24,8 @@ public class StopSessionHandler(IItemRepository repository, ITimeProvider timePr
             return Result.NotFound(ItemErrorCodes.ItemNotFound, "Item not found.");
         }
 
-        if (item.State is not ItemState.Active 
-            && item.State is not ItemState.Paused)
+        if (item.State is not ActivityState.Active 
+            && item.State is not ActivityState.Paused)
         {
             // return Result.Invalid("item.no_session_state", "Item is not active or paused and cannot be stopped.");
         }
@@ -45,7 +44,7 @@ public class StopSessionHandler(IItemRepository repository, ITimeProvider timePr
         );
 
         item.Entity.Update(timeProvider.UtcNow);
-        item.ChangeState(ItemState.InProgress);
+        item.ChangeState(ActivityState.InProgress);
 
         await repository.SaveChangesAsync(ct);
 

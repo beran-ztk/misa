@@ -3,7 +3,7 @@ using Misa.Application.Abstractions.Time;
 using Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Mappings;
 using Misa.Contract.Features.Entities.Extensions.Items.Features.Session;
 using Misa.Contract.Shared.Results;
-using Misa.Domain.Features.Entities.Extensions.Items.Base;
+using Misa.Domain.Items.Components.Activities;
 
 namespace Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Commands;
 public record PauseSessionCommand(
@@ -20,7 +20,7 @@ public class PauseSessionHandler(IItemRepository repository, ITimeProvider timeP
             return Result<SessionResolvedDto>.NotFound(ItemErrorCodes.ItemNotFound, "Item not found.");
         }
 
-        if (item.State != ItemState.Active)
+        if (item.State != ActivityState.Active)
         {
             // return Result.Invalid("item.not_active", "Item is not active and cannot be paused.");
         }
@@ -34,7 +34,7 @@ public class PauseSessionHandler(IItemRepository repository, ITimeProvider timeP
         session.Pause(command.PauseReason, timeProvider.UtcNow);
 
         item.Entity.Update(timeProvider.UtcNow);
-        item.ChangeState(ItemState.Paused);
+        item.ChangeState(ActivityState.Paused);
 
         await repository.SaveChangesAsync(ct);
 

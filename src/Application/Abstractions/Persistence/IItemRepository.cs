@@ -1,6 +1,6 @@
-﻿using Misa.Domain.Features.Entities.Extensions.Items.Base;
-using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
-using Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions;
+﻿using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
+using Misa.Domain.Items;
+using Misa.Domain.Items.Components.Activities.Sessions;
 
 namespace Misa.Application.Abstractions.Persistence;
 
@@ -8,7 +8,7 @@ public interface IItemRepository
 {
     Task SaveChangesAsync(CancellationToken ct = default);
     Task AddAsync(Session session, CancellationToken ct);
-    Task AddAsync(Scheduler scheduler, CancellationToken ct);
+    Task AddAsync(Schedule schedule, CancellationToken ct);
     Task<Session?> TryGetLatestCompletedSessionByItemIdAsync(Guid id, CancellationToken ct);
     Task<Session?> TryGetActiveSessionByItemIdAsync(Guid id, CancellationToken ct);
     Task<Session?> TryGetRunningSessionByItemIdAsync(Guid id, CancellationToken ct);
@@ -20,5 +20,5 @@ public interface IItemRepository
 
     Task<Item?> TryGetItemDetailsAsync(Guid id, CancellationToken ct);
     
-    Task<List<Scheduler>> GetSchedulingRulesAsync(CancellationToken ct);
+    Task<List<Schedule>> GetSchedulingRulesAsync(CancellationToken ct);
 }

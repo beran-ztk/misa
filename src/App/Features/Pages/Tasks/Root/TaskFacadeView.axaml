@@ -114,7 +114,7 @@
                         </DataGridTemplateColumn>
                         
                         <DataGridTextColumn Header="Created"
-                                            Binding="{Binding Item.Entity.CreatedAt, StringFormat='dd.MM.yyyy HH:mm'}"
+                                            Binding="{Binding Item.CreatedAt, StringFormat='dd.MM.yyyy HH:mm'}"
                                             Width="180" />
 
                     </DataGrid.Columns>

@@ -5,7 +5,7 @@ namespace Misa.Application.Abstractions.Persistence;
 public interface ISchedulerPlanningRepository
 {
     Task SaveChangesAsync(CancellationToken ct);
-    Task<List<Scheduler>> GetActiveSchedulesAsync(CancellationToken ct);
+    Task<List<Schedule>> GetActiveSchedulesAsync(CancellationToken ct);
     Task<int> GetExecutionCountPlannedAheadAsync(Guid id, DateTimeOffset now, CancellationToken ct);
-    Task<bool> TryAddExecutionLogAsync(SchedulerExecutionLog log, CancellationToken ct);
+    Task<bool> TryAddExecutionLogAsync(ScheduleExecutionLog log, CancellationToken ct);
 }

@@ -60,41 +60,41 @@ public static class ScheduleMappings
         ScheduleActionType.CreateTask => ScheduleActionTypeDto.CreateTask,
         _ => throw new ArgumentOutOfRangeException(nameof(domain), domain, "Unknown ScheduleActionType.")
     };
-    public static List<ScheduleDto> ToDto(this List<Scheduler> schedulers)
+    public static List<ScheduleDto> ToDto(this List<Schedule> schedulers)
         => schedulers.Select(ToDto).ToList();
 
-    public static ScheduleDto ToDto(this Scheduler scheduler)
+    public static ScheduleDto ToDto(this Schedule schedule)
         => new()
         {
-            Id = scheduler.Id,
+            Id = schedule.Id,
 
-            FrequencyType = scheduler.ScheduleFrequencyType.MapToDto(),
-            FrequencyInterval = scheduler.FrequencyInterval,
+            FrequencyType = schedule.ScheduleFrequencyType.MapToDto(),
+            FrequencyInterval = schedule.FrequencyInterval,
 
-            OccurrenceCountLimit = scheduler.OccurrenceCountLimit,
+            OccurrenceCountLimit = schedule.OccurrenceCountLimit,
 
-            ByDay = scheduler.ByDay,
-            ByMonthDay = scheduler.ByMonthDay,
-            ByMonth = scheduler.ByMonth,
+            ByDay = schedule.ByDay,
+            ByMonthDay = schedule.ByMonthDay,
+            ByMonth = schedule.ByMonth,
 
-            MisfirePolicy = scheduler.MisfirePolicy.MapToDto(),
+            MisfirePolicy = schedule.MisfirePolicy.MapToDto(),
 
-            LookaheadLimit = scheduler.LookaheadLimit,
-            OccurrenceTtl = scheduler.OccurrenceTtl,
+            LookaheadLimit = schedule.LookaheadLimit,
+            OccurrenceTtl = schedule.OccurrenceTtl,
 
-            Payload = scheduler.Payload,
-            Timezone = scheduler.Timezone,
+            Payload = schedule.Payload,
+            Timezone = schedule.Timezone,
 
-            StartTime = scheduler.StartTime,
-            EndTime = scheduler.EndTime,
+            StartTime = schedule.StartTime,
+            EndTime = schedule.EndTime,
 
-            ActiveFromUtc = scheduler.ActiveFromUtc,
-            ActiveUntilUtc = scheduler.ActiveUntilUtc,
+            ActiveFromUtc = schedule.ActiveFromUtc,
+            ActiveUntilUtc = schedule.ActiveUntilUtc,
 
-            LastRunAtUtc = scheduler.LastRunAtUtc,
-            NextDueAtUtc = scheduler.NextDueAtUtc,
-            NextAllowedExecutionAtUtc = scheduler.NextAllowedExecutionAtUtc,
+            LastRunAtUtc = schedule.LastRunAtUtc,
+            NextDueAtUtc = schedule.NextDueAtUtc,
+            NextAllowedExecutionAtUtc = schedule.NextAllowedExecutionAtUtc,
 
-            Item = scheduler.Item.ToDto()
+            Item = schedule.Item.ToDto()
         };
 }

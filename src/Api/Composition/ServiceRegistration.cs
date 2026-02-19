@@ -11,18 +11,16 @@ using Misa.Application.Abstractions.Ids;
 using Misa.Application.Abstractions.Persistence;
 using Misa.Application.Abstractions.Time;
 using Misa.Domain.Features.Audit;
-using Misa.Domain.Features.Entities.Base;
-using Misa.Domain.Features.Entities.Extensions.Items.Base;
-using Misa.Domain.Features.Entities.Extensions.Items.Extensions.Tasks;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
-using Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions;
-using Misa.Domain.Features.Messaging;
+using Misa.Domain.Items;
+using Misa.Domain.Items.Components.Activities;
+using Misa.Domain.Items.Components.Activities.Sessions;
+using Misa.Domain.Items.Components.Tasks;
 using Misa.Infrastructure.Auth;
 using Misa.Infrastructure.Persistence.Context;
 using Misa.Infrastructure.Persistence.Repositories;
 using Misa.Infrastructure.Services.Ids;
 using Misa.Infrastructure.Services.Time;
-using User = Misa.Infrastructure.Auth.User;
 
 namespace Misa.Api.Composition;
 
@@ -45,8 +43,8 @@ public static class ServiceRegistration
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUser, CurrentUser>();
 
-        services.AddDbContext<AuthContext>(opt =>
-            opt.UseNpgsql(configuration.GetConnectionString("Default")));
+        services.AddDbContext<IdentityContext>(opt =>
+            opt.UseNpgsql(configuration.GetConnectionString("User")));
 
         services.AddAuthorizationBuilder()
             .SetFallbackPolicy(new AuthorizationPolicyBuilder()
@@ -60,7 +58,7 @@ public static class ServiceRegistration
                 opt.Password.RequireNonAlphanumeric = false;
                 opt.User.RequireUniqueEmail = true;
             })
-            .AddEntityFrameworkStores<AuthContext>()
+            .AddEntityFrameworkStores<IdentityContext>()
             .AddSignInManager();
         
         
@@ -110,37 +108,31 @@ public static class ServiceRegistration
 
     private static void AddRepositories(this IServiceCollection services)
     {
-        services.AddScoped<IEntityRepository, EntityRepository>();
         services.AddScoped<IItemRepository, ItemRepository>();
         services.AddScoped<ISchedulerPlanningRepository, SchedulerPlanningRepository>();
         services.AddScoped<ISchedulerExecutingRepository, SchedulerExecutingRepository>();
         services.AddScoped<ISchedulerRepository, SchedulerRepository>();
-        services.AddScoped<IAuthenticationRepository, AuthenticationRepository>();
-        services.AddScoped<IDeadlineRepository, DeadlineRepository>();
         services.AddScoped<ITaskRepository, TaskRepository>();
-        services.AddScoped<IChronicleRepository, ChronicleRepository>();
     }
     private static void AddDataAccess(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddDbContext<DefaultContext>((sp, options) =>
+        services.AddDbContext<MisaContext>((_, options) =>
         {
             options.UseNpgsql(
-                configuration.GetConnectionString("Default"),
+                configuration.GetConnectionString("Misa"),
                 npgsql =>
                 {
                     npgsql.MapEnum<ScheduleMisfirePolicy>();
                     npgsql.MapEnum<ScheduleFrequencyType>();
                     npgsql.MapEnum<ScheduleActionType>();
-                    npgsql.MapEnum<SchedulerExecutionStatus>();
-                    npgsql.MapEnum<Priority>();
+                    npgsql.MapEnum<ScheduleExecutionStatus>();
+                    npgsql.MapEnum<ActivityPriority>();
                     npgsql.MapEnum<ChangeType>();
                     npgsql.MapEnum<Workflow>();
                     npgsql.MapEnum<SessionState>();
                     npgsql.MapEnum<SessionEfficiencyType>();
                     npgsql.MapEnum<SessionConcentrationType>();
                     npgsql.MapEnum<TaskCategory>();
-                    npgsql.MapEnum<EventType>();
-                    npgsql.MapEnum<OutboxEventState>();
                     npgsql.MapEnum<JournalSystemType>();
                 });
         });

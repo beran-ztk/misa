@@ -1,5 +1,5 @@
 ﻿using Misa.Contract.Features.Entities.Extensions.Items.Features.Session;
-using Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions;
+using Misa.Domain.Items.Components.Activities.Sessions;
 
 namespace Misa.Application.Mappings;
 

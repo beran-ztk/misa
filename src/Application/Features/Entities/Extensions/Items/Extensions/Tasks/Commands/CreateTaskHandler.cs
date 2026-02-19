@@ -6,7 +6,7 @@ using Misa.Application.Mappings;
 using Misa.Contract.Features.Entities.Extensions.Items.Base;
 using Misa.Contract.Features.Entities.Extensions.Items.Extensions.Tasks;
 using Misa.Contract.Shared.Results;
-using ItemTask = Misa.Domain.Features.Entities.Extensions.Items.Extensions.Tasks.Task;
+using Misa.Domain.Items.Components.Tasks;
 
 namespace Misa.Application.Features.Entities.Extensions.Items.Extensions.Tasks.Commands;
 public sealed record CreateTaskCommand(
@@ -22,13 +22,9 @@ public class CreateTaskHandler(
 {
     public async Task<Result<TaskDto>> HandleAsync(CreateTaskCommand command, CancellationToken ct)
     {
-        var ownerId = currentUser.UserId;
-        if (string.IsNullOrWhiteSpace(ownerId))
-            return Result<TaskDto>.Failure("Missing user id claim.");
-        
-        var task = ItemTask.Create(
+        var task = TaskExtension.Create(
             idGenerator.New(), 
-            ownerId: ownerId,
+            ownerId: currentUser.UserId,
             command.Title, 
             command.CategoryDto.MapToDomain(), 
             command.PriorityDto.MapToDomain(),

@@ -4,8 +4,8 @@ using Misa.Application.Abstractions.Time;
 using Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Mappings;
 using Misa.Contract.Features.Entities.Extensions.Items.Features.Session;
 using Misa.Contract.Shared.Results;
-using Misa.Domain.Features.Entities.Extensions.Items.Base;
-using Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions;
+using Misa.Domain.Items.Components.Activities;
+using Misa.Domain.Items.Components.Activities.Sessions;
 
 namespace Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Commands;
 public record StartSessionCommand(
@@ -25,7 +25,7 @@ public class StartSessionHandler(IItemRepository repository, ITimeProvider timeP
             return Result<SessionResolvedDto>.NotFound("session.item", "session not found.");
         }
 
-        if (item.State == ItemState.Active)
+        if (item.State == ActivityState.Active)
         {
             // return Result.Invalid("item.already_active", "ItemId is already active!");
         }
@@ -42,7 +42,7 @@ public class StartSessionHandler(IItemRepository repository, ITimeProvider timeP
         );
         
         item.Entity.Update(timeProvider.UtcNow);
-        item.ChangeState(ItemState.Active);
+        item.ChangeState(ActivityState.Active);
         
         await repository.AddAsync(session, ct);
 

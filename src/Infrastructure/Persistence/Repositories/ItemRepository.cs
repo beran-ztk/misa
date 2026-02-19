@@ -1,13 +1,13 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Misa.Application.Abstractions.Persistence;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
-using Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions;
+using Misa.Domain.Items.Components.Activities.Sessions;
 using Misa.Infrastructure.Persistence.Context;
-using Item = Misa.Domain.Features.Entities.Extensions.Items.Base.Item;
+using Item = Misa.Domain.Items.Item;
 
 namespace Misa.Infrastructure.Persistence.Repositories;
 
-public class ItemRepository(DefaultContext context) : IItemRepository
+public class ItemRepository(MisaContext context) : IItemRepository
 {
     public async Task SaveChangesAsync(CancellationToken  ct = default)
         => await context.SaveChangesAsync(ct);
@@ -84,16 +84,13 @@ public class ItemRepository(DefaultContext context) : IItemRepository
         await context.Sessions.AddAsync(session, ct);
     }
     
-    public async Task AddAsync(Scheduler scheduler, CancellationToken ct)
+    public async Task AddAsync(Schedule schedule, CancellationToken ct)
     {
-        await context.Schedulers.AddAsync(scheduler, ct);
+        await context.Schedulers.AddAsync(schedule, ct);
     }
     public async Task<Item?> TryGetItemDetailsAsync(Guid id, CancellationToken ct)
     {
         return await context.Items
-            .Include(e => e.Entity)
-                .ThenInclude(e => e.Descriptions)
-            
             .FirstOrDefaultAsync(e => e.Id == id, ct);
     }
     
@@ -104,11 +101,10 @@ public class ItemRepository(DefaultContext context) : IItemRepository
             .SingleOrDefaultAsync(i => i.Id == id, ct);
     }
 
-    public async Task<List<Scheduler>> GetSchedulingRulesAsync(CancellationToken ct)
+    public async Task<List<Schedule>> GetSchedulingRulesAsync(CancellationToken ct)
     {
         return await context.Schedulers
             .Include(s => s.Item)
-            .ThenInclude(i => i.Entity)
             .AsNoTracking()
             .ToListAsync(ct);
     }

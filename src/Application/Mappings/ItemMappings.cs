@@ -1,7 +1,7 @@
 ﻿using Misa.Contract.Features.Entities.Base;
 using Misa.Contract.Features.Entities.Extensions.Items.Base;
-using Misa.Domain.Features.Entities.Base;
-using Misa.Domain.Features.Entities.Extensions.Items.Base;
+using Misa.Domain.Items;
+using Misa.Domain.Items.Components.Activities;
 
 namespace Misa.Application.Mappings;
 public static class ItemMappings
@@ -17,27 +17,27 @@ public static class ItemMappings
             Entity = item.Entity.ToDto()
         };
     }
-    public static Priority MapToDomain(this PriorityDto priorityDto) =>
+    public static ActivityPriority MapToDomain(this PriorityDto priorityDto) =>
         priorityDto switch
         {
-            PriorityDto.None => Priority.None,
-            PriorityDto.Low => Priority.Low,
-            PriorityDto.Medium => Priority.Medium,
-            PriorityDto.High => Priority.High,
-            PriorityDto.Urgent => Priority.Urgent,
-            PriorityDto.Critical => Priority.Critical,
+            PriorityDto.None => ActivityPriority.None,
+            PriorityDto.Low => ActivityPriority.Low,
+            PriorityDto.Medium => ActivityPriority.Medium,
+            PriorityDto.High => ActivityPriority.High,
+            PriorityDto.Urgent => ActivityPriority.Urgent,
+            PriorityDto.Critical => ActivityPriority.Critical,
             _ => throw new ArgumentOutOfRangeException(nameof(priorityDto), priorityDto, null)
         };
-    public static PriorityDto MapToDto(this Priority priority) =>
-        priority switch
+    public static PriorityDto MapToDto(this ActivityPriority activityPriority) =>
+        activityPriority switch
         {
-            Priority.None     => PriorityDto.None,
-            Priority.Low      => PriorityDto.Low,
-            Priority.Medium   => PriorityDto.Medium,
-            Priority.High     => PriorityDto.High,
-            Priority.Urgent   => PriorityDto.Urgent,
-            Priority.Critical => PriorityDto.Critical,
-            _ => throw new ArgumentOutOfRangeException(nameof(priority), priority, null)
+            ActivityPriority.None     => PriorityDto.None,
+            ActivityPriority.Low      => PriorityDto.Low,
+            ActivityPriority.Medium   => PriorityDto.Medium,
+            ActivityPriority.High     => PriorityDto.High,
+            ActivityPriority.Urgent   => PriorityDto.Urgent,
+            ActivityPriority.Critical => PriorityDto.Critical,
+            _ => throw new ArgumentOutOfRangeException(nameof(activityPriority), activityPriority, null)
         };
     public static WorkflowDto MapToDto(this Workflow workflow) =>
         workflow switch

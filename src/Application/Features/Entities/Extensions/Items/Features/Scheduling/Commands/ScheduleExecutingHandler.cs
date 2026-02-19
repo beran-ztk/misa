@@ -24,7 +24,7 @@ public class ScheduleExecutingHandler(ISchedulerExecutingRepository repository, 
 
         foreach (var log in pendingExecutionLogs)
         {
-            if (log.Scheduler.ActionType != ScheduleActionType.CreateTask) continue;
+            if (log.Schedule.ActionType != ScheduleActionType.CreateTask) continue;
             
             log.Claim(timeProvider.UtcNow);
             await repository.SaveChangesAsync(stoppingToken);
@@ -32,8 +32,8 @@ public class ScheduleExecutingHandler(ISchedulerExecutingRepository repository, 
             log.Start(timeProvider.UtcNow);
             await repository.SaveChangesAsync(stoppingToken);
 
-            if (log.Scheduler.Payload == null) continue; // Implement error
-            var dto = JsonSerializer.Deserialize<CreateTaskDto>(log.Scheduler.Payload);
+            if (log.Schedule.Payload == null) continue; // Implement error
+            var dto = JsonSerializer.Deserialize<CreateTaskDto>(log.Schedule.Payload);
             
             if (dto == null) continue; // Implement error
             var addTaskCommand = new CreateTaskCommand(

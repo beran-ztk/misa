@@ -3,7 +3,6 @@ using Misa.Application.Abstractions.Time;
 using Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Mappings;
 using Misa.Contract.Features.Entities.Extensions.Items.Features.Session;
 using Misa.Contract.Shared.Results;
-using Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions;
 
 namespace Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Queries;
 public record GetCurrentSessionDetailsQuery(Guid ItemId);

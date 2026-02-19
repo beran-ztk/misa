@@ -2,7 +2,7 @@
 using Misa.Application.Abstractions.Persistence;
 using Misa.Application.Abstractions.Time;
 using Misa.Contract.Shared.Results;
-using Misa.Domain.Features.Entities.Extensions.Items.Base;
+using Misa.Domain.Items.Components.Activities;
 
 namespace Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Commands;
 public record ContinueSessionCommand(Guid ItemId);
@@ -16,7 +16,7 @@ public class ContinueSessionHandler(IItemRepository repository, ITimeProvider ti
             return Result.NotFound(ItemErrorCodes.ItemNotFound, "Item not found.");
         }
 
-        if (item.State != ItemState.Paused)
+        if (item.State != ActivityState.Paused)
         {
             // return Result.Invalid("item.not_paused", "Item is not paused and cannot be continued.");
         }
@@ -30,7 +30,7 @@ public class ContinueSessionHandler(IItemRepository repository, ITimeProvider ti
         session.Continue(idGenerator.New(), timeProvider.UtcNow);
 
         item.Entity.Update(timeProvider.UtcNow);
-        item.ChangeState(ItemState.Active);
+        item.ChangeState(ActivityState.Active);
 
         await repository.SaveChangesAsync(ct);
 

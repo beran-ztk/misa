@@ -10,11 +10,7 @@ public class GetTasksHandler(ITaskRepository repository, ICurrentUser currentUse
 {
     public async Task<Result<List<TaskDto>>> HandleAsync(GetTasksQuery query, CancellationToken ct)
     {
-        var ownerId = currentUser.UserId;
-        if (string.IsNullOrWhiteSpace(ownerId))
-            return Result<List<TaskDto>>.Failure("Missing user id claim.");
-        
-        var tasks = await repository.GetTasksAsync(ownerId, ct);
+        var tasks = await repository.GetTasksAsync(currentUser.UserId, ct);
 
         var formattedTasks = tasks.ToDto();
         
