@@ -10,7 +10,8 @@ public static class LoginEndpoint
 {
     public static void Map(IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapPost("auth/login", Login);
+        endpoints.MapPost("auth/login", Login)
+            .AllowAnonymous();
     }
     
     private static async Task<Result<AuthTokenResponseDto>> Login(

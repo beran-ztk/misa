@@ -8,18 +8,20 @@ public class Entity
 {
     private Entity () { }
 
-    private Entity(Guid id, Workflow workflow, DateTimeOffset createdAt)
+    private Entity(Guid id, string ownerId ,Workflow workflow, DateTimeOffset createdAt)
     {
         Id = id;
+        OwnerId = ownerId;
         Workflow = workflow;
         CreatedAt = createdAt;
     }
 
-    public static Entity Create(Guid id, Workflow workflow, DateTimeOffset createdAtUtc)
+    public static Entity Create(Guid id, string ownerId, Workflow workflow, DateTimeOffset createdAtUtc)
     {
-        return new Entity(id, workflow, createdAtUtc);
+        return new Entity(id, ownerId, workflow, createdAtUtc);
     }
     public Guid Id { get; init; }
+    public string OwnerId { get; init; }
     public Workflow Workflow { get; init; }
     public bool IsDeleted { get; init; }
     public bool IsArchived { get; init; }

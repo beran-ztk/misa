@@ -4,6 +4,7 @@ public sealed record AuthResponseDto(
     UserDto User
 );
 public sealed record AuthTokenResponseDto(
-    UserDto User,
+    Guid Id,
+    string Name,
     string Token
 );

@@ -22,9 +22,7 @@ public sealed class LoginHandler(IIdentityAuthStore authStore)
 
         var value = login.Value!;
 
-        var dto = new UserDto(value.UserId, value.Username, string.Empty);
-
         return Result<AuthTokenResponseDto>.Ok(
-            new AuthTokenResponseDto(dto, value.Token));
+            new AuthTokenResponseDto(value.UserId, value.Username, value.Token));
     }
 }

@@ -13,6 +13,9 @@ public class EntityConfiguration : IEntityTypeConfiguration<Domain.Features.Enti
             .ValueGeneratedNever()
             .IsRequired();
         
+        builder.Property(x => x.OwnerId)
+            .IsRequired();
+        
         builder.Property(e => e.Workflow).IsRequired();
         builder.Property(e => e.IsDeleted).HasDefaultValue(false).IsRequired();
         builder.Property(e => e.IsArchived).HasDefaultValue(false).IsRequired();

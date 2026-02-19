@@ -26,11 +26,12 @@ public class TaskRepository(DefaultContext context) : ITaskRepository
             .FirstOrDefaultAsync(t => t.Id == id, cancellationToken: ct);
     }
     
-    public async Task<List<ItemTask>> GetTasksAsync(CancellationToken ct)
+    public async Task<List<ItemTask>> GetTasksAsync(string userId, CancellationToken ct)
     {
         return await context.Tasks
             .Include(t => t.Item)
             .ThenInclude(i => i.Entity)
+            .Where(t => t.Item.Entity.OwnerId == userId)
             .OrderByDescending(t => t.Item.Entity.CreatedAt)
             .AsNoTracking()
             .ToListAsync(ct);

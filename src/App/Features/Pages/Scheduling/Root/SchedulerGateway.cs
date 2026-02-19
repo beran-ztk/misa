@@ -21,7 +21,7 @@ public sealed class SchedulerGateway(RemoteProxy remoteProxy, UserState userStat
 
     public async Task<Result<ScheduleDto>> CreateAsync(AddScheduleDto dto)
     {
-        var request = new HttpRequestMessage(HttpMethod.Post, $"scheduling/{userState.User.Id}")
+        var request = new HttpRequestMessage(HttpMethod.Post, $"scheduling/{userState.Id}")
         {
             Content = JsonContent.Create(dto)
         };

@@ -66,6 +66,12 @@
                                      Watermark="Repeat password"
                                      IsEnabled="{Binding IsNotBusy}"/>
                         </StackPanel>
+                        
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="E-Mail" Margin="0"/>
+                            <TextBox Text="{Binding Email, Mode=TwoWay}"
+                                     IsEnabled="{Binding IsNotBusy}"/>
+                        </StackPanel>
 
                         <StackPanel Spacing="6">
                             <TextBlock Text="Time zone" Margin="0"/>

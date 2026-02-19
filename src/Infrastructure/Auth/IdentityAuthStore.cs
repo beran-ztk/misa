@@ -30,18 +30,13 @@ public sealed class IdentityAuthStore(UserManager<User> userManager,
         {
             Id = id.ToString("D"),
             UserName = username,
-            Email = email
+            Email = email,
+            TimeZone = timeZone
         };
 
         var create = await userManager.CreateAsync(user, password);
-        if (!create.Succeeded)
-            return Result<IdentityUserCreated>.Conflict("", JoinErrors(create.Errors));
-
-        // TimeZone ohne Custom-Feld: als Claim speichern
-        var claimRes = await userManager.AddClaimAsync(user, new Claim("tz", timeZone));
-        
-        return !claimRes.Succeeded 
-            ? Result<IdentityUserCreated>.Conflict("", JoinErrors(claimRes.Errors)) 
+        return !create.Succeeded 
+            ? Result<IdentityUserCreated>.Conflict("", JoinErrors(create.Errors)) 
             : Result<IdentityUserCreated>.Ok(new IdentityUserCreated(id, username, email));
     }
     public async Task<Result<IdentityLoginResult>> LoginAsync(

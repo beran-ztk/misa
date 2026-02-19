@@ -1,4 +1,5 @@
-﻿using Misa.Application.Abstractions.Ids;
+﻿using Misa.Application.Abstractions.Authentication;
+using Misa.Application.Abstractions.Ids;
 using Misa.Application.Abstractions.Persistence;
 using Misa.Application.Abstractions.Time;
 using Misa.Application.Mappings;
@@ -16,12 +17,18 @@ public sealed record CreateTaskCommand(
 public class CreateTaskHandler(
     ITaskRepository repository,
     ITimeProvider timeProvider, 
-    IIdGenerator idGenerator)
+    IIdGenerator idGenerator,
+    ICurrentUser currentUser)
 {
     public async Task<Result<TaskDto>> HandleAsync(CreateTaskCommand command, CancellationToken ct)
     {
+        var ownerId = currentUser.UserId;
+        if (string.IsNullOrWhiteSpace(ownerId))
+            return Result<TaskDto>.Failure("Missing user id claim.");
+        
         var task = ItemTask.Create(
             idGenerator.New(), 
+            ownerId: ownerId,
             command.Title, 
             command.CategoryDto.MapToDomain(), 
             command.PriorityDto.MapToDomain(),

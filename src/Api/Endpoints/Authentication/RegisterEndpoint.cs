@@ -10,7 +10,8 @@ public static class RegisterEndpoint
 {
     public static void Map(IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapPost("auth/register", Register);
+        endpoints.MapPost("auth/register", Register)
+            .AllowAnonymous();
     }
     private static async Task<Result<AuthResponseDto>> Register(
         [FromBody] RegisterRequestDto dto,

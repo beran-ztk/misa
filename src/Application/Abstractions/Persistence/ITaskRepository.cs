@@ -5,5 +5,5 @@ public interface ITaskRepository
     Task SaveChangesAsync(CancellationToken ct);
     Task AddAsync(ItemTask task, CancellationToken ct);
     Task<ItemTask?> TryGetTaskAsync(Guid id, CancellationToken ct);
-    Task<List<ItemTask>> GetTasksAsync(CancellationToken ct);
+    Task<List<ItemTask>> GetTasksAsync(string userId, CancellationToken ct);
 }

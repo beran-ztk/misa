@@ -41,6 +41,7 @@ public class AddScheduleHandler(
         var user = await authenticationRepository.FindByIdAsync(command.UserId, ct);
             
         var scheduler = Scheduler.Create(
+            ownerId: string.Empty,
             id: idGenerator.New(), 
             title: command.Title,
             targetItemId: command.TargetItemId,

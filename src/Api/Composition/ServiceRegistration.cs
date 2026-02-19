@@ -1,7 +1,9 @@
 using System.Text;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Misa.Api.Services.Auth;
 using Misa.Api.Services.Features.Items.Features.Scheduler;
 using Misa.Api.Services.Features.Items.Features.Sessions;
 using Misa.Application.Abstractions.Authentication;
@@ -38,11 +40,19 @@ public static class ServiceRegistration
 
     private static void AddIdentity(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddAuthorization();
+        services.AddScoped<IIdentityAuthStore, IdentityAuthStore>();
         
+        services.AddHttpContextAccessor();
+        services.AddScoped<ICurrentUser, CurrentUser>();
+
         services.AddDbContext<AuthContext>(opt =>
             opt.UseNpgsql(configuration.GetConnectionString("Default")));
 
+        services.AddAuthorizationBuilder()
+            .SetFallbackPolicy(new AuthorizationPolicyBuilder()
+                .RequireAuthenticatedUser()
+                .Build());
+        
         services
             .AddIdentityCore<User>(opt =>
             {
@@ -53,7 +63,6 @@ public static class ServiceRegistration
             .AddEntityFrameworkStores<AuthContext>()
             .AddSignInManager();
         
-        services.AddScoped<IIdentityAuthStore, IdentityAuthStore>();
         
         services.AddAuthentication("Bearer")
             .AddJwtBearer("Bearer", options =>

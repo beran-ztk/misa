@@ -12,9 +12,9 @@ public class Task
         Item = item;
         Category = category;
     }
-    public static Task Create(Guid id, string title, TaskCategory category, Priority priority, DateTimeOffset createdAt)
+    public static Task Create(Guid id, string ownerId, string title, TaskCategory category, Priority priority, DateTimeOffset createdAt)
     {
-        var item = Item.Create(id, Workflow.Task, title, priority, createdAt);
+        var item = Item.Create(id, ownerId, Workflow.Task, title, priority, createdAt);
         return new Task(item, category);
     }
     public Guid Id { get; init; }

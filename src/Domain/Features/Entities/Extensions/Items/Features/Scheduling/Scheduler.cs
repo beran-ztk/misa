@@ -71,6 +71,7 @@ public sealed class Scheduler
         return new SchedulerExecutionLog(executionLogId, Id, SchedulingAnchorUtc, utcNow);
     }
     public static Scheduler Create(
+        string ownerId,
         Guid id,
         string title,
         Guid? targetItemId,
@@ -117,7 +118,7 @@ public sealed class Scheduler
         var normalizedByMonthDay = Normalize(byMonthDay, 1, 31, nameof(byMonthDay));
         var normalizedByMonth = Normalize(byMonth, 1, 12, nameof(byMonth));
 
-        var item = Item.Create(id, Workflow.Scheduling, title, Priority.None, createdAt);
+        var item = Item.Create(id, ownerId, Workflow.Scheduling, title, Priority.None, createdAt);
 
         return new Scheduler(item)
         {

@@ -20,7 +20,7 @@ public sealed class ChronicleGateway(RemoteProxy remoteProxy, UserState userStat
 
     public async Task<Result<JournalEntryDto>> CreateAsync(CreateJournalEntryDto dto)
     {
-        var request = new HttpRequestMessage(HttpMethod.Post, $"journals/{userState.User.Id}")
+        var request = new HttpRequestMessage(HttpMethod.Post, $"journals/{userState.Id}")
         {
             Content = JsonContent.Create(dto)
         };
