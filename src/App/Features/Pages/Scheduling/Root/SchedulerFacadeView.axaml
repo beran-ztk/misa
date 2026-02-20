@@ -6,6 +6,7 @@
              x:Class="Misa.Ui.Avalonia.Features.Pages.Scheduling.Root.SchedulerFacadeView"
              xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Scheduling.Root"
              xmlns:scheduler="clr-namespace:Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;assembly=Contract"
+             xmlns:schedules="clr-namespace:Misa.Contract.Items.Components.Schedules;assembly=Contract"
              x:DataType="root:SchedulerFacadeViewModel">
 
   <UserControl.Styles>
@@ -128,7 +129,7 @@
                      ScrollViewer.VerticalScrollBarVisibility="Auto">
 
               <ListBox.ItemTemplate>
-                <DataTemplate x:DataType="scheduler:ScheduleDto">
+                <DataTemplate x:DataType="schedules:ScheduleDto">
 
                   <Border Classes="schedule-card"
                           Padding="12"

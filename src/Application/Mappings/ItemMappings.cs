@@ -6,17 +6,6 @@ using Misa.Domain.Items.Components.Activities;
 namespace Misa.Application.Mappings;
 public static class ItemMappings
 {
-    public static ItemDto ToDto(this Item item)
-    {
-        return new ItemDto
-        {
-            Id = item.Id,
-            State = (ItemStateDto)item.State,
-            Priority = item.Priority.MapToDto(),
-            Title = item.Title,
-            Entity = item.Entity.ToDto()
-        };
-    }
     public static ActivityPriority MapToDomain(this PriorityDto priorityDto) =>
         priorityDto switch
         {
@@ -43,8 +32,7 @@ public static class ItemMappings
         workflow switch
         {
             Workflow.Task => WorkflowDto.Task,
-            Workflow.Deadline => WorkflowDto.Deadline,
-            Workflow.Scheduling => WorkflowDto.Scheduling,
+            Workflow.Schedule => WorkflowDto.Scheduling,
             _ => throw new ArgumentOutOfRangeException(nameof(workflow), workflow, null)
         };
 }

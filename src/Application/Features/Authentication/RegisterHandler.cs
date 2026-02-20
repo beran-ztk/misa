@@ -12,8 +12,6 @@ public sealed record RegisterCommand(string Email, string Username, string Passw
 
 public sealed class RegisterHandler(
     IIdentityAuthStore authStore,
-    IChronicleRepository chronicleRepository,
-    ITimeProvider timeProvider,
     ITimeZoneProvider timeZoneProvider,
     IIdGenerator idGenerator)
 {
@@ -47,11 +45,6 @@ public sealed class RegisterHandler(
 
         if (!created.IsSuccess)
             return Result<AuthResponseDto>.Conflict("", created.Error?.Message ?? "Registration failed.");
-
-
-        // var journal = new Journal(new JournalId(idGenerator.New()), userId, timeProvider.UtcNow);
-        // await chronicleRepository.AddAsync(journal, ct);
-        // await chronicleRepository.SaveChangesAsync(ct);
 
         var dto = new UserDto(userId, username, cmd.TimeZone);
         return Result<AuthResponseDto>.Ok(new AuthResponseDto(dto));

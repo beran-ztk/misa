@@ -7,6 +7,7 @@ using Misa.Contract.Features.Common.Deadlines;
 using Misa.Contract.Features.Entities.Extensions.Items.Extensions.Tasks;
 using Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;
 using Misa.Contract.Features.Entities.Extensions.Items.Features.Session;
+using Misa.Contract.Items.Components.Schedules;
 using Misa.Contract.Shared.Results;
 using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Scheduling.Forms;
 using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions.Forms;

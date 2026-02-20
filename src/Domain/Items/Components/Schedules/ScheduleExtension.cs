@@ -1,21 +1,17 @@
-using Misa.Domain.Items;
+using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
 using Misa.Domain.Items.Components.Activities;
 
-namespace Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
+namespace Misa.Domain.Items.Components.Schedules;
 
 /// <summary>
 /// Represents a scheduled task configuration.
 /// </summary>
-public sealed class Schedule
+public sealed class ScheduleExtension
 {
-    private Schedule() { } // EF Core
+    private ScheduleExtension() { } // EF Core
     
-    private Schedule(Item item)
-    {
-        Item = item;
-    }
-
-    public Guid Id { get; private set; }
+    // Fields + Properties
+    public ItemId Id { get; init; }
     public Guid? TargetItemId { get; private set; }
     
     public ScheduleFrequencyType ScheduleFrequencyType { get; private set; }
@@ -41,19 +37,21 @@ public sealed class Schedule
     public TimeOnly? StartTime { get; private set; }
     public TimeOnly? EndTime { get; private set; }
     
-    public DateTimeOffset ActiveFromUtc { get; set; }
+    public DateTimeOffset ActiveFromUtc { get; init; }
     public DateTimeOffset? ActiveUntilUtc { get; private set; }
     
     public DateTimeOffset? LastRunAtUtc { get; private set; }
     public DateTimeOffset? NextDueAtUtc { get; set; }
     public DateTimeOffset? NextAllowedExecutionAtUtc { get; set; }
 
+    // Derived Properties
     public DateTimeOffset SchedulingAnchorUtc =>
         NextDueAtUtc ?? ActiveFromUtc;
     
-    public Item Item { get; private set; } = null!;
+    // Components
     public ICollection<ScheduleExecutionLog> ExecutionLogs { get; private set; } = new List<ScheduleExecutionLog>();
 
+    // Mutators
     public void CheckAndUpdateNextAllowedExecution(DateTimeOffset utcNow)
         => NextAllowedExecutionAtUtc = NextAllowedExecutionAtUtc >= utcNow 
             ? NextAllowedExecutionAtUtc 
@@ -65,14 +63,14 @@ public sealed class Schedule
             OccurrenceCountLimit -= 1;
         }
     }
+    
+    // Constructors
     public ScheduleExecutionLog CreateExecutionLog(Guid executionLogId, DateTimeOffset utcNow)
     {
-        return new ScheduleExecutionLog(executionLogId, Id, SchedulingAnchorUtc, utcNow);
+        return new ScheduleExecutionLog(executionLogId, Id.Value, SchedulingAnchorUtc, utcNow);
     }
-    public static Schedule Create(
-        string ownerId,
-        Guid id,
-        string title,
+    public ScheduleExtension(
+        ItemId id,
         Guid? targetItemId,
         ScheduleFrequencyType frequencyType,
         int frequencyInterval,
@@ -89,12 +87,8 @@ public sealed class Schedule
         int[]? byDay,
         int[]? byMonthDay,
         int[]? byMonth,
-        string timezone,
-        DateTimeOffset createdAt)
+        string timezone)
     {
-        if (string.IsNullOrWhiteSpace(title))
-            throw new ArgumentException("Title must not be empty.", nameof(title));
-
         if (frequencyInterval <= 0)
             throw new ArgumentException("Frequency interval must be greater than 0.", nameof(frequencyInterval));
 
@@ -117,34 +111,30 @@ public sealed class Schedule
         var normalizedByMonthDay = Normalize(byMonthDay, 1, 31, nameof(byMonthDay));
         var normalizedByMonth = Normalize(byMonth, 1, 12, nameof(byMonth));
 
-        var item = Item.Create(id, ownerId, Workflow.Scheduling, title, ActivityPriority.None, createdAt);
 
-        return new Schedule(item)
-        {
-            TargetItemId = targetItemId,
-            ScheduleFrequencyType = frequencyType,
-            FrequencyInterval = frequencyInterval,
+        Id = id;
+        TargetItemId = targetItemId;
+        ScheduleFrequencyType = frequencyType;
+        FrequencyInterval = frequencyInterval;
 
-            OccurrenceCountLimit = occurrenceCountLimit,
-            MisfirePolicy = misfirePolicy,
-            OccurrenceTtl = occurrenceTtl,
-            ActionType = actionType,
-            Payload = payload,
+        OccurrenceCountLimit = occurrenceCountLimit;
+        MisfirePolicy = misfirePolicy;
+        OccurrenceTtl = occurrenceTtl;
+        ActionType = actionType;
+        Payload = payload;
 
-            StartTime = startTime,
-            EndTime = endTime,
+        StartTime = startTime;
+        EndTime = endTime;
 
-            ActiveFromUtc = activeFromUtc,
-            ActiveUntilUtc = activeUntilUtc,
+        ActiveFromUtc = activeFromUtc;
+        ActiveUntilUtc = activeUntilUtc;
 
-            LookaheadLimit = lookaheadLimit,
-            Timezone = timezone,
+        LookaheadLimit = lookaheadLimit;
+        Timezone = timezone;
 
-            // NEW
-            ByDay = normalizedByDay,
-            ByMonthDay = normalizedByMonthDay,
-            ByMonth = normalizedByMonth
-        };
+        ByDay = normalizedByDay;
+        ByMonthDay = normalizedByMonthDay;
+        ByMonth = normalizedByMonth;
 
         static int[]? Normalize(int[]? values, int min, int max, string name)
         {

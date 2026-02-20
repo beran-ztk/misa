@@ -3,6 +3,7 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
 using Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;
+using Misa.Contract.Items.Components.Schedules;
 using Misa.Contract.Shared.Results;
 using Misa.Ui.Avalonia.Features.Pages.Common;
 using Misa.Ui.Avalonia.Infrastructure.Client;

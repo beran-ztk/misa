@@ -3,8 +3,10 @@ using Misa.Application.Abstractions.Persistence;
 using Misa.Application.Abstractions.Time;
 using Misa.Application.Mappings;
 using Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;
+using Misa.Contract.Items.Components.Schedules;
 using Misa.Contract.Shared.Results;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
+using Misa.Domain.Items.Components.Schedules;
 
 namespace Misa.Application.Features.Entities.Extensions.Items.Features.Scheduling.Commands;
 
@@ -40,7 +42,7 @@ public class AddScheduleHandler(
     {
         var user = await authenticationRepository.FindByIdAsync(command.UserId, ct);
             
-        var scheduler = Schedule.Create(
+        var scheduler = ScheduleExtension.Create(
             ownerId: string.Empty,
             id: idGenerator.New(), 
             title: command.Title,

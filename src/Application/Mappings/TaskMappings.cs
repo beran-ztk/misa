@@ -1,24 +1,10 @@
-﻿using Misa.Application.Features.Entities.Extensions.Items.Extensions.Tasks.Commands;
-using Misa.Contract.Features.Entities.Extensions.Items.Extensions.Tasks;
+﻿using Misa.Contract.Features.Entities.Extensions.Items.Extensions.Tasks;
 using Misa.Domain.Items.Components.Tasks;
 
 namespace Misa.Application.Mappings;
 
 public static class TaskMappings
 {
-    public static List<TaskDto> ToDto(this List<TaskExtension> tasks)
-    {
-        return tasks.Select(t => t.ToDto()).ToList();
-    }
-    public static TaskDto ToDto(this TaskExtension taskExtension)
-    {
-        return new TaskDto
-        {
-            Id = taskExtension.Id,
-            Category = taskExtension.Category.MapToDto(),
-            Item = taskExtension.Item.ToDto()
-        };
-    }
     public static TaskCategory MapToDomain(this TaskCategoryDto categoryDto) =>
         categoryDto switch
         {

@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;
+using Misa.Contract.Items.Components.Schedules;
 using Misa.Contract.Shared.Results;
 using Misa.Ui.Avalonia.Features.Pages.Scheduling.Root;
 using Misa.Ui.Avalonia.Infrastructure.UI;

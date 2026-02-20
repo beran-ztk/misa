@@ -6,6 +6,7 @@ using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
 using Misa.Domain.Features.Entities.Features;
 using Misa.Domain.Items;
 using Misa.Domain.Items.Components.Activities.Sessions;
+using Misa.Domain.Items.Components.Schedules;
 using Misa.Domain.Items.Components.Tasks;
 using Misa.Domain.Shared.DomainEvents;
 
@@ -21,10 +22,8 @@ public class MisaContext(DbContextOptions<MisaContext> options, ITimeProvider ti
     public DbSet<SessionSegment> SessionSegments { get; set; } = null!;
     public DbSet<AuditChange> AuditChanges { get; set; } = null!;
 
-    public DbSet<Schedule> Schedulers { get; set; } = null!;
+    public DbSet<ScheduleExtension> Schedulers { get; set; } = null!;
     public DbSet<ScheduleExecutionLog> SchedulerExecutionLogs { get; set; } = null!;
-    public DbSet<JournalEntry> JournalEntries { get; set; } = null!;
-    public DbSet<JournalCategory> JournalCategories { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

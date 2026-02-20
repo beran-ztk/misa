@@ -1,7 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Misa.Application.Abstractions.Persistence;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
+using Misa.Domain.Items;
 using Misa.Domain.Items.Components.Activities.Sessions;
+using Misa.Domain.Items.Components.Schedules;
 using Misa.Infrastructure.Persistence.Context;
 using Item = Misa.Domain.Items.Item;
 
@@ -84,27 +86,27 @@ public class ItemRepository(MisaContext context) : IItemRepository
         await context.Sessions.AddAsync(session, ct);
     }
     
-    public async Task AddAsync(Schedule schedule, CancellationToken ct)
+    public async Task AddAsync(ScheduleExtension scheduleExtension, CancellationToken ct)
     {
-        await context.Schedulers.AddAsync(schedule, ct);
+        await context.Schedulers.AddAsync(scheduleExtension, ct);
     }
     public async Task<Item?> TryGetItemDetailsAsync(Guid id, CancellationToken ct)
     {
         return await context.Items
-            .FirstOrDefaultAsync(e => e.Id == id, ct);
+            .FirstOrDefaultAsync(e => e.Id == new ItemId(id), ct);
     }
     
     public async Task<Item?> TryGetItemAsync(Guid id, CancellationToken ct)
     {
         return await context.Items
-            .Include(e => e.Entity)
-            .SingleOrDefaultAsync(i => i.Id == id, ct);
+            .SingleOrDefaultAsync(i => i.Id == new ItemId(id), ct);
     }
 
-    public async Task<List<Schedule>> GetSchedulingRulesAsync(CancellationToken ct)
+    public async Task<List<Item>> GetSchedulingRulesAsync(CancellationToken ct)
     {
-        return await context.Schedulers
-            .Include(s => s.Item)
+        return await context.Items
+            .Include(s => s.Activity)
+            .Include(s => s.ScheduleExtension)
             .AsNoTracking()
             .ToListAsync(ct);
     }

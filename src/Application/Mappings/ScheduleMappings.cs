@@ -1,5 +1,7 @@
 ﻿using Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;
+using Misa.Contract.Items.Components.Schedules;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
+using Misa.Domain.Items.Components.Schedules;
 
 namespace Misa.Application.Mappings;
 
@@ -60,41 +62,39 @@ public static class ScheduleMappings
         ScheduleActionType.CreateTask => ScheduleActionTypeDto.CreateTask,
         _ => throw new ArgumentOutOfRangeException(nameof(domain), domain, "Unknown ScheduleActionType.")
     };
-    public static List<ScheduleDto> ToDto(this List<Schedule> schedulers)
+    public static List<ScheduleDto> ToDto(this List<ScheduleExtension> schedulers)
         => schedulers.Select(ToDto).ToList();
 
-    public static ScheduleDto ToDto(this Schedule schedule)
+    public static ScheduleDto ToDto(this ScheduleExtension scheduleExtension)
         => new()
         {
-            Id = schedule.Id,
+            Id = scheduleExtension.Id.Value,
 
-            FrequencyType = schedule.ScheduleFrequencyType.MapToDto(),
-            FrequencyInterval = schedule.FrequencyInterval,
+            FrequencyType = scheduleExtension.ScheduleFrequencyType.MapToDto(),
+            FrequencyInterval = scheduleExtension.FrequencyInterval,
 
-            OccurrenceCountLimit = schedule.OccurrenceCountLimit,
+            OccurrenceCountLimit = scheduleExtension.OccurrenceCountLimit,
 
-            ByDay = schedule.ByDay,
-            ByMonthDay = schedule.ByMonthDay,
-            ByMonth = schedule.ByMonth,
+            ByDay = scheduleExtension.ByDay,
+            ByMonthDay = scheduleExtension.ByMonthDay,
+            ByMonth = scheduleExtension.ByMonth,
 
-            MisfirePolicy = schedule.MisfirePolicy.MapToDto(),
+            MisfirePolicy = scheduleExtension.MisfirePolicy.MapToDto(),
 
-            LookaheadLimit = schedule.LookaheadLimit,
-            OccurrenceTtl = schedule.OccurrenceTtl,
+            LookaheadLimit = scheduleExtension.LookaheadLimit,
+            OccurrenceTtl = scheduleExtension.OccurrenceTtl,
 
-            Payload = schedule.Payload,
-            Timezone = schedule.Timezone,
+            Payload = scheduleExtension.Payload,
+            Timezone = scheduleExtension.Timezone,
 
-            StartTime = schedule.StartTime,
-            EndTime = schedule.EndTime,
+            StartTime = scheduleExtension.StartTime,
+            EndTime = scheduleExtension.EndTime,
 
-            ActiveFromUtc = schedule.ActiveFromUtc,
-            ActiveUntilUtc = schedule.ActiveUntilUtc,
+            ActiveFromUtc = scheduleExtension.ActiveFromUtc,
+            ActiveUntilUtc = scheduleExtension.ActiveUntilUtc,
 
-            LastRunAtUtc = schedule.LastRunAtUtc,
-            NextDueAtUtc = schedule.NextDueAtUtc,
-            NextAllowedExecutionAtUtc = schedule.NextAllowedExecutionAtUtc,
-
-            Item = schedule.Item.ToDto()
+            LastRunAtUtc = scheduleExtension.LastRunAtUtc,
+            NextDueAtUtc = scheduleExtension.NextDueAtUtc,
+            NextAllowedExecutionAtUtc = scheduleExtension.NextAllowedExecutionAtUtc
         };
 }

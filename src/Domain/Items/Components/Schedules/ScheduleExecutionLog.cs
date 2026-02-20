@@ -1,3 +1,5 @@
+using Misa.Domain.Items.Components.Schedules;
+
 namespace Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
 
 /// <summary>
@@ -36,7 +38,7 @@ public sealed class ScheduleExecutionLog
     
     public DateTimeOffset CreatedAtUtc { get; private set; }
     
-    public Schedule Schedule { get; private set; } = null!;
+    public ScheduleExtension ScheduleExtension { get; private set; } = null!;
 
     public void Claim(DateTimeOffset now)
     {

@@ -1,25 +1,30 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
+using Misa.Domain.Items;
+using Misa.Domain.Items.Components.Schedules;
+using Wolverine;
 
-namespace Misa.Infrastructure.Persistence.Configurations.Entities.Extensions.Items.Features.Scheduling;
+namespace Misa.Infrastructure.Persistence.Configurations.Items.Components.Schedules;
 
-public sealed class SchedulerConfiguration : IEntityTypeConfiguration<Schedule>
+public sealed class SchedulerConfiguration : IEntityTypeConfiguration<ScheduleExtension>
 {
-    public void Configure(EntityTypeBuilder<Schedule> builder)
+    public void Configure(EntityTypeBuilder<ScheduleExtension> builder)
     {
+        builder.ToTable("item_schedules");
+        
         builder.HasKey(s => s.Id);
 
-        builder.Property(s => s.Id);
+        builder.Property(s => s.Id)
+            .HasConversion(s => s.Value, value => new ItemId(value))
+            .ValueGeneratedNever();
         
         builder.Property(s => s.TargetItemId);
         
         builder.Property(s => s.ScheduleFrequencyType)
-            .IsRequired()
             .HasDefaultValue(ScheduleFrequencyType.Once);
 
         builder.Property(s => s.FrequencyInterval)
-            .IsRequired()
             .HasDefaultValue(1);
 
         builder.Property(s => s.OccurrenceCountLimit);
@@ -97,13 +102,8 @@ public sealed class SchedulerConfiguration : IEntityTypeConfiguration<Schedule>
         );
         
         // Relationships
-        builder.HasOne(s => s.Item)
-            .WithOne()
-            .HasForeignKey<Schedule>(s => s.Id)
-            .OnDelete(DeleteBehavior.Cascade);
-
         builder.HasMany(s => s.ExecutionLogs)
-            .WithOne(e => e.Schedule)
+            .WithOne(e => e.ScheduleExtension)
             .HasForeignKey(e => e.SchedulerId)
             .OnDelete(DeleteBehavior.Cascade);
     }

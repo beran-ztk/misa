@@ -1,7 +1,9 @@
 ﻿using Misa.Domain.Exceptions;
 using Misa.Domain.Features.Audit;
+using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
 using Misa.Domain.Features.Entities.Features;
 using Misa.Domain.Items.Components.Activities;
+using Misa.Domain.Items.Components.Schedules;
 using Misa.Domain.Items.Components.Tasks;
 using Misa.Domain.Shared.DomainEvents;
 
@@ -45,7 +47,11 @@ public sealed class Item : DomainEventEntity
         string title,
         string description,
         TaskCategory category,
-        DateTimeOffset createdAtUtc)
+        DateTimeOffset createdAtUtc,
+        
+        ActivityState state,
+        ActivityPriority priority,
+        DateTimeOffset dueAt)
     {
         var item = new Item(
             id: id,
@@ -53,9 +59,37 @@ public sealed class Item : DomainEventEntity
             workflow: Workflow.Task,
             title: title,
             description: description,
-            createdAtUtc: createdAtUtc);
+            createdAtUtc: createdAtUtc)
+        {
+            Activity = new ItemActivity(id, state, priority, dueAt),
+            TaskExtension = new TaskExtension(id, category)
+        };
 
-        item.TaskExtension = new TaskExtension(item.Id, category);
+        return item;
+    }
+    public static Item CreateSchedule(
+        ItemId id,
+        string ownerId,
+        string title,
+        string description,
+        DateTimeOffset createdAtUtc,
+        ScheduleExtension scheduleExtension,
+        
+        ActivityState state,
+        ActivityPriority priority,
+        DateTimeOffset dueAt)
+    {
+        var item = new Item(
+            id: id,
+            ownerId: ownerId,
+            workflow: Workflow.Schedule,
+            title: title,
+            description: description,
+            createdAtUtc: createdAtUtc)
+        {
+            Activity = new ItemActivity(id, state, priority, dueAt),
+            ScheduleExtension = scheduleExtension
+        };
 
         return item;
     }
@@ -81,6 +115,7 @@ public sealed class Item : DomainEventEntity
     // Components-Activity
     public ItemActivity? Activity { get; private set; }
     public TaskExtension? TaskExtension { get; private set; }
+    public ScheduleExtension? ScheduleExtension { get; private set; }
 
     // Derived Properties
     

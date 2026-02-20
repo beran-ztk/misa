@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Misa.Application.Abstractions.Persistence;
+using Misa.Domain.Items;
 using Misa.Domain.Items.Components.Tasks;
 using Misa.Infrastructure.Persistence.Context;
 
@@ -17,20 +18,22 @@ public class TaskRepository(MisaContext context) : ITaskRepository
         await context.Tasks.AddAsync(taskExtension, ct);
     }
     
-    public async Task<TaskExtension?> TryGetTaskAsync(Guid id, CancellationToken ct)
+    public async Task<Item?> TryGetTaskAsync(Guid id, CancellationToken ct)
     {
-        return await context.Tasks
-            .Include(t => t.Item)
+        return await context.Items
+            .Include(t => t.Activity)
+            .Include(t => t.TaskExtension)
             .AsNoTracking()
-            .FirstOrDefaultAsync(t => t.Id == id, cancellationToken: ct);
+            .FirstOrDefaultAsync(t => t.Id == new ItemId(id), cancellationToken: ct);
     }
     
-    public async Task<List<TaskExtension>> GetTasksAsync(string userId, CancellationToken ct)
+    public async Task<List<Item>> GetTasksAsync(string userId, CancellationToken ct)
     {
-        return await context.Tasks
-            .Include(t => t.Item)
-            .Where(t => t.Item.OwnerId == userId)
-            .OrderByDescending(t => t.Item.CreatedAt)
+        return await context.Items
+            .Include(t => t.Activity)
+            .Include(t => t.TaskExtension)
+            .Where(t => t.OwnerId == userId)
+            .OrderByDescending(t => t.CreatedAt)
             .AsNoTracking()
             .ToListAsync(ct);
     }

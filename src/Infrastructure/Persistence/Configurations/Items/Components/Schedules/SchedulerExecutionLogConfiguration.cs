@@ -75,7 +75,7 @@ public sealed class SchedulerExecutionLogConfiguration : IEntityTypeConfiguratio
         );
         
         // Relationship
-        builder.HasOne(e => e.Schedule)
+        builder.HasOne(e => e.ScheduleExtension)
             .WithMany(s => s.ExecutionLogs)
             .HasForeignKey(e => e.SchedulerId)
             .OnDelete(DeleteBehavior.Cascade);

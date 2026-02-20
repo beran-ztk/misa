@@ -7,12 +7,13 @@ namespace Misa.Application.Features.Chronicle;
 
 public sealed record GetJournalEntriesQuery;
 
-public class GetJournalEntriesHandler(IChronicleRepository repository)
+public class GetJournalEntriesHandler()
 {
     public async Task<Result<List<JournalEntryDto>>> HandleAsync(GetJournalEntriesQuery query, CancellationToken ct)
     {
-        var journals = await repository.GetJournalEntriesAsync(ct);
-        var formattedJournals = journals.ToDto();
-        return Result<List<JournalEntryDto>>.Ok(formattedJournals);
+        // var journals = await repository.GetJournalEntriesAsync(ct);
+        // var formattedJournals = journals.ToDto();
+        // return Result<List<JournalEntryDto>>.Ok(formattedJournals);
+        return Result<List<JournalEntryDto>>.Failure("not.implemented", "Has not been implemented.");
     }
 }

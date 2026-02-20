@@ -22,33 +22,32 @@ public sealed record CreateJournalEntryCommand(
 
 // Handler
 public sealed class CreateJournalEntryHandler(
-    IChronicleRepository repository,
     ITimeProvider timeProvider,
     IIdGenerator idGenerator)
 {
     public async Task<Result<JournalEntryDto>> HandleAsync(CreateJournalEntryCommand command, CancellationToken ct)
     {
-        var journal = await repository.GetJournalAsync(command.UserId, ct);
-        var id = idGenerator.New();
-        var createdAt = timeProvider.UtcNow;
-
-        var entry = new JournalEntry(
-            id: new JournalEntryId(id),
-            journalId: journal.Id,
-            description: command.Description.Trim(),
-            occurredAt: command.OccurredAt.ToUniversalTime(),
-            untilAt: command.UntilAt?.ToUniversalTime(),
-            createdAt: createdAt,
-            originId: null,
-            systemType: null,
-            categoryId: command.CategoryId is null
-                ? null
-                : new JournalCategoryId(command.CategoryId.Value)
-        );
-
-        await repository.AddAsync(entry, ct);
-        await repository.SaveChangesAsync(ct);
+        // var journal = await repository.GetJournalAsync(command.UserId, ct);
+        // var id = idGenerator.New();
+        // var createdAt = timeProvider.UtcNow;
+        //
+        // var entry = new JournalEntry(
+        //     id: new JournalEntryId(id),
+        //     journalId: journal.Id,
+        //     description: command.Description.Trim(),
+        //     occurredAt: command.OccurredAt.ToUniversalTime(),
+        //     untilAt: command.UntilAt?.ToUniversalTime(),
+        //     createdAt: createdAt,
+        //     originId: null,
+        //     systemType: null,
+        //     categoryId: command.CategoryId is null
+        //         ? null
+        //         : new JournalCategoryId(command.CategoryId.Value)
+        // );
+        //
+        // await repository.AddAsync(entry, ct);
+        // await repository.SaveChangesAsync(ct);
         
-        return Result<JournalEntryDto>.Ok(entry.ToDto());
+        return Result<JournalEntryDto>.Failure("not.implemented", "Has not been implemented.");
     }
 }

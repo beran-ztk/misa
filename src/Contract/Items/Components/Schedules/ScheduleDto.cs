@@ -1,7 +1,7 @@
-﻿using System.Runtime.Serialization;
-using Misa.Contract.Features.Entities.Extensions.Items.Base;
+﻿using Misa.Contract.Features.Entities.Extensions.Items.Base;
+using Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;
 
-namespace Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;
+namespace Misa.Contract.Items.Components.Schedules;
 
 public sealed class ScheduleDto
 {
@@ -34,7 +34,7 @@ public sealed class ScheduleDto
     public DateTimeOffset? NextDueAtUtc { get; init; }
     public DateTimeOffset? NextAllowedExecutionAtUtc { get; init; }
 
-    public required ItemDto Item { get; init; }
+    public ItemDto Item { get; set; }
     
     // Derived Summary
     private DateTimeOffset UtcNow { get; } = DateTimeOffset.UtcNow;

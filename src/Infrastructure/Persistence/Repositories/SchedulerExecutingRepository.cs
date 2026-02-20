@@ -10,7 +10,7 @@ public class SchedulerExecutingRepository(MisaContext context) : ISchedulerExecu
     public async Task<List<ScheduleExecutionLog>> GetPendingExecutionLogsAsync(CancellationToken ct)
     {
         return await context.SchedulerExecutionLogs
-            .Include(x => x.Schedule)
+            .Include(x => x.ScheduleExtension)
             .Where(x => x.Status == ScheduleExecutionStatus.Pending)
             .ToListAsync(ct);
     }

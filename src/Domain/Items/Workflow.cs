@@ -3,6 +3,5 @@
 public enum Workflow
 {
     Task,
-    Deadline,
-    Scheduling
+    Schedule
 }

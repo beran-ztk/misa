@@ -1,5 +1,6 @@
 using Misa.Application.Features.Entities.Extensions.Items.Features.Scheduling.Commands;
 using Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;
+using Misa.Contract.Items.Components.Schedules;
 using Misa.Contract.Shared.Results;
 using Wolverine;
 
