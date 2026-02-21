@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Misa.Application.Features.Entities.Extensions.Items.Features.Scheduling.Commands;
+using Misa.Application.Features.Items.Schedules.Commands;
 using Misa.Contract.Items.Components.Schedules;
 using Misa.Contract.Shared.Results;
 using Wolverine;
@@ -18,7 +19,7 @@ public static class CreateScheduleEndpoint
         IMessageBus bus, 
         CancellationToken ct)
     {
-        var command = new AddScheduleCommand(
+        var command = new CreateScheduleCommand(
             dto.Title,
             dto.Description,
             dto.TargetItemId,

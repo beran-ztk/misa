@@ -8,9 +8,9 @@ using Misa.Contract.Shared.Results;
 using Misa.Domain.Items;
 using Misa.Domain.Items.Components.Schedules;
 
-namespace Misa.Application.Features.Entities.Extensions.Items.Features.Scheduling.Commands;
+namespace Misa.Application.Features.Items.Schedules.Commands;
 
-public record AddScheduleCommand(
+public record CreateScheduleCommand(
     string Title,
     string Description,
     Guid? TargetItemId,
@@ -31,14 +31,14 @@ public record AddScheduleCommand(
     int[]? ByMonth
 );
 
-public class AddScheduleHandler(
+public class CreateScheduleHandler(
     IItemRepository repository, 
     ITimeProvider timeProvider,
     ITimeZoneConverter timeZoneConverter, 
     IIdGenerator idGenerator,
     ICurrentUser currentUser)
 {
-    public async Task<Result<ScheduleExtensionDto>> Handle(AddScheduleCommand command, CancellationToken ct)
+    public async Task<Result<ScheduleExtensionDto>> Handle(CreateScheduleCommand command, CancellationToken ct)
     {
         var scheduleExtension = new ScheduleExtension(
             targetItemId: command.TargetItemId,
@@ -62,7 +62,7 @@ public class AddScheduleHandler(
             
         var scheduler = Item.CreateSchedule(
             id: new ItemId(idGenerator.New()), 
-            ownerId: string.Empty,
+            ownerId: currentUser.UserId,
             title: command.Title,
             description: command.Description,
             createdAtUtc: timeProvider.UtcNow,
