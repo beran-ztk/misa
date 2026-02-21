@@ -1,16 +1,22 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Misa.Application.Abstractions.Persistence;
-using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
-using Misa.Domain.Features.Entities.Extensions.Items.Features.Sessions;
+using Misa.Domain.Items;
+using Misa.Domain.Items.Components.Activities.Sessions;
+using Misa.Domain.Items.Components.Schedules;
 using Misa.Infrastructure.Persistence.Context;
-using Item = Misa.Domain.Features.Entities.Extensions.Items.Base.Item;
+using Item = Misa.Domain.Items.Item;
 
 namespace Misa.Infrastructure.Persistence.Repositories;
 
-public class ItemRepository(DefaultContext context) : IItemRepository
+public class ItemRepository(MisaContext context) : IItemRepository
 {
     public async Task SaveChangesAsync(CancellationToken  ct = default)
         => await context.SaveChangesAsync(ct);
+
+    public async Task AddAsync(Item item, CancellationToken ct)
+    {
+        await context.Items.AddAsync(item, ct);
+    }
 
     public async Task<List<Session>> GetActiveSessionsWithAutostopAsync(CancellationToken ct)
     {
@@ -39,7 +45,7 @@ public class ItemRepository(DefaultContext context) : IItemRepository
     {
         return await context.Sessions
             .Where(s =>
-                s.ItemId == id
+                s.ItemId.Value == id
                 && s.State == SessionState.Ended) 
             .Include(s => s.Segments)
             .OrderByDescending(s => s.CreatedAtUtc)
@@ -51,7 +57,7 @@ public class ItemRepository(DefaultContext context) : IItemRepository
     {
         return await context.Sessions
             .Where(s =>
-                s.ItemId == id
+                s.ItemId.Value == id
                 && (s.State == SessionState.Running
                 || s.State == SessionState.Paused)) 
             .Include(s => s.Segments)
@@ -63,7 +69,7 @@ public class ItemRepository(DefaultContext context) : IItemRepository
     {
         return await context.Sessions
             .Where(s =>
-                s.ItemId == id
+                s.ItemId.Value == id
                 && s.State == SessionState.Running)
             .Include(s => s.Segments.Where(seg => seg.EndedAtUtc == null))
             .OrderByDescending(s => s.CreatedAtUtc)
@@ -73,7 +79,7 @@ public class ItemRepository(DefaultContext context) : IItemRepository
     {
         return await context.Sessions
             .Where(s =>
-                s.ItemId == id
+                s.ItemId.Value == id
                 && s.State == SessionState.Paused)
             .OrderByDescending(s => s.CreatedAtUtc)
             .FirstOrDefaultAsync(ct);
@@ -84,31 +90,22 @@ public class ItemRepository(DefaultContext context) : IItemRepository
         await context.Sessions.AddAsync(session, ct);
     }
     
-    public async Task AddAsync(Scheduler scheduler, CancellationToken ct)
+    public async Task AddAsync(ScheduleExtension scheduleExtension, CancellationToken ct)
     {
-        await context.Schedulers.AddAsync(scheduler, ct);
+        await context.Schedulers.AddAsync(scheduleExtension, ct);
     }
-    public async Task<Item?> TryGetItemDetailsAsync(Guid id, CancellationToken ct)
-    {
-        return await context.Items
-            .Include(e => e.Entity)
-                .ThenInclude(e => e.Descriptions)
-            
-            .FirstOrDefaultAsync(e => e.Id == id, ct);
-    }
-    
     public async Task<Item?> TryGetItemAsync(Guid id, CancellationToken ct)
     {
         return await context.Items
-            .Include(e => e.Entity)
-            .SingleOrDefaultAsync(i => i.Id == id, ct);
+            .SingleOrDefaultAsync(i => i.Id == new ItemId(id), ct);
     }
 
-    public async Task<List<Scheduler>> GetSchedulingRulesAsync(CancellationToken ct)
+    public async Task<List<Item>> GetSchedulesAsync(string userId, CancellationToken ct)
     {
-        return await context.Schedulers
-            .Include(s => s.Item)
-            .ThenInclude(i => i.Entity)
+        return await context.Items
+            .Include(s => s.ScheduleExtension)
+            .Where(t => t.OwnerId == userId && t.Workflow == Workflow.Schedule)
+            .OrderByDescending(t => t.CreatedAt)
             .AsNoTracking()
             .ToListAsync(ct);
     }

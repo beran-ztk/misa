@@ -4,18 +4,16 @@ using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Misa.Contract.Features.Common.Deadlines;
-using Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;
-using Misa.Ui.Avalonia.Features.Inspector.Root;
-using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Scheduling.Forms;
-using Misa.Ui.Avalonia.Infrastructure.UI;
-using ReactiveUI;
 
 namespace Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Base;
 
 public partial class InspectorEntryViewModel
 {
-    public DateTime? Deadline => Facade.State.Deadline?.DueAt.ToLocalTime().DateTime;
+    [ObservableProperty] private DateTimeOffset? _deadlineDate;
+
+    [ObservableProperty] private TimeSpan? _deadlineTime;
+    
+    public DateTime? Deadline => Facade.State.Item?.Activity?.DueAt?.ToLocalTime().DateTime;
     public bool HasDeadline => Deadline is not null;
     public string DeadlineDisplay
         => Deadline is null
@@ -25,25 +23,10 @@ public partial class InspectorEntryViewModel
     [RelayCommand]
     private async Task ShowUpsertDeadlinePanelAsync()
     {
-        var itemId = Facade.State.Item.Id;
-
-        var formVm = new UpsertDeadlineViewModel(itemId, Deadline, Facade.Gateway);
-
-        var result = await Facade.PanelProxy.OpenAsync(Panels.UpsertDeadline, formVm);
-
-        if (result is null) return;
-
-        Facade.State.Deadline = result;
     }
 
     [RelayCommand]
     private async Task DeleteDeadlineAsync(CancellationToken ct)
     {
-        var itemId = Facade.State.Item.Id;
-
-        var result = await Facade.Gateway.DeleteDeadlineAsync(itemId);
-
-        if (result.IsSuccess)
-            Facade.State.Deadline = null;
     }
 }

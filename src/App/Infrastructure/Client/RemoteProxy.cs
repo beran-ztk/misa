@@ -1,18 +1,25 @@
 using System;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
 using Misa.Contract.Shared.Results;
+using Misa.Ui.Avalonia.Infrastructure.States;
 
 namespace Misa.Ui.Avalonia.Infrastructure.Client;
 
-public class RemoteProxy(HttpClient httpClient)
+public class RemoteProxy(HttpClient httpClient, UserState userState)
 {
+    private HttpRequestMessage AddJwtToken(HttpRequestMessage request)
+    {
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", userState.Token);
+        return request;
+    }
     public async Task<Result<T>> SendAsync<T>(HttpRequestMessage request)
     {
         try
         {
-            using var response = await httpClient.SendAsync(request);
+            using var response = await httpClient.SendAsync(AddJwtToken(request));
 
             var result = await response.Content.ReadFromJsonAsync<Result<T>>();
 
@@ -35,7 +42,7 @@ public class RemoteProxy(HttpClient httpClient)
     {
         try
         {
-            using var response = await httpClient.SendAsync(request);
+            using var response = await httpClient.SendAsync(AddJwtToken(request));
 
             var result = await response.Content.ReadFromJsonAsync<Result>();
 

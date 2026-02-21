@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Misa.Application.Features.Entities.Extensions.Items.Features.Scheduling.Commands;
-using Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;
+using Misa.Application.Features.Items.Schedules.Commands;
+using Misa.Contract.Items.Components.Schedules;
 using Misa.Contract.Shared.Results;
 using Wolverine;
 
@@ -12,15 +13,15 @@ public static class CreateScheduleEndpoint
     {
         api.MapPost("scheduling/{userId:guid}", AddSchedulingRule);
     }
-    private static async Task<Result<ScheduleDto>> AddSchedulingRule(
+    private static async Task<Result<ScheduleExtensionDto>> AddSchedulingRule(
         Guid userId,
         [FromBody] AddScheduleDto dto, 
         IMessageBus bus, 
         CancellationToken ct)
     {
-        var command = new AddScheduleCommand(
-            userId,
+        var command = new CreateScheduleCommand(
             dto.Title,
+            dto.Description,
             dto.TargetItemId,
             dto.ScheduleFrequencyType,
             dto.FrequencyInterval,
@@ -39,7 +40,7 @@ public static class CreateScheduleEndpoint
             dto.ByMonth
         );
             
-        var result = await bus.InvokeAsync<Result<ScheduleDto>>(command, ct);
+        var result = await bus.InvokeAsync<Result<ScheduleExtensionDto>>(command, ct);
         return result;
     }
 }

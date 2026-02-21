@@ -1,7 +1,4 @@
-using Misa.Api.Endpoints;
 using Misa.Api.Endpoints.Authentication;
-using Misa.Api.Endpoints.Deadlines;
-using Misa.Api.Endpoints.Descriptions;
 using Misa.Api.Endpoints.Inspector;
 using Misa.Api.Endpoints.Schedules;
 using Misa.Api.Endpoints.Sessions;
@@ -22,10 +19,8 @@ public static class EndpointRegistration
         api.AddEndpointFilter<ResultExceptionFilter>();
 
         api.MapTaskEndpoints();
-        api.MapDeadlineEndpoints();
         api.MapSessionEndpoints();
         api.MapScheduleEndpoints();
-        api.MapDescriptionEndpoints();
         api.MapAuthenticationEndpoints();
         api.MapInspectorEndpoints();
     }
@@ -36,11 +31,6 @@ public static class EndpointRegistration
         GetTasksEndpoint.Map(api);
     }
 
-    private static void MapDeadlineEndpoints(this IEndpointRouteBuilder api)
-    {
-        UpsertDeadlineEndpoint.Map(api);
-        DeleteDeadlineEndpoint.Map(api);
-    }
     private static void MapSessionEndpoints(this IEndpointRouteBuilder api)
     {
         StartSessionEndpoint.Map(api);
@@ -53,12 +43,6 @@ public static class EndpointRegistration
         CreateScheduleEndpoint.Map(api);
         GetSchedulesEndpoint.Map(api);
     }
-    private static void MapDescriptionEndpoints(this IEndpointRouteBuilder api)
-    {
-        CreateDescriptionEndpoint.Map(api);
-        UpdateDescriptionEndpoint.Map(api);
-        DeleteDescriptionEndpoint.Map(api);
-    }
     private static void MapAuthenticationEndpoints(this IEndpointRouteBuilder api)
     {
         RegisterEndpoint.Map(api);
@@ -66,7 +50,6 @@ public static class EndpointRegistration
     }
     private static void MapInspectorEndpoints(this IEndpointRouteBuilder api)
     {
-        GetItemDetailsEndpoint.Map(api);
         GetSessionDetailsEndpoint.Map(api);
     }
 }

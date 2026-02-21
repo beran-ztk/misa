@@ -2,10 +2,7 @@ using System;
 using System.Net.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Misa.Ui.Avalonia.Features.Inspector.Root;
-using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Scheduling.Forms;
 using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions.Forms;
-using Misa.Ui.Avalonia.Features.Pages.Chronicle.Create;
-using Misa.Ui.Avalonia.Features.Pages.Chronicle.Root;
 using Misa.Ui.Avalonia.Features.Pages.Common;
 using Misa.Ui.Avalonia.Features.Pages.Scheduling.Create;
 using Misa.Ui.Avalonia.Features.Pages.Scheduling.Root;
@@ -36,7 +33,6 @@ public static class CompositionRoot
         sc.AddInspector();
         sc.AddTasksFeature();
         sc.AddSchedulingFeature();
-        sc.AddChronicleFeature();
         sc.AddUtilities();
 
         return sc.BuildServiceProvider();
@@ -102,7 +98,6 @@ public static class CompositionRoot
         sc.AddTransient<StartSessionView>();
         sc.AddTransient<PauseSessionView>();
         sc.AddTransient<EndSessionView>();
-        sc.AddTransient<UpsertDeadlineView>();
     }
 
     private static void AddTasksFeature(this IServiceCollection sc)
@@ -124,17 +119,6 @@ public static class CompositionRoot
 
         sc.AddTransient<CreateScheduleView>();
         sc.AddTransient<CreateScheduleViewModel>();
-    }
-    
-    private static void AddChronicleFeature(this IServiceCollection sc)
-    {
-        sc.AddSingleton<ChronicleState>();
-        sc.AddTransient<CreateJournalState>();
-        sc.AddSingleton<ChronicleViewModel>();
-        sc.AddSingleton<ChronicleGateway>();
-
-        sc.AddTransient<CreateJournalView>();
-        sc.AddTransient<CreateJournalViewModel>();
     }
 
     private static void AddUtilities(this IServiceCollection sc)

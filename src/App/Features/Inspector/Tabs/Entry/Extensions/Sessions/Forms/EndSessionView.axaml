@@ -14,7 +14,7 @@
                        Classes="addpanel-text"/>
             <ComboBox Classes="addpanel-combo"
                       ItemsSource="{Binding Efficiencies}"
-                      SelectedItem="{Binding SelectedEfficiency}" />
+                      SelectedItem="{Binding SelectedSessionEfficiency}" />
         </StackPanel>
 
         <StackPanel Classes="addpanel-controls">
@@ -22,7 +22,7 @@
                        Classes="addpanel-text"/>
             <ComboBox Classes="addpanel-combo"
                       ItemsSource="{Binding Concentrations}"
-                      SelectedItem="{Binding SelectedConcentration}" />
+                      SelectedItem="{Binding SelectedSessionConcentration}" />
         </StackPanel>
 
         <StackPanel Classes="addpanel-controls">

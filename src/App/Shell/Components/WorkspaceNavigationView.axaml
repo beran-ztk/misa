@@ -52,8 +52,7 @@
                     </Grid>
                 </Button>
 
-                <Button Classes="workspace-nav" ToolTip.Tip="Chronicle"
-                        Command="{Binding ShowChroniclesCommand}">
+                <Button Classes="workspace-nav" ToolTip.Tip="Chronicle">
                     <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
                         <Image Grid.Column="0" Width="16" Height="16"
                                Source="{SvgImage /Assets/Icons/Shell/Navigation/notebook.svg}"/>

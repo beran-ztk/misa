@@ -23,17 +23,19 @@ public partial class AuthenticationWindowViewModel : ViewModelBase
     private TimeZoneService TimeZoneService { get; }
     private UserState UserState { get; }
     private IServiceProvider Services { get; }
-
+    private RemoteProxy RemoteProxy { get; }
     public AuthenticationWindowViewModel(
         IAuthenticationService authService,
         TimeZoneService timeZoneService,
         UserState userState,
-        IServiceProvider services)
+        IServiceProvider services,
+        RemoteProxy remoteProxy)
     {
         AuthService = authService;
         TimeZoneService = timeZoneService;
         UserState = userState;
         Services = services;
+        RemoteProxy = remoteProxy;
 
         TimeZoneIds = new ObservableCollection<string>(TimeZoneService.Ids);
         SelectedTimeZoneId = TimeZoneIds.Contains("Europe/Berlin") ? "Europe/Berlin" : TimeZoneIds.FirstOrDefault();
@@ -54,6 +56,7 @@ public partial class AuthenticationWindowViewModel : ViewModelBase
     [ObservableProperty] private string _username = string.Empty;
     [ObservableProperty] private string _password = string.Empty;
     [ObservableProperty] private string _confirmPassword = string.Empty;
+    [ObservableProperty] private string _email = string.Empty;
 
     [ObservableProperty] private bool _isBusy;
     public bool IsNotBusy => !IsBusy;
@@ -73,6 +76,7 @@ public partial class AuthenticationWindowViewModel : ViewModelBase
 
             if (IsRegisterMode)
             {
+                if (string.IsNullOrWhiteSpace(Email)) return false;
                 if (!string.Equals(Password, ConfirmPassword, StringComparison.Ordinal)) return false;
                 if (string.IsNullOrWhiteSpace(SelectedTimeZoneId)) return false;
             }
@@ -97,6 +101,7 @@ public partial class AuthenticationWindowViewModel : ViewModelBase
     partial void OnUsernameChanged(string value) => OnPropertyChanged(nameof(CanSubmit));
     partial void OnPasswordChanged(string value) => OnPropertyChanged(nameof(CanSubmit));
     partial void OnConfirmPasswordChanged(string value) => OnPropertyChanged(nameof(CanSubmit));
+    partial void OnEmailChanged(string value) => OnPropertyChanged(nameof(CanSubmit));
     partial void OnSelectedTimeZoneIdChanged(string? value) => OnPropertyChanged(nameof(CanSubmit));
 
     partial void OnIsBusyChanged(bool value)
@@ -116,12 +121,11 @@ public partial class AuthenticationWindowViewModel : ViewModelBase
     [RelayCommand]
     private void Bypass()
     {
-        // Optional: Wenn du Bypass behalten willst, hier entweder Dummy-User setzen oder einfach Shell öffnen.
         OpenShellAndCloseAuth();
     }
 
     [RelayCommand]
-    private void Close()
+    private static void Close()
     {
         if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             desktop.Shutdown();
@@ -137,27 +141,31 @@ public partial class AuthenticationWindowViewModel : ViewModelBase
 
         try
         {
-            AuthResponseDto responseDto;
-
             if (IsRegisterMode)
             {
                 var req = new RegisterRequestDto(
-                    Username.Trim(),
+                    Email,
+                    Username,
                     Password,
                     SelectedTimeZoneId ?? "Europe/Berlin");
 
-                responseDto = await AuthService.RegisterAsync(req);
+                var response = await AuthService.RegisterAsync(req);
+                Username = response.User.Username;
+                Password = string.Empty;
+                IsRegisterMode = false;
+                return;
             }
             else
             {
-                var req = new LoginRequestDto(
+                var request = new LoginRequestDto(
                     Username.Trim(),
                     Password);
 
-                responseDto = await AuthService.LoginAsync(req);
+                var response = await AuthService.LoginAsync(request);
+                UserState.Id = response.Id;
+                UserState.Username = response.Name;
+                UserState.Token = response.Token;
             }
-
-            UserState.User = responseDto.User;
 
             OpenShellAndCloseAuth();
         }
@@ -170,7 +178,7 @@ public partial class AuthenticationWindowViewModel : ViewModelBase
             IsBusy = false;
         }
     }
-
+    
     private void OpenShellAndCloseAuth()
     {
         if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop)

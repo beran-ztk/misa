@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Commands;
-using Misa.Contract.Features.Entities.Extensions.Items.Features.Session;
+using Misa.Contract.Items.Components.Activity.Sessions;
 using Misa.Contract.Shared.Results;
 using Wolverine;
 
@@ -13,7 +13,7 @@ public static class PauseSessionEndpoint
         api.MapPost("items/{itemId:guid}/sessions/pause", PauseSession);
     }
 
-    private static async Task<Result<SessionResolvedDto>> PauseSession(
+    private static async Task<Result<SessionDto>> PauseSession(
         [FromRoute] Guid itemId,
         [FromBody] PauseSessionDto dto,
         IMessageBus bus,
@@ -24,7 +24,7 @@ public static class PauseSessionEndpoint
             dto.PauseReason
         );
 
-        var res = await bus.InvokeAsync<Result<SessionResolvedDto>>(cmd, ct);
+        var res = await bus.InvokeAsync<Result<SessionDto>>(cmd, ct);
         return res;
     }
 }

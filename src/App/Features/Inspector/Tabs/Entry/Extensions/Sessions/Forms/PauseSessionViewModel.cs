@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
-using Misa.Contract.Features.Entities.Extensions.Items.Features.Session;
+using Misa.Contract.Items.Components.Activity.Sessions;
 using Misa.Contract.Shared.Results;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Inspector.Root;
@@ -9,7 +9,7 @@ using Misa.Ui.Avalonia.Infrastructure.UI;
 
 namespace Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions.Forms;
 
-public partial class PauseSessionViewModel(Guid itemId, InspectorGateway gateway) : ViewModelBase, IHostedForm<SessionResolvedDto>
+public partial class PauseSessionViewModel(Guid itemId, InspectorGateway gateway) : ViewModelBase, IHostedForm<SessionDto>
 {
     // Host
     public string Title => "Pause session";
@@ -21,7 +21,7 @@ public partial class PauseSessionViewModel(Guid itemId, InspectorGateway gateway
     // Content
     [ObservableProperty] private string? _pauseReason;
 
-    public async Task<Result<SessionResolvedDto>> SubmitAsync()
+    public async Task<Result<SessionDto>> SubmitAsync()
     {
 
         var dto = new PauseSessionDto(

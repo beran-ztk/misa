@@ -1,23 +1,16 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Misa.Application.Abstractions.Persistence;
-using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
-using Misa.Domain.Features.Messaging;
+using Misa.Domain.Items.Components.Schedules;
 using Misa.Infrastructure.Persistence.Context;
 
 namespace Misa.Infrastructure.Persistence.Repositories;
 
-public class SchedulerExecutingRepository(DefaultContext context) : ISchedulerExecutingRepository
+public class SchedulerExecutingRepository(MisaContext context) : ISchedulerExecutingRepository
 {
-    public async Task AddOutboxMessageAsync(Outbox outbox, CancellationToken ct)
-    {
-        await context.Outboxes.AddAsync(outbox, ct);
-    }
-
-    public async Task<List<SchedulerExecutionLog>> GetPendingExecutionLogsAsync(CancellationToken ct)
+    public async Task<List<ScheduleExecutionLog>> GetPendingExecutionLogsAsync(CancellationToken ct)
     {
         return await context.SchedulerExecutionLogs
-            .Include(x => x.Scheduler)
-            .Where(x => x.Status == SchedulerExecutionStatus.Pending)
+            .Where(x => x.Status == ScheduleExecutionStatus.Pending)
             .ToListAsync(ct);
     }
 

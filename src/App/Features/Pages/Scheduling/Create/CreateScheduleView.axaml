@@ -22,6 +22,15 @@
                        IsVisible="{Binding State.HasValidationError}" />
         </StackPanel>
 
+        <!-- Description -->
+        <StackPanel Classes="addpanel-controls">
+            <TextBlock Text="Add a Description" 
+                       Classes="addpanel-text" />
+            <TextBox Classes="addpanel-oneliner"
+                     Watermark="Description…"
+                     Text="{Binding State.Description, Mode=TwoWay}" />
+        </StackPanel>
+        
         <!-- Frequency -->
         <StackPanel Classes="addpanel-controls">
             <TextBlock Text="Select the frequency type"

@@ -1,22 +1,27 @@
 using System;
 using System.Collections.Generic;
 using CommunityToolkit.Mvvm.ComponentModel;
-using Misa.Contract.Features.Entities.Extensions.Items.Base;
-using Misa.Contract.Features.Entities.Extensions.Items.Extensions.Tasks;
+using Misa.Contract.Items.Components.Activity;
+using Misa.Contract.Items.Components.Tasks;
+using Misa.Ui.Avalonia.Common.Converters;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Tasks.Root;
 
 public sealed partial class CreateTaskState : ObservableObject
 {
     [ObservableProperty] private string _title = string.Empty;
+    [ObservableProperty] private string _description = string.Empty;
     [ObservableProperty] private TaskCategoryDto _selectedCategoryDto;
-    [ObservableProperty] private PriorityDto _selectedPriorityDto;
+    [ObservableProperty] private ActivityPriorityDto _selectedActivityPriorityDto;
+    
+    [ObservableProperty] private DateTimeOffset? _deadlineDate;
+    [ObservableProperty] private TimeSpan? _deadlineTime;
 
     [ObservableProperty] private bool _titleHasValidationError;
     [ObservableProperty] private string _errorMessageTitle = string.Empty;
 
     public IReadOnlyList<TaskCategoryDto> Categories { get; } = Enum.GetValues<TaskCategoryDto>();
-    public IReadOnlyList<PriorityDto> Priorities { get; } = Enum.GetValues<PriorityDto>();
+    public IReadOnlyList<ActivityPriorityDto> Priorities { get; } = Enum.GetValues<ActivityPriorityDto>();
 
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private bool _hasSubmitError;
@@ -41,10 +46,11 @@ public sealed partial class CreateTaskState : ObservableObject
         TitleHasValidationError = false;
         ErrorMessageTitle = string.Empty;
 
-        if (!string.IsNullOrWhiteSpace(Title))
-            return new CreateTaskDto(Title, SelectedCategoryDto, SelectedPriorityDto);
+        if (string.IsNullOrWhiteSpace(Title))
+            TitleValidationError("Please specify a title.");
 
-        TitleValidationError("Please specify a title.");
-        return null;
+        var dueAtUtc = DateTimeOffsetHelper.CombineLocalDateAndTimeToUtc(DeadlineDate, DeadlineTime);
+            
+        return new CreateTaskDto(Title, Description, SelectedCategoryDto, SelectedActivityPriorityDto, dueAtUtc);
     }
 }

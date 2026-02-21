@@ -58,7 +58,7 @@
                             <ItemsControl ItemsSource="{Binding State.PriorityFilters}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <CheckBox Content="{Binding Priority}"
+                                        <CheckBox Content="{Binding ActivityPriority}"
                                                   IsChecked="{Binding IsSelected}" />
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
@@ -98,7 +98,7 @@
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
 
-                        <DataGridTextColumn Header="State" Binding="{Binding Item.State}" Width="120" />
+                        <DataGridTextColumn Header="State" Binding="{Binding Activity.State}" Width="120" />
                         <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="120" />
 
                         <DataGridTemplateColumn Header="Priority" Width="120">
@@ -106,15 +106,15 @@
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal" Spacing="8">
                                         <Ellipse Width="8" Height="8"
-                                                 Fill="{Binding Item.Priority, Converter={StaticResource PriorityToBrushConverter}}" />
-                                        <TextBlock Text="{Binding Item.Priority}" />
+                                                 Fill="{Binding Activity.Priority, Converter={StaticResource PriorityToBrushConverter}}" />
+                                        <TextBlock Text="{Binding Activity.Priority}" />
                                     </StackPanel>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
                         
                         <DataGridTextColumn Header="Created"
-                                            Binding="{Binding Item.Entity.CreatedAt, StringFormat='dd.MM.yyyy HH:mm'}"
+                                            Binding="{Binding Item.CreatedAt, StringFormat='dd.MM.yyyy HH:mm'}"
                                             Width="180" />
 
                     </DataGrid.Columns>

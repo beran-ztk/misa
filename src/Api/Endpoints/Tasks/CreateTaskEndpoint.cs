@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using Misa.Application.Features.Entities.Extensions.Items.Extensions.Tasks.Commands;
-using Misa.Contract.Features.Entities.Extensions.Items.Extensions.Tasks;
+using Misa.Application.Features.Items.Tasks;
+using Misa.Contract.Items.Components.Tasks;
 using Misa.Contract.Shared.Results;
 using Wolverine;
 
@@ -13,20 +13,20 @@ public static class CreateTaskEndpoint
         api.MapPost("tasks", AddTask);
     }
 
-    private static async Task<Result<TaskDto>> AddTask(
+    private static async Task<Result<TaskExtensionDto>> AddTask(
         [FromBody] CreateTaskDto dto,
-        IMessageBus bus,
+        IMessageBus bus, 
         CancellationToken ct)
     {
-        using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
-        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct, timeoutCts.Token);
-
         var command = new CreateTaskCommand(
             dto.Title,
+            dto.Description,
             dto.CategoryDto,
-            dto.PriorityDto);
+            dto.ActivityPriorityDto,
+            dto.DueDate
+        );
 
-        var result = await bus.InvokeAsync<Result<TaskDto>>(command, linkedCts.Token);
+        var result = await bus.InvokeAsync<Result<TaskExtensionDto>>(command, ct);
         return result;
     }
 }

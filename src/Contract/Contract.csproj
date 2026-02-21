@@ -8,7 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <Folder Include="Shared\" />
+      <Folder Include="Common\" />
     </ItemGroup>
 
 </Project>

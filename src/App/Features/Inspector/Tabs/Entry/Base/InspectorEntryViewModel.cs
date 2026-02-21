@@ -26,7 +26,7 @@ public partial class InspectorEntryViewModel : ViewModelBase
             case nameof(Facade.State.CurrentSessionOverview):
                 CurrentSessionPropertyChanged();
                 break;
-            case nameof(Facade.State.Deadline):
+            case nameof(Facade.State.Item.Activity.DueAt):
                 DeadlinePropertyChanged();
                 break;
         }

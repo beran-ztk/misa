@@ -2,15 +2,11 @@ using System;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Microsoft.Extensions.DependencyInjection;
-using Misa.Contract.Features.Chronicle;
-using Misa.Contract.Features.Common.Deadlines;
-using Misa.Contract.Features.Entities.Extensions.Items.Extensions.Tasks;
-using Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;
-using Misa.Contract.Features.Entities.Extensions.Items.Features.Session;
+using Misa.Contract.Items.Components.Activity.Sessions;
+using Misa.Contract.Items.Components.Schedules;
+using Misa.Contract.Items.Components.Tasks;
 using Misa.Contract.Shared.Results;
-using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Scheduling.Forms;
 using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions.Forms;
-using Misa.Ui.Avalonia.Features.Pages.Chronicle.Create;
 using Misa.Ui.Avalonia.Features.Pages.Scheduling.Create;
 using Misa.Ui.Avalonia.Features.Pages.Tasks.Create;
 using Misa.Ui.Avalonia.Shell.Components;
@@ -29,35 +25,25 @@ public readonly record struct PanelKey<TResult>(
 );
 public static class Panels
 {
-    public static readonly PanelKey<TaskDto> Task =
+    public static readonly PanelKey<TaskExtensionDto> Task =
         new("Task",
             sp => sp.GetRequiredService<CreateTaskView>(),
             sp => sp.GetRequiredService<CreateTaskViewModel>());
 
-    public static readonly PanelKey<ScheduleDto> Schedule =
+    public static readonly PanelKey<ScheduleExtensionDto> Schedule =
         new("Schedule",
             sp => sp.GetRequiredService<CreateScheduleView>(),
             sp => sp.GetRequiredService<CreateScheduleViewModel>());
-    
-    public static readonly PanelKey<JournalEntryDto> Journal =
-        new("Journal",
-            sp => sp.GetRequiredService<CreateJournalView>(),
-            sp => sp.GetRequiredService<CreateJournalViewModel>());
 
-    public static readonly PanelKey<SessionResolvedDto> StartSession =
+    public static readonly PanelKey<SessionDto> StartSession =
         new("StartSession",
             sp => sp.GetRequiredService<StartSessionView>(),
             sp => sp.GetRequiredService<StartSessionViewModel>());
 
-    public static readonly PanelKey<SessionResolvedDto> PauseSession =
+    public static readonly PanelKey<SessionDto> PauseSession =
         new("PauseSession",
             sp => sp.GetRequiredService<PauseSessionView>(),
             sp => sp.GetRequiredService<PauseSessionViewModel>());
-
-    public static readonly PanelKey<DeadlineDto> UpsertDeadline =
-        new("UpsertDeadline",
-            sp => sp.GetRequiredService<UpsertDeadlineView>(),
-            sp => sp.GetRequiredService<UpsertDeadlineViewModel>());
 }
 
 public interface IPanelFactory

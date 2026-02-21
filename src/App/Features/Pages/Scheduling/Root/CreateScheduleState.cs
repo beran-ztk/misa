@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
-using Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;
+using Misa.Contract.Items.Components.Schedules;
 using Misa.Ui.Avalonia.Common.Mappings;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Scheduling.Root;
@@ -10,6 +10,7 @@ namespace Misa.Ui.Avalonia.Features.Pages.Scheduling.Root;
 public sealed partial class CreateScheduleState : ViewModelBase
 {
     [ObservableProperty] private string _title = string.Empty;
+    [ObservableProperty] private string _description = string.Empty;
     [ObservableProperty] private string? _payload;
     [ObservableProperty] private int _frequencyInterval = 1;
     [ObservableProperty] private int _lookaheadLimit = 1;
@@ -197,6 +198,7 @@ public sealed partial class CreateScheduleState : ViewModelBase
         return new AddScheduleDto
         {
             Title = trimmedTitle,
+            Description = Description,
             TargetItemId = null,
 
             ScheduleFrequencyType = SelectedFrequencyType,
