@@ -32,10 +32,10 @@ public sealed partial class TaskState : ObservableObject
         foreach (var p in Enum.GetValues<ActivityPriorityDto>())
         {
             var opt = new PriorityFilterOption(p, isSelected: true);
-            opt.PropertyChanged += (_, e) =>
+            opt.PropertyChanged += (s, e) =>
             {
                 if (e.PropertyName == nameof(PriorityFilterOption.IsSelected))
-                    ApplyFilters();
+                    _ = RefreshFilteredCollection();
             };
             PriorityFilters.Add(opt);
         }
@@ -58,10 +58,10 @@ public sealed partial class TaskState : ObservableObject
     /// Filter
     /// </summary>
     [ObservableProperty] private string _searchText = string.Empty;
-    partial void OnSearchTextChanged(string value) => ApplyFilters();
+    partial void OnSearchTextChanged(string value) => _ = RefreshFilteredCollection();
     public ObservableCollection<PriorityFilterOption> PriorityFilters { get; } = [];
     
-    private void ApplyFilters()
+    private async Task RefreshFilteredCollection()
     {
         var activePriorities = PriorityFilters
             .Where(f => f.IsSelected)
@@ -70,14 +70,14 @@ public sealed partial class TaskState : ObservableObject
         
         FilteredItems.Clear();
         
-        foreach (var t in Items)
+        foreach (var item in Items)
         {
-            if (activePriorities.Contains(t.Activity.Priority) 
-                && (t.Item.Title.Contains(SearchText, StringComparison.OrdinalIgnoreCase) || string.IsNullOrEmpty(SearchText)))
+            if (activePriorities.Contains(item.Activity.Priority) 
+                && (item.Item.Title.Contains(SearchText, StringComparison.OrdinalIgnoreCase) || string.IsNullOrEmpty(SearchText)))
             {
-                _ = Dispatcher.UIThread.InvokeAsync(() => 
+                await Dispatcher.UIThread.InvokeAsync(() => 
                 {
-                    FilteredItems.Add(t);
+                    FilteredItems.Add(item);
                 });
             }
         }
@@ -86,21 +86,17 @@ public sealed partial class TaskState : ObservableObject
     /// <summary>
     /// Adders
     /// </summary>
-    public async Task AddToCollection(IReadOnlyCollection<TaskExtensionDto> items)
+    public async Task SetMainCollection(IReadOnlyCollection<TaskExtensionDto> items)
     {
         Items = items;
         FilteredItems.Clear();
-        
-        foreach (var item in items)
-        {
-            await AddToCollection(item);
-        }
+        await RefreshFilteredCollection();
     }
-    public async Task AddToCollection(TaskExtensionDto item)
+    public async Task AppendToMainCollection(TaskExtensionDto item)
     {
-        await Dispatcher.UIThread.InvokeAsync(() => 
-        {
-            FilteredItems.Add(item);
-        });
+        var temp = Items.ToList();
+        temp.Add(item);
+        Items = temp;
+        await RefreshFilteredCollection();
     }
 }

@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Ui.Avalonia.Common.Mappings;
@@ -29,8 +30,10 @@ public sealed partial class TaskFacadeViewModel(
     private async Task GetAllAsync()
     {
         var result = await gateway.GetAllAsync();
-        if (result.IsSuccess)
-            await State.AddToCollection(result.Value);
+        if (!result.IsSuccess || result.Value is null)
+            return;
+        
+        await State.SetMainCollection(result.Value);
     }
 
     [RelayCommand]
@@ -41,6 +44,7 @@ public sealed partial class TaskFacadeViewModel(
         var created = await panelProxy.OpenAsync(Panels.Task, formVm);
         if (created is null) return;
 
-        await State.AddToCollection(created);
+        
+        await State.AppendToMainCollection(created);
     }
 }

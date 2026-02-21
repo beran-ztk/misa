@@ -23,7 +23,7 @@ public static class WolverineRegistration
             opts.Discovery.IncludeAssembly(typeof(StopSessionHandler).Assembly);
             opts.Discovery.IncludeAssembly(typeof(PauseDueSessionsHandler).Assembly);
             opts.Discovery.IncludeAssembly(typeof(PauseExpiredSessionsHandler).Assembly);
-            opts.Discovery.IncludeAssembly(typeof(AddScheduleHandler).Assembly);
+            opts.Discovery.IncludeAssembly(typeof(CreateScheduleHandler).Assembly);
 
             opts.Discovery.IncludeAssembly(typeof(GetSchedulesHandler).Assembly);
 
