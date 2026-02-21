@@ -2,7 +2,7 @@
 
 namespace Misa.Contract.Items.Components.Tasks;
 
-public sealed record CreateTaskDto(
+public sealed record CreateTaskRequest(
     string Title,
     string Description,
     TaskCategoryDto CategoryDto,

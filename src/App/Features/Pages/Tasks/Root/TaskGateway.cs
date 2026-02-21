@@ -18,7 +18,7 @@ public sealed class TaskGateway(RemoteProxy remoteProxy)
         return await remoteProxy.SendAsync<IReadOnlyCollection<TaskExtensionDto>>(request);
     }
 
-    public async Task<Result<TaskExtensionDto>> CreateAsync(CreateTaskDto dto)
+    public async Task<Result<TaskExtensionDto>> CreateAsync(CreateTaskRequest request)
     {
         var request = new HttpRequestMessage(HttpMethod.Post, "tasks")
         {

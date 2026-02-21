@@ -1,0 +1,66 @@
+﻿using Microsoft.AspNetCore.Mvc;
+using Misa.Application.Features.Items.Tasks;
+using Misa.Contract.Items.Components.Tasks;
+using Misa.Contract.Routes;
+using Misa.Contract.Shared.Results;
+using Wolverine;
+
+namespace Misa.Api.Endpoints.Tasks;
+
+public static class TaskEndpoints
+{
+    public static void Map(IEndpointRouteBuilder api)
+    {
+        api.MapPost(TaskRoutes.Create, Create);
+        api.MapGet(TaskRoutes.GetAll, Get);
+        api.MapPatch(TaskRoutes.UpdateCategory, UpdateCategory);
+        api.MapDelete(TaskRoutes.Delete, Delete);
+    }
+    
+    // Create a task
+    private static async Task<IResult> Create(
+        [FromBody] CreateTaskRequest request, 
+        IMessageBus bus, 
+        CancellationToken ct)
+    {
+        var command = new CreateTaskCommand(
+            request.Title,
+            request.Description,
+            request.CategoryDto,
+            request.ActivityPriorityDto,
+            request.DueDate
+        );
+
+        var dto = await bus.InvokeAsync<TaskExtensionDto>(command, ct);
+        
+        return Results.Created($"/tasks/{dto.Item.Id}", dto);
+    }
+    
+    // Get tasks
+    private static async Task<Result<IReadOnlyCollection<TaskExtensionDto>>> Get(IMessageBus bus, CancellationToken ct)
+    {
+        var result = await bus.InvokeAsync<Result<IReadOnlyCollection<TaskExtensionDto>>>(new GetTasksQuery(), ct);
+        return result;
+    }   
+    
+    // Update a task
+    private static async Task<Result> UpdateCategory(
+        [FromRoute] Guid itemId, 
+        [FromBody] UpdateTaskCategoryRequest request,
+        IMessageBus bus, 
+        CancellationToken ct)
+    {
+        var result = await bus.InvokeAsync<Result>(new UpdateTaskCategoryCommand(itemId, request.CategoryDto) , ct);
+        return result;
+    }    
+    
+    // Delete a task
+    private static async Task<Result> Delete(
+        [FromRoute] Guid itemId,
+        IMessageBus bus, 
+        CancellationToken ct)
+    {
+        var result = await bus.InvokeAsync<Result>(new DeleteTaskCommand(itemId), ct);
+        return result;
+    }
+}

@@ -18,17 +18,11 @@ public static class EndpointRegistration
         var api = app.MapGroup("");
         api.AddEndpointFilter<ResultExceptionFilter>();
 
-        api.MapTaskEndpoints();
+        TaskEndpoints.Map(api);
         api.MapSessionEndpoints();
         api.MapScheduleEndpoints();
         api.MapAuthenticationEndpoints();
         api.MapInspectorEndpoints();
-    }
-
-    private static void MapTaskEndpoints(this IEndpointRouteBuilder api)
-    {
-        CreateTaskEndpoint.Map(api);
-        GetTasksEndpoint.Map(api);
     }
 
     private static void MapSessionEndpoints(this IEndpointRouteBuilder api)
