@@ -1,18 +1,18 @@
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Ui.Avalonia.Common.Mappings;
-using Misa.Ui.Avalonia.Features.Pages.Scheduling.Create;
+using Misa.Ui.Avalonia.Features.Pages.Schedules.Create;
 using Misa.Ui.Avalonia.Infrastructure.UI;
 
-namespace Misa.Ui.Avalonia.Features.Pages.Scheduling.Root;
+namespace Misa.Ui.Avalonia.Features.Pages.Schedules.Root;
 
 public sealed partial class SchedulerFacadeViewModel(
-    SchedulerState state,
+    Schedules.Root.SchedulerState state,
     SchedulerGateway gateway,
     PanelProxy panelProxy)
     : ViewModelBase
 {
-    public SchedulerState State { get; } = state;
+    public Schedules.Root.SchedulerState State { get; } = state;
     private SchedulerGateway Gateway { get; } = gateway;
     private PanelProxy PanelProxy { get; } = panelProxy;
 

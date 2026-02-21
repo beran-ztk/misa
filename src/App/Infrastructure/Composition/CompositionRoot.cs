@@ -4,8 +4,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Misa.Ui.Avalonia.Features.Inspector.Root;
 using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions.Forms;
 using Misa.Ui.Avalonia.Features.Pages.Common;
-using Misa.Ui.Avalonia.Features.Pages.Scheduling.Create;
-using Misa.Ui.Avalonia.Features.Pages.Scheduling.Root;
+using Misa.Ui.Avalonia.Features.Pages.Schedules.Create;
+using Misa.Ui.Avalonia.Features.Pages.Schedules.Root;
 using Misa.Ui.Avalonia.Features.Pages.Tasks.Create;
 using Misa.Ui.Avalonia.Features.Pages.Tasks.Root;
 using Misa.Ui.Avalonia.Features.Utilities.Notifications;
@@ -18,6 +18,9 @@ using Misa.Ui.Avalonia.Infrastructure.UI;
 using Misa.Ui.Avalonia.Shell.Authentication;
 using Misa.Ui.Avalonia.Shell.Base;
 using Misa.Ui.Avalonia.Shell.Components;
+using CreateScheduleState = Misa.Ui.Avalonia.Features.Pages.Schedules.Root.CreateScheduleState;
+using SchedulerFacadeViewModel = Misa.Ui.Avalonia.Features.Pages.Schedules.Root.SchedulerFacadeViewModel;
+using SchedulerState = Misa.Ui.Avalonia.Features.Pages.Schedules.Root.SchedulerState;
 
 namespace Misa.Ui.Avalonia.Infrastructure.Composition;
 

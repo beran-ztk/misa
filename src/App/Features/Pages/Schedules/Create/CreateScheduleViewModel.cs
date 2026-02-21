@@ -1,10 +1,11 @@
 using System.Threading.Tasks;
 using Misa.Contract.Items.Components.Schedules;
 using Misa.Contract.Shared.Results;
-using Misa.Ui.Avalonia.Features.Pages.Scheduling.Root;
+using Misa.Ui.Avalonia.Features.Pages.Schedules.Root;
 using Misa.Ui.Avalonia.Infrastructure.UI;
+using CreateScheduleState = Misa.Ui.Avalonia.Features.Pages.Schedules.Root.CreateScheduleState;
 
-namespace Misa.Ui.Avalonia.Features.Pages.Scheduling.Create;
+namespace Misa.Ui.Avalonia.Features.Pages.Schedules.Create;
 
 public sealed class CreateScheduleViewModel(
     CreateScheduleState state,

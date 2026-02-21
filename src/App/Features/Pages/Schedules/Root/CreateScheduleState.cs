@@ -5,7 +5,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using Misa.Contract.Items.Components.Schedules;
 using Misa.Ui.Avalonia.Common.Mappings;
 
-namespace Misa.Ui.Avalonia.Features.Pages.Scheduling.Root;
+namespace Misa.Ui.Avalonia.Features.Pages.Schedules.Root;
 
 public sealed partial class CreateScheduleState : ViewModelBase
 {
@@ -170,7 +170,7 @@ public sealed partial class CreateScheduleState : ViewModelBase
 
         foreach (var p in parts)
         {
-            if (!int.TryParse(p, out var v) || v < 1 || v > 31)
+            if (!int.TryParse((string?)p, out var v) || v < 1 || v > 31)
             {
                 ShowValidationError("Monthdays must be a comma-separated list of numbers between 1 and 31.");
                 return null;

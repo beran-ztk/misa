@@ -1,6 +1,6 @@
 using System;
 using System.Threading.Tasks;
-using Misa.Ui.Avalonia.Features.Pages.Scheduling.Root;
+using Misa.Ui.Avalonia.Features.Pages.Schedules.Root;
 using Misa.Ui.Avalonia.Features.Pages.Tasks.Root;
 using Misa.Ui.Avalonia.Infrastructure.States;
 

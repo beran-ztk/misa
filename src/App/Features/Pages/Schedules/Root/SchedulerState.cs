@@ -7,7 +7,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using Misa.Contract.Items.Components.Schedules;
 using Misa.Ui.Avalonia.Infrastructure.States;
 
-namespace Misa.Ui.Avalonia.Features.Pages.Scheduling.Root;
+namespace Misa.Ui.Avalonia.Features.Pages.Schedules.Root;
 
 public sealed partial class SchedulerState(
     ISelectionContextState selectionContextState,
@@ -31,7 +31,7 @@ public sealed partial class SchedulerState(
         
         foreach (var t in Items)
         {
-            if (t.Item.Title.Contains(SearchText, StringComparison.OrdinalIgnoreCase) || string.IsNullOrEmpty(SearchText))
+            if (t.Item.Title.Contains((string)SearchText, StringComparison.OrdinalIgnoreCase) || string.IsNullOrEmpty(SearchText))
             {
                 _ = Dispatcher.UIThread.InvokeAsync(() => 
                 {

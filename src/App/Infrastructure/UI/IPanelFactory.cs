@@ -7,7 +7,7 @@ using Misa.Contract.Items.Components.Schedules;
 using Misa.Contract.Items.Components.Tasks;
 using Misa.Contract.Shared.Results;
 using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions.Forms;
-using Misa.Ui.Avalonia.Features.Pages.Scheduling.Create;
+using Misa.Ui.Avalonia.Features.Pages.Schedules.Create;
 using Misa.Ui.Avalonia.Features.Pages.Tasks.Create;
 using Misa.Ui.Avalonia.Shell.Components;
 

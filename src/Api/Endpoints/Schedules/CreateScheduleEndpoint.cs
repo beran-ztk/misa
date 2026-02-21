@@ -11,10 +11,9 @@ public static class CreateScheduleEndpoint
 {
     public static void Map(IEndpointRouteBuilder api)
     {
-        api.MapPost("scheduling/{userId:guid}", AddSchedulingRule);
+        api.MapPost("scheduling", AddSchedulingRule);
     }
     private static async Task<Result<ScheduleExtensionDto>> AddSchedulingRule(
-        Guid userId,
         [FromBody] AddScheduleDto dto, 
         IMessageBus bus, 
         CancellationToken ct)
