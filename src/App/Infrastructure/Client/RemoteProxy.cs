@@ -157,7 +157,7 @@ public sealed class RemoteProxy(HttpClient httpClient, UserState userState)
 
         var first = vpd.Errors.First();
         var field = first.Key;
-        var message = first.Value?.FirstOrDefault() ?? vpd.Detail ?? "Validation failed.";
+        var message = first.Value.FirstOrDefault() ?? vpd.Detail ?? "Validation failed.";
         return (field, message);
     }
 

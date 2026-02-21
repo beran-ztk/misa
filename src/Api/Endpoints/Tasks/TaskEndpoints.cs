@@ -36,11 +36,15 @@ public static class TaskEndpoints
         
         return Results.Created(TaskRoutes.GetTaskRequest(dto.Item.Id), dto);
     }
+    
     // Get task
-    private static async Task<Result<IReadOnlyCollection<TaskExtensionDto>>> GetSingle(IMessageBus bus, CancellationToken ct)
+    private static async Task<IResult> GetSingle(
+        [FromRoute] Guid itemId, 
+        IMessageBus bus, 
+        CancellationToken ct)
     {
-        var result = await bus.InvokeAsync<Result<IReadOnlyCollection<TaskExtensionDto>>>(new GetTasksQuery(), ct);
-        return result;
+        var dto = await bus.InvokeAsync<TaskExtensionDto?>(new GetTaskQuery(itemId), ct);
+        return Results.Ok(dto);
     }   
     
     // Get tasks

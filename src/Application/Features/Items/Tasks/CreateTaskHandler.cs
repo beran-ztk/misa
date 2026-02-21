@@ -22,22 +22,9 @@ public class CreateTaskHandler(
     IIdGenerator idGenerator,
     ICurrentUser currentUser)
 {
-    public async Task<Result<TaskExtensionDto>> HandleAsync(CreateTaskCommand command, CancellationToken ct)
+    public async Task<TaskExtensionDto> HandleAsync(CreateTaskCommand command, CancellationToken ct)
     {
-        var task = CreateTaskCommandToDomain(command);
-        
-        await repository.AddAsync(task, ct);
-        await repository.SaveChangesAsync(ct);
-
-        var formattedTask = task.ToTaskExtensionDto();
-        
-        return Result<TaskExtensionDto>
-            .Ok(formattedTask);
-    }
-
-    private Item CreateTaskCommandToDomain(CreateTaskCommand command)
-    {
-        return Item.CreateTask(
+        var task = Item.CreateTask(
             new ItemId(idGenerator.New()), 
             ownerId: currentUser.UserId,
             command.Title, 
@@ -47,5 +34,12 @@ public class CreateTaskHandler(
             command.ActivityPriorityDto.ToDomain(),
             command.DueDate
         );
+        
+        await repository.AddAsync(task, ct);
+        await repository.SaveChangesAsync(ct);
+
+        var formattedTask = task.ToTaskExtensionDto();
+        
+        return formattedTask;
     }
 }
