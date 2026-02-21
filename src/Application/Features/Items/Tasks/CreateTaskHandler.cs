@@ -8,7 +8,7 @@ using Misa.Contract.Items.Components.Tasks;
 using Misa.Contract.Shared.Results;
 using Misa.Domain.Items;
 
-namespace Misa.Application.Features.Items.Tasks.Commands;
+namespace Misa.Application.Features.Items.Tasks;
 public sealed record CreateTaskCommand(
     string Title,
     string Description,

@@ -4,8 +4,7 @@ using Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Comm
 using Misa.Application.Features.Items.Schedules.Commands;
 using Misa.Application.Features.Items.Sessions.Commands;
 using Misa.Application.Features.Items.Sessions.Queries;
-using Misa.Application.Features.Items.Tasks.Commands;
-using Misa.Application.Features.Items.Tasks.Queries;
+using Misa.Application.Features.Items.Tasks;
 using Wolverine;
 
 namespace Misa.Api.Composition;

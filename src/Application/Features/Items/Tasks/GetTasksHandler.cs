@@ -4,7 +4,7 @@ using Misa.Application.Mappings;
 using Misa.Contract.Items.Components.Tasks;
 using Misa.Contract.Shared.Results;
 
-namespace Misa.Application.Features.Items.Tasks.Queries;
+namespace Misa.Application.Features.Items.Tasks;
 
 // Request
 public record GetTasksQuery;

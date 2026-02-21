@@ -19,7 +19,7 @@ public sealed class SchedulerPlanningRepository(MisaContext context) : ISchedule
 
     public async Task<int> GetExecutionCountPlannedAheadAsync(Guid id, DateTimeOffset utcNow, CancellationToken ct)
         => await context.SchedulerExecutionLogs
-            .Where(s => s.SchedulerId.Value == id && s.ScheduledForUtc >= utcNow)
+            .Where(s => s.SchedulerId == new ItemId(id) && s.ScheduledForUtc >= utcNow)
             .CountAsync(ct);
 
     public async Task<bool> TryAddExecutionLogAsync(ScheduleExecutionLog log, CancellationToken ct)

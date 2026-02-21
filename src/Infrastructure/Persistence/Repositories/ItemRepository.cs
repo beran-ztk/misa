@@ -94,23 +94,18 @@ public class ItemRepository(MisaContext context) : IItemRepository
     {
         await context.Schedulers.AddAsync(scheduleExtension, ct);
     }
-    public async Task<Item?> TryGetItemDetailsAsync(Guid id, CancellationToken ct)
-    {
-        return await context.Items
-            .FirstOrDefaultAsync(e => e.Id == new ItemId(id), ct);
-    }
-    
     public async Task<Item?> TryGetItemAsync(Guid id, CancellationToken ct)
     {
         return await context.Items
             .SingleOrDefaultAsync(i => i.Id == new ItemId(id), ct);
     }
 
-    public async Task<List<Item>> GetSchedulingRulesAsync(CancellationToken ct)
+    public async Task<List<Item>> GetSchedulesAsync(string userId, CancellationToken ct)
     {
         return await context.Items
-            .Include(s => s.Activity)
             .Include(s => s.ScheduleExtension)
+            .Where(t => t.OwnerId == userId && t.Workflow == Workflow.Schedule)
+            .OrderByDescending(t => t.CreatedAt)
             .AsNoTracking()
             .ToListAsync(ct);
     }

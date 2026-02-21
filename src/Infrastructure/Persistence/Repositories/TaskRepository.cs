@@ -32,7 +32,7 @@ public class TaskRepository(MisaContext context) : ITaskRepository
         return await context.Items
             .Include(t => t.Activity)
             .Include(t => t.TaskExtension)
-            .Where(t => t.OwnerId == userId)
+            .Where(t => t.OwnerId == userId && t.Workflow == Workflow.Task)
             .OrderByDescending(t => t.CreatedAt)
             .AsNoTracking()
             .ToListAsync(ct);
