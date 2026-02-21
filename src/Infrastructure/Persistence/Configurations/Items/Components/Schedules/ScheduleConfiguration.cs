@@ -6,7 +6,7 @@ using Wolverine;
 
 namespace Misa.Infrastructure.Persistence.Configurations.Items.Components.Schedules;
 
-public sealed class SchedulerConfiguration : IEntityTypeConfiguration<ScheduleExtension>
+public sealed class ScheduleConfiguration : IEntityTypeConfiguration<ScheduleExtension>
 {
     public void Configure(EntityTypeBuilder<ScheduleExtension> builder)
     {

@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Misa.Domain.Items;
 using Misa.Domain.Items.Components.Activities;
+using Misa.Domain.Items.Components.Schedules;
 using Misa.Domain.Items.Components.Tasks;
 
 namespace Misa.Infrastructure.Persistence.Configurations.Items;
@@ -48,6 +49,11 @@ public class ItemConfiguration : IEntityTypeConfiguration<Item>
         builder.HasOne(i => i.TaskExtension)
             .WithOne()
             .HasForeignKey<TaskExtension>(t => t.Id)
+            .OnDelete(DeleteBehavior.Cascade);
+        
+        builder.HasOne(i => i.ScheduleExtension)
+            .WithOne()
+            .HasForeignKey<ScheduleExtension>(t => t.Id)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }

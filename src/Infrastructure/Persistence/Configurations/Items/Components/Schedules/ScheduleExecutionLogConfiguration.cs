@@ -5,7 +5,7 @@ using Misa.Domain.Items.Components.Schedules;
 
 namespace Misa.Infrastructure.Persistence.Configurations.Items.Components.Schedules;
 
-public sealed class SchedulerExecutionLogConfiguration : IEntityTypeConfiguration<ScheduleExecutionLog>
+public sealed class ScheduleExecutionLogConfiguration : IEntityTypeConfiguration<ScheduleExecutionLog>
 {
     public void Configure(EntityTypeBuilder<ScheduleExecutionLog> builder)
     {
