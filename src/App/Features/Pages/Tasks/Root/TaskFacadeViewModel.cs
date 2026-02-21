@@ -29,11 +29,9 @@ public sealed partial class TaskFacadeViewModel(
 
     private async Task GetAllAsync()
     {
-        var result = await gateway.GetAllAsync();
-        if (!result.IsSuccess || result.Value is null)
-            return;
+        var values = await gateway.GetAllAsync();
         
-        await State.SetMainCollection(result.Value);
+        await State.SetMainCollection(values);
     }
 
     [RelayCommand]

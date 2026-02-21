@@ -1,8 +1,8 @@
 using System;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Misa.Contract.Common.Results;
 using Misa.Contract.Items.Components.Activity.Sessions;
-using Misa.Contract.Shared.Results;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Inspector.Root;
 using Misa.Ui.Avalonia.Infrastructure.UI;

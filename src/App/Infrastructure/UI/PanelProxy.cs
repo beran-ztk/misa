@@ -1,7 +1,7 @@
 using System.Threading.Tasks;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.Input;
-using Misa.Contract.Shared.Results;
+using Misa.Contract.Common.Results;
 using Misa.Ui.Avalonia.Infrastructure.States;
 
 namespace Misa.Ui.Avalonia.Infrastructure.UI;

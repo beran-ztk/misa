@@ -2,8 +2,8 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
+using Misa.Contract.Common.Results;
 using Misa.Contract.Items.Components.Schedules;
-using Misa.Contract.Shared.Results;
 using Misa.Ui.Avalonia.Infrastructure.Client;
 using Misa.Ui.Avalonia.Infrastructure.States;
 

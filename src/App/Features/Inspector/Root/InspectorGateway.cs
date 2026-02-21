@@ -2,9 +2,9 @@ using System;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
+using Misa.Contract.Common.Results;
 using Misa.Contract.Items.Components.Activity;
 using Misa.Contract.Items.Components.Activity.Sessions;
-using Misa.Contract.Shared.Results;
 using Misa.Ui.Avalonia.Infrastructure.Client;
 
 namespace Misa.Ui.Avalonia.Features.Inspector.Root;

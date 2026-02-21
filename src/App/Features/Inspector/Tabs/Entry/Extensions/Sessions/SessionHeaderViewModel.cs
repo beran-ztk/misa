@@ -1,7 +1,6 @@
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Items.Components.Activity.Sessions;
-using Misa.Contract.Shared.Results;
 using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions.Forms;
 using Misa.Ui.Avalonia.Infrastructure.UI;
 

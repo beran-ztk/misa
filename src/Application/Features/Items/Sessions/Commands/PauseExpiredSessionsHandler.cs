@@ -1,7 +1,7 @@
 ﻿using Misa.Application.Abstractions.Persistence;
 using Misa.Application.Abstractions.Time;
 using Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Commands;
-using Misa.Contract.Shared.Results;
+using Misa.Contract.Common.Results;
 using Wolverine;
 
 namespace Misa.Application.Features.Items.Sessions.Commands;

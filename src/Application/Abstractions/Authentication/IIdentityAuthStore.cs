@@ -1,4 +1,4 @@
-using Misa.Contract.Shared.Results;
+using Misa.Contract.Common.Results;
 
 namespace Misa.Application.Abstractions.Authentication;
 

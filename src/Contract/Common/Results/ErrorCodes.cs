@@ -1,4 +1,4 @@
-﻿namespace Misa.Contract.Shared.Results;
+﻿namespace Misa.Contract.Common.Results;
 
 public static class ItemErrorCodes
 {

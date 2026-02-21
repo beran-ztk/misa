@@ -2,11 +2,20 @@ namespace Misa.Contract.Routes;
 
 public static class TaskRoutes
 {
-    public const string Create = "items/task";
-    public const string GetAll = "items/tasks";
-    public const string UpdateCategory = "items/{itemId:guid}/task/category";
-    public static string UpdateCategoryRequest(Guid itemId) => $"items/{itemId}/task/category";
+    // Create
+    public const string CreateTask = "items/task";
     
-    public const string Delete = "items/{itemId:guid}/task";
-    public static string DeleteRequest(Guid itemId) => $"items/{itemId}/task/";
+    // Get
+    public const string GetTasks = "items/tasks";
+    public const string GetTask = "items/{itemId:guid}/task";
+    public static string GetTaskRequest(Guid itemId) => $"items/{itemId}/task";
+    
+    // Patch
+    
+    public const string UpdateTaskCategory = "items/{itemId:guid}/task/category";
+    public static string UpdateTaskCategoryRequest(Guid itemId) => $"items/{itemId}/task/category";
+    
+    // Delete
+    public const string DeleteTask = "items/{itemId:guid}/task";
+    public static string DeleteTaskRequest(Guid itemId) => $"items/{itemId}/task/";
 }

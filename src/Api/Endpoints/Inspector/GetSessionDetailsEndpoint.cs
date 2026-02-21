@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Misa.Application.Features.Items.Sessions.Queries;
+using Misa.Contract.Common.Results;
 using Misa.Contract.Items.Components.Activity.Sessions;
-using Misa.Contract.Shared.Results;
 using Wolverine;
 
 namespace Misa.Api.Endpoints.Inspector;

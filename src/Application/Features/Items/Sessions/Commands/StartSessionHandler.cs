@@ -2,8 +2,8 @@
 using Misa.Application.Abstractions.Persistence;
 using Misa.Application.Abstractions.Time;
 using Misa.Application.Mappings;
+using Misa.Contract.Common.Results;
 using Misa.Contract.Items.Components.Activity.Sessions;
-using Misa.Contract.Shared.Results;
 using Misa.Domain.Items;
 using Misa.Domain.Items.Components.Activities.Sessions;
 

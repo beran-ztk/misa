@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
+using Misa.Contract.Common.Results;
 using Misa.Contract.Items.Components.Schedules;
-using Misa.Contract.Shared.Results;
 using Misa.Ui.Avalonia.Features.Pages.Schedules.Root;
 using Misa.Ui.Avalonia.Infrastructure.UI;
 using CreateScheduleState = Misa.Ui.Avalonia.Features.Pages.Schedules.Root.CreateScheduleState;

@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Misa.Application.Features.Items.Tasks;
+using Misa.Contract.Common.Results;
 using Misa.Contract.Items.Components.Tasks;
 using Misa.Contract.Routes;
-using Misa.Contract.Shared.Results;
 using Wolverine;
 
 namespace Misa.Api.Endpoints.Tasks;
@@ -11,10 +11,11 @@ public static class TaskEndpoints
 {
     public static void Map(IEndpointRouteBuilder api)
     {
-        api.MapPost(TaskRoutes.Create, Create);
-        api.MapGet(TaskRoutes.GetAll, Get);
-        api.MapPatch(TaskRoutes.UpdateCategory, UpdateCategory);
-        api.MapDelete(TaskRoutes.Delete, Delete);
+        api.MapPost(TaskRoutes.CreateTask, Create);
+        api.MapGet(TaskRoutes.GetTask, GetSingle);
+        api.MapGet(TaskRoutes.GetTasks, GetAll);
+        api.MapPatch(TaskRoutes.UpdateTaskCategory, UpdateCategory);
+        api.MapDelete(TaskRoutes.DeleteTask, Delete);
     }
     
     // Create a task
@@ -33,14 +34,21 @@ public static class TaskEndpoints
 
         var dto = await bus.InvokeAsync<TaskExtensionDto>(command, ct);
         
-        return Results.Created($"/tasks/{dto.Item.Id}", dto);
+        return Results.Created(TaskRoutes.GetTaskRequest(dto.Item.Id), dto);
     }
-    
-    // Get tasks
-    private static async Task<Result<IReadOnlyCollection<TaskExtensionDto>>> Get(IMessageBus bus, CancellationToken ct)
+    // Get task
+    private static async Task<Result<IReadOnlyCollection<TaskExtensionDto>>> GetSingle(IMessageBus bus, CancellationToken ct)
     {
         var result = await bus.InvokeAsync<Result<IReadOnlyCollection<TaskExtensionDto>>>(new GetTasksQuery(), ct);
         return result;
+    }   
+    
+    // Get tasks
+    private static async Task<IResult> GetAll(IMessageBus bus, CancellationToken ct)
+    {
+        var dto = await bus.InvokeAsync<List<TaskExtensionDto>>(new GetTasksQuery(), ct);
+        
+        return Results.Ok(dto);
     }   
     
     // Update a task

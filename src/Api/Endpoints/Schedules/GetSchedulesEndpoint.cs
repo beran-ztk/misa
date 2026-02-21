@@ -1,6 +1,6 @@
 using Misa.Application.Features.Items.Schedules.Commands;
+using Misa.Contract.Common.Results;
 using Misa.Contract.Items.Components.Schedules;
-using Misa.Contract.Shared.Results;
 using Wolverine;
 
 namespace Misa.Api.Endpoints.Schedules;

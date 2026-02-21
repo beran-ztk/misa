@@ -19,7 +19,7 @@ public static class TaskExtensionMappings
         };
     }
 
-    public static IReadOnlyCollection<TaskExtensionDto> ToTaskExtensionDto(this IEnumerable<Item> items)
+    public static List<TaskExtensionDto> ToTaskExtensionDto(this IEnumerable<Item> items)
         => items.Select(i => i.ToTaskExtensionDto()).ToList();
     public static TaskCategory ToDomain(this TaskCategoryDto categoryDto) =>
         categoryDto switch

@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Misa.Application.Features.Authentication;
+using Misa.Contract.Common.Results;
 using Misa.Contract.Features.Authentication;
-using Misa.Contract.Shared.Results;
 using Wolverine;
 
 namespace Misa.Api.Endpoints.Authentication;
