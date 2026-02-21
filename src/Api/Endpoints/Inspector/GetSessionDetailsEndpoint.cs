@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Queries;
-using Misa.Contract.Features.Entities.Extensions.Items.Features.Session;
+using Misa.Application.Features.Items.Sessions.Queries;
+using Misa.Contract.Items.Components.Activity.Sessions;
 using Misa.Contract.Shared.Results;
 using Wolverine;
 

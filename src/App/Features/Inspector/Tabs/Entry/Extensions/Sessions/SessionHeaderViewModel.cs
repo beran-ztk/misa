@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Input;
-using Misa.Contract.Features.Entities.Extensions.Items.Features.Session;
+using Misa.Contract.Items.Components.Activity.Sessions;
 using Misa.Contract.Shared.Results;
 using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions.Forms;
 using Misa.Ui.Avalonia.Infrastructure.UI;
@@ -9,7 +9,7 @@ namespace Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Base;
 
 public partial class InspectorEntryViewModel
 {
-     public SessionResolvedDto? CurrentSession => Facade.State.CurrentSessionOverview?.ActiveSession;
+     public SessionDto? CurrentSession => Facade.State.CurrentSessionOverview?.ActiveSession;
      
      public bool HasActiveSession => CurrentSession != null;
 

@@ -1,8 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
+using Misa.Domain.Items;
+using Misa.Domain.Items.Components.Schedules;
 
-namespace Misa.Infrastructure.Persistence.Configurations.Entities.Extensions.Items.Features.Scheduling;
+namespace Misa.Infrastructure.Persistence.Configurations.Items.Components.Schedules;
 
 public sealed class SchedulerExecutionLogConfiguration : IEntityTypeConfiguration<ScheduleExecutionLog>
 {
@@ -11,14 +12,12 @@ public sealed class SchedulerExecutionLogConfiguration : IEntityTypeConfiguratio
         builder.HasKey(e => e.Id);
 
         builder.Property(x => x.Id)
-            .ValueGeneratedNever()
-            .IsRequired();
+            .ValueGeneratedNever();
 
         builder.Property(e => e.SchedulerId)
-            .IsRequired();
+            .HasConversion(s => s.Value, value => new ItemId(value));
 
-        builder.Property(e => e.ScheduledForUtc)
-            .IsRequired();
+        builder.Property(e => e.ScheduledForUtc);
 
         builder.Property(e => e.ClaimedAtUtc);
 
@@ -33,16 +32,12 @@ public sealed class SchedulerExecutionLogConfiguration : IEntityTypeConfiguratio
         builder.Property(e => e.Error);
 
         builder.Property(e => e.Attempts)
-            .IsRequired()
             .HasDefaultValue(0);
 
-        builder.Property(e => e.CreatedAtUtc)
-            .IsRequired()
-            .HasDefaultValueSql("now()");
+        builder.Property(e => e.CreatedAtUtc);
         
         // Constraints
-        builder.HasIndex(e => new { e.SchedulerId, e.ScheduledForUtc })
-            .IsUnique();
+        builder.HasIndex(e => new { e.SchedulerId, e.ScheduledForUtc });
         
         builder.HasCheckConstraint(
             "ck_schedexec_claimed_le_started_or_started_null",
@@ -73,11 +68,5 @@ public sealed class SchedulerExecutionLogConfiguration : IEntityTypeConfiguratio
             "ck_schedexec_done_requires_finished",
             "\"Status\" NOT IN ('succeeded','failed','skipped') OR \"FinishedAtUtc\" IS NOT NULL"
         );
-        
-        // Relationship
-        builder.HasOne(e => e.ScheduleExtension)
-            .WithMany(s => s.ExecutionLogs)
-            .HasForeignKey(e => e.SchedulerId)
-            .OnDelete(DeleteBehavior.Cascade);
     }
 }

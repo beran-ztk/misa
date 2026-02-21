@@ -1,8 +1,9 @@
-﻿namespace Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;
+﻿namespace Misa.Contract.Items.Components.Schedules;
 
 public sealed class AddScheduleDto
 {
     public required string Title { get; init; } = string.Empty;
+    public required string Description { get; init; } = string.Empty;
     public Guid? TargetItemId { get; init; }
     public required ScheduleFrequencyTypeDto ScheduleFrequencyType { get; init; }
     public required int FrequencyInterval { get; init; }

@@ -1,4 +1,5 @@
 ﻿using Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Commands;
+using Misa.Application.Features.Items.Sessions.Commands;
 using Wolverine;
 
 namespace Misa.Api.Services.Features.Items.Features.Sessions;

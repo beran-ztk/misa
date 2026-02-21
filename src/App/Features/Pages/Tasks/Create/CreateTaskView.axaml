@@ -9,6 +9,7 @@
         <TextBlock Text="{Binding State.SubmitErrorMessage}"
                    IsVisible="{Binding State.HasSubmitError}" />
         
+        <!-- Title -->
         <StackPanel Classes="addpanel-controls">
             <TextBlock Text="Add a title" 
                        Classes="addpanel-text" />
@@ -18,7 +19,17 @@
             <TextBlock Text="{Binding State.ErrorMessageTitle}"
                        IsVisible="{Binding State.TitleHasValidationError}" />
         </StackPanel>
+        
+        <!-- Description -->
+        <StackPanel Classes="addpanel-controls">
+            <TextBlock Text="Add a Description" 
+                       Classes="addpanel-text" />
+            <TextBox Classes="addpanel-oneliner"
+                     Watermark="Description…"
+                     Text="{Binding State.Description, Mode=TwoWay}" />
+        </StackPanel>
 
+        <!-- Category -->
         <StackPanel Classes="addpanel-controls">
             <TextBlock Text="Select the category" 
                        Classes="addpanel-text"/>
@@ -27,12 +38,28 @@
                       SelectedValue="{Binding State.SelectedCategoryDto}" />
         </StackPanel>
 
+        <!-- Priority -->
         <StackPanel Classes="addpanel-controls">
             <TextBlock Text="Choose a priority for the task" 
                        Classes="addpanel-text"/>
             <ComboBox Classes="addpanel-combo"
                       ItemsSource="{Binding State.Priorities}"
-                      SelectedValue="{Binding State.SelectedPriorityDto}" />
+                      SelectedValue="{Binding State.SelectedActivityPriorityDto}" />
+        </StackPanel>
+        
+        <!-- Deadline -->
+        <StackPanel Classes="addpanel-controls">
+            <TextBlock Text="Select a date"
+                       Classes="addpanel-text"/>
+            <DatePicker Classes="addpanel-date"
+                        SelectedDate="{Binding State.DeadlineDate}" />
+        </StackPanel>
+
+        <StackPanel Classes="addpanel-controls">
+            <TextBlock Text="Select a time"
+                       Classes="addpanel-text"/>
+            <TimePicker Classes="addpanel-time"
+                        SelectedTime="{Binding State.DeadlineTime}" />
         </StackPanel>
     </StackPanel>
 </UserControl>

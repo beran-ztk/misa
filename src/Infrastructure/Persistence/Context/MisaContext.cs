@@ -2,8 +2,6 @@
 using Misa.Application.Abstractions.Ids;
 using Misa.Application.Abstractions.Time;
 using Misa.Domain.Features.Audit;
-using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
-using Misa.Domain.Features.Entities.Features;
 using Misa.Domain.Items;
 using Misa.Domain.Items.Components.Activities.Sessions;
 using Misa.Domain.Items.Components.Schedules;
@@ -16,7 +14,6 @@ public class MisaContext(DbContextOptions<MisaContext> options, ITimeProvider ti
 {
     public DbSet<Item> Items { get; set; } = null!;
     public DbSet<TaskExtension> Tasks { get; set; } = null!;
-    public DbSet<Description> Descriptions { get; set; } = null!;
     
     public DbSet<Session> Sessions { get; set; } = null!;
     public DbSet<SessionSegment> SessionSegments { get; set; } = null!;

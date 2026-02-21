@@ -1,34 +1,28 @@
-﻿using Misa.Contract.Features.Entities.Base;
-using Misa.Contract.Features.Entities.Extensions.Items.Base;
+﻿using Misa.Contract.Items;
 using Misa.Domain.Items;
-using Misa.Domain.Items.Components.Activities;
 
 namespace Misa.Application.Mappings;
 public static class ItemMappings
 {
-    public static ActivityPriority MapToDomain(this PriorityDto priorityDto) =>
-        priorityDto switch
+    public static ItemDto ToDto(this Item item)
+    {
+        return new ItemDto
         {
-            PriorityDto.None => ActivityPriority.None,
-            PriorityDto.Low => ActivityPriority.Low,
-            PriorityDto.Medium => ActivityPriority.Medium,
-            PriorityDto.High => ActivityPriority.High,
-            PriorityDto.Urgent => ActivityPriority.Urgent,
-            PriorityDto.Critical => ActivityPriority.Critical,
-            _ => throw new ArgumentOutOfRangeException(nameof(priorityDto), priorityDto, null)
+            Id = item.Id.Value,
+            OwnerId = item.OwnerId,
+            Workflow = item.Workflow.ToDto(),
+
+            Title = item.Title,
+            Description = item.Description,
+
+            IsDeleted = item.IsDeleted,
+            IsArchived = item.IsArchived,
+
+            CreatedAt = item.CreatedAt,
+            ModifiedAt = item.ModifiedAt
         };
-    public static PriorityDto MapToDto(this ActivityPriority activityPriority) =>
-        activityPriority switch
-        {
-            ActivityPriority.None     => PriorityDto.None,
-            ActivityPriority.Low      => PriorityDto.Low,
-            ActivityPriority.Medium   => PriorityDto.Medium,
-            ActivityPriority.High     => PriorityDto.High,
-            ActivityPriority.Urgent   => PriorityDto.Urgent,
-            ActivityPriority.Critical => PriorityDto.Critical,
-            _ => throw new ArgumentOutOfRangeException(nameof(activityPriority), activityPriority, null)
-        };
-    public static WorkflowDto MapToDto(this Workflow workflow) =>
+    }
+    public static WorkflowDto ToDto(this Workflow workflow) =>
         workflow switch
         {
             Workflow.Task => WorkflowDto.Task,

@@ -8,15 +8,10 @@ public sealed class ItemActivity
     private ItemActivity() { } // EF
 
     public ItemActivity(
-        ItemId id,
         ActivityState state,
         ActivityPriority priority,
-        DateTimeOffset dueAt)
+        DateTimeOffset? dueAt)
     {
-        if (id.Equals(default))
-            throw new DomainValidationException("id", "id_required", "ItemId is required.");
-
-        Id = id;
         State = state;
         Priority = priority;
         DueAt = dueAt;
@@ -26,7 +21,7 @@ public sealed class ItemActivity
     public ItemId Id { get; init; }
     public ActivityState State { get; init; }
     public ActivityPriority Priority { get; init; }
-    public DateTimeOffset DueAt { get; init; }
+    public DateTimeOffset? DueAt { get; init; }
     
     // Components
     public ICollection<Session> Sessions { get; private set; } = new List<Session>();

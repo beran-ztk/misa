@@ -2,10 +2,8 @@ using System;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
-using Misa.Contract.Features.Common.Deadlines;
-using Misa.Contract.Features.Entities.Extensions.Items.Base;
-using Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;
-using Misa.Contract.Features.Entities.Extensions.Items.Features.Session;
+using Misa.Contract.Items.Components.Activity;
+using Misa.Contract.Items.Components.Activity.Sessions;
 using Misa.Contract.Shared.Results;
 using Misa.Ui.Avalonia.Infrastructure.Client;
 
@@ -13,11 +11,11 @@ namespace Misa.Ui.Avalonia.Features.Inspector.Root;
 
 public sealed class InspectorGateway(RemoteProxy remoteProxy)
 {
-    public Task<Result<DetailedItemDto>> GetDetailsAsync(Guid id)
-    {
-        var request = new HttpRequestMessage(HttpMethod.Get, $"items/{id}/details");
-        return remoteProxy.SendAsync<DetailedItemDto>(request);
-    }
+    // public Task<Result<DetailedItemDto>> GetDetailsAsync(Guid id)
+    // {
+    //     var request = new HttpRequestMessage(HttpMethod.Get, $"items/{id}/details");
+    //     return remoteProxy.SendAsync<DetailedItemDto>(request);
+    // }
 
     // Sessions (Overview)
     public Task<Result<CurrentSessionOverviewDto>> GetCurrentAndLatestSessionAsync(Guid itemId)
@@ -27,24 +25,24 @@ public sealed class InspectorGateway(RemoteProxy remoteProxy)
     }
 
     // Sessions (Commands)
-    public Task<Result<SessionResolvedDto>> StartSessionAsync(StartSessionDto dto)
+    public Task<Result<SessionDto>> StartSessionAsync(StartSessionDto dto)
     {
         var request = new HttpRequestMessage(HttpMethod.Post, $"items/{dto.ItemId}/sessions/start")
         {
             Content = JsonContent.Create(dto)
         };
 
-        return remoteProxy.SendAsync<SessionResolvedDto>(request);
+        return remoteProxy.SendAsync<SessionDto>(request);
     }
 
-    public Task<Result<SessionResolvedDto>> PauseSessionAsync(PauseSessionDto dto)
+    public Task<Result<SessionDto>> PauseSessionAsync(PauseSessionDto dto)
     {
         var request = new HttpRequestMessage(HttpMethod.Post, $"items/{dto.ItemId}/sessions/pause")
         {
             Content = JsonContent.Create(dto)
         };
 
-        return remoteProxy.SendAsync<SessionResolvedDto>(request);
+        return remoteProxy.SendAsync<SessionDto>(request);
     }
 
     public Task<Result> ContinueSessionAsync(Guid itemId)
@@ -63,14 +61,15 @@ public sealed class InspectorGateway(RemoteProxy remoteProxy)
         return remoteProxy.SendAsync(request);
     }
 
-    public Task<Result<DeadlineDto>> UpsertDeadlineAsync(UpsertDeadlineDto dto)
+    public Task UpsertDeadlineAsync(UpsertDeadlineDto dto)
     {
-        var request = new HttpRequestMessage(HttpMethod.Put, "deadlines")
-        {
-            Content = JsonContent.Create(dto)
-        };
-
-        return remoteProxy.SendAsync<DeadlineDto>(request);
+        // var request = new HttpRequestMessage(HttpMethod.Put, "deadlines")
+        // {
+        //     Content = JsonContent.Create(dto)
+        // };
+        //
+        // return remoteProxy.SendAsync<DeadlineDto>(request);
+        return Task.CompletedTask;
     }
 
     public Task<Result> DeleteDeadlineAsync(Guid targetItemId)

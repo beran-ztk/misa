@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
 using Misa.Domain.Items;
 using Misa.Domain.Items.Components.Schedules;
 using Wolverine;
@@ -36,30 +35,25 @@ public sealed class SchedulerConfiguration : IEntityTypeConfiguration<ScheduleEx
         builder.Property(s => s.ByMonth);
 
         builder.Property(s => s.MisfirePolicy)
-            .IsRequired()
             .HasDefaultValue(ScheduleMisfirePolicy.Catchup);
 
         builder.Property(s => s.LookaheadLimit)
-            .IsRequired()
             .HasDefaultValue(1);
 
         builder.Property(s => s.OccurrenceTtl);
 
-        builder.Property(s => s.ActionType)
-            .IsRequired();
+        builder.Property(s => s.ActionType);
         
         builder.Property(s => s.Payload)
             .HasColumnType("jsonb");
 
-        builder.Property(s => s.Timezone)
-            .IsRequired();
+        builder.Property(s => s.Timezone);
 
         builder.Property(s => s.StartTime);
 
         builder.Property(s => s.EndTime);
 
-        builder.Property(s => s.ActiveFromUtc)
-            .IsRequired();
+        builder.Property(s => s.ActiveFromUtc);
 
         builder.Property(s => s.ActiveUntilUtc);
 
@@ -103,7 +97,7 @@ public sealed class SchedulerConfiguration : IEntityTypeConfiguration<ScheduleEx
         
         // Relationships
         builder.HasMany(s => s.ExecutionLogs)
-            .WithOne(e => e.ScheduleExtension)
+            .WithOne()
             .HasForeignKey(e => e.SchedulerId)
             .OnDelete(DeleteBehavior.Cascade);
     }

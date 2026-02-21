@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
-using Misa.Contract.Features.Entities.Extensions.Items.Features.Session;
+using Misa.Contract.Items.Components.Activity.Sessions;
 using Misa.Contract.Shared.Results;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Inspector.Root;
@@ -20,19 +20,19 @@ public partial class EndSessionViewModel(Guid itemId, InspectorGateway gateway) 
     // Content
     [ObservableProperty] private string? _summary;
 
-    [ObservableProperty] private EfficiencyContract _selectedEfficiency;
-    [ObservableProperty] private ConcentrationContract _selectedConcentration;
+    [ObservableProperty] private SessionEfficiencyDto _selectedSessionEfficiency;
+    [ObservableProperty] private SessionConcentrationDto _selectedSessionConcentration;
 
-    public IReadOnlyList<EfficiencyContract> Efficiencies { get; } = Enum.GetValues<EfficiencyContract>();
-    public IReadOnlyList<ConcentrationContract> Concentrations { get; } = Enum.GetValues<ConcentrationContract>();
+    public IReadOnlyList<SessionEfficiencyDto> Efficiencies { get; } = Enum.GetValues<SessionEfficiencyDto>();
+    public IReadOnlyList<SessionConcentrationDto> Concentrations { get; } = Enum.GetValues<SessionConcentrationDto>();
 
     public async Task<Result> SubmitAsync()
     {
 
         var dto = new StopSessionDto(
             itemId,
-            SelectedEfficiency,
-            SelectedConcentration,
+            SelectedSessionEfficiency,
+            SelectedSessionConcentration,
             Summary
         );
         

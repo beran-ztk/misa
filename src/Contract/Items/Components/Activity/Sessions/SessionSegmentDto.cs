@@ -1,9 +1,9 @@
-﻿namespace Misa.Contract.Features.Entities.Extensions.Items.Features.Session;
+﻿namespace Misa.Contract.Items.Components.Activity.Sessions;
 
-public record SessionSegmentDto(
+public sealed record SessionSegmentDto(
     Guid Id,
     Guid SessionId,
-    string? PauseReason,
     DateTimeOffset StartedAtUtc,
-    DateTimeOffset? EndedAtUtc
+    DateTimeOffset? EndedAtUtc,
+    string? PauseReason
 );

@@ -1,9 +1,9 @@
-﻿namespace Misa.Contract.Features.Entities.Extensions.Items.Features.Session;
+﻿namespace Misa.Contract.Items.Components.Activity.Sessions;
 
 public class CurrentSessionOverviewDto
 {
-    public SessionResolvedDto? ActiveSession { get; set; }
-    public SessionResolvedDto? LatestClosedSession { get; set; }
+    public SessionDto? ActiveSession { get; set; }
+    public SessionDto? LatestClosedSession { get; set; }
     
     public TimeSpan? ElapsedTime { get; set; }
     public int ItemSessionCount { get; set; }

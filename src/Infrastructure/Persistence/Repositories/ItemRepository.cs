@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Misa.Application.Abstractions.Persistence;
-using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
 using Misa.Domain.Items;
 using Misa.Domain.Items.Components.Activities.Sessions;
 using Misa.Domain.Items.Components.Schedules;
@@ -13,6 +12,11 @@ public class ItemRepository(MisaContext context) : IItemRepository
 {
     public async Task SaveChangesAsync(CancellationToken  ct = default)
         => await context.SaveChangesAsync(ct);
+
+    public async Task AddAsync(Item item, CancellationToken ct)
+    {
+        await context.Items.AddAsync(item, ct);
+    }
 
     public async Task<List<Session>> GetActiveSessionsWithAutostopAsync(CancellationToken ct)
     {
@@ -41,7 +45,7 @@ public class ItemRepository(MisaContext context) : IItemRepository
     {
         return await context.Sessions
             .Where(s =>
-                s.ItemId == id
+                s.ItemId.Value == id
                 && s.State == SessionState.Ended) 
             .Include(s => s.Segments)
             .OrderByDescending(s => s.CreatedAtUtc)
@@ -53,7 +57,7 @@ public class ItemRepository(MisaContext context) : IItemRepository
     {
         return await context.Sessions
             .Where(s =>
-                s.ItemId == id
+                s.ItemId.Value == id
                 && (s.State == SessionState.Running
                 || s.State == SessionState.Paused)) 
             .Include(s => s.Segments)
@@ -65,7 +69,7 @@ public class ItemRepository(MisaContext context) : IItemRepository
     {
         return await context.Sessions
             .Where(s =>
-                s.ItemId == id
+                s.ItemId.Value == id
                 && s.State == SessionState.Running)
             .Include(s => s.Segments.Where(seg => seg.EndedAtUtc == null))
             .OrderByDescending(s => s.CreatedAtUtc)
@@ -75,7 +79,7 @@ public class ItemRepository(MisaContext context) : IItemRepository
     {
         return await context.Sessions
             .Where(s =>
-                s.ItemId == id
+                s.ItemId.Value == id
                 && s.State == SessionState.Paused)
             .OrderByDescending(s => s.CreatedAtUtc)
             .FirstOrDefaultAsync(ct);

@@ -1,5 +1,4 @@
 ﻿using Misa.Application.Abstractions.Persistence;
-using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
 using Misa.Domain.Items.Components.Schedules;
 using Misa.Infrastructure.Persistence.Context;
 

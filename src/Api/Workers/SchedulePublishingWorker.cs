@@ -42,18 +42,18 @@ public class SchedulePublishingWorker(
         {
             logger.LogInformation("Schedule executing worker running at.");
 
-            var scope = provider.CreateScope();
-            var bus = scope.ServiceProvider.GetRequiredService<IMessageBus>();
-
-            var notifications = await bus.InvokeAsync<List<NotificationDto>>(new SchedulePublishingCommand(), stoppingToken);
-
-            foreach (var notification in notifications)
-            {
-                await hub.Clients.All.SendAsync(
-                    nameof(PublisherDto.Scheduler), 
-                    notification, 
-                    stoppingToken);
-            }
+            // var scope = provider.CreateScope();
+            // var bus = scope.ServiceProvider.GetRequiredService<IMessageBus>();
+            //
+            // var notifications = await bus.InvokeAsync<List<NotificationDto>>(new SchedulePublishingCommand(), stoppingToken);
+            //
+            // foreach (var notification in notifications)
+            // {
+            //     await hub.Clients.All.SendAsync(
+            //         nameof(PublisherDto.Scheduler), 
+            //         notification, 
+            //         stoppingToken);
+            // }
         }
         catch (Exception ex)
         {

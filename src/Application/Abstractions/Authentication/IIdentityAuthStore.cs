@@ -24,4 +24,5 @@ public sealed record IdentityUserCreated(Guid UserId, string Username, string Em
 public sealed record IdentityLoginResult(
     Guid UserId,
     string Username,
-    string Token);
+    string Token,
+    string Timezone);

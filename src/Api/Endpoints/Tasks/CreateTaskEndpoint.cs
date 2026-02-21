@@ -1,8 +1,6 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
-using Misa.Api.Services.Auth;
-using Misa.Application.Features.Entities.Extensions.Items.Extensions.Tasks.Commands;
-using Misa.Contract.Features.Entities.Extensions.Items.Extensions.Tasks;
+using Misa.Application.Features.Items.Tasks.Commands;
+using Misa.Contract.Items.Components.Tasks;
 using Misa.Contract.Shared.Results;
 using Wolverine;
 
@@ -15,17 +13,20 @@ public static class CreateTaskEndpoint
         api.MapPost("tasks", AddTask);
     }
 
-    private static async Task<Result<TaskDto>> AddTask(
+    private static async Task<Result<TaskExtensionDto>> AddTask(
         [FromBody] CreateTaskDto dto,
         IMessageBus bus, 
         CancellationToken ct)
     {
         var command = new CreateTaskCommand(
             dto.Title,
+            dto.Description,
             dto.CategoryDto,
-            dto.PriorityDto);
+            dto.ActivityPriorityDto,
+            dto.DueDate
+        );
 
-        var result = await bus.InvokeAsync<Result<TaskDto>>(command, ct);
+        var result = await bus.InvokeAsync<Result<TaskExtensionDto>>(command, ct);
         return result;
     }
 }

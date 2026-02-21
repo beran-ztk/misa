@@ -1,4 +1,4 @@
-﻿namespace Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;
+﻿namespace Misa.Contract.Items.Components.Schedules;
 
 public enum ScheduleActionTypeDto
 {

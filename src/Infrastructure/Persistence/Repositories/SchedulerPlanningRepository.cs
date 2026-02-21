@@ -1,7 +1,6 @@
 ﻿using Npgsql;
 using Microsoft.EntityFrameworkCore;
 using Misa.Application.Abstractions.Persistence;
-using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
 using Misa.Domain.Items;
 using Misa.Domain.Items.Components.Schedules;
 using Misa.Infrastructure.Persistence.Context;
@@ -20,7 +19,7 @@ public sealed class SchedulerPlanningRepository(MisaContext context) : ISchedule
 
     public async Task<int> GetExecutionCountPlannedAheadAsync(Guid id, DateTimeOffset utcNow, CancellationToken ct)
         => await context.SchedulerExecutionLogs
-            .Where(s => s.ScheduleExtension.Id == new ItemId(id) && s.ScheduledForUtc >= utcNow)
+            .Where(s => s.SchedulerId.Value == id && s.ScheduledForUtc >= utcNow)
             .CountAsync(ct);
 
     public async Task<bool> TryAddExecutionLogAsync(ScheduleExecutionLog log, CancellationToken ct)

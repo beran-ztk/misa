@@ -8,4 +8,7 @@ public sealed class CurrentUser(IHttpContextAccessor http) : ICurrentUser
     public string UserId =>
         http.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier)
         ?? throw new InvalidOperationException("Authenticated request without NameIdentifier claim.");
+    public string Timezone =>
+        http.HttpContext?.User.FindFirstValue("tz")
+        ?? throw new InvalidOperationException("Authenticated request without timezone claim.");
 }

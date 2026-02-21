@@ -1,3 +1,3 @@
-﻿namespace Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;
+﻿namespace Misa.Contract.Items.Components.Activity;
 
 public record DeleteDeadlineDto();

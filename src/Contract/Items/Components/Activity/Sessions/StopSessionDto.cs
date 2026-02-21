@@ -1,8 +1,8 @@
-﻿namespace Misa.Contract.Features.Entities.Extensions.Items.Features.Session;
+﻿namespace Misa.Contract.Items.Components.Activity.Sessions;
 
 public record StopSessionDto(
     Guid ItemId,
-    EfficiencyContract Efficiency,
-    ConcentrationContract Concentration,
+    SessionEfficiencyDto SessionEfficiency,
+    SessionConcentrationDto SessionConcentration,
     string? Summary
 );

@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Commands;
-using Misa.Contract.Features.Entities.Extensions.Items.Features.Session;
+using Misa.Contract.Items.Components.Activity.Sessions;
 using Misa.Contract.Shared.Results;
 using Wolverine;
 
@@ -13,7 +13,7 @@ public static class StartSessionEndpoint
         api.MapPost("items/{itemId:guid}/sessions/start", StartSession);
     }
 
-    private static async Task<Result<SessionResolvedDto>> StartSession(
+    private static async Task<Result<SessionDto>> StartSession(
         [FromRoute] Guid itemId,
         [FromBody] StartSessionDto dto,
         IMessageBus bus,
@@ -27,7 +27,7 @@ public static class StartSessionEndpoint
             dto.AutoStopReason
         );
 
-        var res = await bus.InvokeAsync<Result<SessionResolvedDto>>(cmd, ct);
+        var res = await bus.InvokeAsync<Result<SessionDto>>(cmd, ct);
         return res;
     }
 }

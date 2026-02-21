@@ -1,4 +1,4 @@
-﻿namespace Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
+﻿namespace Misa.Domain.Items.Components.Schedules;
 
 /// <summary>
 /// Defines the base frequency type for a scheduler.

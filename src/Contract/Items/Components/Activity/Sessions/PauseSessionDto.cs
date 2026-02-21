@@ -1,4 +1,4 @@
-﻿namespace Misa.Contract.Features.Entities.Extensions.Items.Features.Session;
+﻿namespace Misa.Contract.Items.Components.Activity.Sessions;
 
 public record PauseSessionDto(
     Guid ItemId,

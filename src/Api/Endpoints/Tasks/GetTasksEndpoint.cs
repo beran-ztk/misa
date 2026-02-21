@@ -1,6 +1,5 @@
-﻿using System.Security.Claims;
-using Misa.Application.Features.Entities.Extensions.Items.Extensions.Tasks.Queries;
-using Misa.Contract.Features.Entities.Extensions.Items.Extensions.Tasks;
+﻿using Misa.Application.Features.Items.Tasks.Queries;
+using Misa.Contract.Items.Components.Tasks;
 using Misa.Contract.Shared.Results;
 using Wolverine;
 
@@ -12,10 +11,10 @@ public static class GetTasksEndpoint
     {
         api.MapGet("tasks", GetTasks);
     }
-    private static async Task<Result<List<TaskDto>>> GetTasks(
+    private static async Task<Result<IReadOnlyCollection<TaskExtensionDto>>> GetTasks(
         IMessageBus bus, 
         CancellationToken ct)
     {
-        return await bus.InvokeAsync<Result<List<TaskDto>>>(new GetTasksQuery(), ct);
+        return await bus.InvokeAsync<Result<IReadOnlyCollection<TaskExtensionDto>>>(new GetTasksQuery(), ct);
     }
 }

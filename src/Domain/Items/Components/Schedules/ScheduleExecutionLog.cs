@@ -1,6 +1,4 @@
-using Misa.Domain.Items.Components.Schedules;
-
-namespace Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
+namespace Misa.Domain.Items.Components.Schedules;
 
 /// <summary>
 /// Represents a log entry for a scheduled execution.
@@ -10,7 +8,7 @@ public sealed class ScheduleExecutionLog
     private ScheduleExecutionLog() { } // EF Core
     public ScheduleExecutionLog(
         Guid id,
-        Guid schedulerId,
+        ItemId schedulerId,
         DateTimeOffset scheduledForUtc,
         DateTimeOffset createdAtUtc)
     {
@@ -24,7 +22,7 @@ public sealed class ScheduleExecutionLog
     }
 
     public Guid Id { get; private set; }
-    public Guid SchedulerId { get; private set; }
+    public ItemId SchedulerId { get; private set; }
     
     public DateTimeOffset ScheduledForUtc { get; private set; }
     
@@ -37,8 +35,6 @@ public sealed class ScheduleExecutionLog
     public int Attempts { get; private set; }
     
     public DateTimeOffset CreatedAtUtc { get; private set; }
-    
-    public ScheduleExtension ScheduleExtension { get; private set; } = null!;
 
     public void Claim(DateTimeOffset now)
     {

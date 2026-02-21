@@ -58,7 +58,8 @@ public sealed class IdentityAuthStore(UserManager<User> userManager,
             new IdentityLoginResult(
                 Guid.Parse(user.Id),
                 user.UserName!,
-                token));
+                token,
+                user.TimeZone));
     }
     private string GenerateToken(User user)
     {
@@ -69,10 +70,11 @@ public sealed class IdentityAuthStore(UserManager<User> userManager,
 
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-        var claims = new[]
+        var claims = new List<Claim>
         {
-            new Claim(JwtRegisteredClaimNames.Sub, user.Id),
-            new Claim(JwtRegisteredClaimNames.UniqueName, user.UserName!)
+            new(JwtRegisteredClaimNames.Sub, user.Id),
+            new(JwtRegisteredClaimNames.UniqueName, user.UserName!),
+            new("tz", user.TimeZone)
         };
 
         var token = new JwtSecurityToken(

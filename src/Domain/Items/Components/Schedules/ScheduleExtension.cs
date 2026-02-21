@@ -1,6 +1,3 @@
-using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
-using Misa.Domain.Items.Components.Activities;
-
 namespace Misa.Domain.Items.Components.Schedules;
 
 /// <summary>
@@ -67,10 +64,9 @@ public sealed class ScheduleExtension
     // Constructors
     public ScheduleExecutionLog CreateExecutionLog(Guid executionLogId, DateTimeOffset utcNow)
     {
-        return new ScheduleExecutionLog(executionLogId, Id.Value, SchedulingAnchorUtc, utcNow);
+        return new ScheduleExecutionLog(executionLogId, Id, SchedulingAnchorUtc, utcNow);
     }
     public ScheduleExtension(
-        ItemId id,
         Guid? targetItemId,
         ScheduleFrequencyType frequencyType,
         int frequencyInterval,
@@ -110,9 +106,7 @@ public sealed class ScheduleExtension
         var normalizedByDay = Normalize(byDay, 0, 6, nameof(byDay));
         var normalizedByMonthDay = Normalize(byMonthDay, 1, 31, nameof(byMonthDay));
         var normalizedByMonth = Normalize(byMonth, 1, 12, nameof(byMonth));
-
-
-        Id = id;
+        
         TargetItemId = targetItemId;
         ScheduleFrequencyType = frequencyType;
         FrequencyInterval = frequencyInterval;

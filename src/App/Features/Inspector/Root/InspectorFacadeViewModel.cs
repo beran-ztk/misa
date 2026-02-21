@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Net.Http;
-using System.Security.Cryptography.X509Certificates;
-using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Input;
-using Misa.Contract.Features.Entities.Extensions.Items.Base;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Base;
 using Misa.Ui.Avalonia.Infrastructure.States;
@@ -48,15 +44,15 @@ public sealed partial class InspectorFacadeViewModel : ViewModelBase
 
     private async Task GetEntryDataAsync(Guid? id)
     {
-        if (id is null) return;
-        
-        var result = await Gateway.GetDetailsAsync((Guid)id);
-        if (result.Value is null) return;
-        
-        State.Item = result.Value.Item;
-        State.Deadline = result.Value.Deadline;
-
-        var session = await Gateway.GetCurrentAndLatestSessionAsync(State.Item.Id);
-        State.CurrentSessionOverview = session.Value;
+        // if (id is null) return;
+        //
+        // var result = await Gateway.GetDetailsAsync((Guid)id);
+        // if (result.Value is null) return;
+        //
+        // State.Item = result.Value.Item;
+        // State.Deadline = result.Value.Deadline;
+        //
+        // var session = await Gateway.GetCurrentAndLatestSessionAsync(State.Item.Id);
+        // State.CurrentSessionOverview = session.Value;
     }
 }

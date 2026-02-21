@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Commands;
-using Misa.Contract.Features.Entities.Extensions.Items.Features.Session;
+using Misa.Contract.Items.Components.Activity.Sessions;
 using Misa.Contract.Shared.Results;
 using Wolverine;
 
@@ -21,8 +21,8 @@ public static class StopSessionEndpoint
     {
         var cmd = new StopSessionCommand(
             dto.ItemId,
-            dto.Efficiency,
-            dto.Concentration,
+            dto.SessionEfficiency,
+            dto.SessionConcentration,
             dto.Summary
         );
 

@@ -13,16 +13,17 @@
             Padding="10,8">
 
         <Grid ColumnDefinitions="*,Auto"
+              RowDefinitions="*,*"
               ColumnSpacing="12"
               VerticalAlignment="Center">
 
-            <StackPanel Spacing="2">
+            <StackPanel Grid.Column="0" Grid.Row="0" Spacing="2">
                 <TextBlock Text="Deadline"
                            Opacity="0.7" />
                 <TextBlock Text="{Binding DeadlineDisplay}" />
             </StackPanel>
 
-            <StackPanel Grid.Column="1"
+            <StackPanel Grid.Column="1" Grid.Row="0"
                         Orientation="Horizontal"
                         Spacing="8"
                         VerticalAlignment="Center">
@@ -37,6 +38,22 @@
                     <Image Source="{SvgImage /Assets/Icons/Common/trash.svg}" />
                 </Button>
 
+            </StackPanel>
+            
+            <StackPanel Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="2">
+                <StackPanel Classes="addpanel-controls">
+                    <TextBlock Text="Select a date"
+                               Classes="addpanel-text"/>
+                    <DatePicker Classes="addpanel-date"
+                                SelectedDate="{Binding DeadlineDate}" />
+                </StackPanel>
+
+                <StackPanel Classes="addpanel-controls">
+                    <TextBlock Text="Select a time"
+                               Classes="addpanel-text"/>
+                    <TimePicker Classes="addpanel-time"
+                                SelectedTime="{Binding DeadlineTime}" />
+                </StackPanel>
             </StackPanel>
         </Grid>
     </Border>

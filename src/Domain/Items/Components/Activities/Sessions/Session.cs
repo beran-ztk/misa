@@ -1,9 +1,12 @@
 ﻿namespace Misa.Domain.Items.Components.Activities.Sessions;
 
-public class Session
+public sealed class Session
 {
-    public Guid Id { get; private set; }
-    public Guid ItemId { get; private set; }
+    private Session() {} // EF
+    
+    // Fields & Properties
+    public Guid Id { get; init; }
+    public ItemId ItemId { get; init; }
     public SessionState State { get; private set; }
     public SessionEfficiencyType Efficiency { get; private set; }
     public SessionConcentrationType Concentration { get; private set; }
@@ -18,8 +21,11 @@ public class Session
     public bool? WasAutomaticallyStopped { get; private set; }
 
     public DateTimeOffset CreatedAtUtc { get; private init; }
+    
+    // Components
     public ICollection<SessionSegment> Segments { get; init; } = [];
 
+    // Derived Properties
     public TimeSpan? ElapsedTime(DateTimeOffset utcNow) =>
         Segments.Aggregate(TimeSpan.Zero, (sum, s) =>
         {
@@ -27,11 +33,13 @@ public class Session
             return sum + (end - s.StartedAtUtc);
         });
     
+    // State Change
     public void Autostop()
     {
         WasAutomaticallyStopped = true;
     }
 
+    // Behaviour
     public void AddStartSegment(Guid segmentId)
     {
         var segment = new SessionSegment(segmentId, Id, CreatedAtUtc);
@@ -94,7 +102,7 @@ public class Session
 
     public static Session Start(
         Guid id,
-        Guid entityId, 
+        ItemId itemId, 
         TimeSpan? plannedDuration, 
         string? objective,
         bool stopAutomatically, 
@@ -102,7 +110,7 @@ public class Session
         DateTimeOffset nowUtc) => new()
     {
         Id = id,
-        ItemId = entityId,
+        ItemId = itemId,
         PlannedDuration = plannedDuration,
         Objective = objective,
         StopAutomatically = stopAutomatically,

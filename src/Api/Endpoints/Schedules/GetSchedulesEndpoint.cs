@@ -1,5 +1,4 @@
-using Misa.Application.Features.Entities.Extensions.Items.Features.Scheduling.Commands;
-using Misa.Contract.Features.Entities.Extensions.Items.Features.Scheduler;
+using Misa.Application.Features.Items.Schedules.Commands;
 using Misa.Contract.Items.Components.Schedules;
 using Misa.Contract.Shared.Results;
 using Wolverine;
@@ -13,9 +12,9 @@ public static class GetSchedulesEndpoint
         api.MapGet("scheduling", GetSchedulingRules);
     }
     
-    private static async Task<Result<List<ScheduleDto>>> GetSchedulingRules(IMessageBus bus, CancellationToken ct)
+    private static async Task<Result<IReadOnlyCollection<ScheduleExtensionDto>>> GetSchedulingRules(IMessageBus bus, CancellationToken ct)
     {
-        var result = await bus.InvokeAsync<Result<List<ScheduleDto>>>(new GetScheduleQuery(), ct);
+        var result = await bus.InvokeAsync<Result<IReadOnlyCollection<ScheduleExtensionDto>>>(new GetScheduleQuery(), ct);
         return result;
     }
 }

@@ -1,7 +1,5 @@
 ﻿using Misa.Domain.Exceptions;
 using Misa.Domain.Features.Audit;
-using Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
-using Misa.Domain.Features.Entities.Features;
 using Misa.Domain.Items.Components.Activities;
 using Misa.Domain.Items.Components.Schedules;
 using Misa.Domain.Items.Components.Tasks;
@@ -40,59 +38,6 @@ public sealed class Item : DomainEventEntity
 
         CreatedAt = createdAtUtc;
     }
-
-    public static Item CreateTask(
-        ItemId id,
-        string ownerId,
-        string title,
-        string description,
-        TaskCategory category,
-        DateTimeOffset createdAtUtc,
-        
-        ActivityState state,
-        ActivityPriority priority,
-        DateTimeOffset dueAt)
-    {
-        var item = new Item(
-            id: id,
-            ownerId: ownerId,
-            workflow: Workflow.Task,
-            title: title,
-            description: description,
-            createdAtUtc: createdAtUtc)
-        {
-            Activity = new ItemActivity(id, state, priority, dueAt),
-            TaskExtension = new TaskExtension(id, category)
-        };
-
-        return item;
-    }
-    public static Item CreateSchedule(
-        ItemId id,
-        string ownerId,
-        string title,
-        string description,
-        DateTimeOffset createdAtUtc,
-        ScheduleExtension scheduleExtension,
-        
-        ActivityState state,
-        ActivityPriority priority,
-        DateTimeOffset dueAt)
-    {
-        var item = new Item(
-            id: id,
-            ownerId: ownerId,
-            workflow: Workflow.Schedule,
-            title: title,
-            description: description,
-            createdAtUtc: createdAtUtc)
-        {
-            Activity = new ItemActivity(id, state, priority, dueAt),
-            ScheduleExtension = scheduleExtension
-        };
-
-        return item;
-    }
     
     // Fields + Properties
     public ItemId Id { get; init; }
@@ -110,12 +55,60 @@ public sealed class Item : DomainEventEntity
     
     // Components-Standard
     public ICollection<AuditChange> Changes { get; init; } = new List<AuditChange>();
-    public ICollection<Description> Descriptions { get; init; } = new List<Description>();
     
     // Components-Activity
     public ItemActivity? Activity { get; private set; }
     public TaskExtension? TaskExtension { get; private set; }
     public ScheduleExtension? ScheduleExtension { get; private set; }
+
+    
+    // Behaviours
+    public static Item CreateTask(
+        ItemId id,
+        string ownerId,
+        string title,
+        string description,
+        TaskCategory category,
+        DateTimeOffset createdAtUtc,
+        
+        ActivityPriority priority,
+        DateTimeOffset? dueAt)
+    {
+        var item = new Item(
+            id: id,
+            ownerId: ownerId,
+            workflow: Workflow.Task,
+            title: title,
+            description: description,
+            createdAtUtc: createdAtUtc)
+        {
+            Activity = new ItemActivity(ActivityState.Draft, priority, dueAt),
+            TaskExtension = new TaskExtension(id, category)
+        };
+
+        return item;
+    }
+    public static Item CreateSchedule(
+        ItemId id,
+        string ownerId,
+        string title,
+        string description,
+        DateTimeOffset createdAtUtc,
+        ScheduleExtension scheduleExtension)
+    {
+        var item = new Item(
+            id: id,
+            ownerId: ownerId,
+            workflow: Workflow.Schedule,
+            title: title,
+            description: description,
+            createdAtUtc: createdAtUtc)
+        {
+            ScheduleExtension = scheduleExtension
+        };
+
+        return item;
+    }
 
     // Derived Properties
     

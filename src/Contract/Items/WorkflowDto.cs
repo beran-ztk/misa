@@ -1,4 +1,4 @@
-﻿namespace Misa.Contract.Features.Entities.Base;
+﻿namespace Misa.Contract.Items;
 
 public enum WorkflowDto
 {

@@ -1,4 +1,4 @@
-namespace Misa.Domain.Features.Entities.Extensions.Items.Features.Scheduling;
+namespace Misa.Domain.Items.Components.Schedules;
 
 /// <summary>
 /// Defines how the scheduler should handle missed execution triggers.
