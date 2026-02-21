@@ -126,6 +126,7 @@ public static class ServiceRegistration
                     npgsql.MapEnum<ScheduleFrequencyType>();
                     npgsql.MapEnum<ScheduleActionType>();
                     npgsql.MapEnum<ScheduleExecutionStatus>();
+                    npgsql.MapEnum<ActivityState>();
                     npgsql.MapEnum<ActivityPriority>();
                     npgsql.MapEnum<ChangeType>();
                     npgsql.MapEnum<Workflow>();
