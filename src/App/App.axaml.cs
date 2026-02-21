@@ -21,7 +21,7 @@ public class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
-        const string baseAddress = "http://localhost:4500";
+        const string baseAddress = "https://localhost:4500";
         Services = CompositionRoot.Build(baseAddress);
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
