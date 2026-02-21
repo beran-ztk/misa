@@ -9,7 +9,7 @@ using Misa.Ui.Avalonia.Infrastructure.States;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Schedules.Root;
 
-public sealed class SchedulerGateway(RemoteProxy remoteProxy)
+public sealed class ScheduleGateway(RemoteProxy remoteProxy)
 {
     public async Task<Result<IReadOnlyCollection<ScheduleExtensionDto>>> GetAllAsync()
     {

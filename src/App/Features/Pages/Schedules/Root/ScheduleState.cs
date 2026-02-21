@@ -9,7 +9,7 @@ using Misa.Ui.Avalonia.Infrastructure.States;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Schedules.Root;
 
-public sealed partial class SchedulerState(
+public sealed partial class ScheduleState(
     ISelectionContextState selectionContextState,
     CreateScheduleState createState)
     : ObservableObject

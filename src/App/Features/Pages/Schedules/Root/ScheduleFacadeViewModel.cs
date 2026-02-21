@@ -6,14 +6,14 @@ using Misa.Ui.Avalonia.Infrastructure.UI;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Schedules.Root;
 
-public sealed partial class SchedulerFacadeViewModel(
-    Schedules.Root.SchedulerState state,
-    SchedulerGateway gateway,
+public sealed partial class ScheduleFacadeViewModel(
+    Schedules.Root.ScheduleState state,
+    ScheduleGateway gateway,
     PanelProxy panelProxy)
     : ViewModelBase
 {
-    public Schedules.Root.SchedulerState State { get; } = state;
-    private SchedulerGateway Gateway { get; } = gateway;
+    public Schedules.Root.ScheduleState State { get; } = state;
+    private ScheduleGateway Gateway { get; } = gateway;
     private PanelProxy PanelProxy { get; } = panelProxy;
 
     public async Task InitializeWorkspaceAsync()

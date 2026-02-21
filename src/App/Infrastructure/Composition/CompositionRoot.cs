@@ -19,8 +19,6 @@ using Misa.Ui.Avalonia.Shell.Authentication;
 using Misa.Ui.Avalonia.Shell.Base;
 using Misa.Ui.Avalonia.Shell.Components;
 using CreateScheduleState = Misa.Ui.Avalonia.Features.Pages.Schedules.Root.CreateScheduleState;
-using SchedulerFacadeViewModel = Misa.Ui.Avalonia.Features.Pages.Schedules.Root.SchedulerFacadeViewModel;
-using SchedulerState = Misa.Ui.Avalonia.Features.Pages.Schedules.Root.SchedulerState;
 
 namespace Misa.Ui.Avalonia.Infrastructure.Composition;
 
@@ -115,10 +113,10 @@ public static class CompositionRoot
 
     private static void AddSchedulingFeature(this IServiceCollection sc)
     {
-        sc.AddSingleton<SchedulerState>();
+        sc.AddSingleton<ScheduleState>();
         sc.AddTransient<CreateScheduleState>();
-        sc.AddSingleton<SchedulerFacadeViewModel>();
-        sc.AddSingleton<SchedulerGateway>();
+        sc.AddSingleton<ScheduleFacadeViewModel>();
+        sc.AddSingleton<ScheduleGateway>();
 
         sc.AddTransient<CreateScheduleView>();
         sc.AddTransient<CreateScheduleViewModel>();

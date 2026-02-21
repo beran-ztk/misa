@@ -2,9 +2,9 @@ using Avalonia.Controls;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Schedules.Root;
 
-public partial class SchedulerFacadeView : UserControl
+public partial class ScheduleFacadeView : UserControl
 {
-    public SchedulerFacadeView()
+    public ScheduleFacadeView()
     {
         InitializeComponent();
     }

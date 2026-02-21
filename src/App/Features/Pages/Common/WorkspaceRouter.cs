@@ -16,7 +16,7 @@ public sealed class WorkspaceRouter(
     ShellState shell, 
     
     TaskFacadeViewModel task,
-    SchedulerFacadeViewModel schedule)
+    ScheduleFacadeViewModel schedule)
 {
     public async Task Show(WorkspaceKind kind)
     {
