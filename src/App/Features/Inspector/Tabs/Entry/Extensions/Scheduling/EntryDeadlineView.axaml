@@ -7,20 +7,28 @@
              xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Base"
              x:DataType="root:InspectorEntryViewModel">
 
-    <Border IsVisible="{Binding HasDeadline}"
-            BorderThickness="0,0,0,1"
+    <Border BorderThickness="0,0,0,1"
             BorderBrush="{StaticResource BrushBorder}"
-            Padding="10,8">
+            Padding="10,8"
+            IsVisible="{Binding Facade.State.CanHaveActivity}">
 
         <Grid ColumnDefinitions="*,Auto"
-              RowDefinitions="*,*"
+              RowDefinitions="Auto,Auto"
               ColumnSpacing="12"
+              RowSpacing="16"
               VerticalAlignment="Center">
 
-            <StackPanel Grid.Column="0" Grid.Row="0" Spacing="2">
+            <StackPanel Grid.Column="0" Grid.Row="0" Spacing="2"
+                        IsVisible="{Binding HasDeadline}">
                 <TextBlock Text="Deadline"
                            Opacity="0.7" />
                 <TextBlock Text="{Binding DeadlineDisplay}" />
+            </StackPanel>
+            
+            <StackPanel Grid.Column="0" Grid.Row="0" Spacing="2"
+                        IsVisible="{Binding !HasDeadline}">
+                <TextBlock Text="Has no deadline."
+                           Opacity="0.7" />
             </StackPanel>
 
             <StackPanel Grid.Column="1" Grid.Row="0"
@@ -29,7 +37,7 @@
                         VerticalAlignment="Center">
 
                 <Button Classes="workspace-toolbar-icon"
-                        Command="{Binding ShowUpsertDeadlinePanelCommand}">
+                        Command="{Binding ShowEditDeadlineFormCommand}">
                     <Image Source="{SvgImage /Assets/Icons/Common/edit.svg}" />
                 </Button>
 
@@ -39,21 +47,36 @@
                 </Button>
 
             </StackPanel>
-            
-            <StackPanel Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="2">
-                <StackPanel Classes="addpanel-controls">
-                    <TextBlock Text="Select a date"
-                               Classes="addpanel-text"/>
-                    <DatePicker Classes="addpanel-date"
-                                SelectedDate="{Binding DeadlineDate}" />
+
+            <StackPanel Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="2"
+                        Classes="addpanel-controls"
+                        IsVisible="{Binding ShowEditDeadline}">
+
+                <TextBlock Text="Edit the currently active deadline."
+                           Classes="addpanel-text"/>
+
+                <DatePicker Classes="addpanel-date"
+                            SelectedDate="{Binding DeadlineDate}" />
+
+                <TimePicker Classes="addpanel-time"
+                            SelectedTime="{Binding DeadlineTime}" />
+
+                <!-- Buttons -->
+                <StackPanel Orientation="Horizontal"
+                            HorizontalAlignment="Right"
+                            Spacing="8"
+                            Margin="0,8,0,0">
+
+                    <Button Content="Cancel"
+                            Classes="confirm-cancel-cancel"
+                            Command="{Binding ShowEditDeadlineFormCommand}" />
+
+                    <Button Content="Save"
+                            Classes="confirm-cancel-confirm"
+                            Command="{Binding UpsertDeadlineCommand}" />
+
                 </StackPanel>
 
-                <StackPanel Classes="addpanel-controls">
-                    <TextBlock Text="Select a time"
-                               Classes="addpanel-text"/>
-                    <TimePicker Classes="addpanel-time"
-                                SelectedTime="{Binding DeadlineTime}" />
-                </StackPanel>
             </StackPanel>
         </Grid>
     </Border>

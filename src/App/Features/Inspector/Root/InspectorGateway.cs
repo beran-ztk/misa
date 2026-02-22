@@ -6,6 +6,7 @@ using Misa.Contract.Common.Results;
 using Misa.Contract.Items;
 using Misa.Contract.Items.Components.Activity;
 using Misa.Contract.Items.Components.Activity.Sessions;
+using Misa.Contract.Routes;
 using Misa.Ui.Avalonia.Infrastructure.Client;
 
 namespace Misa.Ui.Avalonia.Features.Inspector.Root;
@@ -62,20 +63,15 @@ public sealed class InspectorGateway(RemoteProxy remoteProxy)
         return remoteProxy.SendAsync(request);
     }
 
-    public Task UpsertDeadlineAsync(UpsertDeadlineDto dto)
+    public async Task<Result> UpsertDeadlineAsync(Guid itemId, DateTimeOffset? deadline)
     {
-        // var request = new HttpRequestMessage(HttpMethod.Put, "deadlines")
-        // {
-        //     Content = JsonContent.Create(dto)
-        // };
-        //
-        // return remoteProxy.SendAsync<DeadlineDto>(request);
-        return Task.CompletedTask;
-    }
-
-    public Task<Result> DeleteDeadlineAsync(Guid targetItemId)
-    {
-        var request = new HttpRequestMessage(HttpMethod.Delete, $"deadlines/{targetItemId}");
-        return remoteProxy.SendAsync(request);
+        var dto = new UpsertDeadlineRequest(deadline);
+        
+        var request = new HttpRequestMessage(HttpMethod.Patch, ActivityRoutes.UpsertDeadlineRequest(itemId))
+        {
+            Content = JsonContent.Create(dto)
+        };
+        
+        return await remoteProxy.SendAsync(request);
     }
 }

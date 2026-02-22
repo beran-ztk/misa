@@ -21,7 +21,7 @@ public sealed class ItemActivity
     public ItemId Id { get; init; }
     public ActivityState State { get; init; }
     public ActivityPriority Priority { get; init; }
-    public DateTimeOffset? DueAt { get; init; }
+    public DateTimeOffset? DueAt { get; private set; }
     
     // Components
     public ICollection<Session> Sessions { get; private set; } = new List<Session>();
@@ -37,4 +37,7 @@ public sealed class ItemActivity
             or ActivityState.InProgress
             or ActivityState.Pending
             or ActivityState.WaitForResponse;
+    
+    // Mutables
+    public void SetDeadline(DateTimeOffset? deadline) => DueAt = deadline; 
 }

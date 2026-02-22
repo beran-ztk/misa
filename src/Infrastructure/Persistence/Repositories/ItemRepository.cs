@@ -29,7 +29,6 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
         return await context.Items
             .Include(t => t.Activity)
             .Include(t => t.TaskExtension)
-            .AsNoTracking()
             .FirstOrDefaultAsync(t => t.Id == new ItemId(id) && t.OwnerId == user.Id, cancellationToken: ct);
     }
     

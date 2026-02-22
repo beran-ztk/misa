@@ -41,12 +41,6 @@
                             <Image Source="{SvgImage /Assets/Icons/Common/dots-three-vertical.svg}" />
                             <Button.Flyout>
                                 <MenuFlyout>
-                                    <MenuItem Header="Set/Edit deadline"
-                                              Command="{Binding ShowUpsertDeadlinePanelCommand}" />
-                                    <MenuItem Header="Remove deadline"
-                                              Command="{Binding DeleteDeadlineCommand}"
-                                              IsVisible="{Binding HasDeadline}" />
-                                    
                                     <MenuItem>
                                         <MenuItem.Header>
                                             <StackPanel Spacing="8" Orientation="Horizontal">

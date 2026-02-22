@@ -1,3 +1,4 @@
+using System;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Misa.Contract.Items;
 using Misa.Contract.Items.Components.Activity.Sessions;
@@ -11,10 +12,10 @@ public sealed partial class InspectorState : ObservableObject
     [ObservableProperty] 
     [NotifyPropertyChangedFor(nameof(HasItem))]
     [NotifyPropertyChangedFor(nameof(CanHaveActivity))]
-    private ItemDto? _item;
+    private ItemDto _item = new();
     
-    public bool HasItem => Item != null;
-    public bool CanHaveActivity => Item?.Workflow == WorkflowDto.Task;
+    public bool HasItem => Item.Id != Guid.Empty;
+    public bool CanHaveActivity => Item.Workflow == WorkflowDto.Task;
     
     [ObservableProperty] private CurrentSessionOverviewDto? _currentSessionOverview;
 }
