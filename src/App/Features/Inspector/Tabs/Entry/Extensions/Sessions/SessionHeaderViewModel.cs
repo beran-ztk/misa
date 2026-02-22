@@ -63,12 +63,10 @@ public partial class InspectorEntryViewModel
 
         var result = await Facade.PanelProxy.OpenAsync(PanelKey.EndSession, formVm);
 
-        if (result is { IsSuccess: true } && Facade.State.CurrentSessionOverview is not null)
+        if (result is { IsSuccess: true })
         {
-            Facade.State.CurrentSessionOverview.ActiveSession = null;
+            await Facade.Reload();
         }
-        
-        CurrentSessionPropertyChanged();
     }
     [RelayCommand]
     private async Task ContinueSessionAsync()

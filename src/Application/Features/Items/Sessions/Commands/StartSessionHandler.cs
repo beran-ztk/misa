@@ -2,8 +2,6 @@
 using Misa.Application.Abstractions.Persistence;
 using Misa.Application.Abstractions.Time;
 using Misa.Domain.Exceptions;
-using Misa.Domain.Items;
-using Misa.Domain.Items.Components.Activities.Sessions;
 
 namespace Misa.Application.Features.Items.Sessions.Commands;
 public record StartSessionCommand(

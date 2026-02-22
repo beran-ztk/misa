@@ -16,16 +16,15 @@ public class StopSessionHandler(IItemRepository repository, ITimeProvider timePr
 {
     public async Task Handle(StopSessionCommand command, CancellationToken ct)
     {
-        // var session = await repository.TryGetActiveSessionByItemIdAsync(command.ItemId, ct);
-        // if (session is null)
-        //     throw new DomainNotFoundException("session.item", "session not found.");
-        //
-        // session.Stop(
-        //     timeProvider.UtcNow,
-        //     command.SessionEfficiency.ToDomain(),
-        //     command.SessionConcentration.ToDomain(),
-        //     command.Summary
-        // );
+        var item = await repository.TryGetItemWithSessionsAsync(command.ItemId, ct);
+        if (item?.Activity is null || item.Activity.Sessions.Count == 0 || item.Activity.TryGetSession is null)
+            throw new DomainNotFoundException("session.item", "session not found.");
+        
+        item.Activity.TryGetSession.Stop(
+            timeProvider.UtcNow,
+            command.SessionEfficiency.ToDomain(),
+            command.SessionConcentration.ToDomain(),
+            command.Summary);
 
         await repository.SaveChangesAsync(ct);
     }

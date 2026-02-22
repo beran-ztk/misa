@@ -51,6 +51,7 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
         return await context.Items
             .Include(t => t.Activity)
             .ThenInclude(a => a.Sessions)
+            .ThenInclude(s => s.Segments)
             .Include(t => t.TaskExtension)
             .FirstOrDefaultAsync(t 
                     => t.Id == new ItemId(id) && t.OwnerId == user.Id && t.Workflow == Workflow.Task

@@ -55,10 +55,10 @@ public sealed class Session
                 throw new InvalidOperationException("Multiple active segments found (data corruption).");
         }
 
+        State = SessionState.Paused;
+        
         var segment = openSegments[0];
         segment.End(nowUtc, pauseReason);
-
-        State = SessionState.Paused;
     }
 
     public void Continue(Guid segmentId, DateTimeOffset startedAtUtc)
