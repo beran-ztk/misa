@@ -1,4 +1,5 @@
 ﻿using Misa.Contract.Items.Components.Activity;
+using Misa.Contract.Items.Components.Schedules;
 using Misa.Contract.Items.Components.Tasks;
 
 namespace Misa.Contract.Items;
@@ -22,4 +23,5 @@ public sealed record ItemDto
     public ItemActivityDto? Activity { get; set; }
     
     public TaskExtensionDto? TaskExtension { get; set; }
+    public ScheduleExtensionDto? ScheduleExtension { get; set; }
 }

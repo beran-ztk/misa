@@ -38,7 +38,7 @@ public class CreateScheduleHandler(
     IIdGenerator idGenerator,
     ICurrentUser currentUser)
 {
-    public async Task<Result<ScheduleExtensionDto>> Handle(CreateScheduleCommand command, CancellationToken ct)
+    public async Task<ScheduleDto> Handle(CreateScheduleCommand command, CancellationToken ct)
     {
         var scheduleExtension = new ScheduleExtension(
             targetItemId: command.TargetItemId,
@@ -72,6 +72,6 @@ public class CreateScheduleHandler(
         await repository.AddAsync(scheduler, ct);
         await repository.SaveChangesAsync(ct);
 
-        return Result<ScheduleExtensionDto>.Ok(scheduler.ToScheduleExtensionDto());
+        return scheduler.ToScheduleExtensionDto();
     }
 }

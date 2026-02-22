@@ -68,10 +68,12 @@
             </Border>
             
             <!-- Deadline -->
-            <deadline:EntryDeadlineView Grid.Row="1"/>
+            <deadline:EntryDeadlineView Grid.Row="1"
+                                        IsVisible="{Binding Facade.State.CanHaveActivity}"/>
             
             <!-- Session -->
-            <session:SessionHeaderView Grid.Row="2"/>
+            <session:SessionHeaderView Grid.Row="2"
+                                       IsVisible="{Binding Facade.State.CanHaveActivity}"/>
             
             <!-- Body -->
             <ScrollViewer Grid.Row="3"

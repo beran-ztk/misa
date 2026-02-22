@@ -15,11 +15,11 @@ public sealed partial class ScheduleState(
     : ObservableObject
 {
     public CreateScheduleState CreateState { get; } = createState;
-    private IReadOnlyCollection<ScheduleExtensionDto> Items { get; set; } = [];
-    public ObservableCollection<ScheduleExtensionDto> FilteredItems { get; } = [];
+    private IReadOnlyCollection<ScheduleDto> Items { get; set; } = [];
+    public ObservableCollection<ScheduleDto> FilteredItems { get; } = [];
 
-    [ObservableProperty] private ScheduleExtensionDto? _selectedItem;
-    partial void OnSelectedItemChanged(ScheduleExtensionDto? value)
+    [ObservableProperty] private ScheduleDto? _selectedItem;
+    partial void OnSelectedItemChanged(ScheduleDto? value)
     {
         selectionContextState.Set(value?.Id);
     }
@@ -40,7 +40,7 @@ public sealed partial class ScheduleState(
             }
         }
     }
-    public async Task AddToCollection(IReadOnlyCollection<ScheduleExtensionDto> items)
+    public async Task AddToCollection(IReadOnlyCollection<ScheduleDto> items)
     {
         Items = items;
         FilteredItems.Clear();
@@ -50,7 +50,7 @@ public sealed partial class ScheduleState(
             await AddToCollection(item);
         }
     }
-    public async Task AddToCollection(ScheduleExtensionDto item)
+    public async Task AddToCollection(ScheduleDto item)
     {
         await Dispatcher.UIThread.InvokeAsync(() => 
         {

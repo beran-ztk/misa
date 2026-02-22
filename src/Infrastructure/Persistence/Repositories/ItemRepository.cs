@@ -23,26 +23,6 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
         await context.Items.AddAsync(item, ct);
     }
 
-    // Task extension
-    public async Task<Item?> TryGetTaskAsync(Guid id, CancellationToken ct)
-    {
-        return await context.Items
-            .Include(t => t.Activity)
-            .Include(t => t.TaskExtension)
-            .FirstOrDefaultAsync(t => t.Id == new ItemId(id) && t.OwnerId == user.Id, cancellationToken: ct);
-    }
-    
-    public async Task<List<Item>> GetTasksAsync(CancellationToken ct)
-    {
-        return await context.Items
-            .Include(t => t.Activity)
-            .Include(t => t.TaskExtension)
-            .Where(t => t.OwnerId == user.Id && t.Workflow == Workflow.Task)
-            .OrderByDescending(t => t.CreatedAt)
-            .AsNoTracking()
-            .ToListAsync(ct);
-    }
-
     // Inspector
     public async Task<Item?> TryGetItemAsync(Guid id, CancellationToken ct)
     {
@@ -58,8 +38,51 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
         {
             case Workflow.Task:
                 return await TryGetTaskAsync(id, ct);
+            case Workflow.Schedule:
+                return await TryGetScheduleAsync(id, ct);
             default: throw new DomainConflictException("workflow.not.allowed", item.Workflow.ToString());
         }
+    }
+    
+    // Task extension
+    public async Task<Item?> TryGetTaskAsync(Guid id, CancellationToken ct)
+    {
+        return await context.Items
+            .Include(t => t.Activity)
+            .Include(t => t.TaskExtension)
+            .FirstOrDefaultAsync(t 
+                    => t.Id == new ItemId(id) && t.OwnerId == user.Id && t.Workflow == Workflow.Task
+                , cancellationToken: ct);
+    }
+    
+    public async Task<List<Item>> GetTasksAsync(CancellationToken ct)
+    {
+        return await context.Items
+            .Include(t => t.Activity)
+            .Include(t => t.TaskExtension)
+            .Where(t => t.OwnerId == user.Id && t.Workflow == Workflow.Task)
+            .OrderByDescending(t => t.CreatedAt)
+            .AsNoTracking()
+            .ToListAsync(ct);
+    }
+
+    // Schedule extension
+    public async Task<Item?> TryGetScheduleAsync(Guid id, CancellationToken ct)
+    {
+        return await context.Items
+            .Include(t => t.ScheduleExtension)
+            .FirstOrDefaultAsync(t 
+                    => t.Id == new ItemId(id) && t.OwnerId == user.Id && t.Workflow == Workflow.Schedule
+                , cancellationToken: ct);
+    }
+    public async Task<List<Item>> GetSchedulesAsync(CancellationToken ct)
+    {
+        return await context.Items
+            .Include(s => s.ScheduleExtension)
+            .Where(t => t.OwnerId == user.Id && t.Workflow == Workflow.Schedule)
+            .OrderByDescending(t => t.CreatedAt)
+            .AsNoTracking()
+            .ToListAsync(ct);
     }
 
     // Not yet reimplemented
@@ -133,15 +156,5 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
     public async Task AddAsync(Session session, CancellationToken ct)
     {
         await context.Sessions.AddAsync(session, ct);
-    }
-
-    public async Task<List<Item>> GetSchedulesAsync(string userId, CancellationToken ct)
-    {
-        return await context.Items
-            .Include(s => s.ScheduleExtension)
-            .Where(t => t.OwnerId == userId && t.Workflow == Workflow.Schedule)
-            .OrderByDescending(t => t.CreatedAt)
-            .AsNoTracking()
-            .ToListAsync(ct);
     }
 }

@@ -182,7 +182,7 @@ public sealed partial class CreateScheduleState : ViewModelBase
         return values.Distinct().OrderBy(x => x).ToArray();
     }
 
-    public AddScheduleDto? TryGetValidatedRequestObject()
+    public CreateScheduleRequest? TryGetValidatedRequestObject()
     {
         ClearValidationError();
 
@@ -195,7 +195,7 @@ public sealed partial class CreateScheduleState : ViewModelBase
         var byMonthDay = ParseByMonthDay();
         if (HasValidationError) return null;
 
-        return new AddScheduleDto
+        return new CreateScheduleRequest
         {
             Title = trimmedTitle,
             Description = Description,

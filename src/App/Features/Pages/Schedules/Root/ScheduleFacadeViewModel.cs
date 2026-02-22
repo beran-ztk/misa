@@ -7,12 +7,12 @@ using Misa.Ui.Avalonia.Infrastructure.UI;
 namespace Misa.Ui.Avalonia.Features.Pages.Schedules.Root;
 
 public sealed partial class ScheduleFacadeViewModel(
-    Schedules.Root.ScheduleState state,
+    ScheduleState state,
     ScheduleGateway gateway,
     PanelProxy panelProxy)
     : ViewModelBase
 {
-    public Schedules.Root.ScheduleState State { get; } = state;
+    public ScheduleState State { get; } = state;
     private ScheduleGateway Gateway { get; } = gateway;
     private PanelProxy PanelProxy { get; } = panelProxy;
 
@@ -29,9 +29,7 @@ public sealed partial class ScheduleFacadeViewModel(
     private async Task GetAllAsync()
     {
         var result = await Gateway.GetAllAsync();
-        
-        if (result.IsSuccess)
-            await State.AddToCollection(result.Value ?? []);
+        await State.AddToCollection(result);
     }
 
     [RelayCommand]

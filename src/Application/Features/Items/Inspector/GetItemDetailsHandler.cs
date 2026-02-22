@@ -17,6 +17,7 @@ public sealed class GetItemDetailsHandler(IItemRepository repository)
         return details.Workflow switch
         {
             Workflow.Task => details.TaskToItemDto(),
+            Workflow.Schedule => details.ScheduleToItemDto(),
             _ => details.ToDto()
         };
     }

@@ -11,12 +11,16 @@ public interface IItemRepository
     // Add item
     Task AddAsync(Item item, CancellationToken ct);
     
+    // Inspector
+    Task<Item?> TryGetItemDetailsAsync(Guid id, CancellationToken ct);
+    
     // Task extension
     Task<Item?> TryGetTaskAsync(Guid id, CancellationToken ct);
     Task<List<Item>> GetTasksAsync(CancellationToken ct);
     
-    // Inspector
-    Task<Item?> TryGetItemDetailsAsync(Guid id, CancellationToken ct);
+    // Schedule extension
+    Task<Item?> TryGetScheduleAsync(Guid id, CancellationToken ct);
+    Task<List<Item>> GetSchedulesAsync(CancellationToken ct);
     
     // Not yet reimplemented
     Task AddAsync(Session session, CancellationToken ct);
@@ -28,6 +32,4 @@ public interface IItemRepository
     Task<List<Session>> GetInactiveSessionsAsync(DateTimeOffset oldestDateAllowed, CancellationToken ct);
 
     Task<Item?> TryGetItemAsync(Guid id, CancellationToken ct);
-    
-    Task<List<Item>> GetSchedulesAsync(string userId, CancellationToken ct);
 }

@@ -3,6 +3,7 @@ using Misa.Application.Features.Entities.Extensions.Items.Features.Scheduling.Co
 using Misa.Application.Features.Items.Schedules.Commands;
 using Misa.Contract.Common.Results;
 using Misa.Contract.Items.Components.Schedules;
+using Misa.Contract.Routes;
 using Wolverine;
 
 namespace Misa.Api.Endpoints.Schedules;
@@ -11,35 +12,35 @@ public static class CreateScheduleEndpoint
 {
     public static void Map(IEndpointRouteBuilder api)
     {
-        api.MapPost("scheduling", AddSchedulingRule);
+        api.MapPost(ScheduleRoutes.CreateSchedule, Create);
     }
-    private static async Task<Result<ScheduleExtensionDto>> AddSchedulingRule(
-        [FromBody] AddScheduleDto dto, 
+    private static async Task<IResult> Create(
+        [FromBody] CreateScheduleRequest request, 
         IMessageBus bus, 
         CancellationToken ct)
     {
         var command = new CreateScheduleCommand(
-            dto.Title,
-            dto.Description,
-            dto.TargetItemId,
-            dto.ScheduleFrequencyType,
-            dto.FrequencyInterval,
-            dto.LookaheadLimit,
-            dto.OccurrenceCountLimit,
-            dto.MisfirePolicy,
-            dto.OccurrenceTtl,
-            dto.ActionType,
-            dto.Payload,
-            dto.StartTime,
-            dto.EndTime,
-            dto.ActiveFromLocal,
-            dto.ActiveUntilLocal,
-            dto.ByDay,
-            dto.ByMonthDay,
-            dto.ByMonth
+            request.Title,
+            request.Description,
+            request.TargetItemId,
+            request.ScheduleFrequencyType,
+            request.FrequencyInterval,
+            request.LookaheadLimit,
+            request.OccurrenceCountLimit,
+            request.MisfirePolicy,
+            request.OccurrenceTtl,
+            request.ActionType,
+            request.Payload,
+            request.StartTime,
+            request.EndTime,
+            request.ActiveFromLocal,
+            request.ActiveUntilLocal,
+            request.ByDay,
+            request.ByMonthDay,
+            request.ByMonth
         );
             
-        var result = await bus.InvokeAsync<Result<ScheduleExtensionDto>>(command, ct);
-        return result;
+        var dto = await bus.InvokeAsync<ScheduleDto>(command, ct);
+        return Results.Ok(dto);
     }
 }

@@ -128,7 +128,7 @@
                      ScrollViewer.VerticalScrollBarVisibility="Auto">
 
               <ListBox.ItemTemplate>
-                <DataTemplate x:DataType="schedules:ScheduleExtensionDto">
+                <DataTemplate x:DataType="schedules:ScheduleDto">
 
                   <Border Classes="schedule-card"
                           Padding="12"

@@ -1,6 +1,6 @@
 ﻿namespace Misa.Contract.Items.Components.Schedules;
 
-public sealed class AddScheduleDto
+public sealed class CreateScheduleRequest
 {
     public required string Title { get; init; } = string.Empty;
     public required string Description { get; init; } = string.Empty;

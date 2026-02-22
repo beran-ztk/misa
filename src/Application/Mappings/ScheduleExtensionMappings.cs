@@ -6,7 +6,41 @@ namespace Misa.Application.Mappings;
 
 public static class ScheduleExtensionMappings
 {
-    public static ScheduleExtensionDto ToScheduleExtensionDto(this Item item)
+    public static ScheduleExtensionDto ToDto(this ScheduleExtension schedule)
+    {
+        return new ScheduleExtensionDto
+        {
+            Id = schedule.Id.Value,
+
+            FrequencyType = schedule.ScheduleFrequencyType.ToDto(),
+            FrequencyInterval = schedule.FrequencyInterval,
+
+            OccurrenceCountLimit = schedule.OccurrenceCountLimit,
+
+            ByDay = schedule.ByDay,
+            ByMonthDay = schedule.ByMonthDay,
+            ByMonth = schedule.ByMonth,
+
+            MisfirePolicy = schedule.MisfirePolicy.ToDto(),
+
+            LookaheadLimit = schedule.LookaheadLimit,
+            OccurrenceTtl = schedule.OccurrenceTtl,
+
+            Payload = schedule.Payload,
+            Timezone = schedule.Timezone,
+
+            StartTime = schedule.StartTime,
+            EndTime = schedule.EndTime,
+
+            ActiveFromUtc = schedule.ActiveFromUtc,
+            ActiveUntilUtc = schedule.ActiveUntilUtc,
+
+            LastRunAtUtc = schedule.LastRunAtUtc,
+            NextDueAtUtc = schedule.NextDueAtUtc,
+            NextAllowedExecutionAtUtc = schedule.NextAllowedExecutionAtUtc
+        };
+    }
+    public static ScheduleDto ToScheduleExtensionDto(this Item item)
     {
         if (item.ScheduleExtension is null)
             throw new ArgumentNullException(nameof(item.ScheduleExtension));
@@ -44,7 +78,7 @@ public static class ScheduleExtensionMappings
             NextAllowedExecutionAtUtc = item.ScheduleExtension.NextAllowedExecutionAtUtc
         };
     }
-    public static IReadOnlyCollection<ScheduleExtensionDto> ToScheduleExtensionDto(this IEnumerable<Item> schedulers)
+    public static List<ScheduleDto> ToScheduleExtensionDto(this IEnumerable<Item> schedulers)
         => schedulers.Select(s => s.ToScheduleExtensionDto()).ToList();
     public static ScheduleFrequencyType ToDomain(this ScheduleFrequencyTypeDto dto) =>
         dto switch

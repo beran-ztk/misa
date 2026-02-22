@@ -30,7 +30,7 @@ public static class Panels
             sp => sp.GetRequiredService<CreateTaskView>(),
             sp => sp.GetRequiredService<CreateTaskViewModel>());
 
-    public static readonly PanelKey<ScheduleExtensionDto> Schedule =
+    public static readonly PanelKey<ScheduleDto> Schedule =
         new("Schedule",
             sp => sp.GetRequiredService<CreateScheduleView>(),
             sp => sp.GetRequiredService<CreateScheduleViewModel>());

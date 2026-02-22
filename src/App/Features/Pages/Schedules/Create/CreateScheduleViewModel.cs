@@ -9,7 +9,7 @@ namespace Misa.Ui.Avalonia.Features.Pages.Schedules.Create;
 
 public sealed class CreateScheduleViewModel(
     CreateScheduleState state,
-    ScheduleGateway gateway) : IHostedForm<ScheduleExtensionDto>
+    ScheduleGateway gateway) : IHostedForm<ScheduleDto>
 {
     public CreateScheduleState State { get; } = state;
 
@@ -18,11 +18,11 @@ public sealed class CreateScheduleViewModel(
     public string CancelText => "Cancel";
     public bool CanSubmit => true;
 
-    public async Task<Result<ScheduleExtensionDto>> SubmitAsync()
+    public async Task<Result<ScheduleDto>> SubmitAsync()
     {
         var dto = State.TryGetValidatedRequestObject();
         if (dto is null)
-            return Result<ScheduleExtensionDto>.Failure(message: "Validation failed.");
+            return Result<ScheduleDto>.Failure(message: "Validation failed.");
 
         return await gateway.CreateAsync(dto);
     }

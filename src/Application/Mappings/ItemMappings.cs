@@ -20,9 +20,7 @@ public static class ItemMappings
             IsArchived = item.IsArchived,
 
             CreatedAt = item.CreatedAt,
-            ModifiedAt = item.ModifiedAt,
-            
-            
+            ModifiedAt = item.ModifiedAt
         };
     }
 
@@ -34,6 +32,15 @@ public static class ItemMappings
         var temp = item.ToDto();
         temp.Activity = item.Activity.ToDto();
         temp.TaskExtension = item.TaskExtension.ToDto();
+        return temp;
+    }
+    public static ItemDto ScheduleToItemDto(this Item item)
+    {
+        if (item.Workflow != Workflow.Schedule || item.ScheduleExtension == null)
+            throw new DomainValidationException(nameof(item.TaskExtension), "", "Could not map task to dto, because of missing data.");
+        
+        var temp = item.ToDto();
+        temp.ScheduleExtension = item.ScheduleExtension.ToDto();
         return temp;
     }
     public static WorkflowDto ToDto(this Workflow workflow) =>
