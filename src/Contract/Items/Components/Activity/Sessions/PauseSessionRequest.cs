@@ -1,6 +1,5 @@
 ﻿namespace Misa.Contract.Items.Components.Activity.Sessions;
 
-public record PauseSessionDto(
-    Guid ItemId,
+public record PauseSessionRequest(
     string? PauseReason
 );

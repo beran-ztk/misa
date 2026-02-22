@@ -1,10 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Misa.Application.Features.Items.Inspector;
-using Misa.Application.Features.Items.Sessions.Queries;
-using Misa.Contract.Common.Results;
 using Misa.Contract.Items;
 using Misa.Contract.Items.Components.Activity;
-using Misa.Contract.Items.Components.Activity.Sessions;
 using Misa.Contract.Routes;
 using Wolverine;
 
@@ -14,9 +11,8 @@ public static class GetSessionDetailsEndpoint
 {
     public static void Map(IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapGet("items/{itemId:guid}/details", GetItemDetails);
-        endpoints.MapGet("items/{itemId:guid}/overview/session", GetCurrentSessionDetails);
         endpoints.MapPatch(ActivityRoutes.UpsertDeadline, UpsertDeadline);
+        endpoints.MapGet("items/{itemId:guid}/details", GetItemDetails);
     }
     private static async Task<IResult> UpsertDeadline(
         [FromRoute] Guid itemId,
@@ -37,14 +33,4 @@ public static class GetSessionDetailsEndpoint
 
         return Results.Ok(dto);
     }    
-    private static async Task<Result<CurrentSessionOverviewDto>> GetCurrentSessionDetails(
-        [FromRoute] Guid itemId,
-        IMessageBus bus,
-        CancellationToken ct)
-    {
-        var res = await bus.InvokeAsync<Result<CurrentSessionOverviewDto>>(
-            new GetCurrentSessionDetailsQuery(itemId), ct);
-
-        return res;
-    }
 }

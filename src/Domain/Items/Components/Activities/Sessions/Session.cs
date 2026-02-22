@@ -40,11 +40,6 @@ public sealed class Session
     }
 
     // Behaviour
-    public void AddStartSegment(Guid segmentId)
-    {
-        var segment = new SessionSegment(segmentId, Id, CreatedAtUtc);
-        Segments.Add(segment);
-    }
     public void Pause(string? pauseReason, DateTimeOffset nowUtc)
     {
         if (State != SessionState.Running)
@@ -73,7 +68,7 @@ public sealed class Session
         
         State = SessionState.Running;
         
-        var segment = new SessionSegment(segmentId, Id, startedAtUtc);
+        var segment = new SessionSegment(segmentId, startedAtUtc);
         Segments.Add(segment);
     }
     public void Stop(
@@ -99,23 +94,29 @@ public sealed class Session
 
         State = SessionState.Ended;
     }
-
     public static Session Start(
-        Guid id,
-        ItemId itemId, 
-        TimeSpan? plannedDuration, 
+        Guid sessionId,
+        Guid segmentId,
+        TimeSpan? plannedDuration,
         string? objective,
-        bool stopAutomatically, 
-        string? autoStopReason, 
-        DateTimeOffset nowUtc) => new()
+        bool stopAutomatically,
+        string? autoStopReason,
+        DateTimeOffset createdAtUtc)
     {
-        Id = id,
-        ItemId = itemId,
-        PlannedDuration = plannedDuration,
-        Objective = objective,
-        StopAutomatically = stopAutomatically,
-        AutoStopReason = autoStopReason,
-        State = SessionState.Running,
-        CreatedAtUtc = nowUtc
-    };
+        var session = new Session
+        {
+            Id = sessionId,
+            PlannedDuration = plannedDuration,
+            Objective = objective,
+            StopAutomatically = stopAutomatically,
+            AutoStopReason = autoStopReason,
+            State = SessionState.Running,
+            CreatedAtUtc = createdAtUtc
+        };
+
+        session.Segments.Add(
+            SessionSegment.StartSessionSegment(segmentId, createdAtUtc));
+
+        return session;
+    }
 }

@@ -5,6 +5,7 @@ using Misa.Domain.Exceptions;
 using Misa.Domain.Items;
 using Misa.Domain.Items.Components.Activities.Sessions;
 using Misa.Infrastructure.Persistence.Context;
+using Wolverine;
 using Item = Misa.Domain.Items.Item;
 
 namespace Misa.Infrastructure.Persistence.Repositories;
@@ -49,6 +50,7 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
     {
         return await context.Items
             .Include(t => t.Activity)
+            .ThenInclude(a => a.Sessions)
             .Include(t => t.TaskExtension)
             .FirstOrDefaultAsync(t 
                     => t.Id == new ItemId(id) && t.OwnerId == user.Id && t.Workflow == Workflow.Task
@@ -85,76 +87,16 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
             .ToListAsync(ct);
     }
 
-    // Not yet reimplemented
-    public async Task<List<Session>> GetActiveSessionsWithAutostopAsync(CancellationToken ct)
+    // Session
+    public async Task<Item?> TryGetItemWithSessionsAsync(Guid itemId, CancellationToken ct)
     {
-        return await context.Sessions
-            .Where(s =>
-                s.StopAutomatically == true
-                && s.State != SessionState.Ended
-                && s.PlannedDuration != null)
-            .Include(s => s.Segments)
-            .ToListAsync(ct);
-    }
-
-    public async Task<List<Session>> GetInactiveSessionsAsync(DateTimeOffset oldestDateAllowed, CancellationToken ct)
-    {
-        return await context.Sessions
-            .Where(s => s.State != SessionState.Ended
-            && s.Segments.Any(
-                seg => seg.EndedAtUtc == null 
-                       && seg.StartedAtUtc <= oldestDateAllowed)
-            )
-            .Include(s => s.Segments.Where(seg => seg.EndedAtUtc == null))
-            .ToListAsync(ct);
-    }
-
-    public async Task<Session?> TryGetLatestCompletedSessionByItemIdAsync(Guid id, CancellationToken ct)
-    {
-        return await context.Sessions
-            .Where(s =>
-                s.ItemId.Value == id
-                && s.State == SessionState.Ended) 
-            .Include(s => s.Segments)
-            .OrderByDescending(s => s.CreatedAtUtc)
-            .AsNoTracking()
-            .FirstOrDefaultAsync(ct);
-    }
-
-    public async Task<Session?> TryGetActiveSessionByItemIdAsync(Guid id, CancellationToken ct)
-    {
-        return await context.Sessions
-            .Where(s =>
-                s.ItemId.Value == id
-                && (s.State == SessionState.Running
-                || s.State == SessionState.Paused)) 
-            .Include(s => s.Segments)
-            .OrderByDescending(s => s.CreatedAtUtc)
-            .FirstOrDefaultAsync(ct);
-    }
-
-    public async Task<Session?> TryGetRunningSessionByItemIdAsync(Guid id, CancellationToken ct)
-    {
-        return await context.Sessions
-            .Where(s =>
-                s.ItemId.Value == id
-                && s.State == SessionState.Running)
-            .Include(s => s.Segments.Where(seg => seg.EndedAtUtc == null))
-            .OrderByDescending(s => s.CreatedAtUtc)
-            .FirstOrDefaultAsync(ct);
-    }  
-    public async Task<Session?> TryGetPausedSessionByItemIdAsync(Guid id, CancellationToken ct)
-    {
-        return await context.Sessions
-            .Where(s =>
-                s.ItemId.Value == id
-                && s.State == SessionState.Paused)
-            .OrderByDescending(s => s.CreatedAtUtc)
-            .FirstOrDefaultAsync(ct);
-    }
-
-    public async Task AddAsync(Session session, CancellationToken ct)
-    {
-        await context.Sessions.AddAsync(session, ct);
+        return await context.Items
+            .Include(t => t.Activity)
+            .ThenInclude(a => a.Sessions)
+            .ThenInclude(s => s.Segments)
+            .FirstOrDefaultAsync(
+                i => i.Id == new ItemId(itemId) && i.OwnerId == user.Id && i.Activity != null,
+                ct
+            );
     }
 }

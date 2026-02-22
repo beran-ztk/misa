@@ -1,11 +1,10 @@
 ﻿using Misa.Application.Abstractions.Persistence;
 using Misa.Application.Abstractions.Time;
 using Misa.Application.Mappings;
-using Misa.Contract.Common.Results;
 using Misa.Contract.Items.Components.Activity.Sessions;
-using Misa.Domain.Items.Components.Activities;
+using Misa.Domain.Exceptions;
 
-namespace Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Commands;
+namespace Misa.Application.Features.Items.Sessions.Commands;
 public record StopSessionCommand(
     Guid ItemId,
     SessionEfficiencyDto SessionEfficiency,
@@ -15,29 +14,19 @@ public record StopSessionCommand(
 
 public class StopSessionHandler(IItemRepository repository, ITimeProvider timeProvider)
 {
-    public async Task<Result> Handle(StopSessionCommand command, CancellationToken ct)
+    public async Task Handle(StopSessionCommand command, CancellationToken ct)
     {
-        var item = await repository.TryGetItemAsync(command.ItemId, ct);
-        if (item is null)
-        {
-            return Result.NotFound(ItemErrorCodes.ItemNotFound, "Item not found.");
-        }
-
-        var session = await repository.TryGetActiveSessionByItemIdAsync(command.ItemId, ct);
-        if (session is null)
-        {
-            return Result.NotFound("session.not_found", "Active session not found.");
-        }
-
-        session.Stop(
-            timeProvider.UtcNow,
-            command.SessionEfficiency.ToDomain(),
-            command.SessionConcentration.ToDomain(),
-            command.Summary
-        );
+        // var session = await repository.TryGetActiveSessionByItemIdAsync(command.ItemId, ct);
+        // if (session is null)
+        //     throw new DomainNotFoundException("session.item", "session not found.");
+        //
+        // session.Stop(
+        //     timeProvider.UtcNow,
+        //     command.SessionEfficiency.ToDomain(),
+        //     command.SessionConcentration.ToDomain(),
+        //     command.Summary
+        // );
 
         await repository.SaveChangesAsync(ct);
-
-        return Result.Ok();
     }
 }

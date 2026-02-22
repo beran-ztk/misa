@@ -27,41 +27,52 @@ public sealed class InspectorGateway(RemoteProxy remoteProxy)
     }
 
     // Sessions (Commands)
-    public Task<Result<SessionDto>> StartSessionAsync(StartSessionDto dto)
+    public Task<Result> StartSessionAsync(StartSessionDto dto)
     {
-        var request = new HttpRequestMessage(HttpMethod.Post, $"items/{dto.ItemId}/sessions/start")
+        var request = new HttpRequestMessage(
+            HttpMethod.Post,
+            ActivityRoutes.RequestStartSession(dto.ItemId))
         {
             Content = JsonContent.Create(dto)
         };
 
-        return remoteProxy.SendAsync<SessionDto>(request);
+        return remoteProxy.SendAsync(request);
     }
 
-    public Task<Result<SessionDto>> PauseSessionAsync(PauseSessionDto dto)
+    public Task<Result> PauseSessionAsync(Guid itemId, PauseSessionRequest dto)
     {
-        var request = new HttpRequestMessage(HttpMethod.Post, $"items/{dto.ItemId}/sessions/pause")
+        var request = new HttpRequestMessage(
+            HttpMethod.Put,
+            ActivityRoutes.RequestPauseSession(itemId))
         {
             Content = JsonContent.Create(dto)
         };
 
-        return remoteProxy.SendAsync<SessionDto>(request);
+        return remoteProxy.SendAsync(request);
     }
 
     public Task<Result> ContinueSessionAsync(Guid itemId)
     {
-        var request = new HttpRequestMessage(HttpMethod.Post, $"items/{itemId}/sessions/continue");
+        var request = new HttpRequestMessage(
+            HttpMethod.Put,
+            ActivityRoutes.RequestContinueSession(itemId));
+
         return remoteProxy.SendAsync(request);
     }
 
     public Task<Result> EndSessionAsync(StopSessionDto dto)
     {
-        var request = new HttpRequestMessage(HttpMethod.Post, $"items/{dto.ItemId}/sessions/stop")
+        var request = new HttpRequestMessage(
+            HttpMethod.Put,
+            ActivityRoutes.RequestStopSession(dto.ItemId))
         {
             Content = JsonContent.Create(dto)
         };
 
         return remoteProxy.SendAsync(request);
     }
+    
+    // Deadline
 
     public async Task<Result> UpsertDeadlineAsync(Guid itemId, DateTimeOffset? deadline)
     {

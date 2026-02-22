@@ -50,8 +50,5 @@ public sealed partial class InspectorFacadeViewModel : ViewModelBase
         if (result.Value is null) return;
         
         State.Item = result.Value;
-        
-        // var session = await Gateway.GetCurrentAndLatestSessionAsync(State.Item.Id);
-        // State.CurrentSessionOverview = session.Value;
     }
 }

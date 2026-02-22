@@ -1,31 +1,20 @@
 ﻿using Misa.Application.Abstractions.Ids;
 using Misa.Application.Abstractions.Persistence;
 using Misa.Application.Abstractions.Time;
-using Misa.Contract.Common.Results;
-using Misa.Domain.Items.Components.Activities;
+using Misa.Domain.Exceptions;
 
-namespace Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Commands;
+namespace Misa.Application.Features.Items.Sessions.Commands;
 public record ContinueSessionCommand(Guid ItemId);
 public class ContinueSessionHandler(IItemRepository repository, ITimeProvider timeProvider, IIdGenerator idGenerator)
 {
-    public async Task<Result> Handle(ContinueSessionCommand command, CancellationToken ct)
+    public async Task Handle(ContinueSessionCommand command, CancellationToken ct)
     {
-        var item = await repository.TryGetItemAsync(command.ItemId, ct);
-        if (item is null)
-        {
-            return Result.NotFound(ItemErrorCodes.ItemNotFound, "Item not found.");
-        }
-        
-        var session = await repository.TryGetPausedSessionByItemIdAsync(command.ItemId, ct);
-        if (session is null)
-        {
-            return Result.NotFound("session.not_found", "Paused session not found.");
-        }
+        var item = await repository.TryGetItemWithSessionsAsync(command.ItemId, ct);
+        if (item?.Activity is null || item.Activity.Sessions.Count == 0 || item.Activity.TryGetSession is null)
+            throw new DomainNotFoundException("session.item", "session not found.");
 
-        session.Continue(idGenerator.New(), timeProvider.UtcNow);
+        item.Activity.TryGetSession.Continue(idGenerator.New(), timeProvider.UtcNow);
         
         await repository.SaveChangesAsync(ct);
-
-        return Result.Ok();
     }
 }

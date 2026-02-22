@@ -1,9 +1,7 @@
 using Misa.Application.Features.Authentication;
 using Misa.Application.Features.Entities.Extensions.Items.Features.Scheduling.Commands;
-using Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Commands;
 using Misa.Application.Features.Items.Schedules.Commands;
 using Misa.Application.Features.Items.Sessions.Commands;
-using Misa.Application.Features.Items.Sessions.Queries;
 using Misa.Application.Features.Items.Tasks;
 using Wolverine;
 
@@ -15,7 +13,6 @@ public static class WolverineRegistration
     {
         host.UseWolverine(opts =>
         {
-            opts.Discovery.IncludeAssembly(typeof(GetCurrentSessionDetailsHandler).Assembly);
             opts.Discovery.IncludeAssembly(typeof(StartSessionHandler).Assembly);
             opts.Discovery.IncludeAssembly(typeof(PauseSessionHandler).Assembly);
             opts.Discovery.IncludeAssembly(typeof(ContinueSessionHandler).Assembly);

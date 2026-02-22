@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Items.Components.Activity.Sessions;
@@ -8,7 +9,8 @@ namespace Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Base;
 
 public partial class InspectorEntryViewModel
 {
-     public SessionDto? CurrentSession => Facade.State.CurrentSessionOverview?.ActiveSession;
+    public SessionDto? CurrentSession =>
+        Facade.State.Item.Activity?.Sessions.FirstOrDefault(s => s.State != SessionStateDto.Ended);
      
      public bool HasActiveSession => CurrentSession != null;
 
@@ -26,28 +28,29 @@ public partial class InspectorEntryViewModel
 
         var formVm = new StartSessionViewModel(itemId, Facade.Gateway);
 
-        var result = await Facade.PanelProxy.OpenAsync(Panels.StartSession, formVm);
+        var result = await Facade.PanelProxy.OpenAsync(PanelKey.StartSession, formVm);
 
-        if (Facade.State.CurrentSessionOverview is not null)
+        if (result is { IsSuccess: true })
         {
-            Facade.State.CurrentSessionOverview.ActiveSession = result;
-            CurrentSessionPropertyChanged();
+            await Facade.Reload();
         }
     }
 
     [RelayCommand]
     private async Task ShowPauseSessionPanelAsync()
     {
+        if (CurrentSession == null)
+            return;
+        
         var itemId = Facade.State.Item.Id;
 
         var formVm = new PauseSessionViewModel(itemId, Facade.Gateway);
 
-        var result = await Facade.PanelProxy.OpenAsync(Panels.PauseSession, formVm);
+        var result = await Facade.PanelProxy.OpenAsync(PanelKey.PauseSession, formVm);
 
-        if (Facade.State.CurrentSessionOverview is not null)
+        if (result is { IsSuccess: true })
         {
-            Facade.State.CurrentSessionOverview.ActiveSession = result;
-            CurrentSessionPropertyChanged();
+            await Facade.Reload();
         }
     }
     
@@ -72,7 +75,10 @@ public partial class InspectorEntryViewModel
     {
         var itemId = Facade.State.Item.Id;
 
-        await Facade.Gateway.ContinueSessionAsync(itemId);
-        await Facade.Reload();
+        var result = await Facade.Gateway.ContinueSessionAsync(itemId);
+        if (result is { IsSuccess: true })
+        {
+            await Facade.Reload();
+        }
     }
 }

@@ -9,7 +9,7 @@ using Misa.Ui.Avalonia.Infrastructure.UI;
 
 namespace Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions.Forms;
 
-public partial class PauseSessionViewModel(Guid itemId, InspectorGateway gateway) : ViewModelBase, IHostedForm<SessionDto>
+public partial class PauseSessionViewModel(Guid itemId, InspectorGateway gateway) : ViewModelBase, IHostedForm
 {
     // Host
     public string Title => "Pause session";
@@ -21,14 +21,13 @@ public partial class PauseSessionViewModel(Guid itemId, InspectorGateway gateway
     // Content
     [ObservableProperty] private string? _pauseReason;
 
-    public async Task<Result<SessionDto>> SubmitAsync()
+    public async Task<Result> SubmitAsync()
     {
 
-        var dto = new PauseSessionDto(
-            itemId,
+        var dto = new PauseSessionRequest(
             PauseReason
         );
         
-        return await gateway.PauseSessionAsync(dto);
+        return await gateway.PauseSessionAsync(itemId, dto);
     }
 }

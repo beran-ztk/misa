@@ -17,18 +17,10 @@ public static class EndpointRegistration
         app.UseMiddleware<HttpExceptionMiddleware>();
 
         TaskEndpoints.Map(app);
-        app.MapSessionEndpoints();
+        SessionEndpoints.Map(app);
         app.MapScheduleEndpoints();
         app.MapAuthenticationEndpoints();
         app.MapInspectorEndpoints();
-    }
-
-    private static void MapSessionEndpoints(this IEndpointRouteBuilder api)
-    {
-        StartSessionEndpoint.Map(api);
-        PauseSessionEndpoint.Map(api);
-        ContinueSessionEndpoint.Map(api);
-        StopSessionEndpoint.Map(api);
     }
     private static void MapScheduleEndpoints(this IEndpointRouteBuilder api)
     {

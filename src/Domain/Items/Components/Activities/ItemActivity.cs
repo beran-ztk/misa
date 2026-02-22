@@ -27,6 +27,7 @@ public sealed class ItemActivity
     public ICollection<Session> Sessions { get; private set; } = new List<Session>();
     
     // Derived Properties
+    public Session? TryGetSession => Sessions.FirstOrDefault(s => s.State != SessionState.Ended);
     public bool HasActiveSession 
         => State == ActivityState.Active;
     
@@ -39,5 +40,26 @@ public sealed class ItemActivity
             or ActivityState.WaitForResponse;
     
     // Mutables
-    public void SetDeadline(DateTimeOffset? deadline) => DueAt = deadline; 
+    public void SetDeadline(DateTimeOffset? deadline) => DueAt = deadline;
+
+    public void StartSession(
+        Guid sessionId,
+        Guid segmentId,
+        TimeSpan? plannedDuration,
+        string? objective,
+        bool stopAutomatically,
+        string? autoStopReason,
+        DateTimeOffset createdAtUtc)
+    {
+        var session = Session.Start(
+            sessionId: sessionId,
+            segmentId: segmentId,
+            plannedDuration: plannedDuration,
+            objective: objective,
+            stopAutomatically: stopAutomatically,
+            autoStopReason: autoStopReason,
+            createdAtUtc: createdAtUtc);
+        
+        Sessions.Add(session);
+    }
 }

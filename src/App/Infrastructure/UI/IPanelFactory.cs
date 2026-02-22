@@ -15,6 +15,8 @@ namespace Misa.Ui.Avalonia.Infrastructure.UI;
 
 public enum PanelKey
 {
+    StartSession,
+    PauseSession,
     EndSession,
 }
 
@@ -34,16 +36,6 @@ public static class Panels
         new("Schedule",
             sp => sp.GetRequiredService<CreateScheduleView>(),
             sp => sp.GetRequiredService<CreateScheduleViewModel>());
-
-    public static readonly PanelKey<SessionDto> StartSession =
-        new("StartSession",
-            sp => sp.GetRequiredService<StartSessionView>(),
-            sp => sp.GetRequiredService<StartSessionViewModel>());
-
-    public static readonly PanelKey<SessionDto> PauseSession =
-        new("PauseSession",
-            sp => sp.GetRequiredService<PauseSessionView>(),
-            sp => sp.GetRequiredService<PauseSessionViewModel>());
 }
 
 public interface IPanelFactory
@@ -58,6 +50,8 @@ public sealed class PanelFactory(IServiceProvider sp) : IPanelFactory
     {
         return key switch
         {
+            PanelKey.StartSession => CreateHosted<StartSessionView, StartSessionViewModel>(context),
+            PanelKey.PauseSession => CreateHosted<PauseSessionView, PauseSessionViewModel>(context),
             PanelKey.EndSession => CreateHosted<EndSessionView, EndSessionViewModel>(context),
             _ => throw new ArgumentOutOfRangeException(nameof(key), key, null)
         };

@@ -1,6 +1,5 @@
 ﻿using Misa.Application.Abstractions.Persistence;
 using Misa.Application.Abstractions.Time;
-using Misa.Application.Features.Entities.Extensions.Items.Features.Sessions.Commands;
 using Misa.Contract.Common.Results;
 using Wolverine;
 
@@ -12,23 +11,23 @@ public class PauseDueSessionsHandler(IItemRepository repository, IMessageBus bus
     {
         var stopped = 0;
         
-        var dueSessions = await repository.GetActiveSessionsWithAutostopAsync(ct);
-
-        foreach (var s in dueSessions.Where(s => s.ElapsedTime(timeProvider.UtcNow) >= s.PlannedDuration))
-        {
-            s.Autostop();
-            
-            var cmd = new PauseSessionCommand(
-                s.ItemId.Value,
-                "Autostop has been triggered. Elapsed time exceeds planned Duration");
-            
-            await bus.InvokeAsync<Result>(cmd, ct);
-
-            stopped++;
-        }
-
-        if (stopped > 0)
-            await repository.SaveChangesAsync(ct);
+        // var dueSessions = await repository.GetActiveSessionsWithAutostopAsync(ct);
+        //
+        // foreach (var s in dueSessions.Where(s => s.ElapsedTime(timeProvider.UtcNow) >= s.PlannedDuration))
+        // {
+        //     s.Autostop();
+        //     
+        //     var cmd = new PauseSessionCommand(
+        //         s.ItemId.Value,
+        //         "Autostop has been triggered. Elapsed time exceeds planned Duration");
+        //     
+        //     await bus.InvokeAsync<Result>(cmd, ct);
+        //
+        //     stopped++;
+        // }
+        //
+        // if (stopped > 0)
+        //     await repository.SaveChangesAsync(ct);
         
         return stopped;
     }
