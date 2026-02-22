@@ -6,7 +6,8 @@
 
     <Border BorderThickness="1,0,0,0"
             BorderBrush="{StaticResource BrushBorder}"
-            Background="{StaticResource BrushPrimaryBackground}">
+            Background="{StaticResource BrushPrimaryBackground}"
+            IsVisible="{Binding State.HasItem}">
 
         <TabControl SelectedIndex="{Binding State.SelectedTabIndex}">
 
@@ -19,7 +20,8 @@
                            TextWrapping="Wrap" />
             </TabItem>
 
-            <TabItem Header="Activity">
+            <TabItem Header="Activity"
+                     IsVisible="{Binding State.CanHaveActivity}">
                 <TextBlock Text="Activity content placeholder"
                            TextWrapping="Wrap" />
             </TabItem>

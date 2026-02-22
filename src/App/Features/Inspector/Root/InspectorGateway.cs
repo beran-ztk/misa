@@ -3,6 +3,7 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
 using Misa.Contract.Common.Results;
+using Misa.Contract.Items;
 using Misa.Contract.Items.Components.Activity;
 using Misa.Contract.Items.Components.Activity.Sessions;
 using Misa.Ui.Avalonia.Infrastructure.Client;
@@ -11,11 +12,11 @@ namespace Misa.Ui.Avalonia.Features.Inspector.Root;
 
 public sealed class InspectorGateway(RemoteProxy remoteProxy)
 {
-    // public Task<Result<DetailedItemDto>> GetDetailsAsync(Guid id)
-    // {
-    //     var request = new HttpRequestMessage(HttpMethod.Get, $"items/{id}/details");
-    //     return remoteProxy.SendAsync<DetailedItemDto>(request);
-    // }
+    public Task<Result<ItemDto?>> GetItemAsync(Guid id)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get, $"items/{id}/details");
+        return remoteProxy.SendAsync<ItemDto?>(request);
+    }
 
     // Sessions (Overview)
     public Task<Result<CurrentSessionOverviewDto>> GetCurrentAndLatestSessionAsync(Guid itemId)

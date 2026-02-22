@@ -1,23 +1,69 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Misa.Application.Abstractions.Authentication;
 using Misa.Application.Abstractions.Persistence;
+using Misa.Domain.Exceptions;
 using Misa.Domain.Items;
 using Misa.Domain.Items.Components.Activities.Sessions;
-using Misa.Domain.Items.Components.Schedules;
 using Misa.Infrastructure.Persistence.Context;
 using Item = Misa.Domain.Items.Item;
 
 namespace Misa.Infrastructure.Persistence.Repositories;
 
-public class ItemRepository(MisaContext context) : IItemRepository
+public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepository
 {
-    public async Task SaveChangesAsync(CancellationToken  ct = default)
-        => await context.SaveChangesAsync(ct);
+    // Save Changes
+    public async Task SaveChangesAsync(CancellationToken ct = default)
+    {
+        await context.SaveChangesAsync(ct);
+    }
 
+    // Add item
     public async Task AddAsync(Item item, CancellationToken ct)
     {
         await context.Items.AddAsync(item, ct);
     }
 
+    // Task extension
+    public async Task<Item?> TryGetTaskAsync(Guid id, CancellationToken ct)
+    {
+        return await context.Items
+            .Include(t => t.Activity)
+            .Include(t => t.TaskExtension)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Id == new ItemId(id) && t.OwnerId == user.Id, cancellationToken: ct);
+    }
+    
+    public async Task<List<Item>> GetTasksAsync(CancellationToken ct)
+    {
+        return await context.Items
+            .Include(t => t.Activity)
+            .Include(t => t.TaskExtension)
+            .Where(t => t.OwnerId == user.Id && t.Workflow == Workflow.Task)
+            .OrderByDescending(t => t.CreatedAt)
+            .AsNoTracking()
+            .ToListAsync(ct);
+    }
+
+    // Inspector
+    public async Task<Item?> TryGetItemAsync(Guid id, CancellationToken ct)
+    {
+        return await context.Items
+            .SingleOrDefaultAsync(i => i.Id == new ItemId(id) && i.OwnerId == user.Id, ct);
+    }
+    public async Task<Item?> TryGetItemDetailsAsync(Guid id, CancellationToken ct)
+    {
+        var item = await TryGetItemAsync(id, ct);
+        if (item is null) throw new DomainNotFoundException("item.not.found", id.ToString());
+
+        switch (item.Workflow)
+        {
+            case Workflow.Task:
+                return await TryGetTaskAsync(id, ct);
+            default: throw new DomainConflictException("workflow.not.allowed", item.Workflow.ToString());
+        }
+    }
+
+    // Not yet reimplemented
     public async Task<List<Session>> GetActiveSessionsWithAutostopAsync(CancellationToken ct)
     {
         return await context.Sessions
@@ -88,16 +134,6 @@ public class ItemRepository(MisaContext context) : IItemRepository
     public async Task AddAsync(Session session, CancellationToken ct)
     {
         await context.Sessions.AddAsync(session, ct);
-    }
-    
-    public async Task AddAsync(ScheduleExtension scheduleExtension, CancellationToken ct)
-    {
-        await context.Schedulers.AddAsync(scheduleExtension, ct);
-    }
-    public async Task<Item?> TryGetItemAsync(Guid id, CancellationToken ct)
-    {
-        return await context.Items
-            .SingleOrDefaultAsync(i => i.Id == new ItemId(id), ct);
     }
 
     public async Task<List<Item>> GetSchedulesAsync(string userId, CancellationToken ct)

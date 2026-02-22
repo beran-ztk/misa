@@ -26,7 +26,7 @@ public class CreateTaskHandler(
     {
         var task = Item.CreateTask(
             new ItemId(idGenerator.New()), 
-            ownerId: currentUser.UserId,
+            ownerId: currentUser.Id,
             command.Title, 
             command.Description,
             command.CategoryDto.ToDomain(), 

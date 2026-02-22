@@ -39,19 +39,18 @@ public sealed partial class InspectorFacadeViewModel : ViewModelBase
     [RelayCommand]
     public async Task Reload()
     {
-        await GetEntryDataAsync(State.Item.Id);
+        await GetEntryDataAsync(State.Item?.Id);
     }
 
     private async Task GetEntryDataAsync(Guid? id)
     {
-        // if (id is null) return;
-        //
-        // var result = await Gateway.GetDetailsAsync((Guid)id);
-        // if (result.Value is null) return;
-        //
-        // State.Item = result.Value.Item;
-        // State.Deadline = result.Value.Deadline;
-        //
+        if (id is null) return;
+        
+        var result = await Gateway.GetItemAsync((Guid)id);
+        if (result.Value is null) return;
+        
+        State.Item = result.Value;
+        
         // var session = await Gateway.GetCurrentAndLatestSessionAsync(State.Item.Id);
         // State.CurrentSessionOverview = session.Value;
     }

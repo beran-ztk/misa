@@ -11,7 +11,7 @@ public class GetSchedulesHandler(IItemRepository repository, ICurrentUser user)
 {
     public async Task<Result<IReadOnlyCollection<ScheduleExtensionDto>>> HandleAsync(GetScheduleQuery query, CancellationToken ct)
     {
-        var result = await repository.GetSchedulesAsync(user.UserId, ct);
+        var result = await repository.GetSchedulesAsync(user.Id, ct);
         
         var schedules = result.ToScheduleExtensionDto();
         return Result<IReadOnlyCollection<ScheduleExtensionDto>>.Ok(schedules);

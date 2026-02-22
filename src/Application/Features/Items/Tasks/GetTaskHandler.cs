@@ -8,14 +8,12 @@ namespace Misa.Application.Features.Items.Tasks;
 public record GetTaskQuery(Guid ItemId);
 
 // Handler
-public sealed class GetTaskHandler(
-    ITaskRepository repository, 
-    ICurrentUser currentUser)
+public sealed class GetTaskHandler(IItemRepository repository)
 {
     // Handle
     public async Task<TaskExtensionDto?> HandleAsync(GetTaskQuery query, CancellationToken ct)
     {
-        var task = await repository.TryGetTaskAsync(currentUser.UserId, query.ItemId ,ct);
+        var task = await repository.TryGetTaskAsync(query.ItemId ,ct);
 
         var formattedTasks = task?.ToTaskExtensionDto();
         

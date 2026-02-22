@@ -62,7 +62,7 @@ public class CreateScheduleHandler(
             
         var scheduler = Item.CreateSchedule(
             id: new ItemId(idGenerator.New()), 
-            ownerId: currentUser.UserId,
+            ownerId: currentUser.Id,
             title: command.Title,
             description: command.Description,
             createdAtUtc: timeProvider.UtcNow,

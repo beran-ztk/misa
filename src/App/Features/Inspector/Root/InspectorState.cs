@@ -8,7 +8,13 @@ public sealed partial class InspectorState : ObservableObject
 {
     [ObservableProperty] private int _selectedTabIndex;
 
-    [ObservableProperty] private ItemDto? _item;
+    [ObservableProperty] 
+    [NotifyPropertyChangedFor(nameof(HasItem))]
+    [NotifyPropertyChangedFor(nameof(CanHaveActivity))]
+    private ItemDto? _item;
+    
+    public bool HasItem => Item != null;
+    public bool CanHaveActivity => Item?.Workflow == WorkflowDto.Task;
     
     [ObservableProperty] private CurrentSessionOverviewDto? _currentSessionOverview;
 }
