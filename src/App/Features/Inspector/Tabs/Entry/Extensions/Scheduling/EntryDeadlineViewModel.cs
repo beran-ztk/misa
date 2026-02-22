@@ -40,6 +40,8 @@ public partial class InspectorEntryViewModel
         DeadlineTime = null;
     }
     
+    private void CloseDeadlineForm() => ShowEditDeadline = false;
+    
     [RelayCommand]
     private async Task UpsertDeadlineAsync()
     {
@@ -50,6 +52,7 @@ public partial class InspectorEntryViewModel
         {
             Facade.State.Item.Activity.DueAt = deadline;
             DeadlinePropertyChanged();
+            CloseDeadlineForm();
         }
     }
 

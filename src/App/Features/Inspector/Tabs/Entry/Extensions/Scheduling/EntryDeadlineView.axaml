@@ -9,13 +9,11 @@
 
     <Border BorderThickness="0,0,0,1"
             BorderBrush="{StaticResource BrushBorder}"
-            Padding="10,8"
-            IsVisible="{Binding Facade.State.CanHaveActivity}">
+            Padding="4,14">
 
         <Grid ColumnDefinitions="*,Auto"
               RowDefinitions="Auto,Auto"
               ColumnSpacing="12"
-              RowSpacing="16"
               VerticalAlignment="Center">
 
             <StackPanel Grid.Column="0" Grid.Row="0" Spacing="2"
@@ -42,6 +40,7 @@
                 </Button>
 
                 <Button Classes="workspace-toolbar-icon"
+                        IsEnabled="{Binding HasDeadline}"
                         Command="{Binding DeleteDeadlineCommand}">
                     <Image Source="{SvgImage /Assets/Icons/Common/trash.svg}" />
                 </Button>
@@ -49,10 +48,15 @@
             </StackPanel>
 
             <StackPanel Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="2"
+                        Margin="0,16,0,0"
                         Classes="addpanel-controls"
                         IsVisible="{Binding ShowEditDeadline}">
 
                 <TextBlock Text="Edit the currently active deadline."
+                           IsVisible="{Binding HasDeadline}"
+                           Classes="addpanel-text"/>
+                <TextBlock Text="Set a deadline."
+                           IsVisible="{Binding !HasDeadline}"
                            Classes="addpanel-text"/>
 
                 <DatePicker Classes="addpanel-date"
