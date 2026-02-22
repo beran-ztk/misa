@@ -10,6 +10,8 @@
 
     <UserControl.Resources>
         <converters:PriorityToBrushConverter x:Key="PriorityToBrushConverter" />
+        <converters:GreaterThanConverter x:Key="GreaterThanConverter" />
+        <converters:LessOrEqualConverter x:Key="LessOrEqualConverter" />
     </UserControl.Resources>
 
     <Grid RowDefinitions="Auto,*">
@@ -74,8 +76,13 @@
         </Border>
 
         <!-- Content -->
-        <Grid Grid.Row="1">
-            <Border Classes="workspace-content-frame">
+        <Grid Grid.Row="1"
+              x:Name="ContentRoot">
+
+            <!-- Table -->
+            <Border Classes="workspace-content-frame"
+                    IsVisible="{Binding #ContentRoot.Bounds.Width, Converter={StaticResource GreaterThanConverter}, ConverterParameter=900}">
+        
                 <DataGrid Classes="workspace-datagrid"
                           HorizontalAlignment="Center"
                           ItemsSource="{Binding State.FilteredItems}"
@@ -120,8 +127,39 @@
                     </DataGrid.Columns>
 
                 </DataGrid>
+        
             </Border>
-        </Grid>
 
+            <!-- Card View -->
+            <ScrollViewer
+                IsVisible="{Binding #ContentRoot.Bounds.Width, Converter={StaticResource LessOrEqualConverter}, ConverterParameter=900}">
+
+                <ItemsControl ItemsSource="{Binding State.FilteredItems}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Margin="8"
+                                    Padding="12"
+                                    BorderBrush="Gray"
+                                    BorderThickness="1"
+                                    CornerRadius="6">
+
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="{Binding Item.Title}"
+                                               FontWeight="Bold" />
+
+                                    <TextBlock Text="{Binding Activity.State}" />
+                                    <TextBlock Text="{Binding Category}" />
+                                    <TextBlock Text="{Binding Activity.Priority}" />
+                                    <TextBlock Text="{Binding Item.CreatedAt, StringFormat='dd.MM.yyyy HH:mm'}" />
+                                </StackPanel>
+
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+            </ScrollViewer>
+
+        </Grid>
     </Grid>
 </UserControl>
