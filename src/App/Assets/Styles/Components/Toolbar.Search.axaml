@@ -2,7 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     
         <Style Selector="TextBox.workspace-toolbar-search">
-                <Setter Property="Width" Value="340"/>
+                <Setter Property="Width" Value="300"/>
                 <Setter Property="Height" Value="30"/>
                 <Setter Property="Padding" Value="10,6"/>
                 <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLight}"/>
