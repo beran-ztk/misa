@@ -11,7 +11,7 @@ namespace Misa.Ui.Avalonia.Features.Pages.Tasks.Create;
 public sealed partial class CreateTaskViewModel(
     CreateTaskState state,
     TaskGateway gateway) 
-    : ObservableObject, IHostedForm<TaskExtensionDto>
+    : ObservableObject, IHostedForm<TaskDto>
 {
     public CreateTaskState State { get; } = state;
 
@@ -21,13 +21,13 @@ public sealed partial class CreateTaskViewModel(
 
     public bool CanSubmit => !State.IsBusy;
 
-    public async Task<Result<TaskExtensionDto>> SubmitAsync()
+    public async Task<Result<TaskDto>> SubmitAsync()
     {
         State.ClearSubmitError();
 
         var dto = State.TryGetValidatedRequestObject();
         if (dto is null)
-            return Result<TaskExtensionDto>.Failure(message: "Validation failed.");
+            return Result<TaskDto>.Failure(message: "Validation failed.");
 
         State.IsBusy = true;
         try

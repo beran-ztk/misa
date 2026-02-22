@@ -32,7 +32,7 @@ public static class TaskEndpoints
             request.DueDate
         );
 
-        var dto = await bus.InvokeAsync<TaskExtensionDto>(command, ct);
+        var dto = await bus.InvokeAsync<TaskDto>(command, ct);
         
         return Results.Created(TaskRoutes.GetTaskRequest(dto.Item.Id), dto);
     }
@@ -43,14 +43,14 @@ public static class TaskEndpoints
         IMessageBus bus, 
         CancellationToken ct)
     {
-        var dto = await bus.InvokeAsync<TaskExtensionDto?>(new GetTaskQuery(itemId), ct);
+        var dto = await bus.InvokeAsync<TaskDto?>(new GetTaskQuery(itemId), ct);
         return Results.Ok(dto);
     }   
     
     // Get tasks
     private static async Task<IResult> GetAll(IMessageBus bus, CancellationToken ct)
     {
-        var dto = await bus.InvokeAsync<List<TaskExtensionDto>>(new GetTasksQuery(), ct);
+        var dto = await bus.InvokeAsync<List<TaskDto>>(new GetTasksQuery(), ct);
         
         return Results.Ok(dto);
     }   

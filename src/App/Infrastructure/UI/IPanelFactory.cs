@@ -25,7 +25,7 @@ public readonly record struct PanelKey<TResult>(
 );
 public static class Panels
 {
-    public static readonly PanelKey<TaskExtensionDto> Task =
+    public static readonly PanelKey<TaskDto> Task =
         new("Task",
             sp => sp.GetRequiredService<CreateTaskView>(),
             sp => sp.GetRequiredService<CreateTaskViewModel>());

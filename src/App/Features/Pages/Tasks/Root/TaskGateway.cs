@@ -12,22 +12,22 @@ namespace Misa.Ui.Avalonia.Features.Pages.Tasks.Root;
 
 public sealed class TaskGateway(RemoteProxy remoteProxy)
 {
-    public async Task<List<TaskExtensionDto>> GetAllAsync()
+    public async Task<List<TaskDto>> GetAllAsync()
     {
         var request = new HttpRequestMessage(HttpMethod.Get, TaskRoutes.GetTasks);
 
-        var response = await remoteProxy.SendAsync<List<TaskExtensionDto>>(request);
+        var response = await remoteProxy.SendAsync<List<TaskDto>>(request);
         return response.Value
                ?? throw new Exception("No Data");
     }
 
-    public async Task<Result<TaskExtensionDto>> CreateAsync(CreateTaskRequest requestBody)
+    public async Task<Result<TaskDto>> CreateAsync(CreateTaskRequest requestBody)
     {
         var request = new HttpRequestMessage(HttpMethod.Post, TaskRoutes.CreateTask)
         {
             Content = JsonContent.Create(requestBody)
         };
 
-        return await remoteProxy.SendAsync<TaskExtensionDto>(request);
+        return await remoteProxy.SendAsync<TaskDto>(request);
     }
 }

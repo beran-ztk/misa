@@ -1,4 +1,5 @@
 ﻿using Misa.Contract.Items;
+using Misa.Domain.Exceptions;
 using Misa.Domain.Items;
 
 namespace Misa.Application.Mappings;
@@ -19,8 +20,21 @@ public static class ItemMappings
             IsArchived = item.IsArchived,
 
             CreatedAt = item.CreatedAt,
-            ModifiedAt = item.ModifiedAt
+            ModifiedAt = item.ModifiedAt,
+            
+            
         };
+    }
+
+    public static ItemDto TaskToItemDto(this Item item)
+    {
+        if (item.Workflow != Workflow.Task || item.Activity == null || item.TaskExtension == null)
+            throw new DomainValidationException(nameof(item.TaskExtension), "", "Could not map task to dto, because of missing data.");
+        
+        var temp = item.ToDto();
+        temp.Activity = item.Activity.ToDto();
+        temp.TaskExtension = item.TaskExtension.ToDto();
+        return temp;
     }
     public static WorkflowDto ToDto(this Workflow workflow) =>
         workflow switch

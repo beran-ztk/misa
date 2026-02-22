@@ -11,7 +11,7 @@ public record GetTaskQuery(Guid ItemId);
 public sealed class GetTaskHandler(IItemRepository repository)
 {
     // Handle
-    public async Task<TaskExtensionDto?> HandleAsync(GetTaskQuery query, CancellationToken ct)
+    public async Task<TaskDto?> HandleAsync(GetTaskQuery query, CancellationToken ct)
     {
         var task = await repository.TryGetTaskAsync(query.ItemId ,ct);
 

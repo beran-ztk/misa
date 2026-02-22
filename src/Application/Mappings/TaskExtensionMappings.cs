@@ -6,12 +6,20 @@ namespace Misa.Application.Mappings;
 
 public static class TaskExtensionMappings
 {
-    public static TaskExtensionDto ToTaskExtensionDto(this Item item)
+    public static TaskExtensionDto ToDto(this TaskExtension taskExtension)
+    {
+        return new TaskExtensionDto
+        {
+            Id = taskExtension.Id.Value,
+            Category = taskExtension.Category.ToDto()
+        };
+    }
+    public static TaskDto ToTaskExtensionDto(this Item item)
     {
         if (item.Activity is null || item.TaskExtension is null)
             throw new ArgumentNullException(nameof(item.Activity));
         
-        return new TaskExtensionDto
+        return new TaskDto
         {
             Item = item.ToDto(),
             Activity = item.Activity.ToDto(),
@@ -19,7 +27,7 @@ public static class TaskExtensionMappings
         };
     }
 
-    public static List<TaskExtensionDto> ToTaskExtensionDto(this IEnumerable<Item> items)
+    public static List<TaskDto> ToTaskExtensionDto(this IEnumerable<Item> items)
         => items.Select(i => i.ToTaskExtensionDto()).ToList();
     public static TaskCategory ToDomain(this TaskCategoryDto categoryDto) =>
         categoryDto switch

@@ -1,4 +1,5 @@
 ﻿using Misa.Contract.Items.Components.Activity;
+using Misa.Contract.Items.Components.Tasks;
 
 namespace Misa.Contract.Items;
 
@@ -17,5 +18,8 @@ public sealed record ItemDto
 
     public required DateTimeOffset CreatedAt { get; init; }
     public DateTimeOffset? ModifiedAt { get; init; }
-    public ItemActivityDto? Activity { get; init; }
+    
+    public ItemActivityDto? Activity { get; set; }
+    
+    public TaskExtensionDto? TaskExtension { get; set; }
 }

@@ -13,7 +13,7 @@ public record GetTasksQuery;
 public class GetTasksHandler(IItemRepository repository)
 {
     // Handle
-    public async Task<List<TaskExtensionDto>> HandleAsync(GetTasksQuery query, CancellationToken ct)
+    public async Task<List<TaskDto>> HandleAsync(GetTasksQuery query, CancellationToken ct)
     {
         var tasks = await repository.GetTasksAsync(ct);
 

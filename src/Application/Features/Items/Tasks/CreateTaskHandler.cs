@@ -22,7 +22,7 @@ public class CreateTaskHandler(
     IIdGenerator idGenerator,
     ICurrentUser currentUser)
 {
-    public async Task<TaskExtensionDto> HandleAsync(CreateTaskCommand command, CancellationToken ct)
+    public async Task<TaskDto> HandleAsync(CreateTaskCommand command, CancellationToken ct)
     {
         var task = Item.CreateTask(
             new ItemId(idGenerator.New()), 

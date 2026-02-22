@@ -17,8 +17,8 @@ public sealed partial class TaskState : ObservableObject
     public ShellState ShellState { get; }
     public CreateTaskState CreateState { get; }
     private ISelectionContextState SelectionContextState { get; }
-    private IReadOnlyCollection<TaskExtensionDto> Items { get; set; } = [];
-    public ObservableCollection<TaskExtensionDto> FilteredItems { get; } = [];
+    private IReadOnlyCollection<TaskDto> Items { get; set; } = [];
+    public ObservableCollection<TaskDto> FilteredItems { get; } = [];
 
     public TaskState(
         ShellState shellState,
@@ -48,8 +48,8 @@ public sealed partial class TaskState : ObservableObject
     
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsItemSelected))]
-    private TaskExtensionDto? _selectedItem;
-    partial void OnSelectedItemChanged(TaskExtensionDto? value)
+    private TaskDto? _selectedItem;
+    partial void OnSelectedItemChanged(TaskDto? value)
     {
         SelectionContextState.Set(value?.Item.Id);
     }
@@ -86,13 +86,13 @@ public sealed partial class TaskState : ObservableObject
     /// <summary>
     /// Adders
     /// </summary>
-    public async Task SetMainCollection(IReadOnlyCollection<TaskExtensionDto> items)
+    public async Task SetMainCollection(IReadOnlyCollection<TaskDto> items)
     {
         Items = items;
         FilteredItems.Clear();
         await RefreshFilteredCollection();
     }
-    public async Task AppendToMainCollection(TaskExtensionDto item)
+    public async Task AppendToMainCollection(TaskDto item)
     {
         var temp = Items.ToList();
         temp.Add(item);
