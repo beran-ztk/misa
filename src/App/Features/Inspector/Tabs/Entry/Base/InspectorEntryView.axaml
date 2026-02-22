@@ -79,6 +79,9 @@
             <ScrollViewer Grid.Row="3"
                           VerticalScrollBarVisibility="Auto"
                           HorizontalScrollBarVisibility="Disabled">
+                
+                <!-- Task-Section -->
+                <root:InspectorTaskSectionView IsVisible="{Binding Facade.State.IsTask}"/>
             </ScrollViewer>
 
         </Grid>
