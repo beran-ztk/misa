@@ -1,5 +1,6 @@
 using System.Linq;
 using System.Threading.Tasks;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Items.Components.Activity.Sessions;
 using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions.Forms;
@@ -20,6 +21,7 @@ public partial class InspectorEntryViewModel
      public bool CanEndSession => CurrentSession != null;
      
     public string ActiveSessionSegmentDisplay => $"Segment {CurrentSession?.Segments.Count} - {CurrentSession?.State}";
+
     
     [RelayCommand]
     private async Task ShowStartSessionPanelAsync()

@@ -80,8 +80,50 @@
                           VerticalScrollBarVisibility="Auto"
                           HorizontalScrollBarVisibility="Disabled">
                 
-                <!-- Task-Section -->
-                <root:InspectorTaskSectionView IsVisible="{Binding Facade.State.IsTask}"/>
+                <!-- Item-Overview -->
+                <Border Padding="20">
+                    
+                    <StackPanel HorizontalAlignment="Stretch">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="This is a Task!"
+                                       HorizontalAlignment="Left"
+                                       IsVisible="{Binding Facade.State.IsTask}"/>
+                            <Button Classes="workspace-toolbar-icon"
+                                    HorizontalAlignment="Right"
+                                    Command="{Binding ShowEditItemFormCommand}">
+                                <Image Source="{SvgImage /Assets/Icons/Common/edit.svg}" />
+                            </Button>
+                        </StackPanel>
+                        
+                        <Border BorderThickness="0,0,0,1"
+                                BorderBrush="{StaticResource BrushBorder}"/>
+                        
+                        <!-- Read-Only view -->
+                        <StackPanel IsVisible="{Binding !Facade.State.IsEditItemFormOpen}">
+                            <!-- Item -->
+                            <TextBlock Text="{Binding Facade.State.Item.Title}"/>
+                            
+                            <!-- Task-Extension -->
+                            <StackPanel IsVisible="{Binding Facade.State.IsTask}">
+                                <TextBlock Text="{Binding Facade.State.Item.TaskExtension.Category}"/>
+                            </StackPanel>
+                        </StackPanel>
+                        
+                        <!-- Edit-View -->
+                        <StackPanel IsVisible="{Binding Facade.State.IsEditItemFormOpen}">
+                            <TextBox Text="{Binding Facade.State.Item.Title}"/>
+                            
+                            <!-- Task-Extension -->
+                            <StackPanel IsVisible="{Binding Facade.State.IsTask}">
+                                <ComboBox Classes="addpanel-combo"
+                                          ItemsSource="{Binding Facade.State.Categories}"
+                                          SelectedValue="{Binding Facade.State.SelectedCategory}"
+                                          SelectedItem="{Binding Facade.State.Item.TaskExtension.Category}"/>
+                            </StackPanel>
+                        </StackPanel>
+                        
+                    </StackPanel>
+                </Border>
             </ScrollViewer>
 
         </Grid>

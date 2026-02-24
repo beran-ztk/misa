@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using CommunityToolkit.Mvvm.Input;
 using Misa.Ui.Avalonia.Common.Formatting;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Inspector.Root;
@@ -18,6 +19,11 @@ public partial class InspectorEntryViewModel : ViewModelBase
     {
         Facade = facade;
         Facade.State.PropertyChanged += OnFacadeStatePropertyChanged;
+    }
+    [RelayCommand]
+    private void ShowEditItemForm()
+    {
+        Facade.State.IsEditItemFormOpen = true;
     }
     private void OnFacadeStatePropertyChanged(object? s, PropertyChangedEventArgs e)
     {
