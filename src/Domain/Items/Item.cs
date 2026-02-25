@@ -17,7 +17,7 @@ public sealed class Item : DomainEventEntity
         string ownerId,
         Workflow workflow,
         string title,
-        string description,
+        string? description,
         DateTimeOffset createdAtUtc)
     {
         if (id.Equals(default))
@@ -67,7 +67,7 @@ public sealed class Item : DomainEventEntity
         ItemId id,
         string ownerId,
         string title,
-        string description,
+        string? description,
         TaskCategory category,
         DateTimeOffset createdAtUtc,
         

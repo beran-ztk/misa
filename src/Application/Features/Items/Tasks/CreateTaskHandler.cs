@@ -11,7 +11,7 @@ using Misa.Domain.Items;
 namespace Misa.Application.Features.Items.Tasks;
 public sealed record CreateTaskCommand(
     string Title,
-    string Description,
+    string? Description,
     TaskCategoryDto CategoryDto,
     ActivityPriorityDto ActivityPriorityDto,
     DateTimeOffset? DueDate

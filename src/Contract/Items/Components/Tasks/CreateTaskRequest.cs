@@ -4,7 +4,7 @@ namespace Misa.Contract.Items.Components.Tasks;
 
 public sealed record CreateTaskRequest(
     string Title,
-    string Description,
+    string? Description,
     TaskCategoryDto CategoryDto,
     ActivityPriorityDto ActivityPriorityDto,
     DateTimeOffset? DueDate
