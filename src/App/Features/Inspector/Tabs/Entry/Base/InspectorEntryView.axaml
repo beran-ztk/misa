@@ -1,16 +1,21 @@
 ﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Base.InspectorEntryView"
+             xmlns:converters="clr-namespace:Misa.Ui.Avalonia.Common.Converters"
              xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Base"
              xmlns:deadline="clr-namespace:Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Scheduling"
              xmlns:session="clr-namespace:Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions"
              x:DataType="root:InspectorEntryViewModel">
 
+    <UserControl.Resources>
+        <converters:NullToStringNoValueIndicator x:Key="NoValueConverter"/>
+    </UserControl.Resources>
+    
     <Border Background="{StaticResource BrushPrimaryBackground}"
             Margin="0,20,0,0"
             Padding="12">
         <Grid RowDefinitions="50,Auto,Auto,*">
-            
+
             <!-- Header -->
             <Border Grid.Row="0"
                     BorderBrush="{StaticResource BrushBorder}"
@@ -24,7 +29,7 @@
                                Text="{Binding Facade.State.Item.Title}"
                                VerticalAlignment="Center"
                                FontSize="20"
-                               FontWeight="Regular"/>
+                               FontWeight="Regular" />
 
                     <StackPanel Grid.Column="1"
                                 Spacing="10"
@@ -34,7 +39,7 @@
                                 Command="{Binding Facade.ReloadCommand}">
                             <Image Source="{SvgImage /Assets/Icons/Common/refresh.svg}" />
                         </Button>
-                        
+
                         <!-- 3-dots menu -->
                         <Button Classes="workspace-toolbar-icon"
                                 VerticalAlignment="Center">
@@ -44,17 +49,19 @@
                                     <MenuItem>
                                         <MenuItem.Header>
                                             <StackPanel Spacing="8" Orientation="Horizontal">
-                                                <Image Width="16" Height="16" Source="{SvgImage /Assets/Icons/Common/archive.svg}"/>
-                                                <TextBlock Text="Archive Item"/>
+                                                <Image Width="16" Height="16"
+                                                       Source="{SvgImage /Assets/Icons/Common/archive.svg}" />
+                                                <TextBlock Text="Archive Item" />
                                             </StackPanel>
                                         </MenuItem.Header>
                                     </MenuItem>
-                                    
+
                                     <MenuItem>
                                         <MenuItem.Header>
                                             <StackPanel Spacing="8" Orientation="Horizontal">
-                                                <Image Width="16" Height="16" Source="{SvgImage /Assets/Icons/Common/trash.svg}"/>
-                                                <TextBlock Text="Delete Item"/>
+                                                <Image Width="16" Height="16"
+                                                       Source="{SvgImage /Assets/Icons/Common/trash.svg}" />
+                                                <TextBlock Text="Delete Item" />
                                             </StackPanel>
                                         </MenuItem.Header>
                                     </MenuItem>
@@ -63,65 +70,123 @@
                             </Button.Flyout>
                         </Button>
                     </StackPanel>
-                    
+
                 </Grid>
             </Border>
-            
+
             <!-- Deadline -->
             <deadline:EntryDeadlineView Grid.Row="1"
-                                        IsVisible="{Binding Facade.State.CanHaveActivity}"/>
-            
+                                        IsVisible="{Binding Facade.State.CanHaveActivity}" />
+
             <!-- Session -->
             <session:SessionHeaderView Grid.Row="2"
-                                       IsVisible="{Binding Facade.State.CanHaveActivity}"/>
-            
+                                       IsVisible="{Binding Facade.State.CanHaveActivity}" />
+
             <!-- Body -->
             <ScrollViewer Grid.Row="3"
                           VerticalScrollBarVisibility="Auto"
                           HorizontalScrollBarVisibility="Disabled">
-                
+
                 <!-- Item-Overview -->
                 <Border Padding="20">
-                    
+
+                    <!-- Header and Edit Button -->
                     <StackPanel HorizontalAlignment="Stretch">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="This is a Task!"
                                        HorizontalAlignment="Left"
-                                       IsVisible="{Binding Facade.State.IsTask}"/>
+                                       IsVisible="{Binding Facade.State.IsTask}" />
+
+                            <!-- TODO: Toggle Button -->
                             <Button Classes="workspace-toolbar-icon"
                                     HorizontalAlignment="Right"
                                     Command="{Binding ShowEditItemFormCommand}">
                                 <Image Source="{SvgImage /Assets/Icons/Common/edit.svg}" />
                             </Button>
                         </StackPanel>
-                        
+
+                        <!-- Separator -->
                         <Border BorderThickness="0,0,0,1"
-                                BorderBrush="{StaticResource BrushBorder}"/>
-                        
-                        <!-- Read-Only view -->
-                        <StackPanel IsVisible="{Binding !Facade.State.IsEditItemFormOpen}">
-                            <!-- Item -->
-                            <TextBlock Text="{Binding Facade.State.Item.Title}"/>
-                            
-                            <!-- Task-Extension -->
-                            <StackPanel IsVisible="{Binding Facade.State.IsTask}">
-                                <TextBlock Text="{Binding Facade.State.Item.TaskExtension.Category}"/>
-                            </StackPanel>
-                        </StackPanel>
-                        
-                        <!-- Edit-View -->
-                        <StackPanel IsVisible="{Binding Facade.State.IsEditItemFormOpen}">
-                            <TextBox Text="{Binding Facade.State.Item.Title}"/>
-                            
-                            <!-- Task-Extension -->
-                            <StackPanel IsVisible="{Binding Facade.State.IsTask}">
-                                <ComboBox Classes="addpanel-combo"
+                                BorderBrush="{StaticResource BrushBorder}" />
+
+                        <!-- View/Edit -->
+                        <StackPanel>
+
+                            <!-- VIEW -->
+                            <Grid IsVisible="{Binding !Facade.State.IsEditItemFormOpen}"
+                                  ColumnDefinitions="180,*"
+                                  RowDefinitions="Auto,Auto,Auto,Auto,Auto"
+                                  RowSpacing="6"
+                                  ColumnSpacing="12">
+
+                                <!-- Title -->
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Title" />
+                                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Facade.State.Item.Title}" />
+
+                                <!-- Description -->
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Description" />
+                                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Facade.State.Item.Description, Converter={StaticResource NoValueConverter}}" />
+
+                                <!-- Created At -->
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Created" />
+                                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Facade.State.Item.CreatedAt}" />
+
+                                <!-- Modified At -->
+                                <TextBlock Grid.Row="3" Grid.Column="0" Text="Modified" />
+                                <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding Facade.State.Item.ModifiedAt, Converter={StaticResource NoValueConverter}}" />
+
+                                <!-- Category (Task only) -->
+                                <TextBlock Grid.Row="4" Grid.Column="0"
+                                           Text="Category"
+                                           IsVisible="{Binding Facade.State.IsTask}" />
+                                <TextBlock Grid.Row="4" Grid.Column="1"
+                                           Text="{Binding Facade.State.Item.TaskExtension.Category}"
+                                           IsVisible="{Binding Facade.State.IsTask}" />
+
+                            </Grid>
+
+                            <!-- EDIT -->
+                            <Grid IsVisible="{Binding Facade.State.IsEditItemFormOpen}"
+                                  ColumnDefinitions="180,*"
+                                  RowDefinitions="Auto,Auto,Auto,Auto,Auto"
+                                  RowSpacing="6"
+                                  ColumnSpacing="12">
+
+                                <!-- Title -->
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Title" />
+                                <TextBox Grid.Row="0" Grid.Column="1"
+                                         Text="{Binding EditTitle, Mode=TwoWay}" />
+
+                                <!-- Description -->
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Description" />
+                                <TextBox Grid.Row="1" Grid.Column="1"
+                                         Text="{Binding EditDescription, Mode=TwoWay}" />
+
+                                <!-- Created At (read-only) -->
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Created" />
+                                <TextBlock Grid.Row="2" Grid.Column="1"
+                                           Text="{Binding Facade.State.Item.CreatedAt}" />
+
+                                <!-- Modified At (read-only) -->
+                                <TextBlock Grid.Row="3" Grid.Column="0" Text="Modified" />
+                                <TextBlock Grid.Row="3" Grid.Column="1"
+                                           Text="{Binding Facade.State.Item.ModifiedAt}" />
+
+                                <!-- Category (Task only) -->
+                                <TextBlock Grid.Row="4" Grid.Column="0"
+                                           Text="Category"
+                                           IsVisible="{Binding Facade.State.IsTask}" />
+                                <ComboBox Grid.Row="4" Grid.Column="1"
+                                          Classes="addpanel-combo"
                                           ItemsSource="{Binding Facade.State.Categories}"
                                           SelectedValue="{Binding Facade.State.SelectedCategory}"
-                                          SelectedItem="{Binding Facade.State.Item.TaskExtension.Category}"/>
-                            </StackPanel>
+                                          SelectedItem="{Binding Facade.State.Item.TaskExtension.Category}"
+                                          IsVisible="{Binding Facade.State.IsTask}" />
+
+                            </Grid>
+
                         </StackPanel>
-                        
+
                     </StackPanel>
                 </Border>
             </ScrollViewer>
