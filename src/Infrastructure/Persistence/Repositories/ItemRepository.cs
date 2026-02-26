@@ -25,14 +25,14 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
     }
 
     // Inspector
-    public async Task<Item?> TryGetItemAsync(Guid id, CancellationToken ct)
+    public async Task<Item?> TryGetItemAsync(Guid id)
     {
         return await context.Items
-            .SingleOrDefaultAsync(i => i.Id == new ItemId(id) && i.OwnerId == user.Id, ct);
+            .SingleOrDefaultAsync(i => i.Id == new ItemId(id) && i.OwnerId == user.Id);
     }
     public async Task<Item?> TryGetItemDetailsAsync(Guid id, CancellationToken ct)
     {
-        var item = await TryGetItemAsync(id, ct);
+        var item = await TryGetItemAsync(id);
         if (item is null) throw new DomainNotFoundException("item.not.found", id.ToString());
 
         switch (item.Workflow)
@@ -63,7 +63,7 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
         return await context.Items
             .Include(t => t.Activity)
             .Include(t => t.TaskExtension)
-            .Where(t => t.OwnerId == user.Id && t.Workflow == Workflow.Task)
+            .Where(t => t.OwnerId == user.Id && t.Workflow == Workflow.Task && t.IsDeleted == false && t.IsArchived == false)
             .OrderByDescending(t => t.CreatedAt)
             .AsNoTracking()
             .ToListAsync(ct);

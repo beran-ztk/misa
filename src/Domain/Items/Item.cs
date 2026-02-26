@@ -128,4 +128,6 @@ public sealed class Item : DomainEventEntity
         
         Description = description;
     }
+    public void Archive() => IsArchived = true;
+    public void Delete() => IsDeleted = true;
 }

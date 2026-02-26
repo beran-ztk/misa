@@ -17,8 +17,4 @@ public static class TaskRoutes
     
     public const string UpdateTaskCategory = "items/{itemId:guid}/task/category";
     public static string UpdateTaskCategoryRequest(Guid itemId) => $"items/{itemId}/task/category";
-    
-    // Delete
-    public const string DeleteTask = "items/{itemId:guid}/task";
-    public static string DeleteTaskRequest(Guid itemId) => $"items/{itemId}/task/";
 }

@@ -18,7 +18,6 @@ public static class TaskEndpoints
         api.MapGet(TaskRoutes.GetTasks, GetAll);
         api.MapPut(TaskRoutes.UpdateTask, Update);
         api.MapPatch(TaskRoutes.UpdateTaskCategory, UpdateCategory);
-        api.MapDelete(TaskRoutes.DeleteTask, Delete);
     }
     
     // Create a task
@@ -85,15 +84,5 @@ public static class TaskEndpoints
     {
         var result = await bus.InvokeAsync<Result>(new UpdateTaskCategoryCommand(itemId, request.CategoryDto) , ct);
         return result;
-    }    
-    
-    // Delete a task
-    private static async Task<Result> Delete(
-        [FromRoute] Guid itemId,
-        IMessageBus bus, 
-        CancellationToken ct)
-    {
-        var result = await bus.InvokeAsync<Result>(new DeleteTaskCommand(itemId), ct);
-        return result;
-    }
+    } 
 }

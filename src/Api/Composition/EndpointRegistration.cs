@@ -18,6 +18,7 @@ public static class EndpointRegistration
 
         TaskEndpoints.Map(app);
         SessionEndpoints.Map(app);
+        EntryEndpoints.Map(app);
         app.MapScheduleEndpoints();
         app.MapAuthenticationEndpoints();
         app.MapInspectorEndpoints();

@@ -47,22 +47,22 @@
                             <Image Source="{SvgImage /Assets/Icons/Common/dots-three-vertical.svg}" />
                             <Button.Flyout>
                                 <MenuFlyout>
-                                    <MenuItem>
+                                    <MenuItem Command="{Binding ArchiveItemCommand}">
                                         <MenuItem.Header>
                                             <StackPanel Spacing="8" Orientation="Horizontal">
                                                 <Image Width="16" Height="16"
                                                        Source="{SvgImage /Assets/Icons/Common/archive.svg}" />
-                                                <TextBlock Text="Archive Item" />
+                                                <TextBlock Text="Archive" />
                                             </StackPanel>
                                         </MenuItem.Header>
                                     </MenuItem>
 
-                                    <MenuItem>
+                                    <MenuItem Command="{Binding DeleteItemCommand}">
                                         <MenuItem.Header>
                                             <StackPanel Spacing="8" Orientation="Horizontal">
                                                 <Image Width="16" Height="16"
                                                        Source="{SvgImage /Assets/Icons/Common/trash.svg}" />
-                                                <TextBlock Text="Delete Item" />
+                                                <TextBlock Text="Delete" />
                                             </StackPanel>
                                         </MenuItem.Header>
                                     </MenuItem>

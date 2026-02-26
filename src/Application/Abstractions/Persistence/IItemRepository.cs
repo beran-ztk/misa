@@ -11,6 +11,7 @@ public interface IItemRepository
     Task AddAsync(Item item, CancellationToken ct);
     
     // Inspector
+    Task<Item?> TryGetItemAsync(Guid id);
     Task<Item?> TryGetItemDetailsAsync(Guid id, CancellationToken ct);
     
     // Task extension

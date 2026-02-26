@@ -19,14 +19,21 @@ public sealed class InspectorGateway(RemoteProxy remoteProxy)
         var request = new HttpRequestMessage(HttpMethod.Get, $"items/{id}/details");
         return remoteProxy.SendAsync<ItemDto?>(request);
     }
-
-    // Sessions (Overview)
-    public Task<Result<CurrentSessionOverviewDto>> GetCurrentAndLatestSessionAsync(Guid itemId)
+    
+    // Archive & Delete
+    public async Task<Result> ArchiveAsync(Guid itemId)
     {
-        var request = new HttpRequestMessage(HttpMethod.Get, $"items/{itemId}/overview/session");
-        return remoteProxy.SendAsync<CurrentSessionOverviewDto>(request);
+        var request = new HttpRequestMessage(HttpMethod.Patch, ItemRoutes.ArchiveItemRequest(itemId));
+        
+        return await remoteProxy.SendAsync(request);
     }
-
+    public async Task<Result> DeleteAsync(Guid itemId)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Delete, ItemRoutes.DeleteItemRequest(itemId));
+        
+        return await remoteProxy.SendAsync(request);
+    }
+    
     // Update
     public async Task<Result> UpdateTaskAsync(Guid itemId, UpdateTaskRequest dto)
     {
