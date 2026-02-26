@@ -9,6 +9,7 @@
 
     <UserControl.Resources>
         <converters:NullToStringNoValueIndicator x:Key="NoValueConverter"/>
+        <converters:UtcToLocalConverter x:Key="UtcToLocalConverter"/>
     </UserControl.Resources>
     
     <Border Background="{StaticResource BrushPrimaryBackground}"
@@ -157,7 +158,7 @@
                                         <TextBlock Text="Created"
                                                    Classes="addpanel-text" />
 
-                                        <TextBlock Text="{Binding Facade.State.Item.CreatedAt}" />
+                                        <TextBlock Text="{Binding Facade.State.Item.CreatedAt, Converter={StaticResource UtcToLocalConverter}, StringFormat='dd.MM.yyyy HH:mm'}" />
                                     </StackPanel>
 
                                     <!-- Modified At -->
@@ -165,7 +166,7 @@
                                         <TextBlock Text="Modified"
                                                    Classes="addpanel-text" />
 
-                                        <TextBlock Text="{Binding Facade.State.Item.ModifiedAt, Converter={StaticResource NoValueConverter}}" />
+                                        <TextBlock Text="{Binding Facade.State.Item.ModifiedAt, Converter={StaticResource UtcToLocalConverter}, StringFormat='dd.MM.yyyy HH:mm', TargetNullValue=---}" />
                                     </StackPanel>
 
                                     <!-- Activity -->

@@ -13,6 +13,7 @@
         <converters:PriorityToBrushConverter x:Key="PriorityToBrushConverter" />
         <converters:GreaterThanConverter x:Key="GreaterThanConverter" />
         <converters:LessOrEqualConverter x:Key="LessOrEqualConverter" />
+        <converters:UtcToLocalConverter x:Key="UtcToLocalConverter" />
     </UserControl.Resources>
 
     <Grid RowDefinitions="Auto,*">
@@ -122,7 +123,9 @@
                         </DataGridTemplateColumn>
                         
                         <DataGridTextColumn Header="Created"
-                                            Binding="{Binding Item.CreatedAt, StringFormat='dd.MM.yyyy HH:mm'}"
+                                            Binding="{Binding Item.CreatedAt,
+                                                Converter={StaticResource UtcToLocalConverter},
+                                                StringFormat='dd.MM.yyyy HH:mm'}"
                                             Width="180" />
 
                     </DataGrid.Columns>
@@ -151,7 +154,7 @@
                                     <TextBlock Text="{Binding Activity.State}" />
                                     <TextBlock Text="{Binding Category}" />
                                     <TextBlock Text="{Binding Activity.Priority}" />
-                                    <TextBlock Text="{Binding Item.CreatedAt, StringFormat='dd.MM.yyyy HH:mm'}" />
+                                    <TextBlock Text="{Binding Item.CreatedAt, Converter={StaticResource UtcToLocalConverter}, StringFormat='dd.MM.yyyy HH:mm'}" />
                                 </StackPanel>
 
                             </Border>
