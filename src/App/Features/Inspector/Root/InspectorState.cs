@@ -14,13 +14,15 @@ public sealed partial class InspectorState : ObservableObject
 
     [ObservableProperty] 
     [NotifyPropertyChangedFor(nameof(HasItem))]
-    [NotifyPropertyChangedFor(nameof(CanHaveActivity))]
+    [NotifyPropertyChangedFor(nameof(HasActivity))]
     [NotifyPropertyChangedFor(nameof(IsTask))]
+    [NotifyPropertyChangedFor(nameof(HasExtension))]
     private ItemDto _item = new();
     
     public bool HasItem => Item.Id != Guid.Empty;
-    public bool CanHaveActivity => Item.Workflow == WorkflowDto.Task;
+    public bool HasActivity => Item.Workflow is WorkflowDto.Task;
     public bool IsTask => Item.Workflow == WorkflowDto.Task;
+    public bool HasExtension => Item.Workflow is WorkflowDto.Task or WorkflowDto.Schedule;
     
     [ObservableProperty] private CurrentSessionOverviewDto? _currentSessionOverview;
     

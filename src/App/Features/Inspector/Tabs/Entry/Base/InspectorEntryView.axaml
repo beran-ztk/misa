@@ -76,11 +76,11 @@
 
             <!-- Deadline -->
             <deadline:EntryDeadlineView Grid.Row="1"
-                                        IsVisible="{Binding Facade.State.CanHaveActivity}" />
+                                        IsVisible="{Binding Facade.State.HasActivity}" />
 
             <!-- Session -->
             <session:SessionHeaderView Grid.Row="2"
-                                       IsVisible="{Binding Facade.State.CanHaveActivity}" />
+                                       IsVisible="{Binding Facade.State.HasActivity}" />
 
             <!-- Body -->
             <ScrollViewer Grid.Row="3"
@@ -105,10 +105,12 @@
                                     Command="{Binding ShowEditItemFormCommand}">
                                 <Image Source="{SvgImage /Assets/Icons/Common/edit.svg}" />
                             </Button>
-
-                            <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                            
+                            <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" 
+                                    Margin="0,0,0,4"
                                     BorderThickness="0,0,0,1"
-                                    BorderBrush="{StaticResource BrushBorder}" />
+                                    BorderBrush="{StaticResource BrushBorder}"
+                                    Opacity="0.60" />
                         </Grid>
 
                         <!-- View/Edit -->
@@ -158,20 +160,80 @@
                                 <TextBlock Text="{Binding Facade.State.Item.ModifiedAt, Converter={StaticResource NoValueConverter}}" />
                             </StackPanel>
 
-                            <!-- Category (Task only) -->
-                            <StackPanel Classes="addpanel-controls">
-                                <TextBlock Text="Category"
-                                           Classes="addpanel-text" />
+                            <!-- Activity -->
+                            <StackPanel Classes="addpanel-body"
+                                        IsVisible="{Binding Facade.State.HasActivity}">
+                                
+                                <!-- Activity Separator -->
+                                <Border Margin="0,8,0,4"
+                                        BorderThickness="0,0,0,1"
+                                        BorderBrush="{StaticResource BrushBorder}"
+                                        Opacity="0.35"/>
+                                
+                                <!-- State -->
+                                <StackPanel Classes="addpanel-controls"
+                                            IsVisible="{Binding Facade.State.Item.Activity}">
 
-                                <TextBlock Text="{Binding Facade.State.Item.TaskExtension.Category, Converter={StaticResource NoValueConverter}}"
-                                           IsVisible="{Binding !Facade.State.IsEditItemFormOpen}" />
+                                    <TextBlock Text="State"
+                                               Classes="addpanel-text" />
 
-                                <ComboBox Classes="addpanel-combo"
-                                          ItemsSource="{Binding Facade.State.Categories}"
-                                          SelectedItem="{Binding Facade.State.Item.TaskExtension.Category, Mode=TwoWay}"
-                                          IsVisible="{Binding Facade.State.IsEditItemFormOpen}" />
+                                    <TextBlock Text="{Binding Facade.State.Item.Activity.State}"
+                                               IsVisible="{Binding !Facade.State.IsEditItemFormOpen}" />
+                                </StackPanel>
+                                
+                                <!-- Priority -->
+                                <StackPanel Classes="addpanel-controls"
+                                            IsVisible="{Binding Facade.State.Item.Activity}">
+                                    <TextBlock Text="Priority"
+                                               Classes="addpanel-text" />
+
+                                    <TextBlock Text="{Binding Facade.State.Item.Activity.Priority}"
+                                               IsVisible="{Binding !Facade.State.IsEditItemFormOpen}" />
+                                </StackPanel>
+
+                                <!-- Deadline -->
+                                <StackPanel Classes="addpanel-controls"
+                                            IsVisible="{Binding Facade.State.Item.Activity}">
+                                    <TextBlock Text="Due"
+                                               Classes="addpanel-text" />
+
+                                    <TextBlock Text="{Binding Facade.State.Item.Activity.DueAt, Converter={StaticResource NoValueConverter}}"
+                                               IsVisible="{Binding !Facade.State.IsEditItemFormOpen}" />
+                                </StackPanel>
                             </StackPanel>
+                            
+                            <!-- Extension -->
+                            <StackPanel Classes="addpanel-body"
+                                        IsVisible="{Binding Facade.State.HasExtension}">
+                                
+                                <!-- Extension Separator -->
+                                <Border Margin="0,8,0,4"
+                                        BorderThickness="0,0,0,1"
+                                        BorderBrush="{StaticResource BrushBorder}"
+                                        Opacity="0.35" />
+                            
+                                <!-- Task -->
+                                <StackPanel Classes="addpanel-body"
+                                            IsVisible="{Binding Facade.State.IsTask}">
+                                    
+                                    <!-- Category -->
+                                    <StackPanel Classes="addpanel-controls"
+                                                IsVisible="{Binding Facade.State.IsTask}">
+                                        <TextBlock Text="Category"
+                                                   Classes="addpanel-text" />
 
+                                        <TextBlock Text="{Binding Facade.State.Item.TaskExtension.Category, Converter={StaticResource NoValueConverter}}"
+                                                   IsVisible="{Binding !Facade.State.IsEditItemFormOpen}" />
+
+                                        <ComboBox Classes="addpanel-combo"
+                                                  ItemsSource="{Binding Facade.State.Categories}"
+                                                  SelectedItem="{Binding Facade.State.Item.TaskExtension.Category, Mode=TwoWay}"
+                                                  IsVisible="{Binding Facade.State.IsEditItemFormOpen}" />
+                                    </StackPanel>
+                                </StackPanel>
+                                
+                            </StackPanel>
+                            
                         </StackPanel>
 
                     </StackPanel>

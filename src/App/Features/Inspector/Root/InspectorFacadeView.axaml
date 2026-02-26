@@ -21,7 +21,7 @@
             </TabItem>
 
             <TabItem Header="Activity"
-                     IsVisible="{Binding State.CanHaveActivity}">
+                     IsVisible="{Binding State.HasActivity}">
                 <TextBlock Text="Activity content placeholder"
                            TextWrapping="Wrap" />
             </TabItem>
