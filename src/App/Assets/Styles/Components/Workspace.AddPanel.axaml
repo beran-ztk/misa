@@ -5,7 +5,7 @@
         <Style Selector="Border.addpanel-main-border">
                 <Setter Property="Background" Value="{StaticResource BrushPrimaryBackground}"/>
                 <Setter Property="CornerRadius" Value="10"/>
-                <Setter Property="BorderBrush" Value="{StaticResource BrushBorderLight}"/>
+                <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}"/>
                 <Setter Property="BorderThickness" Value="2"/>
                 <Setter Property="Padding" Value="20"/>
         </Style>
@@ -23,10 +23,10 @@
         </Style>
         
         <Style Selector="Border.panel-divider">
-                <Setter Property="Height" Value="2"/>
+                <Setter Property="Height" Value="1"/>
                 <Setter Property="CornerRadius" Value="100"/>
-                <Setter Property="Background" Value="{DynamicResource BrushBorderLight}"/>
-                <Setter Property="Opacity" Value="0.7"/>
+                <Setter Property="Background" Value="{DynamicResource BrushBorder}"/>
+                <Setter Property="Opacity" Value="0.5"/>
         </Style>
         
         <!-- Button with image -->
