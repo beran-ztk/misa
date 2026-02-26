@@ -64,6 +64,7 @@ public partial class InspectorEntryViewModel
             var result = await Facade.Gateway.UpdateTaskAsync(item.Id, updateRequest);
             if (result is { IsSuccess: true })
             {
+                Facade.ContextState.NotifyUpdated();
                 await Facade.Reload();
             }
         }

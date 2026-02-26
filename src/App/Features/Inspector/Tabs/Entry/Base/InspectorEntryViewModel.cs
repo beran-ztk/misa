@@ -25,11 +25,15 @@ public partial class InspectorEntryViewModel : ViewModelBase
     private async Task ArchiveItem()
     {
         var result = await Facade.Gateway.ArchiveAsync(Facade.State.Item.Id);
+        if (result.IsSuccess)
+            Facade.ContextState.NotifyRemoved();
     }
     [RelayCommand]
     private async Task DeleteItem()
     {
         var result = await Facade.Gateway.DeleteAsync(Facade.State.Item.Id);
+        if (result.IsSuccess)
+            Facade.ContextState.NotifyRemoved();
     }
     private void OnFacadeStatePropertyChanged(object? s, PropertyChangedEventArgs e)
     {

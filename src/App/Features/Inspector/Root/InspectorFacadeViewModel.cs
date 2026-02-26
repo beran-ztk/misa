@@ -10,7 +10,7 @@ namespace Misa.Ui.Avalonia.Features.Inspector.Root;
 
 public sealed partial class InspectorFacadeViewModel : ViewModelBase
 {
-    private ISelectionContextState ContextState { get; }
+    public ISelectionContextState ContextState { get; }
     public InspectorGateway Gateway { get; }
     public InspectorState State { get; }
     public InspectorEntryViewModel Entry { get; }

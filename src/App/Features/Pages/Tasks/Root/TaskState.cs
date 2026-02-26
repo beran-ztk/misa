@@ -16,7 +16,7 @@ public sealed partial class TaskState : ObservableObject
 {
     public ShellState ShellState { get; }
     public CreateTaskState CreateState { get; }
-    private ISelectionContextState SelectionContextState { get; }
+    public ISelectionContextState SelectionContextState { get; }
     private IReadOnlyCollection<TaskDto> Items { get; set; } = [];
     public ObservableCollection<TaskDto> FilteredItems { get; } = [];
 
