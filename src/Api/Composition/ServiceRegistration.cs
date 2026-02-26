@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Misa.Api.Middleware;
 using Misa.Api.Services.Auth;
 using Misa.Api.Services.Features.Items.Features.Scheduler;
 using Misa.Api.Services.Features.Items.Features.Sessions;
@@ -86,8 +87,8 @@ public static class ServiceRegistration
     {
         services.AddSignalR();
         services.AddControllers();
+        services.AddSingleton<HttpExceptionMiddleware>();
     }
-    
 
     private static void AddCoreServices(this IServiceCollection services)
     {
@@ -112,7 +113,6 @@ public static class ServiceRegistration
         services.AddScoped<ISchedulerPlanningRepository, SchedulerPlanningRepository>();
         services.AddScoped<ISchedulerExecutingRepository, SchedulerExecutingRepository>();
         services.AddScoped<ISchedulerRepository, SchedulerRepository>();
-        services.AddScoped<ITaskRepository, TaskRepository>();
     }
     private static void AddDataAccess(this IServiceCollection services, IConfiguration configuration)
     {

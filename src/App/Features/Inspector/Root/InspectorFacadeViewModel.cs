@@ -10,7 +10,7 @@ namespace Misa.Ui.Avalonia.Features.Inspector.Root;
 
 public sealed partial class InspectorFacadeViewModel : ViewModelBase
 {
-    private ISelectionContextState ContextState { get; }
+    public ISelectionContextState ContextState { get; }
     public InspectorGateway Gateway { get; }
     public InspectorState State { get; }
     public InspectorEntryViewModel Entry { get; }
@@ -39,20 +39,16 @@ public sealed partial class InspectorFacadeViewModel : ViewModelBase
     [RelayCommand]
     public async Task Reload()
     {
-        await GetEntryDataAsync(State.Item.Id);
+        await GetEntryDataAsync(State.Item?.Id);
     }
 
     private async Task GetEntryDataAsync(Guid? id)
     {
-        // if (id is null) return;
-        //
-        // var result = await Gateway.GetDetailsAsync((Guid)id);
-        // if (result.Value is null) return;
-        //
-        // State.Item = result.Value.Item;
-        // State.Deadline = result.Value.Deadline;
-        //
-        // var session = await Gateway.GetCurrentAndLatestSessionAsync(State.Item.Id);
-        // State.CurrentSessionOverview = session.Value;
+        if (id is null) return;
+        
+        var result = await Gateway.GetItemAsync((Guid)id);
+        if (result.Value is null) return;
+        
+        State.Item = result.Value;
     }
 }

@@ -14,29 +14,14 @@ public static class EndpointRegistration
         app.MapControllers();
         app.MapHub<EventHub>("/hubs/updates");
 
-        // Group für Result-basierte Endpoints
-        var api = app.MapGroup("");
-        api.AddEndpointFilter<ResultExceptionFilter>();
+        app.UseMiddleware<HttpExceptionMiddleware>();
 
-        api.MapTaskEndpoints();
-        api.MapSessionEndpoints();
-        api.MapScheduleEndpoints();
-        api.MapAuthenticationEndpoints();
-        api.MapInspectorEndpoints();
-    }
-
-    private static void MapTaskEndpoints(this IEndpointRouteBuilder api)
-    {
-        CreateTaskEndpoint.Map(api);
-        GetTasksEndpoint.Map(api);
-    }
-
-    private static void MapSessionEndpoints(this IEndpointRouteBuilder api)
-    {
-        StartSessionEndpoint.Map(api);
-        PauseSessionEndpoint.Map(api);
-        ContinueSessionEndpoint.Map(api);
-        StopSessionEndpoint.Map(api);
+        TaskEndpoints.Map(app);
+        SessionEndpoints.Map(app);
+        EntryEndpoints.Map(app);
+        app.MapScheduleEndpoints();
+        app.MapAuthenticationEndpoints();
+        app.MapInspectorEndpoints();
     }
     private static void MapScheduleEndpoints(this IEndpointRouteBuilder api)
     {

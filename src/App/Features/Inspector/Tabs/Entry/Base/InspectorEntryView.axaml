@@ -1,21 +1,27 @@
 ﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Base.InspectorEntryView"
+             xmlns:converters="clr-namespace:Misa.Ui.Avalonia.Common.Converters"
              xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Base"
              xmlns:deadline="clr-namespace:Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Scheduling"
              xmlns:session="clr-namespace:Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions"
              x:DataType="root:InspectorEntryViewModel">
 
+    <UserControl.Resources>
+        <converters:NullToStringNoValueIndicator x:Key="NoValueConverter"/>
+        <converters:UtcToLocalConverter x:Key="UtcToLocalConverter"/>
+    </UserControl.Resources>
+    
     <Border Background="{StaticResource BrushPrimaryBackground}"
             Margin="0,20,0,0"
             Padding="12">
         <Grid RowDefinitions="50,Auto,Auto,*">
-            
+
             <!-- Header -->
             <Border Grid.Row="0"
                     BorderBrush="{StaticResource BrushBorder}"
                     BorderThickness="0,0,0,5"
-                    Padding="12,8">
+                    Padding="4,14">
 
                 <Grid ColumnDefinitions="*,Auto"
                       ColumnSpacing="12">
@@ -24,7 +30,7 @@
                                Text="{Binding Facade.State.Item.Title}"
                                VerticalAlignment="Center"
                                FontSize="20"
-                               FontWeight="Regular"/>
+                               FontWeight="Regular" />
 
                     <StackPanel Grid.Column="1"
                                 Spacing="10"
@@ -34,33 +40,29 @@
                                 Command="{Binding Facade.ReloadCommand}">
                             <Image Source="{SvgImage /Assets/Icons/Common/refresh.svg}" />
                         </Button>
-                        
+
                         <!-- 3-dots menu -->
                         <Button Classes="workspace-toolbar-icon"
                                 VerticalAlignment="Center">
                             <Image Source="{SvgImage /Assets/Icons/Common/dots-three-vertical.svg}" />
                             <Button.Flyout>
                                 <MenuFlyout>
-                                    <MenuItem Header="Set/Edit deadline"
-                                              Command="{Binding ShowUpsertDeadlinePanelCommand}" />
-                                    <MenuItem Header="Remove deadline"
-                                              Command="{Binding DeleteDeadlineCommand}"
-                                              IsVisible="{Binding HasDeadline}" />
-                                    
-                                    <MenuItem>
+                                    <MenuItem Command="{Binding ArchiveItemCommand}">
                                         <MenuItem.Header>
                                             <StackPanel Spacing="8" Orientation="Horizontal">
-                                                <Image Width="16" Height="16" Source="{SvgImage /Assets/Icons/Common/archive.svg}"/>
-                                                <TextBlock Text="Archive Item"/>
+                                                <Image Width="16" Height="16"
+                                                       Source="{SvgImage /Assets/Icons/Common/archive.svg}" />
+                                                <TextBlock Text="Archive" />
                                             </StackPanel>
                                         </MenuItem.Header>
                                     </MenuItem>
-                                    
-                                    <MenuItem>
+
+                                    <MenuItem Command="{Binding DeleteItemCommand}">
                                         <MenuItem.Header>
                                             <StackPanel Spacing="8" Orientation="Horizontal">
-                                                <Image Width="16" Height="16" Source="{SvgImage /Assets/Icons/Common/trash.svg}"/>
-                                                <TextBlock Text="Delete Item"/>
+                                                <Image Width="16" Height="16"
+                                                       Source="{SvgImage /Assets/Icons/Common/trash.svg}" />
+                                                <TextBlock Text="Delete" />
                                             </StackPanel>
                                         </MenuItem.Header>
                                     </MenuItem>
@@ -69,22 +71,206 @@
                             </Button.Flyout>
                         </Button>
                     </StackPanel>
+
+                </Grid>
+            </Border>
+
+            <!-- Deadline -->
+            <deadline:EntryDeadlineView Grid.Row="1"
+                                        IsVisible="{Binding Facade.State.HasActivity}" />
+
+            <!-- Session -->
+            <session:SessionHeaderView Grid.Row="2"
+                                       IsVisible="{Binding Facade.State.HasActivity}" />
+
+            <Border Grid.Row="3" 
+                    Padding="20">
+                <Grid RowDefinitions="40,*,40"
+                      RowSpacing="16">
+                    <!-- Header + Edit -->
+                    <Grid Grid.Row="0" 
+                          ColumnDefinitions="*,Auto"
+                          RowDefinitions="Auto,Auto"
+                          RowSpacing="12"
+                          VerticalAlignment="Center">
+
+                        <TextBlock Grid.Row="0" Grid.Column="0"
+                                   Text="{Binding OverviewTitle}"
+                                   VerticalAlignment="Center"/>
+
+                        <Button Grid.Row="0" Grid.Column="1"
+                                Classes="workspace-toolbar-icon"
+                                VerticalAlignment="Center"
+                                Command="{Binding ShowEditItemFormCommand}">
+                            <Image Source="{SvgImage /Assets/Icons/Common/edit.svg}" />
+                        </Button>
+                                
+                        <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" 
+                                Margin="0,0,0,4"
+                                BorderThickness="0,0,0,1"
+                                BorderBrush="{StaticResource BrushBorder}"
+                                Opacity="0.60" />
+                    </Grid>
                     
+                    <!-- Body -->
+                    <ScrollViewer Grid.Row="1"
+                                  VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
+                        <Border Padding="12">
+                            
+                            <StackPanel Spacing="14">
+
+                                
+
+                                <!-- View/Edit -->
+                                <StackPanel Classes="addpanel-body">
+
+                                    <!-- Title -->
+                                    <StackPanel Classes="addpanel-controls">
+                                        <TextBlock Text="Title"
+                                                   Classes="addpanel-text" />
+
+                                        <TextBlock Text="{Binding Facade.State.Item.Title}"
+                                                   IsVisible="{Binding !Facade.State.IsEditItemFormOpen}" />
+
+                                        <TextBox Classes="addpanel-oneliner"
+                                                 Watermark="Title…"
+                                                 Text="{Binding EditTitle, Mode=TwoWay}"
+                                                 IsVisible="{Binding Facade.State.IsEditItemFormOpen}" />
+                                    </StackPanel>
+
+                                    <!-- Description -->
+                                    <StackPanel Classes="addpanel-controls">
+                                        <TextBlock Text="Description"
+                                                   Classes="addpanel-text" />
+
+                                        <TextBlock Text="{Binding Facade.State.Item.Description, Converter={StaticResource NoValueConverter}}"
+                                                   IsVisible="{Binding !Facade.State.IsEditItemFormOpen}" />
+
+                                        <TextBox Classes="addpanel-oneliner"
+                                                 Watermark="Description…"
+                                                 Text="{Binding EditDescription, Mode=TwoWay}"
+                                                 IsVisible="{Binding Facade.State.IsEditItemFormOpen}" />
+                                    </StackPanel>
+
+                                    <!-- Created At -->
+                                    <StackPanel Classes="addpanel-controls">
+                                        <TextBlock Text="Created"
+                                                   Classes="addpanel-text" />
+
+                                        <TextBlock Text="{Binding Facade.State.Item.CreatedAt, Converter={StaticResource UtcToLocalConverter}, StringFormat='dd.MM.yyyy HH:mm'}" />
+                                    </StackPanel>
+
+                                    <!-- Modified At -->
+                                    <StackPanel Classes="addpanel-controls">
+                                        <TextBlock Text="Modified"
+                                                   Classes="addpanel-text" />
+
+                                        <TextBlock Text="{Binding Facade.State.Item.ModifiedAt, Converter={StaticResource UtcToLocalConverter}, StringFormat='dd.MM.yyyy HH:mm', TargetNullValue=---}" />
+                                    </StackPanel>
+
+                                    <!-- Activity -->
+                                    <StackPanel Classes="addpanel-body"
+                                                IsVisible="{Binding Facade.State.HasActivity}">
+                                        
+                                        <!-- Activity Separator -->
+                                        <Border Margin="0,8,0,4"
+                                                BorderThickness="0,0,0,1"
+                                                BorderBrush="{StaticResource BrushBorder}"
+                                                Opacity="0.35"/>
+                                        
+                                        <!-- State -->
+                                        <StackPanel Classes="addpanel-controls">
+
+                                            <TextBlock Text="State"
+                                                       Classes="addpanel-text" />
+
+                                            <TextBlock Text="{Binding Facade.State.Item.Activity.State}"
+                                                       IsVisible="{Binding !Facade.State.IsEditItemFormOpen}" />
+                                            
+                                            <ComboBox Classes="addpanel-combo"
+                                                      ItemsSource="{Binding Facade.State.ActivityStates}"
+                                                      SelectedItem="{Binding EditActivityState, Mode=TwoWay}"
+                                                      IsVisible="{Binding Facade.State.IsEditItemFormOpen}" />
+                                        </StackPanel>
+                                        
+                                        <!-- Priority -->
+                                        <StackPanel Classes="addpanel-controls">
+                                            <TextBlock Text="Priority"
+                                                       Classes="addpanel-text" />
+
+                                            <TextBlock Text="{Binding Facade.State.Item.Activity.Priority}"
+                                                       IsVisible="{Binding !Facade.State.IsEditItemFormOpen}" />
+                                            
+                                            <ComboBox Classes="addpanel-combo"
+                                                      ItemsSource="{Binding Facade.State.ActivityPriorities}"
+                                                      SelectedItem="{Binding EditActivityPriority, Mode=TwoWay}"
+                                                      IsVisible="{Binding Facade.State.IsEditItemFormOpen}" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                    
+                                    <!-- Extension -->
+                                    <StackPanel Classes="addpanel-body"
+                                                IsVisible="{Binding Facade.State.HasExtension}">
+                                        
+                                        <!-- Extension Separator -->
+                                        <Border Margin="0,8,0,4"
+                                                BorderThickness="0,0,0,1"
+                                                BorderBrush="{StaticResource BrushBorder}"
+                                                Opacity="0.35" />
+                                    
+                                        <!-- Task -->
+                                        <StackPanel Classes="addpanel-body"
+                                                    IsVisible="{Binding Facade.State.IsTask}">
+                                            
+                                            <!-- Category -->
+                                            <StackPanel Classes="addpanel-controls"
+                                                        IsVisible="{Binding Facade.State.IsTask}">
+                                                <TextBlock Text="Category"
+                                                           Classes="addpanel-text" />
+
+                                                <TextBlock Text="{Binding Facade.State.Item.TaskExtension.Category, Converter={StaticResource NoValueConverter}}"
+                                                           IsVisible="{Binding !Facade.State.IsEditItemFormOpen}" />
+
+                                                <ComboBox Classes="addpanel-combo"
+                                                          ItemsSource="{Binding Facade.State.TaskCategories}"
+                                                          SelectedItem="{Binding EditTaskCategory, Mode=TwoWay}"
+                                                          IsVisible="{Binding Facade.State.IsEditItemFormOpen}" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                        
+                                    </StackPanel>
+                                    
+                                </StackPanel>
+
+                            </StackPanel>
+                        </Border>
+                    </ScrollViewer>
+                    
+                    <!-- Footer -->
+                    <Border Grid.Row="2"
+                            Padding="4"
+                            BorderThickness="0,1,0,0"
+                            BorderBrush="{StaticResource BrushBorder}"
+                            IsVisible="{Binding Facade.State.IsEditItemFormOpen}">
+                        <Grid ColumnDefinitions="*,Auto" 
+                              VerticalAlignment="Center">
+                    
+                            <StackPanel Grid.Column="1" 
+                                        Classes="confirm-cancel">
+                        
+                                <Button Content="Cancel"
+                                        Classes="confirm-cancel-cancel"
+                                        Command="{Binding CancelCommand}"/>
+                                <Button Content="Submit"
+                                        Classes="confirm-cancel-confirm"
+                                        Command="{Binding SubmitCommand}"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
                 </Grid>
             </Border>
             
-            <!-- Deadline -->
-            <deadline:EntryDeadlineView Grid.Row="1"/>
-            
-            <!-- Session -->
-            <session:SessionHeaderView Grid.Row="2"/>
-            
-            <!-- Body -->
-            <ScrollViewer Grid.Row="3"
-                          VerticalScrollBarVisibility="Auto"
-                          HorizontalScrollBarVisibility="Disabled">
-            </ScrollViewer>
-
         </Grid>
     </Border>
 

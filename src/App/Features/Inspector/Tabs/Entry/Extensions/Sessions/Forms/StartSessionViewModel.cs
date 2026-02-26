@@ -1,8 +1,8 @@
 using System;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Misa.Contract.Common.Results;
 using Misa.Contract.Items.Components.Activity.Sessions;
-using Misa.Contract.Shared.Results;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Inspector.Root;
 using Misa.Ui.Avalonia.Infrastructure.UI;
@@ -10,7 +10,7 @@ using Misa.Ui.Avalonia.Infrastructure.UI;
 namespace Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions.Forms;
 
 public sealed partial class StartSessionViewModel(Guid itemId, InspectorGateway gateway)
-    : ViewModelBase, IHostedForm<SessionDto>
+    : ViewModelBase, IHostedForm
 {
     // Host
     public string Title => "Start a Session";
@@ -24,7 +24,7 @@ public sealed partial class StartSessionViewModel(Guid itemId, InspectorGateway 
     [ObservableProperty] private bool _stopAutomatically;
     [ObservableProperty] private string? _autoStopReason;
 
-    public async Task<Result<SessionDto>> SubmitAsync()
+    public async Task<Result> SubmitAsync()
     {
         TimeSpan? plannedDuration = PlannedMinutes.HasValue
             ? TimeSpan.FromMinutes(Convert.ToInt32(PlannedMinutes.Value))

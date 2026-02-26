@@ -4,5 +4,5 @@ public enum WorkflowDto
 {
     Task,
     Deadline,
-    Scheduling
+    Schedule
 }

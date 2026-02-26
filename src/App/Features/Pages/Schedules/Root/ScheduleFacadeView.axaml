@@ -1,0 +1,235 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="Misa.Ui.Avalonia.Features.Pages.Schedules.Root.ScheduleFacadeView"
+             xmlns:schedules="clr-namespace:Misa.Contract.Items.Components.Schedules;assembly=Contract"
+             xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Schedules.Root"
+             x:DataType="root:ScheduleFacadeViewModel">
+
+  <UserControl.Styles>
+      <!-- Item container: hover + selected -->
+      <Style Selector="ListBoxItem">
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="Margin" Value="0,0,0,10"/>
+        <Setter Property="Background" Value="Transparent"/>
+      </Style>
+
+      <Style Selector="ListBoxItem:pointerover Border.schedule-card">
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}" />
+        <!-- subtle lift -->
+        <Setter Property="BoxShadow" Value="0 8 24 0 #40000000"/>
+      </Style>
+
+      <Style Selector="ListBoxItem:selected Border.schedule-card">
+        <!-- selected outline + a bit more lift -->
+        <Setter Property="BorderBrush" Value="{StaticResource BrushAccent}" />
+        <Setter Property="BorderThickness" Value="1.5"/>
+        <Setter Property="BoxShadow" Value="0 10 28 0 #55000000"/>
+      </Style>
+
+      <!-- Badge -->
+      <Style Selector="Border.badge">
+        <Setter Property="CornerRadius" Value="999"/>
+        <Setter Property="Padding" Value="8,3"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}"/>
+        <Setter Property="Background" Value="#10FFFFFF"/>
+      </Style>
+
+      <Style Selector="TextBlock.badge-text">
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Opacity" Value="0.9"/>
+      </Style>
+
+      <!-- Chip -->
+      <Style Selector="Border.chip">
+        <Setter Property="CornerRadius" Value="999"/>
+        <Setter Property="Padding" Value="8,4"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}"/>
+        <Setter Property="Background" Value="#0CFFFFFF"/>
+      </Style>
+
+      <Style Selector="TextBlock.chip-text">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Opacity" Value="0.9"/>
+      </Style>
+
+      <!-- Secondary text -->
+      <Style Selector="TextBlock.secondary">
+        <Setter Property="Opacity" Value="0.78"/>
+      </Style>
+
+      <Style Selector="TextBlock.muted">
+        <Setter Property="Opacity" Value="0.65"/>
+        <Setter Property="FontSize" Value="12"/>
+      </Style>
+  </UserControl.Styles>
+  
+  
+    <Grid RowDefinitions="Auto,*">
+
+        <!-- Toolbar (match TaskFacadeView) -->
+        <Border Grid.Row="0"
+                Classes="workspace-toolbar-frame">
+            <Grid Classes="workspace-toolbar"
+                  RowDefinitions="Auto,Auto,Auto"
+                  ColumnDefinitions="*,Auto">
+
+                <!-- Row 0: Quick actions (left) -->
+                <StackPanel Grid.Row="0" Grid.Column="0"
+                            Classes="workspace-toolbar-left">
+                    <Button Classes="workspace-toolbar-icon"
+                            Command="{Binding ShowAddPanelCommand}">
+                        <Image Source="{SvgImage /Assets/Icons/Common/plus.svg}" />
+                    </Button>
+
+                    <Button Classes="workspace-toolbar-icon"
+                            Command="{Binding RefreshWorkspaceCommand}">
+                        <Image Source="{SvgImage /Assets/Icons/Common/refresh.svg}" />
+                    </Button>
+                </StackPanel>
+
+                <!-- Row 0: Search (right) -->
+                <StackPanel Grid.Row="0" Grid.Column="1"
+                            Classes="workspace-toolbar-right">
+                    <TextBox Classes="workspace-toolbar-search"
+                             Watermark="Search schedules..."
+                             Text="{Binding State.SearchText, Mode=TwoWay}" />
+                </StackPanel>
+
+                <!-- Row 1: Filters (left) - placeholder to keep identical structure -->
+                <StackPanel Grid.Row="1" Grid.Column="0"
+                            Classes="workspace-toolbar-center">
+                    <!-- Add scheduler filters here later (frequency, misfire, etc.) -->
+                </StackPanel>
+
+                <!-- Thin separator -->
+                <Border Grid.Row="2"
+                        Grid.Column="0"
+                        Grid.ColumnSpan="2"
+                        Classes="workspace-toolbar-separator" />
+            </Grid>
+        </Border>
+
+        <!-- Content (match Task: workspace-content-frame wrapper) -->
+        <Grid Grid.Row="1">
+          <Border Classes="workspace-content-frame"
+                  Background="{StaticResource BrushPrimaryBackgroundLight}"
+                  Padding="30,10">
+
+            <ListBox ItemsSource="{Binding State.FilteredItems}"
+                     SelectedItem="{Binding State.SelectedItem, Mode=TwoWay}"
+                     Background="{StaticResource BrushPrimaryBackgroundLight}"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                     ScrollViewer.VerticalScrollBarVisibility="Auto">
+
+              <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="schedules:ScheduleDto">
+
+                  <Border Classes="schedule-card"
+                          Padding="12"
+                          BorderBrush="{StaticResource BrushBorder}"
+                          BorderThickness="1"
+                          CornerRadius="10"
+                          Background="{StaticResource BrushPrimaryBackground}">
+
+                    <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto"
+                          RowSpacing="10">
+
+                      <!-- Header -->
+                      <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="12">
+                        <StackPanel Spacing="2">
+                          <TextBlock Text="{Binding Item.Title}"
+                                     FontSize="16"
+                                     FontWeight="SemiBold" />
+
+                          <TextBlock Text="{Binding Item.CreatedAt, StringFormat='dd.MM.yyyy HH:mm'}"
+                                     Classes="muted" />
+                        </StackPanel>
+
+                        <!-- Right meta: timezone + badges -->
+                        <StackPanel Grid.Column="1"
+                                    Spacing="6"
+                                    HorizontalAlignment="Right">
+                          <TextBlock Text="{Binding Timezone}"
+                                     Classes="muted"
+                                     HorizontalAlignment="Right"/>
+
+                          <WrapPanel HorizontalAlignment="Right"
+                                     ItemSpacing="4">
+                            <!-- Hard restrictions badge -->
+                            <Border Classes="badge"
+                                    IsVisible="{Binding HasHardRestrictions}">
+                              <TextBlock Classes="badge-text"
+                                         Text="CONSTRAINTS" />
+                            </Border>
+
+                            <!-- Soft restrictions badge -->
+                            <Border Classes="badge"
+                                    IsVisible="{Binding HasSoftRestrictions}">
+                              <TextBlock Classes="badge-text"
+                                         Text="LIMITED" />
+                            </Border>
+                            
+                            <!-- No restrictions badge -->
+                            <Border Classes="badge"
+                                    IsVisible="{Binding HasNoRestrictions}">
+                              <TextBlock Classes="badge-text"
+                                         Text="INDEFINITELY" />
+                            </Border>
+                          </WrapPanel>
+                        </StackPanel>
+                        
+                      </Grid>
+                      
+                      <Border Grid.Row="1" Classes="card-separator"/>
+
+                      <!-- Core summary -->
+                      <TextBlock Grid.Row="2"
+                                 Text="{Binding TriggerSummary}"
+                                 TextWrapping="Wrap" />
+
+                      <!-- Execution status -->
+                      <TextBlock Grid.Row="3"
+                                 Text="{Binding ExecutionStatus}"
+                                 Classes="secondary"
+                                 TextWrapping="Wrap" />
+
+                      <!-- Constraints as chips + operational line -->
+                      <StackPanel Grid.Row="4" Spacing="8">
+
+                        <!-- If you keep ScheduleConstraints as ONE string, show it as a single chip-row -->
+                        <WrapPanel ItemSpacing="4" LineSpacing="4" 
+                                   IsVisible="{Binding HasHardRestrictions}">
+                          <Border Classes="chip" IsVisible="{Binding ConstraintTimeWindow, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                            <TextBlock Classes="chip-text" Text="{Binding ConstraintTimeWindow}"/>
+                          </Border>
+                          <Border Classes="chip" IsVisible="{Binding ConstraintWeekdays, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                            <TextBlock Classes="chip-text" Text="{Binding ConstraintWeekdays}"/>
+                          </Border>
+                          <Border Classes="chip" IsVisible="{Binding ConstraintMonths, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                            <TextBlock Classes="chip-text" Text="{Binding ConstraintMonths}"/>
+                          </Border>
+                          <Border Classes="chip" IsVisible="{Binding ConstraintMonthDays, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                            <TextBlock Classes="chip-text" Text="{Binding ConstraintMonthDays}"/>
+                          </Border>
+                        </WrapPanel>
+
+                        <TextBlock Text="{Binding OperationalBehaviour}"
+                                   Classes="muted"
+                                   TextWrapping="Wrap" />
+                      </StackPanel>
+
+                    </Grid>
+                  </Border>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+            </ListBox>
+          </Border>
+        </Grid>
+    </Grid>
+</UserControl>

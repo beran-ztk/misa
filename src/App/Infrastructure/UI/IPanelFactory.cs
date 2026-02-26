@@ -2,12 +2,12 @@ using System;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Microsoft.Extensions.DependencyInjection;
+using Misa.Contract.Common.Results;
 using Misa.Contract.Items.Components.Activity.Sessions;
 using Misa.Contract.Items.Components.Schedules;
 using Misa.Contract.Items.Components.Tasks;
-using Misa.Contract.Shared.Results;
 using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions.Forms;
-using Misa.Ui.Avalonia.Features.Pages.Scheduling.Create;
+using Misa.Ui.Avalonia.Features.Pages.Schedules.Create;
 using Misa.Ui.Avalonia.Features.Pages.Tasks.Create;
 using Misa.Ui.Avalonia.Shell.Components;
 
@@ -15,6 +15,8 @@ namespace Misa.Ui.Avalonia.Infrastructure.UI;
 
 public enum PanelKey
 {
+    StartSession,
+    PauseSession,
     EndSession,
 }
 
@@ -25,25 +27,15 @@ public readonly record struct PanelKey<TResult>(
 );
 public static class Panels
 {
-    public static readonly PanelKey<TaskExtensionDto> Task =
+    public static readonly PanelKey<TaskDto> Task =
         new("Task",
             sp => sp.GetRequiredService<CreateTaskView>(),
             sp => sp.GetRequiredService<CreateTaskViewModel>());
 
-    public static readonly PanelKey<ScheduleExtensionDto> Schedule =
+    public static readonly PanelKey<ScheduleDto> Schedule =
         new("Schedule",
             sp => sp.GetRequiredService<CreateScheduleView>(),
             sp => sp.GetRequiredService<CreateScheduleViewModel>());
-
-    public static readonly PanelKey<SessionDto> StartSession =
-        new("StartSession",
-            sp => sp.GetRequiredService<StartSessionView>(),
-            sp => sp.GetRequiredService<StartSessionViewModel>());
-
-    public static readonly PanelKey<SessionDto> PauseSession =
-        new("PauseSession",
-            sp => sp.GetRequiredService<PauseSessionView>(),
-            sp => sp.GetRequiredService<PauseSessionViewModel>());
 }
 
 public interface IPanelFactory
@@ -58,6 +50,8 @@ public sealed class PanelFactory(IServiceProvider sp) : IPanelFactory
     {
         return key switch
         {
+            PanelKey.StartSession => CreateHosted<StartSessionView, StartSessionViewModel>(context),
+            PanelKey.PauseSession => CreateHosted<PauseSessionView, PauseSessionViewModel>(context),
             PanelKey.EndSession => CreateHosted<EndSessionView, EndSessionViewModel>(context),
             _ => throw new ArgumentOutOfRangeException(nameof(key), key, null)
         };

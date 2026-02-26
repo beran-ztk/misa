@@ -16,7 +16,7 @@ public static class DurationFormatter
             { TotalHours: >= 1 and < 24 } ts
                 => $"{(int)ts.TotalHours}:{ts.Minutes:00}:{ts.Seconds:00} h",
 
-            { TotalMinutes: >= 1 and < 60 } ts
+            { TotalMinutes: >= 0 and < 60 } ts
                 => $"{(int)ts.TotalMinutes}:{ts.Seconds:00} min",
 
             _ => string.Empty

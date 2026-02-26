@@ -2,6 +2,6 @@ namespace Misa.Application.Abstractions.Authentication;
 
 public interface ICurrentUser
 {
-    string UserId { get; }
+    string Id { get; }
     string Timezone { get; }
 }

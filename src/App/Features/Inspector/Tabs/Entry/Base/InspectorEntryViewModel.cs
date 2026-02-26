@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using CommunityToolkit.Mvvm.Input;
 using Misa.Ui.Avalonia.Common.Formatting;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Inspector.Root;
@@ -19,19 +20,37 @@ public partial class InspectorEntryViewModel : ViewModelBase
         Facade = facade;
         Facade.State.PropertyChanged += OnFacadeStatePropertyChanged;
     }
+
+    [RelayCommand]
+    private async Task ArchiveItem()
+    {
+        var result = await Facade.Gateway.ArchiveAsync(Facade.State.Item.Id);
+        if (result.IsSuccess)
+            Facade.ContextState.NotifyRemoved();
+    }
+    [RelayCommand]
+    private async Task DeleteItem()
+    {
+        var result = await Facade.Gateway.DeleteAsync(Facade.State.Item.Id);
+        if (result.IsSuccess)
+            Facade.ContextState.NotifyRemoved();
+    }
     private void OnFacadeStatePropertyChanged(object? s, PropertyChangedEventArgs e)
     {
         switch (e.PropertyName)
         {
-            case nameof(Facade.State.CurrentSessionOverview):
+            case nameof(Facade.State.Item):
+                CurrentItemPropertyChanged();
                 CurrentSessionPropertyChanged();
-                break;
-            case nameof(Facade.State.Item.Activity.DueAt):
                 DeadlinePropertyChanged();
                 break;
         }
     }
-
+    private void CurrentItemPropertyChanged()
+    {
+        Facade.State.IsEditItemFormOpen = false;
+        OnPropertyChanged(nameof(OverviewTitle));
+    }
     private void CurrentSessionPropertyChanged()
     {
         OnPropertyChanged(nameof(CurrentSession));

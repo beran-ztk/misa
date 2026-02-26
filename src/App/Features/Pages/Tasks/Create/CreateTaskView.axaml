@@ -49,15 +49,10 @@
         
         <!-- Deadline -->
         <StackPanel Classes="addpanel-controls">
-            <TextBlock Text="Select a date"
+            <TextBlock Text="Set a deadline"
                        Classes="addpanel-text"/>
             <DatePicker Classes="addpanel-date"
                         SelectedDate="{Binding State.DeadlineDate}" />
-        </StackPanel>
-
-        <StackPanel Classes="addpanel-controls">
-            <TextBlock Text="Select a time"
-                       Classes="addpanel-text"/>
             <TimePicker Classes="addpanel-time"
                         SelectedTime="{Binding State.DeadlineTime}" />
         </StackPanel>

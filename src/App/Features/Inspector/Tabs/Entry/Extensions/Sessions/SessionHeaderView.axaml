@@ -5,7 +5,7 @@
              xmlns:sessions="clr-namespace:Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions"
              x:DataType="root:InspectorEntryViewModel">
 
-    <Border Padding="10"
+    <Border Padding="4,14"
             BorderThickness="0,0,0,1"
             BorderBrush="{StaticResource BrushBorder}">
         
@@ -36,32 +36,37 @@
                         Spacing="8"
                         VerticalAlignment="Center">
 
-                <Button Command="{Binding ShowStartSessionPanelCommand}"
+                <Button Classes="workspace-toolbar-icon" 
+                        Command="{Binding ShowStartSessionPanelCommand}"
                         IsVisible="{Binding CanStartSession}">
                     <Image Width="16" Height="16"
                            Source="{SvgImage /Assets/Icons/Inspector/Session/play.svg}"/>
                 </Button>
 
-                <Button Command="{Binding ShowPauseSessionPanelCommand}"
+                <Button Classes="workspace-toolbar-icon"
+                        Command="{Binding ShowPauseSessionPanelCommand}"
                         IsVisible="{Binding CanPauseSession}">
                     <Image Width="16" Height="16"
                            Source="{SvgImage /Assets/Icons/Inspector/Session/pause.svg}"/>
                 </Button>
 
-                <Button Command="{Binding ContinueSessionCommand}"
+                <Button Classes="workspace-toolbar-icon"
+                        Command="{Binding ContinueSessionCommand}"
                         IsVisible="{Binding CanContinueSession}">
                     <Image Width="16" Height="16"
                            Source="{SvgImage /Assets/Icons/Inspector/Session/play-pause.svg}"/>
                 </Button>
 
-                <Button Command="{Binding ShowEndSessionPanelCommand}"
+                <Button Classes="workspace-toolbar-icon"
+                        Command="{Binding ShowEndSessionPanelCommand}"
                         IsVisible="{Binding CanEndSession}">
                     <Image Width="16" Height="16"
                            Source="{SvgImage /Assets/Icons/Inspector/Session/stop.svg}"/>
                 </Button>
 
                 <!-- Dropdown (nur wenn Session läuft) -->
-                <DropDownButton IsVisible="{Binding HasActiveSession}"
+                <DropDownButton Classes="workspace-toolbar-icon"
+                                IsVisible="{Binding HasActiveSession}"
                                 VerticalAlignment="Center">
 
                     <DropDownButton.Content>

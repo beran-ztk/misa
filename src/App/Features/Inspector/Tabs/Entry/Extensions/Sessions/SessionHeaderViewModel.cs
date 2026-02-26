@@ -1,7 +1,8 @@
+using System.Linq;
 using System.Threading.Tasks;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Items.Components.Activity.Sessions;
-using Misa.Contract.Shared.Results;
 using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions.Forms;
 using Misa.Ui.Avalonia.Infrastructure.UI;
 
@@ -9,7 +10,8 @@ namespace Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Base;
 
 public partial class InspectorEntryViewModel
 {
-     public SessionDto? CurrentSession => Facade.State.CurrentSessionOverview?.ActiveSession;
+    public SessionDto? CurrentSession =>
+        Facade.State.Item.Activity?.Sessions.FirstOrDefault(s => s.State != SessionStateDto.Ended);
      
      public bool HasActiveSession => CurrentSession != null;
 
@@ -19,6 +21,7 @@ public partial class InspectorEntryViewModel
      public bool CanEndSession => CurrentSession != null;
      
     public string ActiveSessionSegmentDisplay => $"Segment {CurrentSession?.Segments.Count} - {CurrentSession?.State}";
+
     
     [RelayCommand]
     private async Task ShowStartSessionPanelAsync()
@@ -27,28 +30,29 @@ public partial class InspectorEntryViewModel
 
         var formVm = new StartSessionViewModel(itemId, Facade.Gateway);
 
-        var result = await Facade.PanelProxy.OpenAsync(Panels.StartSession, formVm);
+        var result = await Facade.PanelProxy.OpenAsync(PanelKey.StartSession, formVm);
 
-        if (Facade.State.CurrentSessionOverview is not null)
+        if (result is { IsSuccess: true })
         {
-            Facade.State.CurrentSessionOverview.ActiveSession = result;
-            CurrentSessionPropertyChanged();
+            await Facade.Reload();
         }
     }
 
     [RelayCommand]
     private async Task ShowPauseSessionPanelAsync()
     {
+        if (CurrentSession == null)
+            return;
+        
         var itemId = Facade.State.Item.Id;
 
         var formVm = new PauseSessionViewModel(itemId, Facade.Gateway);
 
-        var result = await Facade.PanelProxy.OpenAsync(Panels.PauseSession, formVm);
+        var result = await Facade.PanelProxy.OpenAsync(PanelKey.PauseSession, formVm);
 
-        if (Facade.State.CurrentSessionOverview is not null)
+        if (result is { IsSuccess: true })
         {
-            Facade.State.CurrentSessionOverview.ActiveSession = result;
-            CurrentSessionPropertyChanged();
+            await Facade.Reload();
         }
     }
     
@@ -61,19 +65,20 @@ public partial class InspectorEntryViewModel
 
         var result = await Facade.PanelProxy.OpenAsync(PanelKey.EndSession, formVm);
 
-        if (result is { IsSuccess: true } && Facade.State.CurrentSessionOverview is not null)
+        if (result is { IsSuccess: true })
         {
-            Facade.State.CurrentSessionOverview.ActiveSession = null;
+            await Facade.Reload();
         }
-        
-        CurrentSessionPropertyChanged();
     }
     [RelayCommand]
     private async Task ContinueSessionAsync()
     {
         var itemId = Facade.State.Item.Id;
 
-        await Facade.Gateway.ContinueSessionAsync(itemId);
-        await Facade.Reload();
+        var result = await Facade.Gateway.ContinueSessionAsync(itemId);
+        if (result is { IsSuccess: true })
+        {
+            await Facade.Reload();
+        }
     }
 }

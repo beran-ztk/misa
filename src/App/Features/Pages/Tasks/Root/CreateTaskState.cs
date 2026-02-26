@@ -10,7 +10,7 @@ namespace Misa.Ui.Avalonia.Features.Pages.Tasks.Root;
 public sealed partial class CreateTaskState : ObservableObject
 {
     [ObservableProperty] private string _title = string.Empty;
-    [ObservableProperty] private string _description = string.Empty;
+    [ObservableProperty] private string? _description;
     [ObservableProperty] private TaskCategoryDto _selectedCategoryDto;
     [ObservableProperty] private ActivityPriorityDto _selectedActivityPriorityDto;
     
@@ -41,7 +41,7 @@ public sealed partial class CreateTaskState : ObservableObject
         TitleHasValidationError = true;
         ErrorMessageTitle = message;
     }
-    public CreateTaskDto? TryGetValidatedRequestObject()
+    public CreateTaskRequest? TryGetValidatedRequestObject()
     {
         TitleHasValidationError = false;
         ErrorMessageTitle = string.Empty;
@@ -51,6 +51,6 @@ public sealed partial class CreateTaskState : ObservableObject
 
         var dueAtUtc = DateTimeOffsetHelper.CombineLocalDateAndTimeToUtc(DeadlineDate, DeadlineTime);
             
-        return new CreateTaskDto(Title, Description, SelectedCategoryDto, SelectedActivityPriorityDto, dueAtUtc);
+        return new CreateTaskRequest(Title, Description, SelectedCategoryDto, SelectedActivityPriorityDto, dueAtUtc);
     }
 }

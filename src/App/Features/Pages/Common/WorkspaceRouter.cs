@@ -1,6 +1,6 @@
 using System;
 using System.Threading.Tasks;
-using Misa.Ui.Avalonia.Features.Pages.Scheduling.Root;
+using Misa.Ui.Avalonia.Features.Pages.Schedules.Root;
 using Misa.Ui.Avalonia.Features.Pages.Tasks.Root;
 using Misa.Ui.Avalonia.Infrastructure.States;
 
@@ -16,7 +16,7 @@ public sealed class WorkspaceRouter(
     ShellState shell, 
     
     TaskFacadeViewModel task,
-    SchedulerFacadeViewModel schedule)
+    ScheduleFacadeViewModel schedule)
 {
     public async Task Show(WorkspaceKind kind)
     {

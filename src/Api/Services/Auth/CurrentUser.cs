@@ -5,7 +5,7 @@ namespace Misa.Api.Services.Auth;
 
 public sealed class CurrentUser(IHttpContextAccessor http) : ICurrentUser
 {
-    public string UserId =>
+    public string Id =>
         http.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier)
         ?? throw new InvalidOperationException("Authenticated request without NameIdentifier claim.");
     public string Timezone =>

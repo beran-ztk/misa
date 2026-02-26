@@ -3,15 +3,15 @@ using Misa.Application.Abstractions.Ids;
 using Misa.Application.Abstractions.Persistence;
 using Misa.Application.Abstractions.Time;
 using Misa.Application.Mappings;
+using Misa.Contract.Common.Results;
 using Misa.Contract.Items.Components.Activity;
 using Misa.Contract.Items.Components.Tasks;
-using Misa.Contract.Shared.Results;
 using Misa.Domain.Items;
 
 namespace Misa.Application.Features.Items.Tasks;
 public sealed record CreateTaskCommand(
     string Title,
-    string Description,
+    string? Description,
     TaskCategoryDto CategoryDto,
     ActivityPriorityDto ActivityPriorityDto,
     DateTimeOffset? DueDate
@@ -22,24 +22,11 @@ public class CreateTaskHandler(
     IIdGenerator idGenerator,
     ICurrentUser currentUser)
 {
-    public async Task<Result<TaskExtensionDto>> HandleAsync(CreateTaskCommand command, CancellationToken ct)
+    public async Task<TaskDto> HandleAsync(CreateTaskCommand command, CancellationToken ct)
     {
-        var task = CreateTaskCommandToDomain(command);
-        
-        await repository.AddAsync(task, ct);
-        await repository.SaveChangesAsync(ct);
-
-        var formattedTask = task.ToTaskExtensionDto();
-        
-        return Result<TaskExtensionDto>
-            .Ok(formattedTask);
-    }
-
-    private Item CreateTaskCommandToDomain(CreateTaskCommand command)
-    {
-        return Item.CreateTask(
+        var task = Item.CreateTask(
             new ItemId(idGenerator.New()), 
-            ownerId: currentUser.UserId,
+            ownerId: currentUser.Id,
             command.Title, 
             command.Description,
             command.CategoryDto.ToDomain(), 
@@ -47,5 +34,12 @@ public class CreateTaskHandler(
             command.ActivityPriorityDto.ToDomain(),
             command.DueDate
         );
+        
+        await repository.AddAsync(task, ct);
+        await repository.SaveChangesAsync(ct);
+
+        var formattedTask = task.ToTaskExtensionDto();
+        
+        return formattedTask;
     }
 }

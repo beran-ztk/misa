@@ -3,8 +3,8 @@ using Misa.Application.Abstractions.Ids;
 using Misa.Application.Abstractions.Persistence;
 using Misa.Application.Abstractions.Time;
 using Misa.Application.Mappings;
+using Misa.Contract.Common.Results;
 using Misa.Contract.Items.Components.Schedules;
-using Misa.Contract.Shared.Results;
 using Misa.Domain.Items;
 using Misa.Domain.Items.Components.Schedules;
 
@@ -38,7 +38,7 @@ public class CreateScheduleHandler(
     IIdGenerator idGenerator,
     ICurrentUser currentUser)
 {
-    public async Task<Result<ScheduleExtensionDto>> Handle(CreateScheduleCommand command, CancellationToken ct)
+    public async Task<ScheduleDto> Handle(CreateScheduleCommand command, CancellationToken ct)
     {
         var scheduleExtension = new ScheduleExtension(
             targetItemId: command.TargetItemId,
@@ -62,7 +62,7 @@ public class CreateScheduleHandler(
             
         var scheduler = Item.CreateSchedule(
             id: new ItemId(idGenerator.New()), 
-            ownerId: currentUser.UserId,
+            ownerId: currentUser.Id,
             title: command.Title,
             description: command.Description,
             createdAtUtc: timeProvider.UtcNow,
@@ -72,6 +72,6 @@ public class CreateScheduleHandler(
         await repository.AddAsync(scheduler, ct);
         await repository.SaveChangesAsync(ct);
 
-        return Result<ScheduleExtensionDto>.Ok(scheduler.ToScheduleExtensionDto());
+        return scheduler.ToScheduleExtensionDto();
     }
 }

@@ -10,11 +10,14 @@ public class SessionSegment
     public DateTimeOffset? EndedAtUtc { get; private set; }
 
     public SessionSegment() { }
-    public SessionSegment(Guid id, Guid sessionId, DateTimeOffset startedAtUtc)
+    public SessionSegment(Guid id, DateTimeOffset startedAtUtc)
     {
         Id = id;
-        SessionId = sessionId;
         StartedAtUtc = startedAtUtc;
+    }
+    public static SessionSegment StartSessionSegment(Guid id, DateTimeOffset startedAtUtc)
+    {
+        return new SessionSegment(id, startedAtUtc);
     }
     public void End(DateTimeOffset endedAtUtc, string? pauseReason)
     {

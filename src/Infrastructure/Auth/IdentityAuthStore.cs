@@ -2,10 +2,10 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Misa.Application.Abstractions.Authentication;
-using Misa.Contract.Shared.Results;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
+using Misa.Contract.Common.Results;
 
 namespace Misa.Infrastructure.Auth;
 

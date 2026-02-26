@@ -17,7 +17,7 @@ public sealed class Item : DomainEventEntity
         string ownerId,
         Workflow workflow,
         string title,
-        string description,
+        string? description,
         DateTimeOffset createdAtUtc)
     {
         if (id.Equals(default))
@@ -67,7 +67,7 @@ public sealed class Item : DomainEventEntity
         ItemId id,
         string ownerId,
         string title,
-        string description,
+        string? description,
         TaskCategory category,
         DateTimeOffset createdAtUtc,
         
@@ -113,4 +113,21 @@ public sealed class Item : DomainEventEntity
     // Derived Properties
     
     // Mutators
+    public void ChangeTitle(string title)
+    {
+        if (Title == title)
+            return;
+        
+        Title = title;
+    }
+
+    public void ChangeDescription(string description)
+    {
+        if (Description == description)
+            return;
+        
+        Description = description;
+    }
+    public void Archive() => IsArchived = true;
+    public void Delete() => IsDeleted = true;
 }
