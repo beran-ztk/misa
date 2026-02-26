@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Items;
+using Misa.Contract.Items.Components.Activity;
 using Misa.Contract.Items.Components.Activity.Sessions;
 using Misa.Contract.Items.Components.Tasks;
 
@@ -28,5 +29,7 @@ public sealed partial class InspectorState : ObservableObject
     
     [ObservableProperty] private bool _isEditItemFormOpen;
     [ObservableProperty] private TaskCategoryDto _selectedCategory;
-    public IReadOnlyList<TaskCategoryDto> Categories { get; } = Enum.GetValues<TaskCategoryDto>();
+    public IReadOnlyList<TaskCategoryDto> TaskCategories { get; } = Enum.GetValues<TaskCategoryDto>();
+    public IReadOnlyList<ActivityStateDto> ActivityStates { get; } = Enum.GetValues<ActivityStateDto>();
+    public IReadOnlyList<ActivityPriorityDto> ActivityPriorities { get; } = Enum.GetValues<ActivityPriorityDto>();
 }

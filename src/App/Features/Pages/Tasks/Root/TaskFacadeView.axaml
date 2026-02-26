@@ -70,7 +70,7 @@
                     </Popup>
                 </StackPanel>
 
-                <!-- Thin separator (not full width, centered-ish via margins) -->
+                <!-- Thin separator -->
                 <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Classes="workspace-toolbar-separator" />
             </Grid>
             

@@ -5,7 +5,7 @@
              xmlns:sessions="clr-namespace:Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions"
              x:DataType="root:InspectorEntryViewModel">
 
-    <Border Padding="10"
+    <Border Padding="4,14"
             BorderThickness="0,0,0,1"
             BorderBrush="{StaticResource BrushBorder}">
         

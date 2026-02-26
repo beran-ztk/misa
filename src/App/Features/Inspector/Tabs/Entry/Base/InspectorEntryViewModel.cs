@@ -33,6 +33,7 @@ public partial class InspectorEntryViewModel : ViewModelBase
     }
     private void CurrentItemPropertyChanged()
     {
+        Facade.State.IsEditItemFormOpen = false;
         OnPropertyChanged(nameof(OverviewTitle));
     }
     private void CurrentSessionPropertyChanged()
