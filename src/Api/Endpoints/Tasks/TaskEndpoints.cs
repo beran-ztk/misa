@@ -1,9 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Misa.Application.Features.Items.Tasks;
+using Misa.Application.Mappings;
 using Misa.Contract.Common.Results;
 using Misa.Contract.Items.Components.Tasks;
 using Misa.Contract.Routes;
 using Wolverine;
+
 
 namespace Misa.Api.Endpoints.Tasks;
 
@@ -14,6 +16,7 @@ public static class TaskEndpoints
         api.MapPost(TaskRoutes.CreateTask, Create);
         api.MapGet(TaskRoutes.GetTask, GetSingle);
         api.MapGet(TaskRoutes.GetTasks, GetAll);
+        api.MapPut(TaskRoutes.UpdateTask, Update);
         api.MapPatch(TaskRoutes.UpdateTaskCategory, UpdateCategory);
         api.MapDelete(TaskRoutes.DeleteTask, Delete);
     }
@@ -56,6 +59,24 @@ public static class TaskEndpoints
     }   
     
     // Update a task
+    private static async Task<IResult> Update(
+        [FromRoute] Guid itemId, 
+        [FromBody] UpdateTaskRequest request,
+        IMessageBus bus)
+    {
+        var command = new UpdateTaskCommand(
+            itemId,
+            request.Title,
+            request.Description,
+            request.ActivityState,
+            request.ActivityPriority,
+            request.TaskCategory
+        );
+        
+        await bus.InvokeAsync(command);
+        return Results.Ok();
+    }
+
     private static async Task<Result> UpdateCategory(
         [FromRoute] Guid itemId, 
         [FromBody] UpdateTaskCategoryRequest request,

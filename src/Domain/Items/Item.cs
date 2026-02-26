@@ -113,4 +113,19 @@ public sealed class Item : DomainEventEntity
     // Derived Properties
     
     // Mutators
+    public void ChangeTitle(string title)
+    {
+        if (Title == title)
+            return;
+        
+        Title = title;
+    }
+
+    public void ChangeDescription(string description)
+    {
+        if (Description == description)
+            return;
+        
+        Description = description;
+    }
 }

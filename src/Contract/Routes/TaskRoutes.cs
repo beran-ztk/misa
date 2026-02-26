@@ -10,6 +10,9 @@ public static class TaskRoutes
     public const string GetTask = "items/{itemId:guid}/task";
     public static string GetTaskRequest(Guid itemId) => $"items/{itemId}/task";
     
+    // Put
+    public const string UpdateTask = "items/{itemId:guid}/task";
+    public static string UpdateTaskRequest(Guid itemId) => $"items/{itemId}/task";
     // Patch
     
     public const string UpdateTaskCategory = "items/{itemId:guid}/task/category";

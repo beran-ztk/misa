@@ -19,8 +19,8 @@ public sealed class ItemActivity
     
     // Fields + Properties
     public ItemId Id { get; init; }
-    public ActivityState State { get; init; }
-    public ActivityPriority Priority { get; init; }
+    public ActivityState State { get; private set; }
+    public ActivityPriority Priority { get; private set; }
     public DateTimeOffset? DueAt { get; private set; }
     
     // Components
@@ -39,8 +39,23 @@ public sealed class ItemActivity
             or ActivityState.Pending
             or ActivityState.WaitForResponse;
     
-    // Mutables
+    // Mutator
     public void SetDeadline(DateTimeOffset? deadline) => DueAt = deadline;
+
+    public void ChangeState(ActivityState state)
+    {
+        if (State == state)
+            return;
+        
+        State = state;
+    }
+    public void ChangePriority(ActivityPriority priority)
+    {
+        if (Priority == priority)
+            return;
+        
+        Priority = priority;
+    }
 
     public void StartSession(
         Guid sessionId,

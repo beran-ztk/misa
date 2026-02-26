@@ -54,7 +54,19 @@ public partial class InspectorEntryViewModel
     [RelayCommand]
     private async Task Submit()
     {
-        
+        var item = Facade.State.Item;
+
+        if (item.Workflow == WorkflowDto.Task)
+        {
+            var updateRequest = new UpdateTaskRequest(EditTitle, EditDescription, EditActivityState,
+                EditActivityPriority, EditTaskCategory);
+            
+            var result = await Facade.Gateway.UpdateTaskAsync(item.Id, updateRequest);
+            if (result is { IsSuccess: true })
+            {
+                await Facade.Reload();
+            }
+        }
     }
     private void Clear()
     {

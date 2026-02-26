@@ -10,4 +10,13 @@ public sealed class TaskExtension
     }
     public ItemId Id { get; init; }
     public TaskCategory Category { get; private set; }
+
+    // Mutator
+    public void ChangeCategory(TaskCategory category)
+    {
+        if (Category == category)
+            return;
+        
+        Category = category;
+    }
 }
