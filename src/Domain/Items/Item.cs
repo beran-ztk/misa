@@ -94,7 +94,7 @@ public sealed class Item : DomainEventEntity
         ItemId id,
         string ownerId,
         string title,
-        string description,
+        string? description,
         DateTimeOffset createdAtUtc,
         ScheduleExtension scheduleExtension)
     {
@@ -107,6 +107,28 @@ public sealed class Item : DomainEventEntity
             createdAtUtc: createdAtUtc)
         {
             ScheduleExtension = scheduleExtension
+        };
+
+        return item;
+    }
+    
+    public static Item CreateJournal(
+        ItemId id,
+        string ownerId,
+        string title,
+        string? description,
+        DateTimeOffset createdAtUtc,
+        JournalExtension journalExtension)
+    {
+        var item = new Item(
+            id: id,
+            ownerId: ownerId,
+            workflow: Workflow.Schedule,
+            title: title,
+            description: description,
+            createdAtUtc: createdAtUtc)
+        {
+            JournalExtension = journalExtension
         };
 
         return item;

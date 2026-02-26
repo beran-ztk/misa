@@ -83,9 +83,20 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
         return await context.Items
             .Include(s => s.ScheduleExtension)
             .Where(t => t.OwnerId == user.Id && t.Workflow == Workflow.Schedule)
-            .OrderByDescending(t => t.CreatedAt)
+            .OrderByDescending(t => t.JournalExtension!.OccurredAt) 
+            .ThenByDescending(t => t.CreatedAt)
             .AsNoTracking()
             .ToListAsync(ct);
+    }
+
+    public async Task<List<Item>> GetJournalsAsync()
+    {
+        return await context.Items
+            .Include(s => s.JournalExtension)
+            .Where(t => t.OwnerId == user.Id && t.Workflow == Workflow.Journal)
+            .OrderByDescending(t => t.CreatedAt)
+            .AsNoTracking()
+            .ToListAsync();
     }
 
     // Session

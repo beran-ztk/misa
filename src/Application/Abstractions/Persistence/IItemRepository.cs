@@ -22,6 +22,9 @@ public interface IItemRepository
     Task<Item?> TryGetScheduleAsync(Guid id, CancellationToken ct);
     Task<List<Item>> GetSchedulesAsync(CancellationToken ct);
     
+    // Journal extension
+    Task<List<Item>> GetJournalsAsync();
+    
     // Session
     Task<Item?> TryGetItemWithSessionsAsync(Guid itemId, CancellationToken ct);
 }

@@ -10,7 +10,7 @@ namespace Misa.Ui.Avalonia.Features.Pages.Schedules.Root;
 public sealed partial class CreateScheduleState : ViewModelBase
 {
     [ObservableProperty] private string _title = string.Empty;
-    [ObservableProperty] private string _description = string.Empty;
+    [ObservableProperty] private string? _description;
     [ObservableProperty] private string? _payload;
     [ObservableProperty] private int _frequencyInterval = 1;
     [ObservableProperty] private int _lookaheadLimit = 1;
