@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Misa.Domain.Items;
 using Misa.Domain.Items.Components.Activities;
+using Misa.Domain.Items.Components.Chronicle.Journals;
 using Misa.Domain.Items.Components.Schedules;
 using Misa.Domain.Items.Components.Tasks;
 
@@ -53,7 +54,12 @@ public class ItemConfiguration : IEntityTypeConfiguration<Item>
         
         builder.HasOne(i => i.ScheduleExtension)
             .WithOne()
-            .HasForeignKey<ScheduleExtension>(t => t.Id)
+            .HasForeignKey<ScheduleExtension>(s => s.Id)
+            .OnDelete(DeleteBehavior.Cascade);
+        
+        builder.HasOne(i => i.JournalExtension)
+            .WithOne()
+            .HasForeignKey<JournalExtension>(j => j.Id)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }

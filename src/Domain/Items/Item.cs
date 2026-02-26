@@ -1,6 +1,7 @@
 ﻿using Misa.Domain.Exceptions;
 using Misa.Domain.Features.Audit;
 using Misa.Domain.Items.Components.Activities;
+using Misa.Domain.Items.Components.Chronicle.Journals;
 using Misa.Domain.Items.Components.Schedules;
 using Misa.Domain.Items.Components.Tasks;
 using Misa.Domain.Shared.DomainEvents;
@@ -60,6 +61,7 @@ public sealed class Item : DomainEventEntity
     public ItemActivity? Activity { get; private set; }
     public TaskExtension? TaskExtension { get; private set; }
     public ScheduleExtension? ScheduleExtension { get; private set; }
+    public JournalExtension? JournalExtension { get; private set; }
 
     
     // Behaviours
