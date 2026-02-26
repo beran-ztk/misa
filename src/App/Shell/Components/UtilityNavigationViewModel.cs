@@ -5,20 +5,11 @@ using NotificationViewModel = Misa.Ui.Avalonia.Features.Utilities.Notifications.
 
 namespace Misa.Ui.Avalonia.Shell.Components;
 
-public sealed partial class UtilityNavigationViewModel(
-    ShellState shellState,
-    NotificationViewModel notificationVm
-    ) : ViewModelBase
+public sealed partial class UtilityNavigationViewModel : ViewModelBase
 {
     [RelayCommand]
     private void ToggleNotifications()
     {
-        if (shellState.Utility is NotificationViewModel)
-        {
-            shellState.Utility = null;
-            return;
-        }
-
-        shellState.Utility = notificationVm;
+        
     }
 }
