@@ -87,103 +87,90 @@
                           VerticalScrollBarVisibility="Auto"
                           HorizontalScrollBarVisibility="Disabled">
 
-                <!-- Item-Overview -->
                 <Border Padding="20">
+                    <StackPanel Spacing="14">
 
-                    <!-- Header and Edit Button -->
-                    <StackPanel HorizontalAlignment="Stretch">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="This is a Task!"
-                                       HorizontalAlignment="Left"
-                                       IsVisible="{Binding Facade.State.IsTask}" />
+                        <!-- Header + Edit -->
+                        <Grid ColumnDefinitions="*,Auto"
+                              RowDefinitions="Auto,Auto"
+                              RowSpacing="12">
 
-                            <!-- TODO: Toggle Button -->
-                            <Button Classes="workspace-toolbar-icon"
-                                    HorizontalAlignment="Right"
+                            <TextBlock Grid.Row="0" Grid.Column="0"
+                                       Text="{Binding OverviewTitle}"
+                                       VerticalAlignment="Center"/>
+
+                            <Button Grid.Row="0" Grid.Column="1"
+                                    Classes="workspace-toolbar-icon"
+                                    VerticalAlignment="Center"
                                     Command="{Binding ShowEditItemFormCommand}">
                                 <Image Source="{SvgImage /Assets/Icons/Common/edit.svg}" />
                             </Button>
-                        </StackPanel>
 
-                        <!-- Separator -->
-                        <Border BorderThickness="0,0,0,1"
-                                BorderBrush="{StaticResource BrushBorder}" />
+                            <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                                    BorderThickness="0,0,0,1"
+                                    BorderBrush="{StaticResource BrushBorder}" />
+                        </Grid>
 
                         <!-- View/Edit -->
-                        <StackPanel>
+                        <StackPanel Classes="addpanel-body">
 
-                            <!-- VIEW -->
-                            <Grid IsVisible="{Binding !Facade.State.IsEditItemFormOpen}"
-                                  ColumnDefinitions="180,*"
-                                  RowDefinitions="Auto,Auto,Auto,Auto,Auto"
-                                  RowSpacing="6"
-                                  ColumnSpacing="12">
+                            <!-- Title -->
+                            <StackPanel Classes="addpanel-controls">
+                                <TextBlock Text="Title"
+                                           Classes="addpanel-text" />
 
-                                <!-- Title -->
-                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Title" />
-                                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Facade.State.Item.Title}" />
+                                <TextBlock Text="{Binding Facade.State.Item.Title}"
+                                           IsVisible="{Binding !Facade.State.IsEditItemFormOpen}" />
 
-                                <!-- Description -->
-                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Description" />
-                                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Facade.State.Item.Description, Converter={StaticResource NoValueConverter}}" />
+                                <TextBox Classes="addpanel-oneliner"
+                                         Watermark="Title…"
+                                         Text="{Binding EditTitle, Mode=TwoWay}"
+                                         IsVisible="{Binding Facade.State.IsEditItemFormOpen}" />
+                            </StackPanel>
 
-                                <!-- Created At -->
-                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Created" />
-                                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Facade.State.Item.CreatedAt}" />
+                            <!-- Description -->
+                            <StackPanel Classes="addpanel-controls">
+                                <TextBlock Text="Description"
+                                           Classes="addpanel-text" />
 
-                                <!-- Modified At -->
-                                <TextBlock Grid.Row="3" Grid.Column="0" Text="Modified" />
-                                <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding Facade.State.Item.ModifiedAt, Converter={StaticResource NoValueConverter}}" />
+                                <TextBlock Text="{Binding Facade.State.Item.Description, Converter={StaticResource NoValueConverter}}"
+                                           IsVisible="{Binding !Facade.State.IsEditItemFormOpen}" />
 
-                                <!-- Category (Task only) -->
-                                <TextBlock Grid.Row="4" Grid.Column="0"
-                                           Text="Category"
-                                           IsVisible="{Binding Facade.State.IsTask}" />
-                                <TextBlock Grid.Row="4" Grid.Column="1"
-                                           Text="{Binding Facade.State.Item.TaskExtension.Category}"
-                                           IsVisible="{Binding Facade.State.IsTask}" />
+                                <TextBox Classes="addpanel-oneliner"
+                                         Watermark="Description…"
+                                         Text="{Binding EditDescription, Mode=TwoWay}"
+                                         IsVisible="{Binding Facade.State.IsEditItemFormOpen}" />
+                            </StackPanel>
 
-                            </Grid>
+                            <!-- Created At -->
+                            <StackPanel Classes="addpanel-controls">
+                                <TextBlock Text="Created"
+                                           Classes="addpanel-text" />
 
-                            <!-- EDIT -->
-                            <Grid IsVisible="{Binding Facade.State.IsEditItemFormOpen}"
-                                  ColumnDefinitions="180,*"
-                                  RowDefinitions="Auto,Auto,Auto,Auto,Auto"
-                                  RowSpacing="6"
-                                  ColumnSpacing="12">
+                                <TextBlock Text="{Binding Facade.State.Item.CreatedAt}" />
+                            </StackPanel>
 
-                                <!-- Title -->
-                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Title" />
-                                <TextBox Grid.Row="0" Grid.Column="1"
-                                         Text="{Binding EditTitle, Mode=TwoWay}" />
+                            <!-- Modified At -->
+                            <StackPanel Classes="addpanel-controls">
+                                <TextBlock Text="Modified"
+                                           Classes="addpanel-text" />
 
-                                <!-- Description -->
-                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Description" />
-                                <TextBox Grid.Row="1" Grid.Column="1"
-                                         Text="{Binding EditDescription, Mode=TwoWay}" />
+                                <TextBlock Text="{Binding Facade.State.Item.ModifiedAt, Converter={StaticResource NoValueConverter}}" />
+                            </StackPanel>
 
-                                <!-- Created At (read-only) -->
-                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Created" />
-                                <TextBlock Grid.Row="2" Grid.Column="1"
-                                           Text="{Binding Facade.State.Item.CreatedAt}" />
+                            <!-- Category (Task only) -->
+                            <StackPanel Classes="addpanel-controls">
+                                <TextBlock Text="Category"
+                                           Classes="addpanel-text" />
 
-                                <!-- Modified At (read-only) -->
-                                <TextBlock Grid.Row="3" Grid.Column="0" Text="Modified" />
-                                <TextBlock Grid.Row="3" Grid.Column="1"
-                                           Text="{Binding Facade.State.Item.ModifiedAt}" />
+                                <TextBlock Text="{Binding Facade.State.Item.TaskExtension.Category, Converter={StaticResource NoValueConverter}}"
+                                           IsVisible="{Binding !Facade.State.IsEditItemFormOpen}" />
 
-                                <!-- Category (Task only) -->
-                                <TextBlock Grid.Row="4" Grid.Column="0"
-                                           Text="Category"
-                                           IsVisible="{Binding Facade.State.IsTask}" />
-                                <ComboBox Grid.Row="4" Grid.Column="1"
-                                          Classes="addpanel-combo"
+                                <ComboBox Classes="addpanel-combo"
                                           ItemsSource="{Binding Facade.State.Categories}"
-                                          SelectedValue="{Binding Facade.State.SelectedCategory}"
-                                          SelectedItem="{Binding Facade.State.Item.TaskExtension.Category}"
-                                          IsVisible="{Binding Facade.State.IsTask}" />
-
-                            </Grid>
+                                          SelectedItem="{Binding Facade.State.Item.TaskExtension.Category, Mode=TwoWay}"
+                                          IsVisible="{Binding Facade.State.IsEditItemFormOpen}" />
+                            </StackPanel>
 
                         </StackPanel>
 

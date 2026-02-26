@@ -47,7 +47,7 @@ public static class ItemMappings
         workflow switch
         {
             Workflow.Task => WorkflowDto.Task,
-            Workflow.Schedule => WorkflowDto.Scheduling,
+            Workflow.Schedule => WorkflowDto.Schedule,
             _ => throw new ArgumentOutOfRangeException(nameof(workflow), workflow, null)
         };
 }

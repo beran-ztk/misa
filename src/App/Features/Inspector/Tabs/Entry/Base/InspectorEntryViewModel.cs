@@ -20,22 +20,21 @@ public partial class InspectorEntryViewModel : ViewModelBase
         Facade = facade;
         Facade.State.PropertyChanged += OnFacadeStatePropertyChanged;
     }
-    [RelayCommand]
-    private void ShowEditItemForm()
-    {
-        Facade.State.IsEditItemFormOpen = true;
-    }
     private void OnFacadeStatePropertyChanged(object? s, PropertyChangedEventArgs e)
     {
         switch (e.PropertyName)
         {
             case nameof(Facade.State.Item):
+                CurrentItemPropertyChanged();
                 CurrentSessionPropertyChanged();
                 DeadlinePropertyChanged();
                 break;
         }
     }
-
+    private void CurrentItemPropertyChanged()
+    {
+        OnPropertyChanged(nameof(OverviewTitle));
+    }
     private void CurrentSessionPropertyChanged()
     {
         OnPropertyChanged(nameof(CurrentSession));

@@ -17,6 +17,7 @@
               VerticalAlignment="Center">
 
             <StackPanel Grid.Column="0" Grid.Row="0" Spacing="2"
+                        VerticalAlignment="Center"
                         IsVisible="{Binding HasDeadline}">
                 <TextBlock Text="Deadline"
                            Opacity="0.7" />
@@ -24,6 +25,7 @@
             </StackPanel>
             
             <StackPanel Grid.Column="0" Grid.Row="0" Spacing="2"
+                        VerticalAlignment="Center"
                         IsVisible="{Binding !HasDeadline}">
                 <TextBlock Text="Has no deadline."
                            Opacity="0.7" />
