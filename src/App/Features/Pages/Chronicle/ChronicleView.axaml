@@ -9,7 +9,8 @@
              x:DataType="root:ChronicleViewModel">
     
     <UserControl.Resources>
-        <converters:UtcToLocalConverter x:Key="UtcToLocalConverter"/>
+        <converters:UtcToLocalConverter x:Key="UtcToLocalConverter"/>    
+        <converters:NullToBoolConverter x:Key="NullToBoolConverter" />
     </UserControl.Resources>
     
     <Grid RowDefinitions="Auto,*">
@@ -43,42 +44,87 @@
 
         <!-- Content -->
         <Grid Grid.Row="1" x:Name="ContentRoot">
-            <Border Classes="workspace-content-frame">
-                <ItemsControl ItemsSource="{Binding ChronicleEntries}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <StackPanel Spacing="10">
-                                <!-- Day-Header -->
-                                <TextBlock Text="{Binding Date, StringFormat='dd.MM.yyyy'}" />
+            <Border Padding="14"
+                    CornerRadius="10"
+                    BorderThickness="1"
+                    BorderBrush="#2A2A2A"
+                    Background="#141414">
 
-                                <!-- Entries-->
-                                <ItemsControl ItemsSource="{Binding Entries}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border>
-                                                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
-                                                    <!-- Title -->
-                                                    <TextBlock Grid.Row="0" Grid.Column="0"
-                                                               Text="{Binding Title}"
-                                                               TextWrapping="NoWrap"
-                                                               TextTrimming="CharacterEllipsis"
-                                                               FontSize="14" />
+                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
 
-                                                    <!-- Time -->
-                                                    <TextBlock Grid.Row="0" Grid.Column="1"
-                                                               Text="{Binding OccurredAt, Converter={StaticResource UtcToLocalConverter}, StringFormat='HH:mm'}"
-                                                               Opacity="0.7"
-                                                               Margin="12,0,0,0" />
-                                                </Grid>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                    <ItemsControl ItemsSource="{Binding ChronicleEntries}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Margin="0,0,0,18" Spacing="10">
+
+                                    <!-- Day header -->
+                                    <Border Background="#1B1B1B"
+                                            CornerRadius="8"
+                                            Padding="10,6"
+                                            BorderThickness="1"
+                                            BorderBrush="#2A2A2A">
+                                        <TextBlock Text="{Binding Date, StringFormat='dd.MM.yyyy'}"
+                                                   FontSize="13"
+                                                   FontWeight="SemiBold"
+                                                   Opacity="0.9" />
+                                    </Border>
+
+                                    <!-- Entries -->
+                                    <ItemsControl ItemsSource="{Binding Entries}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border CornerRadius="10"
+                                                        Padding="12,10"
+                                                        Margin="0,0,0,8"
+                                                        Background="#181818"
+                                                        BorderThickness="1"
+                                                        BorderBrush="#2A2A2A">
+
+                                                    <Grid ColumnDefinitions="*,Auto"
+                                                          RowDefinitions="Auto,Auto"
+                                                          RowSpacing="6">
+
+                                                        <!-- Title -->
+                                                        <TextBlock Grid.Row="0" Grid.Column="0"
+                                                                   Text="{Binding Title}"
+                                                                   TextWrapping="NoWrap"
+                                                                   TextTrimming="CharacterEllipsis"
+                                                                   FontSize="14"
+                                                                   FontWeight="SemiBold" />
+
+                                                        <!-- Time -->
+                                                        <TextBlock Grid.Row="0" Grid.Column="1"
+                                                                   Text="{Binding At, Converter={StaticResource UtcToLocalConverter}, StringFormat='HH:mm'}"
+                                                                   Opacity="0.75"
+                                                                   Margin="12,0,0,0"
+                                                                   FontSize="12"
+                                                                   VerticalAlignment="Center" />
+
+                                                        <!-- Description (optional) -->
+                                                        <TextBlock Grid.Row="1" Grid.Column="0"
+                                                                   Grid.ColumnSpan="2"
+                                                                   Text="{Binding Description}"
+                                                                   Opacity="0.75"
+                                                                   FontSize="12"
+                                                                   TextWrapping="Wrap"
+                                                                   TextTrimming="CharacterEllipsis"
+                                                                   MaxLines="2"
+                                                                   IsVisible="{Binding Description, Converter={StaticResource NullToBoolConverter}}" />
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                </ScrollViewer>
             </Border>
         </Grid>
+        
     </Grid>
 </UserControl>

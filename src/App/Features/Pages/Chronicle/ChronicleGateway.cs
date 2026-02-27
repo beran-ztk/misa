@@ -13,11 +13,11 @@ namespace Misa.Ui.Avalonia.Features.Pages.Chronicle;
 
 public class ChronicleGateway(RemoteProxy remoteProxy)
 {
-    public async Task<List<ItemDto>> GetAllAsync()
+    public async Task<List<ChronicleEntryDto>> GetAllAsync()
     {
         var request = new HttpRequestMessage(HttpMethod.Get, ChronicleRoutes.GetJournals);
 
-        var response = await remoteProxy.SendAsync<List<ItemDto>>(request);
+        var response = await remoteProxy.SendAsync<List<ChronicleEntryDto>>(request);
         return response.Value
                ?? throw new Exception("No Data");
     }

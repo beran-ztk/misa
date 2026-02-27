@@ -35,7 +35,7 @@ public static class ChronicleEndpoints
     // Get tasks
     private static async Task<IResult> GetAll(IMessageBus bus)
     {
-        var dto = await bus.InvokeAsync<List<ItemDto>>(new GetJournalsCommand());
+        var dto = await bus.InvokeAsync<List<ChronicleEntryDto>>(new GetJournalsCommand());
 
         return Results.Ok(dto);
     }
