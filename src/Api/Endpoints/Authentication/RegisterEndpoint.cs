@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Misa.Application.Features.Authentication;
+using Misa.Contract.Authentication;
 using Misa.Contract.Common.Results;
 using Misa.Contract.Features.Authentication;
 using Wolverine;
@@ -13,12 +14,13 @@ public static class RegisterEndpoint
         endpoints.MapPost("auth/register", Register)
             .AllowAnonymous();
     }
-    private static async Task<Result<AuthResponseDto>> Register(
+    private static async Task<IResult> Register(
         [FromBody] RegisterRequestDto dto,
         IMessageBus bus,
         CancellationToken ct = default)
     {
         var cmd = new RegisterCommand(dto.Email, dto.Username, dto.Password, dto.TimeZone);
-        return await bus.InvokeAsync<Result<AuthResponseDto>>(cmd, ct);
+        await bus.InvokeAsync(cmd, ct);
+        return Results.Ok();
     }
 }

@@ -1,4 +1,6 @@
-namespace Misa.Contract.Features.Authentication;
+using Misa.Contract.Features.Authentication;
+
+namespace Misa.Contract.Authentication;
 
 public sealed record AuthResponseDto(
     UserDto User

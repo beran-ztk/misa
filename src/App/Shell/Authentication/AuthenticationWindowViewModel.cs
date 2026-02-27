@@ -6,6 +6,7 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using DynamicData.Kernel;
 using Microsoft.Extensions.DependencyInjection;
 using Misa.Contract.Features.Authentication;
 using Misa.Ui.Avalonia.Common.Mappings;
@@ -150,8 +151,14 @@ public partial class AuthenticationWindowViewModel : ViewModelBase
                     SelectedTimeZoneId ?? "Europe/Berlin");
 
                 var response = await AuthService.RegisterAsync(req);
-                Username = response.User.Username;
-                Password = string.Empty;
+                if (!response.IsSuccess)
+                {
+                    ErrorMessage = string.Join(
+                        Environment.NewLine, 
+                        response.ValidationErrors?.Select(m => m.Message) ?? ["Registration failed"]);
+                    return;
+                }
+                
                 IsRegisterMode = false;
                 return;
             }

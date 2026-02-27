@@ -1,4 +1,5 @@
 using Misa.Application.Abstractions.Authentication;
+using Misa.Contract.Authentication;
 using Misa.Contract.Common.Results;
 using Misa.Contract.Features.Authentication;
 
