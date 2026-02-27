@@ -120,8 +120,16 @@ public partial class AuthenticationWindowViewModel : ViewModelBase
     private void SetRegisterMode() => IsRegisterMode = true;
 
     [RelayCommand]
-    private void Bypass()
+    private async Task Bypass()
     {
+        var request = new LoginRequestDto(
+            "master",
+            "Slamer123123");
+
+        var response = await AuthService.LoginAsync(request);
+        UserState.Id = response.Id;
+        UserState.Username = response.Name;
+        UserState.Token = response.Token;
         OpenShellAndCloseAuth();
     }
 

@@ -42,42 +42,42 @@
         </Border>
 
         <!-- Content -->
-        <Grid Grid.Row="1"
-              x:Name="ContentRoot">
+        <Grid Grid.Row="1" x:Name="ContentRoot">
             <Border Classes="workspace-content-frame">
+                <ItemsControl ItemsSource="{Binding ChronicleEntries}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Spacing="10">
+                                <!-- Day-Header -->
+                                <TextBlock Text="{Binding Date, StringFormat='dd.MM.yyyy'}" />
 
-                <DataGrid Classes="workspace-datagrid"
-                          HorizontalAlignment="Center"
-                          ItemsSource="{Binding Entries}"
-                          AutoGenerateColumns="False"
-                          SelectionMode="Extended"
-                          IsReadOnly="True"
-                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                          ScrollViewer.VerticalScrollBarVisibility="Auto">
+                                <!-- Entries-->
+                                <ItemsControl ItemsSource="{Binding Entries}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border>
+                                                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
+                                                    <!-- Title -->
+                                                    <TextBlock Grid.Row="0" Grid.Column="0"
+                                                               Text="{Binding Title}"
+                                                               TextWrapping="NoWrap"
+                                                               TextTrimming="CharacterEllipsis"
+                                                               FontSize="14" />
 
-                    <DataGrid.Columns>
-
-                        <DataGridTemplateColumn Header="Title" Width="320">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding Title}"
-                                               TextTrimming="CharacterEllipsis"
-                                               TextWrapping="NoWrap" />
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-
-                        <DataGridTextColumn Header="Occurred At"
-                                            Binding="{Binding JournalExtension.OccurredAt,
-                                        Converter={StaticResource UtcToLocalConverter},
-                                        StringFormat='dd.MM.yyyy HH:mm', FallbackValue=---}"
-                                            Width="180" />
-
-                        <DataGridTextColumn Header="Description" Binding="{Binding Description}" Width="400" />
-                    </DataGrid.Columns>
-
-                </DataGrid>
-
+                                                    <!-- Time -->
+                                                    <TextBlock Grid.Row="0" Grid.Column="1"
+                                                               Text="{Binding OccurredAt, Converter={StaticResource UtcToLocalConverter}, StringFormat='HH:mm'}"
+                                                               Opacity="0.7"
+                                                               Margin="12,0,0,0" />
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
             </Border>
         </Grid>
     </Grid>
