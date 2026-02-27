@@ -67,18 +67,13 @@
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
 
-                        <DataGridTextColumn Header="Created"
+                        <DataGridTextColumn Header="Occurred At"
                                             Binding="{Binding JournalExtension.OccurredAt,
                                         Converter={StaticResource UtcToLocalConverter},
                                         StringFormat='dd.MM.yyyy HH:mm', FallbackValue=---}"
                                             Width="180" />
-                        <DataGridTextColumn Header="Until"
-                                            Binding="{Binding JournalExtension.UntilAt,
-                                        Converter={StaticResource UtcToLocalConverter},
-                                        StringFormat='dd.MM.yyyy HH:mm', FallbackValue=---}"
-                                            Width="180" />
 
-                        <DataGridTextColumn Header="State" Binding="{Binding Description}" Width="400" />
+                        <DataGridTextColumn Header="Description" Binding="{Binding Description}" Width="400" />
                     </DataGrid.Columns>
 
                 </DataGrid>
