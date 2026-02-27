@@ -14,7 +14,7 @@ public partial class ChronicleViewModel(ChronicleGateway gateway, PanelProxy pan
     public ObservableCollection<ItemDto> Entries { get; } = [];
     public async Task InitializeWorkspaceAsync()
     {
-        await GetAllAsync();
+        await RefreshWorkspaceAsync();
     }
 
     [RelayCommand]

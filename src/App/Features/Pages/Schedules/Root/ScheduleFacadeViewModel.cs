@@ -17,7 +17,9 @@ public sealed partial class ScheduleFacadeViewModel(
     private PanelProxy PanelProxy { get; } = panelProxy;
 
     public async Task InitializeWorkspaceAsync()
-        => await GetAllAsync();
+    {
+        await RefreshWorkspaceAsync();
+    }
 
     [RelayCommand]
     private async Task RefreshWorkspaceAsync()
