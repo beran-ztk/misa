@@ -24,6 +24,7 @@ public sealed class Session
     
     // Components
     public ICollection<SessionSegment> Segments { get; init; } = [];
+    public Item Item { get; set; } = null!;
 
     // Derived Properties
     public TimeSpan? ElapsedTime(DateTimeOffset utcNow) =>

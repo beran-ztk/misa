@@ -1,6 +1,7 @@
 ﻿using Misa.Domain.Exceptions;
 using Misa.Domain.Features.Audit;
 using Misa.Domain.Items.Components.Activities;
+using Misa.Domain.Items.Components.Activities.Sessions;
 using Misa.Domain.Items.Components.Chronicle.Journals;
 using Misa.Domain.Items.Components.Schedules;
 using Misa.Domain.Items.Components.Tasks;
@@ -58,6 +59,7 @@ public sealed class Item : DomainEventEntity
     public ICollection<AuditChange> Changes { get; init; } = new List<AuditChange>();
     
     // Components-Activity
+    public ICollection<Session> Sessions { get; set; } = new List<Session>();
     public ItemActivity? Activity { get; private set; }
     public TaskExtension? TaskExtension { get; private set; }
     public ScheduleExtension? ScheduleExtension { get; private set; }

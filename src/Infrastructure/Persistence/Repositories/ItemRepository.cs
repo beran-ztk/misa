@@ -99,6 +99,14 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
             .ToListAsync();
     }
 
+    public async Task<List<Session>> GetSessionsAsync()
+    {
+        return await context.Sessions
+            .Include(s => s.Item)
+            .Where(s => s.State == SessionState.Ended)
+            .AsNoTracking()
+            .ToListAsync();
+    }
     // Session
     public async Task<Item?> TryGetItemWithSessionsAsync(Guid itemId, CancellationToken ct)
     {

@@ -18,11 +18,8 @@ public sealed class GetJournalsHandler(IItemRepository repository)
         var journals = await repository.GetJournalsAsync();
         foreach (var j in journals)
         {
-            var ext = j.JournalExtension
-                      ?? throw new DomainConflictException("corrupted.data", "journal extension missing");
-
-            var dto = j.ToDto();
-            dto.JournalExtension = ext.ToDto();
+            if (j.JournalExtension is null) 
+                throw new DomainConflictException("corrupted.data", "journal extension missing");
 
             var entry = new ChronicleEntryDto(j.Id.Value, j.JournalExtension.OccurredAt, j.Title, j.Description,
                 ChronicleEntryType.Journal);
@@ -32,7 +29,13 @@ public sealed class GetJournalsHandler(IItemRepository repository)
         // Deadline
         
         // Session
-        
+        var sessions = await repository.GetSessionsAsync();
+        foreach (var s in sessions)
+        {
+            var entry = new ChronicleEntryDto(s.ItemId.Value, s.CreatedAtUtc, $"Session for {s.Item.Title}", null,
+                ChronicleEntryType.Session);
+            chronicleEntries.Add(entry);
+        }
         // ExecutionLogs
         // Changes
         

@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Misa.Domain.Items;
 using Misa.Domain.Items.Components.Activities;
+using Misa.Domain.Items.Components.Activities.Sessions;
 using Misa.Domain.Items.Components.Chronicle.Journals;
 using Misa.Domain.Items.Components.Schedules;
 using Misa.Domain.Items.Components.Tasks;

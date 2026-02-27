@@ -42,6 +42,11 @@ public class SessionConfiguration : IEntityTypeConfiguration<Session>
         builder.Property(x => x.CreatedAtUtc);
 
         // Relations
+        builder.HasOne(s => s.Item)
+            .WithMany(i => i.Sessions)
+            .HasForeignKey(i => i.ItemId)
+            .OnDelete(DeleteBehavior.Cascade);
+        
         builder.HasMany(s => s.Segments)
             .WithOne()
             .HasForeignKey(s => s.SessionId)
