@@ -24,7 +24,7 @@
         <StackPanel Classes="addpanel-controls">
             <TextBlock Text="Add a Description" 
                        Classes="addpanel-text" />
-            <TextBox Classes="addpanel-oneliner"
+            <TextBox Classes="addpanel-multiline"
                      Watermark="Description…"
                      Text="{Binding State.Description, Mode=TwoWay}" />
         </StackPanel>

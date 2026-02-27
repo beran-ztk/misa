@@ -3,6 +3,87 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="Misa.Ui.Avalonia.Features.Pages.Chronicle.ChronicleView">
-    Welcome to Avalonia!
+             x:Class="Misa.Ui.Avalonia.Features.Pages.Chronicle.ChronicleView"
+             xmlns:converters="clr-namespace:Misa.Ui.Avalonia.Common.Converters"
+             xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Chronicle"
+             x:DataType="root:ChronicleViewModel">
+    
+    <UserControl.Resources>
+        <converters:UtcToLocalConverter x:Key="UtcToLocalConverter"/>
+    </UserControl.Resources>
+    
+    <Grid RowDefinitions="Auto,*">
+
+        <!-- Toolbar (2 rows) -->
+        <Border Grid.Row="0"
+                Classes="workspace-toolbar-frame">
+            <Grid Classes="workspace-toolbar"
+                  RowDefinitions="Auto,Auto,Auto"
+                  ColumnDefinitions="*,Auto">
+
+                <!-- Row 0: Quick actions (left) -->
+                <StackPanel Grid.Row="0" Grid.Column="0"
+                            Classes="workspace-toolbar-left">
+                    <Button Classes="workspace-toolbar-icon"
+                            Command="{Binding ShowAddPanelCommand}">
+                        <Image Source="{SvgImage /Assets/Icons/Common/plus.svg}" />
+                    </Button>
+
+                    <Button Classes="workspace-toolbar-icon"
+                            Command="{Binding RefreshWorkspaceCommand}">
+                        <Image Source="{SvgImage /Assets/Icons/Common/refresh.svg}" />
+                    </Button>
+                </StackPanel>
+
+                <!-- Thin separator -->
+                <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Classes="workspace-toolbar-separator" />
+            </Grid>
+            
+        </Border>
+
+        <!-- Content -->
+        <Grid Grid.Row="1"
+              x:Name="ContentRoot">
+            <Border Classes="workspace-content-frame">
+
+                <DataGrid Classes="workspace-datagrid"
+                          HorizontalAlignment="Center"
+                          ItemsSource="{Binding Entries}"
+                          AutoGenerateColumns="False"
+                          SelectionMode="Extended"
+                          IsReadOnly="True"
+                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                          ScrollViewer.VerticalScrollBarVisibility="Auto">
+
+                    <DataGrid.Columns>
+
+                        <DataGridTemplateColumn Header="Title" Width="320">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Title}"
+                                               TextTrimming="CharacterEllipsis"
+                                               TextWrapping="NoWrap" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTextColumn Header="Created"
+                                            Binding="{Binding JournalExtension.OccurredAt,
+                                        Converter={StaticResource UtcToLocalConverter},
+                                        StringFormat='dd.MM.yyyy HH:mm', FallbackValue=---}"
+                                            Width="180" />
+                        <DataGridTextColumn Header="Until"
+                                            Binding="{Binding JournalExtension.UntilAt,
+                                        Converter={StaticResource UtcToLocalConverter},
+                                        StringFormat='dd.MM.yyyy HH:mm', FallbackValue=---}"
+                                            Width="180" />
+
+                        <DataGridTextColumn Header="State" Binding="{Binding Description}" Width="400" />
+                    </DataGrid.Columns>
+
+                </DataGrid>
+
+            </Border>
+        </Grid>
+    </Grid>
 </UserControl>
