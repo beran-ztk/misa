@@ -1,6 +1,4 @@
 using Misa.Application.Abstractions.Persistence;
-using Misa.Application.Mappings;
-using Misa.Contract.Items;
 using Misa.Contract.Items.Components.Chronicle;
 using Misa.Domain.Exceptions;
 
@@ -27,6 +25,14 @@ public sealed class GetJournalsHandler(IItemRepository repository)
         }
 
         // Deadline
+        var deadlines = await repository.GetDeadlinesAsync();
+        foreach (var d in deadlines)
+        {
+            var dueAt = d.DueAt!.Value;
+            var entry = new ChronicleEntryDto(d.Id.Value, dueAt, $"Deadline for {d.Item.Title}", null,
+                ChronicleEntryType.Deadline);
+            chronicleEntries.Add(entry);
+        }
         
         // Session
         var sessions = await repository.GetSessionsAsync();

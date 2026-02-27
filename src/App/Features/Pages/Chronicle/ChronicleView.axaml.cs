@@ -1,6 +1,9 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using Misa.Contract.Items.Components.Chronicle;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Chronicle;
 
@@ -9,5 +12,17 @@ public partial class ChronicleView : UserControl
     public ChronicleView()
     {
         InitializeComponent();
+    }
+
+    private void EntriesList_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        var entry = e.AddedItems.Count > 0 ? e.AddedItems[0] as ChronicleEntryDto : null;
+        if (DataContext is ChronicleViewModel vm)
+        {
+            vm.SelectionChanged(entry);
+        }
+        
+        if (sender is ListBox lb)
+            lb.SelectedItem = null;
     }
 }

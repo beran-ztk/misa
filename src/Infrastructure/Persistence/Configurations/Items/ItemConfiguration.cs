@@ -44,7 +44,7 @@ public class ItemConfiguration : IEntityTypeConfiguration<Item>
         
         // Relations
         builder.HasOne(i => i.Activity)
-            .WithOne()
+            .WithOne(a => a.Item)
             .HasForeignKey<ItemActivity>(a => a.Id)
             .OnDelete(DeleteBehavior.Cascade);
         

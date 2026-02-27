@@ -3,6 +3,8 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             xmlns:ic="using:Avalonia.Xaml.Interactivity"
+             xmlns:ia="using:Avalonia.Xaml.Interactions.Core"
              x:Class="Misa.Ui.Avalonia.Features.Pages.Chronicle.ChronicleView"
              xmlns:converters="clr-namespace:Misa.Ui.Avalonia.Common.Converters"
              xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Chronicle"
@@ -71,8 +73,26 @@
                                     </Border>
 
                                     <!-- Entries -->
-                                    <ItemsControl ItemsSource="{Binding Entries}">
-                                        <ItemsControl.ItemTemplate>
+                                    <ListBox ItemsSource="{Binding Entries}"
+                                             SelectionMode="Single"
+                                             Background="Transparent"
+                                             SelectionChanged="EntriesList_OnSelectionChanged"
+                                             BorderThickness="0">
+                                        
+                                        <ListBox.Styles>
+                                            <Style Selector="ListBoxItem">
+                                                <Setter Property="Padding" Value="0"/>
+                                                <Setter Property="Margin" Value="0"/>
+                                                <Setter Property="Background" Value="Transparent"/>
+                                            </Style>
+
+                                            <Style Selector="ListBoxItem:selected /template/ ContentPresenter Border">
+                                                <Setter Property="BorderBrush" Value="#3A82F7"/>
+                                                <Setter Property="BorderThickness" Value="1"/>
+                                            </Style>
+                                        </ListBox.Styles>
+
+                                        <ListBox.ItemTemplate>
                                             <DataTemplate>
                                                 <Border CornerRadius="10"
                                                         Padding="12,10"
@@ -101,7 +121,7 @@
                                                                    FontSize="12"
                                                                    VerticalAlignment="Center" />
 
-                                                        <!-- Description (optional) -->
+                                                        <!-- Description -->
                                                         <TextBlock Grid.Row="1" Grid.Column="0"
                                                                    Grid.ColumnSpan="2"
                                                                    Text="{Binding Description}"
@@ -114,8 +134,8 @@
                                                     </Grid>
                                                 </Border>
                                             </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
 
                                 </StackPanel>
                             </DataTemplate>

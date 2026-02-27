@@ -10,6 +10,7 @@ using DynamicData.Binding;
 using Misa.Contract.Items;
 using Misa.Contract.Items.Components.Chronicle;
 using Misa.Ui.Avalonia.Common.Mappings;
+using Misa.Ui.Avalonia.Infrastructure.States;
 using Misa.Ui.Avalonia.Infrastructure.UI;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Chronicle;
@@ -19,11 +20,25 @@ public sealed partial class ChronicleItems(DateTime date, List<ChronicleEntryDto
     public DateTime Date { get; set; } = date;
     public ObservableCollection<ChronicleEntryDto> Entries { get; set; } = new(entries);
 }
-public partial class ChronicleViewModel(ChronicleGateway gateway, PanelProxy panelProxy) : ViewModelBase
+public partial class ChronicleViewModel(
+    ChronicleGateway gateway, 
+    ISelectionContextState selectionContextState,
+    PanelProxy panelProxy) : ViewModelBase
 {
     private IReadOnlyCollection<ChronicleEntryDto> Entries { get; set; } = [];
     public ObservableCollection<ChronicleItems> ChronicleEntries { get; set; } = [];
 
+    [ObservableProperty] private ChronicleEntryDto? _selectedEntry;
+
+    public void SelectionChanged(ChronicleEntryDto? entry)
+    {
+        SelectedEntry = entry;
+
+        if (entry?.TargetItemId is null || entry?.Type == ChronicleEntryType.Journal)
+            return;
+
+        selectionContextState.Set(entry?.TargetItemId.Value);
+    }
     public void TransformItemsToChronicleEntries()
     {
         var groups = Entries

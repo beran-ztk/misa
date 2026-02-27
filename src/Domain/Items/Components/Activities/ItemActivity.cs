@@ -24,6 +24,7 @@ public sealed class ItemActivity
     public DateTimeOffset? DueAt { get; private set; }
     
     // Components
+    public Item Item { get; set; } = null!;
     public ICollection<Session> Sessions { get; private set; } = new List<Session>();
     
     // Derived Properties

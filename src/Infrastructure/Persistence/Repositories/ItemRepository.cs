@@ -3,6 +3,7 @@ using Misa.Application.Abstractions.Authentication;
 using Misa.Application.Abstractions.Persistence;
 using Misa.Domain.Exceptions;
 using Misa.Domain.Items;
+using Misa.Domain.Items.Components.Activities;
 using Misa.Domain.Items.Components.Activities.Sessions;
 using Misa.Infrastructure.Persistence.Context;
 using Wolverine;
@@ -95,6 +96,16 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
             .Include(s => s.JournalExtension)
             .Where(t => t.OwnerId == user.Id && t.Workflow == Workflow.Journal)
             .OrderByDescending(t => t.CreatedAt)
+            .AsNoTracking()
+            .ToListAsync();
+    }
+
+    public async Task<List<ItemActivity>> GetDeadlinesAsync()
+    {
+        return await context.ItemActivities
+            .Include(a => a.Item)
+            .Where(a => a.DueAt != null)
+            .OrderByDescending(a => a.DueAt)
             .AsNoTracking()
             .ToListAsync();
     }

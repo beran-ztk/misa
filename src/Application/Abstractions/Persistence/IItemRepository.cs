@@ -1,4 +1,5 @@
 ﻿using Misa.Domain.Items;
+using Misa.Domain.Items.Components.Activities;
 using Misa.Domain.Items.Components.Activities.Sessions;
 
 namespace Misa.Application.Abstractions.Persistence;
@@ -25,6 +26,7 @@ public interface IItemRepository
     
     // Chronicle
     Task<List<Item>> GetJournalsAsync();
+    Task<List<ItemActivity>> GetDeadlinesAsync();
     Task<List<Session>> GetSessionsAsync();
     
     // Session
