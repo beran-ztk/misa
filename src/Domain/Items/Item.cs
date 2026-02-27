@@ -123,7 +123,7 @@ public sealed class Item : DomainEventEntity
         var item = new Item(
             id: id,
             ownerId: ownerId,
-            workflow: Workflow.Schedule,
+            workflow: Workflow.Journal,
             title: title,
             description: description,
             createdAtUtc: createdAtUtc)

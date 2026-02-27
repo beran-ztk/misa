@@ -9,11 +9,13 @@ public record GetJournalsCommand;
 
 public sealed class GetJournalsHandler(IItemRepository repository)
 {
-    public async Task<List<ItemDto>> HandleAsync(GetJournalsCommand command, CancellationToken ct = default)
+    public async Task<List<ItemDto>> HandleAsync(GetJournalsCommand command)
     {
         var journals = await repository.GetJournalsAsync();
 
-        return journals.Select(j =>
+        var result = new List<ItemDto>();
+
+        foreach (var j in journals)
         {
             var ext = j.JournalExtension
                       ?? throw new DomainConflictException("corrupted.data", "journal extension missing");
@@ -21,7 +23,9 @@ public sealed class GetJournalsHandler(IItemRepository repository)
             var dto = j.ToDto();
             dto.JournalExtension = ext.ToDto();
 
-            return dto;
-        }).ToList();
+            result.Add(dto);
+        }
+
+        return result;
     }
 }
