@@ -9,7 +9,7 @@
                 <Setter Property="Background" Value="{StaticResource BrushPrimaryBackground}" />
                 <Setter Property="Padding" Value="16,8" />
                 <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}" />
-                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="BorderThickness" Value="0,1" />
                 
                 <Style Selector="^ TextBlock">
                         <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}" />
