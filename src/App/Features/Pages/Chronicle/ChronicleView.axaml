@@ -3,18 +3,20 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             xmlns:ic="using:Avalonia.Xaml.Interactivity"
-             xmlns:ia="using:Avalonia.Xaml.Interactions.Core"
              x:Class="Misa.Ui.Avalonia.Features.Pages.Chronicle.ChronicleView"
              xmlns:converters="clr-namespace:Misa.Ui.Avalonia.Common.Converters"
              xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Chronicle"
              x:DataType="root:ChronicleViewModel">
-    
+
     <UserControl.Resources>
-        <converters:UtcToLocalConverter x:Key="UtcToLocalConverter"/>    
+        <converters:UtcToLocalConverter x:Key="UtcToLocalConverter" />
         <converters:NullToBoolConverter x:Key="NullToBoolConverter" />
+        <converters:NullToRowHeightConverter x:Key="NullToRowHeightConverter" />
+        <converters:ChronicleTypeToChipBackgroundConverter x:Key="ChronicleTypeToChipBackgroundConverter" />
+        <converters:ChronicleTypeToChipBorderConverter x:Key="ChronicleTypeToChipBorderConverter" />
+        <converters:ChronicleTypeToChipTextConverter x:Key="ChronicleTypeToChipTextConverter" />
     </UserControl.Resources>
-    
+
     <Grid RowDefinitions="Auto,*">
 
         <!-- Toolbar (2 rows) -->
@@ -41,110 +43,76 @@
                 <!-- Thin separator -->
                 <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Classes="workspace-toolbar-separator" />
             </Grid>
-            
+
         </Border>
 
         <!-- Content -->
-        <Grid Grid.Row="1" x:Name="ContentRoot">
-            <Border Padding="14"
-                    CornerRadius="10"
-                    BorderThickness="1"
-                    BorderBrush="#2A2A2A"
-                    Background="#141414">
+        <Border Grid.Row="1"
+                Classes="chronicle-outer-body">
 
-                <ScrollViewer VerticalScrollBarVisibility="Auto"
-                              HorizontalScrollBarVisibility="Disabled">
+            <ScrollViewer VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled">
 
-                    <ItemsControl ItemsSource="{Binding ChronicleEntries}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <StackPanel Margin="0,0,0,18" Spacing="10">
+                <ItemsControl ItemsSource="{Binding ChronicleEntries}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel>
 
-                                    <!-- Day header -->
-                                    <Border Background="#1B1B1B"
-                                            CornerRadius="8"
-                                            Padding="10,6"
-                                            BorderThickness="1"
-                                            BorderBrush="#2A2A2A">
-                                        <TextBlock Text="{Binding Date, StringFormat='dd.MM.yyyy'}"
-                                                   FontSize="13"
-                                                   FontWeight="SemiBold"
-                                                   Opacity="0.9" />
-                                    </Border>
+                                <!-- Day header -->
+                                <Border Classes="chronicle-daily-header">
+                                    <TextBlock Text="{Binding Date, StringFormat='dd.MM'}" />
+                                </Border>
 
-                                    <!-- Entries -->
-                                    <ListBox ItemsSource="{Binding Entries}"
-                                             SelectionMode="Single"
-                                             Background="Transparent"
-                                             SelectionChanged="EntriesList_OnSelectionChanged"
-                                             BorderThickness="0">
-                                        
-                                        <ListBox.Styles>
-                                            <Style Selector="ListBoxItem">
-                                                <Setter Property="Padding" Value="0"/>
-                                                <Setter Property="Margin" Value="0"/>
-                                                <Setter Property="Background" Value="Transparent"/>
-                                            </Style>
+                                <!-- Entries -->
+                                <ListBox ItemsSource="{Binding Entries}"
+                                         SelectionMode="Single"
+                                         SelectionChanged="EntriesList_OnSelectionChanged"
+                                         Background="Transparent">
 
-                                            <Style Selector="ListBoxItem:selected /template/ ContentPresenter Border">
-                                                <Setter Property="BorderBrush" Value="#3A82F7"/>
-                                                <Setter Property="BorderThickness" Value="1"/>
-                                            </Style>
-                                        </ListBox.Styles>
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Classes="chronicle-listbox-items-body">
+                                                <Grid ColumnDefinitions="Auto,*,Auto"
+                                                      ColumnSpacing="8">
+                                                    
+                                                    <Border Grid.Column="0"
+                                                            Classes="chronicle-type-chip"
+                                                            Background="{Binding Type, 
+                                                                Converter={StaticResource ChronicleTypeToChipBackgroundConverter}}"
+                                                            BorderBrush="{Binding Type, 
+                                                                Converter={StaticResource ChronicleTypeToChipBorderConverter}}">
+                                                        
+                                                        <TextBlock Classes="chronicle-type-chip-text"
+                                                                   Text="{Binding Type, 
+                                                                    Converter={StaticResource ChronicleTypeToChipTextConverter}}"/>
+                                                    </Border>
+                                                    
+                                                    <StackPanel Grid.Column="1" Spacing="6">
 
-                                        <ListBox.ItemTemplate>
-                                            <DataTemplate>
-                                                <Border CornerRadius="10"
-                                                        Padding="12,10"
-                                                        Margin="0,0,0,8"
-                                                        Background="#181818"
-                                                        BorderThickness="1"
-                                                        BorderBrush="#2A2A2A">
+                                                        <TextBlock Text="{Binding Title}"
+                                                                   Classes="chronicle-listbox-title" />
 
-                                                    <Grid ColumnDefinitions="*,Auto"
-                                                          RowDefinitions="Auto,Auto"
-                                                          RowSpacing="6">
-
-                                                        <!-- Title -->
-                                                        <TextBlock Grid.Row="0" Grid.Column="0"
-                                                                   Text="{Binding Title}"
-                                                                   TextWrapping="NoWrap"
-                                                                   TextTrimming="CharacterEllipsis"
-                                                                   FontSize="14"
-                                                                   FontWeight="SemiBold" />
-
-                                                        <!-- Time -->
-                                                        <TextBlock Grid.Row="0" Grid.Column="1"
-                                                                   Text="{Binding At, Converter={StaticResource UtcToLocalConverter}, StringFormat='HH:mm'}"
-                                                                   Opacity="0.75"
-                                                                   Margin="12,0,0,0"
-                                                                   FontSize="12"
-                                                                   VerticalAlignment="Center" />
-
-                                                        <!-- Description -->
-                                                        <TextBlock Grid.Row="1" Grid.Column="0"
-                                                                   Grid.ColumnSpan="2"
+                                                        <TextBlock Classes="chronicle-listbox-description"
                                                                    Text="{Binding Description}"
-                                                                   Opacity="0.75"
-                                                                   FontSize="12"
-                                                                   TextWrapping="Wrap"
-                                                                   TextTrimming="CharacterEllipsis"
-                                                                   MaxLines="2"
                                                                    IsVisible="{Binding Description, Converter={StaticResource NullToBoolConverter}}" />
-                                                    </Grid>
-                                                </Border>
-                                            </DataTemplate>
-                                        </ListBox.ItemTemplate>
-                                    </ListBox>
+                                                    </StackPanel>
 
-                                </StackPanel>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+                                                    <TextBlock Grid.Column="2"
+                                                               Text="{Binding At, Converter={StaticResource UtcToLocalConverter}, StringFormat='HH:mm'}"
+                                                               Classes="chronicle-listbox-time" />
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
 
-                </ScrollViewer>
-            </Border>
-        </Grid>
-        
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+            </ScrollViewer>
+        </Border>
+
     </Grid>
 </UserControl>
