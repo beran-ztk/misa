@@ -25,14 +25,6 @@ public sealed class Session
     // Components
     public ICollection<SessionSegment> Segments { get; init; } = [];
     public Item Item { get; set; } = null!;
-
-    // Derived Properties
-    public TimeSpan? ElapsedTime(DateTimeOffset utcNow) =>
-        Segments.Aggregate(TimeSpan.Zero, (sum, s) =>
-        {
-            var end = s.EndedAtUtc ?? utcNow;
-            return sum + (end - s.StartedAtUtc);
-        });
     
     // State Change
     public void Autostop()

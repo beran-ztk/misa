@@ -4,6 +4,8 @@ public sealed record ChronicleEntryDto(
     Guid? TargetItemId,
     DateTimeOffset At,
     string Title,
-    string? Description,
-    ChronicleEntryType Type
+    ChronicleEntryType Type,
+    ChronicleMetaState? MetaState,
+    string? MetaText,
+    string? Description
 );

@@ -15,6 +15,8 @@
         <converters:ChronicleTypeToChipBackgroundConverter x:Key="ChronicleTypeToChipBackgroundConverter" />
         <converters:ChronicleTypeToChipBorderConverter x:Key="ChronicleTypeToChipBorderConverter" />
         <converters:ChronicleTypeToChipTextConverter x:Key="ChronicleTypeToChipTextConverter" />
+        <converters:MetaStateToBackgroundConverter x:Key="MetaStateToBackgroundConverter" />
+        <converters:MetaStateToBorderConverter x:Key="MetaStateToBorderConverter" />
     </UserControl.Resources>
 
     <Grid RowDefinitions="Auto,*">
@@ -87,11 +89,32 @@
                                                                     Converter={StaticResource ChronicleTypeToChipTextConverter}}"/>
                                                     </Border>
                                                     
+                                                    <!-- Content -->
                                                     <StackPanel Grid.Column="1" Spacing="6">
 
+                                                        <!-- Title -->
                                                         <TextBlock Text="{Binding Title}"
                                                                    Classes="chronicle-listbox-title" />
 
+                                                        <!-- Meta Row -->
+                                                        <StackPanel Orientation="Horizontal" Spacing="6"
+                                                                    IsVisible="{Binding MetaText, Converter={StaticResource NullToBoolConverter}}">
+
+                                                            <!-- optional State Chip -->
+                                                            <Border Classes="chronicle-meta-chip"
+                                                                    IsVisible="{Binding MetaState, Converter={StaticResource NullToBoolConverter}}"
+                                                                    Background="{Binding MetaState, Converter={StaticResource MetaStateToBackgroundConverter}}"
+                                                                    BorderBrush="{Binding MetaState, Converter={StaticResource MetaStateToBorderConverter}}">
+                                                                <TextBlock Classes="chronicle-meta-chip-text"
+                                                                           Text="{Binding MetaState}"/>
+                                                            </Border>
+
+                                                            <!-- Meta Text -->
+                                                            <TextBlock Classes="chronicle-listbox-meta"
+                                                                       Text="{Binding MetaText}" />
+                                                        </StackPanel>
+
+                                                        <!-- Description -->
                                                         <TextBlock Classes="chronicle-listbox-description"
                                                                    Text="{Binding Description}"
                                                                    IsVisible="{Binding Description, Converter={StaticResource NullToBoolConverter}}" />

@@ -1,9 +1,16 @@
-using System;
-
-namespace Misa.Ui.Avalonia.Common.Formatting;
-
-public static class DurationFormatter
+namespace Misa.Contract.Common.Converters;
+public record StartToEndTimestamp(DateTimeOffset StartedAtUtc, DateTimeOffset? EndedAtUtc);
+public static class TimeSpanCalculator
 {
+    public static TimeSpan? ElapsedTime(List<StartToEndTimestamp> timestamps)
+    {
+        return timestamps.Aggregate(TimeSpan.Zero, (sum, s) =>
+        {
+            var end = s.EndedAtUtc ?? DateTimeOffset.UtcNow;
+            return sum + (end - s.StartedAtUtc);
+        });
+    }
+    
     public static string FormatDuration(TimeSpan? duration)
     {
         return duration switch

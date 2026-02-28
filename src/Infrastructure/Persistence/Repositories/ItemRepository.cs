@@ -113,6 +113,7 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
     public async Task<List<Session>> GetSessionsAsync()
     {
         return await context.Sessions
+            .Include(s => s.Segments)
             .Include(s => s.Item)
             .Where(s => s.State == SessionState.Ended)
             .AsNoTracking()
