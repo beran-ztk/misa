@@ -12,7 +12,7 @@ namespace Misa.Application.Features.Items.Schedules.Commands;
 
 public record CreateScheduleCommand(
     string Title,
-    string Description,
+    string? Description,
     Guid? TargetItemId,
     ScheduleFrequencyTypeDto ScheduleFrequencyType,
     int FrequencyInterval,

@@ -3,6 +3,6 @@
 public enum WorkflowDto
 {
     Task,
-    Deadline,
-    Schedule
+    Schedule,
+    Journal
 }

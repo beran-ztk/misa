@@ -24,6 +24,11 @@ public class ItemActivityConfiguration : IEntityTypeConfiguration<ItemActivity>
         builder.Property(a => a.DueAt);
         
         // Relations
+        builder.HasOne(a => a.Item)
+            .WithOne(i => i.Activity)
+            .HasForeignKey<ItemActivity>(a => a.Id)
+            .OnDelete(DeleteBehavior.Cascade);
+        
         builder.HasMany(a => a.Sessions)
             .WithOne()
             .HasForeignKey(s => s.ItemId)

@@ -7,6 +7,7 @@ using Misa.Contract.Items.Components.Activity.Sessions;
 using Misa.Contract.Items.Components.Schedules;
 using Misa.Contract.Items.Components.Tasks;
 using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions.Forms;
+using Misa.Ui.Avalonia.Features.Pages.Chronicle;
 using Misa.Ui.Avalonia.Features.Pages.Schedules.Create;
 using Misa.Ui.Avalonia.Features.Pages.Tasks.Create;
 using Misa.Ui.Avalonia.Shell.Components;
@@ -18,6 +19,7 @@ public enum PanelKey
     StartSession,
     PauseSession,
     EndSession,
+    CreateJournal
 }
 
 public readonly record struct PanelKey<TResult>(
@@ -53,6 +55,7 @@ public sealed class PanelFactory(IServiceProvider sp) : IPanelFactory
             PanelKey.StartSession => CreateHosted<StartSessionView, StartSessionViewModel>(context),
             PanelKey.PauseSession => CreateHosted<PauseSessionView, PauseSessionViewModel>(context),
             PanelKey.EndSession => CreateHosted<EndSessionView, EndSessionViewModel>(context),
+            PanelKey.CreateJournal => CreateHosted<CreateJournalView, CreateJournalViewModel>(context),
             _ => throw new ArgumentOutOfRangeException(nameof(key), key, null)
         };
     }

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Input;
-using Misa.Ui.Avalonia.Common.Formatting;
+using Misa.Contract.Common.Converters;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Inspector.Root;
 
@@ -126,10 +126,10 @@ public partial class InspectorEntryViewModel : ViewModelBase
     {
         get
         {
-            var baseText = DurationFormatter.FormatDuration(ElapsedTime());
+            var baseText = TimeSpanCalculator.FormatDuration(ElapsedTime());
 
             var plannedText = CurrentSession?.PlannedDuration is not null
-                ? $" / {DurationFormatter.FormatDuration(CurrentSession.PlannedDuration)}"
+                ? $" / {TimeSpanCalculator.FormatDuration(CurrentSession.PlannedDuration)}"
                 : string.Empty;
 
             return baseText + plannedText;

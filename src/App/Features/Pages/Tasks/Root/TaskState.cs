@@ -14,18 +14,15 @@ namespace Misa.Ui.Avalonia.Features.Pages.Tasks.Root;
 
 public sealed partial class TaskState : ObservableObject
 {
-    public ShellState ShellState { get; }
     public CreateTaskState CreateState { get; }
     public ISelectionContextState SelectionContextState { get; }
     private IReadOnlyCollection<TaskDto> Items { get; set; } = [];
     public ObservableCollection<TaskDto> FilteredItems { get; } = [];
 
     public TaskState(
-        ShellState shellState,
         CreateTaskState createState,
         ISelectionContextState selectionContextState)
     {
-        ShellState = shellState;
         CreateState = createState;
         SelectionContextState = selectionContextState;
         

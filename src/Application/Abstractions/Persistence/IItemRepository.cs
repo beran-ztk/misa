@@ -1,4 +1,6 @@
 ﻿using Misa.Domain.Items;
+using Misa.Domain.Items.Components.Activities;
+using Misa.Domain.Items.Components.Activities.Sessions;
 
 namespace Misa.Application.Abstractions.Persistence;
 
@@ -21,6 +23,11 @@ public interface IItemRepository
     // Schedule extension
     Task<Item?> TryGetScheduleAsync(Guid id, CancellationToken ct);
     Task<List<Item>> GetSchedulesAsync(CancellationToken ct);
+    
+    // Chronicle
+    Task<List<Item>> GetJournalsAsync();
+    Task<List<ItemActivity>> GetDeadlinesAsync();
+    Task<List<Session>> GetSessionsAsync();
     
     // Session
     Task<Item?> TryGetItemWithSessionsAsync(Guid itemId, CancellationToken ct);

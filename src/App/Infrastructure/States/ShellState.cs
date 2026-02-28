@@ -5,10 +5,11 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Infrastructure.UI;
+using Misa.Ui.Avalonia.Shell.Components;
 
 namespace Misa.Ui.Avalonia.Infrastructure.States;
 
-public partial class ShellState : ObservableObject
+public partial class ShellState : ObservableObject, IPanelHost, IWorkspaceHost
 {
     private readonly ISelectionContextState _selectionContext;
     

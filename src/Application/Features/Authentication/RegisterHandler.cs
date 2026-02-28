@@ -2,8 +2,10 @@ using Misa.Application.Abstractions.Authentication;
 using Misa.Application.Abstractions.Ids;
 using Misa.Application.Abstractions.Persistence;
 using Misa.Application.Abstractions.Time;
+using Misa.Contract.Authentication;
 using Misa.Contract.Common.Results;
 using Misa.Contract.Features.Authentication;
+using Misa.Domain.Exceptions;
 using Misa.Domain.Features.Audit;
 
 namespace Misa.Application.Features.Authentication;
@@ -15,23 +17,23 @@ public sealed class RegisterHandler(
     ITimeZoneProvider timeZoneProvider,
     IIdGenerator idGenerator)
 {
-    public async Task<Result<AuthResponseDto>> Handle(RegisterCommand cmd, CancellationToken ct)
+    public async Task Handle(RegisterCommand cmd, CancellationToken ct)
     {
         var username = cmd.Username.Trim();
         var email = cmd.Email.Trim();
 
         if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(cmd.Password))
-            return Result<AuthResponseDto>.Conflict("", "Username and password must not be empty.");
+            throw new DomainValidationException("username.password", "", "Username and password must not be empty.");
 
         if (string.IsNullOrWhiteSpace(email))
-            return Result<AuthResponseDto>.Conflict("", "Email address must not be empty.");
+            throw new DomainValidationException("email", "", "Email must not be empty.");
 
         if (!timeZoneProvider.IsValid(cmd.TimeZone))
-            return Result<AuthResponseDto>.Conflict("", "The specified time zone is invalid.");
+            throw new DomainConflictException("", "The specified time zone is invalid.");
 
         var exists = await authStore.UsernameExistsAsync(username, ct);
         if (exists)
-            return Result<AuthResponseDto>.Conflict("", "The username is already taken.");
+            throw new DomainConflictException("", "The specified username already exists.");
 
         var userId = idGenerator.New();
 
@@ -44,9 +46,6 @@ public sealed class RegisterHandler(
             ct: ct);
 
         if (!created.IsSuccess)
-            return Result<AuthResponseDto>.Conflict("", created.Error?.Message ?? "Registration failed.");
-
-        var dto = new UserDto(userId, username, cmd.TimeZone);
-        return Result<AuthResponseDto>.Ok(new AuthResponseDto(dto));
+            throw new DomainConflictException("", created.Error?.Message ?? "Registration failed.");
     }
 }

@@ -1,6 +1,8 @@
 ﻿using Misa.Contract.Items;
+using Misa.Contract.Items.Components.Chronicle;
 using Misa.Domain.Exceptions;
 using Misa.Domain.Items;
+using Misa.Domain.Items.Components.Chronicle.Journals;
 
 namespace Misa.Application.Mappings;
 public static class ItemMappings
@@ -23,7 +25,14 @@ public static class ItemMappings
             ModifiedAt = item.ModifiedAt
         };
     }
-
+    public static JournalExtensionDto ToDto(this JournalExtension journal)
+    {
+        return new JournalExtensionDto(
+            journal.Id.Value,
+            journal.OccurredAt,
+            journal.UntilAt
+        );
+    }
     public static ItemDto TaskToItemDto(this Item item)
     {
         if (item.Workflow != Workflow.Task || item.Activity == null || item.TaskExtension == null)
@@ -48,6 +57,7 @@ public static class ItemMappings
         {
             Workflow.Task => WorkflowDto.Task,
             Workflow.Schedule => WorkflowDto.Schedule,
+            Workflow.Journal  => WorkflowDto.Journal,
             _ => throw new ArgumentOutOfRangeException(nameof(workflow), workflow, null)
         };
 }

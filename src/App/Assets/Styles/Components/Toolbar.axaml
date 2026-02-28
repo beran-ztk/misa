@@ -4,7 +4,7 @@
 
     <Style Selector="Border.workspace-toolbar-frame">
         <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLight}" />
-        <Setter Property="Padding" Value="24,14,24,12" />
+        <Setter Property="Padding" Value="24,14" />
     </Style>
     
     <Style Selector="Grid.workspace-toolbar">

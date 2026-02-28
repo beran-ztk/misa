@@ -1,4 +1,5 @@
 using Misa.Api.Endpoints.Authentication;
+using Misa.Api.Endpoints.Chronicle;
 using Misa.Api.Endpoints.Inspector;
 using Misa.Api.Endpoints.Schedules;
 using Misa.Api.Endpoints.Sessions;
@@ -19,6 +20,7 @@ public static class EndpointRegistration
         TaskEndpoints.Map(app);
         SessionEndpoints.Map(app);
         EntryEndpoints.Map(app);
+        ChronicleEndpoints.Map(app);
         app.MapScheduleEndpoints();
         app.MapAuthenticationEndpoints();
         app.MapInspectorEndpoints();

@@ -3,6 +3,7 @@ using Misa.Application.Abstractions.Authentication;
 using Misa.Application.Abstractions.Persistence;
 using Misa.Domain.Exceptions;
 using Misa.Domain.Items;
+using Misa.Domain.Items.Components.Activities;
 using Misa.Domain.Items.Components.Activities.Sessions;
 using Misa.Infrastructure.Persistence.Context;
 using Wolverine;
@@ -83,11 +84,41 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
         return await context.Items
             .Include(s => s.ScheduleExtension)
             .Where(t => t.OwnerId == user.Id && t.Workflow == Workflow.Schedule)
-            .OrderByDescending(t => t.CreatedAt)
+            .OrderByDescending(t => t.JournalExtension!.OccurredAt) 
+            .ThenByDescending(t => t.CreatedAt)
             .AsNoTracking()
             .ToListAsync(ct);
     }
 
+    public async Task<List<Item>> GetJournalsAsync()
+    {
+        return await context.Items
+            .Include(s => s.JournalExtension)
+            .Where(t => t.OwnerId == user.Id && t.Workflow == Workflow.Journal)
+            .OrderByDescending(t => t.CreatedAt)
+            .AsNoTracking()
+            .ToListAsync();
+    }
+
+    public async Task<List<ItemActivity>> GetDeadlinesAsync()
+    {
+        return await context.ItemActivities
+            .Include(a => a.Item)
+            .Where(a => a.DueAt != null)
+            .OrderByDescending(a => a.DueAt)
+            .AsNoTracking()
+            .ToListAsync();
+    }
+
+    public async Task<List<Session>> GetSessionsAsync()
+    {
+        return await context.Sessions
+            .Include(s => s.Segments)
+            .Include(s => s.Item)
+            .Where(s => s.State == SessionState.Ended)
+            .AsNoTracking()
+            .ToListAsync();
+    }
     // Session
     public async Task<Item?> TryGetItemWithSessionsAsync(Guid itemId, CancellationToken ct)
     {

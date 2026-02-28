@@ -43,7 +43,7 @@ public sealed partial class TaskFacadeViewModel : ViewModelBase
 
     public async Task InitializeWorkspaceAsync()
     {
-        await GetAllAsync();
+        await RefreshWorkspaceAsync();
     }
 
     [RelayCommand]

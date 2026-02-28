@@ -1,6 +1,8 @@
 ﻿using Misa.Domain.Exceptions;
 using Misa.Domain.Features.Audit;
 using Misa.Domain.Items.Components.Activities;
+using Misa.Domain.Items.Components.Activities.Sessions;
+using Misa.Domain.Items.Components.Chronicle.Journals;
 using Misa.Domain.Items.Components.Schedules;
 using Misa.Domain.Items.Components.Tasks;
 using Misa.Domain.Shared.DomainEvents;
@@ -57,9 +59,11 @@ public sealed class Item : DomainEventEntity
     public ICollection<AuditChange> Changes { get; init; } = new List<AuditChange>();
     
     // Components-Activity
+    public ICollection<Session> Sessions { get; set; } = new List<Session>();
     public ItemActivity? Activity { get; private set; }
     public TaskExtension? TaskExtension { get; private set; }
     public ScheduleExtension? ScheduleExtension { get; private set; }
+    public JournalExtension? JournalExtension { get; private set; }
 
     
     // Behaviours
@@ -92,7 +96,7 @@ public sealed class Item : DomainEventEntity
         ItemId id,
         string ownerId,
         string title,
-        string description,
+        string? description,
         DateTimeOffset createdAtUtc,
         ScheduleExtension scheduleExtension)
     {
@@ -105,6 +109,28 @@ public sealed class Item : DomainEventEntity
             createdAtUtc: createdAtUtc)
         {
             ScheduleExtension = scheduleExtension
+        };
+
+        return item;
+    }
+    
+    public static Item CreateJournal(
+        ItemId id,
+        string ownerId,
+        string title,
+        string? description,
+        DateTimeOffset createdAtUtc,
+        JournalExtension journalExtension)
+    {
+        var item = new Item(
+            id: id,
+            ownerId: ownerId,
+            workflow: Workflow.Journal,
+            title: title,
+            description: description,
+            createdAtUtc: createdAtUtc)
+        {
+            JournalExtension = journalExtension
         };
 
         return item;
