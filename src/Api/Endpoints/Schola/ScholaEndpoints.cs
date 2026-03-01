@@ -12,6 +12,7 @@ public static class ScholaEndpoints
     {
         api.MapPost(ScholaRoutes.CreateArc, CreateArc);
         api.MapPost(ScholaRoutes.CreateUnit, CreateUnit);
+        api.MapGet(ScholaRoutes.GetSchola, GetAll);
     }
     
     // Create a task
@@ -44,4 +45,12 @@ public static class ScholaEndpoints
         await bus.InvokeAsync(command);
         return Results.Ok();
     }
+    
+    private static async Task<IResult> GetAll(IMessageBus bus)
+    {
+        var dto = await bus.InvokeAsync<ScholaDto>(new GetArcWithUnitsCommand());
+        
+        return Results.Ok(dto);
+    }   
+
 }

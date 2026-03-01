@@ -17,12 +17,12 @@ public partial class ScholaViewModel(
     [RelayCommand]
     private async Task RefreshWorkspaceAsync()
     {
-        // await GetAllAsync();
+        await GetAllAsync();
     }
     
     private async Task GetAllAsync()
     {
-        // var values = await _gateway.GetAllAsync();
+        var values = await gateway.GetAllAsync();
         // await State.SetMainCollection(values);
     }
 

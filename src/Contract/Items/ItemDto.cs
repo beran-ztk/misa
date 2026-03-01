@@ -1,6 +1,7 @@
 ﻿using Misa.Contract.Items.Components.Activity;
 using Misa.Contract.Items.Components.Chronicle;
 using Misa.Contract.Items.Components.Schedules;
+using Misa.Contract.Items.Components.Schola;
 using Misa.Contract.Items.Components.Tasks;
 
 namespace Misa.Contract.Items;
@@ -26,4 +27,8 @@ public sealed record ItemDto
     public TaskExtensionDto? TaskExtension { get; set; }
     public ScheduleExtensionDto? ScheduleExtension { get; set; }
     public JournalExtensionDto? JournalExtension { get; set; }
+    
+    // Schola
+    public ArcExtensionDto? ArcExtension { get; set; }
+    public UnitExtensionDto? UnitExtension { get; set; }
 }

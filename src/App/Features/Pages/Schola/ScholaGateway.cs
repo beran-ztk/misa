@@ -28,4 +28,11 @@ public sealed class ScholaGateway(RemoteProxy remoteProxy)
 
         return await remoteProxy.SendAsync(request);
     }
+    
+    public async Task<Result<ScholaDto>> GetAllAsync()
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get, ScholaRoutes.GetSchola);
+
+        return await remoteProxy.SendAsync<ScholaDto>(request);
+    }
 }
