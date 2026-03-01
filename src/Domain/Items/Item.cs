@@ -4,6 +4,7 @@ using Misa.Domain.Items.Components.Activities;
 using Misa.Domain.Items.Components.Activities.Sessions;
 using Misa.Domain.Items.Components.Chronicle.Journals;
 using Misa.Domain.Items.Components.Schedules;
+using Misa.Domain.Items.Components.Schola;
 using Misa.Domain.Items.Components.Tasks;
 using Misa.Domain.Shared.DomainEvents;
 
@@ -64,6 +65,8 @@ public sealed class Item : DomainEventEntity
     public TaskExtension? TaskExtension { get; private set; }
     public ScheduleExtension? ScheduleExtension { get; private set; }
     public JournalExtension? JournalExtension { get; private set; }
+    public Arc? Arc { get; private set; }
+    public Unit? Unit { get; private set; }
 
     
     // Behaviours
@@ -155,7 +158,8 @@ public sealed class Item : DomainEventEntity
             description: description,
             createdAtUtc: createdAtUtc)
         {
-            Activity = new ItemActivity(ActivityState.Draft, priority, objective, null, dueAt)
+            Activity = new ItemActivity(ActivityState.Draft, priority, objective, null, dueAt),
+            Arc = new Arc(id)
         };
 
         return item;
@@ -169,7 +173,9 @@ public sealed class Item : DomainEventEntity
         
         ActivityPriority priority,
         string? objective,
-        DateTimeOffset? dueAt)
+        DateTimeOffset? dueAt,
+        
+        ItemId? arcId)
     {
         var item = new Item(
             id: id,
@@ -179,7 +185,8 @@ public sealed class Item : DomainEventEntity
             description: description,
             createdAtUtc: createdAtUtc)
         {
-            Activity = new ItemActivity(ActivityState.Draft, priority, objective, null, dueAt)
+            Activity = new ItemActivity(ActivityState.Draft, priority, objective, null, dueAt),
+            Unit = new Unit(id, arcId)
         };
 
         return item;

@@ -31,7 +31,8 @@ public sealed class CreateUnitHandler(
             createdAtUtc: timeProvider.UtcNow,
             priority: command.ActivityPriorityDto.ToDomain(),
             objective: command.Objective,
-            dueAt: null
+            dueAt: null,
+            arcId: null
         );
 
         await repository.AddAsync(arc, CancellationToken.None);
