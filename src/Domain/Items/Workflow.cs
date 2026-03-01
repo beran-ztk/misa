@@ -4,5 +4,7 @@ public enum Workflow
 {
     Task,
     Schedule,
-    Journal
+    Journal,
+    Arc,
+    Unit
 }

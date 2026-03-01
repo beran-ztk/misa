@@ -52,12 +52,14 @@ public static class ItemMappings
         temp.ScheduleExtension = item.ScheduleExtension.ToDto();
         return temp;
     }
-    public static WorkflowDto ToDto(this Workflow workflow) =>
+    private static WorkflowDto ToDto(this Workflow workflow) =>
         workflow switch
         {
             Workflow.Task => WorkflowDto.Task,
             Workflow.Schedule => WorkflowDto.Schedule,
             Workflow.Journal  => WorkflowDto.Journal,
+            Workflow.Arc  => WorkflowDto.Arc,
+            Workflow.Unit  => WorkflowDto.Unit,
             _ => throw new ArgumentOutOfRangeException(nameof(workflow), workflow, null)
         };
 }

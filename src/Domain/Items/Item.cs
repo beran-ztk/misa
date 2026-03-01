@@ -86,7 +86,7 @@ public sealed class Item : DomainEventEntity
             description: description,
             createdAtUtc: createdAtUtc)
         {
-            Activity = new ItemActivity(ActivityState.Draft, priority, dueAt),
+            Activity = new ItemActivity(ActivityState.Draft, priority, null, null, dueAt),
             TaskExtension = new TaskExtension(id, category)
         };
 
@@ -131,6 +131,55 @@ public sealed class Item : DomainEventEntity
             createdAtUtc: createdAtUtc)
         {
             JournalExtension = journalExtension
+        };
+
+        return item;
+    }
+    
+    public static Item CreateArc(
+        ItemId id,
+        string ownerId,
+        string title,
+        string? description,
+        DateTimeOffset createdAtUtc,
+        
+        ActivityPriority priority,
+        string? objective,
+        DateTimeOffset? dueAt)
+    {
+        var item = new Item(
+            id: id,
+            ownerId: ownerId,
+            workflow: Workflow.Arc,
+            title: title,
+            description: description,
+            createdAtUtc: createdAtUtc)
+        {
+            Activity = new ItemActivity(ActivityState.Draft, priority, objective, null, dueAt)
+        };
+
+        return item;
+    }
+    public static Item CreateUnit(
+        ItemId id,
+        string ownerId,
+        string title,
+        string? description,
+        DateTimeOffset createdAtUtc,
+        
+        ActivityPriority priority,
+        string? objective,
+        DateTimeOffset? dueAt)
+    {
+        var item = new Item(
+            id: id,
+            ownerId: ownerId,
+            workflow: Workflow.Unit,
+            title: title,
+            description: description,
+            createdAtUtc: createdAtUtc)
+        {
+            Activity = new ItemActivity(ActivityState.Draft, priority, objective, null, dueAt)
         };
 
         return item;

@@ -4,5 +4,7 @@ public enum WorkflowDto
 {
     Task,
     Schedule,
-    Journal
+    Journal,
+    Arc,
+    Unit
 }

@@ -10,10 +10,14 @@ public sealed class ItemActivity
     public ItemActivity(
         ActivityState state,
         ActivityPriority priority,
+        string? objective,
+        string? summary,
         DateTimeOffset? dueAt)
     {
         State = state;
         Priority = priority;
+        Objective = objective;
+        Summary = summary;
         DueAt = dueAt;
     }
     
@@ -21,10 +25,12 @@ public sealed class ItemActivity
     public ItemId Id { get; init; }
     public ActivityState State { get; private set; }
     public ActivityPriority Priority { get; private set; }
+    public string? Objective { get; private set; }
+    public string? Summary { get; private set; }
     public DateTimeOffset? DueAt { get; private set; }
     
     // Components
-    public Item Item { get; set; } = null!;
+    public Item Item { get; private set; } = null!;
     public ICollection<Session> Sessions { get; private set; } = new List<Session>();
     
     // Derived Properties
