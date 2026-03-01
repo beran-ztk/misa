@@ -5,6 +5,7 @@ using Misa.Domain.Items.Components.Activities;
 using Misa.Domain.Items.Components.Activities.Sessions;
 using Misa.Domain.Items.Components.Chronicle.Journals;
 using Misa.Domain.Items.Components.Schedules;
+using Misa.Domain.Items.Components.Schola;
 using Misa.Domain.Items.Components.Tasks;
 
 namespace Misa.Infrastructure.Persistence.Configurations.Items;
@@ -61,6 +62,16 @@ public class ItemConfiguration : IEntityTypeConfiguration<Item>
         builder.HasOne(i => i.JournalExtension)
             .WithOne()
             .HasForeignKey<JournalExtension>(j => j.Id)
+            .OnDelete(DeleteBehavior.Cascade);
+        
+        builder.HasOne(i => i.Arc)
+            .WithOne()
+            .HasForeignKey<Arc>(a => a.Id)
+            .OnDelete(DeleteBehavior.Cascade);
+        
+        builder.HasOne(i => i.Unit)
+            .WithOne()
+            .HasForeignKey<Unit>(u => u.Id)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }
