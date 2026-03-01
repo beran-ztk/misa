@@ -11,7 +11,7 @@ public static class ScholaEndpoints
     public static void Map(IEndpointRouteBuilder api)
     {
         api.MapPost(ScholaRoutes.CreateArc, CreateArc);
-        api.MapGet(ScholaRoutes.CreateUnit, CreateUnit);
+        api.MapPost(ScholaRoutes.CreateUnit, CreateUnit);
     }
     
     // Create a task

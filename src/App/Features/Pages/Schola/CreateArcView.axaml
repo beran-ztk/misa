@@ -1,0 +1,48 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="Misa.Ui.Avalonia.Features.Pages.Schola.CreateArcView"
+             xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Schola"
+             x:DataType="root:CreateArcViewModel">
+    
+    <StackPanel Classes="addpanel-body">
+        <!-- Title -->
+        <StackPanel Classes="addpanel-controls">
+            <TextBlock Text="Add a title" 
+                       Classes="addpanel-text" />
+            <TextBox Classes="addpanel-oneliner"
+                     Watermark="Title…"
+                     Text="{Binding ItemTitle, Mode=TwoWay}" />
+        </StackPanel>
+        
+        <!-- Description -->
+        <StackPanel Classes="addpanel-controls">
+            <TextBlock Text="Add a Description" 
+                       Classes="addpanel-text" />
+            <TextBox Classes="addpanel-multiline"
+                     Watermark="Description…"
+                     Text="{Binding Description, Mode=TwoWay}" />
+        </StackPanel>
+        
+        <!-- Priority -->
+        <StackPanel Classes="addpanel-controls">
+            <TextBlock Text="Choose a priority for the task" 
+                       Classes="addpanel-text"/>
+            <ComboBox Classes="addpanel-combo"
+                      ItemsSource="{Binding Priorities}"
+                      SelectedValue="{Binding SelectedPriority}" />
+        </StackPanel>
+        
+        <!-- Description -->
+        <StackPanel Classes="addpanel-controls">
+            <TextBlock Text="What is your objective?" 
+                       Classes="addpanel-text" />
+            <TextBox Classes="addpanel-multiline"
+                     Watermark="Objective…"
+                     Text="{Binding Objective, Mode=TwoWay}" />
+        </StackPanel>
+    </StackPanel>
+    
+</UserControl>
