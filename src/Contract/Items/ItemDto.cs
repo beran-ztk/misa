@@ -27,8 +27,4 @@ public sealed record ItemDto
     public TaskExtensionDto? TaskExtension { get; set; }
     public ScheduleExtensionDto? ScheduleExtension { get; set; }
     public JournalExtensionDto? JournalExtension { get; set; }
-    
-    // Schola
-    public ArcExtensionDto? ArcExtension { get; set; }
-    public UnitExtensionDto? UnitExtension { get; set; }
 }

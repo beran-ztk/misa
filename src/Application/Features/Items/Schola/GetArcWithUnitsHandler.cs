@@ -15,8 +15,8 @@ public sealed class GetArcWithUnitsHandler(IItemRepository repository)
 
         var scholaDto = new ScholaDto
         {
-            Arcs = arcs.Select(a => a.ToArcExtensionDto()).ToList(),
-            Units = units.Select(u => u.ToUnitExtensionDto()).ToList()
+            Arcs = arcs.Select(a => a.ToArcDto()).ToList(),
+            Units = units.Select(u => u.ToUnitDto()).ToList()
         };
 
         return scholaDto;

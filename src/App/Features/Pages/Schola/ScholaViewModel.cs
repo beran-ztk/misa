@@ -1,5 +1,7 @@
+using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Input;
+using Misa.Contract.Items;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Infrastructure.UI;
 
@@ -9,6 +11,7 @@ public partial class ScholaViewModel(
     ScholaGateway gateway, 
     PanelProxy panelProxy) : ViewModelBase
 {
+    public ObservableCollection<ItemDto> 
     public async Task InitializeWorkspaceAsync()
     {
         await RefreshWorkspaceAsync();
