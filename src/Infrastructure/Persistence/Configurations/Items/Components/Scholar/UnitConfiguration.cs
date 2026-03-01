@@ -25,5 +25,10 @@ public class UnitConfiguration : IEntityTypeConfiguration<Unit>
 
         builder.Property(x => x.ArcId)
             .HasConversion(arcIdConverter);
+        
+        builder.HasOne(a => a.Item)
+            .WithOne(i => i.Unit)
+            .HasForeignKey<Unit>(a => a.Id)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

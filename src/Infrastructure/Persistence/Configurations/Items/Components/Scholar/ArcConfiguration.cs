@@ -16,5 +16,10 @@ public sealed class ArcConfiguration : IEntityTypeConfiguration<Arc>
         builder.Property(x => x.Id)
             .HasConversion(id => id.Value, value => new ItemId(value))
             .ValueGeneratedNever();
+        
+        builder.HasMany(a => a.Units)
+            .WithOne()
+            .HasForeignKey(s => s.ArcId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

@@ -70,7 +70,7 @@ public class ItemConfiguration : IEntityTypeConfiguration<Item>
             .OnDelete(DeleteBehavior.Cascade);
         
         builder.HasOne(i => i.Unit)
-            .WithOne()
+            .WithOne(u => u.Item)
             .HasForeignKey<Unit>(u => u.Id)
             .OnDelete(DeleteBehavior.Cascade);
     }

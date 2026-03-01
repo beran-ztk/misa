@@ -8,4 +8,5 @@ public sealed class Arc
         Id = id;
     }
     public ItemId Id { get; init; }
+    public ICollection<Unit> Units { get; init; } = new List<Unit>();
 }

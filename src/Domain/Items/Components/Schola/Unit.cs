@@ -1,3 +1,5 @@
+using Misa.Domain.Items.Components.Activities;
+
 namespace Misa.Domain.Items.Components.Schola;
 
 public sealed class Unit
@@ -10,4 +12,6 @@ public sealed class Unit
     }
     public ItemId Id { get; init; }
     public ItemId? ArcId { get; init; }
+
+    public Item Item { get; private set; } = null!;
 }
