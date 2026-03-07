@@ -6,5 +6,6 @@ public enum Workflow
     Schedule,
     Journal,
     Arc,
-    Unit
+    Unit,
+    Topic
 }

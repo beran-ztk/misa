@@ -7,6 +7,7 @@ using Misa.Domain.Items.Components.Chronicle.Journals;
 using Misa.Domain.Items.Components.Schedules;
 using Misa.Domain.Items.Components.Schola;
 using Misa.Domain.Items.Components.Tasks;
+using Misa.Domain.Items.Components.Zettelkasten;
 
 namespace Misa.Infrastructure.Persistence.Configurations.Items;
 
@@ -72,6 +73,11 @@ public class ItemConfiguration : IEntityTypeConfiguration<Item>
         builder.HasOne(i => i.Unit)
             .WithOne(u => u.Item)
             .HasForeignKey<Unit>(u => u.Id)
+            .OnDelete(DeleteBehavior.Cascade); 
+        
+        builder.HasOne(i => i.Topic)
+            .WithOne()
+            .HasForeignKey<Topic>(t => t.Id)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }

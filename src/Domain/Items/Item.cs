@@ -197,7 +197,6 @@ public sealed class Item : DomainEventEntity
         ItemId id,
         string ownerId,
         string title,
-        string? description,
         DateTimeOffset createdAtUtc,
         
         ItemId? topicId)
@@ -205,9 +204,9 @@ public sealed class Item : DomainEventEntity
         var item = new Item(
             id: id,
             ownerId: ownerId,
-            workflow: Workflow.Unit,
+            workflow: Workflow.Topic,
             title: title,
-            description: description,
+            description: null,
             createdAtUtc: createdAtUtc)
         {
             Topic = new Topic(id, topicId)
