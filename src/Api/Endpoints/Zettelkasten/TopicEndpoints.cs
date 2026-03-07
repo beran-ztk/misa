@@ -11,6 +11,7 @@ public class TopicEndpoints
     public static void Map(IEndpointRouteBuilder api)
     {
         api.MapPost(ZettelkastenRoutes.CreateTopic, CreateTopic);
+        api.MapGet(ZettelkastenRoutes.GetTopics, GetTopics);
     }
     
     // Create a task
@@ -25,5 +26,11 @@ public class TopicEndpoints
 
         await bus.InvokeAsync(command);
         return Results.Ok();
+    }  
+    
+    private static async Task<IResult> GetTopics(IMessageBus bus)
+    {
+        var result = await bus.InvokeAsync<List<TopicListDto>>(new GetTopicsCommand());
+        return Results.Ok(result);
     }  
 }

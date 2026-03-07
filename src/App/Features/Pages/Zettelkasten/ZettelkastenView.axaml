@@ -18,11 +18,23 @@
                     BorderThickness="0,0,1,0">
                 <StackPanel>
                     <TextBlock Text="Index" />
+                    <Button Classes="workspace-toolbar-icon"
+                            Command="{Binding RefreshWorkspaceCommand}">
+                        <Image Source="{SvgImage /Assets/Icons/Common/refresh.svg}" />
+                    </Button>
                     <TextBox Text="{Binding TopicTitle, Mode=TwoWay}"/>
                     <Button Content="Create Topic"
                             Command="{Binding CreateTopicCommand}"/>
                     
-                    <TreeView/>
+                    <TreeView ItemsSource="{Binding Topics}">
+                        <TreeView.ItemTemplate>
+                            <TreeDataTemplate ItemsSource="{Binding Children}">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <TextBlock Text="{Binding Title}" />
+                                </StackPanel>
+                            </TreeDataTemplate>
+                        </TreeView.ItemTemplate>
+                    </TreeView>
                 </StackPanel>
             </Border>
 

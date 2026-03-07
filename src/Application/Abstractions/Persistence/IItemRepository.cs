@@ -33,6 +33,9 @@ public interface IItemRepository
     Task<List<Item>> GetArcsAsync();
     Task<List<Item>> GetUnitsAsync();
     
+    // Zettelkasten
+    Task<List<Item>> GetTopicsAsync();
+    
     // Session
     Task<Item?> TryGetItemWithSessionsAsync(Guid itemId, CancellationToken ct);
 }

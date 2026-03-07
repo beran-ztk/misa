@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
@@ -18,5 +20,14 @@ public sealed class ZettelkastenGateway(RemoteProxy remoteProxy)
         };
 
         return await remoteProxy.SendAsync(request);
+    }
+
+    public async Task<List<TopicListDto>?> GetTopicsAsync()
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get, ZettelkastenRoutes.GetTopics);
+
+        var response = await remoteProxy.SendAsync<List<TopicListDto>>(request);
+        return response.Value
+               ?? throw new Exception("No Data");
     }
 }
