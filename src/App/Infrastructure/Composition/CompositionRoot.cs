@@ -148,6 +148,7 @@ public static class CompositionRoot
     private static void ZettelkastenServices(this IServiceCollection sc)
     {
         sc.AddSingleton<ZettelkastenViewModel>();
+        sc.AddSingleton<ZettelkastenGateway>();
     }
 
     private static void AddUtilities(this IServiceCollection sc)

@@ -16,12 +16,14 @@
                     Background="{StaticResource BrushPrimaryBackgroundLight}"
                     BorderBrush="{StaticResource BrushBorder}"
                     BorderThickness="0,0,1,0">
-                <Grid RowDefinitions="Auto,*">
-                    <TextBlock Grid.Row="0" 
-                               Text="Index" />
-
-                    <TreeView Grid.Row="1"/>
-                </Grid>
+                <StackPanel>
+                    <TextBlock Text="Index" />
+                    <TextBox Text="{Binding TopicTitle, Mode=TwoWay}"/>
+                    <Button Content="Create Topic"
+                            Command="{Binding CreateTopicCommand}"/>
+                    
+                    <TreeView/>
+                </StackPanel>
             </Border>
 
             <!-- Content / Overview -->
