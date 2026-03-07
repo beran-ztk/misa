@@ -1,7 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Input;
-using Misa.Contract.Items;
+using Misa.Contract.Items.Components.Schola;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Infrastructure.UI;
 
@@ -11,7 +11,8 @@ public partial class ScholaViewModel(
     ScholaGateway gateway, 
     PanelProxy panelProxy) : ViewModelBase
 {
-    public ObservableCollection<ItemDto> 
+    public ObservableCollection<ArcDto> Arcs { get; set; } = [];
+    public ObservableCollection<UnitDto> Units { get; set; } = [];
     public async Task InitializeWorkspaceAsync()
     {
         await RefreshWorkspaceAsync();
@@ -25,8 +26,12 @@ public partial class ScholaViewModel(
     
     private async Task GetAllAsync()
     {
-        var values = await gateway.GetAllAsync();
-        // await State.SetMainCollection(values);
+        var response = await gateway.GetAllAsync();
+        if (response.IsSuccess && response.Value != null)
+        {
+            Arcs = new ObservableCollection<ArcDto>(response.Value.Arcs);
+            Units = new ObservableCollection<UnitDto>(response.Value.Units);
+        }
     }
 
     [RelayCommand]
