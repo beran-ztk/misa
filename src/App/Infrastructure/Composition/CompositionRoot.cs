@@ -6,6 +6,7 @@ using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions.Forms;
 using Misa.Ui.Avalonia.Features.Pages.Chronicle;
 using Misa.Ui.Avalonia.Features.Pages.Schedules.Create;
 using Misa.Ui.Avalonia.Features.Pages.Schedules.Root;
+using Misa.Ui.Avalonia.Features.Pages.Schola;
 using Misa.Ui.Avalonia.Features.Pages.Tasks.Create;
 using Misa.Ui.Avalonia.Features.Pages.Tasks.Root;
 using Misa.Ui.Avalonia.Features.Utilities.Notifications;
@@ -35,6 +36,7 @@ public static class CompositionRoot
         sc.AddTasksFeature();
         sc.AddSchedulingFeature();
         sc.AddChronicleFeature();
+        sc.AddScholaFeature();
         sc.AddUtilities();
 
         return sc.BuildServiceProvider();
@@ -129,6 +131,17 @@ public static class CompositionRoot
         
         sc.AddTransient<CreateJournalView>();
         sc.AddTransient<CreateJournalViewModel>();
+    }
+    
+    private static void AddScholaFeature(this IServiceCollection sc)
+    {
+        sc.AddSingleton<ScholaViewModel>();
+        sc.AddSingleton<ScholaGateway>();
+        
+        sc.AddTransient<CreateArcView>();
+        sc.AddTransient<CreateArcViewModel>();
+        sc.AddTransient<CreateUnitView>();
+        sc.AddTransient<CreateUnitViewModel>();
     }
 
     private static void AddUtilities(this IServiceCollection sc)

@@ -28,6 +28,7 @@
                 
                 <ContentControl Grid.Column="1"
                                 Grid.Row="0"
+                                Background="{StaticResource BrushPrimaryBackground}"
                                 Content="{Binding ShellState.Workspace}"/>
                 
                 <ContentControl Grid.Column="2"

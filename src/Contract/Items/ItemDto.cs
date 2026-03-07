@@ -1,6 +1,7 @@
 ﻿using Misa.Contract.Items.Components.Activity;
 using Misa.Contract.Items.Components.Chronicle;
 using Misa.Contract.Items.Components.Schedules;
+using Misa.Contract.Items.Components.Schola;
 using Misa.Contract.Items.Components.Tasks;
 
 namespace Misa.Contract.Items;

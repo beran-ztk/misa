@@ -29,6 +29,10 @@ public interface IItemRepository
     Task<List<ItemActivity>> GetDeadlinesAsync();
     Task<List<Session>> GetSessionsAsync();
     
+    // Schola
+    Task<List<Item>> GetArcsAsync();
+    Task<List<Item>> GetUnitsAsync();
+    
     // Session
     Task<Item?> TryGetItemWithSessionsAsync(Guid itemId, CancellationToken ct);
 }
