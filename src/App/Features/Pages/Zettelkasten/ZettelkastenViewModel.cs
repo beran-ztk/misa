@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -25,11 +26,13 @@ public sealed partial class ZettelkastenViewModel(ZettelkastenGateway gateway) :
         await GetTopicsAsync();
     }
     [RelayCommand]
-    private async Task CreateTopicAsync()
+    public async Task CreateTopicAsync(Guid? parentId = null)
     {
-        if (TopicTitle is null) return;
-        var request = new CreateTopicRequest(TopicTitle, null);
+        if (string.IsNullOrEmpty(TopicTitle)) return;
+        var request = new CreateTopicRequest(TopicTitle, parentId);
         await gateway.CreateTopicAsync(request);
+        TopicTitle = null;
+        await RefreshWorkspaceAsync();
     }
     private async Task GetTopicsAsync()
     {

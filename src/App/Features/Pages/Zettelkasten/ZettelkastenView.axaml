@@ -31,6 +31,10 @@
                             <TreeDataTemplate ItemsSource="{Binding Children}">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
                                     <TextBlock Text="{Binding Title}" />
+                                    <Button Classes="workspace-toolbar-icon"
+                                            Click="InputElement_OnPointerPressed">
+                                        <Image Source="{SvgImage /Assets/Icons/Common/plus.svg}" />
+                                    </Button>
                                 </StackPanel>
                             </TreeDataTemplate>
                         </TreeView.ItemTemplate>
