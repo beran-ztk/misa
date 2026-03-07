@@ -1,0 +1,47 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="Misa.Ui.Avalonia.Features.Pages.Zettelkasten.ZettelkastenView"
+             xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Zettelkasten"
+             x:DataType="root:ZettelkastenViewModel">
+    
+    <Grid ColumnDefinitions="300,*"
+          RowDefinitions="Auto,*">
+
+        <!-- Toolbar / Header -->
+        <Grid Grid.Row="0"
+              Grid.Column="0"
+              Grid.ColumnSpan="2"
+              ColumnDefinitions="*,Auto">
+            <TextBox Watermark="Search topics..."/>
+
+            <Button Grid.Column="1"
+                    Margin="8,0,0,0"
+                    Content="Create Topic" />
+        </Grid>
+
+        <!-- Index -->
+        <Grid Grid.Row="1"
+              Grid.Column="0"
+              RowDefinitions="Auto,*">
+            <TextBlock Text="Index" />
+
+            <TreeView Grid.Row="1"
+                      Margin="0,8,0,0"/>
+        </Grid>
+
+        <!-- Content / Overview -->
+        <Grid Grid.Row="1"
+              Grid.Column="1"
+              Margin="12,0,0,0"
+              RowDefinitions="Auto,Auto,*">
+            <TextBlock Text="Overview" />
+
+            
+        </Grid>
+
+    </Grid>
+
+</UserControl>

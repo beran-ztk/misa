@@ -48,29 +48,13 @@
                         Command="{Binding ShowChronicleCommand}">
                     <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
                         <Image Grid.Column="0" Width="16" Height="16"
-                               Source="{SvgImage /Assets/Icons/Shell/Navigation/notebook.svg}"/>
+                               Source="{SvgImage /Assets/Icons/Shell/Navigation/hourglass.svg}"/>
                         <TextBlock Grid.Column="1" Classes="workspace-nav" Text="Chronicle"/>
                     </Grid>
                 </Button>
 
-                <Button Classes="workspace-nav" ToolTip.Tip="Index">
-                    <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
-                        <Image Grid.Column="0" Width="16" Height="16"
-                               Source="{SvgImage /Assets/Icons/Shell/Navigation/asterisk.svg}"/>
-                        <TextBlock Grid.Column="1" Classes="workspace-nav" Text="Index"/>
-                    </Grid>
-                </Button>
-
-                <Button Classes="workspace-nav" ToolTip.Tip="Schola"
-                        Command="{Binding ShowScholaCommand}">
-                    <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
-                        <Image Grid.Column="0" Width="16" Height="16"
-                               Source="{SvgImage /Assets/Icons/Shell/Navigation/notches.svg}"/>
-                        <TextBlock Grid.Column="1" Classes="workspace-nav" Text="Schola"/>
-                    </Grid>
-                </Button>
-
-                <Button Classes="workspace-nav" ToolTip.Tip="Zettelkasten">
+                <Button Classes="workspace-nav" ToolTip.Tip="Zettelkasten"
+                        Command="{Binding ShowZettelkastenCommand}">
                     <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
                         <Image Grid.Column="0" Width="16" Height="16"
                                Source="{SvgImage /Assets/Icons/Shell/Navigation/scroll.svg}"/>
@@ -102,14 +86,6 @@
                     </Grid>
                 </Button>
 
-                <Button Classes="workspace-nav" ToolTip.Tip="Agents">
-                    <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
-                        <Image Grid.Column="0" Width="16" Height="16"
-                               Source="{SvgImage /Assets/Icons/Shell/Navigation/agents-head-circuit.svg}"/>
-                        <TextBlock Grid.Column="1" Classes="workspace-nav" Text="Agents"/>
-                    </Grid>
-                </Button>
-
             </StackPanel>
 
             <StackPanel Grid.Row="1"
@@ -119,7 +95,7 @@
                 <Button Classes="workspace-nav" ToolTip.Tip="Ledger">
                     <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
                         <Image Grid.Column="0" Width="16" Height="16"
-                               Source="{SvgImage /Assets/Icons/Shell/Navigation/hourglass.svg}"/>
+                               Source="{SvgImage /Assets/Icons/Shell/Navigation/notebook.svg}"/>
                         <TextBlock Grid.Column="1" Classes="workspace-nav" Text="Ledger"/>
                     </Grid>
                 </Button>

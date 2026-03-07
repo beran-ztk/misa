@@ -9,6 +9,7 @@ using Misa.Ui.Avalonia.Features.Pages.Schedules.Root;
 using Misa.Ui.Avalonia.Features.Pages.Schola;
 using Misa.Ui.Avalonia.Features.Pages.Tasks.Create;
 using Misa.Ui.Avalonia.Features.Pages.Tasks.Root;
+using Misa.Ui.Avalonia.Features.Pages.Zettelkasten;
 using Misa.Ui.Avalonia.Features.Utilities.Notifications;
 using Misa.Ui.Avalonia.Infrastructure.Client;
 using Misa.Ui.Avalonia.Infrastructure.Messaging;
@@ -37,6 +38,7 @@ public static class CompositionRoot
         sc.AddSchedulingFeature();
         sc.AddChronicleFeature();
         sc.AddScholaFeature();
+        sc.ZettelkastenServices();
         sc.AddUtilities();
 
         return sc.BuildServiceProvider();
@@ -142,6 +144,10 @@ public static class CompositionRoot
         sc.AddTransient<CreateArcViewModel>();
         sc.AddTransient<CreateUnitView>();
         sc.AddTransient<CreateUnitViewModel>();
+    }
+    private static void ZettelkastenServices(this IServiceCollection sc)
+    {
+        sc.AddSingleton<ZettelkastenViewModel>();
     }
 
     private static void AddUtilities(this IServiceCollection sc)
