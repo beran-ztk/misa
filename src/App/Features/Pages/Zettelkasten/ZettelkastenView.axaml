@@ -7,41 +7,30 @@
              xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Zettelkasten"
              x:DataType="root:ZettelkastenViewModel">
     
-    <Grid ColumnDefinitions="300,*"
-          RowDefinitions="Auto,*">
+    <Border Padding="10"
+            Background="{StaticResource BrushPrimaryBackgroundLight}">
+        <Grid ColumnDefinitions="300,*">
 
-        <!-- Toolbar / Header -->
-        <Grid Grid.Row="0"
-              Grid.Column="0"
-              Grid.ColumnSpan="2"
-              ColumnDefinitions="*,Auto">
-            <TextBox Watermark="Search topics..."/>
+            <!-- Index -->
+            <Border Grid.Column="0"
+                    Background="{StaticResource BrushPrimaryBackgroundLight}"
+                    BorderBrush="{StaticResource BrushBorder}"
+                    BorderThickness="0,0,1,0">
+                <Grid RowDefinitions="Auto,*">
+                    <TextBlock Grid.Row="0" 
+                               Text="Index" />
 
-            <Button Grid.Column="1"
-                    Margin="8,0,0,0"
-                    Content="Create Topic" />
+                    <TreeView Grid.Row="1"/>
+                </Grid>
+            </Border>
+
+            <!-- Content / Overview -->
+            <Border Grid.Column="1"
+                    Background="{StaticResource BrushPrimaryBackgroundLight}">
+                <TextBlock Text="Overview" />
+            </Border>
+
         </Grid>
-
-        <!-- Index -->
-        <Grid Grid.Row="1"
-              Grid.Column="0"
-              RowDefinitions="Auto,*">
-            <TextBlock Text="Index" />
-
-            <TreeView Grid.Row="1"
-                      Margin="0,8,0,0"/>
-        </Grid>
-
-        <!-- Content / Overview -->
-        <Grid Grid.Row="1"
-              Grid.Column="1"
-              Margin="12,0,0,0"
-              RowDefinitions="Auto,Auto,*">
-            <TextBlock Text="Overview" />
-
-            
-        </Grid>
-
-    </Grid>
+    </Border>
 
 </UserControl>
