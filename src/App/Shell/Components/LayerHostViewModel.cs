@@ -7,6 +7,8 @@ namespace Misa.Ui.Avalonia.Shell.Components;
 
 public interface IPanelHostViewModel
 {
+    string FormTitle { get; }
+    string? FormDescription { get; }
     ViewModelBase Form { get; }
     IRelayCommand CloseCommand { get; }
     IAsyncRelayCommand SubmitCommand { get; }
@@ -19,6 +21,8 @@ public sealed partial class LayerHostViewModel<TForm, TResult>(
     where TForm : ViewModelBase, IHostedForm<TResult>
 {
     public ViewModelBase Form { get; } = form;
+    public string FormTitle { get; } = form.FormTitle;
+    public string? FormDescription { get; } = form.FormDescription;
 
     [RelayCommand]
     private async Task Submit()

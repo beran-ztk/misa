@@ -19,7 +19,7 @@
                 <StackPanel>
                     <TextBlock Text="Index" />
                     <Button Classes="workspace-toolbar-icon"
-                            Command="{Binding CreateTopicCommand}">
+                            Click="CreateTopic_OnPointerPressed">
                         <Image Source="{SvgImage /Assets/Icons/Common/plus.svg}" />
                     </Button>
                     <Button Classes="workspace-toolbar-icon"
@@ -33,7 +33,7 @@
                                 <StackPanel Orientation="Horizontal" Spacing="6">
                                     <TextBlock Text="{Binding Title}" />
                                     <Button Classes="workspace-toolbar-icon"
-                                            Click="InputElement_OnPointerPressed">
+                                            Click="CreateTopic_OnPointerPressed">
                                         <Image Source="{SvgImage /Assets/Icons/Common/plus.svg}" />
                                     </Button>
                                 </StackPanel>

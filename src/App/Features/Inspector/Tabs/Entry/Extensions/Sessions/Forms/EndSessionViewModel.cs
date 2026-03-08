@@ -22,6 +22,9 @@ public partial class EndSessionViewModel(Guid itemId, InspectorGateway gateway)
     public IReadOnlyList<SessionEfficiencyDto> Efficiencies { get; } = Enum.GetValues<SessionEfficiencyDto>();
     public IReadOnlyList<SessionConcentrationDto> Concentrations { get; } = Enum.GetValues<SessionConcentrationDto>();
 
+    public string FormTitle { get; } = "End Session";
+    public string? FormDescription { get; }
+
     public async Task<Result<Result>> SubmitAsync()
     {
         var dto = new StopSessionDto(

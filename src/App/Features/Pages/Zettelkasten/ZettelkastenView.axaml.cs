@@ -14,13 +14,19 @@ public partial class ZettelkastenView : UserControl
         InitializeComponent();
     }
 
-    private async void InputElement_OnPointerPressed(object? sender, RoutedEventArgs e)
+    private async void CreateTopic_OnPointerPressed(object? sender, RoutedEventArgs e)
     {
         if (sender is Button button &&
-            button.DataContext is TopicListDto topic &&
             DataContext is ZettelkastenViewModel vm)
         {
-            await vm.CreateTopicAsync(topic.Id);
+            if (button.DataContext is TopicListDto topic)
+            {
+                await vm.CreateTopicAsync(topic.Id, topic.Title);
+            }
+            else if (button.DataContext is ZettelkastenViewModel)
+            {
+                await vm.CreateTopicAsync();
+            }
         }
     }
 }

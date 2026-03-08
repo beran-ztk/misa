@@ -15,6 +15,9 @@ namespace Misa.Ui.Avalonia.Features.Pages.Tasks.Create;
 public sealed partial class CreateTaskViewModel(TaskGateway gateway)
     : ViewModelBase, IHostedForm<TaskDto>
 {
+    public string FormTitle { get; } = "Create Task";
+    public string? FormDescription { get; }
+
     public async Task<Result<TaskDto>> SubmitAsync()
     {
         var dueAtUtc = DateTimeOffsetHelper.CombineLocalDateAndTimeToUtc(DeadlineDate, DeadlineTime);

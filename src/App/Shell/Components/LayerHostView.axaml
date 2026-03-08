@@ -12,18 +12,33 @@
               Classes="addpanel-main-grid">
 
             <!-- Header -->
-            <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
-                <TextBlock Grid.Column="0" 
-                           Text="Create something"
+            <Grid Grid.Row="0"
+                  ColumnDefinitions="*,Auto"
+                  RowDefinitions="Auto,Auto">
+
+                <!-- Title -->
+                <TextBlock Grid.Row="0"
+                           Grid.Column="0"
+                           Text="{Binding FormTitle}"
                            FontSize="20"
                            FontWeight="Medium"
-                           Foreground="{StaticResource BrushTextPrimary}"/>
+                           Foreground="{StaticResource BrushTextPrimary}" />
 
-                <Button Grid.Column="1"
+                <!-- Close -->
+                <Button Grid.Row="0"
+                        Grid.Column="1"
                         Classes="addpanel-icon"
                         Command="{Binding CloseCommand}">
                     <Image Source="{SvgImage /Assets/Icons/Common/cancel.svg}" />
                 </Button>
+
+                <!-- Description -->
+                <TextBlock Grid.Row="1"
+                           Grid.Column="0"
+                           Grid.ColumnSpan="2"
+                           Classes="addpanel-text"
+                           Text="{Binding FormDescription}"
+                           IsVisible="{Binding FormDescription}" />
             </Grid>
 
             <!-- Separator -->

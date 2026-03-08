@@ -18,6 +18,9 @@ public sealed partial class StartSessionViewModel(Guid itemId, InspectorGateway 
     [ObservableProperty] private bool _stopAutomatically;
     [ObservableProperty] private string? _autoStopReason;
 
+    public string FormTitle { get; } = "Start Session";
+    public string? FormDescription { get; }
+
     public async Task<Result<Result>> SubmitAsync()
     {
         TimeSpan? plannedDuration = PlannedMinutes.HasValue

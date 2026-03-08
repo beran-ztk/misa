@@ -15,6 +15,9 @@ public partial class PauseSessionViewModel(Guid itemId, InspectorGateway gateway
     // Content
     [ObservableProperty] private string? _pauseReason;
 
+    public string FormTitle { get; } = "Pause Session";
+    public string? FormDescription { get; }
+
     public async Task<Result<Result>> SubmitAsync()
     {
         var dto = new PauseSessionRequest(

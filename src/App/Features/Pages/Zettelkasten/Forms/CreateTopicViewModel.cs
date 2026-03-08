@@ -8,10 +8,13 @@ using Misa.Ui.Avalonia.Infrastructure.UI;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Zettelkasten.Forms;
 
-public sealed partial class CreateTopicViewModel(Guid? parentId, ZettelkastenGateway gateway)
+public sealed partial class CreateTopicViewModel(Guid? parentId, string description, ZettelkastenGateway gateway)
     : ViewModelBase, IHostedForm<Result>
 {
     [ObservableProperty] private string _topicTitle = string.Empty;
+
+    public string FormTitle { get; } = "Create Topic";
+    public string? FormDescription { get; } = description;
 
     public async Task<Result<Result>> SubmitAsync()
     {

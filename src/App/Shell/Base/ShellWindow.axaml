@@ -99,7 +99,7 @@
 
             <!-- Modal content -->
             <Border ZIndex="32"
-                    MinWidth="420"
+                    MinWidth="600"
                     MaxWidth="900"
                     Margin="0,70,0,70"
                     HorizontalAlignment="Center"

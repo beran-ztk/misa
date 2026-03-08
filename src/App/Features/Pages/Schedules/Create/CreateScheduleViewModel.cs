@@ -14,6 +14,9 @@ namespace Misa.Ui.Avalonia.Features.Pages.Schedules.Create;
 public sealed partial class CreateScheduleViewModel(ScheduleGateway gateway)
     : ViewModelBase, IHostedForm<ScheduleDto>
 {
+    public string FormTitle { get; } = "Create Schedule";
+    public string? FormDescription { get; }
+
     public async Task<Result<ScheduleDto>> SubmitAsync()
     {
         var dto = TryGetValidatedRequestObject();

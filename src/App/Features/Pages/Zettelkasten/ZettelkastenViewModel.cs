@@ -27,10 +27,15 @@ public sealed partial class ZettelkastenViewModel(ZettelkastenGateway gateway, L
     {
         await GetTopicsAsync();
     }
-    [RelayCommand]
-    public async Task CreateTopicAsync(Guid? parentId = null)
+    public async Task CreateTopicAsync(Guid? parentId = null, string? parentName = null)
     {
-        var formVm = new CreateTopicViewModel(parentId, gateway);
+        string description;
+        if (parentId.HasValue)
+            description = $"This topic will be assigned under the topic '{parentName}'.";
+        else
+            description = "This topic will be on root-level.";
+        
+        var formVm = new CreateTopicViewModel(parentId, description, gateway);
         
         var result = await layerProxy.OpenAsync<CreateTopicViewModel, Result>(formVm, LayerPresentation.Modal);
         if (result is { IsSuccess: true })

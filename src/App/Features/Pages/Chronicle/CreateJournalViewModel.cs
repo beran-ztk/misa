@@ -21,6 +21,9 @@ public sealed partial class CreateJournalViewModel(ChronicleGateway gateway)
     [ObservableProperty] private DateTimeOffset? _untilAtDate;
     [ObservableProperty] private TimeSpan? _untilAtTime;
     
+    public string FormTitle { get; } = "Create Journal";
+    public string? FormDescription { get; }
+
     public async Task<Result<Result>> SubmitAsync()
     {
         var dto = new CreateJournalRequest(
