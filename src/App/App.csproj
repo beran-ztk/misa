@@ -12,6 +12,7 @@
     <ItemGroup>
         <AvaloniaResource Include="Assets\**"/>
         <Folder Include="Features\Inspector\Tabs\" />
+        <Folder Include="Features\Pages\Zettelkasten\Forms\" />
         <Folder Include="Features\Utilities\" />
     </ItemGroup>
 

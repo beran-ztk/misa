@@ -16,10 +16,10 @@
 
             <TextBox Classes="addpanel-oneliner"
                      Watermark="Title…"
-                     Text="{Binding State.Title, Mode=TwoWay}" />
+                     Text="{Binding Title, Mode=TwoWay}" />
 
-            <TextBlock Text="{Binding State.ErrorMessage}"
-                       IsVisible="{Binding State.HasValidationError}" />
+            <TextBlock Text="{Binding ErrorMessage}"
+                       IsVisible="{Binding HasValidationError}" />
         </StackPanel>
 
         <!-- Description -->
@@ -28,7 +28,7 @@
                        Classes="addpanel-text" />
             <TextBox Classes="addpanel-oneliner"
                      Watermark="Description…"
-                     Text="{Binding State.Description, Mode=TwoWay}" />
+                     Text="{Binding Description, Mode=TwoWay}" />
         </StackPanel>
         
         <!-- Frequency -->
@@ -37,8 +37,8 @@
                        Classes="addpanel-text"/>
 
             <ComboBox Classes="addpanel-combo"
-                      ItemsSource="{Binding State.FrequencyTypes}"
-                      SelectedValue="{Binding State.SelectedFrequencyType}" />
+                      ItemsSource="{Binding FrequencyTypes}"
+                      SelectedValue="{Binding SelectedFrequencyType}" />
         </StackPanel>
 
         <StackPanel Classes="addpanel-controls">
@@ -46,7 +46,7 @@
                        Classes="addpanel-text"/>
 
             <NumericUpDown Classes="addpanel-num"
-                           Value="{Binding State.FrequencyInterval, Mode=TwoWay}"
+                           Value="{Binding FrequencyInterval, Mode=TwoWay}"
                            Minimum="1"
                            Maximum="1000"
                            Increment="1"
@@ -59,7 +59,7 @@
                        Classes="addpanel-text"/>
 
             <NumericUpDown Classes="addpanel-num"
-                           Value="{Binding State.LookaheadLimit, Mode=TwoWay}"
+                           Value="{Binding LookaheadLimit, Mode=TwoWay}"
                            Minimum="1"
                            Maximum="100"
                            Increment="1"
@@ -72,7 +72,7 @@
                        Classes="addpanel-text"/>
 
             <NumericUpDown Classes="addpanel-num"
-                           Value="{Binding State.OccurrenceCountLimit, Mode=TwoWay}"
+                           Value="{Binding OccurrenceCountLimit, Mode=TwoWay}"
                            Minimum="0"
                            Maximum="100000"
                            Increment="1"
@@ -85,8 +85,8 @@
                        Classes="addpanel-text"/>
 
             <ComboBox Classes="addpanel-combo"
-                      ItemsSource="{Binding State.MisfirePolicies}"
-                      SelectedValue="{Binding State.SelectedMisfirePolicy, Mode=TwoWay}" />
+                      ItemsSource="{Binding MisfirePolicies}"
+                      SelectedValue="{Binding SelectedMisfirePolicy, Mode=TwoWay}" />
         </StackPanel>
 
         <!-- Occurrence TTL -->
@@ -107,7 +107,7 @@
                                Classes="addpanel-num"
                                Minimum="0"
                                Increment="1"
-                               Value="{Binding State.OccurrenceTtlDays, Mode=TwoWay}" />
+                               Value="{Binding OccurrenceTtlDays, Mode=TwoWay}" />
 
                 <TextBlock Grid.Row="1" Grid.Column="0"
                            VerticalAlignment="Center"
@@ -118,7 +118,7 @@
                                Minimum="0"
                                Maximum="23"
                                Increment="1"
-                               Value="{Binding State.OccurrenceTtlHours, Mode=TwoWay}" />
+                               Value="{Binding OccurrenceTtlHours, Mode=TwoWay}" />
 
                 <TextBlock Grid.Row="2" Grid.Column="0"
                            VerticalAlignment="Center"
@@ -129,7 +129,7 @@
                                Minimum="0"
                                Maximum="59"
                                Increment="1"
-                               Value="{Binding State.OccurrenceTtlMinutes, Mode=TwoWay}" />
+                               Value="{Binding OccurrenceTtlMinutes, Mode=TwoWay}" />
             </Grid>
         </StackPanel>
 
@@ -138,14 +138,14 @@
             <TextBlock Text="Start time (optional)"
                        Classes="addpanel-text"/>
             <TimePicker Classes="addpanel-time"
-                        SelectedTime="{Binding State.StartTime, Mode=TwoWay}" />
+                        SelectedTime="{Binding StartTime, Mode=TwoWay}" />
         </StackPanel>
 
         <StackPanel Classes="addpanel-controls">
             <TextBlock Text="End time (optional)"
                        Classes="addpanel-text"/>
             <TimePicker Classes="addpanel-time"
-                        SelectedTime="{Binding State.EndTime, Mode=TwoWay}" />
+                        SelectedTime="{Binding EndTime, Mode=TwoWay}" />
         </StackPanel>
 
         <!-- Active range -->
@@ -155,9 +155,9 @@
 
             <StackPanel Orientation="Vertical" Spacing="10">
                 <DatePicker Classes="addpanel-date"
-                            SelectedDate="{Binding State.ActiveFromDate, Mode=TwoWay}" />
+                            SelectedDate="{Binding ActiveFromDate, Mode=TwoWay}" />
                 <TimePicker Classes="addpanel-time"
-                            SelectedTime="{Binding State.ActiveFromTime, Mode=TwoWay}" />
+                            SelectedTime="{Binding ActiveFromTime, Mode=TwoWay}" />
             </StackPanel>
         </StackPanel>
 
@@ -167,9 +167,9 @@
 
             <StackPanel Orientation="Vertical" Spacing="10">
                 <DatePicker Classes="addpanel-date"
-                            SelectedDate="{Binding State.ActiveUntilDate, Mode=TwoWay}" />
+                            SelectedDate="{Binding ActiveUntilDate, Mode=TwoWay}" />
                 <TimePicker Classes="addpanel-time"
-                            SelectedTime="{Binding State.ActiveUntilTime, Mode=TwoWay}" />
+                            SelectedTime="{Binding ActiveUntilTime, Mode=TwoWay}" />
             </StackPanel>
         </StackPanel>
 
@@ -185,19 +185,19 @@
 
                 <StackPanel>
                     <CheckBox Content="Monday"    
-                              IsChecked="{Binding State.ByDayMon, Mode=TwoWay}" />
+                              IsChecked="{Binding ByDayMon, Mode=TwoWay}" />
                     <CheckBox Content="Tuesday"   
-                              IsChecked="{Binding State.ByDayTue, Mode=TwoWay}" />
+                              IsChecked="{Binding ByDayTue, Mode=TwoWay}" />
                     <CheckBox Content="Wednesday" 
-                              IsChecked="{Binding State.ByDayWed, Mode=TwoWay}" />
+                              IsChecked="{Binding ByDayWed, Mode=TwoWay}" />
                     <CheckBox Content="Thursday"  
-                              IsChecked="{Binding State.ByDayThu, Mode=TwoWay}" />
+                              IsChecked="{Binding ByDayThu, Mode=TwoWay}" />
                     <CheckBox Content="Friday"    
-                              IsChecked="{Binding State.ByDayFri, Mode=TwoWay}" />
+                              IsChecked="{Binding ByDayFri, Mode=TwoWay}" />
                     <CheckBox Content="Saturday"  
-                              IsChecked="{Binding State.ByDaySat, Mode=TwoWay}" />
+                              IsChecked="{Binding ByDaySat, Mode=TwoWay}" />
                     <CheckBox Content="Sunday"    
-                              IsChecked="{Binding State.ByDaySun, Mode=TwoWay}" />
+                              IsChecked="{Binding ByDaySun, Mode=TwoWay}" />
                 </StackPanel>
             </Expander>
 
@@ -208,29 +208,29 @@
 
                 <StackPanel>
                     <CheckBox Content="January"
-                              IsChecked="{Binding State.ByMonthJan, Mode=TwoWay}" />
+                              IsChecked="{Binding ByMonthJan, Mode=TwoWay}" />
                     <CheckBox Content="February"
-                              IsChecked="{Binding State.ByMonthFeb, Mode=TwoWay}" />
+                              IsChecked="{Binding ByMonthFeb, Mode=TwoWay}" />
                     <CheckBox Content="March"
-                              IsChecked="{Binding State.ByMonthMar, Mode=TwoWay}" />
+                              IsChecked="{Binding ByMonthMar, Mode=TwoWay}" />
                     <CheckBox Content="April"
-                              IsChecked="{Binding State.ByMonthApr, Mode=TwoWay}" />
+                              IsChecked="{Binding ByMonthApr, Mode=TwoWay}" />
                     <CheckBox Content="May"
-                              IsChecked="{Binding State.ByMonthMay, Mode=TwoWay}" />
+                              IsChecked="{Binding ByMonthMay, Mode=TwoWay}" />
                     <CheckBox Content="June"
-                              IsChecked="{Binding State.ByMonthJun, Mode=TwoWay}" />
+                              IsChecked="{Binding ByMonthJun, Mode=TwoWay}" />
                     <CheckBox Content="July"
-                              IsChecked="{Binding State.ByMonthJul, Mode=TwoWay}" />
+                              IsChecked="{Binding ByMonthJul, Mode=TwoWay}" />
                     <CheckBox Content="August"
-                              IsChecked="{Binding State.ByMonthAug, Mode=TwoWay}" />
+                              IsChecked="{Binding ByMonthAug, Mode=TwoWay}" />
                     <CheckBox Content="September"
-                              IsChecked="{Binding State.ByMonthSep, Mode=TwoWay}" />
+                              IsChecked="{Binding ByMonthSep, Mode=TwoWay}" />
                     <CheckBox Content="October"
-                              IsChecked="{Binding State.ByMonthOct, Mode=TwoWay}" />
+                              IsChecked="{Binding ByMonthOct, Mode=TwoWay}" />
                     <CheckBox Content="November"
-                              IsChecked="{Binding State.ByMonthNov, Mode=TwoWay}" />
+                              IsChecked="{Binding ByMonthNov, Mode=TwoWay}" />
                     <CheckBox Content="December"
-                              IsChecked="{Binding State.ByMonthDec, Mode=TwoWay}" />
+                              IsChecked="{Binding ByMonthDec, Mode=TwoWay}" />
                 </StackPanel>
             </Expander>
 
@@ -246,7 +246,7 @@
 
                     <TextBox Classes="addpanel-oneliner"
                              Watermark="1, 15, 31"
-                             Text="{Binding State.ByMonthDayCsv, Mode=TwoWay}" />
+                             Text="{Binding ByMonthDayCsv, Mode=TwoWay}" />
                 </StackPanel>
             </Expander>
 
@@ -259,8 +259,8 @@
                        Classes="addpanel-text"/>
 
             <ComboBox Classes="addpanel-combo"
-                      ItemsSource="{Binding State.ActionTypes}"
-                      SelectedValue="{Binding State.SelectedActionType}" />
+                      ItemsSource="{Binding ActionTypes}"
+                      SelectedValue="{Binding SelectedActionType}" />
         </StackPanel>
 
     </StackPanel>

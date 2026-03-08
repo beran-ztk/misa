@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Input;
+using Misa.Contract.Items.Components.Schedules;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Pages.Schedules.Create;
 using Misa.Ui.Avalonia.Infrastructure.UI;
@@ -37,14 +38,12 @@ public sealed partial class ScheduleFacadeViewModel(
     [RelayCommand]
     private async Task ShowAddPanelAsync()
     {
-        State.CreateState.Reset();
-
-        // var formVm = new CreateScheduleViewModel(State.CreateState, Gateway);
-        //
-        // var created = await PanelProxy.OpenAsync(Panels.Schedule, formVm);
-        // if (created is null) return;
-        //
-        // await State.AddToCollection(created);
+        var formVm = new CreateScheduleViewModel(Gateway);
+        
+        var created = await LayerProxy.OpenAsync<CreateScheduleViewModel, ScheduleDto>(formVm);
+        if (created is null) return;
+        
+        await State.AddToCollection(created);
     }
 
 }

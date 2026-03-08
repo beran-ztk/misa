@@ -20,7 +20,6 @@ using Misa.Ui.Avalonia.Infrastructure.UI;
 using Misa.Ui.Avalonia.Shell.Authentication;
 using Misa.Ui.Avalonia.Shell.Base;
 using Misa.Ui.Avalonia.Shell.Components;
-using CreateScheduleState = Misa.Ui.Avalonia.Features.Pages.Schedules.Root.CreateScheduleState;
 
 namespace Misa.Ui.Avalonia.Infrastructure.Composition;
 
@@ -117,7 +116,6 @@ public static class CompositionRoot
     private static void AddSchedulingFeature(this IServiceCollection sc)
     {
         sc.AddSingleton<ScheduleState>();
-        sc.AddTransient<CreateScheduleState>();
         sc.AddSingleton<ScheduleFacadeViewModel>();
         sc.AddSingleton<ScheduleGateway>();
 

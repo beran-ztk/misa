@@ -7,6 +7,7 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DynamicData.Binding;
+using Misa.Contract.Common.Results;
 using Misa.Contract.Items;
 using Misa.Contract.Items.Components.Chronicle;
 using Misa.Ui.Avalonia.Common.Mappings;
@@ -74,12 +75,12 @@ public partial class ChronicleViewModel(
     [RelayCommand]
     private async Task ShowAddPanelAsync()
     {
-        // var formVm = new CreateJournalViewModel(gateway);
-        //
-        // var created = await panelProxy.OpenAsync(PanelKey.CreateJournal, formVm);
-        // if (created.IsSuccess)
-        // {
-        //     await GetAllAsync();
-        // }
+        var formVm = new CreateJournalViewModel(gateway);
+        
+        var result = await layerProxy.OpenAsync<CreateJournalViewModel, Result>(formVm);
+        if (result is { IsSuccess: true })
+        {
+            await GetAllAsync();
+        }
     }
 }
