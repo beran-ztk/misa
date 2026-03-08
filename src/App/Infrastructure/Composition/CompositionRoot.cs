@@ -60,7 +60,7 @@ public static class CompositionRoot
         sc.AddSingleton<ShellState>();
 
         sc.AddSingleton<IWorkspaceHost>(sp => sp.GetRequiredService<ShellState>());
-        sc.AddSingleton<IPanelHost>(sp => sp.GetRequiredService<ShellState>());
+        sc.AddSingleton<ILayerHost>(sp => sp.GetRequiredService<ShellState>());
         
         // VMs
         sc.AddSingleton<AuthenticationWindowViewModel>();

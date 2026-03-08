@@ -9,7 +9,7 @@ using Misa.Ui.Avalonia.Shell.Components;
 
 namespace Misa.Ui.Avalonia.Infrastructure.States;
 
-public partial class ShellState : ObservableObject, IPanelHost, IWorkspaceHost
+public partial class ShellState : ObservableObject, ILayerHost, IWorkspaceHost
 {
     private readonly ISelectionContextState _selectionContext;
     

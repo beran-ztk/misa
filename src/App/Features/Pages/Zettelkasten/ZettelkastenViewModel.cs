@@ -32,7 +32,7 @@ public sealed partial class ZettelkastenViewModel(ZettelkastenGateway gateway, L
     {
         var formVm = new CreateTopicViewModel(parentId, gateway);
         
-        var result = await layerProxy.OpenAsync<CreateTopicViewModel, Result>(formVm);
+        var result = await layerProxy.OpenAsync<CreateTopicViewModel, Result>(formVm, LayerPresentation.Modal);
         if (result is { IsSuccess: true })
         {
             await RefreshWorkspaceAsync();
