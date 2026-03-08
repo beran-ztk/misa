@@ -34,8 +34,11 @@ public partial class LayerProxy(
     [RelayCommand]
     public void Close(object? result = null)
     {
-        layerHost.Panel = null;
-
+        if (layerHost.Modal is not null)
+            layerHost.Modal = null;
+        else if (layerHost.Panel is not null)
+            layerHost.Panel = null;
+        
         _activePanelTcs?.TrySetResult(result);
         _activePanelTcs = null;
     }

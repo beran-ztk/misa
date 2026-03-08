@@ -86,16 +86,15 @@
               ZIndex="30"
               IsVisible="{Binding ShellState.IsModalOpen}">
 
-            <!-- Dimmed overlay that blocks clicks -->
-            <Border Background="#DA000000"
+            <!-- Overlay -->
+            <Border Background="{StaticResource BrushOverlay}"
                     HorizontalAlignment="Stretch"
                     VerticalAlignment="Stretch">
 
-                <!-- Click-catcher -->
-                <Button Background="Transparent"
-                        BorderThickness="0"
+                <Button Classes="overlay"
                         HorizontalAlignment="Stretch"
-                        VerticalAlignment="Stretch"/>
+                        VerticalAlignment="Stretch"
+                        Command="{Binding LayerCloser.BackdropCloseCommand}"/>
             </Border>
 
             <!-- Modal content -->
@@ -104,7 +103,7 @@
                     MaxWidth="900"
                     Margin="0,70,0,70"
                     HorizontalAlignment="Center"
-                    VerticalAlignment="Stretch">
+                    VerticalAlignment="Center">
 
                 <ContentControl Content="{Binding ShellState.Modal}" />
             </Border>
