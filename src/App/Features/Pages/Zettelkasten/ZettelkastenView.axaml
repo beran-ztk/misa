@@ -2,54 +2,174 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="Misa.Ui.Avalonia.Features.Pages.Zettelkasten.ZettelkastenView"
              xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Zettelkasten"
+             mc:Ignorable="d"
+             d:DesignWidth="1100"
+             d:DesignHeight="700"
+             x:Class="Misa.Ui.Avalonia.Features.Pages.Zettelkasten.ZettelkastenView"
              x:DataType="root:ZettelkastenViewModel">
-    
-    <Border Padding="10"
-            Background="{StaticResource BrushPrimaryBackgroundLight}">
-        <Grid ColumnDefinitions="300,*">
 
-            <!-- Index -->
+    <UserControl.Styles>
+        <Style Selector="TreeView.zettelkasten-tree">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+        </Style>
+
+        <Style Selector="TreeViewItem">
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0,1,0,1" />
+        </Style>
+
+        <Style Selector="Border.topic-row">
+            <Setter Property="Padding" Value="6,4" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="1" />
+        </Style>
+
+        <Style Selector="Border.topic-row:pointerover">
+            <Setter Property="Background" Value="#0FFFFFFF" />
+            <Setter Property="BorderBrush" Value="#14FFFFFF" />
+        </Style>
+
+        <Style Selector="TextBlock.topic-title">
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+            <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}" />
+        </Style>
+
+        <Style Selector="Button.topic-add-button">
+            <Setter Property="Width" Value="18" />
+            <Setter Property="Height" Value="18" />
+            <Setter Property="MinWidth" Value="18" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="4,0,0,0" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Opacity" Value="0" />
+            <Setter Property="IsHitTestVisible" Value="False" />
+            <Setter Property="HorizontalAlignment" Value="Right" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <Style Selector="Border.topic-row:pointerover Button.topic-add-button">
+            <Setter Property="Opacity" Value="1" />
+            <Setter Property="IsHitTestVisible" Value="True" />
+        </Style>
+
+        <Style Selector="Button.topic-add-button:pointerover">
+            <Setter Property="Background" Value="#12FFFFFF" />
+        </Style>
+
+        <Style Selector="Button.topic-add-button Image">
+            <Setter Property="Width" Value="12" />
+            <Setter Property="Height" Value="12" />
+        </Style>
+    </UserControl.Styles>
+
+    <Border Padding="12"
+            Background="{StaticResource BrushPrimaryBackgroundLight}">
+        <Grid ColumnDefinitions="320,*"
+              ColumnSpacing="0">
+
+            <!-- Left: Index -->
             <Border Grid.Column="0"
                     Background="{StaticResource BrushPrimaryBackgroundLight}"
                     BorderBrush="{StaticResource BrushBorder}"
-                    BorderThickness="0,0,1,0">
-                <StackPanel>
-                    <TextBlock Text="Index" />
-                    <Button Classes="workspace-toolbar-icon"
-                            Click="CreateTopic_OnPointerPressed">
-                        <Image Source="{SvgImage /Assets/Icons/Common/plus.svg}" />
-                    </Button>
-                    <Button Classes="workspace-toolbar-icon"
-                            Command="{Binding RefreshWorkspaceCommand}">
-                        <Image Source="{SvgImage /Assets/Icons/Common/refresh.svg}" />
-                    </Button>
-                    
-                    <TreeView ItemsSource="{Binding Topics}">
-                        <TreeView.ItemTemplate>
-                            <TreeDataTemplate ItemsSource="{Binding Children}">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <TextBlock Text="{Binding Title}" />
-                                    <Button Classes="workspace-toolbar-icon"
-                                            Click="CreateTopic_OnPointerPressed">
-                                        <Image Source="{SvgImage /Assets/Icons/Common/plus.svg}" />
-                                    </Button>
-                                </StackPanel>
-                            </TreeDataTemplate>
-                        </TreeView.ItemTemplate>
-                    </TreeView>
-                </StackPanel>
+                    BorderThickness="0,0,1,0"
+                    Padding="0,0,12,0">
+
+                <Grid RowDefinitions="Auto,Auto,Auto,*">
+
+                    <!-- Header -->
+                    <Grid Grid.Row="0"
+                          ColumnDefinitions="*,Auto,Auto"
+                          ColumnSpacing="8"
+                          Margin="0,0,0,8">
+                        <TextBlock Grid.Column="0"
+                                   Text="Knowledge Map"
+                                   FontSize="18"
+                                   FontWeight="SemiBold"
+                                   VerticalAlignment="Center"
+                                   Foreground="{StaticResource BrushTextPrimary}" />
+
+                        <Button Grid.Column="1"
+                                Classes="workspace-toolbar-icon"
+                                ToolTip.Tip="Create topic"
+                                Click="CreateTopic_OnPointerPressed">
+                            <Image Source="{SvgImage /Assets/Icons/Common/plus.svg}" />
+                        </Button>
+
+                        <Button Grid.Column="2"
+                                Classes="workspace-toolbar-icon"
+                                ToolTip.Tip="Refresh"
+                                Command="{Binding RefreshWorkspaceCommand}">
+                            <Image Source="{SvgImage /Assets/Icons/Common/refresh.svg}" />
+                        </Button>
+                    </Grid>
+
+                    <!-- Description -->
+                    <TextBlock Grid.Row="1"
+                               Margin="0,0,0,10"
+                               Text="Structure and entry points of your knowledge base."
+                               Foreground="{StaticResource BrushTextSecondary}"
+                               TextWrapping="Wrap" />
+
+                    <!-- Divider -->
+                    <Border Grid.Row="2"
+                            VerticalAlignment="Top"
+                            Margin="0,0,0,10"
+                            Height="1"
+                            Background="{StaticResource BrushBorder}"
+                            Opacity="0.35" />
+
+                    <!-- Tree -->
+                    <ScrollViewer Grid.Row="3"
+                                  Margin="0,12,0,0"
+                                  HorizontalScrollBarVisibility="Disabled"
+                                  VerticalScrollBarVisibility="Auto">
+
+                        <TreeView Classes="zettelkasten-tree"
+                                  ItemsSource="{Binding Topics}">
+                            <TreeView.ItemTemplate>
+                                <TreeDataTemplate ItemsSource="{Binding Children}">
+                                    <Border Classes="topic-row">
+                                        <Grid ColumnDefinitions="*,Auto"
+                                              ColumnSpacing="6">
+                                            <TextBlock Grid.Column="0"
+                                                       Classes="topic-title"
+                                                       Text="{Binding Title}" />
+
+                                            <Button Grid.Column="1"
+                                                    Classes="topic-add-button"
+                                                    Click="CreateTopic_OnPointerPressed">
+                                                <Image Source="{SvgImage /Assets/Icons/Common/plus.svg}" />
+                                            </Button>
+                                        </Grid>
+                                    </Border>
+                                </TreeDataTemplate>
+                            </TreeView.ItemTemplate>
+                        </TreeView>
+                    </ScrollViewer>
+                </Grid>
             </Border>
 
-            <!-- Content / Overview -->
+            <!-- Right: Content -->
             <Border Grid.Column="1"
-                    Background="{StaticResource BrushPrimaryBackgroundLight}">
-                <TextBlock Text="Overview" />
+                    Background="{StaticResource BrushPrimaryBackgroundLight}"
+                    Padding="20,0,0,0">
+                <Grid RowDefinitions="Auto,*">
+                    <TextBlock Grid.Row="0"
+                               Text="Overview"
+                               FontSize="18"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource BrushTextPrimary}" />
+                </Grid>
             </Border>
-
         </Grid>
     </Border>
-
 </UserControl>
