@@ -35,16 +35,19 @@ public partial class ShellState : ObservableObject, IPanelHost, IWorkspaceHost
     [ObservableProperty] private ViewModelBase _utilityNavigation;
     [ObservableProperty] private ViewModelBase? _utility;
     
+    // Panel
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsPanelOpen))]
     private Control? _panel;
     public bool IsPanelOpen => Panel is not null;
-    [RelayCommand] private void ClosePanel() => Modal = null;
+    
+    // Modal
     [ObservableProperty] 
     [NotifyPropertyChangedFor(nameof(IsModalOpen))]
     private Control? _modal;
     public bool IsModalOpen => Modal is not null;
-    [RelayCommand] private void CloseModal() => Modal = null;
+
+    
     [ObservableProperty] private ViewModelBase? _toast;
     [ObservableProperty] private ViewModelBase? _busy;
 }

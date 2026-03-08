@@ -23,7 +23,7 @@ public sealed partial class ChronicleItems(DateTime date, List<ChronicleEntryDto
 public partial class ChronicleViewModel(
     ChronicleGateway gateway, 
     ISelectionContextState selectionContextState,
-    PanelProxy panelProxy) : ViewModelBase
+    LayerProxy layerProxy) : ViewModelBase
 {
     private IReadOnlyCollection<ChronicleEntryDto> Entries { get; set; } = [];
     public ObservableCollection<ChronicleItems> ChronicleEntries { get; set; } = [];
@@ -74,12 +74,12 @@ public partial class ChronicleViewModel(
     [RelayCommand]
     private async Task ShowAddPanelAsync()
     {
-        var formVm = new CreateJournalViewModel(gateway);
-        
-        var created = await panelProxy.OpenAsync(PanelKey.CreateJournal, formVm);
-        if (created.IsSuccess)
-        {
-            await GetAllAsync();
-        }
+        // var formVm = new CreateJournalViewModel(gateway);
+        //
+        // var created = await panelProxy.OpenAsync(PanelKey.CreateJournal, formVm);
+        // if (created.IsSuccess)
+        // {
+        //     await GetAllAsync();
+        // }
     }
 }

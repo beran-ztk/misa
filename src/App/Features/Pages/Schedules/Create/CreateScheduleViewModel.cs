@@ -9,7 +9,7 @@ namespace Misa.Ui.Avalonia.Features.Pages.Schedules.Create;
 
 public sealed class CreateScheduleViewModel(
     CreateScheduleState state,
-    ScheduleGateway gateway) : IHostedForm<ScheduleDto>
+    ScheduleGateway gateway)
 {
     public CreateScheduleState State { get; } = state;
 

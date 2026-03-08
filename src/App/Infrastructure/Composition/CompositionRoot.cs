@@ -46,12 +46,11 @@ public static class CompositionRoot
 
     private static void AddCore(this IServiceCollection sc, string baseAddress)
     {
-        sc.AddSingleton<PanelProxy>();
-        sc.AddSingleton<IPanelCloser>(sp => sp.GetRequiredService<PanelProxy>());
-        sc.AddSingleton<IPanelFactory, PanelFactory>();
+        sc.AddSingleton<LayerProxy>();
+        sc.AddSingleton<ILayerCloser>(sp => sp.GetRequiredService<LayerProxy>());
         sc.AddSingleton<RemoteProxy>();
         sc.AddSingleton<SignalRNotificationClient>();
-        sc.AddTransient<PanelHostView>();
+        sc.AddTransient<LayerHostView>();
 
         sc.AddSingleton(new HttpClient { BaseAddress = new Uri(baseAddress) });
     }
@@ -109,7 +108,6 @@ public static class CompositionRoot
     private static void AddTasksFeature(this IServiceCollection sc)
     {
         sc.AddSingleton<TaskState>();
-        sc.AddTransient<CreateTaskState>();
         sc.AddSingleton<TaskFacadeViewModel>();
         sc.AddSingleton<TaskGateway>();
 

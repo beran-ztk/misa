@@ -5,9 +5,6 @@
              x:DataType="root:CreateTaskViewModel">
 
     <StackPanel Classes="addpanel-body">
-
-        <TextBlock Text="{Binding State.SubmitErrorMessage}"
-                   IsVisible="{Binding State.HasSubmitError}" />
         
         <!-- Title -->
         <StackPanel Classes="addpanel-controls">
@@ -15,9 +12,7 @@
                        Classes="addpanel-text" />
             <TextBox Classes="addpanel-oneliner"
                      Watermark="Title…"
-                     Text="{Binding State.Title, Mode=TwoWay}" />
-            <TextBlock Text="{Binding State.ErrorMessageTitle}"
-                       IsVisible="{Binding State.TitleHasValidationError}" />
+                     Text="{Binding Title, Mode=TwoWay}" />
         </StackPanel>
         
         <!-- Description -->
@@ -26,7 +21,7 @@
                        Classes="addpanel-text" />
             <TextBox Classes="addpanel-multiline"
                      Watermark="Description…"
-                     Text="{Binding State.Description, Mode=TwoWay}" />
+                     Text="{Binding Description, Mode=TwoWay}" />
         </StackPanel>
 
         <!-- Category -->
@@ -34,8 +29,8 @@
             <TextBlock Text="Select the category" 
                        Classes="addpanel-text"/>
             <ComboBox Classes="addpanel-combo"
-                      ItemsSource="{Binding State.Categories}"
-                      SelectedValue="{Binding State.SelectedCategoryDto}" />
+                      ItemsSource="{Binding Categories}"
+                      SelectedValue="{Binding SelectedCategoryDto}" />
         </StackPanel>
 
         <!-- Priority -->
@@ -43,8 +38,8 @@
             <TextBlock Text="Choose a priority for the task" 
                        Classes="addpanel-text"/>
             <ComboBox Classes="addpanel-combo"
-                      ItemsSource="{Binding State.Priorities}"
-                      SelectedValue="{Binding State.SelectedActivityPriorityDto}" />
+                      ItemsSource="{Binding Priorities}"
+                      SelectedValue="{Binding SelectedActivityPriorityDto}" />
         </StackPanel>
         
         <!-- Deadline -->
@@ -52,9 +47,9 @@
             <TextBlock Text="Set a deadline"
                        Classes="addpanel-text"/>
             <DatePicker Classes="addpanel-date"
-                        SelectedDate="{Binding State.DeadlineDate}" />
+                        SelectedDate="{Binding DeadlineDate}" />
             <TimePicker Classes="addpanel-time"
-                        SelectedTime="{Binding State.DeadlineTime}" />
+                        SelectedTime="{Binding DeadlineTime}" />
         </StackPanel>
     </StackPanel>
 </UserControl>

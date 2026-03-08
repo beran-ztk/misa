@@ -9,12 +9,12 @@ namespace Misa.Ui.Avalonia.Features.Pages.Schedules.Root;
 public sealed partial class ScheduleFacadeViewModel(
     ScheduleState state,
     ScheduleGateway gateway,
-    PanelProxy panelProxy)
+    LayerProxy layerProxy)
     : ViewModelBase
 {
     public ScheduleState State { get; } = state;
     private ScheduleGateway Gateway { get; } = gateway;
-    private PanelProxy PanelProxy { get; } = panelProxy;
+    private LayerProxy LayerProxy { get; } = layerProxy;
 
     public async Task InitializeWorkspaceAsync()
     {
@@ -39,12 +39,12 @@ public sealed partial class ScheduleFacadeViewModel(
     {
         State.CreateState.Reset();
 
-        var formVm = new CreateScheduleViewModel(State.CreateState, Gateway);
-
-        var created = await PanelProxy.OpenAsync(Panels.Schedule, formVm);
-        if (created is null) return;
-
-        await State.AddToCollection(created);
+        // var formVm = new CreateScheduleViewModel(State.CreateState, Gateway);
+        //
+        // var created = await PanelProxy.OpenAsync(Panels.Schedule, formVm);
+        // if (created is null) return;
+        //
+        // await State.AddToCollection(created);
     }
 
 }

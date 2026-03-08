@@ -10,7 +10,7 @@ using Misa.Ui.Avalonia.Infrastructure.UI;
 namespace Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions.Forms;
 
 public sealed partial class StartSessionViewModel(Guid itemId, InspectorGateway gateway)
-    : ViewModelBase, IHostedForm
+    : ViewModelBase
 {
     // Host
     public string Title => "Start a Session";

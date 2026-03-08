@@ -26,49 +26,49 @@ public partial class InspectorEntryViewModel
     [RelayCommand]
     private async Task ShowStartSessionPanelAsync()
     {
-        var itemId = Facade.State.Item.Id;
-
-        var formVm = new StartSessionViewModel(itemId, Facade.Gateway);
-
-        var result = await Facade.PanelProxy.OpenAsync(PanelKey.StartSession, formVm);
-
-        if (result is { IsSuccess: true })
-        {
-            await Facade.Reload();
-        }
+        // var itemId = Facade.State.Item.Id;
+        //
+        // var formVm = new StartSessionViewModel(itemId, Facade.Gateway);
+        //
+        // var result = await Facade.PanelProxy.OpenAsync(formVm);
+        //
+        // if (result is { IsSuccess: true })
+        // {
+        //     await Facade.Reload();
+        // }
     }
 
     [RelayCommand]
     private async Task ShowPauseSessionPanelAsync()
     {
-        if (CurrentSession == null)
-            return;
-        
-        var itemId = Facade.State.Item.Id;
-
-        var formVm = new PauseSessionViewModel(itemId, Facade.Gateway);
-
-        var result = await Facade.PanelProxy.OpenAsync(PanelKey.PauseSession, formVm);
-
-        if (result is { IsSuccess: true })
-        {
-            await Facade.Reload();
-        }
+        // if (CurrentSession == null)
+        //     return;
+        //
+        // var itemId = Facade.State.Item.Id;
+        //
+        // var formVm = new PauseSessionViewModel(itemId, Facade.Gateway);
+        //
+        // var result = await Facade.PanelProxy.OpenAsync(formVm);
+        //
+        // if (result is { IsSuccess: true })
+        // {
+        //     await Facade.Reload();
+        // }
     }
     
     [RelayCommand]
     private async Task ShowEndSessionPanelAsync()
     {
-        var itemId = Facade.State.Item.Id;
-
-        var formVm = new EndSessionViewModel(itemId, Facade.Gateway);
-
-        var result = await Facade.PanelProxy.OpenAsync(PanelKey.EndSession, formVm);
-
-        if (result is { IsSuccess: true })
-        {
-            await Facade.Reload();
-        }
+        // var itemId = Facade.State.Item.Id;
+        //
+        // var formVm = new EndSessionViewModel(itemId, Facade.Gateway);
+        //
+        // var result = await Facade.PanelProxy.OpenAsync(PanelKey.EndSession, formVm);
+        //
+        // if (result is { IsSuccess: true })
+        // {
+        //     await Facade.Reload();
+        // }
     }
     [RelayCommand]
     private async Task ContinueSessionAsync()

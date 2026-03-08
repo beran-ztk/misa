@@ -9,7 +9,7 @@ namespace Misa.Ui.Avalonia.Features.Pages.Schola;
 
 public partial class ScholaViewModel(
     ScholaGateway gateway, 
-    PanelProxy panelProxy) : ViewModelBase
+    LayerProxy layerProxy) : ViewModelBase
 {
     public ObservableCollection<ArcDto> Arcs { get; set; } = [];
     public ObservableCollection<UnitDto> Units { get; set; } = [];
@@ -39,13 +39,13 @@ public partial class ScholaViewModel(
     {
         var formVm = new CreateArcViewModel(gateway);
 
-        await panelProxy.OpenAsync(PanelKey.CreateArc, formVm);
+        // await panelProxy.OpenAsync(PanelKey.CreateArc, formVm);
     }
     [RelayCommand]
     private async Task ShowAddUnitPanelAsync()
     {
         var formVm = new CreateUnitViewModel(gateway);
 
-        await panelProxy.OpenAsync(PanelKey.CreateUnit, formVm);
+        // await panelProxy.OpenAsync(PanelKey.CreateUnit, formVm);
     }
 }

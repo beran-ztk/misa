@@ -3,9 +3,9 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="Misa.Ui.Avalonia.Shell.Components.PanelHostView"
-             xmlns:ui="clr-namespace:Misa.Ui.Avalonia.Infrastructure.UI"
-             x:DataType="ui:IPanelHostViewModel">
+             x:Class="Misa.Ui.Avalonia.Shell.Components.LayerHostView"
+             xmlns:vm="clr-namespace:Misa.Ui.Avalonia.Shell.Components"
+             x:DataType="vm:IPanelHostViewModel">
     
     <Border Classes="addpanel-main-border">
         <Grid RowDefinitions="Auto,Auto,*,Auto,Auto"
@@ -14,7 +14,7 @@
             <!-- Header -->
             <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
                 <TextBlock Grid.Column="0" 
-                           Text="{Binding Title}"
+                           Text="Create something"
                            FontSize="20"
                            FontWeight="Medium"
                            Foreground="{StaticResource BrushTextPrimary}"/>
@@ -35,7 +35,7 @@
                           VerticalScrollBarVisibility="Auto">
                 
                 <ContentControl Padding="20, 0" 
-                    Content="{Binding ContentView}"/>
+                    Content="{Binding Form}"/>
             </ScrollViewer>
             
             <!-- Separator -->
@@ -50,12 +50,11 @@
                 <StackPanel Grid.Column="1" 
                             Classes="confirm-cancel">
                     
-                    <Button Content="{Binding CancelText}"
+                    <Button Content="Cancel"
                             Classes="confirm-cancel-cancel"
-                            Command="{Binding CancelCommand}"/>
-                    <Button Content="{Binding SubmitText}"
+                            Command="{Binding CloseCommand}"/>
+                    <Button Content="Submit"
                             Classes="confirm-cancel-confirm"
-                            IsEnabled="{Binding CanSubmit}"
                             Command="{Binding SubmitCommand}"/>
                 </StackPanel>
             </Grid>

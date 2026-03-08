@@ -65,7 +65,7 @@
                 <Button Classes="overlay"
                         HorizontalAlignment="Stretch"
                         VerticalAlignment="Stretch"
-                        Command="{Binding PanelCloser.BackdropCloseCommand}"/>
+                        Command="{Binding LayerCloser.BackdropCloseCommand}"/>
             </Border>
 
 
@@ -95,8 +95,7 @@
                 <Button Background="Transparent"
                         BorderThickness="0"
                         HorizontalAlignment="Stretch"
-                        VerticalAlignment="Stretch"
-                        Command="{Binding ShellState.CloseModalCommand}" />
+                        VerticalAlignment="Stretch"/>
             </Border>
 
             <!-- Modal content -->

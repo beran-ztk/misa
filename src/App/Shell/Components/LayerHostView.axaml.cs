@@ -4,9 +4,9 @@ using Avalonia.Markup.Xaml;
 
 namespace Misa.Ui.Avalonia.Shell.Components;
 
-public partial class PanelHostView : UserControl
+public partial class LayerHostView : UserControl
 {
-    public PanelHostView()
+    public LayerHostView()
     {
         InitializeComponent();
     }
