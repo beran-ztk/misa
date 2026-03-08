@@ -83,7 +83,7 @@
                     BorderThickness="0,0,1,0"
                     Padding="0,0,12,0">
 
-                <Grid RowDefinitions="Auto,Auto,Auto,*">
+                <Grid RowDefinitions="Auto,Auto,*">
 
                     <!-- Header -->
                     <Grid Grid.Row="0"
@@ -112,15 +112,8 @@
                         </Button>
                     </Grid>
 
-                    <!-- Description -->
-                    <TextBlock Grid.Row="1"
-                               Margin="0,0,0,10"
-                               Text="Structure and entry points of your knowledge base."
-                               Foreground="{StaticResource BrushTextSecondary}"
-                               TextWrapping="Wrap" />
-
                     <!-- Divider -->
-                    <Border Grid.Row="2"
+                    <Border Grid.Row="1"
                             VerticalAlignment="Top"
                             Margin="0,0,0,10"
                             Height="1"
@@ -128,7 +121,7 @@
                             Opacity="0.35" />
 
                     <!-- Tree -->
-                    <ScrollViewer Grid.Row="3"
+                    <ScrollViewer Grid.Row="2"
                                   Margin="0,12,0,0"
                                   HorizontalScrollBarVisibility="Disabled"
                                   VerticalScrollBarVisibility="Auto">
