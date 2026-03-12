@@ -1,16 +1,17 @@
 using System;
 using System.Net.Http;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Misa.Ui.Avalonia.Features.Inspector.Root;
 using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions.Forms;
 using Misa.Ui.Avalonia.Features.Pages.Chronicle;
 using Misa.Ui.Avalonia.Features.Pages.Schedules.Create;
 using Misa.Ui.Avalonia.Features.Pages.Schedules.Root;
-using Misa.Ui.Avalonia.Features.Pages.Schola;
 using Misa.Ui.Avalonia.Features.Pages.Tasks.Create;
 using Misa.Ui.Avalonia.Features.Pages.Tasks.Root;
+using Misa.Ui.Avalonia.Features.Pages.Zettelkasten;
 using Misa.Ui.Avalonia.Features.Utilities.Notifications;
-using Misa.Ui.Avalonia.Infrastructure.Client;
+using Misa.Ui.Avalonia.Infrastructure.Client.RemoteProxy;
 using Misa.Ui.Avalonia.Infrastructure.Messaging;
 using Misa.Ui.Avalonia.Infrastructure.Platform;
 using Misa.Ui.Avalonia.Infrastructure.States;
@@ -19,13 +20,12 @@ using Misa.Ui.Avalonia.Infrastructure.UI;
 using Misa.Ui.Avalonia.Shell.Authentication;
 using Misa.Ui.Avalonia.Shell.Base;
 using Misa.Ui.Avalonia.Shell.Components;
-using CreateScheduleState = Misa.Ui.Avalonia.Features.Pages.Schedules.Root.CreateScheduleState;
 
 namespace Misa.Ui.Avalonia.Infrastructure.Composition;
 
 public static class CompositionRoot
 {
-    public static IServiceProvider Build(string baseAddress)
+    public static ServiceCollection Build(string baseAddress)
     {
         var sc = new ServiceCollection();
 
@@ -36,20 +36,21 @@ public static class CompositionRoot
         sc.AddTasksFeature();
         sc.AddSchedulingFeature();
         sc.AddChronicleFeature();
-        sc.AddScholaFeature();
+        sc.ZettelkastenServices();
         sc.AddUtilities();
 
-        return sc.BuildServiceProvider();
+        sc.AddLogging(log => log.AddConsole());
+
+        return sc;
     }
 
     private static void AddCore(this IServiceCollection sc, string baseAddress)
     {
-        sc.AddSingleton<PanelProxy>();
-        sc.AddSingleton<IPanelCloser>(sp => sp.GetRequiredService<PanelProxy>());
-        sc.AddSingleton<IPanelFactory, PanelFactory>();
+        sc.AddSingleton<LayerProxy>();
+        sc.AddSingleton<ILayerCloser>(sp => sp.GetRequiredService<LayerProxy>());
         sc.AddSingleton<RemoteProxy>();
         sc.AddSingleton<SignalRNotificationClient>();
-        sc.AddTransient<PanelHostView>();
+        sc.AddTransient<LayerHostView>();
 
         sc.AddSingleton(new HttpClient { BaseAddress = new Uri(baseAddress) });
     }
@@ -60,10 +61,10 @@ public static class CompositionRoot
         sc.AddSingleton<ShellState>();
 
         sc.AddSingleton<IWorkspaceHost>(sp => sp.GetRequiredService<ShellState>());
-        sc.AddSingleton<IPanelHost>(sp => sp.GetRequiredService<ShellState>());
+        sc.AddSingleton<ILayerHost>(sp => sp.GetRequiredService<ShellState>());
         
         // VMs
-        sc.AddSingleton<AuthenticationWindowViewModel>();
+        sc.AddTransient<AuthenticationWindowViewModel>();
         sc.AddSingleton<ShellWindowViewModel>();
         sc.AddSingleton<HeaderViewModel>();
         sc.AddSingleton<WorkspaceNavigationViewModel>();
@@ -87,7 +88,7 @@ public static class CompositionRoot
     private static void AddInfrastructure(this IServiceCollection sc)
     {
         sc.AddSingleton<IClipboardService, ClipboardService>();
-        sc.AddSingleton<IAuthenticationService, AuthenticationService>();
+        sc.AddSingleton<AuthenticationGateway>();
         sc.AddSingleton<TimeZoneService>();
     }
 
@@ -107,7 +108,6 @@ public static class CompositionRoot
     private static void AddTasksFeature(this IServiceCollection sc)
     {
         sc.AddSingleton<TaskState>();
-        sc.AddTransient<CreateTaskState>();
         sc.AddSingleton<TaskFacadeViewModel>();
         sc.AddSingleton<TaskGateway>();
 
@@ -117,7 +117,6 @@ public static class CompositionRoot
     private static void AddSchedulingFeature(this IServiceCollection sc)
     {
         sc.AddSingleton<ScheduleState>();
-        sc.AddTransient<CreateScheduleState>();
         sc.AddSingleton<ScheduleFacadeViewModel>();
         sc.AddSingleton<ScheduleGateway>();
 
@@ -133,15 +132,10 @@ public static class CompositionRoot
         sc.AddTransient<CreateJournalViewModel>();
     }
     
-    private static void AddScholaFeature(this IServiceCollection sc)
+    private static void ZettelkastenServices(this IServiceCollection sc)
     {
-        sc.AddSingleton<ScholaViewModel>();
-        sc.AddSingleton<ScholaGateway>();
-        
-        sc.AddTransient<CreateArcView>();
-        sc.AddTransient<CreateArcViewModel>();
-        sc.AddTransient<CreateUnitView>();
-        sc.AddTransient<CreateUnitViewModel>();
+        sc.AddSingleton<ZettelkastenViewModel>();
+        sc.AddSingleton<ZettelkastenGateway>();
     }
 
     private static void AddUtilities(this IServiceCollection sc)

@@ -3,7 +3,7 @@
 public sealed class CreateScheduleRequest
 {
     public required string Title { get; init; } = string.Empty;
-    public required string Description { get; init; } = string.Empty;
+    public required string? Description { get; init; }
     public Guid? TargetItemId { get; init; }
     public required ScheduleFrequencyTypeDto ScheduleFrequencyType { get; init; }
     public required int FrequencyInterval { get; init; }

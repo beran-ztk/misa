@@ -1,10 +1,9 @@
 using System.Linq;
 using System.Threading.Tasks;
-using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Misa.Contract.Common.Results;
 using Misa.Contract.Items.Components.Activity.Sessions;
 using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions.Forms;
-using Misa.Ui.Avalonia.Infrastructure.UI;
 
 namespace Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Base;
 
@@ -26,12 +25,9 @@ public partial class InspectorEntryViewModel
     [RelayCommand]
     private async Task ShowStartSessionPanelAsync()
     {
-        var itemId = Facade.State.Item.Id;
-
-        var formVm = new StartSessionViewModel(itemId, Facade.Gateway);
-
-        var result = await Facade.PanelProxy.OpenAsync(PanelKey.StartSession, formVm);
-
+        var formVm = new StartSessionViewModel(Facade.State.Item.Id, Facade.Gateway);
+        
+        var result = await Facade.LayerProxy.OpenAsync<StartSessionViewModel, Result>(formVm);
         if (result is { IsSuccess: true })
         {
             await Facade.Reload();
@@ -44,12 +40,9 @@ public partial class InspectorEntryViewModel
         if (CurrentSession == null)
             return;
         
-        var itemId = Facade.State.Item.Id;
-
-        var formVm = new PauseSessionViewModel(itemId, Facade.Gateway);
-
-        var result = await Facade.PanelProxy.OpenAsync(PanelKey.PauseSession, formVm);
-
+        var formVm = new PauseSessionViewModel(Facade.State.Item.Id, Facade.Gateway);
+        
+        var result = await Facade.LayerProxy.OpenAsync<PauseSessionViewModel, Result>(formVm);
         if (result is { IsSuccess: true })
         {
             await Facade.Reload();
@@ -59,12 +52,9 @@ public partial class InspectorEntryViewModel
     [RelayCommand]
     private async Task ShowEndSessionPanelAsync()
     {
-        var itemId = Facade.State.Item.Id;
-
-        var formVm = new EndSessionViewModel(itemId, Facade.Gateway);
-
-        var result = await Facade.PanelProxy.OpenAsync(PanelKey.EndSession, formVm);
-
+        var formVm = new EndSessionViewModel(Facade.State.Item.Id, Facade.Gateway);
+        
+        var result = await Facade.LayerProxy.OpenAsync<EndSessionViewModel, Result>(formVm);
         if (result is { IsSuccess: true })
         {
             await Facade.Reload();

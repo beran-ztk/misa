@@ -9,7 +9,7 @@ using Misa.Ui.Avalonia.Shell.Components;
 
 namespace Misa.Ui.Avalonia.Infrastructure.States;
 
-public partial class ShellState : ObservableObject, IPanelHost, IWorkspaceHost
+public partial class ShellState : ObservableObject, ILayerHost, IWorkspaceHost
 {
     private readonly ISelectionContextState _selectionContext;
     
@@ -35,16 +35,19 @@ public partial class ShellState : ObservableObject, IPanelHost, IWorkspaceHost
     [ObservableProperty] private ViewModelBase _utilityNavigation;
     [ObservableProperty] private ViewModelBase? _utility;
     
+    // Panel
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsPanelOpen))]
     private Control? _panel;
     public bool IsPanelOpen => Panel is not null;
-    [RelayCommand] private void ClosePanel() => Modal = null;
+    
+    // Modal
     [ObservableProperty] 
     [NotifyPropertyChangedFor(nameof(IsModalOpen))]
     private Control? _modal;
     public bool IsModalOpen => Modal is not null;
-    [RelayCommand] private void CloseModal() => Modal = null;
+
+    
     [ObservableProperty] private ViewModelBase? _toast;
     [ObservableProperty] private ViewModelBase? _busy;
 }

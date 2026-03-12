@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Input;
+using Misa.Contract.Items.Components.Schedules;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Pages.Schedules.Create;
 using Misa.Ui.Avalonia.Infrastructure.UI;
@@ -9,12 +10,12 @@ namespace Misa.Ui.Avalonia.Features.Pages.Schedules.Root;
 public sealed partial class ScheduleFacadeViewModel(
     ScheduleState state,
     ScheduleGateway gateway,
-    PanelProxy panelProxy)
+    LayerProxy layerProxy)
     : ViewModelBase
 {
     public ScheduleState State { get; } = state;
     private ScheduleGateway Gateway { get; } = gateway;
-    private PanelProxy PanelProxy { get; } = panelProxy;
+    private LayerProxy LayerProxy { get; } = layerProxy;
 
     public async Task InitializeWorkspaceAsync()
     {
@@ -37,13 +38,11 @@ public sealed partial class ScheduleFacadeViewModel(
     [RelayCommand]
     private async Task ShowAddPanelAsync()
     {
-        State.CreateState.Reset();
-
-        var formVm = new CreateScheduleViewModel(State.CreateState, Gateway);
-
-        var created = await PanelProxy.OpenAsync(Panels.Schedule, formVm);
+        var formVm = new CreateScheduleViewModel(Gateway);
+        
+        var created = await LayerProxy.OpenAsync<CreateScheduleViewModel, ScheduleDto>(formVm);
         if (created is null) return;
-
+        
         await State.AddToCollection(created);
     }
 

@@ -6,6 +6,7 @@ using Misa.Domain.Items.Components.Chronicle.Journals;
 using Misa.Domain.Items.Components.Schedules;
 using Misa.Domain.Items.Components.Schola;
 using Misa.Domain.Items.Components.Tasks;
+using Misa.Domain.Items.Components.Zettelkasten;
 using Misa.Domain.Shared.DomainEvents;
 
 namespace Misa.Domain.Items;
@@ -67,6 +68,7 @@ public sealed class Item : DomainEventEntity
     public JournalExtension? JournalExtension { get; private set; }
     public Arc? Arc { get; private set; }
     public Unit? Unit { get; private set; }
+    public Topic? Topic { get; private set; }
 
     
     // Behaviours
@@ -187,6 +189,27 @@ public sealed class Item : DomainEventEntity
         {
             Activity = new ItemActivity(ActivityState.Draft, priority, objective, null, dueAt),
             Unit = new Unit(id, arcId)
+        };
+
+        return item;
+    }
+    public static Item CreateTopic(
+        ItemId id,
+        string ownerId,
+        string title,
+        DateTimeOffset createdAtUtc,
+        
+        ItemId? topicId)
+    {
+        var item = new Item(
+            id: id,
+            ownerId: ownerId,
+            workflow: Workflow.Topic,
+            title: title,
+            description: null,
+            createdAtUtc: createdAtUtc)
+        {
+            Topic = new Topic(id, topicId)
         };
 
         return item;

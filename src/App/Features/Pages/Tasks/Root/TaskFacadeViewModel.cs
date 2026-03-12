@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Input;
+using Misa.Contract.Items.Components.Tasks;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Pages.Tasks.Create;
 using Misa.Ui.Avalonia.Infrastructure.UI;
@@ -9,18 +10,18 @@ namespace Misa.Ui.Avalonia.Features.Pages.Tasks.Root;
 public sealed partial class TaskFacadeViewModel : ViewModelBase
 {
     private readonly TaskGateway _gateway;
-    private readonly PanelProxy _panelProxy;
+    private readonly LayerProxy _layerProxy;
 
     public TaskState State { get; }
 
     public TaskFacadeViewModel(
         TaskState state,
         TaskGateway gateway,
-        PanelProxy panelProxy)
+        LayerProxy layerProxy)
     {
         State = state;
         _gateway = gateway;
-        _panelProxy = panelProxy;
+        _layerProxy = layerProxy;
         
         
         State.SelectionContextState.PropertyChanged += async (s, e) =>
@@ -58,13 +59,13 @@ public sealed partial class TaskFacadeViewModel : ViewModelBase
         var values = await _gateway.GetAllAsync();
         await State.SetMainCollection(values);
     }
-
+    
     [RelayCommand]
     private async Task ShowAddPanelAsync()
     {
-        var formVm = new CreateTaskViewModel(State.CreateState, _gateway);
+        var formVm = new CreateTaskViewModel(_gateway);
 
-        var created = await _panelProxy.OpenAsync(Panels.Task, formVm);
+        var created = await _layerProxy.OpenAsync<CreateTaskViewModel, TaskDto>(formVm);
         if (created is null) return;
 
         await State.AppendToMainCollection(created);

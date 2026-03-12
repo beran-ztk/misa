@@ -142,6 +142,15 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
             .ToListAsync();
     }
 
+    public async Task<List<Item>> GetTopicsAsync()
+    {
+        return await context.Items
+            .Include(s => s.Topic)
+            .Where(t => t.OwnerId == user.Id && t.Workflow == Workflow.Topic)
+            .AsNoTracking()
+            .ToListAsync();
+    }
+
     // Session
     public async Task<Item?> TryGetItemWithSessionsAsync(Guid itemId, CancellationToken ct)
     {

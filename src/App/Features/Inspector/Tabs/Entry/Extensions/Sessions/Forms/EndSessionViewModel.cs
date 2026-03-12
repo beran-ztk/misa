@@ -10,13 +10,9 @@ using Misa.Ui.Avalonia.Infrastructure.UI;
 
 namespace Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions.Forms;
 
-public partial class EndSessionViewModel(Guid itemId, InspectorGateway gateway) : ViewModelBase, IHostedForm
+public partial class EndSessionViewModel(Guid itemId, InspectorGateway gateway)
+    : ViewModelBase, IHostedForm<Result>
 {
-    // Host
-    public string Title => "End session";
-    public string SubmitText => "Save";
-    public string CancelText => "Cancel";
-    public bool CanSubmit => true;
     // Content
     [ObservableProperty] private string? _summary;
 
@@ -26,9 +22,11 @@ public partial class EndSessionViewModel(Guid itemId, InspectorGateway gateway) 
     public IReadOnlyList<SessionEfficiencyDto> Efficiencies { get; } = Enum.GetValues<SessionEfficiencyDto>();
     public IReadOnlyList<SessionConcentrationDto> Concentrations { get; } = Enum.GetValues<SessionConcentrationDto>();
 
-    public async Task<Result> SubmitAsync()
-    {
+    public string FormTitle { get; } = "End Session";
+    public string? FormDescription { get; }
 
+    public async Task<Result<Result>> SubmitAsync()
+    {
         var dto = new StopSessionDto(
             itemId,
             SelectedSessionEfficiency,
@@ -36,6 +34,11 @@ public partial class EndSessionViewModel(Guid itemId, InspectorGateway gateway) 
             Summary
         );
         
-        return await gateway.EndSessionAsync(dto);
+        var result = await gateway.EndSessionAsync(dto);
+
+        if (!result.IsSuccess)
+            return Result<Result>.Failure();
+
+        return Result<Result>.Ok(Result.Ok());
     }
 }

@@ -11,6 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Misa.Contract.Features.Authentication;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Infrastructure.Client;
+using Misa.Ui.Avalonia.Infrastructure.Client.RemoteProxy;
 using Misa.Ui.Avalonia.Infrastructure.Composition;
 using Misa.Ui.Avalonia.Infrastructure.States;
 using Misa.Ui.Avalonia.Infrastructure.Time;
@@ -20,19 +21,19 @@ namespace Misa.Ui.Avalonia.Shell.Authentication;
 
 public partial class AuthenticationWindowViewModel : ViewModelBase
 {
-    private IAuthenticationService AuthService { get; }
+    private AuthenticationGateway Gateway { get; }
     private TimeZoneService TimeZoneService { get; }
     private UserState UserState { get; }
     private IServiceProvider Services { get; }
     private RemoteProxy RemoteProxy { get; }
     public AuthenticationWindowViewModel(
-        IAuthenticationService authService,
+        AuthenticationGateway gateway,
         TimeZoneService timeZoneService,
         UserState userState,
         IServiceProvider services,
         RemoteProxy remoteProxy)
     {
-        AuthService = authService;
+        Gateway = gateway;
         TimeZoneService = timeZoneService;
         UserState = userState;
         Services = services;
@@ -126,7 +127,7 @@ public partial class AuthenticationWindowViewModel : ViewModelBase
             "master",
             "Slamer123123");
 
-        var response = await AuthService.LoginAsync(request);
+        var response = await Gateway.LoginAsync(request);
         UserState.Id = response.Id;
         UserState.Username = response.Name;
         UserState.Token = response.Token;
@@ -158,7 +159,7 @@ public partial class AuthenticationWindowViewModel : ViewModelBase
                     Password,
                     SelectedTimeZoneId ?? "Europe/Berlin");
 
-                var response = await AuthService.RegisterAsync(req);
+                var response = await Gateway.RegisterAsync(req);
                 if (!response.IsSuccess)
                 {
                     ErrorMessage = string.Join(
@@ -176,7 +177,7 @@ public partial class AuthenticationWindowViewModel : ViewModelBase
                     Username.Trim(),
                     Password);
 
-                var response = await AuthService.LoginAsync(request);
+                var response = await Gateway.LoginAsync(request);
                 UserState.Id = response.Id;
                 UserState.Username = response.Name;
                 UserState.Token = response.Token;

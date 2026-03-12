@@ -14,17 +14,17 @@ public sealed partial class InspectorFacadeViewModel : ViewModelBase
     public InspectorGateway Gateway { get; }
     public InspectorState State { get; }
     public InspectorEntryViewModel Entry { get; }
-    public PanelProxy PanelProxy { get; }
+    public LayerProxy LayerProxy { get; }
     public InspectorFacadeViewModel(
         ISelectionContextState  selectionContextState,
         InspectorGateway gateway, 
         InspectorState inspectorState,
-        PanelProxy panelProxy)
+        LayerProxy layerProxy)
     {
         ContextState = selectionContextState;
         Gateway = gateway;
         State = inspectorState;
-        PanelProxy = panelProxy;
+        LayerProxy = layerProxy;
         
         Entry = new InspectorEntryViewModel(this);
 

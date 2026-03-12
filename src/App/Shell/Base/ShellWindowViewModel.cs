@@ -13,13 +13,13 @@ public partial class ShellWindowViewModel : ViewModelBase
 {
     public ShellState ShellState { get; }
     private IServiceProvider ServiceProvider { get; }
-    public required IPanelCloser PanelCloser { get; init; }
+    public required ILayerCloser LayerCloser { get; init; }
     public ShellWindowViewModel(ShellState shellState, IServiceProvider serviceProvider)
     {
         ShellState = shellState; 
         ServiceProvider = serviceProvider;
         
-        PanelCloser = ServiceProvider.GetRequiredService<IPanelCloser>();
+        LayerCloser = ServiceProvider.GetRequiredService<ILayerCloser>();
         
         ShellState.Header = ServiceProvider.GetRequiredService<HeaderViewModel>(); 
         ShellState.Footer = ServiceProvider.GetRequiredService<FooterViewModel>(); 

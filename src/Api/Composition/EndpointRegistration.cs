@@ -5,6 +5,7 @@ using Misa.Api.Endpoints.Schedules;
 using Misa.Api.Endpoints.Schola;
 using Misa.Api.Endpoints.Sessions;
 using Misa.Api.Endpoints.Tasks;
+using Misa.Api.Endpoints.Zettelkasten;
 using Misa.Api.Middleware;
 
 namespace Misa.Api.Composition;
@@ -23,6 +24,7 @@ public static class EndpointRegistration
         EntryEndpoints.Map(app);
         ChronicleEndpoints.Map(app);
         ScholaEndpoints.Map(app);
+        TopicEndpoints.Map(app);
         app.MapScheduleEndpoints();
         app.MapAuthenticationEndpoints();
         app.MapInspectorEndpoints();

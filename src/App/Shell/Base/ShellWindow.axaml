@@ -33,7 +33,7 @@
                 
                 <ContentControl Grid.Column="2"
                                 Grid.Row="0"
-                                Width="600"
+                                Width="500"
                                 MaxWidth="1000"
                                 Content="{Binding ShellState.Inspector}"
                                 IsVisible="{Binding ShellState.SelectionContextHasId}"/>
@@ -65,7 +65,7 @@
                 <Button Classes="overlay"
                         HorizontalAlignment="Stretch"
                         VerticalAlignment="Stretch"
-                        Command="{Binding PanelCloser.BackdropCloseCommand}"/>
+                        Command="{Binding LayerCloser.BackdropCloseCommand}"/>
             </Border>
 
 
@@ -86,26 +86,24 @@
               ZIndex="30"
               IsVisible="{Binding ShellState.IsModalOpen}">
 
-            <!-- Dimmed overlay that blocks clicks -->
-            <Border Background="#DA000000"
+            <!-- Overlay -->
+            <Border Background="{StaticResource BrushOverlay}"
                     HorizontalAlignment="Stretch"
                     VerticalAlignment="Stretch">
 
-                <!-- Click-catcher -->
-                <Button Background="Transparent"
-                        BorderThickness="0"
+                <Button Classes="overlay"
                         HorizontalAlignment="Stretch"
                         VerticalAlignment="Stretch"
-                        Command="{Binding ShellState.CloseModalCommand}" />
+                        Command="{Binding LayerCloser.BackdropCloseCommand}"/>
             </Border>
 
             <!-- Modal content -->
             <Border ZIndex="32"
-                    MinWidth="420"
+                    MinWidth="600"
                     MaxWidth="900"
                     Margin="0,70,0,70"
                     HorizontalAlignment="Center"
-                    VerticalAlignment="Stretch">
+                    VerticalAlignment="Center">
 
                 <ContentControl Content="{Binding ShellState.Modal}" />
             </Border>

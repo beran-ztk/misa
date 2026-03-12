@@ -2,33 +2,47 @@ using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using Misa.Contract.Common.Results;
 using Misa.Contract.Items;
 using Misa.Contract.Items.Components.Chronicle;
 using Misa.Contract.Routes;
 using Misa.Ui.Avalonia.Infrastructure.Client;
+using Misa.Ui.Avalonia.Infrastructure.Client.RemoteProxy;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Chronicle;
 
 public class ChronicleGateway(RemoteProxy remoteProxy)
 {
-    public async Task<List<ChronicleEntryDto>> GetAllAsync()
+    public async Task<List<ChronicleEntryDto>?> GetAllAsync()
     {
-        var request = new HttpRequestMessage(HttpMethod.Get, ChronicleRoutes.GetJournals);
+        var response = await remoteProxy.SendAsync<List<ChronicleEntryDto>>(
+            requestFactory: () => new HttpRequestMessage(HttpMethod.Get, ChronicleRoutes.GetJournals),
+            retry: new RetryOptions
+            {
+                MaxAttempts = 3,
+                Delay = TimeSpan.FromMilliseconds(500)
+            },
+            cancellationToken: CancellationToken.None);
 
-        var response = await remoteProxy.SendAsync<List<ChronicleEntryDto>>(request);
-        return response.Value
-               ?? throw new Exception("No Data");
+        return response.Value;
     }
 
     public async Task<Result> CreateAsync(CreateJournalRequest requestBody)
     {
-        var request = new HttpRequestMessage(HttpMethod.Post, ChronicleRoutes.CreateJournal)
-        {
-            Content = JsonContent.Create(requestBody)
-        };
+        var response = await remoteProxy.SendAsync(
+            requestFactory: () => new HttpRequestMessage(HttpMethod.Post, ChronicleRoutes.CreateJournal)
+            {
+                Content = JsonContent.Create(requestBody)
+            },
+            retry: new RetryOptions
+            {
+                MaxAttempts = 3,
+                Delay = TimeSpan.FromMilliseconds(500)
+            },
+            cancellationToken: CancellationToken.None);
 
-        return await remoteProxy.SendAsync(request);
+        return response;
     }
 }
