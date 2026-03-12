@@ -62,7 +62,7 @@ public static class CompositionRoot
         sc.AddSingleton<ILayerHost>(sp => sp.GetRequiredService<ShellState>());
         
         // VMs
-        sc.AddSingleton<AuthenticationWindowViewModel>();
+        sc.AddTransient<AuthenticationWindowViewModel>();
         sc.AddSingleton<ShellWindowViewModel>();
         sc.AddSingleton<HeaderViewModel>();
         sc.AddSingleton<WorkspaceNavigationViewModel>();
@@ -86,7 +86,7 @@ public static class CompositionRoot
     private static void AddInfrastructure(this IServiceCollection sc)
     {
         sc.AddSingleton<IClipboardService, ClipboardService>();
-        sc.AddSingleton<IAuthenticationService, AuthenticationService>();
+        sc.AddSingleton<AuthenticationGateway>();
         sc.AddSingleton<TimeZoneService>();
     }
 

@@ -8,14 +8,17 @@ using Misa.Contract.Common.Results;
 using Misa.Contract.Features.Authentication;
 using Misa.Ui.Avalonia.Infrastructure.Client.RemoteProxy;
 
-namespace Misa.Ui.Avalonia.Infrastructure.Client;
+namespace Misa.Ui.Avalonia.Shell.Authentication;
 
-public sealed class AuthenticationService(RemoteProxy.RemoteProxy remoteProxy) : IAuthenticationService
+public sealed class AuthenticationGateway(RemoteProxy remoteProxy)
 {
-    public async Task<Result> RegisterAsync(RegisterRequestDto requestDto, CancellationToken ct = default)
+    public async Task<Result> RegisterAsync(RegisterRequestDto requestDto)
     {
         var response = await remoteProxy.SendAsync(
-            requestFactory: () => new HttpRequestMessage(HttpMethod.Post, "auth/register"),
+            requestFactory: () => new HttpRequestMessage(HttpMethod.Post, "auth/register")
+            {
+                Content = JsonContent.Create(requestDto)
+            },
             retry: new RetryOptions
             {
                 MaxAttempts = 3,
@@ -26,11 +29,14 @@ public sealed class AuthenticationService(RemoteProxy.RemoteProxy remoteProxy) :
         return response;
     }
 
-    public async Task<AuthTokenResponseDto> LoginAsync(LoginRequestDto requestDto, CancellationToken ct = default)
+    public async Task<AuthTokenResponseDto> LoginAsync(LoginRequestDto requestDto)
     {
         
         var response = await remoteProxy.SendAsync<AuthTokenResponseDto>(
-            requestFactory: () => new HttpRequestMessage(HttpMethod.Post, "auth/login"),
+            requestFactory: () => new HttpRequestMessage(HttpMethod.Post, "auth/login")
+            {
+                Content = JsonContent.Create(requestDto)
+            },
             retry: new RetryOptions
             {
                 MaxAttempts = 3,

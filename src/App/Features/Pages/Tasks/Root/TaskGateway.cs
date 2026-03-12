@@ -1,13 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
-using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Misa.Contract.Common.Results;
 using Misa.Contract.Items.Components.Tasks;
 using Misa.Contract.Routes;
-using Misa.Ui.Avalonia.Infrastructure.Client;
 using Misa.Ui.Avalonia.Infrastructure.Client.RemoteProxy;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Tasks.Root;
