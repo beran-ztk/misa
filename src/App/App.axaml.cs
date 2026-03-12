@@ -22,7 +22,7 @@ public class App : Application
     public override void OnFrameworkInitializationCompleted()
     {
         const string baseAddress = "https://localhost:4500";
-        Services = CompositionRoot.Build(baseAddress);
+        Services = CompositionRoot.Build(baseAddress).BuildServiceProvider();
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {

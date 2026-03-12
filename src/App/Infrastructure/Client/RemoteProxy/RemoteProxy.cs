@@ -7,21 +7,24 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using Misa.Contract.Common.Results;
 using Misa.Ui.Avalonia.Infrastructure.States;
 
 namespace Misa.Ui.Avalonia.Infrastructure.Client.RemoteProxy;
 
-public sealed class RemoteProxy(HttpClient httpClient, UserState userState)
+public sealed class RemoteProxy(HttpClient httpClient, UserState userState, ILogger<RemoteProxy> logger)
 {
     // Add jwt token to request
     private HttpRequestMessage AddJwtToken(HttpRequestMessage request)
     {
-        if (!string.IsNullOrWhiteSpace(userState.Token))
+        if (string.IsNullOrWhiteSpace(userState.Token))
         {
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", userState.Token);
+            return request;
         }
 
+        logger.LogInformation("Setting jwt token to {UserStateToken}", userState.Token);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", userState.Token);
         return request;
     }
 

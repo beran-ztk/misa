@@ -1,6 +1,7 @@
 using System;
 using System.Net.Http;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Misa.Ui.Avalonia.Features.Inspector.Root;
 using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions.Forms;
 using Misa.Ui.Avalonia.Features.Pages.Chronicle;
@@ -10,7 +11,6 @@ using Misa.Ui.Avalonia.Features.Pages.Tasks.Create;
 using Misa.Ui.Avalonia.Features.Pages.Tasks.Root;
 using Misa.Ui.Avalonia.Features.Pages.Zettelkasten;
 using Misa.Ui.Avalonia.Features.Utilities.Notifications;
-using Misa.Ui.Avalonia.Infrastructure.Client;
 using Misa.Ui.Avalonia.Infrastructure.Client.RemoteProxy;
 using Misa.Ui.Avalonia.Infrastructure.Messaging;
 using Misa.Ui.Avalonia.Infrastructure.Platform;
@@ -25,7 +25,7 @@ namespace Misa.Ui.Avalonia.Infrastructure.Composition;
 
 public static class CompositionRoot
 {
-    public static IServiceProvider Build(string baseAddress)
+    public static ServiceCollection Build(string baseAddress)
     {
         var sc = new ServiceCollection();
 
@@ -39,7 +39,9 @@ public static class CompositionRoot
         sc.ZettelkastenServices();
         sc.AddUtilities();
 
-        return sc.BuildServiceProvider();
+        sc.AddLogging(log => log.AddConsole());
+
+        return sc;
     }
 
     private static void AddCore(this IServiceCollection sc, string baseAddress)

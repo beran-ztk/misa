@@ -32,6 +32,11 @@
         <PackageReference Include="Avalonia.Themes.Simple" Version="11.3.6" />
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.1"/>
         <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="9.0.8" />
+        <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.14" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.14" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Configuration" Version="9.0.14" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.14" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.14" />
         <PackageReference Include="NodaTime" Version="3.3.0" />
         <PackageReference Include="Svg.Controls.Skia.Avalonia" Version="11.3.6" />
         <PackageReference Include="Xaml.Behaviors.Avalonia" Version="11.3.6" />
