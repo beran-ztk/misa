@@ -6,32 +6,38 @@ using System.Threading.Tasks;
 using Misa.Contract.Authentication;
 using Misa.Contract.Common.Results;
 using Misa.Contract.Features.Authentication;
+using Misa.Ui.Avalonia.Infrastructure.Client.RemoteProxy;
 
 namespace Misa.Ui.Avalonia.Infrastructure.Client;
 
-public sealed class AuthenticationService(RemoteProxy remoteProxy) : IAuthenticationService
+public sealed class AuthenticationService(RemoteProxy.RemoteProxy remoteProxy) : IAuthenticationService
 {
     public async Task<Result> RegisterAsync(RegisterRequestDto requestDto, CancellationToken ct = default)
     {
-        using var request = new HttpRequestMessage(HttpMethod.Post, "auth/register");
-        request.Content = JsonContent.Create(requestDto);
-
-        var result = await remoteProxy.SendAsync(request);
+        var response = await remoteProxy.SendAsync(
+            requestFactory: () => new HttpRequestMessage(HttpMethod.Post, "auth/register"),
+            retry: new RetryOptions
+            {
+                MaxAttempts = 3,
+                Delay = TimeSpan.FromMilliseconds(500)
+            },
+            cancellationToken: CancellationToken.None);
         
-        return result;
+        return response;
     }
 
     public async Task<AuthTokenResponseDto> LoginAsync(LoginRequestDto requestDto, CancellationToken ct = default)
     {
-        using var request = new HttpRequestMessage(HttpMethod.Post, "auth/login");
-        request.Content = JsonContent.Create(requestDto);
-
-        var result = await remoteProxy.SendAsync<AuthTokenResponseDto>(request);
-
-        if (!result.IsSuccess)
-            throw new InvalidOperationException(result.Error?.Message ?? "Login failed.");
-
-        return result.Value
-               ?? throw new InvalidOperationException("Empty User-Data.");
+        
+        var response = await remoteProxy.SendAsync<AuthTokenResponseDto>(
+            requestFactory: () => new HttpRequestMessage(HttpMethod.Post, "auth/login"),
+            retry: new RetryOptions
+            {
+                MaxAttempts = 3,
+                Delay = TimeSpan.FromMilliseconds(500)
+            },
+            cancellationToken: CancellationToken.None);
+        
+        return response.Value ?? throw new Exception("Could not login");
     }
 }

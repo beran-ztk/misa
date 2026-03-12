@@ -3,7 +3,6 @@ using CommunityToolkit.Mvvm.Input;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Pages.Chronicle;
 using Misa.Ui.Avalonia.Features.Pages.Schedules.Root;
-using Misa.Ui.Avalonia.Features.Pages.Schola;
 using Misa.Ui.Avalonia.Features.Pages.Tasks.Root;
 using Misa.Ui.Avalonia.Features.Pages.Zettelkasten;
 
@@ -19,7 +18,6 @@ public partial class WorkspaceNavigationViewModel(
     TaskFacadeViewModel task,
     ScheduleFacadeViewModel schedule,
     ChronicleViewModel chronicle,
-    ScholaViewModel schola,
     ZettelkastenViewModel zettel)
     : ViewModelBase
 {
@@ -41,12 +39,6 @@ public partial class WorkspaceNavigationViewModel(
     {
         await chronicle.InitializeWorkspaceAsync();
         host.Workspace = chronicle;
-    }
-    [RelayCommand]
-    private async Task ShowSchola()
-    {
-        await schola.InitializeWorkspaceAsync();
-        host.Workspace = schola;
     }
     [RelayCommand]
     private async Task ShowZettelkasten()

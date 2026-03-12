@@ -6,12 +6,12 @@ using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions.Forms;
 using Misa.Ui.Avalonia.Features.Pages.Chronicle;
 using Misa.Ui.Avalonia.Features.Pages.Schedules.Create;
 using Misa.Ui.Avalonia.Features.Pages.Schedules.Root;
-using Misa.Ui.Avalonia.Features.Pages.Schola;
 using Misa.Ui.Avalonia.Features.Pages.Tasks.Create;
 using Misa.Ui.Avalonia.Features.Pages.Tasks.Root;
 using Misa.Ui.Avalonia.Features.Pages.Zettelkasten;
 using Misa.Ui.Avalonia.Features.Utilities.Notifications;
 using Misa.Ui.Avalonia.Infrastructure.Client;
+using Misa.Ui.Avalonia.Infrastructure.Client.RemoteProxy;
 using Misa.Ui.Avalonia.Infrastructure.Messaging;
 using Misa.Ui.Avalonia.Infrastructure.Platform;
 using Misa.Ui.Avalonia.Infrastructure.States;
@@ -36,7 +36,6 @@ public static class CompositionRoot
         sc.AddTasksFeature();
         sc.AddSchedulingFeature();
         sc.AddChronicleFeature();
-        sc.AddScholaFeature();
         sc.ZettelkastenServices();
         sc.AddUtilities();
 
@@ -131,16 +130,6 @@ public static class CompositionRoot
         sc.AddTransient<CreateJournalViewModel>();
     }
     
-    private static void AddScholaFeature(this IServiceCollection sc)
-    {
-        sc.AddSingleton<ScholaViewModel>();
-        sc.AddSingleton<ScholaGateway>();
-        
-        sc.AddTransient<CreateArcView>();
-        sc.AddTransient<CreateArcViewModel>();
-        sc.AddTransient<CreateUnitView>();
-        sc.AddTransient<CreateUnitViewModel>();
-    }
     private static void ZettelkastenServices(this IServiceCollection sc)
     {
         sc.AddSingleton<ZettelkastenViewModel>();
