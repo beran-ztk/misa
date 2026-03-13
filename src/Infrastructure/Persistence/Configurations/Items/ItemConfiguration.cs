@@ -79,5 +79,10 @@ public class ItemConfiguration : IEntityTypeConfiguration<Item>
             .WithOne()
             .HasForeignKey<Topic>(t => t.Id)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(i => i.ZettelExtension)
+            .WithOne()
+            .HasForeignKey<ZettelExtension>(z => z.Id)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

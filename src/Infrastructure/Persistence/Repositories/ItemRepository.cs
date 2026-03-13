@@ -151,6 +151,30 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
             .ToListAsync();
     }
 
+    public async Task<List<Item>> GetZettelsAsync(Guid? topicId, CancellationToken ct)
+    {
+        var query = context.Items
+            .Include(z => z.ZettelExtension)
+            .Where(z => z.OwnerId == user.Id && z.Workflow == Workflow.Zettel);
+
+        if (topicId.HasValue)
+            query = query.Where(z => z.ZettelExtension!.TopicId == new ItemId(topicId.Value));
+
+        return await query
+            .OrderByDescending(z => z.CreatedAt)
+            .AsNoTracking()
+            .ToListAsync(ct);
+    }
+
+    public async Task<Item?> TryGetZettelAsync(Guid id, CancellationToken ct)
+    {
+        return await context.Items
+            .Include(z => z.ZettelExtension)
+            .FirstOrDefaultAsync(
+                z => z.Id == new ItemId(id) && z.OwnerId == user.Id && z.Workflow == Workflow.Zettel,
+                ct);
+    }
+
     // Session
     public async Task<Item?> TryGetItemWithSessionsAsync(Guid itemId, CancellationToken ct)
     {

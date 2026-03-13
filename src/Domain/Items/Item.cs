@@ -69,6 +69,7 @@ public sealed class Item : DomainEventEntity
     public Arc? Arc { get; private set; }
     public Unit? Unit { get; private set; }
     public Topic? Topic { get; private set; }
+    public ZettelExtension? ZettelExtension { get; private set; }
 
     
     // Behaviours
@@ -210,6 +211,28 @@ public sealed class Item : DomainEventEntity
             createdAtUtc: createdAtUtc)
         {
             Topic = new Topic(id, topicId)
+        };
+
+        return item;
+    }
+
+    public static Item CreateZettel(
+        ItemId id,
+        string ownerId,
+        string title,
+        string? content,
+        DateTimeOffset createdAtUtc,
+        ItemId topicId)
+    {
+        var item = new Item(
+            id: id,
+            ownerId: ownerId,
+            workflow: Workflow.Zettel,
+            title: title,
+            description: null,
+            createdAtUtc: createdAtUtc)
+        {
+            ZettelExtension = new ZettelExtension(id, topicId, content)
         };
 
         return item;

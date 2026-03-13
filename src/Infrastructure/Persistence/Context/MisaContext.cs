@@ -8,6 +8,7 @@ using Misa.Domain.Items.Components.Activities.Sessions;
 using Misa.Domain.Items.Components.Schedules;
 using Misa.Domain.Items.Components.Schola;
 using Misa.Domain.Items.Components.Tasks;
+using Misa.Domain.Items.Components.Zettelkasten;
 using Misa.Domain.Shared.DomainEvents;
 
 namespace Misa.Infrastructure.Persistence.Context;
@@ -26,6 +27,7 @@ public class MisaContext(DbContextOptions<MisaContext> options, ITimeProvider ti
     public DbSet<ScheduleExecutionLog> SchedulerExecutionLogs { get; set; } = null!;
     public DbSet<Arc> Arcs { get; set; } = null!;
     public DbSet<Unit> Units { get; set; } = null!;
+    public DbSet<ZettelExtension> Zettels { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

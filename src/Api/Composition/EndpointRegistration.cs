@@ -25,6 +25,7 @@ public static class EndpointRegistration
         ChronicleEndpoints.Map(app);
         ScholaEndpoints.Map(app);
         TopicEndpoints.Map(app);
+        ZettelEndpoints.Map(app);
         app.MapScheduleEndpoints();
         app.MapAuthenticationEndpoints();
         app.MapInspectorEndpoints();
