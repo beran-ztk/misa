@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Zettelkasten"
+             xmlns:conv="using:Misa.Ui.Avalonia.Common.Converters"
              mc:Ignorable="d"
              d:DesignWidth="1100"
              d:DesignHeight="700"
@@ -137,13 +138,28 @@
                             <TreeView.ItemTemplate>
                                 <TreeDataTemplate ItemsSource="{Binding Children}">
                                     <Border Classes="topic-row">
-                                        <Grid ColumnDefinitions="*,Auto"
+                                        <Grid ColumnDefinitions="Auto,*,Auto"
                                               ColumnSpacing="6">
-                                            <TextBlock Grid.Column="0"
+
+                                            <!-- Type icon -->
+                                            <Panel Grid.Column="0">
+                                                <Image IsVisible="{Binding Workflow, Converter={x:Static conv:WorkflowEqualConverter.Instance}, ConverterParameter=Topic}"
+                                                       Source="{SvgImage /Assets/Icons/Common/folder.svg}"
+                                                       Width="14" Height="14"
+                                                       VerticalAlignment="Center"
+                                                       Opacity="0.65" />
+                                                <Image IsVisible="{Binding Workflow, Converter={x:Static conv:WorkflowEqualConverter.Instance}, ConverterParameter=Zettel}"
+                                                       Source="{SvgImage /Assets/Icons/Shell/Navigation/scroll.svg}"
+                                                       Width="14" Height="14"
+                                                       VerticalAlignment="Center"
+                                                       Opacity="0.65" />
+                                            </Panel>
+
+                                            <TextBlock Grid.Column="1"
                                                        Classes="topic-title"
                                                        Text="{Binding Title}" />
 
-                                            <Button Grid.Column="1"
+                                            <Button Grid.Column="2"
                                                     Classes="topic-add-button"
                                                     Click="Add_OnPointerPressed">
                                                 <FlyoutBase.AttachedFlyout>

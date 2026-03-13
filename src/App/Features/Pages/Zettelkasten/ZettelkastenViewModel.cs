@@ -82,7 +82,11 @@ public sealed partial class ZettelkastenViewModel(ZettelkastenGateway gateway, L
 
     private static List<KnowledgeIndexEntryDto> BuildIndexTree(List<KnowledgeIndexEntryDto> entries)
     {
-        var roots = entries.Where(e => e.ParentId is null).ToList();
+        var roots = entries
+            .Where(e => e.ParentId is null)
+            .OrderBy(e => e.Workflow)
+            .ThenBy(e => e.Title)
+            .ToList();
 
         foreach (var root in roots)
             PopulateChildren(root, entries);
@@ -94,6 +98,8 @@ public sealed partial class ZettelkastenViewModel(ZettelkastenGateway gateway, L
     {
         var children = all
             .Where(e => e.ParentId == entry.Id)
+            .OrderBy(e => e.Workflow)
+            .ThenBy(e => e.Title)
             .Select(e => PopulateChildren(e, all))
             .ToList();
 
