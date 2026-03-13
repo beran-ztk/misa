@@ -60,6 +60,7 @@ public static class ItemMappings
             Workflow.Journal  => WorkflowDto.Journal,
             Workflow.Arc  => WorkflowDto.Arc,
             Workflow.Unit  => WorkflowDto.Unit,
+            Workflow.Zettel  => WorkflowDto.Zettel,
             _ => throw new ArgumentOutOfRangeException(nameof(workflow), workflow, null)
         };
 }

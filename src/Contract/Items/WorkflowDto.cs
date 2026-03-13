@@ -6,5 +6,6 @@ public enum WorkflowDto
     Schedule,
     Journal,
     Arc,
-    Unit
+    Unit,
+    Zettel
 }

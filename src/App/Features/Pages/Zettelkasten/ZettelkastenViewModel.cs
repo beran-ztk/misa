@@ -27,6 +27,16 @@ public sealed partial class ZettelkastenViewModel(ZettelkastenGateway gateway, L
     {
         await GetTopicsAsync();
     }
+    public async Task CreateZettelAsync(Guid? topicId = null, string? topicName = null)
+    {
+        string description = topicId.HasValue
+            ? $"This Zettel will be created under the topic '{topicName}'."
+            : "Select a topic node to create a Zettel.";
+
+        var formVm = new CreateZettelViewModel(topicId, description, gateway);
+        await layerProxy.OpenAsync<CreateZettelViewModel, Result>(formVm, LayerPresentation.Modal);
+    }
+
     public async Task CreateTopicAsync(Guid? parentId = null, string? parentName = null)
     {
         string description;

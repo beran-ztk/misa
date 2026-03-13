@@ -99,8 +99,14 @@
 
                         <Button Grid.Column="1"
                                 Classes="workspace-toolbar-icon"
-                                ToolTip.Tip="Create topic"
-                                Click="CreateTopic_OnPointerPressed">
+                                ToolTip.Tip="Add"
+                                Click="Add_OnPointerPressed">
+                            <FlyoutBase.AttachedFlyout>
+                                <MenuFlyout>
+                                    <MenuItem Header="Create Topic" Click="CreateTopicMenuItem_OnClick" />
+                                    <MenuItem Header="Create Zettel" Click="CreateZettelMenuItem_OnClick" />
+                                </MenuFlyout>
+                            </FlyoutBase.AttachedFlyout>
                             <Image Source="{SvgImage /Assets/Icons/Common/plus.svg}" />
                         </Button>
 
@@ -139,7 +145,13 @@
 
                                             <Button Grid.Column="1"
                                                     Classes="topic-add-button"
-                                                    Click="CreateTopic_OnPointerPressed">
+                                                    Click="Add_OnPointerPressed">
+                                                <FlyoutBase.AttachedFlyout>
+                                                    <MenuFlyout>
+                                                        <MenuItem Header="Create Topic" Click="CreateTopicMenuItem_OnClick" />
+                                                        <MenuItem Header="Create Zettel" Click="CreateZettelMenuItem_OnClick" />
+                                                    </MenuFlyout>
+                                                </FlyoutBase.AttachedFlyout>
                                                 <Image Source="{SvgImage /Assets/Icons/Common/plus.svg}" />
                                             </Button>
                                         </Grid>

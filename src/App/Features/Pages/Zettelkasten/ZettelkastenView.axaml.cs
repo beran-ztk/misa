@@ -1,32 +1,45 @@
-using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Input;
+using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
-using Avalonia.Markup.Xaml;
 using Misa.Contract.Items.Components.Zettelkasten;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Zettelkasten;
 
 public partial class ZettelkastenView : UserControl
 {
+    private object? _pendingContext;
+
     public ZettelkastenView()
     {
         InitializeComponent();
     }
 
-    private async void CreateTopic_OnPointerPressed(object? sender, RoutedEventArgs e)
+    private void Add_OnPointerPressed(object? sender, RoutedEventArgs e)
     {
-        if (sender is Button button &&
-            DataContext is ZettelkastenViewModel vm)
+        if (sender is Button button)
         {
-            if (button.DataContext is TopicListDto topic)
-            {
-                await vm.CreateTopicAsync(topic.Id, topic.Title);
-            }
-            else if (button.DataContext is ZettelkastenViewModel)
-            {
-                await vm.CreateTopicAsync();
-            }
+            _pendingContext = button.DataContext;
+            FlyoutBase.ShowAttachedFlyout(button);
         }
+    }
+
+    private async void CreateTopicMenuItem_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not ZettelkastenViewModel vm) return;
+
+        if (_pendingContext is TopicListDto topic)
+            await vm.CreateTopicAsync(topic.Id, topic.Title);
+        else
+            await vm.CreateTopicAsync();
+    }
+
+    private async void CreateZettelMenuItem_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not ZettelkastenViewModel vm) return;
+
+        if (_pendingContext is TopicListDto topic)
+            await vm.CreateZettelAsync(topic.Id, topic.Title);
+        else
+            await vm.CreateZettelAsync();
     }
 }

@@ -15,6 +15,23 @@ namespace Misa.Ui.Avalonia.Features.Pages.Zettelkasten;
 
 public sealed class ZettelkastenGateway(RemoteProxy remoteProxy)
 {
+    public async Task<Result> CreateZettelAsync(CreateZettelRequest requestBody)
+    {
+        var response = await remoteProxy.SendAsync(
+            requestFactory: () => new HttpRequestMessage(HttpMethod.Post, ZettelkastenRoutes.CreateZettel)
+            {
+                Content = JsonContent.Create(requestBody)
+            },
+            retry: new RetryOptions
+            {
+                MaxAttempts = 3,
+                Delay = TimeSpan.FromMilliseconds(500)
+            },
+            cancellationToken: CancellationToken.None);
+
+        return response;
+    }
+
     public async Task<Result> CreateTopicAsync(CreateTopicRequest requestBody)
     {
         var response = await remoteProxy.SendAsync(
