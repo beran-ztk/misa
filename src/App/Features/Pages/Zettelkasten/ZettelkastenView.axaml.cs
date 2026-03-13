@@ -1,3 +1,4 @@
+using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
@@ -13,6 +14,17 @@ public partial class ZettelkastenView : UserControl
     public ZettelkastenView()
     {
         InitializeComponent();
+    }
+
+    private void Tree_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (DataContext is not ZettelkastenViewModel vm) return;
+        if (sender is not TreeView tree) return;
+
+        if (tree.SelectedItem is KnowledgeIndexEntryDto { Workflow: WorkflowDto.Zettel } entry)
+            vm.SelectedZettel = vm.Zettels.FirstOrDefault(z => z.Id == entry.Id);
+        else
+            vm.SelectedZettel = null;
     }
 
     private void Add_OnPointerPressed(object? sender, RoutedEventArgs e)

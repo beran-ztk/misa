@@ -134,7 +134,8 @@
                                   VerticalScrollBarVisibility="Auto">
 
                         <TreeView Classes="zettelkasten-tree"
-                                  ItemsSource="{Binding Index}">
+                                  ItemsSource="{Binding Index}"
+                                  SelectionChanged="Tree_OnSelectionChanged">
                             <TreeView.ItemTemplate>
                                 <TreeDataTemplate ItemsSource="{Binding Children}">
                                     <Border Classes="topic-row">
@@ -161,6 +162,7 @@
 
                                             <Button Grid.Column="2"
                                                     Classes="topic-add-button"
+                                                    IsVisible="{Binding Workflow, Converter={x:Static conv:WorkflowEqualConverter.Instance}, ConverterParameter=Topic}"
                                                     Click="Add_OnPointerPressed">
                                                 <FlyoutBase.AttachedFlyout>
                                                     <MenuFlyout>
@@ -183,13 +185,40 @@
             <Border Grid.Column="1"
                     Background="{StaticResource BrushPrimaryBackgroundLight}"
                     Padding="20,0,0,0">
-                <Grid RowDefinitions="Auto,*">
-                    <TextBlock Grid.Row="0"
-                               Text="Overview"
-                               FontSize="18"
-                               FontWeight="SemiBold"
+
+                <StackPanel>
+                    <!-- Empty state -->
+                    <TextBlock IsVisible="{Binding SelectedZettel, Converter={x:Static ObjectConverters.IsNull}}"
+                               Text="Select a Zettel to view its content."
+                               VerticalAlignment="Center"
+                               HorizontalAlignment="Center"
+                               Opacity="0.4"
                                Foreground="{StaticResource BrushTextPrimary}" />
-                </Grid>
+
+                    <!-- Zettel detail -->
+                    <Grid IsVisible="{Binding SelectedZettel, Converter={x:Static ObjectConverters.IsNotNull}}"
+                          RowDefinitions="Auto,*">
+
+                        <TextBlock Grid.Row="0"
+                                   Text="{Binding SelectedZettel.Title}"
+                                   FontSize="22"
+                                   FontWeight="SemiBold"
+                                   TextWrapping="Wrap"
+                                   Foreground="{StaticResource BrushTextPrimary}" />
+
+                        <ScrollViewer Grid.Row="1"
+                                      Margin="0,16,0,0"
+                                      HorizontalScrollBarVisibility="Disabled"
+                                      VerticalScrollBarVisibility="Auto">
+                            <TextBlock Text="{Binding SelectedZettel.Content}"
+                                       TextWrapping="Wrap"
+                                       Foreground="{StaticResource BrushTextPrimary}"
+                                       Opacity="0.85"
+                                       LineHeight="22" />
+                        </ScrollViewer>
+                    </Grid>
+                </StackPanel>
+
             </Border>
         </Grid>
     </Border>

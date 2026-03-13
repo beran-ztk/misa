@@ -19,6 +19,8 @@ public sealed partial class ZettelkastenViewModel(ZettelkastenGateway gateway, L
     public ObservableCollection<KnowledgeIndexEntryDto> Index { get; } = [];
     public List<ZettelDto> Zettels { get; private set; } = [];
 
+    [ObservableProperty] private ZettelDto? _selectedZettel;
+
     public async Task InitializeWorkspaceAsync()
     {
         await LoadIndexAsync();
@@ -73,6 +75,8 @@ public sealed partial class ZettelkastenViewModel(ZettelkastenGateway gateway, L
                 Index.Clear();
                 foreach (var entry in tree)
                     Index.Add(entry);
+
+                SelectedZettel = null;
             });
         }
 
