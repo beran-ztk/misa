@@ -133,7 +133,7 @@
                                   VerticalScrollBarVisibility="Auto">
 
                         <TreeView Classes="zettelkasten-tree"
-                                  ItemsSource="{Binding Topics}">
+                                  ItemsSource="{Binding Index}">
                             <TreeView.ItemTemplate>
                                 <TreeDataTemplate ItemsSource="{Binding Children}">
                                     <Border Classes="topic-row">

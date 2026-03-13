@@ -16,17 +16,20 @@ namespace Misa.Ui.Avalonia.Features.Pages.Zettelkasten;
 
 public sealed partial class ZettelkastenViewModel(ZettelkastenGateway gateway, LayerProxy layerProxy) : ViewModelBase
 {
-    public ObservableCollection<TopicListDto> Topics { get; } = [];
-    
+    public ObservableCollection<KnowledgeIndexEntryDto> Index { get; } = [];
+    public List<ZettelDto> Zettels { get; private set; } = [];
+
     public async Task InitializeWorkspaceAsync()
     {
-        await GetTopicsAsync();
+        await LoadIndexAsync();
     }
+
     [RelayCommand]
     private async Task RefreshWorkspaceAsync()
     {
-        await GetTopicsAsync();
+        await LoadIndexAsync();
     }
+
     public async Task CreateZettelAsync(Guid? topicId = null, string? topicName = null)
     {
         string description = topicId.HasValue
@@ -34,67 +37,69 @@ public sealed partial class ZettelkastenViewModel(ZettelkastenGateway gateway, L
             : "Select a topic node to create a Zettel.";
 
         var formVm = new CreateZettelViewModel(topicId, description, gateway);
-        await layerProxy.OpenAsync<CreateZettelViewModel, Result>(formVm, LayerPresentation.Modal);
+        var result = await layerProxy.OpenAsync<CreateZettelViewModel, Result>(formVm, LayerPresentation.Modal);
+        if (result is { IsSuccess: true })
+        {
+            await RefreshWorkspaceAsync();
+        }
     }
 
     public async Task CreateTopicAsync(Guid? parentId = null, string? parentName = null)
     {
-        string description;
-        if (parentId.HasValue)
-            description = $"This topic will be assigned under the topic '{parentName}'.";
-        else
-            description = "This topic will be on root-level.";
-        
+        string description = parentId.HasValue
+            ? $"This topic will be assigned under the topic '{parentName}'."
+            : "This topic will be on root-level.";
+
         var formVm = new CreateTopicViewModel(parentId, description, gateway);
-        
+
         var result = await layerProxy.OpenAsync<CreateTopicViewModel, Result>(formVm, LayerPresentation.Modal);
         if (result is { IsSuccess: true })
         {
             await RefreshWorkspaceAsync();
         }
     }
-    private async Task GetTopicsAsync()
+
+    private async Task LoadIndexAsync()
     {
-        var result = await gateway.GetTopicsAsync();
-        if (result is not null)
+        var indexResult = await gateway.GetKnowledgeIndexAsync();
+        var zettelResult = await gateway.GetZettelsAsync();
+
+        if (indexResult is not null)
         {
-            Topics.Clear();
-            var sortedTopics = BuildTopicTree(result);
-            
-            await Dispatcher.UIThread.InvokeAsync(() => 
+            var tree = BuildIndexTree(indexResult);
+
+            await Dispatcher.UIThread.InvokeAsync(() =>
             {
-                foreach (var topic in sortedTopics)
-                {
-                    Topics.Add(topic);   
-                }
+                Index.Clear();
+                foreach (var entry in tree)
+                    Index.Add(entry);
             });
         }
+
+        if (zettelResult is not null)
+            Zettels = zettelResult;
     }
 
-    private static List<TopicListDto> BuildTopicTree(List<TopicListDto> topics)
+    private static List<KnowledgeIndexEntryDto> BuildIndexTree(List<KnowledgeIndexEntryDto> entries)
     {
-        var parentlessTopics = topics.Where(t => t.ParentId is null).ToList();
-        
-        foreach (var parentlessTopic in parentlessTopics)
-        {
-            PopulateChildren(parentlessTopic, topics);
-        }
-        
-        return parentlessTopics;
+        var roots = entries.Where(e => e.ParentId is null).ToList();
+
+        foreach (var root in roots)
+            PopulateChildren(root, entries);
+
+        return roots;
     }
 
-    private static TopicListDto PopulateChildren(TopicListDto rootTopic, List<TopicListDto> topics)
+    private static KnowledgeIndexEntryDto PopulateChildren(KnowledgeIndexEntryDto entry, List<KnowledgeIndexEntryDto> all)
     {
-        var children = topics
-            .Where(t => t.ParentId == rootTopic.Id)
-            .Select(t => PopulateChildren(t, topics))
+        var children = all
+            .Where(e => e.ParentId == entry.Id)
+            .Select(e => PopulateChildren(e, all))
             .ToList();
 
         foreach (var child in children)
-        {
-            rootTopic.Children.Add(child);
-        }
+            entry.Children.Add(child);
 
-        return rootTopic;
+        return entry;
     }
 }

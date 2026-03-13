@@ -12,6 +12,7 @@ public class ZettelEndpoints
     {
         api.MapPost(ZettelkastenRoutes.CreateZettel, Create);
         api.MapGet(ZettelkastenRoutes.GetZettels, GetAll);
+        api.MapGet(ZettelkastenRoutes.GetZettel, GetSingle);
     }
 
     private static async Task<IResult> Create(
@@ -30,5 +31,14 @@ public class ZettelEndpoints
     {
         var result = await bus.InvokeAsync<List<ZettelDto>>(new GetZettelsQuery(topicId), ct);
         return Results.Ok(result);
+    }
+
+    private static async Task<IResult> GetSingle(
+        Guid itemId,
+        IMessageBus bus,
+        CancellationToken ct)
+    {
+        var result = await bus.InvokeAsync<ZettelDto?>(new GetZettelQuery(itemId), ct);
+        return result is null ? Results.NotFound() : Results.Ok(result);
     }
 }

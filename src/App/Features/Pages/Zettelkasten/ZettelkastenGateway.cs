@@ -49,9 +49,9 @@ public sealed class ZettelkastenGateway(RemoteProxy remoteProxy)
         return response;
     }
 
-    public async Task<List<TopicListDto>?> GetTopicsAsync()
+    public async Task<List<KnowledgeIndexEntryDto>?> GetKnowledgeIndexAsync()
     {
-        var response = await remoteProxy.SendAsync<List<TopicListDto>>(
+        var response = await remoteProxy.SendAsync<List<KnowledgeIndexEntryDto>>(
             requestFactory: () => new HttpRequestMessage(HttpMethod.Get, ZettelkastenRoutes.GetTopics),
             retry: new RetryOptions
             {
@@ -59,7 +59,21 @@ public sealed class ZettelkastenGateway(RemoteProxy remoteProxy)
                 Delay = TimeSpan.FromMilliseconds(500)
             },
             cancellationToken: CancellationToken.None);
-        
+
+        return response.Value;
+    }
+
+    public async Task<List<ZettelDto>?> GetZettelsAsync()
+    {
+        var response = await remoteProxy.SendAsync<List<ZettelDto>>(
+            requestFactory: () => new HttpRequestMessage(HttpMethod.Get, ZettelkastenRoutes.GetZettels),
+            retry: new RetryOptions
+            {
+                MaxAttempts = 3,
+                Delay = TimeSpan.FromMilliseconds(500)
+            },
+            cancellationToken: CancellationToken.None);
+
         return response.Value;
     }
     

@@ -7,5 +7,6 @@ public enum WorkflowDto
     Journal,
     Arc,
     Unit,
+    Topic,
     Zettel
 }

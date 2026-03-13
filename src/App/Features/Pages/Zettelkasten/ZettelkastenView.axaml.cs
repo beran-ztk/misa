@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
+using Misa.Contract.Items;
 using Misa.Contract.Items.Components.Zettelkasten;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Zettelkasten;
@@ -27,19 +28,29 @@ public partial class ZettelkastenView : UserControl
     {
         if (DataContext is not ZettelkastenViewModel vm) return;
 
-        if (_pendingContext is TopicListDto topic)
-            await vm.CreateTopicAsync(topic.Id, topic.Title);
+        if (_pendingContext is KnowledgeIndexEntryDto entry)
+        {
+            var parentId = entry.Workflow == WorkflowDto.Topic ? entry.Id : entry.ParentId;
+            await vm.CreateTopicAsync(parentId, entry.Title);
+        }
         else
+        {
             await vm.CreateTopicAsync();
+        }
     }
 
     private async void CreateZettelMenuItem_OnClick(object? sender, RoutedEventArgs e)
     {
         if (DataContext is not ZettelkastenViewModel vm) return;
 
-        if (_pendingContext is TopicListDto topic)
-            await vm.CreateZettelAsync(topic.Id, topic.Title);
+        if (_pendingContext is KnowledgeIndexEntryDto entry)
+        {
+            var topicId = entry.Workflow == WorkflowDto.Topic ? entry.Id : entry.ParentId;
+            await vm.CreateZettelAsync(topicId, entry.Title);
+        }
         else
+        {
             await vm.CreateZettelAsync();
+        }
     }
 }
