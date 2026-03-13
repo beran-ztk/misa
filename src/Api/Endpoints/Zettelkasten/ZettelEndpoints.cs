@@ -13,6 +13,7 @@ public class ZettelEndpoints
         api.MapPost(ZettelkastenRoutes.CreateZettel, Create);
         api.MapGet(ZettelkastenRoutes.GetZettels, GetAll);
         api.MapGet(ZettelkastenRoutes.GetZettel, GetSingle);
+        api.MapPatch(ZettelkastenRoutes.UpdateZettelContent, UpdateContent);
     }
 
     private static async Task<IResult> Create(
@@ -40,5 +41,15 @@ public class ZettelEndpoints
     {
         var result = await bus.InvokeAsync<ZettelDto?>(new GetZettelQuery(itemId), ct);
         return result is null ? Results.NotFound() : Results.Ok(result);
+    }
+
+    private static async Task<IResult> UpdateContent(
+        Guid itemId,
+        [FromBody] UpdateZettelContentRequest request,
+        IMessageBus bus,
+        CancellationToken ct)
+    {
+        await bus.InvokeAsync(new UpdateZettelContentCommand(itemId, request.Content), ct);
+        return Results.Ok();
     }
 }

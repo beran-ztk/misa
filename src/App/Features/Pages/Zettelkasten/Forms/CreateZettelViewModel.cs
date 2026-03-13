@@ -12,7 +12,6 @@ public sealed partial class CreateZettelViewModel(Guid? topicId, string descript
     : ViewModelBase, IHostedForm<Result>
 {
     [ObservableProperty] private string _zettelTitle = string.Empty;
-    [ObservableProperty] private string? _zettelContent;
 
     public string FormTitle { get; } = "Create Zettel";
     public string? FormDescription { get; } = description;
@@ -22,7 +21,7 @@ public sealed partial class CreateZettelViewModel(Guid? topicId, string descript
         if (string.IsNullOrEmpty(ZettelTitle) || topicId is null)
             return Result<Result>.Failure();
 
-        var request = new CreateZettelRequest(ZettelTitle, ZettelContent, topicId.Value);
+        var request = new CreateZettelRequest(ZettelTitle, null, topicId.Value);
         var result = await gateway.CreateZettelAsync(request);
 
         if (!result.IsSuccess)

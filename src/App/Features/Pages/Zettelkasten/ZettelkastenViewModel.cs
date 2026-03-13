@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -20,6 +21,11 @@ public sealed partial class ZettelkastenViewModel(ZettelkastenGateway gateway, L
     public List<ZettelDto> Zettels { get; private set; } = [];
 
     [ObservableProperty] private ZettelDto? _selectedZettel;
+    [ObservableProperty] private string? _editableContent;
+    [ObservableProperty] private string _saveStateLabel = string.Empty;
+
+    private bool _suppressContentSave;
+    private CancellationTokenSource? _saveCts;
 
     public async Task InitializeWorkspaceAsync()
     {
@@ -30,6 +36,59 @@ public sealed partial class ZettelkastenViewModel(ZettelkastenGateway gateway, L
     private async Task RefreshWorkspaceAsync()
     {
         await LoadIndexAsync();
+    }
+
+    partial void OnSelectedZettelChanged(ZettelDto? value)
+    {
+        _suppressContentSave = true;
+        EditableContent = value?.Content;
+        SaveStateLabel = string.Empty;
+        _suppressContentSave = false;
+    }
+
+    partial void OnEditableContentChanged(string? value)
+    {
+        if (_suppressContentSave) return;
+        if (SelectedZettel is null) return;
+
+        SaveStateLabel = "Unsaved";
+        _ = AutoSaveAsync(SelectedZettel.Id, value);
+    }
+
+    private async Task AutoSaveAsync(Guid zettelId, string? content)
+    {
+        _saveCts?.Cancel();
+        _saveCts = new CancellationTokenSource();
+        var token = _saveCts.Token;
+
+        try
+        {
+            await Task.Delay(1000, token);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
+        if (SelectedZettel?.Id != zettelId) return;
+
+        var result = await gateway.UpdateZettelContentAsync(zettelId, content);
+
+        if (result.IsSuccess)
+        {
+            // Update the cached ZettelDto
+            var idx = Zettels.FindIndex(z => z.Id == zettelId);
+            if (idx >= 0)
+                Zettels[idx] = Zettels[idx] with { Content = content };
+
+            if (SelectedZettel?.Id == zettelId)
+                SaveStateLabel = "Saved";
+        }
+        else
+        {
+            if (SelectedZettel?.Id == zettelId)
+                SaveStateLabel = "Save failed";
+        }
     }
 
     public async Task CreateZettelAsync(Guid? topicId = null, string? topicName = null)

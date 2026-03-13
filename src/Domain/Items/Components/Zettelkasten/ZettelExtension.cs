@@ -14,4 +14,6 @@ public sealed class ZettelExtension
     public ItemId Id { get; init; }
     public ItemId TopicId { get; private set; }
     public string? Content { get; private set; }
+
+    public void ChangeContent(string? content) => Content = content;
 }

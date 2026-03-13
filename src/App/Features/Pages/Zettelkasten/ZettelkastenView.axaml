@@ -197,25 +197,38 @@
 
                     <!-- Zettel detail -->
                     <Grid IsVisible="{Binding SelectedZettel, Converter={x:Static ObjectConverters.IsNotNull}}"
-                          RowDefinitions="Auto,*">
+                          RowDefinitions="Auto,Auto">
 
-                        <TextBlock Grid.Row="0"
-                                   Text="{Binding SelectedZettel.Title}"
-                                   FontSize="22"
-                                   FontWeight="SemiBold"
-                                   TextWrapping="Wrap"
-                                   Foreground="{StaticResource BrushTextPrimary}" />
-
-                        <ScrollViewer Grid.Row="1"
-                                      Margin="0,16,0,0"
-                                      HorizontalScrollBarVisibility="Disabled"
-                                      VerticalScrollBarVisibility="Auto">
-                            <TextBlock Text="{Binding SelectedZettel.Content}"
+                        <Grid Grid.Row="0"
+                              ColumnDefinitions="*,Auto"
+                              ColumnSpacing="10">
+                            <TextBlock Grid.Column="0"
+                                       Text="{Binding SelectedZettel.Title}"
+                                       FontSize="22"
+                                       FontWeight="SemiBold"
                                        TextWrapping="Wrap"
-                                       Foreground="{StaticResource BrushTextPrimary}"
-                                       Opacity="0.85"
-                                       LineHeight="22" />
-                        </ScrollViewer>
+                                       Foreground="{StaticResource BrushTextPrimary}" />
+                            <TextBlock Grid.Column="1"
+                                       Text="{Binding SaveStateLabel}"
+                                       VerticalAlignment="Center"
+                                       FontSize="12"
+                                       Opacity="0.5"
+                                       Foreground="{StaticResource BrushTextPrimary}" />
+                        </Grid>
+
+                        <TextBox Grid.Row="1"
+                                 Margin="0,12,0,0"
+                                 Text="{Binding EditableContent, Mode=TwoWay}"
+                                 AcceptsReturn="True"
+                                 TextWrapping="Wrap"
+                                 MinHeight="200"
+                                 Background="Transparent"
+                                 BorderThickness="0"
+                                 Padding="0"
+                                 Watermark="Start writing…"
+                                 Foreground="{StaticResource BrushTextPrimary}"
+                                 LineHeight="22"
+                                 FontSize="14" />
                     </Grid>
                 </StackPanel>
 

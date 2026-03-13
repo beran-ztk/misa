@@ -16,13 +16,5 @@
                      Text="{Binding ZettelTitle, Mode=TwoWay}" />
         </StackPanel>
 
-        <StackPanel Classes="addpanel-controls">
-            <TextBlock Text="Content (optional)"
-                       Classes="addpanel-text" />
-            <TextBox Classes="addpanel-multiline"
-                     Watermark="Write your note…"
-                     Text="{Binding ZettelContent, Mode=TwoWay}" />
-        </StackPanel>
-
     </StackPanel>
 </UserControl>
