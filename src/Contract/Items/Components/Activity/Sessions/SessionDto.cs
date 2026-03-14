@@ -50,4 +50,23 @@ public sealed record SessionDto
             return $"{elapsedStr} / {plannedStr}";
         }
     }
+
+    public string? EfficiencyDisplay => Efficiency == SessionEfficiencyDto.None ? null : Efficiency switch
+    {
+        SessionEfficiencyDto.LowOutput      => "Low output",
+        SessionEfficiencyDto.SteadyOutput   => "Steady output",
+        SessionEfficiencyDto.HighOutput     => "High output",
+        SessionEfficiencyDto.PeakPerformance => "Peak performance",
+        _ => null
+    };
+
+    public string? ConcentrationDisplay => Concentration == SessionConcentrationDto.None ? null : Concentration switch
+    {
+        SessionConcentrationDto.Distracted      => "Distracted",
+        SessionConcentrationDto.UnfocusedButCalm => "Unfocused but calm",
+        SessionConcentrationDto.Focused         => "Focused",
+        SessionConcentrationDto.DeepFocus       => "Deep focus",
+        SessionConcentrationDto.Hyperfocus      => "Hyperfocus",
+        _ => null
+    };
 }

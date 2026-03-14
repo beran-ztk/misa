@@ -76,7 +76,7 @@
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="sessions:SessionDto">
                                 <Border Classes="session-card" Margin="0,0,0,8">
-                                    <StackPanel Spacing="8">
+                                    <StackPanel Spacing="10">
 
                                         <!-- Header: state badge + date -->
                                         <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
@@ -91,12 +91,15 @@
                                         </Grid>
 
                                         <!-- Objective -->
-                                        <TextBlock Text="{Binding Objective}"
-                                                   FontSize="13"
-                                                   TextWrapping="Wrap"
-                                                   IsVisible="{Binding Objective, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                        <StackPanel Spacing="2"
+                                                    IsVisible="{Binding Objective, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                            <TextBlock Text="Objective" Classes="label" />
+                                            <TextBlock Text="{Binding Objective}"
+                                                       FontSize="13"
+                                                       TextWrapping="Wrap" />
+                                        </StackPanel>
 
-                                        <!-- Duration + segments -->
+                                        <!-- Duration + segments + quality -->
                                         <StackPanel Orientation="Horizontal" Spacing="16">
                                             <StackPanel Spacing="2">
                                                 <TextBlock Text="Duration" Classes="label" />
@@ -105,6 +108,16 @@
                                             <StackPanel Spacing="2">
                                                 <TextBlock Text="Segments" Classes="label" />
                                                 <TextBlock Text="{Binding Segments.Count}" FontSize="12" />
+                                            </StackPanel>
+                                            <StackPanel Spacing="2"
+                                                        IsVisible="{Binding EfficiencyDisplay, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                                <TextBlock Text="Efficiency" Classes="label" />
+                                                <TextBlock Text="{Binding EfficiencyDisplay}" FontSize="12" />
+                                            </StackPanel>
+                                            <StackPanel Spacing="2"
+                                                        IsVisible="{Binding ConcentrationDisplay, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                                <TextBlock Text="Concentration" Classes="label" />
+                                                <TextBlock Text="{Binding ConcentrationDisplay}" FontSize="12" />
                                             </StackPanel>
                                         </StackPanel>
 
