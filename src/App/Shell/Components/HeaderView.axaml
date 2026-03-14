@@ -16,6 +16,7 @@
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Padding" Value="0"/>
             <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="MinWidth" Value="120"/>
         </Style>
 
         <Style Selector="Button.header-user /template/ ContentPresenter">
@@ -37,7 +38,7 @@
     </UserControl.Styles>
 
     <Border Background="{StaticResource BrushPrimaryBackground}"
-            Padding="20,0"
+            Padding="12,0"
             BorderThickness="0,0,0,1"
             BorderBrush="{StaticResource BrushBorder}">
 
@@ -53,7 +54,6 @@
 
             <StackPanel Grid.Column="1"
                         Orientation="Horizontal"
-                        Spacing="16"
                         VerticalAlignment="Center">
 
                 <Button Classes="header-user">
@@ -81,12 +81,10 @@
                         <TextBlock Text="{Binding UserState.Username}"
                                    FontSize="{StaticResource FontSizeAverage}"
                                    Foreground="{StaticResource BrushTextSecondary}"
-                                   VerticalAlignment="Center"/>
+                                   VerticalAlignment="Center"
+                                   HorizontalAlignment="Center"/>
                     </StackPanel>
                 </Button>
-
-                <TextBlock Text="Workspace"
-                           Opacity="0.8" />
 
             </StackPanel>
 

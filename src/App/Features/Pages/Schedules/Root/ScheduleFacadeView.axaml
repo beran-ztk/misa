@@ -17,54 +17,55 @@
       </Style>
 
       <Style Selector="ListBoxItem:pointerover Border.schedule-card">
-        <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}" />
-        <!-- subtle lift -->
-        <Setter Property="BoxShadow" Value="0 8 24 0 #40000000"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorderLight}" />
+        <Setter Property="BoxShadow" Value="0 6 20 0 #38000000"/>
       </Style>
 
       <Style Selector="ListBoxItem:selected Border.schedule-card">
-        <!-- selected outline + a bit more lift -->
         <Setter Property="BorderBrush" Value="{StaticResource BrushAccent}" />
         <Setter Property="BorderThickness" Value="1.5"/>
-        <Setter Property="BoxShadow" Value="0 10 28 0 #55000000"/>
+        <Setter Property="BoxShadow" Value="0 8 24 0 #50000000"/>
       </Style>
 
-      <!-- Badge -->
+      <!-- Badge: small pill label in the title row -->
       <Style Selector="Border.badge">
         <Setter Property="CornerRadius" Value="999"/>
-        <Setter Property="Padding" Value="8,3"/>
+        <Setter Property="Padding" Value="7,2"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}"/>
-        <Setter Property="Background" Value="#10FFFFFF"/>
+        <Setter Property="Background" Value="#0EFFFFFF"/>
       </Style>
 
       <Style Selector="TextBlock.badge-text">
-        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="FontSize" Value="10"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
-        <Setter Property="Opacity" Value="0.9"/>
+        <Setter Property="Opacity" Value="0.75"/>
+        <Setter Property="LetterSpacing" Value="0.5"/>
       </Style>
 
-      <!-- Chip -->
+      <!-- Chip: constraint detail pill in the constraint row -->
       <Style Selector="Border.chip">
-        <Setter Property="CornerRadius" Value="999"/>
+        <Setter Property="CornerRadius" Value="6"/>
         <Setter Property="Padding" Value="8,4"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}"/>
-        <Setter Property="Background" Value="#0CFFFFFF"/>
+        <Setter Property="Background" Value="#08FFFFFF"/>
       </Style>
 
       <Style Selector="TextBlock.chip-text">
         <Setter Property="FontSize" Value="12"/>
-        <Setter Property="Opacity" Value="0.9"/>
+        <Setter Property="Opacity" Value="0.85"/>
       </Style>
 
-      <!-- Secondary text -->
+      <!-- Secondary: one step quieter than primary -->
       <Style Selector="TextBlock.secondary">
-        <Setter Property="Opacity" Value="0.78"/>
+        <Setter Property="Opacity" Value="0.72"/>
+        <Setter Property="FontSize" Value="13"/>
       </Style>
 
+      <!-- Muted: metadata / minor details -->
       <Style Selector="TextBlock.muted">
-        <Setter Property="Opacity" Value="0.65"/>
+        <Setter Property="Opacity" Value="0.50"/>
         <Setter Property="FontSize" Value="12"/>
       </Style>
   </UserControl.Styles>
@@ -131,100 +132,75 @@
                 <DataTemplate x:DataType="schedules:ScheduleDto">
 
                   <Border Classes="schedule-card"
-                          Padding="12"
+                          Padding="16,14"
                           BorderBrush="{StaticResource BrushBorder}"
                           BorderThickness="1"
                           CornerRadius="10"
                           Background="{StaticResource BrushPrimaryBackground}">
 
-                    <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto"
-                          RowSpacing="10">
+                    <StackPanel Spacing="8">
 
-                      <!-- Header -->
-                      <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="12">
-                        <StackPanel Spacing="2">
-                          <TextBlock Text="{Binding Item.Title}"
-                                     FontSize="16"
-                                     FontWeight="SemiBold" />
+                      <!-- Title row: name + restriction badges -->
+                      <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                        <TextBlock Text="{Binding Item.Title}"
+                                   FontSize="15"
+                                   FontWeight="SemiBold"
+                                   VerticalAlignment="Center"
+                                   TextTrimming="CharacterEllipsis" />
 
-                          <TextBlock Text="{Binding Item.CreatedAt, StringFormat='dd.MM.yyyy HH:mm'}"
-                                     Classes="muted" />
-                        </StackPanel>
-
-                        <!-- Right meta: timezone + badges -->
                         <StackPanel Grid.Column="1"
-                                    Spacing="6"
-                                    HorizontalAlignment="Right">
-                          <TextBlock Text="{Binding Timezone}"
-                                     Classes="muted"
-                                     HorizontalAlignment="Right"/>
-
-                          <WrapPanel HorizontalAlignment="Right"
-                                     ItemSpacing="4">
-                            <!-- Hard restrictions badge -->
-                            <Border Classes="badge"
-                                    IsVisible="{Binding HasHardRestrictions}">
-                              <TextBlock Classes="badge-text"
-                                         Text="CONSTRAINTS" />
-                            </Border>
-
-                            <!-- Soft restrictions badge -->
-                            <Border Classes="badge"
-                                    IsVisible="{Binding HasSoftRestrictions}">
-                              <TextBlock Classes="badge-text"
-                                         Text="LIMITED" />
-                            </Border>
-                            
-                            <!-- No restrictions badge -->
-                            <Border Classes="badge"
-                                    IsVisible="{Binding HasNoRestrictions}">
-                              <TextBlock Classes="badge-text"
-                                         Text="INDEFINITELY" />
-                            </Border>
-                          </WrapPanel>
+                                    Orientation="Horizontal"
+                                    Spacing="4"
+                                    VerticalAlignment="Center">
+                          <Border Classes="badge" IsVisible="{Binding HasHardRestrictions}">
+                            <TextBlock Classes="badge-text" Text="CONSTRAINED" />
+                          </Border>
+                          <Border Classes="badge" IsVisible="{Binding HasSoftRestrictions}">
+                            <TextBlock Classes="badge-text" Text="LIMITED" />
+                          </Border>
                         </StackPanel>
-                        
                       </Grid>
-                      
-                      <Border Grid.Row="1" Classes="card-separator"/>
 
-                      <!-- Core summary -->
-                      <TextBlock Grid.Row="2"
-                                 Text="{Binding TriggerSummary}"
+                      <!-- Meta row: execution status + timezone -->
+                      <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Text="{Binding ExecutionStatus}"
+                                   Classes="muted" />
+                        <TextBlock Grid.Column="1"
+                                   Text="{Binding Timezone}"
+                                   Classes="muted" />
+                      </Grid>
+
+                      <Border Classes="card-separator" Margin="0,2"/>
+
+                      <!-- Trigger summary (primary description) -->
+                      <TextBlock Text="{Binding TriggerSummary}"
+                                 TextWrapping="Wrap"
+                                 LineHeight="20" />
+
+                      <!-- Constraint chips (only when hard restrictions exist) -->
+                      <WrapPanel ItemSpacing="4" LineSpacing="4"
+                                 IsVisible="{Binding HasHardRestrictions}"
+                                 Margin="0,2,0,0">
+                        <Border Classes="chip" IsVisible="{Binding ConstraintTimeWindow, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                          <TextBlock Classes="chip-text" Text="{Binding ConstraintTimeWindow}" />
+                        </Border>
+                        <Border Classes="chip" IsVisible="{Binding ConstraintWeekdays, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                          <TextBlock Classes="chip-text" Text="{Binding ConstraintWeekdays}" />
+                        </Border>
+                        <Border Classes="chip" IsVisible="{Binding ConstraintMonths, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                          <TextBlock Classes="chip-text" Text="{Binding ConstraintMonths}" />
+                        </Border>
+                        <Border Classes="chip" IsVisible="{Binding ConstraintMonthDays, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                          <TextBlock Classes="chip-text" Text="{Binding ConstraintMonthDays}" />
+                        </Border>
+                      </WrapPanel>
+
+                      <!-- Operational details (muted footnote) -->
+                      <TextBlock Text="{Binding OperationalBehaviour}"
+                                 Classes="muted"
                                  TextWrapping="Wrap" />
 
-                      <!-- Execution status -->
-                      <TextBlock Grid.Row="3"
-                                 Text="{Binding ExecutionStatus}"
-                                 Classes="secondary"
-                                 TextWrapping="Wrap" />
-
-                      <!-- Constraints as chips + operational line -->
-                      <StackPanel Grid.Row="4" Spacing="8">
-
-                        <!-- If you keep ScheduleConstraints as ONE string, show it as a single chip-row -->
-                        <WrapPanel ItemSpacing="4" LineSpacing="4" 
-                                   IsVisible="{Binding HasHardRestrictions}">
-                          <Border Classes="chip" IsVisible="{Binding ConstraintTimeWindow, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                            <TextBlock Classes="chip-text" Text="{Binding ConstraintTimeWindow}"/>
-                          </Border>
-                          <Border Classes="chip" IsVisible="{Binding ConstraintWeekdays, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                            <TextBlock Classes="chip-text" Text="{Binding ConstraintWeekdays}"/>
-                          </Border>
-                          <Border Classes="chip" IsVisible="{Binding ConstraintMonths, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                            <TextBlock Classes="chip-text" Text="{Binding ConstraintMonths}"/>
-                          </Border>
-                          <Border Classes="chip" IsVisible="{Binding ConstraintMonthDays, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                            <TextBlock Classes="chip-text" Text="{Binding ConstraintMonthDays}"/>
-                          </Border>
-                        </WrapPanel>
-
-                        <TextBlock Text="{Binding OperationalBehaviour}"
-                                   Classes="muted"
-                                   TextWrapping="Wrap" />
-                      </StackPanel>
-
-                    </Grid>
+                    </StackPanel>
                   </Border>
                 </DataTemplate>
               </ListBox.ItemTemplate>
