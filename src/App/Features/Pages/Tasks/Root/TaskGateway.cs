@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Misa.Contract.Common.Results;
@@ -30,7 +31,10 @@ public sealed class TaskGateway(RemoteProxy remoteProxy)
     {
         
         var response = await remoteProxy.SendAsync<TaskDto>(
-            requestFactory: () => new HttpRequestMessage(HttpMethod.Post, TaskRoutes.CreateTask),
+            requestFactory: () => new HttpRequestMessage(HttpMethod.Post, TaskRoutes.CreateTask)
+            {
+                Content = JsonContent.Create(requestBody)
+            },
             retry: new RetryOptions
             {
                 MaxAttempts = 3,
