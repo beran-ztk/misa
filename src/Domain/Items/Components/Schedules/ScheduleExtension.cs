@@ -54,36 +54,42 @@ public sealed class ScheduleExtension : DomainEventEntity
     // Mutators
     public void ChangeMisfirePolicy(ScheduleMisfirePolicy policy)
     {
+        if (MisfirePolicy == policy) return;
         AddDomainEvent(new PropertyChangedEvent(Id.Value, ChangeType.MisfirePolicy, MisfirePolicy.ToString(), policy.ToString(), null));
         MisfirePolicy = policy;
     }
 
     public void ChangeLookaheadLimit(int limit)
     {
+        if (LookaheadLimit == limit) return;
         AddDomainEvent(new PropertyChangedEvent(Id.Value, ChangeType.LookaheadLimit, LookaheadLimit.ToString(), limit.ToString(), null));
         LookaheadLimit = limit;
     }
 
     public void ChangeOccurrenceCountLimit(int? limit)
     {
+        if (OccurrenceCountLimit == limit) return;
         AddDomainEvent(new PropertyChangedEvent(Id.Value, ChangeType.OccurrenceCountLimit, OccurrenceCountLimit?.ToString(), limit?.ToString(), null));
         OccurrenceCountLimit = limit;
     }
 
     public void ChangeStartTime(TimeOnly? startTime)
     {
+        if (StartTime == startTime) return;
         AddDomainEvent(new PropertyChangedEvent(Id.Value, ChangeType.StartTime, StartTime?.ToString(), startTime?.ToString(), null));
         StartTime = startTime;
     }
 
     public void ChangeEndTime(TimeOnly? endTime)
     {
+        if (EndTime == endTime) return;
         AddDomainEvent(new PropertyChangedEvent(Id.Value, ChangeType.EndTime, EndTime?.ToString(), endTime?.ToString(), null));
         EndTime = endTime;
     }
 
     public void ChangeActiveUntil(DateTimeOffset? activeUntilUtc)
     {
+        if (ActiveUntilUtc == activeUntilUtc) return;
         AddDomainEvent(new PropertyChangedEvent(Id.Value, ChangeType.ActiveUntil, ActiveUntilUtc?.ToString("O"), activeUntilUtc?.ToString("O"), null));
         ActiveUntilUtc = activeUntilUtc;
     }
