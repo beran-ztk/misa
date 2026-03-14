@@ -3,13 +3,41 @@
              x:Class="Misa.Ui.Avalonia.Features.Inspector.Root.InspectorFacadeView"
              xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Inspector.Root"
              x:DataType="root:InspectorFacadeViewModel">
+    <UserControl.Styles>
+        <Style Selector="TabControl.inspector-tabs">
+            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackground}" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
 
+        <Style Selector="TabControl.inspector-tabs TabItem">
+            <Setter Property="Padding" Value="12,8" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{StaticResource BrushTextFaded}" />
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Margin" Value="0,0,12,0" />
+        </Style>
+
+        <Style Selector="TabControl.inspector-tabs TabItem:pointerover">
+            <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}" />
+        </Style>
+
+        <Style Selector="TabControl.inspector-tabs TabItem:selected">
+            <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+        </Style>
+    </UserControl.Styles>
+    
     <Border BorderThickness="1,0,0,0"
             BorderBrush="{StaticResource BrushBorder}"
             Background="{StaticResource BrushPrimaryBackground}"
             IsVisible="{Binding State.HasItem}">
 
-        <TabControl SelectedIndex="{Binding State.SelectedTabIndex}">
+        <TabControl Classes="inspector-tabs"
+                    SelectedIndex="{Binding State.SelectedTabIndex}">
 
             <TabItem Header="Entry">
                 <ContentControl Content="{Binding Entry}"/>
