@@ -10,8 +10,23 @@
             <Setter Property="FontSize" Value="11"/>
             <Setter Property="Opacity" Value="0.50"/>
         </Style>
+        <Style Selector="Button.relation-nav-title">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="4,1"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Button.relation-nav-title:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="Button.relation-nav-title:pointerover TextBlock">
+            <Setter Property="TextDecorations" Value="Underline"/>
+        </Style>
     </UserControl.Styles>
 
+    <Border BorderBrush="{StaticResource BrushBorder}"
+            BorderThickness="0,0,0,1"
+            Padding="0,0,0,4">
     <StackPanel Spacing="0">
 
         <!-- Section header -->
@@ -105,9 +120,9 @@
                 <DataTemplate x:DataType="relations:RelationRowVm">
                     <Grid ColumnDefinitions="Auto,Auto,*"
                           ColumnSpacing="8"
-                          Margin="4,3">
+                          Margin="4,4">
 
-                        <!-- Relation type badge -->
+                        <!-- Relation type chip -->
                         <Border Grid.Column="0"
                                 CornerRadius="4"
                                 Padding="6,2"
@@ -115,26 +130,41 @@
                                 BorderBrush="{StaticResource BrushBorder}"
                                 Background="#08FFFFFF"
                                 VerticalAlignment="Center">
-                            <TextBlock Text="{Binding RelationType}"
+                            <TextBlock Text="{Binding ChipLabel}"
                                        FontSize="10"
                                        FontWeight="SemiBold"
                                        Opacity="0.70"
                                        LetterSpacing="0.3"/>
                         </Border>
 
-                        <!-- Direction arrow -->
+                        <!-- Relation wording -->
                         <TextBlock Grid.Column="1"
-                                   Text="{Binding Direction}"
+                                   Text="{Binding RelationLabel}"
                                    FontSize="12"
                                    Opacity="0.45"
                                    VerticalAlignment="Center"/>
 
-                        <!-- Other item title -->
-                        <TextBlock Grid.Column="2"
-                                   Text="{Binding OtherTitle}"
-                                   FontSize="13"
-                                   TextTrimming="CharacterEllipsis"
-                                   VerticalAlignment="Center"/>
+                        <!-- Other item: title + workflow -->
+                        <StackPanel Grid.Column="2"
+                                    Spacing="2"
+                                    VerticalAlignment="Center">
+
+                            <Button Classes="relation-nav-title"
+                                    Command="{Binding $parent[ItemsControl].((relations:InspectorRelationsViewModel)DataContext).NavigateToItemCommand}"
+                                    CommandParameter="{Binding OtherItemId}"
+                                    HorizontalAlignment="Left">
+                                <TextBlock Text="{Binding OtherTitle}"
+                                           FontSize="13"
+                                           FontWeight="Medium"
+                                           TextTrimming="CharacterEllipsis"/>
+                            </Button>
+
+                            <TextBlock Text="{Binding OtherWorkflow}"
+                                       FontSize="10"
+                                       Opacity="0.40"
+                                       Margin="4,0,0,0"/>
+
+                        </StackPanel>
 
                     </Grid>
                 </DataTemplate>
@@ -142,4 +172,5 @@
         </ItemsControl>
 
     </StackPanel>
+    </Border>
 </UserControl>

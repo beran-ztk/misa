@@ -80,11 +80,16 @@ public sealed partial class InspectorRelationsViewModel : ViewModelBase
         }
 
         RelationRows = result.Value
-            .Select(r => new RelationRowVm(
-                r.RelationType,
-                r.SourceItemId == itemId ? "→" : "←",
-                r.SourceItemId == itemId ? r.TargetItemTitle : r.SourceItemTitle
-            ))
+            .Select(r =>
+            {
+                var isSource = r.SourceItemId == itemId;
+                var label    = RelationLabel(r.RelationType, isSource);
+                var chipText = ChipText(r.RelationType);
+                var otherId  = isSource ? r.TargetItemId : r.SourceItemId;
+                var otherTitle    = isSource ? r.TargetItemTitle : r.SourceItemTitle;
+                var otherWorkflow = isSource ? r.TargetItemWorkflow : r.SourceItemWorkflow;
+                return new RelationRowVm(chipText, label, otherId, otherTitle, otherWorkflow.ToString());
+            })
             .ToList();
     }
 
@@ -135,7 +140,39 @@ public sealed partial class InspectorRelationsViewModel : ViewModelBase
         SelectedTargetItem = null;
         await LoadRelationsAsync();
     }
+
+    [RelayCommand]
+    private void NavigateToItem(Guid itemId)
+    {
+        _facade.ContextState.Set(itemId);
+    }
+
+    private static string ChipText(RelationTypeDto type) => type switch
+    {
+        RelationTypeDto.RelatedTo   => "related to",
+        RelationTypeDto.References  => "references",
+        RelationTypeDto.DerivedFrom => "derived from",
+        RelationTypeDto.DuplicateOf => "duplicate of",
+        RelationTypeDto.Contains    => "contains",
+        _                           => type.ToString()
+    };
+
+    private static string RelationLabel(RelationTypeDto type, bool isSource) => type switch
+    {
+        RelationTypeDto.RelatedTo   => "related to",
+        RelationTypeDto.References  => isSource ? "references"        : "is referenced by",
+        RelationTypeDto.DerivedFrom => isSource ? "is derived from"   : "is the basis for",
+        RelationTypeDto.DuplicateOf => isSource ? "is a duplicate of" : "has duplicate",
+        RelationTypeDto.Contains    => isSource ? "contains"          : "is contained in",
+        _                           => type.ToString()
+    };
 }
 
 /// <summary>Flat display row for one relation.</summary>
-public sealed record RelationRowVm(string RelationType, string Direction, string OtherTitle);
+public sealed record RelationRowVm(
+    string ChipLabel,
+    string RelationLabel,
+    Guid OtherItemId,
+    string OtherTitle,
+    string OtherWorkflow
+);

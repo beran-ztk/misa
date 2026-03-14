@@ -1,4 +1,6 @@
 using Misa.Application.Abstractions.Persistence;
+using Misa.Application.Mappings;
+using Misa.Contract.Items;
 using Misa.Contract.Items.Components.Relations;
 
 namespace Misa.Application.Features.Items.Relations;
@@ -13,11 +15,13 @@ public sealed class GetRelationsForItemHandler(IItemRepository repository)
 
         return relations.Select(r => new ItemRelationDto(
             r.Id,
-            r.RelationType.ToString(),
+            r.RelationType.ToDto(),
             r.SourceItemId.Value,
             r.SourceItem?.Title ?? string.Empty,
+            r.SourceItem?.Workflow.ToWorkflowDto() ?? WorkflowDto.Task,
             r.TargetItemId.Value,
-            r.TargetItem?.Title ?? string.Empty
+            r.TargetItem?.Title ?? string.Empty,
+            r.TargetItem?.Workflow.ToWorkflowDto() ?? WorkflowDto.Task
         )).ToList();
     }
 }
