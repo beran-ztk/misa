@@ -22,8 +22,7 @@
 
             <TabItem Header="Activity"
                      IsVisible="{Binding State.HasActivity}">
-                <TextBlock Text="Activity content placeholder"
-                           TextWrapping="Wrap" />
+                <ContentControl Content="{Binding Activity}"/>
             </TabItem>
 
             <TabItem Header="Related">

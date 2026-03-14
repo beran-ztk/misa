@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Ui.Avalonia.Common.Mappings;
+using Misa.Ui.Avalonia.Features.Inspector.Tabs.Activity;
 using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Base;
 using Misa.Ui.Avalonia.Infrastructure.States;
 using Misa.Ui.Avalonia.Infrastructure.UI;
@@ -14,6 +15,7 @@ public sealed partial class InspectorFacadeViewModel : ViewModelBase
     public InspectorGateway Gateway { get; }
     public InspectorState State { get; }
     public InspectorEntryViewModel Entry { get; }
+    public InspectorActivityViewModel Activity { get; }
     public LayerProxy LayerProxy { get; }
     public InspectorFacadeViewModel(
         ISelectionContextState  selectionContextState,
@@ -27,6 +29,7 @@ public sealed partial class InspectorFacadeViewModel : ViewModelBase
         LayerProxy = layerProxy;
         
         Entry = new InspectorEntryViewModel(this);
+        Activity = new InspectorActivityViewModel(this);
 
         ContextState.PropertyChanged += (s, e) =>
         {
