@@ -32,6 +32,28 @@ public sealed partial class TaskState : ObservableObject
             };
             PriorityFilters.Add(opt);
         }
+
+        foreach (var s in Enum.GetValues<ActivityStateDto>())
+        {
+            var opt = new StateFilterOption(s, isSelected: true);
+            opt.PropertyChanged += (s2, e) =>
+            {
+                if (e.PropertyName == nameof(StateFilterOption.IsSelected))
+                    _ = RefreshFilteredCollection();
+            };
+            StateFilters.Add(opt);
+        }
+
+        foreach (var c in Enum.GetValues<TaskCategoryDto>())
+        {
+            var opt = new CategoryFilterOption(c, isSelected: true);
+            opt.PropertyChanged += (s, e) =>
+            {
+                if (e.PropertyName == nameof(CategoryFilterOption.IsSelected))
+                    _ = RefreshFilteredCollection();
+            };
+            CategoryFilters.Add(opt);
+        }
     }
     
     /// <summary>
@@ -53,22 +75,36 @@ public sealed partial class TaskState : ObservableObject
     [ObservableProperty] private string _searchText = string.Empty;
     partial void OnSearchTextChanged(string value) => _ = RefreshFilteredCollection();
     public ObservableCollection<PriorityFilterOption> PriorityFilters { get; } = [];
+    public ObservableCollection<StateFilterOption> StateFilters { get; } = [];
+    public ObservableCollection<CategoryFilterOption> CategoryFilters { get; } = [];
     
-    private async Task RefreshFilteredCollection()
+    private async System.Threading.Tasks.Task RefreshFilteredCollection()
     {
         var activePriorities = PriorityFilters
             .Where(f => f.IsSelected)
             .Select(f => f.ActivityPriority)
             .ToHashSet();
-        
+
+        var activeStates = StateFilters
+            .Where(f => f.IsSelected)
+            .Select(f => f.ActivityState)
+            .ToHashSet();
+
+        var activeCategories = CategoryFilters
+            .Where(f => f.IsSelected)
+            .Select(f => f.TaskCategory)
+            .ToHashSet();
+
         FilteredItems.Clear();
-        
+
         foreach (var item in Items)
         {
-            if (activePriorities.Contains(item.Activity.Priority) 
-                && (item.Item.Title.Contains(SearchText, StringComparison.OrdinalIgnoreCase) || string.IsNullOrEmpty(SearchText)))
+            if (activePriorities.Contains(item.Activity.Priority)
+                && activeStates.Contains(item.Activity.State)
+                && activeCategories.Contains(item.Category)
+                && (string.IsNullOrEmpty(SearchText) || item.Item.Title.Contains(SearchText, StringComparison.OrdinalIgnoreCase)))
             {
-                await Dispatcher.UIThread.InvokeAsync(() => 
+                await Dispatcher.UIThread.InvokeAsync(() =>
                 {
                     FilteredItems.Add(item);
                 });

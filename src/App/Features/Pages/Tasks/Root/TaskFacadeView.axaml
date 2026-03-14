@@ -69,6 +69,46 @@
                             </ItemsControl>
                         </Border>
                     </Popup>
+
+                    <ToggleButton x:Name="StateFilterButton"
+                                  Classes="workspace-toolbar-filter-trigger">
+                        <TextBlock Text="State  ▾" />
+                    </ToggleButton>
+
+                    <Popup PlacementTarget="{Binding ElementName=StateFilterButton}"
+                           IsOpen="{Binding IsChecked, ElementName=StateFilterButton}"
+                           Placement="Bottom">
+                        <Border Classes="filter-popup-frame">
+                            <ItemsControl ItemsSource="{Binding State.StateFilters}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <CheckBox Content="{Binding ActivityState}"
+                                                  IsChecked="{Binding IsSelected}" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Border>
+                    </Popup>
+
+                    <ToggleButton x:Name="CategoryFilterButton"
+                                  Classes="workspace-toolbar-filter-trigger">
+                        <TextBlock Text="Category  ▾" />
+                    </ToggleButton>
+
+                    <Popup PlacementTarget="{Binding ElementName=CategoryFilterButton}"
+                           IsOpen="{Binding IsChecked, ElementName=CategoryFilterButton}"
+                           Placement="Bottom">
+                        <Border Classes="filter-popup-frame">
+                            <ItemsControl ItemsSource="{Binding State.CategoryFilters}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <CheckBox Content="{Binding TaskCategory}"
+                                                  IsChecked="{Binding IsSelected}" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Border>
+                    </Popup>
                 </StackPanel>
 
                 <!-- Thin separator -->
