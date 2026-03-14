@@ -91,11 +91,10 @@
             <!-- Main section -->
             <Border Grid.Row="4"
                     Margin="0,16,0,0"
-                    Padding="16"
-                    Background="{StaticResource BrushPrimaryBackgroundLight}"
+                    Padding="16,16,16,0"
                     BorderBrush="{StaticResource BrushBorder}"
                     BorderThickness="1"
-                    CornerRadius="10">
+                    CornerRadius="8,8,0,0">
 
                 <Grid RowDefinitions="Auto,*,Auto"
                       RowSpacing="16">
@@ -133,7 +132,8 @@
                     <ScrollViewer Grid.Row="1"
                                   VerticalScrollBarVisibility="Auto"
                                   HorizontalScrollBarVisibility="Disabled">
-                        <StackPanel Spacing="16">
+                        <StackPanel Spacing="16"
+                                    Margin="0,0,0,16">
 
                                 
 
@@ -377,7 +377,7 @@
                     
                     <!-- Footer -->
                     <Border Grid.Row="2"
-                            Padding="4"
+                            Padding="4,10,4,12"
                             BorderThickness="0,1,0,0"
                             BorderBrush="{StaticResource BrushBorder}"
                             IsVisible="{Binding Facade.State.IsEditItemFormOpen}">
