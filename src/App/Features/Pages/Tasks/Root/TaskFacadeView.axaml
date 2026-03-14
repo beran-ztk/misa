@@ -16,6 +16,30 @@
         <converters:UtcToLocalConverter x:Key="UtcToLocalConverter" />
     </UserControl.Resources>
 
+    <UserControl.Styles>
+        <Style Selector="ListBoxItem">
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="ListBoxItem /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="ListBoxItem:pointerover Border.task-card">
+            <Setter Property="BorderBrush" Value="{StaticResource BrushBorderLight}"/>
+            <Setter Property="BoxShadow" Value="0 4 16 0 #40000000"/>
+        </Style>
+        <Style Selector="ListBoxItem:selected Border.task-card">
+            <Setter Property="BorderBrush" Value="{StaticResource BrushAccent}"/>
+            <Setter Property="BorderThickness" Value="1.5"/>
+        </Style>
+    </UserControl.Styles>
+
     <Grid RowDefinitions="Auto,*">
 
         <!-- Toolbar (2 rows) -->
@@ -175,15 +199,18 @@
             </Border>
 
             <!-- Card View -->
-            <ScrollViewer
-                IsVisible="{Binding #ContentRoot.Bounds.Width, Converter={StaticResource LessOrEqualConverter}, ConverterParameter=900}"
-                Background="{StaticResource BrushPrimaryBackgroundLight}">
+            <ListBox ItemsSource="{Binding State.FilteredItems}"
+                     SelectedItem="{Binding State.SelectedItem, Mode=TwoWay}"
+                     IsVisible="{Binding #ContentRoot.Bounds.Width, Converter={StaticResource LessOrEqualConverter}, ConverterParameter=900}"
+                     Background="{StaticResource BrushPrimaryBackgroundLight}"
+                     Padding="18,8"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                     ScrollViewer.VerticalScrollBarVisibility="Auto">
 
-                <ItemsControl ItemsSource="{Binding State.FilteredItems}"
-                              Margin="18,8">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Border Background="{StaticResource BrushPrimaryBackground}"
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                            <Border Classes="task-card"
+                                    Background="{StaticResource BrushPrimaryBackground}"
                                     BorderBrush="{StaticResource BrushBorder}"
                                     BorderThickness="1"
                                     CornerRadius="8"
@@ -265,11 +292,9 @@
 
                                 </StackPanel>
                             </Border>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-
-            </ScrollViewer>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
 
         </Grid>
     </Grid>
