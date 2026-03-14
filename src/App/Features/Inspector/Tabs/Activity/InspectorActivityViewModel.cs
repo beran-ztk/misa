@@ -11,6 +11,9 @@ public sealed partial class InspectorActivityViewModel : ViewModelBase
 {
     private readonly InspectorFacadeViewModel _facade;
 
+    /// <summary>Whether the Sessions section should be shown. Only true for real activity items (Task).</summary>
+    public bool ShowSessions => _facade.State.IsRealActivity;
+
     public IReadOnlyList<SessionDto> Sessions =>
         (_facade.State.Item.Activity?.Sessions ?? (IEnumerable<SessionDto>)[])
             .OrderByDescending(s => s.CreatedAtUtc)
@@ -31,6 +34,7 @@ public sealed partial class InspectorActivityViewModel : ViewModelBase
         {
             if (e.PropertyName == nameof(InspectorState.Item))
             {
+                OnPropertyChanged(nameof(ShowSessions));
                 OnPropertyChanged(nameof(Sessions));
                 OnPropertyChanged(nameof(HasSessions));
                 OnPropertyChanged(nameof(Changes));

@@ -16,14 +16,18 @@ public sealed partial class InspectorState : ObservableObject
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasItem))]
-    [NotifyPropertyChangedFor(nameof(HasActivity))]
+    [NotifyPropertyChangedFor(nameof(HasActivityTab))]
+    [NotifyPropertyChangedFor(nameof(IsRealActivity))]
     [NotifyPropertyChangedFor(nameof(IsTask))]
     [NotifyPropertyChangedFor(nameof(IsScheduler))]
     [NotifyPropertyChangedFor(nameof(HasExtension))]
     private ItemDto _item = new();
 
     public bool HasItem => Item.Id != Guid.Empty;
-    public bool HasActivity => Item.Workflow is WorkflowDto.Task or WorkflowDto.Schedule;
+    /// <summary>Whether the Activity tab should be visible. True for Task and Schedule.</summary>
+    public bool HasActivityTab => Item.Workflow is WorkflowDto.Task or WorkflowDto.Schedule;
+    /// <summary>Whether the item has a real ItemActivity (State, Priority, Deadline, Sessions). True for Task only.</summary>
+    public bool IsRealActivity => Item.Workflow == WorkflowDto.Task;
     public bool IsTask => Item.Workflow == WorkflowDto.Task;
     public bool IsScheduler => Item.Workflow == WorkflowDto.Schedule;
     public bool HasExtension => Item.Workflow is WorkflowDto.Task or WorkflowDto.Schedule;

@@ -78,11 +78,11 @@
 
             <!-- Deadline -->
             <deadline:EntryDeadlineView Grid.Row="1"
-                                        IsVisible="{Binding Facade.State.HasActivity}" />
+                                        IsVisible="{Binding Facade.State.IsRealActivity}" />
 
             <!-- Session -->
             <session:SessionHeaderView Grid.Row="2"
-                                       IsVisible="{Binding Facade.State.HasActivity}" />
+                                       IsVisible="{Binding Facade.State.IsRealActivity}" />
 
             <Border Grid.Row="3" 
                     Padding="20">
@@ -172,7 +172,7 @@
 
                                     <!-- Activity -->
                                     <StackPanel Classes="addpanel-body"
-                                                IsVisible="{Binding Facade.State.HasActivity}">
+                                                IsVisible="{Binding Facade.State.IsRealActivity}">
                                         
                                         <!-- Activity Separator -->
                                         <Border Margin="0,8,0,4"

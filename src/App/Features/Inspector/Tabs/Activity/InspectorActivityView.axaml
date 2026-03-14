@@ -54,8 +54,9 @@
                       HorizontalScrollBarVisibility="Disabled">
             <StackPanel Spacing="24">
 
-                <!-- Sessions section -->
-                <StackPanel Spacing="10">
+                <!-- Sessions section — only shown for real activity items (Task) -->
+                <StackPanel Spacing="10"
+                            IsVisible="{Binding ShowSessions}">
                     <Border BorderBrush="{StaticResource BrushBorder}"
                             BorderThickness="0,0,0,1"
                             Padding="4,0,4,8">

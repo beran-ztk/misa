@@ -21,7 +21,7 @@
             </TabItem>
 
             <TabItem Header="Activity"
-                     IsVisible="{Binding State.HasActivity}">
+                     IsVisible="{Binding State.HasActivityTab}">
                 <ContentControl Content="{Binding Activity}"/>
             </TabItem>
 
