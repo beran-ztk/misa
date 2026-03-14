@@ -100,6 +100,16 @@
                                                        TextWrapping="Wrap" />
                                         </StackPanel>
 
+                                        <!-- Summary -->
+                                        <StackPanel Spacing="2"
+                                                    IsVisible="{Binding Summary, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                            <TextBlock Text="Summary" Classes="label" />
+                                            <TextBlock Text="{Binding Summary}"
+                                                       FontSize="12"
+                                                       Opacity="0.80"
+                                                       TextWrapping="Wrap" />
+                                        </StackPanel>
+                                        
                                         <!-- Duration + segments + quality -->
                                         <StackPanel Orientation="Horizontal" Spacing="16">
                                             <StackPanel Spacing="2">
@@ -120,16 +130,6 @@
                                                 <TextBlock Text="Concentration" Classes="label" />
                                                 <TextBlock Text="{Binding ConcentrationDisplay}" FontSize="12" />
                                             </StackPanel>
-                                        </StackPanel>
-
-                                        <!-- Summary -->
-                                        <StackPanel Spacing="2"
-                                                    IsVisible="{Binding Summary, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                                            <TextBlock Text="Summary" Classes="label" />
-                                            <TextBlock Text="{Binding Summary}"
-                                                       FontSize="12"
-                                                       Opacity="0.80"
-                                                       TextWrapping="Wrap" />
                                         </StackPanel>
 
                                     </StackPanel>
