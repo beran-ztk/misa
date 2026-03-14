@@ -84,42 +84,52 @@
             <session:SessionHeaderView Grid.Row="2"
                                        IsVisible="{Binding Facade.State.IsRealActivity}" />
 
-            <Border Grid.Row="3" 
-                    Padding="20">
-                <Grid RowDefinitions="40,*,40"
+            <!-- Main section -->
+            <Border Grid.Row="3"
+                    Margin="0,16,0,0"
+                    Padding="16"
+                    Background="{StaticResource BrushPrimaryBackgroundLight}"
+                    BorderBrush="{StaticResource BrushBorder}"
+                    BorderThickness="1"
+                    CornerRadius="10">
+
+                <Grid RowDefinitions="Auto,*,Auto"
                       RowSpacing="16">
-                    <!-- Header + Edit -->
-                    <Grid Grid.Row="0" 
+
+                    <!-- Section header -->
+                    <Grid Grid.Row="0"
                           ColumnDefinitions="*,Auto"
                           RowDefinitions="Auto,Auto"
-                          RowSpacing="12"
-                          VerticalAlignment="Center">
+                          RowSpacing="10">
 
-                        <TextBlock Grid.Row="0" Grid.Column="0"
+                        <TextBlock Grid.Row="0"
+                                   Grid.Column="0"
                                    Text="{Binding OverviewTitle}"
-                                   VerticalAlignment="Center"/>
+                                   FontSize="14"
+                                   FontWeight="SemiBold"
+                                   VerticalAlignment="Center" />
 
-                        <Button Grid.Row="0" Grid.Column="1"
+                        <Button Grid.Row="0"
+                                Grid.Column="1"
                                 Classes="workspace-toolbar-icon"
                                 VerticalAlignment="Center"
                                 Command="{Binding ShowEditItemFormCommand}">
                             <Image Source="{SvgImage /Assets/Icons/Common/edit.svg}" />
                         </Button>
-                                
-                        <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" 
-                                Margin="0,0,0,4"
+
+                        <Border Grid.Row="1"
+                                Grid.Column="0"
+                                Grid.ColumnSpan="2"
                                 BorderThickness="0,0,0,1"
                                 BorderBrush="{StaticResource BrushBorder}"
-                                Opacity="0.60" />
+                                Opacity="0.55" />
                     </Grid>
                     
                     <!-- Body -->
                     <ScrollViewer Grid.Row="1"
                                   VerticalScrollBarVisibility="Auto"
                                   HorizontalScrollBarVisibility="Disabled">
-                        <Border Padding="12">
-                            
-                            <StackPanel Spacing="14">
+                        <StackPanel Spacing="16">
 
                                 
 
@@ -359,7 +369,6 @@
                                 </StackPanel>
 
                             </StackPanel>
-                        </Border>
                     </ScrollViewer>
                     
                     <!-- Footer -->
