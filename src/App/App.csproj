@@ -104,6 +104,9 @@
       <Compile Update="Features\Inspector\Tabs\Entry\Extensions\Relations\Forms\CreateRelationView.axaml.cs">
         <DependentUpon>CreateRelationView.axaml</DependentUpon>
       </Compile>
+      <Compile Update="Common\Components\DeadlinePicker\DeadlinePickerView.axaml.cs">
+        <DependentUpon>DeadlinePickerView.axaml</DependentUpon>
+      </Compile>
     </ItemGroup>
 
     <ItemGroup>
