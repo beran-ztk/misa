@@ -6,7 +6,6 @@
              x:DataType="relations:InspectorRelationsViewModel">
 
     <UserControl.Styles>
-        <!-- Relation nav title button — looks like a link -->
         <Style Selector="Button.relation-nav-title">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
@@ -27,9 +26,7 @@
     <StackPanel Spacing="0">
 
         <!-- Section header -->
-        <Border Padding="4,14,4,10"
-                BorderBrush="{StaticResource BrushBorder}"
-                BorderThickness="0,0,0,1">
+        <Border Padding="4,14,4,10">
             <Grid ColumnDefinitions="*,Auto">
 
                 <TextBlock Grid.Column="0"
@@ -42,8 +39,7 @@
                 <Button Grid.Column="1"
                         Classes="workspace-toolbar-icon"
                         VerticalAlignment="Center"
-                        Command="{Binding OpenCreateFormCommand}"
-                        IsVisible="{Binding !IsCreateFormOpen}">
+                        Command="{Binding OpenCreateModalCommand}">
                     <Image Width="14" Height="14"
                            Source="{SvgImage /Assets/Icons/Common/plus.svg}"/>
                 </Button>
@@ -51,52 +47,11 @@
             </Grid>
         </Border>
 
-        <!-- Inline create form -->
-        <Border IsVisible="{Binding IsCreateFormOpen}"
-                Padding="4,12,4,8"
-                BorderBrush="{StaticResource BrushBorder}"
-                BorderThickness="0,0,0,1"
-                Background="{StaticResource BrushPrimaryBackgroundLight}">
-            <StackPanel Spacing="10">
-
-                <!-- Relation type -->
-                <StackPanel Spacing="4">
-                    <TextBlock Text="Type"
-                               FontSize="11"
-                               Opacity="0.50"/>
-                    <ComboBox Classes="addpanel-combo"
-                              ItemsSource="{Binding RelationTypes}"
-                              SelectedItem="{Binding SelectedRelationType, Mode=TwoWay}"/>
-                </StackPanel>
-
-                <!-- Target item search -->
-                <StackPanel Spacing="6" MaxWidth="300">
-                    <TextBox Watermark="Search items…"
-                             Text="{Binding SearchText, Mode=TwoWay}"/>
-                    <ListBox ItemsSource="{Binding FilteredLookupItems}"
-                             SelectedItem="{Binding SelectedTargetItem, Mode=TwoWay}"
-                             MaxHeight="160">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding Title}"/>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-                </StackPanel>
-
-                <!-- Actions -->
-                <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
-                    <Button Content="Cancel"
-                            Classes="confirm-cancel-cancel"
-                            Command="{Binding CancelCreateCommand}"/>
-                    <Button Content="Add"
-                            Classes="confirm-cancel-confirm"
-                            Command="{Binding SubmitCreateCommand}"/>
-                </StackPanel>
-
-            </StackPanel>
-        </Border>
-
+        <Border Height="1"
+                Background="{StaticResource BrushBorder}"
+                Opacity="0.6"
+                Margin="30,0"/>
+        
         <!-- Empty state -->
         <TextBlock Text="No relations."
                    Opacity="0.40"
@@ -118,13 +73,12 @@
                               IsVisible="{Binding !IsEditing}"
                               Margin="4,3">
 
-                            <!-- Left: chip + readable sentence + title -->
+                            <!-- Left: chip + readable sentence -->
                             <StackPanel Grid.Column="0"
                                         Orientation="Horizontal"
                                         Spacing="6"
                                         VerticalAlignment="Center">
 
-                                <!-- Relation type chip — subtle anchor -->
                                 <Border CornerRadius="3"
                                         Padding="5,1"
                                         BorderThickness="1"
@@ -137,7 +91,6 @@
                                                LetterSpacing="0.2"/>
                                 </Border>
 
-                                <!-- Readable sentence -->
                                 <TextBlock Text="{Binding RelationLabel}"
                                            FontSize="12"
                                            Opacity="0.50"

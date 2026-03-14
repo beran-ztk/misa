@@ -1,13 +1,15 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Misa.Contract.Common.Results;
 using Misa.Contract.Items.Components.Relations;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Inspector.Root;
+using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Relations.Forms;
+using Misa.Ui.Avalonia.Infrastructure.UI;
 
 namespace Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Relations;
 
@@ -15,6 +17,7 @@ public sealed partial class InspectorRelationsViewModel : ViewModelBase
 {
     private readonly InspectorFacadeViewModel _facade;
     private readonly InspectorGateway _gateway;
+    private readonly LayerProxy _layerProxy;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasRelations))]
@@ -22,43 +25,19 @@ public sealed partial class InspectorRelationsViewModel : ViewModelBase
 
     public bool HasRelations => RelationRows.Count > 0;
 
-    [ObservableProperty] private bool _isCreateFormOpen;
-
-    [ObservableProperty] private List<ItemLookupDto> _lookupItems = [];
-    [ObservableProperty] private ItemLookupDto? _selectedTargetItem;
-    [ObservableProperty] private RelationTypeDto _selectedRelationType = RelationTypeDto.RelatedTo;
-
-    [ObservableProperty]
-    private string _searchText = string.Empty;
-
-    public List<ItemLookupDto> FilteredLookupItems =>
-        string.IsNullOrWhiteSpace(SearchText)
-            ? LookupItems
-            : LookupItems
-                .Where(i => !string.IsNullOrWhiteSpace(i.Title) &&
-                            i.Title.Contains(SearchText, StringComparison.OrdinalIgnoreCase))
-                .ToList();
-
     public IReadOnlyList<RelationTypeDto> RelationTypes { get; } = Enum.GetValues<RelationTypeDto>();
 
-    public InspectorRelationsViewModel(InspectorFacadeViewModel facade, InspectorGateway gateway)
+    public InspectorRelationsViewModel(InspectorFacadeViewModel facade, InspectorGateway gateway, LayerProxy layerProxy)
     {
         _facade = facade;
         _gateway = gateway;
+        _layerProxy = layerProxy;
 
         facade.State.PropertyChanged += (s, e) =>
         {
             if (e.PropertyName == nameof(InspectorState.Item))
                 _ = LoadRelationsAsync();
         };
-
-        PropertyChanged += OnViewModelPropertyChanged;
-    }
-
-    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName == nameof(SearchText) || e.PropertyName == nameof(LookupItems))
-            OnPropertyChanged(nameof(FilteredLookupItems));
     }
 
     private async Task LoadRelationsAsync()
@@ -91,54 +70,23 @@ public sealed partial class InspectorRelationsViewModel : ViewModelBase
             .ToList();
     }
 
-    // ── Create form ──────────────────────────────────────────────────────────
+    // ── Create (modal) ────────────────────────────────────────────────────────
 
     [RelayCommand]
-    private async Task OpenCreateForm()
+    private async Task OpenCreateModal()
     {
-        if (LookupItems.Count == 0)
-        {
-            var result = await _gateway.GetItemsForLookupAsync();
-            if (result.IsSuccess && result.Value is not null)
-            {
-                LookupItems = result.Value
-                    .Where(i => i.Id != _facade.State.Item.Id)
-                    .ToList();
-            }
-        }
+        var lookupResult = await _gateway.GetItemsForLookupAsync();
+        if (!lookupResult.IsSuccess || lookupResult.Value is null) return;
 
-        SearchText = string.Empty;
-        SelectedTargetItem = null;
-        SelectedRelationType = RelationTypeDto.RelatedTo;
-        IsCreateFormOpen = true;
-    }
+        var items = lookupResult.Value
+            .Where(i => i.Id != _facade.State.Item.Id)
+            .ToList();
 
-    [RelayCommand]
-    private void CancelCreate()
-    {
-        IsCreateFormOpen = false;
-        SearchText = string.Empty;
-        SelectedTargetItem = null;
-    }
+        var formVm = new CreateRelationViewModel(_facade.State.Item.Id, items, _gateway);
+        var result = await _layerProxy.OpenAsync<CreateRelationViewModel, Result>(formVm, LayerPresentation.Modal);
 
-    [RelayCommand]
-    private async Task SubmitCreate()
-    {
-        if (SelectedTargetItem is null) return;
-
-        var request = new CreateRelationRequest(
-            _facade.State.Item.Id,
-            SelectedTargetItem.Id,
-            SelectedRelationType
-        );
-
-        var result = await _gateway.CreateRelationAsync(request);
-        if (!result.IsSuccess) return;
-
-        IsCreateFormOpen = false;
-        SearchText = string.Empty;
-        SelectedTargetItem = null;
-        await LoadRelationsAsync();
+        if (result is { IsSuccess: true })
+            await LoadRelationsAsync();
     }
 
     // ── Edit ─────────────────────────────────────────────────────────────────

@@ -21,7 +21,7 @@ public partial class InspectorEntryViewModel : ViewModelBase
     {
         Facade = facade;
         Facade.State.PropertyChanged += OnFacadeStatePropertyChanged;
-        Relations = new InspectorRelationsViewModel(facade, facade.Gateway);
+        Relations = new InspectorRelationsViewModel(facade, facade.Gateway, facade.LayerProxy);
     }
 
     [RelayCommand]

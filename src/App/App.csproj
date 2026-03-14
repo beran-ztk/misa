@@ -101,6 +101,9 @@
       <Compile Update="Features\Inspector\Tabs\Entry\Extensions\Relations\InspectorRelationsView.axaml.cs">
         <DependentUpon>InspectorRelationsView.axaml</DependentUpon>
       </Compile>
+      <Compile Update="Features\Inspector\Tabs\Entry\Extensions\Relations\Forms\CreateRelationView.axaml.cs">
+        <DependentUpon>CreateRelationView.axaml</DependentUpon>
+      </Compile>
     </ItemGroup>
 
     <ItemGroup>
