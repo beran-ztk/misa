@@ -23,7 +23,7 @@ public sealed partial class InspectorState : ObservableObject
     private ItemDto _item = new();
 
     public bool HasItem => Item.Id != Guid.Empty;
-    public bool HasActivity => Item.Workflow is WorkflowDto.Task;
+    public bool HasActivity => Item.Workflow is WorkflowDto.Task or WorkflowDto.Schedule;
     public bool IsTask => Item.Workflow == WorkflowDto.Task;
     public bool IsScheduler => Item.Workflow == WorkflowDto.Schedule;
     public bool HasExtension => Item.Workflow is WorkflowDto.Task or WorkflowDto.Schedule;

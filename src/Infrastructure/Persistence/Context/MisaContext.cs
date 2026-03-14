@@ -53,7 +53,7 @@ public class MisaContext(DbContextOptions<MisaContext> options, ITimeProvider ti
             AuditChanges.Add(
                 new AuditChange(
                     idGenerator.New(),
-                    ev.SubjectId,
+                    ev.ItemId,
                     ev.ChangeType,
                     ev.OldValue,
                     ev.NewValue,

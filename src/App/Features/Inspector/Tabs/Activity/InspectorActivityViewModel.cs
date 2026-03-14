@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Misa.Contract.Items.Components.Activity.Sessions;
+using Misa.Contract.Items.Components.Audits;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Inspector.Root;
 
@@ -17,6 +18,11 @@ public sealed partial class InspectorActivityViewModel : ViewModelBase
 
     public bool HasSessions => Sessions.Count > 0;
 
+    public IReadOnlyList<AuditChangeDto> Changes =>
+        _facade.State.Item.Changes;
+
+    public bool HasChanges => Changes.Count > 0;
+
     public InspectorActivityViewModel(InspectorFacadeViewModel facade)
     {
         _facade = facade;
@@ -27,6 +33,8 @@ public sealed partial class InspectorActivityViewModel : ViewModelBase
             {
                 OnPropertyChanged(nameof(Sessions));
                 OnPropertyChanged(nameof(HasSessions));
+                OnPropertyChanged(nameof(Changes));
+                OnPropertyChanged(nameof(HasChanges));
             }
         };
     }

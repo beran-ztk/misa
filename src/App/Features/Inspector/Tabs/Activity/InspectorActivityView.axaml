@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:converters="clr-namespace:Misa.Ui.Avalonia.Common.Converters"
              xmlns:sessions="clr-namespace:Misa.Contract.Items.Components.Activity.Sessions;assembly=Contract"
+             xmlns:audits="clr-namespace:Misa.Contract.Items.Components.Audits;assembly=Contract"
              xmlns:activity="clr-namespace:Misa.Ui.Avalonia.Features.Inspector.Tabs.Activity"
              x:Class="Misa.Ui.Avalonia.Features.Inspector.Tabs.Activity.InspectorActivityView"
              x:DataType="activity:InspectorActivityViewModel">
@@ -49,34 +50,27 @@
             Margin="0,20,0,0"
             Padding="12">
 
-        <Grid RowDefinitions="Auto,*">
+        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Spacing="24">
 
-            <!-- Section header -->
-            <Border Grid.Row="0"
-                    BorderBrush="{StaticResource BrushBorder}"
-                    BorderThickness="0,0,0,1"
-                    Padding="4,8,4,10"
-                    Margin="0,0,0,12">
-                <TextBlock Text="Sessions"
-                           FontSize="14"
-                           FontWeight="SemiBold"
-                           Opacity="0.85" />
-            </Border>
-
-            <!-- Session list -->
-            <ScrollViewer Grid.Row="1"
-                          VerticalScrollBarVisibility="Auto"
-                          HorizontalScrollBarVisibility="Disabled">
+                <!-- Sessions section -->
                 <StackPanel Spacing="10">
+                    <Border BorderBrush="{StaticResource BrushBorder}"
+                            BorderThickness="0,0,0,1"
+                            Padding="4,0,4,8">
+                        <TextBlock Text="Sessions"
+                                   FontSize="13"
+                                   FontWeight="SemiBold"
+                                   Opacity="0.85" />
+                    </Border>
 
-                    <!-- Empty state -->
                     <TextBlock Text="No sessions yet."
                                Opacity="0.45"
                                FontSize="13"
-                               Margin="4,4"
+                               Margin="4,0"
                                IsVisible="{Binding !HasSessions}" />
 
-                    <!-- Session cards -->
                     <ItemsControl ItemsSource="{Binding Sessions}"
                                   IsVisible="{Binding HasSessions}">
                         <ItemsControl.ItemTemplate>
@@ -90,7 +84,6 @@
                                                 <TextBlock Classes="state-badge-text"
                                                            Text="{Binding State}" />
                                             </Border>
-
                                             <TextBlock Grid.Column="2"
                                                        Text="{Binding CreatedAtUtc, Converter={StaticResource UtcToLocalConverter}, StringFormat='dd.MM.yyyy HH:mm'}"
                                                        Classes="meta"
@@ -103,22 +96,19 @@
                                                    TextWrapping="Wrap"
                                                    IsVisible="{Binding Objective, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
 
-                                        <!-- Duration + segments row -->
+                                        <!-- Duration + segments -->
                                         <StackPanel Orientation="Horizontal" Spacing="16">
                                             <StackPanel Spacing="2">
                                                 <TextBlock Text="Duration" Classes="label" />
-                                                <TextBlock Text="{Binding DurationDisplay}"
-                                                           FontSize="12" />
+                                                <TextBlock Text="{Binding DurationDisplay}" FontSize="12" />
                                             </StackPanel>
-
                                             <StackPanel Spacing="2">
                                                 <TextBlock Text="Segments" Classes="label" />
-                                                <TextBlock Text="{Binding Segments.Count}"
-                                                           FontSize="12" />
+                                                <TextBlock Text="{Binding Segments.Count}" FontSize="12" />
                                             </StackPanel>
                                         </StackPanel>
 
-                                        <!-- Summary (ended sessions) -->
+                                        <!-- Summary -->
                                         <StackPanel Spacing="2"
                                                     IsVisible="{Binding Summary, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
                                             <TextBlock Text="Summary" Classes="label" />
@@ -133,10 +123,77 @@
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
-
                 </StackPanel>
-            </ScrollViewer>
 
-        </Grid>
+                <!-- Changes section -->
+                <StackPanel Spacing="10">
+                    <Border BorderBrush="{StaticResource BrushBorder}"
+                            BorderThickness="0,0,0,1"
+                            Padding="4,0,4,8">
+                        <TextBlock Text="Changes"
+                                   FontSize="13"
+                                   FontWeight="SemiBold"
+                                   Opacity="0.85" />
+                    </Border>
+
+                    <TextBlock Text="No recorded changes yet."
+                               Opacity="0.45"
+                               FontSize="13"
+                               Margin="4,0"
+                               IsVisible="{Binding !HasChanges}" />
+
+                    <ItemsControl ItemsSource="{Binding Changes}"
+                                  IsVisible="{Binding HasChanges}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="audits:AuditChangeDto">
+                                <Border Margin="0,0,0,6"
+                                        Padding="12,8"
+                                        Background="{StaticResource BrushPrimaryBackgroundLight}"
+                                        BorderBrush="{StaticResource BrushBorder}"
+                                        BorderThickness="1"
+                                        CornerRadius="6">
+                                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+
+                                        <!-- Change type badge -->
+                                        <Border Grid.Column="0"
+                                                Classes="state-badge"
+                                                VerticalAlignment="Center">
+                                            <TextBlock Classes="state-badge-text"
+                                                       Text="{Binding ChangeType}" />
+                                        </Border>
+
+                                        <!-- Old → New -->
+                                        <StackPanel Grid.Column="1"
+                                                    Orientation="Horizontal"
+                                                    Spacing="6"
+                                                    VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding ValueBefore, TargetNullValue='—'}"
+                                                       FontSize="12"
+                                                       Opacity="0.60"
+                                                       TextTrimming="CharacterEllipsis" />
+                                            <TextBlock Text="→"
+                                                       FontSize="11"
+                                                       Opacity="0.40"
+                                                       VerticalAlignment="Center" />
+                                            <TextBlock Text="{Binding ValueAfter, TargetNullValue='—'}"
+                                                       FontSize="12"
+                                                       TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+
+                                        <!-- Timestamp -->
+                                        <TextBlock Grid.Column="2"
+                                                   Text="{Binding CreatedAtUtc, Converter={StaticResource UtcToLocalConverter}, StringFormat='dd.MM.yyyy HH:mm'}"
+                                                   Classes="meta"
+                                                   VerticalAlignment="Center" />
+
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+
+            </StackPanel>
+        </ScrollViewer>
     </Border>
 </UserControl>

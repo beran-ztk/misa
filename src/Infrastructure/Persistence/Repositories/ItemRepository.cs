@@ -54,7 +54,8 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
             .ThenInclude(a => a.Sessions)
             .ThenInclude(s => s.Segments)
             .Include(t => t.TaskExtension)
-            .FirstOrDefaultAsync(t 
+            .Include(t => t.Changes)
+            .FirstOrDefaultAsync(t
                     => t.Id == new ItemId(id) && t.OwnerId == user.Id && t.Workflow == Workflow.Task
                 , cancellationToken: ct);
     }
@@ -75,7 +76,8 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
     {
         return await context.Items
             .Include(t => t.ScheduleExtension)
-            .FirstOrDefaultAsync(t 
+            .Include(t => t.Changes)
+            .FirstOrDefaultAsync(t
                     => t.Id == new ItemId(id) && t.OwnerId == user.Id && t.Workflow == Workflow.Schedule
                 , cancellationToken: ct);
     }

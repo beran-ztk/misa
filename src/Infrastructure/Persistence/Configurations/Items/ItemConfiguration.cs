@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Misa.Domain.Items;
 using Misa.Domain.Items.Components.Activities;
 using Misa.Domain.Items.Components.Activities.Sessions;
+using Misa.Domain.Items.Components.Audits.Changes;
 using Misa.Domain.Items.Components.Chronicle.Journals;
 using Misa.Domain.Items.Components.Schedules;
 using Misa.Domain.Items.Components.Schola;
@@ -45,6 +46,11 @@ public class ItemConfiguration : IEntityTypeConfiguration<Item>
         builder.Property(i => i.ModifiedAt);
         
         // Relations
+        builder.HasMany(i => i.Changes)
+            .WithOne()
+            .HasForeignKey(a => a.ItemId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         builder.HasOne(i => i.Activity)
             .WithOne(a => a.Item)
             .HasForeignKey<ItemActivity>(a => a.Id)

@@ -3,7 +3,7 @@
 namespace Misa.Domain.Common.DomainEvents;
 
 public sealed record PropertyChangedEvent(
-    Guid SubjectId,
+    Guid ItemId,
     ChangeType ChangeType,
     string? OldValue,
     string? NewValue,
