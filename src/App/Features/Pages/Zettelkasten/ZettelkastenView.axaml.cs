@@ -1,32 +1,68 @@
-using Avalonia;
+using System.Linq;
 using Avalonia.Controls;
-using Avalonia.Input;
+using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
-using Avalonia.Markup.Xaml;
+using Misa.Contract.Items;
 using Misa.Contract.Items.Components.Zettelkasten;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Zettelkasten;
 
 public partial class ZettelkastenView : UserControl
 {
+    private object? _pendingContext;
+
     public ZettelkastenView()
     {
         InitializeComponent();
     }
 
-    private async void CreateTopic_OnPointerPressed(object? sender, RoutedEventArgs e)
+    private void Tree_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
-        if (sender is Button button &&
-            DataContext is ZettelkastenViewModel vm)
+        if (DataContext is not ZettelkastenViewModel vm) return;
+        if (sender is not TreeView tree) return;
+
+        if (tree.SelectedItem is KnowledgeIndexEntryDto { Workflow: WorkflowDto.Zettel } entry)
+            vm.SelectedZettel = vm.Zettels.FirstOrDefault(z => z.Id == entry.Id);
+        else
+            vm.SelectedZettel = null;
+    }
+
+    private void Add_OnPointerPressed(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Button button)
         {
-            if (button.DataContext is TopicListDto topic)
-            {
-                await vm.CreateTopicAsync(topic.Id, topic.Title);
-            }
-            else if (button.DataContext is ZettelkastenViewModel)
-            {
-                await vm.CreateTopicAsync();
-            }
+            _pendingContext = button.DataContext;
+            FlyoutBase.ShowAttachedFlyout(button);
+        }
+    }
+
+    private async void CreateTopicMenuItem_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not ZettelkastenViewModel vm) return;
+
+        if (_pendingContext is KnowledgeIndexEntryDto entry)
+        {
+            var parentId = entry.Workflow == WorkflowDto.Topic ? entry.Id : entry.ParentId;
+            await vm.CreateTopicAsync(parentId, entry.Title);
+        }
+        else
+        {
+            await vm.CreateTopicAsync();
+        }
+    }
+
+    private async void CreateZettelMenuItem_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not ZettelkastenViewModel vm) return;
+
+        if (_pendingContext is KnowledgeIndexEntryDto entry)
+        {
+            var topicId = entry.Workflow == WorkflowDto.Topic ? entry.Id : entry.ParentId;
+            await vm.CreateZettelAsync(topicId, entry.Title);
+        }
+        else
+        {
+            await vm.CreateZettelAsync();
         }
     }
 }

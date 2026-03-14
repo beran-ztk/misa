@@ -1,11 +1,11 @@
-﻿namespace Misa.Domain.Features.Audit;
+﻿namespace Misa.Domain.Items.Components.Audits.Changes;
 
 public class AuditChange
 {
     private AuditChange() { }
     public AuditChange(
         Guid id,
-        Guid entityId,
+        Guid itemId,
         ChangeType changeType,
         string? before,
         string? after,
@@ -13,7 +13,7 @@ public class AuditChange
         DateTimeOffset createdAtUtc)
     {
         Id = id;
-        EntityId = entityId;
+        ItemId = new ItemId(itemId);
         ChangeType = changeType;
         ValueBefore = before;
         ValueAfter = after;
@@ -22,7 +22,7 @@ public class AuditChange
     }
 
     public Guid Id { get; init; }
-    public Guid EntityId { get; init; }
+    public ItemId ItemId { get; init; }
 
     public ChangeType ChangeType { get; init; }
 

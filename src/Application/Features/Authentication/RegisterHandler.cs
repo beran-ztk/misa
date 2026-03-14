@@ -6,7 +6,6 @@ using Misa.Contract.Authentication;
 using Misa.Contract.Common.Results;
 using Misa.Contract.Features.Authentication;
 using Misa.Domain.Exceptions;
-using Misa.Domain.Features.Audit;
 
 namespace Misa.Application.Features.Authentication;
 

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -16,75 +17,158 @@ namespace Misa.Ui.Avalonia.Features.Pages.Zettelkasten;
 
 public sealed partial class ZettelkastenViewModel(ZettelkastenGateway gateway, LayerProxy layerProxy) : ViewModelBase
 {
-    public ObservableCollection<TopicListDto> Topics { get; } = [];
-    
+    public ObservableCollection<KnowledgeIndexEntryDto> Index { get; } = [];
+    public List<ZettelDto> Zettels { get; private set; } = [];
+
+    [ObservableProperty] private ZettelDto? _selectedZettel;
+    [ObservableProperty] private string? _editableContent;
+    [ObservableProperty] private string _saveStateLabel = string.Empty;
+
+    private bool _suppressContentSave;
+    private CancellationTokenSource? _saveCts;
+
     public async Task InitializeWorkspaceAsync()
     {
-        await GetTopicsAsync();
+        await LoadIndexAsync();
     }
+
     [RelayCommand]
     private async Task RefreshWorkspaceAsync()
     {
-        await GetTopicsAsync();
+        await LoadIndexAsync();
     }
+
+    partial void OnSelectedZettelChanged(ZettelDto? value)
+    {
+        _suppressContentSave = true;
+        EditableContent = value?.Content;
+        SaveStateLabel = string.Empty;
+        _suppressContentSave = false;
+    }
+
+    partial void OnEditableContentChanged(string? value)
+    {
+        if (_suppressContentSave) return;
+        if (SelectedZettel is null) return;
+
+        SaveStateLabel = "Unsaved";
+        _ = AutoSaveAsync(SelectedZettel.Id, value);
+    }
+
+    private async Task AutoSaveAsync(Guid zettelId, string? content)
+    {
+        _saveCts?.Cancel();
+        _saveCts = new CancellationTokenSource();
+        var token = _saveCts.Token;
+
+        try
+        {
+            await Task.Delay(1000, token);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
+        if (SelectedZettel?.Id != zettelId) return;
+
+        var result = await gateway.UpdateZettelContentAsync(zettelId, content);
+
+        if (result.IsSuccess)
+        {
+            // Update the cached ZettelDto
+            var idx = Zettels.FindIndex(z => z.Id == zettelId);
+            if (idx >= 0)
+                Zettels[idx] = Zettels[idx] with { Content = content };
+
+            if (SelectedZettel?.Id == zettelId)
+                SaveStateLabel = "Saved";
+        }
+        else
+        {
+            if (SelectedZettel?.Id == zettelId)
+                SaveStateLabel = "Save failed";
+        }
+    }
+
+    public async Task CreateZettelAsync(Guid? topicId = null, string? topicName = null)
+    {
+        string description = topicId.HasValue
+            ? $"This Zettel will be created under the topic '{topicName}'."
+            : "Select a topic node to create a Zettel.";
+
+        var formVm = new CreateZettelViewModel(topicId, description, gateway);
+        var result = await layerProxy.OpenAsync<CreateZettelViewModel, Result>(formVm, LayerPresentation.Modal);
+        if (result is { IsSuccess: true })
+        {
+            await RefreshWorkspaceAsync();
+        }
+    }
+
     public async Task CreateTopicAsync(Guid? parentId = null, string? parentName = null)
     {
-        string description;
-        if (parentId.HasValue)
-            description = $"This topic will be assigned under the topic '{parentName}'.";
-        else
-            description = "This topic will be on root-level.";
-        
+        string description = parentId.HasValue
+            ? $"This topic will be assigned under the topic '{parentName}'."
+            : "This topic will be on root-level.";
+
         var formVm = new CreateTopicViewModel(parentId, description, gateway);
-        
+
         var result = await layerProxy.OpenAsync<CreateTopicViewModel, Result>(formVm, LayerPresentation.Modal);
         if (result is { IsSuccess: true })
         {
             await RefreshWorkspaceAsync();
         }
     }
-    private async Task GetTopicsAsync()
+
+    private async Task LoadIndexAsync()
     {
-        var result = await gateway.GetTopicsAsync();
-        if (result is not null)
+        var indexResult = await gateway.GetKnowledgeIndexAsync();
+        var zettelResult = await gateway.GetZettelsAsync();
+
+        if (indexResult is not null)
         {
-            Topics.Clear();
-            var sortedTopics = BuildTopicTree(result);
-            
-            await Dispatcher.UIThread.InvokeAsync(() => 
+            var tree = BuildIndexTree(indexResult);
+
+            await Dispatcher.UIThread.InvokeAsync(() =>
             {
-                foreach (var topic in sortedTopics)
-                {
-                    Topics.Add(topic);   
-                }
+                Index.Clear();
+                foreach (var entry in tree)
+                    Index.Add(entry);
+
+                SelectedZettel = null;
             });
         }
+
+        if (zettelResult is not null)
+            Zettels = zettelResult;
     }
 
-    private static List<TopicListDto> BuildTopicTree(List<TopicListDto> topics)
+    private static List<KnowledgeIndexEntryDto> BuildIndexTree(List<KnowledgeIndexEntryDto> entries)
     {
-        var parentlessTopics = topics.Where(t => t.ParentId is null).ToList();
-        
-        foreach (var parentlessTopic in parentlessTopics)
-        {
-            PopulateChildren(parentlessTopic, topics);
-        }
-        
-        return parentlessTopics;
+        var roots = entries
+            .Where(e => e.ParentId is null)
+            .OrderBy(e => e.Workflow)
+            .ThenBy(e => e.Title)
+            .ToList();
+
+        foreach (var root in roots)
+            PopulateChildren(root, entries);
+
+        return roots;
     }
 
-    private static TopicListDto PopulateChildren(TopicListDto rootTopic, List<TopicListDto> topics)
+    private static KnowledgeIndexEntryDto PopulateChildren(KnowledgeIndexEntryDto entry, List<KnowledgeIndexEntryDto> all)
     {
-        var children = topics
-            .Where(t => t.ParentId == rootTopic.Id)
-            .Select(t => PopulateChildren(t, topics))
+        var children = all
+            .Where(e => e.ParentId == entry.Id)
+            .OrderBy(e => e.Workflow)
+            .ThenBy(e => e.Title)
+            .Select(e => PopulateChildren(e, all))
             .ToList();
 
         foreach (var child in children)
-        {
-            rootTopic.Children.Add(child);
-        }
+            entry.Children.Add(child);
 
-        return rootTopic;
+        return entry;
     }
 }

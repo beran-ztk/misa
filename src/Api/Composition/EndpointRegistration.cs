@@ -1,6 +1,7 @@
 using Misa.Api.Endpoints.Authentication;
 using Misa.Api.Endpoints.Chronicle;
 using Misa.Api.Endpoints.Inspector;
+using Misa.Api.Endpoints.Relations;
 using Misa.Api.Endpoints.Schedules;
 using Misa.Api.Endpoints.Schola;
 using Misa.Api.Endpoints.Sessions;
@@ -25,6 +26,8 @@ public static class EndpointRegistration
         ChronicleEndpoints.Map(app);
         ScholaEndpoints.Map(app);
         TopicEndpoints.Map(app);
+        ZettelEndpoints.Map(app);
+        RelationEndpoints.Map(app);
         app.MapScheduleEndpoints();
         app.MapAuthenticationEndpoints();
         app.MapInspectorEndpoints();
@@ -33,6 +36,7 @@ public static class EndpointRegistration
     {
         CreateScheduleEndpoint.Map(api);
         GetSchedulesEndpoint.Map(api);
+        UpdateScheduleEndpoint.Map(api);
     }
     private static void MapAuthenticationEndpoints(this IEndpointRouteBuilder api)
     {

@@ -71,14 +71,14 @@ public static class CompositionRoot
         sc.AddSingleton<UtilityNavigationViewModel>();
         sc.AddSingleton<FooterViewModel>();
 
-        // Windows
-        sc.AddSingleton<AuthenticationWindow>(sp =>
+        // Windows — must be Transient: Avalonia does not allow showing a closed window instance
+        sc.AddTransient<AuthenticationWindow>(sp =>
         {
             var vm = sp.GetRequiredService<AuthenticationWindowViewModel>();
             return new AuthenticationWindow { DataContext = vm };
         });
 
-        sc.AddSingleton<ShellWindow>(sp =>
+        sc.AddTransient<ShellWindow>(sp =>
         {
             var vm = sp.GetRequiredService<ShellWindowViewModel>();
             return new ShellWindow { DataContext = vm };

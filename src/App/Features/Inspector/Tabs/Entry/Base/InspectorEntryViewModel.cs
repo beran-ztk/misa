@@ -7,18 +7,21 @@ using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Common.Converters;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Inspector.Root;
+using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Relations;
 
 namespace Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Base;
 
 public partial class InspectorEntryViewModel : ViewModelBase
 {
     public InspectorFacadeViewModel Facade { get; }
+    public InspectorRelationsViewModel Relations { get; }
     private CancellationTokenSource? _elapsedCts;
     private Task? _elapsedLoop;
     public InspectorEntryViewModel(InspectorFacadeViewModel facade)
     {
         Facade = facade;
         Facade.State.PropertyChanged += OnFacadeStatePropertyChanged;
+        Relations = new InspectorRelationsViewModel(facade, facade.Gateway, facade.LayerProxy);
     }
 
     [RelayCommand]

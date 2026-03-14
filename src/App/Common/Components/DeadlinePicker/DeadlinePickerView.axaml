@@ -1,0 +1,133 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Misa.Ui.Avalonia.Common.Components.DeadlinePicker"
+             x:Class="Misa.Ui.Avalonia.Common.Components.DeadlinePicker.DeadlinePickerView"
+             x:DataType="local:DeadlinePickerViewModel">
+
+    <UserControl.Styles>
+
+        <Style Selector="Button.dp-toggle">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="12,5"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
+        </Style>
+        <Style Selector="Button.dp-toggle /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="Button.dp-toggle:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLight}"/>
+        </Style>
+        <Style Selector="Button.dp-toggle.active">
+            <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
+        </Style>
+        <Style Selector="Button.dp-toggle.active /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}"/>
+        </Style>
+        <Style Selector="Button.dp-toggle.active:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}"/>
+        </Style>
+
+        <Style Selector="ListBox.deadline-preset-list">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+        </Style>
+
+        <Style Selector="ListBox.deadline-preset-list ListBoxItem">
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Margin" Value="0,0,0,6"/>
+            <Setter Property="CornerRadius" Value="6"/>
+        </Style>
+
+        <Style Selector="ListBox.deadline-preset-list ListBoxItem /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+
+        <Style Selector="ListBox.deadline-preset-list ListBoxItem:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}"/>
+        </Style>
+
+        <Style Selector="ListBox.deadline-preset-list ListBoxItem:selected /template/ ContentPresenter">
+            <Setter Property="Background" Value="#1A4A90E2"/>
+        </Style>
+
+        <Style Selector="Border.deadline-preset-row">
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="CornerRadius" Value="6"/>
+        </Style>
+
+        <Style Selector="TextBlock.deadline-preset-label">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
+        </Style>
+
+        <Style Selector="TextBlock.deadline-preset-value">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="{StaticResource BrushTextFaded}"/>
+            <Setter Property="HorizontalAlignment" Value="Right"/>
+        </Style>
+
+    </UserControl.Styles>
+
+    <StackPanel Spacing="8">
+
+        <Border Background="{StaticResource BrushPrimaryBackground}"
+                BorderBrush="{StaticResource BrushBorder}"
+                BorderThickness="1"
+                CornerRadius="5"
+                Padding="2"
+                HorizontalAlignment="Left">
+            <StackPanel Orientation="Horizontal" Spacing="0">
+                <Button Classes="dp-toggle"
+                        Classes.active="{Binding IsRelativeMode}"
+                        Content="Relative"
+                        Command="{Binding SetRelativeModeCommand}" />
+                <Button Classes="dp-toggle"
+                        Classes.active="{Binding IsCustomMode}"
+                        Content="Custom"
+                        Command="{Binding SetCustomModeCommand}" />
+            </StackPanel>
+        </Border>
+
+        <ListBox Classes="deadline-preset-list"
+                 ItemsSource="{Binding Presets}"
+                 SelectedItem="{Binding SelectedPreset, Mode=TwoWay}"
+                 IsVisible="{Binding IsRelativeMode}">
+            <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="local:DeadlinePreset">
+                    <Border Classes="deadline-preset-row"
+                            IsHitTestVisible="False">
+                        <Grid ColumnDefinitions="*,Auto"
+                              ColumnSpacing="12"
+                              IsHitTestVisible="False">
+                            <TextBlock Grid.Column="0"
+                                       Classes="deadline-preset-label"
+                                       Text="{Binding Label}"
+                                       IsHitTestVisible="False" />
+                            <TextBlock Grid.Column="1"
+                                       Classes="deadline-preset-value"
+                                       Text="{Binding DisplayValue}"
+                                       IsHitTestVisible="False" 
+                                       IsVisible="{Binding $parent[ListBoxItem].IsSelected}"/>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <StackPanel Spacing="6"
+                    IsVisible="{Binding IsCustomMode}">
+            <DatePicker Classes="addpanel-date"
+                        SelectedDate="{Binding CustomDate}" />
+            <TimePicker Classes="addpanel-time"
+                        SelectedTime="{Binding CustomTime}" />
+        </StackPanel>
+
+    </StackPanel>
+
+</UserControl>

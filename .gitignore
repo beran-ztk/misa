@@ -7,3 +7,5 @@ riderModule.iml
 *.DotSettings.user
 /Misa.Infrastructure/Migrations
 /src/Infrastructure/Migrations
+CLAUDE.md
+.claude

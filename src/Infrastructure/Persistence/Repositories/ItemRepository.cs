@@ -5,6 +5,7 @@ using Misa.Domain.Exceptions;
 using Misa.Domain.Items;
 using Misa.Domain.Items.Components.Activities;
 using Misa.Domain.Items.Components.Activities.Sessions;
+using Misa.Domain.Items.Components.Relations;
 using Misa.Infrastructure.Persistence.Context;
 using Wolverine;
 using Item = Misa.Domain.Items.Item;
@@ -54,7 +55,8 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
             .ThenInclude(a => a.Sessions)
             .ThenInclude(s => s.Segments)
             .Include(t => t.TaskExtension)
-            .FirstOrDefaultAsync(t 
+            .Include(t => t.Changes)
+            .FirstOrDefaultAsync(t
                     => t.Id == new ItemId(id) && t.OwnerId == user.Id && t.Workflow == Workflow.Task
                 , cancellationToken: ct);
     }
@@ -75,7 +77,8 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
     {
         return await context.Items
             .Include(t => t.ScheduleExtension)
-            .FirstOrDefaultAsync(t 
+            .Include(t => t.Changes)
+            .FirstOrDefaultAsync(t
                     => t.Id == new ItemId(id) && t.OwnerId == user.Id && t.Workflow == Workflow.Schedule
                 , cancellationToken: ct);
     }
@@ -151,6 +154,30 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
             .ToListAsync();
     }
 
+    public async Task<List<Item>> GetZettelsAsync(Guid? topicId, CancellationToken ct)
+    {
+        var query = context.Items
+            .Include(z => z.ZettelExtension)
+            .Where(z => z.OwnerId == user.Id && z.Workflow == Workflow.Zettel);
+
+        if (topicId.HasValue)
+            query = query.Where(z => z.ZettelExtension!.TopicId == new ItemId(topicId.Value));
+
+        return await query
+            .OrderByDescending(z => z.CreatedAt)
+            .AsNoTracking()
+            .ToListAsync(ct);
+    }
+
+    public async Task<Item?> TryGetZettelAsync(Guid id, CancellationToken ct)
+    {
+        return await context.Items
+            .Include(z => z.ZettelExtension)
+            .FirstOrDefaultAsync(
+                z => z.Id == new ItemId(id) && z.OwnerId == user.Id && z.Workflow == Workflow.Zettel,
+                ct);
+    }
+
     // Session
     public async Task<Item?> TryGetItemWithSessionsAsync(Guid itemId, CancellationToken ct)
     {
@@ -162,5 +189,45 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
                 i => i.Id == new ItemId(itemId) && i.OwnerId == user.Id && i.Activity != null,
                 ct
             );
+    }
+
+    // Relations
+    public async Task AddRelationAsync(ItemRelation relation, CancellationToken ct)
+    {
+        await context.ItemRelations.AddAsync(relation, ct);
+    }
+
+    public async Task<List<ItemRelation>> GetRelationsForItemAsync(Guid itemId, CancellationToken ct)
+    {
+        var id = new ItemId(itemId);
+        return await context.ItemRelations
+            .Include(r => r.SourceItem)
+            .Include(r => r.TargetItem)
+            .Where(r => r.SourceItemId == id || r.TargetItemId == id)
+            .AsNoTracking()
+            .ToListAsync(ct);
+    }
+
+    public async Task<ItemRelation?> TryGetRelationAsync(Guid relationId, CancellationToken ct)
+    {
+        return await context.ItemRelations
+            .FirstOrDefaultAsync(r => r.Id == relationId, ct);
+    }
+
+    public async Task DeleteRelationAsync(Guid relationId, CancellationToken ct)
+    {
+        var relation = await context.ItemRelations
+            .FirstOrDefaultAsync(r => r.Id == relationId, ct);
+        if (relation is not null)
+            context.ItemRelations.Remove(relation);
+    }
+
+    public async Task<List<Item>> GetItemsForLookupAsync(CancellationToken ct)
+    {
+        return await context.Items
+            .Where(i => i.OwnerId == user.Id && !i.IsDeleted && !i.IsArchived)
+            .OrderBy(i => i.Title)
+            .AsNoTracking()
+            .ToListAsync(ct);
     }
 }

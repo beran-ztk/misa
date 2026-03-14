@@ -1,13 +1,13 @@
-﻿using Misa.Domain.Exceptions;
-using Misa.Domain.Features.Audit;
+﻿using Misa.Domain.Common.DomainEvents;
+using Misa.Domain.Exceptions;
 using Misa.Domain.Items.Components.Activities;
 using Misa.Domain.Items.Components.Activities.Sessions;
+using Misa.Domain.Items.Components.Audits.Changes;
 using Misa.Domain.Items.Components.Chronicle.Journals;
 using Misa.Domain.Items.Components.Schedules;
 using Misa.Domain.Items.Components.Schola;
 using Misa.Domain.Items.Components.Tasks;
 using Misa.Domain.Items.Components.Zettelkasten;
-using Misa.Domain.Shared.DomainEvents;
 
 namespace Misa.Domain.Items;
 public readonly record struct ItemId(Guid Value);
@@ -69,6 +69,7 @@ public sealed class Item : DomainEventEntity
     public Arc? Arc { get; private set; }
     public Unit? Unit { get; private set; }
     public Topic? Topic { get; private set; }
+    public ZettelExtension? ZettelExtension { get; private set; }
 
     
     // Behaviours
@@ -215,6 +216,28 @@ public sealed class Item : DomainEventEntity
         return item;
     }
 
+    public static Item CreateZettel(
+        ItemId id,
+        string ownerId,
+        string title,
+        string? content,
+        DateTimeOffset createdAtUtc,
+        ItemId topicId)
+    {
+        var item = new Item(
+            id: id,
+            ownerId: ownerId,
+            workflow: Workflow.Zettel,
+            title: title,
+            description: null,
+            createdAtUtc: createdAtUtc)
+        {
+            ZettelExtension = new ZettelExtension(id, topicId, content)
+        };
+
+        return item;
+    }
+
     // Derived Properties
     
     // Mutators
@@ -222,7 +245,8 @@ public sealed class Item : DomainEventEntity
     {
         if (Title == title)
             return;
-        
+
+        AddDomainEvent(new PropertyChangedEvent(Id.Value, ChangeType.Title, Title, title, null));
         Title = title;
     }
 
@@ -230,7 +254,8 @@ public sealed class Item : DomainEventEntity
     {
         if (Description == description)
             return;
-        
+
+        AddDomainEvent(new PropertyChangedEvent(Id.Value, ChangeType.Description, Description, description, null));
         Description = description;
     }
     public void Archive() => IsArchived = true;

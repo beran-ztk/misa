@@ -20,4 +20,53 @@ public sealed record SessionDto
     public required DateTimeOffset CreatedAtUtc { get; init; }
 
     public required ICollection<SessionSegmentDto> Segments { get; init; }
+
+    public TimeSpan TotalElapsed => TimeSpan.FromTicks(
+        Segments
+            .Where(s => s.EndedAtUtc is not null)
+            .Sum(s => (s.EndedAtUtc!.Value - s.StartedAtUtc).Ticks));
+
+    public string DurationDisplay
+    {
+        get
+        {
+            var elapsed = TotalElapsed;
+            if (elapsed == TimeSpan.Zero)
+                return PlannedDuration.HasValue
+                    ? $"0 / {(int)PlannedDuration.Value.TotalMinutes}m"
+                    : "0m";
+
+            var elapsedStr = elapsed.TotalHours >= 1
+                ? $"{(int)elapsed.TotalHours}h {elapsed.Minutes}m"
+                : $"{(int)elapsed.TotalMinutes}m";
+
+            if (PlannedDuration is null)
+                return elapsedStr;
+
+            var plannedStr = PlannedDuration.Value.TotalHours >= 1
+                ? $"{(int)PlannedDuration.Value.TotalHours}h {PlannedDuration.Value.Minutes}m"
+                : $"{(int)PlannedDuration.Value.TotalMinutes}m";
+
+            return $"{elapsedStr} / {plannedStr}";
+        }
+    }
+
+    public string? EfficiencyDisplay => Efficiency == SessionEfficiencyDto.None ? null : Efficiency switch
+    {
+        SessionEfficiencyDto.LowOutput      => "Low output",
+        SessionEfficiencyDto.SteadyOutput   => "Steady output",
+        SessionEfficiencyDto.HighOutput     => "High output",
+        SessionEfficiencyDto.PeakPerformance => "Peak performance",
+        _ => null
+    };
+
+    public string? ConcentrationDisplay => Concentration == SessionConcentrationDto.None ? null : Concentration switch
+    {
+        SessionConcentrationDto.Distracted      => "Distracted",
+        SessionConcentrationDto.UnfocusedButCalm => "Unfocused but calm",
+        SessionConcentrationDto.Focused         => "Focused",
+        SessionConcentrationDto.DeepFocus       => "Deep focus",
+        SessionConcentrationDto.Hyperfocus      => "Hyperfocus",
+        _ => null
+    };
 }

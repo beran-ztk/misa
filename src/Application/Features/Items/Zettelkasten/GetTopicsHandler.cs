@@ -1,18 +1,26 @@
-using Misa.Application.Abstractions.Authentication;
 using Misa.Application.Abstractions.Persistence;
+using Misa.Contract.Items;
 using Misa.Contract.Items.Components.Zettelkasten;
 
 namespace Misa.Application.Features.Items.Zettelkasten;
 
-public sealed record GetTopicsCommand;
+public sealed record GetKnowledgeIndexQuery;
 
-public class GetTopicsHandler(IItemRepository repository, ICurrentUser currentUser)
+public sealed class GetKnowledgeIndexHandler(IItemRepository repository)
 {
-    public async Task<List<TopicListDto>> HandleAsync(GetTopicsCommand command)
+    public async Task<List<KnowledgeIndexEntryDto>> HandleAsync(GetKnowledgeIndexQuery query, CancellationToken ct)
     {
-        var itemTopics = await repository.GetTopicsAsync();
+        var topicItems = await repository.GetTopicsAsync();
+        var zettelItems = await repository.GetZettelsAsync(null, ct);
 
-        var topics = itemTopics.Select(i => new TopicListDto(i.Id.Value, i.Topic?.TopicId?.Value, i.Title)).ToList();
-        return topics;
+        var entries = new List<KnowledgeIndexEntryDto>(topicItems.Count + zettelItems.Count);
+
+        foreach (var item in topicItems)
+            entries.Add(new KnowledgeIndexEntryDto(item.Id.Value, item.Title, item.Topic?.TopicId?.Value, WorkflowDto.Topic));
+
+        foreach (var item in zettelItems)
+            entries.Add(new KnowledgeIndexEntryDto(item.Id.Value, item.Title, item.ZettelExtension!.TopicId.Value, WorkflowDto.Zettel));
+
+        return entries;
     }
 }

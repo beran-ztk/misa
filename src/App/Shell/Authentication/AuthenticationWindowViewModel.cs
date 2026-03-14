@@ -195,6 +195,16 @@ public partial class AuthenticationWindowViewModel : ViewModelBase
         }
     }
     
+    public void Reset()
+    {
+        Username = string.Empty;
+        Password = string.Empty;
+        ConfirmPassword = string.Empty;
+        Email = string.Empty;
+        ErrorMessage = null;
+        IsRegisterMode = false;
+    }
+
     private void OpenShellAndCloseAuth()
     {
         if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop)

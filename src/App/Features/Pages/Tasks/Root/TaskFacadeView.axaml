@@ -16,6 +16,30 @@
         <converters:UtcToLocalConverter x:Key="UtcToLocalConverter" />
     </UserControl.Resources>
 
+    <UserControl.Styles>
+        <Style Selector="ListBoxItem">
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="ListBoxItem /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="ListBoxItem:pointerover Border.task-card">
+            <Setter Property="BorderBrush" Value="{StaticResource BrushBorderLight}"/>
+            <Setter Property="BoxShadow" Value="0 4 16 0 #40000000"/>
+        </Style>
+        <Style Selector="ListBoxItem:selected Border.task-card">
+            <Setter Property="BorderBrush" Value="{StaticResource BrushAccent}"/>
+            <Setter Property="BorderThickness" Value="1.5"/>
+        </Style>
+    </UserControl.Styles>
+
     <Grid RowDefinitions="Auto,*">
 
         <!-- Toolbar (2 rows) -->
@@ -63,6 +87,46 @@
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                         <CheckBox Content="{Binding ActivityPriority}"
+                                                  IsChecked="{Binding IsSelected}" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Border>
+                    </Popup>
+
+                    <ToggleButton x:Name="StateFilterButton"
+                                  Classes="workspace-toolbar-filter-trigger">
+                        <TextBlock Text="State  ▾" />
+                    </ToggleButton>
+
+                    <Popup PlacementTarget="{Binding ElementName=StateFilterButton}"
+                           IsOpen="{Binding IsChecked, ElementName=StateFilterButton}"
+                           Placement="Bottom">
+                        <Border Classes="filter-popup-frame">
+                            <ItemsControl ItemsSource="{Binding State.StateFilters}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <CheckBox Content="{Binding ActivityState}"
+                                                  IsChecked="{Binding IsSelected}" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Border>
+                    </Popup>
+
+                    <ToggleButton x:Name="CategoryFilterButton"
+                                  Classes="workspace-toolbar-filter-trigger">
+                        <TextBlock Text="Category  ▾" />
+                    </ToggleButton>
+
+                    <Popup PlacementTarget="{Binding ElementName=CategoryFilterButton}"
+                           IsOpen="{Binding IsChecked, ElementName=CategoryFilterButton}"
+                           Placement="Bottom">
+                        <Border Classes="filter-popup-frame">
+                            <ItemsControl ItemsSource="{Binding State.CategoryFilters}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <CheckBox Content="{Binding TaskCategory}"
                                                   IsChecked="{Binding IsSelected}" />
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
@@ -135,34 +199,102 @@
             </Border>
 
             <!-- Card View -->
-            <ScrollViewer
-                IsVisible="{Binding #ContentRoot.Bounds.Width, Converter={StaticResource LessOrEqualConverter}, ConverterParameter=900}">
+            <ListBox ItemsSource="{Binding State.FilteredItems}"
+                     SelectedItem="{Binding State.SelectedItem, Mode=TwoWay}"
+                     IsVisible="{Binding #ContentRoot.Bounds.Width, Converter={StaticResource LessOrEqualConverter}, ConverterParameter=900}"
+                     Background="{StaticResource BrushPrimaryBackgroundLight}"
+                     Padding="18,8"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                     ScrollViewer.VerticalScrollBarVisibility="Auto">
 
-                <ItemsControl ItemsSource="{Binding State.FilteredItems}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Border Margin="8"
-                                    Padding="12"
-                                    BorderBrush="Gray"
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                            <Border Classes="task-card"
+                                    Background="{StaticResource BrushPrimaryBackground}"
+                                    BorderBrush="{StaticResource BrushBorder}"
                                     BorderThickness="1"
-                                    CornerRadius="6">
+                                    CornerRadius="8"
+                                    Padding="14,12"
+                                    Margin="0,0,0,8">
 
-                                <StackPanel Spacing="6">
+                                <StackPanel Spacing="0">
+
+                                    <!-- Title -->
                                     <TextBlock Text="{Binding Item.Title}"
-                                               FontWeight="Bold" />
+                                               FontSize="{StaticResource FontSizeMedium}"
+                                               FontWeight="SemiBold"
+                                               Foreground="{StaticResource BrushTextPrimary}"
+                                               TextTrimming="CharacterEllipsis"
+                                               TextWrapping="NoWrap"
+                                               Margin="0,0,0,10" />
 
-                                    <TextBlock Text="{Binding Activity.State}" />
-                                    <TextBlock Text="{Binding Category}" />
-                                    <TextBlock Text="{Binding Activity.Priority}" />
-                                    <TextBlock Text="{Binding Item.CreatedAt, Converter={StaticResource UtcToLocalConverter}, StringFormat='dd.MM.yyyy HH:mm'}" />
+                                    <!-- Divider -->
+                                    <Border Height="1"
+                                            Background="{StaticResource BrushBorder}"
+                                            Margin="0,0,0,10" />
+
+                                    <!-- Properties -->
+                                    <Grid ColumnDefinitions="80,*"
+                                          RowDefinitions="Auto,Auto,Auto,Auto"
+                                          RowSpacing="6">
+
+                                        <TextBlock Grid.Row="0" Grid.Column="0"
+                                                   Text="State"
+                                                   FontSize="{StaticResource FontSizeAverage}"
+                                                   Foreground="{StaticResource BrushTextFaded}"
+                                                   VerticalAlignment="Center" />
+                                        <TextBlock Grid.Row="0" Grid.Column="1"
+                                                   Text="{Binding Activity.State}"
+                                                   FontSize="{StaticResource FontSizeAverage}"
+                                                   Foreground="{StaticResource BrushTextSecondary}"
+                                                   VerticalAlignment="Center" />
+
+                                        <TextBlock Grid.Row="1" Grid.Column="0"
+                                                   Text="Category"
+                                                   FontSize="{StaticResource FontSizeAverage}"
+                                                   Foreground="{StaticResource BrushTextFaded}"
+                                                   VerticalAlignment="Center" />
+                                        <TextBlock Grid.Row="1" Grid.Column="1"
+                                                   Text="{Binding Category}"
+                                                   FontSize="{StaticResource FontSizeAverage}"
+                                                   Foreground="{StaticResource BrushTextSecondary}"
+                                                   VerticalAlignment="Center" />
+
+                                        <TextBlock Grid.Row="2" Grid.Column="0"
+                                                   Text="Priority"
+                                                   FontSize="{StaticResource FontSizeAverage}"
+                                                   Foreground="{StaticResource BrushTextFaded}"
+                                                   VerticalAlignment="Center" />
+                                        <StackPanel Grid.Row="2" Grid.Column="1"
+                                                    Orientation="Horizontal"
+                                                    Spacing="6"
+                                                    VerticalAlignment="Center">
+                                            <Ellipse Width="7" Height="7"
+                                                     Fill="{Binding Activity.Priority, Converter={StaticResource PriorityToBrushConverter}}"
+                                                     VerticalAlignment="Center" />
+                                            <TextBlock Text="{Binding Activity.Priority}"
+                                                       FontSize="{StaticResource FontSizeAverage}"
+                                                       Foreground="{StaticResource BrushTextSecondary}" />
+                                        </StackPanel>
+
+                                        <TextBlock Grid.Row="3" Grid.Column="0"
+                                                   Text="Created"
+                                                   FontSize="{StaticResource FontSizeAverage}"
+                                                   Foreground="{StaticResource BrushTextFaded}"
+                                                   VerticalAlignment="Center" />
+                                        <TextBlock Grid.Row="3" Grid.Column="1"
+                                                   Text="{Binding Item.CreatedAt, Converter={StaticResource UtcToLocalConverter}, StringFormat='dd.MM.yyyy HH:mm'}"
+                                                   FontSize="{StaticResource FontSizeAverage}"
+                                                   Foreground="{StaticResource BrushTextSecondary}"
+                                                   VerticalAlignment="Center" />
+
+                                    </Grid>
+
                                 </StackPanel>
-
                             </Border>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-
-            </ScrollViewer>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
 
         </Grid>
     </Grid>

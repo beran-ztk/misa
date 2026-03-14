@@ -3,166 +3,257 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Zettelkasten"
+             xmlns:conv="using:Misa.Ui.Avalonia.Common.Converters"
              mc:Ignorable="d"
              d:DesignWidth="1100"
              d:DesignHeight="700"
              x:Class="Misa.Ui.Avalonia.Features.Pages.Zettelkasten.ZettelkastenView"
              x:DataType="root:ZettelkastenViewModel">
 
-    <UserControl.Styles>
-        <Style Selector="TreeView.zettelkasten-tree">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Padding" Value="0" />
-        </Style>
+   <UserControl.Styles>
+       <Style Selector="TreeView.zettelkasten-tree">
+           <Setter Property="Background" Value="Transparent" />
+           <Setter Property="BorderThickness" Value="0" />
+           <Setter Property="Padding" Value="0" />
+       </Style>
 
-        <Style Selector="TreeViewItem">
-            <Setter Property="Padding" Value="0" />
-            <Setter Property="Margin" Value="0,1,0,1" />
-        </Style>
+       <Style Selector="TreeViewItem">
+           <Setter Property="Padding" Value="0" />
+           <Setter Property="Margin" Value="0,1,0,1" />
+       </Style>
 
-        <Style Selector="Border.topic-row">
-            <Setter Property="Padding" Value="6,4" />
-            <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderBrush" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="1" />
-        </Style>
+       <Style Selector="Border.topic-row">
+           <Setter Property="Padding" Value="6,4" />
+           <Setter Property="CornerRadius" Value="6" />
+           <Setter Property="Background" Value="Transparent" />
+           <Setter Property="BorderBrush" Value="Transparent" />
+           <Setter Property="BorderThickness" Value="1" />
+       </Style>
 
-        <Style Selector="Border.topic-row:pointerover">
-            <Setter Property="Background" Value="#0FFFFFFF" />
-            <Setter Property="BorderBrush" Value="#14FFFFFF" />
-        </Style>
+       <Style Selector="Border.topic-row:pointerover">
+           <Setter Property="Background" Value="#0FFFFFFF" />
+           <Setter Property="BorderBrush" Value="#14FFFFFF" />
+       </Style>
 
-        <Style Selector="TextBlock.topic-title">
-            <Setter Property="VerticalAlignment" Value="Center" />
-            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
-            <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}" />
-        </Style>
+       <Style Selector="TextBlock.topic-title">
+           <Setter Property="VerticalAlignment" Value="Center" />
+           <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+           <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}" />
+       </Style>
 
-        <Style Selector="Button.topic-add-button">
-            <Setter Property="Width" Value="18" />
-            <Setter Property="Height" Value="18" />
-            <Setter Property="MinWidth" Value="18" />
-            <Setter Property="Padding" Value="0" />
-            <Setter Property="Margin" Value="4,0,0,0" />
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderBrush" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="CornerRadius" Value="4" />
-            <Setter Property="Opacity" Value="0" />
-            <Setter Property="IsHitTestVisible" Value="False" />
-            <Setter Property="HorizontalAlignment" Value="Right" />
-            <Setter Property="VerticalAlignment" Value="Center" />
-        </Style>
+       <Style Selector="Button.topic-add-button">
+           <Setter Property="Width" Value="18" />
+           <Setter Property="Height" Value="18" />
+           <Setter Property="MinWidth" Value="18" />
+           <Setter Property="Padding" Value="0" />
+           <Setter Property="Margin" Value="4,0,0,0" />
+           <Setter Property="Background" Value="Transparent" />
+           <Setter Property="BorderBrush" Value="Transparent" />
+           <Setter Property="BorderThickness" Value="0" />
+           <Setter Property="CornerRadius" Value="4" />
+           <Setter Property="Opacity" Value="0" />
+           <Setter Property="IsHitTestVisible" Value="False" />
+           <Setter Property="HorizontalAlignment" Value="Right" />
+           <Setter Property="VerticalAlignment" Value="Center" />
+       </Style>
 
-        <Style Selector="Border.topic-row:pointerover Button.topic-add-button">
-            <Setter Property="Opacity" Value="1" />
-            <Setter Property="IsHitTestVisible" Value="True" />
-        </Style>
+       <Style Selector="Border.topic-row:pointerover Button.topic-add-button">
+           <Setter Property="Opacity" Value="1" />
+           <Setter Property="IsHitTestVisible" Value="True" />
+       </Style>
 
-        <Style Selector="Button.topic-add-button:pointerover">
-            <Setter Property="Background" Value="#12FFFFFF" />
-        </Style>
+       <Style Selector="Button.topic-add-button:pointerover">
+           <Setter Property="Background" Value="#12FFFFFF" />
+       </Style>
 
-        <Style Selector="Button.topic-add-button Image">
-            <Setter Property="Width" Value="12" />
-            <Setter Property="Height" Value="12" />
-        </Style>
-    </UserControl.Styles>
+       <Style Selector="Button.topic-add-button Image">
+           <Setter Property="Width" Value="12" />
+           <Setter Property="Height" Value="12" />
+       </Style>
 
-    <Border Padding="12"
-            Background="{StaticResource BrushPrimaryBackgroundLight}">
-        <Grid ColumnDefinitions="320,*"
-              ColumnSpacing="0">
+       <!-- Document-surface TextBox: no border, no focus ring -->
+       <Style Selector="TextBox.zettel-content">
+           <Setter Property="Background" Value="Transparent" />
+           <Setter Property="BorderBrush" Value="Transparent" />
+           <Setter Property="BorderThickness" Value="0" />
+           <Setter Property="Padding" Value="0" />
+       </Style>
+       <Style Selector="TextBox.zettel-content:pointerover">
+           <Setter Property="Background" Value="Transparent" />
+           <Setter Property="BorderBrush" Value="Transparent" />
+       </Style>
+       <Style Selector="TextBox.zettel-content:focus">
+           <Setter Property="Background" Value="Transparent" />
+           <Setter Property="BorderBrush" Value="Transparent" />
+       </Style>
+       <Style Selector="TextBox.zettel-content /template/ Border#PART_BorderElement">
+           <Setter Property="Background" Value="Transparent" />
+           <Setter Property="BorderThickness" Value="0" />
+           <Setter Property="BoxShadow" Value="none" />
+       </Style>
+   </UserControl.Styles>
 
-            <!-- Left: Index -->
-            <Border Grid.Column="0"
-                    Background="{StaticResource BrushPrimaryBackgroundLight}"
-                    BorderBrush="{StaticResource BrushBorder}"
-                    BorderThickness="0,0,1,0"
-                    Padding="0,0,12,0">
+   <Border Padding="12"
+           Background="{StaticResource BrushPrimaryBackgroundLight}">
+       <Grid ColumnDefinitions="320,*"
+             ColumnSpacing="0">
 
-                <Grid RowDefinitions="Auto,Auto,*">
+           <!-- Left: Index -->
+           <Border Grid.Column="0"
+                   Background="{StaticResource BrushPrimaryBackgroundLight}"
+                   BorderBrush="{StaticResource BrushBorder}"
+                   BorderThickness="0,0,1,0"
+                   Padding="0,0,12,0">
 
-                    <!-- Header -->
-                    <Grid Grid.Row="0"
-                          ColumnDefinitions="*,Auto,Auto"
-                          ColumnSpacing="8"
-                          Margin="0,0,0,8">
-                        <TextBlock Grid.Column="0"
-                                   Text="Knowledge Map"
-                                   FontSize="18"
-                                   FontWeight="SemiBold"
-                                   VerticalAlignment="Center"
-                                   Foreground="{StaticResource BrushTextPrimary}" />
+               <Grid RowDefinitions="Auto,Auto,*">
 
-                        <Button Grid.Column="1"
-                                Classes="workspace-toolbar-icon"
-                                ToolTip.Tip="Create topic"
-                                Click="CreateTopic_OnPointerPressed">
-                            <Image Source="{SvgImage /Assets/Icons/Common/plus.svg}" />
-                        </Button>
+                   <!-- Header -->
+                   <Grid Grid.Row="0"
+                         ColumnDefinitions="*,Auto,Auto"
+                         ColumnSpacing="8"
+                         Margin="0,0,0,8">
+                       <TextBlock Grid.Column="0"
+                                  Text="Knowledge Map"
+                                  FontSize="18"
+                                  FontWeight="SemiBold"
+                                  VerticalAlignment="Center"
+                                  Foreground="{StaticResource BrushTextPrimary}" />
 
-                        <Button Grid.Column="2"
-                                Classes="workspace-toolbar-icon"
-                                ToolTip.Tip="Refresh"
-                                Command="{Binding RefreshWorkspaceCommand}">
-                            <Image Source="{SvgImage /Assets/Icons/Common/refresh.svg}" />
-                        </Button>
-                    </Grid>
+                       <Button Grid.Column="1"
+                               Classes="workspace-toolbar-icon"
+                               ToolTip.Tip="Add"
+                               Click="Add_OnPointerPressed">
+                           <FlyoutBase.AttachedFlyout>
+                               <MenuFlyout>
+                                   <MenuItem Header="Create Topic" Click="CreateTopicMenuItem_OnClick" />
+                                   <MenuItem Header="Create Zettel" Click="CreateZettelMenuItem_OnClick" />
+                               </MenuFlyout>
+                           </FlyoutBase.AttachedFlyout>
+                           <Image Source="{SvgImage /Assets/Icons/Common/plus.svg}" />
+                       </Button>
 
-                    <!-- Divider -->
-                    <Border Grid.Row="1"
-                            VerticalAlignment="Top"
-                            Margin="0,0,0,10"
-                            Height="1"
-                            Background="{StaticResource BrushBorder}"
-                            Opacity="0.35" />
+                       <Button Grid.Column="2"
+                               Classes="workspace-toolbar-icon"
+                               ToolTip.Tip="Refresh"
+                               Command="{Binding RefreshWorkspaceCommand}">
+                           <Image Source="{SvgImage /Assets/Icons/Common/refresh.svg}" />
+                       </Button>
+                   </Grid>
 
-                    <!-- Tree -->
-                    <ScrollViewer Grid.Row="2"
-                                  Margin="0,12,0,0"
-                                  HorizontalScrollBarVisibility="Disabled"
-                                  VerticalScrollBarVisibility="Auto">
+                   <!-- Divider -->
+                   <Border Grid.Row="1"
+                           VerticalAlignment="Top"
+                           Margin="0,0,0,10"
+                           Height="1"
+                           Background="{StaticResource BrushBorder}"
+                           Opacity="0.35" />
 
-                        <TreeView Classes="zettelkasten-tree"
-                                  ItemsSource="{Binding Topics}">
-                            <TreeView.ItemTemplate>
-                                <TreeDataTemplate ItemsSource="{Binding Children}">
-                                    <Border Classes="topic-row">
-                                        <Grid ColumnDefinitions="*,Auto"
-                                              ColumnSpacing="6">
-                                            <TextBlock Grid.Column="0"
-                                                       Classes="topic-title"
-                                                       Text="{Binding Title}" />
+                   <!-- Tree -->
+                   <ScrollViewer Grid.Row="2"
+                                 Margin="0,12,0,0"
+                                 HorizontalScrollBarVisibility="Disabled"
+                                 VerticalScrollBarVisibility="Auto">
 
-                                            <Button Grid.Column="1"
-                                                    Classes="topic-add-button"
-                                                    Click="CreateTopic_OnPointerPressed">
-                                                <Image Source="{SvgImage /Assets/Icons/Common/plus.svg}" />
-                                            </Button>
-                                        </Grid>
-                                    </Border>
-                                </TreeDataTemplate>
-                            </TreeView.ItemTemplate>
-                        </TreeView>
-                    </ScrollViewer>
-                </Grid>
-            </Border>
+                       <TreeView Classes="zettelkasten-tree"
+                                 ItemsSource="{Binding Index}"
+                                 SelectionChanged="Tree_OnSelectionChanged">
+                           <TreeView.ItemTemplate>
+                               <TreeDataTemplate ItemsSource="{Binding Children}">
+                                   <Border Classes="topic-row">
+                                       <Grid ColumnDefinitions="Auto,*,Auto"
+                                             ColumnSpacing="6">
 
-            <!-- Right: Content -->
-            <Border Grid.Column="1"
-                    Background="{StaticResource BrushPrimaryBackgroundLight}"
-                    Padding="20,0,0,0">
-                <Grid RowDefinitions="Auto,*">
-                    <TextBlock Grid.Row="0"
-                               Text="Overview"
-                               FontSize="18"
-                               FontWeight="SemiBold"
-                               Foreground="{StaticResource BrushTextPrimary}" />
-                </Grid>
-            </Border>
-        </Grid>
-    </Border>
+                                           <!-- Type icon -->
+                                           <Panel Grid.Column="0">
+                                               <Image IsVisible="{Binding Workflow, Converter={x:Static conv:WorkflowEqualConverter.Instance}, ConverterParameter=Topic}"
+                                                      Source="{SvgImage /Assets/Icons/Common/folder.svg}"
+                                                      Width="14" Height="14"
+                                                      VerticalAlignment="Center"
+                                                      Opacity="0.65" />
+                                               <Image IsVisible="{Binding Workflow, Converter={x:Static conv:WorkflowEqualConverter.Instance}, ConverterParameter=Zettel}"
+                                                      Source="{SvgImage /Assets/Icons/Shell/Navigation/scroll.svg}"
+                                                      Width="14" Height="14"
+                                                      VerticalAlignment="Center"
+                                                      Opacity="0.65" />
+                                           </Panel>
+
+                                           <TextBlock Grid.Column="1"
+                                                      Classes="topic-title"
+                                                      Text="{Binding Title}" />
+
+                                           <Button Grid.Column="2"
+                                                   Classes="topic-add-button"
+                                                   IsVisible="{Binding Workflow, Converter={x:Static conv:WorkflowEqualConverter.Instance}, ConverterParameter=Topic}"
+                                                   Click="Add_OnPointerPressed">
+                                               <FlyoutBase.AttachedFlyout>
+                                                   <MenuFlyout>
+                                                       <MenuItem Header="Create Topic" Click="CreateTopicMenuItem_OnClick" />
+                                                       <MenuItem Header="Create Zettel" Click="CreateZettelMenuItem_OnClick" />
+                                                   </MenuFlyout>
+                                               </FlyoutBase.AttachedFlyout>
+                                               <Image Source="{SvgImage /Assets/Icons/Common/plus.svg}" />
+                                           </Button>
+                                       </Grid>
+                                   </Border>
+                               </TreeDataTemplate>
+                           </TreeView.ItemTemplate>
+                       </TreeView>
+                   </ScrollViewer>
+               </Grid>
+           </Border>
+
+           <!-- Right: Content -->
+           <Border Grid.Column="1"
+                   Background="{StaticResource BrushPrimaryBackgroundLight}"
+                   Padding="20,0,0,0">
+
+               <Grid>
+                   <!-- Empty state -->
+                   <TextBlock IsVisible="{Binding SelectedZettel, Converter={x:Static ObjectConverters.IsNull}}"
+                              Text="Select a Zettel to view its content."
+                              VerticalAlignment="Center"
+                              HorizontalAlignment="Center"
+                              Opacity="0.4"
+                              Foreground="{StaticResource BrushTextPrimary}" />
+
+                   <!-- Zettel detail -->
+                   <Grid IsVisible="{Binding SelectedZettel, Converter={x:Static ObjectConverters.IsNotNull}}"
+                         RowDefinitions="Auto,*">
+
+                       <Grid Grid.Row="0"
+                             ColumnDefinitions="*,Auto"
+                             ColumnSpacing="10">
+                           <TextBlock Grid.Column="0"
+                                      Text="{Binding SelectedZettel.Title}"
+                                      FontSize="22"
+                                      FontWeight="SemiBold"
+                                      TextWrapping="Wrap"
+                                      Foreground="{StaticResource BrushTextPrimary}" />
+                           <TextBlock Grid.Column="1"
+                                      Text="{Binding SaveStateLabel}"
+                                      VerticalAlignment="Center"
+                                      FontSize="12"
+                                      Opacity="0.5"
+                                      Foreground="{StaticResource BrushTextPrimary}" />
+                       </Grid>
+
+                       <ScrollViewer Grid.Row="1"
+                                     Margin="0,12,0,0"
+                                     HorizontalScrollBarVisibility="Disabled"
+                                     VerticalScrollBarVisibility="Auto">
+                           <TextBox Classes="zettel-content"
+                                    Text="{Binding EditableContent, Mode=TwoWay}"
+                                    AcceptsReturn="True"
+                                    TextWrapping="Wrap"
+                                    Watermark="Start writing…"
+                                    Foreground="{StaticResource BrushTextPrimary}"
+                                    LineHeight="22"
+                                    FontSize="14" />
+                       </ScrollViewer>
+                   </Grid>
+               </Grid>
+
+           </Border>
+       </Grid>
+   </Border>
 </UserControl>

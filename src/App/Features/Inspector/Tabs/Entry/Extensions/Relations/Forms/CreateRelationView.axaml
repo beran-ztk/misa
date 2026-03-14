@@ -1,0 +1,80 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Relations.Forms"
+             xmlns:dtos="clr-namespace:Misa.Contract.Items.Components.Relations;assembly=Contract"
+             x:Class="Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Relations.Forms.CreateRelationView"
+             x:DataType="vm:CreateRelationViewModel">
+
+    <UserControl.Styles>
+        <!-- Item row in list — full-row selection feel -->
+        <Style Selector="ListBoxItem">
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="CornerRadius" Value="4"/>
+        </Style>
+    </UserControl.Styles>
+
+    <StackPanel Classes="addpanel-body">
+
+        <!-- Filters -->
+        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+
+            <TextBox Grid.Column="0"
+                     Watermark="Search by title…"
+                     Text="{Binding SearchText, Mode=TwoWay}"/>
+
+            <ComboBox Grid.Column="1"
+                      Classes="addpanel-combo"
+                      MinWidth="120"
+                      ItemsSource="{Binding WorkflowOptions}"
+                      SelectedItem="{Binding SelectedWorkflowFilter, Mode=TwoWay}">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate x:DataType="vm:WorkflowFilterOption">
+                        <TextBlock Text="{Binding Display}"/>
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+
+        </Grid>
+
+        <!-- Item picker -->
+        <ListBox ItemsSource="{Binding FilteredItems}"
+                 SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
+                 MinHeight="200"
+                 MaxHeight="340"
+                 BorderThickness="0,1"
+                 BorderBrush="{StaticResource BrushBorder}"
+                 Background="{StaticResource BrushPrimaryBackground}">
+            <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="dtos:ItemLookupDto">
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+
+                        <TextBlock Grid.Column="0"
+                                   Text="{Binding Title}"
+                                   FontSize="13"
+                                   FontWeight="Medium"
+                                   VerticalAlignment="Center"
+                                   TextTrimming="CharacterEllipsis"/>
+
+                        <TextBlock Grid.Column="1"
+                                   Text="{Binding Workflow}"
+                                   FontSize="11"
+                                   Opacity="0.45"
+                                   VerticalAlignment="Center"/>
+
+                    </Grid>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <!-- Relation type -->
+        <StackPanel Spacing="4">
+            <TextBlock Text="Relation type"
+                       Classes="addpanel-text"/>
+            <ComboBox Classes="addpanel-combo"
+                      ItemsSource="{Binding RelationTypes}"
+                      SelectedItem="{Binding SelectedRelationType, Mode=TwoWay}"/>
+        </StackPanel>
+
+    </StackPanel>
+
+</UserControl>

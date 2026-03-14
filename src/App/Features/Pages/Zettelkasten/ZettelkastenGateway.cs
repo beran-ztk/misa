@@ -15,6 +15,23 @@ namespace Misa.Ui.Avalonia.Features.Pages.Zettelkasten;
 
 public sealed class ZettelkastenGateway(RemoteProxy remoteProxy)
 {
+    public async Task<Result> CreateZettelAsync(CreateZettelRequest requestBody)
+    {
+        var response = await remoteProxy.SendAsync(
+            requestFactory: () => new HttpRequestMessage(HttpMethod.Post, ZettelkastenRoutes.CreateZettel)
+            {
+                Content = JsonContent.Create(requestBody)
+            },
+            retry: new RetryOptions
+            {
+                MaxAttempts = 3,
+                Delay = TimeSpan.FromMilliseconds(500)
+            },
+            cancellationToken: CancellationToken.None);
+
+        return response;
+    }
+
     public async Task<Result> CreateTopicAsync(CreateTopicRequest requestBody)
     {
         var response = await remoteProxy.SendAsync(
@@ -32,9 +49,9 @@ public sealed class ZettelkastenGateway(RemoteProxy remoteProxy)
         return response;
     }
 
-    public async Task<List<TopicListDto>?> GetTopicsAsync()
+    public async Task<List<KnowledgeIndexEntryDto>?> GetKnowledgeIndexAsync()
     {
-        var response = await remoteProxy.SendAsync<List<TopicListDto>>(
+        var response = await remoteProxy.SendAsync<List<KnowledgeIndexEntryDto>>(
             requestFactory: () => new HttpRequestMessage(HttpMethod.Get, ZettelkastenRoutes.GetTopics),
             retry: new RetryOptions
             {
@@ -42,7 +59,38 @@ public sealed class ZettelkastenGateway(RemoteProxy remoteProxy)
                 Delay = TimeSpan.FromMilliseconds(500)
             },
             cancellationToken: CancellationToken.None);
-        
+
+        return response.Value;
+    }
+
+    public async Task<Result> UpdateZettelContentAsync(Guid id, string? content)
+    {
+        var response = await remoteProxy.SendAsync(
+            requestFactory: () => new HttpRequestMessage(HttpMethod.Patch, ZettelkastenRoutes.UpdateZettelContentUrl(id))
+            {
+                Content = JsonContent.Create(new UpdateZettelContentRequest(content))
+            },
+            retry: new RetryOptions
+            {
+                MaxAttempts = 3,
+                Delay = TimeSpan.FromMilliseconds(500)
+            },
+            cancellationToken: CancellationToken.None);
+
+        return response;
+    }
+
+    public async Task<List<ZettelDto>?> GetZettelsAsync()
+    {
+        var response = await remoteProxy.SendAsync<List<ZettelDto>>(
+            requestFactory: () => new HttpRequestMessage(HttpMethod.Get, ZettelkastenRoutes.GetZettels),
+            retry: new RetryOptions
+            {
+                MaxAttempts = 3,
+                Delay = TimeSpan.FromMilliseconds(500)
+            },
+            cancellationToken: CancellationToken.None);
+
         return response.Value;
     }
     

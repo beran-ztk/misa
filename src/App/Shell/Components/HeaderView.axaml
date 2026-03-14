@@ -2,13 +2,43 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:components="clr-namespace:Misa.Ui.Avalonia.Shell.Components"
              mc:Ignorable="d"
              d:DesignWidth="800"
              d:DesignHeight="60"
+             x:DataType="components:HeaderViewModel"
              x:Class="Misa.Ui.Avalonia.Shell.Components.HeaderView">
 
+    <UserControl.Styles>
+
+        <Style Selector="Button.header-user">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="MinWidth" Value="120"/>
+        </Style>
+
+        <Style Selector="Button.header-user /template/ ContentPresenter">
+            <Setter Property="CornerRadius" Value="{StaticResource CornerRadiusButtons}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}"/>
+            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}"/>
+        </Style>
+
+        <Style Selector="Button.header-user:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource BrushNavigationHover}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BrushBorderLight}"/>
+        </Style>
+
+        <Style Selector="Button.header-user:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource BrushNavigationPressed}"/>
+        </Style>
+
+    </UserControl.Styles>
+
     <Border Background="{StaticResource BrushPrimaryBackground}"
-            Padding="20,0"
+            Padding="12,0"
             BorderThickness="0,0,0,1"
             BorderBrush="{StaticResource BrushBorder}">
 
@@ -24,13 +54,37 @@
 
             <StackPanel Grid.Column="1"
                         Orientation="Horizontal"
-                        Spacing="16"
                         VerticalAlignment="Center">
 
-                <TextBlock Text="User"
-                           Opacity="0.8" />
-                <TextBlock Text="Workspace"
-                           Opacity="0.8" />
+                <Button Classes="header-user">
+                    <Button.Flyout>
+                        <MenuFlyout Placement="BottomEdgeAlignedRight">
+                            <MenuItem Header="Logout"
+                                      Command="{Binding LogoutCommand}">
+                                <MenuItem.Icon>
+                                    <Image Source="{SvgImage /Assets/Icons/Shell/Navigation/sign-out.svg}"
+                                           Width="14"
+                                           Height="14"/>
+                                </MenuItem.Icon>
+                            </MenuItem>
+                        </MenuFlyout>
+                    </Button.Flyout>
+
+                    <StackPanel Orientation="Horizontal"
+                                Spacing="8"
+                                Margin="10,6">
+                        <Image Source="{SvgImage /Assets/Icons/Shell/Navigation/user.svg}"
+                               Width="14"
+                               Height="14"
+                               Opacity="0.55"
+                               VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding UserState.Username}"
+                                   FontSize="{StaticResource FontSizeAverage}"
+                                   Foreground="{StaticResource BrushTextSecondary}"
+                                   VerticalAlignment="Center"
+                                   HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
 
             </StackPanel>
 

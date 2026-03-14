@@ -11,26 +11,21 @@ public class TopicEndpoints
     public static void Map(IEndpointRouteBuilder api)
     {
         api.MapPost(ZettelkastenRoutes.CreateTopic, CreateTopic);
-        api.MapGet(ZettelkastenRoutes.GetTopics, GetTopics);
+        api.MapGet(ZettelkastenRoutes.GetTopics, GetKnowledgeIndex);
     }
-    
-    // Create a task
+
     private static async Task<IResult> CreateTopic(
-        [FromBody] CreateTopicRequest request, 
+        [FromBody] CreateTopicRequest request,
         IMessageBus bus)
     {
-        var command = new CreateTopicCommand(
-            request.Title,
-            request.ParentId
-        );
-
+        var command = new CreateTopicCommand(request.Title, request.ParentId);
         await bus.InvokeAsync(command);
         return Results.Ok();
-    }  
-    
-    private static async Task<IResult> GetTopics(IMessageBus bus)
+    }
+
+    private static async Task<IResult> GetKnowledgeIndex(IMessageBus bus, CancellationToken ct)
     {
-        var result = await bus.InvokeAsync<List<TopicListDto>>(new GetTopicsCommand());
+        var result = await bus.InvokeAsync<List<KnowledgeIndexEntryDto>>(new GetKnowledgeIndexQuery(), ct);
         return Results.Ok(result);
-    }  
+    }
 }

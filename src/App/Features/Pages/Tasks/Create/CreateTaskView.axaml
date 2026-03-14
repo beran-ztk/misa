@@ -46,10 +46,7 @@
         <StackPanel Classes="addpanel-controls">
             <TextBlock Text="Set a deadline"
                        Classes="addpanel-text"/>
-            <DatePicker Classes="addpanel-date"
-                        SelectedDate="{Binding DeadlineDate}" />
-            <TimePicker Classes="addpanel-time"
-                        SelectedTime="{Binding DeadlineTime}" />
+            <ContentControl Content="{Binding DeadlinePicker}" />
         </StackPanel>
     </StackPanel>
 </UserControl>

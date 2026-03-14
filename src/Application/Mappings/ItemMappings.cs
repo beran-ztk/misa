@@ -1,7 +1,10 @@
-﻿using Misa.Contract.Items;
+﻿using System.Linq;
+using Misa.Contract.Items;
+using Misa.Contract.Items.Components.Audits;
 using Misa.Contract.Items.Components.Chronicle;
 using Misa.Domain.Exceptions;
 using Misa.Domain.Items;
+using Misa.Domain.Items.Components.Audits.Changes;
 using Misa.Domain.Items.Components.Chronicle.Journals;
 
 namespace Misa.Application.Mappings;
@@ -22,9 +25,25 @@ public static class ItemMappings
             IsArchived = item.IsArchived,
 
             CreatedAt = item.CreatedAt,
-            ModifiedAt = item.ModifiedAt
+            ModifiedAt = item.ModifiedAt,
+
+            Changes = item.Changes
+                .OrderByDescending(c => c.CreatedAtUtc)
+                .Select(c => c.ToDto())
+                .ToList()
         };
     }
+
+    public static AuditChangeDto ToDto(this AuditChange change) =>
+        new(
+            change.Id,
+            change.ItemId.Value,
+            change.ChangeType.ToString(),
+            change.ValueBefore,
+            change.ValueAfter,
+            change.Reason,
+            change.CreatedAtUtc
+        );
     public static JournalExtensionDto ToDto(this JournalExtension journal)
     {
         return new JournalExtensionDto(
@@ -60,6 +79,7 @@ public static class ItemMappings
             Workflow.Journal  => WorkflowDto.Journal,
             Workflow.Arc  => WorkflowDto.Arc,
             Workflow.Unit  => WorkflowDto.Unit,
+            Workflow.Zettel  => WorkflowDto.Zettel,
             _ => throw new ArgumentOutOfRangeException(nameof(workflow), workflow, null)
         };
 }

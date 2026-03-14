@@ -1,14 +1,16 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Misa.Application.Abstractions.Ids;
 using Misa.Application.Abstractions.Time;
-using Misa.Domain.Features.Audit;
+using Misa.Domain.Common.DomainEvents;
 using Misa.Domain.Items;
 using Misa.Domain.Items.Components.Activities;
 using Misa.Domain.Items.Components.Activities.Sessions;
+using Misa.Domain.Items.Components.Audits.Changes;
 using Misa.Domain.Items.Components.Schedules;
 using Misa.Domain.Items.Components.Schola;
 using Misa.Domain.Items.Components.Tasks;
-using Misa.Domain.Shared.DomainEvents;
+using Misa.Domain.Items.Components.Relations;
+using Misa.Domain.Items.Components.Zettelkasten;
 
 namespace Misa.Infrastructure.Persistence.Context;
 
@@ -21,11 +23,13 @@ public class MisaContext(DbContextOptions<MisaContext> options, ITimeProvider ti
     public DbSet<Session> Sessions { get; set; } = null!;
     public DbSet<SessionSegment> SessionSegments { get; set; } = null!;
     public DbSet<AuditChange> AuditChanges { get; set; } = null!;
+    public DbSet<ItemRelation> ItemRelations { get; set; } = null!;
 
     public DbSet<ScheduleExtension> Schedulers { get; set; } = null!;
     public DbSet<ScheduleExecutionLog> SchedulerExecutionLogs { get; set; } = null!;
     public DbSet<Arc> Arcs { get; set; } = null!;
     public DbSet<Unit> Units { get; set; } = null!;
+    public DbSet<ZettelExtension> Zettels { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -50,8 +54,8 @@ public class MisaContext(DbContextOptions<MisaContext> options, ITimeProvider ti
         {
             AuditChanges.Add(
                 new AuditChange(
-                    idGenerator.New(), 
-                    ev.EntityId,
+                    idGenerator.New(),
+                    ev.ItemId,
                     ev.ChangeType,
                     ev.OldValue,
                     ev.NewValue,
