@@ -7,6 +7,7 @@ using Misa.Contract.Common.Results;
 using Misa.Contract.Items;
 using Misa.Contract.Items.Components.Activity;
 using Misa.Contract.Items.Components.Activity.Sessions;
+using Misa.Contract.Items.Components.Schedules;
 using Misa.Contract.Items.Components.Tasks;
 using Misa.Contract.Routes;
 using Misa.Ui.Avalonia.Infrastructure.Client;
@@ -76,6 +77,23 @@ public sealed class InspectorGateway(RemoteProxy remoteProxy)
         return response;
     }
     
+    public async Task<Result> UpdateScheduleAsync(Guid itemId, UpdateScheduleRequest dto)
+    {
+        var response = await remoteProxy.SendAsync(
+            requestFactory: () => new HttpRequestMessage(HttpMethod.Put, ScheduleRoutes.UpdateScheduleRequest(itemId))
+            {
+                Content = JsonContent.Create(dto)
+            },
+            retry: new RetryOptions
+            {
+                MaxAttempts = 3,
+                Delay = TimeSpan.FromMilliseconds(500)
+            },
+            cancellationToken: CancellationToken.None);
+
+        return response;
+    }
+
     // Sessions (Commands)
     public async Task<Result> StartSessionAsync(StartSessionDto dto)
     {

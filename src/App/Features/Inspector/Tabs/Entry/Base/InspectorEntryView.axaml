@@ -223,10 +223,9 @@
                                         <!-- Task -->
                                         <StackPanel Classes="addpanel-body"
                                                     IsVisible="{Binding Facade.State.IsTask}">
-                                            
+
                                             <!-- Category -->
-                                            <StackPanel Classes="addpanel-controls"
-                                                        IsVisible="{Binding Facade.State.IsTask}">
+                                            <StackPanel Classes="addpanel-controls">
                                                 <TextBlock Text="Category"
                                                            Classes="addpanel-text" />
 
@@ -239,7 +238,44 @@
                                                           IsVisible="{Binding Facade.State.IsEditItemFormOpen}" />
                                             </StackPanel>
                                         </StackPanel>
-                                        
+
+                                        <!-- Scheduler -->
+                                        <StackPanel Classes="addpanel-body"
+                                                    IsVisible="{Binding Facade.State.IsScheduler}">
+
+                                            <!-- Frequency (read-only) -->
+                                            <StackPanel Classes="addpanel-controls">
+                                                <TextBlock Text="Frequency"
+                                                           Classes="addpanel-text" />
+                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <TextBlock Text="{Binding Facade.State.Item.ScheduleExtension.FrequencyInterval}" />
+                                                    <TextBlock Text="{Binding Facade.State.Item.ScheduleExtension.FrequencyType}" />
+                                                </StackPanel>
+                                            </StackPanel>
+
+                                            <!-- Timezone (read-only) -->
+                                            <StackPanel Classes="addpanel-controls">
+                                                <TextBlock Text="Timezone"
+                                                           Classes="addpanel-text" />
+                                                <TextBlock Text="{Binding Facade.State.Item.ScheduleExtension.Timezone, Converter={StaticResource NoValueConverter}}" />
+                                            </StackPanel>
+
+                                            <!-- Misfire Policy (editable) -->
+                                            <StackPanel Classes="addpanel-controls">
+                                                <TextBlock Text="Misfire Policy"
+                                                           Classes="addpanel-text" />
+
+                                                <TextBlock Text="{Binding Facade.State.Item.ScheduleExtension.MisfirePolicy}"
+                                                           IsVisible="{Binding !Facade.State.IsEditItemFormOpen}" />
+
+                                                <ComboBox Classes="addpanel-combo"
+                                                          ItemsSource="{Binding Facade.State.MisfirePolicies}"
+                                                          SelectedItem="{Binding EditMisfirePolicy, Mode=TwoWay}"
+                                                          IsVisible="{Binding Facade.State.IsEditItemFormOpen}" />
+                                            </StackPanel>
+
+                                        </StackPanel>
+
                                     </StackPanel>
                                     
                                 </StackPanel>

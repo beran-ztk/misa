@@ -34,6 +34,7 @@ public static class EndpointRegistration
     {
         CreateScheduleEndpoint.Map(api);
         GetSchedulesEndpoint.Map(api);
+        UpdateScheduleEndpoint.Map(api);
     }
     private static void MapAuthenticationEndpoints(this IEndpointRouteBuilder api)
     {

@@ -49,6 +49,7 @@ public sealed class ScheduleExtension
     public ICollection<ScheduleExecutionLog> ExecutionLogs { get; private set; } = new List<ScheduleExecutionLog>();
 
     // Mutators
+    public void ChangeMisfirePolicy(ScheduleMisfirePolicy policy) => MisfirePolicy = policy;
     public void CheckAndUpdateNextAllowedExecution(DateTimeOffset utcNow)
         => NextAllowedExecutionAtUtc = NextAllowedExecutionAtUtc >= utcNow 
             ? NextAllowedExecutionAtUtc 

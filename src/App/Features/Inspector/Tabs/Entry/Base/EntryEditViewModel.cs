@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Items;
 using Misa.Contract.Items.Components.Activity;
+using Misa.Contract.Items.Components.Schedules;
 using Misa.Contract.Items.Components.Tasks;
 
 namespace Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Base;
@@ -16,6 +17,7 @@ public partial class InspectorEntryViewModel
     [ObservableProperty] private ActivityStateDto? _editActivityState;
     [ObservableProperty] private ActivityPriorityDto? _editActivityPriority;
     [ObservableProperty] private TaskCategoryDto? _editTaskCategory;
+    [ObservableProperty] private ScheduleMisfirePolicyDto? _editMisfirePolicy;
     
     public string OverviewTitle => 
         Facade.State.Item.Workflow switch
@@ -42,6 +44,7 @@ public partial class InspectorEntryViewModel
         EditActivityState = item.Activity?.State;
         EditActivityPriority = item.Activity?.Priority;
         EditTaskCategory = item.TaskExtension?.Category;
+        EditMisfirePolicy = item.ScheduleExtension?.MisfirePolicy;
     }
 
     [RelayCommand]
@@ -60,8 +63,19 @@ public partial class InspectorEntryViewModel
         {
             var updateRequest = new UpdateTaskRequest(EditTitle, EditDescription, EditActivityState,
                 EditActivityPriority, EditTaskCategory);
-            
+
             var result = await Facade.Gateway.UpdateTaskAsync(item.Id, updateRequest);
+            if (result is { IsSuccess: true })
+            {
+                Facade.ContextState.NotifyUpdated();
+                await Facade.Reload();
+            }
+        }
+        else if (item.Workflow == WorkflowDto.Schedule)
+        {
+            var updateRequest = new UpdateScheduleRequest(EditTitle, EditDescription, EditMisfirePolicy);
+
+            var result = await Facade.Gateway.UpdateScheduleAsync(item.Id, updateRequest);
             if (result is { IsSuccess: true })
             {
                 Facade.ContextState.NotifyUpdated();
@@ -76,5 +90,6 @@ public partial class InspectorEntryViewModel
         EditActivityState = null;
         EditActivityPriority = null;
         EditTaskCategory = null;
+        EditMisfirePolicy = null;
     }
 }

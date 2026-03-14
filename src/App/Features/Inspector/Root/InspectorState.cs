@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Items;
 using Misa.Contract.Items.Components.Activity;
 using Misa.Contract.Items.Components.Activity.Sessions;
+using Misa.Contract.Items.Components.Schedules;
 using Misa.Contract.Items.Components.Tasks;
 
 namespace Misa.Ui.Avalonia.Features.Inspector.Root;
@@ -13,16 +14,18 @@ public sealed partial class InspectorState : ObservableObject
 {
     [ObservableProperty] private int _selectedTabIndex;
 
-    [ObservableProperty] 
+    [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasItem))]
     [NotifyPropertyChangedFor(nameof(HasActivity))]
     [NotifyPropertyChangedFor(nameof(IsTask))]
+    [NotifyPropertyChangedFor(nameof(IsScheduler))]
     [NotifyPropertyChangedFor(nameof(HasExtension))]
     private ItemDto _item = new();
-    
+
     public bool HasItem => Item.Id != Guid.Empty;
     public bool HasActivity => Item.Workflow is WorkflowDto.Task;
     public bool IsTask => Item.Workflow == WorkflowDto.Task;
+    public bool IsScheduler => Item.Workflow == WorkflowDto.Schedule;
     public bool HasExtension => Item.Workflow is WorkflowDto.Task or WorkflowDto.Schedule;
     
     [ObservableProperty] private CurrentSessionOverviewDto? _currentSessionOverview;
@@ -32,4 +35,5 @@ public sealed partial class InspectorState : ObservableObject
     public IReadOnlyList<TaskCategoryDto> TaskCategories { get; } = Enum.GetValues<TaskCategoryDto>();
     public IReadOnlyList<ActivityStateDto> ActivityStates { get; } = Enum.GetValues<ActivityStateDto>();
     public IReadOnlyList<ActivityPriorityDto> ActivityPriorities { get; } = Enum.GetValues<ActivityPriorityDto>();
+    public IReadOnlyList<ScheduleMisfirePolicyDto> MisfirePolicies { get; } = Enum.GetValues<ScheduleMisfirePolicyDto>();
 }

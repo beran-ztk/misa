@@ -7,4 +7,8 @@ public class ScheduleRoutes
     
     // Get
     public const string GetSchedules = "items/schedules";
+
+    // Put
+    public const string UpdateSchedule = "items/{itemId:guid}/schedule";
+    public static string UpdateScheduleRequest(Guid itemId) => $"items/{itemId}/schedule";
 }
