@@ -58,9 +58,7 @@ public sealed partial class InspectorRelationsViewModel : ViewModelBase
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(SearchText) || e.PropertyName == nameof(LookupItems))
-        {
             OnPropertyChanged(nameof(FilteredLookupItems));
-        }
     }
 
     private async Task LoadRelationsAsync()
@@ -82,16 +80,18 @@ public sealed partial class InspectorRelationsViewModel : ViewModelBase
         RelationRows = result.Value
             .Select(r =>
             {
-                var isSource = r.SourceItemId == itemId;
-                var label    = RelationLabel(r.RelationType, isSource);
-                var chipText = ChipText(r.RelationType);
-                var otherId  = isSource ? r.TargetItemId : r.SourceItemId;
+                var isSource      = r.SourceItemId == itemId;
+                var chipText      = ChipText(r.RelationType);
+                var label         = RelationLabel(r.RelationType, isSource);
+                var otherId       = isSource ? r.TargetItemId   : r.SourceItemId;
                 var otherTitle    = isSource ? r.TargetItemTitle : r.SourceItemTitle;
                 var otherWorkflow = isSource ? r.TargetItemWorkflow : r.SourceItemWorkflow;
-                return new RelationRowVm(chipText, label, otherId, otherTitle, otherWorkflow.ToString());
+                return new RelationRowVm(r.RelationId, r.RelationType, chipText, label, otherId, otherTitle, otherWorkflow.ToString());
             })
             .ToList();
     }
+
+    // ── Create form ──────────────────────────────────────────────────────────
 
     [RelayCommand]
     private async Task OpenCreateForm()
@@ -141,11 +141,51 @@ public sealed partial class InspectorRelationsViewModel : ViewModelBase
         await LoadRelationsAsync();
     }
 
+    // ── Edit ─────────────────────────────────────────────────────────────────
+
+    [RelayCommand]
+    private void StartEdit(RelationRowVm row)
+    {
+        foreach (var r in RelationRows)
+            r.IsEditing = false;
+        row.EditingType = row.RelationType;
+        row.IsEditing = true;
+    }
+
+    [RelayCommand]
+    private void CancelEdit(RelationRowVm row)
+    {
+        row.IsEditing = false;
+    }
+
+    [RelayCommand]
+    private async Task SubmitEdit(RelationRowVm row)
+    {
+        var result = await _gateway.UpdateRelationAsync(row.RelationId, new UpdateRelationRequest(row.EditingType));
+        if (!result.IsSuccess) return;
+        row.IsEditing = false;
+        await LoadRelationsAsync();
+    }
+
+    // ── Delete ────────────────────────────────────────────────────────────────
+
+    [RelayCommand]
+    private async Task DeleteRelation(RelationRowVm row)
+    {
+        var result = await _gateway.DeleteRelationAsync(row.RelationId);
+        if (!result.IsSuccess) return;
+        await LoadRelationsAsync();
+    }
+
+    // ── Navigate ──────────────────────────────────────────────────────────────
+
     [RelayCommand]
     private void NavigateToItem(Guid itemId)
     {
         _facade.ContextState.Set(itemId);
     }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
 
     private static string ChipText(RelationTypeDto type) => type switch
     {
@@ -168,11 +208,36 @@ public sealed partial class InspectorRelationsViewModel : ViewModelBase
     };
 }
 
-/// <summary>Flat display row for one relation.</summary>
-public sealed record RelationRowVm(
-    string ChipLabel,
-    string RelationLabel,
-    Guid OtherItemId,
-    string OtherTitle,
-    string OtherWorkflow
-);
+/// <summary>Observable row VM for one relation — supports inline edit.</summary>
+public sealed partial class RelationRowVm : ObservableObject
+{
+    public Guid RelationId { get; }
+    public RelationTypeDto RelationType { get; }
+    public string ChipLabel { get; }
+    public string RelationLabel { get; }
+    public Guid OtherItemId { get; }
+    public string OtherTitle { get; }
+    public string OtherWorkflow { get; }
+
+    [ObservableProperty] private bool _isEditing;
+    [ObservableProperty] private RelationTypeDto _editingType;
+
+    public RelationRowVm(
+        Guid relationId,
+        RelationTypeDto relationType,
+        string chipLabel,
+        string relationLabel,
+        Guid otherItemId,
+        string otherTitle,
+        string otherWorkflow)
+    {
+        RelationId    = relationId;
+        RelationType  = relationType;
+        ChipLabel     = chipLabel;
+        RelationLabel = relationLabel;
+        OtherItemId   = otherItemId;
+        OtherTitle    = otherTitle;
+        OtherWorkflow = otherWorkflow;
+        _editingType  = relationType;
+    }
+}

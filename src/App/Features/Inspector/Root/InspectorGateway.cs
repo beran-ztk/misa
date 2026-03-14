@@ -213,4 +213,27 @@ public sealed class InspectorGateway(RemoteProxy remoteProxy)
 
         return response;
     }
+
+    public async Task<Result> UpdateRelationAsync(Guid relationId, UpdateRelationRequest request)
+    {
+        var response = await remoteProxy.SendAsync(
+            requestFactory: () => new HttpRequestMessage(HttpMethod.Put, RelationRoutes.UpdateRelationUrl(relationId))
+            {
+                Content = JsonContent.Create(request)
+            },
+            retry: new RetryOptions { MaxAttempts = 3, Delay = TimeSpan.FromMilliseconds(500) },
+            cancellationToken: CancellationToken.None);
+
+        return response;
+    }
+
+    public async Task<Result> DeleteRelationAsync(Guid relationId)
+    {
+        var response = await remoteProxy.SendAsync(
+            requestFactory: () => new HttpRequestMessage(HttpMethod.Delete, RelationRoutes.DeleteRelationUrl(relationId)),
+            retry: new RetryOptions { MaxAttempts = 3, Delay = TimeSpan.FromMilliseconds(500) },
+            cancellationToken: CancellationToken.None);
+
+        return response;
+    }
 }

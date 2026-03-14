@@ -23,8 +23,14 @@ public sealed class ItemRelation
     public Guid Id { get; init; }
     public ItemId SourceItemId { get; init; }
     public ItemId TargetItemId { get; init; }
-    public RelationType RelationType { get; init; }
+    public RelationType RelationType { get; private set; }
     public DateTimeOffset CreatedAtUtc { get; init; }
+
+    public void ChangeType(RelationType newType)
+    {
+        if (RelationType == newType) return;
+        RelationType = newType;
+    }
 
     // Navigation properties — loaded by EF when explicitly Included
     public Item? SourceItem { get; private set; }

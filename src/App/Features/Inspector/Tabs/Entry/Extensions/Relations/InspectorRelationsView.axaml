@@ -6,14 +6,11 @@
              x:DataType="relations:InspectorRelationsViewModel">
 
     <UserControl.Styles>
-        <Style Selector="TextBlock.relation-label">
-            <Setter Property="FontSize" Value="11"/>
-            <Setter Property="Opacity" Value="0.50"/>
-        </Style>
+        <!-- Relation nav title button — looks like a link -->
         <Style Selector="Button.relation-nav-title">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="4,1"/>
+            <Setter Property="Padding" Value="0"/>
             <Setter Property="Cursor" Value="Hand"/>
         </Style>
         <Style Selector="Button.relation-nav-title:pointerover /template/ ContentPresenter">
@@ -64,32 +61,27 @@
 
                 <!-- Relation type -->
                 <StackPanel Spacing="4">
-                    <TextBlock Text="Type" Classes="relation-label"/>
+                    <TextBlock Text="Type"
+                               FontSize="11"
+                               Opacity="0.50"/>
                     <ComboBox Classes="addpanel-combo"
                               ItemsSource="{Binding RelationTypes}"
                               SelectedItem="{Binding SelectedRelationType, Mode=TwoWay}"/>
                 </StackPanel>
 
-                <!-- Target item -->
+                <!-- Target item search -->
                 <StackPanel Spacing="6" MaxWidth="300">
-
-                    <!-- search input -->
                     <TextBox Watermark="Search items…"
                              Text="{Binding SearchText, Mode=TwoWay}"/>
-
-                    <!-- results -->
                     <ListBox ItemsSource="{Binding FilteredLookupItems}"
                              SelectedItem="{Binding SelectedTargetItem, Mode=TwoWay}"
                              MaxHeight="160">
-
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <TextBlock Text="{Binding Title}"/>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
-
                     </ListBox>
-
                 </StackPanel>
 
                 <!-- Actions -->
@@ -115,56 +107,125 @@
         <!-- Relations list -->
         <ItemsControl ItemsSource="{Binding RelationRows}"
                       IsVisible="{Binding HasRelations}"
-                      Margin="0,6,0,0">
+                      Margin="0,4,0,0">
             <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="relations:RelationRowVm">
-                    <Grid ColumnDefinitions="Auto,Auto,*"
-                          ColumnSpacing="8"
-                          Margin="4,4">
+                    <Grid Margin="0,2">
 
-                        <!-- Relation type chip -->
-                        <Border Grid.Column="0"
-                                CornerRadius="4"
-                                Padding="6,2"
-                                BorderThickness="1"
-                                BorderBrush="{StaticResource BrushBorder}"
-                                Background="#08FFFFFF"
-                                VerticalAlignment="Center">
-                            <TextBlock Text="{Binding ChipLabel}"
-                                       FontSize="10"
-                                       FontWeight="SemiBold"
-                                       Opacity="0.70"
-                                       LetterSpacing="0.3"/>
+                        <!-- ── Normal row ── -->
+                        <Grid ColumnDefinitions="Auto,*,Auto"
+                              ColumnSpacing="6"
+                              IsVisible="{Binding !IsEditing}"
+                              Margin="4,3">
+
+                            <!-- Left: chip + readable sentence + title -->
+                            <StackPanel Grid.Column="0"
+                                        Orientation="Horizontal"
+                                        Spacing="6"
+                                        VerticalAlignment="Center">
+
+                                <!-- Relation type chip — subtle anchor -->
+                                <Border CornerRadius="3"
+                                        Padding="5,1"
+                                        BorderThickness="1"
+                                        BorderBrush="{StaticResource BrushBorder}"
+                                        Background="Transparent"
+                                        VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding ChipLabel}"
+                                               FontSize="10"
+                                               Opacity="0.45"
+                                               LetterSpacing="0.2"/>
+                                </Border>
+
+                                <!-- Readable sentence -->
+                                <TextBlock Text="{Binding RelationLabel}"
+                                           FontSize="12"
+                                           Opacity="0.50"
+                                           VerticalAlignment="Center"/>
+
+                            </StackPanel>
+
+                            <!-- Centre: clickable title + inline workflow -->
+                            <StackPanel Grid.Column="1"
+                                        Orientation="Horizontal"
+                                        Spacing="4"
+                                        VerticalAlignment="Center">
+
+                                <Button Classes="relation-nav-title"
+                                        Command="{Binding $parent[ItemsControl].((relations:InspectorRelationsViewModel)DataContext).NavigateToItemCommand}"
+                                        CommandParameter="{Binding OtherItemId}">
+                                    <TextBlock Text="{Binding OtherTitle}"
+                                               FontSize="13"
+                                               FontWeight="Medium"
+                                               TextTrimming="CharacterEllipsis"/>
+                                </Button>
+
+                                <TextBlock Text="{Binding OtherWorkflow}"
+                                           FontSize="10"
+                                           Opacity="0.35"
+                                           VerticalAlignment="Center"/>
+
+                            </StackPanel>
+
+                            <!-- Right: edit / delete -->
+                            <StackPanel Grid.Column="2"
+                                        Orientation="Horizontal"
+                                        Spacing="2"
+                                        VerticalAlignment="Center">
+
+                                <Button Classes="workspace-toolbar-icon"
+                                        Command="{Binding $parent[ItemsControl].((relations:InspectorRelationsViewModel)DataContext).StartEditCommand}"
+                                        CommandParameter="{Binding}">
+                                    <Image Width="12" Height="12"
+                                           Source="{SvgImage /Assets/Icons/Common/edit.svg}"/>
+                                </Button>
+
+                                <Button Classes="workspace-toolbar-icon"
+                                        Command="{Binding $parent[ItemsControl].((relations:InspectorRelationsViewModel)DataContext).DeleteRelationCommand}"
+                                        CommandParameter="{Binding}">
+                                    <Image Width="12" Height="12"
+                                           Source="{SvgImage /Assets/Icons/Common/trash.svg}"/>
+                                </Button>
+
+                            </StackPanel>
+
+                        </Grid>
+
+                        <!-- ── Inline edit row ── -->
+                        <Border IsVisible="{Binding IsEditing}"
+                                Padding="4,8"
+                                Background="{StaticResource BrushPrimaryBackgroundLight}"
+                                CornerRadius="4">
+                            <Grid ColumnDefinitions="Auto,*,Auto"
+                                  ColumnSpacing="8"
+                                  VerticalAlignment="Center">
+
+                                <TextBlock Grid.Column="0"
+                                           Text="Type"
+                                           FontSize="11"
+                                           Opacity="0.50"
+                                           VerticalAlignment="Center"/>
+
+                                <ComboBox Grid.Column="1"
+                                          Classes="addpanel-combo"
+                                          ItemsSource="{Binding $parent[ItemsControl].((relations:InspectorRelationsViewModel)DataContext).RelationTypes}"
+                                          SelectedItem="{Binding EditingType, Mode=TwoWay}"/>
+
+                                <StackPanel Grid.Column="2"
+                                            Orientation="Horizontal"
+                                            Spacing="4">
+                                    <Button Classes="confirm-cancel-cancel"
+                                            Content="Cancel"
+                                            Command="{Binding $parent[ItemsControl].((relations:InspectorRelationsViewModel)DataContext).CancelEditCommand}"
+                                            CommandParameter="{Binding}"/>
+                                    <Button Classes="confirm-cancel-confirm"
+                                            Content="Save"
+                                            Command="{Binding $parent[ItemsControl].((relations:InspectorRelationsViewModel)DataContext).SubmitEditCommand}"
+                                            CommandParameter="{Binding}"/>
+                                </StackPanel>
+
+                            </Grid>
                         </Border>
-
-                        <!-- Relation wording -->
-                        <TextBlock Grid.Column="1"
-                                   Text="{Binding RelationLabel}"
-                                   FontSize="12"
-                                   Opacity="0.45"
-                                   VerticalAlignment="Center"/>
-
-                        <!-- Other item: title + workflow -->
-                        <StackPanel Grid.Column="2"
-                                    Spacing="2"
-                                    VerticalAlignment="Center">
-
-                            <Button Classes="relation-nav-title"
-                                    Command="{Binding $parent[ItemsControl].((relations:InspectorRelationsViewModel)DataContext).NavigateToItemCommand}"
-                                    CommandParameter="{Binding OtherItemId}"
-                                    HorizontalAlignment="Left">
-                                <TextBlock Text="{Binding OtherTitle}"
-                                           FontSize="13"
-                                           FontWeight="Medium"
-                                           TextTrimming="CharacterEllipsis"/>
-                            </Button>
-
-                            <TextBlock Text="{Binding OtherWorkflow}"
-                                       FontSize="10"
-                                       Opacity="0.40"
-                                       Margin="4,0,0,0"/>
-
-                        </StackPanel>
 
                     </Grid>
                 </DataTemplate>

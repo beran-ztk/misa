@@ -45,5 +45,7 @@ public interface IItemRepository
     // Relations
     Task AddRelationAsync(ItemRelation relation, CancellationToken ct);
     Task<List<ItemRelation>> GetRelationsForItemAsync(Guid itemId, CancellationToken ct);
+    Task<ItemRelation?> TryGetRelationAsync(Guid relationId, CancellationToken ct);
+    Task DeleteRelationAsync(Guid relationId, CancellationToken ct);
     Task<List<Item>> GetItemsForLookupAsync(CancellationToken ct);
 }

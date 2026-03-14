@@ -208,6 +208,20 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
             .ToListAsync(ct);
     }
 
+    public async Task<ItemRelation?> TryGetRelationAsync(Guid relationId, CancellationToken ct)
+    {
+        return await context.ItemRelations
+            .FirstOrDefaultAsync(r => r.Id == relationId, ct);
+    }
+
+    public async Task DeleteRelationAsync(Guid relationId, CancellationToken ct)
+    {
+        var relation = await context.ItemRelations
+            .FirstOrDefaultAsync(r => r.Id == relationId, ct);
+        if (relation is not null)
+            context.ItemRelations.Remove(relation);
+    }
+
     public async Task<List<Item>> GetItemsForLookupAsync(CancellationToken ct)
     {
         return await context.Items
