@@ -1,6 +1,9 @@
+using Misa.Domain.Common.DomainEvents;
+using Misa.Domain.Items.Components.Audits.Changes;
+
 namespace Misa.Domain.Items.Components.Zettelkasten;
 
-public sealed class ZettelExtension
+public sealed class ZettelExtension : DomainEventEntity
 {
     private ZettelExtension() { } // EF
 
@@ -15,5 +18,9 @@ public sealed class ZettelExtension
     public ItemId TopicId { get; private set; }
     public string? Content { get; private set; }
 
-    public void ChangeContent(string? content) => Content = content;
+    public void ChangeContent(string? content)
+    {
+        AddDomainEvent(new PropertyChangedEvent(Id.Value, ChangeType.Content, Content, content, null));
+        Content = content;
+    }
 }

@@ -1,13 +1,13 @@
-﻿using Misa.Domain.Exceptions;
-using Misa.Domain.Features.Audit;
+﻿using Misa.Domain.Common.DomainEvents;
+using Misa.Domain.Exceptions;
 using Misa.Domain.Items.Components.Activities;
 using Misa.Domain.Items.Components.Activities.Sessions;
+using Misa.Domain.Items.Components.Audits.Changes;
 using Misa.Domain.Items.Components.Chronicle.Journals;
 using Misa.Domain.Items.Components.Schedules;
 using Misa.Domain.Items.Components.Schola;
 using Misa.Domain.Items.Components.Tasks;
 using Misa.Domain.Items.Components.Zettelkasten;
-using Misa.Domain.Shared.DomainEvents;
 
 namespace Misa.Domain.Items;
 public readonly record struct ItemId(Guid Value);
@@ -245,7 +245,8 @@ public sealed class Item : DomainEventEntity
     {
         if (Title == title)
             return;
-        
+
+        AddDomainEvent(new PropertyChangedEvent(Id.Value, ChangeType.Title, Title, title, null));
         Title = title;
     }
 
@@ -253,7 +254,8 @@ public sealed class Item : DomainEventEntity
     {
         if (Description == description)
             return;
-        
+
+        AddDomainEvent(new PropertyChangedEvent(Id.Value, ChangeType.Description, Description, description, null));
         Description = description;
     }
     public void Archive() => IsArchived = true;

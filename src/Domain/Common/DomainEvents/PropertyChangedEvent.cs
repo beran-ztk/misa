@@ -1,9 +1,9 @@
-﻿using Misa.Domain.Features.Audit;
+﻿using Misa.Domain.Items.Components.Audits.Changes;
 
-namespace Misa.Domain.Shared.DomainEvents;
+namespace Misa.Domain.Common.DomainEvents;
 
 public sealed record PropertyChangedEvent(
-    Guid EntityId,
+    Guid SubjectId,
     ChangeType ChangeType,
     string? OldValue,
     string? NewValue,

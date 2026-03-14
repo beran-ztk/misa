@@ -1,8 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Misa.Domain.Features.Audit;
+using Misa.Domain.Items.Components.Audits.Changes;
 
-namespace Misa.Infrastructure.Persistence.Configurations.Audit;
+namespace Misa.Infrastructure.Persistence.Configurations.Items.Components.Audits.Changes;
 
 public class AuditChangeConfiguration : IEntityTypeConfiguration<AuditChange>
 {
@@ -14,7 +14,7 @@ public class AuditChangeConfiguration : IEntityTypeConfiguration<AuditChange>
             .ValueGeneratedNever()
             .IsRequired();
 
-        builder.Property(x => x.EntityId);
+        builder.Property(x => x.SubjectId);
 
         builder.Property(x => x.ChangeType)
             .IsRequired();

@@ -1,15 +1,15 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Misa.Application.Abstractions.Ids;
 using Misa.Application.Abstractions.Time;
-using Misa.Domain.Features.Audit;
+using Misa.Domain.Common.DomainEvents;
 using Misa.Domain.Items;
 using Misa.Domain.Items.Components.Activities;
 using Misa.Domain.Items.Components.Activities.Sessions;
+using Misa.Domain.Items.Components.Audits.Changes;
 using Misa.Domain.Items.Components.Schedules;
 using Misa.Domain.Items.Components.Schola;
 using Misa.Domain.Items.Components.Tasks;
 using Misa.Domain.Items.Components.Zettelkasten;
-using Misa.Domain.Shared.DomainEvents;
 
 namespace Misa.Infrastructure.Persistence.Context;
 
@@ -52,8 +52,8 @@ public class MisaContext(DbContextOptions<MisaContext> options, ITimeProvider ti
         {
             AuditChanges.Add(
                 new AuditChange(
-                    idGenerator.New(), 
-                    ev.EntityId,
+                    idGenerator.New(),
+                    ev.SubjectId,
                     ev.ChangeType,
                     ev.OldValue,
                     ev.NewValue,

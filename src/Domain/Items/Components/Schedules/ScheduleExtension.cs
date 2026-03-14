@@ -1,9 +1,12 @@
+using Misa.Domain.Common.DomainEvents;
+using Misa.Domain.Items.Components.Audits.Changes;
+
 namespace Misa.Domain.Items.Components.Schedules;
 
 /// <summary>
 /// Represents a scheduled task configuration.
 /// </summary>
-public sealed class ScheduleExtension
+public sealed class ScheduleExtension : DomainEventEntity
 {
     private ScheduleExtension() { } // EF Core
     
@@ -49,12 +52,41 @@ public sealed class ScheduleExtension
     public ICollection<ScheduleExecutionLog> ExecutionLogs { get; private set; } = new List<ScheduleExecutionLog>();
 
     // Mutators
-    public void ChangeMisfirePolicy(ScheduleMisfirePolicy policy) => MisfirePolicy = policy;
-    public void ChangeLookaheadLimit(int limit) => LookaheadLimit = limit;
-    public void ChangeOccurrenceCountLimit(int? limit) => OccurrenceCountLimit = limit;
-    public void ChangeStartTime(TimeOnly? startTime) => StartTime = startTime;
-    public void ChangeEndTime(TimeOnly? endTime) => EndTime = endTime;
-    public void ChangeActiveUntil(DateTimeOffset? activeUntilUtc) => ActiveUntilUtc = activeUntilUtc;
+    public void ChangeMisfirePolicy(ScheduleMisfirePolicy policy)
+    {
+        AddDomainEvent(new PropertyChangedEvent(Id.Value, ChangeType.MisfirePolicy, MisfirePolicy.ToString(), policy.ToString(), null));
+        MisfirePolicy = policy;
+    }
+
+    public void ChangeLookaheadLimit(int limit)
+    {
+        AddDomainEvent(new PropertyChangedEvent(Id.Value, ChangeType.LookaheadLimit, LookaheadLimit.ToString(), limit.ToString(), null));
+        LookaheadLimit = limit;
+    }
+
+    public void ChangeOccurrenceCountLimit(int? limit)
+    {
+        AddDomainEvent(new PropertyChangedEvent(Id.Value, ChangeType.OccurrenceCountLimit, OccurrenceCountLimit?.ToString(), limit?.ToString(), null));
+        OccurrenceCountLimit = limit;
+    }
+
+    public void ChangeStartTime(TimeOnly? startTime)
+    {
+        AddDomainEvent(new PropertyChangedEvent(Id.Value, ChangeType.StartTime, StartTime?.ToString(), startTime?.ToString(), null));
+        StartTime = startTime;
+    }
+
+    public void ChangeEndTime(TimeOnly? endTime)
+    {
+        AddDomainEvent(new PropertyChangedEvent(Id.Value, ChangeType.EndTime, EndTime?.ToString(), endTime?.ToString(), null));
+        EndTime = endTime;
+    }
+
+    public void ChangeActiveUntil(DateTimeOffset? activeUntilUtc)
+    {
+        AddDomainEvent(new PropertyChangedEvent(Id.Value, ChangeType.ActiveUntil, ActiveUntilUtc?.ToString("O"), activeUntilUtc?.ToString("O"), null));
+        ActiveUntilUtc = activeUntilUtc;
+    }
     public void CheckAndUpdateNextAllowedExecution(DateTimeOffset utcNow)
         => NextAllowedExecutionAtUtc = NextAllowedExecutionAtUtc >= utcNow 
             ? NextAllowedExecutionAtUtc 

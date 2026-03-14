@@ -1,9 +1,11 @@
+using Misa.Domain.Common.DomainEvents;
 using Misa.Domain.Exceptions;
 using Misa.Domain.Items.Components.Activities.Sessions;
+using Misa.Domain.Items.Components.Audits.Changes;
 
 namespace Misa.Domain.Items.Components.Activities;
 
-public sealed class ItemActivity
+public sealed class ItemActivity : DomainEventEntity
 {
     private ItemActivity() { } // EF
 
@@ -46,21 +48,28 @@ public sealed class ItemActivity
             or ActivityState.Pending
             or ActivityState.WaitForResponse;
     
-    // Mutator
-    public void SetDeadline(DateTimeOffset? deadline) => DueAt = deadline;
+    // Mutators
+    public void SetDeadline(DateTimeOffset? deadline)
+    {
+        AddDomainEvent(new PropertyChangedEvent(Id.Value, ChangeType.Deadline, DueAt?.ToString("O"), deadline?.ToString("O"), null));
+        DueAt = deadline;
+    }
 
     public void ChangeState(ActivityState state)
     {
         if (State == state)
             return;
-        
+
+        AddDomainEvent(new PropertyChangedEvent(Id.Value, ChangeType.State, State.ToString(), state.ToString(), null));
         State = state;
     }
+
     public void ChangePriority(ActivityPriority priority)
     {
         if (Priority == priority)
             return;
-        
+
+        AddDomainEvent(new PropertyChangedEvent(Id.Value, ChangeType.Priority, Priority.ToString(), priority.ToString(), null));
         Priority = priority;
     }
 

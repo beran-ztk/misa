@@ -1,6 +1,9 @@
-﻿namespace Misa.Domain.Items.Components.Tasks;
+﻿using Misa.Domain.Common.DomainEvents;
+using Misa.Domain.Items.Components.Audits.Changes;
 
-public sealed class TaskExtension
+namespace Misa.Domain.Items.Components.Tasks;
+
+public sealed class TaskExtension : DomainEventEntity
 {
     private TaskExtension() {} // EF
     public TaskExtension(ItemId id, TaskCategory category)
@@ -16,7 +19,8 @@ public sealed class TaskExtension
     {
         if (Category == category)
             return;
-        
+
+        AddDomainEvent(new PropertyChangedEvent(Id.Value, ChangeType.Category, Category.ToString(), category.ToString(), null));
         Category = category;
     }
 }
