@@ -253,11 +253,38 @@
                                                 </StackPanel>
                                             </StackPanel>
 
-                                            <!-- Timezone (read-only) -->
+                                            <!-- Lookahead limit (editable) -->
                                             <StackPanel Classes="addpanel-controls">
-                                                <TextBlock Text="Timezone"
+                                                <TextBlock Text="Lookahead Limit"
                                                            Classes="addpanel-text" />
-                                                <TextBlock Text="{Binding Facade.State.Item.ScheduleExtension.Timezone, Converter={StaticResource NoValueConverter}}" />
+
+                                                <TextBlock Text="{Binding Facade.State.Item.ScheduleExtension.LookaheadLimit}"
+                                                           IsVisible="{Binding !Facade.State.IsEditItemFormOpen}" />
+
+                                                <NumericUpDown Classes="addpanel-num"
+                                                               Value="{Binding EditLookaheadLimit, Mode=TwoWay}"
+                                                               Minimum="1"
+                                                               Maximum="100"
+                                                               Increment="1"
+                                                               FormatString="N0"
+                                                               IsVisible="{Binding Facade.State.IsEditItemFormOpen}" />
+                                            </StackPanel>
+
+                                            <!-- Occurrence count limit (editable) -->
+                                            <StackPanel Classes="addpanel-controls">
+                                                <TextBlock Text="Occurrence Limit"
+                                                           Classes="addpanel-text" />
+
+                                                <TextBlock Text="{Binding Facade.State.Item.ScheduleExtension.OccurrenceCountLimit, Converter={StaticResource NoValueConverter}}"
+                                                           IsVisible="{Binding !Facade.State.IsEditItemFormOpen}" />
+
+                                                <NumericUpDown Classes="addpanel-num"
+                                                               Value="{Binding EditOccurrenceCountLimit, Mode=TwoWay}"
+                                                               Minimum="0"
+                                                               Maximum="100000"
+                                                               Increment="1"
+                                                               FormatString="N0"
+                                                               IsVisible="{Binding Facade.State.IsEditItemFormOpen}" />
                                             </StackPanel>
 
                                             <!-- Misfire Policy (editable) -->
@@ -272,6 +299,57 @@
                                                           ItemsSource="{Binding Facade.State.MisfirePolicies}"
                                                           SelectedItem="{Binding EditMisfirePolicy, Mode=TwoWay}"
                                                           IsVisible="{Binding Facade.State.IsEditItemFormOpen}" />
+                                            </StackPanel>
+
+                                            <!-- Start time (editable) -->
+                                            <StackPanel Classes="addpanel-controls">
+                                                <TextBlock Text="Start Time"
+                                                           Classes="addpanel-text" />
+
+                                                <TextBlock Text="{Binding Facade.State.Item.ScheduleExtension.StartTime, Converter={StaticResource NoValueConverter}}"
+                                                           IsVisible="{Binding !Facade.State.IsEditItemFormOpen}" />
+
+                                                <TimePicker Classes="addpanel-time"
+                                                            SelectedTime="{Binding EditStartTime, Mode=TwoWay}"
+                                                            IsVisible="{Binding Facade.State.IsEditItemFormOpen}" />
+                                            </StackPanel>
+
+                                            <!-- End time (editable) -->
+                                            <StackPanel Classes="addpanel-controls">
+                                                <TextBlock Text="End Time"
+                                                           Classes="addpanel-text" />
+
+                                                <TextBlock Text="{Binding Facade.State.Item.ScheduleExtension.EndTime, Converter={StaticResource NoValueConverter}}"
+                                                           IsVisible="{Binding !Facade.State.IsEditItemFormOpen}" />
+
+                                                <TimePicker Classes="addpanel-time"
+                                                            SelectedTime="{Binding EditEndTime, Mode=TwoWay}"
+                                                            IsVisible="{Binding Facade.State.IsEditItemFormOpen}" />
+                                            </StackPanel>
+
+                                            <!-- Active until (editable) -->
+                                            <StackPanel Classes="addpanel-controls">
+                                                <TextBlock Text="Active Until"
+                                                           Classes="addpanel-text" />
+
+                                                <TextBlock Text="{Binding Facade.State.Item.ScheduleExtension.ActiveUntilUtc, Converter={StaticResource UtcToLocalConverter}, StringFormat='dd.MM.yyyy HH:mm', TargetNullValue=---}"
+                                                           IsVisible="{Binding !Facade.State.IsEditItemFormOpen}" />
+
+                                                <StackPanel Orientation="Vertical"
+                                                            Spacing="8"
+                                                            IsVisible="{Binding Facade.State.IsEditItemFormOpen}">
+                                                    <DatePicker Classes="addpanel-date"
+                                                                SelectedDate="{Binding EditActiveUntilDate, Mode=TwoWay}" />
+                                                    <TimePicker Classes="addpanel-time"
+                                                                SelectedTime="{Binding EditActiveUntilTime, Mode=TwoWay}" />
+                                                </StackPanel>
+                                            </StackPanel>
+
+                                            <!-- Timezone (read-only) -->
+                                            <StackPanel Classes="addpanel-controls">
+                                                <TextBlock Text="Timezone"
+                                                           Classes="addpanel-text" />
+                                                <TextBlock Text="{Binding Facade.State.Item.ScheduleExtension.Timezone, Converter={StaticResource NoValueConverter}}" />
                                             </StackPanel>
 
                                         </StackPanel>

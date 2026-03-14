@@ -22,7 +22,12 @@ public static class UpdateScheduleEndpoint
             itemId,
             request.Title,
             request.Description,
-            request.MisfirePolicy);
+            request.MisfirePolicy,
+            request.LookaheadLimit,
+            request.OccurrenceCountLimit,
+            request.StartTime,
+            request.EndTime,
+            request.ActiveUntilUtc);
 
         await bus.InvokeAsync(command);
         return Results.Ok();

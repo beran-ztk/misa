@@ -18,6 +18,12 @@ public partial class InspectorEntryViewModel
     [ObservableProperty] private ActivityPriorityDto? _editActivityPriority;
     [ObservableProperty] private TaskCategoryDto? _editTaskCategory;
     [ObservableProperty] private ScheduleMisfirePolicyDto? _editMisfirePolicy;
+    [ObservableProperty] private int _editLookaheadLimit = 1;
+    [ObservableProperty] private int? _editOccurrenceCountLimit;
+    [ObservableProperty] private TimeSpan? _editStartTime;
+    [ObservableProperty] private TimeSpan? _editEndTime;
+    [ObservableProperty] private DateTimeOffset? _editActiveUntilDate;
+    [ObservableProperty] private TimeSpan? _editActiveUntilTime;
     
     public string OverviewTitle => 
         Facade.State.Item.Workflow switch
@@ -45,6 +51,13 @@ public partial class InspectorEntryViewModel
         EditActivityPriority = item.Activity?.Priority;
         EditTaskCategory = item.TaskExtension?.Category;
         EditMisfirePolicy = item.ScheduleExtension?.MisfirePolicy;
+        EditLookaheadLimit = item.ScheduleExtension?.LookaheadLimit ?? 1;
+        EditOccurrenceCountLimit = item.ScheduleExtension?.OccurrenceCountLimit;
+        EditStartTime = item.ScheduleExtension?.StartTime?.ToTimeSpan();
+        EditEndTime = item.ScheduleExtension?.EndTime?.ToTimeSpan();
+        var localActiveUntil = item.ScheduleExtension?.ActiveUntilUtc?.ToLocalTime();
+        EditActiveUntilDate = localActiveUntil;
+        EditActiveUntilTime = localActiveUntil?.TimeOfDay;
     }
 
     [RelayCommand]
@@ -73,7 +86,22 @@ public partial class InspectorEntryViewModel
         }
         else if (item.Workflow == WorkflowDto.Schedule)
         {
-            var updateRequest = new UpdateScheduleRequest(EditTitle, EditDescription, EditMisfirePolicy);
+            DateTimeOffset? activeUntilUtc = null;
+            if (EditActiveUntilDate is { } d)
+            {
+                var localDt = d.Date.Add(EditActiveUntilTime ?? TimeSpan.Zero);
+                activeUntilUtc = new DateTimeOffset(localDt, DateTimeOffset.Now.Offset).ToUniversalTime();
+            }
+
+            var updateRequest = new UpdateScheduleRequest(
+                EditTitle,
+                EditDescription,
+                EditMisfirePolicy,
+                EditLookaheadLimit,
+                EditOccurrenceCountLimit,
+                EditStartTime is { } st ? TimeOnly.FromTimeSpan(st) : null,
+                EditEndTime is { } et ? TimeOnly.FromTimeSpan(et) : null,
+                activeUntilUtc);
 
             var result = await Facade.Gateway.UpdateScheduleAsync(item.Id, updateRequest);
             if (result is { IsSuccess: true })
@@ -91,5 +119,11 @@ public partial class InspectorEntryViewModel
         EditActivityPriority = null;
         EditTaskCategory = null;
         EditMisfirePolicy = null;
+        EditLookaheadLimit = 1;
+        EditOccurrenceCountLimit = null;
+        EditStartTime = null;
+        EditEndTime = null;
+        EditActiveUntilDate = null;
+        EditActiveUntilTime = null;
     }
 }

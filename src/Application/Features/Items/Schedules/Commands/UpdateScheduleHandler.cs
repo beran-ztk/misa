@@ -9,7 +9,12 @@ public record UpdateScheduleCommand(
     Guid ItemId,
     string? Title,
     string? Description,
-    ScheduleMisfirePolicyDto? MisfirePolicy);
+    ScheduleMisfirePolicyDto? MisfirePolicy,
+    int? LookaheadLimit,
+    int? OccurrenceCountLimit,
+    TimeOnly? StartTime,
+    TimeOnly? EndTime,
+    DateTimeOffset? ActiveUntilUtc);
 
 public sealed class UpdateScheduleHandler(IItemRepository repository)
 {
@@ -25,6 +30,14 @@ public sealed class UpdateScheduleHandler(IItemRepository repository)
             item.ChangeDescription(command.Description);
         if (command.MisfirePolicy is { } policy)
             item.ScheduleExtension.ChangeMisfirePolicy(policy.ToDomain());
+        if (command.LookaheadLimit is { } lookahead && lookahead > 0)
+            item.ScheduleExtension.ChangeLookaheadLimit(lookahead);
+
+        // These fields carry the full intended state — null is a valid "clear" value
+        item.ScheduleExtension.ChangeOccurrenceCountLimit(command.OccurrenceCountLimit);
+        item.ScheduleExtension.ChangeStartTime(command.StartTime);
+        item.ScheduleExtension.ChangeEndTime(command.EndTime);
+        item.ScheduleExtension.ChangeActiveUntil(command.ActiveUntilUtc);
 
         await repository.SaveChangesAsync(CancellationToken.None);
     }

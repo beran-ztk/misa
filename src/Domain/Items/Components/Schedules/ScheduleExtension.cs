@@ -50,6 +50,11 @@ public sealed class ScheduleExtension
 
     // Mutators
     public void ChangeMisfirePolicy(ScheduleMisfirePolicy policy) => MisfirePolicy = policy;
+    public void ChangeLookaheadLimit(int limit) => LookaheadLimit = limit;
+    public void ChangeOccurrenceCountLimit(int? limit) => OccurrenceCountLimit = limit;
+    public void ChangeStartTime(TimeOnly? startTime) => StartTime = startTime;
+    public void ChangeEndTime(TimeOnly? endTime) => EndTime = endTime;
+    public void ChangeActiveUntil(DateTimeOffset? activeUntilUtc) => ActiveUntilUtc = activeUntilUtc;
     public void CheckAndUpdateNextAllowedExecution(DateTimeOffset utcNow)
         => NextAllowedExecutionAtUtc = NextAllowedExecutionAtUtc >= utcNow 
             ? NextAllowedExecutionAtUtc 
