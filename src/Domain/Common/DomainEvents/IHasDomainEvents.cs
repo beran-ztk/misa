@@ -1,4 +1,4 @@
-﻿namespace Misa.Domain.Shared.DomainEvents;
+﻿namespace Misa.Domain.Common.DomainEvents;
 
 public interface IHasDomainEvents
 {
