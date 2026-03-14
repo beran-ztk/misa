@@ -98,6 +98,9 @@
       <Compile Update="Features\Inspector\Tabs\Activity\InspectorActivityView.axaml.cs">
         <DependentUpon>InspectorActivityView.axaml</DependentUpon>
       </Compile>
+      <Compile Update="Features\Inspector\Tabs\Entry\Extensions\Relations\InspectorRelationsView.axaml.cs">
+        <DependentUpon>InspectorRelationsView.axaml</DependentUpon>
+      </Compile>
     </ItemGroup>
 
     <ItemGroup>

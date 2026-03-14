@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading;
@@ -7,6 +8,7 @@ using Misa.Contract.Common.Results;
 using Misa.Contract.Items;
 using Misa.Contract.Items.Components.Activity;
 using Misa.Contract.Items.Components.Activity.Sessions;
+using Misa.Contract.Items.Components.Relations;
 using Misa.Contract.Items.Components.Schedules;
 using Misa.Contract.Items.Components.Tasks;
 using Misa.Contract.Routes;
@@ -173,6 +175,40 @@ public sealed class InspectorGateway(RemoteProxy remoteProxy)
                 MaxAttempts = 3,
                 Delay = TimeSpan.FromMilliseconds(500)
             },
+            cancellationToken: CancellationToken.None);
+
+        return response;
+    }
+
+    // Relations
+    public async Task<Result<List<ItemRelationDto>?>> GetRelationsAsync(Guid itemId)
+    {
+        var response = await remoteProxy.SendAsync<List<ItemRelationDto>?>(
+            requestFactory: () => new HttpRequestMessage(HttpMethod.Get, RelationRoutes.GetRelationsForItemUrl(itemId)),
+            retry: new RetryOptions { MaxAttempts = 3, Delay = TimeSpan.FromMilliseconds(500) },
+            cancellationToken: CancellationToken.None);
+
+        return response;
+    }
+
+    public async Task<Result<List<ItemLookupDto>?>> GetItemsForLookupAsync()
+    {
+        var response = await remoteProxy.SendAsync<List<ItemLookupDto>?>(
+            requestFactory: () => new HttpRequestMessage(HttpMethod.Get, RelationRoutes.GetItemsForLookup),
+            retry: new RetryOptions { MaxAttempts = 3, Delay = TimeSpan.FromMilliseconds(500) },
+            cancellationToken: CancellationToken.None);
+
+        return response;
+    }
+
+    public async Task<Result> CreateRelationAsync(CreateRelationRequest request)
+    {
+        var response = await remoteProxy.SendAsync(
+            requestFactory: () => new HttpRequestMessage(HttpMethod.Post, RelationRoutes.CreateRelation)
+            {
+                Content = JsonContent.Create(request)
+            },
+            retry: new RetryOptions { MaxAttempts = 3, Delay = TimeSpan.FromMilliseconds(500) },
             cancellationToken: CancellationToken.None);
 
         return response;

@@ -1,6 +1,7 @@
 ﻿using Misa.Domain.Items;
 using Misa.Domain.Items.Components.Activities;
 using Misa.Domain.Items.Components.Activities.Sessions;
+using Misa.Domain.Items.Components.Relations;
 
 namespace Misa.Application.Abstractions.Persistence;
 
@@ -40,4 +41,9 @@ public interface IItemRepository
     
     // Session
     Task<Item?> TryGetItemWithSessionsAsync(Guid itemId, CancellationToken ct);
+
+    // Relations
+    Task AddRelationAsync(ItemRelation relation, CancellationToken ct);
+    Task<List<ItemRelation>> GetRelationsForItemAsync(Guid itemId, CancellationToken ct);
+    Task<List<Item>> GetItemsForLookupAsync(CancellationToken ct);
 }

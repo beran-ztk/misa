@@ -1,0 +1,145 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:relations="clr-namespace:Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Relations"
+             xmlns:dtos="clr-namespace:Misa.Contract.Items.Components.Relations;assembly=Contract"
+             x:Class="Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Relations.InspectorRelationsView"
+             x:DataType="relations:InspectorRelationsViewModel">
+
+    <UserControl.Styles>
+        <Style Selector="TextBlock.relation-label">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Opacity" Value="0.50"/>
+        </Style>
+    </UserControl.Styles>
+
+    <StackPanel Spacing="0">
+
+        <!-- Section header -->
+        <Border Padding="4,14,4,10"
+                BorderBrush="{StaticResource BrushBorder}"
+                BorderThickness="0,0,0,1">
+            <Grid ColumnDefinitions="*,Auto">
+
+                <TextBlock Grid.Column="0"
+                           Text="Relations"
+                           FontSize="13"
+                           FontWeight="SemiBold"
+                           Opacity="0.65"
+                           VerticalAlignment="Center"/>
+
+                <Button Grid.Column="1"
+                        Classes="workspace-toolbar-icon"
+                        VerticalAlignment="Center"
+                        Command="{Binding OpenCreateFormCommand}"
+                        IsVisible="{Binding !IsCreateFormOpen}">
+                    <Image Width="14" Height="14"
+                           Source="{SvgImage /Assets/Icons/Common/plus.svg}"/>
+                </Button>
+
+            </Grid>
+        </Border>
+
+        <!-- Inline create form -->
+        <Border IsVisible="{Binding IsCreateFormOpen}"
+                Padding="4,12,4,8"
+                BorderBrush="{StaticResource BrushBorder}"
+                BorderThickness="0,0,0,1"
+                Background="{StaticResource BrushPrimaryBackgroundLight}">
+            <StackPanel Spacing="10">
+
+                <!-- Relation type -->
+                <StackPanel Spacing="4">
+                    <TextBlock Text="Type" Classes="relation-label"/>
+                    <ComboBox Classes="addpanel-combo"
+                              ItemsSource="{Binding RelationTypes}"
+                              SelectedItem="{Binding SelectedRelationType, Mode=TwoWay}"/>
+                </StackPanel>
+
+                <!-- Target item -->
+                <StackPanel Spacing="6" MaxWidth="300">
+
+                    <!-- search input -->
+                    <TextBox Watermark="Search items…"
+                             Text="{Binding SearchText, Mode=TwoWay}"/>
+
+                    <!-- results -->
+                    <ListBox ItemsSource="{Binding FilteredLookupItems}"
+                             SelectedItem="{Binding SelectedTargetItem, Mode=TwoWay}"
+                             MaxHeight="160">
+
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Title}"/>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+
+                    </ListBox>
+
+                </StackPanel>
+
+                <!-- Actions -->
+                <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                    <Button Content="Cancel"
+                            Classes="confirm-cancel-cancel"
+                            Command="{Binding CancelCreateCommand}"/>
+                    <Button Content="Add"
+                            Classes="confirm-cancel-confirm"
+                            Command="{Binding SubmitCreateCommand}"/>
+                </StackPanel>
+
+            </StackPanel>
+        </Border>
+
+        <!-- Empty state -->
+        <TextBlock Text="No relations."
+                   Opacity="0.40"
+                   FontSize="12"
+                   Margin="4,10,4,4"
+                   IsVisible="{Binding !HasRelations}"/>
+
+        <!-- Relations list -->
+        <ItemsControl ItemsSource="{Binding RelationRows}"
+                      IsVisible="{Binding HasRelations}"
+                      Margin="0,6,0,0">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="relations:RelationRowVm">
+                    <Grid ColumnDefinitions="Auto,Auto,*"
+                          ColumnSpacing="8"
+                          Margin="4,3">
+
+                        <!-- Relation type badge -->
+                        <Border Grid.Column="0"
+                                CornerRadius="4"
+                                Padding="6,2"
+                                BorderThickness="1"
+                                BorderBrush="{StaticResource BrushBorder}"
+                                Background="#08FFFFFF"
+                                VerticalAlignment="Center">
+                            <TextBlock Text="{Binding RelationType}"
+                                       FontSize="10"
+                                       FontWeight="SemiBold"
+                                       Opacity="0.70"
+                                       LetterSpacing="0.3"/>
+                        </Border>
+
+                        <!-- Direction arrow -->
+                        <TextBlock Grid.Column="1"
+                                   Text="{Binding Direction}"
+                                   FontSize="12"
+                                   Opacity="0.45"
+                                   VerticalAlignment="Center"/>
+
+                        <!-- Other item title -->
+                        <TextBlock Grid.Column="2"
+                                   Text="{Binding OtherTitle}"
+                                   FontSize="13"
+                                   TextTrimming="CharacterEllipsis"
+                                   VerticalAlignment="Center"/>
+
+                    </Grid>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+    </StackPanel>
+</UserControl>

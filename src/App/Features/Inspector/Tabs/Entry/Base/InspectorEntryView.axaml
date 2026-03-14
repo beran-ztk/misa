@@ -365,7 +365,10 @@
                                         </StackPanel>
 
                                     </StackPanel>
-                                    
+
+                                    <!-- Relations -->
+                                    <ContentControl Content="{Binding Relations}" />
+
                                 </StackPanel>
 
                             </StackPanel>
