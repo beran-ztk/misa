@@ -27,4 +27,5 @@ public sealed class Notification
     public Guid                   SourceId       { get; private set; }
     public DateTimeOffset         CreatedAtUtc   { get; private set; }
     public DateTimeOffset?        DismissedAtUtc { get; private set; }
+    public DateTimeOffset?        ReadAtUtc      { get; private set; }
 }

@@ -19,7 +19,8 @@ public class GetNotificationsHandler(INotificationRepository repository)
                 n.Title,
                 n.Message,
                 n.SourceId,
-                n.CreatedAtUtc))
+                n.CreatedAtUtc,
+                n.ReadAtUtc))
             .ToList();
     }
 }

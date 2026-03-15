@@ -22,6 +22,7 @@ public sealed partial class NotificationItem : ObservableObject
         Title     = notification.Payload;
         Message   = string.Empty;
         Timestamp = notification.Timestamp;
+        _isRead   = false;
     }
 
     public NotificationItem(NotificationEntryDto dto)
@@ -30,6 +31,7 @@ public sealed partial class NotificationItem : ObservableObject
         Title     = dto.Title;
         Message   = dto.Message;
         Timestamp = dto.CreatedAtUtc;
+        _isRead   = dto.ReadAtUtc.HasValue;
     }
 
     public Guid           Id                 { get; }
@@ -38,6 +40,8 @@ public sealed partial class NotificationItem : ObservableObject
     public bool           HasMessage         => !string.IsNullOrWhiteSpace(Message);
     public DateTimeOffset Timestamp          { get; }
     public string         TimestampFormatted => Timestamp.ToLocalTime().ToString("dd MMM · HH:mm", CultureInfo.InvariantCulture);
+
+    [ObservableProperty] private bool _isRead;
 }
 
 public sealed partial class NotificationViewModel : ViewModelBase
@@ -126,5 +130,33 @@ public sealed partial class NotificationViewModel : ViewModelBase
             if (item != null)
                 Notifications.Remove(item);
         });
+    }
+
+    [RelayCommand]
+    private async Task MarkAsReadAsync(Guid id)
+    {
+        var item = Notifications.FirstOrDefault(x => x.Id == id);
+        if (item is null || item.IsRead) return;
+
+        // Optimistic update
+        item.IsRead = true;
+
+        var ok = await _gateway.MarkAsReadAsync(id);
+        if (!ok)
+            item.IsRead = false;
+    }
+
+    [RelayCommand]
+    private async Task MarkAllReadAsync()
+    {
+        // Optimistic update
+        var unread = Notifications.Where(x => !x.IsRead).ToList();
+        foreach (var item in unread)
+            item.IsRead = true;
+
+        var ok = await _gateway.MarkAllAsReadAsync();
+        if (!ok)
+            foreach (var item in unread)
+                item.IsRead = false;
     }
 }

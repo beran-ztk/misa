@@ -12,6 +12,8 @@ public static class NotificationEndpoints
     {
         api.MapGet(NotificationRoutes.GetAll, GetAll);
         api.MapDelete(NotificationRoutes.Dismiss, Dismiss);
+        api.MapPost(NotificationRoutes.MarkRead, MarkRead);
+        api.MapPost(NotificationRoutes.MarkAllRead, MarkAllRead);
     }
 
     private static async Task<IResult> GetAll(
@@ -28,6 +30,18 @@ public static class NotificationEndpoints
     private static async Task<IResult> Dismiss(Guid id, IMessageBus bus, CancellationToken ct)
     {
         await bus.InvokeAsync(new DismissNotificationCommand(id), ct);
+        return Results.NoContent();
+    }
+
+    private static async Task<IResult> MarkRead(Guid id, IMessageBus bus, CancellationToken ct)
+    {
+        await bus.InvokeAsync(new MarkNotificationReadCommand(id), ct);
+        return Results.NoContent();
+    }
+
+    private static async Task<IResult> MarkAllRead(IMessageBus bus, CancellationToken ct)
+    {
+        await bus.InvokeAsync(new MarkAllNotificationsReadCommand(), ct);
         return Results.NoContent();
     }
 }

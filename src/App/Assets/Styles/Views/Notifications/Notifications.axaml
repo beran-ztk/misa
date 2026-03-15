@@ -81,15 +81,24 @@
     </Style>
 
     <!-- ── Notification card ────────────────────────────────────────────── -->
-    <Style Selector="Border.notif-card">
-        <Setter Property="Background"       Value="{StaticResource BrushPrimaryBackground}" />
-        <Setter Property="BorderBrush"      Value="{StaticResource BrushBorder}" />
-        <Setter Property="BorderThickness"  Value="0,0,0,1" />
-        <Setter Property="Padding"          Value="0" />
-    </Style>
+    <Style Selector="Button.notif-card">
+        <Setter Property="Background"                  Value="{StaticResource BrushPrimaryBackground}" />
+        <Setter Property="BorderBrush"                 Value="{StaticResource BrushBorder}" />
+        <Setter Property="BorderThickness"             Value="0,0,0,1" />
+        <Setter Property="Padding"                     Value="0" />
+        <Setter Property="HorizontalAlignment"         Value="Stretch" />
+        <Setter Property="HorizontalContentAlignment"  Value="Stretch" />
+        <Setter Property="Cursor"                      Value="Arrow" />
 
-    <Style Selector="Border.notif-card:pointerover">
-        <Setter Property="Background" Value="#08FFFFFF" />
+        <Style Selector="^ /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="^:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#08FFFFFF" />
+        </Style>
+        <Style Selector="^:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="#10FFFFFF" />
+        </Style>
     </Style>
 
     <!-- Left accent strip -->
@@ -111,6 +120,11 @@
         <Setter Property="FontWeight"       Value="Medium" />
         <Setter Property="TextWrapping"     Value="NoWrap" />
         <Setter Property="TextTrimming"     Value="CharacterEllipsis" />
+    </Style>
+
+    <Style Selector="TextBlock.notif-card-title-unread">
+        <Setter Property="FontWeight"   Value="SemiBold" />
+        <Setter Property="Opacity"      Value="1" />
     </Style>
 
     <!-- Card message -->
@@ -154,10 +168,10 @@
     </Style>
 
     <!-- Show dismiss on card hover -->
-    <Style Selector="Border.notif-card:pointerover Button.notif-dismiss">
+    <Style Selector="Button.notif-card:pointerover Button.notif-dismiss">
         <Setter Property="Opacity" Value="0.7" />
     </Style>
-    <Style Selector="Border.notif-card:pointerover Button.notif-dismiss:pointerover">
+    <Style Selector="Button.notif-card:pointerover Button.notif-dismiss:pointerover">
         <Setter Property="Opacity" Value="1" />
     </Style>
 

@@ -40,4 +40,26 @@ public class NotificationGateway(RemoteProxy remoteProxy)
 
         return response.IsSuccess;
     }
+
+    public async Task<bool> MarkAsReadAsync(Guid id, CancellationToken ct = default)
+    {
+        var url = NotificationRoutes.MarkRead.Replace("{id}", id.ToString());
+
+        var response = await remoteProxy.SendAsync(
+            requestFactory: () => new HttpRequestMessage(HttpMethod.Post, url),
+            retry: new RetryOptions { MaxAttempts = 1, Delay = TimeSpan.FromMilliseconds(0) },
+            cancellationToken: ct);
+
+        return response.IsSuccess;
+    }
+
+    public async Task<bool> MarkAllAsReadAsync(CancellationToken ct = default)
+    {
+        var response = await remoteProxy.SendAsync(
+            requestFactory: () => new HttpRequestMessage(HttpMethod.Post, NotificationRoutes.MarkAllRead),
+            retry: new RetryOptions { MaxAttempts = 1, Delay = TimeSpan.FromMilliseconds(0) },
+            cancellationToken: ct);
+
+        return response.IsSuccess;
+    }
 }

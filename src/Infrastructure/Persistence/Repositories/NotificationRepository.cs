@@ -34,6 +34,20 @@ public class NotificationRepository(MisaContext context) : INotificationReposito
             .ExecuteUpdateAsync(s => s.SetProperty(n => n.DismissedAtUtc, dismissedAt), ct);
     }
 
+    public async Task MarkAsReadAsync(Guid id, DateTimeOffset readAt, CancellationToken ct = default)
+    {
+        await context.Notifications
+            .Where(n => n.Id == id && n.ReadAtUtc == null)
+            .ExecuteUpdateAsync(s => s.SetProperty(n => n.ReadAtUtc, readAt), ct);
+    }
+
+    public async Task MarkAllAsReadAsync(DateTimeOffset readAt, CancellationToken ct = default)
+    {
+        await context.Notifications
+            .Where(n => n.DismissedAtUtc == null && n.ReadAtUtc == null)
+            .ExecuteUpdateAsync(s => s.SetProperty(n => n.ReadAtUtc, readAt), ct);
+    }
+
     public async Task SaveChangesAsync(CancellationToken ct = default)
     {
         await context.SaveChangesAsync(ct);

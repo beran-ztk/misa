@@ -27,6 +27,16 @@
                                    Text="{Binding Notifications.Count}" />
                     </Border>
 
+                    <!-- Mark all read -->
+                    <Button Grid.Column="2"
+                            HorizontalAlignment="Right"
+                            Classes="notif-header-action"
+                            ToolTip.Tip="Mark all as read"
+                            Command="{Binding MarkAllReadCommand}"
+                            IsVisible="{Binding !IsEmpty}">
+                        <TextBlock Text="✓" FontSize="13" />
+                    </Button>
+
                     <!-- Refresh -->
                     <Button Grid.Column="3"
                             Classes="notif-header-action"
@@ -53,12 +63,15 @@
                                       IsVisible="{Binding !IsEmpty}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate x:DataType="local:NotificationItem">
-                                    <Border Classes="notif-card">
+                                    <Button Classes="notif-card"
+                                            Command="{Binding $parent[ItemsControl].((local:NotificationViewModel)DataContext).MarkAsReadCommand}"
+                                            CommandParameter="{Binding Id}">
                                         <Grid ColumnDefinitions="Auto,*">
 
-                                            <!-- Left accent strip -->
+                                            <!-- Left accent strip (visible only when unread) -->
                                             <Border Grid.Column="0"
-                                                    Classes="notif-card-accent" />
+                                                    Classes="notif-card-accent"
+                                                    IsVisible="{Binding !IsRead}" />
 
                                             <!-- Content -->
                                             <Border Grid.Column="1"
@@ -66,9 +79,10 @@
                                                 <Grid RowDefinitions="Auto,Auto"
                                                       ColumnDefinitions="*,Auto">
 
-                                                    <!-- Title -->
+                                                    <!-- Title (bold when unread) -->
                                                     <TextBlock Grid.Row="0" Grid.Column="0"
                                                                Classes="notif-card-title"
+                                                               Classes.notif-card-title-unread="{Binding !IsRead}"
                                                                Text="{Binding Title}" />
 
                                                     <!-- Dismiss -->
@@ -102,7 +116,7 @@
                                                 </Grid>
                                             </Border>
                                         </Grid>
-                                    </Border>
+                                    </Button>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
