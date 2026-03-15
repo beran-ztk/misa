@@ -3,22 +3,26 @@
              x:Class="Misa.Ui.Avalonia.Features.Inspector.Root.InspectorFacadeView"
              xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Inspector.Root"
              x:DataType="root:InspectorFacadeViewModel">
+    
     <UserControl.Styles>
         <Style Selector="TabControl.inspector-tabs">
-            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackground}" />
+            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}" />
             <Setter Property="Padding" Value="0" />
-            <Setter Property="BorderThickness" Value="0" />
         </Style>
 
         <Style Selector="TabControl.inspector-tabs TabItem">
-            <Setter Property="Padding" Value="12,8" />
-            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Padding" Value="20,0" />
             <Setter Property="Foreground" Value="{StaticResource BrushTextFaded}" />
-            <Setter Property="FontSize" Value="16" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Margin" Value="0,0,12,0" />
+            <Setter Property="FontSize" Value="18" />
+            <Setter Property="Opacity" Value="0.6" />
         </Style>
-
+        
+        <Style Selector="Border.inspector-tabs-underline">
+            <Setter Property="BorderThickness" Value="0,1,0,0" />
+            <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}" />
+            <Setter Property="Margin" Value="0,0,0,0" />
+        </Style>
+        
         <Style Selector="TabControl.inspector-tabs TabItem:pointerover">
             <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}" />
         </Style>
@@ -26,8 +30,11 @@
         <Style Selector="TabControl.inspector-tabs TabItem:selected">
             <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}" />
             <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="Opacity" Value="1" />
+        </Style>
+        
+        <Style Selector="TabControl.inspector-tabs TabItem:selected /template/ Border#PART_SelectedPipe">
+            <Setter Property="Background" Value="Transparent" />
         </Style>
     </UserControl.Styles>
     
@@ -40,24 +47,25 @@
                     SelectedIndex="{Binding State.SelectedTabIndex}">
 
             <TabItem Header="Entry">
-                <ContentControl Content="{Binding Entry}"/>
+                <StackPanel>
+                    <Border Classes="inspector-tabs-underline"/>
+                    <ContentControl Content="{Binding Entry}"/>
+                </StackPanel>
             </TabItem>
 
             <TabItem Header="Discussion">
-                <TextBlock Text="Discussion content placeholder"
-                           TextWrapping="Wrap" />
+                <Border Classes="inspector-tabs-underline">
+                    <TextBlock Text="Discussion content placeholder"
+                               TextWrapping="Wrap" />
+                </Border>
             </TabItem>
 
             <TabItem Header="Activity"
                      IsVisible="{Binding State.HasActivityTab}">
-                <ContentControl Content="{Binding Activity}"/>
+                <Border Classes="inspector-tabs-underline">
+                    <ContentControl Content="{Binding Activity}"/>
+                </Border>
             </TabItem>
-
-            <TabItem Header="Related">
-                <TextBlock Text="Related content placeholder"
-                           TextWrapping="Wrap" />
-            </TabItem>
-
         </TabControl>
     </Border>
 </UserControl>
