@@ -26,5 +26,7 @@ public sealed class NotificationConfiguration : IEntityTypeConfiguration<Notific
         builder.Property(n => n.SourceId);
 
         builder.Property(n => n.CreatedAtUtc);
+
+        builder.Property(n => n.DismissedAtUtc);
     }
 }

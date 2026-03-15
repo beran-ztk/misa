@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc;
 using Misa.Application.Features.Notifications;
 using Misa.Contract.Notifications;
 using Misa.Contract.Routes;
@@ -13,9 +14,14 @@ public static class NotificationEndpoints
         api.MapDelete(NotificationRoutes.Dismiss, Dismiss);
     }
 
-    private static async Task<IResult> GetAll(IMessageBus bus, CancellationToken ct)
+    private static async Task<IResult> GetAll(
+        IMessageBus bus,
+        CancellationToken ct,
+        [FromQuery] int limit = 25,
+        [FromQuery] DateTimeOffset? before = null)
     {
-        var dtos = await bus.InvokeAsync<List<NotificationEntryDto>>(new GetNotificationsQuery(), ct);
+        var dtos = await bus.InvokeAsync<List<NotificationEntryDto>>(
+            new GetNotificationsQuery(limit, before), ct);
         return Results.Ok(dtos);
     }
 

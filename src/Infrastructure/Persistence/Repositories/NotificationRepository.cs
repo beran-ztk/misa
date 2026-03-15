@@ -12,20 +12,26 @@ public class NotificationRepository(MisaContext context) : INotificationReposito
         await context.Notifications.AddAsync(notification, ct);
     }
 
-    public async Task<List<Notification>> GetAllAsync(CancellationToken ct = default)
+    public async Task<List<Notification>> GetPageAsync(int limit, DateTimeOffset? before, CancellationToken ct = default)
     {
-        return await context.Notifications
+        var query = context.Notifications
+            .Where(n => n.DismissedAtUtc == null);
+
+        if (before.HasValue)
+            query = query.Where(n => n.CreatedAtUtc < before.Value);
+
+        return await query
             .OrderByDescending(n => n.CreatedAtUtc)
+            .Take(limit)
             .AsNoTracking()
             .ToListAsync(ct);
     }
 
-    public async Task<bool> DeleteAsync(Guid id, CancellationToken ct = default)
+    public async Task DismissAsync(Guid id, DateTimeOffset dismissedAt, CancellationToken ct = default)
     {
-        var rows = await context.Notifications
+        await context.Notifications
             .Where(n => n.Id == id)
-            .ExecuteDeleteAsync(ct);
-        return rows > 0;
+            .ExecuteUpdateAsync(s => s.SetProperty(n => n.DismissedAtUtc, dismissedAt), ct);
     }
 
     public async Task SaveChangesAsync(CancellationToken ct = default)

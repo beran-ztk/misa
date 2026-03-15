@@ -1,6 +1,6 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Collections.Specialized;
 using System.Globalization;
 using System.Linq;
 using System.Threading;
@@ -42,11 +42,17 @@ public sealed partial class NotificationItem : ObservableObject
 
 public sealed partial class NotificationViewModel : ViewModelBase
 {
+    private const int PageSize = 25;
+
     private readonly NotificationGateway _gateway;
+
+    private DateTimeOffset? _oldestTimestamp;
 
     public ObservableCollection<NotificationItem> Notifications { get; } = [];
 
     public bool IsEmpty => Notifications.Count == 0;
+
+    [ObservableProperty] private bool _hasMore;
 
     public NotificationViewModel(NotificationGateway gateway)
     {
@@ -63,25 +69,50 @@ public sealed partial class NotificationViewModel : ViewModelBase
         });
     }
 
+    // Full reload — clears the list and fetches the first page.
     public async Task LoadAsync(CancellationToken ct = default)
     {
-        var dtos = await _gateway.GetAllAsync(ct) ?? [];
+        var dtos = await _gateway.GetPageAsync(limit: PageSize, ct: ct) ?? [];
 
         await Dispatcher.UIThread.InvokeAsync(() =>
         {
-            var existingIds = Notifications.Select(x => x.Id).ToHashSet();
+            Notifications.Clear();
             foreach (var dto in dtos)
-            {
-                if (existingIds.Add(dto.Id))
-                    Notifications.Add(new NotificationItem(dto));
-            }
+                Notifications.Add(new NotificationItem(dto));
+
+            ApplyPagingState(dtos);
         });
     }
 
-    public async Task InitializeAsync() => await RefreshAsync();
+    public async Task InitializeAsync() => await LoadAsync();
 
     [RelayCommand]
     private async Task RefreshAsync() => await LoadAsync();
+
+    // Appends the next page of older notifications.
+    [RelayCommand]
+    private async Task LoadMoreAsync()
+    {
+        if (_oldestTimestamp is null) return;
+
+        var dtos = await _gateway.GetPageAsync(limit: PageSize, before: _oldestTimestamp, ct: CancellationToken.None) ?? [];
+
+        await Dispatcher.UIThread.InvokeAsync(() =>
+        {
+            foreach (var dto in dtos)
+                Notifications.Add(new NotificationItem(dto));
+
+            ApplyPagingState(dtos);
+        });
+    }
+
+    private void ApplyPagingState(List<NotificationEntryDto> dtos)
+    {
+        if (dtos.Count > 0)
+            _oldestTimestamp = dtos[^1].CreatedAtUtc;
+
+        HasMore = dtos.Count == PageSize;
+    }
 
     [RelayCommand]
     private async Task DismissAsync(Guid id)

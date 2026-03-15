@@ -20,10 +20,11 @@ public sealed class Notification
         CreatedAtUtc = createdAtUtc;
     }
 
-    public Guid                   Id           { get; private set; }
-    public string                 Title        { get; private set; } = string.Empty;
-    public string                 Message      { get; private set; } = string.Empty;
-    public NotificationSourceKind SourceKind   { get; private set; }
-    public Guid                   SourceId     { get; private set; }
-    public DateTimeOffset         CreatedAtUtc { get; private set; }
+    public Guid                   Id             { get; private set; }
+    public string                 Title          { get; private set; } = string.Empty;
+    public string                 Message        { get; private set; } = string.Empty;
+    public NotificationSourceKind SourceKind     { get; private set; }
+    public Guid                   SourceId       { get; private set; }
+    public DateTimeOffset         CreatedAtUtc   { get; private set; }
+    public DateTimeOffset?        DismissedAtUtc { get; private set; }
 }

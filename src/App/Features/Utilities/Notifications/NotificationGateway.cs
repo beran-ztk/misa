@@ -11,10 +11,18 @@ namespace Misa.Ui.Avalonia.Features.Utilities.Notifications;
 
 public class NotificationGateway(RemoteProxy remoteProxy)
 {
-    public async Task<List<NotificationEntryDto>?> GetAllAsync(CancellationToken ct = default)
+    public async Task<List<NotificationEntryDto>?> GetPageAsync(
+        int limit = 25,
+        DateTimeOffset? before = null,
+        CancellationToken ct = default)
     {
+        var url = $"{NotificationRoutes.GetAll}?limit={limit}";
+
+        if (before.HasValue)
+            url += $"&before={Uri.EscapeDataString(before.Value.UtcDateTime.ToString("O"))}";
+
         var response = await remoteProxy.SendAsync<List<NotificationEntryDto>>(
-            requestFactory: () => new HttpRequestMessage(HttpMethod.Get, NotificationRoutes.GetAll),
+            requestFactory: () => new HttpRequestMessage(HttpMethod.Get, url),
             retry: new RetryOptions { MaxAttempts = 3, Delay = TimeSpan.FromMilliseconds(500) },
             cancellationToken: ct);
 

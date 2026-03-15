@@ -42,8 +42,7 @@
             <Border Grid.Row="1" Classes="notif-list-area">
                 <ScrollViewer VerticalScrollBarVisibility="Auto"
                               HorizontalScrollBarVisibility="Disabled">
-                    <Panel>
-
+                    <StackPanel Spacing="4">
                         <!-- Empty state -->
                         <TextBlock Classes="notif-empty-text"
                                    Text="No notifications"
@@ -107,8 +106,12 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-
-                    </Panel>
+                        
+                        <Button Classes="notif-load-more"
+                                Command="{Binding LoadMoreCommand}"
+                                IsEnabled="True"
+                                Content="Load more" />
+                    </StackPanel>
                 </ScrollViewer>
             </Border>
 
