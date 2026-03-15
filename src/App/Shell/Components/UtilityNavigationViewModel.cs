@@ -8,6 +8,7 @@ namespace Misa.Ui.Avalonia.Shell.Components;
 
 public sealed partial class UtilityNavigationViewModel(ShellState shellState, NotificationViewModel notificationViewModel) : ViewModelBase
 {
+    public NotificationViewModel NotificationViewModel { get; } = notificationViewModel;
     [RelayCommand]
     private async Task ToggleNotifications()
     {

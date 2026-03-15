@@ -5,8 +5,13 @@
              mc:Ignorable="d"
              x:Class="Misa.Ui.Avalonia.Shell.Components.UtilityNavigationView"
              x:DataType="components:UtilityNavigationViewModel"
-             xmlns:components="clr-namespace:Misa.Ui.Avalonia.Shell.Components">
+             xmlns:components="clr-namespace:Misa.Ui.Avalonia.Shell.Components"
+             xmlns:converters="clr-namespace:Misa.Ui.Avalonia.Common.Converters">
 
+    <UserControl.Resources>
+        <converters:GreaterThanZeroConverter x:Key="GreaterThanZeroConverter" />
+    </UserControl.Resources>
+    
     <Border Background="{StaticResource BrushPrimaryBackground}"
             BorderBrush="{StaticResource BrushBorder}"
             BorderThickness="1,0,0,0">
@@ -19,8 +24,22 @@
                     ToolTip.Tip="Notifications"
                     Command="{Binding ToggleNotificationsCommand}">
 
-                <Image Classes="utility-nav"
-                       Source="{SvgImage /Assets/Icons/Shell/Utility/bell.svg}" />
+                <Grid Height="20" Width="20">
+
+                    <Image Classes="utility-nav"
+                           Source="{SvgImage /Assets/Icons/Shell/Utility/bell.svg}" />
+
+                    <Border Width="8"
+                            Height="8"
+                            CornerRadius="4"
+                            Background="#3B82F6"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Top"
+                            Margin="0,1,1,0"
+                            IsVisible="{Binding NotificationViewModel.UnreadCount, Converter={StaticResource GreaterThanZeroConverter}}" />
+
+                </Grid>
+
             </Button>
 
         </StackPanel>
