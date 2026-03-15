@@ -31,6 +31,12 @@ public sealed class SignalRNotificationClient(UserState userState, string hubUrl
                 _ = handler();
         });
 
+        _connection.Reconnected += _ =>
+        {
+            var handler = NotificationsChanged;
+            return handler is not null ? handler() : Task.CompletedTask;
+        };
+
         try
         {
             await _connection.StartAsync();
