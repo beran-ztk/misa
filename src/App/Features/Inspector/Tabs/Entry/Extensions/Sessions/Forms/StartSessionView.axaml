@@ -7,40 +7,57 @@
              xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions.Forms"
              x:DataType="root:StartSessionViewModel">
 
-    <StackPanel Classes="addpanel-body">
+    <StackPanel Spacing="28">
 
-        <StackPanel Classes="addpanel-controls">
-            <TextBlock Text="How many minutes do you plan in?"
-                       Classes="addpanel-text"/>
-            <NumericUpDown Classes="addpanel-num"
-                           Minimum="1"
-                           Maximum="600"
-                           Value="{Binding PlannedMinutes, Mode=TwoWay}" />
+        <!-- ── Planning ──────────────────────────────────────────────── -->
+        <StackPanel>
+            <TextBlock Text="Planning" Classes="form-section-header"/>
+            <StackPanel Spacing="16">
+
+                <StackPanel Classes="addpanel-controls">
+                    <TextBlock Text="How many minutes do you plan in?"
+                               Classes="addpanel-text"/>
+                    <NumericUpDown Classes="addpanel-num"
+                                   Minimum="1"
+                                   Maximum="600"
+                                   Value="{Binding PlannedMinutes, Mode=TwoWay}" />
+                </StackPanel>
+
+                <StackPanel Classes="addpanel-controls">
+                    <TextBlock Text="What is your objective?"
+                               Classes="addpanel-text"/>
+                    <TextBox Classes="addpanel-oneliner"
+                             Text="{Binding Objective, Mode=TwoWay}"
+                             Watermark="What are you doing?" />
+                </StackPanel>
+
+            </StackPanel>
         </StackPanel>
 
-        <StackPanel Classes="addpanel-controls">
-            <TextBlock Text="What is your objective?"
-                       Classes="addpanel-text"/>
-            <TextBox Classes="addpanel-oneliner"
-                     Text="{Binding Objective, Mode=TwoWay}"
-                     Watermark="What are you doing?" />
-        </StackPanel>
+        <!-- ── Auto-stop ─────────────────────────────────────────────── -->
+        <StackPanel>
+            <TextBlock Text="Auto-stop" Classes="form-section-header"/>
+            <StackPanel Spacing="16">
 
-        <StackPanel Classes="addpanel-controls">
-            <TextBlock Text="Do you want the session to auto-stop and notify you at the planned time?"
-                       Classes="addpanel-text"/>
-            <CheckBox IsChecked="{Binding StopAutomatically, Mode=TwoWay}"
-                      Content="Stop automatically after planned duration" />
-        </StackPanel>
+                <StackPanel Classes="addpanel-controls">
+                    <TextBlock Text="Do you want the session to auto-stop and notify you at the planned time?"
+                               Classes="addpanel-text"/>
+                    <CheckBox IsChecked="{Binding StopAutomatically, Mode=TwoWay}"
+                              Content="Stop automatically after planned duration" />
+                </StackPanel>
 
-        <StackPanel Classes="addpanel-controls">
-            <TextBlock Text="If you have a reason for auto-stop, note it here (optional)."
-                       Classes="addpanel-text"/>
-            <TextBox Classes="addpanel-oneliner"
-                     IsEnabled="{Binding StopAutomatically}"
-                     Text="{Binding AutoStopReason, Mode=TwoWay}"
-                     Watermark="Optional reason" />
+                <StackPanel Classes="addpanel-controls">
+                    <TextBlock Text="If you have a reason for auto-stop, note it here (optional)."
+                               Classes="addpanel-text"/>
+                    <TextBox Classes="addpanel-oneliner"
+                             IsEnabled="{Binding StopAutomatically}"
+                             Text="{Binding AutoStopReason, Mode=TwoWay}"
+                             Watermark="Optional reason" />
+                </StackPanel>
+
+            </StackPanel>
         </StackPanel>
 
     </StackPanel>
+
 </UserControl>
