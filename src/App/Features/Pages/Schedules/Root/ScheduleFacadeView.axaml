@@ -112,16 +112,13 @@
         </Border>
 
         <!-- Content -->
-        <Grid Grid.Row="1">
-          <Border Classes="workspace-content-frame"
-                  Background="{StaticResource BrushPrimaryBackgroundLight}"
-                  Padding="24,8">
-
-            <ListBox ItemsSource="{Binding State.FilteredItems}"
-                     SelectedItem="{Binding State.SelectedItem, Mode=TwoWay}"
-                     Background="{StaticResource BrushPrimaryBackgroundLight}"
-                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                     ScrollViewer.VerticalScrollBarVisibility="Auto">
+        <ListBox Grid.Row="1"
+                 ItemsSource="{Binding State.FilteredItems}"
+                 SelectedItem="{Binding State.SelectedItem, Mode=TwoWay}"
+                 Background="{StaticResource BrushPrimaryBackgroundLight}"
+                 Padding="16,8"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                 ScrollViewer.VerticalScrollBarVisibility="Auto">
 
               <ListBox.ItemTemplate>
                 <DataTemplate x:DataType="schedules:ScheduleDto">
@@ -213,7 +210,5 @@
                 </DataTemplate>
               </ListBox.ItemTemplate>
             </ListBox>
-          </Border>
-        </Grid>
     </Grid>
 </UserControl>
