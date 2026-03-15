@@ -9,30 +9,26 @@
             BorderThickness="0,0,0,1"
             BorderBrush="{StaticResource BrushBorder}">
         
-        <Grid ColumnDefinitions="Auto,*,Auto"
-              VerticalAlignment="Center">
+        <StackPanel Orientation="Horizontal"
+                    Spacing="16"
+                    VerticalAlignment="Center">
 
-            <!-- Has none active Session -->
-            <TextBlock Grid.Column="0"
-                       Text="Currently has no active Session."
+            <!-- No active session -->
+            <TextBlock Text="Currently has no active Session."
                        VerticalAlignment="Center"
                        IsVisible="{Binding !HasActiveSession}" />
-            
+
             <!-- Segment -->
-            <TextBlock Grid.Column="0"
-                       VerticalAlignment="Center"
+            <TextBlock VerticalAlignment="Center"
                        Text="{Binding ActiveSessionSegmentDisplay}"
-                       IsVisible="{Binding HasActiveSession}"/>
+                       IsVisible="{Binding HasActiveSession}" />
 
             <!-- Elapsed -->
-            <TextBlock Grid.Column="1"
-                       VerticalAlignment="Center"
-                       HorizontalAlignment="Center"
+            <TextBlock VerticalAlignment="Center"
                        Text="{Binding ActiveSessionElapsedDisplay}" />
 
             <!-- Quick Actions -->
-            <StackPanel Grid.Column="2"
-                        Orientation="Horizontal"
+            <StackPanel Orientation="Horizontal"
                         Spacing="8"
                         VerticalAlignment="Center">
 
@@ -64,7 +60,6 @@
                            Source="{SvgImage /Assets/Icons/Inspector/Session/stop.svg}"/>
                 </Button>
 
-                <!-- Dropdown (nur wenn Session läuft) -->
                 <DropDownButton Classes="workspace-toolbar-icon"
                                 IsVisible="{Binding HasActiveSession}"
                                 VerticalAlignment="Center">
@@ -82,8 +77,8 @@
                     </DropDownButton.Flyout>
 
                 </DropDownButton>
-                
+
             </StackPanel>
-        </Grid>
+        </StackPanel>
     </Border>
 </UserControl>
