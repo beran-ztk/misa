@@ -21,6 +21,12 @@ public sealed partial class CreateJournalViewModel(ChronicleGateway gateway)
     [ObservableProperty] private DateTimeOffset? _untilAtDate;
     [ObservableProperty] private TimeSpan? _untilAtTime;
     
+    partial void OnUntilAtDateChanged(DateTimeOffset? value)
+    {
+        if (value is not null && UntilAtTime is null)
+            UntilAtTime = TimeSpan.Zero;
+    }
+
     public string FormTitle { get; } = "Create Journal";
     public string? FormDescription { get; }
 

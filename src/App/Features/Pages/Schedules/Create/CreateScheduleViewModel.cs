@@ -83,6 +83,12 @@ public sealed partial class CreateScheduleViewModel(ScheduleGateway gateway)
     [ObservableProperty] private bool _byMonthNov;
     [ObservableProperty] private bool _byMonthDec;
 
+    partial void OnActiveUntilDateChanged(DateTimeOffset? value)
+    {
+        if (value is not null && ActiveUntilTime is null)
+            ActiveUntilTime = TimeSpan.Zero;
+    }
+
     partial void OnSelectedActionTypeChanged(ScheduleActionTypeDto value)
     {
         if (value == ScheduleActionTypeDto.CreateTask)
