@@ -110,6 +110,9 @@
       <Compile Update="Features\Inspector\Tabs\Entry\Base\InspectorEntryBodyView.axaml.cs">
         <DependentUpon>InspectorEntryBodyView.axaml</DependentUpon>
       </Compile>
+      <Compile Update="Features\Utilities\Toast\ToastView.axaml.cs">
+        <DependentUpon>ToastView.axaml</DependentUpon>
+      </Compile>
     </ItemGroup>
 
     <ItemGroup>

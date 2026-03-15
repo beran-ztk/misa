@@ -7,7 +7,9 @@
              xmlns:local="clr-namespace:Misa.Ui.Avalonia.Features.Utilities.Notifications"
              x:DataType="local:NotificationViewModel">
 
-    <Border Classes="notif-panel">
+    <Border Classes="notif-panel"
+            BorderThickness="1,0,0,0"
+            BorderBrush="{StaticResource BrushBorder}">
         <Grid RowDefinitions="Auto,Auto,*">
 
             <!-- ── Header ──────────────────────────────────────────────── -->

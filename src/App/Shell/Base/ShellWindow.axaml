@@ -114,7 +114,24 @@
         
         <Grid x:Name="ToastLayer"
               ZIndex="40">
-            <ContentControl Content="{Binding ShellState.Toast}"/>
+            <ItemsControl ItemsSource="{Binding ShellState.Toasts}"
+                          HorizontalAlignment="Right"
+                          VerticalAlignment="Bottom"
+                          Margin="0,0,50,34"
+                          IsHitTestVisible="False">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Spacing="8"
+                                    IsHitTestVisible="True"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <ContentControl Content="{Binding}"
+                                        IsHitTestVisible="True"/>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
         </Grid>
         
         <Grid x:Name="BusyLayer"

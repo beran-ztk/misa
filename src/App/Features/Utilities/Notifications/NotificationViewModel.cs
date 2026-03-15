@@ -147,7 +147,6 @@ public sealed partial class NotificationViewModel : ViewModelBase
         {
             var existingIds = Notifications.Select(n => n.Id).ToHashSet();
 
-            NotificationItem? firstNew = null;
             var insertIndex = 0;
             foreach (var dto in dtos)
             {
@@ -155,14 +154,11 @@ public sealed partial class NotificationViewModel : ViewModelBase
                 {
                     var item = new NotificationItem(dto);
                     Notifications.Insert(insertIndex++, item);
-                    firstNew ??= item;
+                    _layerProxy.ShowToast(item.Title, item.HasMessage ? item.Message : null);
                 }
             }
 
             UnreadCount = count;
-
-            if (firstNew is not null)
-                _layerProxy.ShowToast(firstNew.Title, firstNew.HasMessage ? firstNew.Message : null);
         });
     }
 

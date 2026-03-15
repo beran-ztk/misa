@@ -4,10 +4,7 @@
              xmlns:vm="clr-namespace:Misa.Ui.Avalonia.Features.Utilities.Toast"
              x:DataType="vm:ToastViewModel">
 
-    <Border Classes="toast-container"
-            HorizontalAlignment="Right"
-            VerticalAlignment="Bottom"
-            Margin="24,0,24,24">
+    <Border Classes="toast-container">
 
         <Grid RowDefinitions="Auto,Auto"
               ColumnDefinitions="*,Auto">

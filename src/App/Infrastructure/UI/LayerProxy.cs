@@ -1,9 +1,8 @@
 using System;
-using System.Threading;
+using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Avalonia.Controls;
-using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
 using Misa.Ui.Avalonia.Common.Mappings;
@@ -26,16 +25,15 @@ public interface ILayerHost
 
 public interface IToastHost
 {
-    ViewModelBase? Toast { get; set; }
+    ObservableCollection<ToastViewModel> Toasts { get; }
 }
 
 public partial class LayerProxy(
-    ILayerHost     layerHost,
-    IToastHost     toastHost,
+    ILayerHost       layerHost,
+    IToastHost       toastHost,
     IServiceProvider sp) : ILayerCloser
 {
     private TaskCompletionSource<object?>? _activePanelTcs;
-    private CancellationTokenSource?      _toastCts;
 
     ICommand ILayerCloser.BackdropCloseCommand => BackdropCloseCommand;
 
@@ -94,38 +92,17 @@ public partial class LayerProxy(
 
     public void ShowToast(string title, string? message = null, int durationMs = 4000)
     {
-        // Cancel any existing auto-dismiss timer and replace the toast.
-        _toastCts?.Cancel();
-        _toastCts = new CancellationTokenSource();
-        var cts = _toastCts;
+        var toasts = toastHost.Toasts;
 
-        void DismissAction()
-        {
-            cts.Cancel();
-            toastHost.Toast = null;
-        }
-
-        toastHost.Toast = new ToastViewModel(title, message, DismissAction);
-        _ = ScheduleAutoDismissAsync(cts.Token, durationMs);
-    }
-
-    private async Task ScheduleAutoDismissAsync(CancellationToken ct, int durationMs)
-    {
-        try
-        {
-            await Task.Delay(durationMs, ct);
-            await Dispatcher.UIThread.InvokeAsync(() => toastHost.Toast = null);
-        }
-        catch (OperationCanceledException)
-        {
-            // Manually dismissed or replaced by a new toast — nothing to do.
-        }
+        ToastViewModel? vm = null;
+        vm = new ToastViewModel(title, message, () => toasts.Remove(vm!), durationMs);
+        toasts.Add(vm);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────
 
     private LayerHostView CreateHosted<TForm, TResult>(
-        TForm form,
+        TForm        form,
         ILayerCloser layerCloser)
         where TForm : ViewModelBase, IHostedForm<TResult>
     {

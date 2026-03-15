@@ -1,9 +1,11 @@
 using System;
+using System.Collections.ObjectModel;
 using System.Security.Cryptography.X509Certificates;
 using Avalonia.Controls;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Ui.Avalonia.Common.Mappings;
+using Misa.Ui.Avalonia.Features.Utilities.Toast;
 using Misa.Ui.Avalonia.Infrastructure.UI;
 using Misa.Ui.Avalonia.Shell.Components;
 
@@ -48,6 +50,7 @@ public partial class ShellState : ObservableObject, ILayerHost, IToastHost, IWor
     public bool IsModalOpen => Modal is not null;
 
     
-    [ObservableProperty] private ViewModelBase? _toast;
+    public ObservableCollection<ToastViewModel> Toasts { get; } = [];
+
     [ObservableProperty] private ViewModelBase? _busy;
 }
