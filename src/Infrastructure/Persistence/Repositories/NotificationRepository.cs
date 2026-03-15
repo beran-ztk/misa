@@ -1,11 +1,12 @@
 using Microsoft.EntityFrameworkCore;
+using Misa.Application.Abstractions.Authentication;
 using Misa.Application.Abstractions.Persistence;
 using Misa.Domain.Notifications;
 using Misa.Infrastructure.Persistence.Context;
 
 namespace Misa.Infrastructure.Persistence.Repositories;
 
-public class NotificationRepository(MisaContext context) : INotificationRepository
+public class NotificationRepository(MisaContext context, ICurrentUser user) : INotificationRepository
 {
     public async Task AddAsync(Notification notification, CancellationToken ct = default)
     {
@@ -15,7 +16,7 @@ public class NotificationRepository(MisaContext context) : INotificationReposito
     public async Task<List<Notification>> GetPageAsync(int limit, DateTimeOffset? before, bool onlyUnread, CancellationToken ct = default)
     {
         var query = context.Notifications
-            .Where(n => n.DismissedAtUtc == null);
+            .Where(n => n.OwnerId == user.Id && n.DismissedAtUtc == null);
 
         if (onlyUnread)
             query = query.Where(n => n.ReadAtUtc == null);
@@ -33,28 +34,28 @@ public class NotificationRepository(MisaContext context) : INotificationReposito
     public async Task<int> GetUnreadCountAsync(CancellationToken ct = default)
     {
         return await context.Notifications
-            .Where(n => n.DismissedAtUtc == null && n.ReadAtUtc == null)
+            .Where(n => n.OwnerId == user.Id && n.DismissedAtUtc == null && n.ReadAtUtc == null)
             .CountAsync(ct);
     }
 
     public async Task DismissAsync(Guid id, DateTimeOffset dismissedAt, CancellationToken ct = default)
     {
         await context.Notifications
-            .Where(n => n.Id == id)
+            .Where(n => n.Id == id && n.OwnerId == user.Id)
             .ExecuteUpdateAsync(s => s.SetProperty(n => n.DismissedAtUtc, dismissedAt), ct);
     }
 
     public async Task MarkAsReadAsync(Guid id, DateTimeOffset readAt, CancellationToken ct = default)
     {
         await context.Notifications
-            .Where(n => n.Id == id && n.ReadAtUtc == null)
+            .Where(n => n.Id == id && n.OwnerId == user.Id && n.ReadAtUtc == null)
             .ExecuteUpdateAsync(s => s.SetProperty(n => n.ReadAtUtc, readAt), ct);
     }
 
     public async Task MarkAllAsReadAsync(DateTimeOffset readAt, CancellationToken ct = default)
     {
         await context.Notifications
-            .Where(n => n.DismissedAtUtc == null && n.ReadAtUtc == null)
+            .Where(n => n.OwnerId == user.Id && n.DismissedAtUtc == null && n.ReadAtUtc == null)
             .ExecuteUpdateAsync(s => s.SetProperty(n => n.ReadAtUtc, readAt), ct);
     }
 

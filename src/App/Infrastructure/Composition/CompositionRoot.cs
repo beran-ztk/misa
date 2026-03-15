@@ -49,7 +49,10 @@ public static class CompositionRoot
         sc.AddSingleton<LayerProxy>();
         sc.AddSingleton<ILayerCloser>(sp => sp.GetRequiredService<LayerProxy>());
         sc.AddSingleton<RemoteProxy>();
-        sc.AddSingleton<SignalRNotificationClient>();
+        sc.AddSingleton<SignalRNotificationClient>(sp =>
+            new SignalRNotificationClient(
+                sp.GetRequiredService<UserState>(),
+                baseAddress + "/hubs/updates"));
         sc.AddTransient<LayerHostView>();
 
         sc.AddSingleton(new HttpClient { BaseAddress = new Uri(baseAddress) });

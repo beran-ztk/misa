@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Misa.Application.Abstractions.Ids;
+using Misa.Application.Abstractions.Notifications;
 using Misa.Application.Abstractions.Persistence;
 using Misa.Application.Abstractions.Time;
 using Misa.Domain.Items.Components.Schedules;
@@ -13,7 +14,8 @@ public class ScheduleExecutingHandler(
     ISchedulerExecutingRepository repository,
     INotificationRepository        notificationRepository,
     ITimeProvider                  timeProvider,
-    IIdGenerator                   idGenerator)
+    IIdGenerator                   idGenerator,
+    INotificationPushService       pushService)
 {
     public async Task HandleAsync(
         ScheduleExecutingCommand command,
@@ -51,13 +53,15 @@ public class ScheduleExecutingHandler(
                 "Schedule has been executed",
                 NotificationSourceKind.SchedulerExecution,
                 log.Id,
-                timeProvider.UtcNow);
+                timeProvider.UtcNow,
+                item.OwnerId);
 
             await notificationRepository.AddAsync(notification, stoppingToken);
 
             log.Succeeded(timeProvider.UtcNow);
             await repository.SaveChangesAsync(stoppingToken);
             await notificationRepository.SaveChangesAsync(stoppingToken);
+            await pushService.NotifyUserChangedAsync(item.OwnerId);
         }
     }
 }
