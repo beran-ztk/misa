@@ -9,121 +9,189 @@
              x:DataType="root:ChronicleViewModel">
 
     <UserControl.Resources>
-        <converters:UtcToLocalConverter x:Key="UtcToLocalConverter" />
-        <converters:NullToBoolConverter x:Key="NullToBoolConverter" />
-        <converters:NullToRowHeightConverter x:Key="NullToRowHeightConverter" />
-        <converters:ChronicleTypeToChipBackgroundConverter x:Key="ChronicleTypeToChipBackgroundConverter" />
-        <converters:ChronicleTypeToChipBorderConverter x:Key="ChronicleTypeToChipBorderConverter" />
-        <converters:ChronicleTypeToChipTextConverter x:Key="ChronicleTypeToChipTextConverter" />
-        <converters:MetaStateToBackgroundConverter x:Key="MetaStateToBackgroundConverter" />
-        <converters:MetaStateToBorderConverter x:Key="MetaStateToBorderConverter" />
+        <converters:UtcToLocalConverter                    x:Key="UtcToLocalConverter" />
+        <converters:NullToBoolConverter                    x:Key="NullToBoolConverter" />
+        <converters:ChronicleTypeToChipBackgroundConverter x:Key="TypeToBackground" />
+        <converters:ChronicleTypeToChipBorderConverter     x:Key="TypeToBorder" />
+        <converters:ChronicleTypeToChipTextConverter       x:Key="TypeToText" />
+        <converters:MetaStateToBackgroundConverter         x:Key="MetaToBackground" />
+        <converters:MetaStateToBorderConverter             x:Key="MetaToBorder" />
+        <converters:ChronicleDateHeaderConverter           x:Key="DateHeader" />
     </UserControl.Resources>
+
+    <UserControl.Styles>
+        <Style Selector="ListBoxItem">
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="ListBoxItem /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#0CFFFFFF"/>
+        </Style>
+        <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+    </UserControl.Styles>
 
     <Grid RowDefinitions="Auto,*">
 
-        <!-- Toolbar (2 rows) -->
-        <Border Grid.Row="0"
-                Classes="workspace-toolbar-frame">
+        <!-- Toolbar -->
+        <Border Grid.Row="0" Classes="workspace-toolbar-frame">
             <Grid Classes="workspace-toolbar"
                   RowDefinitions="Auto,Auto,Auto"
                   ColumnDefinitions="*,Auto">
 
-                <!-- Row 0: Quick actions (left) -->
+                <!-- Row 0 left: action buttons -->
                 <StackPanel Grid.Row="0" Grid.Column="0"
                             Classes="workspace-toolbar-left">
                     <Button Classes="workspace-toolbar-icon"
                             Command="{Binding ShowAddPanelCommand}">
                         <Image Source="{SvgImage /Assets/Icons/Common/plus.svg}" />
                     </Button>
-
                     <Button Classes="workspace-toolbar-icon"
                             Command="{Binding RefreshWorkspaceCommand}">
                         <Image Source="{SvgImage /Assets/Icons/Common/refresh.svg}" />
                     </Button>
                 </StackPanel>
 
-                <!-- Thin separator -->
-                <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Classes="workspace-toolbar-separator" />
-            </Grid>
+                <!-- Row 0 right: search -->
+                <StackPanel Grid.Row="0" Grid.Column="1"
+                            Classes="workspace-toolbar-right">
+                    <TextBox Classes="workspace-toolbar-search"
+                             Watermark="Search title…"
+                             Text="{Binding SearchText, Mode=TwoWay}" />
+                </StackPanel>
 
+                <!-- Row 1 left: type filter chips -->
+                <ItemsControl Grid.Row="1" Grid.Column="0"
+                              ItemsSource="{Binding TypeFilters}"
+                              VerticalAlignment="Center"
+                              Margin="0,5,0,5">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" Spacing="4" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Button Command="{Binding ToggleCommand}"
+                                    Classes="chronicle-filter-chip"
+                                    Classes.selected="{Binding IsSelected}">
+                                <TextBlock Text="{Binding Label}"
+                                           Classes="chronicle-type-chip-text" />
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <!-- Row 1 right: date range -->
+                <StackPanel Grid.Row="1" Grid.Column="1"
+                            Orientation="Horizontal"
+                            Spacing="6"
+                            VerticalAlignment="Center"
+                            Margin="0,5,0,5">
+                    <TextBlock Text="From"
+                               FontSize="11"
+                               Opacity="0.6"
+                               VerticalAlignment="Center" />
+                    <DatePicker SelectedDate="{Binding FilterFrom, Mode=TwoWay}"
+                                Classes="chronicle-date-filter" />
+                    <TextBlock Text="→"
+                               FontSize="11"
+                               Opacity="0.5"
+                               VerticalAlignment="Center" />
+                    <DatePicker SelectedDate="{Binding FilterTo, Mode=TwoWay}"
+                                Classes="chronicle-date-filter" />
+                </StackPanel>
+
+                <!-- Row 2: separator -->
+                <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
+                        Classes="workspace-toolbar-separator" />
+            </Grid>
         </Border>
 
         <!-- Content -->
-        <Border Grid.Row="1"
-                Classes="chronicle-outer-body">
-
+        <Border Grid.Row="1" Classes="chronicle-outer-body">
             <ScrollViewer VerticalScrollBarVisibility="Auto"
                           HorizontalScrollBarVisibility="Disabled">
-
-                <ItemsControl ItemsSource="{Binding ChronicleEntries}">
+                <ItemsControl ItemsSource="{Binding Groups}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <StackPanel>
 
                                 <!-- Day header -->
-                                <Border Classes="chronicle-daily-header">
-                                    <TextBlock Text="{Binding Date, StringFormat='dd.MM'}" />
+                                <Border Classes="chronicle-daily-header"
+                                        Classes.chronicle-upcoming="{Binding IsUpcoming}"
+                                        Classes.chronicle-today="{Binding IsToday}">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Grid.Column="0"
+                                                   Text="{Binding Date, Converter={StaticResource DateHeader}}" />
+                                        <Border Grid.Column="1"
+                                                IsVisible="{Binding IsUpcoming}"
+                                                Classes="chronicle-upcoming-badge">
+                                            <TextBlock Text="upcoming"
+                                                       Classes="chronicle-upcoming-badge-text" />
+                                        </Border>
+                                    </Grid>
                                 </Border>
 
-                                <!-- Entries -->
+                                <!-- Entry rows -->
                                 <ListBox ItemsSource="{Binding Entries}"
                                          SelectionMode="Single"
                                          SelectionChanged="EntriesList_OnSelectionChanged"
                                          Background="Transparent">
-
                                     <ListBox.ItemTemplate>
                                         <DataTemplate>
-                                            <Border Classes="chronicle-listbox-items-body">
-                                                <Grid ColumnDefinitions="Auto,*,Auto"
-                                                      ColumnSpacing="8">
-                                                    
-                                                    <Border Grid.Column="0"
-                                                            Classes="chronicle-type-chip"
-                                                            Background="{Binding Type, 
-                                                                Converter={StaticResource ChronicleTypeToChipBackgroundConverter}}"
-                                                            BorderBrush="{Binding Type, 
-                                                                Converter={StaticResource ChronicleTypeToChipBorderConverter}}">
-                                                        
-                                                        <TextBlock Classes="chronicle-type-chip-text"
-                                                                   Text="{Binding Type, 
-                                                                    Converter={StaticResource ChronicleTypeToChipTextConverter}}"/>
-                                                    </Border>
-                                                    
-                                                    <!-- Content -->
-                                                    <StackPanel Grid.Column="1" Spacing="6">
+                                            <Border Classes="chronicle-row">
+                                                <StackPanel Spacing="3">
 
-                                                        <!-- Title -->
-                                                        <TextBlock Text="{Binding Title}"
-                                                                   Classes="chronicle-listbox-title" />
+                                                    <!-- Main line: chip + title + time -->
+                                                    <Grid ColumnDefinitions="Auto,*,Auto"
+                                                          ColumnSpacing="8">
 
-                                                        <!-- Meta Row -->
-                                                        <StackPanel Orientation="Horizontal" Spacing="6"
-                                                                    IsVisible="{Binding MetaText, Converter={StaticResource NullToBoolConverter}}">
+                                                        <Border Grid.Column="0"
+                                                                Classes="chronicle-type-chip"
+                                                                Background="{Binding Type, Converter={StaticResource TypeToBackground}}"
+                                                                BorderBrush="{Binding Type, Converter={StaticResource TypeToBorder}}">
+                                                            <TextBlock Classes="chronicle-type-chip-text"
+                                                                       Text="{Binding Type, Converter={StaticResource TypeToText}}" />
+                                                        </Border>
 
-                                                            <!-- optional State Chip -->
-                                                            <Border Classes="chronicle-meta-chip"
-                                                                    IsVisible="{Binding MetaState, Converter={StaticResource NullToBoolConverter}}"
-                                                                    Background="{Binding MetaState, Converter={StaticResource MetaStateToBackgroundConverter}}"
-                                                                    BorderBrush="{Binding MetaState, Converter={StaticResource MetaStateToBorderConverter}}">
-                                                                <TextBlock Classes="chronicle-meta-chip-text"
-                                                                           Text="{Binding MetaState}"/>
-                                                            </Border>
+                                                        <TextBlock Grid.Column="1"
+                                                                   Text="{Binding Title}"
+                                                                   Classes="chronicle-row-title"
+                                                                   VerticalAlignment="Center" />
 
-                                                            <!-- Meta Text -->
-                                                            <TextBlock Classes="chronicle-listbox-meta"
-                                                                       Text="{Binding MetaText}" />
-                                                        </StackPanel>
+                                                        <TextBlock Grid.Column="2"
+                                                                   Text="{Binding At, Converter={StaticResource UtcToLocalConverter}, StringFormat='HH:mm'}"
+                                                                   Classes="chronicle-row-time"
+                                                                   VerticalAlignment="Center" />
+                                                    </Grid>
 
-                                                        <!-- Description -->
-                                                        <TextBlock Classes="chronicle-listbox-description"
-                                                                   Text="{Binding Description}"
-                                                                   IsVisible="{Binding Description, Converter={StaticResource NullToBoolConverter}}" />
+                                                    <!-- Sub-line: meta chip + meta text -->
+                                                    <StackPanel Orientation="Horizontal"
+                                                                Spacing="6"
+                                                                Margin="0,0,0,0"
+                                                                IsVisible="{Binding MetaText, Converter={StaticResource NullToBoolConverter}}">
+                                                        <Border Classes="chronicle-meta-chip"
+                                                                IsVisible="{Binding MetaState, Converter={StaticResource NullToBoolConverter}}"
+                                                                Background="{Binding MetaState, Converter={StaticResource MetaToBackground}}"
+                                                                BorderBrush="{Binding MetaState, Converter={StaticResource MetaToBorder}}">
+                                                            <TextBlock Classes="chronicle-meta-chip-text"
+                                                                       Text="{Binding MetaState}" />
+                                                        </Border>
+                                                        <TextBlock Classes="chronicle-row-meta"
+                                                                   Text="{Binding MetaText}" />
                                                     </StackPanel>
 
-                                                    <TextBlock Grid.Column="2"
-                                                               Text="{Binding At, Converter={StaticResource UtcToLocalConverter}, StringFormat='HH:mm'}"
-                                                               Classes="chronicle-listbox-time" />
-                                                </Grid>
+                                                    <!-- Description (journal content, session summary) -->
+                                                    <TextBlock Classes="chronicle-row-description"
+                                                               Text="{Binding Description}"
+                                                               IsVisible="{Binding Description, Converter={StaticResource NullToBoolConverter}}" />
+
+                                                </StackPanel>
                                             </Border>
                                         </DataTemplate>
                                     </ListBox.ItemTemplate>
@@ -133,7 +201,6 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
-
             </ScrollViewer>
         </Border>
 

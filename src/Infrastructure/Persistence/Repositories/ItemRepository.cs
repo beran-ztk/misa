@@ -123,6 +123,18 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
             .ToListAsync();
     }
 
+    public async Task<List<Item>> GetChangedItemsInRangeAsync(DateTimeOffset from, DateTimeOffset to, CancellationToken ct = default)
+    {
+        return await context.Items
+            .Where(i => i.OwnerId == user.Id
+                && i.ModifiedAt != null
+                && i.ModifiedAt >= from
+                && i.ModifiedAt <= to)
+            .OrderByDescending(i => i.ModifiedAt)
+            .AsNoTracking()
+            .ToListAsync(ct);
+    }
+
     public async Task<List<Item>> GetArcsAsync()
     {
         return await context.Items
