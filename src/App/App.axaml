@@ -28,6 +28,7 @@
          <StyleInclude Source="avares://App/Assets/Styles/Views/Scheduler/Schedule.Content.Card.axaml"/>
          <StyleInclude Source="avares://App/Assets/Styles/Views/Chronicle/ChronicleList.axaml"/>
          <StyleInclude Source="avares://App/Assets/Styles/Views/Notifications/Notifications.axaml"/>
+         <StyleInclude Source="avares://App/Assets/Styles/Views/Toast/Toast.axaml"/>
          
          <!-- Navigation -->
          <StyleInclude Source="avares://App/Assets/Styles/Views/Navigation/UtilityNavigation.axaml"/>

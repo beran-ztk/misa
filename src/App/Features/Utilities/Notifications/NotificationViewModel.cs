@@ -13,6 +13,7 @@ using Misa.Contract.Features.Messaging;
 using Misa.Contract.Notifications;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Infrastructure.Messaging;
+using Misa.Ui.Avalonia.Infrastructure.UI;
 
 namespace Misa.Ui.Avalonia.Features.Utilities.Notifications;
 
@@ -55,6 +56,7 @@ public sealed partial class NotificationViewModel : ViewModelBase
 
     private readonly NotificationGateway           _gateway;
     private readonly SignalRNotificationClient     _signalR;
+    private readonly LayerProxy                   _layerProxy;
     private readonly ConcurrentDictionary<Guid, CancellationTokenSource> _pendingDismiss = new();
 
     private DateTimeOffset? _oldestTimestamp;
@@ -72,10 +74,11 @@ public sealed partial class NotificationViewModel : ViewModelBase
 
     public bool HasUnread => UnreadCount > 0;
 
-    public NotificationViewModel(NotificationGateway gateway, SignalRNotificationClient signalR)
+    public NotificationViewModel(NotificationGateway gateway, SignalRNotificationClient signalR, LayerProxy layerProxy)
     {
-        _gateway = gateway;
-        _signalR = signalR;
+        _gateway    = gateway;
+        _signalR    = signalR;
+        _layerProxy = layerProxy;
         _signalR.NotificationsChanged += RefreshFromRemoteChangeAsync;
         Notifications.CollectionChanged += (_, _) => OnPropertyChanged(nameof(IsEmpty));
         _ = LoadAsync();
@@ -127,7 +130,7 @@ public sealed partial class NotificationViewModel : ViewModelBase
 
     public async Task InitializeAsync() => await LoadAsync();
 
-    // Smart refresh from a SignalR push — prepends new items only, updates unread count.
+    // Smart refresh from a SignalR push — prepends new items only, updates unread count, shows toast.
     private async Task RefreshFromRemoteChangeAsync()
     {
         var onlyUnread = ActiveFilter == NotificationFilter.Unread;
@@ -144,14 +147,22 @@ public sealed partial class NotificationViewModel : ViewModelBase
         {
             var existingIds = Notifications.Select(n => n.Id).ToHashSet();
 
+            NotificationItem? firstNew = null;
             var insertIndex = 0;
             foreach (var dto in dtos)
             {
                 if (!existingIds.Contains(dto.Id))
-                    Notifications.Insert(insertIndex++, new NotificationItem(dto));
+                {
+                    var item = new NotificationItem(dto);
+                    Notifications.Insert(insertIndex++, item);
+                    firstNew ??= item;
+                }
             }
 
             UnreadCount = count;
+
+            if (firstNew is not null)
+                _layerProxy.ShowToast(firstNew.Title, firstNew.HasMessage ? firstNew.Message : null);
         });
     }
 
