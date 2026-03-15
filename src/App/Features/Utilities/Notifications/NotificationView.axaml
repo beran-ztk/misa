@@ -8,37 +8,36 @@
              x:DataType="local:NotificationViewModel">
 
     <Border Classes="notif-panel">
-        <Grid RowDefinitions="Auto,*">
+        <Grid RowDefinitions="Auto,Auto,*">
 
             <!-- ── Header ──────────────────────────────────────────────── -->
             <Border Grid.Row="0" Classes="notif-header">
-                <Grid ColumnDefinitions="Auto,Auto,*,Auto">
+                <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto">
 
                     <TextBlock Grid.Column="0"
                                Classes="notif-header-title"
                                Text="Notifications" />
 
-                    <!-- Count badge -->
+                    <!-- Unread count badge -->
                     <Border Grid.Column="1"
                             Classes="notif-count-badge"
                             Margin="8,0,0,0"
-                            IsVisible="{Binding !IsEmpty}">
+                            IsVisible="{Binding HasUnread}">
                         <TextBlock Classes="notif-count-text"
-                                   Text="{Binding Notifications.Count}" />
+                                   Text="{Binding UnreadCount}" />
                     </Border>
 
                     <!-- Mark all read -->
-                    <Button Grid.Column="2"
-                            HorizontalAlignment="Right"
+                    <Button Grid.Column="3"
                             Classes="notif-header-action"
                             ToolTip.Tip="Mark all as read"
                             Command="{Binding MarkAllReadCommand}"
-                            IsVisible="{Binding !IsEmpty}">
+                            IsVisible="{Binding HasUnread}">
                         <TextBlock Text="✓" FontSize="13" />
                     </Button>
 
                     <!-- Refresh -->
-                    <Button Grid.Column="3"
+                    <Button Grid.Column="4"
                             Classes="notif-header-action"
                             ToolTip.Tip="Refresh"
                             Command="{Binding RefreshCommand}">
@@ -48,11 +47,27 @@
                 </Grid>
             </Border>
 
+            <!-- ── Filter bar ───────────────────────────────────────────── -->
+            <Border Grid.Row="1" Classes="notif-filter-bar">
+                <StackPanel Orientation="Horizontal" Spacing="2">
+                    <Button Classes="notif-filter-tab"
+                            Classes.active="{Binding IsFilterAll}"
+                            Command="{Binding SetFilterCommand}"
+                            CommandParameter="{x:Static local:NotificationFilter.All}"
+                            Content="All" />
+                    <Button Classes="notif-filter-tab"
+                            Classes.active="{Binding IsFilterUnread}"
+                            Command="{Binding SetFilterCommand}"
+                            CommandParameter="{x:Static local:NotificationFilter.Unread}"
+                            Content="Unread" />
+                </StackPanel>
+            </Border>
+
             <!-- ── List ────────────────────────────────────────────────── -->
-            <Border Grid.Row="1" Classes="notif-list-area">
+            <Border Grid.Row="2" Classes="notif-list-area">
                 <ScrollViewer VerticalScrollBarVisibility="Auto"
                               HorizontalScrollBarVisibility="Disabled">
-                    <StackPanel Spacing="4">
+                    <StackPanel Spacing="0">
                         <!-- Empty state -->
                         <TextBlock Classes="notif-empty-text"
                                    Text="No notifications"
@@ -66,64 +81,86 @@
                                     <Button Classes="notif-card"
                                             Command="{Binding $parent[ItemsControl].((local:NotificationViewModel)DataContext).MarkAsReadCommand}"
                                             CommandParameter="{Binding Id}">
-                                        <Grid ColumnDefinitions="Auto,*">
+                                        <Panel>
 
-                                            <!-- Left accent strip (visible only when unread) -->
-                                            <Border Grid.Column="0"
-                                                    Classes="notif-card-accent"
-                                                    IsVisible="{Binding !IsRead}" />
+                                            <!-- Normal card content -->
+                                            <Grid ColumnDefinitions="Auto,*"
+                                                  IsVisible="{Binding !IsPendingDismiss}">
 
-                                            <!-- Content -->
-                                            <Border Grid.Column="1"
-                                                    Classes="notif-card-body">
-                                                <Grid RowDefinitions="Auto,Auto"
-                                                      ColumnDefinitions="*,Auto">
+                                                <!-- Left accent strip (visible only when unread) -->
+                                                <Border Grid.Column="0"
+                                                        Classes="notif-card-accent"
+                                                        IsVisible="{Binding !IsRead}" />
 
-                                                    <!-- Title (bold when unread) -->
-                                                    <TextBlock Grid.Row="0" Grid.Column="0"
-                                                               Classes="notif-card-title"
-                                                               Classes.notif-card-title-unread="{Binding !IsRead}"
-                                                               Text="{Binding Title}" />
+                                                <!-- Content -->
+                                                <Border Grid.Column="1"
+                                                        Classes="notif-card-body">
+                                                    <Grid RowDefinitions="Auto,Auto"
+                                                          ColumnDefinitions="*,Auto">
 
-                                                    <!-- Dismiss -->
-                                                    <Button Grid.Row="0" Grid.Column="1"
-                                                            Grid.RowSpan="2"
-                                                            Classes="notif-dismiss"
-                                                            ToolTip.Tip="Dismiss"
-                                                            VerticalAlignment="Top"
-                                                            Margin="8,0,0,0"
-                                                            Command="{Binding $parent[ItemsControl].((local:NotificationViewModel)DataContext).DismissCommand}"
-                                                            CommandParameter="{Binding Id}">
-                                                        <TextBlock Text="×" FontSize="13" />
-                                                    </Button>
+                                                        <!-- Title (bold when unread) -->
+                                                        <TextBlock Grid.Row="0" Grid.Column="0"
+                                                                   Classes="notif-card-title"
+                                                                   Classes.notif-card-title-unread="{Binding !IsRead}"
+                                                                   Text="{Binding Title}" />
 
-                                                    <!-- Message + timestamp -->
-                                                    <Grid Grid.Row="1" Grid.Column="0"
-                                                          RowDefinitions="Auto,Auto"
-                                                          Margin="0,2,0,0">
+                                                        <!-- Dismiss -->
+                                                        <Button Grid.Row="0" Grid.Column="1"
+                                                                Grid.RowSpan="2"
+                                                                Classes="notif-dismiss"
+                                                                ToolTip.Tip="Dismiss"
+                                                                VerticalAlignment="Top"
+                                                                Margin="8,0,0,0"
+                                                                Command="{Binding $parent[ItemsControl].((local:NotificationViewModel)DataContext).DismissCommand}"
+                                                                CommandParameter="{Binding Id}">
+                                                            <TextBlock Text="×" FontSize="13" />
+                                                        </Button>
 
-                                                        <TextBlock Grid.Row="0"
-                                                                   Classes="notif-card-message"
-                                                                   Text="{Binding Message}"
-                                                                   IsVisible="{Binding HasMessage}" />
+                                                        <!-- Message + timestamp -->
+                                                        <Grid Grid.Row="1" Grid.Column="0"
+                                                              RowDefinitions="Auto,Auto"
+                                                              Margin="0,2,0,0">
 
-                                                        <TextBlock Grid.Row="1"
-                                                                   Classes="notif-card-time"
-                                                                   Text="{Binding TimestampFormatted}"
-                                                                   Margin="0,4,0,0" />
+                                                            <TextBlock Grid.Row="0"
+                                                                       Classes="notif-card-message"
+                                                                       Text="{Binding Message}"
+                                                                       IsVisible="{Binding HasMessage}" />
+
+                                                            <TextBlock Grid.Row="1"
+                                                                       Classes="notif-card-time"
+                                                                       Text="{Binding TimestampFormatted}"
+                                                                       Margin="0,4,0,0" />
+                                                        </Grid>
+
                                                     </Grid>
+                                                </Border>
+                                            </Grid>
 
+                                            <!-- Undo banner (shown while dismiss is pending) -->
+                                            <Border Classes="notif-undo-bar"
+                                                    IsVisible="{Binding IsPendingDismiss}">
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <TextBlock Grid.Column="0"
+                                                               Classes="notif-undo-text"
+                                                               Text="Dismissed"
+                                                               VerticalAlignment="Center" />
+                                                    <Button Grid.Column="1"
+                                                            Classes="notif-undo-btn"
+                                                            Command="{Binding $parent[ItemsControl].((local:NotificationViewModel)DataContext).UndoDismissCommand}"
+                                                            CommandParameter="{Binding Id}"
+                                                            Content="Undo" />
                                                 </Grid>
                                             </Border>
-                                        </Grid>
+
+                                        </Panel>
                                     </Button>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                        
+
                         <Button Classes="notif-load-more"
                                 Command="{Binding LoadMoreCommand}"
-                                IsEnabled="True"
+                                IsVisible="{Binding HasMore}"
                                 Content="Load more" />
                     </StackPanel>
                 </ScrollViewer>

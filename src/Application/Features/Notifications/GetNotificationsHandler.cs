@@ -3,7 +3,7 @@ using Misa.Contract.Notifications;
 
 namespace Misa.Application.Features.Notifications;
 
-public sealed record GetNotificationsQuery(int Limit = 25, DateTimeOffset? Before = null);
+public sealed record GetNotificationsQuery(int Limit = 25, DateTimeOffset? Before = null, bool OnlyUnread = false);
 
 public class GetNotificationsHandler(INotificationRepository repository)
 {
@@ -11,7 +11,7 @@ public class GetNotificationsHandler(INotificationRepository repository)
         GetNotificationsQuery query,
         CancellationToken ct)
     {
-        var notifications = await repository.GetPageAsync(query.Limit, query.Before, ct);
+        var notifications = await repository.GetPageAsync(query.Limit, query.Before, query.OnlyUnread, ct);
 
         return notifications
             .Select(n => new NotificationEntryDto(

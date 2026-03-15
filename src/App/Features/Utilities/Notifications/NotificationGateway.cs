@@ -14,6 +14,7 @@ public class NotificationGateway(RemoteProxy remoteProxy)
     public async Task<List<NotificationEntryDto>?> GetPageAsync(
         int limit = 25,
         DateTimeOffset? before = null,
+        bool onlyUnread = false,
         CancellationToken ct = default)
     {
         var url = $"{NotificationRoutes.GetAll}?limit={limit}";
@@ -21,12 +22,25 @@ public class NotificationGateway(RemoteProxy remoteProxy)
         if (before.HasValue)
             url += $"&before={Uri.EscapeDataString(before.Value.UtcDateTime.ToString("O"))}";
 
+        if (onlyUnread)
+            url += "&unreadOnly=true";
+
         var response = await remoteProxy.SendAsync<List<NotificationEntryDto>>(
             requestFactory: () => new HttpRequestMessage(HttpMethod.Get, url),
             retry: new RetryOptions { MaxAttempts = 3, Delay = TimeSpan.FromMilliseconds(500) },
             cancellationToken: ct);
 
         return response.Value;
+    }
+
+    public async Task<int> GetUnreadCountAsync(CancellationToken ct = default)
+    {
+        var response = await remoteProxy.SendAsync<NotificationUnreadCountDto>(
+            requestFactory: () => new HttpRequestMessage(HttpMethod.Get, NotificationRoutes.UnreadCount),
+            retry: new RetryOptions { MaxAttempts = 3, Delay = TimeSpan.FromMilliseconds(500) },
+            cancellationToken: ct);
+
+        return response.Value?.Count ?? 0;
     }
 
     public async Task<bool> DismissAsync(Guid id, CancellationToken ct = default)

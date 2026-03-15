@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Globalization;
@@ -13,6 +14,8 @@ using Misa.Contract.Notifications;
 using Misa.Ui.Avalonia.Common.Mappings;
 
 namespace Misa.Ui.Avalonia.Features.Utilities.Notifications;
+
+public enum NotificationFilter { All, Unread }
 
 public sealed partial class NotificationItem : ObservableObject
 {
@@ -42,6 +45,7 @@ public sealed partial class NotificationItem : ObservableObject
     public string         TimestampFormatted => Timestamp.ToLocalTime().ToString("dd MMM · HH:mm", CultureInfo.InvariantCulture);
 
     [ObservableProperty] private bool _isRead;
+    [ObservableProperty] private bool _isPendingDismiss;
 }
 
 public sealed partial class NotificationViewModel : ViewModelBase
@@ -49,6 +53,7 @@ public sealed partial class NotificationViewModel : ViewModelBase
     private const int PageSize = 25;
 
     private readonly NotificationGateway _gateway;
+    private readonly ConcurrentDictionary<Guid, CancellationTokenSource> _pendingDismiss = new();
 
     private DateTimeOffset? _oldestTimestamp;
 
@@ -56,7 +61,14 @@ public sealed partial class NotificationViewModel : ViewModelBase
 
     public bool IsEmpty => Notifications.Count == 0;
 
-    [ObservableProperty] private bool _hasMore;
+    [ObservableProperty] private bool   _hasMore;
+    [ObservableProperty] private int    _unreadCount;
+    [ObservableProperty] private NotificationFilter _activeFilter = NotificationFilter.All;
+
+    public bool IsFilterAll    => ActiveFilter == NotificationFilter.All;
+    public bool IsFilterUnread => ActiveFilter == NotificationFilter.Unread;
+
+    public bool HasUnread => UnreadCount > 0;
 
     public NotificationViewModel(NotificationGateway gateway)
     {
@@ -65,18 +77,36 @@ public sealed partial class NotificationViewModel : ViewModelBase
         _ = LoadAsync();
     }
 
+    partial void OnActiveFilterChanged(NotificationFilter value)
+    {
+        OnPropertyChanged(nameof(IsFilterAll));
+        OnPropertyChanged(nameof(IsFilterUnread));
+        _ = LoadAsync();
+    }
+
+    partial void OnUnreadCountChanged(int value) => OnPropertyChanged(nameof(HasUnread));
+
     public void Publish(NotificationDto notification)
     {
         Dispatcher.UIThread.Post(() =>
         {
             Notifications.Insert(0, new NotificationItem(notification));
+            UnreadCount++;
         });
     }
 
-    // Full reload — clears the list and fetches the first page.
+    // Full reload — clears the list and fetches the first page + global unread count.
     public async Task LoadAsync(CancellationToken ct = default)
     {
-        var dtos = await _gateway.GetPageAsync(limit: PageSize, ct: ct) ?? [];
+        var onlyUnread = ActiveFilter == NotificationFilter.Unread;
+
+        var pageTask  = _gateway.GetPageAsync(limit: PageSize, onlyUnread: onlyUnread, ct: ct);
+        var countTask = _gateway.GetUnreadCountAsync(ct);
+
+        await Task.WhenAll(pageTask, countTask);
+
+        var dtos  = pageTask.Result ?? [];
+        var count = countTask.Result;
 
         await Dispatcher.UIThread.InvokeAsync(() =>
         {
@@ -85,6 +115,7 @@ public sealed partial class NotificationViewModel : ViewModelBase
                 Notifications.Add(new NotificationItem(dto));
 
             ApplyPagingState(dtos);
+            UnreadCount = count;
         });
     }
 
@@ -93,13 +124,26 @@ public sealed partial class NotificationViewModel : ViewModelBase
     [RelayCommand]
     private async Task RefreshAsync() => await LoadAsync();
 
+    [RelayCommand]
+    private void SetFilter(NotificationFilter filter)
+    {
+        if (ActiveFilter == filter) return;
+        ActiveFilter = filter;
+        // OnActiveFilterChanged triggers LoadAsync
+    }
+
     // Appends the next page of older notifications.
     [RelayCommand]
     private async Task LoadMoreAsync()
     {
         if (_oldestTimestamp is null) return;
 
-        var dtos = await _gateway.GetPageAsync(limit: PageSize, before: _oldestTimestamp, ct: CancellationToken.None) ?? [];
+        var onlyUnread = ActiveFilter == NotificationFilter.Unread;
+        var dtos = await _gateway.GetPageAsync(
+            limit: PageSize,
+            before: _oldestTimestamp,
+            onlyUnread: onlyUnread,
+            ct: CancellationToken.None) ?? [];
 
         await Dispatcher.UIThread.InvokeAsync(() =>
         {
@@ -118,45 +162,89 @@ public sealed partial class NotificationViewModel : ViewModelBase
         HasMore = dtos.Count == PageSize;
     }
 
+    // Dismiss with 4-second undo window — backend is not called until the window expires.
     [RelayCommand]
     private async Task DismissAsync(Guid id)
     {
+        var item = Notifications.FirstOrDefault(x => x.Id == id);
+        if (item is null || item.IsPendingDismiss) return;
+
+        item.IsPendingDismiss = true;
+
+        var cts = new CancellationTokenSource();
+        _pendingDismiss[id] = cts;
+
+        try
+        {
+            await Task.Delay(4000, cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            _pendingDismiss.TryRemove(id, out _);
+            await Dispatcher.UIThread.InvokeAsync(() => item.IsPendingDismiss = false);
+            return;
+        }
+
+        _pendingDismiss.TryRemove(id, out _);
+
         var ok = await _gateway.DismissAsync(id);
-        if (!ok) return;
 
         await Dispatcher.UIThread.InvokeAsync(() =>
         {
-            var item = Notifications.FirstOrDefault(x => x.Id == id);
-            if (item != null)
+            if (ok)
+            {
                 Notifications.Remove(item);
+                if (!item.IsRead)
+                    UnreadCount = Math.Max(0, UnreadCount - 1);
+            }
+            else
+            {
+                item.IsPendingDismiss = false;
+            }
         });
+    }
+
+    // Cancel a pending dismiss before the backend is called.
+    [RelayCommand]
+    private void UndoDismiss(Guid id)
+    {
+        if (_pendingDismiss.TryRemove(id, out var cts))
+            cts.Cancel();
     }
 
     [RelayCommand]
     private async Task MarkAsReadAsync(Guid id)
     {
         var item = Notifications.FirstOrDefault(x => x.Id == id);
-        if (item is null || item.IsRead) return;
+        if (item is null || item.IsRead || item.IsPendingDismiss) return;
 
-        // Optimistic update
         item.IsRead = true;
+        UnreadCount = Math.Max(0, UnreadCount - 1);
 
         var ok = await _gateway.MarkAsReadAsync(id);
         if (!ok)
+        {
             item.IsRead = false;
+            UnreadCount++;
+        }
     }
 
     [RelayCommand]
     private async Task MarkAllReadAsync()
     {
-        // Optimistic update
-        var unread = Notifications.Where(x => !x.IsRead).ToList();
+        var unread = Notifications.Where(x => !x.IsRead && !x.IsPendingDismiss).ToList();
         foreach (var item in unread)
             item.IsRead = true;
 
         var ok = await _gateway.MarkAllAsReadAsync();
-        if (!ok)
+        if (ok)
+        {
+            UnreadCount = 0;
+        }
+        else
+        {
             foreach (var item in unread)
                 item.IsRead = false;
+        }
     }
 }
