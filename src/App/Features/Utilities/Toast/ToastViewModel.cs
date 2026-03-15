@@ -10,6 +10,11 @@ namespace Misa.Ui.Avalonia.Features.Utilities.Toast;
 public sealed partial class ToastViewModel : ViewModelBase
 {
     private readonly Action _dismiss;
+    private readonly int    _durationMs;
+
+    // Tracks how many milliseconds have already elapsed across paused segments.
+    private double           _accumulatedMs;
+    private DateTimeOffset   _timerStartedAt;
     private CancellationTokenSource? _cts;
 
     public string  Title      { get; }
@@ -18,24 +23,58 @@ public sealed partial class ToastViewModel : ViewModelBase
 
     public ToastViewModel(string title, string? message, Action dismiss, int durationMs = 4000)
     {
-        Title    = title;
-        Message  = message;
-        _dismiss = dismiss;
+        Title       = title;
+        Message     = message;
+        _dismiss    = dismiss;
+        _durationMs = durationMs;
 
-        _cts = new CancellationTokenSource();
-        _ = AutoDismissAsync(_cts.Token, durationMs);
+        StartTimer(durationMs);
     }
 
-    private async Task AutoDismissAsync(CancellationToken ct, int durationMs)
+    // ── Hover pause / resume ──────────────────────────────────────────────
+
+    public void PauseAutoDismiss()
+    {
+        if (_cts is null) return; // already paused or dismissed
+
+        _accumulatedMs += (DateTimeOffset.UtcNow - _timerStartedAt).TotalMilliseconds;
+        _cts.Cancel();
+        _cts = null;
+    }
+
+    public void ResumeAutoDismiss()
+    {
+        if (_cts is not null) return; // already running
+
+        var remaining = _durationMs - _accumulatedMs;
+        if (remaining <= 0)
+        {
+            Dismiss();
+            return;
+        }
+
+        StartTimer(remaining);
+    }
+
+    // ── Internals ─────────────────────────────────────────────────────────
+
+    private void StartTimer(double remainingMs)
+    {
+        _timerStartedAt = DateTimeOffset.UtcNow;
+        _cts            = new CancellationTokenSource();
+        _ = AutoDismissAsync(_cts.Token, (int)remainingMs);
+    }
+
+    private async Task AutoDismissAsync(CancellationToken ct, int delayMs)
     {
         try
         {
-            await Task.Delay(durationMs, ct);
+            await Task.Delay(delayMs, ct);
             await Dispatcher.UIThread.InvokeAsync(Dismiss);
         }
         catch (OperationCanceledException)
         {
-            // Manually dismissed — nothing to do.
+            // Paused or manually dismissed — nothing to do.
         }
     }
 

@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Ui.Avalonia.Common.Mappings;
@@ -6,19 +7,43 @@ using NotificationViewModel = Misa.Ui.Avalonia.Features.Utilities.Notifications.
 
 namespace Misa.Ui.Avalonia.Shell.Components;
 
-public sealed partial class UtilityNavigationViewModel(ShellState shellState, NotificationViewModel notificationViewModel) : ViewModelBase
+public sealed partial class UtilityNavigationViewModel : ViewModelBase
 {
-    public NotificationViewModel NotificationViewModel { get; } = notificationViewModel;
+    private readonly ShellState            _shellState;
+    private readonly NotificationViewModel _notificationViewModel;
+
+    public NotificationViewModel NotificationViewModel => _notificationViewModel;
+
+    public bool   HasUnread => _notificationViewModel.UnreadCount > 0;
+    public string BadgeText => _notificationViewModel.UnreadCount > 9
+        ? "9+"
+        : _notificationViewModel.UnreadCount.ToString();
+
+    public UtilityNavigationViewModel(ShellState shellState, NotificationViewModel notificationViewModel)
+    {
+        _shellState            = shellState;
+        _notificationViewModel = notificationViewModel;
+
+        _notificationViewModel.PropertyChanged += OnNotificationPropertyChanged;
+    }
+
+    private void OnNotificationPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(NotificationViewModel.UnreadCount)) return;
+        OnPropertyChanged(nameof(HasUnread));
+        OnPropertyChanged(nameof(BadgeText));
+    }
+
     [RelayCommand]
     private async Task ToggleNotifications()
     {
-        if (shellState.Utility is NotificationViewModel)
+        if (_shellState.Utility is NotificationViewModel)
         {
-            shellState.Utility = null;
+            _shellState.Utility = null;
             return;
         }
-        
-        await notificationViewModel.InitializeAsync();
-        shellState.Utility = notificationViewModel;
+
+        await _notificationViewModel.InitializeAsync();
+        _shellState.Utility = _notificationViewModel;
     }
 }

@@ -8,10 +8,6 @@
              xmlns:components="clr-namespace:Misa.Ui.Avalonia.Shell.Components"
              xmlns:converters="clr-namespace:Misa.Ui.Avalonia.Common.Converters">
 
-    <UserControl.Resources>
-        <converters:GreaterThanZeroConverter x:Key="GreaterThanZeroConverter" />
-    </UserControl.Resources>
-    
     <Border Background="{StaticResource BrushPrimaryBackground}"
             BorderBrush="{StaticResource BrushBorder}"
             BorderThickness="1,0,0,0">
@@ -24,19 +20,18 @@
                     ToolTip.Tip="Notifications"
                     Command="{Binding ToggleNotificationsCommand}">
 
-                <Grid Height="20" Width="20">
+                <Grid Height="24" Width="24">
 
                     <Image Classes="utility-nav"
                            Source="{SvgImage /Assets/Icons/Shell/Utility/bell.svg}" />
 
-                    <Border Width="8"
-                            Height="8"
-                            CornerRadius="4"
-                            Background="#3B82F6"
+                    <Border Classes="notif-badge"
                             HorizontalAlignment="Right"
                             VerticalAlignment="Top"
-                            Margin="0,1,1,0"
-                            IsVisible="{Binding NotificationViewModel.UnreadCount, Converter={StaticResource GreaterThanZeroConverter}}" />
+                            IsVisible="{Binding HasUnread}">
+                        <TextBlock Classes="notif-badge-text"
+                                   Text="{Binding BadgeText}"/>
+                    </Border>
 
                 </Grid>
 

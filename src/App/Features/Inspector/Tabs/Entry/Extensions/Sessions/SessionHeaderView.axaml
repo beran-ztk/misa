@@ -32,7 +32,8 @@
                         Spacing="8"
                         VerticalAlignment="Center">
 
-                <Button Classes="workspace-toolbar-icon" 
+                <Button Classes="workspace-toolbar-icon"
+                        ToolTip.Tip="Start session"
                         Command="{Binding ShowStartSessionPanelCommand}"
                         IsVisible="{Binding CanStartSession}">
                     <Image Width="16" Height="16"
@@ -40,6 +41,7 @@
                 </Button>
 
                 <Button Classes="workspace-toolbar-icon"
+                        ToolTip.Tip="Pause session"
                         Command="{Binding ShowPauseSessionPanelCommand}"
                         IsVisible="{Binding CanPauseSession}">
                     <Image Width="16" Height="16"
@@ -47,6 +49,7 @@
                 </Button>
 
                 <Button Classes="workspace-toolbar-icon"
+                        ToolTip.Tip="Continue session"
                         Command="{Binding ContinueSessionCommand}"
                         IsVisible="{Binding CanContinueSession}">
                     <Image Width="16" Height="16"
@@ -54,29 +57,12 @@
                 </Button>
 
                 <Button Classes="workspace-toolbar-icon"
+                        ToolTip.Tip="End session"
                         Command="{Binding ShowEndSessionPanelCommand}"
                         IsVisible="{Binding CanEndSession}">
                     <Image Width="16" Height="16"
                            Source="{SvgImage /Assets/Icons/Inspector/Session/stop.svg}"/>
                 </Button>
-
-                <DropDownButton Classes="workspace-toolbar-icon"
-                                IsVisible="{Binding HasActiveSession}"
-                                VerticalAlignment="Center">
-
-                    <DropDownButton.Content>
-                        <TextBlock Text="▾" FontSize="16" />
-                    </DropDownButton.Content>
-
-                    <DropDownButton.Flyout>
-                        <Flyout Placement="Bottom">
-                            <StackPanel>
-                                <sessions:CurrentSessionView />
-                            </StackPanel>
-                        </Flyout>
-                    </DropDownButton.Flyout>
-
-                </DropDownButton>
 
             </StackPanel>
         </StackPanel>
