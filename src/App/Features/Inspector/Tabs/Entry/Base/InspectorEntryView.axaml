@@ -14,7 +14,7 @@
             <Border Grid.Row="0"
                     BorderBrush="{StaticResource BrushBorder}"
                     BorderThickness="0,0,0,2"
-                    Padding="0,10">
+                    Padding="0,8">
 
                 <Grid ColumnDefinitions="*,Auto"
                       ColumnSpacing="12">
@@ -27,7 +27,7 @@
                                FontWeight="SemiBold" />
 
                     <StackPanel Grid.Column="1"
-                                Spacing="10"
+                                Spacing="8"
                                 Orientation="Horizontal">
                         <!-- Refresh -->
                         <Button Classes="workspace-toolbar-icon"

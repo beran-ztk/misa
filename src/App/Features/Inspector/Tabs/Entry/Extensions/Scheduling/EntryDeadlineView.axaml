@@ -9,7 +9,7 @@
 
     <Border BorderThickness="0,0,0,1"
             BorderBrush="{StaticResource BrushBorder}"
-            Padding="4,14">
+            Padding="4,16">
 
         <Grid ColumnDefinitions="*,Auto"
               RowDefinitions="Auto,Auto"

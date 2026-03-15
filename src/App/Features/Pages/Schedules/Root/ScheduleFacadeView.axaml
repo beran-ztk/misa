@@ -115,7 +115,7 @@
         <Grid Grid.Row="1">
           <Border Classes="workspace-content-frame"
                   Background="{StaticResource BrushPrimaryBackgroundLight}"
-                  Padding="30,10">
+                  Padding="24,8">
 
             <ListBox ItemsSource="{Binding State.FilteredItems}"
                      SelectedItem="{Binding State.SelectedItem, Mode=TwoWay}"
@@ -127,7 +127,7 @@
                 <DataTemplate x:DataType="schedules:ScheduleDto">
 
                   <Border Classes="schedule-card"
-                          Padding="14,12"
+                          Padding="16,12"
                           BorderBrush="{StaticResource BrushBorder}"
                           BorderThickness="1"
                           CornerRadius="8"
@@ -161,7 +161,7 @@
 
                       <!-- Meta row: execution status + timezone (quiet, contextual) -->
                       <Grid ColumnDefinitions="*,Auto"
-                            Margin="0,0,0,10">
+                            Margin="0,0,0,8">
                         <TextBlock Text="{Binding ExecutionStatus}"
                                    Classes="muted" />
                         <TextBlock Grid.Column="1"
@@ -173,7 +173,7 @@
                       <Border Height="1"
                               Background="{StaticResource BrushBorder}"
                               Opacity="0.40"
-                              Margin="0,0,0,10" />
+                              Margin="0,0,0,8" />
 
                       <!-- Trigger summary — primary content statement -->
                       <TextBlock Text="{Binding TriggerSummary}"

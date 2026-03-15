@@ -7,15 +7,15 @@
                 <Setter Property="CornerRadius" Value="10"/>
                 <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}"/>
                 <Setter Property="BorderThickness" Value="2"/>
-                <Setter Property="Padding" Value="20"/>
+                <Setter Property="Padding" Value="16"/>
         </Style>
-        
+
         <Style Selector="Grid.addpanel-main-grid">
-                <Setter Property="RowSpacing" Value="26"/>
+                <Setter Property="RowSpacing" Value="24"/>
         </Style>
-        
+
         <Style Selector="StackPanel.addpanel-body">
-                <Setter Property="Spacing" Value="20"/>
+                <Setter Property="Spacing" Value="16"/>
         </Style>
         
         <Style Selector="StackPanel.addpanel-controls">
