@@ -1,4 +1,4 @@
-﻿<UserControl xmlns="https://github.com/avaloniaui"
+<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -7,262 +7,245 @@
              xmlns:create="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Schedules.Create"
              x:DataType="create:CreateScheduleViewModel">
 
-    <StackPanel Classes="addpanel-body">
+    <StackPanel Spacing="28">
 
-        <!-- Title -->
-        <StackPanel Classes="addpanel-controls">
-            <TextBlock Text="Add a title"
-                       Classes="addpanel-text"/>
+        <!-- ── Basic ─────────────────────────────────────────────────── -->
+        <StackPanel>
+            <TextBlock Text="Basic" Classes="form-section-header"/>
+            <StackPanel Spacing="16">
 
-            <TextBox Classes="addpanel-oneliner"
-                     Watermark="Title…"
-                     Text="{Binding Title, Mode=TwoWay}" />
-
-            <TextBlock Text="{Binding ErrorMessage}"
-                       IsVisible="{Binding HasValidationError}" />
-        </StackPanel>
-
-        <!-- Description -->
-        <StackPanel Classes="addpanel-controls">
-            <TextBlock Text="Add a Description" 
-                       Classes="addpanel-text" />
-            <TextBox Classes="addpanel-oneliner"
-                     Watermark="Description…"
-                     Text="{Binding Description, Mode=TwoWay}" />
-        </StackPanel>
-        
-        <!-- Frequency -->
-        <StackPanel Classes="addpanel-controls">
-            <TextBlock Text="Select the frequency type"
-                       Classes="addpanel-text"/>
-
-            <ComboBox Classes="addpanel-combo"
-                      ItemsSource="{Binding FrequencyTypes}"
-                      SelectedValue="{Binding SelectedFrequencyType}" />
-        </StackPanel>
-
-        <StackPanel Classes="addpanel-controls">
-            <TextBlock Text="Set the interval"
-                       Classes="addpanel-text"/>
-
-            <NumericUpDown Classes="addpanel-num"
-                           Value="{Binding FrequencyInterval, Mode=TwoWay}"
-                           Minimum="1"
-                           Maximum="1000"
-                           Increment="1"
-                           FormatString="N0" />
-        </StackPanel>
-
-        <!-- Lookahead -->
-        <StackPanel Classes="addpanel-controls">
-            <TextBlock Text="Lookahead limit"
-                       Classes="addpanel-text"/>
-
-            <NumericUpDown Classes="addpanel-num"
-                           Value="{Binding LookaheadLimit, Mode=TwoWay}"
-                           Minimum="1"
-                           Maximum="100"
-                           Increment="1"
-                           FormatString="N0" />
-        </StackPanel>
-
-        <!-- Occurrence limit -->
-        <StackPanel Classes="addpanel-controls">
-            <TextBlock Text="Occurrence count limit (optional)"
-                       Classes="addpanel-text"/>
-
-            <NumericUpDown Classes="addpanel-num"
-                           Value="{Binding OccurrenceCountLimit, Mode=TwoWay}"
-                           Minimum="0"
-                           Maximum="100000"
-                           Increment="1"
-                           FormatString="N0" />
-        </StackPanel>
-
-        <!-- Misfire policy -->
-        <StackPanel Classes="addpanel-controls">
-            <TextBlock Text="Select misfire policy"
-                       Classes="addpanel-text"/>
-
-            <ComboBox Classes="addpanel-combo"
-                      ItemsSource="{Binding MisfirePolicies}"
-                      SelectedValue="{Binding SelectedMisfirePolicy, Mode=TwoWay}" />
-        </StackPanel>
-
-        <!-- Occurrence TTL -->
-        <StackPanel Classes="addpanel-controls">
-            <TextBlock Text="Occurrence TTL (optional)"
-                       Classes="addpanel-text"/>
-
-            <Grid ColumnDefinitions="Auto,*"
-                  RowDefinitions="Auto,Auto,Auto"
-                  ColumnSpacing="12"
-                  RowSpacing="10">
-
-                <TextBlock Grid.Row="0" Grid.Column="0"
-                           VerticalAlignment="Center"
-                           Text="Days"
-                           Classes="addpanel-text"/>
-                <NumericUpDown Grid.Row="0" Grid.Column="1"
-                               Classes="addpanel-num"
-                               Minimum="0"
-                               Increment="1"
-                               Value="{Binding OccurrenceTtlDays, Mode=TwoWay}" />
-
-                <TextBlock Grid.Row="1" Grid.Column="0"
-                           VerticalAlignment="Center"
-                           Text="Hours"
-                           Classes="addpanel-text"/>
-                <NumericUpDown Grid.Row="1" Grid.Column="1"
-                               Classes="addpanel-num"
-                               Minimum="0"
-                               Maximum="23"
-                               Increment="1"
-                               Value="{Binding OccurrenceTtlHours, Mode=TwoWay}" />
-
-                <TextBlock Grid.Row="2" Grid.Column="0"
-                           VerticalAlignment="Center"
-                           Text="Minutes"
-                           Classes="addpanel-text"/>
-                <NumericUpDown Grid.Row="2" Grid.Column="1"
-                               Classes="addpanel-num"
-                               Minimum="0"
-                               Maximum="59"
-                               Increment="1"
-                               Value="{Binding OccurrenceTtlMinutes, Mode=TwoWay}" />
-            </Grid>
-        </StackPanel>
-
-        <!-- Time window -->
-        <StackPanel Classes="addpanel-controls">
-            <TextBlock Text="Start time (optional)"
-                       Classes="addpanel-text"/>
-            <TimePicker Classes="addpanel-time"
-                        SelectedTime="{Binding StartTime, Mode=TwoWay}" />
-        </StackPanel>
-
-        <StackPanel Classes="addpanel-controls">
-            <TextBlock Text="End time (optional)"
-                       Classes="addpanel-text"/>
-            <TimePicker Classes="addpanel-time"
-                        SelectedTime="{Binding EndTime, Mode=TwoWay}" />
-        </StackPanel>
-
-        <!-- Active range -->
-        <StackPanel Classes="addpanel-controls">
-            <TextBlock Text="Active from"
-                       Classes="addpanel-text"/>
-
-            <StackPanel Orientation="Vertical" Spacing="10">
-                <DatePicker Classes="addpanel-date"
-                            SelectedDate="{Binding ActiveFromDate, Mode=TwoWay}" />
-                <TimePicker Classes="addpanel-time"
-                            SelectedTime="{Binding ActiveFromTime, Mode=TwoWay}" />
-            </StackPanel>
-        </StackPanel>
-
-        <StackPanel Classes="addpanel-controls">
-            <TextBlock Text="Active until (optional)"
-                       Classes="addpanel-text"/>
-
-            <StackPanel Orientation="Vertical" Spacing="10">
-                <DatePicker Classes="addpanel-date"
-                            SelectedDate="{Binding ActiveUntilDate, Mode=TwoWay}" />
-                <TimePicker Classes="addpanel-time"
-                            SelectedTime="{Binding ActiveUntilTime, Mode=TwoWay}" />
-            </StackPanel>
-        </StackPanel>
-
-        <!-- Restrictions -->
-        <StackPanel Classes="addpanel-controls">
-            <TextBlock Text="Restrictions (optional)"
-                       Classes="addpanel-text"/>
-
-            <!-- By day -->
-            <Expander IsExpanded="False"
-                      Classes="addpanel-expander"
-                      Header="By weekday">
-
-                <StackPanel>
-                    <CheckBox Content="Monday"    
-                              IsChecked="{Binding ByDayMon, Mode=TwoWay}" />
-                    <CheckBox Content="Tuesday"   
-                              IsChecked="{Binding ByDayTue, Mode=TwoWay}" />
-                    <CheckBox Content="Wednesday" 
-                              IsChecked="{Binding ByDayWed, Mode=TwoWay}" />
-                    <CheckBox Content="Thursday"  
-                              IsChecked="{Binding ByDayThu, Mode=TwoWay}" />
-                    <CheckBox Content="Friday"    
-                              IsChecked="{Binding ByDayFri, Mode=TwoWay}" />
-                    <CheckBox Content="Saturday"  
-                              IsChecked="{Binding ByDaySat, Mode=TwoWay}" />
-                    <CheckBox Content="Sunday"    
-                              IsChecked="{Binding ByDaySun, Mode=TwoWay}" />
-                </StackPanel>
-            </Expander>
-
-            <!-- By month -->
-            <Expander IsExpanded="False"
-                      Classes="addpanel-expander"
-                      Header="By month">
-
-                <StackPanel>
-                    <CheckBox Content="January"
-                              IsChecked="{Binding ByMonthJan, Mode=TwoWay}" />
-                    <CheckBox Content="February"
-                              IsChecked="{Binding ByMonthFeb, Mode=TwoWay}" />
-                    <CheckBox Content="March"
-                              IsChecked="{Binding ByMonthMar, Mode=TwoWay}" />
-                    <CheckBox Content="April"
-                              IsChecked="{Binding ByMonthApr, Mode=TwoWay}" />
-                    <CheckBox Content="May"
-                              IsChecked="{Binding ByMonthMay, Mode=TwoWay}" />
-                    <CheckBox Content="June"
-                              IsChecked="{Binding ByMonthJun, Mode=TwoWay}" />
-                    <CheckBox Content="July"
-                              IsChecked="{Binding ByMonthJul, Mode=TwoWay}" />
-                    <CheckBox Content="August"
-                              IsChecked="{Binding ByMonthAug, Mode=TwoWay}" />
-                    <CheckBox Content="September"
-                              IsChecked="{Binding ByMonthSep, Mode=TwoWay}" />
-                    <CheckBox Content="October"
-                              IsChecked="{Binding ByMonthOct, Mode=TwoWay}" />
-                    <CheckBox Content="November"
-                              IsChecked="{Binding ByMonthNov, Mode=TwoWay}" />
-                    <CheckBox Content="December"
-                              IsChecked="{Binding ByMonthDec, Mode=TwoWay}" />
-                </StackPanel>
-            </Expander>
-
-            <!-- By month day -->
-            <Expander IsExpanded="False"
-                      Classes="addpanel-expander"
-                      Header="By month day">
-
-                <StackPanel>
-                    <TextBlock Text="Enter one or more days of the month as a comma separated list (for example: 1, 15, 31)"
-                               Width="300"
-                               Classes="addpanel-text"/>
-
+                <StackPanel Classes="addpanel-controls">
+                    <TextBlock Text="Add a title" Classes="addpanel-text"/>
                     <TextBox Classes="addpanel-oneliner"
-                             Watermark="1, 15, 31"
-                             Text="{Binding ByMonthDayCsv, Mode=TwoWay}" />
+                             Watermark="Title…"
+                             Text="{Binding Title, Mode=TwoWay}" />
+                    <TextBlock Text="{Binding ErrorMessage}"
+                               IsVisible="{Binding HasValidationError}" />
                 </StackPanel>
-            </Expander>
 
+                <StackPanel Classes="addpanel-controls">
+                    <TextBlock Text="Add a description" Classes="addpanel-text"/>
+                    <TextBox Classes="addpanel-oneliner"
+                             Watermark="Description…"
+                             Text="{Binding Description, Mode=TwoWay}" />
+                </StackPanel>
+
+            </StackPanel>
         </StackPanel>
 
+        <!-- ── Schedule ──────────────────────────────────────────────── -->
+        <StackPanel>
+            <TextBlock Text="Schedule" Classes="form-section-header"/>
+            <StackPanel Spacing="16">
 
-        <!-- Action type -->
-        <StackPanel Classes="addpanel-controls">
-            <TextBlock Text="Select action type"
-                       Classes="addpanel-text"/>
+                <StackPanel Classes="addpanel-controls">
+                    <TextBlock Text="Frequency type" Classes="addpanel-text"/>
+                    <ComboBox Classes="addpanel-combo"
+                              ItemsSource="{Binding FrequencyTypes}"
+                              SelectedValue="{Binding SelectedFrequencyType}" />
+                </StackPanel>
 
-            <ComboBox Classes="addpanel-combo"
-                      ItemsSource="{Binding ActionTypes}"
-                      SelectedValue="{Binding SelectedActionType}" />
+                <StackPanel Classes="addpanel-controls">
+                    <TextBlock Text="Interval" Classes="addpanel-text"/>
+                    <NumericUpDown Classes="addpanel-num"
+                                   Value="{Binding FrequencyInterval, Mode=TwoWay}"
+                                   Minimum="1"
+                                   Maximum="1000"
+                                   Increment="1"
+                                   FormatString="N0" />
+                </StackPanel>
+
+                <StackPanel Classes="addpanel-controls">
+                    <TextBlock Text="Lookahead limit" Classes="addpanel-text"/>
+                    <NumericUpDown Classes="addpanel-num"
+                                   Value="{Binding LookaheadLimit, Mode=TwoWay}"
+                                   Minimum="1"
+                                   Maximum="100"
+                                   Increment="1"
+                                   FormatString="N0" />
+                </StackPanel>
+
+                <StackPanel Classes="addpanel-controls">
+                    <TextBlock Text="Misfire policy" Classes="addpanel-text"/>
+                    <ComboBox Classes="addpanel-combo"
+                              ItemsSource="{Binding MisfirePolicies}"
+                              SelectedValue="{Binding SelectedMisfirePolicy, Mode=TwoWay}" />
+                </StackPanel>
+
+            </StackPanel>
+        </StackPanel>
+
+        <!-- ── Lifetime ──────────────────────────────────────────────── -->
+        <StackPanel>
+            <TextBlock Text="Lifetime" Classes="form-section-header"/>
+            <StackPanel Spacing="16">
+
+                <StackPanel Classes="addpanel-controls">
+                    <TextBlock Text="Occurrence count limit (optional)" Classes="addpanel-text"/>
+                    <NumericUpDown Classes="addpanel-num"
+                                   Value="{Binding OccurrenceCountLimit, Mode=TwoWay}"
+                                   Minimum="0"
+                                   Maximum="100000"
+                                   Increment="1"
+                                   FormatString="N0" />
+                </StackPanel>
+
+                <StackPanel Classes="addpanel-controls">
+                    <TextBlock Text="Occurrence TTL (optional)" Classes="addpanel-text"/>
+                    <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,Auto"
+                          ColumnSpacing="8">
+                        <TextBlock Grid.Column="0"
+                                   Text="Days"
+                                   Classes="addpanel-text"
+                                   VerticalAlignment="Center"/>
+                        <NumericUpDown Grid.Column="1"
+                                       Classes="addpanel-num"
+                                       MinWidth="80"
+                                       Minimum="0"
+                                       Increment="1"
+                                       Value="{Binding OccurrenceTtlDays, Mode=TwoWay}" />
+                        <TextBlock Grid.Column="2"
+                                   Text="Hours"
+                                   Classes="addpanel-text"
+                                   Margin="8,0,0,0"
+                                   VerticalAlignment="Center"/>
+                        <NumericUpDown Grid.Column="3"
+                                       Classes="addpanel-num"
+                                       MinWidth="80"
+                                       Minimum="0"
+                                       Maximum="23"
+                                       Increment="1"
+                                       Value="{Binding OccurrenceTtlHours, Mode=TwoWay}" />
+                        <TextBlock Grid.Column="4"
+                                   Text="Minutes"
+                                   Classes="addpanel-text"
+                                   Margin="8,0,0,0"
+                                   VerticalAlignment="Center"/>
+                        <NumericUpDown Grid.Column="5"
+                                       Classes="addpanel-num"
+                                       MinWidth="80"
+                                       Minimum="0"
+                                       Maximum="59"
+                                       Increment="1"
+                                       Value="{Binding OccurrenceTtlMinutes, Mode=TwoWay}" />
+                    </Grid>
+                </StackPanel>
+
+            </StackPanel>
+        </StackPanel>
+
+        <!-- ── Time window ───────────────────────────────────────────── -->
+        <StackPanel>
+            <TextBlock Text="Time Window" Classes="form-section-header"/>
+            <StackPanel Spacing="16">
+
+                <StackPanel Classes="addpanel-controls">
+                    <TextBlock Text="Start time (optional)" Classes="addpanel-text"/>
+                    <TimePicker Classes="addpanel-time"
+                                SelectedTime="{Binding StartTime, Mode=TwoWay}" />
+                </StackPanel>
+
+                <StackPanel Classes="addpanel-controls">
+                    <TextBlock Text="End time (optional)" Classes="addpanel-text"/>
+                    <TimePicker Classes="addpanel-time"
+                                SelectedTime="{Binding EndTime, Mode=TwoWay}" />
+                </StackPanel>
+
+            </StackPanel>
+        </StackPanel>
+
+        <!-- ── Activation ────────────────────────────────────────────── -->
+        <StackPanel>
+            <TextBlock Text="Activation" Classes="form-section-header"/>
+            <StackPanel Spacing="16">
+
+                <StackPanel Classes="addpanel-controls">
+                    <TextBlock Text="Active from" Classes="addpanel-text"/>
+                    <StackPanel Spacing="8">
+                        <DatePicker Classes="addpanel-date"
+                                    SelectedDate="{Binding ActiveFromDate, Mode=TwoWay}" />
+                        <TimePicker Classes="addpanel-time"
+                                    SelectedTime="{Binding ActiveFromTime, Mode=TwoWay}" />
+                    </StackPanel>
+                </StackPanel>
+
+                <StackPanel Classes="addpanel-controls">
+                    <TextBlock Text="Active until (optional)" Classes="addpanel-text"/>
+                    <StackPanel Spacing="8">
+                        <DatePicker Classes="addpanel-date"
+                                    SelectedDate="{Binding ActiveUntilDate, Mode=TwoWay}" />
+                        <TimePicker Classes="addpanel-time"
+                                    SelectedTime="{Binding ActiveUntilTime, Mode=TwoWay}" />
+                    </StackPanel>
+                </StackPanel>
+
+            </StackPanel>
+        </StackPanel>
+
+        <!-- ── Restrictions ──────────────────────────────────────────── -->
+        <StackPanel>
+            <TextBlock Text="Restrictions" Classes="form-section-header"/>
+            <StackPanel Spacing="8">
+
+                <Expander IsExpanded="False"
+                          Classes="addpanel-expander"
+                          Header="By weekday">
+                    <StackPanel>
+                        <CheckBox Content="Monday"    IsChecked="{Binding ByDayMon, Mode=TwoWay}" />
+                        <CheckBox Content="Tuesday"   IsChecked="{Binding ByDayTue, Mode=TwoWay}" />
+                        <CheckBox Content="Wednesday" IsChecked="{Binding ByDayWed, Mode=TwoWay}" />
+                        <CheckBox Content="Thursday"  IsChecked="{Binding ByDayThu, Mode=TwoWay}" />
+                        <CheckBox Content="Friday"    IsChecked="{Binding ByDayFri, Mode=TwoWay}" />
+                        <CheckBox Content="Saturday"  IsChecked="{Binding ByDaySat, Mode=TwoWay}" />
+                        <CheckBox Content="Sunday"    IsChecked="{Binding ByDaySun, Mode=TwoWay}" />
+                    </StackPanel>
+                </Expander>
+
+                <Expander IsExpanded="False"
+                          Classes="addpanel-expander"
+                          Header="By month">
+                    <StackPanel>
+                        <CheckBox Content="January"   IsChecked="{Binding ByMonthJan, Mode=TwoWay}" />
+                        <CheckBox Content="February"  IsChecked="{Binding ByMonthFeb, Mode=TwoWay}" />
+                        <CheckBox Content="March"     IsChecked="{Binding ByMonthMar, Mode=TwoWay}" />
+                        <CheckBox Content="April"     IsChecked="{Binding ByMonthApr, Mode=TwoWay}" />
+                        <CheckBox Content="May"       IsChecked="{Binding ByMonthMay, Mode=TwoWay}" />
+                        <CheckBox Content="June"      IsChecked="{Binding ByMonthJun, Mode=TwoWay}" />
+                        <CheckBox Content="July"      IsChecked="{Binding ByMonthJul, Mode=TwoWay}" />
+                        <CheckBox Content="August"    IsChecked="{Binding ByMonthAug, Mode=TwoWay}" />
+                        <CheckBox Content="September" IsChecked="{Binding ByMonthSep, Mode=TwoWay}" />
+                        <CheckBox Content="October"   IsChecked="{Binding ByMonthOct, Mode=TwoWay}" />
+                        <CheckBox Content="November"  IsChecked="{Binding ByMonthNov, Mode=TwoWay}" />
+                        <CheckBox Content="December"  IsChecked="{Binding ByMonthDec, Mode=TwoWay}" />
+                    </StackPanel>
+                </Expander>
+
+                <Expander IsExpanded="False"
+                          Classes="addpanel-expander"
+                          Header="By month day">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Enter one or more days of the month as a comma-separated list (e.g. 1, 15, 31)"
+                                   Classes="addpanel-text"/>
+                        <TextBox Classes="addpanel-oneliner"
+                                 Watermark="1, 15, 31"
+                                 Text="{Binding ByMonthDayCsv, Mode=TwoWay}" />
+                    </StackPanel>
+                </Expander>
+
+            </StackPanel>
+        </StackPanel>
+
+        <!-- ── Action ────────────────────────────────────────────────── -->
+        <StackPanel>
+            <TextBlock Text="Action" Classes="form-section-header"/>
+            <StackPanel Classes="addpanel-controls">
+                <TextBlock Text="Action type" Classes="addpanel-text"/>
+                <ComboBox Classes="addpanel-combo"
+                          ItemsSource="{Binding ActionTypes}"
+                          SelectedValue="{Binding SelectedActionType}" />
+            </StackPanel>
         </StackPanel>
 
     </StackPanel>
-    
+
 </UserControl>

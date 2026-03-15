@@ -56,6 +56,14 @@
                 </Style>
         </Style>
         
+        <!-- Form section header -->
+        <Style Selector="TextBlock.form-section-header">
+                <Setter Property="FontSize" Value="11"/>
+                <Setter Property="FontWeight" Value="SemiBold"/>
+                <Setter Property="Foreground" Value="{DynamicResource BrushTextSecondary}"/>
+                <Setter Property="Margin" Value="0,0,0,12"/>
+        </Style>
+
         <!-- Content -->
         <Style Selector="TextBlock.addpanel-text">
                 <Setter Property="FontSize" Value="{StaticResource FontSizeMedium}"/>
