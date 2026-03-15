@@ -11,20 +11,24 @@ namespace Misa.Ui.Avalonia.Shell.Base;
 
 public partial class ShellWindowViewModel : ViewModelBase
 {
-    public ShellState ShellState { get; }
+    public ShellState                ShellState        { get; }
+    public UtilityNavigationViewModel UtilityNavigation { get; }
     private IServiceProvider ServiceProvider { get; }
     public required ILayerCloser LayerCloser { get; init; }
+
     public ShellWindowViewModel(ShellState shellState, IServiceProvider serviceProvider)
     {
-        ShellState = shellState; 
+        ShellState      = shellState;
         ServiceProvider = serviceProvider;
-        
+
         LayerCloser = ServiceProvider.GetRequiredService<ILayerCloser>();
-        
-        ShellState.Header = ServiceProvider.GetRequiredService<HeaderViewModel>(); 
-        ShellState.Footer = ServiceProvider.GetRequiredService<FooterViewModel>(); 
-        ShellState.WorkspaceNavigation = ServiceProvider.GetRequiredService<WorkspaceNavigationViewModel>(); 
-        ShellState.Inspector = ServiceProvider.GetRequiredService<InspectorFacadeViewModel>(); 
-        ShellState.UtilityNavigation = ServiceProvider.GetRequiredService<UtilityNavigationViewModel>();
+
+        ShellState.Header             = ServiceProvider.GetRequiredService<HeaderViewModel>();
+        ShellState.Footer             = ServiceProvider.GetRequiredService<FooterViewModel>();
+        ShellState.WorkspaceNavigation = ServiceProvider.GetRequiredService<WorkspaceNavigationViewModel>();
+        ShellState.Inspector          = ServiceProvider.GetRequiredService<InspectorFacadeViewModel>();
+
+        UtilityNavigation             = ServiceProvider.GetRequiredService<UtilityNavigationViewModel>();
+        ShellState.UtilityNavigation  = UtilityNavigation;
     }
 }

@@ -1,7 +1,7 @@
-﻿using Misa.Application.Features.Entities.Extensions.Items.Features.Scheduling.Commands;
+﻿using Misa.Application.Features.Items.Schedules.Commands;
 using Wolverine;
 
-namespace Misa.Api.Services.Features.Items.Features.Scheduler;
+namespace Misa.Api.Workers;
 
 public class ScheduleExecutingWorker(IServiceProvider provider, ILogger<ScheduleExecutingWorker> logger) : BackgroundService
 {

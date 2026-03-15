@@ -49,7 +49,10 @@ public static class CompositionRoot
         sc.AddSingleton<LayerProxy>();
         sc.AddSingleton<ILayerCloser>(sp => sp.GetRequiredService<LayerProxy>());
         sc.AddSingleton<RemoteProxy>();
-        sc.AddSingleton<SignalRNotificationClient>();
+        sc.AddSingleton<SignalRNotificationClient>(sp =>
+            new SignalRNotificationClient(
+                sp.GetRequiredService<UserState>(),
+                baseAddress + "/hubs/updates"));
         sc.AddTransient<LayerHostView>();
 
         sc.AddSingleton(new HttpClient { BaseAddress = new Uri(baseAddress) });
@@ -62,6 +65,7 @@ public static class CompositionRoot
 
         sc.AddSingleton<IWorkspaceHost>(sp => sp.GetRequiredService<ShellState>());
         sc.AddSingleton<ILayerHost>(sp => sp.GetRequiredService<ShellState>());
+        sc.AddSingleton<IToastHost>(sp => sp.GetRequiredService<ShellState>());
         
         // VMs
         sc.AddTransient<AuthenticationWindowViewModel>();
@@ -140,6 +144,7 @@ public static class CompositionRoot
 
     private static void AddUtilities(this IServiceCollection sc)
     {
+        sc.AddSingleton<NotificationGateway>();
         sc.AddSingleton<NotificationViewModel>();
     }
 }

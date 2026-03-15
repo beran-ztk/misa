@@ -1,0 +1,33 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Misa.Ui.Avalonia.Features.Utilities.Toast.ToastView"
+             xmlns:vm="clr-namespace:Misa.Ui.Avalonia.Features.Utilities.Toast"
+             x:DataType="vm:ToastViewModel">
+
+    <Border Classes="toast-container">
+
+        <Grid RowDefinitions="Auto,Auto"
+              ColumnDefinitions="*,Auto">
+
+            <!-- Title row -->
+            <TextBlock Grid.Row="0" Grid.Column="0"
+                       Classes="toast-title"
+                       Text="{Binding Title}"
+                       VerticalAlignment="Center"/>
+
+            <Button Grid.Row="0" Grid.Column="1"
+                    Classes="toast-close"
+                    Command="{Binding DismissCommand}">
+                <Image Source="{SvgImage /Assets/Icons/Common/cancel.svg}" Width="10" Height="10"/>
+            </Button>
+
+            <!-- Message row -->
+            <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                       Classes="toast-message"
+                       Text="{Binding Message}"
+                       IsVisible="{Binding HasMessage}"/>
+
+        </Grid>
+    </Border>
+
+</UserControl>

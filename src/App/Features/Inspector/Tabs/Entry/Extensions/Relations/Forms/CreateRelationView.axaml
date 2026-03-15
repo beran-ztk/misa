@@ -46,7 +46,7 @@
                  Background="{StaticResource BrushPrimaryBackground}">
             <ListBox.ItemTemplate>
                 <DataTemplate x:DataType="dtos:ItemLookupDto">
-                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
 
                         <TextBlock Grid.Column="0"
                                    Text="{Binding Title}"

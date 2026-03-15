@@ -39,6 +39,7 @@
         <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.14" />
         <PackageReference Include="NodaTime" Version="3.3.0" />
         <PackageReference Include="Svg.Controls.Skia.Avalonia" Version="11.3.6" />
+        <PackageReference Include="TimeZoneConverter" Version="7.2.0" />
         <PackageReference Include="Xaml.Behaviors.Avalonia" Version="11.3.6" />
         <PackageReference Include="Xaml.Behaviors.Interactions" Version="11.3.6" />
     </ItemGroup>
@@ -106,6 +107,12 @@
       </Compile>
       <Compile Update="Common\Components\DeadlinePicker\DeadlinePickerView.axaml.cs">
         <DependentUpon>DeadlinePickerView.axaml</DependentUpon>
+      </Compile>
+      <Compile Update="Features\Inspector\Tabs\Entry\Base\InspectorEntryBodyView.axaml.cs">
+        <DependentUpon>InspectorEntryBodyView.axaml</DependentUpon>
+      </Compile>
+      <Compile Update="Features\Utilities\Toast\ToastView.axaml.cs">
+        <DependentUpon>ToastView.axaml</DependentUpon>
       </Compile>
     </ItemGroup>
 

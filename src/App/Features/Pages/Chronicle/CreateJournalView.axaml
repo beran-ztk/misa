@@ -6,49 +6,59 @@
              x:Class="Misa.Ui.Avalonia.Features.Pages.Chronicle.CreateJournalView"
              xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Chronicle"
              x:DataType="root:CreateJournalViewModel">
-    
-    <StackPanel Classes="addpanel-body">
-        <!-- Title -->
-        <StackPanel Classes="addpanel-controls">
-            <TextBlock Text="Add a title" 
-                       Classes="addpanel-text" />
-            <TextBox Classes="addpanel-oneliner"
-                     Watermark="Title…"
-                     Text="{Binding JournalTitle, Mode=TwoWay}" />
-        </StackPanel>
-        
-        <!-- Description -->
-        <StackPanel Classes="addpanel-controls">
-            <TextBlock Text="Add a Description" 
-                       Classes="addpanel-text" />
-            <TextBox Classes="addpanel-multiline"
-                     Watermark="Description…"
-                     Text="{Binding Description, Mode=TwoWay}" />
-        </StackPanel>
-        
-        <!-- Time range -->
-        <StackPanel Classes="addpanel-controls">
-            <TextBlock Text="Occurred at"
-                       Classes="addpanel-text"/>
 
-            <StackPanel Orientation="Vertical" Spacing="10">
-                <DatePicker Classes="addpanel-date"
-                            SelectedDate="{Binding OccurredAtDate, Mode=TwoWay}" />
-                <TimePicker Classes="addpanel-time"
-                            SelectedTime="{Binding OccurredAtTime, Mode=TwoWay}" />
+    <StackPanel Spacing="28">
+
+        <!-- ── Basic ─────────────────────────────────────────────────── -->
+        <StackPanel>
+            <TextBlock Text="Basic" Classes="form-section-header"/>
+            <StackPanel Spacing="16">
+
+                <StackPanel Classes="addpanel-controls">
+                    <TextBlock Text="Add a title" Classes="addpanel-text"/>
+                    <TextBox Classes="addpanel-oneliner"
+                             Watermark="Title…"
+                             Text="{Binding JournalTitle, Mode=TwoWay}" />
+                </StackPanel>
+
+                <StackPanel Classes="addpanel-controls">
+                    <TextBlock Text="Add a description" Classes="addpanel-text"/>
+                    <TextBox Classes="addpanel-multiline"
+                             Watermark="Description…"
+                             Text="{Binding Description, Mode=TwoWay}" />
+                </StackPanel>
+
             </StackPanel>
         </StackPanel>
 
-        <StackPanel Classes="addpanel-controls">
-            <TextBlock Text="Until at (optional)"
-                       Classes="addpanel-text"/>
+        <!-- ── When ──────────────────────────────────────────────────── -->
+        <StackPanel>
+            <TextBlock Text="When" Classes="form-section-header"/>
+            <StackPanel Spacing="16">
 
-            <StackPanel Orientation="Vertical" Spacing="10">
-                <DatePicker Classes="addpanel-date"
-                            SelectedDate="{Binding UntilAtDate, Mode=TwoWay}" />
-                <TimePicker Classes="addpanel-time"
-                            SelectedTime="{Binding UntilAtTime, Mode=TwoWay}" />
+                <StackPanel Classes="addpanel-controls">
+                    <TextBlock Text="Occurred at" Classes="addpanel-text"/>
+                    <StackPanel Spacing="8">
+                        <DatePicker Classes="addpanel-date"
+                                    SelectedDate="{Binding OccurredAtDate, Mode=TwoWay}" />
+                        <TimePicker Classes="addpanel-time"
+                                    SelectedTime="{Binding OccurredAtTime, Mode=TwoWay}" />
+                    </StackPanel>
+                </StackPanel>
+
+                <StackPanel Classes="addpanel-controls">
+                    <TextBlock Text="Until (optional)" Classes="addpanel-text"/>
+                    <StackPanel Spacing="8">
+                        <DatePicker Classes="addpanel-date"
+                                    SelectedDate="{Binding UntilAtDate, Mode=TwoWay}" />
+                        <TimePicker Classes="addpanel-time"
+                                    SelectedTime="{Binding UntilAtTime, Mode=TwoWay}" />
+                    </StackPanel>
+                </StackPanel>
+
             </StackPanel>
         </StackPanel>
+
     </StackPanel>
+
 </UserControl>

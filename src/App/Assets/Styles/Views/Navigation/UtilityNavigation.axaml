@@ -43,4 +43,24 @@
     <Style Selector="Button.utility-nav:pressed /template/ ContentPresenter">
         <Setter Property="Background" Value="{StaticResource BrushNavigationPressed}" />
     </Style>
+
+    <!-- ── Notification count badge ──────────────────────────────────────── -->
+    <Style Selector="Border.notif-badge">
+        <Setter Property="Background"      Value="#3B82F6"/>
+        <Setter Property="CornerRadius"    Value="999"/>
+        <Setter Property="Padding"         Value="3,0"/>
+        <Setter Property="MinWidth"        Value="14"/>
+        <Setter Property="Height"          Value="14"/>
+        <Setter Property="Margin"          Value="0,0,0,0"/>
+    </Style>
+
+    <Style Selector="TextBlock.notif-badge-text">
+        <Setter Property="Foreground"           Value="White"/>
+        <Setter Property="FontSize"             Value="8"/>
+        <Setter Property="FontWeight"           Value="Bold"/>
+        <Setter Property="HorizontalAlignment"  Value="Center"/>
+        <Setter Property="VerticalAlignment"    Value="Center"/>
+        <Setter Property="TextAlignment"        Value="Center"/>
+    </Style>
+
 </Styles>

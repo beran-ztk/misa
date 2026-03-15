@@ -1,5 +1,4 @@
 using Misa.Application.Features.Authentication;
-using Misa.Application.Features.Entities.Extensions.Items.Features.Scheduling.Commands;
 using Misa.Application.Features.Items.Schedules.Commands;
 using Misa.Application.Features.Items.Sessions.Commands;
 using Misa.Application.Features.Items.Tasks;
@@ -17,7 +16,7 @@ public static class WolverineRegistration
             opts.Discovery.IncludeAssembly(typeof(PauseSessionHandler).Assembly);
             opts.Discovery.IncludeAssembly(typeof(ContinueSessionHandler).Assembly);
             opts.Discovery.IncludeAssembly(typeof(StopSessionHandler).Assembly);
-            opts.Discovery.IncludeAssembly(typeof(PauseDueSessionsHandler).Assembly);
+            opts.Discovery.IncludeAssembly(typeof(NotifySessionPlannedDurationReachedHandler).Assembly);
             opts.Discovery.IncludeAssembly(typeof(PauseExpiredSessionsHandler).Assembly);
             opts.Discovery.IncludeAssembly(typeof(CreateScheduleHandler).Assembly);
 

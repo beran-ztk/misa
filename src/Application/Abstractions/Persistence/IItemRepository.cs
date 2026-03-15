@@ -29,6 +29,7 @@ public interface IItemRepository
     Task<List<Item>> GetJournalsAsync();
     Task<List<ItemActivity>> GetDeadlinesAsync();
     Task<List<Session>> GetSessionsAsync();
+    Task<List<Item>> GetChangedItemsInRangeAsync(DateTimeOffset from, DateTimeOffset to, CancellationToken ct = default);
     
     // Schola
     Task<List<Item>> GetArcsAsync();
@@ -41,6 +42,7 @@ public interface IItemRepository
     
     // Session
     Task<Item?> TryGetItemWithSessionsAsync(Guid itemId, CancellationToken ct);
+    Task<List<Session>> GetSessionsForDurationNotificationAsync(CancellationToken ct);
 
     // Relations
     Task AddRelationAsync(ItemRelation relation, CancellationToken ct);

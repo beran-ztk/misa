@@ -86,7 +86,7 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
     {
         return await context.Items
             .Include(s => s.ScheduleExtension)
-            .Where(t => t.OwnerId == user.Id && t.Workflow == Workflow.Schedule)
+            .Where(t => t.OwnerId == user.Id && t.Workflow == Workflow.Schedule && t.IsDeleted == false && t.IsArchived == false)
             .OrderByDescending(t => t.JournalExtension!.OccurredAt) 
             .ThenByDescending(t => t.CreatedAt)
             .AsNoTracking()
@@ -121,6 +121,18 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
             .Where(s => s.State == SessionState.Ended)
             .AsNoTracking()
             .ToListAsync();
+    }
+
+    public async Task<List<Item>> GetChangedItemsInRangeAsync(DateTimeOffset from, DateTimeOffset to, CancellationToken ct = default)
+    {
+        return await context.Items
+            .Where(i => i.OwnerId == user.Id
+                && i.ModifiedAt != null
+                && i.ModifiedAt >= from
+                && i.ModifiedAt <= to)
+            .OrderByDescending(i => i.ModifiedAt)
+            .AsNoTracking()
+            .ToListAsync(ct);
     }
 
     public async Task<List<Item>> GetArcsAsync()
@@ -179,6 +191,17 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
     }
 
     // Session
+    public async Task<List<Session>> GetSessionsForDurationNotificationAsync(CancellationToken ct)
+    {
+        return await context.Sessions
+            .Include(s => s.Segments)
+            .Include(s => s.Item)
+            .Where(s => s.State == SessionState.Running
+                     && s.PlannedDuration != null
+                     && !s.PlannedDurationNotificationSent)
+            .ToListAsync(ct);
+    }
+
     public async Task<Item?> TryGetItemWithSessionsAsync(Guid itemId, CancellationToken ct)
     {
         return await context.Items

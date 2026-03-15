@@ -1,10 +1,12 @@
 using System;
+using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Avalonia.Controls;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
 using Misa.Ui.Avalonia.Common.Mappings;
+using Misa.Ui.Avalonia.Features.Utilities.Toast;
 using Misa.Ui.Avalonia.Shell.Components;
 
 namespace Misa.Ui.Avalonia.Infrastructure.UI;
@@ -14,14 +16,21 @@ public enum LayerPresentation
     Panel,
     Modal
 }
+
 public interface ILayerHost
 {
     Control? Panel { get; set; }
     Control? Modal { get; set; }
 }
 
+public interface IToastHost
+{
+    ObservableCollection<ToastViewModel> Toasts { get; }
+}
+
 public partial class LayerProxy(
-    ILayerHost layerHost,
+    ILayerHost       layerHost,
+    IToastHost       toastHost,
     IServiceProvider sp) : ILayerCloser
 {
     private TaskCompletionSource<object?>? _activePanelTcs;
@@ -38,7 +47,7 @@ public partial class LayerProxy(
             layerHost.Modal = null;
         else if (layerHost.Panel is not null)
             layerHost.Panel = null;
-        
+
         _activePanelTcs?.TrySetResult(result);
         _activePanelTcs = null;
     }
@@ -60,9 +69,9 @@ public partial class LayerProxy(
                 layerHost.Modal = control;
                 break;
         }
-        
+
         var completed = await bridgeTcs.Task;
-        
+
         _activePanelTcs = null;
         switch (mode)
         {
@@ -79,8 +88,21 @@ public partial class LayerProxy(
             : (TResult)completed;
     }
 
+    // ── Toast ─────────────────────────────────────────────────────────────
+
+    public void ShowToast(string title, string? message = null, int durationMs = 4000)
+    {
+        var toasts = toastHost.Toasts;
+
+        ToastViewModel? vm = null;
+        vm = new ToastViewModel(title, message, () => toasts.Remove(vm!), durationMs);
+        toasts.Add(vm);
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────
+
     private LayerHostView CreateHosted<TForm, TResult>(
-        TForm form,
+        TForm        form,
         ILayerCloser layerCloser)
         where TForm : ViewModelBase, IHostedForm<TResult>
     {

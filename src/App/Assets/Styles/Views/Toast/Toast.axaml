@@ -1,0 +1,65 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ── Container ────────────────────────────────────────────────────── -->
+    <Style Selector="Border.toast-container">
+        <Setter Property="Background"      Value="{StaticResource BrushPrimaryBackgroundLight}" />
+        <Setter Property="BorderBrush"     Value="{StaticResource BrushBorder}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius"    Value="6" />
+        <Setter Property="Padding"         Value="12,10" />
+        <Setter Property="MinWidth"        Value="280" />
+        <Setter Property="MaxWidth"        Value="380" />
+        <Setter Property="BoxShadow"       Value="0 4 20 2 #50000000" />
+    </Style>
+
+    <!-- ── Title ─────────────────────────────────────────────────────────── -->
+    <Style Selector="TextBlock.toast-title">
+        <Setter Property="Foreground"    Value="{StaticResource BrushTextPrimary}" />
+        <Setter Property="FontSize"      Value="13" />
+        <Setter Property="FontWeight"    Value="SemiBold" />
+        <Setter Property="TextWrapping"  Value="NoWrap" />
+        <Setter Property="TextTrimming"  Value="CharacterEllipsis" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <!-- ── Message ───────────────────────────────────────────────────────── -->
+    <Style Selector="TextBlock.toast-message">
+        <Setter Property="Foreground"   Value="{StaticResource BrushTextSecondary}" />
+        <Setter Property="FontSize"     Value="12" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="MaxLines"     Value="2" />
+        <Setter Property="Opacity"      Value="0.85" />
+        <Setter Property="Margin"       Value="0,4,0,0" />
+    </Style>
+
+    <!-- ── Close button ──────────────────────────────────────────────────── -->
+    <Style Selector="Button.toast-close">
+        <Setter Property="Background"       Value="Transparent" />
+        <Setter Property="BorderBrush"      Value="Transparent" />
+        <Setter Property="BorderThickness"  Value="0" />
+        <Setter Property="Padding"          Value="4" />
+        <Setter Property="Width"            Value="22" />
+        <Setter Property="Height"           Value="22" />
+        <Setter Property="Opacity"          Value="0.45" />
+        <Setter Property="Foreground"       Value="{StaticResource BrushTextSecondary}" />
+        <Setter Property="VerticalContentAlignment"   Value="Center" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="Cursor"           Value="Hand" />
+        <Setter Property="Margin"           Value="8,0,0,0" />
+
+        <Style Selector="^ /template/ ContentPresenter">
+            <Setter Property="CornerRadius" Value="4" />
+        </Style>
+        <Style Selector="^:pointerover">
+            <Setter Property="Opacity" Value="1" />
+        </Style>
+        <Style Selector="^:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#10FFFFFF" />
+        </Style>
+        <Style Selector="^:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="#18FFFFFF" />
+        </Style>
+    </Style>
+
+</Styles>

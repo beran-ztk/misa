@@ -10,10 +10,11 @@ public sealed class SchedulerPlanningRepository(MisaContext context) : ISchedule
 {
     public Task SaveChangesAsync(CancellationToken ct) => context.SaveChangesAsync(ct);
     
-    public Task<List<ScheduleExtension>> GetActiveSchedulesAsync(CancellationToken ct)
-        => context.Schedulers
-            .Where(s => 
-                (s.OccurrenceCountLimit == null || s.OccurrenceCountLimit > 0)
+    public Task<List<Item>> GetActiveSchedulesAsync(CancellationToken ct)
+        => context.Items
+            .Include(i => i.ScheduleExtension)
+            .Where(s => s.ScheduleExtension != null && !s.IsDeleted && !s.IsArchived &&
+                (s.ScheduleExtension.OccurrenceCountLimit == null || s.ScheduleExtension.OccurrenceCountLimit > 0)
             )
             .ToListAsync(ct);
 

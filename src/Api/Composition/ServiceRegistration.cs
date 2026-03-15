@@ -1,14 +1,16 @@
 using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Misa.Api.Middleware;
 using Misa.Api.Services.Auth;
-using Misa.Api.Services.Features.Items.Features.Scheduler;
-using Misa.Api.Services.Features.Items.Features.Sessions;
+using Misa.Api.Services.Notifications;
+using Misa.Api.Workers;
 using Misa.Application.Abstractions.Authentication;
 using Misa.Application.Abstractions.Ids;
+using Misa.Application.Abstractions.Notifications;
 using Misa.Application.Abstractions.Persistence;
 using Misa.Application.Abstractions.Time;
 using Misa.Domain.Items;
@@ -81,6 +83,18 @@ public static class ServiceRegistration
                         new SymmetricSecurityKey(
                             Encoding.UTF8.GetBytes(jwt["Key"]!))
                 };
+
+                options.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        var accessToken = context.Request.Query["access_token"];
+                        if (!string.IsNullOrEmpty(accessToken) &&
+                            context.HttpContext.Request.Path.StartsWithSegments("/hubs"))
+                            context.Token = accessToken;
+                        return Task.CompletedTask;
+                    }
+                };
             });
 
     }
@@ -89,6 +103,7 @@ public static class ServiceRegistration
         services.AddSignalR();
         services.AddControllers();
         services.AddSingleton<HttpExceptionMiddleware>();
+        services.AddSingleton<INotificationPushService, SignalRNotificationPushService>();
     }
 
     private static void AddCoreServices(this IServiceCollection services)
@@ -101,11 +116,12 @@ public static class ServiceRegistration
 
     private static void AddWorkers(this IServiceCollection services)
     {
-        services.AddHostedService<SessionAutostopWorker>();
+        services.AddHostedService<SessionDurationNotificationWorker>();
         services.AddHostedService<SessionPastMaxTimeWorker>();
         services.AddHostedService<SchedulePlanningWorker>();
         services.AddHostedService<ScheduleExecutingWorker>();
         services.AddHostedService<SchedulePublishingWorker>();
+        services.AddHostedService<NotificationCleanupWorker>();
     }
 
     private static void AddRepositories(this IServiceCollection services)
@@ -114,6 +130,7 @@ public static class ServiceRegistration
         services.AddScoped<ISchedulerPlanningRepository, SchedulerPlanningRepository>();
         services.AddScoped<ISchedulerExecutingRepository, SchedulerExecutingRepository>();
         services.AddScoped<ISchedulerRepository, SchedulerRepository>();
+        services.AddScoped<INotificationRepository, NotificationRepository>();
     }
     private static void AddDataAccess(this IServiceCollection services, IConfiguration configuration)
     {

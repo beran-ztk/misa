@@ -5,7 +5,8 @@
              mc:Ignorable="d"
              x:Class="Misa.Ui.Avalonia.Shell.Components.UtilityNavigationView"
              x:DataType="components:UtilityNavigationViewModel"
-             xmlns:components="clr-namespace:Misa.Ui.Avalonia.Shell.Components">
+             xmlns:components="clr-namespace:Misa.Ui.Avalonia.Shell.Components"
+             xmlns:converters="clr-namespace:Misa.Ui.Avalonia.Common.Converters">
 
     <Border Background="{StaticResource BrushPrimaryBackground}"
             BorderBrush="{StaticResource BrushBorder}"
@@ -19,8 +20,21 @@
                     ToolTip.Tip="Notifications"
                     Command="{Binding ToggleNotificationsCommand}">
 
-                <Image Classes="utility-nav"
-                       Source="{SvgImage /Assets/Icons/Shell/Utility/bell.svg}" />
+                <Grid Height="24" Width="24">
+
+                    <Image Classes="utility-nav"
+                           Source="{SvgImage /Assets/Icons/Shell/Utility/bell.svg}" />
+
+                    <Border Classes="notif-badge"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Top"
+                            IsVisible="{Binding HasUnread}">
+                        <TextBlock Classes="notif-badge-text"
+                                   Text="{Binding BadgeText}"/>
+                    </Border>
+
+                </Grid>
+
             </Button>
 
         </StackPanel>

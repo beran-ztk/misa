@@ -4,11 +4,11 @@
 
     <Style Selector="Border.workspace-toolbar-frame">
         <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLight}" />
-        <Setter Property="Padding" Value="24,14" />
+        <Setter Property="Padding" Value="18,12" />
     </Style>
     
     <Style Selector="Grid.workspace-toolbar">
-        <Setter Property="RowSpacing" Value="10"/>
+        <Setter Property="RowSpacing" Value="8"/>
     </Style>
 
     <Style Selector="StackPanel.workspace-toolbar-left">
@@ -24,16 +24,17 @@
 
     <Style Selector="StackPanel.workspace-toolbar-center">
         <Setter Property="Orientation" Value="Horizontal" />
-        <Setter Property="Spacing" Value="10" />
+        <Setter Property="Spacing" Value="6" />
         <Setter Property="VerticalAlignment" Value="Center" />
     </Style>
 
     <!-- Separator -->
     <Style Selector="Border.workspace-toolbar-separator">
-        <Setter Property="Height" Value="2" />
+        <Setter Property="Height" Value="1" />
         <Setter Property="Background" Value="{StaticResource BrushBorder}" />
-        <Setter Property="Margin" Value="80,30" />
+        <Setter Property="Margin" Value="0,8,0,0" />
         <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="Opacity" Value="0.40" />
     </Style>
 
 </Styles>

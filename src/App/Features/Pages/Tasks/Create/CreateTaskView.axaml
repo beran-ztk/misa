@@ -1,52 +1,64 @@
-﻿<UserControl xmlns="https://github.com/avaloniaui"
+<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Tasks.Create"
              x:Class="Misa.Ui.Avalonia.Features.Pages.Tasks.Create.CreateTaskView"
              x:DataType="root:CreateTaskViewModel">
 
-    <StackPanel Classes="addpanel-body">
-        
-        <!-- Title -->
-        <StackPanel Classes="addpanel-controls">
-            <TextBlock Text="Add a title" 
-                       Classes="addpanel-text" />
-            <TextBox Classes="addpanel-oneliner"
-                     Watermark="Title…"
-                     Text="{Binding Title, Mode=TwoWay}" />
-        </StackPanel>
-        
-        <!-- Description -->
-        <StackPanel Classes="addpanel-controls">
-            <TextBlock Text="Add a Description" 
-                       Classes="addpanel-text" />
-            <TextBox Classes="addpanel-multiline"
-                     Watermark="Description…"
-                     Text="{Binding Description, Mode=TwoWay}" />
+    <StackPanel Spacing="28">
+
+        <!-- ── Basic ─────────────────────────────────────────────────── -->
+        <StackPanel>
+            <TextBlock Text="Basic" Classes="form-section-header"/>
+            <StackPanel Spacing="16">
+
+                <StackPanel Classes="addpanel-controls">
+                    <TextBlock Text="Add a title" Classes="addpanel-text"/>
+                    <TextBox Classes="addpanel-oneliner"
+                             Watermark="Title…"
+                             Text="{Binding Title, Mode=TwoWay}" />
+                </StackPanel>
+
+                <StackPanel Classes="addpanel-controls">
+                    <TextBlock Text="Add a description" Classes="addpanel-text"/>
+                    <TextBox Classes="addpanel-multiline"
+                             Watermark="Description…"
+                             Text="{Binding Description, Mode=TwoWay}" />
+                </StackPanel>
+
+            </StackPanel>
         </StackPanel>
 
-        <!-- Category -->
-        <StackPanel Classes="addpanel-controls">
-            <TextBlock Text="Select the category" 
-                       Classes="addpanel-text"/>
-            <ComboBox Classes="addpanel-combo"
-                      ItemsSource="{Binding Categories}"
-                      SelectedValue="{Binding SelectedCategoryDto}" />
+        <!-- ── Classification ────────────────────────────────────────── -->
+        <StackPanel>
+            <TextBlock Text="Classification" Classes="form-section-header"/>
+            <StackPanel Spacing="16">
+
+                <StackPanel Classes="addpanel-controls">
+                    <TextBlock Text="Category" Classes="addpanel-text"/>
+                    <ComboBox Classes="addpanel-combo"
+                              ItemsSource="{Binding Categories}"
+                              SelectedValue="{Binding SelectedCategoryDto}" />
+                </StackPanel>
+
+                <StackPanel Classes="addpanel-controls">
+                    <TextBlock Text="Priority" Classes="addpanel-text"/>
+                    <ComboBox Classes="addpanel-combo"
+                              ItemsSource="{Binding Priorities}"
+                              SelectedValue="{Binding SelectedActivityPriorityDto}" />
+                </StackPanel>
+
+            </StackPanel>
         </StackPanel>
 
-        <!-- Priority -->
-        <StackPanel Classes="addpanel-controls">
-            <TextBlock Text="Choose a priority for the task" 
-                       Classes="addpanel-text"/>
-            <ComboBox Classes="addpanel-combo"
-                      ItemsSource="{Binding Priorities}"
-                      SelectedValue="{Binding SelectedActivityPriorityDto}" />
+        <!-- ── Planning ──────────────────────────────────────────────── -->
+        <StackPanel>
+            <TextBlock Text="Planning" Classes="form-section-header"/>
+            <StackPanel Classes="addpanel-controls">
+                <TextBlock Text="Deadline" Classes="addpanel-text"/>
+                <ContentControl Content="{Binding DeadlinePicker}" />
+            </StackPanel>
         </StackPanel>
-        
-        <!-- Deadline -->
-        <StackPanel Classes="addpanel-controls">
-            <TextBlock Text="Set a deadline"
-                       Classes="addpanel-text"/>
-            <ContentControl Content="{Binding DeadlinePicker}" />
-        </StackPanel>
+
     </StackPanel>
+
 </UserControl>

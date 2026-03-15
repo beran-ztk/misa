@@ -1,8 +1,5 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d"
         x:Class="Misa.Ui.Avalonia.Shell.Authentication.AuthenticationWindow"
         xmlns:authentication="clr-namespace:Misa.Ui.Avalonia.Shell.Authentication"
         x:DataType="authentication:AuthenticationWindowViewModel"
@@ -13,72 +10,175 @@
         WindowStartupLocation="CenterScreen"
         CanResize="False">
 
-    <Grid Background="{StaticResource BrushPrimaryBackgroundLighter}">
+    <Window.Styles>
 
+        <!-- Primary action button (Sign in / Register) -->
+        <Style Selector="Button.auth-primary">
+            <Setter Property="Background"              Value="{StaticResource BrushAccent}"/>
+            <Setter Property="Foreground"              Value="White"/>
+            <Setter Property="FontWeight"              Value="SemiBold"/>
+            <Setter Property="Height"                  Value="36"/>
+            <Setter Property="MinWidth"                Value="100"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Cursor"                  Value="Hand"/>
+            <Style Selector="^ /template/ ContentPresenter">
+                <Setter Property="CornerRadius" Value="{StaticResource CornerRadiusButtons}"/>
+            </Style>
+            <Style Selector="^:pointerover /template/ ContentPresenter">
+                <Setter Property="Background" Value="{StaticResource BrushAccentDim}"/>
+            </Style>
+            <Style Selector="^:disabled">
+                <Setter Property="Opacity" Value="0.45"/>
+            </Style>
+        </Style>
+
+        <!-- Secondary action button (Close) -->
+        <Style Selector="Button.auth-secondary">
+            <Setter Property="Background"              Value="Transparent"/>
+            <Setter Property="Foreground"              Value="{StaticResource BrushTextSecondary}"/>
+            <Setter Property="BorderBrush"             Value="{StaticResource BrushBorder}"/>
+            <Setter Property="BorderThickness"         Value="1"/>
+            <Setter Property="Height"                  Value="36"/>
+            <Setter Property="MinWidth"                Value="90"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Cursor"                  Value="Hand"/>
+            <Style Selector="^ /template/ ContentPresenter">
+                <Setter Property="CornerRadius" Value="{StaticResource CornerRadiusButtons}"/>
+            </Style>
+            <Style Selector="^:pointerover /template/ ContentPresenter">
+                <Setter Property="Background" Value="#0CFFFFFF"/>
+            </Style>
+        </Style>
+
+        <!-- Inline link-style button (mode switch) -->
+        <Style Selector="Button.auth-link">
+            <Setter Property="Background"      Value="Transparent"/>
+            <Setter Property="Foreground"      Value="{StaticResource BrushAccent}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding"         Value="2,0"/>
+            <Setter Property="FontSize"        Value="12"/>
+            <Setter Property="Cursor"          Value="Hand"/>
+            <Style Selector="^ /template/ ContentPresenter">
+                <Setter Property="Background"   Value="Transparent"/>
+                <Setter Property="CornerRadius" Value="2"/>
+            </Style>
+            <Style Selector="^:pointerover /template/ ContentPresenter">
+                <Setter Property="Background" Value="Transparent"/>
+            </Style>
+            <Style Selector="^:pointerover">
+                <Setter Property="Opacity" Value="0.75"/>
+            </Style>
+        </Style>
+
+        <!-- De-emphasised dev/bypass button -->
+        <Style Selector="Button.auth-bypass">
+            <Setter Property="Background"      Value="Transparent"/>
+            <Setter Property="Foreground"      Value="{StaticResource BrushTextFaded}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding"         Value="0"/>
+            <Setter Property="FontSize"        Value="11"/>
+            <Setter Property="Opacity"         Value="0.4"/>
+            <Setter Property="Cursor"          Value="Hand"/>
+            <Style Selector="^ /template/ ContentPresenter">
+                <Setter Property="Background" Value="Transparent"/>
+            </Style>
+            <Style Selector="^:pointerover /template/ ContentPresenter">
+                <Setter Property="Background" Value="Transparent"/>
+            </Style>
+            <Style Selector="^:pointerover">
+                <Setter Property="Opacity" Value="0.7"/>
+            </Style>
+        </Style>
+
+    </Window.Styles>
+
+    <!-- Deepest background so card has clear depth -->
+    <Grid Background="{StaticResource BrushPrimaryBackground}">
+
+        <!-- Centered auth card -->
         <Border Background="{StaticResource BrushPrimaryBackgroundLight}"
-                CornerRadius="10"
-                Padding="30"
-                Width="520"
-                MaxWidth="640"
+                BorderBrush="{StaticResource BrushBorder}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="36,30"
+                Width="440"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center">
 
-            <StackPanel Spacing="14">
+            <StackPanel Spacing="0">
 
-                <!-- Header -->
-                <StackPanel Spacing="4">
+                <!-- ── Header ──────────────────────────────────────────────── -->
+                <StackPanel Margin="0,0,0,28">
+
+                    <!-- Product label: small, faded, label-weight -->
                     <TextBlock Text="MISA"
-                               FontSize="{StaticResource FontSizeLarge}"
+                               FontSize="10"
+                               FontWeight="Bold"
                                Foreground="{StaticResource BrushTextFaded}"
-                               Margin="0"/>
+                               Opacity="0.5"
+                               Margin="0,0,0,8"/>
 
+                    <!-- Section heading: the actual user-facing title -->
                     <TextBlock Text="{Binding SubtitleText}"
-                               Margin="0"/>
+                               FontSize="20"
+                               FontWeight="Medium"
+                               Foreground="{StaticResource BrushTextPrimary}"/>
+
                 </StackPanel>
 
-                <Border Height="1"
-                        Background="{StaticResource BrushBorder}"
-                        Opacity="0.35"/>
+                <!-- ── Form fields ──────────────────────────────────────────── -->
+                <StackPanel Spacing="14" Margin="0,0,0,16">
 
-                <!-- Form -->
-                <StackPanel Spacing="10">
-
-                    <StackPanel Spacing="6">
-                        <TextBlock Text="Username" Margin="0"/>
-                        <TextBox Text="{Binding Username, Mode=TwoWay}"
+                    <StackPanel Spacing="5">
+                        <TextBlock Text="Username"
+                                   FontSize="12"
+                                   Foreground="{StaticResource BrushTextSecondary}"/>
+                        <TextBox x:Name="UsernameField"
+                                 Text="{Binding Username, Mode=TwoWay}"
                                  IsEnabled="{Binding IsNotBusy}"/>
                     </StackPanel>
 
-                    <StackPanel Spacing="6">
-                        <TextBlock Text="Password" Margin="0"/>
+                    <StackPanel Spacing="5">
+                        <TextBlock Text="Password"
+                                   FontSize="12"
+                                   Foreground="{StaticResource BrushTextSecondary}"/>
                         <TextBox Text="{Binding Password, Mode=TwoWay}"
                                  PasswordChar="•"
-                                 IsEnabled="{Binding IsNotBusy}"/>
+                                 IsEnabled="{Binding IsNotBusy}">
+                            <TextBox.KeyBindings>
+                                <KeyBinding Gesture="Enter" Command="{Binding SubmitCommand}"/>
+                            </TextBox.KeyBindings>
+                        </TextBox>
                     </StackPanel>
 
-                    <StackPanel IsVisible="{Binding IsRegisterMode}"
-                                Spacing="10">
+                    <!-- Register-only fields — collapse when not in register mode -->
+                    <StackPanel IsVisible="{Binding IsRegisterMode}" Spacing="14">
 
-                        <StackPanel Spacing="6">
-                            <TextBlock Text="Confirm password" Margin="0"/>
+                        <StackPanel Spacing="5">
+                            <TextBlock Text="Confirm password"
+                                       FontSize="12"
+                                       Foreground="{StaticResource BrushTextSecondary}"/>
                             <TextBox Text="{Binding ConfirmPassword, Mode=TwoWay}"
                                      PasswordChar="•"
                                      Watermark="Repeat password"
                                      IsEnabled="{Binding IsNotBusy}"/>
                         </StackPanel>
-                        
-                        <StackPanel Spacing="6">
-                            <TextBlock Text="E-Mail" Margin="0"/>
+
+                        <StackPanel Spacing="5">
+                            <TextBlock Text="Email"
+                                       FontSize="12"
+                                       Foreground="{StaticResource BrushTextSecondary}"/>
                             <TextBox Text="{Binding Email, Mode=TwoWay}"
                                      IsEnabled="{Binding IsNotBusy}"/>
                         </StackPanel>
 
-                        <StackPanel Spacing="6">
-                            <TextBlock Text="Time zone" Margin="0"/>
+                        <StackPanel Spacing="5">
+                            <TextBlock Text="Time zone"
+                                       FontSize="12"
+                                       Foreground="{StaticResource BrushTextSecondary}"/>
                             <ComboBox ItemsSource="{Binding TimeZoneIds}"
                                       SelectedItem="{Binding SelectedTimeZoneId, Mode=TwoWay}"
                                       IsEnabled="{Binding IsNotBusy}"
-                                      Height="38"
                                       HorizontalAlignment="Stretch"/>
                         </StackPanel>
 
@@ -86,66 +186,79 @@
 
                 </StackPanel>
 
-                <!-- Error banner -->
-                <Border IsVisible="{Binding HasError}">
+                <!-- ── Error banner ─────────────────────────────────────────── -->
+                <Border IsVisible="{Binding HasError}"
+                        Margin="0,0,0,16"
+                        Padding="12,9"
+                        CornerRadius="0,4,4,0"
+                        Background="#12F44336"
+                        BorderBrush="{StaticResource BrushError}"
+                        BorderThickness="3,0,0,0">
                     <TextBlock Text="{Binding ErrorMessage}"
                                Foreground="{StaticResource BrushError}"
+                               FontSize="12"
                                TextWrapping="Wrap"/>
                 </Border>
 
-                <!-- Mode switch -->
-                <StackPanel Spacing="6" HorizontalAlignment="Center">
+                <!-- ── Mode switch ──────────────────────────────────────────── -->
+                <StackPanel HorizontalAlignment="Center" Margin="0,0,0,24">
 
                     <StackPanel Orientation="Horizontal"
-                                Spacing="6"
+                                Spacing="4"
                                 HorizontalAlignment="Center"
                                 IsVisible="{Binding IsLoginMode}">
-                        <TextBlock Text="No account?"/>
-                        <Button Content="Create one"
+                        <TextBlock Text="No account?"
+                                   FontSize="12"
+                                   Foreground="{StaticResource BrushTextFaded}"
+                                   VerticalAlignment="Center"/>
+                        <Button Classes="auth-link"
+                                Content="Create one"
                                 Command="{Binding SetRegisterModeCommand}"/>
                     </StackPanel>
 
                     <StackPanel Orientation="Horizontal"
-                                Spacing="6"
+                                Spacing="4"
                                 HorizontalAlignment="Center"
                                 IsVisible="{Binding IsRegisterMode}">
-                        <TextBlock Text="Already have an account?"/>
-                        <Button Content="Sign in"
+                        <TextBlock Text="Already have an account?"
+                                   FontSize="12"
+                                   Foreground="{StaticResource BrushTextFaded}"
+                                   VerticalAlignment="Center"/>
+                        <Button Classes="auth-link"
+                                Content="Sign in"
                                 Command="{Binding SetLoginModeCommand}"/>
                     </StackPanel>
 
                 </StackPanel>
 
-                <!-- Actions -->
+                <!-- ── Actions ──────────────────────────────────────────────── -->
                 <Grid ColumnDefinitions="Auto,*,Auto,Auto"
-                      ColumnSpacing="10"
-                      HorizontalAlignment="Stretch">
+                      ColumnSpacing="8">
 
+                    <!-- Dev bypass: visually stepped back, far left -->
                     <Button Grid.Column="0"
+                            Classes="auth-bypass"
                             Content="Bypass"
                             Command="{Binding BypassCommand}"
-                            IsEnabled="{Binding IsNotBusy}"
-                            Height="40"
-                            VerticalContentAlignment="Center"
-                            MinWidth="100"/>
+                            IsEnabled="{Binding IsNotBusy}"/>
 
+                    <!-- spacer -->
                     <Border Grid.Column="1"/>
 
+                    <!-- Secondary: dismiss -->
                     <Button Grid.Column="2"
+                            Classes="auth-secondary"
                             Content="Close"
                             Command="{Binding CloseCommand}"
-                            IsEnabled="{Binding IsNotBusy}"
-                            Height="40"
-                            VerticalContentAlignment="Center"
-                            MinWidth="100"/>
+                            IsEnabled="{Binding IsNotBusy}"/>
 
+                    <!-- Primary: submit -->
                     <Button Grid.Column="3"
+                            Classes="auth-primary"
                             Content="{Binding PrimaryButtonText}"
                             Command="{Binding SubmitCommand}"
-                            IsEnabled="{Binding CanSubmit}"
-                            Height="40"
-                            VerticalContentAlignment="Center"
-                            MinWidth="100"/>
+                            IsEnabled="{Binding CanSubmit}"/>
+
                 </Grid>
 
             </StackPanel>

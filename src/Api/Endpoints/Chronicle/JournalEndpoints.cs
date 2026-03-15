@@ -12,10 +12,9 @@ public static class ChronicleEndpoints
     public static void Map(IEndpointRouteBuilder api)
     {
         api.MapPost(ChronicleRoutes.CreateJournal, Create);
-        api.MapGet(ChronicleRoutes.GetJournals, GetAll);
+        api.MapGet(ChronicleRoutes.GetChronicle, GetAll);
     }
 
-    // Create a task
     private static async Task<IResult> Create(
         [FromBody] CreateJournalRequest request,
         IMessageBus bus)
@@ -32,11 +31,12 @@ public static class ChronicleEndpoints
         return Results.Ok();
     }
 
-    // Get tasks
-    private static async Task<IResult> GetAll(IMessageBus bus)
+    private static async Task<IResult> GetAll(
+        [FromQuery] DateTimeOffset from,
+        [FromQuery] DateTimeOffset to,
+        IMessageBus bus)
     {
-        var dto = await bus.InvokeAsync<List<ChronicleEntryDto>>(new GetJournalsCommand());
-
+        var dto = await bus.InvokeAsync<List<ChronicleEntryDto>>(new GetChronicleQuery(from, to));
         return Results.Ok(dto);
     }
 }

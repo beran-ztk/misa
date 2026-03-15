@@ -1,61 +1,67 @@
-﻿using Misa.Application.Abstractions.Ids;
+using System.Text.Json;
+using Misa.Application.Abstractions.Ids;
+using Misa.Application.Abstractions.Notifications;
 using Misa.Application.Abstractions.Persistence;
 using Misa.Application.Abstractions.Time;
-using Wolverine;
+using Misa.Domain.Items.Components.Schedules;
+using Misa.Domain.Notifications;
 
-namespace Misa.Application.Features.Entities.Extensions.Items.Features.Scheduling.Commands;
+namespace Misa.Application.Features.Items.Schedules.Commands;
 
 public sealed record ScheduleExecutingCommand;
-public class ScheduleExecutingHandler(ISchedulerExecutingRepository repository, ITimeProvider  timeProvider, IIdGenerator idGenerator)
+
+public class ScheduleExecutingHandler(
+    ISchedulerExecutingRepository repository,
+    INotificationRepository        notificationRepository,
+    ITimeProvider                  timeProvider,
+    IIdGenerator                   idGenerator,
+    INotificationPushService       pushService)
 {
     public async Task HandleAsync(
-        ScheduleExecutingCommand command, 
-        CancellationToken stoppingToken,
-        IMessageBus bus)
+        ScheduleExecutingCommand command,
+        CancellationToken        stoppingToken)
     {
-        var pendingExecutionLogs = await repository.GetPendingExecutionLogsAsync(stoppingToken);
+        var pending = await repository.GetPendingWithExtensionsAsync(stoppingToken);
 
-        // foreach (var log in pendingExecutionLogs)
-        // {
-        //     if (log.ScheduleExtension.ActionType != ScheduleActionType.CreateTask) continue;
-        //     
-        //     log.Claim(timeProvider.UtcNow);
-        //     await repository.SaveChangesAsync(stoppingToken);
-        //     
-        //     log.Start(timeProvider.UtcNow);
-        //     await repository.SaveChangesAsync(stoppingToken);
-        //
-        //     if (log.ScheduleExtension.Payload == null) continue; // Implement error
-        //     var dto = JsonSerializer.Deserialize<CreateTaskDto>(log.ScheduleExtension.Payload);
-        //     
-        //     if (dto == null) continue; // Implement error
-        //     var addTaskCommand = new CreateTaskCommand(
-        //         dto.Title,
-        //         dto.Description,
-        //         dto.CategoryDto,
-        //         dto.ActivityPriorityDto,
-        //         dto.DueDate
-        //     );
-        //     
-        //     var result = await bus.InvokeAsync<Result<TaskExtensionDto>>(addTaskCommand, stoppingToken);
-        //
-        //     if (result.Status == ResultStatus.Success)
-        //     {
-        //         log.Succeeded(timeProvider.UtcNow);
-        //         await repository.AddOutboxMessageAsync(
-        //             new Outbox(
-        //                 idGenerator.New(),
-        //                 EventType.SchedulerCreatedTask,
-        //                 JsonSerializer.Serialize("Blabla"), 
-        //                 timeProvider.UtcNow), 
-        //             stoppingToken);
-        //     }
-        //     else
-        //     {
-        //         log.Fail(timeProvider.UtcNow);
-        //     }
-        //
-        //     await repository.SaveChangesAsync(stoppingToken);
-        // }
+        foreach (var (log, item) in pending)
+        {
+
+            log.Claim(timeProvider.UtcNow);
+            await repository.SaveChangesAsync(stoppingToken);
+
+            log.Start(timeProvider.UtcNow);
+            await repository.SaveChangesAsync(stoppingToken);
+            
+            
+            if (item.ScheduleExtension == null)
+            {
+                log.Fail(timeProvider.UtcNow, "Has no Schedule extension");
+                await repository.SaveChangesAsync(stoppingToken);
+                continue;
+            }
+            
+            if (item.ScheduleExtension.ActionType != ScheduleActionType.None)
+            {
+                log.Fail(timeProvider.UtcNow, "This Action is not implemented yet");
+                await repository.SaveChangesAsync(stoppingToken);
+                continue;
+            }
+
+            var notification = new Notification(
+                idGenerator.New(),
+                item.Title,
+                "Schedule has been executed",
+                NotificationSourceKind.SchedulerExecution,
+                log.Id,
+                timeProvider.UtcNow,
+                item.OwnerId);
+
+            await notificationRepository.AddAsync(notification, stoppingToken);
+
+            log.Succeeded(timeProvider.UtcNow);
+            await repository.SaveChangesAsync(stoppingToken);
+            await notificationRepository.SaveChangesAsync(stoppingToken);
+            await pushService.NotifyUserChangedAsync(item.OwnerId);
+        }
     }
 }

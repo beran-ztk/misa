@@ -57,6 +57,12 @@ public sealed partial class DeadlinePickerViewModel : ViewModelBase
             Mode = DeadlinePickerMode.Relative;
     }
 
+    partial void OnCustomDateChanged(DateTimeOffset? value)
+    {
+        if (value is not null && CustomTime is null)
+            CustomTime = TimeSpan.Zero;
+    }
+
     public void InitializeFrom(DateTimeOffset? deadline)
     {
         if (deadline is null)

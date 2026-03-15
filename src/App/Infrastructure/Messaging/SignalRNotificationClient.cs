@@ -1,26 +1,50 @@
+using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
-using Misa.Contract.Features.Messaging;
-using NotificationViewModel = Misa.Ui.Avalonia.Features.Utilities.Notifications.NotificationViewModel;
+using Misa.Ui.Avalonia.Infrastructure.States;
 
 namespace Misa.Ui.Avalonia.Infrastructure.Messaging;
 
-public sealed class SignalRNotificationClient(NotificationViewModel notifications)
+public sealed class SignalRNotificationClient(UserState userState, string hubUrl)
 {
     private HubConnection? _connection;
 
-    public async Task StartAsync(string baseAddress)
+    internal event Func<Task>? NotificationsChanged;
+
+    public async Task EnsureConnectedAsync()
     {
         if (_connection is not null)
             return;
-        
+
         _connection = new HubConnectionBuilder()
-            .WithUrl(baseAddress + "/hubs/updates")
+            .WithUrl(hubUrl, options =>
+            {
+                options.AccessTokenProvider = () => Task.FromResult<string?>(userState.Token);
+            })
             .WithAutomaticReconnect()
             .Build();
-        
-        _connection.On<NotificationDto>(nameof(PublisherDto.Scheduler), notifications.Publish);
-        
-        await _connection.StartAsync();
+
+        _connection.On("notifications-changed", () =>
+        {
+            var handler = NotificationsChanged;
+            if (handler is not null)
+                _ = handler();
+        });
+
+        _connection.Reconnected += _ =>
+        {
+            var handler = NotificationsChanged;
+            return handler is not null ? handler() : Task.CompletedTask;
+        };
+
+        try
+        {
+            await _connection.StartAsync();
+        }
+        catch (Exception)
+        {
+            // Connection failure on startup is non-fatal — manual refresh still works.
+            // WithAutomaticReconnect will retry once the server becomes available.
+        }
     }
 }

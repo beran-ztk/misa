@@ -17,7 +17,7 @@
             <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="8" />
-            <Setter Property="Padding" Value="14,12" />
+            <Setter Property="Padding" Value="16,12" />
         </Style>
 
         <Style Selector="Border.state-badge">
@@ -47,7 +47,7 @@
     </UserControl.Styles>
 
     <Border Background="{StaticResource BrushPrimaryBackground}"
-            Margin="0,20,0,0"
+            Margin="0,16,0,0"
             Padding="12">
 
         <ScrollViewer VerticalScrollBarVisibility="Auto"
@@ -55,7 +55,7 @@
             <StackPanel Spacing="24">
 
                 <!-- Sessions section — only shown for real activity items (Task) -->
-                <StackPanel Spacing="10"
+                <StackPanel Spacing="8"
                             IsVisible="{Binding ShowSessions}">
                     <Border BorderBrush="{StaticResource BrushBorder}"
                             BorderThickness="0,0,0,1"
@@ -140,7 +140,7 @@
                 </StackPanel>
 
                 <!-- Changes section -->
-                <StackPanel Spacing="10">
+                <StackPanel Spacing="8">
                     <Border BorderBrush="{StaticResource BrushBorder}"
                             BorderThickness="0,0,0,1"
                             Padding="4,0,4,8">
@@ -160,13 +160,13 @@
                                   IsVisible="{Binding HasChanges}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="audits:AuditChangeDto">
-                                <Border Margin="0,0,0,6"
+                                <Border Margin="0,0,0,8"
                                         Padding="12,8"
                                         Background="{StaticResource BrushPrimaryBackgroundLight}"
                                         BorderBrush="{StaticResource BrushBorder}"
                                         BorderThickness="1"
                                         CornerRadius="6">
-                                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
 
                                         <!-- Change type badge -->
                                         <Border Grid.Column="0"
@@ -179,7 +179,7 @@
                                         <!-- Old → New -->
                                         <StackPanel Grid.Column="1"
                                                     Orientation="Horizontal"
-                                                    Spacing="6"
+                                                    Spacing="8"
                                                     VerticalAlignment="Center">
                                             <TextBlock Text="{Binding ValueBefore, TargetNullValue='—'}"
                                                        FontSize="12"

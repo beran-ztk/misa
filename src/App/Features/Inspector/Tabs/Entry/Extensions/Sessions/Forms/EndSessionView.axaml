@@ -7,34 +7,44 @@
              xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions.Forms"
              x:DataType="root:EndSessionViewModel">
 
-    <StackPanel Classes="addpanel-body">
+    <StackPanel Spacing="28">
 
-        <StackPanel Classes="addpanel-controls">
-            <TextBlock Text="Efficiency"
-                       Classes="addpanel-text"/>
-            <ComboBox Classes="addpanel-combo"
-                      ItemsSource="{Binding Efficiencies}"
-                      SelectedItem="{Binding SelectedSessionEfficiency}" />
+        <!-- ── Quality ───────────────────────────────────────────────── -->
+        <StackPanel>
+            <TextBlock Text="Quality" Classes="form-section-header"/>
+            <StackPanel Spacing="16">
+
+                <StackPanel Classes="addpanel-controls">
+                    <TextBlock Text="Efficiency" Classes="addpanel-text"/>
+                    <ComboBox Classes="addpanel-combo"
+                              ItemsSource="{Binding Efficiencies}"
+                              SelectedItem="{Binding SelectedSessionEfficiency}" />
+                </StackPanel>
+
+                <StackPanel Classes="addpanel-controls">
+                    <TextBlock Text="Concentration" Classes="addpanel-text"/>
+                    <ComboBox Classes="addpanel-combo"
+                              ItemsSource="{Binding Concentrations}"
+                              SelectedItem="{Binding SelectedSessionConcentration}" />
+                </StackPanel>
+
+            </StackPanel>
         </StackPanel>
 
-        <StackPanel Classes="addpanel-controls">
-            <TextBlock Text="Concentration"
-                       Classes="addpanel-text"/>
-            <ComboBox Classes="addpanel-combo"
-                      ItemsSource="{Binding Concentrations}"
-                      SelectedItem="{Binding SelectedSessionConcentration}" />
-        </StackPanel>
-
-        <StackPanel Classes="addpanel-controls">
-            <TextBlock Text="Summary"
-                       Classes="addpanel-text"/>
-            <TextBox Classes="addpanel-multiline"
-                     Text="{Binding Summary, Mode=TwoWay}"
-                     AcceptsReturn="True"
-                     TextWrapping="Wrap"
-                     MinHeight="90"
-                     Watermark="What happened? Short summary." />
+        <!-- ── Reflection ────────────────────────────────────────────── -->
+        <StackPanel>
+            <TextBlock Text="Reflection" Classes="form-section-header"/>
+            <StackPanel Classes="addpanel-controls">
+                <TextBlock Text="Summary" Classes="addpanel-text"/>
+                <TextBox Classes="addpanel-multiline"
+                         Text="{Binding Summary, Mode=TwoWay}"
+                         AcceptsReturn="True"
+                         TextWrapping="Wrap"
+                         MinHeight="90"
+                         Watermark="What happened? Short summary." />
+            </StackPanel>
         </StackPanel>
 
     </StackPanel>
+
 </UserControl>
