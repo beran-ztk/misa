@@ -84,7 +84,7 @@
             <!-- Panel content -->
             <Border ZIndex="22"
                     MinWidth="420"
-                    Margin="0,15,75,15"
+                    Margin="0,0,75,0"
                     HorizontalAlignment="Right"
                     VerticalAlignment="Stretch">
                 <ContentControl Content="{Binding ShellState.Panel}"
@@ -111,9 +111,9 @@
 
             <!-- Modal content -->
             <Border ZIndex="32"
-                    MinWidth="600"
-                    MaxWidth="900"
-                    Margin="0,70,0,70"
+                    MinWidth="520"
+                    MaxWidth="720"
+                    Margin="0,64,0,64"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center">
 
