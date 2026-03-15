@@ -19,6 +19,7 @@ public sealed class Session
     
     public bool StopAutomatically { get; private set; }
     public bool? WasAutomaticallyStopped { get; private set; }
+    public bool PlannedDurationNotificationSent { get; private set; }
 
     public DateTimeOffset CreatedAtUtc { get; private init; }
     
@@ -30,6 +31,11 @@ public sealed class Session
     public void Autostop()
     {
         WasAutomaticallyStopped = true;
+    }
+
+    public void MarkPlannedDurationNotificationSent()
+    {
+        PlannedDurationNotificationSent = true;
     }
 
     // Behaviour

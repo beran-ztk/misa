@@ -191,6 +191,17 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
     }
 
     // Session
+    public async Task<List<Session>> GetSessionsForDurationNotificationAsync(CancellationToken ct)
+    {
+        return await context.Sessions
+            .Include(s => s.Segments)
+            .Include(s => s.Item)
+            .Where(s => s.State == SessionState.Running
+                     && s.PlannedDuration != null
+                     && !s.PlannedDurationNotificationSent)
+            .ToListAsync(ct);
+    }
+
     public async Task<Item?> TryGetItemWithSessionsAsync(Guid itemId, CancellationToken ct)
     {
         return await context.Items

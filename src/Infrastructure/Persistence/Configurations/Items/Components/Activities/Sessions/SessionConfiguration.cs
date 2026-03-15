@@ -39,6 +39,10 @@ public class SessionConfiguration : IEntityTypeConfiguration<Session>
         
         builder.Property(x => x.WasAutomaticallyStopped);
 
+        builder.Property(x => x.PlannedDurationNotificationSent)
+            .IsRequired()
+            .HasDefaultValue(false);
+
         builder.Property(x => x.CreatedAtUtc);
 
         // Relations

@@ -116,7 +116,7 @@ public static class ServiceRegistration
 
     private static void AddWorkers(this IServiceCollection services)
     {
-        services.AddHostedService<SessionAutostopWorker>();
+        services.AddHostedService<SessionDurationNotificationWorker>();
         services.AddHostedService<SessionPastMaxTimeWorker>();
         services.AddHostedService<SchedulePlanningWorker>();
         services.AddHostedService<ScheduleExecutingWorker>();

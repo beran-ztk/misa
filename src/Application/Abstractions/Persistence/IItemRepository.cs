@@ -42,6 +42,7 @@ public interface IItemRepository
     
     // Session
     Task<Item?> TryGetItemWithSessionsAsync(Guid itemId, CancellationToken ct);
+    Task<List<Session>> GetSessionsForDurationNotificationAsync(CancellationToken ct);
 
     // Relations
     Task AddRelationAsync(ItemRelation relation, CancellationToken ct);
