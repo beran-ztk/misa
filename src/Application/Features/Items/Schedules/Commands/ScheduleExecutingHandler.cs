@@ -3,7 +3,7 @@ using Misa.Application.Abstractions.Persistence;
 using Misa.Application.Abstractions.Time;
 using Wolverine;
 
-namespace Misa.Application.Features.Entities.Extensions.Items.Features.Scheduling.Commands;
+namespace Misa.Application.Features.Items.Schedules.Commands;
 
 public sealed record ScheduleExecutingCommand;
 public class ScheduleExecutingHandler(ISchedulerExecutingRepository repository, ITimeProvider  timeProvider, IIdGenerator idGenerator)

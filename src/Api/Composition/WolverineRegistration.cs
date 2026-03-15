@@ -1,5 +1,4 @@
 using Misa.Application.Features.Authentication;
-using Misa.Application.Features.Entities.Extensions.Items.Features.Scheduling.Commands;
 using Misa.Application.Features.Items.Schedules.Commands;
 using Misa.Application.Features.Items.Sessions.Commands;
 using Misa.Application.Features.Items.Tasks;

@@ -1,10 +1,7 @@
 using Microsoft.AspNetCore.SignalR;
 using Misa.Api.Middleware;
-using Misa.Application.Features.Entities.Extensions.Items.Features.Scheduling.Commands;
-using Wolverine;
-using Misa.Contract.Features.Messaging;
 
-namespace Misa.Api.Services.Features.Items.Features.Scheduler;
+namespace Misa.Api.Workers;
 
 public class SchedulePublishingWorker(
     IHubContext<EventHub> hub,

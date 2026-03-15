@@ -1,7 +1,7 @@
 ﻿using Misa.Application.Features.Items.Sessions.Commands;
 using Wolverine;
 
-namespace Misa.Api.Services.Features.Items.Features.Sessions;
+namespace Misa.Api.Workers;
 
 public class SessionPastMaxTimeWorker : BackgroundService
 {
