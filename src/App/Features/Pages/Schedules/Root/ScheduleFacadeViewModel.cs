@@ -7,16 +7,37 @@ using Misa.Ui.Avalonia.Infrastructure.UI;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Schedules.Root;
 
-public sealed partial class ScheduleFacadeViewModel(
-    ScheduleState state,
-    ScheduleGateway gateway,
-    LayerProxy layerProxy)
-    : ViewModelBase
+public sealed partial class ScheduleFacadeViewModel : ViewModelBase
 {
-    public ScheduleState State { get; } = state;
-    private ScheduleGateway Gateway { get; } = gateway;
-    private LayerProxy LayerProxy { get; } = layerProxy;
+    public ScheduleState State { get; }
+    private ScheduleGateway Gateway { get; }
+    private LayerProxy LayerProxy { get; }
 
+    public ScheduleFacadeViewModel(ScheduleState state,
+        ScheduleGateway gateway,
+        LayerProxy layerProxy)
+    {
+        State = state;
+        Gateway = gateway;
+        LayerProxy = layerProxy;
+        
+        State.SelectionContextState.PropertyChanged += async (s, e) =>
+        {
+            switch (e.PropertyName)
+            {
+                case nameof(State.SelectionContextState.UpdatedVersion):
+                {
+                    var id = State.SelectionContextState.ActiveEntityId;
+                    await GetAllAsync();
+                    State.SelectionContextState.Set(id);
+                    break;
+                }
+                case nameof(State.SelectionContextState.RemovedVersion):
+                    await GetAllAsync();
+                    break;
+            }
+        };
+    }
     public async Task InitializeWorkspaceAsync()
     {
         await RefreshWorkspaceAsync();

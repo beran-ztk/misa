@@ -12,6 +12,7 @@ namespace Misa.Ui.Avalonia.Features.Pages.Schedules.Root;
 public sealed partial class ScheduleState(ISelectionContextState selectionContextState)
     : ObservableObject
 {
+    public ISelectionContextState SelectionContextState { get; } = selectionContextState;
     private IReadOnlyCollection<ScheduleDto> Items { get; set; } = [];
     public ObservableCollection<ScheduleDto> FilteredItems { get; } = [];
 

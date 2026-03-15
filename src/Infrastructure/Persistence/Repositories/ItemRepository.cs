@@ -86,7 +86,7 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
     {
         return await context.Items
             .Include(s => s.ScheduleExtension)
-            .Where(t => t.OwnerId == user.Id && t.Workflow == Workflow.Schedule)
+            .Where(t => t.OwnerId == user.Id && t.Workflow == Workflow.Schedule && t.IsDeleted == false && t.IsArchived == false)
             .OrderByDescending(t => t.JournalExtension!.OccurredAt) 
             .ThenByDescending(t => t.CreatedAt)
             .AsNoTracking()
