@@ -1,0 +1,292 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Base.InspectorEntryBodyView"
+             xmlns:converters="clr-namespace:Misa.Ui.Avalonia.Common.Converters"
+             xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Base"
+             x:DataType="root:InspectorEntryViewModel">
+
+    <UserControl.Resources>
+        <converters:NullToStringNoValueIndicator x:Key="NoValueConverter"/>
+        <converters:UtcToLocalConverter x:Key="UtcToLocalConverter"/>
+    </UserControl.Resources>
+
+    <Border BorderBrush="{StaticResource BrushBorder}"
+            Margin="0,12"
+            Padding="14"
+            BorderThickness="1">
+
+        <StackPanel Spacing="12">
+
+            <!-- Header -->
+            <Grid ColumnDefinitions="*,Auto">
+
+                <TextBlock Grid.Column="0"
+                           Text="{Binding OverviewTitle, StringFormat='Workflow: {0}'}"
+                           FontSize="14"
+                           FontWeight="SemiBold"
+                           VerticalAlignment="Center" />
+
+                <Button Grid.Column="1"
+                        Classes="workspace-toolbar-icon"
+                        VerticalAlignment="Center"
+                        Command="{Binding ShowEditItemFormCommand}">
+                    <Image Source="{SvgImage /Assets/Icons/Common/edit.svg}" />
+                </Button>
+            </Grid>
+
+            <!-- Body -->
+            <StackPanel Spacing="14">
+                <!-- Title -->
+                <StackPanel Classes="addpanel-controls">
+                    <TextBlock Text="Title"
+                               Classes="addpanel-text" />
+
+                    <TextBlock Text="{Binding Facade.State.Item.Title}"
+                               IsVisible="{Binding !Facade.State.IsEditItemFormOpen}" />
+
+                    <TextBox Classes="addpanel-oneliner"
+                             Watermark="Title…"
+                             Text="{Binding EditTitle, Mode=TwoWay}"
+                             IsVisible="{Binding Facade.State.IsEditItemFormOpen}" />
+                </StackPanel>
+
+                <!-- Description -->
+                <StackPanel Classes="addpanel-controls">
+                    <TextBlock Text="Description"
+                               Classes="addpanel-text" />
+
+                    <TextBlock Text="{Binding Facade.State.Item.Description, Converter={StaticResource NoValueConverter}}"
+                               IsVisible="{Binding !Facade.State.IsEditItemFormOpen}" />
+
+                    <TextBox Classes="addpanel-oneliner"
+                             Watermark="Description…"
+                             Text="{Binding EditDescription, Mode=TwoWay}"
+                             IsVisible="{Binding Facade.State.IsEditItemFormOpen}" />
+                </StackPanel>
+
+                <!-- Created At -->
+                <StackPanel Classes="addpanel-controls">
+                    <TextBlock Text="Created"
+                               Classes="addpanel-text" />
+
+                    <TextBlock Text="{Binding Facade.State.Item.CreatedAt, Converter={StaticResource UtcToLocalConverter}, StringFormat='dd.MM.yyyy HH:mm'}" />
+                </StackPanel>
+
+                <!-- Modified At -->
+                <StackPanel Classes="addpanel-controls">
+                    <TextBlock Text="Modified"
+                               Classes="addpanel-text" />
+
+                    <TextBlock Text="{Binding Facade.State.Item.ModifiedAt, Converter={StaticResource UtcToLocalConverter}, StringFormat='dd.MM.yyyy HH:mm', TargetNullValue=---}" />
+                </StackPanel>
+
+                <!-- Activity -->
+                <StackPanel Classes="addpanel-body"
+                            IsVisible="{Binding Facade.State.IsRealActivity}">
+
+                    <!-- Activity Separator -->
+                    <Border Margin="0,8,0,4"
+                            BorderThickness="0,0,0,1"
+                            BorderBrush="{StaticResource BrushBorder}"
+                            Opacity="0.35"/>
+
+                    <!-- State -->
+                    <StackPanel Classes="addpanel-controls">
+
+                        <TextBlock Text="State"
+                                   Classes="addpanel-text" />
+
+                        <TextBlock Text="{Binding Facade.State.Item.Activity.State}"
+                                   IsVisible="{Binding !Facade.State.IsEditItemFormOpen}" />
+
+                        <ComboBox Classes="addpanel-combo"
+                                  ItemsSource="{Binding Facade.State.ActivityStates}"
+                                  SelectedItem="{Binding EditActivityState, Mode=TwoWay}"
+                                  IsVisible="{Binding Facade.State.IsEditItemFormOpen}" />
+                    </StackPanel>
+
+                    <!-- Priority -->
+                    <StackPanel Classes="addpanel-controls">
+                        <TextBlock Text="Priority"
+                                   Classes="addpanel-text" />
+
+                        <TextBlock Text="{Binding Facade.State.Item.Activity.Priority}"
+                                   IsVisible="{Binding !Facade.State.IsEditItemFormOpen}" />
+
+                        <ComboBox Classes="addpanel-combo"
+                                  ItemsSource="{Binding Facade.State.ActivityPriorities}"
+                                  SelectedItem="{Binding EditActivityPriority, Mode=TwoWay}"
+                                  IsVisible="{Binding Facade.State.IsEditItemFormOpen}" />
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Extension -->
+                <StackPanel Classes="addpanel-body"
+                            IsVisible="{Binding Facade.State.HasExtension}">
+
+                    <!-- Extension Separator -->
+                    <Border Margin="0,8,0,4"
+                            BorderThickness="0,0,0,1"
+                            BorderBrush="{StaticResource BrushBorder}"
+                            Opacity="0.35" />
+
+                    <!-- Task -->
+                    <StackPanel Classes="addpanel-body"
+                                IsVisible="{Binding Facade.State.IsTask}">
+
+                        <!-- Category -->
+                        <StackPanel Classes="addpanel-controls">
+                            <TextBlock Text="Category"
+                                       Classes="addpanel-text" />
+
+                            <TextBlock Text="{Binding Facade.State.Item.TaskExtension.Category, Converter={StaticResource NoValueConverter}}"
+                                       IsVisible="{Binding !Facade.State.IsEditItemFormOpen}" />
+
+                            <ComboBox Classes="addpanel-combo"
+                                      ItemsSource="{Binding Facade.State.TaskCategories}"
+                                      SelectedItem="{Binding EditTaskCategory, Mode=TwoWay}"
+                                      IsVisible="{Binding Facade.State.IsEditItemFormOpen}" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Scheduler -->
+                    <StackPanel Classes="addpanel-body"
+                                IsVisible="{Binding Facade.State.IsScheduler}">
+
+                        <!-- Frequency (read-only) -->
+                        <StackPanel Classes="addpanel-controls">
+                            <TextBlock Text="Frequency"
+                                       Classes="addpanel-text" />
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <TextBlock Text="{Binding Facade.State.Item.ScheduleExtension.FrequencyInterval}" />
+                                <TextBlock Text="{Binding Facade.State.Item.ScheduleExtension.FrequencyType}" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- Lookahead limit (editable) -->
+                        <StackPanel Classes="addpanel-controls">
+                            <TextBlock Text="Lookahead Limit"
+                                       Classes="addpanel-text" />
+
+                            <TextBlock Text="{Binding Facade.State.Item.ScheduleExtension.LookaheadLimit}"
+                                       IsVisible="{Binding !Facade.State.IsEditItemFormOpen}" />
+
+                            <NumericUpDown Classes="addpanel-num"
+                                           Value="{Binding EditLookaheadLimit, Mode=TwoWay}"
+                                           Minimum="1"
+                                           Maximum="100"
+                                           Increment="1"
+                                           FormatString="N0"
+                                           IsVisible="{Binding Facade.State.IsEditItemFormOpen}" />
+                        </StackPanel>
+
+                        <!-- Occurrence count limit (editable) -->
+                        <StackPanel Classes="addpanel-controls">
+                            <TextBlock Text="Occurrence Limit"
+                                       Classes="addpanel-text" />
+
+                            <TextBlock Text="{Binding Facade.State.Item.ScheduleExtension.OccurrenceCountLimit, Converter={StaticResource NoValueConverter}}"
+                                       IsVisible="{Binding !Facade.State.IsEditItemFormOpen}" />
+
+                            <NumericUpDown Classes="addpanel-num"
+                                           Value="{Binding EditOccurrenceCountLimit, Mode=TwoWay}"
+                                           Minimum="0"
+                                           Maximum="100000"
+                                           Increment="1"
+                                           FormatString="N0"
+                                           IsVisible="{Binding Facade.State.IsEditItemFormOpen}" />
+                        </StackPanel>
+
+                        <!-- Misfire Policy (editable) -->
+                        <StackPanel Classes="addpanel-controls">
+                            <TextBlock Text="Misfire Policy"
+                                       Classes="addpanel-text" />
+
+                            <TextBlock Text="{Binding Facade.State.Item.ScheduleExtension.MisfirePolicy}"
+                                       IsVisible="{Binding !Facade.State.IsEditItemFormOpen}" />
+
+                            <ComboBox Classes="addpanel-combo"
+                                      ItemsSource="{Binding Facade.State.MisfirePolicies}"
+                                      SelectedItem="{Binding EditMisfirePolicy, Mode=TwoWay}"
+                                      IsVisible="{Binding Facade.State.IsEditItemFormOpen}" />
+                        </StackPanel>
+
+                        <!-- Start time (editable) -->
+                        <StackPanel Classes="addpanel-controls">
+                            <TextBlock Text="Start Time"
+                                       Classes="addpanel-text" />
+
+                            <TextBlock Text="{Binding Facade.State.Item.ScheduleExtension.StartTime, Converter={StaticResource NoValueConverter}}"
+                                       IsVisible="{Binding !Facade.State.IsEditItemFormOpen}" />
+
+                            <TimePicker Classes="addpanel-time"
+                                        SelectedTime="{Binding EditStartTime, Mode=TwoWay}"
+                                        IsVisible="{Binding Facade.State.IsEditItemFormOpen}" />
+                        </StackPanel>
+
+                        <!-- End time (editable) -->
+                        <StackPanel Classes="addpanel-controls">
+                            <TextBlock Text="End Time"
+                                       Classes="addpanel-text" />
+
+                            <TextBlock Text="{Binding Facade.State.Item.ScheduleExtension.EndTime, Converter={StaticResource NoValueConverter}}"
+                                       IsVisible="{Binding !Facade.State.IsEditItemFormOpen}" />
+
+                            <TimePicker Classes="addpanel-time"
+                                        SelectedTime="{Binding EditEndTime, Mode=TwoWay}"
+                                        IsVisible="{Binding Facade.State.IsEditItemFormOpen}" />
+                        </StackPanel>
+
+                        <!-- Active until (editable) -->
+                        <StackPanel Classes="addpanel-controls">
+                            <TextBlock Text="Active Until"
+                                       Classes="addpanel-text" />
+
+                            <TextBlock Text="{Binding Facade.State.Item.ScheduleExtension.ActiveUntilUtc, Converter={StaticResource UtcToLocalConverter}, StringFormat='dd.MM.yyyy HH:mm', TargetNullValue=---}"
+                                       IsVisible="{Binding !Facade.State.IsEditItemFormOpen}" />
+
+                            <StackPanel Orientation="Vertical"
+                                        Spacing="8"
+                                        IsVisible="{Binding Facade.State.IsEditItemFormOpen}">
+                                <DatePicker Classes="addpanel-date"
+                                            SelectedDate="{Binding EditActiveUntilDate, Mode=TwoWay}" />
+                                <TimePicker Classes="addpanel-time"
+                                            SelectedTime="{Binding EditActiveUntilTime, Mode=TwoWay}" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- Timezone (read-only) -->
+                        <StackPanel Classes="addpanel-controls">
+                            <TextBlock Text="Timezone"
+                                       Classes="addpanel-text" />
+                            <TextBlock Text="{Binding Facade.State.Item.ScheduleExtension.Timezone, Converter={StaticResource NoValueConverter}}" />
+                        </StackPanel>
+
+                    </StackPanel>
+
+                </StackPanel>
+
+            </StackPanel>
+
+            <!-- Footer -->
+            <Border Padding="6,10"
+                    IsVisible="{Binding Facade.State.IsEditItemFormOpen}">
+                <Grid ColumnDefinitions="*,Auto"
+                      VerticalAlignment="Center">
+
+                    <StackPanel Grid.Column="1"
+                                Classes="confirm-cancel">
+
+                        <Button Content="Cancel"
+                                Classes="confirm-cancel-cancel"
+                                Command="{Binding CancelCommand}"/>
+                        <Button Content="Submit"
+                                Classes="confirm-cancel-confirm"
+                                Command="{Binding SubmitCommand}"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </StackPanel>
+    </Border>
+
+</UserControl>
