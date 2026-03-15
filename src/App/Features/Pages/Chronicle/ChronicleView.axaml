@@ -75,14 +75,15 @@
                                   Margin="0,5,0,5">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
-                                <StackPanel Orientation="Horizontal" Spacing="4" />
+                                <WrapPanel Orientation="Horizontal" />
                             </ItemsPanelTemplate>
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <Button Command="{Binding ToggleCommand}"
                                         Classes="chronicle-filter-chip"
-                                        Classes.selected="{Binding IsSelected}">
+                                        Classes.selected="{Binding IsSelected}"
+                                        Margin="0,0,4,4">
                                     <TextBlock Text="{Binding Label}"
                                                Classes="chronicle-type-chip-text" />
                                 </Button>
