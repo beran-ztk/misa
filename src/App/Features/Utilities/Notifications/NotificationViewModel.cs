@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,28 +20,25 @@ public sealed partial class NotificationItem : ObservableObject
     public NotificationItem(NotificationDto notification)
     {
         Id        = Guid.NewGuid();
-        Type      = notification.NotificationType;
-        Severity  = notification.NotificationSeverity;
-        Payload   = notification.Payload;
+        Title     = notification.Payload;
+        Message   = string.Empty;
         Timestamp = notification.Timestamp;
     }
 
     public NotificationItem(NotificationEntryDto dto)
     {
         Id        = dto.Id;
-        Type      = NotificationTypeDto.TaskCreated;
-        Severity  = NotificationSeverityDto.Info;
-        Payload   = string.IsNullOrWhiteSpace(dto.Message) ? dto.Title : $"{dto.Title}: {dto.Message}";
+        Title     = dto.Title;
+        Message   = dto.Message;
         Timestamp = dto.CreatedAtUtc;
     }
 
-    public Guid                    Id              { get; }
-    public NotificationTypeDto     Type            { get; private set; }
-    public string                  TypeToString    => Type.ToString();
-    public NotificationSeverityDto Severity        { get; private set; }
-    public string                  SeverityToString => Severity.ToString();
-    public string                  Payload         { get; private set; }
-    public DateTimeOffset          Timestamp       { get; private set; }
+    public Guid           Id                 { get; }
+    public string         Title              { get; }
+    public string         Message            { get; }
+    public bool           HasMessage         => !string.IsNullOrWhiteSpace(Message);
+    public DateTimeOffset Timestamp          { get; }
+    public string         TimestampFormatted => Timestamp.ToLocalTime().ToString("dd MMM · HH:mm", CultureInfo.InvariantCulture);
 
     [ObservableProperty] private bool _isRead;
 
@@ -52,11 +51,17 @@ public sealed partial class NotificationViewModel : ViewModelBase
 
     public ObservableCollection<NotificationItem> Notifications { get; } = [];
 
+    public bool IsEmpty => Notifications.Count == 0;
+
     public NotificationViewModel(NotificationGateway gateway)
     {
         _gateway = gateway;
+        Notifications.CollectionChanged += OnCollectionChanged;
         _ = LoadAsync();
     }
+
+    private void OnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        => OnPropertyChanged(nameof(IsEmpty));
 
     public void Publish(NotificationDto notification)
     {
@@ -80,10 +85,8 @@ public sealed partial class NotificationViewModel : ViewModelBase
             }
         });
     }
-    public async Task InitializeAsync()
-    {
-        await RefreshAsync();
-    }
+
+    public async Task InitializeAsync() => await RefreshAsync();
 
     [RelayCommand]
     private async Task RefreshAsync() => await LoadAsync();
