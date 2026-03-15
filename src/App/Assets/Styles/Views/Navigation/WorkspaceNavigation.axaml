@@ -20,24 +20,15 @@
     </Style>
 
     <Style Selector="Button.workspace-nav:pointerover">
-        <Setter Property="Opacity" Value="0.7"/>
-    </Style>
-    
-    <Style Selector="Button.workspace-nav:pressed">
-        <Setter Property="RenderTransform" Value="scale(0.90)"/>
-    </Style>
-    
-    <Style Selector="Button.workspace-nav /template/ ContentPresenter">
-        <Setter Property="CornerRadius" Value="{StaticResource CornerRadiusButtons}"/>
-    </Style>
-
-    <Style Selector="Button.workspace-nav:pointerover /template/ ContentPresenter">
         <Setter Property="Background" Value="{StaticResource BrushNavigationHover}"/>
     </Style>
 
-    <Style Selector="Button.workspace-nav:pressed /template/ ContentPresenter">
+    <Style Selector="Button.workspace-nav:pressed">
         <Setter Property="Background" Value="{StaticResource BrushNavigationPressed}"/>
-        <Setter Property="Opacity" Value="0.9"/>
+    </Style>
+
+    <Style Selector="Button.workspace-nav /template/ ContentPresenter">
+        <Setter Property="CornerRadius" Value="0"/>
     </Style>
 
     <!-- Label -->

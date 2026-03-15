@@ -121,6 +121,7 @@ public static class ServiceRegistration
         services.AddHostedService<SchedulePlanningWorker>();
         services.AddHostedService<ScheduleExecutingWorker>();
         services.AddHostedService<SchedulePublishingWorker>();
+        services.AddHostedService<NotificationCleanupWorker>();
     }
 
     private static void AddRepositories(this IServiceCollection services)
