@@ -10,5 +10,6 @@ public interface INotificationRepository
     Task DismissAsync(Guid id, DateTimeOffset dismissedAt, CancellationToken ct = default);
     Task MarkAsReadAsync(Guid id, DateTimeOffset readAt, CancellationToken ct = default);
     Task MarkAllAsReadAsync(DateTimeOffset readAt, CancellationToken ct = default);
+    Task<int> CleanupDismissedAsync(DateTimeOffset dismissedBefore, CancellationToken ct = default);
     Task SaveChangesAsync(CancellationToken ct = default);
 }

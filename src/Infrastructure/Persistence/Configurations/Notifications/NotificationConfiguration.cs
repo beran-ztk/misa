@@ -33,5 +33,7 @@ public sealed class NotificationConfiguration : IEntityTypeConfiguration<Notific
         builder.Property(n => n.DismissedAtUtc);
 
         builder.Property(n => n.ReadAtUtc);
+
+        builder.Property(n => n.DeletedAtUtc);
     }
 }

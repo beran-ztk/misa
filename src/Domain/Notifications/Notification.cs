@@ -31,4 +31,5 @@ public sealed class Notification
     public string                 OwnerId        { get; private set; } = string.Empty;
     public DateTimeOffset?        DismissedAtUtc { get; private set; }
     public DateTimeOffset?        ReadAtUtc      { get; private set; }
+    public DateTimeOffset?        DeletedAtUtc   { get; private set; }
 }

@@ -59,6 +59,13 @@ public class NotificationRepository(MisaContext context, ICurrentUser user) : IN
             .ExecuteUpdateAsync(s => s.SetProperty(n => n.ReadAtUtc, readAt), ct);
     }
 
+    public async Task<int> CleanupDismissedAsync(DateTimeOffset dismissedBefore, CancellationToken ct = default)
+    {
+        return await context.Notifications
+            .Where(n => n.DismissedAtUtc != null && n.DismissedAtUtc < dismissedBefore && n.DeletedAtUtc == null)
+            .ExecuteUpdateAsync(s => s.SetProperty(n => n.DeletedAtUtc, dismissedBefore), ct);
+    }
+
     public async Task SaveChangesAsync(CancellationToken ct = default)
     {
         await context.SaveChangesAsync(ct);
