@@ -76,7 +76,10 @@
                             Classes="workspace-toolbar-center">
                     <ToggleButton x:Name="PriorityFilterButton"
                                   Classes="workspace-toolbar-filter-trigger">
-                        <TextBlock Text="Priority  ▾" />
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Grid.Column="0" Text="Priority" />
+                            <TextBlock Grid.Column="1" Text="▾" />
+                        </Grid>
                     </ToggleButton>
 
                     <Popup PlacementTarget="{Binding ElementName=PriorityFilterButton}"
@@ -96,7 +99,10 @@
 
                     <ToggleButton x:Name="StateFilterButton"
                                   Classes="workspace-toolbar-filter-trigger">
-                        <TextBlock Text="State  ▾" />
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Grid.Column="0" Text="State" />    
+                            <TextBlock Grid.Column="1" Text="▾" />    
+                        </Grid>
                     </ToggleButton>
 
                     <Popup PlacementTarget="{Binding ElementName=StateFilterButton}"
@@ -116,7 +122,10 @@
 
                     <ToggleButton x:Name="CategoryFilterButton"
                                   Classes="workspace-toolbar-filter-trigger">
-                        <TextBlock Text="Category  ▾" />
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Grid.Column="0" Text="Category" />    
+                            <TextBlock Grid.Column="1" Text="▾" />    
+                        </Grid>
                     </ToggleButton>
 
                     <Popup PlacementTarget="{Binding ElementName=CategoryFilterButton}"
