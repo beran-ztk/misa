@@ -6,7 +6,7 @@
     
     <UserControl.Styles>
         <Style Selector="TabControl.inspector-tabs">
-            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}" />
+            <Setter Property="Background" Value="Transparent" />
             <Setter Property="Padding" Value="0" />
         </Style>
 
@@ -20,7 +20,6 @@
         <Style Selector="Border.inspector-tabs-underline">
             <Setter Property="BorderThickness" Value="0,1,0,0" />
             <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}" />
-            <Setter Property="Margin" Value="0,0,0,0" />
         </Style>
         
         <Style Selector="TabControl.inspector-tabs TabItem:pointerover">
@@ -47,24 +46,36 @@
                     SelectedIndex="{Binding State.SelectedTabIndex}">
 
             <TabItem Header="Entry">
-                <StackPanel>
-                    <Border Classes="inspector-tabs-underline"/>
-                    <ContentControl Content="{Binding Entry}"/>
-                </StackPanel>
+                <Grid RowDefinitions="Auto,*">
+                    <Border Grid.Row="0"
+                            Classes="inspector-tabs-underline"/>
+
+                    <ScrollViewer Grid.Row="1">
+                        <ContentControl Content="{Binding Entry}"/>
+                    </ScrollViewer>
+                </Grid>
             </TabItem>
 
             <TabItem Header="Discussion">
-                <Border Classes="inspector-tabs-underline">
-                    <TextBlock Text="Discussion content placeholder"
-                               TextWrapping="Wrap" />
-                </Border>
-            </TabItem>
+                <Grid RowDefinitions="Auto,*">
+                    <Border Grid.Row="0"
+                            Classes="inspector-tabs-underline"/>
 
-            <TabItem Header="Activity"
-                     IsVisible="{Binding State.HasActivityTab}">
-                <Border Classes="inspector-tabs-underline">
-                    <ContentControl Content="{Binding Activity}"/>
-                </Border>
+                    <ScrollViewer Grid.Row="1">
+                        <TextBlock Text="Discussion content placeholder"/>
+                    </ScrollViewer>
+                </Grid>
+            </TabItem>
+            
+            <TabItem Header="Activity">
+                <Grid RowDefinitions="Auto,*">
+                    <Border Grid.Row="0"
+                            Classes="inspector-tabs-underline"/>
+
+                    <ScrollViewer Grid.Row="1">
+                        <ContentControl Content="{Binding Activity}"/>
+                    </ScrollViewer>
+                </Grid>
             </TabItem>
         </TabControl>
     </Border>
