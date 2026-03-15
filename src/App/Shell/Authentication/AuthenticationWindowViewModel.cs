@@ -1,3 +1,4 @@
+using TimeZoneConverter;
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -40,7 +41,16 @@ public partial class AuthenticationWindowViewModel : ViewModelBase
         RemoteProxy = remoteProxy;
 
         TimeZoneIds = new ObservableCollection<string>(TimeZoneService.Ids);
-        SelectedTimeZoneId = TimeZoneIds.Contains("Europe/Berlin") ? "Europe/Berlin" : TimeZoneIds.FirstOrDefault();
+        
+        var windowsZone = TimeZoneInfo.Local.Id;
+        var ianaZone = TZConvert.WindowsToIana(windowsZone);
+
+        SelectedTimeZoneId =
+            TimeZoneIds.Contains(ianaZone)
+                ? ianaZone
+                : TimeZoneIds.Contains("Europe/Berlin")
+                    ? "Europe/Berlin"
+                    : TimeZoneIds.FirstOrDefault();
 
         IsRegisterMode = false;
     }
