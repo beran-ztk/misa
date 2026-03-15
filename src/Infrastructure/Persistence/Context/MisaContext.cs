@@ -11,6 +11,7 @@ using Misa.Domain.Items.Components.Schola;
 using Misa.Domain.Items.Components.Tasks;
 using Misa.Domain.Items.Components.Relations;
 using Misa.Domain.Items.Components.Zettelkasten;
+using Misa.Domain.Notifications;
 
 namespace Misa.Infrastructure.Persistence.Context;
 
@@ -27,6 +28,7 @@ public class MisaContext(DbContextOptions<MisaContext> options, ITimeProvider ti
 
     public DbSet<ScheduleExtension> Schedulers { get; set; } = null!;
     public DbSet<ScheduleExecutionLog> SchedulerExecutionLogs { get; set; } = null!;
+    public DbSet<Notification> Notifications { get; set; } = null!;
     public DbSet<Arc> Arcs { get; set; } = null!;
     public DbSet<Unit> Units { get; set; } = null!;
     public DbSet<ZettelExtension> Zettels { get; set; } = null!;

@@ -113,6 +113,7 @@ public static class ServiceRegistration
         services.AddScoped<ISchedulerPlanningRepository, SchedulerPlanningRepository>();
         services.AddScoped<ISchedulerExecutingRepository, SchedulerExecutingRepository>();
         services.AddScoped<ISchedulerRepository, SchedulerRepository>();
+        services.AddScoped<INotificationRepository, NotificationRepository>();
     }
     private static void AddDataAccess(this IServiceCollection services, IConfiguration configuration)
     {

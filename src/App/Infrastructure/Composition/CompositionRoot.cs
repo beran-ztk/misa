@@ -140,6 +140,7 @@ public static class CompositionRoot
 
     private static void AddUtilities(this IServiceCollection sc)
     {
+        sc.AddSingleton<NotificationGateway>();
         sc.AddSingleton<NotificationViewModel>();
     }
 }

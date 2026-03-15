@@ -53,9 +53,10 @@ public sealed class ScheduleExecutionLog
         Status = ScheduleExecutionStatus.Succeeded;
         FinishedAtUtc = now;
     }
-    public void Fail(DateTimeOffset now)
+    public void Fail(DateTimeOffset now, string? error)
     {
         Status = ScheduleExecutionStatus.Failed;
+        Error = error;
         FinishedAtUtc = now;
     }
 }
