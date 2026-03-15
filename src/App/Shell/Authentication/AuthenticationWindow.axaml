@@ -133,7 +133,8 @@
                         <TextBlock Text="Username"
                                    FontSize="12"
                                    Foreground="{StaticResource BrushTextSecondary}"/>
-                        <TextBox Text="{Binding Username, Mode=TwoWay}"
+                        <TextBox x:Name="UsernameField"
+                                 Text="{Binding Username, Mode=TwoWay}"
                                  IsEnabled="{Binding IsNotBusy}"/>
                     </StackPanel>
 
@@ -143,7 +144,11 @@
                                    Foreground="{StaticResource BrushTextSecondary}"/>
                         <TextBox Text="{Binding Password, Mode=TwoWay}"
                                  PasswordChar="•"
-                                 IsEnabled="{Binding IsNotBusy}"/>
+                                 IsEnabled="{Binding IsNotBusy}">
+                            <TextBox.KeyBindings>
+                                <KeyBinding Gesture="Enter" Command="{Binding SubmitCommand}"/>
+                            </TextBox.KeyBindings>
+                        </TextBox>
                     </StackPanel>
 
                     <!-- Register-only fields — collapse when not in register mode -->
