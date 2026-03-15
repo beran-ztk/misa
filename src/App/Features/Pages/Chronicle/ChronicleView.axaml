@@ -56,7 +56,7 @@
                     </Button>
                 </StackPanel>
 
-                <!-- Row 0 right: search -->
+                <!-- Row 0 right: search — Column 1 sized only by this -->
                 <StackPanel Grid.Row="0" Grid.Column="1"
                             Classes="workspace-toolbar-right">
                     <TextBox Classes="workspace-toolbar-search"
@@ -64,47 +64,66 @@
                              Text="{Binding SearchText, Mode=TwoWay}" />
                 </StackPanel>
 
-                <!-- Row 1 left: type filter chips -->
-                <ItemsControl Grid.Row="1" Grid.Column="0"
-                              ItemsSource="{Binding TypeFilters}"
-                              VerticalAlignment="Center"
-                              Margin="0,5,0,5">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <StackPanel Orientation="Horizontal" Spacing="4" />
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Button Command="{Binding ToggleCommand}"
-                                    Classes="chronicle-filter-chip"
-                                    Classes.selected="{Binding IsSelected}">
-                                <TextBlock Text="{Binding Label}"
-                                           Classes="chronicle-type-chip-text" />
-                            </Button>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                <!-- Row 1: spans full width — chips left, date range right -->
+                <Grid Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                      ColumnDefinitions="*,Auto">
 
-                <!-- Row 1 right: date range -->
-                <StackPanel Grid.Row="1" Grid.Column="1"
-                            Orientation="Horizontal"
-                            Spacing="6"
-                            VerticalAlignment="Center"
-                            Margin="0,5,0,5">
-                    <TextBlock Text="From"
-                               FontSize="11"
-                               Opacity="0.6"
-                               VerticalAlignment="Center" />
-                    <DatePicker SelectedDate="{Binding FilterFrom, Mode=TwoWay}"
-                                Classes="chronicle-date-filter" />
-                    <TextBlock Text="→"
-                               FontSize="11"
-                               Opacity="0.5"
-                               VerticalAlignment="Center" />
-                    <DatePicker SelectedDate="{Binding FilterTo, Mode=TwoWay}"
-                                Classes="chronicle-date-filter" />
-                </StackPanel>
+                    <!-- Type filter chips -->
+                    <ItemsControl Grid.Column="0"
+                                  ItemsSource="{Binding TypeFilters}"
+                                  VerticalAlignment="Center"
+                                  Margin="0,5,0,5">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" Spacing="4" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Command="{Binding ToggleCommand}"
+                                        Classes="chronicle-filter-chip"
+                                        Classes.selected="{Binding IsSelected}">
+                                    <TextBlock Text="{Binding Label}"
+                                               Classes="chronicle-type-chip-text" />
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <!-- Date range — vertical, right-aligned -->
+                    <Grid Grid.Column="1"
+                          RowDefinitions="Auto,Auto"
+                          ColumnDefinitions="40,Auto"
+                          RowSpacing="4"
+                          Margin="12,5,0,5">
+
+                        <TextBlock Grid.Row="0"
+                                   Grid.Column="0"
+                                   Text="From"
+                                   FontSize="10"
+                                   Opacity="0.55"
+                                   VerticalAlignment="Center"/>
+
+                        <DatePicker Grid.Row="0"
+                                    Grid.Column="1"
+                                    SelectedDate="{Binding FilterFrom, Mode=TwoWay}"
+                                    Classes="chronicle-date-filter"/>
+
+                        <TextBlock Grid.Row="1"
+                                   Grid.Column="0"
+                                   Text="To"
+                                   FontSize="10"
+                                   Opacity="0.55"
+                                   VerticalAlignment="Center"/>
+
+                        <DatePicker Grid.Row="1"
+                                    Grid.Column="1"
+                                    SelectedDate="{Binding FilterTo, Mode=TwoWay}"
+                                    Classes="chronicle-date-filter"/>
+
+                    </Grid>
+
+                </Grid>
 
                 <!-- Row 2: separator -->
                 <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
