@@ -20,6 +20,14 @@ public class NotificationRepository(MisaContext context) : INotificationReposito
             .ToListAsync(ct);
     }
 
+    public async Task<bool> DeleteAsync(Guid id, CancellationToken ct = default)
+    {
+        var rows = await context.Notifications
+            .Where(n => n.Id == id)
+            .ExecuteDeleteAsync(ct);
+        return rows > 0;
+    }
+
     public async Task SaveChangesAsync(CancellationToken ct = default)
     {
         await context.SaveChangesAsync(ct);

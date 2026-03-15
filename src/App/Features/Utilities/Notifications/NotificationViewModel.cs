@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Globalization;
@@ -39,10 +38,6 @@ public sealed partial class NotificationItem : ObservableObject
     public bool           HasMessage         => !string.IsNullOrWhiteSpace(Message);
     public DateTimeOffset Timestamp          { get; }
     public string         TimestampFormatted => Timestamp.ToLocalTime().ToString("dd MMM · HH:mm", CultureInfo.InvariantCulture);
-
-    [ObservableProperty] private bool _isRead;
-
-    public void MarkRead() => IsRead = true;
 }
 
 public sealed partial class NotificationViewModel : ViewModelBase
@@ -56,12 +51,9 @@ public sealed partial class NotificationViewModel : ViewModelBase
     public NotificationViewModel(NotificationGateway gateway)
     {
         _gateway = gateway;
-        Notifications.CollectionChanged += OnCollectionChanged;
+        Notifications.CollectionChanged += (_, _) => OnPropertyChanged(nameof(IsEmpty));
         _ = LoadAsync();
     }
-
-    private void OnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
-        => OnPropertyChanged(nameof(IsEmpty));
 
     public void Publish(NotificationDto notification)
     {
@@ -92,20 +84,16 @@ public sealed partial class NotificationViewModel : ViewModelBase
     private async Task RefreshAsync() => await LoadAsync();
 
     [RelayCommand]
-    private void Clear() => Notifications.Clear();
-
-    [RelayCommand]
-    private void MarkAllRead()
+    private async Task DismissAsync(Guid id)
     {
-        foreach (var n in Notifications)
-            n.MarkRead();
-    }
+        var ok = await _gateway.DismissAsync(id);
+        if (!ok) return;
 
-    [RelayCommand]
-    private void Dismiss(Guid id)
-    {
-        var item = Notifications.FirstOrDefault(x => x.Id == id);
-        if (item != null)
-            Notifications.Remove(item);
+        await Dispatcher.UIThread.InvokeAsync(() =>
+        {
+            var item = Notifications.FirstOrDefault(x => x.Id == id);
+            if (item != null)
+                Notifications.Remove(item);
+        });
     }
 }

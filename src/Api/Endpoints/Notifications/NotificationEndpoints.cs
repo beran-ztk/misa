@@ -10,11 +10,18 @@ public static class NotificationEndpoints
     public static void Map(IEndpointRouteBuilder api)
     {
         api.MapGet(NotificationRoutes.GetAll, GetAll);
+        api.MapDelete(NotificationRoutes.Dismiss, Dismiss);
     }
 
     private static async Task<IResult> GetAll(IMessageBus bus, CancellationToken ct)
     {
         var dtos = await bus.InvokeAsync<List<NotificationEntryDto>>(new GetNotificationsQuery(), ct);
         return Results.Ok(dtos);
+    }
+
+    private static async Task<IResult> Dismiss(Guid id, IMessageBus bus, CancellationToken ct)
+    {
+        await bus.InvokeAsync(new DismissNotificationCommand(id), ct);
+        return Results.NoContent();
     }
 }
