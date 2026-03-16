@@ -34,6 +34,7 @@
                 <Button Grid.Row="0"
                         Grid.Column="1"
                         Classes="addpanel-icon"
+                        IsTabStop="False"
                         VerticalAlignment="Center"
                         Command="{Binding CloseCommand}">
                     <Image Source="{SvgImage /Assets/Icons/Common/cancel.svg}" />
@@ -74,12 +75,24 @@
                 <StackPanel Grid.Column="1" 
                             Classes="confirm-cancel">
                     
-                    <Button Content="Cancel"
-                            Classes="confirm-cancel-cancel"
-                            Command="{Binding CloseCommand}"/>
-                    <Button Content="Submit"
-                            Classes="confirm-cancel-confirm"
-                            Command="{Binding SubmitCommand}"/>
+                    <Button Classes="confirm-cancel-cancel"
+                            Command="{Binding CloseCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                            <TextBlock Text="Cancel" VerticalAlignment="Center"/>
+                            <Border Background="#18FFFFFF" CornerRadius="2" Padding="4,1" VerticalAlignment="Center">
+                                <TextBlock Text="Esc" FontSize="10" Opacity="0.6" VerticalAlignment="Center"/>
+                            </Border>
+                        </StackPanel>
+                    </Button>
+                    <Button Classes="confirm-cancel-confirm"
+                            Command="{Binding SubmitCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                            <TextBlock Text="Submit" VerticalAlignment="Center"/>
+                            <Border Background="#20FFFFFF" CornerRadius="2" Padding="4,1" VerticalAlignment="Center">
+                                <TextBlock Text="Ctrl+↵" FontSize="10" Opacity="0.65" VerticalAlignment="Center"/>
+                            </Border>
+                        </StackPanel>
+                    </Button>
                 </StackPanel>
             </Grid>
         </Grid>
