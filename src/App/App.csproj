@@ -114,6 +114,9 @@
       <Compile Update="Features\Utilities\Toast\ToastView.axaml.cs">
         <DependentUpon>ToastView.axaml</DependentUpon>
       </Compile>
+      <Compile Update="Features\Utilities\Dev\DevToolsView.axaml.cs">
+        <DependentUpon>DevToolsView.axaml</DependentUpon>
+      </Compile>
     </ItemGroup>
 
     <ItemGroup>

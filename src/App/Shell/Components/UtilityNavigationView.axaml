@@ -37,6 +37,13 @@
 
             </Button>
 
+            <Button Classes="utility-nav"
+                    ToolTip.Tip="Dev Tools"
+                    Command="{Binding ToggleDevToolsCommand}">
+                <Image Classes="utility-nav"
+                       Source="{SvgImage /Assets/Icons/Shell/Navigation/nut.svg}" />
+            </Button>
+
         </StackPanel>
     </Border>
 </UserControl>

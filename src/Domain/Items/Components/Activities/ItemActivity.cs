@@ -10,12 +10,14 @@ public sealed class ItemActivity : DomainEventEntity
     private ItemActivity() { } // EF
 
     public ItemActivity(
+        ItemId id,
         ActivityState state,
         ActivityPriority priority,
         string? objective,
         string? summary,
         DateTimeOffset? dueAt)
     {
+        Id = id;
         State = state;
         Priority = priority;
         Objective = objective;

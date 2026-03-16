@@ -214,6 +214,14 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
             );
     }
 
+    // Dev
+    public async Task DeleteAllByOwnerAsync(string ownerId, CancellationToken ct)
+    {
+        await context.Items
+            .Where(i => i.OwnerId == ownerId)
+            .ExecuteDeleteAsync(ct);
+    }
+
     // Relations
     public async Task AddRelationAsync(ItemRelation relation, CancellationToken ct)
     {

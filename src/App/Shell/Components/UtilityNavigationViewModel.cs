@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Ui.Avalonia.Common.Mappings;
+using Misa.Ui.Avalonia.Features.Utilities.Dev;
 using Misa.Ui.Avalonia.Infrastructure.States;
 using NotificationViewModel = Misa.Ui.Avalonia.Features.Utilities.Notifications.NotificationViewModel;
 
@@ -11,6 +12,7 @@ public sealed partial class UtilityNavigationViewModel : ViewModelBase
 {
     private readonly ShellState            _shellState;
     private readonly NotificationViewModel _notificationViewModel;
+    private readonly DevToolsViewModel     _devToolsViewModel;
 
     public NotificationViewModel NotificationViewModel => _notificationViewModel;
 
@@ -19,10 +21,14 @@ public sealed partial class UtilityNavigationViewModel : ViewModelBase
         ? "9+"
         : _notificationViewModel.UnreadCount.ToString();
 
-    public UtilityNavigationViewModel(ShellState shellState, NotificationViewModel notificationViewModel)
+    public UtilityNavigationViewModel(
+        ShellState shellState,
+        NotificationViewModel notificationViewModel,
+        DevToolsViewModel devToolsViewModel)
     {
         _shellState            = shellState;
         _notificationViewModel = notificationViewModel;
+        _devToolsViewModel     = devToolsViewModel;
 
         _notificationViewModel.PropertyChanged += OnNotificationPropertyChanged;
     }
@@ -45,5 +51,17 @@ public sealed partial class UtilityNavigationViewModel : ViewModelBase
 
         await _notificationViewModel.InitializeAsync();
         _shellState.Utility = _notificationViewModel;
+    }
+
+    [RelayCommand]
+    private void ToggleDevTools()
+    {
+        if (_shellState.Utility is DevToolsViewModel)
+        {
+            _shellState.Utility = null;
+            return;
+        }
+
+        _shellState.Utility = _devToolsViewModel;
     }
 }

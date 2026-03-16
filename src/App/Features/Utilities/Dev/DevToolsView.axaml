@@ -1,0 +1,38 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             x:Class="Misa.Ui.Avalonia.Features.Utilities.Dev.DevToolsView"
+             xmlns:local="clr-namespace:Misa.Ui.Avalonia.Features.Utilities.Dev"
+             x:DataType="local:DevToolsViewModel">
+
+    <Border BorderThickness="1,0,0,0"
+            BorderBrush="{StaticResource BrushBorder}"
+            MinWidth="220">
+
+        <StackPanel Margin="16" Spacing="12">
+
+            <TextBlock Classes="section-header" Text="Dev Tools" />
+
+            <Button Classes="workspace-action"
+                    Content="Generate Seed Data"
+                    IsEnabled="{Binding !IsBusy}"
+                    Command="{Binding SeedDataCommand}"
+                    HorizontalAlignment="Stretch" />
+
+            <Button Classes="workspace-action-danger"
+                    Content="Delete My Data"
+                    IsEnabled="{Binding !IsBusy}"
+                    Command="{Binding DeleteDataCommand}"
+                    HorizontalAlignment="Stretch" />
+
+            <TextBlock Text="{Binding StatusMessage}"
+                       IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                       TextWrapping="Wrap"
+                       Opacity="0.7" />
+
+        </StackPanel>
+    </Border>
+
+</UserControl>

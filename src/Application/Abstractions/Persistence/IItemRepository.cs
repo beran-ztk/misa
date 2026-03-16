@@ -44,6 +44,9 @@ public interface IItemRepository
     Task<Item?> TryGetItemWithSessionsAsync(Guid itemId, CancellationToken ct);
     Task<List<Session>> GetSessionsForDurationNotificationAsync(CancellationToken ct);
 
+    // Dev
+    Task DeleteAllByOwnerAsync(string ownerId, CancellationToken ct);
+
     // Relations
     Task AddRelationAsync(ItemRelation relation, CancellationToken ct);
     Task<List<ItemRelation>> GetRelationsForItemAsync(Guid itemId, CancellationToken ct);
