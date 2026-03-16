@@ -12,6 +12,7 @@
 
     <Window.KeyBindings>
         <KeyBinding Gesture="Escape" Command="{Binding CloseCommand}"/>
+        <KeyBinding Gesture="Ctrl+B" Command="{Binding BypassCommand}"/>
     </Window.KeyBindings>
 
     <Window.Styles>
