@@ -7,6 +7,10 @@
              xmlns:vm="clr-namespace:Misa.Ui.Avalonia.Shell.Components"
              x:DataType="vm:IPanelHostViewModel">
     
+    <UserControl.KeyBindings>
+        <KeyBinding Gesture="Ctrl+Enter" Command="{Binding SubmitCommand}"/>
+    </UserControl.KeyBindings>
+
     <Border Classes="addpanel-main-border">
         <Grid RowDefinitions="Auto,Auto,*,Auto,Auto"
               Classes="addpanel-main-grid">

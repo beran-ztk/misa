@@ -1,4 +1,5 @@
 ﻿using System;
+using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Inspector.Root;
@@ -30,5 +31,21 @@ public partial class ShellWindowViewModel : ViewModelBase
 
         UtilityNavigation             = ServiceProvider.GetRequiredService<UtilityNavigationViewModel>();
         ShellState.UtilityNavigation  = UtilityNavigation;
+    }
+
+    /// <summary>
+    /// Escape handler: closes the topmost dismissible layer (modal → panel → utility panel).
+    /// </summary>
+    [RelayCommand]
+    private void Dismiss()
+    {
+        if (ShellState.IsModalOpen || ShellState.IsPanelOpen)
+        {
+            LayerCloser.Close();
+            return;
+        }
+
+        if (ShellState.Utility is not null)
+            ShellState.Utility = null;
     }
 }

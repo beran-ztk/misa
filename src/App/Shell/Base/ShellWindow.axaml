@@ -11,6 +11,7 @@
 
     <Window.KeyBindings>
         <KeyBinding Gesture="Ctrl+N" Command="{Binding UtilityNavigation.ToggleNotificationsCommand}"/>
+        <KeyBinding Gesture="Escape" Command="{Binding DismissCommand}"/>
     </Window.KeyBindings>
 
     <Grid>
