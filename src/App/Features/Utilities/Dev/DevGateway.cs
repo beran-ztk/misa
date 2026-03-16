@@ -17,6 +17,14 @@ public sealed class DevGateway(RemoteProxy remoteProxy)
             cancellationToken: default);
     }
 
+    public async Task<Result> SeedStressDataAsync()
+    {
+        return await remoteProxy.SendAsync(
+            requestFactory: () => new HttpRequestMessage(HttpMethod.Post, DevRoutes.SeedStressData),
+            retry: new RetryOptions { MaxAttempts = 1, Delay = TimeSpan.FromMilliseconds(500) },
+            cancellationToken: default);
+    }
+
     public async Task<Result> DeleteDataAsync()
     {
         return await remoteProxy.SendAsync(

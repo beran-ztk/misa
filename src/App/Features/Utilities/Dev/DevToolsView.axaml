@@ -21,6 +21,12 @@
                     Command="{Binding SeedDataCommand}"
                     HorizontalAlignment="Stretch" />
 
+            <Button Classes="workspace-action"
+                    Content="Generate Stress Seed Data"
+                    IsEnabled="{Binding !IsBusy}"
+                    Command="{Binding SeedStressDataCommand}"
+                    HorizontalAlignment="Stretch" />
+
             <Button Classes="workspace-action-danger"
                     Content="Delete My Data"
                     IsEnabled="{Binding !IsBusy}"

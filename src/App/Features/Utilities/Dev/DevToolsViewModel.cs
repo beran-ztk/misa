@@ -23,6 +23,18 @@ public sealed partial class DevToolsViewModel(DevGateway gateway) : ViewModelBas
     }
 
     [RelayCommand]
+    private async Task SeedStressDataAsync()
+    {
+        IsBusy        = true;
+        StatusMessage = null;
+
+        var result = await gateway.SeedStressDataAsync();
+
+        StatusMessage = result.IsSuccess ? "Stress seed data generated." : "Failed to generate stress seed data.";
+        IsBusy        = false;
+    }
+
+    [RelayCommand]
     private async Task DeleteDataAsync()
     {
         IsBusy        = true;
