@@ -69,7 +69,8 @@ public static class TaskEndpoints
             request.Description,
             request.ActivityState,
             request.ActivityPriority,
-            request.TaskCategory
+            request.TaskCategory,
+            request.Reason
         );
         
         await bus.InvokeAsync(command);

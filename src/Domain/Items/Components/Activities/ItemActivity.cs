@@ -37,16 +37,10 @@ public sealed class ItemActivity : DomainEventEntity
     
     // Derived Properties
     public Session? TryGetSession => Sessions.FirstOrDefault(s => s.State != SessionState.Ended);
-    public bool HasActiveSession 
-        => State == ActivityState.Active;
-    
+    public bool HasActiveSession => TryGetSession != null;
+
     public bool CanStartSession
-        => State 
-            is ActivityState.Draft
-            or ActivityState.Undefined
-            or ActivityState.InProgress
-            or ActivityState.Pending
-            or ActivityState.WaitForResponse;
+        => State == ActivityState.Open && TryGetSession == null;
     
     // Mutators
     public void SetDeadline(DateTimeOffset? deadline)
@@ -55,12 +49,12 @@ public sealed class ItemActivity : DomainEventEntity
         DueAt = deadline;
     }
 
-    public void ChangeState(ActivityState state)
+    public void ChangeState(ActivityState state, string? reason = null)
     {
         if (State == state)
             return;
 
-        AddDomainEvent(new PropertyChangedEvent(Id.Value, ChangeType.State, State.ToString(), state.ToString(), null));
+        AddDomainEvent(new PropertyChangedEvent(Id.Value, ChangeType.State, State.ToString(), state.ToString(), reason));
         State = state;
     }
 

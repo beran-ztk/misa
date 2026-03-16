@@ -53,6 +53,7 @@ public partial class InspectorEntryViewModel : ViewModelBase
     {
         Facade.State.IsEditItemFormOpen = false;
         OnPropertyChanged(nameof(OverviewTitle));
+        OnPropertyChanged(nameof(CanMarkAsDone));
     }
     private void CurrentSessionPropertyChanged()
     {

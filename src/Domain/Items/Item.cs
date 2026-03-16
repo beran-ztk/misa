@@ -92,7 +92,7 @@ public sealed class Item : DomainEventEntity
             description: description,
             createdAtUtc: createdAtUtc)
         {
-            Activity = new ItemActivity(ActivityState.Draft, priority, null, null, dueAt),
+            Activity = new ItemActivity(ActivityState.Open, priority, null, null, dueAt),
             TaskExtension = new TaskExtension(id, category)
         };
 
@@ -161,7 +161,7 @@ public sealed class Item : DomainEventEntity
             description: description,
             createdAtUtc: createdAtUtc)
         {
-            Activity = new ItemActivity(ActivityState.Draft, priority, objective, null, dueAt),
+            Activity = new ItemActivity(ActivityState.Open, priority, objective, null, dueAt),
             Arc = new Arc(id)
         };
 
@@ -188,7 +188,7 @@ public sealed class Item : DomainEventEntity
             description: description,
             createdAtUtc: createdAtUtc)
         {
-            Activity = new ItemActivity(ActivityState.Draft, priority, objective, null, dueAt),
+            Activity = new ItemActivity(ActivityState.Open, priority, objective, null, dueAt),
             Unit = new Unit(id, arcId)
         };
 

@@ -61,7 +61,7 @@ public class MisaContext(DbContextOptions<MisaContext> options, ITimeProvider ti
                     ev.ChangeType,
                     ev.OldValue,
                     ev.NewValue,
-                    null,
+                    ev.Reason,
                     timeProvider.UtcNow
                 )
             );

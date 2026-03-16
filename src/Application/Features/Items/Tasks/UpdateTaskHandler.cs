@@ -8,11 +8,12 @@ namespace Misa.Application.Features.Items.Tasks;
 
 public record UpdateTaskCommand(
     Guid ItemId,
-    string? Title, 
-    string? Description, 
-    ActivityStateDto? ActivityState, 
+    string? Title,
+    string? Description,
+    ActivityStateDto? ActivityState,
     ActivityPriorityDto? ActivityPriority,
-    TaskCategoryDto? TaskCategory);
+    TaskCategoryDto? TaskCategory,
+    string? Reason = null);
 
 public sealed class UpdateTaskHandler(IItemRepository repository)
 {
@@ -21,13 +22,13 @@ public sealed class UpdateTaskHandler(IItemRepository repository)
         var item = await repository.TryGetTaskAsync(command.ItemId, CancellationToken.None);
         if (item?.Activity is null || item.TaskExtension is null)
             throw new DomainNotFoundException("task.not.found", command.ItemId.ToString());
-        
+
         if (!string.IsNullOrEmpty(command.Title))
             item.ChangeTitle(command.Title);
         if (command.Description is not null)
             item.ChangeDescription(command.Description);
         if (command.ActivityState is { } state)
-            item.Activity.ChangeState(state.ToDomain());
+            item.Activity.ChangeState(state.ToDomain(), command.Reason);
         if (command.ActivityPriority is { } priority)
             item.Activity.ChangePriority(priority.ToDomain());
         if (command.TaskCategory is { } category)

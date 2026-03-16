@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Items;
@@ -37,7 +38,8 @@ public sealed partial class InspectorState : ObservableObject
     [ObservableProperty] private bool _isEditItemFormOpen;
     [ObservableProperty] private TaskCategoryDto _selectedCategory;
     public IReadOnlyList<TaskCategoryDto> TaskCategories { get; } = Enum.GetValues<TaskCategoryDto>();
-    public IReadOnlyList<ActivityStateDto> ActivityStates { get; } = Enum.GetValues<ActivityStateDto>();
+    public IReadOnlyList<ActivityStateDto> ActivityStates { get; } =
+        Enum.GetValues<ActivityStateDto>().Where(s => s != ActivityStateDto.Expired).ToList();
     public IReadOnlyList<ActivityPriorityDto> ActivityPriorities { get; } = Enum.GetValues<ActivityPriorityDto>();
     public IReadOnlyList<ScheduleMisfirePolicyDto> MisfirePolicies { get; } = Enum.GetValues<ScheduleMisfirePolicyDto>();
 }

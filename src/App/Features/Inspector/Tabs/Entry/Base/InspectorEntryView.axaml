@@ -29,6 +29,14 @@
                     <StackPanel Grid.Column="1"
                                 Spacing="8"
                                 Orientation="Horizontal">
+                        <!-- Quick Done -->
+                        <Button Classes="workspace-toolbar-icon"
+                                ToolTip.Tip="Mark as Done"
+                                Command="{Binding MarkAsDoneCommand}"
+                                IsVisible="{Binding CanMarkAsDone}">
+                            <Image Source="{SvgImage /Assets/Icons/Common/check.svg}" />
+                        </Button>
+
                         <!-- Refresh -->
                         <Button Classes="workspace-toolbar-icon"
                                 Command="{Binding Facade.ReloadCommand}">

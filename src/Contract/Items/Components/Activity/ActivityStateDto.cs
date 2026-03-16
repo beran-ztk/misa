@@ -2,16 +2,7 @@ namespace Misa.Contract.Items.Components.Activity;
 
 public enum ActivityStateDto
 {
-    Draft,
-    Undefined,
-
-    InProgress,
-    Active,
-    Paused,
-    Pending,
-
-    WaitForResponse,
-
+    Open,
     Done,
     Canceled,
     Failed,

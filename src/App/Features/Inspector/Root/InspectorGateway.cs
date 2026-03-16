@@ -162,6 +162,24 @@ public sealed class InspectorGateway(RemoteProxy remoteProxy)
         return response;
     }
     
+    // Activity State
+    public async Task<Result> ChangeActivityStateAsync(Guid itemId, ChangeActivityStateRequest request)
+    {
+        var response = await remoteProxy.SendAsync(
+            requestFactory: () => new HttpRequestMessage(HttpMethod.Patch, ActivityRoutes.ChangeStateRequest(itemId))
+            {
+                Content = JsonContent.Create(request)
+            },
+            retry: new RetryOptions
+            {
+                MaxAttempts = 3,
+                Delay = TimeSpan.FromMilliseconds(500)
+            },
+            cancellationToken: CancellationToken.None);
+
+        return response;
+    }
+
     // Deadline
     public async Task<Result> UpsertDeadlineAsync(Guid itemId, DateTimeOffset? deadline)
     {
