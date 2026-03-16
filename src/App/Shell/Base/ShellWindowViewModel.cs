@@ -16,13 +16,15 @@ public partial class ShellWindowViewModel : ViewModelBase
     public UtilityNavigationViewModel UtilityNavigation { get; }
     private IServiceProvider ServiceProvider { get; }
     public required ILayerCloser LayerCloser { get; init; }
+    private readonly ISelectionContextState _selectionContext;
 
     public ShellWindowViewModel(ShellState shellState, IServiceProvider serviceProvider)
     {
         ShellState      = shellState;
         ServiceProvider = serviceProvider;
 
-        LayerCloser = ServiceProvider.GetRequiredService<ILayerCloser>();
+        LayerCloser       = ServiceProvider.GetRequiredService<ILayerCloser>();
+        _selectionContext = ServiceProvider.GetRequiredService<ISelectionContextState>();
 
         ShellState.Header             = ServiceProvider.GetRequiredService<HeaderViewModel>();
         ShellState.Footer             = ServiceProvider.GetRequiredService<FooterViewModel>();
@@ -34,7 +36,7 @@ public partial class ShellWindowViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Escape handler: closes the topmost dismissible layer (modal → panel → utility panel).
+    /// Escape handler: closes the topmost dismissible layer (modal → panel → utility panel → inspector).
     /// </summary>
     [RelayCommand]
     private void Dismiss()
@@ -46,6 +48,12 @@ public partial class ShellWindowViewModel : ViewModelBase
         }
 
         if (ShellState.Utility is not null)
+        {
             ShellState.Utility = null;
+            return;
+        }
+
+        if (_selectionContext.ActiveEntityId is not null)
+            _selectionContext.Clear();
     }
 }
