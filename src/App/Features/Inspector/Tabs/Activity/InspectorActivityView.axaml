@@ -166,40 +166,51 @@
                                         BorderBrush="{StaticResource BrushBorder}"
                                         BorderThickness="1"
                                         CornerRadius="6">
-                                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                                    
+                                    <Grid ColumnDefinitions="Auto,*,Auto"
+                                          ColumnSpacing="10">
 
                                         <!-- Change type badge -->
                                         <Border Grid.Column="0"
                                                 Classes="state-badge"
-                                                VerticalAlignment="Center">
+                                                VerticalAlignment="Top">
                                             <TextBlock Classes="state-badge-text"
                                                        Text="{Binding ChangeType}" />
                                         </Border>
 
                                         <!-- Old → New -->
-                                        <StackPanel Grid.Column="1"
-                                                    Orientation="Horizontal"
-                                                    Spacing="8"
-                                                    VerticalAlignment="Center">
-                                            <TextBlock Text="{Binding ValueBefore, TargetNullValue='—'}"
+                                        <Grid Grid.Column="1"
+                                              ColumnDefinitions="*,Auto,*"
+                                              ColumnSpacing="8"
+                                              VerticalAlignment="Top">
+                                            <TextBlock Grid.Column="0"
+                                                       Text="{Binding ValueBefore, TargetNullValue='—'}"
                                                        FontSize="12"
                                                        Opacity="0.60"
-                                                       TextTrimming="CharacterEllipsis" />
-                                            <TextBlock Text="→"
+                                                       TextWrapping="Wrap"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       MaxLines="4" />
+
+                                            <TextBlock Grid.Column="1"
+                                                       Text="→"
                                                        FontSize="11"
                                                        Opacity="0.40"
-                                                       VerticalAlignment="Center" />
-                                            <TextBlock Text="{Binding ValueAfter, TargetNullValue='—'}"
+                                                       VerticalAlignment="Top"
+                                                       Margin="0,2,0,0" />
+
+                                            <TextBlock Grid.Column="2"
+                                                       Text="{Binding ValueAfter, TargetNullValue='—'}"
                                                        FontSize="12"
-                                                       TextTrimming="CharacterEllipsis" />
-                                        </StackPanel>
+                                                       TextWrapping="Wrap"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       MaxLines="4" />
+                                        </Grid>
 
                                         <!-- Timestamp -->
                                         <TextBlock Grid.Column="2"
                                                    Text="{Binding CreatedAtUtc, Converter={StaticResource UtcToLocalConverter}, StringFormat='dd.MM.yyyy HH:mm'}"
                                                    Classes="meta"
-                                                   VerticalAlignment="Center" />
-
+                                                   VerticalAlignment="Top" />
                                     </Grid>
                                 </Border>
                             </DataTemplate>
