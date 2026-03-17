@@ -27,6 +27,28 @@ public sealed partial class TaskState : ObservableObject
     // ── Meta summary ────────────────────────────────────────────
     [ObservableProperty] private string _metaSummary = string.Empty;
 
+    // ── Workspace mode ──────────────────────────────────────────
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsActiveMode))]
+    [NotifyPropertyChangedFor(nameof(IsArchivedMode))]
+    [NotifyPropertyChangedFor(nameof(IsDeletedMode))]
+    [NotifyPropertyChangedFor(nameof(IsNonActiveMode))]
+    [NotifyPropertyChangedFor(nameof(CardOpacity))]
+    private TaskWorkspaceMode _workspaceMode = TaskWorkspaceMode.Active;
+
+    public bool IsActiveMode   => WorkspaceMode == TaskWorkspaceMode.Active;
+    public bool IsArchivedMode => WorkspaceMode == TaskWorkspaceMode.Archived;
+    public bool IsDeletedMode  => WorkspaceMode == TaskWorkspaceMode.Deleted;
+    public bool IsNonActiveMode => WorkspaceMode != TaskWorkspaceMode.Active;
+
+    // Card opacity: subtly dim archived/deleted items
+    public double CardOpacity => WorkspaceMode switch
+    {
+        TaskWorkspaceMode.Archived => 0.72,
+        TaskWorkspaceMode.Deleted  => 0.55,
+        _                          => 1.0
+    };
+
     // ── View mode ───────────────────────────────────────────────
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsCardView))]
@@ -104,10 +126,34 @@ public sealed partial class TaskState : ObservableObject
 
     private void RefreshMeta()
     {
-        var now = DateTimeOffset.UtcNow;
         var items = FilteredItems;
+        var total  = items.Count;
 
-        var total    = items.Count;
+        if (total == 0)
+        {
+            MetaSummary = WorkspaceMode switch
+            {
+                TaskWorkspaceMode.Archived => "No archived tasks",
+                TaskWorkspaceMode.Deleted  => "No deleted tasks",
+                _                          => "No tasks"
+            };
+            return;
+        }
+
+        if (WorkspaceMode == TaskWorkspaceMode.Archived)
+        {
+            MetaSummary = $"{total} archived task{(total == 1 ? "" : "s")}";
+            return;
+        }
+
+        if (WorkspaceMode == TaskWorkspaceMode.Deleted)
+        {
+            MetaSummary = $"{total} deleted task{(total == 1 ? "" : "s")}";
+            return;
+        }
+
+        // Active mode — full stats
+        var now      = DateTimeOffset.UtcNow;
         var open     = items.Count(t => t.Activity.State == ActivityStateDto.Open);
         var overdue  = items.Count(t => t.Activity.DueAt.HasValue && t.Activity.DueAt.Value < now);
         var dueSoon  = items.Count(t => t.Activity.DueAt.HasValue
@@ -116,12 +162,6 @@ public sealed partial class TaskState : ObservableObject
         var highPlus = items.Count(t => t.Activity.Priority is ActivityPriorityDto.High
                                                              or ActivityPriorityDto.Urgent
                                                              or ActivityPriorityDto.Critical);
-
-        if (total == 0)
-        {
-            MetaSummary = "No tasks";
-            return;
-        }
 
         var parts = new System.Text.StringBuilder();
         parts.Append($"{total} task{(total == 1 ? "" : "s")}");
@@ -146,5 +186,18 @@ public sealed partial class TaskState : ObservableObject
         temp.Add(item);
         Items = temp;
         await RefreshFilteredCollection();
+    }
+
+    public void RemoveFromMainCollection(TaskDto item)
+    {
+        var temp = Items.ToList();
+        temp.Remove(item);
+        Items = temp;
+        FilteredItems.Remove(item);
+
+        if (SelectedItem?.Item.Id == item.Item.Id)
+            SelectedItem = null;
+
+        RefreshMeta();
     }
 }

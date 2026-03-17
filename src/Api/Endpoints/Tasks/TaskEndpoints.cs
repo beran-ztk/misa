@@ -13,10 +13,12 @@ public static class TaskEndpoints
 {
     public static void Map(IEndpointRouteBuilder api)
     {
-        api.MapPost(TaskRoutes.CreateTask, Create);
-        api.MapGet(TaskRoutes.GetTask, GetSingle);
-        api.MapGet(TaskRoutes.GetTasks, GetAll);
-        api.MapPut(TaskRoutes.UpdateTask, Update);
+        api.MapPost(TaskRoutes.CreateTask,         Create);
+        api.MapGet(TaskRoutes.GetTask,             GetSingle);
+        api.MapGet(TaskRoutes.GetTasks,            GetAll);
+        api.MapGet(TaskRoutes.GetArchivedTasks,    GetArchived);
+        api.MapGet(TaskRoutes.GetDeletedTasks,     GetDeleted);
+        api.MapPut(TaskRoutes.UpdateTask,          Update);
         api.MapPatch(TaskRoutes.UpdateTaskCategory, UpdateCategory);
     }
     
@@ -53,10 +55,23 @@ public static class TaskEndpoints
     private static async Task<IResult> GetAll(IMessageBus bus, CancellationToken ct)
     {
         var dto = await bus.InvokeAsync<List<TaskDto>>(new GetTasksQuery(), ct);
-        
         return Results.Ok(dto);
-    }   
-    
+    }
+
+    // Get archived tasks
+    private static async Task<IResult> GetArchived(IMessageBus bus, CancellationToken ct)
+    {
+        var dto = await bus.InvokeAsync<List<TaskDto>>(new GetArchivedTasksQuery(), ct);
+        return Results.Ok(dto);
+    }
+
+    // Get deleted tasks
+    private static async Task<IResult> GetDeleted(IMessageBus bus, CancellationToken ct)
+    {
+        var dto = await bus.InvokeAsync<List<TaskDto>>(new GetDeletedTasksQuery(), ct);
+        return Results.Ok(dto);
+    }
+
     // Update a task
     private static async Task<IResult> Update(
         [FromRoute] Guid itemId, 

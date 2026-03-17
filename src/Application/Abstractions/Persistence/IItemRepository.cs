@@ -20,6 +20,9 @@ public interface IItemRepository
     // Task extension
     Task<Item?> TryGetTaskAsync(Guid id, CancellationToken ct);
     Task<List<Item>> GetTasksAsync(CancellationToken ct);
+    Task<List<Item>> GetArchivedTasksAsync(CancellationToken ct);
+    Task<List<Item>> GetDeletedTasksAsync(CancellationToken ct);
+    Task HardDeleteItemAsync(Guid id, CancellationToken ct);
     
     // Schedule extension
     Task<Item?> TryGetScheduleAsync(Guid id, CancellationToken ct);

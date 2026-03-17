@@ -6,7 +6,9 @@ public static class TaskRoutes
     public const string CreateTask = "items/task";
     
     // Get
-    public const string GetTasks = "items/tasks";
+    public const string GetTasks         = "items/tasks";
+    public const string GetArchivedTasks = "items/tasks/archived";
+    public const string GetDeletedTasks  = "items/tasks/deleted";
     public const string GetTask = "items/{itemId:guid}/task";
     public static string GetTaskRequest(Guid itemId) => $"items/{itemId}/task";
     

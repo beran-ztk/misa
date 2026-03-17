@@ -56,7 +56,50 @@
             <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}"/>
         </Style>
 
-        <!-- Signal chips -->
+        <!-- ── Workspace mode toggle ────────────────────────────── -->
+        <Style Selector="Button.workspace-mode-btn">
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="Padding" Value="10,0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource BrushTextFaded}"/>
+            <Setter Property="FontSize" Value="{StaticResource FontSizeAverage}"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Style Selector="^ /template/ ContentPresenter">
+                <Setter Property="CornerRadius" Value="4"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="BorderBrush" Value="Transparent"/>
+            </Style>
+            <Style Selector="^:pointerover">
+                <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
+            </Style>
+            <Style Selector="^:pointerover /template/ ContentPresenter">
+                <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}"/>
+            </Style>
+        </Style>
+
+        <!-- Active mode button — accent -->
+        <Style Selector="Button.workspace-mode-btn.mode-on">
+            <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
+            <Style Selector="^ /template/ ContentPresenter">
+                <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}"/>
+                <Setter Property="BorderBrush" Value="{StaticResource BrushAccent}"/>
+            </Style>
+        </Style>
+
+        <!-- Deleted mode button — danger tone when active -->
+        <Style Selector="Button.workspace-mode-btn.mode-on.mode-danger">
+            <Setter Property="Foreground" Value="{StaticResource BrushError}"/>
+            <Style Selector="^ /template/ ContentPresenter">
+                <Setter Property="BorderBrush" Value="{StaticResource BrushError}"/>
+            </Style>
+        </Style>
+
+        <!-- Deleted accent bar — overrides priority color with error red -->
+        <Style Selector="Border.task-card-deleted-bar">
+            <Setter Property="Background" Value="#7DF44336"/>
+        </Style>
+
+        <!-- ── Signal chips ─────────────────────────────────────── -->
         <Style Selector="Border.signal-chip">
             <Setter Property="CornerRadius" Value="3"/>
             <Setter Property="Padding" Value="5,2"/>
@@ -90,6 +133,39 @@
             <Setter Property="Foreground" Value="{StaticResource BrushWarning}"/>
         </Style>
 
+        <!-- ── Card action buttons ──────────────────────────────── -->
+        <Style Selector="Button.card-action">
+            <Setter Property="Height" Value="22"/>
+            <Setter Property="Padding" Value="8,0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Style Selector="^ /template/ ContentPresenter">
+                <Setter Property="CornerRadius" Value="3"/>
+                <Setter Property="BorderThickness" Value="1"/>
+            </Style>
+        </Style>
+
+        <Style Selector="Button.card-action.restore">
+            <Setter Property="Foreground" Value="{StaticResource BrushSuccess}"/>
+            <Style Selector="^ /template/ ContentPresenter">
+                <Setter Property="BorderBrush" Value="{StaticResource BrushSuccess}"/>
+            </Style>
+            <Style Selector="^:pointerover /template/ ContentPresenter">
+                <Setter Property="Background" Value="#1A4CAF50"/>
+            </Style>
+        </Style>
+
+        <Style Selector="Button.card-action.danger">
+            <Setter Property="Foreground" Value="{StaticResource BrushError}"/>
+            <Style Selector="^ /template/ ContentPresenter">
+                <Setter Property="BorderBrush" Value="#60F44336"/>
+            </Style>
+            <Style Selector="^:pointerover /template/ ContentPresenter">
+                <Setter Property="Background" Value="#1AF44336"/>
+            </Style>
+        </Style>
+
     </UserControl.Styles>
 
     <Grid RowDefinitions="Auto,*">
@@ -97,14 +173,15 @@
         <!-- Toolbar -->
         <Border Grid.Row="0" Classes="workspace-toolbar-frame">
             <Grid Classes="workspace-toolbar"
-                  RowDefinitions="Auto,Auto,Auto,Auto"
+                  RowDefinitions="Auto,Auto,Auto,Auto,Auto"
                   ColumnDefinitions="*,Auto">
 
                 <!-- Row 0 left: quick actions -->
                 <StackPanel Grid.Row="0" Grid.Column="0"
                             Classes="workspace-toolbar-left">
                     <Button Classes="workspace-toolbar-icon"
-                            Command="{Binding ShowAddPanelCommand}">
+                            Command="{Binding ShowAddPanelCommand}"
+                            IsVisible="{Binding State.IsActiveMode}">
                         <Image Source="{SvgImage /Assets/Icons/Common/plus.svg}" />
                     </Button>
                     <Button Classes="workspace-toolbar-icon"
@@ -139,8 +216,26 @@
                              Text="{Binding State.SearchText, Mode=TwoWay}" />
                 </StackPanel>
 
-                <!-- Row 1: filters -->
-                <StackPanel Grid.Row="1" Grid.Column="0"
+                <!-- Row 1: workspace mode toggle -->
+                <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                            Orientation="Horizontal"
+                            Spacing="2">
+                    <Button Classes="workspace-mode-btn"
+                            Classes.mode-on="{Binding State.IsActiveMode}"
+                            Command="{Binding SetActiveModeCommand}"
+                            Content="Active"/>
+                    <Button Classes="workspace-mode-btn"
+                            Classes.mode-on="{Binding State.IsArchivedMode}"
+                            Command="{Binding SetArchivedModeCommand}"
+                            Content="Archived"/>
+                    <Button Classes="workspace-mode-btn mode-danger"
+                            Classes.mode-on="{Binding State.IsDeletedMode}"
+                            Command="{Binding SetDeletedModeCommand}"
+                            Content="Deleted"/>
+                </StackPanel>
+
+                <!-- Row 2: filters -->
+                <StackPanel Grid.Row="2" Grid.Column="0"
                             Classes="workspace-toolbar-center">
 
                     <filters:FilterDropdownView
@@ -154,13 +249,13 @@
 
                 </StackPanel>
 
-                <!-- Row 2: meta summary -->
-                <TextBlock Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
+                <!-- Row 3: meta summary -->
+                <TextBlock Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2"
                            Text="{Binding State.MetaSummary}"
                            Classes="workspace-meta-summary"/>
 
-                <!-- Row 3: separator -->
-                <Border Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2"
+                <!-- Row 4: separator -->
+                <Border Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2"
                         Classes="workspace-toolbar-separator" />
             </Grid>
         </Border>
@@ -222,7 +317,8 @@
             </Border>
 
             <!-- Card view -->
-            <ListBox ItemsSource="{Binding State.FilteredItems}"
+            <ListBox x:Name="TaskCardList"
+                     ItemsSource="{Binding State.FilteredItems}"
                      SelectedItem="{Binding State.SelectedItem, Mode=TwoWay}"
                      IsVisible="{Binding State.IsCardView}"
                      Background="{StaticResource BrushPrimaryBackgroundLight}"
@@ -245,14 +341,16 @@
                                 CornerRadius="6"
                                 Padding="0"
                                 Margin="0,0,0,6"
-                                ClipToBounds="True">
+                                ClipToBounds="True"
+                                Opacity="{Binding $parent[ListBox].((root:TaskFacadeViewModel)DataContext).State.CardOpacity}">
 
                             <Grid ColumnDefinitions="5,*">
 
-                                <!-- Priority accent bar -->
+                                <!-- Priority accent bar (turns red in deleted mode) -->
                                 <Border Grid.Column="0"
                                         Background="{Binding Activity.Priority,
-                                            Converter={StaticResource PriorityToBrushConverter}}"/>
+                                            Converter={StaticResource PriorityToBrushConverter}}"
+                                        Classes.task-card-deleted-bar="{Binding $parent[ListBox].((root:TaskFacadeViewModel)DataContext).State.IsDeletedMode}"/>
 
                                 <!-- Card content -->
                                 <StackPanel Grid.Column="1"
@@ -320,6 +418,25 @@
                                             <TextBlock Text="{Binding Item.CreatedAt,
                                                            Converter={StaticResource ItemAgeConverter}}"/>
                                         </Border>
+                                    </StackPanel>
+
+                                    <!-- Row 4: Action buttons (Archived / Deleted modes only) -->
+                                    <StackPanel Orientation="Horizontal"
+                                                Spacing="6"
+                                                Margin="0,4,0,0"
+                                                IsVisible="{Binding $parent[ListBox].((root:TaskFacadeViewModel)DataContext).State.IsNonActiveMode}">
+
+                                        <Button Classes="card-action restore"
+                                                Command="{Binding $parent[ListBox].((root:TaskFacadeViewModel)DataContext).RestoreItemCommand}"
+                                                CommandParameter="{Binding Item.Id}"
+                                                Content="Restore"/>
+
+                                        <Button Classes="card-action danger"
+                                                IsVisible="{Binding $parent[ListBox].((root:TaskFacadeViewModel)DataContext).State.IsDeletedMode}"
+                                                Command="{Binding $parent[ListBox].((root:TaskFacadeViewModel)DataContext).HardDeleteItemCommand}"
+                                                CommandParameter="{Binding Item.Id}"
+                                                Content="Delete permanently"/>
+
                                     </StackPanel>
 
                                 </StackPanel>
