@@ -39,24 +39,31 @@
             <Setter Property="Background" Value="Transparent"/>
         </Style>
 
+        <!-- ── Card base defaults (must live here, not as inline attributes,   -->
+        <!--    so that :pointerover / :selected selectors can override them) -->
+        <Style Selector="Border.task-card">
+            <Setter Property="Background"      Value="{StaticResource BrushPrimaryBackground}"/>
+            <Setter Property="BorderBrush"     Value="{StaticResource BrushBorder}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+
         <!-- ── Card hover / selected states ─────────────────────────── -->
         <!--
             Visual hierarchy: Selected > Hover > Default
-            Hover  — border lifts to BrushBorderLight
+            Hover    — border lifts to BrushBorderLight
             Selected — accent border (1.5px) + very subtle accent background tint
         -->
         <Style Selector="ListBoxItem:pointerover Border.task-card">
             <Setter Property="BorderBrush" Value="{StaticResource BrushBorderLight}"/>
         </Style>
         <Style Selector="ListBoxItem:selected Border.task-card">
-            <Setter Property="BorderBrush"   Value="{StaticResource BrushAccent}"/>
-            <Setter Property="BorderThickness" Value="1.5"/>
-            <Setter Property="Background"    Value="#0A60A0F0"/>
+            <Setter Property="BorderBrush"     Value="{StaticResource BrushAccent}"/>
+            <Setter Property="BorderThickness" Value="0,1,1,1"/>
         </Style>
         <!-- Selected takes priority: prevent hover from overriding the accent border -->
         <Style Selector="ListBoxItem:selected:pointerover Border.task-card">
-            <Setter Property="BorderBrush"   Value="{StaticResource BrushAccent}"/>
-            <Setter Property="BorderThickness" Value="1.5"/>
+            <Setter Property="BorderBrush"     Value="{StaticResource BrushAccent}"/>
+            <Setter Property="BorderThickness" Value="1"/>
         </Style>
 
         <!-- ── View mode icon buttons ────────────────────────────────── -->
@@ -381,9 +388,6 @@
                                     — action links   (archived / deleted modes)
                         -->
                         <Border Classes="task-card"
-                                Background="{StaticResource BrushPrimaryBackground}"
-                                BorderBrush="{StaticResource BrushBorder}"
-                                BorderThickness="1"
                                 CornerRadius="6"
                                 Padding="0"
                                 Margin="0,0,0,6"
