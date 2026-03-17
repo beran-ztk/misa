@@ -42,7 +42,7 @@
                     <!-- Flex: workspace is the sole star column and absorbs all remaining space -->
                     <ColumnDefinition Width="*"/>
                     <!-- Auto: inspector collapses to zero when not visible; MaxWidth caps growth -->
-                    <ColumnDefinition Width="Auto" MaxWidth="500"/>
+                    <ColumnDefinition Width="Auto" MaxWidth="450"/>
                     <!-- Auto: utility collapses to zero when not visible; MaxWidth caps growth -->
                     <ColumnDefinition Width="Auto" MaxWidth="600"/>
                     <!-- Fixed: right utility navigation rail -->
