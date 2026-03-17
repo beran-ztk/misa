@@ -97,7 +97,7 @@
                                                 <!-- Content -->
                                                 <Border Grid.Column="1"
                                                         Classes="notif-card-body">
-                                                    <Grid RowDefinitions="Auto,Auto"
+                                                    <Grid RowDefinitions="Auto,Auto,Auto"
                                                           ColumnDefinitions="*,Auto">
 
                                                         <!-- Title (bold when unread) -->
@@ -108,7 +108,7 @@
 
                                                         <!-- Dismiss -->
                                                         <Button Grid.Row="0" Grid.Column="1"
-                                                                Grid.RowSpan="2"
+                                                                Grid.RowSpan="3"
                                                                 Classes="notif-dismiss"
                                                                 ToolTip.Tip="Dismiss"
                                                                 VerticalAlignment="Top"
@@ -133,6 +133,14 @@
                                                                        Text="{Binding TimestampFormatted}"
                                                                        Margin="0,4,0,0" />
                                                         </Grid>
+
+                                                        <!-- Open link (linked notifications only) -->
+                                                        <Button Grid.Row="2" Grid.Column="0"
+                                                                Classes="notif-open-btn"
+                                                                IsVisible="{Binding HasLinkTarget}"
+                                                                Command="{Binding $parent[ItemsControl].((local:NotificationViewModel)DataContext).OpenLinkedItemCommand}"
+                                                                CommandParameter="{Binding Id}"
+                                                                Content="Open →" />
 
                                                     </Grid>
                                                 </Border>

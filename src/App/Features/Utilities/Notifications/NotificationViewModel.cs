@@ -11,6 +11,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Features.Messaging;
 using Misa.Contract.Notifications;
+using Misa.Ui.Avalonia.Shell.Components;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Infrastructure.Messaging;
 using Misa.Ui.Avalonia.Infrastructure.UI;
@@ -23,28 +24,32 @@ public sealed partial class NotificationItem : ObservableObject
 {
     public NotificationItem(NotificationDto notification)
     {
-        Id        = Guid.NewGuid();
-        Title     = notification.Payload;
-        Message   = string.Empty;
-        Timestamp = notification.Timestamp;
-        _isRead   = false;
+        Id         = Guid.NewGuid();
+        Title      = notification.Payload;
+        Message    = string.Empty;
+        Timestamp  = notification.Timestamp;
+        _isRead    = false;
+        LinkTarget = null;
     }
 
     public NotificationItem(NotificationEntryDto dto)
     {
-        Id        = dto.Id;
-        Title     = dto.Title;
-        Message   = dto.Message;
-        Timestamp = dto.CreatedAtUtc;
-        _isRead   = dto.ReadAtUtc.HasValue;
+        Id         = dto.Id;
+        Title      = dto.Title;
+        Message    = dto.Message;
+        Timestamp  = dto.CreatedAtUtc;
+        _isRead    = dto.ReadAtUtc.HasValue;
+        LinkTarget = dto.LinkTarget;
     }
 
-    public Guid           Id                 { get; }
-    public string         Title              { get; }
-    public string         Message            { get; }
-    public bool           HasMessage         => !string.IsNullOrWhiteSpace(Message);
-    public DateTimeOffset Timestamp          { get; }
-    public string         TimestampFormatted => Timestamp.ToLocalTime().ToString("dd MMM · HH:mm", CultureInfo.InvariantCulture);
+    public Guid                     Id                 { get; }
+    public string                   Title              { get; }
+    public string                   Message            { get; }
+    public bool                     HasMessage         => !string.IsNullOrWhiteSpace(Message);
+    public DateTimeOffset           Timestamp          { get; }
+    public string                   TimestampFormatted => Timestamp.ToLocalTime().ToString("dd MMM · HH:mm", CultureInfo.InvariantCulture);
+    public NotificationLinkTarget?  LinkTarget         { get; }
+    public bool                     HasLinkTarget      => LinkTarget is not null;
 
     [ObservableProperty] private bool _isRead;
     [ObservableProperty] private bool _isPendingDismiss;
@@ -54,9 +59,10 @@ public sealed partial class NotificationViewModel : ViewModelBase
 {
     private const int PageSize = 25;
 
-    private readonly NotificationGateway           _gateway;
-    private readonly SignalRNotificationClient     _signalR;
-    private readonly LayerProxy                   _layerProxy;
+    private readonly NotificationGateway               _gateway;
+    private readonly SignalRNotificationClient         _signalR;
+    private readonly LayerProxy                       _layerProxy;
+    private readonly WorkspaceNavigationViewModel     _navigation;
     private readonly ConcurrentDictionary<Guid, CancellationTokenSource> _pendingDismiss = new();
 
     private DateTimeOffset? _oldestTimestamp;
@@ -74,11 +80,16 @@ public sealed partial class NotificationViewModel : ViewModelBase
 
     public bool HasUnread => UnreadCount > 0;
 
-    public NotificationViewModel(NotificationGateway gateway, SignalRNotificationClient signalR, LayerProxy layerProxy)
+    public NotificationViewModel(
+        NotificationGateway           gateway,
+        SignalRNotificationClient     signalR,
+        LayerProxy                   layerProxy,
+        WorkspaceNavigationViewModel navigation)
     {
         _gateway    = gateway;
         _signalR    = signalR;
         _layerProxy = layerProxy;
+        _navigation = navigation;
         _signalR.NotificationsChanged += RefreshFromRemoteChangeAsync;
         Notifications.CollectionChanged += (_, _) => OnPropertyChanged(nameof(IsEmpty));
         _ = LoadAsync();
@@ -287,5 +298,17 @@ public sealed partial class NotificationViewModel : ViewModelBase
             foreach (var item in unread)
                 item.IsRead = false;
         }
+    }
+
+    [RelayCommand]
+    private async Task OpenLinkedItemAsync(Guid id)
+    {
+        var item = Notifications.FirstOrDefault(x => x.Id == id);
+        if (item?.LinkTarget is not { } target) return;
+
+        await _navigation.NavigateToItemAsync(target);
+
+        if (!item.IsRead)
+            await MarkAsReadAsync(id);
     }
 }

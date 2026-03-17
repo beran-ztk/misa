@@ -241,6 +241,25 @@
         </Style>
     </Style>
 
+    <!-- ── Open link button ─────────────────────────────────────────────── -->
+    <Style Selector="Button.notif-open-btn">
+        <Setter Property="Background"       Value="Transparent" />
+        <Setter Property="Foreground"       Value="{StaticResource BrushAccent}" />
+        <Setter Property="BorderThickness"  Value="0" />
+        <Setter Property="Padding"          Value="0,4,0,0" />
+        <Setter Property="FontSize"         Value="12" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="Cursor"           Value="Hand" />
+        <Setter Property="Opacity"          Value="0.85" />
+
+        <Style Selector="^ /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="^:pointerover">
+            <Setter Property="Opacity" Value="1" />
+        </Style>
+    </Style>
+
     <!-- ── Load more button ─────────────────────────────────────────────── -->
     <Style Selector="Button.notif-load-more">
         <Setter Property="Background"           Value="Transparent" />

@@ -15,7 +15,7 @@
 
     <!-- ── Type variants ─────────────────────────────────────────────────── -->
     <Style Selector="Border.toast-container.toast-success">
-        <Setter Property="BorderBrush"     Value="{StaticResource BrushSuccess}" />
+        <Setter Property="BorderBrush"     Value="{StaticResource BrushAccentDim}" />
         <Setter Property="BorderThickness" Value="3,1,1,1" />
     </Style>
 
