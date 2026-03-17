@@ -8,6 +8,8 @@ using Misa.Contract.Common.Converters;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Inspector.Root;
 using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Relations;
+using Misa.Ui.Avalonia.Features.Utilities.Toast;
+
 
 namespace Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Base;
 
@@ -36,7 +38,10 @@ public partial class InspectorEntryViewModel : ViewModelBase
     {
         var result = await Facade.Gateway.DeleteAsync(Facade.State.Item.Id);
         if (result.IsSuccess)
+        {
+            Facade.LayerProxy.ShowToast("Task deleted", type: ToastType.Info);
             Facade.ContextState.NotifyRemoved();
+        }
     }
     private void OnFacadeStatePropertyChanged(object? s, PropertyChangedEventArgs e)
     {

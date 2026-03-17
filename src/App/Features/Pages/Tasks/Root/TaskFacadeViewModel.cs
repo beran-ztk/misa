@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Items.Components.Tasks;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Pages.Tasks.Create;
+using Misa.Ui.Avalonia.Features.Utilities.Toast;
 using Misa.Ui.Avalonia.Infrastructure.UI;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Tasks.Root;
@@ -75,5 +76,6 @@ public sealed partial class TaskFacadeViewModel : ViewModelBase
         if (created is null) return;
 
         await State.AppendToMainCollection(created);
+        _layerProxy.ShowToast("Task created", type: ToastType.Success);
     }
 }

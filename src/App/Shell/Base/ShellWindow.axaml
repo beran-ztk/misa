@@ -137,9 +137,9 @@
         <Grid x:Name="ToastLayer"
               ZIndex="40">
             <ItemsControl ItemsSource="{Binding ShellState.Toasts}"
-                          HorizontalAlignment="Right"
-                          VerticalAlignment="Bottom"
-                          Margin="0,0,50,34"
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Top"
+                          Margin="0,16,0,0"
                           IsHitTestVisible="False">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>

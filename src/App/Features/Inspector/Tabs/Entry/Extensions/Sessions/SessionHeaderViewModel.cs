@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Common.Results;
 using Misa.Contract.Items.Components.Activity.Sessions;
 using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions.Forms;
+using Misa.Ui.Avalonia.Features.Utilities.Toast;
 
 namespace Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Base;
 
@@ -31,6 +32,7 @@ public partial class InspectorEntryViewModel
         if (result is { IsSuccess: true })
         {
             await Facade.Reload();
+            Facade.LayerProxy.ShowToast("Session started", type: ToastType.Success);
         }
     }
 
@@ -46,6 +48,7 @@ public partial class InspectorEntryViewModel
         if (result is { IsSuccess: true })
         {
             await Facade.Reload();
+            Facade.LayerProxy.ShowToast("Session paused", type: ToastType.Info);
         }
     }
     
@@ -58,6 +61,7 @@ public partial class InspectorEntryViewModel
         if (result is { IsSuccess: true })
         {
             await Facade.Reload();
+            Facade.LayerProxy.ShowToast("Session stopped", type: ToastType.Info);
         }
     }
     [RelayCommand]

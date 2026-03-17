@@ -90,12 +90,12 @@ public partial class LayerProxy(
 
     // ── Toast ─────────────────────────────────────────────────────────────
 
-    public void ShowToast(string title, string? message = null, int durationMs = 4000)
+    public void ShowToast(string title, string? message = null, ToastType type = ToastType.Info, int durationMs = 4000)
     {
         var toasts = toastHost.Toasts;
 
         ToastViewModel? vm = null;
-        vm = new ToastViewModel(title, message, () => toasts.Remove(vm!), durationMs);
+        vm = new ToastViewModel(title, message, () => toasts.Remove(vm!), type, durationMs);
         toasts.Add(vm);
     }
 

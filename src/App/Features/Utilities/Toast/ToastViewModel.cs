@@ -17,14 +17,19 @@ public sealed partial class ToastViewModel : ViewModelBase
     private DateTimeOffset   _timerStartedAt;
     private CancellationTokenSource? _cts;
 
-    public string  Title      { get; }
-    public string? Message    { get; }
-    public bool    HasMessage => !string.IsNullOrWhiteSpace(Message);
+    public string    Title      { get; }
+    public string?   Message    { get; }
+    public ToastType Type       { get; }
+    public bool      HasMessage => !string.IsNullOrWhiteSpace(Message);
+    public bool      IsInfo     => Type == ToastType.Info;
+    public bool      IsSuccess  => Type == ToastType.Success;
+    public bool      IsWarning  => Type == ToastType.Warning;
 
-    public ToastViewModel(string title, string? message, Action dismiss, int durationMs = 4000)
+    public ToastViewModel(string title, string? message, Action dismiss, ToastType type = ToastType.Info, int durationMs = 4000)
     {
         Title       = title;
         Message     = message;
+        Type        = type;
         _dismiss    = dismiss;
         _durationMs = durationMs;
 

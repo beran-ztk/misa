@@ -6,6 +6,7 @@ using Misa.Contract.Items;
 using Misa.Contract.Items.Components.Activity;
 using Misa.Contract.Items.Components.Schedules;
 using Misa.Contract.Items.Components.Tasks;
+using Misa.Ui.Avalonia.Features.Utilities.Toast;
 
 namespace Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Base;
 
@@ -82,6 +83,7 @@ public partial class InspectorEntryViewModel
             {
                 Facade.ContextState.NotifyUpdated();
                 await Facade.Reload();
+                Facade.LayerProxy.ShowToast("Task updated", type: ToastType.Success);
             }
         }
         else if (item.Workflow == WorkflowDto.Schedule)
@@ -108,6 +110,7 @@ public partial class InspectorEntryViewModel
             {
                 Facade.ContextState.NotifyUpdated();
                 await Facade.Reload();
+                Facade.LayerProxy.ShowToast("Schedule updated", type: ToastType.Success);
             }
         }
     }
