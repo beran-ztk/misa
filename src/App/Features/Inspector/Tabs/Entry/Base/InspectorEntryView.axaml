@@ -5,10 +5,29 @@
              xmlns:deadline="clr-namespace:Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Scheduling"
              xmlns:session="clr-namespace:Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions"
              x:DataType="root:InspectorEntryViewModel">
-    
+
+    <UserControl.Styles>
+        <!-- Lifecycle notice — archived: amber left-border -->
+        <Style Selector="Border.lifecycle-notice">
+            <Setter Property="Background"    Value="#18F0A020"/>
+            <Setter Property="BorderBrush"   Value="{StaticResource BrushWarning}"/>
+        </Style>
+        <Style Selector="Border.lifecycle-notice TextBlock">
+            <Setter Property="Foreground"    Value="{StaticResource BrushWarning}"/>
+        </Style>
+        <!-- Lifecycle notice — deleted: red left-border override -->
+        <Style Selector="Border.lifecycle-notice.lifecycle-deleted">
+            <Setter Property="Background"    Value="#18F44336"/>
+            <Setter Property="BorderBrush"   Value="{StaticResource BrushError}"/>
+        </Style>
+        <Style Selector="Border.lifecycle-notice.lifecycle-deleted TextBlock">
+            <Setter Property="Foreground"    Value="{StaticResource BrushError}"/>
+        </Style>
+    </UserControl.Styles>
+
     <Border Background="{StaticResource BrushPrimaryBackground}"
             Padding="12">
-        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto">
+        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto">
 
             <!-- Header -->
             <Border Grid.Row="0"
@@ -51,7 +70,8 @@
                             <Image Source="{SvgImage /Assets/Icons/Common/dots-three-vertical.svg}" />
                             <Button.Flyout>
                                 <MenuFlyout>
-                                    <MenuItem Command="{Binding ArchiveItemCommand}">
+                                    <MenuItem Command="{Binding ArchiveItemCommand}"
+                                              IsEnabled="{Binding Facade.State.CanArchive}">
                                         <MenuItem.Header>
                                             <StackPanel Spacing="8" Orientation="Horizontal">
                                                 <Image Width="16" Height="16"
@@ -61,7 +81,8 @@
                                         </MenuItem.Header>
                                     </MenuItem>
 
-                                    <MenuItem Command="{Binding DeleteItemCommand}">
+                                    <MenuItem Command="{Binding DeleteItemCommand}"
+                                              IsEnabled="{Binding Facade.State.CanDelete}">
                                         <MenuItem.Header>
                                             <StackPanel Spacing="8" Orientation="Horizontal">
                                                 <Image Width="16" Height="16"
@@ -79,20 +100,34 @@
                 </Grid>
             </Border>
 
+            <!-- Lifecycle restriction notice -->
+            <Border Grid.Row="1"
+                    Classes="lifecycle-notice"
+                    Classes.lifecycle-deleted="{Binding Facade.State.IsDeleted}"
+                    BorderThickness="3,0,0,0"
+                    CornerRadius="0,3,3,0"
+                    Padding="10,8"
+                    Margin="0,8,0,0"
+                    IsVisible="{Binding Facade.State.HasLifecycleRestriction}">
+                <TextBlock Text="{Binding Facade.State.LifecycleStatusMessage}"
+                           FontSize="{StaticResource FontSizeSmall}"
+                           TextWrapping="Wrap"/>
+            </Border>
+
             <!-- Deadline -->
-            <deadline:EntryDeadlineView Grid.Row="1"
+            <deadline:EntryDeadlineView Grid.Row="2"
                                         IsVisible="{Binding Facade.State.IsRealActivity}" />
 
             <!-- Session -->
-            <session:SessionHeaderView Grid.Row="2"
+            <session:SessionHeaderView Grid.Row="3"
                                        IsVisible="{Binding Facade.State.IsRealActivity}" />
 
             <!-- Relations -->
-            <ContentControl Grid.Row="3"
+            <ContentControl Grid.Row="4"
                             Content="{Binding Relations}" />
 
             <!-- Main section -->
-            <root:InspectorEntryBodyView Grid.Row="4" />
+            <root:InspectorEntryBodyView Grid.Row="5" />
             
         </Grid>
     </Border>

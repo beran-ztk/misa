@@ -9,7 +9,8 @@ namespace Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Base;
 public partial class InspectorEntryViewModel
 {
     public bool CanMarkAsDone =>
-        Facade.State.Item.Activity?.State is ActivityStateDto.Open;
+        Facade.State.Item.Activity?.State is ActivityStateDto.Open
+        && Facade.State.CanEdit;
 
     [RelayCommand]
     private async Task MarkAsDoneAsync()

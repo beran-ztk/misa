@@ -28,6 +28,15 @@ public sealed partial class InspectorState : ObservableObject
     [NotifyPropertyChangedFor(nameof(IsTask))]
     [NotifyPropertyChangedFor(nameof(IsScheduler))]
     [NotifyPropertyChangedFor(nameof(HasExtension))]
+    [NotifyPropertyChangedFor(nameof(IsArchived))]
+    [NotifyPropertyChangedFor(nameof(IsDeleted))]
+    [NotifyPropertyChangedFor(nameof(IsReadOnlyDueToLifecycle))]
+    [NotifyPropertyChangedFor(nameof(HasLifecycleRestriction))]
+    [NotifyPropertyChangedFor(nameof(CanArchive))]
+    [NotifyPropertyChangedFor(nameof(CanDelete))]
+    [NotifyPropertyChangedFor(nameof(CanEdit))]
+    [NotifyPropertyChangedFor(nameof(CanManageSessions))]
+    [NotifyPropertyChangedFor(nameof(LifecycleStatusMessage))]
     private ItemDto _item = new();
 
     public bool HasItem => Item.Id != Guid.Empty;
@@ -38,6 +47,34 @@ public sealed partial class InspectorState : ObservableObject
     public bool IsTask => Item.Workflow == WorkflowDto.Task;
     public bool IsScheduler => Item.Workflow == WorkflowDto.Schedule;
     public bool HasExtension => Item.Workflow is WorkflowDto.Task or WorkflowDto.Schedule;
+
+    // ── Lifecycle action availability ────────────────────────────────────
+    public bool IsArchived               => Item.IsArchived;
+    public bool IsDeleted                => Item.IsDeleted;
+    public bool IsReadOnlyDueToLifecycle => Item.IsArchived || Item.IsDeleted;
+    public bool HasLifecycleRestriction  => IsReadOnlyDueToLifecycle;
+
+    /// <summary>Can the item be archived. False when already archived or deleted.</summary>
+    public bool CanArchive        => !Item.IsArchived && !Item.IsDeleted;
+    /// <summary>Can the item be soft-deleted. False when already deleted.</summary>
+    public bool CanDelete         => !Item.IsDeleted;
+    /// <summary>Can item fields be edited. False for archived or deleted items.</summary>
+    public bool CanEdit           => !Item.IsArchived && !Item.IsDeleted;
+    /// <summary>Can sessions be started/paused/ended. False for archived or deleted items.</summary>
+    public bool CanManageSessions => !Item.IsArchived && !Item.IsDeleted;
+
+    private string ItemTypeName => Item.Workflow switch
+    {
+        WorkflowDto.Task     => "Task",
+        WorkflowDto.Schedule => "Schedule",
+        _                    => "Item"
+    };
+
+    /// <summary>Non-null when the item is archived or deleted; explains why actions are restricted.</summary>
+    public string? LifecycleStatusMessage =>
+        Item.IsDeleted  ? $"{ItemTypeName} is deleted. Actions are disabled until it is restored." :
+        Item.IsArchived ? $"{ItemTypeName} is archived. Some actions are disabled until it is restored." :
+        null;
     
     [ObservableProperty] private CurrentSessionOverviewDto? _currentSessionOverview;
     

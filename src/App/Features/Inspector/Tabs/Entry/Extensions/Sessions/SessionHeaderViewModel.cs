@@ -15,10 +15,10 @@ public partial class InspectorEntryViewModel
      
      public bool HasActiveSession => CurrentSession != null;
 
-     public bool CanStartSession => CurrentSession == null;
-     public bool CanPauseSession => CurrentSession?.State == SessionStateDto.Running;
-     public bool CanContinueSession => CurrentSession?.State == SessionStateDto.Paused;
-     public bool CanEndSession => CurrentSession != null;
+     public bool CanStartSession    => CurrentSession == null                             && Facade.State.CanManageSessions;
+     public bool CanPauseSession    => CurrentSession?.State == SessionStateDto.Running    && Facade.State.CanManageSessions;
+     public bool CanContinueSession => CurrentSession?.State == SessionStateDto.Paused     && Facade.State.CanManageSessions;
+     public bool CanEndSession      => CurrentSession != null                              && Facade.State.CanManageSessions;
      
     public string ActiveSessionSegmentDisplay => $"Segment {CurrentSession?.Segments.Count} - {CurrentSession?.State}";
 
