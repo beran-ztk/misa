@@ -14,7 +14,6 @@
         <converters:GreaterThanZeroConverter x:Key="GreaterThanZeroConverter" />
         <converters:UtcToLocalConverter x:Key="UtcToLocalConverter" />
         <converters:NullToBoolConverter x:Key="NullToBoolConverter" />
-        <converters:SessionsTotalConverter x:Key="SessionsTotalConverter" />
         <converters:ItemAgeConverter x:Key="ItemAgeConverter" />
         <converters:DeadlineShortConverter x:Key="DeadlineShortConverter" />
         <converters:IsOverdueConverter x:Key="IsOverdueConverter" />
@@ -298,13 +297,12 @@
                                 Margin="0,0,0,6"
                                 ClipToBounds="True">
 
-                            <Grid ColumnDefinitions="3,*">
+                            <Grid ColumnDefinitions="5,*">
 
                                 <!-- Priority accent bar -->
                                 <Border Grid.Column="0"
                                         Background="{Binding Activity.Priority,
-                                            Converter={StaticResource PriorityToBrushConverter}}"
-                                        Opacity="0.45"/>
+                                            Converter={StaticResource PriorityToBrushConverter}}"/>
 
                                 <!-- Card content -->
                                 <StackPanel Grid.Column="1"
@@ -320,6 +318,7 @@
                                                    Foreground="{StaticResource BrushTextPrimary}"
                                                    TextWrapping="Wrap"
                                                    MaxLines="2"
+                                                   Opacity="0.8"
                                                    TextTrimming="CharacterEllipsis"/>
 
                                         <Border Grid.Column="1"
@@ -363,23 +362,14 @@
                                                        Converter={StaticResource NullToBoolConverter}}"/>
                                     </Grid>
 
-                                    <!-- Row 3: Signal chips (sessions + age) -->
+                                    <!-- Row 3: Signal chips (age) -->
                                     <StackPanel Orientation="Horizontal" Spacing="4">
-
-                                        <Border Classes="signal-chip neutral"
-                                                IsVisible="{Binding Activity.Sessions.Count,
-                                                    Converter={StaticResource GreaterThanZeroConverter}}">
-                                            <TextBlock Text="{Binding Activity.Sessions,
-                                                           Converter={StaticResource SessionsTotalConverter}}"/>
-                                        </Border>
-
                                         <Border Classes="signal-chip neutral"
                                                 IsVisible="{Binding Item.CreatedAt,
                                                     Converter={StaticResource ItemAgeConverter}}">
                                             <TextBlock Text="{Binding Item.CreatedAt,
                                                            Converter={StaticResource ItemAgeConverter}}"/>
                                         </Border>
-
                                     </StackPanel>
 
                                 </StackPanel>
