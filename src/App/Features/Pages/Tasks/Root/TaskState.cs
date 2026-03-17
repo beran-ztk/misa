@@ -121,6 +121,18 @@ public sealed partial class TaskState : ObservableObject
         PriorityFilter.FilterChanged += (_, _) => _ = RefreshFilteredCollection();
         StateFilter.FilterChanged += (_, _) => _ = RefreshFilteredCollection();
         CategoryFilter.FilterChanged += (_, _) => _ = RefreshFilteredCollection();
+
+        // Keep workspace list in sync when the Inspector navigates to an item externally
+        // (e.g. via a relation link). Guards against circular update.
+        SelectionContextState.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName != nameof(ISelectionContextState.ActiveEntityId)) return;
+            var id = SelectionContextState.ActiveEntityId;
+            if (SelectedItem?.Item.Id == id) return;
+            SelectedItem = id.HasValue
+                ? FilteredItems.FirstOrDefault(t => t.Item.Id == id.Value)
+                : null;
+        };
     }
 
     private async Task RefreshFilteredCollection()
