@@ -46,6 +46,8 @@ public class ScheduleExecutingHandler(
 
             string notificationTitle;
             string notificationMessage;
+            var    notificationSourceKind = NotificationSourceKind.SchedulerExecution;
+            var    notificationSourceId   = log.Id;
 
             switch (item.ScheduleExtension.ActionType)
             {
@@ -65,8 +67,10 @@ public class ScheduleExecutingHandler(
                         continue;
                     }
 
-                    notificationTitle   = item.Title;
-                    notificationMessage = $"Task \"{taskResult}\" was created";
+                    notificationTitle        = item.Title;
+                    notificationMessage      = $"Task \"{taskResult.Value.Title}\" was created";
+                    notificationSourceKind   = NotificationSourceKind.ScheduleCreatedTask;
+                    notificationSourceId     = taskResult.Value.Id;
                     break;
 
                 default:
@@ -79,8 +83,8 @@ public class ScheduleExecutingHandler(
                 idGenerator.New(),
                 notificationTitle,
                 notificationMessage,
-                NotificationSourceKind.SchedulerExecution,
-                log.Id,
+                notificationSourceKind,
+                notificationSourceId,
                 timeProvider.UtcNow,
                 item.OwnerId);
 
@@ -94,10 +98,10 @@ public class ScheduleExecutingHandler(
     }
 
     /// <summary>
-    /// Deserializes the CreateTask payload and creates the task.
-    /// Returns the created task's title, or null if the payload is invalid.
+    /// Deserializes the CreateTask payload, creates the task, and returns its ID + title.
+    /// Returns null if the payload is missing or invalid.
     /// </summary>
-    private async Task<string?> ExecuteCreateTaskAsync(
+    private async Task<(Guid Id, string Title)?> ExecuteCreateTaskAsync(
         ScheduleExtension schedule,
         string            ownerId,
         CancellationToken ct)
@@ -118,19 +122,20 @@ public class ScheduleExecutingHandler(
         if (payload is null || string.IsNullOrWhiteSpace(payload.Title))
             return null;
 
-        var task = Item.CreateTask(
-            id:            new ItemId(idGenerator.New()),
-            ownerId:       ownerId,
-            title:         payload.Title,
-            description:   payload.Description,
-            category:      payload.Category.ToDomain(),
-            createdAtUtc:  timeProvider.UtcNow,
-            priority:      payload.Priority.ToDomain(),
-            dueAt:         null);
+        var taskId = idGenerator.New();
+        var task   = Item.CreateTask(
+            id:           new ItemId(taskId),
+            ownerId:      ownerId,
+            title:        payload.Title,
+            description:  payload.Description,
+            category:     payload.Category.ToDomain(),
+            createdAtUtc: timeProvider.UtcNow,
+            priority:     payload.Priority.ToDomain(),
+            dueAt:        null);
 
         await itemRepository.AddAsync(task, ct);
         await itemRepository.SaveChangesAsync(ct);
 
-        return payload.Title;
+        return (taskId, payload.Title);
     }
 }

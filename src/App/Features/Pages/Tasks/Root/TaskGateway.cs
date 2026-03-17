@@ -58,6 +58,15 @@ public sealed class TaskGateway(RemoteProxy remoteProxy)
         return response;
     }
 
+    public async Task<TaskDto?> GetByIdAsync(Guid itemId)
+    {
+        var response = await remoteProxy.SendAsync<TaskDto>(
+            requestFactory: () => new HttpRequestMessage(HttpMethod.Get, TaskRoutes.GetTaskRequest(itemId)),
+            retry: new RetryOptions { MaxAttempts = 3, Delay = TimeSpan.FromMilliseconds(500) },
+            cancellationToken: CancellationToken.None);
+        return response.Value;
+    }
+
     public async Task<Result<TaskDto>> CreateAsync(CreateTaskRequest requestBody)
     {
         

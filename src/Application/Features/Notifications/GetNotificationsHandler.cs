@@ -31,6 +31,8 @@ public class GetNotificationsHandler(INotificationRepository repository)
         {
             NotificationSourceKind.SessionPlannedDurationReached =>
                 new NotificationLinkTarget(NotificationWorkspaceTarget.Tasks, sourceId),
+            NotificationSourceKind.ScheduleCreatedTask =>
+                new NotificationLinkTarget(NotificationWorkspaceTarget.Tasks, sourceId),
             _ => null
         };
 }

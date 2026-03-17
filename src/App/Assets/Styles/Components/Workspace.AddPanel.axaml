@@ -148,6 +148,15 @@
                 <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}"/>
         </Style>
         
+        <!-- Task template container inside CreateTask action -->
+        <Style Selector="Border.addpanel-task-template">
+                <Setter Property="Background" Value="#0AFFFFFF"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="CornerRadius" Value="6"/>
+                <Setter Property="Padding" Value="14,12"/>
+        </Style>
+
         <!-- Expander -->
         <Style Selector="Expander.addpanel-expander">
                 <Setter Property="MinWidth" Value="180"/>

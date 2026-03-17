@@ -182,6 +182,23 @@ public sealed partial class TaskFacadeViewModel : ViewModelBase
         _layerProxy.ShowActionToast("Permanently deleted", type: ToastType.Info);
     }
 
+    // ── Background append ────────────────────────────────────────
+
+    /// <summary>
+    /// Fetches a task by ID and appends it to the Active list if not already present.
+    /// No-ops when not in Active mode or when the task is already in the list.
+    /// </summary>
+    public async Task FetchAndAppendAsync(Guid taskId)
+    {
+        if (State.WorkspaceMode != TaskWorkspaceMode.Active) return;
+        if (State.FilteredItems.Any(t => t.Item.Id == taskId)) return;
+
+        var dto = await _gateway.GetByIdAsync(taskId);
+        if (dto is null) return;
+
+        await State.AppendToMainCollection(dto);
+    }
+
     // ── Helpers ─────────────────────────────────────────────────
 
     private TaskDto? FindItem(Guid id) =>

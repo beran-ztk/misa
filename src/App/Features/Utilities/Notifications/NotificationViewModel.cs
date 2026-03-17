@@ -156,6 +156,8 @@ public sealed partial class NotificationViewModel : ViewModelBase
         var dtos  = pageTask.Result ?? [];
         var count = countTask.Result;
 
+        var newTaskIds = new List<Guid>();
+
         await Dispatcher.UIThread.InvokeAsync(() =>
         {
             var existingIds = Notifications.Select(n => n.Id).ToHashSet();
@@ -168,11 +170,17 @@ public sealed partial class NotificationViewModel : ViewModelBase
                     var item = new NotificationItem(dto);
                     Notifications.Insert(insertIndex++, item);
                     _layerProxy.ShowToast(item.Title, item.HasMessage ? item.Message : null);
+
+                    if (item.LinkTarget is { Workspace: NotificationWorkspaceTarget.Tasks } link)
+                        newTaskIds.Add(link.ItemId);
                 }
             }
 
             UnreadCount = count;
         });
+
+        foreach (var taskId in newTaskIds)
+            await _navigation.TryAppendTaskAsync(taskId);
     }
 
     [RelayCommand]

@@ -60,6 +60,11 @@ public partial class WorkspaceNavigationViewModel(
         host.Workspace = zettel;
     }
 
+    public async Task TryAppendTaskAsync(Guid taskId)
+    {
+        await task.FetchAndAppendAsync(taskId);
+    }
+
     public async Task NavigateToItemAsync(NotificationLinkTarget target)
     {
         switch (target.Workspace)

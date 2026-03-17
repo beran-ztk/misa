@@ -33,6 +33,63 @@
             </StackPanel>
         </StackPanel>
 
+        <!-- ── Action ────────────────────────────────────────────────── -->
+        <StackPanel>
+            <TextBlock Text="Action" Classes="form-section-header"/>
+            <StackPanel Spacing="16">
+
+                <StackPanel Classes="addpanel-controls">
+                    <TextBlock Text="Action type" Classes="addpanel-text"/>
+                    <ComboBox Classes="addpanel-combo"
+                              ItemsSource="{Binding ActionTypes}"
+                              SelectedValue="{Binding SelectedActionType, Mode=TwoWay}" />
+                </StackPanel>
+
+                <!-- Create Task payload — visible only when action type is CreateTask -->
+                <Border IsVisible="{Binding IsCreateTaskAction}"
+                        Classes="addpanel-task-template">
+                    <StackPanel Spacing="12">
+
+                        <TextBlock Text="Task template"
+                                   Classes="form-section-header"
+                                   Opacity="0.7"
+                                   FontSize="11"
+                                   Margin="0,0,0,4"/>
+
+                        <StackPanel Classes="addpanel-controls">
+                            <TextBlock Text="Task title" Classes="addpanel-text"/>
+                            <TextBox Classes="addpanel-oneliner"
+                                     Watermark="Task title…"
+                                     Text="{Binding TaskTitle, Mode=TwoWay}" />
+                        </StackPanel>
+
+                        <StackPanel Classes="addpanel-controls">
+                            <TextBlock Text="Task description (optional)" Classes="addpanel-text"/>
+                            <TextBox Classes="addpanel-oneliner"
+                                     Watermark="Description…"
+                                     Text="{Binding TaskDescription, Mode=TwoWay}" />
+                        </StackPanel>
+
+                        <StackPanel Classes="addpanel-controls">
+                            <TextBlock Text="Category" Classes="addpanel-text"/>
+                            <ComboBox Classes="addpanel-combo"
+                                      ItemsSource="{Binding TaskCategories}"
+                                      SelectedValue="{Binding TaskCategory, Mode=TwoWay}" />
+                        </StackPanel>
+
+                        <StackPanel Classes="addpanel-controls">
+                            <TextBlock Text="Priority" Classes="addpanel-text"/>
+                            <ComboBox Classes="addpanel-combo"
+                                      ItemsSource="{Binding TaskPriorities}"
+                                      SelectedValue="{Binding TaskPriority, Mode=TwoWay}" />
+                        </StackPanel>
+
+                    </StackPanel>
+                </Border>
+
+            </StackPanel>
+        </StackPanel>
+
         <!-- ── Schedule ──────────────────────────────────────────────── -->
         <StackPanel>
             <TextBlock Text="Schedule" Classes="form-section-header"/>
@@ -231,61 +288,6 @@
                                  Text="{Binding ByMonthDayCsv, Mode=TwoWay}" />
                     </StackPanel>
                 </Expander>
-
-            </StackPanel>
-        </StackPanel>
-
-        <!-- ── Action ────────────────────────────────────────────────── -->
-        <StackPanel>
-            <TextBlock Text="Action" Classes="form-section-header"/>
-            <StackPanel Spacing="16">
-
-                <StackPanel Classes="addpanel-controls">
-                    <TextBlock Text="Action type" Classes="addpanel-text"/>
-                    <ComboBox Classes="addpanel-combo"
-                              ItemsSource="{Binding ActionTypes}"
-                              SelectedValue="{Binding SelectedActionType, Mode=TwoWay}" />
-                </StackPanel>
-
-                <!-- Create Task payload — visible only when action type is CreateTask -->
-                <StackPanel Spacing="12"
-                            IsVisible="{Binding IsCreateTaskAction}">
-
-                    <TextBlock Text="Task template"
-                               Classes="form-section-header"
-                               Opacity="0.7"
-                               FontSize="11"
-                               Margin="0,4,0,0"/>
-
-                    <StackPanel Classes="addpanel-controls">
-                        <TextBlock Text="Task title" Classes="addpanel-text"/>
-                        <TextBox Classes="addpanel-oneliner"
-                                 Watermark="Task title…"
-                                 Text="{Binding TaskTitle, Mode=TwoWay}" />
-                    </StackPanel>
-
-                    <StackPanel Classes="addpanel-controls">
-                        <TextBlock Text="Task description (optional)" Classes="addpanel-text"/>
-                        <TextBox Classes="addpanel-oneliner"
-                                 Watermark="Description…"
-                                 Text="{Binding TaskDescription, Mode=TwoWay}" />
-                    </StackPanel>
-
-                    <StackPanel Classes="addpanel-controls">
-                        <TextBlock Text="Category" Classes="addpanel-text"/>
-                        <ComboBox Classes="addpanel-combo"
-                                  ItemsSource="{Binding TaskCategories}"
-                                  SelectedValue="{Binding TaskCategory, Mode=TwoWay}" />
-                    </StackPanel>
-
-                    <StackPanel Classes="addpanel-controls">
-                        <TextBlock Text="Priority" Classes="addpanel-text"/>
-                        <ComboBox Classes="addpanel-combo"
-                                  ItemsSource="{Binding TaskPriorities}"
-                                  SelectedValue="{Binding TaskPriority, Mode=TwoWay}" />
-                    </StackPanel>
-
-                </StackPanel>
 
             </StackPanel>
         </StackPanel>
