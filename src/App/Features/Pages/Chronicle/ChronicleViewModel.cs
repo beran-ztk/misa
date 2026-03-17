@@ -127,7 +127,10 @@ public partial class ChronicleViewModel : ViewModelBase
     public async Task InitializeWorkspaceAsync() => await LoadAsync();
 
     [RelayCommand]
-    private async Task RefreshWorkspaceAsync() => await LoadAsync();
+    private async Task RefreshWorkspaceAsync()
+    {
+        await LoadAsync();
+    }
 
     [RelayCommand]
     private async Task ShowAddPanelAsync()

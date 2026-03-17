@@ -56,13 +56,7 @@ public sealed partial class TaskState : ObservableObject
         }
     }
     
-    /// <summary>
-    /// Selected Task
-    /// </summary>
-    public bool IsItemSelected => SelectedItem is not null;
-    
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsItemSelected))]
     private TaskDto? _selectedItem;
     partial void OnSelectedItemChanged(TaskDto? value)
     {
