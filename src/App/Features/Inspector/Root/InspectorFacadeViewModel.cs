@@ -40,6 +40,12 @@ public sealed partial class InspectorFacadeViewModel : ViewModelBase
         };
     }
     [RelayCommand]
+    private void SelectEntryTab() => State.SelectedTabIndex = 0;
+
+    [RelayCommand]
+    private void SelectActivityTab() => State.SelectedTabIndex = 1;
+
+    [RelayCommand]
     public async Task Reload()
     {
         await GetEntryDataAsync(State.Item?.Id);

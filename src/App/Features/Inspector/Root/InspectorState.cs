@@ -13,7 +13,13 @@ namespace Misa.Ui.Avalonia.Features.Inspector.Root;
 
 public sealed partial class InspectorState : ObservableObject
 {
-    [ObservableProperty] private int _selectedTabIndex;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsEntryTab))]
+    [NotifyPropertyChangedFor(nameof(IsActivityTab))]
+    private int _selectedTabIndex;
+
+    public bool IsEntryTab => SelectedTabIndex == 0;
+    public bool IsActivityTab => SelectedTabIndex == 1;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasItem))]
