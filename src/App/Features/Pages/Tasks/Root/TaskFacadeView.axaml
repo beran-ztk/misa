@@ -97,7 +97,7 @@
         <!-- Toolbar -->
         <Border Grid.Row="0" Classes="workspace-toolbar-frame">
             <Grid Classes="workspace-toolbar"
-                  RowDefinitions="Auto,Auto,Auto"
+                  RowDefinitions="Auto,Auto,Auto,Auto"
                   ColumnDefinitions="*,Auto">
 
                 <!-- Row 0 left: quick actions -->
@@ -154,7 +154,13 @@
 
                 </StackPanel>
 
-                <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
+                <!-- Row 2: meta summary -->
+                <TextBlock Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
+                           Text="{Binding State.MetaSummary}"
+                           Classes="workspace-meta-summary"/>
+
+                <!-- Row 3: separator -->
+                <Border Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2"
                         Classes="workspace-toolbar-separator" />
             </Grid>
         </Border>

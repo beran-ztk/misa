@@ -24,6 +24,9 @@ public sealed partial class TaskState : ObservableObject
     public FilterDropdownViewModel StateFilter { get; }
     public FilterDropdownViewModel CategoryFilter { get; }
 
+    // ── Meta summary ────────────────────────────────────────────
+    [ObservableProperty] private string _metaSummary = string.Empty;
+
     // ── View mode ───────────────────────────────────────────────
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsCardView))]
@@ -95,6 +98,39 @@ public sealed partial class TaskState : ObservableObject
                 await Dispatcher.UIThread.InvokeAsync(() => FilteredItems.Add(item));
             }
         }
+
+        RefreshMeta();
+    }
+
+    private void RefreshMeta()
+    {
+        var now = DateTimeOffset.UtcNow;
+        var items = FilteredItems;
+
+        var total    = items.Count;
+        var open     = items.Count(t => t.Activity.State == ActivityStateDto.Open);
+        var overdue  = items.Count(t => t.Activity.DueAt.HasValue && t.Activity.DueAt.Value < now);
+        var dueSoon  = items.Count(t => t.Activity.DueAt.HasValue
+                                        && t.Activity.DueAt.Value >= now
+                                        && (t.Activity.DueAt.Value - now).TotalDays <= 3);
+        var highPlus = items.Count(t => t.Activity.Priority is ActivityPriorityDto.High
+                                                             or ActivityPriorityDto.Urgent
+                                                             or ActivityPriorityDto.Critical);
+
+        if (total == 0)
+        {
+            MetaSummary = "No tasks";
+            return;
+        }
+
+        var parts = new System.Text.StringBuilder();
+        parts.Append($"{total} task{(total == 1 ? "" : "s")}");
+        parts.Append($"  ·  {open} open");
+        if (dueSoon  > 0) parts.Append($"  ·  {dueSoon} due soon");
+        if (overdue  > 0) parts.Append($"  ·  {overdue} overdue");
+        if (highPlus > 0) parts.Append($"  ·  {highPlus} high+");
+
+        MetaSummary = parts.ToString();
     }
 
     public async Task SetMainCollection(IReadOnlyCollection<TaskDto> items)
