@@ -61,6 +61,12 @@ public sealed partial class TaskFacadeViewModel : ViewModelBase
     }
     
     [RelayCommand]
+    private void SetCardView() => State.ViewMode = TaskViewMode.Card;
+
+    [RelayCommand]
+    private void SetListView() => State.ViewMode = TaskViewMode.List;
+
+    [RelayCommand]
     private async Task ShowAddPanelAsync()
     {
         var formVm = new CreateTaskViewModel(_gateway);

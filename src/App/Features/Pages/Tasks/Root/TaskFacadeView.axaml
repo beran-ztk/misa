@@ -11,12 +11,19 @@
 
     <UserControl.Resources>
         <converters:PriorityToBrushConverter x:Key="PriorityToBrushConverter" />
-        <converters:GreaterThanConverter x:Key="GreaterThanConverter" />
-        <converters:LessOrEqualConverter x:Key="LessOrEqualConverter" />
+        <converters:GreaterThanZeroConverter x:Key="GreaterThanZeroConverter" />
         <converters:UtcToLocalConverter x:Key="UtcToLocalConverter" />
+        <converters:NullToBoolConverter x:Key="NullToBoolConverter" />
+        <converters:SessionsTotalConverter x:Key="SessionsTotalConverter" />
+        <converters:ItemAgeConverter x:Key="ItemAgeConverter" />
+        <converters:DeadlineShortConverter x:Key="DeadlineShortConverter" />
+        <converters:IsOverdueConverter x:Key="IsOverdueConverter" />
+        <converters:IsDueSoonConverter x:Key="IsDueSoonConverter" />
     </UserControl.Resources>
 
     <UserControl.Styles>
+
+        <!-- ListBox item reset -->
         <Style Selector="ListBoxItem">
             <Setter Property="Padding" Value="0"/>
             <Setter Property="Background" Value="Transparent"/>
@@ -30,50 +37,112 @@
         <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
             <Setter Property="Background" Value="Transparent"/>
         </Style>
+
+        <!-- Card hover / selected states -->
         <Style Selector="ListBoxItem:pointerover Border.task-card">
             <Setter Property="BorderBrush" Value="{StaticResource BrushBorderLight}"/>
-            <Setter Property="BoxShadow" Value="0 4 16 0 #40000000"/>
         </Style>
         <Style Selector="ListBoxItem:selected Border.task-card">
             <Setter Property="BorderBrush" Value="{StaticResource BrushAccent}"/>
             <Setter Property="BorderThickness" Value="1.5"/>
         </Style>
+
+        <!-- View mode toggle: active state for toolbar icon buttons -->
+        <Style Selector="Button.workspace-toolbar-icon.view-active">
+            <Setter Property="Opacity" Value="1"/>
+        </Style>
+        <Style Selector="Button.workspace-toolbar-icon.view-active /template/ ContentPresenter">
+            <Setter Property="BorderBrush" Value="{StaticResource BrushAccent}"/>
+            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}"/>
+        </Style>
+
+        <!-- Signal chips -->
+        <Style Selector="Border.signal-chip">
+            <Setter Property="CornerRadius" Value="3"/>
+            <Setter Property="Padding" Value="5,2"/>
+        </Style>
+        <Style Selector="Border.signal-chip TextBlock">
+            <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="Border.signal-chip.neutral">
+            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}"/>
+        </Style>
+        <Style Selector="Border.signal-chip.neutral TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource BrushTextFaded}"/>
+        </Style>
+        <Style Selector="Border.signal-chip.deadline">
+            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}"/>
+        </Style>
+        <Style Selector="Border.signal-chip.deadline TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource BrushAccent}"/>
+        </Style>
+        <Style Selector="Border.signal-chip.overdue">
+            <Setter Property="Background" Value="#3A1A1A"/>
+        </Style>
+        <Style Selector="Border.signal-chip.overdue TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource BrushError}"/>
+        </Style>
+        <Style Selector="Border.signal-chip.due-soon">
+            <Setter Property="Background" Value="#3A2E10"/>
+        </Style>
+        <Style Selector="Border.signal-chip.due-soon TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource BrushWarning}"/>
+        </Style>
+
     </UserControl.Styles>
 
     <Grid RowDefinitions="Auto,*">
 
-        <!-- Toolbar (2 rows) -->
-        <Border Grid.Row="0"
-                Classes="workspace-toolbar-frame">
+        <!-- Toolbar -->
+        <Border Grid.Row="0" Classes="workspace-toolbar-frame">
             <Grid Classes="workspace-toolbar"
                   RowDefinitions="Auto,Auto,Auto"
                   ColumnDefinitions="*,Auto">
 
-                <!-- Row 0: Quick actions (left) -->
+                <!-- Row 0 left: quick actions -->
                 <StackPanel Grid.Row="0" Grid.Column="0"
                             Classes="workspace-toolbar-left">
                     <Button Classes="workspace-toolbar-icon"
                             Command="{Binding ShowAddPanelCommand}">
                         <Image Source="{SvgImage /Assets/Icons/Common/plus.svg}" />
                     </Button>
-
                     <Button Classes="workspace-toolbar-icon"
                             Command="{Binding RefreshWorkspaceCommand}">
                         <Image Source="{SvgImage /Assets/Icons/Common/refresh.svg}" />
                     </Button>
                 </StackPanel>
 
-                <!-- Row 0: Search (right) -->
+                <!-- Row 0 right: view toggle + search -->
                 <StackPanel Grid.Row="0" Grid.Column="1"
-                            Classes="workspace-toolbar-right">
+                            Classes="workspace-toolbar-right"
+                            Spacing="8">
+
+                    <!-- View mode toggle -->
+                    <StackPanel Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
+                        <Button Classes="workspace-toolbar-icon"
+                                Classes.view-active="{Binding State.IsCardView}"
+                                Command="{Binding SetCardViewCommand}"
+                                ToolTip.Tip="Card view">
+                            <Image Source="{SvgImage /Assets/Icons/Staging/tabs.svg}" />
+                        </Button>
+                        <Button Classes="workspace-toolbar-icon"
+                                Classes.view-active="{Binding State.IsListView}"
+                                Command="{Binding SetListViewCommand}"
+                                ToolTip.Tip="List view">
+                            <Image Source="{SvgImage /Assets/Icons/Shell/Navigation/list-dashes.svg}" />
+                        </Button>
+                    </StackPanel>
+
                     <TextBox Classes="workspace-toolbar-search"
                              Watermark="Search tasks..."
                              Text="{Binding State.SearchText, Mode=TwoWay}" />
                 </StackPanel>
 
-                <!-- Row 1: Filters (left) -->
+                <!-- Row 1: filters -->
                 <StackPanel Grid.Row="1" Grid.Column="0"
                             Classes="workspace-toolbar-center">
+
                     <ToggleButton x:Name="PriorityFilterButton"
                                   Classes="workspace-toolbar-filter-trigger">
                         <Grid ColumnDefinitions="*,Auto">
@@ -81,7 +150,6 @@
                             <TextBlock Grid.Column="1" Text="▾" />
                         </Grid>
                     </ToggleButton>
-
                     <Popup PlacementTarget="{Binding ElementName=PriorityFilterButton}"
                            IsOpen="{Binding IsChecked, ElementName=PriorityFilterButton}"
                            Placement="Bottom">
@@ -100,11 +168,10 @@
                     <ToggleButton x:Name="StateFilterButton"
                                   Classes="workspace-toolbar-filter-trigger">
                         <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock Grid.Column="0" Text="State" />    
-                            <TextBlock Grid.Column="1" Text="▾" />    
+                            <TextBlock Grid.Column="0" Text="State" />
+                            <TextBlock Grid.Column="1" Text="▾" />
                         </Grid>
                     </ToggleButton>
-
                     <Popup PlacementTarget="{Binding ElementName=StateFilterButton}"
                            IsOpen="{Binding IsChecked, ElementName=StateFilterButton}"
                            Placement="Bottom">
@@ -123,11 +190,10 @@
                     <ToggleButton x:Name="CategoryFilterButton"
                                   Classes="workspace-toolbar-filter-trigger">
                         <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock Grid.Column="0" Text="Category" />    
-                            <TextBlock Grid.Column="1" Text="▾" />    
+                            <TextBlock Grid.Column="0" Text="Category" />
+                            <TextBlock Grid.Column="1" Text="▾" />
                         </Grid>
                     </ToggleButton>
-
                     <Popup PlacementTarget="{Binding ElementName=CategoryFilterButton}"
                            IsOpen="{Binding IsChecked, ElementName=CategoryFilterButton}"
                            Placement="Bottom">
@@ -142,22 +208,20 @@
                             </ItemsControl>
                         </Border>
                     </Popup>
+
                 </StackPanel>
 
-                <!-- Thin separator -->
-                <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Classes="workspace-toolbar-separator" />
+                <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
+                        Classes="workspace-toolbar-separator" />
             </Grid>
-            
         </Border>
 
-        <!-- Content -->
-        <Grid Grid.Row="1"
-              x:Name="ContentRoot">
+        <!-- Content area -->
+        <Grid Grid.Row="1">
 
-            <!-- Table -->
+            <!-- List / table view -->
             <Border Classes="workspace-content-frame"
-                    IsVisible="{Binding #ContentRoot.Bounds.Width, Converter={StaticResource GreaterThanConverter}, ConverterParameter=900}">
-        
+                    IsVisible="{Binding State.IsListView}">
                 <DataGrid Classes="workspace-datagrid"
                           HorizontalAlignment="Center"
                           ItemsSource="{Binding State.FilteredItems}"
@@ -167,9 +231,7 @@
                           IsReadOnly="True"
                           ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                           ScrollViewer.VerticalScrollBarVisibility="Auto">
-
                     <DataGrid.Columns>
-
                         <DataGridTemplateColumn Header="Title" Width="320">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
@@ -179,128 +241,151 @@
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
-
-                        <DataGridTextColumn Header="State" Binding="{Binding Activity.State}" Width="120" />
-                        <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="120" />
-
+                        <DataGridTextColumn Header="State"
+                                            Binding="{Binding Activity.State}"
+                                            Width="120" />
+                        <DataGridTextColumn Header="Category"
+                                            Binding="{Binding Category}"
+                                            Width="120" />
                         <DataGridTemplateColumn Header="Priority" Width="120">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal" Spacing="8">
                                         <Ellipse Width="8" Height="8"
-                                                 Fill="{Binding Activity.Priority, Converter={StaticResource PriorityToBrushConverter}}" />
+                                                 Fill="{Binding Activity.Priority,
+                                                     Converter={StaticResource PriorityToBrushConverter}}" />
                                         <TextBlock Text="{Binding Activity.Priority}" />
                                     </StackPanel>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
-                        
-                        <DataGridTextColumn Header="Created"
-                                            Binding="{Binding Item.CreatedAt,
+                        <DataGridTextColumn Header="Deadline"
+                                            Binding="{Binding Activity.DueAt,
+                                                Converter={StaticResource DeadlineShortConverter}}"
+                                            Width="100" />
+                        <DataGridTextColumn Header="Modified"
+                                            Binding="{Binding Item.ModifiedAt,
                                                 Converter={StaticResource UtcToLocalConverter},
-                                                StringFormat='dd.MM.yyyy HH:mm'}"
-                                            Width="180" />
-
+                                                StringFormat='dd.MM.yyyy'}"
+                                            Width="120" />
                     </DataGrid.Columns>
-
                 </DataGrid>
-        
             </Border>
 
-            <!-- Card View -->
+            <!-- Card view -->
             <ListBox ItemsSource="{Binding State.FilteredItems}"
                      SelectedItem="{Binding State.SelectedItem, Mode=TwoWay}"
-                     IsVisible="{Binding #ContentRoot.Bounds.Width, Converter={StaticResource LessOrEqualConverter}, ConverterParameter=900}"
+                     IsVisible="{Binding State.IsCardView}"
                      Background="{StaticResource BrushPrimaryBackgroundLight}"
-                     Padding="16,8"
+                     Padding="10,8"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                      ScrollViewer.VerticalScrollBarVisibility="Auto">
 
                 <ListBox.ItemTemplate>
                     <DataTemplate>
-                            <Border Classes="task-card"
-                                    Background="{StaticResource BrushPrimaryBackground}"
-                                    BorderBrush="{StaticResource BrushBorder}"
-                                    BorderThickness="1"
-                                    CornerRadius="8"
-                                    Padding="16,12"
-                                    Margin="0,0,0,8">
 
-                                <StackPanel Spacing="0">
+                        <!--
+                            Card structure:
+                            Outer Border (CornerRadius, ClipToBounds) with zero padding
+                              Grid cols: [3px accent bar | content]
+                        -->
+                        <Border Classes="task-card"
+                                Background="{StaticResource BrushPrimaryBackground}"
+                                BorderBrush="{StaticResource BrushBorder}"
+                                BorderThickness="1"
+                                CornerRadius="6"
+                                Padding="0"
+                                Margin="0,0,0,6"
+                                ClipToBounds="True">
 
-                                    <!-- Title -->
-                                    <TextBlock Text="{Binding Item.Title}"
-                                               FontSize="{StaticResource FontSizeMedium}"
-                                               FontWeight="SemiBold"
-                                               Foreground="{StaticResource BrushTextPrimary}"
-                                               TextTrimming="CharacterEllipsis"
-                                               TextWrapping="NoWrap"
-                                               Margin="0,0,0,8" />
+                            <Grid ColumnDefinitions="3,*">
 
-                                    <!-- Divider -->
-                                    <Border Height="1"
-                                            Background="{StaticResource BrushBorder}"
-                                            Margin="0,0,0,8" />
+                                <!-- Priority accent bar -->
+                                <Border Grid.Column="0"
+                                        Background="{Binding Activity.Priority,
+                                            Converter={StaticResource PriorityToBrushConverter}}"
+                                        Opacity="0.45"/>
 
-                                    <!-- Properties -->
-                                    <Grid ColumnDefinitions="80,*"
-                                          RowDefinitions="Auto,Auto,Auto,Auto"
-                                          RowSpacing="6">
+                                <!-- Card content -->
+                                <StackPanel Grid.Column="1"
+                                            Margin="10,9,12,9"
+                                            Spacing="4">
 
-                                        <TextBlock Grid.Row="0" Grid.Column="0"
-                                                   Text="State"
-                                                   FontSize="{StaticResource FontSizeAverage}"
-                                                   Foreground="{StaticResource BrushTextFaded}"
-                                                   VerticalAlignment="Center" />
-                                        <TextBlock Grid.Row="0" Grid.Column="1"
-                                                   Text="{Binding Activity.State}"
-                                                   FontSize="{StaticResource FontSizeAverage}"
-                                                   Foreground="{StaticResource BrushTextSecondary}"
-                                                   VerticalAlignment="Center" />
+                                    <!-- Row 1: Title | Deadline chip -->
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Grid.Column="0"
+                                                   Text="{Binding Item.Title}"
+                                                   FontSize="{StaticResource FontSizeMedium}"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{StaticResource BrushTextPrimary}"
+                                                   TextWrapping="Wrap"
+                                                   MaxLines="2"
+                                                   TextTrimming="CharacterEllipsis"/>
 
-                                        <TextBlock Grid.Row="1" Grid.Column="0"
-                                                   Text="Category"
-                                                   FontSize="{StaticResource FontSizeAverage}"
-                                                   Foreground="{StaticResource BrushTextFaded}"
-                                                   VerticalAlignment="Center" />
-                                        <TextBlock Grid.Row="1" Grid.Column="1"
-                                                   Text="{Binding Category}"
-                                                   FontSize="{StaticResource FontSizeAverage}"
-                                                   Foreground="{StaticResource BrushTextSecondary}"
-                                                   VerticalAlignment="Center" />
-
-                                        <TextBlock Grid.Row="2" Grid.Column="0"
-                                                   Text="Priority"
-                                                   FontSize="{StaticResource FontSizeAverage}"
-                                                   Foreground="{StaticResource BrushTextFaded}"
-                                                   VerticalAlignment="Center" />
-                                        <StackPanel Grid.Row="2" Grid.Column="1"
-                                                    Orientation="Horizontal"
-                                                    Spacing="8"
-                                                    VerticalAlignment="Center">
-                                            <Ellipse Width="7" Height="7"
-                                                     Fill="{Binding Activity.Priority, Converter={StaticResource PriorityToBrushConverter}}"
-                                                     VerticalAlignment="Center" />
-                                            <TextBlock Text="{Binding Activity.Priority}"
-                                                       FontSize="{StaticResource FontSizeAverage}"
-                                                       Foreground="{StaticResource BrushTextSecondary}" />
-                                        </StackPanel>
-
-                                        <TextBlock Grid.Row="3" Grid.Column="0"
-                                                   Text="Created"
-                                                   FontSize="{StaticResource FontSizeAverage}"
-                                                   Foreground="{StaticResource BrushTextFaded}"
-                                                   VerticalAlignment="Center" />
-                                        <TextBlock Grid.Row="3" Grid.Column="1"
-                                                   Text="{Binding Item.CreatedAt, Converter={StaticResource UtcToLocalConverter}, StringFormat='dd.MM.yyyy HH:mm'}"
-                                                   FontSize="{StaticResource FontSizeAverage}"
-                                                   Foreground="{StaticResource BrushTextSecondary}"
-                                                   VerticalAlignment="Center" />
-
+                                        <Border Grid.Column="1"
+                                                Classes="signal-chip deadline"
+                                                Classes.overdue="{Binding Activity.DueAt,
+                                                    Converter={StaticResource IsOverdueConverter}}"
+                                                Classes.due-soon="{Binding Activity.DueAt,
+                                                    Converter={StaticResource IsDueSoonConverter}}"
+                                                VerticalAlignment="Top"
+                                                Margin="8,1,0,0"
+                                                IsVisible="{Binding Activity.DueAt,
+                                                    Converter={StaticResource NullToBoolConverter}}">
+                                            <TextBlock Text="{Binding Activity.DueAt,
+                                                           Converter={StaticResource DeadlineShortConverter}}"/>
+                                        </Border>
                                     </Grid>
 
+                                    <!-- Row 2: State · Category | Modified date -->
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Grid.Column="0"
+                                                    Orientation="Horizontal"
+                                                    Spacing="4">
+                                            <TextBlock Text="{Binding Activity.State}"
+                                                       FontSize="{StaticResource FontSizeSmall}"
+                                                       Foreground="{StaticResource BrushTextSecondary}"/>
+                                            <TextBlock Text="·"
+                                                       FontSize="{StaticResource FontSizeSmall}"
+                                                       Foreground="{StaticResource BrushTextFaded}"/>
+                                            <TextBlock Text="{Binding Category}"
+                                                       FontSize="{StaticResource FontSizeSmall}"
+                                                       Foreground="{StaticResource BrushTextSecondary}"/>
+                                        </StackPanel>
+
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding Item.ModifiedAt,
+                                                       Converter={StaticResource UtcToLocalConverter},
+                                                       StringFormat='dd MMM'}"
+                                                   FontSize="{StaticResource FontSizeSmall}"
+                                                   Foreground="{StaticResource BrushTextFaded}"
+                                                   IsVisible="{Binding Item.ModifiedAt,
+                                                       Converter={StaticResource NullToBoolConverter}}"/>
+                                    </Grid>
+
+                                    <!-- Row 3: Signal chips (sessions + age) -->
+                                    <StackPanel Orientation="Horizontal" Spacing="4">
+
+                                        <Border Classes="signal-chip neutral"
+                                                IsVisible="{Binding Activity.Sessions.Count,
+                                                    Converter={StaticResource GreaterThanZeroConverter}}">
+                                            <TextBlock Text="{Binding Activity.Sessions,
+                                                           Converter={StaticResource SessionsTotalConverter}}"/>
+                                        </Border>
+
+                                        <Border Classes="signal-chip neutral"
+                                                IsVisible="{Binding Item.CreatedAt,
+                                                    Converter={StaticResource ItemAgeConverter}}">
+                                            <TextBlock Text="{Binding Item.CreatedAt,
+                                                           Converter={StaticResource ItemAgeConverter}}"/>
+                                        </Border>
+
+                                    </StackPanel>
+
                                 </StackPanel>
-                            </Border>
+                            </Grid>
+                        </Border>
+
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>

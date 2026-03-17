@@ -57,6 +57,14 @@ public sealed partial class TaskState : ObservableObject
     }
     
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsCardView))]
+    [NotifyPropertyChangedFor(nameof(IsListView))]
+    private TaskViewMode _viewMode = TaskViewMode.Card;
+
+    public bool IsCardView => ViewMode == TaskViewMode.Card;
+    public bool IsListView => ViewMode == TaskViewMode.List;
+
+    [ObservableProperty]
     private TaskDto? _selectedItem;
     partial void OnSelectedItemChanged(TaskDto? value)
     {
