@@ -21,7 +21,8 @@
                         IsVisible="{Binding HasDeadline}">
                 <TextBlock Text="Deadline"
                            Opacity="0.7" />
-                <TextBlock Text="{Binding DeadlineDisplay}" />
+                <TextBlock Foreground="Red" 
+                           Text="{Binding DeadlineDisplay}" />
             </StackPanel>
             
             <StackPanel Grid.Column="0" Grid.Row="0" Spacing="2"
@@ -37,12 +38,19 @@
                         VerticalAlignment="Center">
 
                 <Button Classes="workspace-toolbar-icon"
+                        IsVisible="{Binding !HasDeadline}"
+                        Command="{Binding ShowEditDeadlineFormCommand}">
+                    <Image Source="{SvgImage /Assets/Icons/Common/plus.svg}" />
+                </Button>
+                
+                <Button Classes="workspace-toolbar-icon"
+                        IsVisible="{Binding HasDeadline}"
                         Command="{Binding ShowEditDeadlineFormCommand}">
                     <Image Source="{SvgImage /Assets/Icons/Common/edit.svg}" />
                 </Button>
 
                 <Button Classes="workspace-toolbar-icon"
-                        IsEnabled="{Binding HasDeadline}"
+                        IsVisible="{Binding HasDeadline}"
                         Command="{Binding DeleteDeadlineCommand}">
                     <Image Source="{SvgImage /Assets/Icons/Common/trash.svg}" />
                 </Button>
