@@ -137,9 +137,9 @@
         <Grid x:Name="ToastLayer"
               ZIndex="40">
             <ItemsControl ItemsSource="{Binding ShellState.Toasts}"
-                          HorizontalAlignment="Center"
-                          VerticalAlignment="Top"
-                          Margin="0,16,0,0"
+                          HorizontalAlignment="Right"
+                          VerticalAlignment="Bottom"
+                          Margin="0,0,50,34"
                           IsHitTestVisible="False">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
@@ -156,6 +156,29 @@
             </ItemsControl>
         </Grid>
         
+        <Grid x:Name="ActionToastLayer"
+              ZIndex="45"
+              IsHitTestVisible="False">
+            <ItemsControl ItemsSource="{Binding ShellState.ActionToasts}"
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Top"
+                          Margin="0,16,0,0"
+                          IsHitTestVisible="True">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Spacing="8"
+                                    IsHitTestVisible="True"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <ContentControl Content="{Binding}"
+                                        IsHitTestVisible="True"/>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </Grid>
+
         <Grid x:Name="BusyLayer"
               ZIndex="50">
             <ContentControl Content="{Binding ShellState.Busy}"/>

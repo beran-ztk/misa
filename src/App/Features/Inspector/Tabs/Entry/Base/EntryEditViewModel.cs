@@ -83,7 +83,7 @@ public partial class InspectorEntryViewModel
             {
                 Facade.ContextState.NotifyUpdated();
                 await Facade.Reload();
-                Facade.LayerProxy.ShowToast("Task updated", type: ToastType.Success);
+                Facade.LayerProxy.ShowActionToast("Task updated", type: ToastType.Success);
             }
         }
         else if (item.Workflow == WorkflowDto.Schedule)
@@ -110,7 +110,7 @@ public partial class InspectorEntryViewModel
             {
                 Facade.ContextState.NotifyUpdated();
                 await Facade.Reload();
-                Facade.LayerProxy.ShowToast("Schedule updated", type: ToastType.Success);
+                Facade.LayerProxy.ShowActionToast("Schedule updated", type: ToastType.Success);
             }
         }
     }

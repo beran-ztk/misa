@@ -32,7 +32,7 @@ public partial class InspectorEntryViewModel
         if (result is { IsSuccess: true })
         {
             await Facade.Reload();
-            Facade.LayerProxy.ShowToast("Session started", type: ToastType.Success);
+            Facade.LayerProxy.ShowActionToast("Session started", type: ToastType.Success);
         }
     }
 
@@ -48,7 +48,7 @@ public partial class InspectorEntryViewModel
         if (result is { IsSuccess: true })
         {
             await Facade.Reload();
-            Facade.LayerProxy.ShowToast("Session paused", type: ToastType.Info);
+            Facade.LayerProxy.ShowActionToast("Session paused", type: ToastType.Info);
         }
     }
     
@@ -61,7 +61,7 @@ public partial class InspectorEntryViewModel
         if (result is { IsSuccess: true })
         {
             await Facade.Reload();
-            Facade.LayerProxy.ShowToast("Session stopped", type: ToastType.Info);
+            Facade.LayerProxy.ShowActionToast("Session stopped", type: ToastType.Info);
         }
     }
     [RelayCommand]

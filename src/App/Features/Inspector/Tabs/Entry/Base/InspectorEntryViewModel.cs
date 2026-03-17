@@ -39,7 +39,7 @@ public partial class InspectorEntryViewModel : ViewModelBase
         var result = await Facade.Gateway.DeleteAsync(Facade.State.Item.Id);
         if (result.IsSuccess)
         {
-            Facade.LayerProxy.ShowToast("Task deleted", type: ToastType.Info);
+            Facade.LayerProxy.ShowActionToast("Task deleted", type: ToastType.Info);
             Facade.ContextState.NotifyRemoved();
         }
     }

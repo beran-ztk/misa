@@ -76,6 +76,6 @@ public sealed partial class TaskFacadeViewModel : ViewModelBase
         if (created is null) return;
 
         await State.AppendToMainCollection(created);
-        _layerProxy.ShowToast("Task created", type: ToastType.Success);
+        _layerProxy.ShowActionToast("Task created", type: ToastType.Success);
     }
 }
