@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Common.Converters;
+using Misa.Contract.Items.Components.Activity.Sessions;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Inspector.Root;
 using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Relations;
@@ -29,19 +30,39 @@ public partial class InspectorEntryViewModel : ViewModelBase
     [RelayCommand]
     private async Task ArchiveItem()
     {
+        await EnsureSessionEndedAsync();
         var result = await Facade.Gateway.ArchiveAsync(Facade.State.Item.Id);
         if (result.IsSuccess)
             Facade.ContextState.NotifyRemoved();
     }
+
     [RelayCommand]
     private async Task DeleteItem()
     {
+        await EnsureSessionEndedAsync();
         var result = await Facade.Gateway.DeleteAsync(Facade.State.Item.Id);
         if (result.IsSuccess)
         {
             Facade.LayerProxy.ShowActionToast("Task deleted", type: ToastType.Info);
             Facade.ContextState.NotifyRemoved();
         }
+    }
+
+    /// <summary>
+    /// Silently stops any active session before an archive or delete operation
+    /// to prevent leaving orphaned running sessions on inactive items.
+    /// </summary>
+    private async Task EnsureSessionEndedAsync()
+    {
+        if (CurrentSession == null) return;
+
+        var dto = new StopSessionDto(
+            Facade.State.Item.Id,
+            SessionEfficiencyDto.None,
+            SessionConcentrationDto.None,
+            "Was automatically stopped because of archiving/deleting.");
+
+        await Facade.Gateway.EndSessionAsync(dto);
     }
     private void OnFacadeStatePropertyChanged(object? s, PropertyChangedEventArgs e)
     {

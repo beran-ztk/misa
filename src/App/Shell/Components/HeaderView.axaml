@@ -11,28 +11,76 @@
 
     <UserControl.Styles>
 
+        <!-- ── User trigger button ───────────────────────────────────── -->
         <Style Selector="Button.header-user">
-            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Background"    Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="0"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="MinWidth" Value="120"/>
+            <Setter Property="Padding"       Value="0"/>
+            <Setter Property="Cursor"        Value="Hand"/>
         </Style>
-
         <Style Selector="Button.header-user /template/ ContentPresenter">
-            <Setter Property="CornerRadius" Value="{StaticResource CornerRadiusButtons}"/>
+            <Setter Property="CornerRadius"   Value="{StaticResource CornerRadiusButtons}"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}"/>
-            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}"/>
+            <Setter Property="BorderBrush"    Value="{StaticResource BrushBorder}"/>
+            <Setter Property="Background"     Value="{StaticResource BrushPrimaryBackgroundLighter}"/>
         </Style>
-
         <Style Selector="Button.header-user:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="{StaticResource BrushNavigationHover}"/>
+            <Setter Property="Background"  Value="{StaticResource BrushNavigationHover}"/>
             <Setter Property="BorderBrush" Value="{StaticResource BrushBorderLight}"/>
         </Style>
-
         <Style Selector="Button.header-user:pressed /template/ ContentPresenter">
             <Setter Property="Background" Value="{StaticResource BrushNavigationPressed}"/>
+        </Style>
+
+        <!-- ── User menu dropdown items ──────────────────────────────── -->
+        <Style Selector="Button.user-menu-item">
+            <Setter Property="Background"               Value="Transparent"/>
+            <Setter Property="Foreground"               Value="{StaticResource BrushTextSecondary}"/>
+            <Setter Property="FontSize"                 Value="{StaticResource FontSizeAverage}"/>
+            <Setter Property="HorizontalAlignment"      Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="Padding"                  Value="10,7"/>
+            <Setter Property="Cursor"                   Value="Hand"/>
+            <Style Selector="^ /template/ ContentPresenter">
+                <Setter Property="CornerRadius"    Value="4"/>
+                <Setter Property="BorderThickness" Value="0"/>
+            </Style>
+            <Style Selector="^:pointerover">
+                <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
+            </Style>
+            <Style Selector="^:pointerover /template/ ContentPresenter">
+                <Setter Property="Background" Value="#0CFFFFFF"/>
+            </Style>
+            <Style Selector="^:pressed /template/ ContentPresenter">
+                <Setter Property="Background" Value="#18FFFFFF"/>
+            </Style>
+            <Style Selector="^:disabled">
+                <Setter Property="Opacity" Value="0.4"/>
+            </Style>
+        </Style>
+
+        <!-- Danger variant — logout -->
+        <Style Selector="Button.user-menu-item.danger">
+            <Setter Property="Foreground" Value="#A05858"/>
+            <Style Selector="^:pointerover">
+                <Setter Property="Foreground" Value="{StaticResource BrushError}"/>
+            </Style>
+            <Style Selector="^:pointerover /template/ ContentPresenter">
+                <Setter Property="Background" Value="#10F44336"/>
+            </Style>
+        </Style>
+
+        <!-- ── FlyoutPresenter chrome removal ───────────────────────── -->
+        <!--
+            The default FlyoutPresenter renders its own background, border, and
+            padding behind any custom Flyout content. Strip all of that so only
+            the inner Border defined in the Flyout body is visible.
+        -->
+        <Style Selector="FlyoutPresenter">
+            <Setter Property="Background"      Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding"         Value="0"/>
+            <Setter Property="CornerRadius"    Value="0"/>
         </Style>
 
     </UserControl.Styles>
@@ -58,31 +106,59 @@
 
                 <Button Classes="header-user">
                     <Button.Flyout>
-                        <MenuFlyout Placement="BottomEdgeAlignedRight">
-                            <MenuItem Header="Logout"
-                                      Command="{Binding LogoutCommand}">
-                                <MenuItem.Icon>
-                                    <Image Source="{SvgImage /Assets/Icons/Shell/Navigation/sign-out.svg}"
-                                           Width="14"
-                                           Height="14"/>
-                                </MenuItem.Icon>
-                            </MenuItem>
-                        </MenuFlyout>
+                        <Flyout Placement="BottomEdgeAlignedRight">
+                            <Border Background="{StaticResource BrushPrimaryBackgroundLighter}"
+                                    BorderBrush="{StaticResource BrushBorder}"
+                                    BorderThickness="1"
+                                    CornerRadius="6"
+                                    BoxShadow="0 4 20 2 #60000000"
+                                    MinWidth="160"
+                                    Padding="4">
+                                <StackPanel Spacing="1">
+
+                                    <!-- Profile — placeholder, not yet functional -->
+                                    <Button Classes="user-menu-item"
+                                            IsEnabled="False">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <Image Width="13" Height="13" Opacity="0.6"
+                                                   Source="{SvgImage /Assets/Icons/Shell/Navigation/user.svg}"/>
+                                            <TextBlock Text="Profile"/>
+                                        </StackPanel>
+                                    </Button>
+
+                                    <!-- Separator -->
+                                    <Border Height="1"
+                                            Margin="6,4"
+                                            Background="{StaticResource BrushBorder}"
+                                            Opacity="0.6"/>
+
+                                    <!-- Logout -->
+                                    <Button Classes="user-menu-item danger"
+                                            Command="{Binding LogoutCommand}">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <Image Width="13" Height="13" Opacity="0.7"
+                                                   Source="{SvgImage /Assets/Icons/Shell/Navigation/sign-out.svg}"/>
+                                            <TextBlock Text="Logout"/>
+                                        </StackPanel>
+                                    </Button>
+
+                                </StackPanel>
+                            </Border>
+                        </Flyout>
                     </Button.Flyout>
 
+                    <!-- Button content: status dot + username -->
                     <StackPanel Orientation="Horizontal"
-                                Spacing="8"
-                                Margin="10,6">
-                        <Image Source="{SvgImage /Assets/Icons/Shell/Navigation/user.svg}"
-                               Width="14"
-                               Height="14"
-                               Opacity="0.55"
-                               VerticalAlignment="Center"/>
+                                Spacing="7"
+                                Margin="10,5">
+                        <Ellipse Width="7" Height="7"
+                                 Fill="{StaticResource BrushAccent}"
+                                 Opacity="0.75"
+                                 VerticalAlignment="Center"/>
                         <TextBlock Text="{Binding UserState.Username}"
                                    FontSize="{StaticResource FontSizeAverage}"
                                    Foreground="{StaticResource BrushTextSecondary}"
-                                   VerticalAlignment="Center"
-                                   HorizontalAlignment="Center"/>
+                                   VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
 

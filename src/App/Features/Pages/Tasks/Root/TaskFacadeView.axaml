@@ -25,8 +25,9 @@
 
         <!-- ── ListBox item reset ─────────────────────────────────── -->
         <Style Selector="ListBoxItem">
-            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Padding"    Value="0"/>
             <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Cursor"     Value="Hand"/>
         </Style>
         <Style Selector="ListBoxItem /template/ ContentPresenter">
             <Setter Property="Background" Value="Transparent"/>
@@ -39,11 +40,22 @@
         </Style>
 
         <!-- ── Card hover / selected states ─────────────────────────── -->
+        <!--
+            Visual hierarchy: Selected > Hover > Default
+            Hover  — border lifts to BrushBorderLight
+            Selected — accent border (1.5px) + very subtle accent background tint
+        -->
         <Style Selector="ListBoxItem:pointerover Border.task-card">
             <Setter Property="BorderBrush" Value="{StaticResource BrushBorderLight}"/>
         </Style>
         <Style Selector="ListBoxItem:selected Border.task-card">
-            <Setter Property="BorderBrush" Value="{StaticResource BrushAccent}"/>
+            <Setter Property="BorderBrush"   Value="{StaticResource BrushAccent}"/>
+            <Setter Property="BorderThickness" Value="1.5"/>
+            <Setter Property="Background"    Value="#0A60A0F0"/>
+        </Style>
+        <!-- Selected takes priority: prevent hover from overriding the accent border -->
+        <Style Selector="ListBoxItem:selected:pointerover Border.task-card">
+            <Setter Property="BorderBrush"   Value="{StaticResource BrushAccent}"/>
             <Setter Property="BorderThickness" Value="1.5"/>
         </Style>
 
