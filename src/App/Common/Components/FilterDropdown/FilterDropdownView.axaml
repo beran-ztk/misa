@@ -1,0 +1,223 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Misa.Ui.Avalonia.Common.Components.FilterDropdown.FilterDropdownView"
+             xmlns:local="clr-namespace:Misa.Ui.Avalonia.Common.Components.FilterDropdown"
+             x:DataType="local:FilterDropdownViewModel">
+
+    <UserControl.Styles>
+        <Style Selector="ToggleButton.filter-dropdown-trigger">
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="MinWidth" Value="100"/>
+            <Setter Property="Padding" Value="10,0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+
+        <Style Selector="ToggleButton.filter-dropdown-trigger /template/ ContentPresenter">
+            <Setter Property="CornerRadius" Value="4"/>
+        </Style>
+
+        <Style Selector="ToggleButton.filter-dropdown-trigger:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}"/>
+        </Style>
+
+        <Style Selector="ToggleButton.filter-dropdown-trigger:checked /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}"/>
+        </Style>
+
+        <!-- Active filter: accent border signals something is filtered -->
+        <Style Selector="ToggleButton.filter-dropdown-trigger.filter-active">
+            <Setter Property="BorderBrush" Value="{StaticResource BrushAccent}"/>
+        </Style>
+
+        <!-- Title text -->
+        <Style Selector="ToggleButton.filter-dropdown-trigger TextBlock.filter-trigger-title">
+            <Setter Property="FontSize" Value="{StaticResource FontSizeAverage}"/>
+            <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <!-- Summary text (e.g. "Medium" or "2 sel.") -->
+        <Style Selector="ToggleButton.filter-dropdown-trigger TextBlock.filter-trigger-summary">
+            <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}"/>
+            <Setter Property="Foreground" Value="{StaticResource BrushAccent}"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <!-- Arrow chevron -->
+        <Style Selector="ToggleButton.filter-dropdown-trigger TextBlock.filter-trigger-arrow">
+            <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}"/>
+            <Setter Property="Foreground" Value="{StaticResource BrushTextFaded}"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+
+        <!-- ─── Popup panel ────────────────────────────────────────── -->
+
+        <Style Selector="Border.filter-popup-panel">
+            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackground}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="6,8"/>
+            <Setter Property="MinWidth" Value="180"/>
+            <Setter Property="BoxShadow" Value="0 6 20 0 #60000000"/>
+        </Style>
+
+        <!-- Header title inside popup -->
+        <Style Selector="Border.filter-popup-panel TextBlock.filter-popup-header-title">
+            <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}"/>
+            <Setter Property="Foreground" Value="{StaticResource BrushTextFaded}"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="6,0,0,0"/>
+        </Style>
+
+        <!-- Clear button -->
+        <Style Selector="Button.filter-popup-clear">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="6,2"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Button.filter-popup-clear TextBlock">
+            <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}"/>
+            <Setter Property="Foreground" Value="{StaticResource BrushTextFaded}"/>
+        </Style>
+        <Style Selector="Button.filter-popup-clear:pointerover TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource BrushError}"/>
+        </Style>
+        <Style Selector="Button.filter-popup-clear /template/ ContentPresenter">
+            <Setter Property="CornerRadius" Value="3"/>
+        </Style>
+        <Style Selector="Button.filter-popup-clear:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#3A1A1A"/>
+        </Style>
+
+
+        <!-- ─── Option rows ────────────────────────────────────────── -->
+
+        <Style Selector="Button.filter-option-row">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+
+        <Style Selector="Button.filter-option-row /template/ ContentPresenter">
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Padding" Value="6,5"/>
+        </Style>
+
+        <Style Selector="Button.filter-option-row:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}"/>
+        </Style>
+
+        <Style Selector="Button.filter-option-row.selected /template/ ContentPresenter">
+            <Setter Property="Background" Value="#18304A"/>
+        </Style>
+
+        <Style Selector="Button.filter-option-row:pointerover.selected /template/ ContentPresenter">
+            <Setter Property="Background" Value="#1E3D5C"/>
+        </Style>
+
+        <!-- Option label text -->
+        <Style Selector="Button.filter-option-row TextBlock">
+            <Setter Property="FontSize" Value="{StaticResource FontSizeAverage}"/>
+            <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <Style Selector="Button.filter-option-row.selected TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
+        </Style>
+    </UserControl.Styles>
+    
+    <Grid>
+
+        <!-- Trigger button -->
+        <ToggleButton x:Name="TriggerBtn"
+                      Classes="filter-dropdown-trigger"
+                      Classes.filter-active="{Binding HasActiveSelection}">
+            <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="5">
+
+                <TextBlock Grid.Column="0"
+                           Text="{Binding Title}"
+                           Classes="filter-trigger-title"/>
+
+                <!-- Summary: shown only when a filter is active -->
+                <TextBlock Grid.Column="1"
+                           Text="{Binding SummaryText}"
+                           Classes="filter-trigger-summary"
+                           IsVisible="{Binding HasActiveSelection}"/>
+
+                <TextBlock Grid.Column="2"
+                           Text="▾"
+                           Classes="filter-trigger-arrow"/>
+            </Grid>
+        </ToggleButton>
+
+        <!-- Dropdown panel -->
+        <Popup PlacementTarget="{Binding ElementName=TriggerBtn}"
+               IsOpen="{Binding IsChecked, ElementName=TriggerBtn, Mode=TwoWay}"
+               Placement="Bottom"
+               IsLightDismissEnabled="True">
+
+            <Border Classes="filter-popup-panel">
+                <StackPanel>
+
+                    <!-- Header: title + clear button -->
+                    <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,8">
+                        <TextBlock Grid.Column="0"
+                                   Text="{Binding Title}"
+                                   Classes="filter-popup-header-title"/>
+                        <Button Grid.Column="1"
+                                Classes="filter-popup-clear"
+                                Command="{Binding ResetCommand}"
+                                IsVisible="{Binding HasActiveSelection}">
+                            <TextBlock Text="Clear"/>
+                        </Button>
+                    </Grid>
+
+                    <!-- Separator -->
+                    <Border Height="1"
+                            Background="{StaticResource BrushBorder}"
+                            Opacity="0.6"
+                            Margin="0,0,0,4"/>
+
+                    <!-- Option rows -->
+                    <ItemsControl ItemsSource="{Binding Options}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="local:FilterOption">
+                                <Button Classes="filter-option-row"
+                                        Classes.selected="{Binding IsSelected}"
+                                        Command="{Binding ToggleCommand}">
+                                    <Grid ColumnDefinitions="14,*">
+
+                                        <!-- Selection dot -->
+                                        <Ellipse Grid.Column="0"
+                                                 Width="4" Height="4"
+                                                 VerticalAlignment="Center"
+                                                 Fill="{StaticResource BrushAccent}"
+                                                 IsVisible="{Binding IsSelected}"/>
+
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding Label}"
+                                                   VerticalAlignment="Center"/>
+                                    </Grid>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                </StackPanel>
+            </Border>
+        </Popup>
+
+    </Grid>
+</UserControl>

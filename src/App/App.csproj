@@ -117,6 +117,9 @@
       <Compile Update="Features\Utilities\Dev\DevToolsView.axaml.cs">
         <DependentUpon>DevToolsView.axaml</DependentUpon>
       </Compile>
+      <Compile Update="Common\Components\FilterDropdown\FilterDropdownView.axaml.cs">
+        <DependentUpon>FilterDropdownView.axaml</DependentUpon>
+      </Compile>
     </ItemGroup>
 
     <ItemGroup>

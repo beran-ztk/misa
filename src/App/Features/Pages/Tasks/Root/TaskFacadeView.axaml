@@ -7,6 +7,7 @@
              MinWidth="500"
              xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Tasks.Root"
              xmlns:converters="clr-namespace:Misa.Ui.Avalonia.Common.Converters"
+             xmlns:filters="clr-namespace:Misa.Ui.Avalonia.Common.Components.FilterDropdown"
              x:DataType="root:TaskFacadeViewModel">
 
     <UserControl.Resources>
@@ -142,71 +143,14 @@
                 <StackPanel Grid.Row="1" Grid.Column="0"
                             Classes="workspace-toolbar-center">
 
-                    <ToggleButton x:Name="PriorityFilterButton"
-                                  Classes="workspace-toolbar-filter-trigger">
-                        <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock Grid.Column="0" Text="Priority" />
-                            <TextBlock Grid.Column="1" Text="▾" />
-                        </Grid>
-                    </ToggleButton>
-                    <Popup PlacementTarget="{Binding ElementName=PriorityFilterButton}"
-                           IsOpen="{Binding IsChecked, ElementName=PriorityFilterButton}"
-                           Placement="Bottom">
-                        <Border Classes="filter-popup-frame">
-                            <ItemsControl ItemsSource="{Binding State.PriorityFilters}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <CheckBox Content="{Binding ActivityPriority}"
-                                                  IsChecked="{Binding IsSelected}" />
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </Border>
-                    </Popup>
+                    <filters:FilterDropdownView
+                        DataContext="{Binding State.PriorityFilter}"/>
 
-                    <ToggleButton x:Name="StateFilterButton"
-                                  Classes="workspace-toolbar-filter-trigger">
-                        <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock Grid.Column="0" Text="State" />
-                            <TextBlock Grid.Column="1" Text="▾" />
-                        </Grid>
-                    </ToggleButton>
-                    <Popup PlacementTarget="{Binding ElementName=StateFilterButton}"
-                           IsOpen="{Binding IsChecked, ElementName=StateFilterButton}"
-                           Placement="Bottom">
-                        <Border Classes="filter-popup-frame">
-                            <ItemsControl ItemsSource="{Binding State.StateFilters}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <CheckBox Content="{Binding ActivityState}"
-                                                  IsChecked="{Binding IsSelected}" />
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </Border>
-                    </Popup>
+                    <filters:FilterDropdownView
+                        DataContext="{Binding State.StateFilter}"/>
 
-                    <ToggleButton x:Name="CategoryFilterButton"
-                                  Classes="workspace-toolbar-filter-trigger">
-                        <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock Grid.Column="0" Text="Category" />
-                            <TextBlock Grid.Column="1" Text="▾" />
-                        </Grid>
-                    </ToggleButton>
-                    <Popup PlacementTarget="{Binding ElementName=CategoryFilterButton}"
-                           IsOpen="{Binding IsChecked, ElementName=CategoryFilterButton}"
-                           Placement="Bottom">
-                        <Border Classes="filter-popup-frame">
-                            <ItemsControl ItemsSource="{Binding State.CategoryFilters}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <CheckBox Content="{Binding TaskCategory}"
-                                                  IsChecked="{Binding IsSelected}" />
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </Border>
-                    </Popup>
+                    <filters:FilterDropdownView
+                        DataContext="{Binding State.CategoryFilter}"/>
 
                 </StackPanel>
 

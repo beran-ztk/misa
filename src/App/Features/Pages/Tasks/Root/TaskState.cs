@@ -7,7 +7,7 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Misa.Contract.Items.Components.Activity;
 using Misa.Contract.Items.Components.Tasks;
-using Misa.Ui.Avalonia.Common.Behaviors;
+using Misa.Ui.Avalonia.Common.Components.FilterDropdown;
 using Misa.Ui.Avalonia.Infrastructure.States;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Tasks.Root;
@@ -15,47 +15,16 @@ namespace Misa.Ui.Avalonia.Features.Pages.Tasks.Root;
 public sealed partial class TaskState : ObservableObject
 {
     public ISelectionContextState SelectionContextState { get; }
+
     private IReadOnlyCollection<TaskDto> Items { get; set; } = [];
     public ObservableCollection<TaskDto> FilteredItems { get; } = [];
 
-    public TaskState(ISelectionContextState selectionContextState)
-    {
-        SelectionContextState = selectionContextState;
-        
-        foreach (var p in Enum.GetValues<ActivityPriorityDto>())
-        {
-            var opt = new PriorityFilterOption(p, isSelected: true);
-            opt.PropertyChanged += (s, e) =>
-            {
-                if (e.PropertyName == nameof(PriorityFilterOption.IsSelected))
-                    _ = RefreshFilteredCollection();
-            };
-            PriorityFilters.Add(opt);
-        }
+    // ── Filter dropdowns ────────────────────────────────────────
+    public FilterDropdownViewModel PriorityFilter { get; }
+    public FilterDropdownViewModel StateFilter { get; }
+    public FilterDropdownViewModel CategoryFilter { get; }
 
-        foreach (var s in Enum.GetValues<ActivityStateDto>())
-        {
-            var opt = new StateFilterOption(s, isSelected: true);
-            opt.PropertyChanged += (s2, e) =>
-            {
-                if (e.PropertyName == nameof(StateFilterOption.IsSelected))
-                    _ = RefreshFilteredCollection();
-            };
-            StateFilters.Add(opt);
-        }
-
-        foreach (var c in Enum.GetValues<TaskCategoryDto>())
-        {
-            var opt = new CategoryFilterOption(c, isSelected: true);
-            opt.PropertyChanged += (s, e) =>
-            {
-                if (e.PropertyName == nameof(CategoryFilterOption.IsSelected))
-                    _ = RefreshFilteredCollection();
-            };
-            CategoryFilters.Add(opt);
-        }
-    }
-    
+    // ── View mode ───────────────────────────────────────────────
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsCardView))]
     [NotifyPropertyChangedFor(nameof(IsListView))]
@@ -64,65 +33,77 @@ public sealed partial class TaskState : ObservableObject
     public bool IsCardView => ViewMode == TaskViewMode.Card;
     public bool IsListView => ViewMode == TaskViewMode.List;
 
+    // ── Search ──────────────────────────────────────────────────
+    [ObservableProperty]
+    private string _searchText = string.Empty;
+    partial void OnSearchTextChanged(string value) => _ = RefreshFilteredCollection();
+
+    // ── Selection ───────────────────────────────────────────────
     [ObservableProperty]
     private TaskDto? _selectedItem;
     partial void OnSelectedItemChanged(TaskDto? value)
     {
         SelectionContextState.Set(value?.Item.Id);
     }
-    
-    /// <summary>
-    /// Filter
-    /// </summary>
-    [ObservableProperty] private string _searchText = string.Empty;
-    partial void OnSearchTextChanged(string value) => _ = RefreshFilteredCollection();
-    public ObservableCollection<PriorityFilterOption> PriorityFilters { get; } = [];
-    public ObservableCollection<StateFilterOption> StateFilters { get; } = [];
-    public ObservableCollection<CategoryFilterOption> CategoryFilters { get; } = [];
-    
-    private async System.Threading.Tasks.Task RefreshFilteredCollection()
+
+    public TaskState(ISelectionContextState selectionContextState)
     {
-        var activePriorities = PriorityFilters
-            .Where(f => f.IsSelected)
-            .Select(f => f.ActivityPriority)
-            .ToHashSet();
+        SelectionContextState = selectionContextState;
 
-        var activeStates = StateFilters
-            .Where(f => f.IsSelected)
-            .Select(f => f.ActivityState)
-            .ToHashSet();
+        PriorityFilter = new FilterDropdownViewModel(
+            "Priority",
+            Enum.GetValues<ActivityPriorityDto>().Select(p => p.ToString()));
 
-        var activeCategories = CategoryFilters
-            .Where(f => f.IsSelected)
-            .Select(f => f.TaskCategory)
-            .ToHashSet();
+        StateFilter = new FilterDropdownViewModel(
+            "State",
+            Enum.GetValues<ActivityStateDto>().Select(s => s.ToString()));
+
+        CategoryFilter = new FilterDropdownViewModel(
+            "Category",
+            Enum.GetValues<TaskCategoryDto>().Select(c => c.ToString()));
+
+        PriorityFilter.FilterChanged += (_, _) => _ = RefreshFilteredCollection();
+        StateFilter.FilterChanged += (_, _) => _ = RefreshFilteredCollection();
+        CategoryFilter.FilterChanged += (_, _) => _ = RefreshFilteredCollection();
+    }
+
+    private async Task RefreshFilteredCollection()
+    {
+        // No selection = inactive = pass all; selection = restrict to selected values.
+        var activePriorities = PriorityFilter.HasActiveSelection
+            ? PriorityFilter.SelectedLabels.Select(Enum.Parse<ActivityPriorityDto>).ToHashSet()
+            : null;
+
+        var activeStates = StateFilter.HasActiveSelection
+            ? StateFilter.SelectedLabels.Select(Enum.Parse<ActivityStateDto>).ToHashSet()
+            : null;
+
+        var activeCategories = CategoryFilter.HasActiveSelection
+            ? CategoryFilter.SelectedLabels.Select(Enum.Parse<TaskCategoryDto>).ToHashSet()
+            : null;
 
         FilteredItems.Clear();
 
         foreach (var item in Items)
         {
-            if (activePriorities.Contains(item.Activity.Priority)
-                && activeStates.Contains(item.Activity.State)
-                && activeCategories.Contains(item.Category)
-                && (string.IsNullOrEmpty(SearchText) || item.Item.Title.Contains(SearchText, StringComparison.OrdinalIgnoreCase)))
+            if ((activePriorities == null || activePriorities.Contains(item.Activity.Priority))
+                && (activeStates == null || activeStates.Contains(item.Activity.State))
+                && (activeCategories == null || activeCategories.Contains(item.Category))
+                && (string.IsNullOrEmpty(SearchText)
+                    || item.Item.Title.Contains(SearchText, StringComparison.OrdinalIgnoreCase)))
             {
-                await Dispatcher.UIThread.InvokeAsync(() =>
-                {
-                    FilteredItems.Add(item);
-                });
+                await Dispatcher.UIThread.InvokeAsync(() => FilteredItems.Add(item));
             }
         }
     }
-    
-    /// <summary>
-    /// Adders
-    /// </summary>
+
     public async Task SetMainCollection(IReadOnlyCollection<TaskDto> items)
     {
         Items = items;
         FilteredItems.Clear();
         await RefreshFilteredCollection();
     }
+
     public async Task AppendToMainCollection(TaskDto item)
     {
         var temp = Items.ToList();
