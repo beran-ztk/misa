@@ -92,6 +92,8 @@ public partial class InspectorEntryViewModel : ViewModelBase
         OnPropertyChanged(nameof(CanEndSession));
 
         OnPropertyChanged(nameof(ActiveSessionElapsedDisplay));
+        OnPropertyChanged(nameof(ActiveSessionPlannedSuffixDisplay));
+        OnPropertyChanged(nameof(IsOverPlannedDuration));
         OnPropertyChanged(nameof(ActiveSessionSegmentDisplay));
 
         RunElapsedLoop();
@@ -127,6 +129,7 @@ public partial class InspectorEntryViewModel : ViewModelBase
                 while (!token.IsCancellationRequested && HasActiveSession)
                 {
                     OnPropertyChanged(nameof(ActiveSessionElapsedDisplay));
+                    OnPropertyChanged(nameof(IsOverPlannedDuration));
                     await Task.Delay(1000, token);
                 }
             }
@@ -152,17 +155,14 @@ public partial class InspectorEntryViewModel : ViewModelBase
             return sum + (end - s.StartedAtUtc);
         });
     
-    public string ActiveSessionElapsedDisplay
-    {
-        get
-        {
-            var baseText = TimeSpanCalculator.FormatDuration(ElapsedTime());
+    public string ActiveSessionElapsedDisplay =>
+        TimeSpanCalculator.FormatDuration(ElapsedTime());
 
-            var plannedText = CurrentSession?.PlannedDuration is not null
-                ? $" / {TimeSpanCalculator.FormatDuration(CurrentSession.PlannedDuration)}"
-                : string.Empty;
+    public string ActiveSessionPlannedSuffixDisplay =>
+        CurrentSession?.PlannedDuration is not null
+            ? $" / {TimeSpanCalculator.FormatDuration(CurrentSession.PlannedDuration)}"
+            : string.Empty;
 
-            return baseText + plannedText;
-        }
-    }
+    public bool IsOverPlannedDuration =>
+        CurrentSession?.PlannedDuration is { } planned && ElapsedTime() > planned;
 }
