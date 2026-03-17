@@ -91,26 +91,32 @@
                                     </StackPanel>
 
                                     <!-- Center: clickable title + inline workflow -->
-                                    <StackPanel Grid.Column="1"
-                                                Orientation="Horizontal"
-                                                Spacing="4"
-                                                VerticalAlignment="Center">
+                                    <Grid Grid.Column="1"
+                                          ColumnDefinitions="*,Auto"
+                                          ColumnSpacing="4"
+                                          VerticalAlignment="Top">
 
-                                        <Button Classes="relation-nav-title"
+                                        <Button Grid.Column="0"
+                                                Classes="relation-nav-title"
+                                                HorizontalAlignment="Stretch"
+                                                HorizontalContentAlignment="Left"
                                                 Command="{Binding $parent[ItemsControl].((relations:InspectorRelationsViewModel)DataContext).NavigateToItemCommand}"
                                                 CommandParameter="{Binding OtherItemId}">
                                             <TextBlock Text="{Binding OtherTitle}"
                                                        FontSize="13"
                                                        FontWeight="Medium"
-                                                       TextTrimming="CharacterEllipsis"/>
+                                                       TextWrapping="Wrap"
+                                                       MaxLines="3"/>
                                         </Button>
 
-                                        <TextBlock Text="{Binding OtherWorkflow}"
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding OtherWorkflow}"
                                                    FontSize="10"
                                                    Opacity="0.35"
-                                                   VerticalAlignment="Center"/>
+                                                   VerticalAlignment="Top"
+                                                   Margin="0,2,0,0"/>
 
-                                    </StackPanel>
+                                    </Grid>
 
                                     <!-- Right: edit / delete -->
                                     <StackPanel Grid.Column="2"

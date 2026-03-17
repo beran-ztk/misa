@@ -5,6 +5,12 @@
              xmlns:sessions="clr-namespace:Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions"
              x:DataType="root:InspectorEntryViewModel">
 
+    <UserControl.Styles>
+        <Style Selector="TextBlock.session-elapsed-over">
+            <Setter Property="Foreground" Value="{StaticResource BrushError}"/>
+        </Style>
+    </UserControl.Styles>
+
     <Border Padding="4,16"
             BorderThickness="0,0,0,1"
             BorderBrush="{StaticResource BrushBorder}">
@@ -27,9 +33,17 @@
                            Text="{Binding ActiveSessionSegmentDisplay}"
                            IsVisible="{Binding HasActiveSession}" />
 
-                <TextBlock VerticalAlignment="Center"
-                           Text="{Binding ActiveSessionElapsedDisplay}"
-                           IsVisible="{Binding HasActiveSession}" />
+                <StackPanel Orientation="Horizontal"
+                            Spacing="0"
+                            VerticalAlignment="Center"
+                            IsVisible="{Binding HasActiveSession}">
+                    <TextBlock Text="{Binding ActiveSessionElapsedDisplay}"
+                               Classes.session-elapsed-over="{Binding IsOverPlannedDuration}"
+                               VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding ActiveSessionPlannedSuffixDisplay}"
+                               Foreground="{StaticResource BrushTextFaded}"
+                               VerticalAlignment="Center"/>
+                </StackPanel>
             </StackPanel>
 
             <StackPanel Grid.Column="1"
