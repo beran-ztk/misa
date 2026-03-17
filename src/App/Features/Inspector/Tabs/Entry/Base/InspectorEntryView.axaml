@@ -24,7 +24,9 @@
                                Foreground="{StaticResource BrushTextPrimary}"
                                VerticalAlignment="Center"
                                FontSize="16"
-                               FontWeight="SemiBold" />
+                               FontWeight="SemiBold"
+                               TextWrapping="Wrap"
+                               Opacity="0.8"/>
 
                     <StackPanel Grid.Column="1"
                                 Spacing="8"

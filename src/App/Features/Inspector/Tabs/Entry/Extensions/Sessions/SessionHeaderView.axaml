@@ -18,6 +18,8 @@
                         VerticalAlignment="Center">
                 
                 <TextBlock Text="Currently has no active Session."
+                           Foreground="{StaticResource BrushTextFaded}"
+                           Opacity="0.8"
                            VerticalAlignment="Center"
                            IsVisible="{Binding !HasActiveSession}" />
 
