@@ -58,6 +58,37 @@ public sealed partial class TaskState : ObservableObject
     public bool IsCardView => ViewMode == TaskViewMode.Card;
     public bool IsListView => ViewMode == TaskViewMode.List;
 
+    // ── Sort ────────────────────────────────────────────────────
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsSortByTitle))]
+    [NotifyPropertyChangedFor(nameof(IsSortByState))]
+    [NotifyPropertyChangedFor(nameof(IsSortByCreated))]
+    [NotifyPropertyChangedFor(nameof(SortFieldLabel))]
+    private TaskSortField _sortField = TaskSortField.CreatedAt;
+    partial void OnSortFieldChanged(TaskSortField value) => _ = RefreshFilteredCollection();
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsSortAscending))]
+    [NotifyPropertyChangedFor(nameof(SortDirectionGlyph))]
+    private TaskSortDirection _sortDirection = TaskSortDirection.Descending;
+    partial void OnSortDirectionChanged(TaskSortDirection value) => _ = RefreshFilteredCollection();
+
+    public bool IsSortByTitle   => SortField == TaskSortField.Title;
+    public bool IsSortByState   => SortField == TaskSortField.State;
+    public bool IsSortByCreated => SortField == TaskSortField.CreatedAt;
+    public bool IsSortAscending => SortDirection == TaskSortDirection.Ascending;
+
+    public string SortFieldLabel => SortField switch
+    {
+        TaskSortField.Title    => "Title",
+        TaskSortField.State    => "State",
+        TaskSortField.CreatedAt => "Created",
+        _                      => "?"
+    };
+
+    /// <summary>▲ for ascending, ▼ for descending — used as a compact direction glyph in the toolbar.</summary>
+    public string SortDirectionGlyph => SortDirection == TaskSortDirection.Ascending ? "▲" : "▼";
+
     // ── Search ──────────────────────────────────────────────────
     [ObservableProperty]
     private string _searchText = string.Empty;
@@ -107,19 +138,36 @@ public sealed partial class TaskState : ObservableObject
             ? CategoryFilter.SelectedLabels.Select(Enum.Parse<TaskCategoryDto>).ToHashSet()
             : null;
 
-        FilteredItems.Clear();
+        // 1. Filter
+        var filtered = Items.Where(item =>
+            (activePriorities == null || activePriorities.Contains(item.Activity.Priority))
+            && (activeStates == null || activeStates.Contains(item.Activity.State))
+            && (activeCategories == null || activeCategories.Contains(item.Category))
+            && (string.IsNullOrEmpty(SearchText)
+                || item.Item.Title.Contains(SearchText, StringComparison.OrdinalIgnoreCase)));
 
-        foreach (var item in Items)
+        // 2. Sort
+        IEnumerable<TaskDto> sorted = SortField switch
         {
-            if ((activePriorities == null || activePriorities.Contains(item.Activity.Priority))
-                && (activeStates == null || activeStates.Contains(item.Activity.State))
-                && (activeCategories == null || activeCategories.Contains(item.Category))
-                && (string.IsNullOrEmpty(SearchText)
-                    || item.Item.Title.Contains(SearchText, StringComparison.OrdinalIgnoreCase)))
-            {
-                await Dispatcher.UIThread.InvokeAsync(() => FilteredItems.Add(item));
-            }
-        }
+            TaskSortField.Title => SortDirection == TaskSortDirection.Ascending
+                ? filtered.OrderBy(t => t.Item.Title, StringComparer.OrdinalIgnoreCase)
+                : filtered.OrderByDescending(t => t.Item.Title, StringComparer.OrdinalIgnoreCase),
+
+            TaskSortField.State => SortDirection == TaskSortDirection.Ascending
+                ? filtered.OrderBy(t => t.Activity.State)
+                : filtered.OrderByDescending(t => t.Activity.State),
+
+            TaskSortField.CreatedAt => SortDirection == TaskSortDirection.Ascending
+                ? filtered.OrderBy(t => t.Item.CreatedAt)
+                : filtered.OrderByDescending(t => t.Item.CreatedAt),
+
+            _ => filtered
+        };
+
+        // 3. Populate
+        FilteredItems.Clear();
+        foreach (var item in sorted)
+            await Dispatcher.UIThread.InvokeAsync(() => FilteredItems.Add(item));
 
         RefreshMeta();
     }

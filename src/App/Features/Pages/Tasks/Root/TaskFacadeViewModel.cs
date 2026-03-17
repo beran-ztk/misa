@@ -121,6 +121,23 @@ public sealed partial class TaskFacadeViewModel : ViewModelBase
     [RelayCommand]
     private void SetListView() => State.ViewMode = TaskViewMode.List;
 
+    // ── Sort ─────────────────────────────────────────────────────
+
+    [RelayCommand]
+    private void SetSortTitle() => State.SortField = TaskSortField.Title;
+
+    [RelayCommand]
+    private void SetSortState() => State.SortField = TaskSortField.State;
+
+    [RelayCommand]
+    private void SetSortCreated() => State.SortField = TaskSortField.CreatedAt;
+
+    [RelayCommand]
+    private void ToggleSortDirection() =>
+        State.SortDirection = State.SortDirection == TaskSortDirection.Ascending
+            ? TaskSortDirection.Descending
+            : TaskSortDirection.Ascending;
+
     // ── Add ─────────────────────────────────────────────────────
 
     [RelayCommand]
