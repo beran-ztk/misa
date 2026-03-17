@@ -3,6 +3,9 @@ using Misa.Application.Abstractions.Ids;
 using Misa.Application.Abstractions.Notifications;
 using Misa.Application.Abstractions.Persistence;
 using Misa.Application.Abstractions.Time;
+using Misa.Application.Mappings;
+using Misa.Contract.Items.Components.Schedules;
+using Misa.Domain.Items;
 using Misa.Domain.Items.Components.Schedules;
 using Misa.Domain.Notifications;
 
@@ -12,11 +15,14 @@ public sealed record ScheduleExecutingCommand;
 
 public class ScheduleExecutingHandler(
     ISchedulerExecutingRepository repository,
-    INotificationRepository        notificationRepository,
-    ITimeProvider                  timeProvider,
-    IIdGenerator                   idGenerator,
-    INotificationPushService       pushService)
+    IItemRepository               itemRepository,
+    INotificationRepository       notificationRepository,
+    ITimeProvider                 timeProvider,
+    IIdGenerator                  idGenerator,
+    INotificationPushService      pushService)
 {
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+
     public async Task HandleAsync(
         ScheduleExecutingCommand command,
         CancellationToken        stoppingToken)
@@ -25,32 +31,54 @@ public class ScheduleExecutingHandler(
 
         foreach (var (log, item) in pending)
         {
-
             log.Claim(timeProvider.UtcNow);
             await repository.SaveChangesAsync(stoppingToken);
 
             log.Start(timeProvider.UtcNow);
             await repository.SaveChangesAsync(stoppingToken);
-            
-            
+
             if (item.ScheduleExtension == null)
             {
                 log.Fail(timeProvider.UtcNow, "Has no Schedule extension");
                 await repository.SaveChangesAsync(stoppingToken);
                 continue;
             }
-            
-            if (item.ScheduleExtension.ActionType != ScheduleActionType.None)
+
+            string notificationTitle;
+            string notificationMessage;
+
+            switch (item.ScheduleExtension.ActionType)
             {
-                log.Fail(timeProvider.UtcNow, "This Action is not implemented yet");
-                await repository.SaveChangesAsync(stoppingToken);
-                continue;
+                case ScheduleActionType.None:
+                    notificationTitle   = item.Title;
+                    notificationMessage = "Schedule has been executed";
+                    break;
+
+                case ScheduleActionType.CreateTask:
+                    var taskResult = await ExecuteCreateTaskAsync(
+                        item.ScheduleExtension, item.OwnerId, stoppingToken);
+
+                    if (taskResult is null)
+                    {
+                        log.Fail(timeProvider.UtcNow, "CreateTask payload is missing or invalid");
+                        await repository.SaveChangesAsync(stoppingToken);
+                        continue;
+                    }
+
+                    notificationTitle   = item.Title;
+                    notificationMessage = $"Task \"{taskResult}\" was created";
+                    break;
+
+                default:
+                    log.Fail(timeProvider.UtcNow, $"Action type '{item.ScheduleExtension.ActionType}' is not implemented");
+                    await repository.SaveChangesAsync(stoppingToken);
+                    continue;
             }
 
             var notification = new Notification(
                 idGenerator.New(),
-                item.Title,
-                "Schedule has been executed",
+                notificationTitle,
+                notificationMessage,
                 NotificationSourceKind.SchedulerExecution,
                 log.Id,
                 timeProvider.UtcNow,
@@ -63,5 +91,46 @@ public class ScheduleExecutingHandler(
             await notificationRepository.SaveChangesAsync(stoppingToken);
             await pushService.NotifyUserChangedAsync(item.OwnerId);
         }
+    }
+
+    /// <summary>
+    /// Deserializes the CreateTask payload and creates the task.
+    /// Returns the created task's title, or null if the payload is invalid.
+    /// </summary>
+    private async Task<string?> ExecuteCreateTaskAsync(
+        ScheduleExtension schedule,
+        string            ownerId,
+        CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(schedule.Payload))
+            return null;
+
+        CreateTaskSchedulePayload? payload;
+        try
+        {
+            payload = JsonSerializer.Deserialize<CreateTaskSchedulePayload>(schedule.Payload, JsonOptions);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+
+        if (payload is null || string.IsNullOrWhiteSpace(payload.Title))
+            return null;
+
+        var task = Item.CreateTask(
+            id:            new ItemId(idGenerator.New()),
+            ownerId:       ownerId,
+            title:         payload.Title,
+            description:   payload.Description,
+            category:      payload.Category.ToDomain(),
+            createdAtUtc:  timeProvider.UtcNow,
+            priority:      payload.Priority.ToDomain(),
+            dueAt:         null);
+
+        await itemRepository.AddAsync(task, ct);
+        await itemRepository.SaveChangesAsync(ct);
+
+        return payload.Title;
     }
 }

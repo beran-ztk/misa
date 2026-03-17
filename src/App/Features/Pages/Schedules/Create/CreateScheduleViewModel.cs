@@ -1,10 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Misa.Contract.Common.Results;
+using Misa.Contract.Items.Components.Activity;
 using Misa.Contract.Items.Components.Schedules;
+using Misa.Contract.Items.Components.Tasks;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Pages.Schedules.Root;
 using Misa.Ui.Avalonia.Infrastructure.UI;
@@ -28,7 +31,6 @@ public sealed partial class CreateScheduleViewModel(ScheduleGateway gateway)
     
     [ObservableProperty] private string _title = string.Empty;
     [ObservableProperty] private string? _description;
-    [ObservableProperty] private string? _payload;
     [ObservableProperty] private int _frequencyInterval = 1;
     [ObservableProperty] private int _lookaheadLimit = 1;
 
@@ -36,8 +38,21 @@ public sealed partial class CreateScheduleViewModel(ScheduleGateway gateway)
     [ObservableProperty] private string _errorMessage = string.Empty;
     [ObservableProperty] private int? _occurrenceCountLimit;
 
-    [ObservableProperty] private ScheduleActionTypeDto _selectedActionType = ScheduleActionTypeDto.None;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsCreateTaskAction))]
+    private ScheduleActionTypeDto _selectedActionType = ScheduleActionTypeDto.None;
     public IReadOnlyList<ScheduleActionTypeDto> ActionTypes { get; } = Enum.GetValues<ScheduleActionTypeDto>();
+
+    public bool IsCreateTaskAction => SelectedActionType == ScheduleActionTypeDto.CreateTask;
+
+    // ── CreateTask payload ───────────────────────────────────────────
+    [ObservableProperty] private string _taskTitle       = string.Empty;
+    [ObservableProperty] private string? _taskDescription;
+    [ObservableProperty] private TaskCategoryDto     _taskCategory = TaskCategoryDto.Personal;
+    [ObservableProperty] private ActivityPriorityDto _taskPriority = ActivityPriorityDto.None;
+
+    public IReadOnlyList<TaskCategoryDto>     TaskCategories { get; } = Enum.GetValues<TaskCategoryDto>();
+    public IReadOnlyList<ActivityPriorityDto> TaskPriorities { get; } = Enum.GetValues<ActivityPriorityDto>();
 
     [ObservableProperty] private ScheduleMisfirePolicyDto _selectedMisfirePolicy = ScheduleMisfirePolicyDto.Catchup;
     public IReadOnlyList<ScheduleMisfirePolicyDto> MisfirePolicies { get; } = Enum.GetValues<ScheduleMisfirePolicyDto>();
@@ -89,14 +104,6 @@ public sealed partial class CreateScheduleViewModel(ScheduleGateway gateway)
             ActiveUntilTime = TimeSpan.Zero;
     }
 
-    partial void OnSelectedActionTypeChanged(ScheduleActionTypeDto value)
-    {
-        if (value == ScheduleActionTypeDto.CreateTask)
-        {
-            // Open Dialog
-        }
-    }
-
     private TimeSpan? OccurrenceTtl =>
         OccurrenceTtlDays == 0 &&
         OccurrenceTtlHours == 0 &&
@@ -119,7 +126,6 @@ public sealed partial class CreateScheduleViewModel(ScheduleGateway gateway)
     public void Reset()
     {
         Title = string.Empty;
-        Payload = null;
 
         SelectedFrequencyType = ScheduleFrequencyTypeDto.Minutes;
         FrequencyInterval = 1;
@@ -148,6 +154,11 @@ public sealed partial class CreateScheduleViewModel(ScheduleGateway gateway)
         ByMonthDayCsv = string.Empty;
 
         SelectedActionType = ScheduleActionTypeDto.None;
+
+        TaskTitle       = string.Empty;
+        TaskDescription = null;
+        TaskCategory    = TaskCategoryDto.Personal;
+        TaskPriority    = ActivityPriorityDto.None;
 
         ClearValidationError();
     }
@@ -215,35 +226,55 @@ public sealed partial class CreateScheduleViewModel(ScheduleGateway gateway)
             ShowValidationError("Please specify a title.");
             return null;
         }
+
         var byMonthDay = ParseByMonthDay();
         if (HasValidationError) return null;
 
+        string? serializedPayload = null;
+        if (SelectedActionType == ScheduleActionTypeDto.CreateTask)
+        {
+            var taskTitle = TaskTitle.Trim();
+            if (string.IsNullOrWhiteSpace(taskTitle))
+            {
+                ShowValidationError("Task title is required for the Create Task action.");
+                return null;
+            }
+
+            var payload = new CreateTaskSchedulePayload(
+                Title:       taskTitle,
+                Description: string.IsNullOrWhiteSpace(TaskDescription) ? null : TaskDescription.Trim(),
+                Category:    TaskCategory,
+                Priority:    TaskPriority);
+
+            serializedPayload = JsonSerializer.Serialize(payload);
+        }
+
         return new CreateScheduleRequest
         {
-            Title = trimmedTitle,
-            Description = Description,
+            Title        = trimmedTitle,
+            Description  = Description,
             TargetItemId = null,
 
             ScheduleFrequencyType = SelectedFrequencyType,
-            FrequencyInterval = FrequencyInterval,
+            FrequencyInterval     = FrequencyInterval,
 
-            LookaheadLimit = LookaheadLimit,
+            LookaheadLimit       = LookaheadLimit,
             OccurrenceCountLimit = OccurrenceCountLimit,
 
             ActionType = SelectedActionType,
-            Payload = Payload,
+            Payload    = serializedPayload,
 
             MisfirePolicy = SelectedMisfirePolicy,
             OccurrenceTtl = OccurrenceTtl,
 
             StartTime = StartTime is null ? null : TimeOnly.FromTimeSpan(StartTime.Value),
-            EndTime = EndTime is null ? null : TimeOnly.FromTimeSpan(EndTime.Value),
+            EndTime   = EndTime   is null ? null : TimeOnly.FromTimeSpan(EndTime.Value),
 
-            ActiveFromLocal = ActiveFromDate.Add(ActiveFromTime),
+            ActiveFromLocal  = ActiveFromDate.Add(ActiveFromTime),
             ActiveUntilLocal = ActiveUntilDate?.Add(ActiveUntilTime ?? TimeSpan.Zero),
 
-            ByDay = BuildByDay(),
-            ByMonth = BuildByMonth(),
+            ByDay      = BuildByDay(),
+            ByMonth    = BuildByMonth(),
             ByMonthDay = byMonthDay
         };
     }
