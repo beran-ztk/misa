@@ -51,13 +51,15 @@ public sealed partial class NotificationItem : ObservableObject
     public NotificationLinkTarget?  LinkTarget         { get; }
     public bool                     HasLinkTarget      => LinkTarget is not null;
 
-    [ObservableProperty] private bool _isRead;
-    [ObservableProperty] private bool _isPendingDismiss;
+    [ObservableProperty] private bool   _isRead;
+    [ObservableProperty] private bool   _isPendingDismiss;
+    [ObservableProperty] private double _dismissProgress = 1.0;
 }
 
 public sealed partial class NotificationViewModel : ViewModelBase
 {
-    private const int PageSize = 25;
+    private const int PageSize        = 25;
+    private const int DismissWindowMs = 4000;
 
     private readonly NotificationGateway               _gateway;
     private readonly SignalRNotificationClient         _signalR;
@@ -222,13 +224,31 @@ public sealed partial class NotificationViewModel : ViewModelBase
         if (item is null || item.IsPendingDismiss) return;
 
         item.IsPendingDismiss = true;
+        item.DismissProgress  = 1.0;
 
         var cts = new CancellationTokenSource();
         _pendingDismiss[id] = cts;
 
+        // Drive the countdown progress bar — updates every 50 ms, cancelled if undo is pressed.
+        var startedAt = DateTimeOffset.UtcNow;
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                while (!cts.Token.IsCancellationRequested)
+                {
+                    await Task.Delay(50, cts.Token);
+                    var elapsed  = (DateTimeOffset.UtcNow - startedAt).TotalMilliseconds;
+                    var progress = Math.Max(0.0, 1.0 - elapsed / DismissWindowMs);
+                    await Dispatcher.UIThread.InvokeAsync(() => item.DismissProgress = progress);
+                }
+            }
+            catch (OperationCanceledException) { }
+        });
+
         try
         {
-            await Task.Delay(4000, cts.Token);
+            await Task.Delay(DismissWindowMs, cts.Token);
         }
         catch (OperationCanceledException)
         {

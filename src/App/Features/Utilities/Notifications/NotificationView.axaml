@@ -149,17 +149,32 @@
                                             <!-- Undo banner (shown while dismiss is pending) -->
                                             <Border Classes="notif-undo-bar"
                                                     IsVisible="{Binding IsPendingDismiss}">
-                                                <Grid ColumnDefinitions="*,Auto">
-                                                    <TextBlock Grid.Column="0"
-                                                               Classes="notif-undo-text"
-                                                               Text="Dismissed"
-                                                               VerticalAlignment="Center" />
-                                                    <Button Grid.Column="1"
-                                                            Classes="notif-undo-btn"
-                                                            Command="{Binding $parent[ItemsControl].((local:NotificationViewModel)DataContext).UndoDismissCommand}"
-                                                            CommandParameter="{Binding Id}"
-                                                            Content="Undo" />
-                                                </Grid>
+                                                <StackPanel Spacing="0">
+
+                                                    <Grid ColumnDefinitions="*,Auto"
+                                                          Margin="12,10">
+                                                        <TextBlock Grid.Column="0"
+                                                                   Classes="notif-undo-text"
+                                                                   Text="Dismissed"
+                                                                   VerticalAlignment="Center" />
+                                                        <Button Grid.Column="1"
+                                                                Classes="notif-undo-btn"
+                                                                Command="{Binding $parent[ItemsControl].((local:NotificationViewModel)DataContext).UndoDismissCommand}"
+                                                                CommandParameter="{Binding Id}"
+                                                                Content="Undo" />
+                                                    </Grid>
+
+                                                    <!-- Countdown progress bar -->
+                                                    <Border Classes="notif-undo-track">
+                                                        <Border Classes="notif-undo-fill"
+                                                                RenderTransformOrigin="0,0.5">
+                                                            <Border.RenderTransform>
+                                                                <ScaleTransform ScaleX="{Binding DismissProgress}"/>
+                                                            </Border.RenderTransform>
+                                                        </Border>
+                                                    </Border>
+
+                                                </StackPanel>
                                             </Border>
 
                                         </Panel>

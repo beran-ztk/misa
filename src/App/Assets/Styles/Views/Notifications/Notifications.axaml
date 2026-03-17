@@ -213,8 +213,21 @@
 
     <!-- ── Undo banner ──────────────────────────────────────────────────── -->
     <Style Selector="Border.notif-undo-bar">
-        <Setter Property="Padding"  Value="12,10" />
-        <Setter Property="Opacity"  Value="0.65" />
+        <Setter Property="Opacity" Value="0.65" />
+    </Style>
+
+    <!-- Countdown track (full-width background strip) -->
+    <Style Selector="Border.notif-undo-track">
+        <Setter Property="Height"     Value="2" />
+        <Setter Property="Background" Value="#18FFFFFF" />
+    </Style>
+
+    <!-- Countdown fill (shrinks right-to-left via ScaleX binding) -->
+    <Style Selector="Border.notif-undo-fill">
+        <Setter Property="Height"               Value="2" />
+        <Setter Property="Background"           Value="{StaticResource BrushAccent}" />
+        <Setter Property="Opacity"              Value="0.55" />
+        <Setter Property="HorizontalAlignment"  Value="Stretch" />
     </Style>
 
     <Style Selector="TextBlock.notif-undo-text">
