@@ -2,20 +2,267 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="600"
              x:Class="Misa.Ui.Avalonia.Features.Pages.Journal.JournalView"
              xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Journal"
+             xmlns:converters="clr-namespace:Misa.Ui.Avalonia.Common.Converters"
              x:DataType="root:JournalViewModel">
-    
-    <StackPanel Classes="workspace-toolbar-left">
-        <Button Classes="workspace-toolbar-icon"
-                Command="{Binding ShowAddPanelCommand}">
-            <Image Source="{SvgImage /Assets/Icons/Common/plus.svg}" />
-        </Button>
-        <Button Classes="workspace-toolbar-icon"
-                Command="{Binding RefreshWorkspaceCommand}">
-            <Image Source="{SvgImage /Assets/Icons/Common/refresh.svg}" />
-        </Button>
-    </StackPanel>
-    
+
+    <UserControl.Resources>
+        <converters:UtcToLocalConverter x:Key="UtcToLocalConverter"/>
+        <converters:NullToBoolConverter x:Key="NullToBoolConverter"/>
+    </UserControl.Resources>
+
+    <UserControl.Styles>
+
+        <!-- ── Month navigation arrow buttons ─────────────────────────── -->
+        <Style Selector="Button.journal-nav-btn">
+            <Setter Property="Width"            Value="26"/>
+            <Setter Property="Height"           Value="26"/>
+            <Setter Property="Padding"          Value="0"/>
+            <Setter Property="Background"       Value="Transparent"/>
+            <Setter Property="Foreground"       Value="{StaticResource BrushTextSecondary}"/>
+            <Setter Property="FontSize"         Value="14"/>
+            <Setter Property="Cursor"           Value="Hand"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment"   Value="Center"/>
+            <Style Selector="^ /template/ ContentPresenter">
+                <Setter Property="CornerRadius"    Value="4"/>
+                <Setter Property="BorderThickness" Value="0"/>
+            </Style>
+            <Style Selector="^:pointerover /template/ ContentPresenter">
+                <Setter Property="Background" Value="#0EFFFFFF"/>
+            </Style>
+            <Style Selector="^:pressed /template/ ContentPresenter">
+                <Setter Property="Background" Value="#18FFFFFF"/>
+            </Style>
+        </Style>
+
+        <!-- ── Day list item selected state ──────────────────────────── -->
+        <Style Selector="ListBoxItem:selected Border.day-item-accent">
+            <Setter Property="Background" Value="{StaticResource BrushAccent}"/>
+        </Style>
+        <Style Selector="ListBoxItem:selected TextBlock.day-number">
+            <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+        </Style>
+
+        <!-- Today marker: accent-colored day number even when not selected -->
+        <Style Selector="TextBlock.day-number.day-today">
+            <Setter Property="Foreground" Value="{StaticResource BrushAccent}"/>
+        </Style>
+        <Style Selector="ListBoxItem:selected TextBlock.day-number.day-today">
+            <Setter Property="Foreground" Value="{StaticResource BrushAccent}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+
+        <!-- ── Entry card ─────────────────────────────────────────────── -->
+        <Style Selector="Border.journal-entry-card">
+            <Setter Property="Background"      Value="{StaticResource BrushPrimaryBackground}"/>
+            <Setter Property="BorderBrush"     Value="{StaticResource BrushBorder}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius"    Value="5"/>
+            <Setter Property="Padding"         Value="12,10"/>
+            <Setter Property="Margin"          Value="0,0,0,6"/>
+        </Style>
+
+    </UserControl.Styles>
+
+    <Grid RowDefinitions="Auto,*">
+
+        <!-- ══════════════════════════════════════════════════════════════
+             TOOLBAR — refresh  ·  month navigation  ·  add entry
+        ═══════════════════════════════════════════════════════════════ -->
+        <Border Grid.Row="0" Classes="workspace-toolbar-frame">
+            <Grid Classes="workspace-toolbar"
+                  ColumnDefinitions="Auto,*,Auto">
+
+                <!-- Left: refresh -->
+                <StackPanel Grid.Column="0"
+                            Classes="workspace-toolbar-left">
+                    <Button Classes="workspace-toolbar-icon"
+                            ToolTip.Tip="Refresh"
+                            Command="{Binding RefreshWorkspaceCommand}">
+                        <Image Width="14" Height="14"
+                               Source="{SvgImage /Assets/Icons/Common/refresh.svg}"/>
+                    </Button>
+                </StackPanel>
+
+                <!-- Center: month navigation -->
+                <StackPanel Grid.Column="1"
+                            Orientation="Horizontal"
+                            Spacing="10"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center">
+                    <Button Classes="journal-nav-btn"
+                            Command="{Binding PreviousMonthCommand}"
+                            Content="←"/>
+                    <TextBlock Text="{Binding MonthLabel}"
+                               FontSize="13"
+                               FontWeight="Medium"
+                               Foreground="{StaticResource BrushTextPrimary}"
+                               VerticalAlignment="Center"
+                               MinWidth="120"
+                               TextAlignment="Center"/>
+                    <Button Classes="journal-nav-btn"
+                            Command="{Binding NextMonthCommand}"
+                            Content="→"/>
+                </StackPanel>
+
+                <!-- Right: add entry -->
+                <StackPanel Grid.Column="2"
+                            Classes="workspace-toolbar-right">
+                    <Button Classes="workspace-toolbar-icon"
+                            ToolTip.Tip="New journal entry"
+                            Command="{Binding ShowAddPanelCommand}">
+                        <Image Width="14" Height="14"
+                               Source="{SvgImage /Assets/Icons/Common/plus.svg}"/>
+                    </Button>
+                </StackPanel>
+
+            </Grid>
+        </Border>
+
+        <!-- ══════════════════════════════════════════════════════════════
+             CONTENT — day list (left)  |  entry view (right)
+        ═══════════════════════════════════════════════════════════════ -->
+        <Grid Grid.Row="1" ColumnDefinitions="148,*">
+
+            <!-- ── Left panel: day list ─────────────────────────────── -->
+            <Border Grid.Column="0"
+                    BorderBrush="{StaticResource BrushBorder}"
+                    BorderThickness="0,0,1,0">
+                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <ListBox ItemsSource="{Binding DayItems}"
+                             SelectedItem="{Binding SelectedDay, Mode=TwoWay}"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             Padding="0,4">
+                        <ListBox.ItemContainerTheme>
+                            <ControlTheme TargetType="ListBoxItem"
+                                          BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                                <Setter Property="Padding"    Value="0"/>
+                                <Setter Property="Margin"     Value="0"/>
+                                <Setter Property="Cursor"     Value="Hand"/>
+                                <Setter Property="Background" Value="Transparent"/>
+                            </ControlTheme>
+                        </ListBox.ItemContainerTheme>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="root:JournalDayItem">
+                                <Grid ColumnDefinitions="3,*,Auto"
+                                      Height="30">
+
+                                    <!-- Accent left-edge bar — coloured when the item is selected -->
+                                    <Border Grid.Column="0"
+                                            Classes="day-item-accent"
+                                            Background="Transparent"
+                                            CornerRadius="0,2,2,0"/>
+
+                                    <!-- Day number -->
+                                    <TextBlock Grid.Column="1"
+                                               Classes="day-number"
+                                               Classes.day-today="{Binding IsToday}"
+                                               Text="{Binding Day}"
+                                               FontSize="12"
+                                               Foreground="{StaticResource BrushTextSecondary}"
+                                               Margin="10,0,4,0"
+                                               VerticalAlignment="Center"/>
+
+                                    <!-- Entry count badge (hidden when zero) -->
+                                    <Border Grid.Column="2"
+                                            IsVisible="{Binding HasEntries}"
+                                            Background="{StaticResource BrushPrimaryBackgroundLighter}"
+                                            CornerRadius="3"
+                                            Padding="4,1"
+                                            Margin="0,0,8,0"
+                                            VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding EntryCount}"
+                                                   FontSize="10"
+                                                   Foreground="{StaticResource BrushTextFaded}"/>
+                                    </Border>
+
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </ScrollViewer>
+            </Border>
+
+            <!-- ── Right panel: selected day entries ───────────────── -->
+            <DockPanel Grid.Column="1">
+
+                <!-- Selected day header -->
+                <Border DockPanel.Dock="Top"
+                        Padding="16,10"
+                        BorderBrush="{StaticResource BrushBorder}"
+                        BorderThickness="0,0,0,1">
+                    <TextBlock Text="{Binding SelectedDayLabel}"
+                               FontSize="13"
+                               FontWeight="Medium"
+                               Foreground="{StaticResource BrushTextPrimary}"/>
+                </Border>
+
+                <!-- Entries scroll area -->
+                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Margin="16,12,16,16">
+
+                        <!-- Empty state -->
+                        <TextBlock Text="No entries for this day."
+                                   IsVisible="{Binding !HasEntries}"
+                                   FontSize="12"
+                                   Foreground="{StaticResource BrushTextFaded}"
+                                   Margin="0,4,0,0"/>
+
+                        <!-- Entry cards -->
+                        <ItemsControl ItemsSource="{Binding SelectedDayEntries}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Classes="journal-entry-card">
+                                        <StackPanel Spacing="5">
+
+                                            <!-- Time + Title -->
+                                            <Grid ColumnDefinitions="Auto,*"
+                                                  ColumnSpacing="10">
+                                                <TextBlock Grid.Column="0"
+                                                           Text="{Binding At,
+                                                               Converter={StaticResource UtcToLocalConverter},
+                                                               StringFormat='HH:mm'}"
+                                                           FontSize="{StaticResource FontSizeSmall}"
+                                                           Foreground="{StaticResource BrushTextFaded}"
+                                                           VerticalAlignment="Top"
+                                                           Margin="0,1,0,0"/>
+                                                <TextBlock Grid.Column="1"
+                                                           Text="{Binding Title}"
+                                                           FontSize="{StaticResource FontSizeMedium}"
+                                                           FontWeight="Medium"
+                                                           Foreground="{StaticResource BrushTextPrimary}"
+                                                           TextWrapping="Wrap"/>
+                                            </Grid>
+
+                                            <!-- Description -->
+                                            <TextBlock Text="{Binding Description}"
+                                                       IsVisible="{Binding Description,
+                                                           Converter={StaticResource NullToBoolConverter}}"
+                                                       FontSize="{StaticResource FontSizeSmall}"
+                                                       Foreground="{StaticResource BrushTextSecondary}"
+                                                       TextWrapping="Wrap"
+                                                       Margin="0,2,0,0"/>
+
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                    </StackPanel>
+                </ScrollViewer>
+
+            </DockPanel>
+
+        </Grid>
+
+    </Grid>
+
 </UserControl>
