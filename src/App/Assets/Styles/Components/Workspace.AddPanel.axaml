@@ -3,10 +3,9 @@
         
         <!-- Layout -->
         <Style Selector="Border.addpanel-main-border">
-                <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLight}"/>
-                <Setter Property="CornerRadius" Value="4"/>
+                <Setter Property="Background" Value="{StaticResource BrushPrimaryBackground}"/>
                 <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}"/>
-                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="BorderThickness" Value="2"/>
                 <Setter Property="Padding" Value="16"/>
                 <Setter Property="BoxShadow" Value="0 8 32 0 #55000000"/>
         </Style>
