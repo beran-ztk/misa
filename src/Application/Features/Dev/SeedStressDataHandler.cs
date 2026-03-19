@@ -98,7 +98,7 @@ public sealed class SeedStressDataHandler(
                     _concentrations[i % _concentrations.Length],
                     $"Wrapped up task {i:D3}.");
 
-            item.Activity.ChangeState(ActivityState.Done);
+            item.Activity.ChangeState(ActivityState.Done, now);
             await repository.AddAsync(item, ct);
         }
 
@@ -117,7 +117,7 @@ public sealed class SeedStressDataHandler(
                 priority,
                 dueAt: null);
 
-            item.Activity.ChangeState(ActivityState.Canceled, $"Stress seed: cancellation reason {i}.");
+            item.Activity.ChangeState(ActivityState.Canceled, now, $"Stress seed: cancellation reason {i}.");
             await repository.AddAsync(item, ct);
         }
 
@@ -136,7 +136,7 @@ public sealed class SeedStressDataHandler(
                 priority,
                 dueAt: now.AddDays(-(i % 14 + 1)));
 
-            item.Activity.ChangeState(ActivityState.Failed, $"Stress seed: missed deadline on task {i}.");
+            item.Activity.ChangeState(ActivityState.Failed, now, $"Stress seed: missed deadline on task {i}.");
             await repository.AddAsync(item, ct);
         }
 

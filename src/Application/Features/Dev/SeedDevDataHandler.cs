@@ -103,7 +103,7 @@ public sealed class SeedDevDataHandler(
             "Environment setup run",
             SessionEfficiencyType.HighOutput, SessionConcentrationType.Focused,
             "Got everything running. IDE, SDK, Postgres and Avalonia previewer all working.");
-        t7.Activity.ChangeState(ActivityState.Done);
+        t7.Activity.ChangeState(ActivityState.Done, now);
         await repository.AddAsync(t7, ct);
 
         // 8. Done — quick item
@@ -113,7 +113,7 @@ public sealed class SeedDevDataHandler(
             null,
             TaskCategory.Work, now.AddDays(-6), ActivityPriority.Medium,
             dueAt: null);
-        t8.Activity.ChangeState(ActivityState.Done);
+        t8.Activity.ChangeState(ActivityState.Done, now);
         await repository.AddAsync(t8, ct);
 
         // 9. Cancelled
@@ -123,7 +123,7 @@ public sealed class SeedDevDataHandler(
             "Research venues, poll team availability.",
             TaskCategory.Work, now.AddDays(-15), ActivityPriority.Low,
             dueAt: null);
-        t9.Activity.ChangeState(ActivityState.Canceled, "Postponed to next quarter — budget freeze.");
+        t9.Activity.ChangeState(ActivityState.Canceled, now, "Postponed to next quarter — budget freeze.");
         await repository.AddAsync(t9, ct);
 
         // 10. Failed — overdue deadline
@@ -133,7 +133,7 @@ public sealed class SeedDevDataHandler(
             "Monthly expenses must be submitted before the 15th.",
             TaskCategory.Work, now.AddDays(-14), ActivityPriority.Urgent,
             dueAt: now.AddDays(-3));
-        t10.Activity.ChangeState(ActivityState.Failed, "Missed the finance submission window.");
+        t10.Activity.ChangeState(ActivityState.Failed, now, "Missed the finance submission window.");
         await repository.AddAsync(t10, ct);
 
         await repository.SaveChangesAsync(ct);
