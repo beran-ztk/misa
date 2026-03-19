@@ -37,6 +37,11 @@ public sealed partial class InspectorState : ObservableObject
     [NotifyPropertyChangedFor(nameof(CanEdit))]
     [NotifyPropertyChangedFor(nameof(CanManageSessions))]
     [NotifyPropertyChangedFor(nameof(LifecycleStatusMessage))]
+    [NotifyPropertyChangedFor(nameof(IsDoneState))]
+    [NotifyPropertyChangedFor(nameof(IsFailedOrCanceledState))]
+    [NotifyPropertyChangedFor(nameof(IsExpiredState))]
+    [NotifyPropertyChangedFor(nameof(IsTerminalState))]
+    [NotifyPropertyChangedFor(nameof(ErrorStateBadgeLabel))]
     private ItemDto _item = new();
 
     public bool HasItem => Item.Id != Guid.Empty;
@@ -76,6 +81,13 @@ public sealed partial class InspectorState : ObservableObject
         Item.IsArchived ? $"{ItemTypeName} is archived. Some actions are disabled until it is restored." :
         null;
     
+    // ── Terminal task state detection ─────────────────────────────────────
+    public bool IsDoneState             => IsTask && Item.Activity?.State == ActivityStateDto.Done;
+    public bool IsFailedOrCanceledState => IsTask && Item.Activity?.State is ActivityStateDto.Failed or ActivityStateDto.Canceled;
+    public bool IsExpiredState          => IsTask && Item.Activity?.State == ActivityStateDto.Expired;
+    public bool IsTerminalState         => IsDoneState || IsFailedOrCanceledState || IsExpiredState;
+    public string ErrorStateBadgeLabel  => Item.Activity?.State == ActivityStateDto.Failed ? "FAILED" : "CANCELED";
+
     [ObservableProperty] private CurrentSessionOverviewDto? _currentSessionOverview;
     
     [ObservableProperty] private bool _isEditItemFormOpen;
