@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="Misa.Ui.Avalonia.Features.Inspector.Root.InspectorFacadeView"
              xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Inspector.Root"
+             xmlns:components="clr-namespace:Misa.Ui.Avalonia.Shell.Components"
              x:DataType="root:InspectorFacadeViewModel">
 
     <UserControl.Styles>
@@ -70,14 +71,16 @@
             </Border>
 
             <!-- Content area -->
-            <ScrollViewer Grid.Row="1">
-                <Panel>
-                    <ContentControl Content="{Binding Entry}"
-                                    IsVisible="{Binding State.IsEntryTab}"/>
-                    <ContentControl Content="{Binding Activity}"
-                                    IsVisible="{Binding State.IsActivityTab}"/>
-                </Panel>
-            </ScrollViewer>
+            <components:ScrollRevealHost Grid.Row="1">
+                <components:ScrollRevealHost.RevealContent>
+                    <Panel>
+                        <ContentControl Content="{Binding Entry}"
+                                        IsVisible="{Binding State.IsEntryTab}"/>
+                        <ContentControl Content="{Binding Activity}"
+                                        IsVisible="{Binding State.IsActivityTab}"/>
+                    </Panel>
+                </components:ScrollRevealHost.RevealContent>
+            </components:ScrollRevealHost>
 
         </Grid>
 

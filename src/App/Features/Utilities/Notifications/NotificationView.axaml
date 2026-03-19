@@ -5,6 +5,7 @@
              mc:Ignorable="d"
              x:Class="Misa.Ui.Avalonia.Features.Utilities.Notifications.NotificationView"
              xmlns:local="clr-namespace:Misa.Ui.Avalonia.Features.Utilities.Notifications"
+             xmlns:components="clr-namespace:Misa.Ui.Avalonia.Shell.Components"
              x:DataType="local:NotificationViewModel">
 
     <Border Classes="notif-panel"
@@ -67,128 +68,129 @@
 
             <!-- ── List ────────────────────────────────────────────────── -->
             <Border Grid.Row="2" Classes="notif-list-area">
-                <ScrollViewer VerticalScrollBarVisibility="Auto"
-                              HorizontalScrollBarVisibility="Disabled">
-                    <StackPanel Spacing="0">
-                        <!-- Empty state -->
-                        <TextBlock Classes="notif-empty-text"
-                                   Text="No notifications"
-                                   IsVisible="{Binding IsEmpty}" />
+                <components:ScrollRevealHost>
+                    <components:ScrollRevealHost.RevealContent>
+                        <StackPanel Spacing="0">
+                            <!-- Empty state -->
+                            <TextBlock Classes="notif-empty-text"
+                                       Text="No notifications"
+                                       IsVisible="{Binding IsEmpty}" />
 
-                        <!-- Notification cards -->
-                        <ItemsControl ItemsSource="{Binding Notifications}"
-                                      IsVisible="{Binding !IsEmpty}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate x:DataType="local:NotificationItem">
-                                    <Button Classes="notif-card"
-                                            Command="{Binding $parent[ItemsControl].((local:NotificationViewModel)DataContext).MarkAsReadCommand}"
-                                            CommandParameter="{Binding Id}">
-                                        <Panel>
+                            <!-- Notification cards -->
+                            <ItemsControl ItemsSource="{Binding Notifications}"
+                                          IsVisible="{Binding !IsEmpty}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="local:NotificationItem">
+                                        <Button Classes="notif-card"
+                                                Command="{Binding $parent[ItemsControl].((local:NotificationViewModel)DataContext).MarkAsReadCommand}"
+                                                CommandParameter="{Binding Id}">
+                                            <Panel>
 
-                                            <!-- Normal card content -->
-                                            <Grid ColumnDefinitions="Auto,*"
-                                                  IsVisible="{Binding !IsPendingDismiss}">
+                                                <!-- Normal card content -->
+                                                <Grid ColumnDefinitions="Auto,*"
+                                                      IsVisible="{Binding !IsPendingDismiss}">
 
-                                                <!-- Left accent strip (visible only when unread) -->
-                                                <Border Grid.Column="0"
-                                                        Classes="notif-card-accent"
-                                                        IsVisible="{Binding !IsRead}" />
+                                                    <!-- Left accent strip (visible only when unread) -->
+                                                    <Border Grid.Column="0"
+                                                            Classes="notif-card-accent"
+                                                            IsVisible="{Binding !IsRead}" />
 
-                                                <!-- Content -->
-                                                <Border Grid.Column="1"
-                                                        Classes="notif-card-body">
-                                                    <Grid RowDefinitions="Auto,Auto,Auto"
-                                                          ColumnDefinitions="*,Auto">
+                                                    <!-- Content -->
+                                                    <Border Grid.Column="1"
+                                                            Classes="notif-card-body">
+                                                        <Grid RowDefinitions="Auto,Auto,Auto"
+                                                              ColumnDefinitions="*,Auto">
 
-                                                        <!-- Title (bold when unread) -->
-                                                        <TextBlock Grid.Row="0" Grid.Column="0"
-                                                                   Classes="notif-card-title"
-                                                                   Classes.notif-card-title-unread="{Binding !IsRead}"
-                                                                   Text="{Binding Title}" />
+                                                            <!-- Title (bold when unread) -->
+                                                            <TextBlock Grid.Row="0" Grid.Column="0"
+                                                                       Classes="notif-card-title"
+                                                                       Classes.notif-card-title-unread="{Binding !IsRead}"
+                                                                       Text="{Binding Title}" />
 
-                                                        <!-- Dismiss -->
-                                                        <Button Grid.Row="0" Grid.Column="1"
-                                                                Grid.RowSpan="3"
-                                                                Classes="notif-dismiss"
-                                                                ToolTip.Tip="Dismiss"
-                                                                VerticalAlignment="Top"
-                                                                Margin="8,0,0,0"
-                                                                Command="{Binding $parent[ItemsControl].((local:NotificationViewModel)DataContext).DismissCommand}"
-                                                                CommandParameter="{Binding Id}">
-                                                            <TextBlock Text="×" FontSize="13" />
-                                                        </Button>
+                                                            <!-- Dismiss -->
+                                                            <Button Grid.Row="0" Grid.Column="1"
+                                                                    Grid.RowSpan="3"
+                                                                    Classes="notif-dismiss"
+                                                                    ToolTip.Tip="Dismiss"
+                                                                    VerticalAlignment="Top"
+                                                                    Margin="8,0,0,0"
+                                                                    Command="{Binding $parent[ItemsControl].((local:NotificationViewModel)DataContext).DismissCommand}"
+                                                                    CommandParameter="{Binding Id}">
+                                                                <TextBlock Text="×" FontSize="13" />
+                                                            </Button>
 
-                                                        <!-- Message + timestamp -->
-                                                        <Grid Grid.Row="1" Grid.Column="0"
-                                                              RowDefinitions="Auto,Auto"
-                                                              Margin="0,2,0,0">
+                                                            <!-- Message + timestamp -->
+                                                            <Grid Grid.Row="1" Grid.Column="0"
+                                                                  RowDefinitions="Auto,Auto"
+                                                                  Margin="0,2,0,0">
 
-                                                            <TextBlock Grid.Row="0"
-                                                                       Classes="notif-card-message"
-                                                                       Text="{Binding Message}"
-                                                                       IsVisible="{Binding HasMessage}" />
+                                                                <TextBlock Grid.Row="0"
+                                                                           Classes="notif-card-message"
+                                                                           Text="{Binding Message}"
+                                                                           IsVisible="{Binding HasMessage}" />
 
-                                                            <TextBlock Grid.Row="1"
-                                                                       Classes="notif-card-time"
-                                                                       Text="{Binding TimestampFormatted}"
-                                                                       Margin="0,4,0,0" />
+                                                                <TextBlock Grid.Row="1"
+                                                                           Classes="notif-card-time"
+                                                                           Text="{Binding TimestampFormatted}"
+                                                                           Margin="0,4,0,0" />
+                                                            </Grid>
+
+                                                            <!-- Open link (linked notifications only) -->
+                                                            <Button Grid.Row="2" Grid.Column="0"
+                                                                    Classes="notif-open-btn"
+                                                                    IsVisible="{Binding HasLinkTarget}"
+                                                                    Command="{Binding $parent[ItemsControl].((local:NotificationViewModel)DataContext).OpenLinkedItemCommand}"
+                                                                    CommandParameter="{Binding Id}"
+                                                                    Content="Open →" />
+
+                                                        </Grid>
+                                                    </Border>
+                                                </Grid>
+
+                                                <!-- Undo banner (shown while dismiss is pending) -->
+                                                <Border Classes="notif-undo-bar"
+                                                        IsVisible="{Binding IsPendingDismiss}">
+                                                    <StackPanel Spacing="0">
+
+                                                        <Grid ColumnDefinitions="*,Auto"
+                                                              Margin="12,10">
+                                                            <TextBlock Grid.Column="0"
+                                                                       Classes="notif-undo-text"
+                                                                       Text="Dismissed"
+                                                                       VerticalAlignment="Center" />
+                                                            <Button Grid.Column="1"
+                                                                    Classes="notif-undo-btn"
+                                                                    Command="{Binding $parent[ItemsControl].((local:NotificationViewModel)DataContext).UndoDismissCommand}"
+                                                                    CommandParameter="{Binding Id}"
+                                                                    Content="Undo" />
                                                         </Grid>
 
-                                                        <!-- Open link (linked notifications only) -->
-                                                        <Button Grid.Row="2" Grid.Column="0"
-                                                                Classes="notif-open-btn"
-                                                                IsVisible="{Binding HasLinkTarget}"
-                                                                Command="{Binding $parent[ItemsControl].((local:NotificationViewModel)DataContext).OpenLinkedItemCommand}"
-                                                                CommandParameter="{Binding Id}"
-                                                                Content="Open →" />
-
-                                                    </Grid>
-                                                </Border>
-                                            </Grid>
-
-                                            <!-- Undo banner (shown while dismiss is pending) -->
-                                            <Border Classes="notif-undo-bar"
-                                                    IsVisible="{Binding IsPendingDismiss}">
-                                                <StackPanel Spacing="0">
-
-                                                    <Grid ColumnDefinitions="*,Auto"
-                                                          Margin="12,10">
-                                                        <TextBlock Grid.Column="0"
-                                                                   Classes="notif-undo-text"
-                                                                   Text="Dismissed"
-                                                                   VerticalAlignment="Center" />
-                                                        <Button Grid.Column="1"
-                                                                Classes="notif-undo-btn"
-                                                                Command="{Binding $parent[ItemsControl].((local:NotificationViewModel)DataContext).UndoDismissCommand}"
-                                                                CommandParameter="{Binding Id}"
-                                                                Content="Undo" />
-                                                    </Grid>
-
-                                                    <!-- Countdown progress bar -->
-                                                    <Border Classes="notif-undo-track">
-                                                        <Border Classes="notif-undo-fill"
-                                                                RenderTransformOrigin="0,0.5">
-                                                            <Border.RenderTransform>
-                                                                <ScaleTransform ScaleX="{Binding DismissProgress}"/>
-                                                            </Border.RenderTransform>
+                                                        <!-- Countdown progress bar -->
+                                                        <Border Classes="notif-undo-track">
+                                                            <Border Classes="notif-undo-fill"
+                                                                    RenderTransformOrigin="0,0.5">
+                                                                <Border.RenderTransform>
+                                                                    <ScaleTransform ScaleX="{Binding DismissProgress}"/>
+                                                                </Border.RenderTransform>
+                                                            </Border>
                                                         </Border>
-                                                    </Border>
 
-                                                </StackPanel>
-                                            </Border>
+                                                    </StackPanel>
+                                                </Border>
 
-                                        </Panel>
-                                    </Button>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+                                            </Panel>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
 
-                        <Button Classes="notif-load-more"
-                                Command="{Binding LoadMoreCommand}"
-                                IsVisible="{Binding HasMore}"
-                                Content="Load more" />
-                    </StackPanel>
-                </ScrollViewer>
+                            <Button Classes="notif-load-more"
+                                    Command="{Binding LoadMoreCommand}"
+                                    IsVisible="{Binding HasMore}"
+                                    Content="Load more" />
+                        </StackPanel>
+                    </components:ScrollRevealHost.RevealContent>
+                </components:ScrollRevealHost>
             </Border>
 
         </Grid>

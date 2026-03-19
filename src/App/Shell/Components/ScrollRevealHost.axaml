@@ -1,0 +1,69 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Misa.Ui.Avalonia.Shell.Components.ScrollRevealHost">
+
+    <UserControl.Styles>
+
+        <!-- Pill button that sits in the fade zone and scrolls to the bottom -->
+        <Style Selector="Button.scroll-reveal-btn">
+            <Setter Property="Background"       Value="#18FFFFFF"/>
+            <Setter Property="BorderBrush"      Value="#2AFFFFFF"/>
+            <Setter Property="BorderThickness"  Value="1"/>
+            <Setter Property="CornerRadius"     Value="999"/>
+            <Setter Property="Padding"          Value="10,4"/>
+            <Setter Property="FontSize"         Value="11"/>
+            <Setter Property="Foreground"       Value="#99E6EDF3"/>
+            <Setter Property="Cursor"           Value="Hand"/>
+            <Setter Property="IsHitTestVisible" Value="True"/>
+
+            <Style Selector="^ /template/ ContentPresenter">
+                <Setter Property="CornerRadius" Value="999"/>
+            </Style>
+            <Style Selector="^:pointerover /template/ ContentPresenter">
+                <Setter Property="Background" Value="#28FFFFFF"/>
+            </Style>
+            <Style Selector="^:pressed /template/ ContentPresenter">
+                <Setter Property="Background" Value="#38FFFFFF"/>
+            </Style>
+        </Style>
+
+    </UserControl.Styles>
+
+    <Grid>
+
+        <!-- The scrollable content area -->
+        <ScrollViewer x:Name="PART_Scroll"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+            <ContentPresenter x:Name="PART_ContentPresenter"/>
+        </ScrollViewer>
+
+        <Grid x:Name="PART_RevealLayer"
+              VerticalAlignment="Bottom"
+              IsVisible="False">
+
+            <Border IsHitTestVisible="False" Height="60">
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                        <GradientStop Offset="0"   Color="#00000000"/>
+                        <GradientStop Offset="1"   Color="#CC000000"/>
+                    </LinearGradientBrush>
+                </Border.Background>
+            </Border>
+
+            <Button x:Name="PART_ScrollBtn"
+                    Classes="scroll-reveal-btn"
+                    VerticalAlignment="Bottom"
+                    HorizontalAlignment="Center"
+                    Margin="0,0,0,10">
+                <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                    <TextBlock Text="↓" FontSize="11" VerticalAlignment="Center"/>
+                    <TextBlock Text="more" FontSize="10" Opacity="0.65" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Button>
+
+        </Grid>
+
+    </Grid>
+
+</UserControl>

@@ -120,6 +120,9 @@
       <Compile Update="Common\Components\FilterDropdown\FilterDropdownView.axaml.cs">
         <DependentUpon>FilterDropdownView.axaml</DependentUpon>
       </Compile>
+      <Compile Update="Shell\Components\ScrollRevealHost.axaml.cs">
+        <DependentUpon>ScrollRevealHost.axaml</DependentUpon>
+      </Compile>
     </ItemGroup>
 
     <ItemGroup>
