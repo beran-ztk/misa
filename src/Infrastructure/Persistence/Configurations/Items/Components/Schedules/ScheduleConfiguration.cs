@@ -75,12 +75,6 @@ public sealed class ScheduleConfiguration : IEntityTypeConfiguration<ScheduleExt
         );
 
         builder.HasCheckConstraint(
-            "ck_scheduler_active_time",
-            "(\"StartTime\" IS NULL AND \"EndTime\" IS NULL) " +
-            "OR (\"StartTime\" IS NOT NULL AND \"EndTime\" IS NOT NULL AND \"StartTime\" < \"EndTime\")"
-        );
-
-        builder.HasCheckConstraint(
             "ck_scheduler_active_date",
             "\"ActiveUntilUtc\" IS NULL OR \"ActiveUntilUtc\" > \"ActiveFromUtc\""
         );

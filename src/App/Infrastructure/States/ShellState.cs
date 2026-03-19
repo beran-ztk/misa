@@ -50,7 +50,11 @@ public partial class ShellState : ObservableObject, ILayerHost, IToastHost, IWor
     public bool IsModalOpen => Modal is not null;
 
     
+    // Side toasts — system / SignalR notifications (bottom-right)
     public ObservableCollection<ToastViewModel> Toasts { get; } = [];
+
+    // Action toasts — transient user feedback (top-center, max 1)
+    public ObservableCollection<ToastViewModel> ActionToasts { get; } = [];
 
     [ObservableProperty] private ViewModelBase? _busy;
 }

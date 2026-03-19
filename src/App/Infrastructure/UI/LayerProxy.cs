@@ -1,5 +1,6 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Avalonia.Controls;
@@ -25,7 +26,8 @@ public interface ILayerHost
 
 public interface IToastHost
 {
-    ObservableCollection<ToastViewModel> Toasts { get; }
+    ObservableCollection<ToastViewModel> Toasts       { get; }
+    ObservableCollection<ToastViewModel> ActionToasts { get; }
 }
 
 public partial class LayerProxy(
@@ -88,14 +90,30 @@ public partial class LayerProxy(
             : (TResult)completed;
     }
 
-    // ── Toast ─────────────────────────────────────────────────────────────
+    // ── Toast (side — persistent system notifications) ────────────────────
 
-    public void ShowToast(string title, string? message = null, int durationMs = 4000)
+    public void ShowToast(string title, string? message = null, ToastType type = ToastType.Info, int durationMs = 4000)
     {
         var toasts = toastHost.Toasts;
 
         ToastViewModel? vm = null;
-        vm = new ToastViewModel(title, message, () => toasts.Remove(vm!), durationMs);
+        vm = new ToastViewModel(title, message, () => toasts.Remove(vm!), type, durationMs);
+        toasts.Add(vm);
+    }
+
+    // ── Action toast (top-center — transient user feedback) ───────────────
+    // At most one item is shown at a time; a new call replaces the current one.
+
+    public void ShowActionToast(string title, ToastType type = ToastType.Info, int durationMs = 3000)
+    {
+        var toasts = toastHost.ActionToasts;
+
+        // Dismiss any currently visible toast immediately.
+        foreach (var existing in toasts.ToList())
+            existing.Dismiss();
+
+        ToastViewModel? vm = null;
+        vm = new ToastViewModel(title, null, () => toasts.Remove(vm!), type, durationMs);
         toasts.Add(vm);
     }
 

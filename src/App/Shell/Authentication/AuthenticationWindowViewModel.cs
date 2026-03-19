@@ -39,18 +39,24 @@ public partial class AuthenticationWindowViewModel : ViewModelBase
         UserState = userState;
         Services = services;
         RemoteProxy = remoteProxy;
-
-        TimeZoneIds = new ObservableCollection<string>(TimeZoneService.Ids);
         
-        var windowsZone = TimeZoneInfo.Local.Id;
-        var ianaZone = TZConvert.WindowsToIana(windowsZone);
+        TimeZoneIds = new ObservableCollection<string>(TimeZoneService.Ids);
 
-        SelectedTimeZoneId =
-            TimeZoneIds.Contains(ianaZone)
-                ? ianaZone
-                : TimeZoneIds.Contains("Europe/Berlin")
-                    ? "Europe/Berlin"
-                    : TimeZoneIds.FirstOrDefault();
+        var localId = TimeZoneInfo.Local.Id;
+
+        string timeZoneId;
+
+        try
+        {
+            timeZoneId = TZConvert.WindowsToIana(localId);
+        }
+        catch
+        {
+            timeZoneId = localId;
+        }
+
+        if (TimeZoneIds.Contains(timeZoneId))
+            SelectedTimeZoneId = timeZoneId;
 
         IsRegisterMode = false;
     }

@@ -1,4 +1,4 @@
-﻿<UserControl xmlns="https://github.com/avaloniaui"
+<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -7,97 +7,149 @@
              xmlns:components="clr-namespace:Misa.Ui.Avalonia.Shell.Components"
              x:DataType="components:WorkspaceNavigationViewModel">
 
+    <!--
+        Width is driven by NavWidth (150 expanded / 48 collapsed).
+        The DoubleTransition gives a smooth slide rather than an instant snap.
+        Column 0 in ShellWindow is Width="Auto" so it auto-fits to this border.
+    -->
     <Border Background="{StaticResource BrushPrimaryBackground}"
-            BorderBrush="{StaticResource BrushSecondaryBackground}"
-            BorderThickness="0,0,1,0">
+            BorderBrush="{StaticResource BrushBorder}"
+            BorderThickness="0,0,1,0"
+            Width="{Binding NavWidth}">
 
-        <Grid RowDefinitions="*,Auto" Margin="8,20,8,8">
+        <Border.Transitions>
+            <Transitions>
+                <DoubleTransition Property="Width" Duration="0:0:0.15" Easing="CubicEaseOut"/>
+            </Transitions>
+        </Border.Transitions>
 
+        <Grid RowDefinitions="*,Auto" Margin="8,6,8,8">
+
+            <!-- ── Primary navigation items ─────────────────────────── -->
             <StackPanel Grid.Row="0"
                         Spacing="{StaticResource SpacingSmall}">
 
                 <Button Classes="workspace-nav"
+                        HorizontalContentAlignment="Right"
+                        ToolTip.Tip="{Binding CollapseToggleTooltip}"
+                        Command="{Binding ToggleCollapsedCommand}">
+                    <TextBlock Text="{Binding CollapseToggleGlyph}"
+                               FontSize="13"
+                               VerticalAlignment="Center"/>
+                </Button>
+                
+                <Button Classes="workspace-nav"
+                        Classes.nav-collapsed="{Binding IsCollapsed}"
+                        Classes.nav-active="{Binding IsTasksActive}"
                         ToolTip.Tip="Tasks"
                         Command="{Binding ShowTasksCommand}">
-                    <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
-                        <Image Grid.Column="0" Width="16" Height="16"
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Image Width="16" Height="16" VerticalAlignment="Center"
                                Source="{SvgImage /Assets/Icons/Shell/Navigation/list-dashes.svg}"/>
-                        <TextBlock Grid.Column="1" Classes="workspace-nav" Text="Tasks"/>
-                    </Grid>
+                        <TextBlock Classes="workspace-nav" Text="Tasks"
+                                   IsVisible="{Binding !IsCollapsed}"/>
+                    </StackPanel>
                 </Button>
 
                 <Button Classes="workspace-nav"
+                        Classes.nav-collapsed="{Binding IsCollapsed}"
+                        Classes.nav-active="{Binding IsSchedulerActive}"
                         ToolTip.Tip="Scheduler"
                         Command="{Binding ShowSchedulerCommand}">
-                    <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
-                        <Image Grid.Column="0" Width="16" Height="16"
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Image Width="16" Height="16" VerticalAlignment="Center"
                                Source="{SvgImage /Assets/Icons/Shell/Navigation/calendar-dots.svg}"/>
-                        <TextBlock Grid.Column="1" Classes="workspace-nav" Text="Scheduler"/>
-                    </Grid>
+                        <TextBlock Classes="workspace-nav" Text="Scheduler"
+                                   IsVisible="{Binding !IsCollapsed}"/>
+                    </StackPanel>
                 </Button>
 
-                <Button Classes="workspace-nav" ToolTip.Tip="Contacts">
-                    <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
-                        <Image Grid.Column="0" Width="16" Height="16"
+                <Button Classes="workspace-nav"
+                        Classes.nav-collapsed="{Binding IsCollapsed}"
+                        ToolTip.Tip="Contacts">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Image Width="16" Height="16" VerticalAlignment="Center"
                                Source="{SvgImage /Assets/Icons/Shell/Navigation/users-three.svg}"/>
-                        <TextBlock Grid.Column="1" Classes="workspace-nav" Text="Contacts"/>
-                    </Grid>
+                        <TextBlock Classes="workspace-nav" Text="Contacts"
+                                   IsVisible="{Binding !IsCollapsed}"/>
+                    </StackPanel>
                 </Button>
 
-                <Button Classes="workspace-nav" ToolTip.Tip="Chronicle"
+                <Button Classes="workspace-nav"
+                        Classes.nav-collapsed="{Binding IsCollapsed}"
+                        Classes.nav-active="{Binding IsChronicleActive}"
+                        ToolTip.Tip="Chronicle"
                         Command="{Binding ShowChronicleCommand}">
-                    <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
-                        <Image Grid.Column="0" Width="16" Height="16"
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Image Width="16" Height="16" VerticalAlignment="Center"
                                Source="{SvgImage /Assets/Icons/Shell/Navigation/hourglass.svg}"/>
-                        <TextBlock Grid.Column="1" Classes="workspace-nav" Text="Chronicle"/>
-                    </Grid>
+                        <TextBlock Classes="workspace-nav" Text="Chronicle"
+                                   IsVisible="{Binding !IsCollapsed}"/>
+                    </StackPanel>
                 </Button>
 
-                <Button Classes="workspace-nav" ToolTip.Tip="Zettelkasten"
+                <Button Classes="workspace-nav"
+                        Classes.nav-collapsed="{Binding IsCollapsed}"
+                        Classes.nav-active="{Binding IsZettelActive}"
+                        ToolTip.Tip="Zettelkasten"
                         Command="{Binding ShowZettelkastenCommand}">
-                    <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
-                        <Image Grid.Column="0" Width="16" Height="16"
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Image Width="16" Height="16" VerticalAlignment="Center"
                                Source="{SvgImage /Assets/Icons/Shell/Navigation/scroll.svg}"/>
-                        <TextBlock Grid.Column="1" Classes="workspace-nav" Text="Zettelkasten"/>
-                    </Grid>
+                        <TextBlock Classes="workspace-nav" Text="Zettelkasten"
+                                   IsVisible="{Binding !IsCollapsed}"/>
+                    </StackPanel>
                 </Button>
 
-                <Button Classes="workspace-nav" ToolTip.Tip="Evidences">
-                    <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
-                        <Image Grid.Column="0" Width="16" Height="16"
+                <Button Classes="workspace-nav"
+                        Classes.nav-collapsed="{Binding IsCollapsed}"
+                        ToolTip.Tip="Evidences">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Image Width="16" Height="16" VerticalAlignment="Center"
                                Source="{SvgImage /Assets/Icons/Shell/Navigation/bookmarks.svg}"/>
-                        <TextBlock Grid.Column="1" Classes="workspace-nav" Text="Evidences"/>
-                    </Grid>
+                        <TextBlock Classes="workspace-nav" Text="Evidences"
+                                   IsVisible="{Binding !IsCollapsed}"/>
+                    </StackPanel>
                 </Button>
 
-                <Button Classes="workspace-nav" ToolTip.Tip="RSS Feed">
-                    <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
-                        <Image Grid.Column="0" Width="16" Height="16"
+                <Button Classes="workspace-nav"
+                        Classes.nav-collapsed="{Binding IsCollapsed}"
+                        ToolTip.Tip="RSS Feed">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Image Width="16" Height="16" VerticalAlignment="Center"
                                Source="{SvgImage /Assets/Icons/Shell/Navigation/rss.svg}"/>
-                        <TextBlock Grid.Column="1" Classes="workspace-nav" Text="RSS Feed"/>
-                    </Grid>
+                        <TextBlock Classes="workspace-nav" Text="RSS Feed"
+                                   IsVisible="{Binding !IsCollapsed}"/>
+                    </StackPanel>
                 </Button>
 
-                <Button Classes="workspace-nav" ToolTip.Tip="URLs">
-                    <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
-                        <Image Grid.Column="0" Width="16" Height="16"
+                <Button Classes="workspace-nav"
+                        Classes.nav-collapsed="{Binding IsCollapsed}"
+                        ToolTip.Tip="URLs">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Image Width="16" Height="16" VerticalAlignment="Center"
                                Source="{SvgImage /Assets/Icons/Shell/Navigation/paperclip.svg}"/>
-                        <TextBlock Grid.Column="1" Classes="workspace-nav" Text="URLs"/>
-                    </Grid>
+                        <TextBlock Classes="workspace-nav" Text="URLs"
+                                   IsVisible="{Binding !IsCollapsed}"/>
+                    </StackPanel>
                 </Button>
 
             </StackPanel>
 
+            <!-- ── Footer: utility + collapse toggle ────────────────── -->
             <StackPanel Grid.Row="1"
                         Spacing="{StaticResource SpacingSmall}"
                         VerticalAlignment="Bottom">
 
-                <Button Classes="workspace-nav" ToolTip.Tip="Ledger">
-                    <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
-                        <Image Grid.Column="0" Width="16" Height="16"
+                <Button Classes="workspace-nav"
+                        Classes.nav-collapsed="{Binding IsCollapsed}"
+                        ToolTip.Tip="Ledger">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Image Width="16" Height="16" VerticalAlignment="Center"
                                Source="{SvgImage /Assets/Icons/Shell/Navigation/notebook.svg}"/>
-                        <TextBlock Grid.Column="1" Classes="workspace-nav" Text="Ledger"/>
-                    </Grid>
+                        <TextBlock Classes="workspace-nav" Text="Ledger"
+                                   IsVisible="{Binding !IsCollapsed}"/>
+                    </StackPanel>
                 </Button>
 
                 <Border Height="1"
@@ -105,12 +157,15 @@
                         Background="{StaticResource BrushSecondaryBackground}"
                         Opacity="0.6"/>
 
-                <Button Classes="workspace-nav" ToolTip.Tip="Settings">
-                    <Grid ColumnDefinitions="20,*" ColumnSpacing="10">
-                        <Image Width="16" Height="16"
+                <Button Classes="workspace-nav"
+                        Classes.nav-collapsed="{Binding IsCollapsed}"
+                        ToolTip.Tip="Settings">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Image Width="16" Height="16" VerticalAlignment="Center"
                                Source="{SvgImage /Assets/Icons/Shell/Navigation/nut.svg}"/>
-                        <TextBlock Grid.Column="1" Classes="workspace-nav" Text="Settings"/>
-                    </Grid>
+                        <TextBlock Classes="workspace-nav" Text="Settings"
+                                   IsVisible="{Binding !IsCollapsed}"/>
+                    </StackPanel>
                 </Button>
 
             </StackPanel>

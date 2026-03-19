@@ -4,7 +4,9 @@
              xmlns:vm="clr-namespace:Misa.Ui.Avalonia.Features.Utilities.Toast"
              x:DataType="vm:ToastViewModel">
 
-    <Border Classes="toast-container">
+    <Border Classes="toast-container"
+            Classes.toast-success="{Binding IsSuccess}"
+            Classes.toast-warning="{Binding IsWarning}">
 
         <Grid RowDefinitions="Auto,Auto"
               ColumnDefinitions="*,Auto">

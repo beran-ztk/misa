@@ -1,4 +1,5 @@
 using Misa.Application.Abstractions.Persistence;
+using Misa.Application.Abstractions.Time;
 using Misa.Contract.Items.Components.Activity;
 using Misa.Contract.Items.Components.Tasks;
 using Misa.Domain.Exceptions;
@@ -8,30 +9,33 @@ namespace Misa.Application.Features.Items.Tasks;
 
 public record UpdateTaskCommand(
     Guid ItemId,
-    string? Title, 
-    string? Description, 
-    ActivityStateDto? ActivityState, 
+    string? Title,
+    string? Description,
+    ActivityStateDto? ActivityState,
     ActivityPriorityDto? ActivityPriority,
-    TaskCategoryDto? TaskCategory);
+    TaskCategoryDto? TaskCategory,
+    string? Reason = null);
 
-public sealed class UpdateTaskHandler(IItemRepository repository)
+public sealed class UpdateTaskHandler(IItemRepository repository, ITimeProvider timeProvider)
 {
     public async Task HandleAsync(UpdateTaskCommand command)
     {
         var item = await repository.TryGetTaskAsync(command.ItemId, CancellationToken.None);
         if (item?.Activity is null || item.TaskExtension is null)
             throw new DomainNotFoundException("task.not.found", command.ItemId.ToString());
-        
+
+        var nowUtc = timeProvider.UtcNow;
+
         if (!string.IsNullOrEmpty(command.Title))
-            item.ChangeTitle(command.Title);
+            item.ChangeTitle(command.Title, nowUtc);
         if (command.Description is not null)
-            item.ChangeDescription(command.Description);
+            item.ChangeDescription(command.Description, nowUtc);
         if (command.ActivityState is { } state)
-            item.Activity.ChangeState(state.ToDomain());
+            item.Activity.ChangeState(state.ToDomain(), nowUtc, command.Reason);
         if (command.ActivityPriority is { } priority)
-            item.Activity.ChangePriority(priority.ToDomain());
+            item.Activity.ChangePriority(priority.ToDomain(), nowUtc);
         if (command.TaskCategory is { } category)
-            item.TaskExtension.ChangeCategory(category.ToDomain());
+            item.ChangeTaskCategory(category.ToDomain(), nowUtc);
 
         await repository.SaveChangesAsync(CancellationToken.None);
     }

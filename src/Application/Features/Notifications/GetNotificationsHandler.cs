@@ -1,5 +1,6 @@
 using Misa.Application.Abstractions.Persistence;
 using Misa.Contract.Notifications;
+using Misa.Domain.Notifications;
 
 namespace Misa.Application.Features.Notifications;
 
@@ -20,7 +21,18 @@ public class GetNotificationsHandler(INotificationRepository repository)
                 n.Message,
                 n.SourceId,
                 n.CreatedAtUtc,
-                n.ReadAtUtc))
+                n.ReadAtUtc,
+                ResolveLinkTarget(n.SourceKind, n.SourceId)))
             .ToList();
     }
+
+    private static NotificationLinkTarget? ResolveLinkTarget(NotificationSourceKind kind, Guid sourceId) =>
+        kind switch
+        {
+            NotificationSourceKind.SessionPlannedDurationReached =>
+                new NotificationLinkTarget(NotificationWorkspaceTarget.Tasks, sourceId),
+            NotificationSourceKind.ScheduleCreatedTask =>
+                new NotificationLinkTarget(NotificationWorkspaceTarget.Tasks, sourceId),
+            _ => null
+        };
 }

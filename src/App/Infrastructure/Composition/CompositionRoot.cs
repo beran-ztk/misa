@@ -10,6 +10,7 @@ using Misa.Ui.Avalonia.Features.Pages.Schedules.Root;
 using Misa.Ui.Avalonia.Features.Pages.Tasks.Create;
 using Misa.Ui.Avalonia.Features.Pages.Tasks.Root;
 using Misa.Ui.Avalonia.Features.Pages.Zettelkasten;
+using Misa.Ui.Avalonia.Features.Utilities.Dev;
 using Misa.Ui.Avalonia.Features.Utilities.Notifications;
 using Misa.Ui.Avalonia.Infrastructure.Client.RemoteProxy;
 using Misa.Ui.Avalonia.Infrastructure.Messaging;
@@ -146,5 +147,8 @@ public static class CompositionRoot
     {
         sc.AddSingleton<NotificationGateway>();
         sc.AddSingleton<NotificationViewModel>();
+
+        sc.AddSingleton<DevGateway>();
+        sc.AddSingleton<DevToolsViewModel>();
     }
 }

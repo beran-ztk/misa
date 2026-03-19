@@ -10,7 +10,19 @@
         WindowStartupLocation="CenterScreen">
 
     <Window.KeyBindings>
-        <KeyBinding Gesture="Ctrl+N" Command="{Binding UtilityNavigation.ToggleNotificationsCommand}"/>
+        <!-- Utility -->
+        <KeyBinding Gesture="Ctrl+N"     Command="{Binding UtilityNavigation.ToggleNotificationsCommand}"/>
+        <KeyBinding Gesture="Escape"     Command="{Binding DismissCommand}"/>
+
+        <!-- Workspace navigation -->
+        <KeyBinding Gesture="Ctrl+D1"     Command="{Binding WorkspaceNavigation.ShowTasksCommand}"/>
+        <KeyBinding Gesture="Ctrl+D2"     Command="{Binding WorkspaceNavigation.ShowSchedulerCommand}"/>
+        <KeyBinding Gesture="Ctrl+D4"     Command="{Binding WorkspaceNavigation.ShowChronicleCommand}"/>
+        <KeyBinding Gesture="Ctrl+D5"     Command="{Binding WorkspaceNavigation.ShowZettelkastenCommand}"/>
+
+        <!-- Workspace actions -->
+        <KeyBinding Gesture="Ctrl+Space" Command="{Binding WorkspaceAddCommand}"/>
+        <KeyBinding Gesture="Ctrl+R"     Command="{Binding WorkspaceRefreshCommand}"/>
     </Window.KeyBindings>
 
     <Grid>
@@ -25,12 +37,12 @@
             <Grid Grid.Row="1"
                   RowDefinitions="*,25">
                 <Grid.ColumnDefinitions>
-                    <!-- Fixed: left navigation rail -->
-                    <ColumnDefinition Width="150"/>
+                    <!-- Auto: left navigation rail — width driven by WorkspaceNavigationView.NavWidth -->
+                    <ColumnDefinition Width="Auto"/>
                     <!-- Flex: workspace is the sole star column and absorbs all remaining space -->
                     <ColumnDefinition Width="*"/>
                     <!-- Auto: inspector collapses to zero when not visible; MaxWidth caps growth -->
-                    <ColumnDefinition Width="Auto" MaxWidth="500"/>
+                    <ColumnDefinition Width="Auto" MaxWidth="450"/>
                     <!-- Auto: utility collapses to zero when not visible; MaxWidth caps growth -->
                     <ColumnDefinition Width="Auto" MaxWidth="600"/>
                     <!-- Fixed: right utility navigation rail -->
@@ -81,9 +93,9 @@
             </Border>
 
 
-            <!-- Panel content -->
+            <!-- Panel content — fixed Width so no form or text can push the drawer wider -->
             <Border ZIndex="22"
-                    MinWidth="420"
+                    Width="480"
                     Margin="0,0,75,0"
                     HorizontalAlignment="Right"
                     VerticalAlignment="Stretch">
@@ -109,16 +121,25 @@
                         Command="{Binding LayerCloser.BackdropCloseCommand}"/>
             </Border>
 
-            <!-- Modal content -->
-            <Border ZIndex="32"
-                    MinWidth="520"
-                    MaxWidth="720"
-                    Margin="0,64,0,64"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center">
+            <!--
+                Modal viewport — the inner Grid carries the margin so that
+                $parent[Grid].Bounds.Height returns the already-inset height
+                (window minus the 64 px top/bottom safe zone).  Binding MaxHeight
+                to that value means the modal can never be taller than the
+                available space, and the LayerHostView ScrollViewer takes over
+                for any content that does not fit.
+            -->
+            <Grid Margin="0,64,0,64">
+                <Border ZIndex="32"
+                        MinWidth="520"
+                        MaxWidth="720"
+                        MaxHeight="{Binding $parent[Grid].Bounds.Height, FallbackValue=800}"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center">
 
-                <ContentControl Content="{Binding ShellState.Modal}" />
-            </Border>
+                    <ContentControl Content="{Binding ShellState.Modal}" />
+                </Border>
+            </Grid>
         </Grid>
 
         
@@ -144,6 +165,29 @@
             </ItemsControl>
         </Grid>
         
+        <Grid x:Name="ActionToastLayer"
+              ZIndex="45"
+              IsHitTestVisible="False">
+            <ItemsControl ItemsSource="{Binding ShellState.ActionToasts}"
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Top"
+                          Margin="0,16,0,0"
+                          IsHitTestVisible="True">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Spacing="8"
+                                    IsHitTestVisible="True"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <ContentControl Content="{Binding}"
+                                        IsHitTestVisible="True"/>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </Grid>
+
         <Grid x:Name="BusyLayer"
               ZIndex="50">
             <ContentControl Content="{Binding ShellState.Busy}"/>

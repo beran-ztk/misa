@@ -11,6 +11,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Features.Messaging;
 using Misa.Contract.Notifications;
+using Misa.Ui.Avalonia.Shell.Components;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Infrastructure.Messaging;
 using Misa.Ui.Avalonia.Infrastructure.UI;
@@ -23,40 +24,47 @@ public sealed partial class NotificationItem : ObservableObject
 {
     public NotificationItem(NotificationDto notification)
     {
-        Id        = Guid.NewGuid();
-        Title     = notification.Payload;
-        Message   = string.Empty;
-        Timestamp = notification.Timestamp;
-        _isRead   = false;
+        Id         = Guid.NewGuid();
+        Title      = notification.Payload;
+        Message    = string.Empty;
+        Timestamp  = notification.Timestamp;
+        _isRead    = false;
+        LinkTarget = null;
     }
 
     public NotificationItem(NotificationEntryDto dto)
     {
-        Id        = dto.Id;
-        Title     = dto.Title;
-        Message   = dto.Message;
-        Timestamp = dto.CreatedAtUtc;
-        _isRead   = dto.ReadAtUtc.HasValue;
+        Id         = dto.Id;
+        Title      = dto.Title;
+        Message    = dto.Message;
+        Timestamp  = dto.CreatedAtUtc;
+        _isRead    = dto.ReadAtUtc.HasValue;
+        LinkTarget = dto.LinkTarget;
     }
 
-    public Guid           Id                 { get; }
-    public string         Title              { get; }
-    public string         Message            { get; }
-    public bool           HasMessage         => !string.IsNullOrWhiteSpace(Message);
-    public DateTimeOffset Timestamp          { get; }
-    public string         TimestampFormatted => Timestamp.ToLocalTime().ToString("dd MMM · HH:mm", CultureInfo.InvariantCulture);
+    public Guid                     Id                 { get; }
+    public string                   Title              { get; }
+    public string                   Message            { get; }
+    public bool                     HasMessage         => !string.IsNullOrWhiteSpace(Message);
+    public DateTimeOffset           Timestamp          { get; }
+    public string                   TimestampFormatted => Timestamp.ToLocalTime().ToString("dd MMM · HH:mm", CultureInfo.InvariantCulture);
+    public NotificationLinkTarget?  LinkTarget         { get; }
+    public bool                     HasLinkTarget      => LinkTarget is not null;
 
-    [ObservableProperty] private bool _isRead;
-    [ObservableProperty] private bool _isPendingDismiss;
+    [ObservableProperty] private bool   _isRead;
+    [ObservableProperty] private bool   _isPendingDismiss;
+    [ObservableProperty] private double _dismissProgress = 1.0;
 }
 
 public sealed partial class NotificationViewModel : ViewModelBase
 {
-    private const int PageSize = 25;
+    private const int PageSize        = 25;
+    private const int DismissWindowMs = 4000;
 
-    private readonly NotificationGateway           _gateway;
-    private readonly SignalRNotificationClient     _signalR;
-    private readonly LayerProxy                   _layerProxy;
+    private readonly NotificationGateway               _gateway;
+    private readonly SignalRNotificationClient         _signalR;
+    private readonly LayerProxy                       _layerProxy;
+    private readonly WorkspaceNavigationViewModel     _navigation;
     private readonly ConcurrentDictionary<Guid, CancellationTokenSource> _pendingDismiss = new();
 
     private DateTimeOffset? _oldestTimestamp;
@@ -74,11 +82,16 @@ public sealed partial class NotificationViewModel : ViewModelBase
 
     public bool HasUnread => UnreadCount > 0;
 
-    public NotificationViewModel(NotificationGateway gateway, SignalRNotificationClient signalR, LayerProxy layerProxy)
+    public NotificationViewModel(
+        NotificationGateway           gateway,
+        SignalRNotificationClient     signalR,
+        LayerProxy                   layerProxy,
+        WorkspaceNavigationViewModel navigation)
     {
         _gateway    = gateway;
         _signalR    = signalR;
         _layerProxy = layerProxy;
+        _navigation = navigation;
         _signalR.NotificationsChanged += RefreshFromRemoteChangeAsync;
         Notifications.CollectionChanged += (_, _) => OnPropertyChanged(nameof(IsEmpty));
         _ = LoadAsync();
@@ -143,6 +156,8 @@ public sealed partial class NotificationViewModel : ViewModelBase
         var dtos  = pageTask.Result ?? [];
         var count = countTask.Result;
 
+        var newTaskIds = new List<Guid>();
+
         await Dispatcher.UIThread.InvokeAsync(() =>
         {
             var existingIds = Notifications.Select(n => n.Id).ToHashSet();
@@ -155,11 +170,17 @@ public sealed partial class NotificationViewModel : ViewModelBase
                     var item = new NotificationItem(dto);
                     Notifications.Insert(insertIndex++, item);
                     _layerProxy.ShowToast(item.Title, item.HasMessage ? item.Message : null);
+
+                    if (item.LinkTarget is { Workspace: NotificationWorkspaceTarget.Tasks } link)
+                        newTaskIds.Add(link.ItemId);
                 }
             }
 
             UnreadCount = count;
         });
+
+        foreach (var taskId in newTaskIds)
+            await _navigation.TryAppendTaskAsync(taskId);
     }
 
     [RelayCommand]
@@ -211,13 +232,31 @@ public sealed partial class NotificationViewModel : ViewModelBase
         if (item is null || item.IsPendingDismiss) return;
 
         item.IsPendingDismiss = true;
+        item.DismissProgress  = 1.0;
 
         var cts = new CancellationTokenSource();
         _pendingDismiss[id] = cts;
 
+        // Drive the countdown progress bar — updates every 50 ms, cancelled if undo is pressed.
+        var startedAt = DateTimeOffset.UtcNow;
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                while (!cts.Token.IsCancellationRequested)
+                {
+                    await Task.Delay(50, cts.Token);
+                    var elapsed  = (DateTimeOffset.UtcNow - startedAt).TotalMilliseconds;
+                    var progress = Math.Max(0.0, 1.0 - elapsed / DismissWindowMs);
+                    await Dispatcher.UIThread.InvokeAsync(() => item.DismissProgress = progress);
+                }
+            }
+            catch (OperationCanceledException) { }
+        });
+
         try
         {
-            await Task.Delay(4000, cts.Token);
+            await Task.Delay(DismissWindowMs, cts.Token);
         }
         catch (OperationCanceledException)
         {
@@ -287,5 +326,17 @@ public sealed partial class NotificationViewModel : ViewModelBase
             foreach (var item in unread)
                 item.IsRead = false;
         }
+    }
+
+    [RelayCommand]
+    private async Task OpenLinkedItemAsync(Guid id)
+    {
+        var item = Notifications.FirstOrDefault(x => x.Id == id);
+        if (item?.LinkTarget is not { } target) return;
+
+        await _navigation.NavigateToItemAsync(target);
+
+        if (!item.IsRead)
+            await MarkAsReadAsync(id);
     }
 }

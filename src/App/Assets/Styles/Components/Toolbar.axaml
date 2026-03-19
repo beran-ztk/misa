@@ -28,6 +28,14 @@
         <Setter Property="VerticalAlignment" Value="Center" />
     </Style>
 
+    <!-- Meta summary row -->
+    <Style Selector="TextBlock.workspace-meta-summary">
+        <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}"/>
+        <Setter Property="Foreground" Value="{StaticResource BrushTextFaded}"/>
+        <Setter Property="Margin" Value="0,6,0,0"/>
+        <Setter Property="Opacity" Value="0.7"/>
+    </Style>
+
     <!-- Separator -->
     <Style Selector="Border.workspace-toolbar-separator">
         <Setter Property="Height" Value="1" />

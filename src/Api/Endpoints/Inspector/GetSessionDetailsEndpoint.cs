@@ -12,6 +12,7 @@ public static class GetSessionDetailsEndpoint
     public static void Map(IEndpointRouteBuilder endpoints)
     {
         endpoints.MapPatch(ActivityRoutes.UpsertDeadline, UpsertDeadline);
+        endpoints.MapPatch(ActivityRoutes.ChangeState, ChangeState);
         endpoints.MapGet("items/{itemId:guid}/details", GetItemDetails);
     }
     private static async Task<IResult> UpsertDeadline(
@@ -23,7 +24,19 @@ public static class GetSessionDetailsEndpoint
         await bus.InvokeAsync(new UpsertDeadlineCommand(itemId, request.DueAtUtc), ct);
 
         return Results.Ok();
-    }    
+    }
+
+    private static async Task<IResult> ChangeState(
+        [FromRoute] Guid itemId,
+        [FromBody] ChangeActivityStateRequest request,
+        IMessageBus bus,
+        CancellationToken ct)
+    {
+        await bus.InvokeAsync(new ChangeActivityStateCommand(itemId, request.State, request.Reason), ct);
+
+        return Results.Ok();
+    }
+
     private static async Task<IResult> GetItemDetails(
         [FromRoute] Guid itemId,
         IMessageBus bus,

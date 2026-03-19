@@ -5,10 +5,72 @@
              xmlns:deadline="clr-namespace:Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Scheduling"
              xmlns:session="clr-namespace:Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions"
              x:DataType="root:InspectorEntryViewModel">
-    
+
+    <UserControl.Styles>
+        <!-- Lifecycle notice — archived: amber left-border -->
+        <Style Selector="Border.lifecycle-notice">
+            <Setter Property="Background"    Value="#18F0A020"/>
+            <Setter Property="BorderBrush"   Value="{StaticResource BrushWarning}"/>
+        </Style>
+        <Style Selector="Border.lifecycle-notice TextBlock">
+            <Setter Property="Foreground"    Value="{StaticResource BrushWarning}"/>
+        </Style>
+        <!-- Lifecycle notice — deleted: red left-border override -->
+        <Style Selector="Border.lifecycle-notice.lifecycle-deleted">
+            <Setter Property="Background"    Value="#18F44336"/>
+            <Setter Property="BorderBrush"   Value="{StaticResource BrushError}"/>
+        </Style>
+        <Style Selector="Border.lifecycle-notice.lifecycle-deleted TextBlock">
+            <Setter Property="Foreground"    Value="{StaticResource BrushError}"/>
+        </Style>
+
+        <!-- ── Terminal state badges ──────────────────────────────────────── -->
+        <!--
+            Pill-shaped chips shown in the inspector header whenever a task reaches
+            a terminal state (Done / Failed / Canceled / Expired).
+            Uses the same left-border tint pattern as the lifecycle notices but styled
+            as compact inline chips with semantic color per state.
+        -->
+        <Style Selector="Border.terminal-badge">
+            <Setter Property="CornerRadius"    Value="4"/>
+            <Setter Property="Padding"         Value="8,3"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+        <Style Selector="Border.terminal-badge TextBlock">
+            <Setter Property="FontSize"     Value="10"/>
+            <Setter Property="FontWeight"   Value="SemiBold"/>
+            <Setter Property="LetterSpacing" Value="0.5"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <!-- Done — green -->
+        <Style Selector="Border.terminal-badge.done">
+            <Setter Property="Background"  Value="#183D8B4F"/>
+            <Setter Property="BorderBrush" Value="#403D8B4F"/>
+        </Style>
+        <Style Selector="Border.terminal-badge.done TextBlock">
+            <Setter Property="Foreground" Value="#65B56A"/>
+        </Style>
+        <!-- Failed / Canceled — red -->
+        <Style Selector="Border.terminal-badge.error">
+            <Setter Property="Background"  Value="#1AF44336"/>
+            <Setter Property="BorderBrush" Value="#40F44336"/>
+        </Style>
+        <Style Selector="Border.terminal-badge.error TextBlock">
+            <Setter Property="Foreground" Value="#EF5350"/>
+        </Style>
+        <!-- Expired — warning amber -->
+        <Style Selector="Border.terminal-badge.expired">
+            <Setter Property="Background"  Value="#18F0A020"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BrushWarning}"/>
+        </Style>
+        <Style Selector="Border.terminal-badge.expired TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource BrushWarning}"/>
+        </Style>
+    </UserControl.Styles>
+
     <Border Background="{StaticResource BrushPrimaryBackground}"
             Padding="12">
-        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto">
+        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto">
 
             <!-- Header -->
             <Border Grid.Row="0"
@@ -16,19 +78,29 @@
                     BorderThickness="0,0,0,2"
                     Padding="0,8">
 
-                <Grid ColumnDefinitions="*,Auto"
+                <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto"
                       ColumnSpacing="12">
 
-                    <TextBlock Grid.Column="0"
+                    <TextBlock Grid.Row="0" Grid.Column="0"
                                Text="{Binding Facade.State.Item.Title}"
                                Foreground="{StaticResource BrushTextPrimary}"
                                VerticalAlignment="Center"
                                FontSize="16"
-                               FontWeight="SemiBold" />
+                               FontWeight="SemiBold"
+                               TextWrapping="Wrap"
+                               Opacity="0.8"/>
 
-                    <StackPanel Grid.Column="1"
+                    <StackPanel Grid.Row="0" Grid.Column="1"
                                 Spacing="8"
                                 Orientation="Horizontal">
+                        <!-- Quick Done -->
+                        <Button Classes="workspace-toolbar-icon"
+                                ToolTip.Tip="Mark as Done"
+                                Command="{Binding MarkAsDoneCommand}"
+                                IsVisible="{Binding CanMarkAsDone}">
+                            <Image Source="{SvgImage /Assets/Icons/Common/check.svg}" />
+                        </Button>
+
                         <!-- Refresh -->
                         <Button Classes="workspace-toolbar-icon"
                                 Command="{Binding Facade.ReloadCommand}">
@@ -41,7 +113,8 @@
                             <Image Source="{SvgImage /Assets/Icons/Common/dots-three-vertical.svg}" />
                             <Button.Flyout>
                                 <MenuFlyout>
-                                    <MenuItem Command="{Binding ArchiveItemCommand}">
+                                    <MenuItem Command="{Binding ArchiveItemCommand}"
+                                              IsEnabled="{Binding Facade.State.CanArchive}">
                                         <MenuItem.Header>
                                             <StackPanel Spacing="8" Orientation="Horizontal">
                                                 <Image Width="16" Height="16"
@@ -51,7 +124,8 @@
                                         </MenuItem.Header>
                                     </MenuItem>
 
-                                    <MenuItem Command="{Binding DeleteItemCommand}">
+                                    <MenuItem Command="{Binding DeleteItemCommand}"
+                                              IsEnabled="{Binding Facade.State.CanDelete}">
                                         <MenuItem.Header>
                                             <StackPanel Spacing="8" Orientation="Horizontal">
                                                 <Image Width="16" Height="16"
@@ -66,23 +140,65 @@
                         </Button>
                     </StackPanel>
 
+                    <!--
+                        Terminal state badge row — visible only when the task is in a
+                        finished state (Done, Failed, Canceled, Expired).
+                        Immediately communicates that the item is no longer active.
+                    -->
+                    <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                                Orientation="Horizontal"
+                                Spacing="6"
+                                Margin="0,8,0,0"
+                                IsVisible="{Binding Facade.State.IsTerminalState}">
+
+                        <Border Classes="terminal-badge done"
+                                IsVisible="{Binding Facade.State.IsDoneState}">
+                            <TextBlock Text="DONE"/>
+                        </Border>
+
+                        <Border Classes="terminal-badge error"
+                                IsVisible="{Binding Facade.State.IsFailedOrCanceledState}">
+                            <TextBlock Text="{Binding Facade.State.ErrorStateBadgeLabel}"/>
+                        </Border>
+
+                        <Border Classes="terminal-badge expired"
+                                IsVisible="{Binding Facade.State.IsExpiredState}">
+                            <TextBlock Text="EXPIRED"/>
+                        </Border>
+
+                    </StackPanel>
+
                 </Grid>
             </Border>
 
+            <!-- Lifecycle restriction notice -->
+            <Border Grid.Row="1"
+                    Classes="lifecycle-notice"
+                    Classes.lifecycle-deleted="{Binding Facade.State.IsDeleted}"
+                    BorderThickness="3,0,0,0"
+                    CornerRadius="0,3,3,0"
+                    Padding="10,8"
+                    Margin="0,8,0,0"
+                    IsVisible="{Binding Facade.State.HasLifecycleRestriction}">
+                <TextBlock Text="{Binding Facade.State.LifecycleStatusMessage}"
+                           FontSize="{StaticResource FontSizeSmall}"
+                           TextWrapping="Wrap"/>
+            </Border>
+
             <!-- Deadline -->
-            <deadline:EntryDeadlineView Grid.Row="1"
+            <deadline:EntryDeadlineView Grid.Row="2"
                                         IsVisible="{Binding Facade.State.IsRealActivity}" />
 
             <!-- Session -->
-            <session:SessionHeaderView Grid.Row="2"
+            <session:SessionHeaderView Grid.Row="3"
                                        IsVisible="{Binding Facade.State.IsRealActivity}" />
 
             <!-- Relations -->
-            <ContentControl Grid.Row="3"
+            <ContentControl Grid.Row="4"
                             Content="{Binding Relations}" />
 
             <!-- Main section -->
-            <root:InspectorEntryBodyView Grid.Row="4" />
+            <root:InspectorEntryBodyView Grid.Row="5" />
             
         </Grid>
     </Border>

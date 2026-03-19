@@ -66,10 +66,39 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
         return await context.Items
             .Include(t => t.Activity)
             .Include(t => t.TaskExtension)
-            .Where(t => t.OwnerId == user.Id && t.Workflow == Workflow.Task && t.IsDeleted == false && t.IsArchived == false)
+            .Where(t => t.OwnerId == user.Id && t.Workflow == Workflow.Task && !t.IsDeleted && !t.IsArchived)
             .OrderByDescending(t => t.CreatedAt)
             .AsNoTracking()
             .ToListAsync(ct);
+    }
+
+    public async Task<List<Item>> GetArchivedTasksAsync(CancellationToken ct)
+    {
+        return await context.Items
+            .Include(t => t.Activity)
+            .Include(t => t.TaskExtension)
+            .Where(t => t.OwnerId == user.Id && t.Workflow == Workflow.Task && t.IsArchived && !t.IsDeleted)
+            .OrderByDescending(t => t.CreatedAt)
+            .AsNoTracking()
+            .ToListAsync(ct);
+    }
+
+    public async Task<List<Item>> GetDeletedTasksAsync(CancellationToken ct)
+    {
+        return await context.Items
+            .Include(t => t.Activity)
+            .Include(t => t.TaskExtension)
+            .Where(t => t.OwnerId == user.Id && t.Workflow == Workflow.Task && t.IsDeleted)
+            .OrderByDescending(t => t.CreatedAt)
+            .AsNoTracking()
+            .ToListAsync(ct);
+    }
+
+    public async Task HardDeleteItemAsync(Guid id, CancellationToken ct)
+    {
+        await context.Items
+            .Where(i => i.Id == new ItemId(id) && i.OwnerId == user.Id)
+            .ExecuteDeleteAsync(ct);
     }
 
     // Schedule extension
@@ -212,6 +241,14 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
                 i => i.Id == new ItemId(itemId) && i.OwnerId == user.Id && i.Activity != null,
                 ct
             );
+    }
+
+    // Dev
+    public async Task DeleteAllByOwnerAsync(string ownerId, CancellationToken ct)
+    {
+        await context.Items
+            .Where(i => i.OwnerId == ownerId)
+            .ExecuteDeleteAsync(ct);
     }
 
     // Relations

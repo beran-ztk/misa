@@ -4,8 +4,7 @@
     <!-- ── Panel shell ──────────────────────────────────────────────────── -->
     <Style Selector="Border.notif-panel">
         <Setter Property="Background"   Value="{StaticResource BrushPrimaryBackgroundLight}" />
-        <Setter Property="MinWidth"     Value="320" />
-        <Setter Property="MaxWidth"     Value="480" />
+        <Setter Property="MaxWidth"     Value="280" />
     </Style>
 
     <!-- ── Header ───────────────────────────────────────────────────────── -->
@@ -214,8 +213,21 @@
 
     <!-- ── Undo banner ──────────────────────────────────────────────────── -->
     <Style Selector="Border.notif-undo-bar">
-        <Setter Property="Padding"  Value="12,10" />
-        <Setter Property="Opacity"  Value="0.65" />
+        <Setter Property="Opacity" Value="0.65" />
+    </Style>
+
+    <!-- Countdown track (full-width background strip) -->
+    <Style Selector="Border.notif-undo-track">
+        <Setter Property="Height"     Value="2" />
+        <Setter Property="Background" Value="#18FFFFFF" />
+    </Style>
+
+    <!-- Countdown fill (shrinks right-to-left via ScaleX binding) -->
+    <Style Selector="Border.notif-undo-fill">
+        <Setter Property="Height"               Value="2" />
+        <Setter Property="Background"           Value="{StaticResource BrushAccent}" />
+        <Setter Property="Opacity"              Value="0.55" />
+        <Setter Property="HorizontalAlignment"  Value="Stretch" />
     </Style>
 
     <Style Selector="TextBlock.notif-undo-text">
@@ -236,6 +248,25 @@
 
         <Style Selector="^ /template/ ContentPresenter">
             <Setter Property="CornerRadius" Value="4" />
+        </Style>
+        <Style Selector="^:pointerover">
+            <Setter Property="Opacity" Value="1" />
+        </Style>
+    </Style>
+
+    <!-- ── Open link button ─────────────────────────────────────────────── -->
+    <Style Selector="Button.notif-open-btn">
+        <Setter Property="Background"       Value="Transparent" />
+        <Setter Property="Foreground"       Value="{StaticResource BrushAccent}" />
+        <Setter Property="BorderThickness"  Value="0" />
+        <Setter Property="Padding"          Value="0,4,0,0" />
+        <Setter Property="FontSize"         Value="12" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="Cursor"           Value="Hand" />
+        <Setter Property="Opacity"          Value="0.85" />
+
+        <Style Selector="^ /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
         </Style>
         <Style Selector="^:pointerover">
             <Setter Property="Opacity" Value="1" />

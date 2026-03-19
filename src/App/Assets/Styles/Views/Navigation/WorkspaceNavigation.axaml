@@ -9,14 +9,14 @@
         </ResourceDictionary>
     </Styles.Resources>
 
-    <!-- Main navigation buttons -->
+    <!-- ── Base nav button ────────────────────────────────────────────── -->
     <Style Selector="Button.workspace-nav">
-        <Setter Property="HorizontalAlignment" Value="Stretch"/>
-        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-        <Setter Property="Padding" Value="10,8"/>
-        <Setter Property="BorderThickness" Value="0"/>
-        <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="HorizontalAlignment"        Value="Stretch"/>
+        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        <Setter Property="Padding"                    Value="10,8"/>
+        <Setter Property="BorderThickness"            Value="0"/>
+        <Setter Property="Background"                 Value="Transparent"/>
+        <Setter Property="Cursor"                     Value="Hand"/>
     </Style>
 
     <Style Selector="Button.workspace-nav:pointerover">
@@ -31,11 +31,35 @@
         <Setter Property="CornerRadius" Value="0"/>
     </Style>
 
-    <!-- Label -->
+    <!-- ── Label ─────────────────────────────────────────────────────── -->
     <Style Selector="TextBlock.workspace-nav">
-        <Setter Property="FontSize" Value="{StaticResource FontSizeMedium}"/>
-        <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
+        <Setter Property="FontSize"          Value="{StaticResource FontSizeMedium}"/>
+        <Setter Property="Foreground"        Value="{StaticResource BrushTextSecondary}"/>
         <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+
+    <!-- ── Collapsed: icon only, centred ─────────────────────────────── -->
+    <!--
+        Applied via Classes.nav-collapsed="{Binding IsCollapsed}" in the view.
+        Centres the remaining icon content and removes horizontal padding so the
+        icon sits exactly in the middle of the narrower rail.
+    -->
+    <Style Selector="Button.workspace-nav.nav-collapsed">
+        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        <Setter Property="Padding"                    Value="0,8"/>
+    </Style>
+
+    <!-- ── Active: current workspace ────────────────────────────────── -->
+    <!--
+        Applied via Classes.nav-active="{Binding Is*Active}" in the view.
+        Uses a slightly lifted background so the current destination is clear
+        in both expanded and collapsed states.
+    -->
+    <Style Selector="Button.workspace-nav.nav-active">
+        <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}"/>
+    </Style>
+    <Style Selector="Button.workspace-nav.nav-active TextBlock">
+        <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
     </Style>
 
 </Styles>

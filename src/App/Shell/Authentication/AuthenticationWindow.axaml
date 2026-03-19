@@ -10,6 +10,11 @@
         WindowStartupLocation="CenterScreen"
         CanResize="False">
 
+    <Window.KeyBindings>
+        <KeyBinding Gesture="Escape" Command="{Binding CloseCommand}"/>
+        <KeyBinding Gesture="Ctrl+B" Command="{Binding BypassCommand}"/>
+    </Window.KeyBindings>
+
     <Window.Styles>
 
         <!-- Primary action button (Sign in / Register) -->
@@ -135,7 +140,11 @@
                                    Foreground="{StaticResource BrushTextSecondary}"/>
                         <TextBox x:Name="UsernameField"
                                  Text="{Binding Username, Mode=TwoWay}"
-                                 IsEnabled="{Binding IsNotBusy}"/>
+                                 IsEnabled="{Binding IsNotBusy}">
+                            <TextBox.KeyBindings>
+                                <KeyBinding Gesture="Enter" Command="{Binding SubmitCommand}"/>
+                            </TextBox.KeyBindings>
+                        </TextBox>
                     </StackPanel>
 
                     <StackPanel Spacing="5">
@@ -161,7 +170,11 @@
                             <TextBox Text="{Binding ConfirmPassword, Mode=TwoWay}"
                                      PasswordChar="•"
                                      Watermark="Repeat password"
-                                     IsEnabled="{Binding IsNotBusy}"/>
+                                     IsEnabled="{Binding IsNotBusy}">
+                                <TextBox.KeyBindings>
+                                    <KeyBinding Gesture="Enter" Command="{Binding SubmitCommand}"/>
+                                </TextBox.KeyBindings>
+                            </TextBox>
                         </StackPanel>
 
                         <StackPanel Spacing="5">
@@ -169,7 +182,11 @@
                                        FontSize="12"
                                        Foreground="{StaticResource BrushTextSecondary}"/>
                             <TextBox Text="{Binding Email, Mode=TwoWay}"
-                                     IsEnabled="{Binding IsNotBusy}"/>
+                                     IsEnabled="{Binding IsNotBusy}">
+                                <TextBox.KeyBindings>
+                                    <KeyBinding Gesture="Enter" Command="{Binding SubmitCommand}"/>
+                                </TextBox.KeyBindings>
+                            </TextBox>
                         </StackPanel>
 
                         <StackPanel Spacing="5">

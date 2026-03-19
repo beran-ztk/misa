@@ -9,3 +9,4 @@ riderModule.iml
 /src/Infrastructure/Migrations
 CLAUDE.md
 .claude
+tools/

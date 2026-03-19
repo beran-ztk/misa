@@ -29,7 +29,8 @@
                 <Button Grid.Column="1"
                         Classes="workspace-toolbar-icon"
                         VerticalAlignment="Center"
-                        Command="{Binding ShowEditItemFormCommand}">
+                        Command="{Binding ShowEditItemFormCommand}"
+                        IsEnabled="{Binding Facade.State.CanEdit}">
                     <Image Source="{SvgImage /Assets/Icons/Common/edit.svg}" />
                 </Button>
             </Grid>

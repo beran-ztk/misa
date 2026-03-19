@@ -1,82 +1,88 @@
-﻿<UserControl xmlns="https://github.com/avaloniaui"
+<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="Misa.Ui.Avalonia.Features.Inspector.Root.InspectorFacadeView"
              xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Inspector.Root"
+             xmlns:components="clr-namespace:Misa.Ui.Avalonia.Shell.Components"
              x:DataType="root:InspectorFacadeViewModel">
-    
+
     <UserControl.Styles>
-        <Style Selector="TabControl.inspector-tabs">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="Padding" Value="0" />
+
+        <Style Selector="Button.tab-option">
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Padding" Value="0,8"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Button.tab-option /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLight}"/>
+        </Style>
+        <Style Selector="Button.tab-option:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}"/>
+        </Style>
+        <Style Selector="Button.tab-option.active /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackground}"/>
         </Style>
 
-        <Style Selector="TabControl.inspector-tabs TabItem">
-            <Setter Property="Padding" Value="16,0" />
-            <Setter Property="Foreground" Value="{StaticResource BrushTextFaded}" />
-            <Setter Property="FontSize" Value="18" />
-            <Setter Property="Opacity" Value="0.6" />
+        <Style Selector="Button.tab-option TextBlock">
+            <Setter Property="FontSize" Value="{StaticResource FontSizeAverage}"/>
+            <Setter Property="Foreground" Value="{StaticResource BrushTextFaded}"/>
         </Style>
-        
-        <Style Selector="Border.inspector-tabs-underline">
-            <Setter Property="BorderThickness" Value="0,1,0,0" />
-            <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}" />
+        <Style Selector="Button.tab-option.active TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
         </Style>
-        
-        <Style Selector="TabControl.inspector-tabs TabItem:pointerover">
-            <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}" />
+        <Style Selector="Button.tab-option:pointerover TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
         </Style>
 
-        <Style Selector="TabControl.inspector-tabs TabItem:selected">
-            <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Opacity" Value="1" />
-        </Style>
-        
-        <Style Selector="TabControl.inspector-tabs TabItem:selected /template/ Border#PART_SelectedPipe">
-            <Setter Property="Background" Value="Transparent" />
-        </Style>
     </UserControl.Styles>
-    
+
     <Border BorderThickness="1,0,0,0"
+            Width="400"
             BorderBrush="{StaticResource BrushBorder}"
             Background="{StaticResource BrushPrimaryBackground}"
             IsVisible="{Binding State.HasItem}">
 
-        <TabControl Classes="inspector-tabs"
-                    SelectedIndex="{Binding State.SelectedTabIndex}">
+        <Grid RowDefinitions="Auto,*">
 
-            <TabItem Header="Entry">
-                <Grid RowDefinitions="Auto,*">
-                    <Border Grid.Row="0"
-                            Classes="inspector-tabs-underline"/>
+            <!-- Toggle header strip -->
+            <Border Grid.Row="0"
+                    Background="{StaticResource BrushPrimaryBackgroundLight}">
+                <Grid ColumnDefinitions="*,*">
 
-                    <ScrollViewer Grid.Row="1">
-                        <ContentControl Content="{Binding Entry}"/>
-                    </ScrollViewer>
+                    <Button Grid.Column="0"
+                            Classes="tab-option"
+                            Classes.active="{Binding State.IsEntryTab}"
+                            Command="{Binding SelectEntryTabCommand}">
+                        <TextBlock Text="Entry"/>
+                    </Button>
+
+                    <Button Grid.Column="1"
+                            Classes="tab-option"
+                            Classes.active="{Binding State.IsActivityTab}"
+                            Command="{Binding SelectActivityTabCommand}">
+                        <TextBlock Text="Activity"/>
+                    </Button>
+
                 </Grid>
-            </TabItem>
+            </Border>
 
-            <TabItem Header="Discussion">
-                <Grid RowDefinitions="Auto,*">
-                    <Border Grid.Row="0"
-                            Classes="inspector-tabs-underline"/>
+            <!-- Content area -->
+            <components:ScrollRevealHost Grid.Row="1">
+                <components:ScrollRevealHost.RevealContent>
+                    <Panel>
+                        <ContentControl Content="{Binding Entry}"
+                                        IsVisible="{Binding State.IsEntryTab}"/>
+                        <ContentControl Content="{Binding Activity}"
+                                        IsVisible="{Binding State.IsActivityTab}"/>
+                    </Panel>
+                </components:ScrollRevealHost.RevealContent>
+            </components:ScrollRevealHost>
 
-                    <ScrollViewer Grid.Row="1">
-                        <TextBlock Text="Discussion content placeholder"/>
-                    </ScrollViewer>
-                </Grid>
-            </TabItem>
-            
-            <TabItem Header="Activity">
-                <Grid RowDefinitions="Auto,*">
-                    <Border Grid.Row="0"
-                            Classes="inspector-tabs-underline"/>
+        </Grid>
 
-                    <ScrollViewer Grid.Row="1">
-                        <ContentControl Content="{Binding Activity}"/>
-                    </ScrollViewer>
-                </Grid>
-            </TabItem>
-        </TabControl>
     </Border>
 </UserControl>

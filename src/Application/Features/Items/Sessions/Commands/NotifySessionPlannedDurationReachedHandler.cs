@@ -34,7 +34,7 @@ public class NotifySessionPlannedDurationReachedHandler(
                 "Planned duration reached",
                 $"The planned duration for \"{session.Item.Title}\" has been reached.",
                 NotificationSourceKind.SessionPlannedDurationReached,
-                session.Id,
+                session.Item.Id.Value,
                 now,
                 session.Item.OwnerId);
 

@@ -114,6 +114,15 @@
       <Compile Update="Features\Utilities\Toast\ToastView.axaml.cs">
         <DependentUpon>ToastView.axaml</DependentUpon>
       </Compile>
+      <Compile Update="Features\Utilities\Dev\DevToolsView.axaml.cs">
+        <DependentUpon>DevToolsView.axaml</DependentUpon>
+      </Compile>
+      <Compile Update="Common\Components\FilterDropdown\FilterDropdownView.axaml.cs">
+        <DependentUpon>FilterDropdownView.axaml</DependentUpon>
+      </Compile>
+      <Compile Update="Shell\Components\ScrollRevealHost.axaml.cs">
+        <DependentUpon>ScrollRevealHost.axaml</DependentUpon>
+      </Compile>
     </ItemGroup>
 
     <ItemGroup>

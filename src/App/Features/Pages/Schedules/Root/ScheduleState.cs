@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -9,18 +10,34 @@ using Misa.Ui.Avalonia.Infrastructure.States;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Schedules.Root;
 
-public sealed partial class ScheduleState(ISelectionContextState selectionContextState)
-    : ObservableObject
+public sealed partial class ScheduleState : ObservableObject
 {
-    public ISelectionContextState SelectionContextState { get; } = selectionContextState;
+    public ISelectionContextState SelectionContextState { get; }
     private IReadOnlyCollection<ScheduleDto> Items { get; set; } = [];
     public ObservableCollection<ScheduleDto> FilteredItems { get; } = [];
 
     [ObservableProperty] private ScheduleDto? _selectedItem;
     partial void OnSelectedItemChanged(ScheduleDto? value)
     {
-        selectionContextState.Set(value?.Id);
+        SelectionContextState.Set(value?.Item.Id);
     }
+
+    public ScheduleState(ISelectionContextState selectionContextState)
+    {
+        SelectionContextState = selectionContextState;
+
+        // Keep workspace list in sync when the Inspector navigates to an item externally.
+        SelectionContextState.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName != nameof(ISelectionContextState.ActiveEntityId)) return;
+            var id = SelectionContextState.ActiveEntityId;
+            if (SelectedItem?.Item.Id == id) return;
+            SelectedItem = id.HasValue
+                ? FilteredItems.FirstOrDefault(s => s.Item.Id == id.Value)
+                : null;
+        };
+    }
+    
     [ObservableProperty] private string _searchText = string.Empty;
     partial void OnSearchTextChanged(string value) => ApplyFilters();
     private void ApplyFilters()

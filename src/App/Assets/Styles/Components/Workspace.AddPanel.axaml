@@ -100,12 +100,13 @@
         <Style Selector="ComboBox.addpanel-combo">
                 <Setter Property="MinHeight" Value="36"/>
                 <Setter Property="MinWidth" Value="180"/>
-                
+                <Setter Property="HorizontalAlignment" Value="Stretch"/>
+
                 <Setter Property="FontSize" Value="13"/>
-                
+
                 <Setter Property="Padding" Value="14,6"/>
                 <Setter Property="VerticalContentAlignment" Value="Center"/>
-                
+
                 <Setter Property="CornerRadius" Value="4"/>
                 <Setter Property="BorderThickness" Value="1"/>
                 <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}"/>
@@ -115,42 +116,54 @@
         <Style Selector="NumericUpDown.addpanel-num">
                 <Setter Property="MinHeight" Value="32"/>
                 <Setter Property="MinWidth" Value="180"/>
-                
+
                 <Setter Property="FontSize" Value="13"/>
-                
+
                 <Setter Property="Padding" Value="14,6"/>
                 <Setter Property="VerticalContentAlignment" Value="Center"/>
-                
+
                 <Setter Property="CornerRadius" Value="4"/>
                 <Setter Property="BorderThickness" Value="1"/>
                 <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}"/>
         </Style>
-        
+
         <!-- Time -->
         <Style Selector="TimePicker.addpanel-time">
                 <Setter Property="MinWidth" Value="300"/>
-                
+                <Setter Property="HorizontalAlignment" Value="Stretch"/>
+
                 <Setter Property="FontSize" Value="13"/>
-                
+
                 <Setter Property="CornerRadius" Value="4"/>
                 <Setter Property="BorderThickness" Value="1"/>
                 <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}"/>
         </Style>
-        
+
         <!-- Date -->
         <Style Selector="DatePicker.addpanel-date">
                 <Setter Property="MinWidth" Value="300"/>
-                
+                <Setter Property="HorizontalAlignment" Value="Stretch"/>
+
                 <Setter Property="FontSize" Value="13"/>
-                
+
                 <Setter Property="CornerRadius" Value="4"/>
                 <Setter Property="BorderThickness" Value="1"/>
                 <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}"/>
         </Style>
         
+        <!-- Task template container inside CreateTask action -->
+        <Style Selector="Border.addpanel-task-template">
+                <Setter Property="Background" Value="#0AFFFFFF"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="CornerRadius" Value="6"/>
+                <Setter Property="Padding" Value="14,12"/>
+        </Style>
+
         <!-- Expander -->
         <Style Selector="Expander.addpanel-expander">
                 <Setter Property="MinWidth" Value="180"/>
+                <Setter Property="HorizontalAlignment" Value="Stretch"/>
                 
                 <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLight}"/>
                 

@@ -1,5 +1,6 @@
 using Misa.Api.Endpoints.Authentication;
 using Misa.Api.Endpoints.Chronicle;
+using Misa.Api.Endpoints.Dev;
 using Misa.Api.Endpoints.Inspector;
 using Misa.Api.Endpoints.Notifications;
 using Misa.Api.Endpoints.Relations;
@@ -21,6 +22,7 @@ public static class EndpointRegistration
 
         app.UseMiddleware<HttpExceptionMiddleware>();
 
+        DevEndpoints.Map(app);
         TaskEndpoints.Map(app);
         SessionEndpoints.Map(app);
         EntryEndpoints.Map(app);

@@ -1,4 +1,4 @@
-﻿using Misa.Application.Abstractions.Persistence;
+using Misa.Application.Abstractions.Persistence;
 using Misa.Application.Abstractions.Time;
 using Misa.Application.Mappings;
 using Misa.Contract.Items.Components.Activity.Sessions;
@@ -19,8 +19,8 @@ public class StopSessionHandler(IItemRepository repository, ITimeProvider timePr
         var item = await repository.TryGetItemWithSessionsAsync(command.ItemId, ct);
         if (item?.Activity is null || item.Activity.Sessions.Count == 0 || item.Activity.TryGetSession is null)
             throw new DomainNotFoundException("session.item", "session not found.");
-        
-        item.Activity.TryGetSession.Stop(
+
+        item.Activity.StopCurrentSession(
             timeProvider.UtcNow,
             command.SessionEfficiency.ToDomain(),
             command.SessionConcentration.ToDomain(),

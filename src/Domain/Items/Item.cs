@@ -92,7 +92,7 @@ public sealed class Item : DomainEventEntity
             description: description,
             createdAtUtc: createdAtUtc)
         {
-            Activity = new ItemActivity(ActivityState.Draft, priority, null, null, dueAt),
+            Activity = new ItemActivity(id, ActivityState.Open, priority, null, null, dueAt),
             TaskExtension = new TaskExtension(id, category)
         };
 
@@ -161,7 +161,7 @@ public sealed class Item : DomainEventEntity
             description: description,
             createdAtUtc: createdAtUtc)
         {
-            Activity = new ItemActivity(ActivityState.Draft, priority, objective, null, dueAt),
+            Activity = new ItemActivity(id, ActivityState.Open, priority, objective, null, dueAt),
             Arc = new Arc(id)
         };
 
@@ -188,7 +188,7 @@ public sealed class Item : DomainEventEntity
             description: description,
             createdAtUtc: createdAtUtc)
         {
-            Activity = new ItemActivity(ActivityState.Draft, priority, objective, null, dueAt),
+            Activity = new ItemActivity(id, ActivityState.Open, priority, objective, null, dueAt),
             Unit = new Unit(id, arcId)
         };
 
@@ -241,23 +241,83 @@ public sealed class Item : DomainEventEntity
     // Derived Properties
     
     // Mutators
-    public void ChangeTitle(string title)
+
+    /// <summary>Updates ModifiedAt. Called by all domain mutators — not intended for application-layer use.</summary>
+    internal void Touch(DateTimeOffset nowUtc) => ModifiedAt = nowUtc;
+
+    public void ChangeTitle(string title, DateTimeOffset nowUtc)
     {
         if (Title == title)
             return;
 
         AddDomainEvent(new PropertyChangedEvent(Id.Value, ChangeType.Title, Title, title, null));
         Title = title;
+        Touch(nowUtc);
     }
 
-    public void ChangeDescription(string description)
+    public void ChangeDescription(string description, DateTimeOffset nowUtc)
     {
         if (Description == description)
             return;
 
         AddDomainEvent(new PropertyChangedEvent(Id.Value, ChangeType.Description, Description, description, null));
         Description = description;
+        Touch(nowUtc);
     }
-    public void Archive() => IsArchived = true;
-    public void Delete() => IsDeleted = true;
+
+    public void Archive(DateTimeOffset nowUtc) { IsArchived = true; Touch(nowUtc); }
+    public void Delete(DateTimeOffset nowUtc)  { IsDeleted  = true; Touch(nowUtc); }
+    public void Restore(DateTimeOffset nowUtc) { IsArchived = false; IsDeleted = false; Touch(nowUtc); }
+
+    // ── Child-extension proxies ───────────────────────────────────────────────
+    // Owned child entities without an Item back-navigation property route their
+    // mutations through here so ModifiedAt is updated consistently.
+
+    public void ChangeTaskCategory(TaskCategory category, DateTimeOffset nowUtc)
+    {
+        TaskExtension!.ChangeCategory(category);
+        Touch(nowUtc);
+    }
+
+    public void ChangeZettelContent(string? content, DateTimeOffset nowUtc)
+    {
+        ZettelExtension!.ChangeContent(content);
+        Touch(nowUtc);
+    }
+
+    public void ChangeScheduleMisfirePolicy(ScheduleMisfirePolicy policy, DateTimeOffset nowUtc)
+    {
+        ScheduleExtension!.ChangeMisfirePolicy(policy);
+        Touch(nowUtc);
+    }
+
+    public void ChangeScheduleLookaheadLimit(int limit, DateTimeOffset nowUtc)
+    {
+        ScheduleExtension!.ChangeLookaheadLimit(limit);
+        Touch(nowUtc);
+    }
+
+    public void ChangeScheduleOccurrenceCountLimit(int? limit, DateTimeOffset nowUtc)
+    {
+        ScheduleExtension!.ChangeOccurrenceCountLimit(limit);
+        Touch(nowUtc);
+    }
+
+    public void ChangeScheduleStartTime(TimeOnly? startTime, DateTimeOffset nowUtc)
+    {
+        ScheduleExtension!.ChangeStartTime(startTime);
+        Touch(nowUtc);
+    }
+
+    public void ChangeScheduleEndTime(TimeOnly? endTime, DateTimeOffset nowUtc)
+    {
+        ScheduleExtension!.ChangeEndTime(endTime);
+        Touch(nowUtc);
+    }
+
+    public void ChangeScheduleActiveUntil(DateTimeOffset? activeUntilUtc, DateTimeOffset nowUtc)
+    {
+        ScheduleExtension!.ChangeActiveUntil(activeUntilUtc);
+        Touch(nowUtc);
+    }
 }

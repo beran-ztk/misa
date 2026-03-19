@@ -39,38 +39,26 @@ public static class ItemActivityMappings
             ActivityPriority.Critical => ActivityPriorityDto.Critical,
             _ => throw new ArgumentOutOfRangeException(nameof(activityPriority), activityPriority, null)
         };
-    
+
     public static ActivityState ToDomain(this ActivityStateDto dto) =>
         dto switch
         {
-            ActivityStateDto.Draft           => ActivityState.Draft,
-            ActivityStateDto.Undefined       => ActivityState.Undefined,
-            ActivityStateDto.InProgress      => ActivityState.InProgress,
-            ActivityStateDto.Active          => ActivityState.Active,
-            ActivityStateDto.Paused          => ActivityState.Paused,
-            ActivityStateDto.Pending         => ActivityState.Pending,
-            ActivityStateDto.WaitForResponse => ActivityState.WaitForResponse,
-            ActivityStateDto.Done            => ActivityState.Done,
-            ActivityStateDto.Canceled        => ActivityState.Canceled,
-            ActivityStateDto.Failed          => ActivityState.Failed,
-            ActivityStateDto.Expired         => ActivityState.Expired,
+            ActivityStateDto.Open     => ActivityState.Open,
+            ActivityStateDto.Done     => ActivityState.Done,
+            ActivityStateDto.Canceled => ActivityState.Canceled,
+            ActivityStateDto.Failed   => ActivityState.Failed,
+            ActivityStateDto.Expired  => ActivityState.Expired,
             _ => throw new ArgumentOutOfRangeException(nameof(dto), dto, null)
         };
 
     public static ActivityStateDto ToDto(this ActivityState domain) =>
         domain switch
         {
-            ActivityState.Draft           => ActivityStateDto.Draft,
-            ActivityState.Undefined       => ActivityStateDto.Undefined,
-            ActivityState.InProgress      => ActivityStateDto.InProgress,
-            ActivityState.Active          => ActivityStateDto.Active,
-            ActivityState.Paused          => ActivityStateDto.Paused,
-            ActivityState.Pending         => ActivityStateDto.Pending,
-            ActivityState.WaitForResponse => ActivityStateDto.WaitForResponse,
-            ActivityState.Done            => ActivityStateDto.Done,
-            ActivityState.Canceled        => ActivityStateDto.Canceled,
-            ActivityState.Failed          => ActivityStateDto.Failed,
-            ActivityState.Expired         => ActivityStateDto.Expired,
+            ActivityState.Open     => ActivityStateDto.Open,
+            ActivityState.Done     => ActivityStateDto.Done,
+            ActivityState.Canceled => ActivityStateDto.Canceled,
+            ActivityState.Failed   => ActivityStateDto.Failed,
+            ActivityState.Expired  => ActivityStateDto.Expired,
             _ => throw new ArgumentOutOfRangeException(nameof(domain), domain, null)
         };
 }
