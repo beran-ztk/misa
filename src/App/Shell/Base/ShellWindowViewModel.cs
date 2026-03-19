@@ -73,7 +73,6 @@ public partial class ShellWindowViewModel : ViewModelBase
         {
             case TaskFacadeViewModel vm:     vm.ShowAddPanelCommand.Execute(null); break;
             case ScheduleFacadeViewModel vm: vm.ShowAddPanelCommand.Execute(null); break;
-            case ChronicleViewModel vm:      vm.ShowAddPanelCommand.Execute(null); break;
         }
     }
 

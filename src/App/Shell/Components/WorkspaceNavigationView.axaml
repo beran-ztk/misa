@@ -74,6 +74,19 @@
                                    IsVisible="{Binding !IsCollapsed}"/>
                     </StackPanel>
                 </Button>
+                
+                <Button Classes="workspace-nav"
+                        Classes.nav-collapsed="{Binding IsCollapsed}"
+                        Classes.nav-active="{Binding IsJournalActive}"
+                        ToolTip.Tip="Journal"
+                        Command="{Binding ShowJournalCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Image Width="16" Height="16" VerticalAlignment="Center"
+                               Source="{SvgImage /Assets/Icons/Shell/Navigation/notebook.svg}"/>
+                        <TextBlock Classes="workspace-nav" Text="Journal"
+                                   IsVisible="{Binding !IsCollapsed}"/>
+                    </StackPanel>
+                </Button>
 
                 <Button Classes="workspace-nav"
                         Classes.nav-collapsed="{Binding IsCollapsed}"

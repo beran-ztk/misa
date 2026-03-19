@@ -47,10 +47,6 @@
                 <StackPanel Grid.Row="0" Grid.Column="0"
                             Classes="workspace-toolbar-left">
                     <Button Classes="workspace-toolbar-icon"
-                            Command="{Binding ShowAddPanelCommand}">
-                        <Image Source="{SvgImage /Assets/Icons/Common/plus.svg}" />
-                    </Button>
-                    <Button Classes="workspace-toolbar-icon"
                             Command="{Binding RefreshWorkspaceCommand}">
                         <Image Source="{SvgImage /Assets/Icons/Common/refresh.svg}" />
                     </Button>

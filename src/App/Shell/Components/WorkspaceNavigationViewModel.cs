@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Notifications;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Pages.Chronicle;
+using Misa.Ui.Avalonia.Features.Pages.Journal;
 using Misa.Ui.Avalonia.Features.Pages.Schedules;
 using Misa.Ui.Avalonia.Features.Pages.Tasks;
 using Misa.Ui.Avalonia.Features.Pages.Zettelkasten;
@@ -23,6 +24,7 @@ public partial class WorkspaceNavigationViewModel(
     ISelectionContextState selectionContextState,
     TaskFacadeViewModel task,
     ScheduleFacadeViewModel schedule,
+    JournalViewModel journal,
     ChronicleViewModel chronicle,
     ZettelkastenViewModel zettel)
     : ViewModelBase
@@ -49,6 +51,7 @@ public partial class WorkspaceNavigationViewModel(
 
     public bool IsTasksActive     => _activeWorkspace == task;
     public bool IsSchedulerActive => _activeWorkspace == schedule;
+    public bool IsJournalActive => _activeWorkspace == journal;
     public bool IsChronicleActive => _activeWorkspace == chronicle;
     public bool IsZettelActive    => _activeWorkspace == zettel;
 
@@ -84,6 +87,15 @@ public partial class WorkspaceNavigationViewModel(
         await schedule.InitializeWorkspaceAsync();
         host.Workspace = schedule;
         SetActiveWorkspace(schedule);
+    }
+    
+    [RelayCommand]
+    private async Task ShowJournal()
+    {
+        InitializeWorkspaceSwitch();
+        await journal.InitializeWorkspaceAsync();
+        host.Workspace = journal;
+        SetActiveWorkspace(journal);
     }
 
     [RelayCommand]

@@ -10,7 +10,7 @@ using Misa.Ui.Avalonia.Infrastructure.UI;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Journal;
 
-public sealed partial class CreateJournalViewModel(ChronicleGateway gateway)
+public sealed partial class CreateJournalViewModel(JournalGateway gateway)
     : ViewModelBase, IHostedForm<Result>
 {
 

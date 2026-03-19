@@ -30,21 +30,4 @@ public class ChronicleGateway(RemoteProxy remoteProxy)
 
         return response.Value;
     }
-
-    public async Task<Result> CreateAsync(CreateJournalRequest requestBody)
-    {
-        var response = await remoteProxy.SendAsync(
-            requestFactory: () => new HttpRequestMessage(HttpMethod.Post, ChronicleRoutes.CreateJournal)
-            {
-                Content = JsonContent.Create(requestBody)
-            },
-            retry: new RetryOptions
-            {
-                MaxAttempts = 3,
-                Delay = TimeSpan.FromMilliseconds(500)
-            },
-            cancellationToken: CancellationToken.None);
-
-        return response;
-    }
 }

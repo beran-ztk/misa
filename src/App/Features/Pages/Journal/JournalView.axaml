@@ -6,5 +6,16 @@
              x:Class="Misa.Ui.Avalonia.Features.Pages.Journal.JournalView"
              xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Journal"
              x:DataType="root:JournalViewModel">
-    Welcome to Avalonia!
+    
+    <StackPanel Classes="workspace-toolbar-left">
+        <Button Classes="workspace-toolbar-icon"
+                Command="{Binding ShowAddPanelCommand}">
+            <Image Source="{SvgImage /Assets/Icons/Common/plus.svg}" />
+        </Button>
+        <Button Classes="workspace-toolbar-icon"
+                Command="{Binding RefreshWorkspaceCommand}">
+            <Image Source="{SvgImage /Assets/Icons/Common/refresh.svg}" />
+        </Button>
+    </StackPanel>
+    
 </UserControl>

@@ -43,6 +43,7 @@ public static class CompositionRoot
         sc.AddInspector();
         sc.AddTasksFeature();
         sc.AddSchedulingFeature();
+        sc.AddJournalFeature();
         sc.AddChronicleFeature();
         sc.ZettelkastenServices();
         sc.AddUtilities();
@@ -135,13 +136,18 @@ public static class CompositionRoot
         sc.AddTransient<CreateScheduleView>();
         sc.AddTransient<CreateScheduleViewModel>();
     }
+    private static void AddJournalFeature(this IServiceCollection sc)
+    {
+        sc.AddSingleton<JournalViewModel>();
+        sc.AddSingleton<JournalGateway>();
+        
+        sc.AddTransient<CreateJournalView>();
+        sc.AddTransient<CreateJournalViewModel>();
+    }
     private static void AddChronicleFeature(this IServiceCollection sc)
     {
         sc.AddSingleton<ChronicleViewModel>();
         sc.AddSingleton<ChronicleGateway>();
-        
-        sc.AddTransient<CreateJournalView>();
-        sc.AddTransient<CreateJournalViewModel>();
     }
     
     private static void ZettelkastenServices(this IServiceCollection sc)
