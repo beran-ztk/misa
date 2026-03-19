@@ -87,7 +87,7 @@ public sealed partial class JournalViewModel(JournalGateway gateway, LayerProxy 
     [RelayCommand]
     private async Task ShowAddPanelAsync()
     {
-        var formVm = new CreateJournalViewModel(gateway);
+        var formVm = new CreateJournalViewModel(gateway, SelectedDay?.Date);
         var result = await layerProxy.OpenAsync<CreateJournalViewModel, Result>(formVm);
         if (result is { IsSuccess: true })
             await LoadAsync();

@@ -10,14 +10,14 @@ using Misa.Ui.Avalonia.Infrastructure.UI;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Journal;
 
-public sealed partial class CreateJournalViewModel(JournalGateway gateway)
+public sealed partial class CreateJournalViewModel(JournalGateway gateway, DateTimeOffset? initialDate = null)
     : ViewModelBase, IHostedForm<Result>
 {
 
     [ObservableProperty] private string _journalTitle = string.Empty;
     [ObservableProperty] private string? _description;
-    [ObservableProperty] private DateTimeOffset _occurredAtDate = DateTimeOffset.Now.Date;
-    [ObservableProperty] private TimeSpan _occurredAtTime = DateTimeOffset.Now.TimeOfDay;
+    [ObservableProperty] private DateTimeOffset _occurredAtDate = (initialDate ?? DateTimeOffset.Now).Date;
+    [ObservableProperty] private TimeSpan _occurredAtTime = initialDate.HasValue ? TimeSpan.Zero : DateTimeOffset.Now.TimeOfDay;
 
     [ObservableProperty] private DateTimeOffset? _untilAtDate;
     [ObservableProperty] private TimeSpan? _untilAtTime;

@@ -100,8 +100,8 @@
             <Setter Property="BorderBrush"     Value="{StaticResource BrushBorder}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="CornerRadius"    Value="5"/>
-            <Setter Property="Padding"         Value="12,10"/>
-            <Setter Property="Margin"          Value="0,0,0,6"/>
+            <Setter Property="Padding"         Value="12,10,12,12"/>
+            <Setter Property="Margin"          Value="0,0,0,8"/>
         </Style>
 
     </UserControl.Styles>
@@ -258,35 +258,31 @@
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <Border Classes="journal-entry-card">
-                                        <StackPanel Spacing="5">
+                                        <StackPanel Spacing="0">
 
-                                            <!-- Time + Title -->
-                                            <Grid ColumnDefinitions="Auto,*"
-                                                  ColumnSpacing="10">
-                                                <TextBlock Grid.Column="0"
-                                                           Text="{Binding At,
-                                                               Converter={StaticResource UtcToLocalConverter},
-                                                               StringFormat='HH:mm'}"
-                                                           FontSize="{StaticResource FontSizeSmall}"
-                                                           Foreground="{StaticResource BrushTextFaded}"
-                                                           VerticalAlignment="Top"
-                                                           Margin="0,1,0,0"/>
-                                                <TextBlock Grid.Column="1"
-                                                           Text="{Binding Title}"
-                                                           FontSize="{StaticResource FontSizeMedium}"
-                                                           FontWeight="Medium"
-                                                           Foreground="{StaticResource BrushTextPrimary}"
-                                                           TextWrapping="Wrap"/>
-                                            </Grid>
+                                            <!-- Time -->
+                                            <TextBlock Text="{Binding At,
+                                                           Converter={StaticResource UtcToLocalConverter},
+                                                           StringFormat='HH:mm'}"
+                                                       FontSize="10"
+                                                       Foreground="{StaticResource BrushTextFaded}"
+                                                       Margin="0,0,0,4"/>
 
-                                            <!-- Description -->
+                                            <!-- Title -->
+                                            <TextBlock Text="{Binding Title}"
+                                                       FontSize="{StaticResource FontSizeMedium}"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{StaticResource BrushTextPrimary}"
+                                                       TextWrapping="Wrap"/>
+
+                                            <!-- Description (only when present) -->
                                             <TextBlock Text="{Binding Description}"
                                                        IsVisible="{Binding Description,
                                                            Converter={StaticResource NullToBoolConverter}}"
                                                        FontSize="{StaticResource FontSizeSmall}"
                                                        Foreground="{StaticResource BrushTextSecondary}"
                                                        TextWrapping="Wrap"
-                                                       Margin="0,2,0,0"/>
+                                                       Margin="0,6,0,0"/>
 
                                         </StackPanel>
                                     </Border>
