@@ -20,8 +20,8 @@ public sealed partial class JournalViewModel(JournalGateway gateway, LayerProxy 
 
     // ── Observable state ──────────────────────────────────────────────────────
 
-    public ObservableCollection<JournalDayItem>    DayItems           { get; } = [];
-    public ObservableCollection<ChronicleEntryDto> SelectedDayEntries { get; } = [];
+    public ObservableCollection<JournalCalendarCell> CalendarCells      { get; } = [];
+    public ObservableCollection<ChronicleEntryDto>   SelectedDayEntries { get; } = [];
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(MonthLabel))]
@@ -70,6 +70,15 @@ public sealed partial class JournalViewModel(JournalGateway gateway, LayerProxy 
         await LoadAsync();
     }
 
+    // ── Day selection ─────────────────────────────────────────────────────────
+
+    [RelayCommand]
+    private void SelectDay(JournalDayItem? day)
+    {
+        if (day is null) return;
+        SelectedDay = day;
+    }
+
     // ── Commands ──────────────────────────────────────────────────────────────
 
     [RelayCommand]
@@ -89,10 +98,10 @@ public sealed partial class JournalViewModel(JournalGateway gateway, LayerProxy 
     private async Task LoadAsync()
     {
         _monthEntries = await gateway.GetJournalsForMonthAsync(SelectedYear, SelectedMonth);
-        RebuildDayItems();
+        RebuildCalendarCells();
     }
 
-    private void RebuildDayItems()
+    private void RebuildCalendarCells()
     {
         var daysInMonth    = DateTime.DaysInMonth(SelectedYear, SelectedMonth);
         var today          = DateTime.Today;
@@ -103,30 +112,54 @@ public sealed partial class JournalViewModel(JournalGateway gateway, LayerProxy 
             .GroupBy(e => e.At.ToLocalTime().Day)
             .ToDictionary(g => g.Key, g => g.Count());
 
-        DayItems.Clear();
+        // Monday-first offset: Sunday=0 in DotNet → maps to column 6; Monday=1 → column 0.
+        var firstDayOfMonth = new DateTime(SelectedYear, SelectedMonth, 1);
+        var leadingEmpties  = ((int)firstDayOfMonth.DayOfWeek + 6) % 7;
+
+        CalendarCells.Clear();
+
+        for (var i = 0; i < leadingEmpties; i++)
+            CalendarCells.Add(new JournalCalendarCell { IsEmpty = true });
+
         for (var d = 1; d <= daysInMonth; d++)
         {
-            DayItems.Add(new JournalDayItem
+            CalendarCells.Add(new JournalCalendarCell
             {
-                Day        = d,
-                Date       = new DateTime(SelectedYear, SelectedMonth, d),
-                EntryCount = countsByDay.GetValueOrDefault(d, 0)
+                DayItem = new JournalDayItem
+                {
+                    Day        = d,
+                    Date       = new DateTime(SelectedYear, SelectedMonth, d),
+                    EntryCount = countsByDay.GetValueOrDefault(d, 0)
+                }
             });
         }
 
         // Restore or default selection: previously selected day → today → first day.
-        var newSelected =
-            (prevSelectedDay.HasValue ? DayItems.FirstOrDefault(x => x.Day == prevSelectedDay) : null)
-            ?? (SelectedYear == today.Year && SelectedMonth == today.Month
-                ? DayItems.FirstOrDefault(x => x.Day == today.Day)
+        var targetCell =
+            (prevSelectedDay.HasValue
+                ? CalendarCells.FirstOrDefault(c => !c.IsEmpty && c.DayItem!.Day == prevSelectedDay)
                 : null)
-            ?? DayItems.FirstOrDefault();
+            ?? (SelectedYear == today.Year && SelectedMonth == today.Month
+                ? CalendarCells.FirstOrDefault(c => !c.IsEmpty && c.DayItem!.IsToday)
+                : null)
+            ?? CalendarCells.FirstOrDefault(c => !c.IsEmpty);
 
-        SelectedDay = newSelected;
+        SelectedDay = targetCell?.DayItem;
+        SyncCellSelection();
         RebuildSelectedDayEntries();
     }
 
-    partial void OnSelectedDayChanged(JournalDayItem? value) => RebuildSelectedDayEntries();
+    partial void OnSelectedDayChanged(JournalDayItem? value)
+    {
+        SyncCellSelection();
+        RebuildSelectedDayEntries();
+    }
+
+    private void SyncCellSelection()
+    {
+        foreach (var cell in CalendarCells)
+            cell.IsSelected = !cell.IsEmpty && cell.DayItem == SelectedDay;
+    }
 
     private void RebuildSelectedDayEntries()
     {

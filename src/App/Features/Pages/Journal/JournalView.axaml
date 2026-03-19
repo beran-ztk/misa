@@ -38,21 +38,59 @@
             </Style>
         </Style>
 
-        <!-- ── Day list item selected state ──────────────────────────── -->
-        <Style Selector="ListBoxItem:selected Border.day-item-accent">
-            <Setter Property="Background" Value="{StaticResource BrushAccent}"/>
+        <!-- ── Calendar weekday header labels ────────────────────────── -->
+        <Style Selector="TextBlock.cal-weekday">
+            <Setter Property="FontSize"         Value="9"/>
+            <Setter Property="FontWeight"       Value="Medium"/>
+            <Setter Property="Foreground"       Value="{StaticResource BrushTextFaded}"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment"   Value="Center"/>
+            <Setter Property="TextAlignment"    Value="Center"/>
         </Style>
-        <Style Selector="ListBoxItem:selected TextBlock.day-number">
+
+        <!-- ── Calendar day cell button ──────────────────────────────── -->
+        <Style Selector="Button.cal-day">
+            <Setter Property="Width"            Value="22"/>
+            <Setter Property="Height"           Value="22"/>
+            <Setter Property="Padding"          Value="0"/>
+            <Setter Property="Background"       Value="Transparent"/>
+            <Setter Property="Foreground"       Value="{StaticResource BrushTextSecondary}"/>
+            <Setter Property="FontSize"         Value="11"/>
+            <Setter Property="Cursor"           Value="Hand"/>
+            <Setter Property="HorizontalAlignment"        Value="Center"/>
+            <Setter Property="VerticalAlignment"          Value="Center"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment"   Value="Center"/>
+            <Style Selector="^ /template/ ContentPresenter">
+                <Setter Property="CornerRadius"    Value="4"/>
+                <Setter Property="BorderThickness" Value="0"/>
+            </Style>
+            <Style Selector="^:pointerover /template/ ContentPresenter">
+                <Setter Property="Background" Value="#0EFFFFFF"/>
+            </Style>
+            <Style Selector="^:pressed /template/ ContentPresenter">
+                <Setter Property="Background" Value="#18FFFFFF"/>
+            </Style>
+        </Style>
+
+        <!-- Today: accent-coloured foreground, subtle ring -->
+        <Style Selector="Button.cal-day.cal-today">
+            <Setter Property="Foreground" Value="{StaticResource BrushAccent}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+
+        <!-- Selected: solid accent background, primary text -->
+        <Style Selector="Button.cal-day.cal-selected /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource BrushAccent}"/>
+            <Setter Property="CornerRadius" Value="4"/>
+        </Style>
+        <Style Selector="Button.cal-day.cal-selected">
             <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
             <Setter Property="FontWeight" Value="Medium"/>
         </Style>
 
-        <!-- Today marker: accent-colored day number even when not selected -->
-        <Style Selector="TextBlock.day-number.day-today">
-            <Setter Property="Foreground" Value="{StaticResource BrushAccent}"/>
-        </Style>
-        <Style Selector="ListBoxItem:selected TextBlock.day-number.day-today">
-            <Setter Property="Foreground" Value="{StaticResource BrushAccent}"/>
+        <!-- Selected + today: keep accent background, slightly bolder -->
+        <Style Selector="Button.cal-day.cal-selected.cal-today">
             <Setter Property="FontWeight" Value="SemiBold"/>
         </Style>
 
@@ -124,69 +162,69 @@
         </Border>
 
         <!-- ══════════════════════════════════════════════════════════════
-             CONTENT — day list (left)  |  entry view (right)
+             CONTENT — calendar (left)  |  entry view (right)
         ═══════════════════════════════════════════════════════════════ -->
-        <Grid Grid.Row="1" ColumnDefinitions="148,*">
+        <Grid Grid.Row="1" ColumnDefinitions="172,*">
 
-            <!-- ── Left panel: day list ─────────────────────────────── -->
+            <!-- ── Left panel: month calendar grid ──────────────────── -->
             <Border Grid.Column="0"
                     BorderBrush="{StaticResource BrushBorder}"
                     BorderThickness="0,0,1,0">
-                <ScrollViewer VerticalScrollBarVisibility="Auto"
-                              HorizontalScrollBarVisibility="Disabled">
-                    <ListBox ItemsSource="{Binding DayItems}"
-                             SelectedItem="{Binding SelectedDay, Mode=TwoWay}"
-                             Background="Transparent"
-                             BorderThickness="0"
-                             Padding="0,4">
-                        <ListBox.ItemContainerTheme>
-                            <ControlTheme TargetType="ListBoxItem"
-                                          BasedOn="{StaticResource {x:Type ListBoxItem}}">
-                                <Setter Property="Padding"    Value="0"/>
-                                <Setter Property="Margin"     Value="0"/>
-                                <Setter Property="Cursor"     Value="Hand"/>
-                                <Setter Property="Background" Value="Transparent"/>
-                            </ControlTheme>
-                        </ListBox.ItemContainerTheme>
-                        <ListBox.ItemTemplate>
-                            <DataTemplate x:DataType="root:JournalDayItem">
-                                <Grid ColumnDefinitions="3,*,Auto"
-                                      Height="30">
+                <StackPanel Margin="8,10,8,8" Spacing="4">
 
-                                    <!-- Accent left-edge bar — coloured when the item is selected -->
-                                    <Border Grid.Column="0"
-                                            Classes="day-item-accent"
-                                            Background="Transparent"
-                                            CornerRadius="0,2,2,0"/>
+                    <!-- Weekday headers: Mon → Sun -->
+                    <Grid ColumnDefinitions="*,*,*,*,*,*,*">
+                        <TextBlock Grid.Column="0" Classes="cal-weekday" Text="M"/>
+                        <TextBlock Grid.Column="1" Classes="cal-weekday" Text="T"/>
+                        <TextBlock Grid.Column="2" Classes="cal-weekday" Text="W"/>
+                        <TextBlock Grid.Column="3" Classes="cal-weekday" Text="T"/>
+                        <TextBlock Grid.Column="4" Classes="cal-weekday" Text="F"/>
+                        <TextBlock Grid.Column="5" Classes="cal-weekday" Text="S"/>
+                        <TextBlock Grid.Column="6" Classes="cal-weekday" Text="S"/>
+                    </Grid>
 
-                                    <!-- Day number -->
-                                    <TextBlock Grid.Column="1"
-                                               Classes="day-number"
-                                               Classes.day-today="{Binding IsToday}"
-                                               Text="{Binding Day}"
-                                               FontSize="12"
-                                               Foreground="{StaticResource BrushTextSecondary}"
-                                               Margin="10,0,4,0"
-                                               VerticalAlignment="Center"/>
+                    <!-- Day cells -->
+                    <ItemsControl ItemsSource="{Binding CalendarCells}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="root:JournalCalendarCell">
+                                <!-- Fixed-size slot; empty cells are transparent spacers -->
+                                <Panel Width="22" Height="26">
 
-                                    <!-- Entry count badge (hidden when zero) -->
-                                    <Border Grid.Column="2"
-                                            IsVisible="{Binding HasEntries}"
-                                            Background="{StaticResource BrushPrimaryBackgroundLighter}"
-                                            CornerRadius="3"
-                                            Padding="4,1"
-                                            Margin="0,0,8,0"
-                                            VerticalAlignment="Center">
-                                        <TextBlock Text="{Binding EntryCount}"
-                                                   FontSize="10"
-                                                   Foreground="{StaticResource BrushTextFaded}"/>
-                                    </Border>
+                                    <!-- Day button (hidden for empty/padding cells) -->
+                                    <Button Classes="cal-day"
+                                            Classes.cal-today="{Binding DayItem.IsToday}"
+                                            Classes.cal-selected="{Binding IsSelected}"
+                                            IsVisible="{Binding !IsEmpty}"
+                                            Tag="{Binding DayItem}"
+                                            Click="OnDayClicked"
+                                            VerticalAlignment="Top"
+                                            Margin="0,2,0,0">
+                                        <Panel>
+                                            <TextBlock Text="{Binding DayItem.Day}"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"/>
 
-                                </Grid>
+                                            <!-- Entry dot badge -->
+                                            <Ellipse Width="3" Height="3"
+                                                     Fill="{StaticResource BrushAccent}"
+                                                     IsVisible="{Binding DayItem.HasEntries}"
+                                                     HorizontalAlignment="Center"
+                                                     VerticalAlignment="Bottom"
+                                                     Margin="0,0,0,1"/>
+                                        </Panel>
+                                    </Button>
+
+                                </Panel>
                             </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-                </ScrollViewer>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                </StackPanel>
             </Border>
 
             <!-- ── Right panel: selected day entries ───────────────── -->
