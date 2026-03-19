@@ -91,6 +91,13 @@ public partial class InspectorEntryViewModel : ViewModelBase
         OnPropertyChanged(nameof(CanContinueSession));
         OnPropertyChanged(nameof(CanEndSession));
 
+        OnPropertyChanged(nameof(IsRunning));
+        OnPropertyChanged(nameof(IsPaused));
+        OnPropertyChanged(nameof(SessionStateLabel));
+        OnPropertyChanged(nameof(ActiveSessionObjective));
+        OnPropertyChanged(nameof(HasActiveSessionObjective));
+        OnPropertyChanged(nameof(ActiveSessionSegmentLabel));
+
         OnPropertyChanged(nameof(ActiveSessionElapsedDisplay));
         OnPropertyChanged(nameof(ActiveSessionPlannedSuffixDisplay));
         OnPropertyChanged(nameof(IsOverPlannedDuration));
