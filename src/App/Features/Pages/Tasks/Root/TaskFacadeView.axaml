@@ -284,34 +284,17 @@
                     </Button>
                 </StackPanel>
 
-                <!-- Row 0 right: view toggle + search -->
+                <!-- Row 0 right: search -->
                 <StackPanel Grid.Row="0" Grid.Column="1"
-                            Classes="workspace-toolbar-right"
-                            Spacing="8">
-
-                    <StackPanel Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
-                        <Button Classes="workspace-toolbar-icon"
-                                Classes.view-active="{Binding State.IsCardView}"
-                                Command="{Binding SetCardViewCommand}"
-                                ToolTip.Tip="Card view">
-                            <Image Source="{SvgImage /Assets/Icons/Staging/tabs.svg}" />
-                        </Button>
-                        <Button Classes="workspace-toolbar-icon"
-                                Classes.view-active="{Binding State.IsListView}"
-                                Command="{Binding SetListViewCommand}"
-                                ToolTip.Tip="List view">
-                            <Image Source="{SvgImage /Assets/Icons/Shell/Navigation/list-dashes.svg}" />
-                        </Button>
-                    </StackPanel>
-
+                            Classes="workspace-toolbar-right">
                     <TextBox Classes="workspace-toolbar-search"
                              Watermark="Search tasks..."
                              Text="{Binding State.SearchText, Mode=TwoWay}" />
                 </StackPanel>
 
                 <!--
-                    Row 1: workspace mode segmented control.
-                    Container Border unifies the three segments visually.
+                    Row 1: workspace mode segmented control (left) + layout toggle (right).
+                    Container Border unifies the segments visually.
                     Active segment gets a filled background; deleted active uses a subtle red tint.
                 -->
                 <Border Grid.Row="1" Grid.Column="0"
@@ -338,7 +321,28 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Row 2: filters + sort control -->
+                <!-- Row 1 right: layout toggle — segmented control matching workspace-mode style -->
+                <Border Grid.Row="1" Grid.Column="1"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center"
+                        Background="{StaticResource BrushPrimaryBackground}"
+                        BorderBrush="{StaticResource BrushBorder}"
+                        BorderThickness="1"
+                        CornerRadius="5"
+                        Padding="2">
+                    <StackPanel Orientation="Horizontal" Spacing="1">
+                        <Button Classes="workspace-mode-seg"
+                                Classes.seg-on="{Binding State.IsCardView}"
+                                Command="{Binding SetCardViewCommand}"
+                                Content="Card"/>
+                        <Button Classes="workspace-mode-seg"
+                                Classes.seg-on="{Binding State.IsListView}"
+                                Command="{Binding SetListViewCommand}"
+                                Content="List"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Row 2 left: filters -->
                 <StackPanel Grid.Row="2" Grid.Column="0"
                             Classes="workspace-toolbar-center">
 
@@ -351,69 +355,76 @@
                     <filters:FilterDropdownView
                         DataContext="{Binding State.CategoryFilter}"/>
 
-                    <!--
-                        Sort control: [Sort label] [field trigger ▾] [direction glyph]
-                        Compact, left-aligned, consistent with filter chips.
-                    -->
-                    <StackPanel Orientation="Horizontal"
-                                Spacing="3"
-                                VerticalAlignment="Center"
-                                Margin="4,0,0,0">
+                </StackPanel>
 
-                        <TextBlock Text="Sort"
-                                   FontSize="{StaticResource FontSizeSmall}"
-                                   Foreground="{StaticResource BrushTextFaded}"
-                                   VerticalAlignment="Center"
-                                   Margin="2,0"/>
+                <!--
+                    Row 2 right: sort group — [Sort label] [field ▾ | ↑↓] in a single container.
+                    Uses the same segmented-control border as the workspace/layout toggles so
+                    the field picker and direction button read as one coherent control.
+                -->
+                <StackPanel Grid.Row="2" Grid.Column="1"
+                            Orientation="Horizontal"
+                            Spacing="5"
+                            VerticalAlignment="Center"
+                            HorizontalAlignment="Right">
 
-                        <!-- Field picker -->
-                        <Button Classes="sort-field-trigger">
-                            <Button.Flyout>
-                                <Flyout Placement="Bottom"
-                                        ShowMode="TransientWithDismissOnPointerMoveAway">
-                                    <Border Background="{StaticResource BrushPrimaryBackground}"
-                                            BorderBrush="{StaticResource BrushBorder}"
-                                            BorderThickness="1"
-                                            CornerRadius="6"
-                                            BoxShadow="0 4 16 2 #50000000"
-                                            MinWidth="130"
-                                            Padding="2">
-                                        <StackPanel Spacing="1">
-                                            <Button Classes="sort-option"
-                                                    Classes.sort-active="{Binding State.IsSortByCreated}"
-                                                    Command="{Binding SetSortCreatedCommand}"
-                                                    Content="Created"/>
-                                            <Button Classes="sort-option"
-                                                    Classes.sort-active="{Binding State.IsSortByTitle}"
-                                                    Command="{Binding SetSortTitleCommand}"
-                                                    Content="Title"/>
-                                            <Button Classes="sort-option"
-                                                    Classes.sort-active="{Binding State.IsSortByState}"
-                                                    Command="{Binding SetSortStateCommand}"
-                                                    Content="State"/>
-                                        </StackPanel>
-                                    </Border>
-                                </Flyout>
-                            </Button.Flyout>
-                            <StackPanel Orientation="Horizontal" Spacing="5">
+                    <TextBlock Text="Sort by"
+                               FontSize="{StaticResource FontSizeSmall}"
+                               Foreground="{StaticResource BrushTextSecondary}"
+                               VerticalAlignment="Center"/>
+
+                    <Border Background="{StaticResource BrushPrimaryBackground}"
+                            BorderBrush="{StaticResource BrushBorder}"
+                            BorderThickness="1"
+                            CornerRadius="5"
+                            Padding="2">
+                        <StackPanel Orientation="Horizontal" Spacing="1">
+
+                            <!-- Field picker -->
+                            <Button Classes="workspace-mode-seg">
                                 <TextBlock Text="{Binding State.SortFieldLabel}"
                                            VerticalAlignment="Center"/>
-                                <TextBlock Text="▾"
-                                           FontSize="9"
-                                           Opacity="0.6"
+                                
+                                <Button.Flyout>
+                                    <Flyout Placement="Bottom"
+                                            ShowMode="TransientWithDismissOnPointerMoveAway">
+                                        <Border Background="{StaticResource BrushPrimaryBackground}"
+                                                BorderBrush="{StaticResource BrushBorder}"
+                                                BorderThickness="1"
+                                                CornerRadius="6"
+                                                BoxShadow="0 4 16 2 #50000000"
+                                                MinWidth="130"
+                                                Padding="2">
+                                            <StackPanel Spacing="1">
+                                                <Button Classes="sort-option"
+                                                        Classes.sort-active="{Binding State.IsSortByCreated}"
+                                                        Command="{Binding SetSortCreatedCommand}"
+                                                        Content="Created"/>
+                                                <Button Classes="sort-option"
+                                                        Classes.sort-active="{Binding State.IsSortByTitle}"
+                                                        Command="{Binding SetSortTitleCommand}"
+                                                        Content="Title"/>
+                                                <Button Classes="sort-option"
+                                                        Classes.sort-active="{Binding State.IsSortByState}"
+                                                        Command="{Binding SetSortStateCommand}"
+                                                        Content="State"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </Flyout>
+                                </Button.Flyout>
+                            </Button>
+
+                            <!-- Direction toggle -->
+                            <Button Classes="workspace-mode-seg"
+                                    Padding="8,0"
+                                    Command="{Binding ToggleSortDirectionCommand}">
+                                <TextBlock Text="{Binding State.SortDirectionGlyph}"
+                                           FontSize="10"
                                            VerticalAlignment="Center"/>
-                            </StackPanel>
-                        </Button>
+                            </Button>
 
-                        <!-- Direction toggle -->
-                        <Button Classes="workspace-toolbar-icon"
-                                Command="{Binding ToggleSortDirectionCommand}">
-                            <TextBlock Text="{Binding State.SortDirectionGlyph}"
-                                       FontSize="8"
-                                       VerticalAlignment="Center"/>
-                        </Button>
-
-                    </StackPanel>
+                        </StackPanel>
+                    </Border>
 
                 </StackPanel>
 
