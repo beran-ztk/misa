@@ -4,7 +4,6 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="Misa.Ui.Avalonia.Features.Pages.Tasks.Root.TaskFacadeView"
-             MinWidth="500"
              xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Tasks.Root"
              xmlns:converters="clr-namespace:Misa.Ui.Avalonia.Common.Converters"
              xmlns:filters="clr-namespace:Misa.Ui.Avalonia.Common.Components.FilterDropdown"
@@ -44,7 +43,7 @@
         <Style Selector="Border.task-card">
             <Setter Property="Background"      Value="{StaticResource BrushPrimaryBackground}"/>
             <Setter Property="BorderBrush"     Value="{StaticResource BrushBorder}"/>
-            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderThickness" Value="0,1,1,1"/>
         </Style>
 
         <!-- ── Card hover / selected states ─────────────────────────── -->
@@ -63,7 +62,7 @@
         <!-- Selected takes priority: prevent hover from overriding the accent border -->
         <Style Selector="ListBoxItem:selected:pointerover Border.task-card">
             <Setter Property="BorderBrush"     Value="{StaticResource BrushAccent}"/>
-            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderThickness" Value="0,1,1,1"/>
         </Style>
 
         <!-- ── View mode icon buttons ────────────────────────────────── -->
@@ -614,54 +613,49 @@
 
                                     </Grid>
 
-                                    <!-- Row 2: State · Category  |  Modified date -->
+                                    <!-- Row 2: State · Category · Priority  |  Created date -->
                                     <Grid ColumnDefinitions="*,Auto">
                                         <StackPanel Grid.Column="0"
                                                     Orientation="Horizontal"
                                                     Spacing="4">
                                             <TextBlock Text="{Binding Activity.State}"
                                                        FontSize="{StaticResource FontSizeSmall}"
+                                                       FontWeight="Medium"
                                                        Foreground="{StaticResource BrushTextSecondary}"/>
                                             <TextBlock Text="·"
                                                        FontSize="{StaticResource FontSizeSmall}"
                                                        Foreground="{StaticResource BrushTextFaded}"/>
                                             <TextBlock Text="{Binding Category}"
                                                        FontSize="{StaticResource FontSizeSmall}"
+                                                       FontWeight="Medium"
                                                        Foreground="{StaticResource BrushTextSecondary}"/>
+                                            <TextBlock Text="·"
+                                                       FontSize="{StaticResource FontSizeSmall}"
+                                                       Foreground="{StaticResource BrushTextFaded}"/>
+                                            <TextBlock Text="{Binding Activity.Priority}"
+                                                       FontSize="{StaticResource FontSizeSmall}"
+                                                       FontWeight="Medium"
+                                                       Foreground="{StaticResource BrushTextSecondary}"
+                                                       Opacity="0.7"/>
                                         </StackPanel>
 
                                         <TextBlock Grid.Column="1"
-                                                   Text="{Binding Item.ModifiedAt,
+                                                   Text="{Binding Item.CreatedAt,
                                                        Converter={StaticResource UtcToLocalConverter},
                                                        StringFormat='dd MMM'}"
                                                    FontSize="{StaticResource FontSizeSmall}"
                                                    Foreground="{StaticResource BrushTextFaded}"
-                                                   IsVisible="{Binding Item.ModifiedAt,
+                                                   IsVisible="{Binding Item.CreatedAt,
                                                        Converter={StaticResource NullToBoolConverter}}"/>
                                     </Grid>
 
-                                    <!-- Row 3: age chip (left) · created date (right) -->
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <StackPanel Grid.Column="0"
-                                                    Orientation="Horizontal" Spacing="4">
-                                            <Border Classes="signal-chip neutral"
-                                                    IsVisible="{Binding Item.CreatedAt,
-                                                        Converter={StaticResource ItemAgeConverter}}">
-                                                <TextBlock Text="{Binding Item.CreatedAt,
-                                                               Converter={StaticResource ItemAgeConverter}}"/>
-                                            </Border>
-                                        </StackPanel>
-
-                                        <!-- Created date — subtle right anchor; visible when sorting by Created -->
-                                        <TextBlock Grid.Column="1"
-                                                   Text="{Binding Item.CreatedAt,
-                                                       Converter={StaticResource UtcToLocalConverter},
-                                                       StringFormat='dd MMM yyyy'}"
-                                                   FontSize="{StaticResource FontSizeSmall}"
-                                                   Foreground="{StaticResource BrushTextFaded}"
-                                                   Opacity="0.5"
-                                                   VerticalAlignment="Center"/>
-                                    </Grid>
+                                    <!-- Row 3: age signal — only rendered when contextually relevant -->
+                                    <Border Classes="signal-chip neutral"
+                                            IsVisible="{Binding Item.CreatedAt,
+                                                Converter={StaticResource ItemAgeConverter}}">
+                                        <TextBlock Text="{Binding Item.CreatedAt,
+                                                       Converter={StaticResource ItemAgeConverter}}"/>
+                                    </Border>
 
                                 </StackPanel>
                             </Grid>
