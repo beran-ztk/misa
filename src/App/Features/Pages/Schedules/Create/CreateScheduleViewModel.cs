@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Common.Results;
 using Misa.Contract.Items.Components.Activity;
 using Misa.Contract.Items.Components.Schedules;
@@ -28,15 +29,27 @@ public sealed partial class CreateScheduleViewModel(ScheduleGateway gateway)
 
         return await gateway.CreateAsync(dto);
     }
-    
-    [ObservableProperty] private string _title = string.Empty;
-    [ObservableProperty] private string? _description;
-    [ObservableProperty] private int _frequencyInterval = 1;
-    [ObservableProperty] private int _lookaheadLimit = 1;
 
-    [ObservableProperty] private bool _hasValidationError;
+    // ── Mode ─────────────────────────────────────────────────────────────────
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsRecurringMode))]
+    private bool _isOnceMode = true;
+
+    public bool IsRecurringMode => !IsOnceMode;
+
+    [RelayCommand] private void SetOnceMode()      => IsOnceMode = true;
+    [RelayCommand] private void SetRecurringMode() => IsOnceMode = false;
+
+    // ── Basic ─────────────────────────────────────────────────────────────────
+
+    [ObservableProperty] private string  _title       = string.Empty;
+    [ObservableProperty] private string? _description;
+
+    [ObservableProperty] private bool   _hasValidationError;
     [ObservableProperty] private string _errorMessage = string.Empty;
-    [ObservableProperty] private int? _occurrenceCountLimit;
+
+    // ── Action ────────────────────────────────────────────────────────────────
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsCreateTaskAction))]
@@ -45,8 +58,7 @@ public sealed partial class CreateScheduleViewModel(ScheduleGateway gateway)
 
     public bool IsCreateTaskAction => SelectedActionType == ScheduleActionTypeDto.CreateTask;
 
-    // ── CreateTask payload ───────────────────────────────────────────
-    [ObservableProperty] private string _taskTitle       = string.Empty;
+    [ObservableProperty] private string  _taskTitle       = string.Empty;
     [ObservableProperty] private string? _taskDescription;
     [ObservableProperty] private TaskCategoryDto     _taskCategory = TaskCategoryDto.Personal;
     [ObservableProperty] private ActivityPriorityDto _taskPriority = ActivityPriorityDto.None;
@@ -54,29 +66,55 @@ public sealed partial class CreateScheduleViewModel(ScheduleGateway gateway)
     public IReadOnlyList<TaskCategoryDto>     TaskCategories { get; } = Enum.GetValues<TaskCategoryDto>();
     public IReadOnlyList<ActivityPriorityDto> TaskPriorities { get; } = Enum.GetValues<ActivityPriorityDto>();
 
-    [ObservableProperty] private ScheduleMisfirePolicyDto _selectedMisfirePolicy = ScheduleMisfirePolicyDto.Catchup;
+    // ── Recurring: schedule ───────────────────────────────────────────────────
+
+    [ObservableProperty] private ScheduleFrequencyTypeDto  _selectedFrequencyType  = ScheduleFrequencyTypeDto.Minutes;
+    [ObservableProperty] private ScheduleMisfirePolicyDto  _selectedMisfirePolicy  = ScheduleMisfirePolicyDto.Catchup;
+    [ObservableProperty] private int _frequencyInterval = 1;
+    [ObservableProperty] private int _lookaheadLimit    = 1;
+
+    /// <summary>Frequency types shown in recurring mode — excludes Once, which has its own dedicated flow.</summary>
+    public IReadOnlyList<ScheduleFrequencyTypeDto> RecurringFrequencyTypes { get; } =
+        Enum.GetValues<ScheduleFrequencyTypeDto>()
+            .Where(f => f != ScheduleFrequencyTypeDto.Once)
+            .ToList();
+
     public IReadOnlyList<ScheduleMisfirePolicyDto> MisfirePolicies { get; } = Enum.GetValues<ScheduleMisfirePolicyDto>();
 
-    [ObservableProperty] private ScheduleFrequencyTypeDto _selectedFrequencyType = ScheduleFrequencyTypeDto.Minutes;
-    public IReadOnlyList<ScheduleFrequencyTypeDto> FrequencyTypes { get; } = Enum.GetValues<ScheduleFrequencyTypeDto>();
+    // ── Recurring: lifetime ───────────────────────────────────────────────────
 
-    [ObservableProperty] private int _occurrenceTtlDays;
-    [ObservableProperty] private int _occurrenceTtlHours;
-    [ObservableProperty] private int _occurrenceTtlMinutes;
+    [ObservableProperty] private int? _occurrenceCountLimit;
+    [ObservableProperty] private int  _occurrenceTtlDays;
+    [ObservableProperty] private int  _occurrenceTtlHours;
+    [ObservableProperty] private int  _occurrenceTtlMinutes;
+
+    private TimeSpan? OccurrenceTtl =>
+        OccurrenceTtlDays == 0 && OccurrenceTtlHours == 0 && OccurrenceTtlMinutes == 0
+            ? null
+            : new TimeSpan(OccurrenceTtlDays, OccurrenceTtlHours, OccurrenceTtlMinutes, 0);
+
+    // ── Activation (shared: Once uses ActiveFrom as the trigger datetime) ─────
+
+    [ObservableProperty] private DateTimeOffset  _activeFromDate  = DateTimeOffset.Now.Date;
+    [ObservableProperty] private TimeSpan        _activeFromTime  = DateTimeOffset.Now.TimeOfDay;
+    [ObservableProperty] private DateTimeOffset? _activeUntilDate;
+    [ObservableProperty] private TimeSpan?       _activeUntilTime;
+
+    partial void OnActiveUntilDateChanged(DateTimeOffset? value)
+    {
+        if (value is not null && ActiveUntilTime is null)
+            ActiveUntilTime = TimeSpan.Zero;
+    }
+
+    // ── Recurring: time window ────────────────────────────────────────────────
 
     [ObservableProperty] private TimeSpan? _startTime;
     [ObservableProperty] private TimeSpan? _endTime;
 
-    [ObservableProperty] private DateTimeOffset _activeFromDate = DateTimeOffset.Now.Date;
-    [ObservableProperty] private TimeSpan _activeFromTime = DateTimeOffset.Now.TimeOfDay;
+    // ── Recurring: restrictions ───────────────────────────────────────────────
 
-    [ObservableProperty] private DateTimeOffset? _activeUntilDate;
-    [ObservableProperty] private TimeSpan? _activeUntilTime;
-
-    // Monthdays as Input "1,15,31"
     [ObservableProperty] private string _byMonthDayCsv = string.Empty;
 
-    // Weekdays (Mo..So) and Months (Jan..Dez)
     [ObservableProperty] private bool _byDayMon;
     [ObservableProperty] private bool _byDayTue;
     [ObservableProperty] private bool _byDayWed;
@@ -98,18 +136,50 @@ public sealed partial class CreateScheduleViewModel(ScheduleGateway gateway)
     [ObservableProperty] private bool _byMonthNov;
     [ObservableProperty] private bool _byMonthDec;
 
-    partial void OnActiveUntilDateChanged(DateTimeOffset? value)
+    // ── Reset ─────────────────────────────────────────────────────────────────
+
+    public void Reset()
     {
-        if (value is not null && ActiveUntilTime is null)
-            ActiveUntilTime = TimeSpan.Zero;
+        IsOnceMode = true;
+
+        Title       = string.Empty;
+        Description = null;
+
+        SelectedFrequencyType = ScheduleFrequencyTypeDto.Minutes;
+        FrequencyInterval     = 1;
+        LookaheadLimit        = 1;
+
+        OccurrenceCountLimit = null;
+        SelectedMisfirePolicy = ScheduleMisfirePolicyDto.Catchup;
+
+        OccurrenceTtlDays    = 0;
+        OccurrenceTtlHours   = 0;
+        OccurrenceTtlMinutes = 0;
+
+        StartTime = null;
+        EndTime   = null;
+
+        ActiveFromDate  = DateTimeOffset.Now.Date;
+        ActiveFromTime  = DateTimeOffset.Now.TimeOfDay;
+        ActiveUntilDate = null;
+        ActiveUntilTime = null;
+
+        ByDayMon = ByDayTue = ByDayWed = ByDayThu = ByDayFri = ByDaySat = ByDaySun = false;
+        ByMonthJan = ByMonthFeb = ByMonthMar = ByMonthApr = ByMonthMay = ByMonthJun =
+            ByMonthJul = ByMonthAug = ByMonthSep = ByMonthOct = ByMonthNov = ByMonthDec = false;
+
+        ByMonthDayCsv = string.Empty;
+
+        SelectedActionType = ScheduleActionTypeDto.None;
+        TaskTitle          = string.Empty;
+        TaskDescription    = null;
+        TaskCategory       = TaskCategoryDto.Personal;
+        TaskPriority       = ActivityPriorityDto.None;
+
+        ClearValidationError();
     }
 
-    private TimeSpan? OccurrenceTtl =>
-        OccurrenceTtlDays == 0 &&
-        OccurrenceTtlHours == 0 &&
-        OccurrenceTtlMinutes == 0
-            ? null
-            : new TimeSpan(OccurrenceTtlDays, OccurrenceTtlHours, OccurrenceTtlMinutes, 0);
+    // ── Validation + request building ─────────────────────────────────────────
 
     private void ShowValidationError(string message)
     {
@@ -123,45 +193,112 @@ public sealed partial class CreateScheduleViewModel(ScheduleGateway gateway)
         ErrorMessage = string.Empty;
     }
 
-    public void Reset()
+    private CreateScheduleRequest? TryGetValidatedRequestObject()
     {
-        Title = string.Empty;
-
-        SelectedFrequencyType = ScheduleFrequencyTypeDto.Minutes;
-        FrequencyInterval = 1;
-        LookaheadLimit = 1;
-
-        OccurrenceCountLimit = null;
-        SelectedMisfirePolicy = ScheduleMisfirePolicyDto.Catchup;
-
-        OccurrenceTtlDays = 0;
-        OccurrenceTtlHours = 0;
-        OccurrenceTtlMinutes = 0;
-
-        StartTime = null;
-        EndTime = null;
-
-        ActiveFromDate = DateTimeOffset.Now.Date;
-        ActiveFromTime = DateTimeOffset.Now.TimeOfDay;
-
-        ActiveUntilDate = null;
-        ActiveUntilTime = null;
-
-        ByDayMon = ByDayTue = ByDayWed = ByDayThu = ByDayFri = ByDaySat = ByDaySun = false;
-        ByMonthJan = ByMonthFeb = ByMonthMar = ByMonthApr = ByMonthMay = ByMonthJun =
-            ByMonthJul = ByMonthAug = ByMonthSep = ByMonthOct = ByMonthNov = ByMonthDec = false;
-
-        ByMonthDayCsv = string.Empty;
-
-        SelectedActionType = ScheduleActionTypeDto.None;
-
-        TaskTitle       = string.Empty;
-        TaskDescription = null;
-        TaskCategory    = TaskCategoryDto.Personal;
-        TaskPriority    = ActivityPriorityDto.None;
-
         ClearValidationError();
+
+        var trimmedTitle = Title.Trim();
+        if (string.IsNullOrWhiteSpace(trimmedTitle))
+        {
+            ShowValidationError("Please specify a title.");
+            return null;
+        }
+
+        var payload = BuildPayload();
+        if (HasValidationError) return null;
+
+        if (IsOnceMode)
+            return BuildOnceRequest(trimmedTitle, payload);
+
+        var byMonthDay = ParseByMonthDay();
+        if (HasValidationError) return null;
+
+        return BuildRecurringRequest(trimmedTitle, payload, byMonthDay);
     }
+
+    /// <summary>Serializes the action payload; sets a validation error and returns null on failure.</summary>
+    private string? BuildPayload()
+    {
+        if (SelectedActionType != ScheduleActionTypeDto.CreateTask)
+            return null;
+
+        var taskTitle = TaskTitle.Trim();
+        if (string.IsNullOrWhiteSpace(taskTitle))
+        {
+            ShowValidationError("Task title is required for the Create Task action.");
+            return null;
+        }
+
+        var payload = new CreateTaskSchedulePayload(
+            Title:       taskTitle,
+            Description: string.IsNullOrWhiteSpace(TaskDescription) ? null : TaskDescription.Trim(),
+            Category:    TaskCategory,
+            Priority:    TaskPriority);
+
+        return JsonSerializer.Serialize(payload);
+    }
+
+    /// <summary>
+    /// Once request: frequency = Once, fires exactly once at the trigger datetime.
+    /// Count limit = 1 and RunOnce misfire policy ensure single execution semantics.
+    /// </summary>
+    private CreateScheduleRequest BuildOnceRequest(string title, string? payload) =>
+        new()
+        {
+            Title        = title,
+            Description  = Description,
+            TargetItemId = null,
+
+            ScheduleFrequencyType = ScheduleFrequencyTypeDto.Once,
+            FrequencyInterval     = 1,
+            LookaheadLimit        = 1,
+            OccurrenceCountLimit  = 1,
+
+            ActionType    = SelectedActionType,
+            Payload       = payload,
+            MisfirePolicy = ScheduleMisfirePolicyDto.RunOnce,
+            OccurrenceTtl = null,
+
+            StartTime        = null,
+            EndTime          = null,
+            ActiveFromLocal  = ActiveFromDate.Add(ActiveFromTime),
+            ActiveUntilLocal = null,
+
+            ByDay      = null,
+            ByMonth    = null,
+            ByMonthDay = null
+        };
+
+    /// <summary>Recurring request: full configuration from all form fields.</summary>
+    private CreateScheduleRequest BuildRecurringRequest(string title, string? payload, int[]? byMonthDay) =>
+        new()
+        {
+            Title        = title,
+            Description  = Description,
+            TargetItemId = null,
+
+            ScheduleFrequencyType = SelectedFrequencyType,
+            FrequencyInterval     = FrequencyInterval,
+            LookaheadLimit        = LookaheadLimit,
+            OccurrenceCountLimit  = OccurrenceCountLimit,
+
+            ActionType    = SelectedActionType,
+            Payload       = payload,
+            MisfirePolicy = SelectedMisfirePolicy,
+            OccurrenceTtl = OccurrenceTtl,
+
+            StartTime = StartTime is null ? null : TimeOnly.FromTimeSpan(StartTime.Value),
+            EndTime   = EndTime   is null ? null : TimeOnly.FromTimeSpan(EndTime.Value),
+
+            ActiveFromLocal  = ActiveFromDate.Add(ActiveFromTime),
+            ActiveUntilLocal = ActiveUntilDate?.Add(ActiveUntilTime ?? TimeSpan.Zero),
+
+            ByDay      = BuildByDay(),
+            ByMonth    = BuildByMonth(),
+            ByMonthDay = byMonthDay
+        };
+
+    // ── Restriction helpers ───────────────────────────────────────────────────
 
     private int[]? BuildByDay()
     {
@@ -204,78 +341,14 @@ public sealed partial class CreateScheduleViewModel(ScheduleGateway gateway)
 
         foreach (var p in parts)
         {
-            if (!int.TryParse((string?)p, out var v) || v < 1 || v > 31)
+            if (!int.TryParse(p, out var v) || v < 1 || v > 31)
             {
                 ShowValidationError("Monthdays must be a comma-separated list of numbers between 1 and 31.");
                 return null;
             }
-
             values.Add(v);
         }
 
         return values.Distinct().OrderBy(x => x).ToArray();
-    }
-
-    private CreateScheduleRequest? TryGetValidatedRequestObject()
-    {
-        ClearValidationError();
-
-        var trimmedTitle = Title.Trim();
-        if (string.IsNullOrWhiteSpace(trimmedTitle))
-        {
-            ShowValidationError("Please specify a title.");
-            return null;
-        }
-
-        var byMonthDay = ParseByMonthDay();
-        if (HasValidationError) return null;
-
-        string? serializedPayload = null;
-        if (SelectedActionType == ScheduleActionTypeDto.CreateTask)
-        {
-            var taskTitle = TaskTitle.Trim();
-            if (string.IsNullOrWhiteSpace(taskTitle))
-            {
-                ShowValidationError("Task title is required for the Create Task action.");
-                return null;
-            }
-
-            var payload = new CreateTaskSchedulePayload(
-                Title:       taskTitle,
-                Description: string.IsNullOrWhiteSpace(TaskDescription) ? null : TaskDescription.Trim(),
-                Category:    TaskCategory,
-                Priority:    TaskPriority);
-
-            serializedPayload = JsonSerializer.Serialize(payload);
-        }
-
-        return new CreateScheduleRequest
-        {
-            Title        = trimmedTitle,
-            Description  = Description,
-            TargetItemId = null,
-
-            ScheduleFrequencyType = SelectedFrequencyType,
-            FrequencyInterval     = FrequencyInterval,
-
-            LookaheadLimit       = LookaheadLimit,
-            OccurrenceCountLimit = OccurrenceCountLimit,
-
-            ActionType = SelectedActionType,
-            Payload    = serializedPayload,
-
-            MisfirePolicy = SelectedMisfirePolicy,
-            OccurrenceTtl = OccurrenceTtl,
-
-            StartTime = StartTime is null ? null : TimeOnly.FromTimeSpan(StartTime.Value),
-            EndTime   = EndTime   is null ? null : TimeOnly.FromTimeSpan(EndTime.Value),
-
-            ActiveFromLocal  = ActiveFromDate.Add(ActiveFromTime),
-            ActiveUntilLocal = ActiveUntilDate?.Add(ActiveUntilTime ?? TimeSpan.Zero),
-
-            ByDay      = BuildByDay(),
-            ByMonth    = BuildByMonth(),
-            ByMonthDay = byMonthDay
-        };
     }
 }
