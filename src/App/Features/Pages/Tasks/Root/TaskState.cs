@@ -122,6 +122,9 @@ public sealed partial class TaskState : ObservableObject
         StateFilter.FilterChanged += (_, _) => _ = RefreshFilteredCollection();
         CategoryFilter.FilterChanged += (_, _) => _ = RefreshFilteredCollection();
 
+        var openOption = StateFilter.Options.FirstOrDefault(o => o.Label == ActivityStateDto.Open.ToString());
+        if (openOption is not null) openOption.IsSelected = true;
+
         // Keep workspace list in sync when the Inspector navigates to an item externally
         // (e.g. via a relation link). Guards against circular update.
         SelectionContextState.PropertyChanged += (_, e) =>
