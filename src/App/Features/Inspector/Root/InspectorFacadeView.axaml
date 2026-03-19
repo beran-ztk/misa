@@ -10,14 +10,13 @@
             <Setter Property="HorizontalAlignment" Value="Stretch"/>
             <Setter Property="HorizontalContentAlignment" Value="Center"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="CornerRadius" Value="8,8,0,0"/>
             <Setter Property="Padding" Value="0,8"/>
             <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="0"/>
             <Setter Property="Cursor" Value="Hand"/>
         </Style>
         <Style Selector="Button.tab-option /template/ ContentPresenter">
             <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLight}"/>
-            <Setter Property="CornerRadius" Value="6,6,0,0"/>
         </Style>
         <Style Selector="Button.tab-option:pointerover /template/ ContentPresenter">
             <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}"/>
@@ -51,7 +50,7 @@
             <!-- Toggle header strip -->
             <Border Grid.Row="0"
                     Background="{StaticResource BrushPrimaryBackgroundLight}">
-                <Grid ColumnDefinitions="*,*" ColumnSpacing="3">
+                <Grid ColumnDefinitions="*,*">
 
                     <Button Grid.Column="0"
                             Classes="tab-option"
