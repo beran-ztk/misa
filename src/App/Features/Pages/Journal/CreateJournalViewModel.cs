@@ -5,9 +5,10 @@ using Misa.Contract.Common.Results;
 using Misa.Contract.Items.Components.Chronicle;
 using Misa.Ui.Avalonia.Common.Converters;
 using Misa.Ui.Avalonia.Common.Mappings;
+using Misa.Ui.Avalonia.Features.Pages.Chronicle;
 using Misa.Ui.Avalonia.Infrastructure.UI;
 
-namespace Misa.Ui.Avalonia.Features.Pages.Chronicle;
+namespace Misa.Ui.Avalonia.Features.Pages.Journal;
 
 public sealed partial class CreateJournalViewModel(ChronicleGateway gateway)
     : ViewModelBase, IHostedForm<Result>
