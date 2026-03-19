@@ -54,9 +54,12 @@
             <Border Grid.Row="1" 
                     Classes="panel-divider"/>
 
-            <!-- Body -->
-            <ScrollViewer Grid.Row="2" 
-                          VerticalScrollBarVisibility="Auto">
+            <!-- Body — horizontal scroll is disabled so content is always bounded by the
+                 container width (panel fixed width or modal MaxWidth).  Long text wraps;
+                 wide controls shrink to fit rather than blowing out the host. -->
+            <ScrollViewer Grid.Row="2"
+                          VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled">
                 
                 <ContentControl Padding="0"
                     Content="{Binding Form}"/>
