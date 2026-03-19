@@ -9,7 +9,7 @@ using Misa.Contract.Items.Components.Schedules;
 using Misa.Contract.Routes;
 using Misa.Ui.Avalonia.Infrastructure.Client.RemoteProxy;
 
-namespace Misa.Ui.Avalonia.Features.Pages.Schedules.Root;
+namespace Misa.Ui.Avalonia.Features.Pages.Schedules;
 
 public sealed class ScheduleGateway(RemoteProxy remoteProxy)
 {

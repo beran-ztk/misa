@@ -6,8 +6,8 @@ using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Notifications;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Pages.Chronicle;
-using Misa.Ui.Avalonia.Features.Pages.Schedules.Root;
-using Misa.Ui.Avalonia.Features.Pages.Tasks.Root;
+using Misa.Ui.Avalonia.Features.Pages.Schedules;
+using Misa.Ui.Avalonia.Features.Pages.Tasks;
 using Misa.Ui.Avalonia.Features.Pages.Zettelkasten;
 using Misa.Ui.Avalonia.Infrastructure.States;
 

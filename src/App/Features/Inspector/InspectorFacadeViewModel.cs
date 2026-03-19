@@ -7,7 +7,7 @@ using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Base;
 using Misa.Ui.Avalonia.Infrastructure.States;
 using Misa.Ui.Avalonia.Infrastructure.UI;
 
-namespace Misa.Ui.Avalonia.Features.Inspector.Root;
+namespace Misa.Ui.Avalonia.Features.Inspector;
 
 public sealed partial class InspectorFacadeViewModel : ViewModelBase
 {

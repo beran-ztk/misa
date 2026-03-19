@@ -3,7 +3,6 @@ using System.Linq;
 using Misa.Contract.Items.Components.Activity.Sessions;
 using Misa.Contract.Items.Components.Audits;
 using Misa.Ui.Avalonia.Common.Mappings;
-using Misa.Ui.Avalonia.Features.Inspector.Root;
 
 namespace Misa.Ui.Avalonia.Features.Inspector.Tabs.Activity;
 

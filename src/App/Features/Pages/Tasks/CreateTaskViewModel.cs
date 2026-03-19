@@ -7,10 +7,9 @@ using Misa.Contract.Items.Components.Activity;
 using Misa.Contract.Items.Components.Tasks;
 using Misa.Ui.Avalonia.Common.Components.DeadlinePicker;
 using Misa.Ui.Avalonia.Common.Mappings;
-using Misa.Ui.Avalonia.Features.Pages.Tasks.Root;
 using Misa.Ui.Avalonia.Infrastructure.UI;
 
-namespace Misa.Ui.Avalonia.Features.Pages.Tasks.Create;
+namespace Misa.Ui.Avalonia.Features.Pages.Tasks;
 
 public sealed partial class CreateTaskViewModel(TaskGateway gateway)
     : ViewModelBase, IHostedForm<TaskDto>

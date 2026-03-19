@@ -7,7 +7,6 @@ using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Common.Converters;
 using Misa.Contract.Items.Components.Activity.Sessions;
 using Misa.Ui.Avalonia.Common.Mappings;
-using Misa.Ui.Avalonia.Features.Inspector.Root;
 using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Relations;
 using Misa.Ui.Avalonia.Features.Utilities.Toast;
 
