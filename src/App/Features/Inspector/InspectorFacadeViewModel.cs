@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Ui.Avalonia.Common.Mappings;
+using Misa.Ui.Avalonia.Features.Inspector.Root;
 using Misa.Ui.Avalonia.Features.Inspector.Tabs.Activity;
 using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Base;
 using Misa.Ui.Avalonia.Infrastructure.States;
