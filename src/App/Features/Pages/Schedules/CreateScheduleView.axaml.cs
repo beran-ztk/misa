@@ -1,6 +1,6 @@
 ﻿using Avalonia.Controls;
 
-namespace Misa.Ui.Avalonia.Features.Pages.Schedules.Create;
+namespace Misa.Ui.Avalonia.Features.Pages.Schedules;
 
 public partial class CreateScheduleView : UserControl
 {

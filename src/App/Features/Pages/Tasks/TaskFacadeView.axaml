@@ -3,11 +3,11 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="Misa.Ui.Avalonia.Features.Pages.Tasks.Root.TaskFacadeView"
-             xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Tasks.Root"
+             x:Class="Misa.Ui.Avalonia.Features.Pages.Tasks.TaskFacadeView"
              xmlns:converters="clr-namespace:Misa.Ui.Avalonia.Common.Converters"
              xmlns:filters="clr-namespace:Misa.Ui.Avalonia.Common.Components.FilterDropdown"
-             x:DataType="root:TaskFacadeViewModel">
+             xmlns:tasks="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Tasks"
+             x:DataType="tasks:TaskFacadeViewModel">
 
     <UserControl.Resources>
         <converters:PriorityToBrushConverter x:Key="PriorityToBrushConverter" />
@@ -528,7 +528,7 @@
                                 Padding="0"
                                 Margin="0,0,0,6"
                                 ClipToBounds="True"
-                                Opacity="{Binding $parent[ListBox].((root:TaskFacadeViewModel)DataContext).State.CardOpacity}">
+                                Opacity="{Binding $parent[ListBox].((tasks:TaskFacadeViewModel)DataContext).State.CardOpacity}">
 
                             <Grid ColumnDefinitions="5,*">
 
@@ -536,7 +536,7 @@
                                 <Border Grid.Column="0"
                                         Background="{Binding Activity.Priority,
                                             Converter={StaticResource PriorityToBrushConverter}}"
-                                        Classes.task-card-deleted-bar="{Binding $parent[ListBox].((root:TaskFacadeViewModel)DataContext).State.IsDeletedMode}"/>
+                                        Classes.task-card-deleted-bar="{Binding $parent[ListBox].((tasks:TaskFacadeViewModel)DataContext).State.IsDeletedMode}"/>
 
                                 <!-- Card content -->
                                 <StackPanel Grid.Column="1"
@@ -564,7 +564,7 @@
                                         <Border Grid.Column="1"
                                                 VerticalAlignment="Top"
                                                 Margin="8,1,0,0"
-                                                IsVisible="{Binding $parent[ListBox].((root:TaskFacadeViewModel)DataContext).State.IsActiveMode}">
+                                                IsVisible="{Binding $parent[ListBox].((tasks:TaskFacadeViewModel)DataContext).State.IsActiveMode}">
                                             <Border Classes="signal-chip deadline"
                                                     Classes.overdue="{Binding Activity.DueAt,
                                                         Converter={StaticResource IsOverdueConverter}}"
@@ -587,10 +587,10 @@
                                                     Spacing="0"
                                                     VerticalAlignment="Top"
                                                     Margin="6,0,0,0"
-                                                    IsVisible="{Binding $parent[ListBox].((root:TaskFacadeViewModel)DataContext).State.IsNonActiveMode}">
+                                                    IsVisible="{Binding $parent[ListBox].((tasks:TaskFacadeViewModel)DataContext).State.IsNonActiveMode}">
 
                                             <Button Classes="card-action-link restore"
-                                                    Command="{Binding $parent[ListBox].((root:TaskFacadeViewModel)DataContext).RestoreItemCommand}"
+                                                    Command="{Binding $parent[ListBox].((tasks:TaskFacadeViewModel)DataContext).RestoreItemCommand}"
                                                     CommandParameter="{Binding Item.Id}"
                                                     Content="Restore"/>
 
@@ -601,11 +601,11 @@
                                                        VerticalAlignment="Center"
                                                        Margin="2,0"
                                                        Opacity="0.5"
-                                                       IsVisible="{Binding $parent[ListBox].((root:TaskFacadeViewModel)DataContext).State.IsDeletedMode}"/>
+                                                       IsVisible="{Binding $parent[ListBox].((tasks:TaskFacadeViewModel)DataContext).State.IsDeletedMode}"/>
 
                                             <Button Classes="card-action-link danger"
-                                                    IsVisible="{Binding $parent[ListBox].((root:TaskFacadeViewModel)DataContext).State.IsDeletedMode}"
-                                                    Command="{Binding $parent[ListBox].((root:TaskFacadeViewModel)DataContext).HardDeleteItemCommand}"
+                                                    IsVisible="{Binding $parent[ListBox].((tasks:TaskFacadeViewModel)DataContext).State.IsDeletedMode}"
+                                                    Command="{Binding $parent[ListBox].((tasks:TaskFacadeViewModel)DataContext).HardDeleteItemCommand}"
                                                     CommandParameter="{Binding Item.Id}"
                                                     Content="Delete permanently"/>
 

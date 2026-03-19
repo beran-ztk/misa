@@ -1,6 +1,6 @@
 ﻿using Avalonia.Controls;
 
-namespace Misa.Ui.Avalonia.Features.Inspector.Root;
+namespace Misa.Ui.Avalonia.Features.Inspector;
 
 public partial class InspectorFacadeView : UserControl
 {

@@ -2,14 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Items;
 using Misa.Contract.Items.Components.Activity;
 using Misa.Contract.Items.Components.Activity.Sessions;
 using Misa.Contract.Items.Components.Schedules;
 using Misa.Contract.Items.Components.Tasks;
 
-namespace Misa.Ui.Avalonia.Features.Inspector.Root;
+namespace Misa.Ui.Avalonia.Features.Inspector;
 
 public sealed partial class InspectorState : ObservableObject
 {

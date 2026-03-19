@@ -1,8 +1,6 @@
-using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Markup.Xaml;
 
-namespace Misa.Ui.Avalonia.Features.Pages.Tasks.Root;
+namespace Misa.Ui.Avalonia.Features.Pages.Tasks;
 
 public partial class TaskFacadeView : UserControl
 {

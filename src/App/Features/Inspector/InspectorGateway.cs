@@ -12,10 +12,9 @@ using Misa.Contract.Items.Components.Relations;
 using Misa.Contract.Items.Components.Schedules;
 using Misa.Contract.Items.Components.Tasks;
 using Misa.Contract.Routes;
-using Misa.Ui.Avalonia.Infrastructure.Client;
 using Misa.Ui.Avalonia.Infrastructure.Client.RemoteProxy;
 
-namespace Misa.Ui.Avalonia.Features.Inspector.Root;
+namespace Misa.Ui.Avalonia.Features.Inspector;
 
 public sealed class InspectorGateway(RemoteProxy remoteProxy)
 {

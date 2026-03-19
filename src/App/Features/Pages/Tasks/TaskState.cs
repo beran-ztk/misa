@@ -10,7 +10,7 @@ using Misa.Contract.Items.Components.Tasks;
 using Misa.Ui.Avalonia.Common.Components.FilterDropdown;
 using Misa.Ui.Avalonia.Infrastructure.States;
 
-namespace Misa.Ui.Avalonia.Features.Pages.Tasks.Root;
+namespace Misa.Ui.Avalonia.Features.Pages.Tasks;
 
 public sealed partial class TaskState : ObservableObject
 {
@@ -159,7 +159,7 @@ public sealed partial class TaskState : ObservableObject
             && (activeStates == null || activeStates.Contains(item.Activity.State))
             && (activeCategories == null || activeCategories.Contains(item.Category))
             && (string.IsNullOrEmpty(SearchText)
-                || item.Item.Title.Contains(SearchText, StringComparison.OrdinalIgnoreCase)));
+                || item.Item.Title.Contains((string)SearchText, StringComparison.OrdinalIgnoreCase)));
 
         // 2. Sort
         IEnumerable<TaskDto> sorted = SortField switch

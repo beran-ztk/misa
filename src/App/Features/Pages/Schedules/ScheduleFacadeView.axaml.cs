@@ -1,6 +1,6 @@
 using Avalonia.Controls;
 
-namespace Misa.Ui.Avalonia.Features.Pages.Schedules.Root;
+namespace Misa.Ui.Avalonia.Features.Pages.Schedules;
 
 public partial class ScheduleFacadeView : UserControl
 {

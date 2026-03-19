@@ -8,7 +8,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using Misa.Contract.Items.Components.Schedules;
 using Misa.Ui.Avalonia.Infrastructure.States;
 
-namespace Misa.Ui.Avalonia.Features.Pages.Schedules.Root;
+namespace Misa.Ui.Avalonia.Features.Pages.Schedules;
 
 public sealed partial class ScheduleState : ObservableObject
 {

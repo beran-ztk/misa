@@ -1,4 +1,4 @@
-namespace Misa.Ui.Avalonia.Features.Pages.Tasks.Root;
+namespace Misa.Ui.Avalonia.Features.Pages.Tasks;
 
 public enum TaskSortDirection
 {

@@ -1,9 +1,9 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Class="Misa.Ui.Avalonia.Features.Inspector.Root.InspectorFacadeView"
-             xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Inspector.Root"
+             x:Class="Misa.Ui.Avalonia.Features.Inspector.InspectorFacadeView"
              xmlns:components="clr-namespace:Misa.Ui.Avalonia.Shell.Components"
-             x:DataType="root:InspectorFacadeViewModel">
+             xmlns:inspector="clr-namespace:Misa.Ui.Avalonia.Features.Inspector"
+             x:DataType="inspector:InspectorFacadeViewModel">
 
     <UserControl.Styles>
 

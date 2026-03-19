@@ -1,8 +1,8 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Tasks.Create"
-             x:Class="Misa.Ui.Avalonia.Features.Pages.Tasks.Create.CreateTaskView"
-             x:DataType="root:CreateTaskViewModel">
+             xmlns:tasks="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Tasks"
+             x:Class="Misa.Ui.Avalonia.Features.Pages.Tasks.CreateTaskView"
+             x:DataType="tasks:CreateTaskViewModel">
 
     <StackPanel Spacing="28">
 

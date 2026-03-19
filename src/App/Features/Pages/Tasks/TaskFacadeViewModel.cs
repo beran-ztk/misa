@@ -4,11 +4,10 @@ using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Items.Components.Tasks;
 using Misa.Ui.Avalonia.Common.Mappings;
-using Misa.Ui.Avalonia.Features.Pages.Tasks.Create;
 using Misa.Ui.Avalonia.Features.Utilities.Toast;
 using Misa.Ui.Avalonia.Infrastructure.UI;
 
-namespace Misa.Ui.Avalonia.Features.Pages.Tasks.Root;
+namespace Misa.Ui.Avalonia.Features.Pages.Tasks;
 
 public sealed partial class TaskFacadeViewModel : ViewModelBase
 {

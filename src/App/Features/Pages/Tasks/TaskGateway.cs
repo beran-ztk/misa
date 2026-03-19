@@ -9,7 +9,7 @@ using Misa.Contract.Items.Components.Tasks;
 using Misa.Contract.Routes;
 using Misa.Ui.Avalonia.Infrastructure.Client.RemoteProxy;
 
-namespace Misa.Ui.Avalonia.Features.Pages.Tasks.Root;
+namespace Misa.Ui.Avalonia.Features.Pages.Tasks;
 
 public sealed class TaskGateway(RemoteProxy remoteProxy)
 {

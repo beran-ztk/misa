@@ -2,10 +2,9 @@ using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Items.Components.Schedules;
 using Misa.Ui.Avalonia.Common.Mappings;
-using Misa.Ui.Avalonia.Features.Pages.Schedules.Create;
 using Misa.Ui.Avalonia.Infrastructure.UI;
 
-namespace Misa.Ui.Avalonia.Features.Pages.Schedules.Root;
+namespace Misa.Ui.Avalonia.Features.Pages.Schedules;
 
 public sealed partial class ScheduleFacadeViewModel : ViewModelBase
 {

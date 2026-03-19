@@ -10,10 +10,9 @@ using Misa.Contract.Items.Components.Activity;
 using Misa.Contract.Items.Components.Schedules;
 using Misa.Contract.Items.Components.Tasks;
 using Misa.Ui.Avalonia.Common.Mappings;
-using Misa.Ui.Avalonia.Features.Pages.Schedules.Root;
 using Misa.Ui.Avalonia.Infrastructure.UI;
 
-namespace Misa.Ui.Avalonia.Features.Pages.Schedules.Create;
+namespace Misa.Ui.Avalonia.Features.Pages.Schedules;
 
 public sealed partial class CreateScheduleViewModel(ScheduleGateway gateway)
     : ViewModelBase, IHostedForm<ScheduleDto>
@@ -341,7 +340,7 @@ public sealed partial class CreateScheduleViewModel(ScheduleGateway gateway)
 
         foreach (var p in parts)
         {
-            if (!int.TryParse(p, out var v) || v < 1 || v > 31)
+            if (!int.TryParse((string?)p, out var v) || v < 1 || v > 31)
             {
                 ShowValidationError("Monthdays must be a comma-separated list of numbers between 1 and 31.");
                 return null;
