@@ -6,16 +6,10 @@
 
     <UserControl.Styles>
 
-        <!-- Elapsed time shown in red when over the planned duration -->
         <Style Selector="TextBlock.session-elapsed-over">
             <Setter Property="Foreground" Value="{StaticResource BrushError}"/>
         </Style>
 
-        <!--
-            Session state chip — pill badge that communicates Running / Paused
-            at a glance.  Mirrors the terminal-badge pattern from InspectorEntryView
-            but uses active-state semantics: green = running, amber = paused.
-        -->
         <Style Selector="Border.session-state-chip">
             <Setter Property="CornerRadius"      Value="4"/>
             <Setter Property="Padding"           Value="6,2"/>
@@ -28,7 +22,6 @@
             <Setter Property="LetterSpacing"     Value="0.5"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
-        <!-- Running — green (mirrors terminal-badge.done) -->
         <Style Selector="Border.session-state-chip.running">
             <Setter Property="Background"  Value="#1A3D8B4F"/>
             <Setter Property="BorderBrush" Value="#403D8B4F"/>
@@ -36,7 +29,6 @@
         <Style Selector="Border.session-state-chip.running TextBlock">
             <Setter Property="Foreground" Value="#65B56A"/>
         </Style>
-        <!-- Paused — amber (mirrors terminal-badge.expired) -->
         <Style Selector="Border.session-state-chip.paused">
             <Setter Property="Background"  Value="#18F0A020"/>
             <Setter Property="BorderBrush" Value="{StaticResource BrushWarning}"/>
@@ -45,7 +37,6 @@
             <Setter Property="Foreground" Value="{StaticResource BrushWarning}"/>
         </Style>
 
-        <!-- Continue button — labeled outline button, shown only when paused -->
         <Style Selector="Button.session-continue-btn">
             <Setter Property="Padding"         Value="8,4"/>
             <Setter Property="FontSize"        Value="11"/>
@@ -73,18 +64,19 @@
             BorderThickness="0,0,0,1"
             BorderBrush="{StaticResource BrushBorder}">
 
+        <!--
+            2 columns × 2 rows:
+              (0,0) state chip + duration   |  (0,1) quick actions
+              (1,0–1) objective — ColSpan 2, only when set
+        -->
         <Grid ColumnDefinitions="*,Auto"
-              ColumnSpacing="12"
-              VerticalAlignment="Center">
+              RowDefinitions="Auto,Auto"
+              ColumnSpacing="12">
 
-            <!-- ── Left column: status information ──────────────────────── -->
+            <!-- ── (Row 0, Col 0): state + duration ──────────────────────── -->
 
-            <!--
-                Empty state — no session exists.
-                Two-line layout signals that this area is intentional and actionable,
-                not just a placeholder.
-            -->
-            <StackPanel Grid.Column="0"
+            <!-- Empty state -->
+            <StackPanel Grid.Row="0" Grid.Column="0"
                         Spacing="2"
                         VerticalAlignment="Center"
                         IsVisible="{Binding !HasActiveSession}">
@@ -94,95 +86,51 @@
                            FontWeight="Medium"
                            Foreground="{StaticResource BrushTextSecondary}"
                            Opacity="0.75"/>
+
             </StackPanel>
 
-            <!--
-                Active session — two-row layout.
-
-                Row 0: state chip (RUNNING / PAUSED) + session objective if set.
-                Row 1: segment counter · elapsed time / planned duration.
-
-                Hierarchy makes state scannable at a glance; detail is one
-                visual layer below.
-            -->
-            <Grid Grid.Column="0"
-                  RowDefinitions="Auto,Auto"
-                  RowSpacing="4"
+            <!-- Active state: chip left, duration right -->
+            <Grid Grid.Row="0" Grid.Column="0"
+                  ColumnDefinitions="Auto,*"
+                  ColumnSpacing="10"
                   VerticalAlignment="Center"
                   IsVisible="{Binding HasActiveSession}">
 
-                <!-- State chip + objective -->
-                <Grid Grid.Row="0"
-                      ColumnDefinitions="Auto,*"
-                      ColumnSpacing="8"
-                      VerticalAlignment="Center">
+                <Border Grid.Column="0"
+                        Classes="session-state-chip"
+                        Classes.running="{Binding IsRunning}"
+                        Classes.paused="{Binding IsPaused}">
+                    <TextBlock Text="{Binding SessionStateLabel}"/>
+                </Border>
 
-                    <Border Grid.Column="0"
-                            Classes="session-state-chip"
-                            Classes.running="{Binding IsRunning}"
-                            Classes.paused="{Binding IsPaused}">
-                        <TextBlock Text="{Binding SessionStateLabel}"/>
-                    </Border>
-
-                    <!--
-                        Objective — shown only when the session was started with one.
-                        Truncated to prevent overflow; full text is readable in the
-                        session start panel if needed.
-                    -->
-                    <TextBlock Grid.Column="1"
-                               Text="{Binding ActiveSessionObjective}"
-                               IsVisible="{Binding HasActiveSessionObjective}"
-                               FontSize="12"
-                               FontWeight="Medium"
-                               Foreground="{StaticResource BrushTextSecondary}"
-                               VerticalAlignment="Center"
-                               TextTrimming="CharacterEllipsis"/>
-
-                </Grid>
-
-                <!-- Segment · elapsed / planned -->
-                <StackPanel Grid.Row="1"
+                <StackPanel Grid.Column="1"
                             Orientation="Horizontal"
-                            Spacing="4"
+                            Spacing="0"
+                            HorizontalAlignment="Right"
                             VerticalAlignment="Center">
-
-                    <TextBlock Text="{Binding ActiveSessionSegmentLabel}"
-                               FontSize="11"
-                               Foreground="{StaticResource BrushTextFaded}"
-                               Opacity="0.75"
-                               VerticalAlignment="Center"/>
-
-                    <TextBlock Text="·"
-                               FontSize="11"
-                               Foreground="{StaticResource BrushTextFaded}"
-                               Opacity="0.35"
-                               VerticalAlignment="Center"/>
 
                     <TextBlock Text="{Binding ActiveSessionElapsedDisplay}"
                                Classes.session-elapsed-over="{Binding IsOverPlannedDuration}"
                                FontSize="11"
-                               Foreground="{StaticResource BrushTextSecondary}"
-                               VerticalAlignment="Center"/>
+                               Foreground="{StaticResource BrushTextSecondary}"/>
 
                     <TextBlock Text="{Binding ActiveSessionPlannedSuffixDisplay}"
                                FontSize="11"
                                Foreground="{StaticResource BrushTextFaded}"
-                               Opacity="0.7"
-                               VerticalAlignment="Center"/>
+                               Opacity="0.7"/>
 
                 </StackPanel>
 
             </Grid>
 
-            <!-- ── Right column: actions ─────────────────────────────────── -->
+            <!-- ── (Row 0, Col 1): quick actions ─────────────────────────── -->
 
-            <StackPanel Grid.Column="1"
+            <StackPanel Grid.Row="0" Grid.Column="1"
                         Orientation="Horizontal"
                         Spacing="6"
                         VerticalAlignment="Center"
                         HorizontalAlignment="Right">
 
-                <!-- Start (no active session) -->
                 <Button Classes="workspace-toolbar-icon"
                         ToolTip.Tip="Start session"
                         Command="{Binding ShowStartSessionPanelCommand}"
@@ -191,7 +139,6 @@
                            Source="{SvgImage /Assets/Icons/Inspector/Session/play.svg}"/>
                 </Button>
 
-                <!-- Pause (session running) -->
                 <Button Classes="workspace-toolbar-icon"
                         ToolTip.Tip="Pause session"
                         Command="{Binding ShowPauseSessionPanelCommand}"
@@ -215,7 +162,6 @@
                     </StackPanel>
                 </Button>
 
-                <!-- End (any active session) -->
                 <Button Classes="workspace-toolbar-icon"
                         ToolTip.Tip="End session"
                         Command="{Binding ShowEndSessionPanelCommand}"
@@ -225,6 +171,19 @@
                 </Button>
 
             </StackPanel>
+
+            <!-- ── (Row 1, Col 0–1): objective — full width, wraps freely ── -->
+
+            <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                       FontSize="11"
+                       TextWrapping="Wrap"
+                       Margin="0,6,0,0"
+                       IsVisible="{Binding HasActiveSessionObjective}">
+                <Run Text="Objective: "
+                     Foreground="{StaticResource BrushTextFaded}"/>
+                <Run Text="{Binding ActiveSessionObjective}"
+                     Foreground="{StaticResource BrushTextSecondary}"/>
+            </TextBlock>
 
         </Grid>
 
