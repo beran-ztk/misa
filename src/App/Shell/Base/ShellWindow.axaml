@@ -121,16 +121,25 @@
                         Command="{Binding LayerCloser.BackdropCloseCommand}"/>
             </Border>
 
-            <!-- Modal content -->
-            <Border ZIndex="32"
-                    MinWidth="520"
-                    MaxWidth="720"
-                    Margin="0,64,0,64"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center">
+            <!--
+                Modal viewport — the inner Grid carries the margin so that
+                $parent[Grid].Bounds.Height returns the already-inset height
+                (window minus the 64 px top/bottom safe zone).  Binding MaxHeight
+                to that value means the modal can never be taller than the
+                available space, and the LayerHostView ScrollViewer takes over
+                for any content that does not fit.
+            -->
+            <Grid Margin="0,64,0,64">
+                <Border ZIndex="32"
+                        MinWidth="520"
+                        MaxWidth="720"
+                        MaxHeight="{Binding $parent[Grid].Bounds.Height, FallbackValue=800}"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center">
 
-                <ContentControl Content="{Binding ShellState.Modal}" />
-            </Border>
+                    <ContentControl Content="{Binding ShellState.Modal}" />
+                </Border>
+            </Grid>
         </Grid>
 
         
