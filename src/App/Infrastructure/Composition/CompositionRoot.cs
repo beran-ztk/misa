@@ -20,7 +20,6 @@ using Misa.Ui.Avalonia.Infrastructure.UI;
 using Misa.Ui.Avalonia.Shell.Authentication;
 using Misa.Ui.Avalonia.Shell.Base;
 using Misa.Ui.Avalonia.Shell.Components;
-using CreateJournalViewModel = Misa.Ui.Avalonia.Features.Pages.Journal.CreateJournalViewModel;
 using CreateScheduleViewModel = Misa.Ui.Avalonia.Features.Pages.Schedules.CreateScheduleViewModel;
 using InspectorFacadeViewModel = Misa.Ui.Avalonia.Features.Inspector.InspectorFacadeViewModel;
 using InspectorState = Misa.Ui.Avalonia.Features.Inspector.InspectorState;
@@ -140,9 +139,6 @@ public static class CompositionRoot
     {
         sc.AddSingleton<JournalViewModel>();
         sc.AddSingleton<JournalGateway>();
-        
-        sc.AddTransient<CreateJournalView>();
-        sc.AddTransient<CreateJournalViewModel>();
     }
     private static void AddChronicleFeature(this IServiceCollection sc)
     {
