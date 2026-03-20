@@ -331,6 +331,7 @@
                             <!-- Content input — sits flush on the surface -->
                             <TextBox Classes="composer-content"
                                      Watermark="Write your entry…"
+                                     KeyUp="InputElement_OnKeyUp"
                                      Text="{Binding ComposerContent, Mode=TwoWay}"/>
 
                             <!-- Thin rule separating content from controls -->
