@@ -182,6 +182,43 @@
             <Setter Property="BorderBrush"     Value="{StaticResource BrushBorder}"/>
         </Style>
 
+        <!-- ── Entry card in edit mode ─────────────────────────────── -->
+        <Style Selector="Border.journal-entry-card.editing">
+            <Setter Property="Background" Value="#08FFFFFF"/>
+            <Setter Property="Padding"    Value="8,10,8,12"/>
+        </Style>
+
+        <!-- ── Inline edit TextBox (more compact than top composer) ── -->
+        <Style Selector="TextBox.entry-edit-content">
+            <Setter Property="Background"      Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding"         Value="0"/>
+            <Setter Property="FontSize"        Value="{StaticResource FontSizeMedium}"/>
+            <Setter Property="Foreground"      Value="{StaticResource BrushTextPrimary}"/>
+            <Setter Property="CaretBrush"      Value="{StaticResource BrushTextPrimary}"/>
+            <Setter Property="SelectionBrush"  Value="{StaticResource BrushAccent}"/>
+            <Setter Property="AcceptsReturn"   Value="True"/>
+            <Setter Property="TextWrapping"    Value="Wrap"/>
+            <Setter Property="MinHeight"       Value="32"/>
+        </Style>
+        <Style Selector="TextBox.entry-edit-content /template/ Border">
+            <Setter Property="Background"      Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="BorderBrush"     Value="Transparent"/>
+        </Style>
+        <Style Selector="TextBox.entry-edit-content:pointerover /template/ Border">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+        </Style>
+        <Style Selector="TextBox.entry-edit-content:focus /template/ Border">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+        </Style>
+        <Style Selector="TextBox.entry-edit-content:focus:pointerover /template/ Border">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+        </Style>
+
     </UserControl.Styles>
 
     <Grid RowDefinitions="Auto,*">
@@ -289,7 +326,7 @@
                     <StackPanel Margin="16,12,16,16">
 
                         <!-- ── Always-visible inline composer ────────── -->
-                        <StackPanel Margin="0,0,0,20">
+                        <StackPanel Margin="0,0,0,0">
 
                             <!-- Content input — sits flush on the surface -->
                             <TextBox Classes="composer-content"
@@ -331,6 +368,11 @@
 
                         </StackPanel>
 
+                        <!-- Divider between composer and entries -->
+                        <Border Height="1"
+                                Background="{StaticResource BrushBorder}"
+                                Margin="0,16,0,12"/>
+
                         <!-- Empty state -->
                         <TextBlock Text="No entries for this day."
                                    IsVisible="{Binding !HasEntries}"
@@ -342,7 +384,8 @@
                         <ItemsControl ItemsSource="{Binding SelectedDayEntries}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate x:DataType="root:JournalEntryRow">
-                                    <Border Classes="journal-entry-card">
+                                    <Border Classes="journal-entry-card"
+                                            Classes.editing="{Binding IsEditing}">
 
                                         <StackPanel>
                                             <!-- ── Read view ───────────────────────────────── -->
@@ -382,8 +425,7 @@
                                             <!-- ── Edit view ───────────────────────────────── -->
                                             <StackPanel IsVisible="{Binding IsEditing}" Spacing="0">
 
-                                                <TextBox Classes="composer-content"
-                                                         MinHeight="40"
+                                                <TextBox Classes="entry-edit-content"
                                                          Text="{Binding EditContent, Mode=TwoWay}"/>
 
                                                 <Border Height="1"
