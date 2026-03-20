@@ -36,13 +36,6 @@ public sealed partial class JournalViewModel(JournalGateway gateway) : ViewModel
     // ── Composer state ────────────────────────────────────────────────────────
 
     [ObservableProperty]
-    private bool _isComposerOpen;
-
-    [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(SubmitComposerCommand))]
-    private string _composerTitle = string.Empty;
-
-    [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SubmitComposerCommand))]
     private string _composerContent = string.Empty;
 
@@ -55,8 +48,7 @@ public sealed partial class JournalViewModel(JournalGateway gateway) : ViewModel
     public string SelectedDayLabel => SelectedDay?.Date.ToString("dddd, d MMMM") ?? string.Empty;
     public bool   HasEntries       => SelectedDayEntries.Count > 0;
 
-    private bool CanSubmitComposer =>
-        ComposerTitle.Trim().Length > 0 || ComposerContent.Trim().Length > 0;
+    private bool CanSubmitComposer => ComposerContent.Trim().Length > 0;
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
@@ -99,19 +91,8 @@ public sealed partial class JournalViewModel(JournalGateway gateway) : ViewModel
     // ── Composer ──────────────────────────────────────────────────────────────
 
     [RelayCommand]
-    private void OpenComposer()
+    private void ResetComposer()
     {
-        ComposerTitle   = string.Empty;
-        ComposerContent = string.Empty;
-        ComposerTime    = TimeSpan.Zero;
-        IsComposerOpen  = true;
-    }
-
-    [RelayCommand]
-    private void CloseComposer()
-    {
-        IsComposerOpen  = false;
-        ComposerTitle   = string.Empty;
         ComposerContent = string.Empty;
         ComposerTime    = TimeSpan.Zero;
     }
@@ -119,40 +100,25 @@ public sealed partial class JournalViewModel(JournalGateway gateway) : ViewModel
     [RelayCommand(CanExecute = nameof(CanSubmitComposer))]
     private async Task SubmitComposerAsync()
     {
-        var contentTrimmed = ComposerContent.Trim();
-        var titleTrimmed   = ComposerTitle.Trim();
+        var content = ComposerContent.Trim();
 
-        // Derive effective title: explicit title → first line of content → fallback
-        var effectiveTitle = titleTrimmed.Length > 0
-            ? titleTrimmed
-            : contentTrimmed.Split('\n')[0].Trim() is { Length: > 0 } firstLine
-                ? firstLine.Length <= 100 ? firstLine : firstLine[..100]
-                : SelectedDay?.Date.ToString("d MMMM yyyy") ?? string.Empty;
-
-        // OccurredAt = selected day + composer time, local → UTC
-        var localDateTime = DateTime.SpecifyKind(SelectedDay!.Date + (ComposerTime ?? TimeSpan.Zero), DateTimeKind.Local);
+        var localDateTime = DateTime.SpecifyKind(
+            SelectedDay!.Date + (ComposerTime ?? TimeSpan.Zero),
+            DateTimeKind.Local);
         var occurredAtUtc = new DateTimeOffset(localDateTime).ToUniversalTime();
 
         var request = new CreateJournalRequest(
-            effectiveTitle,
-            contentTrimmed.Length > 0 ? contentTrimmed : null,
+            "Journal entry",
+            content,
             occurredAtUtc,
             null);
 
         var result = await gateway.CreateAsync(request);
-
         if (!result.IsSuccess) return;
 
-        IsComposerOpen  = false;
-        ComposerTitle   = string.Empty;
-        ComposerContent = string.Empty;
+        ResetComposer();
         await LoadAsync();
     }
-
-    // ── Other commands ────────────────────────────────────────────────────────
-
-    [RelayCommand]
-    private async Task RefreshWorkspaceAsync() => await LoadAsync();
 
     // ── Data loading ──────────────────────────────────────────────────────────
 
@@ -209,6 +175,7 @@ public sealed partial class JournalViewModel(JournalGateway gateway) : ViewModel
 
     partial void OnSelectedDayChanged(JournalDayItem? value)
     {
+        ResetComposer();
         SyncCellSelection();
         RebuildSelectedDayEntries();
     }

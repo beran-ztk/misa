@@ -73,13 +73,10 @@
             </Style>
         </Style>
 
-        <!-- Today: accent-coloured foreground -->
         <Style Selector="Button.cal-day.cal-today">
             <Setter Property="Foreground" Value="{StaticResource BrushAccent}"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
         </Style>
-
-        <!-- Selected: solid accent background, primary text -->
         <Style Selector="Button.cal-day.cal-selected /template/ ContentPresenter">
             <Setter Property="Background"   Value="{StaticResource BrushAccent}"/>
             <Setter Property="CornerRadius" Value="4"/>
@@ -94,34 +91,15 @@
 
         <!-- ── Entry card ─────────────────────────────────────────────── -->
         <Style Selector="Border.journal-entry-card">
-            <Setter Property="Background"      Value="{StaticResource BrushPrimaryBackground}"/>
             <Setter Property="BorderBrush"     Value="{StaticResource BrushBorder}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius"    Value="5"/>
-            <Setter Property="Padding"         Value="12,10,12,12"/>
-            <Setter Property="Margin"          Value="0,0,0,8"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="Padding"         Value="0,10,0,10"/>
+            <Setter Property="Margin"          Value="0"/>
         </Style>
 
-        <!-- ── Inline composer ────────────────────────────────────────── -->
-        <Style Selector="Border.journal-composer">
-            <Setter Property="Background"      Value="{StaticResource BrushPrimaryBackground}"/>
-            <Setter Property="BorderBrush"     Value="{StaticResource BrushAccent}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius"    Value="5"/>
-            <Setter Property="Padding"         Value="12,10,12,12"/>
-            <Setter Property="Margin"          Value="0,0,0,12"/>
-        </Style>
-
-        <Style Selector="TextBox.composer-title">
-            <Setter Property="Background"      Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding"         Value="0"/>
-            <Setter Property="FontSize"        Value="11"/>
-            <Setter Property="Foreground"      Value="{StaticResource BrushTextSecondary}"/>
-            <Setter Property="CaretBrush"      Value="{StaticResource BrushTextSecondary}"/>
-            <Setter Property="Margin"          Value="0,0,0,6"/>
-        </Style>
-
+        <!-- ── Inline composer content TextBox ───────────────────────── -->
+        <!--   Suppress all theme backgrounds/borders so the TextBox sits  -->
+        <!--   flush on the surface without a visible box.                 -->
         <Style Selector="TextBox.composer-content">
             <Setter Property="Background"      Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
@@ -129,11 +107,31 @@
             <Setter Property="FontSize"        Value="{StaticResource FontSizeMedium}"/>
             <Setter Property="Foreground"      Value="{StaticResource BrushTextPrimary}"/>
             <Setter Property="CaretBrush"      Value="{StaticResource BrushTextPrimary}"/>
+            <Setter Property="SelectionBrush"  Value="{StaticResource BrushAccent}"/>
             <Setter Property="AcceptsReturn"   Value="True"/>
             <Setter Property="TextWrapping"    Value="Wrap"/>
-            <Setter Property="MinHeight"       Value="56"/>
+            <Setter Property="MinHeight"       Value="60"/>
+        </Style>
+        <!-- Flatten all template borders for every interaction state -->
+        <Style Selector="TextBox.composer-content /template/ Border">
+            <Setter Property="Background"      Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="BorderBrush"     Value="Transparent"/>
+        </Style>
+        <Style Selector="TextBox.composer-content:pointerover /template/ Border">
+            <Setter Property="Background"      Value="Transparent"/>
+            <Setter Property="BorderBrush"     Value="Transparent"/>
+        </Style>
+        <Style Selector="TextBox.composer-content:focus /template/ Border">
+            <Setter Property="Background"      Value="Transparent"/>
+            <Setter Property="BorderBrush"     Value="Transparent"/>
+        </Style>
+        <Style Selector="TextBox.composer-content:focus:pointerover /template/ Border">
+            <Setter Property="Background"      Value="Transparent"/>
+            <Setter Property="BorderBrush"     Value="Transparent"/>
         </Style>
 
+        <!-- ── Composer action buttons ────────────────────────────────── -->
         <Style Selector="Button.composer-action-save">
             <Setter Property="Padding"         Value="12,4"/>
             <Setter Property="FontSize"        Value="11"/>
@@ -174,23 +172,11 @@
     <Grid RowDefinitions="Auto,*">
 
         <!-- ══════════════════════════════════════════════════════════════
-             TOOLBAR — refresh  ·  month navigation  ·  add entry
+             TOOLBAR — refresh  ·  month navigation
         ═══════════════════════════════════════════════════════════════ -->
         <Border Grid.Row="0" Classes="workspace-toolbar-frame">
-            <Grid Classes="workspace-toolbar"
-                  ColumnDefinitions="Auto,*,Auto">
-
-                <StackPanel Grid.Column="0" Classes="workspace-toolbar-left">
-                    <Button Classes="workspace-toolbar-icon"
-                            ToolTip.Tip="Refresh"
-                            Command="{Binding RefreshWorkspaceCommand}">
-                        <Image Width="14" Height="14"
-                               Source="{SvgImage /Assets/Icons/Common/refresh.svg}"/>
-                    </Button>
-                </StackPanel>
-
-                <StackPanel Grid.Column="1"
-                            Orientation="Horizontal"
+            <Grid Classes="workspace-toolbar">
+                <StackPanel Orientation="Horizontal"
                             Spacing="10"
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center">
@@ -208,16 +194,6 @@
                             Command="{Binding NextMonthCommand}"
                             Content="→"/>
                 </StackPanel>
-
-                <StackPanel Grid.Column="2" Classes="workspace-toolbar-right">
-                    <Button Classes="workspace-toolbar-icon"
-                            ToolTip.Tip="New entry"
-                            Command="{Binding OpenComposerCommand}">
-                        <Image Width="14" Height="14"
-                               Source="{SvgImage /Assets/Icons/Common/plus.svg}"/>
-                    </Button>
-                </StackPanel>
-
             </Grid>
         </Border>
 
@@ -279,7 +255,7 @@
                 </StackPanel>
             </Border>
 
-            <!-- ── Right panel: selected day + composer + entries ───── -->
+            <!-- ── Right panel: day header + composer + entries ──────── -->
             <DockPanel Grid.Column="1">
 
                 <!-- Day header -->
@@ -297,66 +273,55 @@
                               HorizontalScrollBarVisibility="Disabled">
                     <StackPanel Margin="16,12,16,16">
 
-                        <!-- ── Inline composer (visible when open) ───── -->
-                        <Border Classes="journal-composer"
-                                IsVisible="{Binding IsComposerOpen}">
-                            <StackPanel Spacing="0">
+                        <!-- ── Always-visible inline composer ────────── -->
+                        <StackPanel Margin="0,0,0,20">
 
-                                <!-- Optional title -->
-                                <TextBox Classes="composer-title"
-                                         Watermark="Title (optional)"
-                                         Text="{Binding ComposerTitle, Mode=TwoWay}"/>
+                            <!-- Content input — sits flush on the surface -->
+                            <TextBox Classes="composer-content"
+                                     Watermark="Write your entry…"
+                                     Text="{Binding ComposerContent, Mode=TwoWay}"/>
 
-                                <!-- Separator -->
-                                <Border Height="1"
-                                        Background="{StaticResource BrushBorder}"
-                                        Margin="0,0,0,8"/>
+                            <!-- Thin rule separating content from controls -->
+                            <Border Height="1"
+                                    Background="{StaticResource BrushBorder}"
+                                    Margin="0,8,0,8"/>
 
-                                <!-- Main content -->
-                                <TextBox Classes="composer-content"
-                                         Watermark="Write your entry…"
-                                         Text="{Binding ComposerContent, Mode=TwoWay}"/>
+                            <!-- Footer: time (left) · Cancel + Save (right) -->
+                            <Grid ColumnDefinitions="Auto,*,Auto">
 
-                                <!-- Footer: time (left) + actions (right) -->
-                                <Grid ColumnDefinitions="Auto,*,Auto"
-                                      Margin="0,10,0,0">
+                                <StackPanel Grid.Column="0"
+                                            Orientation="Horizontal"
+                                            Spacing="6"
+                                            VerticalAlignment="Center">
+                                    <TextBlock Text="At"
+                                               FontSize="10"
+                                               Foreground="{StaticResource BrushTextFaded}"
+                                               VerticalAlignment="Center"/>
+                                    <TimePicker Classes="composer-time"
+                                                SelectedTime="{Binding ComposerTime, Mode=TwoWay}"/>
+                                </StackPanel>
 
-                                    <!-- Time input -->
-                                    <StackPanel Grid.Column="0"
-                                                Orientation="Horizontal"
-                                                Spacing="6"
-                                                VerticalAlignment="Center">
-                                        <TextBlock Text="At"
-                                                   FontSize="10"
-                                                   Foreground="{StaticResource BrushTextFaded}"
-                                                   VerticalAlignment="Center"/>
-                                        <TimePicker Classes="composer-time"
-                                                    SelectedTime="{Binding ComposerTime, Mode=TwoWay}"/>
-                                    </StackPanel>
+                                <StackPanel Grid.Column="2"
+                                            Orientation="Horizontal"
+                                            Spacing="6">
+                                    <Button Classes="composer-action-cancel"
+                                            Content="Cancel"
+                                            Command="{Binding ResetComposerCommand}"/>
+                                    <Button Classes="composer-action-save"
+                                            Content="Save"
+                                            Command="{Binding SubmitComposerCommand}"/>
+                                </StackPanel>
 
-                                    <!-- Save / Cancel -->
-                                    <StackPanel Grid.Column="2"
-                                                Orientation="Horizontal"
-                                                Spacing="6">
-                                        <Button Classes="composer-action-cancel"
-                                                Content="Cancel"
-                                                Command="{Binding CloseComposerCommand}"/>
-                                        <Button Classes="composer-action-save"
-                                                Content="Save"
-                                                Command="{Binding SubmitComposerCommand}"/>
-                                    </StackPanel>
+                            </Grid>
 
-                                </Grid>
+                        </StackPanel>
 
-                            </StackPanel>
-                        </Border>
-
-                        <!-- Empty state (hidden when composer is open or entries exist) -->
+                        <!-- Empty state -->
                         <TextBlock Text="No entries for this day."
                                    IsVisible="{Binding !HasEntries}"
                                    FontSize="12"
                                    Foreground="{StaticResource BrushTextFaded}"
-                                   Margin="0,4,0,0"/>
+                                   Margin="0,0,0,4"/>
 
                         <!-- Entry cards -->
                         <ItemsControl ItemsSource="{Binding SelectedDayEntries}">
@@ -365,6 +330,7 @@
                                     <Border Classes="journal-entry-card">
                                         <StackPanel Spacing="0">
 
+                                            <!-- Time -->
                                             <TextBlock Text="{Binding At,
                                                            Converter={StaticResource UtcToLocalConverter},
                                                            StringFormat='HH:mm'}"
@@ -372,19 +338,13 @@
                                                        Foreground="{StaticResource BrushTextFaded}"
                                                        Margin="0,0,0,4"/>
 
-                                            <TextBlock Text="{Binding Title}"
-                                                       FontSize="{StaticResource FontSizeMedium}"
-                                                       FontWeight="SemiBold"
-                                                       Foreground="{StaticResource BrushTextPrimary}"
-                                                       TextWrapping="Wrap"/>
-
+                                            <!-- Content (Description is the writing body) -->
                                             <TextBlock Text="{Binding Description}"
                                                        IsVisible="{Binding Description,
                                                            Converter={StaticResource NullToBoolConverter}}"
-                                                       FontSize="{StaticResource FontSizeSmall}"
-                                                       Foreground="{StaticResource BrushTextSecondary}"
-                                                       TextWrapping="Wrap"
-                                                       Margin="0,6,0,0"/>
+                                                       FontSize="{StaticResource FontSizeMedium}"
+                                                       Foreground="{StaticResource BrushTextPrimary}"
+                                                       TextWrapping="Wrap"/>
 
                                         </StackPanel>
                                     </Border>
