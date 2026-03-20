@@ -73,7 +73,7 @@
             </Style>
         </Style>
 
-        <!-- Today: accent-coloured foreground, subtle ring -->
+        <!-- Today: accent-coloured foreground -->
         <Style Selector="Button.cal-day.cal-today">
             <Setter Property="Foreground" Value="{StaticResource BrushAccent}"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
@@ -81,15 +81,13 @@
 
         <!-- Selected: solid accent background, primary text -->
         <Style Selector="Button.cal-day.cal-selected /template/ ContentPresenter">
-            <Setter Property="Background" Value="{StaticResource BrushAccent}"/>
+            <Setter Property="Background"   Value="{StaticResource BrushAccent}"/>
             <Setter Property="CornerRadius" Value="4"/>
         </Style>
         <Style Selector="Button.cal-day.cal-selected">
             <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
             <Setter Property="FontWeight" Value="Medium"/>
         </Style>
-
-        <!-- Selected + today: keep accent background, slightly bolder -->
         <Style Selector="Button.cal-day.cal-selected.cal-today">
             <Setter Property="FontWeight" Value="SemiBold"/>
         </Style>
@@ -104,6 +102,64 @@
             <Setter Property="Margin"          Value="0,0,0,8"/>
         </Style>
 
+        <!-- ── Inline composer ────────────────────────────────────────── -->
+        <Style Selector="Border.journal-composer">
+            <Setter Property="Background"      Value="{StaticResource BrushPrimaryBackground}"/>
+            <Setter Property="BorderBrush"     Value="{StaticResource BrushAccent}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius"    Value="5"/>
+            <Setter Property="Padding"         Value="12,10,12,12"/>
+            <Setter Property="Margin"          Value="0,0,0,12"/>
+        </Style>
+
+        <Style Selector="TextBox.composer-title">
+            <Setter Property="Background"      Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding"         Value="0"/>
+            <Setter Property="FontSize"        Value="11"/>
+            <Setter Property="Foreground"      Value="{StaticResource BrushTextSecondary}"/>
+            <Setter Property="CaretBrush"      Value="{StaticResource BrushTextSecondary}"/>
+            <Setter Property="Margin"          Value="0,0,0,6"/>
+        </Style>
+
+        <Style Selector="TextBox.composer-content">
+            <Setter Property="Background"      Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding"         Value="0"/>
+            <Setter Property="FontSize"        Value="{StaticResource FontSizeMedium}"/>
+            <Setter Property="Foreground"      Value="{StaticResource BrushTextPrimary}"/>
+            <Setter Property="CaretBrush"      Value="{StaticResource BrushTextPrimary}"/>
+            <Setter Property="AcceptsReturn"   Value="True"/>
+            <Setter Property="TextWrapping"    Value="Wrap"/>
+            <Setter Property="MinHeight"       Value="56"/>
+        </Style>
+
+        <Style Selector="Button.composer-action-save">
+            <Setter Property="Padding"         Value="12,4"/>
+            <Setter Property="FontSize"        Value="11"/>
+            <Setter Property="FontWeight"      Value="Medium"/>
+            <Setter Property="Background"      Value="{StaticResource BrushAccent}"/>
+            <Setter Property="Foreground"      Value="{StaticResource BrushTextPrimary}"/>
+            <Setter Property="Cursor"          Value="Hand"/>
+            <Style Selector="^ /template/ ContentPresenter">
+                <Setter Property="CornerRadius" Value="4"/>
+            </Style>
+        </Style>
+
+        <Style Selector="Button.composer-action-cancel">
+            <Setter Property="Padding"         Value="12,4"/>
+            <Setter Property="FontSize"        Value="11"/>
+            <Setter Property="Background"      Value="Transparent"/>
+            <Setter Property="Foreground"      Value="{StaticResource BrushTextFaded}"/>
+            <Setter Property="Cursor"          Value="Hand"/>
+            <Style Selector="^ /template/ ContentPresenter">
+                <Setter Property="CornerRadius" Value="4"/>
+            </Style>
+            <Style Selector="^:pointerover /template/ ContentPresenter">
+                <Setter Property="Background"   Value="#0EFFFFFF"/>
+            </Style>
+        </Style>
+
     </UserControl.Styles>
 
     <Grid RowDefinitions="Auto,*">
@@ -115,9 +171,7 @@
             <Grid Classes="workspace-toolbar"
                   ColumnDefinitions="Auto,*,Auto">
 
-                <!-- Left: refresh -->
-                <StackPanel Grid.Column="0"
-                            Classes="workspace-toolbar-left">
+                <StackPanel Grid.Column="0" Classes="workspace-toolbar-left">
                     <Button Classes="workspace-toolbar-icon"
                             ToolTip.Tip="Refresh"
                             Command="{Binding RefreshWorkspaceCommand}">
@@ -126,7 +180,6 @@
                     </Button>
                 </StackPanel>
 
-                <!-- Center: month navigation -->
                 <StackPanel Grid.Column="1"
                             Orientation="Horizontal"
                             Spacing="10"
@@ -147,12 +200,10 @@
                             Content="→"/>
                 </StackPanel>
 
-                <!-- Right: add entry -->
-                <StackPanel Grid.Column="2"
-                            Classes="workspace-toolbar-right">
+                <StackPanel Grid.Column="2" Classes="workspace-toolbar-right">
                     <Button Classes="workspace-toolbar-icon"
-                            ToolTip.Tip="New journal entry"
-                            Command="{Binding ShowAddPanelCommand}">
+                            ToolTip.Tip="New entry"
+                            Command="{Binding OpenComposerCommand}">
                         <Image Width="14" Height="14"
                                Source="{SvgImage /Assets/Icons/Common/plus.svg}"/>
                     </Button>
@@ -172,7 +223,6 @@
                     BorderThickness="0,0,1,0">
                 <StackPanel Margin="8,10,8,8" Spacing="4">
 
-                    <!-- Weekday headers: Mon → Sun -->
                     <Grid ColumnDefinitions="*,*,*,*,*,*,*">
                         <TextBlock Grid.Column="0" Classes="cal-weekday" Text="M"/>
                         <TextBlock Grid.Column="1" Classes="cal-weekday" Text="T"/>
@@ -183,7 +233,6 @@
                         <TextBlock Grid.Column="6" Classes="cal-weekday" Text="S"/>
                     </Grid>
 
-                    <!-- Day cells -->
                     <ItemsControl ItemsSource="{Binding CalendarCells}">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
@@ -192,10 +241,7 @@
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="root:JournalCalendarCell">
-                                <!-- Fixed-size slot; empty cells are transparent spacers -->
                                 <Panel Width="22" Height="26">
-
-                                    <!-- Day button (hidden for empty/padding cells) -->
                                     <Button Classes="cal-day"
                                             Classes.cal-today="{Binding DayItem.IsToday}"
                                             Classes.cal-selected="{Binding IsSelected}"
@@ -208,8 +254,6 @@
                                             <TextBlock Text="{Binding DayItem.Day}"
                                                        HorizontalAlignment="Center"
                                                        VerticalAlignment="Center"/>
-
-                                            <!-- Entry dot badge -->
                                             <Ellipse Width="3" Height="3"
                                                      Fill="{StaticResource BrushAccent}"
                                                      IsVisible="{Binding DayItem.HasEntries}"
@@ -218,7 +262,6 @@
                                                      Margin="0,0,0,1"/>
                                         </Panel>
                                     </Button>
-
                                 </Panel>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
@@ -227,10 +270,10 @@
                 </StackPanel>
             </Border>
 
-            <!-- ── Right panel: selected day entries ───────────────── -->
+            <!-- ── Right panel: selected day + composer + entries ───── -->
             <DockPanel Grid.Column="1">
 
-                <!-- Selected day header -->
+                <!-- Day header -->
                 <Border DockPanel.Dock="Top"
                         Padding="16,10"
                         BorderBrush="{StaticResource BrushBorder}"
@@ -241,12 +284,51 @@
                                Foreground="{StaticResource BrushTextPrimary}"/>
                 </Border>
 
-                <!-- Entries scroll area -->
                 <ScrollViewer VerticalScrollBarVisibility="Auto"
                               HorizontalScrollBarVisibility="Disabled">
                     <StackPanel Margin="16,12,16,16">
 
-                        <!-- Empty state -->
+                        <!-- ── Inline composer (visible when open) ───── -->
+                        <Border Classes="journal-composer"
+                                IsVisible="{Binding IsComposerOpen}">
+                            <StackPanel Spacing="0">
+
+                                <!-- Optional title -->
+                                <TextBox x:Name="ComposerTitleBox"
+                                         Classes="composer-title"
+                                         Watermark="Title (optional)"
+                                         Text="{Binding ComposerTitle, Mode=TwoWay}"
+                                         KeyDown="OnComposerTitleKeyDown"/>
+
+                                <!-- Separator -->
+                                <Border Height="1"
+                                        Background="{StaticResource BrushBorder}"
+                                        Margin="0,0,0,8"/>
+
+                                <!-- Main content -->
+                                <TextBox x:Name="ComposerContentBox"
+                                         Classes="composer-content"
+                                         Watermark="Write your entry…"
+                                         Text="{Binding ComposerContent, Mode=TwoWay}"
+                                         KeyDown="OnComposerContentKeyDown"/>
+
+                                <!-- Actions -->
+                                <StackPanel Orientation="Horizontal"
+                                            Spacing="6"
+                                            HorizontalAlignment="Right"
+                                            Margin="0,10,0,0">
+                                    <Button Classes="composer-action-cancel"
+                                            Content="Cancel"
+                                            Command="{Binding CloseComposerCommand}"/>
+                                    <Button Classes="composer-action-save"
+                                            Content="Save"
+                                            Command="{Binding SubmitComposerCommand}"/>
+                                </StackPanel>
+
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Empty state (hidden when composer is open or entries exist) -->
                         <TextBlock Text="No entries for this day."
                                    IsVisible="{Binding !HasEntries}"
                                    FontSize="12"
@@ -260,7 +342,6 @@
                                     <Border Classes="journal-entry-card">
                                         <StackPanel Spacing="0">
 
-                                            <!-- Time -->
                                             <TextBlock Text="{Binding At,
                                                            Converter={StaticResource UtcToLocalConverter},
                                                            StringFormat='HH:mm'}"
@@ -268,14 +349,12 @@
                                                        Foreground="{StaticResource BrushTextFaded}"
                                                        Margin="0,0,0,4"/>
 
-                                            <!-- Title -->
                                             <TextBlock Text="{Binding Title}"
                                                        FontSize="{StaticResource FontSizeMedium}"
                                                        FontWeight="SemiBold"
                                                        Foreground="{StaticResource BrushTextPrimary}"
                                                        TextWrapping="Wrap"/>
 
-                                            <!-- Description (only when present) -->
                                             <TextBlock Text="{Binding Description}"
                                                        IsVisible="{Binding Description,
                                                            Converter={StaticResource NullToBoolConverter}}"

@@ -5,14 +5,12 @@ using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Misa.Contract.Common.Results;
 using Misa.Contract.Items.Components.Chronicle;
 using Misa.Ui.Avalonia.Common.Mappings;
-using Misa.Ui.Avalonia.Infrastructure.UI;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Journal;
 
-public sealed partial class JournalViewModel(JournalGateway gateway, LayerProxy layerProxy) : ViewModelBase
+public sealed partial class JournalViewModel(JournalGateway gateway) : ViewModelBase
 {
     // ── Raw data ──────────────────────────────────────────────────────────────
 
@@ -35,11 +33,27 @@ public sealed partial class JournalViewModel(JournalGateway gateway, LayerProxy 
     [NotifyPropertyChangedFor(nameof(SelectedDayLabel))]
     private JournalDayItem? _selectedDay;
 
+    // ── Composer state ────────────────────────────────────────────────────────
+
+    [ObservableProperty]
+    private bool _isComposerOpen;
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(SubmitComposerCommand))]
+    private string _composerTitle = string.Empty;
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(SubmitComposerCommand))]
+    private string _composerContent = string.Empty;
+
     // ── Derived ───────────────────────────────────────────────────────────────
 
     public string MonthLabel       => new DateTime(SelectedYear, SelectedMonth, 1).ToString("MMMM yyyy");
     public string SelectedDayLabel => SelectedDay?.Date.ToString("dddd, d MMMM") ?? string.Empty;
     public bool   HasEntries       => SelectedDayEntries.Count > 0;
+
+    private bool CanSubmitComposer =>
+        ComposerTitle.Trim().Length > 0 || ComposerContent.Trim().Length > 0;
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
@@ -79,19 +93,61 @@ public sealed partial class JournalViewModel(JournalGateway gateway, LayerProxy 
         SelectedDay = day;
     }
 
-    // ── Commands ──────────────────────────────────────────────────────────────
+    // ── Composer ──────────────────────────────────────────────────────────────
+
+    [RelayCommand]
+    private void OpenComposer()
+    {
+        ComposerTitle   = string.Empty;
+        ComposerContent = string.Empty;
+        IsComposerOpen  = true;
+    }
+
+    [RelayCommand]
+    private void CloseComposer()
+    {
+        IsComposerOpen  = false;
+        ComposerTitle   = string.Empty;
+        ComposerContent = string.Empty;
+    }
+
+    [RelayCommand(CanExecute = nameof(CanSubmitComposer))]
+    private async Task SubmitComposerAsync()
+    {
+        var contentTrimmed = ComposerContent.Trim();
+        var titleTrimmed   = ComposerTitle.Trim();
+
+        // Derive effective title: explicit title → first line of content → fallback
+        var effectiveTitle = titleTrimmed.Length > 0
+            ? titleTrimmed
+            : contentTrimmed.Split('\n')[0].Trim() is { Length: > 0 } firstLine
+                ? firstLine.Length <= 100 ? firstLine : firstLine[..100]
+                : SelectedDay?.Date.ToString("d MMMM yyyy") ?? string.Empty;
+
+        // OccurredAt = selected day midnight in local time → UTC
+        var localMidnight  = DateTime.SpecifyKind(SelectedDay!.Date, DateTimeKind.Local);
+        var occurredAtUtc  = new DateTimeOffset(localMidnight).ToUniversalTime();
+
+        var request = new CreateJournalRequest(
+            effectiveTitle,
+            contentTrimmed.Length > 0 ? contentTrimmed : null,
+            occurredAtUtc,
+            null);
+
+        var result = await gateway.CreateAsync(request);
+
+        if (!result.IsSuccess) return;
+
+        IsComposerOpen  = false;
+        ComposerTitle   = string.Empty;
+        ComposerContent = string.Empty;
+        await LoadAsync();
+    }
+
+    // ── Other commands ────────────────────────────────────────────────────────
 
     [RelayCommand]
     private async Task RefreshWorkspaceAsync() => await LoadAsync();
-
-    [RelayCommand]
-    private async Task ShowAddPanelAsync()
-    {
-        var formVm = new CreateJournalViewModel(gateway, SelectedDay?.Date);
-        var result = await layerProxy.OpenAsync<CreateJournalViewModel, Result>(formVm);
-        if (result is { IsSuccess: true })
-            await LoadAsync();
-    }
 
     // ── Data loading ──────────────────────────────────────────────────────────
 
@@ -103,16 +159,14 @@ public sealed partial class JournalViewModel(JournalGateway gateway, LayerProxy 
 
     private void RebuildCalendarCells()
     {
-        var daysInMonth    = DateTime.DaysInMonth(SelectedYear, SelectedMonth);
-        var today          = DateTime.Today;
+        var daysInMonth     = DateTime.DaysInMonth(SelectedYear, SelectedMonth);
+        var today           = DateTime.Today;
         var prevSelectedDay = SelectedDay?.Day;
 
-        // Count entries per local calendar day.
         var countsByDay = _monthEntries
             .GroupBy(e => e.At.ToLocalTime().Day)
             .ToDictionary(g => g.Key, g => g.Count());
 
-        // Monday-first offset: Sunday=0 in DotNet → maps to column 6; Monday=1 → column 0.
         var firstDayOfMonth = new DateTime(SelectedYear, SelectedMonth, 1);
         var leadingEmpties  = ((int)firstDayOfMonth.DayOfWeek + 6) % 7;
 
@@ -134,7 +188,6 @@ public sealed partial class JournalViewModel(JournalGateway gateway, LayerProxy 
             });
         }
 
-        // Restore or default selection: previously selected day → today → first day.
         var targetCell =
             (prevSelectedDay.HasValue
                 ? CalendarCells.FirstOrDefault(c => !c.IsEmpty && c.DayItem!.Day == prevSelectedDay)
