@@ -134,7 +134,7 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
     {
         return await context.Items
             .Include(s => s.JournalExtension)
-            .Where(t => t.OwnerId == user.Id && t.Workflow == Workflow.Journal)
+            .Where(t => t.OwnerId == user.Id && t.Workflow == Workflow.Journal && !t.IsDeleted)
             .OrderByDescending(t => t.CreatedAt)
             .AsNoTracking()
             .ToListAsync();
