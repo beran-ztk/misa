@@ -1,19 +1,41 @@
+using System;
 using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Threading;
+using Avalonia.VisualTree;
 using Misa.Contract.Items;
-using Misa.Contract.Items.Components.Zettelkasten;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Zettelkasten;
 
 public partial class ZettelkastenView : UserControl
 {
     private object? _pendingContext;
+    private ZettelkastenViewModel? _vm;
 
     public ZettelkastenView()
     {
         InitializeComponent();
+    }
+
+    protected override void OnDataContextChanged(EventArgs e)
+    {
+        base.OnDataContextChanged(e);
+
+        if (_vm is not null)
+            _vm.ItemCreatedAndReady -= OnItemCreatedAndReady;
+
+        _vm = DataContext as ZettelkastenViewModel;
+
+        if (_vm is not null)
+            _vm.ItemCreatedAndReady += OnItemCreatedAndReady;
+    }
+
+    private void OnItemCreatedAndReady(KnowledgeIndexNodeVm node)
+    {
+        KnowledgeTree.SelectedItem = node;
     }
 
     private void Tree_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
@@ -21,10 +43,15 @@ public partial class ZettelkastenView : UserControl
         if (DataContext is not ZettelkastenViewModel vm) return;
         if (sender is not TreeView tree) return;
 
-        if (tree.SelectedItem is KnowledgeIndexEntryDto { Workflow: WorkflowDto.Zettel } entry)
-            vm.SelectedZettel = vm.Zettels.FirstOrDefault(z => z.Id == entry.Id);
+        if (tree.SelectedItem is KnowledgeIndexNodeVm { IsPending: false } node &&
+            node.Entry?.Workflow == WorkflowDto.Zettel)
+        {
+            vm.SelectedZettel = vm.Zettels.FirstOrDefault(z => z.Id == node.Entry.Id);
+        }
         else
+        {
             vm.SelectedZettel = null;
+        }
     }
 
     private void Add_OnPointerPressed(object? sender, RoutedEventArgs e)
@@ -36,33 +63,46 @@ public partial class ZettelkastenView : UserControl
         }
     }
 
-    private async void CreateTopicMenuItem_OnClick(object? sender, RoutedEventArgs e)
+    private void CreateTopicMenuItem_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not ZettelkastenViewModel vm) return;
+        vm.BeginInlineCreate(_pendingContext as KnowledgeIndexNodeVm, WorkflowDto.Topic);
+        FocusPendingTextBox();
+    }
+
+    private void CreateZettelMenuItem_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not ZettelkastenViewModel vm) return;
+        vm.BeginInlineCreate(_pendingContext as KnowledgeIndexNodeVm, WorkflowDto.Zettel);
+        FocusPendingTextBox();
+    }
+
+    private async void PendingTitleBox_OnKeyDown(object? sender, KeyEventArgs e)
     {
         if (DataContext is not ZettelkastenViewModel vm) return;
 
-        if (_pendingContext is KnowledgeIndexEntryDto entry)
+        switch (e.Key)
         {
-            var parentId = entry.Workflow == WorkflowDto.Topic ? entry.Id : entry.ParentId;
-            await vm.CreateTopicAsync(parentId, entry.Title);
-        }
-        else
-        {
-            await vm.CreateTopicAsync();
+            case Key.Enter:
+                e.Handled = true;
+                await vm.ConfirmInlineCreateAsync();
+                break;
+            case Key.Escape:
+                e.Handled = true;
+                vm.CancelInlineCreate();
+                break;
         }
     }
 
-    private async void CreateZettelMenuItem_OnClick(object? sender, RoutedEventArgs e)
+    private void FocusPendingTextBox()
     {
-        if (DataContext is not ZettelkastenViewModel vm) return;
-
-        if (_pendingContext is KnowledgeIndexEntryDto entry)
+        Dispatcher.UIThread.Post(() =>
         {
-            var topicId = entry.Workflow == WorkflowDto.Topic ? entry.Id : entry.ParentId;
-            await vm.CreateZettelAsync(topicId, entry.Title);
-        }
-        else
-        {
-            await vm.CreateZettelAsync();
-        }
+            var tb = KnowledgeTree
+                .GetVisualDescendants()
+                .OfType<TextBox>()
+                .FirstOrDefault(t => t.Classes.Contains("inline-create-input"));
+            tb?.Focus();
+        }, DispatcherPriority.Render);
     }
 }
