@@ -46,6 +46,9 @@ public sealed partial class JournalViewModel(JournalGateway gateway) : ViewModel
     [NotifyCanExecuteChangedFor(nameof(SubmitComposerCommand))]
     private string _composerContent = string.Empty;
 
+    [ObservableProperty]
+    private TimeSpan? _composerTime = TimeSpan.Zero;
+
     // ── Derived ───────────────────────────────────────────────────────────────
 
     public string MonthLabel       => new DateTime(SelectedYear, SelectedMonth, 1).ToString("MMMM yyyy");
@@ -100,6 +103,7 @@ public sealed partial class JournalViewModel(JournalGateway gateway) : ViewModel
     {
         ComposerTitle   = string.Empty;
         ComposerContent = string.Empty;
+        ComposerTime    = TimeSpan.Zero;
         IsComposerOpen  = true;
     }
 
@@ -109,6 +113,7 @@ public sealed partial class JournalViewModel(JournalGateway gateway) : ViewModel
         IsComposerOpen  = false;
         ComposerTitle   = string.Empty;
         ComposerContent = string.Empty;
+        ComposerTime    = TimeSpan.Zero;
     }
 
     [RelayCommand(CanExecute = nameof(CanSubmitComposer))]
@@ -124,9 +129,9 @@ public sealed partial class JournalViewModel(JournalGateway gateway) : ViewModel
                 ? firstLine.Length <= 100 ? firstLine : firstLine[..100]
                 : SelectedDay?.Date.ToString("d MMMM yyyy") ?? string.Empty;
 
-        // OccurredAt = selected day midnight in local time → UTC
-        var localMidnight  = DateTime.SpecifyKind(SelectedDay!.Date, DateTimeKind.Local);
-        var occurredAtUtc  = new DateTimeOffset(localMidnight).ToUniversalTime();
+        // OccurredAt = selected day + composer time, local → UTC
+        var localDateTime = DateTime.SpecifyKind(SelectedDay!.Date + (ComposerTime ?? TimeSpan.Zero), DateTimeKind.Local);
+        var occurredAtUtc = new DateTimeOffset(localDateTime).ToUniversalTime();
 
         var request = new CreateJournalRequest(
             effectiveTitle,

@@ -160,6 +160,15 @@
             </Style>
         </Style>
 
+        <!-- ── Composer time picker ───────────────────────────────────── -->
+        <Style Selector="TimePicker.composer-time">
+            <Setter Property="MinWidth"        Value="0"/>
+            <Setter Property="FontSize"        Value="11"/>
+            <Setter Property="CornerRadius"    Value="4"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush"     Value="{StaticResource BrushBorder}"/>
+        </Style>
+
     </UserControl.Styles>
 
     <Grid RowDefinitions="Auto,*">
@@ -294,11 +303,9 @@
                             <StackPanel Spacing="0">
 
                                 <!-- Optional title -->
-                                <TextBox x:Name="ComposerTitleBox"
-                                         Classes="composer-title"
+                                <TextBox Classes="composer-title"
                                          Watermark="Title (optional)"
-                                         Text="{Binding ComposerTitle, Mode=TwoWay}"
-                                         KeyDown="OnComposerTitleKeyDown"/>
+                                         Text="{Binding ComposerTitle, Mode=TwoWay}"/>
 
                                 <!-- Separator -->
                                 <Border Height="1"
@@ -306,24 +313,40 @@
                                         Margin="0,0,0,8"/>
 
                                 <!-- Main content -->
-                                <TextBox x:Name="ComposerContentBox"
-                                         Classes="composer-content"
+                                <TextBox Classes="composer-content"
                                          Watermark="Write your entry…"
-                                         Text="{Binding ComposerContent, Mode=TwoWay}"
-                                         KeyDown="OnComposerContentKeyDown"/>
+                                         Text="{Binding ComposerContent, Mode=TwoWay}"/>
 
-                                <!-- Actions -->
-                                <StackPanel Orientation="Horizontal"
-                                            Spacing="6"
-                                            HorizontalAlignment="Right"
-                                            Margin="0,10,0,0">
-                                    <Button Classes="composer-action-cancel"
-                                            Content="Cancel"
-                                            Command="{Binding CloseComposerCommand}"/>
-                                    <Button Classes="composer-action-save"
-                                            Content="Save"
-                                            Command="{Binding SubmitComposerCommand}"/>
-                                </StackPanel>
+                                <!-- Footer: time (left) + actions (right) -->
+                                <Grid ColumnDefinitions="Auto,*,Auto"
+                                      Margin="0,10,0,0">
+
+                                    <!-- Time input -->
+                                    <StackPanel Grid.Column="0"
+                                                Orientation="Horizontal"
+                                                Spacing="6"
+                                                VerticalAlignment="Center">
+                                        <TextBlock Text="At"
+                                                   FontSize="10"
+                                                   Foreground="{StaticResource BrushTextFaded}"
+                                                   VerticalAlignment="Center"/>
+                                        <TimePicker Classes="composer-time"
+                                                    SelectedTime="{Binding ComposerTime, Mode=TwoWay}"/>
+                                    </StackPanel>
+
+                                    <!-- Save / Cancel -->
+                                    <StackPanel Grid.Column="2"
+                                                Orientation="Horizontal"
+                                                Spacing="6">
+                                        <Button Classes="composer-action-cancel"
+                                                Content="Cancel"
+                                                Command="{Binding CloseComposerCommand}"/>
+                                        <Button Classes="composer-action-save"
+                                                Content="Save"
+                                                Command="{Binding SubmitComposerCommand}"/>
+                                    </StackPanel>
+
+                                </Grid>
 
                             </StackPanel>
                         </Border>
