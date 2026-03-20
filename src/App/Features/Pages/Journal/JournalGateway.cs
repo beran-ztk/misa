@@ -57,4 +57,35 @@ public class JournalGateway(RemoteProxy remoteProxy)
                    .ToList()
                ?? [];
     }
+
+    public async Task<Result> UpdateAsync(Guid itemId, UpdateJournalRequest requestBody)
+    {
+        var response = await remoteProxy.SendAsync(
+            requestFactory: () => new HttpRequestMessage(HttpMethod.Put, ChronicleRoutes.UpdateJournalRequest(itemId))
+            {
+                Content = JsonContent.Create(requestBody)
+            },
+            retry: new RetryOptions
+            {
+                MaxAttempts = 3,
+                Delay = TimeSpan.FromMilliseconds(500)
+            },
+            cancellationToken: CancellationToken.None);
+
+        return response;
+    }
+
+    public async Task<Result> DeleteAsync(Guid itemId)
+    {
+        var response = await remoteProxy.SendAsync(
+            requestFactory: () => new HttpRequestMessage(HttpMethod.Delete, ItemRoutes.DeleteItemRequest(itemId)),
+            retry: new RetryOptions
+            {
+                MaxAttempts = 3,
+                Delay = TimeSpan.FromMilliseconds(500)
+            },
+            cancellationToken: CancellationToken.None);
+
+        return response;
+    }
 }

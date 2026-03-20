@@ -28,6 +28,9 @@ public interface IItemRepository
     Task<Item?> TryGetScheduleAsync(Guid id, CancellationToken ct);
     Task<List<Item>> GetSchedulesAsync(CancellationToken ct);
     
+    // Journal
+    Task<Item?> TryGetJournalAsync(Guid id);
+    
     // Chronicle
     Task<List<Item>> GetJournalsAsync();
     Task<List<ItemActivity>> GetDeadlinesAsync();

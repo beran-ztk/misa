@@ -273,6 +273,12 @@ public sealed class Item : DomainEventEntity
     // Owned child entities without an Item back-navigation property route their
     // mutations through here so ModifiedAt is updated consistently.
 
+    public void ChangeJournalOccurredAt(DateTimeOffset occurredAt, DateTimeOffset nowUtc)
+    {
+        JournalExtension!.ChangeOccurredAt(occurredAt);
+        Touch(nowUtc);
+    }
+
     public void ChangeTaskCategory(TaskCategory category, DateTimeOffset nowUtc)
     {
         TaskExtension!.ChangeCategory(category);

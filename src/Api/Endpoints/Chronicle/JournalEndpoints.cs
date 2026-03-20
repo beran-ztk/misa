@@ -12,7 +12,8 @@ public static class ChronicleEndpoints
     public static void Map(IEndpointRouteBuilder api)
     {
         api.MapPost(ChronicleRoutes.CreateJournal, Create);
-        api.MapGet(ChronicleRoutes.GetChronicle, GetAll);
+        api.MapPut(ChronicleRoutes.UpdateJournal,  Update);
+        api.MapGet(ChronicleRoutes.GetChronicle,   GetAll);
     }
 
     private static async Task<IResult> Create(
@@ -28,6 +29,15 @@ public static class ChronicleEndpoints
 
         await bus.InvokeAsync(command);
 
+        return Results.Ok();
+    }
+
+    private static async Task<IResult> Update(
+        [FromRoute] Guid itemId,
+        [FromBody]  UpdateJournalRequest request,
+        IMessageBus bus)
+    {
+        await bus.InvokeAsync(new UpdateJournalCommand(itemId, request.Description, request.OccurredAtUtc));
         return Results.Ok();
     }
 

@@ -122,6 +122,14 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
             .ToListAsync(ct);
     }
 
+    public async Task<Item?> TryGetJournalAsync(Guid id)
+    {
+        return await context.Items
+            .Include(z => z.JournalExtension)
+            .FirstOrDefaultAsync(
+                z => z.Id == new ItemId(id) && z.OwnerId == user.Id && z.Workflow == Workflow.Journal);
+    }
+
     public async Task<List<Item>> GetJournalsAsync()
     {
         return await context.Items

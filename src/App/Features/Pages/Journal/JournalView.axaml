@@ -89,12 +89,27 @@
             <Setter Property="FontWeight" Value="SemiBold"/>
         </Style>
 
-        <!-- ── Entry card ─────────────────────────────────────────────── -->
+        <!-- ── Entry row ─────────────────────────────────────────────── -->
         <Style Selector="Border.journal-entry-card">
             <Setter Property="BorderBrush"     Value="{StaticResource BrushBorder}"/>
             <Setter Property="BorderThickness" Value="0,0,0,1"/>
-            <Setter Property="Padding"         Value="0,10,0,10"/>
+            <Setter Property="Padding"         Value="0,10,0,12"/>
             <Setter Property="Margin"          Value="0"/>
+        </Style>
+
+        <!-- ── Entry row action buttons (Edit / Delete) ──────────────── -->
+        <Style Selector="Button.journal-entry-action">
+            <Setter Property="Padding"         Value="5,2"/>
+            <Setter Property="FontSize"        Value="10"/>
+            <Setter Property="Background"      Value="Transparent"/>
+            <Setter Property="Foreground"      Value="{StaticResource BrushTextFaded}"/>
+            <Setter Property="Cursor"          Value="Hand"/>
+            <Style Selector="^ /template/ ContentPresenter">
+                <Setter Property="CornerRadius" Value="3"/>
+            </Style>
+            <Style Selector="^:pointerover /template/ ContentPresenter">
+                <Setter Property="Background"   Value="#0EFFFFFF"/>
+            </Style>
         </Style>
 
         <!-- ── Inline composer content TextBox ───────────────────────── -->
@@ -323,29 +338,83 @@
                                    Foreground="{StaticResource BrushTextFaded}"
                                    Margin="0,0,0,4"/>
 
-                        <!-- Entry cards -->
+                        <!-- Entry rows -->
                         <ItemsControl ItemsSource="{Binding SelectedDayEntries}">
                             <ItemsControl.ItemTemplate>
-                                <DataTemplate>
+                                <DataTemplate x:DataType="root:JournalEntryRow">
                                     <Border Classes="journal-entry-card">
-                                        <StackPanel Spacing="0">
 
-                                            <!-- Time -->
-                                            <TextBlock Text="{Binding At,
-                                                           Converter={StaticResource UtcToLocalConverter},
-                                                           StringFormat='HH:mm'}"
-                                                       FontSize="10"
-                                                       Foreground="{StaticResource BrushTextFaded}"
-                                                       Margin="0,0,0,4"/>
+                                        <StackPanel>
+                                            <!-- ── Read view ───────────────────────────────── -->
+                                            <Grid IsVisible="{Binding !IsEditing}"
+                                                  ColumnDefinitions="*,Auto">
 
-                                            <!-- Content (Description is the writing body) -->
-                                            <TextBlock Text="{Binding Description}"
-                                                       IsVisible="{Binding Description,
-                                                           Converter={StaticResource NullToBoolConverter}}"
-                                                       FontSize="{StaticResource FontSizeMedium}"
-                                                       Foreground="{StaticResource BrushTextPrimary}"
-                                                       TextWrapping="Wrap"/>
+                                                <StackPanel Grid.Column="0" Spacing="4">
+                                                    <TextBlock Text="{Binding Entry.At,
+                                                                   Converter={StaticResource UtcToLocalConverter},
+                                                                   StringFormat='HH:mm'}"
+                                                               FontSize="10"
+                                                               Foreground="{StaticResource BrushTextFaded}"/>
+                                                    <TextBlock Text="{Binding Entry.Description}"
+                                                               IsVisible="{Binding Entry.Description,
+                                                                   Converter={StaticResource NullToBoolConverter}}"
+                                                               FontSize="{StaticResource FontSizeMedium}"
+                                                               Foreground="{StaticResource BrushTextPrimary}"
+                                                               TextWrapping="Wrap"
+                                                               LineHeight="20"/>
+                                                </StackPanel>
 
+                                                <StackPanel Grid.Column="1"
+                                                            Orientation="Horizontal"
+                                                            Spacing="2"
+                                                            VerticalAlignment="Top"
+                                                            Margin="8,0,0,0">
+                                                    <Button Classes="journal-entry-action"
+                                                            Content="Edit"
+                                                            Command="{Binding BeginEditCommand}"/>
+                                                    <Button Classes="journal-entry-action"
+                                                            Content="Delete"
+                                                            Command="{Binding DeleteCommand}"/>
+                                                </StackPanel>
+
+                                            </Grid>
+
+                                            <!-- ── Edit view ───────────────────────────────── -->
+                                            <StackPanel IsVisible="{Binding IsEditing}" Spacing="0">
+
+                                                <TextBox Classes="composer-content"
+                                                         MinHeight="40"
+                                                         Text="{Binding EditContent, Mode=TwoWay}"/>
+
+                                                <Border Height="1"
+                                                        Background="{StaticResource BrushBorder}"
+                                                        Margin="0,6,0,6"/>
+
+                                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                                    <StackPanel Grid.Column="0"
+                                                                Orientation="Horizontal"
+                                                                Spacing="6"
+                                                                VerticalAlignment="Center">
+                                                        <TextBlock Text="At"
+                                                                   FontSize="10"
+                                                                   Foreground="{StaticResource BrushTextFaded}"
+                                                                   VerticalAlignment="Center"/>
+                                                        <TimePicker Classes="composer-time"
+                                                                    SelectedTime="{Binding EditTime, Mode=TwoWay}"/>
+                                                    </StackPanel>
+                                                    <StackPanel Grid.Column="2"
+                                                                Orientation="Horizontal"
+                                                                Spacing="6">
+                                                        <Button Classes="composer-action-cancel"
+                                                                Content="Cancel"
+                                                                Command="{Binding CancelEditCommand}"/>
+                                                        <Button Classes="composer-action-save"
+                                                                Content="Save"
+                                                                Command="{Binding SaveEditCommand}"/>
+                                                    </StackPanel>
+                                                </Grid>
+
+                                            </StackPanel>
                                         </StackPanel>
                                     </Border>
                                 </DataTemplate>

@@ -12,7 +12,8 @@ public sealed class JournalExtension
 
     public ItemId Id { get; private set; }
 
-    public DateTimeOffset OccurredAt { get; private set; }
+    public DateTimeOffset  OccurredAt { get; private set; }
+    public DateTimeOffset? UntilAt    { get; private set; }
 
-    public DateTimeOffset? UntilAt { get; private set; }
+    public void ChangeOccurredAt(DateTimeOffset occurredAt) => OccurredAt = occurredAt;
 }

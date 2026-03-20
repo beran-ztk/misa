@@ -19,7 +19,7 @@ public sealed partial class JournalViewModel(JournalGateway gateway) : ViewModel
     // ── Observable state ──────────────────────────────────────────────────────
 
     public ObservableCollection<JournalCalendarCell> CalendarCells      { get; } = [];
-    public ObservableCollection<ChronicleEntryDto>   SelectedDayEntries { get; } = [];
+    public ObservableCollection<JournalEntryRow>     SelectedDayEntries { get; } = [];
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(MonthLabel))]
@@ -94,7 +94,7 @@ public sealed partial class JournalViewModel(JournalGateway gateway) : ViewModel
     private void ResetComposer()
     {
         ComposerContent = string.Empty;
-        ComposerTime    = TimeSpan.Zero;
+        ComposerTime    = DefaultComposerTime();
     }
 
     [RelayCommand(CanExecute = nameof(CanSubmitComposer))]
@@ -119,6 +119,11 @@ public sealed partial class JournalViewModel(JournalGateway gateway) : ViewModel
         ResetComposer();
         await LoadAsync();
     }
+
+    // ── Other commands ────────────────────────────────────────────────────────
+
+    [RelayCommand]
+    private async Task RefreshWorkspaceAsync() => await LoadAsync();
 
     // ── Data loading ──────────────────────────────────────────────────────────
 
@@ -193,9 +198,26 @@ public sealed partial class JournalViewModel(JournalGateway gateway) : ViewModel
         if (SelectedDay is not null)
         {
             foreach (var entry in _monthEntries.Where(e => e.At.ToLocalTime().Date == SelectedDay.Date))
-                SelectedDayEntries.Add(entry);
+                SelectedDayEntries.Add(new JournalEntryRow(entry, gateway, LoadAsync));
         }
 
         OnPropertyChanged(nameof(HasEntries));
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Default composer time: current local time (truncated to minutes) when viewing
+    /// today, 00:00 for any other day.
+    /// </summary>
+    private TimeSpan DefaultComposerTime()
+    {
+        if (SelectedDay?.IsToday == true)
+        {
+            var now = DateTime.Now.TimeOfDay;
+            return new TimeSpan(now.Hours, now.Minutes, 0);
+        }
+
+        return TimeSpan.Zero;
     }
 }
