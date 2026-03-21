@@ -27,24 +27,11 @@
                           Background="{StaticResource BrushPrimaryBackground}">
 
                     <TreeView.Styles>
+
                         <Style Selector="TreeViewItem">
                             <Setter Property="IsExpanded" Value="{ReflectionBinding IsExpanded, Mode=TwoWay}" />
-                            <Setter Property="Padding" Value="0"/>
-                            <Setter Property="Background" Value="Transparent"/>
                         </Style>
-
-                        <Style Selector="TreeViewItem:pointerover /template/ ContentPresenter">
-                            <Setter Property="Background" Value="Yellow"/>
-                        </Style>
-
-                        <Style Selector="TreeViewItem:pointerover /template/ ContentPresenter">
-                            <Setter Property="Background" Value="Red"/>
-                        </Style>
-
-                        <Style Selector="TreeViewItem:selected /template/ ContentPresenter">
-                            <Setter Property="Background" Value="Blue"/>
-                        </Style>
-
+                        
                         <!-- Eigene Zeile -->
                         <Style Selector="Border.index-entry-row">
                             <Setter Property="Background" Value="Transparent"/>

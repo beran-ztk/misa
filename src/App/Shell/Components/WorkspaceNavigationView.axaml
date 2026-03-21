@@ -16,13 +16,14 @@
 
             <!-- ── Primary navigation items ─────────────────────────── -->
             <StackPanel Grid.Row="0"
+                        Opacity="0.6"
                         Spacing="{StaticResource SpacingSmall}">
 
                 <Button Classes="workspace-nav"
                         Classes.nav-active="{Binding IsTasksActive}"
                         ToolTip.Tip="Tasks"
                         Command="{Binding ShowTasksCommand}">
-                    <Image Width="20" Height="20" Opacity="0.7"
+                    <Image Width="18" Height="18"
                            Source="{SvgImage /Assets/Icons/Shell/Navigation/list-dashes.svg}"/>
                 </Button>
 
@@ -30,13 +31,13 @@
                         Classes.nav-active="{Binding IsSchedulerActive}"
                         ToolTip.Tip="Scheduler"
                         Command="{Binding ShowSchedulerCommand}">
-                    <Image Width="20" Height="20" Opacity="0.7"
+                    <Image Width="18" Height="18"
                            Source="{SvgImage /Assets/Icons/Shell/Navigation/calendar-dots.svg}"/>
                 </Button>
 
                 <Button Classes="workspace-nav"
                         ToolTip.Tip="Contacts">
-                    <Image Width="20" Height="20" Opacity="0.7"
+                    <Image Width="18" Height="18"
                            Source="{SvgImage /Assets/Icons/Shell/Navigation/users-three.svg}"/>
                 </Button>
 
@@ -44,7 +45,7 @@
                         Classes.nav-active="{Binding IsJournalActive}"
                         ToolTip.Tip="Journal"
                         Command="{Binding ShowJournalCommand}">
-                    <Image Width="20" Height="20" Opacity="0.7"
+                    <Image Width="18" Height="18"
                            Source="{SvgImage /Assets/Icons/Shell/Navigation/notebook.svg}"/>
                 </Button>
 
@@ -52,7 +53,7 @@
                         Classes.nav-active="{Binding IsChronicleActive}"
                         ToolTip.Tip="Chronicle"
                         Command="{Binding ShowChronicleCommand}">
-                    <Image Width="20" Height="20" Opacity="0.7"
+                    <Image Width="18" Height="18"
                            Source="{SvgImage /Assets/Icons/Shell/Navigation/hourglass.svg}"/>
                 </Button>
 
@@ -60,25 +61,25 @@
                         Classes.nav-active="{Binding IsZettelActive}"
                         ToolTip.Tip="Zettelkasten"
                         Command="{Binding ShowZettelkastenCommand}">
-                    <Image Width="20" Height="20" Opacity="0.7"
+                    <Image Width="18" Height="18"
                            Source="{SvgImage /Assets/Icons/Shell/Navigation/scroll.svg}"/>
                 </Button>
 
                 <Button Classes="workspace-nav"
                         ToolTip.Tip="Evidences">
-                    <Image Width="20" Height="20" Opacity="0.7"
+                    <Image Width="18" Height="18"
                            Source="{SvgImage /Assets/Icons/Shell/Navigation/bookmarks.svg}"/>
                 </Button>
 
                 <Button Classes="workspace-nav"
                         ToolTip.Tip="RSS Feed">
-                    <Image Width="20" Height="20" Opacity="0.7"
+                    <Image Width="18" Height="18"
                            Source="{SvgImage /Assets/Icons/Shell/Navigation/rss.svg}"/>
                 </Button>
 
                 <Button Classes="workspace-nav"
                         ToolTip.Tip="URLs">
-                    <Image Width="20" Height="20" Opacity="0.7"
+                    <Image Width="18" Height="18"
                            Source="{SvgImage /Assets/Icons/Shell/Navigation/paperclip.svg}"/>
                 </Button>
 
@@ -86,23 +87,23 @@
 
             <!-- ── Footer ───────────────────────────────────────────── -->
             <StackPanel Grid.Row="1"
-                        Spacing="{StaticResource SpacingSmall}"
-                        VerticalAlignment="Bottom">
+                        Spacing="{StaticResource SpacingMedium}"
+                        VerticalAlignment="Bottom"
+                        Margin="0,0,0,4">
 
                 <Button Classes="workspace-nav"
                         ToolTip.Tip="Ledger">
-                    <Image Width="20" Height="20" Opacity="0.7"
+                    <Image Width="18" Height="18"
                            Source="{SvgImage /Assets/Icons/Shell/Navigation/notebook.svg}"/>
                 </Button>
 
                 <Border Height="1"
-                        Margin="0,8,0,8"
-                        Background="{StaticResource BrushSecondaryBackground}"
+                        Background="{StaticResource BrushBorder}"
                         Opacity="0.6"/>
 
                 <Button Classes="workspace-nav"
                         ToolTip.Tip="Settings">
-                    <Image Width="20" Height="20" Opacity="0.7"
+                    <Image Width="18" Height="18"
                            Source="{SvgImage /Assets/Icons/Shell/Navigation/nut.svg}"/>
                 </Button>
 
