@@ -5,7 +5,6 @@ using Misa.Domain.Items.Components.Activities.Sessions;
 using Misa.Domain.Items.Components.Audits.Changes;
 using Misa.Domain.Items.Components.Chronicle.Journals;
 using Misa.Domain.Items.Components.Schedules;
-using Misa.Domain.Items.Components.Schola;
 using Misa.Domain.Items.Components.Tasks;
 using Misa.Domain.Items.Components.Zettelkasten;
 
@@ -66,8 +65,6 @@ public sealed class Item : DomainEventEntity
     public TaskExtension? TaskExtension { get; private set; }
     public ScheduleExtension? ScheduleExtension { get; private set; }
     public JournalExtension? JournalExtension { get; private set; }
-    public Arc? Arc { get; private set; }
-    public Unit? Unit { get; private set; }
     public Topic? Topic { get; private set; }
     public Zettel? ZettelExtension { get; private set; }
     public KnowledgeIndex? KnowledgeIndex { get; private set; }
@@ -138,59 +135,6 @@ public sealed class Item : DomainEventEntity
             createdAtUtc: createdAtUtc)
         {
             JournalExtension = journalExtension
-        };
-
-        return item;
-    }
-    
-    public static Item CreateArc(
-        ItemId id,
-        string ownerId,
-        string title,
-        string? description,
-        DateTimeOffset createdAtUtc,
-        
-        ActivityPriority priority,
-        string? objective,
-        DateTimeOffset? dueAt)
-    {
-        var item = new Item(
-            id: id,
-            ownerId: ownerId,
-            workflow: Workflow.Arc,
-            title: title,
-            description: description,
-            createdAtUtc: createdAtUtc)
-        {
-            Activity = new ItemActivity(id, ActivityState.Open, priority, objective, null, dueAt),
-            Arc = new Arc(id)
-        };
-
-        return item;
-    }
-    public static Item CreateUnit(
-        ItemId id,
-        string ownerId,
-        string title,
-        string? description,
-        DateTimeOffset createdAtUtc,
-        
-        ActivityPriority priority,
-        string? objective,
-        DateTimeOffset? dueAt,
-        
-        ItemId? arcId)
-    {
-        var item = new Item(
-            id: id,
-            ownerId: ownerId,
-            workflow: Workflow.Unit,
-            title: title,
-            description: description,
-            createdAtUtc: createdAtUtc)
-        {
-            Activity = new ItemActivity(id, ActivityState.Open, priority, objective, null, dueAt),
-            Unit = new Unit(id, arcId)
         };
 
         return item;

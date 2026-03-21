@@ -79,38 +79,4 @@ public sealed class ZettelkastenGateway(RemoteProxy remoteProxy)
 
         return response;
     }
-    
-    // Schola
-    public async Task<Result> CreateArcAsync(CreateArcRequest requestBody)
-    {
-        var response = await remoteProxy.SendAsync(
-            requestFactory: () => new HttpRequestMessage(HttpMethod.Post, ScholaRoutes.CreateArc)
-            {
-                Content = JsonContent.Create(requestBody)
-            },
-            retry: new RetryOptions
-            {
-                MaxAttempts = 3,
-                Delay = TimeSpan.FromMilliseconds(500)
-            },
-            cancellationToken: CancellationToken.None);
-
-        return response;
-    }
-    public async Task<Result> CreateUnitAsync(CreateUnitRequest requestBody)
-    {
-        var response = await remoteProxy.SendAsync(
-            requestFactory: () => new HttpRequestMessage(HttpMethod.Post, ScholaRoutes.CreateUnit)
-            {
-                Content = JsonContent.Create(requestBody)
-            },
-            retry: new RetryOptions
-            {
-                MaxAttempts = 3,
-                Delay = TimeSpan.FromMilliseconds(500)
-            },
-            cancellationToken: CancellationToken.None);
-
-        return response;
-    }
 }

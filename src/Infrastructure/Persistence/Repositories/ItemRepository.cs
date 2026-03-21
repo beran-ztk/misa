@@ -171,29 +171,6 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
             .AsNoTracking()
             .ToListAsync(ct);
     }
-
-    public async Task<List<Item>> GetArcsAsync()
-    {
-        return await context.Items
-            .Include(s => s.Activity)
-            .Include(s => s.Arc)
-            .Where(t => t.OwnerId == user.Id && t.Workflow == Workflow.Arc)
-            .OrderByDescending(t => t.CreatedAt)
-            .AsNoTracking()
-            .ToListAsync();
-    }
-
-    public async Task<List<Item>> GetUnitsAsync()
-    {
-        return await context.Items
-            .Include(s => s.Activity)
-            .Include(s => s.Unit)
-            .Where(t => t.OwnerId == user.Id && t.Workflow == Workflow.Unit)
-            .OrderByDescending(t => t.CreatedAt)
-            .AsNoTracking()
-            .ToListAsync();
-    }
-
     public async Task<List<Item>> GetKnowledgeIndexAsync()
     {
         return await context.Items

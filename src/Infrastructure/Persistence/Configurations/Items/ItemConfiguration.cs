@@ -2,11 +2,8 @@
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Misa.Domain.Items;
 using Misa.Domain.Items.Components.Activities;
-using Misa.Domain.Items.Components.Activities.Sessions;
-using Misa.Domain.Items.Components.Audits.Changes;
 using Misa.Domain.Items.Components.Chronicle.Journals;
 using Misa.Domain.Items.Components.Schedules;
-using Misa.Domain.Items.Components.Schola;
 using Misa.Domain.Items.Components.Tasks;
 using Misa.Domain.Items.Components.Zettelkasten;
 
@@ -70,16 +67,6 @@ public class ItemConfiguration : IEntityTypeConfiguration<Item>
             .WithOne()
             .HasForeignKey<JournalExtension>(j => j.Id)
             .OnDelete(DeleteBehavior.Cascade);
-        
-        builder.HasOne(i => i.Arc)
-            .WithOne()
-            .HasForeignKey<Arc>(a => a.Id)
-            .OnDelete(DeleteBehavior.Cascade);
-        
-        builder.HasOne(i => i.Unit)
-            .WithOne(u => u.Item)
-            .HasForeignKey<Unit>(u => u.Id)
-            .OnDelete(DeleteBehavior.Cascade); 
         
         builder.HasOne(i => i.Topic)
             .WithOne()

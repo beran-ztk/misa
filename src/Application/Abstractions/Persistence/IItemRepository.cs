@@ -37,10 +37,6 @@ public interface IItemRepository
     Task<List<Session>> GetSessionsAsync();
     Task<List<Item>> GetChangedItemsInRangeAsync(DateTimeOffset from, DateTimeOffset to, CancellationToken ct = default);
     
-    // Schola
-    Task<List<Item>> GetArcsAsync();
-    Task<List<Item>> GetUnitsAsync();
-    
     // Zettelkasten
     Task<List<Item>> GetKnowledgeIndexAsync();
     Task<List<Item>> GetZettelsAsync(Guid? topicId, CancellationToken ct);
