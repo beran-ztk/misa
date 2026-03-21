@@ -1,5 +1,6 @@
 using Misa.Application.Abstractions.Persistence;
 using Misa.Application.Mappings;
+using Misa.Contract.Items;
 using Misa.Contract.Items.Components.Zettelkasten;
 
 namespace Misa.Application.Features.Items.Zettelkasten;
@@ -26,7 +27,11 @@ public sealed class GetKnowledgeIndexHandler(IItemRepository repository)
             ))
         );
 
-        var rootEntries = Entries.Where(e => e.ParentId is null).ToList();
+        var rootEntries = Entries
+            .Where(e => e.ParentId is null)
+            .OrderBy(e => e.Title)
+            .ToList();
+        
         var sortedEntries = new List<KnowledgeIndexEntryDto>(rootEntries.Count);
         foreach (var entry in rootEntries)
         {
@@ -34,21 +39,27 @@ public sealed class GetKnowledgeIndexHandler(IItemRepository repository)
             
             sortedEntries.Add(entry);
         }
+
+        sortedEntries = sortedEntries
+            .OrderBy(e => e.Workflow switch
+            {
+                WorkflowDto.Topic => 0,
+                WorkflowDto.Zettel => 1,
+                _ => 99
+            })
+            .ThenBy(e => e.Title)
+            .ToList();
         
         return sortedEntries;
     }
 
     private void AppendChildren(KnowledgeIndexEntryDto currentEntry)
     {
-        foreach (var entry in Entries)
+        foreach (var entry in Entries.Where(entry => entry.ParentId == currentEntry.Id))
         {
-            // Does any entry have currentEntry as Parent?
-            if (entry.ParentId == currentEntry.Id)
-            {
-                AppendChildren(entry);
+            AppendChildren(entry);
                 
-                currentEntry.Children.Add(entry);
-            }
+            currentEntry.Children.Add(entry);
         }
     }
 }
