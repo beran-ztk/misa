@@ -18,14 +18,19 @@
     </Application.Resources>
              
      <Application.Styles>
-         <FluentTheme />
+         <FluentTheme>
+             <FluentTheme.Palettes>
+                 <ColorPaletteResources x:Key="Light" Accent="{StaticResource BorderColor}"/>
+                 <ColorPaletteResources x:Key="Dark" Accent="{StaticResource BorderColor}"/>
+             </FluentTheme.Palettes>
+         </FluentTheme>
+         
          <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
          
          <StyleInclude Source="avares://App/Assets/Styles/Controls/Overlays.axaml"/>
          
          <StyleInclude Source="avares://App/Assets/Styles/Components/Confirm.Cancel.axaml"/>
          
-         <StyleInclude Source="avares://App/Assets/Styles/Views/Scheduler/Schedule.Content.Card.axaml"/>
          <StyleInclude Source="avares://App/Assets/Styles/Views/Chronicle/ChronicleList.axaml"/>
          <StyleInclude Source="avares://App/Assets/Styles/Views/Notifications/Notifications.axaml"/>
          <StyleInclude Source="avares://App/Assets/Styles/Views/Toast/Toast.axaml"/>

@@ -15,10 +15,10 @@
         </Style>
 
         <Style Selector="TextBox.workspace-toolbar-search:pointerover">
-                <Setter Property="BorderBrush" Value="{StaticResource BrushNavigationHover}" />
+                <Setter Property="BorderBrush" Value="{StaticResource BrushPrimaryBackgroundLighter}" />
         </Style>
 
         <Style Selector="TextBox.workspace-toolbar-search:focus">
-                <Setter Property="BorderBrush" Value="{StaticResource BrushNavigationPressed}" />
+                <Setter Property="BorderBrush" Value="{StaticResource BrushPrimaryBackgroundLighter}" />
         </Style>
 </Styles>

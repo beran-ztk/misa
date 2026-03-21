@@ -185,10 +185,10 @@
             </Style>
             <Style Selector="^:pointerover /template/ ContentPresenter">
                 <Setter Property="BorderBrush" Value="{StaticResource BrushBorderLight}"/>
-                <Setter Property="Background"  Value="{StaticResource BrushNavigationHover}"/>
+                <Setter Property="Background"  Value="{StaticResource BrushPrimaryBackgroundLighter}"/>
             </Style>
             <Style Selector="^:pressed /template/ ContentPresenter">
-                <Setter Property="Background" Value="{StaticResource BrushNavigationPressed}"/>
+                <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}"/>
             </Style>
         </Style>
 
