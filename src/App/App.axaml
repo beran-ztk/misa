@@ -11,8 +11,8 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceInclude Source="avares://App/Assets/Styles/Tokens/Spaces.axaml"/>
-                <ResourceInclude Source="avares://App/Assets/Styles/Tokens/Brushes.axaml"/>
+                <ResourceInclude Source="avares://App/Assets/Styles/Spaces.axaml"/>
+                <ResourceInclude Source="avares://App/Assets/Styles/Brushes.axaml"/>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>
@@ -27,24 +27,27 @@
          
          <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
          
+         <!-- Base -->
+         <StyleInclude Source="avares://App/Assets/Styles/Controls.axaml"/>
+         
+         <!-- Controls -->
          <StyleInclude Source="avares://App/Assets/Styles/Controls/Overlays.axaml"/>
-         <StyleInclude Source="avares://App/Assets/Styles/Controls/Base.axaml"/>
 
+         <!-- Components -->
          <StyleInclude Source="avares://App/Assets/Styles/Components/Confirm.Cancel.axaml"/>
-         
-         <StyleInclude Source="avares://App/Assets/Styles/Views/Chronicle/ChronicleList.axaml"/>
-         <StyleInclude Source="avares://App/Assets/Styles/Views/Notifications/Notifications.axaml"/>
-         <StyleInclude Source="avares://App/Assets/Styles/Views/Toast/Toast.axaml"/>
-         
-         <!-- Navigation -->
-         <StyleInclude Source="avares://App/Assets/Styles/Views/Navigation/UtilityNavigation.axaml"/>
-         <StyleInclude Source="avares://App/Assets/Styles/Views/Navigation/WorkspaceNavigation.axaml"/>
          <StyleInclude Source="avares://App/Assets/Styles/Components/Toolbar.axaml"/>
          <StyleInclude Source="avares://App/Assets/Styles/Components/Toolbar.IconButton.axaml"/>
          <StyleInclude Source="avares://App/Assets/Styles/Components/Toolbar.Search.axaml"/>
-         
          <StyleInclude Source="avares://App/Assets/Styles/Components/Workspace.Content.Datagrid.axaml"/>
          <StyleInclude Source="avares://App/Assets/Styles/Components/Workspace.AddPanel.axaml"/>
+         
+         <!-- Views -->
+         <StyleInclude Source="avares://App/Assets/Styles/Views/Chronicle/ChronicleList.axaml"/>
+         <StyleInclude Source="avares://App/Assets/Styles/Views/Notifications/Notifications.axaml"/>
+         <StyleInclude Source="avares://App/Assets/Styles/Views/Toast/Toast.axaml"/>
+         <StyleInclude Source="avares://App/Assets/Styles/Views/Navigation/UtilityNavigation.axaml"/>
+         <StyleInclude Source="avares://App/Assets/Styles/Views/Navigation/WorkspaceNavigation.axaml"/>
+         
      </Application.Styles>
     
 </Application>
