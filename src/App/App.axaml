@@ -29,11 +29,9 @@
          
          <!-- Base -->
          <StyleInclude Source="avares://App/Assets/Styles/Controls.axaml"/>
-         
-         <!-- Controls -->
-         <StyleInclude Source="avares://App/Assets/Styles/Features/Overlays.axaml"/>
 
          <!-- Components -->
+         <StyleInclude Source="avares://App/Assets/Styles/Components/Overlays.axaml"/>
          <StyleInclude Source="avares://App/Assets/Styles/Components/Confirm.Cancel.axaml"/>
          <StyleInclude Source="avares://App/Assets/Styles/Components/Toolbar.axaml"/>
          <StyleInclude Source="avares://App/Assets/Styles/Components/Toolbar.IconButton.axaml"/>
