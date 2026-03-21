@@ -76,30 +76,23 @@
 
         <!--
             Segment button base — sits inside a container Border.
-            No per-button border; shape comes from the container.
+            btn-seg covers: Foreground=Faded, CornerRadius=3, :pointerover/pressed overlays.
+            Local additions: fixed Height/Padding, hover step to Secondary, filled active bg.
         -->
         <Style Selector="Button.workspace-mode-seg">
-            <Setter Property="Height"    Value="22"/>
-            <Setter Property="Padding"   Value="12,0"/>
-            <Setter Property="Foreground" Value="{StaticResource BrushTextFaded}"/>
-            <Setter Property="FontSize"   Value="{StaticResource FontSizeAverage}"/>
-            <Style Selector="^ /template/ ContentPresenter">
-                <Setter Property="CornerRadius" Value="3"/>
-            </Style>
+            <Setter Property="Height"   Value="22"/>
+            <Setter Property="Padding"  Value="12,0"/>
+            <Setter Property="FontSize" Value="{StaticResource FontSizeAverage}"/>
             <Style Selector="^:pointerover">
                 <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
             </Style>
             <Style Selector="^:pointerover /template/ ContentPresenter">
                 <Setter Property="Background" Value="{StaticResource BrushSelectedOverlay}"/>
             </Style>
-            <Style Selector="^:pressed /template/ ContentPresenter">
-                <Setter Property="Background" Value="{StaticResource BrushPressedOverlay}"/>
-            </Style>
         </Style>
 
-        <!-- Active segment — filled pill -->
-        <Style Selector="Button.workspace-mode-seg.seg-on">
-            <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
+        <!-- Active segment — opaque fill (overrides btn-seg.active SelectedOverlay) -->
+        <Style Selector="Button.workspace-mode-seg.active">
             <Style Selector="^ /template/ ContentPresenter">
                 <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}"/>
             </Style>
@@ -109,7 +102,7 @@
             Deleted segment — when active: very subtle muted-red text.
             Not loud. Just a quiet signal that this is a critical zone.
         -->
-        <Style Selector="Button.workspace-mode-seg-deleted.seg-on">
+        <Style Selector="Button.workspace-mode-seg-deleted.active">
             <Setter Property="Foreground" Value="#C87878"/>
             <Style Selector="^ /template/ ContentPresenter">
                 <Setter Property="Background" Value="#14F44336"/>
@@ -176,20 +169,11 @@
         </Style>
 
         <!-- ── Sort option items inside flyout ───────────────────────── -->
+        <!-- btn-menu-item covers: Foreground, FontSize, Stretch/Left alignment, hover states -->
         <Style Selector="Button.sort-option">
-            <Setter Property="Foreground"                 Value="{StaticResource BrushTextSecondary}"/>
-            <Setter Property="FontSize"                   Value="{StaticResource FontSizeAverage}"/>
-            <Setter Property="HorizontalAlignment"        Value="Stretch"/>
-            <Setter Property="HorizontalContentAlignment" Value="Left"/>
-            <Setter Property="Padding"                    Value="9,6"/>
+            <Setter Property="Padding" Value="9,6"/>
             <Style Selector="^ /template/ ContentPresenter">
                 <Setter Property="CornerRadius" Value="3"/>
-            </Style>
-            <Style Selector="^:pointerover">
-                <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
-            </Style>
-            <Style Selector="^:pointerover /template/ ContentPresenter">
-                <Setter Property="Background" Value="{StaticResource BrushSelectedOverlay}"/>
             </Style>
         </Style>
         <!-- Active sort option — accent-colored -->
@@ -281,16 +265,16 @@
                         CornerRadius="5"
                         Padding="2">
                     <StackPanel Orientation="Horizontal" Spacing="1">
-                        <Button Classes="workspace-mode-seg"
-                                Classes.seg-on="{Binding State.IsActiveMode}"
+                        <Button Classes="workspace-mode-seg btn-seg"
+                                Classes.active="{Binding State.IsActiveMode}"
                                 Command="{Binding SetActiveModeCommand}"
                                 Content="Active"/>
-                        <Button Classes="workspace-mode-seg"
-                                Classes.seg-on="{Binding State.IsArchivedMode}"
+                        <Button Classes="workspace-mode-seg btn-seg"
+                                Classes.active="{Binding State.IsArchivedMode}"
                                 Command="{Binding SetArchivedModeCommand}"
                                 Content="Archived"/>
-                        <Button Classes="workspace-mode-seg workspace-mode-seg-deleted"
-                                Classes.seg-on="{Binding State.IsDeletedMode}"
+                        <Button Classes="workspace-mode-seg workspace-mode-seg-deleted btn-seg"
+                                Classes.active="{Binding State.IsDeletedMode}"
                                 Command="{Binding SetDeletedModeCommand}"
                                 Content="Deleted"/>
                     </StackPanel>
@@ -306,12 +290,12 @@
                         CornerRadius="5"
                         Padding="2">
                     <StackPanel Orientation="Horizontal" Spacing="1">
-                        <Button Classes="workspace-mode-seg"
-                                Classes.seg-on="{Binding State.IsCardView}"
+                        <Button Classes="workspace-mode-seg btn-seg"
+                                Classes.active="{Binding State.IsCardView}"
                                 Command="{Binding SetCardViewCommand}"
                                 Content="Card"/>
-                        <Button Classes="workspace-mode-seg"
-                                Classes.seg-on="{Binding State.IsListView}"
+                        <Button Classes="workspace-mode-seg btn-seg"
+                                Classes.active="{Binding State.IsListView}"
                                 Command="{Binding SetListViewCommand}"
                                 Content="List"/>
                     </StackPanel>
@@ -356,7 +340,7 @@
                         <StackPanel Orientation="Horizontal" Spacing="1">
 
                             <!-- Field picker -->
-                            <Button Classes="workspace-mode-seg">
+                            <Button Classes="workspace-mode-seg btn-seg">
                                 <TextBlock Text="{Binding State.SortFieldLabel}"
                                            VerticalAlignment="Center"/>
                                 
@@ -371,15 +355,15 @@
                                                 MinWidth="130"
                                                 Padding="2">
                                             <StackPanel Spacing="1">
-                                                <Button Classes="sort-option"
+                                                <Button Classes="sort-option btn-menu-item"
                                                         Classes.sort-active="{Binding State.IsSortByCreated}"
                                                         Command="{Binding SetSortCreatedCommand}"
                                                         Content="Created"/>
-                                                <Button Classes="sort-option"
+                                                <Button Classes="sort-option btn-menu-item"
                                                         Classes.sort-active="{Binding State.IsSortByTitle}"
                                                         Command="{Binding SetSortTitleCommand}"
                                                         Content="Title"/>
-                                                <Button Classes="sort-option"
+                                                <Button Classes="sort-option btn-menu-item"
                                                         Classes.sort-active="{Binding State.IsSortByState}"
                                                         Command="{Binding SetSortStateCommand}"
                                                         Content="State"/>
@@ -390,7 +374,7 @@
                             </Button>
 
                             <!-- Direction toggle -->
-                            <Button Classes="workspace-mode-seg"
+                            <Button Classes="workspace-mode-seg btn-seg"
                                     Padding="8,0"
                                     Command="{Binding ToggleSortDirectionCommand}">
                                 <TextBlock Text="{Binding State.SortDirectionGlyph}"

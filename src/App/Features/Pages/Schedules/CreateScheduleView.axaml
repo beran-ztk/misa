@@ -9,22 +9,13 @@
             Mode switch — Once / Recurring segmented control.
             Follows the same visual pattern used for other mode toggles in the app.
         -->
+        <!-- btn-seg covers: Foreground=Faded, CornerRadius=3, :pointerover/:pressed overlays -->
         <Style Selector="Button.schedule-mode-btn">
-            <Setter Property="Padding"   Value="14,6"/>
-            <Setter Property="FontSize"  Value="12"/>
-            <Setter Property="Foreground" Value="{StaticResource BrushTextFaded}"/>
-
-            <Style Selector="^ /template/ ContentPresenter">
-                <Setter Property="CornerRadius" Value="3"/>
-            </Style>
-            <Style Selector="^:pointerover /template/ ContentPresenter">
-                <Setter Property="Background" Value="{StaticResource BrushHoverOverlay}"/>
-            </Style>
+            <Setter Property="Padding"  Value="14,6"/>
+            <Setter Property="FontSize" Value="12"/>
         </Style>
         <Style Selector="Button.schedule-mode-btn.active">
-            <Setter Property="Foreground"   Value="{StaticResource BrushTextPrimary}"/>
-            <Setter Property="FontWeight"   Value="Medium"/>
-
+            <Setter Property="FontWeight" Value="Medium"/>
             <Style Selector="^ /template/ ContentPresenter">
                 <Setter Property="Background" Value="#14FFFFFF"/>
             </Style>
@@ -41,11 +32,11 @@
                 Padding="2"
                 HorizontalAlignment="Left">
             <StackPanel Orientation="Horizontal" Spacing="1">
-                <Button Classes="schedule-mode-btn"
+                <Button Classes="schedule-mode-btn btn-seg"
                         Classes.active="{Binding IsOnceMode}"
                         Command="{Binding SetOnceModeCommand}"
                         Content="Once"/>
-                <Button Classes="schedule-mode-btn"
+                <Button Classes="schedule-mode-btn btn-seg"
                         Classes.active="{Binding IsRecurringMode}"
                         Command="{Binding SetRecurringModeCommand}"
                         Content="Recurring"/>

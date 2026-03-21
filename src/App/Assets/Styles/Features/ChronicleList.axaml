@@ -33,20 +33,17 @@
         <Setter Property="Background" Value="{StaticResource BrushSubtleOverlay}" />
     </Style>
 
-    <!-- Upcoming badge -->
+    <!-- Upcoming badge — structure (CornerRadius, BorderThickness, VerticalAlignment) from Controls.axaml pill chip base -->
     <Style Selector="Border.chronicle-upcoming-badge">
-        <Setter Property="Background"        Value="{StaticResource BrushHoverOverlay}" />
-        <Setter Property="BorderBrush"       Value="#20FFFFFF" />
-        <Setter Property="BorderThickness"   Value="1" />
-        <Setter Property="CornerRadius"      Value="{StaticResource CornerRadiusRound}" />
-        <Setter Property="Padding"           Value="7,2" />
-        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Background"  Value="{StaticResource BrushHoverOverlay}" />
+        <Setter Property="BorderBrush" Value="#20FFFFFF" />
+        <Setter Property="Padding"     Value="7,2" />
     </Style>
 
     <Style Selector="TextBlock.chronicle-upcoming-badge-text">
-        <Setter Property="FontSize"          Value="10" />
-        <Setter Property="Opacity"           Value="0.6" />
-        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="FontSize" Value="10" />
+        <Setter Property="Opacity"  Value="0.6" />
+        <!-- VerticalAlignment covered by global TextBlock baseline -->
     </Style>
 
     <!-- ── Entry row ────────────────────────────────────────────────────── -->
@@ -87,29 +84,17 @@
         <Setter Property="Margin"       Value="0,1,0,0" />
     </Style>
 
-    <!-- ── Type chip + Meta chip (shared base) ───────────────────────────
-         Both are read-only pill borders: CornerRadiusRound, 1px border,
-         vertically centred. Padding differs by 1px (type=7,2 / meta=6,2)
-         to reflect their different visual weight in the row.
+    <!-- ── Type chip + Meta chip ────────────────────────────────────────────
+         Structure (CornerRadius, BorderThickness, VerticalAlignment, FontSize)
+         comes from the global pill chip base in Controls.axaml.
+         Only padding and opacity differ here.
     ──────────────────────────────────────────────────────────────────────── -->
-    <Style Selector="Border.chronicle-type-chip, Border.chronicle-meta-chip">
-        <Setter Property="CornerRadius"      Value="{StaticResource CornerRadiusRound}" />
-        <Setter Property="BorderThickness"   Value="1" />
-        <Setter Property="VerticalAlignment" Value="Center" />
-    </Style>
-
     <Style Selector="Border.chronicle-type-chip">
         <Setter Property="Padding" Value="7,2" />
     </Style>
 
     <Style Selector="Border.chronicle-meta-chip">
         <Setter Property="Padding" Value="6,2" />
-    </Style>
-
-    <!-- Chip text: same size and alignment; opacity differs slightly -->
-    <Style Selector="TextBlock.chronicle-type-chip-text, TextBlock.chronicle-meta-chip-text">
-        <Setter Property="FontSize"          Value="10" />
-        <Setter Property="VerticalAlignment" Value="Center" />
     </Style>
 
     <Style Selector="TextBlock.chronicle-type-chip-text">

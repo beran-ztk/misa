@@ -309,4 +309,100 @@ custom Border surfaces inside flyouts render cleanly without double-boxing.
     <Setter Property="CornerRadius"    Value="0"/>
 </Style>
 
+
+<!--
+═══════════════════════════════════════════════════════════════════════════════
+SEGMENTED BUTTON
+Pill-shaped segment inside a container Border. The container provides shape;
+individual buttons have no border. .active fills the background.
+
+Views override .active to use an opaque surface (BrushPrimaryBackgroundLighter)
+when they need a stronger visual separation between segments.
+═══════════════════════════════════════════════════════════════════════════════ -->
+<Style Selector="Button.btn-seg">
+    <Setter Property="Foreground" Value="{StaticResource BrushTextFaded}"/>
+    <Style Selector="^ /template/ ContentPresenter">
+        <Setter Property="CornerRadius" Value="3"/>
+    </Style>
+    <Style Selector="^:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushHoverOverlay}"/>
+    </Style>
+    <Style Selector="^:pressed /template/ ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushPressedOverlay}"/>
+    </Style>
+</Style>
+<Style Selector="Button.btn-seg.active">
+    <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
+    <Style Selector="^ /template/ ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushSelectedOverlay}"/>
+    </Style>
+</Style>
+
+
+<!--
+═══════════════════════════════════════════════════════════════════════════════
+MENU ITEM BUTTON
+Full-width ghost button used in flyout menus, sort option lists, and similar
+list-style controls. Secondary text → primary on hover. Consistent with
+ComboBoxItem treatment.
+═══════════════════════════════════════════════════════════════════════════════ -->
+<Style Selector="Button.btn-menu-item">
+    <Setter Property="Foreground"                 Value="{StaticResource BrushTextSecondary}"/>
+    <Setter Property="FontSize"                   Value="{StaticResource FontSizeAverage}"/>
+    <Setter Property="HorizontalAlignment"        Value="Stretch"/>
+    <Setter Property="HorizontalContentAlignment" Value="Left"/>
+    <Style Selector="^:pointerover">
+        <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
+    </Style>
+    <Style Selector="^:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushSelectedOverlay}"/>
+    </Style>
+    <Style Selector="^:pressed /template/ ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushPressedOverlay}"/>
+    </Style>
+</Style>
+
+
+<!--
+═══════════════════════════════════════════════════════════════════════════════
+PILL CHIP / BADGE — structural base
+Shared structural foundation for all round pill borders across the app:
+badges, chips, count labels, state indicators, etc.
+Color, padding, and background are variant-specific and stay local.
+═══════════════════════════════════════════════════════════════════════════════ -->
+<Style Selector="Border.badge,
+                 Border.state-badge,
+                 Border.chronicle-type-chip,
+                 Border.chronicle-meta-chip,
+                 Border.chronicle-upcoming-badge,
+                 Border.notif-count-badge">
+    <Setter Property="CornerRadius"      Value="{StaticResource CornerRadiusRound}"/>
+    <Setter Property="BorderThickness"   Value="1"/>
+    <Setter Property="VerticalAlignment" Value="Center"/>
+</Style>
+
+<!--
+    Pill chip text — small font, vertically centred.
+    Opacity, weight, and letter-spacing are variant-specific.
+-->
+<Style Selector="TextBlock.badge-text,
+                 TextBlock.state-badge-text,
+                 TextBlock.chronicle-type-chip-text,
+                 TextBlock.chronicle-meta-chip-text">
+    <Setter Property="FontSize"          Value="{StaticResource FontSizeSmall}"/>
+    <Setter Property="VerticalAlignment" Value="Center"/>
+</Style>
+
+
+<!--
+═══════════════════════════════════════════════════════════════════════════════
+MUTED META TEXT
+Shared treatment for secondary metadata labels: 12px, 50% opacity.
+Used in multiple views under different class names (.muted, .meta).
+═══════════════════════════════════════════════════════════════════════════════ -->
+<Style Selector="TextBlock.muted, TextBlock.meta">
+    <Setter Property="FontSize" Value="{StaticResource FontSizeAverage}"/>
+    <Setter Property="Opacity"  Value="0.50"/>
+</Style>
+
 </Styles>

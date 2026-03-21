@@ -30,21 +30,9 @@
         </Style>
 
         <!-- ── User menu dropdown items ──────────────────────────────── -->
+        <!-- btn-menu-item covers: Foreground, FontSize, Stretch/Left alignment, hover/pressed states -->
         <Style Selector="Button.user-menu-item">
-            <Setter Property="Foreground"                 Value="{StaticResource BrushTextSecondary}"/>
-            <Setter Property="FontSize"                   Value="{StaticResource FontSizeAverage}"/>
-            <Setter Property="HorizontalAlignment"        Value="Stretch"/>
-            <Setter Property="HorizontalContentAlignment" Value="Left"/>
-            <Setter Property="Padding"                    Value="10,7"/>
-            <Style Selector="^:pointerover">
-                <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
-            </Style>
-            <Style Selector="^:pointerover /template/ ContentPresenter">
-                <Setter Property="Background" Value="{StaticResource BrushSelectedOverlay}"/>
-            </Style>
-            <Style Selector="^:pressed /template/ ContentPresenter">
-                <Setter Property="Background" Value="{StaticResource BrushPressedOverlay}"/>
-            </Style>
+            <Setter Property="Padding" Value="10,7"/>
             <Style Selector="^:disabled">
                 <Setter Property="Opacity" Value="0.4"/>
             </Style>
@@ -137,7 +125,7 @@
                                 <StackPanel Spacing="1">
 
                                     <!-- Profile — placeholder, not yet functional -->
-                                    <Button Classes="user-menu-item"
+                                    <Button Classes="user-menu-item btn-menu-item"
                                             IsEnabled="False">
                                         <StackPanel Orientation="Horizontal" Spacing="8">
                                             <Image Width="13" Height="13" Opacity="0.6"
@@ -153,7 +141,7 @@
                                             Opacity="0.6"/>
 
                                     <!-- Logout -->
-                                    <Button Classes="user-menu-item danger"
+                                    <Button Classes="user-menu-item danger btn-menu-item"
                                             Command="{Binding LogoutCommand}">
                                         <StackPanel Orientation="Horizontal" Spacing="8">
                                             <Image Width="13" Height="13" Opacity="0.7"
