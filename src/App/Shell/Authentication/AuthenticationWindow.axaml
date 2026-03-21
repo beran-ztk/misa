@@ -19,50 +19,39 @@
 
         <!-- Primary action button (Sign in / Register) -->
         <Style Selector="Button.auth-primary">
-            <Setter Property="Background"              Value="{StaticResource BrushAccent}"/>
-            <Setter Property="Foreground"              Value="White"/>
-            <Setter Property="FontWeight"              Value="SemiBold"/>
-            <Setter Property="Height"                  Value="36"/>
-            <Setter Property="MinWidth"                Value="100"/>
-            <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="Cursor"                  Value="Hand"/>
+            <Setter Property="Background"  Value="{StaticResource BrushAccent}"/>
+            <Setter Property="Foreground"  Value="White"/>
+            <Setter Property="FontWeight"  Value="SemiBold"/>
+            <Setter Property="Height"      Value="36"/>
+            <Setter Property="MinWidth"    Value="100"/>
             <Style Selector="^ /template/ ContentPresenter">
                 <Setter Property="CornerRadius" Value="{StaticResource CornerRadiusButtons}"/>
             </Style>
             <Style Selector="^:pointerover /template/ ContentPresenter">
                 <Setter Property="Background" Value="{StaticResource BrushAccentDim}"/>
             </Style>
-            <Style Selector="^:disabled">
-                <Setter Property="Opacity" Value="0.45"/>
-            </Style>
         </Style>
 
         <!-- Secondary action button (Close) -->
         <Style Selector="Button.auth-secondary">
-            <Setter Property="Background"              Value="Transparent"/>
-            <Setter Property="Foreground"              Value="{StaticResource BrushTextSecondary}"/>
-            <Setter Property="BorderBrush"             Value="{StaticResource BrushBorder}"/>
-            <Setter Property="BorderThickness"         Value="1"/>
-            <Setter Property="Height"                  Value="36"/>
-            <Setter Property="MinWidth"                Value="90"/>
-            <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="Cursor"                  Value="Hand"/>
+            <Setter Property="Foreground"      Value="{StaticResource BrushTextSecondary}"/>
+            <Setter Property="BorderBrush"     Value="{StaticResource BrushBorder}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Height"          Value="36"/>
+            <Setter Property="MinWidth"        Value="90"/>
             <Style Selector="^ /template/ ContentPresenter">
                 <Setter Property="CornerRadius" Value="{StaticResource CornerRadiusButtons}"/>
             </Style>
             <Style Selector="^:pointerover /template/ ContentPresenter">
-                <Setter Property="Background" Value="#0CFFFFFF"/>
+                <Setter Property="Background" Value="{StaticResource BrushSelectedOverlay}"/>
             </Style>
         </Style>
 
         <!-- Inline link-style button (mode switch) -->
         <Style Selector="Button.auth-link">
-            <Setter Property="Background"      Value="Transparent"/>
-            <Setter Property="Foreground"      Value="{StaticResource BrushAccent}"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding"         Value="2,0"/>
-            <Setter Property="FontSize"        Value="12"/>
-            <Setter Property="Cursor"          Value="Hand"/>
+            <Setter Property="Foreground" Value="{StaticResource BrushAccent}"/>
+            <Setter Property="Padding"    Value="2,0"/>
+            <Setter Property="FontSize"   Value="12"/>
             <Style Selector="^ /template/ ContentPresenter">
                 <Setter Property="Background"   Value="Transparent"/>
                 <Setter Property="CornerRadius" Value="2"/>
@@ -77,13 +66,10 @@
 
         <!-- De-emphasised dev/bypass button -->
         <Style Selector="Button.auth-bypass">
-            <Setter Property="Background"      Value="Transparent"/>
-            <Setter Property="Foreground"      Value="{StaticResource BrushTextFaded}"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding"         Value="0"/>
-            <Setter Property="FontSize"        Value="11"/>
-            <Setter Property="Opacity"         Value="0.4"/>
-            <Setter Property="Cursor"          Value="Hand"/>
+            <Setter Property="Foreground" Value="{StaticResource BrushTextFaded}"/>
+            <Setter Property="Padding"    Value="0"/>
+            <Setter Property="FontSize"   Value="11"/>
+            <Setter Property="Opacity"    Value="0.4"/>
             <Style Selector="^ /template/ ContentPresenter">
                 <Setter Property="Background" Value="Transparent"/>
             </Style>

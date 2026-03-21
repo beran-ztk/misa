@@ -21,7 +21,7 @@
         </Style>
 
         <Style Selector="Border.state-badge">
-            <Setter Property="CornerRadius" Value="999" />
+            <Setter Property="CornerRadius" Value="{StaticResource CornerRadiusRound}" />
             <Setter Property="Padding" Value="7,2" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}" />

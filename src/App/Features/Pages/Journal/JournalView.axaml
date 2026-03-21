@@ -17,24 +17,16 @@
 
         <!-- ── Month navigation arrow buttons ─────────────────────────── -->
         <Style Selector="Button.journal-nav-btn">
-            <Setter Property="Width"            Value="26"/>
-            <Setter Property="Height"           Value="26"/>
-            <Setter Property="Padding"          Value="0"/>
-            <Setter Property="Background"       Value="Transparent"/>
-            <Setter Property="Foreground"       Value="{StaticResource BrushTextSecondary}"/>
-            <Setter Property="FontSize"         Value="14"/>
-            <Setter Property="Cursor"           Value="Hand"/>
-            <Setter Property="HorizontalContentAlignment" Value="Center"/>
-            <Setter Property="VerticalContentAlignment"   Value="Center"/>
-            <Style Selector="^ /template/ ContentPresenter">
-                <Setter Property="CornerRadius"    Value="4"/>
-                <Setter Property="BorderThickness" Value="0"/>
-            </Style>
+            <Setter Property="Width"      Value="26"/>
+            <Setter Property="Height"     Value="26"/>
+            <Setter Property="Padding"    Value="0"/>
+            <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
+            <Setter Property="FontSize"   Value="14"/>
             <Style Selector="^:pointerover /template/ ContentPresenter">
-                <Setter Property="Background" Value="#0EFFFFFF"/>
+                <Setter Property="Background" Value="{StaticResource BrushHoverOverlay}"/>
             </Style>
             <Style Selector="^:pressed /template/ ContentPresenter">
-                <Setter Property="Background" Value="#18FFFFFF"/>
+                <Setter Property="Background" Value="{StaticResource BrushPressedOverlay}"/>
             </Style>
         </Style>
 
@@ -50,26 +42,18 @@
 
         <!-- ── Calendar day cell button ──────────────────────────────── -->
         <Style Selector="Button.cal-day">
-            <Setter Property="Width"            Value="22"/>
-            <Setter Property="Height"           Value="22"/>
-            <Setter Property="Padding"          Value="0"/>
-            <Setter Property="Background"       Value="Transparent"/>
-            <Setter Property="Foreground"       Value="{StaticResource BrushTextSecondary}"/>
-            <Setter Property="FontSize"         Value="11"/>
-            <Setter Property="Cursor"           Value="Hand"/>
-            <Setter Property="HorizontalAlignment"        Value="Center"/>
-            <Setter Property="VerticalAlignment"          Value="Center"/>
-            <Setter Property="HorizontalContentAlignment" Value="Center"/>
-            <Setter Property="VerticalContentAlignment"   Value="Center"/>
-            <Style Selector="^ /template/ ContentPresenter">
-                <Setter Property="CornerRadius"    Value="4"/>
-                <Setter Property="BorderThickness" Value="0"/>
-            </Style>
+            <Setter Property="Width"               Value="22"/>
+            <Setter Property="Height"              Value="22"/>
+            <Setter Property="Padding"             Value="0"/>
+            <Setter Property="Foreground"          Value="{StaticResource BrushTextSecondary}"/>
+            <Setter Property="FontSize"            Value="11"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment"   Value="Center"/>
             <Style Selector="^:pointerover /template/ ContentPresenter">
-                <Setter Property="Background" Value="#0EFFFFFF"/>
+                <Setter Property="Background" Value="{StaticResource BrushHoverOverlay}"/>
             </Style>
             <Style Selector="^:pressed /template/ ContentPresenter">
-                <Setter Property="Background" Value="#18FFFFFF"/>
+                <Setter Property="Background" Value="{StaticResource BrushPressedOverlay}"/>
             </Style>
         </Style>
 
@@ -78,8 +62,7 @@
             <Setter Property="FontWeight" Value="SemiBold"/>
         </Style>
         <Style Selector="Button.cal-day.cal-selected /template/ ContentPresenter">
-            <Setter Property="Background"   Value="{StaticResource BrushAccent}"/>
-            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Background" Value="{StaticResource BrushAccent}"/>
         </Style>
         <Style Selector="Button.cal-day.cal-selected">
             <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
@@ -99,16 +82,14 @@
 
         <!-- ── Entry row action buttons (Edit / Delete) ──────────────── -->
         <Style Selector="Button.journal-entry-action">
-            <Setter Property="Padding"         Value="5,2"/>
-            <Setter Property="FontSize"        Value="10"/>
-            <Setter Property="Background"      Value="Transparent"/>
-            <Setter Property="Foreground"      Value="{StaticResource BrushTextFaded}"/>
-            <Setter Property="Cursor"          Value="Hand"/>
+            <Setter Property="Padding"    Value="5,2"/>
+            <Setter Property="FontSize"   Value="10"/>
+            <Setter Property="Foreground" Value="{StaticResource BrushTextFaded}"/>
             <Style Selector="^ /template/ ContentPresenter">
                 <Setter Property="CornerRadius" Value="3"/>
             </Style>
             <Style Selector="^:pointerover /template/ ContentPresenter">
-                <Setter Property="Background"   Value="#0EFFFFFF"/>
+                <Setter Property="Background" Value="{StaticResource BrushHoverOverlay}"/>
             </Style>
         </Style>
 
@@ -119,8 +100,6 @@
             <Setter Property="Background"      Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Padding"         Value="0"/>
-            <Setter Property="FontSize"        Value="{StaticResource FontSizeMedium}"/>
-            <Setter Property="Foreground"      Value="{StaticResource BrushTextPrimary}"/>
             <Setter Property="CaretBrush"      Value="{StaticResource BrushTextPrimary}"/>
             <Setter Property="SelectionBrush"  Value="{StaticResource BrushAccent}"/>
             <Setter Property="AcceptsReturn"   Value="True"/>
@@ -148,28 +127,18 @@
 
         <!-- ── Composer action buttons ────────────────────────────────── -->
         <Style Selector="Button.composer-action-save">
-            <Setter Property="Padding"         Value="12,4"/>
-            <Setter Property="FontSize"        Value="11"/>
-            <Setter Property="FontWeight"      Value="Medium"/>
-            <Setter Property="Background"      Value="{StaticResource BrushAccent}"/>
-            <Setter Property="Foreground"      Value="{StaticResource BrushTextPrimary}"/>
-            <Setter Property="Cursor"          Value="Hand"/>
-            <Style Selector="^ /template/ ContentPresenter">
-                <Setter Property="CornerRadius" Value="4"/>
-            </Style>
+            <Setter Property="Padding"    Value="12,4"/>
+            <Setter Property="FontSize"   Value="11"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Background" Value="{StaticResource BrushAccent}"/>
         </Style>
 
         <Style Selector="Button.composer-action-cancel">
-            <Setter Property="Padding"         Value="12,4"/>
-            <Setter Property="FontSize"        Value="11"/>
-            <Setter Property="Background"      Value="Transparent"/>
-            <Setter Property="Foreground"      Value="{StaticResource BrushTextFaded}"/>
-            <Setter Property="Cursor"          Value="Hand"/>
-            <Style Selector="^ /template/ ContentPresenter">
-                <Setter Property="CornerRadius" Value="4"/>
-            </Style>
+            <Setter Property="Padding"    Value="12,4"/>
+            <Setter Property="FontSize"   Value="11"/>
+            <Setter Property="Foreground" Value="{StaticResource BrushTextFaded}"/>
             <Style Selector="^:pointerover /template/ ContentPresenter">
-                <Setter Property="Background"   Value="#0EFFFFFF"/>
+                <Setter Property="Background" Value="{StaticResource BrushHoverOverlay}"/>
             </Style>
         </Style>
 
@@ -177,7 +146,7 @@
         <Style Selector="TimePicker.composer-time">
             <Setter Property="MinWidth"        Value="0"/>
             <Setter Property="FontSize"        Value="11"/>
-            <Setter Property="CornerRadius"    Value="4"/>
+            <Setter Property="CornerRadius"    Value="{StaticResource CornerRadiusControl}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="BorderBrush"     Value="{StaticResource BrushBorder}"/>
         </Style>
@@ -193,8 +162,6 @@
             <Setter Property="Background"      Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Padding"         Value="0"/>
-            <Setter Property="FontSize"        Value="{StaticResource FontSizeMedium}"/>
-            <Setter Property="Foreground"      Value="{StaticResource BrushTextPrimary}"/>
             <Setter Property="CaretBrush"      Value="{StaticResource BrushTextPrimary}"/>
             <Setter Property="SelectionBrush"  Value="{StaticResource BrushAccent}"/>
             <Setter Property="AcceptsReturn"   Value="True"/>

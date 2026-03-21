@@ -295,4 +295,18 @@ SCROLL VIEWER — suppress the default Fluent focus outline
     <Setter Property="BorderThickness" Value="0"/>
 </Style>
 
+
+<!--
+═══════════════════════════════════════════════════════════════════════════════
+FLYOUT PRESENTER — chrome removal
+Strips the Fluent default background, border, padding, and corner radius so
+custom Border surfaces inside flyouts render cleanly without double-boxing.
+═══════════════════════════════════════════════════════════════════════════════ -->
+<Style Selector="FlyoutPresenter">
+    <Setter Property="Background"      Value="Transparent"/>
+    <Setter Property="BorderThickness" Value="0"/>
+    <Setter Property="Padding"         Value="0"/>
+    <Setter Property="CornerRadius"    Value="0"/>
+</Style>
+
 </Styles>

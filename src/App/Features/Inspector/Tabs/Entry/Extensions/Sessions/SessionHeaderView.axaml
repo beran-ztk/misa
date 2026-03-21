@@ -40,18 +40,13 @@
         <Style Selector="Button.session-continue-btn">
             <Setter Property="Padding"         Value="8,4"/>
             <Setter Property="FontSize"        Value="11"/>
-            <Setter Property="Background"      Value="#10FFFFFF"/>
+            <Setter Property="Background"      Value="{StaticResource BrushHoverOverlay}"/>
             <Setter Property="BorderBrush"     Value="{StaticResource BrushBorder}"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius"    Value="4"/>
             <Setter Property="Foreground"      Value="{StaticResource BrushTextSecondary}"/>
-            <Setter Property="Cursor"          Value="Hand"/>
 
-            <Style Selector="^ /template/ ContentPresenter">
-                <Setter Property="CornerRadius" Value="4"/>
-            </Style>
             <Style Selector="^:pointerover /template/ ContentPresenter">
-                <Setter Property="Background" Value="#1AFFFFFF"/>
+                <Setter Property="Background" Value="{StaticResource BrushPressedOverlay}"/>
             </Style>
             <Style Selector="^:pressed /template/ ContentPresenter">
                 <Setter Property="Background" Value="#28FFFFFF"/>
