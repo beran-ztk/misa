@@ -37,14 +37,11 @@ public partial class ZettelView : UserControl
 
     private void ConfigureEditor()
     {
-        // Flat, transparent backgrounds — no boxed look
-        Editor.TextArea.Background            = Brushes.Transparent;
+        Editor.TextArea.Background = Brushes.Transparent;
 
-        // Top document padding; left/right handled by margins below
         Editor.TextArea.Margin = new Thickness(0, 32, 0, 0);
 
-        // Right padding + generous scroll-past-end at the bottom
-        Editor.TextArea.TextView.Margin = new Thickness(0, 0, 24, 200);
+        Editor.TextArea.TextView.Margin = new Thickness(0, 0, 24, 0);
 
         // Remove the separator line inserted by ShowLineNumbers=True
         var separator = Editor.TextArea.LeftMargins

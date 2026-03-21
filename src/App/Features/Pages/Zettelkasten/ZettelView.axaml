@@ -15,25 +15,31 @@
         <!-- Title -->
         <TextBlock Grid.Row="0"
                    Text="{Binding Title}"
-                   Margin="70,40,24,16"
+                   Margin="50,40,24,16"
                    FontSize="{StaticResource FontSizeXLarge}"
                    FontWeight="SemiBold"
                    Opacity="0.9"
                    Foreground="{StaticResource BrushTextPrimary}"
                    TextWrapping="Wrap"/>
 
-        <aedit:TextEditor Grid.Row="1"
-                          x:Name="Editor"
-                          ShowLineNumbers="True"
-                          WordWrap="True"
-                          HorizontalScrollBarVisibility="Disabled"
-                          VerticalScrollBarVisibility="Auto"
-                          Background="Transparent"
-                          BorderThickness="0"
-                          Foreground="{StaticResource BrushTextPrimary}"
-                          LineNumbersForeground="{StaticResource BrushTextFaded}"
-                          FontFamily="Cascadia Code"
-                          FontSize="{StaticResource FontSizeMedium}"/>
+        <ScrollViewer Grid.Row="1"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+            <StackPanel>
+                <aedit:TextEditor x:Name="Editor"
+                                  ShowLineNumbers="True"
+                                  WordWrap="True"
+                                  HorizontalScrollBarVisibility="Disabled"
+                                  VerticalScrollBarVisibility="Disabled"
+                                  Background="Transparent"
+                                  BorderThickness="0"
+                                  Foreground="{StaticResource BrushTextPrimary}"
+                                  LineNumbersForeground="{StaticResource BrushTextFaded}"
+                                  FontFamily="Cascadia Code"
+                                  FontSize="{StaticResource FontSizeMedium}"/>
+                <Border Height="200"/>
+            </StackPanel>
+        </ScrollViewer>
 
     </Grid>
 
