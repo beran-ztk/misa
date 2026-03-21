@@ -1,24 +1,19 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    
-        <Style Selector="TextBox.workspace-toolbar-search">
-                <Setter Property="Width" Value="300"/>
-                <Setter Property="Height" Value="30"/>
-                <Setter Property="Padding" Value="10,6"/>
-                <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLight}"/>
-                <Setter Property="BorderThickness" Value="1"/>
-                <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}"/>
-        </Style>
 
-        <Style Selector="TextBox.workspace-toolbar-search /template/ ContentPresenter">
-                <Setter Property="CornerRadius" Value="6"/>
-        </Style>
+    <!--
+        workspace-toolbar-search — fixed-size search box in workspace toolbars.
 
-        <Style Selector="TextBox.workspace-toolbar-search:pointerover">
-                <Setter Property="BorderBrush" Value="{StaticResource BrushPrimaryBackgroundLighter}" />
-        </Style>
+        Intentional differences from the global TextBox base:
+        - Fixed 300×30 dimensions
+    -->
+    <Style Selector="TextBox.workspace-toolbar-search">
+        <Setter Property="Width"   Value="300"/>
+        <Setter Property="Height"  Value="30"/>
+        <Setter Property="Padding" Value="10,6"/>
+    </Style>
 
-        <Style Selector="TextBox.workspace-toolbar-search:focus">
-                <Setter Property="BorderBrush" Value="{StaticResource BrushPrimaryBackgroundLighter}" />
-        </Style>
+    <Style Selector="TextBox.workspace-toolbar-search:pointerover, TextBox.workspace-toolbar-search:focus">
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorderLight}"/>
+    </Style>
 </Styles>

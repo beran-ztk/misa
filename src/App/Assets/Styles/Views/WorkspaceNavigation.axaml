@@ -1,26 +1,31 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <!-- ── Base nav button ────────────────────────────────────────────── -->
+    <!--
+        workspace-nav — full-width navigation item in the left workspace rail.
+
+        Intentional differences from the global Button base:
+        - Left-aligned content (base: center)
+        - Custom padding 10,8 (base: 12,7)
+        - CornerRadius=0 (base: CornerRadiusControl=4) — no rounding, spans full width
+        - Hover/pressed use BrushPrimaryBackgroundLighter (opaque surface lift)
+          for a navigation-panel feel, not an alpha overlay
+    -->
     <Style Selector="Button.workspace-nav">
         <Setter Property="HorizontalAlignment"        Value="Stretch"/>
         <Setter Property="HorizontalContentAlignment" Value="Left"/>
         <Setter Property="Padding"                    Value="10,8"/>
-        <Setter Property="BorderThickness"            Value="0"/>
-        <Setter Property="Background"                 Value="Transparent"/>
-        <Setter Property="Cursor"                     Value="Hand"/>
+    </Style>
+
+    <Style Selector="Button.workspace-nav /template/ ContentPresenter">
+        <Setter Property="CornerRadius" Value="0"/>
     </Style>
 
     <Style Selector="Button.workspace-nav:pointerover">
         <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}"/>
     </Style>
-
     <Style Selector="Button.workspace-nav:pressed">
         <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}"/>
-    </Style>
-
-    <Style Selector="Button.workspace-nav /template/ ContentPresenter">
-        <Setter Property="CornerRadius" Value="0"/>
     </Style>
 
     <!-- ── Label ─────────────────────────────────────────────────────── -->
@@ -31,22 +36,12 @@
     </Style>
 
     <!-- ── Collapsed: icon only, centred ─────────────────────────────── -->
-    <!--
-        Applied via Classes.nav-collapsed="{Binding IsCollapsed}" in the view.
-        Centres the remaining icon content and removes horizontal padding so the
-        icon sits exactly in the middle of the narrower rail.
-    -->
     <Style Selector="Button.workspace-nav.nav-collapsed">
         <Setter Property="HorizontalContentAlignment" Value="Center"/>
         <Setter Property="Padding"                    Value="0,8"/>
     </Style>
 
     <!-- ── Active: current workspace ────────────────────────────────── -->
-    <!--
-        Applied via Classes.nav-active="{Binding Is*Active}" in the view.
-        Uses a slightly lifted background so the current destination is clear
-        in both expanded and collapsed states.
-    -->
     <Style Selector="Button.workspace-nav.nav-active">
         <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}"/>
     </Style>
