@@ -29,22 +29,6 @@ public partial class WorkspaceNavigationViewModel(
     ZettelkastenViewModel zettel)
     : ViewModelBase
 {
-    // ── Collapse / expand ─────────────────────────────────────────────────
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(NavWidth))]
-    [NotifyPropertyChangedFor(nameof(CollapseToggleGlyph))]
-    [NotifyPropertyChangedFor(nameof(CollapseToggleTooltip))]
-    private bool _isCollapsed = true;
-
-    /// <summary>Pixel width driven by collapse state; consumed by the view's Border.Width.</summary>
-    public double NavWidth             => IsCollapsed ? 48 : 150;
-    public string CollapseToggleGlyph   => IsCollapsed ? "»" : "«";
-    public string CollapseToggleTooltip => IsCollapsed ? "Expand navigation" : "Collapse navigation";
-
-    [RelayCommand]
-    private void ToggleCollapsed() => IsCollapsed = !IsCollapsed;
-
     // ── Active-item tracking ──────────────────────────────────────────────
 
     private ViewModelBase? _activeWorkspace;

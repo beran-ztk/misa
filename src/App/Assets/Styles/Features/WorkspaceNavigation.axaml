@@ -1,24 +1,14 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <!--
-        workspace-nav — full-width navigation item in the left workspace rail.
-
-        Intentional differences from the global Button base:
-        - Left-aligned content (base: center)
-        - Custom padding 10,8 (base: 12,7)
-        - CornerRadius=0 (base: CornerRadiusControl=4) — no rounding, spans full width
-        - Hover/pressed use BrushPrimaryBackgroundLighter (opaque surface lift)
-          for a navigation-panel feel, not an alpha overlay
-    -->
     <Style Selector="Button.workspace-nav">
-        <Setter Property="HorizontalAlignment"        Value="Stretch"/>
-        <Setter Property="HorizontalContentAlignment" Value="Left"/>
-        <Setter Property="Padding"                    Value="10,8"/>
+        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        <Setter Property="HorizontalAlignment" Value="Center"/>
+        <Setter Property="Padding" Value="6"/>
     </Style>
 
     <Style Selector="Button.workspace-nav /template/ ContentPresenter">
-        <Setter Property="CornerRadius" Value="0"/>
+        <Setter Property="CornerRadius" Value="{StaticResource ControlCornerRadius}"/>
     </Style>
 
     <Style Selector="Button.workspace-nav:pointerover">
@@ -28,25 +18,9 @@
         <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}"/>
     </Style>
 
-    <!-- ── Label ─────────────────────────────────────────────────────── -->
-    <Style Selector="TextBlock.workspace-nav">
-        <Setter Property="FontSize"          Value="{StaticResource FontSizeMedium}"/>
-        <Setter Property="Foreground"        Value="{StaticResource BrushTextSecondary}"/>
-        <Setter Property="VerticalAlignment" Value="Center"/>
-    </Style>
-
-    <!-- ── Collapsed: icon only, centred ─────────────────────────────── -->
-    <Style Selector="Button.workspace-nav.nav-collapsed">
-        <Setter Property="HorizontalContentAlignment" Value="Center"/>
-        <Setter Property="Padding"                    Value="0,8"/>
-    </Style>
-
     <!-- ── Active: current workspace ────────────────────────────────── -->
     <Style Selector="Button.workspace-nav.nav-active">
         <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}"/>
-    </Style>
-    <Style Selector="Button.workspace-nav.nav-active TextBlock">
-        <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
     </Style>
 
 </Styles>

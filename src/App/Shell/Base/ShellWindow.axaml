@@ -40,7 +40,7 @@
                   RowDefinitions="*,25">
                 <Grid.ColumnDefinitions>
                     <!-- Auto: left navigation rail — width driven by WorkspaceNavigationView.NavWidth -->
-                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="48"/>
                     <!-- Flex: workspace is the sole star column and absorbs all remaining space -->
                     <ColumnDefinition Width="*"/>
                     <!-- Auto: inspector collapses to zero when not visible; MaxWidth caps growth -->
