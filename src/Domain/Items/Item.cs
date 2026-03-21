@@ -237,6 +237,11 @@ public sealed class Item : DomainEventEntity
         Touch(nowUtc);
     }
 
+    public void SetKnowledgeIndexExpanded(bool isExpanded)
+    {
+        KnowledgeIndex!.SetExpanded(isExpanded);
+    }
+
     public void ChangeScheduleMisfirePolicy(ScheduleMisfirePolicy policy, DateTimeOffset nowUtc)
     {
         ScheduleExtension!.ChangeMisfirePolicy(policy);

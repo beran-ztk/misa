@@ -206,6 +206,13 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
                 ct);
     }
 
+    public async Task<Item?> TryGetKnowledgeIndexItemAsync(Guid id, CancellationToken ct)
+    {
+        return await context.Items
+            .Include(i => i.KnowledgeIndex)
+            .FirstOrDefaultAsync(i => i.Id == new ItemId(id) && i.OwnerId == user.Id, ct);
+    }
+
     // Session
     public async Task<List<Session>> GetSessionsForDurationNotificationAsync(CancellationToken ct)
     {

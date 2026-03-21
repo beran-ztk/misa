@@ -13,4 +13,6 @@ public class KnowledgeIndex
     public ItemId Id { get; init; }
     public ItemId? ParentId { get; init; }
     public bool IsExpanded { get; private set; }
+
+    public void SetExpanded(bool isExpanded) => IsExpanded = isExpanded;
 }

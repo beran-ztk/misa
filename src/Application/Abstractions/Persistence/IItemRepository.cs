@@ -41,6 +41,7 @@ public interface IItemRepository
     Task<List<Item>> GetKnowledgeIndexAsync();
     Task<List<Item>> GetZettelsAsync(Guid? topicId, CancellationToken ct);
     Task<Item?> TryGetZettelAsync(Guid id, CancellationToken ct);
+    Task<Item?> TryGetKnowledgeIndexItemAsync(Guid id, CancellationToken ct);
     
     // Session
     Task<Item?> TryGetItemWithSessionsAsync(Guid itemId, CancellationToken ct);

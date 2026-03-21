@@ -79,4 +79,21 @@ public sealed class ZettelkastenGateway(RemoteProxy remoteProxy)
 
         return response;
     }
+
+    public async Task<Result> SetKnowledgeIndexExpandedStateAsync(Guid id, bool isExpanded)
+    {
+        var response = await remoteProxy.SendAsync(
+            requestFactory: () => new HttpRequestMessage(HttpMethod.Patch, ZettelkastenRoutes.SetKnowledgeIndexExpandedUrl(id))
+            {
+                Content = JsonContent.Create(new SetKnowledgeIndexExpandedStateRequest(isExpanded))
+            },
+            retry: new RetryOptions
+            {
+                MaxAttempts = 3,
+                Delay = TimeSpan.FromMilliseconds(500)
+            },
+            cancellationToken: CancellationToken.None);
+
+        return response;
+    }
 }

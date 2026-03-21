@@ -22,6 +22,6 @@ public partial class ZettelkastenView : UserControl
         }
 
         if (DataContext is not ZettelkastenViewModel vm) return;
-        await vm.SetExpandedStateAsync(entry.Id, entry.IsExpanded);
+        await vm.SetExpandedStateAsync(entry.Id, !entry.IsExpanded);
     }
 }

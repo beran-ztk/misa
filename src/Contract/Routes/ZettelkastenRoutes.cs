@@ -11,4 +11,7 @@ public static class ZettelkastenRoutes
     public const string UpdateZettelContent = "items/zettelkasten/{itemId:guid}/zettel/content";
 
     public static string UpdateZettelContentUrl(Guid itemId) => $"items/zettelkasten/{itemId}/zettel/content";
+
+    public const string SetKnowledgeIndexExpanded = "items/zettelkasten/{itemId:guid}/expanded";
+    public static string SetKnowledgeIndexExpandedUrl(Guid itemId) => $"items/zettelkasten/{itemId}/expanded";
 }

@@ -27,7 +27,7 @@ public sealed partial class ZettelkastenViewModel(ZettelkastenGateway gateway) :
 
     public async Task SetExpandedStateAsync(Guid id, bool expanded)
     {
-        Console.WriteLine($"{id}, {expanded}");
+        await gateway.SetKnowledgeIndexExpandedStateAsync(id, expanded);
     }
     
     // ── Tree reload helpers ───────────────────────────────────────────────────

@@ -16,6 +16,7 @@ public static class ZettelkastenEndpoints
         api.MapPost(ZettelkastenRoutes.CreateZettel, CreateZettel);
         api.MapGet(ZettelkastenRoutes.GetZettel, GetSingle);
         api.MapPatch(ZettelkastenRoutes.UpdateZettelContent, UpdateContent);
+        api.MapPatch(ZettelkastenRoutes.SetKnowledgeIndexExpanded, SetExpanded);
     }
 
     private static async Task<IResult> GetZettelkasten(IMessageBus bus, CancellationToken ct)
@@ -58,6 +59,16 @@ public static class ZettelkastenEndpoints
         CancellationToken ct)
     {
         await bus.InvokeAsync(new UpdateZettelContentCommand(itemId, request.Content), ct);
+        return Results.Ok();
+    }
+
+    private static async Task<IResult> SetExpanded(
+        Guid itemId,
+        [FromBody] SetKnowledgeIndexExpandedStateRequest request,
+        IMessageBus bus,
+        CancellationToken ct)
+    {
+        await bus.InvokeAsync(new SetKnowledgeIndexExpandedStateCommand(itemId, request.IsExpanded), ct);
         return Results.Ok();
     }
 }
