@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Threading;
+using CommunityToolkit.Mvvm.ComponentModel.__Internals;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Items;
 using Misa.Contract.Items.Components.Zettelkasten;
@@ -110,6 +111,7 @@ public sealed partial class ZettelkastenViewModel(ZettelkastenGateway gateway) :
 
         parent.Children.Insert(0, pending);
         parent.IsExpanded = true;
+        _ = SetExpandedStateAsync(parent.Id, true);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

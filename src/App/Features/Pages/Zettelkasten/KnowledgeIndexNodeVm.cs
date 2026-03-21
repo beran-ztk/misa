@@ -27,9 +27,6 @@ public partial class KnowledgeIndexNodeVm : ObservableObject
 
     [ObservableProperty] private string _pendingTitle = string.Empty;
 
-    public string PendingWatermark =>
-        PendingWorkflow == WorkflowDto.Topic ? "Topic name…" : "Zettel title…";
-
     // Callbacks set by the ViewModel that owns this node
     private Func<string, Task>? _onCommit;
     private Action? _onCancel;
