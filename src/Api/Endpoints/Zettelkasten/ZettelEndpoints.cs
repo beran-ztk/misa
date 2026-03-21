@@ -6,7 +6,7 @@ using Wolverine;
 
 namespace Misa.Api.Endpoints.Zettelkasten;
 
-public class ZettelEndpoints
+public static class ZettelEndpoints
 {
     public static void Map(IEndpointRouteBuilder api)
     {

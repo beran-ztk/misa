@@ -52,7 +52,7 @@ public sealed class ZettelkastenGateway(RemoteProxy remoteProxy)
     public async Task<List<KnowledgeIndexEntryDto>?> GetKnowledgeIndexAsync()
     {
         var response = await remoteProxy.SendAsync<List<KnowledgeIndexEntryDto>>(
-            requestFactory: () => new HttpRequestMessage(HttpMethod.Get, ZettelkastenRoutes.GetTopics),
+            requestFactory: () => new HttpRequestMessage(HttpMethod.Get, ZettelkastenRoutes.GetKnowledgeIndex),
             retry: new RetryOptions
             {
                 MaxAttempts = 3,

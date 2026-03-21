@@ -6,12 +6,12 @@ using Wolverine;
 
 namespace Misa.Api.Endpoints.Zettelkasten;
 
-public class TopicEndpoints
+public static class TopicEndpoints
 {
     public static void Map(IEndpointRouteBuilder api)
     {
         api.MapPost(ZettelkastenRoutes.CreateTopic, CreateTopic);
-        api.MapGet(ZettelkastenRoutes.GetTopics, GetKnowledgeIndex);
+        api.MapGet(ZettelkastenRoutes.GetKnowledgeIndex, GetKnowledgeIndex);
     }
 
     private static async Task<IResult> CreateTopic(
