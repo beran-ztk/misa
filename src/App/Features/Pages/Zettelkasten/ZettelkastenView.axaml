@@ -31,77 +31,160 @@
                         <Style Selector="TreeViewItem">
                             <Setter Property="IsExpanded" Value="{ReflectionBinding IsExpanded, Mode=TwoWay}" />
                         </Style>
-                        
-                        <!-- Eigene Zeile -->
+
+                        <!-- Normal row -->
                         <Style Selector="Border.index-entry-row">
                             <Setter Property="Background" Value="Transparent"/>
                         </Style>
-
                         <Style Selector="Border.index-entry-row:pointerover">
                             <Setter Property="Background" Value="Transparent"/>
                         </Style>
 
-                        <!-- Actions -->
+                        <!-- Three-dots button: hidden until row is hovered -->
                         <Style Selector="Button.index-entry-actions">
-                            <Setter Property="Padding" Value="4"/>
-                            <Setter Property="Opacity" Value="0"/>
+                            <Setter Property="Padding"          Value="4"/>
+                            <Setter Property="Opacity"          Value="0"/>
                             <Setter Property="IsHitTestVisible" Value="False"/>
-                            <Setter Property="Background" Value="Transparent"/>
-                            <Setter Property="BorderThickness" Value="0"/>
+                            <Setter Property="Background"       Value="Transparent"/>
+                            <Setter Property="BorderThickness"  Value="0"/>
                         </Style>
-
                         <Style Selector="Border.index-entry-row:pointerover Button.index-entry-actions">
-                            <Setter Property="Opacity" Value="1"/>
+                            <Setter Property="Opacity"          Value="1"/>
                             <Setter Property="IsHitTestVisible" Value="True"/>
                         </Style>
-                        
                         <Style Selector="Button.index-entry-actions:pointerover /template/ ContentPresenter">
                             <Setter Property="Background" Value="Transparent"/>
                         </Style>
+
+                        <!-- Inline creation TextBox -->
+                        <Style Selector="TextBox.index-creation-input">
+                            <Setter Property="Background"       Value="Transparent"/>
+                            <Setter Property="BorderThickness"  Value="0,0,0,1"/>
+                            <Setter Property="BorderBrush"      Value="{StaticResource BrushAccent}"/>
+                            <Setter Property="Padding"          Value="0,2"/>
+                            <Setter Property="MinHeight"        Value="0"/>
+                            <Setter Property="CornerRadius"     Value="0"/>
+                            <Setter Property="FontSize"         Value="{StaticResource FontSizeAverage}"/>
+                            <Setter Property="CaretBrush"       Value="{StaticResource BrushTextPrimary}"/>
+                            <Setter Property="SelectionBrush"   Value="{StaticResource BrushAccent}"/>
+                        </Style>
+                        <Style Selector="TextBox.index-creation-input:pointerover /template/ Border#PART_BorderElement">
+                            <Setter Property="Background"       Value="Transparent"/>
+                            <Setter Property="BorderBrush"      Value="{StaticResource BrushAccent}"/>
+                            <Setter Property="BorderThickness"  Value="0,0,0,1"/>
+                        </Style>
+                        <Style Selector="TextBox.index-creation-input:focus /template/ Border#PART_BorderElement">
+                            <Setter Property="Background"       Value="Transparent"/>
+                            <Setter Property="BorderBrush"      Value="{StaticResource BrushAccent}"/>
+                            <Setter Property="BorderThickness"  Value="0,0,0,1"/>
+                        </Style>
+
                     </TreeView.Styles>
 
                     <TreeView.ItemTemplate>
                         <TreeDataTemplate ItemsSource="{Binding Children}">
-                            <Border Classes="index-entry-row">
+                            <Panel>
 
-                                <Grid ColumnDefinitions="18,*,22"
-                                      ColumnSpacing="4">
+                                <!-- Normal row (hidden when pending creation is active for this slot) -->
+                                <Border Classes="index-entry-row"
+                                        IsVisible="{Binding IsPendingCreation,
+                                            Converter={x:Static converters:BooleanNotConverter.Instance}}">
+                                    <Grid ColumnDefinitions="18,*,22" ColumnSpacing="4">
 
-                                    <Grid Grid.Column="0"
-                                          VerticalAlignment="Center">
-                                        <Image Width="14"
-                                               Height="14"
-                                               Opacity="0.55"
-                                               Source="{SvgImage /Assets/Icons/Common/folder.svg}"
-                                               IsVisible="{Binding Workflow,
-                                                   Converter={x:Static converters:WorkflowEqualConverter.Instance},
-                                                   ConverterParameter=Topic}"/>
+                                        <!-- Type icon -->
+                                        <Grid Grid.Column="0" VerticalAlignment="Center">
+                                            <Image Width="14" Height="14" Opacity="0.55"
+                                                   Source="{SvgImage /Assets/Icons/Common/folder.svg}"
+                                                   IsVisible="{Binding Workflow,
+                                                       Converter={x:Static converters:WorkflowEqualConverter.Instance},
+                                                       ConverterParameter=Topic}"/>
+                                            <Image Width="14" Height="14" Opacity="0.55"
+                                                   Source="{SvgImage /Assets/Icons/Shell/Navigation/scroll.svg}"
+                                                   IsVisible="{Binding Workflow,
+                                                       Converter={x:Static converters:WorkflowEqualConverter.Instance},
+                                                       ConverterParameter=Zettel}"/>
+                                        </Grid>
 
-                                        <Image Width="14"
-                                               Height="14"
-                                               Opacity="0.55"
-                                               Source="{SvgImage /Assets/Icons/Shell/Navigation/scroll.svg}"
-                                               IsVisible="{Binding Workflow,
-                                                   Converter={x:Static converters:WorkflowEqualConverter.Instance},
-                                                   ConverterParameter=Zettel}"/>
+                                        <!-- Title -->
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding Title}"
+                                                   Opacity="0.8"
+                                                   VerticalAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis"/>
+
+                                        <!-- Three-dots action button -->
+                                        <Button Grid.Column="2"
+                                                Classes="index-entry-actions"
+                                                VerticalAlignment="Center"
+                                                IsVisible="{Binding Workflow,
+                                                       Converter={x:Static converters:WorkflowEqualConverter.Instance},
+                                                       ConverterParameter=Topic}">
+                                            <Button.Flyout>
+                                                <MenuFlyout Placement="BottomEdgeAlignedRight">
+                                                    <MenuItem Command="{Binding $parent[TreeView].((root:ZettelkastenViewModel)DataContext).CreateTopicUnderCommand}"
+                                                              CommandParameter="{Binding Id}">
+                                                        <MenuItem.Header>
+                                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                                <Image Width="13" Height="13" Opacity="0.6"
+                                                                       Source="{SvgImage /Assets/Icons/Common/folder.svg}"/>
+                                                                <TextBlock Text="New Topic"/>
+                                                            </StackPanel>
+                                                        </MenuItem.Header>
+                                                    </MenuItem>
+                                                    <MenuItem Command="{Binding $parent[TreeView].((root:ZettelkastenViewModel)DataContext).CreateZettelUnderCommand}"
+                                                              CommandParameter="{Binding Id}">
+                                                        <MenuItem.Header>
+                                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                                <Image Width="13" Height="13" Opacity="0.6"
+                                                                       Source="{SvgImage /Assets/Icons/Shell/Navigation/scroll.svg}"/>
+                                                                <TextBlock Text="New Zettel"/>
+                                                            </StackPanel>
+                                                        </MenuItem.Header>
+                                                    </MenuItem>
+                                                </MenuFlyout>
+                                            </Button.Flyout>
+                                            <Image Width="12" Height="12"
+                                                   Source="{SvgImage /Assets/Icons/Common/dots-three.svg}"/>
+                                        </Button>
+
                                     </Grid>
+                                </Border>
 
-                                    <TextBlock Grid.Column="1"
-                                               Text="{Binding Title}"
-                                               Opacity="0.8"
-                                               VerticalAlignment="Center"
-                                               TextTrimming="CharacterEllipsis"/>
+                                <!-- Inline creation row (only visible for pending nodes) -->
+                                <Border IsVisible="{Binding IsPendingCreation}">
+                                    <Grid ColumnDefinitions="18,*,22" ColumnSpacing="4">
 
-                                    <Button Grid.Column="2"
-                                            Classes="index-entry-actions"
-                                            VerticalAlignment="Center">
-                                        <Image Width="12"
-                                               Height="12"
-                                               Source="{SvgImage /Assets/Icons/Common/dots-three.svg}"/>
-                                    </Button>
+                                        <!-- Type icon (mirrors normal row) -->
+                                        <Grid Grid.Column="0" VerticalAlignment="Center">
+                                            <Image Width="14" Height="14" Opacity="0.55"
+                                                   Source="{SvgImage /Assets/Icons/Common/folder.svg}"
+                                                   IsVisible="{Binding PendingWorkflow,
+                                                       Converter={x:Static converters:WorkflowEqualConverter.Instance},
+                                                       ConverterParameter=Topic}"/>
+                                            <Image Width="14" Height="14" Opacity="0.55"
+                                                   Source="{SvgImage /Assets/Icons/Shell/Navigation/scroll.svg}"
+                                                   IsVisible="{Binding PendingWorkflow,
+                                                       Converter={x:Static converters:WorkflowEqualConverter.Instance},
+                                                       ConverterParameter=Zettel}"/>
+                                        </Grid>
 
-                                </Grid>
-                            </Border>
+                                        <!-- Title input -->
+                                        <TextBox Grid.Column="1"
+                                                 Classes="index-creation-input"
+                                                 Text="{Binding PendingTitle, Mode=TwoWay}"
+                                                 Watermark="{Binding PendingWatermark}"
+                                                 Loaded="OnCreationInputLoaded"
+                                                 LostFocus="OnCreationInputLostFocus">
+                                            <TextBox.KeyBindings>
+                                                <KeyBinding Gesture="Enter"  Command="{Binding CommitCreationCommand}"/>
+                                                <KeyBinding Gesture="Escape" Command="{Binding CancelCreationCommand}"/>
+                                            </TextBox.KeyBindings>
+                                        </TextBox>
+
+                                    </Grid>
+                                </Border>
+
+                            </Panel>
                         </TreeDataTemplate>
                     </TreeView.ItemTemplate>
                 </TreeView>
