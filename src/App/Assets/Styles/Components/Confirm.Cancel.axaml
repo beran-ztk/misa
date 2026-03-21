@@ -2,44 +2,43 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <Style Selector="StackPanel.confirm-cancel">
-        <Setter Property="Orientation" Value="Horizontal"/>
+        <Setter Property="Orientation"        Value="Horizontal"/>
         <Setter Property="HorizontalAlignment" Value="Right"/>
-        <Setter Property="Spacing" Value="8"/>
+        <Setter Property="Spacing"            Value="8"/>
     </Style>
 
+    <!--
+        confirm-cancel-cancel — secondary/outlined action button.
+        Intentional differences from btn-secondary:
+        - Fixed MinWidth=80, Height=32 for consistent dialog button sizing
+        - Hover uses a fixed subtle overlay (#0CFFFFFF) without border lift —
+          deliberately quieter than btn-secondary's full hover treatment
+    -->
     <Style Selector="Button.confirm-cancel-cancel">
-        <Setter Property="Foreground" Value="{DynamicResource BrushTextSecondary}"/>
-        <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="MinWidth" Value="80"/>
-        <Setter Property="Height" Value="32"/>
-        <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}"/>
+        <Setter Property="Foreground"      Value="{DynamicResource BrushTextSecondary}"/>
+        <Setter Property="MinWidth"        Value="80"/>
+        <Setter Property="Height"          Value="32"/>
+        <Setter Property="BorderBrush"     Value="{StaticResource BrushBorder}"/>
         <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="CornerRadius" Value="4"/>
-        <Setter Property="Cursor" Value="Hand"/>
-        <Style Selector="^ /template/ ContentPresenter">
-            <Setter Property="CornerRadius" Value="4"/>
-        </Style>
         <Style Selector="^:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="#0CFFFFFF"/>
+            <Setter Property="Background" Value="{StaticResource BrushHoverOverlay}"/>
         </Style>
     </Style>
 
+    <!--
+        confirm-cancel-confirm — filled accent action button.
+        Intentional differences from btn-primary:
+        - Fixed MinWidth=80, Height=32 for consistent dialog button sizing
+        - Hover uses BrushAccentDim (darkens) rather than btn-primary's
+          BrushAccentHover (lightens) — deliberate, matches pre-existing behaviour
+    -->
     <Style Selector="Button.confirm-cancel-confirm">
-        <Setter Property="Foreground" Value="White"/>
-        <Setter Property="Background" Value="{DynamicResource BrushAccent}"/>
-        <Setter Property="MinWidth" Value="80"/>
-        <Setter Property="Height" Value="32"/>
-        <Setter Property="BorderThickness" Value="0"/>
-        <Setter Property="CornerRadius" Value="4"/>
-        <Setter Property="Cursor" Value="Hand"/>
-        <Style Selector="^ /template/ ContentPresenter">
-            <Setter Property="CornerRadius" Value="4"/>
-        </Style>
+        <Setter Property="Foreground"  Value="White"/>
+        <Setter Property="Background"  Value="{DynamicResource BrushAccent}"/>
+        <Setter Property="MinWidth"    Value="80"/>
+        <Setter Property="Height"      Value="32"/>
         <Style Selector="^:pointerover /template/ ContentPresenter">
             <Setter Property="Background" Value="{StaticResource BrushAccentDim}"/>
-        </Style>
-        <Style Selector="^:disabled">
-            <Setter Property="Opacity" Value="0.45"/>
         </Style>
     </Style>
 

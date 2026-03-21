@@ -5,7 +5,6 @@ using Misa.Domain.Items.Components.Activities.Sessions;
 using Misa.Domain.Items.Components.Audits.Changes;
 using Misa.Domain.Items.Components.Chronicle.Journals;
 using Misa.Domain.Items.Components.Schedules;
-using Misa.Domain.Items.Components.Schola;
 using Misa.Domain.Items.Components.Tasks;
 using Misa.Domain.Items.Components.Zettelkasten;
 
@@ -66,10 +65,9 @@ public sealed class Item : DomainEventEntity
     public TaskExtension? TaskExtension { get; private set; }
     public ScheduleExtension? ScheduleExtension { get; private set; }
     public JournalExtension? JournalExtension { get; private set; }
-    public Arc? Arc { get; private set; }
-    public Unit? Unit { get; private set; }
     public Topic? Topic { get; private set; }
-    public ZettelExtension? ZettelExtension { get; private set; }
+    public Zettel? ZettelExtension { get; private set; }
+    public KnowledgeIndex? KnowledgeIndex { get; private set; }
 
     
     // Behaviours
@@ -141,66 +139,13 @@ public sealed class Item : DomainEventEntity
 
         return item;
     }
-    
-    public static Item CreateArc(
-        ItemId id,
-        string ownerId,
-        string title,
-        string? description,
-        DateTimeOffset createdAtUtc,
-        
-        ActivityPriority priority,
-        string? objective,
-        DateTimeOffset? dueAt)
-    {
-        var item = new Item(
-            id: id,
-            ownerId: ownerId,
-            workflow: Workflow.Arc,
-            title: title,
-            description: description,
-            createdAtUtc: createdAtUtc)
-        {
-            Activity = new ItemActivity(id, ActivityState.Open, priority, objective, null, dueAt),
-            Arc = new Arc(id)
-        };
-
-        return item;
-    }
-    public static Item CreateUnit(
-        ItemId id,
-        string ownerId,
-        string title,
-        string? description,
-        DateTimeOffset createdAtUtc,
-        
-        ActivityPriority priority,
-        string? objective,
-        DateTimeOffset? dueAt,
-        
-        ItemId? arcId)
-    {
-        var item = new Item(
-            id: id,
-            ownerId: ownerId,
-            workflow: Workflow.Unit,
-            title: title,
-            description: description,
-            createdAtUtc: createdAtUtc)
-        {
-            Activity = new ItemActivity(id, ActivityState.Open, priority, objective, null, dueAt),
-            Unit = new Unit(id, arcId)
-        };
-
-        return item;
-    }
     public static Item CreateTopic(
         ItemId id,
         string ownerId,
         string title,
         DateTimeOffset createdAtUtc,
-        
-        ItemId? topicId)
+
+        ItemId? parentId)
     {
         var item = new Item(
             id: id,
@@ -210,7 +155,8 @@ public sealed class Item : DomainEventEntity
             description: null,
             createdAtUtc: createdAtUtc)
         {
-            Topic = new Topic(id, topicId)
+            Topic = new Topic(id),
+            KnowledgeIndex = new KnowledgeIndex(id, parentId)
         };
 
         return item;
@@ -220,9 +166,8 @@ public sealed class Item : DomainEventEntity
         ItemId id,
         string ownerId,
         string title,
-        string? content,
         DateTimeOffset createdAtUtc,
-        ItemId topicId)
+        ItemId? parentId)
     {
         var item = new Item(
             id: id,
@@ -232,7 +177,8 @@ public sealed class Item : DomainEventEntity
             description: null,
             createdAtUtc: createdAtUtc)
         {
-            ZettelExtension = new ZettelExtension(id, topicId, content)
+            ZettelExtension = new Zettel(id),
+            KnowledgeIndex = new KnowledgeIndex(id, parentId)
         };
 
         return item;
@@ -243,7 +189,7 @@ public sealed class Item : DomainEventEntity
     // Mutators
 
     /// <summary>Updates ModifiedAt. Called by all domain mutators — not intended for application-layer use.</summary>
-    internal void Touch(DateTimeOffset nowUtc) => ModifiedAt = nowUtc;
+    private void Touch(DateTimeOffset nowUtc) => ModifiedAt = nowUtc;
 
     public void ChangeTitle(string title, DateTimeOffset nowUtc)
     {
@@ -273,6 +219,12 @@ public sealed class Item : DomainEventEntity
     // Owned child entities without an Item back-navigation property route their
     // mutations through here so ModifiedAt is updated consistently.
 
+    public void ChangeJournalOccurredAt(DateTimeOffset occurredAt, DateTimeOffset nowUtc)
+    {
+        JournalExtension!.ChangeOccurredAt(occurredAt);
+        Touch(nowUtc);
+    }
+
     public void ChangeTaskCategory(TaskCategory category, DateTimeOffset nowUtc)
     {
         TaskExtension!.ChangeCategory(category);
@@ -283,6 +235,11 @@ public sealed class Item : DomainEventEntity
     {
         ZettelExtension!.ChangeContent(content);
         Touch(nowUtc);
+    }
+
+    public void SetKnowledgeIndexExpanded(bool isExpanded)
+    {
+        KnowledgeIndex!.SetExpanded(isExpanded);
     }
 
     public void ChangeScheduleMisfirePolicy(ScheduleMisfirePolicy policy, DateTimeOffset nowUtc)

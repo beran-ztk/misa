@@ -28,20 +28,20 @@ public interface IItemRepository
     Task<Item?> TryGetScheduleAsync(Guid id, CancellationToken ct);
     Task<List<Item>> GetSchedulesAsync(CancellationToken ct);
     
+    // Journal
+    Task<Item?> TryGetJournalAsync(Guid id);
+    
     // Chronicle
     Task<List<Item>> GetJournalsAsync();
     Task<List<ItemActivity>> GetDeadlinesAsync();
     Task<List<Session>> GetSessionsAsync();
     Task<List<Item>> GetChangedItemsInRangeAsync(DateTimeOffset from, DateTimeOffset to, CancellationToken ct = default);
     
-    // Schola
-    Task<List<Item>> GetArcsAsync();
-    Task<List<Item>> GetUnitsAsync();
-    
     // Zettelkasten
-    Task<List<Item>> GetTopicsAsync();
+    Task<List<Item>> GetKnowledgeIndexAsync();
     Task<List<Item>> GetZettelsAsync(Guid? topicId, CancellationToken ct);
     Task<Item?> TryGetZettelAsync(Guid id, CancellationToken ct);
+    Task<Item?> TryGetKnowledgeIndexItemAsync(Guid id, CancellationToken ct);
     
     // Session
     Task<Item?> TryGetItemWithSessionsAsync(Guid itemId, CancellationToken ct);

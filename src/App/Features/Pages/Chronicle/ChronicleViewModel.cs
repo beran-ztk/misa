@@ -131,13 +131,4 @@ public partial class ChronicleViewModel : ViewModelBase
     {
         await LoadAsync();
     }
-
-    [RelayCommand]
-    private async Task ShowAddPanelAsync()
-    {
-        var formVm = new Journal.CreateJournalViewModel(_gateway);
-        var result = await _layerProxy.OpenAsync<Journal.CreateJournalViewModel, Result>(formVm);
-        if (result is { IsSuccess: true })
-            await LoadAsync();
-    }
 }

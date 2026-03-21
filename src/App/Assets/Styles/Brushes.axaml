@@ -1,0 +1,80 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!--
+        ── Surface scale ─────────────────────────────────────────────────────
+        Background hierarchy, base → most elevated.
+    -->
+    <SolidColorBrush x:Key="BrushPrimaryBackground"        Color="#212121"/>  <!-- app base, workspace          -->
+    <SolidColorBrush x:Key="BrushPrimaryBackgroundLight"   Color="#262626"/>  <!-- toolbars, sidebars           -->
+    <SolidColorBrush x:Key="BrushPrimaryBackgroundLighter" Color="#3c3f41"/>  <!-- elevated surfaces, nav hover -->
+    <SolidColorBrush x:Key="BrushSecondaryBackground"      Color="#161916"/>  <!-- alt-tinted areas             -->
+    <SolidColorBrush x:Key="BrushPanelBackground"          Color="#233549"/>  <!-- right-panel blue tint        -->
+
+    <!--
+        ── Control surfaces ──────────────────────────────────────────────────
+        Inner parts of complex composite controls.
+        BrushBackgroundControl is actively used (Expander header in AddPanel).
+        The others are reserved for Phase 2 component style migration.
+    -->
+    <SolidColorBrush x:Key="BrushBackgroundControl"      Color="#090c11"/>  <!-- Expander header, darkest inner -->
+    <SolidColorBrush x:Key="BrushInputBackground"        Color="#191a1c"/>  <!-- text input inner area          -->
+    <SolidColorBrush x:Key="BrushControlSurface"         Color="#2b2d30"/>  <!-- outer control housing          -->
+    <SolidColorBrush x:Key="BrushInnerContentBackground" Color="#1e1f22"/>  <!-- inner content region           -->
+
+    <!--
+        ── Overlays ──────────────────────────────────────────────────────────
+        Semi-transparent whites composited over dark surfaces.
+        Use these tokens instead of hardcoded alpha literals.
+
+        Intensity scale (alpha):
+            Subtle   0x08 ~3%  — barely-there, e.g. selected item in a dense list
+            Selected 0x0C ~5%  — resting selected state
+            Hover    0x10 ~6%  — pointer-over on any interactive surface
+            Pressed  0x1A ~10% — mouse/touch press confirmation
+    -->
+    <SolidColorBrush x:Key="BrushOverlay"         Color="#B0000000"/>  <!-- modal / panel backdrop    -->
+    <SolidColorBrush x:Key="BrushSubtleOverlay"   Color="#08FFFFFF"/>
+    <SolidColorBrush x:Key="BrushSelectedOverlay" Color="#0CFFFFFF"/>
+    <SolidColorBrush x:Key="BrushHoverOverlay"    Color="#10FFFFFF"/>
+    <SolidColorBrush x:Key="BrushPressedOverlay"  Color="#1AFFFFFF"/>
+
+    <!--
+        ── Text scale ────────────────────────────────────────────────────────
+    -->
+    <SolidColorBrush x:Key="BrushTextPrimary"   Color="#e6edf3"/>  <!-- headings, active labels             -->
+    <SolidColorBrush x:Key="BrushTextSecondary" Color="#9da7b3"/>  <!-- standard body text, nav labels      -->
+    <SolidColorBrush x:Key="BrushTextFaded"     Color="#8090A0"/>  <!-- placeholders, timestamps, captions  -->
+    <SolidColorBrush x:Key="BrushTextDisabled"  Color="#4d5563"/>  <!-- disabled labels (use alone, no opacity) -->
+
+    <!--
+        ── Borders ───────────────────────────────────────────────────────────
+        BorderColor (raw Color) is referenced by FluentTheme to suppress
+        the default Fluent focus ring colour across all controls.
+    -->
+    <Color x:Key="BorderColor">#363636</Color>
+    <SolidColorBrush x:Key="BrushBorder"      Color="{StaticResource BorderColor}"/>
+    <SolidColorBrush x:Key="BrushBorderLight" Color="#606870"/>  <!-- hover border lift       -->
+    <SolidColorBrush x:Key="BrushBorderFocus" Color="#4A90E2"/>  <!-- focus ring (= Accent)   -->
+
+    <!--
+        ── Accent scale ──────────────────────────────────────────────────────
+        Three-step accent ramp used on filled interactive elements:
+            BrushAccentHover — pointer-over (lighter)
+            BrushAccent      — resting state
+            BrushAccentDim   — pressed (darker)
+    -->
+    <SolidColorBrush x:Key="BrushAccentHover"   Color="#5A9FE8"/>  <!-- pointer-over on filled accent   -->
+    <SolidColorBrush x:Key="BrushAccent"         Color="#4A90E2"/>  <!-- resting accent                  -->
+    <SolidColorBrush x:Key="BrushAccentDim"      Color="#2E6BBE"/>  <!-- pressed accent                  -->
+    <SolidColorBrush x:Key="BrushAccentSubtle"   Color="#144A90E2"/><!-- accent background tint           -->
+
+    <!--
+        ── Semantic state ────────────────────────────────────────────────────
+    -->
+    <SolidColorBrush x:Key="BrushSuccess"     Color="#4CAF50"/>
+    <SolidColorBrush x:Key="BrushWarning"     Color="#FFC107"/>
+    <SolidColorBrush x:Key="BrushError"       Color="#F44336"/>
+    <SolidColorBrush x:Key="BrushErrorSubtle" Color="#14F44336"/>  <!-- error background tint -->
+
+</ResourceDictionary>

@@ -11,13 +11,6 @@
   <UserControl.Styles>
 
       <!-- Neutralize default ListBox item background so card styles are authoritative -->
-      <Style Selector="ListBoxItem">
-          <Setter Property="Padding" Value="0"/>
-          <Setter Property="Background" Value="Transparent"/>
-      </Style>
-      <Style Selector="ListBoxItem /template/ ContentPresenter">
-          <Setter Property="Background" Value="Transparent"/>
-      </Style>
       <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter">
           <Setter Property="Background" Value="Transparent"/>
       </Style>
@@ -37,17 +30,13 @@
           <Setter Property="BorderThickness" Value="1.5"/>
       </Style>
 
-      <!-- Badge: small pill in title row — quieter than before -->
+      <!-- Badge — structure (CornerRadius, BorderThickness, VerticalAlignment, FontSize) from Controls.axaml pill chip base -->
       <Style Selector="Border.badge">
-          <Setter Property="CornerRadius" Value="999"/>
-          <Setter Property="Padding" Value="6,2"/>
-          <Setter Property="BorderThickness" Value="1"/>
+          <Setter Property="Padding"     Value="6,2"/>
           <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}"/>
-          <Setter Property="Background" Value="Transparent"/>
       </Style>
       <Style Selector="TextBlock.badge-text">
-          <Setter Property="FontSize" Value="10"/>
-          <Setter Property="Opacity" Value="0.55"/>
+          <Setter Property="Opacity"       Value="0.55"/>
           <Setter Property="LetterSpacing" Value="0.4"/>
       </Style>
 
@@ -62,12 +51,6 @@
       <Style Selector="TextBlock.chip-text">
           <Setter Property="FontSize" Value="11"/>
           <Setter Property="Opacity" Value="0.80"/>
-      </Style>
-
-      <!-- Muted: contextual meta (execution status, timezone) -->
-      <Style Selector="TextBlock.muted">
-          <Setter Property="Opacity" Value="0.50"/>
-          <Setter Property="FontSize" Value="12"/>
       </Style>
 
   </UserControl.Styles>

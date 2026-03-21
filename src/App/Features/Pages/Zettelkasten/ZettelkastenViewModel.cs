@@ -2,30 +2,51 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Misa.Contract.Common.Results;
+using Misa.Contract.Items;
 using Misa.Contract.Items.Components.Zettelkasten;
 using Misa.Ui.Avalonia.Common.Mappings;
-using Misa.Ui.Avalonia.Features.Pages.Zettelkasten.Forms;
-using Misa.Ui.Avalonia.Infrastructure.UI;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Zettelkasten;
 
-public sealed partial class ZettelkastenViewModel(ZettelkastenGateway gateway, LayerProxy layerProxy) : ViewModelBase
+public sealed partial class ZettelkastenViewModel : ViewModelBase
 {
-    public ObservableCollection<KnowledgeIndexEntryDto> Index { get; } = [];
-    public List<ZettelDto> Zettels { get; private set; } = [];
+    public ObservableCollection<KnowledgeIndexNodeVm> KnowledgeIndex { get; } = [];
+    private ZettelkastenGateway _gateway { get; init; }
 
-    [ObservableProperty] private ZettelDto? _selectedZettel;
-    [ObservableProperty] private string? _editableContent;
-    [ObservableProperty] private string _saveStateLabel = string.Empty;
+    [ObservableProperty] private KnowledgeIndexNodeVm? _selectedNode;
+    
+    [ObservableProperty] private ViewModelBase _zettelVm;
 
-    private bool _suppressContentSave;
-    private CancellationTokenSource? _saveCts;
+    [ObservableProperty] private bool _hasZettelSelected;
+
+    public ZettelkastenViewModel(ZettelkastenGateway gateway)
+    {
+        _gateway = gateway;
+        ZettelVm = new ZettelViewModel(_gateway);
+    }
+    partial void OnSelectedNodeChanged(KnowledgeIndexNodeVm? value)
+    {
+        if (value is null || value.IsPendingCreation || value.Workflow != WorkflowDto.Zettel)
+        {
+            return;
+        }
+        
+        _ = LoadZettelAsync(value.Id);
+    }
+
+    private async Task LoadZettelAsync(Guid id)
+    {
+        var dto = await _gateway.GetZettelAsync(id);
+        if (dto is null || ZettelVm is not ZettelViewModel vm) return;
+        HasZettelSelected = true;
+        vm.Load(dto);
+    }
+
+    // ── Initialization ────────────────────────────────────────────────────────
 
     public async Task InitializeWorkspaceAsync()
     {
@@ -38,137 +59,102 @@ public sealed partial class ZettelkastenViewModel(ZettelkastenGateway gateway, L
         await LoadIndexAsync();
     }
 
-    partial void OnSelectedZettelChanged(ZettelDto? value)
+    public async Task SetExpandedStateAsync(Guid id, bool expanded)
     {
-        _suppressContentSave = true;
-        EditableContent = value?.Content;
-        SaveStateLabel = string.Empty;
-        _suppressContentSave = false;
+        await _gateway.SetKnowledgeIndexExpandedStateAsync(id, expanded);
     }
 
-    partial void OnEditableContentChanged(string? value)
-    {
-        if (_suppressContentSave) return;
-        if (SelectedZettel is null) return;
-
-        SaveStateLabel = "Unsaved";
-        _ = AutoSaveAsync(SelectedZettel.Id, value);
-    }
-
-    private async Task AutoSaveAsync(Guid zettelId, string? content)
-    {
-        _saveCts?.Cancel();
-        _saveCts = new CancellationTokenSource();
-        var token = _saveCts.Token;
-
-        try
-        {
-            await Task.Delay(1000, token);
-        }
-        catch (OperationCanceledException)
-        {
-            return;
-        }
-
-        if (SelectedZettel?.Id != zettelId) return;
-
-        var result = await gateway.UpdateZettelContentAsync(zettelId, content);
-
-        if (result.IsSuccess)
-        {
-            // Update the cached ZettelDto
-            var idx = Zettels.FindIndex(z => z.Id == zettelId);
-            if (idx >= 0)
-                Zettels[idx] = Zettels[idx] with { Content = content };
-
-            if (SelectedZettel?.Id == zettelId)
-                SaveStateLabel = "Saved";
-        }
-        else
-        {
-            if (SelectedZettel?.Id == zettelId)
-                SaveStateLabel = "Save failed";
-        }
-    }
-
-    public async Task CreateZettelAsync(Guid? topicId = null, string? topicName = null)
-    {
-        string description = topicId.HasValue
-            ? $"This Zettel will be created under the topic '{topicName}'."
-            : "Select a topic node to create a Zettel.";
-
-        var formVm = new CreateZettelViewModel(topicId, description, gateway);
-        var result = await layerProxy.OpenAsync<CreateZettelViewModel, Result>(formVm, LayerPresentation.Modal);
-        if (result is { IsSuccess: true })
-        {
-            await RefreshWorkspaceAsync();
-        }
-    }
-
-    public async Task CreateTopicAsync(Guid? parentId = null, string? parentName = null)
-    {
-        string description = parentId.HasValue
-            ? $"This topic will be assigned under the topic '{parentName}'."
-            : "This topic will be on root-level.";
-
-        var formVm = new CreateTopicViewModel(parentId, description, gateway);
-
-        var result = await layerProxy.OpenAsync<CreateTopicViewModel, Result>(formVm, LayerPresentation.Modal);
-        if (result is { IsSuccess: true })
-        {
-            await RefreshWorkspaceAsync();
-        }
-    }
+    // ── Tree loading ──────────────────────────────────────────────────────────
 
     private async Task LoadIndexAsync()
     {
-        var indexResult = await gateway.GetKnowledgeIndexAsync();
-        var zettelResult = await gateway.GetZettelsAsync();
+        var index = await _gateway.GetKnowledgeIndexAsync();
+        if (index is null) return;
 
-        if (indexResult is not null)
+        await Dispatcher.UIThread.InvokeAsync(() =>
         {
-            var tree = BuildIndexTree(indexResult);
+            KnowledgeIndex.Clear();
+            foreach (var dto in index)
+                KnowledgeIndex.Add(ToNodeVm(dto));
+        });
+    }
 
-            await Dispatcher.UIThread.InvokeAsync(() =>
+    private static KnowledgeIndexNodeVm ToNodeVm(KnowledgeIndexEntryDto dto)
+    {
+        var vm = new KnowledgeIndexNodeVm
+        {
+            Id         = dto.Id,
+            Workflow   = dto.Workflow,
+            Title      = dto.Title,
+            ParentId   = dto.ParentId,
+            IsExpanded = dto.IsExpanded
+        };
+        foreach (var child in dto.Children)
+            vm.Children.Add(ToNodeVm(child));
+        return vm;
+    }
+
+    // ── Index item actions ────────────────────────────────────────────────────
+
+    [RelayCommand]
+    private void CreateTopicUnder(Guid parentId) =>
+        BeginInlineCreation(parentId, WorkflowDto.Topic);
+
+    [RelayCommand]
+    private void CreateZettelUnder(Guid parentId) =>
+        BeginInlineCreation(parentId, WorkflowDto.Zettel);
+
+    private void BeginInlineCreation(Guid parentId, WorkflowDto workflow)
+    {
+        var parent = FindNode(parentId, KnowledgeIndex);
+        if (parent is null || parent.Workflow != WorkflowDto.Topic) return;
+
+        // Remove any existing pending row under this parent before adding a new one
+        var existing = parent.Children.FirstOrDefault(c => c.IsPendingCreation);
+        if (existing is not null)
+            parent.Children.Remove(existing);
+
+        var pending = new KnowledgeIndexNodeVm
+        {
+            IsPendingCreation = true,
+            PendingWorkflow   = workflow
+        };
+
+        pending.SetCallbacks(
+            onCommit: async title =>
             {
-                Index.Clear();
-                foreach (var entry in tree)
-                    Index.Add(entry);
+                var result = workflow == WorkflowDto.Topic
+                    ? await _gateway.CreateTopicAsync(new CreateTopicRequest(title, parentId))
+                    : await _gateway.CreateZettelAsync(new CreateZettelRequest(title, parentId));
 
-                SelectedZettel = null;
-            });
+                if (result.IsSuccess)
+                    await LoadIndexAsync();
+                else
+                    await Dispatcher.UIThread.InvokeAsync(() => parent.Children.Remove(pending));
+            },
+            onCancel: () =>
+            {
+                // ObservableCollection must be modified on the UI thread
+                Dispatcher.UIThread.Post(() => parent.Children.Remove(pending));
+            }
+        );
+
+        parent.Children.Insert(0, pending);
+        parent.IsExpanded = true;
+        _ = SetExpandedStateAsync(parent.Id, true);
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private static KnowledgeIndexNodeVm? FindNode(
+        Guid id, IEnumerable<KnowledgeIndexNodeVm> nodes)
+    {
+        foreach (var node in nodes)
+        {
+            if (!node.IsPendingCreation && node.Id == id) return node;
+            var found = FindNode(id, node.Children);
+            if (found is not null) return found;
         }
-
-        if (zettelResult is not null)
-            Zettels = zettelResult;
-    }
-
-    private static List<KnowledgeIndexEntryDto> BuildIndexTree(List<KnowledgeIndexEntryDto> entries)
-    {
-        var roots = entries
-            .Where(e => e.ParentId is null)
-            .OrderBy(e => e.Workflow)
-            .ThenBy(e => e.Title)
-            .ToList();
-
-        foreach (var root in roots)
-            PopulateChildren(root, entries);
-
-        return roots;
-    }
-
-    private static KnowledgeIndexEntryDto PopulateChildren(KnowledgeIndexEntryDto entry, List<KnowledgeIndexEntryDto> all)
-    {
-        var children = all
-            .Where(e => e.ParentId == entry.Id)
-            .OrderBy(e => e.Workflow)
-            .ThenBy(e => e.Title)
-            .Select(e => PopulateChildren(e, all))
-            .ToList();
-
-        foreach (var child in children)
-            entry.Children.Add(child);
-
-        return entry;
+        return null;
     }
 }

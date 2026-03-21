@@ -20,7 +20,6 @@ using Misa.Ui.Avalonia.Infrastructure.UI;
 using Misa.Ui.Avalonia.Shell.Authentication;
 using Misa.Ui.Avalonia.Shell.Base;
 using Misa.Ui.Avalonia.Shell.Components;
-using CreateJournalViewModel = Misa.Ui.Avalonia.Features.Pages.Journal.CreateJournalViewModel;
 using CreateScheduleViewModel = Misa.Ui.Avalonia.Features.Pages.Schedules.CreateScheduleViewModel;
 using InspectorFacadeViewModel = Misa.Ui.Avalonia.Features.Inspector.InspectorFacadeViewModel;
 using InspectorState = Misa.Ui.Avalonia.Features.Inspector.InspectorState;
@@ -43,6 +42,7 @@ public static class CompositionRoot
         sc.AddInspector();
         sc.AddTasksFeature();
         sc.AddSchedulingFeature();
+        sc.AddJournalFeature();
         sc.AddChronicleFeature();
         sc.ZettelkastenServices();
         sc.AddUtilities();
@@ -135,13 +135,15 @@ public static class CompositionRoot
         sc.AddTransient<CreateScheduleView>();
         sc.AddTransient<CreateScheduleViewModel>();
     }
+    private static void AddJournalFeature(this IServiceCollection sc)
+    {
+        sc.AddSingleton<JournalViewModel>();
+        sc.AddSingleton<JournalGateway>();
+    }
     private static void AddChronicleFeature(this IServiceCollection sc)
     {
         sc.AddSingleton<ChronicleViewModel>();
         sc.AddSingleton<ChronicleGateway>();
-        
-        sc.AddTransient<CreateJournalView>();
-        sc.AddTransient<CreateJournalViewModel>();
     }
     
     private static void ZettelkastenServices(this IServiceCollection sc)

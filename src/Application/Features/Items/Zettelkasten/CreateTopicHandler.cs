@@ -9,8 +9,8 @@ namespace Misa.Application.Features.Items.Zettelkasten;
 public sealed record CreateTopicCommand(string Title, Guid? ParentId);
 
 public sealed class CreateTopicHandler(
-    IItemRepository repository, 
-    ITimeProvider timeProvider, 
+    IItemRepository repository,
+    ITimeProvider timeProvider,
     IIdGenerator idGenerator,
     ICurrentUser currentUser)
 {
@@ -19,13 +19,13 @@ public sealed class CreateTopicHandler(
         ItemId? parentId = command.ParentId is null
             ? null
             : new ItemId(command.ParentId.Value);
-        
+
         var topic = Item.CreateTopic(
-            id: new ItemId(idGenerator.New()), 
+            id: new ItemId(idGenerator.New()),
             ownerId: currentUser.Id,
             title: command.Title,
             createdAtUtc: timeProvider.UtcNow,
-            topicId: parentId
+            parentId: parentId
         );
 
         await repository.AddAsync(topic, CancellationToken.None);

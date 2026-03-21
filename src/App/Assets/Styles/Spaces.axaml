@@ -1,0 +1,43 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!--
+        Font sizes
+        ─────────────────────────────────────────────────────────────────────
+        NOTE: FontSizeSmall (10) and FontSizeAverage (12) are legacy names used
+        across many views. The planned Phase 2 rename is:
+            FontSizeSmall   → FontSizeXSmall
+            FontSizeAverage → FontSizeSmall
+        Do not use FontSizeSmall / FontSizeAverage in new code.
+    -->
+    <x:Double x:Key="FontSizeSmall">10</x:Double>       <!--  10 — captions, badges, timestamps  -->
+    <x:Double x:Key="FontSizeAverage">12</x:Double>     <!--  12 — secondary/meta text           -->
+    <x:Double x:Key="FontSizeMedium">14</x:Double>      <!--  14 — standard body / control text  -->
+    <x:Double x:Key="FontSizeLarge">16</x:Double>       <!--  16 — emphasis, section headers     -->
+    <x:Double x:Key="FontSizeXLarge">20</x:Double>      <!--  20 — large headings                -->
+    <x:Double x:Key="FontSizeTitle">24</x:Double>       <!--  24 — page / dialog titles          -->
+
+    <!--
+        Spacing
+        ─────────────────────────────────────────────────────────────────────
+    -->
+    <x:Double x:Key="SpacingXSmall">2</x:Double>   <!--  2 — micro-gap, inline icon+label   -->
+    <x:Double x:Key="SpacingSmall">4</x:Double>    <!--  4 — tight groups, chip rows        -->
+    <x:Double x:Key="SpacingMedium">8</x:Double>   <!--  8 — standard control gap           -->
+    <x:Double x:Key="SpacingLarge">12</x:Double>   <!-- 12 — section rows, form fields      -->
+    <x:Double x:Key="SpacingXLarge">16</x:Double>  <!-- 16 — panel padding, card rows       -->
+
+    <!--
+        Corner radii
+        ─────────────────────────────────────────────────────────────────────
+        CornerRadiusControl  (4) — text inputs, checkboxes, small tags
+        CornerRadiusCard     (6) — cards, dropdowns, toasts, flyout panels
+        CornerRadiusButtons  (8) — large round icon buttons (nav rail)
+        CornerRadiusRound  (999) — pill badges, chips, fully-round indicators
+    -->
+    <CornerRadius x:Key="CornerRadiusControl">4</CornerRadius>
+    <CornerRadius x:Key="CornerRadiusCard">6</CornerRadius>
+    <CornerRadius x:Key="CornerRadiusButtons">8</CornerRadius>
+    <CornerRadius x:Key="CornerRadiusRound">999</CornerRadius>
+
+</ResourceDictionary>

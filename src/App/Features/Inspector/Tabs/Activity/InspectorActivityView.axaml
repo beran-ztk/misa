@@ -21,23 +21,15 @@
         </Style>
 
         <Style Selector="Border.state-badge">
-            <Setter Property="CornerRadius" Value="999" />
-            <Setter Property="Padding" Value="7,2" />
-            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding"     Value="7,2" />
             <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}" />
-            <Setter Property="Background" Value="#0EFFFFFF" />
+            <Setter Property="Background"  Value="#0EFFFFFF" />
         </Style>
 
         <Style Selector="TextBlock.state-badge-text">
-            <Setter Property="FontSize" Value="10" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Opacity" Value="0.75" />
+            <Setter Property="FontWeight"   Value="SemiBold" />
+            <Setter Property="Opacity"      Value="0.75" />
             <Setter Property="LetterSpacing" Value="0.5" />
-        </Style>
-
-        <Style Selector="TextBlock.meta">
-            <Setter Property="Opacity" Value="0.50" />
-            <Setter Property="FontSize" Value="12" />
         </Style>
 
         <Style Selector="TextBlock.label">

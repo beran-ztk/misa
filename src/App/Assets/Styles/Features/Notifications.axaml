@@ -1,0 +1,310 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ── Panel shell ──────────────────────────────────────────────────── -->
+    <Style Selector="Border.notif-panel">
+        <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLight}" />
+        <Setter Property="MaxWidth"   Value="280" />
+    </Style>
+
+    <!-- ── Header ───────────────────────────────────────────────────────── -->
+    <Style Selector="Border.notif-header">
+        <Setter Property="Background"      Value="{StaticResource BrushPrimaryBackground}" />
+        <Setter Property="Padding"         Value="16,11" />
+        <Setter Property="BorderBrush"     Value="{StaticResource BrushBorder}" />
+        <Setter Property="BorderThickness" Value="0,0,0,1" />
+    </Style>
+
+    <Style Selector="TextBlock.notif-header-title">
+        <Setter Property="FontSize"          Value="13" />
+        <Setter Property="FontWeight"        Value="SemiBold" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <!-- notif-count-badge — structure from global pill chip base in Controls.axaml -->
+    <Style Selector="Border.notif-count-badge">
+        <Setter Property="Background"  Value="#18FFFFFF" />
+        <Setter Property="BorderBrush" Value="#28FFFFFF" />
+        <Setter Property="Padding"     Value="6,2" />
+    </Style>
+
+    <Style Selector="TextBlock.notif-count-text">
+        <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}" />
+        <Setter Property="FontSize"   Value="11" />
+    </Style>
+
+    <!-- ── Filter bar ───────────────────────────────────────────────────── -->
+    <Style Selector="Border.notif-filter-bar">
+        <Setter Property="Background"      Value="{StaticResource BrushPrimaryBackground}" />
+        <Setter Property="Padding"         Value="10,6" />
+        <Setter Property="BorderBrush"     Value="{StaticResource BrushBorder}" />
+        <Setter Property="BorderThickness" Value="0,0,0,1" />
+    </Style>
+
+    <!-- ── Dimmed action buttons (shared base) ───────────────────────────
+         notif-header-action and notif-filter-tab share the same dimmed-ghost
+         treatment: secondary foreground, 12px font, opacity 0.6 → 1.0 on hover,
+         BrushHoverOverlay on ContentPresenter.
+         Padding and pressed-state handling are specific to each class below.
+    ──────────────────────────────────────────────────────────────────────── -->
+    <Style Selector="Button.notif-header-action, Button.notif-filter-tab">
+        <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}" />
+        <Setter Property="FontSize"   Value="12" />
+        <Setter Property="Opacity"    Value="0.6" />
+    </Style>
+
+    <Style Selector="Button.notif-header-action:pointerover, Button.notif-filter-tab:pointerover">
+        <Setter Property="Opacity" Value="1" />
+    </Style>
+
+    <Style Selector="Button.notif-header-action:pointerover /template/ ContentPresenter, Button.notif-filter-tab:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushHoverOverlay}" />
+    </Style>
+
+    <!--
+        notif-header-action — icon/text button in the panel header.
+        Intentional differences from Button base:
+        - Padding=6,4 (compact, icon-sized)
+        - Starts at Opacity=0.6 (shared); lifts to 1.0 (shared)
+        - Has pressed state (filter-tab intentionally omits this)
+    -->
+    <Style Selector="Button.notif-header-action">
+        <Setter Property="Padding" Value="6,4" />
+
+        <Style Selector="^:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource BrushPressedOverlay}" />
+        </Style>
+    </Style>
+
+    <!--
+        notif-filter-tab — filter selector tab in the filter bar.
+        Intentional differences from Button base:
+        - Padding=10,4 (wider for tab feel)
+        - Starts at Opacity=0.6 (shared); lifts to 1.0 (shared)
+        - Has .active variant (no equivalent for header-action)
+    -->
+    <Style Selector="Button.notif-filter-tab">
+        <Setter Property="Padding" Value="10,4" />
+
+        <Style Selector="^:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource BrushPressedOverlay}" />
+        </Style>
+    </Style>
+
+    <Style Selector="Button.notif-filter-tab.active">
+        <Setter Property="Opacity"    Value="1" />
+        <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}" />
+
+        <Style Selector="^ /template/ ContentPresenter">
+            <Setter Property="Background" Value="#14FFFFFF" />
+        </Style>
+    </Style>
+
+    <!-- ── List area ────────────────────────────────────────────────────── -->
+    <Style Selector="Border.notif-list-area">
+        <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLight}" />
+    </Style>
+
+    <!-- ── Empty state ──────────────────────────────────────────────────── -->
+    <Style Selector="TextBlock.notif-empty-text">
+        <Setter Property="Foreground"          Value="{StaticResource BrushTextFaded}" />
+        <Setter Property="FontSize"            Value="13" />
+        <Setter Property="Opacity"             Value="0.5" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment"   Value="Center" />
+        <Setter Property="TextAlignment"       Value="Center" />
+        <Setter Property="Margin"              Value="0,32" />
+    </Style>
+
+    <!-- ── Notification card ────────────────────────────────────────────── -->
+    <!--
+        notif-card — full-width card button.
+        Intentional differences from Button base:
+        - Background=BrushPrimaryBackground (filled surface, not transparent)
+        - Cursor=Arrow (content card, not a link-style target)
+        - HorizontalContentAlignment=Stretch (card body needs full width)
+        - ContentPresenter reset to Transparent so overlays composite over the card surface
+        - Hover/pressed use Subtle/Hover overlays (softer step than standard button)
+    -->
+    <Style Selector="Button.notif-card">
+        <Setter Property="Background"                 Value="{StaticResource BrushPrimaryBackground}" />
+        <Setter Property="BorderBrush"                Value="{StaticResource BrushBorder}" />
+        <Setter Property="BorderThickness"            Value="0,0,0,1" />
+        <Setter Property="Padding"                    Value="0" />
+        <Setter Property="HorizontalAlignment"        Value="Stretch" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="Cursor"                     Value="Arrow" />
+
+        <Style Selector="^ /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="^:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource BrushSubtleOverlay}" />
+        </Style>
+        <Style Selector="^:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource BrushHoverOverlay}" />
+        </Style>
+    </Style>
+
+    <!-- Left accent strip -->
+    <Style Selector="Border.notif-card-accent">
+        <Setter Property="Background" Value="{StaticResource BrushAccent}" />
+        <Setter Property="Width"      Value="3" />
+        <Setter Property="Opacity"    Value="0.7" />
+    </Style>
+
+    <!-- Card body padding -->
+    <Style Selector="Border.notif-card-body">
+        <Setter Property="Padding" Value="12,10" />
+    </Style>
+
+    <Style Selector="TextBlock.notif-card-title">
+        <Setter Property="FontSize"     Value="13" />
+        <Setter Property="FontWeight"   Value="Medium" />
+        <Setter Property="TextWrapping" Value="NoWrap" />
+        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+    </Style>
+
+    <Style Selector="TextBlock.notif-card-title-unread">
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Opacity"    Value="1" />
+    </Style>
+
+    <Style Selector="TextBlock.notif-card-message">
+        <Setter Property="Foreground"   Value="{StaticResource BrushTextSecondary}" />
+        <Setter Property="FontSize"     Value="12" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="MaxLines"     Value="2" />
+        <Setter Property="Opacity"      Value="0.85" />
+        <Setter Property="Margin"       Value="0,2,0,0" />
+    </Style>
+
+    <Style Selector="TextBlock.notif-card-time">
+        <Setter Property="Foreground"        Value="{StaticResource BrushTextFaded}" />
+        <Setter Property="FontSize"          Value="11" />
+        <Setter Property="Opacity"           Value="0.6" />
+        <Setter Property="VerticalAlignment" Value="Bottom" />
+    </Style>
+
+    <!-- ── Dismiss button ───────────────────────────────────────────────── -->
+    <!--
+        notif-dismiss — small ×button hidden until its card is hovered.
+        Intentional differences from Button base:
+        - Fixed 22×22 size
+        - Starts at Opacity=0 (revealed via parent :pointerover rule below)
+        - Hover uses #14FFFFFF — between HoverOverlay and PressedOverlay,
+          for a more visible response on this compact control
+    -->
+    <Style Selector="Button.notif-dismiss">
+        <Setter Property="Padding"    Value="4" />
+        <Setter Property="Width"      Value="22" />
+        <Setter Property="Height"     Value="22" />
+        <Setter Property="Opacity"    Value="0" />
+        <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}" />
+
+        <Style Selector="^:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#14FFFFFF" />
+        </Style>
+    </Style>
+
+    <!-- Show dismiss on card hover -->
+    <Style Selector="Button.notif-card:pointerover Button.notif-dismiss">
+        <Setter Property="Opacity" Value="0.7" />
+    </Style>
+    <Style Selector="Button.notif-card:pointerover Button.notif-dismiss:pointerover">
+        <Setter Property="Opacity" Value="1" />
+    </Style>
+
+    <!-- ── Undo banner ──────────────────────────────────────────────────── -->
+    <Style Selector="Border.notif-undo-bar">
+        <Setter Property="Opacity" Value="0.65" />
+    </Style>
+
+    <!-- Countdown track -->
+    <Style Selector="Border.notif-undo-track">
+        <Setter Property="Height"     Value="2" />
+        <Setter Property="Background" Value="#18FFFFFF" />
+    </Style>
+
+    <!-- Countdown fill (shrinks right-to-left via ScaleX binding) -->
+    <Style Selector="Border.notif-undo-fill">
+        <Setter Property="Height"              Value="2" />
+        <Setter Property="Background"          Value="{StaticResource BrushAccent}" />
+        <Setter Property="Opacity"             Value="0.55" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+    </Style>
+
+    <Style Selector="TextBlock.notif-undo-text">
+        <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}" />
+        <Setter Property="FontSize"   Value="12" />
+        <Setter Property="FontStyle"  Value="Italic" />
+    </Style>
+
+    <!--
+        notif-undo-btn — outlined accent button in the undo banner.
+        Intentional differences from btn-secondary:
+        - Smaller font (11) and padding (8,3)
+        - Accent color for both border and foreground
+        - Starts at Opacity=0.8, lifts to 1.0 on hover
+    -->
+    <Style Selector="Button.notif-undo-btn">
+        <Setter Property="Foreground"      Value="{StaticResource BrushAccent}" />
+        <Setter Property="BorderBrush"     Value="{StaticResource BrushAccent}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding"         Value="8,3" />
+        <Setter Property="FontSize"        Value="11" />
+        <Setter Property="Opacity"         Value="0.8" />
+
+        <Style Selector="^:pointerover">
+            <Setter Property="Opacity" Value="1" />
+        </Style>
+    </Style>
+
+    <!-- ── Open link button ─────────────────────────────────────────────── -->
+    <!--
+        notif-open-btn — inline text link button.
+        Intentional differences from Button base:
+        - Left-aligned content (link reads left-to-right)
+        - Accent foreground (link color)
+        - Padding only on top (aligns with card text)
+        - Starts at Opacity=0.85, lifts to 1.0 on hover
+    -->
+    <Style Selector="Button.notif-open-btn">
+        <Setter Property="Foreground"                 Value="{StaticResource BrushAccent}" />
+        <Setter Property="Padding"                    Value="0,4,0,0" />
+        <Setter Property="FontSize"                   Value="12" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="Opacity"                    Value="0.85" />
+
+        <Style Selector="^:pointerover">
+            <Setter Property="Opacity" Value="1" />
+        </Style>
+    </Style>
+
+    <!-- ── Load more button ─────────────────────────────────────────────── -->
+    <!--
+        notif-load-more — full-width outlined button at list bottom.
+        Intentional differences from btn-secondary:
+        - Smaller font (12) and vertical-only padding (0,8)
+        - Explicit Margin for list placement
+        - Starts at Opacity=0.7, lifts to 1.0 on hover
+    -->
+    <Style Selector="Button.notif-load-more">
+        <Setter Property="Foreground"          Value="{StaticResource BrushTextSecondary}" />
+        <Setter Property="BorderBrush"         Value="{StaticResource BrushBorder}" />
+        <Setter Property="BorderThickness"     Value="1" />
+        <Setter Property="Padding"             Value="0,8" />
+        <Setter Property="Margin"              Value="16,8" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="FontSize"            Value="12" />
+        <Setter Property="Opacity"             Value="0.7" />
+
+        <Style Selector="^:pointerover">
+            <Setter Property="Opacity" Value="1" />
+        </Style>
+        <Style Selector="^:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource BrushSubtleOverlay}" />
+        </Style>
+    </Style>
+
+</Styles>

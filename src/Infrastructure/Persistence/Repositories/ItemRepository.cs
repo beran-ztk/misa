@@ -122,11 +122,19 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
             .ToListAsync(ct);
     }
 
+    public async Task<Item?> TryGetJournalAsync(Guid id)
+    {
+        return await context.Items
+            .Include(z => z.JournalExtension)
+            .FirstOrDefaultAsync(
+                z => z.Id == new ItemId(id) && z.OwnerId == user.Id && z.Workflow == Workflow.Journal);
+    }
+
     public async Task<List<Item>> GetJournalsAsync()
     {
         return await context.Items
             .Include(s => s.JournalExtension)
-            .Where(t => t.OwnerId == user.Id && t.Workflow == Workflow.Journal)
+            .Where(t => t.OwnerId == user.Id && t.Workflow == Workflow.Journal && !t.IsDeleted)
             .OrderByDescending(t => t.CreatedAt)
             .AsNoTracking()
             .ToListAsync();
@@ -163,34 +171,12 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
             .AsNoTracking()
             .ToListAsync(ct);
     }
-
-    public async Task<List<Item>> GetArcsAsync()
+    public async Task<List<Item>> GetKnowledgeIndexAsync()
     {
         return await context.Items
-            .Include(s => s.Activity)
-            .Include(s => s.Arc)
-            .Where(t => t.OwnerId == user.Id && t.Workflow == Workflow.Arc)
-            .OrderByDescending(t => t.CreatedAt)
-            .AsNoTracking()
-            .ToListAsync();
-    }
-
-    public async Task<List<Item>> GetUnitsAsync()
-    {
-        return await context.Items
-            .Include(s => s.Activity)
-            .Include(s => s.Unit)
-            .Where(t => t.OwnerId == user.Id && t.Workflow == Workflow.Unit)
-            .OrderByDescending(t => t.CreatedAt)
-            .AsNoTracking()
-            .ToListAsync();
-    }
-
-    public async Task<List<Item>> GetTopicsAsync()
-    {
-        return await context.Items
-            .Include(s => s.Topic)
-            .Where(t => t.OwnerId == user.Id && t.Workflow == Workflow.Topic)
+            .Include(s => s.KnowledgeIndex)
+            .Where(t => t.OwnerId == user.Id 
+                        && t.Workflow == Workflow.Topic || t.Workflow == Workflow.Zettel)
             .AsNoTracking()
             .ToListAsync();
     }
@@ -199,10 +185,11 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
     {
         var query = context.Items
             .Include(z => z.ZettelExtension)
+            .Include(z => z.KnowledgeIndex)
             .Where(z => z.OwnerId == user.Id && z.Workflow == Workflow.Zettel);
 
         if (topicId.HasValue)
-            query = query.Where(z => z.ZettelExtension!.TopicId == new ItemId(topicId.Value));
+            query = query.Where(z => z.KnowledgeIndex!.ParentId == new ItemId(topicId.Value));
 
         return await query
             .OrderByDescending(z => z.CreatedAt)
@@ -217,6 +204,13 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
             .FirstOrDefaultAsync(
                 z => z.Id == new ItemId(id) && z.OwnerId == user.Id && z.Workflow == Workflow.Zettel,
                 ct);
+    }
+
+    public async Task<Item?> TryGetKnowledgeIndexItemAsync(Guid id, CancellationToken ct)
+    {
+        return await context.Items
+            .Include(i => i.KnowledgeIndex)
+            .FirstOrDefaultAsync(i => i.Id == new ItemId(id) && i.OwnerId == user.Id, ct);
     }
 
     // Session

@@ -1,0 +1,46 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Zettelkasten"
+             xmlns:aedit="clr-namespace:AvaloniaEdit;assembly=AvaloniaEdit"
+             mc:Ignorable="d"
+             d:DesignWidth="700"
+             d:DesignHeight="600"
+             x:Class="Misa.Ui.Avalonia.Features.Pages.Zettelkasten.ZettelView"
+             x:DataType="root:ZettelViewModel">
+
+    <Grid RowDefinitions="Auto,*">
+
+        <!-- Title -->
+        <TextBlock Grid.Row="0"
+                   Text="{Binding Title}"
+                   Margin="50,40,24,16"
+                   FontSize="{StaticResource FontSizeXLarge}"
+                   FontWeight="SemiBold"
+                   Opacity="0.9"
+                   Foreground="{StaticResource BrushTextPrimary}"
+                   TextWrapping="Wrap"/>
+
+        <ScrollViewer Grid.Row="1"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+            <StackPanel>
+                <aedit:TextEditor x:Name="Editor"
+                                  ShowLineNumbers="True"
+                                  WordWrap="True"
+                                  HorizontalScrollBarVisibility="Disabled"
+                                  VerticalScrollBarVisibility="Disabled"
+                                  Background="Transparent"
+                                  BorderThickness="0"
+                                  Foreground="{StaticResource BrushTextPrimary}"
+                                  LineNumbersForeground="{StaticResource BrushTextFaded}"
+                                  FontFamily="Cascadia Code"
+                                  FontSize="{StaticResource FontSizeMedium}"/>
+                <Border Height="200"/>
+            </StackPanel>
+        </ScrollViewer>
+
+    </Grid>
+
+</UserControl>

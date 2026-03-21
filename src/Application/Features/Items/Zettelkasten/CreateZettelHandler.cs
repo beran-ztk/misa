@@ -6,7 +6,7 @@ using Misa.Domain.Items;
 
 namespace Misa.Application.Features.Items.Zettelkasten;
 
-public sealed record CreateZettelCommand(string Title, string? Content, Guid TopicId);
+public sealed record CreateZettelCommand(string Title, Guid ParentId);
 
 public sealed class CreateZettelHandler(
     IItemRepository repository,
@@ -20,9 +20,8 @@ public sealed class CreateZettelHandler(
             id: new ItemId(idGenerator.New()),
             ownerId: currentUser.Id,
             title: command.Title,
-            content: command.Content,
             createdAtUtc: timeProvider.UtcNow,
-            topicId: new ItemId(command.TopicId)
+            parentId: new ItemId(command.ParentId)
         );
 
         await repository.AddAsync(zettel, CancellationToken.None);

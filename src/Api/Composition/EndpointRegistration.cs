@@ -5,7 +5,6 @@ using Misa.Api.Endpoints.Inspector;
 using Misa.Api.Endpoints.Notifications;
 using Misa.Api.Endpoints.Relations;
 using Misa.Api.Endpoints.Schedules;
-using Misa.Api.Endpoints.Schola;
 using Misa.Api.Endpoints.Sessions;
 using Misa.Api.Endpoints.Tasks;
 using Misa.Api.Endpoints.Zettelkasten;
@@ -27,9 +26,7 @@ public static class EndpointRegistration
         SessionEndpoints.Map(app);
         EntryEndpoints.Map(app);
         ChronicleEndpoints.Map(app);
-        ScholaEndpoints.Map(app);
-        TopicEndpoints.Map(app);
-        ZettelEndpoints.Map(app);
+        ZettelkastenEndpoints.Map(app);
         RelationEndpoints.Map(app);
         NotificationEndpoints.Map(app);
         app.MapScheduleEndpoints();

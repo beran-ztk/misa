@@ -49,7 +49,6 @@ public sealed class ItemActivity : DomainEventEntity
     {
         AddDomainEvent(new PropertyChangedEvent(Id.Value, ChangeType.Deadline, DueAt?.ToString("O"), deadline?.ToString("O"), null));
         DueAt = deadline;
-        Item.Touch(nowUtc);
     }
 
     public void ChangeState(ActivityState state, DateTimeOffset nowUtc, string? reason = null)
@@ -59,7 +58,6 @@ public sealed class ItemActivity : DomainEventEntity
 
         AddDomainEvent(new PropertyChangedEvent(Id.Value, ChangeType.State, State.ToString(), state.ToString(), reason));
         State = state;
-        Item.Touch(nowUtc);
     }
 
     public void ChangePriority(ActivityPriority priority, DateTimeOffset nowUtc)
@@ -69,7 +67,6 @@ public sealed class ItemActivity : DomainEventEntity
 
         AddDomainEvent(new PropertyChangedEvent(Id.Value, ChangeType.Priority, Priority.ToString(), priority.ToString(), null));
         Priority = priority;
-        Item.Touch(nowUtc);
     }
 
     public void StartSession(
@@ -91,19 +88,16 @@ public sealed class ItemActivity : DomainEventEntity
             createdAtUtc: createdAtUtc);
 
         Sessions.Add(session);
-        Item.Touch(createdAtUtc);
     }
 
     public void PauseCurrentSession(string? reason, DateTimeOffset nowUtc)
     {
         TryGetSession!.Pause(reason, nowUtc);
-        Item.Touch(nowUtc);
     }
 
     public void ContinueCurrentSession(Guid segmentId, DateTimeOffset nowUtc)
     {
         TryGetSession!.Continue(segmentId, nowUtc);
-        Item.Touch(nowUtc);
     }
 
     public void StopCurrentSession(
@@ -113,6 +107,5 @@ public sealed class ItemActivity : DomainEventEntity
         string? summary)
     {
         TryGetSession!.Stop(nowUtc, efficiency, concentration, summary);
-        Item.Touch(nowUtc);
     }
 }

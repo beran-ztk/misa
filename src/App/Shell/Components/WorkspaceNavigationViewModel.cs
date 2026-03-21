@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Notifications;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Pages.Chronicle;
+using Misa.Ui.Avalonia.Features.Pages.Journal;
 using Misa.Ui.Avalonia.Features.Pages.Schedules;
 using Misa.Ui.Avalonia.Features.Pages.Tasks;
 using Misa.Ui.Avalonia.Features.Pages.Zettelkasten;
@@ -23,32 +24,18 @@ public partial class WorkspaceNavigationViewModel(
     ISelectionContextState selectionContextState,
     TaskFacadeViewModel task,
     ScheduleFacadeViewModel schedule,
+    JournalViewModel journal,
     ChronicleViewModel chronicle,
     ZettelkastenViewModel zettel)
     : ViewModelBase
 {
-    // ── Collapse / expand ─────────────────────────────────────────────────
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(NavWidth))]
-    [NotifyPropertyChangedFor(nameof(CollapseToggleGlyph))]
-    [NotifyPropertyChangedFor(nameof(CollapseToggleTooltip))]
-    private bool _isCollapsed = true;
-
-    /// <summary>Pixel width driven by collapse state; consumed by the view's Border.Width.</summary>
-    public double NavWidth             => IsCollapsed ? 48 : 150;
-    public string CollapseToggleGlyph   => IsCollapsed ? "»" : "«";
-    public string CollapseToggleTooltip => IsCollapsed ? "Expand navigation" : "Collapse navigation";
-
-    [RelayCommand]
-    private void ToggleCollapsed() => IsCollapsed = !IsCollapsed;
-
     // ── Active-item tracking ──────────────────────────────────────────────
 
     private ViewModelBase? _activeWorkspace;
 
     public bool IsTasksActive     => _activeWorkspace == task;
     public bool IsSchedulerActive => _activeWorkspace == schedule;
+    public bool IsJournalActive => _activeWorkspace == journal;
     public bool IsChronicleActive => _activeWorkspace == chronicle;
     public bool IsZettelActive    => _activeWorkspace == zettel;
 
@@ -84,6 +71,15 @@ public partial class WorkspaceNavigationViewModel(
         await schedule.InitializeWorkspaceAsync();
         host.Workspace = schedule;
         SetActiveWorkspace(schedule);
+    }
+    
+    [RelayCommand]
+    private async Task ShowJournal()
+    {
+        InitializeWorkspaceSwitch();
+        await journal.InitializeWorkspaceAsync();
+        host.Workspace = journal;
+        SetActiveWorkspace(journal);
     }
 
     [RelayCommand]

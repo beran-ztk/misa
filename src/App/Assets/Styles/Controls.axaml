@@ -1,0 +1,408 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+<!--
+═══════════════════════════════════════════════════════════════════════════════
+BUTTON
+═══════════════════════════════════════════════════════════════════════════════
+
+Intentional decision: the global Button default is transparent / ghost.
+Rationale: the overwhelming majority of buttons in this app are icon, nav,
+toolbar, or menu items — all of which are transparent by nature. Filled
+surfaces are opt-in via .btn-primary / .btn-secondary / .btn-danger.
+
+Hover/pressed feedback is always delivered via ContentPresenter alpha
+overlay so it composites correctly over any surface colour.
+
+Specificity note: all class-based styles (wnd-ctrl, workspace-nav, etc.)
+have higher specificity than this type selector and override freely.
+═══════════════════════════════════════════════════════════════════════════════ -->
+<Style Selector="Button">
+    <Setter Property="Background"                 Value="Transparent"/>
+    <Setter Property="BorderThickness"            Value="0"/>
+    <Setter Property="Foreground"                 Value="{StaticResource BrushTextPrimary}"/>
+    <Setter Property="FontSize"                   Value="{StaticResource FontSizeMedium}"/>
+    <Setter Property="Cursor"                     Value="Hand"/>
+    <Setter Property="VerticalContentAlignment"   Value="Center"/>
+    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+    <Style Selector="^ /template/ ContentPresenter">
+        <Setter Property="CornerRadius"    Value="{StaticResource CornerRadiusControl}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding"         Value="12,7"/>
+    </Style>
+    <Style Selector="^:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushHoverOverlay}"/>
+    </Style>
+    <Style Selector="^:pressed /template/ ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushPressedOverlay}"/>
+    </Style>
+    <Style Selector="^:disabled">
+        <Setter Property="Opacity" Value="0.45"/>
+    </Style>
+</Style>
+
+<!--
+    btn-primary ── filled accent; primary call-to-action in panels and dialogs.
+    Hover/pressed use a three-step accent ramp (lighter → resting → darker).
+-->
+<Style Selector="Button.btn-primary">
+    <Setter Property="Background" Value="{StaticResource BrushAccent}"/>
+    <Setter Property="Foreground" Value="White"/>
+    <Style Selector="^ /template/ ContentPresenter">
+        <Setter Property="CornerRadius" Value="{StaticResource CornerRadiusControl}"/>
+        <Setter Property="Padding"      Value="14,8"/>
+    </Style>
+    <Style Selector="^:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushAccentHover}"/>
+    </Style>
+    <Style Selector="^:pressed /template/ ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushAccentDim}"/>
+    </Style>
+    <Style Selector="^:disabled">
+        <Setter Property="Opacity" Value="0.45"/>
+    </Style>
+</Style>
+
+<!--
+    btn-secondary ── outlined; secondary and cancel actions.
+    Border is set on the Button so the ContentPresenter TemplateBinding
+    picks it up automatically. Only hover needs an explicit ContentPresenter
+    override (to change border colour and add a subtle fill).
+-->
+<Style Selector="Button.btn-secondary">
+    <Setter Property="Background"      Value="Transparent"/>
+    <Setter Property="Foreground"      Value="{StaticResource BrushTextSecondary}"/>
+    <Setter Property="BorderBrush"     Value="{StaticResource BrushBorder}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Style Selector="^ /template/ ContentPresenter">
+        <Setter Property="CornerRadius" Value="{StaticResource CornerRadiusControl}"/>
+        <Setter Property="Padding"      Value="14,8"/>
+    </Style>
+    <Style Selector="^:pointerover">
+        <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
+    </Style>
+    <Style Selector="^:pointerover /template/ ContentPresenter">
+        <Setter Property="Background"  Value="{StaticResource BrushHoverOverlay}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorderLight}"/>
+    </Style>
+    <Style Selector="^:pressed /template/ ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushPressedOverlay}"/>
+    </Style>
+    <Style Selector="^:disabled">
+        <Setter Property="Opacity" Value="0.45"/>
+    </Style>
+</Style>
+
+<!--
+    btn-danger ── destructive action (delete, hard-reset, etc.).
+    Resting: red border + subtle red tint. Hover/pressed: solid red fill.
+-->
+<Style Selector="Button.btn-danger">
+    <Setter Property="Background"      Value="{StaticResource BrushErrorSubtle}"/>
+    <Setter Property="Foreground"      Value="{StaticResource BrushError}"/>
+    <Setter Property="BorderBrush"     Value="{StaticResource BrushError}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Style Selector="^ /template/ ContentPresenter">
+        <Setter Property="CornerRadius" Value="{StaticResource CornerRadiusControl}"/>
+        <Setter Property="Padding"      Value="14,8"/>
+    </Style>
+    <Style Selector="^:pointerover">
+        <Setter Property="Foreground" Value="White"/>
+    </Style>
+    <Style Selector="^:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushError}"/>
+    </Style>
+    <Style Selector="^:pressed /template/ ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushError}"/>
+    </Style>
+    <Style Selector="^:disabled">
+        <Setter Property="Opacity" Value="0.45"/>
+    </Style>
+</Style>
+
+
+<!--
+═══════════════════════════════════════════════════════════════════════════════
+TOGGLE BUTTON
+Inherits the global Button base. Adds :checked visual state only.
+:checked:pointerover uses BrushPressedOverlay (stronger than plain hover)
+so the checked state remains visually distinct.
+═══════════════════════════════════════════════════════════════════════════════ -->
+<Style Selector="ToggleButton:checked /template/ ContentPresenter">
+    <Setter Property="Background" Value="{StaticResource BrushSelectedOverlay}"/>
+</Style>
+<Style Selector="ToggleButton:checked:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{StaticResource BrushPressedOverlay}"/>
+</Style>
+
+
+<!--
+═══════════════════════════════════════════════════════════════════════════════
+TEXT BOX
+═══════════════════════════════════════════════════════════════════════════════ -->
+<Style Selector="TextBox">
+    <Setter Property="Background"               Value="{StaticResource BrushPrimaryBackgroundLight}"/>
+    <Setter Property="BorderBrush"              Value="{StaticResource BrushBorder}"/>
+    <Setter Property="BorderThickness"          Value="1"/>
+    <Setter Property="CornerRadius"             Value="{StaticResource CornerRadiusControl}"/>
+    <Setter Property="Foreground"               Value="{StaticResource BrushTextPrimary}"/>
+    <Setter Property="FontSize"                 Value="{StaticResource FontSizeMedium}"/>
+    <Setter Property="CaretBrush"               Value="{StaticResource BrushAccent}"/>
+    <Setter Property="SelectionBrush"           Value="{StaticResource BrushAccentDim}"/>
+    <Setter Property="VerticalContentAlignment" Value="Center"/>
+    <Setter Property="Padding"                  Value="10,7"/>
+</Style>
+<Style Selector="TextBox:pointerover">
+    <Setter Property="BorderBrush" Value="{StaticResource BrushBorderLight}"/>
+</Style>
+<Style Selector="TextBox:focus-within">
+    <Setter Property="BorderBrush" Value="{StaticResource BrushBorderFocus}"/>
+</Style>
+<Style Selector="TextBox:disabled">
+    <Setter Property="Opacity" Value="0.45"/>
+</Style>
+<Style Selector="TextBox:readonly">
+    <Setter Property="Background"  Value="{StaticResource BrushPrimaryBackground}"/>
+    <Setter Property="Foreground"  Value="{StaticResource BrushTextSecondary}"/>
+    <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}"/>
+</Style>
+
+
+<!--
+═══════════════════════════════════════════════════════════════════════════════
+COMBO BOX
+Same border / radius / font defaults as TextBox. Cursor is Hand because
+the whole control is a click target.
+═══════════════════════════════════════════════════════════════════════════════ -->
+<Style Selector="ComboBox">
+    <Setter Property="Background"               Value="{StaticResource BrushPrimaryBackgroundLight}"/>
+    <Setter Property="BorderBrush"              Value="{StaticResource BrushBorder}"/>
+    <Setter Property="BorderThickness"          Value="1"/>
+    <Setter Property="CornerRadius"             Value="{StaticResource CornerRadiusControl}"/>
+    <Setter Property="Foreground"               Value="{StaticResource BrushTextPrimary}"/>
+    <Setter Property="FontSize"                 Value="{StaticResource FontSizeMedium}"/>
+    <Setter Property="VerticalContentAlignment" Value="Center"/>
+    <Setter Property="Padding"                  Value="10,7"/>
+    <Setter Property="Cursor"                   Value="Hand"/>
+</Style>
+<Style Selector="ComboBox:pointerover">
+    <Setter Property="BorderBrush" Value="{StaticResource BrushBorderLight}"/>
+</Style>
+<Style Selector="ComboBox:focus">
+    <Setter Property="BorderBrush" Value="{StaticResource BrushBorderFocus}"/>
+</Style>
+<Style Selector="ComboBox:disabled">
+    <Setter Property="Opacity" Value="0.45"/>
+</Style>
+
+<!--
+    ComboBoxItem — hover/selected via ContentPresenter alpha overlay,
+    consistent with ListBoxItem treatment.
+    Foreground lifts to primary on hover so text reads clearly against
+    the hover overlay.
+-->
+<Style Selector="ComboBoxItem">
+    <Setter Property="FontSize"  Value="{StaticResource FontSizeMedium}"/>
+    <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
+    <Setter Property="Padding"   Value="12,8"/>
+    <Setter Property="Cursor"    Value="Hand"/>
+</Style>
+<Style Selector="ComboBoxItem:pointerover">
+    <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
+</Style>
+<Style Selector="ComboBoxItem:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{StaticResource BrushHoverOverlay}"/>
+</Style>
+<Style Selector="ComboBoxItem:selected /template/ ContentPresenter">
+    <Setter Property="Background" Value="{StaticResource BrushSelectedOverlay}"/>
+</Style>
+<Style Selector="ComboBoxItem:selected:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{StaticResource BrushPressedOverlay}"/>
+</Style>
+
+
+<!--
+═══════════════════════════════════════════════════════════════════════════════
+LIST BOX ITEM
+Global reset: removes Fluent's opaque selection highlight so each view's
+card / row styling is authoritative.
+
+Overlay scale:
+    default         transparent
+    :pointerover    BrushSubtleOverlay   (very light, won't compete with card borders)
+    :selected       BrushSelectedOverlay
+    :selected+hover BrushPressedOverlay  (stronger than either alone)
+
+Views that handle feedback entirely through inner Border styles (task cards,
+schedule cards) override :pointerover and :selected to Transparent locally —
+this base stays out of their way.
+═══════════════════════════════════════════════════════════════════════════════ -->
+<Style Selector="ListBoxItem">
+    <Setter Property="Padding"    Value="0"/>
+    <Setter Property="Background" Value="Transparent"/>
+    <Setter Property="Cursor"     Value="Hand"/>
+</Style>
+<Style Selector="ListBoxItem /template/ ContentPresenter">
+    <Setter Property="Background" Value="Transparent"/>
+</Style>
+<Style Selector="ListBoxItem:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{StaticResource BrushSubtleOverlay}"/>
+</Style>
+<Style Selector="ListBoxItem:selected /template/ ContentPresenter">
+    <Setter Property="Background" Value="{StaticResource BrushSelectedOverlay}"/>
+</Style>
+<Style Selector="ListBoxItem:selected:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{StaticResource BrushPressedOverlay}"/>
+</Style>
+
+
+<!--
+═══════════════════════════════════════════════════════════════════════════════
+CHECK BOX
+Foreground starts at secondary; lifts to primary when checked so the
+label visually confirms the selected state without relying on the checkbox
+indicator alone.
+═══════════════════════════════════════════════════════════════════════════════ -->
+<Style Selector="CheckBox">
+    <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
+    <Setter Property="FontSize"   Value="{StaticResource FontSizeMedium}"/>
+    <Setter Property="Cursor"     Value="Hand"/>
+</Style>
+<Style Selector="CheckBox:checked">
+    <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
+</Style>
+<Style Selector="CheckBox:disabled">
+    <Setter Property="Opacity" Value="0.45"/>
+</Style>
+
+
+<!--
+═══════════════════════════════════════════════════════════════════════════════
+TEXT BLOCK
+Pins foreground to the design token so colour-scale changes propagate
+automatically. Class-based selectors and inline setters override as usual.
+═══════════════════════════════════════════════════════════════════════════════ -->
+<Style Selector="TextBlock">
+    <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
+</Style>
+
+
+<!--
+═══════════════════════════════════════════════════════════════════════════════
+SCROLL VIEWER — suppress the default Fluent focus outline
+═══════════════════════════════════════════════════════════════════════════════ -->
+<Style Selector="ScrollViewer:focus /template/ Border">
+    <Setter Property="BorderThickness" Value="0"/>
+</Style>
+
+
+<!--
+═══════════════════════════════════════════════════════════════════════════════
+FLYOUT PRESENTER — chrome removal
+Strips the Fluent default background, border, padding, and corner radius so
+custom Border surfaces inside flyouts render cleanly without double-boxing.
+═══════════════════════════════════════════════════════════════════════════════ -->
+<Style Selector="FlyoutPresenter">
+    <Setter Property="Background"      Value="Transparent"/>
+    <Setter Property="BorderThickness" Value="0"/>
+    <Setter Property="Padding"         Value="0"/>
+    <Setter Property="CornerRadius"    Value="0"/>
+</Style>
+
+
+<!--
+═══════════════════════════════════════════════════════════════════════════════
+SEGMENTED BUTTON
+Pill-shaped segment inside a container Border. The container provides shape;
+individual buttons have no border. .active fills the background.
+
+Views override .active to use an opaque surface (BrushPrimaryBackgroundLighter)
+when they need a stronger visual separation between segments.
+═══════════════════════════════════════════════════════════════════════════════ -->
+<Style Selector="Button.btn-seg">
+    <Setter Property="Foreground" Value="{StaticResource BrushTextFaded}"/>
+    <Style Selector="^ /template/ ContentPresenter">
+        <Setter Property="CornerRadius" Value="3"/>
+    </Style>
+    <Style Selector="^:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushHoverOverlay}"/>
+    </Style>
+    <Style Selector="^:pressed /template/ ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushPressedOverlay}"/>
+    </Style>
+</Style>
+<Style Selector="Button.btn-seg.active">
+    <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
+    <Style Selector="^ /template/ ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushSelectedOverlay}"/>
+    </Style>
+</Style>
+
+
+<!--
+═══════════════════════════════════════════════════════════════════════════════
+MENU ITEM BUTTON
+Full-width ghost button used in flyout menus, sort option lists, and similar
+list-style controls. Secondary text → primary on hover. Consistent with
+ComboBoxItem treatment.
+═══════════════════════════════════════════════════════════════════════════════ -->
+<Style Selector="Button.btn-menu-item">
+    <Setter Property="Foreground"                 Value="{StaticResource BrushTextSecondary}"/>
+    <Setter Property="FontSize"                   Value="{StaticResource FontSizeAverage}"/>
+    <Setter Property="HorizontalAlignment"        Value="Stretch"/>
+    <Setter Property="HorizontalContentAlignment" Value="Left"/>
+    <Style Selector="^:pointerover">
+        <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
+    </Style>
+    <Style Selector="^:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushSelectedOverlay}"/>
+    </Style>
+    <Style Selector="^:pressed /template/ ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushPressedOverlay}"/>
+    </Style>
+</Style>
+
+
+<!--
+═══════════════════════════════════════════════════════════════════════════════
+PILL CHIP / BADGE — structural base
+Shared structural foundation for all round pill borders across the app:
+badges, chips, count labels, state indicators, etc.
+Color, padding, and background are variant-specific and stay local.
+═══════════════════════════════════════════════════════════════════════════════ -->
+<Style Selector="Border.badge,
+                 Border.state-badge,
+                 Border.chronicle-type-chip,
+                 Border.chronicle-meta-chip,
+                 Border.chronicle-upcoming-badge,
+                 Border.notif-count-badge">
+    <Setter Property="CornerRadius"      Value="{StaticResource CornerRadiusRound}"/>
+    <Setter Property="BorderThickness"   Value="1"/>
+    <Setter Property="VerticalAlignment" Value="Center"/>
+</Style>
+
+<!--
+    Pill chip text — small font, vertically centred.
+    Opacity, weight, and letter-spacing are variant-specific.
+-->
+<Style Selector="TextBlock.badge-text,
+                 TextBlock.state-badge-text,
+                 TextBlock.chronicle-type-chip-text,
+                 TextBlock.chronicle-meta-chip-text">
+    <Setter Property="FontSize"          Value="{StaticResource FontSizeSmall}"/>
+    <Setter Property="VerticalAlignment" Value="Center"/>
+</Style>
+
+
+<!--
+═══════════════════════════════════════════════════════════════════════════════
+MUTED META TEXT
+Shared treatment for secondary metadata labels: 12px, 50% opacity.
+Used in multiple views under different class names (.muted, .meta).
+═══════════════════════════════════════════════════════════════════════════════ -->
+<Style Selector="TextBlock.muted, TextBlock.meta">
+    <Setter Property="FontSize" Value="{StaticResource FontSizeAverage}"/>
+    <Setter Property="Opacity"  Value="0.50"/>
+</Style>
+
+</Styles>

@@ -9,15 +9,13 @@
             <Setter Property="Background"       Value="#18FFFFFF"/>
             <Setter Property="BorderBrush"      Value="#2AFFFFFF"/>
             <Setter Property="BorderThickness"  Value="1"/>
-            <Setter Property="CornerRadius"     Value="999"/>
             <Setter Property="Padding"          Value="10,4"/>
             <Setter Property="FontSize"         Value="11"/>
             <Setter Property="Foreground"       Value="#99E6EDF3"/>
-            <Setter Property="Cursor"           Value="Hand"/>
             <Setter Property="IsHitTestVisible" Value="True"/>
 
             <Style Selector="^ /template/ ContentPresenter">
-                <Setter Property="CornerRadius" Value="999"/>
+                <Setter Property="CornerRadius" Value="{StaticResource CornerRadiusRound}"/>
             </Style>
             <Style Selector="^:pointerover /template/ ContentPresenter">
                 <Setter Property="Background" Value="#28FFFFFF"/>

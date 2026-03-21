@@ -5,7 +5,7 @@
              xmlns:components="clr-namespace:Misa.Ui.Avalonia.Shell.Components"
              mc:Ignorable="d"
              d:DesignWidth="800"
-             d:DesignHeight="60"
+             d:DesignHeight="40"
              x:DataType="components:HeaderViewModel"
              x:Class="Misa.Ui.Avalonia.Shell.Components.HeaderView">
 
@@ -13,10 +13,7 @@
 
         <!-- ── User trigger button ───────────────────────────────────── -->
         <Style Selector="Button.header-user">
-            <Setter Property="Background"    Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding"       Value="0"/>
-            <Setter Property="Cursor"        Value="Hand"/>
+            <Setter Property="Padding" Value="0"/>
         </Style>
         <Style Selector="Button.header-user /template/ ContentPresenter">
             <Setter Property="CornerRadius"   Value="{StaticResource CornerRadiusButtons}"/>
@@ -25,35 +22,17 @@
             <Setter Property="Background"     Value="{StaticResource BrushPrimaryBackgroundLighter}"/>
         </Style>
         <Style Selector="Button.header-user:pointerover /template/ ContentPresenter">
-            <Setter Property="Background"  Value="{StaticResource BrushNavigationHover}"/>
+            <Setter Property="Background"  Value="{StaticResource BrushPrimaryBackgroundLighter}"/>
             <Setter Property="BorderBrush" Value="{StaticResource BrushBorderLight}"/>
         </Style>
         <Style Selector="Button.header-user:pressed /template/ ContentPresenter">
-            <Setter Property="Background" Value="{StaticResource BrushNavigationPressed}"/>
+            <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}"/>
         </Style>
 
         <!-- ── User menu dropdown items ──────────────────────────────── -->
+        <!-- btn-menu-item covers: Foreground, FontSize, Stretch/Left alignment, hover/pressed states -->
         <Style Selector="Button.user-menu-item">
-            <Setter Property="Background"               Value="Transparent"/>
-            <Setter Property="Foreground"               Value="{StaticResource BrushTextSecondary}"/>
-            <Setter Property="FontSize"                 Value="{StaticResource FontSizeAverage}"/>
-            <Setter Property="HorizontalAlignment"      Value="Stretch"/>
-            <Setter Property="HorizontalContentAlignment" Value="Left"/>
-            <Setter Property="Padding"                  Value="10,7"/>
-            <Setter Property="Cursor"                   Value="Hand"/>
-            <Style Selector="^ /template/ ContentPresenter">
-                <Setter Property="CornerRadius"    Value="4"/>
-                <Setter Property="BorderThickness" Value="0"/>
-            </Style>
-            <Style Selector="^:pointerover">
-                <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
-            </Style>
-            <Style Selector="^:pointerover /template/ ContentPresenter">
-                <Setter Property="Background" Value="#0CFFFFFF"/>
-            </Style>
-            <Style Selector="^:pressed /template/ ContentPresenter">
-                <Setter Property="Background" Value="#18FFFFFF"/>
-            </Style>
+            <Setter Property="Padding" Value="10,7"/>
             <Style Selector="^:disabled">
                 <Setter Property="Opacity" Value="0.4"/>
             </Style>
@@ -70,39 +49,68 @@
             </Style>
         </Style>
 
-        <!-- ── FlyoutPresenter chrome removal ───────────────────────── -->
-        <!--
-            The default FlyoutPresenter renders its own background, border, and
-            padding behind any custom Flyout content. Strip all of that so only
-            the inner Border defined in the Flyout body is visible.
-        -->
-        <Style Selector="FlyoutPresenter">
-            <Setter Property="Background"      Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding"         Value="0"/>
-            <Setter Property="CornerRadius"    Value="0"/>
+        <!-- ── Window control buttons ────────────────────────────────── -->
+        <Style Selector="Button.wnd-ctrl">
+            <Setter Property="Foreground"        Value="{StaticResource BrushTextSecondary}"/>
+            <Setter Property="Padding"           Value="0"/>
+            <Setter Property="Width"             Value="46"/>
+            <Setter Property="VerticalAlignment" Value="Stretch"/>
+            <Setter Property="FontSize"          Value="13"/>
+            <Style Selector="^ /template/ ContentPresenter">
+                <Setter Property="CornerRadius" Value="0"/>
+            </Style>
+            <Style Selector="^:pointerover">
+                <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
+            </Style>
+            <Style Selector="^:pointerover /template/ ContentPresenter">
+                <Setter Property="Background" Value="{StaticResource BrushPressedOverlay}"/>
+            </Style>
+            <Style Selector="^:pressed /template/ ContentPresenter">
+                <Setter Property="Background" Value="#26FFFFFF"/>
+            </Style>
+        </Style>
+
+        <!-- Close button — red on hover -->
+        <Style Selector="Button.wnd-ctrl.close:pointerover">
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+        <Style Selector="Button.wnd-ctrl.close:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#C42B1C"/>
+        </Style>
+        <Style Selector="Button.wnd-ctrl.close:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="#B01E10"/>
         </Style>
 
     </UserControl.Styles>
 
+    <!--
+        The outer Border is the drag region.
+        PointerPressed → BeginMoveDrag (single drag)
+        DoubleTapped   → ToggleMaximize
+        Buttons capture their own pointer events so they do NOT trigger dragging.
+    -->
     <Border Background="{StaticResource BrushPrimaryBackground}"
-            Padding="12,0"
+            Padding="12,0,0,0"
             BorderThickness="0,0,0,1"
-            BorderBrush="{StaticResource BrushBorder}">
+            BorderBrush="{StaticResource BrushBorder}"
+            PointerPressed="OnHeaderPointerPressed"
+            DoubleTapped="OnHeaderDoubleTapped">
 
-        <Grid ColumnDefinitions="*,Auto"
-              VerticalAlignment="Center">
+        <Grid ColumnDefinitions="*, Auto, Auto"
+              VerticalAlignment="Stretch">
 
             <!-- Left: Title -->
             <TextBlock Text="MISA"
                        FontSize="18"
                        FontWeight="SemiBold"
                        Opacity="0.8"
-                       VerticalAlignment="Center" />
+                       VerticalAlignment="Center"/>
 
+            <!-- Centre-right: User button -->
             <StackPanel Grid.Column="1"
                         Orientation="Horizontal"
-                        VerticalAlignment="Center">
+                        VerticalAlignment="Center"
+                        Margin="0,0,8,0">
 
                 <Button Classes="header-user">
                     <Button.Flyout>
@@ -117,7 +125,7 @@
                                 <StackPanel Spacing="1">
 
                                     <!-- Profile — placeholder, not yet functional -->
-                                    <Button Classes="user-menu-item"
+                                    <Button Classes="user-menu-item btn-menu-item"
                                             IsEnabled="False">
                                         <StackPanel Orientation="Horizontal" Spacing="8">
                                             <Image Width="13" Height="13" Opacity="0.6"
@@ -133,7 +141,7 @@
                                             Opacity="0.6"/>
 
                                     <!-- Logout -->
-                                    <Button Classes="user-menu-item danger"
+                                    <Button Classes="user-menu-item danger btn-menu-item"
                                             Command="{Binding LogoutCommand}">
                                         <StackPanel Orientation="Horizontal" Spacing="8">
                                             <Image Width="13" Height="13" Opacity="0.7"
@@ -160,6 +168,28 @@
                                    Foreground="{StaticResource BrushTextSecondary}"
                                    VerticalAlignment="Center"/>
                     </StackPanel>
+                </Button>
+
+            </StackPanel>
+
+            <!-- Far right: Window controls -->
+            <StackPanel Grid.Column="2"
+                        Orientation="Horizontal"
+                        VerticalAlignment="Stretch">
+
+                <Button Classes="wnd-ctrl"
+                        Click="OnMinimizeClick">
+                    <TextBlock Text="&#x2500;" FontSize="13"/>
+                </Button>
+
+                <Button Classes="wnd-ctrl"
+                        Click="OnMaximizeRestoreClick">
+                    <TextBlock Text="&#x25A1;" FontSize="13"/>
+                </Button>
+
+                <Button Classes="wnd-ctrl close"
+                        Click="OnCloseClick">
+                    <TextBlock Text="&#x2715;" FontSize="13"/>
                 </Button>
 
             </StackPanel>

@@ -23,14 +23,12 @@
     <UserControl.Styles>
 
         <!-- ── ListBox item reset ─────────────────────────────────── -->
-        <Style Selector="ListBoxItem">
-            <Setter Property="Padding"    Value="0"/>
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Cursor"     Value="Hand"/>
-        </Style>
-        <Style Selector="ListBoxItem /template/ ContentPresenter">
-            <Setter Property="Background" Value="Transparent"/>
-        </Style>
+        <!--
+            Base setters (Padding=0, Background=Transparent, Cursor=Hand) are
+            covered by the global ListBoxItem style; only the hover/selected
+            Transparent overrides need to be here since the global base shows
+            BrushSubtleOverlay / BrushSelectedOverlay and cards own their feedback.
+        -->
         <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter">
             <Setter Property="Background" Value="Transparent"/>
         </Style>
@@ -78,34 +76,23 @@
 
         <!--
             Segment button base — sits inside a container Border.
-            No per-button border; shape comes from the container.
+            btn-seg covers: Foreground=Faded, CornerRadius=3, :pointerover/pressed overlays.
+            Local additions: fixed Height/Padding, hover step to Secondary, filled active bg.
         -->
         <Style Selector="Button.workspace-mode-seg">
-            <Setter Property="Height" Value="22"/>
-            <Setter Property="Padding" Value="12,0"/>
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="{StaticResource BrushTextFaded}"/>
+            <Setter Property="Height"   Value="22"/>
+            <Setter Property="Padding"  Value="12,0"/>
             <Setter Property="FontSize" Value="{StaticResource FontSizeAverage}"/>
-            <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Style Selector="^ /template/ ContentPresenter">
-                <Setter Property="CornerRadius" Value="3"/>
-                <Setter Property="BorderThickness" Value="0"/>
-            </Style>
             <Style Selector="^:pointerover">
                 <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
             </Style>
             <Style Selector="^:pointerover /template/ ContentPresenter">
-                <Setter Property="Background" Value="#0CFFFFFF"/>
-            </Style>
-            <Style Selector="^:pressed /template/ ContentPresenter">
-                <Setter Property="Background" Value="#18FFFFFF"/>
+                <Setter Property="Background" Value="{StaticResource BrushSelectedOverlay}"/>
             </Style>
         </Style>
 
-        <!-- Active segment — filled pill -->
-        <Style Selector="Button.workspace-mode-seg.seg-on">
-            <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
+        <!-- Active segment — opaque fill (overrides btn-seg.active SelectedOverlay) -->
+        <Style Selector="Button.workspace-mode-seg.active">
             <Style Selector="^ /template/ ContentPresenter">
                 <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}"/>
             </Style>
@@ -115,7 +102,7 @@
             Deleted segment — when active: very subtle muted-red text.
             Not loud. Just a quiet signal that this is a critical zone.
         -->
-        <Style Selector="Button.workspace-mode-seg-deleted.seg-on">
+        <Style Selector="Button.workspace-mode-seg-deleted.active">
             <Setter Property="Foreground" Value="#C87878"/>
             <Style Selector="^ /template/ ContentPresenter">
                 <Setter Property="Background" Value="#14F44336"/>
@@ -161,55 +148,32 @@
             <Setter Property="Foreground" Value="{StaticResource BrushWarning}"/>
         </Style>
 
-        <!-- ── Sort field flyout chrome removal ─────────────────────── -->
-        <Style Selector="FlyoutPresenter">
-            <Setter Property="Background"      Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding"         Value="0"/>
-            <Setter Property="CornerRadius"    Value="0"/>
-        </Style>
-
         <!-- ── Sort field trigger button ─────────────────────────────── -->
         <Style Selector="Button.sort-field-trigger">
-            <Setter Property="Height"   Value="22"/>
-            <Setter Property="Padding"  Value="8,0"/>
-            <Setter Property="Cursor"   Value="Hand"/>
+            <Setter Property="Height"     Value="22"/>
+            <Setter Property="Padding"    Value="8,0"/>
             <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
-            <Setter Property="FontSize" Value="{StaticResource FontSizeAverage}"/>
-            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="FontSize"   Value="{StaticResource FontSizeAverage}"/>
             <Style Selector="^ /template/ ContentPresenter">
-                <Setter Property="CornerRadius"    Value="4"/>
                 <Setter Property="BorderThickness" Value="1"/>
                 <Setter Property="BorderBrush"     Value="{StaticResource BrushBorder}"/>
                 <Setter Property="Background"      Value="{StaticResource BrushPrimaryBackgroundLighter}"/>
             </Style>
             <Style Selector="^:pointerover /template/ ContentPresenter">
                 <Setter Property="BorderBrush" Value="{StaticResource BrushBorderLight}"/>
-                <Setter Property="Background"  Value="{StaticResource BrushNavigationHover}"/>
+                <Setter Property="Background"  Value="{StaticResource BrushPrimaryBackgroundLighter}"/>
             </Style>
             <Style Selector="^:pressed /template/ ContentPresenter">
-                <Setter Property="Background" Value="{StaticResource BrushNavigationPressed}"/>
+                <Setter Property="Background" Value="{StaticResource BrushPrimaryBackgroundLighter}"/>
             </Style>
         </Style>
 
         <!-- ── Sort option items inside flyout ───────────────────────── -->
+        <!-- btn-menu-item covers: Foreground, FontSize, Stretch/Left alignment, hover states -->
         <Style Selector="Button.sort-option">
-            <Setter Property="Background"                 Value="Transparent"/>
-            <Setter Property="Foreground"                 Value="{StaticResource BrushTextSecondary}"/>
-            <Setter Property="FontSize"                   Value="{StaticResource FontSizeAverage}"/>
-            <Setter Property="HorizontalAlignment"        Value="Stretch"/>
-            <Setter Property="HorizontalContentAlignment" Value="Left"/>
-            <Setter Property="Padding"                    Value="9,6"/>
-            <Setter Property="Cursor"                     Value="Hand"/>
+            <Setter Property="Padding" Value="9,6"/>
             <Style Selector="^ /template/ ContentPresenter">
-                <Setter Property="CornerRadius"    Value="3"/>
-                <Setter Property="BorderThickness" Value="0"/>
-            </Style>
-            <Style Selector="^:pointerover">
-                <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
-            </Style>
-            <Style Selector="^:pointerover /template/ ContentPresenter">
-                <Setter Property="Background" Value="#0CFFFFFF"/>
+                <Setter Property="CornerRadius" Value="3"/>
             </Style>
         </Style>
         <!-- Active sort option — accent-colored -->
@@ -223,17 +187,13 @@
             No visible border at rest — hover gives a subtle fill.
         -->
         <Style Selector="Button.card-action-link">
-            <Setter Property="Padding" Value="6,2"/>
-            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Padding"  Value="6,2"/>
             <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}"/>
-            <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="Cursor" Value="Hand"/>
             <Style Selector="^ /template/ ContentPresenter">
                 <Setter Property="CornerRadius" Value="3"/>
-                <Setter Property="BorderThickness" Value="0"/>
             </Style>
             <Style Selector="^:pressed /template/ ContentPresenter">
-                <Setter Property="Background" Value="#10FFFFFF"/>
+                <Setter Property="Background" Value="{StaticResource BrushHoverOverlay}"/>
             </Style>
         </Style>
 
@@ -305,16 +265,16 @@
                         CornerRadius="5"
                         Padding="2">
                     <StackPanel Orientation="Horizontal" Spacing="1">
-                        <Button Classes="workspace-mode-seg"
-                                Classes.seg-on="{Binding State.IsActiveMode}"
+                        <Button Classes="workspace-mode-seg btn-seg"
+                                Classes.active="{Binding State.IsActiveMode}"
                                 Command="{Binding SetActiveModeCommand}"
                                 Content="Active"/>
-                        <Button Classes="workspace-mode-seg"
-                                Classes.seg-on="{Binding State.IsArchivedMode}"
+                        <Button Classes="workspace-mode-seg btn-seg"
+                                Classes.active="{Binding State.IsArchivedMode}"
                                 Command="{Binding SetArchivedModeCommand}"
                                 Content="Archived"/>
-                        <Button Classes="workspace-mode-seg workspace-mode-seg-deleted"
-                                Classes.seg-on="{Binding State.IsDeletedMode}"
+                        <Button Classes="workspace-mode-seg workspace-mode-seg-deleted btn-seg"
+                                Classes.active="{Binding State.IsDeletedMode}"
                                 Command="{Binding SetDeletedModeCommand}"
                                 Content="Deleted"/>
                     </StackPanel>
@@ -330,12 +290,12 @@
                         CornerRadius="5"
                         Padding="2">
                     <StackPanel Orientation="Horizontal" Spacing="1">
-                        <Button Classes="workspace-mode-seg"
-                                Classes.seg-on="{Binding State.IsCardView}"
+                        <Button Classes="workspace-mode-seg btn-seg"
+                                Classes.active="{Binding State.IsCardView}"
                                 Command="{Binding SetCardViewCommand}"
                                 Content="Card"/>
-                        <Button Classes="workspace-mode-seg"
-                                Classes.seg-on="{Binding State.IsListView}"
+                        <Button Classes="workspace-mode-seg btn-seg"
+                                Classes.active="{Binding State.IsListView}"
                                 Command="{Binding SetListViewCommand}"
                                 Content="List"/>
                     </StackPanel>
@@ -380,7 +340,7 @@
                         <StackPanel Orientation="Horizontal" Spacing="1">
 
                             <!-- Field picker -->
-                            <Button Classes="workspace-mode-seg">
+                            <Button Classes="workspace-mode-seg btn-seg">
                                 <TextBlock Text="{Binding State.SortFieldLabel}"
                                            VerticalAlignment="Center"/>
                                 
@@ -395,15 +355,15 @@
                                                 MinWidth="130"
                                                 Padding="2">
                                             <StackPanel Spacing="1">
-                                                <Button Classes="sort-option"
+                                                <Button Classes="sort-option btn-menu-item"
                                                         Classes.sort-active="{Binding State.IsSortByCreated}"
                                                         Command="{Binding SetSortCreatedCommand}"
                                                         Content="Created"/>
-                                                <Button Classes="sort-option"
+                                                <Button Classes="sort-option btn-menu-item"
                                                         Classes.sort-active="{Binding State.IsSortByTitle}"
                                                         Command="{Binding SetSortTitleCommand}"
                                                         Content="Title"/>
-                                                <Button Classes="sort-option"
+                                                <Button Classes="sort-option btn-menu-item"
                                                         Classes.sort-active="{Binding State.IsSortByState}"
                                                         Command="{Binding SetSortStateCommand}"
                                                         Content="State"/>
@@ -414,7 +374,7 @@
                             </Button>
 
                             <!-- Direction toggle -->
-                            <Button Classes="workspace-mode-seg"
+                            <Button Classes="workspace-mode-seg btn-seg"
                                     Padding="8,0"
                                     Command="{Binding ToggleSortDirectionCommand}">
                                 <TextBlock Text="{Binding State.SortDirectionGlyph}"
