@@ -28,8 +28,7 @@ public static class EndpointRegistration
         EntryEndpoints.Map(app);
         ChronicleEndpoints.Map(app);
         ScholaEndpoints.Map(app);
-        TopicEndpoints.Map(app);
-        ZettelEndpoints.Map(app);
+        ZettelkastenEndpoints.Map(app);
         RelationEndpoints.Map(app);
         NotificationEndpoints.Map(app);
         app.MapScheduleEndpoints();

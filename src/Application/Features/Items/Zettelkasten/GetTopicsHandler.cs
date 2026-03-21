@@ -10,7 +10,7 @@ public sealed class GetKnowledgeIndexHandler(IItemRepository repository)
 {
     public async Task<List<KnowledgeIndexEntryDto>> HandleAsync(GetKnowledgeIndexQuery query, CancellationToken ct)
     {
-        var topicItems = await repository.GetTopicsAsync();
+        var topicItems = await repository.GetKnowledgeIndexAsync();
         var zettelItems = await repository.GetZettelsAsync(null, ct);
 
         var entries = new List<KnowledgeIndexEntryDto>(topicItems.Count + zettelItems.Count);

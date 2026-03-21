@@ -6,32 +6,39 @@ using Wolverine;
 
 namespace Misa.Api.Endpoints.Zettelkasten;
 
-public static class ZettelEndpoints
+public static class ZettelkastenEndpoints
 {
     public static void Map(IEndpointRouteBuilder api)
     {
-        api.MapPost(ZettelkastenRoutes.CreateZettel, Create);
-        api.MapGet(ZettelkastenRoutes.GetZettels, GetAll);
+        api.MapPost(ZettelkastenRoutes.CreateTopic, CreateTopic);
+        api.MapGet(ZettelkastenRoutes.GetZettelkasten, GetZettelkasten);
+        
+        api.MapPost(ZettelkastenRoutes.CreateZettel, CreateZettel);
         api.MapGet(ZettelkastenRoutes.GetZettel, GetSingle);
         api.MapPatch(ZettelkastenRoutes.UpdateZettelContent, UpdateContent);
     }
 
-    private static async Task<IResult> Create(
+    private static async Task<IResult> GetZettelkasten(IMessageBus bus, CancellationToken ct)
+    {
+        var result = await bus.InvokeAsync<List<KnowledgeIndexEntryDto>>(new GetKnowledgeIndexQuery(), ct);
+        return Results.Ok(result);
+    }
+    private static async Task<IResult> CreateTopic(
+        [FromBody] CreateTopicRequest request,
+        IMessageBus bus)
+    {
+        var command = new CreateTopicCommand(request.Title, request.ParentId);
+        await bus.InvokeAsync(command);
+        return Results.Ok();
+    }
+    
+    private static async Task<IResult> CreateZettel(
         [FromBody] CreateZettelRequest request,
         IMessageBus bus)
     {
         var command = new CreateZettelCommand(request.Title, request.ParentId);
         await bus.InvokeAsync(command);
         return Results.Ok();
-    }
-
-    private static async Task<IResult> GetAll(
-        [FromQuery] Guid? topicId,
-        IMessageBus bus,
-        CancellationToken ct)
-    {
-        var result = await bus.InvokeAsync<List<ZettelDto>>(new GetZettelsQuery(topicId), ct);
-        return Results.Ok(result);
     }
 
     private static async Task<IResult> GetSingle(

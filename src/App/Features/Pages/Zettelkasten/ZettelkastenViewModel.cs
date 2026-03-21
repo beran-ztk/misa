@@ -186,8 +186,7 @@ public sealed partial class ZettelkastenViewModel(ZettelkastenGateway gateway) :
     /// </summary>
     private async Task LoadIndexAsync()
     {
-        var indexResult = await gateway.GetKnowledgeIndexAsync();
-        var zettelResult = await gateway.GetZettelsAsync();
+        var indexResult = await gateway.GetZettelkastenAsync();
 
         if (indexResult is not null)
         {
@@ -201,9 +200,6 @@ public sealed partial class ZettelkastenViewModel(ZettelkastenGateway gateway) :
                 SelectedZettel = null;
             });
         }
-
-        if (zettelResult is not null)
-            Zettels = zettelResult;
     }
 
     /// <summary>
@@ -212,12 +208,8 @@ public sealed partial class ZettelkastenViewModel(ZettelkastenGateway gateway) :
     /// </summary>
     private async Task ReloadAndRestoreAsync(HashSet<Guid> expandedIds, HashSet<Guid> previousIds)
     {
-        var indexResult = await gateway.GetKnowledgeIndexAsync();
-        var zettelResult = await gateway.GetZettelsAsync();
+        var indexResult = await gateway.GetZettelkastenAsync();
 
-        // Update Zettels before dispatching to UI so SelectionChanged can find the new entry.
-        if (zettelResult is not null)
-            Zettels = zettelResult;
 
         if (indexResult is null) return;
 

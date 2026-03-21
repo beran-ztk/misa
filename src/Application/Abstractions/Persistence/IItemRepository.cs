@@ -42,7 +42,7 @@ public interface IItemRepository
     Task<List<Item>> GetUnitsAsync();
     
     // Zettelkasten
-    Task<List<Item>> GetTopicsAsync();
+    Task<List<Item>> GetKnowledgeIndexAsync();
     Task<List<Item>> GetZettelsAsync(Guid? topicId, CancellationToken ct);
     Task<Item?> TryGetZettelAsync(Guid id, CancellationToken ct);
     

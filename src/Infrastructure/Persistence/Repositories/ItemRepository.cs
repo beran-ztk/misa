@@ -194,11 +194,12 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
             .ToListAsync();
     }
 
-    public async Task<List<Item>> GetTopicsAsync()
+    public async Task<List<Item>> GetKnowledgeIndexAsync()
     {
         return await context.Items
             .Include(s => s.KnowledgeIndex)
-            .Where(t => t.OwnerId == user.Id && t.Workflow == Workflow.Topic)
+            .Where(t => t.OwnerId == user.Id 
+                        && t.Workflow == Workflow.Topic && t.Workflow == Workflow.Zettel)
             .AsNoTracking()
             .ToListAsync();
     }

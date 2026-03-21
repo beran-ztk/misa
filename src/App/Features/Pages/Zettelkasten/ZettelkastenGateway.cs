@@ -49,10 +49,10 @@ public sealed class ZettelkastenGateway(RemoteProxy remoteProxy)
         return response;
     }
 
-    public async Task<List<KnowledgeIndexEntryDto>?> GetKnowledgeIndexAsync()
+    public async Task<List<KnowledgeIndexEntryDto>?> GetZettelkastenAsync()
     {
         var response = await remoteProxy.SendAsync<List<KnowledgeIndexEntryDto>>(
-            requestFactory: () => new HttpRequestMessage(HttpMethod.Get, ZettelkastenRoutes.GetKnowledgeIndex),
+            requestFactory: () => new HttpRequestMessage(HttpMethod.Get, ZettelkastenRoutes.GetZettelkasten),
             retry: new RetryOptions
             {
                 MaxAttempts = 3,
@@ -78,20 +78,6 @@ public sealed class ZettelkastenGateway(RemoteProxy remoteProxy)
             cancellationToken: CancellationToken.None);
 
         return response;
-    }
-
-    public async Task<List<ZettelDto>?> GetZettelsAsync()
-    {
-        var response = await remoteProxy.SendAsync<List<ZettelDto>>(
-            requestFactory: () => new HttpRequestMessage(HttpMethod.Get, ZettelkastenRoutes.GetZettels),
-            retry: new RetryOptions
-            {
-                MaxAttempts = 3,
-                Delay = TimeSpan.FromMilliseconds(500)
-            },
-            cancellationToken: CancellationToken.None);
-
-        return response.Value;
     }
     
     // Schola
