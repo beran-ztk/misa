@@ -197,17 +197,8 @@
         <Panel Grid.Column="2"
                Background="{StaticResource BrushPrimaryBackgroundLight}">
 
-            <!-- Placeholder: shown when no zettel is selected -->
-            <TextBlock Text="Select a Zettel to view its content."
-                       VerticalAlignment="Center"
-                       HorizontalAlignment="Center"
-                       Opacity="0.4"
-                       Foreground="{StaticResource BrushTextPrimary}"
-                       IsVisible="{Binding HasZettelSelected,
-                           Converter={x:Static converters:BooleanNotConverter.Instance}}"/>
-
             <!-- Zettel content view -->
-            <root:ZettelView IsVisible="{Binding HasZettelSelected}"/>
+            <ContentControl Content="{Binding ZettelVm}" IsVisible="{Binding HasZettelSelected}"/>
 
         </Panel>
     </Grid>

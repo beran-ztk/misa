@@ -19,14 +19,14 @@ public sealed partial class ZettelkastenViewModel : ViewModelBase
 
     [ObservableProperty] private KnowledgeIndexNodeVm? _selectedNode;
     
-    private readonly ZettelViewModel _zettelVm;
+    [ObservableProperty] private ViewModelBase _zettelVm;
 
     [ObservableProperty] private bool _hasZettelSelected;
 
     public ZettelkastenViewModel(ZettelkastenGateway gateway)
     {
         _gateway = gateway;
-        _zettelVm = new ZettelViewModel(_gateway);
+        ZettelVm = new ZettelViewModel(_gateway);
     }
     partial void OnSelectedNodeChanged(KnowledgeIndexNodeVm? value)
     {
@@ -41,8 +41,9 @@ public sealed partial class ZettelkastenViewModel : ViewModelBase
     private async Task LoadZettelAsync(Guid id)
     {
         var dto = await _gateway.GetZettelAsync(id);
-        if (dto is null) return;
-        _zettelVm.Load(dto);
+        if (dto is null || ZettelVm is not ZettelViewModel vm) return;
+        HasZettelSelected = true;
+        vm.Load(dto);
     }
 
     // ── Initialization ────────────────────────────────────────────────────────
@@ -60,14 +61,14 @@ public sealed partial class ZettelkastenViewModel : ViewModelBase
 
     public async Task SetExpandedStateAsync(Guid id, bool expanded)
     {
-        await gateway.SetKnowledgeIndexExpandedStateAsync(id, expanded);
+        await _gateway.SetKnowledgeIndexExpandedStateAsync(id, expanded);
     }
 
     // ── Tree loading ──────────────────────────────────────────────────────────
 
     private async Task LoadIndexAsync()
     {
-        var index = await gateway.GetKnowledgeIndexAsync();
+        var index = await _gateway.GetKnowledgeIndexAsync();
         if (index is null) return;
 
         await Dispatcher.UIThread.InvokeAsync(() =>
@@ -123,8 +124,8 @@ public sealed partial class ZettelkastenViewModel : ViewModelBase
             onCommit: async title =>
             {
                 var result = workflow == WorkflowDto.Topic
-                    ? await gateway.CreateTopicAsync(new CreateTopicRequest(title, parentId))
-                    : await gateway.CreateZettelAsync(new CreateZettelRequest(title, parentId));
+                    ? await _gateway.CreateTopicAsync(new CreateTopicRequest(title, parentId))
+                    : await _gateway.CreateZettelAsync(new CreateZettelRequest(title, parentId));
 
                 if (result.IsSuccess)
                     await LoadIndexAsync();
