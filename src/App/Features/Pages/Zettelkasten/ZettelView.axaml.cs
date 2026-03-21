@@ -1,8 +1,11 @@
 using System.ComponentModel;
+using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Shapes;
 using Avalonia.Media;
 using Avalonia.Threading;
+using AvaloniaEdit.Editing;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Zettelkasten;
 
@@ -28,6 +31,37 @@ public partial class ZettelView : UserControl
         Editor.Options.EnableEmailHyperlinks       = false;
         Editor.Options.HighlightCurrentLine        = false;
         Editor.Options.ShowBoxForControlCharacters = false;
+
+        ConfigureEditor();
+    }
+
+    private void ConfigureEditor()
+    {
+        // Flat, transparent backgrounds — no boxed look
+        Editor.TextArea.Background            = Brushes.Transparent;
+
+        // Top document padding; left/right handled by margins below
+        Editor.TextArea.Margin = new Thickness(0, 32, 0, 0);
+
+        // Right padding + generous scroll-past-end at the bottom
+        Editor.TextArea.TextView.Margin = new Thickness(0, 0, 24, 200);
+
+        // Remove the separator line inserted by ShowLineNumbers=True
+        var separator = Editor.TextArea.LeftMargins
+            .OfType<Line>()
+            .FirstOrDefault();
+        if (separator is not null)
+            Editor.TextArea.LeftMargins.Remove(separator);
+
+        // Style the line-number gutter: spacing + subtle opacity
+        var lineNumbers = Editor.TextArea.LeftMargins
+            .OfType<LineNumberMargin>()
+            .FirstOrDefault();
+        if (lineNumbers is not null)
+        {
+            lineNumbers.Margin  = new Thickness(16, 0, 14, 0);
+            lineNumbers.Opacity = 0.45;
+        }
     }
 
     // ── DataContext lifecycle ─────────────────────────────────────────────────

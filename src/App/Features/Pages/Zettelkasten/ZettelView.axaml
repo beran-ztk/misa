@@ -33,8 +33,7 @@
                           Foreground="{StaticResource BrushTextPrimary}"
                           LineNumbersForeground="{StaticResource BrushTextFaded}"
                           FontFamily="Cascadia Code"
-                          FontSize="{StaticResource FontSizeMedium}"
-                          Padding="14,0,24,0"/>
+                          FontSize="{StaticResource FontSizeMedium}"/>
 
     </Grid>
 
