@@ -31,7 +31,7 @@
          <StyleInclude Source="avares://App/Assets/Styles/Controls.axaml"/>
          
          <!-- Controls -->
-         <StyleInclude Source="avares://App/Assets/Styles/Controls/Overlays.axaml"/>
+         <StyleInclude Source="avares://App/Assets/Styles/Features/Overlays.axaml"/>
 
          <!-- Components -->
          <StyleInclude Source="avares://App/Assets/Styles/Components/Confirm.Cancel.axaml"/>
@@ -42,11 +42,11 @@
          <StyleInclude Source="avares://App/Assets/Styles/Components/Workspace.AddPanel.axaml"/>
          
          <!-- Views -->
-         <StyleInclude Source="avares://App/Assets/Styles/Views/Chronicle/ChronicleList.axaml"/>
-         <StyleInclude Source="avares://App/Assets/Styles/Views/Notifications/Notifications.axaml"/>
-         <StyleInclude Source="avares://App/Assets/Styles/Views/Toast/Toast.axaml"/>
-         <StyleInclude Source="avares://App/Assets/Styles/Views/Navigation/UtilityNavigation.axaml"/>
-         <StyleInclude Source="avares://App/Assets/Styles/Views/Navigation/WorkspaceNavigation.axaml"/>
+         <StyleInclude Source="avares://App/Assets/Styles/Features/ChronicleList.axaml"/>
+         <StyleInclude Source="avares://App/Assets/Styles/Features/Notifications.axaml"/>
+         <StyleInclude Source="avares://App/Assets/Styles/Features/Toast.axaml"/>
+         <StyleInclude Source="avares://App/Assets/Styles/Features/UtilityNavigation.axaml"/>
+         <StyleInclude Source="avares://App/Assets/Styles/Features/WorkspaceNavigation.axaml"/>
          
      </Application.Styles>
     
