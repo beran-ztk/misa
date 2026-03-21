@@ -16,10 +16,10 @@ public sealed class GetKnowledgeIndexHandler(IItemRepository repository)
         var entries = new List<KnowledgeIndexEntryDto>(topicItems.Count + zettelItems.Count);
 
         foreach (var item in topicItems)
-            entries.Add(new KnowledgeIndexEntryDto(item.Id.Value, item.Title, item.Topic?.TopicId?.Value, WorkflowDto.Topic));
+            entries.Add(new KnowledgeIndexEntryDto(item.Id.Value, item.Title, item.KnowledgeIndex?.ParentId?.Value, WorkflowDto.Topic));
 
         foreach (var item in zettelItems)
-            entries.Add(new KnowledgeIndexEntryDto(item.Id.Value, item.Title, item.ZettelExtension!.TopicId.Value, WorkflowDto.Zettel));
+            entries.Add(new KnowledgeIndexEntryDto(item.Id.Value, item.Title, item.KnowledgeIndex?.ParentId?.Value, WorkflowDto.Zettel));
 
         return entries;
     }

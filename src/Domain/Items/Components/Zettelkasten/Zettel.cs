@@ -3,19 +3,16 @@ using Misa.Domain.Items.Components.Audits.Changes;
 
 namespace Misa.Domain.Items.Components.Zettelkasten;
 
-public sealed class ZettelExtension : DomainEventEntity
+public sealed class Zettel : DomainEventEntity
 {
-    private ZettelExtension() { } // EF
+    private Zettel() { } // EF
 
-    public ZettelExtension(ItemId id, ItemId topicId, string? content)
+    public Zettel(ItemId id)
     {
         Id = id;
-        TopicId = topicId;
-        Content = content;
     }
 
     public ItemId Id { get; init; }
-    public ItemId TopicId { get; private set; }
     public string? Content { get; private set; }
 
     public void ChangeContent(string? content)

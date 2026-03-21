@@ -21,7 +21,7 @@ public sealed partial class CreateZettelViewModel(Guid? topicId, string descript
         if (string.IsNullOrEmpty(ZettelTitle) || topicId is null)
             return Result<Result>.Failure();
 
-        var request = new CreateZettelRequest(ZettelTitle, null, topicId.Value);
+        var request = new CreateZettelRequest(ZettelTitle, topicId.Value);
         var result = await gateway.CreateZettelAsync(request);
 
         if (!result.IsSuccess)

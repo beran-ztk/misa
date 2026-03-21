@@ -197,7 +197,7 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
     public async Task<List<Item>> GetTopicsAsync()
     {
         return await context.Items
-            .Include(s => s.Topic)
+            .Include(s => s.KnowledgeIndex)
             .Where(t => t.OwnerId == user.Id && t.Workflow == Workflow.Topic)
             .AsNoTracking()
             .ToListAsync();
@@ -207,10 +207,11 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
     {
         var query = context.Items
             .Include(z => z.ZettelExtension)
+            .Include(z => z.KnowledgeIndex)
             .Where(z => z.OwnerId == user.Id && z.Workflow == Workflow.Zettel);
 
         if (topicId.HasValue)
-            query = query.Where(z => z.ZettelExtension!.TopicId == new ItemId(topicId.Value));
+            query = query.Where(z => z.KnowledgeIndex!.ParentId == new ItemId(topicId.Value));
 
         return await query
             .OrderByDescending(z => z.CreatedAt)

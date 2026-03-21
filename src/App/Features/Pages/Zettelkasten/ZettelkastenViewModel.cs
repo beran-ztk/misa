@@ -173,7 +173,7 @@ public sealed partial class ZettelkastenViewModel(ZettelkastenGateway gateway) :
         else if (workflow == WorkflowDto.Zettel)
         {
             if (parentId is null) return;
-            var result = await gateway.CreateZettelAsync(new CreateZettelRequest(title, null, parentId.Value));
+            var result = await gateway.CreateZettelAsync(new CreateZettelRequest(title, parentId.Value));
             if (result.IsSuccess)
                 await ReloadAndRestoreAsync(expandedIds, previousIds);
         }

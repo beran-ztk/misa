@@ -12,7 +12,7 @@ public sealed class GetZettelsHandler(IItemRepository repository)
         var items = await repository.GetZettelsAsync(query.TopicId, ct);
 
         return items
-            .Select(i => new ZettelDto(i.Id.Value, i.Title, i.ZettelExtension!.Content, i.ZettelExtension.TopicId.Value))
+            .Select(i => new ZettelDto(i.Id.Value, i.Title, i.ZettelExtension!.Content))
             .ToList();
     }
 }

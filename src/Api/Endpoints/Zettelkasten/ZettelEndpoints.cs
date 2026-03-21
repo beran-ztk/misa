@@ -20,7 +20,7 @@ public class ZettelEndpoints
         [FromBody] CreateZettelRequest request,
         IMessageBus bus)
     {
-        var command = new CreateZettelCommand(request.Title, request.Content, request.TopicId);
+        var command = new CreateZettelCommand(request.Title, request.ParentId);
         await bus.InvokeAsync(command);
         return Results.Ok();
     }

@@ -31,7 +31,8 @@ public class MisaContext(DbContextOptions<MisaContext> options, ITimeProvider ti
     public DbSet<Notification> Notifications { get; set; } = null!;
     public DbSet<Arc> Arcs { get; set; } = null!;
     public DbSet<Unit> Units { get; set; } = null!;
-    public DbSet<ZettelExtension> Zettels { get; set; } = null!;
+    public DbSet<Zettel> Zettels { get; set; } = null!;
+    public DbSet<KnowledgeIndex> KnowledgeIndex { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

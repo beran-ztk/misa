@@ -69,7 +69,8 @@ public sealed class Item : DomainEventEntity
     public Arc? Arc { get; private set; }
     public Unit? Unit { get; private set; }
     public Topic? Topic { get; private set; }
-    public ZettelExtension? ZettelExtension { get; private set; }
+    public Zettel? ZettelExtension { get; private set; }
+    public KnowledgeIndex? KnowledgeIndex { get; private set; }
 
     
     // Behaviours
@@ -199,8 +200,8 @@ public sealed class Item : DomainEventEntity
         string ownerId,
         string title,
         DateTimeOffset createdAtUtc,
-        
-        ItemId? topicId)
+
+        ItemId? parentId)
     {
         var item = new Item(
             id: id,
@@ -210,7 +211,8 @@ public sealed class Item : DomainEventEntity
             description: null,
             createdAtUtc: createdAtUtc)
         {
-            Topic = new Topic(id, topicId)
+            Topic = new Topic(id),
+            KnowledgeIndex = new KnowledgeIndex(id, parentId)
         };
 
         return item;
@@ -220,9 +222,8 @@ public sealed class Item : DomainEventEntity
         ItemId id,
         string ownerId,
         string title,
-        string? content,
         DateTimeOffset createdAtUtc,
-        ItemId topicId)
+        ItemId? parentId)
     {
         var item = new Item(
             id: id,
@@ -232,7 +233,8 @@ public sealed class Item : DomainEventEntity
             description: null,
             createdAtUtc: createdAtUtc)
         {
-            ZettelExtension = new ZettelExtension(id, topicId, content)
+            ZettelExtension = new Zettel(id),
+            KnowledgeIndex = new KnowledgeIndex(id, parentId)
         };
 
         return item;
