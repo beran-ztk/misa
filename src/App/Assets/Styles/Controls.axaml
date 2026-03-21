@@ -1,11 +1,20 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <!-- ═══════════════════════════════════════════════════════════════════
-         Button — transparent base; hover/pressed via ContentPresenter alpha
-         Class-based selectors (header-user, wnd-ctrl, addpanel-icon …)
-         carry higher specificity and override as needed.
-    ═══════════════════════════════════════════════════════════════════════ -->
+    <!--
+    ═══════════════════════════════════════════════════════════════════════════
+    BUTTON
+    ═══════════════════════════════════════════════════════════════════════════
+
+    Global default: transparent ghost — appropriate for this app where the
+    overwhelming majority of buttons are icon, nav, or menu items. Filled
+    surfaces are opt-in via .btn-primary / .btn-secondary.
+
+    Hover/pressed feedback is always via ContentPresenter alpha overlay so
+    the visual effect composites cleanly over any background.
+
+    Class-based selectors carry higher specificity and override as needed.
+    ═══════════════════════════════════════════════════════════════════════════ -->
     <Style Selector="Button">
         <Setter Property="Background"                 Value="Transparent"/>
         <Setter Property="BorderThickness"            Value="0"/>
@@ -17,65 +26,267 @@
         <Style Selector="^ /template/ ContentPresenter">
             <Setter Property="CornerRadius"    Value="{StaticResource CornerRadiusControl}"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding"         Value="10,6"/>
+            <Setter Property="Padding"         Value="12,7"/>
         </Style>
         <Style Selector="^:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="#0EFFFFFF"/>
+            <Setter Property="Background" Value="{StaticResource BrushHoverOverlay}"/>
         </Style>
         <Style Selector="^:pressed /template/ ContentPresenter">
-            <Setter Property="Background" Value="#18FFFFFF"/>
+            <Setter Property="Background" Value="{StaticResource BrushPressedOverlay}"/>
         </Style>
         <Style Selector="^:disabled">
             <Setter Property="Opacity" Value="0.45"/>
         </Style>
     </Style>
 
-    <!-- ═══════════════════════════════════════════════════════════════════
-         TextBox — dark-theme defaults; avoids re-stating BorderBrush /
-         CornerRadius in every class selector.
-    ═══════════════════════════════════════════════════════════════════════ -->
+    <!--
+        btn-primary — filled accent button; use for the primary call to action
+        in panels / dialogs. Replaces ad-hoc accent-filled classes.
+    -->
+    <Style Selector="Button.btn-primary">
+        <Setter Property="Background"  Value="{StaticResource BrushAccent}"/>
+        <Setter Property="Foreground"  Value="White"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Style Selector="^ /template/ ContentPresenter">
+            <Setter Property="CornerRadius"    Value="{StaticResource CornerRadiusControl}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding"         Value="14,8"/>
+        </Style>
+        <Style Selector="^:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource BrushAccentDim}"/>
+        </Style>
+        <Style Selector="^:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource BrushAccentDim}"/>
+        </Style>
+        <Style Selector="^:disabled">
+            <Setter Property="Opacity" Value="0.45"/>
+        </Style>
+    </Style>
+
+    <!--
+        btn-secondary — outlined button; use for secondary / cancel actions.
+    -->
+    <Style Selector="Button.btn-secondary">
+        <Setter Property="Background"    Value="Transparent"/>
+        <Setter Property="Foreground"    Value="{StaticResource BrushTextSecondary}"/>
+        <Setter Property="BorderBrush"   Value="{StaticResource BrushBorder}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Style Selector="^ /template/ ContentPresenter">
+            <Setter Property="CornerRadius"    Value="{StaticResource CornerRadiusControl}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush"     Value="{StaticResource BrushBorder}"/>
+            <Setter Property="Padding"         Value="14,8"/>
+        </Style>
+        <Style Selector="^:pointerover">
+            <Setter Property="Foreground"  Value="{StaticResource BrushTextPrimary}"/>
+        </Style>
+        <Style Selector="^:pointerover /template/ ContentPresenter">
+            <Setter Property="Background"   Value="{StaticResource BrushHoverOverlay}"/>
+            <Setter Property="BorderBrush"  Value="{StaticResource BrushBorderLight}"/>
+        </Style>
+        <Style Selector="^:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource BrushPressedOverlay}"/>
+        </Style>
+        <Style Selector="^:disabled">
+            <Setter Property="Opacity" Value="0.45"/>
+        </Style>
+    </Style>
+
+    <!--
+        btn-danger — destructive action button (e.g. delete, logout confirm).
+    -->
+    <Style Selector="Button.btn-danger">
+        <Setter Property="Background"  Value="{StaticResource BrushErrorSubtle}"/>
+        <Setter Property="Foreground"  Value="{StaticResource BrushError}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BrushError}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Style Selector="^ /template/ ContentPresenter">
+            <Setter Property="CornerRadius"    Value="{StaticResource CornerRadiusControl}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush"     Value="{StaticResource BrushError}"/>
+            <Setter Property="Padding"         Value="14,8"/>
+        </Style>
+        <Style Selector="^:pointerover">
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+        <Style Selector="^:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource BrushError}"/>
+        </Style>
+        <Style Selector="^:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource BrushError}"/>
+            <Setter Property="Opacity"    Value="0.85"/>
+        </Style>
+        <Style Selector="^:disabled">
+            <Setter Property="Opacity" Value="0.45"/>
+        </Style>
+    </Style>
+
+
+    <!--
+    ═══════════════════════════════════════════════════════════════════════════
+    TOGGLE BUTTON
+    ═══════════════════════════════════════════════════════════════════════════
+    Inherits the global Button base. Only adds :checked visual state.
+    ═══════════════════════════════════════════════════════════════════════════ -->
+    <Style Selector="ToggleButton:checked /template/ ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushSelectedOverlay}"/>
+    </Style>
+    <Style Selector="ToggleButton:checked:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushHoverOverlay}"/>
+    </Style>
+
+
+    <!--
+    ═══════════════════════════════════════════════════════════════════════════
+    TEXT BOX
+    ═══════════════════════════════════════════════════════════════════════════ -->
     <Style Selector="TextBox">
-        <Setter Property="Background"             Value="{StaticResource BrushPrimaryBackgroundLight}"/>
-        <Setter Property="BorderBrush"            Value="{StaticResource BrushBorder}"/>
-        <Setter Property="BorderThickness"        Value="1"/>
-        <Setter Property="CornerRadius"           Value="{StaticResource CornerRadiusControl}"/>
-        <Setter Property="Foreground"             Value="{StaticResource BrushTextPrimary}"/>
-        <Setter Property="FontSize"               Value="{StaticResource FontSizeMedium}"/>
-        <Setter Property="CaretBrush"             Value="{StaticResource BrushAccent}"/>
-        <Setter Property="SelectionBrush"         Value="{StaticResource BrushAccentDim}"/>
+        <Setter Property="Background"              Value="{StaticResource BrushPrimaryBackgroundLight}"/>
+        <Setter Property="BorderBrush"             Value="{StaticResource BrushBorder}"/>
+        <Setter Property="BorderThickness"         Value="1"/>
+        <Setter Property="CornerRadius"            Value="{StaticResource CornerRadiusControl}"/>
+        <Setter Property="Foreground"              Value="{StaticResource BrushTextPrimary}"/>
+        <Setter Property="FontSize"                Value="{StaticResource FontSizeMedium}"/>
+        <Setter Property="CaretBrush"              Value="{StaticResource BrushAccent}"/>
+        <Setter Property="SelectionBrush"          Value="{StaticResource BrushAccentDim}"/>
         <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="Padding"                 Value="10,7"/>
     </Style>
     <Style Selector="TextBox:pointerover">
         <Setter Property="BorderBrush" Value="{StaticResource BrushBorderLight}"/>
     </Style>
-    <Style Selector="TextBox:focus">
-        <Setter Property="BorderBrush" Value="{StaticResource BrushAccent}"/>
+    <Style Selector="TextBox:focus-within">
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorderFocus}"/>
+    </Style>
+    <Style Selector="TextBox:disabled">
+        <Setter Property="Opacity"     Value="0.5"/>
+        <Setter Property="Foreground"  Value="{StaticResource BrushTextDisabled}"/>
+    </Style>
+    <!-- Read-only: keep the border, dim the background to signal non-editability -->
+    <Style Selector="TextBox:readonly">
+        <Setter Property="Background"  Value="{StaticResource BrushPrimaryBackground}"/>
+        <Setter Property="Foreground"  Value="{StaticResource BrushTextSecondary}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}"/>
     </Style>
 
-    <!-- ═══════════════════════════════════════════════════════════════════
-         ComboBox — matches TextBox border / radius / font defaults.
-    ═══════════════════════════════════════════════════════════════════════ -->
+
+    <!--
+    ═══════════════════════════════════════════════════════════════════════════
+    COMBO BOX
+    ═══════════════════════════════════════════════════════════════════════════ -->
     <Style Selector="ComboBox">
-        <Setter Property="Background"               Value="{StaticResource BrushPrimaryBackgroundLight}"/>
-        <Setter Property="BorderBrush"              Value="{StaticResource BrushBorder}"/>
-        <Setter Property="BorderThickness"          Value="1"/>
-        <Setter Property="CornerRadius"             Value="{StaticResource CornerRadiusControl}"/>
-        <Setter Property="Foreground"               Value="{StaticResource BrushTextPrimary}"/>
-        <Setter Property="FontSize"                 Value="{StaticResource FontSizeMedium}"/>
+        <Setter Property="Background"              Value="{StaticResource BrushPrimaryBackgroundLight}"/>
+        <Setter Property="BorderBrush"             Value="{StaticResource BrushBorder}"/>
+        <Setter Property="BorderThickness"         Value="1"/>
+        <Setter Property="CornerRadius"            Value="{StaticResource CornerRadiusControl}"/>
+        <Setter Property="Foreground"              Value="{StaticResource BrushTextPrimary}"/>
+        <Setter Property="FontSize"                Value="{StaticResource FontSizeMedium}"/>
         <Setter Property="VerticalContentAlignment" Value="Center"/>
-        <Setter Property="Cursor"                   Value="Hand"/>
+        <Setter Property="Padding"                 Value="10,7"/>
+        <Setter Property="Cursor"                  Value="Hand"/>
     </Style>
     <Style Selector="ComboBox:pointerover">
         <Setter Property="BorderBrush" Value="{StaticResource BrushBorderLight}"/>
     </Style>
+    <Style Selector="ComboBox:focus">
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorderFocus}"/>
+    </Style>
+    <Style Selector="ComboBox:disabled">
+        <Setter Property="Opacity"    Value="0.5"/>
+        <Setter Property="Foreground" Value="{StaticResource BrushTextDisabled}"/>
+    </Style>
 
-    <!-- ═══════════════════════════════════════════════════════════════════
-         CheckBox — secondary text colour and hand cursor by default.
-    ═══════════════════════════════════════════════════════════════════════ -->
+    <!--
+        ComboBoxItem — consistent with ListBoxItem hover/selected treatment.
+        Background is set on ContentPresenter to work with the Fluent template.
+    -->
+    <Style Selector="ComboBoxItem">
+        <Setter Property="FontSize"                   Value="{StaticResource FontSizeMedium}"/>
+        <Setter Property="Foreground"                 Value="{StaticResource BrushTextSecondary}"/>
+        <Setter Property="Padding"                    Value="12,8"/>
+        <Setter Property="Cursor"                     Value="Hand"/>
+    </Style>
+    <Style Selector="ComboBoxItem:pointerover">
+        <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
+    </Style>
+    <Style Selector="ComboBoxItem:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushHoverOverlay}"/>
+    </Style>
+    <Style Selector="ComboBoxItem:selected /template/ ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushSelectedOverlay}"/>
+    </Style>
+    <Style Selector="ComboBoxItem:selected:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushHoverOverlay}"/>
+    </Style>
+
+
+    <!--
+    ═══════════════════════════════════════════════════════════════════════════
+    LIST BOX ITEM
+    ═══════════════════════════════════════════════════════════════════════════
+
+    Global reset: removes Fluent's default selection highlight so each view's
+    card / row styling is authoritative. Views that want ZERO visual feedback
+    on hover/selected (card-based lists) already override with Transparent —
+    this base stays out of their way.
+    ═══════════════════════════════════════════════════════════════════════════ -->
+    <Style Selector="ListBoxItem">
+        <Setter Property="Padding"    Value="0"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Cursor"     Value="Hand"/>
+    </Style>
+    <Style Selector="ListBoxItem /template/ ContentPresenter">
+        <Setter Property="Background" Value="Transparent"/>
+    </Style>
+    <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushSubtleOverlay}"/>
+    </Style>
+    <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushSelectedOverlay}"/>
+    </Style>
+    <Style Selector="ListBoxItem:selected:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushHoverOverlay}"/>
+    </Style>
+
+
+    <!--
+    ═══════════════════════════════════════════════════════════════════════════
+    CHECK BOX
+    ═══════════════════════════════════════════════════════════════════════════ -->
     <Style Selector="CheckBox">
         <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
         <Setter Property="FontSize"   Value="{StaticResource FontSizeMedium}"/>
         <Setter Property="Cursor"     Value="Hand"/>
+    </Style>
+    <!-- Checked: lift to primary so the selected state reads clearly -->
+    <Style Selector="CheckBox:checked">
+        <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
+    </Style>
+    <Style Selector="CheckBox:disabled">
+        <Setter Property="Opacity"    Value="0.45"/>
+        <Setter Property="Foreground" Value="{StaticResource BrushTextDisabled}"/>
+    </Style>
+
+
+    <!--
+    ═══════════════════════════════════════════════════════════════════════════
+    TEXT BLOCK
+    ═══════════════════════════════════════════════════════════════════════════
+    Only foreground — Fluent dark theme already provides near-white text by
+    default; this just pins it explicitly to the design token so changes to
+    the colour scale are automatic.
+    ═══════════════════════════════════════════════════════════════════════════ -->
+    <Style Selector="TextBlock">
+        <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
+    </Style>
+
+
+    <!--
+    ═══════════════════════════════════════════════════════════════════════════
+    SCROLL VIEWER — suppress focus outline
+    ═══════════════════════════════════════════════════════════════════════════ -->
+    <Style Selector="ScrollViewer:focus /template/ Border">
+        <Setter Property="BorderThickness" Value="0"/>
     </Style>
 
 </Styles>
