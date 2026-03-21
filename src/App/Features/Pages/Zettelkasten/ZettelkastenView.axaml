@@ -9,34 +9,51 @@
              x:Class="Misa.Ui.Avalonia.Features.Pages.Zettelkasten.ZettelkastenView"
              x:DataType="root:ZettelkastenViewModel">
 
-   <Border Padding="12"
-           Background="{StaticResource BrushPrimaryBackgroundLight}">
-       <Grid ColumnDefinitions="320,*"
-             ColumnSpacing="0">
+    <Grid ColumnDefinitions="320,*">
 
-           <!-- Left: Index -->
-           <Border Grid.Column="0"
-                   Background="{StaticResource BrushPrimaryBackgroundLight}"
-                   BorderBrush="{StaticResource BrushBorder}"
-                   BorderThickness="0,0,1,0"
-                   Padding="0,0,12,0">
+        <!-- Left: Index -->
+        <Border Grid.Column="0"
+                Background="{StaticResource BrushPrimaryBackground}"
+                BorderBrush="{StaticResource BrushBorder}"
+                BorderThickness="0,0,1,0">
 
-               
-           </Border>
+            <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                          VerticalScrollBarVisibility="Auto">
 
-           <!-- Right: Content -->
-           <Border Grid.Column="1"
-                   Background="{StaticResource BrushPrimaryBackgroundLight}"
-                   Padding="16,0,0,0">
-               <StackPanel>
-                   <!-- Empty state -->
-                   <TextBlock Text="Select a Zettel to view its content."
-                              VerticalAlignment="Center"
-                              HorizontalAlignment="Center"
-                              Opacity="0.4"
-                              Foreground="{StaticResource BrushTextPrimary}" />
-               </StackPanel>
-           </Border>
-       </Grid>
-   </Border>
+                <!-- Knowledge Index as TreeView -->
+                <TreeView x:Name="KnowledgeIndexTree" 
+                          ItemsSource="{Binding KnowledgeIndex}">
+                    
+                    <!-- Index-Tree Styling -->
+                    <TreeView.Styles>
+                        <Style Selector="TreeViewItem">
+                            <Setter Property="IsExpanded" Value="{ReflectionBinding IsExpanded, Mode=TwoWay}" />
+                        </Style>
+                    </TreeView.Styles>
+                    
+                    <!-- Item Template -->
+                    <TreeView.ItemTemplate>
+                        <TreeDataTemplate ItemsSource="{Binding Children}">
+                            <TextBlock Text="{Binding Title}" />
+                        </TreeDataTemplate>
+                    </TreeView.ItemTemplate>
+                </TreeView>
+                
+            </ScrollViewer>
+        </Border>
+
+        <!-- Right: Content -->
+        <Border Grid.Column="1"
+                Background="{StaticResource BrushPrimaryBackgroundLight}"
+                Padding="16,0,0,0">
+            <StackPanel>
+                <!-- Empty state -->
+                <TextBlock Text="Select a Zettel to view its content."
+                           VerticalAlignment="Center"
+                           HorizontalAlignment="Center"
+                           Opacity="0.4"
+                           Foreground="{StaticResource BrushTextPrimary}" />
+            </StackPanel>
+        </Border>
+    </Grid>
 </UserControl>

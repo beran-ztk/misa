@@ -21,7 +21,8 @@ public static class ZettelkastenEndpoints
     private static async Task<IResult> GetZettelkasten(IMessageBus bus, CancellationToken ct)
     {
         var result = await bus.InvokeAsync<List<KnowledgeIndexEntryDto>>(new GetKnowledgeIndexQuery(), ct);
-        return Results.Ok(result);
+        var httpResponse = Results.Ok(result);
+        return httpResponse;
     }
     private static async Task<IResult> CreateTopic(
         [FromBody] CreateTopicRequest request,

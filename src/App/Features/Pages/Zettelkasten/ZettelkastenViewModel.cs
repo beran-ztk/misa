@@ -1,3 +1,4 @@
+using System;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using Avalonia.Threading;
@@ -22,6 +23,11 @@ public sealed partial class ZettelkastenViewModel(ZettelkastenGateway gateway) :
     private async Task RefreshWorkspaceAsync()
     {
         await LoadIndexAsync();
+    }
+
+    public async Task SetExpandedStateAsync(Guid id, bool expanded)
+    {
+        Console.WriteLine($"{id}, {expanded}");
     }
     
     // ── Tree reload helpers ───────────────────────────────────────────────────
