@@ -3,96 +3,38 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Zettelkasten"
+             xmlns:aedit="clr-namespace:AvaloniaEdit;assembly=AvaloniaEdit"
              mc:Ignorable="d"
              d:DesignWidth="700"
              d:DesignHeight="600"
              x:Class="Misa.Ui.Avalonia.Features.Pages.Zettelkasten.ZettelView"
              x:DataType="root:ZettelViewModel">
 
-    <UserControl.Styles>
-
-        <!-- Base: strip all native chrome -->
-        <Style Selector="TextBox.zettel-editor">
-            <Setter Property="Background"               Value="Transparent"/>
-            <Setter Property="BorderThickness"          Value="0"/>
-            <Setter Property="CornerRadius"             Value="0"/>
-            <Setter Property="Padding"                  Value="14,0,24,200"/>
-            <Setter Property="FontSize"                 Value="{StaticResource FontSizeMedium}"/>
-            <Setter Property="LineHeight"               Value="24"/>
-            <Setter Property="Foreground"               Value="{StaticResource BrushTextPrimary}"/>
-            <Setter Property="CaretBrush"               Value="{StaticResource BrushTextPrimary}"/>
-            <Setter Property="SelectionBrush"           Value="#2A4A90E2"/>
-            <Setter Property="SelectionForegroundBrush" Value="{StaticResource BrushTextPrimary}"/>
-        </Style>
-
-        <!-- Kill the inner Border background in every interactive state -->
-        <Style Selector="TextBox.zettel-editor /template/ Border#PART_BorderElement">
-            <Setter Property="Background"      Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
-        </Style>
-        <Style Selector="TextBox.zettel-editor:pointerover /template/ Border#PART_BorderElement">
-            <Setter Property="Background"      Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
-        </Style>
-        <Style Selector="TextBox.zettel-editor:focus /template/ Border#PART_BorderElement">
-            <Setter Property="Background"      Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
-        </Style>
-        <Style Selector="TextBox.zettel-editor:focus-within /template/ Border#PART_BorderElement">
-            <Setter Property="Background"      Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
-        </Style>
-
-    </UserControl.Styles>
-
     <Grid RowDefinitions="Auto,*">
 
-        <!-- Title — sits above the gutter/editor, inset to align with text column -->
+        <!-- Title -->
         <TextBlock Grid.Row="0"
                    Text="{Binding Title}"
-                   Margin="70,40,24,40"
+                   Margin="70,40,24,16"
                    FontSize="{StaticResource FontSizeXLarge}"
                    FontWeight="SemiBold"
                    Opacity="0.9"
                    Foreground="{StaticResource BrushTextPrimary}"
-                   TextTrimming="CharacterEllipsis"/>
+                   TextWrapping="Wrap"/>
 
-        <!-- Outer ScrollViewer owns all vertical scrolling -->
-        <ScrollViewer Grid.Row="1"
-                      VerticalScrollBarVisibility="Auto">
-            <Grid ColumnDefinitions="40,*"
-                  Margin="12,0">
-
-                <ItemsControl Grid.Column="0"
-                              ItemsSource="{Binding LineNumbers}"
-                              VerticalAlignment="Top">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <TextBlock Text="{Binding}"
-                                       Height="24"
-                                       LineHeight="24"
-                                       VerticalAlignment="Top"
-                                       TextAlignment="Right"
-                                       Padding="0,0,8,0"
-                                       FontFamily="Cascadia Code"
-                                       FontSize="14"
-                                       Foreground="{StaticResource BrushTextFaded}"
-                                       Opacity="0.45"/>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-
-                <TextBox Grid.Column="1"
-                         Classes="zettel-editor"
-                         Text="{Binding Content, Mode=TwoWay}"
-                         AcceptsReturn="True"
-                         AcceptsTab="True"
-                         VerticalAlignment="Top"
-                         TextWrapping="Wrap"
-                         FontFamily="Cascadia Code"
-                         ScrollViewer.VerticalScrollBarVisibility="Disabled"/>
-            </Grid>
-        </ScrollViewer>
+        <aedit:TextEditor Grid.Row="1"
+                          x:Name="Editor"
+                          ShowLineNumbers="True"
+                          WordWrap="True"
+                          HorizontalScrollBarVisibility="Disabled"
+                          VerticalScrollBarVisibility="Auto"
+                          Background="Transparent"
+                          BorderThickness="0"
+                          Foreground="{StaticResource BrushTextPrimary}"
+                          LineNumbersForeground="{StaticResource BrushTextFaded}"
+                          FontFamily="Cascadia Code"
+                          FontSize="{StaticResource FontSizeMedium}"
+                          Padding="14,0,24,0"/>
 
     </Grid>
 

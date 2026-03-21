@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -16,8 +14,6 @@ public sealed partial class ZettelViewModel(ZettelkastenGateway gateway) : ViewM
     [ObservableProperty] private string  _title   = string.Empty;
     [ObservableProperty] private string? _content;
 
-    public IReadOnlyList<int> LineNumbers { get; private set; } = [1];
-
     private CancellationTokenSource? _saveCts;
 
     // ── Loading ───────────────────────────────────────────────────────────────
@@ -27,25 +23,11 @@ public sealed partial class ZettelViewModel(ZettelkastenGateway gateway) : ViewM
         Id      = dto.Id;
         Title   = dto.Title;
         Content = dto.Content;
-        RebuildLineNumbers(dto.Content);
-    }
-
-    // ── Line numbers ──────────────────────────────────────────────────────────
-
-    partial void OnContentChanged(string? value)
-    {
-        RebuildLineNumbers(value);
-        ScheduleAutosave(value);
-    }
-
-    private void RebuildLineNumbers(string? content)
-    {
-        var count = string.IsNullOrEmpty(content) ? 1 : content.Count(c => c == '\n') + 1;
-        LineNumbers = Enumerable.Range(1, count).ToArray();
-        OnPropertyChanged(nameof(LineNumbers));
     }
 
     // ── Autosave ──────────────────────────────────────────────────────────────
+
+    partial void OnContentChanged(string? value) => ScheduleAutosave(value);
 
     private void ScheduleAutosave(string? content)
     {
