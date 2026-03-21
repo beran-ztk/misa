@@ -54,6 +54,10 @@
                             <Setter Property="Opacity" Value="1"/>
                             <Setter Property="IsHitTestVisible" Value="True"/>
                         </Style>
+                        
+                        <Style Selector="Button.index-entry-actions:pointerover /template/ ContentPresenter">
+                            <Setter Property="Background" Value="Transparent"/>
+                        </Style>
                     </TreeView.Styles>
 
                     <TreeView.ItemTemplate>
