@@ -4,7 +4,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Threading;
-using CommunityToolkit.Mvvm.ComponentModel.__Internals;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Items;
 using Misa.Contract.Items.Components.Zettelkasten;
@@ -12,9 +12,38 @@ using Misa.Ui.Avalonia.Common.Mappings;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Zettelkasten;
 
-public sealed partial class ZettelkastenViewModel(ZettelkastenGateway gateway) : ViewModelBase
+public sealed partial class ZettelkastenViewModel : ViewModelBase
 {
     public ObservableCollection<KnowledgeIndexNodeVm> KnowledgeIndex { get; } = [];
+    private ZettelkastenGateway _gateway { get; init; }
+
+    [ObservableProperty] private KnowledgeIndexNodeVm? _selectedNode;
+    
+    private readonly ZettelViewModel _zettelVm;
+
+    [ObservableProperty] private bool _hasZettelSelected;
+
+    public ZettelkastenViewModel(ZettelkastenGateway gateway)
+    {
+        _gateway = gateway;
+        _zettelVm = new ZettelViewModel(_gateway);
+    }
+    partial void OnSelectedNodeChanged(KnowledgeIndexNodeVm? value)
+    {
+        if (value is null || value.IsPendingCreation || value.Workflow != WorkflowDto.Zettel)
+        {
+            return;
+        }
+        
+        _ = LoadZettelAsync(value.Id);
+    }
+
+    private async Task LoadZettelAsync(Guid id)
+    {
+        var dto = await _gateway.GetZettelAsync(id);
+        if (dto is null) return;
+        _zettelVm.Load(dto);
+    }
 
     // ── Initialization ────────────────────────────────────────────────────────
 

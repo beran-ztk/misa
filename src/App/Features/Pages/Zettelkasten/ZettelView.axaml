@@ -1,0 +1,39 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Zettelkasten"
+             mc:Ignorable="d"
+             d:DesignWidth="700"
+             d:DesignHeight="600"
+             x:Class="Misa.Ui.Avalonia.Features.Pages.Zettelkasten.ZettelView"
+             x:DataType="root:ZettelViewModel">
+
+    <Grid RowDefinitions="Auto,*" Margin="24,20">
+
+        <!-- Title -->
+        <TextBlock Grid.Row="0"
+                   Text="{Binding Title}"
+                   FontSize="{StaticResource FontSizeLarge}"
+                   FontWeight="SemiBold"
+                   Opacity="0.9"
+                   Margin="0,0,0,16"
+                   TextTrimming="CharacterEllipsis"/>
+
+        <!-- Content editor -->
+        <TextBox Grid.Row="1"
+                 Text="{Binding Content, Mode=TwoWay}"
+                 AcceptsReturn="True"
+                 AcceptsTab="True"
+                 TextWrapping="Wrap"
+                 Watermark="Write something…"
+                 Background="Transparent"
+                 BorderThickness="0"
+                 Padding="0"
+                 FontSize="{StaticResource FontSizeAverage}"
+                 VerticalAlignment="Stretch"
+                 VerticalContentAlignment="Top"/>
+
+    </Grid>
+
+</UserControl>

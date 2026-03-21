@@ -61,6 +61,20 @@ public sealed class ZettelkastenGateway(RemoteProxy remoteProxy)
         return response.Value;
     }
 
+    public async Task<ZettelDto?> GetZettelAsync(Guid id)
+    {
+        var response = await remoteProxy.SendAsync<ZettelDto>(
+            requestFactory: () => new HttpRequestMessage(HttpMethod.Get, ZettelkastenRoutes.GetZettelUrl(id)),
+            retry: new RetryOptions
+            {
+                MaxAttempts = 3,
+                Delay = TimeSpan.FromMilliseconds(500)
+            },
+            cancellationToken: CancellationToken.None);
+
+        return response.Value;
+    }
+
     public async Task<Result> UpdateZettelContentAsync(Guid id, string? content)
     {
         var response = await remoteProxy.SendAsync(
