@@ -150,7 +150,7 @@
                          ColumnSpacing="8"
                          Margin="0,0,0,8">
                        <TextBlock Grid.Column="0"
-                                  Text="Knowledge Map"
+                                  Text="Index"
                                   FontSize="18"
                                   FontWeight="SemiBold"
                                   VerticalAlignment="Center"
@@ -211,7 +211,31 @@
                                                  ItemsSource="{Binding Children}">
                                    <Border Classes="topic-row">
                                        <Panel>
+                                           <!-- Inline creation row -->
+                                           <Grid IsVisible="{Binding IsPending}"
+                                                 ColumnDefinitions="Auto,*"
+                                                 ColumnSpacing="6">
 
+                                               <Panel Grid.Column="0">
+                                                   <Image IsVisible="{Binding PendingWorkflow, Converter={x:Static conv:WorkflowEqualConverter.Instance}, ConverterParameter=Topic}"
+                                                          Source="{SvgImage /Assets/Icons/Common/folder.svg}"
+                                                          Width="14" Height="14"
+                                                          VerticalAlignment="Center"
+                                                          Opacity="0.65" />
+                                                   <Image IsVisible="{Binding PendingWorkflow, Converter={x:Static conv:WorkflowEqualConverter.Instance}, ConverterParameter=Zettel}"
+                                                          Source="{SvgImage /Assets/Icons/Shell/Navigation/scroll.svg}"
+                                                          Width="14" Height="14"
+                                                          VerticalAlignment="Center"
+                                                          Opacity="0.65" />
+                                               </Panel>
+
+                                               <TextBox Grid.Column="1"
+                                                        Classes="inline-create-input"
+                                                        Text="{Binding PendingTitle, Mode=TwoWay}"
+                                                        Watermark="Name…"
+                                                        KeyDown="PendingTitleBox_OnKeyDown" />
+                                           </Grid>
+                                           
                                            <!-- Normal row -->
                                            <Grid IsVisible="{Binding !IsPending}"
                                                  ColumnDefinitions="Auto,*,Auto"
@@ -247,32 +271,6 @@
                                                    <Image Source="{SvgImage /Assets/Icons/Common/plus.svg}" />
                                                </Button>
                                            </Grid>
-
-                                           <!-- Inline creation row -->
-                                           <Grid IsVisible="{Binding IsPending}"
-                                                 ColumnDefinitions="Auto,*"
-                                                 ColumnSpacing="6">
-
-                                               <Panel Grid.Column="0">
-                                                   <Image IsVisible="{Binding PendingWorkflow, Converter={x:Static conv:WorkflowEqualConverter.Instance}, ConverterParameter=Topic}"
-                                                          Source="{SvgImage /Assets/Icons/Common/folder.svg}"
-                                                          Width="14" Height="14"
-                                                          VerticalAlignment="Center"
-                                                          Opacity="0.65" />
-                                                   <Image IsVisible="{Binding PendingWorkflow, Converter={x:Static conv:WorkflowEqualConverter.Instance}, ConverterParameter=Zettel}"
-                                                          Source="{SvgImage /Assets/Icons/Shell/Navigation/scroll.svg}"
-                                                          Width="14" Height="14"
-                                                          VerticalAlignment="Center"
-                                                          Opacity="0.65" />
-                                               </Panel>
-
-                                               <TextBox Grid.Column="1"
-                                                        Classes="inline-create-input"
-                                                        Text="{Binding PendingTitle, Mode=TwoWay}"
-                                                        Watermark="Name…"
-                                                        KeyDown="PendingTitleBox_OnKeyDown" />
-                                           </Grid>
-
                                        </Panel>
                                    </Border>
                                </TreeDataTemplate>
