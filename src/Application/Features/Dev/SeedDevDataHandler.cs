@@ -28,6 +28,7 @@ public sealed class SeedDevDataHandler(
         await SeedTasksAsync(now, owner, ct);
         await SeedJournalsAsync(now, owner, ct);
         await SeedSchedulesAsync(now, owner, tz, ct);
+        await SeedKnowledgeIndexAsync(now, owner, ct);
     }
 
     // ── Tasks ──────────────────────────────────────────────────────────────
@@ -275,6 +276,218 @@ public sealed class SeedDevDataHandler(
         await repository.AddAsync(s3, ct);
 
         await repository.SaveChangesAsync(ct);
+    }
+
+    // ── Knowledge Index ────────────────────────────────────────────────────
+
+    private record KnowledgeSeed(string Title, string[] Notes, KnowledgeSeed[] Children);
+
+    private static readonly KnowledgeSeed[] KnowledgeTree =
+    [
+        new("Projects",
+            ["Project overview", "Current priorities"],
+            [
+                new KnowledgeSeed("Active Projects",
+                    ["Active items list", "Blockers log"],
+                    [
+                        new KnowledgeSeed("Software Development",
+                            ["Architecture notes", "Tech debt log"],
+                            [
+                                new KnowledgeSeed("Backend",  ["API design notes", "Database schema notes"], []),
+                                new KnowledgeSeed("Frontend", ["UI component notes", "Design pattern notes"], []),
+                            ]),
+                        new KnowledgeSeed("Writing Projects",
+                            ["Ideas backlog", "Draft tracker"],
+                            [
+                                new KnowledgeSeed("Blog Posts", ["Post drafts", "Publishing checklist"], []),
+                                new KnowledgeSeed("Long Form",  ["Chapter outlines", "Research notes"], []),
+                            ]),
+                    ]),
+                new KnowledgeSeed("Completed Projects",
+                    ["Completed work summary", "Lessons learned"],
+                    [
+                        new KnowledgeSeed("2024 Archive",
+                            ["2024 highlights", "Key decisions"],
+                            [
+                                new KnowledgeSeed("Q1 2024", ["Q1 highlights", "Sprint notes"], []),
+                                new KnowledgeSeed("Q2 2024", ["Q2 highlights", "Sprint notes"], []),
+                            ]),
+                        new KnowledgeSeed("2023 Archive",
+                            ["2023 highlights", "Key decisions"],
+                            [
+                                new KnowledgeSeed("Q1 2023", ["Q1 highlights", "Sprint notes"], []),
+                                new KnowledgeSeed("Q2 2023", ["Q2 highlights", "Sprint notes"], []),
+                            ]),
+                    ]),
+            ]),
+
+        new("Knowledge",
+            ["Learning goals", "Key references"],
+            [
+                new KnowledgeSeed("Research Areas",
+                    ["Open research questions", "Reading list"],
+                    [
+                        new KnowledgeSeed("Science",
+                            ["Study notes", "Key concepts"],
+                            [
+                                new KnowledgeSeed("Biology", ["Cell biology notes", "Genetics overview"], []),
+                                new KnowledgeSeed("Physics",  ["Mechanics notes", "Thermodynamics notes"], []),
+                            ]),
+                        new KnowledgeSeed("Technology",
+                            ["Trend tracking", "Tool evaluations"],
+                            [
+                                new KnowledgeSeed("AI & ML",          ["Model notes", "Experiment log"], []),
+                                new KnowledgeSeed("Web Development",  ["Framework notes", "Best practices"], []),
+                            ]),
+                    ]),
+                new KnowledgeSeed("Reference Notes",
+                    ["Quick references", "Source catalog"],
+                    [
+                        new KnowledgeSeed("Book Notes",
+                            ["Reading log", "Favourite quotes"],
+                            [
+                                new KnowledgeSeed("Non-Fiction", ["Book summaries", "Key takeaways"], []),
+                                new KnowledgeSeed("Fiction",     ["Reading notes", "Character notes"], []),
+                            ]),
+                        new KnowledgeSeed("Course Notes",
+                            ["Module summaries", "Action items"],
+                            [
+                                new KnowledgeSeed("Online Courses", ["Course tracker", "Certificate log"], []),
+                                new KnowledgeSeed("Workshops",      ["Workshop notes", "Follow-up actions"], []),
+                            ]),
+                    ]),
+            ]),
+
+        new("Health",
+            ["Health goals", "Progress notes"],
+            [
+                new KnowledgeSeed("Physical Health",
+                    ["Exercise log", "Recovery notes"],
+                    [
+                        new KnowledgeSeed("Fitness",
+                            ["Training plan", "Progress notes"],
+                            [
+                                new KnowledgeSeed("Strength Training", ["Workout plans", "Lift records"], []),
+                                new KnowledgeSeed("Cardio",            ["Run logs", "Endurance goals"], []),
+                            ]),
+                        new KnowledgeSeed("Nutrition",
+                            ["Dietary notes", "Meal ideas"],
+                            [
+                                new KnowledgeSeed("Meal Planning", ["Weekly menus", "Prep notes"], []),
+                                new KnowledgeSeed("Supplements",   ["Protocol notes", "Research notes"], []),
+                            ]),
+                    ]),
+                new KnowledgeSeed("Mental Health",
+                    ["Coping strategies", "Mood notes"],
+                    [
+                        new KnowledgeSeed("Mindfulness",
+                            ["Practice log", "Insights"],
+                            [
+                                new KnowledgeSeed("Meditation", ["Session log", "Technique notes"], []),
+                                new KnowledgeSeed("Journaling", ["Prompt library", "Reflection entries"], []),
+                            ]),
+                        new KnowledgeSeed("Therapy Notes",
+                            ["Session summaries", "Goals log"],
+                            [
+                                new KnowledgeSeed("Session Logs",  ["Session log", "Theme notes"], []),
+                                new KnowledgeSeed("Reflections",   ["Weekly reflections", "Key insights"], []),
+                            ]),
+                    ]),
+            ]),
+
+        new("Career",
+            ["Career vision", "Growth areas"],
+            [
+                new KnowledgeSeed("Skills Development",
+                    ["Skills gap analysis", "Learning plan"],
+                    [
+                        new KnowledgeSeed("Technical Skills",
+                            ["Skill assessments", "Practice log"],
+                            [
+                                new KnowledgeSeed("Programming",   ["Code pattern notes", "Language notes"], []),
+                                new KnowledgeSeed("Architecture",  ["Design pattern notes", "System diagrams"], []),
+                            ]),
+                        new KnowledgeSeed("Soft Skills",
+                            ["Feedback notes", "Growth areas"],
+                            [
+                                new KnowledgeSeed("Communication", ["Tips", "Feedback log"], []),
+                                new KnowledgeSeed("Leadership",    ["Principles", "Team notes"], []),
+                            ]),
+                    ]),
+                new KnowledgeSeed("Job Tracking",
+                    ["Company watchlist", "Application status"],
+                    [
+                        new KnowledgeSeed("Applications",
+                            ["Applied positions", "Response tracker"],
+                            [
+                                new KnowledgeSeed("Sent",    ["Application tracker", "Submission log"], []),
+                                new KnowledgeSeed("Pending", ["Awaiting response", "Follow-up list"], []),
+                            ]),
+                        new KnowledgeSeed("Interviews",
+                            ["Interview questions", "Company research"],
+                            [
+                                new KnowledgeSeed("Prep Notes", ["Common questions", "Study topics"], []),
+                                new KnowledgeSeed("Feedback",   ["Interview feedback", "Improvement areas"], []),
+                            ]),
+                    ]),
+            ]),
+
+        new("Personal Systems",
+            ["System overview", "Weekly review template"],
+            [
+                new KnowledgeSeed("Productivity",
+                    ["System rules", "Review template"],
+                    [
+                        new KnowledgeSeed("Task Methods",
+                            ["System notes", "Experiment log"],
+                            [
+                                new KnowledgeSeed("GTD",          ["Capture list", "Project list"], []),
+                                new KnowledgeSeed("Zettelkasten", ["Permanent notes index", "Literature notes"], []),
+                            ]),
+                        new KnowledgeSeed("Time Management",
+                            ["Capacity review", "Focus session log"],
+                            [
+                                new KnowledgeSeed("Time Blocking", ["Block templates", "Focus log"], []),
+                                new KnowledgeSeed("Reviews",       ["Weekly review notes", "Monthly review"], []),
+                            ]),
+                    ]),
+                new KnowledgeSeed("Life Admin",
+                    ["Admin checklist", "Contacts list"],
+                    [
+                        new KnowledgeSeed("Finance",
+                            ["Budget notes", "Expense tracker"],
+                            [
+                                new KnowledgeSeed("Budget",      ["Income tracker", "Expense categories"], []),
+                                new KnowledgeSeed("Investments", ["Portfolio notes", "Strategy notes"], []),
+                            ]),
+                        new KnowledgeSeed("Home",
+                            ["Maintenance checklist", "Improvement ideas"],
+                            [
+                                new KnowledgeSeed("Maintenance",          ["Task schedule", "Service log"], []),
+                                new KnowledgeSeed("Improvement Projects", ["Project list", "Materials list"], []),
+                            ])
+                    ])
+            ])
+    ];
+
+    private async Task SeedKnowledgeIndexAsync(DateTimeOffset now, string owner, CancellationToken ct)
+    {
+        foreach (var root in KnowledgeTree)
+            await SeedKnowledgeNodeAsync(root, parentId: null, now, owner, ct);
+
+        await repository.SaveChangesAsync(ct);
+    }
+
+    private async Task SeedKnowledgeNodeAsync(KnowledgeSeed node, ItemId? parentId, DateTimeOffset now, string owner, CancellationToken ct)
+    {
+        var id = new ItemId(idGenerator.New());
+        await repository.AddAsync(Item.CreateTopic(id, owner, node.Title, now, parentId), ct);
+
+        foreach (var noteTitle in node.Notes)
+            await repository.AddAsync(Item.CreateZettel(new ItemId(idGenerator.New()), owner, noteTitle, now, id), ct);
+
+        foreach (var child in node.Children)
+            await SeedKnowledgeNodeAsync(child, id, now, owner, ct);
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────

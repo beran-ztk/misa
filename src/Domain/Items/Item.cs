@@ -189,7 +189,7 @@ public sealed class Item : DomainEventEntity
     // Mutators
 
     /// <summary>Updates ModifiedAt. Called by all domain mutators — not intended for application-layer use.</summary>
-    internal void Touch(DateTimeOffset nowUtc) => ModifiedAt = nowUtc;
+    private void Touch(DateTimeOffset nowUtc) => ModifiedAt = nowUtc;
 
     public void ChangeTitle(string title, DateTimeOffset nowUtc)
     {
