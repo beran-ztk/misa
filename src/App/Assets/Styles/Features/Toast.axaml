@@ -26,7 +26,6 @@
 
     <!-- ── Title ─────────────────────────────────────────────────────────── -->
     <Style Selector="TextBlock.toast-title">
-        <Setter Property="Foreground"        Value="{StaticResource BrushTextPrimary}" />
         <Setter Property="FontSize"          Value="13" />
         <Setter Property="FontWeight"        Value="SemiBold" />
         <Setter Property="TextWrapping"      Value="NoWrap" />
