@@ -1,0 +1,81 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         Button — transparent base; hover/pressed via ContentPresenter alpha
+         Class-based selectors (header-user, wnd-ctrl, addpanel-icon …)
+         carry higher specificity and override as needed.
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <Style Selector="Button">
+        <Setter Property="Background"                 Value="Transparent"/>
+        <Setter Property="BorderThickness"            Value="0"/>
+        <Setter Property="Foreground"                 Value="{StaticResource BrushTextPrimary}"/>
+        <Setter Property="FontSize"                   Value="{StaticResource FontSizeMedium}"/>
+        <Setter Property="Cursor"                     Value="Hand"/>
+        <Setter Property="VerticalContentAlignment"   Value="Center"/>
+        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        <Style Selector="^ /template/ ContentPresenter">
+            <Setter Property="CornerRadius"    Value="{StaticResource CornerRadiusControl}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding"         Value="10,6"/>
+        </Style>
+        <Style Selector="^:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#0EFFFFFF"/>
+        </Style>
+        <Style Selector="^:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="#18FFFFFF"/>
+        </Style>
+        <Style Selector="^:disabled">
+            <Setter Property="Opacity" Value="0.45"/>
+        </Style>
+    </Style>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         TextBox — dark-theme defaults; avoids re-stating BorderBrush /
+         CornerRadius in every class selector.
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <Style Selector="TextBox">
+        <Setter Property="Background"             Value="{StaticResource BrushPrimaryBackgroundLight}"/>
+        <Setter Property="BorderBrush"            Value="{StaticResource BrushBorder}"/>
+        <Setter Property="BorderThickness"        Value="1"/>
+        <Setter Property="CornerRadius"           Value="{StaticResource CornerRadiusControl}"/>
+        <Setter Property="Foreground"             Value="{StaticResource BrushTextPrimary}"/>
+        <Setter Property="FontSize"               Value="{StaticResource FontSizeMedium}"/>
+        <Setter Property="CaretBrush"             Value="{StaticResource BrushAccent}"/>
+        <Setter Property="SelectionBrush"         Value="{StaticResource BrushAccentDim}"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+    <Style Selector="TextBox:pointerover">
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorderLight}"/>
+    </Style>
+    <Style Selector="TextBox:focus">
+        <Setter Property="BorderBrush" Value="{StaticResource BrushAccent}"/>
+    </Style>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         ComboBox — matches TextBox border / radius / font defaults.
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <Style Selector="ComboBox">
+        <Setter Property="Background"               Value="{StaticResource BrushPrimaryBackgroundLight}"/>
+        <Setter Property="BorderBrush"              Value="{StaticResource BrushBorder}"/>
+        <Setter Property="BorderThickness"          Value="1"/>
+        <Setter Property="CornerRadius"             Value="{StaticResource CornerRadiusControl}"/>
+        <Setter Property="Foreground"               Value="{StaticResource BrushTextPrimary}"/>
+        <Setter Property="FontSize"                 Value="{StaticResource FontSizeMedium}"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="Cursor"                   Value="Hand"/>
+    </Style>
+    <Style Selector="ComboBox:pointerover">
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorderLight}"/>
+    </Style>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         CheckBox — secondary text colour and hand cursor by default.
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <Style Selector="CheckBox">
+        <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
+        <Setter Property="FontSize"   Value="{StaticResource FontSizeMedium}"/>
+        <Setter Property="Cursor"     Value="Hand"/>
+    </Style>
+
+</Styles>

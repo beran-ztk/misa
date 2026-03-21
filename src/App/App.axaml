@@ -28,7 +28,8 @@
          <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
          
          <StyleInclude Source="avares://App/Assets/Styles/Controls/Overlays.axaml"/>
-         
+         <StyleInclude Source="avares://App/Assets/Styles/Controls/Base.axaml"/>
+
          <StyleInclude Source="avares://App/Assets/Styles/Components/Confirm.Cancel.axaml"/>
          
          <StyleInclude Source="avares://App/Assets/Styles/Views/Chronicle/ChronicleList.axaml"/>
