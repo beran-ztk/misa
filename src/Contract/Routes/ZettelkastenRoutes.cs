@@ -3,7 +3,7 @@ namespace Misa.Contract.Routes;
 public static class ZettelkastenRoutes
 {
     public const string CreateTopic = "items/zettelkasten/topic";
-    public const string GetZettelkasten = "items/zettelkasten";
+    public const string GetKnowledgeIndex = "items/zettelkasten";
 
     // Zettels
     public const string CreateZettel = "items/zettelkasten/zettel";

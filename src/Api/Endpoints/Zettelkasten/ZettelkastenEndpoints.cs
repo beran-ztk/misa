@@ -11,7 +11,7 @@ public static class ZettelkastenEndpoints
     public static void Map(IEndpointRouteBuilder api)
     {
         api.MapPost(ZettelkastenRoutes.CreateTopic, CreateTopic);
-        api.MapGet(ZettelkastenRoutes.GetZettelkasten, GetZettelkasten);
+        api.MapGet(ZettelkastenRoutes.GetKnowledgeIndex, GetZettelkasten);
         
         api.MapPost(ZettelkastenRoutes.CreateZettel, CreateZettel);
         api.MapGet(ZettelkastenRoutes.GetZettel, GetSingle);
