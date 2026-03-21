@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Zettelkasten"
+             xmlns:converters="clr-namespace:Misa.Ui.Avalonia.Common.Converters"
              mc:Ignorable="d"
              d:DesignWidth="1100"
              d:DesignHeight="700"
@@ -32,13 +33,63 @@
                             <Setter Property="IsExpanded" Value="{ReflectionBinding IsExpanded, Mode=TwoWay}" />
                             <Setter Property="Padding" Value="0"/>
                         </Style>
+                        <Style Selector="TreeViewItem:pointerover /template/ ContentPresenter">
+                            <Setter Property="Background" Value="Transparent"/>
+                        </Style>
+
+                        <!-- Three-dots button: hidden at rest, revealed on row hover -->
+                        <Style Selector="Button.index-entry-actions">
+                            <Setter Property="Padding" Value="4"/>
+                            <Setter Property="Opacity" Value="0"/>
+                            <Style Selector="^:pointerover /template/ ContentPresenter">
+                                <Setter Property="Background" Value="{StaticResource BrushHoverOverlay}"/>
+                            </Style>
+                        </Style>
+                        <!-- <Style Selector="TreeViewItem:pointerover Button.index-entry-actions"> -->
+                        <!--     <Setter Property="Opacity" Value="0.55"/> -->
+                        <!-- </Style> -->
+                        <Style Selector="TreeViewItem:pointerover Button.index-entry-actions:pointerover">
+                            <Setter Property="Opacity" Value="1"/>
+                        </Style>
                     </TreeView.Styles>
-                    
+
                     <!-- Item Template -->
                     <TreeView.ItemTemplate>
                         <TreeDataTemplate ItemsSource="{Binding Children}">
-                            <TextBlock Text="{Binding Title}" 
-                                       Opacity="0.8"/>
+                            <Grid ColumnDefinitions="18,*,22" ColumnSpacing="4">
+
+                                <!-- Type icon: folder for Topic, scroll for Zettel -->
+                                <Grid Grid.Column="0" VerticalAlignment="Center">
+                                    <Image Width="14" Height="14" Opacity="0.55"
+                                           Source="{SvgImage /Assets/Icons/Common/folder.svg}"
+                                           IsVisible="{Binding Workflow,
+                                               Converter={x:Static converters:WorkflowEqualConverter.Instance},
+                                               ConverterParameter=Topic}"/>
+                                    <Image Width="14" Height="14" Opacity="0.55"
+                                           Source="{SvgImage /Assets/Icons/Shell/Navigation/scroll.svg}"
+                                           IsVisible="{Binding Workflow,
+                                               Converter={x:Static converters:WorkflowEqualConverter.Instance},
+                                               ConverterParameter=Zettel}"/>
+                                </Grid>
+
+                                <!-- Title -->
+                                <TextBlock Grid.Column="1"
+                                           Text="{Binding Title}"
+                                           Opacity="0.8"
+                                           VerticalAlignment="Center"
+                                           TextTrimming="CharacterEllipsis"/>
+
+                                <!-- Three-dots action button (hidden until row is hovered) -->
+                                <Button Grid.Column="2"
+                                        Classes="index-entry-actions"
+                                        VerticalAlignment="Center"
+                                        BorderBrush="Red"
+                                        BorderThickness="1">
+                                    <Image Width="12" Height="12"
+                                           Source="{SvgImage /Assets/Icons/Common/dots-three-vertical.svg}"/>
+                                </Button>
+
+                            </Grid>
                         </TreeDataTemplate>
                     </TreeView.ItemTemplate>
                 </TreeView>
