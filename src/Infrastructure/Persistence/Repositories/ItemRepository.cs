@@ -269,8 +269,17 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
             .Include(r => r.SourceItem)
             .Include(r => r.TargetItem)
             .Where(r => r.SourceItemId == id || r.TargetItemId == id)
+            .Where(r => !r.SourceItem!.IsDeleted && !r.TargetItem!.IsDeleted)
             .AsNoTracking()
             .ToListAsync(ct);
+    }
+
+    public async Task<bool> RelationExistsAsync(Guid sourceId, Guid targetId, CancellationToken ct)
+    {
+        var src = new ItemId(sourceId);
+        var tgt = new ItemId(targetId);
+        return await context.ItemRelations
+            .AnyAsync(r => r.SourceItemId == src && r.TargetItemId == tgt, ct);
     }
 
     public async Task<ItemRelation?> TryGetRelationAsync(Guid relationId, CancellationToken ct)
