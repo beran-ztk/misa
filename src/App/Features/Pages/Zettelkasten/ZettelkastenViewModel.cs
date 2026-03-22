@@ -79,9 +79,14 @@ public sealed partial class ZettelkastenViewModel : ViewModelBase
         });
     }
 
-    private static KnowledgeIndexNodeVm ToNodeVm(KnowledgeIndexEntryDto dto)
+    private KnowledgeIndexNodeVm ToNodeVm(KnowledgeIndexEntryDto dto)
     {
-        var vm = new KnowledgeIndexNodeVm
+        var vm = new KnowledgeIndexNodeVm(async (id, title) =>
+        {
+            var result = await Gateway.RenameItemAsync(id, new RenameItemRequest(title));
+            if (result.IsSuccess)
+                await LoadIndexAsync();
+        })
         {
             Id         = dto.Id,
             Workflow   = dto.Workflow,
@@ -114,19 +119,13 @@ public sealed partial class ZettelkastenViewModel : ViewModelBase
         if (existing is not null)
             parent.Children.Remove(existing);
 
-        var pending = new KnowledgeIndexNodeVm
+        var pending = new KnowledgeIndexNodeVm(null)
         {
             IsPendingCreation = true,
             PendingWorkflow   = workflow
         };
 
         pending.SetCallbacks(
-            onRename: async (id, title) =>
-            {
-                var result = await Gateway.RenameItemAsync(id, new RenameItemRequest(title));
-                if (result.IsSuccess)
-                    await LoadIndexAsync();
-            },
             onCommit: async title =>
             {
                 var result = workflow == WorkflowDto.Topic

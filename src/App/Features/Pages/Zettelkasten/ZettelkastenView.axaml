@@ -105,23 +105,33 @@
 
                                         <!-- Title -->
                                         <TextBlock Grid.Column="1"
+                                                   IsVisible="{Binding !IsRenaming}"
                                                    Text="{Binding Title}"
                                                    Opacity="0.8"
                                                    VerticalAlignment="Center"
                                                    TextTrimming="CharacterEllipsis"/>
+                                        <TextBox Grid.Column="1"
+                                                 IsVisible="{Binding IsRenaming}"
+                                                 Text="{Binding EditTitle}"
+                                                 Opacity="0.8"
+                                                 VerticalAlignment="Center">
+                                            <TextBox.KeyBindings>
+                                                <KeyBinding Gesture="Enter" Command="{Binding CommitRenameCommand}"/>
+                                            </TextBox.KeyBindings>
+                                        </TextBox>
 
                                         <!-- Three-dots action button -->
                                         <Button Grid.Column="2"
                                                 Classes="index-entry-actions"
-                                                VerticalAlignment="Center"
-                                                IsVisible="{Binding Workflow,
-                                                       Converter={x:Static converters:WorkflowEqualConverter.Instance},
-                                                       ConverterParameter=Topic}">
+                                                VerticalAlignment="Center">
                                             <Button.Flyout>
                                                 <MenuFlyout Placement="BottomEdgeAlignedRight">
                                                     <!-- Create Topic -->
                                                     <MenuItem Command="{Binding $parent[TreeView].((root:ZettelkastenViewModel)DataContext).CreateTopicUnderCommand}"
-                                                              CommandParameter="{Binding Id}">
+                                                              CommandParameter="{Binding Id}"
+                                                              IsVisible="{Binding Workflow,
+                                                       Converter={x:Static converters:WorkflowEqualConverter.Instance},
+                                                       ConverterParameter=Topic}">
                                                         <MenuItem.Header>
                                                             <StackPanel Orientation="Horizontal" Spacing="8">
                                                                 <Image Width="13" Height="13" Opacity="0.6"
@@ -133,7 +143,10 @@
                                                     
                                                     <!-- Create Zettel -->
                                                     <MenuItem Command="{Binding $parent[TreeView].((root:ZettelkastenViewModel)DataContext).CreateZettelUnderCommand}"
-                                                              CommandParameter="{Binding Id}">
+                                                              CommandParameter="{Binding Id}"
+                                                              IsVisible="{Binding Workflow,
+                                                       Converter={x:Static converters:WorkflowEqualConverter.Instance},
+                                                       ConverterParameter=Topic}">
                                                         <MenuItem.Header>
                                                             <StackPanel Orientation="Horizontal" Spacing="8">
                                                                 <Image Width="13" Height="13" Opacity="0.6"
@@ -144,13 +157,13 @@
                                                     </MenuItem>
                                                     
                                                     <!-- Rename -->
-                                                    <MenuItem Command="{Binding RenameCommand}"
+                                                    <MenuItem Command="{Binding BeginRenamingCommand}"
                                                               CommandParameter="{Binding Id}">
                                                         <MenuItem.Header>
                                                             <StackPanel Orientation="Horizontal" Spacing="8">
                                                                 <Image Width="13" Height="13" Opacity="0.6"
                                                                        Source="{SvgImage /Assets/Icons/Common/edit.svg}"/>
-                                                                <TextBlock Text="New Zettel"/>
+                                                                <TextBlock Text="Rename"/>
                                                             </StackPanel>
                                                         </MenuItem.Header>
                                                     </MenuItem>
