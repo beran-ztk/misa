@@ -27,10 +27,6 @@
                           Background="{StaticResource BrushPrimaryBackground}">
 
                     <TreeView.Styles>
-                        <TreeView.KeyBindings>
-                            <KeyBinding Gesture="F2"  Command="{Binding CommitCreationCommand}"/>
-                        </TreeView.KeyBindings>
-                        
                         <Style Selector="TreeViewItem">
                             <Setter Property="IsExpanded" Value="{ReflectionBinding IsExpanded, Mode=TwoWay}" />
                         </Style>
@@ -87,6 +83,7 @@
                     <TreeView.ItemTemplate>
                         <TreeDataTemplate ItemsSource="{Binding Children}">
                             <Panel>
+                                
                                 <Border Classes="index-entry-row"
                                         IsVisible="{Binding IsPendingCreation,
                                             Converter={x:Static converters:BooleanNotConverter.Instance}}">
@@ -122,6 +119,7 @@
                                                        ConverterParameter=Topic}">
                                             <Button.Flyout>
                                                 <MenuFlyout Placement="BottomEdgeAlignedRight">
+                                                    <!-- Create Topic -->
                                                     <MenuItem Command="{Binding $parent[TreeView].((root:ZettelkastenViewModel)DataContext).CreateTopicUnderCommand}"
                                                               CommandParameter="{Binding Id}">
                                                         <MenuItem.Header>
@@ -132,12 +130,26 @@
                                                             </StackPanel>
                                                         </MenuItem.Header>
                                                     </MenuItem>
+                                                    
+                                                    <!-- Create Zettel -->
                                                     <MenuItem Command="{Binding $parent[TreeView].((root:ZettelkastenViewModel)DataContext).CreateZettelUnderCommand}"
                                                               CommandParameter="{Binding Id}">
                                                         <MenuItem.Header>
                                                             <StackPanel Orientation="Horizontal" Spacing="8">
                                                                 <Image Width="13" Height="13" Opacity="0.6"
                                                                        Source="{SvgImage /Assets/Icons/Shell/Navigation/scroll.svg}"/>
+                                                                <TextBlock Text="New Zettel"/>
+                                                            </StackPanel>
+                                                        </MenuItem.Header>
+                                                    </MenuItem>
+                                                    
+                                                    <!-- Rename -->
+                                                    <MenuItem Command="{Binding RenameCommand}"
+                                                              CommandParameter="{Binding Id}">
+                                                        <MenuItem.Header>
+                                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                                <Image Width="13" Height="13" Opacity="0.6"
+                                                                       Source="{SvgImage /Assets/Icons/Common/edit.svg}"/>
                                                                 <TextBlock Text="New Zettel"/>
                                                             </StackPanel>
                                                         </MenuItem.Header>

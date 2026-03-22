@@ -123,7 +123,7 @@ public sealed partial class ZettelkastenViewModel : ViewModelBase
         pending.SetCallbacks(
             onRename: async (id, title) =>
             {
-                var result = Gateway.RenameItem(new RenameItemRequest(id, title));
+                var result = await Gateway.RenameItemAsync(id, new RenameItemRequest(title));
                 if (result.IsSuccess)
                     await LoadIndexAsync();
             },
