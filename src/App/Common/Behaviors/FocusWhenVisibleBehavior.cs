@@ -1,4 +1,3 @@
-using System.Reactive;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Threading;
@@ -7,12 +6,12 @@ namespace Misa.Ui.Avalonia.Common.Behaviors;
 
 public class FocusWhenVisibleBehavior : AvaloniaObject
 {
-    public static readonly AttachedProperty<bool> EnabledProperty =
-        AvaloniaProperty.RegisterAttached<FocusWhenVisibleBehavior, Control, bool>("Enabled");
+    public static readonly AttachedProperty<bool> FocusOnVisibleProperty =
+        AvaloniaProperty.RegisterAttached<FocusWhenVisibleBehavior, Control, bool>("FocusOnVisible");
 
     static FocusWhenVisibleBehavior()
     {
-        EnabledProperty.Changed.AddClassHandler<Control>(OnEnabledChanged);
+        FocusOnVisibleProperty.Changed.AddClassHandler<Control>(OnEnabledChanged);
     }
 
     private static void OnEnabledChanged(Control control, AvaloniaPropertyChangedEventArgs args)
@@ -34,14 +33,14 @@ public class FocusWhenVisibleBehavior : AvaloniaObject
             });
         }
 
-        control.GetObservable(Visual.IsVisibleProperty)
-            .Subscribe(new AnonymousObserver<bool>(_ => TryFocus()));
+        // control.GetObservable(Visual.IsVisibleProperty)
+        //     .Subscribe(new AnonymousObserver<bool>(_ => TryFocus()));
         TryFocus();
     }
 
-    public static void SetEnabled(AvaloniaObject element, bool value)
-        => element.SetValue(EnabledProperty, value);
+    public static void SetFocusOnVisible(AvaloniaObject element, bool value)
+        => element.SetValue(FocusOnVisibleProperty, value);
 
-    public static bool GetEnabled(AvaloniaObject element)
-        => element.GetValue(EnabledProperty);
+    public static bool GetFocusOnVisible(AvaloniaObject element)
+        => element.GetValue(FocusOnVisibleProperty);
 }

@@ -120,7 +120,7 @@
                                                  Text="{Binding EditTitle}"
                                                  Opacity="0.8"
                                                  VerticalAlignment="Center"
-                                                 behaviors:FocusWhenVisibleBehavior.Enabled="{Binding IsRenaming}">
+                                                 behaviors:FocusWhenVisibleBehavior.FocusOnVisible="{Binding IsRenaming}">
                                             <TextBox.KeyBindings>
                                                 <KeyBinding Gesture="Enter" Command="{Binding CommitRenameCommand}"/>
                                                 <KeyBinding Gesture="Escape" Command="{Binding CancelRenameCommand}"/>
