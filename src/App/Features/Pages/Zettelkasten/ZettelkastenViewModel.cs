@@ -10,7 +10,6 @@ using Misa.Contract.Common.Results;
 using Misa.Contract.Items;
 using Misa.Contract.Items.Components.Zettelkasten;
 using Misa.Ui.Avalonia.Common.Mappings;
-using Misa.Ui.Avalonia.Features.Utilities.Toast;
 using Misa.Ui.Avalonia.Infrastructure.UI;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Zettelkasten;
@@ -70,6 +69,57 @@ public sealed partial class ZettelkastenViewModel : ViewModelBase
 
     [ObservableProperty] private KnowledgeIndexNodeVm? _selectedNode;
     [ObservableProperty] private string _breadcrumbPath = string.Empty;
+    [ObservableProperty] private string _searchQuery    = string.Empty;
+
+    internal bool SuppressExpansionPersistence { get; private set; }
+
+    partial void OnSearchQueryChanged(string value)
+    {
+        var q = value.Trim();
+        if (string.IsNullOrEmpty(q))
+            ClearFilter();
+        else
+            ApplyFilter(q);
+    }
+
+    private void ApplyFilter(string query)
+    {
+        SuppressExpansionPersistence = true;
+        foreach (var node in KnowledgeIndex)
+            SetNodeVisibility(node, query);
+        SuppressExpansionPersistence = false;
+    }
+
+    // Returns true when this node or any descendant is visible.
+    private static bool SetNodeVisibility(KnowledgeIndexNodeVm node, string query)
+    {
+        bool titleMatch  = node.Title.Contains(query, StringComparison.OrdinalIgnoreCase);
+        bool childMatch  = false;
+        foreach (var child in node.Children)
+            childMatch |= SetNodeVisibility(child, query);
+
+        node.IsSearchMatch = titleMatch;
+        node.IsVisible     = titleMatch || childMatch;
+
+        if (childMatch && !node.IsExpanded)
+            node.IsExpanded = true;
+
+        return node.IsVisible;
+    }
+
+    private void ClearFilter()
+    {
+        foreach (var node in KnowledgeIndex)
+            ClearNodeFilter(node);
+    }
+
+    private static void ClearNodeFilter(KnowledgeIndexNodeVm node)
+    {
+        node.IsSearchMatch = false;
+        node.IsVisible     = true;
+        foreach (var child in node.Children)
+            ClearNodeFilter(child);
+    }
 
     [ObservableProperty] private ViewModelBase _zettelVm;
 
@@ -171,6 +221,9 @@ public sealed partial class ZettelkastenViewModel : ViewModelBase
             KnowledgeIndex.Clear();
             foreach (var dto in index)
                 KnowledgeIndex.Add(ToNodeVm(dto));
+
+            var q = SearchQuery.Trim();
+            if (!string.IsNullOrEmpty(q)) ApplyFilter(q);
 
             // First load: restore last-selected from settings.
             if (!_selectionRestored)

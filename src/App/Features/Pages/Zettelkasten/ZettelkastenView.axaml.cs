@@ -43,6 +43,7 @@ public partial class ZettelkastenView : UserControl
         if (e.Source is not TreeViewItem { DataContext: KnowledgeIndexNodeVm node }) return;
         if (node.IsPendingCreation) return;
         if (DataContext is not ZettelkastenViewModel vm) return;
+        if (vm.SuppressExpansionPersistence) return;
 
         var isExpanded = e.RoutedEvent == TreeViewItem.ExpandedEvent;
         await vm.SetExpandedStateAsync(node.Id, isExpanded);
