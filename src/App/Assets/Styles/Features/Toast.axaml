@@ -43,6 +43,21 @@
         <Setter Property="Margin"       Value="0,4,0,0" />
     </Style>
 
+    <!-- ── Undo button ───────────────────────────────────────────────────── -->
+    <Style Selector="Button.toast-undo">
+        <Setter Property="Padding"    Value="4,2" />
+        <Setter Property="Margin"     Value="8,0,0,0" />
+        <Setter Property="FontSize"   Value="12" />
+        <Setter Property="Foreground" Value="{StaticResource BrushAccent}" />
+
+        <Style Selector="^:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource BrushHoverOverlay}" />
+        </Style>
+        <Style Selector="^:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource BrushPressedOverlay}" />
+        </Style>
+    </Style>
+
     <!-- ── Close button ──────────────────────────────────────────────────── -->
     <!--
         toast-close — small dismiss button in the toast corner.

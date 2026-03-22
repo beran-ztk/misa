@@ -104,7 +104,7 @@ public partial class LayerProxy(
     // ── Action toast (top-center — transient user feedback) ───────────────
     // At most one item is shown at a time; a new call replaces the current one.
 
-    public void ShowActionToast(string title, ToastType type = ToastType.Info, int durationMs = 3000)
+    public void ShowActionToast(string title, ToastType type = ToastType.Info, int durationMs = 3000, Action? undo = null)
     {
         var toasts = toastHost.ActionToasts;
 
@@ -113,7 +113,7 @@ public partial class LayerProxy(
             existing.Dismiss();
 
         ToastViewModel? vm = null;
-        vm = new ToastViewModel(title, null, () => toasts.Remove(vm!), type, durationMs);
+        vm = new ToastViewModel(title, null, () => toasts.Remove(vm!), type, durationMs, undo);
         toasts.Add(vm);
     }
 
