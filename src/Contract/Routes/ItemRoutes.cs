@@ -13,6 +13,10 @@ public class ItemRoutes
     public const string RenameItem = "items/{itemId:guid}/title";
     public static string RenameItemUrl(Guid itemId) => $"items/{itemId}/title";
 
+    // Knowledge subtree batch operations
+    public const string DeleteKnowledgeSubtree  = "items/knowledge-subtree";
+    public const string RestoreKnowledgeSubtree = "items/knowledge-subtree/restore";
+
     // Delete (soft)
     public const string DeleteItem = "items/{itemId:guid}";
     public static string DeleteItemRequest(Guid itemId) => $"items/{itemId}";

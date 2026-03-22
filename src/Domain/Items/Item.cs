@@ -242,6 +242,12 @@ public sealed class Item : DomainEventEntity
         KnowledgeIndex!.SetExpanded(isExpanded);
     }
 
+    public void RelocateKnowledgeIndexToRoot(DateTimeOffset nowUtc)
+    {
+        KnowledgeIndex!.SetParentId(null);
+        Touch(nowUtc);
+    }
+
     public void ChangeScheduleMisfirePolicy(ScheduleMisfirePolicy policy, DateTimeOffset nowUtc)
     {
         ScheduleExtension!.ChangeMisfirePolicy(policy);

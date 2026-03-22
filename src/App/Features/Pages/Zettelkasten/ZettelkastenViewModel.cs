@@ -10,6 +10,7 @@ using Misa.Contract.Common.Results;
 using Misa.Contract.Items;
 using Misa.Contract.Items.Components.Zettelkasten;
 using Misa.Ui.Avalonia.Common.Mappings;
+using Misa.Ui.Avalonia.Features.Utilities.Toast;
 using Misa.Ui.Avalonia.Infrastructure.UI;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Zettelkasten;
@@ -29,8 +30,8 @@ public sealed partial class ZettelkastenViewModel : ViewModelBase
     [RelayCommand]
     private async Task DeleteSelectedItemAsync()
     {
-        if (SelectedNode is null || SelectedNode.IsPendingCreation) return;
-        await ConfirmAndDeleteAsync(SelectedNode.Id, SelectedNode.Title);
+        if (SelectedNode is null || SelectedNode.IsPendingCreation || SelectedNode.IsRenaming) return;
+        await ConfirmAndDeleteAsync(SelectedNode);
     }
 
     [RelayCommand]
@@ -38,15 +39,29 @@ public sealed partial class ZettelkastenViewModel : ViewModelBase
     {
         var node = FindNode(id, KnowledgeIndex);
         if (node is null) return;
-        await ConfirmAndDeleteAsync(node.Id, node.Title);
+        await ConfirmAndDeleteAsync(node);
     }
 
-    private async Task ConfirmAndDeleteAsync(Guid id, string title)
+    private async Task ConfirmAndDeleteAsync(KnowledgeIndexNodeVm rootNode)
     {
-        var formVm = new DeleteKnowledgeItemViewModel(id, title, Gateway);
+        var ids = CollectSubtreeIds(rootNode);
+
+        var formVm = new DeleteKnowledgeItemViewModel(ids.ToArray(), Gateway);
         var result = await _layerProxy.OpenAsync<DeleteKnowledgeItemViewModel, Result>(formVm, LayerPresentation.Modal);
-        if (result is { IsSuccess: true })
-            await LoadIndexAsync();
+
+        if (result is not { IsSuccess: true }) return;
+
+        await LoadIndexAsync();
+    }
+
+    private static List<Guid> CollectSubtreeIds(KnowledgeIndexNodeVm node)
+    {
+        var ids = new List<Guid>();
+        if (!node.IsPendingCreation)
+            ids.Add(node.Id);
+        foreach (var child in node.Children)
+            ids.AddRange(CollectSubtreeIds(child));
+        return ids;
     }
 
     [ObservableProperty] private KnowledgeIndexNodeVm? _selectedNode;
