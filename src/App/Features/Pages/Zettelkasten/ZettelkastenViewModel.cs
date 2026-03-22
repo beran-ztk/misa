@@ -65,10 +65,14 @@ public sealed partial class ZettelkastenViewModel : ViewModelBase
     }
 
     [ObservableProperty] private KnowledgeIndexNodeVm? _selectedNode;
-    
+    [ObservableProperty] private string _breadcrumbPath = string.Empty;
+
     [ObservableProperty] private ViewModelBase _zettelVm;
 
     [ObservableProperty] private bool _hasZettelSelected;
+
+    private readonly ZettelkastenSettings _settings = ZettelkastenSettings.Load();
+    private bool _selectionRestored;
 
     public ZettelkastenViewModel(ZettelkastenGateway gateway, LayerProxy layerProxy)
     {
@@ -76,14 +80,51 @@ public sealed partial class ZettelkastenViewModel : ViewModelBase
         _layerProxy = layerProxy;
         ZettelVm = new ZettelViewModel(Gateway);
     }
+
     partial void OnSelectedNodeChanged(KnowledgeIndexNodeVm? value)
     {
-        if (value is null || value.IsPendingCreation || value.Workflow != WorkflowDto.Zettel)
+        BreadcrumbPath = value is not null ? BuildBreadcrumb(value) : string.Empty;
+
+        if (value is not null && !value.IsPendingCreation)
         {
-            return;
+            _settings.LastSelectedItemId = value.Id;
+            _settings.Save();
         }
-        
+
+        if (value is null || value.IsPendingCreation || value.Workflow != WorkflowDto.Zettel)
+            return;
+
         _ = LoadZettelAsync(value.Id);
+    }
+
+    private string BuildBreadcrumb(KnowledgeIndexNodeVm node)
+    {
+        var parts = new System.Collections.Generic.List<string> { node.Title };
+        var parentId = node.ParentId;
+        while (parentId.HasValue)
+        {
+            var parent = FindNode(parentId.Value, KnowledgeIndex);
+            if (parent is null) break;
+            parts.Insert(0, parent.Title);
+            parentId = parent.ParentId;
+        }
+        return string.Join(" / ", parts);
+    }
+
+    private void EnsureNodeVisible(KnowledgeIndexNodeVm node)
+    {
+        var parentId = node.ParentId;
+        while (parentId.HasValue)
+        {
+            var parent = FindNode(parentId.Value, KnowledgeIndex);
+            if (parent is null) break;
+            if (!parent.IsExpanded)
+            {
+                parent.IsExpanded = true;
+                _ = SetExpandedStateAsync(parent.Id, true);
+            }
+            parentId = parent.ParentId;
+        }
     }
 
     private async Task LoadZettelAsync(Guid id)
@@ -124,6 +165,17 @@ public sealed partial class ZettelkastenViewModel : ViewModelBase
             KnowledgeIndex.Clear();
             foreach (var dto in index)
                 KnowledgeIndex.Add(ToNodeVm(dto));
+
+            if (!_selectionRestored && _settings.LastSelectedItemId.HasValue)
+            {
+                _selectionRestored = true;
+                var node = FindNode(_settings.LastSelectedItemId.Value, KnowledgeIndex);
+                if (node is not null)
+                {
+                    EnsureNodeVisible(node);
+                    SelectedNode = node;
+                }
+            }
         });
     }
 

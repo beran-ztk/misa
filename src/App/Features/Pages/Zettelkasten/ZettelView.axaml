@@ -10,19 +10,34 @@
              x:Class="Misa.Ui.Avalonia.Features.Pages.Zettelkasten.ZettelView"
              x:DataType="root:ZettelViewModel">
 
-    <Grid RowDefinitions="Auto,*">
+    <Grid RowDefinitions="Auto,Auto,*">
 
-        <!-- Title -->
-        <TextBlock Grid.Row="0"
-                   Text="{Binding Title}"
-                   Margin="50,40,24,16"
-                   FontSize="{StaticResource FontSizeXLarge}"
-                   FontWeight="SemiBold"
-                   Opacity="0.9"
-                   Foreground="{StaticResource BrushTextPrimary}"
-                   TextWrapping="Wrap"/>
+        <!-- Title row: dirty indicator + title -->
+        <Grid Grid.Row="0" ColumnDefinitions="Auto,*" Margin="50,16,24,0">
+            <Ellipse Grid.Column="0"
+                     Width="6" Height="6"
+                     Fill="{StaticResource BrushAccent}"
+                     VerticalAlignment="Center"
+                     Margin="0,4,10,0"
+                     IsVisible="{Binding IsDirty}"/>
+            <TextBlock Grid.Column="1"
+                       Text="{Binding Title}"
+                       FontSize="{StaticResource FontSizeXLarge}"
+                       FontWeight="SemiBold"
+                       Opacity="0.9"
+                       Foreground="{StaticResource BrushTextPrimary}"
+                       TextWrapping="Wrap"/>
+        </Grid>
 
-        <ScrollViewer Grid.Row="1"
+        <!-- Timestamps -->
+        <TextBlock Grid.Row="1"
+                   Text="{Binding MetadataLine}"
+                   Margin="50,6,24,12"
+                   FontSize="{StaticResource FontSizeSmall}"
+                   Opacity="0.4"
+                   Foreground="{StaticResource BrushTextPrimary}"/>
+
+        <ScrollViewer Grid.Row="2"
                       VerticalScrollBarVisibility="Auto"
                       HorizontalScrollBarVisibility="Disabled">
             <StackPanel>
