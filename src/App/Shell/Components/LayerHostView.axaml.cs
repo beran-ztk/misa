@@ -34,6 +34,10 @@ public partial class LayerHostView : UserControl
         var first = this.GetVisualDescendants()
             .OfType<TextBox>()
             .FirstOrDefault(t => t.IsEffectivelyVisible && t.IsEffectivelyEnabled && t.IsHitTestVisible);
-        first?.Focus();
+
+        if (first is not null)
+            first.Focus();
+        else
+            Focus(); // no input field — focus the host so Ctrl+Enter / Escape KeyBindings fire
     }
 }
