@@ -50,7 +50,7 @@ public partial class KnowledgeIndexNodeVm : ObservableObject
     // ── Commands ──────────────────────────────────────────────────────────────
 
     [RelayCommand]
-    private async Task BeginRenaming()
+    private void BeginRenaming()
     {
         IsRenaming = true;
         EditTitle = Title;
@@ -65,6 +65,8 @@ public partial class KnowledgeIndexNodeVm : ObservableObject
             
         await _onRename.Invoke(Id, EditTitle.Trim());
     }
+    [RelayCommand] private async Task CancelRename() => IsRenaming = false;
+    
     [RelayCommand]
     private async Task CommitCreation()
     {

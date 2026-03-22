@@ -17,6 +17,12 @@ public sealed partial class ZettelkastenViewModel : ViewModelBase
     public ObservableCollection<KnowledgeIndexNodeVm> KnowledgeIndex { get; } = [];
     private ZettelkastenGateway Gateway { get; }
 
+    [RelayCommand]
+    private void BeginRenameSelectedItem()
+    {
+        SelectedNode?.BeginRenamingCommand.Execute(null);
+    }
+
     [ObservableProperty] private KnowledgeIndexNodeVm? _selectedNode;
     
     [ObservableProperty] private ViewModelBase _zettelVm;
