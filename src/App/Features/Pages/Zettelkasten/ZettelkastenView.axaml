@@ -252,12 +252,23 @@
         <GridSplitter Grid.Column="1"
                       Background="{StaticResource BrushBorder}"/>
 
-        <Panel Grid.Column="2"
-               Background="{StaticResource BrushPrimaryBackgroundLight}">
+        <Grid Grid.Column="2"
+              RowDefinitions="Auto,*"
+              Background="{StaticResource BrushPrimaryBackgroundLight}">
+
+            <!-- Breadcrumb -->
+            <TextBlock Grid.Row="0"
+                       Text="{Binding BreadcrumbPath}"
+                       IsVisible="{Binding HasZettelSelected}"
+                       Margin="50,14,24,0"
+                       FontSize="{StaticResource FontSizeSmall}"
+                       Opacity="0.4"
+                       Foreground="{StaticResource BrushTextPrimary}"
+                       TextTrimming="CharacterEllipsis"/>
 
             <!-- Zettel content view -->
-            <ContentControl Content="{Binding ZettelVm}" IsVisible="{Binding HasZettelSelected}"/>
+            <ContentControl Grid.Row="1" Content="{Binding ZettelVm}" IsVisible="{Binding HasZettelSelected}"/>
 
-        </Panel>
+        </Grid>
     </Grid>
 </UserControl>
