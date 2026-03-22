@@ -147,6 +147,36 @@ public sealed partial class ZettelkastenViewModel : ViewModelBase
         return vm;
     }
 
+    // ── Drag-and-drop ─────────────────────────────────────────────────────────
+
+    public async Task MoveItemAsync(Guid sourceId, Guid targetParentId)
+    {
+        if (sourceId == targetParentId) return;
+
+        var source = FindNode(sourceId, KnowledgeIndex);
+        var target = FindNode(targetParentId, KnowledgeIndex);
+
+        if (source is null || target is null) return;
+        if (target.Workflow != WorkflowDto.Topic) return;
+        if (source.ParentId == targetParentId) return;        // already a child of this topic
+        if (IsInSubtree(targetParentId, source)) return;      // target is inside source's subtree
+
+        var result = await Gateway.ReparentItemAsync(sourceId, targetParentId);
+        if (result.IsSuccess)
+            await LoadIndexAsync();
+    }
+
+    // Returns true when candidateId lives anywhere in the subtree rooted at node.
+    private static bool IsInSubtree(Guid candidateId, KnowledgeIndexNodeVm node)
+    {
+        foreach (var child in node.Children)
+        {
+            if (!child.IsPendingCreation && child.Id == candidateId) return true;
+            if (IsInSubtree(candidateId, child)) return true;
+        }
+        return false;
+    }
+
     // ── Index item actions ────────────────────────────────────────────────────
 
     [RelayCommand]

@@ -15,4 +15,7 @@ public static class ZettelkastenRoutes
 
     public const string SetKnowledgeIndexExpanded = "items/zettelkasten/{itemId:guid}/expanded";
     public static string SetKnowledgeIndexExpandedUrl(Guid itemId) => $"items/zettelkasten/{itemId}/expanded";
+
+    public const string ReparentKnowledgeItem = "items/zettelkasten/{itemId:guid}/parent";
+    public static string ReparentKnowledgeItemUrl(Guid itemId) => $"items/zettelkasten/{itemId}/parent";
 }

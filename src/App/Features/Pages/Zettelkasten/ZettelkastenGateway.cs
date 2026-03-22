@@ -141,6 +141,23 @@ public sealed class ZettelkastenGateway(RemoteProxy remoteProxy)
         return response;
     }
 
+    public async Task<Result> ReparentItemAsync(Guid itemId, Guid newParentId)
+    {
+        var response = await remoteProxy.SendAsync(
+            requestFactory: () => new HttpRequestMessage(HttpMethod.Patch, ZettelkastenRoutes.ReparentKnowledgeItemUrl(itemId))
+            {
+                Content = JsonContent.Create(new ReparentKnowledgeItemRequest(newParentId))
+            },
+            retry: new RetryOptions
+            {
+                MaxAttempts = 3,
+                Delay = TimeSpan.FromMilliseconds(500)
+            },
+            cancellationToken: CancellationToken.None);
+
+        return response;
+    }
+
     public async Task<Result> SetKnowledgeIndexExpandedStateAsync(Guid id, bool isExpanded)
     {
         var response = await remoteProxy.SendAsync(

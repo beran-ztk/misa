@@ -248,6 +248,12 @@ public sealed class Item : DomainEventEntity
         Touch(nowUtc);
     }
 
+    public void ReparentKnowledgeIndex(ItemId newParentId, DateTimeOffset nowUtc)
+    {
+        KnowledgeIndex!.SetParentId(newParentId);
+        Touch(nowUtc);
+    }
+
     public void ChangeScheduleMisfirePolicy(ScheduleMisfirePolicy policy, DateTimeOffset nowUtc)
     {
         ScheduleExtension!.ChangeMisfirePolicy(policy);
