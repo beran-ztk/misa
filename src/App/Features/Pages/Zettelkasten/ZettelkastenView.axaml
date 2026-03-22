@@ -119,13 +119,23 @@
                                                        ConverterParameter=Zettel}"/>
                                         </Grid>
 
-                                        <!-- Title -->
-                                        <TextBlock Grid.Column="1"
-                                                   IsVisible="{Binding !IsRenaming}"
-                                                   Text="{Binding Title}"
-                                                   Opacity="0.8"
-                                                   VerticalAlignment="Center"
-                                                   TextTrimming="CharacterEllipsis"/>
+                                        <!-- Title + child count -->
+                                        <Grid Grid.Column="1"
+                                              IsVisible="{Binding !IsRenaming}"
+                                              ColumnDefinitions="*,Auto"
+                                              VerticalAlignment="Center">
+                                            <TextBlock Grid.Column="0"
+                                                       Text="{Binding Title}"
+                                                       Opacity="0.8"
+                                                       TextTrimming="CharacterEllipsis"/>
+                                            <TextBlock Grid.Column="1"
+                                                       Text="{Binding ChildCount}"
+                                                       IsVisible="{Binding HasChildren}"
+                                                       Opacity="0.35"
+                                                       FontSize="{StaticResource FontSizeSmall}"
+                                                       VerticalAlignment="Center"
+                                                       Margin="5,0,0,0"/>
+                                        </Grid>
                                         <TextBox Grid.Column="1"
                                                  IsVisible="{Binding IsRenaming}"
                                                  Text="{Binding EditTitle}"
