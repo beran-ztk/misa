@@ -3,14 +3,16 @@
         xmlns:base="clr-namespace:Misa.Ui.Avalonia.Shell.Base"
         x:Class="Misa.Ui.Avalonia.Shell.Base.ShellWindow"
         x:DataType="base:ShellWindowViewModel"
-        Icon="/Assets/Icons/Shell/App/nanoparticle.png"
+        Icon="/Assets/Icons/Shell/App/notebook.png"
         Title="Misa"
         MinWidth="900"
         MinHeight="400"
         WindowStartupLocation="CenterScreen"
         ExtendClientAreaToDecorationsHint="True"
         ExtendClientAreaChromeHints="NoChrome">
-
+    
+    <!-- https://www.flaticon.com/free-icon/book_3794883?related_id=3794883 -->
+    
     <Window.KeyBindings>
         <!-- Utility -->
         <KeyBinding Gesture="Ctrl+N"     Command="{Binding UtilityNavigation.ToggleNotificationsCommand}"/>

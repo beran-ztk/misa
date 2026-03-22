@@ -19,7 +19,8 @@
             <Setter Property="CornerRadius"   Value="{StaticResource CornerRadiusButtons}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="BorderBrush"    Value="{StaticResource BrushBorder}"/>
-            <Setter Property="Background"     Value="{StaticResource BrushPrimaryBackgroundLighter}"/>
+            <Setter Property="Background"     Value="Transparent"/>
+            <Setter Property="Padding"     Value="10,0"/>
         </Style>
         <Style Selector="Button.header-user:pointerover /template/ ContentPresenter">
             <Setter Property="Background"  Value="{StaticResource BrushPrimaryBackgroundLighter}"/>
@@ -99,12 +100,12 @@
         <Grid ColumnDefinitions="*, Auto, Auto"
               VerticalAlignment="Stretch">
 
-            <!-- Left: Title -->
-            <TextBlock Text="MISA"
-                       FontSize="18"
-                       FontWeight="SemiBold"
-                       Opacity="0.8"
-                       VerticalAlignment="Center"/>
+            <!-- Left: App icon -->
+            <Image Source="/Assets/Icons/Shell/App/notebook.png"
+                   Height="22"
+                   HorizontalAlignment="Left"
+                   VerticalAlignment="Center"
+                   RenderOptions.BitmapInterpolationMode="HighQuality"/>
 
             <!-- Centre-right: User button -->
             <StackPanel Grid.Column="1"
@@ -158,7 +159,7 @@
                     <!-- Button content: status dot + username -->
                     <StackPanel Orientation="Horizontal"
                                 Spacing="7"
-                                Margin="10,5">
+                                Margin="0,5">
                         <Ellipse Width="7" Height="7"
                                  Fill="{StaticResource BrushAccent}"
                                  Opacity="0.75"
@@ -175,7 +176,8 @@
             <!-- Far right: Window controls -->
             <StackPanel Grid.Column="2"
                         Orientation="Horizontal"
-                        VerticalAlignment="Stretch">
+                        VerticalAlignment="Stretch"
+                        Margin="15,0,0,0">
 
                 <Button Classes="wnd-ctrl"
                         Click="OnMinimizeClick">

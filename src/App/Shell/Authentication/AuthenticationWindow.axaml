@@ -3,13 +3,18 @@
         x:Class="Misa.Ui.Avalonia.Shell.Authentication.AuthenticationWindow"
         xmlns:authentication="clr-namespace:Misa.Ui.Avalonia.Shell.Authentication"
         x:DataType="authentication:AuthenticationWindowViewModel"
+        Icon="/Assets/Icons/Shell/App/notebook.png"
         Width="900"
-        Height="600"
+        Height="640"
         MinWidth="720"
-        MinHeight="520"
+        MinHeight="560"
         WindowStartupLocation="CenterScreen"
-        CanResize="False">
+        CanResize="False"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaChromeHints="NoChrome">
 
+    <!-- https://www.flaticon.com/free-icon/book_3794883?related_id=3794883 -->
+    
     <Window.KeyBindings>
         <KeyBinding Gesture="Escape" Command="{Binding CloseCommand}"/>
         <KeyBinding Gesture="Ctrl+B" Command="{Binding BypassCommand}"/>
@@ -64,6 +69,36 @@
             </Style>
         </Style>
 
+        <!-- Window control buttons — mirrors HeaderView -->
+        <Style Selector="Button.wnd-ctrl">
+            <Setter Property="Foreground"        Value="{StaticResource BrushTextSecondary}"/>
+            <Setter Property="Padding"           Value="0"/>
+            <Setter Property="Width"             Value="46"/>
+            <Setter Property="VerticalAlignment" Value="Stretch"/>
+            <Setter Property="FontSize"          Value="13"/>
+            <Style Selector="^ /template/ ContentPresenter">
+                <Setter Property="CornerRadius" Value="0"/>
+            </Style>
+            <Style Selector="^:pointerover">
+                <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
+            </Style>
+            <Style Selector="^:pointerover /template/ ContentPresenter">
+                <Setter Property="Background" Value="{StaticResource BrushPressedOverlay}"/>
+            </Style>
+            <Style Selector="^:pressed /template/ ContentPresenter">
+                <Setter Property="Background" Value="#26FFFFFF"/>
+            </Style>
+        </Style>
+        <Style Selector="Button.wnd-ctrl.close:pointerover">
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+        <Style Selector="Button.wnd-ctrl.close:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#C42B1C"/>
+        </Style>
+        <Style Selector="Button.wnd-ctrl.close:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="#B01E10"/>
+        </Style>
+
         <!-- De-emphasised dev/bypass button -->
         <Style Selector="Button.auth-bypass">
             <Setter Property="Foreground" Value="{StaticResource BrushTextFaded}"/>
@@ -83,11 +118,45 @@
 
     </Window.Styles>
 
-    <!-- Deepest background so card has clear depth -->
-    <Grid Background="{StaticResource BrushPrimaryBackground}">
+    <Grid RowDefinitions="40,*"
+          Background="{StaticResource BrushPrimaryBackground}">
+
+        <!-- Custom header — mirrors HeaderView chrome -->
+        <Border Grid.Row="0"
+                Background="{StaticResource BrushPrimaryBackground}"
+                BorderThickness="0,0,0,1"
+                BorderBrush="{StaticResource BrushBorder}"
+                Padding="12,0,0,0"
+                PointerPressed="OnHeaderPointerPressed">
+            <Grid ColumnDefinitions="*,Auto"
+                  VerticalAlignment="Stretch">
+
+                <!-- Left: App icon -->
+                <Image Source="/Assets/Icons/Shell/App/notebook.png"
+                       Height="22"
+                       HorizontalAlignment="Left"
+                       VerticalAlignment="Center"
+                       RenderOptions.BitmapInterpolationMode="HighQuality"/>
+
+                <!-- Right: Window controls (minimize + close; no maximize on fixed-size window) -->
+                <StackPanel Grid.Column="1"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Stretch">
+                    <Button Classes="wnd-ctrl"
+                            Click="OnMinimizeClick">
+                        <TextBlock Text="&#x2500;" FontSize="13"/>
+                    </Button>
+                    <Button Classes="wnd-ctrl close"
+                            Click="OnCloseClick">
+                        <TextBlock Text="&#x2715;" FontSize="13"/>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
 
         <!-- Centered auth card -->
-        <Border Background="{StaticResource BrushPrimaryBackgroundLight}"
+        <Border Grid.Row="1"
+                Background="{StaticResource BrushPrimaryBackgroundLight}"
                 BorderBrush="{StaticResource BrushBorder}"
                 BorderThickness="1"
                 CornerRadius="8"
