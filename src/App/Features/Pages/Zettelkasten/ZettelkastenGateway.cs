@@ -5,6 +5,7 @@ using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Misa.Contract.Common.Results;
+using Misa.Contract.Items;
 using Misa.Contract.Items.Components.Zettelkasten;
 using Misa.Contract.Routes;
 using Misa.Ui.Avalonia.Infrastructure.Client.RemoteProxy;
@@ -13,6 +14,54 @@ namespace Misa.Ui.Avalonia.Features.Pages.Zettelkasten;
 
 public sealed class ZettelkastenGateway(RemoteProxy remoteProxy)
 {
+    public async Task<Result> DeleteSubtreeAsync(Guid[] ids)
+    {
+        var response = await remoteProxy.SendAsync(
+            requestFactory: () => new HttpRequestMessage(HttpMethod.Delete, ItemRoutes.DeleteKnowledgeSubtree)
+            {
+                Content = JsonContent.Create(new BatchDeleteKnowledgeSubtreeRequest(ids))
+            },
+            retry: new RetryOptions
+            {
+                MaxAttempts = 3,
+                Delay = TimeSpan.FromMilliseconds(500)
+            },
+            cancellationToken: CancellationToken.None);
+
+        return response;
+    }
+
+    public async Task<Result> DeleteItemAsync(Guid itemId)
+    {
+        var response = await remoteProxy.SendAsync(
+            requestFactory: () => new HttpRequestMessage(HttpMethod.Delete, ItemRoutes.DeleteItemRequest(itemId)),
+            retry: new RetryOptions
+            {
+                MaxAttempts = 3,
+                Delay = TimeSpan.FromMilliseconds(500)
+            },
+            cancellationToken: CancellationToken.None);
+
+        return response;
+    }
+
+    public async Task<Result> RenameItemAsync(Guid itemId, RenameItemRequest requestBody)
+    {
+        var response = await remoteProxy.SendAsync(
+            requestFactory: () => new HttpRequestMessage(HttpMethod.Patch, ItemRoutes.RenameItemUrl(itemId))
+            {
+                Content = JsonContent.Create(requestBody)
+            },
+            retry: new RetryOptions
+            {
+                MaxAttempts = 3,
+                Delay = TimeSpan.FromMilliseconds(500)
+            },
+            cancellationToken: CancellationToken.None);
+
+        return response;
+    }
+
     public async Task<Result> CreateZettelAsync(CreateZettelRequest requestBody)
     {
         var response = await remoteProxy.SendAsync(
@@ -87,6 +136,56 @@ public sealed class ZettelkastenGateway(RemoteProxy remoteProxy)
                 MaxAttempts = 3,
                 Delay = TimeSpan.FromMilliseconds(500)
             },
+            cancellationToken: CancellationToken.None);
+
+        return response;
+    }
+
+    public async Task<Result> ReparentItemAsync(Guid itemId, Guid newParentId)
+    {
+        var response = await remoteProxy.SendAsync(
+            requestFactory: () => new HttpRequestMessage(HttpMethod.Patch, ZettelkastenRoutes.ReparentKnowledgeItemUrl(itemId))
+            {
+                Content = JsonContent.Create(new ReparentKnowledgeItemRequest(newParentId))
+            },
+            retry: new RetryOptions
+            {
+                MaxAttempts = 3,
+                Delay = TimeSpan.FromMilliseconds(500)
+            },
+            cancellationToken: CancellationToken.None);
+
+        return response;
+    }
+
+    public async Task<List<DeletedKnowledgeEntryDto>?> GetDeletedKnowledgeAsync()
+    {
+        var response = await remoteProxy.SendAsync<List<DeletedKnowledgeEntryDto>>(
+            requestFactory: () => new HttpRequestMessage(HttpMethod.Get, ZettelkastenRoutes.GetDeletedKnowledgeIndex),
+            retry: new RetryOptions { MaxAttempts = 3, Delay = TimeSpan.FromMilliseconds(500) },
+            cancellationToken: CancellationToken.None);
+
+        return response.Value;
+    }
+
+    public async Task<Result> RestoreSubtreeAsync(Guid[] ids)
+    {
+        var response = await remoteProxy.SendAsync(
+            requestFactory: () => new HttpRequestMessage(HttpMethod.Post, ItemRoutes.RestoreKnowledgeSubtree)
+            {
+                Content = JsonContent.Create(new RestoreKnowledgeSubtreeRequest(ids))
+            },
+            retry: new RetryOptions { MaxAttempts = 3, Delay = TimeSpan.FromMilliseconds(500) },
+            cancellationToken: CancellationToken.None);
+
+        return response;
+    }
+
+    public async Task<Result> HardDeleteAsync(Guid itemId)
+    {
+        var response = await remoteProxy.SendAsync(
+            requestFactory: () => new HttpRequestMessage(HttpMethod.Delete, ItemRoutes.HardDeleteItemRequest(itemId)),
+            retry: new RetryOptions { MaxAttempts = 3, Delay = TimeSpan.FromMilliseconds(500) },
             cancellationToken: CancellationToken.None);
 
         return response;

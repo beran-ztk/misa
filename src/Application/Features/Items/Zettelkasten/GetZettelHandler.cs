@@ -12,6 +12,6 @@ public sealed class GetZettelHandler(IItemRepository repository)
         var item = await repository.TryGetZettelAsync(query.Id, ct);
         if (item is null) return null;
 
-        return new ZettelDto(item.Id.Value, item.Title, item.ZettelExtension!.Content);
+        return new ZettelDto(item.Id.Value, item.Title, item.ZettelExtension!.Content, item.CreatedAt, item.ModifiedAt);
     }
 }

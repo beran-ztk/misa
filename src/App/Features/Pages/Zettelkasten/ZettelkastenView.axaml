@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Zettelkasten"
              xmlns:converters="clr-namespace:Misa.Ui.Avalonia.Common.Converters"
+             xmlns:behaviors="clr-namespace:Misa.Ui.Avalonia.Common.Behaviors"
              mc:Ignorable="d"
              d:DesignWidth="1100"
              d:DesignHeight="700"
@@ -16,6 +17,33 @@
                 Background="{StaticResource BrushPrimaryBackground}"
                 Padding="0,4">
 
+            <DockPanel>
+
+            <!-- Search + Trash row -->
+            <Grid DockPanel.Dock="Top"
+                  ColumnDefinitions="*,Auto"
+                  Margin="6,2,6,4">
+                <TextBox Grid.Column="0"
+                         Text="{Binding SearchQuery, Mode=TwoWay}"
+                         Watermark="Search…"
+                         Classes="index-search-input">
+                    <TextBox.KeyBindings>
+                        <KeyBinding Gesture="Escape" Command="{Binding ClearSearchAndFocusCommand}"/>
+                    </TextBox.KeyBindings>
+                </TextBox>
+                <Button Grid.Column="1"
+                        Command="{Binding OpenTrashCommand}"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Padding="6,4"
+                        Margin="4,0,0,0"
+                        ToolTip.Tip="Trash"
+                        VerticalAlignment="Center">
+                    <Image Width="13" Height="13" Opacity="0.4"
+                           Source="{SvgImage /Assets/Icons/Common/trash.svg}"/>
+                </Button>
+            </Grid>
+
             <ScrollViewer HorizontalScrollBarVisibility="Disabled"
                           VerticalScrollBarVisibility="Auto"
                           Margin="2,0">
@@ -24,12 +52,45 @@
                           ItemsSource="{Binding KnowledgeIndex}"
                           SelectedItem="{ReflectionBinding SelectedNode, Mode=TwoWay}"
                           FontSize="{StaticResource FontSizeAverage}"
-                          Background="{StaticResource BrushPrimaryBackground}">
+                          Background="{StaticResource BrushPrimaryBackground}"
+                          DragDrop.AllowDrop="True">
 
+                    <TreeView.KeyBindings>
+                        <KeyBinding Gesture="F2"           Command="{Binding BeginRenameSelectedItemCommand}" />
+                        <KeyBinding Gesture="Delete"       Command="{Binding DeleteSelectedItemCommand}" />
+                        <KeyBinding Gesture="Ctrl+Shift+T" Command="{Binding CreateTopicUnderSelectedCommand}" />
+                        <KeyBinding Gesture="Ctrl+Shift+N" Command="{Binding CreateZettelUnderSelectedCommand}" />
+                    </TreeView.KeyBindings>
+                    
                     <TreeView.Styles>
-
                         <Style Selector="TreeViewItem">
                             <Setter Property="IsExpanded" Value="{ReflectionBinding IsExpanded, Mode=TwoWay}" />
+                            <Setter Property="IsVisible"  Value="{ReflectionBinding IsVisible}" />
+                        </Style>
+
+                        <!-- Match highlight -->
+                        <Style Selector="TextBlock.index-title-text.search-match">
+                            <Setter Property="Opacity"     Value="1"/>
+                            <Setter Property="FontWeight"  Value="SemiBold"/>
+                        </Style>
+
+                        <!-- Search input -->
+                        <Style Selector="TextBox.index-search-input">
+                            <Setter Property="Background"      Value="Transparent"/>
+                            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                            <Setter Property="BorderBrush"     Value="{StaticResource BrushBorder}"/>
+                            <Setter Property="Padding"         Value="4,4"/>
+                            <Setter Property="MinHeight"       Value="0"/>
+                            <Setter Property="CornerRadius"    Value="0"/>
+                            <Setter Property="FontSize"        Value="{StaticResource FontSizeAverage}"/>
+                            <Setter Property="CaretBrush"      Value="{StaticResource BrushTextPrimary}"/>
+                        </Style>
+                        <Style Selector="TextBox.index-search-input:focus /template/ Border#PART_BorderElement">
+                            <Setter Property="BorderBrush"     Value="{StaticResource BrushAccent}"/>
+                            <Setter Property="Background"      Value="Transparent"/>
+                        </Style>
+                        <Style Selector="TextBox.index-search-input:pointerover /template/ Border#PART_BorderElement">
+                            <Setter Property="Background"      Value="Transparent"/>
                         </Style>
 
                         <!-- Normal row -->
@@ -38,6 +99,14 @@
                         </Style>
                         <Style Selector="Border.index-entry-row:pointerover">
                             <Setter Property="Background" Value="Transparent"/>
+                        </Style>
+
+                        <!-- Drag-over highlight on valid drop targets -->
+                        <Style Selector="Border.index-entry-row.drag-target">
+                            <Setter Property="Background" Value="{StaticResource BrushHoverOverlay}"/>
+                            <Setter Property="BorderBrush" Value="{StaticResource BrushAccent}"/>
+                            <Setter Property="BorderThickness" Value="1"/>
+                            <Setter Property="CornerRadius" Value="3"/>
                         </Style>
 
                         <!-- Three-dots button: hidden until row is hovered -->
@@ -84,7 +153,9 @@
                     <TreeView.ItemTemplate>
                         <TreeDataTemplate ItemsSource="{Binding Children}">
                             <Panel>
+                                
                                 <Border Classes="index-entry-row"
+                                        Classes.drag-target="{Binding IsDragTarget}"
                                         IsVisible="{Binding IsPendingCreation,
                                             Converter={x:Static converters:BooleanNotConverter.Instance}}">
                                     <Grid ColumnDefinitions="18,*,22" ColumnSpacing="4">
@@ -103,24 +174,49 @@
                                                        ConverterParameter=Zettel}"/>
                                         </Grid>
 
-                                        <!-- Title -->
-                                        <TextBlock Grid.Column="1"
-                                                   Text="{Binding Title}"
-                                                   Opacity="0.8"
-                                                   VerticalAlignment="Center"
-                                                   TextTrimming="CharacterEllipsis"/>
+                                        <!-- Title + child count -->
+                                        <Grid Grid.Column="1"
+                                              IsVisible="{Binding !IsRenaming}"
+                                              ColumnDefinitions="*,Auto"
+                                              VerticalAlignment="Center">
+                                            <TextBlock Grid.Column="0"
+                                                       Classes="index-title-text"
+                                                       Classes.search-match="{Binding IsSearchMatch}"
+                                                       Text="{Binding Title}"
+                                                       Opacity="0.8"
+                                                       TextTrimming="CharacterEllipsis"/>
+                                            <TextBlock Grid.Column="1"
+                                                       Text="{Binding ChildCount}"
+                                                       IsVisible="{Binding HasChildren}"
+                                                       Opacity="0.35"
+                                                       FontSize="{StaticResource FontSizeSmall}"
+                                                       VerticalAlignment="Center"
+                                                       Margin="5,0,0,0"/>
+                                        </Grid>
+                                        <TextBox Grid.Column="1"
+                                                 IsVisible="{Binding IsRenaming}"
+                                                 Text="{Binding EditTitle}"
+                                                 Opacity="0.8"
+                                                 VerticalAlignment="Center"
+                                                 behaviors:FocusWhenVisibleBehavior.FocusOnVisible="{Binding IsRenaming}">
+                                            <TextBox.KeyBindings>
+                                                <KeyBinding Gesture="Enter" Command="{Binding CommitRenameCommand}"/>
+                                                <KeyBinding Gesture="Escape" Command="{Binding CancelRenameCommand}"/>
+                                            </TextBox.KeyBindings>
+                                        </TextBox>
 
                                         <!-- Three-dots action button -->
                                         <Button Grid.Column="2"
                                                 Classes="index-entry-actions"
-                                                VerticalAlignment="Center"
-                                                IsVisible="{Binding Workflow,
-                                                       Converter={x:Static converters:WorkflowEqualConverter.Instance},
-                                                       ConverterParameter=Topic}">
+                                                VerticalAlignment="Center">
                                             <Button.Flyout>
                                                 <MenuFlyout Placement="BottomEdgeAlignedRight">
+                                                    <!-- Create Topic -->
                                                     <MenuItem Command="{Binding $parent[TreeView].((root:ZettelkastenViewModel)DataContext).CreateTopicUnderCommand}"
-                                                              CommandParameter="{Binding Id}">
+                                                              CommandParameter="{Binding Id}"
+                                                              IsVisible="{Binding Workflow,
+                                                       Converter={x:Static converters:WorkflowEqualConverter.Instance},
+                                                       ConverterParameter=Topic}">
                                                         <MenuItem.Header>
                                                             <StackPanel Orientation="Horizontal" Spacing="8">
                                                                 <Image Width="13" Height="13" Opacity="0.6"
@@ -129,13 +225,42 @@
                                                             </StackPanel>
                                                         </MenuItem.Header>
                                                     </MenuItem>
+                                                    
+                                                    <!-- Create Zettel -->
                                                     <MenuItem Command="{Binding $parent[TreeView].((root:ZettelkastenViewModel)DataContext).CreateZettelUnderCommand}"
-                                                              CommandParameter="{Binding Id}">
+                                                              CommandParameter="{Binding Id}"
+                                                              IsVisible="{Binding Workflow,
+                                                       Converter={x:Static converters:WorkflowEqualConverter.Instance},
+                                                       ConverterParameter=Topic}">
                                                         <MenuItem.Header>
                                                             <StackPanel Orientation="Horizontal" Spacing="8">
                                                                 <Image Width="13" Height="13" Opacity="0.6"
                                                                        Source="{SvgImage /Assets/Icons/Shell/Navigation/scroll.svg}"/>
                                                                 <TextBlock Text="New Zettel"/>
+                                                            </StackPanel>
+                                                        </MenuItem.Header>
+                                                    </MenuItem>
+                                                    
+                                                    <!-- Rename -->
+                                                    <MenuItem Command="{Binding BeginRenamingCommand}"
+                                                              CommandParameter="{Binding Id}">
+                                                        <MenuItem.Header>
+                                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                                <Image Width="13" Height="13" Opacity="0.6"
+                                                                       Source="{SvgImage /Assets/Icons/Common/edit.svg}"/>
+                                                                <TextBlock Text="Rename"/>
+                                                            </StackPanel>
+                                                        </MenuItem.Header>
+                                                    </MenuItem>
+
+                                                    <!-- Delete -->
+                                                    <MenuItem Command="{Binding $parent[TreeView].((root:ZettelkastenViewModel)DataContext).DeleteItemCommand}"
+                                                              CommandParameter="{Binding Id}">
+                                                        <MenuItem.Header>
+                                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                                <Image Width="13" Height="13" Opacity="0.6"
+                                                                       Source="{SvgImage /Assets/Icons/Common/trash.svg}"/>
+                                                                <TextBlock Text="Delete"/>
                                                             </StackPanel>
                                                         </MenuItem.Header>
                                                     </MenuItem>
@@ -189,17 +314,29 @@
                 </TreeView>
 
             </ScrollViewer>
+            </DockPanel>
         </Border>
         
         <GridSplitter Grid.Column="1"
                       Background="{StaticResource BrushBorder}"/>
 
-        <Panel Grid.Column="2"
-               Background="{StaticResource BrushPrimaryBackgroundLight}">
+        <Grid Grid.Column="2"
+              RowDefinitions="Auto,*"
+              Background="{StaticResource BrushPrimaryBackgroundLight}">
+
+            <!-- Breadcrumb -->
+            <TextBlock Grid.Row="0"
+                       Text="{Binding BreadcrumbPath}"
+                       IsVisible="{Binding HasZettelSelected}"
+                       Margin="50,14,24,0"
+                       FontSize="{StaticResource FontSizeSmall}"
+                       Opacity="0.4"
+                       Foreground="{StaticResource BrushTextPrimary}"
+                       TextTrimming="CharacterEllipsis"/>
 
             <!-- Zettel content view -->
-            <ContentControl Content="{Binding ZettelVm}" IsVisible="{Binding HasZettelSelected}"/>
+            <ContentControl Grid.Row="1" Content="{Binding ZettelVm}" IsVisible="{Binding HasZettelSelected}"/>
 
-        </Panel>
+        </Grid>
     </Grid>
 </UserControl>

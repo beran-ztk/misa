@@ -39,6 +39,7 @@ public interface IItemRepository
     
     // Zettelkasten
     Task<List<Item>> GetKnowledgeIndexAsync();
+    Task<List<Item>> GetDeletedKnowledgeIndexAsync();
     Task<List<Item>> GetZettelsAsync(Guid? topicId, CancellationToken ct);
     Task<Item?> TryGetZettelAsync(Guid id, CancellationToken ct);
     Task<Item?> TryGetKnowledgeIndexItemAsync(Guid id, CancellationToken ct);
@@ -55,5 +56,6 @@ public interface IItemRepository
     Task<List<ItemRelation>> GetRelationsForItemAsync(Guid itemId, CancellationToken ct);
     Task<ItemRelation?> TryGetRelationAsync(Guid relationId, CancellationToken ct);
     Task DeleteRelationAsync(Guid relationId, CancellationToken ct);
+    Task<bool> RelationExistsAsync(Guid sourceId, Guid targetId, CancellationToken ct);
     Task<List<Item>> GetItemsForLookupAsync(CancellationToken ct);
 }

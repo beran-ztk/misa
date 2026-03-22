@@ -9,7 +9,7 @@
             Classes.toast-warning="{Binding IsWarning}">
 
         <Grid RowDefinitions="Auto,Auto"
-              ColumnDefinitions="*,Auto">
+              ColumnDefinitions="*,Auto,Auto">
 
             <!-- Title row -->
             <TextBlock Grid.Row="0" Grid.Column="0"
@@ -18,13 +18,20 @@
                        VerticalAlignment="Center"/>
 
             <Button Grid.Row="0" Grid.Column="1"
+                    Classes="toast-undo"
+                    IsVisible="{Binding HasUndo}"
+                    Command="{Binding UndoCommand}">
+                <TextBlock Text="Undo" VerticalAlignment="Center"/>
+            </Button>
+
+            <Button Grid.Row="0" Grid.Column="2"
                     Classes="toast-close"
                     Command="{Binding DismissCommand}">
                 <Image Source="{SvgImage /Assets/Icons/Common/cancel.svg}" Width="10" Height="10"/>
             </Button>
 
             <!-- Message row -->
-            <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+            <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3"
                        Classes="toast-message"
                        Text="{Binding Message}"
                        IsVisible="{Binding HasMessage}"/>

@@ -9,8 +9,9 @@ namespace Misa.Ui.Avalonia.Features.Utilities.Toast;
 
 public sealed partial class ToastViewModel : ViewModelBase
 {
-    private readonly Action _dismiss;
-    private readonly int    _durationMs;
+    private readonly Action  _dismiss;
+    private readonly Action? _undo;
+    private readonly int     _durationMs;
 
     // Tracks how many milliseconds have already elapsed across paused segments.
     private double           _accumulatedMs;
@@ -21,16 +22,18 @@ public sealed partial class ToastViewModel : ViewModelBase
     public string?   Message    { get; }
     public ToastType Type       { get; }
     public bool      HasMessage => !string.IsNullOrWhiteSpace(Message);
+    public bool      HasUndo    => _undo is not null;
     public bool      IsInfo     => Type == ToastType.Info;
     public bool      IsSuccess  => Type == ToastType.Success;
     public bool      IsWarning  => Type == ToastType.Warning;
 
-    public ToastViewModel(string title, string? message, Action dismiss, ToastType type = ToastType.Info, int durationMs = 4000)
+    public ToastViewModel(string title, string? message, Action dismiss, ToastType type = ToastType.Info, int durationMs = 4000, Action? undo = null)
     {
         Title       = title;
         Message     = message;
         Type        = type;
         _dismiss    = dismiss;
+        _undo       = undo;
         _durationMs = durationMs;
 
         StartTimer(durationMs);
@@ -81,6 +84,13 @@ public sealed partial class ToastViewModel : ViewModelBase
         {
             // Paused or manually dismissed — nothing to do.
         }
+    }
+
+    [RelayCommand]
+    public void Undo()
+    {
+        _undo?.Invoke();
+        Dismiss();
     }
 
     [RelayCommand]

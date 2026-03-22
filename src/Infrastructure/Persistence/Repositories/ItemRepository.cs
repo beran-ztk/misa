@@ -175,8 +175,19 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
     {
         return await context.Items
             .Include(s => s.KnowledgeIndex)
-            .Where(t => t.OwnerId == user.Id 
-                        && t.Workflow == Workflow.Topic || t.Workflow == Workflow.Zettel)
+            .Where(t => t.OwnerId == user.Id && !t.IsDeleted
+                        && (t.Workflow == Workflow.Topic || t.Workflow == Workflow.Zettel))
+            .AsNoTracking()
+            .ToListAsync();
+    }
+
+    public async Task<List<Item>> GetDeletedKnowledgeIndexAsync()
+    {
+        return await context.Items
+            .Include(s => s.KnowledgeIndex)
+            .Where(t => t.OwnerId == user.Id && t.IsDeleted
+                        && (t.Workflow == Workflow.Topic || t.Workflow == Workflow.Zettel))
+            .OrderByDescending(t => t.ModifiedAt)
             .AsNoTracking()
             .ToListAsync();
     }
@@ -258,8 +269,17 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
             .Include(r => r.SourceItem)
             .Include(r => r.TargetItem)
             .Where(r => r.SourceItemId == id || r.TargetItemId == id)
+            .Where(r => !r.SourceItem!.IsDeleted && !r.TargetItem!.IsDeleted)
             .AsNoTracking()
             .ToListAsync(ct);
+    }
+
+    public async Task<bool> RelationExistsAsync(Guid sourceId, Guid targetId, CancellationToken ct)
+    {
+        var src = new ItemId(sourceId);
+        var tgt = new ItemId(targetId);
+        return await context.ItemRelations
+            .AnyAsync(r => r.SourceItemId == src && r.TargetItemId == tgt, ct);
     }
 
     public async Task<ItemRelation?> TryGetRelationAsync(Guid relationId, CancellationToken ct)

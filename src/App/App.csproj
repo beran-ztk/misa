@@ -143,6 +143,12 @@
       <Compile Update="Features\Pages\Zettelkasten\ZettelView.axaml.cs">
         <DependentUpon>ZettelView.axaml</DependentUpon>
       </Compile>
+      <Compile Update="Features\Pages\Zettelkasten\DeleteKnowledgeItemView.axaml.cs">
+        <DependentUpon>DeleteKnowledgeItemView.axaml</DependentUpon>
+      </Compile>
+      <Compile Update="Features\Pages\Zettelkasten\TrashView.axaml.cs">
+        <DependentUpon>TrashView.axaml</DependentUpon>
+      </Compile>
     </ItemGroup>
 
     <ItemGroup>

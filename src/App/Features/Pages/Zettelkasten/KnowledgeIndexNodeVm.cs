@@ -1,5 +1,6 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -9,16 +10,33 @@ namespace Misa.Ui.Avalonia.Features.Pages.Zettelkasten;
 
 public partial class KnowledgeIndexNodeVm : ObservableObject
 {
+    public KnowledgeIndexNodeVm(Func<Guid, string, Task>? onRename)
+    {
+        _onRename = onRename;
+        Children.CollectionChanged += (_, _) =>
+        {
+            OnPropertyChanged(nameof(ChildCount));
+            OnPropertyChanged(nameof(HasChildren));
+        };
+    }
     // ── Real node data ────────────────────────────────────────────────────────
 
     public Guid Id { get; init; }
     public WorkflowDto Workflow { get; init; }
     public string Title { get; init; } = string.Empty;
+    [ObservableProperty] private string _editTitle = string.Empty;
     public Guid? ParentId { get; init; }
 
     [ObservableProperty] private bool _isExpanded;
+    [ObservableProperty] private bool _isRenaming;
+    [ObservableProperty] private bool _isDragTarget;
+    [ObservableProperty] private bool _isVisible     = true;
+    [ObservableProperty] private bool _isSearchMatch = false;
 
     public ObservableCollection<KnowledgeIndexNodeVm> Children { get; } = [];
+
+    public int  ChildCount  => Children.Count(c => !c.IsPendingCreation);
+    public bool HasChildren => Workflow == WorkflowDto.Topic && ChildCount > 0;
 
     // ── Pending creation state ────────────────────────────────────────────────
 
@@ -28,11 +46,14 @@ public partial class KnowledgeIndexNodeVm : ObservableObject
     [ObservableProperty] private string _pendingTitle = string.Empty;
 
     // Callbacks set by the ViewModel that owns this node
+    private readonly Func<Guid, string, Task>? _onRename;
     private Func<string, Task>? _onCommit;
     private Action? _onCancel;
     private bool _committed;
 
-    internal void SetCallbacks(Func<string, Task> onCommit, Action onCancel)
+    internal void SetCallbacks( 
+        Func<string, Task> onCommit, 
+        Action onCancel)
     {
         _onCommit = onCommit;
         _onCancel = onCancel;
@@ -40,6 +61,24 @@ public partial class KnowledgeIndexNodeVm : ObservableObject
 
     // ── Commands ──────────────────────────────────────────────────────────────
 
+    [RelayCommand]
+    private void BeginRenaming()
+    {
+        IsRenaming = true;
+        EditTitle = Title;
+    }
+    [RelayCommand]
+    private async Task CommitRename()
+    {
+        IsRenaming = false;
+        
+        if (string.IsNullOrWhiteSpace(EditTitle) || _onRename is null)
+            return;
+            
+        await _onRename.Invoke(Id, EditTitle.Trim());
+    }
+    [RelayCommand] private async Task CancelRename() => IsRenaming = false;
+    
     [RelayCommand]
     private async Task CommitCreation()
     {

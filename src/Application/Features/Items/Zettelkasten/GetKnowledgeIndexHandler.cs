@@ -27,8 +27,10 @@ public sealed class GetKnowledgeIndexHandler(IItemRepository repository)
             ))
         );
 
+        var allIds = Entries.Select(e => e.Id).ToHashSet();
+
         var rootEntries = Entries
-            .Where(e => e.ParentId is null)
+            .Where(e => e.ParentId is null || !allIds.Contains(e.ParentId.Value))
             .OrderBy(e => e.Title)
             .ToList();
         
