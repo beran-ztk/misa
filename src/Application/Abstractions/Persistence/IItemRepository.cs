@@ -39,6 +39,7 @@ public interface IItemRepository
     
     // Zettelkasten
     Task<List<Item>> GetKnowledgeIndexAsync();
+    Task<List<Item>> GetDeletedKnowledgeIndexAsync();
     Task<List<Item>> GetZettelsAsync(Guid? topicId, CancellationToken ct);
     Task<Item?> TryGetZettelAsync(Guid id, CancellationToken ct);
     Task<Item?> TryGetKnowledgeIndexItemAsync(Guid id, CancellationToken ct);

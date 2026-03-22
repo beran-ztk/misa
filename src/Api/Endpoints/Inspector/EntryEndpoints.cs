@@ -16,6 +16,7 @@ public static class EntryEndpoints
         endpoints.MapDelete(ItemRoutes.DeleteItem,           Delete);
         endpoints.MapDelete(ItemRoutes.HardDeleteItem,       HardDelete);
         endpoints.MapDelete(ItemRoutes.DeleteKnowledgeSubtree,  DeleteSubtree);
+        endpoints.MapPost(ItemRoutes.RestoreKnowledgeSubtree,   RestoreSubtree);
     }
 
     private static async Task<IResult> Rename(
@@ -64,6 +65,14 @@ public static class EntryEndpoints
         IMessageBus bus)
     {
         await bus.InvokeAsync(new DeleteKnowledgeSubtreeCommand(request.Ids));
+        return Results.Ok();
+    }
+
+    private static async Task<IResult> RestoreSubtree(
+        [FromBody] RestoreKnowledgeSubtreeRequest request,
+        IMessageBus bus)
+    {
+        await bus.InvokeAsync(new RestoreKnowledgeSubtreeCommand(request.Ids));
         return Results.Ok();
     }
 }

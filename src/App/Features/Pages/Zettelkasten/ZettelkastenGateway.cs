@@ -158,6 +158,39 @@ public sealed class ZettelkastenGateway(RemoteProxy remoteProxy)
         return response;
     }
 
+    public async Task<List<DeletedKnowledgeEntryDto>?> GetDeletedKnowledgeAsync()
+    {
+        var response = await remoteProxy.SendAsync<List<DeletedKnowledgeEntryDto>>(
+            requestFactory: () => new HttpRequestMessage(HttpMethod.Get, ZettelkastenRoutes.GetDeletedKnowledgeIndex),
+            retry: new RetryOptions { MaxAttempts = 3, Delay = TimeSpan.FromMilliseconds(500) },
+            cancellationToken: CancellationToken.None);
+
+        return response.Value;
+    }
+
+    public async Task<Result> RestoreSubtreeAsync(Guid[] ids)
+    {
+        var response = await remoteProxy.SendAsync(
+            requestFactory: () => new HttpRequestMessage(HttpMethod.Post, ItemRoutes.RestoreKnowledgeSubtree)
+            {
+                Content = JsonContent.Create(new RestoreKnowledgeSubtreeRequest(ids))
+            },
+            retry: new RetryOptions { MaxAttempts = 3, Delay = TimeSpan.FromMilliseconds(500) },
+            cancellationToken: CancellationToken.None);
+
+        return response;
+    }
+
+    public async Task<Result> HardDeleteAsync(Guid itemId)
+    {
+        var response = await remoteProxy.SendAsync(
+            requestFactory: () => new HttpRequestMessage(HttpMethod.Delete, ItemRoutes.HardDeleteItemRequest(itemId)),
+            retry: new RetryOptions { MaxAttempts = 3, Delay = TimeSpan.FromMilliseconds(500) },
+            cancellationToken: CancellationToken.None);
+
+        return response;
+    }
+
     public async Task<Result> SetKnowledgeIndexExpandedStateAsync(Guid id, bool isExpanded)
     {
         var response = await remoteProxy.SendAsync(

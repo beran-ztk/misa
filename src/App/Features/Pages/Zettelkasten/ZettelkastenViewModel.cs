@@ -204,6 +204,14 @@ public sealed partial class ZettelkastenViewModel : ViewModelBase
         await LoadIndexAsync();
     }
 
+    [RelayCommand]
+    private async Task OpenTrashAsync()
+    {
+        var vm = new TrashViewModel(Gateway);
+        await _layerProxy.OpenAsync<TrashViewModel, Result>(vm, LayerPresentation.Panel);
+        await LoadIndexAsync(); // refresh in case entries were restored
+    }
+
     public async Task SetExpandedStateAsync(Guid id, bool expanded)
     {
         await Gateway.SetKnowledgeIndexExpandedStateAsync(id, expanded);

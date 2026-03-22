@@ -1,0 +1,93 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Zettelkasten"
+             xmlns:converters="clr-namespace:Misa.Ui.Avalonia.Common.Converters"
+             x:Class="Misa.Ui.Avalonia.Features.Pages.Zettelkasten.TrashView"
+             x:DataType="root:TrashViewModel">
+
+    <UserControl.Resources>
+        <converters:NullToBoolConverter x:Key="NullToBool"/>
+    </UserControl.Resources>
+
+    <StackPanel Spacing="0">
+
+        <!-- Loading -->
+        <TextBlock Text="Loading…"
+                   IsVisible="{Binding IsLoading}"
+                   Opacity="0.45"
+                   Margin="0,8,0,0"/>
+
+        <!-- Empty -->
+        <TextBlock Text="Trash is empty."
+                   IsVisible="{Binding IsEmpty}"
+                   Opacity="0.45"
+                   Margin="0,8,0,0"/>
+
+        <!-- List -->
+        <ItemsControl ItemsSource="{Binding Entries}"
+                      IsVisible="{Binding IsLoading,
+                          Converter={x:Static converters:BooleanNotConverter.Instance}}">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate DataType="root:TrashEntryVm">
+                    <Border Padding="0,8"
+                            BorderThickness="0,0,0,1"
+                            BorderBrush="{StaticResource BrushBorder}">
+                        <Grid ColumnDefinitions="16,*,Auto,Auto" ColumnSpacing="8">
+
+                            <!-- Workflow icon -->
+                            <Grid Grid.Column="0" VerticalAlignment="Center">
+                                <Image Width="13" Height="13" Opacity="0.45"
+                                       Source="{SvgImage /Assets/Icons/Common/folder.svg}"
+                                       IsVisible="{Binding Workflow,
+                                           Converter={x:Static converters:WorkflowEqualConverter.Instance},
+                                           ConverterParameter=Topic}"/>
+                                <Image Width="13" Height="13" Opacity="0.45"
+                                       Source="{SvgImage /Assets/Icons/Shell/Navigation/scroll.svg}"
+                                       IsVisible="{Binding Workflow,
+                                           Converter={x:Static converters:WorkflowEqualConverter.Instance},
+                                           ConverterParameter=Zettel}"/>
+                            </Grid>
+
+                            <!-- Title + location -->
+                            <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding Title}"
+                                           Opacity="0.85"
+                                           TextTrimming="CharacterEllipsis"/>
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <TextBlock Text="{Binding LocationDisplay}"
+                                               FontSize="{StaticResource FontSizeSmall}"
+                                               Opacity="0.4"/>
+                                    <TextBlock Text="{Binding DeletedAtDisplay}"
+                                               FontSize="{StaticResource FontSizeSmall}"
+                                               Opacity="0.35"
+                                               IsVisible="{Binding DeletedAt,
+                                                   Converter={StaticResource NullToBool}}"/>
+                                </StackPanel>
+                            </StackPanel>
+
+                            <!-- Restore -->
+                            <Button Grid.Column="2"
+                                    Command="{Binding $parent[ItemsControl].((root:TrashViewModel)DataContext).RestoreEntryCommand}"
+                                    CommandParameter="{Binding}"
+                                    VerticalAlignment="Center"
+                                    Padding="8,4"
+                                    Content="Restore"/>
+
+                            <!-- Permanent delete -->
+                            <Button Grid.Column="3"
+                                    Command="{Binding $parent[ItemsControl].((root:TrashViewModel)DataContext).HardDeleteEntryCommand}"
+                                    CommandParameter="{Binding}"
+                                    VerticalAlignment="Center"
+                                    Padding="8,4"
+                                    Opacity="0.55"
+                                    Content="Delete"/>
+
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+    </StackPanel>
+
+</UserControl>

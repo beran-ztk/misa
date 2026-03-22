@@ -181,6 +181,17 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
             .ToListAsync();
     }
 
+    public async Task<List<Item>> GetDeletedKnowledgeIndexAsync()
+    {
+        return await context.Items
+            .Include(s => s.KnowledgeIndex)
+            .Where(t => t.OwnerId == user.Id && t.IsDeleted
+                        && (t.Workflow == Workflow.Topic || t.Workflow == Workflow.Zettel))
+            .OrderByDescending(t => t.ModifiedAt)
+            .AsNoTracking()
+            .ToListAsync();
+    }
+
     public async Task<List<Item>> GetZettelsAsync(Guid? topicId, CancellationToken ct)
     {
         var query = context.Items

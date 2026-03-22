@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
 using Misa.Application.Features.Items.Zettelkasten;
 using Misa.Contract.Items.Components.Zettelkasten;
@@ -11,7 +12,8 @@ public static class ZettelkastenEndpoints
     public static void Map(IEndpointRouteBuilder api)
     {
         api.MapPost(ZettelkastenRoutes.CreateTopic, CreateTopic);
-        api.MapGet(ZettelkastenRoutes.GetKnowledgeIndex, GetZettelkasten);
+        api.MapGet(ZettelkastenRoutes.GetKnowledgeIndex,        GetZettelkasten);
+        api.MapGet(ZettelkastenRoutes.GetDeletedKnowledgeIndex, GetDeletedKnowledgeIndex);
         
         api.MapPost(ZettelkastenRoutes.CreateZettel, CreateZettel);
         api.MapGet(ZettelkastenRoutes.GetZettel, GetSingle);
@@ -23,8 +25,13 @@ public static class ZettelkastenEndpoints
     private static async Task<IResult> GetZettelkasten(IMessageBus bus, CancellationToken ct)
     {
         var result = await bus.InvokeAsync<List<KnowledgeIndexEntryDto>>(new GetKnowledgeIndexQuery(), ct);
-        var httpResponse = Results.Ok(result);
-        return httpResponse;
+        return Results.Ok(result);
+    }
+
+    private static async Task<IResult> GetDeletedKnowledgeIndex(IMessageBus bus, CancellationToken ct)
+    {
+        var result = await bus.InvokeAsync<List<DeletedKnowledgeEntryDto>>(new GetDeletedKnowledgeIndexQuery(), ct);
+        return Results.Ok(result);
     }
     private static async Task<IResult> CreateTopic(
         [FromBody] CreateTopicRequest request,
