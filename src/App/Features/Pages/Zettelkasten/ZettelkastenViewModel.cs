@@ -20,10 +20,33 @@ public sealed partial class ZettelkastenViewModel : ViewModelBase
     private ZettelkastenGateway Gateway { get; }
     private readonly LayerProxy _layerProxy;
 
+    internal Action? RequestTreeFocus { get; set; }
+
     [RelayCommand]
     private void BeginRenameSelectedItem()
     {
         SelectedNode?.BeginRenamingCommand.Execute(null);
+    }
+
+    [RelayCommand]
+    private void CreateTopicUnderSelected()
+    {
+        if (SelectedNode is null || SelectedNode.Workflow != WorkflowDto.Topic) return;
+        CreateTopicUnder(SelectedNode.Id);
+    }
+
+    [RelayCommand]
+    private void CreateZettelUnderSelected()
+    {
+        if (SelectedNode is null || SelectedNode.Workflow != WorkflowDto.Topic) return;
+        CreateZettelUnder(SelectedNode.Id);
+    }
+
+    [RelayCommand]
+    private void ClearSearchAndFocus()
+    {
+        SearchQuery = string.Empty;
+        RequestTreeFocus?.Invoke();
     }
 
     [RelayCommand]
@@ -258,6 +281,8 @@ public sealed partial class ZettelkastenViewModel : ViewModelBase
                 if (node is not null) { EnsureNodeVisible(node); SelectedNode = node; }
                 else                 { SelectedNode = null; HasZettelSelected = false; }
             }
+
+            RequestTreeFocus?.Invoke();
         });
     }
 

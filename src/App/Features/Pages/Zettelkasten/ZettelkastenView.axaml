@@ -26,7 +26,11 @@
                 <TextBox Grid.Column="0"
                          Text="{Binding SearchQuery, Mode=TwoWay}"
                          Watermark="Search…"
-                         Classes="index-search-input"/>
+                         Classes="index-search-input">
+                    <TextBox.KeyBindings>
+                        <KeyBinding Gesture="Escape" Command="{Binding ClearSearchAndFocusCommand}"/>
+                    </TextBox.KeyBindings>
+                </TextBox>
                 <Button Grid.Column="1"
                         Command="{Binding OpenTrashCommand}"
                         Background="Transparent"
@@ -52,8 +56,10 @@
                           DragDrop.AllowDrop="True">
 
                     <TreeView.KeyBindings>
-                        <KeyBinding Gesture="F2"     Command="{Binding BeginRenameSelectedItemCommand}" />
-                        <KeyBinding Gesture="Delete" Command="{Binding DeleteSelectedItemCommand}" />
+                        <KeyBinding Gesture="F2"           Command="{Binding BeginRenameSelectedItemCommand}" />
+                        <KeyBinding Gesture="Delete"       Command="{Binding DeleteSelectedItemCommand}" />
+                        <KeyBinding Gesture="Ctrl+Shift+T" Command="{Binding CreateTopicUnderSelectedCommand}" />
+                        <KeyBinding Gesture="Ctrl+Shift+N" Command="{Binding CreateZettelUnderSelectedCommand}" />
                     </TreeView.KeyBindings>
                     
                     <TreeView.Styles>

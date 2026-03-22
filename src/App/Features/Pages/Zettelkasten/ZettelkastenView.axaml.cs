@@ -3,6 +3,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Misa.Contract.Items;
 
@@ -21,6 +22,15 @@ public partial class ZettelkastenView : UserControl
     public ZettelkastenView()
     {
         InitializeComponent();
+
+        DataContextChanged += (_, _) =>
+        {
+            if (DataContext is ZettelkastenViewModel vm)
+                vm.RequestTreeFocus = () =>
+                    Dispatcher.UIThread.Post(
+                        () => KnowledgeIndexTree.Focus(),
+                        DispatcherPriority.Input);
+        };
 
         KnowledgeIndexTree.AddHandler(TreeViewItem.ExpandedEvent,  ExpansionStateChanged);
         KnowledgeIndexTree.AddHandler(TreeViewItem.CollapsedEvent, ExpansionStateChanged);
