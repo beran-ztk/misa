@@ -23,6 +23,7 @@ public partial class KnowledgeIndexNodeVm : ObservableObject
 
     [ObservableProperty] private bool _isExpanded;
     [ObservableProperty] private bool _isRenaming;
+    [ObservableProperty] private bool _isDragTarget;
 
     public ObservableCollection<KnowledgeIndexNodeVm> Children { get; } = [];
 

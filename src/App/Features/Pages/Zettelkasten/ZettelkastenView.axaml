@@ -25,7 +25,8 @@
                           ItemsSource="{Binding KnowledgeIndex}"
                           SelectedItem="{ReflectionBinding SelectedNode, Mode=TwoWay}"
                           FontSize="{StaticResource FontSizeAverage}"
-                          Background="{StaticResource BrushPrimaryBackground}">
+                          Background="{StaticResource BrushPrimaryBackground}"
+                          DragDrop.AllowDrop="True">
 
                     <TreeView.KeyBindings>
                         <KeyBinding Gesture="F2"     Command="{Binding BeginRenameSelectedItemCommand}" />
@@ -43,6 +44,14 @@
                         </Style>
                         <Style Selector="Border.index-entry-row:pointerover">
                             <Setter Property="Background" Value="Transparent"/>
+                        </Style>
+
+                        <!-- Drag-over highlight on valid drop targets -->
+                        <Style Selector="Border.index-entry-row.drag-target">
+                            <Setter Property="Background" Value="{StaticResource BrushHoverOverlay}"/>
+                            <Setter Property="BorderBrush" Value="{StaticResource BrushAccent}"/>
+                            <Setter Property="BorderThickness" Value="1"/>
+                            <Setter Property="CornerRadius" Value="3"/>
                         </Style>
 
                         <!-- Three-dots button: hidden until row is hovered -->
@@ -91,6 +100,7 @@
                             <Panel>
                                 
                                 <Border Classes="index-entry-row"
+                                        Classes.drag-target="{Binding IsDragTarget}"
                                         IsVisible="{Binding IsPendingCreation,
                                             Converter={x:Static converters:BooleanNotConverter.Instance}}">
                                     <Grid ColumnDefinitions="18,*,22" ColumnSpacing="4">
