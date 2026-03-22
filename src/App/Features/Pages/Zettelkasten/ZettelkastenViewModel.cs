@@ -51,6 +51,10 @@ public sealed partial class ZettelkastenViewModel : ViewModelBase
 
         if (result is not { IsSuccess: true }) return;
 
+        // After delete: prefer parent, then an adjacent sibling.
+        _reloadTargetId   = rootNode.ParentId;
+        _reloadFallbackId = FindAdjacentSiblingId(rootNode);
+
         await LoadIndexAsync();
     }
 
@@ -72,7 +76,9 @@ public sealed partial class ZettelkastenViewModel : ViewModelBase
     [ObservableProperty] private bool _hasZettelSelected;
 
     private readonly ZettelkastenSettings _settings = ZettelkastenSettings.Load();
-    private bool _selectionRestored;
+    private bool  _selectionRestored;
+    private Guid? _reloadTargetId;
+    private Guid? _reloadFallbackId;
 
     public ZettelkastenViewModel(ZettelkastenGateway gateway, LayerProxy layerProxy)
     {
@@ -166,15 +172,30 @@ public sealed partial class ZettelkastenViewModel : ViewModelBase
             foreach (var dto in index)
                 KnowledgeIndex.Add(ToNodeVm(dto));
 
-            if (!_selectionRestored && _settings.LastSelectedItemId.HasValue)
+            // First load: restore last-selected from settings.
+            if (!_selectionRestored)
             {
                 _selectionRestored = true;
-                var node = FindNode(_settings.LastSelectedItemId.Value, KnowledgeIndex);
-                if (node is not null)
+                if (_settings.LastSelectedItemId.HasValue)
                 {
-                    EnsureNodeVisible(node);
-                    SelectedNode = node;
+                    var node = FindNode(_settings.LastSelectedItemId.Value, KnowledgeIndex);
+                    if (node is not null) { EnsureNodeVisible(node); SelectedNode = node; }
                 }
+                return;
+            }
+
+            // Subsequent reloads: restore explicitly requested target.
+            var targetId   = _reloadTargetId;
+            var fallbackId = _reloadFallbackId;
+            _reloadTargetId   = null;
+            _reloadFallbackId = null;
+
+            if (targetId.HasValue)
+            {
+                var node = FindNode(targetId.Value, KnowledgeIndex)
+                        ?? (fallbackId.HasValue ? FindNode(fallbackId.Value, KnowledgeIndex) : null);
+                if (node is not null) { EnsureNodeVisible(node); SelectedNode = node; }
+                else                 { SelectedNode = null; HasZettelSelected = false; }
             }
         });
     }
@@ -183,9 +204,12 @@ public sealed partial class ZettelkastenViewModel : ViewModelBase
     {
         var vm = new KnowledgeIndexNodeVm(async (id, title) =>
         {
+            _reloadTargetId = id;
             var result = await Gateway.RenameItemAsync(id, new RenameItemRequest(title));
             if (result.IsSuccess)
                 await LoadIndexAsync();
+            else
+                _reloadTargetId = null;
         })
         {
             Id         = dto.Id,
@@ -213,9 +237,12 @@ public sealed partial class ZettelkastenViewModel : ViewModelBase
         if (source.ParentId == targetParentId) return;        // already a child of this topic
         if (IsInSubtree(targetParentId, source)) return;      // target is inside source's subtree
 
+        _reloadTargetId = sourceId;
         var result = await Gateway.ReparentItemAsync(sourceId, targetParentId);
         if (result.IsSuccess)
             await LoadIndexAsync();
+        else
+            _reloadTargetId = null;
     }
 
     // Returns true when candidateId lives anywhere in the subtree rooted at node.
@@ -280,6 +307,21 @@ public sealed partial class ZettelkastenViewModel : ViewModelBase
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
+
+    // Returns the ID of the sibling adjacent to node, preferring the one before it.
+    private Guid? FindAdjacentSiblingId(KnowledgeIndexNodeVm node)
+    {
+        IEnumerable<KnowledgeIndexNodeVm> siblings = node.ParentId.HasValue
+            ? FindNode(node.ParentId.Value, KnowledgeIndex)?.Children ?? []
+            : KnowledgeIndex;
+
+        var list = siblings.Where(c => !c.IsPendingCreation).ToList();
+        var idx  = list.IndexOf(node);
+        if (idx < 0) return null;
+        if (idx > 0)              return list[idx - 1].Id;
+        if (idx < list.Count - 1) return list[idx + 1].Id;
+        return null;
+    }
 
     private static KnowledgeIndexNodeVm? FindNode(
         Guid id, IEnumerable<KnowledgeIndexNodeVm> nodes)

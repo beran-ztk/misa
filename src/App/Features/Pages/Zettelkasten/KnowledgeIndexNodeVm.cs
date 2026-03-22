@@ -1,5 +1,6 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -12,6 +13,11 @@ public partial class KnowledgeIndexNodeVm : ObservableObject
     public KnowledgeIndexNodeVm(Func<Guid, string, Task>? onRename)
     {
         _onRename = onRename;
+        Children.CollectionChanged += (_, _) =>
+        {
+            OnPropertyChanged(nameof(ChildCount));
+            OnPropertyChanged(nameof(HasChildren));
+        };
     }
     // ── Real node data ────────────────────────────────────────────────────────
 
@@ -26,6 +32,9 @@ public partial class KnowledgeIndexNodeVm : ObservableObject
     [ObservableProperty] private bool _isDragTarget;
 
     public ObservableCollection<KnowledgeIndexNodeVm> Children { get; } = [];
+
+    public int  ChildCount  => Children.Count(c => !c.IsPendingCreation);
+    public bool HasChildren => Workflow == WorkflowDto.Topic && ChildCount > 0;
 
     // ── Pending creation state ────────────────────────────────────────────────
 
