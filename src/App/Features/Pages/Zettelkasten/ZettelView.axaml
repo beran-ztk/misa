@@ -37,7 +37,12 @@
                                   LineNumbersForeground="{StaticResource BrushTextFaded}"
                                   FontFamily="Cascadia Code"
                                   FontSize="{StaticResource FontSizeMedium}"/>
-                <Border Height="200"/>
+                <Border Height="100"/>
+                <Border BorderThickness="0,1,0,0"
+                        BorderBrush="{StaticResource BrushBorder}"
+                        Margin="30,0"
+                        Opacity="0.9"
+                        Height="100"/>
             </StackPanel>
         </ScrollViewer>
 

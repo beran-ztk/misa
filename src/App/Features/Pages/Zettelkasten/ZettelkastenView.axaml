@@ -27,7 +27,10 @@
                           Background="{StaticResource BrushPrimaryBackground}">
 
                     <TreeView.Styles>
-
+                        <TreeView.KeyBindings>
+                            <KeyBinding Gesture="F2"  Command="{Binding CommitCreationCommand}"/>
+                        </TreeView.KeyBindings>
+                        
                         <Style Selector="TreeViewItem">
                             <Setter Property="IsExpanded" Value="{ReflectionBinding IsExpanded, Mode=TwoWay}" />
                         </Style>

@@ -28,18 +28,28 @@ public partial class KnowledgeIndexNodeVm : ObservableObject
     [ObservableProperty] private string _pendingTitle = string.Empty;
 
     // Callbacks set by the ViewModel that owns this node
+    private Func<Guid, string, Task>? _onRename;
     private Func<string, Task>? _onCommit;
     private Action? _onCancel;
     private bool _committed;
 
-    internal void SetCallbacks(Func<string, Task> onCommit, Action onCancel)
+    internal void SetCallbacks(
+        Func<Guid, string, Task> onRename, 
+        Func<string, Task> onCommit, 
+        Action onCancel)
     {
+        _onRename = onRename;
         _onCommit = onCommit;
         _onCancel = onCancel;
     }
 
     // ── Commands ──────────────────────────────────────────────────────────────
 
+    [RelayCommand]
+    private async Task Rename()
+    {
+        
+    }
     [RelayCommand]
     private async Task CommitCreation()
     {

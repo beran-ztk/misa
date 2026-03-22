@@ -15,7 +15,7 @@ namespace Misa.Ui.Avalonia.Features.Pages.Zettelkasten;
 public sealed partial class ZettelkastenViewModel : ViewModelBase
 {
     public ObservableCollection<KnowledgeIndexNodeVm> KnowledgeIndex { get; } = [];
-    private ZettelkastenGateway _gateway { get; init; }
+    private ZettelkastenGateway Gateway { get; }
 
     [ObservableProperty] private KnowledgeIndexNodeVm? _selectedNode;
     
@@ -25,8 +25,8 @@ public sealed partial class ZettelkastenViewModel : ViewModelBase
 
     public ZettelkastenViewModel(ZettelkastenGateway gateway)
     {
-        _gateway = gateway;
-        ZettelVm = new ZettelViewModel(_gateway);
+        Gateway = gateway;
+        ZettelVm = new ZettelViewModel(Gateway);
     }
     partial void OnSelectedNodeChanged(KnowledgeIndexNodeVm? value)
     {
@@ -40,7 +40,7 @@ public sealed partial class ZettelkastenViewModel : ViewModelBase
 
     private async Task LoadZettelAsync(Guid id)
     {
-        var dto = await _gateway.GetZettelAsync(id);
+        var dto = await Gateway.GetZettelAsync(id);
         if (dto is null || ZettelVm is not ZettelViewModel vm) return;
         HasZettelSelected = true;
         vm.Load(dto);
@@ -61,14 +61,14 @@ public sealed partial class ZettelkastenViewModel : ViewModelBase
 
     public async Task SetExpandedStateAsync(Guid id, bool expanded)
     {
-        await _gateway.SetKnowledgeIndexExpandedStateAsync(id, expanded);
+        await Gateway.SetKnowledgeIndexExpandedStateAsync(id, expanded);
     }
 
     // ── Tree loading ──────────────────────────────────────────────────────────
 
     private async Task LoadIndexAsync()
     {
-        var index = await _gateway.GetKnowledgeIndexAsync();
+        var index = await Gateway.GetKnowledgeIndexAsync();
         if (index is null) return;
 
         await Dispatcher.UIThread.InvokeAsync(() =>
@@ -121,11 +121,17 @@ public sealed partial class ZettelkastenViewModel : ViewModelBase
         };
 
         pending.SetCallbacks(
+            onRename: async (id, title) =>
+            {
+                var result = Gateway.RenameItem(new RenameItemRequest(id, title));
+                if (result.IsSuccess)
+                    await LoadIndexAsync();
+            },
             onCommit: async title =>
             {
                 var result = workflow == WorkflowDto.Topic
-                    ? await _gateway.CreateTopicAsync(new CreateTopicRequest(title, parentId))
-                    : await _gateway.CreateZettelAsync(new CreateZettelRequest(title, parentId));
+                    ? await Gateway.CreateTopicAsync(new CreateTopicRequest(title, parentId))
+                    : await Gateway.CreateZettelAsync(new CreateZettelRequest(title, parentId));
 
                 if (result.IsSuccess)
                     await LoadIndexAsync();
