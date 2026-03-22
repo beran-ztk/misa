@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Zettelkasten"
              xmlns:converters="clr-namespace:Misa.Ui.Avalonia.Common.Converters"
+             xmlns:behaviors="clr-namespace:Misa.Ui.Avalonia.Common.Behaviors"
              mc:Ignorable="d"
              d:DesignWidth="1100"
              d:DesignHeight="700"
@@ -118,7 +119,8 @@
                                                  IsVisible="{Binding IsRenaming}"
                                                  Text="{Binding EditTitle}"
                                                  Opacity="0.8"
-                                                 VerticalAlignment="Center">
+                                                 VerticalAlignment="Center"
+                                                 behaviors:FocusWhenVisibleBehavior.Enabled="{Binding IsRenaming}">
                                             <TextBox.KeyBindings>
                                                 <KeyBinding Gesture="Enter" Command="{Binding CommitRenameCommand}"/>
                                                 <KeyBinding Gesture="Escape" Command="{Binding CancelRenameCommand}"/>
