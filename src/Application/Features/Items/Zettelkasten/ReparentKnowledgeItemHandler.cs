@@ -11,7 +11,7 @@ public sealed class ReparentKnowledgeItemHandler(IItemRepository repository, ITi
 {
     public async Task HandleAsync(ReparentKnowledgeItemCommand command)
     {
-        var item = await repository.TryGetItemAsync(command.ItemId);
+        var item = await repository.TryGetKnowledgeIndexItemAsync(command.ItemId, CancellationToken.None);
         if (item is null)
             throw new DomainNotFoundException("Item not found", "");
 

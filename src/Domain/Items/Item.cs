@@ -242,12 +242,6 @@ public sealed class Item : DomainEventEntity
         KnowledgeIndex!.SetExpanded(isExpanded);
     }
 
-    public void RelocateKnowledgeIndexToRoot(DateTimeOffset nowUtc)
-    {
-        KnowledgeIndex!.SetParentId(null);
-        Touch(nowUtc);
-    }
-
     public void ReparentKnowledgeIndex(ItemId newParentId, DateTimeOffset nowUtc)
     {
         KnowledgeIndex!.SetParentId(newParentId);
