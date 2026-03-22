@@ -6,9 +6,11 @@ using System.Threading.Tasks;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Misa.Contract.Common.Results;
 using Misa.Contract.Items;
 using Misa.Contract.Items.Components.Zettelkasten;
 using Misa.Ui.Avalonia.Common.Mappings;
+using Misa.Ui.Avalonia.Infrastructure.UI;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Zettelkasten;
 
@@ -16,11 +18,35 @@ public sealed partial class ZettelkastenViewModel : ViewModelBase
 {
     public ObservableCollection<KnowledgeIndexNodeVm> KnowledgeIndex { get; } = [];
     private ZettelkastenGateway Gateway { get; }
+    private readonly LayerProxy _layerProxy;
 
     [RelayCommand]
     private void BeginRenameSelectedItem()
     {
         SelectedNode?.BeginRenamingCommand.Execute(null);
+    }
+
+    [RelayCommand]
+    private async Task DeleteSelectedItemAsync()
+    {
+        if (SelectedNode is null || SelectedNode.IsPendingCreation) return;
+        await ConfirmAndDeleteAsync(SelectedNode.Id, SelectedNode.Title);
+    }
+
+    [RelayCommand]
+    private async Task DeleteItemAsync(Guid id)
+    {
+        var node = FindNode(id, KnowledgeIndex);
+        if (node is null) return;
+        await ConfirmAndDeleteAsync(node.Id, node.Title);
+    }
+
+    private async Task ConfirmAndDeleteAsync(Guid id, string title)
+    {
+        var formVm = new DeleteKnowledgeItemViewModel(id, title, Gateway);
+        var result = await _layerProxy.OpenAsync<DeleteKnowledgeItemViewModel, Result>(formVm, LayerPresentation.Modal);
+        if (result is { IsSuccess: true })
+            await LoadIndexAsync();
     }
 
     [ObservableProperty] private KnowledgeIndexNodeVm? _selectedNode;
@@ -29,9 +55,10 @@ public sealed partial class ZettelkastenViewModel : ViewModelBase
 
     [ObservableProperty] private bool _hasZettelSelected;
 
-    public ZettelkastenViewModel(ZettelkastenGateway gateway)
+    public ZettelkastenViewModel(ZettelkastenGateway gateway, LayerProxy layerProxy)
     {
         Gateway = gateway;
+        _layerProxy = layerProxy;
         ZettelVm = new ZettelViewModel(Gateway);
     }
     partial void OnSelectedNodeChanged(KnowledgeIndexNodeVm? value)

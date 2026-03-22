@@ -28,7 +28,8 @@
                           Background="{StaticResource BrushPrimaryBackground}">
 
                     <TreeView.KeyBindings>
-                        <KeyBinding Gesture="F2" Command="{Binding BeginRenameSelectedItemCommand}" />
+                        <KeyBinding Gesture="F2"     Command="{Binding BeginRenameSelectedItemCommand}" />
+                        <KeyBinding Gesture="Delete" Command="{Binding DeleteSelectedItemCommand}" />
                     </TreeView.KeyBindings>
                     
                     <TreeView.Styles>
@@ -171,6 +172,18 @@
                                                                 <Image Width="13" Height="13" Opacity="0.6"
                                                                        Source="{SvgImage /Assets/Icons/Common/edit.svg}"/>
                                                                 <TextBlock Text="Rename"/>
+                                                            </StackPanel>
+                                                        </MenuItem.Header>
+                                                    </MenuItem>
+
+                                                    <!-- Delete -->
+                                                    <MenuItem Command="{Binding $parent[TreeView].((root:ZettelkastenViewModel)DataContext).DeleteItemCommand}"
+                                                              CommandParameter="{Binding Id}">
+                                                        <MenuItem.Header>
+                                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                                <Image Width="13" Height="13" Opacity="0.6"
+                                                                       Source="{SvgImage /Assets/Icons/Common/trash.svg}"/>
+                                                                <TextBlock Text="Delete"/>
                                                             </StackPanel>
                                                         </MenuItem.Header>
                                                     </MenuItem>

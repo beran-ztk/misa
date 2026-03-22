@@ -14,6 +14,20 @@ namespace Misa.Ui.Avalonia.Features.Pages.Zettelkasten;
 
 public sealed class ZettelkastenGateway(RemoteProxy remoteProxy)
 {
+    public async Task<Result> DeleteItemAsync(Guid itemId)
+    {
+        var response = await remoteProxy.SendAsync(
+            requestFactory: () => new HttpRequestMessage(HttpMethod.Delete, ItemRoutes.DeleteItemRequest(itemId)),
+            retry: new RetryOptions
+            {
+                MaxAttempts = 3,
+                Delay = TimeSpan.FromMilliseconds(500)
+            },
+            cancellationToken: CancellationToken.None);
+
+        return response;
+    }
+
     public async Task<Result> RenameItemAsync(Guid itemId, RenameItemRequest requestBody)
     {
         var response = await remoteProxy.SendAsync(
