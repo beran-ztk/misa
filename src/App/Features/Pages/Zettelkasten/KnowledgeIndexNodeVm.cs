@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
@@ -19,44 +20,70 @@ public partial class KnowledgeIndexNodeVm : ObservableObject
             OnPropertyChanged(nameof(HasChildren));
         };
     }
-    // ── Real node data ────────────────────────────────────────────────────────
 
-    public Guid Id { get; init; }
-    public WorkflowDto Workflow { get; init; }
-    public string Title { get; init; } = string.Empty;
-    [ObservableProperty] private string _editTitle = string.Empty;
-    public Guid? ParentId { get; init; }
+    // ── Core data ─────────────────────────────────────────────────────────────
 
-    [ObservableProperty] private bool _isExpanded;
-    [ObservableProperty] private bool _isRenaming;
-    [ObservableProperty] private bool _isDragTarget;
-    [ObservableProperty] private bool _isVisible     = true;
-    [ObservableProperty] private bool _isSearchMatch = false;
+    public Guid          Id        { get; init; }
+    public WorkflowDto   Workflow  { get; init; }
+    public string        Title     { get; init; } = string.Empty;
+    public Guid?         ParentId  { get; init; }
+
+    /// <summary>Non-null only for nodes built from the deleted-items list.</summary>
+    public DateTimeOffset? DeletedAt { get; init; }
+
+    public string DeletedAtDisplay =>
+        DeletedAt?.LocalDateTime.ToString("MMM d, yyyy") ?? string.Empty;
+
+    // ── UI state ──────────────────────────────────────────────────────────────
+
+    [ObservableProperty] private string _editTitle    = string.Empty;
+    [ObservableProperty] private bool   _isExpanded;
+    [ObservableProperty] private bool   _isRenaming;
+    [ObservableProperty] private bool   _isDragTarget;
+    [ObservableProperty] private bool   _isVisible     = true;
+    [ObservableProperty] private bool   _isSearchMatch = false;
+
+    // ── Children ──────────────────────────────────────────────────────────────
 
     public ObservableCollection<KnowledgeIndexNodeVm> Children { get; } = [];
 
     public int  ChildCount  => Children.Count(c => !c.IsPendingCreation);
     public bool HasChildren => Workflow == WorkflowDto.Topic && ChildCount > 0;
 
-    // ── Pending creation state ────────────────────────────────────────────────
+    // ── Pending creation (main tree only) ─────────────────────────────────────
 
-    public bool IsPendingCreation { get; init; }
-    public WorkflowDto PendingWorkflow { get; init; }
+    public bool        IsPendingCreation { get; init; }
+    public WorkflowDto PendingWorkflow   { get; init; }
 
     [ObservableProperty] private string _pendingTitle = string.Empty;
 
-    // Callbacks set by the ViewModel that owns this node
+    // ── Rename callbacks ──────────────────────────────────────────────────────
+
     private readonly Func<Guid, string, Task>? _onRename;
     private Func<string, Task>? _onCommit;
-    private Action? _onCancel;
-    private bool _committed;
+    private Action?             _onCancel;
+    private bool                _committed;
 
-    internal void SetCallbacks( 
-        Func<string, Task> onCommit, 
-        Action onCancel)
+    internal void SetCallbacks(Func<string, Task> onCommit, Action onCancel)
     {
         _onCommit = onCommit;
         _onCancel = onCancel;
+    }
+
+    // ── Tree utilities ────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Yields this node's ID and the IDs of all its descendants.
+    /// Pending-creation nodes are excluded (they have no real ID).
+    /// </summary>
+    public IEnumerable<Guid> GetSubtreeIds()
+    {
+        if (!IsPendingCreation)
+            yield return Id;
+
+        foreach (var child in Children)
+            foreach (var id in child.GetSubtreeIds())
+                yield return id;
     }
 
     // ── Commands ──────────────────────────────────────────────────────────────
@@ -65,20 +92,23 @@ public partial class KnowledgeIndexNodeVm : ObservableObject
     private void BeginRenaming()
     {
         IsRenaming = true;
-        EditTitle = Title;
+        EditTitle  = Title;
     }
+
     [RelayCommand]
     private async Task CommitRename()
     {
         IsRenaming = false;
-        
+
         if (string.IsNullOrWhiteSpace(EditTitle) || _onRename is null)
             return;
-            
+
         await _onRename.Invoke(Id, EditTitle.Trim());
     }
-    [RelayCommand] private async Task CancelRename() => IsRenaming = false;
-    
+
+    [RelayCommand]
+    private void CancelRename() => IsRenaming = false;
+
     [RelayCommand]
     private async Task CommitCreation()
     {

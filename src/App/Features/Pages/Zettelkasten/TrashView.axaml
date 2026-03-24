@@ -23,13 +23,22 @@
                    Opacity="0.45"
                    Margin="0,8,0,0"/>
 
-        <!-- List -->
-        <ItemsControl ItemsSource="{Binding Entries}"
-                      IsVisible="{Binding IsLoading,
-                          Converter={x:Static converters:BooleanNotConverter.Instance}}">
-            <ItemsControl.ItemTemplate>
-                <DataTemplate DataType="root:TrashEntryVm">
-                    <Border Padding="0,8"
+        <!-- Hierarchical trash tree -->
+        <TreeView x:Name="TrashTree"
+                  ItemsSource="{Binding Entries}"
+                  IsVisible="{Binding IsLoading,
+                      Converter={x:Static converters:BooleanNotConverter.Instance}}">
+
+            <TreeView.Styles>
+                <Style Selector="TreeViewItem">
+                    <Setter Property="IsExpanded" Value="{ReflectionBinding IsExpanded, Mode=TwoWay}"/>
+                </Style>
+            </TreeView.Styles>
+
+            <TreeView.ItemTemplate>
+                <TreeDataTemplate DataType="root:KnowledgeIndexNodeVm"
+                                  ItemsSource="{Binding Children}">
+                    <Border Padding="0,6"
                             BorderThickness="0,0,0,1"
                             BorderBrush="{StaticResource BrushBorder}">
                         <Grid ColumnDefinitions="16,*,Auto,Auto" ColumnSpacing="8">
@@ -48,26 +57,21 @@
                                            ConverterParameter=Zettel}"/>
                             </Grid>
 
-                            <!-- Title + location -->
+                            <!-- Title + deletion date -->
                             <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
                                 <TextBlock Text="{Binding Title}"
                                            Opacity="0.85"
                                            TextTrimming="CharacterEllipsis"/>
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <TextBlock Text="{Binding LocationDisplay}"
-                                               FontSize="{StaticResource FontSizeSmall}"
-                                               Opacity="0.4"/>
-                                    <TextBlock Text="{Binding DeletedAtDisplay}"
-                                               FontSize="{StaticResource FontSizeSmall}"
-                                               Opacity="0.35"
-                                               IsVisible="{Binding DeletedAt,
-                                                   Converter={StaticResource NullToBool}}"/>
-                                </StackPanel>
+                                <TextBlock Text="{Binding DeletedAtDisplay}"
+                                           FontSize="{StaticResource FontSizeSmall}"
+                                           Opacity="0.35"
+                                           IsVisible="{Binding DeletedAt,
+                                               Converter={StaticResource NullToBool}}"/>
                             </StackPanel>
 
                             <!-- Restore -->
                             <Button Grid.Column="2"
-                                    Command="{Binding $parent[ItemsControl].((root:TrashViewModel)DataContext).RestoreEntryCommand}"
+                                    Command="{Binding $parent[TreeView].((root:TrashViewModel)DataContext).RestoreEntryCommand}"
                                     CommandParameter="{Binding}"
                                     VerticalAlignment="Center"
                                     Padding="8,4"
@@ -75,7 +79,7 @@
 
                             <!-- Permanent delete -->
                             <Button Grid.Column="3"
-                                    Command="{Binding $parent[ItemsControl].((root:TrashViewModel)DataContext).HardDeleteEntryCommand}"
+                                    Command="{Binding $parent[TreeView].((root:TrashViewModel)DataContext).HardDeleteEntryCommand}"
                                     CommandParameter="{Binding}"
                                     VerticalAlignment="Center"
                                     Padding="8,4"
@@ -84,9 +88,10 @@
 
                         </Grid>
                     </Border>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
+                </TreeDataTemplate>
+            </TreeView.ItemTemplate>
+
+        </TreeView>
 
     </StackPanel>
 
