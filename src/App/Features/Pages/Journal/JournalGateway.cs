@@ -16,21 +16,15 @@ public class JournalGateway(RemoteProxy remoteProxy)
 {
     public async Task<Result> CreateAsync(CreateJournalRequest requestBody)
     {
-        var response = await remoteProxy.SendAsync(
+        return await remoteProxy.SendAsync(
             requestFactory: () => new HttpRequestMessage(HttpMethod.Post, ChronicleRoutes.CreateJournal)
             {
                 Content = JsonContent.Create(requestBody)
             },
-            retry: new RetryOptions
-            {
-                MaxAttempts = 3,
-                Delay = TimeSpan.FromMilliseconds(500)
-            },
+            retry: RetryOptions.Default,
             cancellationToken: CancellationToken.None);
-
-        return response;
     }
-    
+
     public async Task<IReadOnlyList<ChronicleEntryDto>> GetJournalsForMonthAsync(int year, int month)
     {
         // Use local-time month boundaries so the query matches what the user expects.
@@ -44,11 +38,7 @@ public class JournalGateway(RemoteProxy remoteProxy)
 
         var response = await remoteProxy.SendAsync<List<ChronicleEntryDto>>(
             requestFactory: () => new HttpRequestMessage(HttpMethod.Get, url),
-            retry: new RetryOptions
-            {
-                MaxAttempts = 3,
-                Delay = TimeSpan.FromMilliseconds(500)
-            },
+            retry: RetryOptions.Default,
             cancellationToken: CancellationToken.None);
 
         return response.Value?
@@ -60,32 +50,20 @@ public class JournalGateway(RemoteProxy remoteProxy)
 
     public async Task<Result> UpdateAsync(Guid itemId, UpdateJournalRequest requestBody)
     {
-        var response = await remoteProxy.SendAsync(
+        return await remoteProxy.SendAsync(
             requestFactory: () => new HttpRequestMessage(HttpMethod.Put, ChronicleRoutes.UpdateJournalRequest(itemId))
             {
                 Content = JsonContent.Create(requestBody)
             },
-            retry: new RetryOptions
-            {
-                MaxAttempts = 3,
-                Delay = TimeSpan.FromMilliseconds(500)
-            },
+            retry: RetryOptions.Default,
             cancellationToken: CancellationToken.None);
-
-        return response;
     }
 
     public async Task<Result> DeleteAsync(Guid itemId)
     {
-        var response = await remoteProxy.SendAsync(
+        return await remoteProxy.SendAsync(
             requestFactory: () => new HttpRequestMessage(HttpMethod.Delete, ItemRoutes.DeleteItemRequest(itemId)),
-            retry: new RetryOptions
-            {
-                MaxAttempts = 3,
-                Delay = TimeSpan.FromMilliseconds(500)
-            },
+            retry: RetryOptions.Default,
             cancellationToken: CancellationToken.None);
-
-        return response;
     }
 }

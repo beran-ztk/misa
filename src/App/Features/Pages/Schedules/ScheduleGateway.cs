@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -17,11 +16,7 @@ public sealed class ScheduleGateway(RemoteProxy remoteProxy)
     {
         var response = await remoteProxy.SendAsync<List<ScheduleDto>>(
             requestFactory: () => new HttpRequestMessage(HttpMethod.Get, ScheduleRoutes.GetSchedules),
-            retry: new RetryOptions
-            {
-                MaxAttempts = 3,
-                Delay = TimeSpan.FromMilliseconds(500)
-            },
+            retry: RetryOptions.Default,
             cancellationToken: CancellationToken.None);
 
         return response.Value;
@@ -29,19 +24,12 @@ public sealed class ScheduleGateway(RemoteProxy remoteProxy)
 
     public async Task<Result<ScheduleDto>> CreateAsync(CreateScheduleRequest dto)
     {
-        var response = await remoteProxy.SendAsync<ScheduleDto>(
+        return await remoteProxy.SendAsync<ScheduleDto>(
             requestFactory: () => new HttpRequestMessage(HttpMethod.Post, ScheduleRoutes.CreateSchedule)
             {
                 Content = JsonContent.Create(dto)
             },
-            retry: new RetryOptions
-            {
-                MaxAttempts = 3,
-                Delay = TimeSpan.FromMilliseconds(500)
-            },
+            retry: RetryOptions.Default,
             cancellationToken: CancellationToken.None);
-
-        return response;
     }
-
 }

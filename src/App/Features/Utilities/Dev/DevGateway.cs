@@ -1,4 +1,3 @@
-using System;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Misa.Contract.Common.Results;
@@ -13,23 +12,20 @@ public sealed class DevGateway(RemoteProxy remoteProxy)
     {
         return await remoteProxy.SendAsync(
             requestFactory: () => new HttpRequestMessage(HttpMethod.Post, DevRoutes.SeedData),
-            retry: new RetryOptions { MaxAttempts = 1, Delay = TimeSpan.FromMilliseconds(500) },
-            cancellationToken: default);
+            retry: RetryOptions.None);
     }
 
     public async Task<Result> SeedStressDataAsync()
     {
         return await remoteProxy.SendAsync(
             requestFactory: () => new HttpRequestMessage(HttpMethod.Post, DevRoutes.SeedStressData),
-            retry: new RetryOptions { MaxAttempts = 1, Delay = TimeSpan.FromMilliseconds(500) },
-            cancellationToken: default);
+            retry: RetryOptions.None);
     }
 
     public async Task<Result> DeleteDataAsync()
     {
         return await remoteProxy.SendAsync(
             requestFactory: () => new HttpRequestMessage(HttpMethod.Delete, DevRoutes.DeleteData),
-            retry: new RetryOptions { MaxAttempts = 1, Delay = TimeSpan.FromMilliseconds(500) },
-            cancellationToken: default);
+            retry: RetryOptions.None);
     }
 }
