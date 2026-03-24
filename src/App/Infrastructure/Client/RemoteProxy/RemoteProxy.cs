@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -13,276 +12,203 @@ using Misa.Ui.Avalonia.Infrastructure.States;
 
 namespace Misa.Ui.Avalonia.Infrastructure.Client.RemoteProxy;
 
+/// <summary>
+/// Central HTTP transport layer for the application client.
+/// Responsibilities: authentication, retry with configurable backoff, cancellation,
+/// response deserialization, and structured failure mapping.
+/// All results are returned as <see cref="Result"/> / <see cref="Result{T}"/> — no exceptions escape
+/// except genuine caller cancellation (<see cref="OperationCanceledException"/>).
+/// </summary>
 public sealed class RemoteProxy(HttpClient httpClient, UserState userState, ILogger<RemoteProxy> logger)
 {
-    // Add jwt token to request
-    private HttpRequestMessage AddJwtToken(HttpRequestMessage request)
-    {
-        if (string.IsNullOrWhiteSpace(userState.Token))
-        {
-            return request;
-        }
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
-        logger.LogInformation("Setting jwt token to {UserStateToken}", userState.Token);
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", userState.Token);
-        return request;
-    }
+    // -------------------------------------------------------------------------
+    // Public API
+    // -------------------------------------------------------------------------
 
-    // Check if request should be sent again
-    private static bool ShouldRetry(HttpStatusCode statusCode, int attempt, RetryOptions retry)
-    {
-        if (attempt >= retry.MaxAttempts)
-        {
-            return false;
-        }
-        
-        return statusCode == HttpStatusCode.RequestTimeout 
-               || (int)statusCode >= 500;
-    }
-
-    // Delay before sending request again
-    private static Task DelayBeforeRetryAsync(RetryOptions retry, int attempt, CancellationToken cancellationToken)
-    {
-        var delay = TimeSpan.FromMilliseconds(retry.Delay.TotalMilliseconds * attempt);
-        return Task.Delay(delay, cancellationToken);
-    }
-    
-    // Send request (generic)
-    public async Task<Result<T>> SendAsync<T>(
+    public Task<Result<T>> SendAsync<T>(
         Func<HttpRequestMessage> requestFactory,
         RetryOptions? retry = null,
         CancellationToken cancellationToken = default)
-    {
-        retry ??= RetryOptions.None;
+        => SendCoreAsync(requestFactory, ReadJsonBodyAsync<T>, retry ?? RetryOptions.None, cancellationToken);
 
-        for (var attempt = 1; attempt <= retry.MaxAttempts; attempt++)
-        {
-            try
-            {
-                using var request = AddJwtToken(requestFactory());
-                using var response = await httpClient.SendAsync(request, cancellationToken);
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    if (!ShouldRetry(response.StatusCode, attempt, retry))
-                    {
-                        return await ReadFailure<T>(response);
-                    }
-
-                    await DelayBeforeRetryAsync(retry, attempt, cancellationToken);
-                    continue;
-                }
-
-                if (response.StatusCode == HttpStatusCode.NoContent)
-                {
-                    return Result<T>.Ok(default!);
-                }
-
-                var dto = await response.Content.ReadFromJsonAsync<T>(cancellationToken);
-
-                return dto is null
-                    ? RemoteProxyErrors.EmptyResponse<T>()
-                    : Result<T>.Ok(dto);
-            }
-            catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
-            {
-                if (attempt >= retry.MaxAttempts)
-                {
-                    return RemoteProxyErrors.Timeout<T>(ex.Message);
-                }
-                
-                await DelayBeforeRetryAsync(retry, attempt, cancellationToken);
-            }
-            catch (OperationCanceledException)
-            {
-                // TODO: Aufrufer muss catchen
-                throw;
-            }
-            catch (HttpRequestException ex)
-            {
-                if (attempt >= retry.MaxAttempts)
-                {
-                    return RemoteProxyErrors.HttpError<T>(ex.Message);
-                }
-
-                await DelayBeforeRetryAsync(retry, attempt, cancellationToken);
-            }
-            catch (Exception ex)
-            {
-                return RemoteProxyErrors.Unexpected<T>(ex.Message);
-            }
-        }    
-        
-        return RemoteProxyErrors.RetryExhausted<T>();
-    }
-
-    // Send request (non-generic)
     public async Task<Result> SendAsync(
         Func<HttpRequestMessage> requestFactory,
         RetryOptions? retry = null,
         CancellationToken cancellationToken = default)
     {
-        retry ??= RetryOptions.None;
+        var result = await SendCoreAsync<object?>(
+            requestFactory,
+            static (_, _) => Task.FromResult(Result<object?>.Ok(null)),
+            retry ?? RetryOptions.None,
+            cancellationToken);
 
+        return result.IsSuccess ? Result.Ok() : Downcast(result);
+    }
+
+    // -------------------------------------------------------------------------
+    // Core execution pipeline
+    // -------------------------------------------------------------------------
+
+    /// <summary>
+    /// Single retry-aware execution pipeline shared by both public overloads.
+    /// <paramref name="onSuccess"/> is invoked only on a success response and owns body reading.
+    /// The <see cref="HttpResponseMessage"/> is always disposed before this method returns.
+    /// </summary>
+    private async Task<Result<T>> SendCoreAsync<T>(
+        Func<HttpRequestMessage> requestFactory,
+        Func<HttpResponseMessage, CancellationToken, Task<Result<T>>> onSuccess,
+        RetryOptions retry,
+        CancellationToken cancellationToken)
+    {
         for (var attempt = 1; attempt <= retry.MaxAttempts; attempt++)
         {
+            var isLastAttempt = attempt == retry.MaxAttempts;
+            HttpResponseMessage? response = null;
+
             try
             {
-                using var request = AddJwtToken(requestFactory());
-                using var response = await httpClient.SendAsync(request, cancellationToken);
+                using var request = BuildRequest(requestFactory);
+
+                logger.LogDebug(
+                    "HTTP {Method} {Uri} — attempt {Attempt}/{Max}",
+                    request.Method, request.RequestUri, attempt, retry.MaxAttempts);
+
+                response = await httpClient.SendAsync(
+                    request,
+                    HttpCompletionOption.ResponseHeadersRead,
+                    cancellationToken);
 
                 if (response.IsSuccessStatusCode)
                 {
-                    return Result.Ok();
+                    logger.LogDebug(
+                        "HTTP {StatusCode} — attempt {Attempt} succeeded",
+                        (int)response.StatusCode, attempt);
+
+                    return await onSuccess(response, cancellationToken);
                 }
 
-                if (!ShouldRetry(response.StatusCode, attempt, retry))
+                // Non-success: retry if transient and attempts remain
+                if (!isLastAttempt && IsRetryableStatus(response.StatusCode))
                 {
-                    return await ReadFailure(response);
+                    var delay = retry.ComputeDelay(attempt);
+
+                    logger.LogWarning(
+                        "HTTP {StatusCode} on attempt {Attempt}/{Max} — retrying in {DelayMs} ms",
+                        (int)response.StatusCode, attempt, retry.MaxAttempts, (int)delay.TotalMilliseconds);
+
+                    // Release the connection before sleeping so it is not held during the delay
+                    response.Dispose();
+                    response = null;
+
+                    await Task.Delay(delay, cancellationToken);
+                    continue;
                 }
 
-                await DelayBeforeRetryAsync(retry, attempt, cancellationToken);
-            }
-            catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
-            {
-                if (attempt >= retry.MaxAttempts)
-                {
-                    return RemoteProxyErrors.Timeout(ex.Message);
-                }
+                // Non-retryable status or final attempt — parse and return the failure
+                logger.LogWarning(
+                    "HTTP {StatusCode} on attempt {Attempt}/{Max} — not retrying",
+                    (int)response.StatusCode, attempt, retry.MaxAttempts);
 
-                await DelayBeforeRetryAsync(retry, attempt, cancellationToken);
+                var failure = await HttpFailureParser.ParseAsync(response);
+                return Upcast<T>(failure);
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
-                // TODO: Aufrufer muss catchen
+                // Genuine caller cancellation — propagate; do not convert to a failure result.
+                logger.LogDebug("Request cancelled by caller on attempt {Attempt}", attempt);
                 throw;
+            }
+            catch (OperationCanceledException ex)
+            {
+                // Internal timeout: HttpClient.Timeout elapsed or server stopped responding.
+                logger.LogWarning(ex, "Request timed out — attempt {Attempt}/{Max}", attempt, retry.MaxAttempts);
+
+                if (isLastAttempt)
+                    return RemoteProxyErrors.Timeout<T>();
+
+                await Task.Delay(retry.ComputeDelay(attempt), cancellationToken);
             }
             catch (HttpRequestException ex)
             {
-                if (attempt >= retry.MaxAttempts)
-                {
-                    return RemoteProxyErrors.HttpError(ex.Message);
-                }
+                // Transport failure: DNS, connection refused, TLS error, etc.
+                logger.LogWarning(ex,
+                    "Transport error on attempt {Attempt}/{Max}: {Message}",
+                    attempt, retry.MaxAttempts, ex.Message);
 
-                await DelayBeforeRetryAsync(retry, attempt, cancellationToken);
+                if (isLastAttempt)
+                    return RemoteProxyErrors.TransportError<T>();
+
+                await Task.Delay(retry.ComputeDelay(attempt), cancellationToken);
             }
             catch (Exception ex)
             {
-                return RemoteProxyErrors.Unexpected(ex.Message);
+                // Unexpected — do not retry; preserve full context in logs.
+                logger.LogError(ex, "Unexpected error on attempt {Attempt}", attempt);
+                return RemoteProxyErrors.Unexpected<T>();
+            }
+            finally
+            {
+                response?.Dispose();
             }
         }
 
-        return RemoteProxyErrors.RetryExhausted();
+        // Reached only when MaxAttempts < 1 (misconfiguration) — the loop always returns
+        // on the final attempt under valid configuration.
+        return RemoteProxyErrors.RetryExhausted<T>();
     }
 
-    private static async Task<Result<T>> ReadFailure<T>(HttpResponseMessage response)
+    // -------------------------------------------------------------------------
+    // Helpers
+    // -------------------------------------------------------------------------
+
+    private HttpRequestMessage BuildRequest(Func<HttpRequestMessage> factory)
     {
-        var contentType = response.Content.Headers.ContentType?.MediaType;
+        var request = factory();
 
-        if (string.Equals(contentType, "application/problem+json", StringComparison.OrdinalIgnoreCase))
-        {
-            try
-            {
-                var validation = await response.Content.ReadFromJsonAsync<ValidationProblemDetailsDto>();
-                if (validation is not null)
-                {
-                    var (field, message) = CombineValidationErrors(validation);
-                    return Result<T>.Invalid(field, code: validation.Title ?? "validation_failed", message: message);
-                }
-            }
-            catch (JsonException)
-            {
-                // ignore
-            }
+        if (!string.IsNullOrWhiteSpace(userState.Token))
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", userState.Token);
 
-            try
-            {
-                var problem = await response.Content.ReadFromJsonAsync<ProblemDetailsDto>();
-                if (problem is not null)
-                {
-                    var code = problem.Title ?? $"http_{(int)response.StatusCode}";
-                    var msg = problem.Detail ?? $"Request failed ({(int)response.StatusCode} {response.ReasonPhrase}).";
-                    return Result<T>.Failure(code: code, message: msg);
-                }
-            }
-            catch (JsonException)
-            {
-                // ignore
-            }
-        }
-
-        // Fallback: plain text / unknown json
-        var raw = await response.Content.ReadAsStringAsync();
-        return Result<T>.Failure(
-            code: $"http_{(int)response.StatusCode}",
-            message: string.IsNullOrWhiteSpace(raw)
-                ? $"Request failed ({(int)response.StatusCode} {response.ReasonPhrase})."
-                : raw);
+        return request;
     }
 
-    private static async Task<Result> ReadFailure(HttpResponseMessage response)
+    private static bool IsRetryableStatus(HttpStatusCode statusCode)
+        => statusCode == HttpStatusCode.RequestTimeout || (int)statusCode >= 500;
+
+    private async Task<Result<T>> ReadJsonBodyAsync<T>(HttpResponseMessage response, CancellationToken ct)
     {
-        var contentType = response.Content.Headers.ContentType?.MediaType;
+        if (response.StatusCode == HttpStatusCode.NoContent)
+            return Result<T>.Ok(default!);
 
-        if (string.Equals(contentType, "application/problem+json", StringComparison.OrdinalIgnoreCase))
+        try
         {
-            try
-            {
-                var validation = await response.Content.ReadFromJsonAsync<ValidationProblemDetailsDto>();
-                if (validation is not null)
-                {
-                    var (field, message) = CombineValidationErrors(validation);
-                    return Result.Invalid(field, code: validation.Title ?? "validation_failed", message: message);
-                }
-            }
-            catch (JsonException)
-            {
-                // ignore
-            }
-            
-            try
-            {
-                var problem = await response.Content.ReadFromJsonAsync<ProblemDetailsDto>();
-                if (problem is not null)
-                {
-                    var code = problem.Title ?? $"http_{(int)response.StatusCode}";
-                    var msg = problem.Detail ?? $"Request failed ({(int)response.StatusCode} {response.ReasonPhrase}).";
-                    return Result.Failure(code: code, message: msg);
-                }
-            }
-            catch (JsonException)
-            {
-                // ignore
-            }
-        }
+            var value = await response.Content.ReadFromJsonAsync<T>(JsonOptions, ct);
 
-        var raw = await response.Content.ReadAsStringAsync();
-        return Result.Failure(
-            code: $"http_{(int)response.StatusCode}",
-            message: string.IsNullOrWhiteSpace(raw)
-                ? $"Request failed ({(int)response.StatusCode} {response.ReasonPhrase})."
-                : raw);
+            return value is null
+                ? RemoteProxyErrors.EmptyResponse<T>()
+                : Result<T>.Ok(value);
+        }
+        catch (JsonException ex)
+        {
+            logger.LogWarning(ex, "Failed to deserialize response body as {Type}", typeof(T).Name);
+            return RemoteProxyErrors.MalformedResponse<T>();
+        }
     }
 
-    private static (string field, string message) CombineValidationErrors(ValidationProblemDetailsDto vpd)
+    /// <summary>Lifts a non-generic failure into <see cref="Result{T}"/>, preserving all failure fields.</summary>
+    private static Result<T> Upcast<T>(Result r) => new()
     {
-        if (vpd.Errors is null || vpd.Errors.Count == 0)
-            return ("", vpd.Detail ?? "Validation failed.");
+        Status          = r.Status,
+        Error           = r.Error,
+        ValidationErrors = r.ValidationErrors
+    };
 
-        var parts = new List<string>();
-
-        foreach (var kv in vpd.Errors)
-        {
-            var field = kv.Key;
-
-            foreach (var msg in kv.Value)
-            {
-                parts.Add($"{field}: {msg}");
-            }
-        }
-
-        var combined = string.Join("; ", parts);
-
-        return ("", combined);
-    }
+    /// <summary>Drops the type parameter from a <see cref="Result{T}"/> failure into <see cref="Result"/>.</summary>
+    private static Result Downcast<T>(Result<T> r) => new()
+    {
+        Status          = r.Status,
+        Error           = r.Error,
+        ValidationErrors = r.ValidationErrors
+    };
 }
