@@ -26,6 +26,8 @@
                 <TextBox Grid.Column="0"
                          Text="{Binding SearchQuery, Mode=TwoWay}"
                          Watermark="Search…"
+                         Background="Transparent"
+                         BorderThickness="0,0,0,1"
                          Classes="index-search-input">
                     <TextBox.KeyBindings>
                         <KeyBinding Gesture="Escape" Command="{Binding ClearSearchAndFocusCommand}"/>

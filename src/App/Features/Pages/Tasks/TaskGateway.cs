@@ -17,8 +17,9 @@ public sealed class TaskGateway(RemoteProxy remoteProxy)
     {
         var response = await remoteProxy.SendAsync<List<TaskDto>>(
             requestFactory: () => new HttpRequestMessage(HttpMethod.Get, TaskRoutes.GetTasks),
-            retry: new RetryOptions { MaxAttempts = 3, Delay = TimeSpan.FromMilliseconds(500) },
+            retry: RetryOptions.Default,
             cancellationToken: CancellationToken.None);
+
         return response.Value;
     }
 
@@ -26,8 +27,9 @@ public sealed class TaskGateway(RemoteProxy remoteProxy)
     {
         var response = await remoteProxy.SendAsync<List<TaskDto>>(
             requestFactory: () => new HttpRequestMessage(HttpMethod.Get, TaskRoutes.GetArchivedTasks),
-            retry: new RetryOptions { MaxAttempts = 3, Delay = TimeSpan.FromMilliseconds(500) },
+            retry: RetryOptions.Default,
             cancellationToken: CancellationToken.None);
+
         return response.Value;
     }
 
@@ -35,53 +37,46 @@ public sealed class TaskGateway(RemoteProxy remoteProxy)
     {
         var response = await remoteProxy.SendAsync<List<TaskDto>>(
             requestFactory: () => new HttpRequestMessage(HttpMethod.Get, TaskRoutes.GetDeletedTasks),
-            retry: new RetryOptions { MaxAttempts = 3, Delay = TimeSpan.FromMilliseconds(500) },
+            retry: RetryOptions.Default,
             cancellationToken: CancellationToken.None);
+
         return response.Value;
     }
 
     public async Task<Result> RestoreAsync(Guid itemId)
     {
-        var response = await remoteProxy.SendAsync(
+        return await remoteProxy.SendAsync(
             requestFactory: () => new HttpRequestMessage(HttpMethod.Patch, ItemRoutes.RestoreItemRequest(itemId)),
-            retry: new RetryOptions { MaxAttempts = 3, Delay = TimeSpan.FromMilliseconds(500) },
+            retry: RetryOptions.Default,
             cancellationToken: CancellationToken.None);
-        return response;
     }
 
     public async Task<Result> HardDeleteAsync(Guid itemId)
     {
-        var response = await remoteProxy.SendAsync(
+        return await remoteProxy.SendAsync(
             requestFactory: () => new HttpRequestMessage(HttpMethod.Delete, ItemRoutes.HardDeleteItemRequest(itemId)),
-            retry: new RetryOptions { MaxAttempts = 3, Delay = TimeSpan.FromMilliseconds(500) },
+            retry: RetryOptions.Default,
             cancellationToken: CancellationToken.None);
-        return response;
     }
 
     public async Task<TaskDto?> GetByIdAsync(Guid itemId)
     {
         var response = await remoteProxy.SendAsync<TaskDto>(
             requestFactory: () => new HttpRequestMessage(HttpMethod.Get, TaskRoutes.GetTaskRequest(itemId)),
-            retry: new RetryOptions { MaxAttempts = 3, Delay = TimeSpan.FromMilliseconds(500) },
+            retry: RetryOptions.Default,
             cancellationToken: CancellationToken.None);
+
         return response.Value;
     }
 
     public async Task<Result<TaskDto>> CreateAsync(CreateTaskRequest requestBody)
     {
-        
-        var response = await remoteProxy.SendAsync<TaskDto>(
+        return await remoteProxy.SendAsync<TaskDto>(
             requestFactory: () => new HttpRequestMessage(HttpMethod.Post, TaskRoutes.CreateTask)
             {
                 Content = JsonContent.Create(requestBody)
             },
-            retry: new RetryOptions
-            {
-                MaxAttempts = 3,
-                Delay = TimeSpan.FromMilliseconds(500)
-            },
+            retry: RetryOptions.Default,
             cancellationToken: CancellationToken.None);
-        
-        return response;
     }
 }

@@ -27,7 +27,7 @@ public class NotificationGateway(RemoteProxy remoteProxy)
 
         var response = await remoteProxy.SendAsync<List<NotificationEntryDto>>(
             requestFactory: () => new HttpRequestMessage(HttpMethod.Get, url),
-            retry: new RetryOptions { MaxAttempts = 3, Delay = TimeSpan.FromMilliseconds(500) },
+            retry: RetryOptions.Default,
             cancellationToken: ct);
 
         return response.Value;
@@ -37,7 +37,7 @@ public class NotificationGateway(RemoteProxy remoteProxy)
     {
         var response = await remoteProxy.SendAsync<NotificationUnreadCountDto>(
             requestFactory: () => new HttpRequestMessage(HttpMethod.Get, NotificationRoutes.UnreadCount),
-            retry: new RetryOptions { MaxAttempts = 3, Delay = TimeSpan.FromMilliseconds(500) },
+            retry: RetryOptions.Default,
             cancellationToken: ct);
 
         return response.Value?.Count ?? 0;
@@ -49,7 +49,7 @@ public class NotificationGateway(RemoteProxy remoteProxy)
 
         var response = await remoteProxy.SendAsync(
             requestFactory: () => new HttpRequestMessage(HttpMethod.Delete, url),
-            retry: new RetryOptions { MaxAttempts = 1, Delay = TimeSpan.FromMilliseconds(0) },
+            retry: RetryOptions.None,
             cancellationToken: ct);
 
         return response.IsSuccess;
@@ -61,7 +61,7 @@ public class NotificationGateway(RemoteProxy remoteProxy)
 
         var response = await remoteProxy.SendAsync(
             requestFactory: () => new HttpRequestMessage(HttpMethod.Post, url),
-            retry: new RetryOptions { MaxAttempts = 1, Delay = TimeSpan.FromMilliseconds(0) },
+            retry: RetryOptions.None,
             cancellationToken: ct);
 
         return response.IsSuccess;
@@ -71,7 +71,7 @@ public class NotificationGateway(RemoteProxy remoteProxy)
     {
         var response = await remoteProxy.SendAsync(
             requestFactory: () => new HttpRequestMessage(HttpMethod.Post, NotificationRoutes.MarkAllRead),
-            retry: new RetryOptions { MaxAttempts = 1, Delay = TimeSpan.FromMilliseconds(0) },
+            retry: RetryOptions.None,
             cancellationToken: ct);
 
         return response.IsSuccess;

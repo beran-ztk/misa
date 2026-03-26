@@ -14,36 +14,25 @@ public sealed class AuthenticationGateway(RemoteProxy remoteProxy)
 {
     public async Task<Result> RegisterAsync(RegisterRequestDto requestDto)
     {
-        var response = await remoteProxy.SendAsync(
+        return await remoteProxy.SendAsync(
             requestFactory: () => new HttpRequestMessage(HttpMethod.Post, "auth/register")
             {
                 Content = JsonContent.Create(requestDto)
             },
-            retry: new RetryOptions
-            {
-                MaxAttempts = 3,
-                Delay = TimeSpan.FromMilliseconds(500)
-            },
+            retry: RetryOptions.Default,
             cancellationToken: CancellationToken.None);
-        
-        return response;
     }
 
     public async Task<AuthTokenResponseDto> LoginAsync(LoginRequestDto requestDto)
     {
-        
         var response = await remoteProxy.SendAsync<AuthTokenResponseDto>(
             requestFactory: () => new HttpRequestMessage(HttpMethod.Post, "auth/login")
             {
                 Content = JsonContent.Create(requestDto)
             },
-            retry: new RetryOptions
-            {
-                MaxAttempts = 3,
-                Delay = TimeSpan.FromMilliseconds(500)
-            },
+            retry: RetryOptions.Default,
             cancellationToken: CancellationToken.None);
-        
-        return response.Value ?? throw new Exception("Could not login");
+
+        return response.Value ?? throw new InvalidOperationException("Login succeeded but returned no token.");
     }
 }

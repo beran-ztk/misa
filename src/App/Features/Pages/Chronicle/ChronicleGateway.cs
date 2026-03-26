@@ -1,10 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
-using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Misa.Contract.Common.Results;
 using Misa.Contract.Items.Components.Chronicle;
 using Misa.Contract.Routes;
 using Misa.Ui.Avalonia.Infrastructure.Client.RemoteProxy;
@@ -21,11 +19,7 @@ public class ChronicleGateway(RemoteProxy remoteProxy)
 
         var response = await remoteProxy.SendAsync<List<ChronicleEntryDto>>(
             requestFactory: () => new HttpRequestMessage(HttpMethod.Get, url),
-            retry: new RetryOptions
-            {
-                MaxAttempts = 3,
-                Delay = TimeSpan.FromMilliseconds(500)
-            },
+            retry: RetryOptions.Default,
             cancellationToken: CancellationToken.None);
 
         return response.Value;

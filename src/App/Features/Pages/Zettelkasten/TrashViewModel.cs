@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
@@ -17,31 +15,21 @@ public sealed partial class TrashViewModel(ZettelkastenGateway gateway)
     public string  FormTitle       => "Trash";
     public string? FormDescription => null;
 
-    [ObservableProperty] private ObservableCollection<TrashEntryVm> _entries = [];
+    [ObservableProperty] private ObservableCollection<KnowledgeIndexNodeVm> _entries = [];
     [ObservableProperty] private bool _isLoading = true;
     [ObservableProperty] private bool _isEmpty;
 
     public async Task LoadAsync()
     {
         IsLoading = true;
+
         var deleted = await gateway.GetDeletedKnowledgeAsync();
 
         Entries.Clear();
         if (deleted is not null)
         {
-            var titleById = deleted.ToDictionary(d => d.Id, d => d.Title);
-            foreach (var dto in deleted)
-            {
-                Entries.Add(new TrashEntryVm
-                {
-                    Id          = dto.Id,
-                    Workflow    = dto.Workflow,
-                    Title       = dto.Title,
-                    ParentId    = dto.ParentId,
-                    ParentTitle = dto.ParentId.HasValue && titleById.TryGetValue(dto.ParentId.Value, out var pt) ? pt : null,
-                    DeletedAt   = dto.DeletedAt
-                });
-            }
+            foreach (var root in KnowledgeTreeBuilder.FromDeletedFlat(deleted))
+                Entries.Add(root);
         }
 
         IsLoading = false;
@@ -51,46 +39,28 @@ public sealed partial class TrashViewModel(ZettelkastenGateway gateway)
     // ── Restore ───────────────────────────────────────────────────────────────
 
     [RelayCommand]
-    private async Task RestoreEntry(TrashEntryVm entry)
+    private async Task RestoreEntry(KnowledgeIndexNodeVm entry)
     {
-        // Restore the entry plus any deleted descendants present in the trash list.
-        var ids    = CollectWithDescendants(entry).Select(e => e.Id).ToArray();
+        var ids    = entry.GetSubtreeIds().ToArray();
         var result = await gateway.RestoreSubtreeAsync(ids);
         if (!result.IsSuccess) return;
 
-        foreach (var id in ids)
-        {
-            var vm = Entries.FirstOrDefault(e => e.Id == id);
-            if (vm is not null) Entries.Remove(vm);
-        }
-        IsEmpty = Entries.Count == 0;
+        await LoadAsync(); // rebuild the tree; the restored items will no longer appear
     }
 
     // ── Permanent delete ──────────────────────────────────────────────────────
 
     [RelayCommand]
-    private async Task HardDeleteEntry(TrashEntryVm entry)
+    private async Task HardDeleteEntry(KnowledgeIndexNodeVm entry)
     {
         var result = await gateway.HardDeleteAsync(entry.Id);
         if (!result.IsSuccess) return;
 
-        Entries.Remove(entry);
-        IsEmpty = Entries.Count == 0;
+        await LoadAsync(); // rebuild; the deleted item (and its children) will no longer appear
     }
 
     // ── IHostedForm ───────────────────────────────────────────────────────────
 
     public Task<Result<Result>> SubmitAsync() =>
         Task.FromResult(Result<Result>.Ok(Result.Ok()));
-
-    // ── Helpers ───────────────────────────────────────────────────────────────
-
-    // Yields entry + all entries whose ParentId chain leads back to it.
-    private IEnumerable<TrashEntryVm> CollectWithDescendants(TrashEntryVm root)
-    {
-        yield return root;
-        foreach (var child in Entries.Where(e => e.ParentId == root.Id))
-            foreach (var desc in CollectWithDescendants(child))
-                yield return desc;
-    }
 }
