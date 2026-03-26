@@ -12,26 +12,9 @@ using Misa.Ui.Avalonia.Infrastructure.States;
 
 namespace Misa.Ui.Avalonia.Infrastructure.Client.RemoteProxy;
 
-/// <summary>
-/// Central HTTP transport layer for the application client.
-/// Responsibilities: authentication, retry with configurable backoff, cancellation,
-/// response deserialization, and structured failure mapping.
-/// All results are returned as <see cref="Result"/> / <see cref="Result{T}"/> — no exceptions escape
-/// except genuine caller cancellation (<see cref="OperationCanceledException"/>).
-/// </summary>
+/// <summary> HTTP transport layer for the client. </summary>
 public sealed class RemoteProxy(HttpClient httpClient, UserState userState, ILogger<RemoteProxy> logger)
 {
-    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
-
-    // -------------------------------------------------------------------------
-    // Public API
-    // -------------------------------------------------------------------------
-
-    public Task<Result<T>> SendAsync<T>(
-        Func<HttpRequestMessage> requestFactory,
-        RetryOptions? retry = null,
-        CancellationToken cancellationToken = default)
-        => SendCoreAsync(requestFactory, ReadJsonBodyAsync<T>, retry ?? RetryOptions.None, cancellationToken);
 
     public async Task<Result> SendAsync(
         Func<HttpRequestMessage> requestFactory,
@@ -46,16 +29,15 @@ public sealed class RemoteProxy(HttpClient httpClient, UserState userState, ILog
 
         return result.IsSuccess ? Result.Ok() : Downcast(result);
     }
+    
+    public Task<Result<T>> SendAsync<T>(
+        Func<HttpRequestMessage> requestFactory,
+        RetryOptions? retry = null,
+        CancellationToken cancellationToken = default)
+        => SendCoreAsync(requestFactory, ReadJsonBodyAsync<T>, retry ?? RetryOptions.None, cancellationToken);
 
     // -------------------------------------------------------------------------
-    // Core execution pipeline
-    // -------------------------------------------------------------------------
-
-    /// <summary>
-    /// Single retry-aware execution pipeline shared by both public overloads.
-    /// <paramref name="onSuccess"/> is invoked only on a success response and owns body reading.
-    /// The <see cref="HttpResponseMessage"/> is always disposed before this method returns.
-    /// </summary>
+    // Execution pipeline
     private async Task<Result<T>> SendCoreAsync<T>(
         Func<HttpRequestMessage> requestFactory,
         Func<HttpResponseMessage, CancellationToken, Task<Result<T>>> onSuccess,
@@ -69,7 +51,9 @@ public sealed class RemoteProxy(HttpClient httpClient, UserState userState, ILog
 
             try
             {
-                using var request = BuildRequest(requestFactory);
+                using var request = requestFactory();
+                if (!string.IsNullOrWhiteSpace(userState.Token))
+                    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", userState.Token);
 
                 logger.LogDebug(
                     "HTTP {Method} {Uri} — attempt {Attempt}/{Max}",
@@ -90,7 +74,8 @@ public sealed class RemoteProxy(HttpClient httpClient, UserState userState, ILog
                 }
 
                 // Non-success: retry if transient and attempts remain
-                if (!isLastAttempt && IsRetryableStatus(response.StatusCode))
+                if (!isLastAttempt 
+                    && (response.StatusCode == HttpStatusCode.RequestTimeout || (int)response.StatusCode >= 500))
                 {
                     var delay = retry.ComputeDelay(attempt);
 
@@ -162,20 +147,6 @@ public sealed class RemoteProxy(HttpClient httpClient, UserState userState, ILog
     // -------------------------------------------------------------------------
     // Helpers
     // -------------------------------------------------------------------------
-
-    private HttpRequestMessage BuildRequest(Func<HttpRequestMessage> factory)
-    {
-        var request = factory();
-
-        if (!string.IsNullOrWhiteSpace(userState.Token))
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", userState.Token);
-
-        return request;
-    }
-
-    private static bool IsRetryableStatus(HttpStatusCode statusCode)
-        => statusCode == HttpStatusCode.RequestTimeout || (int)statusCode >= 500;
-
     private async Task<Result<T>> ReadJsonBodyAsync<T>(HttpResponseMessage response, CancellationToken ct)
     {
         if (response.StatusCode == HttpStatusCode.NoContent)
@@ -183,7 +154,7 @@ public sealed class RemoteProxy(HttpClient httpClient, UserState userState, ILog
 
         try
         {
-            var value = await response.Content.ReadFromJsonAsync<T>(JsonOptions, ct);
+            var value = await response.Content.ReadFromJsonAsync<T>(new JsonSerializerOptions(JsonSerializerDefaults.Web), ct);
 
             return value is null
                 ? RemoteProxyErrors.EmptyResponse<T>()

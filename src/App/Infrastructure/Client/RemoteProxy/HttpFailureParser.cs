@@ -13,11 +13,11 @@ namespace Misa.Ui.Avalonia.Infrastructure.Client.RemoteProxy;
 /// Handles application/problem+json, generic JSON, plain text, and empty bodies.
 /// Maps HTTP status codes to the appropriate <see cref="ResultStatus"/> variants.
 /// </summary>
-internal static class HttpFailureParser
+public static class HttpFailureParser
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
-    internal static async Task<Result> ParseAsync(HttpResponseMessage response)
+    public static async Task<Result> ParseAsync(HttpResponseMessage response)
     {
         var statusCode = response.StatusCode;
         var contentType = response.Content.Headers.ContentType?.MediaType;
@@ -79,7 +79,10 @@ internal static class HttpFailureParser
             if (!string.IsNullOrWhiteSpace(raw))
                 body = raw;
         }
-        catch { }
+        catch
+        {
+            // ignored
+        }
 
         return MapStatusCode(statusCode, title: null, detail: body);
     }
