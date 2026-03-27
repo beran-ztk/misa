@@ -2,11 +2,6 @@ using Misa.Contract.Common.Results;
 
 namespace Misa.Ui.Avalonia.Infrastructure.Client.RemoteProxy;
 
-/// <summary>
-/// Transport-layer failure results produced by <see cref="RemoteProxy"/>.
-/// These represent conditions that prevent a valid server response from being returned —
-/// they are distinct from application-level failures (HTTP 4xx/5xx) parsed by HttpFailureParser.
-/// </summary>
 public static class RemoteProxyErrors
 {
     public static Result<T> EmptyResponse<T>() =>

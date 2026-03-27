@@ -8,11 +8,6 @@ using Misa.Contract.Common.Results;
 
 namespace Misa.Ui.Avalonia.Infrastructure.Client.RemoteProxy;
 
-/// <summary>
-/// Parses a non-success <see cref="HttpResponseMessage"/> into an application-level <see cref="Result"/> failure.
-/// Handles application/problem+json, generic JSON, plain text, and empty bodies.
-/// Maps HTTP status codes to the appropriate <see cref="ResultStatus"/> variants.
-/// </summary>
 public static class HttpFailureParser
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
@@ -32,7 +27,6 @@ public static class HttpFailureParser
         return await ParseFallbackAsync(response, statusCode);
     }
 
-    // Attempts to parse as ValidationProblemDetails (superset) then ProblemDetails.
     private static async Task<Result?> TryParseProblemDetailsAsync(HttpResponseMessage response, HttpStatusCode statusCode)
     {
         string body;
@@ -42,13 +36,12 @@ public static class HttpFailureParser
         }
         catch
         {
-            return null; // body unavailable — fall through to fallback
+            return null;
         }
 
         if (string.IsNullOrWhiteSpace(body))
             return null;
 
-        // Check for validation errors first — ValidationProblemDetails is a superset of ProblemDetails
         try
         {
             var vpd = JsonSerializer.Deserialize<ValidationProblemDetailsDto>(body, JsonOptions);
@@ -57,7 +50,6 @@ public static class HttpFailureParser
         }
         catch (JsonException) { }
 
-        // Fall back to plain ProblemDetails
         try
         {
             var pd = JsonSerializer.Deserialize<ProblemDetailsDto>(body, JsonOptions);
@@ -69,7 +61,6 @@ public static class HttpFailureParser
         return null;
     }
 
-    // Best-effort: read raw body (any content type) and map by status code.
     private static async Task<Result> ParseFallbackAsync(HttpResponseMessage response, HttpStatusCode statusCode)
     {
         string? body = null;

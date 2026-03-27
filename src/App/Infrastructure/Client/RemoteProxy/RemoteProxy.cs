@@ -36,7 +36,6 @@ public sealed class RemoteProxy(HttpClient httpClient, UserState userState, ILog
         CancellationToken cancellationToken = default)
         => SendCoreAsync(requestFactory, ReadJsonBodyAsync<T>, retry ?? RetryOptions.None, cancellationToken);
 
-    // -------------------------------------------------------------------------
     // Execution pipeline
     private async Task<Result<T>> SendCoreAsync<T>(
         Func<HttpRequestMessage> requestFactory,
@@ -59,11 +58,13 @@ public sealed class RemoteProxy(HttpClient httpClient, UserState userState, ILog
                     "HTTP {Method} {Uri} — attempt {Attempt}/{Max}",
                     request.Method, request.RequestUri, attempt, retry.MaxAttempts);
 
+                // Send request to http server
                 response = await httpClient.SendAsync(
                     request,
                     HttpCompletionOption.ResponseHeadersRead,
                     cancellationToken);
 
+                // On success: execute lambda-expression
                 if (response.IsSuccessStatusCode)
                 {
                     logger.LogDebug(
@@ -83,7 +84,7 @@ public sealed class RemoteProxy(HttpClient httpClient, UserState userState, ILog
                         "HTTP {StatusCode} on attempt {Attempt}/{Max} — retrying in {DelayMs} ms",
                         (int)response.StatusCode, attempt, retry.MaxAttempts, (int)delay.TotalMilliseconds);
 
-                    // Release the connection before sleeping so it is not held during the delay
+                    // Release connection before sleeping
                     response.Dispose();
                     response = null;
 
@@ -91,7 +92,7 @@ public sealed class RemoteProxy(HttpClient httpClient, UserState userState, ILog
                     continue;
                 }
 
-                // Non-retryable status or final attempt — parse and return the failure
+                // Non-retryable status or final attempt
                 logger.LogWarning(
                     "HTTP {StatusCode} on attempt {Attempt}/{Max} — not retrying",
                     (int)response.StatusCode, attempt, retry.MaxAttempts);
@@ -101,13 +102,13 @@ public sealed class RemoteProxy(HttpClient httpClient, UserState userState, ILog
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
-                // Genuine caller cancellation — propagate; do not convert to a failure result.
+                // Caller cancellation
                 logger.LogDebug("Request cancelled by caller on attempt {Attempt}", attempt);
                 throw;
             }
             catch (OperationCanceledException ex)
             {
-                // Internal timeout: HttpClient.Timeout elapsed or server stopped responding.
+                // Server timeout
                 logger.LogWarning(ex, "Request timed out — attempt {Attempt}/{Max}", attempt, retry.MaxAttempts);
 
                 if (isLastAttempt)
@@ -117,7 +118,7 @@ public sealed class RemoteProxy(HttpClient httpClient, UserState userState, ILog
             }
             catch (HttpRequestException ex)
             {
-                // Transport failure: DNS, connection refused, TLS error, etc.
+                // Transport failure
                 logger.LogWarning(ex,
                     "Transport error on attempt {Attempt}/{Max}: {Message}",
                     attempt, retry.MaxAttempts, ex.Message);
@@ -129,7 +130,7 @@ public sealed class RemoteProxy(HttpClient httpClient, UserState userState, ILog
             }
             catch (Exception ex)
             {
-                // Unexpected — do not retry; preserve full context in logs.
+                // Unexpected
                 logger.LogError(ex, "Unexpected error on attempt {Attempt}", attempt);
                 return RemoteProxyErrors.Unexpected<T>();
             }
@@ -139,14 +140,10 @@ public sealed class RemoteProxy(HttpClient httpClient, UserState userState, ILog
             }
         }
 
-        // Reached only when MaxAttempts < 1 (misconfiguration) — the loop always returns
-        // on the final attempt under valid configuration.
+        // On last attempt
         return RemoteProxyErrors.RetryExhausted<T>();
     }
 
-    // -------------------------------------------------------------------------
-    // Helpers
-    // -------------------------------------------------------------------------
     private async Task<Result<T>> ReadJsonBodyAsync<T>(HttpResponseMessage response, CancellationToken ct)
     {
         if (response.StatusCode == HttpStatusCode.NoContent)
@@ -167,7 +164,6 @@ public sealed class RemoteProxy(HttpClient httpClient, UserState userState, ILog
         }
     }
 
-    /// <summary>Lifts a non-generic failure into <see cref="Result{T}"/>, preserving all failure fields.</summary>
     private static Result<T> Upcast<T>(Result r) => new()
     {
         Status          = r.Status,
@@ -175,7 +171,6 @@ public sealed class RemoteProxy(HttpClient httpClient, UserState userState, ILog
         ValidationErrors = r.ValidationErrors
     };
 
-    /// <summary>Drops the type parameter from a <see cref="Result{T}"/> failure into <see cref="Result"/>.</summary>
     private static Result Downcast<T>(Result<T> r) => new()
     {
         Status          = r.Status,
