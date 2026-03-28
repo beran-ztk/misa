@@ -1,16 +1,13 @@
 using System.Collections.ObjectModel;
-using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Misa.Contract.Common.Results;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Infrastructure;
-using Misa.Ui.Avalonia.Infrastructure.UI;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Zettelkasten;
 
-public sealed partial class TrashViewModel : ViewModelBase, IHostedForm<Result>
+public sealed partial class TrashViewModel : ViewModelBase, IHostedForm<object>
 {
     public string  FormTitle       => "Trash";
     public string? FormDescription => null;
@@ -61,6 +58,8 @@ public sealed partial class TrashViewModel : ViewModelBase, IHostedForm<Result>
 
     // ── IHostedForm ───────────────────────────────────────────────────────────
 
-    public Task<Result<Result>> SubmitAsync() =>
-        Task.FromResult(Result<Result>.Ok(Result.Ok()));
+    public Task<object> SubmitAsync()
+    {
+        return new object();
+    }
 }

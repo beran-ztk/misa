@@ -6,5 +6,5 @@ public interface IHostedForm<TResult>
 {
     string FormTitle { get; }
     string? FormDescription { get; }
-    Task<Result<TResult>> SubmitAsync();
+    Task<TResult> SubmitAsync();
 }
