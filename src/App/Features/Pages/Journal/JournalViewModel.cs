@@ -5,11 +5,19 @@ using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Misa.Core.Features.Items.Chronicle;
 using Misa.Ui.Avalonia.Common.Mappings;
-using Misa.Ui.Avalonia.Features.Pages.Chronicle;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Journal;
-
+public sealed record ChronicleEntryDto(
+    Guid? TargetItemId,
+    DateTimeOffset At,
+    string Title,
+    ChronicleEntryType Type,
+    ChronicleMetaState? MetaState,
+    string? MetaText,
+    string? Description
+);
 public sealed partial class JournalViewModel : ViewModelBase
 {
     // ── Raw data ──────────────────────────────────────────────────────────────

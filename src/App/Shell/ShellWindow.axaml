@@ -17,11 +17,6 @@
         <!-- Utility -->
         <KeyBinding Gesture="Ctrl+N"     Command="{Binding UtilityNavigation.ToggleNotificationsCommand}"/>
         <KeyBinding Gesture="Escape"     Command="{Binding DismissCommand}"/>
-
-        <!-- Workspace navigation -->
-        <KeyBinding Gesture="Ctrl+D1"     Command="{Binding WorkspaceNavigation.ShowTasksCommand}"/>
-        <KeyBinding Gesture="Ctrl+D4"     Command="{Binding WorkspaceNavigation.ShowChronicleCommand}"/>
-        <KeyBinding Gesture="Ctrl+D5"     Command="{Binding WorkspaceNavigation.ShowZettelkastenCommand}"/>
     </Window.KeyBindings>
 
     <Grid>

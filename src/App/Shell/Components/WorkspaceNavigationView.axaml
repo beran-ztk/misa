@@ -28,25 +28,11 @@
                 </Button>
 
                 <Button Classes="workspace-nav"
-                        ToolTip.Tip="Contacts">
-                    <Image Width="18" Height="18"
-                           Source="{SvgImage /Assets/Icons/Shell/Navigation/users-three.svg}"/>
-                </Button>
-
-                <Button Classes="workspace-nav"
                         Classes.nav-active="{Binding IsJournalActive}"
                         ToolTip.Tip="Journal"
                         Command="{Binding ShowJournalCommand}">
                     <Image Width="18" Height="18"
                            Source="{SvgImage /Assets/Icons/Shell/Navigation/notebook.svg}"/>
-                </Button>
-
-                <Button Classes="workspace-nav"
-                        Classes.nav-active="{Binding IsChronicleActive}"
-                        ToolTip.Tip="Chronicle"
-                        Command="{Binding ShowChronicleCommand}">
-                    <Image Width="18" Height="18"
-                           Source="{SvgImage /Assets/Icons/Shell/Navigation/hourglass.svg}"/>
                 </Button>
 
                 <Button Classes="workspace-nav"

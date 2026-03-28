@@ -2,7 +2,6 @@ using System;
 using System.Net.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Misa.Ui.Avalonia.Features.Pages.Chronicle;
 using Misa.Ui.Avalonia.Features.Pages.Journal;
 using Misa.Ui.Avalonia.Features.Pages.Zettelkasten;
 using Misa.Ui.Avalonia.Features.Utilities.Dev;
@@ -62,9 +61,6 @@ public static class CompositionRoot
         
         // Journal
         sc.AddSingleton<JournalViewModel>();
-        
-        // Chronicle
-        sc.AddSingleton<ChronicleViewModel>();
         
         // Zettelkasten
         sc.AddSingleton<ZettelkastenViewModel>();

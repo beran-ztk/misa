@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Core.Features.Items.Chronicle;
-using Misa.Ui.Avalonia.Features.Pages.Chronicle;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Journal;
 
