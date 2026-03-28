@@ -91,7 +91,6 @@ public static class CompositionRoot
     {
         sc.AddSingleton<ISelectionContextState, SelectionContextState>();
         
-        sc.AddSingleton<InspectorGateway>();
         sc.AddSingleton<InspectorState>();
         sc.AddSingleton<InspectorFacadeViewModel>();
         
@@ -104,8 +103,6 @@ public static class CompositionRoot
     {
         sc.AddSingleton<TaskState>();
         sc.AddSingleton<TaskFacadeViewModel>();
-        sc.AddSingleton<TaskGateway>();
-
         sc.AddTransient<CreateTaskView>();
     }
 
@@ -121,26 +118,20 @@ public static class CompositionRoot
     private static void AddJournalFeature(this IServiceCollection sc)
     {
         sc.AddSingleton<JournalViewModel>();
-        sc.AddSingleton<JournalGateway>();
     }
     private static void AddChronicleFeature(this IServiceCollection sc)
     {
         sc.AddSingleton<ChronicleViewModel>();
-        sc.AddSingleton<ChronicleGateway>();
     }
     
     private static void ZettelkastenServices(this IServiceCollection sc)
     {
         sc.AddSingleton<ZettelkastenViewModel>();
-        sc.AddSingleton<ZettelkastenGateway>();
     }
 
     private static void AddUtilities(this IServiceCollection sc)
     {
-        sc.AddSingleton<NotificationGateway>();
         sc.AddSingleton<NotificationViewModel>();
-
-        sc.AddSingleton<DevGateway>();
         sc.AddSingleton<DevToolsViewModel>();
     }
 }
