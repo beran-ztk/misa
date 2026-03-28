@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Misa.Domain.Items;
-using Misa.Domain.Items.Components.Chronicle.Journals;
+using Misa.Domain.Items.Components.Journal;
 
 namespace Misa.Infrastructure.Persistence.Configurations.Items.Components.Chronicle.Journals;
 

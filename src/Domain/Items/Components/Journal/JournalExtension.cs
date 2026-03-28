@@ -1,4 +1,4 @@
-namespace Misa.Domain.Items.Components.Chronicle.Journals;
+namespace Misa.Domain.Items.Components.Journal;
 
 public sealed class JournalExtension
 {

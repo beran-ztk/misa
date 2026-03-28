@@ -1,6 +1,6 @@
 using Misa.Core.Common.Abstractions.Persistence;
 using Misa.Domain.Items;
-using Misa.Domain.Items.Components.Chronicle.Journals;
+using Misa.Domain.Items.Components.Journal;
 
 namespace Misa.Core.Features.Items.Chronicle;
 

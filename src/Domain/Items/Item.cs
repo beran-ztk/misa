@@ -3,7 +3,7 @@ using Misa.Domain.Exceptions;
 using Misa.Domain.Items.Components.Activities;
 using Misa.Domain.Items.Components.Activities.Sessions;
 using Misa.Domain.Items.Components.Audits.Changes;
-using Misa.Domain.Items.Components.Chronicle.Journals;
+using Misa.Domain.Items.Components.Journal;
 using Misa.Domain.Items.Components.Schedules;
 using Misa.Domain.Items.Components.Tasks;
 using Misa.Domain.Items.Components.Zettelkasten;

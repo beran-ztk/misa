@@ -35,7 +35,6 @@ public static class CompositionRoot
     private static void AddCoreServices(this IServiceCollection sc)
     {
         sc.AddSingleton<ShellState>();
-        sc.AddSingleton<TimeZoneService>();
         sc.AddSingleton<ISelectionContextState, SelectionContextState>();
         sc.AddSingleton<IWorkspaceHost>(sp => sp.GetRequiredService<ShellState>());
         
