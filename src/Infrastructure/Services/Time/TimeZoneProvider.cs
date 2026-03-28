@@ -1,4 +1,4 @@
-using Misa.Application.Abstractions.Time;
+using Misa.Core.Abstractions.Time;
 using NodaTime;
 
 namespace Misa.Infrastructure.Services.Time;

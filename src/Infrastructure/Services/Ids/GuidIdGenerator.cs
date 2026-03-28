@@ -1,4 +1,4 @@
-using Misa.Application.Abstractions.Ids;
+using Misa.Core.Abstractions.Ids;
 
 namespace Misa.Infrastructure.Services.Ids;
 

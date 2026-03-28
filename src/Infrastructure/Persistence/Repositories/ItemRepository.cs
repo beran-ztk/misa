@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Misa.Application.Abstractions.Persistence;
+using Misa.Core.Abstractions.Persistence;
 using Misa.Domain.Exceptions;
 using Misa.Domain.Items;
 using Misa.Domain.Items.Components.Activities;

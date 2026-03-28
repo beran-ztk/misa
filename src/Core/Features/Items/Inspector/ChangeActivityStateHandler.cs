@@ -1,0 +1,29 @@
+using Misa.Contract.Items.Components.Activity;
+using Misa.Core.Abstractions.Persistence;
+using Misa.Core.Abstractions.Time;
+using Misa.Core.Mappings;
+using Misa.Domain.Exceptions;
+
+namespace Misa.Core.Features.Items.Inspector;
+
+public record ChangeActivityStateCommand(
+    Guid ItemId,
+    ActivityStateDto State,
+    string? Reason = null);
+
+public sealed class ChangeActivityStateHandler(IItemRepository repository, ITimeProvider timeProvider)
+{
+    public async Task HandleAsync(ChangeActivityStateCommand command, CancellationToken ct)
+    {
+        if (command.State == ActivityStateDto.Expired)
+            throw new DomainValidationException("State", "activity.state.expired.not.allowed", "Expired is a system-only state and cannot be set manually.");
+
+        var item = await repository.TryGetItemDetailsAsync(command.ItemId, ct);
+        if (item?.Activity is null)
+            throw new DomainNotFoundException("item.not.found", command.ItemId.ToString());
+
+        item.Activity.ChangeState(command.State.ToDomain(), timeProvider.UtcNow, command.Reason);
+
+        await repository.SaveChangesAsync(ct);
+    }
+}

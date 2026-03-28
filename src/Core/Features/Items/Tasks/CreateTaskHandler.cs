@@ -1,0 +1,41 @@
+﻿using Misa.Contract.Items.Components.Activity;
+using Misa.Contract.Items.Components.Tasks;
+using Misa.Core.Abstractions.Ids;
+using Misa.Core.Abstractions.Persistence;
+using Misa.Core.Abstractions.Time;
+using Misa.Core.Mappings;
+using Misa.Domain.Items;
+
+namespace Misa.Core.Features.Items.Tasks;
+public sealed record CreateTaskCommand(
+    string Title,
+    string? Description,
+    TaskCategoryDto CategoryDto,
+    ActivityPriorityDto ActivityPriorityDto,
+    DateTimeOffset? DueDate
+);
+public class CreateTaskHandler(
+    IItemRepository repository,
+    ITimeProvider timeProvider, 
+    IIdGenerator idGenerator)
+{
+    public async Task<TaskDto> HandleAsync(CreateTaskCommand command, CancellationToken ct)
+    {
+        var task = Item.CreateTask(
+            new ItemId(idGenerator.New()),
+            command.Title, 
+            command.Description,
+            command.CategoryDto.ToDomain(), 
+            timeProvider.UtcNow,
+            command.ActivityPriorityDto.ToDomain(),
+            command.DueDate
+        );
+        
+        await repository.AddAsync(task, ct);
+        await repository.SaveChangesAsync(ct);
+
+        var formattedTask = task.ToTaskExtensionDto();
+        
+        return formattedTask;
+    }
+}

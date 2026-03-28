@@ -1,0 +1,11 @@
+using Misa.Core.Abstractions.Persistence;
+
+namespace Misa.Core.Features.Notifications;
+
+public sealed record GetUnreadCountQuery;
+
+public class GetUnreadCountHandler(INotificationRepository repository)
+{
+    public async Task<int> HandleAsync(GetUnreadCountQuery query, CancellationToken ct)
+        => await repository.GetUnreadCountAsync(ct);
+}

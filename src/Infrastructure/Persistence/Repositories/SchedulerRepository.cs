@@ -1,4 +1,4 @@
-﻿using Misa.Application.Abstractions.Persistence;
+﻿using Misa.Core.Abstractions.Persistence;
 using Misa.Domain.Items.Components.Schedules;
 using Misa.Infrastructure.Persistence.Context;
 
