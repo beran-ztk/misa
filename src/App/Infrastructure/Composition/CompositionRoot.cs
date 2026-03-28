@@ -11,7 +11,6 @@ using Misa.Ui.Avalonia.Features.Pages.Tasks;
 using Misa.Ui.Avalonia.Features.Pages.Zettelkasten;
 using Misa.Ui.Avalonia.Features.Utilities.Dev;
 using Misa.Ui.Avalonia.Features.Utilities.Notifications;
-using Misa.Ui.Avalonia.Infrastructure.Client.RemoteProxy;
 using Misa.Ui.Avalonia.Infrastructure.Platform;
 using Misa.Ui.Avalonia.Infrastructure.States;
 using Misa.Ui.Avalonia.Infrastructure.Time;
@@ -55,7 +54,6 @@ public static class CompositionRoot
     {
         sc.AddSingleton<LayerProxy>();
         sc.AddSingleton<ILayerCloser>(sp => sp.GetRequiredService<LayerProxy>());
-        sc.AddSingleton<RemoteProxy>();
         sc.AddTransient<LayerHostView>();
 
         sc.AddSingleton(new HttpClient { BaseAddress = new Uri(baseAddress) });
