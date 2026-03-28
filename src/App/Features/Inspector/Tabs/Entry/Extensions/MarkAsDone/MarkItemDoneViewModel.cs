@@ -8,7 +8,7 @@ using Misa.Ui.Avalonia.Infrastructure.UI;
 
 namespace Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.MarkAsDone;
 
-public sealed partial class MarkItemDoneViewModel(Guid itemId, InspectorGateway gateway)
+public sealed partial class MarkItemDoneViewModel(Guid itemId)
     : ViewModelBase, IHostedForm<Result>
 {
     [ObservableProperty] private string? _reason;
@@ -19,9 +19,9 @@ public sealed partial class MarkItemDoneViewModel(Guid itemId, InspectorGateway 
     public async Task<Result<Result>> SubmitAsync()
     {
         var request = new ChangeActivityStateRequest(ActivityStateDto.Done, Reason);
-        var result = await gateway.ChangeActivityStateAsync(itemId, request);
+        // var result = await gateway.ChangeActivityStateAsync(itemId, request);
 
-        if (!result.IsSuccess)
+        // if (!result.IsSuccess)
             return Result<Result>.Failure();
 
         return Result<Result>.Ok(Result.Ok());

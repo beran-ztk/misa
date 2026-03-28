@@ -7,9 +7,7 @@ using Misa.Ui.Avalonia.Infrastructure.UI;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Zettelkasten;
 
-public sealed class DeleteKnowledgeItemViewModel(
-    Guid[] ids,
-    ZettelkastenGateway gateway)
+public sealed class DeleteKnowledgeItemViewModel(Guid[] ids)
     : ViewModelBase, IHostedForm<Result>
 {
     public string FormTitle { get; } = "Delete item";
@@ -17,11 +15,11 @@ public sealed class DeleteKnowledgeItemViewModel(
 
     public async Task<Result<Result>> SubmitAsync()
     {
-        var result = await gateway.DeleteSubtreeAsync(ids);
-
-        if (!result.IsSuccess)
-            return Result<Result>.Failure();
-
-        return Result<Result>.Ok(Result.Ok());
+        // var result = await gateway.DeleteSubtreeAsync(ids);
+        //
+        // if (!result.IsSuccess)
+        return Result<Result>.Failure();
+        //
+        // return Result<Result>.Ok(Result.Ok());
     }
 }

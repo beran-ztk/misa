@@ -6,18 +6,13 @@ using Misa.Contract.Items.Components.Chronicle;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Journal;
 
-/// <summary>
-/// Wraps a single journal ChronicleEntryDto with per-row edit and delete state.
-/// </summary>
 public sealed partial class JournalEntryRow : ObservableObject
 {
-    private readonly JournalGateway _gateway;
     private readonly Func<Task>     _refresh;
 
-    public JournalEntryRow(ChronicleEntryDto entry, JournalGateway gateway, Func<Task> refresh)
+    public JournalEntryRow(ChronicleEntryDto entry, Func<Task> refresh)
     {
         Entry    = entry;
-        _gateway = gateway;
         _refresh = refresh;
 
         _editContent = entry.Description ?? string.Empty;
@@ -62,9 +57,9 @@ public sealed partial class JournalEntryRow : ObservableObject
         var occurredAtUtc = new DateTimeOffset(localDateTime).ToUniversalTime();
 
         var request = new UpdateJournalRequest(EditContent.Trim(), occurredAtUtc);
-        var result  = await _gateway.UpdateAsync(Entry.TargetItemId!.Value, request);
+        // var result  = await _gateway.UpdateAsync(Entry.TargetItemId!.Value, request);
 
-        if (!result.IsSuccess) return;
+        // if (!result.IsSuccess) return;
 
         IsEditing = false;
         await _refresh();
@@ -75,8 +70,8 @@ public sealed partial class JournalEntryRow : ObservableObject
     {
         if (Entry.TargetItemId is null) return;
 
-        var result = await _gateway.DeleteAsync(Entry.TargetItemId.Value);
-        if (!result.IsSuccess) return;
+        // var result = await _gateway.DeleteAsync(Entry.TargetItemId.Value);
+        // if (!result.IsSuccess) return;
 
         await _refresh();
     }

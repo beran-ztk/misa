@@ -11,13 +11,13 @@ using Misa.Ui.Avalonia.Infrastructure.UI;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Tasks;
 
-public sealed partial class CreateTaskViewModel(TaskGateway gateway)
-    : ViewModelBase, IHostedForm<TaskDto>
+public sealed partial class CreateTaskViewModel : ViewModelBase, IHostedForm<Result>
 {
     public string FormTitle { get; } = "Create Task";
     public string? FormDescription { get; }
 
-    public async Task<Result<TaskDto>> SubmitAsync()
+    // public async Task<Result<TaskDto>> SubmitAsync()
+    public async Task<Result<Result>> SubmitAsync()
     {
         var request = new CreateTaskRequest(
             Title,
@@ -26,7 +26,8 @@ public sealed partial class CreateTaskViewModel(TaskGateway gateway)
             SelectedActivityPriorityDto,
             DeadlinePicker.SelectedDeadline);
 
-        return await gateway.CreateAsync(request);
+        // return await gateway.CreateAsync(request);
+        return Result<Result>.Failure();
     }
 
     [ObservableProperty] private string _title = string.Empty;

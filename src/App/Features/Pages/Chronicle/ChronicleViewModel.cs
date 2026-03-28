@@ -25,7 +25,6 @@ public sealed class ChronicleGroup
 
 public partial class ChronicleViewModel : ViewModelBase
 {
-    private readonly ChronicleGateway          _gateway;
     private readonly ISelectionContextState    _selectionContextState;
     private readonly LayerProxy                _layerProxy;
 
@@ -39,11 +38,9 @@ public partial class ChronicleViewModel : ViewModelBase
     [ObservableProperty] private DateTimeOffset? _filterTo;
 
     public ChronicleViewModel(
-        ChronicleGateway       gateway,
         ISelectionContextState selectionContextState,
         LayerProxy             layerProxy)
     {
-        _gateway               = gateway;
         _selectionContextState = selectionContextState;
         _layerProxy            = layerProxy;
 
@@ -77,7 +74,7 @@ public partial class ChronicleViewModel : ViewModelBase
     private async Task LoadAsync()
     {
         if (FilterFrom is null || FilterTo is null) return;
-        _allEntries = await _gateway.GetChronicleAsync(FilterFrom.Value, FilterTo.Value) ?? [];
+        // _allEntries = await _gateway.GetChronicleAsync(FilterFrom.Value, FilterTo.Value) ?? [];
         await RebuildGroupsAsync();
     }
 

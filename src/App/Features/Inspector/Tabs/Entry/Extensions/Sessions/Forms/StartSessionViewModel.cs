@@ -8,7 +8,7 @@ using Misa.Ui.Avalonia.Infrastructure.UI;
 
 namespace Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions.Forms;
 
-public sealed partial class StartSessionViewModel(Guid itemId, InspectorGateway gateway)
+public sealed partial class StartSessionViewModel(Guid itemId)
     : ViewModelBase, IHostedForm<Result>
 {
     // Content
@@ -34,9 +34,9 @@ public sealed partial class StartSessionViewModel(Guid itemId, InspectorGateway 
             AutoStopReason
         );
         
-        var result = await gateway.StartSessionAsync(dto);
+        // var result = await gateway.StartSessionAsync(dto);
 
-        if (!result.IsSuccess)
+        // if (!result.IsSuccess)
             return Result<Result>.Failure();
 
         return Result<Result>.Ok(Result.Ok());

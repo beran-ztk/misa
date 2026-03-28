@@ -15,7 +15,7 @@ public partial class InspectorEntryViewModel
     [RelayCommand]
     private async Task MarkAsDoneAsync()
     {
-        var formVm = new MarkItemDoneViewModel(Facade.State.Item.Id, Facade.Gateway);
+        var formVm = new MarkItemDoneViewModel(Facade.State.Item.Id);
 
         var result = await Facade.LayerProxy.OpenAsync<MarkItemDoneViewModel, Result>(formVm);
         if (result is { IsSuccess: true })

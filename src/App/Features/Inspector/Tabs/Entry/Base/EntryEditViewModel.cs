@@ -75,43 +75,43 @@ public partial class InspectorEntryViewModel
 
         if (item.Workflow == WorkflowDto.Task)
         {
-            var updateRequest = new UpdateTaskRequest(EditTitle, EditDescription, EditActivityState,
-                EditActivityPriority, EditTaskCategory);
-
-            var result = await Facade.Gateway.UpdateTaskAsync(item.Id, updateRequest);
-            if (result is { IsSuccess: true })
-            {
-                Facade.ContextState.NotifyUpdated();
-                await Facade.Reload();
-                Facade.LayerProxy.ShowActionToast("Task updated", type: ToastType.Success);
-            }
+            // var updateRequest = new UpdateTaskRequest(EditTitle, EditDescription, EditActivityState,
+            //     EditActivityPriority, EditTaskCategory);
+            //
+            // var result = await Facade.Gateway.UpdateTaskAsync(item.Id, updateRequest);
+            // if (result is { IsSuccess: true })
+            // {
+            //     Facade.ContextState.NotifyUpdated();
+            //     await Facade.Reload();
+            //     Facade.LayerProxy.ShowActionToast("Task updated", type: ToastType.Success);
+            // }
         }
         else if (item.Workflow == WorkflowDto.Schedule)
         {
-            DateTimeOffset? activeUntilUtc = null;
-            if (EditActiveUntilDate is { } d)
-            {
-                var localDt = d.Date.Add(EditActiveUntilTime ?? TimeSpan.Zero);
-                activeUntilUtc = new DateTimeOffset(localDt, DateTimeOffset.Now.Offset).ToUniversalTime();
-            }
-
-            var updateRequest = new UpdateScheduleRequest(
-                EditTitle,
-                EditDescription,
-                EditMisfirePolicy,
-                EditLookaheadLimit,
-                EditOccurrenceCountLimit,
-                EditStartTime is { } st ? TimeOnly.FromTimeSpan(st) : null,
-                EditEndTime is { } et ? TimeOnly.FromTimeSpan(et) : null,
-                activeUntilUtc);
-
-            var result = await Facade.Gateway.UpdateScheduleAsync(item.Id, updateRequest);
-            if (result is { IsSuccess: true })
-            {
-                Facade.ContextState.NotifyUpdated();
-                await Facade.Reload();
-                Facade.LayerProxy.ShowActionToast("Schedule updated", type: ToastType.Success);
-            }
+            // DateTimeOffset? activeUntilUtc = null;
+            // if (EditActiveUntilDate is { } d)
+            // {
+            //     var localDt = d.Date.Add(EditActiveUntilTime ?? TimeSpan.Zero);
+            //     activeUntilUtc = new DateTimeOffset(localDt, DateTimeOffset.Now.Offset).ToUniversalTime();
+            // }
+            //
+            // var updateRequest = new UpdateScheduleRequest(
+            //     EditTitle,
+            //     EditDescription,
+            //     EditMisfirePolicy,
+            //     EditLookaheadLimit,
+            //     EditOccurrenceCountLimit,
+            //     EditStartTime is { } st ? TimeOnly.FromTimeSpan(st) : null,
+            //     EditEndTime is { } et ? TimeOnly.FromTimeSpan(et) : null,
+            //     activeUntilUtc);
+            //
+            // var result = await Facade.Gateway.UpdateScheduleAsync(item.Id, updateRequest);
+            // if (result is { IsSuccess: true })
+            // {
+            //     Facade.ContextState.NotifyUpdated();
+            //     await Facade.Reload();
+            //     Facade.LayerProxy.ShowActionToast("Schedule updated", type: ToastType.Success);
+            // }
         }
     }
     private void Clear()

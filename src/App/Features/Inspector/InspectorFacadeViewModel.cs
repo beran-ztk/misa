@@ -12,19 +12,16 @@ namespace Misa.Ui.Avalonia.Features.Inspector;
 public sealed partial class InspectorFacadeViewModel : ViewModelBase
 {
     public ISelectionContextState ContextState { get; }
-    public InspectorGateway Gateway { get; }
     public InspectorState State { get; }
     public InspectorEntryViewModel Entry { get; }
     public InspectorActivityViewModel Activity { get; }
     public LayerProxy LayerProxy { get; }
     public InspectorFacadeViewModel(
         ISelectionContextState  selectionContextState,
-        InspectorGateway gateway, 
         InspectorState inspectorState,
         LayerProxy layerProxy)
     {
         ContextState = selectionContextState;
-        Gateway = gateway;
         State = inspectorState;
         LayerProxy = layerProxy;
         
@@ -55,9 +52,9 @@ public sealed partial class InspectorFacadeViewModel : ViewModelBase
     {
         if (id is null) return;
         
-        var result = await Gateway.GetItemAsync((Guid)id);
-        if (result.Value is null) return;
+        // var result = await Gateway.GetItemAsync((Guid)id);
+        // if (result.Value is null) return;
         
-        State.Item = result.Value;
+        // State.Item = result.Value;
     }
 }

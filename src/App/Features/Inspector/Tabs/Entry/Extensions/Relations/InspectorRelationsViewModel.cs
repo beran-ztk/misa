@@ -15,7 +15,6 @@ namespace Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Relations;
 public sealed partial class InspectorRelationsViewModel : ViewModelBase
 {
     private readonly InspectorFacadeViewModel _facade;
-    private readonly InspectorGateway _gateway;
     private readonly LayerProxy _layerProxy;
 
     [ObservableProperty]
@@ -26,10 +25,9 @@ public sealed partial class InspectorRelationsViewModel : ViewModelBase
 
     public IReadOnlyList<RelationTypeDto> RelationTypes { get; } = Enum.GetValues<RelationTypeDto>();
 
-    public InspectorRelationsViewModel(InspectorFacadeViewModel facade, InspectorGateway gateway, LayerProxy layerProxy)
+    public InspectorRelationsViewModel(InspectorFacadeViewModel facade, LayerProxy layerProxy)
     {
         _facade = facade;
-        _gateway = gateway;
         _layerProxy = layerProxy;
 
         facade.State.PropertyChanged += (s, e) =>
@@ -48,25 +46,25 @@ public sealed partial class InspectorRelationsViewModel : ViewModelBase
             return;
         }
 
-        var result = await _gateway.GetRelationsAsync(itemId);
-        if (!result.IsSuccess || result.Value is null)
-        {
-            RelationRows = [];
-            return;
-        }
-
-        RelationRows = result.Value
-            .Select(r =>
-            {
-                var isSource      = r.SourceItemId == itemId;
-                var chipText      = ChipText(r.RelationType);
-                var label         = RelationLabel(r.RelationType, isSource);
-                var otherId       = isSource ? r.TargetItemId   : r.SourceItemId;
-                var otherTitle    = isSource ? r.TargetItemTitle : r.SourceItemTitle;
-                var otherWorkflow = isSource ? r.TargetItemWorkflow : r.SourceItemWorkflow;
-                return new RelationRowVm(r.RelationId, r.RelationType, chipText, label, otherId, otherTitle, otherWorkflow.ToString());
-            })
-            .ToList();
+        // var result = await _gateway.GetRelationsAsync(itemId);
+        // if (!result.IsSuccess || result.Value is null)
+        // {
+        //     RelationRows = [];
+        //     return;
+        // }
+        //
+        // RelationRows = result.Value
+        //     .Select(r =>
+        //     {
+        //         var isSource      = r.SourceItemId == itemId;
+        //         var chipText      = ChipText(r.RelationType);
+        //         var label         = RelationLabel(r.RelationType, isSource);
+        //         var otherId       = isSource ? r.TargetItemId   : r.SourceItemId;
+        //         var otherTitle    = isSource ? r.TargetItemTitle : r.SourceItemTitle;
+        //         var otherWorkflow = isSource ? r.TargetItemWorkflow : r.SourceItemWorkflow;
+        //         return new RelationRowVm(r.RelationId, r.RelationType, chipText, label, otherId, otherTitle, otherWorkflow.ToString());
+        //     })
+        //     .ToList();
     }
 
     // ── Create (modal) ────────────────────────────────────────────────────────
@@ -74,18 +72,18 @@ public sealed partial class InspectorRelationsViewModel : ViewModelBase
     [RelayCommand]
     private async Task OpenCreateModal()
     {
-        var lookupResult = await _gateway.GetItemsForLookupAsync();
-        if (!lookupResult.IsSuccess || lookupResult.Value is null) return;
-
-        var items = lookupResult.Value
-            .Where(i => i.Id != _facade.State.Item.Id)
-            .ToList();
-
-        var formVm = new CreateRelationViewModel(_facade.State.Item.Id, items, _gateway);
-        var result = await _layerProxy.OpenAsync<CreateRelationViewModel, Result>(formVm, LayerPresentation.Modal);
-
-        if (result is { IsSuccess: true })
-            await LoadRelationsAsync();
+        // var lookupResult = await _gateway.GetItemsForLookupAsync();
+        // if (!lookupResult.IsSuccess || lookupResult.Value is null) return;
+        //
+        // var items = lookupResult.Value
+        //     .Where(i => i.Id != _facade.State.Item.Id)
+        //     .ToList();
+        //
+        // var formVm = new CreateRelationViewModel(_facade.State.Item.Id, items, _gateway);
+        // var result = await _layerProxy.OpenAsync<CreateRelationViewModel, Result>(formVm, LayerPresentation.Modal);
+        //
+        // if (result is { IsSuccess: true })
+        //     await LoadRelationsAsync();
     }
 
     // ── Edit ─────────────────────────────────────────────────────────────────
@@ -108,10 +106,10 @@ public sealed partial class InspectorRelationsViewModel : ViewModelBase
     [RelayCommand]
     private async Task SubmitEdit(RelationRowVm row)
     {
-        var result = await _gateway.UpdateRelationAsync(row.RelationId, new UpdateRelationRequest(row.EditingType));
-        if (!result.IsSuccess) return;
-        row.IsEditing = false;
-        await LoadRelationsAsync();
+        // var result = await _gateway.UpdateRelationAsync(row.RelationId, new UpdateRelationRequest(row.EditingType));
+        // if (!result.IsSuccess) return;
+        // row.IsEditing = false;
+        // await LoadRelationsAsync();
     }
 
     // ── Delete ────────────────────────────────────────────────────────────────
@@ -119,9 +117,9 @@ public sealed partial class InspectorRelationsViewModel : ViewModelBase
     [RelayCommand]
     private async Task DeleteRelation(RelationRowVm row)
     {
-        var result = await _gateway.DeleteRelationAsync(row.RelationId);
-        if (!result.IsSuccess) return;
-        await LoadRelationsAsync();
+        // var result = await _gateway.DeleteRelationAsync(row.RelationId);
+        // if (!result.IsSuccess) return;
+        // await LoadRelationsAsync();
     }
 
     // ── Navigate ──────────────────────────────────────────────────────────────

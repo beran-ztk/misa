@@ -23,28 +23,28 @@ public partial class InspectorEntryViewModel : ViewModelBase
     {
         Facade = facade;
         Facade.State.PropertyChanged += OnFacadeStatePropertyChanged;
-        Relations = new InspectorRelationsViewModel(facade, facade.Gateway, facade.LayerProxy);
+        Relations = new InspectorRelationsViewModel(facade, facade.LayerProxy);
     }
 
     [RelayCommand]
     private async Task ArchiveItem()
     {
         await EnsureSessionEndedAsync();
-        var result = await Facade.Gateway.ArchiveAsync(Facade.State.Item.Id);
-        if (result.IsSuccess)
-            Facade.ContextState.NotifyRemoved();
+        // var result = await Facade.Gateway.ArchiveAsync(Facade.State.Item.Id);
+        // if (result.IsSuccess)
+            // Facade.ContextState.NotifyRemoved();
     }
 
     [RelayCommand]
     private async Task DeleteItem()
     {
-        await EnsureSessionEndedAsync();
-        var result = await Facade.Gateway.DeleteAsync(Facade.State.Item.Id);
-        if (result.IsSuccess)
-        {
-            Facade.LayerProxy.ShowActionToast("Task deleted", type: ToastType.Info);
-            Facade.ContextState.NotifyRemoved();
-        }
+        // await EnsureSessionEndedAsync();
+        // var result = await Facade.Gateway.DeleteAsync(Facade.State.Item.Id);
+        // if (result.IsSuccess)
+        // {
+        //     Facade.LayerProxy.ShowActionToast("Task deleted", type: ToastType.Info);
+        //     Facade.ContextState.NotifyRemoved();
+        // }
     }
 
     /// <summary>
@@ -61,7 +61,7 @@ public partial class InspectorEntryViewModel : ViewModelBase
             SessionConcentrationDto.None,
             "Was automatically stopped because of archiving/deleting.");
 
-        await Facade.Gateway.EndSessionAsync(dto);
+        // await Facade.Gateway.EndSessionAsync(dto);
     }
     private void OnFacadeStatePropertyChanged(object? s, PropertyChangedEventArgs e)
     {

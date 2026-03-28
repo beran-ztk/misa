@@ -110,7 +110,6 @@ public static class CompositionRoot
     {
         sc.AddSingleton<ScheduleState>();
         sc.AddSingleton<ScheduleFacadeViewModel>();
-        sc.AddSingleton<ScheduleGateway>();
 
         sc.AddTransient<CreateScheduleView>();
         sc.AddTransient<CreateScheduleViewModel>();

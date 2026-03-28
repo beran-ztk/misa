@@ -11,18 +11,15 @@ namespace Misa.Ui.Avalonia.Features.Pages.Tasks;
 
 public sealed partial class TaskFacadeViewModel : ViewModelBase
 {
-    private readonly TaskGateway _gateway;
     private readonly LayerProxy _layerProxy;
 
     public TaskState State { get; }
 
     public TaskFacadeViewModel(
         TaskState state,
-        TaskGateway gateway,
         LayerProxy layerProxy)
     {
         State = state;
-        _gateway = gateway;
         _layerProxy = layerProxy;
 
         State.SelectionContextState.PropertyChanged += async (s, e) =>
@@ -67,20 +64,20 @@ public sealed partial class TaskFacadeViewModel : ViewModelBase
 
     private async Task GetActiveAsync()
     {
-        var values = await _gateway.GetAllAsync();
-        await State.SetMainCollection(values ?? []);
+        // var values = await _gateway.GetAllAsync();
+        // await State.SetMainCollection(values ?? []);
     }
 
     private async Task GetArchivedAsync()
     {
-        var values = await _gateway.GetArchivedAsync();
-        await State.SetMainCollection(values ?? []);
+        // var values = await _gateway.GetArchivedAsync();
+        // await State.SetMainCollection(values ?? []);
     }
 
     private async Task GetDeletedAsync()
     {
-        var values = await _gateway.GetDeletedAsync();
-        await State.SetMainCollection(values ?? []);
+        // var values = await _gateway.GetDeletedAsync();
+        // await State.SetMainCollection(values ?? []);
     }
 
     // ── Workspace mode toggle ───────────────────────────────────
@@ -142,12 +139,12 @@ public sealed partial class TaskFacadeViewModel : ViewModelBase
     [RelayCommand]
     private async Task ShowAddPanelAsync()
     {
-        var formVm = new CreateTaskViewModel(_gateway);
+        // var formVm = new CreateTaskViewModel(_gateway);
 
-        var created = await _layerProxy.OpenAsync<CreateTaskViewModel, TaskDto>(formVm);
-        if (created is null) return;
+        // var created = await _layerProxy.OpenAsync<CreateTaskViewModel, TaskDto>(formVm);
+        // if (created is null) return;
 
-        await State.AppendToMainCollection(created);
+        // await State.AppendToMainCollection(created);
         _layerProxy.ShowActionToast("Task created", type: ToastType.Success);
     }
 
@@ -159,8 +156,8 @@ public sealed partial class TaskFacadeViewModel : ViewModelBase
         var item = FindItem(itemId);
         if (item is null) return;
 
-        var result = await _gateway.RestoreAsync(itemId);
-        if (!result.IsSuccess) return;
+        // var result = await _gateway.RestoreAsync(itemId);
+        // if (!result.IsSuccess) return;
 
         State.RemoveFromMainCollection(item);
         _layerProxy.ShowActionToast("Item restored", type: ToastType.Success);
@@ -174,8 +171,8 @@ public sealed partial class TaskFacadeViewModel : ViewModelBase
         var item = FindItem(itemId);
         if (item is null) return;
 
-        var result = await _gateway.HardDeleteAsync(itemId);
-        if (!result.IsSuccess) return;
+        // var result = await _gateway.HardDeleteAsync(itemId);
+        // if (!result.IsSuccess) return;
 
         State.RemoveFromMainCollection(item);
         _layerProxy.ShowActionToast("Permanently deleted", type: ToastType.Info);
@@ -192,10 +189,10 @@ public sealed partial class TaskFacadeViewModel : ViewModelBase
         if (State.WorkspaceMode != TaskWorkspaceMode.Active) return;
         if (State.FilteredItems.Any(t => t.Item.Id == taskId)) return;
 
-        var dto = await _gateway.GetByIdAsync(taskId);
-        if (dto is null) return;
+        // var dto = await _gateway.GetByIdAsync(taskId);
+        // if (dto is null) return;
 
-        await State.AppendToMainCollection(dto);
+        // await State.AppendToMainCollection(dto);
     }
 
     // ── Helpers ─────────────────────────────────────────────────

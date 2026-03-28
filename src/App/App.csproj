@@ -90,9 +90,6 @@
         <DependentUpon>InformationView.axaml</DependentUpon>
         <SubType>Code</SubType>
       </Compile>
-      <Compile Update="Features\Pages\Zettelkasten\Forms\CreateZettelView.axaml.cs">
-        <DependentUpon>CreateZettelView.axaml</DependentUpon>
-      </Compile>
       <Compile Update="Features\Inspector\Tabs\Activity\InspectorActivityView.axaml.cs">
         <DependentUpon>InspectorActivityView.axaml</DependentUpon>
       </Compile>

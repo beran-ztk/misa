@@ -14,19 +14,18 @@ using Misa.Ui.Avalonia.Infrastructure.UI;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Schedules;
 
-public sealed partial class CreateScheduleViewModel(ScheduleGateway gateway)
-    : ViewModelBase, IHostedForm<ScheduleDto>
+public sealed partial class CreateScheduleViewModel : ViewModelBase, IHostedForm<ScheduleDto>
 {
     public string FormTitle { get; } = "Create Schedule";
     public string? FormDescription { get; }
 
     public async Task<Result<ScheduleDto>> SubmitAsync()
     {
-        var dto = TryGetValidatedRequestObject();
-        if (dto is null)
-            return Result<ScheduleDto>.Failure(message: "Validation failed.");
-
-        return await gateway.CreateAsync(dto);
+        // var dto = TryGetValidatedRequestObject();
+        // if (dto is null)
+        return Result<ScheduleDto>.Failure(message: "Validation failed.");
+        //
+        // return await gateway.CreateAsync(dto);
     }
 
     // ── Mode ─────────────────────────────────────────────────────────────────

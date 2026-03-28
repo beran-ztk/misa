@@ -15,7 +15,6 @@ public sealed partial class CreateRelationViewModel : ViewModelBase, IHostedForm
 {
     private readonly Guid _currentItemId;
     private readonly List<ItemLookupDto> _allItems;
-    private readonly InspectorGateway _gateway;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(FilteredItems))]
@@ -51,11 +50,10 @@ public sealed partial class CreateRelationViewModel : ViewModelBase, IHostedForm
     public string FormTitle => "Add Relation";
     public string? FormDescription => null;
 
-    public CreateRelationViewModel(Guid currentItemId, List<ItemLookupDto> allItems, InspectorGateway gateway)
+    public CreateRelationViewModel(Guid currentItemId, List<ItemLookupDto> allItems)
     {
         _currentItemId = currentItemId;
         _allItems = allItems;
-        _gateway = gateway;
 
         WorkflowOptions =
         [
@@ -68,15 +66,16 @@ public sealed partial class CreateRelationViewModel : ViewModelBase, IHostedForm
 
     public async Task<Result<Result>> SubmitAsync()
     {
-        if (SelectedItem is null)
-            return Result<Result>.Failure();
-
-        var request = new CreateRelationRequest(_currentItemId, SelectedItem.Id, SelectedRelationType);
-        var result = await _gateway.CreateRelationAsync(request);
-
-        return result.IsSuccess
-            ? Result<Result>.Ok(Result.Ok())
-            : Result<Result>.Failure();
+        // if (SelectedItem is null)
+        //     return Result<Result>.Failure();
+        //
+        // var request = new CreateRelationRequest(_currentItemId, SelectedItem.Id, SelectedRelationType);
+        // var result = await _gateway.CreateRelationAsync(request);
+        //
+        // return result.IsSuccess
+        //     ? Result<Result>.Ok(Result.Ok())
+        //     : Result<Result>.Failure();
+        return Result<Result>.Failure();
     }
 }
 

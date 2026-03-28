@@ -7,7 +7,7 @@ using Misa.Ui.Avalonia.Common.Mappings;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Zettelkasten;
 
-public sealed partial class ZettelViewModel(ZettelkastenGateway gateway) : ViewModelBase
+public sealed partial class ZettelViewModel : ViewModelBase
 {
     private Guid Id { get; set; }
 
@@ -70,16 +70,16 @@ public sealed partial class ZettelViewModel(ZettelkastenGateway gateway) : ViewM
 
     private async Task SaveAfterDelayAsync(string? content, CancellationToken ct)
     {
-        try
-        {
-            await Task.Delay(TimeSpan.FromSeconds(2), ct);
-            var result = await gateway.UpdateZettelContentAsync(Id, content);
-            if (result.IsSuccess)
-            {
-                ModifiedAt = DateTimeOffset.UtcNow;
-                IsDirty    = false;
-            }
-        }
-        catch (OperationCanceledException) { }
+        // try
+        // {
+        //     await Task.Delay(TimeSpan.FromSeconds(2), ct);
+        //     var result = await gateway.UpdateZettelContentAsync(Id, content);
+        //     if (result.IsSuccess)
+        //     {
+        //         ModifiedAt = DateTimeOffset.UtcNow;
+        //         IsDirty    = false;
+        //     }
+        // }
+        // catch (OperationCanceledException) { }
     }
 }

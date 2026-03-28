@@ -10,7 +10,7 @@ using Misa.Ui.Avalonia.Common.Mappings;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Journal;
 
-public sealed partial class JournalViewModel(JournalGateway gateway) : ViewModelBase
+public sealed partial class JournalViewModel : ViewModelBase
 {
     // ── Raw data ──────────────────────────────────────────────────────────────
 
@@ -113,8 +113,8 @@ public sealed partial class JournalViewModel(JournalGateway gateway) : ViewModel
             occurredAtUtc,
             null);
 
-        var result = await gateway.CreateAsync(request);
-        if (!result.IsSuccess) return;
+        // var result = await gateway.CreateAsync(request);
+        // if (!result.IsSuccess) return;
 
         ResetComposer();
         await LoadAsync();
@@ -129,7 +129,7 @@ public sealed partial class JournalViewModel(JournalGateway gateway) : ViewModel
 
     private async Task LoadAsync()
     {
-        _monthEntries = await gateway.GetJournalsForMonthAsync(SelectedYear, SelectedMonth);
+        // _monthEntries = await gateway.GetJournalsForMonthAsync(SelectedYear, SelectedMonth);
         RebuildCalendarCells();
     }
 
@@ -197,8 +197,8 @@ public sealed partial class JournalViewModel(JournalGateway gateway) : ViewModel
 
         if (SelectedDay is not null)
         {
-            foreach (var entry in _monthEntries.Where(e => e.At.ToLocalTime().Date == SelectedDay.Date))
-                SelectedDayEntries.Add(new JournalEntryRow(entry, gateway, LoadAsync));
+            // foreach (var entry in _monthEntries.Where(e => e.At.ToLocalTime().Date == SelectedDay.Date))
+                // SelectedDayEntries.Add(new JournalEntryRow(entry, gateway, LoadAsync));
         }
 
         OnPropertyChanged(nameof(HasEntries));

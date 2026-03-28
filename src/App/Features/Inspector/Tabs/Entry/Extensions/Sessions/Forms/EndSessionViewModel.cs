@@ -9,7 +9,7 @@ using Misa.Ui.Avalonia.Infrastructure.UI;
 
 namespace Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions.Forms;
 
-public partial class EndSessionViewModel(Guid itemId, InspectorGateway gateway)
+public partial class EndSessionViewModel(Guid itemId)
     : ViewModelBase, IHostedForm<Result>
 {
     // Content
@@ -33,9 +33,9 @@ public partial class EndSessionViewModel(Guid itemId, InspectorGateway gateway)
             Summary
         );
         
-        var result = await gateway.EndSessionAsync(dto);
+        // var result = await gateway.EndSessionAsync(dto);
 
-        if (!result.IsSuccess)
+        // if (!result.IsSuccess)
             return Result<Result>.Failure();
 
         return Result<Result>.Ok(Result.Ok());

@@ -17,7 +17,6 @@ public sealed partial class ZettelkastenViewModel : ViewModelBase
 {
     public ObservableCollection<KnowledgeIndexNodeVm> KnowledgeIndex { get; } = [];
 
-    private ZettelkastenGateway Gateway    { get; }
     private readonly LayerProxy _layerProxy;
 
     internal Action? RequestTreeFocus { get; set; }
@@ -35,11 +34,10 @@ public sealed partial class ZettelkastenViewModel : ViewModelBase
     private Guid? _reloadTargetId;
     private Guid? _reloadFallbackId;
 
-    public ZettelkastenViewModel(ZettelkastenGateway gateway, LayerProxy layerProxy)
+    public ZettelkastenViewModel(LayerProxy layerProxy)
     {
-        Gateway    = gateway;
         _layerProxy = layerProxy;
-        ZettelVm  = new ZettelViewModel(Gateway);
+        ZettelVm  = new ZettelViewModel();
     }
 
     // ── Initialization ────────────────────────────────────────────────────────
@@ -52,7 +50,7 @@ public sealed partial class ZettelkastenViewModel : ViewModelBase
     [RelayCommand]
     private async Task OpenTrashAsync()
     {
-        var vm = new TrashViewModel(Gateway);
+        var vm = new TrashViewModel();
         await _layerProxy.OpenAsync<TrashViewModel, Result>(vm, LayerPresentation.Panel);
         await LoadIndexAsync(); // refresh in case entries were restored
     }
@@ -61,62 +59,64 @@ public sealed partial class ZettelkastenViewModel : ViewModelBase
 
     private async Task LoadIndexAsync()
     {
-        var index = await Gateway.GetKnowledgeIndexAsync();
-        if (index is null) return;
-
-        // Build the rename callback once per load; it captures Gateway + LoadIndexAsync.
-        Func<Guid, string, Task> onRename = async (id, title) =>
-        {
-            _reloadTargetId = id;
-            var result = await Gateway.RenameItemAsync(id, new RenameItemRequest(title));
-            if (result.IsSuccess)
-                await LoadIndexAsync();
-            else
-                _reloadTargetId = null;
-        };
-
-        await Dispatcher.UIThread.InvokeAsync(() =>
-        {
-            KnowledgeIndex.Clear();
-            foreach (var node in KnowledgeTreeBuilder.FromHierarchical(index, onRename))
-                KnowledgeIndex.Add(node);
-
-            var q = SearchQuery.Trim();
-            if (!string.IsNullOrEmpty(q))
-                ApplyFilter(q);
-
-            // First load: restore last-selected item from settings.
-            if (!_selectionRestored)
-            {
-                _selectionRestored = true;
-                if (_settings.LastSelectedItemId.HasValue)
-                {
-                    var node = FindNode(_settings.LastSelectedItemId.Value, KnowledgeIndex);
-                    if (node is not null) { EnsureNodeVisible(node); SelectedNode = node; }
-                }
-                return;
-            }
-
-            // Subsequent reloads: restore explicitly requested selection target.
-            var targetId   = _reloadTargetId;
-            var fallbackId = _reloadFallbackId;
-            _reloadTargetId   = null;
-            _reloadFallbackId = null;
-
-            if (targetId.HasValue)
-            {
-                var node = FindNode(targetId.Value, KnowledgeIndex)
-                        ?? (fallbackId.HasValue ? FindNode(fallbackId.Value, KnowledgeIndex) : null);
-                if (node is not null) { EnsureNodeVisible(node); SelectedNode = node; }
-                else                 { SelectedNode = null; HasZettelSelected = false; }
-            }
-
-            RequestTreeFocus?.Invoke();
-        });
+        // var index = await Gateway.GetKnowledgeIndexAsync();
+        // if (index is null) return;
+        //
+        // // Build the rename callback once per load; it captures Gateway + LoadIndexAsync.
+        // Func<Guid, string, Task> onRename = async (id, title) =>
+        // {
+        //     _reloadTargetId = id;
+        //     var result = await Gateway.RenameItemAsync(id, new RenameItemRequest(title));
+        //     if (result.IsSuccess)
+        //         await LoadIndexAsync();
+        //     else
+        //         _reloadTargetId = null;
+        // };
+        //
+        // await Dispatcher.UIThread.InvokeAsync(() =>
+        // {
+        //     KnowledgeIndex.Clear();
+        //     foreach (var node in KnowledgeTreeBuilder.FromHierarchical(index, onRename))
+        //         KnowledgeIndex.Add(node);
+        //
+        //     var q = SearchQuery.Trim();
+        //     if (!string.IsNullOrEmpty(q))
+        //         ApplyFilter(q);
+        //
+        //     // First load: restore last-selected item from settings.
+        //     if (!_selectionRestored)
+        //     {
+        //         _selectionRestored = true;
+        //         if (_settings.LastSelectedItemId.HasValue)
+        //         {
+        //             var node = FindNode(_settings.LastSelectedItemId.Value, KnowledgeIndex);
+        //             if (node is not null) { EnsureNodeVisible(node); SelectedNode = node; }
+        //         }
+        //         return;
+        //     }
+        //
+        //     // Subsequent reloads: restore explicitly requested selection target.
+        //     var targetId   = _reloadTargetId;
+        //     var fallbackId = _reloadFallbackId;
+        //     _reloadTargetId   = null;
+        //     _reloadFallbackId = null;
+        //
+        //     if (targetId.HasValue)
+        //     {
+        //         var node = FindNode(targetId.Value, KnowledgeIndex)
+        //                 ?? (fallbackId.HasValue ? FindNode(fallbackId.Value, KnowledgeIndex) : null);
+        //         if (node is not null) { EnsureNodeVisible(node); SelectedNode = node; }
+        //         else                 { SelectedNode = null; HasZettelSelected = false; }
+        //     }
+        //
+        //     RequestTreeFocus?.Invoke();
+        // });
     }
 
-    public async Task SetExpandedStateAsync(Guid id, bool expanded) =>
-        await Gateway.SetKnowledgeIndexExpandedStateAsync(id, expanded);
+    public async Task SetExpandedStateAsync(Guid id, bool expanded)
+    {
+        // await Gateway.SetKnowledgeIndexExpandedStateAsync(id, expanded);
+    }
 
     // ── Selection ─────────────────────────────────────────────────────────────
 
@@ -138,10 +138,10 @@ public sealed partial class ZettelkastenViewModel : ViewModelBase
 
     private async Task LoadZettelAsync(Guid id)
     {
-        var dto = await Gateway.GetZettelAsync(id);
-        if (dto is null || ZettelVm is not ZettelViewModel vm) return;
-        HasZettelSelected = true;
-        vm.Load(dto);
+        // var dto = await Gateway.GetZettelAsync(id);
+        // if (dto is null || ZettelVm is not ZettelViewModel vm) return;
+        // HasZettelSelected = true;
+        // vm.Load(dto);
     }
 
     // ── Search / filter ───────────────────────────────────────────────────────
@@ -239,18 +239,18 @@ public sealed partial class ZettelkastenViewModel : ViewModelBase
 
     private async Task ConfirmAndDeleteAsync(KnowledgeIndexNodeVm rootNode)
     {
-        var ids = rootNode.GetSubtreeIds().ToArray();
-
-        var formVm = new DeleteKnowledgeItemViewModel(ids, Gateway);
-        var result = await _layerProxy.OpenAsync<DeleteKnowledgeItemViewModel, Result>(formVm, LayerPresentation.Modal);
-
-        if (result is not { IsSuccess: true }) return;
-
-        // After delete: prefer parent, then an adjacent sibling.
-        _reloadTargetId   = rootNode.ParentId;
-        _reloadFallbackId = FindAdjacentSiblingId(rootNode);
-
-        await LoadIndexAsync();
+        // var ids = rootNode.GetSubtreeIds().ToArray();
+        //
+        // var formVm = new DeleteKnowledgeItemViewModel(ids, Gateway);
+        // var result = await _layerProxy.OpenAsync<DeleteKnowledgeItemViewModel, Result>(formVm, LayerPresentation.Modal);
+        //
+        // if (result is not { IsSuccess: true }) return;
+        //
+        // // After delete: prefer parent, then an adjacent sibling.
+        // _reloadTargetId   = rootNode.ParentId;
+        // _reloadFallbackId = FindAdjacentSiblingId(rootNode);
+        //
+        // await LoadIndexAsync();
     }
 
     // ── Inline creation ───────────────────────────────────────────────────────
@@ -265,59 +265,59 @@ public sealed partial class ZettelkastenViewModel : ViewModelBase
 
     private void BeginInlineCreation(Guid parentId, WorkflowDto workflow)
     {
-        var parent = FindNode(parentId, KnowledgeIndex);
-        if (parent is null || parent.Workflow != WorkflowDto.Topic) return;
-
-        // Remove any existing pending row under this parent before adding a new one
-        var existing = parent.Children.FirstOrDefault(c => c.IsPendingCreation);
-        if (existing is not null)
-            parent.Children.Remove(existing);
-
-        var pending = new KnowledgeIndexNodeVm(null)
-        {
-            IsPendingCreation = true,
-            PendingWorkflow   = workflow
-        };
-
-        pending.SetCallbacks(
-            onCommit: async title =>
-            {
-                var result = workflow == WorkflowDto.Topic
-                    ? await Gateway.CreateTopicAsync(new CreateTopicRequest(title, parentId))
-                    : await Gateway.CreateZettelAsync(new CreateZettelRequest(title, parentId));
-
-                if (result.IsSuccess)
-                    await LoadIndexAsync();
-                else
-                    await Dispatcher.UIThread.InvokeAsync(() => parent.Children.Remove(pending));
-            },
-            onCancel: () => Dispatcher.UIThread.Post(() => parent.Children.Remove(pending)));
-
-        parent.Children.Insert(0, pending);
-        parent.IsExpanded = true;
-        _ = SetExpandedStateAsync(parent.Id, true);
+        // var parent = FindNode(parentId, KnowledgeIndex);
+        // if (parent is null || parent.Workflow != WorkflowDto.Topic) return;
+        //
+        // // Remove any existing pending row under this parent before adding a new one
+        // var existing = parent.Children.FirstOrDefault(c => c.IsPendingCreation);
+        // if (existing is not null)
+        //     parent.Children.Remove(existing);
+        //
+        // var pending = new KnowledgeIndexNodeVm(null)
+        // {
+        //     IsPendingCreation = true,
+        //     PendingWorkflow   = workflow
+        // };
+        //
+        // pending.SetCallbacks(
+        //     onCommit: async title =>
+        //     {
+        //         var result = workflow == WorkflowDto.Topic
+        //             ? await Gateway.CreateTopicAsync(new CreateTopicRequest(title, parentId))
+        //             : await Gateway.CreateZettelAsync(new CreateZettelRequest(title, parentId));
+        //
+        //         if (result.IsSuccess)
+        //             await LoadIndexAsync();
+        //         else
+        //             await Dispatcher.UIThread.InvokeAsync(() => parent.Children.Remove(pending));
+        //     },
+        //     onCancel: () => Dispatcher.UIThread.Post(() => parent.Children.Remove(pending)));
+        //
+        // parent.Children.Insert(0, pending);
+        // parent.IsExpanded = true;
+        // _ = SetExpandedStateAsync(parent.Id, true);
     }
 
     // ── Drag-and-drop ─────────────────────────────────────────────────────────
 
     public async Task MoveItemAsync(Guid sourceId, Guid targetParentId)
     {
-        if (sourceId == targetParentId) return;
-
-        var source = FindNode(sourceId, KnowledgeIndex);
-        var target = FindNode(targetParentId, KnowledgeIndex);
-
-        if (source is null || target is null)             return;
-        if (target.Workflow != WorkflowDto.Topic)         return;
-        if (source.ParentId == targetParentId)            return; // already a child
-        if (IsInSubtree(targetParentId, source))          return; // target is inside source
-
-        _reloadTargetId = sourceId;
-        var result = await Gateway.ReparentItemAsync(sourceId, targetParentId);
-        if (result.IsSuccess)
-            await LoadIndexAsync();
-        else
-            _reloadTargetId = null;
+        // if (sourceId == targetParentId) return;
+        //
+        // var source = FindNode(sourceId, KnowledgeIndex);
+        // var target = FindNode(targetParentId, KnowledgeIndex);
+        //
+        // if (source is null || target is null)             return;
+        // if (target.Workflow != WorkflowDto.Topic)         return;
+        // if (source.ParentId == targetParentId)            return; // already a child
+        // if (IsInSubtree(targetParentId, source))          return; // target is inside source
+        //
+        // _reloadTargetId = sourceId;
+        // var result = await Gateway.ReparentItemAsync(sourceId, targetParentId);
+        // if (result.IsSuccess)
+        //     await LoadIndexAsync();
+        // else
+        //     _reloadTargetId = null;
     }
 
     // Returns true when candidateId lives anywhere in the subtree rooted at node.

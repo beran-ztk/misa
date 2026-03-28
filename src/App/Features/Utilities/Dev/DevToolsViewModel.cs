@@ -5,7 +5,7 @@ using Misa.Ui.Avalonia.Common.Mappings;
 
 namespace Misa.Ui.Avalonia.Features.Utilities.Dev;
 
-public sealed partial class DevToolsViewModel(DevGateway gateway) : ViewModelBase
+public sealed partial class DevToolsViewModel : ViewModelBase
 {
     [ObservableProperty] private bool   _isBusy;
     [ObservableProperty] private string? _statusMessage;
@@ -16,9 +16,9 @@ public sealed partial class DevToolsViewModel(DevGateway gateway) : ViewModelBas
         IsBusy        = true;
         StatusMessage = null;
 
-        var result = await gateway.SeedDataAsync();
+        // var result = await gateway.SeedDataAsync();
 
-        StatusMessage = result.IsSuccess ? "Seed data generated." : "Failed to seed data.";
+        // StatusMessage = result.IsSuccess ? "Seed data generated." : "Failed to seed data.";
         IsBusy        = false;
     }
 
@@ -28,9 +28,9 @@ public sealed partial class DevToolsViewModel(DevGateway gateway) : ViewModelBas
         IsBusy        = true;
         StatusMessage = null;
 
-        var result = await gateway.SeedStressDataAsync();
+        // var result = await gateway.SeedStressDataAsync();
 
-        StatusMessage = result.IsSuccess ? "Stress seed data generated." : "Failed to generate stress seed data.";
+        // StatusMessage = result.IsSuccess ? "Stress seed data generated." : "Failed to generate stress seed data.";
         IsBusy        = false;
     }
 
@@ -40,9 +40,9 @@ public sealed partial class DevToolsViewModel(DevGateway gateway) : ViewModelBas
         IsBusy        = true;
         StatusMessage = null;
 
-        var result = await gateway.DeleteDataAsync();
+        // var result = await gateway.DeleteDataAsync();
 
-        StatusMessage = result.IsSuccess ? "All data deleted." : "Failed to delete data.";
+        // StatusMessage = result.IsSuccess ? "All data deleted." : "Failed to delete data.";
         IsBusy        = false;
     }
 }

@@ -36,7 +36,7 @@ public partial class InspectorEntryViewModel
     [RelayCommand]
     private async Task ShowStartSessionPanelAsync()
     {
-        var formVm = new StartSessionViewModel(Facade.State.Item.Id, Facade.Gateway);
+        var formVm = new StartSessionViewModel(Facade.State.Item.Id);
         
         var result = await Facade.LayerProxy.OpenAsync<StartSessionViewModel, Result>(formVm);
         if (result is { IsSuccess: true })
@@ -52,7 +52,7 @@ public partial class InspectorEntryViewModel
         if (CurrentSession == null)
             return;
         
-        var formVm = new PauseSessionViewModel(Facade.State.Item.Id, Facade.Gateway);
+        var formVm = new PauseSessionViewModel(Facade.State.Item.Id);
         
         var result = await Facade.LayerProxy.OpenAsync<PauseSessionViewModel, Result>(formVm);
         if (result is { IsSuccess: true })
@@ -65,7 +65,7 @@ public partial class InspectorEntryViewModel
     [RelayCommand]
     private async Task ShowEndSessionPanelAsync()
     {
-        var formVm = new EndSessionViewModel(Facade.State.Item.Id, Facade.Gateway);
+        var formVm = new EndSessionViewModel(Facade.State.Item.Id);
         
         var result = await Facade.LayerProxy.OpenAsync<EndSessionViewModel, Result>(formVm);
         if (result is { IsSuccess: true })
@@ -77,12 +77,12 @@ public partial class InspectorEntryViewModel
     [RelayCommand]
     private async Task ContinueSessionAsync()
     {
-        var itemId = Facade.State.Item.Id;
-
-        var result = await Facade.Gateway.ContinueSessionAsync(itemId);
-        if (result is { IsSuccess: true })
-        {
-            await Facade.Reload();
-        }
+        // var itemId = Facade.State.Item.Id;
+        //
+        // var result = await Facade.Gateway.ContinueSessionAsync(itemId);
+        // if (result is { IsSuccess: true })
+        // {
+        //     await Facade.Reload();
+        // }
     }
 }

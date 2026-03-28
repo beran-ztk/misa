@@ -9,8 +9,7 @@ using Misa.Ui.Avalonia.Infrastructure.UI;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Zettelkasten;
 
-public sealed partial class TrashViewModel(ZettelkastenGateway gateway)
-    : ViewModelBase, IHostedForm<Result>
+public sealed partial class TrashViewModel : ViewModelBase, IHostedForm<Result>
 {
     public string  FormTitle       => "Trash";
     public string? FormDescription => null;
@@ -22,18 +21,18 @@ public sealed partial class TrashViewModel(ZettelkastenGateway gateway)
     public async Task LoadAsync()
     {
         IsLoading = true;
-
-        var deleted = await gateway.GetDeletedKnowledgeAsync();
-
-        Entries.Clear();
-        if (deleted is not null)
-        {
-            foreach (var root in KnowledgeTreeBuilder.FromDeletedFlat(deleted))
-                Entries.Add(root);
-        }
-
-        IsLoading = false;
-        IsEmpty   = Entries.Count == 0;
+        //
+        // var deleted = await gateway.GetDeletedKnowledgeAsync();
+        //
+        // Entries.Clear();
+        // if (deleted is not null)
+        // {
+        //     foreach (var root in KnowledgeTreeBuilder.FromDeletedFlat(deleted))
+        //         Entries.Add(root);
+        // }
+        //
+        // IsLoading = false;
+        // IsEmpty   = Entries.Count == 0;
     }
 
     // ── Restore ───────────────────────────────────────────────────────────────
@@ -41,11 +40,11 @@ public sealed partial class TrashViewModel(ZettelkastenGateway gateway)
     [RelayCommand]
     private async Task RestoreEntry(KnowledgeIndexNodeVm entry)
     {
-        var ids    = entry.GetSubtreeIds().ToArray();
-        var result = await gateway.RestoreSubtreeAsync(ids);
-        if (!result.IsSuccess) return;
-
-        await LoadAsync(); // rebuild the tree; the restored items will no longer appear
+        // var ids    = entry.GetSubtreeIds().ToArray();
+        // var result = await gateway.RestoreSubtreeAsync(ids);
+        // if (!result.IsSuccess) return;
+        //
+        // await LoadAsync(); // rebuild the tree; the restored items will no longer appear
     }
 
     // ── Permanent delete ──────────────────────────────────────────────────────
@@ -53,10 +52,10 @@ public sealed partial class TrashViewModel(ZettelkastenGateway gateway)
     [RelayCommand]
     private async Task HardDeleteEntry(KnowledgeIndexNodeVm entry)
     {
-        var result = await gateway.HardDeleteAsync(entry.Id);
-        if (!result.IsSuccess) return;
-
-        await LoadAsync(); // rebuild; the deleted item (and its children) will no longer appear
+        // var result = await gateway.HardDeleteAsync(entry.Id);
+        // if (!result.IsSuccess) return;
+        //
+        // await LoadAsync(); // rebuild; the deleted item (and its children) will no longer appear
     }
 
     // ── IHostedForm ───────────────────────────────────────────────────────────

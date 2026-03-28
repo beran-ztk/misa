@@ -38,13 +38,13 @@ public partial class InspectorEntryViewModel
     {
         var deadline = DeadlinePicker.SelectedDeadline;
 
-        var response = await Facade.Gateway.UpsertDeadlineAsync(Facade.State.Item.Id, deadline);
-        if (response.IsSuccess && Facade.State.Item.Activity is not null)
-        {
-            Facade.State.Item.Activity.DueAt = deadline;
-            DeadlinePropertyChanged();
-            CloseDeadlineForm();
-        }
+        // var response = await Facade.Gateway.UpsertDeadlineAsync(Facade.State.Item.Id, deadline);
+        // if (response.IsSuccess && Facade.State.Item.Activity is not null)
+        // {
+        //     Facade.State.Item.Activity.DueAt = deadline;
+        //     DeadlinePropertyChanged();
+        //     CloseDeadlineForm();
+        // }
     }
 
     [RelayCommand]

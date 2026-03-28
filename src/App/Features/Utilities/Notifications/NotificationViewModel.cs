@@ -60,7 +60,6 @@ public sealed partial class NotificationViewModel : ViewModelBase
     private const int PageSize        = 25;
     private const int DismissWindowMs = 4000;
 
-    private readonly NotificationGateway               _gateway;
     private readonly LayerProxy                       _layerProxy;
     private readonly WorkspaceNavigationViewModel     _navigation;
     private readonly ConcurrentDictionary<Guid, CancellationTokenSource> _pendingDismiss = new();
@@ -81,11 +80,9 @@ public sealed partial class NotificationViewModel : ViewModelBase
     public bool HasUnread => UnreadCount > 0;
 
     public NotificationViewModel(
-        NotificationGateway           gateway,
         LayerProxy                   layerProxy,
         WorkspaceNavigationViewModel navigation)
     {
-        _gateway    = gateway;
         _layerProxy = layerProxy;
         _navigation = navigation;
         Notifications.CollectionChanged += (_, _) => OnPropertyChanged(nameof(IsEmpty));
@@ -113,25 +110,25 @@ public sealed partial class NotificationViewModel : ViewModelBase
     // Full reload — clears the list and fetches the first page + global unread count.
     public async Task LoadAsync(CancellationToken ct = default)
     {
-        var onlyUnread = ActiveFilter == NotificationFilter.Unread;
-
-        var pageTask  = _gateway.GetPageAsync(limit: PageSize, onlyUnread: onlyUnread, ct: ct);
-        var countTask = _gateway.GetUnreadCountAsync(ct);
-
-        await Task.WhenAll(pageTask, countTask);
-
-        var dtos  = pageTask.Result ?? [];
-        var count = countTask.Result;
-
-        await Dispatcher.UIThread.InvokeAsync(() =>
-        {
-            Notifications.Clear();
-            foreach (var dto in dtos)
-                Notifications.Add(new NotificationItem(dto));
-
-            ApplyPagingState(dtos);
-            UnreadCount = count;
-        });
+        // var onlyUnread = ActiveFilter == NotificationFilter.Unread;
+        //
+        // var pageTask  = _gateway.GetPageAsync(limit: PageSize, onlyUnread: onlyUnread, ct: ct);
+        // var countTask = _gateway.GetUnreadCountAsync(ct);
+        //
+        // await Task.WhenAll(pageTask, countTask);
+        //
+        // var dtos  = pageTask.Result ?? [];
+        // var count = countTask.Result;
+        //
+        // await Dispatcher.UIThread.InvokeAsync(() =>
+        // {
+        //     Notifications.Clear();
+        //     foreach (var dto in dtos)
+        //         Notifications.Add(new NotificationItem(dto));
+        //
+        //     ApplyPagingState(dtos);
+        //     UnreadCount = count;
+        // });
     }
 
     public async Task InitializeAsync() => await LoadAsync();
@@ -139,41 +136,41 @@ public sealed partial class NotificationViewModel : ViewModelBase
     // Smart refresh from a SignalR push — prepends new items only, updates unread count, shows toast.
     private async Task RefreshFromRemoteChangeAsync()
     {
-        var onlyUnread = ActiveFilter == NotificationFilter.Unread;
-
-        var pageTask  = _gateway.GetPageAsync(limit: PageSize, onlyUnread: onlyUnread, ct: CancellationToken.None);
-        var countTask = _gateway.GetUnreadCountAsync(CancellationToken.None);
-
-        await Task.WhenAll(pageTask, countTask);
-
-        var dtos  = pageTask.Result ?? [];
-        var count = countTask.Result;
-
-        var newTaskIds = new List<Guid>();
-
-        await Dispatcher.UIThread.InvokeAsync(() =>
-        {
-            var existingIds = Notifications.Select(n => n.Id).ToHashSet();
-
-            var insertIndex = 0;
-            foreach (var dto in dtos)
-            {
-                if (!existingIds.Contains(dto.Id))
-                {
-                    var item = new NotificationItem(dto);
-                    Notifications.Insert(insertIndex++, item);
-                    _layerProxy.ShowToast(item.Title, item.HasMessage ? item.Message : null);
-
-                    if (item.LinkTarget is { Workspace: NotificationWorkspaceTarget.Tasks } link)
-                        newTaskIds.Add(link.ItemId);
-                }
-            }
-
-            UnreadCount = count;
-        });
-
-        foreach (var taskId in newTaskIds)
-            await _navigation.TryAppendTaskAsync(taskId);
+        // var onlyUnread = ActiveFilter == NotificationFilter.Unread;
+        //
+        // var pageTask  = _gateway.GetPageAsync(limit: PageSize, onlyUnread: onlyUnread, ct: CancellationToken.None);
+        // var countTask = _gateway.GetUnreadCountAsync(CancellationToken.None);
+        //
+        // await Task.WhenAll(pageTask, countTask);
+        //
+        // var dtos  = pageTask.Result ?? [];
+        // var count = countTask.Result;
+        //
+        // var newTaskIds = new List<Guid>();
+        //
+        // await Dispatcher.UIThread.InvokeAsync(() =>
+        // {
+        //     var existingIds = Notifications.Select(n => n.Id).ToHashSet();
+        //
+        //     var insertIndex = 0;
+        //     foreach (var dto in dtos)
+        //     {
+        //         if (!existingIds.Contains(dto.Id))
+        //         {
+        //             var item = new NotificationItem(dto);
+        //             Notifications.Insert(insertIndex++, item);
+        //             _layerProxy.ShowToast(item.Title, item.HasMessage ? item.Message : null);
+        //
+        //             if (item.LinkTarget is { Workspace: NotificationWorkspaceTarget.Tasks } link)
+        //                 newTaskIds.Add(link.ItemId);
+        //         }
+        //     }
+        //
+        //     UnreadCount = count;
+        // });
+        //
+        // foreach (var taskId in newTaskIds)
+        //     await _navigation.TryAppendTaskAsync(taskId);
     }
 
     [RelayCommand]
@@ -191,22 +188,22 @@ public sealed partial class NotificationViewModel : ViewModelBase
     [RelayCommand]
     private async Task LoadMoreAsync()
     {
-        if (_oldestTimestamp is null) return;
-
-        var onlyUnread = ActiveFilter == NotificationFilter.Unread;
-        var dtos = await _gateway.GetPageAsync(
-            limit: PageSize,
-            before: _oldestTimestamp,
-            onlyUnread: onlyUnread,
-            ct: CancellationToken.None) ?? [];
-
-        await Dispatcher.UIThread.InvokeAsync(() =>
-        {
-            foreach (var dto in dtos)
-                Notifications.Add(new NotificationItem(dto));
-
-            ApplyPagingState(dtos);
-        });
+        // if (_oldestTimestamp is null) return;
+        //
+        // var onlyUnread = ActiveFilter == NotificationFilter.Unread;
+        // var dtos = await _gateway.GetPageAsync(
+        //     limit: PageSize,
+        //     before: _oldestTimestamp,
+        //     onlyUnread: onlyUnread,
+        //     ct: CancellationToken.None) ?? [];
+        //
+        // await Dispatcher.UIThread.InvokeAsync(() =>
+        // {
+        //     foreach (var dto in dtos)
+        //         Notifications.Add(new NotificationItem(dto));
+        //
+        //     ApplyPagingState(dtos);
+        // });
     }
 
     private void ApplyPagingState(List<NotificationEntryDto> dtos)
@@ -260,21 +257,21 @@ public sealed partial class NotificationViewModel : ViewModelBase
 
         _pendingDismiss.TryRemove(id, out _);
 
-        var ok = await _gateway.DismissAsync(id);
-
-        await Dispatcher.UIThread.InvokeAsync(() =>
-        {
-            if (ok)
-            {
-                Notifications.Remove(item);
-                if (!item.IsRead)
-                    UnreadCount = Math.Max(0, UnreadCount - 1);
-            }
-            else
-            {
-                item.IsPendingDismiss = false;
-            }
-        });
+        // var ok = await _gateway.DismissAsync(id);
+        //
+        // await Dispatcher.UIThread.InvokeAsync(() =>
+        // {
+        //     if (ok)
+        //     {
+        //         Notifications.Remove(item);
+        //         if (!item.IsRead)
+        //             UnreadCount = Math.Max(0, UnreadCount - 1);
+        //     }
+        //     else
+        //     {
+        //         item.IsPendingDismiss = false;
+        //     }
+        // });
     }
 
     // Cancel a pending dismiss before the backend is called.
@@ -294,12 +291,12 @@ public sealed partial class NotificationViewModel : ViewModelBase
         item.IsRead = true;
         UnreadCount = Math.Max(0, UnreadCount - 1);
 
-        var ok = await _gateway.MarkAsReadAsync(id);
-        if (!ok)
-        {
-            item.IsRead = false;
-            UnreadCount++;
-        }
+        // var ok = await _gateway.MarkAsReadAsync(id);
+        // if (!ok)
+        // {
+        //     item.IsRead = false;
+        //     UnreadCount++;
+        // }
     }
 
     [RelayCommand]
@@ -309,16 +306,16 @@ public sealed partial class NotificationViewModel : ViewModelBase
         foreach (var item in unread)
             item.IsRead = true;
 
-        var ok = await _gateway.MarkAllAsReadAsync();
-        if (ok)
-        {
-            UnreadCount = 0;
-        }
-        else
-        {
-            foreach (var item in unread)
-                item.IsRead = false;
-        }
+        // var ok = await _gateway.MarkAllAsReadAsync();
+        // if (ok)
+        // {
+        //     UnreadCount = 0;
+        // }
+        // else
+        // {
+        //     foreach (var item in unread)
+        //         item.IsRead = false;
+        // }
     }
 
     [RelayCommand]

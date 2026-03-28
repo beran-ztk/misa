@@ -8,7 +8,7 @@ using Misa.Ui.Avalonia.Infrastructure.UI;
 
 namespace Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions.Forms;
 
-public partial class PauseSessionViewModel(Guid itemId, InspectorGateway gateway)
+public partial class PauseSessionViewModel(Guid itemId)
     : ViewModelBase, IHostedForm<Result>
 {
     // Content
@@ -23,9 +23,9 @@ public partial class PauseSessionViewModel(Guid itemId, InspectorGateway gateway
             PauseReason
         );
         
-        var result = await gateway.PauseSessionAsync(itemId, dto);
+        // var result = await gateway.PauseSessionAsync(itemId, dto);
 
-        if (!result.IsSuccess)
+        // if (!result.IsSuccess)
             return Result<Result>.Failure();
 
         return Result<Result>.Ok(Result.Ok());
