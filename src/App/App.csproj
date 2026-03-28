@@ -129,8 +129,4 @@
         <SubType>Code</SubType>
       </Compile>
     </ItemGroup>
-
-    <ItemGroup>
-      <AdditionalFiles Include="Features\Utilities\Notifications\NotificationView.axaml" />
-    </ItemGroup>
 </Project>

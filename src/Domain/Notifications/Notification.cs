@@ -1,4 +1,10 @@
 namespace Misa.Domain.Notifications;
+public enum NotificationSourceKind
+{
+    SchedulerExecution,
+    SessionPlannedDurationReached,
+    ScheduleCreatedTask
+}
 
 public sealed class Notification
 {

@@ -17,27 +17,6 @@
                     HorizontalAlignment="Center">
 
             <Button Classes="utility-nav"
-                    ToolTip.Tip="Notifications"
-                    Command="{Binding ToggleNotificationsCommand}">
-
-                <Grid Height="24" Width="24">
-
-                    <Image Classes="utility-nav"
-                           Source="{SvgImage /Assets/Icons/Shell/Utility/bell.svg}" />
-
-                    <Border Classes="notif-badge"
-                            HorizontalAlignment="Right"
-                            VerticalAlignment="Top"
-                            IsVisible="{Binding HasUnread}">
-                        <TextBlock Classes="notif-badge-text"
-                                   Text="{Binding BadgeText}"/>
-                    </Border>
-
-                </Grid>
-
-            </Button>
-
-            <Button Classes="utility-nav"
                     ToolTip.Tip="Dev Tools"
                     Command="{Binding ToggleDevToolsCommand}">
                 <Image Classes="utility-nav"

@@ -5,7 +5,6 @@ using Microsoft.Extensions.Logging;
 using Misa.Ui.Avalonia.Features.Pages.Journal;
 using Misa.Ui.Avalonia.Features.Pages.Zettelkasten;
 using Misa.Ui.Avalonia.Features.Utilities.Dev;
-using Misa.Ui.Avalonia.Features.Utilities.Notifications;
 using Misa.Ui.Avalonia.Shell;
 using Misa.Ui.Avalonia.Shell.Components;
 using InspectorFacadeViewModel = Misa.Ui.Avalonia.Features.Inspector.InspectorFacadeViewModel;
@@ -66,7 +65,6 @@ public static class CompositionRoot
     }
     private static void AddUtilityServices(this IServiceCollection sc)
     {
-        sc.AddSingleton<NotificationViewModel>();
         sc.AddSingleton<DevToolsViewModel>();
     }
 }
