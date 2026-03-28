@@ -1,6 +1,6 @@
 using System.Windows.Input;
 
-namespace Misa.Ui.Avalonia.Infrastructure.UI;
+namespace Misa.Ui.Avalonia.Infrastructure;
 
 public interface ILayerCloser
 {

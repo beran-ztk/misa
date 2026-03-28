@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Misa.Contract.Items.Components.Schedules;
-using Misa.Ui.Avalonia.Infrastructure.States;
+using Misa.Ui.Avalonia.Infrastructure;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Schedules;
 

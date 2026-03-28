@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Misa.Contract.Common.Results;
 using Misa.Contract.Items.Components.Chronicle;
 using Misa.Ui.Avalonia.Common.Behaviors;
 using Misa.Ui.Avalonia.Common.Mappings;
-using Misa.Ui.Avalonia.Infrastructure.States;
+using Misa.Ui.Avalonia.Infrastructure;
 using Misa.Ui.Avalonia.Infrastructure.UI;
+using LayerProxy = Misa.Ui.Avalonia.Infrastructure.LayerProxy;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Chronicle;
 

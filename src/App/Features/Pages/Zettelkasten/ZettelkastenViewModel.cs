@@ -9,7 +9,9 @@ using Misa.Contract.Common.Results;
 using Misa.Contract.Items;
 using Misa.Contract.Items.Components.Zettelkasten;
 using Misa.Ui.Avalonia.Common.Mappings;
+using Misa.Ui.Avalonia.Infrastructure;
 using Misa.Ui.Avalonia.Infrastructure.UI;
+using LayerProxy = Misa.Ui.Avalonia.Infrastructure.LayerProxy;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Zettelkasten;
 

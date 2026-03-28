@@ -1,7 +1,7 @@
 using System.Threading.Tasks;
 using Misa.Contract.Common.Results;
 
-namespace Misa.Ui.Avalonia.Infrastructure.UI;
+namespace Misa.Ui.Avalonia.Infrastructure;
 
 public interface IHostedForm<TResult>
 {

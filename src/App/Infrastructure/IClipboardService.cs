@@ -2,7 +2,7 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 
-namespace Misa.Ui.Avalonia.Infrastructure.Platform;
+namespace Misa.Ui.Avalonia.Infrastructure;
 
 public interface IClipboardService
 {

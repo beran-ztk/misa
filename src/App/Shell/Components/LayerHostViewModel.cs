@@ -1,7 +1,7 @@
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Ui.Avalonia.Common.Mappings;
-using Misa.Ui.Avalonia.Infrastructure.UI;
+using Misa.Ui.Avalonia.Infrastructure;
 
 namespace Misa.Ui.Avalonia.Shell.Components;
 

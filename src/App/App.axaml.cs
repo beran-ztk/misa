@@ -5,7 +5,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
 using Microsoft.Extensions.DependencyInjection;
-using Misa.Ui.Avalonia.Infrastructure.Composition;
+using Misa.Ui.Avalonia.Infrastructure;
 using Misa.Ui.Avalonia.Shell;
 
 namespace Misa.Ui.Avalonia;

@@ -10,7 +10,7 @@ using Misa.Contract.Items.Components.Activity;
 using Misa.Contract.Items.Components.Schedules;
 using Misa.Contract.Items.Components.Tasks;
 using Misa.Ui.Avalonia.Common.Mappings;
-using Misa.Ui.Avalonia.Infrastructure.UI;
+using Misa.Ui.Avalonia.Infrastructure;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Schedules;
 

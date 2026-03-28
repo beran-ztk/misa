@@ -32,7 +32,6 @@
         </PackageReference>
         <PackageReference Include="Avalonia.Themes.Simple" Version="11.3.6" />
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.1"/>
-        <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="9.0.8" />
         <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.14" />
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.14" />
         <PackageReference Include="Microsoft.Extensions.Logging.Configuration" Version="9.0.14" />

@@ -2,7 +2,7 @@
 using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace Misa.Ui.Avalonia.Infrastructure.States;
+namespace Misa.Ui.Avalonia.Infrastructure;
 
 public interface ISelectionContextState : INotifyPropertyChanged
 {

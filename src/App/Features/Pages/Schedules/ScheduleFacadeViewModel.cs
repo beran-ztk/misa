@@ -2,7 +2,7 @@ using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Items.Components.Schedules;
 using Misa.Ui.Avalonia.Common.Mappings;
-using Misa.Ui.Avalonia.Infrastructure.UI;
+using LayerProxy = Misa.Ui.Avalonia.Infrastructure.LayerProxy;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Schedules;
 

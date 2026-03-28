@@ -8,7 +8,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using Misa.Contract.Items.Components.Activity;
 using Misa.Contract.Items.Components.Tasks;
 using Misa.Ui.Avalonia.Common.Components.FilterDropdown;
-using Misa.Ui.Avalonia.Infrastructure.States;
+using Misa.Ui.Avalonia.Infrastructure;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Tasks;
 

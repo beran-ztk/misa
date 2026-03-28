@@ -10,7 +10,7 @@ using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Utilities.Toast;
 using Misa.Ui.Avalonia.Shell.Components;
 
-namespace Misa.Ui.Avalonia.Infrastructure.UI;
+namespace Misa.Ui.Avalonia.Infrastructure;
 
 public enum LayerPresentation
 {

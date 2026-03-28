@@ -1,7 +1,6 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Notifications;
 using Misa.Ui.Avalonia.Common.Mappings;
@@ -10,7 +9,7 @@ using Misa.Ui.Avalonia.Features.Pages.Journal;
 using Misa.Ui.Avalonia.Features.Pages.Schedules;
 using Misa.Ui.Avalonia.Features.Pages.Tasks;
 using Misa.Ui.Avalonia.Features.Pages.Zettelkasten;
-using Misa.Ui.Avalonia.Infrastructure.States;
+using Misa.Ui.Avalonia.Infrastructure;
 
 namespace Misa.Ui.Avalonia.Shell.Components;
 

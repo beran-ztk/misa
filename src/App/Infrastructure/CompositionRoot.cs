@@ -2,7 +2,6 @@ using System;
 using System.Net.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Misa.Ui.Avalonia.Features.Inspector;
 using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions.Forms;
 using Misa.Ui.Avalonia.Features.Pages.Chronicle;
 using Misa.Ui.Avalonia.Features.Pages.Journal;
@@ -11,10 +10,6 @@ using Misa.Ui.Avalonia.Features.Pages.Tasks;
 using Misa.Ui.Avalonia.Features.Pages.Zettelkasten;
 using Misa.Ui.Avalonia.Features.Utilities.Dev;
 using Misa.Ui.Avalonia.Features.Utilities.Notifications;
-using Misa.Ui.Avalonia.Infrastructure.Platform;
-using Misa.Ui.Avalonia.Infrastructure.States;
-using Misa.Ui.Avalonia.Infrastructure.Time;
-using Misa.Ui.Avalonia.Infrastructure.UI;
 using Misa.Ui.Avalonia.Shell;
 using Misa.Ui.Avalonia.Shell.Components;
 using CreateScheduleViewModel = Misa.Ui.Avalonia.Features.Pages.Schedules.CreateScheduleViewModel;
@@ -26,7 +21,7 @@ using ShellWindowViewModel = Misa.Ui.Avalonia.Shell.ShellWindowViewModel;
 using TaskFacadeViewModel = Misa.Ui.Avalonia.Features.Pages.Tasks.TaskFacadeViewModel;
 using TaskState = Misa.Ui.Avalonia.Features.Pages.Tasks.TaskState;
 
-namespace Misa.Ui.Avalonia.Infrastructure.Composition;
+namespace Misa.Ui.Avalonia.Infrastructure;
 
 public static class CompositionRoot
 {

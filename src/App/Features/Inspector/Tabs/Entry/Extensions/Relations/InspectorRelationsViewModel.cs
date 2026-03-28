@@ -9,6 +9,7 @@ using Misa.Contract.Items.Components.Relations;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Relations.Forms;
 using Misa.Ui.Avalonia.Infrastructure.UI;
+using LayerProxy = Misa.Ui.Avalonia.Infrastructure.LayerProxy;
 
 namespace Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Relations;
 

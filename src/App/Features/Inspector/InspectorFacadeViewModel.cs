@@ -4,8 +4,9 @@ using CommunityToolkit.Mvvm.Input;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Inspector.Tabs.Activity;
 using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Base;
-using Misa.Ui.Avalonia.Infrastructure.States;
+using Misa.Ui.Avalonia.Infrastructure;
 using Misa.Ui.Avalonia.Infrastructure.UI;
+using LayerProxy = Misa.Ui.Avalonia.Infrastructure.LayerProxy;
 
 namespace Misa.Ui.Avalonia.Features.Inspector;
 

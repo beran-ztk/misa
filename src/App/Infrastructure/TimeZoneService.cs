@@ -1,7 +1,7 @@
 using System.Collections.ObjectModel;
 using NodaTime;
 
-namespace Misa.Ui.Avalonia.Infrastructure.Time;
+namespace Misa.Ui.Avalonia.Infrastructure;
 
 public sealed class TimeZoneService
 {

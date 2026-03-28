@@ -4,11 +4,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Pages.Chronicle;
 using Misa.Ui.Avalonia.Features.Pages.Zettelkasten;
-using Misa.Ui.Avalonia.Infrastructure.States;
-using Misa.Ui.Avalonia.Infrastructure.UI;
+using Misa.Ui.Avalonia.Infrastructure;
 using Misa.Ui.Avalonia.Shell.Components;
 using InspectorFacadeViewModel = Misa.Ui.Avalonia.Features.Inspector.InspectorFacadeViewModel;
 using ScheduleFacadeViewModel = Misa.Ui.Avalonia.Features.Pages.Schedules.ScheduleFacadeViewModel;
+using ShellState = Misa.Ui.Avalonia.Infrastructure.ShellState;
 using TaskFacadeViewModel = Misa.Ui.Avalonia.Features.Pages.Tasks.TaskFacadeViewModel;
 
 namespace Misa.Ui.Avalonia.Shell;

@@ -3,8 +3,8 @@ using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Utilities.Dev;
-using Misa.Ui.Avalonia.Infrastructure.States;
 using NotificationViewModel = Misa.Ui.Avalonia.Features.Utilities.Notifications.NotificationViewModel;
+using ShellState = Misa.Ui.Avalonia.Infrastructure.ShellState;
 
 namespace Misa.Ui.Avalonia.Shell.Components;
 

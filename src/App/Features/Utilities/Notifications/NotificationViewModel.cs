@@ -13,7 +13,7 @@ using Misa.Contract.Features.Messaging;
 using Misa.Contract.Notifications;
 using Misa.Ui.Avalonia.Shell.Components;
 using Misa.Ui.Avalonia.Common.Mappings;
-using Misa.Ui.Avalonia.Infrastructure.UI;
+using LayerProxy = Misa.Ui.Avalonia.Infrastructure.LayerProxy;
 
 namespace Misa.Ui.Avalonia.Features.Utilities.Notifications;
 
