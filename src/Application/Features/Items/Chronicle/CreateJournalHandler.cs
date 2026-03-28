@@ -1,4 +1,3 @@
-using Misa.Application.Abstractions.Authentication;
 using Misa.Application.Abstractions.Ids;
 using Misa.Application.Abstractions.Persistence;
 using Misa.Application.Abstractions.Time;
@@ -19,8 +18,7 @@ public sealed record CreateJournalCommand(
 public sealed class CreateJournalHandler(
     IItemRepository repository,
     ITimeProvider timeProvider,
-    IIdGenerator idGenerator,
-    ICurrentUser currentUser)
+    IIdGenerator idGenerator)
 {
     public async Task<ItemDto> Handle(CreateJournalCommand command, CancellationToken ct)
     {
@@ -31,7 +29,6 @@ public sealed class CreateJournalHandler(
 
         var journalItem = Item.CreateJournal(
             id: new ItemId(idGenerator.New()),
-            ownerId: currentUser.Id,
             title: command.Title,
             description: command.Description,
             createdAtUtc: timeProvider.UtcNow,

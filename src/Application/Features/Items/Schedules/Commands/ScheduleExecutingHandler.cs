@@ -58,7 +58,7 @@ public class ScheduleExecutingHandler(
 
                 case ScheduleActionType.CreateTask:
                     var taskResult = await ExecuteCreateTaskAsync(
-                        item.ScheduleExtension, item.OwnerId, stoppingToken);
+                        item.ScheduleExtension, stoppingToken);
 
                     if (taskResult is null)
                     {
@@ -85,15 +85,13 @@ public class ScheduleExecutingHandler(
                 notificationMessage,
                 notificationSourceKind,
                 notificationSourceId,
-                timeProvider.UtcNow,
-                item.OwnerId);
+                timeProvider.UtcNow);
 
             await notificationRepository.AddAsync(notification, stoppingToken);
 
             log.Succeeded(timeProvider.UtcNow);
             await repository.SaveChangesAsync(stoppingToken);
             await notificationRepository.SaveChangesAsync(stoppingToken);
-            await pushService.NotifyUserChangedAsync(item.OwnerId);
         }
     }
 
@@ -103,7 +101,6 @@ public class ScheduleExecutingHandler(
     /// </summary>
     private async Task<(Guid Id, string Title)?> ExecuteCreateTaskAsync(
         ScheduleExtension schedule,
-        string            ownerId,
         CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(schedule.Payload))
@@ -125,7 +122,6 @@ public class ScheduleExecutingHandler(
         var taskId = idGenerator.New();
         var task   = Item.CreateTask(
             id:           new ItemId(taskId),
-            ownerId:      ownerId,
             title:        payload.Title,
             description:  payload.Description,
             category:     payload.Category.ToDomain(),

@@ -10,8 +10,7 @@ public sealed class Notification
         string message,
         NotificationSourceKind sourceKind,
         Guid sourceId,
-        DateTimeOffset createdAtUtc,
-        string ownerId)
+        DateTimeOffset createdAtUtc)
     {
         Id           = id;
         Title        = title;
@@ -19,7 +18,6 @@ public sealed class Notification
         SourceKind   = sourceKind;
         SourceId     = sourceId;
         CreatedAtUtc = createdAtUtc;
-        OwnerId      = ownerId;
     }
 
     public Guid                   Id             { get; private set; }
@@ -28,7 +26,6 @@ public sealed class Notification
     public NotificationSourceKind SourceKind     { get; private set; }
     public Guid                   SourceId       { get; private set; }
     public DateTimeOffset         CreatedAtUtc   { get; private set; }
-    public string                 OwnerId        { get; private set; } = string.Empty;
     public DateTimeOffset?        DismissedAtUtc { get; private set; }
     public DateTimeOffset?        ReadAtUtc      { get; private set; }
     public DateTimeOffset?        DeletedAtUtc   { get; private set; }

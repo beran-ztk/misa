@@ -49,7 +49,7 @@ public interface IItemRepository
     Task<List<Session>> GetSessionsForDurationNotificationAsync(CancellationToken ct);
 
     // Dev
-    Task DeleteAllByOwnerAsync(string ownerId, CancellationToken ct);
+    Task DeleteAllByOwnerAsync(CancellationToken ct);
 
     // Relations
     Task AddRelationAsync(ItemRelation relation, CancellationToken ct);

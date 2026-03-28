@@ -35,13 +35,11 @@ public class NotifySessionPlannedDurationReachedHandler(
                 $"The planned duration for \"{session.Item.Title}\" has been reached.",
                 NotificationSourceKind.SessionPlannedDurationReached,
                 session.Item.Id.Value,
-                now,
-                session.Item.OwnerId);
+                now);
 
             await notificationRepository.AddAsync(notification, ct);
             await itemRepository.SaveChangesAsync(ct);
             await notificationRepository.SaveChangesAsync(ct);
-            await pushService.NotifyUserChangedAsync(session.Item.OwnerId);
         }
     }
 

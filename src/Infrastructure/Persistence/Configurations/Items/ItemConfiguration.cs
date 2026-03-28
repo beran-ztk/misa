@@ -20,9 +20,6 @@ public class ItemConfiguration : IEntityTypeConfiguration<Item>
         builder.Property(i => i.Id)
             .HasConversion(i => i.Value, i => new ItemId(i))
             .ValueGeneratedNever();
-
-        builder.Property(i => i.OwnerId)
-            .HasMaxLength(128);
         
         builder.Property(i => i.Workflow);
         

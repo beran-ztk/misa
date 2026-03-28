@@ -27,7 +27,6 @@ public static class ScheduleExtensionMappings
             OccurrenceTtl = schedule.OccurrenceTtl,
 
             Payload = schedule.Payload,
-            Timezone = schedule.Timezone,
 
             StartTime = schedule.StartTime,
             EndTime = schedule.EndTime,
@@ -65,7 +64,6 @@ public static class ScheduleExtensionMappings
             OccurrenceTtl = item.ScheduleExtension.OccurrenceTtl,
 
             Payload = item.ScheduleExtension.Payload,
-            Timezone = item.ScheduleExtension.Timezone,
 
             StartTime = item.ScheduleExtension.StartTime,
             EndTime = item.ScheduleExtension.EndTime,

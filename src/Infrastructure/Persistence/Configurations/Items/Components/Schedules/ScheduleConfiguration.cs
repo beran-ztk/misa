@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Misa.Domain.Items;
 using Misa.Domain.Items.Components.Schedules;
-using Wolverine;
 
 namespace Misa.Infrastructure.Persistence.Configurations.Items.Components.Schedules;
 
@@ -46,8 +45,6 @@ public sealed class ScheduleConfiguration : IEntityTypeConfiguration<ScheduleExt
         
         builder.Property(s => s.Payload)
             .HasColumnType("jsonb");
-
-        builder.Property(s => s.Timezone);
 
         builder.Property(s => s.StartTime);
 

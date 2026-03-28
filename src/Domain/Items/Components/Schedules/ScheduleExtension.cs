@@ -32,8 +32,6 @@ public sealed class ScheduleExtension : DomainEventEntity
     public ScheduleActionType ActionType { get; private set; }
     public string? Payload { get; private set; }
     
-    public string Timezone { get; private set; } = string.Empty;
-    
     public TimeOnly? StartTime { get; private set; }
     public TimeOnly? EndTime { get; private set; }
     
@@ -126,8 +124,7 @@ public sealed class ScheduleExtension : DomainEventEntity
         DateTimeOffset? activeUntilUtc,
         int[]? byDay,
         int[]? byMonthDay,
-        int[]? byMonth,
-        string timezone)
+        int[]? byMonth)
     {
         if (frequencyInterval <= 0)
             throw new ArgumentException("Frequency interval must be greater than 0.", nameof(frequencyInterval));
@@ -168,7 +165,6 @@ public sealed class ScheduleExtension : DomainEventEntity
         ActiveUntilUtc = activeUntilUtc;
 
         LookaheadLimit = lookaheadLimit;
-        Timezone = timezone;
 
         ByDay = normalizedByDay;
         ByMonthDay = normalizedByMonthDay;

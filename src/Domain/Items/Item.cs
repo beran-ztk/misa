@@ -17,7 +17,6 @@ public sealed class Item : DomainEventEntity
 
     private Item(
         ItemId id,
-        string ownerId,
         Workflow workflow,
         string title,
         string? description,
@@ -26,14 +25,10 @@ public sealed class Item : DomainEventEntity
         if (id.Equals(default))
             throw new DomainValidationException("id", "id_required", "Id is required.");
 
-        if (string.IsNullOrWhiteSpace(ownerId))
-            throw new DomainValidationException("ownerId", "owner_required", "OwnerId is required.");
-
         if (string.IsNullOrWhiteSpace(title))
             throw new DomainValidationException("title", "title_required", "Title is required.");
 
         Id = id;
-        OwnerId = ownerId;
         Workflow = workflow;
 
         Title = title;
@@ -44,7 +39,6 @@ public sealed class Item : DomainEventEntity
     
     // Fields + Properties
     public ItemId Id { get; init; }
-    public string OwnerId { get; init; } = string.Empty;
     public Workflow Workflow { get; init; }
     
     public string Title { get; private set; } = string.Empty;
@@ -73,7 +67,6 @@ public sealed class Item : DomainEventEntity
     // Behaviours
     public static Item CreateTask(
         ItemId id,
-        string ownerId,
         string title,
         string? description,
         TaskCategory category,
@@ -84,7 +77,6 @@ public sealed class Item : DomainEventEntity
     {
         var item = new Item(
             id: id,
-            ownerId: ownerId,
             workflow: Workflow.Task,
             title: title,
             description: description,
@@ -98,7 +90,6 @@ public sealed class Item : DomainEventEntity
     }
     public static Item CreateSchedule(
         ItemId id,
-        string ownerId,
         string title,
         string? description,
         DateTimeOffset createdAtUtc,
@@ -106,7 +97,6 @@ public sealed class Item : DomainEventEntity
     {
         var item = new Item(
             id: id,
-            ownerId: ownerId,
             workflow: Workflow.Schedule,
             title: title,
             description: description,
@@ -120,7 +110,6 @@ public sealed class Item : DomainEventEntity
     
     public static Item CreateJournal(
         ItemId id,
-        string ownerId,
         string title,
         string? description,
         DateTimeOffset createdAtUtc,
@@ -128,7 +117,6 @@ public sealed class Item : DomainEventEntity
     {
         var item = new Item(
             id: id,
-            ownerId: ownerId,
             workflow: Workflow.Journal,
             title: title,
             description: description,
@@ -141,7 +129,6 @@ public sealed class Item : DomainEventEntity
     }
     public static Item CreateTopic(
         ItemId id,
-        string ownerId,
         string title,
         DateTimeOffset createdAtUtc,
 
@@ -149,7 +136,6 @@ public sealed class Item : DomainEventEntity
     {
         var item = new Item(
             id: id,
-            ownerId: ownerId,
             workflow: Workflow.Topic,
             title: title,
             description: null,
@@ -164,14 +150,12 @@ public sealed class Item : DomainEventEntity
 
     public static Item CreateZettel(
         ItemId id,
-        string ownerId,
         string title,
         DateTimeOffset createdAtUtc,
         ItemId? parentId)
     {
         var item = new Item(
             id: id,
-            ownerId: ownerId,
             workflow: Workflow.Zettel,
             title: title,
             description: null,

@@ -15,7 +15,6 @@ public static class ItemMappings
         return new ItemDto
         {
             Id = item.Id.Value,
-            OwnerId = item.OwnerId,
             Workflow = item.Workflow.ToDto(),
 
             Title = item.Title,

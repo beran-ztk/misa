@@ -1,4 +1,3 @@
-using Misa.Application.Abstractions.Authentication;
 using Misa.Application.Abstractions.Ids;
 using Misa.Application.Abstractions.Persistence;
 using Misa.Application.Abstractions.Time;
@@ -11,14 +10,12 @@ public sealed record CreateZettelCommand(string Title, Guid ParentId);
 public sealed class CreateZettelHandler(
     IItemRepository repository,
     ITimeProvider timeProvider,
-    IIdGenerator idGenerator,
-    ICurrentUser currentUser)
+    IIdGenerator idGenerator)
 {
     public async Task HandleAsync(CreateZettelCommand command)
     {
         var zettel = Item.CreateZettel(
             id: new ItemId(idGenerator.New()),
-            ownerId: currentUser.Id,
             title: command.Title,
             createdAtUtc: timeProvider.UtcNow,
             parentId: new ItemId(command.ParentId)

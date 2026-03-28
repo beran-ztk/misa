@@ -1,6 +1,0 @@
-@Misa.Api.Web_HostAddress = http://localhost:4500
-
-GET {{Misa.Api.Web_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###

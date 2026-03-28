@@ -1,4 +1,3 @@
-using Misa.Application.Abstractions.Authentication;
 using Misa.Application.Abstractions.Persistence;
 using Misa.Application.Mappings;
 using Misa.Contract.Items.Components.Tasks;

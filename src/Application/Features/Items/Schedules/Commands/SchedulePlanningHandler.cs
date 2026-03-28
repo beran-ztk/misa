@@ -27,11 +27,11 @@ public class SchedulePlanningHandler(
             if (schedule.ScheduleExtension is null) continue;
             if (!AllowedFrequencies.Contains(schedule.ScheduleExtension.ScheduleFrequencyType)) continue;
 
-            if (!timeZoneProvider.IsValid(schedule.ScheduleExtension.Timezone))
+            if (!timeZoneProvider.IsValid(string.Empty))
                 throw new InvalidCastException("Timezone is not valid.");
             
             var utcNow = timeProvider.UtcNow;
-            var localNow = timeZoneConverter.UtcToLocal(utcNow, schedule.ScheduleExtension.Timezone);
+            var localNow = timeZoneConverter.UtcToLocal(utcNow, string.Empty);
             
             var currentLookaheadCount = await repository.GetExecutionCountPlannedAheadAsync(schedule.ScheduleExtension.Id.Value, utcNow, stoppingToken);
             
@@ -45,7 +45,7 @@ public class SchedulePlanningHandler(
             
             while (schedule.ScheduleExtension.OccurrenceCountLimit != 0 
                    && currentLookaheadCount < schedule.ScheduleExtension.LookaheadLimit
-                   && timeZoneConverter.UtcToLocal(schedule.ScheduleExtension.SchedulingAnchorUtc, schedule.ScheduleExtension.Timezone) < maxLocalLookaheadTime)
+                   && timeZoneConverter.UtcToLocal(schedule.ScheduleExtension.SchedulingAnchorUtc, string.Empty) < maxLocalLookaheadTime)
             {
                 var delta = schedule.ScheduleExtension.ScheduleFrequencyType switch
                 {
@@ -61,7 +61,7 @@ public class SchedulePlanningHandler(
                         ? schedule.ScheduleExtension.ActiveFromUtc
                         : schedule.ScheduleExtension.SchedulingAnchorUtc.Add(delta);
 
-                    var localScheduledTimestamp = timeZoneConverter.UtcToLocal(schedule.ScheduleExtension.SchedulingAnchorUtc, schedule.ScheduleExtension.Timezone);
+                    var localScheduledTimestamp = timeZoneConverter.UtcToLocal(schedule.ScheduleExtension.SchedulingAnchorUtc, string.Empty);
                     var localScheduledTime = TimeOnly.FromTimeSpan(localScheduledTimestamp.TimeOfDay);
                     
                     if ((schedule.ScheduleExtension.StartTime is not null && localScheduledTime < schedule.ScheduleExtension.StartTime) 
@@ -88,9 +88,9 @@ public class SchedulePlanningHandler(
                     
                     break;
                 } 
-                while (timeZoneConverter.UtcToLocal(schedule.ScheduleExtension.SchedulingAnchorUtc, schedule.ScheduleExtension.Timezone) < maxLocalLookaheadTime);
+                while (timeZoneConverter.UtcToLocal(schedule.ScheduleExtension.SchedulingAnchorUtc, string.Empty) < maxLocalLookaheadTime);
 
-                if (timeZoneConverter.UtcToLocal(schedule.ScheduleExtension.SchedulingAnchorUtc, schedule.ScheduleExtension.Timezone) > localNow)
+                if (timeZoneConverter.UtcToLocal(schedule.ScheduleExtension.SchedulingAnchorUtc, string.Empty) > localNow)
                 {
                     currentLookaheadCount++;
                 }

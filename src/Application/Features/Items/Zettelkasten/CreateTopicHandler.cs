@@ -1,4 +1,3 @@
-using Misa.Application.Abstractions.Authentication;
 using Misa.Application.Abstractions.Ids;
 using Misa.Application.Abstractions.Persistence;
 using Misa.Application.Abstractions.Time;
@@ -11,8 +10,7 @@ public sealed record CreateTopicCommand(string Title, Guid? ParentId);
 public sealed class CreateTopicHandler(
     IItemRepository repository,
     ITimeProvider timeProvider,
-    IIdGenerator idGenerator,
-    ICurrentUser currentUser)
+    IIdGenerator idGenerator)
 {
     public async Task HandleAsync(CreateTopicCommand command)
     {
@@ -22,7 +20,6 @@ public sealed class CreateTopicHandler(
 
         var topic = Item.CreateTopic(
             id: new ItemId(idGenerator.New()),
-            ownerId: currentUser.Id,
             title: command.Title,
             createdAtUtc: timeProvider.UtcNow,
             parentId: parentId

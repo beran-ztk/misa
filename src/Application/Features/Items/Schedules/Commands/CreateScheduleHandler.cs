@@ -1,6 +1,4 @@
-﻿using System.Text.Json;
-using Misa.Application.Abstractions.Authentication;
-using Misa.Application.Abstractions.Ids;
+﻿using Misa.Application.Abstractions.Ids;
 using Misa.Application.Abstractions.Persistence;
 using Misa.Application.Abstractions.Time;
 using Misa.Application.Mappings;
@@ -34,9 +32,7 @@ public record CreateScheduleCommand(
 public class CreateScheduleHandler(
     IItemRepository repository, 
     ITimeProvider timeProvider,
-    ITimeZoneConverter timeZoneConverter, 
-    IIdGenerator idGenerator,
-    ICurrentUser currentUser)
+    IIdGenerator idGenerator)
 {
     public async Task<ScheduleDto> Handle(CreateScheduleCommand command, CancellationToken ct)
     {
@@ -52,17 +48,15 @@ public class CreateScheduleHandler(
             payload: command.Payload,
             startTime: command.StartTime,
             endTime: command.EndTime,
-            activeFromUtc: timeZoneConverter.LocalToUtc(command.ActiveFromLocal, currentUser.Timezone),
-            activeUntilUtc: timeZoneConverter.LocalToUtc(command.ActiveUntilLocal, currentUser.Timezone),
+            activeFromUtc: command.ActiveFromLocal.ToUniversalTime(),
+            activeUntilUtc: command.ActiveUntilLocal?.ToUniversalTime(),
             byDay: command.ByDay,
             byMonthDay: command.ByMonthDay,
-            byMonth: command.ByMonth,
-            timezone: currentUser.Timezone
+            byMonth: command.ByMonth
         );
             
         var scheduler = Item.CreateSchedule(
             id: new ItemId(idGenerator.New()), 
-            ownerId: currentUser.Id,
             title: command.Title,
             description: command.Description,
             createdAtUtc: timeProvider.UtcNow,

@@ -1,9 +1,7 @@
-﻿using Misa.Application.Abstractions.Authentication;
-using Misa.Application.Abstractions.Ids;
+﻿using Misa.Application.Abstractions.Ids;
 using Misa.Application.Abstractions.Persistence;
 using Misa.Application.Abstractions.Time;
 using Misa.Application.Mappings;
-using Misa.Contract.Common.Results;
 using Misa.Contract.Items.Components.Activity;
 using Misa.Contract.Items.Components.Tasks;
 using Misa.Domain.Items;
@@ -19,14 +17,12 @@ public sealed record CreateTaskCommand(
 public class CreateTaskHandler(
     IItemRepository repository,
     ITimeProvider timeProvider, 
-    IIdGenerator idGenerator,
-    ICurrentUser currentUser)
+    IIdGenerator idGenerator)
 {
     public async Task<TaskDto> HandleAsync(CreateTaskCommand command, CancellationToken ct)
     {
         var task = Item.CreateTask(
-            new ItemId(idGenerator.New()), 
-            ownerId: currentUser.Id,
+            new ItemId(idGenerator.New()),
             command.Title, 
             command.Description,
             command.CategoryDto.ToDomain(), 

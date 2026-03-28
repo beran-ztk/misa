@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Misa.Application.Abstractions.Authentication;
 using Misa.Application.Abstractions.Persistence;
 using Misa.Domain.Exceptions;
 using Misa.Domain.Items;
@@ -7,12 +6,11 @@ using Misa.Domain.Items.Components.Activities;
 using Misa.Domain.Items.Components.Activities.Sessions;
 using Misa.Domain.Items.Components.Relations;
 using Misa.Infrastructure.Persistence.Context;
-using Wolverine;
 using Item = Misa.Domain.Items.Item;
 
 namespace Misa.Infrastructure.Persistence.Repositories;
 
-public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepository
+public class ItemRepository(MisaContext context) : IItemRepository
 {
     // Save Changes
     public async Task SaveChangesAsync(CancellationToken ct = default)
@@ -30,7 +28,7 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
     public async Task<Item?> TryGetItemAsync(Guid id)
     {
         return await context.Items
-            .SingleOrDefaultAsync(i => i.Id == new ItemId(id) && i.OwnerId == user.Id);
+            .SingleOrDefaultAsync(i => i.Id == new ItemId(id));
     }
     public async Task<Item?> TryGetItemDetailsAsync(Guid id, CancellationToken ct)
     {
@@ -57,7 +55,7 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
             .Include(t => t.TaskExtension)
             .Include(t => t.Changes)
             .FirstOrDefaultAsync(t
-                    => t.Id == new ItemId(id) && t.OwnerId == user.Id && t.Workflow == Workflow.Task
+                    => t.Id == new ItemId(id) && t.Workflow == Workflow.Task
                 , cancellationToken: ct);
     }
     
@@ -66,7 +64,7 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
         return await context.Items
             .Include(t => t.Activity)
             .Include(t => t.TaskExtension)
-            .Where(t => t.OwnerId == user.Id && t.Workflow == Workflow.Task && !t.IsDeleted && !t.IsArchived)
+            .Where(t => t.Workflow == Workflow.Task && !t.IsDeleted && !t.IsArchived)
             .OrderByDescending(t => t.CreatedAt)
             .AsNoTracking()
             .ToListAsync(ct);
@@ -77,7 +75,7 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
         return await context.Items
             .Include(t => t.Activity)
             .Include(t => t.TaskExtension)
-            .Where(t => t.OwnerId == user.Id && t.Workflow == Workflow.Task && t.IsArchived && !t.IsDeleted)
+            .Where(t => t.Workflow == Workflow.Task && t.IsArchived && !t.IsDeleted)
             .OrderByDescending(t => t.CreatedAt)
             .AsNoTracking()
             .ToListAsync(ct);
@@ -88,7 +86,7 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
         return await context.Items
             .Include(t => t.Activity)
             .Include(t => t.TaskExtension)
-            .Where(t => t.OwnerId == user.Id && t.Workflow == Workflow.Task && t.IsDeleted)
+            .Where(t => t.Workflow == Workflow.Task && t.IsDeleted)
             .OrderByDescending(t => t.CreatedAt)
             .AsNoTracking()
             .ToListAsync(ct);
@@ -97,7 +95,7 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
     public async Task HardDeleteItemAsync(Guid id, CancellationToken ct)
     {
         await context.Items
-            .Where(i => i.Id == new ItemId(id) && i.OwnerId == user.Id)
+            .Where(i => i.Id == new ItemId(id))
             .ExecuteDeleteAsync(ct);
     }
 
@@ -108,14 +106,14 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
             .Include(t => t.ScheduleExtension)
             .Include(t => t.Changes)
             .FirstOrDefaultAsync(t
-                    => t.Id == new ItemId(id) && t.OwnerId == user.Id && t.Workflow == Workflow.Schedule
+                    => t.Id == new ItemId(id) && t.Workflow == Workflow.Schedule
                 , cancellationToken: ct);
     }
     public async Task<List<Item>> GetSchedulesAsync(CancellationToken ct)
     {
         return await context.Items
             .Include(s => s.ScheduleExtension)
-            .Where(t => t.OwnerId == user.Id && t.Workflow == Workflow.Schedule && t.IsDeleted == false && t.IsArchived == false)
+            .Where(t => t.Workflow == Workflow.Schedule && t.IsDeleted == false && t.IsArchived == false)
             .OrderByDescending(t => t.JournalExtension!.OccurredAt) 
             .ThenByDescending(t => t.CreatedAt)
             .AsNoTracking()
@@ -127,14 +125,14 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
         return await context.Items
             .Include(z => z.JournalExtension)
             .FirstOrDefaultAsync(
-                z => z.Id == new ItemId(id) && z.OwnerId == user.Id && z.Workflow == Workflow.Journal);
+                z => z.Id == new ItemId(id) && z.Workflow == Workflow.Journal);
     }
 
     public async Task<List<Item>> GetJournalsAsync()
     {
         return await context.Items
             .Include(s => s.JournalExtension)
-            .Where(t => t.OwnerId == user.Id && t.Workflow == Workflow.Journal && !t.IsDeleted)
+            .Where(t => t.Workflow == Workflow.Journal && !t.IsDeleted)
             .OrderByDescending(t => t.CreatedAt)
             .AsNoTracking()
             .ToListAsync();
@@ -163,8 +161,7 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
     public async Task<List<Item>> GetChangedItemsInRangeAsync(DateTimeOffset from, DateTimeOffset to, CancellationToken ct = default)
     {
         return await context.Items
-            .Where(i => i.OwnerId == user.Id
-                && i.ModifiedAt != null
+            .Where(i => i.ModifiedAt != null
                 && i.ModifiedAt >= from
                 && i.ModifiedAt <= to)
             .OrderByDescending(i => i.ModifiedAt)
@@ -175,7 +172,7 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
     {
         return await context.Items
             .Include(s => s.KnowledgeIndex)
-            .Where(t => t.OwnerId == user.Id && !t.IsDeleted
+            .Where(t => !t.IsDeleted
                         && (t.Workflow == Workflow.Topic || t.Workflow == Workflow.Zettel))
             .AsNoTracking()
             .ToListAsync();
@@ -185,7 +182,7 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
     {
         return await context.Items
             .Include(s => s.KnowledgeIndex)
-            .Where(t => t.OwnerId == user.Id && t.IsDeleted
+            .Where(t => t.IsDeleted
                         && (t.Workflow == Workflow.Topic || t.Workflow == Workflow.Zettel))
             .OrderByDescending(t => t.ModifiedAt)
             .AsNoTracking()
@@ -197,7 +194,7 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
         var query = context.Items
             .Include(z => z.ZettelExtension)
             .Include(z => z.KnowledgeIndex)
-            .Where(z => z.OwnerId == user.Id && z.Workflow == Workflow.Zettel);
+            .Where(z => z.Workflow == Workflow.Zettel);
 
         if (topicId.HasValue)
             query = query.Where(z => z.KnowledgeIndex!.ParentId == new ItemId(topicId.Value));
@@ -213,7 +210,7 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
         return await context.Items
             .Include(z => z.ZettelExtension)
             .FirstOrDefaultAsync(
-                z => z.Id == new ItemId(id) && z.OwnerId == user.Id && z.Workflow == Workflow.Zettel,
+                z => z.Id == new ItemId(id) && z.Workflow == Workflow.Zettel,
                 ct);
     }
 
@@ -221,7 +218,7 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
     {
         return await context.Items
             .Include(i => i.KnowledgeIndex)
-            .FirstOrDefaultAsync(i => i.Id == new ItemId(id) && i.OwnerId == user.Id, ct);
+            .FirstOrDefaultAsync(i => i.Id == new ItemId(id), ct);
     }
 
     // Session
@@ -243,16 +240,15 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
             .ThenInclude(a => a.Sessions)
             .ThenInclude(s => s.Segments)
             .FirstOrDefaultAsync(
-                i => i.Id == new ItemId(itemId) && i.OwnerId == user.Id && i.Activity != null,
+                i => i.Id == new ItemId(itemId) && i.Activity != null,
                 ct
             );
     }
 
     // Dev
-    public async Task DeleteAllByOwnerAsync(string ownerId, CancellationToken ct)
+    public async Task DeleteAllByOwnerAsync(CancellationToken ct)
     {
         await context.Items
-            .Where(i => i.OwnerId == ownerId)
             .ExecuteDeleteAsync(ct);
     }
 
@@ -299,7 +295,7 @@ public class ItemRepository(MisaContext context, ICurrentUser user) : IItemRepos
     public async Task<List<Item>> GetItemsForLookupAsync(CancellationToken ct)
     {
         return await context.Items
-            .Where(i => i.OwnerId == user.Id && !i.IsDeleted && !i.IsArchived)
+            .Where(i => !i.IsDeleted && !i.IsArchived)
             .OrderBy(i => i.Title)
             .AsNoTracking()
             .ToListAsync(ct);
