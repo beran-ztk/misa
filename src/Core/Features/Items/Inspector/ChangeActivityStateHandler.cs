@@ -1,5 +1,4 @@
 using Misa.Core.Common.Abstractions.Persistence;
-using Misa.Core.Common.Abstractions.Time;
 using Misa.Domain.Exceptions;
 using Misa.Domain.Items.Components.Activities;
 
@@ -7,7 +6,7 @@ namespace Misa.Core.Features.Items.Inspector;
 
 public record ChangeActivityStateCommand(Guid ItemId, ActivityState State, string? Reason = null);
 
-public sealed class ChangeActivityStateHandler(IItemRepository repository, ITimeProvider timeProvider)
+public sealed class ChangeActivityStateHandler(IItemRepository repository)
 {
     public async Task HandleAsync(ChangeActivityStateCommand command, CancellationToken ct)
     {
@@ -18,7 +17,7 @@ public sealed class ChangeActivityStateHandler(IItemRepository repository, ITime
         if (item?.Activity is null)
             throw new DomainNotFoundException("item.not.found", command.ItemId.ToString());
 
-        item.Activity.ChangeState(command.State, timeProvider.UtcNow, command.Reason);
+        item.Activity.ChangeState(command.State, DateTimeOffset.UtcNow, command.Reason);
 
         await repository.SaveChangesAsync(ct);
     }

@@ -1,12 +1,11 @@
 using Misa.Core.Common.Abstractions.Persistence;
-using Misa.Core.Common.Abstractions.Time;
 using Misa.Domain.Exceptions;
 
 namespace Misa.Core.Features.Items.Inspector;
 
 public record RenameItemCommand(Guid Id, string Title);
 
-public sealed class RenameItemHandler(IItemRepository repository, ITimeProvider timeProvider)
+public sealed class RenameItemHandler(IItemRepository repository)
 {
     public async Task HandleAsync(RenameItemCommand command)
     {
@@ -14,7 +13,7 @@ public sealed class RenameItemHandler(IItemRepository repository, ITimeProvider 
         if (item == null)
             throw new DomainNotFoundException("Item not found", "");
 
-        item.ChangeTitle(command.Title, timeProvider.UtcNow);
+        item.ChangeTitle(command.Title, DateTimeOffset.UtcNow);
         await repository.SaveChangesAsync(CancellationToken.None);
     }
 }

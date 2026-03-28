@@ -1,11 +1,10 @@
 using Misa.Core.Common.Abstractions.Persistence;
-using Misa.Core.Common.Abstractions.Time;
 using Misa.Domain.Exceptions;
 
 namespace Misa.Core.Features.Items.Inspector;
 
 public record DeleteItemCommand(Guid Id);
-public sealed class DeleteItemHandler(IItemRepository repository, ITimeProvider timeProvider)
+public sealed class DeleteItemHandler(IItemRepository repository)
 {
     public async Task HandleAsync(DeleteItemCommand command)
     {
@@ -13,7 +12,7 @@ public sealed class DeleteItemHandler(IItemRepository repository, ITimeProvider 
         if (item == null)
             throw new DomainNotFoundException("Item not found", "");
 
-        item.Delete(timeProvider.UtcNow);
+        item.Delete(DateTimeOffset.UtcNow);
         await repository.SaveChangesAsync(CancellationToken.None);
     }
 }

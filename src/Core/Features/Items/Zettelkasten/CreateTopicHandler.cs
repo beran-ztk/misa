@@ -1,16 +1,11 @@
-using Misa.Core.Common.Abstractions.Ids;
 using Misa.Core.Common.Abstractions.Persistence;
-using Misa.Core.Common.Abstractions.Time;
 using Misa.Domain.Items;
 
 namespace Misa.Core.Features.Items.Zettelkasten;
 
 public sealed record CreateTopicCommand(string Title, Guid? ParentId);
 
-public sealed class CreateTopicHandler(
-    IItemRepository repository,
-    ITimeProvider timeProvider,
-    IIdGenerator idGenerator)
+public sealed class CreateTopicHandler(IItemRepository repository)
 {
     public async Task HandleAsync(CreateTopicCommand command)
     {
@@ -19,9 +14,9 @@ public sealed class CreateTopicHandler(
             : new ItemId(command.ParentId.Value);
 
         var topic = Item.CreateTopic(
-            id: new ItemId(idGenerator.New()),
+            id: new ItemId(Guid.NewGuid()),
             title: command.Title,
-            createdAtUtc: timeProvider.UtcNow,
+            createdAtUtc: DateTimeOffset.UtcNow,
             parentId: parentId
         );
 

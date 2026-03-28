@@ -1,5 +1,4 @@
 using Misa.Core.Common.Abstractions.Persistence;
-using Misa.Core.Common.Abstractions.Time;
 using Misa.Domain.Exceptions;
 using Misa.Domain.Items.Components.Activities;
 using Misa.Domain.Items.Components.Tasks;
@@ -15,7 +14,7 @@ public record UpdateTaskCommand(
     TaskCategory? TaskCategory,
     string? Reason = null);
 
-public sealed class UpdateTaskHandler(IItemRepository repository, ITimeProvider timeProvider)
+public sealed class UpdateTaskHandler(IItemRepository repository)
 {
     public async Task HandleAsync(UpdateTaskCommand command)
     {
@@ -23,7 +22,7 @@ public sealed class UpdateTaskHandler(IItemRepository repository, ITimeProvider 
         if (item?.Activity is null || item.TaskExtension is null)
             throw new DomainNotFoundException("task.not.found", command.ItemId.ToString());
 
-        var nowUtc = timeProvider.UtcNow;
+        var nowUtc = DateTimeOffset.UtcNow;
 
         if (!string.IsNullOrEmpty(command.Title))
             item.ChangeTitle(command.Title, nowUtc);

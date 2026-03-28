@@ -1,6 +1,4 @@
-using Misa.Core.Common.Abstractions.Ids;
 using Misa.Core.Common.Abstractions.Persistence;
-using Misa.Core.Common.Abstractions.Time;
 using Misa.Domain.Exceptions;
 using Misa.Domain.Items.Components.Relations;
 
@@ -13,9 +11,7 @@ public sealed record CreateRelationCommand(
 );
 
 public sealed class CreateRelationHandler(
-    IItemRepository repository,
-    ITimeProvider timeProvider,
-    IIdGenerator idGenerator)
+    IItemRepository repository)
 {
     public async Task HandleAsync(CreateRelationCommand command, CancellationToken ct)
     {
@@ -34,11 +30,11 @@ public sealed class CreateRelationHandler(
             throw new DomainValidationException("targetItemId", "duplicate_relation", "A relation between these entries already exists.");
 
         var relation = new ItemRelation(
-            idGenerator.New(),
+            Guid.NewGuid(),
             command.SourceItemId,
             command.TargetItemId,
             command.RelationType,
-            timeProvider.UtcNow
+            DateTimeOffset.UtcNow
         );
 
         await repository.AddRelationAsync(relation, ct);

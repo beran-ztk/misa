@@ -1,18 +1,17 @@
 using Misa.Core.Common.Abstractions.Persistence;
-using Misa.Core.Common.Abstractions.Time;
 
 namespace Misa.Core.Features.Items.Inspector;
 
 public record DeleteKnowledgeSubtreeCommand(Guid[] Ids);
 
-public sealed class DeleteKnowledgeSubtreeHandler(IItemRepository repository, ITimeProvider timeProvider)
+public sealed class DeleteKnowledgeSubtreeHandler(IItemRepository repository)
 {
     public async Task HandleAsync(DeleteKnowledgeSubtreeCommand command)
     {
         foreach (var id in command.Ids)
         {
             var item = await repository.TryGetItemAsync(id);
-            item?.Delete(timeProvider.UtcNow);
+            item?.Delete(DateTimeOffset.UtcNow);
         }
 
         await repository.SaveChangesAsync(CancellationToken.None);

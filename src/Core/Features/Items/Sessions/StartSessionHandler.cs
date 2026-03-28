@@ -1,6 +1,4 @@
-﻿using Misa.Core.Common.Abstractions.Ids;
-using Misa.Core.Common.Abstractions.Persistence;
-using Misa.Core.Common.Abstractions.Time;
+﻿using Misa.Core.Common.Abstractions.Persistence;
 using Misa.Domain.Exceptions;
 
 namespace Misa.Core.Features.Items.Sessions;
@@ -11,7 +9,7 @@ public record StartSessionCommand(
     bool StopAutomatically, 
     string? AutoStopReason
 );
-public class StartSessionHandler(IItemRepository repository, ITimeProvider timeProvider, IIdGenerator idGenerator)
+public class StartSessionHandler(IItemRepository repository)
 {
     public async Task Handle(StartSessionCommand command, CancellationToken ct)
     {
@@ -20,13 +18,13 @@ public class StartSessionHandler(IItemRepository repository, ITimeProvider timeP
             throw new DomainNotFoundException("session.item", "session not found.");
 
         item.Activity.StartSession(
-            sessionId: idGenerator.New(),
-            segmentId: idGenerator.New(),
+            sessionId: Guid.NewGuid(),
+            segmentId: Guid.NewGuid(),
             command.PlannedDuration, 
             command.Objective, 
             command.StopAutomatically, 
             command.AutoStopReason, 
-            timeProvider.UtcNow
+            DateTimeOffset.UtcNow
         );
         
         await repository.SaveChangesAsync(ct);

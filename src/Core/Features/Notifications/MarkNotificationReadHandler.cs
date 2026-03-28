@@ -1,14 +1,13 @@
 using Misa.Core.Common.Abstractions.Persistence;
-using Misa.Core.Common.Abstractions.Time;
 
 namespace Misa.Core.Features.Notifications;
 
 public sealed record MarkNotificationReadCommand(Guid Id);
 
-public class MarkNotificationReadHandler(INotificationRepository repository, ITimeProvider timeProvider)
+public class MarkNotificationReadHandler(INotificationRepository repository)
 {
     public async Task HandleAsync(MarkNotificationReadCommand command, CancellationToken ct)
     {
-        await repository.MarkAsReadAsync(command.Id, timeProvider.UtcNow, ct);
+        await repository.MarkAsReadAsync(command.Id, DateTimeOffset.UtcNow, ct);
     }
 }

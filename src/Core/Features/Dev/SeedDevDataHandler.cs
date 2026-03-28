@@ -1,15 +1,10 @@
-using Misa.Core.Common.Abstractions.Ids;
 using Misa.Core.Common.Abstractions.Persistence;
-using Misa.Core.Common.Abstractions.Time;
 
 namespace Misa.Core.Features.Dev;
 
 public record SeedDevDataCommand;
 
-public sealed class SeedDevDataHandler(
-    IItemRepository repository,
-    ITimeProvider timeProvider,
-    IIdGenerator idGenerator)
+public sealed class SeedDevDataHandler(IItemRepository repository)
 {
     // public async Task HandleAsync(SeedDevDataCommand command, CancellationToken ct)
     // {

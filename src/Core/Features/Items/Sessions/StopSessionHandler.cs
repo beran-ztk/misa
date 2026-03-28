@@ -1,5 +1,4 @@
 using Misa.Core.Common.Abstractions.Persistence;
-using Misa.Core.Common.Abstractions.Time;
 using Misa.Domain.Exceptions;
 using Misa.Domain.Items.Components.Activities.Sessions;
 
@@ -11,7 +10,7 @@ public record StopSessionCommand(
     string? Summary
 );
 
-public class StopSessionHandler(IItemRepository repository, ITimeProvider timeProvider)
+public class StopSessionHandler(IItemRepository repository)
 {
     public async Task Handle(StopSessionCommand command, CancellationToken ct)
     {
@@ -20,7 +19,7 @@ public class StopSessionHandler(IItemRepository repository, ITimeProvider timePr
             throw new DomainNotFoundException("session.item", "session not found.");
 
         item.Activity.StopCurrentSession(
-            timeProvider.UtcNow,
+            DateTimeOffset.UtcNow,
             command.SessionEfficiency,
             command.SessionConcentration,
             command.Summary);

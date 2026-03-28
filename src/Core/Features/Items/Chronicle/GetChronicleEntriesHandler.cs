@@ -1,8 +1,4 @@
 using Misa.Core.Common.Abstractions.Persistence;
-using Misa.Core.Common.Abstractions.Time;
-using Misa.Core.Common.Converters;
-using Misa.Domain.Exceptions;
-using Misa.Domain.Items.Components.Activities.Sessions;
 
 namespace Misa.Core.Features.Items.Chronicle;
 
@@ -23,7 +19,7 @@ public enum ChronicleEntryType
     SchedulerEvent,
     AuditChange
 }
-public sealed class GetChronicleEntriesHandler(IItemRepository repository, ITimeProvider timeProvider)
+public sealed class GetChronicleEntriesHandler(IItemRepository repository)
 {
     public async Task HandleAsync(GetChronicleEntriesCommand entriesCommand)
     {

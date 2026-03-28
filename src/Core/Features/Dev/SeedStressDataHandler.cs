@@ -1,15 +1,10 @@
-using Misa.Core.Common.Abstractions.Ids;
 using Misa.Core.Common.Abstractions.Persistence;
-using Misa.Core.Common.Abstractions.Time;
 
 namespace Misa.Core.Features.Dev;
 
 public record SeedStressDataCommand;
 
-public sealed class SeedStressDataHandler(
-    IItemRepository repository,
-    ITimeProvider timeProvider,
-    IIdGenerator idGenerator)
+public sealed class SeedStressDataHandler(IItemRepository repository)
 {
     // private static readonly TaskCategory[]         _categories    = Enum.GetValues<TaskCategory>();
     // private static readonly ActivityPriority[]     _priorities    = Enum.GetValues<ActivityPriority>();

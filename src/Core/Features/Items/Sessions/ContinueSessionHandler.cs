@@ -1,11 +1,9 @@
-using Misa.Core.Common.Abstractions.Ids;
 using Misa.Core.Common.Abstractions.Persistence;
-using Misa.Core.Common.Abstractions.Time;
 using Misa.Domain.Exceptions;
 
 namespace Misa.Core.Features.Items.Sessions;
 public record ContinueSessionCommand(Guid ItemId);
-public class ContinueSessionHandler(IItemRepository repository, ITimeProvider timeProvider, IIdGenerator idGenerator)
+public class ContinueSessionHandler(IItemRepository repository)
 {
     public async Task Handle(ContinueSessionCommand command, CancellationToken ct)
     {
@@ -13,7 +11,7 @@ public class ContinueSessionHandler(IItemRepository repository, ITimeProvider ti
         if (item?.Activity is null || item.Activity.Sessions.Count == 0 || item.Activity.TryGetSession is null)
             throw new DomainNotFoundException("session.item", "session not found.");
 
-        item.Activity.ContinueCurrentSession(idGenerator.New(), timeProvider.UtcNow);
+        item.Activity.ContinueCurrentSession(Guid.NewGuid(), DateTimeOffset.UtcNow);
 
         await repository.SaveChangesAsync(ct);
     }

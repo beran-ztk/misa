@@ -1,6 +1,4 @@
-using Misa.Core.Common.Abstractions.Ids;
 using Misa.Core.Common.Abstractions.Persistence;
-using Misa.Core.Common.Abstractions.Time;
 using Misa.Domain.Items;
 using Misa.Domain.Items.Components.Chronicle.Journals;
 
@@ -13,10 +11,7 @@ public sealed record CreateJournalCommand(
     DateTimeOffset? UntilAtUtc
 );
 
-public sealed class CreateJournalEntryHandler(
-    IItemRepository repository,
-    ITimeProvider timeProvider,
-    IIdGenerator idGenerator)
+public sealed class CreateJournalEntryHandler(IItemRepository repository)
 {
     public async Task<Item> Handle(CreateJournalCommand command, CancellationToken ct)
     {
@@ -26,10 +21,10 @@ public sealed class CreateJournalEntryHandler(
         );
 
         var journalItem = Item.CreateJournal(
-            id: new ItemId(idGenerator.New()),
+            id: new ItemId(Guid.NewGuid()),
             title: command.Title,
             description: command.Description,
-            createdAtUtc: timeProvider.UtcNow,
+            createdAtUtc: DateTimeOffset.UtcNow,
             journalExtension: journalExtension
         );
 

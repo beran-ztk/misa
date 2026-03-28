@@ -1,6 +1,4 @@
-using Misa.Core.Common.Abstractions.Ids;
 using Misa.Core.Common.Abstractions.Persistence;
-using Misa.Core.Common.Abstractions.Time;
 using Misa.Domain.Items.Components.Activities.Sessions;
 using Misa.Domain.Notifications;
 
@@ -10,14 +8,12 @@ public record NotifySessionPlannedDurationReachedCommand;
 
 public class NotifySessionPlannedDurationReachedHandler(
     IItemRepository          itemRepository,
-    INotificationRepository  notificationRepository,
-    ITimeProvider            timeProvider,
-    IIdGenerator             idGenerator)
+    INotificationRepository  notificationRepository)
 {
     public async Task Handle(NotifySessionPlannedDurationReachedCommand command, CancellationToken ct)
     {
         var sessions = await itemRepository.GetSessionsForDurationNotificationAsync(ct);
-        var now = timeProvider.UtcNow;
+        var now = DateTimeOffset.UtcNow;
 
         foreach (var session in sessions)
         {
@@ -28,7 +24,7 @@ public class NotifySessionPlannedDurationReachedHandler(
             session.MarkPlannedDurationNotificationSent();
 
             var notification = new Notification(
-                idGenerator.New(),
+                Guid.NewGuid(),
                 "Planned duration reached",
                 $"The planned duration for \"{session.Item.Title}\" has been reached.",
                 NotificationSourceKind.SessionPlannedDurationReached,

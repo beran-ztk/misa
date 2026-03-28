@@ -1,12 +1,11 @@
 using Misa.Core.Common.Abstractions.Persistence;
-using Misa.Core.Common.Abstractions.Time;
 using Misa.Domain.Exceptions;
 
 namespace Misa.Core.Features.Items.Inspector;
 
 public record UpsertDeadlineCommand(Guid ItemId, DateTimeOffset? DueAtUtc);
 
-public sealed class UpsertDeadlineHandler(IItemRepository repository, ITimeProvider timeProvider)
+public sealed class UpsertDeadlineHandler(IItemRepository repository)
 {
     public async Task HandleAsync(UpsertDeadlineCommand command, CancellationToken ct)
     {
@@ -14,7 +13,7 @@ public sealed class UpsertDeadlineHandler(IItemRepository repository, ITimeProvi
         if (item?.Activity is null)
             throw new DomainNotFoundException("item.not.found", "");
 
-        item.Activity.SetDeadline(command.DueAtUtc, timeProvider.UtcNow);
+        item.Activity.SetDeadline(command.DueAtUtc, DateTimeOffset.UtcNow);
         await repository.SaveChangesAsync(ct);
     }
 }

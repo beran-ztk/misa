@@ -88,25 +88,6 @@ public sealed class Item : DomainEventEntity
 
         return item;
     }
-    public static Item CreateSchedule(
-        ItemId id,
-        string title,
-        string? description,
-        DateTimeOffset createdAtUtc,
-        Schedule schedule)
-    {
-        var item = new Item(
-            id: id,
-            workflow: Workflow.Schedule,
-            title: title,
-            description: description,
-            createdAtUtc: createdAtUtc)
-        {
-            ScheduleExtension = schedule
-        };
-
-        return item;
-    }
     
     public static Item CreateJournal(
         ItemId id,
@@ -229,42 +210,6 @@ public sealed class Item : DomainEventEntity
     public void ReparentKnowledgeIndex(ItemId newParentId, DateTimeOffset nowUtc)
     {
         KnowledgeIndex!.SetParentId(newParentId);
-        Touch(nowUtc);
-    }
-
-    public void ChangeScheduleMisfirePolicy(ScheduleMisfirePolicy policy, DateTimeOffset nowUtc)
-    {
-        ScheduleExtension!.ChangeMisfirePolicy(policy);
-        Touch(nowUtc);
-    }
-
-    public void ChangeScheduleLookaheadLimit(int limit, DateTimeOffset nowUtc)
-    {
-        ScheduleExtension!.ChangeLookaheadLimit(limit);
-        Touch(nowUtc);
-    }
-
-    public void ChangeScheduleOccurrenceCountLimit(int? limit, DateTimeOffset nowUtc)
-    {
-        ScheduleExtension!.ChangeOccurrenceCountLimit(limit);
-        Touch(nowUtc);
-    }
-
-    public void ChangeScheduleStartTime(TimeOnly? startTime, DateTimeOffset nowUtc)
-    {
-        ScheduleExtension!.ChangeStartTime(startTime);
-        Touch(nowUtc);
-    }
-
-    public void ChangeScheduleEndTime(TimeOnly? endTime, DateTimeOffset nowUtc)
-    {
-        ScheduleExtension!.ChangeEndTime(endTime);
-        Touch(nowUtc);
-    }
-
-    public void ChangeScheduleActiveUntil(DateTimeOffset? activeUntilUtc, DateTimeOffset nowUtc)
-    {
-        ScheduleExtension!.ChangeActiveUntil(activeUntilUtc);
         Touch(nowUtc);
     }
 }

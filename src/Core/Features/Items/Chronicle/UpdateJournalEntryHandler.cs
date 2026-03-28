@@ -1,5 +1,4 @@
 using Misa.Core.Common.Abstractions.Persistence;
-using Misa.Core.Common.Abstractions.Time;
 using Misa.Domain.Exceptions;
 
 namespace Misa.Core.Features.Items.Chronicle;
@@ -9,7 +8,7 @@ public sealed record UpdateJournalCommand(
     string?        Description,
     DateTimeOffset OccurredAtUtc);
 
-public sealed class UpdateJournalEntryHandler(IItemRepository repository, ITimeProvider timeProvider)
+public sealed class UpdateJournalEntryHandler(IItemRepository repository)
 {
     public async Task HandleAsync(UpdateJournalCommand command)
     {
@@ -17,7 +16,7 @@ public sealed class UpdateJournalEntryHandler(IItemRepository repository, ITimeP
         if (item is null)
             throw new DomainNotFoundException("Item not found", "");
 
-        var nowUtc = timeProvider.UtcNow;
+        var nowUtc = DateTimeOffset.UtcNow;
 
         item.ChangeDescription(command.Description ?? string.Empty, nowUtc);
         item.ChangeJournalOccurredAt(command.OccurredAtUtc, nowUtc);
