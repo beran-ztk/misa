@@ -4,12 +4,12 @@ using Misa.Domain.Items;
 using Misa.Domain.Items.Components.Activities;
 using Misa.Domain.Items.Components.Activities.Sessions;
 using Misa.Domain.Items.Components.Relations;
-using Misa.Infrastructure.Persistence.Context;
+using Misa.Infrastructure.Persistence;
 using Item = Misa.Domain.Items.Item;
 
 namespace Misa.Core.Common.Abstractions.Persistence;
 
-public class ItemRepository(MisaContext context)
+public class ItemRepository(Context context)
 {
     // Save Changes
     public async Task SaveChangesAsync(CancellationToken ct = default)

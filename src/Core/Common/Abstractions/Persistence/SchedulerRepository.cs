@@ -1,9 +1,9 @@
 ﻿using Misa.Domain.Items.Components.Schedules;
-using Misa.Infrastructure.Persistence.Context;
+using Misa.Infrastructure.Persistence;
 
 namespace Misa.Core.Common.Abstractions.Persistence;
 
-public class SchedulerRepository(MisaContext context)
+public class SchedulerRepository(Context context)
 {
     public Task AddAsync(Schedule schedule, CancellationToken ct)
         => context.Schedulers.AddAsync(schedule, ct).AsTask();

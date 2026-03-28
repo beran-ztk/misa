@@ -1,10 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using Misa.Domain.Notifications;
-using Misa.Infrastructure.Persistence.Context;
+using Misa.Infrastructure.Persistence;
 
 namespace Misa.Core.Common.Abstractions.Persistence;
 
-public class NotificationRepository(MisaContext context)
+public class NotificationRepository(Context context)
 {
     public async Task AddAsync(Notification notification, CancellationToken ct = default)
     {
