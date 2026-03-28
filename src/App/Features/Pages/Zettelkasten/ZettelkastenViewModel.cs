@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Misa.Contract.Items;
+using Misa.Domain.Items;
 using Misa.Ui.Avalonia.Common.Mappings;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Zettelkasten;
@@ -116,7 +116,7 @@ public sealed partial class ZettelkastenViewModel : ViewModelBase
             _settings.Save();
         }
 
-        if (value is null || value.IsPendingCreation || value.Workflow != WorkflowDto.Zettel)
+        if (value is null || value.IsPendingCreation || value.Workflow != Workflow.Zettel)
             return;
 
         _ = LoadZettelAsync(value.Id);
@@ -190,14 +190,14 @@ public sealed partial class ZettelkastenViewModel : ViewModelBase
     [RelayCommand]
     private void CreateTopicUnderSelected()
     {
-        if (SelectedNode is null || SelectedNode.Workflow != WorkflowDto.Topic) return;
+        if (SelectedNode is null || SelectedNode.Workflow != Workflow.Topic) return;
         CreateTopicUnder(SelectedNode.Id);
     }
 
     [RelayCommand]
     private void CreateZettelUnderSelected()
     {
-        if (SelectedNode is null || SelectedNode.Workflow != WorkflowDto.Topic) return;
+        if (SelectedNode is null || SelectedNode.Workflow != Workflow.Topic) return;
         CreateZettelUnder(SelectedNode.Id);
     }
 
@@ -243,13 +243,13 @@ public sealed partial class ZettelkastenViewModel : ViewModelBase
 
     [RelayCommand]
     private void CreateTopicUnder(Guid parentId) =>
-        BeginInlineCreation(parentId, WorkflowDto.Topic);
+        BeginInlineCreation(parentId, Workflow.Topic);
 
     [RelayCommand]
     private void CreateZettelUnder(Guid parentId) =>
-        BeginInlineCreation(parentId, WorkflowDto.Zettel);
+        BeginInlineCreation(parentId, Workflow.Zettel);
 
-    private void BeginInlineCreation(Guid parentId, WorkflowDto workflow)
+    private void BeginInlineCreation(Guid parentId, Workflow workflow)
     {
         // var parent = FindNode(parentId, KnowledgeIndex);
         // if (parent is null || parent.Workflow != WorkflowDto.Topic) return;

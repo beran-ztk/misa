@@ -1,9 +1,9 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:converters="clr-namespace:Misa.Ui.Avalonia.Common.Converters"
-             xmlns:sessions="clr-namespace:Misa.Contract.Items.Components.Activity.Sessions;assembly=Contract"
-             xmlns:audits="clr-namespace:Misa.Contract.Items.Components.Audits;assembly=Contract"
              xmlns:activity="clr-namespace:Misa.Ui.Avalonia.Features.Inspector.Tabs.Activity"
+             xmlns:sessions="clr-namespace:Misa.Domain.Items.Components.Activities.Sessions;assembly=Domain"
+             xmlns:audits="clr-namespace:Misa.Domain.Items.Components.Audits.Changes;assembly=Domain"
              x:Class="Misa.Ui.Avalonia.Features.Inspector.Tabs.Activity.InspectorActivityView"
              x:DataType="activity:InspectorActivityViewModel">
 
@@ -67,7 +67,7 @@
                     <ItemsControl ItemsSource="{Binding Sessions}"
                                   IsVisible="{Binding HasSessions}">
                         <ItemsControl.ItemTemplate>
-                            <DataTemplate x:DataType="sessions:SessionDto">
+                            <DataTemplate x:DataType="sessions:Session">
                                 <Border Classes="session-card" Margin="0,0,0,8">
                                     <StackPanel Spacing="10">
 
@@ -151,7 +151,7 @@
                     <ItemsControl ItemsSource="{Binding Changes}"
                                   IsVisible="{Binding HasChanges}">
                         <ItemsControl.ItemTemplate>
-                            <DataTemplate x:DataType="audits:AuditChangeDto">
+                            <DataTemplate x:DataType="audits:AuditChange">
                                 <Border Margin="0,0,0,8"
                                         Padding="12,8"
                                         Background="{StaticResource BrushPrimaryBackgroundLight}"

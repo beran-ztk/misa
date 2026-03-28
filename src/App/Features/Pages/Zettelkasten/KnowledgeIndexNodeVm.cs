@@ -5,7 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Misa.Contract.Items;
+using Misa.Domain.Items;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Zettelkasten;
 
@@ -24,7 +24,7 @@ public partial class KnowledgeIndexNodeVm : ObservableObject
     // ── Core data ─────────────────────────────────────────────────────────────
 
     public Guid          Id        { get; init; }
-    public WorkflowDto   Workflow  { get; init; }
+    public Workflow   Workflow  { get; init; }
     public string        Title     { get; init; } = string.Empty;
     public Guid?         ParentId  { get; init; }
 
@@ -48,12 +48,12 @@ public partial class KnowledgeIndexNodeVm : ObservableObject
     public ObservableCollection<KnowledgeIndexNodeVm> Children { get; } = [];
 
     public int  ChildCount  => Children.Count(c => !c.IsPendingCreation);
-    public bool HasChildren => Workflow == WorkflowDto.Topic && ChildCount > 0;
+    public bool HasChildren => Workflow == Workflow.Topic && ChildCount > 0;
 
     // ── Pending creation (main tree only) ─────────────────────────────────────
 
     public bool        IsPendingCreation { get; init; }
-    public WorkflowDto PendingWorkflow   { get; init; }
+    public Workflow PendingWorkflow   { get; init; }
 
     [ObservableProperty] private string _pendingTitle = string.Empty;
 

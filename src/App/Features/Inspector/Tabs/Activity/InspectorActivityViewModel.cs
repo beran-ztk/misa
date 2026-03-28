@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
-using Misa.Contract.Items.Components.Activity.Sessions;
-using Misa.Contract.Items.Components.Audits;
+using Misa.Domain.Items.Components.Activities.Sessions;
+using Misa.Domain.Items.Components.Audits.Changes;
 using Misa.Ui.Avalonia.Common.Mappings;
 
 namespace Misa.Ui.Avalonia.Features.Inspector.Tabs.Activity;
@@ -13,15 +13,14 @@ public sealed partial class InspectorActivityViewModel : ViewModelBase
     /// <summary>Whether the Sessions section should be shown. Only true for real activity items (Task).</summary>
     public bool ShowSessions => _facade.State.IsRealActivity;
 
-    public IReadOnlyList<SessionDto> Sessions =>
-        (_facade.State.Item.Activity?.Sessions ?? (IEnumerable<SessionDto>)[])
+    public IReadOnlyList<Session> Sessions =>
+        (_facade.State.Item.Activity?.Sessions ?? (IEnumerable<Session>)[])
             .OrderByDescending(s => s.CreatedAtUtc)
             .ToList();
 
     public bool HasSessions => Sessions.Count > 0;
 
-    public IReadOnlyList<AuditChangeDto> Changes =>
-        _facade.State.Item.Changes;
+    public ICollection<AuditChange> Changes => _facade.State.Item.Changes;
 
     public bool HasChanges => Changes.Count > 0;
 

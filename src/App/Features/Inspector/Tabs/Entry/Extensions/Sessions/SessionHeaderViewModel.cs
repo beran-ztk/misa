@@ -1,24 +1,24 @@
 using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Input;
-using Misa.Contract.Items.Components.Activity.Sessions;
+using Misa.Domain.Items.Components.Activities.Sessions;
 
 namespace Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Base;
 
 public partial class InspectorEntryViewModel
 {
-    public SessionDto? CurrentSession =>
-        Facade.State.Item.Activity?.Sessions.FirstOrDefault(s => s.State != SessionStateDto.Ended);
+    public Session? CurrentSession =>
+        Facade.State.Item.Activity?.Sessions.FirstOrDefault(s => s.State != SessionState.Ended);
      
      public bool HasActiveSession => CurrentSession != null;
 
      public bool CanStartSession    => CurrentSession == null                             && Facade.State.CanManageSessions;
-     public bool CanPauseSession    => CurrentSession?.State == SessionStateDto.Running    && Facade.State.CanManageSessions;
-     public bool CanContinueSession => CurrentSession?.State == SessionStateDto.Paused     && Facade.State.CanManageSessions;
+     public bool CanPauseSession    => CurrentSession?.State == SessionState.Running    && Facade.State.CanManageSessions;
+     public bool CanContinueSession => CurrentSession?.State == SessionState.Paused     && Facade.State.CanManageSessions;
      public bool CanEndSession      => CurrentSession != null                              && Facade.State.CanManageSessions;
      
-    public bool IsRunning => CurrentSession?.State == SessionStateDto.Running;
-    public bool IsPaused  => CurrentSession?.State == SessionStateDto.Paused;
+    public bool IsRunning => CurrentSession?.State == SessionState.Running;
+    public bool IsPaused  => CurrentSession?.State == SessionState.Paused;
 
     public string SessionStateLabel => IsRunning ? "RUNNING" : "PAUSED";
 

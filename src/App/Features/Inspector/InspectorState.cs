@@ -84,8 +84,6 @@ public sealed partial class InspectorState : ObservableObject
     public bool IsExpiredState          => IsTask && Item.Activity?.State == ActivityState.Expired;
     public bool IsTerminalState         => IsDoneState || IsFailedOrCanceledState || IsExpiredState;
     public string ErrorStateBadgeLabel  => Item.Activity?.State == ActivityState.Failed ? "FAILED" : "CANCELED";
-
-    [ObservableProperty] private CurrentSessionOverviewDto? _currentSessionOverview;
     
     [ObservableProperty] private bool _isEditItemFormOpen;
     [ObservableProperty] private TaskCategory _selectedCategory;

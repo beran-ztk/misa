@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
-using Misa.Contract.Items;
-using Misa.Contract.Items.Components.Relations;
+using Misa.Core.Features.Items.Relations;
+using Misa.Domain.Items;
+using Misa.Domain.Items.Components.Relations;
 using Misa.Ui.Avalonia.Common.Mappings;
 
 namespace Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Relations.Forms;
@@ -24,10 +25,10 @@ public sealed partial class CreateRelationViewModel : ViewModelBase
 
     [ObservableProperty] private ItemLookupDto? _selectedItem;
 
-    [ObservableProperty] private RelationTypeDto _selectedRelationType = RelationTypeDto.RelatedTo;
+    [ObservableProperty] private RelationType _selectedRelationType = RelationType.RelatedTo;
 
     public IReadOnlyList<WorkflowFilterOption> WorkflowOptions { get; }
-    public IReadOnlyList<RelationTypeDto> RelationTypes { get; } = Enum.GetValues<RelationTypeDto>();
+    public IReadOnlyList<RelationType> RelationTypes { get; } = Enum.GetValues<RelationType>();
 
     public List<ItemLookupDto> FilteredItems
     {
@@ -56,7 +57,7 @@ public sealed partial class CreateRelationViewModel : ViewModelBase
         WorkflowOptions =
         [
             new WorkflowFilterOption(null, "All types"),
-            .. Enum.GetValues<WorkflowDto>().Select(w => new WorkflowFilterOption(w, w.ToString()))
+            .. Enum.GetValues<Workflow>().Select(w => new WorkflowFilterOption(w, w.ToString()))
         ];
 
         _selectedWorkflowFilter = WorkflowOptions[0];
@@ -76,4 +77,4 @@ public sealed partial class CreateRelationViewModel : ViewModelBase
     }
 }
 
-public sealed record WorkflowFilterOption(WorkflowDto? Value, string Display);
+public sealed record WorkflowFilterOption(Workflow? Value, string Display);

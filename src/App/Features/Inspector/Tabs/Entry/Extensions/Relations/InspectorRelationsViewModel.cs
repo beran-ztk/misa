@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Misa.Contract.Items.Components.Relations;
+using Misa.Domain.Items.Components.Relations;
 using Misa.Ui.Avalonia.Common.Mappings;
 
 namespace Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Relations;
@@ -18,7 +18,7 @@ public sealed partial class InspectorRelationsViewModel : ViewModelBase
 
     public bool HasRelations => RelationRows.Count > 0;
 
-    public IReadOnlyList<RelationTypeDto> RelationTypes { get; } = Enum.GetValues<RelationTypeDto>();
+    public IReadOnlyList<RelationType> RelationTypes { get; } = Enum.GetValues<RelationType>();
 
     public InspectorRelationsViewModel(InspectorFacadeViewModel facade)
     {
@@ -34,7 +34,7 @@ public sealed partial class InspectorRelationsViewModel : ViewModelBase
     private async Task LoadRelationsAsync()
     {
         var itemId = _facade.State.Item.Id;
-        if (itemId == Guid.Empty)
+        if (itemId.Value == Guid.Empty)
         {
             RelationRows = [];
             return;
@@ -126,23 +126,23 @@ public sealed partial class InspectorRelationsViewModel : ViewModelBase
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    private static string ChipText(RelationTypeDto type) => type switch
+    private static string ChipText(RelationType type) => type switch
     {
-        RelationTypeDto.RelatedTo   => "related to",
-        RelationTypeDto.References  => "references",
-        RelationTypeDto.DerivedFrom => "derived from",
-        RelationTypeDto.DuplicateOf => "duplicate of",
-        RelationTypeDto.Contains    => "contains",
+        RelationType.RelatedTo   => "related to",
+        RelationType.References  => "references",
+        RelationType.DerivedFrom => "derived from",
+        RelationType.DuplicateOf => "duplicate of",
+        RelationType.Contains    => "contains",
         _                           => type.ToString()
     };
 
-    private static string RelationLabel(RelationTypeDto type, bool isSource) => type switch
+    private static string RelationLabel(RelationType type, bool isSource) => type switch
     {
-        RelationTypeDto.RelatedTo   => "related to",
-        RelationTypeDto.References  => isSource ? "references"        : "is referenced by",
-        RelationTypeDto.DerivedFrom => isSource ? "is derived from"   : "is the basis for",
-        RelationTypeDto.DuplicateOf => isSource ? "is a duplicate of" : "has duplicate",
-        RelationTypeDto.Contains    => isSource ? "contains"          : "is contained in",
+        RelationType.RelatedTo   => "related to",
+        RelationType.References  => isSource ? "references"        : "is referenced by",
+        RelationType.DerivedFrom => isSource ? "is derived from"   : "is the basis for",
+        RelationType.DuplicateOf => isSource ? "is a duplicate of" : "has duplicate",
+        RelationType.Contains    => isSource ? "contains"          : "is contained in",
         _                           => type.ToString()
     };
 }
@@ -151,7 +151,7 @@ public sealed partial class InspectorRelationsViewModel : ViewModelBase
 public sealed partial class RelationRowVm : ObservableObject
 {
     public Guid RelationId { get; }
-    public RelationTypeDto RelationType { get; }
+    public RelationType RelationType { get; }
     public string ChipLabel { get; }
     public string RelationLabel { get; }
     public Guid OtherItemId { get; }
@@ -159,11 +159,11 @@ public sealed partial class RelationRowVm : ObservableObject
     public string OtherWorkflow { get; }
 
     [ObservableProperty] private bool _isEditing;
-    [ObservableProperty] private RelationTypeDto _editingType;
+    [ObservableProperty] private RelationType _editingType;
 
     public RelationRowVm(
         Guid relationId,
-        RelationTypeDto relationType,
+        RelationType relationType,
         string chipLabel,
         string relationLabel,
         Guid otherItemId,

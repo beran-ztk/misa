@@ -6,13 +6,21 @@ using System.Threading.Tasks;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Misa.Contract.Items.Components.Chronicle;
+using Misa.Core.Features.Items.Chronicle;
 using Misa.Ui.Avalonia.Common.Behaviors;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Infrastructure;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Chronicle;
-
+public sealed record ChronicleEntryDto(
+    Guid? TargetItemId,
+    DateTimeOffset At,
+    string Title,
+    ChronicleEntryType Type,
+    ChronicleMetaState? MetaState,
+    string? MetaText,
+    string? Description
+);
 public sealed class ChronicleGroup
 {
     public DateTime Date       { get; init; }

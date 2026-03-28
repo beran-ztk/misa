@@ -2,7 +2,8 @@ using System;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Misa.Contract.Items.Components.Chronicle;
+using Misa.Core.Features.Items.Chronicle;
+using Misa.Ui.Avalonia.Features.Pages.Chronicle;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Journal;
 
@@ -56,7 +57,7 @@ public sealed partial class JournalEntryRow : ObservableObject
             DateTimeKind.Local);
         var occurredAtUtc = new DateTimeOffset(localDateTime).ToUniversalTime();
 
-        var request = new UpdateJournalRequest(EditContent.Trim(), occurredAtUtc);
+        var request = new UpdateJournalCommand(Entry.TargetItemId!.Value,EditContent.Trim(), occurredAtUtc);
         // var result  = await _gateway.UpdateAsync(Entry.TargetItemId!.Value, request);
 
         // if (!result.IsSuccess) return;

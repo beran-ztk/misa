@@ -2,9 +2,8 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Input;
-using Misa.Contract.Items.Components.Tasks;
+using Misa.Domain.Items;
 using Misa.Ui.Avalonia.Common.Mappings;
-using Misa.Ui.Avalonia.Features.Utilities.Toast;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Tasks;
 
@@ -182,7 +181,7 @@ public sealed partial class TaskFacadeViewModel : ViewModelBase
     public async Task FetchAndAppendAsync(Guid taskId)
     {
         if (State.WorkspaceMode != TaskWorkspaceMode.Active) return;
-        if (State.FilteredItems.Any(t => t.Item.Id == taskId)) return;
+        if (State.FilteredItems.Any(t => t.Id.Value == taskId)) return;
 
         // var dto = await _gateway.GetByIdAsync(taskId);
         // if (dto is null) return;
@@ -192,6 +191,6 @@ public sealed partial class TaskFacadeViewModel : ViewModelBase
 
     // ── Helpers ─────────────────────────────────────────────────
 
-    private TaskDto? FindItem(Guid id) =>
-        State.FilteredItems.FirstOrDefault(t => t.Item.Id == id);
+    private Item? FindItem(Guid id) =>
+        State.FilteredItems.FirstOrDefault(t => t.Id.Value == id);
 }

@@ -5,7 +5,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
-using Misa.Contract.Items;
+using Misa.Domain.Items;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Zettelkasten;
 
@@ -167,7 +167,7 @@ public partial class ZettelkastenView : UserControl
     {
         if (e.Data.Get("DragNode") is not KnowledgeIndexNodeVm source) return false;
         if (target.IsPendingCreation) return false;
-        if (target.Workflow != WorkflowDto.Topic) return false;
+        if (target.Workflow != Workflow.Topic) return false;
         if (target.Id == source.Id) return false;
         if (IsInSubtree(target.Id, source)) return false; // dropping onto own descendant
         return true;

@@ -1,7 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:relations="clr-namespace:Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Relations"
-             xmlns:dtos="clr-namespace:Misa.Contract.Items.Components.Relations;assembly=Contract"
              x:Class="Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Relations.InspectorRelationsView"
              x:DataType="relations:InspectorRelationsViewModel">
 

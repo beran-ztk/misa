@@ -41,7 +41,7 @@ public sealed partial class InspectorFacadeViewModel : ViewModelBase
     [RelayCommand]
     public async Task Reload()
     {
-        await GetEntryDataAsync(State.Item?.Id);
+        await GetEntryDataAsync(State.Item?.Id.Value);
     }
 
     private async Task GetEntryDataAsync(Guid? id)

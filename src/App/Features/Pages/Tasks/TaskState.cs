@@ -5,8 +5,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
-using Misa.Contract.Items.Components.Activity;
-using Misa.Contract.Items.Components.Tasks;
+using Misa.Domain.Items;
+using Misa.Domain.Items.Components.Activities;
+using Misa.Domain.Items.Components.Tasks;
 using Misa.Ui.Avalonia.Common.Components.FilterDropdown;
 using Misa.Ui.Avalonia.Infrastructure;
 
@@ -16,8 +17,8 @@ public sealed partial class TaskState : ObservableObject
 {
     public ISelectionContextState SelectionContextState { get; }
 
-    private IReadOnlyCollection<TaskDto> Items { get; set; } = [];
-    public ObservableCollection<TaskDto> FilteredItems { get; } = [];
+    private IReadOnlyCollection<Item> Items { get; set; } = [];
+    public ObservableCollection<Item> FilteredItems { get; } = [];
 
     // ── Filter dropdowns ────────────────────────────────────────
     public FilterDropdownViewModel PriorityFilter { get; }
@@ -96,10 +97,10 @@ public sealed partial class TaskState : ObservableObject
 
     // ── Selection ───────────────────────────────────────────────
     [ObservableProperty]
-    private TaskDto? _selectedItem;
-    partial void OnSelectedItemChanged(TaskDto? value)
+    private Item? _selectedItem;
+    partial void OnSelectedItemChanged(Item? value)
     {
-        SelectionContextState.Set(value?.Item.Id);
+        SelectionContextState.Set(value?.Id.Value);
     }
 
     public TaskState(ISelectionContextState selectionContextState)
@@ -108,21 +109,21 @@ public sealed partial class TaskState : ObservableObject
 
         PriorityFilter = new FilterDropdownViewModel(
             "Priority",
-            Enum.GetValues<ActivityPriorityDto>().Select(p => p.ToString()));
+            Enum.GetValues<ActivityPriority>().Select(p => p.ToString()));
 
         StateFilter = new FilterDropdownViewModel(
             "State",
-            Enum.GetValues<ActivityStateDto>().Select(s => s.ToString()));
+            Enum.GetValues<ActivityState>().Select(s => s.ToString()));
 
         CategoryFilter = new FilterDropdownViewModel(
             "Category",
-            Enum.GetValues<TaskCategoryDto>().Select(c => c.ToString()));
+            Enum.GetValues<TaskCategory>().Select(c => c.ToString()));
 
         PriorityFilter.FilterChanged += (_, _) => _ = RefreshFilteredCollection();
         StateFilter.FilterChanged += (_, _) => _ = RefreshFilteredCollection();
         CategoryFilter.FilterChanged += (_, _) => _ = RefreshFilteredCollection();
 
-        var openOption = StateFilter.Options.FirstOrDefault(o => o.Label == ActivityStateDto.Open.ToString());
+        var openOption = StateFilter.Options.FirstOrDefault(o => o.Label == ActivityState.Open.ToString());
         if (openOption is not null) openOption.IsSelected = true;
 
         // Keep workspace list in sync when the Inspector navigates to an item externally
@@ -131,9 +132,9 @@ public sealed partial class TaskState : ObservableObject
         {
             if (e.PropertyName != nameof(ISelectionContextState.ActiveEntityId)) return;
             var id = SelectionContextState.ActiveEntityId;
-            if (SelectedItem?.Item.Id == id) return;
+            if (SelectedItem?.Id.Value == id) return;
             SelectedItem = id.HasValue
-                ? FilteredItems.FirstOrDefault(t => t.Item.Id == id.Value)
+                ? FilteredItems.FirstOrDefault(t => t.Id.Value == id.Value)
                 : null;
         };
     }
@@ -142,39 +143,39 @@ public sealed partial class TaskState : ObservableObject
     {
         // No selection = inactive = pass all; selection = restrict to selected values.
         var activePriorities = PriorityFilter.HasActiveSelection
-            ? PriorityFilter.SelectedLabels.Select(Enum.Parse<ActivityPriorityDto>).ToHashSet()
+            ? PriorityFilter.SelectedLabels.Select(Enum.Parse<ActivityPriority>).ToHashSet()
             : null;
 
         var activeStates = StateFilter.HasActiveSelection
-            ? StateFilter.SelectedLabels.Select(Enum.Parse<ActivityStateDto>).ToHashSet()
+            ? StateFilter.SelectedLabels.Select(Enum.Parse<ActivityState>).ToHashSet()
             : null;
 
         var activeCategories = CategoryFilter.HasActiveSelection
-            ? CategoryFilter.SelectedLabels.Select(Enum.Parse<TaskCategoryDto>).ToHashSet()
+            ? CategoryFilter.SelectedLabels.Select(Enum.Parse<TaskCategory>).ToHashSet()
             : null;
 
         // 1. Filter
         var filtered = Items.Where(item =>
             (activePriorities == null || activePriorities.Contains(item.Activity.Priority))
             && (activeStates == null || activeStates.Contains(item.Activity.State))
-            && (activeCategories == null || activeCategories.Contains(item.Category))
+            && (activeCategories == null || activeCategories.Contains(item.TaskExtension.Category))
             && (string.IsNullOrEmpty(SearchText)
-                || item.Item.Title.Contains((string)SearchText, StringComparison.OrdinalIgnoreCase)));
+                || item.Title.Contains((string)SearchText, StringComparison.OrdinalIgnoreCase)));
 
         // 2. Sort
-        IEnumerable<TaskDto> sorted = SortField switch
+        IEnumerable<Item> sorted = SortField switch
         {
             TaskSortField.Title => SortDirection == TaskSortDirection.Ascending
-                ? filtered.OrderBy(t => t.Item.Title, StringComparer.OrdinalIgnoreCase)
-                : filtered.OrderByDescending(t => t.Item.Title, StringComparer.OrdinalIgnoreCase),
+                ? filtered.OrderBy(t => t.Title, StringComparer.OrdinalIgnoreCase)
+                : filtered.OrderByDescending(t => t.Title, StringComparer.OrdinalIgnoreCase),
 
             TaskSortField.State => SortDirection == TaskSortDirection.Ascending
                 ? filtered.OrderBy(t => t.Activity.State)
                 : filtered.OrderByDescending(t => t.Activity.State),
 
             TaskSortField.CreatedAt => SortDirection == TaskSortDirection.Ascending
-                ? filtered.OrderBy(t => t.Item.CreatedAt)
-                : filtered.OrderByDescending(t => t.Item.CreatedAt),
+                ? filtered.OrderBy(t => t.CreatedAt)
+                : filtered.OrderByDescending(t => t.CreatedAt),
 
             _ => filtered
         };
@@ -217,14 +218,14 @@ public sealed partial class TaskState : ObservableObject
 
         // Active mode — full stats
         var now      = DateTimeOffset.UtcNow;
-        var open     = items.Count(t => t.Activity.State == ActivityStateDto.Open);
+        var open     = items.Count(t => t.Activity.State == ActivityState.Open);
         var overdue  = items.Count(t => t.Activity.DueAt.HasValue && t.Activity.DueAt.Value < now);
         var dueSoon  = items.Count(t => t.Activity.DueAt.HasValue
                                         && t.Activity.DueAt.Value >= now
                                         && (t.Activity.DueAt.Value - now).TotalDays <= 3);
-        var highPlus = items.Count(t => t.Activity.Priority is ActivityPriorityDto.High
-                                                             or ActivityPriorityDto.Urgent
-                                                             or ActivityPriorityDto.Critical);
+        var highPlus = items.Count(t => t.Activity.Priority is ActivityPriority.High
+                                                             or ActivityPriority.Urgent
+                                                             or ActivityPriority.Critical);
 
         var parts = new System.Text.StringBuilder();
         parts.Append($"{total} task{(total == 1 ? "" : "s")}");
@@ -236,14 +237,14 @@ public sealed partial class TaskState : ObservableObject
         MetaSummary = parts.ToString();
     }
 
-    public async Task SetMainCollection(IReadOnlyCollection<TaskDto> items)
+    public async Task SetMainCollection(IReadOnlyCollection<Item> items)
     {
         Items = items;
         FilteredItems.Clear();
         await RefreshFilteredCollection();
     }
 
-    public async Task AppendToMainCollection(TaskDto item)
+    public async Task AppendToMainCollection(Item item)
     {
         var temp = Items.ToList();
         temp.Add(item);
@@ -251,14 +252,14 @@ public sealed partial class TaskState : ObservableObject
         await RefreshFilteredCollection();
     }
 
-    public void RemoveFromMainCollection(TaskDto item)
+    public void RemoveFromMainCollection(Item item)
     {
         var temp = Items.ToList();
         temp.Remove(item);
         Items = temp;
         FilteredItems.Remove(item);
 
-        if (SelectedItem?.Item.Id == item.Item.Id)
+        if (SelectedItem?.Id == item.Id)
             SelectedItem = null;
 
         RefreshMeta();

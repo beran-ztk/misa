@@ -160,7 +160,7 @@
                                        Classes="addpanel-text" />
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <TextBlock Text="{Binding Facade.State.Item.ScheduleExtension.FrequencyInterval}" />
-                                <TextBlock Text="{Binding Facade.State.Item.ScheduleExtension.FrequencyType}" />
+                                <TextBlock Text="{Binding Facade.State.Item.ScheduleExtension.ScheduleFrequencyType}" />
                             </StackPanel>
                         </StackPanel>
 
@@ -254,13 +254,6 @@
                                 <TimePicker Classes="addpanel-time"
                                             SelectedTime="{Binding EditActiveUntilTime, Mode=TwoWay}" />
                             </StackPanel>
-                        </StackPanel>
-
-                        <!-- Timezone (read-only) -->
-                        <StackPanel Classes="addpanel-controls">
-                            <TextBlock Text="Timezone"
-                                       Classes="addpanel-text" />
-                            <TextBlock Text="{Binding Facade.State.Item.ScheduleExtension.Timezone, Converter={StaticResource NoValueConverter}}" />
                         </StackPanel>
 
                     </StackPanel>

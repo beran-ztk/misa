@@ -418,7 +418,7 @@
                         <DataGridTemplateColumn Header="Title" Width="320">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <TextBlock Text="{Binding Item.Title}"
+                                    <TextBlock Text="{Binding Title}"
                                                TextTrimming="CharacterEllipsis"
                                                TextWrapping="NoWrap" />
                                 </DataTemplate>
@@ -428,7 +428,7 @@
                                             Binding="{Binding Activity.State}"
                                             Width="120" />
                         <DataGridTextColumn Header="Category"
-                                            Binding="{Binding Category}"
+                                            Binding="{Binding TaskExtension.Category}"
                                             Width="120" />
                         <DataGridTemplateColumn Header="Priority" Width="120">
                             <DataGridTemplateColumn.CellTemplate>
@@ -447,12 +447,12 @@
                                                 Converter={StaticResource DeadlineShortConverter}}"
                                             Width="100" />
                         <DataGridTextColumn Header="Created"
-                                            Binding="{Binding Item.CreatedAt,
+                                            Binding="{Binding CreatedAt,
                                                 Converter={StaticResource UtcToLocalConverter},
                                                 StringFormat='dd.MM.yyyy'}"
                                             Width="100" />
                         <DataGridTextColumn Header="Modified"
-                                            Binding="{Binding Item.ModifiedAt,
+                                            Binding="{Binding ModifiedAt,
                                                 Converter={StaticResource UtcToLocalConverter},
                                                 StringFormat='dd.MM.yyyy'}"
                                             Width="100" />
@@ -507,7 +507,7 @@
                                     <Grid ColumnDefinitions="*,Auto">
 
                                         <TextBlock Grid.Column="0"
-                                                   Text="{Binding Item.Title}"
+                                                   Text="{Binding Title}"
                                                    FontSize="{StaticResource FontSizeMedium}"
                                                    FontWeight="SemiBold"
                                                    Foreground="{StaticResource BrushTextPrimary}"
@@ -551,7 +551,7 @@
 
                                             <Button Classes="card-action-link restore"
                                                     Command="{Binding $parent[ListBox].((tasks:TaskFacadeViewModel)DataContext).RestoreItemCommand}"
-                                                    CommandParameter="{Binding Item.Id}"
+                                                    CommandParameter="{Binding Id}"
                                                     Content="Restore"/>
 
                                             <!-- Divider + danger action — deleted mode only -->
@@ -566,7 +566,7 @@
                                             <Button Classes="card-action-link danger"
                                                     IsVisible="{Binding $parent[ListBox].((tasks:TaskFacadeViewModel)DataContext).State.IsDeletedMode}"
                                                     Command="{Binding $parent[ListBox].((tasks:TaskFacadeViewModel)DataContext).HardDeleteItemCommand}"
-                                                    CommandParameter="{Binding Item.Id}"
+                                                    CommandParameter="{Binding Id}"
                                                     Content="Delete permanently"/>
 
                                         </StackPanel>
@@ -585,7 +585,7 @@
                                             <TextBlock Text="·"
                                                        FontSize="{StaticResource FontSizeSmall}"
                                                        Foreground="{StaticResource BrushTextFaded}"/>
-                                            <TextBlock Text="{Binding Category}"
+                                            <TextBlock Text="{Binding TaskExtension.Category}"
                                                        FontSize="{StaticResource FontSizeSmall}"
                                                        FontWeight="Medium"
                                                        Foreground="{StaticResource BrushTextSecondary}"/>
@@ -600,20 +600,20 @@
                                         </StackPanel>
 
                                         <TextBlock Grid.Column="1"
-                                                   Text="{Binding Item.CreatedAt,
+                                                   Text="{Binding CreatedAt,
                                                        Converter={StaticResource UtcToLocalConverter},
                                                        StringFormat='dd MMM'}"
                                                    FontSize="{StaticResource FontSizeSmall}"
                                                    Foreground="{StaticResource BrushTextFaded}"
-                                                   IsVisible="{Binding Item.CreatedAt,
+                                                   IsVisible="{Binding CreatedAt,
                                                        Converter={StaticResource NullToBoolConverter}}"/>
                                     </Grid>
 
                                     <!-- Row 3: age signal — only rendered when contextually relevant -->
                                     <Border Classes="signal-chip neutral"
-                                            IsVisible="{Binding Item.CreatedAt,
+                                            IsVisible="{Binding CreatedAt,
                                                 Converter={StaticResource ItemAgeConverter}}">
-                                        <TextBlock Text="{Binding Item.CreatedAt,
+                                        <TextBlock Text="{Binding CreatedAt,
                                                        Converter={StaticResource ItemAgeConverter}}"/>
                                     </Border>
 

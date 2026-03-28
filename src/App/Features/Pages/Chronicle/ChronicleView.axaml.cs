@@ -1,5 +1,4 @@
 using Avalonia.Controls;
-using Misa.Contract.Items.Components.Chronicle;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Chronicle;
 

@@ -2,7 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
-using Misa.Contract.Items.Components.Zettelkasten;
+using Misa.Domain.Items;
 using Misa.Ui.Avalonia.Common.Mappings;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Zettelkasten;
@@ -33,16 +33,16 @@ public sealed partial class ZettelViewModel : ViewModelBase
 
     // ── Loading ───────────────────────────────────────────────────────────────
 
-    public void Load(ZettelDto dto)
+    public void Load(Item dto)
     {
         _saveCts?.Cancel();
         _saveCts?.Dispose();
         _saveCts   = null;
         _loading   = true;
 
-        Id         = dto.Id;
+        Id         = dto.Id.Value;
         Title      = dto.Title;
-        Content    = dto.Content;
+        Content    = dto.ZettelExtension.Content;
         CreatedAt  = dto.CreatedAt;
         ModifiedAt = dto.ModifiedAt;
         IsDirty    = false;

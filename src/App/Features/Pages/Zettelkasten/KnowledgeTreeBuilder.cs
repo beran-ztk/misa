@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Misa.Contract.Items.Components.Zettelkasten;
+using Misa.Core.Features.Items.Zettelkasten;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Zettelkasten;
 

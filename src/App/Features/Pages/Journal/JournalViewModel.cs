@@ -5,8 +5,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Misa.Contract.Items.Components.Chronicle;
 using Misa.Ui.Avalonia.Common.Mappings;
+using Misa.Ui.Avalonia.Features.Pages.Chronicle;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Journal;
 
@@ -107,11 +107,11 @@ public sealed partial class JournalViewModel : ViewModelBase
             DateTimeKind.Local);
         var occurredAtUtc = new DateTimeOffset(localDateTime).ToUniversalTime();
 
-        var request = new CreateJournalRequest(
-            "Journal entry",
-            content,
-            occurredAtUtc,
-            null);
+        // var request = new CreateJournalRequest(
+        //     "Journal entry",
+        //     content,
+        //     occurredAtUtc,
+        //     null);
 
         // var result = await gateway.CreateAsync(request);
         // if (!result.IsSuccess) return;

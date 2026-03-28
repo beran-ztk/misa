@@ -4,12 +4,11 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Input;
-using Misa.Contract.Items.Components.Activity.Sessions;
 using Misa.Core.Common.Converters;
+using Misa.Core.Features.Items.Sessions;
+using Misa.Domain.Items.Components.Activities.Sessions;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Relations;
-using Misa.Ui.Avalonia.Features.Utilities.Toast;
-
 
 namespace Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Base;
 
@@ -55,10 +54,10 @@ public partial class InspectorEntryViewModel : ViewModelBase
     {
         if (CurrentSession == null) return;
 
-        var dto = new StopSessionDto(
-            Facade.State.Item.Id,
-            SessionEfficiencyDto.None,
-            SessionConcentrationDto.None,
+        var dto = new StopSessionCommand(
+            Facade.State.Item.Id.Value,
+            SessionEfficiencyType.None,
+            SessionConcentrationType.None,
             "Was automatically stopped because of archiving/deleting.");
 
         // await Facade.Gateway.EndSessionAsync(dto);

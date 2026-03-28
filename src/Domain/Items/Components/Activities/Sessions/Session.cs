@@ -118,4 +118,54 @@ public sealed class Session
 
         return session;
     }
+    
+    
+    public TimeSpan TotalElapsed => TimeSpan.FromTicks(
+        Segments
+            .Where(s => s.EndedAtUtc is not null)
+            .Sum(s => (s.EndedAtUtc!.Value - s.StartedAtUtc).Ticks));
+
+    public string DurationDisplay
+    {
+        get
+        {
+            var elapsed = TotalElapsed;
+            if (elapsed == TimeSpan.Zero)
+                return PlannedDuration.HasValue
+                    ? $"0 / {(int)PlannedDuration.Value.TotalMinutes}m"
+                    : "0m";
+
+            var elapsedStr = elapsed.TotalHours >= 1
+                ? $"{(int)elapsed.TotalHours}h {elapsed.Minutes}m"
+                : $"{(int)elapsed.TotalMinutes}m";
+
+            if (PlannedDuration is null)
+                return elapsedStr;
+
+            var plannedStr = PlannedDuration.Value.TotalHours >= 1
+                ? $"{(int)PlannedDuration.Value.TotalHours}h {PlannedDuration.Value.Minutes}m"
+                : $"{(int)PlannedDuration.Value.TotalMinutes}m";
+
+            return $"{elapsedStr} / {plannedStr}";
+        }
+    }
+
+    public string? EfficiencyDisplay => Efficiency == SessionEfficiencyType.None ? null : Efficiency switch
+    {
+        SessionEfficiencyType.LowOutput      => "Low output",
+        SessionEfficiencyType.SteadyOutput   => "Steady output",
+        SessionEfficiencyType.HighOutput     => "High output",
+        SessionEfficiencyType.PeakPerformance => "Peak performance",
+        _ => null
+    };
+
+    public string? ConcentrationDisplay => Concentration == SessionConcentrationType.None ? null : Concentration switch
+    {
+        SessionConcentrationType.Distracted      => "Distracted",
+        SessionConcentrationType.UnfocusedButCalm => "Unfocused but calm",
+        SessionConcentrationType.Focused         => "Focused",
+        SessionConcentrationType.DeepFocus       => "Deep focus",
+        SessionConcentrationType.Hyperfocus      => "Hyperfocus",
+        _ => null
+    };
 }
