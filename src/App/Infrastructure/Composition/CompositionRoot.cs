@@ -12,7 +12,6 @@ using Misa.Ui.Avalonia.Features.Pages.Zettelkasten;
 using Misa.Ui.Avalonia.Features.Utilities.Dev;
 using Misa.Ui.Avalonia.Features.Utilities.Notifications;
 using Misa.Ui.Avalonia.Infrastructure.Client.RemoteProxy;
-using Misa.Ui.Avalonia.Infrastructure.Messaging;
 using Misa.Ui.Avalonia.Infrastructure.Platform;
 using Misa.Ui.Avalonia.Infrastructure.States;
 using Misa.Ui.Avalonia.Infrastructure.Time;
