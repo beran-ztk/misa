@@ -1,5 +1,5 @@
 using Misa.Contract.Items;
-using Misa.Core.Abstractions.Persistence;
+using Misa.Core.Common.Abstractions.Persistence;
 using Misa.Core.Mappings;
 using Misa.Domain.Exceptions;
 using Misa.Domain.Items;

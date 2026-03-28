@@ -1,4 +1,4 @@
-using Misa.Core.Abstractions.Persistence;
+using Misa.Core.Common.Abstractions.Persistence;
 
 namespace Misa.Core.Features.Items.Relations;
 

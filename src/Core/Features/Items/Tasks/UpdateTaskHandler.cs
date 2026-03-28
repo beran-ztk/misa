@@ -1,7 +1,7 @@
 using Misa.Contract.Items.Components.Activity;
 using Misa.Contract.Items.Components.Tasks;
-using Misa.Core.Abstractions.Persistence;
-using Misa.Core.Abstractions.Time;
+using Misa.Core.Common.Abstractions.Persistence;
+using Misa.Core.Common.Abstractions.Time;
 using Misa.Core.Mappings;
 using Misa.Domain.Exceptions;
 

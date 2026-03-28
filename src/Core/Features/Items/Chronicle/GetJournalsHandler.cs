@@ -1,7 +1,7 @@
-using Misa.Contract.Common.Converters;
 using Misa.Contract.Items.Components.Chronicle;
-using Misa.Core.Abstractions.Persistence;
-using Misa.Core.Abstractions.Time;
+using Misa.Core.Common.Abstractions.Persistence;
+using Misa.Core.Common.Abstractions.Time;
+using Misa.Core.Common.Converters;
 using Misa.Domain.Exceptions;
 using Misa.Domain.Items.Components.Activities.Sessions;
 

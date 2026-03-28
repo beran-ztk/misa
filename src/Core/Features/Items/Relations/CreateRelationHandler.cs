@@ -1,7 +1,7 @@
 using Misa.Contract.Items.Components.Relations;
-using Misa.Core.Abstractions.Ids;
-using Misa.Core.Abstractions.Persistence;
-using Misa.Core.Abstractions.Time;
+using Misa.Core.Common.Abstractions.Ids;
+using Misa.Core.Common.Abstractions.Persistence;
+using Misa.Core.Common.Abstractions.Time;
 using Misa.Core.Mappings;
 using Misa.Domain.Exceptions;
 using Misa.Domain.Items.Components.Relations;

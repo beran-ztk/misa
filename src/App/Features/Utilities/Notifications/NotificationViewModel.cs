@@ -9,8 +9,6 @@ using System.Threading.Tasks;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Misa.Contract.Features.Messaging;
-using Misa.Contract.Notifications;
 using Misa.Ui.Avalonia.Shell.Components;
 using Misa.Ui.Avalonia.Common.Mappings;
 
@@ -20,25 +18,25 @@ public enum NotificationFilter { All, Unread }
 
 public sealed partial class NotificationItem : ObservableObject
 {
-    public NotificationItem(NotificationDto notification)
+    public NotificationItem()
     {
-        Id         = Guid.NewGuid();
-        Title      = notification.Payload;
-        Message    = string.Empty;
-        Timestamp  = notification.Timestamp;
-        _isRead    = false;
-        LinkTarget = null;
+        // Id         = Guid.NewGuid();
+        // Title      = notification.Payload;
+        // Message    = string.Empty;
+        // Timestamp  = notification.Timestamp;
+        // _isRead    = false;
+        // LinkTarget = null;
     }
 
-    public NotificationItem(NotificationEntryDto dto)
-    {
-        Id         = dto.Id;
-        Title      = dto.Title;
-        Message    = dto.Message;
-        Timestamp  = dto.CreatedAtUtc;
-        _isRead    = dto.ReadAtUtc.HasValue;
-        LinkTarget = dto.LinkTarget;
-    }
+    // public NotificationItem(NotificationEntryDto dto)
+    // {
+    //     Id         = dto.Id;
+    //     Title      = dto.Title;
+    //     Message    = dto.Message;
+    //     Timestamp  = dto.CreatedAtUtc;
+    //     _isRead    = dto.ReadAtUtc.HasValue;
+    //     LinkTarget = dto.LinkTarget;
+    // }
 
     public Guid                     Id                 { get; }
     public string                   Title              { get; }
@@ -46,8 +44,6 @@ public sealed partial class NotificationItem : ObservableObject
     public bool                     HasMessage         => !string.IsNullOrWhiteSpace(Message);
     public DateTimeOffset           Timestamp          { get; }
     public string                   TimestampFormatted => Timestamp.ToLocalTime().ToString("dd MMM · HH:mm", CultureInfo.InvariantCulture);
-    public NotificationLinkTarget?  LinkTarget         { get; }
-    public bool                     HasLinkTarget      => LinkTarget is not null;
 
     [ObservableProperty] private bool   _isRead;
     [ObservableProperty] private bool   _isPendingDismiss;
@@ -93,14 +89,14 @@ public sealed partial class NotificationViewModel : ViewModelBase
 
     partial void OnUnreadCountChanged(int value) => OnPropertyChanged(nameof(HasUnread));
 
-    public void Publish(NotificationDto notification)
-    {
-        Dispatcher.UIThread.Post(() =>
-        {
-            Notifications.Insert(0, new NotificationItem(notification));
-            UnreadCount++;
-        });
-    }
+    // public void Publish(NotificationDto notification)
+    // {
+    //     Dispatcher.UIThread.Post(() =>
+    //     {
+    //         Notifications.Insert(0, new NotificationItem(notification));
+    //         UnreadCount++;
+    //     });
+    // }
 
     // Full reload — clears the list and fetches the first page + global unread count.
     public async Task LoadAsync(CancellationToken ct = default)
@@ -201,13 +197,13 @@ public sealed partial class NotificationViewModel : ViewModelBase
         // });
     }
 
-    private void ApplyPagingState(List<NotificationEntryDto> dtos)
-    {
-        if (dtos.Count > 0)
-            _oldestTimestamp = dtos[^1].CreatedAtUtc;
-
-        HasMore = dtos.Count == PageSize;
-    }
+    // private void ApplyPagingState(List<NotificationEntryDto> dtos)
+    // {
+    //     if (dtos.Count > 0)
+    //         _oldestTimestamp = dtos[^1].CreatedAtUtc;
+    //
+    //     HasMore = dtos.Count == PageSize;
+    // }
 
     // Dismiss with 4-second undo window — backend is not called until the window expires.
     [RelayCommand]
@@ -316,12 +312,12 @@ public sealed partial class NotificationViewModel : ViewModelBase
     [RelayCommand]
     private async Task OpenLinkedItemAsync(Guid id)
     {
-        var item = Notifications.FirstOrDefault(x => x.Id == id);
-        if (item?.LinkTarget is not { } target) return;
-
-        await _navigation.NavigateToItemAsync(target);
-
-        if (!item.IsRead)
-            await MarkAsReadAsync(id);
+        // var item = Notifications.FirstOrDefault(x => x.Id == id);
+        // if (item?.LinkTarget is not { } target) return;
+        //
+        // await _navigation.NavigateToItemAsync(target);
+        //
+        // if (!item.IsRead)
+        //     await MarkAsReadAsync(id);
     }
 }

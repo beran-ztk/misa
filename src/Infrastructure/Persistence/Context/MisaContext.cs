@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Misa.Core.Abstractions.Ids;
-using Misa.Core.Abstractions.Time;
+using Misa.Core.Common.Abstractions.Ids;
+using Misa.Core.Common.Abstractions.Time;
 using Misa.Domain.Common.DomainEvents;
 using Misa.Domain.Items;
 using Misa.Domain.Items.Components.Activities;

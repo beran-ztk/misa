@@ -138,7 +138,6 @@
                                                             <!-- Open link (linked notifications only) -->
                                                             <Button Grid.Row="2" Grid.Column="0"
                                                                     Classes="notif-open-btn"
-                                                                    IsVisible="{Binding HasLinkTarget}"
                                                                     Command="{Binding $parent[ItemsControl].((local:NotificationViewModel)DataContext).OpenLinkedItemCommand}"
                                                                     CommandParameter="{Binding Id}"
                                                                     Content="Open →" />

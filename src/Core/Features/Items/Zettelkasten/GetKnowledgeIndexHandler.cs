@@ -1,6 +1,6 @@
 using Misa.Contract.Items;
 using Misa.Contract.Items.Components.Zettelkasten;
-using Misa.Core.Abstractions.Persistence;
+using Misa.Core.Common.Abstractions.Persistence;
 using Misa.Core.Mappings;
 
 namespace Misa.Core.Features.Items.Zettelkasten;

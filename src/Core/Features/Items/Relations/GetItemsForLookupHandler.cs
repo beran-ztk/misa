@@ -1,6 +1,6 @@
 using Misa.Contract.Items;
 using Misa.Contract.Items.Components.Relations;
-using Misa.Core.Abstractions.Persistence;
+using Misa.Core.Common.Abstractions.Persistence;
 using Misa.Domain.Items;
 
 namespace Misa.Core.Features.Items.Relations;

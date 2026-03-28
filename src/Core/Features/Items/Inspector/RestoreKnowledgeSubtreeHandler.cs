@@ -1,5 +1,5 @@
-using Misa.Core.Abstractions.Persistence;
-using Misa.Core.Abstractions.Time;
+using Misa.Core.Common.Abstractions.Persistence;
+using Misa.Core.Common.Abstractions.Time;
 
 namespace Misa.Core.Features.Items.Inspector;
 

@@ -1,7 +1,6 @@
-using Misa.Core.Abstractions.Ids;
-using Misa.Core.Abstractions.Notifications;
-using Misa.Core.Abstractions.Persistence;
-using Misa.Core.Abstractions.Time;
+using Misa.Core.Common.Abstractions.Ids;
+using Misa.Core.Common.Abstractions.Persistence;
+using Misa.Core.Common.Abstractions.Time;
 using Misa.Domain.Items.Components.Activities.Sessions;
 using Misa.Domain.Notifications;
 
@@ -13,8 +12,7 @@ public class NotifySessionPlannedDurationReachedHandler(
     IItemRepository          itemRepository,
     INotificationRepository  notificationRepository,
     ITimeProvider            timeProvider,
-    IIdGenerator             idGenerator,
-    INotificationPushService pushService)
+    IIdGenerator             idGenerator)
 {
     public async Task Handle(NotifySessionPlannedDurationReachedCommand command, CancellationToken ct)
     {

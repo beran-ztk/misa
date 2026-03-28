@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Misa.Core.Abstractions.Persistence;
+using Misa.Core.Common.Abstractions.Persistence;
 using Misa.Domain.Notifications;
 using Misa.Infrastructure.Persistence.Context;
 

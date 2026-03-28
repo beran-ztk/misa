@@ -1,0 +1,15 @@
+using Misa.Domain.Notifications;
+
+namespace Misa.Core.Common.Abstractions.Persistence;
+
+public interface INotificationRepository
+{
+    Task AddAsync(Notification notification, CancellationToken ct = default);
+    Task<List<Notification>> GetPageAsync(int limit, DateTimeOffset? before, bool onlyUnread, CancellationToken ct = default);
+    Task<int> GetUnreadCountAsync(CancellationToken ct = default);
+    Task DismissAsync(Guid id, DateTimeOffset dismissedAt, CancellationToken ct = default);
+    Task MarkAsReadAsync(Guid id, DateTimeOffset readAt, CancellationToken ct = default);
+    Task MarkAllAsReadAsync(DateTimeOffset readAt, CancellationToken ct = default);
+    Task<int> CleanupDismissedAsync(DateTimeOffset dismissedBefore, CancellationToken ct = default);
+    Task SaveChangesAsync(CancellationToken ct = default);
+}

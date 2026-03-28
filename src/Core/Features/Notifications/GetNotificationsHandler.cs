@@ -1,6 +1,4 @@
-using Misa.Contract.Notifications;
-using Misa.Core.Abstractions.Persistence;
-using Misa.Domain.Notifications;
+using Misa.Core.Common.Abstractions.Persistence;
 
 namespace Misa.Core.Features.Notifications;
 
@@ -8,31 +6,31 @@ public sealed record GetNotificationsQuery(int Limit = 25, DateTimeOffset? Befor
 
 public class GetNotificationsHandler(INotificationRepository repository)
 {
-    public async Task<List<NotificationEntryDto>> HandleAsync(
-        GetNotificationsQuery query,
-        CancellationToken ct)
-    {
-        var notifications = await repository.GetPageAsync(query.Limit, query.Before, query.OnlyUnread, ct);
-
-        return notifications
-            .Select(n => new NotificationEntryDto(
-                n.Id,
-                n.Title,
-                n.Message,
-                n.SourceId,
-                n.CreatedAtUtc,
-                n.ReadAtUtc,
-                ResolveLinkTarget(n.SourceKind, n.SourceId)))
-            .ToList();
-    }
-
-    private static NotificationLinkTarget? ResolveLinkTarget(NotificationSourceKind kind, Guid sourceId) =>
-        kind switch
-        {
-            NotificationSourceKind.SessionPlannedDurationReached =>
-                new NotificationLinkTarget(NotificationWorkspaceTarget.Tasks, sourceId),
-            NotificationSourceKind.ScheduleCreatedTask =>
-                new NotificationLinkTarget(NotificationWorkspaceTarget.Tasks, sourceId),
-            _ => null
-        };
+    // public async Task<List<NotificationEntryDto>> HandleAsync(
+    //     GetNotificationsQuery query,
+    //     CancellationToken ct)
+    // {
+    //     var notifications = await repository.GetPageAsync(query.Limit, query.Before, query.OnlyUnread, ct);
+    //
+    //     return notifications
+    //         .Select(n => new NotificationEntryDto(
+    //             n.Id,
+    //             n.Title,
+    //             n.Message,
+    //             n.SourceId,
+    //             n.CreatedAtUtc,
+    //             n.ReadAtUtc,
+    //             ResolveLinkTarget(n.SourceKind, n.SourceId)))
+    //         .ToList();
+    // }
+    //
+    // private static NotificationLinkTarget? ResolveLinkTarget(NotificationSourceKind kind, Guid sourceId) =>
+    //     kind switch
+    //     {
+    //         NotificationSourceKind.SessionPlannedDurationReached =>
+    //             new NotificationLinkTarget(NotificationWorkspaceTarget.Tasks, sourceId),
+    //         NotificationSourceKind.ScheduleCreatedTask =>
+    //             new NotificationLinkTarget(NotificationWorkspaceTarget.Tasks, sourceId),
+    //         _ => null
+    //     };
 }

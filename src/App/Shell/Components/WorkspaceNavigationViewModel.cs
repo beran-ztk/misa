@@ -1,7 +1,5 @@
-using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Input;
-using Misa.Contract.Notifications;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Pages.Chronicle;
 using Misa.Ui.Avalonia.Features.Pages.Journal;
@@ -83,21 +81,5 @@ public partial class WorkspaceNavigationViewModel(
         await zettel.InitializeWorkspaceAsync();
         host.Workspace = zettel;
         SetActiveWorkspace(zettel);
-    }
-
-    public async Task NavigateToItemAsync(NotificationLinkTarget target)
-    {
-        switch (target.Workspace)
-        {
-            case NotificationWorkspaceTarget.Tasks:
-                selectionContextState.Set(null);
-                await task.InitializeWorkspaceAsync();
-                host.Workspace = task;
-                SetActiveWorkspace(task);
-                var taskItem = task.State.FilteredItems.FirstOrDefault(t => t.Item.Id == target.ItemId);
-                if (taskItem is not null)
-                    task.State.SelectedItem = taskItem;
-                break;
-        }
     }
 }

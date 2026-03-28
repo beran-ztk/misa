@@ -1,5 +1,5 @@
 using Misa.Contract.Items.Components.Tasks;
-using Misa.Core.Abstractions.Persistence;
+using Misa.Core.Common.Abstractions.Persistence;
 using Misa.Core.Mappings;
 
 namespace Misa.Core.Features.Items.Tasks;
