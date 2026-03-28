@@ -2,15 +2,15 @@ using System;
 using System.Net.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Misa.Ui.Avalonia.Features.Inspector;
 using Misa.Ui.Avalonia.Features.Pages.Journal;
+using Misa.Ui.Avalonia.Features.Pages.Tasks;
 using Misa.Ui.Avalonia.Features.Pages.Zettelkasten;
 using Misa.Ui.Avalonia.Features.Utilities.Dev;
 using Misa.Ui.Avalonia.Shell;
 using Misa.Ui.Avalonia.Shell.Components;
-using InspectorFacadeViewModel = Misa.Ui.Avalonia.Features.Inspector.InspectorFacadeViewModel;
 using InspectorState = Misa.Ui.Avalonia.Features.Inspector.InspectorState;
 using ShellWindowViewModel = Misa.Ui.Avalonia.Shell.ShellWindowViewModel;
-using TaskFacadeViewModel = Misa.Ui.Avalonia.Features.Pages.Tasks.TaskFacadeViewModel;
 using TaskState = Misa.Ui.Avalonia.Features.Pages.Tasks.TaskState;
 
 namespace Misa.Ui.Avalonia.Infrastructure;
@@ -34,7 +34,7 @@ public static class CompositionRoot
     private static void AddCoreServices(this IServiceCollection sc)
     {
         sc.AddSingleton<ShellState>();
-        sc.AddSingleton<ISelectionContextState, SelectionContextState>();
+        sc.AddSingleton<SelectedItemCoordinator>();
         sc.AddSingleton<IWorkspaceHost>(sp => sp.GetRequiredService<ShellState>());
         
         // VMs
@@ -51,11 +51,11 @@ public static class CompositionRoot
     {
         // Inspector
         sc.AddSingleton<InspectorState>();
-        sc.AddSingleton<InspectorFacadeViewModel>();
+        sc.AddSingleton<InspectorViewModel>();
         
         // Task
         sc.AddSingleton<TaskState>();
-        sc.AddSingleton<TaskFacadeViewModel>();
+        sc.AddSingleton<TaskViewModel>();
         
         // Journal
         sc.AddSingleton<JournalViewModel>();

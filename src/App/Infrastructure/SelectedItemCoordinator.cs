@@ -1,21 +1,9 @@
 ﻿using System;
-using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Misa.Ui.Avalonia.Infrastructure;
 
-public interface ISelectionContextState : INotifyPropertyChanged
-{
-    Guid? ActiveEntityId { get; }
-    int UpdatedVersion { get; set; }
-    int RemovedVersion { get; set; }
-    void NotifyUpdated();
-    void NotifyRemoved();
-    void Set(Guid? id);
-    void Clear();
-}
-
-public sealed partial class SelectionContextState : ObservableObject, ISelectionContextState
+public sealed partial class SelectedItemCoordinator : ObservableObject
 {
     [ObservableProperty] private Guid? _activeEntityId;
     [ObservableProperty] private bool _updated;

@@ -7,27 +7,27 @@ using Misa.Ui.Avalonia.Common.Mappings;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Tasks;
 
-public sealed partial class TaskFacadeViewModel : ViewModelBase
+public sealed partial class TaskViewModel : ViewModelBase
 {
     public TaskState State { get; }
 
-    public TaskFacadeViewModel(
+    public TaskViewModel(
         TaskState state)
     {
         State = state;
 
-        State.SelectionContextState.PropertyChanged += async (s, e) =>
+        State.SelectedItemCoordinator.PropertyChanged += async (s, e) =>
         {
             switch (e.PropertyName)
             {
-                case nameof(State.SelectionContextState.UpdatedVersion):
+                case nameof(State.SelectedItemCoordinator.UpdatedVersion):
                 {
-                    var id = State.SelectionContextState.ActiveEntityId;
+                    var id = State.SelectedItemCoordinator.ActiveEntityId;
                     await LoadCurrentModeAsync();
-                    State.SelectionContextState.Set(id);
+                    State.SelectedItemCoordinator.Set(id);
                     break;
                 }
-                case nameof(State.SelectionContextState.RemovedVersion):
+                case nameof(State.SelectedItemCoordinator.RemovedVersion):
                     await LoadCurrentModeAsync();
                     break;
             }

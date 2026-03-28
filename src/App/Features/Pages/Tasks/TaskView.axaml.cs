@@ -2,9 +2,9 @@ using Avalonia.Controls;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Tasks;
 
-public partial class TaskFacadeView : UserControl
+public partial class TaskView : UserControl
 {
-    public TaskFacadeView()
+    public TaskView()
     {
         InitializeComponent();
     }

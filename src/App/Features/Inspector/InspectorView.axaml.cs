@@ -2,9 +2,9 @@
 
 namespace Misa.Ui.Avalonia.Features.Inspector;
 
-public partial class InspectorFacadeView : UserControl
+public partial class InspectorView : UserControl
 {
-    public InspectorFacadeView()
+    public InspectorView()
     {
         InitializeComponent();
     }

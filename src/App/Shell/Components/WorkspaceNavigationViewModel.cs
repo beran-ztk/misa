@@ -15,8 +15,8 @@ public interface IWorkspaceHost
 
 public partial class WorkspaceNavigationViewModel(
     IWorkspaceHost host,
-    ISelectionContextState selectionContextState,
-    TaskFacadeViewModel task,
+    SelectedItemCoordinator selectedItemCoordinator,
+    TaskViewModel task,
     JournalViewModel journal,
     ZettelkastenViewModel zettel)
     : ViewModelBase
@@ -40,7 +40,7 @@ public partial class WorkspaceNavigationViewModel(
 
     private void InitializeWorkspaceSwitch()
     {
-        selectionContextState.Set(null);
+        selectedItemCoordinator.Set(null);
     }
 
     [RelayCommand]

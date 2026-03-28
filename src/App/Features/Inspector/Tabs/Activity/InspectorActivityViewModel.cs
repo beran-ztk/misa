@@ -8,7 +8,7 @@ namespace Misa.Ui.Avalonia.Features.Inspector.Tabs.Activity;
 
 public sealed partial class InspectorActivityViewModel : ViewModelBase
 {
-    private readonly InspectorFacadeViewModel _facade;
+    private readonly InspectorViewModel _facade;
 
     /// <summary>Whether the Sessions section should be shown. Only true for real activity items (Task).</summary>
     public bool ShowSessions => _facade.State.IsRealActivity;
@@ -24,7 +24,7 @@ public sealed partial class InspectorActivityViewModel : ViewModelBase
 
     public bool HasChanges => Changes.Count > 0;
 
-    public InspectorActivityViewModel(InspectorFacadeViewModel facade)
+    public InspectorActivityViewModel(InspectorViewModel facade)
     {
         _facade = facade;
 

@@ -14,11 +14,11 @@ namespace Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Base;
 
 public partial class InspectorEntryViewModel : ViewModelBase
 {
-    public InspectorFacadeViewModel Facade { get; }
+    public InspectorViewModel Facade { get; }
     public InspectorRelationsViewModel Relations { get; }
     private CancellationTokenSource? _elapsedCts;
     private Task? _elapsedLoop;
-    public InspectorEntryViewModel(InspectorFacadeViewModel facade)
+    public InspectorEntryViewModel(InspectorViewModel facade)
     {
         Facade = facade;
         Facade.State.PropertyChanged += OnFacadeStatePropertyChanged;

@@ -6,11 +6,11 @@ namespace Misa.Ui.Avalonia.Infrastructure;
 
 public partial class ShellState : ObservableObject, IWorkspaceHost
 {
-    private readonly ISelectionContextState _selectionContext;
+    private readonly SelectedItemCoordinator _selectionContext;
     
-    public ShellState(ISelectionContextState selectionContextState)
+    public ShellState(SelectedItemCoordinator selectedItemCoordinator)
     {
-        _selectionContext = selectionContextState;
+        _selectionContext = selectedItemCoordinator;
        
         _selectionContext.PropertyChanged += (s, e) =>
         {

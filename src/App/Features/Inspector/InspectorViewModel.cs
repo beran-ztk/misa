@@ -8,17 +8,17 @@ using Misa.Ui.Avalonia.Infrastructure;
 
 namespace Misa.Ui.Avalonia.Features.Inspector;
 
-public sealed partial class InspectorFacadeViewModel : ViewModelBase
+public sealed partial class InspectorViewModel : ViewModelBase
 {
-    public ISelectionContextState ContextState { get; }
+    public SelectedItemCoordinator ContextState { get; }
     public InspectorState State { get; }
     public InspectorEntryViewModel Entry { get; }
     public InspectorActivityViewModel Activity { get; }
-    public InspectorFacadeViewModel(
-        ISelectionContextState  selectionContextState,
+    public InspectorViewModel(
+        SelectedItemCoordinator  selectedItemCoordinator,
         InspectorState inspectorState)
     {
-        ContextState = selectionContextState;
+        ContextState = selectedItemCoordinator;
         State = inspectorState;
         
         Entry = new InspectorEntryViewModel(this);

@@ -2,9 +2,9 @@
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
 using Misa.Ui.Avalonia.Common.Mappings;
+using Misa.Ui.Avalonia.Features.Inspector;
 using Misa.Ui.Avalonia.Infrastructure;
 using Misa.Ui.Avalonia.Shell.Components;
-using InspectorFacadeViewModel = Misa.Ui.Avalonia.Features.Inspector.InspectorFacadeViewModel;
 using ShellState = Misa.Ui.Avalonia.Infrastructure.ShellState;
 
 namespace Misa.Ui.Avalonia.Shell;
@@ -15,18 +15,17 @@ public partial class ShellWindowViewModel : ViewModelBase
     public WorkspaceNavigationViewModel WorkspaceNavigation { get; }
     public UtilityNavigationViewModel  UtilityNavigation  { get; }
     private IServiceProvider ServiceProvider { get; }
-    private readonly ISelectionContextState _selectionContext;
+    private readonly SelectedItemCoordinator _selectionContext;
 
-    public ShellWindowViewModel(ShellState shellState, IServiceProvider serviceProvider)
+    public ShellWindowViewModel(ShellState shellState, SelectedItemCoordinator selectionContext, IServiceProvider serviceProvider)
     {
         ShellState      = shellState;
         ServiceProvider = serviceProvider;
-
-        _selectionContext  = ServiceProvider.GetRequiredService<ISelectionContextState>();
+        _selectionContext  = selectionContext;
 
         ShellState.Header              = ServiceProvider.GetRequiredService<HeaderViewModel>();
         ShellState.Footer              = ServiceProvider.GetRequiredService<FooterViewModel>();
-        ShellState.Inspector           = ServiceProvider.GetRequiredService<InspectorFacadeViewModel>();
+        ShellState.Inspector           = ServiceProvider.GetRequiredService<InspectorViewModel>();
 
         WorkspaceNavigation            = ServiceProvider.GetRequiredService<WorkspaceNavigationViewModel>();
         ShellState.WorkspaceNavigation = WorkspaceNavigation;

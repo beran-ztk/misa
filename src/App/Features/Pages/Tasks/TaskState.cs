@@ -15,7 +15,7 @@ namespace Misa.Ui.Avalonia.Features.Pages.Tasks;
 
 public sealed partial class TaskState : ObservableObject
 {
-    public ISelectionContextState SelectionContextState { get; }
+    public SelectedItemCoordinator SelectedItemCoordinator { get; }
 
     private IReadOnlyCollection<Item> Items { get; set; } = [];
     public ObservableCollection<Item> FilteredItems { get; } = [];
@@ -100,12 +100,12 @@ public sealed partial class TaskState : ObservableObject
     private Item? _selectedItem;
     partial void OnSelectedItemChanged(Item? value)
     {
-        SelectionContextState.Set(value?.Id.Value);
+        SelectedItemCoordinator.Set(value?.Id.Value);
     }
 
-    public TaskState(ISelectionContextState selectionContextState)
+    public TaskState(SelectedItemCoordinator selectedItemCoordinator)
     {
-        SelectionContextState = selectionContextState;
+        SelectedItemCoordinator = selectedItemCoordinator;
 
         PriorityFilter = new FilterDropdownViewModel(
             "Priority",
@@ -128,10 +128,10 @@ public sealed partial class TaskState : ObservableObject
 
         // Keep workspace list in sync when the Inspector navigates to an item externally
         // (e.g. via a relation link). Guards against circular update.
-        SelectionContextState.PropertyChanged += (_, e) =>
+        SelectedItemCoordinator.PropertyChanged += (_, e) =>
         {
-            if (e.PropertyName != nameof(ISelectionContextState.ActiveEntityId)) return;
-            var id = SelectionContextState.ActiveEntityId;
+            if (e.PropertyName != nameof(SelectedItemCoordinator.ActiveEntityId)) return;
+            var id = SelectedItemCoordinator.ActiveEntityId;
             if (SelectedItem?.Id.Value == id) return;
             SelectedItem = id.HasValue
                 ? FilteredItems.FirstOrDefault(t => t.Id.Value == id.Value)

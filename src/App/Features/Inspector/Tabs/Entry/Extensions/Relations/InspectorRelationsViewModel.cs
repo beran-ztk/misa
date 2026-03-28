@@ -10,7 +10,7 @@ namespace Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Relations;
 
 public sealed partial class InspectorRelationsViewModel : ViewModelBase
 {
-    private readonly InspectorFacadeViewModel _facade;
+    private readonly InspectorViewModel _facade;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasRelations))]
@@ -20,7 +20,7 @@ public sealed partial class InspectorRelationsViewModel : ViewModelBase
 
     public IReadOnlyList<RelationType> RelationTypes { get; } = Enum.GetValues<RelationType>();
 
-    public InspectorRelationsViewModel(InspectorFacadeViewModel facade)
+    public InspectorRelationsViewModel(InspectorViewModel facade)
     {
         _facade = facade;
 
