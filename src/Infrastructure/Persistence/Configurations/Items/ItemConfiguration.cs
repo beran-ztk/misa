@@ -57,7 +57,7 @@ public class ItemConfiguration : IEntityTypeConfiguration<Item>
         
         builder.HasOne(i => i.ScheduleExtension)
             .WithOne()
-            .HasForeignKey<ScheduleExtension>(s => s.Id)
+            .HasForeignKey<Schedule>(s => s.Id)
             .OnDelete(DeleteBehavior.Cascade);
         
         builder.HasOne(i => i.JournalExtension)

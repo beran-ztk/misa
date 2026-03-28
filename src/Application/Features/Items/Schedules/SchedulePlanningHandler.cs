@@ -3,7 +3,7 @@ using Misa.Application.Abstractions.Persistence;
 using Misa.Application.Abstractions.Time;
 using Misa.Domain.Items.Components.Schedules;
 
-namespace Misa.Application.Features.Items.Schedules.Commands;
+namespace Misa.Application.Features.Items.Schedules;
 public record SchedulePlanningCommand;
 public class SchedulePlanningHandler(
     ISchedulerPlanningRepository repository, 

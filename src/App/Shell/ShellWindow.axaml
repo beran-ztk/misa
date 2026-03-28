@@ -20,13 +20,8 @@
 
         <!-- Workspace navigation -->
         <KeyBinding Gesture="Ctrl+D1"     Command="{Binding WorkspaceNavigation.ShowTasksCommand}"/>
-        <KeyBinding Gesture="Ctrl+D2"     Command="{Binding WorkspaceNavigation.ShowSchedulerCommand}"/>
         <KeyBinding Gesture="Ctrl+D4"     Command="{Binding WorkspaceNavigation.ShowChronicleCommand}"/>
         <KeyBinding Gesture="Ctrl+D5"     Command="{Binding WorkspaceNavigation.ShowZettelkastenCommand}"/>
-
-        <!-- Workspace actions -->
-        <KeyBinding Gesture="Ctrl+Space" Command="{Binding WorkspaceAddCommand}"/>
-        <KeyBinding Gesture="Ctrl+R"     Command="{Binding WorkspaceRefreshCommand}"/>
     </Window.KeyBindings>
 
     <Grid>

@@ -5,9 +5,9 @@ using Misa.Domain.Items.Components.Schedules;
 
 namespace Misa.Infrastructure.Persistence.Configurations.Items.Components.Schedules;
 
-public sealed class ScheduleConfiguration : IEntityTypeConfiguration<ScheduleExtension>
+public sealed class ScheduleConfiguration : IEntityTypeConfiguration<Schedule>
 {
-    public void Configure(EntityTypeBuilder<ScheduleExtension> builder)
+    public void Configure(EntityTypeBuilder<Schedule> builder)
     {
         builder.ToTable("item_schedules");
         

@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Input;
@@ -6,7 +5,6 @@ using Misa.Contract.Notifications;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Pages.Chronicle;
 using Misa.Ui.Avalonia.Features.Pages.Journal;
-using Misa.Ui.Avalonia.Features.Pages.Schedules;
 using Misa.Ui.Avalonia.Features.Pages.Tasks;
 using Misa.Ui.Avalonia.Features.Pages.Zettelkasten;
 using Misa.Ui.Avalonia.Infrastructure;
@@ -22,7 +20,6 @@ public partial class WorkspaceNavigationViewModel(
     IWorkspaceHost host,
     ISelectionContextState selectionContextState,
     TaskFacadeViewModel task,
-    ScheduleFacadeViewModel schedule,
     JournalViewModel journal,
     ChronicleViewModel chronicle,
     ZettelkastenViewModel zettel)
@@ -33,7 +30,6 @@ public partial class WorkspaceNavigationViewModel(
     private ViewModelBase? _activeWorkspace;
 
     public bool IsTasksActive     => _activeWorkspace == task;
-    public bool IsSchedulerActive => _activeWorkspace == schedule;
     public bool IsJournalActive => _activeWorkspace == journal;
     public bool IsChronicleActive => _activeWorkspace == chronicle;
     public bool IsZettelActive    => _activeWorkspace == zettel;
@@ -42,7 +38,6 @@ public partial class WorkspaceNavigationViewModel(
     {
         _activeWorkspace = vm;
         OnPropertyChanged(nameof(IsTasksActive));
-        OnPropertyChanged(nameof(IsSchedulerActive));
         OnPropertyChanged(nameof(IsChronicleActive));
         OnPropertyChanged(nameof(IsZettelActive));
     }
@@ -61,15 +56,6 @@ public partial class WorkspaceNavigationViewModel(
         await task.InitializeWorkspaceAsync();
         host.Workspace = task;
         SetActiveWorkspace(task);
-    }
-
-    [RelayCommand]
-    private async Task ShowScheduler()
-    {
-        InitializeWorkspaceSwitch();
-        await schedule.InitializeWorkspaceAsync();
-        host.Workspace = schedule;
-        SetActiveWorkspace(schedule);
     }
     
     [RelayCommand]
@@ -99,11 +85,6 @@ public partial class WorkspaceNavigationViewModel(
         SetActiveWorkspace(zettel);
     }
 
-    public async Task TryAppendTaskAsync(Guid taskId)
-    {
-        await task.FetchAndAppendAsync(taskId);
-    }
-
     public async Task NavigateToItemAsync(NotificationLinkTarget target)
     {
         switch (target.Workspace)
@@ -116,16 +97,6 @@ public partial class WorkspaceNavigationViewModel(
                 var taskItem = task.State.FilteredItems.FirstOrDefault(t => t.Item.Id == target.ItemId);
                 if (taskItem is not null)
                     task.State.SelectedItem = taskItem;
-                break;
-
-            case NotificationWorkspaceTarget.Schedules:
-                selectionContextState.Set(null);
-                await schedule.InitializeWorkspaceAsync();
-                host.Workspace = schedule;
-                SetActiveWorkspace(schedule);
-                var scheduleItem = schedule.State.FilteredItems.FirstOrDefault(s => s.Item.Id == target.ItemId);
-                if (scheduleItem is not null)
-                    schedule.State.SelectedItem = scheduleItem;
                 break;
         }
     }

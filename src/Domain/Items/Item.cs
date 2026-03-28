@@ -57,7 +57,7 @@ public sealed class Item : DomainEventEntity
     public ICollection<Session> Sessions { get; set; } = new List<Session>();
     public ItemActivity? Activity { get; private set; }
     public TaskExtension? TaskExtension { get; private set; }
-    public ScheduleExtension? ScheduleExtension { get; private set; }
+    public Schedule? ScheduleExtension { get; private set; }
     public JournalExtension? JournalExtension { get; private set; }
     public Topic? Topic { get; private set; }
     public Zettel? ZettelExtension { get; private set; }
@@ -93,7 +93,7 @@ public sealed class Item : DomainEventEntity
         string title,
         string? description,
         DateTimeOffset createdAtUtc,
-        ScheduleExtension scheduleExtension)
+        Schedule schedule)
     {
         var item = new Item(
             id: id,
@@ -102,7 +102,7 @@ public sealed class Item : DomainEventEntity
             description: description,
             createdAtUtc: createdAtUtc)
         {
-            ScheduleExtension = scheduleExtension
+            ScheduleExtension = schedule
         };
 
         return item;

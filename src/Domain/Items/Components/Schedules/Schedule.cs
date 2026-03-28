@@ -6,9 +6,9 @@ namespace Misa.Domain.Items.Components.Schedules;
 /// <summary>
 /// Represents a scheduled task configuration.
 /// </summary>
-public sealed class ScheduleExtension : DomainEventEntity
+public sealed class Schedule : DomainEventEntity
 {
-    private ScheduleExtension() { } // EF Core
+    private Schedule() { } // EF Core
     
     // Fields + Properties
     public ItemId Id { get; init; }
@@ -108,7 +108,7 @@ public sealed class ScheduleExtension : DomainEventEntity
     {
         return new ScheduleExecutionLog(executionLogId, Id, SchedulingAnchorUtc, utcNow);
     }
-    public ScheduleExtension(
+    public Schedule(
         Guid? targetItemId,
         ScheduleFrequencyType frequencyType,
         int frequencyInterval,

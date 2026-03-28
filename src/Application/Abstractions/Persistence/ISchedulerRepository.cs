@@ -4,7 +4,7 @@ namespace Misa.Application.Abstractions.Persistence;
 
 public interface ISchedulerRepository
 {
-    Task AddAsync(ScheduleExtension scheduleExtension, CancellationToken ct);
-    void Remove(ScheduleExtension scheduleExtension);
+    Task AddAsync(Schedule schedule, CancellationToken ct);
+    void Remove(Schedule schedule);
     Task SaveChangesAsync(CancellationToken ct);
 }

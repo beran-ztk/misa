@@ -5,18 +5,14 @@ using Microsoft.Extensions.Logging;
 using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions.Forms;
 using Misa.Ui.Avalonia.Features.Pages.Chronicle;
 using Misa.Ui.Avalonia.Features.Pages.Journal;
-using Misa.Ui.Avalonia.Features.Pages.Schedules;
 using Misa.Ui.Avalonia.Features.Pages.Tasks;
 using Misa.Ui.Avalonia.Features.Pages.Zettelkasten;
 using Misa.Ui.Avalonia.Features.Utilities.Dev;
 using Misa.Ui.Avalonia.Features.Utilities.Notifications;
 using Misa.Ui.Avalonia.Shell;
 using Misa.Ui.Avalonia.Shell.Components;
-using CreateScheduleViewModel = Misa.Ui.Avalonia.Features.Pages.Schedules.CreateScheduleViewModel;
 using InspectorFacadeViewModel = Misa.Ui.Avalonia.Features.Inspector.InspectorFacadeViewModel;
 using InspectorState = Misa.Ui.Avalonia.Features.Inspector.InspectorState;
-using ScheduleFacadeViewModel = Misa.Ui.Avalonia.Features.Pages.Schedules.ScheduleFacadeViewModel;
-using ScheduleState = Misa.Ui.Avalonia.Features.Pages.Schedules.ScheduleState;
 using ShellWindowViewModel = Misa.Ui.Avalonia.Shell.ShellWindowViewModel;
 using TaskFacadeViewModel = Misa.Ui.Avalonia.Features.Pages.Tasks.TaskFacadeViewModel;
 using TaskState = Misa.Ui.Avalonia.Features.Pages.Tasks.TaskState;
@@ -34,7 +30,6 @@ public static class CompositionRoot
         sc.AddInfrastructure();
         sc.AddInspector();
         sc.AddTasksFeature();
-        sc.AddSchedulingFeature();
         sc.AddJournalFeature();
         sc.AddChronicleFeature();
         sc.ZettelkastenServices();
@@ -99,15 +94,6 @@ public static class CompositionRoot
         sc.AddSingleton<TaskState>();
         sc.AddSingleton<TaskFacadeViewModel>();
         sc.AddTransient<CreateTaskView>();
-    }
-
-    private static void AddSchedulingFeature(this IServiceCollection sc)
-    {
-        sc.AddSingleton<ScheduleState>();
-        sc.AddSingleton<ScheduleFacadeViewModel>();
-
-        sc.AddTransient<CreateScheduleView>();
-        sc.AddTransient<CreateScheduleViewModel>();
     }
     private static void AddJournalFeature(this IServiceCollection sc)
     {

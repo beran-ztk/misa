@@ -2,14 +2,10 @@
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
 using Misa.Ui.Avalonia.Common.Mappings;
-using Misa.Ui.Avalonia.Features.Pages.Chronicle;
-using Misa.Ui.Avalonia.Features.Pages.Zettelkasten;
 using Misa.Ui.Avalonia.Infrastructure;
 using Misa.Ui.Avalonia.Shell.Components;
 using InspectorFacadeViewModel = Misa.Ui.Avalonia.Features.Inspector.InspectorFacadeViewModel;
-using ScheduleFacadeViewModel = Misa.Ui.Avalonia.Features.Pages.Schedules.ScheduleFacadeViewModel;
 using ShellState = Misa.Ui.Avalonia.Infrastructure.ShellState;
-using TaskFacadeViewModel = Misa.Ui.Avalonia.Features.Pages.Tasks.TaskFacadeViewModel;
 
 namespace Misa.Ui.Avalonia.Shell;
 
@@ -61,33 +57,5 @@ public partial class ShellWindowViewModel : ViewModelBase
 
         if (_selectionContext.ActiveEntityId is not null)
             _selectionContext.Clear();
-    }
-
-    /// <summary>
-    /// Ctrl+Space: triggers the active workspace's primary Add action.
-    /// </summary>
-    [RelayCommand]
-    private void WorkspaceAdd()
-    {
-        switch (ShellState.Workspace)
-        {
-            case TaskFacadeViewModel vm:     vm.ShowAddPanelCommand.Execute(null); break;
-            case ScheduleFacadeViewModel vm: vm.ShowAddPanelCommand.Execute(null); break;
-        }
-    }
-
-    /// <summary>
-    /// Ctrl+R: refreshes the active workspace if it supports refresh.
-    /// </summary>
-    [RelayCommand]
-    private void WorkspaceRefresh()
-    {
-        switch (ShellState.Workspace)
-        {
-            case TaskFacadeViewModel vm:     vm.RefreshWorkspaceCommand.Execute(null); break;
-            case ScheduleFacadeViewModel vm: vm.RefreshWorkspaceCommand.Execute(null); break;
-            case ChronicleViewModel vm:      vm.RefreshWorkspaceCommand.Execute(null); break;
-            case ZettelkastenViewModel vm:   vm.RefreshWorkspaceCommand.Execute(null); break;
-        }
     }
 }

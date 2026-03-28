@@ -116,14 +116,6 @@
       <Compile Update="Shell\Components\ScrollRevealHost.axaml.cs">
         <DependentUpon>ScrollRevealHost.axaml</DependentUpon>
       </Compile>
-      <Compile Update="Features\Pages\Schedules\CreateScheduleView.axaml.cs">
-        <DependentUpon>CreateScheduleView.axaml</DependentUpon>
-        <SubType>Code</SubType>
-      </Compile>
-      <Compile Update="Features\Pages\Schedules\ScheduleFacadeView.axaml.cs">
-        <DependentUpon>ScheduleFacadeView.axaml</DependentUpon>
-        <SubType>Code</SubType>
-      </Compile>
       <Compile Update="Features\Pages\Tasks\TaskFacadeView.axaml.cs">
         <DependentUpon>TaskFacadeView.axaml</DependentUpon>
         <SubType>Code</SubType>

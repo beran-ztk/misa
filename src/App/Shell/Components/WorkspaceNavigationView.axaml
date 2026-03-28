@@ -28,14 +28,6 @@
                 </Button>
 
                 <Button Classes="workspace-nav"
-                        Classes.nav-active="{Binding IsSchedulerActive}"
-                        ToolTip.Tip="Scheduler"
-                        Command="{Binding ShowSchedulerCommand}">
-                    <Image Width="18" Height="18"
-                           Source="{SvgImage /Assets/Icons/Shell/Navigation/calendar-dots.svg}"/>
-                </Button>
-
-                <Button Classes="workspace-nav"
                         ToolTip.Tip="Contacts">
                     <Image Width="18" Height="18"
                            Source="{SvgImage /Assets/Icons/Shell/Navigation/users-three.svg}"/>

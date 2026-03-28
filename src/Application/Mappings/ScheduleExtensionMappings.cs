@@ -6,7 +6,7 @@ namespace Misa.Application.Mappings;
 
 public static class ScheduleExtensionMappings
 {
-    public static ScheduleExtensionDto ToDto(this ScheduleExtension schedule)
+    public static ScheduleExtensionDto ToDto(this Schedule schedule)
     {
         return new ScheduleExtensionDto
         {

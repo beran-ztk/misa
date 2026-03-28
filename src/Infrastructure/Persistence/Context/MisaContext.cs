@@ -25,7 +25,7 @@ public class MisaContext(DbContextOptions<MisaContext> options, ITimeProvider ti
     public DbSet<AuditChange> AuditChanges { get; set; } = null!;
     public DbSet<ItemRelation> ItemRelations { get; set; } = null!;
 
-    public DbSet<ScheduleExtension> Schedulers { get; set; } = null!;
+    public DbSet<Schedule> Schedulers { get; set; } = null!;
     public DbSet<ScheduleExecutionLog> SchedulerExecutionLogs { get; set; } = null!;
     public DbSet<Notification> Notifications { get; set; } = null!;
     public DbSet<Zettel> Zettels { get; set; } = null!;
