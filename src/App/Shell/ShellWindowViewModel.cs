@@ -15,7 +15,6 @@ public partial class ShellWindowViewModel : ViewModelBase
     public WorkspaceNavigationViewModel WorkspaceNavigation { get; }
     public UtilityNavigationViewModel  UtilityNavigation  { get; }
     private IServiceProvider ServiceProvider { get; }
-    public required ILayerCloser LayerCloser { get; init; }
     private readonly ISelectionContextState _selectionContext;
 
     public ShellWindowViewModel(ShellState shellState, IServiceProvider serviceProvider)
@@ -23,7 +22,6 @@ public partial class ShellWindowViewModel : ViewModelBase
         ShellState      = shellState;
         ServiceProvider = serviceProvider;
 
-        LayerCloser        = ServiceProvider.GetRequiredService<ILayerCloser>();
         _selectionContext  = ServiceProvider.GetRequiredService<ISelectionContextState>();
 
         ShellState.Header              = ServiceProvider.GetRequiredService<HeaderViewModel>();

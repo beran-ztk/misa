@@ -22,31 +22,22 @@ public static class CompositionRoot
     public static ServiceCollection Build(string baseAddress)
     {
         var sc = new ServiceCollection();
-
-        sc.AddCore(baseAddress);
-        sc.AddShell();
-        sc.AddInfrastructure();
-        sc.AddInspector();
-        sc.AddTasksFeature();
-        sc.AddJournalFeature();
-        sc.AddChronicleFeature();
-        sc.ZettelkastenServices();
-        sc.AddUtilities();
-
+        
         sc.AddLogging(log => log.AddConsole());
+        sc.AddSingleton(new HttpClient { BaseAddress = new Uri(baseAddress) });
+        
+        sc.AddCoreServices();
+        sc.AddFeatureServices();
+        sc.AddUtilityServices();
 
         return sc;
     }
 
-    private static void AddCore(this IServiceCollection sc, string baseAddress)
-    {
-        sc.AddSingleton(new HttpClient { BaseAddress = new Uri(baseAddress) });
-    }
-
-    private static void AddShell(this IServiceCollection sc)
+    private static void AddCoreServices(this IServiceCollection sc)
     {
         sc.AddSingleton<ShellState>();
-
+        sc.AddSingleton<TimeZoneService>();
+        sc.AddSingleton<ISelectionContextState, SelectionContextState>();
         sc.AddSingleton<IWorkspaceHost>(sp => sp.GetRequiredService<ShellState>());
         
         // VMs
@@ -56,47 +47,29 @@ public static class CompositionRoot
         sc.AddSingleton<UtilityNavigationViewModel>();
         sc.AddSingleton<FooterViewModel>();
 
-        sc.AddTransient<ShellWindow>(sp =>
-        {
-            var vm = sp.GetRequiredService<ShellWindowViewModel>();
-            return new ShellWindow { DataContext = vm };
-        });
+        sc.AddTransient<ShellWindow>(sp => new ShellWindow { DataContext = sp.GetRequiredService<ShellWindowViewModel>() });
     }
 
-    private static void AddInfrastructure(this IServiceCollection sc)
+    private static void AddFeatureServices(this IServiceCollection sc)
     {
-        sc.AddSingleton<IClipboardService, ClipboardService>();
-        sc.AddSingleton<TimeZoneService>();
-    }
-
-    private static void AddInspector(this IServiceCollection sc)
-    {
-        sc.AddSingleton<ISelectionContextState, SelectionContextState>();
-        
+        // Inspector
         sc.AddSingleton<InspectorState>();
         sc.AddSingleton<InspectorFacadeViewModel>();
-    }
-
-    private static void AddTasksFeature(this IServiceCollection sc)
-    {
+        
+        // Task
         sc.AddSingleton<TaskState>();
         sc.AddSingleton<TaskFacadeViewModel>();
-    }
-    private static void AddJournalFeature(this IServiceCollection sc)
-    {
+        
+        // Journal
         sc.AddSingleton<JournalViewModel>();
-    }
-    private static void AddChronicleFeature(this IServiceCollection sc)
-    {
+        
+        // Chronicle
         sc.AddSingleton<ChronicleViewModel>();
-    }
-    
-    private static void ZettelkastenServices(this IServiceCollection sc)
-    {
+        
+        // Zettelkasten
         sc.AddSingleton<ZettelkastenViewModel>();
     }
-
-    private static void AddUtilities(this IServiceCollection sc)
+    private static void AddUtilityServices(this IServiceCollection sc)
     {
         sc.AddSingleton<NotificationViewModel>();
         sc.AddSingleton<DevToolsViewModel>();
