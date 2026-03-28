@@ -4,7 +4,7 @@ namespace Misa.Core.Features.Dev;
 
 public record SeedDevDataCommand;
 
-public sealed class SeedDevDataHandler(IItemRepository repository)
+public sealed class SeedDevDataHandler(ItemRepository repository)
 {
     // public async Task HandleAsync(SeedDevDataCommand command, CancellationToken ct)
     // {

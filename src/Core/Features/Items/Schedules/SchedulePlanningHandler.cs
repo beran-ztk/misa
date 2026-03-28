@@ -3,7 +3,7 @@ using Misa.Domain.Items.Components.Schedules;
 
 namespace Misa.Core.Features.Items.Schedules;
 public record SchedulePlanningCommand;
-public class SchedulePlanningHandler(ISchedulerPlanningRepository repository)
+public class SchedulePlanningHandler(SchedulerPlanningRepository repository)
 {
     private static readonly HashSet<ScheduleFrequencyType> AllowedFrequencies =
     [

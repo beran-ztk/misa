@@ -4,7 +4,7 @@ namespace Misa.Core.Features.Items.Zettelkasten;
 
 public sealed record SetKnowledgeIndexExpandedStateCommand(Guid Id, bool IsExpanded);
 
-public sealed class SetKnowledgeIndexExpandedStateHandler(IItemRepository repository)
+public sealed class SetKnowledgeIndexExpandedStateHandler(ItemRepository repository)
 {
     public async Task HandleAsync(SetKnowledgeIndexExpandedStateCommand command, CancellationToken ct)
     {

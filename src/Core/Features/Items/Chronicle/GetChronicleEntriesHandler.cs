@@ -19,7 +19,7 @@ public enum ChronicleEntryType
     SchedulerEvent,
     AuditChange
 }
-public sealed class GetChronicleEntriesHandler(IItemRepository repository)
+public sealed class GetChronicleEntriesHandler(ItemRepository repository)
 {
     public async Task HandleAsync(GetChronicleEntriesCommand entriesCommand)
     {

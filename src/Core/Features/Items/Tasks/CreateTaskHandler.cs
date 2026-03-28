@@ -11,7 +11,7 @@ public sealed record CreateTaskCommand(
     ActivityPriority ActivityPriorityDto,
     DateTimeOffset? DueDate
 );
-public class CreateTaskHandler(IItemRepository repository)
+public class CreateTaskHandler(ItemRepository repository)
 {
     public async Task HandleAsync(CreateTaskCommand command, CancellationToken ct)
     {

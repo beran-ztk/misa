@@ -4,7 +4,7 @@ using Misa.Domain.Items.Components.Relations;
 namespace Misa.Core.Features.Items.Relations;
 
 public sealed record GetRelationsForItemQuery(Guid ItemId);
-public sealed class GetRelationsForItemHandler(IItemRepository repository)
+public sealed class GetRelationsForItemHandler(ItemRepository repository)
 {
     public async Task<List<ItemRelation>> HandleAsync(GetRelationsForItemQuery query, CancellationToken ct)
     {

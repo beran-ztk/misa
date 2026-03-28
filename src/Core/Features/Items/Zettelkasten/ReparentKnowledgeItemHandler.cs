@@ -6,7 +6,7 @@ namespace Misa.Core.Features.Items.Zettelkasten;
 
 public record ReparentKnowledgeItemCommand(Guid ItemId, Guid NewParentId);
 
-public sealed class ReparentKnowledgeItemHandler(IItemRepository repository)
+public sealed class ReparentKnowledgeItemHandler(ItemRepository repository)
 {
     public async Task HandleAsync(ReparentKnowledgeItemCommand command)
     {

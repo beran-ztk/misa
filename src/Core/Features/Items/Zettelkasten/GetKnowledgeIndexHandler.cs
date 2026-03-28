@@ -14,7 +14,7 @@ public record KnowledgeIndexEntryDto(
 {
     public List<KnowledgeIndexEntryDto> Children { get; set; } = [];
 }
-public sealed class GetKnowledgeIndexHandler(IItemRepository repository)
+public sealed class GetKnowledgeIndexHandler(ItemRepository repository)
 {
     private List<KnowledgeIndexEntryDto> Entries { get; set; } = [];
     public async Task<List<KnowledgeIndexEntryDto>> HandleAsync(GetKnowledgeIndexQuery query, CancellationToken ct)

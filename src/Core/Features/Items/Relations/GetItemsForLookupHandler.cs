@@ -6,7 +6,7 @@ namespace Misa.Core.Features.Items.Relations;
 public sealed record GetItemsForLookupQuery;
 
 public sealed record ItemLookupDto(Guid Id, string Title, Workflow Workflow);
-public sealed class GetItemsForLookupHandler(IItemRepository repository)
+public sealed class GetItemsForLookupHandler(ItemRepository repository)
 {
     public async Task<List<ItemLookupDto>> HandleAsync(GetItemsForLookupQuery query, CancellationToken ct)
     {

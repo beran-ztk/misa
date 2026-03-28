@@ -11,7 +11,7 @@ public sealed record CreateRelationCommand(
 );
 
 public sealed class CreateRelationHandler(
-    IItemRepository repository)
+    ItemRepository repository)
 {
     public async Task HandleAsync(CreateRelationCommand command, CancellationToken ct)
     {

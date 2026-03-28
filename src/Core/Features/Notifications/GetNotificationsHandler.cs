@@ -4,7 +4,7 @@ namespace Misa.Core.Features.Notifications;
 
 public sealed record GetNotificationsQuery(int Limit = 25, DateTimeOffset? Before = null, bool OnlyUnread = false);
 
-public class GetNotificationsHandler(INotificationRepository repository)
+public class GetNotificationsHandler(NotificationRepository repository)
 {
     // public async Task<List<NotificationEntryDto>> HandleAsync(
     //     GetNotificationsQuery query,

@@ -4,7 +4,7 @@ namespace Misa.Core.Features.Notifications;
 
 public sealed record DismissNotificationCommand(Guid Id);
 
-public class DismissNotificationHandler(INotificationRepository repository)
+public class DismissNotificationHandler(NotificationRepository repository)
 {
     public async Task HandleAsync(DismissNotificationCommand command, CancellationToken ct)
     {

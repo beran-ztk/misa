@@ -10,7 +10,7 @@ public record DeletedKnowledgeEntryDto(
     string       Title,
     Guid?        ParentId,
     DateTimeOffset? DeletedAt);
-public sealed class GetDeletedKnowledgeIndexHandler(IItemRepository repository)
+public sealed class GetDeletedKnowledgeIndexHandler(ItemRepository repository)
 {
     public async Task<List<DeletedKnowledgeEntryDto>> HandleAsync(
         GetDeletedKnowledgeIndexQuery query, CancellationToken ct)

@@ -4,7 +4,7 @@ namespace Misa.Core.Features.Items.Inspector;
 
 public record DeleteKnowledgeSubtreeCommand(Guid[] Ids);
 
-public sealed class DeleteKnowledgeSubtreeHandler(IItemRepository repository)
+public sealed class DeleteKnowledgeSubtreeHandler(ItemRepository repository)
 {
     public async Task HandleAsync(DeleteKnowledgeSubtreeCommand command)
     {

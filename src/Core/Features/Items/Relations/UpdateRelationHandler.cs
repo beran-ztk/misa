@@ -6,7 +6,7 @@ namespace Misa.Core.Features.Items.Relations;
 
 public sealed record UpdateRelationCommand(Guid RelationId, RelationType RelationType);
 
-public sealed class UpdateRelationHandler(IItemRepository repository)
+public sealed class UpdateRelationHandler(ItemRepository repository)
 {
     public async Task HandleAsync(UpdateRelationCommand command, CancellationToken ct)
     {

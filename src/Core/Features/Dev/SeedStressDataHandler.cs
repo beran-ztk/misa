@@ -4,7 +4,7 @@ namespace Misa.Core.Features.Dev;
 
 public record SeedStressDataCommand;
 
-public sealed class SeedStressDataHandler(IItemRepository repository)
+public sealed class SeedStressDataHandler(ItemRepository repository)
 {
     // private static readonly TaskCategory[]         _categories    = Enum.GetValues<TaskCategory>();
     // private static readonly ActivityPriority[]     _priorities    = Enum.GetValues<ActivityPriority>();

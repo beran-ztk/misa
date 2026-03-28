@@ -5,7 +5,7 @@ namespace Misa.Core.Features.Items.Tasks;
 
 public record GetArchivedTasksQuery;
 
-public class GetArchivedTasksHandler(IItemRepository repository)
+public class GetArchivedTasksHandler(ItemRepository repository)
 {
     public async Task<List<Item>> HandleAsync(GetArchivedTasksQuery query, CancellationToken ct)
     {

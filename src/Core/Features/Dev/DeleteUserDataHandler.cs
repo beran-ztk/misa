@@ -4,7 +4,7 @@ namespace Misa.Core.Features.Dev;
 
 public record DeleteUserDataCommand;
 
-public sealed class DeleteUserDataHandler(IItemRepository repository)
+public sealed class DeleteUserDataHandler(ItemRepository repository)
 {
     public async Task HandleAsync(DeleteUserDataCommand command, CancellationToken ct)
     {

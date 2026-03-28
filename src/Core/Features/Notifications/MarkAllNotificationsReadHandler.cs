@@ -4,7 +4,7 @@ namespace Misa.Core.Features.Notifications;
 
 public sealed record MarkAllNotificationsReadCommand;
 
-public class MarkAllNotificationsReadHandler(INotificationRepository repository)
+public class MarkAllNotificationsReadHandler(NotificationRepository repository)
 {
     public async Task HandleAsync(MarkAllNotificationsReadCommand command, CancellationToken ct)
     {

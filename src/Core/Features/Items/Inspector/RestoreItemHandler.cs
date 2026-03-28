@@ -5,7 +5,7 @@ namespace Misa.Core.Features.Items.Inspector;
 
 public record RestoreItemCommand(Guid Id);
 
-public sealed class RestoreItemHandler(IItemRepository repository)
+public sealed class RestoreItemHandler(ItemRepository repository)
 {
     public async Task HandleAsync(RestoreItemCommand command)
     {

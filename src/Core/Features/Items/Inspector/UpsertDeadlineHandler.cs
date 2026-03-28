@@ -5,7 +5,7 @@ namespace Misa.Core.Features.Items.Inspector;
 
 public record UpsertDeadlineCommand(Guid ItemId, DateTimeOffset? DueAtUtc);
 
-public sealed class UpsertDeadlineHandler(IItemRepository repository)
+public sealed class UpsertDeadlineHandler(ItemRepository repository)
 {
     public async Task HandleAsync(UpsertDeadlineCommand command, CancellationToken ct)
     {

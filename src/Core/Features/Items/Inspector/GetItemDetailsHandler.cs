@@ -5,7 +5,7 @@ using Misa.Domain.Items;
 namespace Misa.Core.Features.Items.Inspector;
 public record GetItemDetailsQuery(Guid ItemId);
 
-public sealed class GetItemDetailsHandler(IItemRepository repository)
+public sealed class GetItemDetailsHandler(ItemRepository repository)
 {
     public async Task<Item?> HandleAsync(GetItemDetailsQuery query, CancellationToken cancellationToken)
     {

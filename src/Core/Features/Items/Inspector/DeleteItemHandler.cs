@@ -4,7 +4,7 @@ using Misa.Domain.Exceptions;
 namespace Misa.Core.Features.Items.Inspector;
 
 public record DeleteItemCommand(Guid Id);
-public sealed class DeleteItemHandler(IItemRepository repository)
+public sealed class DeleteItemHandler(ItemRepository repository)
 {
     public async Task HandleAsync(DeleteItemCommand command)
     {

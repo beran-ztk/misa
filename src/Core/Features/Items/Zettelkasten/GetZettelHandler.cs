@@ -5,7 +5,7 @@ namespace Misa.Core.Features.Items.Zettelkasten;
 
 public sealed record GetZettelQuery(Guid Id);
 
-public sealed class GetZettelHandler(IItemRepository repository)
+public sealed class GetZettelHandler(ItemRepository repository)
 {
     public async Task<Item?> HandleAsync(GetZettelQuery query, CancellationToken ct)
     {

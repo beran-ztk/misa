@@ -4,7 +4,7 @@ namespace Misa.Core.Features.Items.Inspector;
 
 public record HardDeleteItemCommand(Guid Id);
 
-public sealed class HardDeleteItemHandler(IItemRepository repository)
+public sealed class HardDeleteItemHandler(ItemRepository repository)
 {
     public async Task HandleAsync(HardDeleteItemCommand command)
     {

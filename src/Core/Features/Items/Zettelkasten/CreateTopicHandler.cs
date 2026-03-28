@@ -5,7 +5,7 @@ namespace Misa.Core.Features.Items.Zettelkasten;
 
 public sealed record CreateTopicCommand(string Title, Guid? ParentId);
 
-public sealed class CreateTopicHandler(IItemRepository repository)
+public sealed class CreateTopicHandler(ItemRepository repository)
 {
     public async Task HandleAsync(CreateTopicCommand command)
     {

@@ -14,7 +14,7 @@ public record UpdateTaskCommand(
     TaskCategory? TaskCategory,
     string? Reason = null);
 
-public sealed class UpdateTaskHandler(IItemRepository repository)
+public sealed class UpdateTaskHandler(ItemRepository repository)
 {
     public async Task HandleAsync(UpdateTaskCommand command)
     {

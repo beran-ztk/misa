@@ -10,7 +10,7 @@ public record StopSessionCommand(
     string? Summary
 );
 
-public class StopSessionHandler(IItemRepository repository)
+public class StopSessionHandler(ItemRepository repository)
 {
     public async Task Handle(StopSessionCommand command, CancellationToken ct)
     {

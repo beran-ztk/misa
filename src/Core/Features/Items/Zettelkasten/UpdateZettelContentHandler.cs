@@ -4,7 +4,7 @@ namespace Misa.Core.Features.Items.Zettelkasten;
 
 public sealed record UpdateZettelContentCommand(Guid Id, string? Content);
 
-public sealed class UpdateZettelContentHandler(IItemRepository repository)
+public sealed class UpdateZettelContentHandler(ItemRepository repository)
 {
     public async Task HandleAsync(UpdateZettelContentCommand command, CancellationToken ct)
     {

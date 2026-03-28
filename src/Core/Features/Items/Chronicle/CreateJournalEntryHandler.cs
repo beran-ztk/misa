@@ -11,7 +11,7 @@ public sealed record CreateJournalCommand(
     DateTimeOffset? UntilAtUtc
 );
 
-public sealed class CreateJournalEntryHandler(IItemRepository repository)
+public sealed class CreateJournalEntryHandler(ItemRepository repository)
 {
     public async Task<Item> Handle(CreateJournalCommand command, CancellationToken ct)
     {

@@ -7,8 +7,8 @@ namespace Misa.Core.Features.Items.Sessions;
 public record NotifySessionPlannedDurationReachedCommand;
 
 public class NotifySessionPlannedDurationReachedHandler(
-    IItemRepository          itemRepository,
-    INotificationRepository  notificationRepository)
+    ItemRepository          itemRepository,
+    NotificationRepository  notificationRepository)
 {
     public async Task Handle(NotifySessionPlannedDurationReachedCommand command, CancellationToken ct)
     {

@@ -4,7 +4,7 @@ namespace Misa.Core.Features.Items.Inspector;
 
 public record RestoreKnowledgeSubtreeCommand(Guid[] Ids);
 
-public sealed class RestoreKnowledgeSubtreeHandler(IItemRepository repository)
+public sealed class RestoreKnowledgeSubtreeHandler(ItemRepository repository)
 {
     public async Task HandleAsync(RestoreKnowledgeSubtreeCommand command)
     {

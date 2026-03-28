@@ -6,7 +6,7 @@ public record PauseSessionCommand(
     Guid ItemId,
     string? PauseReason
 );
-public class PauseSessionHandler(IItemRepository repository)
+public class PauseSessionHandler(ItemRepository repository)
 {
     public async Task Handle(PauseSessionCommand command, CancellationToken ct)
     {

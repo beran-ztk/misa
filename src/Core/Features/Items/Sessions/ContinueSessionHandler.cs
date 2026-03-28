@@ -3,7 +3,7 @@ using Misa.Domain.Exceptions;
 
 namespace Misa.Core.Features.Items.Sessions;
 public record ContinueSessionCommand(Guid ItemId);
-public class ContinueSessionHandler(IItemRepository repository)
+public class ContinueSessionHandler(ItemRepository repository)
 {
     public async Task Handle(ContinueSessionCommand command, CancellationToken ct)
     {

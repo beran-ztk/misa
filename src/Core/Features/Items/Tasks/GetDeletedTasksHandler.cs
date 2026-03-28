@@ -5,7 +5,7 @@ namespace Misa.Core.Features.Items.Tasks;
 
 public record GetDeletedTasksQuery;
 
-public class GetDeletedTasksHandler(IItemRepository repository)
+public class GetDeletedTasksHandler(ItemRepository repository)
 {
     public async Task<List<Item>> HandleAsync(GetDeletedTasksQuery query, CancellationToken ct)
     {

@@ -1,12 +1,11 @@
-﻿using Npgsql;
-using Microsoft.EntityFrameworkCore;
-using Misa.Core.Common.Abstractions.Persistence;
+﻿using Microsoft.EntityFrameworkCore;
 using Misa.Domain.Items;
 using Misa.Domain.Items.Components.Schedules;
 using Misa.Infrastructure.Persistence.Context;
+using Npgsql;
 
-namespace Misa.Infrastructure.Persistence.Repositories;
-public sealed class SchedulerPlanningRepository(MisaContext context) : ISchedulerPlanningRepository
+namespace Misa.Core.Common.Abstractions.Persistence;
+public sealed class SchedulerPlanningRepository(MisaContext context)
 {
     public Task SaveChangesAsync(CancellationToken ct) => context.SaveChangesAsync(ct);
     

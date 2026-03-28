@@ -5,7 +5,7 @@ namespace Misa.Core.Features.Items.Inspector;
 
 public record RenameItemCommand(Guid Id, string Title);
 
-public sealed class RenameItemHandler(IItemRepository repository)
+public sealed class RenameItemHandler(ItemRepository repository)
 {
     public async Task HandleAsync(RenameItemCommand command)
     {

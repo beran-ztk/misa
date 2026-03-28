@@ -4,7 +4,7 @@ using Misa.Domain.Exceptions;
 namespace Misa.Core.Features.Items.Inspector;
 
 public record ArchiveItemCommand(Guid Id);
-public sealed class ArchiveItemHandler(IItemRepository repository)
+public sealed class ArchiveItemHandler(ItemRepository repository)
 {
     public async Task HandleAsync(ArchiveItemCommand command)
     {

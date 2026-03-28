@@ -9,7 +9,7 @@ public record StartSessionCommand(
     bool StopAutomatically, 
     string? AutoStopReason
 );
-public class StartSessionHandler(IItemRepository repository)
+public class StartSessionHandler(ItemRepository repository)
 {
     public async Task Handle(StartSessionCommand command, CancellationToken ct)
     {

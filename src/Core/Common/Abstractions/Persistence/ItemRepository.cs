@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Misa.Core.Common.Abstractions.Persistence;
 using Misa.Domain.Exceptions;
 using Misa.Domain.Items;
 using Misa.Domain.Items.Components.Activities;
@@ -8,9 +7,9 @@ using Misa.Domain.Items.Components.Relations;
 using Misa.Infrastructure.Persistence.Context;
 using Item = Misa.Domain.Items.Item;
 
-namespace Misa.Infrastructure.Persistence.Repositories;
+namespace Misa.Core.Common.Abstractions.Persistence;
 
-public class ItemRepository(MisaContext context) : IItemRepository
+public class ItemRepository(MisaContext context)
 {
     // Save Changes
     public async Task SaveChangesAsync(CancellationToken ct = default)

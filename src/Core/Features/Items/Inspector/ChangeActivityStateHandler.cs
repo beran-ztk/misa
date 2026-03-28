@@ -6,7 +6,7 @@ namespace Misa.Core.Features.Items.Inspector;
 
 public record ChangeActivityStateCommand(Guid ItemId, ActivityState State, string? Reason = null);
 
-public sealed class ChangeActivityStateHandler(IItemRepository repository)
+public sealed class ChangeActivityStateHandler(ItemRepository repository)
 {
     public async Task HandleAsync(ChangeActivityStateCommand command, CancellationToken ct)
     {
