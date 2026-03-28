@@ -57,10 +57,6 @@ public static class CompositionRoot
         sc.AddSingleton<LayerProxy>();
         sc.AddSingleton<ILayerCloser>(sp => sp.GetRequiredService<LayerProxy>());
         sc.AddSingleton<RemoteProxy>();
-        sc.AddSingleton<SignalRNotificationClient>(sp =>
-            new SignalRNotificationClient(
-                sp.GetRequiredService<UserState>(),
-                baseAddress + "/hubs/updates"));
         sc.AddTransient<LayerHostView>();
 
         sc.AddSingleton(new HttpClient { BaseAddress = new Uri(baseAddress) });
@@ -68,7 +64,6 @@ public static class CompositionRoot
 
     private static void AddShell(this IServiceCollection sc)
     {
-        sc.AddSingleton<UserState>();
         sc.AddSingleton<ShellState>();
 
         sc.AddSingleton<IWorkspaceHost>(sp => sp.GetRequiredService<ShellState>());

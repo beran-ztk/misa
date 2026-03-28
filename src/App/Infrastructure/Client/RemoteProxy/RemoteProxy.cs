@@ -13,7 +13,7 @@ using Misa.Ui.Avalonia.Infrastructure.States;
 namespace Misa.Ui.Avalonia.Infrastructure.Client.RemoteProxy;
 
 /// <summary> HTTP transport layer for the client. </summary>
-public sealed class RemoteProxy(HttpClient httpClient, UserState userState, ILogger<RemoteProxy> logger)
+public sealed class RemoteProxy(HttpClient httpClient, ILogger<RemoteProxy> logger)
 {
 
     public async Task<Result> SendAsync(
