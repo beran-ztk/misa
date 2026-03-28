@@ -2,6 +2,4 @@
 
 namespace Misa.Ui.Avalonia.Common.Mappings;
 
-public class ViewModelBase : ObservableObject
-{
-}
+public class ViewModelBase : ObservableObject;

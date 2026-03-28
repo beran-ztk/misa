@@ -3,7 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.VisualTree;
 
-namespace Misa.Ui.Avalonia.Shell.Base;
+namespace Misa.Ui.Avalonia.Shell;
 
 public partial class ShellWindow : Window
 {

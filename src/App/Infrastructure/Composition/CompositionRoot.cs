@@ -17,13 +17,14 @@ using Misa.Ui.Avalonia.Infrastructure.Platform;
 using Misa.Ui.Avalonia.Infrastructure.States;
 using Misa.Ui.Avalonia.Infrastructure.Time;
 using Misa.Ui.Avalonia.Infrastructure.UI;
-using Misa.Ui.Avalonia.Shell.Base;
+using Misa.Ui.Avalonia.Shell;
 using Misa.Ui.Avalonia.Shell.Components;
 using CreateScheduleViewModel = Misa.Ui.Avalonia.Features.Pages.Schedules.CreateScheduleViewModel;
 using InspectorFacadeViewModel = Misa.Ui.Avalonia.Features.Inspector.InspectorFacadeViewModel;
 using InspectorState = Misa.Ui.Avalonia.Features.Inspector.InspectorState;
 using ScheduleFacadeViewModel = Misa.Ui.Avalonia.Features.Pages.Schedules.ScheduleFacadeViewModel;
 using ScheduleState = Misa.Ui.Avalonia.Features.Pages.Schedules.ScheduleState;
+using ShellWindowViewModel = Misa.Ui.Avalonia.Shell.ShellWindowViewModel;
 using TaskFacadeViewModel = Misa.Ui.Avalonia.Features.Pages.Tasks.TaskFacadeViewModel;
 using TaskState = Misa.Ui.Avalonia.Features.Pages.Tasks.TaskState;
 

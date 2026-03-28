@@ -149,6 +149,10 @@
       <Compile Update="Features\Pages\Zettelkasten\TrashView.axaml.cs">
         <DependentUpon>TrashView.axaml</DependentUpon>
       </Compile>
+      <Compile Update="Shell\ShellWindow.axaml.cs">
+        <DependentUpon>ShellWindow.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
     </ItemGroup>
 
     <ItemGroup>

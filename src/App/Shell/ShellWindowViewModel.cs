@@ -11,7 +11,7 @@ using InspectorFacadeViewModel = Misa.Ui.Avalonia.Features.Inspector.InspectorFa
 using ScheduleFacadeViewModel = Misa.Ui.Avalonia.Features.Pages.Schedules.ScheduleFacadeViewModel;
 using TaskFacadeViewModel = Misa.Ui.Avalonia.Features.Pages.Tasks.TaskFacadeViewModel;
 
-namespace Misa.Ui.Avalonia.Shell.Base;
+namespace Misa.Ui.Avalonia.Shell;
 
 public partial class ShellWindowViewModel : ViewModelBase
 {
