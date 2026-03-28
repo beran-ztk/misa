@@ -1,5 +1,3 @@
-using Misa.Contract.Items;
-using Misa.Contract.Items.Components.Relations;
 using Misa.Core.Common.Abstractions.Persistence;
 using Misa.Domain.Items;
 
@@ -7,6 +5,7 @@ namespace Misa.Core.Features.Items.Relations;
 
 public sealed record GetItemsForLookupQuery;
 
+public sealed record ItemLookupDto(Guid Id, string Title, Workflow Workflow);
 public sealed class GetItemsForLookupHandler(IItemRepository repository)
 {
     public async Task<List<ItemLookupDto>> HandleAsync(GetItemsForLookupQuery query, CancellationToken ct)
@@ -16,17 +15,7 @@ public sealed class GetItemsForLookupHandler(IItemRepository repository)
         return items.Select(i => new ItemLookupDto(
             i.Id.Value,
             i.Title,
-            i.Workflow switch
-            {
-                Workflow.Task     => WorkflowDto.Task,
-                Workflow.Schedule => WorkflowDto.Schedule,
-                Workflow.Journal  => WorkflowDto.Journal,
-                Workflow.Arc      => WorkflowDto.Arc,
-                Workflow.Unit     => WorkflowDto.Unit,
-                Workflow.Topic    => WorkflowDto.Topic,
-                Workflow.Zettel   => WorkflowDto.Zettel,
-                _                 => WorkflowDto.Task
-            }
+            i.Workflow
         )).ToList();
     }
 }

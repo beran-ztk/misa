@@ -1,11 +1,15 @@
-using Misa.Contract.Items.Components.Zettelkasten;
 using Misa.Core.Common.Abstractions.Persistence;
-using Misa.Core.Mappings;
+using Misa.Domain.Items;
 
 namespace Misa.Core.Features.Items.Zettelkasten;
 
 public sealed record GetDeletedKnowledgeIndexQuery;
-
+public record DeletedKnowledgeEntryDto(
+    Guid         Id,
+    Workflow  Workflow,
+    string       Title,
+    Guid?        ParentId,
+    DateTimeOffset? DeletedAt);
 public sealed class GetDeletedKnowledgeIndexHandler(IItemRepository repository)
 {
     public async Task<List<DeletedKnowledgeEntryDto>> HandleAsync(
@@ -16,7 +20,7 @@ public sealed class GetDeletedKnowledgeIndexHandler(IItemRepository repository)
         return items
             .Select(item => new DeletedKnowledgeEntryDto(
                 item.Id.Value,
-                item.Workflow.ToWorkflowDto(),
+                item.Workflow,
                 item.Title,
                 item.KnowledgeIndex?.ParentId?.Value,
                 item.ModifiedAt))

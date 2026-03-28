@@ -9,7 +9,7 @@ public sealed record UpdateJournalCommand(
     string?        Description,
     DateTimeOffset OccurredAtUtc);
 
-public sealed class UpdateJournalHandler(IItemRepository repository, ITimeProvider timeProvider)
+public sealed class UpdateJournalEntryHandler(IItemRepository repository, ITimeProvider timeProvider)
 {
     public async Task HandleAsync(UpdateJournalCommand command)
     {

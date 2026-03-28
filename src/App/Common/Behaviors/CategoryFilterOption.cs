@@ -1,14 +1,14 @@
 using CommunityToolkit.Mvvm.ComponentModel;
-using Misa.Contract.Items.Components.Tasks;
+using Misa.Domain.Items.Components.Tasks;
 
 namespace Misa.Ui.Avalonia.Common.Behaviors;
 
 public sealed partial class CategoryFilterOption : ObservableObject
 {
-    public TaskCategoryDto TaskCategory { get; }
+    public TaskCategory TaskCategory { get; }
     [ObservableProperty] private bool _isSelected;
 
-    public CategoryFilterOption(TaskCategoryDto taskCategory, bool isSelected = true)
+    public CategoryFilterOption(TaskCategory taskCategory, bool isSelected = true)
     {
         TaskCategory = taskCategory;
         IsSelected = isSelected;

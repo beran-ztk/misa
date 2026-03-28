@@ -1,17 +1,16 @@
-﻿using Misa.Contract.Items.Components.Activity;
-using Misa.Contract.Items.Components.Tasks;
-using Misa.Core.Common.Abstractions.Ids;
+﻿using Misa.Core.Common.Abstractions.Ids;
 using Misa.Core.Common.Abstractions.Persistence;
 using Misa.Core.Common.Abstractions.Time;
-using Misa.Core.Mappings;
 using Misa.Domain.Items;
+using Misa.Domain.Items.Components.Activities;
+using Misa.Domain.Items.Components.Tasks;
 
 namespace Misa.Core.Features.Items.Tasks;
 public sealed record CreateTaskCommand(
     string Title,
     string? Description,
-    TaskCategoryDto CategoryDto,
-    ActivityPriorityDto ActivityPriorityDto,
+    TaskCategory CategoryDto,
+    ActivityPriority ActivityPriorityDto,
     DateTimeOffset? DueDate
 );
 public class CreateTaskHandler(
@@ -19,23 +18,19 @@ public class CreateTaskHandler(
     ITimeProvider timeProvider, 
     IIdGenerator idGenerator)
 {
-    public async Task<TaskDto> HandleAsync(CreateTaskCommand command, CancellationToken ct)
+    public async Task HandleAsync(CreateTaskCommand command, CancellationToken ct)
     {
         var task = Item.CreateTask(
             new ItemId(idGenerator.New()),
             command.Title, 
             command.Description,
-            command.CategoryDto.ToDomain(), 
+            command.CategoryDto, 
             timeProvider.UtcNow,
-            command.ActivityPriorityDto.ToDomain(),
+            command.ActivityPriorityDto,
             command.DueDate
         );
         
         await repository.AddAsync(task, ct);
         await repository.SaveChangesAsync(ct);
-
-        var formattedTask = task.ToTaskExtensionDto();
-        
-        return formattedTask;
     }
 }

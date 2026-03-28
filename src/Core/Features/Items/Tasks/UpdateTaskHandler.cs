@@ -1,9 +1,8 @@
-using Misa.Contract.Items.Components.Activity;
-using Misa.Contract.Items.Components.Tasks;
 using Misa.Core.Common.Abstractions.Persistence;
 using Misa.Core.Common.Abstractions.Time;
-using Misa.Core.Mappings;
 using Misa.Domain.Exceptions;
+using Misa.Domain.Items.Components.Activities;
+using Misa.Domain.Items.Components.Tasks;
 
 namespace Misa.Core.Features.Items.Tasks;
 
@@ -11,9 +10,9 @@ public record UpdateTaskCommand(
     Guid ItemId,
     string? Title,
     string? Description,
-    ActivityStateDto? ActivityState,
-    ActivityPriorityDto? ActivityPriority,
-    TaskCategoryDto? TaskCategory,
+    ActivityState? ActivityState,
+    ActivityPriority? ActivityPriority,
+    TaskCategory? TaskCategory,
     string? Reason = null);
 
 public sealed class UpdateTaskHandler(IItemRepository repository, ITimeProvider timeProvider)
@@ -31,11 +30,11 @@ public sealed class UpdateTaskHandler(IItemRepository repository, ITimeProvider 
         if (command.Description is not null)
             item.ChangeDescription(command.Description, nowUtc);
         if (command.ActivityState is { } state)
-            item.Activity.ChangeState(state.ToDomain(), nowUtc, command.Reason);
+            item.Activity.ChangeState(state, nowUtc, command.Reason);
         if (command.ActivityPriority is { } priority)
-            item.Activity.ChangePriority(priority.ToDomain(), nowUtc);
+            item.Activity.ChangePriority(priority, nowUtc);
         if (command.TaskCategory is { } category)
-            item.ChangeTaskCategory(category.ToDomain(), nowUtc);
+            item.ChangeTaskCategory(category, nowUtc);
 
         await repository.SaveChangesAsync(CancellationToken.None);
     }

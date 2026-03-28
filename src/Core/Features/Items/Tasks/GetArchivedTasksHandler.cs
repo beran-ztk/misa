@@ -1,6 +1,5 @@
-using Misa.Contract.Items.Components.Tasks;
 using Misa.Core.Common.Abstractions.Persistence;
-using Misa.Core.Mappings;
+using Misa.Domain.Items;
 
 namespace Misa.Core.Features.Items.Tasks;
 
@@ -8,9 +7,9 @@ public record GetArchivedTasksQuery;
 
 public class GetArchivedTasksHandler(IItemRepository repository)
 {
-    public async Task<List<TaskDto>> HandleAsync(GetArchivedTasksQuery query, CancellationToken ct)
+    public async Task<List<Item>> HandleAsync(GetArchivedTasksQuery query, CancellationToken ct)
     {
         var tasks = await repository.GetArchivedTasksAsync(ct);
-        return tasks.ToTaskExtensionDto();
+        return tasks;
     }
 }

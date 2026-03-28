@@ -2,14 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
-using Misa.Contract.Items;
-using Misa.Contract.Items.Components.Activity;
-using Misa.Contract.Items.Components.Activity.Sessions;
-using Misa.Contract.Items.Components.Schedules;
-using Misa.Contract.Items.Components.Tasks;
+using Misa.Domain.Items;
+using Misa.Domain.Items.Components.Activities;
+using Misa.Domain.Items.Components.Schedules;
+using Misa.Domain.Items.Components.Tasks;
 
 namespace Misa.Ui.Avalonia.Features.Inspector;
-
 public sealed partial class InspectorState : ObservableObject
 {
     [ObservableProperty]
@@ -41,16 +39,16 @@ public sealed partial class InspectorState : ObservableObject
     [NotifyPropertyChangedFor(nameof(IsExpiredState))]
     [NotifyPropertyChangedFor(nameof(IsTerminalState))]
     [NotifyPropertyChangedFor(nameof(ErrorStateBadgeLabel))]
-    private ItemDto _item = new();
+    private Item _item;
 
-    public bool HasItem => Item.Id != Guid.Empty;
+    public bool HasItem => Item.Id.Value != Guid.Empty;
     /// <summary>Whether the Activity tab should be visible. True for Task and Schedule.</summary>
-    public bool HasActivityTab => Item.Workflow is WorkflowDto.Task or WorkflowDto.Schedule;
+    public bool HasActivityTab => Item.Workflow is Workflow.Task or Workflow.Schedule;
     /// <summary>Whether the item has a real ItemActivity (State, Priority, Deadline, Sessions). True for Task only.</summary>
-    public bool IsRealActivity => Item.Workflow == WorkflowDto.Task;
-    public bool IsTask => Item.Workflow == WorkflowDto.Task;
-    public bool IsScheduler => Item.Workflow == WorkflowDto.Schedule;
-    public bool HasExtension => Item.Workflow is WorkflowDto.Task or WorkflowDto.Schedule;
+    public bool IsRealActivity => Item.Workflow == Workflow.Task;
+    public bool IsTask => Item.Workflow == Workflow.Task;
+    public bool IsScheduler => Item.Workflow == Workflow.Schedule;
+    public bool HasExtension => Item.Workflow is Workflow.Task or Workflow.Schedule;
 
     // ── Lifecycle action availability ────────────────────────────────────
     public bool IsArchived               => Item.IsArchived;
@@ -69,8 +67,8 @@ public sealed partial class InspectorState : ObservableObject
 
     private string ItemTypeName => Item.Workflow switch
     {
-        WorkflowDto.Task     => "Task",
-        WorkflowDto.Schedule => "Schedule",
+        Workflow.Task     => "Task",
+        Workflow.Schedule => "Schedule",
         _                    => "Item"
     };
 
@@ -81,19 +79,19 @@ public sealed partial class InspectorState : ObservableObject
         null;
     
     // ── Terminal task state detection ─────────────────────────────────────
-    public bool IsDoneState             => IsTask && Item.Activity?.State == ActivityStateDto.Done;
-    public bool IsFailedOrCanceledState => IsTask && Item.Activity?.State is ActivityStateDto.Failed or ActivityStateDto.Canceled;
-    public bool IsExpiredState          => IsTask && Item.Activity?.State == ActivityStateDto.Expired;
+    public bool IsDoneState             => IsTask && Item.Activity?.State == ActivityState.Done;
+    public bool IsFailedOrCanceledState => IsTask && Item.Activity?.State is ActivityState.Failed or ActivityState.Canceled;
+    public bool IsExpiredState          => IsTask && Item.Activity?.State == ActivityState.Expired;
     public bool IsTerminalState         => IsDoneState || IsFailedOrCanceledState || IsExpiredState;
-    public string ErrorStateBadgeLabel  => Item.Activity?.State == ActivityStateDto.Failed ? "FAILED" : "CANCELED";
+    public string ErrorStateBadgeLabel  => Item.Activity?.State == ActivityState.Failed ? "FAILED" : "CANCELED";
 
     [ObservableProperty] private CurrentSessionOverviewDto? _currentSessionOverview;
     
     [ObservableProperty] private bool _isEditItemFormOpen;
-    [ObservableProperty] private TaskCategoryDto _selectedCategory;
-    public IReadOnlyList<TaskCategoryDto> TaskCategories { get; } = Enum.GetValues<TaskCategoryDto>();
-    public IReadOnlyList<ActivityStateDto> ActivityStates { get; } =
-        Enum.GetValues<ActivityStateDto>().Where(s => s != ActivityStateDto.Expired).ToList();
-    public IReadOnlyList<ActivityPriorityDto> ActivityPriorities { get; } = Enum.GetValues<ActivityPriorityDto>();
-    public IReadOnlyList<ScheduleMisfirePolicyDto> MisfirePolicies { get; } = Enum.GetValues<ScheduleMisfirePolicyDto>();
+    [ObservableProperty] private TaskCategory _selectedCategory;
+    public IReadOnlyList<TaskCategory> TaskCategories { get; } = Enum.GetValues<TaskCategory>();
+    public IReadOnlyList<ActivityState> ActivityStates { get; } =
+        Enum.GetValues<ActivityState>().Where(s => s != ActivityState.Expired).ToList();
+    public IReadOnlyList<ActivityPriority> ActivityPriorities { get; } = Enum.GetValues<ActivityPriority>();
+    public IReadOnlyList<ScheduleMisfirePolicy> MisfirePolicies { get; } = Enum.GetValues<ScheduleMisfirePolicy>();
 }

@@ -2,7 +2,7 @@ using System;
 using System.Globalization;
 using Avalonia.Data.Converters;
 using Avalonia.Media;
-using Misa.Contract.Items.Components.Chronicle;
+using Misa.Core.Features.Items.Chronicle;
 
 namespace Misa.Ui.Avalonia.Common.Converters;
 

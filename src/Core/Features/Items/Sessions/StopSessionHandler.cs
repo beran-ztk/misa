@@ -1,14 +1,13 @@
-using Misa.Contract.Items.Components.Activity.Sessions;
 using Misa.Core.Common.Abstractions.Persistence;
 using Misa.Core.Common.Abstractions.Time;
-using Misa.Core.Mappings;
 using Misa.Domain.Exceptions;
+using Misa.Domain.Items.Components.Activities.Sessions;
 
 namespace Misa.Core.Features.Items.Sessions;
 public record StopSessionCommand(
     Guid ItemId,
-    SessionEfficiencyDto SessionEfficiency,
-    SessionConcentrationDto SessionConcentration,
+    SessionEfficiencyType SessionEfficiency,
+    SessionConcentrationType SessionConcentration,
     string? Summary
 );
 
@@ -22,8 +21,8 @@ public class StopSessionHandler(IItemRepository repository, ITimeProvider timePr
 
         item.Activity.StopCurrentSession(
             timeProvider.UtcNow,
-            command.SessionEfficiency.ToDomain(),
-            command.SessionConcentration.ToDomain(),
+            command.SessionEfficiency,
+            command.SessionConcentration,
             command.Summary);
 
         await repository.SaveChangesAsync(ct);

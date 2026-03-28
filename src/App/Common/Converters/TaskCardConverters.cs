@@ -1,9 +1,6 @@
 using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using Avalonia.Data.Converters;
-using Misa.Contract.Items.Components.Activity.Sessions;
 
 namespace Misa.Ui.Avalonia.Common.Converters;
 

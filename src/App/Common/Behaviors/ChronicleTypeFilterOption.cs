@@ -1,6 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Misa.Contract.Items.Components.Chronicle;
+using Misa.Core.Features.Items.Chronicle;
 
 namespace Misa.Ui.Avalonia.Common.Behaviors;
 

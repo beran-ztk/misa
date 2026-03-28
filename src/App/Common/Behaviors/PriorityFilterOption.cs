@@ -1,14 +1,14 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-using Misa.Contract.Items.Components.Activity;
+using Misa.Domain.Items.Components.Activities;
 
 namespace Misa.Ui.Avalonia.Common.Behaviors;
 
 public sealed partial class PriorityFilterOption : ObservableObject
 {
-    public ActivityPriorityDto ActivityPriority { get; }
+    public ActivityPriority ActivityPriority { get; }
     [ObservableProperty] private bool _isSelected;
 
-    public PriorityFilterOption(ActivityPriorityDto activityPriority, bool isSelected = true)
+    public PriorityFilterOption(ActivityPriority activityPriority, bool isSelected = true)
     {
         ActivityPriority = activityPriority;
         IsSelected = isSelected;

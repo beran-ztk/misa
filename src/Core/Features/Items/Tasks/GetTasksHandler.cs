@@ -1,6 +1,5 @@
-﻿using Misa.Contract.Items.Components.Tasks;
-using Misa.Core.Common.Abstractions.Persistence;
-using Misa.Core.Mappings;
+﻿using Misa.Core.Common.Abstractions.Persistence;
+using Misa.Domain.Items;
 
 namespace Misa.Core.Features.Items.Tasks;
 
@@ -11,12 +10,9 @@ public record GetTasksQuery;
 public class GetTasksHandler(IItemRepository repository)
 {
     // Handle
-    public async Task<List<TaskDto>> HandleAsync(GetTasksQuery query, CancellationToken ct)
+    public async Task<List<Item>> HandleAsync(GetTasksQuery query, CancellationToken ct)
     {
         var tasks = await repository.GetTasksAsync(ct);
-
-        var formattedTasks = tasks.ToTaskExtensionDto();
-        
-        return formattedTasks;
+        return tasks;
     }
 }

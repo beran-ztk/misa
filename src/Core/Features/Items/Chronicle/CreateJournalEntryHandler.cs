@@ -1,8 +1,6 @@
-using Misa.Contract.Items;
 using Misa.Core.Common.Abstractions.Ids;
 using Misa.Core.Common.Abstractions.Persistence;
 using Misa.Core.Common.Abstractions.Time;
-using Misa.Core.Mappings;
 using Misa.Domain.Items;
 using Misa.Domain.Items.Components.Chronicle.Journals;
 
@@ -15,12 +13,12 @@ public sealed record CreateJournalCommand(
     DateTimeOffset? UntilAtUtc
 );
 
-public sealed class CreateJournalHandler(
+public sealed class CreateJournalEntryHandler(
     IItemRepository repository,
     ITimeProvider timeProvider,
     IIdGenerator idGenerator)
 {
-    public async Task<ItemDto> Handle(CreateJournalCommand command, CancellationToken ct)
+    public async Task<Item> Handle(CreateJournalCommand command, CancellationToken ct)
     {
         var journalExtension = new JournalExtension(
             occurredAt: command.OccurredAtUtc,
@@ -38,6 +36,6 @@ public sealed class CreateJournalHandler(
         await repository.AddAsync(journalItem, ct);
         await repository.SaveChangesAsync(ct);
 
-        return journalItem.ToDto();
+        return journalItem;
     }
 }

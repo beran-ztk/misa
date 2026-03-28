@@ -2,7 +2,7 @@
 using System.Globalization;
 using Avalonia.Data.Converters;
 using Avalonia.Media;
-using Misa.Contract.Items.Components.Activity;
+using Misa.Domain.Items.Components.Activities;
 
 namespace Misa.Ui.Avalonia.Common.Converters;
 
@@ -12,18 +12,18 @@ public sealed class PriorityToBrushConverter : IValueConverter
 
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        if (value is not ActivityPriorityDto priority)
+        if (value is not ActivityPriority priority)
             return Brushes.Transparent;
 
         return priority switch
         {
-            ActivityPriorityDto.None     => Brushes.Transparent,
+            ActivityPriority.None     => Brushes.Transparent,
 
-            ActivityPriorityDto.Low      => new SolidColorBrush(Color.Parse("#9AA5B1")), // muted gray-blue
-            ActivityPriorityDto.Medium   => new SolidColorBrush(Color.Parse("#5B8DEF")), // calm blue
-            ActivityPriorityDto.High     => new SolidColorBrush(Color.Parse("#E2A03F")), // soft amber
-            ActivityPriorityDto.Urgent   => new SolidColorBrush(Color.Parse("#E06C3C")), // warm orange
-            ActivityPriorityDto.Critical => new SolidColorBrush(Color.Parse("#C44536")), // deep red
+            ActivityPriority.Low      => new SolidColorBrush(Color.Parse("#9AA5B1")), // muted gray-blue
+            ActivityPriority.Medium   => new SolidColorBrush(Color.Parse("#5B8DEF")), // calm blue
+            ActivityPriority.High     => new SolidColorBrush(Color.Parse("#E2A03F")), // soft amber
+            ActivityPriority.Urgent   => new SolidColorBrush(Color.Parse("#E06C3C")), // warm orange
+            ActivityPriority.Critical => new SolidColorBrush(Color.Parse("#C44536")), // deep red
 
             _ => Brushes.Transparent
         };

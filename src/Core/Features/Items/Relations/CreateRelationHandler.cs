@@ -1,8 +1,6 @@
-using Misa.Contract.Items.Components.Relations;
 using Misa.Core.Common.Abstractions.Ids;
 using Misa.Core.Common.Abstractions.Persistence;
 using Misa.Core.Common.Abstractions.Time;
-using Misa.Core.Mappings;
 using Misa.Domain.Exceptions;
 using Misa.Domain.Items.Components.Relations;
 
@@ -11,7 +9,7 @@ namespace Misa.Core.Features.Items.Relations;
 public sealed record CreateRelationCommand(
     Guid SourceItemId,
     Guid TargetItemId,
-    RelationTypeDto RelationType
+    RelationType RelationType
 );
 
 public sealed class CreateRelationHandler(
@@ -39,7 +37,7 @@ public sealed class CreateRelationHandler(
             idGenerator.New(),
             command.SourceItemId,
             command.TargetItemId,
-            command.RelationType.ToDomain(),
+            command.RelationType,
             timeProvider.UtcNow
         );
 
