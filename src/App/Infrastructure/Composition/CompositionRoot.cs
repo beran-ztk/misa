@@ -17,7 +17,6 @@ using Misa.Ui.Avalonia.Infrastructure.Platform;
 using Misa.Ui.Avalonia.Infrastructure.States;
 using Misa.Ui.Avalonia.Infrastructure.Time;
 using Misa.Ui.Avalonia.Infrastructure.UI;
-using Misa.Ui.Avalonia.Shell.Authentication;
 using Misa.Ui.Avalonia.Shell.Base;
 using Misa.Ui.Avalonia.Shell.Components;
 using CreateScheduleViewModel = Misa.Ui.Avalonia.Features.Pages.Schedules.CreateScheduleViewModel;
@@ -76,19 +75,11 @@ public static class CompositionRoot
         sc.AddSingleton<IToastHost>(sp => sp.GetRequiredService<ShellState>());
         
         // VMs
-        sc.AddTransient<AuthenticationWindowViewModel>();
         sc.AddSingleton<ShellWindowViewModel>();
         sc.AddSingleton<HeaderViewModel>();
         sc.AddSingleton<WorkspaceNavigationViewModel>();
         sc.AddSingleton<UtilityNavigationViewModel>();
         sc.AddSingleton<FooterViewModel>();
-
-        // Windows — must be Transient: Avalonia does not allow showing a closed window instance
-        sc.AddTransient<AuthenticationWindow>(sp =>
-        {
-            var vm = sp.GetRequiredService<AuthenticationWindowViewModel>();
-            return new AuthenticationWindow { DataContext = vm };
-        });
 
         sc.AddTransient<ShellWindow>(sp =>
         {
@@ -100,7 +91,6 @@ public static class CompositionRoot
     private static void AddInfrastructure(this IServiceCollection sc)
     {
         sc.AddSingleton<IClipboardService, ClipboardService>();
-        sc.AddSingleton<AuthenticationGateway>();
         sc.AddSingleton<TimeZoneService>();
     }
 

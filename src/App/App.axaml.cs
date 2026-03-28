@@ -6,7 +6,7 @@ using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
 using Microsoft.Extensions.DependencyInjection;
 using Misa.Ui.Avalonia.Infrastructure.Composition;
-using Misa.Ui.Avalonia.Shell.Authentication;
+using Misa.Ui.Avalonia.Shell.Base;
 
 namespace Misa.Ui.Avalonia;
 
@@ -27,7 +27,7 @@ public class App : Application
         {
             DisableAvaloniaDataAnnotationValidation();
 
-            desktop.MainWindow = Services.GetRequiredService<AuthenticationWindow>();
+            desktop.MainWindow = Services.GetRequiredService<ShellWindow>();
         }
 
         base.OnFrameworkInitializationCompleted();
