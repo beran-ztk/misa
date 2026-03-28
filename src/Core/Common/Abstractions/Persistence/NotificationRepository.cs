@@ -36,25 +36,28 @@ public class NotificationRepository(MisaContext context)
             .CountAsync(ct);
     }
 
-    public async Task DismissAsync(Guid id, DateTimeOffset dismissedAt, CancellationToken ct = default)
+    public async Task DismissAsync(Guid id, CancellationToken ct = default)
     {
+        var now = DateTimeOffset.UtcNow;
         await context.Notifications
             .Where(n => n.Id == id)
-            .ExecuteUpdateAsync(s => s.SetProperty(n => n.DismissedAtUtc, dismissedAt), ct);
+            .ExecuteUpdateAsync(s => s.SetProperty(n => n.DismissedAtUtc, now), ct);
     }
 
-    public async Task MarkAsReadAsync(Guid id, DateTimeOffset readAt, CancellationToken ct = default)
+    public async Task MarkAsReadAsync(Guid id, CancellationToken ct = default)
     {
+        var now = DateTimeOffset.UtcNow;
         await context.Notifications
             .Where(n => n.Id == id && n.ReadAtUtc == null)
-            .ExecuteUpdateAsync(s => s.SetProperty(n => n.ReadAtUtc, readAt), ct);
+            .ExecuteUpdateAsync(s => s.SetProperty(n => n.ReadAtUtc, now), ct);
     }
 
-    public async Task MarkAllAsReadAsync(DateTimeOffset readAt, CancellationToken ct = default)
+    public async Task MarkAllAsReadAsync(CancellationToken ct = default)
     {
+        var now = DateTimeOffset.UtcNow;
         await context.Notifications
             .Where(n => n.DismissedAtUtc == null && n.ReadAtUtc == null)
-            .ExecuteUpdateAsync(s => s.SetProperty(n => n.ReadAtUtc, readAt), ct);
+            .ExecuteUpdateAsync(s => s.SetProperty(n => n.ReadAtUtc, now), ct);
     }
 
     public async Task<int> CleanupDismissedAsync(DateTimeOffset dismissedBefore, CancellationToken ct = default)

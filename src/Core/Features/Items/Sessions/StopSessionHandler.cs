@@ -19,7 +19,6 @@ public class StopSessionHandler(ItemRepository repository)
             throw new DomainNotFoundException("session.item", "session not found.");
 
         item.Activity.StopCurrentSession(
-            DateTimeOffset.UtcNow,
             command.SessionEfficiency,
             command.SessionConcentration,
             command.Summary);

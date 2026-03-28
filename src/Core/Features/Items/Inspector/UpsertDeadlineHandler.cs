@@ -13,7 +13,7 @@ public sealed class UpsertDeadlineHandler(ItemRepository repository)
         if (item?.Activity is null)
             throw new DomainNotFoundException("item.not.found", "");
 
-        item.Activity.SetDeadline(command.DueAtUtc, DateTimeOffset.UtcNow);
+        item.Activity.SetDeadline(command.DueAtUtc);
         await repository.SaveChangesAsync(ct);
     }
 }

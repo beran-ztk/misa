@@ -13,7 +13,7 @@ public sealed class RestoreItemHandler(ItemRepository repository)
         if (item == null)
             throw new DomainNotFoundException("Item not found", "");
 
-        item.Restore(DateTimeOffset.UtcNow);
+        item.Restore();
         await repository.SaveChangesAsync(CancellationToken.None);
     }
 }

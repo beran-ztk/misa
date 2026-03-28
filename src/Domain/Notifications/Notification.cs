@@ -5,19 +5,17 @@ public sealed class Notification
     private Notification() { } // EF Core
 
     public Notification(
-        Guid id,
         string title,
         string message,
         NotificationSourceKind sourceKind,
-        Guid sourceId,
-        DateTimeOffset createdAtUtc)
+        Guid sourceId)
     {
-        Id           = id;
+        Id           = Guid.NewGuid();
         Title        = title;
         Message      = message;
         SourceKind   = sourceKind;
         SourceId     = sourceId;
-        CreatedAtUtc = createdAtUtc;
+        CreatedAtUtc = DateTimeOffset.UtcNow;
     }
 
     public Guid                   Id             { get; private set; }

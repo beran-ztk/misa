@@ -11,7 +11,7 @@ public sealed class UpdateZettelContentHandler(ItemRepository repository)
         var item = await repository.TryGetZettelAsync(command.Id, ct);
         if (item?.ZettelExtension is null) return;
 
-        item.ChangeZettelContent(command.Content, DateTimeOffset.UtcNow);
+        item.ChangeZettelContent(command.Content);
         await repository.SaveChangesAsync(ct);
     }
 }

@@ -21,10 +21,8 @@ public sealed class CreateJournalEntryHandler(ItemRepository repository)
         );
 
         var journalItem = Item.CreateJournal(
-            id: new ItemId(Guid.NewGuid()),
             title: command.Title,
             description: command.Description,
-            createdAtUtc: DateTimeOffset.UtcNow,
             journalExtension: journalExtension
         );
 

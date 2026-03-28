@@ -4,21 +4,19 @@ public class AuditChange
 {
     private AuditChange() { }
     public AuditChange(
-        Guid id,
         Guid itemId,
         ChangeType changeType,
         string? before,
         string? after,
-        string? reason,
-        DateTimeOffset createdAtUtc)
+        string? reason)
     {
-        Id = id;
+        Id = Guid.NewGuid();
         ItemId = new ItemId(itemId);
         ChangeType = changeType;
         ValueBefore = before;
         ValueAfter = after;
         Reason = reason;
-        CreatedAtUtc = createdAtUtc;
+        CreatedAtUtc = DateTimeOffset.UtcNow;
     }
 
     public Guid Id { get; init; }

@@ -10,9 +10,7 @@ public sealed class CreateZettelHandler(ItemRepository repository)
     public async Task HandleAsync(CreateZettelCommand command)
     {
         var zettel = Item.CreateZettel(
-            id: new ItemId(Guid.NewGuid()),
             title: command.Title,
-            createdAtUtc: DateTimeOffset.UtcNow,
             parentId: new ItemId(command.ParentId)
         );
 

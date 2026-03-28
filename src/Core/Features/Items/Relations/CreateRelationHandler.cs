@@ -30,11 +30,9 @@ public sealed class CreateRelationHandler(
             throw new DomainValidationException("targetItemId", "duplicate_relation", "A relation between these entries already exists.");
 
         var relation = new ItemRelation(
-            Guid.NewGuid(),
             command.SourceItemId,
             command.TargetItemId,
-            command.RelationType,
-            DateTimeOffset.UtcNow
+            command.RelationType
         );
 
         await repository.AddRelationAsync(relation, ct);

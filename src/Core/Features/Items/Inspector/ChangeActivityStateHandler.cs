@@ -17,7 +17,7 @@ public sealed class ChangeActivityStateHandler(ItemRepository repository)
         if (item?.Activity is null)
             throw new DomainNotFoundException("item.not.found", command.ItemId.ToString());
 
-        item.Activity.ChangeState(command.State, DateTimeOffset.UtcNow, command.Reason);
+        item.Activity.ChangeState(command.State, command.Reason);
 
         await repository.SaveChangesAsync(ct);
     }

@@ -17,7 +17,7 @@ public sealed class ReparentKnowledgeItemHandler(ItemRepository repository)
         if (item is null)
             throw new DomainNotFoundException("Item not found", "");
 
-        item.ReparentKnowledgeIndex(new ItemId(command.NewParentId), DateTimeOffset.UtcNow);
+        item.ReparentKnowledgeIndex(new ItemId(command.NewParentId));
         await repository.SaveChangesAsync(CancellationToken.None);
     }
 }

@@ -52,13 +52,11 @@ public class MisaContext(DbContextOptions<MisaContext> options) : DbContext(opti
         {
             AuditChanges.Add(
                 new AuditChange(
-                    Guid.NewGuid(),
                     ev.ItemId,
                     ev.ChangeType,
                     ev.OldValue,
                     ev.NewValue,
-                    ev.Reason,
-                    DateTimeOffset.UtcNow
+                    ev.Reason
                 )
             );
         }

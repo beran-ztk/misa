@@ -39,7 +39,7 @@ public sealed class Session
     }
 
     // Behaviour
-    public void Pause(string? pauseReason, DateTimeOffset nowUtc)
+    public void Pause(string? pauseReason)
     {
         if (State != SessionState.Running)
             throw new InvalidOperationException("Session is not running.");
@@ -55,23 +55,20 @@ public sealed class Session
         }
 
         State = SessionState.Paused;
-        
+
         var segment = openSegments[0];
-        segment.End(nowUtc, pauseReason);
+        segment.End(pauseReason);
     }
 
-    public void Continue(Guid segmentId, DateTimeOffset startedAtUtc)
+    public void Continue()
     {
         if (State != SessionState.Paused)
             throw new InvalidOperationException("Session is not paused.");
-        
+
         State = SessionState.Running;
-        
-        var segment = new SessionSegment(segmentId, startedAtUtc);
-        Segments.Add(segment);
+        Segments.Add(SessionSegment.Create());
     }
     public void Stop(
-        DateTimeOffset nowUtc,
         SessionEfficiencyType efficiency,
         SessionConcentrationType concentration,
         string? summary)
@@ -83,7 +80,7 @@ public sealed class Session
             case > 1:
                 return;
             case 1:
-                openSegments[0].End(nowUtc, null);
+                openSegments[0].End(null);
                 break;
         }
 
@@ -94,27 +91,24 @@ public sealed class Session
         State = SessionState.Ended;
     }
     public static Session Start(
-        Guid sessionId,
-        Guid segmentId,
         TimeSpan? plannedDuration,
         string? objective,
         bool stopAutomatically,
-        string? autoStopReason,
-        DateTimeOffset createdAtUtc)
+        string? autoStopReason)
     {
+        var now = DateTimeOffset.UtcNow;
         var session = new Session
         {
-            Id = sessionId,
+            Id = Guid.NewGuid(),
             PlannedDuration = plannedDuration,
             Objective = objective,
             StopAutomatically = stopAutomatically,
             AutoStopReason = autoStopReason,
             State = SessionState.Running,
-            CreatedAtUtc = createdAtUtc
+            CreatedAtUtc = now
         };
 
-        session.Segments.Add(
-            SessionSegment.StartSessionSegment(segmentId, createdAtUtc));
+        session.Segments.Add(SessionSegment.Create());
 
         return session;
     }

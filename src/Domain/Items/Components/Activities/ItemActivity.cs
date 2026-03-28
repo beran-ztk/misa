@@ -45,13 +45,13 @@ public sealed class ItemActivity : DomainEventEntity
         => State == ActivityState.Open && TryGetSession == null;
     
     // Mutators
-    public void SetDeadline(DateTimeOffset? deadline, DateTimeOffset nowUtc)
+    public void SetDeadline(DateTimeOffset? deadline)
     {
         AddDomainEvent(new PropertyChangedEvent(Id.Value, ChangeType.Deadline, DueAt?.ToString("O"), deadline?.ToString("O"), null));
         DueAt = deadline;
     }
 
-    public void ChangeState(ActivityState state, DateTimeOffset nowUtc, string? reason = null)
+    public void ChangeState(ActivityState state, string? reason = null)
     {
         if (State == state)
             return;
@@ -60,7 +60,7 @@ public sealed class ItemActivity : DomainEventEntity
         State = state;
     }
 
-    public void ChangePriority(ActivityPriority priority, DateTimeOffset nowUtc)
+    public void ChangePriority(ActivityPriority priority)
     {
         if (Priority == priority)
             return;
@@ -70,42 +70,35 @@ public sealed class ItemActivity : DomainEventEntity
     }
 
     public void StartSession(
-        Guid sessionId,
-        Guid segmentId,
         TimeSpan? plannedDuration,
         string? objective,
         bool stopAutomatically,
-        string? autoStopReason,
-        DateTimeOffset createdAtUtc)
+        string? autoStopReason)
     {
         var session = Session.Start(
-            sessionId: sessionId,
-            segmentId: segmentId,
             plannedDuration: plannedDuration,
             objective: objective,
             stopAutomatically: stopAutomatically,
-            autoStopReason: autoStopReason,
-            createdAtUtc: createdAtUtc);
+            autoStopReason: autoStopReason);
 
         Sessions.Add(session);
     }
 
-    public void PauseCurrentSession(string? reason, DateTimeOffset nowUtc)
+    public void PauseCurrentSession(string? reason)
     {
-        TryGetSession!.Pause(reason, nowUtc);
+        TryGetSession!.Pause(reason);
     }
 
-    public void ContinueCurrentSession(Guid segmentId, DateTimeOffset nowUtc)
+    public void ContinueCurrentSession()
     {
-        TryGetSession!.Continue(segmentId, nowUtc);
+        TryGetSession!.Continue();
     }
 
     public void StopCurrentSession(
-        DateTimeOffset nowUtc,
         SessionEfficiencyType efficiency,
         SessionConcentrationType concentration,
         string? summary)
     {
-        TryGetSession!.Stop(nowUtc, efficiency, concentration, summary);
+        TryGetSession!.Stop(efficiency, concentration, summary);
     }
 }

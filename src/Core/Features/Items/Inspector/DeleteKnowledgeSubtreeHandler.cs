@@ -11,7 +11,7 @@ public sealed class DeleteKnowledgeSubtreeHandler(ItemRepository repository)
         foreach (var id in command.Ids)
         {
             var item = await repository.TryGetItemAsync(id);
-            item?.Delete(DateTimeOffset.UtcNow);
+            item?.Delete();
         }
 
         await repository.SaveChangesAsync(CancellationToken.None);

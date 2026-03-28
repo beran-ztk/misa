@@ -13,7 +13,7 @@ public sealed class RenameItemHandler(ItemRepository repository)
         if (item == null)
             throw new DomainNotFoundException("Item not found", "");
 
-        item.ChangeTitle(command.Title, DateTimeOffset.UtcNow);
+        item.ChangeTitle(command.Title);
         await repository.SaveChangesAsync(CancellationToken.None);
     }
 }

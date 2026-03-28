@@ -8,6 +8,6 @@ public class MarkAllNotificationsReadHandler(NotificationRepository repository)
 {
     public async Task HandleAsync(MarkAllNotificationsReadCommand command, CancellationToken ct)
     {
-        await repository.MarkAllAsReadAsync(DateTimeOffset.UtcNow, ct);
+        await repository.MarkAllAsReadAsync(ct);
     }
 }

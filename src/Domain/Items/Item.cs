@@ -16,25 +16,20 @@ public sealed class Item : DomainEventEntity
     private Item() { } // EF
 
     private Item(
-        ItemId id,
         Workflow workflow,
         string title,
-        string? description,
-        DateTimeOffset createdAtUtc)
+        string? description)
     {
-        if (id.Equals(default))
-            throw new DomainValidationException("id", "id_required", "Id is required.");
-
         if (string.IsNullOrWhiteSpace(title))
             throw new DomainValidationException("title", "title_required", "Title is required.");
 
-        Id = id;
+        Id = new ItemId(Guid.NewGuid());
         Workflow = workflow;
 
         Title = title;
         Description = description;
 
-        CreatedAt = createdAtUtc;
+        CreatedAt = DateTimeOffset.UtcNow;
     }
     
     // Fields + Properties
@@ -66,86 +61,45 @@ public sealed class Item : DomainEventEntity
     
     // Behaviours
     public static Item CreateTask(
-        ItemId id,
         string title,
         string? description,
         TaskCategory category,
-        DateTimeOffset createdAtUtc,
-        
         ActivityPriority priority,
         DateTimeOffset? dueAt)
     {
-        var item = new Item(
-            id: id,
-            workflow: Workflow.Task,
-            title: title,
-            description: description,
-            createdAtUtc: createdAtUtc)
-        {
-            Activity = new ItemActivity(id, ActivityState.Open, priority, null, null, dueAt),
-            TaskExtension = new TaskExtension(id, category)
-        };
-
+        var item = new Item(Workflow.Task, title, description);
+        item.Activity = new ItemActivity(item.Id, ActivityState.Open, priority, null, null, dueAt);
+        item.TaskExtension = new TaskExtension(item.Id, category);
         return item;
     }
-    
+
     public static Item CreateJournal(
-        ItemId id,
         string title,
         string? description,
-        DateTimeOffset createdAtUtc,
         JournalExtension journalExtension)
     {
-        var item = new Item(
-            id: id,
-            workflow: Workflow.Journal,
-            title: title,
-            description: description,
-            createdAtUtc: createdAtUtc)
-        {
-            JournalExtension = journalExtension
-        };
-
+        var item = new Item(Workflow.Journal, title, description);
+        item.JournalExtension = journalExtension;
         return item;
     }
-    public static Item CreateTopic(
-        ItemId id,
-        string title,
-        DateTimeOffset createdAtUtc,
 
+    public static Item CreateTopic(
+        string title,
         ItemId? parentId)
     {
-        var item = new Item(
-            id: id,
-            workflow: Workflow.Topic,
-            title: title,
-            description: null,
-            createdAtUtc: createdAtUtc)
-        {
-            Topic = new Topic(id),
-            KnowledgeIndex = new KnowledgeIndex(id, parentId)
-        };
-
+        var item = new Item(Workflow.Topic, title, null);
+        item.Topic = new Topic(item.Id);
+        item.KnowledgeIndex = new KnowledgeIndex(item.Id, parentId);
         return item;
     }
 
     public static Item CreateZettel(
-        ItemId id,
         string title,
-        DateTimeOffset createdAtUtc,
         ItemId? parentId)
     {
-        var item = new Item(
-            id: id,
-            workflow: Workflow.Zettel,
-            title: title,
-            description: null,
-            createdAtUtc: createdAtUtc)
-        {
-            ZettelExtension = new Zettel(id),
-            KnowledgeIndex = new KnowledgeIndex(id, parentId)
-        };
-
+        var item = new Item(Workflow.Zettel, title, null);
+        item.ZettelExtension = new Zettel(item.Id);
+        item.KnowledgeIndex = new KnowledgeIndex(item.Id, parentId);
         return item;
     }
 
@@ -153,53 +107,52 @@ public sealed class Item : DomainEventEntity
     
     // Mutators
 
-    /// <summary>Updates ModifiedAt. Called by all domain mutators — not intended for application-layer use.</summary>
-    private void Touch(DateTimeOffset nowUtc) => ModifiedAt = nowUtc;
+    private void Touch() => ModifiedAt = DateTimeOffset.UtcNow;
 
-    public void ChangeTitle(string title, DateTimeOffset nowUtc)
+    public void ChangeTitle(string title)
     {
         if (Title == title)
             return;
 
         AddDomainEvent(new PropertyChangedEvent(Id.Value, ChangeType.Title, Title, title, null));
         Title = title;
-        Touch(nowUtc);
+        Touch();
     }
 
-    public void ChangeDescription(string description, DateTimeOffset nowUtc)
+    public void ChangeDescription(string description)
     {
         if (Description == description)
             return;
 
         AddDomainEvent(new PropertyChangedEvent(Id.Value, ChangeType.Description, Description, description, null));
         Description = description;
-        Touch(nowUtc);
+        Touch();
     }
 
-    public void Archive(DateTimeOffset nowUtc) { IsArchived = true; Touch(nowUtc); }
-    public void Delete(DateTimeOffset nowUtc)  { IsDeleted  = true; Touch(nowUtc); }
-    public void Restore(DateTimeOffset nowUtc) { IsArchived = false; IsDeleted = false; Touch(nowUtc); }
+    public void Archive() { IsArchived = true; Touch(); }
+    public void Delete()  { IsDeleted  = true; Touch(); }
+    public void Restore() { IsArchived = false; IsDeleted = false; Touch(); }
 
     // ── Child-extension proxies ───────────────────────────────────────────────
     // Owned child entities without an Item back-navigation property route their
     // mutations through here so ModifiedAt is updated consistently.
 
-    public void ChangeJournalOccurredAt(DateTimeOffset occurredAt, DateTimeOffset nowUtc)
+    public void ChangeJournalOccurredAt(DateTimeOffset occurredAt)
     {
         JournalExtension!.ChangeOccurredAt(occurredAt);
-        Touch(nowUtc);
+        Touch();
     }
 
-    public void ChangeTaskCategory(TaskCategory category, DateTimeOffset nowUtc)
+    public void ChangeTaskCategory(TaskCategory category)
     {
         TaskExtension!.ChangeCategory(category);
-        Touch(nowUtc);
+        Touch();
     }
 
-    public void ChangeZettelContent(string? content, DateTimeOffset nowUtc)
+    public void ChangeZettelContent(string? content)
     {
         ZettelExtension!.ChangeContent(content);
-        Touch(nowUtc);
+        Touch();
     }
 
     public void SetKnowledgeIndexExpanded(bool isExpanded)
@@ -207,9 +160,9 @@ public sealed class Item : DomainEventEntity
         KnowledgeIndex!.SetExpanded(isExpanded);
     }
 
-    public void ReparentKnowledgeIndex(ItemId newParentId, DateTimeOffset nowUtc)
+    public void ReparentKnowledgeIndex(ItemId newParentId)
     {
         KnowledgeIndex!.SetParentId(newParentId);
-        Touch(nowUtc);
+        Touch();
     }
 }

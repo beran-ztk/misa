@@ -11,7 +11,7 @@ public sealed class RestoreKnowledgeSubtreeHandler(ItemRepository repository)
         foreach (var id in command.Ids)
         {
             var item = await repository.TryGetItemAsync(id);
-            item?.Restore(DateTimeOffset.UtcNow);
+            item?.Restore();
         }
 
         await repository.SaveChangesAsync(CancellationToken.None);

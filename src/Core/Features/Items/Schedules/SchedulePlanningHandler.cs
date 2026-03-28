@@ -21,10 +21,9 @@ public class SchedulePlanningHandler(SchedulerPlanningRepository repository)
             if (!AllowedFrequencies.Contains(schedule.ScheduleExtension.ScheduleFrequencyType)) continue;
 
             
-            var utcNow = DateTimeOffset.UtcNow;
             var localNow = DateTimeOffset.Now;
-            
-            var currentLookaheadCount = await repository.GetExecutionCountPlannedAheadAsync(schedule.ScheduleExtension.Id.Value, utcNow, stoppingToken);
+
+            var currentLookaheadCount = await repository.GetExecutionCountPlannedAheadAsync(schedule.ScheduleExtension.Id.Value, stoppingToken);
             
             var maxLocalLookaheadTime = schedule.ScheduleExtension.ScheduleFrequencyType switch
             {
@@ -86,9 +85,9 @@ public class SchedulePlanningHandler(SchedulerPlanningRepository repository)
                     currentLookaheadCount++;
                 }
                 
-                var log = schedule.ScheduleExtension.CreateExecutionLog(Guid.NewGuid(), DateTimeOffset.UtcNow);
+                var log = schedule.ScheduleExtension.CreateExecutionLog();
                 schedule.ScheduleExtension.ReduceOccurrenceCount();
-                schedule.ScheduleExtension.CheckAndUpdateNextAllowedExecution(utcNow);
+                schedule.ScheduleExtension.CheckAndUpdateNextAllowedExecution();
                 
                 await repository.TryAddExecutionLogAsync(log, stoppingToken);
                 

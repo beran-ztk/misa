@@ -7,18 +7,16 @@ public sealed class ScheduleExecutionLog
 {
     private ScheduleExecutionLog() { } // EF Core
     public ScheduleExecutionLog(
-        Guid id,
         ItemId schedulerId,
-        DateTimeOffset scheduledForUtc,
-        DateTimeOffset createdAtUtc)
+        DateTimeOffset scheduledForUtc)
     {
-        Id = id;
+        Id = Guid.NewGuid();
         SchedulerId = schedulerId;
         ScheduledForUtc = scheduledForUtc;
 
         Status = ScheduleExecutionStatus.Pending;
         Attempts = 0;
-        CreatedAtUtc = createdAtUtc;
+        CreatedAtUtc = DateTimeOffset.UtcNow;
     }
 
     public Guid Id { get; private set; }
@@ -36,27 +34,27 @@ public sealed class ScheduleExecutionLog
     
     public DateTimeOffset CreatedAtUtc { get; private set; }
 
-    public void Claim(DateTimeOffset now)
+    public void Claim()
     {
         Status = ScheduleExecutionStatus.Claimed;
-        ClaimedAtUtc = now;
+        ClaimedAtUtc = DateTimeOffset.UtcNow;
     }
-    public void Start(DateTimeOffset now)
+    public void Start()
     {
         Attempts += 1;
-        
+
         Status = ScheduleExecutionStatus.Running;
-        StartedAtUtc = now;
+        StartedAtUtc = DateTimeOffset.UtcNow;
     }
-    public void Succeeded(DateTimeOffset now)
+    public void Succeeded()
     {
         Status = ScheduleExecutionStatus.Succeeded;
-        FinishedAtUtc = now;
+        FinishedAtUtc = DateTimeOffset.UtcNow;
     }
-    public void Fail(DateTimeOffset now, string? error)
+    public void Fail(string? error)
     {
         Status = ScheduleExecutionStatus.Failed;
         Error = error;
-        FinishedAtUtc = now;
+        FinishedAtUtc = DateTimeOffset.UtcNow;
     }
 }

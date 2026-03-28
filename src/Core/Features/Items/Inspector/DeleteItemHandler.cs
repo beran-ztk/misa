@@ -12,7 +12,7 @@ public sealed class DeleteItemHandler(ItemRepository repository)
         if (item == null)
             throw new DomainNotFoundException("Item not found", "");
 
-        item.Delete(DateTimeOffset.UtcNow);
+        item.Delete();
         await repository.SaveChangesAsync(CancellationToken.None);
     }
 }

@@ -8,7 +8,7 @@ public class DismissNotificationHandler(NotificationRepository repository)
 {
     public async Task HandleAsync(DismissNotificationCommand command, CancellationToken ct)
     {
-        await repository.DismissAsync(command.Id, DateTimeOffset.UtcNow, ct);
+        await repository.DismissAsync(command.Id, ct);
         await repository.SaveChangesAsync(ct);
     }
 }

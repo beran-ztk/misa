@@ -11,7 +11,7 @@ public class ContinueSessionHandler(ItemRepository repository)
         if (item?.Activity is null || item.Activity.Sessions.Count == 0 || item.Activity.TryGetSession is null)
             throw new DomainNotFoundException("session.item", "session not found.");
 
-        item.Activity.ContinueCurrentSession(Guid.NewGuid(), DateTimeOffset.UtcNow);
+        item.Activity.ContinueCurrentSession();
 
         await repository.SaveChangesAsync(ct);
     }

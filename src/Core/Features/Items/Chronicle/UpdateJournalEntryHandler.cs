@@ -16,10 +16,8 @@ public sealed class UpdateJournalEntryHandler(ItemRepository repository)
         if (item is null)
             throw new DomainNotFoundException("Item not found", "");
 
-        var nowUtc = DateTimeOffset.UtcNow;
-
-        item.ChangeDescription(command.Description ?? string.Empty, nowUtc);
-        item.ChangeJournalOccurredAt(command.OccurredAtUtc, nowUtc);
+        item.ChangeDescription(command.Description ?? string.Empty);
+        item.ChangeJournalOccurredAt(command.OccurredAtUtc);
 
         await repository.SaveChangesAsync(CancellationToken.None);
     }

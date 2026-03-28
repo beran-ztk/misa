@@ -24,12 +24,10 @@ public class NotifySessionPlannedDurationReachedHandler(
             session.MarkPlannedDurationNotificationSent();
 
             var notification = new Notification(
-                Guid.NewGuid(),
                 "Planned duration reached",
                 $"The planned duration for \"{session.Item.Title}\" has been reached.",
                 NotificationSourceKind.SessionPlannedDurationReached,
-                session.Item.Id.Value,
-                now);
+                session.Item.Id.Value);
 
             await notificationRepository.AddAsync(notification, ct);
             await itemRepository.SaveChangesAsync(ct);

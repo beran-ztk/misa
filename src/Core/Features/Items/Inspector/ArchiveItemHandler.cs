@@ -12,7 +12,7 @@ public sealed class ArchiveItemHandler(ItemRepository repository)
         if (item == null)
             throw new DomainNotFoundException("Item not found", "");
 
-        item.Archive(DateTimeOffset.UtcNow);
+        item.Archive();
         await repository.SaveChangesAsync(CancellationToken.None);
     }
 }

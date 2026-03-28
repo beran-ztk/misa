@@ -7,17 +7,15 @@ public sealed class ItemRelation
     private ItemRelation() { } // EF Core
 
     public ItemRelation(
-        Guid id,
         Guid sourceItemId,
         Guid targetItemId,
-        RelationType relationType,
-        DateTimeOffset createdAtUtc)
+        RelationType relationType)
     {
-        Id = id;
+        Id = Guid.NewGuid();
         SourceItemId = new ItemId(sourceItemId);
         TargetItemId = new ItemId(targetItemId);
         RelationType = relationType;
-        CreatedAtUtc = createdAtUtc;
+        CreatedAtUtc = DateTimeOffset.UtcNow;
     }
 
     public Guid Id { get; init; }

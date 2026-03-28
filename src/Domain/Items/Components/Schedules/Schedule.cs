@@ -91,10 +91,13 @@ public sealed class Schedule : DomainEventEntity
         AddDomainEvent(new PropertyChangedEvent(Id.Value, ChangeType.ActiveUntil, ActiveUntilUtc?.ToString("O"), activeUntilUtc?.ToString("O"), null));
         ActiveUntilUtc = activeUntilUtc;
     }
-    public void CheckAndUpdateNextAllowedExecution(DateTimeOffset utcNow)
-        => NextAllowedExecutionAtUtc = NextAllowedExecutionAtUtc >= utcNow 
-            ? NextAllowedExecutionAtUtc 
+    public void CheckAndUpdateNextAllowedExecution()
+    {
+        var utcNow = DateTimeOffset.UtcNow;
+        NextAllowedExecutionAtUtc = NextAllowedExecutionAtUtc >= utcNow
+            ? NextAllowedExecutionAtUtc
             : SchedulingAnchorUtc;
+    }
     public void ReduceOccurrenceCount()
     {
         if (OccurrenceCountLimit is > 0)
@@ -104,9 +107,9 @@ public sealed class Schedule : DomainEventEntity
     }
     
     // Constructors
-    public ScheduleExecutionLog CreateExecutionLog(Guid executionLogId, DateTimeOffset utcNow)
+    public ScheduleExecutionLog CreateExecutionLog()
     {
-        return new ScheduleExecutionLog(executionLogId, Id, SchedulingAnchorUtc, utcNow);
+        return new ScheduleExecutionLog(Id, SchedulingAnchorUtc);
     }
     public Schedule(
         Guid? targetItemId,

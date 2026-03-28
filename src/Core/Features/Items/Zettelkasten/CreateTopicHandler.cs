@@ -14,9 +14,7 @@ public sealed class CreateTopicHandler(ItemRepository repository)
             : new ItemId(command.ParentId.Value);
 
         var topic = Item.CreateTopic(
-            id: new ItemId(Guid.NewGuid()),
             title: command.Title,
-            createdAtUtc: DateTimeOffset.UtcNow,
             parentId: parentId
         );
 

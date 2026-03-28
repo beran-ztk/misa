@@ -14,7 +14,7 @@ public class PauseSessionHandler(ItemRepository repository)
         if (item?.Activity is null || item.Activity.Sessions.Count == 0 || item.Activity.TryGetSession is null)
             throw new DomainNotFoundException("session.item", "session not found.");
 
-        item.Activity.PauseCurrentSession(command.PauseReason, DateTimeOffset.UtcNow);
+        item.Activity.PauseCurrentSession(command.PauseReason);
 
         await repository.SaveChangesAsync(ct);
     }

@@ -16,11 +16,9 @@ public class CreateTaskHandler(ItemRepository repository)
     public async Task HandleAsync(CreateTaskCommand command, CancellationToken ct)
     {
         var task = Item.CreateTask(
-            new ItemId(Guid.NewGuid()),
-            command.Title, 
+            command.Title,
             command.Description,
-            command.CategoryDto, 
-            DateTimeOffset.UtcNow,
+            command.CategoryDto,
             command.ActivityPriorityDto,
             command.DueDate
         );

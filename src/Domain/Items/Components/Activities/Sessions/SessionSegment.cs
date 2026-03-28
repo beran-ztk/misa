@@ -10,21 +10,18 @@ public class SessionSegment
     public DateTimeOffset? EndedAtUtc { get; private set; }
 
     public SessionSegment() { }
-    public SessionSegment(Guid id, DateTimeOffset startedAtUtc)
+    private SessionSegment(DateTimeOffset startedAtUtc)
     {
-        Id = id;
+        Id = Guid.NewGuid();
         StartedAtUtc = startedAtUtc;
     }
-    public static SessionSegment StartSessionSegment(Guid id, DateTimeOffset startedAtUtc)
-    {
-        return new SessionSegment(id, startedAtUtc);
-    }
-    public void End(DateTimeOffset endedAtUtc, string? pauseReason)
+    public static SessionSegment Create() => new SessionSegment(DateTimeOffset.UtcNow);
+    public void End(string? pauseReason)
     {
         if (EndedAtUtc != null)
             throw new InvalidOperationException("Segment already ended.");
 
-        EndedAtUtc = endedAtUtc;
+        EndedAtUtc = DateTimeOffset.UtcNow;
         PauseReason = pauseReason;
     }
 }

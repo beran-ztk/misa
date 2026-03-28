@@ -18,13 +18,10 @@ public class StartSessionHandler(ItemRepository repository)
             throw new DomainNotFoundException("session.item", "session not found.");
 
         item.Activity.StartSession(
-            sessionId: Guid.NewGuid(),
-            segmentId: Guid.NewGuid(),
-            command.PlannedDuration, 
-            command.Objective, 
-            command.StopAutomatically, 
-            command.AutoStopReason, 
-            DateTimeOffset.UtcNow
+            command.PlannedDuration,
+            command.Objective,
+            command.StopAutomatically,
+            command.AutoStopReason
         );
         
         await repository.SaveChangesAsync(ct);

@@ -22,18 +22,16 @@ public sealed class UpdateTaskHandler(ItemRepository repository)
         if (item?.Activity is null || item.TaskExtension is null)
             throw new DomainNotFoundException("task.not.found", command.ItemId.ToString());
 
-        var nowUtc = DateTimeOffset.UtcNow;
-
         if (!string.IsNullOrEmpty(command.Title))
-            item.ChangeTitle(command.Title, nowUtc);
+            item.ChangeTitle(command.Title);
         if (command.Description is not null)
-            item.ChangeDescription(command.Description, nowUtc);
+            item.ChangeDescription(command.Description);
         if (command.ActivityState is { } state)
-            item.Activity.ChangeState(state, nowUtc, command.Reason);
+            item.Activity.ChangeState(state, command.Reason);
         if (command.ActivityPriority is { } priority)
-            item.Activity.ChangePriority(priority, nowUtc);
+            item.Activity.ChangePriority(priority);
         if (command.TaskCategory is { } category)
-            item.ChangeTaskCategory(category, nowUtc);
+            item.ChangeTaskCategory(category);
 
         await repository.SaveChangesAsync(CancellationToken.None);
     }
