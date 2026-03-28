@@ -1,10 +1,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Input;
-using Misa.Contract.Common.Results;
 using Misa.Contract.Items.Components.Activity.Sessions;
-using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions.Forms;
-using Misa.Ui.Avalonia.Features.Utilities.Toast;
 
 namespace Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Base;
 
@@ -36,43 +33,43 @@ public partial class InspectorEntryViewModel
     [RelayCommand]
     private async Task ShowStartSessionPanelAsync()
     {
-        var formVm = new StartSessionViewModel(Facade.State.Item.Id);
-        
-        var result = await Facade.LayerProxy.OpenAsync<StartSessionViewModel, Result>(formVm);
-        if (result is { IsSuccess: true })
-        {
-            await Facade.Reload();
-            Facade.LayerProxy.ShowActionToast("Session started", type: ToastType.Success);
-        }
+        // var formVm = new StartSessionViewModel(Facade.State.Item.Id);
+        //
+        // var result = await Facade.LayerProxy.OpenAsync<StartSessionViewModel, Result>(formVm);
+        // if (result is { IsSuccess: true })
+        // {
+        //     await Facade.Reload();
+        //     Facade.LayerProxy.ShowActionToast("Session started", type: ToastType.Success);
+        // }
     }
 
     [RelayCommand]
     private async Task ShowPauseSessionPanelAsync()
     {
-        if (CurrentSession == null)
-            return;
-        
-        var formVm = new PauseSessionViewModel(Facade.State.Item.Id);
-        
-        var result = await Facade.LayerProxy.OpenAsync<PauseSessionViewModel, Result>(formVm);
-        if (result is { IsSuccess: true })
-        {
-            await Facade.Reload();
-            Facade.LayerProxy.ShowActionToast("Session paused", type: ToastType.Info);
-        }
+        // if (CurrentSession == null)
+        //     return;
+        //
+        // var formVm = new PauseSessionViewModel(Facade.State.Item.Id);
+        //
+        // var result = await Facade.LayerProxy.OpenAsync<PauseSessionViewModel, Result>(formVm);
+        // if (result is { IsSuccess: true })
+        // {
+        //     await Facade.Reload();
+        //     Facade.LayerProxy.ShowActionToast("Session paused", type: ToastType.Info);
+        // }
     }
     
     [RelayCommand]
     private async Task ShowEndSessionPanelAsync()
     {
-        var formVm = new EndSessionViewModel(Facade.State.Item.Id);
-        
-        var result = await Facade.LayerProxy.OpenAsync<EndSessionViewModel, Result>(formVm);
-        if (result is { IsSuccess: true })
-        {
-            await Facade.Reload();
-            Facade.LayerProxy.ShowActionToast("Session stopped", type: ToastType.Info);
-        }
+        // var formVm = new EndSessionViewModel(Facade.State.Item.Id);
+        //
+        // var result = await Facade.LayerProxy.OpenAsync<EndSessionViewModel, Result>(formVm);
+        // if (result is { IsSuccess: true })
+        // {
+        //     await Facade.Reload();
+        //     Facade.LayerProxy.ShowActionToast("Session stopped", type: ToastType.Info);
+        // }
     }
     [RelayCommand]
     private async Task ContinueSessionAsync()

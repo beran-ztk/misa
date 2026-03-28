@@ -2,10 +2,8 @@ using System;
 using System.Net.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Sessions.Forms;
 using Misa.Ui.Avalonia.Features.Pages.Chronicle;
 using Misa.Ui.Avalonia.Features.Pages.Journal;
-using Misa.Ui.Avalonia.Features.Pages.Tasks;
 using Misa.Ui.Avalonia.Features.Pages.Zettelkasten;
 using Misa.Ui.Avalonia.Features.Utilities.Dev;
 using Misa.Ui.Avalonia.Features.Utilities.Notifications;
@@ -42,10 +40,6 @@ public static class CompositionRoot
 
     private static void AddCore(this IServiceCollection sc, string baseAddress)
     {
-        sc.AddSingleton<LayerProxy>();
-        sc.AddSingleton<ILayerCloser>(sp => sp.GetRequiredService<LayerProxy>());
-        sc.AddTransient<LayerHostView>();
-
         sc.AddSingleton(new HttpClient { BaseAddress = new Uri(baseAddress) });
     }
 
@@ -54,8 +48,6 @@ public static class CompositionRoot
         sc.AddSingleton<ShellState>();
 
         sc.AddSingleton<IWorkspaceHost>(sp => sp.GetRequiredService<ShellState>());
-        sc.AddSingleton<ILayerHost>(sp => sp.GetRequiredService<ShellState>());
-        sc.AddSingleton<IToastHost>(sp => sp.GetRequiredService<ShellState>());
         
         // VMs
         sc.AddSingleton<ShellWindowViewModel>();
@@ -83,17 +75,12 @@ public static class CompositionRoot
         
         sc.AddSingleton<InspectorState>();
         sc.AddSingleton<InspectorFacadeViewModel>();
-        
-        sc.AddTransient<StartSessionView>();
-        sc.AddTransient<PauseSessionView>();
-        sc.AddTransient<EndSessionView>();
     }
 
     private static void AddTasksFeature(this IServiceCollection sc)
     {
         sc.AddSingleton<TaskState>();
         sc.AddSingleton<TaskFacadeViewModel>();
-        sc.AddTransient<CreateTaskView>();
     }
     private static void AddJournalFeature(this IServiceCollection sc)
     {

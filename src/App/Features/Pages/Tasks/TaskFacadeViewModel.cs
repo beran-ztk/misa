@@ -5,22 +5,17 @@ using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Items.Components.Tasks;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Utilities.Toast;
-using LayerProxy = Misa.Ui.Avalonia.Infrastructure.LayerProxy;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Tasks;
 
 public sealed partial class TaskFacadeViewModel : ViewModelBase
 {
-    private readonly LayerProxy _layerProxy;
-
     public TaskState State { get; }
 
     public TaskFacadeViewModel(
-        TaskState state,
-        LayerProxy layerProxy)
+        TaskState state)
     {
         State = state;
-        _layerProxy = layerProxy;
 
         State.SelectionContextState.PropertyChanged += async (s, e) =>
         {
@@ -145,7 +140,7 @@ public sealed partial class TaskFacadeViewModel : ViewModelBase
         // if (created is null) return;
 
         // await State.AppendToMainCollection(created);
-        _layerProxy.ShowActionToast("Task created", type: ToastType.Success);
+        // _layerProxy.ShowActionToast("Task created", type: ToastType.Success);
     }
 
     // ── Restore ─────────────────────────────────────────────────
@@ -160,7 +155,7 @@ public sealed partial class TaskFacadeViewModel : ViewModelBase
         // if (!result.IsSuccess) return;
 
         State.RemoveFromMainCollection(item);
-        _layerProxy.ShowActionToast("Item restored", type: ToastType.Success);
+        // _layerProxy.ShowActionToast("Item restored", type: ToastType.Success);
     }
 
     // ── Hard delete ──────────────────────────────────────────────
@@ -175,7 +170,7 @@ public sealed partial class TaskFacadeViewModel : ViewModelBase
         // if (!result.IsSuccess) return;
 
         State.RemoveFromMainCollection(item);
-        _layerProxy.ShowActionToast("Permanently deleted", type: ToastType.Info);
+        // _layerProxy.ShowActionToast("Permanently deleted", type: ToastType.Info);
     }
 
     // ── Background append ────────────────────────────────────────

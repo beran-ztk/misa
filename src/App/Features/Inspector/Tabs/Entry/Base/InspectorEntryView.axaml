@@ -95,9 +95,7 @@
                                 Orientation="Horizontal">
                         <!-- Quick Done -->
                         <Button Classes="workspace-toolbar-icon"
-                                ToolTip.Tip="Mark as Done"
-                                Command="{Binding MarkAsDoneCommand}"
-                                IsVisible="{Binding CanMarkAsDone}">
+                                ToolTip.Tip="Mark as Done">
                             <Image Source="{SvgImage /Assets/Icons/Common/check.svg}" />
                         </Button>
 

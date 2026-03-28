@@ -6,16 +6,12 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Misa.Contract.Items;
 using Misa.Ui.Avalonia.Common.Mappings;
-using Misa.Ui.Avalonia.Infrastructure;
-using LayerProxy = Misa.Ui.Avalonia.Infrastructure.LayerProxy;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Zettelkasten;
 
 public sealed partial class ZettelkastenViewModel : ViewModelBase
 {
     public ObservableCollection<KnowledgeIndexNodeVm> KnowledgeIndex { get; } = [];
-
-    private readonly LayerProxy _layerProxy;
 
     internal Action? RequestTreeFocus { get; set; }
 
@@ -32,9 +28,8 @@ public sealed partial class ZettelkastenViewModel : ViewModelBase
     private Guid? _reloadTargetId;
     private Guid? _reloadFallbackId;
 
-    public ZettelkastenViewModel(LayerProxy layerProxy)
+    public ZettelkastenViewModel()
     {
-        _layerProxy = layerProxy;
         ZettelVm  = new ZettelViewModel();
     }
 
@@ -45,13 +40,6 @@ public sealed partial class ZettelkastenViewModel : ViewModelBase
     [RelayCommand]
     private async Task RefreshWorkspaceAsync() => await LoadIndexAsync();
 
-    [RelayCommand]
-    private async Task OpenTrashAsync()
-    {
-        var vm = new TrashViewModel();
-        await _layerProxy.OpenAsync<TrashViewModel, object>(vm, LayerPresentation.Panel);
-        await LoadIndexAsync(); // refresh in case entries were restored
-    }
 
     // ── Tree loading ──────────────────────────────────────────────────────────
 

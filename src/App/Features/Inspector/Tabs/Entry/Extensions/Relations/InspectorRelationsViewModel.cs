@@ -1,22 +1,16 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Misa.Contract.Common.Results;
 using Misa.Contract.Items.Components.Relations;
 using Misa.Ui.Avalonia.Common.Mappings;
-using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Relations.Forms;
-using Misa.Ui.Avalonia.Infrastructure.UI;
-using LayerProxy = Misa.Ui.Avalonia.Infrastructure.LayerProxy;
 
 namespace Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Relations;
 
 public sealed partial class InspectorRelationsViewModel : ViewModelBase
 {
     private readonly InspectorFacadeViewModel _facade;
-    private readonly LayerProxy _layerProxy;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasRelations))]
@@ -26,10 +20,9 @@ public sealed partial class InspectorRelationsViewModel : ViewModelBase
 
     public IReadOnlyList<RelationTypeDto> RelationTypes { get; } = Enum.GetValues<RelationTypeDto>();
 
-    public InspectorRelationsViewModel(InspectorFacadeViewModel facade, LayerProxy layerProxy)
+    public InspectorRelationsViewModel(InspectorFacadeViewModel facade)
     {
         _facade = facade;
-        _layerProxy = layerProxy;
 
         facade.State.PropertyChanged += (s, e) =>
         {

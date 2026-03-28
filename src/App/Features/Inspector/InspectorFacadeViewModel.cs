@@ -5,8 +5,6 @@ using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Inspector.Tabs.Activity;
 using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Base;
 using Misa.Ui.Avalonia.Infrastructure;
-using Misa.Ui.Avalonia.Infrastructure.UI;
-using LayerProxy = Misa.Ui.Avalonia.Infrastructure.LayerProxy;
 
 namespace Misa.Ui.Avalonia.Features.Inspector;
 
@@ -16,15 +14,12 @@ public sealed partial class InspectorFacadeViewModel : ViewModelBase
     public InspectorState State { get; }
     public InspectorEntryViewModel Entry { get; }
     public InspectorActivityViewModel Activity { get; }
-    public LayerProxy LayerProxy { get; }
     public InspectorFacadeViewModel(
         ISelectionContextState  selectionContextState,
-        InspectorState inspectorState,
-        LayerProxy layerProxy)
+        InspectorState inspectorState)
     {
         ContextState = selectionContextState;
         State = inspectorState;
-        LayerProxy = layerProxy;
         
         Entry = new InspectorEntryViewModel(this);
         Activity = new InspectorActivityViewModel(this);

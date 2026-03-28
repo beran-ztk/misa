@@ -33,17 +33,6 @@
                         <KeyBinding Gesture="Escape" Command="{Binding ClearSearchAndFocusCommand}"/>
                     </TextBox.KeyBindings>
                 </TextBox>
-                <Button Grid.Column="1"
-                        Command="{Binding OpenTrashCommand}"
-                        Background="Transparent"
-                        BorderThickness="0"
-                        Padding="6,4"
-                        Margin="4,0,0,0"
-                        ToolTip.Tip="Trash"
-                        VerticalAlignment="Center">
-                    <Image Width="13" Height="13" Opacity="0.4"
-                           Source="{SvgImage /Assets/Icons/Common/trash.svg}"/>
-                </Button>
             </Grid>
 
             <ScrollViewer HorizontalScrollBarVisibility="Disabled"

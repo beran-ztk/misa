@@ -3,16 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
-using Misa.Contract.Common.Results;
 using Misa.Contract.Items;
 using Misa.Contract.Items.Components.Relations;
 using Misa.Ui.Avalonia.Common.Mappings;
-using Misa.Ui.Avalonia.Infrastructure;
-using Misa.Ui.Avalonia.Infrastructure.UI;
 
 namespace Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Relations.Forms;
 
-public sealed partial class CreateRelationViewModel : ViewModelBase, IHostedForm<Result>
+public sealed partial class CreateRelationViewModel : ViewModelBase
 {
     private readonly Guid _currentItemId;
     private readonly List<ItemLookupDto> _allItems;
@@ -65,7 +62,7 @@ public sealed partial class CreateRelationViewModel : ViewModelBase, IHostedForm
         _selectedWorkflowFilter = WorkflowOptions[0];
     }
 
-    public async Task<Result<Result>> SubmitAsync()
+    public async Task SubmitAsync()
     {
         // if (SelectedItem is null)
         //     return Result<Result>.Failure();
@@ -76,7 +73,6 @@ public sealed partial class CreateRelationViewModel : ViewModelBase, IHostedForm
         // return result.IsSuccess
         //     ? Result<Result>.Ok(Result.Ok())
         //     : Result<Result>.Failure();
-        return Result<Result>.Failure();
     }
 }
 

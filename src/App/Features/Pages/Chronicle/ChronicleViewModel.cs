@@ -10,8 +10,6 @@ using Misa.Contract.Items.Components.Chronicle;
 using Misa.Ui.Avalonia.Common.Behaviors;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Infrastructure;
-using Misa.Ui.Avalonia.Infrastructure.UI;
-using LayerProxy = Misa.Ui.Avalonia.Infrastructure.LayerProxy;
 
 namespace Misa.Ui.Avalonia.Features.Pages.Chronicle;
 
@@ -26,7 +24,6 @@ public sealed class ChronicleGroup
 public partial class ChronicleViewModel : ViewModelBase
 {
     private readonly ISelectionContextState    _selectionContextState;
-    private readonly LayerProxy                _layerProxy;
 
     private IReadOnlyCollection<ChronicleEntryDto> _allEntries = [];
 
@@ -37,12 +34,9 @@ public partial class ChronicleViewModel : ViewModelBase
     [ObservableProperty] private DateTimeOffset? _filterFrom;
     [ObservableProperty] private DateTimeOffset? _filterTo;
 
-    public ChronicleViewModel(
-        ISelectionContextState selectionContextState,
-        LayerProxy             layerProxy)
+    public ChronicleViewModel(ISelectionContextState selectionContextState)
     {
         _selectionContextState = selectionContextState;
-        _layerProxy            = layerProxy;
 
         _filterFrom = DateTimeOffset.UtcNow.AddDays(-30);
         _filterTo   = DateTimeOffset.UtcNow.AddDays(7);

@@ -7,7 +7,7 @@ using Misa.Ui.Avalonia.Shell.Components;
 
 namespace Misa.Ui.Avalonia.Infrastructure;
 
-public partial class ShellState : ObservableObject, ILayerHost, IToastHost, IWorkspaceHost
+public partial class ShellState : ObservableObject, IWorkspaceHost
 {
     private readonly ISelectionContextState _selectionContext;
     
@@ -32,25 +32,4 @@ public partial class ShellState : ObservableObject, ILayerHost, IToastHost, IWor
     
     [ObservableProperty] private ViewModelBase _utilityNavigation;
     [ObservableProperty] private ViewModelBase? _utility;
-    
-    // Panel
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsPanelOpen))]
-    private Control? _panel;
-    public bool IsPanelOpen => Panel is not null;
-    
-    // Modal
-    [ObservableProperty] 
-    [NotifyPropertyChangedFor(nameof(IsModalOpen))]
-    private Control? _modal;
-    public bool IsModalOpen => Modal is not null;
-
-    
-    // Side toasts — system / SignalR notifications (bottom-right)
-    public ObservableCollection<ToastViewModel> Toasts { get; } = [];
-
-    // Action toasts — transient user feedback (top-center, max 1)
-    public ObservableCollection<ToastViewModel> ActionToasts { get; } = [];
-
-    [ObservableProperty] private ViewModelBase? _busy;
 }

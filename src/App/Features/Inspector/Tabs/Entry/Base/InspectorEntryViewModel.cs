@@ -23,7 +23,7 @@ public partial class InspectorEntryViewModel : ViewModelBase
     {
         Facade = facade;
         Facade.State.PropertyChanged += OnFacadeStatePropertyChanged;
-        Relations = new InspectorRelationsViewModel(facade, facade.LayerProxy);
+        Relations = new InspectorRelationsViewModel(facade);
     }
 
     [RelayCommand]
@@ -78,7 +78,6 @@ public partial class InspectorEntryViewModel : ViewModelBase
     {
         Facade.State.IsEditItemFormOpen = false;
         OnPropertyChanged(nameof(OverviewTitle));
-        OnPropertyChanged(nameof(CanMarkAsDone));
     }
     private void CurrentSessionPropertyChanged()
     {

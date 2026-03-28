@@ -13,7 +13,6 @@ using Misa.Contract.Features.Messaging;
 using Misa.Contract.Notifications;
 using Misa.Ui.Avalonia.Shell.Components;
 using Misa.Ui.Avalonia.Common.Mappings;
-using LayerProxy = Misa.Ui.Avalonia.Infrastructure.LayerProxy;
 
 namespace Misa.Ui.Avalonia.Features.Utilities.Notifications;
 
@@ -60,7 +59,6 @@ public sealed partial class NotificationViewModel : ViewModelBase
     private const int PageSize        = 25;
     private const int DismissWindowMs = 4000;
 
-    private readonly LayerProxy                       _layerProxy;
     private readonly WorkspaceNavigationViewModel     _navigation;
     private readonly ConcurrentDictionary<Guid, CancellationTokenSource> _pendingDismiss = new();
 
@@ -79,11 +77,8 @@ public sealed partial class NotificationViewModel : ViewModelBase
 
     public bool HasUnread => UnreadCount > 0;
 
-    public NotificationViewModel(
-        LayerProxy                   layerProxy,
-        WorkspaceNavigationViewModel navigation)
+    public NotificationViewModel(WorkspaceNavigationViewModel navigation)
     {
-        _layerProxy = layerProxy;
         _navigation = navigation;
         Notifications.CollectionChanged += (_, _) => OnPropertyChanged(nameof(IsEmpty));
         _ = LoadAsync();

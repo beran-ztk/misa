@@ -43,12 +43,6 @@ public partial class ShellWindowViewModel : ViewModelBase
     [RelayCommand]
     private void Dismiss()
     {
-        if (ShellState.IsModalOpen || ShellState.IsPanelOpen)
-        {
-            LayerCloser.Close();
-            return;
-        }
-
         if (ShellState.Utility is not null)
         {
             ShellState.Utility = null;
