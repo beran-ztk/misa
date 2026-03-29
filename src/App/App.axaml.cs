@@ -1,6 +1,5 @@
 using System;
 using System.Linq;
-using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
@@ -10,7 +9,7 @@ using ShellWindow = Misa.App.Shell.ShellWindow;
 
 namespace Misa.App;
 
-public class App : Application
+public class App : Avalonia.Application
 {
     private static IServiceProvider Services { get; set; } = null!;
     public override void Initialize()

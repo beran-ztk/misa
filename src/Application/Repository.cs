@@ -1,7 +1,7 @@
 ﻿using Misa.Domain;
 using Misa.Infrastructure;
 
-namespace Misa.Core;
+namespace Misa.Application;
 
 public sealed class Repository(Context context)
 {

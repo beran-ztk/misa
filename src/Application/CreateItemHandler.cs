@@ -1,6 +1,6 @@
 using Misa.Domain;
 
-namespace Misa.Core;
+namespace Misa.Application;
 
 public record CreateTopicCommand(Guid ParentId, string Title);
 public record CreateNoteCommand(Guid ParentId, string Title, string Content);

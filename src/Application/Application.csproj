@@ -4,7 +4,7 @@
         <TargetFramework>net9.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <RootNamespace>Misa.Core</RootNamespace>
+        <RootNamespace>Misa.Application</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
