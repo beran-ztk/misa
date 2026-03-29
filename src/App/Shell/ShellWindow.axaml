@@ -10,63 +10,23 @@
         WindowStartupLocation="CenterScreen"
         ExtendClientAreaToDecorationsHint="True"
         ExtendClientAreaChromeHints="NoChrome">
-    
-    <!-- https://www.flaticon.com/free-icon/book_3794883?related_id=3794883 -->
-    
-    <Window.KeyBindings>
-        <!-- Utility -->
-        <KeyBinding Gesture="Escape"     Command="{Binding DismissCommand}"/>
-    </Window.KeyBindings>
 
     <Grid>
         
-        <Grid x:Name="ShellLayer"
-              ZIndex="10"
-              RowDefinitions="40,*">
+        <Grid RowDefinitions="40,*">
             
             <ContentControl Grid.Row="0" 
-                            Content="{Binding ShellState.Header}"/>
+                            Content="{Binding Header}"/>
             
-            <Grid Grid.Row="1"
-                  RowDefinitions="*,25">
-                <Grid.ColumnDefinitions>
-                    <!-- Auto: left navigation rail — width driven by WorkspaceNavigationView.NavWidth -->
-                    <ColumnDefinition Width="48"/>
-                    <!-- Flex: workspace is the sole star column and absorbs all remaining space -->
-                    <ColumnDefinition Width="*"/>
-                    <!-- Auto: inspector collapses to zero when not visible; MaxWidth caps growth -->
-                    <ColumnDefinition Width="Auto" MaxWidth="450"/>
-                    <!-- Auto: utility collapses to zero when not visible; MaxWidth caps growth -->
-                    <ColumnDefinition Width="Auto" MaxWidth="600"/>
-                    <!-- Fixed: right utility navigation rail -->
-                    <ColumnDefinition Width="40"/>
-                </Grid.ColumnDefinitions>
+            <Grid Grid.Row="1" 
+                  ColumnDefinitions="400,*">
 
                 <ContentControl Grid.Column="0"
-                                Grid.Row="0" Grid.RowSpan="2"
-                                Content="{Binding ShellState.WorkspaceNavigation}"/>
+                                Content="{Binding Navigation}"/>
 
                 <ContentControl Grid.Column="1"
-                                Grid.Row="0"
                                 Background="{StaticResource BrushPrimaryBackground}"
-                                Content="{Binding ShellState.Workspace}"/>
-
-                <ContentControl Grid.Column="2"
-                                Grid.Row="0"
-                                Content="{Binding ShellState.Inspector}"
-                                IsVisible="{Binding ShellState.SelectionContextHasId}"/>
-
-                <ContentControl Grid.Column="3"
-                                Grid.Row="0"
-                                Content="{Binding ShellState.Utility}"/>
-
-                <ContentControl Grid.Column="4"
-                                Grid.Row="0"
-                                Content="{Binding ShellState.UtilityNavigation}"/>
-
-                <ContentControl Grid.Column="1" Grid.ColumnSpan="4"
-                                Grid.Row="1"
-                                Content="{Binding ShellState.Footer}"/>
+                                Content="{Binding Workspace}"/>
             </Grid>
         </Grid>
         

@@ -1,7 +1,7 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="Misa.Ui.Avalonia.App"
-             xmlns:mappings="clr-namespace:Misa.Ui.Avalonia.Common.Mappings"
+             xmlns:mappings="clr-namespace:Misa.Ui.Avalonia.Infrastructure"
              RequestedThemeVariant="Default">
 
     <Application.DataTemplates>
