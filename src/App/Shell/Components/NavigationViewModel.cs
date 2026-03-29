@@ -38,14 +38,13 @@ public partial class IndexEntry : ObservableObject
     }
     
     // ── Child creation state ──────────────────────────────────────────────────
-
+    public required Func<Kind, Guid?, Task<IndexEntry?>> OnCreateIndex { get; init; }
+    
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsTopicSelected))]
     [NotifyPropertyChangedFor(nameof(IsNoteSelected))]
     [NotifyPropertyChangedFor(nameof(IsQuestSelected))]
     private Kind _pendingKind = Kind.Topic;
-
-    [ObservableProperty] private string _pendingTitle = string.Empty;
 
     public bool IsTopicSelected => PendingKind == Kind.Topic;
     public bool IsNoteSelected  => PendingKind == Kind.Note;
@@ -54,7 +53,6 @@ public partial class IndexEntry : ObservableObject
     [RelayCommand] private void SetKindTopic() => PendingKind = Kind.Topic;
     [RelayCommand] private void SetKindNote()  => PendingKind = Kind.Note;
     [RelayCommand] private void SetKindQuest() => PendingKind = Kind.Quest;
-    public required Func<Kind, Guid?, Task<IndexEntry?>> OnCreateIndex { get; init; }
 
     [RelayCommand]
     private async Task CreateIndex()
