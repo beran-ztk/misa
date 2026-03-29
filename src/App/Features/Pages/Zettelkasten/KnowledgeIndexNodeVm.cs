@@ -21,7 +21,7 @@ public partial class KnowledgeIndexNodeVm : ObservableObject
         };
     }
 
-    // ── Core data ─────────────────────────────────────────────────────────────
+    // ── Application data ─────────────────────────────────────────────────────────────
 
     public Guid          Id        { get; init; }
     public Workflow   Workflow  { get; init; }

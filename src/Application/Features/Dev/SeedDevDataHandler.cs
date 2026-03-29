@@ -402,12 +402,12 @@ public sealed class SeedDevDataHandler(ItemRepository repository)
     //                         ]),
     //                 ]),
     //             new KnowledgeSeed("Job Tracking",
-    //                 ["Company watchlist", "Core status"],
+    //                 ["Company watchlist", "Application status"],
     //                 [
     //                     new KnowledgeSeed("Applications",
     //                         ["Applied positions", "Response tracker"],
     //                         [
-    //                             new KnowledgeSeed("Sent",    ["Core tracker", "Submission log"], []),
+    //                             new KnowledgeSeed("Sent",    ["Application tracker", "Submission log"], []),
     //                             new KnowledgeSeed("Pending", ["Awaiting response", "Follow-up list"], []),
     //                         ]),
     //                     new KnowledgeSeed("Interviews",

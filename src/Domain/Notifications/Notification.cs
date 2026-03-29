@@ -8,7 +8,7 @@ public enum NotificationSourceKind
 
 public sealed class Notification
 {
-    private Notification() { } // EF Core
+    private Notification() { } // EF Application
 
     public Notification(
         string title,

@@ -4,7 +4,7 @@ namespace Misa.Domain.Items.Components.Relations;
 
 public sealed class ItemRelation
 {
-    private ItemRelation() { } // EF Core
+    private ItemRelation() { } // EF Application
 
     public ItemRelation(
         Guid sourceItemId,

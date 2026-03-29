@@ -5,7 +5,7 @@ namespace Misa.Domain.Items.Components.Schedules;
 /// </summary>
 public sealed class ScheduleExecutionLog
 {
-    private ScheduleExecutionLog() { } // EF Core
+    private ScheduleExecutionLog() { } // EF Application
     public ScheduleExecutionLog(
         ItemId schedulerId,
         DateTimeOffset scheduledForUtc)

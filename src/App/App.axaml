@@ -42,9 +42,6 @@
          <StyleInclude Source="avares://App/Assets/Styles/Components/Workspace.AddPanel.axaml"/>
          
          <!-- Views -->
-         <StyleInclude Source="avares://App/Assets/Styles/Features/ChronicleList.axaml"/>
-         <StyleInclude Source="avares://App/Assets/Styles/Features/Notifications.axaml"/>
-         <StyleInclude Source="avares://App/Assets/Styles/Features/Toast.axaml"/>
          <StyleInclude Source="avares://App/Assets/Styles/Features/UtilityNavigation.axaml"/>
          <StyleInclude Source="avares://App/Assets/Styles/Features/WorkspaceNavigation.axaml"/>
          

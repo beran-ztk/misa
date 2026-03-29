@@ -1,7 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Relations.Forms"
-             xmlns:dtos="clr-namespace:Misa.Core.Features.Items.Relations;assembly=Core"
+             xmlns:dtos="clr-namespace:Misa.Core.Features.Items.Relations;assembly=Application"
              x:Class="Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Relations.Forms.CreateRelationView"
              x:DataType="vm:CreateRelationViewModel">
 

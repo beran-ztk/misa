@@ -8,7 +8,7 @@ namespace Misa.Domain.Items.Components.Schedules;
 /// </summary>
 public sealed class Schedule : DomainEventEntity
 {
-    private Schedule() { } // EF Core
+    private Schedule() { } // EF Application
     
     // Fields + Properties
     public ItemId Id { get; init; }
