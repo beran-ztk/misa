@@ -3,11 +3,12 @@ using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Misa.App.Infrastructure;
+using Misa.Application;
 using Misa.Domain;
 
 namespace Misa.App.Shell.Workspace;
 
-public sealed partial class NoteViewModel : ViewModelBase
+public sealed partial class NoteViewModel(Dispatcher dispatcher) : ViewModelBase(dispatcher)
 {
     private Guid Id { get; set; }
 
@@ -21,17 +22,17 @@ public sealed partial class NoteViewModel : ViewModelBase
 
     // ── Loading ───────────────────────────────────────────────────────────────
 
-    public void Load(Item dto)
+    public void Load(Item item)
     {
         _saveCts?.Cancel();
         _saveCts?.Dispose();
-        _saveCts   = null;
-        _loading   = true;
+        _saveCts = null;
+        _loading = true;
 
-        Id         = dto.Id;
-        Title      = dto.Title;
-        Content    = dto.Note?.Content;
-        IsDirty    = false;
+        Id      = item.Id;
+        Title   = item.Title;
+        Content = item.Note?.Content;
+        IsDirty = false;
 
         _loading = false;
     }
@@ -59,11 +60,8 @@ public sealed partial class NoteViewModel : ViewModelBase
         try
         {
             await Task.Delay(TimeSpan.FromSeconds(2), ct);
-            // var result = await gateway.UpdateZettelContentAsync(Id, content);
-            if (true)
-            {
-                IsDirty    = false;
-            }
+            // TODO: dispatch UpdateNoteContentCommand once query + update handlers exist
+            IsDirty = false;
         }
         catch (OperationCanceledException) { }
     }

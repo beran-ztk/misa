@@ -2,17 +2,13 @@ using Misa.Domain;
 
 namespace Misa.Application;
 
-public record CreateTopicCommand(Guid ParentId, string Title);
+public record CreateTopicCommand(Guid? ParentId, string Title);
 public record CreateNoteCommand(Guid ParentId, string Title, string Content);
 public record CreateQuestCommand(Guid ParentId, string Title);
 
 public sealed class CreateItemHandler(Repository repository)
 {
-    private async Task Save(Item item)
-    {
-        await repository.AddAsync(item);
-        await repository.SaveChangesAsync();
-    }
+    private Task Save(Item item) => repository.AddAsync(item);
     
     // Create Topic
     public async Task Handle(CreateTopicCommand createTopicCommand)

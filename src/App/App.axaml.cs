@@ -1,17 +1,21 @@
 using System;
+using System.IO;
 using System.Linq;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Misa.App.Shell;
 using Misa.App.Shell.Components;
+using Misa.App.Shell.Workspace;
+using Misa.Application;
+using Misa.Infrastructure;
 
 namespace Misa.App;
 
 public class App : Avalonia.Application
 {
-    private static IServiceProvider Services { get; set; } = null!;
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
@@ -19,23 +23,42 @@ public class App : Avalonia.Application
 
     public override void OnFrameworkInitializationCompleted()
     {
+        var dbPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "Misa", "misa.db");
+        Directory.CreateDirectory(Path.GetDirectoryName(dbPath)!);
+
         var services = new ServiceCollection();
-        services.AddSingleton<ShellWindowViewModel>();
+
+        // ── Persistence ───────────────────────────────────────────────────────
+        services.AddDbContextFactory<Context>(opt =>
+            opt.UseSqlite($"Data Source={dbPath}"));
+
+        // ── Application ───────────────────────────────────────────────────────
+        services.AddSingleton<Repository>();
+        services.AddSingleton<CreateItemHandler>();
+        services.AddSingleton<Dispatcher>();
+
+        // ── Shell ─────────────────────────────────────────────────────────────
         services.AddSingleton<HeaderViewModel>();
         services.AddSingleton<NavigationViewModel>();
-
+        services.AddSingleton<NoteViewModel>();
+        services.AddSingleton<ShellWindowViewModel>();
         services.AddTransient<ShellWindow>(sp => new ShellWindow
         {
             DataContext = sp.GetRequiredService<ShellWindowViewModel>()
         });
 
-        Services = services.BuildServiceProvider();
+        var sp = services.BuildServiceProvider();
+
+        // Ensure database schema exists
+        using var db = sp.GetRequiredService<IDbContextFactory<Context>>().CreateDbContext();
+        db.Database.EnsureCreated();
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             DisableAvaloniaDataAnnotationValidation();
-
-            desktop.MainWindow = Services.GetRequiredService<ShellWindow>();
+            desktop.MainWindow = sp.GetRequiredService<ShellWindow>();
         }
 
         base.OnFrameworkInitializationCompleted();
@@ -43,14 +66,8 @@ public class App : Avalonia.Application
 
     private void DisableAvaloniaDataAnnotationValidation()
     {
-        // Get an array of plugins to remove
-        var dataValidationPluginsToRemove =
-            BindingPlugins.DataValidators.OfType<DataAnnotationsValidationPlugin>().ToArray();
-
-        // remove each entry found
-        foreach (var plugin in dataValidationPluginsToRemove)
-        {
+        var toRemove = BindingPlugins.DataValidators.OfType<DataAnnotationsValidationPlugin>().ToArray();
+        foreach (var plugin in toRemove)
             BindingPlugins.DataValidators.Remove(plugin);
-        }
     }
 }

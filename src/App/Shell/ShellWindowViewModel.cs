@@ -1,22 +1,15 @@
-﻿using System;
-using Microsoft.Extensions.DependencyInjection;
 using Misa.App.Infrastructure;
 using Misa.App.Shell.Components;
+using Misa.Application;
 
 namespace Misa.App.Shell;
 
-public partial class ShellWindowViewModel : ViewModelBase
+public partial class ShellWindowViewModel(
+    Dispatcher dispatcher,
+    HeaderViewModel header,
+    NavigationViewModel navigation) : ViewModelBase(dispatcher)
 {
-    private IServiceProvider ServiceProvider { get; }
-    public ViewModelBase Header { get; init; }
-    public ViewModelBase Navigation { get; init; }
+    public ViewModelBase Header { get; } = header;
+    public ViewModelBase Navigation { get; } = navigation;
     public ViewModelBase? Workspace { get; set; }
-
-    public ShellWindowViewModel(IServiceProvider serviceProvider)
-    {
-        ServiceProvider = serviceProvider;
-
-        Header = ServiceProvider.GetRequiredService<HeaderViewModel>();
-        Navigation = ServiceProvider.GetRequiredService<NavigationViewModel>();
-    }
 }

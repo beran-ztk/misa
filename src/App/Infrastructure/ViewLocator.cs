@@ -2,10 +2,14 @@ using System;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Misa.Application;
 
 namespace Misa.App.Infrastructure;
 
-public class ViewModelBase : ObservableObject;
+public class ViewModelBase(Dispatcher dispatcher) : ObservableObject
+{
+    protected Dispatcher Dispatcher { get; } = dispatcher;
+}
 
 public class ViewLocator : IDataTemplate
 {

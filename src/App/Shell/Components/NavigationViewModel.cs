@@ -1,7 +1,9 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Misa.App.Infrastructure;
+using Misa.Application;
 using Misa.Domain;
 
 namespace Misa.App.Shell.Components;
@@ -14,7 +16,19 @@ public partial class IndexEntry : ObservableObject
     public string Title { get; init; } = string.Empty;
     public ObservableCollection<IndexEntry> Children { get; } = [];
 }
-public sealed class NavigationViewModel : ViewModelBase
+
+public sealed class NavigationViewModel(Dispatcher dispatcher) : ViewModelBase(dispatcher)
 {
     public ObservableCollection<IndexEntry> IndexEntries { get; } = [];
+
+    private async Task Create()
+    {
+        var parentId = Guid.Empty;
+        var title = string.Empty;
+        var content = string.Empty;
+        
+        await Dispatcher.SendAsync(new CreateNoteCommand(parentId, title, content));
+        await Dispatcher.SendAsync(new CreateTopicCommand(parentId, title));
+        await Dispatcher.SendAsync(new CreateQuestCommand(parentId, title));
+    }
 }
