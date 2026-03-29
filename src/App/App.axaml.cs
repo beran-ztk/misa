@@ -4,8 +4,8 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
 using Microsoft.Extensions.DependencyInjection;
-using Misa.App.Infrastructure;
-using ShellWindow = Misa.App.Shell.ShellWindow;
+using Misa.App.Shell;
+using Misa.App.Shell.Components;
 
 namespace Misa.App;
 
@@ -19,8 +19,17 @@ public class App : Avalonia.Application
 
     public override void OnFrameworkInitializationCompleted()
     {
-        const string baseAddress = "https://localhost:4500";
-        Services = CompositionRoot.Build(baseAddress).BuildServiceProvider();
+        var services = new ServiceCollection();
+        services.AddSingleton<ShellWindowViewModel>();
+        services.AddSingleton<HeaderViewModel>();
+        services.AddSingleton<NavigationViewModel>();
+
+        services.AddTransient<ShellWindow>(sp => new ShellWindow
+        {
+            DataContext = sp.GetRequiredService<ShellWindowViewModel>()
+        });
+
+        Services = services.BuildServiceProvider();
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
