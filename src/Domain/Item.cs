@@ -36,10 +36,10 @@ public sealed class Item
         var item = new Item(parentId, Kind.Topic, title);
         return item;
     }
-    public static Item CreateNote(Guid parentId, string title, string content)
+    public static Item CreateNote(Guid parentId, string title)
     {
         var item = new Item(parentId, Kind.Note, title);
-        item.Note = new Note(item.Id, content);
+        item.Note = new Note(item.Id);
         return item;
     }
     public static Item CreateQuest(Guid parentId, string title)

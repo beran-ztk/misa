@@ -17,6 +17,30 @@ public partial class IndexEntry : ObservableObject
     public Kind Kind { get; init; }
     public string Title { get; init; } = string.Empty;
     public ObservableCollection<IndexEntry> Children { get; } = [];
+
+    // ── Child creation state ──────────────────────────────────────────────────
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsTopicSelected))]
+    [NotifyPropertyChangedFor(nameof(IsNoteSelected))]
+    [NotifyPropertyChangedFor(nameof(IsQuestSelected))]
+    private Kind _pendingKind = Kind.Topic;
+
+    [ObservableProperty] private string _pendingTitle = string.Empty;
+
+    public bool IsTopicSelected => PendingKind == Kind.Topic;
+    public bool IsNoteSelected  => PendingKind == Kind.Note;
+    public bool IsQuestSelected => PendingKind == Kind.Quest;
+
+    [RelayCommand] private void SetKindTopic() => PendingKind = Kind.Topic;
+    [RelayCommand] private void SetKindNote()  => PendingKind = Kind.Note;
+    [RelayCommand] private void SetKindQuest() => PendingKind = Kind.Quest;
+
+    // Wired by NavigationViewModel during BuildTree
+    internal Func<IndexEntry, Task>? OnCreateChild { get; set; }
+
+    [RelayCommand]
+    private Task CreateChild() => OnCreateChild?.Invoke(this) ?? Task.CompletedTask;
 }
 
 public sealed partial class NavigationViewModel : ViewModelBase
@@ -40,7 +64,17 @@ public sealed partial class NavigationViewModel : ViewModelBase
     {
         var map = new Dictionary<Guid, IndexEntry>(items.Count);
         foreach (var item in items)
-            map[item.Id] = new IndexEntry { Id = item.Id, ParentId = item.ParentId, Kind = item.Kind, Title = item.Title };
+        {
+            var entry = new IndexEntry
+            {
+                Id       = item.Id,
+                ParentId = item.ParentId,
+                Kind     = item.Kind,
+                Title    = item.Title,
+            };
+            entry.OnCreateChild = CreateChildAsync;
+            map[item.Id] = entry;
+        }
 
         IndexEntries.Clear();
         foreach (var entry in map.Values)
@@ -50,6 +84,27 @@ public sealed partial class NavigationViewModel : ViewModelBase
             else
                 parent.Children.Add(entry);
         }
+    }
+
+    private async Task CreateChildAsync(IndexEntry parent)
+    {
+        if (string.IsNullOrWhiteSpace(parent.PendingTitle)) return;
+
+        switch (parent.PendingKind)
+        {
+            case Kind.Topic:
+                await Dispatcher.SendAsync(new CreateTopicRequest(parent.Id, parent.PendingTitle));
+                break;
+            case Kind.Note:
+                await Dispatcher.SendAsync(new CreateNoteRequest(parent.Id, parent.PendingTitle));
+                break;
+            case Kind.Quest:
+                await Dispatcher.SendAsync(new CreateQuestRequest(parent.Id, parent.PendingTitle));
+                break;
+        }
+
+        parent.PendingTitle = string.Empty;
+        await LoadAsync();
     }
 
     [RelayCommand]

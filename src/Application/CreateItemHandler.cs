@@ -3,7 +3,7 @@ using Misa.Domain;
 namespace Misa.Application;
 
 public record CreateTopicRequest(Guid? ParentId, string Title);
-public record CreateNoteRequest(Guid ParentId, string Title, string Content);
+public record CreateNoteRequest(Guid ParentId, string Title);
 public record CreateQuestRequest(Guid ParentId, string Title);
 
 public sealed class CreateItemHandler(Repository repository)
@@ -20,7 +20,7 @@ public sealed class CreateItemHandler(Repository repository)
     // Create Note
     public async Task Handle(CreateNoteRequest createNoteRequest)
     {
-        var item = Item.CreateNote(createNoteRequest.ParentId, createNoteRequest.Title, createNoteRequest.Content);
+        var item = Item.CreateNote(createNoteRequest.ParentId, createNoteRequest.Title);
         await Save(item);
     }
     

@@ -2,7 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="600"
              x:Class="Misa.App.Shell.Components.NavigationView"
              xmlns:root="clr-namespace:Misa.App.Shell.Components"
              x:DataType="root:NavigationViewModel">
@@ -42,14 +42,77 @@
                     <Style Selector="Border.index-entry-row:pointerover">
                         <Setter Property="Background" Value="Transparent"/>
                     </Style>
+                    <!-- Reveal add button only on hover -->
+                    <Style Selector="Border.index-entry-row Button.add-child">
+                        <Setter Property="Opacity" Value="0"/>
+                    </Style>
+                    <Style Selector="Border.index-entry-row:pointerover Button.add-child">
+                        <Setter Property="Opacity" Value="1"/>
+                    </Style>
                 </TreeView.Styles>
 
                 <TreeView.ItemTemplate>
-                    <TreeDataTemplate ItemsSource="{Binding Children}">
+                    <TreeDataTemplate x:DataType="root:IndexEntry"
+                                      ItemsSource="{Binding Children}">
                         <Border Classes="index-entry-row">
-                            <TextBlock Text="{Binding Title}"
-                                       Opacity="0.8"
-                                       TextTrimming="CharacterEllipsis"/>
+                            <Grid ColumnDefinitions="*,Auto">
+
+                                <TextBlock Grid.Column="0"
+                                           Text="{Binding Title}"
+                                           Opacity="0.8"
+                                           VerticalAlignment="Center"
+                                           TextTrimming="CharacterEllipsis"/>
+
+                                <Button Grid.Column="1"
+                                        Classes="add-child"
+                                        Content="+"
+                                        Padding="6,2"
+                                        VerticalAlignment="Center"
+                                        Foreground="{StaticResource BrushTextFaded}"
+                                        FontSize="{StaticResource FontSizeMedium}">
+                                    <Button.Flyout>
+                                        <Flyout Placement="BottomEdgeAlignedRight">
+                                            <Border x:DataType="root:IndexEntry"
+                                                    Background="{StaticResource BrushControlSurface}"
+                                                    CornerRadius="{StaticResource CornerRadiusCard}"
+                                                    Padding="12">
+                                            <StackPanel Width="188"
+                                                        Spacing="{StaticResource SpacingMedium}">
+
+                                                <!-- Kind selector -->
+                                                <StackPanel Orientation="Horizontal"
+                                                            Spacing="{StaticResource SpacingSmall}">
+                                                    <Button Classes="btn-seg"
+                                                            Classes.active="{Binding IsTopicSelected}"
+                                                            Content="Topic"
+                                                            Command="{Binding SetKindTopicCommand}"/>
+                                                    <Button Classes="btn-seg"
+                                                            Classes.active="{Binding IsNoteSelected}"
+                                                            Content="Zettel"
+                                                            Command="{Binding SetKindNoteCommand}"/>
+                                                    <Button Classes="btn-seg"
+                                                            Classes.active="{Binding IsQuestSelected}"
+                                                            Content="Quest"
+                                                            Command="{Binding SetKindQuestCommand}"/>
+                                                </StackPanel>
+
+                                                <!-- Title input -->
+                                                <TextBox Text="{Binding PendingTitle}"
+                                                         Watermark="Title…"/>
+
+                                                <!-- Confirm -->
+                                                <Button Classes="btn-primary"
+                                                        Content="Create"
+                                                        HorizontalAlignment="Stretch"
+                                                        Command="{Binding CreateChildCommand}"/>
+
+                                            </StackPanel>
+                                            </Border>
+                                        </Flyout>
+                                    </Button.Flyout>
+                                </Button>
+
+                            </Grid>
                         </Border>
                     </TreeDataTemplate>
                 </TreeView.ItemTemplate>

@@ -4,10 +4,9 @@ public sealed class Note
 {
     private Note() { } // EF
 
-    public Note(Guid itemId, string content)
+    public Note(Guid itemId)
     {
         ItemId = itemId;
-        Content = content;
     }
     
     // Fields + Properties
