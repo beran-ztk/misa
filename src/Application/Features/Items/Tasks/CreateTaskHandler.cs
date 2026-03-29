@@ -1,4 +1,4 @@
-﻿using Misa.Core.Common.Abstractions.Persistence;
+﻿using Misa.Core.Persistence;
 using Misa.Domain.Items;
 using Misa.Domain.Items.Components.Activities;
 using Misa.Domain.Items.Components.Tasks;

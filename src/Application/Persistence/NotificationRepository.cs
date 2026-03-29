@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Misa.Domain.Notifications;
 using Misa.Infrastructure.Persistence;
 
-namespace Misa.Core.Common.Abstractions.Persistence;
+namespace Misa.Core.Persistence;
 
 public class NotificationRepository(Context context)
 {

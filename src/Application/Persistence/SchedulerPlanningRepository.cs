@@ -4,7 +4,7 @@ using Misa.Domain.Items.Components.Schedules;
 using Misa.Infrastructure.Persistence;
 using Npgsql;
 
-namespace Misa.Core.Common.Abstractions.Persistence;
+namespace Misa.Core.Persistence;
 public sealed class SchedulerPlanningRepository(Context context)
 {
     public Task SaveChangesAsync(CancellationToken ct) => context.SaveChangesAsync(ct);

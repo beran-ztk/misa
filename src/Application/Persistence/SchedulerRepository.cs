@@ -1,7 +1,7 @@
 ﻿using Misa.Domain.Items.Components.Schedules;
 using Misa.Infrastructure.Persistence;
 
-namespace Misa.Core.Common.Abstractions.Persistence;
+namespace Misa.Core.Persistence;
 
 public class SchedulerRepository(Context context)
 {

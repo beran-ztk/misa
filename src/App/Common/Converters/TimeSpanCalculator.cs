@@ -1,4 +1,8 @@
-namespace Misa.Core.Common.Converters;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace Misa.Ui.Avalonia.Common.Converters;
 public record StartToEndTimestamp(DateTimeOffset StartedAtUtc, DateTimeOffset? EndedAtUtc);
 public static class TimeSpanCalculator
 {

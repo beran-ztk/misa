@@ -1,4 +1,4 @@
-﻿using Misa.Core.Common.Abstractions.Persistence;
+﻿using Misa.Core.Persistence;
 using Misa.Domain.Exceptions;
 
 namespace Misa.Core.Features.Items.Sessions;

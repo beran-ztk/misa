@@ -7,7 +7,7 @@ using Misa.Domain.Items.Components.Relations;
 using Misa.Infrastructure.Persistence;
 using Item = Misa.Domain.Items.Item;
 
-namespace Misa.Core.Common.Abstractions.Persistence;
+namespace Misa.Core.Persistence;
 
 public class ItemRepository(Context context)
 {

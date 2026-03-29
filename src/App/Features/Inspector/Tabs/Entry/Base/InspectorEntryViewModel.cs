@@ -4,9 +4,9 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Input;
-using Misa.Core.Common.Converters;
 using Misa.Core.Features.Items.Sessions;
 using Misa.Domain.Items.Components.Activities.Sessions;
+using Misa.Ui.Avalonia.Common.Converters;
 using Misa.Ui.Avalonia.Common.Mappings;
 using Misa.Ui.Avalonia.Features.Inspector.Tabs.Entry.Extensions.Relations;
 
