@@ -3,7 +3,7 @@
         xmlns:shell1="clr-namespace:Misa.App.Shell"
         x:Class="Misa.App.Shell.ShellWindow"
         x:DataType="shell1:ShellWindowViewModel"
-        Icon="/Assets/Icons/Shell/App/app-icon-notebook.png"
+        Icon="/Assets/Icons/app-icon-notebook.png"
         Title="Misa"
         MinWidth="900"
         MinHeight="400"
