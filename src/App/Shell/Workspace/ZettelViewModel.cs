@@ -14,19 +14,7 @@ public sealed partial class ZettelViewModel : ViewModelBase
     [ObservableProperty] private string  _title   = string.Empty;
     [ObservableProperty] private string? _content;
 
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(MetadataLine))]
-    private DateTimeOffset _createdAt;
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(MetadataLine))]
-    private DateTimeOffset? _modifiedAt;
-
     [ObservableProperty] private bool _isDirty;
-
-    public string MetadataLine => ModifiedAt.HasValue
-        ? $"Created {CreatedAt:MMM d, yyyy}  ·  Modified {ModifiedAt:MMM d, yyyy}"
-        : $"Created {CreatedAt:MMM d, yyyy}";
 
     private CancellationTokenSource? _saveCts;
     private bool _loading;
@@ -42,7 +30,7 @@ public sealed partial class ZettelViewModel : ViewModelBase
 
         Id         = dto.Id;
         Title      = dto.Title;
-        Content    = dto.Note.Content;
+        Content    = dto.Note?.Content;
         IsDirty    = false;
 
         _loading = false;
@@ -68,16 +56,15 @@ public sealed partial class ZettelViewModel : ViewModelBase
 
     private async Task SaveAfterDelayAsync(string? content, CancellationToken ct)
     {
-        // try
-        // {
-        //     await Task.Delay(TimeSpan.FromSeconds(2), ct);
-        //     var result = await gateway.UpdateZettelContentAsync(Id, content);
-        //     if (result.IsSuccess)
-        //     {
-        //         ModifiedAt = DateTimeOffset.UtcNow;
-        //         IsDirty    = false;
-        //     }
-        // }
-        // catch (OperationCanceledException) { }
+        try
+        {
+            await Task.Delay(TimeSpan.FromSeconds(2), ct);
+            // var result = await gateway.UpdateZettelContentAsync(Id, content);
+            if (true)
+            {
+                IsDirty    = false;
+            }
+        }
+        catch (OperationCanceledException) { }
     }
 }
