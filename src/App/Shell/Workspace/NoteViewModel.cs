@@ -7,7 +7,7 @@ using Misa.Domain;
 
 namespace Misa.App.Shell.Workspace;
 
-public sealed partial class ZettelViewModel : ViewModelBase
+public sealed partial class NoteViewModel : ViewModelBase
 {
     private Guid Id { get; set; }
 

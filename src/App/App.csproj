@@ -108,9 +108,5 @@
         <DependentUpon>ShellWindow.axaml</DependentUpon>
         <SubType>Code</SubType>
       </Compile>
-      <Compile Update="Shell\Workspace\ZettelView.axaml.cs">
-        <DependentUpon>ZettelView.axaml</DependentUpon>
-        <SubType>Code</SubType>
-      </Compile>
     </ItemGroup>
 </Project>
