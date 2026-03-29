@@ -19,12 +19,16 @@
                             Content="{Binding Header}"/>
             
             <Grid Grid.Row="1" 
-                  ColumnDefinitions="400,*">
+                  ColumnDefinitions="300,1,*">
 
                 <ContentControl Grid.Column="0"
                                 Content="{Binding Navigation}"/>
 
-                <ContentControl Grid.Column="1"
+                <GridSplitter Grid.Column="1"
+                              Background="{StaticResource BrushBorder}"
+                              Opacity="0.5"/>
+                
+                <ContentControl Grid.Column="2"
                                 Background="{StaticResource BrushPrimaryBackground}"
                                 Content="{Binding Workspace}"/>
             </Grid>

@@ -26,7 +26,7 @@ public sealed class Item
     public Guid Id { get; init; }
     public Guid? ParentId { get; init; }
     public Kind Kind { get; init; }
-    public string Title { get; private set; }
+    public string Title { get; set; }
     
     public Note? Note { get; private set; }
     public Quest? Quest { get; private set; }
@@ -36,13 +36,13 @@ public sealed class Item
         var item = new Item(parentId, Kind.Topic, title);
         return item;
     }
-    public static Item CreateNote(Guid parentId, string title)
+    public static Item CreateNote(Guid? parentId, string title)
     {
         var item = new Item(parentId, Kind.Note, title);
         item.Note = new Note(item.Id);
         return item;
     }
-    public static Item CreateQuest(Guid parentId, string title)
+    public static Item CreateQuest(Guid? parentId, string title)
     {
         var item = new Item(parentId, Kind.Quest, title);
         item.Quest = new Quest(item.Id);

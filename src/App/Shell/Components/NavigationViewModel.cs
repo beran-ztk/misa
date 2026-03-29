@@ -15,9 +15,28 @@ public partial class IndexEntry : ObservableObject
     public Guid Id { get; init; }
     public Guid? ParentId { get; init; }
     public Kind Kind { get; init; }
-    public string Title { get; init; } = string.Empty;
+    [ObservableProperty] private string _title = string.Empty;
     public ObservableCollection<IndexEntry> Children { get; } = [];
 
+    // ── Rename ──────────────────────────────────────────────────
+    [ObservableProperty] private bool _isRenaming;
+    [ObservableProperty] private string _renamedTitle = string.Empty;
+    public required Func<UpdateTitleRequest, Task<bool>> OnRename { get; init; }
+    
+    [RelayCommand] private void IntendToRename() { RenamedTitle = Title; IsRenaming = true; }
+    [RelayCommand] private void CancelRename() => IsRenaming = false;
+    
+    [RelayCommand]
+    private async Task SubmitRename()
+    {
+        var result = await OnRename.Invoke(new UpdateTitleRequest(Id, RenamedTitle));
+        
+        IsRenaming = false;
+
+        if (result) 
+            Title = RenamedTitle;
+    }
+    
     // ── Child creation state ──────────────────────────────────────────────────
 
     [ObservableProperty]
@@ -35,20 +54,22 @@ public partial class IndexEntry : ObservableObject
     [RelayCommand] private void SetKindTopic() => PendingKind = Kind.Topic;
     [RelayCommand] private void SetKindNote()  => PendingKind = Kind.Note;
     [RelayCommand] private void SetKindQuest() => PendingKind = Kind.Quest;
-
-    // Wired by NavigationViewModel during BuildTree
-    internal Func<IndexEntry, Task>? OnCreateChild { get; set; }
+    public required Func<Kind, Guid?, Task<IndexEntry?>> OnCreateIndex { get; init; }
 
     [RelayCommand]
-    private Task CreateChild() => OnCreateChild?.Invoke(this) ?? Task.CompletedTask;
+    private async Task CreateIndex()
+    {
+        var entry = await OnCreateIndex.Invoke(PendingKind, Id);
+        if (entry is null) return;
+        
+        Children.Add(entry);
+    }
 }
 
 public sealed partial class NavigationViewModel : ViewModelBase
 {
     public ObservableCollection<IndexEntry> IndexEntries { get; } = [];
-
-    [ObservableProperty] private string _newTopicTitle = string.Empty;
-
+    
     public NavigationViewModel(Dispatcher dispatcher) : base(dispatcher)
     {
         _ = LoadAsync();
@@ -65,14 +86,7 @@ public sealed partial class NavigationViewModel : ViewModelBase
         var map = new Dictionary<Guid, IndexEntry>(items.Count);
         foreach (var item in items)
         {
-            var entry = new IndexEntry
-            {
-                Id       = item.Id,
-                ParentId = item.ParentId,
-                Kind     = item.Kind,
-                Title    = item.Title,
-            };
-            entry.OnCreateChild = CreateChildAsync;
+            var entry = CreateIndexEntry(item);
             map[item.Id] = entry;
         }
 
@@ -86,34 +100,43 @@ public sealed partial class NavigationViewModel : ViewModelBase
         }
     }
 
-    private async Task CreateChildAsync(IndexEntry parent)
+    private IndexEntry CreateIndexEntry(Item item) => new()
     {
-        if (string.IsNullOrWhiteSpace(parent.PendingTitle)) return;
+        Id = item.Id,
+        ParentId = item.ParentId,
+        Kind = item.Kind,
+        Title = item.Title,
+        OnCreateIndex = CreateIndexAsync,
+        OnRename = Rename
+    };
 
-        switch (parent.PendingKind)
-        {
-            case Kind.Topic:
-                await Dispatcher.SendAsync(new CreateTopicRequest(parent.Id, parent.PendingTitle));
-                break;
-            case Kind.Note:
-                await Dispatcher.SendAsync(new CreateNoteRequest(parent.Id, parent.PendingTitle));
-                break;
-            case Kind.Quest:
-                await Dispatcher.SendAsync(new CreateQuestRequest(parent.Id, parent.PendingTitle));
-                break;
-        }
-
-        parent.PendingTitle = string.Empty;
-        await LoadAsync();
-    }
+    private async Task<bool> Rename(UpdateTitleRequest r) => await Dispatcher.UpdateAsync(r);
+    
 
     [RelayCommand]
     private async Task CreateRootTopic()
     {
-        if (string.IsNullOrWhiteSpace(NewTopicTitle)) return;
+        var entry = await CreateIndexAsync(Kind.Topic, null);
+        if (entry is null) return;
+        
+        IndexEntries.Add(entry);
+    }
+    private async Task<IndexEntry?> CreateIndexAsync(Kind kind, Guid? parentId)
+    {
+        const string title = "Untitled";
 
-        await Dispatcher.SendAsync(new CreateTopicRequest(null, NewTopicTitle));
-        NewTopicTitle = string.Empty;
-        await LoadAsync();
+        var item = kind switch
+        {
+            Kind.Topic => await Dispatcher.SendAsync(new CreateTopicRequest(parentId, title)),
+            Kind.Note => await Dispatcher.SendAsync(new CreateNoteRequest(parentId, title)),
+            Kind.Quest => await Dispatcher.SendAsync(new CreateQuestRequest(parentId, title)),
+            _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
+        };
+        if (item is null) return null;
+        
+        var entry = CreateIndexEntry(item);
+        entry.IntendToRenameCommand.Execute(null);
+        
+        return entry;
     }
 }
