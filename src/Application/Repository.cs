@@ -12,12 +12,9 @@ public sealed class Repository(IDbContextFactory<Context> factory)
         ctx.Items.Add(item);
         await ctx.SaveChangesAsync();
     }
-    public async Task<List<Item>> GetTopicsAsync()
+    public async Task<List<Item>> GetItemsAsync()
     {
         await using var ctx = await factory.CreateDbContextAsync();
-        var topics = await ctx.Items
-            .Where(i => i.Kind == Kind.Topic)
-            .ToListAsync();
-        return topics;
+        return await ctx.Items.ToListAsync();
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -31,9 +32,26 @@ public sealed partial class NavigationViewModel : ViewModelBase
 
     private async Task LoadAsync()
     {
-        var topics = await Dispatcher.GetAsync(new GetTopicsRequest());
+        var items = await Dispatcher.GetAsync(new GetItemsRequest());
+        BuildTree(items);
     }
-    
+
+    private void BuildTree(List<Item> items)
+    {
+        var map = new Dictionary<Guid, IndexEntry>(items.Count);
+        foreach (var item in items)
+            map[item.Id] = new IndexEntry { Id = item.Id, ParentId = item.ParentId, Kind = item.Kind, Title = item.Title };
+
+        IndexEntries.Clear();
+        foreach (var entry in map.Values)
+        {
+            if (entry.ParentId is null || !map.TryGetValue(entry.ParentId.Value, out var parent))
+                IndexEntries.Add(entry);
+            else
+                parent.Children.Add(entry);
+        }
+    }
+
     [RelayCommand]
     private async Task CreateRootTopic()
     {
@@ -41,5 +59,6 @@ public sealed partial class NavigationViewModel : ViewModelBase
 
         await Dispatcher.SendAsync(new CreateTopicRequest(null, NewTopicTitle));
         NewTopicTitle = string.Empty;
+        await LoadAsync();
     }
 }

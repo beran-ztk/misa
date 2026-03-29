@@ -2,14 +2,12 @@ using Misa.Domain;
 
 namespace Misa.Application;
 
-public record GetTopicsRequest;
+public record GetItemsRequest;
 
 public sealed class GetItemHandler(Repository repository)
 {
-    // Create Topic
-    public async Task<List<Item>> Handle(GetTopicsRequest getTopicsRequest)
+    public async Task<List<Item>> Handle(GetItemsRequest r)
     {
-        var topics = await repository.GetTopicsAsync();
-        return topics;
+        return await repository.GetItemsAsync();
     }
 }

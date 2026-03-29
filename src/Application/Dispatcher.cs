@@ -12,5 +12,5 @@ public sealed class Dispatcher(
     public Task SendAsync(CreateQuestRequest r) => createItemHandler.Handle(r);
     
     // Get
-    public Task<List<Item>> GetAsync(GetTopicsRequest r) => getItemHandler.Handle(r);
+    public Task<List<Item>> GetAsync(GetItemsRequest r) => getItemHandler.Handle(r);
 }
