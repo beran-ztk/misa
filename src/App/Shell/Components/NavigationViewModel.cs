@@ -18,18 +18,28 @@ public partial class IndexEntry : ObservableObject
     public ObservableCollection<IndexEntry> Children { get; } = [];
 }
 
-public sealed partial class NavigationViewModel(Dispatcher dispatcher) : ViewModelBase(dispatcher)
+public sealed partial class NavigationViewModel : ViewModelBase
 {
     public ObservableCollection<IndexEntry> IndexEntries { get; } = [];
 
     [ObservableProperty] private string _newTopicTitle = string.Empty;
 
+    public NavigationViewModel(Dispatcher dispatcher) : base(dispatcher)
+    {
+        _ = LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        var topics = await Dispatcher.GetAsync(new GetTopicsRequest());
+    }
+    
     [RelayCommand]
     private async Task CreateRootTopic()
     {
         if (string.IsNullOrWhiteSpace(NewTopicTitle)) return;
 
-        await Dispatcher.SendAsync(new CreateTopicCommand(null, NewTopicTitle));
+        await Dispatcher.SendAsync(new CreateTopicRequest(null, NewTopicTitle));
         NewTopicTitle = string.Empty;
     }
 }

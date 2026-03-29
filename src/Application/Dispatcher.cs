@@ -1,8 +1,16 @@
+using Misa.Domain;
+
 namespace Misa.Application;
 
-public sealed class Dispatcher(CreateItemHandler items)
+public sealed class Dispatcher(
+    CreateItemHandler createItemHandler,
+    GetItemHandler getItemHandler)
 {
-    public Task SendAsync(CreateTopicCommand cmd) => items.Handle(cmd);
-    public Task SendAsync(CreateNoteCommand cmd)  => items.Handle(cmd);
-    public Task SendAsync(CreateQuestCommand cmd) => items.Handle(cmd);
+    // Create
+    public Task SendAsync(CreateTopicRequest r) => createItemHandler.Handle(r);
+    public Task SendAsync(CreateNoteRequest r)  => createItemHandler.Handle(r);
+    public Task SendAsync(CreateQuestRequest r) => createItemHandler.Handle(r);
+    
+    // Get
+    public Task<List<Item>> GetAsync(GetTopicsRequest r) => getItemHandler.Handle(r);
 }

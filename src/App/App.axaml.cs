@@ -37,6 +37,7 @@ public class App : Avalonia.Application
         // ── Application ───────────────────────────────────────────────────────
         services.AddSingleton<Repository>();
         services.AddSingleton<CreateItemHandler>();
+        services.AddSingleton<GetItemHandler>();
         services.AddSingleton<Dispatcher>();
 
         // ── Shell ─────────────────────────────────────────────────────────────

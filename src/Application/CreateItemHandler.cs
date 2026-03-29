@@ -2,32 +2,32 @@ using Misa.Domain;
 
 namespace Misa.Application;
 
-public record CreateTopicCommand(Guid? ParentId, string Title);
-public record CreateNoteCommand(Guid ParentId, string Title, string Content);
-public record CreateQuestCommand(Guid ParentId, string Title);
+public record CreateTopicRequest(Guid? ParentId, string Title);
+public record CreateNoteRequest(Guid ParentId, string Title, string Content);
+public record CreateQuestRequest(Guid ParentId, string Title);
 
 public sealed class CreateItemHandler(Repository repository)
 {
     private Task Save(Item item) => repository.AddAsync(item);
     
     // Create Topic
-    public async Task Handle(CreateTopicCommand createTopicCommand)
+    public async Task Handle(CreateTopicRequest createTopicRequest)
     {
-        var item = Item.CreateTopic(createTopicCommand.ParentId, createTopicCommand.Title);
+        var item = Item.CreateTopic(createTopicRequest.ParentId, createTopicRequest.Title);
         await Save(item);
     }
     
     // Create Note
-    public async Task Handle(CreateNoteCommand createNoteCommand)
+    public async Task Handle(CreateNoteRequest createNoteRequest)
     {
-        var item = Item.CreateNote(createNoteCommand.ParentId, createNoteCommand.Title, createNoteCommand.Content);
+        var item = Item.CreateNote(createNoteRequest.ParentId, createNoteRequest.Title, createNoteRequest.Content);
         await Save(item);
     }
     
     // Create Quest
-    public async Task Handle(CreateQuestCommand createQuestCommand)
+    public async Task Handle(CreateQuestRequest createQuestRequest)
     {
-        var item = Item.CreateQuest(createQuestCommand.ParentId, createQuestCommand.Title);
+        var item = Item.CreateQuest(createQuestRequest.ParentId, createQuestRequest.Title);
         await Save(item);
     }
 }
