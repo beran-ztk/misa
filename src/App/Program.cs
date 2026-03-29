@@ -1,8 +1,8 @@
-﻿using Avalonia;
-using System;
+﻿using System;
+using Avalonia;
 using Avalonia.ReactiveUI;
 
-namespace Misa.Ui.Avalonia;
+namespace Misa.App;
 
 public static class Program
 {

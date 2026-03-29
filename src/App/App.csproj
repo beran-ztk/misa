@@ -112,9 +112,5 @@
         <DependentUpon>ZettelView.axaml</DependentUpon>
         <SubType>Code</SubType>
       </Compile>
-      <Compile Update="Shell\Workspace\ZettelkastenView.axaml.cs">
-        <DependentUpon>ZettelkastenView.axaml</DependentUpon>
-        <SubType>Code</SubType>
-      </Compile>
     </ItemGroup>
 </Project>

@@ -2,12 +2,12 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:components="clr-namespace:Misa.Ui.Avalonia.Shell.Components"
+             xmlns:components1="clr-namespace:Misa.App.Shell.Components"
              mc:Ignorable="d"
              d:DesignWidth="800"
              d:DesignHeight="40"
-             x:DataType="components:HeaderViewModel"
-             x:Class="Misa.Ui.Avalonia.Shell.Components.HeaderView">
+             x:DataType="components1:HeaderViewModel"
+             x:Class="Misa.App.Shell.Components.HeaderView">
 
     <UserControl.Styles>
 
@@ -56,7 +56,8 @@
               VerticalAlignment="Stretch">
 
             <!-- Left: App icon -->
-            <Image Source="/Assets/Icons/Shell/App/notebook.png"
+            <Image Grid.Column="0" 
+                   Source="/Assets/Icons/app-icon-notebook.png"
                    Height="22"
                    HorizontalAlignment="Left"
                    VerticalAlignment="Center"

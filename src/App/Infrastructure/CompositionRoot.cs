@@ -2,11 +2,10 @@ using System;
 using System.Net.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Misa.Ui.Avalonia.Features.Pages.Zettelkasten;
-using Misa.Ui.Avalonia.Shell;
-using Misa.Ui.Avalonia.Shell.Components;
+using Misa.App.Shell;
+using Misa.App.Shell.Components;
 
-namespace Misa.Ui.Avalonia.Infrastructure;
+namespace Misa.App.Infrastructure;
 
 public static class CompositionRoot
 {
@@ -18,7 +17,8 @@ public static class CompositionRoot
         sc.AddSingleton(new HttpClient { BaseAddress = new Uri(baseAddress) });
         
         sc.AddCoreServices();
-        sc.AddFeatureServices();
+
+        sc.AddSingleton<NavigationViewModel>();
 
         return sc;
     }
@@ -30,11 +30,5 @@ public static class CompositionRoot
         sc.AddSingleton<HeaderViewModel>();
 
         sc.AddTransient<ShellWindow>(sp => new ShellWindow { DataContext = sp.GetRequiredService<ShellWindowViewModel>() });
-    }
-
-    private static void AddFeatureServices(this IServiceCollection sc)
-    {
-        // Zettelkasten
-        sc.AddSingleton<ZettelkastenViewModel>();
     }
 }

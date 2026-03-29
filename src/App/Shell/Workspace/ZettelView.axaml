@@ -1,16 +1,10 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:root="clr-namespace:Misa.Ui.Avalonia.Features.Pages.Zettelkasten"
              xmlns:aedit="clr-namespace:AvaloniaEdit;assembly=AvaloniaEdit"
-             mc:Ignorable="d"
-             d:DesignWidth="700"
-             d:DesignHeight="600"
-             x:Class="Misa.Ui.Avalonia.Features.Pages.Zettelkasten.ZettelView"
+             xmlns:root="clr-namespace:Misa.App.Shell.Workspace"
              x:DataType="root:ZettelViewModel">
 
-    <Grid RowDefinitions="Auto,Auto,*">
+    <Grid RowDefinitions="Auto,*">
 
         <!-- Title row: dirty indicator + title -->
         <Grid Grid.Row="0" ColumnDefinitions="Auto,*" Margin="50,16,24,0">
@@ -29,15 +23,7 @@
                        TextWrapping="Wrap"/>
         </Grid>
 
-        <!-- Timestamps -->
-        <TextBlock Grid.Row="1"
-                   Text="{Binding MetadataLine}"
-                   Margin="50,6,24,12"
-                   FontSize="{StaticResource FontSizeSmall}"
-                   Opacity="0.4"
-                   Foreground="{StaticResource BrushTextPrimary}"/>
-
-        <ScrollViewer Grid.Row="2"
+        <ScrollViewer Grid.Row="1"
                       VerticalScrollBarVisibility="Auto"
                       HorizontalScrollBarVisibility="Disabled">
             <StackPanel>

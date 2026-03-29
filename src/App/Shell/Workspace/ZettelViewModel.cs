@@ -2,8 +2,8 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Misa.App.Infrastructure;
 using Misa.Domain;
-using Misa.Ui.Avalonia.Infrastructure;
 
 namespace Misa.App.Shell.Workspace;
 

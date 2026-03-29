@@ -1,5 +1,5 @@
-using Misa.Ui.Avalonia.Infrastructure;
+using Misa.App.Infrastructure;
 
-namespace Misa.Ui.Avalonia.Shell.Components;
+namespace Misa.App.Shell.Components;
 
 public class HeaderViewModel : ViewModelBase;

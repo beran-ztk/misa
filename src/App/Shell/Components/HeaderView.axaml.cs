@@ -2,7 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 
-namespace Misa.Ui.Avalonia.Shell.Components;
+namespace Misa.App.Shell.Components;
 
 public partial class HeaderView : UserControl
 {

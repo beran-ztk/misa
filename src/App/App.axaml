@@ -1,11 +1,11 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Class="Misa.Ui.Avalonia.App"
-             xmlns:mappings="clr-namespace:Misa.Ui.Avalonia.Infrastructure"
+             xmlns:infrastructure="clr-namespace:Misa.App.Infrastructure"
+             x:Class="Misa.App.App"
              RequestedThemeVariant="Default">
 
     <Application.DataTemplates>
-        <mappings:ViewLocator/>
+        <infrastructure:ViewLocator/>
     </Application.DataTemplates>
     
     <Application.Resources>
@@ -31,19 +31,6 @@
          
          <!-- Base -->
          <StyleInclude Source="avares://App/Assets/Styles/Controls.axaml"/>
-
-         <!-- Components -->
-         <StyleInclude Source="avares://App/Assets/Styles/Components/Overlays.axaml"/>
-         <StyleInclude Source="avares://App/Assets/Styles/Components/Confirm.Cancel.axaml"/>
-         <StyleInclude Source="avares://App/Assets/Styles/Components/Toolbar.axaml"/>
-         <StyleInclude Source="avares://App/Assets/Styles/Components/Toolbar.IconButton.axaml"/>
-         <StyleInclude Source="avares://App/Assets/Styles/Components/Toolbar.Search.axaml"/>
-         <StyleInclude Source="avares://App/Assets/Styles/Components/Workspace.Content.Datagrid.axaml"/>
-         <StyleInclude Source="avares://App/Assets/Styles/Components/Workspace.AddPanel.axaml"/>
-         
-         <!-- Views -->
-         <StyleInclude Source="avares://App/Assets/Styles/Features/UtilityNavigation.axaml"/>
-         <StyleInclude Source="avares://App/Assets/Styles/Features/WorkspaceNavigation.axaml"/>
          
      </Application.Styles>
     

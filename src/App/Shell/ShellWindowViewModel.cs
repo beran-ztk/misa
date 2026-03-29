@@ -1,9 +1,9 @@
 ﻿using System;
 using Microsoft.Extensions.DependencyInjection;
-using Misa.Ui.Avalonia.Infrastructure;
-using Misa.Ui.Avalonia.Shell.Components;
+using Misa.App.Infrastructure;
+using Misa.App.Shell.Components;
 
-namespace Misa.Ui.Avalonia.Shell;
+namespace Misa.App.Shell;
 
 public partial class ShellWindowViewModel : ViewModelBase
 {
@@ -17,6 +17,6 @@ public partial class ShellWindowViewModel : ViewModelBase
         ServiceProvider = serviceProvider;
 
         Header = ServiceProvider.GetRequiredService<HeaderViewModel>();
-        Navigation = ServiceProvider.GetRequiredService<Navs>();
+        Navigation = ServiceProvider.GetRequiredService<NavigationViewModel>();
     }
 }

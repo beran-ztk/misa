@@ -3,7 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace Misa.Ui.Avalonia.Infrastructure;
+namespace Misa.App.Infrastructure;
 
 public class ViewModelBase : ObservableObject;
 
