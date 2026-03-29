@@ -6,52 +6,58 @@
              x:Class="Misa.App.Shell.Components.NavigationView"
              xmlns:root="clr-namespace:Misa.App.Shell.Components"
              x:DataType="root:NavigationViewModel">
-    
-    <Border Background="{StaticResource BrushPrimaryBackground}"
-            Padding="0,4">
 
-            <ScrollViewer HorizontalScrollBarVisibility="Disabled"
-                          VerticalScrollBarVisibility="Auto"
-                          Margin="2,0">
+    <DockPanel Background="{StaticResource BrushPrimaryBackground}">
 
-                <TreeView x:Name="KnowledgeIndexTree"
-                          ItemsSource="{Binding IndexEntries}"
-                          FontSize="{StaticResource FontSizeAverage}"
-                          Background="{StaticResource BrushPrimaryBackground}"
-                          DragDrop.AllowDrop="True">
-                    
-                    <TreeView.Styles>
+        <!-- Create root topic -->
+        <Grid DockPanel.Dock="Top"
+              ColumnDefinitions="*,Auto"
+              Margin="6,6,6,4">
+            <TextBox Grid.Column="0"
+                     Text="{Binding NewTopicTitle}"
+                     Watermark="New topic…"/>
+            <Button Grid.Column="1"
+                    Command="{Binding CreateRootTopicCommand}"
+                    Content="+"
+                    Margin="4,0,0,0"
+                    FontSize="{StaticResource FontSizeLarge}"
+                    Foreground="{StaticResource BrushTextSecondary}"/>
+        </Grid>
 
-                        <Style Selector="TextBox.index-search-input:focus /template/ Border#PART_BorderElement">
-                            <Setter Property="BorderBrush"     Value="{StaticResource BrushAccent}"/>
-                            <Setter Property="Background"      Value="Transparent"/>
-                        </Style>
-                        <Style Selector="TextBox.index-search-input:pointerover /template/ Border#PART_BorderElement">
-                            <Setter Property="Background"      Value="Transparent"/>
-                        </Style>
+        <!-- Index tree -->
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                      VerticalScrollBarVisibility="Auto"
+                      Margin="2,0">
 
-                        <!-- Normal row -->
-                        <Style Selector="Border.index-entry-row">
-                            <Setter Property="Background" Value="Transparent"/>
-                        </Style>
-                        <Style Selector="Border.index-entry-row:pointerover">
-                            <Setter Property="Background" Value="Transparent"/>
-                        </Style>
+            <TreeView x:Name="KnowledgeIndexTree"
+                      ItemsSource="{Binding IndexEntries}"
+                      FontSize="{StaticResource FontSizeAverage}"
+                      Background="{StaticResource BrushPrimaryBackground}"
+                      DragDrop.AllowDrop="True">
 
-                    </TreeView.Styles>
+                <TreeView.Styles>
+                    <Style Selector="Border.index-entry-row">
+                        <Setter Property="Background" Value="Transparent"/>
+                    </Style>
+                    <Style Selector="Border.index-entry-row:pointerover">
+                        <Setter Property="Background" Value="Transparent"/>
+                    </Style>
+                </TreeView.Styles>
 
-                    <TreeView.ItemTemplate>
-                        <TreeDataTemplate ItemsSource="{Binding Children}">
-                            <Border Classes="index-entry-row">
-                                <!-- Title -->
-                                <TextBlock Text="{Binding Title}"
-                                           Opacity="0.8"
-                                           TextTrimming="CharacterEllipsis"/>
-                            </Border>
-                        </TreeDataTemplate>
-                    </TreeView.ItemTemplate>
-                </TreeView>
+                <TreeView.ItemTemplate>
+                    <TreeDataTemplate ItemsSource="{Binding Children}">
+                        <Border Classes="index-entry-row">
+                            <TextBlock Text="{Binding Title}"
+                                       Opacity="0.8"
+                                       TextTrimming="CharacterEllipsis"/>
+                        </Border>
+                    </TreeDataTemplate>
+                </TreeView.ItemTemplate>
 
-            </ScrollViewer>
-        </Border>
+            </TreeView>
+
+        </ScrollViewer>
+
+    </DockPanel>
+
 </UserControl>
