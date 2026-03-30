@@ -1,0 +1,179 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             x:Class="Misa.App.Shell.Components.IndexNodeView"
+             xmlns:behaviors="clr-namespace:Misa.App.Common.Behaviors"
+             xmlns:converters="clr-namespace:Misa.App.Common.Converters"
+             xmlns:root="clr-namespace:Misa.App.Shell.Components"
+             x:DataType="root:IndexEntry">
+
+    <UserControl.Styles>
+        <Style Selector="Border.index-node-row">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="CornerRadius" Value="3"/>
+        </Style>
+        <Style Selector="Border.index-node-row.selected">
+            <Setter Property="Background" Value="{StaticResource BrushControlSurface}"/>
+        </Style>
+        <Style Selector="Border.index-node-row:pointerover">
+            <Setter Property="Background" Value="{StaticResource BrushControlSurface}"/>
+        </Style>
+        <Style Selector="Border.index-node-row Button.add-child">
+            <Setter Property="Opacity" Value="0"/>
+        </Style>
+        <Style Selector="Border.index-node-row:pointerover Button.add-child">
+            <Setter Property="Opacity" Value="1"/>
+        </Style>
+        <Style Selector="ToggleButton.expand-toggle">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+        </Style>
+        <Style Selector="ToggleButton.expand-toggle:checked /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="ToggleButton.expand-toggle:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+    </UserControl.Styles>
+
+    <StackPanel>
+
+        <!-- Node row -->
+        <Border Classes="index-node-row"
+                Classes.selected="{Binding IsSelected}"
+                Padding="2,1">
+            <Grid ColumnDefinitions="14,18,*,22" ColumnSpacing="4">
+
+                <!-- Expand / Collapse toggle -->
+                <ToggleButton Grid.Column="0"
+                              Classes="expand-toggle"
+                              IsChecked="{Binding IsExpanded, Mode=TwoWay}"
+                              IsVisible="{Binding HasChildren}"
+                              Width="14" Height="14"
+                              VerticalAlignment="Center"
+                              HorizontalAlignment="Center">
+                    <Panel>
+                        <TextBlock Text="▸"
+                                   IsVisible="{Binding !IsExpanded}"
+                                   FontSize="10"
+                                   Opacity="0.6"
+                                   VerticalAlignment="Center"
+                                   HorizontalAlignment="Center"/>
+                        <TextBlock Text="▾"
+                                   IsVisible="{Binding IsExpanded}"
+                                   FontSize="10"
+                                   Opacity="0.6"
+                                   VerticalAlignment="Center"
+                                   HorizontalAlignment="Center"/>
+                    </Panel>
+                </ToggleButton>
+
+                <!-- Type icon -->
+                <Grid Grid.Column="1" VerticalAlignment="Center">
+                    <Image Width="14" Height="14" Opacity="0.55"
+                           Source="{SvgImage /Assets/Icons/folder.svg}"
+                           IsVisible="{Binding Kind,
+                               Converter={x:Static converters:KindEqualConverter.Instance},
+                               ConverterParameter=Topic}"/>
+                    <Image Width="14" Height="14" Opacity="0.55"
+                           Source="{SvgImage /Assets/Icons/note-blank.svg}"
+                           IsVisible="{Binding Kind,
+                               Converter={x:Static converters:KindEqualConverter.Instance},
+                               ConverterParameter=Note}"/>
+                    <Image Width="14" Height="14" Opacity="0.55"
+                           Source="{SvgImage /Assets/Icons/question-mark.svg}"
+                           IsVisible="{Binding Kind,
+                               Converter={x:Static converters:KindEqualConverter.Instance},
+                               ConverterParameter=Quest}"/>
+                </Grid>
+
+                <!-- Title / Rename -->
+                <Grid Grid.Column="2">
+                    <Button IsVisible="{Binding !IsRenaming}"
+                            Command="{Binding SelectCommand}"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Padding="2,0"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Left"
+                            VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Title}"
+                                   Opacity="0.8"
+                                   TextTrimming="CharacterEllipsis"
+                                   FontSize="{StaticResource FontSizeAverage}"/>
+                    </Button>
+                    <TextBox IsVisible="{Binding IsRenaming}"
+                             Text="{Binding RenamedTitle, Mode=TwoWay}"
+                             Opacity="0.8"
+                             BorderBrush="{StaticResource BrushBorder}"
+                             BorderThickness="0,0,0,1"
+                             Background="Transparent"
+                             VerticalAlignment="Center"
+                             FontSize="{StaticResource FontSizeAverage}"
+                             behaviors:FocusControlWhenVisible.FocusOnVisible="{Binding IsRenaming}">
+                        <TextBox.KeyBindings>
+                            <KeyBinding Gesture="Enter" Command="{Binding SubmitRenameCommand}"/>
+                            <KeyBinding Gesture="Escape" Command="{Binding CancelRenameCommand}"/>
+                        </TextBox.KeyBindings>
+                    </TextBox>
+                </Grid>
+
+                <!-- Add child button -->
+                <Button Grid.Column="3"
+                        Classes="add-child"
+                        Content="+"
+                        Padding="6,2"
+                        VerticalAlignment="Center"
+                        Foreground="{StaticResource BrushTextFaded}"
+                        FontSize="{StaticResource FontSizeSmall}">
+                    <Button.Flyout>
+                        <Flyout Placement="BottomEdgeAlignedRight">
+                            <Border x:DataType="root:IndexEntry"
+                                    Background="{StaticResource BrushControlSurface}"
+                                    CornerRadius="{StaticResource CornerRadiusCard}"
+                                    Padding="6">
+                                <StackPanel MinWidth="180">
+                                    <StackPanel IsVisible="{Binding CanHaveChildren}">
+                                        <Button Content="Create Topic"
+                                                HorizontalAlignment="Stretch"
+                                                HorizontalContentAlignment="Left"
+                                                Command="{Binding CreateTopicCommand}"/>
+                                        <Button Content="Create Note"
+                                                HorizontalAlignment="Stretch"
+                                                HorizontalContentAlignment="Left"
+                                                Command="{Binding CreateNoteCommand}"/>
+                                        <Button Content="Create Quest"
+                                                HorizontalAlignment="Stretch"
+                                                HorizontalContentAlignment="Left"
+                                                Command="{Binding CreateQuestCommand}"/>
+                                        <Separator Opacity="0.5"/>
+                                    </StackPanel>
+                                    <Button Content="Rename"
+                                            HorizontalAlignment="Stretch"
+                                            HorizontalContentAlignment="Left"
+                                            Command="{Binding IntendToRenameCommand}"/>
+                                </StackPanel>
+                            </Border>
+                        </Flyout>
+                    </Button.Flyout>
+                </Button>
+
+            </Grid>
+        </Border>
+
+        <!-- Children (recursive) -->
+        <ItemsControl ItemsSource="{Binding Children}"
+                      IsVisible="{Binding IsExpanded}"
+                      Margin="16,0,0,0">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="root:IndexEntry">
+                    <root:IndexNodeView />
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+    </StackPanel>
+</UserControl>

@@ -18,6 +18,12 @@ public partial class IndexEntry : ObservableObject
     [ObservableProperty] private string _title = string.Empty;
     public ObservableCollection<IndexEntry> Children { get; } = [];
     public bool CanHaveChildren => Kind == Kind.Topic;
+    public bool HasChildren => Children.Count > 0;
+
+    public IndexEntry()
+    {
+        Children.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasChildren));
+    }
 
     // ── Expansion State ──────────────────────────────────────────────────
     [ObservableProperty] private bool _isExpanded;
@@ -26,25 +32,31 @@ public partial class IndexEntry : ObservableObject
     {
         _ = OnExpansionStateChange.Invoke(new UpdateExpansionStateRequest(Id, value));
     }
+
+    // ── Selection ────────────────────────────────────────────────────────
+    [ObservableProperty] private bool _isSelected;
+    public required Action<IndexEntry> OnSelect { get; init; }
+    [RelayCommand] private void Select() => OnSelect(this);
+
     // ── Rename ──────────────────────────────────────────────────
     [ObservableProperty] private bool _isRenaming;
     [ObservableProperty] private string _renamedTitle = string.Empty;
     public required Func<UpdateTitleRequest, Task<bool>> OnRename { get; init; }
-    
+
     [RelayCommand] private void IntendToRename() { RenamedTitle = Title; IsRenaming = true; }
     [RelayCommand] private void CancelRename() => IsRenaming = false;
-    
+
     [RelayCommand]
     private async Task SubmitRename()
     {
         var result = await OnRename.Invoke(new UpdateTitleRequest(Id, RenamedTitle));
-        
+
         IsRenaming = false;
 
-        if (result) 
+        if (result)
             Title = RenamedTitle;
     }
-    
+
     // ── Child creation ──────────────────────────────────────────────────
     public required Func<Kind, Guid?, Task<IndexEntry?>> OnCreateIndex { get; init; }
 
@@ -56,10 +68,10 @@ public partial class IndexEntry : ObservableObject
     private async Task CreateIndex(Kind kind)
     {
         IsExpanded = true;
-        
+
         var entry = await OnCreateIndex.Invoke(kind, Id);
         if (entry is null) return;
-        
+
         Children.Add(entry);
     }
 }
@@ -99,17 +111,28 @@ public sealed partial class NavigationViewModel : ViewModelBase
         }
     }
 
+    [ObservableProperty] private IndexEntry? _selectedEntry;
+
+    private void SelectEntry(IndexEntry entry)
+    {
+        if (SelectedEntry is not null)
+            SelectedEntry.IsSelected = false;
+        SelectedEntry = entry;
+        entry.IsSelected = true;
+    }
+
     private IndexEntry CreateIndexEntry(Item item) => new()
     {
         OnExpansionStateChange = ExpansionStateChange,
         OnCreateIndex = CreateIndexAsync,
         OnRename = Rename,
-        
+        OnSelect = SelectEntry,
+
         Id = item.Id,
         ParentId = item.ParentId,
         Kind = item.Kind,
         Title = item.Title,
-        IsExpanded =  item.IsExpanded
+        IsExpanded = item.IsExpanded
     };
     private async Task<bool> Rename(UpdateTitleRequest r) => await Dispatcher.UpdateAsync(r);
     private async Task ExpansionStateChange(UpdateExpansionStateRequest r) => await Dispatcher.UpdateAsync(r);

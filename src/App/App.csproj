@@ -113,5 +113,8 @@
         <DependentUpon>ShellWindow.axaml</DependentUpon>
         <SubType>Code</SubType>
       </Compile>
+      <Compile Update="Shell\Components\IndexNodeView.axaml.cs">
+        <DependentUpon>IndexNodeView.axaml</DependentUpon>
+      </Compile>
     </ItemGroup>
 </Project>
