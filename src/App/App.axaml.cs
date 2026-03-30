@@ -30,18 +30,15 @@ public class App : Avalonia.Application
 
         var services = new ServiceCollection();
 
-        // ── Persistence ───────────────────────────────────────────────────────
         services.AddDbContextFactory<Context>(opt =>
             opt.UseSqlite($"Data Source={dbPath}"));
 
-        // ── Application ───────────────────────────────────────────────────────
         services.AddSingleton<Repository>();
         services.AddSingleton<CreateItemHandler>();
         services.AddSingleton<GetItemHandler>();
         services.AddSingleton<UpdateItemHandler>();
         services.AddSingleton<Dispatcher>();
 
-        // ── Shell ─────────────────────────────────────────────────────────────
         services.AddSingleton<HeaderViewModel>();
         services.AddSingleton<NavigationViewModel>();
         services.AddSingleton<NoteViewModel>();
@@ -53,9 +50,8 @@ public class App : Avalonia.Application
 
         var sp = services.BuildServiceProvider();
 
-        // Ensure database schema exists
         using var db = sp.GetRequiredService<IDbContextFactory<Context>>().CreateDbContext();
-        db.Database.EnsureCreated();
+        db.Database.Migrate();
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {

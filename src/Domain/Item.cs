@@ -27,6 +27,7 @@ public sealed class Item
     public Guid? ParentId { get; init; }
     public Kind Kind { get; init; }
     public string Title { get; set; }
+    public bool IsExpanded { get; set; }
     
     public Note? Note { get; private set; }
     public Quest? Quest { get; private set; }

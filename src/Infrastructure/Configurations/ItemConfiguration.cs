@@ -21,6 +21,8 @@ public class ItemConfiguration : IEntityTypeConfiguration<Item>
         
         builder.Property(x => x.Title);
         
+        builder.Property(x => x.IsExpanded);
+        
         builder.HasOne(x => x.Note)
             .WithOne()
             .HasForeignKey<Note>(x => x.ItemId)

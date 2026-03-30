@@ -38,7 +38,7 @@ public partial class IndexEntry : ObservableObject
             Title = RenamedTitle;
     }
     
-    // ── Child creation state ──────────────────────────────────────────────────
+    // ── Child creation ──────────────────────────────────────────────────
     public required Func<Kind, Guid?, Task<IndexEntry?>> OnCreateIndex { get; init; }
 
     [RelayCommand] private void CreateTopic() => _ = CreateIndex(Kind.Topic);
