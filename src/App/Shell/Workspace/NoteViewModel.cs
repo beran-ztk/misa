@@ -60,7 +60,7 @@ public sealed partial class NoteViewModel(Dispatcher dispatcher) : ViewModelBase
         try
         {
             await Task.Delay(TimeSpan.FromSeconds(2), ct);
-            // TODO: dispatch UpdateNoteContentCommand once query + update handlers exist
+            await Dispatcher.UpdateAsync(new UpdateContentRequest(Id, content ?? string.Empty));
             IsDirty = false;
         }
         catch (OperationCanceledException) { }

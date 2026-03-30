@@ -11,5 +11,5 @@ public sealed class Note
     
     // Fields + Properties
     public Guid ItemId { get; init; }
-    public string Content { get; private set; } = string.Empty;
+    public string Content { get; set; } = string.Empty;
 }

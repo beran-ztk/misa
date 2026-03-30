@@ -118,12 +118,15 @@ public sealed partial class NavigationViewModel : ViewModelBase
 
     [ObservableProperty] private IndexEntry? _selectedEntry;
 
+    public Func<Guid, Task>? OnNodeOpened { get; set; }
+
     private void SelectEntry(IndexEntry entry)
     {
         if (SelectedEntry is not null)
             SelectedEntry.IsSelected = false;
         SelectedEntry = entry;
         entry.IsSelected = true;
+        _ = OnNodeOpened?.Invoke(entry.Id);
     }
 
     private IndexEntry CreateIndexEntry(Item item) => new()
