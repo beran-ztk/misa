@@ -5,6 +5,7 @@
              mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="600"
              x:Class="Misa.App.Shell.Components.NavigationView"
              xmlns:behaviors="clr-namespace:Misa.App.Common.Behaviors"
+             xmlns:converters="clr-namespace:Misa.App.Common.Converters"
              xmlns:root="clr-namespace:Misa.App.Shell.Components"
              x:DataType="root:NavigationViewModel">
 
@@ -54,9 +55,25 @@
                         <TreeDataTemplate x:DataType="root:IndexEntry"
                                           ItemsSource="{Binding Children}">
                             <Border Classes="index-entry-row">
-                                <Grid ColumnDefinitions="*,Auto">
+                                <Grid ColumnDefinitions="18,*,22" ColumnSpacing="4">
 
-                                    <TextBlock Grid.Column="0"
+                                    <!-- Type icon -->
+                                    <Grid Grid.Column="0" VerticalAlignment="Center">
+                                        <Image Width="14" Height="14" Opacity="0.55"
+                                               Source="{SvgImage /Assets/Icons/folder.svg}"
+                                               IsVisible="{Binding Kind,
+                                                       Converter={x:Static converters:KindEqualConverter.Instance}, ConverterParameter=Topic}"/>
+                                        <Image Width="14" Height="14" Opacity="0.55"
+                                               Source="{SvgImage /Assets/Icons/note-blank.svg}"
+                                               IsVisible="{Binding Kind,
+                                                       Converter={x:Static converters:KindEqualConverter.Instance}, ConverterParameter=Note}"/>
+                                        <Image Width="14" Height="14" Opacity="0.55"
+                                               Source="{SvgImage /Assets/Icons/question-mark.svg}"
+                                               IsVisible="{Binding Kind,
+                                                       Converter={x:Static converters:KindEqualConverter.Instance}, ConverterParameter=Quest}"/>
+                                    </Grid>
+
+                                    <TextBlock Grid.Column="1"
                                                IsVisible="{Binding !IsRenaming}"
                                                Text="{Binding Title}"
                                                Opacity="0.8"
@@ -74,7 +91,7 @@
                                         </TextBox.KeyBindings>
                                     </TextBox>
 
-                                    <Button Grid.Column="1"
+                                    <Button Grid.Column="2"
                                             Classes="add-child"
                                             Content="+"
                                             Padding="6,2"
