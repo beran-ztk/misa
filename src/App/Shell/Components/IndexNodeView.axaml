@@ -40,7 +40,7 @@
     </UserControl.Styles>
 
     <Grid RowDefinitions="Auto,Auto"
-          ColumnDefinitions="14,*">
+          ColumnDefinitions="Auto,*">
 
         <!-- Expand / Collapse toggle -->
         <ToggleButton Grid.Row="0" Grid.Column="0"
@@ -159,14 +159,14 @@
                 Background="{StaticResource BrushBorder}"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Stretch"
-                Padding="0,6"
-                Opacity="1"
+                Margin="0,4,0,2"
                 Width="1"
-                IsVisible="{Binding IsExpanded}"/>
+                IsVisible="{Binding IsExpandedAndHasChildren}"/>
         <!-- Children (recursive) -->
-        <ItemsControl Grid.Row="1" Grid.Column="1" 
+        <ItemsControl Grid.Row="1" Grid.Column="1"
+                      Margin="6,2,0,4"
                       ItemsSource="{Binding Children}"
-                      IsVisible="{Binding IsExpanded}">
+                      IsVisible="{Binding IsExpandedAndHasChildren}">
             <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="root:IndexEntry">
                     <root:IndexNodeView />

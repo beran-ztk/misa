@@ -19,14 +19,19 @@ public partial class IndexEntry : ObservableObject
     public ObservableCollection<IndexEntry> Children { get; } = [];
     public bool CanHaveChildren => Kind == Kind.Topic;
     public bool HasChildren => Children.Count > 0;
+    public bool IsExpandedAndHasChildren => IsExpanded && HasChildren;
 
     public IndexEntry()
     {
-        Children.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasChildren));
+        Children.CollectionChanged += (_, _) =>
+        {
+            OnPropertyChanged(nameof(HasChildren));
+            OnPropertyChanged(nameof(IsExpandedAndHasChildren));
+        };
     }
 
     // ── Expansion State ──────────────────────────────────────────────────
-    [ObservableProperty] private bool _isExpanded;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(IsExpandedAndHasChildren))] private bool _isExpanded;
     public required Func<UpdateExpansionStateRequest, Task> OnExpansionStateChange { get; init; }
     partial void OnIsExpandedChanging(bool value)
     {
