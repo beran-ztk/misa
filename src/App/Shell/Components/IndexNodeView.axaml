@@ -13,11 +13,12 @@
         <Style Selector="Border.index-node-row">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="CornerRadius" Value="3"/>
-        </Style>
-        <Style Selector="Border.index-node-row.selected">
-            <Setter Property="Background" Value="{StaticResource BrushControlSurface}"/>
+            <Setter Property="Padding" Value="4"/>
         </Style>
         <Style Selector="Border.index-node-row:pointerover">
+            <Setter Property="Background" Value="{StaticResource BrushControlSurface}"/>
+        </Style>
+        <Style Selector="Border.index-node-row.selected">
             <Setter Property="Background" Value="{StaticResource BrushControlSurface}"/>
         </Style>
         <Style Selector="Border.index-node-row Button.add-child">
@@ -26,6 +27,14 @@
         <Style Selector="Border.index-node-row:pointerover Button.add-child">
             <Setter Property="Opacity" Value="1"/>
         </Style>
+        
+        <Style Selector="Button.index-node-title">
+            
+        </Style>
+        <Style Selector="Button.index-node-title:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        
         <Style Selector="ToggleButton.expand-toggle">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
@@ -84,6 +93,7 @@
                 <!-- Title / Rename -->
                 <Grid Grid.Column="1">
                     <Button IsVisible="{Binding !IsRenaming}"
+                            Classes="index-node-title"
                             Command="{Binding SelectCommand}"
                             Background="Transparent"
                             BorderThickness="0"
