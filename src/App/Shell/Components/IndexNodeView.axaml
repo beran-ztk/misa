@@ -40,7 +40,7 @@
     </UserControl.Styles>
 
     <Grid RowDefinitions="Auto,Auto"
-          ColumnDefinitions="14,Auto">
+          ColumnDefinitions="14,*">
 
         <!-- Expand / Collapse toggle -->
         <ToggleButton Grid.Row="0" Grid.Column="0"
@@ -65,10 +65,10 @@
                 Classes="index-node-row"
                 Classes.selected="{Binding IsSelected}">
             
-            <StackPanel Orientation="Horizontal" Spacing="2">
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="2">
 
                 <!-- Type icon -->
-                <Grid VerticalAlignment="Center">
+                <Grid Grid.Column="0" VerticalAlignment="Center">
                     <Image Width="14" Height="14" Opacity="0.55"
                            Source="{SvgImage /Assets/Icons/note-blank.svg}"
                            IsVisible="{Binding Kind,
@@ -82,7 +82,7 @@
                 </Grid>
 
                 <!-- Title / Rename -->
-                <Grid>
+                <Grid Grid.Column="1">
                     <Button IsVisible="{Binding !IsRenaming}"
                             Command="{Binding SelectCommand}"
                             Background="Transparent"
@@ -113,7 +113,8 @@
                 </Grid>
 
                 <!-- Add child button -->
-                <Button Classes="add-child"
+                <Button Grid.Column="2"
+                        Classes="add-child"
                         Content="+"
                         Padding="6,2"
                         VerticalAlignment="Center"
@@ -151,7 +152,7 @@
                     </Button.Flyout>
                 </Button>
 
-            </StackPanel>
+            </Grid>
         </Border>
 
         <Border Grid.Row="1" Grid.Column="0"
