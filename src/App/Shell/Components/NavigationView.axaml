@@ -22,6 +22,10 @@
                     <Image Width="18" Height="18"
                            Source="{SvgImage /Assets/Icons/folder-add.svg}"/>
                 </Button>
+                <Button Command="{Binding ReloadCommand}">
+                    <Image Width="18" Height="18"
+                           Source="{SvgImage /Assets/Icons/refresh.svg}"/>
+                </Button>
             </StackPanel>
 
             <!-- Index tree -->
@@ -36,6 +40,10 @@
                           DragDrop.AllowDrop="True">
 
                     <TreeView.Styles>
+                        <Style Selector="TreeViewItem">
+                            <Setter Property="IsExpanded" Value="{ReflectionBinding IsExpanded, Mode=TwoWay}" />
+                        </Style>
+                        
                         <Style Selector="Border.index-entry-row">
                             <Setter Property="Background" Value="Transparent"/>
                         </Style>

@@ -33,4 +33,14 @@ public sealed class Repository(IDbContextFactory<Context> factory)
         await ctx.SaveChangesAsync();
         return true;
     }
+    public async Task UpdateExpansionStateAsync(Guid id, bool isExpanded)
+    {
+        await using var ctx = await factory.CreateDbContextAsync();
+        
+        var item = await ctx.Items.Where(x => x.Id == id).FirstOrDefaultAsync();
+        if (item is null) return;
+        
+        item.IsExpanded = isExpanded;
+        await ctx.SaveChangesAsync();
+    }
 }

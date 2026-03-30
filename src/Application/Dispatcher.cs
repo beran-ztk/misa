@@ -17,4 +17,5 @@ public sealed class Dispatcher(
     
     // Update
     public Task<bool> UpdateAsync(UpdateTitleRequest r) => updateItemHandler.HandleAsync(r);
+    public Task UpdateAsync(UpdateExpansionStateRequest r) => updateItemHandler.HandleAsync(r);
 }

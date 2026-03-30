@@ -19,6 +19,13 @@ public partial class IndexEntry : ObservableObject
     public ObservableCollection<IndexEntry> Children { get; } = [];
     public bool CanHaveChildren => Kind == Kind.Topic;
 
+    // ── Expansion State ──────────────────────────────────────────────────
+    [ObservableProperty] private bool _isExpanded;
+    public required Func<UpdateExpansionStateRequest, Task> OnExpansionStateChange { get; init; }
+    partial void OnIsExpandedChanging(bool value)
+    {
+        _ = OnExpansionStateChange.Invoke(new UpdateExpansionStateRequest(Id, value));
+    }
     // ── Rename ──────────────────────────────────────────────────
     [ObservableProperty] private bool _isRenaming;
     [ObservableProperty] private string _renamedTitle = string.Empty;
@@ -48,6 +55,8 @@ public partial class IndexEntry : ObservableObject
     [RelayCommand]
     private async Task CreateIndex(Kind kind)
     {
+        IsExpanded = true;
+        
         var entry = await OnCreateIndex.Invoke(kind, Id);
         if (entry is null) return;
         
@@ -64,6 +73,7 @@ public sealed partial class NavigationViewModel : ViewModelBase
         _ = LoadAsync();
     }
 
+    [RelayCommand] private async Task Reload() => await LoadAsync();
     private async Task LoadAsync()
     {
         var items = await Dispatcher.GetAsync(new GetItemsRequest());
@@ -91,14 +101,18 @@ public sealed partial class NavigationViewModel : ViewModelBase
 
     private IndexEntry CreateIndexEntry(Item item) => new()
     {
+        OnExpansionStateChange = ExpansionStateChange,
+        OnCreateIndex = CreateIndexAsync,
+        OnRename = Rename,
+        
         Id = item.Id,
         ParentId = item.ParentId,
         Kind = item.Kind,
         Title = item.Title,
-        OnCreateIndex = CreateIndexAsync,
-        OnRename = Rename
+        IsExpanded =  item.IsExpanded
     };
     private async Task<bool> Rename(UpdateTitleRequest r) => await Dispatcher.UpdateAsync(r);
+    private async Task ExpansionStateChange(UpdateExpansionStateRequest r) => await Dispatcher.UpdateAsync(r);
 
     [RelayCommand]
     private async Task CreateRootTopic()
