@@ -65,7 +65,7 @@
                 Classes="index-node-row"
                 Classes.selected="{Binding IsSelected}">
             
-            <StackPanel Spacing="2">
+            <StackPanel Orientation="Horizontal" Spacing="2">
 
                 <!-- Type icon -->
                 <Grid VerticalAlignment="Center">
@@ -158,14 +158,14 @@
                 Background="{StaticResource BrushBorder}"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Stretch"
-                Padding="0,4"
+                Padding="0,6"
+                Opacity="1"
                 Width="1"
                 IsVisible="{Binding IsExpanded}"/>
         <!-- Children (recursive) -->
         <ItemsControl Grid.Row="1" Grid.Column="1" 
                       ItemsSource="{Binding Children}"
-                      IsVisible="{Binding IsExpanded}"
-                      Margin="16,0,0,0">
+                      IsVisible="{Binding IsExpanded}">
             <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="root:IndexEntry">
                     <root:IndexNodeView />
