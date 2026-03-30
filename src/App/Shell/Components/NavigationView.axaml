@@ -87,10 +87,13 @@
                                                Opacity="0.8"
                                                VerticalAlignment="Center"
                                                TextTrimming="CharacterEllipsis"/>
-                                    <TextBox Grid.Column="0"
+                                    <TextBox Grid.Column="1"
                                                IsVisible="{Binding IsRenaming}"
                                                Text="{Binding RenamedTitle, Mode=TwoWay}"
                                                Opacity="0.8"
+                                               BorderBrush="{StaticResource BrushBorder}"
+                                               BorderThickness="0,0,0,1"
+                                               Background="Transparent"
                                                VerticalAlignment="Center"
                                                behaviors:FocusControlWhenVisible.FocusOnVisible="{Binding IsRenaming}">
                                         <TextBox.KeyBindings>
