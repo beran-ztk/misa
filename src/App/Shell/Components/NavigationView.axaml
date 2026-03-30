@@ -80,40 +80,38 @@
                                             Padding="6,2"
                                             VerticalAlignment="Center"
                                             Foreground="{StaticResource BrushTextFaded}"
-                                            FontSize="{StaticResource FontSizeMedium}">
+                                            FontSize="{StaticResource FontSizeSmall}">
                                         <Button.Flyout>
                                             <Flyout Placement="BottomEdgeAlignedRight">
                                                 <Border x:DataType="root:IndexEntry"
                                                         Background="{StaticResource BrushControlSurface}"
                                                         CornerRadius="{StaticResource CornerRadiusCard}"
-                                                        Padding="12">
-                                                <StackPanel Width="188"
-                                                            Spacing="{StaticResource SpacingMedium}">
+                                                        Padding="6">
+                                                    <StackPanel MinWidth="180">
+                                                        <StackPanel IsVisible="{Binding CanHaveChildren}">
+                                                            <Button Content="Create Topic"
+                                                                    HorizontalAlignment="Stretch"
+                                                                    HorizontalContentAlignment="Left"
+                                                                    Command="{Binding CreateTopicCommand}" />
 
-                                                    <!-- Kind selector -->
-                                                    <StackPanel Orientation="Horizontal"
-                                                                Spacing="{StaticResource SpacingSmall}">
-                                                        <Button Classes="btn-seg"
-                                                                Classes.active="{Binding IsTopicSelected}"
-                                                                Content="Topic"
-                                                                Command="{Binding SetKindTopicCommand}"/>
-                                                        <Button Classes="btn-seg"
-                                                                Classes.active="{Binding IsNoteSelected}"
-                                                                Content="Zettel"
-                                                                Command="{Binding SetKindNoteCommand}"/>
-                                                        <Button Classes="btn-seg"
-                                                                Classes.active="{Binding IsQuestSelected}"
-                                                                Content="Quest"
-                                                                Command="{Binding SetKindQuestCommand}"/>
+                                                            <Button Content="Create Note"
+                                                                    HorizontalAlignment="Stretch"
+                                                                    HorizontalContentAlignment="Left"
+                                                                    Command="{Binding CreateNoteCommand}" />
+
+                                                            <Button Content="Create Quest"
+                                                                    HorizontalAlignment="Stretch"
+                                                                    HorizontalContentAlignment="Left"
+                                                                    Command="{Binding CreateQuestCommand}" />
+
+                                                            <Separator Opacity="0.5"/>
+                                                        </StackPanel>
+
+                                                        <Button Content="Rename"
+                                                                HorizontalAlignment="Stretch"
+                                                                HorizontalContentAlignment="Left"
+                                                                Command="{Binding IntendToRenameCommand}" />
                                                     </StackPanel>
-
-                                                    <!-- Confirm -->
-                                                    <Button Classes="btn-primary"
-                                                            Content="Create"
-                                                            HorizontalAlignment="Stretch"
-                                                            Command="{Binding CreateIndexCommand}"/>
-
-                                                </StackPanel>
                                                 </Border>
                                             </Flyout>
                                         </Button.Flyout>

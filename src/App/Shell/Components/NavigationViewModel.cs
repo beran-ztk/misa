@@ -14,9 +14,10 @@ public partial class IndexEntry : ObservableObject
 {
     public Guid Id { get; init; }
     public Guid? ParentId { get; init; }
-    public Kind Kind { get; init; }
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanHaveChildren))] private Kind _kind;
     [ObservableProperty] private string _title = string.Empty;
     public ObservableCollection<IndexEntry> Children { get; } = [];
+    public bool CanHaveChildren => Kind == Kind.Topic;
 
     // ── Rename ──────────────────────────────────────────────────
     [ObservableProperty] private bool _isRenaming;
@@ -39,25 +40,15 @@ public partial class IndexEntry : ObservableObject
     
     // ── Child creation state ──────────────────────────────────────────────────
     public required Func<Kind, Guid?, Task<IndexEntry?>> OnCreateIndex { get; init; }
-    
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsTopicSelected))]
-    [NotifyPropertyChangedFor(nameof(IsNoteSelected))]
-    [NotifyPropertyChangedFor(nameof(IsQuestSelected))]
-    private Kind _pendingKind = Kind.Topic;
 
-    public bool IsTopicSelected => PendingKind == Kind.Topic;
-    public bool IsNoteSelected  => PendingKind == Kind.Note;
-    public bool IsQuestSelected => PendingKind == Kind.Quest;
-
-    [RelayCommand] private void SetKindTopic() => PendingKind = Kind.Topic;
-    [RelayCommand] private void SetKindNote()  => PendingKind = Kind.Note;
-    [RelayCommand] private void SetKindQuest() => PendingKind = Kind.Quest;
+    [RelayCommand] private void CreateTopic() => _ = CreateIndex(Kind.Topic);
+    [RelayCommand] private void CreateNote()  => _ = CreateIndex(Kind.Note);
+    [RelayCommand] private void CreateQuest() => _ = CreateIndex(Kind.Quest);
 
     [RelayCommand]
-    private async Task CreateIndex()
+    private async Task CreateIndex(Kind kind)
     {
-        var entry = await OnCreateIndex.Invoke(PendingKind, Id);
+        var entry = await OnCreateIndex.Invoke(kind, Id);
         if (entry is null) return;
         
         Children.Add(entry);
@@ -107,9 +98,7 @@ public sealed partial class NavigationViewModel : ViewModelBase
         OnCreateIndex = CreateIndexAsync,
         OnRename = Rename
     };
-
     private async Task<bool> Rename(UpdateTitleRequest r) => await Dispatcher.UpdateAsync(r);
-    
 
     [RelayCommand]
     private async Task CreateRootTopic()
