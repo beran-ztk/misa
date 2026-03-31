@@ -49,7 +49,7 @@
     </UserControl.Styles>
 
     <Grid RowDefinitions="Auto,Auto"
-          ColumnDefinitions="Auto,*">
+          ColumnDefinitions="12,*">
 
         <!-- Expand / Collapse toggle -->
         <ToggleButton Grid.Row="0" Grid.Column="0"
@@ -74,24 +74,24 @@
                 Classes="index-node-row"
                 Classes.selected="{Binding IsSelected}">
             
-            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="2">
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="2">
 
                 <!-- Type icon -->
-                <Grid Grid.Column="0" VerticalAlignment="Center">
-                    <Image Width="14" Height="14" Opacity="0.55"
-                           Source="{SvgImage /Assets/Icons/note-blank.svg}"
-                           IsVisible="{Binding Kind,
-                               Converter={x:Static converters:KindEqualConverter.Instance},
-                               ConverterParameter=Note}"/>
-                    <Image Width="14" Height="14" Opacity="0.55"
-                           Source="{SvgImage /Assets/Icons/question-mark.svg}"
-                           IsVisible="{Binding Kind,
-                               Converter={x:Static converters:KindEqualConverter.Instance},
-                               ConverterParameter=Quest}"/>
-                </Grid>
+                <!-- <Grid Grid.Column="0" VerticalAlignment="Center"> -->
+                <!--     <Image Width="14" Height="14" Opacity="0.55" -->
+                <!--            Source="{SvgImage /Assets/Icons/note-blank.svg}" -->
+                <!--            IsVisible="{Binding Kind, -->
+                <!--                Converter={x:Static converters:KindEqualConverter.Instance}, -->
+                <!--                ConverterParameter=Note}"/> -->
+                <!--     <Image Width="14" Height="14" Opacity="0.55" -->
+                <!--            Source="{SvgImage /Assets/Icons/question-mark.svg}" -->
+                <!--            IsVisible="{Binding Kind, -->
+                <!--                Converter={x:Static converters:KindEqualConverter.Instance}, -->
+                <!--                ConverterParameter=Quest}"/> -->
+                <!-- </Grid> -->
 
                 <!-- Title / Rename -->
-                <Grid Grid.Column="1">
+                <Grid Grid.Column="0">
                     <Button IsVisible="{Binding !IsRenaming}"
                             Classes="index-node-title"
                             Command="{Binding SelectCommand}"
@@ -123,7 +123,7 @@
                 </Grid>
 
                 <!-- Add child button -->
-                <Button Grid.Column="2"
+                <Button Grid.Column="1"
                         Classes="add-child"
                         Content="+"
                         Padding="6,2"
@@ -169,7 +169,7 @@
                 Background="{StaticResource BrushBorder}"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Stretch"
-                Margin="0,4,0,2"
+                Margin="0"
                 Width="1"
                 IsVisible="{Binding IsExpandedAndHasChildren}"/>
         <!-- Children (recursive) -->
