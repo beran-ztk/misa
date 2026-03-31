@@ -3,20 +3,28 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="Misa.App.Shell.Workspace.NoteView"             
+             x:Class="Misa.App.Shell.Workspace.NoteView"
              xmlns:root="clr-namespace:Misa.App.Shell.Workspace"
              xmlns:avaloniaEdit="https://github.com/avaloniaui/avaloniaedit"
              x:DataType="root:NoteViewModel">
 
+    <UserControl.Styles>
+        <!-- Line number gutter: smaller font, right-side breathing space replaces hard separator -->
+        <Style Selector="avaloniaEdit|LineNumberMargin">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Margin"   Value="0,0,6,0"/>
+        </Style>
+    </UserControl.Styles>
+
     <Grid RowDefinitions="Auto,*">
 
         <!-- Title row: dirty indicator + title -->
-        <Grid Grid.Row="0" ColumnDefinitions="Auto,*" Margin="50,16,24,0">
+        <Grid Grid.Row="0" ColumnDefinitions="Auto,*" Margin="28,24,24,8">
             <Ellipse Grid.Column="0"
                      Width="6" Height="6"
                      Fill="{StaticResource BrushAccent}"
                      VerticalAlignment="Center"
-                     Margin="0,4,10,0"
+                     Margin="0,2,8,0"
                      IsVisible="{Binding IsDirty}"/>
             <TextBlock Grid.Column="1"
                        Text="{Binding Title}"
@@ -38,8 +46,8 @@
                                   VerticalScrollBarVisibility="Disabled"
                                   Background="Transparent"
                                   BorderThickness="0"
-                                  Foreground="{StaticResource BrushTextPrimary}"
-                                  LineNumbersForeground="{StaticResource BrushTextFaded}"
+                                  Foreground="{StaticResource BrushTextSecondary}"
+                                  LineNumbersForeground="{StaticResource BrushTextDisabled}"
                                   FontFamily="Cascadia Code"
                                   FontSize="{StaticResource FontSizeMedium}"/>
                 <Border Height="100"/>
