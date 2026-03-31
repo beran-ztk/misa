@@ -13,7 +13,9 @@ namespace Misa.App.Shell.Components;
 public partial class IndexEntry : ObservableObject
 {
     public Guid Id { get; init; }
-    public Guid? ParentId { get; init; }
+
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasParent))] private Guid? _parentId;
+    public bool HasParent => ParentId is not null;
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanHaveChildren))] private Kind _kind;
     [ObservableProperty] private string _title = string.Empty;
     public ObservableCollection<IndexEntry> Children { get; } = [];
