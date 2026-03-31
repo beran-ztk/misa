@@ -54,7 +54,7 @@
                 Classes="index-node-row"
                 Classes.selected="{Binding IsSelected}">
             
-            <Grid ColumnDefinitions="Auto,12,*,Auto" ColumnSpacing="4">
+            <Grid ColumnDefinitions="Auto,12,*,Auto" ColumnSpacing="2">
 
                 <!-- Type icon -->
                 <!-- <Grid Grid.Column="0" VerticalAlignment="Center"> -->
@@ -86,9 +86,9 @@
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="root:IndexGuideSegment">
-                            <Border Width="16" VerticalAlignment="Stretch">
+                            <Border Width="13" VerticalAlignment="Stretch">
                                 <Border Width="1"
-                                        Margin="3,0,0,0"
+                                        Margin="2,0,0,0"
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Stretch"
                                         Background="{StaticResource BrushBorder}"
@@ -122,13 +122,11 @@
                             Classes="index-node-title"
                             Command="{Binding SelectCommand}"
                             Background="Transparent"
-                            BorderThickness="0"
-                            Padding="2,0"
                             HorizontalAlignment="Stretch"
                             HorizontalContentAlignment="Left"
                             VerticalAlignment="Center">
                         <TextBlock Text="{Binding Title}"
-                                   Opacity="0.8"
+                                   Opacity="0.9"
                                    TextTrimming="CharacterEllipsis"
                                    FontSize="{StaticResource FontSizeAverage}"/>
                     </Button>
