@@ -5,6 +5,7 @@ using Misa.App.Infrastructure;
 using Misa.App.Shell.Components;
 using Misa.App.Shell.Workspace;
 using Misa.Application;
+using Misa.Domain;
 
 namespace Misa.App.Shell;
 
@@ -33,7 +34,15 @@ public sealed partial class ShellWindowViewModel : ViewModelBase
     {
         var item = await Dispatcher.GetAsync(new GetItemRequest(id));
         if (item is null) return;
-        _noteViewModel.Load(item);
-        Workspace = _noteViewModel;
+
+        if (item.Kind == Kind.Note)
+        {
+            _noteViewModel.Load(item);
+            Workspace = _noteViewModel;
+        }
+        else
+        {
+            Workspace = null;
+        }
     }
 }

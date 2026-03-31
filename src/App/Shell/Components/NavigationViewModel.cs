@@ -122,11 +122,18 @@ public sealed partial class NavigationViewModel : ViewModelBase
 
     private void SelectEntry(IndexEntry entry)
     {
+        // Remove selection of current entry
         if (SelectedEntry is not null)
             SelectedEntry.IsSelected = false;
+        
+        // Select new entry
         SelectedEntry = entry;
         entry.IsSelected = true;
         _ = OnNodeOpened?.Invoke(entry.Id);
+        
+        // Update Expanded-State if Topic
+        if (entry.Kind == Kind.Topic)
+            entry.IsExpanded = !entry.IsExpanded;
     }
 
     private IndexEntry CreateIndexEntry(Item item) => new()
