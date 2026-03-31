@@ -54,7 +54,7 @@
                 Classes="index-node-row"
                 Classes.selected="{Binding IsSelected}">
             
-            <Grid ColumnDefinitions="Auto,12,*,Auto" ColumnSpacing="2">
+            <Grid ColumnDefinitions="Auto,12,*,Auto" ColumnSpacing="4">
 
                 <!-- Type icon -->
                 <!-- <Grid Grid.Column="0" VerticalAlignment="Center"> -->
@@ -75,7 +75,7 @@
                         HorizontalAlignment="Center"
                         VerticalAlignment="Stretch"
                         Width="1"
-                        Margin="6,0,0,0"
+                        Margin="9,0,0,0"
                         IsVisible="{Binding HasParent}"/>
                 
                 <!-- Expand / Collapse toggle -->
