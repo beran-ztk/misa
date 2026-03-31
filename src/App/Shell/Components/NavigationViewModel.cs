@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
+using Avalonia;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Misa.App.Infrastructure;
@@ -17,6 +18,8 @@ public partial class IndexEntry : ObservableObject
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasParent))] private Guid? _parentId;
     public bool HasParent => ParentId is not null;
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanHaveChildren))] private Kind _kind;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(IndentMargin))] private int _depth;
+    public Thickness IndentMargin => new(Depth * 16.0, 0, 0, 0);
     [ObservableProperty] private string _title = string.Empty;
     public ObservableCollection<IndexEntry> Children { get; } = [];
     public bool CanHaveChildren => Kind == Kind.Topic;
@@ -79,6 +82,7 @@ public partial class IndexEntry : ObservableObject
         var entry = await OnCreateIndex.Invoke(kind, Id);
         if (entry is null) return;
 
+        entry.Depth = Depth + 1;
         Children.Add(entry);
     }
 }
@@ -116,6 +120,16 @@ public sealed partial class NavigationViewModel : ViewModelBase
             else
                 parent.Children.Add(entry);
         }
+
+        foreach (var root in IndexEntries)
+            SetDepthRecursive(root, 0);
+    }
+
+    private static void SetDepthRecursive(IndexEntry entry, int depth)
+    {
+        entry.Depth = depth;
+        foreach (var child in entry.Children)
+            SetDepthRecursive(child, depth + 1);
     }
 
     [ObservableProperty] private IndexEntry? _selectedEntry;

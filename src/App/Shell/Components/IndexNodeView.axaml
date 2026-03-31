@@ -54,7 +54,8 @@
                 Classes="index-node-row"
                 Classes.selected="{Binding IsSelected}">
             
-            <Grid ColumnDefinitions="Auto,12,*,Auto" ColumnSpacing="4">
+            <Grid ColumnDefinitions="Auto,12,*,Auto" ColumnSpacing="4"
+                  Margin="{Binding IndentMargin}">
 
                 <!-- Type icon -->
                 <!-- <Grid Grid.Column="0" VerticalAlignment="Center"> -->
