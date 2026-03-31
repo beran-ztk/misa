@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
-using Avalonia;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Misa.App.Infrastructure;
@@ -11,6 +10,8 @@ using Misa.Domain;
 
 namespace Misa.App.Shell.Components;
 
+public sealed record IndexGuideSegment(bool ShowLine);
+
 public partial class IndexEntry : ObservableObject
 {
     public Guid Id { get; init; }
@@ -18,8 +19,17 @@ public partial class IndexEntry : ObservableObject
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasParent))] private Guid? _parentId;
     public bool HasParent => ParentId is not null;
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanHaveChildren))] private Kind _kind;
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(IndentMargin))] private int _depth;
-    public Thickness IndentMargin => new(Depth * 16.0, 0, 0, 0);
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(GuideSegments))] private int _depth;
+    public IReadOnlyList<IndexGuideSegment> GuideSegments
+    {
+        get
+        {
+            var segments = new IndexGuideSegment[Depth];
+            for (var i = 0; i < Depth; i++)
+                segments[i] = new IndexGuideSegment(ShowLine: true);
+            return segments;
+        }
+    }
     [ObservableProperty] private string _title = string.Empty;
     public ObservableCollection<IndexEntry> Children { get; } = [];
     public bool CanHaveChildren => Kind == Kind.Topic;

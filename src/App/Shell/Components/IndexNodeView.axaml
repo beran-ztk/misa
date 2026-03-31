@@ -54,8 +54,7 @@
                 Classes="index-node-row"
                 Classes.selected="{Binding IsSelected}">
             
-            <Grid ColumnDefinitions="Auto,12,*,Auto" ColumnSpacing="4"
-                  Margin="{Binding IndentMargin}">
+            <Grid ColumnDefinitions="Auto,12,*,Auto" ColumnSpacing="4">
 
                 <!-- Type icon -->
                 <!-- <Grid Grid.Column="0" VerticalAlignment="Center"> -->
@@ -70,14 +69,33 @@
                 <!--                Converter={x:Static converters:KindEqualConverter.Instance}, -->
                 <!--                ConverterParameter=Quest}"/> -->
                 <!-- </Grid> -->
-                
-                <Border Grid.Column="0"
-                        Background="{StaticResource BrushBorder}"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Stretch"
-                        Width="1"
-                        Margin="9,0,0,0"
-                        IsVisible="{Binding HasParent}"/>
+
+                <!-- Guide gutter: one fixed-width slot per ancestor depth level -->
+                <ItemsControl Grid.Column="0"
+                              ItemsSource="{Binding GuideSegments}"
+                              VerticalAlignment="Stretch">
+                    <ItemsControl.Styles>
+                        <Style Selector="ItemsControl > ContentPresenter">
+                            <Setter Property="VerticalAlignment" Value="Stretch"/>
+                        </Style>
+                    </ItemsControl.Styles>
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="root:IndexGuideSegment">
+                            <Border Width="16" VerticalAlignment="Stretch">
+                                <Border Width="1"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Stretch"
+                                        Background="{StaticResource BrushBorder}"
+                                        IsVisible="{Binding ShowLine}"/>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
                 
                 <!-- Expand / Collapse toggle -->
                 <ToggleButton Grid.Column="1"
