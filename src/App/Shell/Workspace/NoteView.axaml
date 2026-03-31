@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+<UserControl xmlns="https://github.com/avaloniaui" 
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -8,23 +8,14 @@
              xmlns:avaloniaEdit="https://github.com/avaloniaui/avaloniaedit"
              x:DataType="root:NoteViewModel">
 
-    <UserControl.Styles>
-        <!-- Line number gutter: smaller font, right-side breathing space replaces hard separator -->
-        <Style Selector="avaloniaEdit|LineNumberMargin">
-            <Setter Property="FontSize" Value="11"/>
-            <Setter Property="Margin"   Value="0,0,6,0"/>
-        </Style>
-    </UserControl.Styles>
-
     <Grid RowDefinitions="Auto,*">
 
-        <!-- Title row: dirty indicator + title -->
-        <Grid Grid.Row="0" ColumnDefinitions="Auto,*" Margin="28,24,24,8">
+        <Grid Grid.Row="0" ColumnDefinitions="16,*" Margin="30,16,24,0">
             <Ellipse Grid.Column="0"
                      Width="6" Height="6"
                      Fill="{StaticResource BrushAccent}"
                      VerticalAlignment="Center"
-                     Margin="0,2,8,0"
+                     HorizontalAlignment="Center"
                      IsVisible="{Binding IsDirty}"/>
             <TextBlock Grid.Column="1"
                        Text="{Binding Title}"
@@ -40,16 +31,16 @@
                       HorizontalScrollBarVisibility="Disabled">
             <StackPanel>
                 <avaloniaEdit:TextEditor x:Name="Editor"
-                                  ShowLineNumbers="True"
-                                  WordWrap="True"
-                                  HorizontalScrollBarVisibility="Disabled"
-                                  VerticalScrollBarVisibility="Disabled"
-                                  Background="Transparent"
-                                  BorderThickness="0"
-                                  Foreground="{StaticResource BrushTextSecondary}"
-                                  LineNumbersForeground="{StaticResource BrushTextDisabled}"
-                                  FontFamily="Cascadia Code"
-                                  FontSize="{StaticResource FontSizeMedium}"/>
+                                         ShowLineNumbers="True"
+                                         WordWrap="True"
+                                         HorizontalScrollBarVisibility="Disabled"
+                                         VerticalScrollBarVisibility="Disabled"
+                                         Background="Transparent"
+                                         BorderThickness="0"
+                                         Foreground="{StaticResource BrushTextPrimary}"
+                                         LineNumbersForeground="{StaticResource BrushTextFaded}"
+                                         FontFamily="Cascadia Code"
+                                         FontSize="{StaticResource FontSizeMedium}"/>
                 <Border Height="100"/>
                 <Border BorderThickness="0,1,0,0"
                         BorderBrush="{StaticResource BrushBorder}"
