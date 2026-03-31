@@ -88,6 +88,7 @@
                         <DataTemplate x:DataType="root:IndexGuideSegment">
                             <Border Width="16" VerticalAlignment="Stretch">
                                 <Border Width="1"
+                                        Margin="3,0,0,0"
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Stretch"
                                         Background="{StaticResource BrushBorder}"
