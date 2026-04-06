@@ -11,8 +11,8 @@
         ExtendClientAreaToDecorationsHint="True"
         ExtendClientAreaChromeHints="NoChrome">
 
-    <Grid>
-        
+    <Border BorderThickness="1"
+            BorderBrush="AntiqueWhite">
         <Grid RowDefinitions="40,*">
             
             <ContentControl Grid.Row="0" 
@@ -33,6 +33,5 @@
                                 Content="{Binding Workspace}"/>
             </Grid>
         </Grid>
-        
-    </Grid>
+    </Border>
 </Window>
