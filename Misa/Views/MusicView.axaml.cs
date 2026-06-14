@@ -16,6 +16,7 @@ namespace Misa.Views;
 public partial class MusicView : UserControl
 {
     private enum PlaybackState { Stopped, Playing, Paused }
+    private enum RepeatMode { None, RepeatOne, RepeatAll }
 
     private readonly DispatcherTimer _progressTimer = new() { Interval = TimeSpan.FromMilliseconds(500) };
 
@@ -24,6 +25,8 @@ public partial class MusicView : UserControl
     private int _playingTrackId = -1;
     private PlaybackState _state = PlaybackState.Stopped;
     private bool _isSeeking;
+    private bool _autoplay;
+    private RepeatMode _repeatMode = RepeatMode.None;
 
     private List<Genre> _genres = [];
     private List<Rating> _ratings = [];
@@ -41,9 +44,12 @@ public partial class MusicView : UserControl
         PlaybackSlider.AddHandler(InputElement.PointerReleasedEvent, OnSliderPointerReleased, RoutingStrategies.Tunnel);
 
         SortFieldCombo.ItemsSource = new[] { "Title", "Rating", "Downloaded", "Duration" };
-        SortFieldCombo.SelectedIndex = 2; // DownloadedAt
+        SortFieldCombo.SelectedIndex = 2;
         SortDirectionCombo.ItemsSource = new[] { "Ascending", "Descending" };
-        SortDirectionCombo.SelectedIndex = 1; // Descending
+        SortDirectionCombo.SelectedIndex = 1;
+
+        RepeatModeCombo.ItemsSource = new[] { "No repeat", "Repeat one", "Repeat all" };
+        RepeatModeCombo.SelectedIndex = 0;
 
         SearchBox.TextChanged += (_, _) => ApplyFilter();
         SortFieldCombo.SelectionChanged += (_, _) => ApplyFilter();
@@ -51,6 +57,14 @@ public partial class MusicView : UserControl
         GenreFilter.SelectionChanged += (_, _) => ApplyFilter();
         RatingFilter.SelectionChanged += (_, _) => ApplyFilter();
         StyleFilter.SelectionChanged += (_, _) => ApplyFilter();
+        AutoplayCheckBox.IsCheckedChanged += (_, _) => _autoplay = AutoplayCheckBox.IsChecked == true;
+        RepeatModeCombo.SelectionChanged += (_, _) =>
+            _repeatMode = RepeatModeCombo.SelectedIndex switch
+            {
+                1 => RepeatMode.RepeatOne,
+                2 => RepeatMode.RepeatAll,
+                _ => RepeatMode.None,
+            };
 
         try
         {
@@ -160,8 +174,6 @@ public partial class MusicView : UserControl
     private TrackSortDirection GetSortDirection() =>
         SortDirectionCombo.SelectedIndex == 1 ? TrackSortDirection.Descending : TrackSortDirection.Ascending;
 
-    // Tracks visible after all filters, search, and sort — the current play context.
-    // Use this list for next-track navigation when it is implemented.
     public IReadOnlyList<TrackDisplayItem> GetPlayContext() => _filteredItems;
 
     public void Refresh()
@@ -226,8 +238,9 @@ public partial class MusicView : UserControl
     // --- Playback control ---
 
     private void OnPlayClicked(object? sender, RoutedEventArgs e) => StartPlayback();
-
     private void OnListDoubleTapped(object? sender, TappedEventArgs e) => StartPlayback();
+    private void OnPreviousClicked(object? sender, RoutedEventArgs e) => NavigatePrevious();
+    private void OnNextClicked(object? sender, RoutedEventArgs e) => NavigateNext(isManual: true);
 
     private void OnPauseResumeClicked(object? sender, RoutedEventArgs e)
     {
@@ -243,6 +256,12 @@ public partial class MusicView : UserControl
     {
         var idx = FileList.SelectedIndex;
         if (idx < 0 || idx >= _filteredItems.Count) return;
+        PlayTrackAt(idx);
+    }
+
+    private void PlayTrackAt(int filteredIndex)
+    {
+        if (filteredIndex < 0 || filteredIndex >= _filteredItems.Count) return;
 
         if (_player != null)
         {
@@ -256,7 +275,9 @@ public partial class MusicView : UserControl
         _progressTimer.Stop();
         _isSeeking = false;
 
-        var track = _filteredItems[idx].Track;
+        var track = _filteredItems[filteredIndex].Track;
+        FileList.SelectedIndex = filteredIndex;
+
         try
         {
             _audioStream = new MediaFoundationReader(
@@ -277,9 +298,7 @@ public partial class MusicView : UserControl
         catch (Exception ex)
         {
             StatusText.Text = $"Playback failed: {ex.Message}";
-            _playingTrackId = -1;
-            _state = PlaybackState.Stopped;
-            UpdateButtonStates();
+            FullStop();
         }
     }
 
@@ -310,13 +329,10 @@ public partial class MusicView : UserControl
         _audioStream?.Dispose();
         _player = null;
         _audioStream = null;
-        _playingTrackId = -1;
         _state = PlaybackState.Stopped;
         _isSeeking = false;
         _progressTimer.Stop();
-        ResetPlaybackUI();
-        UpdateButtonStates();
-        RefreshPlayingMarkers();
+        FullStop();
     }
 
     private void OnPlaybackStopped(object? sender, StoppedEventArgs e)
@@ -325,19 +341,121 @@ public partial class MusicView : UserControl
         Dispatcher.UIThread.Post(() =>
         {
             if (_player == null || _player != stoppedPlayer) return;
+
+            // Tear down player machinery; keep _playingTrackId so NavigateNext can use it.
             _player.PlaybackStopped -= OnPlaybackStopped;
             _player.Dispose();
             _audioStream?.Dispose();
             _player = null;
             _audioStream = null;
-            _playingTrackId = -1;
             _state = PlaybackState.Stopped;
             _isSeeking = false;
             _progressTimer.Stop();
-            ResetPlaybackUI();
-            UpdateButtonStates();
-            RefreshPlayingMarkers();
+
+            if (_autoplay)
+                NavigateNext(isManual: false);
+            else
+                FullStop();
         });
+    }
+
+    // --- Navigation ---
+
+    private int GetCurrentPlayIndex() =>
+        _playingTrackId < 0 ? -1 : _filteredItems.FindIndex(i => i.Track.Id == _playingTrackId);
+
+    private void NavigateNext(bool isManual)
+    {
+        if (_filteredItems.Count == 0)
+        {
+            StatusText.Text = "No tracks in the current view.";
+            FullStop();
+            return;
+        }
+
+        var currentIdx = GetCurrentPlayIndex();
+
+        // RepeatOne only takes effect on autoplay, not manual Next.
+        if (_repeatMode == RepeatMode.RepeatOne && !isManual)
+        {
+            PlayTrackAt(currentIdx >= 0 ? currentIdx : 0);
+            return;
+        }
+
+        int nextIdx;
+        if (_repeatMode == RepeatMode.RepeatAll)
+        {
+            nextIdx = currentIdx < 0 ? 0 : (currentIdx + 1) % _filteredItems.Count;
+        }
+        else
+        {
+            // None, or RepeatOne with manual press (behaves like None for navigation).
+            if (currentIdx >= 0)
+            {
+                nextIdx = currentIdx + 1;
+                if (nextIdx >= _filteredItems.Count)
+                {
+                    FullStop();
+                    return;
+                }
+            }
+            else if (_playingTrackId < 0)
+            {
+                // Nothing playing: use selected track as the starting point.
+                var selIdx = FileList.SelectedIndex;
+                nextIdx = selIdx >= 0 && selIdx < _filteredItems.Count ? selIdx : 0;
+            }
+            else
+            {
+                // Playing track is no longer visible in the filtered list.
+                nextIdx = 0;
+            }
+        }
+
+        PlayTrackAt(nextIdx);
+    }
+
+    private void NavigatePrevious()
+    {
+        if (_filteredItems.Count == 0) return;
+
+        var currentIdx = GetCurrentPlayIndex();
+
+        int prevIdx;
+        if (_repeatMode == RepeatMode.RepeatAll)
+        {
+            prevIdx = currentIdx <= 0 ? _filteredItems.Count - 1 : currentIdx - 1;
+        }
+        else
+        {
+            if (currentIdx < 0)
+            {
+                // Nothing playing or not visible: use selected as reference.
+                var selIdx = FileList.SelectedIndex;
+                if (selIdx <= 0) return;
+                prevIdx = selIdx - 1;
+            }
+            else if (currentIdx == 0)
+            {
+                return; // Already at the first track.
+            }
+            else
+            {
+                prevIdx = currentIdx - 1;
+            }
+        }
+
+        PlayTrackAt(prevIdx);
+    }
+
+    // Clears all playing state and resets the UI. Does NOT touch _player/_audioStream.
+    private void FullStop()
+    {
+        _playingTrackId = -1;
+        _state = PlaybackState.Stopped;
+        ResetPlaybackUI();
+        UpdateButtonStates();
+        RefreshPlayingMarkers();
     }
 
     // --- Progress ---
