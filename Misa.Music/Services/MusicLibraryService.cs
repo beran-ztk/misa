@@ -84,8 +84,8 @@ public class MusicLibraryService
         return new DownloadResult(true);
     }
 
-    public void UpdateTrack(int id, string title, int genreId, int ratingId, List<int> styleIds) =>
-        _db.UpdateTrack(id, title, genreId, ratingId, styleIds);
+    public void UpdateTrack(int id, string title, int genreId, int ratingId, List<int> styleIds, string? notes) =>
+        _db.UpdateTrack(id, title, genreId, ratingId, styleIds, notes);
 
     public DeleteTrackResult DeleteTrack(int id, string fileName)
     {

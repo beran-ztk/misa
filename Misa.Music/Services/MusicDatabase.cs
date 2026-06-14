@@ -23,9 +23,38 @@ public class MusicDatabase
         if (!string.IsNullOrEmpty(dir))
             Directory.CreateDirectory(dir);
 
-        if (File.Exists(_dbPath)) return;
-
         using var conn = Open();
+
+        if (!TableExists(conn, "Music"))
+        {
+            CreateSchema(conn);
+            SeedRatings(conn);
+        }
+
+        Migrate(conn);
+    }
+
+    private static bool TableExists(SqliteConnection conn, string table)
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=$t";
+        cmd.Parameters.AddWithValue("$t", table);
+        return (long)cmd.ExecuteScalar()! > 0;
+    }
+
+    private static bool ColumnExists(SqliteConnection conn, string table, string column)
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = $"PRAGMA table_info({table})";
+        using var r = cmd.ExecuteReader();
+        while (r.Read())
+            if (string.Equals(r.GetString(1), column, StringComparison.OrdinalIgnoreCase))
+                return true;
+        return false;
+    }
+
+    private static void CreateSchema(SqliteConnection conn)
+    {
         using var cmd = conn.CreateCommand();
         cmd.CommandText = @"
             CREATE TABLE Genres (
@@ -49,7 +78,8 @@ public class MusicDatabase
                 GenreId         INTEGER NOT NULL,
                 RatingId        INTEGER NOT NULL,
                 DownloadedAt    TEXT    NOT NULL,
-                DurationSeconds INTEGER NULL
+                DurationSeconds INTEGER NULL,
+                Notes           TEXT    NULL
             );
             CREATE TABLE MusicStyles (
                 MusicId INTEGER NOT NULL,
@@ -57,8 +87,16 @@ public class MusicDatabase
                 PRIMARY KEY (MusicId, StyleId)
             );";
         cmd.ExecuteNonQuery();
+    }
 
-        SeedRatings(conn);
+    private static void Migrate(SqliteConnection conn)
+    {
+        if (!ColumnExists(conn, "Music", "Notes"))
+        {
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "ALTER TABLE Music ADD COLUMN Notes TEXT NULL";
+            cmd.ExecuteNonQuery();
+        }
     }
 
     private static void SeedRatings(SqliteConnection conn)
@@ -125,13 +163,14 @@ public class MusicDatabase
     {
         using var conn = Open();
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT Id, CanonicalUrl, Title, FileName, GenreId, RatingId, DownloadedAt, DurationSeconds FROM Music ORDER BY DownloadedAt DESC";
+        cmd.CommandText = "SELECT Id, CanonicalUrl, Title, FileName, GenreId, RatingId, DownloadedAt, DurationSeconds, Notes FROM Music ORDER BY DownloadedAt DESC";
         using var r = cmd.ExecuteReader();
         var list = new List<MusicTrack>();
         while (r.Read())
             list.Add(new MusicTrack(r.GetInt32(0), r.GetString(1), r.GetString(2), r.GetString(3),
                                     r.GetInt32(4), r.GetInt32(5), r.GetString(6),
-                                    r.IsDBNull(7) ? null : r.GetInt32(7)));
+                                    r.IsDBNull(7) ? null : r.GetInt32(7),
+                                    r.IsDBNull(8) ? null : r.GetString(8)));
         return list;
     }
 
@@ -168,18 +207,19 @@ public class MusicDatabase
         return ids;
     }
 
-    public void UpdateTrack(int id, string title, int genreId, int ratingId, List<int> styleIds)
+    public void UpdateTrack(int id, string title, int genreId, int ratingId, List<int> styleIds, string? notes)
     {
         using var conn = Open();
         using var tx = conn.BeginTransaction();
 
         using var updateCmd = conn.CreateCommand();
         updateCmd.Transaction = tx;
-        updateCmd.CommandText = "UPDATE Music SET Title = $title, GenreId = $genreId, RatingId = $ratingId WHERE Id = $id";
+        updateCmd.CommandText = "UPDATE Music SET Title = $title, GenreId = $genreId, RatingId = $ratingId, Notes = $notes WHERE Id = $id";
         updateCmd.Parameters.AddWithValue("$id", id);
         updateCmd.Parameters.AddWithValue("$title", title);
         updateCmd.Parameters.AddWithValue("$genreId", genreId);
         updateCmd.Parameters.AddWithValue("$ratingId", ratingId);
+        updateCmd.Parameters.AddWithValue("$notes", notes ?? (object)DBNull.Value);
         updateCmd.ExecuteNonQuery();
 
         using var delStylesCmd = conn.CreateCommand();

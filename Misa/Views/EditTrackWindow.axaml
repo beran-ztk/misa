@@ -25,6 +25,10 @@
 
                 <TextBlock Text="Styles (click to toggle)" />
                 <ListBox x:Name="StylesBox" SelectionMode="Multiple,Toggle" Height="120" />
+
+                <TextBlock Text="Notes" />
+                <TextBox x:Name="NotesBox" AcceptsReturn="True" Height="80"
+                         TextWrapping="Wrap" Watermark="Optional notes…" />
             </StackPanel>
         </ScrollViewer>
 

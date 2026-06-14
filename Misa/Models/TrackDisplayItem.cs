@@ -8,5 +8,7 @@ public record TrackDisplayItem(MusicTrack Track, string MetaLine, List<int> Styl
     public string Title => Track.Title;
     public int GenreId => Track.GenreId;
     public int RatingId => Track.RatingId;
+    public string? Notes => Track.Notes;
+    public bool HasNotes => !string.IsNullOrWhiteSpace(Track.Notes);
     public bool IsPlaying { get; set; }
 }

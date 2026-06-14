@@ -29,6 +29,8 @@ public partial class MusicView : UserControl
     private List<Rating> _ratings = [];
     private List<Style> _styles = [];
     private List<TrackDisplayItem> _allItems = [];
+    private Dictionary<int, List<int>> _allTrackStyleIds = [];
+    // _filteredItems is the play context: tracks visible after all filters, search, and sort.
     private List<TrackDisplayItem> _filteredItems = [];
 
     public MusicView()
@@ -37,9 +39,19 @@ public partial class MusicView : UserControl
         _progressTimer.Tick += OnProgressTick;
         PlaybackSlider.AddHandler(InputElement.PointerPressedEvent, OnSliderPointerPressed, RoutingStrategies.Tunnel);
         PlaybackSlider.AddHandler(InputElement.PointerReleasedEvent, OnSliderPointerReleased, RoutingStrategies.Tunnel);
+
+        SortFieldCombo.ItemsSource = new[] { "Title", "Rating", "Downloaded", "Duration" };
+        SortFieldCombo.SelectedIndex = 2; // DownloadedAt
+        SortDirectionCombo.ItemsSource = new[] { "Ascending", "Descending" };
+        SortDirectionCombo.SelectedIndex = 1; // Descending
+
+        SearchBox.TextChanged += (_, _) => ApplyFilter();
+        SortFieldCombo.SelectionChanged += (_, _) => ApplyFilter();
+        SortDirectionCombo.SelectionChanged += (_, _) => ApplyFilter();
         GenreFilter.SelectionChanged += (_, _) => ApplyFilter();
         RatingFilter.SelectionChanged += (_, _) => ApplyFilter();
         StyleFilter.SelectionChanged += (_, _) => ApplyFilter();
+
         try
         {
             MusicLibraryService.Current.Initialize();
@@ -71,14 +83,14 @@ public partial class MusicView : UserControl
     private void RefreshTrackList()
     {
         var tracks = MusicLibraryService.Current.GetTracks();
-        var allStyleIds = MusicLibraryService.Current.GetAllTrackStyleIds();
+        _allTrackStyleIds = MusicLibraryService.Current.GetAllTrackStyleIds();
         var genreMap = _genres.ToDictionary(g => g.Id, g => g.Name);
         var ratingMap = _ratings.ToDictionary(r => r.Id, r => r.Name);
         var styleMap = _styles.ToDictionary(s => s.Id, s => s.Name);
 
         _allItems = tracks.Select(t =>
         {
-            var styleIds = allStyleIds.GetValueOrDefault(t.Id, []);
+            var styleIds = _allTrackStyleIds.GetValueOrDefault(t.Id, []);
             var styleNames = styleIds
                 .Select(id => styleMap.GetValueOrDefault(id, ""))
                 .Where(n => n.Length > 0)
@@ -107,11 +119,21 @@ public partial class MusicView : UserControl
         var selRatingIds = SelectedIds(RatingFilter.SelectedItems, _ratings, r => r.Name, r => r.Id);
         var selStyleIds = SelectedIds(StyleFilter.SelectedItems, _styles, s => s.Name, s => s.Id);
 
-        _filteredItems = _allItems.Where(item =>
-            (selGenreIds.Count == 0 || selGenreIds.Contains(item.GenreId)) &&
-            (selRatingIds.Count == 0 || selRatingIds.Contains(item.RatingId)) &&
-            (selStyleIds.Count == 0 || item.StyleIds.Any(id => selStyleIds.Contains(id)))
-        ).ToList();
+        var ratingSortOrders = _ratings.ToDictionary(r => r.Id, r => r.SortOrder);
+        var itemById = _allItems.ToDictionary(i => i.Track.Id);
+
+        var filtered = TrackFilter.Apply(
+            _allItems.Select(i => i.Track),
+            _allTrackStyleIds,
+            ratingSortOrders,
+            selGenreIds, selRatingIds, selStyleIds,
+            SearchBox.Text,
+            GetSortField(), GetSortDirection());
+
+        _filteredItems = filtered
+            .Where(t => itemById.ContainsKey(t.Id))
+            .Select(t => itemById[t.Id])
+            .ToList();
 
         foreach (var item in _filteredItems)
             item.IsPlaying = item.Track.Id == _playingTrackId;
@@ -125,6 +147,22 @@ public partial class MusicView : UserControl
         if (selected.Count == 0) return [];
         return source.Where(item => selected.Contains(nameOf(item))).Select(idOf).ToHashSet();
     }
+
+    private TrackSortField GetSortField() => SortFieldCombo.SelectedIndex switch
+    {
+        0 => TrackSortField.Title,
+        1 => TrackSortField.Rating,
+        2 => TrackSortField.DownloadedAt,
+        3 => TrackSortField.Duration,
+        _ => TrackSortField.DownloadedAt,
+    };
+
+    private TrackSortDirection GetSortDirection() =>
+        SortDirectionCombo.SelectedIndex == 1 ? TrackSortDirection.Descending : TrackSortDirection.Ascending;
+
+    // Tracks visible after all filters, search, and sort — the current play context.
+    // Use this list for next-track navigation when it is implemented.
+    public IReadOnlyList<TrackDisplayItem> GetPlayContext() => _filteredItems;
 
     public void Refresh()
     {

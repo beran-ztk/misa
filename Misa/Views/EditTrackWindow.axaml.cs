@@ -31,6 +31,7 @@ public partial class EditTrackWindow : Window
         _styles = MusicLibraryService.Current.GetStyles();
 
         TitleBox.Text = _track.Title;
+        NotesBox.Text = _track.Notes ?? "";
 
         GenreBox.ItemsSource = new[] { "(Select genre)" }.Concat(_genres.Select(g => g.Name)).ToList();
         var genreIdx = _genres.FindIndex(g => g.Id == _track.GenreId);
@@ -66,7 +67,8 @@ public partial class EditTrackWindow : Window
             .Select(name => _styles.First(s => s.Name == name).Id)
             .ToList() ?? [];
 
-        MusicLibraryService.Current.UpdateTrack(_track.Id, title, genreId, ratingId, styleIds);
+        var notes = string.IsNullOrWhiteSpace(NotesBox.Text) ? null : NotesBox.Text.Trim();
+        MusicLibraryService.Current.UpdateTrack(_track.Id, title, genreId, ratingId, styleIds, notes);
         Close(true);
     }
 
