@@ -16,8 +16,13 @@ public partial class MusicView : UserControl
 
     private IWavePlayer? _player;
     private WaveStream? _audioStream;
-    private List<MusicTrack> _tracks = [];
     private int _playingTrackId = -1;
+
+    private List<Genre> _genres = [];
+    private List<Rating> _ratings = [];
+    private List<Style> _styles = [];
+    private List<TrackDisplayItem> _allItems = [];
+    private List<TrackDisplayItem> _filteredItems = [];
 
     public MusicView()
     {
@@ -31,18 +36,85 @@ public partial class MusicView : UserControl
             StatusText.Text = $"Database error: {ex.Message}";
             return;
         }
+        LoadLookups();
         RefreshTrackList();
+    }
+
+    private void LoadLookups()
+    {
+        _genres = Db.GetGenres();
+        _ratings = Db.GetRatings();
+        _styles = Db.GetStyles();
+        GenreFilter.ItemsSource = _genres.Select(g => g.Name).ToList();
+        RatingFilter.ItemsSource = _ratings.Select(r => r.Name).ToList();
+        StyleFilter.ItemsSource = _styles.Select(s => s.Name).ToList();
     }
 
     private void RefreshTrackList()
     {
-        _tracks = Db.GetAllTracks();
-        FileList.ItemsSource = _tracks.Select(t => t.Title).ToList();
+        var tracks = Db.GetAllTracks();
+        var allStyleIds = Db.GetAllMusicStyleIds();
+        var genreMap = _genres.ToDictionary(g => g.Id, g => g.Name);
+        var ratingMap = _ratings.ToDictionary(r => r.Id, r => r.Name);
+        var styleMap = _styles.ToDictionary(s => s.Id, s => s.Name);
+
+        _allItems = tracks.Select(t =>
+        {
+            var styleIds = allStyleIds.GetValueOrDefault(t.Id, []);
+            var styleNames = styleIds
+                .Select(id => styleMap.GetValueOrDefault(id, ""))
+                .Where(n => n.Length > 0)
+                .Order();
+
+            var parts = new List<string>
+            {
+                genreMap.GetValueOrDefault(t.GenreId, "?"),
+                ratingMap.GetValueOrDefault(t.RatingId, "?"),
+            };
+            if (t.DurationSeconds.HasValue)
+                parts.Add(FormatDuration(t.DurationSeconds.Value));
+            var styleStr = string.Join(", ", styleNames);
+            if (styleStr.Length > 0)
+                parts.Add(styleStr);
+
+            return new TrackDisplayItem(t, string.Join(" · ", parts), styleIds);
+        }).ToList();
+
+        ApplyFilter();
+    }
+
+    private void ApplyFilter()
+    {
+        var selGenreIds = SelectedIds(GenreFilter, _genres, g => g.Name, g => g.Id);
+        var selRatingIds = SelectedIds(RatingFilter, _ratings, r => r.Name, r => r.Id);
+        var selStyleIds = SelectedIds(StyleFilter, _styles, s => s.Name, s => s.Id);
+
+        _filteredItems = _allItems.Where(item =>
+            (selGenreIds.Count == 0 || selGenreIds.Contains(item.GenreId)) &&
+            (selRatingIds.Count == 0 || selRatingIds.Contains(item.RatingId)) &&
+            (selStyleIds.Count == 0 || item.StyleIds.Any(id => selStyleIds.Contains(id)))
+        ).ToList();
+
+        FileList.ItemsSource = _filteredItems;
+    }
+
+    private static HashSet<int> SelectedIds<T>(ListBox filter, List<T> source,
+        Func<T, string> nameOf, Func<T, int> idOf)
+    {
+        var selected = filter.SelectedItems?.Cast<string>().ToHashSet() ?? [];
+        if (selected.Count == 0) return [];
+        return source.Where(item => selected.Contains(nameOf(item))).Select(idOf).ToHashSet();
+    }
+
+    private void OnFilterChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        ApplyFilter();
     }
 
     public void Refresh()
     {
         NowPlayingText.Text = "";
+        LoadLookups();
         RefreshTrackList();
     }
 
@@ -57,21 +129,21 @@ public partial class MusicView : UserControl
     private async void OnContextEditClicked(object? sender, RoutedEventArgs e)
     {
         var idx = FileList.SelectedIndex;
-        if (idx < 0 || idx >= _tracks.Count) return;
+        if (idx < 0 || idx >= _filteredItems.Count) return;
 
         var owner = TopLevel.GetTopLevel(this) as Window;
         if (owner == null) return;
 
-        var saved = await new EditTrackWindow(_tracks[idx]).ShowDialog<bool>(owner);
+        var saved = await new EditTrackWindow(_filteredItems[idx].Track).ShowDialog<bool>(owner);
         if (saved) RefreshTrackList();
     }
 
     private async void OnContextDeleteClicked(object? sender, RoutedEventArgs e)
     {
         var idx = FileList.SelectedIndex;
-        if (idx < 0 || idx >= _tracks.Count) return;
+        if (idx < 0 || idx >= _filteredItems.Count) return;
 
-        var track = _tracks[idx];
+        var track = _filteredItems[idx].Track;
         var owner = TopLevel.GetTopLevel(this) as Window;
         if (owner == null) return;
 
@@ -105,19 +177,20 @@ public partial class MusicView : UserControl
     private void OnPlayClicked(object? sender, RoutedEventArgs e)
     {
         var idx = FileList.SelectedIndex;
-        if (idx < 0 || idx >= _tracks.Count) return;
+        if (idx < 0 || idx >= _filteredItems.Count) return;
 
         //StopPlayback();
 
+        var track = _filteredItems[idx].Track;
         try
         {
-            _audioStream = new MediaFoundationReader(Path.Combine(MusicDir, _tracks[idx].FileName));
+            _audioStream = new MediaFoundationReader(Path.Combine(MusicDir, track.FileName));
             _player = new WaveOutEvent();
             _player.PlaybackStopped += OnPlaybackStopped;
             _player.Init(_audioStream);
             _player.Play();
-            _playingTrackId = _tracks[idx].Id;
-            NowPlayingText.Text = _tracks[idx].Title;
+            _playingTrackId = track.Id;
+            NowPlayingText.Text = track.Title;
         }
         catch (Exception ex)
         {
@@ -152,5 +225,12 @@ public partial class MusicView : UserControl
         _player = null;
         _audioStream = null;
         _playingTrackId = -1;
+    }
+
+    private static string FormatDuration(int seconds)
+    {
+        var m = seconds / 60;
+        var s = seconds % 60;
+        return $"{m}:{s:D2}";
     }
 }

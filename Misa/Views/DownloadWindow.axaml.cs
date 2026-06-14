@@ -103,7 +103,8 @@ public partial class DownloadWindow : Window
             .Select(name => _styles.First(s => s.Name == name).Id)
             .ToList() ?? [];
 
-        Db.InsertTrack(canonicalUrl, title, fileName, genreId, ratingId, styleIds);
+        var duration = await GetDurationAsync(filePath);
+        Db.InsertTrack(canonicalUrl, title, fileName, genreId, ratingId, styleIds, duration);
 
         Close(true);
     }
@@ -154,6 +155,30 @@ public partial class DownloadWindow : Window
         await stdoutTask;
 
         return (process.ExitCode == 0, stderr);
+    }
+
+    private static async Task<int?> GetDurationAsync(string filePath)
+    {
+        try
+        {
+            var psi = new ProcessStartInfo
+            {
+                FileName = Path.Combine(ToolsDir, "ffprobe.exe"),
+                Arguments = $"-v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 \"{filePath}\"",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+            };
+            using var process = Process.Start(psi)!;
+            var output = await process.StandardOutput.ReadToEndAsync();
+            await process.WaitForExitAsync();
+            if (double.TryParse(output.Trim(), System.Globalization.NumberStyles.Any,
+                                System.Globalization.CultureInfo.InvariantCulture, out var seconds))
+                return (int)seconds;
+        }
+        catch { }
+        return null;
     }
 
     private static string? FindDownloadedFile(string videoId)

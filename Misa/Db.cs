@@ -14,7 +14,7 @@ static class Db
     public static void Initialize()
     {
         Directory.CreateDirectory(@"D:\media\music");
-
+        
         if (File.Exists(DbPath)) return;
 
         using var conn = Open();
@@ -34,13 +34,14 @@ static class Db
                 SortOrder INTEGER NOT NULL
             );
             CREATE TABLE Music (
-                Id           INTEGER PRIMARY KEY AUTOINCREMENT,
-                CanonicalUrl TEXT    NOT NULL UNIQUE,
-                Title        TEXT    NOT NULL,
-                FileName     TEXT    NOT NULL UNIQUE,
-                GenreId      INTEGER NOT NULL,
-                RatingId     INTEGER NOT NULL,
-                DownloadedAt TEXT    NOT NULL
+                Id              INTEGER PRIMARY KEY AUTOINCREMENT,
+                CanonicalUrl    TEXT    NOT NULL UNIQUE,
+                Title           TEXT    NOT NULL,
+                FileName        TEXT    NOT NULL UNIQUE,
+                GenreId         INTEGER NOT NULL,
+                RatingId        INTEGER NOT NULL,
+                DownloadedAt    TEXT    NOT NULL,
+                DurationSeconds INTEGER NULL
             );
             CREATE TABLE MusicStyles (
                 MusicId INTEGER NOT NULL,
@@ -71,7 +72,7 @@ static class Db
     }
 
     public static void InsertTrack(string canonicalUrl, string title, string fileName,
-                                   int genreId, int ratingId, List<int> styleIds)
+                                   int genreId, int ratingId, List<int> styleIds, int? durationSeconds)
     {
         using var conn = Open();
         using var tx = conn.BeginTransaction();
@@ -79,14 +80,15 @@ static class Db
         using var insertCmd = conn.CreateCommand();
         insertCmd.Transaction = tx;
         insertCmd.CommandText = @"
-            INSERT INTO Music (CanonicalUrl, Title, FileName, GenreId, RatingId, DownloadedAt)
-            VALUES ($url, $title, $fileName, $genreId, $ratingId, $downloadedAt)";
+            INSERT INTO Music (CanonicalUrl, Title, FileName, GenreId, RatingId, DownloadedAt, DurationSeconds)
+            VALUES ($url, $title, $fileName, $genreId, $ratingId, $downloadedAt, $duration)";
         insertCmd.Parameters.AddWithValue("$url", canonicalUrl);
         insertCmd.Parameters.AddWithValue("$title", title);
         insertCmd.Parameters.AddWithValue("$fileName", fileName);
         insertCmd.Parameters.AddWithValue("$genreId", genreId);
         insertCmd.Parameters.AddWithValue("$ratingId", ratingId);
         insertCmd.Parameters.AddWithValue("$downloadedAt", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+        insertCmd.Parameters.AddWithValue("$duration", durationSeconds.HasValue ? (object)durationSeconds.Value : DBNull.Value);
         insertCmd.ExecuteNonQuery();
 
         if (styleIds.Count > 0)
@@ -115,13 +117,35 @@ static class Db
     {
         using var conn = Open();
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT Id, CanonicalUrl, Title, FileName, GenreId, RatingId, DownloadedAt FROM Music ORDER BY DownloadedAt DESC";
+        cmd.CommandText = "SELECT Id, CanonicalUrl, Title, FileName, GenreId, RatingId, DownloadedAt, DurationSeconds FROM Music ORDER BY DownloadedAt DESC";
         using var r = cmd.ExecuteReader();
         var list = new List<MusicTrack>();
         while (r.Read())
             list.Add(new MusicTrack(r.GetInt32(0), r.GetString(1), r.GetString(2), r.GetString(3),
-                                    r.GetInt32(4), r.GetInt32(5), r.GetString(6)));
+                                    r.GetInt32(4), r.GetInt32(5), r.GetString(6),
+                                    r.IsDBNull(7) ? null : r.GetInt32(7)));
         return list;
+    }
+
+    public static Dictionary<int, List<int>> GetAllMusicStyleIds()
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT MusicId, StyleId FROM MusicStyles";
+        using var r = cmd.ExecuteReader();
+        var dict = new Dictionary<int, List<int>>();
+        while (r.Read())
+        {
+            var musicId = r.GetInt32(0);
+            var styleId = r.GetInt32(1);
+            if (!dict.TryGetValue(musicId, out var ids))
+            {
+                ids = [];
+                dict[musicId] = ids;
+            }
+            ids.Add(styleId);
+        }
+        return dict;
     }
 
     public static List<Genre> GetGenres()
