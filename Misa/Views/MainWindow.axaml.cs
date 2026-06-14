@@ -5,6 +5,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Avalonia.Threading;
+using NAudio.Wave;
 
 namespace Misa.Views;
 
@@ -12,6 +14,9 @@ public partial class MainWindow : Window
 {
     private const string MusicDir = @"D:\media\music";
     private static readonly string[] AudioExtensions = [".m4a", ".mp3", ".webm", ".opus"];
+
+    private IWavePlayer? _player;
+    private WaveStream? _audioStream;
 
     public MainWindow()
     {
@@ -34,6 +39,52 @@ public partial class MainWindow : Window
         if (success) RefreshFileList();
 
         DownloadBtn.IsEnabled = true;
+    }
+
+    private void OnPlayClicked(object? sender, RoutedEventArgs e)
+    {
+        if (FileList.SelectedItem is not string selected) return;
+
+        //StopPlayback();
+
+        try
+        {
+            _audioStream = new MediaFoundationReader(Path.Combine(MusicDir, selected));
+            _player = new WaveOutEvent();
+            _player.PlaybackStopped += OnPlaybackStopped;
+            _player.Init(_audioStream);
+            _player.Play();
+            NowPlayingText.Text = selected;
+        }
+        catch (Exception ex)
+        {
+            StopPlayback();
+            StatusText.Text = $"Playback failed: {ex.Message}";
+        }
+    }
+
+    private void OnStopClicked(object? sender, RoutedEventArgs e)
+    {
+        StopPlayback();
+        NowPlayingText.Text = "";
+    }
+
+    private void OnPlaybackStopped(object? sender, StoppedEventArgs e)
+    {
+        Dispatcher.UIThread.Post(() => NowPlayingText.Text = "");
+    }
+
+    private void StopPlayback()
+    {
+        if (_player != null)
+        {
+            _player.PlaybackStopped -= OnPlaybackStopped;
+            _player.Stop();
+            _player.Dispose();
+        }
+        _audioStream?.Dispose();
+        _player = null;
+        _audioStream = null;
     }
 
     private static async Task<(bool success, string errorOutput)> RunYtDlp(string url)

@@ -1,13 +1,20 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="Misa.Views.MainWindow"
-        Title="Misa" Width="720" Height="540">
+        Title="Misa" Width="1600" Height="800">
 
     <DockPanel Margin="12" LastChildFill="True">
         <StackPanel DockPanel.Dock="Top" Spacing="8" Margin="0,0,0,12">
             <TextBox x:Name="UrlBox" Watermark="Paste YouTube URL here…" />
             <Button x:Name="DownloadBtn" Content="Download" Click="OnDownloadClicked" HorizontalAlignment="Left" />
             <TextBlock x:Name="StatusText" Text="Ready." TextWrapping="Wrap" />
+        </StackPanel>
+        <StackPanel DockPanel.Dock="Bottom" Spacing="6" Margin="0,8,0,0">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <Button x:Name="PlayBtn" Content="Play" Click="OnPlayClicked" />
+                <Button x:Name="StopBtn" Content="Stop" Click="OnStopClicked" />
+            </StackPanel>
+            <TextBlock x:Name="NowPlayingText" Text="" TextWrapping="Wrap" FontStyle="Italic" />
         </StackPanel>
         <ListBox x:Name="FileList" />
     </DockPanel>
