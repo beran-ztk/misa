@@ -15,11 +15,15 @@ namespace Misa.Views;
 
 public partial class MusicView : UserControl
 {
+    private enum PlaybackState { Stopped, Playing, Paused }
+
     private readonly DispatcherTimer _progressTimer = new() { Interval = TimeSpan.FromMilliseconds(500) };
 
     private IWavePlayer? _player;
     private WaveStream? _audioStream;
     private int _playingTrackId = -1;
+    private PlaybackState _state = PlaybackState.Stopped;
+    private bool _isSeeking;
 
     private List<Genre> _genres = [];
     private List<Rating> _ratings = [];
@@ -31,6 +35,8 @@ public partial class MusicView : UserControl
     {
         InitializeComponent();
         _progressTimer.Tick += OnProgressTick;
+        PlaybackSlider.AddHandler(InputElement.PointerPressedEvent, OnSliderPointerPressed, RoutingStrategies.Tunnel);
+        PlaybackSlider.AddHandler(InputElement.PointerReleasedEvent, OnSliderPointerReleased, RoutingStrategies.Tunnel);
         GenreFilter.SelectionChanged += (_, _) => ApplyFilter();
         RatingFilter.SelectionChanged += (_, _) => ApplyFilter();
         StyleFilter.SelectionChanged += (_, _) => ApplyFilter();
@@ -46,6 +52,8 @@ public partial class MusicView : UserControl
         LoadLookups();
         RefreshTrackList();
     }
+
+    // --- Track list ---
 
     private void LoadLookups()
     {
@@ -131,6 +139,8 @@ public partial class MusicView : UserControl
         RefreshTrackList();
     }
 
+    // --- Dialogs ---
+
     private async void OnAddTrackClicked(object? sender, RoutedEventArgs e)
     {
         var owner = TopLevel.GetTopLevel(this) as Window;
@@ -175,9 +185,21 @@ public partial class MusicView : UserControl
         RefreshTrackList();
     }
 
+    // --- Playback control ---
+
     private void OnPlayClicked(object? sender, RoutedEventArgs e) => StartPlayback();
 
     private void OnListDoubleTapped(object? sender, TappedEventArgs e) => StartPlayback();
+
+    private void OnPauseResumeClicked(object? sender, RoutedEventArgs e)
+    {
+        if (_state == PlaybackState.Playing)
+            PausePlayback();
+        else if (_state == PlaybackState.Paused)
+            ResumePlayback();
+    }
+
+    private void OnStopClicked(object? sender, RoutedEventArgs e) => StopPlayback();
 
     private void StartPlayback()
     {
@@ -194,46 +216,49 @@ public partial class MusicView : UserControl
             _audioStream = null;
         }
         _progressTimer.Stop();
+        _isSeeking = false;
 
         var track = _filteredItems[idx].Track;
         try
         {
-            _audioStream = new MediaFoundationReader(Path.Combine(MusicLibraryService.Current.MusicDirectory, track.FileName));
+            _audioStream = new MediaFoundationReader(
+                Path.Combine(MusicLibraryService.Current.MusicDirectory, track.FileName));
             _player = new WaveOutEvent();
             _player.PlaybackStopped += OnPlaybackStopped;
             _player.Init(_audioStream);
             _player.Play();
             _playingTrackId = track.Id;
+            _state = PlaybackState.Playing;
             NowPlayingText.Text = track.Title;
             PlaybackInfoPanel.IsVisible = true;
+            UpdateProgressDisplay();
             _progressTimer.Start();
+            UpdateButtonStates();
             RefreshPlayingMarkers();
         }
         catch (Exception ex)
         {
             StatusText.Text = $"Playback failed: {ex.Message}";
             _playingTrackId = -1;
+            _state = PlaybackState.Stopped;
+            UpdateButtonStates();
         }
     }
 
-    private void OnStopClicked(object? sender, RoutedEventArgs e) => StopPlayback();
-
-    private void OnPlaybackStopped(object? sender, StoppedEventArgs e)
+    private void PausePlayback()
     {
-        var stoppedPlayer = sender as IWavePlayer;
-        Dispatcher.UIThread.Post(() =>
-        {
-            if (_player == null || _player != stoppedPlayer) return;
-            _player.PlaybackStopped -= OnPlaybackStopped;
-            _player.Dispose();
-            _audioStream?.Dispose();
-            _player = null;
-            _audioStream = null;
-            _playingTrackId = -1;
-            _progressTimer.Stop();
-            ResetPlaybackUI();
-            RefreshPlayingMarkers();
-        });
+        _player?.Pause();
+        _progressTimer.Stop();
+        _state = PlaybackState.Paused;
+        UpdateButtonStates();
+    }
+
+    private void ResumePlayback()
+    {
+        _player?.Play();
+        _progressTimer.Start();
+        _state = PlaybackState.Playing;
+        UpdateButtonStates();
     }
 
     public void StopPlayback()
@@ -248,28 +273,107 @@ public partial class MusicView : UserControl
         _player = null;
         _audioStream = null;
         _playingTrackId = -1;
+        _state = PlaybackState.Stopped;
+        _isSeeking = false;
         _progressTimer.Stop();
         ResetPlaybackUI();
+        UpdateButtonStates();
         RefreshPlayingMarkers();
     }
 
+    private void OnPlaybackStopped(object? sender, StoppedEventArgs e)
+    {
+        var stoppedPlayer = sender as IWavePlayer;
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (_player == null || _player != stoppedPlayer) return;
+            _player.PlaybackStopped -= OnPlaybackStopped;
+            _player.Dispose();
+            _audioStream?.Dispose();
+            _player = null;
+            _audioStream = null;
+            _playingTrackId = -1;
+            _state = PlaybackState.Stopped;
+            _isSeeking = false;
+            _progressTimer.Stop();
+            ResetPlaybackUI();
+            UpdateButtonStates();
+            RefreshPlayingMarkers();
+        });
+    }
+
+    // --- Progress ---
+
     private void OnProgressTick(object? sender, EventArgs e)
+    {
+        if (_isSeeking) return;
+        UpdateProgressDisplay();
+    }
+
+    private void UpdateProgressDisplay()
     {
         if (_audioStream == null) return;
         var current = _audioStream.CurrentTime;
         var total = _audioStream.TotalTime;
-        PlaybackTimeText.Text = $"{FormatDuration((int)current.TotalSeconds)} / {FormatDuration((int)total.TotalSeconds)}";
-        PlaybackProgress.Value = total.TotalSeconds > 0
-            ? current.TotalSeconds / total.TotalSeconds * 100
-            : 0;
+        PlaybackTimeText.Text = $"{FormatDuration(current)} / {FormatDuration(total)}";
+        if (!_isSeeking)
+            PlaybackSlider.Value = total.TotalSeconds > 0
+                ? current.TotalSeconds / total.TotalSeconds * 100
+                : 0;
     }
 
     private void ResetPlaybackUI()
     {
         NowPlayingText.Text = "";
-        PlaybackProgress.Value = 0;
+        PlaybackSlider.Value = 0;
         PlaybackTimeText.Text = "";
         PlaybackInfoPanel.IsVisible = false;
+    }
+
+    // --- Seeking ---
+
+    private void OnSliderPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (_audioStream == null) return;
+        _isSeeking = true;
+        _progressTimer.Stop();
+    }
+
+    private void OnSliderPointerReleased(object? sender, PointerReleasedEventArgs e)
+    {
+        if (_audioStream == null)
+        {
+            _isSeeking = false;
+            return;
+        }
+
+        var totalSeconds = _audioStream.TotalTime.TotalSeconds;
+        var targetSeconds = Math.Clamp(PlaybackSlider.Value / 100.0 * totalSeconds, 0, totalSeconds);
+
+        if (_state == PlaybackState.Playing)
+        {
+            _player?.Pause();
+            _audioStream.CurrentTime = TimeSpan.FromSeconds(targetSeconds);
+            _player?.Play();
+        }
+        else
+        {
+            _audioStream.CurrentTime = TimeSpan.FromSeconds(targetSeconds);
+        }
+
+        PlaybackTimeText.Text = $"{FormatDuration(_audioStream.CurrentTime)} / {FormatDuration(_audioStream.TotalTime)}";
+        _isSeeking = false;
+
+        if (_state == PlaybackState.Playing)
+            _progressTimer.Start();
+    }
+
+    // --- UI helpers ---
+
+    private void UpdateButtonStates()
+    {
+        PauseResumeBtn.IsVisible = _state != PlaybackState.Stopped;
+        PauseResumeBtn.Content = _state == PlaybackState.Paused ? "Resume" : "Pause";
     }
 
     private void RefreshPlayingMarkers()
@@ -291,10 +395,14 @@ public partial class MusicView : UserControl
         }
     }
 
+    // --- Formatting ---
+
+    private static string FormatDuration(TimeSpan t) => FormatDuration((int)t.TotalSeconds);
+
     private static string FormatDuration(int seconds)
     {
         var m = seconds / 60;
         var s = seconds % 60;
-        return $"{m}:{s:D2}";
+        return $"{m:D2}:{s:D2}";
     }
 }
