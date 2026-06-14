@@ -3,48 +3,21 @@
         x:Class="Misa.Views.MainWindow"
         Title="Misa" Width="1300" Height="700">
 
-    <Grid ColumnDefinitions="*,290" Margin="12">
+    <Grid ColumnDefinitions="160,*">
 
-        <!-- Left: download + playback -->
-        <DockPanel Grid.Column="0" Margin="0,0,12,0" LastChildFill="True">
-            <StackPanel DockPanel.Dock="Top" Spacing="8" Margin="0,0,0,12">
-                <TextBox x:Name="UrlBox" Watermark="Paste YouTube URL here…" />
-                <Button x:Name="DownloadBtn" Content="Download" Click="OnDownloadClicked" HorizontalAlignment="Left" />
-                <TextBlock x:Name="StatusText" Text="Ready." TextWrapping="Wrap" />
+        <Border Grid.Column="0" BorderThickness="0,0,1,0" BorderBrush="#30808080" Padding="8">
+            <StackPanel Spacing="4">
+                <TextBlock Text="Misa" FontWeight="Bold" FontSize="16" Margin="4,4,4,12" />
+                <Button x:Name="NavMusicBtn" Content="Music"
+                        HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                        Click="OnMusicClicked" />
+                <Button x:Name="NavSettingsBtn" Content="Settings"
+                        HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                        Click="OnSettingsClicked" />
             </StackPanel>
-            <StackPanel DockPanel.Dock="Bottom" Spacing="6" Margin="0,8,0,0">
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                    <Button x:Name="PlayBtn" Content="Play" Click="OnPlayClicked" />
-                    <Button x:Name="StopBtn" Content="Stop" Click="OnStopClicked" />
-                </StackPanel>
-                <TextBlock x:Name="NowPlayingText" Text="" TextWrapping="Wrap" FontStyle="Italic" />
-            </StackPanel>
-            <ListBox x:Name="FileList" />
-        </DockPanel>
+        </Border>
 
-        <!-- Right: metadata + management -->
-        <StackPanel Grid.Column="1" Spacing="8">
-            <TextBlock Text="Download Metadata" FontWeight="Bold" />
-            <TextBox x:Name="TitleBox" Watermark="Title (optional)" />
-            <TextBlock Text="Genre" />
-            <ComboBox x:Name="GenreBox" HorizontalAlignment="Stretch" />
-            <TextBlock Text="Rating" />
-            <ComboBox x:Name="RatingBox" HorizontalAlignment="Stretch" />
-            <TextBlock Text="Styles (click to toggle)" />
-            <ListBox x:Name="StylesBox" SelectionMode="Multiple,Toggle" Height="120" />
-
-            <Border Height="1" Background="#30808080" Margin="0,6" />
-
-            <TextBlock Text="Manage" FontWeight="Bold" />
-            <StackPanel Orientation="Horizontal" Spacing="6">
-                <TextBox x:Name="NewGenreBox" Watermark="New genre…" MinWidth="200" />
-                <Button Content="Add" Click="OnAddGenreClicked" />
-            </StackPanel>
-            <StackPanel Orientation="Horizontal" Spacing="6">
-                <TextBox x:Name="NewStyleBox" Watermark="New style…" MinWidth="200" />
-                <Button Content="Add" Click="OnAddStyleClicked" />
-            </StackPanel>
-        </StackPanel>
+        <ContentControl Grid.Column="1" x:Name="ContentArea" />
 
     </Grid>
 

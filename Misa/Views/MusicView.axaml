@@ -1,0 +1,50 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Misa.Views.MusicView">
+
+    <Grid ColumnDefinitions="*,290" Margin="12">
+
+        <!-- Left: download + playback -->
+        <DockPanel Grid.Column="0" Margin="0,0,12,0" LastChildFill="True">
+            <StackPanel DockPanel.Dock="Top" Spacing="8" Margin="0,0,0,12">
+                <TextBox x:Name="UrlBox" Watermark="Paste YouTube URL here…" />
+                <Button x:Name="DownloadBtn" Content="Download" Click="OnDownloadClicked" HorizontalAlignment="Left" />
+                <TextBlock x:Name="StatusText" Text="Ready." TextWrapping="Wrap" />
+            </StackPanel>
+            <StackPanel DockPanel.Dock="Bottom" Spacing="6" Margin="0,8,0,0">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button x:Name="PlayBtn" Content="Play" Click="OnPlayClicked" />
+                    <Button x:Name="StopBtn" Content="Stop" Click="OnStopClicked" />
+                </StackPanel>
+                <TextBlock x:Name="NowPlayingText" Text="" TextWrapping="Wrap" FontStyle="Italic" />
+            </StackPanel>
+            <ListBox x:Name="FileList" />
+        </DockPanel>
+
+        <!-- Right: metadata + management -->
+        <StackPanel Grid.Column="1" Spacing="8">
+            <TextBlock Text="Download Metadata" FontWeight="Bold" />
+            <TextBox x:Name="TitleBox" Watermark="Title (optional)" />
+            <TextBlock Text="Genre" />
+            <ComboBox x:Name="GenreBox" HorizontalAlignment="Stretch" />
+            <TextBlock Text="Rating" />
+            <ComboBox x:Name="RatingBox" HorizontalAlignment="Stretch" />
+            <TextBlock Text="Styles (click to toggle)" />
+            <ListBox x:Name="StylesBox" SelectionMode="Multiple,Toggle" Height="120" />
+
+            <Border Height="1" Background="#30808080" Margin="0,6" />
+
+            <TextBlock Text="Manage" FontWeight="Bold" />
+            <StackPanel Orientation="Horizontal" Spacing="6">
+                <TextBox x:Name="NewGenreBox" Watermark="New genre…" MinWidth="200" />
+                <Button Content="Add" Click="OnAddGenreClicked" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="6">
+                <TextBox x:Name="NewStyleBox" Watermark="New style…" MinWidth="200" />
+                <Button Content="Add" Click="OnAddStyleClicked" />
+            </StackPanel>
+        </StackPanel>
+
+    </Grid>
+
+</UserControl>
