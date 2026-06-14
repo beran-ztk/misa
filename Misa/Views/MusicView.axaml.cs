@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Misa.Models;
@@ -15,6 +16,8 @@ namespace Misa.Views;
 public partial class MusicView : UserControl
 {
     private const string MusicDir = @"D:\media\music";
+
+    private readonly DispatcherTimer _progressTimer = new() { Interval = TimeSpan.FromMilliseconds(500) };
 
     private IWavePlayer? _player;
     private WaveStream? _audioStream;
@@ -29,6 +32,7 @@ public partial class MusicView : UserControl
     public MusicView()
     {
         InitializeComponent();
+        _progressTimer.Tick += OnProgressTick;
         GenreFilter.SelectionChanged += (_, _) => ApplyFilter();
         RatingFilter.SelectionChanged += (_, _) => ApplyFilter();
         StyleFilter.SelectionChanged += (_, _) => ApplyFilter();
@@ -103,6 +107,9 @@ public partial class MusicView : UserControl
             (selStyleIds.Count == 0 || item.StyleIds.Any(id => selStyleIds.Contains(id)))
         ).ToList();
 
+        foreach (var item in _filteredItems)
+            item.IsPlaying = item.Track.Id == _playingTrackId;
+
         FileList.ItemsSource = _filteredItems;
     }
 
@@ -161,10 +168,7 @@ public partial class MusicView : UserControl
         if (!confirmed) return;
 
         if (_playingTrackId == track.Id)
-        {
             StopPlayback();
-            NowPlayingText.Text = "";
-        }
 
         var result = MusicLibraryService.Current.DeleteTrack(track.Id, track.FileName);
         if (result.FileError != null)
@@ -173,12 +177,25 @@ public partial class MusicView : UserControl
         RefreshTrackList();
     }
 
-    private void OnPlayClicked(object? sender, RoutedEventArgs e)
+    private void OnPlayClicked(object? sender, RoutedEventArgs e) => StartPlayback();
+
+    private void OnListDoubleTapped(object? sender, TappedEventArgs e) => StartPlayback();
+
+    private void StartPlayback()
     {
         var idx = FileList.SelectedIndex;
         if (idx < 0 || idx >= _filteredItems.Count) return;
 
-        //StopPlayback();
+        if (_player != null)
+        {
+            _player.PlaybackStopped -= OnPlaybackStopped;
+            _player.Stop();
+            _player.Dispose();
+            _audioStream?.Dispose();
+            _player = null;
+            _audioStream = null;
+        }
+        _progressTimer.Stop();
 
         var track = _filteredItems[idx].Track;
         try
@@ -190,25 +207,34 @@ public partial class MusicView : UserControl
             _player.Play();
             _playingTrackId = track.Id;
             NowPlayingText.Text = track.Title;
+            PlaybackInfoPanel.IsVisible = true;
+            _progressTimer.Start();
+            RefreshPlayingMarkers();
         }
         catch (Exception ex)
         {
             StatusText.Text = $"Playback failed: {ex.Message}";
+            _playingTrackId = -1;
         }
     }
 
-    private void OnStopClicked(object? sender, RoutedEventArgs e)
-    {
-        StopPlayback();
-        NowPlayingText.Text = "";
-    }
+    private void OnStopClicked(object? sender, RoutedEventArgs e) => StopPlayback();
 
     private void OnPlaybackStopped(object? sender, StoppedEventArgs e)
     {
+        var stoppedPlayer = sender as IWavePlayer;
         Dispatcher.UIThread.Post(() =>
         {
-            NowPlayingText.Text = "";
+            if (_player == null || _player != stoppedPlayer) return;
+            _player.PlaybackStopped -= OnPlaybackStopped;
+            _player.Dispose();
+            _audioStream?.Dispose();
+            _player = null;
+            _audioStream = null;
             _playingTrackId = -1;
+            _progressTimer.Stop();
+            ResetPlaybackUI();
+            RefreshPlayingMarkers();
         });
     }
 
@@ -224,6 +250,47 @@ public partial class MusicView : UserControl
         _player = null;
         _audioStream = null;
         _playingTrackId = -1;
+        _progressTimer.Stop();
+        ResetPlaybackUI();
+        RefreshPlayingMarkers();
+    }
+
+    private void OnProgressTick(object? sender, EventArgs e)
+    {
+        if (_audioStream == null) return;
+        var current = _audioStream.CurrentTime;
+        var total = _audioStream.TotalTime;
+        PlaybackTimeText.Text = $"{FormatDuration((int)current.TotalSeconds)} / {FormatDuration((int)total.TotalSeconds)}";
+        PlaybackProgress.Value = total.TotalSeconds > 0
+            ? current.TotalSeconds / total.TotalSeconds * 100
+            : 0;
+    }
+
+    private void ResetPlaybackUI()
+    {
+        NowPlayingText.Text = "";
+        PlaybackProgress.Value = 0;
+        PlaybackTimeText.Text = "";
+        PlaybackInfoPanel.IsVisible = false;
+    }
+
+    private void RefreshPlayingMarkers()
+    {
+        if (_filteredItems.Count == 0) return;
+
+        var selectedId = FileList.SelectedIndex >= 0 && FileList.SelectedIndex < _filteredItems.Count
+            ? _filteredItems[FileList.SelectedIndex].Track.Id : -1;
+
+        foreach (var item in _filteredItems)
+            item.IsPlaying = item.Track.Id == _playingTrackId;
+
+        FileList.ItemsSource = _filteredItems.ToList();
+
+        if (selectedId >= 0)
+        {
+            var idx = _filteredItems.FindIndex(i => i.Track.Id == selectedId);
+            if (idx >= 0) FileList.SelectedIndex = idx;
+        }
     }
 
     private static string FormatDuration(int seconds)
