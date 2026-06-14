@@ -33,6 +33,7 @@ public partial class MusicView : UserControl
     private float _volume = 1.0f;
     private bool _muted;
     private bool _shuffle;
+    private bool _loadingSettings;
 
     private List<Genre> _genres = [];
     private List<Rating> _ratings = [];
@@ -64,31 +65,43 @@ public partial class MusicView : UserControl
         RatingFilter.SelectionChanged += (_, _) => ApplyFilter();
         StyleFilter.SelectionChanged += (_, _) => ApplyFilter();
 
-        AutoplayCheckBox.IsCheckedChanged += (_, _) => _autoplay = AutoplayCheckBox.IsChecked == true;
+        AutoplayCheckBox.IsCheckedChanged += (_, _) =>
+        {
+            _autoplay = AutoplayCheckBox.IsChecked == true;
+            SavePlayerSettings();
+        };
         RepeatModeCombo.SelectionChanged += (_, _) =>
+        {
             _repeatMode = RepeatModeCombo.SelectedIndex switch
             {
                 1 => RepeatMode.RepeatOne,
                 2 => RepeatMode.RepeatAll,
                 _ => RepeatMode.None,
             };
+            SavePlayerSettings();
+        };
 
         VolumeSlider.ValueChanged += (_, _) =>
         {
             _volume = (float)(VolumeSlider.Value / 100.0);
             VolumeText.Text = $"{(int)VolumeSlider.Value}%";
             if (!_muted) ApplyVolume();
+            SavePlayerSettings();
         };
         MuteCheckBox.IsCheckedChanged += (_, _) =>
         {
             _muted = MuteCheckBox.IsChecked == true;
             ApplyVolume();
+            SavePlayerSettings();
         };
         ShuffleCheckBox.IsCheckedChanged += (_, _) =>
         {
             _shuffle = ShuffleCheckBox.IsChecked == true;
             if (!_shuffle) _shuffleHistory.Clear();
+            SavePlayerSettings();
         };
+
+        LoadPlayerSettings();
 
         try
         {
@@ -101,6 +114,46 @@ public partial class MusicView : UserControl
         }
         LoadLookups();
         RefreshTrackList();
+    }
+
+    private void LoadPlayerSettings()
+    {
+        _loadingSettings = true;
+        try
+        {
+            var s = MusicLibraryService.Current.GetSettings();
+            VolumeSlider.Value = s.Volume;
+            VolumeText.Text = $"{s.Volume}%"; // explicit — event may not fire if value unchanged
+            MuteCheckBox.IsChecked = s.IsMuted;
+            ShuffleCheckBox.IsChecked = s.ShuffleEnabled;
+            AutoplayCheckBox.IsChecked = s.AutoplayEnabled;
+            RepeatModeCombo.SelectedIndex = s.RepeatMode switch
+            {
+                "RepeatOne" => 1,
+                "RepeatAll" => 2,
+                _ => 0,
+            };
+        }
+        finally
+        {
+            _loadingSettings = false;
+        }
+    }
+
+    private void SavePlayerSettings()
+    {
+        if (_loadingSettings) return;
+        MusicLibraryService.Current.SavePlayerSettings(
+            volume: (int)VolumeSlider.Value,
+            isMuted: _muted,
+            shuffleEnabled: _shuffle,
+            autoplayEnabled: _autoplay,
+            repeatMode: _repeatMode switch
+            {
+                RepeatMode.RepeatOne => "RepeatOne",
+                RepeatMode.RepeatAll => "RepeatAll",
+                _ => "None",
+            });
     }
 
     // --- Track list ---

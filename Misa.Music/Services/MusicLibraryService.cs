@@ -43,6 +43,18 @@ public class MusicLibraryService
 
     public void Initialize() => _db.Initialize();
 
+    // Updates only player-related settings fields and flushes to disk.
+    // Does not call ApplySettings() — the player state has no effect on the DB or downloader.
+    public void SavePlayerSettings(int volume, bool isMuted, bool shuffleEnabled, bool autoplayEnabled, string repeatMode)
+    {
+        _settings.Volume = volume;
+        _settings.IsMuted = isMuted;
+        _settings.ShuffleEnabled = shuffleEnabled;
+        _settings.AutoplayEnabled = autoplayEnabled;
+        _settings.RepeatMode = repeatMode;
+        MusicSettingsService.SaveSettings(_settings);
+    }
+
     // --- Tracks ---
 
     public List<MusicTrack> GetTracks() => _db.GetAllTracks();

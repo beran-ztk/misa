@@ -20,6 +20,11 @@ public static class MusicSettingsService
         UseNodeJsRuntime = true,
         UseFirefoxCookies = false,
         UseRemoteEjsComponents = false,
+        Volume = 100,
+        IsMuted = false,
+        ShuffleEnabled = false,
+        AutoplayEnabled = false,
+        RepeatMode = "None",
     };
 
     public static MusicSettings LoadSettings()
