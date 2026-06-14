@@ -19,6 +19,9 @@ public partial class MusicView : UserControl
     private enum RepeatMode { None, RepeatOne, RepeatAll }
 
     private readonly DispatcherTimer _progressTimer = new() { Interval = TimeSpan.FromMilliseconds(500) };
+    private readonly Random _rng = new();
+    // Track IDs played during shuffle, for Previous to walk back through (capped at 50).
+    private readonly List<int> _shuffleHistory = [];
 
     private IWavePlayer? _player;
     private WaveStream? _audioStream;
@@ -27,6 +30,9 @@ public partial class MusicView : UserControl
     private bool _isSeeking;
     private bool _autoplay;
     private RepeatMode _repeatMode = RepeatMode.None;
+    private float _volume = 1.0f;
+    private bool _muted;
+    private bool _shuffle;
 
     private List<Genre> _genres = [];
     private List<Rating> _ratings = [];
@@ -57,6 +63,7 @@ public partial class MusicView : UserControl
         GenreFilter.SelectionChanged += (_, _) => ApplyFilter();
         RatingFilter.SelectionChanged += (_, _) => ApplyFilter();
         StyleFilter.SelectionChanged += (_, _) => ApplyFilter();
+
         AutoplayCheckBox.IsCheckedChanged += (_, _) => _autoplay = AutoplayCheckBox.IsChecked == true;
         RepeatModeCombo.SelectionChanged += (_, _) =>
             _repeatMode = RepeatModeCombo.SelectedIndex switch
@@ -65,6 +72,23 @@ public partial class MusicView : UserControl
                 2 => RepeatMode.RepeatAll,
                 _ => RepeatMode.None,
             };
+
+        VolumeSlider.ValueChanged += (_, _) =>
+        {
+            _volume = (float)(VolumeSlider.Value / 100.0);
+            VolumeText.Text = $"{(int)VolumeSlider.Value}%";
+            if (!_muted) ApplyVolume();
+        };
+        MuteCheckBox.IsCheckedChanged += (_, _) =>
+        {
+            _muted = MuteCheckBox.IsChecked == true;
+            ApplyVolume();
+        };
+        ShuffleCheckBox.IsCheckedChanged += (_, _) =>
+        {
+            _shuffle = ShuffleCheckBox.IsChecked == true;
+            if (!_shuffle) _shuffleHistory.Clear();
+        };
 
         try
         {
@@ -286,6 +310,7 @@ public partial class MusicView : UserControl
             _player.PlaybackStopped += OnPlaybackStopped;
             _player.Init(_audioStream);
             _player.Play();
+            ApplyVolume();
             _playingTrackId = track.Id;
             _state = PlaybackState.Playing;
             NowPlayingText.Text = track.Title;
@@ -359,6 +384,14 @@ public partial class MusicView : UserControl
         });
     }
 
+    // --- Volume ---
+
+    private void ApplyVolume()
+    {
+        if (_player is WaveOutEvent waveOut)
+            waveOut.Volume = _muted ? 0f : _volume;
+    }
+
     // --- Navigation ---
 
     private int GetCurrentPlayIndex() =>
@@ -375,25 +408,49 @@ public partial class MusicView : UserControl
 
         var currentIdx = GetCurrentPlayIndex();
 
-        // RepeatOne only takes effect on autoplay, not manual Next.
+        // RepeatOne on autoplay always replays the same track — shuffle doesn't apply.
         if (_repeatMode == RepeatMode.RepeatOne && !isManual)
         {
             PlayTrackAt(currentIdx >= 0 ? currentIdx : 0);
             return;
         }
 
-        int nextIdx;
+        // Shuffle: pick a random track, avoiding an immediate repeat when count > 1.
+        if (_shuffle)
+        {
+            // Push current track to history before leaving it.
+            if (_playingTrackId >= 0)
+            {
+                _shuffleHistory.Add(_playingTrackId);
+                if (_shuffleHistory.Count > 50) _shuffleHistory.RemoveAt(0);
+            }
+
+            int nextIdx;
+            if (_filteredItems.Count == 1)
+            {
+                nextIdx = 0;
+            }
+            else
+            {
+                do { nextIdx = _rng.Next(_filteredItems.Count); }
+                while (nextIdx == currentIdx);
+            }
+            PlayTrackAt(nextIdx);
+            return;
+        }
+
+        // Linear navigation.
+        int nextLinearIdx;
         if (_repeatMode == RepeatMode.RepeatAll)
         {
-            nextIdx = currentIdx < 0 ? 0 : (currentIdx + 1) % _filteredItems.Count;
+            nextLinearIdx = currentIdx < 0 ? 0 : (currentIdx + 1) % _filteredItems.Count;
         }
         else
         {
-            // None, or RepeatOne with manual press (behaves like None for navigation).
             if (currentIdx >= 0)
             {
-                nextIdx = currentIdx + 1;
-                if (nextIdx >= _filteredItems.Count)
+                nextLinearIdx = currentIdx + 1;
+                if (nextLinearIdx >= _filteredItems.Count)
                 {
                     FullStop();
                     return;
@@ -403,21 +460,39 @@ public partial class MusicView : UserControl
             {
                 // Nothing playing: use selected track as the starting point.
                 var selIdx = FileList.SelectedIndex;
-                nextIdx = selIdx >= 0 && selIdx < _filteredItems.Count ? selIdx : 0;
+                nextLinearIdx = selIdx >= 0 && selIdx < _filteredItems.Count ? selIdx : 0;
             }
             else
             {
                 // Playing track is no longer visible in the filtered list.
-                nextIdx = 0;
+                nextLinearIdx = 0;
             }
         }
 
-        PlayTrackAt(nextIdx);
+        PlayTrackAt(nextLinearIdx);
     }
 
     private void NavigatePrevious()
     {
         if (_filteredItems.Count == 0) return;
+
+        // Shuffle: walk back through history.
+        if (_shuffle && _shuffleHistory.Count > 0)
+        {
+            while (_shuffleHistory.Count > 0)
+            {
+                var histId = _shuffleHistory[^1];
+                _shuffleHistory.RemoveAt(_shuffleHistory.Count - 1);
+                var histIdx = _filteredItems.FindIndex(i => i.Track.Id == histId);
+                if (histIdx >= 0)
+                {
+                    PlayTrackAt(histIdx);
+                    return;
+                }
+                // Track no longer visible — keep popping.
+            }
+            // History exhausted; fall through to linear.
+        }
 
         var currentIdx = GetCurrentPlayIndex();
 
