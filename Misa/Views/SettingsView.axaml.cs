@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
-using Misa.Models;
+using Misa.Music.Models;
+using Misa.Music.Services;
 
 namespace Misa.Views;
 
@@ -34,7 +35,7 @@ public partial class SettingsView : UserControl
 
     private void LoadGenres()
     {
-        _genres = Db.GetGenres();
+        _genres = MusicLibraryService.Current.GetGenres();
         GenreList.ItemsSource = _genres.Select(g => g.Name).ToList();
     }
 
@@ -49,7 +50,7 @@ public partial class SettingsView : UserControl
     {
         var name = GenreInput.Text?.Trim();
         if (string.IsNullOrEmpty(name)) { GenreStatus.Text = "Enter a name."; return; }
-        Db.InsertGenre(name);
+        MusicLibraryService.Current.AddGenre(name);
         GenreInput.Text = "";
         GenreStatus.Text = "Added.";
         LoadGenres();
@@ -62,7 +63,7 @@ public partial class SettingsView : UserControl
         if (idx < 0) { GenreStatus.Text = "Select a genre first."; return; }
         var name = GenreInput.Text?.Trim();
         if (string.IsNullOrEmpty(name)) { GenreStatus.Text = "Enter a new name."; return; }
-        Db.UpdateGenre(_genres[idx].Id, name);
+        MusicLibraryService.Current.RenameGenre(_genres[idx].Id, name);
         GenreStatus.Text = "Renamed.";
         LoadGenres();
         OnMetadataChanged?.Invoke();
@@ -72,12 +73,8 @@ public partial class SettingsView : UserControl
     {
         var idx = GenreList.SelectedIndex;
         if (idx < 0) { GenreStatus.Text = "Select a genre first."; return; }
-        if (Db.IsGenreInUse(_genres[idx].Id))
-        {
-            GenreStatus.Text = "Cannot delete: genre is used by one or more tracks.";
-            return;
-        }
-        Db.DeleteGenre(_genres[idx].Id);
+        var result = MusicLibraryService.Current.TryDeleteGenre(_genres[idx].Id);
+        if (!result.Success) { GenreStatus.Text = result.Error; return; }
         GenreStatus.Text = "Deleted.";
         LoadGenres();
         OnMetadataChanged?.Invoke();
@@ -87,7 +84,7 @@ public partial class SettingsView : UserControl
 
     private void LoadStyles()
     {
-        _styles = Db.GetStyles();
+        _styles = MusicLibraryService.Current.GetStyles();
         StyleList.ItemsSource = _styles.Select(s => s.Name).ToList();
     }
 
@@ -102,7 +99,7 @@ public partial class SettingsView : UserControl
     {
         var name = StyleInput.Text?.Trim();
         if (string.IsNullOrEmpty(name)) { StyleStatus.Text = "Enter a name."; return; }
-        Db.InsertStyle(name);
+        MusicLibraryService.Current.AddStyle(name);
         StyleInput.Text = "";
         StyleStatus.Text = "Added.";
         LoadStyles();
@@ -115,7 +112,7 @@ public partial class SettingsView : UserControl
         if (idx < 0) { StyleStatus.Text = "Select a style first."; return; }
         var name = StyleInput.Text?.Trim();
         if (string.IsNullOrEmpty(name)) { StyleStatus.Text = "Enter a new name."; return; }
-        Db.UpdateStyle(_styles[idx].Id, name);
+        MusicLibraryService.Current.RenameStyle(_styles[idx].Id, name);
         StyleStatus.Text = "Renamed.";
         LoadStyles();
         OnMetadataChanged?.Invoke();
@@ -125,12 +122,8 @@ public partial class SettingsView : UserControl
     {
         var idx = StyleList.SelectedIndex;
         if (idx < 0) { StyleStatus.Text = "Select a style first."; return; }
-        if (Db.IsStyleInUse(_styles[idx].Id))
-        {
-            StyleStatus.Text = "Cannot delete: style is used by one or more tracks.";
-            return;
-        }
-        Db.DeleteStyle(_styles[idx].Id);
+        var result = MusicLibraryService.Current.TryDeleteStyle(_styles[idx].Id);
+        if (!result.Success) { StyleStatus.Text = result.Error; return; }
         StyleStatus.Text = "Deleted.";
         LoadStyles();
         OnMetadataChanged?.Invoke();
@@ -140,7 +133,7 @@ public partial class SettingsView : UserControl
 
     private void LoadRatings()
     {
-        _ratings = Db.GetRatings();
+        _ratings = MusicLibraryService.Current.GetRatings();
         RatingList.ItemsSource = _ratings.Select(r => r.Name).ToList();
     }
 
@@ -155,7 +148,7 @@ public partial class SettingsView : UserControl
     {
         var name = RatingInput.Text?.Trim();
         if (string.IsNullOrEmpty(name)) { RatingStatus.Text = "Enter a name."; return; }
-        Db.InsertRating(name);
+        MusicLibraryService.Current.AddRating(name);
         RatingInput.Text = "";
         RatingStatus.Text = "Added.";
         LoadRatings();
@@ -168,7 +161,7 @@ public partial class SettingsView : UserControl
         if (idx < 0) { RatingStatus.Text = "Select a rating first."; return; }
         var name = RatingInput.Text?.Trim();
         if (string.IsNullOrEmpty(name)) { RatingStatus.Text = "Enter a new name."; return; }
-        Db.UpdateRating(_ratings[idx].Id, name);
+        MusicLibraryService.Current.RenameRating(_ratings[idx].Id, name);
         RatingStatus.Text = "Renamed.";
         LoadRatings();
         OnMetadataChanged?.Invoke();
@@ -178,12 +171,8 @@ public partial class SettingsView : UserControl
     {
         var idx = RatingList.SelectedIndex;
         if (idx < 0) { RatingStatus.Text = "Select a rating first."; return; }
-        if (Db.IsRatingInUse(_ratings[idx].Id))
-        {
-            RatingStatus.Text = "Cannot delete: rating is used by one or more tracks.";
-            return;
-        }
-        Db.DeleteRating(_ratings[idx].Id);
+        var result = MusicLibraryService.Current.TryDeleteRating(_ratings[idx].Id);
+        if (!result.Success) { RatingStatus.Text = result.Error; return; }
         RatingStatus.Text = "Deleted.";
         LoadRatings();
         OnMetadataChanged?.Invoke();

@@ -2,20 +2,24 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Microsoft.Data.Sqlite;
-using Misa.Models;
+using Misa.Music.Models;
 
-namespace Misa;
+namespace Misa.Music.Services;
 
-static class Db
+public class MusicDatabase
 {
-    public const string DbPath = @"D:\media\music\music.db";
-    private static readonly string ConnectionString = $"Data Source={DbPath}";
+    private readonly string _connectionString;
 
-    public static void Initialize()
+    public MusicDatabase(string dbPath)
     {
-        Directory.CreateDirectory(@"D:\media\music");
-        
-        if (File.Exists(DbPath)) return;
+        _connectionString = $"Data Source={dbPath}";
+    }
+
+    public void Initialize()
+    {
+        Directory.CreateDirectory(MusicConfiguration.MusicDirectory);
+
+        if (File.Exists(MusicConfiguration.DatabasePath)) return;
 
         using var conn = Open();
         using var cmd = conn.CreateCommand();
@@ -62,7 +66,7 @@ static class Db
         cmd.ExecuteNonQuery();
     }
 
-    public static bool TrackExists(string canonicalUrl)
+    public bool TrackExists(string canonicalUrl)
     {
         using var conn = Open();
         using var cmd = conn.CreateCommand();
@@ -71,8 +75,8 @@ static class Db
         return (long)cmd.ExecuteScalar()! > 0;
     }
 
-    public static void InsertTrack(string canonicalUrl, string title, string fileName,
-                                   int genreId, int ratingId, List<int> styleIds, int? durationSeconds)
+    public void InsertTrack(string canonicalUrl, string title, string fileName,
+                            int genreId, int ratingId, List<int> styleIds, int? durationSeconds)
     {
         using var conn = Open();
         using var tx = conn.BeginTransaction();
@@ -113,7 +117,7 @@ static class Db
         tx.Commit();
     }
 
-    public static List<MusicTrack> GetAllTracks()
+    public List<MusicTrack> GetAllTracks()
     {
         using var conn = Open();
         using var cmd = conn.CreateCommand();
@@ -127,7 +131,7 @@ static class Db
         return list;
     }
 
-    public static Dictionary<int, List<int>> GetAllMusicStyleIds()
+    public Dictionary<int, List<int>> GetAllMusicStyleIds()
     {
         using var conn = Open();
         using var cmd = conn.CreateCommand();
@@ -148,153 +152,7 @@ static class Db
         return dict;
     }
 
-    public static List<Genre> GetGenres()
-    {
-        using var conn = Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT Id, Name FROM Genres ORDER BY Name";
-        using var r = cmd.ExecuteReader();
-        var list = new List<Genre>();
-        while (r.Read()) list.Add(new Genre(r.GetInt32(0), r.GetString(1)));
-        return list;
-    }
-
-    public static void InsertGenre(string name)
-    {
-        using var conn = Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = "INSERT OR IGNORE INTO Genres (Name) VALUES ($name)";
-        cmd.Parameters.AddWithValue("$name", name);
-        cmd.ExecuteNonQuery();
-    }
-
-    public static List<Style> GetStyles()
-    {
-        using var conn = Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT Id, Name FROM Styles ORDER BY Name";
-        using var r = cmd.ExecuteReader();
-        var list = new List<Style>();
-        while (r.Read()) list.Add(new Style(r.GetInt32(0), r.GetString(1)));
-        return list;
-    }
-
-    public static void InsertStyle(string name)
-    {
-        using var conn = Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = "INSERT OR IGNORE INTO Styles (Name) VALUES ($name)";
-        cmd.Parameters.AddWithValue("$name", name);
-        cmd.ExecuteNonQuery();
-    }
-
-    public static List<Rating> GetRatings()
-    {
-        using var conn = Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT Id, Name, SortOrder FROM Ratings ORDER BY SortOrder";
-        using var r = cmd.ExecuteReader();
-        var list = new List<Rating>();
-        while (r.Read()) list.Add(new Rating(r.GetInt32(0), r.GetString(1), r.GetInt32(2)));
-        return list;
-    }
-
-    public static void InsertRating(string name)
-    {
-        using var conn = Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = @"
-            INSERT OR IGNORE INTO Ratings (Name, SortOrder)
-            VALUES ($name, (SELECT COALESCE(MAX(SortOrder), 0) + 1 FROM Ratings))";
-        cmd.Parameters.AddWithValue("$name", name);
-        cmd.ExecuteNonQuery();
-    }
-
-    public static bool IsGenreInUse(int id)
-    {
-        using var conn = Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT COUNT(*) FROM Music WHERE GenreId = $id";
-        cmd.Parameters.AddWithValue("$id", id);
-        return (long)cmd.ExecuteScalar()! > 0;
-    }
-
-    public static void UpdateGenre(int id, string name)
-    {
-        using var conn = Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = "UPDATE Genres SET Name = $name WHERE Id = $id";
-        cmd.Parameters.AddWithValue("$id", id);
-        cmd.Parameters.AddWithValue("$name", name);
-        cmd.ExecuteNonQuery();
-    }
-
-    public static void DeleteGenre(int id)
-    {
-        using var conn = Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = "DELETE FROM Genres WHERE Id = $id";
-        cmd.Parameters.AddWithValue("$id", id);
-        cmd.ExecuteNonQuery();
-    }
-
-    public static bool IsStyleInUse(int id)
-    {
-        using var conn = Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT COUNT(*) FROM MusicStyles WHERE StyleId = $id";
-        cmd.Parameters.AddWithValue("$id", id);
-        return (long)cmd.ExecuteScalar()! > 0;
-    }
-
-    public static void UpdateStyle(int id, string name)
-    {
-        using var conn = Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = "UPDATE Styles SET Name = $name WHERE Id = $id";
-        cmd.Parameters.AddWithValue("$id", id);
-        cmd.Parameters.AddWithValue("$name", name);
-        cmd.ExecuteNonQuery();
-    }
-
-    public static void DeleteStyle(int id)
-    {
-        using var conn = Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = "DELETE FROM Styles WHERE Id = $id";
-        cmd.Parameters.AddWithValue("$id", id);
-        cmd.ExecuteNonQuery();
-    }
-
-    public static bool IsRatingInUse(int id)
-    {
-        using var conn = Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT COUNT(*) FROM Music WHERE RatingId = $id";
-        cmd.Parameters.AddWithValue("$id", id);
-        return (long)cmd.ExecuteScalar()! > 0;
-    }
-
-    public static void UpdateRating(int id, string name)
-    {
-        using var conn = Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = "UPDATE Ratings SET Name = $name WHERE Id = $id";
-        cmd.Parameters.AddWithValue("$id", id);
-        cmd.Parameters.AddWithValue("$name", name);
-        cmd.ExecuteNonQuery();
-    }
-
-    public static void DeleteRating(int id)
-    {
-        using var conn = Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = "DELETE FROM Ratings WHERE Id = $id";
-        cmd.Parameters.AddWithValue("$id", id);
-        cmd.ExecuteNonQuery();
-    }
-
-    public static List<int> GetMusicStyleIds(int musicId)
+    public List<int> GetMusicStyleIds(int musicId)
     {
         using var conn = Open();
         using var cmd = conn.CreateCommand();
@@ -306,7 +164,7 @@ static class Db
         return ids;
     }
 
-    public static void UpdateTrack(int id, string title, int genreId, int ratingId, List<int> styleIds)
+    public void UpdateTrack(int id, string title, int genreId, int ratingId, List<int> styleIds)
     {
         using var conn = Open();
         using var tx = conn.BeginTransaction();
@@ -343,7 +201,7 @@ static class Db
         tx.Commit();
     }
 
-    public static void DeleteTrack(int id)
+    public void DeleteTrack(int id)
     {
         using var conn = Open();
         using var tx = conn.BeginTransaction();
@@ -363,9 +221,155 @@ static class Db
         tx.Commit();
     }
 
-    private static SqliteConnection Open()
+    public List<Genre> GetGenres()
     {
-        var conn = new SqliteConnection(ConnectionString);
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT Id, Name FROM Genres ORDER BY Name";
+        using var r = cmd.ExecuteReader();
+        var list = new List<Genre>();
+        while (r.Read()) list.Add(new Genre(r.GetInt32(0), r.GetString(1)));
+        return list;
+    }
+
+    public void InsertGenre(string name)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "INSERT OR IGNORE INTO Genres (Name) VALUES ($name)";
+        cmd.Parameters.AddWithValue("$name", name);
+        cmd.ExecuteNonQuery();
+    }
+
+    public bool IsGenreInUse(int id)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT COUNT(*) FROM Music WHERE GenreId = $id";
+        cmd.Parameters.AddWithValue("$id", id);
+        return (long)cmd.ExecuteScalar()! > 0;
+    }
+
+    public void UpdateGenre(int id, string name)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "UPDATE Genres SET Name = $name WHERE Id = $id";
+        cmd.Parameters.AddWithValue("$id", id);
+        cmd.Parameters.AddWithValue("$name", name);
+        cmd.ExecuteNonQuery();
+    }
+
+    public void DeleteGenre(int id)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "DELETE FROM Genres WHERE Id = $id";
+        cmd.Parameters.AddWithValue("$id", id);
+        cmd.ExecuteNonQuery();
+    }
+
+    public List<Style> GetStyles()
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT Id, Name FROM Styles ORDER BY Name";
+        using var r = cmd.ExecuteReader();
+        var list = new List<Style>();
+        while (r.Read()) list.Add(new Style(r.GetInt32(0), r.GetString(1)));
+        return list;
+    }
+
+    public void InsertStyle(string name)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "INSERT OR IGNORE INTO Styles (Name) VALUES ($name)";
+        cmd.Parameters.AddWithValue("$name", name);
+        cmd.ExecuteNonQuery();
+    }
+
+    public bool IsStyleInUse(int id)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT COUNT(*) FROM MusicStyles WHERE StyleId = $id";
+        cmd.Parameters.AddWithValue("$id", id);
+        return (long)cmd.ExecuteScalar()! > 0;
+    }
+
+    public void UpdateStyle(int id, string name)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "UPDATE Styles SET Name = $name WHERE Id = $id";
+        cmd.Parameters.AddWithValue("$id", id);
+        cmd.Parameters.AddWithValue("$name", name);
+        cmd.ExecuteNonQuery();
+    }
+
+    public void DeleteStyle(int id)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "DELETE FROM Styles WHERE Id = $id";
+        cmd.Parameters.AddWithValue("$id", id);
+        cmd.ExecuteNonQuery();
+    }
+
+    public List<Rating> GetRatings()
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT Id, Name, SortOrder FROM Ratings ORDER BY SortOrder";
+        using var r = cmd.ExecuteReader();
+        var list = new List<Rating>();
+        while (r.Read()) list.Add(new Rating(r.GetInt32(0), r.GetString(1), r.GetInt32(2)));
+        return list;
+    }
+
+    public void InsertRating(string name)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+            INSERT OR IGNORE INTO Ratings (Name, SortOrder)
+            VALUES ($name, (SELECT COALESCE(MAX(SortOrder), 0) + 1 FROM Ratings))";
+        cmd.Parameters.AddWithValue("$name", name);
+        cmd.ExecuteNonQuery();
+    }
+
+    public bool IsRatingInUse(int id)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT COUNT(*) FROM Music WHERE RatingId = $id";
+        cmd.Parameters.AddWithValue("$id", id);
+        return (long)cmd.ExecuteScalar()! > 0;
+    }
+
+    public void UpdateRating(int id, string name)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "UPDATE Ratings SET Name = $name WHERE Id = $id";
+        cmd.Parameters.AddWithValue("$id", id);
+        cmd.Parameters.AddWithValue("$name", name);
+        cmd.ExecuteNonQuery();
+    }
+
+    public void DeleteRating(int id)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "DELETE FROM Ratings WHERE Id = $id";
+        cmd.Parameters.AddWithValue("$id", id);
+        cmd.ExecuteNonQuery();
+    }
+
+    private SqliteConnection Open()
+    {
+        var conn = new SqliteConnection(_connectionString);
         conn.Open();
         return conn;
     }

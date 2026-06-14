@@ -6,6 +6,8 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Misa.Models;
+using Misa.Music.Models;
+using Misa.Music.Services;
 using NAudio.Wave;
 
 namespace Misa.Views;
@@ -32,7 +34,7 @@ public partial class MusicView : UserControl
         StyleFilter.SelectionChanged += (_, _) => ApplyFilter();
         try
         {
-            Db.Initialize();
+            MusicLibraryService.Current.Initialize();
         }
         catch (Exception ex)
         {
@@ -45,9 +47,9 @@ public partial class MusicView : UserControl
 
     private void LoadLookups()
     {
-        _genres = Db.GetGenres();
-        _ratings = Db.GetRatings();
-        _styles = Db.GetStyles();
+        _genres = MusicLibraryService.Current.GetGenres();
+        _ratings = MusicLibraryService.Current.GetRatings();
+        _styles = MusicLibraryService.Current.GetStyles();
         GenreFilter.Placeholder = "Genres";
         GenreFilter.SetItems(_genres.Select(g => g.Name));
         RatingFilter.Placeholder = "Ratings";
@@ -58,8 +60,8 @@ public partial class MusicView : UserControl
 
     private void RefreshTrackList()
     {
-        var tracks = Db.GetAllTracks();
-        var allStyleIds = Db.GetAllMusicStyleIds();
+        var tracks = MusicLibraryService.Current.GetTracks();
+        var allStyleIds = MusicLibraryService.Current.GetAllTrackStyleIds();
         var genreMap = _genres.ToDictionary(g => g.Id, g => g.Name);
         var ratingMap = _ratings.ToDictionary(r => r.Id, r => r.Name);
         var styleMap = _styles.ToDictionary(s => s.Id, s => s.Name);
@@ -164,18 +166,9 @@ public partial class MusicView : UserControl
             NowPlayingText.Text = "";
         }
 
-        Db.DeleteTrack(track.Id);
-
-        try
-        {
-            var filePath = Path.Combine(MusicDir, track.FileName);
-            if (File.Exists(filePath))
-                File.Delete(filePath);
-        }
-        catch (Exception ex)
-        {
-            StatusText.Text = $"File could not be deleted: {ex.Message}";
-        }
+        var result = MusicLibraryService.Current.DeleteTrack(track.Id, track.FileName);
+        if (result.FileError != null)
+            StatusText.Text = $"File could not be deleted: {result.FileError}";
 
         RefreshTrackList();
     }

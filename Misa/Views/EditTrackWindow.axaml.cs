@@ -2,7 +2,8 @@ using System.Collections.Generic;
 using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
-using Misa.Models;
+using Misa.Music.Models;
+using Misa.Music.Services;
 
 namespace Misa.Views;
 
@@ -25,9 +26,9 @@ public partial class EditTrackWindow : Window
 
     private void LoadAndPrefill()
     {
-        _genres = Db.GetGenres();
-        _ratings = Db.GetRatings();
-        _styles = Db.GetStyles();
+        _genres = MusicLibraryService.Current.GetGenres();
+        _ratings = MusicLibraryService.Current.GetRatings();
+        _styles = MusicLibraryService.Current.GetStyles();
 
         TitleBox.Text = _track.Title;
 
@@ -40,7 +41,7 @@ public partial class EditTrackWindow : Window
         RatingBox.SelectedIndex = ratingIdx >= 0 ? ratingIdx + 1 : 0;
 
         StylesBox.ItemsSource = _styles.Select(s => s.Name).ToList();
-        var currentStyleIds = Db.GetMusicStyleIds(_track.Id);
+        var currentStyleIds = MusicLibraryService.Current.GetTrackStyleIds(_track.Id);
         for (int i = 0; i < _styles.Count; i++)
         {
             if (currentStyleIds.Contains(_styles[i].Id))
@@ -65,7 +66,7 @@ public partial class EditTrackWindow : Window
             .Select(name => _styles.First(s => s.Name == name).Id)
             .ToList() ?? [];
 
-        Db.UpdateTrack(_track.Id, title, genreId, ratingId, styleIds);
+        MusicLibraryService.Current.UpdateTrack(_track.Id, title, genreId, ratingId, styleIds);
         Close(true);
     }
 
