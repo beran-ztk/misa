@@ -13,6 +13,7 @@ public partial class MainWindow : Window
         InitializeComponent();
         _settingsView.PrepareForReset = () => _musicView.StopPlayback();
         _settingsView.OnResetComplete = () => _musicView.Refresh();
+        _settingsView.OnMetadataChanged = () => _musicView.RefreshFilters();
         ContentArea.Content = _musicView;
     }
 

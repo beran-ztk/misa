@@ -2,10 +2,54 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="Misa.Views.SettingsView">
 
-    <StackPanel Margin="16" Spacing="12" MaxWidth="460">
+    <ScrollViewer>
+        <StackPanel Margin="16" Spacing="4">
 
-        <TextBlock Text="Settings will be added here." />
+            <TextBlock Text="Metadata" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12" />
 
-    </StackPanel>
+            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="20">
+
+                <!-- Genres -->
+                <StackPanel Grid.Column="0" Spacing="6">
+                    <TextBlock Text="Genres" FontWeight="SemiBold" />
+                    <ListBox x:Name="GenreList" Height="130" SelectionChanged="OnGenreSelected" />
+                    <TextBox x:Name="GenreInput" Watermark="Name…" />
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <Button Content="Add" Click="OnAddGenreClicked" />
+                        <Button Content="Rename" Click="OnRenameGenreClicked" />
+                        <Button Content="Delete" Click="OnDeleteGenreClicked" />
+                    </StackPanel>
+                    <TextBlock x:Name="GenreStatus" Text="" FontSize="11" Opacity="0.7" TextWrapping="Wrap" />
+                </StackPanel>
+
+                <!-- Styles -->
+                <StackPanel Grid.Column="1" Spacing="6">
+                    <TextBlock Text="Styles" FontWeight="SemiBold" />
+                    <ListBox x:Name="StyleList" Height="130" SelectionChanged="OnStyleSelected" />
+                    <TextBox x:Name="StyleInput" Watermark="Name…" />
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <Button Content="Add" Click="OnAddStyleClicked" />
+                        <Button Content="Rename" Click="OnRenameStyleClicked" />
+                        <Button Content="Delete" Click="OnDeleteStyleClicked" />
+                    </StackPanel>
+                    <TextBlock x:Name="StyleStatus" Text="" FontSize="11" Opacity="0.7" TextWrapping="Wrap" />
+                </StackPanel>
+
+                <!-- Ratings -->
+                <StackPanel Grid.Column="2" Spacing="6">
+                    <TextBlock Text="Ratings" FontWeight="SemiBold" />
+                    <ListBox x:Name="RatingList" Height="130" SelectionChanged="OnRatingSelected" />
+                    <TextBox x:Name="RatingInput" Watermark="Name…" />
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <Button Content="Add" Click="OnAddRatingClicked" />
+                        <Button Content="Rename" Click="OnRenameRatingClicked" />
+                        <Button Content="Delete" Click="OnDeleteRatingClicked" />
+                    </StackPanel>
+                    <TextBlock x:Name="RatingStatus" Text="" FontSize="11" Opacity="0.7" TextWrapping="Wrap" />
+                </StackPanel>
+
+            </Grid>
+        </StackPanel>
+    </ScrollViewer>
 
 </UserControl>

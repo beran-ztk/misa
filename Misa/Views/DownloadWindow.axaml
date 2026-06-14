@@ -1,7 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="Misa.Views.DownloadWindow"
-        Title="Download Track" Width="480" Height="620"
+        Title="Download Track" Width="480" Height="480"
         CanResize="False" WindowStartupLocation="CenterOwner">
 
     <DockPanel Margin="16">
@@ -32,17 +32,6 @@
                 <TextBlock Text="Styles (optional, click to toggle)" />
                 <ListBox x:Name="StylesBox" SelectionMode="Multiple,Toggle" Height="100" />
 
-                <Border Height="1" Background="#30808080" Margin="0,6" />
-
-                <TextBlock Text="Manage" FontWeight="Bold" />
-                <StackPanel Orientation="Horizontal" Spacing="6">
-                    <TextBox x:Name="NewGenreBox" Watermark="New genre…" MinWidth="180" />
-                    <Button Content="Add" Click="OnAddGenreClicked" />
-                </StackPanel>
-                <StackPanel Orientation="Horizontal" Spacing="6">
-                    <TextBox x:Name="NewStyleBox" Watermark="New style…" MinWidth="180" />
-                    <Button Content="Add" Click="OnAddStyleClicked" />
-                </StackPanel>
             </StackPanel>
         </ScrollViewer>
 

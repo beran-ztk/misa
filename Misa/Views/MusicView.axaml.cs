@@ -27,6 +27,9 @@ public partial class MusicView : UserControl
     public MusicView()
     {
         InitializeComponent();
+        GenreFilter.SelectionChanged += (_, _) => ApplyFilter();
+        RatingFilter.SelectionChanged += (_, _) => ApplyFilter();
+        StyleFilter.SelectionChanged += (_, _) => ApplyFilter();
         try
         {
             Db.Initialize();
@@ -45,9 +48,12 @@ public partial class MusicView : UserControl
         _genres = Db.GetGenres();
         _ratings = Db.GetRatings();
         _styles = Db.GetStyles();
-        GenreFilter.ItemsSource = _genres.Select(g => g.Name).ToList();
-        RatingFilter.ItemsSource = _ratings.Select(r => r.Name).ToList();
-        StyleFilter.ItemsSource = _styles.Select(s => s.Name).ToList();
+        GenreFilter.Placeholder = "Genres";
+        GenreFilter.SetItems(_genres.Select(g => g.Name));
+        RatingFilter.Placeholder = "Ratings";
+        RatingFilter.SetItems(_ratings.Select(r => r.Name));
+        StyleFilter.Placeholder = "Styles";
+        StyleFilter.SetItems(_styles.Select(s => s.Name));
     }
 
     private void RefreshTrackList()
@@ -85,9 +91,9 @@ public partial class MusicView : UserControl
 
     private void ApplyFilter()
     {
-        var selGenreIds = SelectedIds(GenreFilter, _genres, g => g.Name, g => g.Id);
-        var selRatingIds = SelectedIds(RatingFilter, _ratings, r => r.Name, r => r.Id);
-        var selStyleIds = SelectedIds(StyleFilter, _styles, s => s.Name, s => s.Id);
+        var selGenreIds = SelectedIds(GenreFilter.SelectedItems, _genres, g => g.Name, g => g.Id);
+        var selRatingIds = SelectedIds(RatingFilter.SelectedItems, _ratings, r => r.Name, r => r.Id);
+        var selStyleIds = SelectedIds(StyleFilter.SelectedItems, _styles, s => s.Name, s => s.Id);
 
         _filteredItems = _allItems.Where(item =>
             (selGenreIds.Count == 0 || selGenreIds.Contains(item.GenreId)) &&
@@ -98,22 +104,22 @@ public partial class MusicView : UserControl
         FileList.ItemsSource = _filteredItems;
     }
 
-    private static HashSet<int> SelectedIds<T>(ListBox filter, List<T> source,
+    private static HashSet<int> SelectedIds<T>(IReadOnlySet<string> selected, List<T> source,
         Func<T, string> nameOf, Func<T, int> idOf)
     {
-        var selected = filter.SelectedItems?.Cast<string>().ToHashSet() ?? [];
         if (selected.Count == 0) return [];
         return source.Where(item => selected.Contains(nameOf(item))).Select(idOf).ToHashSet();
-    }
-
-    private void OnFilterChanged(object? sender, SelectionChangedEventArgs e)
-    {
-        ApplyFilter();
     }
 
     public void Refresh()
     {
         NowPlayingText.Text = "";
+        LoadLookups();
+        RefreshTrackList();
+    }
+
+    public void RefreshFilters()
+    {
         LoadLookups();
         RefreshTrackList();
     }

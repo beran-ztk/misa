@@ -111,26 +111,6 @@ public partial class DownloadWindow : Window
 
     private void OnCloseClicked(object? sender, RoutedEventArgs e) => Close(false);
 
-    private void OnAddGenreClicked(object? sender, RoutedEventArgs e)
-    {
-        var name = NewGenreBox.Text?.Trim();
-        if (string.IsNullOrEmpty(name)) return;
-        Db.InsertGenre(name);
-        NewGenreBox.Text = "";
-        var prevGenre = GenreBox.SelectedIndex;
-        LoadLookups();
-        GenreBox.SelectedIndex = prevGenre;
-    }
-
-    private void OnAddStyleClicked(object? sender, RoutedEventArgs e)
-    {
-        var name = NewStyleBox.Text?.Trim();
-        if (string.IsNullOrEmpty(name)) return;
-        Db.InsertStyle(name);
-        NewStyleBox.Text = "";
-        LoadLookups();
-    }
-
     private static async Task<(bool success, string errorOutput)> RunYtDlp(string url)
     {
         var outputTemplate = Path.Combine(MusicDir, @"%(title)s [%(id)s].%(ext)s");

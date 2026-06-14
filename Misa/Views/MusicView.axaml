@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:Misa.Views"
              xmlns:models="using:Misa.Models"
              x:Class="Misa.Views.MusicView">
 
@@ -13,20 +14,17 @@
         <Border DockPanel.Dock="Top" BorderThickness="0,0,0,1" BorderBrush="#30808080"
                 Padding="0,0,0,8" Margin="0,0,0,8">
             <StackPanel Orientation="Horizontal" Spacing="16">
-                <StackPanel Spacing="4" MinWidth="120">
+                <StackPanel Spacing="3" MinWidth="160">
                     <TextBlock Text="Genre" FontSize="11" Opacity="0.6" />
-                    <ListBox x:Name="GenreFilter" SelectionMode="Multiple,Toggle"
-                             Height="80" SelectionChanged="OnFilterChanged" />
+                    <local:MultiSelectFilterControl x:Name="GenreFilter" />
                 </StackPanel>
-                <StackPanel Spacing="4" MinWidth="100">
+                <StackPanel Spacing="3" MinWidth="140">
                     <TextBlock Text="Rating" FontSize="11" Opacity="0.6" />
-                    <ListBox x:Name="RatingFilter" SelectionMode="Multiple,Toggle"
-                             Height="80" SelectionChanged="OnFilterChanged" />
+                    <local:MultiSelectFilterControl x:Name="RatingFilter" />
                 </StackPanel>
-                <StackPanel Spacing="4" MinWidth="120">
+                <StackPanel Spacing="3" MinWidth="160">
                     <TextBlock Text="Style" FontSize="11" Opacity="0.6" />
-                    <ListBox x:Name="StyleFilter" SelectionMode="Multiple,Toggle"
-                             Height="80" SelectionChanged="OnFilterChanged" />
+                    <local:MultiSelectFilterControl x:Name="StyleFilter" />
                 </StackPanel>
             </StackPanel>
         </Border>

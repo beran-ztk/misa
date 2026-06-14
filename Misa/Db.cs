@@ -199,6 +199,101 @@ static class Db
         return list;
     }
 
+    public static void InsertRating(string name)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+            INSERT OR IGNORE INTO Ratings (Name, SortOrder)
+            VALUES ($name, (SELECT COALESCE(MAX(SortOrder), 0) + 1 FROM Ratings))";
+        cmd.Parameters.AddWithValue("$name", name);
+        cmd.ExecuteNonQuery();
+    }
+
+    public static bool IsGenreInUse(int id)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT COUNT(*) FROM Music WHERE GenreId = $id";
+        cmd.Parameters.AddWithValue("$id", id);
+        return (long)cmd.ExecuteScalar()! > 0;
+    }
+
+    public static void UpdateGenre(int id, string name)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "UPDATE Genres SET Name = $name WHERE Id = $id";
+        cmd.Parameters.AddWithValue("$id", id);
+        cmd.Parameters.AddWithValue("$name", name);
+        cmd.ExecuteNonQuery();
+    }
+
+    public static void DeleteGenre(int id)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "DELETE FROM Genres WHERE Id = $id";
+        cmd.Parameters.AddWithValue("$id", id);
+        cmd.ExecuteNonQuery();
+    }
+
+    public static bool IsStyleInUse(int id)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT COUNT(*) FROM MusicStyles WHERE StyleId = $id";
+        cmd.Parameters.AddWithValue("$id", id);
+        return (long)cmd.ExecuteScalar()! > 0;
+    }
+
+    public static void UpdateStyle(int id, string name)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "UPDATE Styles SET Name = $name WHERE Id = $id";
+        cmd.Parameters.AddWithValue("$id", id);
+        cmd.Parameters.AddWithValue("$name", name);
+        cmd.ExecuteNonQuery();
+    }
+
+    public static void DeleteStyle(int id)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "DELETE FROM Styles WHERE Id = $id";
+        cmd.Parameters.AddWithValue("$id", id);
+        cmd.ExecuteNonQuery();
+    }
+
+    public static bool IsRatingInUse(int id)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT COUNT(*) FROM Music WHERE RatingId = $id";
+        cmd.Parameters.AddWithValue("$id", id);
+        return (long)cmd.ExecuteScalar()! > 0;
+    }
+
+    public static void UpdateRating(int id, string name)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "UPDATE Ratings SET Name = $name WHERE Id = $id";
+        cmd.Parameters.AddWithValue("$id", id);
+        cmd.Parameters.AddWithValue("$name", name);
+        cmd.ExecuteNonQuery();
+    }
+
+    public static void DeleteRating(int id)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "DELETE FROM Ratings WHERE Id = $id";
+        cmd.Parameters.AddWithValue("$id", id);
+        cmd.ExecuteNonQuery();
+    }
+
     public static List<int> GetMusicStyleIds(int musicId)
     {
         using var conn = Open();
