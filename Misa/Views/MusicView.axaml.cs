@@ -17,6 +17,7 @@ public partial class MusicView : UserControl
     private IWavePlayer? _player;
     private WaveStream? _audioStream;
     private List<MusicTrack> _tracks = [];
+    private int _playingTrackId = -1;
 
     public MusicView()
     {
@@ -39,12 +40,66 @@ public partial class MusicView : UserControl
         FileList.ItemsSource = _tracks.Select(t => t.Title).ToList();
     }
 
+    public void Refresh()
+    {
+        NowPlayingText.Text = "";
+        RefreshTrackList();
+    }
+
     private async void OnAddTrackClicked(object? sender, RoutedEventArgs e)
     {
         var owner = TopLevel.GetTopLevel(this) as Window;
         if (owner == null) return;
         var downloaded = await new DownloadWindow().ShowDialog<bool>(owner);
         if (downloaded) RefreshTrackList();
+    }
+
+    private async void OnContextEditClicked(object? sender, RoutedEventArgs e)
+    {
+        var idx = FileList.SelectedIndex;
+        if (idx < 0 || idx >= _tracks.Count) return;
+
+        var owner = TopLevel.GetTopLevel(this) as Window;
+        if (owner == null) return;
+
+        var saved = await new EditTrackWindow(_tracks[idx]).ShowDialog<bool>(owner);
+        if (saved) RefreshTrackList();
+    }
+
+    private async void OnContextDeleteClicked(object? sender, RoutedEventArgs e)
+    {
+        var idx = FileList.SelectedIndex;
+        if (idx < 0 || idx >= _tracks.Count) return;
+
+        var track = _tracks[idx];
+        var owner = TopLevel.GetTopLevel(this) as Window;
+        if (owner == null) return;
+
+        var confirmed = await new ConfirmDialog(
+            $"Delete \"{track.Title}\"?\n\nThis will remove the audio file and database entry.")
+            .ShowDialog<bool>(owner);
+        if (!confirmed) return;
+
+        if (_playingTrackId == track.Id)
+        {
+            StopPlayback();
+            NowPlayingText.Text = "";
+        }
+
+        Db.DeleteTrack(track.Id);
+
+        try
+        {
+            var filePath = Path.Combine(MusicDir, track.FileName);
+            if (File.Exists(filePath))
+                File.Delete(filePath);
+        }
+        catch (Exception ex)
+        {
+            StatusText.Text = $"File could not be deleted: {ex.Message}";
+        }
+
+        RefreshTrackList();
     }
 
     private void OnPlayClicked(object? sender, RoutedEventArgs e)
@@ -61,6 +116,7 @@ public partial class MusicView : UserControl
             _player.PlaybackStopped += OnPlaybackStopped;
             _player.Init(_audioStream);
             _player.Play();
+            _playingTrackId = _tracks[idx].Id;
             NowPlayingText.Text = _tracks[idx].Title;
         }
         catch (Exception ex)
@@ -77,13 +133,11 @@ public partial class MusicView : UserControl
 
     private void OnPlaybackStopped(object? sender, StoppedEventArgs e)
     {
-        Dispatcher.UIThread.Post(() => NowPlayingText.Text = "");
-    }
-
-    public void Refresh()
-    {
-        NowPlayingText.Text = "";
-        RefreshTrackList();
+        Dispatcher.UIThread.Post(() =>
+        {
+            NowPlayingText.Text = "";
+            _playingTrackId = -1;
+        });
     }
 
     public void StopPlayback()
@@ -97,5 +151,6 @@ public partial class MusicView : UserControl
         _audioStream?.Dispose();
         _player = null;
         _audioStream = null;
+        _playingTrackId = -1;
     }
 }

@@ -17,7 +17,14 @@
             <TextBlock x:Name="NowPlayingText" Text="" TextWrapping="Wrap" FontStyle="Italic" />
         </StackPanel>
 
-        <ListBox x:Name="FileList" />
+        <ListBox x:Name="FileList">
+            <ListBox.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Edit" Click="OnContextEditClicked" />
+                    <MenuItem Header="Delete" Click="OnContextDeleteClicked" />
+                </ContextMenu>
+            </ListBox.ContextMenu>
+        </ListBox>
 
     </DockPanel>
 
