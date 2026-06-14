@@ -9,15 +9,36 @@ public class MusicLibraryService
 {
     public static readonly MusicLibraryService Current = new();
 
-    private readonly MusicDatabase _db;
-    private readonly TrackDownloadService _downloader;
-    private readonly TrackFileService _fileService;
+    private MusicSettings _settings;
+    private MusicDatabase _db;
+    private TrackDownloadService _downloader;
+    private TrackFileService _fileService;
 
     private MusicLibraryService()
     {
-        _db = new MusicDatabase(MusicConfiguration.DatabasePath);
-        _downloader = new TrackDownloadService(MusicConfiguration.ToolsDirectory, MusicConfiguration.MusicDirectory);
-        _fileService = new TrackFileService(MusicConfiguration.MusicDirectory);
+        _settings = MusicSettingsService.LoadSettings();
+        _db = null!;
+        _downloader = null!;
+        _fileService = null!;
+        ApplySettings();
+    }
+
+    private void ApplySettings()
+    {
+        var dbPath = Path.Combine(_settings.MusicDirectory, "music.db");
+        _db = new MusicDatabase(dbPath);
+        _downloader = new TrackDownloadService(_settings.ToolsDirectory, _settings.MusicDirectory, _settings);
+        _fileService = new TrackFileService(_settings.MusicDirectory);
+    }
+
+    public MusicSettings GetSettings() => _settings;
+    public string MusicDirectory => _settings.MusicDirectory;
+
+    public void SaveSettings(MusicSettings settings)
+    {
+        _settings = settings;
+        MusicSettingsService.SaveSettings(settings);
+        ApplySettings();
     }
 
     public void Initialize() => _db.Initialize();

@@ -1,8 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Avalonia.Platform.Storage;
 using Misa.Music.Models;
 using Misa.Music.Services;
 
@@ -26,9 +31,104 @@ public partial class SettingsView : UserControl
 
     private void LoadAll()
     {
+        LoadMusicSettings();
         LoadGenres();
         LoadStyles();
         LoadRatings();
+    }
+
+    // --- Music Settings ---
+
+    private void LoadMusicSettings()
+    {
+        var s = MusicLibraryService.Current.GetSettings();
+        MusicDirBox.Text = s.MusicDirectory;
+        ToolsDirBox.Text = s.ToolsDirectory;
+        UseNodeJsCheckBox.IsChecked = s.UseNodeJsRuntime;
+        UseFirefoxCheckBox.IsChecked = s.UseFirefoxCookies;
+        UseRemoteEjsCheckBox.IsChecked = s.UseRemoteEjsComponents;
+    }
+
+    private async void OnBrowseMusicDirClicked(object? sender, RoutedEventArgs e)
+    {
+        var topLevel = TopLevel.GetTopLevel(this);
+        if (topLevel == null) return;
+        var folders = await topLevel.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+        {
+            Title = "Select Music Directory",
+            AllowMultiple = false,
+        });
+        if (folders.Count > 0)
+            MusicDirBox.Text = folders[0].Path.LocalPath;
+    }
+
+    private async void OnBrowseToolsDirClicked(object? sender, RoutedEventArgs e)
+    {
+        var topLevel = TopLevel.GetTopLevel(this);
+        if (topLevel == null) return;
+        var folders = await topLevel.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+        {
+            Title = "Select Tools Directory",
+            AllowMultiple = false,
+        });
+        if (folders.Count > 0)
+            ToolsDirBox.Text = folders[0].Path.LocalPath;
+    }
+
+    private void OnSaveSettingsClicked(object? sender, RoutedEventArgs e)
+    {
+        var settings = new MusicSettings
+        {
+            MusicDirectory = MusicDirBox.Text?.Trim() ?? "",
+            ToolsDirectory = ToolsDirBox.Text?.Trim() ?? "",
+            UseNodeJsRuntime = UseNodeJsCheckBox.IsChecked == true,
+            UseFirefoxCookies = UseFirefoxCheckBox.IsChecked == true,
+            UseRemoteEjsComponents = UseRemoteEjsCheckBox.IsChecked == true,
+        };
+        PrepareForReset?.Invoke();
+        MusicLibraryService.Current.SaveSettings(settings);
+        SettingsStatus.Text = "Settings saved.";
+        OnResetComplete?.Invoke();
+    }
+
+    private async void OnTestToolsClicked(object? sender, RoutedEventArgs e)
+    {
+        var toolsDir = ToolsDirBox.Text?.Trim() ?? "";
+        var sb = new StringBuilder();
+
+        foreach (var tool in new[] { "yt-dlp.exe", "ffmpeg.exe", "ffprobe.exe" })
+        {
+            var path = Path.Combine(toolsDir, tool);
+            sb.AppendLine(File.Exists(path) ? $"✓ {tool}" : $"✗ {tool} — not found");
+        }
+
+        if (UseNodeJsCheckBox.IsChecked == true)
+        {
+            try
+            {
+                var psi = new ProcessStartInfo
+                {
+                    FileName = "node",
+                    Arguments = "--version",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                };
+                using var process = Process.Start(psi)!;
+                var version = await process.StandardOutput.ReadToEndAsync();
+                await process.WaitForExitAsync();
+                sb.AppendLine(process.ExitCode == 0
+                    ? $"✓ node {version.Trim()}"
+                    : "✗ node — not available");
+            }
+            catch
+            {
+                sb.AppendLine("✗ node — not found in PATH");
+            }
+        }
+
+        SettingsStatus.Text = sb.ToString().TrimEnd();
     }
 
     // --- Genres ---

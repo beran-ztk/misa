@@ -15,8 +15,6 @@ namespace Misa.Views;
 
 public partial class MusicView : UserControl
 {
-    private const string MusicDir = @"D:\media\music";
-
     private readonly DispatcherTimer _progressTimer = new() { Interval = TimeSpan.FromMilliseconds(500) };
 
     private IWavePlayer? _player;
@@ -200,7 +198,7 @@ public partial class MusicView : UserControl
         var track = _filteredItems[idx].Track;
         try
         {
-            _audioStream = new MediaFoundationReader(Path.Combine(MusicDir, track.FileName));
+            _audioStream = new MediaFoundationReader(Path.Combine(MusicLibraryService.Current.MusicDirectory, track.FileName));
             _player = new WaveOutEvent();
             _player.PlaybackStopped += OnPlaybackStopped;
             _player.Init(_audioStream);

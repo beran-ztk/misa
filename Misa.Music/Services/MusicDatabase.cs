@@ -8,18 +8,22 @@ namespace Misa.Music.Services;
 
 public class MusicDatabase
 {
+    private readonly string _dbPath;
     private readonly string _connectionString;
 
     public MusicDatabase(string dbPath)
     {
+        _dbPath = dbPath;
         _connectionString = $"Data Source={dbPath}";
     }
 
     public void Initialize()
     {
-        Directory.CreateDirectory(MusicConfiguration.MusicDirectory);
+        var dir = Path.GetDirectoryName(_dbPath);
+        if (!string.IsNullOrEmpty(dir))
+            Directory.CreateDirectory(dir);
 
-        if (File.Exists(MusicConfiguration.DatabasePath)) return;
+        if (File.Exists(_dbPath)) return;
 
         using var conn = Open();
         using var cmd = conn.CreateCommand();
