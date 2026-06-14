@@ -1,20 +1,15 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:vm="using:Misa.ViewModels"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="Misa.Views.MainWindow"
-        x:DataType="vm:MainWindowViewModel"
-        Icon="/Assets/avalonia-logo.ico"
-        Title="Misa">
+        Title="Misa" Width="720" Height="540">
 
-    <Design.DataContext>
-        <!-- This only sets the DataContext for the previewer in an IDE,
-             to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
-        <vm:MainWindowViewModel/>
-    </Design.DataContext>
-
-    <TextBlock Text="{Binding Greeting}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+    <DockPanel Margin="12" LastChildFill="True">
+        <StackPanel DockPanel.Dock="Top" Spacing="8" Margin="0,0,0,12">
+            <TextBox x:Name="UrlBox" Watermark="Paste YouTube URL here…" />
+            <Button x:Name="DownloadBtn" Content="Download" Click="OnDownloadClicked" HorizontalAlignment="Left" />
+            <TextBlock x:Name="StatusText" Text="Ready." TextWrapping="Wrap" />
+        </StackPanel>
+        <ListBox x:Name="FileList" />
+    </DockPanel>
 
 </Window>
