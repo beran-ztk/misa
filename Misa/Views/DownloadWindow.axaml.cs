@@ -96,8 +96,8 @@ public partial class DownloadWindow : Window
             ? TitleFromFileName(fileName)
             : TitleBox.Text.Trim();
 
-        var genreId = (int?)_genres[GenreBox.SelectedIndex - 1].Id;
-        var ratingId = (int?)_ratings[RatingBox.SelectedIndex - 1].Id;
+        var genreId = _genres[GenreBox.SelectedIndex - 1].Id;
+        var ratingId = _ratings[RatingBox.SelectedIndex - 1].Id;
         var styleIds = StylesBox.SelectedItems?
             .Cast<string>()
             .Select(name => _styles.First(s => s.Name == name).Id)

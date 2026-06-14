@@ -80,7 +80,13 @@ public partial class MusicView : UserControl
         Dispatcher.UIThread.Post(() => NowPlayingText.Text = "");
     }
 
-    private void StopPlayback()
+    public void Refresh()
+    {
+        NowPlayingText.Text = "";
+        RefreshTrackList();
+    }
+
+    public void StopPlayback()
     {
         if (_player != null)
         {

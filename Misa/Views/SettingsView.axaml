@@ -2,6 +2,10 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="Misa.Views.SettingsView">
 
-    <TextBlock Text="Settings will be added here." Margin="12" />
+    <StackPanel Margin="16" Spacing="12" MaxWidth="460">
+
+        <TextBlock Text="Settings will be added here." />
+
+    </StackPanel>
 
 </UserControl>

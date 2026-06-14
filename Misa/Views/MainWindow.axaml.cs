@@ -11,6 +11,8 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        _settingsView.PrepareForReset = () => _musicView.StopPlayback();
+        _settingsView.OnResetComplete = () => _musicView.Refresh();
         ContentArea.Content = _musicView;
     }
 

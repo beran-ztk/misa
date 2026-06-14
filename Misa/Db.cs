@@ -8,39 +8,41 @@ namespace Misa;
 
 static class Db
 {
-    private const string DbPath = @"D:\media\music\music.db";
+    public const string DbPath = @"D:\media\music\music.db";
     private static readonly string ConnectionString = $"Data Source={DbPath}";
 
     public static void Initialize()
     {
         Directory.CreateDirectory(@"D:\media\music");
 
+        if (File.Exists(DbPath)) return;
+
         using var conn = Open();
         using var cmd = conn.CreateCommand();
         cmd.CommandText = @"
-            CREATE TABLE IF NOT EXISTS Genres (
+            CREATE TABLE Genres (
                 Id   INTEGER PRIMARY KEY AUTOINCREMENT,
                 Name TEXT    NOT NULL UNIQUE
             );
-            CREATE TABLE IF NOT EXISTS Styles (
+            CREATE TABLE Styles (
                 Id   INTEGER PRIMARY KEY AUTOINCREMENT,
                 Name TEXT    NOT NULL UNIQUE
             );
-            CREATE TABLE IF NOT EXISTS Ratings (
+            CREATE TABLE Ratings (
                 Id        INTEGER PRIMARY KEY AUTOINCREMENT,
                 Name      TEXT    NOT NULL UNIQUE,
                 SortOrder INTEGER NOT NULL
             );
-            CREATE TABLE IF NOT EXISTS Music (
+            CREATE TABLE Music (
                 Id           INTEGER PRIMARY KEY AUTOINCREMENT,
                 CanonicalUrl TEXT    NOT NULL UNIQUE,
                 Title        TEXT    NOT NULL,
                 FileName     TEXT    NOT NULL UNIQUE,
-                GenreId      INTEGER NULL,
-                RatingId     INTEGER NULL,
+                GenreId      INTEGER NOT NULL,
+                RatingId     INTEGER NOT NULL,
                 DownloadedAt TEXT    NOT NULL
             );
-            CREATE TABLE IF NOT EXISTS MusicStyles (
+            CREATE TABLE MusicStyles (
                 MusicId INTEGER NOT NULL,
                 StyleId INTEGER NOT NULL,
                 PRIMARY KEY (MusicId, StyleId)
@@ -52,10 +54,6 @@ static class Db
 
     private static void SeedRatings(SqliteConnection conn)
     {
-        using var countCmd = conn.CreateCommand();
-        countCmd.CommandText = "SELECT COUNT(*) FROM Ratings";
-        if ((long)countCmd.ExecuteScalar()! > 0) return;
-
         using var cmd = conn.CreateCommand();
         cmd.CommandText = @"
             INSERT INTO Ratings (Name, SortOrder) VALUES
@@ -73,7 +71,7 @@ static class Db
     }
 
     public static void InsertTrack(string canonicalUrl, string title, string fileName,
-                                   int? genreId, int? ratingId, List<int> styleIds)
+                                   int genreId, int ratingId, List<int> styleIds)
     {
         using var conn = Open();
         using var tx = conn.BeginTransaction();
@@ -86,8 +84,8 @@ static class Db
         insertCmd.Parameters.AddWithValue("$url", canonicalUrl);
         insertCmd.Parameters.AddWithValue("$title", title);
         insertCmd.Parameters.AddWithValue("$fileName", fileName);
-        insertCmd.Parameters.AddWithValue("$genreId", genreId.HasValue ? genreId.Value : DBNull.Value);
-        insertCmd.Parameters.AddWithValue("$ratingId", ratingId.HasValue ? ratingId.Value : DBNull.Value);
+        insertCmd.Parameters.AddWithValue("$genreId", genreId);
+        insertCmd.Parameters.AddWithValue("$ratingId", ratingId);
         insertCmd.Parameters.AddWithValue("$downloadedAt", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
         insertCmd.ExecuteNonQuery();
 
@@ -122,9 +120,7 @@ static class Db
         var list = new List<MusicTrack>();
         while (r.Read())
             list.Add(new MusicTrack(r.GetInt32(0), r.GetString(1), r.GetString(2), r.GetString(3),
-                                    r.IsDBNull(4) ? null : r.GetInt32(4),
-                                    r.IsDBNull(5) ? null : r.GetInt32(5),
-                                    r.GetString(6)));
+                                    r.GetInt32(4), r.GetInt32(5), r.GetString(6)));
         return list;
     }
 
