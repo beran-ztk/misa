@@ -3,16 +3,20 @@
         x:Class="Misa.Views.MainWindow"
         Title="Misa" Width="1300" Height="700">
 
-    <Grid ColumnDefinitions="160,*">
+    <Grid ColumnDefinitions="156,*">
 
-        <Border Grid.Column="0" BorderThickness="0,0,1,0" BorderBrush="#30808080" Padding="8">
-            <StackPanel Spacing="4">
-                <TextBlock Text="Misa" FontWeight="Bold" FontSize="16" Margin="4,4,4,12" />
+        <Border Grid.Column="0" BorderThickness="0,0,1,0" BorderBrush="#25808080"
+                Padding="8,10,8,8">
+            <StackPanel Spacing="2">
+                <TextBlock Text="Misa" FontWeight="Bold" FontSize="16"
+                           Margin="6,2,6,14" />
                 <Button x:Name="NavMusicBtn" Content="Music"
-                        HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Left"
                         Click="OnMusicClicked" />
                 <Button x:Name="NavSettingsBtn" Content="Settings"
-                        HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Left"
                         Click="OnSettingsClicked" />
             </StackPanel>
         </Border>
