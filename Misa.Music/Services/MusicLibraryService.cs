@@ -17,6 +17,10 @@ public class MusicLibraryService
     private MusicLibraryService()
     {
         _settings = MusicSettingsService.LoadSettings();
+        // Re-save immediately so any fields added since the last run are written to disk
+        // with their defaults, preventing them from falling back to C# class defaults on
+        // the next startup when SavePlayerSettings is called before the user visits Settings.
+        MusicSettingsService.SaveSettings(_settings);
         _db = null!;
         _downloader = null!;
         _fileService = null!;
@@ -52,13 +56,16 @@ public class MusicLibraryService
 
     // Updates only player-related settings fields and flushes to disk.
     // Does not call ApplySettings() — the player state has no effect on the DB or downloader.
-    public void SavePlayerSettings(int volume, bool isMuted, bool shuffleEnabled, bool autoplayEnabled, string repeatMode)
+    public void SavePlayerSettings(int volume, bool isMuted, bool shuffleEnabled, bool autoplayEnabled,
+        string repeatMode, bool crossfadeEnabled, bool showUpcomingTrackBar)
     {
         _settings.Volume = volume;
         _settings.IsMuted = isMuted;
         _settings.ShuffleEnabled = shuffleEnabled;
         _settings.AutoplayEnabled = autoplayEnabled;
         _settings.RepeatMode = repeatMode;
+        _settings.CrossfadeEnabled = crossfadeEnabled;
+        _settings.ShowUpcomingTrackBar = showUpcomingTrackBar;
         MusicSettingsService.SaveSettings(_settings);
     }
 

@@ -11,32 +11,40 @@ using Avalonia.Threading;
 using Misa.Models;
 using Misa.Music.Models;
 using Misa.Music.Services;
-using NAudio.Wave;
+using Misa.Services;
 
 namespace Misa.Views;
 
 public partial class MusicView : UserControl
 {
-    private enum PlaybackState { Stopped, Playing, Paused }
     private enum RepeatMode { None, RepeatOne, RepeatAll }
 
-    private readonly DispatcherTimer _progressTimer = new() { Interval = TimeSpan.FromMilliseconds(500) };
-    private readonly Random _rng = new();
-    // Track IDs played during shuffle, for Previous to walk back through (capped at 50).
-    private readonly List<int> _shuffleHistory = [];
-
-    private IWavePlayer? _player;
-    private WaveStream? _audioStream;
-    private int _playingTrackId = -1;
-    private PlaybackState _state = PlaybackState.Stopped;
+    // Engine
+    private readonly PlaybackEngine _engine = new();
     private bool _isSeeking;
+
+    // Playback settings (mirrored from MusicSettings for quick access)
     private bool _autoplay;
+    private bool _crossfadeEnabled;
+    private int _crossfadeDurationSeconds = 10;
+    private int _manualFadeDurationSeconds = 2;
+    private bool _showUpcomingTrackBar = true;
     private RepeatMode _repeatMode = RepeatMode.None;
     private float _volume = 1.0f;
     private bool _muted;
     private bool _shuffle;
     private bool _loadingSettings;
 
+    // Crossfade state
+    private int _lastKnownActiveId = -1;
+    private bool _crossfadeTriggered;
+    private int _nextTrackIndex = -1;
+
+    // Shuffle history (for Previous to walk back)
+    private readonly List<int> _shuffleHistory = [];
+    private readonly Random _rng = new();
+
+    // Track list data
     private List<Genre> _genres = [];
     private List<Rating> _ratings = [];
     private List<Style> _styles = [];
@@ -45,7 +53,6 @@ public partial class MusicView : UserControl
     private Dictionary<int, List<int>> _allTrackStyleIds = [];
     private Dictionary<int, List<int>> _allTrackGenreIds = [];
     private Dictionary<int, List<int>> _allTrackLanguageIds = [];
-    // _filteredItems is the play context: tracks visible after all filters, search, and sort.
     private List<TrackDisplayItem> _filteredItems = [];
 
     private record FilterGroupControls(MultiSelectFilterControl GenreCtrl, MultiSelectFilterControl StyleCtrl, MultiSelectFilterControl LanguageCtrl);
@@ -54,15 +61,21 @@ public partial class MusicView : UserControl
     public MusicView()
     {
         InitializeComponent();
-        _progressTimer.Tick += OnProgressTick;
+
+        // Engine events
+        _engine.StateChanged += OnEngineStateChanged;
+        _engine.TrackNaturallyEnded += OnTrackNaturallyEnded;
+        _engine.ProgressUpdated += OnProgressUpdated;
+
+        // Seeking
         PlaybackSlider.AddHandler(InputElement.PointerPressedEvent, OnSliderPointerPressed, RoutingStrategies.Tunnel);
         PlaybackSlider.AddHandler(InputElement.PointerReleasedEvent, OnSliderPointerReleased, RoutingStrategies.Tunnel);
 
+        // Sort/search
         SortFieldCombo.ItemsSource = new[] { "Title", "Rating", "Downloaded", "Duration" };
         SortFieldCombo.SelectedIndex = 2;
         SortDirectionCombo.ItemsSource = new[] { "Ascending", "Descending" };
         SortDirectionCombo.SelectedIndex = 1;
-
         RepeatModeCombo.ItemsSource = new[] { "No repeat", "Repeat one", "Repeat all" };
         RepeatModeCombo.SelectedIndex = 0;
 
@@ -72,13 +85,22 @@ public partial class MusicView : UserControl
         RatingFilter.SelectionChanged += (_, _) => ApplyFilter();
         ReEvalFilterCheckBox.IsCheckedChanged += (_, _) => ApplyFilter();
 
+        // Player controls
         AutoplayCheckBox.IsCheckedChanged += (_, _) =>
         {
+            if (_loadingSettings) return;
             _autoplay = AutoplayCheckBox.IsChecked == true;
+            SavePlayerSettings();
+        };
+        CrossfadeCheckBox.IsCheckedChanged += (_, _) =>
+        {
+            if (_loadingSettings) return;
+            _crossfadeEnabled = CrossfadeCheckBox.IsChecked == true;
             SavePlayerSettings();
         };
         RepeatModeCombo.SelectionChanged += (_, _) =>
         {
+            if (_loadingSettings) return;
             _repeatMode = RepeatModeCombo.SelectedIndex switch
             {
                 1 => RepeatMode.RepeatOne,
@@ -87,22 +109,26 @@ public partial class MusicView : UserControl
             };
             SavePlayerSettings();
         };
-
         VolumeSlider.ValueChanged += (_, _) =>
         {
+            if (_loadingSettings) return;
             _volume = (float)(VolumeSlider.Value / 100.0);
             VolumeText.Text = $"{(int)VolumeSlider.Value}%";
-            if (!_muted) ApplyVolume();
+            _engine.MasterVolume = _volume;
+            if (!_muted) _engine.ApplyVolume();
             SavePlayerSettings();
         };
         MuteCheckBox.IsCheckedChanged += (_, _) =>
         {
+            if (_loadingSettings) return;
             _muted = MuteCheckBox.IsChecked == true;
-            ApplyVolume();
+            _engine.Muted = _muted;
+            _engine.ApplyVolume();
             SavePlayerSettings();
         };
         ShuffleCheckBox.IsCheckedChanged += (_, _) =>
         {
+            if (_loadingSettings) return;
             _shuffle = ShuffleCheckBox.IsChecked == true;
             if (!_shuffle) _shuffleHistory.Clear();
             SavePlayerSettings();
@@ -110,19 +136,15 @@ public partial class MusicView : UserControl
 
         LoadPlayerSettings();
 
-        try
-        {
-            MusicLibraryService.Current.Initialize();
-        }
-        catch (Exception ex)
-        {
-            StatusText.Text = $"Database error: {ex.Message}";
-            return;
-        }
+        try { MusicLibraryService.Current.Initialize(); }
+        catch (Exception ex) { StatusText.Text = $"Database error: {ex.Message}"; return; }
+
         LoadLookups();
         AddFilterGroup();
         RefreshTrackList();
     }
+
+    // --- Settings ---
 
     private void LoadPlayerSettings()
     {
@@ -131,21 +153,35 @@ public partial class MusicView : UserControl
         {
             var s = MusicLibraryService.Current.GetSettings();
             VolumeSlider.Value = s.Volume;
-            VolumeText.Text = $"{s.Volume}%"; // explicit — event may not fire if value unchanged
+            VolumeText.Text = $"{s.Volume}%";
             MuteCheckBox.IsChecked = s.IsMuted;
             ShuffleCheckBox.IsChecked = s.ShuffleEnabled;
             AutoplayCheckBox.IsChecked = s.AutoplayEnabled;
+            CrossfadeCheckBox.IsChecked = s.CrossfadeEnabled;
             RepeatModeCombo.SelectedIndex = s.RepeatMode switch
             {
                 "RepeatOne" => 1,
                 "RepeatAll" => 2,
                 _ => 0,
             };
+            _volume = s.Volume / 100f;
+            _muted = s.IsMuted;
+            _shuffle = s.ShuffleEnabled;
+            _autoplay = s.AutoplayEnabled;
+            _crossfadeEnabled = s.CrossfadeEnabled;
+            _crossfadeDurationSeconds = Math.Clamp(s.CrossfadeDurationSeconds, 0, 30);
+            _manualFadeDurationSeconds = Math.Clamp(s.ManualSwitchFadeDurationSeconds, 0, 10);
+            _showUpcomingTrackBar = s.ShowUpcomingTrackBar;
+            _repeatMode = s.RepeatMode switch
+            {
+                "RepeatOne" => RepeatMode.RepeatOne,
+                "RepeatAll" => RepeatMode.RepeatAll,
+                _ => RepeatMode.None,
+            };
+            _engine.MasterVolume = _volume;
+            _engine.Muted = _muted;
         }
-        finally
-        {
-            _loadingSettings = false;
-        }
+        finally { _loadingSettings = false; }
     }
 
     private void SavePlayerSettings()
@@ -161,7 +197,9 @@ public partial class MusicView : UserControl
                 RepeatMode.RepeatOne => "RepeatOne",
                 RepeatMode.RepeatAll => "RepeatAll",
                 _ => "None",
-            });
+            },
+            crossfadeEnabled: _crossfadeEnabled,
+            showUpcomingTrackBar: _showUpcomingTrackBar);
     }
 
     // --- Track list ---
@@ -201,28 +239,17 @@ public partial class MusicView : UserControl
             var styleIds = _allTrackStyleIds.GetValueOrDefault(t.Id, []);
             var languageIds = _allTrackLanguageIds.GetValueOrDefault(t.Id, []);
 
-            var genreNames = genreIds
-                .Select(id => genreMap.GetValueOrDefault(id, ""))
-                .Where(n => n.Length > 0)
-                .Order();
-            var styleNames = styleIds
-                .Select(id => styleMap.GetValueOrDefault(id, ""))
-                .Where(n => n.Length > 0)
-                .Order();
-            var languageNames = languageIds
-                .Select(id => languageMap.GetValueOrDefault(id, ""))
-                .Where(n => n.Length > 0)
-                .Order();
-
             var parts = new List<string>();
-            var genreStr = string.Join(", ", genreNames);
+            var genreStr = string.Join(", ", genreIds
+                .Select(id => genreMap.GetValueOrDefault(id, "")).Where(n => n.Length > 0).Order());
             if (genreStr.Length > 0) parts.Add(genreStr);
             parts.Add(ratingMap.GetValueOrDefault(t.RatingId, "?"));
-            if (t.DurationSeconds.HasValue)
-                parts.Add(FormatDuration(t.DurationSeconds.Value));
-            var styleStr = string.Join(", ", styleNames);
+            if (t.DurationSeconds.HasValue) parts.Add(FormatDuration(t.DurationSeconds.Value));
+            var styleStr = string.Join(", ", styleIds
+                .Select(id => styleMap.GetValueOrDefault(id, "")).Where(n => n.Length > 0).Order());
             if (styleStr.Length > 0) parts.Add(styleStr);
-            var langStr = string.Join(", ", languageNames);
+            var langStr = string.Join(", ", languageIds
+                .Select(id => languageMap.GetValueOrDefault(id, "")).Where(n => n.Length > 0).Order());
             if (langStr.Length > 0) parts.Add(langStr);
             if (t.ReEvaluationNeeded) parts.Add("[re-eval]");
 
@@ -265,9 +292,10 @@ public partial class MusicView : UserControl
             .ToList();
 
         foreach (var item in _filteredItems)
-            item.IsPlaying = item.Track.Id == _playingTrackId;
+            item.IsPlaying = item.Track.Id == _engine.ActiveTrackId;
 
         FileList.ItemsSource = _filteredItems;
+        RefreshNextTrackPreview();
     }
 
     private static HashSet<int> SelectedIds<T>(IReadOnlySet<string> selected, List<T> source,
@@ -295,6 +323,7 @@ public partial class MusicView : UserControl
     {
         NowPlayingText.Text = "";
         LoadLookups();
+        LoadPlayerSettings();
         RefreshTrackList();
     }
 
@@ -359,8 +388,7 @@ public partial class MusicView : UserControl
         if (idx < 0) return;
         _filterGroups.RemoveAt(idx);
         FilterGroupsPanel.Children.RemoveAt(idx);
-        if (_filterGroups.Count == 0)
-            AddFilterGroup();
+        if (_filterGroups.Count == 0) AddFilterGroup();
         ApplyFilter();
     }
 
@@ -378,10 +406,8 @@ public partial class MusicView : UserControl
     {
         var idx = FileList.SelectedIndex;
         if (idx < 0 || idx >= _filteredItems.Count) return;
-
         var owner = TopLevel.GetTopLevel(this) as Window;
         if (owner == null) return;
-
         var saved = await new EditTrackWindow(_filteredItems[idx].Track).ShowDialog<bool>(owner);
         if (saved) RefreshTrackList();
     }
@@ -390,7 +416,6 @@ public partial class MusicView : UserControl
     {
         var idx = FileList.SelectedIndex;
         if (idx < 0 || idx >= _filteredItems.Count) return;
-
         var track = _filteredItems[idx].Track;
         var owner = TopLevel.GetTopLevel(this) as Window;
         if (owner == null) return;
@@ -400,8 +425,7 @@ public partial class MusicView : UserControl
             .ShowDialog<bool>(owner);
         if (!confirmed) return;
 
-        if (_playingTrackId == track.Id)
-            StopPlayback();
+        if (_engine.ActiveTrackId == track.Id) _engine.Stop();
 
         var result = MusicLibraryService.Current.DeleteTrack(track.Id, track.FileName);
         if (result.FileError != null)
@@ -419,178 +443,181 @@ public partial class MusicView : UserControl
 
     private void OnPauseResumeClicked(object? sender, RoutedEventArgs e)
     {
-        if (_state == PlaybackState.Playing)
-            PausePlayback();
-        else if (_state == PlaybackState.Paused)
-            ResumePlayback();
+        if (_engine.State == EngineState.Playing) _engine.Pause();
+        else if (_engine.State == EngineState.Paused) _engine.Resume();
+        UpdateButtonStates();
     }
 
-    private void OnStopClicked(object? sender, RoutedEventArgs e) => StopPlayback();
+    private void OnStopClicked(object? sender, RoutedEventArgs e)
+    {
+        _engine.Stop();
+        // StateChanged fires FullStop via OnEngineStateChanged.
+    }
 
     private void StartPlayback()
     {
         var idx = FileList.SelectedIndex;
         if (idx < 0 || idx >= _filteredItems.Count) return;
-        PlayTrackAt(idx);
+        PlayTrackAt(idx, isCrossfade: false);
     }
 
-    private void PlayTrackAt(int filteredIndex)
+    private void PlayTrackAt(int filteredIndex, bool isCrossfade)
     {
         if (filteredIndex < 0 || filteredIndex >= _filteredItems.Count) return;
 
-        if (_player != null)
-        {
-            _player.PlaybackStopped -= OnPlaybackStopped;
-            _player.Stop();
-            _player.Dispose();
-            _audioStream?.Dispose();
-            _player = null;
-            _audioStream = null;
-        }
-        _progressTimer.Stop();
-        _isSeeking = false;
-
         var track = _filteredItems[filteredIndex].Track;
-        FileList.SelectedIndex = filteredIndex;
+        var filePath = Path.Combine(MusicLibraryService.Current.MusicDirectory, track.FileName);
+
+        bool wasPlaying = _engine.State != EngineState.Stopped;
+        float fadeOut = isCrossfade ? _crossfadeDurationSeconds
+                      : wasPlaying ? _manualFadeDurationSeconds : 0f;
+        // Crossfade: new track fades in over the crossfade window.
+        // Manual switch: new track also fades in (same duration as fade-out) so it
+        // never starts at full volume and does not inherit any outgoing track's volume.
+        // Cold start (nothing was playing): immediate full volume, no fade needed.
+        float fadeIn = isCrossfade ? _crossfadeDurationSeconds
+                     : wasPlaying ? _manualFadeDurationSeconds : 0f;
 
         try
         {
-            _audioStream = new MediaFoundationReader(
-                Path.Combine(MusicLibraryService.Current.MusicDirectory, track.FileName));
-            _player = new WaveOutEvent();
-            _player.PlaybackStopped += OnPlaybackStopped;
-            _player.Init(_audioStream);
-            _player.Play();
-            ApplyVolume();
-            _playingTrackId = track.Id;
-            _state = PlaybackState.Playing;
-            NowPlayingText.Text = track.Title;
-            PlaybackInfoPanel.IsVisible = true;
-            UpdateProgressDisplay();
-            _progressTimer.Start();
-            UpdateButtonStates();
-            RefreshPlayingMarkers();
+            _isSeeking = false;
+            _engine.Play(filePath, track.Id, fadeOut, fadeIn);
         }
         catch (Exception ex)
         {
             StatusText.Text = $"Playback failed: {ex.Message}";
+            return;
+        }
+
+        FileList.SelectedIndex = filteredIndex;
+
+        // If this is a shuffle play, push to history.
+        if (_shuffle && wasPlaying)
+        {
+            _shuffleHistory.Add(_engine.ActiveTrackId);
+            if (_shuffleHistory.Count > 50) _shuffleHistory.RemoveAt(0);
+        }
+
+        NowPlayingText.Text = track.Title;
+        PlaybackInfoPanel.IsVisible = true;
+        _nextTrackIndex = PeekNextTrackIndex(filteredIndex);
+        UpdateUpcomingBar();
+        UpdateButtonStates();
+        RefreshPlayingMarkers();
+    }
+
+    // --- Engine events ---
+
+    private void OnEngineStateChanged()
+    {
+        UpdateButtonStates();
+        if (_engine.State == EngineState.Stopped)
+        {
+            _nextTrackIndex = -1;
+            _crossfadeTriggered = false;
+            _lastKnownActiveId = -1;
+            ResetPlaybackUI();
+            RefreshPlayingMarkers();
+            UpdateUpcomingBar();
+        }
+    }
+
+    private void OnTrackNaturallyEnded()
+    {
+        if (_autoplay)
+            NavigateNext(isManual: false);
+        else
             FullStop();
-        }
     }
 
-    private void PausePlayback()
+    private void OnProgressUpdated()
     {
-        _player?.Pause();
-        _progressTimer.Stop();
-        _state = PlaybackState.Paused;
-        UpdateButtonStates();
-    }
-
-    private void ResumePlayback()
-    {
-        _player?.Play();
-        _progressTimer.Start();
-        _state = PlaybackState.Playing;
-        UpdateButtonStates();
-    }
-
-    public void StopPlayback()
-    {
-        if (_player != null)
+        // Detect track change (e.g. crossfade started a new primary).
+        if (_engine.ActiveTrackId != _lastKnownActiveId)
         {
-            _player.PlaybackStopped -= OnPlaybackStopped;
-            _player.Stop();
-            _player.Dispose();
+            _lastKnownActiveId = _engine.ActiveTrackId;
+            _crossfadeTriggered = false;
         }
-        _audioStream?.Dispose();
-        _player = null;
-        _audioStream = null;
-        _state = PlaybackState.Stopped;
-        _isSeeking = false;
-        _progressTimer.Stop();
-        FullStop();
-    }
 
-    private void OnPlaybackStopped(object? sender, StoppedEventArgs e)
-    {
-        var stoppedPlayer = sender as IWavePlayer;
-        Dispatcher.UIThread.Post(() =>
+        // Update progress UI.
+        if (!_isSeeking && _engine.TotalTime.TotalSeconds > 0)
+            PlaybackSlider.Value = _engine.CurrentTime.TotalSeconds / _engine.TotalTime.TotalSeconds * 100;
+        PlaybackTimeText.Text = $"{FormatDuration(_engine.CurrentTime)} / {FormatDuration(_engine.TotalTime)}";
+
+        // Crossfade trigger: start next track early so they overlap.
+        if (_crossfadeEnabled && _autoplay && !_crossfadeTriggered
+            && _nextTrackIndex >= 0 && _engine.State == EngineState.Playing)
         {
-            if (_player == null || _player != stoppedPlayer) return;
+            var total = _engine.TotalTime.TotalSeconds;
+            var current = _engine.CurrentTime.TotalSeconds;
+            // Only trigger if the song is long enough (prevents instant loop on short tracks).
+            if (total >= _crossfadeDurationSeconds + 2.0 && current >= 1.0)
+            {
+                var remaining = total - current;
+                if (remaining > 0 && remaining <= _crossfadeDurationSeconds)
+                {
+                    _crossfadeTriggered = true;
+                    PlayTrackAt(_nextTrackIndex, isCrossfade: true);
+                    return; // PlayTrackAt already updates upcoming bar
+                }
+            }
+        }
 
-            // Tear down player machinery; keep _playingTrackId so NavigateNext can use it.
-            _player.PlaybackStopped -= OnPlaybackStopped;
-            _player.Dispose();
-            _audioStream?.Dispose();
-            _player = null;
-            _audioStream = null;
-            _state = PlaybackState.Stopped;
-            _isSeeking = false;
-            _progressTimer.Stop();
-
-            if (_autoplay)
-                NavigateNext(isManual: false);
-            else
-                FullStop();
-        });
-    }
-
-    // --- Volume ---
-
-    private void ApplyVolume()
-    {
-        if (_player is WaveOutEvent waveOut)
-            waveOut.Volume = _muted ? 0f : _volume;
+        UpdateUpcomingBar();
     }
 
     // --- Navigation ---
 
     private int GetCurrentPlayIndex() =>
-        _playingTrackId < 0 ? -1 : _filteredItems.FindIndex(i => i.Track.Id == _playingTrackId);
+        _engine.ActiveTrackId < 0 ? -1 : _filteredItems.FindIndex(i => i.Track.Id == _engine.ActiveTrackId);
+
+    private int PeekNextTrackIndex(int currentFilteredIndex)
+    {
+        if (_filteredItems.Count == 0) return -1;
+        if (_repeatMode == RepeatMode.RepeatOne) return currentFilteredIndex;
+        if (_shuffle)
+        {
+            if (_filteredItems.Count == 1) return 0;
+            int next;
+            do { next = _rng.Next(_filteredItems.Count); } while (next == currentFilteredIndex);
+            return next;
+        }
+        if (_repeatMode == RepeatMode.RepeatAll)
+            return (currentFilteredIndex + 1) % _filteredItems.Count;
+        int nextIdx = currentFilteredIndex + 1;
+        return nextIdx < _filteredItems.Count ? nextIdx : -1;
+    }
+
+    private void RefreshNextTrackPreview()
+    {
+        if (_engine.ActiveTrackId < 0) { _nextTrackIndex = -1; UpdateUpcomingBar(); return; }
+        var currentIdx = GetCurrentPlayIndex();
+        if (currentIdx < 0) { _nextTrackIndex = -1; UpdateUpcomingBar(); return; }
+        _nextTrackIndex = PeekNextTrackIndex(currentIdx);
+        UpdateUpcomingBar();
+    }
 
     private void NavigateNext(bool isManual)
     {
-        if (_filteredItems.Count == 0)
-        {
-            StatusText.Text = "No tracks in the current view.";
-            FullStop();
-            return;
-        }
+        if (_filteredItems.Count == 0) { FullStop(); return; }
 
         var currentIdx = GetCurrentPlayIndex();
 
-        // RepeatOne on autoplay always replays the same track — shuffle doesn't apply.
         if (_repeatMode == RepeatMode.RepeatOne && !isManual)
         {
-            PlayTrackAt(currentIdx >= 0 ? currentIdx : 0);
+            PlayTrackAt(currentIdx >= 0 ? currentIdx : 0, isCrossfade: false);
             return;
         }
 
-        // Shuffle: pick a random track, avoiding an immediate repeat when count > 1.
         if (_shuffle)
         {
-            // Push current track to history before leaving it.
-            if (_playingTrackId >= 0)
-            {
-                _shuffleHistory.Add(_playingTrackId);
-                if (_shuffleHistory.Count > 50) _shuffleHistory.RemoveAt(0);
-            }
-
             int nextIdx;
-            if (_filteredItems.Count == 1)
-            {
-                nextIdx = 0;
-            }
-            else
-            {
-                do { nextIdx = _rng.Next(_filteredItems.Count); }
-                while (nextIdx == currentIdx);
-            }
-            PlayTrackAt(nextIdx);
+            if (_filteredItems.Count == 1) { nextIdx = 0; }
+            else { do { nextIdx = _rng.Next(_filteredItems.Count); } while (nextIdx == currentIdx); }
+            PlayTrackAt(nextIdx, isCrossfade: false);
             return;
         }
 
-        // Linear navigation.
         int nextLinearIdx;
         if (_repeatMode == RepeatMode.RepeatAll)
         {
@@ -601,33 +628,26 @@ public partial class MusicView : UserControl
             if (currentIdx >= 0)
             {
                 nextLinearIdx = currentIdx + 1;
-                if (nextLinearIdx >= _filteredItems.Count)
-                {
-                    FullStop();
-                    return;
-                }
+                if (nextLinearIdx >= _filteredItems.Count) { FullStop(); return; }
             }
-            else if (_playingTrackId < 0)
+            else if (_engine.ActiveTrackId < 0)
             {
-                // Nothing playing: use selected track as the starting point.
                 var selIdx = FileList.SelectedIndex;
                 nextLinearIdx = selIdx >= 0 && selIdx < _filteredItems.Count ? selIdx : 0;
             }
             else
             {
-                // Playing track is no longer visible in the filtered list.
                 nextLinearIdx = 0;
             }
         }
 
-        PlayTrackAt(nextLinearIdx);
+        PlayTrackAt(nextLinearIdx, isCrossfade: false);
     }
 
     private void NavigatePrevious()
     {
         if (_filteredItems.Count == 0) return;
 
-        // Shuffle: walk back through history.
         if (_shuffle && _shuffleHistory.Count > 0)
         {
             while (_shuffleHistory.Count > 0)
@@ -635,18 +655,11 @@ public partial class MusicView : UserControl
                 var histId = _shuffleHistory[^1];
                 _shuffleHistory.RemoveAt(_shuffleHistory.Count - 1);
                 var histIdx = _filteredItems.FindIndex(i => i.Track.Id == histId);
-                if (histIdx >= 0)
-                {
-                    PlayTrackAt(histIdx);
-                    return;
-                }
-                // Track no longer visible — keep popping.
+                if (histIdx >= 0) { PlayTrackAt(histIdx, isCrossfade: false); return; }
             }
-            // History exhausted; fall through to linear.
         }
 
         var currentIdx = GetCurrentPlayIndex();
-
         int prevIdx;
         if (_repeatMode == RepeatMode.RepeatAll)
         {
@@ -656,52 +669,79 @@ public partial class MusicView : UserControl
         {
             if (currentIdx < 0)
             {
-                // Nothing playing or not visible: use selected as reference.
                 var selIdx = FileList.SelectedIndex;
                 if (selIdx <= 0) return;
                 prevIdx = selIdx - 1;
             }
-            else if (currentIdx == 0)
-            {
-                return; // Already at the first track.
-            }
-            else
-            {
-                prevIdx = currentIdx - 1;
-            }
+            else if (currentIdx == 0) { return; }
+            else { prevIdx = currentIdx - 1; }
         }
 
-        PlayTrackAt(prevIdx);
+        PlayTrackAt(prevIdx, isCrossfade: false);
     }
 
-    // Clears all playing state and resets the UI. Does NOT touch _player/_audioStream.
     private void FullStop()
     {
-        _playingTrackId = -1;
-        _state = PlaybackState.Stopped;
-        ResetPlaybackUI();
-        UpdateButtonStates();
-        RefreshPlayingMarkers();
+        _engine.Stop();
+        // OnEngineStateChanged will handle UI reset.
     }
 
-    // --- Progress ---
-
-    private void OnProgressTick(object? sender, EventArgs e)
+    public void StopPlayback()
     {
-        if (_isSeeking) return;
-        UpdateProgressDisplay();
+        _engine.Stop();
     }
 
-    private void UpdateProgressDisplay()
+    // --- Upcoming bar ---
+
+    private void UpdateUpcomingBar()
     {
-        if (_audioStream == null) return;
-        var current = _audioStream.CurrentTime;
-        var total = _audioStream.TotalTime;
-        PlaybackTimeText.Text = $"{FormatDuration(current)} / {FormatDuration(total)}";
-        if (!_isSeeking)
-            PlaybackSlider.Value = total.TotalSeconds > 0
-                ? current.TotalSeconds / total.TotalSeconds * 100
-                : 0;
+        if (!_showUpcomingTrackBar || _engine.State == EngineState.Stopped
+            || _nextTrackIndex < 0 || _nextTrackIndex >= _filteredItems.Count)
+        {
+            UpcomingBar.IsVisible = false;
+            return;
+        }
+
+        UpcomingBar.IsVisible = true;
+        UpcomingTrackText.Text = _filteredItems[_nextTrackIndex].Track.Title;
+
+        if (_engine.IsCrossfading)
+        {
+            CrossfadeStatusText.Text = "↗ crossfading";
+        }
+        else if (_crossfadeEnabled && _engine.TotalTime.TotalSeconds > 0)
+        {
+            var remaining = (_engine.TotalTime - _engine.CurrentTime).TotalSeconds;
+            CrossfadeStatusText.Text = remaining > 0 ? $"xfade in {(int)remaining}s" : "";
+        }
+        else
+        {
+            CrossfadeStatusText.Text = "";
+        }
+    }
+
+    // --- Progress / seeking ---
+
+    private void OnSliderPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (_engine.State == EngineState.Stopped) return;
+        _isSeeking = true;
+    }
+
+    private void OnSliderPointerReleased(object? sender, PointerReleasedEventArgs e)
+    {
+        if (_engine.State == EngineState.Stopped) { _isSeeking = false; return; }
+        _engine.Seek(PlaybackSlider.Value / 100.0);
+        PlaybackTimeText.Text = $"{FormatDuration(_engine.CurrentTime)} / {FormatDuration(_engine.TotalTime)}";
+        _isSeeking = false;
+    }
+
+    // --- UI helpers ---
+
+    private void UpdateButtonStates()
+    {
+        PauseResumeBtn.IsVisible = _engine.State != EngineState.Stopped;
+        PauseResumeBtn.Content = _engine.State == EngineState.Paused ? "Resume" : "Pause";
     }
 
     private void ResetPlaybackUI()
@@ -712,52 +752,6 @@ public partial class MusicView : UserControl
         PlaybackInfoPanel.IsVisible = false;
     }
 
-    // --- Seeking ---
-
-    private void OnSliderPointerPressed(object? sender, PointerPressedEventArgs e)
-    {
-        if (_audioStream == null) return;
-        _isSeeking = true;
-        _progressTimer.Stop();
-    }
-
-    private void OnSliderPointerReleased(object? sender, PointerReleasedEventArgs e)
-    {
-        if (_audioStream == null)
-        {
-            _isSeeking = false;
-            return;
-        }
-
-        var totalSeconds = _audioStream.TotalTime.TotalSeconds;
-        var targetSeconds = Math.Clamp(PlaybackSlider.Value / 100.0 * totalSeconds, 0, totalSeconds);
-
-        if (_state == PlaybackState.Playing)
-        {
-            _player?.Pause();
-            _audioStream.CurrentTime = TimeSpan.FromSeconds(targetSeconds);
-            _player?.Play();
-        }
-        else
-        {
-            _audioStream.CurrentTime = TimeSpan.FromSeconds(targetSeconds);
-        }
-
-        PlaybackTimeText.Text = $"{FormatDuration(_audioStream.CurrentTime)} / {FormatDuration(_audioStream.TotalTime)}";
-        _isSeeking = false;
-
-        if (_state == PlaybackState.Playing)
-            _progressTimer.Start();
-    }
-
-    // --- UI helpers ---
-
-    private void UpdateButtonStates()
-    {
-        PauseResumeBtn.IsVisible = _state != PlaybackState.Stopped;
-        PauseResumeBtn.Content = _state == PlaybackState.Paused ? "Resume" : "Pause";
-    }
-
     private void RefreshPlayingMarkers()
     {
         if (_filteredItems.Count == 0) return;
@@ -766,7 +760,7 @@ public partial class MusicView : UserControl
             ? _filteredItems[FileList.SelectedIndex].Track.Id : -1;
 
         foreach (var item in _filteredItems)
-            item.IsPlaying = item.Track.Id == _playingTrackId;
+            item.IsPlaying = item.Track.Id == _engine.ActiveTrackId;
 
         FileList.ItemsSource = _filteredItems.ToList();
 

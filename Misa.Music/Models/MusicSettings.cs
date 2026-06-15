@@ -14,4 +14,8 @@ public class MusicSettings
     public bool ShuffleEnabled { get; set; } = false;
     public bool AutoplayEnabled { get; set; } = false;
     public string RepeatMode { get; set; } = "None"; // "None" | "RepeatOne" | "RepeatAll"
+    public bool CrossfadeEnabled { get; set; } = false;
+    public int CrossfadeDurationSeconds { get; set; } = 10;
+    public int ManualSwitchFadeDurationSeconds { get; set; } = 2;
+    public bool ShowUpcomingTrackBar { get; set; } = true;
 }

@@ -49,6 +49,9 @@ public partial class SettingsView : UserControl
         UseNodeJsCheckBox.IsChecked = s.UseNodeJsRuntime;
         UseFirefoxCheckBox.IsChecked = s.UseFirefoxCookies;
         UseRemoteEjsCheckBox.IsChecked = s.UseRemoteEjsComponents;
+        CrossfadeDurationBox.Value = s.CrossfadeDurationSeconds;
+        ManualFadeDurationBox.Value = s.ManualSwitchFadeDurationSeconds;
+        ShowUpcomingBarCheckBox.IsChecked = s.ShowUpcomingTrackBar;
     }
 
     private async void OnBrowseMusicDirClicked(object? sender, RoutedEventArgs e)
@@ -79,14 +82,18 @@ public partial class SettingsView : UserControl
 
     private void OnSaveSettingsClicked(object? sender, RoutedEventArgs e)
     {
-        var settings = new MusicSettings
-        {
-            MusicDirectory = MusicDirBox.Text?.Trim() ?? "",
-            ToolsDirectory = ToolsDirBox.Text?.Trim() ?? "",
-            UseNodeJsRuntime = UseNodeJsCheckBox.IsChecked == true,
-            UseFirefoxCookies = UseFirefoxCheckBox.IsChecked == true,
-            UseRemoteEjsComponents = UseRemoteEjsCheckBox.IsChecked == true,
-        };
+        // Start from the live settings object to preserve player state (volume, etc.).
+        var settings = MusicLibraryService.Current.GetSettings();
+        settings.MusicDirectory = MusicDirBox.Text?.Trim() ?? "";
+        settings.ToolsDirectory = ToolsDirBox.Text?.Trim() ?? "";
+        settings.UseNodeJsRuntime = UseNodeJsCheckBox.IsChecked == true;
+        settings.UseFirefoxCookies = UseFirefoxCheckBox.IsChecked == true;
+        settings.UseRemoteEjsComponents = UseRemoteEjsCheckBox.IsChecked == true;
+        if (CrossfadeDurationBox.Value.HasValue)
+            settings.CrossfadeDurationSeconds = Math.Clamp((int)CrossfadeDurationBox.Value.Value, 0, 30);
+        if (ManualFadeDurationBox.Value.HasValue)
+            settings.ManualSwitchFadeDurationSeconds = Math.Clamp((int)ManualFadeDurationBox.Value.Value, 0, 10);
+        settings.ShowUpcomingTrackBar = ShowUpcomingBarCheckBox.IsChecked == true;
         PrepareForReset?.Invoke();
         MusicLibraryService.Current.SaveSettings(settings);
         SettingsStatus.Text = "Settings saved.";
