@@ -28,10 +28,10 @@ public class MusicDatabase
         if (!TableExists(conn, "Music"))
         {
             CreateSchema(conn);
-            SeedRatings(conn);
         }
 
         Migrate(conn);
+        SeedDefaultMetadata(conn);
     }
 
     private static bool TableExists(SqliteConnection conn, string table)
@@ -212,13 +212,30 @@ public class MusicDatabase
             cmd.ExecuteNonQuery();
         }
     }
-
-    private static void SeedRatings(SqliteConnection conn)
+    private static void SeedDefaultMetadata(SqliteConnection conn)
     {
         using var cmd = conn.CreateCommand();
         cmd.CommandText = @"
-            INSERT INTO Ratings (Name, SortOrder) VALUES
-            ('Skip', 1), ('Okay', 2), ('Good', 3), ('Great', 4), ('Timeless', 5)";
+            INSERT OR IGNORE INTO Ratings (Name, SortOrder) VALUES
+                ('Skip', 1), ('Okay', 2), ('Good', 3), ('Great', 4), ('Favorite', 5);
+
+            INSERT OR IGNORE INTO Genres (Name) VALUES
+                ('Anime'), ('Pop'), ('Nightcore'), ('Techno'), ('Trance'),
+                ('Hardstyle'), ('Frenchcore'), ('EDM'), ('House'), ('Synthwave'),
+                ('Retrowave'), ('Darksynth'), ('Chillwave'), ('Phonk'), ('Trap'),
+                ('Ambient'), ('Epic'), ('Classical'), ('Orchestral'), ('Piano');
+
+            INSERT OR IGNORE INTO Styles (Name) VALUES
+                ('Fast'), ('Slow'), ('Energetic'), ('Calm'), ('Hard'),
+                ('Soft'), ('Dark'), ('Light'), ('Melodic'), ('Emotional'),
+                ('Melancholic'), ('Romantic'), ('Epic'), ('Dramatic'), ('Powerful'),
+                ('Ambient'), ('Wave'), ('Chill'), ('Vocal'), ('Instrumental'),
+                ('Anime Opening'), ('Anime Ending'), ('Party'), ('Bossfight'),
+                ('Speed Up'), ('Slowed'), ('Reverb');
+
+            INSERT OR IGNORE INTO Languages (Name) VALUES
+                ('English'), ('Japanese'), ('Turkish'), ('German'),
+                ('Korean'), ('French'), ('Unknown');";
         cmd.ExecuteNonQuery();
     }
 
