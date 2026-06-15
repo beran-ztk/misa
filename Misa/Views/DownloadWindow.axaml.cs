@@ -1,7 +1,10 @@
 using System.Collections.Generic;
 using System.Linq;
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
+using Avalonia.Layout;
 using Misa.Music.Models;
 using Misa.Music.Services;
 
@@ -14,11 +17,14 @@ public partial class DownloadWindow : Window
     private List<Style> _styles = [];
     private List<Language> _languages = [];
 
+    private readonly List<ToggleButton> _genreButtons = [];
+    private readonly List<ToggleButton> _styleButtons = [];
+    private readonly List<ToggleButton> _languageButtons = [];
+
     public DownloadWindow()
     {
         InitializeComponent();
         UrlBox.TextChanged += (_, _) => UpdateDownloadButton();
-        GenresBox.SelectionChanged += (_, _) => UpdateDownloadButton();
         RatingBox.SelectionChanged += (_, _) => UpdateDownloadButton();
         LoadLookups();
     }
@@ -30,17 +36,37 @@ public partial class DownloadWindow : Window
         _styles = MusicLibraryService.Current.GetStyles();
         _languages = MusicLibraryService.Current.GetLanguages();
 
-        GenresBox.ItemsSource = _genres.Select(g => g.Name).ToList();
+        AddChips(GenresPanel, _genres.Select(g => g.Name), _genreButtons);
+        AddChips(StylesPanel, _styles.Select(s => s.Name), _styleButtons);
+        AddChips(LanguagesPanel, _languages.Select(l => l.Name), _languageButtons);
+
         RatingBox.ItemsSource = new[] { "(Select rating)" }.Concat(_ratings.Select(r => r.Name)).ToList();
         RatingBox.SelectedIndex = 0;
-        StylesBox.ItemsSource = _styles.Select(s => s.Name).ToList();
-        LanguagesBox.ItemsSource = _languages.Select(l => l.Name).ToList();
+    }
+
+    private void AddChips(WrapPanel panel, IEnumerable<string> names, List<ToggleButton> buttons)
+    {
+        panel.Children.Clear();
+        buttons.Clear();
+        foreach (var name in names.OrderBy(n => n))
+        {
+            var btn = new ToggleButton
+            {
+                Content = name,
+                Padding = new Thickness(12, 6),
+                Margin = new Thickness(0, 0, 6, 6),
+                CornerRadius = new CornerRadius(12),
+            };
+            btn.IsCheckedChanged += (_, _) => UpdateDownloadButton();
+            panel.Children.Add(btn);
+            buttons.Add(btn);
+        }
     }
 
     private void UpdateDownloadButton()
     {
         DownloadBtn.IsEnabled = !string.IsNullOrWhiteSpace(UrlBox.Text)
-                               && (GenresBox.SelectedItems?.Count ?? 0) > 0
+                               && _genreButtons.Any(b => b.IsChecked == true)
                                && RatingBox.SelectedIndex > 0;
     }
 
@@ -54,19 +80,19 @@ public partial class DownloadWindow : Window
         {
             RawUrl = UrlBox.Text?.Trim() ?? "",
             CustomTitle = string.IsNullOrWhiteSpace(TitleBox.Text) ? null : TitleBox.Text.Trim(),
-            GenreIds = GenresBox.SelectedItems?
-                .Cast<string>()
-                .Select(name => _genres.First(g => g.Name == name).Id)
-                .ToList() ?? [],
+            GenreIds = _genreButtons
+                .Where(b => b.IsChecked == true)
+                .Select(b => _genres.First(g => g.Name == (string)b.Content!).Id)
+                .ToList(),
             RatingId = _ratings[RatingBox.SelectedIndex - 1].Id,
-            StyleIds = StylesBox.SelectedItems?
-                .Cast<string>()
-                .Select(name => _styles.First(s => s.Name == name).Id)
-                .ToList() ?? [],
-            LanguageIds = LanguagesBox.SelectedItems?
-                .Cast<string>()
-                .Select(name => _languages.First(l => l.Name == name).Id)
-                .ToList() ?? [],
+            StyleIds = _styleButtons
+                .Where(b => b.IsChecked == true)
+                .Select(b => _styles.First(s => s.Name == (string)b.Content!).Id)
+                .ToList(),
+            LanguageIds = _languageButtons
+                .Where(b => b.IsChecked == true)
+                .Select(b => _languages.First(l => l.Name == (string)b.Content!).Id)
+                .ToList(),
         };
 
         var result = await MusicLibraryService.Current.DownloadTrackAsync(request);
