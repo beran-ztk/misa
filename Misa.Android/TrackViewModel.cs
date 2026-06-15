@@ -14,7 +14,7 @@ public class TrackViewModel
         Track = track;
 
         var parts = new List<string>();
-        if (!string.IsNullOrEmpty(track.Genre)) parts.Add(track.Genre);
+        if (track.Genres.Count > 0) parts.Add(string.Join(", ", track.Genres));
         if (!string.IsNullOrEmpty(track.Rating)) parts.Add(track.Rating);
         if (track.Styles.Count > 0) parts.Add(string.Join(", ", track.Styles));
         MetaLine = string.Join(" · ", parts);

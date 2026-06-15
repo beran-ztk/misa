@@ -33,7 +33,7 @@ public partial class MultiSelectFilterControl : UserControl
         foreach (var item in items)
         {
             var name = item;
-            var cb = new CheckBox { Content = name, Padding = new Thickness(4, 2) };
+            var cb = new CheckBox { Content = name };
             cb.IsCheckedChanged += (_, _) =>
             {
                 if (cb.IsChecked == true) _selected.Add(name);

@@ -2,9 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Layout;
 using Avalonia.Threading;
 using Misa.Models;
 using Misa.Music.Models;
@@ -40,8 +42,12 @@ public partial class MusicView : UserControl
     private List<Style> _styles = [];
     private List<TrackDisplayItem> _allItems = [];
     private Dictionary<int, List<int>> _allTrackStyleIds = [];
+    private Dictionary<int, List<int>> _allTrackGenreIds = [];
     // _filteredItems is the play context: tracks visible after all filters, search, and sort.
     private List<TrackDisplayItem> _filteredItems = [];
+
+    private record FilterGroupControls(MultiSelectFilterControl GenreCtrl, MultiSelectFilterControl StyleCtrl);
+    private readonly List<FilterGroupControls> _filterGroups = [];
 
     public MusicView()
     {
@@ -61,9 +67,8 @@ public partial class MusicView : UserControl
         SearchBox.TextChanged += (_, _) => ApplyFilter();
         SortFieldCombo.SelectionChanged += (_, _) => ApplyFilter();
         SortDirectionCombo.SelectionChanged += (_, _) => ApplyFilter();
-        GenreFilter.SelectionChanged += (_, _) => ApplyFilter();
         RatingFilter.SelectionChanged += (_, _) => ApplyFilter();
-        StyleFilter.SelectionChanged += (_, _) => ApplyFilter();
+        ReEvalFilterCheckBox.IsCheckedChanged += (_, _) => ApplyFilter();
 
         AutoplayCheckBox.IsCheckedChanged += (_, _) =>
         {
@@ -113,6 +118,7 @@ public partial class MusicView : UserControl
             return;
         }
         LoadLookups();
+        AddFilterGroup();
         RefreshTrackList();
     }
 
@@ -163,42 +169,52 @@ public partial class MusicView : UserControl
         _genres = MusicLibraryService.Current.GetGenres();
         _ratings = MusicLibraryService.Current.GetRatings();
         _styles = MusicLibraryService.Current.GetStyles();
-        GenreFilter.Placeholder = "Genres";
-        GenreFilter.SetItems(_genres.Select(g => g.Name));
+
         RatingFilter.Placeholder = "Ratings";
         RatingFilter.SetItems(_ratings.Select(r => r.Name));
-        StyleFilter.Placeholder = "Styles";
-        StyleFilter.SetItems(_styles.Select(s => s.Name));
+
+        // Keep genre/style items in existing filter groups up to date
+        foreach (var fg in _filterGroups)
+        {
+            fg.GenreCtrl.SetItems(_genres.Select(g => g.Name));
+            fg.StyleCtrl.SetItems(_styles.Select(s => s.Name));
+        }
     }
 
     private void RefreshTrackList()
     {
         var tracks = MusicLibraryService.Current.GetTracks();
         _allTrackStyleIds = MusicLibraryService.Current.GetAllTrackStyleIds();
+        _allTrackGenreIds = MusicLibraryService.Current.GetAllTrackGenreIds();
         var genreMap = _genres.ToDictionary(g => g.Id, g => g.Name);
         var ratingMap = _ratings.ToDictionary(r => r.Id, r => r.Name);
         var styleMap = _styles.ToDictionary(s => s.Id, s => s.Name);
 
         _allItems = tracks.Select(t =>
         {
+            var genreIds = _allTrackGenreIds.GetValueOrDefault(t.Id, []);
             var styleIds = _allTrackStyleIds.GetValueOrDefault(t.Id, []);
+
+            var genreNames = genreIds
+                .Select(id => genreMap.GetValueOrDefault(id, ""))
+                .Where(n => n.Length > 0)
+                .Order();
             var styleNames = styleIds
                 .Select(id => styleMap.GetValueOrDefault(id, ""))
                 .Where(n => n.Length > 0)
                 .Order();
 
-            var parts = new List<string>
-            {
-                genreMap.GetValueOrDefault(t.GenreId, "?"),
-                ratingMap.GetValueOrDefault(t.RatingId, "?"),
-            };
+            var parts = new List<string>();
+            var genreStr = string.Join(", ", genreNames);
+            if (genreStr.Length > 0) parts.Add(genreStr);
+            parts.Add(ratingMap.GetValueOrDefault(t.RatingId, "?"));
             if (t.DurationSeconds.HasValue)
                 parts.Add(FormatDuration(t.DurationSeconds.Value));
             var styleStr = string.Join(", ", styleNames);
-            if (styleStr.Length > 0)
-                parts.Add(styleStr);
+            if (styleStr.Length > 0) parts.Add(styleStr);
+            if (t.ReEvaluationNeeded) parts.Add("[re-eval]");
 
-            return new TrackDisplayItem(t, string.Join(" · ", parts), styleIds);
+            return new TrackDisplayItem(t, string.Join(" · ", parts), genreIds, styleIds);
         }).ToList();
 
         ApplyFilter();
@@ -206,18 +222,26 @@ public partial class MusicView : UserControl
 
     private void ApplyFilter()
     {
-        var selGenreIds = SelectedIds(GenreFilter.SelectedItems, _genres, g => g.Name, g => g.Id);
         var selRatingIds = SelectedIds(RatingFilter.SelectedItems, _ratings, r => r.Name, r => r.Id);
-        var selStyleIds = SelectedIds(StyleFilter.SelectedItems, _styles, s => s.Name, s => s.Id);
-
         var ratingSortOrders = _ratings.ToDictionary(r => r.Id, r => r.SortOrder);
         var itemById = _allItems.ToDictionary(i => i.Track.Id);
 
+        var groups = _filterGroups
+            .Select(fg => new FilterGroup(
+                SelectedIds(fg.GenreCtrl.SelectedItems, _genres, g => g.Name, g => g.Id),
+                SelectedIds(fg.StyleCtrl.SelectedItems, _styles, s => s.Name, s => s.Id)))
+            .ToList();
+
+        bool? reEvalFilter = ReEvalFilterCheckBox.IsChecked == true ? true : null;
+
         var filtered = TrackFilter.Apply(
             _allItems.Select(i => i.Track),
+            _allTrackGenreIds,
             _allTrackStyleIds,
             ratingSortOrders,
-            selGenreIds, selRatingIds, selStyleIds,
+            selRatingIds,
+            groups,
+            reEvalFilter,
             SearchBox.Text,
             GetSortField(), GetSortDirection());
 
@@ -264,6 +288,57 @@ public partial class MusicView : UserControl
     {
         LoadLookups();
         RefreshTrackList();
+    }
+
+    // --- Filter groups ---
+
+    private void OnAddFilterGroupClicked(object? sender, RoutedEventArgs e)
+    {
+        AddFilterGroup();
+        ApplyFilter();
+    }
+
+    private void AddFilterGroup()
+    {
+        var genreCtrl = new MultiSelectFilterControl { Placeholder = "Genres" };
+        genreCtrl.SetItems(_genres.Select(g => g.Name));
+        genreCtrl.SelectionChanged += (_, _) => ApplyFilter();
+
+        var styleCtrl = new MultiSelectFilterControl { Placeholder = "Styles" };
+        styleCtrl.SetItems(_styles.Select(s => s.Name));
+        styleCtrl.SelectionChanged += (_, _) => ApplyFilter();
+
+        var fg = new FilterGroupControls(genreCtrl, styleCtrl);
+        _filterGroups.Add(fg);
+
+        var removeBtn = new Button { Content = "×", Padding = new Thickness(6, 0) };
+        removeBtn.Click += (_, _) => RemoveFilterGroup(fg);
+
+        var genreWrapper = new StackPanel { Spacing = 2, MinWidth = 150 };
+        genreWrapper.Children.Add(new TextBlock { Text = "Genre", FontSize = 11, Opacity = 0.55 });
+        genreWrapper.Children.Add(genreCtrl);
+
+        var styleWrapper = new StackPanel { Spacing = 2, MinWidth = 150 };
+        styleWrapper.Children.Add(new TextBlock { Text = "Style", FontSize = 11, Opacity = 0.55 });
+        styleWrapper.Children.Add(styleCtrl);
+
+        var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
+        row.Children.Add(genreWrapper);
+        row.Children.Add(styleWrapper);
+        row.Children.Add(removeBtn);
+
+        FilterGroupsPanel.Children.Add(row);
+    }
+
+    private void RemoveFilterGroup(FilterGroupControls fg)
+    {
+        var idx = _filterGroups.IndexOf(fg);
+        if (idx < 0) return;
+        _filterGroups.RemoveAt(idx);
+        FilterGroupsPanel.Children.RemoveAt(idx);
+        if (_filterGroups.Count == 0)
+            AddFilterGroup();
+        ApplyFilter();
     }
 
     // --- Dialogs ---

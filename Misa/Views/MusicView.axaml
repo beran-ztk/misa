@@ -20,21 +20,24 @@
                 BorderThickness="0,0,0,1" BorderBrush="#20808080">
             <StackPanel Spacing="8">
 
-                <!-- Genre / Rating / Style filter row -->
-                <StackPanel Orientation="Horizontal" Spacing="16">
-                    <StackPanel Spacing="2" MinWidth="150">
-                        <TextBlock Text="Genre" FontSize="11" Opacity="0.55" />
-                        <local:MultiSelectFilterControl x:Name="GenreFilter" />
+                <!-- Global filters row: Rating + ReEval + Add Group button -->
+                <DockPanel>
+                    <Button DockPanel.Dock="Right" Content="+ Group"
+                            Click="OnAddFilterGroupClicked"
+                            Padding="8,4" VerticalAlignment="Center" />
+                    <StackPanel Orientation="Horizontal" Spacing="16">
+                        <StackPanel Spacing="2" MinWidth="130">
+                            <TextBlock Text="Rating" FontSize="11" Opacity="0.55" />
+                            <local:MultiSelectFilterControl x:Name="RatingFilter" />
+                        </StackPanel>
+                        <CheckBox x:Name="ReEvalFilterCheckBox"
+                                  Content="Re-eval needed"
+                                  VerticalAlignment="Bottom" />
                     </StackPanel>
-                    <StackPanel Spacing="2" MinWidth="130">
-                        <TextBlock Text="Rating" FontSize="11" Opacity="0.55" />
-                        <local:MultiSelectFilterControl x:Name="RatingFilter" />
-                    </StackPanel>
-                    <StackPanel Spacing="2" MinWidth="150">
-                        <TextBlock Text="Style" FontSize="11" Opacity="0.55" />
-                        <local:MultiSelectFilterControl x:Name="StyleFilter" />
-                    </StackPanel>
-                </StackPanel>
+                </DockPanel>
+
+                <!-- Filter groups (populated dynamically in code-behind) -->
+                <StackPanel x:Name="FilterGroupsPanel" Spacing="4" />
 
                 <!-- Search + Sort row -->
                 <Grid ColumnDefinitions="*,Auto,Auto">

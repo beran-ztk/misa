@@ -1,7 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="Misa.Views.EditTrackWindow"
-        Title="Edit Track" Width="480" Height="480"
+        Title="Edit Track" Width="480" Height="540"
         CanResize="False" WindowStartupLocation="CenterOwner">
 
     <DockPanel Margin="16">
@@ -17,14 +17,16 @@
                 <TextBlock Text="Title" />
                 <TextBox x:Name="TitleBox" />
 
-                <TextBlock Text="Genre" />
-                <ComboBox x:Name="GenreBox" HorizontalAlignment="Stretch" />
+                <TextBlock Text="Genres (click to toggle)" />
+                <ListBox x:Name="GenresBox" SelectionMode="Multiple,Toggle" Height="100" />
 
                 <TextBlock Text="Rating" />
                 <ComboBox x:Name="RatingBox" HorizontalAlignment="Stretch" />
 
                 <TextBlock Text="Styles (click to toggle)" />
-                <ListBox x:Name="StylesBox" SelectionMode="Multiple,Toggle" Height="120" />
+                <ListBox x:Name="StylesBox" SelectionMode="Multiple,Toggle" Height="100" />
+
+                <CheckBox x:Name="ReEvalCheckBox" Content="Needs re-evaluation" />
 
                 <TextBlock Text="Notes" />
                 <TextBox x:Name="NotesBox" AcceptsReturn="True" Height="80"

@@ -1,7 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="Misa.Views.DownloadWindow"
-        Title="Download Track" Width="480" Height="480"
+        Title="Download Track" Width="480" Height="520"
         CanResize="False" WindowStartupLocation="CenterOwner">
 
     <DockPanel Margin="16">
@@ -23,14 +23,14 @@
                 <TextBlock Text="Title (optional)" />
                 <TextBox x:Name="TitleBox" Watermark="Derived from file name if empty" />
 
-                <TextBlock Text="Genre" />
-                <ComboBox x:Name="GenreBox" HorizontalAlignment="Stretch" />
+                <TextBlock Text="Genres (click to toggle)" />
+                <ListBox x:Name="GenresBox" SelectionMode="Multiple,Toggle" Height="80" />
 
                 <TextBlock Text="Rating" />
                 <ComboBox x:Name="RatingBox" HorizontalAlignment="Stretch" />
 
                 <TextBlock Text="Styles (optional, click to toggle)" />
-                <ListBox x:Name="StylesBox" SelectionMode="Multiple,Toggle" Height="100" />
+                <ListBox x:Name="StylesBox" SelectionMode="Multiple,Toggle" Height="80" />
 
             </StackPanel>
         </ScrollViewer>

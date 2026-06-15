@@ -17,7 +17,7 @@ public partial class DownloadWindow : Window
     {
         InitializeComponent();
         UrlBox.TextChanged += (_, _) => UpdateDownloadButton();
-        GenreBox.SelectionChanged += (_, _) => UpdateDownloadButton();
+        GenresBox.SelectionChanged += (_, _) => UpdateDownloadButton();
         RatingBox.SelectionChanged += (_, _) => UpdateDownloadButton();
         LoadLookups();
     }
@@ -28,8 +28,7 @@ public partial class DownloadWindow : Window
         _ratings = MusicLibraryService.Current.GetRatings();
         _styles = MusicLibraryService.Current.GetStyles();
 
-        GenreBox.ItemsSource = new[] { "(Select genre)" }.Concat(_genres.Select(g => g.Name)).ToList();
-        GenreBox.SelectedIndex = 0;
+        GenresBox.ItemsSource = _genres.Select(g => g.Name).ToList();
         RatingBox.ItemsSource = new[] { "(Select rating)" }.Concat(_ratings.Select(r => r.Name)).ToList();
         RatingBox.SelectedIndex = 0;
         StylesBox.ItemsSource = _styles.Select(s => s.Name).ToList();
@@ -38,7 +37,7 @@ public partial class DownloadWindow : Window
     private void UpdateDownloadButton()
     {
         DownloadBtn.IsEnabled = !string.IsNullOrWhiteSpace(UrlBox.Text)
-                               && GenreBox.SelectedIndex > 0
+                               && (GenresBox.SelectedItems?.Count ?? 0) > 0
                                && RatingBox.SelectedIndex > 0;
     }
 
@@ -52,7 +51,10 @@ public partial class DownloadWindow : Window
         {
             RawUrl = UrlBox.Text?.Trim() ?? "",
             CustomTitle = string.IsNullOrWhiteSpace(TitleBox.Text) ? null : TitleBox.Text.Trim(),
-            GenreId = _genres[GenreBox.SelectedIndex - 1].Id,
+            GenreIds = GenresBox.SelectedItems?
+                .Cast<string>()
+                .Select(name => _genres.First(g => g.Name == name).Id)
+                .ToList() ?? [],
             RatingId = _ratings[RatingBox.SelectedIndex - 1].Id,
             StyleIds = StylesBox.SelectedItems?
                 .Cast<string>()

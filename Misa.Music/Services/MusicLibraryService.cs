@@ -67,8 +67,10 @@ public class MusicLibraryService
     public List<MusicTrack> GetTracks() => _db.GetAllTracks();
 
     public Dictionary<int, List<int>> GetAllTrackStyleIds() => _db.GetAllMusicStyleIds();
-
     public List<int> GetTrackStyleIds(int trackId) => _db.GetMusicStyleIds(trackId);
+
+    public Dictionary<int, List<int>> GetAllTrackGenreIds() => _db.GetAllMusicGenreIds();
+    public List<int> GetTrackGenreIds(int trackId) => _db.GetMusicGenreIds(trackId);
 
     public async Task<DownloadResult> DownloadTrackAsync(DownloadRequest request)
     {
@@ -98,13 +100,13 @@ public class MusicLibraryService
             : request.CustomTitle.Trim();
 
         var duration = await _downloader.GetDurationAsync(filePath);
-        _db.InsertTrack(canonicalUrl, title, fileName, request.GenreId, request.RatingId, request.StyleIds, duration);
+        _db.InsertTrack(canonicalUrl, title, fileName, request.GenreIds, request.RatingId, request.StyleIds, duration);
 
         return new DownloadResult(true);
     }
 
-    public void UpdateTrack(int id, string title, int genreId, int ratingId, List<int> styleIds, string? notes) =>
-        _db.UpdateTrack(id, title, genreId, ratingId, styleIds, notes);
+    public void UpdateTrack(int id, string title, List<int> genreIds, int ratingId, List<int> styleIds, string? notes, bool reEvaluationNeeded) =>
+        _db.UpdateTrack(id, title, genreIds, ratingId, styleIds, notes, reEvaluationNeeded);
 
     public DeleteTrackResult DeleteTrack(int id, string fileName)
     {

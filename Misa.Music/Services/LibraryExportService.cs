@@ -34,6 +34,7 @@ public class LibraryExportService
         var ratings = _db.GetRatings().ToDictionary(r => r.Id, r => r.Name);
         var styles = _db.GetStyles().ToDictionary(s => s.Id, s => s.Name);
         var allStyleIds = _db.GetAllMusicStyleIds();
+        var allGenreIds = _db.GetAllMusicGenreIds();
 
         var export = new LibraryExport
         {
@@ -41,21 +42,26 @@ public class LibraryExportService
             LibraryVersion = 1,
             Tracks = tracks.Select(t =>
             {
-                var styleIds = allStyleIds.ContainsKey(t.Id) ? allStyleIds[t.Id] : new List<int>();
+                var styleIds = allStyleIds.GetValueOrDefault(t.Id) ?? [];
+                var genreIds = allGenreIds.GetValueOrDefault(t.Id) ?? [];
                 return new LibraryTrack
                 {
                     Id = t.Id,
                     Title = t.Title,
                     FileName = t.FileName,
                     CanonicalUrl = t.CanonicalUrl,
-                    Genre = genres.ContainsKey(t.GenreId) ? genres[t.GenreId] : "",
-                    Rating = ratings.ContainsKey(t.RatingId) ? ratings[t.RatingId] : "",
+                    Genres = genreIds
+                        .Where(genres.ContainsKey)
+                        .Select(id => genres[id])
+                        .ToList(),
+                    Rating = ratings.GetValueOrDefault(t.RatingId, ""),
                     Styles = styleIds
-                        .Where(sid => styles.ContainsKey(sid))
-                        .Select(sid => styles[sid])
+                        .Where(styles.ContainsKey)
+                        .Select(id => styles[id])
                         .ToList(),
                     DurationSeconds = t.DurationSeconds,
                     Notes = t.Notes,
+                    ReEvaluationNeeded = t.ReEvaluationNeeded,
                 };
             }).ToList(),
         };

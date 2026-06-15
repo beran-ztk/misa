@@ -29,11 +29,11 @@ public class TrackDownloadService
         var args = new List<string>();
         if (_settings.UseNodeJsRuntime) args.Add("--js-runtimes node");
         if (_settings.UseFirefoxCookies) args.Add("--cookies-from-browser firefox");
-        if (_settings.UseRemoteEjsComponents) args.Add("--remote-components ejs:github");
+        // if (_settings.UseRemoteEjsComponents) args.Add("--remote-components ejs:github");
         args.Add("--no-playlist");
         args.Add("-x");
         args.Add("--audio-format m4a");
-        args.Add($"--ffmpeg-location \"{_toolsDir}\"");
+        // args.Add($"--ffmpeg-location \"{_toolsDir}\"");
         args.Add($"-o \"{outputTemplate}\"");
         args.Add($"\"{url}\"");
 

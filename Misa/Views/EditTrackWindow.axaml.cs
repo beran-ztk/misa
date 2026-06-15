@@ -19,7 +19,7 @@ public partial class EditTrackWindow : Window
         InitializeComponent();
         _track = track;
         TitleBox.TextChanged += (_, _) => UpdateSaveButton();
-        GenreBox.SelectionChanged += (_, _) => UpdateSaveButton();
+        GenresBox.SelectionChanged += (_, _) => UpdateSaveButton();
         RatingBox.SelectionChanged += (_, _) => UpdateSaveButton();
         LoadAndPrefill();
     }
@@ -32,10 +32,15 @@ public partial class EditTrackWindow : Window
 
         TitleBox.Text = _track.Title;
         NotesBox.Text = _track.Notes ?? "";
+        ReEvalCheckBox.IsChecked = _track.ReEvaluationNeeded;
 
-        GenreBox.ItemsSource = new[] { "(Select genre)" }.Concat(_genres.Select(g => g.Name)).ToList();
-        var genreIdx = _genres.FindIndex(g => g.Id == _track.GenreId);
-        GenreBox.SelectedIndex = genreIdx >= 0 ? genreIdx + 1 : 0;
+        GenresBox.ItemsSource = _genres.Select(g => g.Name).ToList();
+        var currentGenreIds = MusicLibraryService.Current.GetTrackGenreIds(_track.Id);
+        for (int i = 0; i < _genres.Count; i++)
+        {
+            if (currentGenreIds.Contains(_genres[i].Id))
+                GenresBox.Selection.Select(i);
+        }
 
         RatingBox.ItemsSource = new[] { "(Select rating)" }.Concat(_ratings.Select(r => r.Name)).ToList();
         var ratingIdx = _ratings.FindIndex(r => r.Id == _track.RatingId);
@@ -53,22 +58,26 @@ public partial class EditTrackWindow : Window
     private void UpdateSaveButton()
     {
         SaveBtn.IsEnabled = !string.IsNullOrWhiteSpace(TitleBox.Text)
-                           && GenreBox.SelectedIndex > 0
+                           && (GenresBox.SelectedItems?.Count ?? 0) > 0
                            && RatingBox.SelectedIndex > 0;
     }
 
     private void OnSaveClicked(object? sender, RoutedEventArgs e)
     {
         var title = TitleBox.Text!.Trim();
-        var genreId = _genres[GenreBox.SelectedIndex - 1].Id;
+        var genreIds = GenresBox.SelectedItems?
+            .Cast<string>()
+            .Select(name => _genres.First(g => g.Name == name).Id)
+            .ToList() ?? [];
         var ratingId = _ratings[RatingBox.SelectedIndex - 1].Id;
         var styleIds = StylesBox.SelectedItems?
             .Cast<string>()
             .Select(name => _styles.First(s => s.Name == name).Id)
             .ToList() ?? [];
-
         var notes = string.IsNullOrWhiteSpace(NotesBox.Text) ? null : NotesBox.Text.Trim();
-        MusicLibraryService.Current.UpdateTrack(_track.Id, title, genreId, ratingId, styleIds, notes);
+        var reEval = ReEvalCheckBox.IsChecked == true;
+
+        MusicLibraryService.Current.UpdateTrack(_track.Id, title, genreIds, ratingId, styleIds, notes, reEval);
         Close(true);
     }
 
