@@ -1,5 +1,0 @@
-<Project>
-  <PropertyGroup Condition="'$(TargetFramework)' == 'net9.0-android'">
-    <AndroidSdkDirectory>C:\Users\beran\AppData\Local\Android\Sdk</AndroidSdkDirectory>
-  </PropertyGroup>
-</Project>

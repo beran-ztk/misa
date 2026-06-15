@@ -4,6 +4,7 @@
              xmlns:models="using:Misa.Models"
              x:Class="Misa.Views.MusicView">
 
+    <Grid>
     <DockPanel LastChildFill="True">
 
         <!-- ═══════════════════════════════════════════════════════════
@@ -287,5 +288,7 @@
         </ListBox>
 
     </DockPanel>
+    <local:AddTrackOverlay x:Name="AddTrackOverlay" IsVisible="False" />
+    </Grid>
 
 </UserControl>

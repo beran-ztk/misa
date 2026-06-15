@@ -1,16 +1,16 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
-using Avalonia.Layout;
 using Misa.Music.Models;
 using Misa.Music.Services;
 
 namespace Misa.Views;
 
-public partial class DownloadWindow : Window
+public partial class AddTrackOverlay : UserControl
 {
     private List<Genre> _genres = [];
     private List<Rating> _ratings = [];
@@ -21,12 +21,24 @@ public partial class DownloadWindow : Window
     private readonly List<ToggleButton> _styleButtons = [];
     private readonly List<ToggleButton> _languageButtons = [];
 
-    public DownloadWindow()
+    private bool _downloading;
+
+    public event Action? TrackDownloaded;
+    public event Action? CloseRequested;
+
+    public AddTrackOverlay()
     {
         InitializeComponent();
         UrlBox.TextChanged += (_, _) => UpdateDownloadButton();
         RatingBox.SelectionChanged += (_, _) => UpdateDownloadButton();
+    }
+
+    public void Open()
+    {
+        _downloading = false;
         LoadLookups();
+        ClearForm();
+        IsVisible = true;
     }
 
     private void LoadLookups()
@@ -41,6 +53,19 @@ public partial class DownloadWindow : Window
         AddChips(LanguagesPanel, _languages.Select(l => l.Name), _languageButtons);
 
         RatingBox.ItemsSource = new[] { "(Select rating)" }.Concat(_ratings.Select(r => r.Name)).ToList();
+        RatingBox.SelectedIndex = 0;
+    }
+
+    private void ClearForm()
+    {
+        UrlBox.Text = "";
+        TitleBox.Text = "";
+        StatusText.Text = "";
+        CloseBtn.IsEnabled = true;
+        DownloadBtn.IsEnabled = false;
+        foreach (var b in _genreButtons) b.IsChecked = false;
+        foreach (var b in _styleButtons) b.IsChecked = false;
+        foreach (var b in _languageButtons) b.IsChecked = false;
         RatingBox.SelectedIndex = 0;
     }
 
@@ -72,6 +97,7 @@ public partial class DownloadWindow : Window
 
     private async void OnDownloadClicked(object? sender, RoutedEventArgs e)
     {
+        _downloading = true;
         DownloadBtn.IsEnabled = false;
         CloseBtn.IsEnabled = false;
         StatusText.Text = "Downloading…";
@@ -97,6 +123,8 @@ public partial class DownloadWindow : Window
 
         var result = await MusicLibraryService.Current.DownloadTrackAsync(request);
 
+        _downloading = false;
+
         if (!result.Success)
         {
             StatusText.Text = result.Error;
@@ -105,8 +133,12 @@ public partial class DownloadWindow : Window
             return;
         }
 
-        Close(true);
+        TrackDownloaded?.Invoke();
     }
 
-    private void OnCloseClicked(object? sender, RoutedEventArgs e) => Close(false);
+    private void OnCloseClicked(object? sender, RoutedEventArgs e)
+    {
+        if (_downloading) return;
+        CloseRequested?.Invoke();
+    }
 }

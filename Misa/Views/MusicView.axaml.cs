@@ -123,6 +123,9 @@ public partial class MusicView : UserControl
         LoadLookups();
         AddFilterGroup();
         RefreshTrackList();
+
+        AddTrackOverlay.TrackDownloaded += () => { AddTrackOverlay.IsVisible = false; RefreshTrackList(); };
+        AddTrackOverlay.CloseRequested += () => AddTrackOverlay.IsVisible = false;
     }
 
     // ─── Settings ────────────────────────────────────────────────────────────
@@ -431,12 +434,9 @@ public partial class MusicView : UserControl
 
     // ─── Dialogs ──────────────────────────────────────────────────────────────
 
-    private async void OnAddTrackClicked(object? sender, RoutedEventArgs e)
+    private void OnAddTrackClicked(object? sender, RoutedEventArgs e)
     {
-        var owner = TopLevel.GetTopLevel(this) as Window;
-        if (owner == null) return;
-        var downloaded = await new DownloadWindow().ShowDialog<bool>(owner);
-        if (downloaded) RefreshTrackList();
+        AddTrackOverlay.Open();
     }
 
     private async void OnContextEditClicked(object? sender, RoutedEventArgs e)
