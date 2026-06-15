@@ -1,7 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="Misa.Views.DownloadWindow"
-        Title="Download Track" Width="480" Height="610"
+        Title="Download Track" Width="480" Height="560"
         CanResize="False" WindowStartupLocation="CenterOwner">
 
     <DockPanel Margin="16">
@@ -13,27 +13,79 @@
         </StackPanel>
 
         <TextBlock x:Name="StatusText" DockPanel.Dock="Bottom"
-                   Text="" TextWrapping="Wrap" Margin="0,8,0,0" />
+                   Text="" TextWrapping="Wrap" Margin="0,6,0,0" FontSize="12" />
 
         <ScrollViewer>
-            <StackPanel Spacing="8">
-                <TextBlock Text="YouTube URL" />
-                <TextBox x:Name="UrlBox" Watermark="https://www.youtube.com/watch?v=…" />
+            <StackPanel Spacing="10">
 
-                <TextBlock Text="Title (optional)" />
-                <TextBox x:Name="TitleBox" Watermark="Derived from file name if empty" />
+                <StackPanel Spacing="3">
+                    <TextBlock Text="YouTube URL" FontSize="12" Opacity="0.75" />
+                    <TextBox x:Name="UrlBox" Watermark="https://www.youtube.com/watch?v=…" />
+                </StackPanel>
 
-                <TextBlock Text="Genres (click to toggle)" />
-                <ListBox x:Name="GenresBox" SelectionMode="Multiple,Toggle" Height="80" />
+                <StackPanel Spacing="3">
+                    <TextBlock Text="Title (optional)" FontSize="12" Opacity="0.75" />
+                    <TextBox x:Name="TitleBox" Watermark="Derived from file name if empty" />
+                </StackPanel>
 
-                <TextBlock Text="Rating" />
-                <ComboBox x:Name="RatingBox" HorizontalAlignment="Stretch" />
+                <StackPanel Spacing="4">
+                    <TextBlock Text="Genres" FontSize="12" Opacity="0.75" />
+                    <ListBox x:Name="GenresBox" SelectionMode="Multiple,Toggle" MaxHeight="110"
+                             ScrollViewer.VerticalScrollBarVisibility="Auto">
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel />
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                        <ListBox.Styles>
+                            <Style Selector="ListBoxItem">
+                                <Setter Property="Padding" Value="10,5" />
+                                <Setter Property="Margin" Value="2,2,0,0" />
+                            </Style>
+                        </ListBox.Styles>
+                    </ListBox>
+                </StackPanel>
 
-                <TextBlock Text="Styles (optional, click to toggle)" />
-                <ListBox x:Name="StylesBox" SelectionMode="Multiple,Toggle" Height="80" />
+                <StackPanel Spacing="3">
+                    <TextBlock Text="Rating" FontSize="12" Opacity="0.75" />
+                    <ComboBox x:Name="RatingBox" HorizontalAlignment="Stretch" />
+                </StackPanel>
 
-                <TextBlock Text="Languages (optional, click to toggle)" />
-                <ListBox x:Name="LanguagesBox" SelectionMode="Multiple,Toggle" Height="70" />
+                <StackPanel Spacing="4">
+                    <TextBlock Text="Styles (optional)" FontSize="12" Opacity="0.75" />
+                    <ListBox x:Name="StylesBox" SelectionMode="Multiple,Toggle" MaxHeight="100"
+                             ScrollViewer.VerticalScrollBarVisibility="Auto">
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel />
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                        <ListBox.Styles>
+                            <Style Selector="ListBoxItem">
+                                <Setter Property="Padding" Value="10,5" />
+                                <Setter Property="Margin" Value="2,2,0,0" />
+                            </Style>
+                        </ListBox.Styles>
+                    </ListBox>
+                </StackPanel>
+
+                <StackPanel Spacing="4">
+                    <TextBlock Text="Languages (optional)" FontSize="12" Opacity="0.75" />
+                    <ListBox x:Name="LanguagesBox" SelectionMode="Multiple,Toggle" MaxHeight="90"
+                             ScrollViewer.VerticalScrollBarVisibility="Auto">
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel />
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                        <ListBox.Styles>
+                            <Style Selector="ListBoxItem">
+                                <Setter Property="Padding" Value="10,5" />
+                                <Setter Property="Margin" Value="2,2,0,0" />
+                            </Style>
+                        </ListBox.Styles>
+                    </ListBox>
+                </StackPanel>
 
             </StackPanel>
         </ScrollViewer>

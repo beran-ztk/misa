@@ -6,65 +6,92 @@
 
     <DockPanel LastChildFill="True">
 
-        <!-- Header row: title + action buttons -->
-        <DockPanel DockPanel.Dock="Top" Margin="16,12,16,10">
+        <!-- Header row -->
+        <DockPanel DockPanel.Dock="Top" Margin="16,14,16,10">
             <TextBlock DockPanel.Dock="Left" Text="Music Library"
-                       FontSize="18" FontWeight="SemiBold"
-                       VerticalAlignment="Center" />
+                       FontSize="17" FontWeight="SemiBold" VerticalAlignment="Center" />
             <Button DockPanel.Dock="Right" Content="Add Track"
                     Click="OnAddTrackClicked" VerticalAlignment="Center" />
         </DockPanel>
 
-        <!-- Filter / Search / Sort area -->
-        <Border DockPanel.Dock="Top" Padding="16,0,16,10"
+        <!-- Filter / Search / Sort -->
+        <Border DockPanel.Dock="Top" Padding="16,6,16,10"
                 BorderThickness="0,0,0,1" BorderBrush="#20808080">
-            <StackPanel Spacing="8">
+            <StackPanel Spacing="6">
 
-                <!-- Global filters row: Rating + ReEval + Add Group button -->
+                <!-- Global filters + group button on one row -->
                 <DockPanel>
                     <Button DockPanel.Dock="Right" Content="+ Group"
                             Click="OnAddFilterGroupClicked"
-                            Padding="8,4" VerticalAlignment="Center" />
-                    <StackPanel Orientation="Horizontal" Spacing="16">
+                            Padding="10,3" FontSize="11" VerticalAlignment="Center" />
+                    <StackPanel Orientation="Horizontal" Spacing="14" VerticalAlignment="Center">
                         <StackPanel Spacing="2" MinWidth="130">
-                            <TextBlock Text="Rating" FontSize="11" Opacity="0.55" />
+                            <TextBlock Text="Rating" FontSize="10" Opacity="0.5" />
                             <local:MultiSelectFilterControl x:Name="RatingFilter" />
                         </StackPanel>
-                        <CheckBox x:Name="ReEvalFilterCheckBox"
-                                  Content="Re-eval needed"
-                                  VerticalAlignment="Bottom" />
+                        <CheckBox x:Name="ReEvalFilterCheckBox" Content="Re-eval only"
+                                  VerticalAlignment="Bottom" FontSize="12" />
                     </StackPanel>
                 </DockPanel>
 
-                <!-- Filter groups (populated dynamically in code-behind) -->
-                <StackPanel x:Name="FilterGroupsPanel" Spacing="4" />
+                <!-- Dynamic filter groups (populated in code-behind) -->
+                <StackPanel x:Name="FilterGroupsPanel" Spacing="3" />
 
-                <!-- Search + Sort row -->
+                <!-- Search + Sort -->
                 <Grid ColumnDefinitions="*,Auto,Auto">
                     <TextBox x:Name="SearchBox" Grid.Column="0"
                              Watermark="Search title or notes…" />
                     <ComboBox x:Name="SortFieldCombo" Grid.Column="1"
-                              Margin="8,0,0,0" MinWidth="120" />
+                              Margin="6,0,0,0" MinWidth="108" />
                     <ComboBox x:Name="SortDirectionCombo" Grid.Column="2"
-                              Margin="4,0,0,0" MinWidth="96" />
+                              Margin="4,0,0,0" MinWidth="86" />
                 </Grid>
 
-                <!-- Status / feedback line -->
                 <TextBlock x:Name="StatusText" Text="" TextWrapping="Wrap"
-                           FontSize="11" Opacity="0.65" />
+                           FontSize="11" Opacity="0.6" />
 
             </StackPanel>
         </Border>
 
         <!-- Player bar -->
-        <Border DockPanel.Dock="Bottom" Padding="16,8"
+        <Border DockPanel.Dock="Bottom" Padding="16,10,16,10"
                 BorderThickness="0,1,0,0" BorderBrush="#20808080">
             <StackPanel Spacing="5">
 
-                <!-- Transport + Playback options + Volume + Now Playing -->
+                <!-- Row 1: Now Playing + secondary options -->
                 <DockPanel>
-                    <!-- Transport buttons -->
-                    <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" Spacing="3">
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="12"
+                                VerticalAlignment="Center">
+                        <CheckBox x:Name="AutoplayCheckBox" Content="Autoplay" FontSize="11" />
+                        <CheckBox x:Name="CrossfadeCheckBox" Content="Crossfade" FontSize="11" />
+                        <ComboBox x:Name="RepeatModeCombo" MinWidth="95" FontSize="11" />
+                        <CheckBox x:Name="ShuffleCheckBox" Content="Shuffle" FontSize="11" />
+                    </StackPanel>
+                    <TextBlock x:Name="NowPlayingText" Text="" FontStyle="Italic" Opacity="0.7"
+                               VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                               Margin="0,0,14,0" />
+                </DockPanel>
+
+                <!-- Row 2: Progress bar (only shown during playback) -->
+                <Grid x:Name="PlaybackInfoPanel" ColumnDefinitions="*,Auto" IsVisible="False">
+                    <Slider x:Name="PlaybackSlider" Grid.Column="0"
+                            Minimum="0" Maximum="100" Value="0" VerticalAlignment="Center" />
+                    <TextBlock x:Name="PlaybackTimeText" Grid.Column="1"
+                               Text="" FontSize="11" Opacity="0.6"
+                               Margin="10,0,0,0" MinWidth="86" VerticalAlignment="Center" />
+                </Grid>
+
+                <!-- Row 3: Transport buttons + volume -->
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="6"
+                                VerticalAlignment="Center">
+                        <CheckBox x:Name="MuteCheckBox" Content="Mute" />
+                        <Slider x:Name="VolumeSlider" Minimum="0" Maximum="100" Value="100"
+                                Width="90" VerticalAlignment="Center" />
+                        <TextBlock x:Name="VolumeText" Text="100%" FontSize="11" Opacity="0.6"
+                                   MinWidth="34" VerticalAlignment="Center" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="3" VerticalAlignment="Center">
                         <Button Content="⏮" Click="OnPreviousClicked" />
                         <Button Content="▶" Click="OnPlayClicked" />
                         <Button x:Name="PauseResumeBtn" Content="Pause"
@@ -72,74 +99,42 @@
                         <Button Content="⏹" Click="OnStopClicked" />
                         <Button Content="⏭" Click="OnNextClicked" />
                     </StackPanel>
-
-                    <!-- Autoplay / Crossfade / Repeat / Shuffle -->
-                    <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" Spacing="8"
-                                VerticalAlignment="Center" Margin="14,0,0,0">
-                        <CheckBox x:Name="AutoplayCheckBox" Content="Autoplay" />
-                        <CheckBox x:Name="CrossfadeCheckBox" Content="Crossfade" />
-                        <ComboBox x:Name="RepeatModeCombo" MinWidth="105" />
-                        <CheckBox x:Name="ShuffleCheckBox" Content="Shuffle" />
-                    </StackPanel>
-
-                    <!-- Mute + Volume -->
-                    <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" Spacing="6"
-                                VerticalAlignment="Center" Margin="14,0,0,0">
-                        <CheckBox x:Name="MuteCheckBox" Content="Mute" />
-                        <Slider x:Name="VolumeSlider" Minimum="0" Maximum="100" Value="100"
-                                Width="90" VerticalAlignment="Center" />
-                        <TextBlock x:Name="VolumeText" Text="100%" FontSize="11" Opacity="0.6"
-                                   MinWidth="34" VerticalAlignment="Center" />
-                    </StackPanel>
-
-                    <!-- Now Playing (fills remaining width) -->
-                    <TextBlock x:Name="NowPlayingText" Text="" FontStyle="Italic"
-                               VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
-                               Margin="14,0,0,0" Opacity="0.75" />
                 </DockPanel>
-
-                <!-- Progress row: full width, only shown during playback -->
-                <Grid x:Name="PlaybackInfoPanel" ColumnDefinitions="*,Auto" IsVisible="False">
-                    <Slider x:Name="PlaybackSlider" Grid.Column="0"
-                            Minimum="0" Maximum="100" Value="0"
-                            VerticalAlignment="Center" />
-                    <TextBlock x:Name="PlaybackTimeText" Grid.Column="1"
-                               Text="" FontSize="11" Opacity="0.6"
-                               Margin="10,0,0,0" VerticalAlignment="Center" />
-                </Grid>
 
             </StackPanel>
         </Border>
 
-        <!-- Upcoming track bar (shown above player bar when autoplay has a next track) -->
+        <!-- Upcoming track bar (above player bar) -->
         <Border x:Name="UpcomingBar" DockPanel.Dock="Bottom"
-                Padding="16,5" Background="#0A808080" IsVisible="False"
-                BorderThickness="0,1,0,0" BorderBrush="#18808080">
+                Padding="16,5" IsVisible="False"
+                BorderThickness="0,1,0,0" BorderBrush="#14808080">
             <DockPanel>
                 <TextBlock x:Name="CrossfadeStatusText" DockPanel.Dock="Right"
-                           FontSize="11" Opacity="0.5" VerticalAlignment="Center"
-                           Margin="12,0,0,0" />
-                <TextBlock FontSize="11" Opacity="0.55" Text="Next: "
-                           VerticalAlignment="Center" />
-                <TextBlock x:Name="UpcomingTrackText" FontSize="11" Opacity="0.75"
-                           TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                           FontSize="11" Opacity="0.45" VerticalAlignment="Center" />
+                <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                    <TextBlock FontSize="11" Opacity="0.45" Text="Next:" />
+                    <TextBlock x:Name="UpcomingTrackText" FontSize="11" Opacity="0.65"
+                               TextTrimming="CharacterEllipsis" />
+                </StackPanel>
             </DockPanel>
         </Border>
 
-        <!-- Track list (fills remaining space) -->
-        <ListBox x:Name="FileList" DoubleTapped="OnListDoubleTapped">
+        <!-- Track list -->
+        <ListBox x:Name="FileList" DoubleTapped="OnListDoubleTapped"
+                 Padding="4,4,4,4">
             <ListBox.ItemTemplate>
                 <DataTemplate x:DataType="models:TrackDisplayItem">
-                    <Grid ColumnDefinitions="18,*">
-                        <TextBlock Grid.Column="0" Text="▶" FontSize="9"
-                                   VerticalAlignment="Center" Opacity="0.8"
+                    <Grid ColumnDefinitions="20,*">
+                        <TextBlock Grid.Column="0" Text="▶" FontSize="10"
+                                   VerticalAlignment="Center" Opacity="0.75"
                                    IsVisible="{Binding IsPlaying}" />
-                        <StackPanel Grid.Column="1" Margin="0,3">
-                            <TextBlock Text="{Binding Title}" />
-                            <TextBlock Text="{Binding MetaLine}" FontSize="11" Opacity="0.55" />
+                        <StackPanel Grid.Column="1" Margin="0,4,0,4">
+                            <TextBlock Text="{Binding Title}" FontSize="13" />
+                            <TextBlock Text="{Binding MetaLine}" FontSize="11" Opacity="0.55"
+                                       Margin="0,1,0,0" />
                             <TextBlock Text="{Binding Notes}" FontSize="11" Opacity="0.45"
                                        FontStyle="Italic" IsVisible="{Binding HasNotes}"
-                                       TextTrimming="CharacterEllipsis" />
+                                       TextTrimming="CharacterEllipsis" Margin="0,1,0,0" />
                         </StackPanel>
                     </Grid>
                 </DataTemplate>

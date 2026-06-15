@@ -3,149 +3,177 @@
              x:Class="Misa.Views.SettingsView">
 
     <ScrollViewer>
-        <StackPanel Margin="20,16,20,24" Spacing="0">
+        <StackPanel Margin="20,16,20,28" Spacing="0">
 
             <!-- Section: Storage & Tools -->
-            <TextBlock Text="Storage &amp; Tools" FontSize="15" FontWeight="SemiBold"
-                       Margin="0,0,0,12" />
+            <Border BorderThickness="0,0,0,1" BorderBrush="#18808080"
+                    Padding="0,0,0,20" Margin="0,0,0,20">
+                <StackPanel Spacing="10">
+                    <TextBlock Text="Storage &amp; Tools" FontSize="14" FontWeight="SemiBold" />
 
-            <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto" RowSpacing="8">
-                <TextBlock Grid.Row="0" Grid.Column="0" Text="Music directory"
-                           VerticalAlignment="Center" Margin="0,0,16,0" />
-                <TextBox Grid.Row="0" Grid.Column="1" x:Name="MusicDirBox" />
-                <Button Grid.Row="0" Grid.Column="2" Content="Browse"
-                        Click="OnBrowseMusicDirClicked" Margin="8,0,0,0" />
+                    <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto" RowSpacing="8">
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Music directory"
+                                   VerticalAlignment="Center" Margin="0,0,14,0" />
+                        <TextBox Grid.Row="0" Grid.Column="1" x:Name="MusicDirBox" />
+                        <Button Grid.Row="0" Grid.Column="2" Content="Browse"
+                                Click="OnBrowseMusicDirClicked" Margin="8,0,0,0" />
 
-                <TextBlock Grid.Row="1" Grid.Column="0" Text="Tools directory"
-                           VerticalAlignment="Center" Margin="0,0,16,0" />
-                <TextBox Grid.Row="1" Grid.Column="1" x:Name="ToolsDirBox" />
-                <Button Grid.Row="1" Grid.Column="2" Content="Browse"
-                        Click="OnBrowseToolsDirClicked" Margin="8,0,0,0" />
-            </Grid>
-
-            <Border BorderThickness="0,0,0,1" BorderBrush="#20808080" Margin="0,20,0,20" />
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Tools directory"
+                                   VerticalAlignment="Center" Margin="0,0,14,0" />
+                        <TextBox Grid.Row="1" Grid.Column="1" x:Name="ToolsDirBox" />
+                        <Button Grid.Row="1" Grid.Column="2" Content="Browse"
+                                Click="OnBrowseToolsDirClicked" Margin="8,0,0,0" />
+                    </Grid>
+                </StackPanel>
+            </Border>
 
             <!-- Section: Download Options -->
-            <TextBlock Text="Download Options" FontSize="15" FontWeight="SemiBold"
-                       Margin="0,0,0,10" />
+            <Border BorderThickness="0,0,0,1" BorderBrush="#18808080"
+                    Padding="0,0,0,20" Margin="0,0,0,20">
+                <StackPanel Spacing="10">
+                    <TextBlock Text="Download Options" FontSize="14" FontWeight="SemiBold" />
 
-            <StackPanel Spacing="6">
-                <CheckBox x:Name="UseNodeJsCheckBox" Content="Use Node.js runtime" />
-                <CheckBox x:Name="UseFirefoxCheckBox" Content="Use Firefox cookies" />
-                <CheckBox x:Name="UseRemoteEjsCheckBox" Content="Use remote EJS components" />
-            </StackPanel>
+                    <StackPanel Spacing="6">
+                        <CheckBox x:Name="UseNodeJsCheckBox" Content="Use Node.js runtime" />
+                        <CheckBox x:Name="UseFirefoxCheckBox" Content="Use Firefox cookies" />
+                        <CheckBox x:Name="UseRemoteEjsCheckBox" Content="Use remote EJS components" />
+                    </StackPanel>
 
-            <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,14,0,4">
-                <Button Content="Save Settings" Click="OnSaveSettingsClicked" />
-                <Button Content="Test Tools" Click="OnTestToolsClicked" />
-            </StackPanel>
-            <TextBlock x:Name="SettingsStatus" Text="" FontSize="11" Opacity="0.65"
-                       TextWrapping="Wrap" />
-
-            <Border BorderThickness="0,0,0,1" BorderBrush="#20808080" Margin="0,24,0,20" />
+                    <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4,0,0">
+                        <Button Content="Save Settings" Click="OnSaveSettingsClicked" />
+                        <Button Content="Test Tools" Click="OnTestToolsClicked" />
+                    </StackPanel>
+                    <TextBlock x:Name="SettingsStatus" Text="" FontSize="11" Opacity="0.65"
+                               TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
 
             <!-- Section: Library Export -->
-            <TextBlock Text="Library Export" FontSize="15" FontWeight="SemiBold"
-                       Margin="0,0,0,10" />
-            <TextBlock Text="Writes library.json to the configured music directory for use by the Android client."
-                       FontSize="11" Opacity="0.65" TextWrapping="Wrap" Margin="0,0,0,8" />
-            <Button Content="Export library.json" Click="OnExportLibraryClicked"
-                    HorizontalAlignment="Left" />
-            <TextBlock x:Name="ExportStatus" Text="" FontSize="11" Opacity="0.65"
-                       TextWrapping="Wrap" Margin="0,6,0,0" />
-
-            <Border BorderThickness="0,0,0,1" BorderBrush="#20808080" Margin="0,24,0,20" />
+            <Border BorderThickness="0,0,0,1" BorderBrush="#18808080"
+                    Padding="0,0,0,20" Margin="0,0,0,20">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="Library Export" FontSize="14" FontWeight="SemiBold" />
+                    <TextBlock Text="Writes library.json to the music directory for use by the Android client."
+                               FontSize="11" Opacity="0.65" TextWrapping="Wrap" />
+                    <Button Content="Export library.json" Click="OnExportLibraryClicked"
+                            HorizontalAlignment="Left" />
+                    <TextBlock x:Name="ExportStatus" Text="" FontSize="11" Opacity="0.65"
+                               TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
 
             <!-- Section: Playback -->
-            <TextBlock Text="Playback" FontSize="15" FontWeight="SemiBold"
-                       Margin="0,0,0,10" />
-            <TextBlock Text="These settings take effect after clicking Save Settings."
-                       FontSize="11" Opacity="0.65" TextWrapping="Wrap" Margin="0,0,0,8" />
+            <Border BorderThickness="0,0,0,1" BorderBrush="#18808080"
+                    Padding="0,0,0,20" Margin="0,0,0,20">
+                <StackPanel Spacing="10">
+                    <TextBlock Text="Playback" FontSize="14" FontWeight="SemiBold" />
+                    <TextBlock Text="Changes take effect after clicking Save Settings."
+                               FontSize="11" Opacity="0.65" />
 
-            <Grid ColumnDefinitions="Auto,140,Auto" RowDefinitions="Auto,Auto" RowSpacing="8">
-                <TextBlock Grid.Row="0" Grid.Column="0" Text="Crossfade duration"
-                           VerticalAlignment="Center" Margin="0,0,12,0" />
-                <NumericUpDown Grid.Row="0" Grid.Column="1" x:Name="CrossfadeDurationBox"
-                               Minimum="0" Maximum="30" Increment="1" FormatString="0" />
-                <TextBlock Grid.Row="0" Grid.Column="2" Text="seconds"
-                           VerticalAlignment="Center" Margin="8,0,0,0" />
+                    <Grid ColumnDefinitions="Auto,120,Auto" RowDefinitions="Auto,Auto" RowSpacing="8">
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Crossfade duration"
+                                   VerticalAlignment="Center" Margin="0,0,12,0" />
+                        <NumericUpDown Grid.Row="0" Grid.Column="1" x:Name="CrossfadeDurationBox"
+                                       Minimum="0" Maximum="30" Increment="1" FormatString="0" />
+                        <TextBlock Grid.Row="0" Grid.Column="2" Text="seconds"
+                                   VerticalAlignment="Center" Margin="8,0,0,0" />
 
-                <TextBlock Grid.Row="1" Grid.Column="0" Text="Manual switch fade"
-                           VerticalAlignment="Center" Margin="0,0,12,0" />
-                <NumericUpDown Grid.Row="1" Grid.Column="1" x:Name="ManualFadeDurationBox"
-                               Minimum="0" Maximum="10" Increment="1" FormatString="0" />
-                <TextBlock Grid.Row="1" Grid.Column="2" Text="seconds"
-                           VerticalAlignment="Center" Margin="8,0,0,0" />
-            </Grid>
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Manual switch fade"
+                                   VerticalAlignment="Center" Margin="0,0,12,0" />
+                        <NumericUpDown Grid.Row="1" Grid.Column="1" x:Name="ManualFadeDurationBox"
+                                       Minimum="0" Maximum="10" Increment="1" FormatString="0" />
+                        <TextBlock Grid.Row="1" Grid.Column="2" Text="seconds"
+                                   VerticalAlignment="Center" Margin="8,0,0,0" />
+                    </Grid>
 
-            <CheckBox x:Name="ShowUpcomingBarCheckBox" Content="Show upcoming track bar"
-                      Margin="0,10,0,0" />
-
-            <Border BorderThickness="0,0,0,1" BorderBrush="#20808080" Margin="0,24,0,20" />
+                    <CheckBox x:Name="ShowUpcomingBarCheckBox" Content="Show upcoming track bar" />
+                </StackPanel>
+            </Border>
 
             <!-- Section: Metadata -->
-            <TextBlock Text="Metadata" FontSize="15" FontWeight="SemiBold"
-                       Margin="0,0,0,14" />
+            <StackPanel Spacing="10">
+                <TextBlock Text="Metadata" FontSize="14" FontWeight="SemiBold" />
 
-            <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="20">
+                <TabControl Height="340">
 
-                <!-- Genres -->
-                <StackPanel Grid.Column="0" Spacing="6">
-                    <TextBlock Text="Genres" FontWeight="SemiBold" />
-                    <ListBox x:Name="GenreList" Height="140" SelectionChanged="OnGenreSelected" />
-                    <TextBox x:Name="GenreInput" Watermark="Name…" />
-                    <StackPanel Orientation="Horizontal" Spacing="6">
-                        <Button Content="Add" Click="OnAddGenreClicked" />
-                        <Button Content="Rename" Click="OnRenameGenreClicked" />
-                        <Button Content="Delete" Click="OnDeleteGenreClicked" />
-                    </StackPanel>
-                    <TextBlock x:Name="GenreStatus" Text="" FontSize="11" Opacity="0.65"
-                               TextWrapping="Wrap" />
-                </StackPanel>
+                    <TabItem Header="Genres">
+                        <DockPanel Margin="0,8,0,0">
+                            <Grid DockPanel.Dock="Bottom" ColumnDefinitions="*,Auto,Auto,Auto"
+                                  Margin="0,8,0,0">
+                                <TextBox Grid.Column="0" x:Name="GenreInput" Watermark="Name…" />
+                                <Button Grid.Column="1" Content="Add" Click="OnAddGenreClicked"
+                                        Margin="6,0,0,0" />
+                                <Button Grid.Column="2" Content="Rename" Click="OnRenameGenreClicked"
+                                        Margin="4,0,0,0" />
+                                <Button Grid.Column="3" Content="Delete" Click="OnDeleteGenreClicked"
+                                        Margin="4,0,0,0" />
+                            </Grid>
+                            <TextBlock DockPanel.Dock="Bottom" x:Name="GenreStatus"
+                                       Text="" FontSize="11" Opacity="0.65"
+                                       TextWrapping="Wrap" Margin="0,5,0,0" />
+                            <ListBox x:Name="GenreList" SelectionChanged="OnGenreSelected" />
+                        </DockPanel>
+                    </TabItem>
 
-                <!-- Styles -->
-                <StackPanel Grid.Column="1" Spacing="6">
-                    <TextBlock Text="Styles" FontWeight="SemiBold" />
-                    <ListBox x:Name="StyleList" Height="140" SelectionChanged="OnStyleSelected" />
-                    <TextBox x:Name="StyleInput" Watermark="Name…" />
-                    <StackPanel Orientation="Horizontal" Spacing="6">
-                        <Button Content="Add" Click="OnAddStyleClicked" />
-                        <Button Content="Rename" Click="OnRenameStyleClicked" />
-                        <Button Content="Delete" Click="OnDeleteStyleClicked" />
-                    </StackPanel>
-                    <TextBlock x:Name="StyleStatus" Text="" FontSize="11" Opacity="0.65"
-                               TextWrapping="Wrap" />
-                </StackPanel>
+                    <TabItem Header="Styles">
+                        <DockPanel Margin="0,8,0,0">
+                            <Grid DockPanel.Dock="Bottom" ColumnDefinitions="*,Auto,Auto,Auto"
+                                  Margin="0,8,0,0">
+                                <TextBox Grid.Column="0" x:Name="StyleInput" Watermark="Name…" />
+                                <Button Grid.Column="1" Content="Add" Click="OnAddStyleClicked"
+                                        Margin="6,0,0,0" />
+                                <Button Grid.Column="2" Content="Rename" Click="OnRenameStyleClicked"
+                                        Margin="4,0,0,0" />
+                                <Button Grid.Column="3" Content="Delete" Click="OnDeleteStyleClicked"
+                                        Margin="4,0,0,0" />
+                            </Grid>
+                            <TextBlock DockPanel.Dock="Bottom" x:Name="StyleStatus"
+                                       Text="" FontSize="11" Opacity="0.65"
+                                       TextWrapping="Wrap" Margin="0,5,0,0" />
+                            <ListBox x:Name="StyleList" SelectionChanged="OnStyleSelected" />
+                        </DockPanel>
+                    </TabItem>
 
-                <!-- Languages -->
-                <StackPanel Grid.Column="2" Spacing="6">
-                    <TextBlock Text="Languages" FontWeight="SemiBold" />
-                    <ListBox x:Name="LanguageList" Height="140" SelectionChanged="OnLanguageSelected" />
-                    <TextBox x:Name="LanguageInput" Watermark="Name…" />
-                    <StackPanel Orientation="Horizontal" Spacing="6">
-                        <Button Content="Add" Click="OnAddLanguageClicked" />
-                        <Button Content="Rename" Click="OnRenameLanguageClicked" />
-                        <Button Content="Delete" Click="OnDeleteLanguageClicked" />
-                    </StackPanel>
-                    <TextBlock x:Name="LanguageStatus" Text="" FontSize="11" Opacity="0.65"
-                               TextWrapping="Wrap" />
-                </StackPanel>
+                    <TabItem Header="Languages">
+                        <DockPanel Margin="0,8,0,0">
+                            <Grid DockPanel.Dock="Bottom" ColumnDefinitions="*,Auto,Auto,Auto"
+                                  Margin="0,8,0,0">
+                                <TextBox Grid.Column="0" x:Name="LanguageInput" Watermark="Name…" />
+                                <Button Grid.Column="1" Content="Add" Click="OnAddLanguageClicked"
+                                        Margin="6,0,0,0" />
+                                <Button Grid.Column="2" Content="Rename" Click="OnRenameLanguageClicked"
+                                        Margin="4,0,0,0" />
+                                <Button Grid.Column="3" Content="Delete" Click="OnDeleteLanguageClicked"
+                                        Margin="4,0,0,0" />
+                            </Grid>
+                            <TextBlock DockPanel.Dock="Bottom" x:Name="LanguageStatus"
+                                       Text="" FontSize="11" Opacity="0.65"
+                                       TextWrapping="Wrap" Margin="0,5,0,0" />
+                            <ListBox x:Name="LanguageList" SelectionChanged="OnLanguageSelected" />
+                        </DockPanel>
+                    </TabItem>
 
-                <!-- Ratings -->
-                <StackPanel Grid.Column="3" Spacing="6">
-                    <TextBlock Text="Ratings" FontWeight="SemiBold" />
-                    <ListBox x:Name="RatingList" Height="140" SelectionChanged="OnRatingSelected" />
-                    <TextBox x:Name="RatingInput" Watermark="Name…" />
-                    <StackPanel Orientation="Horizontal" Spacing="6">
-                        <Button Content="Add" Click="OnAddRatingClicked" />
-                        <Button Content="Rename" Click="OnRenameRatingClicked" />
-                        <Button Content="Delete" Click="OnDeleteRatingClicked" />
-                    </StackPanel>
-                    <TextBlock x:Name="RatingStatus" Text="" FontSize="11" Opacity="0.65"
-                               TextWrapping="Wrap" />
-                </StackPanel>
+                    <TabItem Header="Ratings">
+                        <DockPanel Margin="0,8,0,0">
+                            <Grid DockPanel.Dock="Bottom" ColumnDefinitions="*,Auto,Auto,Auto"
+                                  Margin="0,8,0,0">
+                                <TextBox Grid.Column="0" x:Name="RatingInput" Watermark="Name…" />
+                                <Button Grid.Column="1" Content="Add" Click="OnAddRatingClicked"
+                                        Margin="6,0,0,0" />
+                                <Button Grid.Column="2" Content="Rename" Click="OnRenameRatingClicked"
+                                        Margin="4,0,0,0" />
+                                <Button Grid.Column="3" Content="Delete" Click="OnDeleteRatingClicked"
+                                        Margin="4,0,0,0" />
+                            </Grid>
+                            <TextBlock DockPanel.Dock="Bottom" x:Name="RatingStatus"
+                                       Text="" FontSize="11" Opacity="0.65"
+                                       TextWrapping="Wrap" Margin="0,5,0,0" />
+                            <ListBox x:Name="RatingList" SelectionChanged="OnRatingSelected" />
+                        </DockPanel>
+                    </TabItem>
 
-            </Grid>
+                </TabControl>
+            </StackPanel>
 
         </StackPanel>
     </ScrollViewer>

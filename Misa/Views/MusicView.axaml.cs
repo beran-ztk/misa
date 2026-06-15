@@ -7,6 +7,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
+using Avalonia.Media;
 using Avalonia.Threading;
 using Misa.Models;
 using Misa.Music.Models;
@@ -379,7 +380,16 @@ public partial class MusicView : UserControl
         row.Children.Add(languageWrapper);
         row.Children.Add(removeBtn);
 
-        FilterGroupsPanel.Children.Add(row);
+        var card = new Border
+        {
+            Background = new SolidColorBrush(Color.FromArgb(14, 128, 128, 128)),
+            BorderBrush = new SolidColorBrush(Color.FromArgb(24, 128, 128, 128)),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(5),
+            Padding = new Thickness(10, 7),
+            Child = row,
+        };
+        FilterGroupsPanel.Children.Add(card);
     }
 
     private void RemoveFilterGroup(FilterGroupControls fg)

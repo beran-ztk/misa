@@ -13,27 +13,80 @@
         </StackPanel>
 
         <ScrollViewer>
-            <StackPanel Spacing="8">
-                <TextBlock Text="Title" />
-                <TextBox x:Name="TitleBox" />
+            <StackPanel Spacing="10">
 
-                <TextBlock Text="Genres (click to toggle)" />
-                <ListBox x:Name="GenresBox" SelectionMode="Multiple,Toggle" Height="90" />
+                <StackPanel Spacing="3">
+                    <TextBlock Text="Title" FontSize="12" Opacity="0.75" />
+                    <TextBox x:Name="TitleBox" />
+                </StackPanel>
 
-                <TextBlock Text="Rating" />
-                <ComboBox x:Name="RatingBox" HorizontalAlignment="Stretch" />
+                <StackPanel Spacing="4">
+                    <TextBlock Text="Genres" FontSize="12" Opacity="0.75" />
+                    <ListBox x:Name="GenresBox" SelectionMode="Multiple,Toggle" MaxHeight="110"
+                             ScrollViewer.VerticalScrollBarVisibility="Auto">
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel />
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                        <ListBox.Styles>
+                            <Style Selector="ListBoxItem">
+                                <Setter Property="Padding" Value="10,5" />
+                                <Setter Property="Margin" Value="2,2,0,0" />
+                            </Style>
+                        </ListBox.Styles>
+                    </ListBox>
+                </StackPanel>
 
-                <TextBlock Text="Styles (click to toggle)" />
-                <ListBox x:Name="StylesBox" SelectionMode="Multiple,Toggle" Height="90" />
+                <StackPanel Spacing="3">
+                    <TextBlock Text="Rating" FontSize="12" Opacity="0.75" />
+                    <ComboBox x:Name="RatingBox" HorizontalAlignment="Stretch" />
+                </StackPanel>
 
-                <TextBlock Text="Languages (optional, click to toggle)" />
-                <ListBox x:Name="LanguagesBox" SelectionMode="Multiple,Toggle" Height="80" />
+                <StackPanel Spacing="4">
+                    <TextBlock Text="Styles (optional)" FontSize="12" Opacity="0.75" />
+                    <ListBox x:Name="StylesBox" SelectionMode="Multiple,Toggle" MaxHeight="100"
+                             ScrollViewer.VerticalScrollBarVisibility="Auto">
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel />
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                        <ListBox.Styles>
+                            <Style Selector="ListBoxItem">
+                                <Setter Property="Padding" Value="10,5" />
+                                <Setter Property="Margin" Value="2,2,0,0" />
+                            </Style>
+                        </ListBox.Styles>
+                    </ListBox>
+                </StackPanel>
 
-                <CheckBox x:Name="ReEvalCheckBox" Content="Needs re-evaluation" />
+                <StackPanel Spacing="4">
+                    <TextBlock Text="Languages (optional)" FontSize="12" Opacity="0.75" />
+                    <ListBox x:Name="LanguagesBox" SelectionMode="Multiple,Toggle" MaxHeight="90"
+                             ScrollViewer.VerticalScrollBarVisibility="Auto">
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel />
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                        <ListBox.Styles>
+                            <Style Selector="ListBoxItem">
+                                <Setter Property="Padding" Value="10,5" />
+                                <Setter Property="Margin" Value="2,2,0,0" />
+                            </Style>
+                        </ListBox.Styles>
+                    </ListBox>
+                </StackPanel>
 
-                <TextBlock Text="Notes" />
-                <TextBox x:Name="NotesBox" AcceptsReturn="True" Height="80"
-                         TextWrapping="Wrap" Watermark="Optional notes…" />
+                <CheckBox x:Name="ReEvalCheckBox" Content="Needs re-evaluation" Margin="0,2,0,0" />
+
+                <StackPanel Spacing="3">
+                    <TextBlock Text="Notes" FontSize="12" Opacity="0.75" />
+                    <TextBox x:Name="NotesBox" AcceptsReturn="True" Height="80"
+                             TextWrapping="Wrap" Watermark="Optional notes…" />
+                </StackPanel>
+
             </StackPanel>
         </ScrollViewer>
 
