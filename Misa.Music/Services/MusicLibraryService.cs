@@ -43,6 +43,13 @@ public class MusicLibraryService
 
     public void Initialize() => _db.Initialize();
 
+    public string ExportLibrary()
+    {
+        var svc = new LibraryExportService(_db, _settings.MusicDirectory);
+        svc.Export();
+        return svc.ExportPath;
+    }
+
     // Updates only player-related settings fields and flushes to disk.
     // Does not call ApplySettings() — the player state has no effect on the DB or downloader.
     public void SavePlayerSettings(int volume, bool isMuted, bool shuffleEnabled, bool autoplayEnabled, string repeatMode)

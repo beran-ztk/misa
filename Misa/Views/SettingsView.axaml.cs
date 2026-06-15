@@ -131,6 +131,21 @@ public partial class SettingsView : UserControl
         SettingsStatus.Text = sb.ToString().TrimEnd();
     }
 
+    // --- Library Export ---
+
+    private void OnExportLibraryClicked(object? sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var path = MusicLibraryService.Current.ExportLibrary();
+            ExportStatus.Text = $"Exported: {path}";
+        }
+        catch (Exception ex)
+        {
+            ExportStatus.Text = $"Export failed: {ex.Message}";
+        }
+    }
+
     // --- Genres ---
 
     private void LoadGenres()

@@ -8,4 +8,8 @@
     <ItemGroup>
         <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.5"/>
     </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Misa.Shared\Misa.Shared.csproj"/>
+    </ItemGroup>
 </Project>
