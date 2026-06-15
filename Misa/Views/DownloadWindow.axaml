@@ -1,7 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="Misa.Views.DownloadWindow"
-        Title="Download Track" Width="480" Height="520"
+        Title="Download Track" Width="480" Height="610"
         CanResize="False" WindowStartupLocation="CenterOwner">
 
     <DockPanel Margin="16">
@@ -31,6 +31,9 @@
 
                 <TextBlock Text="Styles (optional, click to toggle)" />
                 <ListBox x:Name="StylesBox" SelectionMode="Multiple,Toggle" Height="80" />
+
+                <TextBlock Text="Languages (optional, click to toggle)" />
+                <ListBox x:Name="LanguagesBox" SelectionMode="Multiple,Toggle" Height="70" />
 
             </StackPanel>
         </ScrollViewer>

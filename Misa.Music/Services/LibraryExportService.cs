@@ -33,8 +33,10 @@ public class LibraryExportService
         var genres = _db.GetGenres().ToDictionary(g => g.Id, g => g.Name);
         var ratings = _db.GetRatings().ToDictionary(r => r.Id, r => r.Name);
         var styles = _db.GetStyles().ToDictionary(s => s.Id, s => s.Name);
+        var languages = _db.GetLanguages().ToDictionary(l => l.Id, l => l.Name);
         var allStyleIds = _db.GetAllMusicStyleIds();
         var allGenreIds = _db.GetAllMusicGenreIds();
+        var allLanguageIds = _db.GetAllMusicLanguageIds();
 
         var export = new LibraryExport
         {
@@ -44,21 +46,17 @@ public class LibraryExportService
             {
                 var styleIds = allStyleIds.GetValueOrDefault(t.Id) ?? [];
                 var genreIds = allGenreIds.GetValueOrDefault(t.Id) ?? [];
+                var languageIds = allLanguageIds.GetValueOrDefault(t.Id) ?? [];
                 return new LibraryTrack
                 {
                     Id = t.Id,
                     Title = t.Title,
                     FileName = t.FileName,
                     CanonicalUrl = t.CanonicalUrl,
-                    Genres = genreIds
-                        .Where(genres.ContainsKey)
-                        .Select(id => genres[id])
-                        .ToList(),
+                    Genres = genreIds.Where(genres.ContainsKey).Select(id => genres[id]).ToList(),
                     Rating = ratings.GetValueOrDefault(t.RatingId, ""),
-                    Styles = styleIds
-                        .Where(styles.ContainsKey)
-                        .Select(id => styles[id])
-                        .ToList(),
+                    Styles = styleIds.Where(styles.ContainsKey).Select(id => styles[id]).ToList(),
+                    Languages = languageIds.Where(languages.ContainsKey).Select(id => languages[id]).ToList(),
                     DurationSeconds = t.DurationSeconds,
                     Notes = t.Notes,
                     ReEvaluationNeeded = t.ReEvaluationNeeded,

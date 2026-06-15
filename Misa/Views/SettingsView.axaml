@@ -60,7 +60,7 @@
             <TextBlock Text="Metadata" FontSize="15" FontWeight="SemiBold"
                        Margin="0,0,0,14" />
 
-            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="20">
+            <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="20">
 
                 <!-- Genres -->
                 <StackPanel Grid.Column="0" Spacing="6">
@@ -90,8 +90,22 @@
                                TextWrapping="Wrap" />
                 </StackPanel>
 
-                <!-- Ratings -->
+                <!-- Languages -->
                 <StackPanel Grid.Column="2" Spacing="6">
+                    <TextBlock Text="Languages" FontWeight="SemiBold" />
+                    <ListBox x:Name="LanguageList" Height="140" SelectionChanged="OnLanguageSelected" />
+                    <TextBox x:Name="LanguageInput" Watermark="Name…" />
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <Button Content="Add" Click="OnAddLanguageClicked" />
+                        <Button Content="Rename" Click="OnRenameLanguageClicked" />
+                        <Button Content="Delete" Click="OnDeleteLanguageClicked" />
+                    </StackPanel>
+                    <TextBlock x:Name="LanguageStatus" Text="" FontSize="11" Opacity="0.65"
+                               TextWrapping="Wrap" />
+                </StackPanel>
+
+                <!-- Ratings -->
+                <StackPanel Grid.Column="3" Spacing="6">
                     <TextBlock Text="Ratings" FontWeight="SemiBold" />
                     <ListBox x:Name="RatingList" Height="140" SelectionChanged="OnRatingSelected" />
                     <TextBox x:Name="RatingInput" Watermark="Name…" />

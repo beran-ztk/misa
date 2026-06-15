@@ -40,13 +40,15 @@ public partial class MusicView : UserControl
     private List<Genre> _genres = [];
     private List<Rating> _ratings = [];
     private List<Style> _styles = [];
+    private List<Language> _languages = [];
     private List<TrackDisplayItem> _allItems = [];
     private Dictionary<int, List<int>> _allTrackStyleIds = [];
     private Dictionary<int, List<int>> _allTrackGenreIds = [];
+    private Dictionary<int, List<int>> _allTrackLanguageIds = [];
     // _filteredItems is the play context: tracks visible after all filters, search, and sort.
     private List<TrackDisplayItem> _filteredItems = [];
 
-    private record FilterGroupControls(MultiSelectFilterControl GenreCtrl, MultiSelectFilterControl StyleCtrl);
+    private record FilterGroupControls(MultiSelectFilterControl GenreCtrl, MultiSelectFilterControl StyleCtrl, MultiSelectFilterControl LanguageCtrl);
     private readonly List<FilterGroupControls> _filterGroups = [];
 
     public MusicView()
@@ -169,15 +171,16 @@ public partial class MusicView : UserControl
         _genres = MusicLibraryService.Current.GetGenres();
         _ratings = MusicLibraryService.Current.GetRatings();
         _styles = MusicLibraryService.Current.GetStyles();
+        _languages = MusicLibraryService.Current.GetLanguages();
 
         RatingFilter.Placeholder = "Ratings";
         RatingFilter.SetItems(_ratings.Select(r => r.Name));
 
-        // Keep genre/style items in existing filter groups up to date
         foreach (var fg in _filterGroups)
         {
             fg.GenreCtrl.SetItems(_genres.Select(g => g.Name));
             fg.StyleCtrl.SetItems(_styles.Select(s => s.Name));
+            fg.LanguageCtrl.SetItems(_languages.Select(l => l.Name));
         }
     }
 
@@ -186,14 +189,17 @@ public partial class MusicView : UserControl
         var tracks = MusicLibraryService.Current.GetTracks();
         _allTrackStyleIds = MusicLibraryService.Current.GetAllTrackStyleIds();
         _allTrackGenreIds = MusicLibraryService.Current.GetAllTrackGenreIds();
+        _allTrackLanguageIds = MusicLibraryService.Current.GetAllTrackLanguageIds();
         var genreMap = _genres.ToDictionary(g => g.Id, g => g.Name);
         var ratingMap = _ratings.ToDictionary(r => r.Id, r => r.Name);
         var styleMap = _styles.ToDictionary(s => s.Id, s => s.Name);
+        var languageMap = _languages.ToDictionary(l => l.Id, l => l.Name);
 
         _allItems = tracks.Select(t =>
         {
             var genreIds = _allTrackGenreIds.GetValueOrDefault(t.Id, []);
             var styleIds = _allTrackStyleIds.GetValueOrDefault(t.Id, []);
+            var languageIds = _allTrackLanguageIds.GetValueOrDefault(t.Id, []);
 
             var genreNames = genreIds
                 .Select(id => genreMap.GetValueOrDefault(id, ""))
@@ -201,6 +207,10 @@ public partial class MusicView : UserControl
                 .Order();
             var styleNames = styleIds
                 .Select(id => styleMap.GetValueOrDefault(id, ""))
+                .Where(n => n.Length > 0)
+                .Order();
+            var languageNames = languageIds
+                .Select(id => languageMap.GetValueOrDefault(id, ""))
                 .Where(n => n.Length > 0)
                 .Order();
 
@@ -212,9 +222,11 @@ public partial class MusicView : UserControl
                 parts.Add(FormatDuration(t.DurationSeconds.Value));
             var styleStr = string.Join(", ", styleNames);
             if (styleStr.Length > 0) parts.Add(styleStr);
+            var langStr = string.Join(", ", languageNames);
+            if (langStr.Length > 0) parts.Add(langStr);
             if (t.ReEvaluationNeeded) parts.Add("[re-eval]");
 
-            return new TrackDisplayItem(t, string.Join(" · ", parts), genreIds, styleIds);
+            return new TrackDisplayItem(t, string.Join(" · ", parts), genreIds, styleIds, languageIds);
         }).ToList();
 
         ApplyFilter();
@@ -229,7 +241,8 @@ public partial class MusicView : UserControl
         var groups = _filterGroups
             .Select(fg => new FilterGroup(
                 SelectedIds(fg.GenreCtrl.SelectedItems, _genres, g => g.Name, g => g.Id),
-                SelectedIds(fg.StyleCtrl.SelectedItems, _styles, s => s.Name, s => s.Id)))
+                SelectedIds(fg.StyleCtrl.SelectedItems, _styles, s => s.Name, s => s.Id),
+                SelectedIds(fg.LanguageCtrl.SelectedItems, _languages, l => l.Name, l => l.Id)))
             .ToList();
 
         bool? reEvalFilter = ReEvalFilterCheckBox.IsChecked == true ? true : null;
@@ -238,6 +251,7 @@ public partial class MusicView : UserControl
             _allItems.Select(i => i.Track),
             _allTrackGenreIds,
             _allTrackStyleIds,
+            _allTrackLanguageIds,
             ratingSortOrders,
             selRatingIds,
             groups,
@@ -308,7 +322,11 @@ public partial class MusicView : UserControl
         styleCtrl.SetItems(_styles.Select(s => s.Name));
         styleCtrl.SelectionChanged += (_, _) => ApplyFilter();
 
-        var fg = new FilterGroupControls(genreCtrl, styleCtrl);
+        var languageCtrl = new MultiSelectFilterControl { Placeholder = "Languages" };
+        languageCtrl.SetItems(_languages.Select(l => l.Name));
+        languageCtrl.SelectionChanged += (_, _) => ApplyFilter();
+
+        var fg = new FilterGroupControls(genreCtrl, styleCtrl, languageCtrl);
         _filterGroups.Add(fg);
 
         var removeBtn = new Button { Content = "×", Padding = new Thickness(6, 0) };
@@ -322,9 +340,14 @@ public partial class MusicView : UserControl
         styleWrapper.Children.Add(new TextBlock { Text = "Style", FontSize = 11, Opacity = 0.55 });
         styleWrapper.Children.Add(styleCtrl);
 
+        var languageWrapper = new StackPanel { Spacing = 2, MinWidth = 150 };
+        languageWrapper.Children.Add(new TextBlock { Text = "Language", FontSize = 11, Opacity = 0.55 });
+        languageWrapper.Children.Add(languageCtrl);
+
         var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
         row.Children.Add(genreWrapper);
         row.Children.Add(styleWrapper);
+        row.Children.Add(languageWrapper);
         row.Children.Add(removeBtn);
 
         FilterGroupsPanel.Children.Add(row);

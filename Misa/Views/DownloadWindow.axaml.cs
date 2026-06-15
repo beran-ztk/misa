@@ -12,6 +12,7 @@ public partial class DownloadWindow : Window
     private List<Genre> _genres = [];
     private List<Rating> _ratings = [];
     private List<Style> _styles = [];
+    private List<Language> _languages = [];
 
     public DownloadWindow()
     {
@@ -27,11 +28,13 @@ public partial class DownloadWindow : Window
         _genres = MusicLibraryService.Current.GetGenres();
         _ratings = MusicLibraryService.Current.GetRatings();
         _styles = MusicLibraryService.Current.GetStyles();
+        _languages = MusicLibraryService.Current.GetLanguages();
 
         GenresBox.ItemsSource = _genres.Select(g => g.Name).ToList();
         RatingBox.ItemsSource = new[] { "(Select rating)" }.Concat(_ratings.Select(r => r.Name)).ToList();
         RatingBox.SelectedIndex = 0;
         StylesBox.ItemsSource = _styles.Select(s => s.Name).ToList();
+        LanguagesBox.ItemsSource = _languages.Select(l => l.Name).ToList();
     }
 
     private void UpdateDownloadButton()
@@ -59,6 +62,10 @@ public partial class DownloadWindow : Window
             StyleIds = StylesBox.SelectedItems?
                 .Cast<string>()
                 .Select(name => _styles.First(s => s.Name == name).Id)
+                .ToList() ?? [],
+            LanguageIds = LanguagesBox.SelectedItems?
+                .Cast<string>()
+                .Select(name => _languages.First(l => l.Name == name).Id)
                 .ToList() ?? [],
         };
 

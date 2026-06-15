@@ -65,6 +65,10 @@ public class MusicDatabase
                 Id   INTEGER PRIMARY KEY AUTOINCREMENT,
                 Name TEXT    NOT NULL UNIQUE
             );
+            CREATE TABLE Languages (
+                Id   INTEGER PRIMARY KEY AUTOINCREMENT,
+                Name TEXT    NOT NULL UNIQUE
+            );
             CREATE TABLE Ratings (
                 Id        INTEGER PRIMARY KEY AUTOINCREMENT,
                 Name      TEXT    NOT NULL UNIQUE,
@@ -90,6 +94,11 @@ public class MusicDatabase
                 MusicId INTEGER NOT NULL,
                 GenreId INTEGER NOT NULL,
                 PRIMARY KEY (MusicId, GenreId)
+            );
+            CREATE TABLE MusicLanguages (
+                MusicId    INTEGER NOT NULL,
+                LanguageId INTEGER NOT NULL,
+                PRIMARY KEY (MusicId, LanguageId)
             );";
         cmd.ExecuteNonQuery();
     }
@@ -110,7 +119,6 @@ public class MusicDatabase
         {
             using var tx = conn.BeginTransaction();
 
-            // Create MusicGenres junction table (may not exist yet)
             using (var cmd = conn.CreateCommand())
             {
                 cmd.Transaction = tx;
@@ -122,7 +130,6 @@ public class MusicDatabase
                 cmd.ExecuteNonQuery();
             }
 
-            // Copy existing single-genre assignments into the junction table
             using (var cmd = conn.CreateCommand())
             {
                 cmd.Transaction = tx;
@@ -130,7 +137,6 @@ public class MusicDatabase
                 cmd.ExecuteNonQuery();
             }
 
-            // Rebuild Music without GenreId, adding ReEvaluationNeeded
             using (var cmd = conn.CreateCommand())
             {
                 cmd.Transaction = tx;
@@ -171,13 +177,12 @@ public class MusicDatabase
         }
         else if (!ColumnExists(conn, "Music", "ReEvaluationNeeded"))
         {
-            // Already on multi-genre schema but column missing (shouldn't normally happen)
             using var cmd = conn.CreateCommand();
             cmd.CommandText = "ALTER TABLE Music ADD COLUMN ReEvaluationNeeded INTEGER NOT NULL DEFAULT 0";
             cmd.ExecuteNonQuery();
         }
 
-        // Ensure MusicGenres exists for databases that skipped the GenreId migration path
+        // Ensure junction tables exist for databases that skipped earlier migration paths
         if (!TableExists(conn, "MusicGenres"))
         {
             using var cmd = conn.CreateCommand();
@@ -185,6 +190,24 @@ public class MusicDatabase
                 MusicId INTEGER NOT NULL,
                 GenreId INTEGER NOT NULL,
                 PRIMARY KEY (MusicId, GenreId)
+            )";
+            cmd.ExecuteNonQuery();
+        }
+
+        // Languages support (new — all existing songs start with no language)
+        if (!TableExists(conn, "Languages"))
+        {
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "CREATE TABLE Languages (Id INTEGER PRIMARY KEY AUTOINCREMENT, Name TEXT NOT NULL UNIQUE)";
+            cmd.ExecuteNonQuery();
+        }
+        if (!TableExists(conn, "MusicLanguages"))
+        {
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = @"CREATE TABLE MusicLanguages (
+                MusicId    INTEGER NOT NULL,
+                LanguageId INTEGER NOT NULL,
+                PRIMARY KEY (MusicId, LanguageId)
             )";
             cmd.ExecuteNonQuery();
         }
@@ -209,7 +232,8 @@ public class MusicDatabase
     }
 
     public void InsertTrack(string canonicalUrl, string title, string fileName,
-                            List<int> genreIds, int ratingId, List<int> styleIds, int? durationSeconds)
+                            List<int> genreIds, int ratingId, List<int> styleIds,
+                            List<int> languageIds, int? durationSeconds)
     {
         using var conn = Open();
         using var tx = conn.BeginTransaction();
@@ -232,33 +256,9 @@ public class MusicDatabase
         idCmd.CommandText = "SELECT last_insert_rowid()";
         var musicId = (long)idCmd.ExecuteScalar()!;
 
-        if (genreIds.Count > 0)
-        {
-            using var genreCmd = conn.CreateCommand();
-            genreCmd.Transaction = tx;
-            genreCmd.CommandText = "INSERT INTO MusicGenres (MusicId, GenreId) VALUES ($mid, $gid)";
-            genreCmd.Parameters.Add("$mid", SqliteType.Integer).Value = musicId;
-            var gidParam = genreCmd.Parameters.Add("$gid", SqliteType.Integer);
-            foreach (var gid in genreIds)
-            {
-                gidParam.Value = gid;
-                genreCmd.ExecuteNonQuery();
-            }
-        }
-
-        if (styleIds.Count > 0)
-        {
-            using var styleCmd = conn.CreateCommand();
-            styleCmd.Transaction = tx;
-            styleCmd.CommandText = "INSERT INTO MusicStyles (MusicId, StyleId) VALUES ($mid, $sid)";
-            styleCmd.Parameters.Add("$mid", SqliteType.Integer).Value = musicId;
-            var sidParam = styleCmd.Parameters.Add("$sid", SqliteType.Integer);
-            foreach (var sid in styleIds)
-            {
-                sidParam.Value = sid;
-                styleCmd.ExecuteNonQuery();
-            }
-        }
+        InsertJunctionRows(conn, tx, "MusicGenres", "GenreId", musicId, genreIds);
+        InsertJunctionRows(conn, tx, "MusicStyles", "StyleId", musicId, styleIds);
+        InsertJunctionRows(conn, tx, "MusicLanguages", "LanguageId", musicId, languageIds);
 
         tx.Commit();
     }
@@ -280,73 +280,17 @@ public class MusicDatabase
         return list;
     }
 
-    public Dictionary<int, List<int>> GetAllMusicStyleIds()
-    {
-        using var conn = Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT MusicId, StyleId FROM MusicStyles";
-        using var r = cmd.ExecuteReader();
-        var dict = new Dictionary<int, List<int>>();
-        while (r.Read())
-        {
-            var musicId = r.GetInt32(0);
-            var styleId = r.GetInt32(1);
-            if (!dict.TryGetValue(musicId, out var ids))
-            {
-                ids = [];
-                dict[musicId] = ids;
-            }
-            ids.Add(styleId);
-        }
-        return dict;
-    }
+    public Dictionary<int, List<int>> GetAllMusicStyleIds() => GetAllJunctionIds("MusicStyles", "StyleId");
+    public List<int> GetMusicStyleIds(int musicId) => GetJunctionIds("MusicStyles", "StyleId", musicId);
 
-    public List<int> GetMusicStyleIds(int musicId)
-    {
-        using var conn = Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT StyleId FROM MusicStyles WHERE MusicId = $id";
-        cmd.Parameters.AddWithValue("$id", musicId);
-        using var r = cmd.ExecuteReader();
-        var ids = new List<int>();
-        while (r.Read()) ids.Add(r.GetInt32(0));
-        return ids;
-    }
+    public Dictionary<int, List<int>> GetAllMusicGenreIds() => GetAllJunctionIds("MusicGenres", "GenreId");
+    public List<int> GetMusicGenreIds(int musicId) => GetJunctionIds("MusicGenres", "GenreId", musicId);
 
-    public Dictionary<int, List<int>> GetAllMusicGenreIds()
-    {
-        using var conn = Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT MusicId, GenreId FROM MusicGenres";
-        using var r = cmd.ExecuteReader();
-        var dict = new Dictionary<int, List<int>>();
-        while (r.Read())
-        {
-            var musicId = r.GetInt32(0);
-            var genreId = r.GetInt32(1);
-            if (!dict.TryGetValue(musicId, out var ids))
-            {
-                ids = [];
-                dict[musicId] = ids;
-            }
-            ids.Add(genreId);
-        }
-        return dict;
-    }
+    public Dictionary<int, List<int>> GetAllMusicLanguageIds() => GetAllJunctionIds("MusicLanguages", "LanguageId");
+    public List<int> GetMusicLanguageIds(int musicId) => GetJunctionIds("MusicLanguages", "LanguageId", musicId);
 
-    public List<int> GetMusicGenreIds(int musicId)
-    {
-        using var conn = Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT GenreId FROM MusicGenres WHERE MusicId = $id";
-        cmd.Parameters.AddWithValue("$id", musicId);
-        using var r = cmd.ExecuteReader();
-        var ids = new List<int>();
-        while (r.Read()) ids.Add(r.GetInt32(0));
-        return ids;
-    }
-
-    public void UpdateTrack(int id, string title, List<int> genreIds, int ratingId, List<int> styleIds, string? notes, bool reEvaluationNeeded)
+    public void UpdateTrack(int id, string title, List<int> genreIds, int ratingId,
+                            List<int> styleIds, List<int> languageIds, string? notes, bool reEvaluationNeeded)
     {
         using var conn = Open();
         using var tx = conn.BeginTransaction();
@@ -363,47 +307,9 @@ public class MusicDatabase
             cmd.ExecuteNonQuery();
         }
 
-        using (var cmd = conn.CreateCommand())
-        {
-            cmd.Transaction = tx;
-            cmd.CommandText = "DELETE FROM MusicGenres WHERE MusicId = $id";
-            cmd.Parameters.AddWithValue("$id", id);
-            cmd.ExecuteNonQuery();
-        }
-        if (genreIds.Count > 0)
-        {
-            using var genreCmd = conn.CreateCommand();
-            genreCmd.Transaction = tx;
-            genreCmd.CommandText = "INSERT INTO MusicGenres (MusicId, GenreId) VALUES ($mid, $gid)";
-            genreCmd.Parameters.Add("$mid", SqliteType.Integer).Value = id;
-            var gidParam = genreCmd.Parameters.Add("$gid", SqliteType.Integer);
-            foreach (var gid in genreIds)
-            {
-                gidParam.Value = gid;
-                genreCmd.ExecuteNonQuery();
-            }
-        }
-
-        using (var cmd = conn.CreateCommand())
-        {
-            cmd.Transaction = tx;
-            cmd.CommandText = "DELETE FROM MusicStyles WHERE MusicId = $id";
-            cmd.Parameters.AddWithValue("$id", id);
-            cmd.ExecuteNonQuery();
-        }
-        if (styleIds.Count > 0)
-        {
-            using var styleCmd = conn.CreateCommand();
-            styleCmd.Transaction = tx;
-            styleCmd.CommandText = "INSERT INTO MusicStyles (MusicId, StyleId) VALUES ($mid, $sid)";
-            styleCmd.Parameters.Add("$mid", SqliteType.Integer).Value = id;
-            var sidParam = styleCmd.Parameters.Add("$sid", SqliteType.Integer);
-            foreach (var sid in styleIds)
-            {
-                sidParam.Value = sid;
-                styleCmd.ExecuteNonQuery();
-            }
-        }
+        ReplaceJunctionRows(conn, tx, "MusicGenres", "GenreId", id, genreIds);
+        ReplaceJunctionRows(conn, tx, "MusicStyles", "StyleId", id, styleIds);
+        ReplaceJunctionRows(conn, tx, "MusicLanguages", "LanguageId", id, languageIds);
 
         tx.Commit();
     }
@@ -413,20 +319,15 @@ public class MusicDatabase
         using var conn = Open();
         using var tx = conn.BeginTransaction();
 
-        using (var cmd = conn.CreateCommand())
+        foreach (var table in new[] { "MusicGenres", "MusicStyles", "MusicLanguages" })
         {
+            using var cmd = conn.CreateCommand();
             cmd.Transaction = tx;
-            cmd.CommandText = "DELETE FROM MusicGenres WHERE MusicId = $id";
+            cmd.CommandText = $"DELETE FROM {table} WHERE MusicId = $id";
             cmd.Parameters.AddWithValue("$id", id);
             cmd.ExecuteNonQuery();
         }
-        using (var cmd = conn.CreateCommand())
-        {
-            cmd.Transaction = tx;
-            cmd.CommandText = "DELETE FROM MusicStyles WHERE MusicId = $id";
-            cmd.Parameters.AddWithValue("$id", id);
-            cmd.ExecuteNonQuery();
-        }
+
         using (var cmd = conn.CreateCommand())
         {
             cmd.Transaction = tx;
@@ -438,101 +339,34 @@ public class MusicDatabase
         tx.Commit();
     }
 
-    public List<Genre> GetGenres()
-    {
-        using var conn = Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT Id, Name FROM Genres ORDER BY Name";
-        using var r = cmd.ExecuteReader();
-        var list = new List<Genre>();
-        while (r.Read()) list.Add(new Genre(r.GetInt32(0), r.GetString(1)));
-        return list;
-    }
+    // --- Genres ---
 
-    public void InsertGenre(string name)
-    {
-        using var conn = Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = "INSERT OR IGNORE INTO Genres (Name) VALUES ($name)";
-        cmd.Parameters.AddWithValue("$name", name);
-        cmd.ExecuteNonQuery();
-    }
+    public List<Genre> GetGenres() => GetLookupList("Genres", (id, name) => new Genre(id, name));
 
-    public bool IsGenreInUse(int id)
-    {
-        using var conn = Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT COUNT(*) FROM MusicGenres WHERE GenreId = $id";
-        cmd.Parameters.AddWithValue("$id", id);
-        return (long)cmd.ExecuteScalar()! > 0;
-    }
+    public void InsertGenre(string name) => InsertLookup("Genres", name);
+    public bool IsGenreInUse(int id) => IsInUse("MusicGenres", "GenreId", id);
+    public void UpdateGenre(int id, string name) => UpdateLookup("Genres", id, name);
+    public void DeleteGenre(int id) => DeleteLookup("Genres", id);
 
-    public void UpdateGenre(int id, string name)
-    {
-        using var conn = Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = "UPDATE Genres SET Name = $name WHERE Id = $id";
-        cmd.Parameters.AddWithValue("$id", id);
-        cmd.Parameters.AddWithValue("$name", name);
-        cmd.ExecuteNonQuery();
-    }
+    // --- Styles ---
 
-    public void DeleteGenre(int id)
-    {
-        using var conn = Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = "DELETE FROM Genres WHERE Id = $id";
-        cmd.Parameters.AddWithValue("$id", id);
-        cmd.ExecuteNonQuery();
-    }
+    public List<Style> GetStyles() => GetLookupList("Styles", (id, name) => new Style(id, name));
 
-    public List<Style> GetStyles()
-    {
-        using var conn = Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT Id, Name FROM Styles ORDER BY Name";
-        using var r = cmd.ExecuteReader();
-        var list = new List<Style>();
-        while (r.Read()) list.Add(new Style(r.GetInt32(0), r.GetString(1)));
-        return list;
-    }
+    public void InsertStyle(string name) => InsertLookup("Styles", name);
+    public bool IsStyleInUse(int id) => IsInUse("MusicStyles", "StyleId", id);
+    public void UpdateStyle(int id, string name) => UpdateLookup("Styles", id, name);
+    public void DeleteStyle(int id) => DeleteLookup("Styles", id);
 
-    public void InsertStyle(string name)
-    {
-        using var conn = Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = "INSERT OR IGNORE INTO Styles (Name) VALUES ($name)";
-        cmd.Parameters.AddWithValue("$name", name);
-        cmd.ExecuteNonQuery();
-    }
+    // --- Languages ---
 
-    public bool IsStyleInUse(int id)
-    {
-        using var conn = Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT COUNT(*) FROM MusicStyles WHERE StyleId = $id";
-        cmd.Parameters.AddWithValue("$id", id);
-        return (long)cmd.ExecuteScalar()! > 0;
-    }
+    public List<Language> GetLanguages() => GetLookupList("Languages", (id, name) => new Language(id, name));
 
-    public void UpdateStyle(int id, string name)
-    {
-        using var conn = Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = "UPDATE Styles SET Name = $name WHERE Id = $id";
-        cmd.Parameters.AddWithValue("$id", id);
-        cmd.Parameters.AddWithValue("$name", name);
-        cmd.ExecuteNonQuery();
-    }
+    public void InsertLanguage(string name) => InsertLookup("Languages", name);
+    public bool IsLanguageInUse(int id) => IsInUse("MusicLanguages", "LanguageId", id);
+    public void UpdateLanguage(int id, string name) => UpdateLookup("Languages", id, name);
+    public void DeleteLanguage(int id) => DeleteLookup("Languages", id);
 
-    public void DeleteStyle(int id)
-    {
-        using var conn = Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = "DELETE FROM Styles WHERE Id = $id";
-        cmd.Parameters.AddWithValue("$id", id);
-        cmd.ExecuteNonQuery();
-    }
+    // --- Ratings ---
 
     public List<Rating> GetRatings()
     {
@@ -556,32 +390,120 @@ public class MusicDatabase
         cmd.ExecuteNonQuery();
     }
 
-    public bool IsRatingInUse(int id)
+    public bool IsRatingInUse(int id) => IsInUse("Music", "RatingId", id);
+    public void UpdateRating(int id, string name) => UpdateLookup("Ratings", id, name);
+    public void DeleteRating(int id) => DeleteLookup("Ratings", id);
+
+    // --- Private helpers ---
+
+    private List<T> GetLookupList<T>(string table, Func<int, string, T> ctor)
     {
         using var conn = Open();
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT COUNT(*) FROM Music WHERE RatingId = $id";
+        cmd.CommandText = $"SELECT Id, Name FROM {table} ORDER BY Name";
+        using var r = cmd.ExecuteReader();
+        var list = new List<T>();
+        while (r.Read()) list.Add(ctor(r.GetInt32(0), r.GetString(1)));
+        return list;
+    }
+
+    private void InsertLookup(string table, string name)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = $"INSERT OR IGNORE INTO {table} (Name) VALUES ($name)";
+        cmd.Parameters.AddWithValue("$name", name);
+        cmd.ExecuteNonQuery();
+    }
+
+    private bool IsInUse(string table, string column, int id)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = $"SELECT COUNT(*) FROM {table} WHERE {column} = $id";
         cmd.Parameters.AddWithValue("$id", id);
         return (long)cmd.ExecuteScalar()! > 0;
     }
 
-    public void UpdateRating(int id, string name)
+    private void UpdateLookup(string table, int id, string name)
     {
         using var conn = Open();
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = "UPDATE Ratings SET Name = $name WHERE Id = $id";
+        cmd.CommandText = $"UPDATE {table} SET Name = $name WHERE Id = $id";
         cmd.Parameters.AddWithValue("$id", id);
         cmd.Parameters.AddWithValue("$name", name);
         cmd.ExecuteNonQuery();
     }
 
-    public void DeleteRating(int id)
+    private void DeleteLookup(string table, int id)
     {
         using var conn = Open();
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = "DELETE FROM Ratings WHERE Id = $id";
+        cmd.CommandText = $"DELETE FROM {table} WHERE Id = $id";
         cmd.Parameters.AddWithValue("$id", id);
         cmd.ExecuteNonQuery();
+    }
+
+    private Dictionary<int, List<int>> GetAllJunctionIds(string table, string idColumn)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = $"SELECT MusicId, {idColumn} FROM {table}";
+        using var r = cmd.ExecuteReader();
+        var dict = new Dictionary<int, List<int>>();
+        while (r.Read())
+        {
+            var musicId = r.GetInt32(0);
+            var tagId = r.GetInt32(1);
+            if (!dict.TryGetValue(musicId, out var ids))
+            {
+                ids = [];
+                dict[musicId] = ids;
+            }
+            ids.Add(tagId);
+        }
+        return dict;
+    }
+
+    private List<int> GetJunctionIds(string table, string idColumn, int musicId)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = $"SELECT {idColumn} FROM {table} WHERE MusicId = $id";
+        cmd.Parameters.AddWithValue("$id", musicId);
+        using var r = cmd.ExecuteReader();
+        var ids = new List<int>();
+        while (r.Read()) ids.Add(r.GetInt32(0));
+        return ids;
+    }
+
+    private static void InsertJunctionRows(SqliteConnection conn, SqliteTransaction tx,
+        string table, string idColumn, long musicId, List<int> ids)
+    {
+        if (ids.Count == 0) return;
+        using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
+        cmd.CommandText = $"INSERT INTO {table} (MusicId, {idColumn}) VALUES ($mid, $tid)";
+        cmd.Parameters.Add("$mid", SqliteType.Integer).Value = musicId;
+        var tidParam = cmd.Parameters.Add("$tid", SqliteType.Integer);
+        foreach (var id in ids)
+        {
+            tidParam.Value = id;
+            cmd.ExecuteNonQuery();
+        }
+    }
+
+    private static void ReplaceJunctionRows(SqliteConnection conn, SqliteTransaction tx,
+        string table, string idColumn, int musicId, List<int> ids)
+    {
+        using (var del = conn.CreateCommand())
+        {
+            del.Transaction = tx;
+            del.CommandText = $"DELETE FROM {table} WHERE MusicId = $id";
+            del.Parameters.AddWithValue("$id", musicId);
+            del.ExecuteNonQuery();
+        }
+        InsertJunctionRows(conn, tx, table, idColumn, musicId, ids);
     }
 
     private SqliteConnection Open()

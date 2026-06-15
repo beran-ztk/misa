@@ -9,4 +9,5 @@ public class DownloadRequest
     public List<int> GenreIds { get; init; } = [];
     public required int RatingId { get; init; }
     public List<int> StyleIds { get; init; } = [];
+    public List<int> LanguageIds { get; init; } = [];
 }

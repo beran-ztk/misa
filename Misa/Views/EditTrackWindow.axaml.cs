@@ -13,6 +13,7 @@ public partial class EditTrackWindow : Window
     private List<Genre> _genres = [];
     private List<Rating> _ratings = [];
     private List<Style> _styles = [];
+    private List<Language> _languages = [];
 
     public EditTrackWindow(MusicTrack track)
     {
@@ -29,6 +30,7 @@ public partial class EditTrackWindow : Window
         _genres = MusicLibraryService.Current.GetGenres();
         _ratings = MusicLibraryService.Current.GetRatings();
         _styles = MusicLibraryService.Current.GetStyles();
+        _languages = MusicLibraryService.Current.GetLanguages();
 
         TitleBox.Text = _track.Title;
         NotesBox.Text = _track.Notes ?? "";
@@ -53,6 +55,14 @@ public partial class EditTrackWindow : Window
             if (currentStyleIds.Contains(_styles[i].Id))
                 StylesBox.Selection.Select(i);
         }
+
+        LanguagesBox.ItemsSource = _languages.Select(l => l.Name).ToList();
+        var currentLanguageIds = MusicLibraryService.Current.GetTrackLanguageIds(_track.Id);
+        for (int i = 0; i < _languages.Count; i++)
+        {
+            if (currentLanguageIds.Contains(_languages[i].Id))
+                LanguagesBox.Selection.Select(i);
+        }
     }
 
     private void UpdateSaveButton()
@@ -74,10 +84,14 @@ public partial class EditTrackWindow : Window
             .Cast<string>()
             .Select(name => _styles.First(s => s.Name == name).Id)
             .ToList() ?? [];
+        var languageIds = LanguagesBox.SelectedItems?
+            .Cast<string>()
+            .Select(name => _languages.First(l => l.Name == name).Id)
+            .ToList() ?? [];
         var notes = string.IsNullOrWhiteSpace(NotesBox.Text) ? null : NotesBox.Text.Trim();
         var reEval = ReEvalCheckBox.IsChecked == true;
 
-        MusicLibraryService.Current.UpdateTrack(_track.Id, title, genreIds, ratingId, styleIds, notes, reEval);
+        MusicLibraryService.Current.UpdateTrack(_track.Id, title, genreIds, ratingId, styleIds, languageIds, notes, reEval);
         Close(true);
     }
 

@@ -16,6 +16,7 @@ public class LibraryTrack
     public List<string> Genres { get; set; } = [];
     public string Rating { get; set; } = "";
     public List<string> Styles { get; set; } = [];
+    public List<string> Languages { get; set; } = [];
     public int? DurationSeconds { get; set; }
     public string? Notes { get; set; }
     public bool ReEvaluationNeeded { get; set; }

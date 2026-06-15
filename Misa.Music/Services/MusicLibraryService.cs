@@ -72,6 +72,9 @@ public class MusicLibraryService
     public Dictionary<int, List<int>> GetAllTrackGenreIds() => _db.GetAllMusicGenreIds();
     public List<int> GetTrackGenreIds(int trackId) => _db.GetMusicGenreIds(trackId);
 
+    public Dictionary<int, List<int>> GetAllTrackLanguageIds() => _db.GetAllMusicLanguageIds();
+    public List<int> GetTrackLanguageIds(int trackId) => _db.GetMusicLanguageIds(trackId);
+
     public async Task<DownloadResult> DownloadTrackAsync(DownloadRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.RawUrl))
@@ -100,13 +103,15 @@ public class MusicLibraryService
             : request.CustomTitle.Trim();
 
         var duration = await _downloader.GetDurationAsync(filePath);
-        _db.InsertTrack(canonicalUrl, title, fileName, request.GenreIds, request.RatingId, request.StyleIds, duration);
+        _db.InsertTrack(canonicalUrl, title, fileName,
+            request.GenreIds, request.RatingId, request.StyleIds, request.LanguageIds, duration);
 
         return new DownloadResult(true);
     }
 
-    public void UpdateTrack(int id, string title, List<int> genreIds, int ratingId, List<int> styleIds, string? notes, bool reEvaluationNeeded) =>
-        _db.UpdateTrack(id, title, genreIds, ratingId, styleIds, notes, reEvaluationNeeded);
+    public void UpdateTrack(int id, string title, List<int> genreIds, int ratingId,
+                            List<int> styleIds, List<int> languageIds, string? notes, bool reEvaluationNeeded) =>
+        _db.UpdateTrack(id, title, genreIds, ratingId, styleIds, languageIds, notes, reEvaluationNeeded);
 
     public DeleteTrackResult DeleteTrack(int id, string fileName)
     {
@@ -117,9 +122,7 @@ public class MusicLibraryService
     // --- Genres ---
 
     public List<Genre> GetGenres() => _db.GetGenres();
-
     public void AddGenre(string name) => _db.InsertGenre(name);
-
     public void RenameGenre(int id, string name) => _db.UpdateGenre(id, name);
 
     public DeletionResult TryDeleteGenre(int id)
@@ -133,9 +136,7 @@ public class MusicLibraryService
     // --- Styles ---
 
     public List<Style> GetStyles() => _db.GetStyles();
-
     public void AddStyle(string name) => _db.InsertStyle(name);
-
     public void RenameStyle(int id, string name) => _db.UpdateStyle(id, name);
 
     public DeletionResult TryDeleteStyle(int id)
@@ -146,12 +147,24 @@ public class MusicLibraryService
         return new DeletionResult(true);
     }
 
+    // --- Languages ---
+
+    public List<Language> GetLanguages() => _db.GetLanguages();
+    public void AddLanguage(string name) => _db.InsertLanguage(name);
+    public void RenameLanguage(int id, string name) => _db.UpdateLanguage(id, name);
+
+    public DeletionResult TryDeleteLanguage(int id)
+    {
+        if (_db.IsLanguageInUse(id))
+            return new DeletionResult(false, "Cannot delete: language is used by one or more tracks.");
+        _db.DeleteLanguage(id);
+        return new DeletionResult(true);
+    }
+
     // --- Ratings ---
 
     public List<Rating> GetRatings() => _db.GetRatings();
-
     public void AddRating(string name) => _db.InsertRating(name);
-
     public void RenameRating(int id, string name) => _db.UpdateRating(id, name);
 
     public DeletionResult TryDeleteRating(int id)
