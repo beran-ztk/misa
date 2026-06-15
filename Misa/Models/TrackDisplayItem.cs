@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Avalonia.Media.Imaging;
 using Misa.Music.Models;
 
 namespace Misa.Models;
@@ -11,4 +12,5 @@ public record TrackDisplayItem(MusicTrack Track, string MetaLine, List<int> Genr
     public bool HasNotes => !string.IsNullOrWhiteSpace(Track.Notes);
     public bool ReEvaluationNeeded => Track.ReEvaluationNeeded;
     public bool IsPlaying { get; set; }
+    public Bitmap? Thumbnail { get; set; }
 }

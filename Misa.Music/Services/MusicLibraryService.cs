@@ -126,6 +126,17 @@ public class MusicLibraryService
         return _fileService.TryDeleteFile(fileName);
     }
 
+    // --- Thumbnails ---
+
+    public string? EnsureThumbnailCached(int trackId, string fileName)
+    {
+        var audioFilePath = Path.Combine(_settings.MusicDirectory, fileName);
+        return ThumbnailService.EnsureCached(trackId, audioFilePath);
+    }
+
+    public string? GetThumbnailCachePath(int trackId) =>
+        ThumbnailService.GetCachedPath(trackId);
+
     // --- Genres ---
 
     public List<Genre> GetGenres() => _db.GetGenres();

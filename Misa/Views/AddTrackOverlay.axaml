@@ -67,14 +67,16 @@
                         </StackPanel>
 
                         <!-- Genres -->
-                        <StackPanel Spacing="8">
+                        <StackPanel Spacing="8"
+                                    Margin="0,0,40,0">
                             <TextBlock Text="Genres"
                                        FontSize="13" FontWeight="SemiBold" />
                             <WrapPanel x:Name="GenresPanel" Orientation="Horizontal" />
                         </StackPanel>
 
                         <!-- Styles -->
-                        <StackPanel Spacing="8">
+                        <StackPanel Spacing="8"
+                                    Margin="0,0,40,0">
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <TextBlock Text="Styles"
                                            FontSize="13" FontWeight="SemiBold" />
@@ -86,7 +88,8 @@
                         </StackPanel>
 
                         <!-- Languages -->
-                        <StackPanel Spacing="8">
+                        <StackPanel Spacing="8"
+                                    Margin="0,0,40,0">
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <TextBlock Text="Languages"
                                            FontSize="13" FontWeight="SemiBold" />

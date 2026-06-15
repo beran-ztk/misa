@@ -259,12 +259,20 @@
             </ListBox.Styles>
             <ListBox.ItemTemplate>
                 <DataTemplate x:DataType="models:TrackDisplayItem">
-                    <Grid ColumnDefinitions="16,*">
+                    <Grid ColumnDefinitions="16,44,*">
                         <TextBlock Grid.Column="0"
                                    Text="▶" FontSize="9"
                                    VerticalAlignment="Center" Opacity="0.7"
                                    IsVisible="{Binding IsPlaying}" />
-                        <StackPanel Grid.Column="1">
+                        <Border Grid.Column="1"
+                                Width="36" Height="36"
+                                CornerRadius="3" ClipToBounds="True"
+                                Margin="4,0,8,0" VerticalAlignment="Center"
+                                Background="#12808080">
+                            <Image Source="{Binding Thumbnail}"
+                                   Stretch="UniformToFill" />
+                        </Border>
+                        <StackPanel Grid.Column="2">
                             <TextBlock Text="{Binding Title}" FontSize="13" />
                             <TextBlock Text="{Binding MetaLine}"
                                        FontSize="11" Opacity="0.5"

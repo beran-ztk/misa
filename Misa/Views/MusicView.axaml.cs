@@ -2,12 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Misa.Models;
 using Misa.Music.Models;
@@ -39,6 +42,7 @@ public partial class MusicView : UserControl
     // UI state
     private bool _sortDescending = true;
     private bool _filterPanelVisible;
+    private CancellationTokenSource? _thumbLoadCts;
 
     // Crossfade state
     private int _lastKnownActiveId = -1;
@@ -206,6 +210,12 @@ public partial class MusicView : UserControl
 
     private void RefreshTrackList()
     {
+        _thumbLoadCts?.Cancel();
+        _thumbLoadCts = new CancellationTokenSource();
+
+        foreach (var item in _allItems)
+            item.Thumbnail?.Dispose();
+
         var tracks = MusicLibraryService.Current.GetTracks();
         _allTrackStyleIds = MusicLibraryService.Current.GetAllTrackStyleIds();
         _allTrackGenreIds = MusicLibraryService.Current.GetAllTrackGenreIds();
@@ -244,6 +254,51 @@ public partial class MusicView : UserControl
         }).ToList();
 
         ApplyFilter();
+        _ = LoadThumbnailsAsync(_thumbLoadCts.Token);
+    }
+
+    private async Task LoadThumbnailsAsync(CancellationToken ct)
+    {
+        var items = _allItems.ToList();
+
+        // Extract embedded artwork to disk cache on a background thread
+        Dictionary<int, string?> paths;
+        try
+        {
+            paths = await Task.Run(() =>
+            {
+                var result = new Dictionary<int, string?>();
+                foreach (var item in items)
+                {
+                    ct.ThrowIfCancellationRequested();
+                    result[item.Track.Id] = MusicLibraryService.Current.EnsureThumbnailCached(
+                        item.Track.Id, item.Track.FileName);
+                }
+                return result;
+            }, ct);
+        }
+        catch (OperationCanceledException) { return; }
+
+        if (ct.IsCancellationRequested) return;
+
+        // Load Bitmaps on UI thread (reading small cached JPEGs is fast)
+        bool any = false;
+        foreach (var item in items)
+        {
+            if (paths.TryGetValue(item.Track.Id, out var path) && path != null)
+            {
+                try { item.Thumbnail = new Bitmap(path); any = true; }
+                catch { }
+            }
+        }
+
+        if (!any || ct.IsCancellationRequested) return;
+
+        // Re-assign ItemsSource to trigger a re-render with thumbnails
+        var sel = FileList.SelectedIndex;
+        FileList.ItemsSource = _filteredItems.ToList();
+        if (sel >= 0 && sel < _filteredItems.Count)
+            FileList.SelectedIndex = sel;
     }
 
     private void ApplyFilter()

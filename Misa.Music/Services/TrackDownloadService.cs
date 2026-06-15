@@ -33,7 +33,8 @@ public class TrackDownloadService
         args.Add("--no-playlist");
         args.Add("-x");
         args.Add("--audio-format m4a");
-        // args.Add($"--ffmpeg-location \"{_toolsDir}\"");
+        args.Add("--embed-thumbnail");
+        args.Add($"--ffmpeg-location \"{_toolsDir}\"");
         args.Add($"-o \"{outputTemplate}\"");
         args.Add($"\"{url}\"");
 
