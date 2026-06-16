@@ -233,25 +233,25 @@ public partial class MusicView : UserControl
             var styleIds = _allTrackStyleIds.GetValueOrDefault(t.Id, []);
             var languageIds = _allTrackLanguageIds.GetValueOrDefault(t.Id, []);
 
-            var parts = new List<string>();
             var genreStr = string.Join(", ", genreIds
                 .Select(id => genreMap.GetValueOrDefault(id, ""))
                 .Where(n => n.Length > 0).Order());
-            if (genreStr.Length > 0) parts.Add(genreStr);
-            parts.Add(ratingMap.GetValueOrDefault(t.RatingId, "?"));
-            if (t.DurationSeconds.HasValue)
-                parts.Add(FormatDuration(t.DurationSeconds.Value));
             var styleStr = string.Join(", ", styleIds
                 .Select(id => styleMap.GetValueOrDefault(id, ""))
                 .Where(n => n.Length > 0).Order());
-            if (styleStr.Length > 0) parts.Add(styleStr);
             var langStr = string.Join(", ", languageIds
                 .Select(id => languageMap.GetValueOrDefault(id, ""))
                 .Where(n => n.Length > 0).Order());
-            if (langStr.Length > 0) parts.Add(langStr);
-            if (t.ReEvaluationNeeded) parts.Add("[re-eval]");
+            var ratingName = ratingMap.GetValueOrDefault(t.RatingId, "");
+            var durationText = t.DurationSeconds.HasValue ? FormatDuration(t.DurationSeconds.Value) : "";
 
-            return new TrackDisplayItem(t, string.Join(" · ", parts), genreIds, styleIds, languageIds);
+            var miscParts = new List<string>();
+            if (langStr.Length > 0) miscParts.Add(langStr);
+            if (t.ReEvaluationNeeded) miscParts.Add("[re-eval]");
+
+            return new TrackDisplayItem(t, string.Join(" · ", miscParts),
+                genreIds, styleIds, languageIds,
+                genreStr, styleStr, durationText, ratingName);
         }).ToList();
 
         ApplyFilter();
@@ -401,7 +401,9 @@ public partial class MusicView : UserControl
         };
         // Records copy init-only properties via `with`, but IsPlaying/Thumbnail have `set`
         // and are NOT copied automatically — reconstruct manually to preserve them.
-        var updated = new TrackDisplayItem(newTrack, old.MetaLine, old.GenreIds, old.StyleIds, old.LanguageIds)
+        var updated = new TrackDisplayItem(newTrack, old.MetaLine,
+            old.GenreIds, old.StyleIds, old.LanguageIds,
+            old.GenreText, old.StyleText, old.DurationText, old.RatingText)
         {
             IsPlaying = old.IsPlaying,
             Thumbnail = old.Thumbnail,

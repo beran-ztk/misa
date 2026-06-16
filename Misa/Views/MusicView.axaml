@@ -212,36 +212,72 @@
                 </ListBox.Styles>
                 <ListBox.ItemTemplate>
                     <DataTemplate x:DataType="models:TrackDisplayItem">
-                        <Grid ColumnDefinitions="14,44,*">
+                        <Grid ColumnDefinitions="14,48,*,Auto">
+
+                            <!-- Playing indicator -->
                             <TextBlock Grid.Column="0"
                                        Text="▶" FontSize="9"
                                        VerticalAlignment="Center"
-                                       Opacity="0.65"
+                                       Opacity="0.6"
                                        IsVisible="{Binding IsPlaying}"/>
+
+                            <!-- Thumbnail -->
                             <Border Grid.Column="1"
                                     Width="36" Height="36"
                                     CornerRadius="4" ClipToBounds="True"
-                                    Margin="4,0,8,0" VerticalAlignment="Center"
+                                    Margin="4,0,10,0" VerticalAlignment="Center"
                                     Background="#10808080">
                                 <Image Source="{Binding Thumbnail}"
                                        Stretch="UniformToFill"/>
                             </Border>
-                            <StackPanel Grid.Column="2" VerticalAlignment="Center">
-                                <TextBlock Text="{Binding Title}" FontSize="13"/>
+
+                            <!-- Title + genre + style -->
+                            <StackPanel Grid.Column="2"
+                                        VerticalAlignment="Center"
+                                        Spacing="2">
+                                <TextBlock Text="{Binding Title}"
+                                           FontSize="13" FontWeight="Medium"
+                                           TextTrimming="CharacterEllipsis"/>
+                                <TextBlock Text="{Binding GenreText}"
+                                           FontSize="11" Opacity="0.58"
+                                           IsVisible="{Binding HasGenres}"
+                                           TextTrimming="CharacterEllipsis"/>
+                                <TextBlock Text="{Binding StyleText}"
+                                           FontSize="10.5" Opacity="0.35"
+                                           IsVisible="{Binding HasStyles}"
+                                           TextTrimming="CharacterEllipsis"/>
                                 <TextBlock Text="{Binding MetaLine}"
-                                           FontSize="11" Opacity="0.45"
-                                           Margin="0,2,0,0"/>
-                                <TextBlock Text="{Binding Notes}"
-                                           FontSize="11" Opacity="0.38"
-                                           FontStyle="Italic"
-                                           IsVisible="{Binding HasNotes}"
-                                           TextTrimming="CharacterEllipsis"
-                                           Margin="0,1,0,0"/>
-                                <TextBlock Text="{Binding StatsLine}"
-                                           FontSize="10" Opacity="0.3"
-                                           IsVisible="{Binding HasStats}"
-                                           Margin="0,1,0,0"/>
+                                           FontSize="10" Opacity="0.28"
+                                           IsVisible="{Binding HasMetaLine}"
+                                           TextTrimming="CharacterEllipsis"/>
                             </StackPanel>
+
+                            <!-- Right: duration / rating / counts -->
+                            <StackPanel Grid.Column="3"
+                                        VerticalAlignment="Center"
+                                        HorizontalAlignment="Right"
+                                        Spacing="3"
+                                        Margin="16,0,0,0"
+                                        MinWidth="72">
+                                <TextBlock Text="{Binding DurationText}"
+                                           FontSize="11" Opacity="0.52"
+                                           HorizontalAlignment="Right"
+                                           IsVisible="{Binding HasDuration}"/>
+                                <TextBlock Text="{Binding RatingText}"
+                                           FontSize="10" Opacity="0.42"
+                                           HorizontalAlignment="Right"
+                                           IsVisible="{Binding HasRating}"/>
+                                <StackPanel Orientation="Horizontal"
+                                            HorizontalAlignment="Right"
+                                            Spacing="10"
+                                            IsVisible="{Binding HasStats}">
+                                    <TextBlock Text="{Binding ListenText}"
+                                               FontSize="10" Opacity="0.32"/>
+                                    <TextBlock Text="{Binding SkipText}"
+                                               FontSize="10" Opacity="0.32"/>
+                                </StackPanel>
+                            </StackPanel>
+
                         </Grid>
                     </DataTemplate>
                 </ListBox.ItemTemplate>
