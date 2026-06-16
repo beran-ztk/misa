@@ -1,8 +1,7 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
-using Misa.Views;
-using Music.Views;
+using MainWindow = Music.Views.MainWindow;
 
 namespace Music;
 

@@ -1,15 +1,14 @@
-using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 
-namespace Misa.Views;
+namespace Music.Views;
 
 public partial class MainWindow : Window
 {
-    private readonly Music.Views.MusicView _musicView = new();
-    private readonly Music.Views.SettingsView _settingsView = new();
+    private readonly MusicView _musicView = new();
+    private readonly SettingsView _settingsView = new();
 
     public MainWindow()
     {
@@ -18,7 +17,6 @@ public partial class MainWindow : Window
         _settingsView.OnResetComplete = () => _musicView.Refresh();
         _settingsView.OnMetadataChanged = () => _musicView.RefreshFilters();
         ContentArea.Content = _musicView;
-        SetActiveNav(NavMusicBtn);
 
         PropertyChanged += (_, e) =>
         {
@@ -27,23 +25,16 @@ public partial class MainWindow : Window
         };
     }
 
-    private void OnMusicClicked(object? sender, RoutedEventArgs e)
-    {
-        ContentArea.Content = _musicView;
-        SetActiveNav(NavMusicBtn);
-    }
-
     private void OnSettingsClicked(object? sender, RoutedEventArgs e)
     {
-        ContentArea.Content = _settingsView;
-        SetActiveNav(NavSettingsBtn);
-    }
-
-    private void SetActiveNav(Button active)
-    {
-        var activeBg = new SolidColorBrush(Color.FromArgb(30, 128, 128, 128));
-        NavMusicBtn.Background = NavMusicBtn == active ? activeBg : Brushes.Transparent;
-        NavSettingsBtn.Background = NavSettingsBtn == active ? activeBg : Brushes.Transparent;
+        if (Equals(ContentArea.Content, _musicView))
+        {
+            ContentArea.Content = _settingsView;
+        }
+        else
+        {
+            ContentArea.Content = _musicView;
+        }
     }
 
     private void OnTitleBarPointerPressed(object? sender, PointerPressedEventArgs e)
