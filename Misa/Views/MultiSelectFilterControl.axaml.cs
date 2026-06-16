@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Layout;
 using Avalonia.Media;
 
 namespace Misa.Views;
@@ -19,9 +21,27 @@ public partial class MultiSelectFilterControl : UserControl
     public MultiSelectFilterControl()
     {
         InitializeComponent();
-        ToggleBtn.Content = _label;
+
+        // Build button content: label (left) + dropdown arrow (right)
+        var arrow = new TextBlock
+        {
+            Text = "▾",
+            Opacity = 0.45,
+            FontSize = 11,
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(6, 0, 0, 0),
+        };
+        var container = new Grid();
+        container.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+        container.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
+        Grid.SetColumn(_label, 0);
+        Grid.SetColumn(arrow, 1);
+        container.Children.Add(_label);
+        container.Children.Add(arrow);
+        ToggleBtn.Content = container;
+
         var flyout = (Flyout)ToggleBtn.Flyout!;
-        flyout.Content = new ScrollViewer { MaxHeight = 200, MinWidth = 140, Content = _itemsPanel };
+        flyout.Content = new ScrollViewer { MaxHeight = 250, MinWidth = 220, Content = _itemsPanel };
         UpdateText();
     }
 

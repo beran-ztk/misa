@@ -123,7 +123,7 @@ public partial class MusicView : UserControl
         LoadPlayerSettings();
 
         try { MusicLibraryService.Current.Initialize(); }
-        catch (Exception ex) { StatusText.Text = $"Database error: {ex.Message}"; return; }
+        catch (Exception ex) { StatusText.Text = $"Database error: {ex.Message}"; StatusText.IsVisible = true; return; }
 
         LoadLookups();
         AddFilterGroup();
@@ -441,6 +441,7 @@ public partial class MusicView : UserControl
         }
 
         ActiveFilterChips.ItemsSource = chips.Count > 0 ? (IEnumerable<string>)chips : null;
+        ActiveFilterChips.IsVisible = chips.Count > 0;
     }
 
     private static HashSet<int> SelectedIds<T>(IReadOnlySet<string> selected, List<T> source,
@@ -490,8 +491,21 @@ public partial class MusicView : UserControl
     private void OnToggleFiltersClicked(object? sender, RoutedEventArgs e)
     {
         _filterPanelVisible = !_filterPanelVisible;
-        FilterPanel.IsVisible = _filterPanelVisible;
-        FiltersToggleBtn.Content = _filterPanelVisible ? "Filters ▲" : "Filters";
+        FilterDrawer.IsVisible = _filterPanelVisible;
+    }
+
+    private void OnClearFiltersClicked(object? sender, RoutedEventArgs e)
+    {
+        RatingFilter.SetItems(_ratings.Select(r => r.Name));
+        RatingFilter.Placeholder = "All ratings";
+        ReEvalFilterCheckBox.IsChecked = false;
+        foreach (var fg in _filterGroups)
+        {
+            fg.GenreCtrl.SetItems(_genres.Select(g => g.Name));
+            fg.StyleCtrl.SetItems(_styles.Select(s => s.Name));
+            fg.LanguageCtrl.SetItems(_languages.Select(l => l.Name));
+        }
+        ApplyFilter();
     }
 
     // ─── Filter groups ────────────────────────────────────────────────────────
@@ -504,51 +518,72 @@ public partial class MusicView : UserControl
 
     private void AddFilterGroup()
     {
-        var genreCtrl = new MultiSelectFilterControl { Placeholder = "Genres" };
+        var genreCtrl = new MultiSelectFilterControl { Placeholder = "All genres" };
         genreCtrl.SetItems(_genres.Select(g => g.Name));
         genreCtrl.SelectionChanged += (_, _) => ApplyFilter();
 
-        var styleCtrl = new MultiSelectFilterControl { Placeholder = "Styles" };
+        var styleCtrl = new MultiSelectFilterControl { Placeholder = "All styles" };
         styleCtrl.SetItems(_styles.Select(s => s.Name));
         styleCtrl.SelectionChanged += (_, _) => ApplyFilter();
 
-        var languageCtrl = new MultiSelectFilterControl { Placeholder = "Languages" };
+        var languageCtrl = new MultiSelectFilterControl { Placeholder = "All languages" };
         languageCtrl.SetItems(_languages.Select(l => l.Name));
         languageCtrl.SelectionChanged += (_, _) => ApplyFilter();
 
         var fg = new FilterGroupControls(genreCtrl, styleCtrl, languageCtrl);
         _filterGroups.Add(fg);
 
-        var removeBtn = new Button { Content = "×", Padding = new Thickness(6, 0) };
-        removeBtn.Click += (_, _) => RemoveFilterGroup(fg);
+        StackPanel Section(string label, MultiSelectFilterControl ctrl) =>
+            new StackPanel { Spacing = 5, Margin = new Thickness(0, 0, 0, 10),
+                Children = {
+                    new TextBlock { Text = label, FontSize = 11, Opacity = 0.5 },
+                    ctrl
+                }
+            };
 
-        var genreWrapper = new StackPanel { Spacing = 2, MinWidth = 150 };
-        genreWrapper.Children.Add(new TextBlock { Text = "Genre", FontSize = 11, Opacity = 0.55 });
-        genreWrapper.Children.Add(genreCtrl);
+        var body = new StackPanel { Margin = new Thickness(0, 6, 0, 0) };
+        body.Children.Add(Section("Genre", genreCtrl));
+        body.Children.Add(Section("Style", styleCtrl));
+        body.Children.Add(Section("Language", languageCtrl));
 
-        var styleWrapper = new StackPanel { Spacing = 2, MinWidth = 150 };
-        styleWrapper.Children.Add(new TextBlock { Text = "Style", FontSize = 11, Opacity = 0.55 });
-        styleWrapper.Children.Add(styleCtrl);
+        var card = new StackPanel { Margin = new Thickness(0, 0, 0, 4) };
 
-        var languageWrapper = new StackPanel { Spacing = 2, MinWidth = 150 };
-        languageWrapper.Children.Add(new TextBlock { Text = "Language", FontSize = 11, Opacity = 0.55 });
-        languageWrapper.Children.Add(languageCtrl);
-
-        var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
-        row.Children.Add(genreWrapper);
-        row.Children.Add(styleWrapper);
-        row.Children.Add(languageWrapper);
-        row.Children.Add(removeBtn);
-
-        var card = new Border
+        // Only groups after the first get a divider + remove button
+        if (_filterGroups.Count > 1)
         {
-            Background = new SolidColorBrush(Color.FromArgb(14, 128, 128, 128)),
-            BorderBrush = new SolidColorBrush(Color.FromArgb(24, 128, 128, 128)),
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(5),
-            Padding = new Thickness(10, 7),
-            Child = row,
-        };
+            var header = new Grid { Margin = new Thickness(0, 12, 0, 0) };
+            header.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+            header.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
+
+            var groupLabel = new TextBlock
+            {
+                Text = $"Group {_filterGroups.Count}",
+                FontSize = 11, Opacity = 0.4,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            var removeBtn = new Button
+            {
+                Content = "×", Padding = new Thickness(6, 2),
+                FontSize = 12, Opacity = 0.5,
+                Background = new SolidColorBrush(Colors.Transparent)
+            };
+            removeBtn.Click += (_, _) => RemoveFilterGroup(fg);
+
+            Grid.SetColumn(groupLabel, 0);
+            Grid.SetColumn(removeBtn, 1);
+            header.Children.Add(groupLabel);
+            header.Children.Add(removeBtn);
+
+            var divider = new Border
+            {
+                Height = 1, Margin = new Thickness(0, 0, 0, 4),
+                Background = new SolidColorBrush(Color.FromArgb(22, 128, 128, 128))
+            };
+            card.Children.Add(divider);
+            card.Children.Add(header);
+        }
+
+        card.Children.Add(body);
         FilterGroupsPanel.Children.Add(card);
     }
 
@@ -596,7 +631,10 @@ public partial class MusicView : UserControl
 
         var result = MusicLibraryService.Current.DeleteTrack(track.Id, track.FileName);
         if (result.FileError != null)
+        {
             StatusText.Text = $"File could not be deleted: {result.FileError}";
+            StatusText.IsVisible = true;
+        }
 
         RefreshTrackList();
     }
@@ -677,6 +715,7 @@ public partial class MusicView : UserControl
         catch (Exception ex)
         {
             StatusText.Text = $"Playback failed: {ex.Message}";
+            StatusText.IsVisible = true;
             return;
         }
 

@@ -1,7 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="Misa.Views.MultiSelectFilterControl">
-    <Button x:Name="ToggleBtn" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left">
+    <Button x:Name="ToggleBtn" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
         <Button.Flyout>
             <Flyout Placement="Bottom" />
         </Button.Flyout>

@@ -1,29 +1,116 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="Misa.Views.MainWindow"
-        Title="Misa" Width="1300" Height="700">
+        Title="Misa"
+        Width="1300" Height="760"
+        MinWidth="900" MinHeight="520"
+        SystemDecorations="Full"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaChromeHints="NoChrome"
+        ExtendClientAreaTitleBarHeightHint="0">
 
-    <Grid ColumnDefinitions="156,*">
+    <Grid RowDefinitions="38,*" ColumnDefinitions="48,*">
 
-        <Border Grid.Column="0" BorderThickness="0,0,1,0" BorderBrush="#25808080"
-                Padding="8,10,8,8">
-            <StackPanel Spacing="2">
-                <TextBlock Text="Misa" FontWeight="Bold" FontSize="16"
-                           Margin="6,2,6,14" />
-                <Button x:Name="NavMusicBtn" Content="Music"
-                        HorizontalAlignment="Stretch"
-                        HorizontalContentAlignment="Left"
-                        Background="Transparent"
-                        Click="OnMusicClicked" />
-                <Button x:Name="NavSettingsBtn" Content="Settings"
-                        HorizontalAlignment="Stretch"
-                        Background="Transparent"
-                        HorizontalContentAlignment="Left"
-                        Click="OnSettingsClicked" />
+        <!-- ══ Custom title bar ══ -->
+        <Grid Grid.Row="0" Grid.ColumnSpan="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Drag / title area (transparent so hit-testable, but invisible) -->
+            <Panel Grid.Column="0"
+                   Background="Transparent"
+                   PointerPressed="OnTitleBarPointerPressed"
+                   DoubleTapped="OnTitleBarDoubleTapped">
+                <TextBlock Text="Misa"
+                           FontSize="13" FontWeight="SemiBold"
+                           Opacity="0.8"
+                           VerticalAlignment="Center"
+                           Margin="14,0,0,0"
+                           IsHitTestVisible="False"/>
+            </Panel>
+
+            <!-- Window control buttons -->
+            <StackPanel Grid.Column="1"
+                        Orientation="Horizontal"
+                        VerticalAlignment="Stretch">
+                <Button Content="─"
+                        Click="OnMinimizeClicked"
+                        Width="46" Height="38" Padding="0"
+                        FontSize="11"
+                        Background="Transparent" BorderThickness="0"
+                        CornerRadius="0"
+                        HorizontalContentAlignment="Center"
+                        VerticalContentAlignment="Center"
+                        Opacity="0.6"/>
+                <Button x:Name="TitleMaxBtn"
+                        Content="□"
+                        Click="OnMaxRestoreClicked"
+                        Width="46" Height="38" Padding="0"
+                        FontSize="11"
+                        Background="Transparent" BorderThickness="0"
+                        CornerRadius="0"
+                        HorizontalContentAlignment="Center"
+                        VerticalContentAlignment="Center"
+                        Opacity="0.6"/>
+                <Button Content="✕"
+                        Click="OnWindowCloseClicked"
+                        Width="46" Height="38" Padding="0"
+                        FontSize="11"
+                        Background="Transparent" BorderThickness="0"
+                        CornerRadius="0"
+                        HorizontalContentAlignment="Center"
+                        VerticalContentAlignment="Center"
+                        Opacity="0.6"/>
             </StackPanel>
+        </Grid>
+
+        <!-- Separator under title bar -->
+        <Rectangle Grid.Row="0" Grid.ColumnSpan="2"
+                   VerticalAlignment="Bottom" Height="1"
+                   Fill="#1E808080"
+                   IsHitTestVisible="False"/>
+
+        <!-- ══ Left sidebar ══ -->
+        <Border Grid.Row="1" Grid.Column="0"
+                BorderThickness="0,0,1,0"
+                BorderBrush="#1E808080">
+            <DockPanel LastChildFill="False">
+                <Button x:Name="NavMusicBtn"
+                        DockPanel.Dock="Top"
+                        Content="♫"
+                        Click="OnMusicClicked"
+                        ToolTip.Tip="Music"
+                        Height="30"
+                        Padding="0"
+                        FontSize="16"
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Center"
+                        VerticalContentAlignment="Center"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        CornerRadius="0"/>
+                <Button x:Name="NavSettingsBtn"
+                        DockPanel.Dock="Bottom"
+                        Content="⚙"
+                        Click="OnSettingsClicked"
+                        ToolTip.Tip="Settings"
+                        Width="48" Height="48"
+                        Padding="0"
+                        FontSize="16"
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Center"
+                        VerticalContentAlignment="Center"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        CornerRadius="0"/>
+            </DockPanel>
         </Border>
 
-        <ContentControl Grid.Column="1" x:Name="ContentArea" />
+        <!-- ══ Content area ══ -->
+        <ContentControl Grid.Row="1" Grid.Column="1"
+                        x:Name="ContentArea"/>
 
     </Grid>
 
