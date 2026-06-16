@@ -1,6 +1,6 @@
 using System;
 
-namespace Misa.Music.Services;
+namespace Misa.Services;
 
 public static class YouTubeUrlNormalizer
 {

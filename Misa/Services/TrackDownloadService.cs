@@ -1,13 +1,12 @@
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Misa.Music.Models;
+using Misa.Models;
 
-namespace Misa.Music.Services;
+namespace Misa.Services;
 
 public class TrackDownloadService
 {

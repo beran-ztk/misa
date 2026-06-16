@@ -5,22 +5,24 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
-using Misa.Music.Models;
-using Misa.Music.Services;
+using Misa.Models;
+using Misa.Services;
+using Language = Misa.Models.Language;
+using Rating = Misa.Models.Rating;
 
 namespace Misa.Views;
 
 public partial class AddTrackOverlay : UserControl
 {
-    private List<Genre> _genres = [];
+    private List<Models.Genre> _genres = [];
     private List<Rating> _ratings = [];
-    private List<Style> _styles = [];
+    private List<Models.Style> _styles = [];
     private List<Language> _languages = [];
 
     // Each chip tuple pairs the domain object with its ToggleButton so we can read
     // the selection by ID rather than by parsing button content (which includes counts).
-    private readonly List<(Genre Genre, ToggleButton Btn)> _genreChips = [];
-    private readonly List<(Style Style, ToggleButton Btn)> _styleChips = [];
+    private readonly List<(Models.Genre Genre, ToggleButton Btn)> _genreChips = [];
+    private readonly List<(Models.Style Style, ToggleButton Btn)> _styleChips = [];
     private readonly List<(Language Lang, ToggleButton Btn)> _langChips = [];
 
     private Dictionary<int, List<int>> _allTrackGenreIds = [];

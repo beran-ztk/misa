@@ -13,8 +13,6 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Misa.Models;
-using Misa.Music.Models;
-using Misa.Music.Services;
 using Misa.Services;
 
 namespace Misa.Views;

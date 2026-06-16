@@ -1,9 +1,9 @@
 using System;
 using System.IO;
 using System.Text.Json;
-using Misa.Music.Models;
+using Misa.Models;
 
-namespace Misa.Music.Services;
+namespace Misa.Services;
 
 public static class MusicSettingsService
 {

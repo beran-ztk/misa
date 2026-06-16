@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
-using Misa.Music.Models;
+using Misa.Models;
 
-namespace Misa.Music.Services;
+namespace Misa.Services;
 
 public class MusicLibraryService
 {

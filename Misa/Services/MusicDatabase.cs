@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Microsoft.Data.Sqlite;
-using Misa.Music.Models;
+using Misa.Models;
 
-namespace Misa.Music.Services;
+namespace Misa.Services;
 
 public class MusicDatabase
 {
@@ -30,7 +30,6 @@ public class MusicDatabase
             CreateSchema(conn);
         }
 
-        Migrate(conn);
         SeedDefaultMetadata(conn);
     }
 
@@ -108,8 +107,6 @@ public class MusicDatabase
             );";
         cmd.ExecuteNonQuery();
     }
-
-    private static void Migrate(SqliteConnection conn) { }
 
     private static void SeedDefaultMetadata(SqliteConnection conn)
     {

@@ -8,8 +8,8 @@ using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
-using Misa.Music.Models;
-using Misa.Music.Services;
+using Misa.Models;
+using Misa.Services;
 
 namespace Misa.Views;
 

@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Misa.Music.Models;
+namespace Misa.Models;
 
 public class DownloadRequest
 {

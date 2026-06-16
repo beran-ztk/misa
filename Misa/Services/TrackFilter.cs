@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Misa.Music.Models;
+using Misa.Models;
 
-namespace Misa.Music.Services;
+namespace Misa.Services;
 
 public enum TrackSortField { Title, Rating, DownloadedAt, Duration }
 public enum TrackSortDirection { Ascending, Descending }

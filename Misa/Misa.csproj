@@ -9,7 +9,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Folder Include="Models\"/>
         <AvaloniaResource Include="Assets\**"/>
     </ItemGroup>
 
@@ -24,10 +23,8 @@
             <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
         </PackageReference>
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.1"/>
+        <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.5" />
         <PackageReference Include="NAudio" Version="2.2.1"/>
-    </ItemGroup>
-
-    <ItemGroup>
-        <ProjectReference Include="..\Misa.Music\Misa.Music.csproj"/>
+        <PackageReference Include="TagLibSharp" Version="2.3.0" />
     </ItemGroup>
 </Project>

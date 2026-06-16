@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 
-namespace Misa.Music.Services;
+namespace Misa.Services;
 
 public static class ThumbnailService
 {

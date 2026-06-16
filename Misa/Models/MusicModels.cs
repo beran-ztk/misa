@@ -1,4 +1,4 @@
-namespace Misa.Music.Models;
+namespace Misa.Models;
 
 public record MusicTrack(
     int Id, string CanonicalUrl, string Title, string FileName,

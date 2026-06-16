@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Misa.Music.Services;
+namespace Misa.Services;
 
 public static class MetadataCountService
 {

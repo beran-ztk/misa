@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using Avalonia.Media.Imaging;
-using Misa.Music.Models;
 
 namespace Misa.Models;
 

@@ -1,8 +1,8 @@
 using System;
 using System.IO;
-using Misa.Music.Models;
+using Misa.Models;
 
-namespace Misa.Music.Services;
+namespace Misa.Services;
 
 public class TrackFileService
 {

@@ -1,4 +1,4 @@
-namespace Misa.Music.Models;
+namespace Misa.Models;
 
 public class MusicSettings
 {
