@@ -1,0 +1,388 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:Misa.Views"
+             xmlns:models="clr-namespace:Music.Models"
+             xmlns:views="clr-namespace:Music.Views"
+             x:Class="Music.Views.MusicView">
+
+    <DockPanel LastChildFill="True">
+
+        <!-- ── Toolbar ── -->
+        <Grid DockPanel.Dock="Top"
+              ColumnDefinitions="*,Auto"
+              Margin="20,14,16,10">
+
+            <TextBlock Grid.Column="0"
+                       Text="Music Library"
+                       FontSize="16" FontWeight="SemiBold"
+                       VerticalAlignment="Center"/>
+
+            <StackPanel Grid.Column="1"
+                        Orientation="Horizontal"
+                        Spacing="8"
+                        VerticalAlignment="Center">
+
+                <Button Content="＋"
+                        Click="OnAddTrackClicked"
+                        ToolTip.Tip="Add Track"
+                        Width="30" Height="30"
+                        BorderBrush="Gray"
+                        BorderThickness="1"
+                        Background="Transparent"
+                        Padding="0" FontSize="16"
+                        HorizontalContentAlignment="Center"
+                        VerticalContentAlignment="Center"/>
+
+                <TextBox x:Name="SearchBox"
+                         Watermark="Search…"
+                         Width="230" Height="30"
+                         VerticalContentAlignment="Center"/>
+
+                <Border BorderBrush="#28808080" BorderThickness="1"
+                        CornerRadius="5" ClipToBounds="True"
+                        VerticalAlignment="Center">
+                    <Grid ColumnDefinitions="Auto,1,Auto">
+                        <Button x:Name="SortDirectionBtn"
+                                Grid.Column="0"
+                                Content="↓"
+                                Click="OnToggleSortDirectionClicked"
+                                BorderThickness="0" CornerRadius="0"
+                                Background="Transparent"
+                                Padding="9,5" FontSize="10"/>
+                        <Rectangle Grid.Column="1" Fill="#28808080"/>
+                        <ComboBox x:Name="SortFieldCombo"
+                                  Grid.Column="2"
+                                  BorderThickness="0" CornerRadius="0"
+                                  Padding="8,5,4,5" MinWidth="100"/>
+                    </Grid>
+                </Border>
+
+                <Button x:Name="FiltersToggleBtn"
+                        Content="Filter"
+                        Click="OnToggleFiltersClicked"
+                        Background="Transparent"
+                        BorderThickness="1"
+                        BorderBrush="Gray"
+                        Height="30" Padding="14,0"
+                        ToolTip.Tip="Open filter panel"
+                        VerticalContentAlignment="Center"/>
+
+            </StackPanel>
+        </Grid>
+
+        <!-- ── Active filter chips (hidden when no filters active) ── -->
+        <ItemsControl x:Name="ActiveFilterChips"
+                      DockPanel.Dock="Top"
+                      IsVisible="False"
+                      Margin="20,0,16,8">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <WrapPanel Orientation="Horizontal"/>
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Border Margin="0,2,4,2" Padding="9,3"
+                            CornerRadius="10"
+                            BorderBrush="#32808080" BorderThickness="1"
+                            Background="#0D808080">
+                        <TextBlock Text="{Binding}" FontSize="11"/>
+                    </Border>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <!-- ── Status / error text (hidden until needed) ── -->
+        <TextBlock x:Name="StatusText"
+                   DockPanel.Dock="Top"
+                   Text="" TextWrapping="Wrap"
+                   IsVisible="False"
+                   FontSize="11" Opacity="0.6"
+                   Margin="20,0,16,6"/>
+
+        <!-- ── Player bar ── -->
+        <Border DockPanel.Dock="Bottom"
+                Padding="16,8,16,12"
+                BorderThickness="0,1,0,0" BorderBrush="#18808080">
+            <StackPanel Spacing="4">
+
+                <Border x:Name="UpcomingBar" IsVisible="False" Padding="2,0,0,2">
+                    <DockPanel>
+                        <TextBlock x:Name="CrossfadeStatusText"
+                                   DockPanel.Dock="Right"
+                                   FontSize="11" Opacity="0.4"
+                                   VerticalAlignment="Center"/>
+                        <StackPanel Orientation="Horizontal" Spacing="4"
+                                    VerticalAlignment="Center">
+                            <TextBlock Text="Next:"
+                                       FontSize="11" Opacity="0.4"/>
+                            <TextBlock x:Name="UpcomingTrackText"
+                                       FontSize="11" Opacity="0.6"
+                                       TextTrimming="CharacterEllipsis"/>
+                        </StackPanel>
+                    </DockPanel>
+                </Border>
+
+                <Grid x:Name="PlaybackInfoPanel"
+                      ColumnDefinitions="*,Auto"
+                      IsVisible="False">
+                    <Slider x:Name="PlaybackSlider"
+                            Grid.Column="0"
+                            Minimum="0" Maximum="100" Value="0"
+                            VerticalAlignment="Center"/>
+                    <TextBlock x:Name="PlaybackTimeText"
+                               Grid.Column="1"
+                               Text="" FontSize="11" Opacity="0.55"
+                               Margin="10,0,0,0" MinWidth="86"
+                               VerticalAlignment="Center"/>
+                </Grid>
+
+                <Grid ColumnDefinitions="Auto,*,Auto">
+
+                    <StackPanel Grid.Column="0"
+                                Orientation="Horizontal" Spacing="2"
+                                VerticalAlignment="Center">
+                        <Button Content="«"
+                                Background="Transparent"
+                                Click="OnPreviousClicked"
+                                Padding="10,5" FontSize="19"/>
+                        <Button x:Name="PlayPauseBtn"
+                                Content="▶"
+                                Background="Transparent"
+                                Click="OnPlayPauseClicked"
+                                Padding="12,5" FontSize="15"/>
+                        <Button Content="»"
+                                Background="Transparent"
+                                Click="OnNextClicked"
+                                Padding="10,5" FontSize="19"/>
+                    </StackPanel>
+
+                    <TextBlock Grid.Column="1"
+                               x:Name="NowPlayingText"
+                               Text=""
+                               FontStyle="Italic" Opacity="0.7"
+                               VerticalAlignment="Center"
+                               HorizontalAlignment="Center"
+                               TextTrimming="CharacterEllipsis"
+                               Margin="12,0"/>
+
+                    <StackPanel Grid.Column="2"
+                                Orientation="Horizontal" Spacing="4"
+                                VerticalAlignment="Center">
+                        <Slider x:Name="VolumeSlider"
+                                Minimum="0" Maximum="100" Value="100"
+                                Width="80" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="VolumeText"
+                                   Text="100%"
+                                   FontSize="11" Opacity="0.55"
+                                   MinWidth="34" VerticalAlignment="Center"/>
+                        <Button x:Name="RepeatBtn"
+                                Content="↻"
+                                Background="Transparent"
+                                Click="OnRepeatCycleClicked"
+                                Padding="7,5" FontSize="14"
+                                Opacity="0.35"
+                                ToolTip.Tip="Repeat: Off"/>
+                        <Button x:Name="ShuffleBtn"
+                                Content="⇄"
+                                Background="Transparent"
+                                Click="OnShuffleToggleClicked"
+                                Padding="7,5" FontSize="14"
+                                Opacity="0.35"
+                                ToolTip.Tip="Shuffle: Off"/>
+                    </StackPanel>
+
+                </Grid>
+            </StackPanel>
+        </Border>
+
+        <!-- ══════════════════════════════════════════════════════
+             Track list + filter drawer overlay (Panel fills remaining space)
+             ══════════════════════════════════════════════════════ -->
+        <Panel>
+
+            <ListBox x:Name="FileList"
+                     DoubleTapped="OnListDoubleTapped"
+                     Padding="0">
+                <ListBox.Styles>
+                    <Style Selector="ListBoxItem">
+                        <Setter Property="Padding" Value="16,7,16,7"/>
+                        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                        <Setter Property="BorderBrush" Value="#0C808080"/>
+                    </Style>
+                </ListBox.Styles>
+                <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="models:TrackDisplayItem">
+                        <Grid ColumnDefinitions="14,48,*,Auto">
+
+                            <!-- Playing indicator -->
+                            <TextBlock Grid.Column="0"
+                                       Text="▶" FontSize="9"
+                                       VerticalAlignment="Center"
+                                       Opacity="0.6"
+                                       IsVisible="{Binding IsPlaying}"/>
+
+                            <!-- Thumbnail -->
+                            <Border Grid.Column="1"
+                                    Width="36" Height="36"
+                                    CornerRadius="4" ClipToBounds="True"
+                                    Margin="4,0,10,0" VerticalAlignment="Center"
+                                    Background="#10808080">
+                                <Image Source="{Binding Thumbnail}"
+                                       Stretch="UniformToFill"/>
+                            </Border>
+
+                            <!-- Title + genre + style -->
+                            <StackPanel Grid.Column="2"
+                                        VerticalAlignment="Center"
+                                        Spacing="2">
+                                <TextBlock Text="{Binding Title}"
+                                           FontSize="13" FontWeight="Medium"
+                                           TextTrimming="CharacterEllipsis"/>
+                                <TextBlock Text="{Binding GenreText}"
+                                           FontSize="11" Opacity="0.58"
+                                           IsVisible="{Binding HasGenres}"
+                                           TextTrimming="CharacterEllipsis"/>
+                                <TextBlock Text="{Binding StyleText}"
+                                           FontSize="10.5" Opacity="0.35"
+                                           IsVisible="{Binding HasStyles}"
+                                           TextTrimming="CharacterEllipsis"/>
+                                <TextBlock Text="{Binding MetaLine}"
+                                           FontSize="10" Opacity="0.28"
+                                           IsVisible="{Binding HasMetaLine}"
+                                           TextTrimming="CharacterEllipsis"/>
+                            </StackPanel>
+
+                            <!-- Right: duration / rating / counts -->
+                            <StackPanel Grid.Column="3"
+                                        VerticalAlignment="Center"
+                                        HorizontalAlignment="Right"
+                                        Spacing="3"
+                                        Margin="16,0,0,0"
+                                        MinWidth="72">
+                                <TextBlock Text="{Binding DurationText}"
+                                           FontSize="11" Opacity="0.52"
+                                           HorizontalAlignment="Right"
+                                           IsVisible="{Binding HasDuration}"/>
+                                <TextBlock Text="{Binding RatingText}"
+                                           FontSize="10" Opacity="0.42"
+                                           HorizontalAlignment="Right"
+                                           IsVisible="{Binding HasRating}"/>
+                                <StackPanel Orientation="Horizontal"
+                                            HorizontalAlignment="Right"
+                                            Spacing="10"
+                                            IsVisible="{Binding HasStats}">
+                                    <TextBlock Text="{Binding ListenText}"
+                                               FontSize="10" Opacity="0.32"/>
+                                    <TextBlock Text="{Binding SkipText}"
+                                               FontSize="10" Opacity="0.32"/>
+                                </StackPanel>
+                            </StackPanel>
+
+                        </Grid>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+                <ListBox.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="Edit" Click="OnContextEditClicked"/>
+                        <MenuItem Header="Delete" Click="OnContextDeleteClicked"/>
+                    </ContextMenu>
+                </ListBox.ContextMenu>
+            </ListBox>
+
+            <!-- ── Filter drawer (right-side overlay) ── -->
+            <Border x:Name="FilterDrawer"
+                    Width="310" HorizontalAlignment="Right"
+                    IsVisible="False"
+                    Background="#1A1A1D"
+                    BorderThickness="1,0,0,0" BorderBrush="#22808080"
+                    BoxShadow="-8 0 32 0 #55000000">
+                <DockPanel LastChildFill="True">
+
+                    <!-- Header (docked top) -->
+                    <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto,Auto"
+                          Margin="16,13,10,13">
+                        <TextBlock Grid.Column="0"
+                                   Text="Filters"
+                                   FontSize="14" FontWeight="SemiBold"
+                                   VerticalAlignment="Center"/>
+                        <Button Grid.Column="1"
+                                Content="Clear all"
+                                Click="OnClearFiltersClicked"
+                                Padding="8,4" FontSize="11"
+                                Opacity="0.6"
+                                Background="Transparent"/>
+                        <Button Grid.Column="2"
+                                Content="✕"
+                                Click="OnToggleFiltersClicked"
+                                Padding="8,4" FontSize="11"
+                                Opacity="0.5"
+                                Background="Transparent"
+                                Margin="2,0,0,0"/>
+                    </Grid>
+                    <Rectangle DockPanel.Dock="Top"
+                               Height="1" Fill="#18808080"/>
+
+                    <!-- Footer (docked bottom, always visible) -->
+                    <Border DockPanel.Dock="Bottom"
+                            BorderThickness="0,1,0,0" BorderBrush="#14808080"
+                            Padding="16,10,16,12">
+                        <Button Content="＋ Add group"
+                                Click="OnAddFilterGroupClicked"
+                                Padding="10,6" FontSize="11"
+                                HorizontalAlignment="Left"/>
+                    </Border>
+
+                    <!-- Scrollable filter sections (fills remaining space) -->
+                    <ScrollViewer Padding="16,14,16,10">
+                        <StackPanel Spacing="20">
+
+                            <!-- Rating -->
+                            <StackPanel Spacing="7">
+                                <TextBlock Text="RATING"
+                                           FontSize="10" FontWeight="SemiBold"
+                                           Opacity="0.38" LetterSpacing="1"/>
+                                <views:MultiSelectFilterControl x:Name="RatingFilter"
+                                                                Placeholder="All ratings"/>
+                            </StackPanel>
+
+                            <!-- Options -->
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="OPTIONS"
+                                           FontSize="10" FontWeight="SemiBold"
+                                           Opacity="0.38" LetterSpacing="1"/>
+                                <CheckBox x:Name="ReEvalFilterCheckBox"
+                                          Content="Re-evaluation needed"
+                                          FontSize="12"/>
+                                <CheckBox x:Name="AutoplayCheckBox"
+                                          Content="Autoplay"
+                                          FontSize="12"/>
+                                <CheckBox x:Name="CrossfadeCheckBox"
+                                          Content="Crossfade"
+                                          FontSize="12"/>
+                            </StackPanel>
+
+                            <!-- Tags -->
+                            <StackPanel Spacing="0">
+                                <TextBlock Text="TAGS"
+                                           FontSize="10" FontWeight="SemiBold"
+                                           Opacity="0.38" LetterSpacing="1"
+                                           Margin="0,0,0,10"/>
+                                <StackPanel x:Name="FilterGroupsPanel" Spacing="0"/>
+                            </StackPanel>
+                            <Border Height="30"/>
+                        </StackPanel>
+                        
+                    </ScrollViewer>
+
+                </DockPanel>
+            </Border>
+
+            <!-- Add track overlay (always on top) -->
+            <views:AddTrackOverlay x:Name="AddTrackOverlay" IsVisible="False"/>
+
+        </Panel>
+
+    </DockPanel>
+
+</UserControl>
