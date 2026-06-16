@@ -13,9 +13,11 @@
                 <Button x:Name="NavMusicBtn" Content="Music"
                         HorizontalAlignment="Stretch"
                         HorizontalContentAlignment="Left"
+                        Background="Transparent"
                         Click="OnMusicClicked" />
                 <Button x:Name="NavSettingsBtn" Content="Settings"
                         HorizontalAlignment="Stretch"
+                        Background="Transparent"
                         HorizontalContentAlignment="Left"
                         Click="OnSettingsClicked" />
             </StackPanel>
