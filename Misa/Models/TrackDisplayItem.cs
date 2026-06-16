@@ -11,6 +11,10 @@ public record TrackDisplayItem(MusicTrack Track, string MetaLine, List<int> Genr
     public string? Notes => Track.Notes;
     public bool HasNotes => !string.IsNullOrWhiteSpace(Track.Notes);
     public bool ReEvaluationNeeded => Track.ReEvaluationNeeded;
+    public int ListenCount => Track.ListenCount;
+    public int SkipCount => Track.SkipCount;
+    public bool HasStats => Track.ListenCount > 0 || Track.SkipCount > 0;
+    public string StatsLine => $"▶ {Track.ListenCount}  ⏭ {Track.SkipCount}";
     public bool IsPlaying { get; set; }
     public Bitmap? Thumbnail { get; set; }
 }

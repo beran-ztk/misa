@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
@@ -119,6 +120,12 @@ public class MusicLibraryService
     public void UpdateTrack(int id, string title, List<int> genreIds, int ratingId,
                             List<int> styleIds, List<int> languageIds, string? notes, bool reEvaluationNeeded) =>
         _db.UpdateTrack(id, title, genreIds, ratingId, styleIds, languageIds, notes, reEvaluationNeeded);
+
+    public void IncrementListenCount(int trackId) =>
+        _db.IncrementListenCount(trackId, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+
+    public void IncrementSkipCount(int trackId) =>
+        _db.IncrementSkipCount(trackId);
 
     public DeleteTrackResult DeleteTrack(int id, string fileName)
     {

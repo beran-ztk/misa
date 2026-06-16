@@ -211,6 +211,26 @@ public class MusicDatabase
             )";
             cmd.ExecuteNonQuery();
         }
+
+        // Listening statistics — existing rows default to 0/NULL.
+        if (!ColumnExists(conn, "Music", "ListenCount"))
+        {
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "ALTER TABLE Music ADD COLUMN ListenCount INTEGER NOT NULL DEFAULT 0";
+            cmd.ExecuteNonQuery();
+        }
+        if (!ColumnExists(conn, "Music", "SkipCount"))
+        {
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "ALTER TABLE Music ADD COLUMN SkipCount INTEGER NOT NULL DEFAULT 0";
+            cmd.ExecuteNonQuery();
+        }
+        if (!ColumnExists(conn, "Music", "LastListenedAt"))
+        {
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "ALTER TABLE Music ADD COLUMN LastListenedAt TEXT NULL";
+            cmd.ExecuteNonQuery();
+        }
     }
     private static void SeedDefaultMetadata(SqliteConnection conn)
     {
@@ -284,7 +304,10 @@ public class MusicDatabase
     {
         using var conn = Open();
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT Id, CanonicalUrl, Title, FileName, RatingId, DownloadedAt, DurationSeconds, Notes, ReEvaluationNeeded FROM Music ORDER BY DownloadedAt DESC";
+        cmd.CommandText = @"SELECT Id, CanonicalUrl, Title, FileName, RatingId, DownloadedAt,
+                                   DurationSeconds, Notes, ReEvaluationNeeded,
+                                   ListenCount, SkipCount, LastListenedAt
+                            FROM Music ORDER BY DownloadedAt DESC";
         using var r = cmd.ExecuteReader();
         var list = new List<MusicTrack>();
         while (r.Read())
@@ -293,8 +316,30 @@ public class MusicDatabase
                 r.GetInt32(4), r.GetString(5),
                 r.IsDBNull(6) ? null : r.GetInt32(6),
                 r.IsDBNull(7) ? null : r.GetString(7),
-                r.GetInt32(8) != 0));
+                r.GetInt32(8) != 0,
+                r.GetInt32(9),
+                r.GetInt32(10),
+                r.IsDBNull(11) ? null : r.GetString(11)));
         return list;
+    }
+
+    public void IncrementListenCount(int trackId, string lastListenedAt)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "UPDATE Music SET ListenCount = ListenCount + 1, LastListenedAt = $at WHERE Id = $id";
+        cmd.Parameters.AddWithValue("$id", trackId);
+        cmd.Parameters.AddWithValue("$at", lastListenedAt);
+        cmd.ExecuteNonQuery();
+    }
+
+    public void IncrementSkipCount(int trackId)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "UPDATE Music SET SkipCount = SkipCount + 1 WHERE Id = $id";
+        cmd.Parameters.AddWithValue("$id", trackId);
+        cmd.ExecuteNonQuery();
     }
 
     public Dictionary<int, List<int>> GetAllMusicStyleIds() => GetAllJunctionIds("MusicStyles", "StyleId");

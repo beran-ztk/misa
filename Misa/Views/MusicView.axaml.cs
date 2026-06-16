@@ -25,6 +25,7 @@ public partial class MusicView : UserControl
 
     // Engine
     private readonly PlaybackEngine _engine = new();
+    private readonly PlaybackSession _session = new();
     private bool _isSeeking;
 
     // Playback settings
@@ -361,6 +362,60 @@ public partial class MusicView : UserControl
         }
     }
 
+    // ─── Session helpers ──────────────────────────────────────────────────────
+
+    private void CloseCurrentSession(bool wasNatural)
+    {
+        if (!_session.HasSession) return;
+        var trackId = _session.TrackId;
+        var (listen, skip) = _session.Close(wasNatural);
+        if (listen) OnListenThresholdReached(trackId);
+        else if (skip) OnSkipCounted(trackId);
+    }
+
+    // Called once when the listen threshold is crossed during playback.
+    private void OnListenThresholdReached(int trackId)
+    {
+        MusicLibraryService.Current.IncrementListenCount(trackId);
+        UpdateCountsInMemory(trackId, deltaListen: 1, deltaSkip: 0);
+    }
+
+    private void OnSkipCounted(int trackId)
+    {
+        MusicLibraryService.Current.IncrementSkipCount(trackId);
+        UpdateCountsInMemory(trackId, deltaListen: 0, deltaSkip: 1);
+    }
+
+    // Updates ListenCount/SkipCount in the in-memory collections and refreshes the list
+    // without touching the database again or reloading thumbnails.
+    private void UpdateCountsInMemory(int trackId, int deltaListen, int deltaSkip)
+    {
+        var idx = _allItems.FindIndex(i => i.Track.Id == trackId);
+        if (idx < 0) return;
+
+        var old = _allItems[idx];
+        var newTrack = old.Track with
+        {
+            ListenCount = old.Track.ListenCount + deltaListen,
+            SkipCount = old.Track.SkipCount + deltaSkip,
+        };
+        // Records copy init-only properties via `with`, but IsPlaying/Thumbnail have `set`
+        // and are NOT copied automatically — reconstruct manually to preserve them.
+        var updated = new TrackDisplayItem(newTrack, old.MetaLine, old.GenreIds, old.StyleIds, old.LanguageIds)
+        {
+            IsPlaying = old.IsPlaying,
+            Thumbnail = old.Thumbnail,
+        };
+        _allItems[idx] = updated;
+
+        var fIdx = _filteredItems.FindIndex(i => i.Track.Id == trackId);
+        if (fIdx >= 0)
+        {
+            _filteredItems[fIdx] = updated;
+            FileList.ItemsSource = _filteredItems.ToList();
+        }
+    }
+
     private void UpdateFilterChips()
     {
         var chips = new List<string>();
@@ -601,6 +656,10 @@ public partial class MusicView : UserControl
     {
         if (filteredIndex < 0 || filteredIndex >= _filteredItems.Count) return;
 
+        // Close any open session (manual track change). Natural-end sessions are closed
+        // in OnTrackNaturallyEnded before this point, so this handles the skip case.
+        CloseCurrentSession(wasNatural: false);
+
         var track = _filteredItems[filteredIndex].Track;
         var filePath = Path.Combine(MusicLibraryService.Current.MusicDirectory, track.FileName);
 
@@ -620,6 +679,8 @@ public partial class MusicView : UserControl
             StatusText.Text = $"Playback failed: {ex.Message}";
             return;
         }
+
+        _session.Start(track.Id, track.DurationSeconds ?? 0);
 
         FileList.SelectedIndex = filteredIndex;
 
@@ -641,6 +702,12 @@ public partial class MusicView : UserControl
 
     private void OnEngineStateChanged()
     {
+        // Keep session wall-clock accumulation accurate across pause/resume.
+        if (_engine.State == EngineState.Paused)
+            _session.OnPause();
+        else if (_engine.State == EngineState.Playing && _session.HasSession)
+            _session.OnResume();
+
         UpdateButtonStates();
         if (_engine.State == EngineState.Stopped)
         {
@@ -655,6 +722,8 @@ public partial class MusicView : UserControl
 
     private void OnTrackNaturallyEnded()
     {
+        // Close session before navigating so the new PlayTrackAt call doesn't see a stale session.
+        CloseCurrentSession(wasNatural: true);
         if (_autoplay)
             NavigateNext(isManual: false);
         else
@@ -668,6 +737,10 @@ public partial class MusicView : UserControl
             _lastKnownActiveId = _engine.ActiveTrackId;
             _crossfadeTriggered = false;
         }
+
+        // Track position for listen-threshold detection; the count is committed on session close.
+        if (_session.HasSession)
+            _session.OnProgress(_engine.CurrentTime.TotalSeconds);
 
         if (!_isSeeking && _engine.TotalTime.TotalSeconds > 0)
             PlaybackSlider.Value =
@@ -812,9 +885,17 @@ public partial class MusicView : UserControl
         PlayTrackAt(prevIdx, isCrossfade: false);
     }
 
-    private void FullStop() => _engine.Stop();
+    private void FullStop()
+    {
+        CloseCurrentSession(wasNatural: false);
+        _engine.Stop();
+    }
 
-    public void StopPlayback() => _engine.Stop();
+    public void StopPlayback()
+    {
+        CloseCurrentSession(wasNatural: false);
+        _engine.Stop();
+    }
 
     // ─── Upcoming bar ─────────────────────────────────────────────────────────
 
