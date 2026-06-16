@@ -17,11 +17,18 @@ public partial class AddTrackOverlay : UserControl
     private List<Style> _styles = [];
     private List<Language> _languages = [];
 
-    private readonly List<ToggleButton> _genreButtons = [];
-    private readonly List<ToggleButton> _styleButtons = [];
-    private readonly List<ToggleButton> _languageButtons = [];
+    // Each chip tuple pairs the domain object with its ToggleButton so we can read
+    // the selection by ID rather than by parsing button content (which includes counts).
+    private readonly List<(Genre Genre, ToggleButton Btn)> _genreChips = [];
+    private readonly List<(Style Style, ToggleButton Btn)> _styleChips = [];
+    private readonly List<(Language Lang, ToggleButton Btn)> _langChips = [];
+
+    private Dictionary<int, List<int>> _allTrackGenreIds = [];
+    private Dictionary<int, List<int>> _allTrackStyleIds = [];
 
     private bool _downloading;
+    private bool _showAllGenres;
+    private const int InitialGenreLimit = 10;
 
     public event Action? TrackDownloaded;
     public event Action? CloseRequested;
@@ -36,6 +43,7 @@ public partial class AddTrackOverlay : UserControl
     public void Open()
     {
         _downloading = false;
+        _showAllGenres = false;
         LoadLookups();
         ClearForm();
         IsVisible = true;
@@ -47,13 +55,15 @@ public partial class AddTrackOverlay : UserControl
         _ratings = MusicLibraryService.Current.GetRatings();
         _styles = MusicLibraryService.Current.GetStyles();
         _languages = MusicLibraryService.Current.GetLanguages();
+        _allTrackGenreIds = MusicLibraryService.Current.GetAllTrackGenreIds();
+        _allTrackStyleIds = MusicLibraryService.Current.GetAllTrackStyleIds();
 
-        AddChips(GenresPanel, _genres.Select(g => g.Name), _genreButtons);
-        AddChips(StylesPanel, _styles.Select(s => s.Name), _styleButtons);
-        AddChips(LanguagesPanel, _languages.Select(l => l.Name), _languageButtons);
+        RebuildGenreChips();
+        BuildLanguageChips();
 
-        RatingBox.ItemsSource = new[] { "(Select rating)" }.Concat(_ratings.Select(r => r.Name)).ToList();
-        RatingBox.SelectedIndex = 0;
+        // Default to first rating so the field is pre-filled when More options is collapsed.
+        RatingBox.ItemsSource = _ratings.Select(r => r.Name).ToList();
+        RatingBox.SelectedIndex = _ratings.Count > 0 ? 0 : -1;
     }
 
     private void ClearForm()
@@ -63,37 +73,145 @@ public partial class AddTrackOverlay : UserControl
         StatusText.Text = "";
         CloseBtn.IsEnabled = true;
         DownloadBtn.IsEnabled = false;
-        foreach (var b in _genreButtons) b.IsChecked = false;
-        foreach (var b in _styleButtons) b.IsChecked = false;
-        foreach (var b in _languageButtons) b.IsChecked = false;
-        RatingBox.SelectedIndex = 0;
+        foreach (var (_, btn) in _genreChips) btn.IsChecked = false;
+        StylesPanel.Children.Clear();
+        _styleChips.Clear();
+        StylesSection.IsVisible = false;
+        foreach (var (_, btn) in _langChips) btn.IsChecked = false;
+        RatingBox.SelectedIndex = _ratings.Count > 0 ? 0 : -1;
     }
 
-    private void AddChips(WrapPanel panel, IEnumerable<string> names, List<ToggleButton> buttons)
+    // ─── Genre chips ─────────────────────────────────────────────────────────
+
+    private void RebuildGenreChips()
     {
-        panel.Children.Clear();
-        buttons.Clear();
-        foreach (var name in names.OrderBy(n => n))
+        var genreCounts = MetadataCountService.GenreCounts(_allTrackGenreIds);
+        var sorted = _genres
+            .OrderByDescending(g => genreCounts.GetValueOrDefault(g.Id, 0))
+            .ThenBy(g => g.Name)
+            .ToList();
+
+        GenresPanel.Children.Clear();
+        _genreChips.Clear();
+
+        for (int i = 0; i < sorted.Count; i++)
+        {
+            var genre = sorted[i];
+            var count = genreCounts.GetValueOrDefault(genre.Id, 0);
+            var btn = new ToggleButton
+            {
+                Content = count > 0 ? $"{genre.Name} ({count})" : genre.Name,
+                Padding = new Thickness(12, 6),
+                Margin = new Thickness(0, 0, 6, 6),
+                CornerRadius = new CornerRadius(12),
+                IsVisible = _showAllGenres || i < InitialGenreLimit,
+            };
+            btn.IsCheckedChanged += (_, _) => OnGenreSelectionChanged();
+            _genreChips.Add((genre, btn));
+            GenresPanel.Children.Add(btn);
+        }
+
+        ShowMoreGenresBtn.IsVisible = sorted.Count > InitialGenreLimit && !_showAllGenres;
+    }
+
+    private void OnShowMoreGenresClicked(object? sender, RoutedEventArgs e)
+    {
+        _showAllGenres = true;
+        for (int i = InitialGenreLimit; i < _genreChips.Count; i++)
+            _genreChips[i].Btn.IsVisible = true;
+        ShowMoreGenresBtn.IsVisible = false;
+    }
+
+    // ─── Style chips (rebuilt whenever genre selection changes) ───────────────
+
+    private void OnGenreSelectionChanged()
+    {
+        UpdateDownloadButton();
+        RebuildStyleChips();
+    }
+
+    private void RebuildStyleChips()
+    {
+        var selectedGenreIds = _genreChips
+            .Where(c => c.Btn.IsChecked == true)
+            .Select(c => c.Genre.Id)
+            .ToHashSet();
+
+        StylesSection.IsVisible = selectedGenreIds.Count > 0;
+
+        if (selectedGenreIds.Count == 0)
+        {
+            StylesPanel.Children.Clear();
+            _styleChips.Clear();
+            return;
+        }
+
+        // Counts are scoped to tracks that match ALL selected genres (AND logic).
+        var styleCounts = MetadataCountService.StyleCountsForGenres(
+            _allTrackGenreIds, _allTrackStyleIds, selectedGenreIds);
+
+        // Preserve which styles the user had already checked before the rebuild.
+        var prevSelected = _styleChips
+            .Where(c => c.Btn.IsChecked == true)
+            .Select(c => c.Style.Id)
+            .ToHashSet();
+
+        var sorted = _styles
+            .OrderByDescending(s => styleCounts.GetValueOrDefault(s.Id, 0))
+            .ThenBy(s => s.Name)
+            .ToList();
+
+        StylesPanel.Children.Clear();
+        _styleChips.Clear();
+
+        foreach (var style in sorted)
+        {
+            var count = styleCounts.GetValueOrDefault(style.Id, 0);
+            var btn = new ToggleButton
+            {
+                Content = count > 0 ? $"{style.Name} ({count})" : style.Name,
+                Padding = new Thickness(12, 6),
+                Margin = new Thickness(0, 0, 6, 6),
+                CornerRadius = new CornerRadius(12),
+                IsChecked = prevSelected.Contains(style.Id),
+                Opacity = count > 0 ? 1.0 : 0.45,
+            };
+            btn.IsCheckedChanged += (_, _) => UpdateDownloadButton();
+            _styleChips.Add((style, btn));
+            StylesPanel.Children.Add(btn);
+        }
+    }
+
+    // ─── Language chips ──────────────────────────────────────────────────────
+
+    private void BuildLanguageChips()
+    {
+        LanguagesPanel.Children.Clear();
+        _langChips.Clear();
+        foreach (var lang in _languages.OrderBy(l => l.Name))
         {
             var btn = new ToggleButton
             {
-                Content = name,
+                Content = lang.Name,
                 Padding = new Thickness(12, 6),
                 Margin = new Thickness(0, 0, 6, 6),
                 CornerRadius = new CornerRadius(12),
             };
-            btn.IsCheckedChanged += (_, _) => UpdateDownloadButton();
-            panel.Children.Add(btn);
-            buttons.Add(btn);
+            _langChips.Add((lang, btn));
+            LanguagesPanel.Children.Add(btn);
         }
     }
+
+    // ─── Validation ───────────────────────────────────────────────────────────
 
     private void UpdateDownloadButton()
     {
         DownloadBtn.IsEnabled = !string.IsNullOrWhiteSpace(UrlBox.Text)
-                               && _genreButtons.Any(b => b.IsChecked == true)
-                               && RatingBox.SelectedIndex > 0;
+                               && _genreChips.Any(c => c.Btn.IsChecked == true)
+                               && RatingBox.SelectedIndex >= 0;
     }
+
+    // ─── Download ─────────────────────────────────────────────────────────────
 
     private async void OnDownloadClicked(object? sender, RoutedEventArgs e)
     {
@@ -106,18 +224,18 @@ public partial class AddTrackOverlay : UserControl
         {
             RawUrl = UrlBox.Text?.Trim() ?? "",
             CustomTitle = string.IsNullOrWhiteSpace(TitleBox.Text) ? null : TitleBox.Text.Trim(),
-            GenreIds = _genreButtons
-                .Where(b => b.IsChecked == true)
-                .Select(b => _genres.First(g => g.Name == (string)b.Content!).Id)
+            GenreIds = _genreChips
+                .Where(c => c.Btn.IsChecked == true)
+                .Select(c => c.Genre.Id)
                 .ToList(),
-            RatingId = _ratings[RatingBox.SelectedIndex - 1].Id,
-            StyleIds = _styleButtons
-                .Where(b => b.IsChecked == true)
-                .Select(b => _styles.First(s => s.Name == (string)b.Content!).Id)
+            RatingId = _ratings[RatingBox.SelectedIndex].Id,
+            StyleIds = _styleChips
+                .Where(c => c.Btn.IsChecked == true)
+                .Select(c => c.Style.Id)
                 .ToList(),
-            LanguageIds = _languageButtons
-                .Where(b => b.IsChecked == true)
-                .Select(b => _languages.First(l => l.Name == (string)b.Content!).Id)
+            LanguageIds = _langChips
+                .Where(c => c.Btn.IsChecked == true)
+                .Select(c => c.Lang.Id)
                 .ToList(),
         };
 

@@ -339,6 +339,26 @@ public partial class MusicView : UserControl
         FileList.ItemsSource = _filteredItems;
         RefreshNextTrackPreview();
         UpdateFilterChips();
+        UpdateFilterCounts();
+    }
+
+    private void UpdateFilterCounts()
+    {
+        var currentTrackIds = _filteredItems.Select(i => i.Track.Id).ToList();
+
+        var genreFacetCounts = MetadataCountService.FacetCounts(currentTrackIds, _allTrackGenreIds);
+        var styleFacetCounts = MetadataCountService.FacetCounts(currentTrackIds, _allTrackStyleIds);
+
+        var genreCountByName = _genres.ToDictionary(g => g.Name,
+            g => genreFacetCounts.GetValueOrDefault(g.Id, 0));
+        var styleCountByName = _styles.ToDictionary(s => s.Name,
+            s => styleFacetCounts.GetValueOrDefault(s.Id, 0));
+
+        foreach (var fg in _filterGroups)
+        {
+            fg.GenreCtrl.UpdateCounts(genreCountByName);
+            fg.StyleCtrl.UpdateCounts(styleCountByName);
+        }
     }
 
     private void UpdateFilterChips()
