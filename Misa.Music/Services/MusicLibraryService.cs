@@ -74,14 +74,14 @@ public class MusicLibraryService
 
     public List<MusicTrack> GetTracks() => _db.GetAllTracks();
 
-    public Dictionary<int, List<int>> GetAllTrackStyleIds() => _db.GetAllMusicStyleIds();
-    public List<int> GetTrackStyleIds(int trackId) => _db.GetMusicStyleIds(trackId);
+    public Dictionary<int, List<int>> GetAllTrackStyleIds() => _db.GetAllTrackStyleIds();
+    public List<int> GetTrackStyleIds(int trackId) => _db.GetTrackStyleIds(trackId);
 
-    public Dictionary<int, List<int>> GetAllTrackGenreIds() => _db.GetAllMusicGenreIds();
-    public List<int> GetTrackGenreIds(int trackId) => _db.GetMusicGenreIds(trackId);
+    public Dictionary<int, List<int>> GetAllTrackGenreIds() => _db.GetAllTrackGenreIds();
+    public List<int> GetTrackGenreIds(int trackId) => _db.GetTrackGenreIds(trackId);
 
-    public Dictionary<int, List<int>> GetAllTrackLanguageIds() => _db.GetAllMusicLanguageIds();
-    public List<int> GetTrackLanguageIds(int trackId) => _db.GetMusicLanguageIds(trackId);
+    public Dictionary<int, List<int>> GetAllTrackLanguageIds() => _db.GetAllTrackLanguageIds();
+    public List<int> GetTrackLanguageIds(int trackId) => _db.GetTrackLanguageIds(trackId);
 
     public async Task<DownloadResult> DownloadTrackAsync(DownloadRequest request)
     {

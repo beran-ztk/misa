@@ -25,7 +25,7 @@ public class MusicDatabase
 
         using var conn = Open();
 
-        if (!TableExists(conn, "Music"))
+        if (!TableExists(conn, "Tracks"))
         {
             CreateSchema(conn);
         }
@@ -58,12 +58,15 @@ public class MusicDatabase
         using var cmd = conn.CreateCommand();
         cmd.CommandText = @"
             CREATE TABLE Genres (
-                Id   INTEGER PRIMARY KEY AUTOINCREMENT,
-                Name TEXT    NOT NULL UNIQUE
+                Id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                Name        TEXT    NOT NULL UNIQUE,
+                Description TEXT    NULL
             );
             CREATE TABLE Styles (
-                Id   INTEGER PRIMARY KEY AUTOINCREMENT,
-                Name TEXT    NOT NULL UNIQUE
+                Id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                Name        TEXT    NOT NULL UNIQUE,
+                Category    TEXT    NULL,
+                Description TEXT    NULL
             );
             CREATE TABLE Languages (
                 Id   INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -74,7 +77,7 @@ public class MusicDatabase
                 Name      TEXT    NOT NULL UNIQUE,
                 SortOrder INTEGER NOT NULL
             );
-            CREATE TABLE Music (
+            CREATE TABLE Tracks (
                 Id                 INTEGER PRIMARY KEY AUTOINCREMENT,
                 CanonicalUrl       TEXT    NOT NULL UNIQUE,
                 Title              TEXT    NOT NULL,
@@ -83,155 +86,31 @@ public class MusicDatabase
                 DownloadedAt       TEXT    NOT NULL,
                 DurationSeconds    INTEGER NULL,
                 Notes              TEXT    NULL,
-                ReEvaluationNeeded INTEGER NOT NULL DEFAULT 0
+                ReEvaluationNeeded INTEGER NOT NULL DEFAULT 0,
+                ListenCount        INTEGER NOT NULL DEFAULT 0,
+                SkipCount          INTEGER NOT NULL DEFAULT 0,
+                LastListenedAt     TEXT    NULL
             );
-            CREATE TABLE MusicStyles (
-                MusicId INTEGER NOT NULL,
+            CREATE TABLE TrackStyles (
+                TrackId INTEGER NOT NULL,
                 StyleId INTEGER NOT NULL,
-                PRIMARY KEY (MusicId, StyleId)
+                PRIMARY KEY (TrackId, StyleId)
             );
-            CREATE TABLE MusicGenres (
-                MusicId INTEGER NOT NULL,
+            CREATE TABLE TrackGenres (
+                TrackId INTEGER NOT NULL,
                 GenreId INTEGER NOT NULL,
-                PRIMARY KEY (MusicId, GenreId)
+                PRIMARY KEY (TrackId, GenreId)
             );
-            CREATE TABLE MusicLanguages (
-                MusicId    INTEGER NOT NULL,
+            CREATE TABLE TrackLanguages (
+                TrackId    INTEGER NOT NULL,
                 LanguageId INTEGER NOT NULL,
-                PRIMARY KEY (MusicId, LanguageId)
+                PRIMARY KEY (TrackId, LanguageId)
             );";
         cmd.ExecuteNonQuery();
     }
 
-    private static void Migrate(SqliteConnection conn)
-    {
-        // Legacy: Notes column (pre-multi-genre era)
-        if (!ColumnExists(conn, "Music", "Notes"))
-        {
-            using var cmd = conn.CreateCommand();
-            cmd.CommandText = "ALTER TABLE Music ADD COLUMN Notes TEXT NULL";
-            cmd.ExecuteNonQuery();
-        }
+    private static void Migrate(SqliteConnection conn) { }
 
-        // Multi-genre migration: GenreId column on Music → MusicGenres junction table.
-        // Also rebuilds Music table to drop GenreId and add ReEvaluationNeeded.
-        if (ColumnExists(conn, "Music", "GenreId"))
-        {
-            using var tx = conn.BeginTransaction();
-
-            using (var cmd = conn.CreateCommand())
-            {
-                cmd.Transaction = tx;
-                cmd.CommandText = @"CREATE TABLE IF NOT EXISTS MusicGenres (
-                    MusicId INTEGER NOT NULL,
-                    GenreId INTEGER NOT NULL,
-                    PRIMARY KEY (MusicId, GenreId)
-                )";
-                cmd.ExecuteNonQuery();
-            }
-
-            using (var cmd = conn.CreateCommand())
-            {
-                cmd.Transaction = tx;
-                cmd.CommandText = "INSERT OR IGNORE INTO MusicGenres (MusicId, GenreId) SELECT Id, GenreId FROM Music";
-                cmd.ExecuteNonQuery();
-            }
-
-            using (var cmd = conn.CreateCommand())
-            {
-                cmd.Transaction = tx;
-                cmd.CommandText = @"CREATE TABLE Music_New (
-                    Id                 INTEGER PRIMARY KEY AUTOINCREMENT,
-                    CanonicalUrl       TEXT    NOT NULL UNIQUE,
-                    Title              TEXT    NOT NULL,
-                    FileName           TEXT    NOT NULL UNIQUE,
-                    RatingId           INTEGER NOT NULL,
-                    DownloadedAt       TEXT    NOT NULL,
-                    DurationSeconds    INTEGER NULL,
-                    Notes              TEXT    NULL,
-                    ReEvaluationNeeded INTEGER NOT NULL DEFAULT 0
-                )";
-                cmd.ExecuteNonQuery();
-            }
-            using (var cmd = conn.CreateCommand())
-            {
-                cmd.Transaction = tx;
-                cmd.CommandText = @"INSERT INTO Music_New (Id, CanonicalUrl, Title, FileName, RatingId, DownloadedAt, DurationSeconds, Notes)
-                    SELECT Id, CanonicalUrl, Title, FileName, RatingId, DownloadedAt, DurationSeconds, Notes FROM Music";
-                cmd.ExecuteNonQuery();
-            }
-            using (var cmd = conn.CreateCommand())
-            {
-                cmd.Transaction = tx;
-                cmd.CommandText = "DROP TABLE Music";
-                cmd.ExecuteNonQuery();
-            }
-            using (var cmd = conn.CreateCommand())
-            {
-                cmd.Transaction = tx;
-                cmd.CommandText = "ALTER TABLE Music_New RENAME TO Music";
-                cmd.ExecuteNonQuery();
-            }
-
-            tx.Commit();
-        }
-        else if (!ColumnExists(conn, "Music", "ReEvaluationNeeded"))
-        {
-            using var cmd = conn.CreateCommand();
-            cmd.CommandText = "ALTER TABLE Music ADD COLUMN ReEvaluationNeeded INTEGER NOT NULL DEFAULT 0";
-            cmd.ExecuteNonQuery();
-        }
-
-        // Ensure junction tables exist for databases that skipped earlier migration paths
-        if (!TableExists(conn, "MusicGenres"))
-        {
-            using var cmd = conn.CreateCommand();
-            cmd.CommandText = @"CREATE TABLE MusicGenres (
-                MusicId INTEGER NOT NULL,
-                GenreId INTEGER NOT NULL,
-                PRIMARY KEY (MusicId, GenreId)
-            )";
-            cmd.ExecuteNonQuery();
-        }
-
-        // Languages support (new — all existing songs start with no language)
-        if (!TableExists(conn, "Languages"))
-        {
-            using var cmd = conn.CreateCommand();
-            cmd.CommandText = "CREATE TABLE Languages (Id INTEGER PRIMARY KEY AUTOINCREMENT, Name TEXT NOT NULL UNIQUE)";
-            cmd.ExecuteNonQuery();
-        }
-        if (!TableExists(conn, "MusicLanguages"))
-        {
-            using var cmd = conn.CreateCommand();
-            cmd.CommandText = @"CREATE TABLE MusicLanguages (
-                MusicId    INTEGER NOT NULL,
-                LanguageId INTEGER NOT NULL,
-                PRIMARY KEY (MusicId, LanguageId)
-            )";
-            cmd.ExecuteNonQuery();
-        }
-
-        // Listening statistics — existing rows default to 0/NULL.
-        if (!ColumnExists(conn, "Music", "ListenCount"))
-        {
-            using var cmd = conn.CreateCommand();
-            cmd.CommandText = "ALTER TABLE Music ADD COLUMN ListenCount INTEGER NOT NULL DEFAULT 0";
-            cmd.ExecuteNonQuery();
-        }
-        if (!ColumnExists(conn, "Music", "SkipCount"))
-        {
-            using var cmd = conn.CreateCommand();
-            cmd.CommandText = "ALTER TABLE Music ADD COLUMN SkipCount INTEGER NOT NULL DEFAULT 0";
-            cmd.ExecuteNonQuery();
-        }
-        if (!ColumnExists(conn, "Music", "LastListenedAt"))
-        {
-            using var cmd = conn.CreateCommand();
-            cmd.CommandText = "ALTER TABLE Music ADD COLUMN LastListenedAt TEXT NULL";
-            cmd.ExecuteNonQuery();
-        }
-    }
     private static void SeedDefaultMetadata(SqliteConnection conn)
     {
         using var cmd = conn.CreateCommand();
@@ -239,19 +118,90 @@ public class MusicDatabase
             INSERT OR IGNORE INTO Ratings (Name, SortOrder) VALUES
                 ('Skip', 1), ('Okay', 2), ('Good', 3), ('Great', 4), ('Favorite', 5);
 
-            INSERT OR IGNORE INTO Genres (Name) VALUES
-                ('Anime'), ('Pop'), ('Nightcore'), ('Techno'), ('Trance'),
-                ('Hardstyle'), ('Frenchcore'), ('EDM'), ('House'), ('Synthwave'),
-                ('Retrowave'), ('Darksynth'), ('Chillwave'), ('Phonk'), ('Trap'),
-                ('Ambient'), ('Epic'), ('Classical'), ('Orchestral'), ('Piano');
+            INSERT OR IGNORE INTO Genres (Name, Description) VALUES
+                ('Nightcore', 'Hochgepitchte und beschleunigte Versionen bestehender Songs; oft mit Anime-, Internet- oder Edit-Kultur verbunden.'),
+                ('Pop', 'Eingängige, melodische Mainstream-Musik mit Fokus auf Gesang, Hook und Wiedererkennbarkeit.'),
+                ('EDM', 'Breiter Sammelbegriff für elektronische Festival-, Club- und Dance-Musik mit moderner Produktion.'),
+                ('House', 'Elektronische Musik mit stabilem 4/4-Groove, tanzbarem Rhythmus und meist gleichmäßigem Flow.'),
+                ('Techno', 'Treibende, repetitive elektronische Musik mit Fokus auf Rhythmus, Energie, Groove und maschinellem Klang.'),
+                ('Trance', 'Melodische elektronische Musik mit langen Aufbauten, Spannung, Euphorie und atmosphärischen Flächen.'),
+                ('Hardstyle', 'Harte elektronische Musik mit starkem Kick, klaren Leads und oft euphorischen oder aggressiven Melodien.'),
+                ('Hardcore', 'Sehr harte und schnelle elektronische Musik; Oberbegriff für extreme Core-Stile mit hoher Energie.'),
+                ('Frenchcore', 'Schneller Core-Stil mit rollender Kickdrum, hohem Tempo und oft überraschend melodischen Elementen.'),
+                ('Drum and Bass', 'Schnelle elektronische Musik mit Breakbeats, starkem Bass und komplexerem Rhythmus als House oder Techno.'),
+                ('Dubstep', 'Basslastige elektronische Musik mit schweren Drops, Wobble-Bässen und oft halbem Tempo-Gefühl.'),
+                ('Future Bass', 'Melodische Bass-Musik mit hellen Synths, Vocal-Chops, emotionalem Klang und modernen Drops.'),
+                ('Trap', 'Beat-orientierte Musik mit 808-Bass, schnellen Hi-Hats und Einflüssen aus Hip-Hop und EDM.'),
+                ('Phonk', 'Dunkler, basslastiger Stil mit Hip-Hop- und Memphis-Rap-Einfluss; häufig in Drift- und Edit-Musik.'),
+                ('Wave', 'Atmosphärische, dunkle Bass-Musik zwischen Trap, Ambient und Synth-Flächen; oft emotional und nächtlich.'),
+                ('Synthwave', 'Retro-elektronische Musik mit 80er-Synths, nostalgischer Atmosphäre und oft cineastischem Klang.'),
+                ('Ambient', 'Atmosphärische Musik ohne starken Beat; Fokus liegt auf Raum, Stimmung, Fläche und Klangtextur.'),
+                ('Downtempo', 'Langsamere elektronische Musik mit Beat, aber ruhiger, entspannter und weniger cluborientiert.'),
+                ('Lo-Fi', 'Musik mit absichtlich warmem, rauem oder unperfektem Klang; oft entspannte Beats und weiche Atmosphäre.'),
+                ('Hip-Hop', 'Oberbegriff für Beats, Sampling, Rap-Kultur und rhythmisch geprägte urbane Musik.'),
+                ('Rap', 'Musik mit gesprochenem oder gerapptem Vocal im Vordergrund; stärker text- und floworientiert als Hip-Hop allgemein.'),
+                ('R&B', 'Gesangsorientierte Musik mit Soul-, Pop- und Hip-Hop-Einflüssen; oft weich, emotional und groovebasiert.'),
+                ('Rock', 'Gitarrenbasierte Musik mit Band-Sound, Drums und meist stärkerer Live- oder Energie-Wirkung.'),
+                ('Metal', 'Härtere Gitarrenmusik mit aggressiveren Riffs, hoher Intensität und oft dunklerem oder wuchtigerem Klang.'),
+                ('Classical', 'Klassische Musik mit traditionellen Kompositionsformen, z. B. Klavier, Streicher oder Orchesterwerke.'),
+                ('Orchestral', 'Musik mit Orchesterklang; kann klassisch, filmisch, modern, dramatisch oder soundtrackartig sein.'),
+                ('Piano', 'Klavierzentrierte Musik, unabhängig davon ob sie klassisch, emotional, ruhig oder modern produziert ist.'),
+                ('Epic', 'Große, mächtige und cineastische Musik mit Trailer-, Battle-, Bossfight- oder Heldengefühl.'),
+                ('Chiptune', '8-Bit- oder Retro-Game-Sound mit alten Konsolen-, Arcade- oder Chip-Sound-Ästhetiken.'),
+                ('J-Pop', 'Japanische Popmusik mit eingängigen Melodien; oft relevant für Anime-, Idol- oder japanische Medienkultur.'),
+                ('K-Pop', 'Koreanische Popmusik mit stark produzierten Vocals, Hooks, Choreografie- und Dance-orientiertem Sound.');
 
-            INSERT OR IGNORE INTO Styles (Name) VALUES
-                ('Fast'), ('Slow'), ('Energetic'), ('Calm'), ('Hard'),
-                ('Soft'), ('Dark'), ('Light'), ('Melodic'), ('Emotional'),
-                ('Melancholic'), ('Romantic'), ('Epic'), ('Dramatic'), ('Powerful'),
-                ('Ambient'), ('Wave'), ('Chill'), ('Vocal'), ('Instrumental'),
-                ('Anime Opening'), ('Anime Ending'), ('Party'), ('Bossfight'),
-                ('Speed Up'), ('Slowed'), ('Reverb');
+            INSERT OR IGNORE INTO Styles (Name, Category, Description) VALUES
+                ('Fast', 'Energy', 'Schneller Track mit hohem Tempo oder deutlich beschleunigtem Gefühl.'),
+                ('Slow', 'Energy', 'Langsamer Track mit ruhigem Tempo oder getragenem Ablauf.'),
+                ('Energetic', 'Energy', 'Wirkt aktiv, antreibend und energiegeladen, ohne zwingend hart zu sein.'),
+                ('Calm', 'Energy', 'Ruhiger, entspannter Track mit wenig Druck, Aufregung oder Bewegung.'),
+
+                ('Bouncy', 'Groove', 'Federnder, springender Rhythmus, der leicht und beweglich wirkt.'),
+                ('Groovy', 'Groove', 'Starker Rhythmus oder Flow, der besonders gut mitwippt oder tanzbar wirkt.'),
+
+                ('Aggressive', 'Pressure', 'Klingt offensiv, hart, druckvoll oder attackierend.'),
+                ('Hard', 'Pressure', 'Allgemein harter Sound mit kräftigem Druck, starken Kicks oder intensiver Energie.'),
+                ('Raw', 'Pressure', 'Roh, ungeglättet, dreckig oder wenig poliert; oft härter und direkter als melodische Varianten.'),
+                ('Bass', 'Pressure', 'Bass ist auffällig dominant und prägt den Track deutlich.'),
+
+                ('Soft', 'Softness', 'Weicher, sanfter Klang ohne starke Härte oder Aggression.'),
+                ('Smooth', 'Softness', 'Sehr flüssiger, angenehmer und sauberer Klangfluss.'),
+                ('Deep', 'Softness', 'Tiefer, ruhiger oder räumlicher Klang mit weniger direkter Oberfläche.'),
+                ('Chill', 'Softness', 'Entspannt, locker und gut zum Nebenbei- oder Runterkommen-Hören.'),
+
+                ('Dark', 'Mood', 'Dunkle, ernste oder bedrohliche Stimmung.'),
+                ('Melodic', 'Mood', 'Melodie ist besonders wichtig und bleibt klar im Vordergrund.'),
+                ('Emotional', 'Mood', 'Starker emotionaler Ausdruck, unabhängig davon ob traurig, euphorisch oder dramatisch.'),
+                ('Melancholic', 'Mood', 'Traurig, nachdenklich oder bittersüß, aber nicht zwingend komplett negativ.'),
+                ('Romantic', 'Mood', 'Romantische, warme oder gefühlvolle Stimmung.'),
+                ('Dramatic', 'Mood', 'Wirkt groß, ernst, spannungsvoll oder filmisch zugespitzt.'),
+                ('Euphoric', 'Mood', 'Sehr positives, erhebendes Hochgefühl; typisch bei Trance oder Hardstyle.'),
+                ('Dreamy', 'Mood', 'Verträumt, weich, schwebend oder leicht unreal wirkend.'),
+                ('Nostalgic', 'Mood', 'Erzeugt ein Vergangenheits-, Erinnerungs- oder Retro-Gefühl.'),
+                ('Happy', 'Mood', 'Fröhlich, positiv und leicht.'),
+                ('Hopeful', 'Mood', 'Hoffnungsvoll, aufbauend und positiv nach vorne gerichtet.'),
+                ('Mysterious', 'Mood', 'Geheimnisvoll, unklar oder rätselhaft wirkend.'),
+                ('Tense', 'Mood', 'Angespannt, unruhig oder spannungsvoll.'),
+                ('Atmospheric', 'Mood', 'Starke Atmosphäre, viel Raum, Fläche oder Stimmung statt nur Beat und Melodie.'),
+
+                ('Vocal', 'Vocals', 'Gesang, Rap oder Stimme ist ein wichtiger Bestandteil des Tracks.'),
+                ('Instrumental', 'Vocals', 'Keine deutlichen Vocals im Vordergrund; Fokus liegt auf Instrumenten, Synths oder Beats.'),
+
+                ('Anime', 'Context', 'Hat klaren Anime-Bezug oder klingt stark nach Anime-, AMV- oder Opening-Kontext.'),
+                ('Sleep', 'Context', 'Ruhig genug zum Einschlafen oder sehr passivem Hören.'),
+
+                ('Speed Up', 'Version', 'Beschleunigte Version eines Tracks, aber nicht zwingend so stark verändert wie Nightcore.'),
+                ('Slowed', 'Version', 'Verlangsamte Version eines Tracks.'),
+                ('Reverb', 'Version', 'Hall wurde deutlich hinzugefügt und prägt den Klang.'),
+                ('Mashup', 'Version', 'Mehrere Songs oder Elemente wurden zu einem neuen Track kombiniert.'),
+                ('Live Version', 'Version', 'Live-Aufnahme oder Live-Version statt normaler Studiofassung.'),
+
+                ('Retro', 'Aesthetic', 'Klingt bewusst nach älteren Musik-, Synth- oder Game-Ästhetiken.'),
+                ('Cyberpunk', 'Aesthetic', 'Düstere, futuristische High-Tech-Atmosphäre, oft neonartig oder urban.'),
+                ('Glitchy', 'Aesthetic', 'Bewusst digitale Fehler, Stottern, Artefakte oder zerhackte Sounds.'),
+                ('Immense', 'Aesthetic', 'Sehr groß, wuchtig oder überwältigend im Klangbild.'),
+                ('Minimal', 'Aesthetic', 'Reduzierter Track mit wenigen Elementen, viel Wiederholung und wenig Überladung.');
 
             INSERT OR IGNORE INTO Languages (Name) VALUES
                 ('English'), ('Japanese'), ('Turkish'), ('German'),
@@ -263,7 +213,7 @@ public class MusicDatabase
     {
         using var conn = Open();
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT COUNT(*) FROM Music WHERE CanonicalUrl = $url";
+        cmd.CommandText = "SELECT COUNT(*) FROM Tracks WHERE CanonicalUrl = $url";
         cmd.Parameters.AddWithValue("$url", canonicalUrl);
         return (long)cmd.ExecuteScalar()! > 0;
     }
@@ -278,7 +228,7 @@ public class MusicDatabase
         using var insertCmd = conn.CreateCommand();
         insertCmd.Transaction = tx;
         insertCmd.CommandText = @"
-            INSERT INTO Music (CanonicalUrl, Title, FileName, RatingId, DownloadedAt, DurationSeconds)
+            INSERT INTO Tracks (CanonicalUrl, Title, FileName, RatingId, DownloadedAt, DurationSeconds)
             VALUES ($url, $title, $fileName, $ratingId, $downloadedAt, $duration)";
         insertCmd.Parameters.AddWithValue("$url", canonicalUrl);
         insertCmd.Parameters.AddWithValue("$title", title);
@@ -291,11 +241,11 @@ public class MusicDatabase
         using var idCmd = conn.CreateCommand();
         idCmd.Transaction = tx;
         idCmd.CommandText = "SELECT last_insert_rowid()";
-        var musicId = (long)idCmd.ExecuteScalar()!;
+        var trackId = (long)idCmd.ExecuteScalar()!;
 
-        InsertJunctionRows(conn, tx, "MusicGenres", "GenreId", musicId, genreIds);
-        InsertJunctionRows(conn, tx, "MusicStyles", "StyleId", musicId, styleIds);
-        InsertJunctionRows(conn, tx, "MusicLanguages", "LanguageId", musicId, languageIds);
+        InsertJunctionRows(conn, tx, "TrackGenres", "GenreId", trackId, genreIds);
+        InsertJunctionRows(conn, tx, "TrackStyles", "StyleId", trackId, styleIds);
+        InsertJunctionRows(conn, tx, "TrackLanguages", "LanguageId", trackId, languageIds);
 
         tx.Commit();
     }
@@ -307,7 +257,7 @@ public class MusicDatabase
         cmd.CommandText = @"SELECT Id, CanonicalUrl, Title, FileName, RatingId, DownloadedAt,
                                    DurationSeconds, Notes, ReEvaluationNeeded,
                                    ListenCount, SkipCount, LastListenedAt
-                            FROM Music ORDER BY DownloadedAt DESC";
+                            FROM Tracks ORDER BY DownloadedAt DESC";
         using var r = cmd.ExecuteReader();
         var list = new List<MusicTrack>();
         while (r.Read())
@@ -327,7 +277,7 @@ public class MusicDatabase
     {
         using var conn = Open();
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = "UPDATE Music SET ListenCount = ListenCount + 1, LastListenedAt = $at WHERE Id = $id";
+        cmd.CommandText = "UPDATE Tracks SET ListenCount = ListenCount + 1, LastListenedAt = $at WHERE Id = $id";
         cmd.Parameters.AddWithValue("$id", trackId);
         cmd.Parameters.AddWithValue("$at", lastListenedAt);
         cmd.ExecuteNonQuery();
@@ -337,19 +287,19 @@ public class MusicDatabase
     {
         using var conn = Open();
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = "UPDATE Music SET SkipCount = SkipCount + 1 WHERE Id = $id";
+        cmd.CommandText = "UPDATE Tracks SET SkipCount = SkipCount + 1 WHERE Id = $id";
         cmd.Parameters.AddWithValue("$id", trackId);
         cmd.ExecuteNonQuery();
     }
 
-    public Dictionary<int, List<int>> GetAllMusicStyleIds() => GetAllJunctionIds("MusicStyles", "StyleId");
-    public List<int> GetMusicStyleIds(int musicId) => GetJunctionIds("MusicStyles", "StyleId", musicId);
+    public Dictionary<int, List<int>> GetAllTrackStyleIds() => GetAllJunctionIds("TrackStyles", "StyleId");
+    public List<int> GetTrackStyleIds(int trackId) => GetJunctionIds("TrackStyles", "StyleId", trackId);
 
-    public Dictionary<int, List<int>> GetAllMusicGenreIds() => GetAllJunctionIds("MusicGenres", "GenreId");
-    public List<int> GetMusicGenreIds(int musicId) => GetJunctionIds("MusicGenres", "GenreId", musicId);
+    public Dictionary<int, List<int>> GetAllTrackGenreIds() => GetAllJunctionIds("TrackGenres", "GenreId");
+    public List<int> GetTrackGenreIds(int trackId) => GetJunctionIds("TrackGenres", "GenreId", trackId);
 
-    public Dictionary<int, List<int>> GetAllMusicLanguageIds() => GetAllJunctionIds("MusicLanguages", "LanguageId");
-    public List<int> GetMusicLanguageIds(int musicId) => GetJunctionIds("MusicLanguages", "LanguageId", musicId);
+    public Dictionary<int, List<int>> GetAllTrackLanguageIds() => GetAllJunctionIds("TrackLanguages", "LanguageId");
+    public List<int> GetTrackLanguageIds(int trackId) => GetJunctionIds("TrackLanguages", "LanguageId", trackId);
 
     public void UpdateTrack(int id, string title, List<int> genreIds, int ratingId,
                             List<int> styleIds, List<int> languageIds, string? notes, bool reEvaluationNeeded)
@@ -360,7 +310,7 @@ public class MusicDatabase
         using (var cmd = conn.CreateCommand())
         {
             cmd.Transaction = tx;
-            cmd.CommandText = "UPDATE Music SET Title = $title, RatingId = $ratingId, Notes = $notes, ReEvaluationNeeded = $reEval WHERE Id = $id";
+            cmd.CommandText = "UPDATE Tracks SET Title = $title, RatingId = $ratingId, Notes = $notes, ReEvaluationNeeded = $reEval WHERE Id = $id";
             cmd.Parameters.AddWithValue("$id", id);
             cmd.Parameters.AddWithValue("$title", title);
             cmd.Parameters.AddWithValue("$ratingId", ratingId);
@@ -369,9 +319,9 @@ public class MusicDatabase
             cmd.ExecuteNonQuery();
         }
 
-        ReplaceJunctionRows(conn, tx, "MusicGenres", "GenreId", id, genreIds);
-        ReplaceJunctionRows(conn, tx, "MusicStyles", "StyleId", id, styleIds);
-        ReplaceJunctionRows(conn, tx, "MusicLanguages", "LanguageId", id, languageIds);
+        ReplaceJunctionRows(conn, tx, "TrackGenres", "GenreId", id, genreIds);
+        ReplaceJunctionRows(conn, tx, "TrackStyles", "StyleId", id, styleIds);
+        ReplaceJunctionRows(conn, tx, "TrackLanguages", "LanguageId", id, languageIds);
 
         tx.Commit();
     }
@@ -381,11 +331,11 @@ public class MusicDatabase
         using var conn = Open();
         using var tx = conn.BeginTransaction();
 
-        foreach (var table in new[] { "MusicGenres", "MusicStyles", "MusicLanguages" })
+        foreach (var table in new[] { "TrackGenres", "TrackStyles", "TrackLanguages" })
         {
             using var cmd = conn.CreateCommand();
             cmd.Transaction = tx;
-            cmd.CommandText = $"DELETE FROM {table} WHERE MusicId = $id";
+            cmd.CommandText = $"DELETE FROM {table} WHERE TrackId = $id";
             cmd.Parameters.AddWithValue("$id", id);
             cmd.ExecuteNonQuery();
         }
@@ -393,7 +343,7 @@ public class MusicDatabase
         using (var cmd = conn.CreateCommand())
         {
             cmd.Transaction = tx;
-            cmd.CommandText = "DELETE FROM Music WHERE Id = $id";
+            cmd.CommandText = "DELETE FROM Tracks WHERE Id = $id";
             cmd.Parameters.AddWithValue("$id", id);
             cmd.ExecuteNonQuery();
         }
@@ -406,7 +356,7 @@ public class MusicDatabase
     public List<Genre> GetGenres() => GetLookupList("Genres", (id, name) => new Genre(id, name));
 
     public void InsertGenre(string name) => InsertLookup("Genres", name);
-    public bool IsGenreInUse(int id) => IsInUse("MusicGenres", "GenreId", id);
+    public bool IsGenreInUse(int id) => IsInUse("TrackGenres", "GenreId", id);
     public void UpdateGenre(int id, string name) => UpdateLookup("Genres", id, name);
     public void DeleteGenre(int id) => DeleteLookup("Genres", id);
 
@@ -415,7 +365,7 @@ public class MusicDatabase
     public List<Style> GetStyles() => GetLookupList("Styles", (id, name) => new Style(id, name));
 
     public void InsertStyle(string name) => InsertLookup("Styles", name);
-    public bool IsStyleInUse(int id) => IsInUse("MusicStyles", "StyleId", id);
+    public bool IsStyleInUse(int id) => IsInUse("TrackStyles", "StyleId", id);
     public void UpdateStyle(int id, string name) => UpdateLookup("Styles", id, name);
     public void DeleteStyle(int id) => DeleteLookup("Styles", id);
 
@@ -424,7 +374,7 @@ public class MusicDatabase
     public List<Language> GetLanguages() => GetLookupList("Languages", (id, name) => new Language(id, name));
 
     public void InsertLanguage(string name) => InsertLookup("Languages", name);
-    public bool IsLanguageInUse(int id) => IsInUse("MusicLanguages", "LanguageId", id);
+    public bool IsLanguageInUse(int id) => IsInUse("TrackLanguages", "LanguageId", id);
     public void UpdateLanguage(int id, string name) => UpdateLookup("Languages", id, name);
     public void DeleteLanguage(int id) => DeleteLookup("Languages", id);
 
@@ -452,7 +402,7 @@ public class MusicDatabase
         cmd.ExecuteNonQuery();
     }
 
-    public bool IsRatingInUse(int id) => IsInUse("Music", "RatingId", id);
+    public bool IsRatingInUse(int id) => IsInUse("Tracks", "RatingId", id);
     public void UpdateRating(int id, string name) => UpdateLookup("Ratings", id, name);
     public void DeleteRating(int id) => DeleteLookup("Ratings", id);
 
@@ -510,29 +460,29 @@ public class MusicDatabase
     {
         using var conn = Open();
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = $"SELECT MusicId, {idColumn} FROM {table}";
+        cmd.CommandText = $"SELECT TrackId, {idColumn} FROM {table}";
         using var r = cmd.ExecuteReader();
         var dict = new Dictionary<int, List<int>>();
         while (r.Read())
         {
-            var musicId = r.GetInt32(0);
+            var trackId = r.GetInt32(0);
             var tagId = r.GetInt32(1);
-            if (!dict.TryGetValue(musicId, out var ids))
+            if (!dict.TryGetValue(trackId, out var ids))
             {
                 ids = [];
-                dict[musicId] = ids;
+                dict[trackId] = ids;
             }
             ids.Add(tagId);
         }
         return dict;
     }
 
-    private List<int> GetJunctionIds(string table, string idColumn, int musicId)
+    private List<int> GetJunctionIds(string table, string idColumn, int trackId)
     {
         using var conn = Open();
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = $"SELECT {idColumn} FROM {table} WHERE MusicId = $id";
-        cmd.Parameters.AddWithValue("$id", musicId);
+        cmd.CommandText = $"SELECT {idColumn} FROM {table} WHERE TrackId = $id";
+        cmd.Parameters.AddWithValue("$id", trackId);
         using var r = cmd.ExecuteReader();
         var ids = new List<int>();
         while (r.Read()) ids.Add(r.GetInt32(0));
@@ -540,32 +490,32 @@ public class MusicDatabase
     }
 
     private static void InsertJunctionRows(SqliteConnection conn, SqliteTransaction tx,
-        string table, string idColumn, long musicId, List<int> ids)
+        string table, string idColumn, long trackId, List<int> ids)
     {
         if (ids.Count == 0) return;
         using var cmd = conn.CreateCommand();
         cmd.Transaction = tx;
-        cmd.CommandText = $"INSERT INTO {table} (MusicId, {idColumn}) VALUES ($mid, $tid)";
-        cmd.Parameters.Add("$mid", SqliteType.Integer).Value = musicId;
-        var tidParam = cmd.Parameters.Add("$tid", SqliteType.Integer);
+        cmd.CommandText = $"INSERT INTO {table} (TrackId, {idColumn}) VALUES ($tid, $val)";
+        cmd.Parameters.Add("$tid", SqliteType.Integer).Value = trackId;
+        var valParam = cmd.Parameters.Add("$val", SqliteType.Integer);
         foreach (var id in ids)
         {
-            tidParam.Value = id;
+            valParam.Value = id;
             cmd.ExecuteNonQuery();
         }
     }
 
     private static void ReplaceJunctionRows(SqliteConnection conn, SqliteTransaction tx,
-        string table, string idColumn, int musicId, List<int> ids)
+        string table, string idColumn, int trackId, List<int> ids)
     {
         using (var del = conn.CreateCommand())
         {
             del.Transaction = tx;
-            del.CommandText = $"DELETE FROM {table} WHERE MusicId = $id";
-            del.Parameters.AddWithValue("$id", musicId);
+            del.CommandText = $"DELETE FROM {table} WHERE TrackId = $id";
+            del.Parameters.AddWithValue("$id", trackId);
             del.ExecuteNonQuery();
         }
-        InsertJunctionRows(conn, tx, table, idColumn, musicId, ids);
+        InsertJunctionRows(conn, tx, table, idColumn, trackId, ids);
     }
 
     private SqliteConnection Open()

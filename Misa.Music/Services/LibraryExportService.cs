@@ -34,9 +34,9 @@ public class LibraryExportService
         var ratings = _db.GetRatings().ToDictionary(r => r.Id, r => r.Name);
         var styles = _db.GetStyles().ToDictionary(s => s.Id, s => s.Name);
         var languages = _db.GetLanguages().ToDictionary(l => l.Id, l => l.Name);
-        var allStyleIds = _db.GetAllMusicStyleIds();
-        var allGenreIds = _db.GetAllMusicGenreIds();
-        var allLanguageIds = _db.GetAllMusicLanguageIds();
+        var allStyleIds = _db.GetAllTrackStyleIds();
+        var allGenreIds = _db.GetAllTrackGenreIds();
+        var allLanguageIds = _db.GetAllTrackLanguageIds();
 
         var export = new LibraryExport
         {
