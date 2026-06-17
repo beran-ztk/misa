@@ -10,6 +10,7 @@ public static class MusicSettingsService
     private static readonly string SettingsPath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
         "Misa", "music-settings.json");
+    // Todo: Anderen Pfad
 
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 

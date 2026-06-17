@@ -8,6 +8,7 @@ public static class ThumbnailService
     private static readonly string CacheDir = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "Misa", "thumbcache");
+    // Todo: Anderen Pfad
 
     // Extracts the first embedded picture from the audio file into the cache.
     // Returns the cache path on success, null if no picture or on any error.

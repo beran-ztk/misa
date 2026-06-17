@@ -88,13 +88,11 @@ public partial class MusicView : UserControl
         {
             if (_loadingSettings) return;
             _autoplay = AutoplayCheckBox.IsChecked == true;
-            SavePlayerSettings();
         };
         CrossfadeCheckBox.IsCheckedChanged += (_, _) =>
         {
             if (_loadingSettings) return;
             _crossfadeEnabled = CrossfadeCheckBox.IsChecked == true;
-            SavePlayerSettings();
         };
 
         // Volume
@@ -105,7 +103,6 @@ public partial class MusicView : UserControl
             VolumeText.Text = $"{(int)VolumeSlider.Value}%";
             _engine.MasterVolume = _volume;
             if (!_muted) _engine.ApplyVolume();
-            SavePlayerSettings();
         };
 
         LoadPlayerSettings();
@@ -157,24 +154,6 @@ public partial class MusicView : UserControl
         finally { _loadingSettings = false; }
 
         UpdateToggleButtonStates();
-    }
-
-    private void SavePlayerSettings()
-    {
-        if (_loadingSettings) return;
-        MusicLibraryService.Current.SavePlayerSettings(
-            volume: (int)VolumeSlider.Value,
-            isMuted: _muted,
-            shuffleEnabled: _shuffle,
-            autoplayEnabled: _autoplay,
-            repeatMode: _repeatMode switch
-            {
-                RepeatMode.RepeatOne => "RepeatOne",
-                RepeatMode.RepeatAll => "RepeatAll",
-                _ => "None",
-            },
-            crossfadeEnabled: _crossfadeEnabled,
-            showUpcomingTrackBar: _showUpcomingTrackBar);
     }
 
     // ─── Track list ──────────────────────────────────────────────────────────
@@ -623,7 +602,6 @@ public partial class MusicView : UserControl
             _ => RepeatMode.None,
         };
         UpdateToggleButtonStates();
-        SavePlayerSettings();
     }
 
     private void OnShuffleToggleClicked(object? sender, RoutedEventArgs e)
@@ -631,7 +609,6 @@ public partial class MusicView : UserControl
         _shuffle = !_shuffle;
         if (!_shuffle) _shuffleHistory.Clear();
         UpdateToggleButtonStates();
-        SavePlayerSettings();
     }
 
     private void StartPlayback()

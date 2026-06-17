@@ -36,29 +36,7 @@ public class MusicLibraryService
     public MusicSettings GetSettings() => _settings;
     public string MusicDirectory => _settings.MusicDirectory;
 
-    public void SaveSettings(MusicSettings settings)
-    {
-        _settings = settings;
-        MusicSettingsService.SaveSettings(settings);
-        ApplySettings();
-    }
-
     public void Initialize() => _db.Initialize();
-
-    // Updates only player-related settings fields and flushes to disk.
-    // Does not call ApplySettings() — the player state has no effect on the DB or downloader.
-    public void SavePlayerSettings(int volume, bool isMuted, bool shuffleEnabled, bool autoplayEnabled,
-        string repeatMode, bool crossfadeEnabled, bool showUpcomingTrackBar)
-    {
-        _settings.Volume = volume;
-        _settings.IsMuted = isMuted;
-        _settings.ShuffleEnabled = shuffleEnabled;
-        _settings.AutoplayEnabled = autoplayEnabled;
-        _settings.RepeatMode = repeatMode;
-        _settings.CrossfadeEnabled = crossfadeEnabled;
-        _settings.ShowUpcomingTrackBar = showUpcomingTrackBar;
-        MusicSettingsService.SaveSettings(_settings);
-    }
 
     // --- Tracks ---
 
@@ -130,42 +108,11 @@ public class MusicLibraryService
     // --- Genres ---
 
     public List<Genre> GetGenres() => _db.GetGenres();
-    public void AddGenre(string name) => _db.InsertGenre(name);
-    public void RenameGenre(int id, string name) => _db.UpdateGenre(id, name);
-
-    public DeletionResult TryDeleteGenre(int id)
-    {
-        if (_db.IsGenreInUse(id))
-            return new DeletionResult(false, "Cannot delete: genre is used by one or more tracks.");
-        _db.DeleteGenre(id);
-        return new DeletionResult(true);
-    }
 
     // --- Styles ---
 
     public List<Style> GetStyles() => _db.GetStyles();
-    public void AddStyle(string name) => _db.InsertStyle(name);
-    public void RenameStyle(int id, string name) => _db.UpdateStyle(id, name);
-
-    public DeletionResult TryDeleteStyle(int id)
-    {
-        if (_db.IsStyleInUse(id))
-            return new DeletionResult(false, "Cannot delete: style is used by one or more tracks.");
-        _db.DeleteStyle(id);
-        return new DeletionResult(true);
-    }
 
     // --- Ratings ---
-
     public List<Rating> GetRatings() => _db.GetRatings();
-    public void AddRating(string name) => _db.InsertRating(name);
-    public void RenameRating(int id, string name) => _db.UpdateRating(id, name);
-
-    public DeletionResult TryDeleteRating(int id)
-    {
-        if (_db.IsRatingInUse(id))
-            return new DeletionResult(false, "Cannot delete: rating is used by one or more tracks.");
-        _db.DeleteRating(id);
-        return new DeletionResult(true);
-    }
 }

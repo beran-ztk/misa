@@ -7,14 +7,10 @@ namespace Music.Views;
 public partial class MainWindow : Window
 {
     private readonly MusicView _musicView = new();
-    private readonly SettingsView _settingsView = new();
 
     public MainWindow()
     {
         InitializeComponent();
-        _settingsView.PrepareForReset = () => _musicView.StopPlayback();
-        _settingsView.OnResetComplete = () => _musicView.Refresh();
-        _settingsView.OnMetadataChanged = () => _musicView.RefreshFilters();
         ContentArea.Content = _musicView;
 
         PropertyChanged += (_, e) =>
@@ -23,19 +19,6 @@ public partial class MainWindow : Window
                 TitleMaxBtn.Content = WindowState == WindowState.Maximized ? "❐" : "□";
         };
     }
-
-    private void OnSettingsClicked(object? sender, RoutedEventArgs e)
-    {
-        if (Equals(ContentArea.Content, _musicView))
-        {
-            ContentArea.Content = _settingsView;
-        }
-        else
-        {
-            ContentArea.Content = _musicView;
-        }
-    }
-
     private void OnTitleBarPointerPressed(object? sender, PointerPressedEventArgs e)
     {
         if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)

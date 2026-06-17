@@ -25,17 +25,17 @@ public class TrackDownloadService
     {
         var outputTemplate = Path.Combine(_musicDir, "%(title)s [%(id)s].%(ext)s");
 
-        var args = new List<string>();
-        if (_settings.UseNodeJsRuntime) args.Add("--js-runtimes node");
-        if (_settings.UseFirefoxCookies) args.Add("--cookies-from-browser firefox");
-        // if (_settings.UseRemoteEjsComponents) args.Add("--remote-components ejs:github");
-        args.Add("--no-playlist");
-        args.Add("-x");
-        args.Add("--audio-format m4a");
-        args.Add("--embed-thumbnail");
-        args.Add($"--ffmpeg-location \"{_toolsDir}\"");
-        args.Add($"-o \"{outputTemplate}\"");
-        args.Add($"\"{url}\"");
+        var args = new List<string>
+        {
+            "--js-runtimes node",
+            "--no-playlist",
+            "-x",
+            "--audio-format m4a",
+            "--embed-thumbnail",
+            $"--ffmpeg-location \"{_toolsDir}\"",
+            $"-o \"{outputTemplate}\"",
+            $"\"{url}\""
+        };
 
         var psi = new ProcessStartInfo
         {

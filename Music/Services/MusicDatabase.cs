@@ -317,22 +317,11 @@ public class MusicDatabase
 
     public List<Genre> GetGenres() => GetLookupList("Genres", (id, name) => new Genre(id, name));
 
-    public void InsertGenre(string name) => InsertLookup("Genres", name);
-    public bool IsGenreInUse(int id) => IsInUse("TrackGenres", "GenreId", id);
-    public void UpdateGenre(int id, string name) => UpdateLookup("Genres", id, name);
-    public void DeleteGenre(int id) => DeleteLookup("Genres", id);
-
     // --- Styles ---
 
     public List<Style> GetStyles() => GetLookupList("Styles", (id, name) => new Style(id, name));
 
-    public void InsertStyle(string name) => InsertLookup("Styles", name);
-    public bool IsStyleInUse(int id) => IsInUse("TrackStyles", "StyleId", id);
-    public void UpdateStyle(int id, string name) => UpdateLookup("Styles", id, name);
-    public void DeleteStyle(int id) => DeleteLookup("Styles", id);
-
     // --- Ratings ---
-
     public List<Rating> GetRatings()
     {
         using var conn = Open();
@@ -343,21 +332,6 @@ public class MusicDatabase
         while (r.Read()) list.Add(new Rating(r.GetInt32(0), r.GetString(1), r.GetInt32(2)));
         return list;
     }
-
-    public void InsertRating(string name)
-    {
-        using var conn = Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = @"
-            INSERT OR IGNORE INTO Ratings (Name, SortOrder)
-            VALUES ($name, (SELECT COALESCE(MAX(SortOrder), 0) + 1 FROM Ratings))";
-        cmd.Parameters.AddWithValue("$name", name);
-        cmd.ExecuteNonQuery();
-    }
-
-    public bool IsRatingInUse(int id) => IsInUse("Tracks", "RatingId", id);
-    public void UpdateRating(int id, string name) => UpdateLookup("Ratings", id, name);
-    public void DeleteRating(int id) => DeleteLookup("Ratings", id);
 
     // --- Private helpers ---
 
