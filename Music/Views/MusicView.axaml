@@ -145,12 +145,9 @@
                                 Orientation="Horizontal" Spacing="4"
                                 VerticalAlignment="Center">
                         <Slider x:Name="VolumeSlider"
-                                Minimum="0" Maximum="100" Value="100"
-                                Width="80" VerticalAlignment="Center"/>
-                        <TextBlock x:Name="VolumeText"
-                                   Text="100%"
-                                   FontSize="11" Opacity="0.55"
-                                   MinWidth="34" VerticalAlignment="Center"/>
+                                Minimum="0" Maximum="100" 
+                                Value="100"
+                                Width="100" VerticalAlignment="Center"/>
                         <Button x:Name="RepeatBtn"
                                 Content="↻"
                                 Background="Transparent"
@@ -216,15 +213,9 @@
                                            TextTrimming="CharacterEllipsis"/>
                                 <TextBlock Text="{Binding GenreText}"
                                            FontSize="11" Opacity="0.58"
-                                           IsVisible="{Binding HasGenres}"
                                            TextTrimming="CharacterEllipsis"/>
                                 <TextBlock Text="{Binding StyleText}"
                                            FontSize="10.5" Opacity="0.35"
-                                           IsVisible="{Binding HasStyles}"
-                                           TextTrimming="CharacterEllipsis"/>
-                                <TextBlock Text="{Binding MetaLine}"
-                                           FontSize="10" Opacity="0.28"
-                                           IsVisible="{Binding HasMetaLine}"
                                            TextTrimming="CharacterEllipsis"/>
                             </StackPanel>
 
@@ -237,21 +228,10 @@
                                         MinWidth="72">
                                 <TextBlock Text="{Binding DurationText}"
                                            FontSize="11" Opacity="0.52"
-                                           HorizontalAlignment="Right"
-                                           IsVisible="{Binding HasDuration}"/>
+                                           HorizontalAlignment="Right"/>
                                 <TextBlock Text="{Binding RatingText}"
                                            FontSize="10" Opacity="0.42"
-                                           HorizontalAlignment="Right"
-                                           IsVisible="{Binding HasRating}"/>
-                                <StackPanel Orientation="Horizontal"
-                                            HorizontalAlignment="Right"
-                                            Spacing="10"
-                                            IsVisible="{Binding HasStats}">
-                                    <TextBlock Text="{Binding ListenText}"
-                                               FontSize="10" Opacity="0.32"/>
-                                    <TextBlock Text="{Binding SkipText}"
-                                               FontSize="10" Opacity="0.32"/>
-                                </StackPanel>
+                                           HorizontalAlignment="Right"/>
                             </StackPanel>
 
                         </Grid>
@@ -260,7 +240,6 @@
                 <ListBox.ContextMenu>
                     <ContextMenu>
                         <MenuItem Header="Edit" Click="OnContextEditClicked"/>
-                        <MenuItem Header="Delete" Click="OnContextDeleteClicked"/>
                     </ContextMenu>
                 </ListBox.ContextMenu>
             </ListBox>
@@ -328,12 +307,6 @@
                                            Opacity="0.38" LetterSpacing="1"/>
                                 <CheckBox x:Name="ReEvalFilterCheckBox"
                                           Content="Re-evaluation needed"
-                                          FontSize="12"/>
-                                <CheckBox x:Name="AutoplayCheckBox"
-                                          Content="Autoplay"
-                                          FontSize="12"/>
-                                <CheckBox x:Name="CrossfadeCheckBox"
-                                          Content="Crossfade"
                                           FontSize="12"/>
                             </StackPanel>
 

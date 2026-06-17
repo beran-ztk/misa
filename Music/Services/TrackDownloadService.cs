@@ -10,20 +10,10 @@ namespace Music.Services;
 
 public class TrackDownloadService
 {
-    private readonly string _toolsDir;
-    private readonly string _musicDir;
-    private readonly MusicSettings _settings;
-
-    public TrackDownloadService(string toolsDir, string musicDir, MusicSettings settings)
-    {
-        _toolsDir = toolsDir;
-        _musicDir = musicDir;
-        _settings = settings;
-    }
 
     public async Task<(bool Success, string ErrorOutput)> RunYtDlpAsync(string url)
     {
-        var outputTemplate = Path.Combine(_musicDir, "%(title)s [%(id)s].%(ext)s");
+        var outputTemplate = Path.Combine(Values.TracksDirectory, "%(title)s [%(id)s].%(ext)s");
 
         var args = new List<string>
         {
@@ -32,14 +22,14 @@ public class TrackDownloadService
             "-x",
             "--audio-format m4a",
             "--embed-thumbnail",
-            $"--ffmpeg-location \"{_toolsDir}\"",
+            $"--ffmpeg-location \"{Values.ToolsDirectory}\"",
             $"-o \"{outputTemplate}\"",
             $"\"{url}\""
         };
 
         var psi = new ProcessStartInfo
         {
-            FileName = Path.Combine(_toolsDir, "yt-dlp.exe"),
+            FileName = Path.Combine(Values.ToolsDirectory, "yt-dlp.exe"),
             Arguments = string.Join(" ", args),
             RedirectStandardOutput = true,
             RedirectStandardError = true,
@@ -64,7 +54,7 @@ public class TrackDownloadService
         {
             var psi = new ProcessStartInfo
             {
-                FileName = Path.Combine(_toolsDir, "ffprobe.exe"),
+                FileName = Path.Combine(Values.ToolsDirectory, "ffprobe.exe"),
                 Arguments = $"-v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 \"{filePath}\"",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
@@ -83,7 +73,7 @@ public class TrackDownloadService
 
     public string? FindDownloadedFile(string videoId)
     {
-        return Directory.GetFiles(_musicDir, "*.m4a")
+        return Directory.GetFiles(Values.TracksDirectory, "*.m4a")
                         .FirstOrDefault(f => Path.GetFileNameWithoutExtension(f).EndsWith($"[{videoId}]"));
     }
 

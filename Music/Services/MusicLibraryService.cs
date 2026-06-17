@@ -10,32 +10,15 @@ public class MusicLibraryService
 {
     public static readonly MusicLibraryService Current = new();
 
-    private MusicSettings _settings;
-    private MusicDatabase _db;
-    private TrackDownloadService _downloader;
-    private TrackFileService _fileService;
+    private readonly MusicDatabase _db;
+    private readonly TrackDownloadService _downloader;
 
     private MusicLibraryService()
     {
-        _settings = MusicSettingsService.LoadSettings();
-        MusicSettingsService.SaveSettings(_settings);
-        _db = null!;
-        _downloader = null!;
-        _fileService = null!;
-        ApplySettings();
+        _db = new MusicDatabase();
+        _downloader = new TrackDownloadService();
     }
-
-    private void ApplySettings()
-    {
-        var dbPath = Path.Combine(_settings.MusicDirectory, "music.db");
-        _db = new MusicDatabase(dbPath);
-        _downloader = new TrackDownloadService(_settings.ToolsDirectory, _settings.MusicDirectory, _settings);
-        _fileService = new TrackFileService(_settings.MusicDirectory);
-    }
-
-    public MusicSettings GetSettings() => _settings;
-    public string MusicDirectory => _settings.MusicDirectory;
-
+    
     public void Initialize() => _db.Initialize();
 
     // --- Tracks ---
@@ -92,16 +75,11 @@ public class MusicLibraryService
     public void IncrementSkipCount(int trackId) =>
         _db.IncrementSkipCount(trackId);
 
-    public DeleteTrackResult DeleteTrack(int id, string fileName)
-    {
-        _db.DeleteTrack(id);
-        return _fileService.TryDeleteFile(fileName);
-    }
 
     // --- Thumbnails ---
     public string? EnsureThumbnailCached(int trackId, string fileName)
     {
-        var audioFilePath = Path.Combine(_settings.MusicDirectory, fileName);
+        var audioFilePath = Path.Combine(Values.TracksDirectory, fileName);
         return ThumbnailService.EnsureCached(trackId, audioFilePath);
     }
 

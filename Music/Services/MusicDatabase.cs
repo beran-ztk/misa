@@ -8,14 +8,8 @@ namespace Music.Services;
 
 public class MusicDatabase
 {
-    private readonly string _dbPath;
-    private readonly string _connectionString;
+    private readonly string _connectionString = $"Data Source={Values.DbPath}";
 
-    public MusicDatabase(string dbPath)
-    {
-        _dbPath = dbPath;
-        _connectionString = $"Data Source={dbPath}";
-    }
     private SqliteConnection Open()
     {
         var conn = new SqliteConnection(_connectionString);
@@ -24,10 +18,10 @@ public class MusicDatabase
     }
     public void Initialize()
     {
-        if (File.Exists(_dbPath))
+        if (File.Exists(Values.DbPath))
             return;
         
-        var dir = Path.GetDirectoryName(_dbPath);
+        var dir = Path.GetDirectoryName(Values.DbPath);
         if (!string.IsNullOrEmpty(dir))
             Directory.CreateDirectory(dir);
         
