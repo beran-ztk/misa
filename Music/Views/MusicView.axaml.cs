@@ -11,7 +11,6 @@ using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
-using CommunityToolkit.Mvvm.ComponentModel;
 using Music.Models;
 using Music.Services;
 
@@ -132,8 +131,7 @@ public partial class MusicView : UserControl
             var ratingName = ratingMap.GetValueOrDefault(t.RatingId, "");
             var durationText = t.DurationSeconds.HasValue ? FormatDuration(t.DurationSeconds.Value) : "";
             
-            return new TrackDisplayItem(t, genreIds, styleIds,
-                genreStr,styleStr, durationText,ratingName);
+            return new TrackDisplayItem(t, genreStr, styleStr, durationText, ratingName);
         }).ToList();
 
         ApplyFilter();
@@ -187,7 +185,6 @@ public partial class MusicView : UserControl
     private void ApplyFilter()
     {
         var selRatingIds = SelectedIds(RatingFilter.SelectedItems, Values.Ratings, r => r.Name, r => r.Id);
-        var ratingSortOrders = Values.Ratings.ToDictionary(r => r.Id, r => r.SortOrder);
         var itemById = _allItems.ToDictionary(i => i.Track.Id);
 
         var groups = _filterGroups
@@ -200,7 +197,6 @@ public partial class MusicView : UserControl
             _allItems.Select(i => i.Track),
             _allTrackGenreIds,
             _allTrackStyleIds,
-            ratingSortOrders,
             selRatingIds,
             groups,
             SearchBox.Text);
@@ -259,7 +255,6 @@ public partial class MusicView : UserControl
 
         var seenGenres = new HashSet<string>();
         var seenStyles = new HashSet<string>();
-        var seenLangs = new HashSet<string>();
 
         foreach (var fg in _filterGroups)
         {
@@ -280,17 +275,9 @@ public partial class MusicView : UserControl
         return source.Where(item => selected.Contains(nameOf(item))).Select(idOf).ToHashSet();
     }
 
-    public IReadOnlyList<TrackDisplayItem> GetPlayContext() => _filteredItems;
-
     public void Refresh()
     {
         NowPlayingText.Text = "";
-        LoadLookups();
-        RefreshTrackList();
-    }
-
-    public void RefreshFilters()
-    {
         LoadLookups();
         RefreshTrackList();
     }

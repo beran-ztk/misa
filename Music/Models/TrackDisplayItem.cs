@@ -1,12 +1,9 @@
-using System.Collections.Generic;
 using Avalonia.Media.Imaging;
 
 namespace Music.Models;
 
 public record TrackDisplayItem(
     MusicTrack Track,
-    List<int> GenreIds,
-    List<int> StyleIds,
     string GenreText,
     string StyleText,
     string DurationText,

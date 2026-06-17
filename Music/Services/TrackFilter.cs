@@ -13,7 +13,6 @@ public static class TrackFilter
         IEnumerable<MusicTrack> tracks,
         IReadOnlyDictionary<int, List<int>> trackGenreIds,
         IReadOnlyDictionary<int, List<int>> trackStyleIds,
-        IReadOnlyDictionary<int, int> ratingSortOrders,
         IReadOnlySet<int> ratingFilter,
         IReadOnlyList<FilterGroup> filterGroups,
         string? searchText)
@@ -55,7 +54,7 @@ public static class TrackFilter
         return sorted.ToList();
     }
 
-    // A track matches a group if it has ALL the group's genres, ALL the group's styles,
+    // A track matches a group if it has all selected genres and all selected styles.
     private static bool MatchesGroup(
         MusicTrack track,
         FilterGroup group,
