@@ -23,9 +23,8 @@ public class MusicLibraryService
 
     public Dictionary<int, List<int>> GetAllTrackGenreIds() => _db.GetAllTrackGenreIds();
     public List<int> GetTrackGenreIds(int trackId) => _db.GetTrackGenreIds(trackId);
-    public void UpdateTrack(int id, string title, List<int> genreIds, int ratingId,
-        List<int> styleIds, string? notes, bool reEvaluationNeeded) =>
-        _db.UpdateTrack(id, title, genreIds, ratingId, styleIds, notes, reEvaluationNeeded);
+    public void UpdateTrack(int id, string title, List<int> genreIds, int ratingId, List<int> styleIds) 
+        => _db.UpdateTrack(id, title, genreIds, ratingId, styleIds);
 
     // --- Thumbnails ---
     public string? EnsureThumbnailCached(int trackId, string fileName)

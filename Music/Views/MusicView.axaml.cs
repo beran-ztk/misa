@@ -27,8 +27,7 @@ public partial class MusicView : UserControl
     private bool _isSeeking;
 
     // Playback settings
-    private int _crossfadeDurationSeconds = 10;
-    private int _manualFadeDurationSeconds = 2;
+    
     private bool _showUpcomingTrackBar = true;
     private RepeatMode _repeatMode = RepeatMode.None;
     private bool _shuffle;
@@ -75,7 +74,6 @@ public partial class MusicView : UserControl
 
         SearchBox.TextChanged += (_, _) => ApplyFilter();
         RatingFilter.SelectionChanged += (_, _) => ApplyFilter();
-        ReEvalFilterCheckBox.IsCheckedChanged += (_, _) => ApplyFilter();
 
         // Volume
         VolumeSlider.ValueChanged += (_, _) =>
@@ -141,13 +139,9 @@ public partial class MusicView : UserControl
                 .Where(n => n.Length > 0).Order());
             var ratingName = ratingMap.GetValueOrDefault(t.RatingId, "");
             var durationText = t.DurationSeconds.HasValue ? FormatDuration(t.DurationSeconds.Value) : "";
-
-            var miscParts = new List<string>();
-            if (t.ReEvaluationNeeded) miscParts.Add("[re-eval]");
-
-            return new TrackDisplayItem(t, string.Join(" · ", miscParts),
-                genreIds, styleIds,
-                genreStr, styleStr, durationText, ratingName);
+            
+            return new TrackDisplayItem(t, genreIds, styleIds,
+                genreStr,styleStr, durationText,ratingName);
         }).ToList();
 
         ApplyFilter();
@@ -209,9 +203,7 @@ public partial class MusicView : UserControl
                 SelectedIds(fg.GenreCtrl.SelectedItems, Values.Genres, g => g.Name, g => g.Id),
                 SelectedIds(fg.StyleCtrl.SelectedItems, Values.Styles, s => s.Name, s => s.Id)))
             .ToList();
-
-        bool? reEvalFilter = ReEvalFilterCheckBox.IsChecked == true ? true : null;
-
+        
         var filtered = TrackFilter.Apply(
             _allItems.Select(i => i.Track),
             _allTrackGenreIds,
@@ -219,7 +211,6 @@ public partial class MusicView : UserControl
             ratingSortOrders,
             selRatingIds,
             groups,
-            reEvalFilter,
             SearchBox.Text);
 
         _filteredItems = filtered
@@ -271,9 +262,6 @@ public partial class MusicView : UserControl
         foreach (var r in Enumerable.OrderBy<string, string>(RatingFilter.SelectedItems, n => n))
             chips.Add($"Rating: {r}");
 
-        if (ReEvalFilterCheckBox.IsChecked == true)
-            chips.Add("Re-eval");
-
         var seenGenres = new HashSet<string>();
         var seenStyles = new HashSet<string>();
         var seenLangs = new HashSet<string>();
@@ -324,7 +312,6 @@ public partial class MusicView : UserControl
     {
         RatingFilter.SetItems(Values.Ratings.Select(r => r.Name));
         RatingFilter.Placeholder = "All ratings";
-        ReEvalFilterCheckBox.IsChecked = false;
         foreach (var fg in _filterGroups)
         {
             fg.GenreCtrl.SetItems(Values.Genres.Select(g => g.Name));
@@ -493,10 +480,10 @@ public partial class MusicView : UserControl
         var filePath = Path.Combine(Values.TracksDirectory, track.FileName);
 
         bool wasPlaying = _engine.State != EngineState.Stopped;
-        float fadeOut = isCrossfade ? _crossfadeDurationSeconds
-                      : wasPlaying ? _manualFadeDurationSeconds : 0f;
-        float fadeIn = isCrossfade ? _crossfadeDurationSeconds
-                     : wasPlaying ? _manualFadeDurationSeconds : 0f;
+        float fadeOut = isCrossfade ? Values.CrossfadeDurationSeconds
+                      : wasPlaying ? Values.ManualFadeDurationSeconds : 0f;
+        float fadeIn = isCrossfade ? Values.CrossfadeDurationSeconds
+                     : wasPlaying ? Values.ManualFadeDurationSeconds : 0f;
 
         try
         {
@@ -579,10 +566,10 @@ public partial class MusicView : UserControl
         {
             var total = _engine.TotalTime.TotalSeconds;
             var current = _engine.CurrentTime.TotalSeconds;
-            if (total >= _crossfadeDurationSeconds + 2.0 && current >= 1.0)
+            if (total >= Values.CrossfadeDurationSeconds + 2.0 && current >= 1.0)
             {
                 var remaining = total - current;
-                if (remaining > 0 && remaining <= _crossfadeDurationSeconds)
+                if (remaining > 0 && remaining <= Values.CrossfadeDurationSeconds)
                 {
                     _crossfadeTriggered = true;
                     PlayTrackAt(_nextTrackIndex, isCrossfade: true);

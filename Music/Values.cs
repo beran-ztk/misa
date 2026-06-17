@@ -14,6 +14,8 @@ public static class Values
     public static readonly string ToolsDirectory = @"D:\media\tools";
 
     public static float Volume = 100f;
+    public const int CrossfadeDurationSeconds = 10;
+    public const int ManualFadeDurationSeconds = 2;
     
     public static List<Genre> Genres = [];
     public static List<Style> Styles = [];

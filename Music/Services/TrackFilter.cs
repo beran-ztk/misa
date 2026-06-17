@@ -16,21 +16,18 @@ public static class TrackFilter
         IReadOnlyDictionary<int, int> ratingSortOrders,
         IReadOnlySet<int> ratingFilter,
         IReadOnlyList<FilterGroup> filterGroups,
-        bool? reEvaluationFilter,
         string? searchText)
     {
         IEnumerable<MusicTrack> query = tracks;
 
         if (ratingFilter.Count > 0)
             query = query.Where(t => ratingFilter.Contains(t.RatingId));
-
-        if (reEvaluationFilter.HasValue)
-            query = query.Where(t => t.ReEvaluationNeeded == reEvaluationFilter.Value);
+        
 
         var term = searchText?.Trim();
         if (!string.IsNullOrEmpty(term))
-            query = query.Where(t => MatchesSearch(t, term));
-
+            query = query.Where(t => t.Title.Contains(term, StringComparison.OrdinalIgnoreCase));
+        
         // Apply filter groups: OR between groups, AND within a group.
         // Empty groups (nothing selected in any dimension) are ignored.
         var activeGroups = filterGroups
@@ -80,12 +77,5 @@ public static class TrackFilter
         }
 
         return true;
-    }
-
-    private static bool MatchesSearch(MusicTrack t, string term)
-    {
-        if (t.Title.Contains(term, StringComparison.OrdinalIgnoreCase)) return true;
-        if (t.Notes != null && t.Notes.Contains(term, StringComparison.OrdinalIgnoreCase)) return true;
-        return false;
     }
 }

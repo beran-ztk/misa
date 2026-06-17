@@ -2,8 +2,7 @@ namespace Music.Models;
 
 public record MusicTrack(
     int Id, string CanonicalUrl, string Title, string FileName,
-    int RatingId, string DownloadedAt, int? DurationSeconds,
-    string? Notes, bool ReEvaluationNeeded, string? LastListenedAt);
+    int RatingId, string DownloadedAt, int? DurationSeconds);
 
 public record Genre(int Id, string Name);
 public record Style(int Id, string Name);

@@ -31,8 +31,6 @@ public partial class EditTrackWindow : Window
         _styles = MusicLibraryService.Current.GetStyles();
 
         TitleBox.Text = _track.Title;
-        NotesBox.Text = _track.Notes ?? "";
-        ReEvalCheckBox.IsChecked = _track.ReEvaluationNeeded;
 
         GenresBox.ItemsSource = _genres.Select(g => g.Name).ToList();
         var currentGenreIds = MusicLibraryService.Current.GetTrackGenreIds(_track.Id);
@@ -74,10 +72,8 @@ public partial class EditTrackWindow : Window
             .Cast<string>()
             .Select(name => _styles.First(s => s.Name == name).Id)
             .ToList() ?? [];
-        var notes = string.IsNullOrWhiteSpace(NotesBox.Text) ? null : NotesBox.Text.Trim();
-        var reEval = ReEvalCheckBox.IsChecked == true;
 
-        MusicLibraryService.Current.UpdateTrack(_track.Id, title, genreIds, ratingId, styleIds, notes, reEval);
+        MusicLibraryService.Current.UpdateTrack(_track.Id, title, genreIds, ratingId, styleIds);
         Close(true);
     }
 

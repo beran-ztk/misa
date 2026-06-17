@@ -61,14 +61,6 @@
                     </ListBox>
                 </StackPanel>
 
-                <CheckBox x:Name="ReEvalCheckBox" Content="Needs re-evaluation" Margin="0,2,0,0" />
-
-                <StackPanel Spacing="3">
-                    <TextBlock Text="Notes" FontSize="12" Opacity="0.75" />
-                    <TextBox x:Name="NotesBox" AcceptsReturn="True" Height="80"
-                             TextWrapping="Wrap" Watermark="Optional notes…" />
-                </StackPanel>
-
             </StackPanel>
         </ScrollViewer>
 

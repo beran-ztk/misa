@@ -208,7 +208,7 @@
                             <StackPanel Grid.Column="2"
                                         VerticalAlignment="Center"
                                         Spacing="2">
-                                <TextBlock Text="{Binding Title}"
+                                <TextBlock Text="{Binding Track.Title}"
                                            FontSize="13" FontWeight="Medium"
                                            TextTrimming="CharacterEllipsis"/>
                                 <TextBlock Text="{Binding GenreText}"
@@ -298,16 +298,6 @@
                                            Opacity="0.38" LetterSpacing="1"/>
                                 <views:MultiSelectFilterControl x:Name="RatingFilter"
                                                                 Placeholder="---"/>
-                            </StackPanel>
-
-                            <!-- Options -->
-                            <StackPanel Spacing="8">
-                                <TextBlock Text="OPTIONS"
-                                           FontSize="10" FontWeight="SemiBold"
-                                           Opacity="0.38" LetterSpacing="1"/>
-                                <CheckBox x:Name="ReEvalFilterCheckBox"
-                                          Content="Re-evaluation needed"
-                                          FontSize="12"/>
                             </StackPanel>
 
                             <!-- Tags -->

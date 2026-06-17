@@ -57,10 +57,7 @@ public class MusicDatabase
                 FileName           TEXT    NOT NULL UNIQUE,
                 RatingId           INTEGER NOT NULL,
                 DownloadedAt       TEXT    NOT NULL,
-                DurationSeconds    INTEGER NULL,
-                Notes              TEXT    NULL,
-                ReEvaluationNeeded INTEGER NOT NULL DEFAULT 0
-                LastListenedAt     TEXT    NULL
+                DurationSeconds    INTEGER NULL
             );
             CREATE TABLE TrackStyles (
                 TrackId INTEGER NOT NULL,
@@ -213,18 +210,19 @@ public class MusicDatabase
         using var conn = Open();
         using var cmd = conn.CreateCommand();
         cmd.CommandText = @"SELECT Id, CanonicalUrl, Title, FileName, RatingId, DownloadedAt,
-                                   DurationSeconds, Notes, ReEvaluationNeeded, LastListenedAt
+                                   DurationSeconds
                             FROM Tracks ORDER BY DownloadedAt DESC";
         using var r = cmd.ExecuteReader();
         var list = new List<MusicTrack>();
         while (r.Read())
             list.Add(new MusicTrack(
-                r.GetInt32(0), r.GetString(1), r.GetString(2), r.GetString(3),
-                r.GetInt32(4), r.GetString(5),
-                r.IsDBNull(6) ? null : r.GetInt32(6),
-                r.IsDBNull(7) ? null : r.GetString(7),
-                r.GetInt32(8) != 0,
-                r.IsDBNull(10) ? null : r.GetString(10)));
+                r.GetInt32(0), 
+                r.GetString(1), 
+                r.GetString(2), 
+                r.GetString(3),
+                r.GetInt32(4), 
+                r.GetString(5),
+                r.IsDBNull(6) ? null : r.GetInt32(6)));
         return list;
     }
     public Dictionary<int, List<int>> GetAllTrackStyleIds() => GetAllJunctionIds("TrackStyles", "StyleId");
@@ -234,7 +232,7 @@ public class MusicDatabase
     public List<int> GetTrackGenreIds(int trackId) => GetJunctionIds("TrackGenres", "GenreId", trackId);
 
     public void UpdateTrack(int id, string title, List<int> genreIds, int ratingId,
-                            List<int> styleIds, string? notes, bool reEvaluationNeeded)
+                            List<int> styleIds)
     {
         using var conn = Open();
         using var tx = conn.BeginTransaction();
@@ -242,12 +240,10 @@ public class MusicDatabase
         using (var cmd = conn.CreateCommand())
         {
             cmd.Transaction = tx;
-            cmd.CommandText = "UPDATE Tracks SET Title = $title, RatingId = $ratingId, Notes = $notes, ReEvaluationNeeded = $reEval WHERE Id = $id";
+            cmd.CommandText = "UPDATE Tracks SET Title = $title, RatingId = $ratingId WHERE Id = $id";
             cmd.Parameters.AddWithValue("$id", id);
             cmd.Parameters.AddWithValue("$title", title);
             cmd.Parameters.AddWithValue("$ratingId", ratingId);
-            cmd.Parameters.AddWithValue("$notes", notes ?? (object)DBNull.Value);
-            cmd.Parameters.AddWithValue("$reEval", reEvaluationNeeded ? 1 : 0);
             cmd.ExecuteNonQuery();
         }
 
