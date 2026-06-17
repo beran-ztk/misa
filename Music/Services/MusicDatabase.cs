@@ -16,40 +16,24 @@ public class MusicDatabase
         _dbPath = dbPath;
         _connectionString = $"Data Source={dbPath}";
     }
-
+    private SqliteConnection Open()
+    {
+        var conn = new SqliteConnection(_connectionString);
+        conn.Open();
+        return conn;
+    }
     public void Initialize()
     {
+        if (File.Exists(_dbPath))
+            return;
+        
         var dir = Path.GetDirectoryName(_dbPath);
         if (!string.IsNullOrEmpty(dir))
             Directory.CreateDirectory(dir);
-
+        
         using var conn = Open();
-
-        if (!TableExists(conn, "Tracks"))
-        {
-            CreateSchema(conn);
-        }
-
+        CreateSchema(conn);
         SeedDefaultMetadata(conn);
-    }
-
-    private static bool TableExists(SqliteConnection conn, string table)
-    {
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=$t";
-        cmd.Parameters.AddWithValue("$t", table);
-        return (long)cmd.ExecuteScalar()! > 0;
-    }
-
-    private static bool ColumnExists(SqliteConnection conn, string table, string column)
-    {
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = $"PRAGMA table_info({table})";
-        using var r = cmd.ExecuteReader();
-        while (r.Read())
-            if (string.Equals(r.GetString(1), column, StringComparison.OrdinalIgnoreCase))
-                return true;
-        return false;
     }
 
     private static void CreateSchema(SqliteConnection conn)
@@ -66,10 +50,6 @@ public class MusicDatabase
                 Name        TEXT    NOT NULL UNIQUE,
                 Category    TEXT    NULL,
                 Description TEXT    NULL
-            );
-            CREATE TABLE Languages (
-                Id   INTEGER PRIMARY KEY AUTOINCREMENT,
-                Name TEXT    NOT NULL UNIQUE
             );
             CREATE TABLE Ratings (
                 Id        INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -99,11 +79,6 @@ public class MusicDatabase
                 TrackId INTEGER NOT NULL,
                 GenreId INTEGER NOT NULL,
                 PRIMARY KEY (TrackId, GenreId)
-            );
-            CREATE TABLE TrackLanguages (
-                TrackId    INTEGER NOT NULL,
-                LanguageId INTEGER NOT NULL,
-                PRIMARY KEY (TrackId, LanguageId)
             );";
         cmd.ExecuteNonQuery();
     }
@@ -198,11 +173,7 @@ public class MusicDatabase
                 ('Cyberpunk', 'Aesthetic', 'Düstere, futuristische High-Tech-Atmosphäre, oft neonartig oder urban.'),
                 ('Glitchy', 'Aesthetic', 'Bewusst digitale Fehler, Stottern, Artefakte oder zerhackte Sounds.'),
                 ('Immense', 'Aesthetic', 'Sehr groß, wuchtig oder überwältigend im Klangbild.'),
-                ('Minimal', 'Aesthetic', 'Reduzierter Track mit wenigen Elementen, viel Wiederholung und wenig Überladung.');
-
-            INSERT OR IGNORE INTO Languages (Name) VALUES
-                ('English'), ('Japanese'), ('Turkish'), ('German'),
-                ('Korean'), ('French'), ('Unknown');";
+                ('Minimal', 'Aesthetic', 'Reduzierter Track mit wenigen Elementen, viel Wiederholung und wenig Überladung.');";
         cmd.ExecuteNonQuery();
     }
 
@@ -216,8 +187,7 @@ public class MusicDatabase
     }
 
     public void InsertTrack(string canonicalUrl, string title, string fileName,
-                            List<int> genreIds, int ratingId, List<int> styleIds,
-                            List<int> languageIds, int? durationSeconds)
+                            List<int> genreIds, int ratingId, List<int> styleIds, int? durationSeconds)
     {
         using var conn = Open();
         using var tx = conn.BeginTransaction();
@@ -242,7 +212,6 @@ public class MusicDatabase
 
         InsertJunctionRows(conn, tx, "TrackGenres", "GenreId", trackId, genreIds);
         InsertJunctionRows(conn, tx, "TrackStyles", "StyleId", trackId, styleIds);
-        InsertJunctionRows(conn, tx, "TrackLanguages", "LanguageId", trackId, languageIds);
 
         tx.Commit();
     }
@@ -295,11 +264,8 @@ public class MusicDatabase
     public Dictionary<int, List<int>> GetAllTrackGenreIds() => GetAllJunctionIds("TrackGenres", "GenreId");
     public List<int> GetTrackGenreIds(int trackId) => GetJunctionIds("TrackGenres", "GenreId", trackId);
 
-    public Dictionary<int, List<int>> GetAllTrackLanguageIds() => GetAllJunctionIds("TrackLanguages", "LanguageId");
-    public List<int> GetTrackLanguageIds(int trackId) => GetJunctionIds("TrackLanguages", "LanguageId", trackId);
-
     public void UpdateTrack(int id, string title, List<int> genreIds, int ratingId,
-                            List<int> styleIds, List<int> languageIds, string? notes, bool reEvaluationNeeded)
+                            List<int> styleIds, string? notes, bool reEvaluationNeeded)
     {
         using var conn = Open();
         using var tx = conn.BeginTransaction();
@@ -318,7 +284,6 @@ public class MusicDatabase
 
         ReplaceJunctionRows(conn, tx, "TrackGenres", "GenreId", id, genreIds);
         ReplaceJunctionRows(conn, tx, "TrackStyles", "StyleId", id, styleIds);
-        ReplaceJunctionRows(conn, tx, "TrackLanguages", "LanguageId", id, languageIds);
 
         tx.Commit();
     }
@@ -328,7 +293,7 @@ public class MusicDatabase
         using var conn = Open();
         using var tx = conn.BeginTransaction();
 
-        foreach (var table in new[] { "TrackGenres", "TrackStyles", "TrackLanguages" })
+        foreach (var table in new[] { "TrackGenres", "TrackStyles" })
         {
             using var cmd = conn.CreateCommand();
             cmd.Transaction = tx;
@@ -365,15 +330,6 @@ public class MusicDatabase
     public bool IsStyleInUse(int id) => IsInUse("TrackStyles", "StyleId", id);
     public void UpdateStyle(int id, string name) => UpdateLookup("Styles", id, name);
     public void DeleteStyle(int id) => DeleteLookup("Styles", id);
-
-    // --- Languages ---
-
-    public List<Language> GetLanguages() => GetLookupList("Languages", (id, name) => new Language(id, name));
-
-    public void InsertLanguage(string name) => InsertLookup("Languages", name);
-    public bool IsLanguageInUse(int id) => IsInUse("TrackLanguages", "LanguageId", id);
-    public void UpdateLanguage(int id, string name) => UpdateLookup("Languages", id, name);
-    public void DeleteLanguage(int id) => DeleteLookup("Languages", id);
 
     // --- Ratings ---
 
@@ -513,12 +469,5 @@ public class MusicDatabase
             del.ExecuteNonQuery();
         }
         InsertJunctionRows(conn, tx, table, idColumn, trackId, ids);
-    }
-
-    private SqliteConnection Open()
-    {
-        var conn = new SqliteConnection(_connectionString);
-        conn.Open();
-        return conn;
     }
 }

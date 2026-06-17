@@ -38,7 +38,6 @@ public partial class MusicView : UserControl
     private bool _loadingSettings;
 
     // UI state
-    private bool _sortDescending = true;
     private bool _filterPanelVisible;
     private CancellationTokenSource? _thumbLoadCts;
 
@@ -55,17 +54,14 @@ public partial class MusicView : UserControl
     private List<Genre> _genres = [];
     private List<Rating> _ratings = [];
     private List<Style> _styles = [];
-    private List<Language> _languages = [];
     private List<TrackDisplayItem> _allItems = [];
     private Dictionary<int, List<int>> _allTrackStyleIds = [];
     private Dictionary<int, List<int>> _allTrackGenreIds = [];
-    private Dictionary<int, List<int>> _allTrackLanguageIds = [];
     private List<TrackDisplayItem> _filteredItems = [];
 
     private record FilterGroupControls(
         MultiSelectFilterControl GenreCtrl,
-        MultiSelectFilterControl StyleCtrl,
-        MultiSelectFilterControl LanguageCtrl);
+        MultiSelectFilterControl StyleCtrl);
     private readonly List<FilterGroupControls> _filterGroups = [];
 
     public MusicView()
@@ -78,17 +74,12 @@ public partial class MusicView : UserControl
         _engine.ProgressUpdated += OnProgressUpdated;
 
         // Seeking
-        PlaybackSlider.AddHandler(InputElement.PointerPressedEvent,
+        PlaybackSlider.AddHandler(PointerPressedEvent,
             OnSliderPointerPressed, RoutingStrategies.Tunnel);
-        PlaybackSlider.AddHandler(InputElement.PointerReleasedEvent,
+        PlaybackSlider.AddHandler(PointerReleasedEvent,
             OnSliderPointerReleased, RoutingStrategies.Tunnel);
 
-        // Sort / search
-        SortFieldCombo.ItemsSource = new[] { "Title", "Rating", "Downloaded", "Duration" };
-        SortFieldCombo.SelectedIndex = 2;
-
         SearchBox.TextChanged += (_, _) => ApplyFilter();
-        SortFieldCombo.SelectionChanged += (_, _) => ApplyFilter();
         RatingFilter.SelectionChanged += (_, _) => ApplyFilter();
         ReEvalFilterCheckBox.IsCheckedChanged += (_, _) => ApplyFilter();
 
@@ -193,7 +184,6 @@ public partial class MusicView : UserControl
         _genres = MusicLibraryService.Current.GetGenres();
         _ratings = MusicLibraryService.Current.GetRatings();
         _styles = MusicLibraryService.Current.GetStyles();
-        _languages = MusicLibraryService.Current.GetLanguages();
 
         RatingFilter.Placeholder = "Ratings";
         RatingFilter.SetItems(_ratings.Select(r => r.Name));
@@ -202,7 +192,6 @@ public partial class MusicView : UserControl
         {
             fg.GenreCtrl.SetItems(_genres.Select(g => g.Name));
             fg.StyleCtrl.SetItems(_styles.Select(s => s.Name));
-            fg.LanguageCtrl.SetItems(_languages.Select(l => l.Name));
         }
     }
 
@@ -217,18 +206,15 @@ public partial class MusicView : UserControl
         var tracks = MusicLibraryService.Current.GetTracks();
         _allTrackStyleIds = MusicLibraryService.Current.GetAllTrackStyleIds();
         _allTrackGenreIds = MusicLibraryService.Current.GetAllTrackGenreIds();
-        _allTrackLanguageIds = MusicLibraryService.Current.GetAllTrackLanguageIds();
 
         var genreMap = _genres.ToDictionary(g => g.Id, g => g.Name);
         var ratingMap = _ratings.ToDictionary(r => r.Id, r => r.Name);
         var styleMap = _styles.ToDictionary(s => s.Id, s => s.Name);
-        var languageMap = _languages.ToDictionary(l => l.Id, l => l.Name);
 
         _allItems = tracks.Select(t =>
         {
             var genreIds = _allTrackGenreIds.GetValueOrDefault(t.Id, []);
             var styleIds = _allTrackStyleIds.GetValueOrDefault(t.Id, []);
-            var languageIds = _allTrackLanguageIds.GetValueOrDefault(t.Id, []);
 
             var genreStr = string.Join(", ", genreIds
                 .Select(id => genreMap.GetValueOrDefault(id, ""))
@@ -236,18 +222,14 @@ public partial class MusicView : UserControl
             var styleStr = string.Join(", ", styleIds
                 .Select(id => styleMap.GetValueOrDefault(id, ""))
                 .Where(n => n.Length > 0).Order());
-            var langStr = string.Join(", ", languageIds
-                .Select(id => languageMap.GetValueOrDefault(id, ""))
-                .Where(n => n.Length > 0).Order());
             var ratingName = ratingMap.GetValueOrDefault(t.RatingId, "");
             var durationText = t.DurationSeconds.HasValue ? FormatDuration(t.DurationSeconds.Value) : "";
 
             var miscParts = new List<string>();
-            if (langStr.Length > 0) miscParts.Add(langStr);
             if (t.ReEvaluationNeeded) miscParts.Add("[re-eval]");
 
             return new TrackDisplayItem(t, string.Join(" · ", miscParts),
-                genreIds, styleIds, languageIds,
+                genreIds, styleIds,
                 genreStr, styleStr, durationText, ratingName);
         }).ToList();
 
@@ -308,8 +290,7 @@ public partial class MusicView : UserControl
         var groups = _filterGroups
             .Select(fg => new FilterGroup(
                 SelectedIds(fg.GenreCtrl.SelectedItems, _genres, g => g.Name, g => g.Id),
-                SelectedIds(fg.StyleCtrl.SelectedItems, _styles, s => s.Name, s => s.Id),
-                SelectedIds(fg.LanguageCtrl.SelectedItems, _languages, l => l.Name, l => l.Id)))
+                SelectedIds(fg.StyleCtrl.SelectedItems, _styles, s => s.Name, s => s.Id)))
             .ToList();
 
         bool? reEvalFilter = ReEvalFilterCheckBox.IsChecked == true ? true : null;
@@ -318,13 +299,11 @@ public partial class MusicView : UserControl
             _allItems.Select(i => i.Track),
             _allTrackGenreIds,
             _allTrackStyleIds,
-            _allTrackLanguageIds,
             ratingSortOrders,
             selRatingIds,
             groups,
             reEvalFilter,
-            SearchBox.Text,
-            GetSortField(), GetSortDirection());
+            SearchBox.Text);
 
         _filteredItems = filtered
             .Where(t => itemById.ContainsKey(t.Id))
@@ -399,7 +378,7 @@ public partial class MusicView : UserControl
         // Records copy init-only properties via `with`, but IsPlaying/Thumbnail have `set`
         // and are NOT copied automatically — reconstruct manually to preserve them.
         var updated = new TrackDisplayItem(newTrack, old.MetaLine,
-            old.GenreIds, old.StyleIds, old.LanguageIds,
+            old.GenreIds, old.StyleIds,
             old.GenreText, old.StyleText, old.DurationText, old.RatingText)
         {
             IsPlaying = old.IsPlaying,
@@ -435,8 +414,6 @@ public partial class MusicView : UserControl
                 if (seenGenres.Add(g)) chips.Add($"Genre: {g}");
             foreach (var s in fg.StyleCtrl.SelectedItems.OrderBy(n => n))
                 if (seenStyles.Add(s)) chips.Add($"Style: {s}");
-            foreach (var l in fg.LanguageCtrl.SelectedItems.OrderBy(n => n))
-                if (seenLangs.Add(l)) chips.Add($"Lang: {l}");
         }
 
         ActiveFilterChips.ItemsSource = chips.Count > 0 ? (IEnumerable<string>)chips : null;
@@ -449,18 +426,6 @@ public partial class MusicView : UserControl
         if (selected.Count == 0) return [];
         return source.Where(item => selected.Contains(nameOf(item))).Select(idOf).ToHashSet();
     }
-
-    private TrackSortField GetSortField() => SortFieldCombo.SelectedIndex switch
-    {
-        0 => TrackSortField.Title,
-        1 => TrackSortField.Rating,
-        2 => TrackSortField.DownloadedAt,
-        3 => TrackSortField.Duration,
-        _ => TrackSortField.DownloadedAt,
-    };
-
-    private TrackSortDirection GetSortDirection() =>
-        _sortDescending ? TrackSortDirection.Descending : TrackSortDirection.Ascending;
 
     public IReadOnlyList<TrackDisplayItem> GetPlayContext() => _filteredItems;
 
@@ -480,13 +445,6 @@ public partial class MusicView : UserControl
 
     // ─── Toolbar / filter panel ───────────────────────────────────────────────
 
-    private void OnToggleSortDirectionClicked(object? sender, RoutedEventArgs e)
-    {
-        _sortDescending = !_sortDescending;
-        SortDirectionBtn.Content = _sortDescending ? "↓" : "↑";
-        ApplyFilter();
-    }
-
     private void OnToggleFiltersClicked(object? sender, RoutedEventArgs e)
     {
         _filterPanelVisible = !_filterPanelVisible;
@@ -502,7 +460,6 @@ public partial class MusicView : UserControl
         {
             fg.GenreCtrl.SetItems(_genres.Select(g => g.Name));
             fg.StyleCtrl.SetItems(_styles.Select(s => s.Name));
-            fg.LanguageCtrl.SetItems(_languages.Select(l => l.Name));
         }
         ApplyFilter();
     }
@@ -525,11 +482,7 @@ public partial class MusicView : UserControl
         styleCtrl.SetItems(_styles.Select(s => s.Name));
         styleCtrl.SelectionChanged += (_, _) => ApplyFilter();
 
-        var languageCtrl = new MultiSelectFilterControl { Placeholder = "All languages" };
-        languageCtrl.SetItems(_languages.Select(l => l.Name));
-        languageCtrl.SelectionChanged += (_, _) => ApplyFilter();
-
-        var fg = new FilterGroupControls(genreCtrl, styleCtrl, languageCtrl);
+        var fg = new FilterGroupControls(genreCtrl, styleCtrl);
         _filterGroups.Add(fg);
 
         StackPanel Section(string label, MultiSelectFilterControl ctrl) =>
@@ -543,7 +496,6 @@ public partial class MusicView : UserControl
         var body = new StackPanel { Margin = new Thickness(0, 6, 0, 0) };
         body.Children.Add(Section("Genre", genreCtrl));
         body.Children.Add(Section("Style", styleCtrl));
-        body.Children.Add(Section("Language", languageCtrl));
 
         var card = new StackPanel { Margin = new Thickness(0, 0, 0, 4) };
 

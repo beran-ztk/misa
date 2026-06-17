@@ -32,25 +32,6 @@
                          Width="230" Height="30"
                          VerticalContentAlignment="Center"/>
 
-                <Border BorderBrush="#28808080" BorderThickness="1"
-                        CornerRadius="5" ClipToBounds="True"
-                        VerticalAlignment="Center">
-                    <Grid ColumnDefinitions="Auto,1,Auto">
-                        <Button x:Name="SortDirectionBtn"
-                                Grid.Column="0"
-                                Content="↓"
-                                Click="OnToggleSortDirectionClicked"
-                                BorderThickness="0" CornerRadius="0"
-                                Background="Transparent"
-                                Padding="9,5" FontSize="10"/>
-                        <Rectangle Grid.Column="1" Fill="#28808080"/>
-                        <ComboBox x:Name="SortFieldCombo"
-                                  Grid.Column="2"
-                                  BorderThickness="0" CornerRadius="0"
-                                  Padding="8,5,4,5" MinWidth="100"/>
-                    </Grid>
-                </Border>
-
                 <Button x:Name="FiltersToggleBtn"
                         Content="Filter"
                         Click="OnToggleFiltersClicked"

@@ -15,13 +15,11 @@ public partial class AddTrackOverlay : UserControl
     private List<Genre> _genres = [];
     private List<Rating> _ratings = [];
     private List<Style> _styles = [];
-    private List<Language> _languages = [];
 
     // Each chip tuple pairs the domain object with its ToggleButton so we can read
     // the selection by ID rather than by parsing button content (which includes counts).
     private readonly List<(Genre Genre, ToggleButton Btn)> _genreChips = [];
     private readonly List<(Style Style, ToggleButton Btn)> _styleChips = [];
-    private readonly List<(Language Lang, ToggleButton Btn)> _langChips = [];
 
     private Dictionary<int, List<int>> _allTrackGenreIds = [];
     private Dictionary<int, List<int>> _allTrackStyleIds = [];
@@ -54,12 +52,10 @@ public partial class AddTrackOverlay : UserControl
         _genres = MusicLibraryService.Current.GetGenres();
         _ratings = MusicLibraryService.Current.GetRatings();
         _styles = MusicLibraryService.Current.GetStyles();
-        _languages = MusicLibraryService.Current.GetLanguages();
         _allTrackGenreIds = MusicLibraryService.Current.GetAllTrackGenreIds();
         _allTrackStyleIds = MusicLibraryService.Current.GetAllTrackStyleIds();
 
         RebuildGenreChips();
-        BuildLanguageChips();
 
         // Default to first rating so the field is pre-filled when More options is collapsed.
         RatingBox.ItemsSource = _ratings.Select(r => r.Name).ToList();
@@ -77,7 +73,6 @@ public partial class AddTrackOverlay : UserControl
         StylesPanel.Children.Clear();
         _styleChips.Clear();
         StylesSection.IsVisible = false;
-        foreach (var (_, btn) in _langChips) btn.IsChecked = false;
         RatingBox.SelectedIndex = _ratings.Count > 0 ? 0 : -1;
     }
 
@@ -182,26 +177,6 @@ public partial class AddTrackOverlay : UserControl
         }
     }
 
-    // ─── Language chips ──────────────────────────────────────────────────────
-
-    private void BuildLanguageChips()
-    {
-        LanguagesPanel.Children.Clear();
-        _langChips.Clear();
-        foreach (var lang in _languages.OrderBy(l => l.Name))
-        {
-            var btn = new ToggleButton
-            {
-                Content = lang.Name,
-                Padding = new Thickness(12, 6),
-                Margin = new Thickness(0, 0, 6, 6),
-                CornerRadius = new CornerRadius(12),
-            };
-            _langChips.Add((lang, btn));
-            LanguagesPanel.Children.Add(btn);
-        }
-    }
-
     // ─── Validation ───────────────────────────────────────────────────────────
 
     private void UpdateDownloadButton()
@@ -232,11 +207,7 @@ public partial class AddTrackOverlay : UserControl
             StyleIds = _styleChips
                 .Where(c => c.Btn.IsChecked == true)
                 .Select(c => c.Style.Id)
-                .ToList(),
-            LanguageIds = _langChips
-                .Where(c => c.Btn.IsChecked == true)
-                .Select(c => c.Lang.Id)
-                .ToList(),
+                .ToList()
         };
 
         var result = await MusicLibraryService.Current.DownloadTrackAsync(request);

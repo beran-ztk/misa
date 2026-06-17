@@ -8,5 +8,4 @@ public record MusicTrack(
 
 public record Genre(int Id, string Name);
 public record Style(int Id, string Name);
-public record Language(int Id, string Name);
 public record Rating(int Id, string Name, int SortOrder);

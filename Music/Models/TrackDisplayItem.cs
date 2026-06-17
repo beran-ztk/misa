@@ -8,7 +8,6 @@ public record TrackDisplayItem(
     string MetaLine,
     List<int> GenreIds,
     List<int> StyleIds,
-    List<int> LanguageIds,
     string GenreText,
     string StyleText,
     string DurationText,

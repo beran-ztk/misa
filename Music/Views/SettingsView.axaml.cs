@@ -20,13 +20,12 @@ public partial class SettingsView : UserControl
 
     private List<Genre> _genres = [];
     private List<Style> _styles = [];
-    private List<Language> _languages = [];
     private List<Rating> _ratings = [];
 
     public SettingsView()
     {
         InitializeComponent();
-        try { LoadAll(); } catch { }
+        LoadAll();
     }
 
     private void LoadAll()
@@ -34,7 +33,6 @@ public partial class SettingsView : UserControl
         LoadMusicSettings();
         LoadGenres();
         LoadStyles();
-        LoadLanguages();
         LoadRatings();
     }
 
@@ -234,55 +232,6 @@ public partial class SettingsView : UserControl
         if (!result.Success) { StyleStatus.Text = result.Error; return; }
         StyleStatus.Text = "Deleted.";
         LoadStyles();
-        OnMetadataChanged?.Invoke();
-    }
-
-    // --- Languages ---
-
-    private void LoadLanguages()
-    {
-        _languages = MusicLibraryService.Current.GetLanguages();
-        LanguageList.ItemsSource = _languages.Select(l => l.Name).ToList();
-    }
-
-    private void OnLanguageSelected(object? sender, SelectionChangedEventArgs e)
-    {
-        var idx = LanguageList.SelectedIndex;
-        if (idx >= 0 && idx < _languages.Count)
-            LanguageInput.Text = _languages[idx].Name;
-    }
-
-    private void OnAddLanguageClicked(object? sender, RoutedEventArgs e)
-    {
-        var name = LanguageInput.Text?.Trim();
-        if (string.IsNullOrEmpty(name)) { LanguageStatus.Text = "Enter a name."; return; }
-        MusicLibraryService.Current.AddLanguage(name);
-        LanguageInput.Text = "";
-        LanguageStatus.Text = "Added.";
-        LoadLanguages();
-        OnMetadataChanged?.Invoke();
-    }
-
-    private void OnRenameLanguageClicked(object? sender, RoutedEventArgs e)
-    {
-        var idx = LanguageList.SelectedIndex;
-        if (idx < 0) { LanguageStatus.Text = "Select a language first."; return; }
-        var name = LanguageInput.Text?.Trim();
-        if (string.IsNullOrEmpty(name)) { LanguageStatus.Text = "Enter a new name."; return; }
-        MusicLibraryService.Current.RenameLanguage(_languages[idx].Id, name);
-        LanguageStatus.Text = "Renamed.";
-        LoadLanguages();
-        OnMetadataChanged?.Invoke();
-    }
-
-    private void OnDeleteLanguageClicked(object? sender, RoutedEventArgs e)
-    {
-        var idx = LanguageList.SelectedIndex;
-        if (idx < 0) { LanguageStatus.Text = "Select a language first."; return; }
-        var result = MusicLibraryService.Current.TryDeleteLanguage(_languages[idx].Id);
-        if (!result.Success) { LanguageStatus.Text = result.Error; return; }
-        LanguageStatus.Text = "Deleted.";
-        LoadLanguages();
         OnMetadataChanged?.Invoke();
     }
 

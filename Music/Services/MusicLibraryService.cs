@@ -18,9 +18,6 @@ public class MusicLibraryService
     private MusicLibraryService()
     {
         _settings = MusicSettingsService.LoadSettings();
-        // Re-save immediately so any fields added since the last run are written to disk
-        // with their defaults, preventing them from falling back to C# class defaults on
-        // the next startup when SavePlayerSettings is called before the user visits Settings.
         MusicSettingsService.SaveSettings(_settings);
         _db = null!;
         _downloader = null!;
@@ -73,9 +70,6 @@ public class MusicLibraryService
     public Dictionary<int, List<int>> GetAllTrackGenreIds() => _db.GetAllTrackGenreIds();
     public List<int> GetTrackGenreIds(int trackId) => _db.GetTrackGenreIds(trackId);
 
-    public Dictionary<int, List<int>> GetAllTrackLanguageIds() => _db.GetAllTrackLanguageIds();
-    public List<int> GetTrackLanguageIds(int trackId) => _db.GetTrackLanguageIds(trackId);
-
     public async Task<DownloadResult> DownloadTrackAsync(DownloadRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.RawUrl))
@@ -105,14 +99,14 @@ public class MusicLibraryService
 
         var duration = await _downloader.GetDurationAsync(filePath);
         _db.InsertTrack(canonicalUrl, title, fileName,
-            request.GenreIds, request.RatingId, request.StyleIds, request.LanguageIds, duration);
+            request.GenreIds, request.RatingId, request.StyleIds, duration);
 
         return new DownloadResult(true);
     }
 
     public void UpdateTrack(int id, string title, List<int> genreIds, int ratingId,
-                            List<int> styleIds, List<int> languageIds, string? notes, bool reEvaluationNeeded) =>
-        _db.UpdateTrack(id, title, genreIds, ratingId, styleIds, languageIds, notes, reEvaluationNeeded);
+                            List<int> styleIds, string? notes, bool reEvaluationNeeded) =>
+        _db.UpdateTrack(id, title, genreIds, ratingId, styleIds, notes, reEvaluationNeeded);
 
     public void IncrementListenCount(int trackId) =>
         _db.IncrementListenCount(trackId, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
@@ -127,15 +121,11 @@ public class MusicLibraryService
     }
 
     // --- Thumbnails ---
-
     public string? EnsureThumbnailCached(int trackId, string fileName)
     {
         var audioFilePath = Path.Combine(_settings.MusicDirectory, fileName);
         return ThumbnailService.EnsureCached(trackId, audioFilePath);
     }
-
-    public string? GetThumbnailCachePath(int trackId) =>
-        ThumbnailService.GetCachedPath(trackId);
 
     // --- Genres ---
 
@@ -162,20 +152,6 @@ public class MusicLibraryService
         if (_db.IsStyleInUse(id))
             return new DeletionResult(false, "Cannot delete: style is used by one or more tracks.");
         _db.DeleteStyle(id);
-        return new DeletionResult(true);
-    }
-
-    // --- Languages ---
-
-    public List<Language> GetLanguages() => _db.GetLanguages();
-    public void AddLanguage(string name) => _db.InsertLanguage(name);
-    public void RenameLanguage(int id, string name) => _db.UpdateLanguage(id, name);
-
-    public DeletionResult TryDeleteLanguage(int id)
-    {
-        if (_db.IsLanguageInUse(id))
-            return new DeletionResult(false, "Cannot delete: language is used by one or more tracks.");
-        _db.DeleteLanguage(id);
         return new DeletionResult(true);
     }
 

@@ -5,11 +5,7 @@ using Music.Models;
 
 namespace Music.Services;
 
-public enum TrackSortField { Title, Rating, DownloadedAt, Duration }
-public enum TrackSortDirection { Ascending, Descending }
-
-// A single filter group: within the group all conditions are AND; between groups is OR.
-public record FilterGroup(IReadOnlySet<int> GenreIds, IReadOnlySet<int> StyleIds, IReadOnlySet<int> LanguageIds);
+public record FilterGroup(IReadOnlySet<int> GenreIds, IReadOnlySet<int> StyleIds);
 
 public static class TrackFilter
 {
@@ -17,14 +13,11 @@ public static class TrackFilter
         IEnumerable<MusicTrack> tracks,
         IReadOnlyDictionary<int, List<int>> trackGenreIds,
         IReadOnlyDictionary<int, List<int>> trackStyleIds,
-        IReadOnlyDictionary<int, List<int>> trackLanguageIds,
         IReadOnlyDictionary<int, int> ratingSortOrders,
         IReadOnlySet<int> ratingFilter,
         IReadOnlyList<FilterGroup> filterGroups,
         bool? reEvaluationFilter,
-        string? searchText,
-        TrackSortField sortField,
-        TrackSortDirection sortDirection)
+        string? searchText)
     {
         IEnumerable<MusicTrack> query = tracks;
 
@@ -41,7 +34,7 @@ public static class TrackFilter
         // Apply filter groups: OR between groups, AND within a group.
         // Empty groups (nothing selected in any dimension) are ignored.
         var activeGroups = filterGroups
-            .Where(g => g.GenreIds.Count > 0 || g.StyleIds.Count > 0 || g.LanguageIds.Count > 0)
+            .Where(g => g.GenreIds.Count > 0 || g.StyleIds.Count > 0)
             .ToList();
 
         if (activeGroups.Count > 0)
@@ -51,7 +44,7 @@ public static class TrackFilter
             foreach (var track in query)
             {
                 if (seen.Contains(track.Id)) continue;
-                if (activeGroups.Any(g => MatchesGroup(track, g, trackGenreIds, trackStyleIds, trackLanguageIds)))
+                if (activeGroups.Any(g => MatchesGroup(track, g, trackGenreIds, trackStyleIds)))
                 {
                     seen.Add(track.Id);
                     matched.Add(track);
@@ -60,34 +53,17 @@ public static class TrackFilter
             query = matched;
         }
 
-        IEnumerable<MusicTrack> sorted = sortField switch
-        {
-            TrackSortField.Title => sortDirection == TrackSortDirection.Ascending
-                ? query.OrderBy(t => t.Title, StringComparer.OrdinalIgnoreCase)
-                : query.OrderByDescending(t => t.Title, StringComparer.OrdinalIgnoreCase),
-            TrackSortField.Rating => sortDirection == TrackSortDirection.Ascending
-                ? query.OrderBy(t => ratingSortOrders.GetValueOrDefault(t.RatingId, 0))
-                : query.OrderByDescending(t => ratingSortOrders.GetValueOrDefault(t.RatingId, 0)),
-            TrackSortField.DownloadedAt => sortDirection == TrackSortDirection.Ascending
-                ? query.OrderBy(t => t.DownloadedAt)
-                : query.OrderByDescending(t => t.DownloadedAt),
-            TrackSortField.Duration => sortDirection == TrackSortDirection.Ascending
-                ? query.OrderBy(t => t.DurationSeconds ?? int.MaxValue)
-                : query.OrderByDescending(t => t.DurationSeconds ?? -1),
-            _ => query.OrderByDescending(t => t.DownloadedAt),
-        };
+        var sorted = query.OrderBy(t => t.Title, StringComparer.OrdinalIgnoreCase);
 
         return sorted.ToList();
     }
 
     // A track matches a group if it has ALL the group's genres, ALL the group's styles,
-    // and ALL the group's languages (each dimension is AND within the group).
     private static bool MatchesGroup(
         MusicTrack track,
         FilterGroup group,
         IReadOnlyDictionary<int, List<int>> trackGenreIds,
-        IReadOnlyDictionary<int, List<int>> trackStyleIds,
-        IReadOnlyDictionary<int, List<int>> trackLanguageIds)
+        IReadOnlyDictionary<int, List<int>> trackStyleIds)
     {
         if (group.GenreIds.Count > 0)
         {
@@ -101,13 +77,6 @@ public static class TrackFilter
             trackStyleIds.TryGetValue(track.Id, out var tStyles);
             tStyles ??= [];
             if (!group.StyleIds.All(id => tStyles.Contains(id))) return false;
-        }
-
-        if (group.LanguageIds.Count > 0)
-        {
-            trackLanguageIds.TryGetValue(track.Id, out var tLangs);
-            tLangs ??= [];
-            if (!group.LanguageIds.All(id => tLangs.Contains(id))) return false;
         }
 
         return true;

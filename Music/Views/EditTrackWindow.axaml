@@ -61,24 +61,6 @@
                     </ListBox>
                 </StackPanel>
 
-                <StackPanel Spacing="4">
-                    <TextBlock Text="Languages (optional)" FontSize="12" Opacity="0.75" />
-                    <ListBox x:Name="LanguagesBox" SelectionMode="Multiple,Toggle" MaxHeight="90"
-                             ScrollViewer.VerticalScrollBarVisibility="Auto">
-                        <ListBox.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <WrapPanel />
-                            </ItemsPanelTemplate>
-                        </ListBox.ItemsPanel>
-                        <ListBox.Styles>
-                            <Style Selector="ListBoxItem">
-                                <Setter Property="Padding" Value="10,5" />
-                                <Setter Property="Margin" Value="2,2,0,0" />
-                            </Style>
-                        </ListBox.Styles>
-                    </ListBox>
-                </StackPanel>
-
                 <CheckBox x:Name="ReEvalCheckBox" Content="Needs re-evaluation" Margin="0,2,0,0" />
 
                 <StackPanel Spacing="3">

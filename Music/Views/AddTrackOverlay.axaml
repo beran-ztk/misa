@@ -97,17 +97,6 @@
                                 <WrapPanel x:Name="StylesPanel" Orientation="Horizontal" />
                             </StackPanel>
                         </Grid>
-                        <!-- Languages -->
-                        <StackPanel Spacing="8" Margin="0,0,40,0">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                <TextBlock Text="Language"
-                                           FontSize="13" FontWeight="SemiBold" />
-                                <TextBlock Text="optional"
-                                           FontSize="11" Opacity="0.4"
-                                           VerticalAlignment="Bottom" Margin="0,0,0,1" />
-                            </StackPanel>
-                            <WrapPanel x:Name="LanguagesPanel" Orientation="Horizontal" />
-                        </StackPanel>
                         
                         <Border Height="10" />
                     </StackPanel>
