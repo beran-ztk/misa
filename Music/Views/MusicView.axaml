@@ -4,46 +4,89 @@
              xmlns:views="clr-namespace:Music.Views"
              x:Class="Music.Views.MusicView">
 
-    <DockPanel LastChildFill="True">
+    <UserControl.Styles>
+        <Style Selector="Button">
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="BorderBrush" Value="#3D4652"/>
+            <Setter Property="Foreground" Value="#F6F8FA"/>
+        </Style>
+        <Style Selector="Button:pointerover">
+            <Setter Property="Background" Value="#1B2430"/>
+            <Setter Property="BorderBrush" Value="#516174"/>
+        </Style>
+        <Style Selector="Button.icon">
+            <Setter Property="Width" Value="38"/>
+            <Setter Property="Height" Value="38"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="TextBox">
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="BorderBrush" Value="#3D4652"/>
+            <Setter Property="Background" Value="#0B0D10"/>
+            <Setter Property="Foreground" Value="#F6F8FA"/>
+        </Style>
+        <Style Selector="ListBoxItem">
+            <Setter Property="Padding" Value="18,9,16,9"/>
+            <Setter Property="MinHeight" Value="62"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="BorderBrush" Value="#102A2F37"/>
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="ListBoxItem:pointerover">
+            <Setter Property="Background" Value="#22262C"/>
+        </Style>
+        <Style Selector="ListBoxItem:selected">
+            <Setter Property="Background" Value="#183A57"/>
+        </Style>
+    </UserControl.Styles>
+
+    <DockPanel LastChildFill="True"
+               Background="#121417">
 
         <!-- ── Toolbar ── -->
-        <Grid DockPanel.Dock="Top"
-              ColumnDefinitions="*,Auto"
-              Margin="20,14,16,10">
+        <Border DockPanel.Dock="Top"
+                Background="#0A0B0D"
+                BorderBrush="#16212C"
+                BorderThickness="0,0,0,1"
+                Padding="20,12,16,10">
+            <Grid ColumnDefinitions="*,Auto">
 
             <StackPanel Grid.Column="1"
                         Orientation="Horizontal"
-                        Spacing="8"
+                        Spacing="9"
                         VerticalAlignment="Center">
 
                 <Button Content="＋"
                         Click="OnAddTrackClicked"
                         ToolTip.Tip="Add Track"
-                        Width="30" Height="30"
-                        BorderBrush="Gray"
+                        Width="34" Height="34"
                         BorderThickness="1"
-                        Background="Transparent"
+                        Background="#10151B"
                         Padding="0" FontSize="16"
                         HorizontalContentAlignment="Center"
                         VerticalContentAlignment="Center"/>
 
                 <TextBox x:Name="SearchBox"
                          Watermark="Search…"
-                         Width="230" Height="30"
+                         Width="230" Height="34"
                          VerticalContentAlignment="Center"/>
 
                 <Button x:Name="FiltersToggleBtn"
                         Content="Filter"
                         Click="OnToggleFiltersClicked"
-                        Background="Transparent"
+                        Background="#10151B"
                         BorderThickness="1"
-                        BorderBrush="Gray"
-                        Height="30" Padding="14,0"
+                        Height="34" Padding="16,0"
                         ToolTip.Tip="Open filter panel"
                         VerticalContentAlignment="Center"/>
 
             </StackPanel>
-        </Grid>
+            </Grid>
+        </Border>
 
         <!-- ── Active filter chips (hidden when no filters active) ── -->
         <ItemsControl x:Name="ActiveFilterChips"
@@ -77,11 +120,14 @@
 
         <!-- ── Player bar ── -->
         <Border DockPanel.Dock="Bottom"
-                Padding="16,8,16,12"
-                BorderThickness="0,1,0,0" BorderBrush="#18808080">
-            <StackPanel Spacing="4">
+                Padding="16,10,16,14"
+                Background="#07080A"
+                BorderThickness="0,1,0,0" BorderBrush="#202832">
+            <StackPanel Spacing="8">
 
-                <Border x:Name="UpcomingBar" IsVisible="False" Padding="2,0,0,2">
+                <Border x:Name="UpcomingBar"
+                        IsVisible="False"
+                        Padding="4,0,4,0">
                     <DockPanel>
                         <TextBlock x:Name="CrossfadeStatusText"
                                    DockPanel.Dock="Right"
@@ -117,17 +163,15 @@
                     <StackPanel Grid.Column="0"
                                 Orientation="Horizontal" Spacing="2"
                                 VerticalAlignment="Center">
-                        <Button Background="Transparent"
+                        <Button Classes="icon"
                                 Click="OnPreviousClicked"
-                                Padding="10,5"
                                 ToolTip.Tip="Previous track">
                             <Image Source="{SvgImage /Assets/skip-back.svg}"
                                    Width="18" Height="18"/>
                         </Button>
                         <Button x:Name="PlayPauseBtn"
-                                Background="Transparent"
+                                Classes="icon"
                                 Click="OnPlayPauseClicked"
-                                Padding="12,5"
                                 ToolTip.Tip="Play / Pause">
                             <Grid Width="18" Height="18">
                                 <Image x:Name="PlayIcon"
@@ -137,9 +181,8 @@
                                        IsVisible="False"/>
                             </Grid>
                         </Button>
-                        <Button Background="Transparent"
+                        <Button Classes="icon"
                                 Click="OnNextClicked"
-                                Padding="10,5"
                                 ToolTip.Tip="Next track">
                             <Image Source="{SvgImage /Assets/skip-forward.svg}"
                                    Width="18" Height="18"/>
@@ -163,9 +206,8 @@
                                 Value="100"
                                 Width="100" VerticalAlignment="Center"/>
                         <Button x:Name="ShuffleBtn"
-                                Background="Transparent"
+                                Classes="icon"
                                 Click="OnShuffleToggleClicked"
-                                Padding="7,5"
                                 Opacity="0.35"
                                 ToolTip.Tip="Shuffle: Off">
                             <Image Source="{SvgImage /Assets/shuffle.svg}"
@@ -184,17 +226,12 @@
 
             <ListBox x:Name="FileList"
                      DoubleTapped="OnListDoubleTapped"
-                     Padding="0">
-                <ListBox.Styles>
-                    <Style Selector="ListBoxItem">
-                        <Setter Property="Padding" Value="16,7,16,7"/>
-                        <Setter Property="BorderThickness" Value="0,0,0,1"/>
-                        <Setter Property="BorderBrush" Value="#0C808080"/>
-                    </Style>
-                </ListBox.Styles>
+                     Background="#17191D"
+                     BorderThickness="0"
+                     Padding="12,8">
                 <ListBox.ItemTemplate>
                     <DataTemplate x:DataType="models:TrackDisplayItem">
-                        <Grid ColumnDefinitions="14,48,*,Auto">
+                        <Grid ColumnDefinitions="16,52,*,Auto">
 
                             <!-- Playing indicator -->
                             <Image Grid.Column="0"
@@ -206,10 +243,10 @@
 
                             <!-- Thumbnail -->
                             <Border Grid.Column="1"
-                                    Width="36" Height="36"
-                                    CornerRadius="4" ClipToBounds="True"
-                                    Margin="4,0,10,0" VerticalAlignment="Center"
-                                    Background="#10808080">
+                                    Width="40" Height="40"
+                                    CornerRadius="6" ClipToBounds="True"
+                                    Margin="4,0,12,0" VerticalAlignment="Center"
+                                    Background="#262B32">
                                 <Image Source="{Binding Thumbnail}"
                                        Stretch="UniformToFill"/>
                             </Border>
@@ -233,8 +270,8 @@
                             <StackPanel Grid.Column="3"
                                         VerticalAlignment="Center"
                                         HorizontalAlignment="Right"
-                                        Spacing="3"
-                                        Margin="16,0,0,0"
+                                        Spacing="4"
+                                        Margin="20,0,0,0"
                                         MinWidth="72">
                                 <TextBlock Text="{Binding DurationText}"
                                            FontSize="11" Opacity="0.52"
@@ -258,9 +295,9 @@
             <Border x:Name="FilterDrawer"
                     Width="310" HorizontalAlignment="Right"
                     IsVisible="False"
-                    Background="#1A1A1D"
-                    BorderThickness="1,0,0,0" BorderBrush="#22808080"
-                    BoxShadow="-8 0 32 0 #55000000">
+                    Background="#101216"
+                    BorderThickness="1,0,0,0" BorderBrush="#2B3642"
+                    BoxShadow="-10 0 34 0 #77000000">
                 <DockPanel LastChildFill="True">
 
                     <!-- Header (docked top) -->

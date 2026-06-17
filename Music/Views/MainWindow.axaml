@@ -9,11 +9,13 @@
         ExtendClientAreaChromeHints="NoChrome"
         ExtendClientAreaTitleBarHeightHint="0">
 
-    <Grid RowDefinitions="38,*">
+    <Grid RowDefinitions="38,*"
+          Background="#0C0D10">
 
         <!-- ══ Custom title bar ══ -->
-        <Border Grid.Row="0" 
-                BorderBrush="SteelBlue"
+        <Border Grid.Row="0"
+                Background="#07080A"
+                BorderBrush="#223044"
                 BorderThickness="0,0,0,1">
             <Grid ColumnDefinitions="*,Auto">
 
@@ -23,9 +25,9 @@
                            PointerPressed="OnTitleBarPointerPressed"
                            DoubleTapped="OnTitleBarDoubleTapped">
                             <TextBlock Text="Music Library"
-                                       Foreground="LavenderBlush"
-                                       Margin="10,0,0,0"
-                                       FontSize="14" FontWeight="Normal"
+                                       Foreground="#F4F7FA"
+                                       Margin="12,0,0,0"
+                                       FontSize="13" FontWeight="SemiBold"
                                        VerticalAlignment="Center"/>
                     </Panel>
 
