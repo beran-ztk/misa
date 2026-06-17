@@ -30,7 +30,7 @@
             <Setter Property="Foreground" Value="#F6F8FA"/>
         </Style>
         <Style Selector="Slider">
-            <Setter Property="MinHeight" Value="36"/>
+            <Setter Property="MinHeight" Value="24"/>
             <Setter Property="Foreground" Value="#1E9AF0"/>
             <Setter Property="Background" Value="#33404A"/>
         </Style>
@@ -128,7 +128,7 @@
                 Padding="16,10,16,14"
                 Background="#07080A"
                 BorderThickness="0,1,0,0" BorderBrush="#202832">
-            <StackPanel Spacing="8">
+            <StackPanel>
 
                 <Border x:Name="UpcomingBar"
                         IsVisible="False"
@@ -152,10 +152,12 @@
                 <Grid x:Name="PlaybackInfoPanel"
                       ColumnDefinitions="*,Auto"
                       IsVisible="False">
-                    <Slider x:Name="PlaybackSlider"
-                            Grid.Column="0"
-                            Minimum="0" Maximum="100" Value="0"
-                            VerticalAlignment="Center"/>
+                    <Border Grid.Column="0"
+                            ClipToBounds="False">
+                        <Slider x:Name="PlaybackSlider"
+                                Minimum="0" Maximum="100" Value="0"
+                                VerticalAlignment="Center"/>
+                    </Border>
                     <TextBlock x:Name="PlaybackTimeText"
                                Grid.Column="1"
                                Text="" FontSize="11" Opacity="0.55"
@@ -206,11 +208,13 @@
                     <StackPanel Grid.Column="2"
                                 Orientation="Horizontal" Spacing="4"
                                 VerticalAlignment="Center">
-                        <Slider x:Name="VolumeSlider"
-                                Minimum="0" Maximum="100" 
-                                Value="100"
-                                Width="108"
-                                VerticalAlignment="Center"/>
+                        <Border ClipToBounds="False">
+                            <Slider x:Name="VolumeSlider"
+                                    Minimum="0" Maximum="100" 
+                                    Value="100"
+                                    Width="108"
+                                    VerticalAlignment="Center"/>
+                        </Border>
                         <Button x:Name="ShuffleBtn"
                                 Classes="icon"
                                 Click="OnShuffleToggleClicked"

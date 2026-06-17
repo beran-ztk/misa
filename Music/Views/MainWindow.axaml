@@ -4,85 +4,8 @@
         Title="Misa"
         Width="1300" Height="760"
         MinWidth="900" MinHeight="520"
-        SystemDecorations="Full"
-        ExtendClientAreaToDecorationsHint="True"
-        ExtendClientAreaChromeHints="NoChrome"
-        ExtendClientAreaTitleBarHeightHint="0">
+        SystemDecorations="Full">
 
-    <Window.Styles>
-        <Style Selector="Button.title-button">
-            <Setter Property="Width" Value="46"/>
-            <Setter Property="Height" Value="38"/>
-            <Setter Property="Padding" Value="0"/>
-            <Setter Property="FontSize" Value="13"/>
-            <Setter Property="Foreground" Value="#D7DFE8"/>
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="CornerRadius" Value="0"/>
-            <Setter Property="HorizontalContentAlignment" Value="Center"/>
-            <Setter Property="VerticalContentAlignment" Value="Center"/>
-        </Style>
-        <Style Selector="Button.title-button:pointerover">
-            <Setter Property="Background" Value="#1B2430"/>
-            <Setter Property="Foreground" Value="#FFFFFF"/>
-        </Style>
-        <Style Selector="Button.close-button:pointerover">
-            <Setter Property="Background" Value="#C42B1C"/>
-            <Setter Property="Foreground" Value="#FFFFFF"/>
-        </Style>
-    </Window.Styles>
-
-    <Grid RowDefinitions="38,*"
-          Background="#0C0D10">
-
-        <!-- ══ Custom title bar ══ -->
-        <Border Grid.Row="0"
-                Background="#07080A"
-                BorderBrush="#223044"
-                BorderThickness="0,0,0,1">
-            <Grid>
-                <Grid ColumnDefinitions="*,Auto">
-
-                    <!-- Drag / title area (transparent so hit-testable, but invisible) -->
-                    <Panel Grid.Column="0"
-                           Background="Transparent"
-                           PointerPressed="OnTitleBarPointerPressed"
-                           DoubleTapped="OnTitleBarDoubleTapped">
-                    </Panel>
-
-                    <!-- Window control buttons -->
-                    <StackPanel Grid.Column="1"
-                                Orientation="Horizontal"
-                                VerticalAlignment="Stretch">
-                        
-                        <Button Content="—"
-                                Classes="title-button"
-                                Click="OnMinimizeClicked"
-                                ToolTip.Tip="Minimize"/>
-                        <Button x:Name="TitleMaxBtn"
-                                Content="□"
-                                Classes="title-button"
-                                Click="OnMaxRestoreClicked"
-                                ToolTip.Tip="Maximize"/>
-                        <Button Content="×"
-                                Classes="title-button close-button"
-                                Click="OnWindowCloseClicked"
-                                FontSize="17"
-                                ToolTip.Tip="Close"/>
-                    </StackPanel>
-                </Grid>
-
-                <Panel Height="5"
-                       VerticalAlignment="Top"
-                       Background="Transparent"
-                       PointerPressed="OnTopResizePointerPressed"/>
-            </Grid>
-        </Border>
-
-        <!-- ══ Content area ══ -->
-        <ContentControl Grid.Row="1" 
-                        x:Name="ContentArea"/>
-
-    </Grid>
+    <ContentControl x:Name="ContentArea"/>
 
 </Window>
