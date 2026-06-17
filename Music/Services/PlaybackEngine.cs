@@ -17,7 +17,7 @@ public sealed class PlaybackEngine : IDisposable
         public readonly AudioFileReader Reader;   // owns CurrentTime, TotalTime, software Volume
         public readonly int TrackId;
 
-        // 0..1 transition factor; Reader.Volume = MasterVolume * TransitionVolume (or 0 if muted).
+        // 0..1 transition factor; Reader.Volume = user volume * TransitionVolume.
         public float TransitionVolume;
         public float FadeTarget;   // 0 = fade out fully, 1 = fade in to full
         public float FadeStep;     // per 100 ms tick, signed; 0 = steady
@@ -31,7 +31,7 @@ public sealed class PlaybackEngine : IDisposable
             FadeTarget = startTransition;
         }
 
-        // Set the effective output level: MasterVolume * TransitionVolume (0 if muted).
+        // Set the effective output level: user volume * TransitionVolume.
         public void ApplySoftVolume(float masterVolume) =>
             Reader.Volume = Math.Clamp(masterVolume * TransitionVolume, 0f, 1f);
 
@@ -54,8 +54,7 @@ public sealed class PlaybackEngine : IDisposable
     public TimeSpan TotalTime { get; private set; }
     public bool IsCrossfading => _secondary != null;
 
-    // User-facing volume settings (set by MusicView; engine does not persist them).
-    public float MasterVolume { get; set; } = 1f;
+    private float _masterVolume = 1f;
 
     private AudioSlot? _primary;
     private AudioSlot? _secondary;
@@ -66,7 +65,7 @@ public sealed class PlaybackEngine : IDisposable
 
     // Begin playing filePath.
     // If a track is already playing it fades out over fadeOutSeconds (0 = immediate stop).
-    // The new track fades in over fadeInSeconds (0 = starts at full MasterVolume immediately).
+    // The new track fades in over fadeInSeconds (0 = starts at full user volume immediately).
     public void Play(string filePath, int trackId, float fadeOutSeconds, float fadeInSeconds)
     {
         if (_disposed) return;
@@ -113,7 +112,7 @@ public sealed class PlaybackEngine : IDisposable
             FadeTarget = 1f,
             FadeStep = fadeInSeconds > 0f ? 1f / (fadeInSeconds * 10f) : 0f,
         };
-        _primary.ApplySoftVolume(MasterVolume);
+        _primary.ApplySoftVolume(_masterVolume);
 
         player.Play();
         ActiveTrackId = trackId;
@@ -126,6 +125,8 @@ public sealed class PlaybackEngine : IDisposable
     {
         if (_primary == null || State != EngineState.Playing) return;
         _primary.Player.Pause();
+        _secondary?.Player.Pause();
+        _timer.Stop();
         State = EngineState.Paused;
         StateChanged?.Invoke();
     }
@@ -134,6 +135,8 @@ public sealed class PlaybackEngine : IDisposable
     {
         if (_primary == null || State != EngineState.Paused) return;
         _primary.Player.Play();
+        _secondary?.Player.Play();
+        _timer.Start();
         State = EngineState.Playing;
         StateChanged?.Invoke();
     }
@@ -171,17 +174,26 @@ public sealed class PlaybackEngine : IDisposable
         if (total <= 0) return;
         var targetSec = Math.Clamp(fraction * total, 0, total);
         bool wasPlaying = State == EngineState.Playing;
-        if (wasPlaying) _primary.Player.Pause();
+        if (wasPlaying)
+        {
+            _primary.Player.Pause();
+            _secondary?.Player.Pause();
+        }
         _primary.Reader.CurrentTime = TimeSpan.FromSeconds(targetSec);
-        if (wasPlaying) _primary.Player.Play();
+        if (wasPlaying)
+        {
+            _primary.Player.Play();
+            _secondary?.Player.Play();
+        }
         CurrentTime = _primary.Reader.CurrentTime;
     }
 
-    // Re-apply MasterVolume/Muted to currently active slots (call after user changes volume).
-    public void ApplyVolume()
+    // Re-apply the user volume to all active slots without changing their fade position.
+    public void ApplyVolume(float masterVolume)
     {
-        _primary?.ApplySoftVolume(Values.Volume);
-        _secondary?.ApplySoftVolume(Values.Volume);
+        _masterVolume = Math.Clamp(masterVolume, 0f, 1f);
+        _primary?.ApplySoftVolume(_masterVolume);
+        _secondary?.ApplySoftVolume(_masterVolume);
     }
 
     private void OnTick(object? sender, EventArgs e)
@@ -190,7 +202,7 @@ public sealed class PlaybackEngine : IDisposable
         if (_primary != null && _primary.FadeStep > 0f)
         {
             _primary.TransitionVolume = Math.Min(_primary.TransitionVolume + _primary.FadeStep, _primary.FadeTarget);
-            _primary.ApplySoftVolume(MasterVolume);
+            _primary.ApplySoftVolume(_masterVolume);
             if (_primary.TransitionVolume >= _primary.FadeTarget) _primary.FadeStep = 0f;
         }
 
@@ -198,7 +210,7 @@ public sealed class PlaybackEngine : IDisposable
         if (_secondary != null && _secondary.FadeStep < 0f)
         {
             _secondary.TransitionVolume = Math.Max(_secondary.TransitionVolume + _secondary.FadeStep, 0f);
-            _secondary.ApplySoftVolume(MasterVolume);
+            _secondary.ApplySoftVolume(_masterVolume);
             if (_secondary.TransitionVolume <= 0f)
             {
                 _secondary.Player.PlaybackStopped -= OnSecondaryEnded;

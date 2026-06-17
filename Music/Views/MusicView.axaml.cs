@@ -69,7 +69,7 @@ public partial class MusicView : UserControl
         VolumeSlider.ValueChanged += (_, _) =>
         {
             Values.Volume = (float)VolumeSlider.Value / 100.0f;
-            _engine.ApplyVolume();
+            _engine.ApplyVolume(Values.Volume);
         };
         
         try { MusicLibraryService.Current.Initialize(); }

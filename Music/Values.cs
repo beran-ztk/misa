@@ -13,7 +13,7 @@ public static class Values
     public static readonly string DbPath = Path.Combine(LocalDirectory, "music.db");
     public static readonly string ToolsDirectory = @"D:\media\tools";
 
-    public static float Volume = 100f;
+    public static float Volume = 1f;
     public const int CrossfadeDurationSeconds = 10;
     public const int ManualFadeDurationSeconds = 2;
     
