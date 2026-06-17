@@ -1,9 +1,9 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="Music.Views.MainWindow"
-        Title="Misa"
-        Width="1300" Height="760"
-        MinWidth="900" MinHeight="520"
+        Title="Music"
+        Icon="/Assets/music.png"
+        Width="750" Height="1200"
         SystemDecorations="Full">
 
     <ContentControl x:Name="ContentArea"/>
