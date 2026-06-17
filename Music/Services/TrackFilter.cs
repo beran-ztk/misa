@@ -34,20 +34,8 @@ public static class TrackFilter
             .ToList();
 
         if (activeGroups.Count > 0)
-        {
-            var seen = new HashSet<int>();
-            var matched = new List<MusicTrack>();
-            foreach (var track in query)
-            {
-                if (seen.Contains(track.Id)) continue;
-                if (activeGroups.Any(g => MatchesGroup(track, g, trackGenreIds, trackStyleIds)))
-                {
-                    seen.Add(track.Id);
-                    matched.Add(track);
-                }
-            }
-            query = matched;
-        }
+            query = query.Where(track => activeGroups.Any(g =>
+                MatchesGroup(track, g, trackGenreIds, trackStyleIds)));
 
         var sorted = query.OrderBy(t => t.Title, StringComparer.OrdinalIgnoreCase);
 
