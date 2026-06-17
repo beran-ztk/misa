@@ -93,28 +93,6 @@
             </Grid>
         </Border>
 
-        <!-- ── Active filter chips (hidden when no filters active) ── -->
-        <ItemsControl x:Name="ActiveFilterChips"
-                      DockPanel.Dock="Top"
-                      IsVisible="False"
-                      Margin="20,0,16,8">
-            <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <WrapPanel Orientation="Horizontal"/>
-                </ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
-            <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                    <Border Margin="0,2,4,2" Padding="9,3"
-                            CornerRadius="10"
-                            BorderBrush="#32808080" BorderThickness="1"
-                            Background="#0D808080">
-                        <TextBlock Text="{Binding}" FontSize="11"/>
-                    </Border>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
-
         <!-- ── Status / error text (hidden until needed) ── -->
         <TextBlock x:Name="StatusText"
                    DockPanel.Dock="Top"

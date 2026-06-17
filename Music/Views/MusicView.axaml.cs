@@ -217,7 +217,6 @@ public partial class MusicView : UserControl
 
         FileList.ItemsSource = _filteredItems;
         RefreshNextTrackPreview();
-        UpdateFilterChips();
         UpdateFilterCounts();
     }
 
@@ -238,28 +237,6 @@ public partial class MusicView : UserControl
             fg.GenreCtrl.UpdateCounts(genreCountByName);
             fg.StyleCtrl.UpdateCounts(styleCountByName);
         }
-    }
-
-    private void UpdateFilterChips()
-    {
-        var chips = new List<string>();
-
-        foreach (var r in Enumerable.OrderBy<string, string>(RatingFilter.SelectedItems, n => n))
-            chips.Add($"Rating: {r}");
-
-        var seenGenres = new HashSet<string>();
-        var seenStyles = new HashSet<string>();
-
-        foreach (var fg in _filterGroups)
-        {
-            foreach (var g in fg.GenreCtrl.SelectedItems.OrderBy(n => n))
-                if (seenGenres.Add(g)) chips.Add($"Genre: {g}");
-            foreach (var s in fg.StyleCtrl.SelectedItems.OrderBy(n => n))
-                if (seenStyles.Add(s)) chips.Add($"Style: {s}");
-        }
-
-        ActiveFilterChips.ItemsSource = chips.Count > 0 ? (IEnumerable<string>)chips : null;
-        ActiveFilterChips.IsVisible = chips.Count > 0;
     }
 
     private static HashSet<int> SelectedIds<T>(IReadOnlySet<string> selected, List<T> source,
