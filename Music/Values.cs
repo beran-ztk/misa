@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using Music.Models;
 
 namespace Music;
 
@@ -12,4 +14,8 @@ public static class Values
     public static readonly string ToolsDirectory = @"D:\media\tools";
 
     public static float Volume = 100f;
+    
+    public static List<Genre> Genres = [];
+    public static List<Style> Styles = [];
+    public static List<Rating> Ratings = [];
 }

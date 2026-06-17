@@ -59,9 +59,7 @@ public class MusicDatabase
                 DownloadedAt       TEXT    NOT NULL,
                 DurationSeconds    INTEGER NULL,
                 Notes              TEXT    NULL,
-                ReEvaluationNeeded INTEGER NOT NULL DEFAULT 0,
-                ListenCount        INTEGER NOT NULL DEFAULT 0,
-                SkipCount          INTEGER NOT NULL DEFAULT 0,
+                ReEvaluationNeeded INTEGER NOT NULL DEFAULT 0
                 LastListenedAt     TEXT    NULL
             );
             CREATE TABLE TrackStyles (
@@ -215,8 +213,7 @@ public class MusicDatabase
         using var conn = Open();
         using var cmd = conn.CreateCommand();
         cmd.CommandText = @"SELECT Id, CanonicalUrl, Title, FileName, RatingId, DownloadedAt,
-                                   DurationSeconds, Notes, ReEvaluationNeeded,
-                                   ListenCount, SkipCount, LastListenedAt
+                                   DurationSeconds, Notes, ReEvaluationNeeded, LastListenedAt
                             FROM Tracks ORDER BY DownloadedAt DESC";
         using var r = cmd.ExecuteReader();
         var list = new List<MusicTrack>();
@@ -227,31 +224,9 @@ public class MusicDatabase
                 r.IsDBNull(6) ? null : r.GetInt32(6),
                 r.IsDBNull(7) ? null : r.GetString(7),
                 r.GetInt32(8) != 0,
-                r.GetInt32(9),
-                r.GetInt32(10),
-                r.IsDBNull(11) ? null : r.GetString(11)));
+                r.IsDBNull(10) ? null : r.GetString(10)));
         return list;
     }
-
-    public void IncrementListenCount(int trackId, string lastListenedAt)
-    {
-        using var conn = Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = "UPDATE Tracks SET ListenCount = ListenCount + 1, LastListenedAt = $at WHERE Id = $id";
-        cmd.Parameters.AddWithValue("$id", trackId);
-        cmd.Parameters.AddWithValue("$at", lastListenedAt);
-        cmd.ExecuteNonQuery();
-    }
-
-    public void IncrementSkipCount(int trackId)
-    {
-        using var conn = Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = "UPDATE Tracks SET SkipCount = SkipCount + 1 WHERE Id = $id";
-        cmd.Parameters.AddWithValue("$id", trackId);
-        cmd.ExecuteNonQuery();
-    }
-
     public Dictionary<int, List<int>> GetAllTrackStyleIds() => GetAllJunctionIds("TrackStyles", "StyleId");
     public List<int> GetTrackStyleIds(int trackId) => GetJunctionIds("TrackStyles", "StyleId", trackId);
 
@@ -282,40 +257,9 @@ public class MusicDatabase
         tx.Commit();
     }
 
-    public void DeleteTrack(int id)
-    {
-        using var conn = Open();
-        using var tx = conn.BeginTransaction();
-
-        foreach (var table in new[] { "TrackGenres", "TrackStyles" })
-        {
-            using var cmd = conn.CreateCommand();
-            cmd.Transaction = tx;
-            cmd.CommandText = $"DELETE FROM {table} WHERE TrackId = $id";
-            cmd.Parameters.AddWithValue("$id", id);
-            cmd.ExecuteNonQuery();
-        }
-
-        using (var cmd = conn.CreateCommand())
-        {
-            cmd.Transaction = tx;
-            cmd.CommandText = "DELETE FROM Tracks WHERE Id = $id";
-            cmd.Parameters.AddWithValue("$id", id);
-            cmd.ExecuteNonQuery();
-        }
-
-        tx.Commit();
-    }
-
-    // --- Genres ---
-
+    // --- Lookups ---
     public List<Genre> GetGenres() => GetLookupList("Genres", (id, name) => new Genre(id, name));
-
-    // --- Styles ---
-
     public List<Style> GetStyles() => GetLookupList("Styles", (id, name) => new Style(id, name));
-
-    // --- Ratings ---
     public List<Rating> GetRatings()
     {
         using var conn = Open();
@@ -338,43 +282,6 @@ public class MusicDatabase
         var list = new List<T>();
         while (r.Read()) list.Add(ctor(r.GetInt32(0), r.GetString(1)));
         return list;
-    }
-
-    private void InsertLookup(string table, string name)
-    {
-        using var conn = Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = $"INSERT OR IGNORE INTO {table} (Name) VALUES ($name)";
-        cmd.Parameters.AddWithValue("$name", name);
-        cmd.ExecuteNonQuery();
-    }
-
-    private bool IsInUse(string table, string column, int id)
-    {
-        using var conn = Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = $"SELECT COUNT(*) FROM {table} WHERE {column} = $id";
-        cmd.Parameters.AddWithValue("$id", id);
-        return (long)cmd.ExecuteScalar()! > 0;
-    }
-
-    private void UpdateLookup(string table, int id, string name)
-    {
-        using var conn = Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = $"UPDATE {table} SET Name = $name WHERE Id = $id";
-        cmd.Parameters.AddWithValue("$id", id);
-        cmd.Parameters.AddWithValue("$name", name);
-        cmd.ExecuteNonQuery();
-    }
-
-    private void DeleteLookup(string table, int id)
-    {
-        using var conn = Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = $"DELETE FROM {table} WHERE Id = $id";
-        cmd.Parameters.AddWithValue("$id", id);
-        cmd.ExecuteNonQuery();
     }
 
     private Dictionary<int, List<int>> GetAllJunctionIds(string table, string idColumn)

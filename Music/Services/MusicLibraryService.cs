@@ -9,16 +9,9 @@ namespace Music.Services;
 public class MusicLibraryService
 {
     public static readonly MusicLibraryService Current = new();
+    private readonly MusicDatabase _db = new();
+    private readonly TrackDownloadService _downloader = new();
 
-    private readonly MusicDatabase _db;
-    private readonly TrackDownloadService _downloader;
-
-    private MusicLibraryService()
-    {
-        _db = new MusicDatabase();
-        _downloader = new TrackDownloadService();
-    }
-    
     public void Initialize() => _db.Initialize();
 
     // --- Tracks ---
@@ -30,6 +23,21 @@ public class MusicLibraryService
 
     public Dictionary<int, List<int>> GetAllTrackGenreIds() => _db.GetAllTrackGenreIds();
     public List<int> GetTrackGenreIds(int trackId) => _db.GetTrackGenreIds(trackId);
+    public void UpdateTrack(int id, string title, List<int> genreIds, int ratingId,
+        List<int> styleIds, string? notes, bool reEvaluationNeeded) =>
+        _db.UpdateTrack(id, title, genreIds, ratingId, styleIds, notes, reEvaluationNeeded);
+
+    // --- Thumbnails ---
+    public string? EnsureThumbnailCached(int trackId, string fileName)
+    {
+        var audioFilePath = Path.Combine(Values.TracksDirectory, fileName);
+        return ThumbnailService.EnsureCached(trackId, audioFilePath);
+    }
+
+    // --- Lookups ---
+    public List<Genre> GetGenres() => _db.GetGenres();
+    public List<Style> GetStyles() => _db.GetStyles();
+    public List<Rating> GetRatings() => _db.GetRatings();
 
     public async Task<DownloadResult> DownloadTrackAsync(DownloadRequest request)
     {
@@ -64,33 +72,4 @@ public class MusicLibraryService
 
         return new DownloadResult(true);
     }
-
-    public void UpdateTrack(int id, string title, List<int> genreIds, int ratingId,
-                            List<int> styleIds, string? notes, bool reEvaluationNeeded) =>
-        _db.UpdateTrack(id, title, genreIds, ratingId, styleIds, notes, reEvaluationNeeded);
-
-    public void IncrementListenCount(int trackId) =>
-        _db.IncrementListenCount(trackId, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
-
-    public void IncrementSkipCount(int trackId) =>
-        _db.IncrementSkipCount(trackId);
-
-
-    // --- Thumbnails ---
-    public string? EnsureThumbnailCached(int trackId, string fileName)
-    {
-        var audioFilePath = Path.Combine(Values.TracksDirectory, fileName);
-        return ThumbnailService.EnsureCached(trackId, audioFilePath);
-    }
-
-    // --- Genres ---
-
-    public List<Genre> GetGenres() => _db.GetGenres();
-
-    // --- Styles ---
-
-    public List<Style> GetStyles() => _db.GetStyles();
-
-    // --- Ratings ---
-    public List<Rating> GetRatings() => _db.GetRatings();
 }

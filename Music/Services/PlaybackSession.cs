@@ -63,23 +63,7 @@ public sealed class PlaybackSession
             ListenThresholdReached = true;
     }
 
-    // Close the session and decide what to count.
-    // wasNatural = true when the track ended on its own (no user interruption).
-    // Returns (countListen, countSkip) — at most one is true.
-    public (bool listen, bool skip) Close(bool wasNatural)
-    {
-        if (!HasSession) return (false, false);
-
-        Flush();
-
-        bool listen = wasNatural || ListenThresholdReached;
-        bool skip = !listen && _accumulatedWallSeconds >= MinEffectiveSecondsForSkip;
-
-        Reset();
-        return (listen, skip);
-    }
-
-    private void Flush()
+    public void Flush()
     {
         if (_lastResumeUtc.HasValue)
         {
@@ -98,7 +82,7 @@ public sealed class PlaybackSession
         return false;
     }
 
-    private void Reset()
+    public void Reset()
     {
         _trackId = -1;
         _totalSeconds = 0;

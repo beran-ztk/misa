@@ -48,9 +48,6 @@ public partial class MusicView : UserControl
     private readonly Random _rng = new();
 
     // Track list data
-    private List<Genre> _genres = [];
-    private List<Rating> _ratings = [];
-    private List<Style> _styles = [];
     private List<TrackDisplayItem> _allItems = [];
     private Dictionary<int, List<int>> _allTrackStyleIds = [];
     private Dictionary<int, List<int>> _allTrackGenreIds = [];
@@ -102,17 +99,16 @@ public partial class MusicView : UserControl
 
     private void LoadLookups()
     {
-        _genres = MusicLibraryService.Current.GetGenres();
-        _ratings = MusicLibraryService.Current.GetRatings();
-        _styles = MusicLibraryService.Current.GetStyles();
+        Values.Genres = MusicLibraryService.Current.GetGenres();
+        Values.Styles = MusicLibraryService.Current.GetStyles();
+        Values.Ratings = MusicLibraryService.Current.GetRatings();
 
-        RatingFilter.Placeholder = "Ratings";
-        RatingFilter.SetItems(_ratings.Select(r => r.Name));
+        RatingFilter.SetItems(Values.Ratings.Select(r => r.Name));
 
         foreach (var fg in _filterGroups)
         {
-            fg.GenreCtrl.SetItems(_genres.Select(g => g.Name));
-            fg.StyleCtrl.SetItems(_styles.Select(s => s.Name));
+            fg.GenreCtrl.SetItems(Values.Genres.Select(g => g.Name));
+            fg.StyleCtrl.SetItems(Values.Styles.Select(s => s.Name));
         }
     }
 
@@ -128,9 +124,9 @@ public partial class MusicView : UserControl
         _allTrackStyleIds = MusicLibraryService.Current.GetAllTrackStyleIds();
         _allTrackGenreIds = MusicLibraryService.Current.GetAllTrackGenreIds();
 
-        var genreMap = _genres.ToDictionary(g => g.Id, g => g.Name);
-        var ratingMap = _ratings.ToDictionary(r => r.Id, r => r.Name);
-        var styleMap = _styles.ToDictionary(s => s.Id, s => s.Name);
+        var genreMap = Values.Genres.ToDictionary(g => g.Id, g => g.Name);
+        var ratingMap = Values.Ratings.ToDictionary(r => r.Id, r => r.Name);
+        var styleMap = Values.Styles.ToDictionary(s => s.Id, s => s.Name);
 
         _allItems = tracks.Select(t =>
         {
@@ -204,14 +200,14 @@ public partial class MusicView : UserControl
 
     private void ApplyFilter()
     {
-        var selRatingIds = SelectedIds(RatingFilter.SelectedItems, _ratings, r => r.Name, r => r.Id);
-        var ratingSortOrders = _ratings.ToDictionary(r => r.Id, r => r.SortOrder);
+        var selRatingIds = SelectedIds(RatingFilter.SelectedItems, Values.Ratings, r => r.Name, r => r.Id);
+        var ratingSortOrders = Values.Ratings.ToDictionary(r => r.Id, r => r.SortOrder);
         var itemById = _allItems.ToDictionary(i => i.Track.Id);
 
         var groups = _filterGroups
             .Select(fg => new FilterGroup(
-                SelectedIds(fg.GenreCtrl.SelectedItems, _genres, g => g.Name, g => g.Id),
-                SelectedIds(fg.StyleCtrl.SelectedItems, _styles, s => s.Name, s => s.Id)))
+                SelectedIds(fg.GenreCtrl.SelectedItems, Values.Genres, g => g.Name, g => g.Id),
+                SelectedIds(fg.StyleCtrl.SelectedItems, Values.Styles, s => s.Name, s => s.Id)))
             .ToList();
 
         bool? reEvalFilter = ReEvalFilterCheckBox.IsChecked == true ? true : null;
@@ -247,9 +243,9 @@ public partial class MusicView : UserControl
         var genreFacetCounts = MetadataCountService.FacetCounts(currentTrackIds, _allTrackGenreIds);
         var styleFacetCounts = MetadataCountService.FacetCounts(currentTrackIds, _allTrackStyleIds);
 
-        var genreCountByName = _genres.ToDictionary(g => g.Name,
+        var genreCountByName = Values.Genres.ToDictionary(g => g.Name,
             g => genreFacetCounts.GetValueOrDefault(g.Id, 0));
-        var styleCountByName = _styles.ToDictionary(s => s.Name,
+        var styleCountByName = Values.Styles.ToDictionary(s => s.Name,
             s => styleFacetCounts.GetValueOrDefault(s.Id, 0));
 
         foreach (var fg in _filterGroups)
@@ -261,58 +257,11 @@ public partial class MusicView : UserControl
 
     // ─── Session helpers ──────────────────────────────────────────────────────
 
-    private void CloseCurrentSession(bool wasNatural)
+    private void CloseCurrentSession()
     {
         if (!_session.HasSession) return;
-        var trackId = _session.TrackId;
-        var (listen, skip) = _session.Close(wasNatural);
-        if (listen) OnListenThresholdReached(trackId);
-        else if (skip) OnSkipCounted(trackId);
-    }
-
-    // Called once when the listen threshold is crossed during playback.
-    private void OnListenThresholdReached(int trackId)
-    {
-        MusicLibraryService.Current.IncrementListenCount(trackId);
-        UpdateCountsInMemory(trackId, deltaListen: 1, deltaSkip: 0);
-    }
-
-    private void OnSkipCounted(int trackId)
-    {
-        MusicLibraryService.Current.IncrementSkipCount(trackId);
-        UpdateCountsInMemory(trackId, deltaListen: 0, deltaSkip: 1);
-    }
-
-    // Updates ListenCount/SkipCount in the in-memory collections and refreshes the list
-    // without touching the database again or reloading thumbnails.
-    private void UpdateCountsInMemory(int trackId, int deltaListen, int deltaSkip)
-    {
-        var idx = _allItems.FindIndex(i => i.Track.Id == trackId);
-        if (idx < 0) return;
-
-        var old = _allItems[idx];
-        var newTrack = old.Track with
-        {
-            ListenCount = old.Track.ListenCount + deltaListen,
-            SkipCount = old.Track.SkipCount + deltaSkip,
-        };
-        // Records copy init-only properties via `with`, but IsPlaying/Thumbnail have `set`
-        // and are NOT copied automatically — reconstruct manually to preserve them.
-        var updated = new TrackDisplayItem(newTrack, old.MetaLine,
-            old.GenreIds, old.StyleIds,
-            old.GenreText, old.StyleText, old.DurationText, old.RatingText)
-        {
-            IsPlaying = old.IsPlaying,
-            Thumbnail = old.Thumbnail,
-        };
-        _allItems[idx] = updated;
-
-        var fIdx = _filteredItems.FindIndex(i => i.Track.Id == trackId);
-        if (fIdx >= 0)
-        {
-            _filteredItems[fIdx] = updated;
-            FileList.ItemsSource = _filteredItems.ToList();
-        }
+        _session.Flush();
+        _session.Reset();
     }
 
     private void UpdateFilterChips()
@@ -373,13 +322,13 @@ public partial class MusicView : UserControl
 
     private void OnClearFiltersClicked(object? sender, RoutedEventArgs e)
     {
-        RatingFilter.SetItems(_ratings.Select(r => r.Name));
+        RatingFilter.SetItems(Values.Ratings.Select(r => r.Name));
         RatingFilter.Placeholder = "All ratings";
         ReEvalFilterCheckBox.IsChecked = false;
         foreach (var fg in _filterGroups)
         {
-            fg.GenreCtrl.SetItems(_genres.Select(g => g.Name));
-            fg.StyleCtrl.SetItems(_styles.Select(s => s.Name));
+            fg.GenreCtrl.SetItems(Values.Genres.Select(g => g.Name));
+            fg.StyleCtrl.SetItems(Values.Styles.Select(s => s.Name));
         }
         ApplyFilter();
     }
@@ -395,11 +344,11 @@ public partial class MusicView : UserControl
     private void AddFilterGroup()
     {
         var genreCtrl = new MultiSelectFilterControl { Placeholder = "All genres" };
-        genreCtrl.SetItems(_genres.Select(g => g.Name));
+        genreCtrl.SetItems(Values.Genres.Select(g => g.Name));
         genreCtrl.SelectionChanged += (_, _) => ApplyFilter();
 
         var styleCtrl = new MultiSelectFilterControl { Placeholder = "All styles" };
-        styleCtrl.SetItems(_styles.Select(s => s.Name));
+        styleCtrl.SetItems(Values.Styles.Select(s => s.Name));
         styleCtrl.SelectionChanged += (_, _) => ApplyFilter();
 
         var fg = new FilterGroupControls(genreCtrl, styleCtrl);
@@ -538,7 +487,7 @@ public partial class MusicView : UserControl
 
         // Close any open session (manual track change). Natural-end sessions are closed
         // in OnTrackNaturallyEnded before this point, so this handles the skip case.
-        CloseCurrentSession(wasNatural: false);
+        CloseCurrentSession();
 
         var track = _filteredItems[filteredIndex].Track;
         var filePath = Path.Combine(Values.TracksDirectory, track.FileName);
@@ -603,7 +552,7 @@ public partial class MusicView : UserControl
     private void OnTrackNaturallyEnded()
     {
         // Close session before navigating so the new PlayTrackAt call doesn't see a stale session.
-        CloseCurrentSession(wasNatural: true);
+        CloseCurrentSession();
         NavigateNext(isManual: false);
     }
 
@@ -763,7 +712,7 @@ public partial class MusicView : UserControl
 
     private void FullStop()
     {
-        CloseCurrentSession(wasNatural: false);
+        CloseCurrentSession();
         _engine.Stop();
     }
 

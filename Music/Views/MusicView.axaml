@@ -297,7 +297,7 @@
                                            FontSize="10" FontWeight="SemiBold"
                                            Opacity="0.38" LetterSpacing="1"/>
                                 <views:MultiSelectFilterControl x:Name="RatingFilter"
-                                                                Placeholder="All ratings"/>
+                                                                Placeholder="---"/>
                             </StackPanel>
 
                             <!-- Options -->
