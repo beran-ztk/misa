@@ -57,15 +57,13 @@ public partial class AddTrackOverlay : UserControl
 
         RebuildGenreChips();
 
-        // Default to first rating so the field is pre-filled when More options is collapsed.
         RatingBox.ItemsSource = _ratings.Select(r => r.Name).ToList();
-        RatingBox.SelectedIndex = _ratings.Count > 0 ? 0 : -1;
+        RatingBox.SelectedIndex = -1;
     }
 
     private void ClearForm()
     {
         UrlBox.Text = "";
-        TitleBox.Text = "";
         StatusText.Text = "";
         CloseBtn.IsEnabled = true;
         DownloadBtn.IsEnabled = false;
@@ -73,7 +71,7 @@ public partial class AddTrackOverlay : UserControl
         StylesPanel.Children.Clear();
         _styleChips.Clear();
         StylesSection.IsVisible = false;
-        RatingBox.SelectedIndex = _ratings.Count > 0 ? 0 : -1;
+        RatingBox.SelectedIndex = -1;
     }
 
     // ─── Genre chips ─────────────────────────────────────────────────────────
@@ -93,14 +91,8 @@ public partial class AddTrackOverlay : UserControl
         {
             var genre = sorted[i];
             var count = genreCounts.GetValueOrDefault(genre.Id, 0);
-            var btn = new ToggleButton
-            {
-                Content = count > 0 ? $"{genre.Name} ({count})" : genre.Name,
-                Padding = new Thickness(12, 6),
-                Margin = new Thickness(0, 0, 6, 6),
-                CornerRadius = new CornerRadius(12),
-                IsVisible = _showAllGenres || i < InitialGenreLimit,
-            };
+            var btn = MetadataChipFactory.Create(genre.Name, count);
+            btn.IsVisible = _showAllGenres || i < InitialGenreLimit;
             btn.IsCheckedChanged += (_, _) => OnGenreSelectionChanged();
             _genreChips.Add((genre, btn));
             GenresPanel.Children.Add(btn);
@@ -162,15 +154,8 @@ public partial class AddTrackOverlay : UserControl
         foreach (var style in sorted)
         {
             var count = styleCounts.GetValueOrDefault(style.Id, 0);
-            var btn = new ToggleButton
-            {
-                Content = count > 0 ? $"{style.Name} ({count})" : style.Name,
-                Padding = new Thickness(12, 6),
-                Margin = new Thickness(0, 0, 6, 6),
-                CornerRadius = new CornerRadius(12),
-                IsChecked = prevSelected.Contains(style.Id),
-                Opacity = count > 0 ? 1.0 : 0.45,
-            };
+            var btn = MetadataChipFactory.Create(style.Name, count, prevSelected.Contains(style.Id));
+            btn.Opacity = count > 0 ? 1.0 : 0.48;
             btn.IsCheckedChanged += (_, _) => UpdateDownloadButton();
             _styleChips.Add((style, btn));
             StylesPanel.Children.Add(btn);
@@ -198,7 +183,6 @@ public partial class AddTrackOverlay : UserControl
         var request = new DownloadRequest
         {
             RawUrl = UrlBox.Text?.Trim() ?? "",
-            CustomTitle = string.IsNullOrWhiteSpace(TitleBox.Text) ? null : TitleBox.Text.Trim(),
             GenreIds = _genreChips
                 .Where(c => c.Btn.IsChecked == true)
                 .Select(c => c.Genre.Id)

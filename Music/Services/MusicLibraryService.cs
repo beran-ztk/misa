@@ -54,12 +54,8 @@ public class MusicLibraryService
             return new DownloadResult(false, "Download finished but file not found.");
 
         var fileName = Path.GetFileName(filePath);
-        var title = string.IsNullOrWhiteSpace(request.CustomTitle)
-            ? _downloader.TitleFromFileName(fileName)
-            : request.CustomTitle.Trim();
-
         var duration = await _downloader.GetDurationAsync(filePath);
-        _db.InsertTrack(canonicalUrl, title, fileName,
+        _db.InsertTrack(canonicalUrl, _downloader.TitleFromFileName(fileName), fileName,
             request.GenreIds, request.RatingId, request.StyleIds, duration);
 
         return new DownloadResult(true);

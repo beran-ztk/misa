@@ -1,13 +1,11 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Class="Music.Views.AddTrackOverlay">
+             x:Class="Music.Views.EditTrackOverlay">
 
     <Panel>
 
-        <!-- Dim backdrop -->
         <Border Background="#70000000" />
 
-        <!-- Modal card: stretches to fill the panel with margin so footer is always in view -->
         <Border Margin="32,16,32,16"
                 MaxWidth="880" MinWidth="360"
                 HorizontalAlignment="Center"
@@ -18,12 +16,11 @@
 
             <Grid RowDefinitions="Auto,1,*,1,Auto">
 
-                <!-- Header -->
                 <Grid Grid.Row="0"
                       ColumnDefinitions="*,Auto"
                       Margin="24,16,20,14">
                     <TextBlock Grid.Column="0"
-                               Text="Add Track"
+                               Text="Edit Track"
                                FontSize="18" FontWeight="SemiBold"
                                VerticalAlignment="Center" />
                     <Button Grid.Column="1"
@@ -34,46 +31,32 @@
                             VerticalAlignment="Center" />
                 </Grid>
 
-                <!-- Header/body divider -->
                 <Rectangle Grid.Row="1" Fill="#18808080" />
 
-                <!-- Body (scrollable) -->
                 <ScrollViewer Grid.Row="2"
                               Padding="24,18,24,0"
                               HorizontalScrollBarVisibility="Disabled">
                     <StackPanel Spacing="22" Margin="0,0,0,20">
 
                         <StackPanel Spacing="7">
-                            <TextBlock Text="YouTube URL"
+                            <TextBlock Text="Title"
                                        FontSize="13" FontWeight="SemiBold" />
-                            <TextBox x:Name="UrlBox"
-                                     Watermark="https://www.youtube.com/watch?v=…" />
+                            <TextBox x:Name="TitleBox" />
                         </StackPanel>
 
-                        <!-- Rating -->
                         <StackPanel Spacing="6">
                             <TextBlock Text="Rating"
                                        FontSize="13" FontWeight="SemiBold" />
                             <ComboBox x:Name="RatingBox" MinWidth="200" />
                         </StackPanel>
-                        
-                        <!-- Genres -->
+
                         <StackPanel Spacing="8" Margin="0,0,40,0">
                             <TextBlock Text="Genres"
                                        FontSize="13" FontWeight="SemiBold" />
                             <WrapPanel x:Name="GenresPanel" Orientation="Horizontal" />
-                            <Button x:Name="ShowMoreGenresBtn"
-                                    Content="Show more genres"
-                                    Classes="more-button"
-                                    IsVisible="False"
-                                    Click="OnShowMoreGenresClicked"
-                                    HorizontalAlignment="Left" />
                         </StackPanel>
 
-                        <!-- Styles: shown only after at least one genre is selected.
-                             The left accent bar visually anchors styles under their genre context. -->
-                        <Grid x:Name="StylesSection" IsVisible="False"
-                              ColumnDefinitions="Auto,*" Margin="0,0,40,0">
+                        <Grid ColumnDefinitions="Auto,*" Margin="0,0,40,0">
                             <Border Grid.Column="0"
                                     Width="2" Margin="0,2,0,2"
                                     Background="#40808080" CornerRadius="1" />
@@ -88,15 +71,13 @@
                                 <WrapPanel x:Name="StylesPanel" Orientation="Horizontal" />
                             </StackPanel>
                         </Grid>
-                        
+
                         <Border Height="10" />
                     </StackPanel>
                 </ScrollViewer>
 
-                <!-- Body/footer divider -->
                 <Rectangle Grid.Row="3" Fill="#18808080" />
 
-                <!-- Footer -->
                 <Grid Grid.Row="4"
                       ColumnDefinitions="*,Auto"
                       Margin="24,10,24,16">
@@ -108,13 +89,12 @@
                                Margin="0,0,16,0" />
                     <StackPanel Grid.Column="1"
                                 Orientation="Horizontal" Spacing="8">
-                        <Button x:Name="DownloadBtn"
-                                Content="Download"
-                                Click="OnDownloadClicked"
+                        <Button x:Name="SaveBtn"
+                                Content="Save"
+                                Click="OnSaveClicked"
                                 IsEnabled="False"
                                 Classes="accent" />
-                        <Button x:Name="CloseBtn"
-                                Content="Cancel"
+                        <Button Content="Cancel"
                                 Click="OnCloseClicked" />
                     </StackPanel>
                 </Grid>

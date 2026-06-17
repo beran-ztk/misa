@@ -6,5 +6,36 @@
   
     <Application.Styles>
         <FluentTheme />
+        <Style Selector="ToggleButton.metadata-chip">
+            <Setter Property="Padding" Value="11,6"/>
+            <Setter Property="Margin" Value="0,0,7,7"/>
+            <Setter Property="CornerRadius" Value="14"/>
+            <Setter Property="Background" Value="#252B31"/>
+            <Setter Property="BorderBrush" Value="#37424D"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Foreground" Value="#F2F5F8"/>
+        </Style>
+        <Style Selector="ToggleButton.metadata-chip:pointerover">
+            <Setter Property="Background" Value="#303944"/>
+            <Setter Property="BorderBrush" Value="#4A5A68"/>
+        </Style>
+        <Style Selector="ToggleButton.metadata-chip:checked">
+            <Setter Property="Background" Value="#176EA8"/>
+            <Setter Property="BorderBrush" Value="#32A7E6"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+        </Style>
+        <Style Selector="Button.more-button">
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Background" Value="#101923"/>
+            <Setter Property="BorderBrush" Value="#2B5877"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Foreground" Value="#BFE8FF"/>
+        </Style>
+        <Style Selector="Button.more-button:pointerover">
+            <Setter Property="Background" Value="#152638"/>
+            <Setter Property="BorderBrush" Value="#3C82AD"/>
+        </Style>
     </Application.Styles>
 </Application>

@@ -385,6 +385,7 @@
 
             <!-- Add track overlay (always on top) -->
             <views:AddTrackOverlay x:Name="AddTrackOverlay" IsVisible="False"/>
+            <views:EditTrackOverlay x:Name="EditTrackOverlay" IsVisible="False"/>
 
         </Panel>
 

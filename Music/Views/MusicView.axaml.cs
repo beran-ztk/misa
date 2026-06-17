@@ -81,6 +81,7 @@ public partial class MusicView : UserControl
 
         AddTrackOverlay.TrackDownloaded += () => { AddTrackOverlay.IsVisible = false; RefreshTrackList(); };
         AddTrackOverlay.CloseRequested += () => AddTrackOverlay.IsVisible = false;
+        EditTrackOverlay.TrackSaved += RefreshTrackList;
     }
 
     // ─── Track list ──────────────────────────────────────────────────────────
@@ -379,14 +380,11 @@ public partial class MusicView : UserControl
         AddTrackOverlay.Open();
     }
 
-    private async void OnContextEditClicked(object? sender, RoutedEventArgs e)
+    private void OnContextEditClicked(object? sender, RoutedEventArgs e)
     {
         var idx = FileList.SelectedIndex;
         if (idx < 0 || idx >= _filteredItems.Count) return;
-        var owner = TopLevel.GetTopLevel(this) as Window;
-        if (owner == null) return;
-        var saved = await new EditTrackWindow(_filteredItems[idx].Track).ShowDialog<bool>(owner);
-        if (saved) RefreshTrackList();
+        EditTrackOverlay.Open(_filteredItems[idx].Track);
     }
 
     // ─── Playback control ─────────────────────────────────────────────────────
