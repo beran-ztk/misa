@@ -117,19 +117,33 @@
                     <StackPanel Grid.Column="0"
                                 Orientation="Horizontal" Spacing="2"
                                 VerticalAlignment="Center">
-                        <Button Content="«"
-                                Background="Transparent"
+                        <Button Background="Transparent"
                                 Click="OnPreviousClicked"
-                                Padding="10,5" FontSize="19"/>
+                                Padding="10,5"
+                                ToolTip.Tip="Previous track">
+                            <Image Source="{SvgImage /Assets/skip-back.svg}"
+                                   Width="18" Height="18"/>
+                        </Button>
                         <Button x:Name="PlayPauseBtn"
-                                Content="▶"
                                 Background="Transparent"
                                 Click="OnPlayPauseClicked"
-                                Padding="12,5" FontSize="15"/>
-                        <Button Content="»"
-                                Background="Transparent"
+                                Padding="12,5"
+                                ToolTip.Tip="Play / Pause">
+                            <Grid Width="18" Height="18">
+                                <Image x:Name="PlayIcon"
+                                       Source="{SvgImage /Assets/play.svg}"/>
+                                <Image x:Name="PauseIcon"
+                                       Source="{SvgImage /Assets/pause.svg}"
+                                       IsVisible="False"/>
+                            </Grid>
+                        </Button>
+                        <Button Background="Transparent"
                                 Click="OnNextClicked"
-                                Padding="10,5" FontSize="19"/>
+                                Padding="10,5"
+                                ToolTip.Tip="Next track">
+                            <Image Source="{SvgImage /Assets/skip-forward.svg}"
+                                   Width="18" Height="18"/>
+                        </Button>
                     </StackPanel>
 
                     <TextBlock Grid.Column="1"
@@ -148,20 +162,15 @@
                                 Minimum="0" Maximum="100" 
                                 Value="100"
                                 Width="100" VerticalAlignment="Center"/>
-                        <Button x:Name="RepeatBtn"
-                                Content="↻"
-                                Background="Transparent"
-                                Click="OnRepeatCycleClicked"
-                                Padding="7,5" FontSize="14"
-                                Opacity="0.35"
-                                ToolTip.Tip="Repeat: Off"/>
                         <Button x:Name="ShuffleBtn"
-                                Content="⇄"
                                 Background="Transparent"
                                 Click="OnShuffleToggleClicked"
-                                Padding="7,5" FontSize="14"
+                                Padding="7,5"
                                 Opacity="0.35"
-                                ToolTip.Tip="Shuffle: Off"/>
+                                ToolTip.Tip="Shuffle: Off">
+                            <Image Source="{SvgImage /Assets/shuffle.svg}"
+                                   Width="17" Height="17"/>
+                        </Button>
                     </StackPanel>
 
                 </Grid>
@@ -188,11 +197,12 @@
                         <Grid ColumnDefinitions="14,48,*,Auto">
 
                             <!-- Playing indicator -->
-                            <TextBlock Grid.Column="0"
-                                       Text="▶" FontSize="9"
-                                       VerticalAlignment="Center"
-                                       Opacity="0.6"
-                                       IsVisible="{Binding IsPlaying}"/>
+                            <Image Grid.Column="0"
+                                   Source="{SvgImage /Assets/play-pause.svg}"
+                                   Width="10" Height="10"
+                                   VerticalAlignment="Center"
+                                   Opacity="0.6"
+                                   IsVisible="{Binding IsPlaying}"/>
 
                             <!-- Thumbnail -->
                             <Border Grid.Column="1"

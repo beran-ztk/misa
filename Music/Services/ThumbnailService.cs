@@ -5,19 +5,14 @@ namespace Music.Services;
 
 public static class ThumbnailService
 {
-    private static readonly string CacheDir = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "Misa", "thumbcache");
-    // Todo: Anderen Pfad
-
     // Extracts the first embedded picture from the audio file into the cache.
     // Returns the cache path on success, null if no picture or on any error.
     public static string? EnsureCached(int trackId, string audioFilePath)
     {
         try
         {
-            Directory.CreateDirectory(CacheDir);
-            var cachePath = Path.Combine(CacheDir, $"{trackId}.jpg");
+            Directory.CreateDirectory(Values.ThumbnailDirectory);
+            var cachePath = Path.Combine(Values.ThumbnailDirectory, $"{trackId}.jpg");
 
             if (File.Exists(cachePath))
                 return cachePath;

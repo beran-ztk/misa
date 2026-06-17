@@ -19,19 +19,13 @@ namespace Music.Views;
 
 public partial class MusicView : UserControl
 {
-    private enum RepeatMode { None, RepeatOne, RepeatAll }
-
     // Engine
     private readonly PlaybackEngine _engine = new();
     private readonly PlaybackSession _session = new();
     private bool _isSeeking;
 
     // Playback settings
-    
-    private bool _showUpcomingTrackBar = true;
-    private RepeatMode _repeatMode = RepeatMode.None;
     private bool _shuffle;
-    private bool _loadingSettings;
 
     // UI state
     private bool _filterPanelVisible;
@@ -42,8 +36,6 @@ public partial class MusicView : UserControl
     private bool _crossfadeTriggered;
     private int _nextTrackIndex = -1;
 
-    // Shuffle history
-    private readonly List<int> _shuffleHistory = [];
     private readonly Random _rng = new();
 
     // Track list data
@@ -217,6 +209,9 @@ public partial class MusicView : UserControl
             .Where(t => itemById.ContainsKey(t.Id))
             .Select(t => itemById[t.Id])
             .ToList();
+
+        if (_shuffle)
+            ShuffleFilteredItems();
 
         foreach (var item in _filteredItems)
             item.IsPlaying = item.Track.Id == _engine.ActiveTrackId;
@@ -445,20 +440,15 @@ public partial class MusicView : UserControl
         }
     }
 
-    private void OnRepeatCycleClicked(object? sender, RoutedEventArgs e)
-    {
-        _repeatMode = _repeatMode switch
-        {
-            RepeatMode.None => RepeatMode.RepeatAll,
-            RepeatMode.RepeatAll => RepeatMode.RepeatOne,
-            _ => RepeatMode.None,
-        };
-    }
-
     private void OnShuffleToggleClicked(object? sender, RoutedEventArgs e)
     {
         _shuffle = !_shuffle;
-        if (!_shuffle) _shuffleHistory.Clear();
+        ApplyFilter();
+        FileList.SelectedIndex = _filteredItems.Count > 0 ? 0 : -1;
+        ShuffleBtn.Opacity = _shuffle ? 1.0 : 0.35;
+        ToolTip.SetTip(ShuffleBtn, _shuffle ? "Shuffle: On" : "Shuffle: Off");
+        if (_filteredItems.Count > 0)
+            PlayTrackAt(0, isCrossfade: false);
     }
 
     private void StartPlayback()
@@ -500,12 +490,6 @@ public partial class MusicView : UserControl
         _session.Start(track.Id, track.DurationSeconds ?? 0);
 
         FileList.SelectedIndex = filteredIndex;
-
-        if (_shuffle && wasPlaying)
-        {
-            _shuffleHistory.Add(_engine.ActiveTrackId);
-            if (_shuffleHistory.Count > 50) _shuffleHistory.RemoveAt(0);
-        }
 
         NowPlayingText.Text = track.Title;
         PlaybackInfoPanel.IsVisible = true;
@@ -591,16 +575,6 @@ public partial class MusicView : UserControl
     private int PeekNextTrackIndex(int currentFilteredIndex)
     {
         if (_filteredItems.Count == 0) return -1;
-        if (_repeatMode == RepeatMode.RepeatOne) return currentFilteredIndex;
-        if (_shuffle)
-        {
-            if (_filteredItems.Count == 1) return 0;
-            int next;
-            do { next = _rng.Next(_filteredItems.Count); } while (next == currentFilteredIndex);
-            return next;
-        }
-        if (_repeatMode == RepeatMode.RepeatAll)
-            return (currentFilteredIndex + 1) % _filteredItems.Count;
         int nextIdx = currentFilteredIndex + 1;
         return nextIdx < _filteredItems.Count ? nextIdx : -1;
     }
@@ -620,42 +594,23 @@ public partial class MusicView : UserControl
 
         var currentIdx = GetCurrentPlayIndex();
 
-        if (_repeatMode == RepeatMode.RepeatOne && !isManual)
-        {
-            PlayTrackAt(currentIdx >= 0 ? currentIdx : 0, isCrossfade: false);
-            return;
-        }
-
-        if (_shuffle)
-        {
-            int nextIdx;
-            if (_filteredItems.Count == 1) { nextIdx = 0; }
-            else { do { nextIdx = _rng.Next(_filteredItems.Count); } while (nextIdx == currentIdx); }
-            PlayTrackAt(nextIdx, isCrossfade: false);
-            return;
-        }
-
         int nextLinearIdx;
-        if (_repeatMode == RepeatMode.RepeatAll)
+        if (currentIdx >= 0)
         {
-            nextLinearIdx = currentIdx < 0 ? 0 : (currentIdx + 1) % _filteredItems.Count;
+            nextLinearIdx = currentIdx + 1;
+            if (nextLinearIdx >= _filteredItems.Count) { FullStop(); return; }
+        }
+        else if (_engine.ActiveTrackId < 0)
+        {
+            var selIdx = FileList.SelectedIndex;
+            nextLinearIdx = selIdx >= 0 && selIdx < _filteredItems.Count
+                ? selIdx + (isManual ? 0 : 1)
+                : 0;
+            if (nextLinearIdx >= _filteredItems.Count) { FullStop(); return; }
         }
         else
         {
-            if (currentIdx >= 0)
-            {
-                nextLinearIdx = currentIdx + 1;
-                if (nextLinearIdx >= _filteredItems.Count) { FullStop(); return; }
-            }
-            else if (_engine.ActiveTrackId < 0)
-            {
-                var selIdx = FileList.SelectedIndex;
-                nextLinearIdx = selIdx >= 0 && selIdx < _filteredItems.Count ? selIdx : 0;
-            }
-            else
-            {
-                nextLinearIdx = 0;
-            }
+            nextLinearIdx = 0;
         }
 
         PlayTrackAt(nextLinearIdx, isCrossfade: false);
@@ -665,34 +620,16 @@ public partial class MusicView : UserControl
     {
         if (_filteredItems.Count == 0) return;
 
-        if (_shuffle && _shuffleHistory.Count > 0)
-        {
-            while (_shuffleHistory.Count > 0)
-            {
-                var histId = _shuffleHistory[^1];
-                _shuffleHistory.RemoveAt(_shuffleHistory.Count - 1);
-                var histIdx = _filteredItems.FindIndex(i => i.Track.Id == histId);
-                if (histIdx >= 0) { PlayTrackAt(histIdx, isCrossfade: false); return; }
-            }
-        }
-
         var currentIdx = GetCurrentPlayIndex();
         int prevIdx;
-        if (_repeatMode == RepeatMode.RepeatAll)
+        if (currentIdx < 0)
         {
-            prevIdx = currentIdx <= 0 ? _filteredItems.Count - 1 : currentIdx - 1;
+            var selIdx = FileList.SelectedIndex;
+            if (selIdx <= 0) return;
+            prevIdx = selIdx - 1;
         }
-        else
-        {
-            if (currentIdx < 0)
-            {
-                var selIdx = FileList.SelectedIndex;
-                if (selIdx <= 0) return;
-                prevIdx = selIdx - 1;
-            }
-            else if (currentIdx == 0) { return; }
-            else { prevIdx = currentIdx - 1; }
-        }
+        else if (currentIdx == 0) { return; }
+        else { prevIdx = currentIdx - 1; }
 
         PlayTrackAt(prevIdx, isCrossfade: false);
     }
@@ -707,7 +644,7 @@ public partial class MusicView : UserControl
 
     private void UpdateUpcomingBar()
     {
-        if (!_showUpcomingTrackBar || _engine.State == EngineState.Stopped
+        if (_engine.State == EngineState.Stopped
             || _nextTrackIndex < 0 || _nextTrackIndex >= _filteredItems.Count)
         {
             UpcomingBar.IsVisible = false;
@@ -753,7 +690,9 @@ public partial class MusicView : UserControl
 
     private void UpdateButtonStates()
     {
-        PlayPauseBtn.Content = _engine.State == EngineState.Playing ? "⏸" : "▶";
+        var isPlaying = _engine.State == EngineState.Playing;
+        PlayIcon.IsVisible = !isPlaying;
+        PauseIcon.IsVisible = isPlaying;
     }
 
     private void RefreshPlayingMarkers()
@@ -778,6 +717,15 @@ public partial class MusicView : UserControl
     // ─── Formatting ───────────────────────────────────────────────────────────
 
     private static string FormatDuration(TimeSpan t) => FormatDuration((int)t.TotalSeconds);
+
+    private void ShuffleFilteredItems()
+    {
+        for (var i = _filteredItems.Count - 1; i > 0; i--)
+        {
+            var j = _rng.Next(i + 1);
+            (_filteredItems[i], _filteredItems[j]) = (_filteredItems[j], _filteredItems[i]);
+        }
+    }
 
     private static string FormatDuration(int seconds)
     {
