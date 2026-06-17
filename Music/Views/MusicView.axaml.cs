@@ -141,18 +141,17 @@ public partial class MusicView : UserControl
     {
         var items = _allItems.ToList();
 
-        // Extract embedded artwork to disk cache on a background thread
-        Dictionary<int, string?> paths;
+        Dictionary<int, byte[]?> artworkByTrackId;
         try
         {
-            paths = await Task.Run(() =>
+            artworkByTrackId = await Task.Run(() =>
             {
-                var result = new Dictionary<int, string?>();
+                var result = new Dictionary<int, byte[]?>();
                 foreach (var item in items)
                 {
                     ct.ThrowIfCancellationRequested();
-                    result[item.Track.Id] = MusicLibraryService.Current.EnsureThumbnailCached(
-                        item.Track.Id, item.Track.FileName);
+                    var audioFilePath = Path.Combine(Values.TracksDirectory, item.Track.FileName);
+                    result[item.Track.Id] = ThumbnailService.ReadEmbeddedArtwork(audioFilePath);
                 }
                 return result;
             }, ct);
@@ -161,13 +160,17 @@ public partial class MusicView : UserControl
 
         if (ct.IsCancellationRequested) return;
 
-        // Load Bitmaps on UI thread (reading small cached JPEGs is fast)
         bool any = false;
         foreach (var item in items)
         {
-            if (paths.TryGetValue(item.Track.Id, out var path) && path != null)
+            if (artworkByTrackId.TryGetValue(item.Track.Id, out var artwork) && artwork != null)
             {
-                try { item.Thumbnail = new Bitmap(path); any = true; }
+                try
+                {
+                    using var stream = new MemoryStream(artwork);
+                    item.Thumbnail = new Bitmap(stream);
+                    any = true;
+                }
                 catch { }
             }
         }

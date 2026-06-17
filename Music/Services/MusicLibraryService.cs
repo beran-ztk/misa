@@ -26,13 +26,6 @@ public class MusicLibraryService
     public void UpdateTrack(int id, string title, List<int> genreIds, int ratingId, List<int> styleIds) 
         => _db.UpdateTrack(id, title, genreIds, ratingId, styleIds);
 
-    // --- Thumbnails ---
-    public string? EnsureThumbnailCached(int trackId, string fileName)
-    {
-        var audioFilePath = Path.Combine(Values.TracksDirectory, fileName);
-        return ThumbnailService.EnsureCached(trackId, audioFilePath);
-    }
-
     // --- Lookups ---
     public List<Genre> GetGenres() => _db.GetGenres();
     public List<Style> GetStyles() => _db.GetStyles();

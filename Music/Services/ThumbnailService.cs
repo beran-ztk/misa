@@ -1,22 +1,13 @@
-using System;
 using System.IO;
 
 namespace Music.Services;
 
 public static class ThumbnailService
 {
-    // Extracts the first embedded picture from the audio file into the cache.
-    // Returns the cache path on success, null if no picture or on any error.
-    public static string? EnsureCached(int trackId, string audioFilePath)
+    public static byte[]? ReadEmbeddedArtwork(string audioFilePath)
     {
         try
         {
-            Directory.CreateDirectory(Values.ThumbnailDirectory);
-            var cachePath = Path.Combine(Values.ThumbnailDirectory, $"{trackId}.jpg");
-
-            if (File.Exists(cachePath))
-                return cachePath;
-
             if (!File.Exists(audioFilePath))
                 return null;
 
@@ -25,8 +16,7 @@ public static class ThumbnailService
             if (pictures.Length == 0)
                 return null;
 
-            File.WriteAllBytes(cachePath, pictures[0].Data.Data);
-            return cachePath;
+            return pictures[0].Data.Data;
         }
         catch
         {
