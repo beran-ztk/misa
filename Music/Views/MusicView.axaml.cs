@@ -11,6 +11,7 @@ using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using Avalonia.Platform.Storage;
 using Music.Models;
 using Music.Services;
 
@@ -355,6 +356,32 @@ public partial class MusicView : UserControl
     private void OnAddTrackClicked(object? sender, RoutedEventArgs e)
     {
         AddTrackOverlay.Open();
+    }
+
+    private async void OnExportClicked(object? sender, RoutedEventArgs e)
+    {
+        var topLevel = TopLevel.GetTopLevel(this);
+        if (topLevel == null) return;
+
+        var folders = await topLevel.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+        {
+            Title = "Export Android library",
+            AllowMultiple = false
+        });
+        if (folders.Count == 0) return;
+
+        try
+        {
+            StatusText.Text = "Exporting library...";
+            StatusText.IsVisible = true;
+            await MusicLibraryService.Current.ExportPortableLibraryAsync(folders[0].Path.LocalPath);
+            StatusText.Text = $"Exported library to {folders[0].Path.LocalPath}";
+        }
+        catch (Exception ex)
+        {
+            StatusText.Text = $"Export failed: {ex.Message}";
+            StatusText.IsVisible = true;
+        }
     }
 
     private void OnContextEditClicked(object? sender, RoutedEventArgs e)

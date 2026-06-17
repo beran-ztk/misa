@@ -80,6 +80,15 @@
                          Width="230" Height="34"
                          VerticalContentAlignment="Center"/>
 
+                <Button x:Name="ExportBtn"
+                        Content="Export"
+                        Click="OnExportClicked"
+                        Background="#10151B"
+                        BorderThickness="1"
+                        Height="34" Padding="16,0"
+                        ToolTip.Tip="Export Android library"
+                        VerticalContentAlignment="Center"/>
+
                 <Button x:Name="FiltersToggleBtn"
                         Content="Filter"
                         Click="OnToggleFiltersClicked"

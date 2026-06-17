@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
+using Music.Core;
 using Music.Models;
 
 namespace Music.Services;
@@ -30,6 +32,39 @@ public class MusicLibraryService
     public List<Genre> GetGenres() => _db.GetGenres();
     public List<Style> GetStyles() => _db.GetStyles();
     public List<Rating> GetRatings() => _db.GetRatings();
+
+    public async Task ExportPortableLibraryAsync(string targetDirectory)
+    {
+        Directory.CreateDirectory(targetDirectory);
+        var targetTracksDirectory = Path.Combine(targetDirectory, "tracks");
+        Directory.CreateDirectory(targetTracksDirectory);
+
+        var tracks = GetTracks();
+        var genres = GetGenres().ToDictionary(g => g.Id, g => g.Name);
+        var styles = GetStyles().ToDictionary(s => s.Id, s => s.Name);
+        var ratings = GetRatings().ToDictionary(r => r.Id, r => r.Name);
+        var trackGenreIds = GetAllTrackGenreIds();
+        var trackStyleIds = GetAllTrackStyleIds();
+
+        var portableTracks = new List<PortableTrack>();
+
+        foreach (var track in tracks)
+        {
+            var sourcePath = Path.Combine(Values.TracksDirectory, track.FileName);
+            if (File.Exists(sourcePath))
+                File.Copy(sourcePath, Path.Combine(targetTracksDirectory, track.FileName), overwrite: true);
+
+            portableTracks.Add(new PortableTrack(
+                track.Title,
+                track.FileName,
+                track.DurationSeconds,
+                ratings.GetValueOrDefault(track.RatingId, ""),
+                NamesFor(trackGenreIds.GetValueOrDefault(track.Id, []), genres),
+                NamesFor(trackStyleIds.GetValueOrDefault(track.Id, []), styles)));
+        }
+
+        await PortableLibraryStore.SaveAsync(targetDirectory, new PortableMusicLibrary(portableTracks));
+    }
 
     public async Task<DownloadResult> DownloadTrackAsync(DownloadRequest request)
     {
@@ -60,4 +95,10 @@ public class MusicLibraryService
 
         return new DownloadResult(true);
     }
+
+    private static List<string> NamesFor(IEnumerable<int> ids, IReadOnlyDictionary<int, string> names) =>
+        ids.Select(id => names.GetValueOrDefault(id, ""))
+            .Where(name => name.Length > 0)
+            .Order(StringComparer.OrdinalIgnoreCase)
+            .ToList();
 }
