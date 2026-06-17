@@ -34,6 +34,7 @@ public partial class AddTrackOverlay : UserControl
     public AddTrackOverlay()
     {
         InitializeComponent();
+        BodyScroll.PropertyChanged += (_, _) => UpdateBodyWidth();
         UrlBox.TextChanged += (_, _) => UpdateDownloadButton();
         RatingBox.SelectionChanged += (_, _) => UpdateDownloadButton();
     }
@@ -45,6 +46,14 @@ public partial class AddTrackOverlay : UserControl
         LoadLookups();
         ClearForm();
         IsVisible = true;
+        UpdateBodyWidth();
+    }
+
+    private void UpdateBodyWidth()
+    {
+        var width = BodyScroll.Bounds.Width - BodyScroll.Padding.Left - BodyScroll.Padding.Right;
+        if (width > 0)
+            BodyContent.Width = width;
     }
 
     private void LoadLookups()

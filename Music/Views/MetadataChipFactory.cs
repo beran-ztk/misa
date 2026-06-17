@@ -27,8 +27,9 @@ internal static class MetadataChipFactory
         {
             content.Children.Add(new Border
             {
-                MinWidth = 20,
-                Padding = new Thickness(6, 1),
+                MinWidth = 22,
+                Height = 16,
+                Padding = new Thickness(0),
                 CornerRadius = new CornerRadius(8),
                 Background = new SolidColorBrush(Color.FromArgb(40, 255, 255, 255)),
                 Child = new TextBlock
@@ -36,7 +37,10 @@ internal static class MetadataChipFactory
                     Text = count.ToString(),
                     FontSize = 10,
                     Opacity = 0.82,
-                    HorizontalAlignment = HorizontalAlignment.Center
+                    MinWidth = 22,
+                    TextAlignment = TextAlignment.Center,
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                    VerticalAlignment = VerticalAlignment.Center
                 }
             });
         }
