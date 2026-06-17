@@ -19,6 +19,13 @@ public partial class MainWindow : Window
                 TitleMaxBtn.Content = WindowState == WindowState.Maximized ? "❐" : "□";
         };
     }
+
+    private void OnTopResizePointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (WindowState == WindowState.Normal && e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+            BeginResizeDrag(WindowEdge.North, e);
+    }
+
     private void OnTitleBarPointerPressed(object? sender, PointerPressedEventArgs e)
     {
         if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)

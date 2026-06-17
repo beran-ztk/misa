@@ -30,7 +30,7 @@
             <Setter Property="Foreground" Value="#F6F8FA"/>
         </Style>
         <Style Selector="Slider">
-            <Setter Property="MinHeight" Value="28"/>
+            <Setter Property="MinHeight" Value="36"/>
             <Setter Property="Foreground" Value="#1E9AF0"/>
             <Setter Property="Background" Value="#33404A"/>
         </Style>
@@ -155,7 +155,6 @@
                     <Slider x:Name="PlaybackSlider"
                             Grid.Column="0"
                             Minimum="0" Maximum="100" Value="0"
-                            Height="28"
                             VerticalAlignment="Center"/>
                     <TextBlock x:Name="PlaybackTimeText"
                                Grid.Column="1"
@@ -210,7 +209,7 @@
                         <Slider x:Name="VolumeSlider"
                                 Minimum="0" Maximum="100" 
                                 Value="100"
-                                Width="108" Height="28"
+                                Width="108"
                                 VerticalAlignment="Center"/>
                         <Button x:Name="ShuffleBtn"
                                 Classes="icon"

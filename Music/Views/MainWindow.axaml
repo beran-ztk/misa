@@ -9,6 +9,29 @@
         ExtendClientAreaChromeHints="NoChrome"
         ExtendClientAreaTitleBarHeightHint="0">
 
+    <Window.Styles>
+        <Style Selector="Button.title-button">
+            <Setter Property="Width" Value="46"/>
+            <Setter Property="Height" Value="38"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="#D7DFE8"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="0"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="Button.title-button:pointerover">
+            <Setter Property="Background" Value="#1B2430"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+        </Style>
+        <Style Selector="Button.close-button:pointerover">
+            <Setter Property="Background" Value="#C42B1C"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+        </Style>
+    </Window.Styles>
+
     <Grid RowDefinitions="38,*"
           Background="#0C0D10">
 
@@ -17,18 +40,14 @@
                 Background="#07080A"
                 BorderBrush="#223044"
                 BorderThickness="0,0,0,1">
-            <Grid ColumnDefinitions="*,Auto">
+            <Grid>
+                <Grid ColumnDefinitions="*,Auto">
 
                     <!-- Drag / title area (transparent so hit-testable, but invisible) -->
                     <Panel Grid.Column="0"
                            Background="Transparent"
                            PointerPressed="OnTitleBarPointerPressed"
                            DoubleTapped="OnTitleBarDoubleTapped">
-                            <TextBlock Text="Music Library"
-                                       Foreground="#F4F7FA"
-                                       Margin="12,0,0,0"
-                                       FontSize="13" FontWeight="SemiBold"
-                                       VerticalAlignment="Center"/>
                     </Panel>
 
                     <!-- Window control buttons -->
@@ -36,36 +55,28 @@
                                 Orientation="Horizontal"
                                 VerticalAlignment="Stretch">
                         
-                        <Button Content="─"
+                        <Button Content="—"
+                                Classes="title-button"
                                 Click="OnMinimizeClicked"
-                                Width="46" Height="38" Padding="0"
-                                FontSize="11"
-                                Background="Transparent" BorderThickness="0"
-                                CornerRadius="0"
-                                HorizontalContentAlignment="Center"
-                                VerticalContentAlignment="Center"
-                                Opacity="0.6"/>
+                                ToolTip.Tip="Minimize"/>
                         <Button x:Name="TitleMaxBtn"
                                 Content="□"
+                                Classes="title-button"
                                 Click="OnMaxRestoreClicked"
-                                Width="46" Height="38" Padding="0"
-                                FontSize="11"
-                                Background="Transparent" BorderThickness="0"
-                                CornerRadius="0"
-                                HorizontalContentAlignment="Center"
-                                VerticalContentAlignment="Center"
-                                Opacity="0.6"/>
-                        <Button Content="✕"
+                                ToolTip.Tip="Maximize"/>
+                        <Button Content="×"
+                                Classes="title-button close-button"
                                 Click="OnWindowCloseClicked"
-                                Width="46" Height="38" Padding="0"
-                                FontSize="11"
-                                Background="Transparent" BorderThickness="0"
-                                CornerRadius="0"
-                                HorizontalContentAlignment="Center"
-                                VerticalContentAlignment="Center"
-                                Opacity="0.6"/>
+                                FontSize="17"
+                                ToolTip.Tip="Close"/>
                     </StackPanel>
                 </Grid>
+
+                <Panel Height="5"
+                       VerticalAlignment="Top"
+                       Background="Transparent"
+                       PointerPressed="OnTopResizePointerPressed"/>
+            </Grid>
         </Border>
 
         <!-- ══ Content area ══ -->
