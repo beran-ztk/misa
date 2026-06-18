@@ -331,7 +331,7 @@ public partial class MusicView : UserControl
             var divider = new Border
             {
                 Height = 1, Margin = new Thickness(0, 0, 0, 4),
-                Background = new SolidColorBrush(Color.FromArgb(22, 128, 128, 128))
+                Background = new SolidColorBrush(Color.FromArgb(70, 49, 75, 95))
             };
             card.Children.Add(divider);
             card.Children.Add(header);
@@ -372,10 +372,9 @@ public partial class MusicView : UserControl
 
         try
         {
-            StatusText.Text = "Exporting library...";
-            StatusText.IsVisible = true;
             await MusicLibraryService.Current.ExportPortableLibraryAsync(folders[0].Path.LocalPath);
-            StatusText.Text = $"Exported library to {folders[0].Path.LocalPath}";
+            StatusText.Text = "";
+            StatusText.IsVisible = false;
         }
         catch (Exception ex)
         {

@@ -62,9 +62,7 @@ public partial class MainView : UserControl
         {
             ClearCoverCache();
             _loadedLibrary = await PortableLibraryStore.LoadAsync(CompanionServices.LibraryStorage.LibraryDirectory);
-            StatusText.Text = _loadedLibrary.Library.Tracks.Count == 0
-                ? $"No library found. Put library.json and tracks/ into: {_loadedLibrary.RootDirectory}"
-                : $"{_loadedLibrary.Library.Tracks.Count} tracks loaded from {_loadedLibrary.RootDirectory}";
+            StatusText.Text = "";
         }
         catch (Exception ex)
         {
@@ -395,7 +393,7 @@ public partial class MainView : UserControl
     {
         ImportButton.IsEnabled = false;
         ReloadButton.IsEnabled = false;
-        StatusText.Text = "Importing library...";
+        StatusText.Text = "";
 
         try
         {

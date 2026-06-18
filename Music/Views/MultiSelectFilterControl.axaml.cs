@@ -4,6 +4,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
+using TagLib.Asf;
 
 namespace Music.Views;
 
@@ -41,7 +42,15 @@ public partial class MultiSelectFilterControl : UserControl
         ToggleBtn.Content = container;
 
         var flyout = (Flyout)ToggleBtn.Flyout!;
-        flyout.Content = new ScrollViewer { MaxHeight = 250, MinWidth = 220, Content = _itemsPanel };
+        flyout.Content = new Border
+        {
+            Background = new SolidColorBrush(Color.FromRgb(13, 21, 29)),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(49, 75, 95)),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(6),
+            Padding = new Thickness(6),
+            Child = new ScrollViewer { MaxHeight = 280, MinWidth = 220, Content = _itemsPanel }
+        };
         UpdateText();
     }
 
@@ -53,7 +62,12 @@ public partial class MultiSelectFilterControl : UserControl
         foreach (var item in items)
         {
             var name = item;
-            var cb = new CheckBox { Content = name };
+            var cb = new CheckBox
+            {
+                Content = name,
+                Foreground = new SolidColorBrush(Color.FromRgb(236, 243, 249)),
+                Padding = new Thickness(4, 2)
+            };
             cb.IsCheckedChanged += (_, _) =>
             {
                 if (cb.IsChecked == true) _selected.Add(name);

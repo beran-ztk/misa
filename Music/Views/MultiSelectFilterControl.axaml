@@ -1,7 +1,15 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="Music.Views.MultiSelectFilterControl">
-    <Button x:Name="ToggleBtn" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+    <Button x:Name="ToggleBtn"
+            HorizontalAlignment="Stretch"
+            HorizontalContentAlignment="Stretch"
+            Background="#0D151D"
+            BorderBrush="#314B5F"
+            BorderThickness="1"
+            CornerRadius="6"
+            Margin="0"
+            Padding="10,7">
         <Button.Flyout>
             <Flyout Placement="Bottom" />
         </Button.Flyout>
