@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Layout;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Music.Core;
@@ -15,8 +16,16 @@ public partial class MainView : UserControl
     private LoadedMusicLibrary _loadedLibrary = new("", PortableMusicLibrary.Empty);
 
     private List<PortableTrack> _filteredTracks = [];
+    private readonly List<FilterGroupControls> _filterGroups = [];
+    private readonly Random _rng = new();
     private int _currentIndex = -1;
     private bool _isSeeking;
+    private bool _shuffle;
+
+    private record FilterGroupControls(
+        MultiSelectFilterControl GenreFilter,
+        MultiSelectFilterControl StyleFilter,
+        StackPanel Container);
 
     public MainView()
     {
@@ -24,8 +33,6 @@ public partial class MainView : UserControl
 
         SearchBox.TextChanged += (_, _) => ApplyFilter();
         RatingFilter.SelectionChanged += (_, _) => ApplyFilter();
-        GenreFilter.SelectionChanged += (_, _) => ApplyFilter();
-        StyleFilter.SelectionChanged += (_, _) => ApplyFilter();
 
         ProgressSlider.AddHandler(PointerPressedEvent, OnProgressPressed, RoutingStrategies.Tunnel);
         ProgressSlider.AddHandler(PointerReleasedEvent, OnProgressReleased, RoutingStrategies.Tunnel);
@@ -61,15 +68,8 @@ public partial class MainView : UserControl
 
     private void PopulateFilters()
     {
-        SetFilterItems(RatingFilter, "All ratings", _loadedLibrary.Library.Ratings);
-        SetFilterItems(GenreFilter, "All genres", _loadedLibrary.Library.Genres);
-        SetFilterItems(StyleFilter, "All styles", _loadedLibrary.Library.Styles);
-    }
-
-    private static void SetFilterItems(ComboBox combo, string allText, IEnumerable<string> values)
-    {
-        combo.ItemsSource = new[] { allText }.Concat(values).ToList();
-        combo.SelectedIndex = 0;
+        RatingFilter.SetItems(_loadedLibrary.Library.Ratings);
+        RebuildFilterGroups();
     }
 
     private void ApplyFilter()
@@ -77,17 +77,20 @@ public partial class MainView : UserControl
         _filteredTracks = PortableTrackFilter.Apply(
             _loadedLibrary.Library.Tracks,
             SearchBox.Text,
-            SelectedFilter(RatingFilter),
-            SelectedFilter(GenreFilter),
-            SelectedFilter(StyleFilter));
+            RatingFilter.SelectedItems,
+            _filterGroups
+                .Select(group => new PortableFilterGroup(group.GenreFilter.SelectedItems, group.StyleFilter.SelectedItems))
+                .ToList());
+
+        if (_shuffle)
+            ShuffleFilteredTracks();
 
         TrackList.ItemsSource = _filteredTracks;
         if (_currentIndex >= _filteredTracks.Count)
             _currentIndex = -1;
-    }
 
-    private static string? SelectedFilter(ComboBox combo) =>
-        combo.SelectedIndex > 0 ? combo.SelectedItem as string : null;
+        UpdateFilterCounts();
+    }
 
     private async Task PlayTrackAtAsync(int index)
     {
@@ -106,7 +109,7 @@ public partial class MainView : UserControl
         TrackList.SelectedIndex = index;
         NowPlayingText.Text = track.Title;
         await _audio.PlayAsync(path);
-        PlayPauseButton.Content = "Pause";
+        PlayPauseButton.Content = "II";
         StatusText.Text = "";
     }
 
@@ -127,12 +130,12 @@ public partial class MainView : UserControl
         if (_audio.IsPlaying)
         {
             _audio.Pause();
-            PlayPauseButton.Content = "Play";
+            PlayPauseButton.Content = ">";
         }
         else
         {
             _audio.Resume();
-            PlayPauseButton.Content = "Pause";
+            PlayPauseButton.Content = "II";
         }
     }
 
@@ -158,7 +161,7 @@ public partial class MainView : UserControl
         if (next >= _filteredTracks.Count)
         {
             _audio.Stop();
-            PlayPauseButton.Content = "Play";
+            PlayPauseButton.Content = ">";
             return;
         }
 
@@ -168,6 +171,136 @@ public partial class MainView : UserControl
     private void OnReloadClicked(object? sender, RoutedEventArgs e)
     {
         _ = LoadLibraryAsync();
+    }
+
+    private void OnToggleFiltersClicked(object? sender, RoutedEventArgs e)
+    {
+        FilterDrawer.IsVisible = !FilterDrawer.IsVisible;
+    }
+
+    private void OnClearFiltersClicked(object? sender, RoutedEventArgs e)
+    {
+        RatingFilter.SetItems(_loadedLibrary.Library.Ratings);
+        RebuildFilterGroups();
+        ApplyFilter();
+    }
+
+    private void OnAddFilterGroupClicked(object? sender, RoutedEventArgs e)
+    {
+        AddFilterGroup();
+        ApplyFilter();
+    }
+
+    private void RebuildFilterGroups()
+    {
+        _filterGroups.Clear();
+        FilterGroupsPanel.Children.Clear();
+        AddFilterGroup();
+    }
+
+    private void AddFilterGroup()
+    {
+        var genreFilter = new MultiSelectFilterControl { Placeholder = "All genres" };
+        genreFilter.SetItems(_loadedLibrary.Library.Genres);
+        genreFilter.SelectionChanged += (_, _) => ApplyFilter();
+
+        var styleFilter = new MultiSelectFilterControl { Placeholder = "All styles" };
+        styleFilter.SetItems(_loadedLibrary.Library.Styles);
+        styleFilter.SelectionChanged += (_, _) => ApplyFilter();
+
+        var container = new StackPanel { Spacing = 8, Margin = new Avalonia.Thickness(0, _filterGroups.Count == 0 ? 0 : 14, 0, 6) };
+        var controls = new FilterGroupControls(genreFilter, styleFilter, container);
+        _filterGroups.Add(controls);
+
+        if (_filterGroups.Count > 1)
+        {
+            var header = new Grid();
+            header.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+            header.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
+
+            var label = new TextBlock
+            {
+                Text = $"Group {_filterGroups.Count}",
+                FontSize = 11,
+                Opacity = 0.45,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            var removeButton = new Button
+            {
+                Content = "x",
+                Padding = new Avalonia.Thickness(8, 2),
+                FontSize = 11,
+                Opacity = 0.55,
+                Background = null
+            };
+            removeButton.Click += (_, _) => RemoveFilterGroup(controls);
+
+            Grid.SetColumn(label, 0);
+            Grid.SetColumn(removeButton, 1);
+            header.Children.Add(label);
+            header.Children.Add(removeButton);
+            container.Children.Add(header);
+        }
+
+        container.Children.Add(FilterSection("Genre", genreFilter));
+        container.Children.Add(FilterSection("Style", styleFilter));
+        FilterGroupsPanel.Children.Add(container);
+    }
+
+    private static StackPanel FilterSection(string label, Control control) =>
+        new()
+        {
+            Spacing = 5,
+            Children =
+            {
+                new TextBlock { Text = label, FontSize = 11, Opacity = 0.55 },
+                control
+            }
+        };
+
+    private void RemoveFilterGroup(FilterGroupControls controls)
+    {
+        var index = _filterGroups.IndexOf(controls);
+        if (index < 0)
+            return;
+
+        _filterGroups.RemoveAt(index);
+        FilterGroupsPanel.Children.Remove(controls.Container);
+        if (_filterGroups.Count == 0)
+            AddFilterGroup();
+
+        ApplyFilter();
+    }
+
+    private void UpdateFilterCounts()
+    {
+        var genreCounts = CountByName(_filteredTracks.SelectMany(track => track.Genres));
+        var styleCounts = CountByName(_filteredTracks.SelectMany(track => track.Styles));
+
+        foreach (var group in _filterGroups)
+        {
+            group.GenreFilter.UpdateCounts(genreCounts);
+            group.StyleFilter.UpdateCounts(styleCounts);
+        }
+    }
+
+    private static Dictionary<string, int> CountByName(IEnumerable<string> values)
+    {
+        var counts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        foreach (var value in values.Where(value => !string.IsNullOrWhiteSpace(value)))
+            counts[value] = counts.GetValueOrDefault(value, 0) + 1;
+        return counts;
+    }
+
+    private async void OnShuffleClicked(object? sender, RoutedEventArgs e)
+    {
+        _shuffle = !_shuffle;
+        ShuffleButton.Opacity = _shuffle ? 1.0 : 0.45;
+        ShuffleButton.Content = _shuffle ? "Shuffle on" : "Shuffle";
+        ApplyFilter();
+
+        if (_filteredTracks.Count > 0)
+            await PlayTrackAtAsync(0);
     }
 
     private async void OnImportClicked(object? sender, RoutedEventArgs e)
@@ -316,9 +449,18 @@ public partial class MainView : UserControl
 
         TimeText.Text = $"{Format(_audio.Position)} / {Format(_audio.Duration)}";
         if (_currentIndex >= 0)
-            PlayPauseButton.Content = _audio.IsPlaying ? "Pause" : "Play";
+            PlayPauseButton.Content = _audio.IsPlaying ? "II" : ">";
     }
 
     private static string Format(TimeSpan time) =>
         $"{(int)time.TotalMinutes:D2}:{time.Seconds:D2}";
+
+    private void ShuffleFilteredTracks()
+    {
+        for (var i = _filteredTracks.Count - 1; i > 0; i--)
+        {
+            var j = _rng.Next(i + 1);
+            (_filteredTracks[i], _filteredTracks[j]) = (_filteredTracks[j], _filteredTracks[i]);
+        }
+    }
 }
