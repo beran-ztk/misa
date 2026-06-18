@@ -46,6 +46,31 @@ public class TrackDownloadService
         return null;
     }
 
+    public async Task<string?> GetTitleAsync(string url)
+    {
+        try
+        {
+            var result = await RunProcessAsync(
+                Path.Combine(Values.ToolsDirectory, "yt-dlp.exe"),
+                "--js-runtimes", "node",
+                "--no-playlist",
+                "--print", "title",
+                "--skip-download",
+                url);
+
+            var title = result.Output
+                .Split('\n')
+                .Select(line => line.Trim())
+                .FirstOrDefault(line => line.Length > 0);
+
+            return result.ExitCode == 0 ? title : null;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     public string? FindDownloadedFile(string videoId)
     {
         return Directory.GetFiles(Values.TracksDirectory, "*.m4a")

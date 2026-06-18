@@ -1,10 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
+using Avalonia.Media;
 using Music.Models;
 using Music.Services;
 
@@ -24,9 +27,15 @@ public partial class AddTrackOverlay : UserControl
     private Dictionary<int, List<int>> _allTrackGenreIds = [];
     private Dictionary<int, List<int>> _allTrackStyleIds = [];
 
+    private CancellationTokenSource? _urlValidationCts;
+    private string? _validCanonicalUrl;
+    private string? _remoteTitle;
     private bool _downloading;
     private bool _showAllGenres;
     private const int InitialGenreLimit = 10;
+    private static readonly IBrush NeutralUrlBrush = new SolidColorBrush(Color.FromRgb(61, 70, 82));
+    private static readonly IBrush ValidUrlBrush = new SolidColorBrush(Color.FromRgb(72, 194, 120));
+    private static readonly IBrush InvalidUrlBrush = new SolidColorBrush(Color.FromRgb(224, 92, 92));
 
     public event Action? TrackDownloaded;
     public event Action? CloseRequested;
@@ -35,7 +44,7 @@ public partial class AddTrackOverlay : UserControl
     {
         InitializeComponent();
         BodyScroll.PropertyChanged += (_, _) => UpdateBodyWidth();
-        UrlBox.TextChanged += (_, _) => UpdateDownloadButton();
+        UrlBox.TextChanged += (_, _) => ValidateUrl();
         RatingBox.SelectionChanged += (_, _) => UpdateDownloadButton();
     }
 
@@ -74,6 +83,7 @@ public partial class AddTrackOverlay : UserControl
     {
         UrlBox.Text = "";
         StatusText.Text = "";
+        SetUrlState(UrlState.Empty);
         CloseBtn.IsEnabled = true;
         DownloadBtn.IsEnabled = false;
         BusyDetailText.Text = "";
@@ -176,22 +186,99 @@ public partial class AddTrackOverlay : UserControl
 
     private void UpdateDownloadButton()
     {
-        DownloadBtn.IsEnabled = !string.IsNullOrWhiteSpace(UrlBox.Text)
+        DownloadBtn.IsEnabled = _validCanonicalUrl != null
                                && _genreChips.Any(c => c.Btn.IsChecked == true)
                                && RatingBox.SelectedIndex >= 0;
+    }
+
+    private void ValidateUrl()
+    {
+        _urlValidationCts?.Cancel();
+        _remoteTitle = null;
+
+        var rawUrl = UrlBox.Text?.Trim() ?? "";
+        if (string.IsNullOrWhiteSpace(rawUrl))
+        {
+            SetUrlState(UrlState.Empty);
+            return;
+        }
+
+        var videoId = YouTubeUrlNormalizer.ExtractVideoId(rawUrl);
+        if (videoId is null)
+        {
+            SetUrlState(UrlState.Invalid, "URL can not be parsed.");
+            return;
+        }
+
+        var canonicalUrl = YouTubeUrlNormalizer.GetCanonicalUrl(videoId);
+        if (MusicLibraryService.Current.TrackExistsByCanonicalUrl(canonicalUrl))
+        {
+            SetUrlState(UrlState.Invalid, "Track already exists.");
+            return;
+        }
+
+        SetUrlState(UrlState.Valid, "URL looks good. Reading title...");
+
+        _urlValidationCts = new CancellationTokenSource();
+        _ = LoadRemoteTitleAsync(canonicalUrl, _urlValidationCts.Token);
+    }
+
+    private async Task LoadRemoteTitleAsync(string canonicalUrl, CancellationToken token)
+    {
+        try
+        {
+            await Task.Delay(450, token);
+            var title = await MusicLibraryService.Current.GetRemoteTitleAsync(canonicalUrl);
+            if (token.IsCancellationRequested || _validCanonicalUrl != canonicalUrl)
+                return;
+
+            _remoteTitle = title;
+            SetUrlState(UrlState.Valid, title is { Length: > 0 }
+                ? $"Ready: {title}"
+                : "URL looks good.");
+        }
+        catch (OperationCanceledException) { }
+    }
+
+    private void SetUrlState(UrlState state, string message = "")
+    {
+        _validCanonicalUrl = state == UrlState.Valid
+            ? YouTubeUrlNormalizer.GetCanonicalUrl(YouTubeUrlNormalizer.ExtractVideoId(UrlBox.Text?.Trim() ?? "")!)
+            : null;
+
+        UrlBox.BorderBrush = state switch
+        {
+            UrlState.Valid => ValidUrlBrush,
+            UrlState.Invalid => InvalidUrlBrush,
+            _ => NeutralUrlBrush
+        };
+
+        UrlStateIcon.Text = state switch
+        {
+            UrlState.Valid => "✓",
+            UrlState.Invalid => "!",
+            _ => ""
+        };
+        UrlStateIcon.Foreground = state == UrlState.Valid ? ValidUrlBrush : InvalidUrlBrush;
+        UrlValidationText.Text = message;
+        UrlValidationText.Foreground = state == UrlState.Valid ? ValidUrlBrush : InvalidUrlBrush;
+
+        UpdateDownloadButton();
     }
 
     // ─── Download ─────────────────────────────────────────────────────────────
 
     private async void OnDownloadClicked(object? sender, RoutedEventArgs e)
     {
-        var url = UrlBox.Text?.Trim() ?? "";
-        SetBusy(true, url);
+        if (_validCanonicalUrl is null)
+            return;
+
+        SetBusy(true, _remoteTitle ?? _validCanonicalUrl);
         StatusText.Text = "";
 
         var request = new DownloadRequest
         {
-            RawUrl = url,
+            RawUrl = _validCanonicalUrl,
             GenreIds = _genreChips
                 .Where(c => c.Btn.IsChecked == true)
                 .Select(c => c.Genre.Id)
@@ -238,6 +325,14 @@ public partial class AddTrackOverlay : UserControl
     private void OnCloseClicked(object? sender, RoutedEventArgs e)
     {
         if (_downloading) return;
+        _urlValidationCts?.Cancel();
         CloseRequested?.Invoke();
+    }
+
+    private enum UrlState
+    {
+        Empty,
+        Valid,
+        Invalid
     }
 }

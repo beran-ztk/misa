@@ -33,6 +33,10 @@ public class MusicLibraryService
     public List<Style> GetStyles() => _db.GetStyles();
     public List<Rating> GetRatings() => _db.GetRatings();
 
+    public bool TrackExistsByCanonicalUrl(string canonicalUrl) => _db.TrackExists(canonicalUrl);
+
+    public Task<string?> GetRemoteTitleAsync(string canonicalUrl) => _downloader.GetTitleAsync(canonicalUrl);
+
     public async Task ExportPortableLibraryAsync(string targetDirectory)
     {
         Directory.CreateDirectory(targetDirectory);

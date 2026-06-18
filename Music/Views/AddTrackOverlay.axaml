@@ -53,11 +53,27 @@
                         <StackPanel Spacing="7">
                             <TextBlock Text="YouTube URL"
                                        FontSize="13" FontWeight="SemiBold" />
-                            <TextBox x:Name="UrlBox"
-                                     MinWidth="0"
-                                     HorizontalAlignment="Stretch"
-                                     TextWrapping="NoWrap"
-                                     Watermark="https://www.youtube.com/watch?v=…" />
+                            <Grid>
+                                <TextBox x:Name="UrlBox"
+                                         MinWidth="0"
+                                         Padding="10,6,34,6"
+                                         HorizontalAlignment="Stretch"
+                                         TextWrapping="NoWrap"
+                                         Watermark="https://www.youtube.com/watch?v=…" />
+                                <TextBlock x:Name="UrlStateIcon"
+                                           Text=""
+                                           FontSize="15"
+                                           FontWeight="SemiBold"
+                                           HorizontalAlignment="Right"
+                                           VerticalAlignment="Center"
+                                           Margin="0,0,11,0"
+                                           IsHitTestVisible="False"/>
+                            </Grid>
+                            <TextBlock x:Name="UrlValidationText"
+                                       Text=""
+                                       FontSize="11"
+                                       Opacity="0.78"
+                                       TextWrapping="Wrap"/>
                         </StackPanel>
 
                         <!-- Rating -->
