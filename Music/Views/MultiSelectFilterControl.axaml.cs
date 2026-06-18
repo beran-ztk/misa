@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -16,7 +17,7 @@ public partial class MultiSelectFilterControl : UserControl
     private readonly HashSet<string> _selected = [];
     private readonly List<FilterItem> _items = [];
 
-    private sealed record FilterItem(string Name, CheckBox CheckBox, TextBlock CountText, Border CountBadge);
+    private sealed record FilterItem(string Name, Control Row, CheckBox CheckBox, TextBlock CountText, Border CountBadge);
 
     public string Placeholder { get; set; } = "All";
     public event EventHandler? SelectionChanged;
@@ -134,14 +135,12 @@ public partial class MultiSelectFilterControl : UserControl
             row.Children.Add(nameText);
             row.Children.Add(countBadge);
 
-            _items.Add(new FilterItem(name, cb, countText, countBadge));
+            _items.Add(new FilterItem(name, row, cb, countText, countBadge));
             _itemsPanel.Children.Add(row);
         }
         UpdateText();
     }
 
-    // Updates the count label shown next to each item without touching selection state.
-    // Items with count 0 show just the name; items with count > 0 show "Name (count)".
     public void UpdateCounts(IReadOnlyDictionary<string, int> counts)
     {
         foreach (var item in _items)
@@ -150,6 +149,15 @@ public partial class MultiSelectFilterControl : UserControl
             item.CountText.Text = count.ToString();
             item.CountBadge.IsVisible = count > 0;
         }
+
+        var sortedItems = _items
+            .OrderByDescending(item => counts.GetValueOrDefault(item.Name, 0))
+            .ThenBy(item => item.Name, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        _itemsPanel.Children.Clear();
+        foreach (var item in sortedItems)
+            _itemsPanel.Children.Add(item.Row);
     }
 
     private void UpdateText()
