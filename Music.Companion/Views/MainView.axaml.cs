@@ -240,10 +240,14 @@ public partial class MainView : UserControl
             var removeButton = new Button
             {
                 Content = "x",
-                Padding = new Avalonia.Thickness(8, 2),
+                Width = 34,
+                Height = 30,
+                Padding = new Avalonia.Thickness(0),
                 FontSize = 11,
                 Opacity = 0.55,
-                Background = null
+                Background = null,
+                HorizontalContentAlignment = HorizontalAlignment.Center,
+                VerticalContentAlignment = VerticalAlignment.Center
             };
             removeButton.Click += (_, _) => RemoveFilterGroup(controls);
 

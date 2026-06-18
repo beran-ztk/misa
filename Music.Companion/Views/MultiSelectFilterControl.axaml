@@ -3,9 +3,24 @@
              x:Class="Music.Companion.Views.MultiSelectFilterControl">
     <Button x:Name="ToggleBtn"
             HorizontalAlignment="Stretch"
-            HorizontalContentAlignment="Stretch">
+            HorizontalContentAlignment="Stretch"
+            Background="#0D151D"
+            BorderBrush="#414B5F"
+            BorderThickness="1"
+            CornerRadius="6,6,0,0"
+            Margin="0"
+            Padding="10,7">
         <Button.Flyout>
-            <Flyout Placement="Bottom"/>
+            <Flyout Placement="Bottom">
+                <Flyout.FlyoutPresenterTheme>
+                    <ControlTheme TargetType="FlyoutPresenter">
+                        <Setter Property="Padding" Value="0"/>
+                        <Setter Property="Background" Value="Transparent"/>
+                        <Setter Property="BorderThickness" Value="0"/>
+                        <Setter Property="CornerRadius" Value="6"/>
+                    </ControlTheme>
+                </Flyout.FlyoutPresenterTheme>
+            </Flyout>
         </Button.Flyout>
     </Button>
 </UserControl>

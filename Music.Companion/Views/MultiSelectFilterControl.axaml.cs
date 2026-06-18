@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 
@@ -9,8 +10,11 @@ public partial class MultiSelectFilterControl : UserControl
 {
     private readonly StackPanel _itemsPanel = new() { Spacing = 2 };
     private readonly TextBlock _label = new() { TextTrimming = TextTrimming.CharacterEllipsis };
+    private readonly Border _flyoutContent;
     private readonly HashSet<string> _selected = new(StringComparer.OrdinalIgnoreCase);
-    private readonly List<(string Name, CheckBox CheckBox)> _items = [];
+    private readonly List<FilterItem> _items = [];
+
+    private sealed record FilterItem(string Name, Control Row, CheckBox CheckBox, TextBlock CountText, Border CountBadge);
 
     public string Placeholder { get; set; } = "All";
     public event EventHandler? SelectionChanged;
@@ -22,7 +26,7 @@ public partial class MultiSelectFilterControl : UserControl
 
         var arrow = new TextBlock
         {
-            Text = "v",
+            Text = "▾",
             Opacity = 0.45,
             FontSize = 11,
             VerticalAlignment = VerticalAlignment.Center,
@@ -39,13 +43,17 @@ public partial class MultiSelectFilterControl : UserControl
         ToggleBtn.Content = content;
 
         var flyout = (Flyout)ToggleBtn.Flyout!;
-        flyout.Content = new ScrollViewer
+        _flyoutContent = new Border
         {
-            MaxHeight = 320,
-            MinWidth = 250,
-            Padding = new Thickness(6),
-            Content = _itemsPanel
+            Background = new SolidColorBrush(Color.FromRgb(16, 27, 37)),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(80, 87, 109)),
+            BorderThickness = new Thickness(1, 0, 1, 1),
+            CornerRadius = new CornerRadius(0, 0, 6, 6),
+            Padding = new Thickness(10, 8),
+            Child = new ScrollViewer { MaxHeight = 280, MinWidth = 220, Content = _itemsPanel }
         };
+        flyout.Content = _flyoutContent;
+        flyout.Opening += (_, _) => _flyoutContent.Width = ToggleBtn.Bounds.Width;
 
         UpdateText();
     }
@@ -59,7 +67,11 @@ public partial class MultiSelectFilterControl : UserControl
         foreach (var item in items)
         {
             var name = item;
-            var checkBox = new CheckBox { Content = name };
+            var checkBox = new CheckBox
+            {
+                VerticalAlignment = VerticalAlignment.Center,
+                Padding = new Thickness(0)
+            };
             checkBox.IsCheckedChanged += (_, _) =>
             {
                 if (checkBox.IsChecked == true)
@@ -71,8 +83,61 @@ public partial class MultiSelectFilterControl : UserControl
                 SelectionChanged?.Invoke(this, EventArgs.Empty);
             };
 
-            _items.Add((name, checkBox));
-            _itemsPanel.Children.Add(checkBox);
+            var nameText = new TextBlock
+            {
+                Text = name,
+                Foreground = new SolidColorBrush(Color.FromRgb(236, 243, 249)),
+                FontWeight = FontWeight.Medium,
+                VerticalAlignment = VerticalAlignment.Center,
+                TextTrimming = TextTrimming.CharacterEllipsis,
+                Margin = new Thickness(8, 0, 10, 0)
+            };
+
+            var countText = new TextBlock
+            {
+                Foreground = new SolidColorBrush(Color.FromRgb(192, 214, 229)),
+                FontSize = 11,
+                FontWeight = FontWeight.Medium,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            var countBadge = new Border
+            {
+                IsVisible = false,
+                MinWidth = 24,
+                Padding = new Thickness(7, 1),
+                Margin = new Thickness(0, 0, 12, 0),
+                CornerRadius = new CornerRadius(9),
+                Background = new SolidColorBrush(Color.FromArgb(90, 61, 91, 111)),
+                BorderBrush = new SolidColorBrush(Color.FromArgb(80, 120, 154, 176)),
+                BorderThickness = new Thickness(1),
+                Child = countText,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+
+            var row = new Grid
+            {
+                ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto"),
+                MinHeight = 30,
+                Cursor = new Cursor(StandardCursorType.Hand)
+            };
+            row.PointerPressed += (_, e) =>
+            {
+                if (e.Source is CheckBox)
+                    return;
+
+                checkBox.IsChecked = checkBox.IsChecked != true;
+            };
+
+            Grid.SetColumn(checkBox, 0);
+            Grid.SetColumn(nameText, 1);
+            Grid.SetColumn(countBadge, 2);
+            row.Children.Add(checkBox);
+            row.Children.Add(nameText);
+            row.Children.Add(countBadge);
+
+            _items.Add(new FilterItem(name, row, checkBox, countText, countBadge));
+            _itemsPanel.Children.Add(row);
         }
 
         UpdateText();
@@ -80,11 +145,21 @@ public partial class MultiSelectFilterControl : UserControl
 
     public void UpdateCounts(IReadOnlyDictionary<string, int> counts)
     {
-        foreach (var (name, checkBox) in _items)
+        foreach (var item in _items)
         {
-            var count = counts.GetValueOrDefault(name, 0);
-            checkBox.Content = count > 0 ? $"{name} ({count})" : name;
+            var count = counts.GetValueOrDefault(item.Name, 0);
+            item.CountText.Text = count.ToString();
+            item.CountBadge.IsVisible = count > 0;
         }
+
+        var sortedItems = _items
+            .OrderByDescending(item => counts.GetValueOrDefault(item.Name, 0))
+            .ThenBy(item => item.Name, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        _itemsPanel.Children.Clear();
+        foreach (var item in sortedItems)
+            _itemsPanel.Children.Add(item.Row);
     }
 
     private void UpdateText()
