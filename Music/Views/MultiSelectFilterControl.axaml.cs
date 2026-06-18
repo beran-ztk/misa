@@ -11,6 +11,7 @@ public partial class MultiSelectFilterControl : UserControl
 {
     private readonly StackPanel _itemsPanel = new() { Spacing = 2 };
     private readonly TextBlock _label = new() { TextTrimming = TextTrimming.CharacterEllipsis };
+    private readonly Border _flyoutContent;
     private readonly HashSet<string> _selected = [];
     private readonly List<(string Name, CheckBox Cb)> _items = [];
 
@@ -41,7 +42,7 @@ public partial class MultiSelectFilterControl : UserControl
         ToggleBtn.Content = container;
 
         var flyout = (Flyout)ToggleBtn.Flyout!;
-        flyout.Content = new Border
+        _flyoutContent = new Border
         {
             Background = new SolidColorBrush(Color.FromRgb(13, 21, 29)),
             BorderBrush = new SolidColorBrush(Color.FromRgb(49, 75, 95)),
@@ -50,6 +51,9 @@ public partial class MultiSelectFilterControl : UserControl
             Padding = new Thickness(6),
             Child = new ScrollViewer { MaxHeight = 280, MinWidth = 220, Content = _itemsPanel }
         };
+        flyout.Content = _flyoutContent;
+        flyout.Opening += (_, _) => _flyoutContent.Width = ToggleBtn.Bounds.Width;
+
         UpdateText();
     }
 
