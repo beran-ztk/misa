@@ -59,6 +59,13 @@
                 BorderThickness="0,0,0,1"
                 Padding="20,12,16,10">
             <Grid ColumnDefinitions="*,Auto">
+                <TextBlock x:Name="PlaylistSummaryText"
+                           Grid.Column="0"
+                           Text=""
+                           FontSize="11"
+                           Opacity="0.55"
+                           VerticalAlignment="Center"
+                           TextTrimming="CharacterEllipsis"/>
 
             <StackPanel Grid.Column="1"
                         Orientation="Horizontal"

@@ -227,6 +227,7 @@ public partial class MusicView : UserControl
             item.IsPlaying = item.Track.Id == _engine.ActiveTrackId;
 
         FileList.ItemsSource = _filteredItems;
+        UpdatePlaylistSummary();
         RefreshNextTrackPreview();
         UpdateFilterCounts();
     }
@@ -712,6 +713,7 @@ public partial class MusicView : UserControl
         }
 
         UpdateUpcomingBar();
+        UpdatePlaylistSummary();
     }
 
     // ─── Navigation ───────────────────────────────────────────────────────────
@@ -735,6 +737,37 @@ public partial class MusicView : UserControl
         if (currentIdx < 0) { _nextTrackIndex = -1; UpdateUpcomingBar(); return; }
         _nextTrackIndex = PeekNextTrackIndex(currentIdx);
         UpdateUpcomingBar();
+        UpdatePlaylistSummary();
+    }
+
+    private void UpdatePlaylistSummary()
+    {
+        var totalSeconds = _filteredItems
+            .Select(item => item.Track.DurationSeconds ?? 0)
+            .Sum();
+
+        var summary = $"{_filteredItems.Count} tracks · {FormatPlaylistDuration(totalSeconds)}";
+        var remaining = RemainingPlaylistDurationSeconds();
+        if (remaining > 0)
+            summary += $" · ends {DateTime.Now.AddSeconds(remaining):HH:mm}";
+
+        PlaylistSummaryText.Text = summary;
+    }
+
+    private int RemainingPlaylistDurationSeconds()
+    {
+        var currentIdx = GetCurrentPlayIndex();
+        if (currentIdx < 0 || currentIdx >= _filteredItems.Count)
+            return 0;
+
+        var currentRemaining = _engine.TotalTime.TotalSeconds > 0
+            ? Math.Max(0, (int)(_engine.TotalTime - _engine.CurrentTime).TotalSeconds)
+            : _filteredItems[currentIdx].Track.DurationSeconds ?? 0;
+
+        return currentRemaining + _filteredItems
+            .Skip(currentIdx + 1)
+            .Select(item => item.Track.DurationSeconds ?? 0)
+            .Sum();
     }
 
     private void NavigateNext(bool isManual)
@@ -865,6 +898,14 @@ public partial class MusicView : UserControl
     // ─── Formatting ───────────────────────────────────────────────────────────
 
     private static string FormatDuration(TimeSpan t) => FormatDuration((int)t.TotalSeconds);
+
+    private static string FormatPlaylistDuration(int totalSeconds)
+    {
+        var time = TimeSpan.FromSeconds(totalSeconds);
+        return time.TotalHours >= 1
+            ? $"{(int)time.TotalHours}:{time.Minutes:D2}h"
+            : $"{time.Minutes}:{time.Seconds:D2}m";
+    }
 
     private void ShuffleFilteredItems()
     {

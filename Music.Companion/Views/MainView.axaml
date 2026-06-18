@@ -91,6 +91,10 @@
                                Width="19" Height="19"/>
                     </Button>
                 </Grid>
+                <TextBlock x:Name="PlaylistSummaryText"
+                           FontSize="11"
+                           Opacity="0.58"
+                           TextTrimming="CharacterEllipsis"/>
                 <TextBlock x:Name="StatusText"
                            IsVisible="False"/>
             </StackPanel>
