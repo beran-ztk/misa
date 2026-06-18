@@ -46,6 +46,7 @@ public partial class MusicView : UserControl
     private List<TrackDisplayItem> _filteredItems = [];
     private List<PortableFilterPreset> _filterPresets = [];
     private bool _updatingPresetUi;
+    private bool _showReviewOnly;
 
     private record FilterGroupControls(
         MultiSelectFilterControl GenreCtrl,
@@ -69,6 +70,7 @@ public partial class MusicView : UserControl
 
         SearchBox.TextChanged += (_, _) => ApplyFilter();
         RatingFilter.SelectionChanged += (_, _) => ApplyFilter();
+        FileList.SelectionChanged += (_, _) => UpdateReviewButton();
 
         // Volume
         VolumeSlider.ValueChanged += (_, _) =>
@@ -142,7 +144,10 @@ public partial class MusicView : UserControl
             var ratingName = ratingMap.GetValueOrDefault(t.RatingId, "");
             var durationText = t.DurationSeconds.HasValue ? FormatDuration(t.DurationSeconds.Value) : "";
             
-            return new TrackDisplayItem(t, genreStr, styleStr, durationText, ratingName);
+            return new TrackDisplayItem(t, genreStr, styleStr, durationText, ratingName)
+            {
+                NeedsReview = t.NeedsReview
+            };
         }).ToList();
 
         ApplyFilter();
@@ -220,6 +225,11 @@ public partial class MusicView : UserControl
             .Select(t => itemById[t.Id])
             .ToList();
 
+        if (_showReviewOnly)
+            _filteredItems = _filteredItems
+                .Where(item => item.NeedsReview)
+                .ToList();
+
         if (_shuffle)
             ShuffleFilteredItems();
 
@@ -230,6 +240,8 @@ public partial class MusicView : UserControl
         UpdatePlaylistSummary();
         RefreshNextTrackPreview();
         UpdateFilterCounts();
+        UpdateReviewFilterButton();
+        UpdateReviewButton();
     }
 
     private void UpdateFilterCounts()
@@ -300,6 +312,21 @@ public partial class MusicView : UserControl
         FilterDrawer.IsVisible = _filterPanelVisible;
     }
 
+    private void OnReviewFilterClicked(object? sender, RoutedEventArgs e)
+    {
+        _showReviewOnly = !_showReviewOnly;
+        ApplyFilter();
+    }
+
+    private void UpdateReviewFilterButton()
+    {
+        var count = _allItems.Count(item => item.NeedsReview);
+        ReviewFilterBtn.Opacity = _showReviewOnly ? 1.0 : 0.35;
+        ToolTip.SetTip(ReviewFilterBtn, _showReviewOnly
+            ? $"Review filter: On ({count})"
+            : $"Reviews ({count})");
+    }
+
     private void OnClearFiltersClicked(object? sender, RoutedEventArgs e)
     {
         _updatingPresetUi = true;
@@ -312,6 +339,7 @@ public partial class MusicView : UserControl
         _filterGroups.Clear();
         FilterGroupsPanel.Children.Clear();
         AddFilterGroup();
+        _showReviewOnly = false;
         ApplyFilter();
     }
 
@@ -584,6 +612,15 @@ public partial class MusicView : UserControl
         EditTrackOverlay.Open(_filteredItems[idx].Track);
     }
 
+    private void OnContextToggleReviewClicked(object? sender, RoutedEventArgs e)
+    {
+        var idx = FileList.SelectedIndex;
+        if (idx < 0 || idx >= _filteredItems.Count)
+            return;
+
+        ToggleReview(_filteredItems[idx].Track);
+    }
+
     // ─── Playback control ─────────────────────────────────────────────────────
 
     private void OnListDoubleTapped(object? sender, TappedEventArgs e) => StartPlayback();
@@ -617,6 +654,45 @@ public partial class MusicView : UserControl
         ToolTip.SetTip(ShuffleBtn, _shuffle ? "Shuffle: On" : "Shuffle: Off");
         if (_filteredItems.Count > 0)
             PlayTrackAt(0, isCrossfade: false);
+    }
+
+    private void OnReviewToggleClicked(object? sender, RoutedEventArgs e)
+    {
+        var track = ActiveOrSelectedTrack();
+        if (track is null)
+        {
+            ShowToast("No track selected");
+            return;
+        }
+
+        ToggleReview(track);
+    }
+
+    private MusicTrack? ActiveOrSelectedTrack()
+    {
+        if (_engine.ActiveTrackId >= 0)
+            return _allItems.FirstOrDefault(item => item.Track.Id == _engine.ActiveTrackId)?.Track;
+
+        var index = FileList.SelectedIndex;
+        return index >= 0 && index < _filteredItems.Count
+            ? _filteredItems[index].Track
+            : null;
+    }
+
+    private void ToggleReview(MusicTrack track)
+    {
+        var needsReview = !track.NeedsReview;
+        MusicLibraryService.Current.SetTrackNeedsReview(track.Id, needsReview);
+        RefreshTrackList();
+        ShowToast(needsReview ? "Marked for review" : "Review mark removed");
+    }
+
+    private void UpdateReviewButton()
+    {
+        var track = ActiveOrSelectedTrack();
+        var isMarked = track?.NeedsReview == true;
+        ReviewBtn.Opacity = isMarked ? 1.0 : 0.35;
+        ToolTip.SetTip(ReviewBtn, isMarked ? "Remove review mark" : "Mark for review");
     }
 
     private void StartPlayback()
@@ -874,6 +950,7 @@ public partial class MusicView : UserControl
         var isPlaying = _engine.State == EngineState.Playing;
         PlayIcon.IsVisible = !isPlaying;
         PauseIcon.IsVisible = isPlaying;
+        UpdateReviewButton();
     }
 
     private void RefreshPlayingMarkers()

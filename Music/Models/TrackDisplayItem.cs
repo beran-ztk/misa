@@ -11,6 +11,7 @@ public record TrackDisplayItem(
     string RatingText)
 {
     public bool IsPlaying { get; set; }
+    public bool NeedsReview { get; set; }
     public Bitmap? Thumbnail { get; set; }
 
     public IBrush PlayingBackground => IsPlaying

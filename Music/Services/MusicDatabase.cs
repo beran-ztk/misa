@@ -57,7 +57,8 @@ public class MusicDatabase
                 FileName           TEXT    NOT NULL UNIQUE,
                 RatingId           INTEGER NOT NULL,
                 DownloadedAt       TEXT    NOT NULL,
-                DurationSeconds    INTEGER NULL
+                DurationSeconds    INTEGER NULL,
+                NeedsReview        INTEGER NOT NULL DEFAULT 0
             );
             CREATE TABLE TrackStyles (
                 TrackId INTEGER NOT NULL,
@@ -210,7 +211,7 @@ public class MusicDatabase
         using var conn = Open();
         using var cmd = conn.CreateCommand();
         cmd.CommandText = @"SELECT Id, CanonicalUrl, Title, FileName, RatingId, DownloadedAt,
-                                   DurationSeconds
+                                   DurationSeconds, NeedsReview
                             FROM Tracks ORDER BY DownloadedAt DESC";
         using var r = cmd.ExecuteReader();
         var list = new List<MusicTrack>();
@@ -222,7 +223,8 @@ public class MusicDatabase
                 r.GetString(3),
                 r.GetInt32(4), 
                 r.GetString(5),
-                r.IsDBNull(6) ? null : r.GetInt32(6)));
+                r.IsDBNull(6) ? null : r.GetInt32(6),
+                r.GetInt32(7) != 0));
         return list;
     }
     public Dictionary<int, List<int>> GetAllTrackStyleIds() => GetAllJunctionIds("TrackStyles", "StyleId");
@@ -251,6 +253,16 @@ public class MusicDatabase
         ReplaceJunctionRows(conn, tx, "TrackStyles", "StyleId", id, styleIds);
 
         tx.Commit();
+    }
+
+    public void SetTrackNeedsReview(int id, bool needsReview)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "UPDATE Tracks SET NeedsReview = $needsReview WHERE Id = $id";
+        cmd.Parameters.AddWithValue("$id", id);
+        cmd.Parameters.AddWithValue("$needsReview", needsReview ? 1 : 0);
+        cmd.ExecuteNonQuery();
     }
 
     // --- Lookups ---

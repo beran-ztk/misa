@@ -55,7 +55,7 @@
                 BorderThickness="0,0,0,1"
                 Padding="14,12,14,10">
             <StackPanel Spacing="9">
-                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+                <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="8">
                     <TextBlock Text="Music"
                                FontSize="20"
                                FontWeight="SemiBold"
@@ -69,6 +69,15 @@
                                Width="19" Height="19"/>
                     </Button>
                     <Button Grid.Column="2"
+                            x:Name="ReviewFilterButton"
+                            Classes="toolbarIcon"
+                            Click="OnReviewFilterClicked"
+                            Opacity="0.45"
+                            ToolTip.Tip="Show reviews">
+                        <Image Source="{SvgImage /Assets/review.svg}"
+                               Width="19" Height="19"/>
+                    </Button>
+                    <Button Grid.Column="3"
                             x:Name="ReloadButton"
                             Classes="toolbarIcon"
                             Click="OnReloadClicked"
@@ -125,7 +134,7 @@
                                Opacity="0.62"
                                VerticalAlignment="Center"/>
                 </Grid>
-                <Grid ColumnDefinitions="Auto,*,Auto">
+                <Grid ColumnDefinitions="Auto,*,Auto,Auto">
                     <StackPanel Orientation="Horizontal"
                                 Spacing="0"
                                 VerticalAlignment="Center">
@@ -156,8 +165,18 @@
                                    Width="19" Height="19"/>
                         </Button>
                     </StackPanel>
-                    <Button x:Name="ShuffleButton"
+                    <Button x:Name="ReviewButton"
                             Grid.Column="2"
+                            HorizontalAlignment="Right"
+                            Classes="icon"
+                            Opacity="0.45"
+                            Click="OnReviewClicked"
+                            ToolTip.Tip="Mark for review">
+                        <Image Source="{SvgImage /Assets/review.svg}"
+                               Width="18" Height="18"/>
+                    </Button>
+                    <Button x:Name="ShuffleButton"
+                            Grid.Column="3"
                             HorizontalAlignment="Right"
                             Classes="icon"
                             Opacity="0.45"
@@ -229,6 +248,17 @@
                                             BorderThickness="1">
                                         <TextBlock Text="{Binding Rating}"
                                                    FontSize="10"/>
+                                    </Border>
+                                    <Border IsVisible="{Binding IsMarkedForReview}"
+                                            CornerRadius="5"
+                                            Padding="7,2"
+                                            Background="#302615"
+                                            BorderBrush="#7B5D2A"
+                                            BorderThickness="1"
+                                            HorizontalAlignment="Right">
+                                        <TextBlock Text="Review"
+                                                   FontSize="10"
+                                                   Foreground="#FFD27A"/>
                                     </Border>
                                 </StackPanel>
                             </Grid>

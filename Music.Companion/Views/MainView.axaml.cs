@@ -24,6 +24,7 @@ public partial class MainView : UserControl
     private int _currentIndex = -1;
     private bool _isSeeking;
     private bool _shuffle;
+    private bool _showReviewOnly;
     private bool _updatingPresetUi;
     private DateTime _lastMediaUpdate = DateTime.MinValue;
     private CancellationTokenSource? _toastCts;
@@ -33,7 +34,7 @@ public partial class MainView : UserControl
         MultiSelectFilterControl StyleFilter,
         StackPanel Container);
 
-    private sealed record TrackRow(PortableTrack Track, Bitmap? Cover, bool IsCurrent)
+    private sealed record TrackRow(PortableTrack Track, Bitmap? Cover, bool IsCurrent, bool IsMarkedForReview)
     {
         private static readonly IBrush CurrentBackgroundBrush = new SolidColorBrush(Color.FromArgb(78, 17, 121, 184));
         private static readonly IBrush CurrentAccentBrush = new SolidColorBrush(Color.FromRgb(31, 154, 240));
@@ -86,6 +87,8 @@ public partial class MainView : UserControl
 
         PopulateFilters();
         ApplyFilter();
+        UpdateReviewButton();
+        UpdateReviewFilterButton();
     }
 
     private void PopulateFilters()
@@ -124,6 +127,11 @@ public partial class MainView : UserControl
         if (_shuffle)
             ShuffleFilteredTracks();
 
+        if (_showReviewOnly)
+            _filteredTracks = _filteredTracks
+                .Where(track => track.NeedsReview)
+                .ToList();
+
         if (_currentIndex >= _filteredTracks.Count)
             _currentIndex = -1;
 
@@ -135,7 +143,11 @@ public partial class MainView : UserControl
     private void RefreshTrackRows(bool scrollToCurrent = false)
     {
         var rows = _filteredTracks
-            .Select((track, index) => new TrackRow(track, LoadCover(track), index == _currentIndex))
+            .Select((track, index) => new TrackRow(
+                track,
+                LoadCover(track),
+                index == _currentIndex,
+                track.NeedsReview))
             .ToList();
 
         TrackList.ItemsSource = rows;
@@ -163,6 +175,7 @@ public partial class MainView : UserControl
         NowPlayingText.Text = track.Title;
         await _audio.PlayAsync(path);
         UpdatePlayPauseIcon();
+        UpdateReviewButton();
         UpdateMediaControls();
         StatusText.Text = "";
     }
@@ -231,6 +244,7 @@ public partial class MainView : UserControl
             NowPlayingText.Text = "";
             RefreshTrackRows();
             UpdatePlayPauseIcon();
+            UpdateReviewButton();
             CompanionServices.MediaControls.Stop();
             return;
         }
@@ -256,6 +270,7 @@ public partial class MainView : UserControl
 
         RatingFilter.SetItems(_loadedLibrary.Library.Ratings);
         RebuildFilterGroups();
+        _showReviewOnly = false;
         ApplyFilter();
     }
 
@@ -475,6 +490,65 @@ public partial class MainView : UserControl
 
         if (_filteredTracks.Count > 0)
             await PlayTrackAtAsync(0);
+    }
+
+    private async void OnReviewClicked(object? sender, RoutedEventArgs e)
+    {
+        if (_currentIndex < 0 || _currentIndex >= _filteredTracks.Count)
+        {
+            ShowToast("No active track");
+            return;
+        }
+
+        var track = _filteredTracks[_currentIndex];
+        await SetTrackReviewAsync(track.FileName, !track.NeedsReview);
+        ShowToast(track.NeedsReview ? "Review mark removed" : "Marked for review");
+        ApplyFilter();
+        UpdateReviewButton();
+    }
+
+    private async Task SetTrackReviewAsync(string fileName, bool needsReview)
+    {
+        var tracks = _loadedLibrary.Library.Tracks
+            .Select(track => string.Equals(track.FileName, fileName, StringComparison.OrdinalIgnoreCase)
+                ? track with { NeedsReview = needsReview }
+                : track)
+            .ToList();
+
+        _loadedLibrary = _loadedLibrary with
+        {
+            Library = _loadedLibrary.Library with { Tracks = tracks }
+        };
+
+        await PortableLibraryStore.SaveAsync(
+            CompanionServices.LibraryStorage.LibraryDirectory,
+            _loadedLibrary.Library);
+    }
+
+    private void UpdateReviewButton()
+    {
+        var isMarked = _currentIndex >= 0 &&
+                       _currentIndex < _filteredTracks.Count &&
+                       _filteredTracks[_currentIndex].NeedsReview;
+
+        ReviewButton.Opacity = isMarked ? 1.0 : 0.45;
+        ToolTip.SetTip(ReviewButton, isMarked ? "Remove review mark" : "Mark for review");
+    }
+
+    private void OnReviewFilterClicked(object? sender, RoutedEventArgs e)
+    {
+        _showReviewOnly = !_showReviewOnly;
+        ApplyFilter();
+        UpdateReviewFilterButton();
+    }
+
+    private void UpdateReviewFilterButton()
+    {
+        var count = _loadedLibrary.Library.Tracks.Count(track => track.NeedsReview);
+        ReviewFilterButton.Opacity = _showReviewOnly ? 1.0 : 0.45;
+        ToolTip.SetTip(ReviewFilterButton, _showReviewOnly
+            ? $"Review filter: On ({count})"
+            : $"Reviews ({count})");
     }
 
     private async void OnImportClicked(object? sender, RoutedEventArgs e)

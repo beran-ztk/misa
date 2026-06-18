@@ -27,6 +27,7 @@ public class MusicLibraryService
     public List<int> GetTrackGenreIds(int trackId) => _db.GetTrackGenreIds(trackId);
     public void UpdateTrack(int id, string title, List<int> genreIds, int ratingId, List<int> styleIds) 
         => _db.UpdateTrack(id, title, genreIds, ratingId, styleIds);
+    public void SetTrackNeedsReview(int id, bool needsReview) => _db.SetTrackNeedsReview(id, needsReview);
 
     // --- Lookups ---
     public List<Genre> GetGenres() => _db.GetGenres();
@@ -69,7 +70,8 @@ public class MusicLibraryService
                 ratings.GetValueOrDefault(track.RatingId, ""),
                 NamesFor(trackGenreIds.GetValueOrDefault(track.Id, []), genres),
                 NamesFor(trackStyleIds.GetValueOrDefault(track.Id, []), styles),
-                coverFileName));
+                coverFileName,
+                track.NeedsReview));
         }
 
         await PortableLibraryStore.SaveAsync(

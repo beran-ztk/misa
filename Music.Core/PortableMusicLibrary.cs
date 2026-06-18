@@ -43,7 +43,8 @@ public sealed record PortableTrack(
     string Rating,
     List<string> Genres,
     List<string> Styles,
-    string? CoverFileName = null)
+    string? CoverFileName = null,
+    bool NeedsReview = false)
 {
     public string GenreText => string.Join(", ", Genres);
     public string StyleText => string.Join(", ", Styles);

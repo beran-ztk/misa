@@ -87,6 +87,17 @@
                          Width="230" Height="34"
                          VerticalContentAlignment="Center"/>
 
+                <Button x:Name="ReviewFilterBtn"
+                        Classes="icon"
+                        Click="OnReviewFilterClicked"
+                        Background="#10151B"
+                        BorderThickness="1"
+                        Opacity="0.35"
+                        ToolTip.Tip="Show review marks">
+                    <Image Source="{SvgImage /Assets/review.svg}"
+                           Width="17" Height="17"/>
+                </Button>
+
                 <Button x:Name="ExportBtn"
                         Classes="icon"
                         Click="OnExportClicked"
@@ -220,6 +231,14 @@
                             <Image Source="{SvgImage /Assets/shuffle.svg}"
                                    Width="17" Height="17"/>
                         </Button>
+                        <Button x:Name="ReviewBtn"
+                                Classes="icon"
+                                Click="OnReviewToggleClicked"
+                                Opacity="0.35"
+                                ToolTip.Tip="Mark for review">
+                            <Image Source="{SvgImage /Assets/review.svg}"
+                                   Width="17" Height="17"/>
+                        </Button>
                     </StackPanel>
 
                 </Grid>
@@ -295,6 +314,17 @@
                                                    FontSize="10"
                                                    Foreground="#DCE6EF"/>
                                     </Border>
+                                    <Border IsVisible="{Binding NeedsReview}"
+                                            Background="#302615"
+                                            BorderBrush="#7B5D2A"
+                                            BorderThickness="1"
+                                            CornerRadius="5"
+                                            Padding="7,2"
+                                            HorizontalAlignment="Right">
+                                        <TextBlock Text="Review"
+                                                   FontSize="10"
+                                                   Foreground="#FFD27A"/>
+                                    </Border>
                                 </StackPanel>
 
                             </Grid>
@@ -304,6 +334,7 @@
                 <ListBox.ContextMenu>
                     <ContextMenu>
                         <MenuItem Header="Edit" Click="OnContextEditClicked"/>
+                        <MenuItem Header="Toggle review mark" Click="OnContextToggleReviewClicked"/>
                     </ContextMenu>
                 </ListBox.ContextMenu>
             </ListBox>
