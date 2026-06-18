@@ -30,6 +30,7 @@ public partial class MusicView : UserControl
     // UI state
     private bool _filterPanelVisible;
     private CancellationTokenSource? _thumbLoadCts;
+    private CancellationTokenSource? _toastCts;
 
     // Crossfade state
     private int _lastKnownActiveId = -1;
@@ -84,7 +85,12 @@ public partial class MusicView : UserControl
         AddFilterGroup();
         RefreshTrackList();
 
-        AddTrackOverlay.TrackDownloaded += () => { AddTrackOverlay.IsVisible = false; RefreshTrackList(); };
+        AddTrackOverlay.TrackDownloaded += () =>
+        {
+            AddTrackOverlay.IsVisible = false;
+            RefreshTrackList();
+            ShowToast("Track downloaded");
+        };
         AddTrackOverlay.CloseRequested += () => AddTrackOverlay.IsVisible = false;
         EditTrackOverlay.TrackSaved += RefreshTrackList;
     }
@@ -525,6 +531,24 @@ public partial class MusicView : UserControl
     private void OnAddTrackClicked(object? sender, RoutedEventArgs e)
     {
         AddTrackOverlay.Open();
+    }
+
+    private async void ShowToast(string message)
+    {
+        _toastCts?.Cancel();
+        var cts = new CancellationTokenSource();
+        _toastCts = cts;
+
+        ToastText.Text = message;
+        Toast.IsVisible = true;
+
+        try
+        {
+            await Task.Delay(3500, cts.Token);
+            if (!cts.IsCancellationRequested)
+                Toast.IsVisible = false;
+        }
+        catch (OperationCanceledException) { }
     }
 
     private async void OnExportClicked(object? sender, RoutedEventArgs e)

@@ -410,6 +410,22 @@
             </Border>
 
             <!-- Add track overlay (always on top) -->
+            <Border x:Name="Toast"
+                    IsVisible="False"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Bottom"
+                    Margin="0,0,0,22"
+                    Background="#E6101821"
+                    BorderBrush="#314B5F"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="14,9"
+                    BoxShadow="0 8 24 2 #66000000">
+                <TextBlock x:Name="ToastText"
+                           FontSize="12"
+                           Foreground="#EAF3FA"/>
+            </Border>
+
             <views:AddTrackOverlay x:Name="AddTrackOverlay" IsVisible="False"/>
             <views:EditTrackOverlay x:Name="EditTrackOverlay" IsVisible="False"/>
 
