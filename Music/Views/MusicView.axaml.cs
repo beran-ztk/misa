@@ -227,21 +227,55 @@ public partial class MusicView : UserControl
 
     private void UpdateFilterCounts()
     {
-        var currentTrackIds = _filteredItems.Select(i => i.Track.Id).ToList();
-
-        var genreFacetCounts = MetadataCountService.FacetCounts(currentTrackIds, _allTrackGenreIds);
-        var styleFacetCounts = MetadataCountService.FacetCounts(currentTrackIds, _allTrackStyleIds);
-
-        var genreCountByName = Values.Genres.ToDictionary(g => g.Name,
-            g => genreFacetCounts.GetValueOrDefault(g.Id, 0));
-        var styleCountByName = Values.Styles.ToDictionary(s => s.Name,
-            s => styleFacetCounts.GetValueOrDefault(s.Id, 0));
-
         foreach (var fg in _filterGroups)
         {
+            var groupTracks = TracksMatchingSearchRatingAndGroup(fg);
+            var groupTrackIds = groupTracks.Select(track => track.Id).ToList();
+
+            var genreFacetCounts = MetadataCountService.FacetCounts(groupTrackIds, _allTrackGenreIds);
+            var styleFacetCounts = MetadataCountService.FacetCounts(groupTrackIds, _allTrackStyleIds);
+
+            var genreCountByName = Values.Genres.ToDictionary(g => g.Name,
+                g => genreFacetCounts.GetValueOrDefault(g.Id, 0));
+            var styleCountByName = Values.Styles.ToDictionary(s => s.Name,
+                s => styleFacetCounts.GetValueOrDefault(s.Id, 0));
+
             fg.GenreCtrl.UpdateCounts(genreCountByName);
             fg.StyleCtrl.UpdateCounts(styleCountByName);
         }
+    }
+
+    private List<MusicTrack> TracksMatchingSearchRatingAndGroup(FilterGroupControls group)
+    {
+        IEnumerable<MusicTrack> query = _allItems.Select(item => item.Track);
+        var selectedRatingIds = SelectedIds(RatingFilter.SelectedItems, Values.Ratings, r => r.Name, r => r.Id);
+        var selectedGenreIds = SelectedIds(group.GenreCtrl.SelectedItems, Values.Genres, g => g.Name, g => g.Id);
+        var selectedStyleIds = SelectedIds(group.StyleCtrl.SelectedItems, Values.Styles, s => s.Name, s => s.Id);
+        var term = SearchBox.Text?.Trim();
+
+        if (!string.IsNullOrWhiteSpace(term))
+            query = query.Where(track => track.Title.Contains(term, StringComparison.OrdinalIgnoreCase));
+
+        if (selectedRatingIds.Count > 0)
+            query = query.Where(track => selectedRatingIds.Contains(track.RatingId));
+
+        if (selectedGenreIds.Count > 0)
+            query = query.Where(track => TrackHasAllTags(track.Id, _allTrackGenreIds, selectedGenreIds));
+
+        if (selectedStyleIds.Count > 0)
+            query = query.Where(track => TrackHasAllTags(track.Id, _allTrackStyleIds, selectedStyleIds));
+
+        return query.ToList();
+    }
+
+    private static bool TrackHasAllTags(
+        int trackId,
+        IReadOnlyDictionary<int, List<int>> trackTagIds,
+        IReadOnlySet<int> selectedTagIds)
+    {
+        trackTagIds.TryGetValue(trackId, out var trackTags);
+        trackTags ??= [];
+        return selectedTagIds.All(trackTags.Contains);
     }
 
     private static HashSet<int> SelectedIds<T>(IReadOnlySet<string> selected, List<T> source,
