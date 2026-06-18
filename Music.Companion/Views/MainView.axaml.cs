@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
+using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
@@ -25,19 +26,26 @@ public partial class MainView : UserControl
     private bool _shuffle;
     private bool _updatingPresetUi;
     private DateTime _lastMediaUpdate = DateTime.MinValue;
+    private CancellationTokenSource? _toastCts;
 
     private record FilterGroupControls(
         MultiSelectFilterControl GenreFilter,
         MultiSelectFilterControl StyleFilter,
         StackPanel Container);
 
-    private sealed record TrackRow(PortableTrack Track, Bitmap? Cover)
+    private sealed record TrackRow(PortableTrack Track, Bitmap? Cover, bool IsCurrent)
     {
+        private static readonly IBrush CurrentBackgroundBrush = new SolidColorBrush(Color.FromArgb(78, 17, 121, 184));
+        private static readonly IBrush CurrentAccentBrush = new SolidColorBrush(Color.FromRgb(31, 154, 240));
+        private static readonly IBrush TransparentBrush = Brushes.Transparent;
+
         public string Title => Track.Title;
         public string GenreText => Track.GenreText;
         public string StyleText => Track.StyleText;
         public string DurationText => Track.DurationText;
         public string Rating => Track.Rating;
+        public IBrush CurrentBackground => IsCurrent ? CurrentBackgroundBrush : TransparentBrush;
+        public IBrush CurrentAccent => IsCurrent ? CurrentAccentBrush : TransparentBrush;
     }
 
     public MainView()
@@ -116,14 +124,25 @@ public partial class MainView : UserControl
         if (_shuffle)
             ShuffleFilteredTracks();
 
-        TrackList.ItemsSource = _filteredTracks
-            .Select(track => new TrackRow(track, LoadCover(track)))
-            .ToList();
         if (_currentIndex >= _filteredTracks.Count)
             _currentIndex = -1;
 
+        RefreshTrackRows();
         UpdatePlaylistSummary();
         UpdateFilterCounts();
+    }
+
+    private void RefreshTrackRows(bool scrollToCurrent = false)
+    {
+        var rows = _filteredTracks
+            .Select((track, index) => new TrackRow(track, LoadCover(track), index == _currentIndex))
+            .ToList();
+
+        TrackList.ItemsSource = rows;
+        TrackList.SelectedIndex = _currentIndex;
+
+        if (scrollToCurrent && _currentIndex >= 0 && _currentIndex < rows.Count)
+            Dispatcher.UIThread.Post(() => TrackList.ScrollIntoView(rows[_currentIndex]));
     }
 
     private async Task PlayTrackAtAsync(int index)
@@ -140,7 +159,7 @@ public partial class MainView : UserControl
         }
 
         _currentIndex = index;
-        TrackList.SelectedIndex = index;
+        RefreshTrackRows(scrollToCurrent: true);
         NowPlayingText.Text = track.Title;
         await _audio.PlayAsync(path);
         UpdatePlayPauseIcon();
@@ -208,6 +227,9 @@ public partial class MainView : UserControl
         if (next >= _filteredTracks.Count)
         {
             _audio.Stop();
+            _currentIndex = -1;
+            NowPlayingText.Text = "";
+            RefreshTrackRows();
             UpdatePlayPauseIcon();
             CompanionServices.MediaControls.Stop();
             return;
@@ -516,6 +538,7 @@ public partial class MainView : UserControl
 
             Directory.Move(tempDirectory, targetDirectory);
             await LoadLibraryAsync();
+            ShowToast($"Library imported · {_loadedLibrary.Library.Tracks.Count} tracks · {ImportedLibraryDuration()}");
         }
         catch (Exception ex)
         {
@@ -537,6 +560,35 @@ public partial class MainView : UserControl
         return items
             .OfType<IStorageFolder>()
             .FirstOrDefault(folder => string.Equals(folder.Name, "MusicLibrary", StringComparison.OrdinalIgnoreCase));
+    }
+
+    private string ImportedLibraryDuration()
+    {
+        var totalSeconds = _loadedLibrary.Library.Tracks
+            .Select(track => track.DurationSeconds ?? 0)
+            .Sum();
+
+        return FormatPlaylistDuration(totalSeconds);
+    }
+
+    private async void ShowToast(string message)
+    {
+        _toastCts?.Cancel();
+        _toastCts = new CancellationTokenSource();
+        var token = _toastCts.Token;
+
+        ToastText.Text = message;
+        Toast.IsVisible = true;
+
+        try
+        {
+            await Task.Delay(2400, token);
+            if (!token.IsCancellationRequested)
+                Toast.IsVisible = false;
+        }
+        catch (TaskCanceledException)
+        {
+        }
     }
 
     private static bool HasLibraryFiles(IReadOnlyList<IStorageItem> items) =>

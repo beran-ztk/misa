@@ -177,51 +177,62 @@
                      DoubleTapped="OnTrackDoubleTapped">
                 <ListBox.ItemTemplate>
                     <DataTemplate>
-                        <Grid ColumnDefinitions="44,*,Auto">
-                            <Border Grid.Column="0"
-                                    Width="36" Height="36"
-                                    CornerRadius="6"
-                                    ClipToBounds="True"
-                                    Background="#262B32"
-                                    VerticalAlignment="Center"
-                                    Margin="0,0,10,0">
-                                <Image Source="{Binding Cover}"
-                                       Stretch="UniformToFill"/>
-                            </Border>
-                            <StackPanel Grid.Column="1"
-                                        Spacing="2">
-                                <TextBlock Text="{Binding Title}"
-                                           FontSize="14"
-                                           FontWeight="SemiBold"
-                                           TextTrimming="CharacterEllipsis"/>
-                                <TextBlock Text="{Binding GenreText}"
-                                           FontSize="11"
-                                           Opacity="0.62"
-                                           TextTrimming="CharacterEllipsis"/>
-                                <TextBlock Text="{Binding StyleText}"
-                                           FontSize="10"
-                                           Opacity="0.42"
-                                           TextTrimming="CharacterEllipsis"/>
-                            </StackPanel>
-                            <StackPanel Grid.Column="2"
-                                        HorizontalAlignment="Right"
+                        <Border Background="{Binding CurrentBackground}"
+                                CornerRadius="8"
+                                Padding="6,5">
+                            <Grid ColumnDefinitions="4,44,*,Auto">
+                                <Border Grid.Column="0"
+                                        Width="3"
+                                        Height="34"
+                                        CornerRadius="2"
+                                        Background="{Binding CurrentAccent}"
+                                        VerticalAlignment="Center"/>
+                                <Border Grid.Column="1"
+                                        Width="36" Height="36"
+                                        CornerRadius="6"
+                                        ClipToBounds="True"
+                                        Background="#262B32"
                                         VerticalAlignment="Center"
-                                        Spacing="4"
-                                        Margin="16,0,0,0">
-                                <TextBlock Text="{Binding DurationText}"
-                                           FontSize="11"
-                                           Opacity="0.58"
-                                           HorizontalAlignment="Right"/>
-                                <Border CornerRadius="5"
-                                        Padding="7,2"
-                                        Background="#26313A"
-                                        BorderBrush="#3D4B59"
-                                        BorderThickness="1">
-                                    <TextBlock Text="{Binding Rating}"
-                                               FontSize="10"/>
+                                        Margin="7,0,10,0">
+                                    <Image Source="{Binding Cover}"
+                                           Stretch="UniformToFill"/>
                                 </Border>
-                            </StackPanel>
-                        </Grid>
+                                <StackPanel Grid.Column="2"
+                                            Spacing="2"
+                                            VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Title}"
+                                               FontSize="14"
+                                               FontWeight="SemiBold"
+                                               TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Text="{Binding GenreText}"
+                                               FontSize="11"
+                                               Opacity="0.62"
+                                               TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Text="{Binding StyleText}"
+                                               FontSize="10"
+                                               Opacity="0.42"
+                                               TextTrimming="CharacterEllipsis"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="3"
+                                            HorizontalAlignment="Right"
+                                            VerticalAlignment="Center"
+                                            Spacing="4"
+                                            Margin="16,0,0,0">
+                                    <TextBlock Text="{Binding DurationText}"
+                                               FontSize="11"
+                                               Opacity="0.58"
+                                               HorizontalAlignment="Right"/>
+                                    <Border CornerRadius="5"
+                                            Padding="7,2"
+                                            Background="#26313A"
+                                            BorderBrush="#3D4B59"
+                                            BorderThickness="1">
+                                        <TextBlock Text="{Binding Rating}"
+                                                   FontSize="10"/>
+                                    </Border>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>
@@ -310,6 +321,22 @@
                                 HorizontalAlignment="Left"/>
                     </Border>
                 </Grid>
+            </Border>
+
+            <Border x:Name="Toast"
+                    IsVisible="False"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Bottom"
+                    Margin="18"
+                    Background="#E6111820"
+                    BorderBrush="#365166"
+                    BorderThickness="1"
+                    CornerRadius="9"
+                    Padding="14,9">
+                <TextBlock x:Name="ToastText"
+                           FontSize="12"
+                           FontWeight="SemiBold"
+                           Foreground="#F3F7FA"/>
             </Border>
         </Panel>
 
