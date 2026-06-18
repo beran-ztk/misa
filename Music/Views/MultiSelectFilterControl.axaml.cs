@@ -16,6 +16,7 @@ public partial class MultiSelectFilterControl : UserControl
     private readonly Border _flyoutContent;
     private readonly HashSet<string> _selected = [];
     private readonly List<FilterItem> _items = [];
+    private bool _updatingSelection;
 
     private sealed record FilterItem(string Name, Control Row, CheckBox CheckBox, TextBlock CountText, Border CountBadge);
 
@@ -79,7 +80,8 @@ public partial class MultiSelectFilterControl : UserControl
                 if (cb.IsChecked == true) _selected.Add(name);
                 else _selected.Remove(name);
                 UpdateText();
-                SelectionChanged?.Invoke(this, EventArgs.Empty);
+                if (!_updatingSelection)
+                    SelectionChanged?.Invoke(this, EventArgs.Empty);
             };
 
             var nameText = new TextBlock
@@ -139,6 +141,26 @@ public partial class MultiSelectFilterControl : UserControl
             _itemsPanel.Children.Add(row);
         }
         UpdateText();
+    }
+
+    public void SetSelectedItems(IEnumerable<string> selectedItems, bool notify = true)
+    {
+        var selected = selectedItems.ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        _updatingSelection = true;
+        _selected.Clear();
+        foreach (var item in _items)
+        {
+            var isSelected = selected.Contains(item.Name);
+            item.CheckBox.IsChecked = isSelected;
+            if (isSelected)
+                _selected.Add(item.Name);
+        }
+        _updatingSelection = false;
+
+        UpdateText();
+        if (notify)
+            SelectionChanged?.Invoke(this, EventArgs.Empty);
     }
 
     public void UpdateCounts(IReadOnlyDictionary<string, int> counts)

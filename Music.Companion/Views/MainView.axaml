@@ -260,6 +260,22 @@
                                   Padding="16,12,16,12">
                         <StackPanel Spacing="18">
                             <StackPanel Spacing="7">
+                                <TextBlock Text="PRESETS"
+                                           FontSize="10"
+                                           FontWeight="SemiBold"
+                                           Opacity="0.45"/>
+                                <ComboBox x:Name="PresetBox"
+                                          SelectionChanged="OnPresetSelectionChanged"
+                                          HorizontalAlignment="Stretch"
+                                          Height="36"
+                                          Background="#0D151D"
+                                          BorderBrush="#414B5F"
+                                          BorderThickness="1"
+                                          CornerRadius="6"
+                                          Padding="8,4"/>
+                            </StackPanel>
+
+                            <StackPanel Spacing="7">
                                 <TextBlock Text="RATING"
                                            FontSize="10"
                                            FontWeight="SemiBold"

@@ -12,6 +12,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
+using Music.Core;
 using Music.Models;
 using Music.Services;
 
@@ -42,6 +43,8 @@ public partial class MusicView : UserControl
     private Dictionary<int, List<int>> _allTrackStyleIds = [];
     private Dictionary<int, List<int>> _allTrackGenreIds = [];
     private List<TrackDisplayItem> _filteredItems = [];
+    private List<PortableFilterPreset> _filterPresets = [];
+    private bool _updatingPresetUi;
 
     private record FilterGroupControls(
         MultiSelectFilterControl GenreCtrl,
@@ -77,6 +80,7 @@ public partial class MusicView : UserControl
         catch (Exception ex) { StatusText.Text = $"Database error: {ex.Message}"; StatusText.IsVisible = true; return; }
 
         LoadLookups();
+        LoadFilterPresets();
         AddFilterGroup();
         RefreshTrackList();
 
@@ -257,15 +261,145 @@ public partial class MusicView : UserControl
 
     private void OnClearFiltersClicked(object? sender, RoutedEventArgs e)
     {
+        _updatingPresetUi = true;
+        PresetBox.SelectedIndex = -1;
+        PresetNameBox.Text = "";
+        _updatingPresetUi = false;
+
         RatingFilter.SetItems(Values.Ratings.Select(r => r.Name));
         RatingFilter.Placeholder = "All ratings";
-        foreach (var fg in _filterGroups)
-        {
-            fg.GenreCtrl.SetItems(Values.Genres.Select(g => g.Name));
-            fg.StyleCtrl.SetItems(Values.Styles.Select(s => s.Name));
-        }
+        _filterGroups.Clear();
+        FilterGroupsPanel.Children.Clear();
+        AddFilterGroup();
         ApplyFilter();
     }
+
+    private void LoadFilterPresets()
+    {
+        _filterPresets = FilterPresetStore.Load();
+        RefreshPresetBox();
+    }
+
+    private void RefreshPresetBox(string? selectedName = null)
+    {
+        _updatingPresetUi = true;
+
+        var names = _filterPresets
+            .Select(preset => preset.Name)
+            .Order(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        PresetBox.ItemsSource = names;
+        PresetBox.SelectedItem = selectedName != null && names.Contains(selectedName, StringComparer.OrdinalIgnoreCase)
+            ? names.First(name => string.Equals(name, selectedName, StringComparison.OrdinalIgnoreCase))
+            : null;
+
+        _updatingPresetUi = false;
+    }
+
+    private void OnPresetSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (_updatingPresetUi || PresetBox.SelectedItem is not string presetName)
+            return;
+
+        var preset = _filterPresets.FirstOrDefault(p =>
+            string.Equals(p.Name, presetName, StringComparison.OrdinalIgnoreCase));
+
+        if (preset is null)
+            return;
+
+        PresetNameBox.Text = preset.Name;
+        ApplyFilterPreset(preset);
+    }
+
+    private void OnSavePresetClicked(object? sender, RoutedEventArgs e)
+    {
+        var name = PresetNameBox.Text?.Trim();
+        if (string.IsNullOrWhiteSpace(name) && PresetBox.SelectedItem is string selectedName)
+            name = selectedName;
+
+        if (string.IsNullOrWhiteSpace(name))
+            return;
+
+        var preset = CreatePreset(name);
+        var index = _filterPresets.FindIndex(existing =>
+            string.Equals(existing.Name, preset.Name, StringComparison.OrdinalIgnoreCase));
+
+        if (index >= 0)
+            _filterPresets[index] = preset;
+        else
+            _filterPresets.Add(preset);
+
+        FilterPresetStore.Save(_filterPresets);
+        _filterPresets = FilterPresetStore.Load();
+        PresetNameBox.Text = preset.Name;
+        RefreshPresetBox(preset.Name);
+    }
+
+    private void OnDeletePresetClicked(object? sender, RoutedEventArgs e)
+    {
+        var name = PresetBox.SelectedItem as string ?? PresetNameBox.Text?.Trim();
+        if (string.IsNullOrWhiteSpace(name))
+            return;
+
+        _filterPresets.RemoveAll(preset =>
+            string.Equals(preset.Name, name, StringComparison.OrdinalIgnoreCase));
+
+        FilterPresetStore.Save(_filterPresets);
+        _filterPresets = FilterPresetStore.Load();
+        PresetNameBox.Text = "";
+        RefreshPresetBox();
+    }
+
+    private PortableFilterPreset CreatePreset(string name)
+    {
+        var groups = _filterGroups
+            .Select(group => new PortableFilterGroup(
+                SortedNames(group.GenreCtrl.SelectedItems),
+                SortedNames(group.StyleCtrl.SelectedItems)))
+            .Where(group => group.Genres.Count > 0 || group.Styles.Count > 0)
+            .ToList();
+
+        return new PortableFilterPreset(
+            name,
+            SortedNames(RatingFilter.SelectedItems),
+            groups);
+    }
+
+    private void ApplyFilterPreset(PortableFilterPreset preset)
+    {
+        RatingFilter.SetSelectedItems(preset.Ratings, notify: false);
+
+        _filterGroups.Clear();
+        FilterGroupsPanel.Children.Clear();
+
+        var groups = preset.Groups
+            .Where(group => group.Genres.Count > 0 || group.Styles.Count > 0)
+            .ToList();
+
+        if (groups.Count == 0)
+        {
+            AddFilterGroup();
+        }
+        else
+        {
+            foreach (var group in groups)
+            {
+                var controls = AddFilterGroup();
+                controls.GenreCtrl.SetSelectedItems(group.Genres, notify: false);
+                controls.StyleCtrl.SetSelectedItems(group.Styles, notify: false);
+            }
+        }
+
+        ApplyFilter();
+    }
+
+    private static List<string> SortedNames(IEnumerable<string> names) =>
+        names
+            .Where(name => !string.IsNullOrWhiteSpace(name))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Order(StringComparer.OrdinalIgnoreCase)
+            .ToList();
 
     // ─── Filter groups ────────────────────────────────────────────────────────
 
@@ -275,7 +409,7 @@ public partial class MusicView : UserControl
         ApplyFilter();
     }
 
-    private void AddFilterGroup()
+    private FilterGroupControls AddFilterGroup()
     {
         var genreCtrl = new MultiSelectFilterControl { Placeholder = "All genres" };
         genreCtrl.SetItems(Values.Genres.Select(g => g.Name));
@@ -339,6 +473,7 @@ public partial class MusicView : UserControl
 
         card.Children.Add(body);
         FilterGroupsPanel.Children.Add(card);
+        return fg;
     }
 
     private void RemoveFilterGroup(FilterGroupControls fg)

@@ -23,6 +23,7 @@ public partial class MainView : UserControl
     private int _currentIndex = -1;
     private bool _isSeeking;
     private bool _shuffle;
+    private bool _updatingPresetUi;
 
     private record FilterGroupControls(
         MultiSelectFilterControl GenreFilter,
@@ -78,8 +79,23 @@ public partial class MainView : UserControl
 
     private void PopulateFilters()
     {
+        PopulatePresets();
         RatingFilter.SetItems(_loadedLibrary.Library.Ratings);
         RebuildFilterGroups();
+    }
+
+    private void PopulatePresets()
+    {
+        _updatingPresetUi = true;
+        var names = (_loadedLibrary.Library.FilterPresets ?? [])
+            .Select(preset => preset.Name)
+            .Order(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        PresetBox.ItemsSource = names;
+        PresetBox.SelectedIndex = -1;
+        PresetBox.IsEnabled = names.Count > 0;
+        _updatingPresetUi = false;
     }
 
     private void ApplyFilter()
@@ -89,7 +105,9 @@ public partial class MainView : UserControl
             SearchBox.Text,
             RatingFilter.SelectedItems,
             _filterGroups
-                .Select(group => new PortableFilterGroup(group.GenreFilter.SelectedItems, group.StyleFilter.SelectedItems))
+                .Select(group => new PortableFilterGroup(
+                    group.GenreFilter.SelectedItems.ToList(),
+                    group.StyleFilter.SelectedItems.ToList()))
                 .ToList());
 
         if (_shuffle)
@@ -192,8 +210,54 @@ public partial class MainView : UserControl
 
     private void OnClearFiltersClicked(object? sender, RoutedEventArgs e)
     {
+        _updatingPresetUi = true;
+        PresetBox.SelectedIndex = -1;
+        _updatingPresetUi = false;
+
         RatingFilter.SetItems(_loadedLibrary.Library.Ratings);
         RebuildFilterGroups();
+        ApplyFilter();
+    }
+
+    private void OnPresetSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (_updatingPresetUi || PresetBox.SelectedItem is not string presetName)
+            return;
+
+        var preset = (_loadedLibrary.Library.FilterPresets ?? []).FirstOrDefault(p =>
+            string.Equals(p.Name, presetName, StringComparison.OrdinalIgnoreCase));
+
+        if (preset is null)
+            return;
+
+        ApplyFilterPreset(preset);
+    }
+
+    private void ApplyFilterPreset(PortableFilterPreset preset)
+    {
+        RatingFilter.SetSelectedItems(preset.Ratings, notify: false);
+
+        _filterGroups.Clear();
+        FilterGroupsPanel.Children.Clear();
+
+        var groups = preset.Groups
+            .Where(group => group.Genres.Count > 0 || group.Styles.Count > 0)
+            .ToList();
+
+        if (groups.Count == 0)
+        {
+            AddFilterGroup();
+        }
+        else
+        {
+            foreach (var group in groups)
+            {
+                var controls = AddFilterGroup();
+                controls.GenreFilter.SetSelectedItems(group.Genres, notify: false);
+                controls.StyleFilter.SetSelectedItems(group.Styles, notify: false);
+            }
+        }
+
         ApplyFilter();
     }
 
@@ -210,7 +274,7 @@ public partial class MainView : UserControl
         AddFilterGroup();
     }
 
-    private void AddFilterGroup()
+    private FilterGroupControls AddFilterGroup()
     {
         var genreFilter = new MultiSelectFilterControl { Placeholder = "All genres" };
         genreFilter.SetItems(_loadedLibrary.Library.Genres);
@@ -261,6 +325,7 @@ public partial class MainView : UserControl
         container.Children.Add(FilterSection("Genre", genreFilter));
         container.Children.Add(FilterSection("Style", styleFilter));
         FilterGroupsPanel.Children.Add(container);
+        return controls;
     }
 
     private static StackPanel FilterSection(string label, Control control) =>

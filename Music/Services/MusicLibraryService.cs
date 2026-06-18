@@ -68,7 +68,9 @@ public class MusicLibraryService
                 coverFileName));
         }
 
-        await PortableLibraryStore.SaveAsync(targetDirectory, new PortableMusicLibrary(portableTracks));
+        await PortableLibraryStore.SaveAsync(
+            targetDirectory,
+            new PortableMusicLibrary(portableTracks, FilterPresetStore.Load()));
     }
 
     public async Task<DownloadResult> DownloadTrackAsync(DownloadRequest request)

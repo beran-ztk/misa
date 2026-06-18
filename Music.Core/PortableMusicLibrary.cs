@@ -3,7 +3,9 @@ using System.Text.Json.Serialization;
 
 namespace Music.Core;
 
-public sealed record PortableMusicLibrary(List<PortableTrack> Tracks)
+public sealed record PortableMusicLibrary(
+    List<PortableTrack> Tracks,
+    List<PortableFilterPreset>? FilterPresets = null)
 {
     public static PortableMusicLibrary Empty { get; } = new([]);
 
@@ -28,6 +30,11 @@ public sealed record PortableMusicLibrary(List<PortableTrack> Tracks)
         .Order(StringComparer.OrdinalIgnoreCase)
         .ToList();
 }
+
+public sealed record PortableFilterPreset(
+    string Name,
+    List<string> Ratings,
+    List<PortableFilterGroup> Groups);
 
 public sealed record PortableTrack(
     string Title,
@@ -100,7 +107,7 @@ public static class PortableLibraryStore
     }
 }
 
-public sealed record PortableFilterGroup(IReadOnlySet<string> Genres, IReadOnlySet<string> Styles);
+public sealed record PortableFilterGroup(List<string> Genres, List<string> Styles);
 
 public static class PortableTrackFilter
 {
