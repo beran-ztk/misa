@@ -11,7 +11,16 @@
             Margin="0"
             Padding="10,7">
         <Button.Flyout>
-            <Flyout Placement="Bottom" />
+            <Flyout Placement="Bottom">
+                <Flyout.FlyoutPresenterTheme>
+                    <ControlTheme TargetType="FlyoutPresenter">
+                        <Setter Property="Padding" Value="0"/>
+                        <Setter Property="Background" Value="Transparent"/>
+                        <Setter Property="BorderThickness" Value="0"/>
+                        <Setter Property="CornerRadius" Value="6"/>
+                    </ControlTheme>
+                </Flyout.FlyoutPresenterTheme>
+            </Flyout>
         </Button.Flyout>
     </Button>
 </UserControl>
