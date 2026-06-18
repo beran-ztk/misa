@@ -5,9 +5,9 @@
             HorizontalAlignment="Stretch"
             HorizontalContentAlignment="Stretch"
             Background="#0D151D"
-            BorderBrush="#314B5F"
+            BorderBrush="#414B5F"
             BorderThickness="1"
-            CornerRadius="6"
+            CornerRadius="6,6,0,0"
             Margin="0"
             Padding="10,7">
         <Button.Flyout>
