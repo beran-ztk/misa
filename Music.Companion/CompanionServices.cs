@@ -4,6 +4,7 @@ public static class CompanionServices
 {
     public static ICompanionAudioPlayer AudioPlayer { get; set; } = new EmptyAudioPlayer();
     public static ILibraryStorage LibraryStorage { get; set; } = new DefaultLibraryStorage();
+    public static IMediaControls MediaControls { get; set; } = new EmptyMediaControls();
 }
 
 public interface ILibraryStorage
@@ -23,6 +24,22 @@ public interface ICompanionAudioPlayer
     void Pause();
     void Resume();
     void Seek(TimeSpan position);
+    void Stop();
+}
+
+public enum MediaControlCommand
+{
+    Previous,
+    PlayPause,
+    Next
+}
+
+public interface IMediaControls
+{
+    event Action<MediaControlCommand>? CommandRequested;
+    event Action<TimeSpan>? SeekRequested;
+
+    void Update(string title, string? coverPath, bool isPlaying, TimeSpan position, TimeSpan duration);
     void Stop();
 }
 
@@ -50,5 +67,19 @@ internal sealed class EmptyAudioPlayer : ICompanionAudioPlayer
     public void Pause() { }
     public void Resume() { }
     public void Seek(TimeSpan position) { }
+    public void Stop() { }
+}
+
+internal sealed class EmptyMediaControls : IMediaControls
+{
+    public event Action<MediaControlCommand>? CommandRequested;
+    public event Action<TimeSpan>? SeekRequested;
+
+    public void Update(string title, string? coverPath, bool isPlaying, TimeSpan position, TimeSpan duration)
+    {
+        _ = CommandRequested;
+        _ = SeekRequested;
+    }
+
     public void Stop() { }
 }

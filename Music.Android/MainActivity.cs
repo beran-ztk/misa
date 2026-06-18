@@ -18,6 +18,7 @@ public class MainActivity : AvaloniaMainActivity<App>
     {
         CompanionServices.AudioPlayer = new AndroidAudioPlayer();
         CompanionServices.LibraryStorage = new AndroidLibraryStorage();
+        CompanionServices.MediaControls = new AndroidMediaControls(this);
 
         return base.CustomizeAppBuilder(builder)
             .WithInterFont();

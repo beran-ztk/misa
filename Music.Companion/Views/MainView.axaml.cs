@@ -24,6 +24,7 @@ public partial class MainView : UserControl
     private bool _isSeeking;
     private bool _shuffle;
     private bool _updatingPresetUi;
+    private DateTime _lastMediaUpdate = DateTime.MinValue;
 
     private record FilterGroupControls(
         MultiSelectFilterControl GenreFilter,
@@ -50,6 +51,8 @@ public partial class MainView : UserControl
         ProgressSlider.AddHandler(PointerReleasedEvent, OnProgressReleased, RoutingStrategies.Tunnel);
 
         _audio.PlaybackEnded += () => Dispatcher.UIThread.Post(PlayNext);
+        CompanionServices.MediaControls.CommandRequested += OnMediaCommandRequested;
+        CompanionServices.MediaControls.SeekRequested += OnMediaSeekRequested;
         _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
         _timer.Tick += (_, _) => UpdatePlaybackUi();
         _timer.Start();
@@ -140,6 +143,7 @@ public partial class MainView : UserControl
         NowPlayingText.Text = track.Title;
         await _audio.PlayAsync(path);
         UpdatePlayPauseIcon();
+        UpdateMediaControls();
         StatusText.Text = "";
     }
 
@@ -149,6 +153,11 @@ public partial class MainView : UserControl
     }
 
     private async void OnPlayPauseClicked(object? sender, RoutedEventArgs e)
+    {
+        await TogglePlaybackAsync();
+    }
+
+    private async Task TogglePlaybackAsync()
     {
         if (_currentIndex < 0)
         {
@@ -161,15 +170,22 @@ public partial class MainView : UserControl
         {
             _audio.Pause();
             UpdatePlayPauseIcon();
+            UpdateMediaControls();
         }
         else
         {
             _audio.Resume();
             UpdatePlayPauseIcon();
+            UpdateMediaControls();
         }
     }
 
     private void OnPreviousClicked(object? sender, RoutedEventArgs e)
+    {
+        PlayPrevious();
+    }
+
+    private void PlayPrevious()
     {
         if (_filteredTracks.Count == 0)
             return;
@@ -192,6 +208,7 @@ public partial class MainView : UserControl
         {
             _audio.Stop();
             UpdatePlayPauseIcon();
+            CompanionServices.MediaControls.Stop();
             return;
         }
 
@@ -570,10 +587,17 @@ public partial class MainView : UserControl
         if (_audio.Duration.TotalSeconds > 0)
         {
             var seconds = _audio.Duration.TotalSeconds * ProgressSlider.Value / 100.0;
-            _audio.Seek(TimeSpan.FromSeconds(seconds));
+            SeekTo(TimeSpan.FromSeconds(seconds));
         }
 
         _isSeeking = false;
+    }
+
+    private void SeekTo(TimeSpan position)
+    {
+        _audio.Seek(position);
+        UpdatePlaybackUi();
+        UpdateMediaControls();
     }
 
     private void UpdatePlaybackUi()
@@ -583,7 +607,11 @@ public partial class MainView : UserControl
 
         TimeText.Text = $"{Format(_audio.Position)} / {Format(_audio.Duration)}";
         if (_currentIndex >= 0)
+        {
             UpdatePlayPauseIcon();
+            if (_audio.IsPlaying && DateTime.UtcNow - _lastMediaUpdate > TimeSpan.FromSeconds(4))
+                UpdateMediaControls();
+        }
     }
 
     private static string Format(TimeSpan time) =>
@@ -602,5 +630,47 @@ public partial class MainView : UserControl
     {
         PlayIcon.IsVisible = !_audio.IsPlaying;
         PauseIcon.IsVisible = _audio.IsPlaying;
+    }
+
+    private void UpdateMediaControls()
+    {
+        if (_currentIndex < 0 || _currentIndex >= _filteredTracks.Count)
+        {
+            CompanionServices.MediaControls.Stop();
+            return;
+        }
+
+        var track = _filteredTracks[_currentIndex];
+        CompanionServices.MediaControls.Update(
+            track.Title,
+            _loadedLibrary.CoverPath(track),
+            _audio.IsPlaying,
+            _audio.Position,
+            _audio.Duration);
+        _lastMediaUpdate = DateTime.UtcNow;
+    }
+
+    private void OnMediaCommandRequested(MediaControlCommand command)
+    {
+        Dispatcher.UIThread.Post(async () =>
+        {
+            switch (command)
+            {
+                case MediaControlCommand.Previous:
+                    PlayPrevious();
+                    break;
+                case MediaControlCommand.PlayPause:
+                    await TogglePlaybackAsync();
+                    break;
+                case MediaControlCommand.Next:
+                    PlayNext();
+                    break;
+            }
+        });
+    }
+
+    private void OnMediaSeekRequested(TimeSpan position)
+    {
+        Dispatcher.UIThread.Post(() => SeekTo(position));
     }
 }
