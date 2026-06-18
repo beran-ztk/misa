@@ -5,7 +5,7 @@
     <Panel>
 
         <!-- Dim backdrop -->
-        <Border Background="#70000000" />
+        <Border Background="#70000000"/>
 
         <!-- Modal card: stretches to fill the panel with margin so footer is always in view -->
         <Border Margin="32,16,32,16"
@@ -14,9 +14,12 @@
                 HorizontalAlignment="Center"
                 VerticalAlignment="Stretch"
                 Background="#1E1E1E"
+                BorderThickness="1"
+                BorderBrush="DarkCyan"
                 CornerRadius="8"
                 BoxShadow="0 8 40 4 #80000000">
 
+            <Grid>
             <Grid RowDefinitions="Auto,1,*,1,Auto">
 
                 <!-- Header -->
@@ -126,6 +129,39 @@
                     </StackPanel>
                 </Grid>
 
+            </Grid>
+
+            <Border x:Name="BusyLayer"
+                    IsVisible="False"
+                    Background="#B0181A1D"
+                    CornerRadius="8">
+                <Border Width="300"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Background="#101821"
+                        BorderBrush="#314B5F"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="22,18"
+                        BoxShadow="0 8 28 2 #66000000">
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="Downloading track"
+                                   FontSize="15"
+                                   FontWeight="SemiBold"
+                                   HorizontalAlignment="Center"/>
+                        <ProgressBar IsIndeterminate="True"
+                                     Height="5"
+                                     Foreground="#1E9AF0"
+                                     Background="#26313A"/>
+                        <TextBlock x:Name="BusyDetailText"
+                                   Text=""
+                                   FontSize="11"
+                                   Opacity="0.62"
+                                   TextAlignment="Center"
+                                   TextWrapping="Wrap"/>
+                    </StackPanel>
+                </Border>
+            </Border>
             </Grid>
         </Border>
 

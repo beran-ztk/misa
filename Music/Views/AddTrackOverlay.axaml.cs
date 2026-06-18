@@ -41,7 +41,7 @@ public partial class AddTrackOverlay : UserControl
 
     public void Open()
     {
-        _downloading = false;
+        SetBusy(false);
         _showAllGenres = false;
         LoadLookups();
         ClearForm();
@@ -76,6 +76,7 @@ public partial class AddTrackOverlay : UserControl
         StatusText.Text = "";
         CloseBtn.IsEnabled = true;
         DownloadBtn.IsEnabled = false;
+        BusyDetailText.Text = "";
         foreach (var (_, btn) in _genreChips) btn.IsChecked = false;
         StylesPanel.Children.Clear();
         _styleChips.Clear();
@@ -184,14 +185,13 @@ public partial class AddTrackOverlay : UserControl
 
     private async void OnDownloadClicked(object? sender, RoutedEventArgs e)
     {
-        _downloading = true;
-        DownloadBtn.IsEnabled = false;
-        CloseBtn.IsEnabled = false;
-        StatusText.Text = "Downloading…";
+        var url = UrlBox.Text?.Trim() ?? "";
+        SetBusy(true, url);
+        StatusText.Text = "";
 
         var request = new DownloadRequest
         {
-            RawUrl = UrlBox.Text?.Trim() ?? "",
+            RawUrl = url,
             GenreIds = _genreChips
                 .Where(c => c.Btn.IsChecked == true)
                 .Select(c => c.Genre.Id)
@@ -205,10 +205,9 @@ public partial class AddTrackOverlay : UserControl
 
         var result = await MusicLibraryService.Current.DownloadTrackAsync(request);
 
-        _downloading = false;
-
         if (!result.Success)
         {
+            SetBusy(false);
             StatusText.Text = result.Error;
             UpdateDownloadButton();
             CloseBtn.IsEnabled = true;
@@ -216,6 +215,24 @@ public partial class AddTrackOverlay : UserControl
         }
 
         TrackDownloaded?.Invoke();
+    }
+
+    private void SetBusy(bool isBusy, string detail = "")
+    {
+        _downloading = isBusy;
+        BusyLayer.IsVisible = isBusy;
+        BusyDetailText.Text = detail;
+        DownloadBtn.IsEnabled = !isBusy && DownloadBtn.IsEnabled;
+        CloseBtn.IsEnabled = !isBusy;
+        UrlBox.IsEnabled = !isBusy;
+        RatingBox.IsEnabled = !isBusy;
+        ShowMoreGenresBtn.IsEnabled = !isBusy;
+
+        foreach (var (_, btn) in _genreChips)
+            btn.IsEnabled = !isBusy;
+
+        foreach (var (_, btn) in _styleChips)
+            btn.IsEnabled = !isBusy;
     }
 
     private void OnCloseClicked(object? sender, RoutedEventArgs e)
