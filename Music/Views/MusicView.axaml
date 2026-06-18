@@ -170,7 +170,7 @@
                                 Classes="icon"
                                 Click="OnPlayPauseClicked"
                                 ToolTip.Tip="Play / Pause">
-                            <Grid Width="18" Height="18">
+                            <Grid Width="26" Height="26">
                                 <Image x:Name="PlayIcon"
                                        Source="{SvgImage /Assets/play.svg}"/>
                                 <Image x:Name="PauseIcon"
