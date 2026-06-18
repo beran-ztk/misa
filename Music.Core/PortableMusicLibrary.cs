@@ -35,7 +35,8 @@ public sealed record PortableTrack(
     int? DurationSeconds,
     string Rating,
     List<string> Genres,
-    List<string> Styles)
+    List<string> Styles,
+    string? CoverFileName = null)
 {
     public string GenreText => string.Join(", ", Genres);
     public string StyleText => string.Join(", ", Styles);
@@ -53,6 +54,15 @@ public sealed record LoadedMusicLibrary(string RootDirectory, PortableMusicLibra
         return File.Exists(tracksPath)
             ? tracksPath
             : Path.Combine(RootDirectory, track.FileName);
+    }
+
+    public string? CoverPath(PortableTrack track)
+    {
+        if (string.IsNullOrWhiteSpace(track.CoverFileName))
+            return null;
+
+        var path = Path.Combine(RootDirectory, "covers", track.CoverFileName);
+        return File.Exists(path) ? path : null;
     }
 }
 

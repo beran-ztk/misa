@@ -37,7 +37,9 @@ public class MusicLibraryService
     {
         Directory.CreateDirectory(targetDirectory);
         var targetTracksDirectory = Path.Combine(targetDirectory, "tracks");
+        var targetCoversDirectory = Path.Combine(targetDirectory, "covers");
         Directory.CreateDirectory(targetTracksDirectory);
+        Directory.CreateDirectory(targetCoversDirectory);
 
         var tracks = GetTracks();
         var genres = GetGenres().ToDictionary(g => g.Id, g => g.Name);
@@ -54,13 +56,16 @@ public class MusicLibraryService
             if (File.Exists(sourcePath))
                 File.Copy(sourcePath, Path.Combine(targetTracksDirectory, track.FileName), overwrite: true);
 
+            var coverFileName = ExportCover(sourcePath, targetCoversDirectory, track.FileName);
+
             portableTracks.Add(new PortableTrack(
                 track.Title,
                 track.FileName,
                 track.DurationSeconds,
                 ratings.GetValueOrDefault(track.RatingId, ""),
                 NamesFor(trackGenreIds.GetValueOrDefault(track.Id, []), genres),
-                NamesFor(trackStyleIds.GetValueOrDefault(track.Id, []), styles)));
+                NamesFor(trackStyleIds.GetValueOrDefault(track.Id, []), styles),
+                coverFileName));
         }
 
         await PortableLibraryStore.SaveAsync(targetDirectory, new PortableMusicLibrary(portableTracks));
@@ -101,4 +106,29 @@ public class MusicLibraryService
             .Where(name => name.Length > 0)
             .Order(StringComparer.OrdinalIgnoreCase)
             .ToList();
+
+    private static string? ExportCover(string audioFilePath, string targetCoversDirectory, string trackFileName)
+    {
+        if (!File.Exists(audioFilePath))
+            return null;
+
+        var artwork = ThumbnailService.ReadEmbeddedArtworkFile(audioFilePath);
+        if (artwork is null)
+            return null;
+
+        var coverFileName = SafeFileName(Path.GetFileNameWithoutExtension(trackFileName)) + artwork.Extension;
+        File.WriteAllBytes(Path.Combine(targetCoversDirectory, coverFileName), artwork.Data);
+        return coverFileName;
+    }
+
+    private static string SafeFileName(string value)
+    {
+        var invalid = Path.GetInvalidFileNameChars();
+        var chars = value
+            .Select(ch => invalid.Contains(ch) ? '_' : ch)
+            .ToArray();
+
+        var safe = new string(chars).Trim();
+        return safe.Length == 0 ? "cover" : safe;
+    }
 }

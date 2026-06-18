@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
+using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Music.Core;
@@ -17,6 +18,7 @@ public partial class MainView : UserControl
 
     private List<PortableTrack> _filteredTracks = [];
     private readonly List<FilterGroupControls> _filterGroups = [];
+    private readonly Dictionary<string, Bitmap?> _coverCache = new(StringComparer.OrdinalIgnoreCase);
     private readonly Random _rng = new();
     private int _currentIndex = -1;
     private bool _isSeeking;
@@ -26,6 +28,15 @@ public partial class MainView : UserControl
         MultiSelectFilterControl GenreFilter,
         MultiSelectFilterControl StyleFilter,
         StackPanel Container);
+
+    private sealed record TrackRow(PortableTrack Track, Bitmap? Cover)
+    {
+        public string Title => Track.Title;
+        public string GenreText => Track.GenreText;
+        public string StyleText => Track.StyleText;
+        public string DurationText => Track.DurationText;
+        public string Rating => Track.Rating;
+    }
 
     public MainView()
     {
@@ -49,6 +60,7 @@ public partial class MainView : UserControl
     {
         try
         {
+            ClearCoverCache();
             _loadedLibrary = await PortableLibraryStore.LoadAsync(CompanionServices.LibraryStorage.LibraryDirectory);
             StatusText.Text = _loadedLibrary.Library.Tracks.Count == 0
                 ? $"No library found. Put library.json and tracks/ into: {_loadedLibrary.RootDirectory}"
@@ -85,7 +97,9 @@ public partial class MainView : UserControl
         if (_shuffle)
             ShuffleFilteredTracks();
 
-        TrackList.ItemsSource = _filteredTracks;
+        TrackList.ItemsSource = _filteredTracks
+            .Select(track => new TrackRow(track, LoadCover(track)))
+            .ToList();
         if (_currentIndex >= _filteredTracks.Count)
             _currentIndex = -1;
 
@@ -313,6 +327,36 @@ public partial class MainView : UserControl
         foreach (var value in values.Where(value => !string.IsNullOrWhiteSpace(value)))
             counts[value] = counts.GetValueOrDefault(value, 0) + 1;
         return counts;
+    }
+
+    private Bitmap? LoadCover(PortableTrack track)
+    {
+        var path = _loadedLibrary.CoverPath(track);
+        if (path is null)
+            return null;
+
+        if (_coverCache.TryGetValue(path, out var cached))
+            return cached;
+
+        try
+        {
+            var bitmap = new Bitmap(path);
+            _coverCache[path] = bitmap;
+            return bitmap;
+        }
+        catch
+        {
+            _coverCache[path] = null;
+            return null;
+        }
+    }
+
+    private void ClearCoverCache()
+    {
+        foreach (var cover in _coverCache.Values)
+            cover?.Dispose();
+
+        _coverCache.Clear();
     }
 
     private async void OnShuffleClicked(object? sender, RoutedEventArgs e)
