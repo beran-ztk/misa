@@ -81,22 +81,26 @@
                          VerticalContentAlignment="Center"/>
 
                 <Button x:Name="ExportBtn"
-                        Content="Export"
+                        Classes="icon"
                         Click="OnExportClicked"
                         Background="#10151B"
                         BorderThickness="1"
-                        Height="34" Padding="16,0"
                         ToolTip.Tip="Export Android library"
-                        VerticalContentAlignment="Center"/>
+                        VerticalContentAlignment="Center">
+                    <Image Source="{SvgImage /Assets/export.svg}"
+                           Width="17" Height="17"/>
+                </Button>
 
                 <Button x:Name="FiltersToggleBtn"
-                        Content="Filter"
+                        Classes="icon"
                         Click="OnToggleFiltersClicked"
                         Background="#10151B"
                         BorderThickness="1"
-                        Height="34" Padding="16,0"
                         ToolTip.Tip="Open filter panel"
-                        VerticalContentAlignment="Center"/>
+                        VerticalContentAlignment="Center">
+                    <Image Source="{SvgImage /Assets/filter.svg}"
+                           Width="17" Height="17"/>
+                </Button>
 
             </StackPanel>
             </Grid>

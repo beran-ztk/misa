@@ -109,7 +109,7 @@ public partial class MainView : UserControl
         TrackList.SelectedIndex = index;
         NowPlayingText.Text = track.Title;
         await _audio.PlayAsync(path);
-        PlayPauseButton.Content = "II";
+        UpdatePlayPauseIcon();
         StatusText.Text = "";
     }
 
@@ -130,12 +130,12 @@ public partial class MainView : UserControl
         if (_audio.IsPlaying)
         {
             _audio.Pause();
-            PlayPauseButton.Content = ">";
+            UpdatePlayPauseIcon();
         }
         else
         {
             _audio.Resume();
-            PlayPauseButton.Content = "II";
+            UpdatePlayPauseIcon();
         }
     }
 
@@ -161,7 +161,7 @@ public partial class MainView : UserControl
         if (next >= _filteredTracks.Count)
         {
             _audio.Stop();
-            PlayPauseButton.Content = ">";
+            UpdatePlayPauseIcon();
             return;
         }
 
@@ -319,7 +319,7 @@ public partial class MainView : UserControl
     {
         _shuffle = !_shuffle;
         ShuffleButton.Opacity = _shuffle ? 1.0 : 0.45;
-        ShuffleButton.Content = _shuffle ? "Shuffle on" : "Shuffle";
+        ToolTip.SetTip(ShuffleButton, _shuffle ? "Shuffle: On" : "Shuffle: Off");
         ApplyFilter();
 
         if (_filteredTracks.Count > 0)
@@ -472,7 +472,7 @@ public partial class MainView : UserControl
 
         TimeText.Text = $"{Format(_audio.Position)} / {Format(_audio.Duration)}";
         if (_currentIndex >= 0)
-            PlayPauseButton.Content = _audio.IsPlaying ? "II" : ">";
+            UpdatePlayPauseIcon();
     }
 
     private static string Format(TimeSpan time) =>
@@ -485,5 +485,11 @@ public partial class MainView : UserControl
             var j = _rng.Next(i + 1);
             (_filteredTracks[i], _filteredTracks[j]) = (_filteredTracks[j], _filteredTracks[i]);
         }
+    }
+
+    private void UpdatePlayPauseIcon()
+    {
+        PlayIcon.IsVisible = !_audio.IsPlaying;
+        PauseIcon.IsVisible = _audio.IsPlaying;
     }
 }

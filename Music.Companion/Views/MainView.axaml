@@ -20,9 +20,15 @@
             <Setter Property="Width" Value="42"/>
             <Setter Property="Height" Value="38"/>
             <Setter Property="Padding" Value="0"/>
-            <Setter Property="FontSize" Value="18"/>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="Button.toolbarIcon">
+            <Setter Property="Width" Value="42"/>
+            <Setter Property="Height" Value="38"/>
+            <Setter Property="Padding" Value="0"/>
             <Setter Property="HorizontalContentAlignment" Value="Center"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
@@ -56,14 +62,20 @@
                                VerticalAlignment="Center"/>
                     <Button Grid.Column="1"
                             x:Name="ImportButton"
-                            Content="Import"
+                            Classes="toolbarIcon"
                             Click="OnImportClicked"
-                            Padding="12,6"/>
+                            ToolTip.Tip="Import">
+                        <Image Source="{SvgImage /Assets/import.svg}"
+                               Width="19" Height="19"/>
+                    </Button>
                     <Button Grid.Column="2"
                             x:Name="ReloadButton"
-                            Content="Reload"
+                            Classes="toolbarIcon"
                             Click="OnReloadClicked"
-                            Padding="12,6"/>
+                            ToolTip.Tip="Reload">
+                        <Image Source="{SvgImage /Assets/reload.svg}"
+                               Width="19" Height="19"/>
+                    </Button>
                 </Grid>
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
                     <TextBox x:Name="SearchBox"
@@ -72,9 +84,12 @@
                              VerticalContentAlignment="Center"/>
                     <Button Grid.Column="1"
                             x:Name="FilterButton"
-                            Content="Filter"
+                            Classes="toolbarIcon"
                             Click="OnToggleFiltersClicked"
-                            Padding="14,0"/>
+                            ToolTip.Tip="Filters">
+                        <Image Source="{SvgImage /Assets/filter.svg}"
+                               Width="19" Height="19"/>
+                    </Button>
                 </Grid>
                 <TextBlock x:Name="StatusText"
                            FontSize="11"
@@ -114,24 +129,41 @@
                                 VerticalAlignment="Center">
                         <Button x:Name="PreviousButton"
                                 Classes="icon"
-                                Content="&lt;"
-                                Click="OnPreviousClicked"/>
+                                Click="OnPreviousClicked"
+                                ToolTip.Tip="Previous">
+                            <Image Source="{SvgImage /Assets/skip-back.svg}"
+                                   Width="19" Height="19"/>
+                        </Button>
                         <Button x:Name="PlayPauseButton"
                                 Classes="icon"
-                                Content=">"
-                                Click="OnPlayPauseClicked"/>
+                                Click="OnPlayPauseClicked"
+                                ToolTip.Tip="Play / Pause">
+                            <Grid Width="19" Height="19">
+                                <Image x:Name="PlayIcon"
+                                       Source="{SvgImage /Assets/play.svg}"/>
+                                <Image x:Name="PauseIcon"
+                                       Source="{SvgImage /Assets/pause.svg}"
+                                       IsVisible="False"/>
+                            </Grid>
+                        </Button>
                         <Button x:Name="NextButton"
                                 Classes="icon"
-                                Content="&gt;"
-                                Click="OnNextClicked"/>
+                                Click="OnNextClicked"
+                                ToolTip.Tip="Next">
+                            <Image Source="{SvgImage /Assets/skip-forward.svg}"
+                                   Width="19" Height="19"/>
+                        </Button>
                     </StackPanel>
                     <Button x:Name="ShuffleButton"
                             Grid.Column="2"
                             HorizontalAlignment="Right"
-                            Content="Shuffle"
+                            Classes="icon"
                             Opacity="0.45"
-                            Padding="12,5"
-                            Click="OnShuffleClicked"/>
+                            Click="OnShuffleClicked"
+                            ToolTip.Tip="Shuffle">
+                        <Image Source="{SvgImage /Assets/shuffle.svg}"
+                               Width="18" Height="18"/>
+                    </Button>
                 </Grid>
             </StackPanel>
         </Border>
@@ -205,12 +237,14 @@
                                 Opacity="0.65"
                                 Background="Transparent"/>
                         <Button Grid.Column="2"
-                                Content="x"
                                 Click="OnToggleFiltersClicked"
+                                ToolTip.Tip="Close"
                                 Padding="8,4"
                                 FontSize="12"
                                 Opacity="0.55"
-                                Background="Transparent"/>
+                                Background="Transparent">
+                            <TextBlock Text="x"/>
+                        </Button>
                     </Grid>
 
                     <ScrollViewer Grid.Row="1"
