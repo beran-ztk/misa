@@ -30,6 +30,7 @@ public partial class AddTrackOverlay : UserControl
     private CancellationTokenSource? _urlValidationCts;
     private string? _validCanonicalUrl;
     private string? _remoteTitle;
+    private bool _updatingUrlText;
     private bool _downloading;
     private bool _showAllGenres;
     private const int InitialGenreLimit = 10;
@@ -193,6 +194,9 @@ public partial class AddTrackOverlay : UserControl
 
     private void ValidateUrl()
     {
+        if (_updatingUrlText)
+            return;
+
         _urlValidationCts?.Cancel();
         _remoteTitle = null;
 
@@ -215,6 +219,14 @@ public partial class AddTrackOverlay : UserControl
         {
             SetUrlState(UrlState.Invalid, "Track already exists.");
             return;
+        }
+
+        if (!string.Equals(UrlBox.Text, canonicalUrl, StringComparison.Ordinal))
+        {
+            _updatingUrlText = true;
+            UrlBox.Text = canonicalUrl;
+            UrlBox.CaretIndex = canonicalUrl.Length;
+            _updatingUrlText = false;
         }
 
         SetUrlState(UrlState.Valid, "URL looks good. Reading title...");
