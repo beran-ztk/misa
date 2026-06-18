@@ -274,14 +274,37 @@ public partial class MainView : UserControl
 
     private void UpdateFilterCounts()
     {
-        var genreCounts = CountByName(_filteredTracks.SelectMany(track => track.Genres));
-        var styleCounts = CountByName(_filteredTracks.SelectMany(track => track.Styles));
-
         foreach (var group in _filterGroups)
         {
+            var groupTracks = TracksMatchingSearchRatingAndGroup(group);
+            var genreCounts = CountByName(groupTracks.SelectMany(track => track.Genres));
+            var styleCounts = CountByName(groupTracks.SelectMany(track => track.Styles));
+
             group.GenreFilter.UpdateCounts(genreCounts);
             group.StyleFilter.UpdateCounts(styleCounts);
         }
+    }
+
+    private List<PortableTrack> TracksMatchingSearchRatingAndGroup(FilterGroupControls group)
+    {
+        IEnumerable<PortableTrack> query = _loadedLibrary.Library.Tracks;
+        var term = SearchBox.Text?.Trim();
+
+        if (!string.IsNullOrWhiteSpace(term))
+            query = query.Where(track => track.Title.Contains(term, StringComparison.OrdinalIgnoreCase));
+
+        if (RatingFilter.SelectedItems.Count > 0)
+            query = query.Where(track => RatingFilter.SelectedItems.Contains(track.Rating));
+
+        if (group.GenreFilter.SelectedItems.Count > 0)
+            query = query.Where(track => group.GenreFilter.SelectedItems
+                .All(genre => track.Genres.Contains(genre, StringComparer.OrdinalIgnoreCase)));
+
+        if (group.StyleFilter.SelectedItems.Count > 0)
+            query = query.Where(track => group.StyleFilter.SelectedItems
+                .All(style => track.Styles.Contains(style, StringComparer.OrdinalIgnoreCase)));
+
+        return query.ToList();
     }
 
     private static Dictionary<string, int> CountByName(IEnumerable<string> values)

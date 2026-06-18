@@ -95,7 +95,20 @@
                            FontStyle="Italic"
                            Opacity="0.75"
                            TextTrimming="CharacterEllipsis"/>
-                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                    <Slider x:Name="ProgressSlider"
+                            Grid.Column="0"
+                            Minimum="0"
+                            Maximum="100"
+                            Value="0"/>
+                    <TextBlock x:Name="TimeText"
+                               Grid.Column="1"
+                               Text="00:00 / 00:00"
+                               FontSize="11"
+                               Opacity="0.62"
+                               VerticalAlignment="Center"/>
+                </Grid>
+                <Grid ColumnDefinitions="Auto,*,Auto">
                     <StackPanel Orientation="Horizontal"
                                 Spacing="0"
                                 VerticalAlignment="Center">
@@ -112,24 +125,14 @@
                                 Content="&gt;"
                                 Click="OnNextClicked"/>
                     </StackPanel>
-                    <Slider x:Name="ProgressSlider"
-                            Grid.Column="1"
-                            Minimum="0"
-                            Maximum="100"
-                            Value="0"/>
-                    <TextBlock x:Name="TimeText"
-                               Grid.Column="2"
-                               Text="00:00 / 00:00"
-                               FontSize="11"
-                               Opacity="0.62"
-                               VerticalAlignment="Center"/>
+                    <Button x:Name="ShuffleButton"
+                            Grid.Column="2"
+                            HorizontalAlignment="Right"
+                            Content="Shuffle"
+                            Opacity="0.45"
+                            Padding="12,5"
+                            Click="OnShuffleClicked"/>
                 </Grid>
-                <Button x:Name="ShuffleButton"
-                        HorizontalAlignment="Right"
-                        Content="Shuffle"
-                        Opacity="0.45"
-                        Padding="12,5"
-                        Click="OnShuffleClicked"/>
             </StackPanel>
         </Border>
 
@@ -186,8 +189,8 @@
                     BorderBrush="#2B3642"
                     BorderThickness="1,0,0,0"
                     BoxShadow="-10 0 34 0 #77000000">
-                <DockPanel LastChildFill="True">
-                    <Grid DockPanel.Dock="Top"
+                <Grid RowDefinitions="Auto,*,Auto">
+                    <Grid Grid.Row="0"
                           ColumnDefinitions="*,Auto,Auto"
                           Margin="16,13,10,13">
                         <TextBlock Text="Filters"
@@ -210,17 +213,8 @@
                                 Background="Transparent"/>
                     </Grid>
 
-                    <Border DockPanel.Dock="Bottom"
-                            BorderThickness="0,1,0,0"
-                            BorderBrush="#26313A"
-                            Padding="16,10,16,12">
-                        <Button Content="+ Add group"
-                                Click="OnAddFilterGroupClicked"
-                                Padding="10,6"
-                                HorizontalAlignment="Left"/>
-                    </Border>
-
-                    <ScrollViewer Padding="16,12,16,12">
+                    <ScrollViewer Grid.Row="1"
+                                  Padding="16,12,16,12">
                         <StackPanel Spacing="18">
                             <StackPanel Spacing="7">
                                 <TextBlock Text="RATING"
@@ -239,9 +233,20 @@
                                 <StackPanel x:Name="FilterGroupsPanel"
                                             Spacing="0"/>
                             </StackPanel>
+                            <Border Height="60"/>
                         </StackPanel>
                     </ScrollViewer>
-                </DockPanel>
+
+                    <Border Grid.Row="2"
+                            BorderThickness="0,1,0,0"
+                            BorderBrush="#26313A"
+                            Padding="16,10,16,12">
+                        <Button Content="+ Add group"
+                                Click="OnAddFilterGroupClicked"
+                                Padding="10,6"
+                                HorizontalAlignment="Left"/>
+                    </Border>
+                </Grid>
             </Border>
         </Panel>
 
