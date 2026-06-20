@@ -33,6 +33,11 @@ public class MusicLibraryService
     public List<Genre> GetGenres() => _db.GetGenres();
     public List<Style> GetStyles() => _db.GetStyles();
     public List<Rating> GetRatings() => _db.GetRatings();
+    public List<ModelGenre> GetModelGenres() => _db.GetModelGenres();
+    public List<ModelSubgenre> GetModelSubgenres(int? modelGenreId = null) => _db.GetModelSubgenres(modelGenreId);
+    public List<GenreMapping> GetGenreMappings() => _db.GetGenreMappings();
+    public void SetGenreMapping(int genreId, int modelSubgenreId) => _db.SetGenreMapping(genreId, modelSubgenreId);
+    public void RemoveGenreMapping(int modelSubgenreId) => _db.RemoveGenreMapping(modelSubgenreId);
 
     public bool TrackExistsByCanonicalUrl(string canonicalUrl) => _db.TrackExists(canonicalUrl);
 

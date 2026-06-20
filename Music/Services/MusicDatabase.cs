@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Text.Json;
+using Avalonia.Platform;
 using Microsoft.Data.Sqlite;
 using Music.Models;
 
@@ -8,201 +11,217 @@ namespace Music.Services;
 
 public class MusicDatabase
 {
+    private const string AssetBaseUri = "avares://Music/Assets/";
+    private const string ManualAssignmentSourceKey = "manual";
     private readonly string _connectionString = $"Data Source={Values.DbPath}";
 
     private SqliteConnection Open()
     {
         var conn = new SqliteConnection(_connectionString);
         conn.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "PRAGMA foreign_keys = ON;";
+        cmd.ExecuteNonQuery();
         return conn;
     }
+
     public void Initialize()
     {
         if (File.Exists(Values.DbPath))
             return;
-        
-        var dir = Path.GetDirectoryName(Values.DbPath);
-        if (!string.IsNullOrEmpty(dir))
-            Directory.CreateDirectory(dir);
-        
+
+        var directory = Path.GetDirectoryName(Values.DbPath);
+        if (!string.IsNullOrEmpty(directory))
+            Directory.CreateDirectory(directory);
+
         using var conn = Open();
-        CreateSchema(conn);
-        SeedDefaultMetadata(conn);
+        using var tx = conn.BeginTransaction();
+        CreateSchema(conn, tx);
+        SeedDefaultMetadata(conn, tx);
+        tx.Commit();
     }
 
-    private static void CreateSchema(SqliteConnection conn)
+    private static void CreateSchema(SqliteConnection conn, SqliteTransaction tx)
     {
         using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
         cmd.CommandText = @"
-            CREATE TABLE Genres (
-                Id          INTEGER PRIMARY KEY AUTOINCREMENT,
-                Name        TEXT    NOT NULL UNIQUE,
-                Description TEXT    NULL
+            CREATE TABLE channels (
+                id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+                name                TEXT NOT NULL,
+                source_channel_id   TEXT NULL UNIQUE,
+                source_url          TEXT NULL,
+                inform_new_songs    INTEGER NOT NULL DEFAULT 0
             );
-            CREATE TABLE Styles (
-                Id          INTEGER PRIMARY KEY AUTOINCREMENT,
-                Name        TEXT    NOT NULL UNIQUE,
-                Category    TEXT    NULL,
-                Description TEXT    NULL
+
+            CREATE TABLE ratings (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                name        TEXT NOT NULL UNIQUE,
+                sort_order  INTEGER NOT NULL UNIQUE
             );
-            CREATE TABLE Ratings (
-                Id        INTEGER PRIMARY KEY AUTOINCREMENT,
-                Name      TEXT    NOT NULL UNIQUE,
-                SortOrder INTEGER NOT NULL
+
+            CREATE TABLE genres (
+                id           INTEGER PRIMARY KEY AUTOINCREMENT,
+                key          TEXT NOT NULL UNIQUE,
+                name         TEXT NOT NULL UNIQUE,
+                description  TEXT NULL
             );
-            CREATE TABLE Tracks (
-                Id                 INTEGER PRIMARY KEY AUTOINCREMENT,
-                CanonicalUrl       TEXT    NOT NULL UNIQUE,
-                Title              TEXT    NOT NULL,
-                FileName           TEXT    NOT NULL UNIQUE,
-                RatingId           INTEGER NOT NULL,
-                DownloadedAt       TEXT    NOT NULL,
-                DurationSeconds    INTEGER NULL,
-                NeedsReview        INTEGER NOT NULL DEFAULT 0
+
+            CREATE TABLE genre_assignment_sources (
+                id      INTEGER PRIMARY KEY AUTOINCREMENT,
+                key     TEXT NOT NULL UNIQUE,
+                name    TEXT NOT NULL UNIQUE
             );
-            CREATE TABLE TrackStyles (
-                TrackId INTEGER NOT NULL,
-                StyleId INTEGER NOT NULL,
-                PRIMARY KEY (TrackId, StyleId)
+
+            CREATE TABLE tracks (
+                id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+                channel_id          INTEGER NULL REFERENCES channels(id),
+                rating_id           INTEGER NULL REFERENCES ratings(id),
+                canonical_url       TEXT NULL UNIQUE,
+                title               TEXT NOT NULL,
+                file_name           TEXT NOT NULL UNIQUE,
+                duration_seconds    INTEGER NULL,
+                uploaded_at         TEXT NULL,
+                downloaded_at       TEXT NOT NULL,
+                updated_at          TEXT NOT NULL,
+                listen_count        INTEGER NOT NULL DEFAULT 0,
+                skip_count          INTEGER NOT NULL DEFAULT 0,
+                last_listened_at    TEXT NULL,
+                needs_reevaluation  INTEGER NOT NULL DEFAULT 0,
+                notes               TEXT NULL
             );
-            CREATE TABLE TrackGenres (
-                TrackId INTEGER NOT NULL,
-                GenreId INTEGER NOT NULL,
-                PRIMARY KEY (TrackId, GenreId)
-            );";
+
+            CREATE TABLE track_genres (
+                track_id                 INTEGER NOT NULL REFERENCES tracks(id) ON DELETE CASCADE,
+                genre_id                 INTEGER NOT NULL REFERENCES genres(id),
+                set_by_source_id         INTEGER NOT NULL REFERENCES genre_assignment_sources(id),
+                assigned_at              TEXT NOT NULL,
+                PRIMARY KEY (track_id, genre_id)
+            );
+
+            CREATE TABLE track_analysis (
+                id                INTEGER PRIMARY KEY AUTOINCREMENT,
+                track_id          INTEGER NOT NULL UNIQUE REFERENCES tracks(id) ON DELETE CASCADE,
+                analyzed_at       TEXT NOT NULL,
+                analyzer_name     TEXT NULL,
+                analyzer_version  TEXT NULL,
+                bpm               REAL NULL,
+                loudness          REAL NULL,
+                danceability      REAL NULL
+            );
+
+            CREATE TABLE model_genres (
+                id      INTEGER PRIMARY KEY AUTOINCREMENT,
+                name    TEXT NOT NULL UNIQUE
+            );
+
+            CREATE TABLE model_subgenres (
+                id              INTEGER PRIMARY KEY AUTOINCREMENT,
+                model_genre_id  INTEGER NOT NULL REFERENCES model_genres(id) ON DELETE CASCADE,
+                name            TEXT NOT NULL,
+                UNIQUE (model_genre_id, name)
+            );
+
+            CREATE TABLE track_genre_predictions (
+                id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+                track_analysis_id  INTEGER NOT NULL REFERENCES track_analysis(id) ON DELETE CASCADE,
+                model_subgenre_id  INTEGER NOT NULL REFERENCES model_subgenres(id),
+                score              REAL NOT NULL CHECK (score >= 0 AND score <= 1),
+                UNIQUE (track_analysis_id, model_subgenre_id)
+            );
+
+            CREATE TABLE genre_mappings (
+                id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+                genre_id           INTEGER NOT NULL REFERENCES genres(id) ON DELETE CASCADE,
+                model_subgenre_id  INTEGER NOT NULL UNIQUE REFERENCES model_subgenres(id) ON DELETE CASCADE
+            );
+
+            CREATE INDEX ix_track_genres_genre_id ON track_genres(genre_id);
+            CREATE INDEX ix_model_subgenres_model_genre_id ON model_subgenres(model_genre_id);
+            CREATE INDEX ix_track_genre_predictions_analysis_id ON track_genre_predictions(track_analysis_id);
+            CREATE INDEX ix_genre_mappings_genre_id ON genre_mappings(genre_id);";
         cmd.ExecuteNonQuery();
     }
 
-    private static void SeedDefaultMetadata(SqliteConnection conn)
+    private static void SeedDefaultMetadata(SqliteConnection conn, SqliteTransaction tx)
     {
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = @"
-            INSERT OR IGNORE INTO Ratings (Name, SortOrder) VALUES
-                ('Skip', 1), ('Okay', 2), ('Good', 3), ('Great', 4), ('Favorite', 5);
+        foreach (var rating in ReadAsset<RatingSeedDocument>("default-ratings.json").Ratings)
+        {
+            ExecuteInsert(conn, tx,
+                "INSERT INTO ratings (name, sort_order) VALUES ($name, $sortOrder)",
+                ("$name", rating.Name), ("$sortOrder", rating.SortOrder));
+        }
 
-            INSERT OR IGNORE INTO Genres (Name, Description) VALUES
-                ('Nightcore', 'Hochgepitchte und beschleunigte Versionen bestehender Songs; oft mit Anime-, Internet- oder Edit-Kultur verbunden.'),
-                ('Pop', 'Eingängige, melodische Mainstream-Musik mit Fokus auf Gesang, Hook und Wiedererkennbarkeit.'),
-                ('EDM', 'Breiter Sammelbegriff für elektronische Festival-, Club- und Dance-Musik mit moderner Produktion.'),
-                ('House', 'Elektronische Musik mit stabilem 4/4-Groove, tanzbarem Rhythmus und meist gleichmäßigem Flow.'),
-                ('Techno', 'Treibende, repetitive elektronische Musik mit Fokus auf Rhythmus, Energie, Groove und maschinellem Klang.'),
-                ('Trance', 'Melodische elektronische Musik mit langen Aufbauten, Spannung, Euphorie und atmosphärischen Flächen.'),
-                ('Hardstyle', 'Harte elektronische Musik mit starkem Kick, klaren Leads und oft euphorischen oder aggressiven Melodien.'),
-                ('Hardcore', 'Sehr harte und schnelle elektronische Musik; Oberbegriff für extreme Core-Stile mit hoher Energie.'),
-                ('Frenchcore', 'Schneller Core-Stil mit rollender Kickdrum, hohem Tempo und oft überraschend melodischen Elementen.'),
-                ('Drum and Bass', 'Schnelle elektronische Musik mit Breakbeats, starkem Bass und komplexerem Rhythmus als House oder Techno.'),
-                ('Dubstep', 'Basslastige elektronische Musik mit schweren Drops, Wobble-Bässen und oft halbem Tempo-Gefühl.'),
-                ('Future Bass', 'Melodische Bass-Musik mit hellen Synths, Vocal-Chops, emotionalem Klang und modernen Drops.'),
-                ('Trap', 'Beat-orientierte Musik mit 808-Bass, schnellen Hi-Hats und Einflüssen aus Hip-Hop und EDM.'),
-                ('Phonk', 'Dunkler, basslastiger Stil mit Hip-Hop- und Memphis-Rap-Einfluss; häufig in Drift- und Edit-Musik.'),
-                ('Wave', 'Atmosphärische, dunkle Bass-Musik zwischen Trap, Ambient und Synth-Flächen; oft emotional und nächtlich.'),
-                ('Synthwave', 'Retro-elektronische Musik mit 80er-Synths, nostalgischer Atmosphäre und oft cineastischem Klang.'),
-                ('Ambient', 'Atmosphärische Musik ohne starken Beat; Fokus liegt auf Raum, Stimmung, Fläche und Klangtextur.'),
-                ('Downtempo', 'Langsamere elektronische Musik mit Beat, aber ruhiger, entspannter und weniger cluborientiert.'),
-                ('Lo-Fi', 'Musik mit absichtlich warmem, rauem oder unperfektem Klang; oft entspannte Beats und weiche Atmosphäre.'),
-                ('Hip-Hop', 'Oberbegriff für Beats, Sampling, Rap-Kultur und rhythmisch geprägte urbane Musik.'),
-                ('Rap', 'Musik mit gesprochenem oder gerapptem Vocal im Vordergrund; stärker text- und floworientiert als Hip-Hop allgemein.'),
-                ('R&B', 'Gesangsorientierte Musik mit Soul-, Pop- und Hip-Hop-Einflüssen; oft weich, emotional und groovebasiert.'),
-                ('Rock', 'Gitarrenbasierte Musik mit Band-Sound, Drums und meist stärkerer Live- oder Energie-Wirkung.'),
-                ('Metal', 'Härtere Gitarrenmusik mit aggressiveren Riffs, hoher Intensität und oft dunklerem oder wuchtigerem Klang.'),
-                ('Classical', 'Klassische Musik mit traditionellen Kompositionsformen, z. B. Klavier, Streicher oder Orchesterwerke.'),
-                ('Orchestral', 'Musik mit Orchesterklang; kann klassisch, filmisch, modern, dramatisch oder soundtrackartig sein.'),
-                ('Piano', 'Klavierzentrierte Musik, unabhängig davon ob sie klassisch, emotional, ruhig oder modern produziert ist.'),
-                ('Epic', 'Große, mächtige und cineastische Musik mit Trailer-, Battle-, Bossfight- oder Heldengefühl.'),
-                ('Chiptune', '8-Bit- oder Retro-Game-Sound mit alten Konsolen-, Arcade- oder Chip-Sound-Ästhetiken.'),
-                ('J-Pop', 'Japanische Popmusik mit eingängigen Melodien; oft relevant für Anime-, Idol- oder japanische Medienkultur.'),
-                ('K-Pop', 'Koreanische Popmusik mit stark produzierten Vocals, Hooks, Choreografie- und Dance-orientiertem Sound.');
+        var genres = ReadAsset<GenreSeedDocument>("default-genres.json").Genres;
+        for (var index = 0; index < genres.Count; index++)
+        {
+            var genre = genres[index];
+            ExecuteInsert(conn, tx,
+                "INSERT INTO genres (key, name, description) VALUES ($key, $name, $description)",
+                ("$key", ToKey(genre.Name)),
+                ("$name", genre.Name),
+                ("$description", genre.Description));
+        }
 
-            INSERT OR IGNORE INTO Styles (Name, Category, Description) VALUES
-                ('Fast', 'Energy', 'Schneller Track mit hohem Tempo oder deutlich beschleunigtem Gefühl.'),
-                ('Slow', 'Energy', 'Langsamer Track mit ruhigem Tempo oder getragenem Ablauf.'),
-                ('Energetic', 'Energy', 'Wirkt aktiv, antreibend und energiegeladen, ohne zwingend hart zu sein.'),
-                ('Calm', 'Energy', 'Ruhiger, entspannter Track mit wenig Druck, Aufregung oder Bewegung.'),
+        foreach (var source in new[]
+                 {
+                     new AssignmentSourceSeed("manual", "Manual"),
+                     new AssignmentSourceSeed("model_suggestion", "Model suggestion"),
+                     new AssignmentSourceSeed("import", "Import"),
+                     new AssignmentSourceSeed("system", "System")
+                 })
+        {
+            ExecuteInsert(conn, tx,
+                "INSERT INTO genre_assignment_sources (key, name) VALUES ($key, $name)",
+                ("$key", source.Key), ("$name", source.Name));
+        }
 
-                ('Bouncy', 'Groove', 'Federnder, springender Rhythmus, der leicht und beweglich wirkt.'),
-                ('Groovy', 'Groove', 'Starker Rhythmus oder Flow, der besonders gut mitwippt oder tanzbar wirkt.'),
+        var modelGenres = new Dictionary<string, long>(StringComparer.Ordinal);
+        foreach (var modelClass in ReadAsset<ModelGenreSeedDocument>("model-genres-with-subgenres.json").Classes)
+        {
+            var (genreName, subgenreName) = SplitModelClass(modelClass);
+            if (!modelGenres.TryGetValue(genreName, out var modelGenreId))
+            {
+                modelGenreId = InsertAndGetId(conn, tx,
+                    "INSERT INTO model_genres (name) VALUES ($name)",
+                    ("$name", genreName));
+                modelGenres.Add(genreName, modelGenreId);
+            }
 
-                ('Aggressive', 'Pressure', 'Klingt offensiv, hart, druckvoll oder attackierend.'),
-                ('Hard', 'Pressure', 'Allgemein harter Sound mit kräftigem Druck, starken Kicks oder intensiver Energie.'),
-                ('Raw', 'Pressure', 'Roh, ungeglättet, dreckig oder wenig poliert; oft härter und direkter als melodische Varianten.'),
-                ('Bass', 'Pressure', 'Bass ist auffällig dominant und prägt den Track deutlich.'),
-
-                ('Soft', 'Softness', 'Weicher, sanfter Klang ohne starke Härte oder Aggression.'),
-                ('Smooth', 'Softness', 'Sehr flüssiger, angenehmer und sauberer Klangfluss.'),
-                ('Deep', 'Softness', 'Tiefer, ruhiger oder räumlicher Klang mit weniger direkter Oberfläche.'),
-                ('Chill', 'Softness', 'Entspannt, locker und gut zum Nebenbei- oder Runterkommen-Hören.'),
-
-                ('Dark', 'Mood', 'Dunkle, ernste oder bedrohliche Stimmung.'),
-                ('Melodic', 'Mood', 'Melodie ist besonders wichtig und bleibt klar im Vordergrund.'),
-                ('Emotional', 'Mood', 'Starker emotionaler Ausdruck, unabhängig davon ob traurig, euphorisch oder dramatisch.'),
-                ('Melancholic', 'Mood', 'Traurig, nachdenklich oder bittersüß, aber nicht zwingend komplett negativ.'),
-                ('Romantic', 'Mood', 'Romantische, warme oder gefühlvolle Stimmung.'),
-                ('Dramatic', 'Mood', 'Wirkt groß, ernst, spannungsvoll oder filmisch zugespitzt.'),
-                ('Euphoric', 'Mood', 'Sehr positives, erhebendes Hochgefühl; typisch bei Trance oder Hardstyle.'),
-                ('Dreamy', 'Mood', 'Verträumt, weich, schwebend oder leicht unreal wirkend.'),
-                ('Nostalgic', 'Mood', 'Erzeugt ein Vergangenheits-, Erinnerungs- oder Retro-Gefühl.'),
-                ('Happy', 'Mood', 'Fröhlich, positiv und leicht.'),
-                ('Hopeful', 'Mood', 'Hoffnungsvoll, aufbauend und positiv nach vorne gerichtet.'),
-                ('Mysterious', 'Mood', 'Geheimnisvoll, unklar oder rätselhaft wirkend.'),
-                ('Tense', 'Mood', 'Angespannt, unruhig oder spannungsvoll.'),
-                ('Atmospheric', 'Mood', 'Starke Atmosphäre, viel Raum, Fläche oder Stimmung statt nur Beat und Melodie.'),
-
-                ('Vocal', 'Vocals', 'Gesang, Rap oder Stimme ist ein wichtiger Bestandteil des Tracks.'),
-                ('Instrumental', 'Vocals', 'Keine deutlichen Vocals im Vordergrund; Fokus liegt auf Instrumenten, Synths oder Beats.'),
-
-                ('Anime', 'Context', 'Hat klaren Anime-Bezug oder klingt stark nach Anime-, AMV- oder Opening-Kontext.'),
-                ('Sleep', 'Context', 'Ruhig genug zum Einschlafen oder sehr passivem Hören.'),
-
-                ('Speed Up', 'Version', 'Beschleunigte Version eines Tracks, aber nicht zwingend so stark verändert wie Nightcore.'),
-                ('Slowed', 'Version', 'Verlangsamte Version eines Tracks.'),
-                ('Reverb', 'Version', 'Hall wurde deutlich hinzugefügt und prägt den Klang.'),
-                ('Mashup', 'Version', 'Mehrere Songs oder Elemente wurden zu einem neuen Track kombiniert.'),
-                ('Live Version', 'Version', 'Live-Aufnahme oder Live-Version statt normaler Studiofassung.'),
-
-                ('Retro', 'Aesthetic', 'Klingt bewusst nach älteren Musik-, Synth- oder Game-Ästhetiken.'),
-                ('Cyberpunk', 'Aesthetic', 'Düstere, futuristische High-Tech-Atmosphäre, oft neonartig oder urban.'),
-                ('Glitchy', 'Aesthetic', 'Bewusst digitale Fehler, Stottern, Artefakte oder zerhackte Sounds.'),
-                ('Immense', 'Aesthetic', 'Sehr groß, wuchtig oder überwältigend im Klangbild.'),
-                ('Minimal', 'Aesthetic', 'Reduzierter Track mit wenigen Elementen, viel Wiederholung und wenig Überladung.');";
-        cmd.ExecuteNonQuery();
+            ExecuteInsert(conn, tx,
+                "INSERT INTO model_subgenres (model_genre_id, name) VALUES ($modelGenreId, $name)",
+                ("$modelGenreId", modelGenreId), ("$name", subgenreName));
+        }
     }
 
     public bool TrackExists(string canonicalUrl)
     {
         using var conn = Open();
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT COUNT(*) FROM Tracks WHERE CanonicalUrl = $url";
+        cmd.CommandText = "SELECT COUNT(*) FROM tracks WHERE canonical_url = $url";
         cmd.Parameters.AddWithValue("$url", canonicalUrl);
         return (long)cmd.ExecuteScalar()! > 0;
     }
 
     public void InsertTrack(string canonicalUrl, string title, string fileName,
-                            List<int> genreIds, int ratingId, List<int> styleIds, int? durationSeconds)
+        List<int> genreIds, int ratingId, List<int> _, int? durationSeconds)
     {
         using var conn = Open();
         using var tx = conn.BeginTransaction();
+        var now = DateTime.UtcNow.ToString("O");
 
-        using var insertCmd = conn.CreateCommand();
-        insertCmd.Transaction = tx;
-        insertCmd.CommandText = @"
-            INSERT INTO Tracks (CanonicalUrl, Title, FileName, RatingId, DownloadedAt, DurationSeconds)
-            VALUES ($url, $title, $fileName, $ratingId, $downloadedAt, $duration)";
-        insertCmd.Parameters.AddWithValue("$url", canonicalUrl);
-        insertCmd.Parameters.AddWithValue("$title", title);
-        insertCmd.Parameters.AddWithValue("$fileName", fileName);
-        insertCmd.Parameters.AddWithValue("$ratingId", ratingId);
-        insertCmd.Parameters.AddWithValue("$downloadedAt", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
-        insertCmd.Parameters.AddWithValue("$duration", durationSeconds.HasValue ? (object)durationSeconds.Value : DBNull.Value);
-        insertCmd.ExecuteNonQuery();
+        var trackId = InsertAndGetId(conn, tx, @"
+            INSERT INTO tracks (canonical_url, title, file_name, rating_id, downloaded_at, updated_at, duration_seconds)
+            VALUES ($url, $title, $fileName, $ratingId, $downloadedAt, $updatedAt, $duration)",
+            ("$url", canonicalUrl),
+            ("$title", title),
+            ("$fileName", fileName),
+            ("$ratingId", ratingId),
+            ("$downloadedAt", now),
+            ("$updatedAt", now),
+            ("$duration", durationSeconds));
 
-        using var idCmd = conn.CreateCommand();
-        idCmd.Transaction = tx;
-        idCmd.CommandText = "SELECT last_insert_rowid()";
-        var trackId = (long)idCmd.ExecuteScalar()!;
-
-        InsertJunctionRows(conn, tx, "TrackGenres", "GenreId", trackId, genreIds);
-        InsertJunctionRows(conn, tx, "TrackStyles", "StyleId", trackId, styleIds);
-
+        InsertTrackGenres(conn, tx, trackId, genreIds, GetAssignmentSourceId(conn, tx, ManualAssignmentSourceKey), now);
         tx.Commit();
     }
 
@@ -210,48 +229,64 @@ public class MusicDatabase
     {
         using var conn = Open();
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = @"SELECT Id, CanonicalUrl, Title, FileName, RatingId, DownloadedAt,
-                                   DurationSeconds, NeedsReview
-                            FROM Tracks ORDER BY DownloadedAt DESC";
-        using var r = cmd.ExecuteReader();
-        var list = new List<MusicTrack>();
-        while (r.Read())
-            list.Add(new MusicTrack(
-                r.GetInt32(0), 
-                r.GetString(1), 
-                r.GetString(2), 
-                r.GetString(3),
-                r.GetInt32(4), 
-                r.GetString(5),
-                r.IsDBNull(6) ? null : r.GetInt32(6),
-                r.GetInt32(7) != 0));
-        return list;
+        cmd.CommandText = @"SELECT id, canonical_url, title, file_name, rating_id, downloaded_at,
+                                   duration_seconds, needs_reevaluation
+                            FROM tracks ORDER BY downloaded_at DESC";
+        using var reader = cmd.ExecuteReader();
+        var tracks = new List<MusicTrack>();
+        while (reader.Read())
+        {
+            tracks.Add(new MusicTrack(
+                reader.GetInt32(0),
+                reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
+                reader.GetString(2),
+                reader.GetString(3),
+                reader.IsDBNull(4) ? 0 : reader.GetInt32(4),
+                reader.GetString(5),
+                reader.IsDBNull(6) ? null : reader.GetInt32(6),
+                reader.GetInt32(7) != 0));
+        }
+        return tracks;
     }
-    public Dictionary<int, List<int>> GetAllTrackStyleIds() => GetAllJunctionIds("TrackStyles", "StyleId");
-    public List<int> GetTrackStyleIds(int trackId) => GetJunctionIds("TrackStyles", "StyleId", trackId);
 
-    public Dictionary<int, List<int>> GetAllTrackGenreIds() => GetAllJunctionIds("TrackGenres", "GenreId");
-    public List<int> GetTrackGenreIds(int trackId) => GetJunctionIds("TrackGenres", "GenreId", trackId);
+    public Dictionary<int, List<int>> GetAllTrackGenreIds()
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT track_id, genre_id FROM track_genres";
+        return ReadTrackIdMap(cmd);
+    }
 
-    public void UpdateTrack(int id, string title, List<int> genreIds, int ratingId,
-                            List<int> styleIds)
+    public List<int> GetTrackGenreIds(int trackId)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT genre_id FROM track_genres WHERE track_id = $trackId";
+        cmd.Parameters.AddWithValue("$trackId", trackId);
+        using var reader = cmd.ExecuteReader();
+        var genreIds = new List<int>();
+        while (reader.Read()) genreIds.Add(reader.GetInt32(0));
+        return genreIds;
+    }
+
+    // Styles are intentionally no longer part of the schema. These compatibility
+    // methods keep the current UI operational until its dedicated filter redesign.
+    public Dictionary<int, List<int>> GetAllTrackStyleIds() => [];
+    public List<int> GetTrackStyleIds(int trackId) => [];
+    public List<Style> GetStyles() => [];
+
+    public void UpdateTrack(int id, string title, List<int> genreIds, int ratingId, List<int> _)
     {
         using var conn = Open();
         using var tx = conn.BeginTransaction();
+        var now = DateTime.UtcNow.ToString("O");
 
-        using (var cmd = conn.CreateCommand())
-        {
-            cmd.Transaction = tx;
-            cmd.CommandText = "UPDATE Tracks SET Title = $title, RatingId = $ratingId WHERE Id = $id";
-            cmd.Parameters.AddWithValue("$id", id);
-            cmd.Parameters.AddWithValue("$title", title);
-            cmd.Parameters.AddWithValue("$ratingId", ratingId);
-            cmd.ExecuteNonQuery();
-        }
+        ExecuteInsert(conn, tx,
+            "UPDATE tracks SET title = $title, rating_id = $ratingId, updated_at = $updatedAt WHERE id = $id",
+            ("$id", id), ("$title", title), ("$ratingId", ratingId), ("$updatedAt", now));
 
-        ReplaceJunctionRows(conn, tx, "TrackGenres", "GenreId", id, genreIds);
-        ReplaceJunctionRows(conn, tx, "TrackStyles", "StyleId", id, styleIds);
-
+        ExecuteInsert(conn, tx, "DELETE FROM track_genres WHERE track_id = $trackId", ("$trackId", id));
+        InsertTrackGenres(conn, tx, id, genreIds, GetAssignmentSourceId(conn, tx, ManualAssignmentSourceKey), now);
         tx.Commit();
     }
 
@@ -259,98 +294,204 @@ public class MusicDatabase
     {
         using var conn = Open();
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = "UPDATE Tracks SET NeedsReview = $needsReview WHERE Id = $id";
+        cmd.CommandText = "UPDATE tracks SET needs_reevaluation = $needsReview WHERE id = $id";
         cmd.Parameters.AddWithValue("$id", id);
         cmd.Parameters.AddWithValue("$needsReview", needsReview ? 1 : 0);
         cmd.ExecuteNonQuery();
     }
 
-    // --- Lookups ---
-    public List<Genre> GetGenres() => GetLookupList("Genres", (id, name) => new Genre(id, name));
-    public List<Style> GetStyles() => GetLookupList("Styles", (id, name) => new Style(id, name));
+    public List<Genre> GetGenres()
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT id, name FROM genres ORDER BY name";
+        return ReadLookupList(cmd, (id, name) => new Genre(id, name));
+    }
+
     public List<Rating> GetRatings()
     {
         using var conn = Open();
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT Id, Name, SortOrder FROM Ratings ORDER BY SortOrder";
-        using var r = cmd.ExecuteReader();
-        var list = new List<Rating>();
-        while (r.Read()) list.Add(new Rating(r.GetInt32(0), r.GetString(1), r.GetInt32(2)));
-        return list;
+        cmd.CommandText = "SELECT id, name, sort_order FROM ratings ORDER BY sort_order";
+        using var reader = cmd.ExecuteReader();
+        var ratings = new List<Rating>();
+        while (reader.Read()) ratings.Add(new Rating(reader.GetInt32(0), reader.GetString(1), reader.GetInt32(2)));
+        return ratings;
     }
 
-    // --- Private helpers ---
-
-    private List<T> GetLookupList<T>(string table, Func<int, string, T> ctor)
+    public List<ModelGenre> GetModelGenres()
     {
         using var conn = Open();
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = $"SELECT Id, Name FROM {table} ORDER BY Name";
-        using var r = cmd.ExecuteReader();
-        var list = new List<T>();
-        while (r.Read()) list.Add(ctor(r.GetInt32(0), r.GetString(1)));
-        return list;
+        cmd.CommandText = "SELECT id, name FROM model_genres ORDER BY name";
+        return ReadLookupList(cmd, (id, name) => new ModelGenre(id, name));
     }
 
-    private Dictionary<int, List<int>> GetAllJunctionIds(string table, string idColumn)
+    public List<ModelSubgenre> GetModelSubgenres(int? modelGenreId = null)
     {
         using var conn = Open();
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = $"SELECT TrackId, {idColumn} FROM {table}";
-        using var r = cmd.ExecuteReader();
-        var dict = new Dictionary<int, List<int>>();
-        while (r.Read())
+        cmd.CommandText = @"SELECT id, model_genre_id, name
+                            FROM model_subgenres
+                            WHERE $modelGenreId IS NULL OR model_genre_id = $modelGenreId
+                            ORDER BY name";
+        cmd.Parameters.AddWithValue("$modelGenreId", modelGenreId is null ? DBNull.Value : modelGenreId.Value);
+        using var reader = cmd.ExecuteReader();
+        var subgenres = new List<ModelSubgenre>();
+        while (reader.Read()) subgenres.Add(new ModelSubgenre(reader.GetInt32(0), reader.GetInt32(1), reader.GetString(2)));
+        return subgenres;
+    }
+
+    public List<GenreMapping> GetGenreMappings()
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"SELECT gm.id, gm.genre_id, g.name, gm.model_subgenre_id, msg.model_genre_id, msg.name
+                            FROM genre_mappings gm
+                            JOIN genres g ON g.id = gm.genre_id
+                            JOIN model_subgenres msg ON msg.id = gm.model_subgenre_id
+                            ORDER BY msg.name";
+        using var reader = cmd.ExecuteReader();
+        var mappings = new List<GenreMapping>();
+        while (reader.Read())
         {
-            var trackId = r.GetInt32(0);
-            var tagId = r.GetInt32(1);
-            if (!dict.TryGetValue(trackId, out var ids))
-            {
-                ids = [];
-                dict[trackId] = ids;
-            }
-            ids.Add(tagId);
+            mappings.Add(new GenreMapping(
+                reader.GetInt32(0), reader.GetInt32(1), reader.GetString(2),
+                reader.GetInt32(3), reader.GetInt32(4), reader.GetString(5)));
         }
-        return dict;
+        return mappings;
     }
 
-    private List<int> GetJunctionIds(string table, string idColumn, int trackId)
+    public void SetGenreMapping(int genreId, int modelSubgenreId)
     {
         using var conn = Open();
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = $"SELECT {idColumn} FROM {table} WHERE TrackId = $id";
-        cmd.Parameters.AddWithValue("$id", trackId);
-        using var r = cmd.ExecuteReader();
-        var ids = new List<int>();
-        while (r.Read()) ids.Add(r.GetInt32(0));
-        return ids;
+        cmd.CommandText = @"
+            INSERT INTO genre_mappings (genre_id, model_subgenre_id)
+            VALUES ($genreId, $modelSubgenreId)
+            ON CONFLICT(model_subgenre_id) DO UPDATE SET genre_id = excluded.genre_id";
+        cmd.Parameters.AddWithValue("$genreId", genreId);
+        cmd.Parameters.AddWithValue("$modelSubgenreId", modelSubgenreId);
+        cmd.ExecuteNonQuery();
     }
 
-    private static void InsertJunctionRows(SqliteConnection conn, SqliteTransaction tx,
-        string table, string idColumn, long trackId, List<int> ids)
+    public void RemoveGenreMapping(int modelSubgenreId)
     {
-        if (ids.Count == 0) return;
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "DELETE FROM genre_mappings WHERE model_subgenre_id = $modelSubgenreId";
+        cmd.Parameters.AddWithValue("$modelSubgenreId", modelSubgenreId);
+        cmd.ExecuteNonQuery();
+    }
+
+    private static void InsertTrackGenres(SqliteConnection conn, SqliteTransaction tx, long trackId,
+        IEnumerable<int> genreIds, long assignmentSourceId, string assignedAt)
+    {
+        var distinctGenreIds = genreIds.Distinct().ToList();
+        if (distinctGenreIds.Count == 0) return;
+
         using var cmd = conn.CreateCommand();
         cmd.Transaction = tx;
-        cmd.CommandText = $"INSERT INTO {table} (TrackId, {idColumn}) VALUES ($tid, $val)";
-        cmd.Parameters.Add("$tid", SqliteType.Integer).Value = trackId;
-        var valParam = cmd.Parameters.Add("$val", SqliteType.Integer);
-        foreach (var id in ids)
+        cmd.CommandText = @"INSERT INTO track_genres (track_id, genre_id, set_by_source_id, assigned_at)
+                            VALUES ($trackId, $genreId, $sourceId, $assignedAt)";
+        cmd.Parameters.Add("$trackId", SqliteType.Integer).Value = trackId;
+        var genreIdParameter = cmd.Parameters.Add("$genreId", SqliteType.Integer);
+        cmd.Parameters.Add("$sourceId", SqliteType.Integer).Value = assignmentSourceId;
+        cmd.Parameters.Add("$assignedAt", SqliteType.Text).Value = assignedAt;
+        foreach (var genreId in distinctGenreIds)
         {
-            valParam.Value = id;
+            genreIdParameter.Value = genreId;
             cmd.ExecuteNonQuery();
         }
     }
 
-    private static void ReplaceJunctionRows(SqliteConnection conn, SqliteTransaction tx,
-        string table, string idColumn, int trackId, List<int> ids)
+    private static long GetAssignmentSourceId(SqliteConnection conn, SqliteTransaction tx, string key)
     {
-        using (var del = conn.CreateCommand())
-        {
-            del.Transaction = tx;
-            del.CommandText = $"DELETE FROM {table} WHERE TrackId = $id";
-            del.Parameters.AddWithValue("$id", trackId);
-            del.ExecuteNonQuery();
-        }
-        InsertJunctionRows(conn, tx, table, idColumn, trackId, ids);
+        using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
+        cmd.CommandText = "SELECT id FROM genre_assignment_sources WHERE key = $key";
+        cmd.Parameters.AddWithValue("$key", key);
+        return (long)cmd.ExecuteScalar()!;
     }
+
+    private static List<T> ReadLookupList<T>(SqliteCommand cmd, Func<int, string, T> create)
+    {
+        using var reader = cmd.ExecuteReader();
+        var rows = new List<T>();
+        while (reader.Read()) rows.Add(create(reader.GetInt32(0), reader.GetString(1)));
+        return rows;
+    }
+
+    private static Dictionary<int, List<int>> ReadTrackIdMap(SqliteCommand cmd)
+    {
+        using var reader = cmd.ExecuteReader();
+        var values = new Dictionary<int, List<int>>();
+        while (reader.Read())
+        {
+            var trackId = reader.GetInt32(0);
+            if (!values.TryGetValue(trackId, out var ids))
+                values[trackId] = ids = [];
+            ids.Add(reader.GetInt32(1));
+        }
+        return values;
+    }
+
+    private static void ExecuteInsert(SqliteConnection conn, SqliteTransaction tx, string sql,
+        params (string Name, object? Value)[] parameters)
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
+        cmd.CommandText = sql;
+        AddParameters(cmd, parameters);
+        cmd.ExecuteNonQuery();
+    }
+
+    private static long InsertAndGetId(SqliteConnection conn, SqliteTransaction tx, string sql,
+        params (string Name, object? Value)[] parameters)
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
+        cmd.CommandText = $"{sql}; SELECT last_insert_rowid();";
+        AddParameters(cmd, parameters);
+        return (long)cmd.ExecuteScalar()!;
+    }
+
+    private static void AddParameters(SqliteCommand cmd, IEnumerable<(string Name, object? Value)> parameters)
+    {
+        foreach (var (name, value) in parameters)
+            cmd.Parameters.AddWithValue(name, value ?? DBNull.Value);
+    }
+
+    private static T ReadAsset<T>(string fileName)
+    {
+        using var stream = AssetLoader.Open(new Uri(AssetBaseUri + fileName));
+        return JsonSerializer.Deserialize<T>(stream, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
+               ?? throw new InvalidOperationException($"Could not read asset '{fileName}'.");
+    }
+
+    private static (string Genre, string Subgenre) SplitModelClass(string value)
+    {
+        var separator = value.IndexOf("---", StringComparison.Ordinal);
+        if (separator <= 0 || separator == value.Length - 3)
+            throw new InvalidOperationException($"Invalid model class '{value}'. Expected 'Genre---Subgenre'.");
+
+        return (value[..separator], value[(separator + 3)..]);
+    }
+
+    private static string ToKey(string name)
+    {
+        var chars = name
+            .Trim()
+            .ToLowerInvariant()
+            .Select(character => char.IsLetterOrDigit(character) ? character : '_')
+            .ToArray();
+        return string.Join(string.Empty, chars).Trim('_');
+    }
+
+    private sealed record RatingSeedDocument(List<RatingSeed> Ratings);
+    private sealed record RatingSeed(string Name, int SortOrder);
+    private sealed record GenreSeedDocument(List<GenreSeed> Genres);
+    private sealed record GenreSeed(string Name, string? Description);
+    private sealed record ModelGenreSeedDocument(List<string> Classes);
+    private sealed record AssignmentSourceSeed(string Key, string Name);
 }
