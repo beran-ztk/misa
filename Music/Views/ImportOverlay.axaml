@@ -1,0 +1,40 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Music.Views.ImportOverlay">
+    <Panel>
+        <Border Background="#70000000"/>
+        <Border Width="480" MaxWidth="560" Margin="24"
+                HorizontalAlignment="Center" VerticalAlignment="Center"
+                Background="#1E1E1E" BorderBrush="#314B5F" BorderThickness="1"
+                CornerRadius="8" BoxShadow="0 8 40 4 #80000000" Padding="24">
+            <Grid>
+                <StackPanel x:Name="SourcePanel" Spacing="16">
+                    <TextBlock Text="Import music" FontSize="18" FontWeight="SemiBold"/>
+                    <TextBlock Text="Choose where to import a track from." FontSize="12" Opacity="0.62"/>
+                    <Button Content="Download from YouTube" Click="OnYouTubeSelected" Padding="14,10"
+                            HorizontalContentAlignment="Left"/>
+                    <Button Content="Cancel" Click="OnCloseClicked" HorizontalAlignment="Right"/>
+                </StackPanel>
+                <StackPanel x:Name="YouTubePanel" IsVisible="False" Spacing="14">
+                    <TextBlock Text="Download from YouTube" FontSize="18" FontWeight="SemiBold"/>
+                    <TextBlock Text="Paste a video URL. Existing tracks are detected before the download starts."
+                               FontSize="12" Opacity="0.62" TextWrapping="Wrap"/>
+                    <TextBox x:Name="UrlBox" Watermark="https://www.youtube.com/watch?v=…"/>
+                    <TextBlock x:Name="StatusText" FontSize="11" Opacity="0.72" TextWrapping="Wrap"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                        <Button Content="Back" Click="OnBackClicked"/>
+                        <Button x:Name="DownloadButton" Content="Download" Click="OnDownloadClicked"
+                                IsEnabled="False" Classes="accent"/>
+                    </StackPanel>
+                </StackPanel>
+                <Border x:Name="BusyLayer" IsVisible="False" Background="#D0181A1D" CornerRadius="8">
+                    <StackPanel Width="270" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12">
+                        <TextBlock x:Name="BusyText" Text="Downloading audio…" FontSize="15" FontWeight="SemiBold"
+                                   TextAlignment="Center"/>
+                        <ProgressBar IsIndeterminate="True" Height="5"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+    </Panel>
+</UserControl>
