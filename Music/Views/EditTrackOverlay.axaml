@@ -56,7 +56,7 @@
                             <WrapPanel x:Name="GenresPanel" Orientation="Horizontal" />
                         </StackPanel>
 
-                        <Grid ColumnDefinitions="Auto,*" Margin="0,0,40,0">
+                        <Grid x:Name="StylesSection" ColumnDefinitions="Auto,*" Margin="0,0,40,0">
                             <Border Grid.Column="0"
                                     Width="2" Margin="0,2,0,2"
                                     Background="#40808080" CornerRadius="1" />
@@ -98,6 +98,24 @@
                                 Click="OnCloseClicked" />
                     </StackPanel>
                 </Grid>
+
+                <Border x:Name="AnalysisBusyLayer"
+                        Grid.RowSpan="5"
+                        IsVisible="False"
+                        Background="#C0181A1D"
+                        CornerRadius="8">
+                    <StackPanel Width="300"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Spacing="12">
+                        <TextBlock Text="Analyzing genres with Discogs-MAEST…"
+                                   FontSize="15" FontWeight="SemiBold"
+                                   TextAlignment="Center"/>
+                        <ProgressBar IsIndeterminate="True" Height="5"/>
+                        <TextBlock Text="The metadata editor will open when analysis is complete."
+                                   FontSize="11" Opacity="0.62" TextAlignment="Center" TextWrapping="Wrap"/>
+                    </StackPanel>
+                </Border>
 
             </Grid>
         </Border>

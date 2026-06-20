@@ -72,15 +72,16 @@
                         Spacing="9"
                         VerticalAlignment="Center">
 
-                <Button Content="＋"
-                        Click="OnAddTrackClicked"
+                <Button Click="OnImportClicked"
                         ToolTip.Tip="Add Track"
                         Width="34" Height="34"
                         BorderThickness="1"
                         Background="#10151B"
-                        Padding="0" FontSize="16"
+                        Padding="0"
                         HorizontalContentAlignment="Center"
-                        VerticalContentAlignment="Center"/>
+                        VerticalContentAlignment="Center">
+                    <Image Source="{SvgImage /Assets/download.svg}" Width="17" Height="17"/>
+                </Button>
 
                 <TextBox x:Name="SearchBox"
                          Watermark="Search…"
@@ -458,6 +459,7 @@
             </Border>
 
             <views:AddTrackOverlay x:Name="AddTrackOverlay" IsVisible="False"/>
+            <views:ImportOverlay x:Name="ImportOverlay" IsVisible="False"/>
             <views:EditTrackOverlay x:Name="EditTrackOverlay" IsVisible="False"/>
 
         </Panel>

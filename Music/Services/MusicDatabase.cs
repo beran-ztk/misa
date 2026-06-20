@@ -204,7 +204,7 @@ public class MusicDatabase
     }
 
     public int InsertTrack(string canonicalUrl, string title, string fileName,
-        List<int> genreIds, int ratingId, List<int> _, int? durationSeconds)
+        List<int> genreIds, int? ratingId, List<int> _, int? durationSeconds)
     {
         using var conn = Open();
         using var tx = conn.BeginTransaction();
@@ -282,7 +282,7 @@ public class MusicDatabase
                 reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
                 reader.GetString(2),
                 reader.GetString(3),
-                reader.IsDBNull(4) ? 0 : reader.GetInt32(4),
+                reader.IsDBNull(4) ? null : reader.GetInt32(4),
                 reader.GetString(5),
                 reader.IsDBNull(6) ? null : reader.GetInt32(6),
                 reader.GetInt32(7) != 0));
@@ -316,14 +316,14 @@ public class MusicDatabase
     public List<int> GetTrackStyleIds(int trackId) => [];
     public List<Style> GetStyles() => [];
 
-    public void UpdateTrack(int id, string title, List<int> genreIds, int ratingId, List<int> _)
+    public void UpdateTrack(int id, string title, List<int> genreIds, int? ratingId, List<int> _)
     {
         using var conn = Open();
         using var tx = conn.BeginTransaction();
         var now = DateTime.UtcNow.ToString("O");
 
         ExecuteInsert(conn, tx,
-            "UPDATE tracks SET title = $title, rating_id = $ratingId, updated_at = $updatedAt WHERE id = $id",
+            "UPDATE tracks SET title = $title, rating_id = $ratingId, updated_at = $updatedAt, needs_reevaluation = CASE WHEN $ratingId IS NULL THEN 1 ELSE needs_reevaluation END WHERE id = $id",
             ("$id", id), ("$title", title), ("$ratingId", ratingId), ("$updatedAt", now));
 
         ExecuteInsert(conn, tx, "DELETE FROM track_genres WHERE track_id = $trackId", ("$trackId", id));
@@ -335,7 +335,9 @@ public class MusicDatabase
     {
         using var conn = Open();
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = "UPDATE tracks SET needs_reevaluation = $needsReview WHERE id = $id";
+        cmd.CommandText = @"UPDATE tracks SET needs_reevaluation =
+                            CASE WHEN rating_id IS NULL THEN 1 ELSE $needsReview END
+                            WHERE id = $id";
         cmd.Parameters.AddWithValue("$id", id);
         cmd.Parameters.AddWithValue("$needsReview", needsReview ? 1 : 0);
         cmd.ExecuteNonQuery();

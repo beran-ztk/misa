@@ -26,7 +26,7 @@ public class MusicLibraryService
 
     public Dictionary<int, List<int>> GetAllTrackGenreIds() => _db.GetAllTrackGenreIds();
     public List<int> GetTrackGenreIds(int trackId) => _db.GetTrackGenreIds(trackId);
-    public void UpdateTrack(int id, string title, List<int> genreIds, int ratingId, List<int> styleIds) 
+    public void UpdateTrack(int id, string title, List<int> genreIds, int? ratingId, List<int> styleIds)
         => _db.UpdateTrack(id, title, genreIds, ratingId, styleIds);
     public void SetTrackNeedsReview(int id, bool needsReview) => _db.SetTrackNeedsReview(id, needsReview);
 
@@ -73,7 +73,7 @@ public class MusicLibraryService
                 track.Title,
                 track.FileName,
                 track.DurationSeconds,
-                ratings.GetValueOrDefault(track.RatingId, ""),
+                track.RatingId is int ratingId ? ratings.GetValueOrDefault(ratingId, "") : "Not rated",
                 NamesFor(trackGenreIds.GetValueOrDefault(track.Id, []), genres),
                 NamesFor(trackStyleIds.GetValueOrDefault(track.Id, []), styles),
                 coverFileName,
@@ -123,6 +123,47 @@ public class MusicLibraryService
 
         _db.SetTrackNeedsReview(trackId, true);
         return new DownloadResult(true, Warning: $"Track downloaded, but analysis needs review: {analysisError}");
+    }
+
+    public async Task<ImportResult> ImportFromYouTubeAsync(string rawUrl, IProgress<string>? progress = null)
+    {
+        var videoId = YouTubeUrlNormalizer.ExtractVideoId(rawUrl);
+        if (videoId is null)
+            return new ImportResult(false, Error: "Could not parse YouTube URL.");
+
+        var canonicalUrl = YouTubeUrlNormalizer.GetCanonicalUrl(videoId);
+        if (_db.TrackExists(canonicalUrl))
+            return new ImportResult(false, Error: "Track already exists.");
+
+        progress?.Report("Downloading audio…");
+        var (success, errorOutput) = await _downloader.RunYtDlpAsync(canonicalUrl);
+        if (!success)
+            return new ImportResult(false, Error: $"Download failed:\n{errorOutput}");
+
+        var filePath = _downloader.FindDownloadedFile(videoId);
+        if (filePath is null)
+            return new ImportResult(false, Error: "Download finished but file not found.");
+
+        var fileName = Path.GetFileName(filePath);
+        var duration = await _downloader.GetDurationAsync(filePath);
+        var trackId = _db.InsertTrack(canonicalUrl, _downloader.TitleFromFileName(fileName), fileName,
+            [], null, [], duration);
+        _db.SetTrackNeedsReview(trackId, true);
+        return new ImportResult(true, GetTracks().Single(track => track.Id == trackId));
+    }
+
+    public async Task<string?> AnalyzeTrackAsync(MusicTrack track)
+    {
+        var filePath = Path.Combine(Values.TracksDirectory, track.FileName);
+        var (analysis, error) = await _analysis.AnalyzeAsync(filePath);
+        if (analysis is not null)
+        {
+            _db.SaveTrackAnalysis(track.Id, analysis);
+            return null;
+        }
+
+        _db.SetTrackNeedsReview(track.Id, true);
+        return error ?? "Analysis failed.";
     }
 
     private static List<string> NamesFor(IEnumerable<int> ids, IReadOnlyDictionary<int, string> names) =>

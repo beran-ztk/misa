@@ -95,6 +95,11 @@ public partial class MusicView : UserControl
             ShowToast(warning ?? "Track downloaded and analyzed");
         };
         AddTrackOverlay.CloseRequested += () => AddTrackOverlay.IsVisible = false;
+        ImportOverlay.TrackImported += track =>
+        {
+            RefreshTrackList();
+            EditTrackOverlay.Open(track, analyzeAfterOpening: true);
+        };
         EditTrackOverlay.TrackSaved += RefreshTrackList;
         SettingsOverlay.ToastRequested += ShowToast;
     }
@@ -143,7 +148,7 @@ public partial class MusicView : UserControl
             var styleStr = string.Join(", ", styleIds
                 .Select(id => styleMap.GetValueOrDefault(id, ""))
                 .Where(n => n.Length > 0).Order());
-            var ratingName = ratingMap.GetValueOrDefault(t.RatingId, "");
+            var ratingName = t.RatingId is int ratingId ? ratingMap.GetValueOrDefault(ratingId, "") : "Not rated";
             var durationText = t.DurationSeconds.HasValue ? FormatDuration(t.DurationSeconds.Value) : "";
             
             return new TrackDisplayItem(t, genreStr, styleStr, durationText, ratingName)
@@ -278,7 +283,7 @@ public partial class MusicView : UserControl
             query = query.Where(track => track.Title.Contains(term, StringComparison.OrdinalIgnoreCase));
 
         if (selectedRatingIds.Count > 0)
-            query = query.Where(track => selectedRatingIds.Contains(track.RatingId));
+            query = query.Where(track => track.RatingId is int ratingId && selectedRatingIds.Contains(ratingId));
 
         if (selectedGenreIds.Count > 0)
             query = query.Where(track => TrackHasAllTags(track.Id, _allTrackGenreIds, selectedGenreIds));
@@ -559,9 +564,9 @@ public partial class MusicView : UserControl
 
     // ─── Dialogs ──────────────────────────────────────────────────────────────
 
-    private void OnAddTrackClicked(object? sender, RoutedEventArgs e)
+    private void OnImportClicked(object? sender, RoutedEventArgs e)
     {
-        AddTrackOverlay.Open();
+        ImportOverlay.Open();
     }
 
     private void OnSettingsClicked(object? sender, RoutedEventArgs e)

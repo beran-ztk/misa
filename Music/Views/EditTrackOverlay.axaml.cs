@@ -31,12 +31,14 @@ public partial class EditTrackOverlay : UserControl
         RatingBox.SelectionChanged += (_, _) => UpdateSaveButton();
     }
 
-    public void Open(MusicTrack track)
+    public void Open(MusicTrack track, bool analyzeAfterOpening = false)
     {
         _track = track;
         LoadLookups();
         Prefill(track);
         IsVisible = true;
+        if (analyzeAfterOpening)
+            _ = AnalyzeImportedTrackAsync(track);
     }
 
     private void LoadLookups()
@@ -46,6 +48,7 @@ public partial class EditTrackOverlay : UserControl
         _styles = MusicLibraryService.Current.GetStyles();
         _allTrackGenreIds = MusicLibraryService.Current.GetAllTrackGenreIds();
         _allTrackStyleIds = MusicLibraryService.Current.GetAllTrackStyleIds();
+        StylesSection.IsVisible = _styles.Count > 0;
 
         RatingBox.ItemsSource = _ratings.Select(r => r.Name).ToList();
     }
@@ -132,15 +135,12 @@ public partial class EditTrackOverlay : UserControl
 
     private void UpdateSaveButton()
     {
-        SaveBtn.IsEnabled = _track != null
-                            && !string.IsNullOrWhiteSpace(TitleBox.Text)
-                            && RatingBox.SelectedIndex >= 0
-                            && SelectedGenreIds().Count > 0;
+        SaveBtn.IsEnabled = _track != null && !string.IsNullOrWhiteSpace(TitleBox.Text);
     }
 
     private void OnSaveClicked(object? sender, RoutedEventArgs e)
     {
-        if (_track == null || RatingBox.SelectedIndex < 0)
+        if (_track == null)
             return;
 
         var genreIds = SelectedGenreIds().ToList();
@@ -153,11 +153,24 @@ public partial class EditTrackOverlay : UserControl
             _track.Id,
             TitleBox.Text!.Trim(),
             genreIds,
-            _ratings[RatingBox.SelectedIndex].Id,
+            RatingBox.SelectedIndex >= 0 ? _ratings[RatingBox.SelectedIndex].Id : null,
             styleIds);
 
         CloseOverlay();
         TrackSaved?.Invoke();
+    }
+
+    private async System.Threading.Tasks.Task AnalyzeImportedTrackAsync(MusicTrack track)
+    {
+        AnalysisBusyLayer.IsVisible = true;
+        StatusText.Text = "Analyzing genres with Discogs-MAEST…";
+        SaveBtn.IsEnabled = false;
+        var error = await MusicLibraryService.Current.AnalyzeTrackAsync(track);
+        AnalysisBusyLayer.IsVisible = false;
+        StatusText.Text = error is null
+            ? "Analysis complete. Review the metadata and save when ready."
+            : $"Analysis needs review: {error}";
+        UpdateSaveButton();
     }
 
     private void OnCloseClicked(object? sender, RoutedEventArgs e) => CloseOverlay();

@@ -20,7 +20,7 @@ public static class TrackFilter
         IEnumerable<MusicTrack> query = tracks;
 
         if (ratingFilter.Count > 0)
-            query = query.Where(t => ratingFilter.Contains(t.RatingId));
+            query = query.Where(t => t.RatingId is int ratingId && ratingFilter.Contains(ratingId));
         
 
         var term = searchText?.Trim();
