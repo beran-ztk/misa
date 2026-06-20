@@ -343,6 +343,15 @@ public class MusicDatabase
         cmd.ExecuteNonQuery();
     }
 
+    public void DeleteTrack(int id)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "DELETE FROM tracks WHERE id = $id";
+        cmd.Parameters.AddWithValue("$id", id);
+        cmd.ExecuteNonQuery();
+    }
+
     public List<Genre> GetGenres()
     {
         using var conn = Open();

@@ -639,6 +639,24 @@ public partial class MusicView : UserControl
         ToggleReview(_filteredItems[idx].Track);
     }
 
+    private async void OnContextDeleteClicked(object? sender, RoutedEventArgs e)
+    {
+        var idx = FileList.SelectedIndex;
+        if (idx < 0 || idx >= _filteredItems.Count)
+            return;
+
+        var track = _filteredItems[idx].Track;
+        var error = await MusicLibraryService.Current.DeleteTrackAsync(track);
+        if (error is not null)
+        {
+            ShowToast(error);
+            return;
+        }
+
+        RefreshTrackList();
+        ShowToast("Track deleted");
+    }
+
     // ─── Playback control ─────────────────────────────────────────────────────
 
     private void OnListDoubleTapped(object? sender, TappedEventArgs e) => StartPlayback();

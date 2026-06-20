@@ -30,6 +30,23 @@ public class MusicLibraryService
         => _db.UpdateTrack(id, title, genreIds, ratingId, styleIds);
     public void SetTrackNeedsReview(int id, bool needsReview) => _db.SetTrackNeedsReview(id, needsReview);
 
+    public Task<string?> DeleteTrackAsync(MusicTrack track)
+    {
+        try
+        {
+            var filePath = Path.Combine(Values.TracksDirectory, track.FileName);
+            if (File.Exists(filePath))
+                File.Delete(filePath);
+
+            _db.DeleteTrack(track.Id);
+            return Task.FromResult<string?>(null);
+        }
+        catch (Exception exception)
+        {
+            return Task.FromResult<string?>($"Could not delete track: {exception.Message}");
+        }
+    }
+
     // --- Lookups ---
     public List<Genre> GetGenres() => _db.GetGenres();
     public List<Style> GetStyles() => _db.GetStyles();

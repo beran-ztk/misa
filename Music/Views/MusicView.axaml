@@ -346,6 +346,8 @@
                     <ContextMenu>
                         <MenuItem Header="Edit" Click="OnContextEditClicked"/>
                         <MenuItem Header="Toggle review mark" Click="OnContextToggleReviewClicked"/>
+                        <Separator/>
+                        <MenuItem Header="Delete track (including file)" Click="OnContextDeleteClicked"/>
                     </ContextMenu>
                 </ListBox.ContextMenu>
             </ListBox>
