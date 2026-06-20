@@ -112,8 +112,6 @@
                                    FontSize="15" FontWeight="SemiBold"
                                    TextAlignment="Center"/>
                         <ProgressBar IsIndeterminate="True" Height="5"/>
-                        <TextBlock Text="The metadata editor will open when analysis is complete."
-                                   FontSize="11" Opacity="0.62" TextAlignment="Center" TextWrapping="Wrap"/>
                     </StackPanel>
                 </Border>
 

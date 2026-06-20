@@ -10,6 +10,7 @@ public partial class ImportOverlay : UserControl
 {
     private string? _canonicalUrl;
     private bool _updatingUrl;
+    private bool _isDownloading;
 
     public event Action<MusicTrack>? TrackImported;
 
@@ -24,23 +25,10 @@ public partial class ImportOverlay : UserControl
         _canonicalUrl = null;
         UrlBox.Text = string.Empty;
         StatusText.Text = string.Empty;
-        SourcePanel.IsVisible = true;
-        YouTubePanel.IsVisible = false;
         BusyLayer.IsVisible = false;
+        _isDownloading = false;
         IsVisible = true;
-    }
-
-    private void OnYouTubeSelected(object? sender, RoutedEventArgs e)
-    {
-        SourcePanel.IsVisible = false;
-        YouTubePanel.IsVisible = true;
         UrlBox.Focus();
-    }
-
-    private void OnBackClicked(object? sender, RoutedEventArgs e)
-    {
-        SourcePanel.IsVisible = true;
-        YouTubePanel.IsVisible = false;
     }
 
     private void ValidateUrl()
@@ -51,7 +39,6 @@ public partial class ImportOverlay : UserControl
         if (videoId is null)
         {
             _canonicalUrl = null;
-            DownloadButton.IsEnabled = false;
             StatusText.Text = rawUrl.Length == 0 ? string.Empty : "Enter a valid YouTube URL.";
             return;
         }
@@ -60,14 +47,12 @@ public partial class ImportOverlay : UserControl
         if (MusicLibraryService.Current.TrackExistsByCanonicalUrl(canonicalUrl))
         {
             _canonicalUrl = null;
-            DownloadButton.IsEnabled = false;
             StatusText.Text = "This track already exists in the library.";
             return;
         }
 
         _canonicalUrl = canonicalUrl;
-        DownloadButton.IsEnabled = true;
-        StatusText.Text = "Ready to download and analyze.";
+        StatusText.Text = "";
         if (!string.Equals(rawUrl, canonicalUrl, StringComparison.Ordinal))
         {
             _updatingUrl = true;
@@ -75,11 +60,14 @@ public partial class ImportOverlay : UserControl
             UrlBox.CaretIndex = canonicalUrl.Length;
             _updatingUrl = false;
         }
+
+        _ = DownloadAsync();
     }
 
-    private async void OnDownloadClicked(object? sender, RoutedEventArgs e)
+    private async System.Threading.Tasks.Task DownloadAsync()
     {
-        if (_canonicalUrl is null) return;
+        if (_canonicalUrl is null || _isDownloading) return;
+        _isDownloading = true;
         BusyLayer.IsVisible = true;
         var progress = new Progress<string>(message => BusyText.Text = message);
         var result = await MusicLibraryService.Current.ImportFromYouTubeAsync(_canonicalUrl, progress);
@@ -87,6 +75,7 @@ public partial class ImportOverlay : UserControl
         if (!result.Success || result.Track is null)
         {
             StatusText.Text = result.Error ?? "Import failed.";
+            _isDownloading = false;
             return;
         }
 
