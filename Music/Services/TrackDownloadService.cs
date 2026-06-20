@@ -1,7 +1,10 @@
 using System.Diagnostics;
+using System;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
+using Music.Models;
 using System.Threading.Tasks;
 
 namespace Music.Services;
@@ -69,6 +72,33 @@ public class TrackDownloadService
         {
             return null;
         }
+    }
+
+    public async Task<YouTubeTrackMetadata?> GetMetadataAsync(string url)
+    {
+        try
+        {
+            var result = await RunProcessAsync(
+                Path.Combine(Values.ToolsDirectory, "yt-dlp.exe"),
+                "--js-runtimes", "node",
+                "--no-playlist",
+                "--skip-download",
+                "--dump-single-json",
+                url);
+            if (result.ExitCode != 0) return null;
+
+            using var document = JsonDocument.Parse(result.Output);
+            var root = document.RootElement;
+            string? Value(string key) => root.TryGetProperty(key, out var value) && value.ValueKind == JsonValueKind.String
+                ? value.GetString() : null;
+            var uploadDate = Value("upload_date");
+            if (uploadDate?.Length == 8 && DateTime.TryParseExact(uploadDate, "yyyyMMdd", CultureInfo.InvariantCulture,
+                    DateTimeStyles.None, out var date))
+                uploadDate = date.ToString("yyyy-MM-dd");
+            return new YouTubeTrackMetadata(
+                Value("title"), Value("channel_id"), Value("channel"), Value("channel_url"), uploadDate);
+        }
+        catch { return null; }
     }
 
     public string? FindDownloadedFile(string videoId)

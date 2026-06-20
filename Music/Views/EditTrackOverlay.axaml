@@ -47,7 +47,7 @@
                     <StackPanel Spacing="22" Margin="0,0,0,20">
 
                         <StackPanel Spacing="10">
-                            <TextBlock Text="Basic information" FontSize="13" FontWeight="SemiBold" />
+                            <TextBlock Text="Information" FontSize="13" FontWeight="SemiBold" />
                             <Grid ColumnDefinitions="*,200" ColumnSpacing="14">
                                 <StackPanel Spacing="7">
                                     <TextBlock Text="Title" FontSize="11" Opacity="0.68" />
@@ -58,11 +58,26 @@
                                     <ComboBox x:Name="RatingBox" />
                                 </StackPanel>
                             </Grid>
+                            <Grid x:Name="ChannelInfoRow" ColumnDefinitions="120,*,Auto" Margin="0,4,0,0">
+                                <TextBlock Text="Channel" FontSize="11" Opacity="0.68" VerticalAlignment="Center" />
+                                <TextBox x:Name="ChannelBox" Grid.Column="1" IsReadOnly="True" FontSize="11" />
+                                <Button Grid.Column="2" Content="Copy" Click="OnCopyChannelClicked" Padding="9,4" FontSize="10" Margin="8,0,0,0" />
+                            </Grid>
+                            <Grid ColumnDefinitions="120,*,Auto">
+                                <TextBlock Text="YouTube URL" FontSize="11" Opacity="0.68" VerticalAlignment="Center" />
+                                <TextBox x:Name="YouTubeUrlBox" Grid.Column="1" IsReadOnly="True" FontSize="11" />
+                                <Button Grid.Column="2" Content="Copy" Click="OnCopyYouTubeUrlClicked" Padding="9,4" FontSize="10" Margin="8,0,0,0" />
+                            </Grid>
+                            <Grid x:Name="ChannelUrlRow" ColumnDefinitions="120,*,Auto">
+                                <TextBlock Text="Channel URL" FontSize="11" Opacity="0.68" VerticalAlignment="Center" />
+                                <TextBox x:Name="ChannelUrlBox" Grid.Column="1" IsReadOnly="True" FontSize="11" />
+                                <Button Grid.Column="2" Content="Copy" Click="OnCopyChannelUrlClicked" Padding="9,4" FontSize="10" Margin="8,0,0,0" />
+                            </Grid>
                         </StackPanel>
 
                         <StackPanel x:Name="DetectedGenresSection" Spacing="5" Margin="0,0,40,0">
-                            <TextBlock Text="Detected by model" FontSize="13" FontWeight="SemiBold" />
-                            <TextBlock x:Name="DetectedGenresText" FontSize="11" Foreground="#7CB9DF" TextWrapping="Wrap" />
+                            <TextBlock Text="Detected by model · unmapped" FontSize="13" FontWeight="SemiBold" />
+                            <StackPanel x:Name="DetectedGenresPanel" Spacing="3" />
                         </StackPanel>
 
                         <StackPanel Spacing="8" Margin="0,0,40,0">

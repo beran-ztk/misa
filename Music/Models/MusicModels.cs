@@ -4,11 +4,13 @@ namespace Music.Models;
 
 public record MusicTrack(
     int Id, string CanonicalUrl, string Title, string FileName,
-    int? RatingId, string DownloadedAt, int? DurationSeconds, bool NeedsReview);
+    int? RatingId, string DownloadedAt, int? DurationSeconds, bool NeedsReview,
+    string? ChannelName, string? ChannelUrl, string? UploadedAt);
 
 public record Genre(int Id, string Name);
 public record Style(int Id, string Name);
 public record Rating(int Id, string Name, int SortOrder);
+public record YouTubeTrackMetadata(string? Title, string? ChannelId, string? ChannelName, string? ChannelUrl, string? UploadedAt);
 public record ModelGenre(int Id, string Name);
 public record ModelSubgenre(int Id, int ModelGenreId, string Name);
 public record StoredModelGenrePrediction(

@@ -297,6 +297,9 @@
                                                Foreground="{Binding TitleBrush}"
                                                FontSize="13" FontWeight="SemiBold"
                                                TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Text="{Binding ChannelText}"
+                                               FontSize="10.5" Opacity="0.52"
+                                               TextTrimming="CharacterEllipsis"/>
                                     <TextBlock Text="{Binding SystemGenreText}"
                                                FontSize="11" Foreground="#65BCEB"
                                                TextTrimming="CharacterEllipsis"/>

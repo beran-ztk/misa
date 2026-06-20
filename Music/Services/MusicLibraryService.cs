@@ -140,8 +140,9 @@ public class MusicLibraryService
 
         var fileName = Path.GetFileName(filePath);
         var duration = await _downloader.GetDurationAsync(filePath);
-        var trackId = _db.InsertTrack(canonicalUrl, _downloader.TitleFromFileName(fileName), fileName,
-            request.GenreIds, request.RatingId, request.StyleIds, duration);
+        var metadata = await _downloader.GetMetadataAsync(canonicalUrl);
+        var trackId = _db.InsertTrack(canonicalUrl, metadata?.Title ?? _downloader.TitleFromFileName(fileName), fileName,
+            request.GenreIds, request.RatingId, request.StyleIds, duration, metadata);
 
         progress?.Report("Analyzing genres with Discogs-MAEST…");
         var (analysis, analysisError) = await _analysis.AnalyzeAsync(filePath);
@@ -176,8 +177,9 @@ public class MusicLibraryService
 
         var fileName = Path.GetFileName(filePath);
         var duration = await _downloader.GetDurationAsync(filePath);
-        var trackId = _db.InsertTrack(canonicalUrl, _downloader.TitleFromFileName(fileName), fileName,
-            [], null, [], duration);
+        var metadata = await _downloader.GetMetadataAsync(canonicalUrl);
+        var trackId = _db.InsertTrack(canonicalUrl, metadata?.Title ?? _downloader.TitleFromFileName(fileName), fileName,
+            [], null, [], duration, metadata);
         progress?.Report("Analyzing track…");
         var (analysis, analysisError) = await _analysis.AnalyzeAsync(filePath);
         if (analysis is not null)

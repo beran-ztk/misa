@@ -167,7 +167,7 @@ public partial class MusicView : UserControl
                 .Where(attribute => attribute.Key is "emotional_tone" or "energy_context" or "vocal_presence")
                 .Select(attribute => attribute.EffectiveValue));
             
-            return new TrackDisplayItem(t, genreStr, manualGenreStr, styleStr, durationText, ratingName, profileText)
+            return new TrackDisplayItem(t, genreStr, manualGenreStr, styleStr, durationText, ratingName, profileText, t.ChannelName ?? "")
             {
                 NeedsReview = t.NeedsReview
             };

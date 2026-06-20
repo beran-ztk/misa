@@ -65,6 +65,11 @@ public partial class EditTrackOverlay : UserControl
     {
         StatusText.Text = "";
         TitleBox.Text = track.Title;
+        ChannelBox.Text = track.ChannelName ?? string.Empty;
+        YouTubeUrlBox.Text = track.CanonicalUrl;
+        ChannelUrlBox.Text = track.ChannelUrl ?? string.Empty;
+        ChannelInfoRow.IsVisible = !string.IsNullOrWhiteSpace(track.ChannelName);
+        ChannelUrlRow.IsVisible = !string.IsNullOrWhiteSpace(track.ChannelUrl);
 
         var ratingIndex = _ratings.FindIndex(r => r.Id == track.RatingId);
         RatingBox.SelectedIndex = ratingIndex >= 0 ? ratingIndex : -1;
@@ -546,7 +551,30 @@ public partial class EditTrackOverlay : UserControl
             .Select(prediction => $"{prediction.ModelGenreName} → {prediction.ModelSubgenreName}")
             .ToList();
         DetectedGenresSection.IsVisible = detected.Count > 0;
-        DetectedGenresText.Text = string.Join(" · ", detected);
+        DetectedGenresPanel.Children.Clear();
+        foreach (var prediction in MusicLibraryService.Current.GetTrackGenrePredictions(track.Id)
+                     .Where(prediction => prediction.Score > .1 && !mappedSubgenreIds.Contains(prediction.ModelSubgenreId))
+                     .Take(6))
+        {
+            var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
+            row.Children.Add(new TextBlock { Text = $"{prediction.ModelGenreName} → {prediction.ModelSubgenreName}", FontSize = 11, Foreground = new SolidColorBrush(Color.Parse("#7CB9DF")) });
+            var score = new TextBlock { Text = prediction.Score.ToString("0.###"), FontSize = 10.5, Opacity = .65 };
+            Grid.SetColumn(score, 1);
+            row.Children.Add(score);
+            DetectedGenresPanel.Children.Add(row);
+        }
+    }
+
+    private async void OnCopyChannelClicked(object? sender, RoutedEventArgs e) => await CopyTextAsync(ChannelBox.Text);
+    private async void OnCopyYouTubeUrlClicked(object? sender, RoutedEventArgs e) => await CopyTextAsync(YouTubeUrlBox.Text);
+    private async void OnCopyChannelUrlClicked(object? sender, RoutedEventArgs e) => await CopyTextAsync(ChannelUrlBox.Text);
+
+    private async System.Threading.Tasks.Task CopyTextAsync(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return;
+        var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
+        if (clipboard is not null)
+            await clipboard.SetTextAsync(text);
     }
 
     private static void ApplyModelGenreVisual(Border container, TextBlock genreName, Border divider, bool enabled)

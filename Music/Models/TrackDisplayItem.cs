@@ -10,7 +10,8 @@ public record TrackDisplayItem(
     string StyleText,
     string DurationText,
     string RatingText,
-    string ProfileText)
+    string ProfileText,
+    string ChannelText)
 {
     public bool IsPlaying { get; set; }
     public bool NeedsReview { get; set; }

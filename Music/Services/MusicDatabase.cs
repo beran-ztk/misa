@@ -232,19 +232,32 @@ public class MusicDatabase
     }
 
     public int InsertTrack(string canonicalUrl, string title, string fileName,
-        List<int> genreIds, int? ratingId, List<int> _, int? durationSeconds)
+        List<int> genreIds, int? ratingId, List<int> _, int? durationSeconds, YouTubeTrackMetadata? metadata = null)
     {
         using var conn = Open();
         using var tx = conn.BeginTransaction();
         var now = DateTime.UtcNow.ToString("O");
 
+        long? channelId = null;
+        if (!string.IsNullOrWhiteSpace(metadata?.ChannelId))
+        {
+            ExecuteInsert(conn, tx, @"INSERT INTO channels (name, source_channel_id, source_url)
+                VALUES ($name, $channelId, $channelUrl)
+                ON CONFLICT(source_channel_id) DO UPDATE SET name = excluded.name, source_url = excluded.source_url",
+                ("$name", metadata.ChannelName ?? "Unknown channel"), ("$channelId", metadata.ChannelId), ("$channelUrl", metadata.ChannelUrl));
+            channelId = InsertAndGetId(conn, tx, "SELECT id FROM channels WHERE source_channel_id = $channelId",
+                ("$channelId", metadata.ChannelId));
+        }
+
         var trackId = InsertAndGetId(conn, tx, @"
-            INSERT INTO tracks (canonical_url, title, file_name, rating_id, downloaded_at, updated_at, duration_seconds)
-            VALUES ($url, $title, $fileName, $ratingId, $downloadedAt, $updatedAt, $duration)",
+            INSERT INTO tracks (canonical_url, title, file_name, channel_id, rating_id, uploaded_at, downloaded_at, updated_at, duration_seconds)
+            VALUES ($url, $title, $fileName, $channelId, $ratingId, $uploadedAt, $downloadedAt, $updatedAt, $duration)",
             ("$url", canonicalUrl),
             ("$title", title),
             ("$fileName", fileName),
+            ("$channelId", channelId),
             ("$ratingId", ratingId),
+            ("$uploadedAt", metadata?.UploadedAt),
             ("$downloadedAt", now),
             ("$updatedAt", now),
             ("$duration", durationSeconds));
@@ -323,9 +336,10 @@ public class MusicDatabase
     {
         using var conn = Open();
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = @"SELECT id, canonical_url, title, file_name, rating_id, downloaded_at,
-                                   duration_seconds, needs_reevaluation
-                            FROM tracks ORDER BY downloaded_at DESC";
+        cmd.CommandText = @"SELECT tracks.id, tracks.canonical_url, tracks.title, tracks.file_name, tracks.rating_id, tracks.downloaded_at,
+                                   tracks.duration_seconds, tracks.needs_reevaluation, channels.name, channels.source_url, tracks.uploaded_at
+                            FROM tracks LEFT JOIN channels ON channels.id = tracks.channel_id
+                            ORDER BY tracks.downloaded_at DESC";
         using var reader = cmd.ExecuteReader();
         var tracks = new List<MusicTrack>();
         while (reader.Read())
@@ -338,7 +352,10 @@ public class MusicDatabase
                 reader.IsDBNull(4) ? null : reader.GetInt32(4),
                 reader.GetString(5),
                 reader.IsDBNull(6) ? null : reader.GetInt32(6),
-                reader.GetInt32(7) != 0));
+                reader.GetInt32(7) != 0,
+                reader.IsDBNull(8) ? null : reader.GetString(8),
+                reader.IsDBNull(9) ? null : reader.GetString(9),
+                reader.IsDBNull(10) ? null : reader.GetString(10)));
         }
         return tracks;
     }
