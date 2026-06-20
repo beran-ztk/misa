@@ -9,6 +9,12 @@ public record Style(int Id, string Name);
 public record Rating(int Id, string Name, int SortOrder);
 public record ModelGenre(int Id, string Name);
 public record ModelSubgenre(int Id, int ModelGenreId, string Name);
+public record StoredModelGenrePrediction(
+    int ModelGenreId,
+    string ModelGenreName,
+    int ModelSubgenreId,
+    string ModelSubgenreName,
+    double Score);
 public record GenreMapping(
     int Id,
     int GenreId,

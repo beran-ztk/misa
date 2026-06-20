@@ -66,6 +66,7 @@ public partial class EditTrackOverlay : UserControl
 
         RebuildGenreChips(selectedGenreIds);
         RebuildStyleChips(selectedStyleIds);
+        ShowModelPredictions(track, applyMappedGenres: false);
         UpdateSaveButton();
     }
 
@@ -170,7 +171,38 @@ public partial class EditTrackOverlay : UserControl
         StatusText.Text = error is null
             ? "Analysis complete. Review the metadata and save when ready."
             : $"Analysis needs review: {error}";
+        ShowModelPredictions(track, applyMappedGenres: error is null);
         UpdateSaveButton();
+    }
+
+    private void ShowModelPredictions(MusicTrack track, bool applyMappedGenres)
+    {
+        const double displayThreshold = 0.1;
+        var predictions = MusicLibraryService.Current.GetTrackGenrePredictions(track.Id)
+            .Where(prediction => prediction.Score > displayThreshold)
+            .ToList();
+
+        ModelAnalysisSection.IsVisible = predictions.Count > 0;
+        ModelPredictionsText.Text = predictions.Count == 0
+            ? string.Empty
+            : string.Join("\n", predictions.Select(prediction =>
+                $"{prediction.ModelGenreName} → {prediction.ModelSubgenreName}  ({prediction.Score:0.###})"));
+
+        if (!applyMappedGenres || predictions.Count == 0)
+            return;
+
+        var mappings = MusicLibraryService.Current.GetGenreMappings()
+            .ToDictionary(mapping => mapping.ModelSubgenreId, mapping => mapping.GenreId);
+        var mappedGenreIds = predictions
+            .Where(prediction => mappings.ContainsKey(prediction.ModelSubgenreId))
+            .Select(prediction => mappings[prediction.ModelSubgenreId])
+            .ToHashSet();
+        if (mappedGenreIds.Count == 0)
+            return;
+
+        var selectedGenreIds = SelectedGenreIds();
+        selectedGenreIds.UnionWith(mappedGenreIds);
+        RebuildGenreChips(selectedGenreIds);
     }
 
     private void OnCloseClicked(object? sender, RoutedEventArgs e) => CloseOverlay();

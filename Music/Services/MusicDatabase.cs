@@ -385,6 +385,29 @@ public class MusicDatabase
         return subgenres;
     }
 
+    public List<StoredModelGenrePrediction> GetTrackGenrePredictions(int trackId)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+            SELECT model_genres.id, model_genres.name, model_subgenres.id, model_subgenres.name, predictions.score
+            FROM track_genre_predictions predictions
+            JOIN track_analysis analysis ON analysis.id = predictions.track_analysis_id
+            JOIN model_subgenres ON model_subgenres.id = predictions.model_subgenre_id
+            JOIN model_genres ON model_genres.id = model_subgenres.model_genre_id
+            WHERE analysis.track_id = $trackId
+            ORDER BY predictions.score DESC";
+        cmd.Parameters.AddWithValue("$trackId", trackId);
+        using var reader = cmd.ExecuteReader();
+        var predictions = new List<StoredModelGenrePrediction>();
+        while (reader.Read())
+        {
+            predictions.Add(new StoredModelGenrePrediction(
+                reader.GetInt32(0), reader.GetString(1), reader.GetInt32(2), reader.GetString(3), reader.GetDouble(4)));
+        }
+        return predictions;
+    }
+
     public List<GenreMapping> GetGenreMappings()
     {
         using var conn = Open();
