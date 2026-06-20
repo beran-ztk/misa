@@ -271,10 +271,14 @@ public partial class EditTrackOverlay : UserControl
 
     private static string FormatExperimentalModel(ExperimentalAnalysisModel model)
     {
-        var values = string.Join("\n", model.Values
-            .OrderByDescending(value => value.Score)
+        IEnumerable<ExperimentalAnalysisValue> orderedValues = model.Values.OrderByDescending(value => value.Score);
+        var isMoodThemeModel = model.Model.Equals("mtg_jamendo_moodtheme", StringComparison.OrdinalIgnoreCase);
+        if (isMoodThemeModel)
+            orderedValues = orderedValues.Take(5);
+        var values = string.Join("\n", orderedValues
             .Select(value => $"  {value.Label}: {value.Score:0.###}"));
-        return $"{model.Category} · {model.Model}\n{values}";
+        var suffix = isMoodThemeModel ? " (top 5)" : string.Empty;
+        return $"{model.Category} · {model.Model}{suffix}\n{values}";
     }
 
     private void OnAnalysisButtonClicked(object? sender, RoutedEventArgs e)

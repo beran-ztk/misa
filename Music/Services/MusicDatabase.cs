@@ -132,6 +132,19 @@ public class MusicDatabase
                 UNIQUE (track_analysis_id, model_subgenre_id)
             );
 
+            CREATE TABLE track_analysis_signals (
+                id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+                track_analysis_id  INTEGER NOT NULL REFERENCES track_analysis(id) ON DELETE CASCADE,
+                model_family       TEXT NOT NULL,
+                category           TEXT NOT NULL,
+                model_name         TEXT NOT NULL,
+                model_type         TEXT NOT NULL,
+                description        TEXT NOT NULL,
+                signal_key         TEXT NOT NULL,
+                score              REAL NOT NULL,
+                UNIQUE (track_analysis_id, model_name, signal_key)
+            );
+
 
             CREATE TABLE genre_mappings (
                 id                 INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -142,6 +155,7 @@ public class MusicDatabase
             CREATE INDEX ix_track_genres_genre_id ON track_genres(genre_id);
             CREATE INDEX ix_model_subgenres_model_genre_id ON model_subgenres(model_genre_id);
             CREATE INDEX ix_track_genre_predictions_analysis_id ON track_genre_predictions(track_analysis_id);
+            CREATE INDEX ix_track_analysis_signals_analysis_id ON track_analysis_signals(track_analysis_id);
             CREATE INDEX ix_genre_mappings_genre_id ON genre_mappings(genre_id);";
         cmd.ExecuteNonQuery();
     }
@@ -270,6 +284,21 @@ public class MusicDatabase
             predictionCommand.Parameters.AddWithValue("$modelGenre", prediction.ModelGenre);
             predictionCommand.Parameters.AddWithValue("$modelSubgenre", prediction.ModelSubgenre);
             predictionCommand.ExecuteNonQuery();
+        }
+
+        ExecuteInsert(conn, tx,
+            "DELETE FROM track_analysis_signals WHERE track_analysis_id = $analysisId",
+            ("$analysisId", analysisId));
+        foreach (var model in analysis.ExperimentalModels ?? [])
+        foreach (var value in model.Values)
+        {
+            ExecuteInsert(conn, tx, @"
+                INSERT INTO track_analysis_signals
+                    (track_analysis_id, model_family, category, model_name, model_type, description, signal_key, score)
+                VALUES ($analysisId, $family, $category, $model, $type, $description, $key, $score)",
+                ("$analysisId", analysisId), ("$family", model.Family), ("$category", model.Category),
+                ("$model", model.Model), ("$type", model.Type), ("$description", model.Description),
+                ("$key", value.Label), ("$score", value.Score));
         }
 
         RefreshModelGenres(conn, tx, trackId);
@@ -504,6 +533,29 @@ public class MusicDatabase
             reader.IsDBNull(0) ? null : reader.GetDouble(0),
             reader.IsDBNull(1) ? null : reader.GetDouble(1),
             reader.IsDBNull(2) ? null : reader.GetDouble(2));
+    }
+
+    public List<ExperimentalAnalysisModel> GetTrackAnalysisSignals(int trackId)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+            SELECT model_family, category, model_name, model_type, description, signal_key, score
+            FROM track_analysis_signals signals
+            JOIN track_analysis analysis ON analysis.id = signals.track_analysis_id
+            WHERE analysis.track_id = $trackId
+            ORDER BY model_family, category, model_name, score DESC";
+        cmd.Parameters.AddWithValue("$trackId", trackId);
+        using var reader = cmd.ExecuteReader();
+        var grouped = new Dictionary<(string Family, string Category, string Model, string Type, string Description), List<ExperimentalAnalysisValue>>();
+        while (reader.Read())
+        {
+            var key = (reader.GetString(0), reader.GetString(1), reader.GetString(2), reader.GetString(3), reader.GetString(4));
+            if (!grouped.TryGetValue(key, out var values)) grouped[key] = values = [];
+            values.Add(new ExperimentalAnalysisValue(reader.GetString(5), reader.GetDouble(6)));
+        }
+        return grouped.Select(item => new ExperimentalAnalysisModel(
+            item.Key.Family, item.Key.Category, item.Key.Model, item.Key.Type, item.Key.Description, item.Value)).ToList();
     }
 
     public List<GenreMapping> GetGenreMappings()

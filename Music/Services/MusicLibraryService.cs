@@ -63,7 +63,7 @@ public class MusicLibraryService
     public List<StoredModelGenrePrediction> GetTrackGenrePredictions(int trackId) => _db.GetTrackGenrePredictions(trackId);
     public TrackAudioAnalysis? GetTrackAudioAnalysis(int trackId) => _db.GetTrackAudioAnalysis(trackId);
     public IReadOnlyList<ExperimentalAnalysisModel> GetExperimentalAnalysis(int trackId) =>
-        _experimentalAnalysis.GetValueOrDefault(trackId, []);
+        _db.GetTrackAnalysisSignals(trackId);
     public List<GenreMapping> GetGenreMappings() => _db.GetGenreMappings();
     public void SetGenreMapping(int genreId, int modelSubgenreId) => _db.SetGenreMapping(genreId, modelSubgenreId);
     public void RemoveGenreMapping(int modelSubgenreId) => _db.RemoveGenreMapping(modelSubgenreId);
