@@ -123,8 +123,7 @@ public class MusicLibraryService
         if (_db.TrackExists(canonicalUrl))
             return new DownloadResult(false, "Track already exists.");
 
-        progress?.Report("Downloading audio…");
-        var (success, errorOutput) = await _downloader.RunYtDlpAsync(canonicalUrl);
+        var (success, errorOutput) = await DownloadWithSingleRetryAsync(canonicalUrl, progress);
         if (!success)
             return new DownloadResult(false, $"Failed:\n{errorOutput}");
 
@@ -159,8 +158,7 @@ public class MusicLibraryService
         if (_db.TrackExists(canonicalUrl))
             return new ImportResult(false, Error: "Track already exists.");
 
-        progress?.Report("Downloading audio…");
-        var (success, errorOutput) = await _downloader.RunYtDlpAsync(canonicalUrl);
+        var (success, errorOutput) = await DownloadWithSingleRetryAsync(canonicalUrl, progress);
         if (!success)
             return new ImportResult(false, Error: $"Download failed:\n{errorOutput}");
 
@@ -172,8 +170,17 @@ public class MusicLibraryService
         var duration = await _downloader.GetDurationAsync(filePath);
         var trackId = _db.InsertTrack(canonicalUrl, _downloader.TitleFromFileName(fileName), fileName,
             [], null, [], duration);
-        _db.SetTrackNeedsReview(trackId, true);
-        return new ImportResult(true, GetTracks().Single(track => track.Id == trackId));
+        progress?.Report("Analyzing track…");
+        var (analysis, analysisError) = await _analysis.AnalyzeAsync(filePath);
+        if (analysis is not null)
+            _db.SaveTrackAnalysis(trackId, analysis);
+        else
+            _db.SetTrackNeedsReview(trackId, true);
+
+        return new ImportResult(
+            true,
+            GetTracks().Single(track => track.Id == trackId),
+            Warning: analysis is null ? $"Track downloaded, but analysis needs review: {analysisError}" : null);
     }
 
     public async Task<string?> AnalyzeTrackAsync(MusicTrack track)
@@ -189,6 +196,25 @@ public class MusicLibraryService
         _db.SetTrackNeedsReview(track.Id, true);
         return error ?? "Analysis failed.";
     }
+
+    private async Task<(bool Success, string ErrorOutput)> DownloadWithSingleRetryAsync(
+        string canonicalUrl,
+        IProgress<string>? progress)
+    {
+        progress?.Report("Downloading audio…");
+        var result = await _downloader.RunYtDlpAsync(canonicalUrl);
+        if (result.Success || !IsForbiddenResponse(result.ErrorOutput))
+            return result;
+
+        progress?.Report("Download was rejected (403). Retrying once…");
+        await Task.Delay(TimeSpan.FromMilliseconds(800));
+        progress?.Report("Retrying download…");
+        return await _downloader.RunYtDlpAsync(canonicalUrl);
+    }
+
+    private static bool IsForbiddenResponse(string output) =>
+        output.Contains("403", StringComparison.OrdinalIgnoreCase)
+        || output.Contains("forbidden", StringComparison.OrdinalIgnoreCase);
 
     private static List<string> NamesFor(IEnumerable<int> ids, IReadOnlyDictionary<int, string> names) =>
         ids.Select(id => names.GetValueOrDefault(id, ""))

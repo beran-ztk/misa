@@ -1,3 +1,7 @@
 namespace Music.Models;
 
-public record ImportResult(bool Success, MusicTrack? Track = null, string? Error = null);
+public record ImportResult(
+    bool Success,
+    MusicTrack? Track = null,
+    string? Error = null,
+    string? Warning = null);

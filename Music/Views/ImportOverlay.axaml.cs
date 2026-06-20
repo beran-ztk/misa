@@ -1,5 +1,6 @@
 using System;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Music.Models;
 using Music.Services;
@@ -25,7 +26,8 @@ public partial class ImportOverlay : UserControl
         _canonicalUrl = null;
         UrlBox.Text = string.Empty;
         StatusText.Text = string.Empty;
-        BusyLayer.IsVisible = false;
+        BusyPanel.IsVisible = false;
+        ImportForm.IsEnabled = true;
         _isDownloading = false;
         IsVisible = true;
         UrlBox.Focus();
@@ -68,10 +70,12 @@ public partial class ImportOverlay : UserControl
     {
         if (_canonicalUrl is null || _isDownloading) return;
         _isDownloading = true;
-        BusyLayer.IsVisible = true;
+        ImportForm.IsEnabled = false;
+        BusyPanel.IsVisible = true;
         var progress = new Progress<string>(message => BusyText.Text = message);
         var result = await MusicLibraryService.Current.ImportFromYouTubeAsync(_canonicalUrl, progress);
-        BusyLayer.IsVisible = false;
+        BusyPanel.IsVisible = false;
+        ImportForm.IsEnabled = true;
         if (!result.Success || result.Track is null)
         {
             StatusText.Text = result.Error ?? "Import failed.";
@@ -84,4 +88,10 @@ public partial class ImportOverlay : UserControl
     }
 
     private void OnCloseClicked(object? sender, RoutedEventArgs e) => IsVisible = false;
+
+    private void OnBackdropPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (!_isDownloading)
+            IsVisible = false;
+    }
 }

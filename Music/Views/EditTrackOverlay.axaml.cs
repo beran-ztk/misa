@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Music.Models;
@@ -23,6 +25,7 @@ public partial class EditTrackOverlay : UserControl
     private Dictionary<int, List<int>> _allTrackGenreIds = [];
     private Dictionary<int, List<int>> _allTrackStyleIds = [];
     private HashSet<int> _modelGenreIds = [];
+    private CancellationTokenSource? _analysisPreviewCancellation;
 
     public event Action? TrackSaved;
 
@@ -39,6 +42,7 @@ public partial class EditTrackOverlay : UserControl
         LoadLookups();
         Prefill(track);
         IsVisible = true;
+        StartModelAnalysisPreview();
         if (analyzeAfterOpening)
             _ = AnalyzeImportedTrackAsync(track);
     }
@@ -177,6 +181,7 @@ public partial class EditTrackOverlay : UserControl
             ? "Analysis complete. Review the metadata and save when ready."
             : $"Analysis needs review: {error}";
         ShowModelPredictions(track, applyMappedGenres: error is null);
+        StartModelAnalysisPreview();
         ShowModelSelectedGenres(track);
         RebuildGenreChips(SelectedGenreIds());
         ShowAudioAnalysis(track);
@@ -196,7 +201,42 @@ public partial class EditTrackOverlay : UserControl
         LoudnessRangeText.Text = analysis.LoudnessRange is double range
             ? $"{range:0.#} LU"
             : "—";
+
+        BpmInsightText.Text = analysis.Bpm is double detectedBpm
+            ? GetTempoInsight(detectedBpm)
+            : "Tempo could not be determined.";
+        IntegratedLoudnessInsightText.Text = analysis.IntegratedLoudness is double detectedLoudness
+            ? GetIntegratedLoudnessInsight(detectedLoudness)
+            : "Average loudness could not be determined.";
+        LoudnessRangeInsightText.Text = analysis.LoudnessRange is double loudnessRange
+            ? GetLoudnessRangeInsight(loudnessRange)
+            : "Loudness variation could not be determined.";
     }
+
+    private static string GetTempoInsight(double bpm) => bpm switch
+    {
+        < 80 => "Slow tempo with a relaxed pulse.",
+        < 120 => "Moderate, steady tempo.",
+        < 140 => "Upbeat tempo common in dance music.",
+        < 175 => "Fast, high-energy tempo.",
+        _ => "Very fast tempo."
+    };
+
+    private static string GetIntegratedLoudnessInsight(double lufs) => lufs switch
+    {
+        >= -8 => "Very loud and dense overall master.",
+        >= -11 => "Loud modern master with limited headroom.",
+        >= -14 => "Moderate overall loudness.",
+        _ => "Quieter overall master with more headroom."
+    };
+
+    private static string GetLoudnessRangeInsight(double lu) => lu switch
+    {
+        <= 3 => "Very even loudness; little contrast between sections.",
+        <= 6 => "Controlled dynamics with moderate variation.",
+        <= 10 => "Noticeable contrast between quieter and louder sections.",
+        _ => "High dynamic contrast across the track."
+    };
 
     private void ShowModelPredictions(MusicTrack track, bool applyMappedGenres)
     {
@@ -205,12 +245,51 @@ public partial class EditTrackOverlay : UserControl
             .Where(prediction => prediction.Score > displayThreshold)
             .ToList();
 
-        ModelAnalysisSection.IsVisible = predictions.Count > 0;
+        AnalysisButton.IsVisible = predictions.Count > 0;
+        if (predictions.Count == 0)
+            AnalysisPopup.IsOpen = false;
         ModelPredictionsText.Text = predictions.Count == 0
             ? string.Empty
             : string.Join("\n", predictions.Select(prediction =>
                 $"{prediction.ModelGenreName} → {prediction.ModelSubgenreName}  ({prediction.Score:0.###})"));
 
+    }
+
+    private void OnAnalysisButtonClicked(object? sender, RoutedEventArgs e)
+    {
+        _analysisPreviewCancellation?.Cancel();
+        AnalysisPopup.IsOpen = !AnalysisPopup.IsOpen;
+    }
+
+    private void OnEditorPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (e.Source != AnalysisButton)
+            AnalysisPopup.IsOpen = false;
+    }
+
+    private void StartModelAnalysisPreview()
+    {
+        _analysisPreviewCancellation?.Cancel();
+        if (!AnalysisButton.IsVisible)
+            return;
+
+        var cancellation = _analysisPreviewCancellation = new CancellationTokenSource();
+        AnalysisPopup.IsOpen = true;
+        _ = CloseAnalysisPreviewAfterDelayAsync(cancellation.Token);
+    }
+
+    private async System.Threading.Tasks.Task CloseAnalysisPreviewAfterDelayAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await System.Threading.Tasks.Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
+            if (!cancellationToken.IsCancellationRequested)
+                AnalysisPopup.IsOpen = false;
+        }
+        catch (OperationCanceledException)
+        {
+            // A manual toggle or a closed editor cancels the temporary preview.
+        }
     }
 
     private void ShowModelSelectedGenres(MusicTrack track)
@@ -228,14 +307,22 @@ public partial class EditTrackOverlay : UserControl
                 Padding = new Avalonia.Thickness(9, 7),
                 Margin = new Avalonia.Thickness(0, 0, 0, 3)
             };
-            var row = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*") };
-            var chip = new ToggleButton
+            var row = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,Auto,*") };
+            var genreName = new TextBlock
             {
-                Content = assignment.GenreName,
-                IsChecked = assignment.IsEnabled,
-                Padding = new Avalonia.Thickness(10, 5),
-                CornerRadius = new Avalonia.CornerRadius(13),
-                FontSize = 11
+                Text = assignment.GenreName,
+                FontSize = 12,
+                FontWeight = Avalonia.Media.FontWeight.SemiBold,
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+                Margin = new Avalonia.Thickness(2, 0, 10, 0)
+            };
+            var divider = new Border
+            {
+                Width = 1,
+                Height = 18,
+                Background = new SolidColorBrush(Color.Parse("#4D7B96")),
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+                Margin = new Avalonia.Thickness(0, 0, 10, 0)
             };
             var reason = new TextBlock
             {
@@ -243,34 +330,38 @@ public partial class EditTrackOverlay : UserControl
                 FontSize = 10.5, Opacity = 0.72, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
                 Margin = new Avalonia.Thickness(10, 0, 0, 0), TextWrapping = TextWrapping.Wrap
             };
-            Grid.SetColumn(reason, 1);
-            row.Children.Add(chip);
+            Grid.SetColumn(divider, 1);
+            Grid.SetColumn(reason, 2);
+            row.Children.Add(genreName);
+            row.Children.Add(divider);
             row.Children.Add(reason);
             container.Child = row;
-            ApplyModelGenreVisual(container, chip, assignment.IsEnabled);
-            chip.IsCheckedChanged += (_, _) =>
+            var enabled = assignment.IsEnabled;
+            ApplyModelGenreVisual(container, genreName, divider, enabled);
+            container.PointerPressed += (_, _) =>
             {
-                var enabled = chip.IsChecked == true;
+                enabled = !enabled;
                 MusicLibraryService.Current.SetTrackModelGenreEnabled(track.Id, assignment.GenreId, enabled);
-                ApplyModelGenreVisual(container, chip, enabled);
+                ApplyModelGenreVisual(container, genreName, divider, enabled);
             };
             ModelSelectedGenresPanel.Children.Add(container);
         }
     }
 
-    private static void ApplyModelGenreVisual(Border container, ToggleButton chip, bool enabled)
+    private static void ApplyModelGenreVisual(Border container, TextBlock genreName, Border divider, bool enabled)
     {
         container.Background = new SolidColorBrush(Color.Parse(enabled ? "#153B54" : "#23272D"));
         container.BorderBrush = new SolidColorBrush(Color.Parse(enabled ? "#3286B8" : "#3B414A"));
-        chip.Background = new SolidColorBrush(Color.Parse(enabled ? "#176EA8" : "#30353C"));
-        chip.BorderBrush = new SolidColorBrush(Color.Parse(enabled ? "#57C2F5" : "#525B66"));
-        chip.Foreground = enabled ? Brushes.White : new SolidColorBrush(Color.Parse("#A3ABB5"));
+        genreName.Foreground = enabled ? Brushes.White : new SolidColorBrush(Color.Parse("#A3ABB5"));
+        divider.Background = new SolidColorBrush(Color.Parse(enabled ? "#4D9AC5" : "#4A535D"));
     }
 
     private void OnCloseClicked(object? sender, RoutedEventArgs e) => CloseOverlay();
 
     private void CloseOverlay()
     {
+        _analysisPreviewCancellation?.Cancel();
+        AnalysisPopup.IsOpen = false;
         IsVisible = false;
         _track = null;
     }

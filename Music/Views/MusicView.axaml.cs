@@ -98,7 +98,7 @@ public partial class MusicView : UserControl
         ImportOverlay.TrackImported += track =>
         {
             RefreshTrackList();
-            EditTrackOverlay.Open(track, analyzeAfterOpening: true);
+            EditTrackOverlay.Open(track);
         };
         EditTrackOverlay.TrackSaved += RefreshTrackList;
         SettingsOverlay.ToastRequested += ShowToast;
