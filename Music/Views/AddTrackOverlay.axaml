@@ -85,8 +85,12 @@
                         
                         <!-- Genres -->
                         <StackPanel Spacing="8" Margin="0,0,40,0">
-                            <TextBlock Text="Genres"
-                                       FontSize="13" FontWeight="SemiBold" />
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <TextBlock Text="Genres"
+                                           FontSize="13" FontWeight="SemiBold" />
+                                <TextBlock Text="optional — automatic analysis runs after download"
+                                           FontSize="11" Opacity="0.5" VerticalAlignment="Bottom" />
+                            </StackPanel>
                             <WrapPanel x:Name="GenresPanel" Orientation="Horizontal" />
                             <Button x:Name="ShowMoreGenresBtn"
                                     Content="Show more genres"
@@ -96,8 +100,7 @@
                                     HorizontalAlignment="Left" />
                         </StackPanel>
 
-                        <!-- Styles: shown only after at least one genre is selected.
-                             The left accent bar visually anchors styles under their genre context. -->
+                        <!-- Styles remain hidden while the first metadata version has no style data. -->
                         <Grid x:Name="StylesSection" IsVisible="False"
                               ColumnDefinitions="Auto,*" Margin="0,0,40,0">
                             <Border Grid.Column="0"
@@ -161,7 +164,8 @@
                         Padding="22,18"
                         BoxShadow="0 8 28 2 #66000000">
                     <StackPanel Spacing="12">
-                        <TextBlock Text="Downloading track"
+                        <TextBlock x:Name="BusyTitleText"
+                                   Text="Downloading track"
                                    FontSize="15"
                                    FontWeight="SemiBold"
                                    HorizontalAlignment="Center"/>

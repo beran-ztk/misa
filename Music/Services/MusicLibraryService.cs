@@ -13,6 +13,7 @@ public class MusicLibraryService
     public static readonly MusicLibraryService Current = new();
     private readonly MusicDatabase _db = new();
     private readonly TrackDownloadService _downloader = new();
+    private readonly TrackAnalysisService _analysis = new();
 
     public void Initialize() => _db.Initialize();
 
@@ -84,7 +85,7 @@ public class MusicLibraryService
             new PortableMusicLibrary(portableTracks, FilterPresetStore.Load()));
     }
 
-    public async Task<DownloadResult> DownloadTrackAsync(DownloadRequest request)
+    public async Task<DownloadResult> DownloadTrackAsync(DownloadRequest request, IProgress<string>? progress = null)
     {
         if (string.IsNullOrWhiteSpace(request.RawUrl))
             return new DownloadResult(false, "URL is required.");
@@ -98,6 +99,7 @@ public class MusicLibraryService
         if (_db.TrackExists(canonicalUrl))
             return new DownloadResult(false, "Track already exists.");
 
+        progress?.Report("Downloading audio…");
         var (success, errorOutput) = await _downloader.RunYtDlpAsync(canonicalUrl);
         if (!success)
             return new DownloadResult(false, $"Failed:\n{errorOutput}");
@@ -108,10 +110,19 @@ public class MusicLibraryService
 
         var fileName = Path.GetFileName(filePath);
         var duration = await _downloader.GetDurationAsync(filePath);
-        _db.InsertTrack(canonicalUrl, _downloader.TitleFromFileName(fileName), fileName,
+        var trackId = _db.InsertTrack(canonicalUrl, _downloader.TitleFromFileName(fileName), fileName,
             request.GenreIds, request.RatingId, request.StyleIds, duration);
 
-        return new DownloadResult(true);
+        progress?.Report("Analyzing genres with Discogs-MAEST…");
+        var (analysis, analysisError) = await _analysis.AnalyzeAsync(filePath);
+        if (analysis is not null)
+        {
+            _db.SaveTrackAnalysis(trackId, analysis);
+            return new DownloadResult(true);
+        }
+
+        _db.SetTrackNeedsReview(trackId, true);
+        return new DownloadResult(true, Warning: $"Track downloaded, but analysis needs review: {analysisError}");
     }
 
     private static List<string> NamesFor(IEnumerable<int> ids, IReadOnlyDictionary<int, string> names) =>

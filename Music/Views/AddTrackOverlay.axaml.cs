@@ -38,7 +38,7 @@ public partial class AddTrackOverlay : UserControl
     private static readonly IBrush ValidUrlBrush = new SolidColorBrush(Color.FromRgb(72, 194, 120));
     private static readonly IBrush InvalidUrlBrush = new SolidColorBrush(Color.FromRgb(224, 92, 92));
 
-    public event Action? TrackDownloaded;
+    public event Action<string?>? TrackDownloaded;
     public event Action? CloseRequested;
 
     public AddTrackOverlay()
@@ -145,7 +145,7 @@ public partial class AddTrackOverlay : UserControl
             .Select(c => c.Genre.Id)
             .ToHashSet();
 
-        StylesSection.IsVisible = selectedGenreIds.Count > 0;
+        StylesSection.IsVisible = selectedGenreIds.Count > 0 && _styles.Count > 0;
 
         if (selectedGenreIds.Count == 0)
         {
@@ -188,7 +188,6 @@ public partial class AddTrackOverlay : UserControl
     private void UpdateDownloadButton()
     {
         DownloadBtn.IsEnabled = _validCanonicalUrl != null
-                               && _genreChips.Any(c => c.Btn.IsChecked == true)
                                && RatingBox.SelectedIndex >= 0;
     }
 
@@ -302,7 +301,8 @@ public partial class AddTrackOverlay : UserControl
                 .ToList()
         };
 
-        var result = await MusicLibraryService.Current.DownloadTrackAsync(request);
+        var progress = new Progress<string>(stage => BusyTitleText.Text = stage);
+        var result = await MusicLibraryService.Current.DownloadTrackAsync(request, progress);
 
         if (!result.Success)
         {
@@ -313,13 +313,14 @@ public partial class AddTrackOverlay : UserControl
             return;
         }
 
-        TrackDownloaded?.Invoke();
+        TrackDownloaded?.Invoke(result.Warning);
     }
 
     private void SetBusy(bool isBusy, string detail = "")
     {
         _downloading = isBusy;
         BusyLayer.IsVisible = isBusy;
+        BusyTitleText.Text = "Downloading track";
         BusyDetailText.Text = detail;
         DownloadBtn.IsEnabled = !isBusy && DownloadBtn.IsEnabled;
         CloseBtn.IsEnabled = !isBusy;

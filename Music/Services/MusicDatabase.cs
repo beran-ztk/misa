@@ -203,7 +203,7 @@ public class MusicDatabase
         return (long)cmd.ExecuteScalar()! > 0;
     }
 
-    public void InsertTrack(string canonicalUrl, string title, string fileName,
+    public int InsertTrack(string canonicalUrl, string title, string fileName,
         List<int> genreIds, int ratingId, List<int> _, int? durationSeconds)
     {
         using var conn = Open();
@@ -222,6 +222,47 @@ public class MusicDatabase
             ("$duration", durationSeconds));
 
         InsertTrackGenres(conn, tx, trackId, genreIds, GetAssignmentSourceId(conn, tx, ManualAssignmentSourceKey), now);
+        tx.Commit();
+        return (int)trackId;
+    }
+
+    public void SaveTrackAnalysis(int trackId, TrackAnalysisResult analysis)
+    {
+        using var conn = Open();
+        using var tx = conn.BeginTransaction();
+
+        ExecuteInsert(conn, tx, @"
+            INSERT INTO track_analysis (track_id, analyzed_at, analyzer_name)
+            VALUES ($trackId, $analyzedAt, $analyzerName)
+            ON CONFLICT(track_id) DO UPDATE SET
+                analyzed_at = excluded.analyzed_at,
+                analyzer_name = excluded.analyzer_name",
+            ("$trackId", trackId),
+            ("$analyzedAt", DateTime.UtcNow.ToString("O")),
+            ("$analyzerName", analysis.AnalyzerName));
+
+        var analysisId = GetTrackAnalysisId(conn, tx, trackId);
+        ExecuteInsert(conn, tx,
+            "DELETE FROM track_genre_predictions WHERE track_analysis_id = $analysisId",
+            ("$analysisId", analysisId));
+
+        foreach (var prediction in analysis.Predictions)
+        {
+            using var predictionCommand = conn.CreateCommand();
+            predictionCommand.Transaction = tx;
+            predictionCommand.CommandText = @"
+                INSERT INTO track_genre_predictions (track_analysis_id, model_subgenre_id, score)
+                SELECT $analysisId, model_subgenres.id, $score
+                FROM model_subgenres
+                JOIN model_genres ON model_genres.id = model_subgenres.model_genre_id
+                WHERE model_genres.name = $modelGenre AND model_subgenres.name = $modelSubgenre";
+            predictionCommand.Parameters.AddWithValue("$analysisId", analysisId);
+            predictionCommand.Parameters.AddWithValue("$score", prediction.Score);
+            predictionCommand.Parameters.AddWithValue("$modelGenre", prediction.ModelGenre);
+            predictionCommand.Parameters.AddWithValue("$modelSubgenre", prediction.ModelSubgenre);
+            predictionCommand.ExecuteNonQuery();
+        }
+
         tx.Commit();
     }
 
@@ -411,6 +452,15 @@ public class MusicDatabase
         cmd.Transaction = tx;
         cmd.CommandText = "SELECT id FROM genre_assignment_sources WHERE key = $key";
         cmd.Parameters.AddWithValue("$key", key);
+        return (long)cmd.ExecuteScalar()!;
+    }
+
+    private static long GetTrackAnalysisId(SqliteConnection conn, SqliteTransaction tx, int trackId)
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
+        cmd.CommandText = "SELECT id FROM track_analysis WHERE track_id = $trackId";
+        cmd.Parameters.AddWithValue("$trackId", trackId);
         return (long)cmd.ExecuteScalar()!;
     }
 

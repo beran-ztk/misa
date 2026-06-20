@@ -88,11 +88,11 @@ public partial class MusicView : UserControl
         AddFilterGroup();
         RefreshTrackList();
 
-        AddTrackOverlay.TrackDownloaded += () =>
+        AddTrackOverlay.TrackDownloaded += warning =>
         {
             AddTrackOverlay.IsVisible = false;
             RefreshTrackList();
-            ShowToast("Track downloaded");
+            ShowToast(warning ?? "Track downloaded and analyzed");
         };
         AddTrackOverlay.CloseRequested += () => AddTrackOverlay.IsVisible = false;
         EditTrackOverlay.TrackSaved += RefreshTrackList;
