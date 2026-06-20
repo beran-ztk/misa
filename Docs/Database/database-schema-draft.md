@@ -122,7 +122,8 @@ Columns:
 - analyzer_version         optional text
 
 - bpm                      nullable numeric value
-- loudness                 nullable numeric value
+- integrated_loudness      nullable numeric value in LUFS
+- loudness_range           nullable numeric value in LU
 - danceability             nullable numeric value
 
 Notes:

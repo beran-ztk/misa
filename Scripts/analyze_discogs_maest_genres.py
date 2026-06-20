@@ -57,6 +57,20 @@ def main():
         resampleQuality=4
     )()
 
+    bpm_audio = es.MonoLoader(
+        filename=args.track_path,
+        sampleRate=44100,
+        resampleQuality=4
+    )()
+    bpm, _, _, _, _ = es.RhythmExtractor2013(method="multifeature")(bpm_audio)
+
+    loudness_audio, loudness_sample_rate, _, *_ = es.AudioLoader(
+        filename=args.track_path
+    )()
+    _, _, integrated_loudness, loudness_range = es.LoudnessEBUR128(
+        sampleRate=loudness_sample_rate
+    )(loudness_audio)
+
     predictions = es.TensorflowPredictMAEST(
         graphFilename=str(model_path),
         output="PartitionedCall/Identity_13"
@@ -81,6 +95,9 @@ def main():
         "model": MODEL_NAME,
         "predictionShape": list(predictions.shape),
         "labelCount": len(labels),
+        "bpm": float(bpm),
+        "integratedLoudness": float(integrated_loudness),
+        "loudnessRange": float(loudness_range),
         "predictions": [
             {
                 "label": labels[int(i)],

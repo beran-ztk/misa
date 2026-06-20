@@ -60,7 +60,12 @@ public sealed class TrackAnalysisService
             if (predictions.Count == 0)
                 return (null, "Analysis completed but returned no valid genre predictions.");
 
-            return (new TrackAnalysisResult(output.Model ?? "discogs-maest-30s-pw-519l-2", predictions), null);
+            return (new TrackAnalysisResult(
+                output.Model ?? "discogs-maest-30s-pw-519l-2",
+                predictions,
+                output.Bpm,
+                output.IntegratedLoudness,
+                output.LoudnessRange), null);
         }
         catch (JsonException exception)
         {
@@ -123,7 +128,14 @@ public sealed class TrackAnalysisService
         return string.IsNullOrWhiteSpace(error) ? "Docker analysis failed." : error.Trim();
     }
 
-    private sealed record ScriptOutput(bool Success, string? Error, string? Model, List<ScriptPrediction>? Predictions);
+    private sealed record ScriptOutput(
+        bool Success,
+        string? Error,
+        string? Model,
+        List<ScriptPrediction>? Predictions,
+        double? Bpm,
+        double? IntegratedLoudness,
+        double? LoudnessRange);
     private sealed record ScriptPrediction(string? Label, double Score);
     private sealed record ProcessResult(int ExitCode, string Output, string Error);
 }

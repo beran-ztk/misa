@@ -106,7 +106,8 @@ public class MusicDatabase
                 analyzer_name     TEXT NULL,
                 analyzer_version  TEXT NULL,
                 bpm               REAL NULL,
-                loudness          REAL NULL,
+                integrated_loudness REAL NULL,
+                loudness_range    REAL NULL,
                 danceability      REAL NULL
             );
 
@@ -232,14 +233,20 @@ public class MusicDatabase
         using var tx = conn.BeginTransaction();
 
         ExecuteInsert(conn, tx, @"
-            INSERT INTO track_analysis (track_id, analyzed_at, analyzer_name)
-            VALUES ($trackId, $analyzedAt, $analyzerName)
+            INSERT INTO track_analysis (track_id, analyzed_at, analyzer_name, bpm, integrated_loudness, loudness_range)
+            VALUES ($trackId, $analyzedAt, $analyzerName, $bpm, $loudness, $loudnessRange)
             ON CONFLICT(track_id) DO UPDATE SET
                 analyzed_at = excluded.analyzed_at,
-                analyzer_name = excluded.analyzer_name",
+                analyzer_name = excluded.analyzer_name,
+                bpm = excluded.bpm,
+                integrated_loudness = excluded.integrated_loudness,
+                loudness_range = excluded.loudness_range",
             ("$trackId", trackId),
             ("$analyzedAt", DateTime.UtcNow.ToString("O")),
-            ("$analyzerName", analysis.AnalyzerName));
+            ("$analyzerName", analysis.AnalyzerName),
+            ("$bpm", analysis.Bpm),
+            ("$loudness", analysis.IntegratedLoudness),
+            ("$loudnessRange", analysis.LoudnessRange));
 
         var analysisId = GetTrackAnalysisId(conn, tx, trackId);
         ExecuteInsert(conn, tx,
