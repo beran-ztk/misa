@@ -26,6 +26,8 @@ public partial class EditTrackOverlay : UserControl
     private Dictionary<int, List<int>> _allTrackStyleIds = [];
     private HashSet<int> _modelGenreIds = [];
     private CancellationTokenSource? _analysisPreviewCancellation;
+    private readonly Dictionary<string, string?> _pendingAttributeOverrides = [];
+    private bool _buildingSoundProfile;
 
     public event Action? TrackSaved;
 
@@ -167,6 +169,9 @@ public partial class EditTrackOverlay : UserControl
             RatingBox.SelectedIndex >= 0 ? _ratings[RatingBox.SelectedIndex].Id : null,
             styleIds);
 
+        foreach (var overrideValue in _pendingAttributeOverrides)
+            MusicLibraryService.Current.SetTrackDerivedAttributeOverride(_track.Id, overrideValue.Key, overrideValue.Value);
+
         CloseOverlay();
         TrackSaved?.Invoke();
     }
@@ -223,10 +228,11 @@ public partial class EditTrackOverlay : UserControl
         SoundProfilePanel.Children.Clear();
         if (!SoundProfileSection.IsVisible) return;
 
-        var summary = string.Join("  ·  ", derived.Select(attribute =>
-            $"{FormatAttributeName(attribute.Key)}: {attribute.EffectiveValue}"));
-        if (summary.Length > 0)
-            SoundProfilePanel.Children.Add(new TextBlock { Text = summary, FontSize = 11, FontWeight = Avalonia.Media.FontWeight.SemiBold, Opacity = .85 });
+        _pendingAttributeOverrides.Clear();
+        _buildingSoundProfile = true;
+        foreach (var attribute in derived)
+            AddDerivedAttribute(attribute);
+        _buildingSoundProfile = false;
 
         AddSignal("Happy", "How strongly the model detects a happy mood.", Signal(models, "mood happy", "happy"));
         AddSignal("Sad", "How strongly the model detects a sad or melancholy mood.", Signal(models, "mood sad", "sad"));
@@ -248,7 +254,58 @@ public partial class EditTrackOverlay : UserControl
             row.Children.Add(title); row.Children.Add(bar); row.Children.Add(value);
             SoundProfilePanel.Children.Add(row);
         }
+
+        void AddDerivedAttribute(DerivedTrackAttribute attribute)
+        {
+            var options = AttributeOptions(attribute.Key);
+            if (options.Length == 0) return;
+            var row = new Grid { ColumnDefinitions = new ColumnDefinitions("120,*"), Margin = new Avalonia.Thickness(0, 0, 0, 2) };
+            var label = new TextBlock
+            {
+                Text = $"{FormatAttributeName(attribute.Key)} · {attribute.SystemValue}",
+                FontSize = 11,
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
+            };
+            ToolTip.SetTip(label, AttributeExplanation(attribute.Key));
+            var selector = new ComboBox
+            {
+                ItemsSource = new[] { $"Use system ({attribute.SystemValue})" }.Concat(options).ToList(),
+                SelectedIndex = attribute.ManualValue is null ? 0 : Array.IndexOf(options, attribute.ManualValue) + 1,
+                MinWidth = 150,
+                FontSize = 11
+            };
+            selector.SelectionChanged += (_, _) =>
+            {
+                if (_buildingSoundProfile) return;
+                _pendingAttributeOverrides[attribute.Key] = selector.SelectedIndex <= 0
+                    ? null
+                    : options[selector.SelectedIndex - 1];
+                UpdateSaveButton();
+            };
+            Grid.SetColumn(selector, 1);
+            row.Children.Add(label);
+            row.Children.Add(selector);
+            SoundProfilePanel.Children.Add(row);
+        }
     }
+
+    private static string[] AttributeOptions(string key) => key switch
+    {
+        "intensity" => ["Low", "Medium", "High"],
+        "emotional_tone" => ["Positive", "Neutral", "Melancholic"],
+        "energy_context" => ["Calm", "Driving", "Intense"],
+        "vocal_presence" => ["Instrumental", "Mixed", "Vocal"],
+        _ => []
+    };
+
+    private static string AttributeExplanation(string key) => key switch
+    {
+        "intensity" => "System suggestion based on several signals such as arousal, engagement and danceability.",
+        "emotional_tone" => "System suggestion based primarily on the valence model output.",
+        "energy_context" => "System suggestion based on the arousal model output.",
+        "vocal_presence" => "System suggestion based on the voice versus instrumental classifier.",
+        _ => "System-generated analysis attribute."
+    };
 
     private static double? Signal(IReadOnlyList<ExperimentalAnalysisModel> models, string model, string label) =>
         models.FirstOrDefault(item => item.Model == model)?.Values.FirstOrDefault(value => value.Label == label)?.Score;
