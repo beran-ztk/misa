@@ -46,25 +46,32 @@
                               HorizontalScrollBarVisibility="Disabled">
                     <StackPanel Spacing="22" Margin="0,0,0,20">
 
-                        <StackPanel Spacing="7">
-                            <TextBlock Text="Title"
-                                       FontSize="13" FontWeight="SemiBold" />
-                            <TextBox x:Name="TitleBox" />
+                        <StackPanel Spacing="10">
+                            <TextBlock Text="Basic information" FontSize="13" FontWeight="SemiBold" />
+                            <Grid ColumnDefinitions="*,200" ColumnSpacing="14">
+                                <StackPanel Spacing="7">
+                                    <TextBlock Text="Title" FontSize="11" Opacity="0.68" />
+                                    <TextBox x:Name="TitleBox" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Spacing="7">
+                                    <TextBlock Text="Rating" FontSize="11" Opacity="0.68" />
+                                    <ComboBox x:Name="RatingBox" />
+                                </StackPanel>
+                            </Grid>
                         </StackPanel>
 
-                        <StackPanel Spacing="6">
-                            <TextBlock Text="Rating"
-                                       FontSize="13" FontWeight="SemiBold" />
-                            <ComboBox x:Name="RatingBox" MinWidth="200" />
+                        <StackPanel x:Name="DetectedGenresSection" Spacing="5" Margin="0,0,40,0">
+                            <TextBlock Text="Detected by model" FontSize="13" FontWeight="SemiBold" />
+                            <TextBlock x:Name="DetectedGenresText" FontSize="11" Foreground="#7CB9DF" TextWrapping="Wrap" />
                         </StackPanel>
 
                         <StackPanel Spacing="8" Margin="0,0,40,0">
+                            <TextBlock Text="Library classification" FontSize="13" FontWeight="SemiBold" />
                             <StackPanel x:Name="ModelSelectedGenresSection" Spacing="7" Margin="0,0,0,18">
-                                <TextBlock Text="Model-selected genres" FontSize="13" FontWeight="SemiBold" />
+                                <TextBlock Text="Mapped system genres" FontSize="11" Opacity="0.68" />
                                 <StackPanel x:Name="ModelSelectedGenresPanel" Spacing="8" />
                             </StackPanel>
-                            <TextBlock Text="Genres"
-                                       FontSize="13" FontWeight="SemiBold" />
+                            <TextBlock Text="Manual genres" FontSize="11" Opacity="0.68" />
                             <WrapPanel x:Name="GenresPanel" Orientation="Horizontal" />
                         </StackPanel>
 

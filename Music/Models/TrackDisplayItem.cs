@@ -9,7 +9,8 @@ public record TrackDisplayItem(
     string ManualGenreText,
     string StyleText,
     string DurationText,
-    string RatingText)
+    string RatingText,
+    string ProfileText)
 {
     public bool IsPlaying { get; set; }
     public bool NeedsReview { get; set; }

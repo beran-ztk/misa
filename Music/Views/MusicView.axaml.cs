@@ -162,8 +162,12 @@ public partial class MusicView : UserControl
                 .Where(n => n.Length > 0).Order());
             var ratingName = t.RatingId is int ratingId ? ratingMap.GetValueOrDefault(ratingId, "") : "Not rated";
             var durationText = t.DurationSeconds.HasValue ? FormatDuration(t.DurationSeconds.Value) : "";
+            var attributes = MusicLibraryService.Current.GetTrackDerivedAttributes(t.Id);
+            var profileText = string.Join(" · ", attributes
+                .Where(attribute => attribute.Key is "emotional_tone" or "energy_context" or "vocal_presence")
+                .Select(attribute => attribute.EffectiveValue));
             
-            return new TrackDisplayItem(t, genreStr, manualGenreStr, styleStr, durationText, ratingName)
+            return new TrackDisplayItem(t, genreStr, manualGenreStr, styleStr, durationText, ratingName, profileText)
             {
                 NeedsReview = t.NeedsReview
             };

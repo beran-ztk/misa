@@ -289,7 +289,7 @@
                                            Stretch="UniformToFill"/>
                                 </Border>
 
-                                <!-- Title + genre + style -->
+                                <!-- Title + library classification + profile -->
                                 <StackPanel Grid.Column="2"
                                             VerticalAlignment="Center"
                                             Spacing="2">
@@ -303,8 +303,8 @@
                                     <TextBlock Text="{Binding ManualGenreText}"
                                                FontSize="11" Opacity="0.62"
                                                TextTrimming="CharacterEllipsis"/>
-                                    <TextBlock Text="{Binding StyleText}"
-                                               FontSize="10.5" Opacity="0.38"
+                                    <TextBlock Text="{Binding ProfileText}"
+                                               FontSize="10.5" Foreground="#A9BAC8" Opacity="0.62"
                                                TextTrimming="CharacterEllipsis"/>
                                 </StackPanel>
 

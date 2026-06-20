@@ -73,6 +73,7 @@ public partial class EditTrackOverlay : UserControl
         var selectedStyleIds = MusicLibraryService.Current.GetTrackStyleIds(track.Id).ToHashSet();
 
         ShowModelSelectedGenres(track);
+        ShowDetectedGenres(track);
         RebuildGenreChips(selectedGenreIds);
         RebuildStyleChips(selectedStyleIds);
         ShowModelPredictions(track, applyMappedGenres: false);
@@ -189,6 +190,7 @@ public partial class EditTrackOverlay : UserControl
         ShowModelPredictions(track, applyMappedGenres: error is null);
         StartModelAnalysisPreview();
         ShowModelSelectedGenres(track);
+        ShowDetectedGenres(track);
         RebuildGenreChips(SelectedGenreIds());
         ShowAudioAnalysis(track);
         ShowSoundProfile(track);
@@ -532,6 +534,19 @@ public partial class EditTrackOverlay : UserControl
             };
             ModelSelectedGenresPanel.Children.Add(container);
         }
+    }
+
+    private void ShowDetectedGenres(MusicTrack track)
+    {
+        var mappedSubgenreIds = MusicLibraryService.Current.GetGenreMappings()
+            .Select(mapping => mapping.ModelSubgenreId).ToHashSet();
+        var detected = MusicLibraryService.Current.GetTrackGenrePredictions(track.Id)
+            .Where(prediction => prediction.Score > .1 && !mappedSubgenreIds.Contains(prediction.ModelSubgenreId))
+            .Take(6)
+            .Select(prediction => $"{prediction.ModelGenreName} → {prediction.ModelSubgenreName}")
+            .ToList();
+        DetectedGenresSection.IsVisible = detected.Count > 0;
+        DetectedGenresText.Text = string.Join(" · ", detected);
     }
 
     private static void ApplyModelGenreVisual(Border container, TextBlock genreName, Border divider, bool enabled)
