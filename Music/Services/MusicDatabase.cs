@@ -617,16 +617,39 @@ public class MusicDatabase
     {
         double Signal(string model, string label) => models.FirstOrDefault(item => item.Model == model)?.Values
             .FirstOrDefault(value => value.Label == label)?.Score ?? 0;
+        double SignalStartingWith(string model, string labelPrefix) => models.FirstOrDefault(item => item.Model == model)?.Values
+            .FirstOrDefault(value => value.Label.StartsWith(labelPrefix, StringComparison.OrdinalIgnoreCase))?.Score ?? 0;
         var arousal = Math.Clamp((Signal("arousal_valence", "arousal") - 1d) / 8d, 0d, 1d);
         var valence = Math.Clamp((Signal("arousal_valence", "valence") - 1d) / 8d, 0d, 1d);
-        var intensity = 0.35 * arousal + 0.25 * Signal("engagement_regression", "engagement")
-            + 0.20 * Signal("mood aggressive", "aggressive") + 0.10 * Signal("mood party", "party")
-            + 0.10 * Signal("danceability classifier", "danceable");
+        var happy = Signal("mood happy", "happy");
+        var sad = Signal("mood sad", "sad");
+        var relaxed = Signal("mood relaxed", "relaxed");
+        var aggressive = Signal("mood aggressive", "aggressive");
+        var party = Signal("mood party", "party");
+        var engagement = Signal("engagement_regression", "engagement");
+        var danceable = Signal("danceability classifier", "danceable");
+        var jamendoEmotional = Signal("mtg_jamendo_moodtheme", "emotional");
+        var jamendoMelancholic = Signal("mtg_jamendo_moodtheme", "melancholic");
+        var jamendoPositive = Signal("mtg_jamendo_moodtheme", "positive");
+        var jamendoUplifting = Signal("mtg_jamendo_moodtheme", "uplifting");
+        var jamendoCalm = Signal("mtg_jamendo_moodtheme", "calm");
+        var jamendoMeditative = Signal("mtg_jamendo_moodtheme", "meditative");
+        var jamendoEnergetic = Signal("mtg_jamendo_moodtheme", "energetic");
+        var jamendoPowerful = Signal("mtg_jamendo_moodtheme", "powerful");
+        var mirexReflective = SignalStartingWith("moods mirex", "literate, poignant");
+        var melancholy = .55 * sad + .20 * mirexReflective + .10 * jamendoEmotional
+            + .10 * jamendoMelancholic + .05 * (1 - happy);
+        var positive = .65 * happy + .15 * jamendoPositive + .10 * jamendoUplifting + .10 * valence;
+        var calm = .55 * relaxed + .15 * jamendoCalm + .15 * jamendoMeditative + .15 * (1 - engagement);
+        var active = .30 * engagement + .18 * party + .15 * aggressive + .15 * jamendoEnergetic
+            + .12 * danceable + .10 * arousal;
+        var intense = .40 * aggressive + .25 * jamendoPowerful + .20 * engagement + .15 * jamendoEnergetic;
+        var intensity = Math.Clamp(active * (1 - .55 * calm), 0, 1);
         var vocal = Signal("voice/instrumental classifiers", "voice");
         return [
             ("intensity", intensity < .34 ? "Low" : intensity < .67 ? "Medium" : "High", intensity),
-            ("emotional_tone", valence < .40 ? "Melancholic" : valence > .60 ? "Positive" : "Neutral", valence),
-            ("energy_context", arousal < .34 ? "Calm" : arousal > .67 ? "Intense" : "Driving", arousal),
+            ("emotional_tone", melancholy >= .55 && melancholy > positive + .10 ? "Melancholic" : positive >= .55 && positive > melancholy + .10 ? "Positive" : "Neutral", Math.Max(melancholy, positive)),
+            ("energy_context", calm >= .55 && calm > active ? "Calm" : intense >= .65 && intense > calm ? "Intense" : "Driving", Math.Max(calm, Math.Max(active, intense))),
             ("vocal_presence", vocal > .67 ? "Vocal" : vocal < .33 ? "Instrumental" : "Mixed", vocal)
         ];
     }

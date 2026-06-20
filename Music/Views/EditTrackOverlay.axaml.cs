@@ -241,6 +241,8 @@ public partial class EditTrackOverlay : UserControl
         AddSignal("Party", "How strongly the model detects a party-oriented character.", Signal(models, "mood party", "party"));
         AddSignal("Danceable", "How strongly the model classifies the track as danceable.", Signal(models, "danceability classifier", "danceable"));
         AddSignal("Vocal", "How strongly the model detects vocals rather than an instrumental track.", Signal(models, "voice/instrumental classifiers", "voice"));
+        AddJamendoThemes(models);
+        AddMirexCharacter(models);
 
         void AddSignal(string name, string explanation, double? score)
         {
@@ -287,6 +289,34 @@ public partial class EditTrackOverlay : UserControl
             row.Children.Add(selector);
             SoundProfilePanel.Children.Add(row);
         }
+
+        void AddJamendoThemes(IReadOnlyList<ExperimentalAnalysisModel> analysisModels)
+        {
+            var tags = analysisModels.FirstOrDefault(model => model.Model == "mtg_jamendo_moodtheme")?.Values
+                .OrderByDescending(value => value.Score).Take(5).ToList() ?? [];
+            if (tags.Count == 0) return;
+            var text = new TextBlock
+            {
+                Text = "Themes · " + string.Join(" · ", tags.Select(tag => $"{tag.Label} ({tag.Score:0.##})")),
+                FontSize = 10.5,
+                Opacity = .78,
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Avalonia.Thickness(0, 5, 0, 0)
+            };
+            ToolTip.SetTip(text, "Jamendo tags describe themes and atmosphere. They are independent tags, not fixed genre or mood decisions.");
+            SoundProfilePanel.Children.Add(text);
+        }
+
+        void AddMirexCharacter(IReadOnlyList<ExperimentalAnalysisModel> analysisModels)
+        {
+            var top = analysisModels.FirstOrDefault(model => model.Model == "moods mirex")?.Values
+                .OrderByDescending(value => value.Score).FirstOrDefault();
+            if (top is null) return;
+            var title = MirexTitle(top.Label);
+            var text = new TextBlock { Text = $"Emotional character · {title} ({top.Score:0.##})", FontSize = 10.5, Opacity = .82 };
+            ToolTip.SetTip(text, MirexExplanation(top.Label));
+            SoundProfilePanel.Children.Add(text);
+        }
     }
 
     private static string[] AttributeOptions(string key) => key switch
@@ -305,6 +335,31 @@ public partial class EditTrackOverlay : UserControl
         "energy_context" => "System suggestion based on the arousal model output.",
         "vocal_presence" => "System suggestion based on the voice versus instrumental classifier.",
         _ => "System-generated analysis attribute."
+    };
+
+    private static string MirexTitle(string label) => label switch
+    {
+        var text when text.StartsWith("passionate", StringComparison.OrdinalIgnoreCase) => "Energetic / assertive",
+        var text when text.StartsWith("rollicking", StringComparison.OrdinalIgnoreCase) => "Cheerful / playful",
+        var text when text.StartsWith("literate", StringComparison.OrdinalIgnoreCase) => "Reflective / melancholic",
+        var text when text.StartsWith("humorous", StringComparison.OrdinalIgnoreCase) => "Quirky / humorous",
+        var text when text.StartsWith("aggressive", StringComparison.OrdinalIgnoreCase) => "Tense / aggressive",
+        _ => "Mixed mood"
+    };
+
+    private static string MirexExplanation(string label) => label switch
+    {
+        var text when text.StartsWith("literate", StringComparison.OrdinalIgnoreCase) =>
+            "Poignant bedeutet emotional berührend; wistful bedeutet sehnsüchtig oder nostalgisch; bittersweet bedeutet zugleich schön und traurig; brooding bedeutet nach innen gekehrt und düster.",
+        var text when text.StartsWith("passionate", StringComparison.OrdinalIgnoreCase) =>
+            "A forceful, confident and energetic emotional character.",
+        var text when text.StartsWith("rollicking", StringComparison.OrdinalIgnoreCase) =>
+            "A cheerful, light-hearted and playful emotional character.",
+        var text when text.StartsWith("humorous", StringComparison.OrdinalIgnoreCase) =>
+            "A quirky, humorous or whimsical emotional character.",
+        var text when text.StartsWith("aggressive", StringComparison.OrdinalIgnoreCase) =>
+            "A tense, fiery, anxious or forceful emotional character.",
+        _ => "A broad MIREX mood cluster derived from several descriptive terms."
     };
 
     private static double? Signal(IReadOnlyList<ExperimentalAnalysisModel> models, string model, string label) =>
