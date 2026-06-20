@@ -71,6 +71,7 @@ public partial class MusicView : UserControl
         SearchBox.TextChanged += (_, _) => ApplyFilter();
         RatingFilter.SelectionChanged += (_, _) => ApplyFilter();
         FileList.SelectionChanged += (_, _) => UpdateReviewButton();
+        PlayerBar.SizeChanged += (_, _) => UpdateSettingsLayout();
 
         // Volume
         VolumeSlider.ValueChanged += (_, _) =>
@@ -95,6 +96,7 @@ public partial class MusicView : UserControl
         };
         AddTrackOverlay.CloseRequested += () => AddTrackOverlay.IsVisible = false;
         EditTrackOverlay.TrackSaved += RefreshTrackList;
+        SettingsOverlay.ToastRequested += ShowToast;
     }
 
     // ─── Track list ──────────────────────────────────────────────────────────
@@ -560,6 +562,17 @@ public partial class MusicView : UserControl
     private void OnAddTrackClicked(object? sender, RoutedEventArgs e)
     {
         AddTrackOverlay.Open();
+    }
+
+    private void OnSettingsClicked(object? sender, RoutedEventArgs e)
+    {
+        UpdateSettingsLayout();
+        SettingsOverlay.Open();
+    }
+
+    private void UpdateSettingsLayout()
+    {
+        SettingsOverlay.Margin = new Thickness(0, 0, 0, PlayerBar.Bounds.Height);
     }
 
     private async void ShowToast(string message)

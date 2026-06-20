@@ -49,8 +49,8 @@
         </Style>
     </UserControl.Styles>
 
-    <DockPanel LastChildFill="True"
-               Background="#121417">
+    <Panel Background="#121417">
+    <DockPanel LastChildFill="True">
 
         <!-- ── Toolbar ── -->
         <Border DockPanel.Dock="Top"
@@ -109,6 +109,15 @@
                            Width="17" Height="17"/>
                 </Button>
 
+                <Button Classes="icon"
+                        Click="OnSettingsClicked"
+                        Background="#10151B"
+                        BorderThickness="1"
+                        ToolTip.Tip="Settings">
+                    <Image Source="{SvgImage /Assets/gear.svg}"
+                           Width="17" Height="17"/>
+                </Button>
+
                 <Button x:Name="FiltersToggleBtn"
                         Classes="icon"
                         Click="OnToggleFiltersClicked"
@@ -132,7 +141,8 @@
                    Height="0"/>
 
         <!-- ── Player bar ── -->
-        <Border DockPanel.Dock="Bottom"
+        <Border x:Name="PlayerBar"
+                DockPanel.Dock="Bottom"
                 Padding="16,10,16,14"
                 Background="#07080A"
                 BorderThickness="0,1,0,0" BorderBrush="#202832">
@@ -447,28 +457,32 @@
                 </DockPanel>
             </Border>
 
-            <!-- Add track overlay (always on top) -->
-            <Border x:Name="Toast"
-                    IsVisible="False"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Bottom"
-                    Margin="0,0,0,22"
-                    Background="#E6101821"
-                    BorderBrush="#314B5F"
-                    BorderThickness="1"
-                    CornerRadius="8"
-                    Padding="14,9"
-                    BoxShadow="0 8 24 2 #66000000">
-                <TextBlock x:Name="ToastText"
-                           FontSize="12"
-                           Foreground="#EAF3FA"/>
-            </Border>
-
             <views:AddTrackOverlay x:Name="AddTrackOverlay" IsVisible="False"/>
             <views:EditTrackOverlay x:Name="EditTrackOverlay" IsVisible="False"/>
 
         </Panel>
 
     </DockPanel>
+
+    <views:SettingsOverlay x:Name="SettingsOverlay" IsVisible="False" ZIndex="90"/>
+
+    <Border x:Name="Toast"
+            IsVisible="False"
+            ZIndex="100"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Top"
+            Margin="0,18,22,0"
+            Background="#E6101821"
+            BorderBrush="#314B5F"
+            BorderThickness="1"
+            CornerRadius="8"
+            Padding="14,9"
+            BoxShadow="0 8 24 2 #66000000">
+        <TextBlock x:Name="ToastText"
+                   FontSize="12"
+                   Foreground="#EAF3FA"/>
+    </Border>
+
+    </Panel>
 
 </UserControl>

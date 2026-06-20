@@ -1,0 +1,142 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Music.Views.SettingsOverlay">
+
+    <UserControl.Styles>
+        <Style Selector="ToggleButton.settings-nav">
+            <Setter Property="Padding" Value="11,8"/>
+            <Setter Property="Margin" Value="0,1"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="5"/>
+            <Setter Property="Foreground" Value="#A7AFB9"/>
+            <Setter Property="FontSize" Value="12"/>
+        </Style>
+        <Style Selector="ToggleButton.settings-nav:pointerover">
+            <Setter Property="Background" Value="#25282E"/>
+            <Setter Property="Foreground" Value="#EDF1F5"/>
+        </Style>
+        <Style Selector="ToggleButton.settings-nav:checked">
+            <Setter Property="Background" Value="#30333B"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+        <Style Selector="ToggleButton.mapping-filter">
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="MinWidth" Value="66"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Background" Value="#10151B"/>
+            <Setter Property="BorderBrush" Value="#3D4652"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+        <Style Selector="ToggleButton.mapping-filter:checked">
+            <Setter Property="Background" Value="#176EA8"/>
+            <Setter Property="BorderBrush" Value="#32A7E6"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Grid ColumnDefinitions="244,1,*" Background="#1B1D22">
+        <!-- Settings navigation -->
+        <Border Grid.Column="0" Background="#15161A" Padding="16,20,16,16">
+            <Grid RowDefinitions="Auto,Auto,*,Auto">
+                <StackPanel Spacing="3">
+                    <TextBlock Text="Settings" FontSize="18" FontWeight="SemiBold"/>
+                    <TextBlock Text="Library setup" FontSize="11" Opacity="0.52"/>
+                </StackPanel>
+
+                <StackPanel Grid.Row="1" Margin="0,26,0,0" Spacing="6">
+                    <TextBlock Text="CLASSIFICATION" FontSize="10" FontWeight="SemiBold"
+                               Opacity="0.4" LetterSpacing="0.8" Margin="10,0,0,4"/>
+                    <ToggleButton x:Name="GenreMappingsNavButton" Classes="settings-nav"
+                                  Content="Genre mappings" Tag="mappings"
+                                  Click="OnSettingsNavigationClicked"/>
+                </StackPanel>
+
+                <StackPanel Grid.Row="2" VerticalAlignment="Top" Margin="0,22,0,0" Spacing="6">
+                    <TextBlock Text="LIBRARY" FontSize="10" FontWeight="SemiBold"
+                               Opacity="0.4" LetterSpacing="0.8" Margin="10,0,0,4"/>
+                    <ToggleButton x:Name="LibraryNavButton" Classes="settings-nav"
+                                  Content="Locations" Tag="library"
+                                  Click="OnSettingsNavigationClicked"/>
+                </StackPanel>
+
+                <Button Grid.Row="3" Content="Close settings" Click="OnCloseClicked"
+                        HorizontalAlignment="Left" Background="Transparent" BorderThickness="0"
+                        Foreground="#A7AFB9" Padding="10,7"/>
+            </Grid>
+        </Border>
+
+        <Rectangle Grid.Column="1" Fill="#2A2D34"/>
+
+        <!-- Settings content -->
+        <Grid Grid.Column="2" RowDefinitions="Auto,1,*,Auto">
+            <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="30,20,22,16">
+                <StackPanel Spacing="2">
+                    <TextBlock x:Name="PageTitleText" FontSize="18" FontWeight="SemiBold"/>
+                    <TextBlock x:Name="PageDescriptionText" FontSize="11" Opacity="0.58" TextWrapping="Wrap"/>
+                </StackPanel>
+                <Button Grid.Column="1" Content="✕" Click="OnCloseClicked" Padding="8,4"
+                        FontSize="14" Opacity="0.6" VerticalAlignment="Top"/>
+            </Grid>
+
+            <Rectangle Grid.Row="1" Fill="#24272E"/>
+
+            <Grid x:Name="GenreMappingsPage" Grid.Row="2" RowDefinitions="Auto,*" Margin="30,22,30,0">
+                <Grid Grid.Row="0" ColumnDefinitions="*,170,Auto" Margin="0,0,0,12">
+                    <TextBox x:Name="SearchBox" Grid.Column="0" Height="34"
+                             Watermark="Search model genres or subgenres…"/>
+                    <ComboBox x:Name="ModelGenreBox" Grid.Column="1" Height="34"
+                              Margin="10,0,0,0"/>
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="12,0,0,0"
+                                VerticalAlignment="Center" Spacing="0">
+                        <ToggleButton x:Name="AllFilterButton" Classes="mapping-filter"
+                                      Content="All" Tag="all" IsChecked="True"
+                                      CornerRadius="6,0,0,6" Click="OnMappingFilterClicked"/>
+                        <ToggleButton x:Name="MappedFilterButton" Classes="mapping-filter"
+                                      Content="Mapped" Tag="mapped"
+                                      CornerRadius="0" Click="OnMappingFilterClicked"/>
+                        <ToggleButton x:Name="UnmappedFilterButton" Classes="mapping-filter"
+                                      Content="Unmapped" Tag="unmapped"
+                                      CornerRadius="0,6,6,0" Click="OnMappingFilterClicked"/>
+                    </StackPanel>
+                </Grid>
+
+                <Grid Grid.Row="1" RowDefinitions="Auto,*">
+                    <Grid ColumnDefinitions="130,*,190" Margin="0,0,0,6">
+                        <TextBlock Text="MODEL GENRE" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
+                        <TextBlock Grid.Column="1" Text="MODEL SUBGENRE" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
+                        <TextBlock Grid.Column="2" Text="YOUR GENRE" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
+                    </Grid>
+                    <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel x:Name="MappingRows" Spacing="5" Margin="0,0,0,18"/>
+                    </ScrollViewer>
+                </Grid>
+            </Grid>
+
+            <ScrollViewer x:Name="LibraryPage" Grid.Row="2" IsVisible="False" Margin="30,22,30,0"
+                          HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Spacing="22">
+                    <StackPanel Spacing="5">
+                        <TextBlock Text="Library locations" FontSize="15" FontWeight="SemiBold"/>
+                        <TextBlock Text="The local database and downloaded tracks used by this installation."
+                                   FontSize="11" Opacity="0.62" TextWrapping="Wrap"/>
+                    </StackPanel>
+                    <StackPanel Spacing="5">
+                        <TextBlock Text="DATABASE" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
+                        <TextBlock x:Name="DatabasePathText" FontSize="12" TextWrapping="Wrap"/>
+                    </StackPanel>
+                    <StackPanel Spacing="5">
+                        <TextBlock Text="TRACKS FOLDER" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
+                        <TextBlock x:Name="TracksPathText" FontSize="12" TextWrapping="Wrap"/>
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+
+            <Border Grid.Row="3" BorderThickness="0,1,0,0" BorderBrush="#24272E" Padding="30,10,30,13">
+                <TextBlock x:Name="SummaryText" VerticalAlignment="Center" FontSize="11" Opacity="0.65"/>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>
