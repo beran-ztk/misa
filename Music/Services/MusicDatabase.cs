@@ -177,7 +177,7 @@ public class MusicDatabase
         }
 
         var modelGenres = new Dictionary<string, long>(StringComparer.Ordinal);
-        foreach (var modelClass in ReadAsset<ModelGenreSeedDocument>("model-genres-with-subgenres.json").Classes)
+        foreach (var modelClass in ReadAsset<ModelGenreSeedDocument>("Models/discogs-maest-30s-pw-519l-2.json").Classes)
         {
             var (genreName, subgenreName) = SplitModelClass(modelClass);
             if (!modelGenres.TryGetValue(genreName, out var modelGenreId))

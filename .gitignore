@@ -8,3 +8,8 @@ Assets/
 
 # Local Codex verification builds. Never use the app's normal bin/ output for them.
 /.codex-build/
+
+# Local runtime dependencies kept beside the solution.
+/Tools/
+/Models/**/*.pb
+/Scripts/__pycache__/
