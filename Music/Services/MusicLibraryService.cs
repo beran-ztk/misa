@@ -64,6 +64,9 @@ public class MusicLibraryService
     public TrackAudioAnalysis? GetTrackAudioAnalysis(int trackId) => _db.GetTrackAudioAnalysis(trackId);
     public IReadOnlyList<ExperimentalAnalysisModel> GetExperimentalAnalysis(int trackId) =>
         _db.GetTrackAnalysisSignals(trackId);
+    public List<DerivedTrackAttribute> GetTrackDerivedAttributes(int trackId) => _db.GetTrackDerivedAttributes(trackId);
+    public void SetTrackDerivedAttributeOverride(int trackId, string key, string? value) =>
+        _db.SetTrackDerivedAttributeOverride(trackId, key, value);
     public List<GenreMapping> GetGenreMappings() => _db.GetGenreMappings();
     public void SetGenreMapping(int genreId, int modelSubgenreId) => _db.SetGenreMapping(genreId, modelSubgenreId);
     public void RemoveGenreMapping(int modelSubgenreId) => _db.RemoveGenreMapping(modelSubgenreId);

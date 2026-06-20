@@ -11,6 +11,10 @@ public record ExperimentalAnalysisModel(
     string Type,
     string Description,
     IReadOnlyList<ExperimentalAnalysisValue> Values);
+public record DerivedTrackAttribute(string Key, string SystemValue, double Score, string? ManualValue)
+{
+    public string EffectiveValue => ManualValue ?? SystemValue;
+}
 
 public record TrackAnalysisResult(
     string AnalyzerName,

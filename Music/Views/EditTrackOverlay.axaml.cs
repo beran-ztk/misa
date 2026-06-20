@@ -75,6 +75,7 @@ public partial class EditTrackOverlay : UserControl
         RebuildStyleChips(selectedStyleIds);
         ShowModelPredictions(track, applyMappedGenres: false);
         ShowAudioAnalysis(track);
+        ShowSoundProfile(track);
         UpdateSaveButton();
     }
 
@@ -185,6 +186,7 @@ public partial class EditTrackOverlay : UserControl
         ShowModelSelectedGenres(track);
         RebuildGenreChips(SelectedGenreIds());
         ShowAudioAnalysis(track);
+        ShowSoundProfile(track);
         UpdateSaveButton();
     }
 
@@ -212,6 +214,52 @@ public partial class EditTrackOverlay : UserControl
             ? GetLoudnessRangeInsight(loudnessRange)
             : "Loudness variation could not be determined.";
     }
+
+    private void ShowSoundProfile(MusicTrack track)
+    {
+        var models = MusicLibraryService.Current.GetExperimentalAnalysis(track.Id);
+        var derived = MusicLibraryService.Current.GetTrackDerivedAttributes(track.Id);
+        SoundProfileSection.IsVisible = models.Count > 0 || derived.Count > 0;
+        SoundProfilePanel.Children.Clear();
+        if (!SoundProfileSection.IsVisible) return;
+
+        var summary = string.Join("  ·  ", derived.Select(attribute =>
+            $"{FormatAttributeName(attribute.Key)}: {attribute.EffectiveValue}"));
+        if (summary.Length > 0)
+            SoundProfilePanel.Children.Add(new TextBlock { Text = summary, FontSize = 11, FontWeight = Avalonia.Media.FontWeight.SemiBold, Opacity = .85 });
+
+        AddSignal("Happy", "How strongly the model detects a happy mood.", Signal(models, "mood happy", "happy"));
+        AddSignal("Sad", "How strongly the model detects a sad or melancholy mood.", Signal(models, "mood sad", "sad"));
+        AddSignal("Relaxed", "How strongly the model detects a relaxed character.", Signal(models, "mood relaxed", "relaxed"));
+        AddSignal("Aggressive", "How strongly the model detects an aggressive character.", Signal(models, "mood aggressive", "aggressive"));
+        AddSignal("Party", "How strongly the model detects a party-oriented character.", Signal(models, "mood party", "party"));
+        AddSignal("Danceable", "How strongly the model classifies the track as danceable.", Signal(models, "danceability classifier", "danceable"));
+        AddSignal("Vocal", "How strongly the model detects vocals rather than an instrumental track.", Signal(models, "voice/instrumental classifiers", "voice"));
+
+        void AddSignal(string name, string explanation, double? score)
+        {
+            if (score is null) return;
+            var row = new Grid { ColumnDefinitions = new ColumnDefinitions("82,*,40"), RowDefinitions = new RowDefinitions("Auto,Auto") };
+            var title = new TextBlock { Text = name, FontSize = 11 };
+            ToolTip.SetTip(title, explanation);
+            var bar = new ProgressBar { Minimum = 0, Maximum = 1, Value = score.Value, Height = 6, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center, Foreground = new SolidColorBrush(Color.Parse("#1E9AF0")) };
+            var value = new TextBlock { Text = score.Value.ToString("0.##"), FontSize = 10.5, Opacity = .72, HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right };
+            Grid.SetColumn(bar, 1); Grid.SetColumn(value, 2);
+            row.Children.Add(title); row.Children.Add(bar); row.Children.Add(value);
+            SoundProfilePanel.Children.Add(row);
+        }
+    }
+
+    private static double? Signal(IReadOnlyList<ExperimentalAnalysisModel> models, string model, string label) =>
+        models.FirstOrDefault(item => item.Model == model)?.Values.FirstOrDefault(value => value.Label == label)?.Score;
+
+    private static string FormatAttributeName(string key) => key switch
+    {
+        "emotional_tone" => "Tone",
+        "energy_context" => "Energy",
+        "vocal_presence" => "Vocals",
+        _ => char.ToUpperInvariant(key[0]) + key[1..]
+    };
 
     private static string GetTempoInsight(double bpm) => bpm switch
     {

@@ -145,6 +145,16 @@ public class MusicDatabase
                 UNIQUE (track_analysis_id, model_name, signal_key)
             );
 
+            CREATE TABLE track_derived_attributes (
+                id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+                track_analysis_id  INTEGER NOT NULL REFERENCES track_analysis(id) ON DELETE CASCADE,
+                attribute_key      TEXT NOT NULL,
+                system_value       TEXT NOT NULL,
+                system_score       REAL NOT NULL,
+                manual_value       TEXT NULL,
+                UNIQUE (track_analysis_id, attribute_key)
+            );
+
 
             CREATE TABLE genre_mappings (
                 id                 INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -156,6 +166,7 @@ public class MusicDatabase
             CREATE INDEX ix_model_subgenres_model_genre_id ON model_subgenres(model_genre_id);
             CREATE INDEX ix_track_genre_predictions_analysis_id ON track_genre_predictions(track_analysis_id);
             CREATE INDEX ix_track_analysis_signals_analysis_id ON track_analysis_signals(track_analysis_id);
+            CREATE INDEX ix_track_derived_attributes_analysis_id ON track_derived_attributes(track_analysis_id);
             CREATE INDEX ix_genre_mappings_genre_id ON genre_mappings(genre_id);";
         cmd.ExecuteNonQuery();
     }
@@ -300,6 +311,8 @@ public class MusicDatabase
                 ("$model", model.Model), ("$type", model.Type), ("$description", model.Description),
                 ("$key", value.Label), ("$score", value.Score));
         }
+
+        SaveDerivedAttributes(conn, tx, analysisId, DeriveAttributes(analysis.ExperimentalModels ?? []));
 
         RefreshModelGenres(conn, tx, trackId);
 
@@ -556,6 +569,66 @@ public class MusicDatabase
         }
         return grouped.Select(item => new ExperimentalAnalysisModel(
             item.Key.Family, item.Key.Category, item.Key.Model, item.Key.Type, item.Key.Description, item.Value)).ToList();
+    }
+
+    public List<DerivedTrackAttribute> GetTrackDerivedAttributes(int trackId)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"SELECT attribute_key, system_value, system_score, manual_value
+                            FROM track_derived_attributes attributes
+                            JOIN track_analysis analysis ON analysis.id = attributes.track_analysis_id
+                            WHERE analysis.track_id = $trackId ORDER BY attribute_key";
+        cmd.Parameters.AddWithValue("$trackId", trackId);
+        using var reader = cmd.ExecuteReader();
+        var result = new List<DerivedTrackAttribute>();
+        while (reader.Read()) result.Add(new DerivedTrackAttribute(
+            reader.GetString(0), reader.GetString(1), reader.GetDouble(2),
+            reader.IsDBNull(3) ? null : reader.GetString(3)));
+        return result;
+    }
+
+    public void SetTrackDerivedAttributeOverride(int trackId, string key, string? manualValue)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"UPDATE track_derived_attributes SET manual_value = $manualValue
+                            WHERE track_analysis_id = (SELECT id FROM track_analysis WHERE track_id = $trackId)
+                            AND attribute_key = $key";
+        cmd.Parameters.AddWithValue("$trackId", trackId);
+        cmd.Parameters.AddWithValue("$key", key);
+        cmd.Parameters.AddWithValue("$manualValue", (object?)manualValue ?? DBNull.Value);
+        cmd.ExecuteNonQuery();
+    }
+
+    private static void SaveDerivedAttributes(SqliteConnection conn, SqliteTransaction tx, long analysisId,
+        IEnumerable<(string Key, string Value, double Score)> attributes)
+    {
+        foreach (var attribute in attributes)
+            ExecuteInsert(conn, tx, @"INSERT INTO track_derived_attributes
+                (track_analysis_id, attribute_key, system_value, system_score)
+                VALUES ($analysisId, $key, $value, $score)
+                ON CONFLICT(track_analysis_id, attribute_key) DO UPDATE SET
+                    system_value = excluded.system_value, system_score = excluded.system_score",
+                ("$analysisId", analysisId), ("$key", attribute.Key), ("$value", attribute.Value), ("$score", attribute.Score));
+    }
+
+    private static List<(string Key, string Value, double Score)> DeriveAttributes(IReadOnlyList<ExperimentalAnalysisModel> models)
+    {
+        double Signal(string model, string label) => models.FirstOrDefault(item => item.Model == model)?.Values
+            .FirstOrDefault(value => value.Label == label)?.Score ?? 0;
+        var arousal = Math.Clamp((Signal("arousal_valence", "arousal") - 1d) / 8d, 0d, 1d);
+        var valence = Math.Clamp((Signal("arousal_valence", "valence") - 1d) / 8d, 0d, 1d);
+        var intensity = 0.35 * arousal + 0.25 * Signal("engagement_regression", "engagement")
+            + 0.20 * Signal("mood aggressive", "aggressive") + 0.10 * Signal("mood party", "party")
+            + 0.10 * Signal("danceability classifier", "danceable");
+        var vocal = Signal("voice/instrumental classifiers", "voice");
+        return [
+            ("intensity", intensity < .34 ? "Low" : intensity < .67 ? "Medium" : "High", intensity),
+            ("emotional_tone", valence < .40 ? "Melancholic" : valence > .60 ? "Positive" : "Neutral", valence),
+            ("energy_context", arousal < .34 ? "Calm" : arousal > .67 ? "Intense" : "Driving", arousal),
+            ("vocal_presence", vocal > .67 ? "Vocal" : vocal < .33 ? "Instrumental" : "Mixed", vocal)
+        ];
     }
 
     public List<GenreMapping> GetGenreMappings()
