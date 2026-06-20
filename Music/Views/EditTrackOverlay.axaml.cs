@@ -67,6 +67,7 @@ public partial class EditTrackOverlay : UserControl
         RebuildGenreChips(selectedGenreIds);
         RebuildStyleChips(selectedStyleIds);
         ShowModelPredictions(track, applyMappedGenres: false);
+        ShowAudioAnalysis(track);
         UpdateSaveButton();
     }
 
@@ -172,7 +173,23 @@ public partial class EditTrackOverlay : UserControl
             ? "Analysis complete. Review the metadata and save when ready."
             : $"Analysis needs review: {error}";
         ShowModelPredictions(track, applyMappedGenres: error is null);
+        ShowAudioAnalysis(track);
         UpdateSaveButton();
+    }
+
+    private void ShowAudioAnalysis(MusicTrack track)
+    {
+        var analysis = MusicLibraryService.Current.GetTrackAudioAnalysis(track.Id);
+        AudioAnalysisSection.IsVisible = analysis is not null;
+        if (analysis is null) return;
+
+        BpmText.Text = analysis.Bpm is double bpm ? $"{bpm:0.#} BPM" : "—";
+        IntegratedLoudnessText.Text = analysis.IntegratedLoudness is double loudness
+            ? $"{loudness:0.#} LUFS"
+            : "—";
+        LoudnessRangeText.Text = analysis.LoudnessRange is double range
+            ? $"{range:0.#} LU"
+            : "—";
     }
 
     private void ShowModelPredictions(MusicTrack track, bool applyMappedGenres)

@@ -63,6 +63,19 @@
                                        FontSize="11" Opacity="0.68" TextWrapping="Wrap" />
                         </StackPanel>
 
+                        <StackPanel x:Name="AudioAnalysisSection" Spacing="7" Margin="0,0,40,0">
+                            <TextBlock Text="Audio analysis"
+                                       FontSize="13" FontWeight="SemiBold" />
+                            <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto">
+                                <TextBlock Text="BPM" FontSize="11" Opacity="0.62"/>
+                                <TextBlock x:Name="BpmText" Grid.Column="1" FontSize="11"/>
+                                <TextBlock Grid.Row="1" Text="Integrated loudness" FontSize="11" Opacity="0.62"/>
+                                <TextBlock x:Name="IntegratedLoudnessText" Grid.Row="1" Grid.Column="1" FontSize="11"/>
+                                <TextBlock Grid.Row="2" Text="Loudness range" FontSize="11" Opacity="0.62"/>
+                                <TextBlock x:Name="LoudnessRangeText" Grid.Row="2" Grid.Column="1" FontSize="11"/>
+                            </Grid>
+                        </StackPanel>
+
                         <Grid x:Name="StylesSection" ColumnDefinitions="Auto,*" Margin="0,0,40,0">
                             <Border Grid.Column="0"
                                     Width="2" Margin="0,2,0,2"

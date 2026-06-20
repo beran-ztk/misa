@@ -10,3 +10,5 @@ public record TrackAnalysisResult(
     double? Bpm,
     double? IntegratedLoudness,
     double? LoudnessRange);
+
+public record TrackAudioAnalysis(double? Bpm, double? IntegratedLoudness, double? LoudnessRange);

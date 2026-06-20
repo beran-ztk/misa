@@ -424,6 +424,24 @@ public class MusicDatabase
         return predictions;
     }
 
+    public TrackAudioAnalysis? GetTrackAudioAnalysis(int trackId)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+            SELECT bpm, integrated_loudness, loudness_range
+            FROM track_analysis
+            WHERE track_id = $trackId";
+        cmd.Parameters.AddWithValue("$trackId", trackId);
+        using var reader = cmd.ExecuteReader();
+        if (!reader.Read()) return null;
+
+        return new TrackAudioAnalysis(
+            reader.IsDBNull(0) ? null : reader.GetDouble(0),
+            reader.IsDBNull(1) ? null : reader.GetDouble(1),
+            reader.IsDBNull(2) ? null : reader.GetDouble(2));
+    }
+
     public List<GenreMapping> GetGenreMappings()
     {
         using var conn = Open();
