@@ -66,6 +66,7 @@ public partial class SettingsOverlay : UserControl
         UpdateSummary();
         RebuildMappingRows();
         RebuildCalibrationRows();
+        RebuildGenreRows();
         IsVisible = true;
     }
 
@@ -203,6 +204,7 @@ public partial class SettingsOverlay : UserControl
         {
             "library" => SettingsPage.Library,
             "calibration" => SettingsPage.AnalysisCalibration,
+            "genres" => SettingsPage.Genres,
             _ => SettingsPage.GenreMappings
         });
     }
@@ -215,23 +217,64 @@ public partial class SettingsOverlay : UserControl
         GenreMappingsPage.IsVisible = isMappingsPage;
         LibraryPage.IsVisible = isLibraryPage;
         AnalysisCalibrationPage.IsVisible = page == SettingsPage.AnalysisCalibration;
+        GenresPage.IsVisible = page == SettingsPage.Genres;
         GenreMappingsNavButton.IsChecked = isMappingsPage;
         LibraryNavButton.IsChecked = isLibraryPage;
         AnalysisCalibrationNavButton.IsChecked = page == SettingsPage.AnalysisCalibration;
+        GenresNavButton.IsChecked = page == SettingsPage.Genres;
 
         PageTitleText.Text = page switch
         {
             SettingsPage.Library => "Library",
             SettingsPage.AnalysisCalibration => "Analysis calibration",
+            SettingsPage.Genres => "Your genres",
             _ => "Genre mappings"
         };
         PageDescriptionText.Text = isMappingsPage
             ? "Connect model subgenres with your own genres. Unassigned labels remain visible as raw model output."
             : isLibraryPage
                 ? "Where this installation keeps the local music library and its database."
-                : "Compare current system interpretations before turning them into filters.";
+                : page == SettingsPage.Genres
+                    ? "Create and maintain the genres used by your library. Genres with existing tracks or mappings stay protected."
+                    : "Compare current system interpretations before turning them into filters.";
         SummaryText.Text = isMappingsPage ? BuildSummaryText() : "";
         if (page == SettingsPage.AnalysisCalibration) RebuildCalibrationRows();
+        if (page == SettingsPage.Genres) RebuildGenreRows();
+    }
+
+    private void RebuildGenreRows()
+    {
+        if (!IsInitialized) return;
+        GenreRows.Children.Clear();
+        foreach (var genre in MusicLibraryService.Current.GetGenres())
+        {
+            var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto") };
+            var nameBox = new TextBox { Text = genre.Name, Height = 32 };
+            var save = new Button { Content = "Save", Padding = new Avalonia.Thickness(10, 4), Margin = new Avalonia.Thickness(8, 0, 0, 0), FontSize = 10 };
+            var remove = new Button { Content = "Delete", Padding = new Avalonia.Thickness(10, 4), Margin = new Avalonia.Thickness(6, 0, 0, 0), FontSize = 10 };
+            save.Click += (_, _) =>
+            {
+                try { MusicLibraryService.Current.RenameGenre(genre.Id, nameBox.Text ?? genre.Name); ToastRequested?.Invoke("Genre updated."); RebuildGenreRows(); }
+                catch (Exception exception) { ToastRequested?.Invoke($"Could not update genre: {exception.Message}"); }
+            };
+            remove.Click += (_, _) =>
+            {
+                var error = MusicLibraryService.Current.DeleteGenreIfUnused(genre.Id);
+                ToastRequested?.Invoke(error ?? "Genre deleted.");
+                RebuildGenreRows();
+            };
+            Grid.SetColumn(save, 1); Grid.SetColumn(remove, 2);
+            row.Children.Add(nameBox); row.Children.Add(save); row.Children.Add(remove);
+            GenreRows.Children.Add(row);
+        }
+    }
+
+    private void OnAddGenreClicked(object? sender, RoutedEventArgs e)
+    {
+        var name = NewGenreBox.Text?.Trim() ?? string.Empty;
+        if (name.Length == 0) return;
+        try { MusicLibraryService.Current.AddGenre(name); NewGenreBox.Text = string.Empty; RebuildGenreRows(); ToastRequested?.Invoke("Genre added."); }
+        catch (Exception exception) { ToastRequested?.Invoke($"Could not add genre: {exception.Message}"); }
     }
 
     private void RebuildCalibrationRows()
@@ -328,5 +371,5 @@ public partial class SettingsOverlay : UserControl
             .OrderByDescending(item => item.value.Score).Take(3).Select(item => $"{item.Model}: {item.value.Label} {item.value.Score:0.##}"));
     }
 
-    private enum SettingsPage { GenreMappings, Library, AnalysisCalibration }
+    private enum SettingsPage { GenreMappings, Library, AnalysisCalibration, Genres }
 }

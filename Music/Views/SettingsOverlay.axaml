@@ -55,6 +55,9 @@
                     <ToggleButton x:Name="AnalysisCalibrationNavButton" Classes="settings-nav"
                                   Content="Analysis calibration" Tag="calibration"
                                   Click="OnSettingsNavigationClicked"/>
+                    <ToggleButton x:Name="GenresNavButton" Classes="settings-nav"
+                                  Content="Your genres" Tag="genres"
+                                  Click="OnSettingsNavigationClicked"/>
                 </StackPanel>
 
                 <StackPanel Grid.Row="2" VerticalAlignment="Top" Margin="0,22,0,0" Spacing="6">
@@ -145,6 +148,16 @@
                 </Grid>
                 <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
                     <StackPanel x:Name="CalibrationRows" Spacing="5" Margin="0,0,0,18"/>
+                </ScrollViewer>
+            </Grid>
+
+            <Grid x:Name="GenresPage" Grid.Row="2" IsVisible="False" RowDefinitions="Auto,*" Margin="30,22,30,0">
+                <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,12">
+                    <TextBox x:Name="NewGenreBox" Watermark="New genre name…" Height="34"/>
+                    <Button Grid.Column="1" Content="Add genre" Click="OnAddGenreClicked" Margin="10,0,0,0" Padding="12,5"/>
+                </Grid>
+                <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel x:Name="GenreRows" Spacing="5" Margin="0,0,0,18"/>
                 </ScrollViewer>
             </Grid>
 

@@ -490,6 +490,46 @@ public class MusicDatabase
         return ReadLookupList(cmd, (id, name) => new Genre(id, name));
     }
 
+    public void AddGenre(string name)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "INSERT INTO genres (key, name) VALUES ($key, $name)";
+        cmd.Parameters.AddWithValue("$key", GenreKey(name));
+        cmd.Parameters.AddWithValue("$name", name.Trim());
+        cmd.ExecuteNonQuery();
+    }
+
+    public void RenameGenre(int id, string name)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "UPDATE genres SET key = $key, name = $name WHERE id = $id";
+        cmd.Parameters.AddWithValue("$id", id);
+        cmd.Parameters.AddWithValue("$key", GenreKey(name));
+        cmd.Parameters.AddWithValue("$name", name.Trim());
+        cmd.ExecuteNonQuery();
+    }
+
+    public string? DeleteGenreIfUnused(int id)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"SELECT (SELECT COUNT(*) FROM track_genres WHERE genre_id = $id),
+                                   (SELECT COUNT(*) FROM genre_mappings WHERE genre_id = $id)";
+        cmd.Parameters.AddWithValue("$id", id);
+        using var reader = cmd.ExecuteReader();
+        reader.Read();
+        var tracks = reader.GetInt64(0);
+        var mappings = reader.GetInt64(1);
+        if (tracks > 0 || mappings > 0)
+            return $"Cannot delete: used by {tracks} track(s) and {mappings} mapping(s).";
+        reader.Close();
+        cmd.CommandText = "DELETE FROM genres WHERE id = $id";
+        cmd.ExecuteNonQuery();
+        return null;
+    }
+
     public List<Rating> GetRatings()
     {
         using var conn = Open();
@@ -830,6 +870,10 @@ public class MusicDatabase
         foreach (var (name, value) in parameters)
             cmd.Parameters.AddWithValue(name, value ?? DBNull.Value);
     }
+
+    private static string GenreKey(string name) => string.Concat(name.Trim().ToLowerInvariant()
+        .Select(character => char.IsLetterOrDigit(character) ? character : '-'))
+        .Trim('-');
 
     private static T ReadAsset<T>(string fileName)
     {

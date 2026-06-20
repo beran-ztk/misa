@@ -56,6 +56,9 @@ public class MusicLibraryService
 
     // --- Lookups ---
     public List<Genre> GetGenres() => _db.GetGenres();
+    public void AddGenre(string name) => _db.AddGenre(name);
+    public void RenameGenre(int id, string name) => _db.RenameGenre(id, name);
+    public string? DeleteGenreIfUnused(int id) => _db.DeleteGenreIfUnused(id);
     public List<Style> GetStyles() => _db.GetStyles();
     public List<Rating> GetRatings() => _db.GetRatings();
     public List<ModelGenre> GetModelGenres() => _db.GetModelGenres();
