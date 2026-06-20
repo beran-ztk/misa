@@ -5,7 +5,8 @@ namespace Music.Models;
 
 public record TrackDisplayItem(
     MusicTrack Track,
-    string GenreText,
+    string SystemGenreText,
+    string ManualGenreText,
     string StyleText,
     string DurationText,
     string RatingText)

@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace Music.Models;
 
 public record MusicTrack(
@@ -15,6 +17,8 @@ public record StoredModelGenrePrediction(
     int ModelSubgenreId,
     string ModelSubgenreName,
     double Score);
+public record ModelGenreReason(string ModelGenreName, string ModelSubgenreName, double Score);
+public record TrackModelGenre(int GenreId, string GenreName, bool IsEnabled, IReadOnlyList<ModelGenreReason> Reasons);
 public record GenreMapping(
     int Id,
     int GenreId,

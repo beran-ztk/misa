@@ -96,6 +96,7 @@ public class MusicDatabase
                 genre_id                 INTEGER NOT NULL REFERENCES genres(id),
                 set_by_source_id         INTEGER NOT NULL REFERENCES genre_assignment_sources(id),
                 assigned_at              TEXT NOT NULL,
+                is_enabled               INTEGER NOT NULL DEFAULT 1,
                 PRIMARY KEY (track_id, genre_id)
             );
 
@@ -130,6 +131,7 @@ public class MusicDatabase
                 score              REAL NOT NULL CHECK (score >= 0 AND score <= 1),
                 UNIQUE (track_analysis_id, model_subgenre_id)
             );
+
 
             CREATE TABLE genre_mappings (
                 id                 INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -270,6 +272,8 @@ public class MusicDatabase
             predictionCommand.ExecuteNonQuery();
         }
 
+        RefreshModelGenres(conn, tx, trackId);
+
         tx.Commit();
     }
 
@@ -301,7 +305,7 @@ public class MusicDatabase
     {
         using var conn = Open();
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT track_id, genre_id FROM track_genres";
+        cmd.CommandText = "SELECT track_id, genre_id FROM track_genres WHERE is_enabled = 1";
         return ReadTrackIdMap(cmd);
     }
 
@@ -309,12 +313,71 @@ public class MusicDatabase
     {
         using var conn = Open();
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT genre_id FROM track_genres WHERE track_id = $trackId";
+        cmd.CommandText = "SELECT genre_id FROM track_genres WHERE track_id = $trackId AND is_enabled = 1";
         cmd.Parameters.AddWithValue("$trackId", trackId);
         using var reader = cmd.ExecuteReader();
         var genreIds = new List<int>();
         while (reader.Read()) genreIds.Add(reader.GetInt32(0));
         return genreIds;
+    }
+
+    public List<int> GetTrackManualGenreIds(int trackId)
+    {
+        using var conn = Open(); using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"SELECT track_genres.genre_id FROM track_genres JOIN genre_assignment_sources source ON source.id = track_genres.set_by_source_id
+                            WHERE track_id = $trackId AND source.key = 'manual'";
+        cmd.Parameters.AddWithValue("$trackId", trackId);
+        using var reader = cmd.ExecuteReader();
+        var ids = new List<int>();
+        while (reader.Read()) ids.Add(reader.GetInt32(0));
+        return ids;
+    }
+
+    public List<TrackModelGenre> GetTrackModelGenres(int trackId)
+    {
+        using var conn = Open(); using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"SELECT track_genres.genre_id, genres.name, track_genres.is_enabled, mg.name, msg.name, predictions.score
+                            FROM track_genres JOIN genre_assignment_sources source ON source.id = track_genres.set_by_source_id
+                            JOIN genres ON genres.id = track_genres.genre_id JOIN genre_mappings mapping ON mapping.genre_id = track_genres.genre_id
+                            JOIN model_subgenres msg ON msg.id = mapping.model_subgenre_id JOIN model_genres mg ON mg.id = msg.model_genre_id
+                            JOIN track_analysis analysis ON analysis.track_id = track_genres.track_id
+                            JOIN track_genre_predictions predictions ON predictions.track_analysis_id = analysis.id AND predictions.model_subgenre_id = msg.id
+                            WHERE track_genres.track_id = $trackId AND source.key = 'model_suggestion' AND predictions.score > 0.1 ORDER BY genres.name, predictions.score DESC";
+        cmd.Parameters.AddWithValue("$trackId", trackId);
+        using var reader = cmd.ExecuteReader();
+        var groups = new Dictionary<int, (string Name, bool Enabled, List<ModelGenreReason> Reasons)>();
+        while (reader.Read())
+        {
+            var id = reader.GetInt32(0);
+            if (!groups.TryGetValue(id, out var group)) groups[id] = group = (reader.GetString(1), reader.GetInt32(2) != 0, []);
+            group.Reasons.Add(new ModelGenreReason(reader.GetString(3), reader.GetString(4), reader.GetDouble(5)));
+        }
+        return groups.Select(x => new TrackModelGenre(x.Key, x.Value.Name, x.Value.Enabled, x.Value.Reasons)).ToList();
+    }
+
+    public void SetTrackModelGenreEnabled(int trackId, int genreId, bool isEnabled)
+    {
+        using var conn = Open(); using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"UPDATE track_genres SET is_enabled = $enabled WHERE track_id = $trackId AND genre_id = $genreId
+                            AND set_by_source_id = (SELECT id FROM genre_assignment_sources WHERE key = 'model_suggestion')";
+        cmd.Parameters.AddWithValue("$trackId", trackId); cmd.Parameters.AddWithValue("$genreId", genreId); cmd.Parameters.AddWithValue("$enabled", isEnabled ? 1 : 0);
+        cmd.ExecuteNonQuery();
+    }
+
+    public Dictionary<int, List<int>> GetAllTrackModelGenreIds()
+    {
+        using var conn = Open(); using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"SELECT track_genres.track_id, track_genres.genre_id FROM track_genres JOIN genre_assignment_sources source ON source.id = track_genres.set_by_source_id
+                            WHERE source.key = 'model_suggestion' AND track_genres.is_enabled = 1";
+        return ReadTrackIdMap(cmd);
+    }
+
+    public Dictionary<int, List<int>> GetAllTrackManualGenreIds()
+    {
+        using var conn = Open(); using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"SELECT track_genres.track_id, track_genres.genre_id FROM track_genres JOIN genre_assignment_sources source ON source.id = track_genres.set_by_source_id
+                            WHERE source.key = 'manual' AND track_genres.is_enabled = 1";
+        return ReadTrackIdMap(cmd);
     }
 
     // Styles are intentionally no longer part of the schema. These compatibility
@@ -333,7 +396,8 @@ public class MusicDatabase
             "UPDATE tracks SET title = $title, rating_id = $ratingId, updated_at = $updatedAt, needs_reevaluation = CASE WHEN $ratingId IS NULL THEN 1 ELSE needs_reevaluation END WHERE id = $id",
             ("$id", id), ("$title", title), ("$ratingId", ratingId), ("$updatedAt", now));
 
-        ExecuteInsert(conn, tx, "DELETE FROM track_genres WHERE track_id = $trackId", ("$trackId", id));
+        ExecuteInsert(conn, tx, @"DELETE FROM track_genres WHERE track_id = $trackId
+                                AND set_by_source_id = (SELECT id FROM genre_assignment_sources WHERE key = 'manual')", ("$trackId", id));
         InsertTrackGenres(conn, tx, id, genreIds, GetAssignmentSourceId(conn, tx, ManualAssignmentSourceKey), now);
         tx.Commit();
     }
@@ -473,6 +537,7 @@ public class MusicDatabase
         cmd.Parameters.AddWithValue("$genreId", genreId);
         cmd.Parameters.AddWithValue("$modelSubgenreId", modelSubgenreId);
         cmd.ExecuteNonQuery();
+        RefreshAllModelGenres(conn);
     }
 
     public void RemoveGenreMapping(int modelSubgenreId)
@@ -482,6 +547,36 @@ public class MusicDatabase
         cmd.CommandText = "DELETE FROM genre_mappings WHERE model_subgenre_id = $modelSubgenreId";
         cmd.Parameters.AddWithValue("$modelSubgenreId", modelSubgenreId);
         cmd.ExecuteNonQuery();
+        RefreshAllModelGenres(conn);
+    }
+
+    private static void RefreshAllModelGenres(SqliteConnection conn)
+    {
+        using var tx = conn.BeginTransaction();
+        RefreshModelGenres(conn, tx, null);
+        tx.Commit();
+    }
+
+    private static void RefreshModelGenres(SqliteConnection conn, SqliteTransaction tx, int? trackId)
+    {
+        ExecuteInsert(conn, tx, @"
+            DELETE FROM track_genres WHERE ($trackId IS NULL OR track_id = $trackId)
+            AND set_by_source_id = (SELECT id FROM genre_assignment_sources WHERE key = 'model_suggestion')
+            AND NOT EXISTS (
+                SELECT 1 FROM track_genre_predictions predictions JOIN track_analysis analysis ON analysis.id = predictions.track_analysis_id
+                JOIN genre_mappings mappings ON mappings.model_subgenre_id = predictions.model_subgenre_id
+                WHERE analysis.track_id = track_genres.track_id AND mappings.genre_id = track_genres.genre_id AND predictions.score > 0.1)",
+            ("$trackId", trackId));
+        ExecuteInsert(conn, tx, @"
+            INSERT INTO track_genres (track_id, genre_id, set_by_source_id, assigned_at, is_enabled)
+            SELECT DISTINCT analysis.track_id, mappings.genre_id,
+                (SELECT id FROM genre_assignment_sources WHERE key = 'model_suggestion'), $assignedAt, 1
+            FROM track_genre_predictions predictions
+            JOIN track_analysis analysis ON analysis.id = predictions.track_analysis_id
+            JOIN genre_mappings mappings ON mappings.model_subgenre_id = predictions.model_subgenre_id
+            WHERE predictions.score > 0.1 AND ($trackId IS NULL OR analysis.track_id = $trackId)
+            ON CONFLICT(track_id, genre_id) DO UPDATE SET set_by_source_id = excluded.set_by_source_id, assigned_at = excluded.assigned_at",
+            ("$trackId", trackId), ("$assignedAt", DateTime.UtcNow.ToString("O")));
     }
 
     private static void InsertTrackGenres(SqliteConnection conn, SqliteTransaction tx, long trackId,
@@ -492,7 +587,7 @@ public class MusicDatabase
 
         using var cmd = conn.CreateCommand();
         cmd.Transaction = tx;
-        cmd.CommandText = @"INSERT INTO track_genres (track_id, genre_id, set_by_source_id, assigned_at)
+        cmd.CommandText = @"INSERT OR IGNORE INTO track_genres (track_id, genre_id, set_by_source_id, assigned_at)
                             VALUES ($trackId, $genreId, $sourceId, $assignedAt)";
         cmd.Parameters.Add("$trackId", SqliteType.Integer).Value = trackId;
         var genreIdParameter = cmd.Parameters.Add("$genreId", SqliteType.Integer);

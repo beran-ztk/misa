@@ -132,6 +132,8 @@ public partial class MusicView : UserControl
         var tracks = MusicLibraryService.Current.GetTracks();
         _allTrackStyleIds = MusicLibraryService.Current.GetAllTrackStyleIds();
         _allTrackGenreIds = MusicLibraryService.Current.GetAllTrackGenreIds();
+        var systemGenreIds = MusicLibraryService.Current.GetAllTrackModelGenreIds();
+        var manualGenreIds = MusicLibraryService.Current.GetAllTrackManualGenreIds();
 
         var genreMap = Values.Genres.ToDictionary(g => g.Id, g => g.Name);
         var ratingMap = Values.Ratings.ToDictionary(r => r.Id, r => r.Name);
@@ -140,9 +142,14 @@ public partial class MusicView : UserControl
         _allItems = tracks.Select(t =>
         {
             var genreIds = _allTrackGenreIds.GetValueOrDefault(t.Id, []);
+            var systemIds = systemGenreIds.GetValueOrDefault(t.Id, []);
+            var manualIds = manualGenreIds.GetValueOrDefault(t.Id, []);
             var styleIds = _allTrackStyleIds.GetValueOrDefault(t.Id, []);
 
-            var genreStr = string.Join(", ", genreIds
+            var genreStr = string.Join(", ", systemIds
+                .Select(id => genreMap.GetValueOrDefault(id, ""))
+                .Where(n => n.Length > 0).Order());
+            var manualGenreStr = string.Join(", ", manualIds
                 .Select(id => genreMap.GetValueOrDefault(id, ""))
                 .Where(n => n.Length > 0).Order());
             var styleStr = string.Join(", ", styleIds
@@ -151,7 +158,7 @@ public partial class MusicView : UserControl
             var ratingName = t.RatingId is int ratingId ? ratingMap.GetValueOrDefault(ratingId, "") : "Not rated";
             var durationText = t.DurationSeconds.HasValue ? FormatDuration(t.DurationSeconds.Value) : "";
             
-            return new TrackDisplayItem(t, genreStr, styleStr, durationText, ratingName)
+            return new TrackDisplayItem(t, genreStr, manualGenreStr, styleStr, durationText, ratingName)
             {
                 NeedsReview = t.NeedsReview
             };

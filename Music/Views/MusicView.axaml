@@ -297,7 +297,10 @@
                                                Foreground="{Binding TitleBrush}"
                                                FontSize="13" FontWeight="SemiBold"
                                                TextTrimming="CharacterEllipsis"/>
-                                    <TextBlock Text="{Binding GenreText}"
+                                    <TextBlock Text="{Binding SystemGenreText}"
+                                               FontSize="11" Foreground="#65BCEB"
+                                               TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Text="{Binding ManualGenreText}"
                                                FontSize="11" Opacity="0.62"
                                                TextTrimming="CharacterEllipsis"/>
                                     <TextBlock Text="{Binding StyleText}"
