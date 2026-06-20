@@ -43,6 +43,16 @@ public sealed class TrackAnalysisService
         if (result.ExitCode != 0)
             return (null, ExtractError(result.Output, result.Error));
 
+        var experimentalResult = await RunDockerAsync(
+            "run", "--rm",
+            "-v", $"{Values.ScriptsDirectory}:{ScriptsDirectoryInContainer}:ro",
+            "-v", $"{Values.ModelsDirectory}:/models:ro",
+            "-v", $"{Values.TracksDirectory}:{TracksDirectoryInContainer}:ro",
+            Values.AnalysisDockerImage,
+            "python3", $"{ScriptsDirectoryInContainer}/{ScriptFileName}", containerTrackPath,
+            "--model-directory", ModelDirectoryInContainer,
+            "--experimental-only");
+
         try
         {
             var output = JsonSerializer.Deserialize<ScriptOutput>(result.Output,
@@ -65,7 +75,8 @@ public sealed class TrackAnalysisService
                 predictions,
                 output.Bpm,
                 output.IntegratedLoudness,
-                output.LoudnessRange), null);
+                output.LoudnessRange,
+                ParseExperimentalModels(experimentalResult)), null);
         }
         catch (JsonException exception)
         {
@@ -83,6 +94,38 @@ public sealed class TrackAnalysisService
             label[..separator],
             label[(separator + 3)..],
             score);
+    }
+
+    private static List<ExperimentalAnalysisModel> ParseExperimentalModels(ProcessResult result)
+    {
+        if (result.ExitCode != 0)
+            return [];
+
+        try
+        {
+            var output = JsonSerializer.Deserialize<ScriptOutput>(result.Output,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            if (output is null || !output.Success)
+                return [];
+
+            return (output.ExperimentalPredictions ?? [])
+                .Where(model => !string.IsNullOrWhiteSpace(model.Model))
+                .Select(model => new ExperimentalAnalysisModel(
+                    model.Family ?? "unknown",
+                    model.Category ?? "Other",
+                    model.Model!,
+                    model.Type ?? "classifier",
+                    model.Description ?? string.Empty,
+                    (model.Values ?? [])
+                        .Where(value => !string.IsNullOrWhiteSpace(value.Label))
+                        .Select(value => new ExperimentalAnalysisValue(value.Label!, value.Score))
+                        .ToList()))
+                .ToList();
+        }
+        catch (JsonException)
+        {
+            return [];
+        }
     }
 
     private static async Task<ProcessResult> RunDockerAsync(params string[] arguments)
@@ -135,7 +178,16 @@ public sealed class TrackAnalysisService
         List<ScriptPrediction>? Predictions,
         double? Bpm,
         double? IntegratedLoudness,
-        double? LoudnessRange);
+        double? LoudnessRange,
+        List<ScriptExperimentalModel>? ExperimentalPredictions);
     private sealed record ScriptPrediction(string? Label, double Score);
+    private sealed record ScriptExperimentalModel(
+        string? Family,
+        string? Category,
+        string? Model,
+        string? Type,
+        string? Description,
+        List<ScriptExperimentalValue>? Values);
+    private sealed record ScriptExperimentalValue(string? Label, double Score);
     private sealed record ProcessResult(int ExitCode, string Output, string Error);
 }

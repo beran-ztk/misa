@@ -244,15 +244,37 @@ public partial class EditTrackOverlay : UserControl
         var predictions = MusicLibraryService.Current.GetTrackGenrePredictions(track.Id)
             .Where(prediction => prediction.Score > displayThreshold)
             .ToList();
+        var experimentalModels = MusicLibraryService.Current.GetExperimentalAnalysis(track.Id);
 
-        AnalysisButton.IsVisible = predictions.Count > 0;
-        if (predictions.Count == 0)
+        AnalysisButton.IsVisible = predictions.Count > 0 || experimentalModels.Count > 0;
+        if (!AnalysisButton.IsVisible)
             AnalysisPopup.IsOpen = false;
-        ModelPredictionsText.Text = predictions.Count == 0
-            ? string.Empty
-            : string.Join("\n", predictions.Select(prediction =>
-                $"{prediction.ModelGenreName} → {prediction.ModelSubgenreName}  ({prediction.Score:0.###})"));
 
+        var sections = new List<string>();
+        if (predictions.Count > 0)
+        {
+            sections.Add("Genres\n" + string.Join("\n", predictions.Select(prediction =>
+                $"{prediction.ModelGenreName} → {prediction.ModelSubgenreName}  ({prediction.Score:0.###})")));
+        }
+        if (experimentalModels.Count > 0)
+        {
+            sections.Add("Experimental output — not saved\n" + string.Join("\n\n", experimentalModels
+                .OrderBy(model => model.Family)
+                .ThenBy(model => model.Category)
+                .ThenBy(model => model.Model)
+                .Select(FormatExperimentalModel)));
+        }
+
+        ModelPredictionsText.Text = string.Join("\n\n", sections);
+
+    }
+
+    private static string FormatExperimentalModel(ExperimentalAnalysisModel model)
+    {
+        var values = string.Join("\n", model.Values
+            .OrderByDescending(value => value.Score)
+            .Select(value => $"  {value.Label}: {value.Score:0.###}"));
+        return $"{model.Category} · {model.Model}\n{values}";
     }
 
     private void OnAnalysisButtonClicked(object? sender, RoutedEventArgs e)

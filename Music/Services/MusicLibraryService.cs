@@ -14,6 +14,7 @@ public class MusicLibraryService
     private readonly MusicDatabase _db = new();
     private readonly TrackDownloadService _downloader = new();
     private readonly TrackAnalysisService _analysis = new();
+    private readonly Dictionary<int, IReadOnlyList<ExperimentalAnalysisModel>> _experimentalAnalysis = [];
 
     public void Initialize() => _db.Initialize();
 
@@ -44,6 +45,7 @@ public class MusicLibraryService
                 File.Delete(filePath);
 
             _db.DeleteTrack(track.Id);
+            _experimentalAnalysis.Remove(track.Id);
             return Task.FromResult<string?>(null);
         }
         catch (Exception exception)
@@ -60,6 +62,8 @@ public class MusicLibraryService
     public List<ModelSubgenre> GetModelSubgenres(int? modelGenreId = null) => _db.GetModelSubgenres(modelGenreId);
     public List<StoredModelGenrePrediction> GetTrackGenrePredictions(int trackId) => _db.GetTrackGenrePredictions(trackId);
     public TrackAudioAnalysis? GetTrackAudioAnalysis(int trackId) => _db.GetTrackAudioAnalysis(trackId);
+    public IReadOnlyList<ExperimentalAnalysisModel> GetExperimentalAnalysis(int trackId) =>
+        _experimentalAnalysis.GetValueOrDefault(trackId, []);
     public List<GenreMapping> GetGenreMappings() => _db.GetGenreMappings();
     public void SetGenreMapping(int genreId, int modelSubgenreId) => _db.SetGenreMapping(genreId, modelSubgenreId);
     public void RemoveGenreMapping(int modelSubgenreId) => _db.RemoveGenreMapping(modelSubgenreId);
@@ -141,6 +145,7 @@ public class MusicLibraryService
         if (analysis is not null)
         {
             _db.SaveTrackAnalysis(trackId, analysis);
+            CacheExperimentalAnalysis(trackId, analysis);
             return new DownloadResult(true);
         }
 
@@ -173,7 +178,10 @@ public class MusicLibraryService
         progress?.Report("Analyzing track…");
         var (analysis, analysisError) = await _analysis.AnalyzeAsync(filePath);
         if (analysis is not null)
+        {
             _db.SaveTrackAnalysis(trackId, analysis);
+            CacheExperimentalAnalysis(trackId, analysis);
+        }
         else
             _db.SetTrackNeedsReview(trackId, true);
 
@@ -190,12 +198,16 @@ public class MusicLibraryService
         if (analysis is not null)
         {
             _db.SaveTrackAnalysis(track.Id, analysis);
+            CacheExperimentalAnalysis(track.Id, analysis);
             return null;
         }
 
         _db.SetTrackNeedsReview(track.Id, true);
         return error ?? "Analysis failed.";
     }
+
+    private void CacheExperimentalAnalysis(int trackId, TrackAnalysisResult analysis) =>
+        _experimentalAnalysis[trackId] = analysis.ExperimentalModels ?? [];
 
     private async Task<(bool Success, string ErrorOutput)> DownloadWithSingleRetryAsync(
         string canonicalUrl,
