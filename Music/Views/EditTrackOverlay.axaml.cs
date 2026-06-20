@@ -215,19 +215,19 @@ public partial class EditTrackOverlay : UserControl
 
     private static string GetTempoInsight(double bpm) => bpm switch
     {
-        < 80 => "Slow tempo with a relaxed pulse.",
-        < 120 => "Moderate, steady tempo.",
-        < 140 => "Upbeat tempo common in dance music.",
-        < 175 => "Fast, high-energy tempo.",
+        < 80 => "Slow tempo.",
+        < 120 => "Moderate tempo.",
+        < 140 => "Medium-fast tempo.",
+        < 175 => "Fast tempo.",
         _ => "Very fast tempo."
     };
 
     private static string GetIntegratedLoudnessInsight(double lufs) => lufs switch
     {
-        >= -8 => "Very loud and dense overall master.",
-        >= -11 => "Loud modern master with limited headroom.",
-        >= -14 => "Moderate overall loudness.",
-        _ => "Quieter overall master with more headroom."
+        >= -8 => "Very loud overall.",
+        >= -11 => "Loud overall.",
+        >= -14 => "Moderately loud overall.",
+        _ => "Relatively quiet overall."
     };
 
     private static string GetLoudnessRangeInsight(double lu) => lu switch
