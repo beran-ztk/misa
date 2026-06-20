@@ -52,6 +52,9 @@
                     <ToggleButton x:Name="GenreMappingsNavButton" Classes="settings-nav"
                                   Content="Genre mappings" Tag="mappings"
                                   Click="OnSettingsNavigationClicked"/>
+                    <ToggleButton x:Name="AnalysisCalibrationNavButton" Classes="settings-nav"
+                                  Content="Analysis calibration" Tag="calibration"
+                                  Click="OnSettingsNavigationClicked"/>
                 </StackPanel>
 
                 <StackPanel Grid.Row="2" VerticalAlignment="Top" Margin="0,22,0,0" Spacing="6">
@@ -133,6 +136,17 @@
                     </StackPanel>
                 </StackPanel>
             </ScrollViewer>
+
+            <Grid x:Name="AnalysisCalibrationPage" Grid.Row="2" IsVisible="False" RowDefinitions="Auto,*" Margin="30,22,30,0">
+                <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,12">
+                    <TextBlock Text="Compare system interpretations with their strongest evidence. Click a row to review the track."
+                               FontSize="11" Opacity="0.62" VerticalAlignment="Center"/>
+                    <ComboBox x:Name="CalibrationSortBox" Grid.Column="1" Width="170" Height="32"/>
+                </Grid>
+                <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel x:Name="CalibrationRows" Spacing="5" Margin="0,0,0,18"/>
+                </ScrollViewer>
+            </Grid>
 
             <Border Grid.Row="3" BorderThickness="0,1,0,0" BorderBrush="#24272E" Padding="30,10,30,13">
                 <TextBlock x:Name="SummaryText" VerticalAlignment="Center" FontSize="11" Opacity="0.65"/>

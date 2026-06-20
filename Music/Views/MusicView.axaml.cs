@@ -102,6 +102,11 @@ public partial class MusicView : UserControl
         };
         EditTrackOverlay.TrackSaved += RefreshTrackList;
         SettingsOverlay.ToastRequested += ShowToast;
+        SettingsOverlay.TrackCalibrationRequested += track =>
+        {
+            SettingsOverlay.IsVisible = false;
+            EditTrackOverlay.Open(track);
+        };
     }
 
     // ─── Track list ──────────────────────────────────────────────────────────

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
@@ -22,6 +23,7 @@ public partial class SettingsOverlay : UserControl
     private SettingsPage _selectedPage;
 
     public event Action<string>? ToastRequested;
+    public event Action<MusicTrack>? TrackCalibrationRequested;
 
     public SettingsOverlay()
     {
@@ -32,6 +34,9 @@ public partial class SettingsOverlay : UserControl
             RebuildMappingRows();
             UpdateSummary();
         };
+        CalibrationSortBox.ItemsSource = new[] { "Recently added", "Tone", "Energy", "Intensity" };
+        CalibrationSortBox.SelectedIndex = 0;
+        CalibrationSortBox.SelectionChanged += (_, _) => RebuildCalibrationRows();
     }
 
     public void Open()
@@ -60,6 +65,7 @@ public partial class SettingsOverlay : UserControl
         SelectPage(SettingsPage.GenreMappings);
         UpdateSummary();
         RebuildMappingRows();
+        RebuildCalibrationRows();
         IsVisible = true;
     }
 
@@ -193,23 +199,78 @@ public partial class SettingsOverlay : UserControl
     private void OnSettingsNavigationClicked(object? sender, RoutedEventArgs e)
     {
         if (sender is not ToggleButton { Tag: string value }) return;
-        SelectPage(value == "library" ? SettingsPage.Library : SettingsPage.GenreMappings);
+        SelectPage(value switch
+        {
+            "library" => SettingsPage.Library,
+            "calibration" => SettingsPage.AnalysisCalibration,
+            _ => SettingsPage.GenreMappings
+        });
     }
 
     private void SelectPage(SettingsPage page)
     {
         _selectedPage = page;
         var isMappingsPage = page == SettingsPage.GenreMappings;
+        var isLibraryPage = page == SettingsPage.Library;
         GenreMappingsPage.IsVisible = isMappingsPage;
-        LibraryPage.IsVisible = !isMappingsPage;
+        LibraryPage.IsVisible = isLibraryPage;
+        AnalysisCalibrationPage.IsVisible = page == SettingsPage.AnalysisCalibration;
         GenreMappingsNavButton.IsChecked = isMappingsPage;
-        LibraryNavButton.IsChecked = !isMappingsPage;
+        LibraryNavButton.IsChecked = isLibraryPage;
+        AnalysisCalibrationNavButton.IsChecked = page == SettingsPage.AnalysisCalibration;
 
-        PageTitleText.Text = isMappingsPage ? "Genre mappings" : "Library";
+        PageTitleText.Text = page switch
+        {
+            SettingsPage.Library => "Library",
+            SettingsPage.AnalysisCalibration => "Analysis calibration",
+            _ => "Genre mappings"
+        };
         PageDescriptionText.Text = isMappingsPage
             ? "Connect model subgenres with your own genres. Unassigned labels remain visible as raw model output."
-            : "Where this installation keeps the local music library and its database.";
+            : isLibraryPage
+                ? "Where this installation keeps the local music library and its database."
+                : "Compare current system interpretations before turning them into filters.";
         SummaryText.Text = isMappingsPage ? BuildSummaryText() : "";
+        if (page == SettingsPage.AnalysisCalibration) RebuildCalibrationRows();
+    }
+
+    private void RebuildCalibrationRows()
+    {
+        if (!IsInitialized) return;
+        CalibrationRows.Children.Clear();
+        var rows = MusicLibraryService.Current.GetTracks()
+            .Select(track => new CalibrationRow(track, MusicLibraryService.Current.GetTrackDerivedAttributes(track.Id),
+                MusicLibraryService.Current.GetExperimentalAnalysis(track.Id)))
+            .Where(row => row.Attributes.Count > 0)
+            .ToList();
+        rows = (CalibrationSortBox.SelectedItem as string) switch
+        {
+            "Tone" => rows.OrderBy(row => row.Value("emotional_tone")).ThenBy(row => row.Track.Title).ToList(),
+            "Energy" => rows.OrderBy(row => row.Value("energy_context")).ThenBy(row => row.Track.Title).ToList(),
+            "Intensity" => rows.OrderBy(row => row.Value("intensity")).ThenBy(row => row.Track.Title).ToList(),
+            _ => rows.OrderByDescending(row => row.Track.DownloadedAt).ToList()
+        };
+        foreach (var row in rows) CalibrationRows.Children.Add(CreateCalibrationRow(row));
+        if (rows.Count == 0) CalibrationRows.Children.Add(new TextBlock { Text = "No analyzed tracks are available yet.", Opacity = .52, Margin = new Avalonia.Thickness(0, 18, 0, 0) });
+    }
+
+    private Control CreateCalibrationRow(CalibrationRow row)
+    {
+        var button = new Button { Background = new SolidColorBrush(Color.Parse("#111419")), BorderBrush = new SolidColorBrush(Color.Parse("#26313A")), BorderThickness = new Avalonia.Thickness(1), Padding = new Avalonia.Thickness(11, 9), HorizontalContentAlignment = HorizontalAlignment.Stretch };
+        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("2*,100,100,100,2*") };
+        grid.Children.Add(new TextBlock { Text = row.Track.Title, FontSize = 12, TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis, VerticalAlignment = VerticalAlignment.Center });
+        AddCell(row.Value("emotional_tone"), 1); AddCell(row.Value("energy_context"), 2); AddCell(row.Value("intensity"), 3);
+        var evidence = new TextBlock { Text = row.Evidence, FontSize = 10.5, Opacity = .64, TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis, VerticalAlignment = VerticalAlignment.Center };
+        Grid.SetColumn(evidence, 4); grid.Children.Add(evidence);
+        button.Content = grid;
+        button.Click += (_, _) => TrackCalibrationRequested?.Invoke(row.Track);
+        return button;
+
+        void AddCell(string value, int column)
+        {
+            var text = new TextBlock { Text = value, FontSize = 11, VerticalAlignment = VerticalAlignment.Center };
+            Grid.SetColumn(text, column); grid.Children.Add(text);
+        }
     }
 
     private void SetMappingFilter(MappingFilter filter)
@@ -260,5 +321,12 @@ public partial class SettingsOverlay : UserControl
     }
 
     private enum MappingFilter { All, Mapped, Unmapped }
-    private enum SettingsPage { GenreMappings, Library }
+    private sealed record CalibrationRow(MusicTrack Track, List<DerivedTrackAttribute> Attributes, IReadOnlyList<ExperimentalAnalysisModel> Signals)
+    {
+        public string Value(string key) => Attributes.FirstOrDefault(attribute => attribute.Key == key)?.EffectiveValue ?? "—";
+        public string Evidence => string.Join(" · ", Signals.SelectMany(model => model.Values.Select(value => (model.Model, value)))
+            .OrderByDescending(item => item.value.Score).Take(3).Select(item => $"{item.Model}: {item.value.Label} {item.value.Score:0.##}"));
+    }
+
+    private enum SettingsPage { GenreMappings, Library, AnalysisCalibration }
 }
