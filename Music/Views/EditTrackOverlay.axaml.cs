@@ -209,7 +209,6 @@ public partial class EditTrackOverlay : UserControl
         var sorted = _tags
             .OrderByDescending(tag => selectedTagIds.Contains(tag.Id))
             .ThenBy(tag => tag.CategoryName, StringComparer.OrdinalIgnoreCase)
-            .ThenBy(tag => tag.SortOrder)
             .ThenBy(tag => tag.Name, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
@@ -269,7 +268,7 @@ public partial class EditTrackOverlay : UserControl
     private static void ApplyTagVisual(ToggleButton button, Tag tag)
     {
         var selected = button.IsChecked == true;
-        var accent = SafeBrush(tag.Color, "#65BCEB");
+        var accent = SafeBrush(tag.CategoryColor, "#65BCEB");
         button.Background = new SolidColorBrush(Color.Parse(selected ? "#1A3140" : "#1A2026"));
         button.BorderBrush = selected ? accent : new SolidColorBrush(Color.Parse("#394653"));
         button.BorderThickness = new Avalonia.Thickness(1);

@@ -82,13 +82,8 @@ public class MusicDatabase
             CREATE TABLE tags (
                 id           INTEGER PRIMARY KEY AUTOINCREMENT,
                 category_id  INTEGER NOT NULL REFERENCES tag_categories(id) ON DELETE CASCADE,
-                key          TEXT NOT NULL,
                 name         TEXT NOT NULL,
                 description  TEXT NULL,
-                color        TEXT NULL,
-                sort_order   INTEGER NOT NULL DEFAULT 0,
-                is_active    INTEGER NOT NULL DEFAULT 1,
-                UNIQUE (category_id, key),
                 UNIQUE (category_id, name)
             );
 
@@ -286,6 +281,7 @@ public class MusicDatabase
         CreateImportQueueSchema(conn);
         CreateModelMetadataSchema(conn);
         CreateTagSchema(conn);
+        SimplifyTagSchemaIfNeeded(conn);
         SeedDefaultTagCategories(conn);
         if (ModelMetadataNeedsImport(conn))
         {
@@ -309,13 +305,8 @@ public class MusicDatabase
             CREATE TABLE IF NOT EXISTS tags (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 category_id INTEGER NOT NULL REFERENCES tag_categories(id) ON DELETE CASCADE,
-                key TEXT NOT NULL,
                 name TEXT NOT NULL,
                 description TEXT NULL,
-                color TEXT NULL,
-                sort_order INTEGER NOT NULL DEFAULT 0,
-                is_active INTEGER NOT NULL DEFAULT 1,
-                UNIQUE (category_id, key),
                 UNIQUE (category_id, name)
             );
             CREATE TABLE IF NOT EXISTS track_tags (
@@ -355,6 +346,111 @@ public class MusicDatabase
             CREATE INDEX IF NOT EXISTS ix_tag_rules_tag_id ON tag_rules(tag_id);
             CREATE INDEX IF NOT EXISTS ix_track_tag_suggestions_track_id ON track_tag_suggestions(track_id);";
         cmd.ExecuteNonQuery();
+    }
+
+    private static void SimplifyTagSchemaIfNeeded(SqliteConnection conn)
+    {
+        if (!ColumnExists(conn, "tags", "key"))
+            return;
+
+        using (var foreignKeyCommand = conn.CreateCommand())
+        {
+            foreignKeyCommand.CommandText = "PRAGMA foreign_keys = OFF;";
+            foreignKeyCommand.ExecuteNonQuery();
+        }
+
+        try
+        {
+            using var tx = conn.BeginTransaction();
+            ExecuteInsert(conn, tx, "DROP INDEX IF EXISTS ix_tags_category_id");
+            ExecuteInsert(conn, tx, "DROP INDEX IF EXISTS ix_track_tags_tag_id");
+            ExecuteInsert(conn, tx, "DROP INDEX IF EXISTS ix_tag_rules_tag_id");
+            ExecuteInsert(conn, tx, "DROP INDEX IF EXISTS ix_track_tag_suggestions_track_id");
+
+            ExecuteInsert(conn, tx, "ALTER TABLE track_tag_suggestions RENAME TO track_tag_suggestions_legacy");
+            ExecuteInsert(conn, tx, "ALTER TABLE tag_rules RENAME TO tag_rules_legacy");
+            ExecuteInsert(conn, tx, "ALTER TABLE track_tags RENAME TO track_tags_legacy");
+            ExecuteInsert(conn, tx, "ALTER TABLE tags RENAME TO tags_legacy");
+
+            ExecuteInsert(conn, tx, @"
+                CREATE TABLE tags (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    category_id INTEGER NOT NULL REFERENCES tag_categories(id) ON DELETE CASCADE,
+                    name TEXT NOT NULL,
+                    description TEXT NULL,
+                    UNIQUE (category_id, name)
+                )");
+            ExecuteInsert(conn, tx, @"
+                INSERT INTO tags (id, category_id, name, description)
+                SELECT id, category_id, name, description FROM tags_legacy");
+
+            ExecuteInsert(conn, tx, @"
+                CREATE TABLE track_tags (
+                    track_id INTEGER NOT NULL REFERENCES tracks(id) ON DELETE CASCADE,
+                    tag_id INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+                    source TEXT NOT NULL DEFAULT 'manual',
+                    strength REAL NULL CHECK (strength IS NULL OR (strength >= 0 AND strength <= 1)),
+                    confidence REAL NULL CHECK (confidence IS NULL OR (confidence >= 0 AND confidence <= 1)),
+                    assigned_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    PRIMARY KEY (track_id, tag_id)
+                )");
+            ExecuteInsert(conn, tx, @"
+                INSERT INTO track_tags (track_id, tag_id, source, strength, confidence, assigned_at, updated_at)
+                SELECT track_id, tag_id, source, strength, confidence, assigned_at, updated_at
+                FROM track_tags_legacy");
+
+            ExecuteInsert(conn, tx, @"
+                CREATE TABLE tag_rules (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    tag_id INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+                    source_type TEXT NOT NULL,
+                    source_key TEXT NOT NULL,
+                    threshold REAL NOT NULL CHECK (threshold >= 0 AND threshold <= 1),
+                    auto_assign INTEGER NOT NULL DEFAULT 0,
+                    enabled INTEGER NOT NULL DEFAULT 1,
+                    UNIQUE (tag_id, source_type, source_key)
+                )");
+            ExecuteInsert(conn, tx, @"
+                INSERT INTO tag_rules (id, tag_id, source_type, source_key, threshold, auto_assign, enabled)
+                SELECT id, tag_id, source_type, source_key, threshold, auto_assign, enabled
+                FROM tag_rules_legacy");
+
+            ExecuteInsert(conn, tx, @"
+                CREATE TABLE track_tag_suggestions (
+                    track_id INTEGER NOT NULL REFERENCES tracks(id) ON DELETE CASCADE,
+                    tag_id INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+                    rule_id INTEGER NULL REFERENCES tag_rules(id) ON DELETE SET NULL,
+                    source_type TEXT NOT NULL,
+                    source_key TEXT NOT NULL,
+                    score REAL NOT NULL CHECK (score >= 0 AND score <= 1),
+                    state TEXT NOT NULL DEFAULT 'pending',
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    PRIMARY KEY (track_id, tag_id, source_type, source_key)
+                )");
+            ExecuteInsert(conn, tx, @"
+                INSERT INTO track_tag_suggestions
+                    (track_id, tag_id, rule_id, source_type, source_key, score, state, created_at, updated_at)
+                SELECT track_id, tag_id, rule_id, source_type, source_key, score, state, created_at, updated_at
+                FROM track_tag_suggestions_legacy");
+
+            ExecuteInsert(conn, tx, "DROP TABLE track_tag_suggestions_legacy");
+            ExecuteInsert(conn, tx, "DROP TABLE tag_rules_legacy");
+            ExecuteInsert(conn, tx, "DROP TABLE track_tags_legacy");
+            ExecuteInsert(conn, tx, "DROP TABLE tags_legacy");
+            ExecuteInsert(conn, tx, "CREATE INDEX ix_tags_category_id ON tags(category_id)");
+            ExecuteInsert(conn, tx, "CREATE INDEX ix_track_tags_tag_id ON track_tags(tag_id)");
+            ExecuteInsert(conn, tx, "CREATE INDEX ix_tag_rules_tag_id ON tag_rules(tag_id)");
+            ExecuteInsert(conn, tx, "CREATE INDEX ix_track_tag_suggestions_track_id ON track_tag_suggestions(track_id)");
+            tx.Commit();
+        }
+        finally
+        {
+            using var foreignKeyCommand = conn.CreateCommand();
+            foreignKeyCommand.CommandText = "PRAGMA foreign_keys = ON;";
+            foreignKeyCommand.ExecuteNonQuery();
+        }
     }
 
     private static void CreateModelMetadataSchema(SqliteConnection conn)
@@ -1136,12 +1232,10 @@ public class MusicDatabase
         using var conn = Open();
         using var cmd = conn.CreateCommand();
         cmd.CommandText = @"
-            SELECT tags.id, tags.category_id, categories.name, tags.name, tags.description,
-                   COALESCE(tags.color, categories.color), tags.sort_order
+            SELECT tags.id, tags.category_id, categories.name, categories.color, tags.name, tags.description
             FROM tags
             JOIN tag_categories categories ON categories.id = tags.category_id
-            WHERE tags.is_active = 1
-            ORDER BY categories.sort_order, categories.name, tags.sort_order, tags.name";
+            ORDER BY categories.sort_order, categories.name, tags.name";
         return ReadTags(cmd);
     }
 
@@ -1149,11 +1243,9 @@ public class MusicDatabase
     {
         using var conn = Open();
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = @"INSERT INTO tags (category_id, key, name, description, sort_order)
-                            VALUES ($categoryId, $key, $name, $description,
-                                COALESCE((SELECT MAX(sort_order) + 10 FROM tags WHERE category_id = $categoryId), 10))";
+        cmd.CommandText = @"INSERT INTO tags (category_id, name, description)
+                            VALUES ($categoryId, $name, $description)";
         cmd.Parameters.AddWithValue("$categoryId", categoryId);
-        cmd.Parameters.AddWithValue("$key", GenreKey(name));
         cmd.Parameters.AddWithValue("$name", name.Trim());
         cmd.Parameters.AddWithValue("$description", string.IsNullOrWhiteSpace(description) ? DBNull.Value : description.Trim());
         cmd.ExecuteNonQuery();
@@ -1163,9 +1255,8 @@ public class MusicDatabase
     {
         using var conn = Open();
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = "UPDATE tags SET key = $key, name = $name, description = $description WHERE id = $id";
+        cmd.CommandText = "UPDATE tags SET name = $name, description = $description WHERE id = $id";
         cmd.Parameters.AddWithValue("$id", id);
-        cmd.Parameters.AddWithValue("$key", GenreKey(name));
         cmd.Parameters.AddWithValue("$name", name.Trim());
         cmd.Parameters.AddWithValue("$description", string.IsNullOrWhiteSpace(description) ? DBNull.Value : description.Trim());
         cmd.ExecuteNonQuery();
@@ -1197,9 +1288,7 @@ public class MusicDatabase
     {
         using var conn = Open();
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = @"SELECT track_tags.track_id, track_tags.tag_id
-                            FROM track_tags JOIN tags ON tags.id = track_tags.tag_id
-                            WHERE tags.is_active = 1";
+        cmd.CommandText = "SELECT track_id, tag_id FROM track_tags";
         return ReadTrackIdMap(cmd);
     }
 
@@ -1207,9 +1296,7 @@ public class MusicDatabase
     {
         using var conn = Open();
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = @"SELECT track_tags.tag_id
-                            FROM track_tags JOIN tags ON tags.id = track_tags.tag_id
-                            WHERE track_tags.track_id = $trackId AND tags.is_active = 1";
+        cmd.CommandText = "SELECT tag_id FROM track_tags WHERE track_id = $trackId";
         cmd.Parameters.AddWithValue("$trackId", trackId);
         using var reader = cmd.ExecuteReader();
         var ids = new List<int>();
@@ -1222,25 +1309,23 @@ public class MusicDatabase
         using var conn = Open();
         using var cmd = conn.CreateCommand();
         cmd.CommandText = @"
-            SELECT tags.id, tags.category_id, categories.name, tags.name, tags.description,
-                   COALESCE(tags.color, categories.color), tags.sort_order,
+            SELECT tags.id, tags.category_id, categories.name, categories.color, tags.name, tags.description,
                    track_tags.source, track_tags.strength, track_tags.confidence
             FROM track_tags
             JOIN tags ON tags.id = track_tags.tag_id
             JOIN tag_categories categories ON categories.id = tags.category_id
-            WHERE track_tags.track_id = $trackId AND tags.is_active = 1
-            ORDER BY categories.sort_order, categories.name, tags.sort_order, tags.name";
+            WHERE track_tags.track_id = $trackId
+            ORDER BY categories.sort_order, categories.name, tags.name";
         cmd.Parameters.AddWithValue("$trackId", trackId);
         using var reader = cmd.ExecuteReader();
         var tags = new List<TrackTag>();
         while (reader.Read())
             tags.Add(new TrackTag(
-                reader.GetInt32(0), reader.GetInt32(1), reader.GetString(2), reader.GetString(3),
-                reader.IsDBNull(4) ? null : reader.GetString(4),
-                reader.IsDBNull(5) ? null : reader.GetString(5),
-                reader.GetInt32(6), reader.GetString(7),
-                reader.IsDBNull(8) ? null : reader.GetDouble(8),
-                reader.IsDBNull(9) ? null : reader.GetDouble(9)));
+                reader.GetInt32(0), reader.GetInt32(1), reader.GetString(2),
+                reader.IsDBNull(3) ? null : reader.GetString(3), reader.GetString(4),
+                reader.IsDBNull(5) ? null : reader.GetString(5), reader.GetString(6),
+                reader.IsDBNull(7) ? null : reader.GetDouble(7),
+                reader.IsDBNull(8) ? null : reader.GetDouble(8)));
         return tags;
     }
 
@@ -1602,10 +1687,9 @@ public class MusicDatabase
                 reader.GetInt32(0),
                 reader.GetInt32(1),
                 reader.GetString(2),
-                reader.GetString(3),
-                reader.IsDBNull(4) ? null : reader.GetString(4),
-                reader.IsDBNull(5) ? null : reader.GetString(5),
-                reader.GetInt32(6)));
+                reader.IsDBNull(3) ? null : reader.GetString(3),
+                reader.GetString(4),
+                reader.IsDBNull(5) ? null : reader.GetString(5)));
         return tags;
     }
 

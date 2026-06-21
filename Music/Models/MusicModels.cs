@@ -13,18 +13,16 @@ public record Tag(
     int Id,
     int CategoryId,
     string CategoryName,
+    string? CategoryColor,
     string Name,
-    string? Description,
-    string? Color,
-    int SortOrder);
+    string? Description);
 public record TrackTag(
     int Id,
     int CategoryId,
     string CategoryName,
+    string? CategoryColor,
     string Name,
     string? Description,
-    string? Color,
-    int SortOrder,
     string Source,
     double? Strength,
     double? Confidence);

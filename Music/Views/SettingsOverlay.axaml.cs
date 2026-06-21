@@ -409,8 +409,7 @@ public partial class SettingsOverlay : UserControl
 
         var tags = _tags
             .Where(tag => tag.CategoryId == categoryId.Value)
-            .OrderBy(tag => tag.SortOrder)
-            .ThenBy(tag => tag.Name, StringComparer.OrdinalIgnoreCase)
+            .OrderBy(tag => tag.Name, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
         foreach (var tag in tags)
