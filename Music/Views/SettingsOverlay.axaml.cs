@@ -17,6 +17,7 @@ public partial class SettingsOverlay : UserControl
     private readonly List<MappingChoice> _mappingChoices = [];
     private List<ModelGenre> _modelGenres = [];
     private List<ModelSubgenre> _modelSubgenres = [];
+    private Dictionary<int, List<ModelSubgenreDistinction>> _distinctionsBySubgenreId = [];
     private Dictionary<int, GenreMapping> _mappingsBySubgenreId = [];
     private bool _isLoading;
     private MappingFilter _mappingFilter = MappingFilter.All;
@@ -52,6 +53,9 @@ public partial class SettingsOverlay : UserControl
 
         _modelGenres = MusicLibraryService.Current.GetModelGenres();
         _modelSubgenres = MusicLibraryService.Current.GetModelSubgenres();
+        _distinctionsBySubgenreId = MusicLibraryService.Current.GetModelSubgenreDistinctions()
+            .GroupBy(item => item.ModelSubgenreId)
+            .ToDictionary(group => group.Key, group => group.ToList());
         _mappingsBySubgenreId = MusicLibraryService.Current.GetGenreMappings()
             .ToDictionary(mapping => mapping.ModelSubgenreId);
 
@@ -110,6 +114,8 @@ public partial class SettingsOverlay : UserControl
             : string.Empty;
         return modelGenreName.Contains(search, StringComparison.OrdinalIgnoreCase)
                || subgenre.Name.Contains(search, StringComparison.OrdinalIgnoreCase)
+               || (subgenre.Description?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false)
+               || (subgenre.ClassificationHint?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false)
                || mappedGenreName.Contains(search, StringComparison.OrdinalIgnoreCase);
     }
 
@@ -123,24 +129,38 @@ public partial class SettingsOverlay : UserControl
             CornerRadius = new Avalonia.CornerRadius(5),
             Padding = new Avalonia.Thickness(10, 7)
         };
-        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("150,*,220") };
+        var grid = new Grid
+        {
+            ColumnDefinitions = new ColumnDefinitions("*,220"),
+            RowDefinitions = new RowDefinitions("Auto,Auto,*"),
+            RowSpacing = 5,
+            ColumnSpacing = 16
+        };
         grid.Children.Add(new TextBlock
         {
-            Text = modelGenreName,
-            FontSize = 11,
-            Opacity = 0.58,
+            Text = $"{modelGenreName}  ·  {subgenre.Name}",
+            FontSize = 12,
+            FontWeight = FontWeight.SemiBold,
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis
         });
-        var subgenreText = new TextBlock
+        var bpm = new TextBlock
         {
-            Text = subgenre.Name,
-            FontSize = 12,
-            VerticalAlignment = VerticalAlignment.Center,
-            TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis
+            Text = BpmText(subgenre), FontSize = 10.5, Opacity = 0.68,
+            HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Center
         };
-        Grid.SetColumn(subgenreText, 1);
-        grid.Children.Add(subgenreText);
+        Grid.SetColumn(bpm, 1);
+        grid.Children.Add(bpm);
+
+        if (!string.IsNullOrWhiteSpace(subgenre.Description))
+        {
+            var description = new TextBlock
+            {
+                Text = subgenre.Description, FontSize = 10.5, Opacity = 0.74, TextWrapping = TextWrapping.Wrap
+            };
+            Grid.SetRow(description, 1);
+            grid.Children.Add(description);
+        }
 
         var choiceBox = new ComboBox
         {
@@ -154,12 +174,40 @@ public partial class SettingsOverlay : UserControl
             : (int?)null;
         choiceBox.SelectedItem = _mappingChoices.Single(choice => choice.GenreId == assignedGenreId);
         choiceBox.SelectionChanged += OnMappingSelectionChanged;
-        Grid.SetColumn(choiceBox, 2);
+        Grid.SetColumn(choiceBox, 1);
+        Grid.SetRow(choiceBox, 2);
+        choiceBox.VerticalAlignment = VerticalAlignment.Bottom;
         grid.Children.Add(choiceBox);
+
+        var details = new List<string>();
+        if (!string.IsNullOrWhiteSpace(subgenre.ClassificationHint))
+            details.Add($"Classify when: {subgenre.ClassificationHint}");
+        if (_distinctionsBySubgenreId.TryGetValue(subgenre.Id, out var distinctions))
+            details.Add("Distinguish from: " + string.Join(" · ", distinctions.Select(item =>
+                $"{item.ModelGenreName} → {item.ModelSubgenreName} — {item.Difference}")));
+        if (details.Count > 0)
+        {
+            var detailsText = new TextBlock
+            {
+                Text = string.Join("\n", details),
+                FontSize = 10,
+                Foreground = new SolidColorBrush(Color.Parse("#83BBD9")),
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Avalonia.Thickness(0, 1, 0, 0)
+            };
+            Grid.SetRow(detailsText, 2);
+            grid.Children.Add(detailsText);
+        }
 
         row.Child = grid;
         return row;
     }
+
+    private static string BpmText(ModelSubgenre subgenre) => subgenre.BpmMin is not null && subgenre.BpmMax is not null
+        ? $"Typical BPM · {subgenre.BpmMin}–{subgenre.BpmMax}"
+        : subgenre.BpmMin is not null ? $"Typical BPM · from {subgenre.BpmMin}"
+        : subgenre.BpmMax is not null ? $"Typical BPM · up to {subgenre.BpmMax}"
+        : string.Empty;
 
     private void OnMappingSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {

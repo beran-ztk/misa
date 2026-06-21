@@ -27,6 +27,9 @@ public partial class EditTrackOverlay : UserControl
     private Dictionary<int, List<int>> _allTrackGenreIds = [];
     private Dictionary<int, List<int>> _allTrackStyleIds = [];
     private HashSet<int> _modelGenreIds = [];
+    private Dictionary<int, ModelSubgenre> _modelSubgenresById = [];
+    private Dictionary<int, string> _modelGenreNamesById = [];
+    private Dictionary<int, List<ModelSubgenreDistinction>> _distinctionsBySubgenreId = [];
     private CancellationTokenSource? _analysisPreviewCancellation;
     private readonly Dictionary<string, string?> _pendingAttributeOverrides = [];
     private bool _buildingSoundProfile;
@@ -714,6 +717,7 @@ public partial class EditTrackOverlay : UserControl
 
     private void ShowModelSelectedGenres(MusicTrack track)
     {
+        LoadModelMetadata();
         var assignments = MusicLibraryService.Current.GetTrackModelGenres(track.Id);
         _modelGenreIds = assignments.Select(assignment => assignment.GenreId).ToHashSet();
         ModelSelectedGenresSection.IsVisible = assignments.Count > 0;
@@ -766,12 +770,17 @@ public partial class EditTrackOverlay : UserControl
                 MusicLibraryService.Current.SetTrackModelGenreEnabled(track.Id, assignment.GenreId, enabled);
                 ApplyModelGenreVisual(container, genreName, divider, enabled, confidenceBrush);
             };
+            ToolTip.SetTip(container, CreateModelMetadataTooltip(assignment.Reasons
+                .Select(reason => FindModelSubgenreId(reason.ModelGenreName, reason.ModelSubgenreName))
+                .Where(id => id is not null)
+                .Select(id => id!.Value)));
             ModelSelectedGenresPanel.Children.Add(container);
         }
     }
 
     private void ShowDetectedGenres(MusicTrack track)
     {
+        LoadModelMetadata();
         var mappedSubgenreIds = MusicLibraryService.Current.GetGenreMappings()
             .Select(mapping => mapping.ModelSubgenreId).ToHashSet();
         var detected = MusicLibraryService.Current.GetTrackGenrePredictions(track.Id)
@@ -785,14 +794,90 @@ public partial class EditTrackOverlay : UserControl
                      .Where(prediction => prediction.Score > .1 && !mappedSubgenreIds.Contains(prediction.ModelSubgenreId))
                      .Take(6))
         {
+            var container = new Border
+            {
+                Background = new SolidColorBrush(Color.Parse("#161C22")),
+                BorderBrush = new SolidColorBrush(Color.Parse("#2D3945")),
+                BorderThickness = new Avalonia.Thickness(1),
+                CornerRadius = new Avalonia.CornerRadius(5),
+                Padding = new Avalonia.Thickness(8, 5)
+            };
             var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
             var confidenceBrush = AnalysisColorScale.GenreConfidence(prediction.Score);
             row.Children.Add(new TextBlock { Text = $"{prediction.ModelGenreName} → {prediction.ModelSubgenreName}", FontSize = 11, Foreground = confidenceBrush });
             var score = new TextBlock { Text = prediction.Score.ToString("0.###"), FontSize = 10.5, Foreground = confidenceBrush, FontWeight = FontWeight.SemiBold };
             Grid.SetColumn(score, 1);
             row.Children.Add(score);
-            DetectedGenresPanel.Children.Add(row);
+            container.Child = row;
+            ToolTip.SetTip(container, CreateModelMetadataTooltip([prediction.ModelSubgenreId]));
+            DetectedGenresPanel.Children.Add(container);
         }
+    }
+
+    private void LoadModelMetadata()
+    {
+        var subgenres = MusicLibraryService.Current.GetModelSubgenres();
+        _modelSubgenresById = subgenres.ToDictionary(item => item.Id);
+        _modelGenreNamesById = MusicLibraryService.Current.GetModelGenres().ToDictionary(item => item.Id, item => item.Name);
+        _distinctionsBySubgenreId = MusicLibraryService.Current.GetModelSubgenreDistinctions()
+            .GroupBy(item => item.ModelSubgenreId)
+            .ToDictionary(group => group.Key, group => group.ToList());
+    }
+
+    private int? FindModelSubgenreId(string genreName, string subgenreName) => _modelSubgenresById.Values
+        .FirstOrDefault(item => item.Name == subgenreName
+            && _modelGenreNamesById.GetValueOrDefault(item.ModelGenreId) == genreName)?.Id;
+
+    private Control CreateModelMetadataTooltip(IEnumerable<int> subgenreIds)
+    {
+        var panel = new StackPanel { Spacing = 7 };
+        foreach (var id in subgenreIds.Distinct())
+        {
+            if (!_modelSubgenresById.TryGetValue(id, out var subgenre)) continue;
+            var genreName = _modelGenreNamesById.GetValueOrDefault(subgenre.ModelGenreId, "Model genre");
+            panel.Children.Add(new TextBlock
+            {
+                Text = $"{genreName} → {subgenre.Name}",
+                FontSize = 12,
+                FontWeight = FontWeight.SemiBold,
+                Foreground = new SolidColorBrush(Color.Parse("#9FD7F2"))
+            });
+            if (!string.IsNullOrWhiteSpace(subgenre.Description))
+                panel.Children.Add(new TextBlock { Text = subgenre.Description, FontSize = 11, TextWrapping = TextWrapping.Wrap });
+            if (!string.IsNullOrWhiteSpace(subgenre.ClassificationHint))
+                panel.Children.Add(new TextBlock
+                {
+                    Text = $"Classify when: {subgenre.ClassificationHint}", FontSize = 10.5,
+                    Foreground = new SolidColorBrush(Color.Parse("#8CC9E9")), TextWrapping = TextWrapping.Wrap
+                });
+            if (subgenre.BpmMin is not null || subgenre.BpmMax is not null)
+                panel.Children.Add(new TextBlock
+                {
+                    Text = subgenre.BpmMin is not null && subgenre.BpmMax is not null
+                        ? $"Typical BPM: {subgenre.BpmMin}–{subgenre.BpmMax}"
+                        : $"Typical BPM: {(subgenre.BpmMin is not null ? $"from {subgenre.BpmMin}" : $"up to {subgenre.BpmMax}")}",
+                    FontSize = 10.5, Opacity = 0.78
+                });
+            if (_distinctionsBySubgenreId.TryGetValue(subgenre.Id, out var distinctions))
+            {
+                panel.Children.Add(new TextBlock { Text = "Distinguish from", FontSize = 10.5, FontWeight = FontWeight.SemiBold, Opacity = 0.82 });
+                foreach (var distinction in distinctions)
+                    panel.Children.Add(new TextBlock
+                    {
+                        Text = $"{distinction.ModelGenreName} → {distinction.ModelSubgenreName}: {distinction.Difference}",
+                        FontSize = 10, Opacity = 0.76, TextWrapping = TextWrapping.Wrap
+                    });
+            }
+        }
+        return new Border
+        {
+            Background = new SolidColorBrush(Color.Parse("#1B222A")), BorderBrush = new SolidColorBrush(Color.Parse("#4A667A")),
+            BorderThickness = new Avalonia.Thickness(1), CornerRadius = new Avalonia.CornerRadius(6),
+            // Tooltips opened near the left analysis column only have roughly 320 px of safe popup space.
+            // Keep the content narrower than that space so text wraps instead of being clipped on both sides.
+            Padding = new Avalonia.Thickness(12, 10), Width = 300, MaxWidth = 300,
+            Child = new ScrollViewer { MaxHeight = 390, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled, Content = panel }
+        };
     }
 
     private static void ApplyModelGenreVisual(Border container, TextBlock genreName, Border divider, bool enabled, IBrush confidenceBrush)

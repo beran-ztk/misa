@@ -110,10 +110,9 @@
                 </Grid>
 
                 <Grid Grid.Row="1" RowDefinitions="Auto,*">
-                    <Grid ColumnDefinitions="130,*,190" Margin="0,0,0,6">
-                        <TextBlock Text="MODEL GENRE" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
-                        <TextBlock Grid.Column="1" Text="MODEL SUBGENRE" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
-                        <TextBlock Grid.Column="2" Text="YOUR GENRE" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
+                    <Grid ColumnDefinitions="*,220" Margin="0,0,0,6">
+                        <TextBlock Text="MODEL CLASSIFICATION" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
+                        <TextBlock Grid.Column="1" Text="YOUR GENRE" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
                     </Grid>
                     <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
                         <StackPanel x:Name="MappingRows" Spacing="5" Margin="0,0,0,18"/>

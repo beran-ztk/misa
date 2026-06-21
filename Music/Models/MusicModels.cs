@@ -20,7 +20,20 @@ public record YouTubeTrackMetadata(
     long? EstimatedAudioSizeBytes = null,
     int? DurationSeconds = null);
 public record ModelGenre(int Id, string Name);
-public record ModelSubgenre(int Id, int ModelGenreId, string Name);
+public record ModelSubgenre(
+    int Id,
+    int ModelGenreId,
+    string Name,
+    string? Description = null,
+    string? ClassificationHint = null,
+    int? BpmMin = null,
+    int? BpmMax = null);
+public record ModelSubgenreDistinction(
+    int ModelSubgenreId,
+    int DistinguishFromModelSubgenreId,
+    string ModelGenreName,
+    string ModelSubgenreName,
+    string Difference);
 public record StoredModelGenrePrediction(
     int ModelGenreId,
     string ModelGenreName,

@@ -945,15 +945,38 @@ public class MusicDatabase
     {
         using var conn = Open();
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = @"SELECT id, model_genre_id, name
+        cmd.CommandText = @"SELECT id, model_genre_id, name, description, classification_hint, bpm_min, bpm_max
                             FROM model_subgenres
                             WHERE $modelGenreId IS NULL OR model_genre_id = $modelGenreId
                             ORDER BY name";
         cmd.Parameters.AddWithValue("$modelGenreId", modelGenreId is null ? DBNull.Value : modelGenreId.Value);
         using var reader = cmd.ExecuteReader();
         var subgenres = new List<ModelSubgenre>();
-        while (reader.Read()) subgenres.Add(new ModelSubgenre(reader.GetInt32(0), reader.GetInt32(1), reader.GetString(2)));
+        while (reader.Read()) subgenres.Add(new ModelSubgenre(
+            reader.GetInt32(0), reader.GetInt32(1), reader.GetString(2),
+            reader.IsDBNull(3) ? null : reader.GetString(3),
+            reader.IsDBNull(4) ? null : reader.GetString(4),
+            reader.IsDBNull(5) ? null : reader.GetInt32(5),
+            reader.IsDBNull(6) ? null : reader.GetInt32(6)));
         return subgenres;
+    }
+
+    public List<ModelSubgenreDistinction> GetModelSubgenreDistinctions()
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+            SELECT distinctions.model_subgenre_id, distinctions.distinguish_from_model_subgenre_id,
+                   genres.name, subgenres.name, distinctions.difference
+            FROM model_subgenre_distinctions distinctions
+            JOIN model_subgenres subgenres ON subgenres.id = distinctions.distinguish_from_model_subgenre_id
+            JOIN model_genres genres ON genres.id = subgenres.model_genre_id
+            ORDER BY distinctions.model_subgenre_id, genres.name, subgenres.name";
+        using var reader = cmd.ExecuteReader();
+        var distinctions = new List<ModelSubgenreDistinction>();
+        while (reader.Read()) distinctions.Add(new ModelSubgenreDistinction(
+            reader.GetInt32(0), reader.GetInt32(1), reader.GetString(2), reader.GetString(3), reader.GetString(4)));
+        return distinctions;
     }
 
     public List<StoredModelGenrePrediction> GetTrackGenrePredictions(int trackId)
