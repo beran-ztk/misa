@@ -67,7 +67,6 @@ public partial class EditTrackOverlay : UserControl
 
     private void Prefill(MusicTrack track)
     {
-        StatusText.Text = "";
         _pendingAttributeOverrides.Clear();
         TitleBox.Text = track.Title;
         ChannelBox.Text = track.ChannelName ?? string.Empty;
@@ -193,14 +192,10 @@ public partial class EditTrackOverlay : UserControl
         _analysisStartedAt = DateTime.UtcNow;
         AnalysisElapsedText.Text = "0:00";
         _analysisElapsedTimer.Start();
-        StatusText.Text = "Analyzing genres with Discogs-MAEST…";
         SaveBtn.IsEnabled = false;
         var error = await MusicLibraryService.Current.AnalyzeTrackAsync(track);
         _analysisElapsedTimer.Stop();
         AnalysisBusyLayer.IsVisible = false;
-        StatusText.Text = error is null
-            ? "Analysis complete. Review the metadata and save when ready."
-            : $"Analysis needs review: {error}";
         ShowModelPredictions(track, applyMappedGenres: error is null);
         StartModelAnalysisPreview();
         ShowModelSelectedGenres(track);
@@ -492,15 +487,15 @@ public partial class EditTrackOverlay : UserControl
     {
         var color = score switch
         {
-            < .1 => "#E05F5F",
-            < .2 => "#E18A5B",
-            < .3 => "#E2B45A",
-            < .4 => "#A6C86A",
-            < .5 => "#67C995",
-            < .6 => "#47C4B2",
-            < .7 => "#42AACD",
-            < .8 => "#3B91E6",
-            _ => "#9278E6"
+            < .1 => "#dd0a03",
+            < .2 => "#ef3610",
+            < .3 => "#e4511b",
+            < .4 => "#dd7c22",
+            < .5 => "#d99c26",
+            < .6 => "#ddcd22",
+            < .7 => "#b8e31c",
+            < .8 => "#7ae916",
+            _ => "#02ef24"
         };
         return new SolidColorBrush(Color.Parse(color));
     }
