@@ -12,6 +12,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
+using Avalonia.VisualTree;
 using Music.Core;
 using Music.Models;
 using Music.Services;
@@ -22,6 +23,8 @@ public partial class MusicView : UserControl
 {
     // Engine
     private readonly PlaybackEngine _engine = new();
+    private readonly GlobalMediaKeyListener _globalMediaKeys = new();
+    private readonly WindowsMediaSession _windowsMediaSession = new();
     private bool _isSeeking;
 
     // Playback settings
@@ -59,6 +62,15 @@ public partial class MusicView : UserControl
     public MusicView()
     {
         InitializeComponent();
+        AddHandler(KeyDownEvent, OnKeyDown, RoutingStrategies.Tunnel);
+        _globalMediaKeys.Pressed += OnGlobalMediaKeyPressed;
+        _globalMediaKeys.Start();
+        _windowsMediaSession.Pressed += OnGlobalMediaKeyPressed;
+        DetachedFromVisualTree += (_, _) =>
+        {
+            _globalMediaKeys.Dispose();
+            _windowsMediaSession.Dispose();
+        };
 
         // Engine events
         _engine.StateChanged += OnEngineStateChanged;
@@ -136,6 +148,12 @@ public partial class MusicView : UserControl
 
     private void UpdateImportBounds() =>
         ImportOverlay.Margin = new Thickness(0, 0, 0, PlayerBar.Bounds.Height);
+
+    public void EnableSystemMediaControls()
+    {
+        _windowsMediaSession.Start();
+        _windowsMediaSession.UpdateState(_engine.State);
+    }
 
     private void RefreshLibraryPresentation()
     {
@@ -732,7 +750,44 @@ public partial class MusicView : UserControl
     private void OnPreviousClicked(object? sender, RoutedEventArgs e) => NavigatePrevious();
     private void OnNextClicked(object? sender, RoutedEventArgs e) => NavigateNext(isManual: true);
 
-    private void OnPlayPauseClicked(object? sender, RoutedEventArgs e)
+    private void OnPlayPauseClicked(object? sender, RoutedEventArgs e) => TogglePlayPause();
+
+    private void OnKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (IsTextEntry(e.Source)) return;
+        var shortcut = e.Key switch
+        {
+            Key.Space or Key.MediaPlayPause => MediaShortcut.PlayPause,
+            Key.MediaPreviousTrack => MediaShortcut.Previous,
+            Key.MediaNextTrack => MediaShortcut.Next,
+            _ => (MediaShortcut?)null
+        };
+        if (shortcut is null) return;
+        HandleMediaShortcut(shortcut.Value);
+        e.Handled = true;
+    }
+
+    private void OnGlobalMediaKeyPressed(MediaShortcut shortcut) => HandleMediaShortcut(shortcut);
+
+    private void HandleMediaShortcut(MediaShortcut shortcut)
+    {
+        switch (shortcut)
+        {
+            case MediaShortcut.Previous: NavigatePrevious(); break;
+            case MediaShortcut.PlayPause: TogglePlayPause(); break;
+            case MediaShortcut.Next: NavigateNext(isManual: true); break;
+        }
+    }
+
+    private static bool IsTextEntry(object? source)
+    {
+        for (var visual = source as Visual; visual is not null; visual = visual.GetVisualParent())
+            if (visual is TextBox or ComboBox)
+                return true;
+        return false;
+    }
+
+    private void TogglePlayPause()
     {
         if (_engine.State == EngineState.Playing)
         {
@@ -855,6 +910,7 @@ public partial class MusicView : UserControl
 
     private void OnEngineStateChanged()
     {
+        _windowsMediaSession.UpdateState(_engine.State);
         UpdateButtonStates();
         if (_engine.State == EngineState.Stopped)
         {

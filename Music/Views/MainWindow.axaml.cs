@@ -18,6 +18,7 @@ public partial class MainWindow : Window
     {
         base.OnOpened(e);
         UseDarkWindowsTitleBar();
+        _musicView.EnableSystemMediaControls();
     }
 
     private void UseDarkWindowsTitleBar()
