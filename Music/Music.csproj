@@ -12,6 +12,8 @@
         <AvaloniaResource Include="Assets\**"/>
         <AvaloniaResource Include="..\Models\Essentia\DiscogsMAEST\discogs-maest-30s-pw-519l-2.json"
                          Link="Assets\Models\discogs-maest-30s-pw-519l-2.json"/>
+        <AvaloniaResource Include="..\Models\Essentia\DiscogsMAEST\maest-genre-metadata.json"
+                         Link="Assets\Models\maest-genre-metadata.json"/>
     </ItemGroup>
 
     <ItemGroup>

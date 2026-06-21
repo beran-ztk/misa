@@ -129,7 +129,19 @@ public class MusicDatabase
                 id              INTEGER PRIMARY KEY AUTOINCREMENT,
                 model_genre_id  INTEGER NOT NULL REFERENCES model_genres(id) ON DELETE CASCADE,
                 name            TEXT NOT NULL,
+                description     TEXT NULL,
+                classification_hint TEXT NULL,
+                bpm_min         INTEGER NULL,
+                bpm_max         INTEGER NULL,
                 UNIQUE (model_genre_id, name)
+            );
+
+            CREATE TABLE model_subgenre_distinctions (
+                id                              INTEGER PRIMARY KEY AUTOINCREMENT,
+                model_subgenre_id               INTEGER NOT NULL REFERENCES model_subgenres(id) ON DELETE CASCADE,
+                distinguish_from_model_subgenre_id INTEGER NOT NULL REFERENCES model_subgenres(id) ON DELETE CASCADE,
+                difference                      TEXT NOT NULL,
+                UNIQUE (model_subgenre_id, distinguish_from_model_subgenre_id)
             );
 
             CREATE TABLE track_genre_predictions (
@@ -193,6 +205,7 @@ public class MusicDatabase
 
             CREATE INDEX ix_track_genres_genre_id ON track_genres(genre_id);
             CREATE INDEX ix_model_subgenres_model_genre_id ON model_subgenres(model_genre_id);
+            CREATE INDEX ix_model_subgenre_distinctions_source ON model_subgenre_distinctions(model_subgenre_id);
             CREATE INDEX ix_track_genre_predictions_analysis_id ON track_genre_predictions(track_analysis_id);
             CREATE INDEX ix_track_analysis_signals_analysis_id ON track_analysis_signals(track_analysis_id);
             CREATE INDEX ix_track_derived_attributes_analysis_id ON track_derived_attributes(track_analysis_id);
@@ -206,7 +219,43 @@ public class MusicDatabase
         EnsureColumn(conn, "tracks", "file_size_bytes", "INTEGER NULL");
         EnsureColumn(conn, "tracks", "download_duration_ms", "INTEGER NULL");
         EnsureColumn(conn, "track_analysis", "analysis_duration_ms", "INTEGER NULL");
+        EnsureColumn(conn, "model_subgenres", "description", "TEXT NULL");
+        EnsureColumn(conn, "model_subgenres", "classification_hint", "TEXT NULL");
+        EnsureColumn(conn, "model_subgenres", "bpm_min", "INTEGER NULL");
+        EnsureColumn(conn, "model_subgenres", "bpm_max", "INTEGER NULL");
         CreateImportQueueSchema(conn);
+        CreateModelMetadataSchema(conn);
+        if (ModelMetadataNeedsImport(conn))
+        {
+            using var tx = conn.BeginTransaction();
+            SynchronizeModelMetadata(conn, tx);
+            tx.Commit();
+        }
+    }
+
+    private static void CreateModelMetadataSchema(SqliteConnection conn)
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+            CREATE TABLE IF NOT EXISTS model_subgenre_distinctions (
+                id                              INTEGER PRIMARY KEY AUTOINCREMENT,
+                model_subgenre_id               INTEGER NOT NULL REFERENCES model_subgenres(id) ON DELETE CASCADE,
+                distinguish_from_model_subgenre_id INTEGER NOT NULL REFERENCES model_subgenres(id) ON DELETE CASCADE,
+                difference                      TEXT NOT NULL,
+                UNIQUE (model_subgenre_id, distinguish_from_model_subgenre_id)
+            );
+            CREATE INDEX IF NOT EXISTS ix_model_subgenre_distinctions_source
+                ON model_subgenre_distinctions(model_subgenre_id);";
+        cmd.ExecuteNonQuery();
+    }
+
+    private static bool ModelMetadataNeedsImport(SqliteConnection conn)
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"SELECT COUNT(*) FROM model_subgenres
+                            WHERE description IS NOT NULL OR classification_hint IS NOT NULL
+                               OR bpm_min IS NOT NULL OR bpm_max IS NOT NULL";
+        return Convert.ToInt32(cmd.ExecuteScalar()) == 0;
     }
 
     private static void CreateImportQueueSchema(SqliteConnection conn)
@@ -508,21 +557,55 @@ public class MusicDatabase
                 ("$key", source.Key), ("$name", source.Name));
         }
 
-        var modelGenres = new Dictionary<string, long>(StringComparer.Ordinal);
-        foreach (var modelClass in ReadAsset<ModelGenreSeedDocument>("Models/discogs-maest-30s-pw-519l-2.json").Classes)
+        SynchronizeModelMetadata(conn, tx);
+    }
+
+    /// <summary>
+    /// Imports the human-authored MAEST vocabulary unchanged for a newly created or not-yet-migrated database.
+    /// </summary>
+    private static void SynchronizeModelMetadata(SqliteConnection conn, SqliteTransaction tx)
+    {
+        var metadata = ReadAsset<List<ModelSubgenreMetadataSeed>>("Models/maest-genre-metadata.json");
+        var genreIds = new Dictionary<string, long>(StringComparer.Ordinal);
+        var subgenreIds = new Dictionary<string, long>(StringComparer.Ordinal);
+
+        foreach (var item in metadata)
         {
-            var (genreName, subgenreName) = SplitModelClass(modelClass);
-            if (!modelGenres.TryGetValue(genreName, out var modelGenreId))
+            if (!genreIds.TryGetValue(item.Genre, out var genreId))
             {
-                modelGenreId = InsertAndGetId(conn, tx,
-                    "INSERT INTO model_genres (name) VALUES ($name)",
-                    ("$name", genreName));
-                modelGenres.Add(genreName, modelGenreId);
+                ExecuteInsert(conn, tx, "INSERT OR IGNORE INTO model_genres (name) VALUES ($name)", ("$name", item.Genre));
+                genreId = SelectId(conn, tx, "SELECT id FROM model_genres WHERE name = $name", ("$name", item.Genre));
+                genreIds.Add(item.Genre, genreId);
             }
 
-            ExecuteInsert(conn, tx,
-                "INSERT INTO model_subgenres (model_genre_id, name) VALUES ($modelGenreId, $name)",
-                ("$modelGenreId", modelGenreId), ("$name", subgenreName));
+            ExecuteInsert(conn, tx, @"INSERT INTO model_subgenres
+                    (model_genre_id, name, description, classification_hint, bpm_min, bpm_max)
+                VALUES ($genreId, $name, $description, $hint, $bpmMin, $bpmMax)
+                ON CONFLICT(model_genre_id, name) DO UPDATE SET
+                    description = excluded.description,
+                    classification_hint = excluded.classification_hint,
+                    bpm_min = excluded.bpm_min,
+                    bpm_max = excluded.bpm_max",
+                ("$genreId", genreId), ("$name", item.Subgenre), ("$description", item.Description),
+                ("$hint", item.ClassificationHint), ("$bpmMin", item.BpmMin), ("$bpmMax", item.BpmMax));
+
+            subgenreIds[item.Label] = SelectId(conn, tx,
+                "SELECT id FROM model_subgenres WHERE model_genre_id = $genreId AND name = $name",
+                ("$genreId", genreId), ("$name", item.Subgenre));
+        }
+
+        ExecuteInsert(conn, tx, "DELETE FROM model_subgenre_distinctions");
+        foreach (var item in metadata)
+        {
+            if (!subgenreIds.TryGetValue(item.Label, out var sourceId)) continue;
+            foreach (var distinction in item.DistinguishFrom)
+            {
+                if (!subgenreIds.TryGetValue(distinction.Label, out var targetId)) continue;
+                ExecuteInsert(conn, tx, @"INSERT OR REPLACE INTO model_subgenre_distinctions
+                        (model_subgenre_id, distinguish_from_model_subgenre_id, difference)
+                    VALUES ($sourceId, $targetId, $difference)",
+                    ("$sourceId", sourceId), ("$targetId", targetId), ("$difference", distinction.Difference));
+            }
         }
     }
 
@@ -1183,6 +1266,16 @@ public class MusicDatabase
         return (long)cmd.ExecuteScalar()!;
     }
 
+    private static long SelectId(SqliteConnection conn, SqliteTransaction tx, string sql,
+        params (string Name, object? Value)[] parameters)
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
+        cmd.CommandText = sql;
+        AddParameters(cmd, parameters);
+        return (long)cmd.ExecuteScalar()!;
+    }
+
     private static void AddParameters(SqliteCommand cmd, IEnumerable<(string Name, object? Value)> parameters)
     {
         foreach (var (name, value) in parameters)
@@ -1223,6 +1316,15 @@ public class MusicDatabase
     private sealed record RatingSeed(string Name, int SortOrder);
     private sealed record GenreSeedDocument(List<GenreSeed> Genres);
     private sealed record GenreSeed(string Name, string? Description);
-    private sealed record ModelGenreSeedDocument(List<string> Classes);
+    private sealed record ModelSubgenreMetadataSeed(
+        string Label,
+        string Genre,
+        string Subgenre,
+        string? Description,
+        string? ClassificationHint,
+        int? BpmMin,
+        int? BpmMax,
+        List<ModelSubgenreDistinctionSeed> DistinguishFrom);
+    private sealed record ModelSubgenreDistinctionSeed(string Label, string Difference);
     private sealed record AssignmentSourceSeed(string Key, string Name);
 }
