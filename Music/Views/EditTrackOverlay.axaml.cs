@@ -6,6 +6,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
 using Music.Models;
@@ -131,7 +132,7 @@ public partial class EditTrackOverlay : UserControl
         var label = new TextBlock
         {
             Text = name,
-            FontSize = 10,
+            FontSize = 12,
             FontWeight = FontWeight.SemiBold,
             VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis,
@@ -142,7 +143,7 @@ public partial class EditTrackOverlay : UserControl
         {
             Content = label,
             IsChecked = isSelected,
-            Width = 130,
+            Width = 120,
             Height = 31,
             Margin = new Avalonia.Thickness(0, 0, 6, 6),
             Padding = new Avalonia.Thickness(9, 3),
@@ -423,6 +424,7 @@ public partial class EditTrackOverlay : UserControl
             {
                 Content = value,
                 FontSize = 10.5,
+                Width = 96,
                 Padding = new Avalonia.Thickness(9, 4),
                 Margin = new Avalonia.Thickness(0),
                 CornerRadius = new Avalonia.CornerRadius(
@@ -433,6 +435,7 @@ public partial class EditTrackOverlay : UserControl
                 Background = new SolidColorBrush(Color.Parse(isSelected
                     ? (isSystem ? "#164968" : "#35414D")
                     : "#1E242A")),
+                HorizontalContentAlignment = HorizontalAlignment.Center,
                 BorderBrush = new SolidColorBrush(Color.Parse("#53606C")),
                 BorderThickness = isMiddle ? new Avalonia.Thickness(1, 0) : new Avalonia.Thickness(0),
                 Foreground = new SolidColorBrush(Color.Parse(isSystem ? "#9BD8F8" : "#D8E0E8"))
