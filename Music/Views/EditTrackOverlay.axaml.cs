@@ -213,12 +213,21 @@ public partial class EditTrackOverlay : UserControl
         if (analysis is null) return;
 
         BpmText.Text = analysis.Bpm is double bpm ? $"{bpm:0.#} BPM" : "—";
+        BpmText.Foreground = analysis.Bpm is double bpmForColor
+            ? AnalysisColorScale.Tempo(bpmForColor)
+            : Brushes.White;
         IntegratedLoudnessText.Text = analysis.IntegratedLoudness is double loudness
             ? $"{loudness:0.#} LUFS"
             : "—";
+        IntegratedLoudnessText.Foreground = analysis.IntegratedLoudness is double loudnessForColor
+            ? AnalysisColorScale.IntegratedLoudness(loudnessForColor)
+            : Brushes.White;
         LoudnessRangeText.Text = analysis.LoudnessRange is double range
             ? $"{range:0.#} LU"
             : "—";
+        LoudnessRangeText.Foreground = analysis.LoudnessRange is double detectedRange
+            ? AnalysisColorScale.LoudnessRange(detectedRange)
+            : Brushes.White;
 
         BpmInsightText.Text = analysis.Bpm is double detectedBpm
             ? GetTempoInsight(detectedBpm)
@@ -260,7 +269,7 @@ public partial class EditTrackOverlay : UserControl
         {
             if (score is null) return;
             var row = new Grid { ColumnDefinitions = new ColumnDefinitions("82,*,40"), RowDefinitions = new RowDefinitions("Auto,Auto") };
-            var brush = SignalBrush(score.Value);
+            var brush = AnalysisColorScale.Mood(score.Value);
             var title = new TextBlock { Text = name, FontSize = 11, Foreground = brush };
             ToolTip.SetTip(title, explanation);
             var bar = new ProgressBar { Minimum = 0, Maximum = 1, Value = score.Value, Height = 6, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center, Foreground = brush };
@@ -385,7 +394,7 @@ public partial class EditTrackOverlay : UserControl
                 {
                     Text = $"{tag.Label}  {tag.Score:0.##}",
                     FontSize = 10.5,
-                    Foreground = new SolidColorBrush(Color.Parse("#B7DDF0")),
+                    Foreground = AnalysisColorScale.Mood(tag.Score),
                     Background = new SolidColorBrush(Color.Parse("#203747")),
                     Padding = new Avalonia.Thickness(6, 2),
                     Margin = new Avalonia.Thickness(0, 0, 5, 4)
@@ -424,18 +433,16 @@ public partial class EditTrackOverlay : UserControl
             foreach (var value in values)
             {
                 var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,40") };
-                var label = new TextBlock { Text = value.Label, FontSize = 10.5, Opacity = .82, TextWrapping = TextWrapping.Wrap };
+                var brush = AnalysisColorScale.Mood(value.Score);
+                var label = new TextBlock { Text = value.Label, FontSize = 10.5, Foreground = brush, TextWrapping = TextWrapping.Wrap };
                 ToolTip.SetTip(label, MirexExplanation(value.Label));
                 row.Children.Add(label);
-                var isPrimary = value.Score >= .5;
-                var isSecondary = !isPrimary && value.Score >= .25;
                 var score = new TextBlock
                 {
                     Text = value.Score.ToString("0.##"),
                     FontSize = 10.5,
-                    FontWeight = isPrimary ? FontWeight.SemiBold : FontWeight.Normal,
-                    Foreground = new SolidColorBrush(Color.Parse(isPrimary ? "#FFD27A" : isSecondary ? "#78C7EE" : "#AAB3BD")),
-                    Opacity = isPrimary || isSecondary ? 1 : .68,
+                    FontWeight = FontWeight.SemiBold,
+                    Foreground = brush,
                     HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right
                 };
                 Grid.SetColumn(score, 1);
@@ -482,23 +489,6 @@ public partial class EditTrackOverlay : UserControl
 
     private static double? Signal(IReadOnlyList<ExperimentalAnalysisModel> models, string model, string label) =>
         models.FirstOrDefault(item => item.Model == model)?.Values.FirstOrDefault(value => value.Label == label)?.Score;
-
-    private static IBrush SignalBrush(double score)
-    {
-        var color = score switch
-        {
-            < .1 => "#dd0a03",
-            < .2 => "#ef3610",
-            < .3 => "#e4511b",
-            < .4 => "#dd7c22",
-            < .5 => "#d99c26",
-            < .6 => "#ddcd22",
-            < .7 => "#b8e31c",
-            < .8 => "#7ae916",
-            _ => "#02ef24"
-        };
-        return new SolidColorBrush(Color.Parse(color));
-    }
 
     private static string FormatAttributeName(string key) => key switch
     {
@@ -621,6 +611,8 @@ public partial class EditTrackOverlay : UserControl
         ModelSelectedGenresPanel.Children.Clear();
         foreach (var assignment in assignments)
         {
+            var confidenceBrush = AnalysisColorScale.GenreConfidence(
+                assignment.Reasons.Count == 0 ? 0 : assignment.Reasons.Max(reason => reason.Score));
             var container = new Border
             {
                 BorderThickness = new Avalonia.Thickness(1),
@@ -648,7 +640,7 @@ public partial class EditTrackOverlay : UserControl
             var reason = new TextBlock
             {
                 Text = string.Join(" · ", assignment.Reasons.Select(item => $"{item.ModelGenreName} → {item.ModelSubgenreName} ({item.Score:0.###})")),
-                FontSize = 10.5, Opacity = 0.72, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+                FontSize = 10.5, Foreground = confidenceBrush, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
                 Margin = new Avalonia.Thickness(10, 0, 0, 0), TextWrapping = TextWrapping.Wrap
             };
             Grid.SetColumn(divider, 1);
@@ -658,12 +650,12 @@ public partial class EditTrackOverlay : UserControl
             row.Children.Add(reason);
             container.Child = row;
             var enabled = assignment.IsEnabled;
-            ApplyModelGenreVisual(container, genreName, divider, enabled);
+            ApplyModelGenreVisual(container, genreName, divider, enabled, confidenceBrush);
             container.PointerPressed += (_, _) =>
             {
                 enabled = !enabled;
                 MusicLibraryService.Current.SetTrackModelGenreEnabled(track.Id, assignment.GenreId, enabled);
-                ApplyModelGenreVisual(container, genreName, divider, enabled);
+                ApplyModelGenreVisual(container, genreName, divider, enabled, confidenceBrush);
             };
             ModelSelectedGenresPanel.Children.Add(container);
         }
@@ -685,20 +677,21 @@ public partial class EditTrackOverlay : UserControl
                      .Take(6))
         {
             var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
-            row.Children.Add(new TextBlock { Text = $"{prediction.ModelGenreName} → {prediction.ModelSubgenreName}", FontSize = 11, Foreground = new SolidColorBrush(Color.Parse("#7CB9DF")) });
-            var score = new TextBlock { Text = prediction.Score.ToString("0.###"), FontSize = 10.5, Opacity = .65 };
+            var confidenceBrush = AnalysisColorScale.GenreConfidence(prediction.Score);
+            row.Children.Add(new TextBlock { Text = $"{prediction.ModelGenreName} → {prediction.ModelSubgenreName}", FontSize = 11, Foreground = confidenceBrush });
+            var score = new TextBlock { Text = prediction.Score.ToString("0.###"), FontSize = 10.5, Foreground = confidenceBrush, FontWeight = FontWeight.SemiBold };
             Grid.SetColumn(score, 1);
             row.Children.Add(score);
             DetectedGenresPanel.Children.Add(row);
         }
     }
 
-    private static void ApplyModelGenreVisual(Border container, TextBlock genreName, Border divider, bool enabled)
+    private static void ApplyModelGenreVisual(Border container, TextBlock genreName, Border divider, bool enabled, IBrush confidenceBrush)
     {
         container.Background = new SolidColorBrush(Color.Parse(enabled ? "#153B54" : "#23272D"));
-        container.BorderBrush = new SolidColorBrush(Color.Parse(enabled ? "#3286B8" : "#3B414A"));
-        genreName.Foreground = enabled ? Brushes.White : new SolidColorBrush(Color.Parse("#A3ABB5"));
-        divider.Background = new SolidColorBrush(Color.Parse(enabled ? "#4D9AC5" : "#4A535D"));
+        container.BorderBrush = enabled ? confidenceBrush : new SolidColorBrush(Color.Parse("#3B414A"));
+        genreName.Foreground = enabled ? confidenceBrush : new SolidColorBrush(Color.Parse("#A3ABB5"));
+        divider.Background = enabled ? confidenceBrush : new SolidColorBrush(Color.Parse("#4A535D"));
     }
 
     private void OnCloseClicked(object? sender, RoutedEventArgs e) => CloseOverlay();
