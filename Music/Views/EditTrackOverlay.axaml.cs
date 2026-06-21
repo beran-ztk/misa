@@ -98,11 +98,9 @@ public partial class EditTrackOverlay : UserControl
 
     private void RebuildGenreChips(IReadOnlySet<int> selectedGenreIds)
     {
-        var genreCounts = MetadataCountService.GenreCounts(_allTrackGenreIds);
         var sorted = _genres
             .Where(genre => !_modelGenreIds.Contains(genre.Id))
             .OrderByDescending(g => selectedGenreIds.Contains(g.Id))
-            .ThenByDescending(g => genreCounts.GetValueOrDefault(g.Id, 0))
             .ThenBy(g => g.Name)
             .ToList();
 
@@ -111,16 +109,68 @@ public partial class EditTrackOverlay : UserControl
 
         foreach (var genre in sorted)
         {
-            var count = genreCounts.GetValueOrDefault(genre.Id, 0);
-            var btn = MetadataChipFactory.Create(genre.Name, count, selectedGenreIds.Contains(genre.Id));
+            var isSelected = selectedGenreIds.Contains(genre.Id);
+            var btn = CreateManualGenreButton(genre.Name, isSelected);
             btn.IsCheckedChanged += (_, _) =>
             {
+                ApplyManualGenreVisual(btn);
+                UpdateManualGenreSummary();
                 RebuildStyleChips();
                 UpdateSaveButton();
             };
+
             _genreChips.Add((genre, btn));
             GenresPanel.Children.Add(btn);
         }
+
+        UpdateManualGenreSummary();
+    }
+
+    private static ToggleButton CreateManualGenreButton(string name, bool isSelected)
+    {
+        var label = new TextBlock
+        {
+            Text = name,
+            FontSize = 10,
+            FontWeight = FontWeight.SemiBold,
+            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+            TextTrimming = TextTrimming.CharacterEllipsis,
+            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center
+        };
+
+        var button = new ToggleButton
+        {
+            Content = label,
+            IsChecked = isSelected,
+            Width = 130,
+            Height = 31,
+            Margin = new Avalonia.Thickness(0, 0, 6, 6),
+            Padding = new Avalonia.Thickness(9, 3),
+            CornerRadius = new Avalonia.CornerRadius(3),
+            HorizontalContentAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+            VerticalContentAlignment = Avalonia.Layout.VerticalAlignment.Center,
+            Tag = label
+        };
+        ApplyManualGenreVisual(button);
+        return button;
+    }
+
+    private static void ApplyManualGenreVisual(ToggleButton button)
+    {
+        var selected = button.IsChecked == true;
+        button.Background = new SolidColorBrush(Color.Parse(selected ? "#164968" : "#1A2026"));
+        button.BorderBrush = new SolidColorBrush(Color.Parse(selected ? "#45A7DC" : "#394653"));
+        button.BorderThickness = new Avalonia.Thickness(1);
+        if (button.Tag is TextBlock label)
+            label.Foreground = new SolidColorBrush(Color.Parse(selected ? "#E9F6FF" : "#D7E0E8"));
+    }
+
+    private void UpdateManualGenreSummary()
+    {
+        var selectedCount = _genreChips.Count(item => item.Btn.IsChecked == true);
+        ManualGenreSummaryText.Text = selectedCount == 0
+            ? "No manual genres"
+            : $"{selectedCount} selected";
     }
 
     private void RebuildStyleChips(IReadOnlySet<int>? selectedStyleIds = null)
