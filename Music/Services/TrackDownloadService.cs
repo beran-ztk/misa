@@ -13,6 +13,7 @@ namespace Music.Services;
 
 public class TrackDownloadService
 {
+    private const int GeneratedMixEntryLimit = 50;
     public async Task<(bool Success, string ErrorOutput)> RunYtDlpAsync(string url)
     {
         Directory.CreateDirectory(Values.TracksDirectory);
@@ -106,9 +107,19 @@ public class TrackDownloadService
     {
         try
         {
+            var arguments = new List<string> { "--js-runtimes", "node", "--flat-playlist", "--dump-json", "--no-warnings" };
+            // YouTube's RD_* links are generated radio queues. yt-dlp can follow hundreds of their
+            // recommendations although YouTube initially presents only the first small section.
+            // Keep that useful, stable first section and leave ordinary user playlists unbounded.
+            if (IsGeneratedMix(url))
+            {
+                arguments.Add("--playlist-end");
+                arguments.Add(GeneratedMixEntryLimit.ToString(CultureInfo.InvariantCulture));
+            }
+            arguments.Add(url);
             var result = await RunProcessAsync(
                 Path.Combine(Values.ToolsDirectory, "yt-dlp.exe"),
-                ["--js-runtimes", "node", "--flat-playlist", "--dump-json", "--no-warnings", url],
+                arguments.ToArray(),
                 cancellationToken);
             if (result.ExitCode != 0) return [];
 
@@ -131,6 +142,17 @@ public class TrackDownloadService
         }
         catch (OperationCanceledException) { throw; }
         catch { return []; }
+    }
+
+    private static bool IsGeneratedMix(string url)
+    {
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri)) return false;
+        var listValue = uri.Query.TrimStart('?').Split('&', StringSplitOptions.RemoveEmptyEntries)
+            .Select(part => part.Split('=', 2))
+            .Where(part => part.Length == 2 && part[0].Equals("list", StringComparison.OrdinalIgnoreCase))
+            .Select(part => Uri.UnescapeDataString(part[1]))
+            .FirstOrDefault();
+        return listValue?.StartsWith("RD", StringComparison.OrdinalIgnoreCase) == true;
     }
 
     public string? FindDownloadedFile(string videoId)
