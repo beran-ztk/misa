@@ -538,7 +538,7 @@ public partial class EditTrackOverlay : UserControl
     private static string[] AttributeOptions(string key) => key switch
     {
         "intensity" => ["Low", "Medium", "High"],
-        "emotional_tone" => ["Positive", "Neutral", "Melancholic"],
+        "emotional_tone" => ["Melancholic", "Neutral", "Positive"],
         "energy_context" => ["Calm", "Driving", "Intense"],
         "vocal_presence" => ["Instrumental", "Mixed", "Vocal"],
         _ => []
