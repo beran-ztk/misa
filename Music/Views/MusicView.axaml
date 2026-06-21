@@ -289,60 +289,69 @@
                                            Stretch="UniformToFill"/>
                                 </Border>
 
-                                <!-- Title + library classification + profile -->
-                                <StackPanel Grid.Column="2"
-                                            VerticalAlignment="Center"
-                                            Spacing="2">
-                                    <TextBlock Text="{Binding Track.Title}"
+                                <!-- Compact metadata: identity, classification, then profile -->
+                                <Grid Grid.Column="2"
+                                      VerticalAlignment="Center"
+                                      RowDefinitions="Auto,Auto,Auto"
+                                      ColumnDefinitions="Auto,*"
+                                      RowSpacing="2">
+                                    <TextBlock Text="{Binding ChannelPrefixText}"
+                                               FontSize="10.5" Opacity="0.52"
+                                               MaxWidth="190" TextTrimming="CharacterEllipsis"
+                                               VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding Track.Title}"
                                                Foreground="{Binding TitleBrush}"
                                                FontSize="13" FontWeight="SemiBold"
                                                TextTrimming="CharacterEllipsis"/>
-                                    <TextBlock Text="{Binding ChannelText}"
-                                               FontSize="10.5" Opacity="0.52"
-                                               TextTrimming="CharacterEllipsis"/>
-                                    <TextBlock Text="{Binding SystemGenreText}"
-                                               FontSize="11" Foreground="#65BCEB"
-                                               TextTrimming="CharacterEllipsis"/>
-                                    <TextBlock Text="{Binding ManualGenreText}"
-                                               FontSize="11" Opacity="0.62"
-                                               TextTrimming="CharacterEllipsis"/>
-                                    <TextBlock Text="{Binding ProfileText}"
+                                    <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal">
+                                        <TextBlock Text="{Binding SystemGenreText}"
+                                                   FontSize="11" Foreground="#65BCEB"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Text="{Binding ManualGenreDisplayText}"
+                                                   FontSize="11" Opacity="0.66"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                    </StackPanel>
+                                    <TextBlock Grid.Row="2" Grid.ColumnSpan="2" Text="{Binding ProfileText}"
                                                FontSize="10.5" Foreground="#A9BAC8" Opacity="0.62"
                                                TextTrimming="CharacterEllipsis"/>
-                                </StackPanel>
+                                </Grid>
 
-                                <!-- Right: duration / rating / counts -->
-                                <StackPanel Grid.Column="3"
-                                            VerticalAlignment="Center"
-                                            HorizontalAlignment="Right"
-                                            Spacing="5"
-                                            Margin="22,0,0,0"
-                                            MinWidth="76">
+                                <!-- Right: one compact element per metadata row -->
+                                <Grid Grid.Column="3"
+                                      VerticalAlignment="Center"
+                                      HorizontalAlignment="Right"
+                                      RowDefinitions="Auto,Auto,Auto"
+                                      Margin="16,0,0,0"
+                                      MinWidth="62">
                                     <TextBlock Text="{Binding DurationText}"
-                                               FontSize="11" Opacity="0.56"
+                                               FontSize="10.5" Opacity="0.56"
                                                HorizontalAlignment="Right"/>
-                                    <Border Background="{Binding RatingBackground}"
+                                    <Border Grid.Row="1" Background="{Binding RatingBackground}"
                                             BorderBrush="{Binding RatingBorder}"
                                             BorderThickness="1"
-                                            CornerRadius="5"
-                                            Padding="7,2"
+                                            CornerRadius="4"
+                                            Height="18"
+                                            Padding="5,0"
                                             HorizontalAlignment="Right">
                                         <TextBlock Text="{Binding RatingText}"
-                                                   FontSize="10"
+                                                   FontSize="9.5"
+                                                   VerticalAlignment="Center"
                                                    Foreground="#DCE6EF"/>
                                     </Border>
-                                    <Border IsVisible="{Binding NeedsReview}"
+                                    <Border Grid.Row="2" IsVisible="{Binding NeedsReview}"
                                             Background="#302615"
                                             BorderBrush="#7B5D2A"
                                             BorderThickness="1"
-                                            CornerRadius="5"
-                                            Padding="7,2"
+                                            CornerRadius="4"
+                                            Height="18"
+                                            Padding="5,0"
                                             HorizontalAlignment="Right">
                                         <TextBlock Text="Review"
-                                                   FontSize="10"
+                                                   FontSize="9.5"
+                                                   VerticalAlignment="Center"
                                                    Foreground="#FFD27A"/>
                                     </Border>
-                                </StackPanel>
+                                </Grid>
 
                             </Grid>
                         </Border>

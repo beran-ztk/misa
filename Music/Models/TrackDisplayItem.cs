@@ -17,6 +17,16 @@ public record TrackDisplayItem(
     public bool NeedsReview { get; set; }
     public Bitmap? Thumbnail { get; set; }
 
+    public string ChannelPrefixText => string.IsNullOrWhiteSpace(ChannelText)
+        ? string.Empty
+        : $"{ChannelText}  ·  ";
+
+    public string ManualGenreDisplayText => string.IsNullOrWhiteSpace(ManualGenreText)
+        ? string.Empty
+        : string.IsNullOrWhiteSpace(SystemGenreText)
+            ? ManualGenreText
+            : $"  ·  {ManualGenreText}";
+
     public IBrush PlayingBackground => IsPlaying
         ? new SolidColorBrush(Color.FromArgb(48, 28, 132, 184))
         : Brushes.Transparent;

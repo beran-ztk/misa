@@ -2,6 +2,7 @@ using System;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Threading;
 using Music.Models;
 using Music.Services;
 
@@ -12,6 +13,8 @@ public partial class ImportOverlay : UserControl
     private string? _canonicalUrl;
     private bool _updatingUrl;
     private bool _isDownloading;
+    private readonly DispatcherTimer _elapsedTimer = new() { Interval = TimeSpan.FromSeconds(1) };
+    private DateTime _startedAt;
 
     public event Action<MusicTrack>? TrackImported;
 
@@ -19,6 +22,7 @@ public partial class ImportOverlay : UserControl
     {
         InitializeComponent();
         UrlBox.TextChanged += (_, _) => ValidateUrl();
+        _elapsedTimer.Tick += (_, _) => UpdateElapsedTime();
     }
 
     public void Open()
@@ -27,6 +31,7 @@ public partial class ImportOverlay : UserControl
         UrlBox.Text = string.Empty;
         StatusText.Text = string.Empty;
         BusyPanel.IsVisible = false;
+        _elapsedTimer.Stop();
         ImportForm.IsEnabled = true;
         _isDownloading = false;
         IsVisible = true;
@@ -72,9 +77,13 @@ public partial class ImportOverlay : UserControl
         _isDownloading = true;
         ImportForm.IsEnabled = false;
         BusyPanel.IsVisible = true;
+        _startedAt = DateTime.UtcNow;
+        BusyElapsedText.Text = "0:00";
+        _elapsedTimer.Start();
         var progress = new Progress<string>(message => BusyText.Text = message);
         var result = await MusicLibraryService.Current.ImportFromYouTubeAsync(_canonicalUrl, progress);
         BusyPanel.IsVisible = false;
+        _elapsedTimer.Stop();
         ImportForm.IsEnabled = true;
         if (!result.Success || result.Track is null)
         {
@@ -93,5 +102,13 @@ public partial class ImportOverlay : UserControl
     {
         if (!_isDownloading)
             IsVisible = false;
+    }
+
+    private void UpdateElapsedTime()
+    {
+        var elapsed = DateTime.UtcNow - _startedAt;
+        BusyElapsedText.Text = elapsed.TotalHours >= 1
+            ? $"{(int)elapsed.TotalHours}:{elapsed.Minutes:00}:{elapsed.Seconds:00}"
+            : $"{elapsed.Minutes}:{elapsed.Seconds:00}";
     }
 }

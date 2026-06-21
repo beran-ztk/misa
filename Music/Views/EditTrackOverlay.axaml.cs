@@ -7,6 +7,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using Avalonia.Threading;
 using Music.Models;
 using Music.Services;
 
@@ -28,6 +29,8 @@ public partial class EditTrackOverlay : UserControl
     private CancellationTokenSource? _analysisPreviewCancellation;
     private readonly Dictionary<string, string?> _pendingAttributeOverrides = [];
     private bool _buildingSoundProfile;
+    private readonly DispatcherTimer _analysisElapsedTimer = new() { Interval = TimeSpan.FromSeconds(1) };
+    private DateTime _analysisStartedAt;
 
     public event Action? TrackSaved;
 
@@ -36,6 +39,7 @@ public partial class EditTrackOverlay : UserControl
         InitializeComponent();
         TitleBox.TextChanged += (_, _) => UpdateSaveButton();
         RatingBox.SelectionChanged += (_, _) => UpdateSaveButton();
+        _analysisElapsedTimer.Tick += (_, _) => UpdateAnalysisElapsedTime();
     }
 
     public void Open(MusicTrack track, bool analyzeAfterOpening = false)
@@ -64,6 +68,7 @@ public partial class EditTrackOverlay : UserControl
     private void Prefill(MusicTrack track)
     {
         StatusText.Text = "";
+        _pendingAttributeOverrides.Clear();
         TitleBox.Text = track.Title;
         ChannelBox.Text = track.ChannelName ?? string.Empty;
         YouTubeUrlBox.Text = track.CanonicalUrl;
@@ -185,9 +190,13 @@ public partial class EditTrackOverlay : UserControl
     private async System.Threading.Tasks.Task AnalyzeImportedTrackAsync(MusicTrack track)
     {
         AnalysisBusyLayer.IsVisible = true;
+        _analysisStartedAt = DateTime.UtcNow;
+        AnalysisElapsedText.Text = "0:00";
+        _analysisElapsedTimer.Start();
         StatusText.Text = "Analyzing genres with Discogs-MAEST…";
         SaveBtn.IsEnabled = false;
         var error = await MusicLibraryService.Current.AnalyzeTrackAsync(track);
+        _analysisElapsedTimer.Stop();
         AnalysisBusyLayer.IsVisible = false;
         StatusText.Text = error is null
             ? "Analysis complete. Review the metadata and save when ready."
@@ -235,11 +244,15 @@ public partial class EditTrackOverlay : UserControl
         SoundProfilePanel.Children.Clear();
         if (!SoundProfileSection.IsVisible) return;
 
-        _pendingAttributeOverrides.Clear();
         _buildingSoundProfile = true;
         foreach (var attribute in derived)
             AddDerivedAttribute(attribute);
         _buildingSoundProfile = false;
+
+        // These compact model summaries belong next to the profile choices they explain,
+        // rather than below a long list of raw confidence bars.
+        AddJamendoThemes(models);
+        AddMirexCharacter(models);
 
         AddSignal("Happy", "How strongly the model detects a happy mood.", Signal(models, "mood happy", "happy"));
         AddSignal("Sad", "How strongly the model detects a sad or melancholy mood.", Signal(models, "mood sad", "sad"));
@@ -248,17 +261,15 @@ public partial class EditTrackOverlay : UserControl
         AddSignal("Party", "How strongly the model detects a party-oriented character.", Signal(models, "mood party", "party"));
         AddSignal("Danceable", "How strongly the model classifies the track as danceable.", Signal(models, "danceability classifier", "danceable"));
         AddSignal("Vocal", "How strongly the model detects vocals rather than an instrumental track.", Signal(models, "voice/instrumental classifiers", "voice"));
-        AddJamendoThemes(models);
-        AddMirexCharacter(models);
-
         void AddSignal(string name, string explanation, double? score)
         {
             if (score is null) return;
             var row = new Grid { ColumnDefinitions = new ColumnDefinitions("82,*,40"), RowDefinitions = new RowDefinitions("Auto,Auto") };
-            var title = new TextBlock { Text = name, FontSize = 11 };
+            var brush = SignalBrush(score.Value);
+            var title = new TextBlock { Text = name, FontSize = 11, Foreground = brush };
             ToolTip.SetTip(title, explanation);
-            var bar = new ProgressBar { Minimum = 0, Maximum = 1, Value = score.Value, Height = 6, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center, Foreground = new SolidColorBrush(Color.Parse("#1E9AF0")) };
-            var value = new TextBlock { Text = score.Value.ToString("0.##"), FontSize = 10.5, Opacity = .72, HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right };
+            var bar = new ProgressBar { Minimum = 0, Maximum = 1, Value = score.Value, Height = 6, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center, Foreground = brush };
+            var value = new TextBlock { Text = score.Value.ToString("0.##"), FontSize = 10.5, Foreground = brush, FontWeight = Avalonia.Media.FontWeight.SemiBold, HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right };
             Grid.SetColumn(bar, 1); Grid.SetColumn(value, 2);
             row.Children.Add(title); row.Children.Add(bar); row.Children.Add(value);
             SoundProfilePanel.Children.Add(row);
@@ -268,33 +279,86 @@ public partial class EditTrackOverlay : UserControl
         {
             var options = AttributeOptions(attribute.Key);
             if (options.Length == 0) return;
-            var row = new Grid { ColumnDefinitions = new ColumnDefinitions("120,*"), Margin = new Avalonia.Thickness(0, 0, 0, 2) };
+            var manualValue = _pendingAttributeOverrides.TryGetValue(attribute.Key, out var pendingValue)
+                ? pendingValue
+                : attribute.ManualValue;
+
+            var row = new Grid
+            {
+                ColumnDefinitions = new ColumnDefinitions("112,*"),
+                Margin = new Avalonia.Thickness(0, 0, 0, 2)
+            };
             var label = new TextBlock
             {
-                Text = $"{FormatAttributeName(attribute.Key)} · {attribute.SystemValue}",
+                Text = FormatAttributeName(attribute.Key),
                 FontSize = 11,
                 VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
             };
             ToolTip.SetTip(label, AttributeExplanation(attribute.Key));
-            var selector = new ComboBox
+
+            var choices = new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal };
+            var choiceBorder = new Border
             {
-                ItemsSource = new[] { $"Use system ({attribute.SystemValue})" }.Concat(options).ToList(),
-                SelectedIndex = attribute.ManualValue is null ? 0 : Array.IndexOf(options, attribute.ManualValue) + 1,
-                MinWidth = 150,
-                FontSize = 11
+                BorderBrush = new SolidColorBrush(Color.Parse("#3B4550")),
+                BorderThickness = new Avalonia.Thickness(1),
+                CornerRadius = new Avalonia.CornerRadius(5),
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left,
+                Child = choices
             };
-            selector.SelectionChanged += (_, _) =>
+
+            for (var index = 0; index < options.Length; index++)
+            {
+                var option = options[index];
+                var isSystem = string.Equals(option, attribute.SystemValue, StringComparison.OrdinalIgnoreCase);
+                var optionButton = CreateProfileChoice(
+                    option,
+                    isSystem,
+                    isSelected: isSystem ? manualValue is null : string.Equals(manualValue, option, StringComparison.OrdinalIgnoreCase),
+                    isMiddle: index > 0 && index < options.Length - 1,
+                    isFirst: index == 0,
+                    isLast: index == options.Length - 1);
+                optionButton.Click += (_, _) => SetOverride(isSystem ? null : option);
+                choices.Children.Add(optionButton);
+            }
+
+            void SetOverride(string? value)
             {
                 if (_buildingSoundProfile) return;
-                _pendingAttributeOverrides[attribute.Key] = selector.SelectedIndex <= 0
-                    ? null
-                    : options[selector.SelectedIndex - 1];
+                _pendingAttributeOverrides[attribute.Key] = value;
+                ShowSoundProfile(track);
                 UpdateSaveButton();
-            };
-            Grid.SetColumn(selector, 1);
+            }
+
+            Grid.SetColumn(choiceBorder, 1);
             row.Children.Add(label);
-            row.Children.Add(selector);
+            row.Children.Add(choiceBorder);
             SoundProfilePanel.Children.Add(row);
+        }
+
+        static Button CreateProfileChoice(string value, bool isSystem, bool isSelected, bool isMiddle, bool isFirst, bool isLast)
+        {
+            var button = new Button
+            {
+                Content = value,
+                FontSize = 10.5,
+                Padding = new Avalonia.Thickness(9, 4),
+                Margin = new Avalonia.Thickness(0),
+                CornerRadius = new Avalonia.CornerRadius(
+                    isFirst ? 4 : 0,
+                    isLast ? 4 : 0,
+                    isLast ? 4 : 0,
+                    isFirst ? 4 : 0),
+                Background = new SolidColorBrush(Color.Parse(isSelected
+                    ? (isSystem ? "#164968" : "#35414D")
+                    : "#1E242A")),
+                BorderBrush = new SolidColorBrush(Color.Parse("#53606C")),
+                BorderThickness = isMiddle ? new Avalonia.Thickness(1, 0) : new Avalonia.Thickness(0),
+                Foreground = new SolidColorBrush(Color.Parse(isSystem ? "#9BD8F8" : "#D8E0E8"))
+            };
+            ToolTip.SetTip(button, isSystem
+                ? "Model suggestion. Click to use this value again."
+                : "Manual override. Click to save this value instead of the model suggestion.");
+            return button;
         }
 
         void AddJamendoThemes(IReadOnlyList<ExperimentalAnalysisModel> analysisModels)
@@ -302,27 +366,89 @@ public partial class EditTrackOverlay : UserControl
             var tags = analysisModels.FirstOrDefault(model => model.Model == "mtg_jamendo_moodtheme")?.Values
                 .OrderByDescending(value => value.Score).Take(5).ToList() ?? [];
             if (tags.Count == 0) return;
-            var text = new TextBlock
+            var card = new Border
             {
-                Text = "Themes · " + string.Join(" · ", tags.Select(tag => $"{tag.Label} ({tag.Score:0.##})")),
-                FontSize = 10.5,
-                Opacity = .78,
-                TextWrapping = TextWrapping.Wrap,
-                Margin = new Avalonia.Thickness(0, 5, 0, 0)
+                Background = new SolidColorBrush(Color.Parse("#151C25")),
+                BorderBrush = new SolidColorBrush(Color.Parse("#29465A")),
+                BorderThickness = new Avalonia.Thickness(1),
+                CornerRadius = new Avalonia.CornerRadius(6),
+                Padding = new Avalonia.Thickness(10, 8),
+                Margin = new Avalonia.Thickness(0, 1, 0, 2)
             };
-            ToolTip.SetTip(text, "Jamendo tags describe themes and atmosphere. They are independent tags, not fixed genre or mood decisions.");
-            SoundProfilePanel.Children.Add(text);
+            var panel = new StackPanel { Spacing = 5 };
+            panel.Children.Add(new TextBlock
+            {
+                Text = "Themes · Jamendo mood/theme model",
+                FontSize = 10.5,
+                FontWeight = FontWeight.SemiBold,
+                Foreground = new SolidColorBrush(Color.Parse("#78C7EE"))
+            });
+            var tagPanel = new WrapPanel { Orientation = Avalonia.Layout.Orientation.Horizontal };
+            foreach (var tag in tags)
+            {
+                var tagText = new TextBlock
+                {
+                    Text = $"{tag.Label}  {tag.Score:0.##}",
+                    FontSize = 10.5,
+                    Foreground = new SolidColorBrush(Color.Parse("#B7DDF0")),
+                    Background = new SolidColorBrush(Color.Parse("#203747")),
+                    Padding = new Avalonia.Thickness(6, 2),
+                    Margin = new Avalonia.Thickness(0, 0, 5, 4)
+                };
+                ToolTip.SetTip(tagText, "A Jamendo tag: an independent theme or atmosphere detected by the model.");
+                tagPanel.Children.Add(tagText);
+            }
+            panel.Children.Add(tagPanel);
+            card.Child = panel;
+            SoundProfilePanel.Children.Add(card);
         }
 
         void AddMirexCharacter(IReadOnlyList<ExperimentalAnalysisModel> analysisModels)
         {
-            var top = analysisModels.FirstOrDefault(model => model.Model == "moods mirex")?.Values
-                .OrderByDescending(value => value.Score).FirstOrDefault();
-            if (top is null) return;
-            var title = MirexTitle(top.Label);
-            var text = new TextBlock { Text = $"Emotional character · {title} ({top.Score:0.##})", FontSize = 10.5, Opacity = .82 };
-            ToolTip.SetTip(text, MirexExplanation(top.Label));
-            SoundProfilePanel.Children.Add(text);
+            var values = analysisModels.FirstOrDefault(model => model.Model == "moods mirex")?.Values
+                .OrderByDescending(value => value.Score).ToList() ?? [];
+            if (values.Count == 0) return;
+
+            var card = new Border
+            {
+                Background = new SolidColorBrush(Color.Parse("#161C22")),
+                BorderBrush = new SolidColorBrush(Color.Parse("#2D3945")),
+                BorderThickness = new Avalonia.Thickness(1),
+                CornerRadius = new Avalonia.CornerRadius(6),
+                Padding = new Avalonia.Thickness(10, 8),
+                Margin = new Avalonia.Thickness(0, 1, 0, 2)
+            };
+            var panel = new StackPanel { Spacing = 4 };
+            panel.Children.Add(new TextBlock
+            {
+                Text = "Emotional character · MIREX mood clusters",
+                FontSize = 10.5,
+                FontWeight = FontWeight.SemiBold,
+                Foreground = new SolidColorBrush(Color.Parse("#9BD8F8"))
+            });
+            foreach (var value in values)
+            {
+                var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,40") };
+                var label = new TextBlock { Text = value.Label, FontSize = 10.5, Opacity = .82, TextWrapping = TextWrapping.Wrap };
+                ToolTip.SetTip(label, MirexExplanation(value.Label));
+                row.Children.Add(label);
+                var isPrimary = value.Score >= .5;
+                var isSecondary = !isPrimary && value.Score >= .25;
+                var score = new TextBlock
+                {
+                    Text = value.Score.ToString("0.##"),
+                    FontSize = 10.5,
+                    FontWeight = isPrimary ? FontWeight.SemiBold : FontWeight.Normal,
+                    Foreground = new SolidColorBrush(Color.Parse(isPrimary ? "#FFD27A" : isSecondary ? "#78C7EE" : "#AAB3BD")),
+                    Opacity = isPrimary || isSecondary ? 1 : .68,
+                    HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right
+                };
+                Grid.SetColumn(score, 1);
+                row.Children.Add(score);
+                panel.Children.Add(row);
+            }
+            card.Child = panel;
+            SoundProfilePanel.Children.Add(card);
         }
     }
 
@@ -344,16 +470,6 @@ public partial class EditTrackOverlay : UserControl
         _ => "System-generated analysis attribute."
     };
 
-    private static string MirexTitle(string label) => label switch
-    {
-        var text when text.StartsWith("passionate", StringComparison.OrdinalIgnoreCase) => "Energetic / assertive",
-        var text when text.StartsWith("rollicking", StringComparison.OrdinalIgnoreCase) => "Cheerful / playful",
-        var text when text.StartsWith("literate", StringComparison.OrdinalIgnoreCase) => "Reflective / melancholic",
-        var text when text.StartsWith("humorous", StringComparison.OrdinalIgnoreCase) => "Quirky / humorous",
-        var text when text.StartsWith("aggressive", StringComparison.OrdinalIgnoreCase) => "Tense / aggressive",
-        _ => "Mixed mood"
-    };
-
     private static string MirexExplanation(string label) => label switch
     {
         var text when text.StartsWith("literate", StringComparison.OrdinalIgnoreCase) =>
@@ -371,6 +487,23 @@ public partial class EditTrackOverlay : UserControl
 
     private static double? Signal(IReadOnlyList<ExperimentalAnalysisModel> models, string model, string label) =>
         models.FirstOrDefault(item => item.Model == model)?.Values.FirstOrDefault(value => value.Label == label)?.Score;
+
+    private static IBrush SignalBrush(double score)
+    {
+        var color = score switch
+        {
+            < .1 => "#E05F5F",
+            < .2 => "#E18A5B",
+            < .3 => "#E2B45A",
+            < .4 => "#A6C86A",
+            < .5 => "#67C995",
+            < .6 => "#47C4B2",
+            < .7 => "#42AACD",
+            < .8 => "#3B91E6",
+            _ => "#9278E6"
+        };
+        return new SolidColorBrush(Color.Parse(color));
+    }
 
     private static string FormatAttributeName(string key) => key switch
     {
@@ -565,18 +698,6 @@ public partial class EditTrackOverlay : UserControl
         }
     }
 
-    private async void OnCopyChannelClicked(object? sender, RoutedEventArgs e) => await CopyTextAsync(ChannelBox.Text);
-    private async void OnCopyYouTubeUrlClicked(object? sender, RoutedEventArgs e) => await CopyTextAsync(YouTubeUrlBox.Text);
-    private async void OnCopyChannelUrlClicked(object? sender, RoutedEventArgs e) => await CopyTextAsync(ChannelUrlBox.Text);
-
-    private async System.Threading.Tasks.Task CopyTextAsync(string? text)
-    {
-        if (string.IsNullOrWhiteSpace(text)) return;
-        var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
-        if (clipboard is not null)
-            await clipboard.SetTextAsync(text);
-    }
-
     private static void ApplyModelGenreVisual(Border container, TextBlock genreName, Border divider, bool enabled)
     {
         container.Background = new SolidColorBrush(Color.Parse(enabled ? "#153B54" : "#23272D"));
@@ -589,9 +710,18 @@ public partial class EditTrackOverlay : UserControl
 
     private void CloseOverlay()
     {
+        _analysisElapsedTimer.Stop();
         _analysisPreviewCancellation?.Cancel();
         AnalysisPopup.IsOpen = false;
         IsVisible = false;
         _track = null;
+    }
+
+    private void UpdateAnalysisElapsedTime()
+    {
+        var elapsed = DateTime.UtcNow - _analysisStartedAt;
+        AnalysisElapsedText.Text = elapsed.TotalHours >= 1
+            ? $"{(int)elapsed.TotalHours}:{elapsed.Minutes:00}:{elapsed.Seconds:00}"
+            : $"{elapsed.Minutes}:{elapsed.Seconds:00}";
     }
 }

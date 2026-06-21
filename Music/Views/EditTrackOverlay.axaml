@@ -4,74 +4,81 @@
 
     <Panel>
 
-        <Border Background="#70000000" />
-
-        <Border Margin="32,16,32,16"
-                MaxWidth="880" MinWidth="360"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Stretch"
-                Background="#1E1E1E"
-                CornerRadius="8"
+        <Border Background="#17191D"
                 PointerPressed="OnEditorPressed"
-                BoxShadow="0 8 40 4 #80000000">
+                ZIndex="20">
 
-            <Grid RowDefinitions="Auto,1,*,1,Auto">
+            <Grid RowDefinitions="Auto,1,*">
 
                 <Grid Grid.Row="0"
                       ColumnDefinitions="*,Auto"
-                      Margin="24,16,20,14">
-                    <TextBlock Grid.Column="0"
-                               Text="Edit Track"
-                               FontSize="18" FontWeight="SemiBold"
-                               VerticalAlignment="Center" />
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+                      Margin="26,15,22,12">
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="9">
+                        <Image Source="{SvgImage /Assets/info.svg}" Width="18" Height="18" Opacity="0.76"/>
+                        <StackPanel Spacing="1">
+                            <TextBlock Text="Track information"
+                                       FontSize="17" FontWeight="SemiBold" />
+                            <TextBlock x:Name="StatusText"
+                                       Text="" TextWrapping="Wrap"
+                                       FontSize="10.5" Opacity="0.58" />
+                        </StackPanel>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
                         <Button x:Name="AnalysisButton"
-                                Content="Analysis"
                                 Click="OnAnalysisButtonClicked"
-                                Padding="10,4" FontSize="11"
+                                ToolTip.Tip="Show model analysis"
+                                Width="34" Height="34" Padding="0"
+                                Background="Transparent" BorderThickness="0"
                                 IsVisible="False"
-                                Opacity="0.72" />
-                        <Button Content="✕"
+                                Opacity="0.7">
+                            <Image Source="{SvgImage /Assets/info.svg}" Width="17" Height="17"/>
+                        </Button>
+                        <Button x:Name="SaveBtn"
+                                Click="OnSaveClicked"
+                                IsEnabled="False"
+                                ToolTip.Tip="Save changes"
+                                Width="34" Height="34" Padding="0"
+                                Background="Transparent" BorderThickness="0">
+                            <Image Source="{SvgImage /Assets/save.svg}" Width="17" Height="17"/>
+                        </Button>
+                        <Button ToolTip.Tip="Close"
                                 Click="OnCloseClicked"
-                                Padding="8,4" FontSize="13"
-                                Opacity="0.55"
-                                VerticalAlignment="Center" />
+                                Width="34" Height="34" Padding="0"
+                                Background="Transparent" BorderThickness="0"
+                                Opacity="0.65">
+                            <Image Source="{SvgImage /Assets/close.svg}" Width="16" Height="16"/>
+                        </Button>
                     </StackPanel>
                 </Grid>
 
                 <Rectangle Grid.Row="1" Fill="#18808080" />
 
                 <ScrollViewer Grid.Row="2"
-                              Padding="24,18,24,0"
+                              Padding="26,18,26,20"
                               HorizontalScrollBarVisibility="Disabled">
                     <StackPanel Spacing="22" Margin="0,0,0,20">
 
                         <StackPanel Spacing="10">
                             <TextBlock Text="Information" FontSize="13" FontWeight="SemiBold" />
-                            <Grid ColumnDefinitions="*,200" ColumnSpacing="14">
-                                <StackPanel Spacing="7">
-                                    <TextBlock Text="Title" FontSize="11" Opacity="0.68" />
-                                    <TextBox x:Name="TitleBox" />
-                                </StackPanel>
-                                <StackPanel Grid.Column="1" Spacing="7">
-                                    <TextBlock Text="Rating" FontSize="11" Opacity="0.68" />
-                                    <ComboBox x:Name="RatingBox" />
-                                </StackPanel>
+                            <Grid ColumnDefinitions="112,*" ColumnSpacing="10">
+                                <TextBlock Text="Title" FontSize="11" Opacity="0.68" VerticalAlignment="Center" />
+                                <TextBox x:Name="TitleBox" Grid.Column="1" />
                             </Grid>
-                            <Grid x:Name="ChannelInfoRow" ColumnDefinitions="120,*,Auto" Margin="0,4,0,0">
+                            <Grid ColumnDefinitions="112,*" ColumnSpacing="10">
+                                <TextBlock Text="Rating" FontSize="11" Opacity="0.68" VerticalAlignment="Center" />
+                                <ComboBox x:Name="RatingBox" Grid.Column="1" Width="176" HorizontalAlignment="Left" />
+                            </Grid>
+                            <Grid x:Name="ChannelInfoRow" ColumnDefinitions="112,*" Margin="0,4,0,0">
                                 <TextBlock Text="Channel" FontSize="11" Opacity="0.68" VerticalAlignment="Center" />
                                 <TextBox x:Name="ChannelBox" Grid.Column="1" IsReadOnly="True" FontSize="11" />
-                                <Button Grid.Column="2" Content="Copy" Click="OnCopyChannelClicked" Padding="9,4" FontSize="10" Margin="8,0,0,0" />
                             </Grid>
-                            <Grid ColumnDefinitions="120,*,Auto">
+                            <Grid ColumnDefinitions="112,*">
                                 <TextBlock Text="YouTube URL" FontSize="11" Opacity="0.68" VerticalAlignment="Center" />
                                 <TextBox x:Name="YouTubeUrlBox" Grid.Column="1" IsReadOnly="True" FontSize="11" />
-                                <Button Grid.Column="2" Content="Copy" Click="OnCopyYouTubeUrlClicked" Padding="9,4" FontSize="10" Margin="8,0,0,0" />
                             </Grid>
-                            <Grid x:Name="ChannelUrlRow" ColumnDefinitions="120,*,Auto">
+                            <Grid x:Name="ChannelUrlRow" ColumnDefinitions="112,*">
                                 <TextBlock Text="Channel URL" FontSize="11" Opacity="0.68" VerticalAlignment="Center" />
                                 <TextBox x:Name="ChannelUrlBox" Grid.Column="1" IsReadOnly="True" FontSize="11" />
-                                <Button Grid.Column="2" Content="Copy" Click="OnCopyChannelUrlClicked" Padding="9,4" FontSize="10" Margin="8,0,0,0" />
                             </Grid>
                         </StackPanel>
 
@@ -119,7 +126,11 @@
                         </StackPanel>
 
                         <StackPanel x:Name="SoundProfileSection" Spacing="8" Margin="0,0,40,0">
-                            <TextBlock Text="Sound profile" FontSize="13" FontWeight="SemiBold" />
+                            <StackPanel Spacing="2">
+                                <TextBlock Text="Sound profile" FontSize="13" FontWeight="SemiBold" />
+                                <TextBlock Text="Blue values are model suggestions. Choose a different value only to override one."
+                                           FontSize="10.5" Opacity="0.55" TextWrapping="Wrap" />
+                            </StackPanel>
                             <StackPanel x:Name="SoundProfilePanel" Spacing="7" />
                         </StackPanel>
 
@@ -139,43 +150,23 @@
                             </StackPanel>
                         </Grid>
 
-                        <Border Height="10" />
+                        <Border Height="50" />
                     </StackPanel>
                 </ScrollViewer>
 
-                <Rectangle Grid.Row="3" Fill="#18808080" />
-
-                <Grid Grid.Row="4"
-                      ColumnDefinitions="*,Auto"
-                      Margin="24,10,24,16">
-                    <TextBlock Grid.Column="0"
-                               x:Name="StatusText"
-                               Text="" TextWrapping="Wrap"
-                               FontSize="12" Opacity="0.65"
-                               VerticalAlignment="Center"
-                               Margin="0,0,16,0" />
-                    <StackPanel Grid.Column="1"
-                                Orientation="Horizontal" Spacing="8">
-                        <Button x:Name="SaveBtn"
-                                Content="Save"
-                                Click="OnSaveClicked"
-                                IsEnabled="False"
-                                Classes="accent" />
-                        <Button Content="Cancel"
-                                Click="OnCloseClicked" />
-                    </StackPanel>
-                </Grid>
-
                 <Border x:Name="AnalysisBusyLayer"
-                        Grid.RowSpan="5"
+                        Grid.RowSpan="3"
                         IsVisible="False"
-                        Background="#C0181A1D"
-                        CornerRadius="8">
+                        Background="#C0181A1D">
                     <Border Width="300" HorizontalAlignment="Center" VerticalAlignment="Center"
                             Background="#101A27" BorderBrush="#36779F" BorderThickness="1" CornerRadius="9" Padding="24,20">
                         <StackPanel Spacing="12">
-                            <TextBlock Text="Analyzing track…" FontSize="15" FontWeight="SemiBold" TextAlignment="Center"/>
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Text="Analyzing track…" FontSize="15" FontWeight="SemiBold" TextAlignment="Center"/>
+                                <TextBlock x:Name="AnalysisElapsedText" Grid.Column="1" Text="0:00" FontSize="13" FontWeight="SemiBold" Foreground="#65BCEB"/>
+                            </Grid>
                             <ProgressBar IsIndeterminate="True" Height="5" Foreground="#1E9AF0" Background="#26313A"/>
+                            <TextBlock Text="Elapsed time" FontSize="10" Opacity="0.48" HorizontalAlignment="Right" Margin="0,-7,0,0"/>
                         </StackPanel>
                     </Border>
                 </Border>
