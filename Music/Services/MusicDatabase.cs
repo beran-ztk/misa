@@ -93,6 +93,7 @@ public class MusicDatabase
                 skip_count          INTEGER NOT NULL DEFAULT 0,
                 last_listened_at    TEXT NULL,
                 file_size_bytes     INTEGER NULL,
+                download_duration_ms INTEGER NULL,
                 needs_reevaluation  INTEGER NOT NULL DEFAULT 0,
                 notes               TEXT NULL
             );
@@ -182,6 +183,7 @@ public class MusicDatabase
     {
         EnsureColumn(conn, "tracks", "listened_seconds", "INTEGER NOT NULL DEFAULT 0");
         EnsureColumn(conn, "tracks", "file_size_bytes", "INTEGER NULL");
+        EnsureColumn(conn, "tracks", "download_duration_ms", "INTEGER NULL");
         EnsureColumn(conn, "track_analysis", "analysis_duration_ms", "INTEGER NULL");
     }
 
@@ -272,6 +274,37 @@ public class MusicDatabase
         return TimeSpan.FromMilliseconds(Math.Clamp(estimates.Average(), 3_000, 15 * 60_000));
     }
 
+    public TimeSpan? EstimateDownloadDuration(int? trackDurationSeconds, long? fileSizeBytes)
+    {
+        if (trackDurationSeconds is not > 0 && fileSizeBytes is not > 0) return null;
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"SELECT duration_seconds, file_size_bytes, download_duration_ms FROM tracks
+                            WHERE download_duration_ms IS NOT NULL AND download_duration_ms > 0
+                            ORDER BY downloaded_at DESC LIMIT 30";
+        using var reader = cmd.ExecuteReader();
+        var samples = new List<(int? Duration, long? Size, int Milliseconds)>();
+        while (reader.Read())
+            samples.Add((reader.IsDBNull(0) ? null : reader.GetInt32(0), reader.IsDBNull(1) ? null : reader.GetInt64(1), reader.GetInt32(2)));
+        if (samples.Count == 0) return null;
+
+        var estimates = new List<(double Value, double Weight)> { (samples.Average(sample => (double)sample.Milliseconds), .15) };
+        if (trackDurationSeconds is > 0)
+        {
+            var rates = samples.Where(sample => sample.Duration is > 0)
+                .Select(sample => sample.Milliseconds / (double)sample.Duration!.Value).ToList();
+            if (rates.Count > 0) estimates.Add((rates.Average() * trackDurationSeconds.Value, .7));
+        }
+        if (fileSizeBytes is > 0)
+        {
+            var rates = samples.Where(sample => sample.Size is > 0)
+                .Select(sample => sample.Milliseconds / (sample.Size!.Value / 1_000_000d)).ToList();
+            if (rates.Count > 0) estimates.Add((rates.Average() * (fileSizeBytes.Value / 1_000_000d), .15));
+        }
+        var estimate = estimates.Sum(item => item.Value * item.Weight) / estimates.Sum(item => item.Weight);
+        return TimeSpan.FromMilliseconds(Math.Clamp(estimate, 1_000, 60 * 60_000));
+    }
+
     private static void SeedDefaultMetadata(SqliteConnection conn, SqliteTransaction tx)
     {
         foreach (var rating in ReadAsset<RatingSeedDocument>("default-ratings.json").Ratings)
@@ -333,7 +366,8 @@ public class MusicDatabase
     }
 
     public int InsertTrack(string canonicalUrl, string title, string fileName,
-        List<int> genreIds, int? ratingId, List<int> _, int? durationSeconds, long? fileSizeBytes, YouTubeTrackMetadata? metadata = null)
+        List<int> genreIds, int? ratingId, List<int> _, int? durationSeconds, long? fileSizeBytes,
+        int? downloadDurationMilliseconds, YouTubeTrackMetadata? metadata = null)
     {
         using var conn = Open();
         using var tx = conn.BeginTransaction();
@@ -351,8 +385,8 @@ public class MusicDatabase
         }
 
         var trackId = InsertAndGetId(conn, tx, @"
-            INSERT INTO tracks (canonical_url, title, file_name, channel_id, rating_id, uploaded_at, downloaded_at, updated_at, duration_seconds, file_size_bytes)
-            VALUES ($url, $title, $fileName, $channelId, $ratingId, $uploadedAt, $downloadedAt, $updatedAt, $duration, $fileSizeBytes)",
+            INSERT INTO tracks (canonical_url, title, file_name, channel_id, rating_id, uploaded_at, downloaded_at, updated_at, duration_seconds, file_size_bytes, download_duration_ms)
+            VALUES ($url, $title, $fileName, $channelId, $ratingId, $uploadedAt, $downloadedAt, $updatedAt, $duration, $fileSizeBytes, $downloadDurationMs)",
             ("$url", canonicalUrl),
             ("$title", title),
             ("$fileName", fileName),
@@ -362,7 +396,8 @@ public class MusicDatabase
             ("$downloadedAt", now),
             ("$updatedAt", now),
             ("$duration", durationSeconds),
-            ("$fileSizeBytes", fileSizeBytes));
+            ("$fileSizeBytes", fileSizeBytes),
+            ("$downloadDurationMs", downloadDurationMilliseconds));
 
         InsertTrackGenres(conn, tx, trackId, genreIds, GetAssignmentSourceId(conn, tx, ManualAssignmentSourceKey), now);
         tx.Commit();

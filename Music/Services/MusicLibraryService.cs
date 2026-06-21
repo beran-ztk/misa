@@ -42,6 +42,8 @@ public class MusicLibraryService
     public TrackUsageStats GetTrackUsageStats(int trackId) => _db.GetTrackUsageStats(trackId);
     public TimeSpan? EstimateAnalysisDuration(int? trackDurationSeconds, long? fileSizeBytes) =>
         _db.EstimateAnalysisDuration(trackDurationSeconds, fileSizeBytes);
+    public TimeSpan? EstimateDownloadDuration(int? trackDurationSeconds, long? fileSizeBytes) =>
+        _db.EstimateDownloadDuration(trackDurationSeconds, fileSizeBytes);
 
     public Task<string?> DeleteTrackAsync(MusicTrack track)
     {
@@ -140,7 +142,11 @@ public class MusicLibraryService
         if (_db.TrackExists(canonicalUrl))
             return new DownloadResult(false, "Track already exists.");
 
-        var (success, errorOutput) = await DownloadWithSingleRetryAsync(canonicalUrl, progress);
+        progress?.Report("Checking audio details…");
+        var previewMetadata = await _downloader.GetMetadataAsync(canonicalUrl);
+        var downloadEstimate = EstimateDownloadDuration(previewMetadata?.DurationSeconds, previewMetadata?.EstimatedAudioSizeBytes);
+        var downloadStopwatch = Stopwatch.StartNew();
+        var (success, errorOutput) = await DownloadWithSingleRetryAsync(canonicalUrl, progress, downloadEstimate);
         if (!success)
             return new DownloadResult(false, $"Failed:\n{errorOutput}");
 
@@ -150,10 +156,10 @@ public class MusicLibraryService
 
         var fileName = Path.GetFileName(filePath);
         var duration = await _downloader.GetDurationAsync(filePath);
-        var metadata = await _downloader.GetMetadataAsync(canonicalUrl);
+        var metadata = previewMetadata ?? await _downloader.GetMetadataAsync(canonicalUrl);
         var fileSizeBytes = new FileInfo(filePath).Length;
         var trackId = _db.InsertTrack(canonicalUrl, metadata?.Title ?? _downloader.TitleFromFileName(fileName), fileName,
-            request.GenreIds, request.RatingId, request.StyleIds, duration, fileSizeBytes, metadata);
+            request.GenreIds, request.RatingId, request.StyleIds, duration, fileSizeBytes, (int)downloadStopwatch.ElapsedMilliseconds, metadata);
 
         progress?.Report(AnalysisProgressText(duration, fileSizeBytes));
         var stopwatch = Stopwatch.StartNew();
@@ -179,7 +185,11 @@ public class MusicLibraryService
         if (_db.TrackExists(canonicalUrl))
             return new ImportResult(false, Error: "Track already exists.");
 
-        var (success, errorOutput) = await DownloadWithSingleRetryAsync(canonicalUrl, progress);
+        progress?.Report("Checking audio details…");
+        var previewMetadata = await _downloader.GetMetadataAsync(canonicalUrl);
+        var downloadEstimate = EstimateDownloadDuration(previewMetadata?.DurationSeconds, previewMetadata?.EstimatedAudioSizeBytes);
+        var downloadStopwatch = Stopwatch.StartNew();
+        var (success, errorOutput) = await DownloadWithSingleRetryAsync(canonicalUrl, progress, downloadEstimate);
         if (!success)
             return new ImportResult(false, Error: $"Download failed:\n{errorOutput}");
 
@@ -189,10 +199,10 @@ public class MusicLibraryService
 
         var fileName = Path.GetFileName(filePath);
         var duration = await _downloader.GetDurationAsync(filePath);
-        var metadata = await _downloader.GetMetadataAsync(canonicalUrl);
+        var metadata = previewMetadata ?? await _downloader.GetMetadataAsync(canonicalUrl);
         var fileSizeBytes = new FileInfo(filePath).Length;
         var trackId = _db.InsertTrack(canonicalUrl, metadata?.Title ?? _downloader.TitleFromFileName(fileName), fileName,
-            [], null, [], duration, fileSizeBytes, metadata);
+            [], null, [], duration, fileSizeBytes, (int)downloadStopwatch.ElapsedMilliseconds, metadata);
         progress?.Report(AnalysisProgressText(duration, fileSizeBytes));
         var stopwatch = Stopwatch.StartNew();
         var (analysis, analysisError) = await _analysis.AnalyzeAsync(filePath);
@@ -243,9 +253,12 @@ public class MusicLibraryService
 
     private async Task<(bool Success, string ErrorOutput)> DownloadWithSingleRetryAsync(
         string canonicalUrl,
-        IProgress<string>? progress)
+        IProgress<string>? progress,
+        TimeSpan? estimate = null)
     {
-        progress?.Report("Downloading audio…");
+        progress?.Report(estimate is null
+            ? "Downloading audio…"
+            : $"Downloading audio… usually about {FormatEstimate(estimate.Value)}");
         var result = await _downloader.RunYtDlpAsync(canonicalUrl);
         if (result.Success || !IsForbiddenResponse(result.ErrorOutput))
             return result;

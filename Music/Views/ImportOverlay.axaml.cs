@@ -80,10 +80,11 @@ public partial class ImportOverlay : UserControl
         _startedAt = DateTime.UtcNow;
         BusyElapsedText.Text = "0:00";
         _elapsedTimer.Start();
-        var progress = new Progress<string>(message =>
+        IProgress<string> progress = new ImmediateProgress(message =>
         {
             BusyText.Text = message;
-            if (message.StartsWith("Analyzing", StringComparison.OrdinalIgnoreCase))
+            if (message.StartsWith("Downloading", StringComparison.OrdinalIgnoreCase)
+                || message.StartsWith("Analyzing", StringComparison.OrdinalIgnoreCase))
             {
                 _startedAt = DateTime.UtcNow;
                 BusyElapsedText.Text = "0:00";
@@ -118,5 +119,10 @@ public partial class ImportOverlay : UserControl
         BusyElapsedText.Text = elapsed.TotalHours >= 1
             ? $"{(int)elapsed.TotalHours}:{elapsed.Minutes:00}:{elapsed.Seconds:00}"
             : $"{elapsed.Minutes}:{elapsed.Seconds:00}";
+    }
+
+    private sealed class ImmediateProgress(Action<string> report) : IProgress<string>
+    {
+        public void Report(string value) => report(value);
     }
 }

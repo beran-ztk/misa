@@ -96,7 +96,8 @@ public class TrackDownloadService
                     DateTimeStyles.None, out var date))
                 uploadDate = date.ToString("yyyy-MM-dd");
             return new YouTubeTrackMetadata(
-                Value("title"), Value("channel_id"), Value("channel"), Value("channel_url"), uploadDate);
+                Value("title"), Value("channel_id"), Value("channel"), Value("channel_url"), uploadDate,
+                EstimatedAudioSize(root), DurationSeconds(root));
         }
         catch { return null; }
     }
@@ -113,6 +114,37 @@ public class TrackDownloadService
         var bracket = name.LastIndexOf('[');
         return bracket > 0 ? name[..bracket].Trim() : name;
     }
+
+    private static long? EstimatedAudioSize(JsonElement root)
+    {
+        if (!root.TryGetProperty("formats", out var formats) || formats.ValueKind != JsonValueKind.Array)
+            return null;
+
+        var candidates = formats.EnumerateArray()
+            .Where(format => Value(format, "acodec") is not "none"
+                             && Value(format, "vcodec") == "none")
+            .Select(format => new
+            {
+                Bitrate = Number(format, "abr") ?? 0,
+                Size = Integer(format, "filesize") ?? Integer(format, "filesize_approx")
+            })
+            .Where(format => format.Size is > 0)
+            .OrderByDescending(format => format.Bitrate)
+            .FirstOrDefault();
+        return candidates?.Size;
+
+        static string? Value(JsonElement element, string key) => element.TryGetProperty(key, out var value)
+            && value.ValueKind == JsonValueKind.String ? value.GetString() : null;
+        static double? Number(JsonElement element, string key) => element.TryGetProperty(key, out var value)
+            && value.TryGetDouble(out var number) ? number : null;
+        static long? Integer(JsonElement element, string key) => element.TryGetProperty(key, out var value)
+            && value.TryGetInt64(out var number) ? number : null;
+    }
+
+    private static int? DurationSeconds(JsonElement root) => root.TryGetProperty("duration", out var value)
+        && value.TryGetDouble(out var seconds) && seconds > 0
+            ? (int)Math.Round(seconds)
+            : null;
 
     private static async Task<ProcessResult> RunProcessAsync(string fileName, params string[] args)
     {

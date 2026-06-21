@@ -11,7 +11,14 @@ public record Genre(int Id, string Name);
 public record Style(int Id, string Name);
 public record Rating(int Id, string Name, int SortOrder);
 public record TrackUsageStats(int PlayCount, int ListenedSeconds, int SkipCount, string? LastListenedAt);
-public record YouTubeTrackMetadata(string? Title, string? ChannelId, string? ChannelName, string? ChannelUrl, string? UploadedAt);
+public record YouTubeTrackMetadata(
+    string? Title,
+    string? ChannelId,
+    string? ChannelName,
+    string? ChannelUrl,
+    string? UploadedAt,
+    long? EstimatedAudioSizeBytes = null,
+    int? DurationSeconds = null);
 public record ModelGenre(int Id, string Name);
 public record ModelSubgenre(int Id, int ModelGenreId, string Name);
 public record StoredModelGenrePrediction(
