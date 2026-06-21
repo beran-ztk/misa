@@ -346,10 +346,10 @@ public partial class EditTrackOverlay : UserControl
                 Foreground = accent,
                 VerticalAlignment = VerticalAlignment.Center
             };
-            ToolTip.SetTip(tag, $"{suggestion.CategoryName}\n{suggestion.SourceType} · {suggestion.SourceKey}");
+            ToolTip.SetTip(tag, $"{suggestion.CategoryName}\n{suggestion.ConditionSummary}");
             var evidence = new TextBlock
             {
-                Text = $"{suggestion.SourceType} · {suggestion.SourceKey}  {suggestion.Score:0.##}",
+                Text = $"{(suggestion.MatchMode == TagRuleMatchMode.All ? "ALL" : "ANY")} · {suggestion.ConditionSummary}  ·  {suggestion.Score:0.##}",
                 FontSize = 10,
                 Opacity = .62,
                 VerticalAlignment = VerticalAlignment.Center,
@@ -374,7 +374,7 @@ public partial class EditTrackOverlay : UserControl
             accept.Click += (_, _) =>
             {
                 MusicLibraryService.Current.AcceptTrackTagSuggestion(
-                    track.Id, suggestion.TagId, suggestion.SourceType, suggestion.SourceKey);
+                    track.Id, suggestion.TagId, suggestion.RuleGroupId);
                 RebuildTagChips(MusicLibraryService.Current.GetTrackTagIds(track.Id).ToHashSet());
                 ShowTagSuggestions(track);
                 TrackSaved?.Invoke();
@@ -382,7 +382,7 @@ public partial class EditTrackOverlay : UserControl
             reject.Click += (_, _) =>
             {
                 MusicLibraryService.Current.RejectTrackTagSuggestion(
-                    track.Id, suggestion.TagId, suggestion.SourceType, suggestion.SourceKey);
+                    track.Id, suggestion.RuleGroupId);
                 ShowTagSuggestions(track);
             };
             Grid.SetColumn(evidence, 1);

@@ -230,28 +230,31 @@ public class MusicDatabase
                 model_subgenre_id  INTEGER NOT NULL UNIQUE REFERENCES model_subgenres(id) ON DELETE CASCADE
             );
 
-            CREATE TABLE tag_rules (
+            CREATE TABLE tag_rule_groups (
                 id            INTEGER PRIMARY KEY AUTOINCREMENT,
                 tag_id        INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+                match_mode    TEXT NOT NULL CHECK (match_mode IN ('all', 'any')),
+                enabled       INTEGER NOT NULL DEFAULT 1
+            );
+
+            CREATE TABLE tag_rule_conditions (
+                id            INTEGER PRIMARY KEY AUTOINCREMENT,
+                rule_group_id INTEGER NOT NULL REFERENCES tag_rule_groups(id) ON DELETE CASCADE,
                 source_type   TEXT NOT NULL,
                 source_key    TEXT NOT NULL,
-                threshold     REAL NOT NULL CHECK (threshold >= 0 AND threshold <= 1),
-                auto_assign   INTEGER NOT NULL DEFAULT 0,
-                enabled       INTEGER NOT NULL DEFAULT 1,
-                UNIQUE (tag_id, source_type, source_key)
+                threshold     REAL NOT NULL,
+                UNIQUE (rule_group_id, source_type, source_key)
             );
 
             CREATE TABLE track_tag_suggestions (
-                track_id     INTEGER NOT NULL REFERENCES tracks(id) ON DELETE CASCADE,
-                tag_id       INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
-                rule_id      INTEGER NULL REFERENCES tag_rules(id) ON DELETE SET NULL,
-                source_type  TEXT NOT NULL,
-                source_key   TEXT NOT NULL,
-                score        REAL NOT NULL CHECK (score >= 0 AND score <= 1),
-                state        TEXT NOT NULL DEFAULT 'pending',
-                created_at   TEXT NOT NULL,
-                updated_at   TEXT NOT NULL,
-                PRIMARY KEY (track_id, tag_id, source_type, source_key)
+                track_id       INTEGER NOT NULL REFERENCES tracks(id) ON DELETE CASCADE,
+                tag_id         INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+                rule_group_id  INTEGER NOT NULL REFERENCES tag_rule_groups(id) ON DELETE CASCADE,
+                score          REAL NOT NULL,
+                state          TEXT NOT NULL DEFAULT 'pending',
+                created_at     TEXT NOT NULL,
+                updated_at     TEXT NOT NULL,
+                PRIMARY KEY (track_id, rule_group_id)
             );
 
             CREATE INDEX ix_track_genres_genre_id ON track_genres(genre_id);
@@ -263,7 +266,8 @@ public class MusicDatabase
             CREATE INDEX ix_track_analysis_signals_analysis_id ON track_analysis_signals(track_analysis_id);
             CREATE INDEX ix_track_derived_attributes_analysis_id ON track_derived_attributes(track_analysis_id);
             CREATE INDEX ix_genre_mappings_genre_id ON genre_mappings(genre_id);
-            CREATE INDEX ix_tag_rules_tag_id ON tag_rules(tag_id);
+            CREATE INDEX ix_tag_rule_groups_tag_id ON tag_rule_groups(tag_id);
+            CREATE INDEX ix_tag_rule_conditions_group_id ON tag_rule_conditions(rule_group_id);
             CREATE INDEX ix_track_tag_suggestions_track_id ON track_tag_suggestions(track_id);";
         cmd.ExecuteNonQuery();
     }
@@ -282,6 +286,7 @@ public class MusicDatabase
         CreateModelMetadataSchema(conn);
         CreateTagSchema(conn);
         SimplifyTagSchemaIfNeeded(conn);
+        MigrateTagRuleGroupsIfNeeded(conn);
         SeedDefaultTagCategories(conn);
         if (ModelMetadataNeedsImport(conn))
         {
@@ -319,31 +324,34 @@ public class MusicDatabase
                 updated_at TEXT NOT NULL,
                 PRIMARY KEY (track_id, tag_id)
             );
-            CREATE TABLE IF NOT EXISTS tag_rules (
+            CREATE TABLE IF NOT EXISTS tag_rule_groups (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 tag_id INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+                match_mode TEXT NOT NULL CHECK (match_mode IN ('all', 'any')),
+                enabled INTEGER NOT NULL DEFAULT 1
+            );
+            CREATE TABLE IF NOT EXISTS tag_rule_conditions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                rule_group_id INTEGER NOT NULL REFERENCES tag_rule_groups(id) ON DELETE CASCADE,
                 source_type TEXT NOT NULL,
                 source_key TEXT NOT NULL,
-                threshold REAL NOT NULL CHECK (threshold >= 0 AND threshold <= 1),
-                auto_assign INTEGER NOT NULL DEFAULT 0,
-                enabled INTEGER NOT NULL DEFAULT 1,
-                UNIQUE (tag_id, source_type, source_key)
+                threshold REAL NOT NULL,
+                UNIQUE (rule_group_id, source_type, source_key)
             );
             CREATE TABLE IF NOT EXISTS track_tag_suggestions (
                 track_id INTEGER NOT NULL REFERENCES tracks(id) ON DELETE CASCADE,
                 tag_id INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
-                rule_id INTEGER NULL REFERENCES tag_rules(id) ON DELETE SET NULL,
-                source_type TEXT NOT NULL,
-                source_key TEXT NOT NULL,
-                score REAL NOT NULL CHECK (score >= 0 AND score <= 1),
+                rule_group_id INTEGER NOT NULL REFERENCES tag_rule_groups(id) ON DELETE CASCADE,
+                score REAL NOT NULL,
                 state TEXT NOT NULL DEFAULT 'pending',
                 created_at TEXT NOT NULL,
                 updated_at TEXT NOT NULL,
-                PRIMARY KEY (track_id, tag_id, source_type, source_key)
+                PRIMARY KEY (track_id, rule_group_id)
             );
             CREATE INDEX IF NOT EXISTS ix_tags_category_id ON tags(category_id);
             CREATE INDEX IF NOT EXISTS ix_track_tags_tag_id ON track_tags(tag_id);
-            CREATE INDEX IF NOT EXISTS ix_tag_rules_tag_id ON tag_rules(tag_id);
+            CREATE INDEX IF NOT EXISTS ix_tag_rule_groups_tag_id ON tag_rule_groups(tag_id);
+            CREATE INDEX IF NOT EXISTS ix_tag_rule_conditions_group_id ON tag_rule_conditions(rule_group_id);
             CREATE INDEX IF NOT EXISTS ix_track_tag_suggestions_track_id ON track_tag_suggestions(track_id);";
         cmd.ExecuteNonQuery();
     }
@@ -453,6 +461,89 @@ public class MusicDatabase
         }
     }
 
+    private static void MigrateTagRuleGroupsIfNeeded(SqliteConnection conn)
+    {
+        if (!TableExists(conn, "tag_rules"))
+            return;
+
+        using (var foreignKeyCommand = conn.CreateCommand())
+        {
+            foreignKeyCommand.CommandText = "PRAGMA foreign_keys = OFF;";
+            foreignKeyCommand.ExecuteNonQuery();
+        }
+
+        try
+        {
+            using var tx = conn.BeginTransaction();
+            ExecuteInsert(conn, tx, "DROP INDEX IF EXISTS ix_tag_rules_tag_id");
+            ExecuteInsert(conn, tx, "DROP INDEX IF EXISTS ix_tag_rule_groups_tag_id");
+            ExecuteInsert(conn, tx, "DROP INDEX IF EXISTS ix_tag_rule_conditions_group_id");
+            ExecuteInsert(conn, tx, "DROP INDEX IF EXISTS ix_track_tag_suggestions_track_id");
+            // CreateTagSchema runs before migrations. On an existing installation these
+            // are therefore empty placeholder tables and must make room for the legacy
+            // rule data that is about to be converted.
+            ExecuteInsert(conn, tx, "DROP TABLE IF EXISTS tag_rule_conditions");
+            ExecuteInsert(conn, tx, "DROP TABLE IF EXISTS tag_rule_groups");
+            ExecuteInsert(conn, tx, "ALTER TABLE track_tag_suggestions RENAME TO track_tag_suggestions_legacy_rules");
+            ExecuteInsert(conn, tx, "ALTER TABLE tag_rules RENAME TO tag_rules_legacy");
+
+            ExecuteInsert(conn, tx, @"
+                CREATE TABLE tag_rule_groups (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    tag_id INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+                    match_mode TEXT NOT NULL CHECK (match_mode IN ('all', 'any')),
+                    enabled INTEGER NOT NULL DEFAULT 1
+                )");
+            ExecuteInsert(conn, tx, @"
+                CREATE TABLE tag_rule_conditions (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    rule_group_id INTEGER NOT NULL REFERENCES tag_rule_groups(id) ON DELETE CASCADE,
+                    source_type TEXT NOT NULL,
+                    source_key TEXT NOT NULL,
+                    threshold REAL NOT NULL,
+                    UNIQUE (rule_group_id, source_type, source_key)
+                )");
+            ExecuteInsert(conn, tx, @"
+                CREATE TABLE track_tag_suggestions (
+                    track_id INTEGER NOT NULL REFERENCES tracks(id) ON DELETE CASCADE,
+                    tag_id INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+                    rule_group_id INTEGER NOT NULL REFERENCES tag_rule_groups(id) ON DELETE CASCADE,
+                    score REAL NOT NULL,
+                    state TEXT NOT NULL DEFAULT 'pending',
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    PRIMARY KEY (track_id, rule_group_id)
+                )");
+
+            // Every previous one-condition rule becomes an ALL group containing that one condition.
+            ExecuteInsert(conn, tx, @"
+                INSERT INTO tag_rule_groups (id, tag_id, match_mode, enabled)
+                SELECT id, tag_id, 'all', enabled FROM tag_rules_legacy");
+            ExecuteInsert(conn, tx, @"
+                INSERT INTO tag_rule_conditions (rule_group_id, source_type, source_key, threshold)
+                SELECT id, source_type, source_key, threshold FROM tag_rules_legacy");
+            ExecuteInsert(conn, tx, @"
+                INSERT INTO track_tag_suggestions
+                    (track_id, tag_id, rule_group_id, score, state, created_at, updated_at)
+                SELECT track_id, tag_id, rule_id, score, state, created_at, updated_at
+                FROM track_tag_suggestions_legacy_rules
+                WHERE rule_id IS NOT NULL");
+
+            ExecuteInsert(conn, tx, "DROP TABLE track_tag_suggestions_legacy_rules");
+            ExecuteInsert(conn, tx, "DROP TABLE tag_rules_legacy");
+            ExecuteInsert(conn, tx, "CREATE INDEX ix_tag_rule_groups_tag_id ON tag_rule_groups(tag_id)");
+            ExecuteInsert(conn, tx, "CREATE INDEX ix_tag_rule_conditions_group_id ON tag_rule_conditions(rule_group_id)");
+            ExecuteInsert(conn, tx, "CREATE INDEX ix_track_tag_suggestions_track_id ON track_tag_suggestions(track_id)");
+            tx.Commit();
+        }
+        finally
+        {
+            using var foreignKeyCommand = conn.CreateCommand();
+            foreignKeyCommand.CommandText = "PRAGMA foreign_keys = ON;";
+            foreignKeyCommand.ExecuteNonQuery();
+        }
+    }
+
     private static void CreateModelMetadataSchema(SqliteConnection conn)
     {
         using var cmd = conn.CreateCommand();
@@ -520,6 +611,14 @@ public class MusicDatabase
             if (string.Equals(reader.GetString(1), column, StringComparison.OrdinalIgnoreCase))
                 return true;
         return false;
+    }
+
+    private static bool TableExists(SqliteConnection conn, string table)
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = $table";
+        cmd.Parameters.AddWithValue("$table", table);
+        return Convert.ToInt32(cmd.ExecuteScalar()) > 0;
     }
 
     public void RecordTrackPlaybackStarted(int trackId)
@@ -1268,7 +1367,7 @@ public class MusicDatabase
         using var conn = Open();
         using var cmd = conn.CreateCommand();
         cmd.CommandText = @"SELECT (SELECT COUNT(*) FROM track_tags WHERE tag_id = $id),
-                                   (SELECT COUNT(*) FROM tag_rules WHERE tag_id = $id),
+                                   (SELECT COUNT(*) FROM tag_rule_groups WHERE tag_id = $id),
                                    (SELECT COUNT(*) FROM track_tag_suggestions WHERE tag_id = $id)";
         cmd.Parameters.AddWithValue("$id", id);
         using var reader = cmd.ExecuteReader();
@@ -1371,56 +1470,76 @@ public class MusicDatabase
         return sources;
     }
 
-    public List<TagRule> GetTagRules()
+    public List<TagRuleGroup> GetTagRuleGroups()
     {
         using var conn = Open();
         using var cmd = conn.CreateCommand();
         cmd.CommandText = @"
-            SELECT rules.id, tags.id, tags.name, categories.name, categories.color,
-                   rules.source_type, rules.source_key, rules.threshold, rules.auto_assign, rules.enabled
-            FROM tag_rules rules
-            JOIN tags ON tags.id = rules.tag_id
+            SELECT groups.id, tags.id, tags.name, categories.name, categories.color,
+                   groups.match_mode, groups.enabled
+            FROM tag_rule_groups groups
+            JOIN tags ON tags.id = groups.tag_id
             JOIN tag_categories categories ON categories.id = tags.category_id
-            ORDER BY categories.sort_order, categories.name, tags.name, rules.source_type, rules.source_key";
+            ORDER BY categories.sort_order, categories.name, tags.name, groups.id";
         using var reader = cmd.ExecuteReader();
-        var rules = new List<TagRule>();
+        var groups = new List<TagRuleGroup>();
         while (reader.Read())
-            rules.Add(new TagRule(
+            groups.Add(new TagRuleGroup(
                 reader.GetInt32(0), reader.GetInt32(1), reader.GetString(2), reader.GetString(3),
                 reader.IsDBNull(4) ? null : reader.GetString(4),
-                reader.GetString(5), reader.GetString(6), reader.GetDouble(7),
-                reader.GetInt32(8) != 0, reader.GetInt32(9) != 0));
-        return rules;
+                ParseMatchMode(reader.GetString(5)), reader.GetInt32(6) != 0, []));
+
+        var conditions = GetTagRuleConditions(conn);
+        return groups
+            .Select(group => group with { Conditions = conditions.GetValueOrDefault(group.Id, []) })
+            .ToList();
     }
 
-    public void AddTagRule(int tagId, string sourceType, string sourceKey, double threshold)
+    public int CreateTagRuleGroup(int tagId, TagRuleMatchMode matchMode, string sourceType, string sourceKey, double threshold)
     {
         using var conn = Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = @"
-            INSERT INTO tag_rules (tag_id, source_type, source_key, threshold, auto_assign, enabled)
-            VALUES ($tagId, $sourceType, $sourceKey, $threshold, 0, 1)
-            ON CONFLICT(tag_id, source_type, source_key) DO UPDATE SET
-                threshold = excluded.threshold,
-                enabled = 1";
-        cmd.Parameters.AddWithValue("$tagId", tagId);
-        cmd.Parameters.AddWithValue("$sourceType", sourceType);
-        cmd.Parameters.AddWithValue("$sourceKey", sourceKey);
-        cmd.Parameters.AddWithValue("$threshold", Math.Clamp(threshold, 0d, 1d));
-        cmd.ExecuteNonQuery();
+        using var tx = conn.BeginTransaction();
+        var groupId = InsertAndGetId(conn, tx, @"
+            INSERT INTO tag_rule_groups (tag_id, match_mode, enabled)
+            VALUES ($tagId, $matchMode, 1)",
+            ("$tagId", tagId), ("$matchMode", MatchModeKey(matchMode)));
+        InsertTagRuleCondition(conn, tx, groupId, sourceType, sourceKey, threshold);
+        tx.Commit();
+        return (int)groupId;
     }
 
-    public void SetTagRuleEnabled(int ruleId, bool enabled)
+    public void AddTagRuleCondition(int groupId, string sourceType, string sourceKey, double threshold)
     {
         using var conn = Open();
-        ExecuteNonQuery(conn, "UPDATE tag_rules SET enabled = $enabled WHERE id = $id",
-            ("$id", ruleId), ("$enabled", enabled ? 1 : 0));
+        using var tx = conn.BeginTransaction();
+        InsertTagRuleCondition(conn, tx, groupId, sourceType, sourceKey, threshold);
+        tx.Commit();
     }
 
-    public void DeleteTagRule(int ruleId)
+    public void DeleteTagRuleCondition(int conditionId)
     {
         using var conn = Open();
-        ExecuteNonQuery(conn, "DELETE FROM tag_rules WHERE id = $id", ("$id", ruleId));
+        ExecuteNonQuery(conn, "DELETE FROM tag_rule_conditions WHERE id = $id", ("$id", conditionId));
+    }
+
+    public void SetTagRuleGroupEnabled(int groupId, bool enabled)
+    {
+        using var conn = Open();
+        ExecuteNonQuery(conn, "UPDATE tag_rule_groups SET enabled = $enabled WHERE id = $id",
+            ("$id", groupId), ("$enabled", enabled ? 1 : 0));
+    }
+
+    public void SetTagRuleGroupMatchMode(int groupId, TagRuleMatchMode matchMode)
+    {
+        using var conn = Open();
+        ExecuteNonQuery(conn, "UPDATE tag_rule_groups SET match_mode = $matchMode WHERE id = $id",
+            ("$id", groupId), ("$matchMode", MatchModeKey(matchMode)));
+    }
+
+    public void DeleteTagRuleGroup(int groupId)
+    {
+        using var conn = Open();
+        ExecuteNonQuery(conn, "DELETE FROM tag_rule_groups WHERE id = $id", ("$id", groupId));
     }
 
     public void RefreshAllTagSuggestions()
@@ -1446,25 +1565,30 @@ public class MusicDatabase
         using var conn = Open();
         using var cmd = conn.CreateCommand();
         cmd.CommandText = @"
-            SELECT tags.id, tags.name, categories.name, categories.color,
-                   suggestions.source_type, suggestions.source_key, suggestions.score, suggestions.state
+            SELECT suggestions.rule_group_id, tags.id, tags.name, categories.name, categories.color,
+                   groups.match_mode,
+                   group_concat(conditions.source_type || ' · ' || conditions.source_key || ' ≥ ' || printf('%.2f', conditions.threshold), '  ·  '),
+                   suggestions.score, suggestions.state
             FROM track_tag_suggestions suggestions
             JOIN tags ON tags.id = suggestions.tag_id
             JOIN tag_categories categories ON categories.id = tags.category_id
+            JOIN tag_rule_groups groups ON groups.id = suggestions.rule_group_id
+            JOIN tag_rule_conditions conditions ON conditions.rule_group_id = groups.id
             WHERE suggestions.track_id = $trackId AND suggestions.state = 'pending'
+            GROUP BY suggestions.rule_group_id
             ORDER BY suggestions.score DESC, categories.sort_order, tags.name";
         cmd.Parameters.AddWithValue("$trackId", trackId);
         using var reader = cmd.ExecuteReader();
         var suggestions = new List<TrackTagSuggestion>();
         while (reader.Read())
             suggestions.Add(new TrackTagSuggestion(
-                reader.GetInt32(0), reader.GetString(1), reader.GetString(2),
-                reader.IsDBNull(3) ? null : reader.GetString(3),
-                reader.GetString(4), reader.GetString(5), reader.GetDouble(6), reader.GetString(7)));
+                reader.GetInt32(0), reader.GetInt32(1), reader.GetString(2), reader.GetString(3),
+                reader.IsDBNull(4) ? null : reader.GetString(4),
+                ParseMatchMode(reader.GetString(5)), reader.GetString(6), reader.GetDouble(7), reader.GetString(8)));
         return suggestions;
     }
 
-    public void AcceptTrackTagSuggestion(int trackId, int tagId, string sourceType, string sourceKey)
+    public void AcceptTrackTagSuggestion(int trackId, int tagId, int ruleGroupId)
     {
         using var conn = Open();
         using var tx = conn.BeginTransaction();
@@ -1481,15 +1605,50 @@ public class MusicDatabase
         tx.Commit();
     }
 
-    public void RejectTrackTagSuggestion(int trackId, int tagId, string sourceType, string sourceKey)
+    public void RejectTrackTagSuggestion(int trackId, int ruleGroupId)
     {
         using var conn = Open();
         ExecuteNonQuery(conn, @"
             UPDATE track_tag_suggestions SET state = 'rejected', updated_at = $now
-            WHERE track_id = $trackId AND tag_id = $tagId AND source_type = $sourceType AND source_key = $sourceKey",
-            ("$trackId", trackId), ("$tagId", tagId), ("$sourceType", sourceType), ("$sourceKey", sourceKey),
+            WHERE track_id = $trackId AND rule_group_id = $ruleGroupId",
+            ("$trackId", trackId), ("$ruleGroupId", ruleGroupId),
             ("$now", DateTime.UtcNow.ToString("O")));
     }
+
+    private static Dictionary<int, IReadOnlyList<TagRuleCondition>> GetTagRuleConditions(SqliteConnection conn)
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"SELECT id, rule_group_id, source_type, source_key, threshold
+                            FROM tag_rule_conditions
+                            ORDER BY rule_group_id, id";
+        using var reader = cmd.ExecuteReader();
+        var result = new Dictionary<int, List<TagRuleCondition>>();
+        while (reader.Read())
+        {
+            var groupId = reader.GetInt32(1);
+            if (!result.TryGetValue(groupId, out var conditions))
+                result[groupId] = conditions = new List<TagRuleCondition>();
+            conditions.Add(new TagRuleCondition(
+                reader.GetInt32(0), reader.GetString(2), reader.GetString(3), reader.GetDouble(4)));
+        }
+        return result.ToDictionary(item => item.Key, item => (IReadOnlyList<TagRuleCondition>)item.Value);
+    }
+
+    private static void InsertTagRuleCondition(SqliteConnection conn, SqliteTransaction tx, long groupId,
+        string sourceType, string sourceKey, double threshold) =>
+        ExecuteInsert(conn, tx, @"
+            INSERT INTO tag_rule_conditions (rule_group_id, source_type, source_key, threshold)
+            VALUES ($groupId, $sourceType, $sourceKey, $threshold)
+            ON CONFLICT(rule_group_id, source_type, source_key) DO UPDATE SET threshold = excluded.threshold",
+            ("$groupId", groupId), ("$sourceType", sourceType), ("$sourceKey", sourceKey), ("$threshold", threshold));
+
+    private static TagRuleMatchMode ParseMatchMode(string value) =>
+        string.Equals(value, "any", StringComparison.OrdinalIgnoreCase)
+            ? TagRuleMatchMode.Any
+            : TagRuleMatchMode.All;
+
+    private static string MatchModeKey(TagRuleMatchMode value) =>
+        value == TagRuleMatchMode.Any ? "any" : "all";
 
     public List<Rating> GetRatings()
     {
@@ -1778,27 +1937,35 @@ public class MusicDatabase
 
         ExecuteInsert(conn, tx, @"
             INSERT INTO track_tag_suggestions
-                (track_id, tag_id, rule_id, source_type, source_key, score, state, created_at, updated_at)
-            SELECT $trackId, rules.tag_id, rules.id, rules.source_type, rules.source_key,
-                   signals.score, 'pending', $now, $now
-            FROM tag_rules rules
+                (track_id, tag_id, rule_group_id, score, state, created_at, updated_at)
+            SELECT $trackId, groups.tag_id, groups.id,
+                   CASE WHEN groups.match_mode = 'all' THEN MIN(signals.score) ELSE MAX(signals.score) END,
+                   'pending', $now, $now
+            FROM tag_rule_groups groups
+            JOIN tag_rule_conditions conditions ON conditions.rule_group_id = groups.id
             JOIN track_analysis_signals signals
                 ON signals.track_analysis_id = $analysisId
-               AND signals.model_name = rules.source_type
-               AND signals.signal_key = rules.source_key
-            WHERE rules.enabled = 1
-              AND rules.auto_assign = 0
-              AND signals.score >= rules.threshold
+               AND signals.model_name = conditions.source_type
+               AND signals.signal_key = conditions.source_key
+               AND signals.score >= conditions.threshold
+            WHERE groups.enabled = 1
               AND NOT EXISTS (
                   SELECT 1 FROM track_tags assigned
-                  WHERE assigned.track_id = $trackId AND assigned.tag_id = rules.tag_id)
+                  WHERE assigned.track_id = $trackId AND assigned.tag_id = groups.tag_id)
               AND NOT EXISTS (
                   SELECT 1 FROM track_tag_suggestions existing
                   WHERE existing.track_id = $trackId
-                    AND existing.tag_id = rules.tag_id
-                    AND existing.source_type = rules.source_type
-                    AND existing.source_key = rules.source_key
-                    AND existing.state IN ('accepted', 'rejected'))",
+                    AND existing.rule_group_id = groups.id
+                    AND existing.state IN ('accepted', 'rejected'))
+            GROUP BY groups.id
+            HAVING COUNT(DISTINCT conditions.id) > 0
+               AND (
+                   groups.match_mode = 'any'
+                   OR COUNT(DISTINCT conditions.id) = (
+                       SELECT COUNT(*) FROM tag_rule_conditions all_conditions
+                       WHERE all_conditions.rule_group_id = groups.id
+                   )
+               )",
             ("$trackId", trackId), ("$analysisId", analysisId), ("$now", now));
     }
 

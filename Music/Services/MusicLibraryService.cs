@@ -90,17 +90,22 @@ public class MusicLibraryService
     public List<TrackTag> GetTrackTags(int trackId) => _db.GetTrackTags(trackId);
     public void SetTrackManualTags(int trackId, IReadOnlyCollection<int> tagIds) => _db.SetTrackManualTags(trackId, tagIds);
     public List<TagSignalSource> GetTagSignalSources() => _db.GetTagSignalSources();
-    public List<TagRule> GetTagRules() => _db.GetTagRules();
-    public void AddTagRule(int tagId, string sourceType, string sourceKey, double threshold) =>
-        _db.AddTagRule(tagId, sourceType, sourceKey, threshold);
-    public void SetTagRuleEnabled(int ruleId, bool enabled) => _db.SetTagRuleEnabled(ruleId, enabled);
-    public void DeleteTagRule(int ruleId) => _db.DeleteTagRule(ruleId);
+    public List<TagRuleGroup> GetTagRuleGroups() => _db.GetTagRuleGroups();
+    public int CreateTagRuleGroup(int tagId, TagRuleMatchMode matchMode, string sourceType, string sourceKey, double threshold) =>
+        _db.CreateTagRuleGroup(tagId, matchMode, sourceType, sourceKey, threshold);
+    public void AddTagRuleCondition(int groupId, string sourceType, string sourceKey, double threshold) =>
+        _db.AddTagRuleCondition(groupId, sourceType, sourceKey, threshold);
+    public void DeleteTagRuleCondition(int conditionId) => _db.DeleteTagRuleCondition(conditionId);
+    public void SetTagRuleGroupEnabled(int groupId, bool enabled) => _db.SetTagRuleGroupEnabled(groupId, enabled);
+    public void SetTagRuleGroupMatchMode(int groupId, TagRuleMatchMode matchMode) =>
+        _db.SetTagRuleGroupMatchMode(groupId, matchMode);
+    public void DeleteTagRuleGroup(int groupId) => _db.DeleteTagRuleGroup(groupId);
     public void RefreshAllTagSuggestions() => _db.RefreshAllTagSuggestions();
     public List<TrackTagSuggestion> GetTrackTagSuggestions(int trackId) => _db.GetTrackTagSuggestions(trackId);
-    public void AcceptTrackTagSuggestion(int trackId, int tagId, string sourceType, string sourceKey) =>
-        _db.AcceptTrackTagSuggestion(trackId, tagId, sourceType, sourceKey);
-    public void RejectTrackTagSuggestion(int trackId, int tagId, string sourceType, string sourceKey) =>
-        _db.RejectTrackTagSuggestion(trackId, tagId, sourceType, sourceKey);
+    public void AcceptTrackTagSuggestion(int trackId, int tagId, int ruleGroupId) =>
+        _db.AcceptTrackTagSuggestion(trackId, tagId, ruleGroupId);
+    public void RejectTrackTagSuggestion(int trackId, int ruleGroupId) =>
+        _db.RejectTrackTagSuggestion(trackId, ruleGroupId);
     public List<Style> GetStyles() => _db.GetStyles();
     public List<Rating> GetRatings() => _db.GetRatings();
     public List<ModelGenre> GetModelGenres() => _db.GetModelGenres();

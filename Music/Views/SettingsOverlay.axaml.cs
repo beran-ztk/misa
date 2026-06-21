@@ -23,7 +23,7 @@ public partial class SettingsOverlay : UserControl
     private List<TagCategory> _tagCategories = [];
     private List<Tag> _tags = [];
     private List<TagSignalSource> _tagSignalSources = [];
-    private List<TagRule> _tagRules = [];
+    private List<TagRuleGroup> _tagRuleGroups = [];
     private bool _isLoading;
     private bool _updatingTagCategory;
     private MappingFilter _mappingFilter = MappingFilter.All;
@@ -396,7 +396,7 @@ public partial class SettingsOverlay : UserControl
         if (!IsInitialized) return;
         _tags = MusicLibraryService.Current.GetTags();
         _tagSignalSources = MusicLibraryService.Current.GetTagSignalSources();
-        _tagRules = MusicLibraryService.Current.GetTagRules();
+        _tagRuleGroups = MusicLibraryService.Current.GetTagRuleGroups();
 
         TagRuleTagBox.ItemsSource = _tags
             .Select(tag => new TagRuleTagChoice(tag.Id, tag.CategoryName, tag.Name, tag.CategoryColor))
@@ -407,11 +407,18 @@ public partial class SettingsOverlay : UserControl
             .OrderBy(TagRuleModelDisplayName, StringComparer.OrdinalIgnoreCase)
             .Select(model => new TagRuleModelChoice(model))
             .ToList();
+        TagRuleMatchModeBox.ItemsSource = new[]
+        {
+            new TagRuleMatchModeChoice(TagRuleMatchMode.All, "ALL"),
+            new TagRuleMatchModeChoice(TagRuleMatchMode.Any, "ANY")
+        };
 
         if (TagRuleTagBox.SelectedIndex < 0 && _tags.Count > 0)
             TagRuleTagBox.SelectedIndex = 0;
         if (TagRuleModelBox.SelectedIndex < 0 && _tagSignalSources.Count > 0)
             TagRuleModelBox.SelectedIndex = 0;
+        if (TagRuleMatchModeBox.SelectedIndex < 0)
+            TagRuleMatchModeBox.SelectedIndex = 0;
         RebuildTagRuleSignalChoices();
 
         RebuildTagRuleRows();
@@ -451,46 +458,50 @@ public partial class SettingsOverlay : UserControl
             return;
         }
 
-        foreach (var rule in _tagRules)
+        foreach (var group in _tagRuleGroups)
         {
-            var accent = CategoryBrush(rule.CategoryColor);
-            var row = new Border
+            var accent = CategoryBrush(group.CategoryColor);
+            var card = new Border
             {
                 Background = new SolidColorBrush(Color.Parse("#111419")),
                 BorderBrush = new SolidColorBrush(Color.Parse("#26313A")),
                 BorderThickness = new Avalonia.Thickness(1),
                 CornerRadius = new Avalonia.CornerRadius(5),
-                Padding = new Avalonia.Thickness(10, 7)
+                Padding = new Avalonia.Thickness(10, 8)
             };
-            var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("180,*,70,Auto,Auto"), ColumnSpacing = 10 };
+            var panel = new StackPanel { Spacing = 7 };
+            var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("180,110,*,Auto,Auto"), ColumnSpacing = 10 };
             var tag = new TextBlock
             {
-                Text = $"{rule.CategoryName} · {rule.TagName}",
+                Text = $"{group.CategoryName} · {group.TagName}",
                 FontSize = 11,
                 FontWeight = FontWeight.SemiBold,
                 Foreground = accent,
                 VerticalAlignment = VerticalAlignment.Center,
                 TextTrimming = TextTrimming.CharacterEllipsis
             };
-            var source = new TextBlock
+            var matchMode = new ComboBox
             {
-                Text = $"{TagRuleModelDisplayName(rule.SourceType)} · {rule.SourceKey}",
-                FontSize = 10.5,
-                Opacity = .7,
-                VerticalAlignment = VerticalAlignment.Center,
-                TextTrimming = TextTrimming.CharacterEllipsis
+                ItemsSource = new[]
+                {
+                    new TagRuleMatchModeChoice(TagRuleMatchMode.All, "ALL"),
+                    new TagRuleMatchModeChoice(TagRuleMatchMode.Any, "ANY")
+                },
+                SelectedItem = new TagRuleMatchModeChoice(group.MatchMode, group.MatchMode == TagRuleMatchMode.All ? "ALL" : "ANY"),
+                Height = 28,
+                FontSize = 10
             };
-            var threshold = new TextBlock
+            matchMode.SelectionChanged += (_, _) =>
             {
-                Text = $"≥ {rule.Threshold:0.##}",
-                FontSize = 10.5,
-                Foreground = accent,
-                VerticalAlignment = VerticalAlignment.Center,
-                HorizontalAlignment = HorizontalAlignment.Right
+                if (matchMode.SelectedItem is not TagRuleMatchModeChoice selected || selected.Mode == group.MatchMode)
+                    return;
+                MusicLibraryService.Current.SetTagRuleGroupMatchMode(group.Id, selected.Mode);
+                MusicLibraryService.Current.RefreshAllTagSuggestions();
+                ReloadTagRules();
             };
             var enabled = new ToggleSwitch
             {
-                IsChecked = rule.Enabled,
+                IsChecked = group.Enabled,
                 OnContent = "On",
                 OffContent = "Off",
                 FontSize = 10,
@@ -498,7 +509,7 @@ public partial class SettingsOverlay : UserControl
             };
             enabled.IsCheckedChanged += (_, _) =>
             {
-                MusicLibraryService.Current.SetTagRuleEnabled(rule.Id, enabled.IsChecked == true);
+                MusicLibraryService.Current.SetTagRuleGroupEnabled(group.Id, enabled.IsChecked == true);
                 MusicLibraryService.Current.RefreshAllTagSuggestions();
             };
             var remove = new Button
@@ -510,49 +521,174 @@ public partial class SettingsOverlay : UserControl
             };
             remove.Click += (_, _) =>
             {
-                MusicLibraryService.Current.DeleteTagRule(rule.Id);
+                MusicLibraryService.Current.DeleteTagRuleGroup(group.Id);
                 MusicLibraryService.Current.RefreshAllTagSuggestions();
                 ReloadTagRules();
-                ToastRequested?.Invoke("Tag rule deleted.");
+                ToastRequested?.Invoke("Tag rule group deleted.");
             };
-            Grid.SetColumn(source, 1);
-            Grid.SetColumn(threshold, 2);
+            Grid.SetColumn(matchMode, 1);
             Grid.SetColumn(enabled, 3);
             Grid.SetColumn(remove, 4);
             grid.Children.Add(tag);
-            grid.Children.Add(source);
-            grid.Children.Add(threshold);
+            grid.Children.Add(matchMode);
             grid.Children.Add(enabled);
             grid.Children.Add(remove);
-            row.Child = grid;
-            TagRuleRows.Children.Add(row);
+            panel.Children.Add(grid);
+
+            foreach (var condition in group.Conditions)
+                panel.Children.Add(CreateTagRuleConditionRow(group, condition, accent));
+
+            panel.Children.Add(CreateTagRuleConditionEditor(group, accent));
+            card.Child = panel;
+            TagRuleRows.Children.Add(card);
         }
 
-        if (_tagRules.Count == 0)
-            TagRuleRows.Children.Add(new TextBlock { Text = "No rules yet. Select one of your tags, choose a model signal and set its minimum score.", Opacity = .52, Margin = new Avalonia.Thickness(0, 18, 0, 0) });
+        if (_tagRuleGroups.Count == 0)
+            TagRuleRows.Children.Add(new TextBlock { Text = "No rule groups yet. Select a tag, choose ALL or ANY, then add the first condition.", Opacity = .52, Margin = new Avalonia.Thickness(0, 18, 0, 0) });
     }
 
     private void OnAddTagRuleClicked(object? sender, RoutedEventArgs e)
     {
         if (TagRuleTagBox.SelectedItem is not TagRuleTagChoice tag
-            || TagRuleSignalBox.SelectedItem is not TagRuleSignalChoice source)
+            || TagRuleSignalBox.SelectedItem is not TagRuleSignalChoice source
+            || TagRuleMatchModeBox.SelectedItem is not TagRuleMatchModeChoice matchMode)
             return;
 
-        if (!double.TryParse(TagRuleThresholdBox.Text, NumberStyles.Float, CultureInfo.InvariantCulture, out var threshold)
-            || threshold < 0 || threshold > 1)
+        if (!TryParseTagRuleThreshold(TagRuleThresholdBox.Text, out var threshold))
         {
-            ToastRequested?.Invoke("Threshold must be a number between 0 and 1.");
+            ToastRequested?.Invoke("Threshold must be a valid number.");
             return;
         }
 
         try
         {
-            MusicLibraryService.Current.AddTagRule(tag.Id, source.ModelName, source.SignalKey, threshold);
+            MusicLibraryService.Current.CreateTagRuleGroup(tag.Id, matchMode.Mode, source.ModelName, source.SignalKey, threshold);
             MusicLibraryService.Current.RefreshAllTagSuggestions();
             ReloadTagRules();
-            ToastRequested?.Invoke($"Suggestion rule added for {tag.Name}.");
+            ToastRequested?.Invoke($"Rule group created for {tag.Name}.");
         }
         catch (Exception exception) { ToastRequested?.Invoke($"Could not add tag rule: {exception.Message}"); }
+    }
+
+    private Control CreateTagRuleConditionRow(TagRuleGroup group, TagRuleCondition condition, IBrush accent)
+    {
+        var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,76,Auto"), ColumnSpacing = 10, Margin = new Avalonia.Thickness(8, 0, 0, 0) };
+        var source = new TextBlock
+        {
+            Text = $"{TagRuleModelDisplayName(condition.SourceType)} · {condition.SourceKey}",
+            FontSize = 10.5,
+            Opacity = .72,
+            VerticalAlignment = VerticalAlignment.Center,
+            TextTrimming = TextTrimming.CharacterEllipsis
+        };
+        var threshold = new TextBlock
+        {
+            Text = $"≥ {condition.Threshold:0.###}",
+            FontSize = 10.5,
+            Foreground = accent,
+            VerticalAlignment = VerticalAlignment.Center,
+            HorizontalAlignment = HorizontalAlignment.Right
+        };
+        var remove = new Button
+        {
+            Content = "×",
+            FontSize = 12,
+            Padding = new Avalonia.Thickness(7, 1),
+            Background = new SolidColorBrush(Colors.Transparent),
+            Opacity = .6
+        };
+        ToolTip.SetTip(remove, "Remove condition");
+        remove.Click += (_, _) =>
+        {
+            MusicLibraryService.Current.DeleteTagRuleCondition(condition.Id);
+            MusicLibraryService.Current.RefreshAllTagSuggestions();
+            ReloadTagRules();
+        };
+        Grid.SetColumn(threshold, 1);
+        Grid.SetColumn(remove, 2);
+        row.Children.Add(source);
+        row.Children.Add(threshold);
+        row.Children.Add(remove);
+        return row;
+    }
+
+    private Control CreateTagRuleConditionEditor(TagRuleGroup group, IBrush accent)
+    {
+        var row = new Grid
+        {
+            ColumnDefinitions = new ColumnDefinitions("165,*,78,Auto"),
+            ColumnSpacing = 8,
+            Margin = new Avalonia.Thickness(8, 1, 0, 0)
+        };
+        var modelBox = new ComboBox
+        {
+            ItemsSource = _tagSignalSources
+                .Select(source => source.ModelName)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(TagRuleModelDisplayName, StringComparer.OrdinalIgnoreCase)
+                .Select(model => new TagRuleModelChoice(model))
+                .ToList(),
+            Height = 29,
+            FontSize = 10
+        };
+        var signalBox = new ComboBox { Height = 29, FontSize = 10 };
+        var thresholdBox = new TextBox { Text = "0.30", Height = 29, FontSize = 10, VerticalContentAlignment = VerticalAlignment.Center };
+        var add = new Button
+        {
+            Content = "+ condition",
+            FontSize = 10,
+            Padding = new Avalonia.Thickness(9, 3),
+            BorderBrush = accent
+        };
+
+        void RebuildSignals()
+        {
+            if (modelBox.SelectedItem is not TagRuleModelChoice model)
+            {
+                signalBox.ItemsSource = Array.Empty<TagRuleSignalChoice>();
+                return;
+            }
+
+            signalBox.ItemsSource = _tagSignalSources
+                .Where(source => string.Equals(source.ModelName, model.ModelName, StringComparison.OrdinalIgnoreCase))
+                .OrderBy(source => source.SignalKey, StringComparer.OrdinalIgnoreCase)
+                .Select(source => new TagRuleSignalChoice(source.ModelName, source.SignalKey, source.Description))
+                .ToList();
+            signalBox.SelectedIndex = 0;
+        }
+
+        modelBox.SelectionChanged += (_, _) => RebuildSignals();
+        add.Click += (_, _) =>
+        {
+            if (signalBox.SelectedItem is not TagRuleSignalChoice signal
+                || !TryParseTagRuleThreshold(thresholdBox.Text, out var threshold))
+            {
+                ToastRequested?.Invoke("Threshold must be a valid number.");
+                return;
+            }
+
+            MusicLibraryService.Current.AddTagRuleCondition(group.Id, signal.ModelName, signal.SignalKey, threshold);
+            MusicLibraryService.Current.RefreshAllTagSuggestions();
+            ReloadTagRules();
+        };
+        modelBox.SelectedIndex = 0;
+        RebuildSignals();
+
+        Grid.SetColumn(signalBox, 1);
+        Grid.SetColumn(thresholdBox, 2);
+        Grid.SetColumn(add, 3);
+        row.Children.Add(modelBox);
+        row.Children.Add(signalBox);
+        row.Children.Add(thresholdBox);
+        row.Children.Add(add);
+        return row;
+    }
+
+    private static bool TryParseTagRuleThreshold(string? value, out double threshold)
+    {
+        var parsed = double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out threshold)
+            || double.TryParse(value, NumberStyles.Float, CultureInfo.CurrentCulture, out threshold);
+        return parsed && double.IsFinite(threshold) && threshold >= 0;
     }
 
     private int? SelectedTagCategoryId() => (TagCategoryBox.SelectedItem as TagCategoryChoice)?.Id;
@@ -816,6 +952,11 @@ public partial class SettingsOverlay : UserControl
     private sealed record TagRuleSignalChoice(string ModelName, string SignalKey, string Description)
     {
         public override string ToString() => SignalKey;
+    }
+
+    private sealed record TagRuleMatchModeChoice(TagRuleMatchMode Mode, string Name)
+    {
+        public override string ToString() => Name;
     }
 
     private enum MappingFilter { All, Mapped, Unmapped }

@@ -190,14 +190,15 @@
             </Grid>
 
             <Grid x:Name="TagRulesPage" Grid.Row="2" IsVisible="False" RowDefinitions="Auto,*" Margin="30,22,30,0">
-                <Grid Grid.Row="0" ColumnDefinitions="190,185,*,86,Auto" ColumnSpacing="10" Margin="0,0,0,14">
+                <Grid Grid.Row="0" ColumnDefinitions="170,88,165,*,86,Auto" ColumnSpacing="10" Margin="0,0,0,14">
                     <ComboBox x:Name="TagRuleTagBox" Height="34"/>
-                    <ComboBox x:Name="TagRuleModelBox" Grid.Column="1" Height="34"
+                    <ComboBox x:Name="TagRuleMatchModeBox" Grid.Column="1" Height="34"/>
+                    <ComboBox x:Name="TagRuleModelBox" Grid.Column="2" Height="34"
                               SelectionChanged="OnTagRuleModelSelectionChanged"/>
-                    <ComboBox x:Name="TagRuleSignalBox" Grid.Column="2" Height="34"/>
-                    <TextBox x:Name="TagRuleThresholdBox" Grid.Column="3" Height="34"
+                    <ComboBox x:Name="TagRuleSignalBox" Grid.Column="3" Height="34"/>
+                    <TextBox x:Name="TagRuleThresholdBox" Grid.Column="4" Height="34"
                              Text="0.30" Watermark="Score"/>
-                    <Button Grid.Column="4" Content="Add suggestion rule" Click="OnAddTagRuleClicked"
+                    <Button Grid.Column="5" Content="Create rule" Click="OnAddTagRuleClicked"
                             Padding="12,5"/>
                 </Grid>
                 <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">

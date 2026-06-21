@@ -30,24 +30,29 @@ public record TagSignalSource(string ModelName, string SignalKey, string Descrip
 {
     public string DisplayName => $"{ModelName} · {SignalKey}";
 }
-public record TagRule(
+public record TagRuleCondition(
+    int Id,
+    string SourceType,
+    string SourceKey,
+    double Threshold);
+public record TagRuleGroup(
     int Id,
     int TagId,
     string TagName,
     string CategoryName,
     string? CategoryColor,
-    string SourceType,
-    string SourceKey,
-    double Threshold,
-    bool AutoAssign,
-    bool Enabled);
+    TagRuleMatchMode MatchMode,
+    bool Enabled,
+    IReadOnlyList<TagRuleCondition> Conditions);
+public enum TagRuleMatchMode { All, Any }
 public record TrackTagSuggestion(
+    int RuleGroupId,
     int TagId,
     string TagName,
     string CategoryName,
     string? CategoryColor,
-    string SourceType,
-    string SourceKey,
+    TagRuleMatchMode MatchMode,
+    string ConditionSummary,
     double Score,
     string State);
 public record Style(int Id, string Name);
