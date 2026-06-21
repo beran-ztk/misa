@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
-using Avalonia.Controls.Templates;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
@@ -67,24 +66,7 @@ public partial class EditTrackOverlay : UserControl
         _allTrackStyleIds = MusicLibraryService.Current.GetAllTrackStyleIds();
         StylesSection.IsVisible = _styles.Count > 0;
 
-        RatingBox.ItemsSource = _ratings.Select(r => new RatingChoice(r.Id, r.Name)).ToList();
-        RatingBox.ItemTemplate = new FuncDataTemplate<RatingChoice>((choice, _) =>
-        {
-            // Avalonia also asks the template to render the empty selection while opening.
-            if (choice is null)
-                return new TextBlock();
-
-            var (background, border, foreground) = RatingColors(choice.Name);
-            return new Border
-            {
-                Background = background,
-                BorderBrush = border,
-                BorderThickness = new Avalonia.Thickness(1),
-                CornerRadius = new Avalonia.CornerRadius(4),
-                Padding = new Avalonia.Thickness(7, 3),
-                Child = new TextBlock { Text = choice.Name, FontSize = 11, Foreground = foreground }
-            };
-        });
+        RatingBox.ItemsSource = _ratings.Select(r => r.Name).ToList();
     }
 
     private void Prefill(MusicTrack track)
@@ -98,7 +80,7 @@ public partial class EditTrackOverlay : UserControl
         ChannelUrlRow.IsVisible = !string.IsNullOrWhiteSpace(track.ChannelUrl);
 
         var ratingIndex = _ratings.FindIndex(r => r.Id == track.RatingId);
-        RatingBox.SelectedIndex = ratingIndex >= 0 ? ratingIndex : -1;
+        RatingBox.SelectedIndex = ratingIndex;
         UpdateRatingVisual();
 
         var selectedGenreIds = MusicLibraryService.Current.GetTrackManualGenreIds(track.Id).ToHashSet();
@@ -206,8 +188,6 @@ public partial class EditTrackOverlay : UserControl
     };
 
     private static IBrush Brush(string color) => new SolidColorBrush(Color.Parse(color));
-
-    private sealed record RatingChoice(int Id, string Name);
 
     private void OnSaveClicked(object? sender, RoutedEventArgs e)
     {
