@@ -50,6 +50,9 @@ public class MusicLibraryService
     public void UpdateImportQueueItem(int id, ImportQueueStatus status, string? detail = null, int? trackId = null) =>
         _db.UpdateImportQueueItem(id, status, detail, trackId);
     public ImportQueueSummary GetImportQueueSummary() => _db.GetImportQueueSummary();
+    public HashSet<string> GetActiveImportCanonicalUrls() => _db.GetActiveImportCanonicalUrls();
+    public List<ImportQueueSource> GetImportQueueSources() => _db.GetImportQueueSources();
+    public bool RemoveQueuedImport(int id) => _db.RemoveQueuedImport(id);
 
     public Task<string?> DeleteTrackAsync(MusicTrack track)
     {

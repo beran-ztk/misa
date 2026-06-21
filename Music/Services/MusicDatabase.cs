@@ -429,6 +429,46 @@ public class MusicDatabase
             counts.GetValueOrDefault(ImportQueueStatus.ReadyForReview.ToString()));
     }
 
+    public HashSet<string> GetActiveImportCanonicalUrls()
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"SELECT canonical_url FROM import_queue_items
+                            WHERE status IN ($queued, $downloading, $analyzing)";
+        cmd.Parameters.AddWithValue("$queued", ImportQueueStatus.Queued.ToString());
+        cmd.Parameters.AddWithValue("$downloading", ImportQueueStatus.Downloading.ToString());
+        cmd.Parameters.AddWithValue("$analyzing", ImportQueueStatus.Analyzing.ToString());
+        using var reader = cmd.ExecuteReader();
+        var urls = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        while (reader.Read()) urls.Add(reader.GetString(0));
+        return urls;
+    }
+
+    public List<ImportQueueSource> GetImportQueueSources()
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"SELECT id, batch_id, source_url, canonical_url, title, duration_seconds, estimated_size_bytes,
+                                   status, detail, track_id
+                            FROM import_queue_items
+                            ORDER BY batch_id DESC, created_at, id";
+        using var reader = cmd.ExecuteReader();
+        var items = new List<ImportQueueItem>();
+        while (reader.Read()) items.Add(ReadImportQueueItem(reader));
+        return items.GroupBy(item => item.SourceUrl, StringComparer.OrdinalIgnoreCase)
+            .Select(group => new ImportQueueSource(group.Key, group.ToList())).ToList();
+    }
+
+    public bool RemoveQueuedImport(int id)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "DELETE FROM import_queue_items WHERE id = $id AND status = $queued";
+        cmd.Parameters.AddWithValue("$id", id);
+        cmd.Parameters.AddWithValue("$queued", ImportQueueStatus.Queued.ToString());
+        return cmd.ExecuteNonQuery() > 0;
+    }
+
     private static ImportQueueItem ReadImportQueueItem(SqliteDataReader reader) => new(
         reader.GetInt32(0), reader.GetInt32(1), reader.GetString(2), reader.GetString(3), reader.GetString(4),
         reader.IsDBNull(5) ? null : reader.GetInt32(5), reader.IsDBNull(6) ? null : reader.GetInt64(6),

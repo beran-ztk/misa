@@ -76,6 +76,7 @@ public partial class MusicView : UserControl
         FileList.SelectionChanged += (_, _) => UpdateReviewButton();
         PlayerBar.SizeChanged += (_, _) => UpdateSettingsLayout();
         PlayerBar.SizeChanged += (_, _) => UpdateEditorBounds();
+        PlayerBar.SizeChanged += (_, _) => UpdateImportBounds();
 
         // Volume
         VolumeSlider.ValueChanged += (_, _) =>
@@ -88,6 +89,7 @@ public partial class MusicView : UserControl
         catch (Exception ex) { StatusText.Text = $"Database error: {ex.Message}"; StatusText.IsVisible = true; return; }
         ImportQueueService.Current.Initialize();
         UpdateQueueStatus();
+        UpdateImportBounds();
 
         LoadLookups();
         LoadFilterPresets();
@@ -106,7 +108,11 @@ public partial class MusicView : UserControl
             ShowToast($"{count} track{(count == 1 ? string.Empty : "s")} added to the import queue");
             UpdateQueueStatus();
         };
-        ImportQueueService.Current.ItemUpdated += _ => Avalonia.Threading.Dispatcher.UIThread.Post(UpdateQueueStatus);
+        ImportQueueService.Current.ItemUpdated += _ => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            UpdateQueueStatus();
+            if (ImportOverlay.IsVisible) ImportOverlay.RefreshQueue();
+        });
         ImportQueueService.Current.TrackImported += (track, warning) => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
         {
             RefreshTrackList();
@@ -128,6 +134,9 @@ public partial class MusicView : UserControl
         EditTrackOverlay.Margin = new Thickness(0, 0, 0, PlayerBar.Bounds.Height);
     }
 
+    private void UpdateImportBounds() =>
+        ImportOverlay.Margin = new Thickness(0, 0, 0, PlayerBar.Bounds.Height);
+
     private void RefreshLibraryPresentation()
     {
         LoadLookups();
@@ -141,7 +150,6 @@ public partial class MusicView : UserControl
         if (summary.Downloading > 0) parts.Add("downloading");
         if (summary.Analyzing > 0) parts.Add("analyzing");
         if (summary.Queued > 0) parts.Add($"{summary.Queued} queued");
-        if (summary.ReadyForReview > 0) parts.Add($"{summary.ReadyForReview} ready for review");
         QueueStatusText.IsVisible = parts.Count > 0;
         QueueStatusText.Text = parts.Count > 0 ? $"Queue · {string.Join(" · ", parts)}" : string.Empty;
     }

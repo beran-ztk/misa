@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Text.Json;
 using Music.Models;
 using System.Threading.Tasks;
@@ -75,17 +76,14 @@ public class TrackDownloadService
         }
     }
 
-    public async Task<YouTubeTrackMetadata?> GetMetadataAsync(string url)
+    public async Task<YouTubeTrackMetadata?> GetMetadataAsync(string url, CancellationToken cancellationToken = default)
     {
         try
         {
             var result = await RunProcessAsync(
                 Path.Combine(Values.ToolsDirectory, "yt-dlp.exe"),
-                "--js-runtimes", "node",
-                "--no-playlist",
-                "--skip-download",
-                "--dump-single-json",
-                url);
+                ["--js-runtimes", "node", "--no-playlist", "--skip-download", "--dump-single-json", url],
+                cancellationToken);
             if (result.ExitCode != 0) return null;
 
             using var document = JsonDocument.Parse(result.Output);
@@ -100,20 +98,18 @@ public class TrackDownloadService
                 Value("title"), Value("channel_id"), Value("channel"), Value("channel_url"), uploadDate,
                 EstimatedAudioSize(root), DurationSeconds(root));
         }
+        catch (OperationCanceledException) { throw; }
         catch { return null; }
     }
 
-    public async Task<IReadOnlyList<YouTubePlaylistEntry>> GetPlaylistEntriesAsync(string url)
+    public async Task<IReadOnlyList<YouTubePlaylistEntry>> GetPlaylistEntriesAsync(string url, CancellationToken cancellationToken = default)
     {
         try
         {
             var result = await RunProcessAsync(
                 Path.Combine(Values.ToolsDirectory, "yt-dlp.exe"),
-                "--js-runtimes", "node",
-                "--flat-playlist",
-                "--dump-json",
-                "--no-warnings",
-                url);
+                ["--js-runtimes", "node", "--flat-playlist", "--dump-json", "--no-warnings", url],
+                cancellationToken);
             if (result.ExitCode != 0) return [];
 
             var entries = new List<YouTubePlaylistEntry>();
@@ -133,10 +129,8 @@ public class TrackDownloadService
             }
             return entries;
         }
-        catch
-        {
-            return [];
-        }
+        catch (OperationCanceledException) { throw; }
+        catch { return []; }
     }
 
     public string? FindDownloadedFile(string videoId)
@@ -183,7 +177,10 @@ public class TrackDownloadService
             ? (int)Math.Round(seconds)
             : null;
 
-    private static async Task<ProcessResult> RunProcessAsync(string fileName, params string[] args)
+    private static async Task<ProcessResult> RunProcessAsync(string fileName, params string[] args) =>
+        await RunProcessAsync(fileName, args, CancellationToken.None);
+
+    private static async Task<ProcessResult> RunProcessAsync(string fileName, string[] args, CancellationToken cancellationToken)
     {
         var psi = new ProcessStartInfo
         {
@@ -203,7 +200,16 @@ public class TrackDownloadService
 
         var outputTask = process.StandardOutput.ReadToEndAsync();
         var errorTask = process.StandardError.ReadToEndAsync();
-        await process.WaitForExitAsync();
+        try
+        {
+            await process.WaitForExitAsync(cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            if (!process.HasExited) process.Kill(true);
+            await process.WaitForExitAsync();
+            throw;
+        }
 
         return new ProcessResult(process.ExitCode, await outputTask, await errorTask);
     }

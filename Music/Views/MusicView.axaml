@@ -466,11 +466,13 @@
             </Border>
 
             <views:AddTrackOverlay x:Name="AddTrackOverlay" IsVisible="False"/>
-            <views:ImportOverlay x:Name="ImportOverlay" IsVisible="False"/>
 
         </Panel>
 
     </DockPanel>
+
+    <!-- Queue management is a workspace, not a small dialog. It deliberately stops above the player. -->
+    <views:ImportOverlay x:Name="ImportOverlay" IsVisible="False" ZIndex="70"/>
 
     <!-- Covers the toolbar as well as the list while track details are open. -->
     <views:EditTrackOverlay x:Name="EditTrackOverlay" IsVisible="False" ZIndex="80"/>

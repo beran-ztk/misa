@@ -41,5 +41,9 @@ public record ImportQueueItem(
     string? Detail,
     int? TrackId);
 
+public record ImportQueueSource(
+    string SourceUrl,
+    IReadOnlyList<ImportQueueItem> Items);
+
 public record YouTubePlaylistEntry(string SourceUrl, string CanonicalUrl, string Title, int? DurationSeconds);
 public record ImportQueueSummary(int Queued, int Downloading, int Analyzing, int ReadyForReview);

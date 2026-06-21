@@ -1,50 +1,59 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Class="Music.Views.ImportOverlay">
-    <Panel>
-        <Border Background="#78000000" PointerPressed="OnBackdropPressed"/>
-        <Border Width="720" MaxWidth="900" Margin="24"
-                HorizontalAlignment="Center" VerticalAlignment="Center"
-                Background="#1E1E1E" BorderBrush="#314B5F" BorderThickness="1"
-                CornerRadius="8" BoxShadow="0 8 40 4 #80000000" Padding="24">
-            <Grid RowDefinitions="Auto,*,Auto">
-                <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,16">
-                    <StackPanel Spacing="3">
-                        <TextBlock Text="Import queue" FontSize="18" FontWeight="SemiBold"/>
-                        <TextBlock Text="Paste individual videos, playlists or YouTube mixes. Nothing downloads before you confirm the preview."
-                                   FontSize="11" Opacity="0.6" TextWrapping="Wrap"/>
-                    </StackPanel>
-                    <Button Grid.Column="1" Content="✕" Click="OnCloseClicked" Padding="8,3" FontSize="13" Opacity="0.6"/>
-                </Grid>
-
-                <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled" MaxHeight="580">
-                    <StackPanel Spacing="12">
-                        <TextBox x:Name="UrlsBox" AcceptsReturn="True" TextWrapping="Wrap" Height="88"
-                                 Watermark="One YouTube URL per line — videos, playlists or mixes…"/>
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <Button x:Name="PreviewBtn" Content="Check links" Click="OnPreviewClicked" Classes="accent"/>
-                            <TextBlock x:Name="StatusText" FontSize="11" Opacity="0.7" VerticalAlignment="Center" TextWrapping="Wrap"/>
-                        </StackPanel>
-                        <StackPanel x:Name="BusyPanel" IsVisible="False" Spacing="6">
-                            <TextBlock x:Name="BusyText" Text="Reading links…" FontSize="11" Opacity="0.72"/>
-                            <ProgressBar IsIndeterminate="True" Height="4" Foreground="#1E9AF0" Background="#26313A"/>
-                        </StackPanel>
-
-                        <StackPanel x:Name="PreviewPanel" IsVisible="False" Spacing="8" Margin="0,6,0,0">
-                            <Border Background="#151B22" BorderBrush="#2D3D4B" BorderThickness="1" CornerRadius="6" Padding="10,8">
-                                <TextBlock x:Name="PreviewSummaryText" FontSize="11" TextWrapping="Wrap"/>
-                            </Border>
-                            <TextBlock Text="Import plan" FontSize="12" FontWeight="SemiBold"/>
-                            <StackPanel x:Name="PreviewRows" Spacing="3"/>
-                        </StackPanel>
-                    </StackPanel>
-                </ScrollViewer>
-
-                <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,16,0,0">
-                    <Button Content="Cancel" Click="OnCloseClicked"/>
-                    <Button x:Name="QueueBtn" Content="Add to queue" Click="OnQueueClicked" IsEnabled="False" Classes="accent"/>
+             x:Class="Music.Views.ImportOverlay"
+             Background="#121417">
+    <Grid RowDefinitions="Auto,*">
+        <Border Grid.Row="0" Background="#171A1F" BorderBrush="#2A3440" BorderThickness="0,0,0,1" Padding="26,16">
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Spacing="3">
+                    <TextBlock Text="Import queue" FontSize="18" FontWeight="SemiBold"/>
+                    <TextBlock Text="Build an import plan, then let downloads and analysis run in the background."
+                               FontSize="11" Opacity="0.62"/>
                 </StackPanel>
+                <Button Grid.Column="1" Content="✕" Click="OnCloseClicked" Classes="icon" ToolTip.Tip="Close queue" Opacity="0.7"/>
             </Grid>
         </Border>
-    </Panel>
+
+        <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
+            <Grid ColumnDefinitions="410,*" ColumnSpacing="28" Margin="26,22,26,32">
+                <StackPanel Spacing="12">
+                    <StackPanel Spacing="3">
+                        <TextBlock Text="ADD LINKS" FontSize="10" FontWeight="SemiBold" LetterSpacing="1" Opacity="0.45"/>
+                        <TextBlock Text="Videos, playlists and YouTube mixes are expanded before anything is queued."
+                                   FontSize="11" Opacity="0.66" TextWrapping="Wrap"/>
+                    </StackPanel>
+                    <StackPanel x:Name="InputRows" Spacing="7"/>
+                    <Button Content="＋ Add another link" Click="OnAddLinkClicked"
+                            HorizontalAlignment="Left" Background="Transparent" Padding="8,5" FontSize="11" Opacity="0.78"/>
+                    <StackPanel Orientation="Horizontal" Spacing="9" Margin="0,5,0,0">
+                        <Button x:Name="PreviewBtn" Content="Check links" Click="OnPreviewClicked" Classes="accent"/>
+                        <Button x:Name="QueueBtn" Content="Add to queue" Click="OnQueueClicked" IsEnabled="False"/>
+                    </StackPanel>
+                    <TextBlock x:Name="StatusText" FontSize="11" Opacity="0.7" TextWrapping="Wrap"/>
+                    <StackPanel x:Name="BusyPanel" IsVisible="False" Spacing="6" Margin="0,5,0,0">
+                        <TextBlock x:Name="BusyText" Text="Reading link…" FontSize="11" Opacity="0.72"/>
+                        <ProgressBar IsIndeterminate="True" Height="4" Foreground="#1E9AF0" Background="#26313A"/>
+                        <Button Content="Stop checking" Click="OnStopCheckingClicked" HorizontalAlignment="Left"
+                                Background="Transparent" Padding="7,3" FontSize="10" Opacity="0.7"/>
+                    </StackPanel>
+                    <StackPanel x:Name="PreviewPanel" IsVisible="False" Spacing="8" Margin="0,10,0,0">
+                        <Border Background="#151B22" BorderBrush="#2D3D4B" BorderThickness="1" CornerRadius="5" Padding="10,8">
+                            <TextBlock x:Name="PreviewSummaryText" FontSize="11" TextWrapping="Wrap"/>
+                        </Border>
+                        <StackPanel x:Name="PreviewRows" Spacing="4"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Spacing="12">
+                    <StackPanel Spacing="3">
+                        <TextBlock Text="CURRENT QUEUE" FontSize="10" FontWeight="SemiBold" LetterSpacing="1" Opacity="0.45"/>
+                        <TextBlock Text="Queued tracks can be removed until their download begins."
+                                   FontSize="11" Opacity="0.66"/>
+                    </StackPanel>
+                    <TextBlock x:Name="EmptyQueueText" Text="Nothing is waiting yet." FontSize="12" Opacity="0.5" Margin="0,14,0,0"/>
+                    <StackPanel x:Name="QueueSources" Spacing="10"/>
+                </StackPanel>
+            </Grid>
+        </ScrollViewer>
+    </Grid>
 </UserControl>
