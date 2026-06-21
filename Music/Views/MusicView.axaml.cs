@@ -164,8 +164,8 @@ public partial class MusicView : UserControl
             var durationText = t.DurationSeconds.HasValue ? FormatDuration(t.DurationSeconds.Value) : "";
             var attributes = MusicLibraryService.Current.GetTrackDerivedAttributes(t.Id);
             var profileText = string.Join(" · ", attributes
-                .Where(attribute => attribute.Key is "emotional_tone" or "energy_context" or "vocal_presence")
-                .Select(attribute => attribute.EffectiveValue));
+                .Where(attribute => attribute.Key is "emotional_tone" or "energy_context" or "intensity" or "vocal_presence")
+                .Select(attribute => $"{ProfileAttributeName(attribute.Key)} {attribute.EffectiveValue}"));
             
             return new TrackDisplayItem(t, genreStr, manualGenreStr, styleStr, durationText, ratingName, profileText, t.ChannelName ?? "")
             {
@@ -176,6 +176,14 @@ public partial class MusicView : UserControl
         ApplyFilter();
         _ = LoadThumbnailsAsync(_thumbLoadCts.Token);
     }
+
+    private static string ProfileAttributeName(string key) => key switch
+    {
+        "emotional_tone" => "Tone",
+        "energy_context" => "Energy",
+        "vocal_presence" => "Vocals",
+        _ => char.ToUpperInvariant(key[0]) + key[1..]
+    };
 
     private async Task LoadThumbnailsAsync(CancellationToken ct)
     {

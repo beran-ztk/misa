@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Controls.Templates;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
@@ -38,7 +39,11 @@ public partial class EditTrackOverlay : UserControl
     {
         InitializeComponent();
         TitleBox.TextChanged += (_, _) => UpdateSaveButton();
-        RatingBox.SelectionChanged += (_, _) => UpdateSaveButton();
+        RatingBox.SelectionChanged += (_, _) =>
+        {
+            UpdateRatingVisual();
+            UpdateSaveButton();
+        };
         _analysisElapsedTimer.Tick += (_, _) => UpdateAnalysisElapsedTime();
     }
 
@@ -62,7 +67,24 @@ public partial class EditTrackOverlay : UserControl
         _allTrackStyleIds = MusicLibraryService.Current.GetAllTrackStyleIds();
         StylesSection.IsVisible = _styles.Count > 0;
 
-        RatingBox.ItemsSource = _ratings.Select(r => r.Name).ToList();
+        RatingBox.ItemsSource = _ratings.Select(r => new RatingChoice(r.Id, r.Name)).ToList();
+        RatingBox.ItemTemplate = new FuncDataTemplate<RatingChoice>((choice, _) =>
+        {
+            // Avalonia also asks the template to render the empty selection while opening.
+            if (choice is null)
+                return new TextBlock();
+
+            var (background, border, foreground) = RatingColors(choice.Name);
+            return new Border
+            {
+                Background = background,
+                BorderBrush = border,
+                BorderThickness = new Avalonia.Thickness(1),
+                CornerRadius = new Avalonia.CornerRadius(4),
+                Padding = new Avalonia.Thickness(7, 3),
+                Child = new TextBlock { Text = choice.Name, FontSize = 11, Foreground = foreground }
+            };
+        });
     }
 
     private void Prefill(MusicTrack track)
@@ -77,6 +99,7 @@ public partial class EditTrackOverlay : UserControl
 
         var ratingIndex = _ratings.FindIndex(r => r.Id == track.RatingId);
         RatingBox.SelectedIndex = ratingIndex >= 0 ? ratingIndex : -1;
+        UpdateRatingVisual();
 
         var selectedGenreIds = MusicLibraryService.Current.GetTrackManualGenreIds(track.Id).ToHashSet();
         var selectedStyleIds = MusicLibraryService.Current.GetTrackStyleIds(track.Id).ToHashSet();
@@ -160,6 +183,31 @@ public partial class EditTrackOverlay : UserControl
     {
         SaveBtn.IsEnabled = _track != null && !string.IsNullOrWhiteSpace(TitleBox.Text);
     }
+
+    private void UpdateRatingVisual()
+    {
+        var name = RatingBox.SelectedIndex >= 0 && RatingBox.SelectedIndex < _ratings.Count
+            ? _ratings[RatingBox.SelectedIndex].Name
+            : "Not rated";
+        var (background, border, foreground) = RatingColors(name);
+        RatingBox.Background = background;
+        RatingBox.BorderBrush = border;
+        RatingBox.Foreground = foreground;
+    }
+
+    private static (IBrush Background, IBrush Border, IBrush Foreground) RatingColors(string name) => name switch
+    {
+        "Favorite" => (Brush("#3B341C"), Brush("#E7BE4B"), Brush("#FFE39A")),
+        "Great" => (Brush("#183827"), Brush("#4EC27A"), Brush("#B7F2CC")),
+        "Good" => (Brush("#17354B"), Brush("#4DA5DD"), Brush("#BCE7FF")),
+        "Okay" => (Brush("#2C3440"), Brush("#8795A7"), Brush("#DAE1E9")),
+        "Skip" => (Brush("#402326"), Brush("#DD6A70"), Brush("#FFC1C4")),
+        _ => (Brush("#20252B"), Brush("#4C5967"), Brush("#BBC5CE"))
+    };
+
+    private static IBrush Brush(string color) => new SolidColorBrush(Color.Parse(color));
+
+    private sealed record RatingChoice(int Id, string Name);
 
     private void OnSaveClicked(object? sender, RoutedEventArgs e)
     {
@@ -394,7 +442,7 @@ public partial class EditTrackOverlay : UserControl
                 {
                     Text = $"{tag.Label}  {tag.Score:0.##}",
                     FontSize = 10.5,
-                    Foreground = AnalysisColorScale.Mood(tag.Score),
+                    Foreground = AnalysisColorScale.MoodModel(tag.Score),
                     Background = new SolidColorBrush(Color.Parse("#203747")),
                     Padding = new Avalonia.Thickness(6, 2),
                     Margin = new Avalonia.Thickness(0, 0, 5, 4)
@@ -433,7 +481,7 @@ public partial class EditTrackOverlay : UserControl
             foreach (var value in values)
             {
                 var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,40") };
-                var brush = AnalysisColorScale.Mood(value.Score);
+                var brush = AnalysisColorScale.MoodModel(value.Score);
                 var label = new TextBlock { Text = value.Label, FontSize = 10.5, Foreground = brush, TextWrapping = TextWrapping.Wrap };
                 ToolTip.SetTip(label, MirexExplanation(value.Label));
                 row.Children.Add(label);
@@ -500,27 +548,27 @@ public partial class EditTrackOverlay : UserControl
 
     private static string GetTempoInsight(double bpm) => bpm switch
     {
-        < 80 => "Slow tempo.",
-        < 120 => "Moderate tempo.",
-        < 140 => "Medium-fast tempo.",
-        < 175 => "Fast tempo.",
-        _ => "Very fast tempo."
+        < 80 => "Slow tempo — unhurried pace.",
+        < 120 => "Moderate tempo — steady mid-tempo pace.",
+        < 140 => "Medium-fast tempo — forward-moving pace.",
+        < 175 => "Fast tempo — energetic pace.",
+        _ => "Very fast tempo — high-energy pace."
     };
 
     private static string GetIntegratedLoudnessInsight(double lufs) => lufs switch
     {
-        >= -8 => "Very loud overall.",
-        >= -11 => "Loud overall.",
-        >= -14 => "Moderately loud overall.",
-        _ => "Relatively quiet overall."
+        >= -8 => "Very loud overall — tightly mastered.",
+        >= -11 => "Loud overall — modern, present master.",
+        >= -14 => "Moderate loudness — more breathing room.",
+        _ => "Relatively quiet overall — softer master."
     };
 
     private static string GetLoudnessRangeInsight(double lu) => lu switch
     {
-        <= 3 => "Very even loudness; little contrast between sections.",
-        <= 6 => "Controlled dynamics with moderate variation.",
-        <= 10 => "Noticeable contrast between quieter and louder sections.",
-        _ => "High dynamic contrast across the track."
+        <= 3 => "Very even level — little contrast between sections.",
+        <= 6 => "Controlled dynamics — moderate variation.",
+        <= 10 => "Noticeable dynamics — clear quiet/loud contrast.",
+        _ => "High dynamics — strong contrast across the track."
     };
 
     private void ShowModelPredictions(MusicTrack track, bool applyMappedGenres)
