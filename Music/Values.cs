@@ -22,6 +22,7 @@ public static class Values
     public const int ManualFadeDurationSeconds = 2;
     
     public static List<Genre> Genres = [];
+    public static List<Tag> Tags = [];
     public static List<Style> Styles = [];
     public static List<Rating> Ratings = [];
 

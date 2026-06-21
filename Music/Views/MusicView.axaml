@@ -338,7 +338,7 @@
                                                    Margin="0,0,8,0"
                                                    VerticalAlignment="Center"/>
                                     </Grid>
-                                    <TextBlock Grid.Row="2" Text="{Binding ProfileText}"
+                                    <TextBlock Grid.Row="2" Text="{Binding ProfileAndTagText}"
                                                FontSize="10.5" Foreground="#A9BAC8" Opacity="0.62"
                                                TextTrimming="CharacterEllipsis"/>
                                 </Grid>

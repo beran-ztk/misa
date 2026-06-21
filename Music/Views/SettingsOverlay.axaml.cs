@@ -19,7 +19,10 @@ public partial class SettingsOverlay : UserControl
     private List<ModelSubgenre> _modelSubgenres = [];
     private Dictionary<int, List<ModelSubgenreDistinction>> _distinctionsBySubgenreId = [];
     private Dictionary<int, GenreMapping> _mappingsBySubgenreId = [];
+    private List<TagCategory> _tagCategories = [];
+    private List<Tag> _tags = [];
     private bool _isLoading;
+    private bool _updatingTagCategory;
     private MappingFilter _mappingFilter = MappingFilter.All;
     private SettingsPage _selectedPage;
 
@@ -72,6 +75,7 @@ public partial class SettingsOverlay : UserControl
         RebuildMappingRows();
         RebuildCalibrationRows();
         RebuildGenreRows();
+        ReloadTagManagement();
         IsVisible = true;
     }
 
@@ -255,6 +259,7 @@ public partial class SettingsOverlay : UserControl
             "library" => SettingsPage.Library,
             "calibration" => SettingsPage.AnalysisCalibration,
             "genres" => SettingsPage.Genres,
+            "tags" => SettingsPage.Tags,
             _ => SettingsPage.GenreMappings
         });
     }
@@ -268,16 +273,19 @@ public partial class SettingsOverlay : UserControl
         LibraryPage.IsVisible = isLibraryPage;
         AnalysisCalibrationPage.IsVisible = page == SettingsPage.AnalysisCalibration;
         GenresPage.IsVisible = page == SettingsPage.Genres;
+        TagsPage.IsVisible = page == SettingsPage.Tags;
         GenreMappingsNavButton.IsChecked = isMappingsPage;
         LibraryNavButton.IsChecked = isLibraryPage;
         AnalysisCalibrationNavButton.IsChecked = page == SettingsPage.AnalysisCalibration;
         GenresNavButton.IsChecked = page == SettingsPage.Genres;
+        TagsNavButton.IsChecked = page == SettingsPage.Tags;
 
         PageTitleText.Text = page switch
         {
             SettingsPage.Library => "Library",
             SettingsPage.AnalysisCalibration => "Analysis calibration",
             SettingsPage.Genres => "Your genres",
+            SettingsPage.Tags => "Tags",
             _ => "Genre mappings"
         };
         PageDescriptionText.Text = isMappingsPage
@@ -286,10 +294,13 @@ public partial class SettingsOverlay : UserControl
                 ? "Where this installation keeps the local music library and its database."
                 : page == SettingsPage.Genres
                     ? "Create and maintain the genres used by your library. Genres with existing tracks or mappings stay protected."
-                    : "Compare current system interpretations before turning them into filters.";
+                    : page == SettingsPage.Tags
+                        ? "Maintain your curated labels. Tags can describe mood, themes, situations or workflow states without turning them into genres."
+                        : "Compare current system interpretations before turning them into filters.";
         SummaryText.Text = isMappingsPage ? BuildSummaryText() : "";
         if (page == SettingsPage.AnalysisCalibration) RebuildCalibrationRows();
         if (page == SettingsPage.Genres) RebuildGenreRows();
+        if (page == SettingsPage.Tags) ReloadTagManagement(SelectedTagCategoryId());
     }
 
     private void RebuildGenreRows()
@@ -339,6 +350,171 @@ public partial class SettingsOverlay : UserControl
             LibraryMetadataChanged?.Invoke();
         }
         catch (Exception exception) { ToastRequested?.Invoke($"Could not add genre: {exception.Message}"); }
+    }
+
+    private void ReloadTagManagement(int? selectedCategoryId = null)
+    {
+        if (!IsInitialized) return;
+        _tagCategories = MusicLibraryService.Current.GetTagCategories();
+        _tags = MusicLibraryService.Current.GetTags();
+
+        var choices = _tagCategories
+            .Select(category => new TagCategoryChoice(category.Id, category.Name))
+            .ToList();
+
+        _updatingTagCategory = true;
+        TagCategoryBox.ItemsSource = choices;
+        if (choices.Count == 0)
+        {
+            TagCategoryBox.SelectedIndex = -1;
+            RenameTagCategoryBox.Text = string.Empty;
+        }
+        else
+        {
+            TagCategoryBox.SelectedItem = choices.FirstOrDefault(choice => choice.Id == selectedCategoryId)
+                                          ?? choices[0];
+        }
+        _updatingTagCategory = false;
+
+        UpdateSelectedTagCategoryFields();
+        RebuildTagRows();
+    }
+
+    private int? SelectedTagCategoryId() => (TagCategoryBox.SelectedItem as TagCategoryChoice)?.Id;
+
+    private void OnTagCategorySelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (_updatingTagCategory) return;
+        UpdateSelectedTagCategoryFields();
+        RebuildTagRows();
+    }
+
+    private void UpdateSelectedTagCategoryFields()
+    {
+        var categoryId = SelectedTagCategoryId();
+        var category = _tagCategories.FirstOrDefault(item => item.Id == categoryId);
+        RenameTagCategoryBox.Text = category?.Name ?? string.Empty;
+    }
+
+    private void RebuildTagRows()
+    {
+        if (!IsInitialized) return;
+        TagRows.Children.Clear();
+        var categoryId = SelectedTagCategoryId();
+        if (categoryId is null)
+        {
+            TagRows.Children.Add(new TextBlock { Text = "Create a tag category first.", Opacity = .52, Margin = new Avalonia.Thickness(0, 18, 0, 0) });
+            return;
+        }
+
+        var tags = _tags
+            .Where(tag => tag.CategoryId == categoryId.Value)
+            .OrderBy(tag => tag.SortOrder)
+            .ThenBy(tag => tag.Name, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        foreach (var tag in tags)
+        {
+            var row = new Border
+            {
+                Background = new SolidColorBrush(Color.Parse("#111419")),
+                BorderBrush = new SolidColorBrush(Color.Parse("#26313A")),
+                BorderThickness = new Avalonia.Thickness(1),
+                CornerRadius = new Avalonia.CornerRadius(5),
+                Padding = new Avalonia.Thickness(9, 7)
+            };
+            var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("190,*,Auto,Auto"), ColumnSpacing = 8 };
+            var nameBox = new TextBox { Text = tag.Name, Height = 32, FontSize = 11 };
+            var descriptionBox = new TextBox { Text = tag.Description ?? string.Empty, Height = 32, FontSize = 11, Watermark = "Description / usage hint…" };
+            var save = new Button { Content = "Save", Padding = new Avalonia.Thickness(10, 4), FontSize = 10 };
+            var remove = new Button { Content = "Delete", Padding = new Avalonia.Thickness(10, 4), FontSize = 10, Opacity = .75 };
+            save.Click += (_, _) =>
+            {
+                try
+                {
+                    MusicLibraryService.Current.RenameTag(tag.Id, nameBox.Text ?? tag.Name, descriptionBox.Text);
+                    ToastRequested?.Invoke("Tag updated.");
+                    ReloadTagManagement(categoryId);
+                    LibraryMetadataChanged?.Invoke();
+                }
+                catch (Exception exception) { ToastRequested?.Invoke($"Could not update tag: {exception.Message}"); }
+            };
+            remove.Click += (_, _) =>
+            {
+                var error = MusicLibraryService.Current.DeleteTagIfUnused(tag.Id);
+                ToastRequested?.Invoke(error ?? "Tag deleted.");
+                ReloadTagManagement(categoryId);
+                if (error is null) LibraryMetadataChanged?.Invoke();
+            };
+            Grid.SetColumn(descriptionBox, 1);
+            Grid.SetColumn(save, 2);
+            Grid.SetColumn(remove, 3);
+            grid.Children.Add(nameBox);
+            grid.Children.Add(descriptionBox);
+            grid.Children.Add(save);
+            grid.Children.Add(remove);
+            row.Child = grid;
+            TagRows.Children.Add(row);
+        }
+
+        if (tags.Count == 0)
+            TagRows.Children.Add(new TextBlock { Text = "No tags in this category yet.", Opacity = .52, Margin = new Avalonia.Thickness(0, 18, 0, 0) });
+    }
+
+    private void OnAddTagCategoryClicked(object? sender, RoutedEventArgs e)
+    {
+        var name = NewTagCategoryBox.Text?.Trim() ?? string.Empty;
+        if (name.Length == 0) return;
+        try
+        {
+            MusicLibraryService.Current.AddTagCategory(name);
+            NewTagCategoryBox.Text = string.Empty;
+            ReloadTagManagement();
+            ToastRequested?.Invoke("Tag category added.");
+            LibraryMetadataChanged?.Invoke();
+        }
+        catch (Exception exception) { ToastRequested?.Invoke($"Could not add tag category: {exception.Message}"); }
+    }
+
+    private void OnSaveTagCategoryClicked(object? sender, RoutedEventArgs e)
+    {
+        if (SelectedTagCategoryId() is not int categoryId) return;
+        var name = RenameTagCategoryBox.Text?.Trim() ?? string.Empty;
+        if (name.Length == 0) return;
+        try
+        {
+            MusicLibraryService.Current.RenameTagCategory(categoryId, name);
+            ReloadTagManagement(categoryId);
+            ToastRequested?.Invoke("Tag category updated.");
+            LibraryMetadataChanged?.Invoke();
+        }
+        catch (Exception exception) { ToastRequested?.Invoke($"Could not update tag category: {exception.Message}"); }
+    }
+
+    private void OnDeleteTagCategoryClicked(object? sender, RoutedEventArgs e)
+    {
+        if (SelectedTagCategoryId() is not int categoryId) return;
+        var error = MusicLibraryService.Current.DeleteTagCategoryIfUnused(categoryId);
+        ToastRequested?.Invoke(error ?? "Tag category deleted.");
+        ReloadTagManagement();
+        if (error is null) LibraryMetadataChanged?.Invoke();
+    }
+
+    private void OnAddTagClicked(object? sender, RoutedEventArgs e)
+    {
+        if (SelectedTagCategoryId() is not int categoryId) return;
+        var name = NewTagBox.Text?.Trim() ?? string.Empty;
+        if (name.Length == 0) return;
+        try
+        {
+            MusicLibraryService.Current.AddTag(categoryId, name, NewTagDescriptionBox.Text);
+            NewTagBox.Text = string.Empty;
+            NewTagDescriptionBox.Text = string.Empty;
+            ReloadTagManagement(categoryId);
+            ToastRequested?.Invoke("Tag added.");
+            LibraryMetadataChanged?.Invoke();
+        }
+        catch (Exception exception) { ToastRequested?.Invoke($"Could not add tag: {exception.Message}"); }
     }
 
     private void RebuildCalibrationRows()
@@ -427,6 +603,11 @@ public partial class SettingsOverlay : UserControl
         public override string ToString() => Name;
     }
 
+    private sealed record TagCategoryChoice(int Id, string Name)
+    {
+        public override string ToString() => Name;
+    }
+
     private enum MappingFilter { All, Mapped, Unmapped }
     private sealed record CalibrationRow(MusicTrack Track, List<DerivedTrackAttribute> Attributes, IReadOnlyList<ExperimentalAnalysisModel> Signals)
     {
@@ -435,5 +616,5 @@ public partial class SettingsOverlay : UserControl
             .OrderByDescending(item => item.value.Score).Take(3).Select(item => $"{item.Model}: {item.value.Label} {item.value.Score:0.##}"));
     }
 
-    private enum SettingsPage { GenreMappings, Library, AnalysisCalibration, Genres }
+    private enum SettingsPage { GenreMappings, Library, AnalysisCalibration, Genres, Tags }
 }

@@ -77,6 +77,18 @@ public class MusicLibraryService
     public void AddGenre(string name) => _db.AddGenre(name);
     public void RenameGenre(int id, string name) => _db.RenameGenre(id, name);
     public string? DeleteGenreIfUnused(int id) => _db.DeleteGenreIfUnused(id);
+    public List<TagCategory> GetTagCategories() => _db.GetTagCategories();
+    public void AddTagCategory(string name) => _db.AddTagCategory(name);
+    public void RenameTagCategory(int id, string name) => _db.RenameTagCategory(id, name);
+    public string? DeleteTagCategoryIfUnused(int id) => _db.DeleteTagCategoryIfUnused(id);
+    public List<Tag> GetTags() => _db.GetTags();
+    public void AddTag(int categoryId, string name, string? description) => _db.AddTag(categoryId, name, description);
+    public void RenameTag(int id, string name, string? description) => _db.RenameTag(id, name, description);
+    public string? DeleteTagIfUnused(int id) => _db.DeleteTagIfUnused(id);
+    public Dictionary<int, List<int>> GetAllTrackTagIds() => _db.GetAllTrackTagIds();
+    public List<int> GetTrackTagIds(int trackId) => _db.GetTrackTagIds(trackId);
+    public List<TrackTag> GetTrackTags(int trackId) => _db.GetTrackTags(trackId);
+    public void SetTrackManualTags(int trackId, IReadOnlyCollection<int> tagIds) => _db.SetTrackManualTags(trackId, tagIds);
     public List<Style> GetStyles() => _db.GetStyles();
     public List<Rating> GetRatings() => _db.GetRatings();
     public List<ModelGenre> GetModelGenres() => _db.GetModelGenres();
@@ -107,9 +119,11 @@ public class MusicLibraryService
 
         var tracks = GetTracks();
         var genres = GetGenres().ToDictionary(g => g.Id, g => g.Name);
+        var tags = GetTags().ToDictionary(t => t.Id, t => $"{t.CategoryName}: {t.Name}");
         var styles = GetStyles().ToDictionary(s => s.Id, s => s.Name);
         var ratings = GetRatings().ToDictionary(r => r.Id, r => r.Name);
         var trackGenreIds = GetAllTrackGenreIds();
+        var trackTagIds = GetAllTrackTagIds();
         var trackStyleIds = GetAllTrackStyleIds();
 
         var portableTracks = new List<PortableTrack>();
@@ -130,7 +144,8 @@ public class MusicLibraryService
                 NamesFor(trackGenreIds.GetValueOrDefault(track.Id, []), genres),
                 NamesFor(trackStyleIds.GetValueOrDefault(track.Id, []), styles),
                 coverFileName,
-                track.NeedsReview));
+                track.NeedsReview,
+                NamesFor(trackTagIds.GetValueOrDefault(track.Id, []), tags)));
         }
 
         await PortableLibraryStore.SaveAsync(

@@ -58,6 +58,9 @@
                     <ToggleButton x:Name="GenresNavButton" Classes="settings-nav"
                                   Content="Your genres" Tag="genres"
                                   Click="OnSettingsNavigationClicked"/>
+                    <ToggleButton x:Name="TagsNavButton" Classes="settings-nav"
+                                  Content="Tags" Tag="tags"
+                                  Click="OnSettingsNavigationClicked"/>
                 </StackPanel>
 
                 <StackPanel Grid.Row="2" VerticalAlignment="Top" Margin="0,22,0,0" Spacing="6">
@@ -157,6 +160,29 @@
                 </Grid>
                 <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
                     <StackPanel x:Name="GenreRows" Spacing="5" Margin="0,0,0,18"/>
+                </ScrollViewer>
+            </Grid>
+
+            <Grid x:Name="TagsPage" Grid.Row="2" IsVisible="False" RowDefinitions="Auto,Auto,*" Margin="30,22,30,0">
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,12">
+                    <TextBox x:Name="NewTagCategoryBox" Watermark="New tag category…" Height="34"/>
+                    <Button Grid.Column="1" Content="Add category" Click="OnAddTagCategoryClicked" Margin="10,0,0,0" Padding="12,5"/>
+                </Grid>
+                <StackPanel Grid.Row="1" Spacing="8" Margin="0,0,0,14">
+                    <Grid ColumnDefinitions="220,*,Auto,Auto">
+                        <ComboBox x:Name="TagCategoryBox" Height="34" SelectionChanged="OnTagCategorySelectionChanged"/>
+                        <TextBox x:Name="RenameTagCategoryBox" Grid.Column="1" Margin="10,0,0,0" Height="34"/>
+                        <Button Grid.Column="2" Content="Save category" Click="OnSaveTagCategoryClicked" Margin="8,0,0,0" Padding="12,5"/>
+                        <Button Grid.Column="3" Content="Delete" Click="OnDeleteTagCategoryClicked" Margin="6,0,0,0" Padding="12,5" Opacity="0.75"/>
+                    </Grid>
+                    <Grid ColumnDefinitions="190,*,Auto">
+                        <TextBox x:Name="NewTagBox" Watermark="New tag…" Height="34"/>
+                        <TextBox x:Name="NewTagDescriptionBox" Grid.Column="1" Watermark="Description / usage hint…" Height="34" Margin="10,0,0,0"/>
+                        <Button Grid.Column="2" Content="Add tag" Click="OnAddTagClicked" Margin="10,0,0,0" Padding="12,5"/>
+                    </Grid>
+                </StackPanel>
+                <ScrollViewer Grid.Row="2" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel x:Name="TagRows" Spacing="5" Margin="0,0,0,18"/>
                 </ScrollViewer>
             </Grid>
 

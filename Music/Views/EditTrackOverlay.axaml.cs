@@ -18,10 +18,12 @@ public partial class EditTrackOverlay : UserControl
 {
     private MusicTrack? _track;
     private List<Genre> _genres = [];
+    private List<Tag> _tags = [];
     private List<Rating> _ratings = [];
     private List<Style> _styles = [];
 
     private readonly List<(Genre Genre, ToggleButton Btn)> _genreChips = [];
+    private readonly List<(Tag Tag, ToggleButton Btn)> _tagChips = [];
     private readonly List<(Style Style, ToggleButton Btn)> _styleChips = [];
 
     private Dictionary<int, List<int>> _allTrackGenreIds = [];
@@ -68,6 +70,7 @@ public partial class EditTrackOverlay : UserControl
     private void LoadLookups()
     {
         _genres = MusicLibraryService.Current.GetGenres();
+        _tags = MusicLibraryService.Current.GetTags();
         _ratings = MusicLibraryService.Current.GetRatings();
         _styles = MusicLibraryService.Current.GetStyles();
         _allTrackGenreIds = MusicLibraryService.Current.GetAllTrackGenreIds();
@@ -92,11 +95,13 @@ public partial class EditTrackOverlay : UserControl
         UpdateRatingVisual();
 
         var selectedGenreIds = MusicLibraryService.Current.GetTrackManualGenreIds(track.Id).ToHashSet();
+        var selectedTagIds = MusicLibraryService.Current.GetTrackTagIds(track.Id).ToHashSet();
         var selectedStyleIds = MusicLibraryService.Current.GetTrackStyleIds(track.Id).ToHashSet();
 
         ShowModelSelectedGenres(track);
         ShowDetectedGenres(track);
         RebuildGenreChips(selectedGenreIds);
+        RebuildTagChips(selectedTagIds);
         RebuildStyleChips(selectedStyleIds);
         ShowModelPredictions(track, applyMappedGenres: false);
         ShowAudioAnalysis(track);
@@ -199,6 +204,97 @@ public partial class EditTrackOverlay : UserControl
             : $"{selectedCount} selected";
     }
 
+    private void RebuildTagChips(IReadOnlySet<int> selectedTagIds)
+    {
+        var sorted = _tags
+            .OrderByDescending(tag => selectedTagIds.Contains(tag.Id))
+            .ThenBy(tag => tag.CategoryName, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(tag => tag.SortOrder)
+            .ThenBy(tag => tag.Name, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        TagsPanel.Children.Clear();
+        _tagChips.Clear();
+
+        foreach (var tag in sorted)
+        {
+            var isSelected = selectedTagIds.Contains(tag.Id);
+            var btn = CreateTagButton(tag, isSelected);
+            btn.IsCheckedChanged += (_, _) =>
+            {
+                ApplyTagVisual(btn, tag);
+                UpdateTagSummary();
+                UpdateSaveButton();
+            };
+
+            _tagChips.Add((tag, btn));
+            TagsPanel.Children.Add(btn);
+        }
+
+        UpdateTagSummary();
+    }
+
+    private static ToggleButton CreateTagButton(Tag tag, bool isSelected)
+    {
+        var label = new TextBlock
+        {
+            Text = tag.Name,
+            FontSize = 11,
+            FontWeight = FontWeight.SemiBold,
+            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+            TextTrimming = TextTrimming.CharacterEllipsis,
+            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center
+        };
+
+        var button = new ToggleButton
+        {
+            Content = label,
+            IsChecked = isSelected,
+            Width = 120,
+            Height = 29,
+            Margin = new Avalonia.Thickness(0, 0, 6, 6),
+            Padding = new Avalonia.Thickness(8, 2),
+            CornerRadius = new Avalonia.CornerRadius(3),
+            HorizontalContentAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+            VerticalContentAlignment = Avalonia.Layout.VerticalAlignment.Center,
+            Tag = label
+        };
+        ToolTip.SetTip(button, string.IsNullOrWhiteSpace(tag.Description)
+            ? tag.CategoryName
+            : $"{tag.CategoryName}\n{tag.Description}");
+        ApplyTagVisual(button, tag);
+        return button;
+    }
+
+    private static void ApplyTagVisual(ToggleButton button, Tag tag)
+    {
+        var selected = button.IsChecked == true;
+        var accent = SafeBrush(tag.Color, "#65BCEB");
+        button.Background = new SolidColorBrush(Color.Parse(selected ? "#1A3140" : "#1A2026"));
+        button.BorderBrush = selected ? accent : new SolidColorBrush(Color.Parse("#394653"));
+        button.BorderThickness = new Avalonia.Thickness(1);
+        if (button.Tag is TextBlock label)
+        {
+            label.Foreground = selected
+                ? accent
+                : new SolidColorBrush(Color.Parse("#D7E0E8"));
+        }
+    }
+
+    private static IBrush SafeBrush(string? color, string fallback)
+    {
+        try { return new SolidColorBrush(Color.Parse(string.IsNullOrWhiteSpace(color) ? fallback : color)); }
+        catch { return new SolidColorBrush(Color.Parse(fallback)); }
+    }
+
+    private void UpdateTagSummary()
+    {
+        var selectedCount = _tagChips.Count(item => item.Btn.IsChecked == true);
+        TagSummaryText.Text = selectedCount == 0
+            ? "No tags"
+            : $"{selectedCount} selected";
+    }
+
     private void RebuildStyleChips(IReadOnlySet<int>? selectedStyleIds = null)
     {
         var selectedGenreIds = SelectedGenreIds();
@@ -235,6 +331,12 @@ public partial class EditTrackOverlay : UserControl
         _genreChips
             .Where(c => c.Btn.IsChecked == true)
             .Select(c => c.Genre.Id)
+            .ToHashSet();
+
+    private HashSet<int> SelectedTagIds() =>
+        _tagChips
+            .Where(c => c.Btn.IsChecked == true)
+            .Select(c => c.Tag.Id)
             .ToHashSet();
 
     private void UpdateSaveButton()
@@ -282,6 +384,8 @@ public partial class EditTrackOverlay : UserControl
             genreIds,
             RatingBox.SelectedIndex >= 0 ? _ratings[RatingBox.SelectedIndex].Id : null,
             styleIds);
+
+        MusicLibraryService.Current.SetTrackManualTags(_track.Id, SelectedTagIds());
 
         foreach (var overrideValue in _pendingAttributeOverrides)
             MusicLibraryService.Current.SetTrackDerivedAttributeOverride(_track.Id, overrideValue.Key, overrideValue.Value);

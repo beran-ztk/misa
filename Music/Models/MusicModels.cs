@@ -8,6 +8,26 @@ public record MusicTrack(
     string? ChannelName, string? ChannelUrl, string? UploadedAt);
 
 public record Genre(int Id, string Name);
+public record TagCategory(int Id, string Name, string? Color, int SortOrder);
+public record Tag(
+    int Id,
+    int CategoryId,
+    string CategoryName,
+    string Name,
+    string? Description,
+    string? Color,
+    int SortOrder);
+public record TrackTag(
+    int Id,
+    int CategoryId,
+    string CategoryName,
+    string Name,
+    string? Description,
+    string? Color,
+    int SortOrder,
+    string Source,
+    double? Strength,
+    double? Confidence);
 public record Style(int Id, string Name);
 public record Rating(int Id, string Name, int SortOrder);
 public record TrackUsageStats(int PlayCount, int ListenedSeconds, int SkipCount, string? LastListenedAt);

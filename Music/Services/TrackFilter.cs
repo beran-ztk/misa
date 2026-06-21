@@ -5,7 +5,7 @@ using Music.Models;
 
 namespace Music.Services;
 
-public record FilterGroup(IReadOnlySet<int> GenreIds, IReadOnlySet<int> StyleIds);
+public record FilterGroup(IReadOnlySet<int> GenreIds, IReadOnlySet<int> StyleIds, IReadOnlySet<int> TagIds);
 
 public static class TrackFilter
 {
@@ -13,6 +13,7 @@ public static class TrackFilter
         IEnumerable<MusicTrack> tracks,
         IReadOnlyDictionary<int, List<int>> trackGenreIds,
         IReadOnlyDictionary<int, List<int>> trackStyleIds,
+        IReadOnlyDictionary<int, List<int>> trackTagIds,
         IReadOnlySet<int> ratingFilter,
         IReadOnlyList<FilterGroup> filterGroups,
         string? searchText)
@@ -30,12 +31,12 @@ public static class TrackFilter
         // Apply filter groups: OR between groups, AND within a group.
         // Empty groups (nothing selected in any dimension) are ignored.
         var activeGroups = filterGroups
-            .Where(g => g.GenreIds.Count > 0 || g.StyleIds.Count > 0)
+            .Where(g => g.GenreIds.Count > 0 || g.StyleIds.Count > 0 || g.TagIds.Count > 0)
             .ToList();
 
         if (activeGroups.Count > 0)
             query = query.Where(track => activeGroups.Any(g =>
-                MatchesGroup(track, g, trackGenreIds, trackStyleIds)));
+                MatchesGroup(track, g, trackGenreIds, trackStyleIds, trackTagIds)));
 
         var sorted = query.OrderBy(t => t.Title, StringComparer.OrdinalIgnoreCase);
 
@@ -47,7 +48,8 @@ public static class TrackFilter
         MusicTrack track,
         FilterGroup group,
         IReadOnlyDictionary<int, List<int>> trackGenreIds,
-        IReadOnlyDictionary<int, List<int>> trackStyleIds)
+        IReadOnlyDictionary<int, List<int>> trackStyleIds,
+        IReadOnlyDictionary<int, List<int>> trackTagIds)
     {
         if (group.GenreIds.Count > 0)
         {
@@ -61,6 +63,13 @@ public static class TrackFilter
             trackStyleIds.TryGetValue(track.Id, out var tStyles);
             tStyles ??= [];
             if (!group.StyleIds.All(id => tStyles.Contains(id))) return false;
+        }
+
+        if (group.TagIds.Count > 0)
+        {
+            trackTagIds.TryGetValue(track.Id, out var tTags);
+            tTags ??= [];
+            if (!group.TagIds.All(id => tTags.Contains(id))) return false;
         }
 
         return true;

@@ -52,6 +52,7 @@ public partial class MusicView : UserControl
     private List<TrackDisplayItem> _allItems = [];
     private Dictionary<int, List<int>> _allTrackStyleIds = [];
     private Dictionary<int, List<int>> _allTrackGenreIds = [];
+    private Dictionary<int, List<int>> _allTrackTagIds = [];
     private List<TrackDisplayItem> _filteredItems = [];
     private List<PortableFilterPreset> _filterPresets = [];
     private bool _updatingPresetUi;
@@ -59,7 +60,8 @@ public partial class MusicView : UserControl
 
     private record FilterGroupControls(
         MultiSelectFilterControl GenreCtrl,
-        MultiSelectFilterControl StyleCtrl);
+        MultiSelectFilterControl StyleCtrl,
+        MultiSelectFilterControl TagCtrl);
     private readonly List<FilterGroupControls> _filterGroups = [];
 
     public MusicView()
@@ -182,6 +184,7 @@ public partial class MusicView : UserControl
     private void LoadLookups()
     {
         Values.Genres = MusicLibraryService.Current.GetGenres();
+        Values.Tags = MusicLibraryService.Current.GetTags();
         Values.Styles = MusicLibraryService.Current.GetStyles();
         Values.Ratings = MusicLibraryService.Current.GetRatings();
 
@@ -191,6 +194,7 @@ public partial class MusicView : UserControl
         {
             fg.GenreCtrl.SetItems(Values.Genres.Select(g => g.Name));
             fg.StyleCtrl.SetItems(Values.Styles.Select(s => s.Name));
+            fg.TagCtrl.SetItems(Values.Tags.Select(t => TagFilterName(t)));
         }
     }
 
@@ -205,10 +209,12 @@ public partial class MusicView : UserControl
         var tracks = MusicLibraryService.Current.GetTracks();
         _allTrackStyleIds = MusicLibraryService.Current.GetAllTrackStyleIds();
         _allTrackGenreIds = MusicLibraryService.Current.GetAllTrackGenreIds();
+        _allTrackTagIds = MusicLibraryService.Current.GetAllTrackTagIds();
         var systemGenreIds = MusicLibraryService.Current.GetAllTrackModelGenreIds();
         var manualGenreIds = MusicLibraryService.Current.GetAllTrackManualGenreIds();
 
         var genreMap = Values.Genres.ToDictionary(g => g.Id, g => g.Name);
+        var tagMap = Values.Tags.ToDictionary(t => t.Id, TagFilterName);
         var ratingMap = Values.Ratings.ToDictionary(r => r.Id, r => r.Name);
         var styleMap = Values.Styles.ToDictionary(s => s.Id, s => s.Name);
 
@@ -217,6 +223,7 @@ public partial class MusicView : UserControl
             var genreIds = _allTrackGenreIds.GetValueOrDefault(t.Id, []);
             var systemIds = systemGenreIds.GetValueOrDefault(t.Id, []);
             var manualIds = manualGenreIds.GetValueOrDefault(t.Id, []);
+            var tagIds = _allTrackTagIds.GetValueOrDefault(t.Id, []);
             var styleIds = _allTrackStyleIds.GetValueOrDefault(t.Id, []);
 
             var genreStr = string.Join(", ", systemIds
@@ -228,6 +235,9 @@ public partial class MusicView : UserControl
             var styleStr = string.Join(", ", styleIds
                 .Select(id => styleMap.GetValueOrDefault(id, ""))
                 .Where(n => n.Length > 0).Order());
+            var tagStr = string.Join(", ", tagIds
+                .Select(id => tagMap.GetValueOrDefault(id, ""))
+                .Where(n => n.Length > 0).Order());
             var ratingName = t.RatingId is int ratingId ? ratingMap.GetValueOrDefault(ratingId, "") : "Not rated";
             var durationText = t.DurationSeconds.HasValue ? FormatDuration(t.DurationSeconds.Value) : "";
             var attributes = MusicLibraryService.Current.GetTrackDerivedAttributes(t.Id);
@@ -235,7 +245,7 @@ public partial class MusicView : UserControl
                 .Where(attribute => attribute.Key is "emotional_tone" or "energy_context" or "intensity" or "vocal_presence")
                 .Select(attribute => $"{ProfileAttributeName(attribute.Key)} {attribute.EffectiveValue}"));
             
-            return new TrackDisplayItem(t, genreStr, manualGenreStr, styleStr, durationText, ratingName, profileText, t.ChannelName ?? "")
+            return new TrackDisplayItem(t, genreStr, manualGenreStr, styleStr, durationText, ratingName, profileText, tagStr, t.ChannelName ?? "")
             {
                 NeedsReview = t.NeedsReview
             };
@@ -252,6 +262,8 @@ public partial class MusicView : UserControl
         "vocal_presence" => "Vocals",
         _ => char.ToUpperInvariant(key[0]) + key[1..]
     };
+
+    private static string TagFilterName(Tag tag) => $"{tag.CategoryName}: {tag.Name}";
 
     private async Task LoadThumbnailsAsync(CancellationToken ct)
     {
@@ -308,13 +320,15 @@ public partial class MusicView : UserControl
         var groups = _filterGroups
             .Select(fg => new FilterGroup(
                 SelectedIds(fg.GenreCtrl.SelectedItems, Values.Genres, g => g.Name, g => g.Id),
-                SelectedIds(fg.StyleCtrl.SelectedItems, Values.Styles, s => s.Name, s => s.Id)))
+                SelectedIds(fg.StyleCtrl.SelectedItems, Values.Styles, s => s.Name, s => s.Id),
+                SelectedIds(fg.TagCtrl.SelectedItems, Values.Tags, TagFilterName, t => t.Id)))
             .ToList();
         
         var filtered = TrackFilter.Apply(
             _allItems.Select(i => i.Track),
             _allTrackGenreIds,
             _allTrackStyleIds,
+            _allTrackTagIds,
             selRatingIds,
             groups,
             SearchBox.Text);
@@ -352,14 +366,18 @@ public partial class MusicView : UserControl
 
             var genreFacetCounts = MetadataCountService.FacetCounts(groupTrackIds, _allTrackGenreIds);
             var styleFacetCounts = MetadataCountService.FacetCounts(groupTrackIds, _allTrackStyleIds);
+            var tagFacetCounts = MetadataCountService.FacetCounts(groupTrackIds, _allTrackTagIds);
 
             var genreCountByName = Values.Genres.ToDictionary(g => g.Name,
                 g => genreFacetCounts.GetValueOrDefault(g.Id, 0));
             var styleCountByName = Values.Styles.ToDictionary(s => s.Name,
                 s => styleFacetCounts.GetValueOrDefault(s.Id, 0));
+            var tagCountByName = Values.Tags.ToDictionary(TagFilterName,
+                t => tagFacetCounts.GetValueOrDefault(t.Id, 0));
 
             fg.GenreCtrl.UpdateCounts(genreCountByName);
             fg.StyleCtrl.UpdateCounts(styleCountByName);
+            fg.TagCtrl.UpdateCounts(tagCountByName);
         }
     }
 
@@ -369,6 +387,7 @@ public partial class MusicView : UserControl
         var selectedRatingIds = SelectedIds(RatingFilter.SelectedItems, Values.Ratings, r => r.Name, r => r.Id);
         var selectedGenreIds = SelectedIds(group.GenreCtrl.SelectedItems, Values.Genres, g => g.Name, g => g.Id);
         var selectedStyleIds = SelectedIds(group.StyleCtrl.SelectedItems, Values.Styles, s => s.Name, s => s.Id);
+        var selectedTagIds = SelectedIds(group.TagCtrl.SelectedItems, Values.Tags, TagFilterName, t => t.Id);
         var term = SearchBox.Text?.Trim();
 
         if (!string.IsNullOrWhiteSpace(term))
@@ -382,6 +401,9 @@ public partial class MusicView : UserControl
 
         if (selectedStyleIds.Count > 0)
             query = query.Where(track => TrackHasAllTags(track.Id, _allTrackStyleIds, selectedStyleIds));
+
+        if (selectedTagIds.Count > 0)
+            query = query.Where(track => TrackHasAllTags(track.Id, _allTrackTagIds, selectedTagIds));
 
         return query.ToList();
     }
@@ -524,8 +546,9 @@ public partial class MusicView : UserControl
         var groups = _filterGroups
             .Select(group => new PortableFilterGroup(
                 SortedNames(group.GenreCtrl.SelectedItems),
-                SortedNames(group.StyleCtrl.SelectedItems)))
-            .Where(group => group.Genres.Count > 0 || group.Styles.Count > 0)
+                SortedNames(group.StyleCtrl.SelectedItems),
+                SortedNames(group.TagCtrl.SelectedItems)))
+            .Where(group => group.Genres.Count > 0 || group.Styles.Count > 0 || (group.Tags?.Count ?? 0) > 0)
             .ToList();
 
         return new PortableFilterPreset(
@@ -542,7 +565,7 @@ public partial class MusicView : UserControl
         FilterGroupsPanel.Children.Clear();
 
         var groups = preset.Groups
-            .Where(group => group.Genres.Count > 0 || group.Styles.Count > 0)
+            .Where(group => group.Genres.Count > 0 || group.Styles.Count > 0 || (group.Tags?.Count ?? 0) > 0)
             .ToList();
 
         if (groups.Count == 0)
@@ -556,6 +579,7 @@ public partial class MusicView : UserControl
                 var controls = AddFilterGroup();
                 controls.GenreCtrl.SetSelectedItems(group.Genres, notify: false);
                 controls.StyleCtrl.SetSelectedItems(group.Styles, notify: false);
+                controls.TagCtrl.SetSelectedItems(group.Tags ?? [], notify: false);
             }
         }
 
@@ -587,7 +611,11 @@ public partial class MusicView : UserControl
         styleCtrl.SetItems(Values.Styles.Select(s => s.Name));
         styleCtrl.SelectionChanged += (_, _) => ApplyFilter();
 
-        var fg = new FilterGroupControls(genreCtrl, styleCtrl);
+        var tagCtrl = new MultiSelectFilterControl { Placeholder = "All tags" };
+        tagCtrl.SetItems(Values.Tags.Select(TagFilterName));
+        tagCtrl.SelectionChanged += (_, _) => ApplyFilter();
+
+        var fg = new FilterGroupControls(genreCtrl, styleCtrl, tagCtrl);
         _filterGroups.Add(fg);
 
         StackPanel Section(string label, MultiSelectFilterControl ctrl) =>
@@ -601,6 +629,7 @@ public partial class MusicView : UserControl
         var body = new StackPanel { Margin = new Thickness(0, 6, 0, 0) };
         body.Children.Add(Section("Genre", genreCtrl));
         body.Children.Add(Section("Style", styleCtrl));
+        body.Children.Add(Section("Tag", tagCtrl));
 
         var card = new StackPanel { Margin = new Thickness(0, 0, 0, 4) };
 

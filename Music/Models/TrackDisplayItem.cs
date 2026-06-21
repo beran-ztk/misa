@@ -11,6 +11,7 @@ public record TrackDisplayItem(
     string DurationText,
     string RatingText,
     string ProfileText,
+    string TagText,
     string ChannelText)
 {
     public bool IsPlaying { get; set; }
@@ -26,6 +27,12 @@ public record TrackDisplayItem(
         : string.IsNullOrWhiteSpace(SystemGenreText)
             ? ManualGenreText
             : $"  ·  {ManualGenreText}";
+
+    public string ProfileAndTagText => string.IsNullOrWhiteSpace(TagText)
+        ? ProfileText
+        : string.IsNullOrWhiteSpace(ProfileText)
+            ? $"Tags {TagText}"
+            : $"{ProfileText}  ·  Tags {TagText}";
 
     public IBrush PlayingBackground => IsPlaying
         ? new SolidColorBrush(Color.FromArgb(48, 28, 132, 184))
