@@ -82,21 +82,11 @@ public sealed class ImportQueueService
                     continue;
                 }
 
-                progress?.Report("Reading track details…");
-                YouTubeTrackMetadata? metadata = null;
-                try
-                {
-                    using var metadataTimeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-                    metadataTimeout.CancelAfter(TimeSpan.FromSeconds(20));
-                    metadata = await _downloader.GetMetadataAsync(entry.CanonicalUrl, metadataTimeout.Token);
-                }
-                catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
-                {
-                    // The flat playlist already gave us a valid queue item. Size/estimate may simply remain unknown.
-                }
-                var duration = metadata?.DurationSeconds ?? entry.DurationSeconds;
+                // Flat playlist output already contains the title and usually the duration. Avoiding a full
+                // yt-dlp metadata request per candidate makes large playlists and generated mixes responsive.
+                // Exact audio size and metadata are fetched later, only for the item currently downloading.
                 previewItems.Add(new ImportPreviewItem(entry.SourceUrl, entry.CanonicalUrl,
-                    metadata?.Title ?? entry.Title, duration, metadata?.EstimatedAudioSizeBytes, ImportQueueStatus.Queued));
+                    entry.Title, entry.DurationSeconds, null, ImportQueueStatus.Queued));
             }
         }
 
