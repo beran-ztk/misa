@@ -86,6 +86,8 @@ public partial class MusicView : UserControl
         
         try { MusicLibraryService.Current.Initialize(); }
         catch (Exception ex) { StatusText.Text = $"Database error: {ex.Message}"; StatusText.IsVisible = true; return; }
+        ImportQueueService.Current.Initialize();
+        UpdateQueueStatus();
 
         LoadLookups();
         LoadFilterPresets();
@@ -99,11 +101,17 @@ public partial class MusicView : UserControl
             ShowToast(warning ?? "Track downloaded and analyzed");
         };
         AddTrackOverlay.CloseRequested += () => AddTrackOverlay.IsVisible = false;
-        ImportOverlay.TrackImported += track =>
+        ImportOverlay.QueueSubmitted += count =>
+        {
+            ShowToast($"{count} track{(count == 1 ? string.Empty : "s")} added to the import queue");
+            UpdateQueueStatus();
+        };
+        ImportQueueService.Current.ItemUpdated += _ => Avalonia.Threading.Dispatcher.UIThread.Post(UpdateQueueStatus);
+        ImportQueueService.Current.TrackImported += (track, warning) => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
         {
             RefreshTrackList();
-            EditTrackOverlay.Open(track);
-        };
+            ShowToast(warning ?? $"Imported: {track.Title}");
+        });
         EditTrackOverlay.TrackSaved += RefreshTrackList;
         SettingsOverlay.ToastRequested += ShowToast;
         SettingsOverlay.LibraryMetadataChanged += RefreshLibraryPresentation;
@@ -124,6 +132,18 @@ public partial class MusicView : UserControl
     {
         LoadLookups();
         RefreshTrackList();
+    }
+
+    private void UpdateQueueStatus()
+    {
+        var summary = ImportQueueService.Current.GetSummary();
+        var parts = new List<string>();
+        if (summary.Downloading > 0) parts.Add("downloading");
+        if (summary.Analyzing > 0) parts.Add("analyzing");
+        if (summary.Queued > 0) parts.Add($"{summary.Queued} queued");
+        if (summary.ReadyForReview > 0) parts.Add($"{summary.ReadyForReview} ready for review");
+        QueueStatusText.IsVisible = parts.Count > 0;
+        QueueStatusText.Text = parts.Count > 0 ? $"Queue · {string.Join(" · ", parts)}" : string.Empty;
     }
 
     // ─── Track list ──────────────────────────────────────────────────────────

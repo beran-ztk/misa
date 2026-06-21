@@ -44,6 +44,12 @@ public class MusicLibraryService
         _db.EstimateAnalysisDuration(trackDurationSeconds, fileSizeBytes);
     public TimeSpan? EstimateDownloadDuration(int? trackDurationSeconds, long? fileSizeBytes) =>
         _db.EstimateDownloadDuration(trackDurationSeconds, fileSizeBytes);
+    public int CreateImportBatch(string sourceUrl, IReadOnlyList<ImportPreviewItem> items) => _db.CreateImportBatch(sourceUrl, items);
+    public void RequeueInterruptedImports() => _db.RequeueInterruptedImports();
+    public ImportQueueItem? GetNextQueuedImport() => _db.GetNextQueuedImport();
+    public void UpdateImportQueueItem(int id, ImportQueueStatus status, string? detail = null, int? trackId = null) =>
+        _db.UpdateImportQueueItem(id, status, detail, trackId);
+    public ImportQueueSummary GetImportQueueSummary() => _db.GetImportQueueSummary();
 
     public Task<string?> DeleteTrackAsync(MusicTrack track)
     {

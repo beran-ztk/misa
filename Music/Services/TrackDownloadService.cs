@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -100,6 +101,42 @@ public class TrackDownloadService
                 EstimatedAudioSize(root), DurationSeconds(root));
         }
         catch { return null; }
+    }
+
+    public async Task<IReadOnlyList<YouTubePlaylistEntry>> GetPlaylistEntriesAsync(string url)
+    {
+        try
+        {
+            var result = await RunProcessAsync(
+                Path.Combine(Values.ToolsDirectory, "yt-dlp.exe"),
+                "--js-runtimes", "node",
+                "--flat-playlist",
+                "--dump-json",
+                "--no-warnings",
+                url);
+            if (result.ExitCode != 0) return [];
+
+            var entries = new List<YouTubePlaylistEntry>();
+            foreach (var line in result.Output.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            {
+                using var document = JsonDocument.Parse(line);
+                var root = document.RootElement;
+                if (!root.TryGetProperty("id", out var idValue) || idValue.ValueKind != JsonValueKind.String) continue;
+                var id = idValue.GetString();
+                if (string.IsNullOrWhiteSpace(id)) continue;
+                var canonicalUrl = YouTubeUrlNormalizer.GetCanonicalUrl(id);
+                var title = root.TryGetProperty("title", out var titleValue) && titleValue.ValueKind == JsonValueKind.String
+                    ? titleValue.GetString() ?? id
+                    : id;
+                var duration = DurationSeconds(root);
+                entries.Add(new YouTubePlaylistEntry(url, canonicalUrl, title, duration));
+            }
+            return entries;
+        }
+        catch
+        {
+            return [];
+        }
     }
 
     public string? FindDownloadedFile(string videoId)

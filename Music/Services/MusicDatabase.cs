@@ -163,6 +163,27 @@ public class MusicDatabase
                 UNIQUE (track_analysis_id, attribute_key)
             );
 
+            CREATE TABLE import_batches (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                source_url  TEXT NOT NULL,
+                created_at  TEXT NOT NULL
+            );
+
+            CREATE TABLE import_queue_items (
+                id                    INTEGER PRIMARY KEY AUTOINCREMENT,
+                batch_id              INTEGER NOT NULL REFERENCES import_batches(id) ON DELETE CASCADE,
+                source_url            TEXT NOT NULL,
+                canonical_url         TEXT NOT NULL UNIQUE,
+                title                 TEXT NOT NULL,
+                duration_seconds      INTEGER NULL,
+                estimated_size_bytes  INTEGER NULL,
+                status                TEXT NOT NULL,
+                detail                TEXT NULL,
+                track_id              INTEGER NULL REFERENCES tracks(id),
+                created_at            TEXT NOT NULL,
+                updated_at            TEXT NOT NULL
+            );
+
 
             CREATE TABLE genre_mappings (
                 id                 INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -185,6 +206,32 @@ public class MusicDatabase
         EnsureColumn(conn, "tracks", "file_size_bytes", "INTEGER NULL");
         EnsureColumn(conn, "tracks", "download_duration_ms", "INTEGER NULL");
         EnsureColumn(conn, "track_analysis", "analysis_duration_ms", "INTEGER NULL");
+        CreateImportQueueSchema(conn);
+    }
+
+    private static void CreateImportQueueSchema(SqliteConnection conn)
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+            CREATE TABLE IF NOT EXISTS import_batches (
+                id INTEGER PRIMARY KEY AUTOINCREMENT, source_url TEXT NOT NULL, created_at TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS import_queue_items (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                batch_id INTEGER NOT NULL REFERENCES import_batches(id) ON DELETE CASCADE,
+                source_url TEXT NOT NULL,
+                canonical_url TEXT NOT NULL UNIQUE,
+                title TEXT NOT NULL,
+                duration_seconds INTEGER NULL,
+                estimated_size_bytes INTEGER NULL,
+                status TEXT NOT NULL,
+                detail TEXT NULL,
+                track_id INTEGER NULL REFERENCES tracks(id),
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS ix_import_queue_status ON import_queue_items(status, created_at);";
+        cmd.ExecuteNonQuery();
     }
 
     private static void EnsureColumn(SqliteConnection conn, string table, string column, string definition)
@@ -304,6 +351,89 @@ public class MusicDatabase
         var estimate = estimates.Sum(item => item.Value * item.Weight) / estimates.Sum(item => item.Weight);
         return TimeSpan.FromMilliseconds(Math.Clamp(estimate, 1_000, 60 * 60_000));
     }
+
+    public int CreateImportBatch(string sourceUrl, IReadOnlyList<ImportPreviewItem> items)
+    {
+        using var conn = Open();
+        using var tx = conn.BeginTransaction();
+        var now = DateTime.UtcNow.ToString("O");
+        var batchId = InsertAndGetId(conn, tx,
+            "INSERT INTO import_batches (source_url, created_at) VALUES ($sourceUrl, $createdAt)",
+            ("$sourceUrl", sourceUrl), ("$createdAt", now));
+
+        foreach (var item in items.Where(item => item.Status == ImportQueueStatus.Queued))
+        {
+            ExecuteInsert(conn, tx, @"
+                INSERT OR IGNORE INTO import_queue_items
+                    (batch_id, source_url, canonical_url, title, duration_seconds, estimated_size_bytes, status, detail, created_at, updated_at)
+                VALUES ($batchId, $sourceUrl, $canonicalUrl, $title, $duration, $size, $status, $detail, $createdAt, $updatedAt)",
+                ("$batchId", batchId), ("$sourceUrl", item.SourceUrl), ("$canonicalUrl", item.CanonicalUrl),
+                ("$title", item.Title), ("$duration", item.DurationSeconds), ("$size", item.EstimatedSizeBytes),
+                ("$status", ImportQueueStatus.Queued.ToString()), ("$detail", item.Detail),
+                ("$createdAt", now), ("$updatedAt", now));
+        }
+        tx.Commit();
+        return (int)batchId;
+    }
+
+    public void RequeueInterruptedImports()
+    {
+        using var conn = Open();
+        ExecuteNonQuery(conn, @"UPDATE import_queue_items SET status = $queued,
+                                detail = 'Interrupted — queued again', updated_at = $now
+                                WHERE status IN ($downloading, $analyzing)",
+            ("$queued", ImportQueueStatus.Queued.ToString()),
+            ("$downloading", ImportQueueStatus.Downloading.ToString()),
+            ("$analyzing", ImportQueueStatus.Analyzing.ToString()),
+            ("$now", DateTime.UtcNow.ToString("O")));
+    }
+
+    public ImportQueueItem? GetNextQueuedImport()
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"SELECT id, batch_id, source_url, canonical_url, title, duration_seconds, estimated_size_bytes,
+                                   status, detail, track_id
+                            FROM import_queue_items WHERE status = $status ORDER BY created_at, id LIMIT 1";
+        cmd.Parameters.AddWithValue("$status", ImportQueueStatus.Queued.ToString());
+        using var reader = cmd.ExecuteReader();
+        return reader.Read() ? ReadImportQueueItem(reader) : null;
+    }
+
+    public void UpdateImportQueueItem(int id, ImportQueueStatus status, string? detail = null, int? trackId = null)
+    {
+        using var conn = Open();
+        ExecuteNonQuery(conn, @"UPDATE import_queue_items SET status = $status, detail = $detail,
+                                track_id = COALESCE($trackId, track_id), updated_at = $updatedAt WHERE id = $id",
+            ("$status", status.ToString()), ("$detail", detail), ("$trackId", trackId),
+            ("$updatedAt", DateTime.UtcNow.ToString("O")), ("$id", id));
+    }
+
+    public ImportQueueSummary GetImportQueueSummary()
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"SELECT status, COUNT(*) FROM import_queue_items
+                            WHERE status IN ($queued, $downloading, $analyzing, $ready) GROUP BY status";
+        cmd.Parameters.AddWithValue("$queued", ImportQueueStatus.Queued.ToString());
+        cmd.Parameters.AddWithValue("$downloading", ImportQueueStatus.Downloading.ToString());
+        cmd.Parameters.AddWithValue("$analyzing", ImportQueueStatus.Analyzing.ToString());
+        cmd.Parameters.AddWithValue("$ready", ImportQueueStatus.ReadyForReview.ToString());
+        var counts = new Dictionary<string, int>();
+        using var reader = cmd.ExecuteReader();
+        while (reader.Read()) counts[reader.GetString(0)] = reader.GetInt32(1);
+        return new ImportQueueSummary(
+            counts.GetValueOrDefault(ImportQueueStatus.Queued.ToString()),
+            counts.GetValueOrDefault(ImportQueueStatus.Downloading.ToString()),
+            counts.GetValueOrDefault(ImportQueueStatus.Analyzing.ToString()),
+            counts.GetValueOrDefault(ImportQueueStatus.ReadyForReview.ToString()));
+    }
+
+    private static ImportQueueItem ReadImportQueueItem(SqliteDataReader reader) => new(
+        reader.GetInt32(0), reader.GetInt32(1), reader.GetString(2), reader.GetString(3), reader.GetString(4),
+        reader.IsDBNull(5) ? null : reader.GetInt32(5), reader.IsDBNull(6) ? null : reader.GetInt64(6),
+        Enum.Parse<ImportQueueStatus>(reader.GetString(7)), reader.IsDBNull(8) ? null : reader.GetString(8),
+        reader.IsDBNull(9) ? null : reader.GetInt32(9));
 
     private static void SeedDefaultMetadata(SqliteConnection conn, SqliteTransaction tx)
     {

@@ -3,30 +3,46 @@
              x:Class="Music.Views.ImportOverlay">
     <Panel>
         <Border Background="#78000000" PointerPressed="OnBackdropPressed"/>
-        <Border Width="400" MaxWidth="460" Margin="24"
+        <Border Width="720" MaxWidth="900" Margin="24"
                 HorizontalAlignment="Center" VerticalAlignment="Center"
                 Background="#1E1E1E" BorderBrush="#314B5F" BorderThickness="1"
                 CornerRadius="8" BoxShadow="0 8 40 4 #80000000" Padding="24">
-            <Grid>
-                <StackPanel x:Name="ImportForm" Spacing="8">
-                    <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,18">
-                        <TextBlock Text="Download from YouTube" FontSize="18" FontWeight="SemiBold"/>
-                        <Button Grid.Column="1" Content="✕" Click="OnCloseClicked" Padding="8,3"
-                                FontSize="13" Opacity="0.6"/>
-                    </Grid>
-                    <TextBlock Text="Paste a YouTube URL" FontSize="12" Opacity="0.62"/>
-                    <TextBox x:Name="UrlBox" Watermark="https://www.youtube.com/watch?v=…"/>
-                    <TextBlock x:Name="StatusText" FontSize="11" Opacity="0.72" TextWrapping="Wrap"/>
-                    <StackPanel x:Name="BusyPanel" IsVisible="False" Spacing="7" Margin="0,8,0,0">
-                        <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock x:Name="BusyText" Text="Downloading audio…" FontSize="12" FontWeight="SemiBold"/>
-                            <TextBlock x:Name="BusyElapsedText" Grid.Column="1" Text="0:00"
-                                       FontSize="12" FontWeight="SemiBold" Foreground="#65BCEB"/>
-                        </Grid>
-                        <ProgressBar IsIndeterminate="True" Height="4"
-                                     Foreground="#1E9AF0" Background="#26313A"/>
-                        <TextBlock Text="Elapsed time" FontSize="10" Opacity="0.48" HorizontalAlignment="Right" Margin="0,-5,0,0"/>
+            <Grid RowDefinitions="Auto,*,Auto">
+                <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,16">
+                    <StackPanel Spacing="3">
+                        <TextBlock Text="Import queue" FontSize="18" FontWeight="SemiBold"/>
+                        <TextBlock Text="Paste individual videos, playlists or YouTube mixes. Nothing downloads before you confirm the preview."
+                                   FontSize="11" Opacity="0.6" TextWrapping="Wrap"/>
                     </StackPanel>
+                    <Button Grid.Column="1" Content="✕" Click="OnCloseClicked" Padding="8,3" FontSize="13" Opacity="0.6"/>
+                </Grid>
+
+                <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled" MaxHeight="580">
+                    <StackPanel Spacing="12">
+                        <TextBox x:Name="UrlsBox" AcceptsReturn="True" TextWrapping="Wrap" Height="88"
+                                 Watermark="One YouTube URL per line — videos, playlists or mixes…"/>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Button x:Name="PreviewBtn" Content="Check links" Click="OnPreviewClicked" Classes="accent"/>
+                            <TextBlock x:Name="StatusText" FontSize="11" Opacity="0.7" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                        </StackPanel>
+                        <StackPanel x:Name="BusyPanel" IsVisible="False" Spacing="6">
+                            <TextBlock x:Name="BusyText" Text="Reading links…" FontSize="11" Opacity="0.72"/>
+                            <ProgressBar IsIndeterminate="True" Height="4" Foreground="#1E9AF0" Background="#26313A"/>
+                        </StackPanel>
+
+                        <StackPanel x:Name="PreviewPanel" IsVisible="False" Spacing="8" Margin="0,6,0,0">
+                            <Border Background="#151B22" BorderBrush="#2D3D4B" BorderThickness="1" CornerRadius="6" Padding="10,8">
+                                <TextBlock x:Name="PreviewSummaryText" FontSize="11" TextWrapping="Wrap"/>
+                            </Border>
+                            <TextBlock Text="Import plan" FontSize="12" FontWeight="SemiBold"/>
+                            <StackPanel x:Name="PreviewRows" Spacing="3"/>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,16,0,0">
+                    <Button Content="Cancel" Click="OnCloseClicked"/>
+                    <Button x:Name="QueueBtn" Content="Add to queue" Click="OnQueueClicked" IsEnabled="False" Classes="accent"/>
                 </StackPanel>
             </Grid>
         </Border>
