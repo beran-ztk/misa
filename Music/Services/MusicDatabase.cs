@@ -1451,6 +1451,20 @@ public class MusicDatabase
                 ("$trackId", trackId), ("$tagId", tagId), ("$now", now));
         }
 
+        // Accepting a suggestion merely means that the user wanted the tag at that
+        // time. If they later remove it in the tag editor, make the former
+        // suggestion visible again. Explicitly rejected suggestions stay rejected.
+        ExecuteInsert(conn, tx, @"
+            UPDATE track_tag_suggestions
+            SET state = 'pending', updated_at = $now
+            WHERE track_id = $trackId
+              AND state = 'accepted'
+              AND NOT EXISTS (
+                  SELECT 1 FROM track_tags assigned
+                  WHERE assigned.track_id = track_tag_suggestions.track_id
+                    AND assigned.tag_id = track_tag_suggestions.tag_id)",
+            ("$trackId", trackId), ("$now", now));
+
         tx.Commit();
     }
 
