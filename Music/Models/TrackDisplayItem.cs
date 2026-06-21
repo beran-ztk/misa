@@ -17,9 +17,9 @@ public record TrackDisplayItem(
     public bool NeedsReview { get; set; }
     public Bitmap? Thumbnail { get; set; }
 
-    public string ChannelPrefixText => string.IsNullOrWhiteSpace(ChannelText)
+    public string ChannelSeparatorText => string.IsNullOrWhiteSpace(ChannelText)
         ? string.Empty
-        : $"{ChannelText}  ·  ";
+        : "  ·  ";
 
     public string ManualGenreDisplayText => string.IsNullOrWhiteSpace(ManualGenreText)
         ? string.Empty
@@ -35,8 +35,10 @@ public record TrackDisplayItem(
         ? new SolidColorBrush(Color.FromRgb(39, 172, 231))
         : Brushes.Transparent;
 
-    public IBrush TitleBrush => IsPlaying
-        ? new SolidColorBrush(Color.FromRgb(246, 251, 255))
+    public IBrush TitleBrush => NeedsReview
+        ? new SolidColorBrush(Color.FromRgb(255, 210, 122))
+        : IsPlaying
+            ? new SolidColorBrush(Color.FromRgb(246, 251, 255))
         : new SolidColorBrush(Color.FromRgb(238, 241, 245));
 
     public IBrush RatingBackground => RatingText switch

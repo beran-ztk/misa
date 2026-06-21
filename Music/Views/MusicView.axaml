@@ -271,7 +271,7 @@
                         <Border Background="{Binding PlayingBackground}"
                                 CornerRadius="7"
                                 Padding="8,6">
-                            <Grid ColumnDefinitions="4,52,*,Auto">
+                            <Grid ColumnDefinitions="4,52,*">
 
                                 <Border Grid.Column="0"
                                         Width="3" Height="38"
@@ -293,64 +293,49 @@
                                 <Grid Grid.Column="2"
                                       VerticalAlignment="Center"
                                       RowDefinitions="Auto,Auto,Auto"
-                                      ColumnDefinitions="Auto,*"
                                       RowSpacing="2">
-                                    <TextBlock Text="{Binding ChannelPrefixText}"
-                                               FontSize="10.5" Opacity="0.52"
-                                               MaxWidth="190" TextTrimming="CharacterEllipsis"
-                                               VerticalAlignment="Center"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding Track.Title}"
+                                    <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*">
+                                        <Border Background="{Binding RatingBackground}"
+                                                BorderBrush="{Binding RatingBorder}"
+                                                BorderThickness="1"
+                                                CornerRadius="4"
+                                                Height="18"
+                                                Padding="5,0"
+                                                VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding RatingText}"
+                                                       FontSize="9.5"
+                                                       VerticalAlignment="Center"
+                                                       Foreground="#DCE6EF"/>
+                                        </Border>
+                                        <TextBlock Grid.Column="1" Text="  ·  " FontSize="10.5" Opacity="0.42" VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="2" Text="{Binding ChannelText}"
+                                                   FontSize="10.5" Opacity="0.52"
+                                                   MaxWidth="190" TextTrimming="CharacterEllipsis"
+                                                   VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="3" Text="{Binding ChannelSeparatorText}"
+                                                   FontSize="10.5" Opacity="0.42" VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="4" Text="{Binding Track.Title}"
                                                Foreground="{Binding TitleBrush}"
                                                FontSize="13" FontWeight="SemiBold"
                                                TextTrimming="CharacterEllipsis"/>
-                                    <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal">
-                                        <TextBlock Text="{Binding SystemGenreText}"
-                                                   FontSize="11" Foreground="#65BCEB"
-                                                   TextTrimming="CharacterEllipsis"/>
-                                        <TextBlock Text="{Binding ManualGenreDisplayText}"
-                                                   FontSize="11" Opacity="0.66"
-                                                   TextTrimming="CharacterEllipsis"/>
-                                    </StackPanel>
-                                    <TextBlock Grid.Row="2" Grid.ColumnSpan="2" Text="{Binding ProfileText}"
+                                    </Grid>
+                                    <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding SystemGenreText}"
+                                                       FontSize="11" Foreground="#65BCEB"
+                                                       TextTrimming="CharacterEllipsis"/>
+                                            <TextBlock Text="{Binding ManualGenreDisplayText}"
+                                                       FontSize="11" Opacity="0.66"
+                                                       TextTrimming="CharacterEllipsis"/>
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="1" Text="{Binding DurationText}"
+                                                   FontSize="10.5" Opacity="0.56"
+                                                   Margin="14,0,0,0"
+                                                   VerticalAlignment="Center"/>
+                                    </Grid>
+                                    <TextBlock Grid.Row="2" Text="{Binding ProfileText}"
                                                FontSize="10.5" Foreground="#A9BAC8" Opacity="0.62"
                                                TextTrimming="CharacterEllipsis"/>
-                                </Grid>
-
-                                <!-- Right: one compact element per metadata row -->
-                                <Grid Grid.Column="3"
-                                      VerticalAlignment="Center"
-                                      HorizontalAlignment="Right"
-                                      RowDefinitions="Auto,Auto,Auto"
-                                      Margin="16,0,0,0"
-                                      MinWidth="62">
-                                    <TextBlock Text="{Binding DurationText}"
-                                               FontSize="10.5" Opacity="0.56"
-                                               HorizontalAlignment="Right"/>
-                                    <Border Grid.Row="1" Background="{Binding RatingBackground}"
-                                            BorderBrush="{Binding RatingBorder}"
-                                            BorderThickness="1"
-                                            CornerRadius="4"
-                                            Height="18"
-                                            Padding="5,0"
-                                            HorizontalAlignment="Right">
-                                        <TextBlock Text="{Binding RatingText}"
-                                                   FontSize="9.5"
-                                                   VerticalAlignment="Center"
-                                                   Foreground="#DCE6EF"/>
-                                    </Border>
-                                    <Border Grid.Row="2" IsVisible="{Binding NeedsReview}"
-                                            Background="#302615"
-                                            BorderBrush="#7B5D2A"
-                                            BorderThickness="1"
-                                            CornerRadius="4"
-                                            Height="18"
-                                            Padding="5,0"
-                                            HorizontalAlignment="Right">
-                                        <TextBlock Text="Review"
-                                                   FontSize="9.5"
-                                                   VerticalAlignment="Center"
-                                                   Foreground="#FFD27A"/>
-                                    </Border>
                                 </Grid>
 
                             </Grid>
@@ -477,11 +462,13 @@
 
             <views:AddTrackOverlay x:Name="AddTrackOverlay" IsVisible="False"/>
             <views:ImportOverlay x:Name="ImportOverlay" IsVisible="False"/>
-            <views:EditTrackOverlay x:Name="EditTrackOverlay" IsVisible="False"/>
 
         </Panel>
 
     </DockPanel>
+
+    <!-- Covers the toolbar as well as the list while track details are open. -->
+    <views:EditTrackOverlay x:Name="EditTrackOverlay" IsVisible="False" ZIndex="80"/>
 
     <views:SettingsOverlay x:Name="SettingsOverlay" IsVisible="False" ZIndex="90"/>
 
