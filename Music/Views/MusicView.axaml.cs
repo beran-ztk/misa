@@ -194,7 +194,7 @@ public partial class MusicView : UserControl
         {
             fg.GenreCtrl.SetItems(Values.Genres.Select(g => g.Name));
             fg.StyleCtrl.SetItems(Values.Styles.Select(s => s.Name));
-            fg.TagCtrl.SetItems(Values.Tags.Select(t => TagFilterName(t)));
+            fg.TagCtrl.SetItems(TagFilterOptions());
         }
     }
 
@@ -214,7 +214,9 @@ public partial class MusicView : UserControl
         var manualGenreIds = MusicLibraryService.Current.GetAllTrackManualGenreIds();
 
         var genreMap = Values.Genres.ToDictionary(g => g.Id, g => g.Name);
-        var tagMap = Values.Tags.ToDictionary(t => t.Id, TagFilterName);
+        var tagMap = Values.Tags.ToDictionary(t => t.Id);
+        var tagOrder = Values.Tags.Select((tag, index) => (tag.Id, index))
+            .ToDictionary(item => item.Id, item => item.index);
         var ratingMap = Values.Ratings.ToDictionary(r => r.Id, r => r.Name);
         var styleMap = Values.Styles.ToDictionary(s => s.Id, s => s.Name);
 
@@ -235,9 +237,22 @@ public partial class MusicView : UserControl
             var styleStr = string.Join(", ", styleIds
                 .Select(id => styleMap.GetValueOrDefault(id, ""))
                 .Where(n => n.Length > 0).Order());
-            var tagStr = string.Join(", ", tagIds
-                .Select(id => tagMap.GetValueOrDefault(id, ""))
-                .Where(n => n.Length > 0).Order());
+            var trackTags = tagIds
+                .Select(id => tagMap.GetValueOrDefault(id))
+                .Where(tag => tag is not null)
+                .Cast<Tag>()
+                .OrderBy(tag => tagOrder.GetValueOrDefault(tag.Id, int.MaxValue))
+                .ToList();
+            var visibleTags = trackTags
+                .Take(3)
+                .Select(tag => new TrackTagDisplay(
+                    tag.Name,
+                    tag.CategoryName,
+                    CategoryBrush(tag.CategoryColor)))
+                .ToList();
+            var moreTagsText = trackTags.Count > visibleTags.Count
+                ? $"+{trackTags.Count - visibleTags.Count}"
+                : string.Empty;
             var ratingName = t.RatingId is int ratingId ? ratingMap.GetValueOrDefault(ratingId, "") : "Not rated";
             var durationText = t.DurationSeconds.HasValue ? FormatDuration(t.DurationSeconds.Value) : "";
             var attributes = MusicLibraryService.Current.GetTrackDerivedAttributes(t.Id);
@@ -245,7 +260,7 @@ public partial class MusicView : UserControl
                 .Where(attribute => attribute.Key is "emotional_tone" or "energy_context" or "intensity" or "vocal_presence")
                 .Select(attribute => $"{ProfileAttributeName(attribute.Key)} {attribute.EffectiveValue}"));
             
-            return new TrackDisplayItem(t, genreStr, manualGenreStr, styleStr, durationText, ratingName, profileText, tagStr, t.ChannelName ?? "")
+            return new TrackDisplayItem(t, genreStr, manualGenreStr, styleStr, durationText, ratingName, profileText, visibleTags, moreTagsText, t.ChannelName ?? "")
             {
                 NeedsReview = t.NeedsReview
             };
@@ -264,6 +279,19 @@ public partial class MusicView : UserControl
     };
 
     private static string TagFilterName(Tag tag) => $"{tag.CategoryName}: {tag.Name}";
+
+    private static IEnumerable<MultiSelectFilterControl.FilterOption> TagFilterOptions() =>
+        Values.Tags.Select(tag => new MultiSelectFilterControl.FilterOption(
+            TagFilterName(tag),
+            tag.Name,
+            tag.CategoryName,
+            tag.CategoryColor));
+
+    private static IBrush CategoryBrush(string? color)
+    {
+        try { return new SolidColorBrush(Color.Parse(string.IsNullOrWhiteSpace(color) ? "#65BCEB" : color)); }
+        catch { return new SolidColorBrush(Color.Parse("#65BCEB")); }
+    }
 
     private async Task LoadThumbnailsAsync(CancellationToken ct)
     {
@@ -612,7 +640,7 @@ public partial class MusicView : UserControl
         styleCtrl.SelectionChanged += (_, _) => ApplyFilter();
 
         var tagCtrl = new MultiSelectFilterControl { Placeholder = "All tags" };
-        tagCtrl.SetItems(Values.Tags.Select(TagFilterName));
+        tagCtrl.SetItems(TagFilterOptions());
         tagCtrl.SelectionChanged += (_, _) => ApplyFilter();
 
         var fg = new FilterGroupControls(genreCtrl, styleCtrl, tagCtrl);

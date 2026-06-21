@@ -1,7 +1,10 @@
+using System.Collections.Generic;
 using Avalonia.Media.Imaging;
 using Avalonia.Media;
 
 namespace Music.Models;
+
+public record TrackTagDisplay(string Name, string CategoryName, IBrush Foreground);
 
 public record TrackDisplayItem(
     MusicTrack Track,
@@ -11,7 +14,8 @@ public record TrackDisplayItem(
     string DurationText,
     string RatingText,
     string ProfileText,
-    string TagText,
+    IReadOnlyList<TrackTagDisplay> VisibleTags,
+    string MoreTagsText,
     string ChannelText)
 {
     public bool IsPlaying { get; set; }
@@ -27,12 +31,6 @@ public record TrackDisplayItem(
         : string.IsNullOrWhiteSpace(SystemGenreText)
             ? ManualGenreText
             : $"  ·  {ManualGenreText}";
-
-    public string ProfileAndTagText => string.IsNullOrWhiteSpace(TagText)
-        ? ProfileText
-        : string.IsNullOrWhiteSpace(ProfileText)
-            ? $"Tags {TagText}"
-            : $"{ProfileText}  ·  Tags {TagText}";
 
     public IBrush PlayingBackground => IsPlaying
         ? new SolidColorBrush(Color.FromArgb(48, 28, 132, 184))

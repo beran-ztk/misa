@@ -206,28 +206,54 @@ public partial class EditTrackOverlay : UserControl
 
     private void RebuildTagChips(IReadOnlySet<int> selectedTagIds)
     {
-        var sorted = _tags
-            .OrderByDescending(tag => selectedTagIds.Contains(tag.Id))
-            .ThenBy(tag => tag.CategoryName, StringComparer.OrdinalIgnoreCase)
-            .ThenBy(tag => tag.Name, StringComparer.OrdinalIgnoreCase)
-            .ToList();
-
         TagsPanel.Children.Clear();
         _tagChips.Clear();
 
-        foreach (var tag in sorted)
+        foreach (var category in _tags
+                     .GroupBy(tag => new { tag.CategoryId, tag.CategoryName, tag.CategoryColor }))
         {
-            var isSelected = selectedTagIds.Contains(tag.Id);
-            var btn = CreateTagButton(tag, isSelected);
-            btn.IsCheckedChanged += (_, _) =>
+            var section = new StackPanel { Spacing = 5 };
+            var accent = SafeBrush(category.Key.CategoryColor, "#65BCEB");
+            var header = new Grid { ColumnDefinitions = new ColumnDefinitions("3,Auto,*"), ColumnSpacing = 7 };
+            header.Children.Add(new Border
             {
-                ApplyTagVisual(btn, tag);
-                UpdateTagSummary();
-                UpdateSaveButton();
+                Background = accent,
+                CornerRadius = new Avalonia.CornerRadius(2),
+                Height = 13,
+                VerticalAlignment = VerticalAlignment.Center
+            });
+            var title = new TextBlock
+            {
+                Text = category.Key.CategoryName,
+                FontSize = 10.5,
+                FontWeight = FontWeight.SemiBold,
+                Foreground = accent,
+                VerticalAlignment = VerticalAlignment.Center
             };
+            Grid.SetColumn(title, 1);
+            header.Children.Add(title);
+            section.Children.Add(header);
 
-            _tagChips.Add((tag, btn));
-            TagsPanel.Children.Add(btn);
+            var chips = new WrapPanel { Orientation = Avalonia.Layout.Orientation.Horizontal };
+            foreach (var tag in category
+                         .OrderByDescending(tag => selectedTagIds.Contains(tag.Id))
+                         .ThenBy(tag => tag.Name, StringComparer.OrdinalIgnoreCase))
+            {
+                var isSelected = selectedTagIds.Contains(tag.Id);
+                var btn = CreateTagButton(tag, isSelected);
+                btn.IsCheckedChanged += (_, _) =>
+                {
+                    ApplyTagVisual(btn, tag);
+                    UpdateTagSummary();
+                    UpdateSaveButton();
+                };
+
+                _tagChips.Add((tag, btn));
+                chips.Children.Add(btn);
+            }
+
+            section.Children.Add(chips);
+            TagsPanel.Children.Add(section);
         }
 
         UpdateTagSummary();

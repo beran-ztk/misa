@@ -18,7 +18,21 @@ public partial class MultiSelectFilterControl : UserControl
     private readonly List<FilterItem> _items = [];
     private bool _updatingSelection;
 
-    private sealed record FilterItem(string Name, Control Row, CheckBox CheckBox, TextBlock CountText, Border CountBadge);
+    public sealed record FilterOption(
+        string Value,
+        string DisplayName,
+        string? GroupName = null,
+        string? GroupColor = null);
+
+    private sealed record FilterItem(
+        string Name,
+        string GroupName,
+        string? GroupColor,
+        int GroupIndex,
+        Control Row,
+        CheckBox CheckBox,
+        TextBlock CountText,
+        Border CountBadge);
 
     public string Placeholder { get; set; } = "All";
     public event EventHandler? SelectionChanged;
@@ -64,12 +78,22 @@ public partial class MultiSelectFilterControl : UserControl
 
     public void SetItems(IEnumerable<string> items)
     {
+        SetItems(items.Select(item => new FilterOption(item, item)));
+    }
+
+    public void SetItems(IEnumerable<FilterOption> items)
+    {
         _selected.Clear();
         _items.Clear();
         _itemsPanel.Children.Clear();
+        var groupIndexes = new Dictionary<(string Name, string? Color), int>();
         foreach (var item in items)
         {
-            var name = item;
+            var name = item.Value;
+            var groupName = item.GroupName ?? string.Empty;
+            var groupKey = (groupName, item.GroupColor);
+            if (!groupIndexes.TryGetValue(groupKey, out var groupIndex))
+                groupIndexes[groupKey] = groupIndex = groupIndexes.Count;
             var cb = new CheckBox
             {
                 VerticalAlignment = VerticalAlignment.Center,
@@ -86,7 +110,7 @@ public partial class MultiSelectFilterControl : UserControl
 
             var nameText = new TextBlock
             {
-                Text = name,
+                Text = item.DisplayName,
                 Foreground = new SolidColorBrush(Color.FromRgb(236, 243, 249)),
                 FontWeight = FontWeight.Medium,
                 VerticalAlignment = VerticalAlignment.Center,
@@ -137,9 +161,9 @@ public partial class MultiSelectFilterControl : UserControl
             row.Children.Add(nameText);
             row.Children.Add(countBadge);
 
-            _items.Add(new FilterItem(name, row, cb, countText, countBadge));
-            _itemsPanel.Children.Add(row);
+            _items.Add(new FilterItem(name, groupName, item.GroupColor, groupIndex, row, cb, countText, countBadge));
         }
+        RebuildItemsPanel(_items);
         UpdateText();
     }
 
@@ -173,13 +197,43 @@ public partial class MultiSelectFilterControl : UserControl
         }
 
         var sortedItems = _items
-            .OrderByDescending(item => counts.GetValueOrDefault(item.Name, 0))
+            .OrderBy(item => item.GroupIndex)
+            .ThenByDescending(item => counts.GetValueOrDefault(item.Name, 0))
             .ThenBy(item => item.Name, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
+        RebuildItemsPanel(sortedItems);
+    }
+
+    private void RebuildItemsPanel(IEnumerable<FilterItem> items)
+    {
         _itemsPanel.Children.Clear();
-        foreach (var item in sortedItems)
-            _itemsPanel.Children.Add(item.Row);
+        foreach (var group in items.GroupBy(item => item.GroupIndex))
+        {
+            var first = group.First();
+            if (!string.IsNullOrWhiteSpace(first.GroupName))
+            {
+                var header = new TextBlock
+                {
+                    Text = first.GroupName.ToUpperInvariant(),
+                    FontSize = 9.5,
+                    FontWeight = FontWeight.SemiBold,
+                    Foreground = ToBrush(first.GroupColor),
+                    Opacity = .88,
+                    Margin = new Thickness(0, 7, 0, 2)
+                };
+                _itemsPanel.Children.Add(header);
+            }
+
+            foreach (var item in group)
+                _itemsPanel.Children.Add(item.Row);
+        }
+    }
+
+    private static IBrush ToBrush(string? color)
+    {
+        try { return new SolidColorBrush(Color.Parse(string.IsNullOrWhiteSpace(color) ? "#A7AFB9" : color)); }
+        catch { return new SolidColorBrush(Color.Parse("#A7AFB9")); }
     }
 
     private void UpdateText()
