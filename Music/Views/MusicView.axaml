@@ -265,12 +265,12 @@
                      DoubleTapped="OnListDoubleTapped"
                      Background="#17191D"
                      BorderThickness="0"
-                     Padding="12,8">
+                     Padding="4,4">
                 <ListBox.ItemTemplate>
                     <DataTemplate x:DataType="models:TrackDisplayItem">
                         <Border Background="{Binding PlayingBackground}"
                                 CornerRadius="7"
-                                Padding="8,6">
+                                Padding="4,4">
                             <Grid ColumnDefinitions="4,52,*">
 
                                 <Border Grid.Column="0"
@@ -330,7 +330,7 @@
                                         </StackPanel>
                                         <TextBlock Grid.Column="1" Text="{Binding DurationText}"
                                                    FontSize="10.5" Opacity="0.56"
-                                                   Margin="14,0,0,0"
+                                                   Margin="0,0,8,0"
                                                    VerticalAlignment="Center"/>
                                     </Grid>
                                     <TextBlock Grid.Row="2" Text="{Binding ProfileText}"

@@ -72,6 +72,7 @@ public partial class MusicView : UserControl
         RatingFilter.SelectionChanged += (_, _) => ApplyFilter();
         FileList.SelectionChanged += (_, _) => UpdateReviewButton();
         PlayerBar.SizeChanged += (_, _) => UpdateSettingsLayout();
+        PlayerBar.SizeChanged += (_, _) => UpdateEditorBounds();
 
         // Volume
         VolumeSlider.ValueChanged += (_, _) =>
@@ -102,11 +103,24 @@ public partial class MusicView : UserControl
         };
         EditTrackOverlay.TrackSaved += RefreshTrackList;
         SettingsOverlay.ToastRequested += ShowToast;
+        SettingsOverlay.LibraryMetadataChanged += RefreshLibraryPresentation;
         SettingsOverlay.TrackCalibrationRequested += track =>
         {
             SettingsOverlay.IsVisible = false;
             EditTrackOverlay.Open(track);
         };
+    }
+
+    private void UpdateEditorBounds()
+    {
+        // The editor covers the toolbar and library, but deliberately stops above the player.
+        EditTrackOverlay.Margin = new Thickness(0, 0, 0, PlayerBar.Bounds.Height);
+    }
+
+    private void RefreshLibraryPresentation()
+    {
+        LoadLookups();
+        RefreshTrackList();
     }
 
     // ─── Track list ──────────────────────────────────────────────────────────

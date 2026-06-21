@@ -24,6 +24,7 @@ public partial class SettingsOverlay : UserControl
 
     public event Action<string>? ToastRequested;
     public event Action<MusicTrack>? TrackCalibrationRequested;
+    public event Action? LibraryMetadataChanged;
 
     public SettingsOverlay()
     {
@@ -181,6 +182,7 @@ public partial class SettingsOverlay : UserControl
         }
 
         UpdateSummary();
+        LibraryMetadataChanged?.Invoke();
         if (_mappingFilter != MappingFilter.All)
             RebuildMappingRows();
     }
@@ -254,7 +256,13 @@ public partial class SettingsOverlay : UserControl
             var remove = new Button { Content = "Delete", Padding = new Avalonia.Thickness(10, 4), Margin = new Avalonia.Thickness(6, 0, 0, 0), FontSize = 10 };
             save.Click += (_, _) =>
             {
-                try { MusicLibraryService.Current.RenameGenre(genre.Id, nameBox.Text ?? genre.Name); ToastRequested?.Invoke("Genre updated."); RebuildGenreRows(); }
+                try
+                {
+                    MusicLibraryService.Current.RenameGenre(genre.Id, nameBox.Text ?? genre.Name);
+                    ToastRequested?.Invoke("Genre updated.");
+                    RebuildGenreRows();
+                    LibraryMetadataChanged?.Invoke();
+                }
                 catch (Exception exception) { ToastRequested?.Invoke($"Could not update genre: {exception.Message}"); }
             };
             remove.Click += (_, _) =>
@@ -262,6 +270,7 @@ public partial class SettingsOverlay : UserControl
                 var error = MusicLibraryService.Current.DeleteGenreIfUnused(genre.Id);
                 ToastRequested?.Invoke(error ?? "Genre deleted.");
                 RebuildGenreRows();
+                if (error is null) LibraryMetadataChanged?.Invoke();
             };
             Grid.SetColumn(save, 1); Grid.SetColumn(remove, 2);
             row.Children.Add(nameBox); row.Children.Add(save); row.Children.Add(remove);
@@ -273,7 +282,14 @@ public partial class SettingsOverlay : UserControl
     {
         var name = NewGenreBox.Text?.Trim() ?? string.Empty;
         if (name.Length == 0) return;
-        try { MusicLibraryService.Current.AddGenre(name); NewGenreBox.Text = string.Empty; RebuildGenreRows(); ToastRequested?.Invoke("Genre added."); }
+        try
+        {
+            MusicLibraryService.Current.AddGenre(name);
+            NewGenreBox.Text = string.Empty;
+            RebuildGenreRows();
+            ToastRequested?.Invoke("Genre added.");
+            LibraryMetadataChanged?.Invoke();
+        }
         catch (Exception exception) { ToastRequested?.Invoke($"Could not add genre: {exception.Message}"); }
     }
 
