@@ -996,6 +996,7 @@ public partial class MusicView : UserControl
         _lastListeningPositionSeconds = 0;
         _unflushedListeningSeconds = 0;
         MusicLibraryService.Current.RecordTrackPlaybackStarted(trackId);
+        EditTrackOverlay.RefreshUsageStats();
     }
 
     private void RecordListeningProgress()
@@ -1019,6 +1020,7 @@ public partial class MusicView : UserControl
         FlushListeningSeconds(force: true);
         if (markSkipped)
             MusicLibraryService.Current.RecordTrackSkip(_listeningTrackId);
+        EditTrackOverlay.RefreshUsageStats();
         _listeningTrackId = -1;
         _lastListeningPositionSeconds = 0;
         _unflushedListeningSeconds = 0;
@@ -1030,6 +1032,7 @@ public partial class MusicView : UserControl
         if (wholeSeconds < (force ? 1 : 5)) return;
         MusicLibraryService.Current.AddTrackListenedSeconds(_listeningTrackId, wholeSeconds);
         _unflushedListeningSeconds -= wholeSeconds;
+        EditTrackOverlay.RefreshUsageStats();
     }
 
     // ─── Upcoming bar ─────────────────────────────────────────────────────────

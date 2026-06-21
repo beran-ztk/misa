@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -38,6 +39,9 @@ public class MusicLibraryService
     public void RecordTrackPlaybackStarted(int trackId) => _db.RecordTrackPlaybackStarted(trackId);
     public void AddTrackListenedSeconds(int trackId, int seconds) => _db.AddTrackListenedSeconds(trackId, seconds);
     public void RecordTrackSkip(int trackId) => _db.RecordTrackSkip(trackId);
+    public TrackUsageStats GetTrackUsageStats(int trackId) => _db.GetTrackUsageStats(trackId);
+    public TimeSpan? EstimateAnalysisDuration(int? trackDurationSeconds, long? fileSizeBytes) =>
+        _db.EstimateAnalysisDuration(trackDurationSeconds, fileSizeBytes);
 
     public Task<string?> DeleteTrackAsync(MusicTrack track)
     {
@@ -147,14 +151,16 @@ public class MusicLibraryService
         var fileName = Path.GetFileName(filePath);
         var duration = await _downloader.GetDurationAsync(filePath);
         var metadata = await _downloader.GetMetadataAsync(canonicalUrl);
+        var fileSizeBytes = new FileInfo(filePath).Length;
         var trackId = _db.InsertTrack(canonicalUrl, metadata?.Title ?? _downloader.TitleFromFileName(fileName), fileName,
-            request.GenreIds, request.RatingId, request.StyleIds, duration, metadata);
+            request.GenreIds, request.RatingId, request.StyleIds, duration, fileSizeBytes, metadata);
 
-        progress?.Report("Analyzing genres with Discogs-MAEST…");
+        progress?.Report(AnalysisProgressText(duration, fileSizeBytes));
+        var stopwatch = Stopwatch.StartNew();
         var (analysis, analysisError) = await _analysis.AnalyzeAsync(filePath);
         if (analysis is not null)
         {
-            _db.SaveTrackAnalysis(trackId, analysis);
+            _db.SaveTrackAnalysis(trackId, analysis, (int)stopwatch.ElapsedMilliseconds);
             CacheExperimentalAnalysis(trackId, analysis);
             return new DownloadResult(true);
         }
@@ -184,13 +190,15 @@ public class MusicLibraryService
         var fileName = Path.GetFileName(filePath);
         var duration = await _downloader.GetDurationAsync(filePath);
         var metadata = await _downloader.GetMetadataAsync(canonicalUrl);
+        var fileSizeBytes = new FileInfo(filePath).Length;
         var trackId = _db.InsertTrack(canonicalUrl, metadata?.Title ?? _downloader.TitleFromFileName(fileName), fileName,
-            [], null, [], duration, metadata);
-        progress?.Report("Analyzing track…");
+            [], null, [], duration, fileSizeBytes, metadata);
+        progress?.Report(AnalysisProgressText(duration, fileSizeBytes));
+        var stopwatch = Stopwatch.StartNew();
         var (analysis, analysisError) = await _analysis.AnalyzeAsync(filePath);
         if (analysis is not null)
         {
-            _db.SaveTrackAnalysis(trackId, analysis);
+            _db.SaveTrackAnalysis(trackId, analysis, (int)stopwatch.ElapsedMilliseconds);
             CacheExperimentalAnalysis(trackId, analysis);
         }
         else
@@ -205,10 +213,11 @@ public class MusicLibraryService
     public async Task<string?> AnalyzeTrackAsync(MusicTrack track)
     {
         var filePath = Path.Combine(Values.TracksDirectory, track.FileName);
+        var stopwatch = Stopwatch.StartNew();
         var (analysis, error) = await _analysis.AnalyzeAsync(filePath);
         if (analysis is not null)
         {
-            _db.SaveTrackAnalysis(track.Id, analysis);
+            _db.SaveTrackAnalysis(track.Id, analysis, (int)stopwatch.ElapsedMilliseconds);
             CacheExperimentalAnalysis(track.Id, analysis);
             return null;
         }
@@ -219,6 +228,18 @@ public class MusicLibraryService
 
     private void CacheExperimentalAnalysis(int trackId, TrackAnalysisResult analysis) =>
         _experimentalAnalysis[trackId] = analysis.ExperimentalModels ?? [];
+
+    private string AnalysisProgressText(int? durationSeconds, long fileSizeBytes)
+    {
+        var estimate = EstimateAnalysisDuration(durationSeconds, fileSizeBytes);
+        return estimate is null
+            ? "Analyzing track…"
+            : $"Analyzing track… usually about {FormatEstimate(estimate.Value)}";
+    }
+
+    private static string FormatEstimate(TimeSpan duration) => duration.TotalMinutes >= 1
+        ? $"{Math.Ceiling(duration.TotalMinutes):0} min"
+        : $"{Math.Max(1, Math.Round(duration.TotalSeconds)):0} sec";
 
     private async Task<(bool Success, string ErrorOutput)> DownloadWithSingleRetryAsync(
         string canonicalUrl,

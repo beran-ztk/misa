@@ -80,7 +80,15 @@ public partial class ImportOverlay : UserControl
         _startedAt = DateTime.UtcNow;
         BusyElapsedText.Text = "0:00";
         _elapsedTimer.Start();
-        var progress = new Progress<string>(message => BusyText.Text = message);
+        var progress = new Progress<string>(message =>
+        {
+            BusyText.Text = message;
+            if (message.StartsWith("Analyzing", StringComparison.OrdinalIgnoreCase))
+            {
+                _startedAt = DateTime.UtcNow;
+                BusyElapsedText.Text = "0:00";
+            }
+        });
         var result = await MusicLibraryService.Current.ImportFromYouTubeAsync(_canonicalUrl, progress);
         BusyPanel.IsVisible = false;
         _elapsedTimer.Stop();

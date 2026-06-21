@@ -92,6 +92,7 @@ public class MusicDatabase
                 listened_seconds    INTEGER NOT NULL DEFAULT 0,
                 skip_count          INTEGER NOT NULL DEFAULT 0,
                 last_listened_at    TEXT NULL,
+                file_size_bytes     INTEGER NULL,
                 needs_reevaluation  INTEGER NOT NULL DEFAULT 0,
                 notes               TEXT NULL
             );
@@ -114,7 +115,8 @@ public class MusicDatabase
                 bpm               REAL NULL,
                 integrated_loudness REAL NULL,
                 loudness_range    REAL NULL,
-                danceability      REAL NULL
+                danceability      REAL NULL,
+                analysis_duration_ms INTEGER NULL
             );
 
             CREATE TABLE model_genres (
@@ -178,9 +180,16 @@ public class MusicDatabase
 
     private static void ApplyMigrations(SqliteConnection conn)
     {
-        if (ColumnExists(conn, "tracks", "listened_seconds")) return;
+        EnsureColumn(conn, "tracks", "listened_seconds", "INTEGER NOT NULL DEFAULT 0");
+        EnsureColumn(conn, "tracks", "file_size_bytes", "INTEGER NULL");
+        EnsureColumn(conn, "track_analysis", "analysis_duration_ms", "INTEGER NULL");
+    }
+
+    private static void EnsureColumn(SqliteConnection conn, string table, string column, string definition)
+    {
+        if (ColumnExists(conn, table, column)) return;
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = "ALTER TABLE tracks ADD COLUMN listened_seconds INTEGER NOT NULL DEFAULT 0";
+        cmd.CommandText = $"ALTER TABLE {table} ADD COLUMN {column} {definition}";
         cmd.ExecuteNonQuery();
     }
 
@@ -218,6 +227,49 @@ public class MusicDatabase
         ExecuteNonQuery(conn,
             "UPDATE tracks SET skip_count = skip_count + 1 WHERE id = $trackId",
             ("$trackId", trackId));
+    }
+
+    public TrackUsageStats GetTrackUsageStats(int trackId)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"SELECT listen_count, listened_seconds, skip_count, last_listened_at
+                            FROM tracks WHERE id = $trackId";
+        cmd.Parameters.AddWithValue("$trackId", trackId);
+        using var reader = cmd.ExecuteReader();
+        return reader.Read()
+            ? new TrackUsageStats(reader.GetInt32(0), reader.GetInt32(1), reader.GetInt32(2), reader.IsDBNull(3) ? null : reader.GetString(3))
+            : new TrackUsageStats(0, 0, 0, null);
+    }
+
+    public TimeSpan? EstimateAnalysisDuration(int? trackDurationSeconds, long? fileSizeBytes)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"SELECT tracks.duration_seconds, tracks.file_size_bytes, analysis.analysis_duration_ms
+                            FROM track_analysis analysis JOIN tracks ON tracks.id = analysis.track_id
+                            WHERE analysis.analysis_duration_ms IS NOT NULL
+                            ORDER BY analysis.analyzed_at DESC LIMIT 30";
+        using var reader = cmd.ExecuteReader();
+        var samples = new List<(int? Duration, long? Size, int Milliseconds)>();
+        while (reader.Read())
+            samples.Add((reader.IsDBNull(0) ? null : reader.GetInt32(0), reader.IsDBNull(1) ? null : reader.GetInt64(1), reader.GetInt32(2)));
+        if (samples.Count == 0) return null;
+
+        var estimates = new List<double> { samples.Average(sample => (double)sample.Milliseconds) };
+        if (trackDurationSeconds is > 0)
+        {
+            var durationRates = samples.Where(sample => sample.Duration is > 0)
+                .Select(sample => sample.Milliseconds / (double)sample.Duration!.Value).ToList();
+            if (durationRates.Count > 0) estimates.Add(durationRates.Average() * trackDurationSeconds.Value);
+        }
+        if (fileSizeBytes is > 0)
+        {
+            var sizeRates = samples.Where(sample => sample.Size is > 0)
+                .Select(sample => sample.Milliseconds / (sample.Size!.Value / 1_000_000d)).ToList();
+            if (sizeRates.Count > 0) estimates.Add(sizeRates.Average() * (fileSizeBytes.Value / 1_000_000d));
+        }
+        return TimeSpan.FromMilliseconds(Math.Clamp(estimates.Average(), 3_000, 15 * 60_000));
     }
 
     private static void SeedDefaultMetadata(SqliteConnection conn, SqliteTransaction tx)
@@ -281,7 +333,7 @@ public class MusicDatabase
     }
 
     public int InsertTrack(string canonicalUrl, string title, string fileName,
-        List<int> genreIds, int? ratingId, List<int> _, int? durationSeconds, YouTubeTrackMetadata? metadata = null)
+        List<int> genreIds, int? ratingId, List<int> _, int? durationSeconds, long? fileSizeBytes, YouTubeTrackMetadata? metadata = null)
     {
         using var conn = Open();
         using var tx = conn.BeginTransaction();
@@ -299,8 +351,8 @@ public class MusicDatabase
         }
 
         var trackId = InsertAndGetId(conn, tx, @"
-            INSERT INTO tracks (canonical_url, title, file_name, channel_id, rating_id, uploaded_at, downloaded_at, updated_at, duration_seconds)
-            VALUES ($url, $title, $fileName, $channelId, $ratingId, $uploadedAt, $downloadedAt, $updatedAt, $duration)",
+            INSERT INTO tracks (canonical_url, title, file_name, channel_id, rating_id, uploaded_at, downloaded_at, updated_at, duration_seconds, file_size_bytes)
+            VALUES ($url, $title, $fileName, $channelId, $ratingId, $uploadedAt, $downloadedAt, $updatedAt, $duration, $fileSizeBytes)",
             ("$url", canonicalUrl),
             ("$title", title),
             ("$fileName", fileName),
@@ -309,33 +361,36 @@ public class MusicDatabase
             ("$uploadedAt", metadata?.UploadedAt),
             ("$downloadedAt", now),
             ("$updatedAt", now),
-            ("$duration", durationSeconds));
+            ("$duration", durationSeconds),
+            ("$fileSizeBytes", fileSizeBytes));
 
         InsertTrackGenres(conn, tx, trackId, genreIds, GetAssignmentSourceId(conn, tx, ManualAssignmentSourceKey), now);
         tx.Commit();
         return (int)trackId;
     }
 
-    public void SaveTrackAnalysis(int trackId, TrackAnalysisResult analysis)
+    public void SaveTrackAnalysis(int trackId, TrackAnalysisResult analysis, int? analysisDurationMilliseconds = null)
     {
         using var conn = Open();
         using var tx = conn.BeginTransaction();
 
         ExecuteInsert(conn, tx, @"
-            INSERT INTO track_analysis (track_id, analyzed_at, analyzer_name, bpm, integrated_loudness, loudness_range)
-            VALUES ($trackId, $analyzedAt, $analyzerName, $bpm, $loudness, $loudnessRange)
+            INSERT INTO track_analysis (track_id, analyzed_at, analyzer_name, bpm, integrated_loudness, loudness_range, analysis_duration_ms)
+            VALUES ($trackId, $analyzedAt, $analyzerName, $bpm, $loudness, $loudnessRange, $analysisDurationMs)
             ON CONFLICT(track_id) DO UPDATE SET
                 analyzed_at = excluded.analyzed_at,
                 analyzer_name = excluded.analyzer_name,
                 bpm = excluded.bpm,
                 integrated_loudness = excluded.integrated_loudness,
-                loudness_range = excluded.loudness_range",
+                loudness_range = excluded.loudness_range,
+                analysis_duration_ms = excluded.analysis_duration_ms",
             ("$trackId", trackId),
             ("$analyzedAt", DateTime.UtcNow.ToString("O")),
             ("$analyzerName", analysis.AnalyzerName),
             ("$bpm", analysis.Bpm),
             ("$loudness", analysis.IntegratedLoudness),
-            ("$loudnessRange", analysis.LoudnessRange));
+            ("$loudnessRange", analysis.LoudnessRange),
+            ("$analysisDurationMs", analysisDurationMilliseconds));
 
         var analysisId = GetTrackAnalysisId(conn, tx, trackId);
         ExecuteInsert(conn, tx,

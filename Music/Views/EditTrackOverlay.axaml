@@ -151,6 +151,13 @@
                             </StackPanel>
                         </Grid>
 
+                        <Border x:Name="TrackUsageFooter" IsVisible="False"
+                                BorderBrush="#26313A" BorderThickness="0,1,0,0"
+                                Padding="0,10,0,0" Margin="0,4,40,0">
+                            <TextBlock x:Name="TrackUsageText" FontSize="10.5" Opacity="0.58"
+                                       TextTrimming="CharacterEllipsis" />
+                        </Border>
+
                         <Border Height="50" />
                     </StackPanel>
                 </ScrollViewer>
@@ -167,6 +174,7 @@
                                 <TextBlock x:Name="AnalysisElapsedText" Grid.Column="1" Text="0:00" FontSize="13" FontWeight="SemiBold" Foreground="#65BCEB"/>
                             </Grid>
                             <ProgressBar IsIndeterminate="True" Height="5" Foreground="#1E9AF0" Background="#26313A"/>
+                            <TextBlock x:Name="AnalysisEstimateText" FontSize="10.5" Opacity="0.62" TextAlignment="Center" TextWrapping="Wrap" />
                             <TextBlock Text="Elapsed time" FontSize="10" Opacity="0.48" HorizontalAlignment="Right" Margin="0,-7,0,0"/>
                         </StackPanel>
                     </Border>

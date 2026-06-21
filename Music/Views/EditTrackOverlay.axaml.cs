@@ -94,7 +94,25 @@ public partial class EditTrackOverlay : UserControl
         ShowModelPredictions(track, applyMappedGenres: false);
         ShowAudioAnalysis(track);
         ShowSoundProfile(track);
+        ShowUsageStats(track);
         UpdateSaveButton();
+    }
+
+    public void RefreshUsageStats()
+    {
+        if (_track is not null)
+            ShowUsageStats(_track);
+    }
+
+    private void ShowUsageStats(MusicTrack track)
+    {
+        var usage = MusicLibraryService.Current.GetTrackUsageStats(track.Id);
+        TrackUsageFooter.IsVisible = usage.PlayCount > 0 || usage.ListenedSeconds > 0 || usage.SkipCount > 0;
+        if (!TrackUsageFooter.IsVisible) return;
+        var listened = usage.ListenedSeconds >= 60
+            ? $"{usage.ListenedSeconds / 60} min listened"
+            : $"{usage.ListenedSeconds} sec listened";
+        TrackUsageText.Text = $"Listening · {usage.PlayCount} plays · {listened} · {usage.SkipCount} skips";
     }
 
     private void RebuildGenreChips(IReadOnlySet<int> selectedGenreIds)
@@ -270,6 +288,12 @@ public partial class EditTrackOverlay : UserControl
         AnalysisBusyLayer.IsVisible = true;
         _analysisStartedAt = DateTime.UtcNow;
         AnalysisElapsedText.Text = "0:00";
+        var filePath = System.IO.Path.Combine(Values.TracksDirectory, track.FileName);
+        var fileSize = System.IO.File.Exists(filePath) ? new System.IO.FileInfo(filePath).Length : 0;
+        var estimate = MusicLibraryService.Current.EstimateAnalysisDuration(track.DurationSeconds, fileSize);
+        AnalysisEstimateText.Text = estimate is null
+            ? "Building an estimate from completed analyses."
+            : $"Typical time for similar tracks: about {FormatEstimate(estimate.Value)}";
         _analysisElapsedTimer.Start();
         SaveBtn.IsEnabled = false;
         var error = await MusicLibraryService.Current.AnalyzeTrackAsync(track);
@@ -284,6 +308,10 @@ public partial class EditTrackOverlay : UserControl
         ShowSoundProfile(track);
         UpdateSaveButton();
     }
+
+    private static string FormatEstimate(TimeSpan duration) => duration.TotalMinutes >= 1
+        ? $"{Math.Ceiling(duration.TotalMinutes):0} min"
+        : $"{Math.Max(1, Math.Round(duration.TotalSeconds)):0} sec";
 
     private void ShowAudioAnalysis(MusicTrack track)
     {
