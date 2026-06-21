@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
@@ -32,7 +31,6 @@ public partial class EditTrackOverlay : UserControl
     private Dictionary<int, ModelSubgenre> _modelSubgenresById = [];
     private Dictionary<int, string> _modelGenreNamesById = [];
     private Dictionary<int, List<ModelSubgenreDistinction>> _distinctionsBySubgenreId = [];
-    private CancellationTokenSource? _analysisPreviewCancellation;
     private readonly Dictionary<string, string?> _pendingAttributeOverrides = [];
     private bool _buildingSoundProfile;
     private readonly DispatcherTimer _analysisElapsedTimer = new() { Interval = TimeSpan.FromSeconds(1) };
@@ -62,7 +60,6 @@ public partial class EditTrackOverlay : UserControl
         LoadLookups();
         Prefill(track);
         IsVisible = true;
-        StartModelAnalysisPreview();
         if (analyzeAfterOpening)
             _ = AnalyzeImportedTrackAsync(track);
     }
@@ -104,7 +101,6 @@ public partial class EditTrackOverlay : UserControl
         RebuildTagChips(selectedTagIds);
         ShowTagSuggestions(track);
         RebuildStyleChips(selectedStyleIds);
-        ShowModelPredictions(track, applyMappedGenres: false);
         ShowAudioAnalysis(track);
         ShowSoundProfile(track);
         ShowUsageStats(track);
@@ -519,8 +515,6 @@ public partial class EditTrackOverlay : UserControl
         var error = await MusicLibraryService.Current.AnalyzeTrackAsync(track);
         _analysisElapsedTimer.Stop();
         AnalysisBusyLayer.IsVisible = false;
-        ShowModelPredictions(track, applyMappedGenres: error is null);
-        StartModelAnalysisPreview();
         ShowModelSelectedGenres(track);
         ShowDetectedGenres(track);
         RebuildGenreChips(SelectedGenreIds());
@@ -853,86 +847,6 @@ public partial class EditTrackOverlay : UserControl
         _ => "High dynamics — strong contrast across the track."
     };
 
-    private void ShowModelPredictions(MusicTrack track, bool applyMappedGenres)
-    {
-        const double displayThreshold = 0.1;
-        var predictions = MusicLibraryService.Current.GetTrackGenrePredictions(track.Id)
-            .Where(prediction => prediction.Score > displayThreshold)
-            .ToList();
-        var experimentalModels = MusicLibraryService.Current.GetExperimentalAnalysis(track.Id);
-
-        AnalysisButton.IsVisible = predictions.Count > 0 || experimentalModels.Count > 0;
-        if (!AnalysisButton.IsVisible)
-            AnalysisPopup.IsOpen = false;
-
-        var sections = new List<string>();
-        if (predictions.Count > 0)
-        {
-            sections.Add("Genres\n" + string.Join("\n", predictions.Select(prediction =>
-                $"{prediction.ModelGenreName} → {prediction.ModelSubgenreName}  ({prediction.Score:0.###})")));
-        }
-        if (experimentalModels.Count > 0)
-        {
-            sections.Add("Experimental output — not saved\n" + string.Join("\n\n", experimentalModels
-                .OrderBy(model => model.Family)
-                .ThenBy(model => model.Category)
-                .ThenBy(model => model.Model)
-                .Select(FormatExperimentalModel)));
-        }
-
-        ModelPredictionsText.Text = string.Join("\n\n", sections);
-
-    }
-
-    private static string FormatExperimentalModel(ExperimentalAnalysisModel model)
-    {
-        IEnumerable<ExperimentalAnalysisValue> orderedValues = model.Values.OrderByDescending(value => value.Score);
-        var isMoodThemeModel = model.Model.Equals("mtg_jamendo_moodtheme", StringComparison.OrdinalIgnoreCase);
-        if (isMoodThemeModel)
-            orderedValues = orderedValues.Take(5);
-        var values = string.Join("\n", orderedValues
-            .Select(value => $"  {value.Label}: {value.Score:0.###}"));
-        var suffix = isMoodThemeModel ? " (top 5)" : string.Empty;
-        return $"{model.Category} · {model.Model}{suffix}\n{values}";
-    }
-
-    private void OnAnalysisButtonClicked(object? sender, RoutedEventArgs e)
-    {
-        _analysisPreviewCancellation?.Cancel();
-        AnalysisPopup.IsOpen = !AnalysisPopup.IsOpen;
-    }
-
-    private void OnEditorPressed(object? sender, PointerPressedEventArgs e)
-    {
-        if (e.Source != AnalysisButton)
-            AnalysisPopup.IsOpen = false;
-    }
-
-    private void StartModelAnalysisPreview()
-    {
-        _analysisPreviewCancellation?.Cancel();
-        if (!AnalysisButton.IsVisible)
-            return;
-
-        var cancellation = _analysisPreviewCancellation = new CancellationTokenSource();
-        AnalysisPopup.IsOpen = true;
-        _ = CloseAnalysisPreviewAfterDelayAsync(cancellation.Token);
-    }
-
-    private async System.Threading.Tasks.Task CloseAnalysisPreviewAfterDelayAsync(CancellationToken cancellationToken)
-    {
-        try
-        {
-            await System.Threading.Tasks.Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
-            if (!cancellationToken.IsCancellationRequested)
-                AnalysisPopup.IsOpen = false;
-        }
-        catch (OperationCanceledException)
-        {
-            // A manual toggle or a closed editor cancels the temporary preview.
-        }
-    }
-
     private void ShowModelSelectedGenres(MusicTrack track)
     {
         LoadModelMetadata();
@@ -1116,8 +1030,6 @@ public partial class EditTrackOverlay : UserControl
             PreviewClosed?.Invoke();
         }
         _analysisElapsedTimer.Stop();
-        _analysisPreviewCancellation?.Cancel();
-        AnalysisPopup.IsOpen = false;
         IsVisible = false;
         _track = null;
     }
