@@ -102,6 +102,7 @@ public partial class EditTrackOverlay : UserControl
         ShowDetectedGenres(track);
         RebuildGenreChips(selectedGenreIds);
         RebuildTagChips(selectedTagIds);
+        ShowTagSuggestions(track);
         RebuildStyleChips(selectedStyleIds);
         ShowModelPredictions(track, applyMappedGenres: false);
         ShowAudioAnalysis(track);
@@ -320,6 +321,82 @@ public partial class EditTrackOverlay : UserControl
             : $"{selectedCount} selected";
     }
 
+    private void ShowTagSuggestions(MusicTrack track)
+    {
+        var suggestions = MusicLibraryService.Current.GetTrackTagSuggestions(track.Id);
+        SuggestedTagsSection.IsVisible = suggestions.Count > 0;
+        SuggestedTagsPanel.Children.Clear();
+        foreach (var suggestion in suggestions)
+        {
+            var accent = SafeBrush(suggestion.CategoryColor, "#65BCEB");
+            var row = new Border
+            {
+                Background = new SolidColorBrush(Color.Parse("#161C22")),
+                BorderBrush = accent,
+                BorderThickness = new Avalonia.Thickness(1),
+                CornerRadius = new Avalonia.CornerRadius(4),
+                Padding = new Avalonia.Thickness(8, 5)
+            };
+            var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto,Auto"), ColumnSpacing = 8 };
+            var tag = new TextBlock
+            {
+                Text = suggestion.TagName,
+                FontSize = 11,
+                FontWeight = FontWeight.SemiBold,
+                Foreground = accent,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            ToolTip.SetTip(tag, $"{suggestion.CategoryName}\n{suggestion.SourceType} · {suggestion.SourceKey}");
+            var evidence = new TextBlock
+            {
+                Text = $"{suggestion.SourceType} · {suggestion.SourceKey}  {suggestion.Score:0.##}",
+                FontSize = 10,
+                Opacity = .62,
+                VerticalAlignment = VerticalAlignment.Center,
+                TextTrimming = TextTrimming.CharacterEllipsis
+            };
+            var accept = new Button
+            {
+                Content = "Add",
+                FontSize = 10,
+                Padding = new Avalonia.Thickness(9, 3),
+                Background = new SolidColorBrush(Color.Parse("#153B54")),
+                BorderBrush = accent
+            };
+            var reject = new Button
+            {
+                Content = "×",
+                FontSize = 12,
+                Padding = new Avalonia.Thickness(7, 1),
+                Background = new SolidColorBrush(Colors.Transparent),
+                Opacity = .65
+            };
+            accept.Click += (_, _) =>
+            {
+                MusicLibraryService.Current.AcceptTrackTagSuggestion(
+                    track.Id, suggestion.TagId, suggestion.SourceType, suggestion.SourceKey);
+                RebuildTagChips(MusicLibraryService.Current.GetTrackTagIds(track.Id).ToHashSet());
+                ShowTagSuggestions(track);
+                TrackSaved?.Invoke();
+            };
+            reject.Click += (_, _) =>
+            {
+                MusicLibraryService.Current.RejectTrackTagSuggestion(
+                    track.Id, suggestion.TagId, suggestion.SourceType, suggestion.SourceKey);
+                ShowTagSuggestions(track);
+            };
+            Grid.SetColumn(evidence, 1);
+            Grid.SetColumn(accept, 2);
+            Grid.SetColumn(reject, 3);
+            grid.Children.Add(tag);
+            grid.Children.Add(evidence);
+            grid.Children.Add(accept);
+            grid.Children.Add(reject);
+            row.Child = grid;
+            SuggestedTagsPanel.Children.Add(row);
+        }
+    }
+
     private void RebuildStyleChips(IReadOnlySet<int>? selectedStyleIds = null)
     {
         var selectedGenreIds = SelectedGenreIds();
@@ -447,6 +524,7 @@ public partial class EditTrackOverlay : UserControl
         ShowModelSelectedGenres(track);
         ShowDetectedGenres(track);
         RebuildGenreChips(SelectedGenreIds());
+        ShowTagSuggestions(track);
         ShowAudioAnalysis(track);
         ShowSoundProfile(track);
         UpdateSaveButton();

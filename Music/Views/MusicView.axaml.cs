@@ -243,16 +243,12 @@ public partial class MusicView : UserControl
                 .Cast<Tag>()
                 .OrderBy(tag => tagOrder.GetValueOrDefault(tag.Id, int.MaxValue))
                 .ToList();
-            var visibleTags = trackTags
-                .Take(3)
+            var tagDisplays = trackTags
                 .Select(tag => new TrackTagDisplay(
                     tag.Name,
                     tag.CategoryName,
                     CategoryBrush(tag.CategoryColor)))
                 .ToList();
-            var moreTagsText = trackTags.Count > visibleTags.Count
-                ? $"+{trackTags.Count - visibleTags.Count}"
-                : string.Empty;
             var ratingName = t.RatingId is int ratingId ? ratingMap.GetValueOrDefault(ratingId, "") : "Not rated";
             var durationText = t.DurationSeconds.HasValue ? FormatDuration(t.DurationSeconds.Value) : "";
             var attributes = MusicLibraryService.Current.GetTrackDerivedAttributes(t.Id);
@@ -260,7 +256,7 @@ public partial class MusicView : UserControl
                 .Where(attribute => attribute.Key is "emotional_tone" or "energy_context" or "intensity" or "vocal_presence")
                 .Select(attribute => $"{ProfileAttributeName(attribute.Key)} {attribute.EffectiveValue}"));
             
-            return new TrackDisplayItem(t, genreStr, manualGenreStr, styleStr, durationText, ratingName, profileText, visibleTags, moreTagsText, t.ChannelName ?? "")
+            return new TrackDisplayItem(t, genreStr, manualGenreStr, styleStr, durationText, ratingName, profileText, tagDisplays, t.ChannelName ?? "")
             {
                 NeedsReview = t.NeedsReview
             };

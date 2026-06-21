@@ -26,6 +26,30 @@ public record TrackTag(
     string Source,
     double? Strength,
     double? Confidence);
+public record TagSignalSource(string ModelName, string SignalKey, string Description)
+{
+    public string DisplayName => $"{ModelName} · {SignalKey}";
+}
+public record TagRule(
+    int Id,
+    int TagId,
+    string TagName,
+    string CategoryName,
+    string? CategoryColor,
+    string SourceType,
+    string SourceKey,
+    double Threshold,
+    bool AutoAssign,
+    bool Enabled);
+public record TrackTagSuggestion(
+    int TagId,
+    string TagName,
+    string CategoryName,
+    string? CategoryColor,
+    string SourceType,
+    string SourceKey,
+    double Score,
+    string State);
 public record Style(int Id, string Name);
 public record Rating(int Id, string Name, int SortOrder);
 public record TrackUsageStats(int PlayCount, int ListenedSeconds, int SkipCount, string? LastListenedAt);

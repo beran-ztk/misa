@@ -338,34 +338,17 @@
                                                    Margin="0,0,8,0"
                                                    VerticalAlignment="Center"/>
                                     </Grid>
-                                    <StackPanel Grid.Row="2"
-                                                Orientation="Horizontal"
-                                                Spacing="0">
-                                        <TextBlock Text="{Binding ProfileText}"
+                                    <Grid Grid.Row="2" ColumnDefinitions="Auto,*">
+                                        <TextBlock Grid.Column="0"
+                                                   Text="{Binding ProfileText}"
                                                    FontSize="10.5" Foreground="#A9BAC8" Opacity="0.62"
+                                                   MaxWidth="360"
                                                    TextTrimming="CharacterEllipsis"/>
-                                        <ItemsControl ItemsSource="{Binding VisibleTags}"
-                                                      Margin="8,0,0,0">
-                                            <ItemsControl.ItemsPanel>
-                                                <ItemsPanelTemplate>
-                                                    <StackPanel Orientation="Horizontal"/>
-                                                </ItemsPanelTemplate>
-                                            </ItemsControl.ItemsPanel>
-                                            <ItemsControl.ItemTemplate>
-                                                <DataTemplate x:DataType="models:TrackTagDisplay">
-                                                    <TextBlock Text="{Binding Name}"
-                                                               Foreground="{Binding Foreground}"
-                                                               FontSize="10.5"
-                                                               FontWeight="SemiBold"
-                                                               ToolTip.Tip="{Binding CategoryName}"
-                                                               Margin="0,0,8,0"/>
-                                                </DataTemplate>
-                                            </ItemsControl.ItemTemplate>
-                                        </ItemsControl>
-                                        <TextBlock Text="{Binding MoreTagsText}"
-                                                   FontSize="10.5" Opacity="0.5"
-                                                   VerticalAlignment="Center"/>
-                                    </StackPanel>
+                                        <views:TrackTagSummaryControl Tags="{Binding TagDisplays}"
+                                                                      Grid.Column="1"
+                                                                      Margin="8,0,0,0"
+                                                                      HorizontalAlignment="Stretch"/>
+                                    </Grid>
                                 </Grid>
 
                             </Grid>

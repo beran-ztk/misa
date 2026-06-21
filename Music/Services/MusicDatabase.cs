@@ -972,6 +972,7 @@ public class MusicDatabase
         SaveDerivedAttributes(conn, tx, analysisId, DeriveAttributes(analysis.ExperimentalModels ?? []));
 
         RefreshModelGenres(conn, tx, trackId);
+        RefreshTagSuggestions(conn, tx, trackId, analysisId);
 
         tx.Commit();
     }
@@ -1354,6 +1355,142 @@ public class MusicDatabase
         tx.Commit();
     }
 
+    public List<TagSignalSource> GetTagSignalSources()
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+            SELECT model_name, signal_key, MAX(description)
+            FROM track_analysis_signals
+            GROUP BY model_name, signal_key
+            ORDER BY model_name, signal_key";
+        using var reader = cmd.ExecuteReader();
+        var sources = new List<TagSignalSource>();
+        while (reader.Read())
+            sources.Add(new TagSignalSource(reader.GetString(0), reader.GetString(1), reader.GetString(2)));
+        return sources;
+    }
+
+    public List<TagRule> GetTagRules()
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+            SELECT rules.id, tags.id, tags.name, categories.name, categories.color,
+                   rules.source_type, rules.source_key, rules.threshold, rules.auto_assign, rules.enabled
+            FROM tag_rules rules
+            JOIN tags ON tags.id = rules.tag_id
+            JOIN tag_categories categories ON categories.id = tags.category_id
+            ORDER BY categories.sort_order, categories.name, tags.name, rules.source_type, rules.source_key";
+        using var reader = cmd.ExecuteReader();
+        var rules = new List<TagRule>();
+        while (reader.Read())
+            rules.Add(new TagRule(
+                reader.GetInt32(0), reader.GetInt32(1), reader.GetString(2), reader.GetString(3),
+                reader.IsDBNull(4) ? null : reader.GetString(4),
+                reader.GetString(5), reader.GetString(6), reader.GetDouble(7),
+                reader.GetInt32(8) != 0, reader.GetInt32(9) != 0));
+        return rules;
+    }
+
+    public void AddTagRule(int tagId, string sourceType, string sourceKey, double threshold)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+            INSERT INTO tag_rules (tag_id, source_type, source_key, threshold, auto_assign, enabled)
+            VALUES ($tagId, $sourceType, $sourceKey, $threshold, 0, 1)
+            ON CONFLICT(tag_id, source_type, source_key) DO UPDATE SET
+                threshold = excluded.threshold,
+                enabled = 1";
+        cmd.Parameters.AddWithValue("$tagId", tagId);
+        cmd.Parameters.AddWithValue("$sourceType", sourceType);
+        cmd.Parameters.AddWithValue("$sourceKey", sourceKey);
+        cmd.Parameters.AddWithValue("$threshold", Math.Clamp(threshold, 0d, 1d));
+        cmd.ExecuteNonQuery();
+    }
+
+    public void SetTagRuleEnabled(int ruleId, bool enabled)
+    {
+        using var conn = Open();
+        ExecuteNonQuery(conn, "UPDATE tag_rules SET enabled = $enabled WHERE id = $id",
+            ("$id", ruleId), ("$enabled", enabled ? 1 : 0));
+    }
+
+    public void DeleteTagRule(int ruleId)
+    {
+        using var conn = Open();
+        ExecuteNonQuery(conn, "DELETE FROM tag_rules WHERE id = $id", ("$id", ruleId));
+    }
+
+    public void RefreshAllTagSuggestions()
+    {
+        using var conn = Open();
+        var analyses = new List<(int TrackId, long AnalysisId)>();
+        using (var read = conn.CreateCommand())
+        {
+            read.CommandText = "SELECT track_id, id FROM track_analysis";
+            using var reader = read.ExecuteReader();
+            while (reader.Read())
+                analyses.Add((reader.GetInt32(0), reader.GetInt64(1)));
+        }
+
+        using var tx = conn.BeginTransaction();
+        foreach (var (trackId, analysisId) in analyses)
+            RefreshTagSuggestions(conn, tx, trackId, analysisId);
+        tx.Commit();
+    }
+
+    public List<TrackTagSuggestion> GetTrackTagSuggestions(int trackId)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+            SELECT tags.id, tags.name, categories.name, categories.color,
+                   suggestions.source_type, suggestions.source_key, suggestions.score, suggestions.state
+            FROM track_tag_suggestions suggestions
+            JOIN tags ON tags.id = suggestions.tag_id
+            JOIN tag_categories categories ON categories.id = tags.category_id
+            WHERE suggestions.track_id = $trackId AND suggestions.state = 'pending'
+            ORDER BY suggestions.score DESC, categories.sort_order, tags.name";
+        cmd.Parameters.AddWithValue("$trackId", trackId);
+        using var reader = cmd.ExecuteReader();
+        var suggestions = new List<TrackTagSuggestion>();
+        while (reader.Read())
+            suggestions.Add(new TrackTagSuggestion(
+                reader.GetInt32(0), reader.GetString(1), reader.GetString(2),
+                reader.IsDBNull(3) ? null : reader.GetString(3),
+                reader.GetString(4), reader.GetString(5), reader.GetDouble(6), reader.GetString(7)));
+        return suggestions;
+    }
+
+    public void AcceptTrackTagSuggestion(int trackId, int tagId, string sourceType, string sourceKey)
+    {
+        using var conn = Open();
+        using var tx = conn.BeginTransaction();
+        var now = DateTime.UtcNow.ToString("O");
+        ExecuteInsert(conn, tx, @"
+            INSERT INTO track_tags (track_id, tag_id, source, strength, confidence, assigned_at, updated_at)
+            VALUES ($trackId, $tagId, 'manual', 1, 1, $now, $now)
+            ON CONFLICT(track_id, tag_id) DO UPDATE SET source = 'manual', strength = 1, confidence = 1, updated_at = excluded.updated_at",
+            ("$trackId", trackId), ("$tagId", tagId), ("$now", now));
+        ExecuteInsert(conn, tx, @"
+            UPDATE track_tag_suggestions SET state = 'accepted', updated_at = $now
+            WHERE track_id = $trackId AND tag_id = $tagId AND state = 'pending'",
+            ("$trackId", trackId), ("$tagId", tagId), ("$now", now));
+        tx.Commit();
+    }
+
+    public void RejectTrackTagSuggestion(int trackId, int tagId, string sourceType, string sourceKey)
+    {
+        using var conn = Open();
+        ExecuteNonQuery(conn, @"
+            UPDATE track_tag_suggestions SET state = 'rejected', updated_at = $now
+            WHERE track_id = $trackId AND tag_id = $tagId AND source_type = $sourceType AND source_key = $sourceKey",
+            ("$trackId", trackId), ("$tagId", tagId), ("$sourceType", sourceType), ("$sourceKey", sourceKey),
+            ("$now", DateTime.UtcNow.ToString("O")));
+    }
+
     public List<Rating> GetRatings()
     {
         using var conn = Open();
@@ -1629,6 +1766,40 @@ public class MusicDatabase
             WHERE predictions.score > 0.1 AND ($trackId IS NULL OR analysis.track_id = $trackId)
             ON CONFLICT(track_id, genre_id) DO UPDATE SET set_by_source_id = excluded.set_by_source_id, assigned_at = excluded.assigned_at",
             ("$trackId", trackId), ("$assignedAt", DateTime.UtcNow.ToString("O")));
+    }
+
+    private static void RefreshTagSuggestions(SqliteConnection conn, SqliteTransaction tx, int trackId, long analysisId)
+    {
+        var now = DateTime.UtcNow.ToString("O");
+        ExecuteInsert(conn, tx, @"
+            DELETE FROM track_tag_suggestions
+            WHERE track_id = $trackId AND state = 'pending'",
+            ("$trackId", trackId));
+
+        ExecuteInsert(conn, tx, @"
+            INSERT INTO track_tag_suggestions
+                (track_id, tag_id, rule_id, source_type, source_key, score, state, created_at, updated_at)
+            SELECT $trackId, rules.tag_id, rules.id, rules.source_type, rules.source_key,
+                   signals.score, 'pending', $now, $now
+            FROM tag_rules rules
+            JOIN track_analysis_signals signals
+                ON signals.track_analysis_id = $analysisId
+               AND signals.model_name = rules.source_type
+               AND signals.signal_key = rules.source_key
+            WHERE rules.enabled = 1
+              AND rules.auto_assign = 0
+              AND signals.score >= rules.threshold
+              AND NOT EXISTS (
+                  SELECT 1 FROM track_tags assigned
+                  WHERE assigned.track_id = $trackId AND assigned.tag_id = rules.tag_id)
+              AND NOT EXISTS (
+                  SELECT 1 FROM track_tag_suggestions existing
+                  WHERE existing.track_id = $trackId
+                    AND existing.tag_id = rules.tag_id
+                    AND existing.source_type = rules.source_type
+                    AND existing.source_key = rules.source_key
+                    AND existing.state IN ('accepted', 'rejected'))",
+            ("$trackId", trackId), ("$analysisId", analysisId), ("$now", now));
     }
 
     private static void InsertTrackGenres(SqliteConnection conn, SqliteTransaction tx, long trackId,

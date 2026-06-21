@@ -14,8 +14,7 @@ public record TrackDisplayItem(
     string DurationText,
     string RatingText,
     string ProfileText,
-    IReadOnlyList<TrackTagDisplay> VisibleTags,
-    string MoreTagsText,
+    IReadOnlyList<TrackTagDisplay> TagDisplays,
     string ChannelText)
 {
     public bool IsPlaying { get; set; }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
@@ -21,6 +22,8 @@ public partial class SettingsOverlay : UserControl
     private Dictionary<int, GenreMapping> _mappingsBySubgenreId = [];
     private List<TagCategory> _tagCategories = [];
     private List<Tag> _tags = [];
+    private List<TagSignalSource> _tagSignalSources = [];
+    private List<TagRule> _tagRules = [];
     private bool _isLoading;
     private bool _updatingTagCategory;
     private MappingFilter _mappingFilter = MappingFilter.All;
@@ -76,6 +79,7 @@ public partial class SettingsOverlay : UserControl
         RebuildCalibrationRows();
         RebuildGenreRows();
         ReloadTagManagement();
+        ReloadTagRules();
         IsVisible = true;
     }
 
@@ -260,6 +264,7 @@ public partial class SettingsOverlay : UserControl
             "calibration" => SettingsPage.AnalysisCalibration,
             "genres" => SettingsPage.Genres,
             "tags" => SettingsPage.Tags,
+            "tag_rules" => SettingsPage.TagRules,
             _ => SettingsPage.GenreMappings
         });
     }
@@ -274,11 +279,13 @@ public partial class SettingsOverlay : UserControl
         AnalysisCalibrationPage.IsVisible = page == SettingsPage.AnalysisCalibration;
         GenresPage.IsVisible = page == SettingsPage.Genres;
         TagsPage.IsVisible = page == SettingsPage.Tags;
+        TagRulesPage.IsVisible = page == SettingsPage.TagRules;
         GenreMappingsNavButton.IsChecked = isMappingsPage;
         LibraryNavButton.IsChecked = isLibraryPage;
         AnalysisCalibrationNavButton.IsChecked = page == SettingsPage.AnalysisCalibration;
         GenresNavButton.IsChecked = page == SettingsPage.Genres;
         TagsNavButton.IsChecked = page == SettingsPage.Tags;
+        TagRulesNavButton.IsChecked = page == SettingsPage.TagRules;
 
         PageTitleText.Text = page switch
         {
@@ -286,6 +293,7 @@ public partial class SettingsOverlay : UserControl
             SettingsPage.AnalysisCalibration => "Analysis calibration",
             SettingsPage.Genres => "Your genres",
             SettingsPage.Tags => "Tags",
+            SettingsPage.TagRules => "Tag rules",
             _ => "Genre mappings"
         };
         PageDescriptionText.Text = isMappingsPage
@@ -296,11 +304,14 @@ public partial class SettingsOverlay : UserControl
                     ? "Create and maintain the genres used by your library. Genres with existing tracks or mappings stay protected."
                     : page == SettingsPage.Tags
                         ? "Maintain your curated labels. Tags can describe mood, themes, situations or workflow states without turning them into genres."
+                        : page == SettingsPage.TagRules
+                            ? "Turn model signals into reviewable tag suggestions. Rules never assign tags automatically in this first version."
                         : "Compare current system interpretations before turning them into filters.";
         SummaryText.Text = isMappingsPage ? BuildSummaryText() : "";
         if (page == SettingsPage.AnalysisCalibration) RebuildCalibrationRows();
         if (page == SettingsPage.Genres) RebuildGenreRows();
         if (page == SettingsPage.Tags) ReloadTagManagement(SelectedTagCategoryId());
+        if (page == SettingsPage.TagRules) ReloadTagRules();
     }
 
     private void RebuildGenreRows()
@@ -378,6 +389,170 @@ public partial class SettingsOverlay : UserControl
 
         UpdateSelectedTagCategoryFields();
         RebuildTagRows();
+    }
+
+    private void ReloadTagRules()
+    {
+        if (!IsInitialized) return;
+        _tags = MusicLibraryService.Current.GetTags();
+        _tagSignalSources = MusicLibraryService.Current.GetTagSignalSources();
+        _tagRules = MusicLibraryService.Current.GetTagRules();
+
+        TagRuleTagBox.ItemsSource = _tags
+            .Select(tag => new TagRuleTagChoice(tag.Id, tag.CategoryName, tag.Name, tag.CategoryColor))
+            .ToList();
+        TagRuleModelBox.ItemsSource = _tagSignalSources
+            .Select(source => source.ModelName)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(TagRuleModelDisplayName, StringComparer.OrdinalIgnoreCase)
+            .Select(model => new TagRuleModelChoice(model))
+            .ToList();
+
+        if (TagRuleTagBox.SelectedIndex < 0 && _tags.Count > 0)
+            TagRuleTagBox.SelectedIndex = 0;
+        if (TagRuleModelBox.SelectedIndex < 0 && _tagSignalSources.Count > 0)
+            TagRuleModelBox.SelectedIndex = 0;
+        RebuildTagRuleSignalChoices();
+
+        RebuildTagRuleRows();
+    }
+
+    private void OnTagRuleModelSelectionChanged(object? sender, SelectionChangedEventArgs e) =>
+        RebuildTagRuleSignalChoices();
+
+    private void RebuildTagRuleSignalChoices()
+    {
+        if (TagRuleModelBox.SelectedItem is not TagRuleModelChoice model)
+        {
+            TagRuleSignalBox.ItemsSource = Array.Empty<TagRuleSignalChoice>();
+            return;
+        }
+
+        TagRuleSignalBox.ItemsSource = _tagSignalSources
+            .Where(source => string.Equals(source.ModelName, model.ModelName, StringComparison.OrdinalIgnoreCase))
+            .OrderBy(source => source.SignalKey, StringComparer.OrdinalIgnoreCase)
+            .Select(source => new TagRuleSignalChoice(source.ModelName, source.SignalKey, source.Description))
+            .ToList();
+        if (TagRuleSignalBox.SelectedIndex < 0)
+            TagRuleSignalBox.SelectedIndex = 0;
+    }
+
+    private void RebuildTagRuleRows()
+    {
+        if (!IsInitialized) return;
+        TagRuleRows.Children.Clear();
+        if (_tagSignalSources.Count == 0)
+        {
+            TagRuleRows.Children.Add(new TextBlock
+            {
+                Text = "Analyze at least one track first. Its available model signals will appear here as possible rule sources.",
+                Opacity = .52, TextWrapping = TextWrapping.Wrap, Margin = new Avalonia.Thickness(0, 18, 0, 0)
+            });
+            return;
+        }
+
+        foreach (var rule in _tagRules)
+        {
+            var accent = CategoryBrush(rule.CategoryColor);
+            var row = new Border
+            {
+                Background = new SolidColorBrush(Color.Parse("#111419")),
+                BorderBrush = new SolidColorBrush(Color.Parse("#26313A")),
+                BorderThickness = new Avalonia.Thickness(1),
+                CornerRadius = new Avalonia.CornerRadius(5),
+                Padding = new Avalonia.Thickness(10, 7)
+            };
+            var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("180,*,70,Auto,Auto"), ColumnSpacing = 10 };
+            var tag = new TextBlock
+            {
+                Text = $"{rule.CategoryName} · {rule.TagName}",
+                FontSize = 11,
+                FontWeight = FontWeight.SemiBold,
+                Foreground = accent,
+                VerticalAlignment = VerticalAlignment.Center,
+                TextTrimming = TextTrimming.CharacterEllipsis
+            };
+            var source = new TextBlock
+            {
+                Text = $"{TagRuleModelDisplayName(rule.SourceType)} · {rule.SourceKey}",
+                FontSize = 10.5,
+                Opacity = .7,
+                VerticalAlignment = VerticalAlignment.Center,
+                TextTrimming = TextTrimming.CharacterEllipsis
+            };
+            var threshold = new TextBlock
+            {
+                Text = $"≥ {rule.Threshold:0.##}",
+                FontSize = 10.5,
+                Foreground = accent,
+                VerticalAlignment = VerticalAlignment.Center,
+                HorizontalAlignment = HorizontalAlignment.Right
+            };
+            var enabled = new ToggleSwitch
+            {
+                IsChecked = rule.Enabled,
+                OnContent = "On",
+                OffContent = "Off",
+                FontSize = 10,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            enabled.IsCheckedChanged += (_, _) =>
+            {
+                MusicLibraryService.Current.SetTagRuleEnabled(rule.Id, enabled.IsChecked == true);
+                MusicLibraryService.Current.RefreshAllTagSuggestions();
+            };
+            var remove = new Button
+            {
+                Content = "Delete",
+                FontSize = 10,
+                Padding = new Avalonia.Thickness(10, 4),
+                Opacity = .75
+            };
+            remove.Click += (_, _) =>
+            {
+                MusicLibraryService.Current.DeleteTagRule(rule.Id);
+                MusicLibraryService.Current.RefreshAllTagSuggestions();
+                ReloadTagRules();
+                ToastRequested?.Invoke("Tag rule deleted.");
+            };
+            Grid.SetColumn(source, 1);
+            Grid.SetColumn(threshold, 2);
+            Grid.SetColumn(enabled, 3);
+            Grid.SetColumn(remove, 4);
+            grid.Children.Add(tag);
+            grid.Children.Add(source);
+            grid.Children.Add(threshold);
+            grid.Children.Add(enabled);
+            grid.Children.Add(remove);
+            row.Child = grid;
+            TagRuleRows.Children.Add(row);
+        }
+
+        if (_tagRules.Count == 0)
+            TagRuleRows.Children.Add(new TextBlock { Text = "No rules yet. Select one of your tags, choose a model signal and set its minimum score.", Opacity = .52, Margin = new Avalonia.Thickness(0, 18, 0, 0) });
+    }
+
+    private void OnAddTagRuleClicked(object? sender, RoutedEventArgs e)
+    {
+        if (TagRuleTagBox.SelectedItem is not TagRuleTagChoice tag
+            || TagRuleSignalBox.SelectedItem is not TagRuleSignalChoice source)
+            return;
+
+        if (!double.TryParse(TagRuleThresholdBox.Text, NumberStyles.Float, CultureInfo.InvariantCulture, out var threshold)
+            || threshold < 0 || threshold > 1)
+        {
+            ToastRequested?.Invoke("Threshold must be a number between 0 and 1.");
+            return;
+        }
+
+        try
+        {
+            MusicLibraryService.Current.AddTagRule(tag.Id, source.ModelName, source.SignalKey, threshold);
+            MusicLibraryService.Current.RefreshAllTagSuggestions();
+            ReloadTagRules();
+            ToastRequested?.Invoke($"Suggestion rule added for {tag.Name}.");
+        }
+        catch (Exception exception) { ToastRequested?.Invoke($"Could not add tag rule: {exception.Message}"); }
     }
 
     private int? SelectedTagCategoryId() => (TagCategoryBox.SelectedItem as TagCategoryChoice)?.Id;
@@ -590,6 +765,27 @@ public partial class SettingsOverlay : UserControl
     private string SubgenreName(int modelSubgenreId) => _modelSubgenres
         .FirstOrDefault(subgenre => subgenre.Id == modelSubgenreId)?.Name ?? "model subgenre";
 
+    private static IBrush CategoryBrush(string? color)
+    {
+        try { return new SolidColorBrush(Color.Parse(string.IsNullOrWhiteSpace(color) ? "#65BCEB" : color)); }
+        catch { return new SolidColorBrush(Color.Parse("#65BCEB")); }
+    }
+
+    private static string TagRuleModelDisplayName(string modelName) => modelName switch
+    {
+        "mood happy" => "Mood happy",
+        "mood sad" => "Mood sad",
+        "mood relaxed" => "Mood relaxed",
+        "mood aggressive" => "Mood aggressive",
+        "mood party" => "Mood party",
+        "mtg_jamendo_moodtheme" => "Jamendo mood/theme",
+        "moods mirex" => "MIREX mood clusters",
+        "genre electronic" => "Electronic character",
+        "danceability classifier" => "Danceability",
+        "voice/instrumental classifiers" => "Voice / instrumental",
+        _ => modelName
+    };
+
     private void OnCloseClicked(object? sender, RoutedEventArgs e) => IsVisible = false;
 
     private sealed record MappingChoice(int? GenreId, string Name)
@@ -607,6 +803,21 @@ public partial class SettingsOverlay : UserControl
         public override string ToString() => Name;
     }
 
+    private sealed record TagRuleTagChoice(int Id, string CategoryName, string Name, string? CategoryColor)
+    {
+        public override string ToString() => $"{CategoryName} · {Name}";
+    }
+
+    private sealed record TagRuleModelChoice(string ModelName)
+    {
+        public override string ToString() => TagRuleModelDisplayName(ModelName);
+    }
+
+    private sealed record TagRuleSignalChoice(string ModelName, string SignalKey, string Description)
+    {
+        public override string ToString() => SignalKey;
+    }
+
     private enum MappingFilter { All, Mapped, Unmapped }
     private sealed record CalibrationRow(MusicTrack Track, List<DerivedTrackAttribute> Attributes, IReadOnlyList<ExperimentalAnalysisModel> Signals)
     {
@@ -615,5 +826,5 @@ public partial class SettingsOverlay : UserControl
             .OrderByDescending(item => item.value.Score).Take(3).Select(item => $"{item.Model}: {item.value.Label} {item.value.Score:0.##}"));
     }
 
-    private enum SettingsPage { GenreMappings, Library, AnalysisCalibration, Genres, Tags }
+    private enum SettingsPage { GenreMappings, Library, AnalysisCalibration, Genres, Tags, TagRules }
 }
