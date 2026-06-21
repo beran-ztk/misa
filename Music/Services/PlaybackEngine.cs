@@ -6,6 +6,19 @@ namespace Music.Services;
 
 public enum EngineState { Stopped, Playing, Paused }
 
+public record PlaybackSlotSnapshot(
+    string FilePath,
+    int TrackId,
+    TimeSpan Position,
+    float TransitionVolume,
+    float FadeTarget,
+    float FadeStep);
+
+public record PlaybackEngineSnapshot(
+    EngineState State,
+    PlaybackSlotSnapshot Primary,
+    PlaybackSlotSnapshot? Secondary);
+
 // Controls playback of up to two simultaneous tracks (primary + fading-out secondary).
 // Volume is controlled entirely in software via AudioFileReader.Volume (sample multiplication)
 // so each slot's volume is fully independent — no shared hardware/device volume is touched.
@@ -15,6 +28,7 @@ public sealed class PlaybackEngine : IDisposable
     {
         public readonly IWavePlayer Player;
         public readonly AudioFileReader Reader;   // owns CurrentTime, TotalTime, software Volume
+        public readonly string FilePath;
         public readonly int TrackId;
 
         // 0..1 transition factor; Reader.Volume = user volume * TransitionVolume.
@@ -22,10 +36,11 @@ public sealed class PlaybackEngine : IDisposable
         public float FadeTarget;   // 0 = fade out fully, 1 = fade in to full
         public float FadeStep;     // per 100 ms tick, signed; 0 = steady
 
-        public AudioSlot(IWavePlayer player, AudioFileReader reader, int trackId, float startTransition)
+        public AudioSlot(IWavePlayer player, AudioFileReader reader, string filePath, int trackId, float startTransition)
         {
             Player = player;
             Reader = reader;
+            FilePath = filePath;
             TrackId = trackId;
             TransitionVolume = startTransition;
             FadeTarget = startTransition;
@@ -107,7 +122,7 @@ public sealed class PlaybackEngine : IDisposable
         player.Init(reader);
 
         float startTransition = fadeInSeconds > 0f ? 0f : 1f;
-        _primary = new AudioSlot(player, reader, trackId, startTransition)
+        _primary = new AudioSlot(player, reader, filePath, trackId, startTransition)
         {
             FadeTarget = 1f,
             FadeStep = fadeInSeconds > 0f ? 1f / (fadeInSeconds * 10f) : 0f,
@@ -164,6 +179,56 @@ public sealed class PlaybackEngine : IDisposable
         CurrentTime = TimeSpan.Zero;
         TotalTime = TimeSpan.Zero;
         StateChanged?.Invoke();
+    }
+
+    /// <summary>Captures both audible slots so a temporary preview can restore an in-progress crossfade exactly.</summary>
+    public PlaybackEngineSnapshot? CaptureSnapshot()
+    {
+        if (_primary is null || State == EngineState.Stopped) return null;
+        return new PlaybackEngineSnapshot(State, CaptureSlot(_primary), _secondary is null ? null : CaptureSlot(_secondary));
+    }
+
+    public void RestoreSnapshot(PlaybackEngineSnapshot? snapshot)
+    {
+        Stop();
+        if (snapshot is null || _disposed) return;
+
+        _secondary = snapshot.Secondary is null ? null : CreateSlot(snapshot.Secondary, isPrimary: false);
+        _primary = CreateSlot(snapshot.Primary, isPrimary: true);
+        ActiveTrackId = snapshot.Primary.TrackId;
+        CurrentTime = _primary.Reader.CurrentTime;
+        TotalTime = _primary.Reader.TotalTime;
+        State = snapshot.State;
+
+        if (State == EngineState.Playing)
+        {
+            _secondary?.Player.Play();
+            _primary.Player.Play();
+            _timer.Start();
+        }
+
+        StateChanged?.Invoke();
+        ProgressUpdated?.Invoke();
+    }
+
+    private static PlaybackSlotSnapshot CaptureSlot(AudioSlot slot) => new(
+        slot.FilePath, slot.TrackId, slot.Reader.CurrentTime, slot.TransitionVolume, slot.FadeTarget, slot.FadeStep);
+
+    private AudioSlot CreateSlot(PlaybackSlotSnapshot snapshot, bool isPrimary)
+    {
+        var reader = new AudioFileReader(snapshot.FilePath);
+        reader.CurrentTime = snapshot.Position <= reader.TotalTime ? snapshot.Position : reader.TotalTime;
+        var player = new WaveOutEvent();
+        if (isPrimary) player.PlaybackStopped += OnPrimaryEnded;
+        else player.PlaybackStopped += OnSecondaryEnded;
+        player.Init(reader);
+        var slot = new AudioSlot(player, reader, snapshot.FilePath, snapshot.TrackId, snapshot.TransitionVolume)
+        {
+            FadeTarget = snapshot.FadeTarget,
+            FadeStep = snapshot.FadeStep
+        };
+        slot.ApplySoftVolume(_masterVolume);
+        return slot;
     }
 
     // Seek to a position expressed as a fraction 0..1 of TotalTime.

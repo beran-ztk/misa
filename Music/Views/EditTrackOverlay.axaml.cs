@@ -35,8 +35,11 @@ public partial class EditTrackOverlay : UserControl
     private bool _buildingSoundProfile;
     private readonly DispatcherTimer _analysisElapsedTimer = new() { Interval = TimeSpan.FromSeconds(1) };
     private DateTime _analysisStartedAt;
+    private bool _isPlayingPreview;
 
     public event Action? TrackSaved;
+    public event Action<MusicTrack>? PreviewRequested;
+    public event Action? PreviewClosed;
 
     public EditTrackOverlay()
     {
@@ -53,6 +56,7 @@ public partial class EditTrackOverlay : UserControl
     public void Open(MusicTrack track, bool analyzeAfterOpening = false)
     {
         _track = track;
+        _isPlayingPreview = false;
         LoadLookups();
         Prefill(track);
         IsVisible = true;
@@ -284,6 +288,13 @@ public partial class EditTrackOverlay : UserControl
 
         CloseOverlay();
         TrackSaved?.Invoke();
+    }
+
+    private void OnPreviewClicked(object? sender, RoutedEventArgs e)
+    {
+        if (_track is null) return;
+        _isPlayingPreview = true;
+        PreviewRequested?.Invoke(_track);
     }
 
     private async System.Threading.Tasks.Task AnalyzeImportedTrackAsync(MusicTrack track)
@@ -892,6 +903,11 @@ public partial class EditTrackOverlay : UserControl
 
     private void CloseOverlay()
     {
+        if (_isPlayingPreview)
+        {
+            _isPlayingPreview = false;
+            PreviewClosed?.Invoke();
+        }
         _analysisElapsedTimer.Stop();
         _analysisPreviewCancellation?.Cancel();
         AnalysisPopup.IsOpen = false;

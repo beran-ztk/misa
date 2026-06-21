@@ -18,6 +18,14 @@
                         <TextBlock Text="Track information" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center"/>
                     </StackPanel>
                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                        <Button x:Name="PreviewButton"
+                                Click="OnPreviewClicked"
+                                ToolTip.Tip="Play this track in the main player"
+                                Width="34" Height="34" Padding="0"
+                                Background="Transparent" BorderThickness="0"
+                                Opacity="0.8">
+                            <Image Source="{SvgImage /Assets/play.svg}" Width="16" Height="16"/>
+                        </Button>
                         <Button x:Name="AnalysisButton"
                                 Click="OnAnalysisButtonClicked"
                                 ToolTip.Tip="Show model analysis"

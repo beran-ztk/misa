@@ -42,6 +42,9 @@ public partial class MusicView : UserControl
     private int _listeningTrackId = -1;
     private double _lastListeningPositionSeconds;
     private double _unflushedListeningSeconds;
+    private PlaybackEngineSnapshot? _previewPlaybackSnapshot;
+    private bool _isTrackPreviewActive;
+    private int _previewTrackId = -1;
 
     private readonly Random _rng = new();
 
@@ -131,6 +134,8 @@ public partial class MusicView : UserControl
             ShowToast(warning ?? $"Imported: {track.Title}");
         });
         EditTrackOverlay.TrackSaved += RefreshTrackList;
+        EditTrackOverlay.PreviewRequested += StartTrackPreview;
+        EditTrackOverlay.PreviewClosed += StopTrackPreview;
         SettingsOverlay.ToastRequested += ShowToast;
         SettingsOverlay.LibraryMetadataChanged += RefreshLibraryPresentation;
         SettingsOverlay.TrackCalibrationRequested += track =>
@@ -801,7 +806,13 @@ public partial class MusicView : UserControl
         }
         else
         {
-            StartPlayback();
+            if (_isTrackPreviewActive && _previewTrackId >= 0)
+            {
+                var previewTrack = _allItems.FirstOrDefault(item => item.Track.Id == _previewTrackId)?.Track;
+                if (previewTrack is not null) StartTrackPreview(previewTrack);
+            }
+            else
+                StartPlayback();
         }
     }
 
@@ -906,6 +917,90 @@ public partial class MusicView : UserControl
         RefreshPlayingMarkers();
     }
 
+    // ─── Temporary track-information preview ─────────────────────────────────
+
+    private void StartTrackPreview(MusicTrack track)
+    {
+        var filePath = Path.Combine(Values.TracksDirectory, track.FileName);
+        if (!File.Exists(filePath))
+        {
+            ShowToast("The audio file for this track is not available.");
+            return;
+        }
+
+        if (!_isTrackPreviewActive)
+        {
+            _previewPlaybackSnapshot = _engine.CaptureSnapshot();
+            // A preview is neither a skip nor a separate full listen.
+            FinishListeningSession(markSkipped: false);
+            _isTrackPreviewActive = true;
+        }
+
+        try
+        {
+            _engine.Play(filePath, track.Id, 0, 0);
+        }
+        catch (Exception exception)
+        {
+            ShowToast($"Preview could not start: {exception.Message}");
+            return;
+        }
+
+        _previewTrackId = track.Id;
+        _isSeeking = false;
+        var index = _filteredItems.FindIndex(item => item.Track.Id == track.Id);
+        if (index >= 0) FileList.SelectedIndex = index;
+        NowPlayingText.Text = $"Preview · {track.Title}";
+        PlaybackInfoPanel.IsVisible = true;
+        _nextTrackIndex = -1;
+        _crossfadeTriggered = false;
+        UpdateUpcomingBar();
+        UpdateButtonStates();
+        RefreshPlayingMarkers();
+    }
+
+    private void StopTrackPreview()
+    {
+        if (!_isTrackPreviewActive) return;
+
+        var snapshot = _previewPlaybackSnapshot;
+        _previewPlaybackSnapshot = null;
+        _isTrackPreviewActive = false;
+        _previewTrackId = -1;
+        _isSeeking = false;
+
+        try
+        {
+            _engine.RestoreSnapshot(snapshot);
+        }
+        catch (Exception exception)
+        {
+            _engine.Stop();
+            ShowToast($"Previous playback could not be restored: {exception.Message}");
+        }
+
+        if (snapshot is null || _engine.ActiveTrackId < 0)
+        {
+            NowPlayingText.Text = string.Empty;
+            PlaybackInfoPanel.IsVisible = false;
+            _nextTrackIndex = -1;
+        }
+        else if (_allItems.FirstOrDefault(item => item.Track.Id == _engine.ActiveTrackId)?.Track is { } restoredTrack)
+        {
+            ResumeListeningSession(restoredTrack.Id, _engine.CurrentTime);
+            var index = _filteredItems.FindIndex(item => item.Track.Id == restoredTrack.Id);
+            if (index >= 0) FileList.SelectedIndex = index;
+            NowPlayingText.Text = restoredTrack.Title;
+            PlaybackInfoPanel.IsVisible = true;
+            _nextTrackIndex = index >= 0 ? PeekNextTrackIndex(index) : -1;
+            _crossfadeTriggered = false;
+        }
+
+        UpdateUpcomingBar();
+        UpdateButtonStates();
+        RefreshPlayingMarkers();
+    }
+
     // ─── Engine events ────────────────────────────────────────────────────────
 
     private void OnEngineStateChanged()
@@ -924,6 +1019,12 @@ public partial class MusicView : UserControl
 
     private void OnTrackNaturallyEnded()
     {
+        if (_isTrackPreviewActive)
+        {
+            _nextTrackIndex = -1;
+            UpdateUpcomingBar();
+            return;
+        }
         FinishListeningSession(markSkipped: false);
         NavigateNext(isManual: false);
     }
@@ -944,7 +1045,7 @@ public partial class MusicView : UserControl
         PlaybackTimeText.Text =
             $"{FormatDuration(_engine.CurrentTime)} / {FormatDuration(_engine.TotalTime)}";
 
-        if (!_crossfadeTriggered && _nextTrackIndex >= 0 && _engine.State == EngineState.Playing)
+        if (!_isTrackPreviewActive && !_crossfadeTriggered && _nextTrackIndex >= 0 && _engine.State == EngineState.Playing)
         {
             var total = _engine.TotalTime.TotalSeconds;
             var current = _engine.CurrentTime.TotalSeconds;
@@ -1020,6 +1121,7 @@ public partial class MusicView : UserControl
 
     private void NavigateNext(bool isManual)
     {
+        if (_isTrackPreviewActive) return;
         if (_filteredItems.Count == 0) { FullStop(); return; }
 
         var currentIdx = GetCurrentPlayIndex();
@@ -1048,6 +1150,7 @@ public partial class MusicView : UserControl
 
     private void NavigatePrevious()
     {
+        if (_isTrackPreviewActive) return;
         if (_filteredItems.Count == 0) return;
 
         var currentIdx = GetCurrentPlayIndex();
@@ -1080,6 +1183,14 @@ public partial class MusicView : UserControl
         _lastListeningPositionSeconds = 0;
         _unflushedListeningSeconds = 0;
         MusicLibraryService.Current.RecordTrackPlaybackStarted(trackId);
+        EditTrackOverlay.RefreshUsageStats();
+    }
+
+    private void ResumeListeningSession(int trackId, TimeSpan position)
+    {
+        _listeningTrackId = trackId;
+        _lastListeningPositionSeconds = position.TotalSeconds;
+        _unflushedListeningSeconds = 0;
         EditTrackOverlay.RefreshUsageStats();
     }
 
