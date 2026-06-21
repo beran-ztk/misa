@@ -35,6 +35,9 @@ public class MusicLibraryService
     public void UpdateTrack(int id, string title, List<int> genreIds, int? ratingId, List<int> styleIds)
         => _db.UpdateTrack(id, title, genreIds, ratingId, styleIds);
     public void SetTrackNeedsReview(int id, bool needsReview) => _db.SetTrackNeedsReview(id, needsReview);
+    public void RecordTrackPlaybackStarted(int trackId) => _db.RecordTrackPlaybackStarted(trackId);
+    public void AddTrackListenedSeconds(int trackId, int seconds) => _db.AddTrackListenedSeconds(trackId, seconds);
+    public void RecordTrackSkip(int trackId) => _db.RecordTrackSkip(trackId);
 
     public Task<string?> DeleteTrackAsync(MusicTrack track)
     {

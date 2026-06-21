@@ -36,6 +36,9 @@ public partial class MusicView : UserControl
     private int _lastKnownActiveId = -1;
     private bool _crossfadeTriggered;
     private int _nextTrackIndex = -1;
+    private int _listeningTrackId = -1;
+    private double _lastListeningPositionSeconds;
+    private double _unflushedListeningSeconds;
 
     private readonly Random _rng = new();
 
@@ -783,6 +786,13 @@ public partial class MusicView : UserControl
         var track = _filteredItems[filteredIndex].Track;
         var filePath = Path.Combine(Values.TracksDirectory, track.FileName);
 
+        if (_engine.ActiveTrackId >= 0 && _engine.ActiveTrackId != track.Id)
+        {
+            var totalSeconds = _engine.TotalTime.TotalSeconds;
+            var playedFraction = totalSeconds > 0 ? _engine.CurrentTime.TotalSeconds / totalSeconds : 1;
+            FinishListeningSession(markSkipped: !isCrossfade && playedFraction < .8);
+        }
+
         bool wasPlaying = _engine.State != EngineState.Stopped;
         float fadeOut = isCrossfade ? Values.CrossfadeDurationSeconds
                       : wasPlaying ? Values.ManualFadeDurationSeconds : 0f;
@@ -800,6 +810,8 @@ public partial class MusicView : UserControl
             StatusText.IsVisible = true;
             return;
         }
+
+        BeginListeningSession(track.Id);
 
         FileList.SelectedIndex = filteredIndex;
 
@@ -828,11 +840,13 @@ public partial class MusicView : UserControl
 
     private void OnTrackNaturallyEnded()
     {
+        FinishListeningSession(markSkipped: false);
         NavigateNext(isManual: false);
     }
 
     private void OnProgressUpdated()
     {
+        RecordListeningProgress();
         if (_engine.ActiveTrackId != _lastKnownActiveId)
         {
             _lastKnownActiveId = _engine.ActiveTrackId;
@@ -968,7 +982,54 @@ public partial class MusicView : UserControl
 
     private void FullStop()
     {
+        var totalSeconds = _engine.TotalTime.TotalSeconds;
+        var playedFraction = totalSeconds > 0 ? _engine.CurrentTime.TotalSeconds / totalSeconds : 1;
+        FinishListeningSession(markSkipped: playedFraction < .8);
         _engine.Stop();
+    }
+
+    // ─── Listening telemetry ─────────────────────────────────────────────────
+
+    private void BeginListeningSession(int trackId)
+    {
+        _listeningTrackId = trackId;
+        _lastListeningPositionSeconds = 0;
+        _unflushedListeningSeconds = 0;
+        MusicLibraryService.Current.RecordTrackPlaybackStarted(trackId);
+    }
+
+    private void RecordListeningProgress()
+    {
+        if (_listeningTrackId < 0 || _listeningTrackId != _engine.ActiveTrackId)
+            return;
+
+        var position = _engine.CurrentTime.TotalSeconds;
+        var delta = position - _lastListeningPositionSeconds;
+        // Seeking is not listening time; accept only the small deltas emitted by the playback timer.
+        if (delta is > 0 and <= 1.5)
+            _unflushedListeningSeconds += delta;
+        _lastListeningPositionSeconds = position;
+        FlushListeningSeconds();
+    }
+
+    private void FinishListeningSession(bool markSkipped)
+    {
+        if (_listeningTrackId < 0) return;
+        RecordListeningProgress();
+        FlushListeningSeconds(force: true);
+        if (markSkipped)
+            MusicLibraryService.Current.RecordTrackSkip(_listeningTrackId);
+        _listeningTrackId = -1;
+        _lastListeningPositionSeconds = 0;
+        _unflushedListeningSeconds = 0;
+    }
+
+    private void FlushListeningSeconds(bool force = false)
+    {
+        var wholeSeconds = (int)Math.Floor(_unflushedListeningSeconds);
+        if (wholeSeconds < (force ? 1 : 5)) return;
+        MusicLibraryService.Current.AddTrackListenedSeconds(_listeningTrackId, wholeSeconds);
+        _unflushedListeningSeconds -= wholeSeconds;
     }
 
     // ─── Upcoming bar ─────────────────────────────────────────────────────────

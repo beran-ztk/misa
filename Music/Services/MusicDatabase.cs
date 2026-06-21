@@ -28,7 +28,11 @@ public class MusicDatabase
     public void Initialize()
     {
         if (File.Exists(Values.DbPath))
+        {
+            using var existingConnection = Open();
+            ApplyMigrations(existingConnection);
             return;
+        }
 
         var directory = Path.GetDirectoryName(Values.DbPath);
         if (!string.IsNullOrEmpty(directory))
@@ -85,6 +89,7 @@ public class MusicDatabase
                 downloaded_at       TEXT NOT NULL,
                 updated_at          TEXT NOT NULL,
                 listen_count        INTEGER NOT NULL DEFAULT 0,
+                listened_seconds    INTEGER NOT NULL DEFAULT 0,
                 skip_count          INTEGER NOT NULL DEFAULT 0,
                 last_listened_at    TEXT NULL,
                 needs_reevaluation  INTEGER NOT NULL DEFAULT 0,
@@ -169,6 +174,50 @@ public class MusicDatabase
             CREATE INDEX ix_track_derived_attributes_analysis_id ON track_derived_attributes(track_analysis_id);
             CREATE INDEX ix_genre_mappings_genre_id ON genre_mappings(genre_id);";
         cmd.ExecuteNonQuery();
+    }
+
+    private static void ApplyMigrations(SqliteConnection conn)
+    {
+        if (ColumnExists(conn, "tracks", "listened_seconds")) return;
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "ALTER TABLE tracks ADD COLUMN listened_seconds INTEGER NOT NULL DEFAULT 0";
+        cmd.ExecuteNonQuery();
+    }
+
+    private static bool ColumnExists(SqliteConnection conn, string table, string column)
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = $"PRAGMA table_info({table})";
+        using var reader = cmd.ExecuteReader();
+        while (reader.Read())
+            if (string.Equals(reader.GetString(1), column, StringComparison.OrdinalIgnoreCase))
+                return true;
+        return false;
+    }
+
+    public void RecordTrackPlaybackStarted(int trackId)
+    {
+        using var conn = Open();
+        ExecuteNonQuery(conn,
+            "UPDATE tracks SET listen_count = listen_count + 1, last_listened_at = $now WHERE id = $trackId",
+            ("$now", DateTime.UtcNow.ToString("O")), ("$trackId", trackId));
+    }
+
+    public void AddTrackListenedSeconds(int trackId, int seconds)
+    {
+        if (seconds <= 0) return;
+        using var conn = Open();
+        ExecuteNonQuery(conn,
+            "UPDATE tracks SET listened_seconds = listened_seconds + $seconds WHERE id = $trackId",
+            ("$seconds", seconds), ("$trackId", trackId));
+    }
+
+    public void RecordTrackSkip(int trackId)
+    {
+        using var conn = Open();
+        ExecuteNonQuery(conn,
+            "UPDATE tracks SET skip_count = skip_count + 1 WHERE id = $trackId",
+            ("$trackId", trackId));
     }
 
     private static void SeedDefaultMetadata(SqliteConnection conn, SqliteTransaction tx)
@@ -850,6 +899,15 @@ public class MusicDatabase
     {
         using var cmd = conn.CreateCommand();
         cmd.Transaction = tx;
+        cmd.CommandText = sql;
+        AddParameters(cmd, parameters);
+        cmd.ExecuteNonQuery();
+    }
+
+    private static void ExecuteNonQuery(SqliteConnection conn, string sql,
+        params (string Name, object? Value)[] parameters)
+    {
+        using var cmd = conn.CreateCommand();
         cmd.CommandText = sql;
         AddParameters(cmd, parameters);
         cmd.ExecuteNonQuery();
