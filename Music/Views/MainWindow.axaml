@@ -3,8 +3,8 @@
         x:Class="Music.Views.MainWindow"
         Title="Music"
         Icon="/Assets/music.png"
-        Width="1050" Height="850"
-        MinWidth="720" MinHeight="540"
+        Width="900" Height="1200"
+        MinWidth="500" MinHeight="400"
         SystemDecorations="Full">
 
     <ContentControl x:Name="ContentArea"/>

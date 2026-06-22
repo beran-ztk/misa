@@ -7,6 +7,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Svg.Skia;
 using Music.Models;
 using Music.Services;
 
@@ -135,14 +136,7 @@ public partial class SettingsOverlay : UserControl
     {
         if (search.Length == 0) return true;
         return modelGenreName.Contains(search, StringComparison.OrdinalIgnoreCase)
-               || subgenre.Name.Contains(search, StringComparison.OrdinalIgnoreCase)
-               || (subgenre.Description?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false)
-               || (subgenre.ClassificationHint?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false)
-               || (_distinctionsBySubgenreId.TryGetValue(subgenre.Id, out var distinctions)
-                   && distinctions.Any(item =>
-                       item.ModelGenreName.Contains(search, StringComparison.OrdinalIgnoreCase)
-                       || item.ModelSubgenreName.Contains(search, StringComparison.OrdinalIgnoreCase)
-                       || item.Difference.Contains(search, StringComparison.OrdinalIgnoreCase)));
+               || subgenre.Name.Contains(search, StringComparison.OrdinalIgnoreCase);
     }
 
     private GenreVocabularyRowState CreateGenreVocabularyRow(ModelSubgenre subgenre, string modelGenreName)
@@ -190,10 +184,11 @@ public partial class SettingsOverlay : UserControl
         header.Children.Add(bpm);
         var edit = new Button
         {
-            Content = "Edit",
+            Content = CreateSvgIcon("/Assets/pencil-simple.svg", 14),
             Classes = { "settings-ghost" },
             VerticalAlignment = VerticalAlignment.Center
         };
+        ToolTip.SetTip(edit, "Edit genre");
         Grid.SetColumn(edit, 2);
         header.Children.Add(edit);
         panel.Children.Add(header);
@@ -205,17 +200,31 @@ public partial class SettingsOverlay : UserControl
 
         if (_distinctionsBySubgenreId.TryGetValue(subgenre.Id, out var distinctions) && distinctions.Count > 0)
         {
-            var distinctionText = new TextBlock
+            var distinctionPanel = new StackPanel
             {
-                Text = "Distinguish from: " + string.Join("  ·  ", distinctions.Select(item =>
-                    $"{item.ModelSubgenreName} ({item.ModelGenreName}) — {item.Difference}")),
-                FontSize = 10,
-                Foreground = new SolidColorBrush(Color.Parse("#80C9E8")),
-                Opacity = 0.86,
-                TextWrapping = TextWrapping.Wrap,
-                Margin = new Avalonia.Thickness(0, 1, 0, 0)
+                Spacing = 3,
+                Margin = new Avalonia.Thickness(0, 2, 0, 0)
             };
-            panel.Children.Add(distinctionText);
+            distinctionPanel.Children.Add(new TextBlock
+            {
+                Text = "Distinguish from",
+                FontSize = 9.7,
+                FontWeight = FontWeight.SemiBold,
+                Foreground = new SolidColorBrush(Color.Parse("#80C9E8")),
+                Opacity = 0.72
+            });
+            foreach (var item in distinctions)
+            {
+                distinctionPanel.Children.Add(new TextBlock
+                {
+                    Text = $"{item.ModelSubgenreName} ({item.ModelGenreName}) — {item.Difference}",
+                    FontSize = 10,
+                    Foreground = new SolidColorBrush(Color.Parse("#B6D8E9")),
+                    Opacity = 0.78,
+                    TextWrapping = TextWrapping.Wrap
+                });
+            }
+            panel.Children.Add(distinctionPanel);
         }
 
         edit.Click += (_, _) =>
@@ -240,7 +249,8 @@ public partial class SettingsOverlay : UserControl
             }
 
             editorPanel.IsVisible = !editorPanel.IsVisible;
-            edit.Content = editorPanel.IsVisible ? "Close" : "Edit";
+            edit.Opacity = editorPanel.IsVisible ? 1 : 0.82;
+            ToolTip.SetTip(edit, editorPanel.IsVisible ? "Close editor" : "Edit genre");
         };
 
         row.Child = panel;
@@ -306,10 +316,28 @@ public partial class SettingsOverlay : UserControl
 
     private static TextBox CreateSettingsTextBox(string text, string watermark)
     {
-        var box = new TextBox { Text = text, Watermark = watermark, Height = 32, FontSize = 11.5 };
+        var box = new TextBox
+        {
+            Text = text,
+            Watermark = watermark,
+            Height = 32,
+            FontSize = 11.5,
+            VerticalContentAlignment = VerticalAlignment.Center
+        };
         box.Classes.Add("settings-input");
         return box;
     }
+
+    private static Avalonia.Svg.Skia.Svg CreateSvgIcon(string path, double size) => new(new Uri("avares://Music/"))
+    {
+        Path = path,
+        Width = size,
+        Height = size,
+        Stretch = Stretch.Uniform,
+        Opacity = 0.82,
+        VerticalAlignment = VerticalAlignment.Center,
+        HorizontalAlignment = HorizontalAlignment.Center
+    };
 
     private static TextBlock CreateGenreBodyText(string? value, string fallback, string color = "#D9E4EC")
     {
