@@ -1119,13 +1119,13 @@ public class MusicDatabase
     public List<TrackModelGenre> GetTrackModelGenres(int trackId)
     {
         using var conn = Open(); using var cmd = conn.CreateCommand();
-        cmd.CommandText = @"SELECT track_genres.genre_id, mg.name || ' → ' || msg.name, track_genres.is_enabled, mg.name, msg.name, predictions.score
+        cmd.CommandText = @"SELECT track_genres.genre_id, msg.name, track_genres.is_enabled, mg.name, msg.name, predictions.score
                             FROM track_genres
                             JOIN model_subgenres msg ON msg.id = track_genres.genre_id
                             JOIN model_genres mg ON mg.id = msg.model_genre_id
                             JOIN track_analysis analysis ON analysis.track_id = track_genres.track_id
                             JOIN track_genre_predictions predictions ON predictions.track_analysis_id = analysis.id AND predictions.model_subgenre_id = msg.id
-                            WHERE track_genres.track_id = $trackId AND predictions.score > 0.1 ORDER BY msg.name, predictions.score DESC";
+                            WHERE track_genres.track_id = $trackId ORDER BY predictions.score DESC, msg.name";
         cmd.Parameters.AddWithValue("$trackId", trackId);
         using var reader = cmd.ExecuteReader();
         var groups = new Dictionary<int, (string Name, bool Enabled, List<ModelGenreReason> Reasons)>();
@@ -1140,9 +1140,22 @@ public class MusicDatabase
 
     public void SetTrackModelGenreEnabled(int trackId, int genreId, bool isEnabled)
     {
-        using var conn = Open(); using var cmd = conn.CreateCommand();
-        cmd.CommandText = @"UPDATE track_genres SET is_enabled = $enabled WHERE track_id = $trackId AND genre_id = $genreId";
-        cmd.Parameters.AddWithValue("$trackId", trackId); cmd.Parameters.AddWithValue("$genreId", genreId); cmd.Parameters.AddWithValue("$enabled", isEnabled ? 1 : 0);
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        if (isEnabled)
+        {
+            cmd.CommandText = @"
+                INSERT INTO track_genres (track_id, genre_id, assigned_at, is_enabled)
+                VALUES ($trackId, $genreId, $assignedAt, 1)
+                ON CONFLICT(track_id, genre_id) DO UPDATE SET is_enabled = 1, assigned_at = excluded.assigned_at";
+            cmd.Parameters.AddWithValue("$assignedAt", DateTime.UtcNow.ToString("O"));
+        }
+        else
+        {
+            cmd.CommandText = @"UPDATE track_genres SET is_enabled = 0 WHERE track_id = $trackId AND genre_id = $genreId";
+        }
+        cmd.Parameters.AddWithValue("$trackId", trackId);
+        cmd.Parameters.AddWithValue("$genreId", genreId);
         cmd.ExecuteNonQuery();
     }
 
@@ -1832,7 +1845,7 @@ public class MusicDatabase
             DELETE FROM track_genres WHERE ($trackId IS NULL OR track_id = $trackId)
             AND NOT EXISTS (
                 SELECT 1 FROM track_genre_predictions predictions JOIN track_analysis analysis ON analysis.id = predictions.track_analysis_id
-                WHERE analysis.track_id = track_genres.track_id AND predictions.model_subgenre_id = track_genres.genre_id AND predictions.score > 0.1)",
+                WHERE analysis.track_id = track_genres.track_id AND predictions.model_subgenre_id = track_genres.genre_id AND predictions.score > 0.05)",
             ("$trackId", trackId));
         ExecuteInsert(conn, tx, @"
             INSERT INTO track_genres (track_id, genre_id, assigned_at, is_enabled)

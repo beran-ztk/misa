@@ -758,7 +758,8 @@ public partial class EditTrackOverlay : UserControl
         LoadModelMetadata();
         var assignments = MusicLibraryService.Current.GetTrackModelGenres(track.Id);
         _modelGenreIds = assignments.Select(assignment => assignment.GenreId).ToHashSet();
-        ModelSelectedGenresSection.IsVisible = assignments.Count > 0;
+        RebuildModelGenrePicker();
+        ModelSelectedGenresSection.IsVisible = _modelSubgenresById.Count > 0;
         ModelSelectedGenresPanel.Children.Clear();
         foreach (var assignment in assignments)
         {
@@ -790,7 +791,7 @@ public partial class EditTrackOverlay : UserControl
             };
             var reason = new TextBlock
             {
-                Text = string.Join(" · ", assignment.Reasons.Select(item => $"{item.ModelGenreName} → {item.ModelSubgenreName} ({item.Score:0.###})")),
+                Text = string.Join(" · ", assignment.Reasons.Select(item => $"{item.ModelGenreName} · {item.Score:0.###}")),
                 FontSize = 10.5, Foreground = confidenceBrush, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
                 Margin = new Avalonia.Thickness(10, 0, 0, 0), TextWrapping = TextWrapping.Wrap
             };
@@ -806,7 +807,8 @@ public partial class EditTrackOverlay : UserControl
             {
                 enabled = !enabled;
                 MusicLibraryService.Current.SetTrackModelGenreEnabled(track.Id, assignment.GenreId, enabled);
-                ApplyModelGenreVisual(container, genreName, divider, enabled, confidenceBrush);
+                ShowModelSelectedGenres(track);
+                ShowDetectedGenres(track);
             };
             ToolTip.SetTip(container, CreateModelMetadataTooltip(assignment.Reasons
                 .Select(reason => FindModelSubgenreId(reason.ModelGenreName, reason.ModelSubgenreName))
@@ -821,14 +823,12 @@ public partial class EditTrackOverlay : UserControl
         LoadModelMetadata();
         var detected = MusicLibraryService.Current.GetTrackGenrePredictions(track.Id)
             .Where(prediction => prediction.Score is > .05 and <= .1)
+            .Where(prediction => !_modelGenreIds.Contains(prediction.ModelSubgenreId))
             .Take(6)
-            .Select(prediction => $"{prediction.ModelGenreName} → {prediction.ModelSubgenreName}")
             .ToList();
         DetectedGenresSection.IsVisible = detected.Count > 0;
         DetectedGenresPanel.Children.Clear();
-        foreach (var prediction in MusicLibraryService.Current.GetTrackGenrePredictions(track.Id)
-                     .Where(prediction => prediction.Score is > .05 and <= .1)
-                     .Take(6))
+        foreach (var prediction in detected)
         {
             var container = new Border
             {
@@ -838,16 +838,65 @@ public partial class EditTrackOverlay : UserControl
                 CornerRadius = new Avalonia.CornerRadius(5),
                 Padding = new Avalonia.Thickness(8, 5)
             };
-            var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
+            var row = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto") };
             var confidenceBrush = AnalysisColorScale.GenreConfidence(prediction.Score);
-            row.Children.Add(new TextBlock { Text = $"{prediction.ModelGenreName} → {prediction.ModelSubgenreName}", FontSize = 11, Foreground = confidenceBrush });
+            row.Children.Add(new TextBlock
+            {
+                Text = prediction.ModelSubgenreName,
+                FontSize = 11,
+                FontWeight = FontWeight.SemiBold,
+                Foreground = confidenceBrush,
+                Margin = new Avalonia.Thickness(0, 0, 8, 0)
+            });
+            var modelGenre = new TextBlock
+            {
+                Text = prediction.ModelGenreName,
+                FontSize = 10.5,
+                Opacity = 0.62,
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+                TextTrimming = TextTrimming.CharacterEllipsis
+            };
+            Grid.SetColumn(modelGenre, 1);
+            row.Children.Add(modelGenre);
             var score = new TextBlock { Text = prediction.Score.ToString("0.###"), FontSize = 10.5, Foreground = confidenceBrush, FontWeight = FontWeight.SemiBold };
-            Grid.SetColumn(score, 1);
+            Grid.SetColumn(score, 2);
             row.Children.Add(score);
             container.Child = row;
+            container.PointerPressed += (_, _) =>
+            {
+                MusicLibraryService.Current.SetTrackModelGenreEnabled(track.Id, prediction.ModelSubgenreId, true);
+                ShowModelSelectedGenres(track);
+                ShowDetectedGenres(track);
+            };
             ToolTip.SetTip(container, CreateModelMetadataTooltip([prediction.ModelSubgenreId]));
             DetectedGenresPanel.Children.Add(container);
         }
+    }
+
+    private void RebuildModelGenrePicker()
+    {
+        var choices = _modelSubgenresById.Values
+            .Where(subgenre => !_modelGenreIds.Contains(subgenre.Id))
+            .OrderBy(subgenre => _modelGenreNamesById.GetValueOrDefault(subgenre.ModelGenreId, ""), StringComparer.OrdinalIgnoreCase)
+            .ThenBy(subgenre => subgenre.Name, StringComparer.OrdinalIgnoreCase)
+            .Select(subgenre => new ModelSubgenreChoice(
+                subgenre.Id,
+                $"{_modelGenreNamesById.GetValueOrDefault(subgenre.ModelGenreId, "Genre")} · {subgenre.Name}"))
+            .ToList();
+        ModelGenrePickerBox.ItemsSource = choices;
+        ModelGenrePickerBox.SelectedIndex = choices.Count > 0 ? 0 : -1;
+        ModelGenrePickerBox.IsEnabled = choices.Count > 0;
+    }
+
+    private void OnAddModelGenreClicked(object? sender, RoutedEventArgs e)
+    {
+        if (_track is null || ModelGenrePickerBox.SelectedItem is not ModelSubgenreChoice choice)
+            return;
+
+        MusicLibraryService.Current.SetTrackModelGenreEnabled(_track.Id, choice.Id, true);
+        ShowModelSelectedGenres(_track);
+        ShowDetectedGenres(_track);
+        UpdateSaveButton();
     }
 
     private void LoadModelMetadata()
@@ -922,6 +971,11 @@ public partial class EditTrackOverlay : UserControl
         container.BorderBrush = enabled ? confidenceBrush : new SolidColorBrush(Color.Parse("#3B414A"));
         genreName.Foreground = enabled ? confidenceBrush : new SolidColorBrush(Color.Parse("#A3ABB5"));
         divider.Background = enabled ? confidenceBrush : new SolidColorBrush(Color.Parse("#4A535D"));
+    }
+
+    private sealed record ModelSubgenreChoice(int Id, string Label)
+    {
+        public override string ToString() => Label;
     }
 
     private void OnCloseClicked(object? sender, RoutedEventArgs e) => CloseOverlay();

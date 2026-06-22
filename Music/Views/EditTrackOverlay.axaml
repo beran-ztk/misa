@@ -78,16 +78,23 @@
                             </Grid>
                         </StackPanel>
 
-                        <StackPanel x:Name="DetectedGenresSection" Spacing="5" Margin="0,0,40,0">
-                            <TextBlock Text="Detected by model · below active threshold" FontSize="13" FontWeight="SemiBold" />
-                            <StackPanel x:Name="DetectedGenresPanel" Spacing="3" />
-                        </StackPanel>
-
                         <StackPanel Spacing="8" Margin="0,0,40,0">
                             <TextBlock Text="Library classification" FontSize="13" FontWeight="SemiBold" />
                             <StackPanel x:Name="ModelSelectedGenresSection" Spacing="7" Margin="0,0,0,18">
-                                <TextBlock Text="Detected genres" FontSize="11" Opacity="0.68" />
+                                <TextBlock Text="Active genres" FontSize="11" Opacity="0.68" />
                                 <StackPanel x:Name="ModelSelectedGenresPanel" Spacing="8" />
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" Margin="0,2,0,0">
+                                    <ComboBox x:Name="ModelGenrePickerBox"
+                                              Height="32"/>
+                                    <Button Grid.Column="1"
+                                            Content="Add"
+                                            Padding="12,5"
+                                            Click="OnAddModelGenreClicked"/>
+                                </Grid>
+                            </StackPanel>
+                            <StackPanel x:Name="DetectedGenresSection" Spacing="5" Margin="0,0,0,10">
+                                <TextBlock Text="More model detections" FontSize="11" Opacity="0.68" />
+                                <StackPanel x:Name="DetectedGenresPanel" Spacing="3" />
                             </StackPanel>
                             <Grid ColumnDefinitions="*,Auto" Margin="0,8,0,0">
                                 <TextBlock Text="Tags" FontSize="11" Opacity="0.68" />

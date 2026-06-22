@@ -226,6 +226,7 @@ public partial class MusicView : UserControl
 
             var genreStr = string.Join(", ", genreIds
                 .Select(id => genreMap.GetValueOrDefault(id, ""))
+                .Select(ShortGenreName)
                 .Where(n => n.Length > 0).Order());
             var styleStr = string.Join(", ", styleIds
                 .Select(id => styleMap.GetValueOrDefault(id, ""))
@@ -266,6 +267,14 @@ public partial class MusicView : UserControl
         "vocal_presence" => "Vocals",
         _ => char.ToUpperInvariant(key[0]) + key[1..]
     };
+
+    private static string ShortGenreName(string genreName)
+    {
+        var separator = genreName.LastIndexOf('→');
+        return separator >= 0 && separator + 1 < genreName.Length
+            ? genreName[(separator + 1)..].Trim()
+            : genreName;
+    }
 
     private static string TagFilterName(Tag tag) => $"{tag.CategoryName}: {tag.Name}";
 
