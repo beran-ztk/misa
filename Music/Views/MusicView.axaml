@@ -34,6 +34,22 @@
             <Setter Property="Foreground" Value="#1E9AF0"/>
             <Setter Property="Background" Value="#33404A"/>
         </Style>
+        <Style Selector="Slider.playback">
+            <Setter Property="Foreground" Value="#38A8F2"/>
+            <Setter Property="Background" Value="#263542"/>
+        </Style>
+        <Style Selector="Slider.playback /template/ Thumb">
+            <Setter Property="Width" Value="9"/>
+            <Setter Property="Height" Value="9"/>
+            <Setter Property="Background" Value="#E6F7FF"/>
+            <Setter Property="BorderBrush" Value="#38A8F2"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+        <Style Selector="Slider.playback:pointerover /template/ Thumb">
+            <Setter Property="Width" Value="11"/>
+            <Setter Property="Height" Value="11"/>
+            <Setter Property="Background" Value="#FFFFFF"/>
+        </Style>
         <Style Selector="ListBoxItem">
             <Setter Property="Padding" Value="10,6,10,6"/>
             <Setter Property="MinHeight" Value="66"/>
@@ -205,6 +221,7 @@
                     <Border Grid.Column="0"
                             ClipToBounds="False">
                         <Slider x:Name="PlaybackSlider"
+                                Classes="playback"
                                 Minimum="0" Maximum="100" Value="0"
                                 VerticalAlignment="Center"/>
                     </Border>
@@ -260,6 +277,7 @@
                                 VerticalAlignment="Center">
                         <Border ClipToBounds="False">
                             <Slider x:Name="VolumeSlider"
+                                    Classes="playback"
                                     Minimum="0" Maximum="100" 
                                     Value="100"
                                     Width="108"
