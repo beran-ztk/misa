@@ -75,6 +75,7 @@ public class MusicLibraryService
     public List<TagCategory> GetTagCategories() => _db.GetTagCategories();
     public void AddTagCategory(string name) => _db.AddTagCategory(name);
     public void RenameTagCategory(int id, string name) => _db.RenameTagCategory(id, name);
+    public void SetTagCategoryColor(int id, string? color) => _db.SetTagCategoryColor(id, color);
     public string? DeleteTagCategoryIfUnused(int id) => _db.DeleteTagCategoryIfUnused(id);
     public List<Tag> GetTags() => _db.GetTags();
     public void AddTag(int categoryId, string name, string? description) => _db.AddTag(categoryId, name, description);

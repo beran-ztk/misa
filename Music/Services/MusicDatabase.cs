@@ -1134,6 +1134,16 @@ public class MusicDatabase
         cmd.ExecuteNonQuery();
     }
 
+    public void SetTagCategoryColor(int id, string? color)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "UPDATE tag_categories SET color = $color WHERE id = $id";
+        cmd.Parameters.AddWithValue("$id", id);
+        cmd.Parameters.AddWithValue("$color", string.IsNullOrWhiteSpace(color) ? DBNull.Value : color.Trim());
+        cmd.ExecuteNonQuery();
+    }
+
     public string? DeleteTagCategoryIfUnused(int id)
     {
         using var conn = Open();

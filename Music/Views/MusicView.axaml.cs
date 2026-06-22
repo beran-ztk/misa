@@ -91,7 +91,11 @@ public partial class MusicView : UserControl
         PlaybackSlider.AddHandler(PointerReleasedEvent,
             OnSliderPointerReleased, RoutingStrategies.Tunnel);
 
-        SearchBox.TextChanged += (_, _) => ApplyFilter();
+        SearchBox.TextChanged += (_, _) =>
+        {
+            ApplyFilter();
+            UpdateSearchVisibility();
+        };
         RatingFilter.SelectionChanged += (_, _) => ApplyFilter();
         FileList.SelectionChanged += (_, _) =>
         {
@@ -531,6 +535,41 @@ public partial class MusicView : UserControl
     {
         _filterPanelVisible = !_filterPanelVisible;
         FilterDrawer.IsVisible = _filterPanelVisible;
+    }
+
+    private void OnSearchToggleClicked(object? sender, RoutedEventArgs e)
+    {
+        SearchBox.IsVisible = true;
+        SearchToggleBtn.Opacity = 1.0;
+        Dispatcher.UIThread.Post(() => SearchBox.Focus(), DispatcherPriority.Background);
+    }
+
+    private void OnSearchBoxKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Escape)
+        {
+            SearchBox.Text = string.Empty;
+            SearchBox.IsVisible = false;
+            SearchToggleBtn.Focus();
+            e.Handled = true;
+            return;
+        }
+
+        if (e.Key == Key.Enter)
+        {
+            SearchToggleBtn.Focus();
+            e.Handled = true;
+        }
+    }
+
+    private void OnSearchBoxLostFocus(object? sender, RoutedEventArgs e) => UpdateSearchVisibility();
+
+    private void UpdateSearchVisibility()
+    {
+        var hasSearch = !string.IsNullOrWhiteSpace(SearchBox.Text);
+        if (!SearchBox.IsKeyboardFocusWithin && !hasSearch)
+            SearchBox.IsVisible = false;
+        SearchToggleBtn.Opacity = SearchBox.IsVisible || hasSearch ? 1.0 : 0.86;
     }
 
     private void OnReviewFilterClicked(object? sender, RoutedEventArgs e)

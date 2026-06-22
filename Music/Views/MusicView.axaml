@@ -126,8 +126,19 @@
 
                 <TextBox x:Name="SearchBox"
                          Watermark="Search…"
+                         IsVisible="False"
                          Width="230" Height="34"
-                         VerticalContentAlignment="Center"/>
+                         VerticalContentAlignment="Center"
+                         KeyDown="OnSearchBoxKeyDown"
+                         LostFocus="OnSearchBoxLostFocus"/>
+
+                <Button x:Name="SearchToggleBtn"
+                        Classes="icon"
+                        Click="OnSearchToggleClicked"
+                        ToolTip.Tip="Search"
+                        Opacity="0.86">
+                    <Image Source="{SvgImage /Assets/search.svg}" Width="17" Height="17"/>
+                </Button>
 
                 <Button x:Name="ReviewFilterBtn"
                         Classes="icon"
@@ -174,7 +185,7 @@
                 MaxHeight="132"
                 Background="#B807080A"
                 ClipToBounds="True"
-                BorderThickness="0,1,0,0" BorderBrush="#202832">
+                BorderThickness="0,0,0,0" BorderBrush="#202832">
             <Panel>
                 <Image x:Name="PlayerArtworkBackground"
                        IsVisible="False"

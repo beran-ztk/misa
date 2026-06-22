@@ -851,6 +851,7 @@ public partial class SettingsOverlay : UserControl
         var categoryId = SelectedTagCategoryId();
         var category = _tagCategories.FirstOrDefault(item => item.Id == categoryId);
         RenameTagCategoryBox.Text = category?.Name ?? string.Empty;
+        TagCategoryColorBox.Text = category?.Color ?? string.Empty;
         AddTagPanel.IsVisible = category is not null;
         AddTagTitleText.Text = category is null ? "Add tag" : $"Add tag to {category.Name}";
         TagVocabularyHintText.Text = category is null
@@ -1058,6 +1059,44 @@ public partial class SettingsOverlay : UserControl
         ToastRequested?.Invoke(error ?? "Tag category deleted.");
         ReloadTagManagement();
         if (error is null) LibraryMetadataChanged?.Invoke();
+    }
+
+    private void OnSaveTagCategoryColorClicked(object? sender, RoutedEventArgs e)
+    {
+        if (SelectedTagCategoryId() is not int categoryId) return;
+        if (!TryNormalizeHexColor(TagCategoryColorBox.Text, out var color))
+        {
+            ToastRequested?.Invoke("Color must be a hex value like #65BCEB.");
+            return;
+        }
+
+        try
+        {
+            MusicLibraryService.Current.SetTagCategoryColor(categoryId, color);
+            ReloadTagManagement(categoryId);
+            ToastRequested?.Invoke("Tag category color updated.");
+            LibraryMetadataChanged?.Invoke();
+        }
+        catch (Exception exception) { ToastRequested?.Invoke($"Could not update tag color: {exception.Message}"); }
+    }
+
+    private static bool TryNormalizeHexColor(string? value, out string? color)
+    {
+        color = null;
+        var text = value?.Trim() ?? string.Empty;
+        if (text.Length == 0)
+            return true;
+
+        if (!text.StartsWith('#')) text = "#" + text;
+        if (text.Length != 7)
+            return false;
+
+        for (var i = 1; i < text.Length; i++)
+            if (!Uri.IsHexDigit(text[i]))
+                return false;
+
+        color = text.ToUpperInvariant();
+        return true;
     }
 
     private void OnAddTagClicked(object? sender, RoutedEventArgs e)

@@ -6,6 +6,7 @@
         <Style Selector="ToggleButton.settings-nav">
             <Setter Property="Padding" Value="11,8"/>
             <Setter Property="Margin" Value="0,1"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
             <Setter Property="HorizontalContentAlignment" Value="Left"/>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
@@ -261,11 +262,22 @@
                         Padding="12"
                         Margin="0,0,0,12">
                     <Grid RowDefinitions="Auto,Auto" RowSpacing="8">
-                        <StackPanel Spacing="2">
-                            <TextBlock x:Name="AddTagTitleText" Text="Add tag" FontSize="12" FontWeight="SemiBold"/>
-                            <TextBlock Text="Create a tag inside the selected category."
-                                       FontSize="10.5" Opacity="0.56"/>
-                        </StackPanel>
+                        <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+                            <StackPanel Spacing="2">
+                                <TextBlock x:Name="AddTagTitleText" Text="Add tag" FontSize="12" FontWeight="SemiBold"/>
+                                <TextBlock Text="Create a tag inside the selected category."
+                                           FontSize="10.5" Opacity="0.56"/>
+                            </StackPanel>
+                            <TextBox x:Name="TagCategoryColorBox"
+                                     Grid.Column="1"
+                                     Classes="settings-input"
+                                     Width="105"
+                                     Watermark="#65BCEB"/>
+                            <Button Grid.Column="2"
+                                    Classes="settings-action"
+                                    Content="Save color"
+                                    Click="OnSaveTagCategoryColorClicked"/>
+                        </Grid>
                         <Grid Grid.Row="1" ColumnDefinitions="190,*,Auto" ColumnSpacing="10">
                             <TextBox x:Name="NewTagBox" Classes="settings-input"
                                      Watermark="New tag…"/>
