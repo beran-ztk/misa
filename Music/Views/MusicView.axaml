@@ -185,6 +185,7 @@
                 MaxHeight="132"
                 Background="Transparent"
                 ClipToBounds="True"
+                CornerRadius="10,21,0,0"
                 BorderThickness="0,1,0,0" BorderBrush="#202832">
             <Panel>
                 <Image x:Name="PlayerArtworkBackground"
@@ -192,26 +193,18 @@
                        IsHitTestVisible="False"
                        Height="132"
                        VerticalAlignment="Stretch"
-                       Opacity="0.1"
+                       Opacity="0.2"
                        Stretch="UniformToFill"
                        RenderTransformOrigin="0.5,0.5">
                     <Image.RenderTransform>
                         <ScaleTransform ScaleX="1.06" ScaleY="1.06"/>
                     </Image.RenderTransform>
                     <Image.Effect>
-                        <BlurEffect Radius="40"/>
+                        <BlurEffect Radius="60"/>
                     </Image.Effect>
                 </Image>
-                <Rectangle IsHitTestVisible="False">
-                    <Rectangle.Fill>
-                        <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
-                            <GradientStop Color="#4207080A" Offset="0"/>
-                            <GradientStop Color="#4A07080A" Offset="0.45"/>
-                            <GradientStop Color="#5607080A" Offset="0.72"/>
-                            <GradientStop Color="#6207080A" Offset="1"/>
-                        </LinearGradientBrush>
-                    </Rectangle.Fill>
-                </Rectangle>
+                <Rectangle Fill="#4207080A" IsHitTestVisible="False"/>
+                <Rectangle Fill="#08000000" IsHitTestVisible="False"/>
                 <StackPanel Margin="16,10,16,14">
 
                 <Border x:Name="UpcomingBar"
