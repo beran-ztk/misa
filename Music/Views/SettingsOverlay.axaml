@@ -40,12 +40,14 @@
                                   Content="Genres" Tag="mappings"
                                   Click="OnSettingsNavigationClicked"/>
                     <ToggleButton x:Name="AnalysisCalibrationNavButton" Classes="settings-nav"
+                                  IsVisible="False"
                                   Content="Analysis calibration" Tag="calibration"
                                   Click="OnSettingsNavigationClicked"/>
                     <ToggleButton x:Name="TagsNavButton" Classes="settings-nav"
                                   Content="Tags" Tag="tags"
                                   Click="OnSettingsNavigationClicked"/>
                     <ToggleButton x:Name="TagRulesNavButton" Classes="settings-nav"
+                                  IsVisible="False"
                                   Content="Tag rules" Tag="tag_rules"
                                   Click="OnSettingsNavigationClicked"/>
                 </StackPanel>
