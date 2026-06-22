@@ -268,6 +268,7 @@ public class MusicDatabase
         SimplifyTagSchemaIfNeeded(conn);
         MigrateTagRuleGroupsIfNeeded(conn);
         RemoveExcludedExperimentalModelData(conn);
+        RemoveCompletedImportQueueItems(conn);
         SeedDefaultLookups(conn);
         if (ModelMetadataNeedsImport(conn))
         {
@@ -619,6 +620,14 @@ public class MusicDatabase
         cmd.ExecuteNonQuery();
     }
 
+    private static void RemoveCompletedImportQueueItems(SqliteConnection conn)
+    {
+        if (!TableExists(conn, "import_queue_items"))
+            return;
+        ExecuteNonQuery(conn, "DELETE FROM import_queue_items WHERE status = $status",
+            ("$status", ImportQueueStatus.ReadyForReview.ToString()));
+    }
+
     private static void EnsureColumn(SqliteConnection conn, string table, string column, string definition)
     {
         if (ColumnExists(conn, table, column)) return;
@@ -766,9 +775,19 @@ public class MusicDatabase
         foreach (var item in items.Where(item => item.Status == ImportQueueStatus.Queued))
         {
             ExecuteInsert(conn, tx, @"
-                INSERT OR IGNORE INTO import_queue_items
+                INSERT INTO import_queue_items
                     (batch_id, source_url, canonical_url, title, duration_seconds, estimated_size_bytes, status, detail, created_at, updated_at)
-                VALUES ($batchId, $sourceUrl, $canonicalUrl, $title, $duration, $size, $status, $detail, $createdAt, $updatedAt)",
+                VALUES ($batchId, $sourceUrl, $canonicalUrl, $title, $duration, $size, $status, $detail, $createdAt, $updatedAt)
+                ON CONFLICT(canonical_url) DO UPDATE SET
+                    batch_id = excluded.batch_id,
+                    source_url = excluded.source_url,
+                    title = excluded.title,
+                    duration_seconds = excluded.duration_seconds,
+                    estimated_size_bytes = excluded.estimated_size_bytes,
+                    status = excluded.status,
+                    detail = excluded.detail,
+                    track_id = NULL,
+                    updated_at = excluded.updated_at",
                 ("$batchId", batchId), ("$sourceUrl", item.SourceUrl), ("$canonicalUrl", item.CanonicalUrl),
                 ("$title", item.Title), ("$duration", item.DurationSeconds), ("$size", item.EstimatedSizeBytes),
                 ("$status", ImportQueueStatus.Queued.ToString()), ("$detail", item.Detail),
@@ -816,11 +835,10 @@ public class MusicDatabase
         using var conn = Open();
         using var cmd = conn.CreateCommand();
         cmd.CommandText = @"SELECT status, COUNT(*) FROM import_queue_items
-                            WHERE status IN ($queued, $downloading, $analyzing, $ready) GROUP BY status";
+                            WHERE status IN ($queued, $downloading, $analyzing) GROUP BY status";
         cmd.Parameters.AddWithValue("$queued", ImportQueueStatus.Queued.ToString());
         cmd.Parameters.AddWithValue("$downloading", ImportQueueStatus.Downloading.ToString());
         cmd.Parameters.AddWithValue("$analyzing", ImportQueueStatus.Analyzing.ToString());
-        cmd.Parameters.AddWithValue("$ready", ImportQueueStatus.ReadyForReview.ToString());
         var counts = new Dictionary<string, int>();
         using var reader = cmd.ExecuteReader();
         while (reader.Read()) counts[reader.GetString(0)] = reader.GetInt32(1);
@@ -828,7 +846,7 @@ public class MusicDatabase
             counts.GetValueOrDefault(ImportQueueStatus.Queued.ToString()),
             counts.GetValueOrDefault(ImportQueueStatus.Downloading.ToString()),
             counts.GetValueOrDefault(ImportQueueStatus.Analyzing.ToString()),
-            counts.GetValueOrDefault(ImportQueueStatus.ReadyForReview.ToString()));
+            0);
     }
 
     public HashSet<string> GetActiveImportCanonicalUrls()
@@ -853,7 +871,12 @@ public class MusicDatabase
         cmd.CommandText = @"SELECT id, batch_id, source_url, canonical_url, title, duration_seconds, estimated_size_bytes,
                                    status, detail, track_id
                             FROM import_queue_items
+                            WHERE status IN ($queued, $downloading, $analyzing, $failed)
                             ORDER BY batch_id DESC, created_at, id";
+        cmd.Parameters.AddWithValue("$queued", ImportQueueStatus.Queued.ToString());
+        cmd.Parameters.AddWithValue("$downloading", ImportQueueStatus.Downloading.ToString());
+        cmd.Parameters.AddWithValue("$analyzing", ImportQueueStatus.Analyzing.ToString());
+        cmd.Parameters.AddWithValue("$failed", ImportQueueStatus.Failed.ToString());
         using var reader = cmd.ExecuteReader();
         var items = new List<ImportQueueItem>();
         while (reader.Read()) items.Add(ReadImportQueueItem(reader));
@@ -865,10 +888,17 @@ public class MusicDatabase
     {
         using var conn = Open();
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = "DELETE FROM import_queue_items WHERE id = $id AND status = $queued";
+        cmd.CommandText = "DELETE FROM import_queue_items WHERE id = $id AND status IN ($queued, $failed)";
         cmd.Parameters.AddWithValue("$id", id);
         cmd.Parameters.AddWithValue("$queued", ImportQueueStatus.Queued.ToString());
+        cmd.Parameters.AddWithValue("$failed", ImportQueueStatus.Failed.ToString());
         return cmd.ExecuteNonQuery() > 0;
+    }
+
+    public void DeleteImportQueueItem(int id)
+    {
+        using var conn = Open();
+        ExecuteNonQuery(conn, "DELETE FROM import_queue_items WHERE id = $id", ("$id", id));
     }
 
     private static ImportQueueItem ReadImportQueueItem(SqliteDataReader reader) => new(

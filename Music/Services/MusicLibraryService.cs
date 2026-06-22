@@ -50,6 +50,7 @@ public class MusicLibraryService
     public HashSet<string> GetActiveImportCanonicalUrls() => _db.GetActiveImportCanonicalUrls();
     public List<ImportQueueSource> GetImportQueueSources() => _db.GetImportQueueSources();
     public bool RemoveQueuedImport(int id) => _db.RemoveQueuedImport(id);
+    public void DeleteImportQueueItem(int id) => _db.DeleteImportQueueItem(id);
 
     public Task<string?> DeleteTrackAsync(MusicTrack track)
     {

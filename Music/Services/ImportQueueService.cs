@@ -141,8 +141,14 @@ public sealed class ImportQueueService
             if (result.Success && result.Track is not null)
             {
                 MusicLibraryService.Current.SetTrackNeedsReview(result.Track.Id, true);
-                Update(item, ImportQueueStatus.ReadyForReview, result.Warning ?? "Ready for review", result.Track.Id);
+                MusicLibraryService.Current.DeleteImportQueueItem(item.Id);
                 TrackImported?.Invoke(result.Track, result.Warning);
+                ItemUpdated?.Invoke(item with
+                {
+                    Status = ImportQueueStatus.ReadyForReview,
+                    Detail = result.Warning ?? "Ready for review",
+                    TrackId = result.Track.Id
+                });
             }
             else
                 Update(item, ImportQueueStatus.Failed, result.Error ?? "Import failed");
