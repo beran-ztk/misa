@@ -12,6 +12,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Music.Core;
 using Music.Models;
@@ -117,7 +118,7 @@ public partial class MusicView : UserControl
         LoadFilterPresets();
         AddFilterGroup();
         RefreshTrackList();
-        StartFirstTrackPaused();
+
         SettingsOverlay.PreloadGenreVocabulary();
 
         AddTrackOverlay.TrackDownloaded += warning =>
@@ -168,6 +169,17 @@ public partial class MusicView : UserControl
     {
         _windowsMediaSession.Start();
         _windowsMediaSession.UpdateState(_engine.State);
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (_filteredItems.Count == 0 || _engine.State != EngineState.Stopped)
+                return;
+
+            FileList.SelectedIndex = 0;
+            StartPlayback();
+            _engine.Pause();
+            UpdatePlaybackPositionUi();
+            UpdateButtonStates();
+        }, DispatcherPriority.Background);
     }
 
     private void RefreshLibraryPresentation()
@@ -991,17 +1003,6 @@ public partial class MusicView : UserControl
         PlayTrackAt(idx, isCrossfade: false);
     }
 
-    private void StartFirstTrackPaused()
-    {
-        if (_filteredItems.Count == 0)
-            return;
-
-        FileList.SelectedIndex = 0;
-        PlayTrackAt(0, isCrossfade: false);
-        _engine.Pause();
-        UpdateButtonStates();
-    }
-
     private void PlayTrackAt(int filteredIndex, bool isCrossfade)
     {
         if (filteredIndex < 0 || filteredIndex >= _filteredItems.Count) return;
@@ -1173,12 +1174,7 @@ public partial class MusicView : UserControl
             _crossfadeTriggered = false;
         }
 
-        if (!_isSeeking && _engine.TotalTime.TotalSeconds > 0)
-            PlaybackSlider.Value =
-                _engine.CurrentTime.TotalSeconds / _engine.TotalTime.TotalSeconds * 100;
-
-        PlaybackTimeText.Text =
-            $"{FormatDuration(_engine.CurrentTime)} / {FormatDuration(_engine.TotalTime)}";
+        UpdatePlaybackPositionUi();
 
         if (!_isTrackPreviewActive && !_crossfadeTriggered && _nextTrackIndex >= 0 && _engine.State == EngineState.Playing)
         {
@@ -1198,6 +1194,19 @@ public partial class MusicView : UserControl
 
         UpdateUpcomingBar();
         UpdatePlaylistSummary();
+    }
+
+    private void UpdatePlaybackPositionUi()
+    {
+        if (!_isSeeking)
+        {
+            PlaybackSlider.Value = _engine.TotalTime.TotalSeconds > 0
+                ? _engine.CurrentTime.TotalSeconds / _engine.TotalTime.TotalSeconds * 100
+                : 0;
+        }
+
+        PlaybackTimeText.Text =
+            $"{FormatDuration(_engine.CurrentTime)} / {FormatDuration(_engine.TotalTime)}";
     }
 
     // ─── Navigation ───────────────────────────────────────────────────────────

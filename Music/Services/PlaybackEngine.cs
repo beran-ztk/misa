@@ -131,6 +131,8 @@ public sealed class PlaybackEngine : IDisposable
 
         player.Play();
         ActiveTrackId = trackId;
+        CurrentTime = reader.CurrentTime;
+        TotalTime = reader.TotalTime;
         State = EngineState.Playing;
         _timer.Start();
         StateChanged?.Invoke();
