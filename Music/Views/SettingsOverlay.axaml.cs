@@ -24,6 +24,8 @@ public partial class SettingsOverlay : UserControl
     private bool _isLoading;
     private bool _updatingTagCategory;
     private bool _genreVocabularyLoaded;
+    private readonly Dictionary<int, GenreVocabularyRowState> _genreVocabularyRowsById = [];
+    private TextBlock? _emptyGenreVocabularyText;
     private SettingsPage _selectedPage;
 
     public event Action<string>? ToastRequested;
@@ -52,6 +54,8 @@ public partial class SettingsOverlay : UserControl
         IsVisible = true;
     }
 
+    public void PreloadGenreVocabulary() => EnsureGenreVocabularyLoaded();
+
     private void EnsureGenreVocabularyLoaded()
     {
         if (_genreVocabularyLoaded)
@@ -71,36 +75,51 @@ public partial class SettingsOverlay : UserControl
         SearchBox.Text = string.Empty;
         _genreVocabularyLoaded = true;
         _isLoading = false;
+        BuildGenreVocabularyRowCache();
     }
 
     private void RebuildGenreVocabularyRows()
     {
-        if (_isLoading) return;
+        if (_isLoading || !_genreVocabularyLoaded) return;
 
-        GenreVocabularyRows.Children.Clear();
         var search = SearchBox.Text?.Trim() ?? string.Empty;
         var selectedModelGenreId = (ModelGenreBox.SelectedItem as ModelGenreChoice)?.Id;
-        var modelGenreNames = _modelGenres.ToDictionary(genre => genre.Id, genre => genre.Name);
-
-        var rows = _modelSubgenres
-            .Where(subgenre => selectedModelGenreId is null || subgenre.ModelGenreId == selectedModelGenreId)
-            .Where(subgenre => MatchesSearch(subgenre, modelGenreNames[subgenre.ModelGenreId], search))
-            .OrderBy(subgenre => modelGenreNames[subgenre.ModelGenreId])
-            .ThenBy(subgenre => subgenre.Name, StringComparer.OrdinalIgnoreCase)
-            .ToList();
-
-        foreach (var subgenre in rows)
-            GenreVocabularyRows.Children.Add(CreateGenreVocabularyRow(subgenre, modelGenreNames[subgenre.ModelGenreId]));
-
-        if (rows.Count == 0)
+        var visibleCount = 0;
+        foreach (var row in _genreVocabularyRowsById.Values)
         {
-            GenreVocabularyRows.Children.Add(new TextBlock
-            {
-            Text = "No genres match the current filter.",
-                Opacity = 0.52,
-                Margin = new Avalonia.Thickness(0, 18, 0, 0)
-            });
+            var isVisible = (selectedModelGenreId is null || row.Subgenre.ModelGenreId == selectedModelGenreId)
+                            && MatchesSearch(row.Subgenre, row.ModelGenreName, search);
+            row.Control.IsVisible = isVisible;
+            if (isVisible) visibleCount++;
         }
+
+        if (_emptyGenreVocabularyText is not null)
+            _emptyGenreVocabularyText.IsVisible = visibleCount == 0;
+    }
+
+    private void BuildGenreVocabularyRowCache()
+    {
+        GenreVocabularyRows.Children.Clear();
+        _genreVocabularyRowsById.Clear();
+        var modelGenreNames = _modelGenres.ToDictionary(genre => genre.Id, genre => genre.Name);
+        foreach (var subgenre in _modelSubgenres
+                     .OrderBy(subgenre => modelGenreNames.GetValueOrDefault(subgenre.ModelGenreId, ""), StringComparer.OrdinalIgnoreCase)
+                     .ThenBy(subgenre => subgenre.Name, StringComparer.OrdinalIgnoreCase))
+        {
+            var row = CreateGenreVocabularyRow(subgenre, modelGenreNames[subgenre.ModelGenreId]);
+            _genreVocabularyRowsById[subgenre.Id] = row;
+            GenreVocabularyRows.Children.Add(row.Control);
+        }
+
+        _emptyGenreVocabularyText = new TextBlock
+        {
+            Text = "No genres match the current filter.",
+            Opacity = 0.52,
+            Margin = new Avalonia.Thickness(0, 18, 0, 0),
+            IsVisible = false
+        };
+        GenreVocabularyRows.Children.Add(_emptyGenreVocabularyText);
+        RebuildGenreVocabularyRows();
     }
 
     private bool MatchesSearch(ModelSubgenre subgenre, string modelGenreName, string search)
@@ -112,29 +131,34 @@ public partial class SettingsOverlay : UserControl
                || (subgenre.ClassificationHint?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false);
     }
 
-    private Control CreateGenreVocabularyRow(ModelSubgenre subgenre, string modelGenreName)
+    private GenreVocabularyRowState CreateGenreVocabularyRow(ModelSubgenre subgenre, string modelGenreName)
     {
         var row = new Border
         {
             Background = new SolidColorBrush(Color.Parse("#111419")),
             BorderBrush = new SolidColorBrush(Color.Parse("#26313A")),
             BorderThickness = new Avalonia.Thickness(1),
-            CornerRadius = new Avalonia.CornerRadius(5),
-            Padding = new Avalonia.Thickness(10, 7)
+            CornerRadius = new Avalonia.CornerRadius(7),
+            Padding = new Avalonia.Thickness(12, 10)
         };
-        var panel = new StackPanel { Spacing = 7 };
+        var panel = new StackPanel { Spacing = 10 };
         var header = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), ColumnSpacing = 12 };
-        header.Children.Add(new TextBlock
+        var titleText = new TextBlock
         {
             Text = $"{modelGenreName}  ·  {subgenre.Name}",
             FontSize = 12,
             FontWeight = FontWeight.SemiBold,
             VerticalAlignment = VerticalAlignment.Center,
+            Foreground = new SolidColorBrush(Color.Parse("#E8F0F6")),
             TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis
-        });
+        };
+        header.Children.Add(titleText);
         var bpm = new TextBlock
         {
-            Text = BpmText(subgenre), FontSize = 10.5, Opacity = 0.68,
+            Text = BpmText(subgenre),
+            FontSize = 10.5,
+            Foreground = new SolidColorBrush(Color.Parse("#9FCBE4")),
+            Opacity = 0.86,
             HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Center
         };
         Grid.SetColumn(bpm, 1);
@@ -142,29 +166,31 @@ public partial class SettingsOverlay : UserControl
         panel.Children.Add(header);
 
         var nameBox = new TextBox { Text = subgenre.Name, Height = 32, Watermark = "Subgenre name" };
-        var descriptionBox = new TextBox { Text = subgenre.Description ?? string.Empty, Height = 32, Watermark = "Description" };
+        var descriptionBox = new TextBox { Text = subgenre.Description ?? string.Empty, Height = 32, Watermark = "Short description" };
         var hintBox = new TextBox { Text = subgenre.ClassificationHint ?? string.Empty, Height = 32, Watermark = "Classification hint" };
-        var bpmMinBox = new TextBox { Text = subgenre.BpmMin?.ToString(CultureInfo.InvariantCulture) ?? string.Empty, Height = 32, Watermark = "BPM min" };
-        var bpmMaxBox = new TextBox { Text = subgenre.BpmMax?.ToString(CultureInfo.InvariantCulture) ?? string.Empty, Height = 32, Watermark = "BPM max" };
+        var bpmMinBox = new TextBox { Text = subgenre.BpmMin?.ToString(CultureInfo.InvariantCulture) ?? string.Empty, Height = 32, Watermark = "Min" };
+        var bpmMaxBox = new TextBox { Text = subgenre.BpmMax?.ToString(CultureInfo.InvariantCulture) ?? string.Empty, Height = 32, Watermark = "Max" };
 
-        var editGrid = new Grid
+        var topFields = new Grid { ColumnDefinitions = new ColumnDefinitions("*,82,82,Auto"), ColumnSpacing = 8 };
+        topFields.Children.Add(CreateLabeledField("Subgenre", nameBox));
+        Grid.SetColumn(bpmMinBox, 1);
+        Grid.SetColumn(bpmMaxBox, 2);
+        topFields.Children.Add(CreateLabeledField("BPM min", bpmMinBox, 1));
+        topFields.Children.Add(CreateLabeledField("BPM max", bpmMaxBox, 2));
+        var save = new Button
         {
-            ColumnDefinitions = new ColumnDefinitions("170,*,*,75,75,Auto"),
-            ColumnSpacing = 8
+            Content = "Save",
+            Padding = new Avalonia.Thickness(12, 5),
+            FontSize = 10.5,
+            Background = new SolidColorBrush(Color.Parse("#26313A")),
+            BorderBrush = new SolidColorBrush(Color.Parse("#425365")),
+            VerticalAlignment = VerticalAlignment.Bottom
         };
-        Grid.SetColumn(descriptionBox, 1);
-        Grid.SetColumn(hintBox, 2);
-        Grid.SetColumn(bpmMinBox, 3);
-        Grid.SetColumn(bpmMaxBox, 4);
-        var save = new Button { Content = "Save", Padding = new Avalonia.Thickness(10, 4), FontSize = 10 };
-        Grid.SetColumn(save, 5);
-        editGrid.Children.Add(nameBox);
-        editGrid.Children.Add(descriptionBox);
-        editGrid.Children.Add(hintBox);
-        editGrid.Children.Add(bpmMinBox);
-        editGrid.Children.Add(bpmMaxBox);
-        editGrid.Children.Add(save);
-        panel.Children.Add(editGrid);
+        Grid.SetColumn(save, 3);
+        topFields.Children.Add(save);
+        panel.Children.Add(topFields);
+        panel.Children.Add(CreateLabeledField("Description", descriptionBox));
+        panel.Children.Add(CreateLabeledField("Classification hint", hintBox));
 
         var details = new List<string>();
         if (_distinctionsBySubgenreId.TryGetValue(subgenre.Id, out var distinctions))
@@ -202,12 +228,44 @@ public partial class SettingsOverlay : UserControl
                 hintBox.Text,
                 bpmMin,
                 bpmMax);
+            var updated = subgenre with
+            {
+                Name = nameBox.Text.Trim(),
+                Description = descriptionBox.Text,
+                ClassificationHint = hintBox.Text,
+                BpmMin = bpmMin,
+                BpmMax = bpmMax
+            };
+            var index = _modelSubgenres.FindIndex(item => item.Id == subgenre.Id);
+            if (index >= 0) _modelSubgenres[index] = updated;
+            titleText.Text = $"{modelGenreName}  ·  {updated.Name}";
+            bpm.Text = BpmText(updated);
+            if (_genreVocabularyRowsById.TryGetValue(updated.Id, out var state))
+                state.Subgenre = updated;
             ToastRequested?.Invoke("Genre updated.");
-            ReloadGenreVocabulary();
+            RebuildGenreVocabularyRows();
+            UpdateSummary();
+            LibraryMetadataChanged?.Invoke();
         };
 
         row.Child = panel;
-        return row;
+        return new GenreVocabularyRowState(row, subgenre, modelGenreName);
+    }
+
+    private static StackPanel CreateLabeledField(string label, Control field, int? gridColumn = null)
+    {
+        var panel = new StackPanel { Spacing = 3 };
+        panel.Children.Add(new TextBlock
+        {
+            Text = label.ToUpperInvariant(),
+            FontSize = 9.5,
+            Opacity = 0.45,
+            FontWeight = FontWeight.SemiBold
+        });
+        panel.Children.Add(field);
+        if (gridColumn is int column)
+            Grid.SetColumn(panel, column);
+        return panel;
     }
 
     private static string BpmText(ModelSubgenre subgenre) => subgenre.BpmMin is not null && subgenre.BpmMax is not null
@@ -251,7 +309,7 @@ public partial class SettingsOverlay : UserControl
             .FirstOrDefault(choice => choice.Id == selectedCategoryId)
             ?? ((IEnumerable<ModelGenreChoice>)ModelGenreBox.ItemsSource!).First();
         _isLoading = false;
-        RebuildGenreVocabularyRows();
+        BuildGenreVocabularyRowCache();
         UpdateSummary();
         LibraryMetadataChanged?.Invoke();
     }
@@ -883,6 +941,20 @@ public partial class SettingsOverlay : UserControl
     private sealed record ModelGenreChoice(int? Id, string Name)
     {
         public override string ToString() => Name;
+    }
+
+    private sealed class GenreVocabularyRowState
+    {
+        public GenreVocabularyRowState(Control control, ModelSubgenre subgenre, string modelGenreName)
+        {
+            Control = control;
+            Subgenre = subgenre;
+            ModelGenreName = modelGenreName;
+        }
+
+        public Control Control { get; }
+        public ModelSubgenre Subgenre { get; set; }
+        public string ModelGenreName { get; }
     }
 
     private sealed record TagCategoryChoice(int Id, string Name)

@@ -112,6 +112,7 @@ public partial class MusicView : UserControl
         LoadFilterPresets();
         AddFilterGroup();
         RefreshTrackList();
+        SettingsOverlay.PreloadGenreVocabulary();
 
         AddTrackOverlay.TrackDownloaded += warning =>
         {

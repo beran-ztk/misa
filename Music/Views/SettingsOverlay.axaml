@@ -96,7 +96,9 @@
                 <Grid Grid.Row="1" ColumnDefinitions="*,Auto" Margin="0,0,0,12">
                     <TextBox x:Name="NewSubgenreBox" Height="34" Watermark="New subgenre in selected category…"/>
                     <Button Grid.Column="1" Content="Add subgenre" Click="OnAddSubgenreClicked"
-                            Margin="10,0,0,0" Padding="12,5"/>
+                            Margin="10,0,0,0" Padding="12,5"
+                            Background="#26313A"
+                            BorderBrush="#425365"/>
                 </Grid>
 
                 <Grid Grid.Row="2" RowDefinitions="Auto,*">
@@ -104,7 +106,7 @@
                         <TextBlock Text="GENRE VOCABULARY" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
                     </Grid>
                     <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
-                        <StackPanel x:Name="GenreVocabularyRows" Spacing="5" Margin="0,0,0,18"/>
+                        <StackPanel x:Name="GenreVocabularyRows" Spacing="8" Margin="0,0,0,18"/>
                     </ScrollViewer>
                 </Grid>
             </Grid>
