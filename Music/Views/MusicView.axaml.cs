@@ -92,7 +92,11 @@ public partial class MusicView : UserControl
 
         SearchBox.TextChanged += (_, _) => ApplyFilter();
         RatingFilter.SelectionChanged += (_, _) => ApplyFilter();
-        FileList.SelectionChanged += (_, _) => UpdateReviewButton();
+        FileList.SelectionChanged += (_, _) =>
+        {
+            UpdateReviewButton();
+            UpdateIdleSelectedTrackArtwork();
+        };
         PlayerBar.SizeChanged += (_, _) => UpdateSettingsLayout();
         PlayerBar.SizeChanged += (_, _) => UpdateEditorBounds();
         PlayerBar.SizeChanged += (_, _) => UpdateImportBounds();
@@ -401,12 +405,54 @@ public partial class MusicView : UserControl
         foreach (var item in _filteredItems)
             item.IsPlaying = item.Track.Id == _engine.ActiveTrackId;
 
+        var selectedTrackId = (FileList.SelectedItem as TrackDisplayItem)?.Track.Id;
+
         FileList.ItemsSource = _filteredItems;
+        RestoreOrInitializeSelection(selectedTrackId);
         UpdatePlaylistSummary();
         RefreshNextTrackPreview();
         UpdateFilterCounts();
         UpdateReviewFilterButton();
         UpdateReviewButton();
+        UpdateIdleSelectedTrackArtwork();
+    }
+
+    private void RestoreOrInitializeSelection(int? previousSelectedTrackId)
+    {
+        if (_filteredItems.Count == 0)
+        {
+            FileList.SelectedIndex = -1;
+            return;
+        }
+
+        var targetTrackId = _engine.ActiveTrackId >= 0
+            ? _engine.ActiveTrackId
+            : previousSelectedTrackId;
+
+        if (targetTrackId is int id)
+        {
+            var index = _filteredItems.FindIndex(item => item.Track.Id == id);
+            if (index >= 0)
+            {
+                FileList.SelectedIndex = index;
+                return;
+            }
+        }
+
+        if (FileList.SelectedIndex < 0 || FileList.SelectedIndex >= _filteredItems.Count)
+            FileList.SelectedIndex = 0;
+    }
+
+    private void UpdateIdleSelectedTrackArtwork()
+    {
+        if (_engine.ActiveTrackId >= 0 || _isTrackPreviewActive)
+            return;
+
+        var index = FileList.SelectedIndex;
+        if (index >= 0 && index < _filteredItems.Count)
+            UpdatePlayerArtworkBackground(_filteredItems[index].Track);
+        else
+            ClearPlayerArtworkBackground();
     }
 
     private void UpdateFilterCounts()
@@ -1275,6 +1321,8 @@ public partial class MusicView : UserControl
         PlayerArtworkBackground.IsVisible = artwork is not null;
         AppArtworkBackground.Source = artwork;
         AppArtworkBackground.IsVisible = artwork is not null;
+        ListArtworkBackground.Source = artwork;
+        ListArtworkBackground.IsVisible = artwork is not null;
     }
 
     private static Bitmap? LoadPlayerArtwork(MusicTrack track)
@@ -1301,6 +1349,8 @@ public partial class MusicView : UserControl
         PlayerArtworkBackground.IsVisible = false;
         AppArtworkBackground.Source = null;
         AppArtworkBackground.IsVisible = false;
+        ListArtworkBackground.Source = null;
+        ListArtworkBackground.IsVisible = false;
 
         if (!disposeCache)
             return;
