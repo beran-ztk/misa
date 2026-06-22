@@ -23,6 +23,7 @@ public partial class SettingsOverlay : UserControl
     private List<TagRuleGroup> _tagRuleGroups = [];
     private bool _isLoading;
     private bool _updatingTagCategory;
+    private bool _genreVocabularyLoaded;
     private SettingsPage _selectedPage;
 
     public event Action<string>? ToastRequested;
@@ -45,10 +46,18 @@ public partial class SettingsOverlay : UserControl
 
     public void Open()
     {
-        _isLoading = true;
         DatabasePathText.Text = Values.DbPath;
         TracksPathText.Text = Values.TracksDirectory;
+        SelectPage(SettingsPage.Library);
+        IsVisible = true;
+    }
 
+    private void EnsureGenreVocabularyLoaded()
+    {
+        if (_genreVocabularyLoaded)
+            return;
+
+        _isLoading = true;
         _modelGenres = MusicLibraryService.Current.GetModelGenres();
         _modelSubgenres = MusicLibraryService.Current.GetModelSubgenres();
         _distinctionsBySubgenreId = MusicLibraryService.Current.GetModelSubgenreDistinctions()
@@ -60,15 +69,8 @@ public partial class SettingsOverlay : UserControl
             .ToList();
         ModelGenreBox.SelectedIndex = 0;
         SearchBox.Text = string.Empty;
+        _genreVocabularyLoaded = true;
         _isLoading = false;
-
-        SelectPage(SettingsPage.GenreVocabulary);
-        UpdateSummary();
-        RebuildGenreVocabularyRows();
-        RebuildCalibrationRows();
-        ReloadTagManagement();
-        ReloadTagRules();
-        IsVisible = true;
     }
 
     private void RebuildGenreVocabularyRows()
@@ -234,6 +236,8 @@ public partial class SettingsOverlay : UserControl
     private void ReloadGenreVocabulary()
     {
         var selectedCategoryId = (ModelGenreBox.SelectedItem as ModelGenreChoice)?.Id;
+        _genreVocabularyLoaded = true;
+        _isLoading = true;
         _modelGenres = MusicLibraryService.Current.GetModelGenres();
         _modelSubgenres = MusicLibraryService.Current.GetModelSubgenres();
         _distinctionsBySubgenreId = MusicLibraryService.Current.GetModelSubgenreDistinctions()
@@ -246,6 +250,7 @@ public partial class SettingsOverlay : UserControl
         ModelGenreBox.SelectedItem = ((IEnumerable<ModelGenreChoice>)ModelGenreBox.ItemsSource!)
             .FirstOrDefault(choice => choice.Id == selectedCategoryId)
             ?? ((IEnumerable<ModelGenreChoice>)ModelGenreBox.ItemsSource!).First();
+        _isLoading = false;
         RebuildGenreVocabularyRows();
         UpdateSummary();
         LibraryMetadataChanged?.Invoke();
@@ -293,6 +298,9 @@ public partial class SettingsOverlay : UserControl
 
     private void SelectPage(SettingsPage page)
     {
+        if (page == SettingsPage.GenreVocabulary)
+            EnsureGenreVocabularyLoaded();
+
         _selectedPage = page;
         var isGenreVocabularyPage = page == SettingsPage.GenreVocabulary;
         var isLibraryPage = page == SettingsPage.Library;
@@ -325,6 +333,7 @@ public partial class SettingsOverlay : UserControl
                         ? "Turn model signals into reviewable tag suggestions. Rules never assign tags automatically in this first version."
                         : "Compare current system interpretations before turning them into filters.";
         SummaryText.Text = isGenreVocabularyPage ? BuildSummaryText() : "";
+        if (isGenreVocabularyPage) RebuildGenreVocabularyRows();
         if (page == SettingsPage.AnalysisCalibration) RebuildCalibrationRows();
         if (page == SettingsPage.Tags) ReloadTagManagement(SelectedTagCategoryId());
         if (page == SettingsPage.TagRules) ReloadTagRules();
