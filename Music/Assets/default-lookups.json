@@ -1,0 +1,283 @@
+{
+  "tagCategories": [
+    {
+      "id": 1,
+      "key": "mood",
+      "name": "Mood",
+      "color": "#65BCEB",
+      "sort_order": 10,
+      "tags": [
+        {
+          "id": 9,
+          "name": "Aggressive",
+          "description": "Forceful, confrontational, hard-hitting, or attacking in character."
+        },
+        {
+          "id": 17,
+          "name": "Dark",
+          "description": "Dark, serious, ominous, or threatening in mood."
+        },
+        {
+          "id": 22,
+          "name": "Dramatic",
+          "description": "Large-scale, serious, tense, or cinematically heightened."
+        },
+        {
+          "id": 24,
+          "name": "Dreamy",
+          "description": "Dreamlike, soft, floating, or slightly unreal in feeling."
+        },
+        {
+          "id": 19,
+          "name": "Emotional",
+          "description": "Strong emotional expression, whether sad, uplifting, or dramatic."
+        },
+        {
+          "id": 23,
+          "name": "Euphoric",
+          "description": "Highly uplifting and exhilarating, often with a sense of release."
+        },
+        {
+          "id": 26,
+          "name": "Happy",
+          "description": "Cheerful, positive, and light in mood."
+        },
+        {
+          "id": 27,
+          "name": "Hopeful",
+          "description": "Optimistic, encouraging, and forward-looking."
+        },
+        {
+          "id": 20,
+          "name": "Melancholic",
+          "description": "Sad, reflective, wistful, or bittersweet in character."
+        },
+        {
+          "id": 28,
+          "name": "Mysterious",
+          "description": "Unclear, enigmatic, or suspenseful in atmosphere."
+        },
+        {
+          "id": 25,
+          "name": "Nostalgic",
+          "description": "Evokes memories, the past, or a retro emotional feeling."
+        },
+        {
+          "id": 21,
+          "name": "Romantic",
+          "description": "Warm, affectionate, or emotionally intimate in mood."
+        },
+        {
+          "id": 29,
+          "name": "Tense",
+          "description": "Tense, restless, uneasy, or full of anticipation."
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "key": "sound",
+      "name": "Sound",
+      "color": "#8BD17C",
+      "sort_order": 20,
+      "tags": [
+        {
+          "id": 30,
+          "name": "Atmospheric",
+          "description": "Strong sense of space and atmosphere, often prioritising texture over direct rhythm."
+        },
+        {
+          "id": 12,
+          "name": "Bass",
+          "description": "Bass is unusually prominent and strongly shapes the track."
+        },
+        {
+          "id": 7,
+          "name": "Bouncy",
+          "description": "Springy rhythm with a light, playful sense of movement."
+        },
+        {
+          "id": 6,
+          "name": "Calm",
+          "description": "Relaxed and low-pressure, with little agitation or urgency."
+        },
+        {
+          "id": 15,
+          "name": "Deep",
+          "description": "Deep, spacious, or inward-looking sound with less direct surface energy."
+        },
+        {
+          "id": 5,
+          "name": "Energetic",
+          "description": "Active, driving, and energetic without necessarily sounding harsh."
+        },
+        {
+          "id": 3,
+          "name": "Fast",
+          "description": "Fast-paced or clearly accelerated in feel."
+        },
+        {
+          "id": 8,
+          "name": "Groovy",
+          "description": "Strong rhythmic flow that feels especially easy to move along with."
+        },
+        {
+          "id": 10,
+          "name": "Hard",
+          "description": "Hard-edged sound with strong kick impact, pressure, or intensity."
+        },
+        {
+          "id": 43,
+          "name": "Immense",
+          "description": "Very large, weighty, or overwhelming in sonic scale."
+        },
+        {
+          "id": 32,
+          "name": "Instrumental",
+          "description": "No prominent vocals; the focus is on instruments, synths, or beats."
+        },
+        {
+          "id": 18,
+          "name": "Melodic",
+          "description": "Melody is especially important and clearly foregrounded."
+        },
+        {
+          "id": 44,
+          "name": "Minimal",
+          "description": "Reduced arrangement with few elements, repetition, and little overload."
+        },
+        {
+          "id": 11,
+          "name": "Raw",
+          "description": "Rough, unpolished, dirty, or deliberately less refined in sound."
+        },
+        {
+          "id": 4,
+          "name": "Slow",
+          "description": "Slow-paced, calm, or carried by a restrained flow."
+        },
+        {
+          "id": 14,
+          "name": "Smooth",
+          "description": "Fluid, pleasant, and cleanly flowing in sound and arrangement."
+        },
+        {
+          "id": 13,
+          "name": "Soft",
+          "description": "Gentle and smooth in sound, without strong harshness or aggression."
+        },
+        {
+          "id": 31,
+          "name": "Vocal",
+          "description": "Vocals, rap, or a prominent voice are an important part of the track."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "key": "theme",
+      "name": "Theme",
+      "color": "#CBA6F7",
+      "sort_order": 20,
+      "tags": [
+        {
+          "id": 33,
+          "name": "Anime",
+          "description": "Clear anime, AMV, opening, or anime-inspired context."
+        },
+        {
+          "id": 41,
+          "name": "Cyberpunk",
+          "description": "Dark futuristic high-tech atmosphere, often neon, urban, or dystopian."
+        },
+        {
+          "id": 42,
+          "name": "Glitchy",
+          "description": "Digital errors, stutters, artifacts, or chopped-up sound are intentionally prominent."
+        },
+        {
+          "id": 40,
+          "name": "Retro",
+          "description": "Deliberately evokes older music, synth, game, or production aesthetics."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "key": "situation",
+      "name": "Situation",
+      "color": "#F9C66A",
+      "sort_order": 30,
+      "tags": [
+        {
+          "id": 16,
+          "name": "Chill",
+          "description": "Relaxed and suitable for unwinding or casual background listening."
+        },
+        {
+          "id": 34,
+          "name": "Sleep",
+          "description": "Calm enough for sleep or very passive listening."
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "key": "workflow",
+      "name": "Workflow",
+      "color": "#8BD17C",
+      "sort_order": 40,
+      "tags": [
+        {
+          "id": 46,
+          "name": "Find more",
+          "description": "Look for similar songs."
+        },
+        {
+          "id": 47,
+          "name": "Find other version",
+          "description": "Look for another version of this song."
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "key": "version",
+      "name": "Version",
+      "color": "#F58BA8",
+      "sort_order": 50,
+      "tags": [
+        {
+          "id": 39,
+          "name": "Live Version",
+          "description": "A live recording or live version rather than the standard studio version."
+        },
+        {
+          "id": 38,
+          "name": "Mashup",
+          "description": "Combines multiple songs or musical elements into one track."
+        },
+        {
+          "id": 45,
+          "name": "Nightcore",
+          "description": "A sped-up and usually pitch-raised edit of an existing track, often giving the song a brighter, faster, more energetic character."
+        },
+        {
+          "id": 37,
+          "name": "Reverb",
+          "description": "Added reverb is clearly audible and shapes the sound."
+        },
+        {
+          "id": 36,
+          "name": "Slowed",
+          "description": "A deliberately slowed-down version of a track."
+        },
+        {
+          "id": 35,
+          "name": "Speed Up",
+          "description": "An accelerated version of a track, without necessarily being a full Nightcore edit."
+        }
+      ]
+    }
+  ]
+}
