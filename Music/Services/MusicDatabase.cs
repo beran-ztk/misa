@@ -1055,7 +1055,7 @@ public class MusicDatabase
         var now = DateTime.UtcNow.ToString("O");
 
         ExecuteInsert(conn, tx,
-            "UPDATE tracks SET title = $title, rating_id = $ratingId, updated_at = $updatedAt, needs_reevaluation = CASE WHEN $ratingId IS NULL THEN 1 ELSE needs_reevaluation END WHERE id = $id",
+            "UPDATE tracks SET title = $title, rating_id = $ratingId, updated_at = $updatedAt, needs_reevaluation = 0 WHERE id = $id",
             ("$id", id), ("$title", title), ("$ratingId", ratingId), ("$updatedAt", now));
 
         tx.Commit();
@@ -1065,9 +1065,7 @@ public class MusicDatabase
     {
         using var conn = Open();
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = @"UPDATE tracks SET needs_reevaluation =
-                            CASE WHEN rating_id IS NULL THEN 1 ELSE $needsReview END
-                            WHERE id = $id";
+        cmd.CommandText = "UPDATE tracks SET needs_reevaluation = $needsReview WHERE id = $id";
         cmd.Parameters.AddWithValue("$id", id);
         cmd.Parameters.AddWithValue("$needsReview", needsReview ? 1 : 0);
         cmd.ExecuteNonQuery();
