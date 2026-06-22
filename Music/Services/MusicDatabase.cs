@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Avalonia.Platform;
 using Microsoft.Data.Sqlite;
 using Music.Models;
@@ -265,7 +266,7 @@ public class MusicDatabase
         CreateTagSchema(conn);
         SimplifyTagSchemaIfNeeded(conn);
         MigrateTagRuleGroupsIfNeeded(conn);
-        SeedDefaultTagCategories(conn);
+        SeedDefaultLookups(conn);
         if (ModelMetadataNeedsImport(conn))
         {
             using var tx = conn.BeginTransaction();
@@ -599,6 +600,15 @@ public class MusicDatabase
         return Convert.ToInt32(cmd.ExecuteScalar()) > 0;
     }
 
+    private static long TableRowCount(SqliteConnection conn, string table)
+    {
+        if (!TableExists(conn, table))
+            return 0;
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = $"SELECT COUNT(*) FROM {table}";
+        return (long)cmd.ExecuteScalar()!;
+    }
+
     public void RecordTrackPlaybackStarted(int trackId)
     {
         using var conn = Open();
@@ -830,38 +840,67 @@ public class MusicDatabase
                 ("$name", rating.Name), ("$sortOrder", rating.SortOrder));
         }
 
-        SeedDefaultTagCategories(conn, tx);
+        SeedDefaultLookups(conn, tx);
 
         SynchronizeModelMetadata(conn, tx);
     }
 
-    private static void SeedDefaultTagCategories(SqliteConnection conn)
+    private static void SeedDefaultLookups(SqliteConnection conn)
     {
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT COUNT(*) FROM tag_categories";
-        if (Convert.ToInt32(cmd.ExecuteScalar()) > 0)
-            return;
-
         using var tx = conn.BeginTransaction();
-        SeedDefaultTagCategories(conn, tx);
+        SeedDefaultLookups(conn, tx);
         tx.Commit();
     }
 
-    private static void SeedDefaultTagCategories(SqliteConnection conn, SqliteTransaction tx)
+    private static void SeedDefaultLookups(SqliteConnection conn, SqliteTransaction tx)
     {
-        var defaults = new[]
-        {
-            new { Name = "Mood", Color = "#65BCEB", Sort = 10 },
-            new { Name = "Theme", Color = "#CBA6F7", Sort = 20 },
-            new { Name = "Situation", Color = "#F9C66A", Sort = 30 },
-            new { Name = "Workflow", Color = "#8BD17C", Sort = 40 }
-        };
+        var lookups = ReadAsset<LookupSeedDocument>("default-lookups.json");
 
-        foreach (var item in defaults)
+        foreach (var category in lookups.TagCategories)
         {
-            ExecuteInsert(conn, tx, @"INSERT OR IGNORE INTO tag_categories (key, name, color, sort_order)
-                                      VALUES ($key, $name, $color, $sortOrder)",
-                ("$key", SlugKey(item.Name)), ("$name", item.Name), ("$color", item.Color), ("$sortOrder", item.Sort));
+            var key = string.IsNullOrWhiteSpace(category.Key) ? SlugKey(category.Name) : category.Key;
+            ExecuteInsert(conn, tx, @"
+                INSERT INTO tag_categories (key, name, color, sort_order)
+                VALUES ($key, $name, $color, $sortOrder)
+                ON CONFLICT(key) DO UPDATE SET
+                    name = excluded.name,
+                    color = excluded.color,
+                    sort_order = excluded.sort_order",
+                ("$key", key), ("$name", category.Name), ("$color", category.Color), ("$sortOrder", category.SortOrder));
+
+            var categoryId = SelectId(conn, tx, "SELECT id FROM tag_categories WHERE key = $key", ("$key", key));
+            foreach (var tag in category.Tags)
+            {
+                ExecuteInsert(conn, tx, @"
+                    INSERT INTO tags (category_id, name, description)
+                    VALUES ($categoryId, $name, $description)
+                    ON CONFLICT(category_id, name) DO UPDATE SET description = excluded.description",
+                    ("$categoryId", categoryId),
+                    ("$name", tag.Name),
+                    ("$description", string.IsNullOrWhiteSpace(tag.Description) ? DBNull.Value : tag.Description));
+            }
+        }
+
+        if (TableRowCount(conn, "tag_rule_groups") > 0)
+            return;
+
+        foreach (var group in lookups.TagRuleGroups)
+        {
+            var tagId = FindTagId(conn, tx, group.CategoryName, group.TagName);
+            if (tagId is null || group.Conditions.Count == 0)
+                continue;
+
+            var groupId = InsertAndGetId(conn, tx, @"
+                INSERT INTO tag_rule_groups (tag_id, match_mode, enabled)
+                VALUES ($tagId, $matchMode, $enabled)",
+                ("$tagId", tagId.Value),
+                ("$matchMode", group.MatchMode.Equals("all", StringComparison.OrdinalIgnoreCase) ? "all" : "any"),
+                ("$enabled", group.Enabled == 0 ? 0 : 1));
+
+            foreach (var condition in group.Conditions)
+            {
+                InsertTagRuleCondition(conn, tx, groupId, condition.SourceType, condition.SourceKey, condition.Threshold);
+            }
         }
     }
 
@@ -1932,6 +1971,20 @@ public class MusicDatabase
         return (long)cmd.ExecuteScalar()!;
     }
 
+    private static long? FindTagId(SqliteConnection conn, SqliteTransaction tx, string categoryName, string tagName)
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
+        cmd.CommandText = @"
+            SELECT tags.id
+            FROM tags
+            JOIN tag_categories categories ON categories.id = tags.category_id
+            WHERE categories.name = $categoryName AND tags.name = $tagName";
+        cmd.Parameters.AddWithValue("$categoryName", categoryName);
+        cmd.Parameters.AddWithValue("$tagName", tagName);
+        return cmd.ExecuteScalar() is long id ? id : null;
+    }
+
     private static void AddParameters(SqliteCommand cmd, IEnumerable<(string Name, object? Value)> parameters)
     {
         foreach (var (name, value) in parameters)
@@ -1960,6 +2013,26 @@ public class MusicDatabase
 
     private sealed record RatingSeedDocument(List<RatingSeed> Ratings);
     private sealed record RatingSeed(string Name, int SortOrder);
+    private sealed record LookupSeedDocument(
+        [property: JsonPropertyName("tagCategories")] List<LookupTagCategorySeed> TagCategories,
+        [property: JsonPropertyName("tagRuleGroups")] List<LookupTagRuleGroupSeed> TagRuleGroups);
+    private sealed record LookupTagCategorySeed(
+        string Key,
+        string Name,
+        string? Color,
+        [property: JsonPropertyName("sort_order")] int SortOrder,
+        List<LookupTagSeed> Tags);
+    private sealed record LookupTagSeed(string Name, string? Description);
+    private sealed record LookupTagRuleGroupSeed(
+        [property: JsonPropertyName("category_name")] string CategoryName,
+        [property: JsonPropertyName("tag_name")] string TagName,
+        [property: JsonPropertyName("match_mode")] string MatchMode,
+        int Enabled,
+        List<LookupTagRuleConditionSeed> Conditions);
+    private sealed record LookupTagRuleConditionSeed(
+        [property: JsonPropertyName("source_type")] string SourceType,
+        [property: JsonPropertyName("source_key")] string SourceKey,
+        double Threshold);
     private sealed record ModelSubgenreMetadataSeed(
         string Label,
         string Genre,
