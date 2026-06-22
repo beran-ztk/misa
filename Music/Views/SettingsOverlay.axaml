@@ -233,26 +233,66 @@
             </Grid>
 
             <Grid x:Name="TagsPage" Grid.Row="2" IsVisible="False" RowDefinitions="Auto,Auto,*" Margin="30,22,30,0">
-                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,12">
-                    <TextBox x:Name="NewTagCategoryBox" Watermark="New tag category…" Height="34"/>
-                    <Button Grid.Column="1" Content="Add category" Click="OnAddTagCategoryClicked" Margin="10,0,0,0" Padding="12,5"/>
+                <Border Grid.Row="0"
+                        Background="#52080B0F"
+                        BorderBrush="#263542"
+                        BorderThickness="1"
+                        CornerRadius="7"
+                        Padding="12"
+                        Margin="0,0,0,12">
+                    <Grid ColumnDefinitions="220,*,Auto" ColumnSpacing="10">
+                        <ComboBox x:Name="TagCategoryBox" Classes="settings-input"
+                                  SelectionChanged="OnTagCategorySelectionChanged"/>
+                        <TextBox x:Name="NewTagCategoryBox" Grid.Column="1" Classes="settings-input"
+                                 Watermark="New tag category…"/>
+                        <Button Grid.Column="2" Classes="settings-action"
+                                Content="Add category"
+                                Click="OnAddTagCategoryClicked"/>
+                    </Grid>
+                </Border>
+
+                <Border x:Name="AddTagPanel"
+                        Grid.Row="1"
+                        IsVisible="False"
+                        Background="#360A1016"
+                        BorderBrush="#263542"
+                        BorderThickness="1"
+                        CornerRadius="7"
+                        Padding="12"
+                        Margin="0,0,0,12">
+                    <Grid RowDefinitions="Auto,Auto" RowSpacing="8">
+                        <StackPanel Spacing="2">
+                            <TextBlock x:Name="AddTagTitleText" Text="Add tag" FontSize="12" FontWeight="SemiBold"/>
+                            <TextBlock Text="Create a tag inside the selected category."
+                                       FontSize="10.5" Opacity="0.56"/>
+                        </StackPanel>
+                        <Grid Grid.Row="1" ColumnDefinitions="190,*,Auto" ColumnSpacing="10">
+                            <TextBox x:Name="NewTagBox" Classes="settings-input"
+                                     Watermark="New tag…"/>
+                            <TextBox x:Name="NewTagDescriptionBox" Grid.Column="1" Classes="settings-input"
+                                     Watermark="Description / usage hint…"/>
+                            <Button Grid.Column="2" Classes="settings-action"
+                                    Content="Add tag"
+                                    Click="OnAddTagClicked"/>
+                        </Grid>
+                    </Grid>
+                </Border>
+
+                <TextBox x:Name="RenameTagCategoryBox" IsVisible="False"/>
+
+                <Grid Grid.Row="2" RowDefinitions="Auto,*">
+                    <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,8">
+                        <TextBlock Text="TAGS" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
+                        <TextBlock x:Name="TagVocabularyHintText"
+                                   Grid.Column="1"
+                                   FontSize="10.5"
+                                   Opacity="0.5"
+                                   VerticalAlignment="Center"/>
+                    </Grid>
+                    <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel x:Name="TagRows" Spacing="8" Margin="0,0,0,18"/>
+                    </ScrollViewer>
                 </Grid>
-                <StackPanel Grid.Row="1" Spacing="8" Margin="0,0,0,14">
-                    <Grid ColumnDefinitions="220,*,Auto,Auto">
-                        <ComboBox x:Name="TagCategoryBox" Height="34" SelectionChanged="OnTagCategorySelectionChanged"/>
-                        <TextBox x:Name="RenameTagCategoryBox" Grid.Column="1" Margin="10,0,0,0" Height="34"/>
-                        <Button Grid.Column="2" Content="Save category" Click="OnSaveTagCategoryClicked" Margin="8,0,0,0" Padding="12,5"/>
-                        <Button Grid.Column="3" Content="Delete" Click="OnDeleteTagCategoryClicked" Margin="6,0,0,0" Padding="12,5" Opacity="0.75"/>
-                    </Grid>
-                    <Grid ColumnDefinitions="190,*,Auto">
-                        <TextBox x:Name="NewTagBox" Watermark="New tag…" Height="34"/>
-                        <TextBox x:Name="NewTagDescriptionBox" Grid.Column="1" Watermark="Description / usage hint…" Height="34" Margin="10,0,0,0"/>
-                        <Button Grid.Column="2" Content="Add tag" Click="OnAddTagClicked" Margin="10,0,0,0" Padding="12,5"/>
-                    </Grid>
-                </StackPanel>
-                <ScrollViewer Grid.Row="2" HorizontalScrollBarVisibility="Disabled">
-                    <StackPanel x:Name="TagRows" Spacing="5" Margin="0,0,0,18"/>
-                </ScrollViewer>
             </Grid>
 
             <Grid x:Name="TagRulesPage" Grid.Row="2" IsVisible="False" RowDefinitions="Auto,*" Margin="30,22,30,0">

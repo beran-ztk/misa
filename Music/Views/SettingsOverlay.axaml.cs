@@ -851,6 +851,11 @@ public partial class SettingsOverlay : UserControl
         var categoryId = SelectedTagCategoryId();
         var category = _tagCategories.FirstOrDefault(item => item.Id == categoryId);
         RenameTagCategoryBox.Text = category?.Name ?? string.Empty;
+        AddTagPanel.IsVisible = category is not null;
+        AddTagTitleText.Text = category is null ? "Add tag" : $"Add tag to {category.Name}";
+        TagVocabularyHintText.Text = category is null
+            ? "Choose or create a category before adding tags."
+            : "Cards are compact; edit only when needed.";
     }
 
     private void RebuildTagRows()
@@ -871,50 +876,147 @@ public partial class SettingsOverlay : UserControl
 
         foreach (var tag in tags)
         {
-            var row = new Border
-            {
-                Background = new SolidColorBrush(Color.Parse("#111419")),
-                BorderBrush = new SolidColorBrush(Color.Parse("#26313A")),
-                BorderThickness = new Avalonia.Thickness(1),
-                CornerRadius = new Avalonia.CornerRadius(5),
-                Padding = new Avalonia.Thickness(9, 7)
-            };
-            var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("190,*,Auto,Auto"), ColumnSpacing = 8 };
-            var nameBox = new TextBox { Text = tag.Name, Height = 32, FontSize = 11 };
-            var descriptionBox = new TextBox { Text = tag.Description ?? string.Empty, Height = 32, FontSize = 11, Watermark = "Description / usage hint…" };
-            var save = new Button { Content = "Save", Padding = new Avalonia.Thickness(10, 4), FontSize = 10 };
-            var remove = new Button { Content = "Delete", Padding = new Avalonia.Thickness(10, 4), FontSize = 10, Opacity = .75 };
-            save.Click += (_, _) =>
-            {
-                try
-                {
-                    MusicLibraryService.Current.RenameTag(tag.Id, nameBox.Text ?? tag.Name, descriptionBox.Text);
-                    ToastRequested?.Invoke("Tag updated.");
-                    ReloadTagManagement(categoryId);
-                    LibraryMetadataChanged?.Invoke();
-                }
-                catch (Exception exception) { ToastRequested?.Invoke($"Could not update tag: {exception.Message}"); }
-            };
-            remove.Click += (_, _) =>
-            {
-                var error = MusicLibraryService.Current.DeleteTagIfUnused(tag.Id);
-                ToastRequested?.Invoke(error ?? "Tag deleted.");
-                ReloadTagManagement(categoryId);
-                if (error is null) LibraryMetadataChanged?.Invoke();
-            };
-            Grid.SetColumn(descriptionBox, 1);
-            Grid.SetColumn(save, 2);
-            Grid.SetColumn(remove, 3);
-            grid.Children.Add(nameBox);
-            grid.Children.Add(descriptionBox);
-            grid.Children.Add(save);
-            grid.Children.Add(remove);
-            row.Child = grid;
-            TagRows.Children.Add(row);
+            TagRows.Children.Add(CreateTagVocabularyRow(tag, categoryId.Value));
         }
 
         if (tags.Count == 0)
             TagRows.Children.Add(new TextBlock { Text = "No tags in this category yet.", Opacity = .52, Margin = new Avalonia.Thickness(0, 18, 0, 0) });
+    }
+
+    private Control CreateTagVocabularyRow(Tag tag, int selectedCategoryId)
+    {
+        var row = new Border
+        {
+            Background = new SolidColorBrush(Color.Parse("#D60E1217")),
+            BorderBrush = new SolidColorBrush(Color.Parse("#253542")),
+            BorderThickness = new Avalonia.Thickness(1),
+            CornerRadius = new Avalonia.CornerRadius(7),
+            Padding = new Avalonia.Thickness(12, 9)
+        };
+        var panel = new StackPanel { Spacing = 8 };
+        var current = tag;
+        StackPanel? editorPanel = null;
+
+        var header = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), ColumnSpacing = 10 };
+        var titlePanel = new StackPanel { Spacing = 1 };
+        var accent = CategoryBrush(tag.CategoryColor);
+        var titleText = new TextBlock
+        {
+            Text = tag.Name,
+            FontSize = 12.5,
+            FontWeight = FontWeight.SemiBold,
+            Foreground = accent,
+            TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis
+        };
+        titlePanel.Children.Add(titleText);
+        titlePanel.Children.Add(new TextBlock
+        {
+            Text = tag.CategoryName,
+            FontSize = 10,
+            Opacity = 0.55,
+            TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis
+        });
+        header.Children.Add(titlePanel);
+
+        var edit = new Button
+        {
+            Content = CreateSvgIcon("/Assets/pencil-simple.svg", 14),
+            Classes = { "settings-ghost" },
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        ToolTip.SetTip(edit, "Edit tag");
+        Grid.SetColumn(edit, 1);
+        header.Children.Add(edit);
+        panel.Children.Add(header);
+
+        var descriptionText = CreateGenreBodyText(tag.Description, "No description yet.");
+        panel.Children.Add(descriptionText);
+
+        edit.Click += (_, _) =>
+        {
+            if (editorPanel is null)
+            {
+                editorPanel = CreateTagVocabularyEditor(
+                    current,
+                    selectedCategoryId,
+                    updated =>
+                    {
+                        current = updated;
+                        titleText.Text = updated.Name;
+                        descriptionText.Text = BodyText(updated.Description, "No description yet.");
+                        descriptionText.Opacity = string.IsNullOrWhiteSpace(updated.Description) ? 0.45 : 0.76;
+                    });
+                panel.Children.Add(editorPanel);
+            }
+
+            editorPanel.IsVisible = !editorPanel.IsVisible;
+            edit.Opacity = editorPanel.IsVisible ? 1 : 0.82;
+            ToolTip.SetTip(edit, editorPanel.IsVisible ? "Close editor" : "Edit tag");
+        };
+
+        row.Child = panel;
+        return row;
+    }
+
+    private StackPanel CreateTagVocabularyEditor(Tag tag, int selectedCategoryId, Action<Tag> onSaved)
+    {
+        var nameBox = CreateSettingsTextBox(tag.Name, "Tag name");
+        var descriptionBox = CreateSettingsTextBox(tag.Description ?? string.Empty, "Description / usage hint");
+        var editor = new StackPanel
+        {
+            Spacing = 8,
+            IsVisible = false,
+            Margin = new Avalonia.Thickness(0, 4, 0, 0)
+        };
+
+        var fields = new Grid { ColumnDefinitions = new ColumnDefinitions("190,*,Auto,Auto"), ColumnSpacing = 8 };
+        fields.Children.Add(CreateLabeledField("Tag", nameBox));
+        fields.Children.Add(CreateLabeledField("Description", descriptionBox, 1));
+        var save = new Button
+        {
+            Content = "Save",
+            Classes = { "settings-action" },
+            VerticalAlignment = VerticalAlignment.Bottom
+        };
+        var remove = new Button
+        {
+            Content = "Delete",
+            Classes = { "settings-ghost" },
+            Width = double.NaN,
+            Padding = new Avalonia.Thickness(10, 4),
+            VerticalAlignment = VerticalAlignment.Bottom,
+            Opacity = .7
+        };
+        Grid.SetColumn(save, 2);
+        Grid.SetColumn(remove, 3);
+        fields.Children.Add(save);
+        fields.Children.Add(remove);
+        editor.Children.Add(fields);
+
+        save.Click += (_, _) =>
+        {
+            try
+            {
+                MusicLibraryService.Current.RenameTag(tag.Id, nameBox.Text ?? tag.Name, descriptionBox.Text);
+                var updated = tag with { Name = (nameBox.Text ?? tag.Name).Trim(), Description = descriptionBox.Text };
+                var index = _tags.FindIndex(item => item.Id == tag.Id);
+                if (index >= 0) _tags[index] = updated;
+                onSaved(updated);
+                ToastRequested?.Invoke("Tag updated.");
+                RebuildTagRows();
+                LibraryMetadataChanged?.Invoke();
+            }
+            catch (Exception exception) { ToastRequested?.Invoke($"Could not update tag: {exception.Message}"); }
+        };
+        remove.Click += (_, _) =>
+        {
+            var error = MusicLibraryService.Current.DeleteTagIfUnused(tag.Id);
+            ToastRequested?.Invoke(error ?? "Tag deleted.");
+            ReloadTagManagement(selectedCategoryId);
+            if (error is null) LibraryMetadataChanged?.Invoke();
+        };
+
+        return editor;
     }
 
     private void OnAddTagCategoryClicked(object? sender, RoutedEventArgs e)
@@ -925,7 +1027,9 @@ public partial class SettingsOverlay : UserControl
         {
             MusicLibraryService.Current.AddTagCategory(name);
             NewTagCategoryBox.Text = string.Empty;
-            ReloadTagManagement();
+            var createdCategoryId = MusicLibraryService.Current.GetTagCategories()
+                .FirstOrDefault(category => string.Equals(category.Name, name, StringComparison.OrdinalIgnoreCase))?.Id;
+            ReloadTagManagement(createdCategoryId);
             ToastRequested?.Invoke("Tag category added.");
             LibraryMetadataChanged?.Invoke();
         }
