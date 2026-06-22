@@ -62,7 +62,6 @@ public partial class MusicView : UserControl
 
     private record FilterGroupControls(
         MultiSelectFilterControl GenreCtrl,
-        MultiSelectFilterControl StyleCtrl,
         MultiSelectFilterControl TagCtrl);
     private readonly List<FilterGroupControls> _filterGroups = [];
 
@@ -216,8 +215,7 @@ public partial class MusicView : UserControl
 
         foreach (var fg in _filterGroups)
         {
-            fg.GenreCtrl.SetItems(Values.Genres.Select(g => g.Name));
-            fg.StyleCtrl.SetItems(Values.Styles.Select(s => s.Name));
+            fg.GenreCtrl.SetItems(GenreFilterOptions());
             fg.TagCtrl.SetItems(TagFilterOptions());
         }
     }
@@ -325,6 +323,15 @@ public partial class MusicView : UserControl
 
     private static string TagFilterName(Tag tag) => $"{tag.CategoryName}: {tag.Name}";
 
+    private static IEnumerable<MultiSelectFilterControl.FilterOption> GenreFilterOptions() =>
+        Values.Genres.Select(genre =>
+        {
+            var parts = genre.Name.Split('→', 2, StringSplitOptions.TrimEntries);
+            return parts.Length == 2
+                ? new MultiSelectFilterControl.FilterOption(genre.Name, parts[1], parts[0])
+                : new MultiSelectFilterControl.FilterOption(genre.Name, genre.Name);
+        });
+
     private static IEnumerable<MultiSelectFilterControl.FilterOption> TagFilterOptions() =>
         Values.Tags.Select(tag => new MultiSelectFilterControl.FilterOption(
             TagFilterName(tag),
@@ -393,7 +400,7 @@ public partial class MusicView : UserControl
         var groups = _filterGroups
             .Select(fg => new FilterGroup(
                 SelectedIds(fg.GenreCtrl.SelectedItems, Values.Genres, g => g.Name, g => g.Id),
-                SelectedIds(fg.StyleCtrl.SelectedItems, Values.Styles, s => s.Name, s => s.Id),
+                new HashSet<int>(),
                 SelectedIds(fg.TagCtrl.SelectedItems, Values.Tags, TagFilterName, t => t.Id)))
             .ToList();
         
@@ -469,18 +476,14 @@ public partial class MusicView : UserControl
             var groupTrackIds = groupTracks.Select(track => track.Id).ToList();
 
             var genreFacetCounts = MetadataCountService.FacetCounts(groupTrackIds, _allTrackGenreIds);
-            var styleFacetCounts = MetadataCountService.FacetCounts(groupTrackIds, _allTrackStyleIds);
             var tagFacetCounts = MetadataCountService.FacetCounts(groupTrackIds, _allTrackTagIds);
 
             var genreCountByName = Values.Genres.ToDictionary(g => g.Name,
                 g => genreFacetCounts.GetValueOrDefault(g.Id, 0));
-            var styleCountByName = Values.Styles.ToDictionary(s => s.Name,
-                s => styleFacetCounts.GetValueOrDefault(s.Id, 0));
             var tagCountByName = Values.Tags.ToDictionary(TagFilterName,
                 t => tagFacetCounts.GetValueOrDefault(t.Id, 0));
 
             fg.GenreCtrl.UpdateCounts(genreCountByName);
-            fg.StyleCtrl.UpdateCounts(styleCountByName);
             fg.TagCtrl.UpdateCounts(tagCountByName);
         }
     }
@@ -490,7 +493,6 @@ public partial class MusicView : UserControl
         IEnumerable<MusicTrack> query = _allItems.Select(item => item.Track);
         var selectedRatingIds = SelectedIds(RatingFilter.SelectedItems, Values.Ratings, r => r.Name, r => r.Id);
         var selectedGenreIds = SelectedIds(group.GenreCtrl.SelectedItems, Values.Genres, g => g.Name, g => g.Id);
-        var selectedStyleIds = SelectedIds(group.StyleCtrl.SelectedItems, Values.Styles, s => s.Name, s => s.Id);
         var selectedTagIds = SelectedIds(group.TagCtrl.SelectedItems, Values.Tags, TagFilterName, t => t.Id);
         var term = SearchBox.Text?.Trim();
 
@@ -502,9 +504,6 @@ public partial class MusicView : UserControl
 
         if (selectedGenreIds.Count > 0)
             query = query.Where(track => TrackHasAllTags(track.Id, _allTrackGenreIds, selectedGenreIds));
-
-        if (selectedStyleIds.Count > 0)
-            query = query.Where(track => TrackHasAllTags(track.Id, _allTrackStyleIds, selectedStyleIds));
 
         if (selectedTagIds.Count > 0)
             query = query.Where(track => TrackHasAllTags(track.Id, _allTrackTagIds, selectedTagIds));
@@ -535,6 +534,7 @@ public partial class MusicView : UserControl
     {
         _filterPanelVisible = !_filterPanelVisible;
         FilterDrawer.IsVisible = _filterPanelVisible;
+        FiltersToggleBtn.Opacity = _filterPanelVisible ? 1.0 : 0.86;
     }
 
     private void OnSearchToggleClicked(object? sender, RoutedEventArgs e)
@@ -694,9 +694,9 @@ public partial class MusicView : UserControl
         var groups = _filterGroups
             .Select(group => new PortableFilterGroup(
                 SortedNames(group.GenreCtrl.SelectedItems),
-                SortedNames(group.StyleCtrl.SelectedItems),
+                [],
                 SortedNames(group.TagCtrl.SelectedItems)))
-            .Where(group => group.Genres.Count > 0 || group.Styles.Count > 0 || (group.Tags?.Count ?? 0) > 0)
+            .Where(group => group.Genres.Count > 0 || (group.Tags?.Count ?? 0) > 0)
             .ToList();
 
         return new PortableFilterPreset(
@@ -713,7 +713,7 @@ public partial class MusicView : UserControl
         FilterGroupsPanel.Children.Clear();
 
         var groups = preset.Groups
-            .Where(group => group.Genres.Count > 0 || group.Styles.Count > 0 || (group.Tags?.Count ?? 0) > 0)
+            .Where(group => group.Genres.Count > 0 || (group.Tags?.Count ?? 0) > 0)
             .ToList();
 
         if (groups.Count == 0)
@@ -726,7 +726,6 @@ public partial class MusicView : UserControl
             {
                 var controls = AddFilterGroup();
                 controls.GenreCtrl.SetSelectedItems(group.Genres, notify: false);
-                controls.StyleCtrl.SetSelectedItems(group.Styles, notify: false);
                 controls.TagCtrl.SetSelectedItems(group.Tags ?? [], notify: false);
             }
         }
@@ -752,71 +751,70 @@ public partial class MusicView : UserControl
     private FilterGroupControls AddFilterGroup()
     {
         var genreCtrl = new MultiSelectFilterControl { Placeholder = "All genres" };
-        genreCtrl.SetItems(Values.Genres.Select(g => g.Name));
+        genreCtrl.SetItems(GenreFilterOptions());
         genreCtrl.SelectionChanged += (_, _) => ApplyFilter();
-
-        var styleCtrl = new MultiSelectFilterControl { Placeholder = "All styles" };
-        styleCtrl.SetItems(Values.Styles.Select(s => s.Name));
-        styleCtrl.SelectionChanged += (_, _) => ApplyFilter();
 
         var tagCtrl = new MultiSelectFilterControl { Placeholder = "All tags" };
         tagCtrl.SetItems(TagFilterOptions());
         tagCtrl.SelectionChanged += (_, _) => ApplyFilter();
 
-        var fg = new FilterGroupControls(genreCtrl, styleCtrl, tagCtrl);
+        var fg = new FilterGroupControls(genreCtrl, tagCtrl);
         _filterGroups.Add(fg);
 
-        StackPanel Section(string label, MultiSelectFilterControl ctrl) =>
-            new StackPanel { Spacing = 5, Margin = new Thickness(0, 0, 0, 10),
+        StackPanel Section(string label, string hint, MultiSelectFilterControl ctrl) =>
+            new StackPanel { Spacing = 6,
                 Children = {
-                    new TextBlock { Text = label, FontSize = 11, Opacity = 0.5 },
+                    new TextBlock { Text = label.ToUpperInvariant(), FontSize = 10, FontWeight = FontWeight.SemiBold, Opacity = 0.44, LetterSpacing = 1 },
+                    new TextBlock { Text = hint, FontSize = 10.5, Opacity = 0.48, TextWrapping = TextWrapping.Wrap },
                     ctrl
                 }
             };
 
-        var body = new StackPanel { Margin = new Thickness(0, 6, 0, 0) };
-        body.Children.Add(Section("Genre", genreCtrl));
-        body.Children.Add(Section("Style", styleCtrl));
-        body.Children.Add(Section("Tag", tagCtrl));
-
-        var card = new StackPanel { Margin = new Thickness(0, 0, 0, 4) };
-
-        // Only groups after the first get a divider + remove button
-        if (_filterGroups.Count > 1)
+        var groupNumber = _filterGroups.Count;
+        var content = new StackPanel { Spacing = 14 };
+        var header = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
+        header.Children.Add(new TextBlock
         {
-            var header = new Grid { Margin = new Thickness(0, 12, 0, 0) };
-            header.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
-            header.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
-
-            var groupLabel = new TextBlock
-            {
-                Text = $"Group {_filterGroups.Count}",
-                FontSize = 11, Opacity = 0.4,
-                VerticalAlignment = VerticalAlignment.Center
-            };
+            Text = groupNumber == 1 ? "Primary group" : $"Group {groupNumber}",
+            FontSize = 12,
+            FontWeight = FontWeight.SemiBold,
+            Opacity = 0.86,
+            VerticalAlignment = VerticalAlignment.Center
+        });
+        if (groupNumber > 1)
+        {
             var removeBtn = new Button
             {
-                Content = "×", Padding = new Thickness(6, 2),
-                FontSize = 12, Opacity = 0.5,
-                Background = new SolidColorBrush(Colors.Transparent)
+                Content = "Remove",
+                Padding = new Thickness(9, 4),
+                FontSize = 10.5,
+                Opacity = 0.62,
+                Background = new SolidColorBrush(Colors.Transparent),
+                BorderBrush = new SolidColorBrush(Color.Parse("#314B5F")),
+                BorderThickness = new Thickness(1)
             };
             removeBtn.Click += (_, _) => RemoveFilterGroup(fg);
-
-            Grid.SetColumn(groupLabel, 0);
             Grid.SetColumn(removeBtn, 1);
-            header.Children.Add(groupLabel);
             header.Children.Add(removeBtn);
-
-            var divider = new Border
-            {
-                Height = 1, Margin = new Thickness(0, 0, 0, 4),
-                Background = new SolidColorBrush(Color.FromArgb(70, 49, 75, 95))
-            };
-            card.Children.Add(divider);
-            card.Children.Add(header);
         }
+        content.Children.Add(header);
 
-        card.Children.Add(body);
+        var fields = new Grid { ColumnDefinitions = new ColumnDefinitions("*,*"), ColumnSpacing = 14 };
+        fields.Children.Add(Section("Genres", "Model genres selected here must be present on the track.", genreCtrl));
+        var tags = Section("Tags", "Tags are grouped by category and keep their category colors.", tagCtrl);
+        Grid.SetColumn(tags, 1);
+        fields.Children.Add(tags);
+        content.Children.Add(fields);
+
+        var card = new Border
+        {
+            Background = new SolidColorBrush(Color.Parse("#9A111820")),
+            BorderBrush = new SolidColorBrush(Color.Parse("#263442")),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(9),
+            Padding = new Thickness(14, 12),
+            Child = content
+        };
         FilterGroupsPanel.Children.Add(card);
         return fg;
     }

@@ -26,6 +26,7 @@ public partial class MultiSelectFilterControl : UserControl
 
     private sealed record FilterItem(
         string Name,
+        string DisplayName,
         string GroupName,
         string? GroupColor,
         int GroupIndex,
@@ -161,7 +162,7 @@ public partial class MultiSelectFilterControl : UserControl
             row.Children.Add(nameText);
             row.Children.Add(countBadge);
 
-            _items.Add(new FilterItem(name, groupName, item.GroupColor, groupIndex, row, cb, countText, countBadge));
+            _items.Add(new FilterItem(name, item.DisplayName, groupName, item.GroupColor, groupIndex, row, cb, countText, countBadge));
         }
         RebuildItemsPanel(_items);
         UpdateText();
@@ -240,6 +241,8 @@ public partial class MultiSelectFilterControl : UserControl
     {
         _label.Text = _selected.Count == 0
             ? Placeholder
-            : string.Join(", ", _selected);
+            : string.Join(", ", _items
+                .Where(item => _selected.Contains(item.Name))
+                .Select(item => item.DisplayName));
     }
 }

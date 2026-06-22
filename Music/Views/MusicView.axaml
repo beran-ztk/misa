@@ -159,7 +159,7 @@
                 <Button x:Name="FiltersToggleBtn"
                         Classes="icon"
                         Click="OnToggleFiltersClicked"
-                        ToolTip.Tip="Open filter panel"
+                        ToolTip.Tip="Open filters"
                         VerticalContentAlignment="Center"
                         Opacity="0.86">
                     <Image Source="{SvgImage /Assets/filter.svg}"
@@ -450,112 +450,127 @@
                 </ListBox.ContextMenu>
             </ListBox>
 
-            <!-- ── Filter drawer (right-side overlay) ── -->
+            <!-- ── Filter workspace overlay ── -->
             <Border x:Name="FilterDrawer"
-                    Width="310" HorizontalAlignment="Right"
+                    ZIndex="40"
                     IsVisible="False"
-                    Background="#101216"
-                    BorderThickness="1,0,0,0" BorderBrush="#2B3642"
-                    BoxShadow="-10 0 34 0 #77000000">
-                <DockPanel LastChildFill="True">
-
-                    <!-- Header (docked top) -->
-                    <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto,Auto"
-                          Margin="16,13,10,13">
-                        <TextBlock Grid.Column="0"
-                                   Text="Filters"
-                                   FontSize="14" FontWeight="SemiBold"
-                                   VerticalAlignment="Center"/>
+                    Background="#D20D0F12"
+                    BorderThickness="0,1,0,0"
+                    BorderBrush="#25313D">
+                <Grid RowDefinitions="Auto,*" Margin="30,22,30,26">
+                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto" Margin="0,0,0,18">
+                        <StackPanel Spacing="3">
+                            <TextBlock Text="Filters" FontSize="20" FontWeight="SemiBold"/>
+                            <TextBlock Text="Build reusable presets from ratings, model genres and tags."
+                                       FontSize="11" Opacity="0.62"/>
+                        </StackPanel>
                         <Button Grid.Column="1"
                                 Content="Clear"
                                 Click="OnClearFiltersClicked"
-                                Padding="8,4" FontSize="11"
-                                Opacity="0.6"
-                                Background="Transparent"/>
-                    </Grid>
-                    <Rectangle DockPanel.Dock="Top"
-                               Height="1" Fill="#18808080"/>
-
-                    <!-- Footer (docked bottom, always visible) -->
-                    <Border DockPanel.Dock="Bottom"
-                            BorderThickness="0,1,0,0" BorderBrush="#14808080"
-                            Padding="16,10,16,12">
-                        <Button Content="＋ Add group"
-                                Click="OnAddFilterGroupClicked"
-                                Background="#0D151D"
+                                Background="Transparent"
                                 BorderBrush="#314B5F"
                                 BorderThickness="1"
-                                Padding="10,6" FontSize="11"
-                                HorizontalAlignment="Left"/>
-                    </Border>
+                                Padding="12,6"
+                                Margin="0,0,10,0"
+                                FontSize="11"
+                                Opacity="0.72"/>
+                        <Button Grid.Column="2"
+                                Content="✕"
+                                Click="OnToggleFiltersClicked"
+                                Classes="icon"
+                                ToolTip.Tip="Close filters"
+                                Opacity="0.7"/>
+                    </Grid>
 
-                    <!-- Scrollable filter sections (fills remaining space) -->
-                    <ScrollViewer Padding="16,14,16,10">
-                        <StackPanel Spacing="20">
-
-                            <!-- Presets -->
-                            <StackPanel Spacing="7">
-                                <TextBlock Text="PRESETS"
-                                           FontSize="10" FontWeight="SemiBold"
-                                           Opacity="0.38" LetterSpacing="1"/>
-                                <ComboBox x:Name="PresetBox"
-                                          SelectionChanged="OnPresetSelectionChanged"
-                                          HorizontalAlignment="Stretch"
-                                          Height="34"
-                                          Background="#0D151D"
-                                          BorderBrush="#414B5F"
-                                          BorderThickness="1"
-                                          CornerRadius="6"
-                                          Padding="8,4"/>
-                                <Grid ColumnDefinitions="*,Auto,Auto"
-                                      ColumnSpacing="7">
+                    <Grid Grid.Row="1" ColumnDefinitions="280,*" ColumnSpacing="24">
+                        <Border Background="#B80B0D10"
+                                BorderBrush="#263442"
+                                BorderThickness="1"
+                                CornerRadius="10"
+                                Padding="16">
+                            <StackPanel Spacing="18">
+                                <StackPanel Spacing="7">
+                                    <TextBlock Text="PRESETS"
+                                               FontSize="10" FontWeight="SemiBold"
+                                               Opacity="0.42" LetterSpacing="1"/>
+                                    <ComboBox x:Name="PresetBox"
+                                              SelectionChanged="OnPresetSelectionChanged"
+                                              HorizontalAlignment="Stretch"
+                                              Height="36"
+                                              Background="#0D151D"
+                                              BorderBrush="#414B5F"
+                                              BorderThickness="1"
+                                              CornerRadius="6"
+                                              Padding="9,5"/>
                                     <TextBox x:Name="PresetNameBox"
                                              Watermark="Preset name"
-                                             Height="32"
+                                             Height="34"
                                              VerticalContentAlignment="Center"/>
+                                    <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                                        <Button Grid.Column="0"
+                                                Content="Save preset"
+                                                Click="OnSavePresetClicked"
+                                                Background="#12334A"
+                                                BorderBrush="#2D6E96"
+                                                BorderThickness="1"
+                                                Padding="10,6"
+                                                FontSize="11"/>
+                                        <Button Grid.Column="1"
+                                                Content="Delete"
+                                                Click="OnDeletePresetClicked"
+                                                Background="Transparent"
+                                                BorderBrush="#314B5F"
+                                                BorderThickness="1"
+                                                Padding="10,6"
+                                                FontSize="11"
+                                                Opacity="0.75"/>
+                                    </Grid>
+                                </StackPanel>
+
+                                <Rectangle Height="1" Fill="#25313D"/>
+
+                                <StackPanel Spacing="7">
+                                    <TextBlock Text="RATING"
+                                               FontSize="10" FontWeight="SemiBold"
+                                               Opacity="0.42" LetterSpacing="1"/>
+                                    <views:MultiSelectFilterControl x:Name="RatingFilter"
+                                                                    Placeholder="All ratings"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Column="1"
+                                Background="#A80B0D10"
+                                BorderBrush="#263442"
+                                BorderThickness="1"
+                                CornerRadius="10"
+                                Padding="18">
+                            <DockPanel LastChildFill="True">
+                                <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="0,0,0,14">
+                                    <StackPanel Spacing="3">
+                                        <TextBlock Text="Filter groups" FontSize="14" FontWeight="SemiBold"/>
+                                        <TextBlock Text="Groups are OR. Inside a group, selected genres and tags must all match."
+                                                   FontSize="11" Opacity="0.56"/>
+                                    </StackPanel>
                                     <Button Grid.Column="1"
-                                            Content="Save"
-                                            Click="OnSavePresetClicked"
+                                            Content="＋ Add group"
+                                            Click="OnAddFilterGroupClicked"
                                             Background="#0D151D"
                                             BorderBrush="#314B5F"
                                             BorderThickness="1"
-                                            Padding="10,5"
-                                            FontSize="11"/>
-                                    <Button Grid.Column="2"
-                                            Content="Delete"
-                                            Click="OnDeletePresetClicked"
-                                            Background="Transparent"
-                                            BorderBrush="#314B5F"
-                                            BorderThickness="1"
-                                            Padding="10,5"
+                                            Padding="11,7"
                                             FontSize="11"
-                                            Opacity="0.75"/>
+                                            HorizontalAlignment="Right"
+                                            VerticalAlignment="Top"/>
                                 </Grid>
-                            </StackPanel>
 
-                            <!-- Rating -->
-                            <StackPanel Spacing="7">
-                                <TextBlock Text="RATING"
-                                           FontSize="10" FontWeight="SemiBold"
-                                           Opacity="0.38" LetterSpacing="1"/>
-                                <views:MultiSelectFilterControl x:Name="RatingFilter"
-                                                                Placeholder="---"/>
-                            </StackPanel>
-
-                            <!-- Tags -->
-                            <StackPanel Spacing="0">
-                                <TextBlock Text="TAGS"
-                                           FontSize="10" FontWeight="SemiBold"
-                                           Opacity="0.38" LetterSpacing="1"
-                                           Margin="0,0,0,10"/>
-                                <StackPanel x:Name="FilterGroupsPanel" Spacing="0"/>
-                            </StackPanel>
-                            <Border Height="30"/>
-                        </StackPanel>
-                        
-                    </ScrollViewer>
-
-                </DockPanel>
+                                <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+                                    <StackPanel x:Name="FilterGroupsPanel" Spacing="12"/>
+                                </ScrollViewer>
+                            </DockPanel>
+                        </Border>
+                    </Grid>
+                </Grid>
             </Border>
 
             <views:AddTrackOverlay x:Name="AddTrackOverlay" IsVisible="False"/>
