@@ -135,32 +135,78 @@ public sealed class ImportQueueService
     {
         while (MusicLibraryService.Current.GetNextQueuedImport() is { } item)
         {
+            if (IsInterruptedRetry(item))
+            {
+                MusicLibraryService.Current.CleanupInterruptedImport(item);
+                item = item with { TrackId = null };
+            }
+
+            if (GetRecoverableTrack(item) is { } existingTrack)
+            {
+                await CompleteRecoveredTrackAsync(item, existingTrack);
+                continue;
+            }
+
             Update(item, ImportQueueStatus.Downloading, "Checking download details…");
+            var currentItem = item;
             var result = await MusicLibraryService.Current.ImportFromYouTubeAsync(item.CanonicalUrl,
                 new Progress<string>(message =>
                 {
                     var status = message.StartsWith("Analyzing", StringComparison.OrdinalIgnoreCase)
                         ? ImportQueueStatus.Analyzing
                         : ImportQueueStatus.Downloading;
-                    Update(item, status, message);
-                }));
+                    Update(currentItem, status, message);
+                }),
+                trackId =>
+                {
+                    Update(currentItem, ImportQueueStatus.Analyzing, "Analyzing track…", trackId);
+                    currentItem = currentItem with { TrackId = trackId };
+                });
 
             if (result.Success && result.Track is not null)
-            {
-                MusicLibraryService.Current.SetTrackNeedsReview(result.Track.Id, true);
-                MusicLibraryService.Current.DeleteImportQueueItem(item.Id);
-                ClearActivePhase(item.Id);
-                TrackImported?.Invoke(result.Track, result.Warning);
-                ItemUpdated?.Invoke(item with
-                {
-                    Status = ImportQueueStatus.ReadyForReview,
-                    Detail = result.Warning ?? "Ready for review",
-                    TrackId = result.Track.Id
-                });
-            }
+                CompleteImport(item, result.Track, result.Warning);
             else
                 Update(item, ImportQueueStatus.Failed, result.Error ?? "Import failed");
         }
+    }
+
+    private static MusicTrack? GetRecoverableTrack(ImportQueueItem item)
+    {
+        if (item.TrackId is int existingTrackId
+            && MusicLibraryService.Current.GetTrackById(existingTrackId) is { } existingTrack)
+            return existingTrack;
+
+        return MusicLibraryService.Current.GetTrackByCanonicalUrl(item.CanonicalUrl);
+    }
+
+    private static bool IsInterruptedRetry(ImportQueueItem item) =>
+        item.Detail?.StartsWith("Interrupted", StringComparison.OrdinalIgnoreCase) == true;
+
+    private async Task CompleteRecoveredTrackAsync(ImportQueueItem item, MusicTrack track)
+    {
+        if (MusicLibraryService.Current.GetTrackAudioAnalysis(track.Id) is not null)
+        {
+            CompleteImport(item, track, null);
+            return;
+        }
+
+        Update(item, ImportQueueStatus.Analyzing, "Resuming analysis…", track.Id);
+        var error = await MusicLibraryService.Current.AnalyzeTrackAsync(track);
+        CompleteImport(item, track, error is null ? null : $"Track downloaded, but analysis needs review: {error}");
+    }
+
+    private void CompleteImport(ImportQueueItem item, MusicTrack track, string? warning)
+    {
+        MusicLibraryService.Current.SetTrackNeedsReview(track.Id, true);
+        MusicLibraryService.Current.DeleteImportQueueItem(item.Id);
+        ClearActivePhase(item.Id);
+        TrackImported?.Invoke(track, warning);
+        ItemUpdated?.Invoke(item with
+        {
+            Status = ImportQueueStatus.ReadyForReview,
+            Detail = warning ?? "Ready for review",
+            TrackId = track.Id
+        });
     }
 
     private void Update(ImportQueueItem item, ImportQueueStatus status, string? detail, int? trackId = null)

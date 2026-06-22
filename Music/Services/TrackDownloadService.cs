@@ -161,6 +161,22 @@ public class TrackDownloadService
                         .FirstOrDefault(f => Path.GetFileNameWithoutExtension(f).EndsWith($"[{videoId}]"));
     }
 
+    public void DeleteDownloadArtifacts(string videoId)
+    {
+        if (string.IsNullOrWhiteSpace(videoId) || !Directory.Exists(Values.TracksDirectory))
+            return;
+
+        foreach (var filePath in Directory.EnumerateFiles(Values.TracksDirectory))
+        {
+            var fileName = Path.GetFileName(filePath);
+            if (!fileName.Contains($"[{videoId}]", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            try { File.Delete(filePath); }
+            catch { }
+        }
+    }
+
     public string TitleFromFileName(string fileName)
     {
         var name = Path.GetFileNameWithoutExtension(fileName);

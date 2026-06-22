@@ -603,12 +603,31 @@ public class MusicDatabase
     {
         using var conn = Open();
         ExecuteNonQuery(conn, @"UPDATE import_queue_items SET status = $queued,
-                                detail = 'Interrupted — queued again', updated_at = $now
+                                detail = 'Interrupted — cleaned up and queued again',
+                                track_id = NULL,
+                                updated_at = $now
                                 WHERE status IN ($downloading, $analyzing)",
             ("$queued", ImportQueueStatus.Queued.ToString()),
             ("$downloading", ImportQueueStatus.Downloading.ToString()),
             ("$analyzing", ImportQueueStatus.Analyzing.ToString()),
             ("$now", DateTime.UtcNow.ToString("O")));
+    }
+
+    public List<ImportQueueItem> GetInterruptedImportQueueItems()
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"SELECT id, batch_id, source_url, canonical_url, title, duration_seconds, estimated_size_bytes,
+                                   status, detail, track_id
+                            FROM import_queue_items
+                            WHERE status IN ($downloading, $analyzing)
+                            ORDER BY created_at, id";
+        cmd.Parameters.AddWithValue("$downloading", ImportQueueStatus.Downloading.ToString());
+        cmd.Parameters.AddWithValue("$analyzing", ImportQueueStatus.Analyzing.ToString());
+        using var reader = cmd.ExecuteReader();
+        var items = new List<ImportQueueItem>();
+        while (reader.Read()) items.Add(ReadImportQueueItem(reader));
+        return items;
     }
 
     public ImportQueueItem? GetNextQueuedImport()
