@@ -23,6 +23,8 @@ namespace Music.Views;
 
 public partial class MusicView : UserControl
 {
+    private const string DefaultFilterPresetName = "Default";
+
     // Engine
     private readonly PlaybackEngine _engine = new();
     private readonly GlobalMediaKeyListener _globalMediaKeys = new();
@@ -60,6 +62,10 @@ public partial class MusicView : UserControl
     private List<PortableFilterPreset> _filterPresets = [];
     private bool _updatingPresetUi;
     private bool _showReviewOnly;
+    private MultiSelectFilterControl? _conditionGenreCtrl;
+    private MultiSelectFilterControl? _conditionTagCtrl;
+    private FilterSection? _conditionGenreSection;
+    private FilterSection? _conditionTagSection;
 
     private record FilterGroupControls(
         MultiSelectFilterControl GenreCtrl,
@@ -122,7 +128,12 @@ public partial class MusicView : UserControl
 
         LoadLookups();
         LoadFilterPresets();
-        AddFilterGroup();
+        InitializeFilterConditionBuilder();
+        if (_filterPresets.FirstOrDefault(preset =>
+                string.Equals(preset.Name, DefaultFilterPresetName, StringComparison.OrdinalIgnoreCase)) is { } defaultPreset)
+            ApplyFilterPreset(defaultPreset);
+        else
+            RebuildFilterConditionsPanel();
         RefreshTrackList();
 
         SettingsOverlay.PreloadGenreVocabulary();
@@ -216,12 +227,19 @@ public partial class MusicView : UserControl
 
         RatingFilter.SetItems(Values.Ratings.Select(r => r.Name));
 
+        if (_conditionGenreCtrl is not null && _conditionTagCtrl is not null)
+        {
+            _conditionGenreCtrl.SetItems(GenreFilterOptions());
+            _conditionTagCtrl.SetItems(TagFilterOptions());
+            RefreshConditionBuilder();
+        }
+
         foreach (var fg in _filterGroups)
         {
             fg.GenreCtrl.SetItems(GenreFilterOptions());
             fg.TagCtrl.SetItems(TagFilterOptions());
-            fg.RefreshVisuals();
         }
+        RebuildFilterConditionsPanel();
     }
 
     private void RefreshTrackList()
@@ -609,15 +627,15 @@ public partial class MusicView : UserControl
     private void OnClearFiltersClicked(object? sender, RoutedEventArgs e)
     {
         _updatingPresetUi = true;
-        PresetBox.SelectedIndex = -1;
-        PresetNameBox.Text = "";
+        PresetBox.SelectedItem = DefaultFilterPresetName;
+        PresetNameBox.Text = DefaultFilterPresetName;
         _updatingPresetUi = false;
 
         RatingFilter.SetItems(Values.Ratings.Select(r => r.Name));
         RatingFilter.Placeholder = "All ratings";
         _filterGroups.Clear();
-        FilterGroupsPanel.Children.Clear();
-        AddFilterGroup();
+        RebuildFilterConditionsPanel();
+        ClearConditionBuilder();
         _showReviewOnly = false;
         ApplyFilter();
     }
@@ -625,7 +643,18 @@ public partial class MusicView : UserControl
     private void LoadFilterPresets()
     {
         _filterPresets = FilterPresetStore.Load();
-        RefreshPresetBox();
+        if (_filterPresets.All(preset => !string.Equals(preset.Name, DefaultFilterPresetName, StringComparison.OrdinalIgnoreCase)))
+        {
+            _filterPresets.Add(new PortableFilterPreset(
+                DefaultFilterPresetName,
+                new List<string>(),
+                new List<PortableFilterGroup>()));
+            FilterPresetStore.Save(_filterPresets);
+            _filterPresets = FilterPresetStore.Load();
+        }
+
+        PresetNameBox.Text = DefaultFilterPresetName;
+        RefreshPresetBox(DefaultFilterPresetName);
     }
 
     private void RefreshPresetBox(string? selectedName = null)
@@ -638,8 +667,9 @@ public partial class MusicView : UserControl
             .ToList();
 
         PresetBox.ItemsSource = names;
-        PresetBox.SelectedItem = selectedName != null && names.Contains(selectedName, StringComparer.OrdinalIgnoreCase)
-            ? names.First(name => string.Equals(name, selectedName, StringComparison.OrdinalIgnoreCase))
+        var effectiveSelection = selectedName ?? DefaultFilterPresetName;
+        PresetBox.SelectedItem = names.Contains(effectiveSelection, StringComparer.OrdinalIgnoreCase)
+            ? names.First(name => string.Equals(name, effectiveSelection, StringComparison.OrdinalIgnoreCase))
             : null;
 
         _updatingPresetUi = false;
@@ -690,13 +720,29 @@ public partial class MusicView : UserControl
         if (string.IsNullOrWhiteSpace(name))
             return;
 
-        _filterPresets.RemoveAll(preset =>
-            string.Equals(preset.Name, name, StringComparison.OrdinalIgnoreCase));
+        if (string.Equals(name, DefaultFilterPresetName, StringComparison.OrdinalIgnoreCase))
+        {
+            var defaultPreset = new PortableFilterPreset(
+                DefaultFilterPresetName,
+                new List<string>(),
+                new List<PortableFilterGroup>());
+            var defaultIndex = _filterPresets.FindIndex(preset =>
+                string.Equals(preset.Name, DefaultFilterPresetName, StringComparison.OrdinalIgnoreCase));
+            if (defaultIndex >= 0) _filterPresets[defaultIndex] = defaultPreset;
+            else _filterPresets.Add(defaultPreset);
+        }
+        else
+        {
+            _filterPresets.RemoveAll(preset =>
+                string.Equals(preset.Name, name, StringComparison.OrdinalIgnoreCase));
+        }
 
         FilterPresetStore.Save(_filterPresets);
         _filterPresets = FilterPresetStore.Load();
-        PresetNameBox.Text = "";
-        RefreshPresetBox();
+        PresetNameBox.Text = DefaultFilterPresetName;
+        RefreshPresetBox(DefaultFilterPresetName);
+        ApplyFilterPreset(_filterPresets.First(preset =>
+            string.Equals(preset.Name, DefaultFilterPresetName, StringComparison.OrdinalIgnoreCase)));
     }
 
     private PortableFilterPreset CreatePreset(string name)
@@ -704,7 +750,7 @@ public partial class MusicView : UserControl
         var groups = _filterGroups
             .Select(group => new PortableFilterGroup(
                 SortedNames(group.GenreCtrl.SelectedItems),
-                [],
+                new List<string>(),
                 SortedNames(group.TagCtrl.SelectedItems)))
             .Where(group => group.Genres.Count > 0 || (group.Tags?.Count ?? 0) > 0)
             .ToList();
@@ -720,27 +766,16 @@ public partial class MusicView : UserControl
         RatingFilter.SetSelectedItems(preset.Ratings, notify: false);
 
         _filterGroups.Clear();
-        FilterGroupsPanel.Children.Clear();
 
         var groups = preset.Groups
             .Where(group => group.Genres.Count > 0 || (group.Tags?.Count ?? 0) > 0)
             .ToList();
 
-        if (groups.Count == 0)
-        {
-            AddFilterGroup();
-        }
-        else
-        {
-            foreach (var group in groups)
-            {
-                var controls = AddFilterGroup();
-                controls.GenreCtrl.SetSelectedItems(group.Genres, notify: false);
-                controls.TagCtrl.SetSelectedItems(group.Tags ?? [], notify: false);
-                controls.RefreshVisuals();
-            }
-        }
+        foreach (var group in groups)
+            _filterGroups.Add(CreateFilterCondition(group.Genres, group.Tags ?? new List<string>()));
 
+        RebuildFilterConditionsPanel();
+        ClearConditionBuilder();
         ApplyFilter();
     }
 
@@ -755,74 +790,177 @@ public partial class MusicView : UserControl
 
     private void OnAddFilterGroupClicked(object? sender, RoutedEventArgs e)
     {
-        AddFilterGroup();
+        AddConditionFromBuilder();
         ApplyFilter();
     }
 
-    private FilterGroupControls AddFilterGroup()
+    private void InitializeFilterConditionBuilder()
+    {
+        _conditionGenreCtrl = new MultiSelectFilterControl { Placeholder = "All genres" };
+        _conditionGenreCtrl.SetItems(GenreFilterOptions());
+
+        _conditionTagCtrl = new MultiSelectFilterControl { Placeholder = "All tags" };
+        _conditionTagCtrl.SetItems(TagFilterOptions());
+
+        _conditionGenreSection = CreateGenreFilterSection(_conditionGenreCtrl);
+        _conditionTagSection = CreateTagFilterSection(_conditionTagCtrl);
+
+        FilterBuilderPanel.Children.Clear();
+        FilterBuilderPanel.Children.Add(_conditionGenreSection.Control);
+        FilterBuilderPanel.Children.Add(_conditionTagSection.Control);
+    }
+
+    private void AddConditionFromBuilder()
+    {
+        if (_conditionGenreCtrl is null || _conditionTagCtrl is null)
+            return;
+
+        var selectedGenres = SortedNames(_conditionGenreCtrl.SelectedItems);
+        var selectedTags = SortedNames(_conditionTagCtrl.SelectedItems);
+        if (selectedGenres.Count == 0 && selectedTags.Count == 0)
+            return;
+
+        _filterGroups.Add(CreateFilterCondition(selectedGenres, selectedTags));
+        RebuildFilterConditionsPanel();
+        ClearConditionBuilder();
+    }
+
+    private FilterGroupControls CreateFilterCondition(IEnumerable<string> genres, IEnumerable<string> tags)
     {
         var genreCtrl = new MultiSelectFilterControl { Placeholder = "All genres" };
         genreCtrl.SetItems(GenreFilterOptions());
-        genreCtrl.SelectionChanged += (_, _) => ApplyFilter();
+        genreCtrl.SetSelectedItems(genres, notify: false);
 
         var tagCtrl = new MultiSelectFilterControl { Placeholder = "All tags" };
         tagCtrl.SetItems(TagFilterOptions());
-        tagCtrl.SelectionChanged += (_, _) => ApplyFilter();
+        tagCtrl.SetSelectedItems(tags, notify: false);
 
-        FilterSection? genreSection = null;
-        FilterSection? tagSection = null;
-        var fg = new FilterGroupControls(genreCtrl, tagCtrl, () =>
+        return new FilterGroupControls(genreCtrl, tagCtrl, () => { });
+    }
+
+    private void ClearConditionBuilder()
+    {
+        _conditionGenreCtrl?.SetSelectedItems(Array.Empty<string>(), notify: false);
+        _conditionTagCtrl?.SetSelectedItems(Array.Empty<string>(), notify: false);
+        RefreshConditionBuilder();
+    }
+
+    private void RefreshConditionBuilder()
+    {
+        _conditionGenreSection?.Refresh();
+        _conditionTagSection?.Refresh();
+    }
+
+    private void RebuildFilterConditionsPanel()
+    {
+        FilterGroupsPanel.Children.Clear();
+
+        if (_filterGroups.Count == 0)
         {
-            genreSection?.Refresh();
-            tagSection?.Refresh();
-        });
-        _filterGroups.Add(fg);
+            FilterGroupsPanel.Children.Add(new TextBlock
+            {
+                Text = "No conditions yet. Select genres or tags above, then add a condition.",
+                FontSize = 11,
+                Opacity = 0.52,
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(0, 4, 0, 0)
+            });
+            return;
+        }
 
-        var groupNumber = _filterGroups.Count;
-        var content = new StackPanel { Spacing = 14 };
+        for (var i = 0; i < _filterGroups.Count; i++)
+            FilterGroupsPanel.Children.Add(CreateConditionCard(_filterGroups[i], i));
+    }
+
+    private Control CreateConditionCard(FilterGroupControls condition, int index)
+    {
+        var genreNames = condition.GenreCtrl.SelectedItems
+            .Select(DisplayGenreFilterName)
+            .Order(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        var selectedTags = condition.TagCtrl.SelectedItems
+            .Order(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        var chips = new WrapPanel { Orientation = Orientation.Horizontal };
+        foreach (var name in genreNames)
+            chips.Children.Add(CreateConditionChip(name, "#65BCEB"));
+        foreach (var selectedTag in selectedTags)
+        {
+            var tag = Values.Tags.FirstOrDefault(item => string.Equals(TagFilterName(item), selectedTag, StringComparison.OrdinalIgnoreCase));
+            chips.Children.Add(CreateConditionChip(DisplayTagFilterName(selectedTag), tag?.CategoryColor ?? "#CFA7FF"));
+        }
+
+        var removeBtn = new Button
+        {
+            Content = "Remove",
+            Padding = new Thickness(9, 4),
+            FontSize = 10.5,
+            Opacity = 0.68,
+            Background = new SolidColorBrush(Colors.Transparent),
+            BorderBrush = new SolidColorBrush(Color.Parse("#314B5F")),
+            BorderThickness = new Thickness(1)
+        };
+        removeBtn.Click += (_, _) => RemoveFilterGroup(condition);
+
         var header = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
         header.Children.Add(new TextBlock
         {
-            Text = groupNumber == 1 ? "Primary group" : $"Group {groupNumber}",
-            FontSize = 12,
+            Text = $"Condition {index + 1}",
+            FontSize = 11.5,
             FontWeight = FontWeight.SemiBold,
-            Opacity = 0.86,
+            Opacity = 0.82,
             VerticalAlignment = VerticalAlignment.Center
         });
-        if (groupNumber > 1)
-        {
-            var removeBtn = new Button
-            {
-                Content = "Remove",
-                Padding = new Thickness(9, 4),
-                FontSize = 10.5,
-                Opacity = 0.62,
-                Background = new SolidColorBrush(Colors.Transparent),
-                BorderBrush = new SolidColorBrush(Color.Parse("#314B5F")),
-                BorderThickness = new Thickness(1)
-            };
-            removeBtn.Click += (_, _) => RemoveFilterGroup(fg);
-            Grid.SetColumn(removeBtn, 1);
-            header.Children.Add(removeBtn);
-        }
-        content.Children.Add(header);
+        Grid.SetColumn(removeBtn, 1);
+        header.Children.Add(removeBtn);
 
-        genreSection = CreateGenreFilterSection(genreCtrl);
-        tagSection = CreateTagFilterSection(tagCtrl);
-        content.Children.Add(genreSection.Control);
-        content.Children.Add(tagSection.Control);
-
-        var card = new Border
+        return new Border
         {
-            Background = new SolidColorBrush(Color.Parse("#9A111820")),
+            Background = new SolidColorBrush(Color.Parse("#78111820")),
             BorderBrush = new SolidColorBrush(Color.Parse("#263442")),
             BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(9),
-            Padding = new Thickness(14, 12),
-            Child = content
+            CornerRadius = new CornerRadius(7),
+            Padding = new Thickness(11, 9),
+            Child = new StackPanel
+            {
+                Spacing = 8,
+                Children = { header, chips }
+            }
         };
-        FilterGroupsPanel.Children.Add(card);
-        return fg;
+    }
+
+    private static Border CreateConditionChip(string text, string? accentColor)
+    {
+        var accent = SafeBrush(accentColor, "#65BCEB");
+        return new Border
+        {
+            Background = new SolidColorBrush(Color.Parse("#1A2026")),
+            BorderBrush = accent,
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(4),
+            Padding = new Thickness(8, 3),
+            Margin = new Thickness(0, 0, 6, 6),
+            Child = new TextBlock
+            {
+                Text = text,
+                FontSize = 10.5,
+                FontWeight = FontWeight.SemiBold,
+                Foreground = accent
+            }
+        };
+    }
+
+    private static string DisplayGenreFilterName(string genreName)
+    {
+        var parts = genreName.Split('→', 2, StringSplitOptions.TrimEntries);
+        return parts.Length == 2 ? parts[1] : genreName;
+    }
+
+    private static string DisplayTagFilterName(string tagName)
+    {
+        var parts = tagName.Split(':', 2, StringSplitOptions.TrimEntries);
+        return parts.Length == 2 ? parts[1] : tagName;
     }
 
     private FilterSection CreateGenreFilterSection(MultiSelectFilterControl genreCtrl)
@@ -1148,8 +1286,7 @@ public partial class MusicView : UserControl
         var idx = _filterGroups.IndexOf(fg);
         if (idx < 0) return;
         _filterGroups.RemoveAt(idx);
-        FilterGroupsPanel.Children.RemoveAt(idx);
-        if (_filterGroups.Count == 0) AddFilterGroup();
+        RebuildFilterConditionsPanel();
         ApplyFilter();
     }
 
