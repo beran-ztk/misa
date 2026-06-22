@@ -33,7 +33,14 @@ public partial class MainWindow : Window
         var enabled = 1;
         DwmSetWindowAttribute(handle.Value, 20, ref enabled, sizeof(int));
 
-        var captionColor = 0x000000;
+        var borderColor = 0x4E4134;
+        DwmSetWindowAttribute(handle.Value, 34, ref borderColor, sizeof(int));
+
+        var backdropType = 2; // Mica where supported; ignored by older Windows builds.
+        DwmSetWindowAttribute(handle.Value, 38, ref backdropType, sizeof(int));
+
+        // COLORREF is 0x00BBGGRR. Native title bars do not support real alpha transparency here.
+        var captionColor = 0x0E0B09;
         DwmSetWindowAttribute(handle.Value, 35, ref captionColor, sizeof(int));
 
         var textColor = 0xFFFFFF;

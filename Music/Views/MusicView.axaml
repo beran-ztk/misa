@@ -74,7 +74,7 @@
         </Style>
     </UserControl.Styles>
 
-    <Panel Background="#121417">
+    <Panel>
     <Image x:Name="AppArtworkBackground"
            IsVisible="False"
            IsHitTestVisible="False"
@@ -85,16 +85,15 @@
             <ScaleTransform ScaleX="1.08" ScaleY="1.08"/>
         </Image.RenderTransform>
         <Image.Effect>
-            <BlurEffect Radius="22"/>
+            <BlurEffect Radius="20"/>
         </Image.Effect>
     </Image>
-    <Rectangle Fill="#D9121417" IsHitTestVisible="False"/>
-    <Rectangle Fill="#4A000000" IsHitTestVisible="False"/>
+    <Rectangle Fill="#A0121417" IsHitTestVisible="False"/>
     <DockPanel LastChildFill="True">
 
         <!-- ── Toolbar ── -->
         <Border DockPanel.Dock="Top"
-                Background="#4A07080A"
+                Background="#2A07080A"
                 BorderBrush="#16212C"
                 BorderThickness="0,0,0,1"
                 Padding="20,12,16,10">
@@ -185,7 +184,7 @@
                 MaxHeight="132"
                 Background="Transparent"
                 ClipToBounds="True"
-                CornerRadius="10,21,0,0"
+                CornerRadius="10,10,0,0"
                 BorderThickness="0,1,0,0" BorderBrush="#202832">
             <Panel>
                 <Image x:Name="PlayerArtworkBackground"
@@ -203,117 +202,119 @@
                         <BlurEffect Radius="60"/>
                     </Image.Effect>
                 </Image>
-                <Rectangle Fill="#4207080A" IsHitTestVisible="False"/>
-                <Rectangle Fill="#08000000" IsHitTestVisible="False"/>
-                <StackPanel Margin="16,10,16,14">
+                <Rectangle Fill="#0007080A" IsHitTestVisible="False"/>
+                <Rectangle Fill="#00000000" IsHitTestVisible="False"/>
+                <Rectangle Fill="#00000000" IsHitTestVisible="False"/>
+                <StackPanel Margin="16,10,16,0">
 
-                <Border x:Name="UpcomingBar"
-                        IsVisible="False"
-                        Padding="4,0,4,0">
-                    <DockPanel>
-                        <TextBlock x:Name="CrossfadeStatusText"
-                                   DockPanel.Dock="Right"
-                                   IsVisible="False"
-                                   FontSize="11" Opacity="0.4"
-                                   VerticalAlignment="Center"/>
-                        <StackPanel Orientation="Horizontal" Spacing="4"
-                                    VerticalAlignment="Center">
-                            <TextBlock Text="Next:"
-                                       FontSize="11" Opacity="0.4"/>
-                            <TextBlock x:Name="UpcomingTrackText"
-                                       FontSize="11" Opacity="0.6"
-                                       TextTrimming="CharacterEllipsis"/>
-                        </StackPanel>
-                    </DockPanel>
-                </Border>
-
-                <Grid x:Name="PlaybackInfoPanel"
-                      ColumnDefinitions="*,Auto"
-                      IsVisible="False">
-                    <Border Grid.Column="0"
-                            ClipToBounds="False">
-                        <Slider x:Name="PlaybackSlider"
-                                Classes="playback"
-                                Minimum="0" Maximum="100" Value="0"
-                                VerticalAlignment="Center"/>
+                    <Border x:Name="UpcomingBar"
+                            IsVisible="False"
+                            Padding="4,0,4,0">
+                        <DockPanel>
+                            <TextBlock x:Name="CrossfadeStatusText"
+                                       DockPanel.Dock="Right"
+                                       IsVisible="False"
+                                       FontSize="11" Opacity="0.4"
+                                       VerticalAlignment="Center"/>
+                            <StackPanel Orientation="Horizontal" Spacing="4"
+                                        VerticalAlignment="Center">
+                                <TextBlock Text="Next:"
+                                           FontSize="11" Opacity="0.4"/>
+                                <TextBlock x:Name="UpcomingTrackText"
+                                           FontSize="11" Opacity="0.6"
+                                           TextTrimming="CharacterEllipsis"/>
+                            </StackPanel>
+                        </DockPanel>
                     </Border>
-                    <TextBlock x:Name="PlaybackTimeText"
-                               Grid.Column="1"
-                               Text="" FontSize="11" Opacity="0.55"
-                               Margin="10,0,0,0" MinWidth="86"
-                               VerticalAlignment="Center"/>
-                </Grid>
 
-                <Grid ColumnDefinitions="Auto,*,Auto">
-
-                    <StackPanel Grid.Column="0"
-                                Orientation="Horizontal" Spacing="2"
-                                VerticalAlignment="Center">
-                        <Button Classes="icon"
-                                Click="OnPreviousClicked"
-                                ToolTip.Tip="Previous track">
-                            <Image Source="{SvgImage /Assets/skip-back.svg}"
-                                   Width="18" Height="18"/>
-                        </Button>
-                        <Button x:Name="PlayPauseBtn"
-                                Classes="icon"
-                                Click="OnPlayPauseClicked"
-                                ToolTip.Tip="Play / Pause">
-                            <Grid Width="26" Height="26">
-                                <Image x:Name="PlayIcon"
-                                       Source="{SvgImage /Assets/play.svg}"/>
-                                <Image x:Name="PauseIcon"
-                                       Source="{SvgImage /Assets/pause.svg}"
-                                       IsVisible="False"/>
-                            </Grid>
-                        </Button>
-                        <Button Classes="icon"
-                                Click="OnNextClicked"
-                                ToolTip.Tip="Next track">
-                            <Image Source="{SvgImage /Assets/skip-forward.svg}"
-                                   Width="18" Height="18"/>
-                        </Button>
-                    </StackPanel>
-
-                    <TextBlock Grid.Column="1"
-                               x:Name="NowPlayingText"
-                               Text=""
-                               FontStyle="Italic" Opacity="0.7"
-                               VerticalAlignment="Center"
-                               HorizontalAlignment="Center"
-                               TextTrimming="CharacterEllipsis"
-                               Margin="12,0"/>
-
-                    <StackPanel Grid.Column="2"
-                                Orientation="Horizontal" Spacing="4"
-                                VerticalAlignment="Center">
-                        <Border ClipToBounds="False">
-                            <Slider x:Name="VolumeSlider"
+                    <Grid x:Name="PlaybackInfoPanel"
+                          ColumnDefinitions="*,Auto"
+                          IsVisible="False">
+                        <Border Grid.Column="0"
+                                ClipToBounds="False">
+                            <Slider x:Name="PlaybackSlider"
                                     Classes="playback"
-                                    Minimum="0" Maximum="100" 
-                                    Value="100"
-                                    Width="108"
+                                    Minimum="0" Maximum="100" Value="0"
                                     VerticalAlignment="Center"/>
                         </Border>
-                        <Button x:Name="ShuffleBtn"
-                                Classes="icon"
-                                Click="OnShuffleToggleClicked"
-                                Opacity="0.35"
-                                ToolTip.Tip="Shuffle: Off">
-                            <Image Source="{SvgImage /Assets/shuffle.svg}"
-                                   Width="17" Height="17"/>
-                        </Button>
-                        <Button x:Name="ReviewBtn"
-                                Classes="icon"
-                                Click="OnReviewToggleClicked"
-                                Opacity="0.35"
-                                ToolTip.Tip="Mark for review">
-                            <Image Source="{SvgImage /Assets/review.svg}"
-                                   Width="17" Height="17"/>
-                        </Button>
-                    </StackPanel>
+                        <TextBlock x:Name="PlaybackTimeText"
+                                   Grid.Column="1"
+                                   Text="" FontSize="11" Opacity="0.55"
+                                   Margin="10,0,0,0" MinWidth="86"
+                                   VerticalAlignment="Center"/>
+                    </Grid>
 
-                </Grid>
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+
+                        <StackPanel Grid.Column="0"
+                                    Orientation="Horizontal" Spacing="2"
+                                    VerticalAlignment="Center">
+                            <Button Classes="icon"
+                                    Click="OnPreviousClicked"
+                                    ToolTip.Tip="Previous track">
+                                <Image Source="{SvgImage /Assets/skip-back.svg}"
+                                       Width="18" Height="18"/>
+                            </Button>
+                            <Button x:Name="PlayPauseBtn"
+                                    Classes="icon"
+                                    Click="OnPlayPauseClicked"
+                                    ToolTip.Tip="Play / Pause">
+                                <Grid Width="26" Height="26">
+                                    <Image x:Name="PlayIcon"
+                                           Source="{SvgImage /Assets/play.svg}"/>
+                                    <Image x:Name="PauseIcon"
+                                           Source="{SvgImage /Assets/pause.svg}"
+                                           IsVisible="False"/>
+                                </Grid>
+                            </Button>
+                            <Button Classes="icon"
+                                    Click="OnNextClicked"
+                                    ToolTip.Tip="Next track">
+                                <Image Source="{SvgImage /Assets/skip-forward.svg}"
+                                       Width="18" Height="18"/>
+                            </Button>
+                        </StackPanel>
+
+                        <TextBlock Grid.Column="1"
+                                   x:Name="NowPlayingText"
+                                   Text=""
+                                   FontStyle="Italic" Opacity="0.7"
+                                   VerticalAlignment="Center"
+                                   HorizontalAlignment="Center"
+                                   TextTrimming="CharacterEllipsis"
+                                   Margin="12,0"/>
+
+                        <StackPanel Grid.Column="2"
+                                    Orientation="Horizontal" Spacing="4"
+                                    VerticalAlignment="Center">
+                            <Border ClipToBounds="False">
+                                <Slider x:Name="VolumeSlider"
+                                        Classes="playback"
+                                        Minimum="0" Maximum="100" 
+                                        Opacity="0.6"
+                                        Value="100"
+                                        Width="108"
+                                        VerticalAlignment="Center"/>
+                            </Border>
+                            <Button x:Name="ShuffleBtn"
+                                    Classes="icon"
+                                    Click="OnShuffleToggleClicked"
+                                    Opacity="0.35"
+                                    ToolTip.Tip="Shuffle: Off">
+                                <Image Source="{SvgImage /Assets/shuffle.svg}"
+                                       Width="17" Height="17"/>
+                            </Button>
+                            <Button x:Name="ReviewBtn"
+                                    Classes="icon"
+                                    Click="OnReviewToggleClicked"
+                                    Opacity="0.35"
+                                    ToolTip.Tip="Mark for review">
+                                <Image Source="{SvgImage /Assets/review.svg}"
+                                       Width="17" Height="17"/>
+                            </Button>
+                        </StackPanel>
+
+                    </Grid>
                 </StackPanel>
             </Panel>
         </Border>
