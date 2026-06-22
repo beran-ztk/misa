@@ -85,6 +85,14 @@ public partial class SettingsOverlay : UserControl
 
         var search = SearchBox.Text?.Trim() ?? string.Empty;
         var selectedModelGenreId = (ModelGenreBox.SelectedItem as ModelGenreChoice)?.Id;
+        var selectedModelGenreName = (ModelGenreBox.SelectedItem as ModelGenreChoice)?.Name;
+        AddSubgenrePanel.IsVisible = selectedModelGenreId is not null;
+        AddSubgenreTitleText.Text = selectedModelGenreId is null
+            ? "Add subgenre"
+            : $"Add subgenre to {selectedModelGenreName}";
+        GenreVocabularyHintText.Text = selectedModelGenreId is null
+            ? "Choose a category to add new subgenres."
+            : "Cards are compact; edit only when needed.";
         var visibleCount = 0;
         foreach (var row in _genreVocabularyRowsById.Values)
         {
@@ -129,31 +137,47 @@ public partial class SettingsOverlay : UserControl
         return modelGenreName.Contains(search, StringComparison.OrdinalIgnoreCase)
                || subgenre.Name.Contains(search, StringComparison.OrdinalIgnoreCase)
                || (subgenre.Description?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false)
-               || (subgenre.ClassificationHint?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false);
+               || (subgenre.ClassificationHint?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false)
+               || (_distinctionsBySubgenreId.TryGetValue(subgenre.Id, out var distinctions)
+                   && distinctions.Any(item =>
+                       item.ModelGenreName.Contains(search, StringComparison.OrdinalIgnoreCase)
+                       || item.ModelSubgenreName.Contains(search, StringComparison.OrdinalIgnoreCase)
+                       || item.Difference.Contains(search, StringComparison.OrdinalIgnoreCase)));
     }
 
     private GenreVocabularyRowState CreateGenreVocabularyRow(ModelSubgenre subgenre, string modelGenreName)
     {
         var row = new Border
         {
-            Background = new SolidColorBrush(Color.Parse("#111419")),
-            BorderBrush = new SolidColorBrush(Color.Parse("#26313A")),
+            Background = new SolidColorBrush(Color.Parse("#D60E1217")),
+            BorderBrush = new SolidColorBrush(Color.Parse("#253542")),
             BorderThickness = new Avalonia.Thickness(1),
             CornerRadius = new Avalonia.CornerRadius(7),
-            Padding = new Avalonia.Thickness(12, 10)
+            Padding = new Avalonia.Thickness(12, 9)
         };
-        var panel = new StackPanel { Spacing = 10 };
-        var header = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), ColumnSpacing = 12 };
+        var panel = new StackPanel { Spacing = 8 };
+        var current = subgenre;
+        StackPanel? editorPanel = null;
+
+        var header = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto"), ColumnSpacing = 10 };
+        var titlePanel = new StackPanel { Spacing = 1 };
         var titleText = new TextBlock
         {
-            Text = $"{modelGenreName}  ·  {subgenre.Name}",
-            FontSize = 12,
+            Text = subgenre.Name,
+            FontSize = 12.5,
             FontWeight = FontWeight.SemiBold,
-            VerticalAlignment = VerticalAlignment.Center,
             Foreground = new SolidColorBrush(Color.Parse("#E8F0F6")),
             TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis
         };
-        header.Children.Add(titleText);
+        titlePanel.Children.Add(titleText);
+        titlePanel.Children.Add(new TextBlock
+        {
+            Text = modelGenreName,
+            FontSize = 10,
+            Opacity = 0.55,
+            TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis
+        });
+        header.Children.Add(titlePanel);
         var bpm = new TextBlock
         {
             Text = BpmText(subgenre),
@@ -164,51 +188,94 @@ public partial class SettingsOverlay : UserControl
         };
         Grid.SetColumn(bpm, 1);
         header.Children.Add(bpm);
+        var edit = new Button
+        {
+            Content = "Edit",
+            Classes = { "settings-ghost" },
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        Grid.SetColumn(edit, 2);
+        header.Children.Add(edit);
         panel.Children.Add(header);
 
-        var nameBox = new TextBox { Text = subgenre.Name, Height = 32, Watermark = "Subgenre name" };
-        var descriptionBox = new TextBox { Text = subgenre.Description ?? string.Empty, Height = 32, Watermark = "Short description" };
-        var hintBox = new TextBox { Text = subgenre.ClassificationHint ?? string.Empty, Height = 32, Watermark = "Classification hint" };
-        var bpmMinBox = new TextBox { Text = subgenre.BpmMin?.ToString(CultureInfo.InvariantCulture) ?? string.Empty, Height = 32, Watermark = "Min" };
-        var bpmMaxBox = new TextBox { Text = subgenre.BpmMax?.ToString(CultureInfo.InvariantCulture) ?? string.Empty, Height = 32, Watermark = "Max" };
+        var descriptionText = CreateGenreBodyText(subgenre.Description, "No description yet.");
+        panel.Children.Add(descriptionText);
+        var hintText = CreateGenreBodyText(subgenre.ClassificationHint, "No classification hint yet.", "#8FB6D1");
+        panel.Children.Add(hintText);
 
+        if (_distinctionsBySubgenreId.TryGetValue(subgenre.Id, out var distinctions) && distinctions.Count > 0)
+        {
+            var distinctionText = new TextBlock
+            {
+                Text = "Distinguish from: " + string.Join("  ·  ", distinctions.Select(item =>
+                    $"{item.ModelSubgenreName} ({item.ModelGenreName}) — {item.Difference}")),
+                FontSize = 10,
+                Foreground = new SolidColorBrush(Color.Parse("#80C9E8")),
+                Opacity = 0.86,
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Avalonia.Thickness(0, 1, 0, 0)
+            };
+            panel.Children.Add(distinctionText);
+        }
+
+        edit.Click += (_, _) =>
+        {
+            if (editorPanel is null)
+            {
+                editorPanel = CreateGenreVocabularyEditor(
+                    current,
+                    updated =>
+                    {
+                        current = updated;
+                        titleText.Text = updated.Name;
+                        descriptionText.Text = BodyText(updated.Description, "No description yet.");
+                        descriptionText.Opacity = string.IsNullOrWhiteSpace(updated.Description) ? 0.45 : 0.76;
+                        hintText.Text = BodyText(updated.ClassificationHint, "No classification hint yet.");
+                        hintText.Opacity = string.IsNullOrWhiteSpace(updated.ClassificationHint) ? 0.45 : 0.78;
+                        bpm.Text = BpmText(updated);
+                        if (_genreVocabularyRowsById.TryGetValue(updated.Id, out var state))
+                            state.Subgenre = updated;
+                    });
+                panel.Children.Add(editorPanel);
+            }
+
+            editorPanel.IsVisible = !editorPanel.IsVisible;
+            edit.Content = editorPanel.IsVisible ? "Close" : "Edit";
+        };
+
+        row.Child = panel;
+        return new GenreVocabularyRowState(row, subgenre, modelGenreName);
+    }
+
+    private StackPanel CreateGenreVocabularyEditor(ModelSubgenre subgenre, Action<ModelSubgenre> onSaved)
+    {
+        var nameBox = CreateSettingsTextBox(subgenre.Name, "Subgenre name");
+        var descriptionBox = CreateSettingsTextBox(subgenre.Description ?? string.Empty, "Short description");
+        var hintBox = CreateSettingsTextBox(subgenre.ClassificationHint ?? string.Empty, "Classification hint");
+        var bpmMinBox = CreateSettingsTextBox(subgenre.BpmMin?.ToString(CultureInfo.InvariantCulture) ?? string.Empty, "Min");
+        var bpmMaxBox = CreateSettingsTextBox(subgenre.BpmMax?.ToString(CultureInfo.InvariantCulture) ?? string.Empty, "Max");
+
+        var editor = new StackPanel
+        {
+            Spacing = 8,
+            IsVisible = false,
+            Margin = new Avalonia.Thickness(0, 4, 0, 0)
+        };
         var topFields = new Grid { ColumnDefinitions = new ColumnDefinitions("*,82,82,Auto"), ColumnSpacing = 8 };
         topFields.Children.Add(CreateLabeledField("Subgenre", nameBox));
-        Grid.SetColumn(bpmMinBox, 1);
-        Grid.SetColumn(bpmMaxBox, 2);
         topFields.Children.Add(CreateLabeledField("BPM min", bpmMinBox, 1));
         topFields.Children.Add(CreateLabeledField("BPM max", bpmMaxBox, 2));
         var save = new Button
         {
             Content = "Save",
-            Padding = new Avalonia.Thickness(12, 5),
-            FontSize = 10.5,
-            Background = new SolidColorBrush(Color.Parse("#26313A")),
-            BorderBrush = new SolidColorBrush(Color.Parse("#425365")),
+            Classes = { "settings-action" },
             VerticalAlignment = VerticalAlignment.Bottom
         };
         Grid.SetColumn(save, 3);
         topFields.Children.Add(save);
-        panel.Children.Add(topFields);
-        panel.Children.Add(CreateLabeledField("Description", descriptionBox));
-        panel.Children.Add(CreateLabeledField("Classification hint", hintBox));
-
-        var details = new List<string>();
-        if (_distinctionsBySubgenreId.TryGetValue(subgenre.Id, out var distinctions))
-            details.Add("Distinguish from: " + string.Join(" · ", distinctions.Select(item =>
-                $"{item.ModelGenreName} → {item.ModelSubgenreName} — {item.Difference}")));
-        if (details.Count > 0)
-        {
-            var detailsText = new TextBlock
-            {
-                Text = string.Join("\n", details),
-                FontSize = 10,
-                Foreground = new SolidColorBrush(Color.Parse("#83BBD9")),
-                TextWrapping = TextWrapping.Wrap,
-                Margin = new Avalonia.Thickness(0, 1, 0, 0)
-            };
-            panel.Children.Add(detailsText);
-        }
+        editor.Children.Add(topFields);
+        editor.Children.Add(CreateLabeledField("Description", descriptionBox));
+        editor.Children.Add(CreateLabeledField("Classification hint", hintBox));
 
         save.Click += (_, _) =>
         {
@@ -222,36 +289,43 @@ public partial class SettingsOverlay : UserControl
                 ToastRequested?.Invoke("BPM values must be whole numbers.");
                 return;
             }
-            MusicLibraryService.Current.UpdateModelSubgenre(
-                subgenre.Id,
-                nameBox.Text,
-                descriptionBox.Text,
-                hintBox.Text,
-                bpmMin,
-                bpmMax);
-            var updated = subgenre with
-            {
-                Name = nameBox.Text.Trim(),
-                Description = descriptionBox.Text,
-                ClassificationHint = hintBox.Text,
-                BpmMin = bpmMin,
-                BpmMax = bpmMax
-            };
+
+            MusicLibraryService.Current.UpdateModelSubgenre(subgenre.Id, nameBox.Text, descriptionBox.Text, hintBox.Text, bpmMin, bpmMax);
+            var updated = subgenre with { Name = nameBox.Text.Trim(), Description = descriptionBox.Text, ClassificationHint = hintBox.Text, BpmMin = bpmMin, BpmMax = bpmMax };
             var index = _modelSubgenres.FindIndex(item => item.Id == subgenre.Id);
             if (index >= 0) _modelSubgenres[index] = updated;
-            titleText.Text = $"{modelGenreName}  ·  {updated.Name}";
-            bpm.Text = BpmText(updated);
-            if (_genreVocabularyRowsById.TryGetValue(updated.Id, out var state))
-                state.Subgenre = updated;
+            onSaved(updated);
             ToastRequested?.Invoke("Genre updated.");
             RebuildGenreVocabularyRows();
             UpdateSummary();
             LibraryMetadataChanged?.Invoke();
         };
 
-        row.Child = panel;
-        return new GenreVocabularyRowState(row, subgenre, modelGenreName);
+        return editor;
     }
+
+    private static TextBox CreateSettingsTextBox(string text, string watermark)
+    {
+        var box = new TextBox { Text = text, Watermark = watermark, Height = 32, FontSize = 11.5 };
+        box.Classes.Add("settings-input");
+        return box;
+    }
+
+    private static TextBlock CreateGenreBodyText(string? value, string fallback, string color = "#D9E4EC")
+    {
+        var hasValue = !string.IsNullOrWhiteSpace(value);
+        return new TextBlock
+        {
+            Text = BodyText(value, fallback),
+            FontSize = 10.7,
+            Foreground = new SolidColorBrush(Color.Parse(color)),
+            Opacity = hasValue ? 0.76 : 0.45,
+            TextWrapping = TextWrapping.Wrap
+        };
+    }
+
+    private static string BodyText(string? value, string fallback) =>
+        string.IsNullOrWhiteSpace(value) ? fallback : value.Trim();
 
     private static StackPanel CreateLabeledField(string label, Control field, int? gridColumn = null)
     {
