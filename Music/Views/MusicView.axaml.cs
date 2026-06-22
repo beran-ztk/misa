@@ -34,6 +34,7 @@ public partial class MusicView : UserControl
     private bool _filterPanelVisible;
     private CancellationTokenSource? _thumbLoadCts;
     private CancellationTokenSource? _toastCts;
+    private readonly Dictionary<int, Bitmap?> _playerArtworkCache = [];
 
     // Crossfade state
     private int _lastKnownActiveId = -1;
@@ -75,6 +76,7 @@ public partial class MusicView : UserControl
         {
             _globalMediaKeys.Dispose();
             _windowsMediaSession.Dispose();
+            ClearPlayerArtworkBackground(disposeCache: true);
         };
 
         // Engine events
@@ -204,6 +206,8 @@ public partial class MusicView : UserControl
         _thumbLoadCts?.Cancel();
         _thumbLoadCts = new CancellationTokenSource();
 
+        ClearPlayerArtworkBackground(disposeCache: true);
+
         foreach (var item in _allItems)
             item.Thumbnail?.Dispose();
 
@@ -276,6 +280,9 @@ public partial class MusicView : UserControl
         }).ToList();
 
         ApplyFilter();
+        if (_engine.ActiveTrackId >= 0
+            && _allItems.FirstOrDefault(item => item.Track.Id == _engine.ActiveTrackId)?.Track is { } activeTrack)
+            UpdatePlayerArtworkBackground(activeTrack);
         _ = LoadThumbnailsAsync(_thumbLoadCts.Token);
     }
 
@@ -984,6 +991,7 @@ public partial class MusicView : UserControl
         FileList.SelectedIndex = filteredIndex;
 
         NowPlayingText.Text = track.Title;
+        UpdatePlayerArtworkBackground(track);
         PlaybackInfoPanel.IsVisible = true;
         _nextTrackIndex = PeekNextTrackIndex(filteredIndex);
         UpdateUpcomingBar();
@@ -1025,6 +1033,7 @@ public partial class MusicView : UserControl
         var index = _filteredItems.FindIndex(item => item.Track.Id == track.Id);
         if (index >= 0) FileList.SelectedIndex = index;
         NowPlayingText.Text = $"Preview · {track.Title}";
+        UpdatePlayerArtworkBackground(track);
         PlaybackInfoPanel.IsVisible = true;
         _nextTrackIndex = -1;
         _crossfadeTriggered = false;
@@ -1056,6 +1065,7 @@ public partial class MusicView : UserControl
         if (snapshot is null || _engine.ActiveTrackId < 0)
         {
             NowPlayingText.Text = string.Empty;
+            ClearPlayerArtworkBackground();
             PlaybackInfoPanel.IsVisible = false;
             _nextTrackIndex = -1;
         }
@@ -1065,6 +1075,7 @@ public partial class MusicView : UserControl
             var index = _filteredItems.FindIndex(item => item.Track.Id == restoredTrack.Id);
             if (index >= 0) FileList.SelectedIndex = index;
             NowPlayingText.Text = restoredTrack.Title;
+            UpdatePlayerArtworkBackground(restoredTrack);
             PlaybackInfoPanel.IsVisible = true;
             _nextTrackIndex = index >= 0 ? PeekNextTrackIndex(index) : -1;
             _crossfadeTriggered = false;
@@ -1086,6 +1097,8 @@ public partial class MusicView : UserControl
             _nextTrackIndex = -1;
             _crossfadeTriggered = false;
             _lastKnownActiveId = -1;
+            if (!_isTrackPreviewActive)
+                ClearPlayerArtworkBackground();
             RefreshPlayingMarkers();
             UpdateUpcomingBar();
         }
@@ -1247,6 +1260,54 @@ public partial class MusicView : UserControl
         var playedFraction = totalSeconds > 0 ? _engine.CurrentTime.TotalSeconds / totalSeconds : 1;
         FinishListeningSession(markSkipped: playedFraction < .8);
         _engine.Stop();
+        ClearPlayerArtworkBackground();
+    }
+
+    private void UpdatePlayerArtworkBackground(MusicTrack track)
+    {
+        if (!_playerArtworkCache.TryGetValue(track.Id, out var artwork))
+        {
+            artwork = LoadPlayerArtwork(track);
+            _playerArtworkCache[track.Id] = artwork;
+        }
+
+        PlayerArtworkBackground.Source = artwork;
+        PlayerArtworkBackground.IsVisible = artwork is not null;
+        AppArtworkBackground.Source = artwork;
+        AppArtworkBackground.IsVisible = artwork is not null;
+    }
+
+    private static Bitmap? LoadPlayerArtwork(MusicTrack track)
+    {
+        try
+        {
+            var audioFilePath = Path.Combine(Values.TracksDirectory, track.FileName);
+            var artwork = ThumbnailService.ReadEmbeddedArtwork(audioFilePath);
+            if (artwork is null)
+                return null;
+
+            using var stream = new MemoryStream(artwork);
+            return new Bitmap(stream);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private void ClearPlayerArtworkBackground(bool disposeCache = false)
+    {
+        PlayerArtworkBackground.Source = null;
+        PlayerArtworkBackground.IsVisible = false;
+        AppArtworkBackground.Source = null;
+        AppArtworkBackground.IsVisible = false;
+
+        if (!disposeCache)
+            return;
+
+        foreach (var artwork in _playerArtworkCache.Values)
+            artwork?.Dispose();
+        _playerArtworkCache.Clear();
     }
 
     // ─── Listening telemetry ─────────────────────────────────────────────────

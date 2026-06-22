@@ -50,11 +50,26 @@
     </UserControl.Styles>
 
     <Panel Background="#121417">
+    <Image x:Name="AppArtworkBackground"
+           IsVisible="False"
+           IsHitTestVisible="False"
+           Opacity="0.12"
+           Stretch="UniformToFill"
+           RenderTransformOrigin="0.5,0.5">
+        <Image.RenderTransform>
+            <ScaleTransform ScaleX="1.08" ScaleY="1.08"/>
+        </Image.RenderTransform>
+        <Image.Effect>
+            <BlurEffect Radius="22"/>
+        </Image.Effect>
+    </Image>
+    <Rectangle Fill="#D9121417" IsHitTestVisible="False"/>
+    <Rectangle Fill="#4A000000" IsHitTestVisible="False"/>
     <DockPanel LastChildFill="True">
 
         <!-- ── Toolbar ── -->
         <Border DockPanel.Dock="Top"
-                Background="#0A0B0D"
+                Background="#E60A0B0D"
                 BorderBrush="#16212C"
                 BorderThickness="0,0,0,1"
                 Padding="20,12,16,10">
@@ -149,10 +164,30 @@
         <!-- ── Player bar ── -->
         <Border x:Name="PlayerBar"
                 DockPanel.Dock="Bottom"
-                Padding="16,10,16,14"
-                Background="#07080A"
+                Padding="0"
+                MaxHeight="132"
+                Background="#CC07080A"
+                ClipToBounds="True"
                 BorderThickness="0,1,0,0" BorderBrush="#202832">
-            <StackPanel>
+            <Panel>
+                <Image x:Name="PlayerArtworkBackground"
+                       IsVisible="False"
+                       IsHitTestVisible="False"
+                       Height="132"
+                       VerticalAlignment="Stretch"
+                       Opacity="0.26"
+                       Stretch="UniformToFill"
+                       RenderTransformOrigin="0.5,0.5">
+                    <Image.RenderTransform>
+                        <ScaleTransform ScaleX="1.06" ScaleY="1.06"/>
+                    </Image.RenderTransform>
+                    <Image.Effect>
+                        <BlurEffect Radius="14"/>
+                    </Image.Effect>
+                </Image>
+                <Rectangle Fill="#E607080A" IsHitTestVisible="False"/>
+                <Rectangle Fill="#30000000" IsHitTestVisible="False"/>
+                <StackPanel Margin="16,10,16,14">
 
                 <Border x:Name="UpcomingBar"
                         IsVisible="False"
@@ -258,7 +293,8 @@
                     </StackPanel>
 
                 </Grid>
-            </StackPanel>
+                </StackPanel>
+            </Panel>
         </Border>
 
         <!-- ══════════════════════════════════════════════════════
@@ -268,7 +304,7 @@
 
             <ListBox x:Name="FileList"
                      DoubleTapped="OnListDoubleTapped"
-                     Background="#17191D"
+                     Background="#E617191D"
                      BorderThickness="0"
                      Padding="4,4">
                 <ListBox.ItemTemplate>
