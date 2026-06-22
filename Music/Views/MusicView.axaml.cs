@@ -224,10 +224,28 @@ public partial class MusicView : UserControl
             var tagIds = _allTrackTagIds.GetValueOrDefault(t.Id, []);
             var styleIds = _allTrackStyleIds.GetValueOrDefault(t.Id, []);
 
-            var genreStr = string.Join(", ", genreIds
-                .Select(id => genreMap.GetValueOrDefault(id, ""))
-                .Select(ShortGenreName)
-                .Where(n => n.Length > 0).Order());
+            var modelGenreAssignments = MusicLibraryService.Current.GetTrackModelGenres(t.Id)
+                .Where(assignment => assignment.IsEnabled)
+                .ToList();
+            var modelGenreStr = string.Join(", ", modelGenreAssignments
+                .Where(assignment => assignment.Reasons.Count > 0)
+                .Select(assignment => ShortGenreName(assignment.GenreName))
+                .Where(name => name.Length > 0)
+                .Order());
+            var manualGenreStr = string.Join(", ", modelGenreAssignments
+                .Where(assignment => assignment.Reasons.Count == 0)
+                .Select(assignment => ShortGenreName(assignment.GenreName))
+                .Where(name => name.Length > 0)
+                .Order());
+            var genreStr = string.Join(", ", new[] { modelGenreStr, manualGenreStr }
+                .Where(text => !string.IsNullOrWhiteSpace(text)));
+            if (string.IsNullOrWhiteSpace(genreStr))
+            {
+                genreStr = string.Join(", ", genreIds
+                    .Select(id => genreMap.GetValueOrDefault(id, ""))
+                    .Select(ShortGenreName)
+                    .Where(n => n.Length > 0).Order());
+            }
             var styleStr = string.Join(", ", styleIds
                 .Select(id => styleMap.GetValueOrDefault(id, ""))
                 .Where(n => n.Length > 0).Order());
@@ -250,7 +268,7 @@ public partial class MusicView : UserControl
                 .Where(attribute => attribute.Key is "emotional_tone" or "energy_context" or "intensity" or "vocal_presence")
                 .Select(attribute => $"{ProfileAttributeName(attribute.Key)} {attribute.EffectiveValue}"));
             
-            return new TrackDisplayItem(t, genreStr, styleStr, durationText, ratingName, profileText, tagDisplays, t.ChannelName ?? "")
+            return new TrackDisplayItem(t, genreStr, modelGenreStr, manualGenreStr, styleStr, durationText, ratingName, profileText, tagDisplays, t.ChannelName ?? "")
             {
                 NeedsReview = t.NeedsReview
             };

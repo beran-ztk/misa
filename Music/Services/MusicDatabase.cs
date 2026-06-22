@@ -1199,9 +1199,10 @@ public class MusicDatabase
                             FROM track_genres
                             JOIN model_subgenres msg ON msg.id = track_genres.genre_id
                             JOIN model_genres mg ON mg.id = msg.model_genre_id
-                            JOIN track_analysis analysis ON analysis.track_id = track_genres.track_id
-                            JOIN track_genre_predictions predictions ON predictions.track_analysis_id = analysis.id AND predictions.model_subgenre_id = msg.id
-                            WHERE track_genres.track_id = $trackId ORDER BY predictions.score DESC, msg.name";
+                            LEFT JOIN track_analysis analysis ON analysis.track_id = track_genres.track_id
+                            LEFT JOIN track_genre_predictions predictions ON predictions.track_analysis_id = analysis.id AND predictions.model_subgenre_id = msg.id
+                            WHERE track_genres.track_id = $trackId
+                            ORDER BY predictions.score IS NULL, predictions.score DESC, msg.name";
         cmd.Parameters.AddWithValue("$trackId", trackId);
         using var reader = cmd.ExecuteReader();
         var groups = new Dictionary<int, (string Name, bool Enabled, List<ModelGenreReason> Reasons)>();
@@ -1209,7 +1210,8 @@ public class MusicDatabase
         {
             var id = reader.GetInt32(0);
             if (!groups.TryGetValue(id, out var group)) groups[id] = group = (reader.GetString(1), reader.GetInt32(2) != 0, []);
-            group.Reasons.Add(new ModelGenreReason(reader.GetString(3), reader.GetString(4), reader.GetDouble(5)));
+            if (!reader.IsDBNull(5))
+                group.Reasons.Add(new ModelGenreReason(reader.GetString(3), reader.GetString(4), reader.GetDouble(5)));
         }
         return groups.Select(x => new TrackModelGenre(x.Key, x.Value.Name, x.Value.Enabled, x.Value.Reasons)).ToList();
     }

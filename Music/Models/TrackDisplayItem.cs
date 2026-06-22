@@ -9,6 +9,8 @@ public record TrackTagDisplay(string Name, string CategoryName, IBrush Foregroun
 public record TrackDisplayItem(
     MusicTrack Track,
     string GenreText,
+    string ModelGenreText,
+    string ManualGenreText,
     string StyleText,
     string DurationText,
     string RatingText,
@@ -21,6 +23,10 @@ public record TrackDisplayItem(
     public Bitmap? Thumbnail { get; set; }
 
     public string ChannelSeparatorText => string.IsNullOrWhiteSpace(ChannelText)
+        ? string.Empty
+        : "  ·  ";
+
+    public string GenreSeparatorText => string.IsNullOrWhiteSpace(ModelGenreText) || string.IsNullOrWhiteSpace(ManualGenreText)
         ? string.Empty
         : "  ·  ";
 

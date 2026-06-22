@@ -83,18 +83,52 @@
                             <StackPanel x:Name="ModelSelectedGenresSection" Spacing="7" Margin="0,0,0,18">
                                 <TextBlock Text="Active genres" FontSize="11" Opacity="0.68" />
                                 <StackPanel x:Name="ModelSelectedGenresPanel" Spacing="8" />
-                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" Margin="0,2,0,0">
-                                    <ComboBox x:Name="ModelGenrePickerBox"
-                                              Height="32"/>
-                                    <Button Grid.Column="1"
-                                            Content="Add"
-                                            Padding="12,5"
-                                            Click="OnAddModelGenreClicked"/>
-                                </Grid>
                             </StackPanel>
                             <StackPanel x:Name="DetectedGenresSection" Spacing="5" Margin="0,0,0,10">
                                 <TextBlock Text="More model detections" FontSize="11" Opacity="0.68" />
                                 <StackPanel x:Name="DetectedGenresPanel" Spacing="3" />
+                            </StackPanel>
+                            <StackPanel x:Name="AddModelGenreSection" Margin="0,2,0,10">
+                                <Border Background="#10151A"
+                                        BorderBrush="#2D3945"
+                                        BorderThickness="1"
+                                        CornerRadius="5"
+                                        Padding="10">
+                                    <StackPanel Spacing="9">
+                                        <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8">
+                                            <TextBlock Text="Add genre"
+                                                       FontSize="11"
+                                                       Opacity="0.68"
+                                                       VerticalAlignment="Center"/>
+                                            <TextBlock x:Name="ModelGenreChoiceSummaryText"
+                                                       Grid.Column="1"
+                                                       FontSize="10.5"
+                                                       Opacity="0.48"
+                                                       VerticalAlignment="Center"
+                                                       TextTrimming="CharacterEllipsis"/>
+                                            <ComboBox x:Name="ModelGenreCategoryFilterBox"
+                                                      Grid.Column="2"
+                                                      Width="220"
+                                                      Height="30"
+                                                      FontSize="11"
+                                                      SelectionChanged="OnModelGenreFilterChanged"/>
+                                            <TextBox x:Name="ModelGenreSearchBox"
+                                                     Grid.Column="3"
+                                                     Width="300"
+                                                     Height="30"
+                                                     FontSize="11"
+                                                     Watermark="Search subgenre…"
+                                                     TextChanged="OnModelGenreSearchChanged"/>
+                                        </Grid>
+                                        <ScrollViewer MaxHeight="246"
+                                                      HorizontalScrollBarVisibility="Disabled"
+                                                      VerticalScrollBarVisibility="Auto">
+                                            <WrapPanel x:Name="ModelGenreChoicesPanel"
+                                                       Orientation="Horizontal"
+                                                       HorizontalAlignment="Center"/>
+                                        </ScrollViewer>
+                                    </StackPanel>
+                                </Border>
                             </StackPanel>
                             <Grid ColumnDefinitions="*,Auto" Margin="0,8,0,0">
                                 <TextBlock Text="Tags" FontSize="11" Opacity="0.68" />
