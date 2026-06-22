@@ -13,6 +13,7 @@ namespace Music.Services;
 public class MusicDatabase
 {
     private const string AssetBaseUri = "avares://Music/Assets/";
+    private const string RemovedMoodThemeModelName = "mtg_" + "jamen" + "do_" + "mood" + "theme";
     private readonly string _connectionString = $"Data Source={Values.DbPath}";
 
     private SqliteConnection Open()
@@ -266,6 +267,7 @@ public class MusicDatabase
         CreateTagSchema(conn);
         SimplifyTagSchemaIfNeeded(conn);
         MigrateTagRuleGroupsIfNeeded(conn);
+        RemoveExcludedExperimentalModelData(conn);
         SeedDefaultLookups(conn);
         if (ModelMetadataNeedsImport(conn))
         {
@@ -273,6 +275,50 @@ public class MusicDatabase
             SynchronizeModelMetadata(conn, tx);
             tx.Commit();
         }
+    }
+
+    private static void RemoveExcludedExperimentalModelData(SqliteConnection conn)
+    {
+        if (!TableExists(conn, "track_analysis_signals"))
+            return;
+
+        ExecuteNonQuery(conn,
+            "DELETE FROM track_analysis_signals WHERE model_name = $modelName",
+            ("$modelName", RemovedMoodThemeModelName));
+
+        if (TableExists(conn, "tag_rule_conditions"))
+        {
+            ExecuteNonQuery(conn,
+                "DELETE FROM tag_rule_conditions WHERE source_type = $modelName",
+                ("$modelName", RemovedMoodThemeModelName));
+        }
+
+        if (TableExists(conn, "tag_rule_groups") && TableExists(conn, "tag_rule_conditions"))
+        {
+            if (TableExists(conn, "track_tag_suggestions"))
+            {
+                ExecuteNonQuery(conn, @"
+                    DELETE FROM track_tag_suggestions
+                    WHERE rule_group_id IN (
+                        SELECT groups.id
+                        FROM tag_rule_groups groups
+                        LEFT JOIN tag_rule_conditions conditions ON conditions.rule_group_id = groups.id
+                        GROUP BY groups.id
+                        HAVING COUNT(conditions.id) = 0
+                    )");
+            }
+            ExecuteNonQuery(conn, @"
+                DELETE FROM tag_rule_groups
+                WHERE id IN (
+                    SELECT groups.id
+                    FROM tag_rule_groups groups
+                    LEFT JOIN tag_rule_conditions conditions ON conditions.rule_group_id = groups.id
+                    GROUP BY groups.id
+                    HAVING COUNT(conditions.id) = 0
+                )");
+        }
+
+        RebuildDerivedAttributes(conn);
     }
 
     private static void CreateTagSchema(SqliteConnection conn)
@@ -1749,6 +1795,52 @@ public class MusicDatabase
             item.Key.Family, item.Key.Category, item.Key.Model, item.Key.Type, item.Key.Description, item.Value)).ToList();
     }
 
+    private static List<ExperimentalAnalysisModel> GetTrackAnalysisSignals(SqliteConnection conn, SqliteTransaction tx, long analysisId)
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
+        cmd.CommandText = @"
+            SELECT model_family, category, model_name, model_type, description, signal_key, score
+            FROM track_analysis_signals
+            WHERE track_analysis_id = $analysisId
+            ORDER BY model_family, category, model_name, score DESC";
+        cmd.Parameters.AddWithValue("$analysisId", analysisId);
+        using var reader = cmd.ExecuteReader();
+        var grouped = new Dictionary<(string Family, string Category, string Model, string Type, string Description), List<ExperimentalAnalysisValue>>();
+        while (reader.Read())
+        {
+            var key = (reader.GetString(0), reader.GetString(1), reader.GetString(2), reader.GetString(3), reader.GetString(4));
+            if (!grouped.TryGetValue(key, out var values)) grouped[key] = values = [];
+            values.Add(new ExperimentalAnalysisValue(reader.GetString(5), reader.GetDouble(6)));
+        }
+        return grouped.Select(item => new ExperimentalAnalysisModel(
+            item.Key.Family, item.Key.Category, item.Key.Model, item.Key.Type, item.Key.Description, item.Value)).ToList();
+    }
+
+    private static void RebuildDerivedAttributes(SqliteConnection conn)
+    {
+        if (!TableExists(conn, "track_analysis") || !TableExists(conn, "track_derived_attributes"))
+            return;
+
+        var analysisIds = new List<long>();
+        using (var cmd = conn.CreateCommand())
+        {
+            cmd.CommandText = "SELECT id FROM track_analysis";
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read()) analysisIds.Add(reader.GetInt64(0));
+        }
+
+        using var tx = conn.BeginTransaction();
+        foreach (var analysisId in analysisIds)
+        {
+            ExecuteInsert(conn, tx,
+                "DELETE FROM track_derived_attributes WHERE track_analysis_id = $analysisId",
+                ("$analysisId", analysisId));
+            SaveDerivedAttributes(conn, tx, analysisId, DeriveAttributes(GetTrackAnalysisSignals(conn, tx, analysisId)));
+        }
+        tx.Commit();
+    }
+
     public List<DerivedTrackAttribute> GetTrackDerivedAttributes(int trackId)
     {
         using var conn = Open();
@@ -1806,22 +1898,12 @@ public class MusicDatabase
         var party = Signal("mood party", "party");
         var engagement = Signal("engagement_regression", "engagement");
         var danceable = Signal("danceability classifier", "danceable");
-        var jamendoEmotional = Signal("mtg_jamendo_moodtheme", "emotional");
-        var jamendoMelancholic = Signal("mtg_jamendo_moodtheme", "melancholic");
-        var jamendoPositive = Signal("mtg_jamendo_moodtheme", "positive");
-        var jamendoUplifting = Signal("mtg_jamendo_moodtheme", "uplifting");
-        var jamendoCalm = Signal("mtg_jamendo_moodtheme", "calm");
-        var jamendoMeditative = Signal("mtg_jamendo_moodtheme", "meditative");
-        var jamendoEnergetic = Signal("mtg_jamendo_moodtheme", "energetic");
-        var jamendoPowerful = Signal("mtg_jamendo_moodtheme", "powerful");
         var mirexReflective = SignalStartingWith("moods mirex", "literate, poignant");
-        var melancholy = .55 * sad + .20 * mirexReflective + .10 * jamendoEmotional
-            + .10 * jamendoMelancholic + .05 * (1 - happy);
-        var positive = .65 * happy + .15 * jamendoPositive + .10 * jamendoUplifting + .10 * valence;
-        var calm = .55 * relaxed + .15 * jamendoCalm + .15 * jamendoMeditative + .15 * (1 - engagement);
-        var active = .30 * engagement + .18 * party + .15 * aggressive + .15 * jamendoEnergetic
-            + .12 * danceable + .10 * arousal;
-        var intense = .40 * aggressive + .25 * jamendoPowerful + .20 * engagement + .15 * jamendoEnergetic;
+        var melancholy = .65 * sad + .25 * mirexReflective + .10 * (1 - happy);
+        var positive = .75 * happy + .15 * valence + .10 * party;
+        var calm = .70 * relaxed + .20 * (1 - engagement) + .10 * (1 - arousal);
+        var active = .35 * engagement + .22 * party + .18 * aggressive + .15 * danceable + .10 * arousal;
+        var intense = .45 * aggressive + .30 * engagement + .15 * danceable + .10 * arousal;
         var intensity = Math.Clamp(active * (1 - .55 * calm), 0, 1);
         var vocal = Signal("voice/instrumental classifiers", "voice");
         return [

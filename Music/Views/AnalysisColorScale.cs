@@ -11,7 +11,7 @@ public static class AnalysisColorScale
 {
     public static IBrush Mood(double score) => RedToGreen(Clamp(score));
 
-    // Jamendo and MIREX scores rarely reach 1.0; .6 already represents a strong match.
+    // MIREX scores rarely reach 1.0; .6 already represents a strong match.
     public static IBrush MoodModel(double score) => RedToGreen(Clamp(score / .6));
 
     public static IBrush GenreConfidence(double confidence) =>

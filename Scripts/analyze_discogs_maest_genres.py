@@ -11,6 +11,7 @@ MAEST_MODEL_NAME = "discogs-maest-30s-pw-519l-2"
 MAEST_MODEL_FILE = "discogs-maest-30s-pw-519l-2.pb"
 MAEST_METADATA_FILE = "discogs-maest-30s-pw-519l-2.json"
 DEFAULT_MODEL_DIRECTORY = Path(__file__).resolve().parent.parent / "Models" / "Essentia" / "DiscogsMAEST"
+EXCLUDED_HEAD_MODELS = {"mtg_" + "jamen" + "do_" + "mood" + "theme"}
 
 
 def error(message):
@@ -94,6 +95,8 @@ def discover_heads(heads_directory):
         if not model_path.exists():
             continue
         metadata = read_metadata(metadata_path)
+        if metadata.get("name", metadata_path.stem) in EXCLUDED_HEAD_MODELS:
+            continue
         category = metadata_path.parent.relative_to(heads_directory).as_posix().replace("/", " / ")
         heads.append((category, metadata_path, model_path, metadata))
     return heads

@@ -862,7 +862,6 @@ public partial class SettingsOverlay : UserControl
         "mood relaxed" => "Mood relaxed",
         "mood aggressive" => "Mood aggressive",
         "mood party" => "Mood party",
-        "mtg_jamendo_moodtheme" => "Jamendo mood/theme",
         "moods mirex" => "MIREX mood clusters",
         "genre electronic" => "Electronic character",
         "danceability classifier" => "Danceability",

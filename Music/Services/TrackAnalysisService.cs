@@ -12,6 +12,10 @@ namespace Music.Services;
 public sealed class TrackAnalysisService
 {
     private const string ScriptFileName = "analyze_discogs_maest_genres.py";
+    private static readonly HashSet<string> ExcludedExperimentalModels = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "mtg_" + "jamen" + "do_" + "mood" + "theme"
+    };
     private const string ModelDirectoryInContainer = "/models/Essentia/DiscogsMAEST";
     private const string ScriptsDirectoryInContainer = "/scripts";
     private const string TracksDirectoryInContainer = "/tracks";
@@ -110,6 +114,7 @@ public sealed class TrackAnalysisService
 
             return (output.ExperimentalPredictions ?? [])
                 .Where(model => !string.IsNullOrWhiteSpace(model.Model))
+                .Where(model => !ExcludedExperimentalModels.Contains(model.Model!))
                 .Select(model => new ExperimentalAnalysisModel(
                     model.Family ?? "unknown",
                     model.Category ?? "Other",

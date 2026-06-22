@@ -481,9 +481,6 @@ public partial class EditTrackOverlay : UserControl
             AddDerivedAttribute(attribute);
         _buildingSoundProfile = false;
 
-        // These compact model summaries belong next to the profile choices they explain,
-        // rather than below a long list of raw confidence bars.
-        AddJamendoThemes(models);
         AddMirexCharacter(models);
 
         AddSignal("Happy", "How strongly the model detects a happy mood.", Signal(models, "mood happy", "happy"));
@@ -593,48 +590,6 @@ public partial class EditTrackOverlay : UserControl
                 ? "Model suggestion. Click to use this value again."
                 : "Manual override. Click to save this value instead of the model suggestion.");
             return button;
-        }
-
-        void AddJamendoThemes(IReadOnlyList<ExperimentalAnalysisModel> analysisModels)
-        {
-            var tags = analysisModels.FirstOrDefault(model => model.Model == "mtg_jamendo_moodtheme")?.Values
-                .OrderByDescending(value => value.Score).Take(5).ToList() ?? [];
-            if (tags.Count == 0) return;
-            var card = new Border
-            {
-                Background = new SolidColorBrush(Color.Parse("#151C25")),
-                BorderBrush = new SolidColorBrush(Color.Parse("#29465A")),
-                BorderThickness = new Avalonia.Thickness(1),
-                CornerRadius = new Avalonia.CornerRadius(6),
-                Padding = new Avalonia.Thickness(10, 8),
-                Margin = new Avalonia.Thickness(0, 1, 0, 2)
-            };
-            var panel = new StackPanel { Spacing = 5 };
-            panel.Children.Add(new TextBlock
-            {
-                Text = "Themes · Jamendo mood/theme model",
-                FontSize = 10.5,
-                FontWeight = FontWeight.SemiBold,
-                Foreground = new SolidColorBrush(Color.Parse("#78C7EE"))
-            });
-            var tagPanel = new WrapPanel { Orientation = Avalonia.Layout.Orientation.Horizontal };
-            foreach (var tag in tags)
-            {
-                var tagText = new TextBlock
-                {
-                    Text = $"{tag.Label}  {tag.Score:0.##}",
-                    FontSize = 10.5,
-                    Foreground = AnalysisColorScale.MoodModel(tag.Score),
-                    Background = new SolidColorBrush(Color.Parse("#203747")),
-                    Padding = new Avalonia.Thickness(6, 2),
-                    Margin = new Avalonia.Thickness(0, 0, 5, 4)
-                };
-                ToolTip.SetTip(tagText, "A Jamendo tag: an independent theme or atmosphere detected by the model.");
-                tagPanel.Children.Add(tagText);
-            }
-            panel.Children.Add(tagPanel);
-            card.Child = panel;
-            SoundProfilePanel.Children.Add(card);
         }
 
         void AddMirexCharacter(IReadOnlyList<ExperimentalAnalysisModel> analysisModels)
