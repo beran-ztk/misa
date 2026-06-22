@@ -311,8 +311,8 @@ public partial class MusicView : UserControl
             var durationText = t.DurationSeconds.HasValue ? FormatDuration(t.DurationSeconds.Value) : "";
             var attributes = MusicLibraryService.Current.GetTrackDerivedAttributes(t.Id);
             var profileText = string.Join(" · ", attributes
-                .Where(attribute => attribute.Key is "emotional_tone" or "energy_context" or "intensity" or "vocal_presence")
-                .Select(attribute => $"{ProfileAttributeName(attribute.Key)} {attribute.EffectiveValue}"));
+                .Where(attribute => attribute.Key is "emotional_tone" or "energy_context" or "intensity")
+                .Select(attribute => $"{attribute.EffectiveValue} {ProfileAttributeName(attribute.Key)}"));
             
             return new TrackDisplayItem(t, genreStr, modelGenreStr, manualGenreStr, styleStr, durationText, ratingName, profileText, tagDisplays, t.ChannelName ?? "")
             {
@@ -331,7 +331,6 @@ public partial class MusicView : UserControl
     {
         "emotional_tone" => "Tone",
         "energy_context" => "Energy",
-        "vocal_presence" => "Vocals",
         _ => char.ToUpperInvariant(key[0]) + key[1..]
     };
 
