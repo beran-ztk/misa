@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
@@ -62,7 +63,9 @@ public partial class MusicView : UserControl
 
     private record FilterGroupControls(
         MultiSelectFilterControl GenreCtrl,
-        MultiSelectFilterControl TagCtrl);
+        MultiSelectFilterControl TagCtrl,
+        Action RefreshVisuals);
+    private sealed record FilterSection(Control Control, Action Refresh);
     private readonly List<FilterGroupControls> _filterGroups = [];
 
     public MusicView()
@@ -217,6 +220,7 @@ public partial class MusicView : UserControl
         {
             fg.GenreCtrl.SetItems(GenreFilterOptions());
             fg.TagCtrl.SetItems(TagFilterOptions());
+            fg.RefreshVisuals();
         }
     }
 
@@ -343,6 +347,12 @@ public partial class MusicView : UserControl
     {
         try { return new SolidColorBrush(Color.Parse(string.IsNullOrWhiteSpace(color) ? "#65BCEB" : color)); }
         catch { return new SolidColorBrush(Color.Parse("#65BCEB")); }
+    }
+
+    private static IBrush SafeBrush(string? color, string fallback)
+    {
+        try { return new SolidColorBrush(Color.Parse(string.IsNullOrWhiteSpace(color) ? fallback : color)); }
+        catch { return new SolidColorBrush(Color.Parse(fallback)); }
     }
 
     private async Task LoadThumbnailsAsync(CancellationToken ct)
@@ -727,6 +737,7 @@ public partial class MusicView : UserControl
                 var controls = AddFilterGroup();
                 controls.GenreCtrl.SetSelectedItems(group.Genres, notify: false);
                 controls.TagCtrl.SetSelectedItems(group.Tags ?? [], notify: false);
+                controls.RefreshVisuals();
             }
         }
 
@@ -758,17 +769,14 @@ public partial class MusicView : UserControl
         tagCtrl.SetItems(TagFilterOptions());
         tagCtrl.SelectionChanged += (_, _) => ApplyFilter();
 
-        var fg = new FilterGroupControls(genreCtrl, tagCtrl);
+        FilterSection? genreSection = null;
+        FilterSection? tagSection = null;
+        var fg = new FilterGroupControls(genreCtrl, tagCtrl, () =>
+        {
+            genreSection?.Refresh();
+            tagSection?.Refresh();
+        });
         _filterGroups.Add(fg);
-
-        StackPanel Section(string label, string hint, MultiSelectFilterControl ctrl) =>
-            new StackPanel { Spacing = 6,
-                Children = {
-                    new TextBlock { Text = label.ToUpperInvariant(), FontSize = 10, FontWeight = FontWeight.SemiBold, Opacity = 0.44, LetterSpacing = 1 },
-                    new TextBlock { Text = hint, FontSize = 10.5, Opacity = 0.48, TextWrapping = TextWrapping.Wrap },
-                    ctrl
-                }
-            };
 
         var groupNumber = _filterGroups.Count;
         var content = new StackPanel { Spacing = 14 };
@@ -799,12 +807,10 @@ public partial class MusicView : UserControl
         }
         content.Children.Add(header);
 
-        var fields = new Grid { ColumnDefinitions = new ColumnDefinitions("*,*"), ColumnSpacing = 14 };
-        fields.Children.Add(Section("Genres", "Model genres selected here must be present on the track.", genreCtrl));
-        var tags = Section("Tags", "Tags are grouped by category and keep their category colors.", tagCtrl);
-        Grid.SetColumn(tags, 1);
-        fields.Children.Add(tags);
-        content.Children.Add(fields);
+        genreSection = CreateGenreFilterSection(genreCtrl);
+        tagSection = CreateTagFilterSection(tagCtrl);
+        content.Children.Add(genreSection.Control);
+        content.Children.Add(tagSection.Control);
 
         var card = new Border
         {
@@ -817,6 +823,324 @@ public partial class MusicView : UserControl
         };
         FilterGroupsPanel.Children.Add(card);
         return fg;
+    }
+
+    private FilterSection CreateGenreFilterSection(MultiSelectFilterControl genreCtrl)
+    {
+        string? selectedGroupName = null;
+        var searchText = string.Empty;
+        var choicesPanel = new WrapPanel { Orientation = Orientation.Horizontal };
+        var summary = new TextBlock
+        {
+            FontSize = 10.5,
+            Opacity = 0.56,
+            VerticalAlignment = VerticalAlignment.Center,
+            TextTrimming = TextTrimming.CharacterEllipsis
+        };
+        var categoryBox = new ComboBox
+        {
+            Height = 34,
+            Background = new SolidColorBrush(Color.Parse("#0D151D")),
+            BorderBrush = new SolidColorBrush(Color.Parse("#414B5F")),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(6),
+            Padding = new Thickness(9, 4)
+        };
+        var searchBox = new TextBox
+        {
+            Watermark = "Search subgenre…",
+            MinWidth = 180,
+            Height = 34,
+            VerticalContentAlignment = VerticalAlignment.Center
+        };
+
+        string GroupName(Genre genre)
+        {
+            var parts = genre.Name.Split('→', 2, StringSplitOptions.TrimEntries);
+            return parts.Length == 2 ? parts[0] : string.Empty;
+        }
+
+        string SubgenreName(Genre genre)
+        {
+            var parts = genre.Name.Split('→', 2, StringSplitOptions.TrimEntries);
+            return parts.Length == 2 ? parts[1] : genre.Name;
+        }
+
+        void FillChoices()
+        {
+            choicesPanel.Children.Clear();
+            var selected = genreCtrl.SelectedItems;
+            var normalizedSearch = searchText.Trim();
+            var choices = Values.Genres
+                .Where(genre => selectedGroupName is null || string.Equals(GroupName(genre), selectedGroupName, StringComparison.OrdinalIgnoreCase))
+                .Where(genre => string.IsNullOrWhiteSpace(normalizedSearch)
+                                || SubgenreName(genre).Contains(normalizedSearch, StringComparison.OrdinalIgnoreCase)
+                                || GroupName(genre).Contains(normalizedSearch, StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(genre => selected.Contains(genre.Name))
+                .ThenBy(genre => GroupName(genre), StringComparer.OrdinalIgnoreCase)
+                .ThenBy(genre => SubgenreName(genre), StringComparer.OrdinalIgnoreCase)
+                .Take(72)
+                .ToList();
+
+            foreach (var genre in choices)
+            {
+                var isSelected = selected.Contains(genre.Name);
+                var button = CreateFilterChoiceButton(SubgenreName(genre), GroupName(genre), isSelected, null);
+                button.Click += (_, _) =>
+                {
+                    var next = genreCtrl.SelectedItems.ToHashSet(StringComparer.OrdinalIgnoreCase);
+                    if (!next.Add(genre.Name))
+                        next.Remove(genre.Name);
+                    genreCtrl.SetSelectedItems(next);
+                    FillChoices();
+                    UpdateGenreSummary();
+                };
+                choicesPanel.Children.Add(button);
+            }
+
+            if (choices.Count == 0)
+            {
+                choicesPanel.Children.Add(new TextBlock
+                {
+                    Text = "No genres match this filter.",
+                    FontSize = 11,
+                    Opacity = 0.52,
+                    Margin = new Thickness(0, 8, 0, 4)
+                });
+            }
+        }
+
+        void UpdateGenreSummary()
+        {
+            var selectedCount = genreCtrl.SelectedItems.Count;
+            summary.Text = selectedCount == 0
+                ? $"{Values.Genres.Count} selectable"
+                : $"{selectedCount} selected · {Values.Genres.Count - selectedCount} available";
+        }
+
+        var groupChoices = new[] { new GenreGroupChoice(null, "All model groups") }
+            .Concat(Values.Genres
+                .Select(GroupName)
+                .Where(name => !string.IsNullOrWhiteSpace(name))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Order(StringComparer.OrdinalIgnoreCase)
+                .Select(name => new GenreGroupChoice(name, name)))
+            .ToList();
+        categoryBox.ItemsSource = groupChoices;
+        categoryBox.SelectedIndex = 0;
+        categoryBox.SelectionChanged += (_, _) =>
+        {
+            selectedGroupName = (categoryBox.SelectedItem as GenreGroupChoice)?.GroupName;
+            FillChoices();
+        };
+        searchBox.TextChanged += (_, _) =>
+        {
+            searchText = searchBox.Text ?? string.Empty;
+            FillChoices();
+        };
+
+        UpdateGenreSummary();
+        FillChoices();
+
+        var header = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,220,*,Auto"), ColumnSpacing = 10 };
+        header.Children.Add(new TextBlock
+        {
+            Text = "Genres",
+            FontSize = 12,
+            FontWeight = FontWeight.SemiBold,
+            VerticalAlignment = VerticalAlignment.Center
+        });
+        Grid.SetColumn(categoryBox, 1);
+        header.Children.Add(categoryBox);
+        Grid.SetColumn(searchBox, 2);
+        header.Children.Add(searchBox);
+        Grid.SetColumn(summary, 3);
+        header.Children.Add(summary);
+
+        var border = new Border
+        {
+            Background = new SolidColorBrush(Color.Parse("#68121A22")),
+            BorderBrush = new SolidColorBrush(Color.Parse("#2A3A46")),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(7),
+            Padding = new Thickness(11, 10),
+            Child = new StackPanel
+            {
+                Spacing = 10,
+                Children =
+                {
+                    header,
+                    new ScrollViewer
+                    {
+                        MaxHeight = 205,
+                        HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+                        Content = choicesPanel
+                    }
+                }
+            }
+        };
+        return new FilterSection(border, () =>
+        {
+            UpdateGenreSummary();
+            FillChoices();
+        });
+    }
+
+    private FilterSection CreateTagFilterSection(MultiSelectFilterControl tagCtrl)
+    {
+        var panel = new StackPanel { Spacing = 9 };
+
+        var header = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto") };
+        header.Children.Add(new TextBlock
+        {
+            Text = "Tags",
+            FontSize = 12,
+            FontWeight = FontWeight.SemiBold,
+            VerticalAlignment = VerticalAlignment.Center
+        });
+        var summary = new TextBlock
+        {
+            FontSize = 10.5,
+            Opacity = 0.56,
+            VerticalAlignment = VerticalAlignment.Center,
+            HorizontalAlignment = HorizontalAlignment.Right
+        };
+        Grid.SetColumn(summary, 2);
+        header.Children.Add(summary);
+        panel.Children.Add(header);
+
+        void UpdateSummary()
+        {
+            summary.Text = tagCtrl.SelectedItems.Count == 0
+                ? "No tags selected"
+                : $"{tagCtrl.SelectedItems.Count} selected";
+        }
+
+        void Toggle(Tag tag)
+        {
+            var value = TagFilterName(tag);
+            var next = tagCtrl.SelectedItems.ToHashSet(StringComparer.OrdinalIgnoreCase);
+            if (!next.Add(value))
+                next.Remove(value);
+            tagCtrl.SetSelectedItems(next);
+            RebuildTags();
+        }
+
+        void RebuildTags()
+        {
+            while (panel.Children.Count > 1)
+                panel.Children.RemoveAt(1);
+
+            foreach (var category in Values.Tags.GroupBy(tag => new { tag.CategoryId, tag.CategoryName, tag.CategoryColor }))
+            {
+                var accent = SafeBrush(category.Key.CategoryColor, "#65BCEB");
+                var section = new StackPanel { Spacing = 5 };
+                var categoryHeader = new Grid { ColumnDefinitions = new ColumnDefinitions("3,Auto,*"), ColumnSpacing = 7 };
+                categoryHeader.Children.Add(new Border
+                {
+                    Background = accent,
+                    CornerRadius = new CornerRadius(2),
+                    Height = 13,
+                    VerticalAlignment = VerticalAlignment.Center
+                });
+                var title = new TextBlock
+                {
+                    Text = category.Key.CategoryName,
+                    FontSize = 10.5,
+                    FontWeight = FontWeight.SemiBold,
+                    Foreground = accent,
+                    VerticalAlignment = VerticalAlignment.Center
+                };
+                Grid.SetColumn(title, 1);
+                categoryHeader.Children.Add(title);
+                section.Children.Add(categoryHeader);
+
+                var chips = new WrapPanel { Orientation = Orientation.Horizontal };
+                foreach (var tag in category
+                             .OrderByDescending(tag => tagCtrl.SelectedItems.Contains(TagFilterName(tag)))
+                             .ThenBy(tag => tag.Name, StringComparer.OrdinalIgnoreCase))
+                {
+                    var selected = tagCtrl.SelectedItems.Contains(TagFilterName(tag));
+                    var button = CreateFilterChoiceButton(tag.Name, null, selected, category.Key.CategoryColor);
+                    ToolTip.SetTip(button, string.IsNullOrWhiteSpace(tag.Description)
+                        ? tag.CategoryName
+                        : $"{tag.CategoryName}\n{tag.Description}");
+                    button.Click += (_, _) => Toggle(tag);
+                    chips.Children.Add(button);
+                }
+
+                section.Children.Add(chips);
+                panel.Children.Add(section);
+            }
+
+            UpdateSummary();
+        }
+
+        RebuildTags();
+
+        var border = new Border
+        {
+            Background = new SolidColorBrush(Color.Parse("#68121A22")),
+            BorderBrush = new SolidColorBrush(Color.Parse("#2A3A46")),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(7),
+            Padding = new Thickness(11, 10),
+            Child = panel
+        };
+        return new FilterSection(border, RebuildTags);
+    }
+
+    private static Button CreateFilterChoiceButton(string title, string? subtitle, bool isSelected, string? accentColor)
+    {
+        var accent = SafeBrush(accentColor, "#65BCEB");
+        var titleText = new TextBlock
+        {
+            Text = title,
+            FontSize = 11,
+            FontWeight = FontWeight.SemiBold,
+            Foreground = isSelected ? accent : new SolidColorBrush(Color.Parse("#E8F1F7")),
+            TextAlignment = TextAlignment.Center,
+            TextTrimming = TextTrimming.CharacterEllipsis
+        };
+        var content = new StackPanel
+        {
+            Spacing = 0,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            Children = { titleText }
+        };
+        if (!string.IsNullOrWhiteSpace(subtitle))
+        {
+            content.Children.Add(new TextBlock
+            {
+                Text = subtitle,
+                FontSize = 9,
+                Opacity = 0.62,
+                Foreground = new SolidColorBrush(Color.Parse("#A9BAC8")),
+                TextAlignment = TextAlignment.Center,
+                TextTrimming = TextTrimming.CharacterEllipsis
+            });
+        }
+
+        return new Button
+        {
+            Content = content,
+            Width = 136,
+            Height = string.IsNullOrWhiteSpace(subtitle) ? 29 : 42,
+            Margin = new Thickness(0, 0, 7, 7),
+            Padding = new Thickness(8, 2),
+            CornerRadius = new CornerRadius(3),
+            Background = new SolidColorBrush(Color.Parse(isSelected ? "#1A3140" : "#1A2026")),
+            BorderBrush = isSelected ? accent : new SolidColorBrush(Color.Parse("#394653")),
+            BorderThickness = new Thickness(1),
+            HorizontalContentAlignment = HorizontalAlignment.Center,
+            VerticalContentAlignment = VerticalAlignment.Center
+        };
+    }
+
+    private sealed record GenreGroupChoice(string? GroupName, string Label)
+    {
+        public override string ToString() => Label;
     }
 
     private void RemoveFilterGroup(FilterGroupControls fg)
