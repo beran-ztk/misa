@@ -94,7 +94,7 @@
 
         <!-- ── Toolbar ── -->
         <Border DockPanel.Dock="Top"
-                Background="#8F07080A"
+                Background="#4A07080A"
                 BorderBrush="#16212C"
                 BorderThickness="0,0,0,1"
                 Padding="20,12,16,10">
@@ -334,8 +334,8 @@
                     <BlurEffect Radius="18"/>
                 </Image.Effect>
             </Image>
-            <Rectangle Fill="#5607080A" IsHitTestVisible="False"/>
-            <Rectangle Fill="#0C000000" IsHitTestVisible="False"/>
+            <Rectangle Fill="#4207080A" IsHitTestVisible="False"/>
+            <Rectangle Fill="#08000000" IsHitTestVisible="False"/>
 
             <ListBox x:Name="FileList"
                      DoubleTapped="OnListDoubleTapped"

@@ -539,6 +539,15 @@ public partial class MusicView : UserControl
 
     private void OnSearchToggleClicked(object? sender, RoutedEventArgs e)
     {
+        if (SearchBox.IsVisible)
+        {
+            SearchBox.Text = string.Empty;
+            SearchBox.IsVisible = false;
+            SearchToggleBtn.Opacity = 0.86;
+            SearchToggleBtn.Focus();
+            return;
+        }
+
         SearchBox.IsVisible = true;
         SearchToggleBtn.Opacity = 1.0;
         Dispatcher.UIThread.Post(() => SearchBox.Focus(), DispatcherPriority.Background);
