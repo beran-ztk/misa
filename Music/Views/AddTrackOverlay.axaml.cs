@@ -68,13 +68,14 @@ public partial class AddTrackOverlay : UserControl
 
     private void LoadLookups()
     {
-        _genres = MusicLibraryService.Current.GetGenres();
+        _genres = [];
         _ratings = MusicLibraryService.Current.GetRatings();
         _styles = MusicLibraryService.Current.GetStyles();
-        _allTrackGenreIds = MusicLibraryService.Current.GetAllTrackGenreIds();
+        _allTrackGenreIds = [];
         _allTrackStyleIds = MusicLibraryService.Current.GetAllTrackStyleIds();
 
-        RebuildGenreChips();
+        GenresPanel.Children.Clear();
+        _genreChips.Clear();
 
         RatingBox.ItemsSource = _ratings.Select(r => r.Name).ToList();
         RatingBox.SelectedIndex = -1;
@@ -290,10 +291,7 @@ public partial class AddTrackOverlay : UserControl
         var request = new DownloadRequest
         {
             RawUrl = _validCanonicalUrl,
-            GenreIds = _genreChips
-                .Where(c => c.Btn.IsChecked == true)
-                .Select(c => c.Genre.Id)
-                .ToList(),
+            GenreIds = [],
             RatingId = _ratings[RatingBox.SelectedIndex].Id,
             StyleIds = _styleChips
                 .Where(c => c.Btn.IsChecked == true)

@@ -4,7 +4,6 @@ using System.Globalization;
 using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
-using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
@@ -15,18 +14,15 @@ namespace Music.Views;
 
 public partial class SettingsOverlay : UserControl
 {
-    private readonly List<MappingChoice> _mappingChoices = [];
     private List<ModelGenre> _modelGenres = [];
     private List<ModelSubgenre> _modelSubgenres = [];
     private Dictionary<int, List<ModelSubgenreDistinction>> _distinctionsBySubgenreId = [];
-    private Dictionary<int, GenreMapping> _mappingsBySubgenreId = [];
     private List<TagCategory> _tagCategories = [];
     private List<Tag> _tags = [];
     private List<TagSignalSource> _tagSignalSources = [];
     private List<TagRuleGroup> _tagRuleGroups = [];
     private bool _isLoading;
     private bool _updatingTagCategory;
-    private MappingFilter _mappingFilter = MappingFilter.All;
     private SettingsPage _selectedPage;
 
     public event Action<string>? ToastRequested;
@@ -36,10 +32,10 @@ public partial class SettingsOverlay : UserControl
     public SettingsOverlay()
     {
         InitializeComponent();
-        SearchBox.TextChanged += (_, _) => RebuildMappingRows();
+        SearchBox.TextChanged += (_, _) => RebuildGenreVocabularyRows();
         ModelGenreBox.SelectionChanged += (_, _) =>
         {
-            RebuildMappingRows();
+            RebuildGenreVocabularyRows();
             UpdateSummary();
         };
         CalibrationSortBox.ItemsSource = new[] { "Recently added", "Tone", "Energy", "Intensity" };
@@ -52,62 +48,53 @@ public partial class SettingsOverlay : UserControl
         _isLoading = true;
         DatabasePathText.Text = Values.DbPath;
         TracksPathText.Text = Values.TracksDirectory;
-        var genres = MusicLibraryService.Current.GetGenres();
-        _mappingChoices.Clear();
-        _mappingChoices.Add(new MappingChoice(null, "Not assigned"));
-        _mappingChoices.AddRange(genres.Select(genre => new MappingChoice(genre.Id, genre.Name)));
 
         _modelGenres = MusicLibraryService.Current.GetModelGenres();
         _modelSubgenres = MusicLibraryService.Current.GetModelSubgenres();
         _distinctionsBySubgenreId = MusicLibraryService.Current.GetModelSubgenreDistinctions()
             .GroupBy(item => item.ModelSubgenreId)
             .ToDictionary(group => group.Key, group => group.ToList());
-        _mappingsBySubgenreId = MusicLibraryService.Current.GetGenreMappings()
-            .ToDictionary(mapping => mapping.ModelSubgenreId);
 
-        ModelGenreBox.ItemsSource = new[] { new ModelGenreChoice(null, "All model genres") }
+        ModelGenreBox.ItemsSource = new[] { new ModelGenreChoice(null, "All categories") }
             .Concat(_modelGenres.Select(genre => new ModelGenreChoice(genre.Id, genre.Name)))
             .ToList();
         ModelGenreBox.SelectedIndex = 0;
         SearchBox.Text = string.Empty;
-        SetMappingFilter(MappingFilter.All);
         _isLoading = false;
 
-        SelectPage(SettingsPage.GenreMappings);
+        SelectPage(SettingsPage.GenreVocabulary);
         UpdateSummary();
-        RebuildMappingRows();
+        RebuildGenreVocabularyRows();
         RebuildCalibrationRows();
-        RebuildGenreRows();
         ReloadTagManagement();
         ReloadTagRules();
         IsVisible = true;
     }
 
-    private void RebuildMappingRows()
+    private void RebuildGenreVocabularyRows()
     {
         if (_isLoading) return;
 
-        MappingRows.Children.Clear();
+        GenreVocabularyRows.Children.Clear();
         var search = SearchBox.Text?.Trim() ?? string.Empty;
         var selectedModelGenreId = (ModelGenreBox.SelectedItem as ModelGenreChoice)?.Id;
         var modelGenreNames = _modelGenres.ToDictionary(genre => genre.Id, genre => genre.Name);
 
         var rows = _modelSubgenres
             .Where(subgenre => selectedModelGenreId is null || subgenre.ModelGenreId == selectedModelGenreId)
-            .Where(MatchesMappingFilter)
             .Where(subgenre => MatchesSearch(subgenre, modelGenreNames[subgenre.ModelGenreId], search))
             .OrderBy(subgenre => modelGenreNames[subgenre.ModelGenreId])
             .ThenBy(subgenre => subgenre.Name, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
         foreach (var subgenre in rows)
-            MappingRows.Children.Add(CreateMappingRow(subgenre, modelGenreNames[subgenre.ModelGenreId]));
+            GenreVocabularyRows.Children.Add(CreateGenreVocabularyRow(subgenre, modelGenreNames[subgenre.ModelGenreId]));
 
         if (rows.Count == 0)
         {
-            MappingRows.Children.Add(new TextBlock
+            GenreVocabularyRows.Children.Add(new TextBlock
             {
-                Text = "No model subgenres match the current filter.",
+            Text = "No genres match the current filter.",
                 Opacity = 0.52,
                 Margin = new Avalonia.Thickness(0, 18, 0, 0)
             });
@@ -117,17 +104,13 @@ public partial class SettingsOverlay : UserControl
     private bool MatchesSearch(ModelSubgenre subgenre, string modelGenreName, string search)
     {
         if (search.Length == 0) return true;
-        var mappedGenreName = _mappingsBySubgenreId.TryGetValue(subgenre.Id, out var mapping)
-            ? mapping.GenreName
-            : string.Empty;
         return modelGenreName.Contains(search, StringComparison.OrdinalIgnoreCase)
                || subgenre.Name.Contains(search, StringComparison.OrdinalIgnoreCase)
                || (subgenre.Description?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false)
-               || (subgenre.ClassificationHint?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false)
-               || mappedGenreName.Contains(search, StringComparison.OrdinalIgnoreCase);
+               || (subgenre.ClassificationHint?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false);
     }
 
-    private Control CreateMappingRow(ModelSubgenre subgenre, string modelGenreName)
+    private Control CreateGenreVocabularyRow(ModelSubgenre subgenre, string modelGenreName)
     {
         var row = new Border
         {
@@ -137,14 +120,9 @@ public partial class SettingsOverlay : UserControl
             CornerRadius = new Avalonia.CornerRadius(5),
             Padding = new Avalonia.Thickness(10, 7)
         };
-        var grid = new Grid
-        {
-            ColumnDefinitions = new ColumnDefinitions("*,220"),
-            RowDefinitions = new RowDefinitions("Auto,Auto,*"),
-            RowSpacing = 5,
-            ColumnSpacing = 16
-        };
-        grid.Children.Add(new TextBlock
+        var panel = new StackPanel { Spacing = 7 };
+        var header = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), ColumnSpacing = 12 };
+        header.Children.Add(new TextBlock
         {
             Text = $"{modelGenreName}  ·  {subgenre.Name}",
             FontSize = 12,
@@ -158,38 +136,35 @@ public partial class SettingsOverlay : UserControl
             HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Center
         };
         Grid.SetColumn(bpm, 1);
-        grid.Children.Add(bpm);
+        header.Children.Add(bpm);
+        panel.Children.Add(header);
 
-        if (!string.IsNullOrWhiteSpace(subgenre.Description))
-        {
-            var description = new TextBlock
-            {
-                Text = subgenre.Description, FontSize = 10.5, Opacity = 0.74, TextWrapping = TextWrapping.Wrap
-            };
-            Grid.SetRow(description, 1);
-            grid.Children.Add(description);
-        }
+        var nameBox = new TextBox { Text = subgenre.Name, Height = 32, Watermark = "Subgenre name" };
+        var descriptionBox = new TextBox { Text = subgenre.Description ?? string.Empty, Height = 32, Watermark = "Description" };
+        var hintBox = new TextBox { Text = subgenre.ClassificationHint ?? string.Empty, Height = 32, Watermark = "Classification hint" };
+        var bpmMinBox = new TextBox { Text = subgenre.BpmMin?.ToString(CultureInfo.InvariantCulture) ?? string.Empty, Height = 32, Watermark = "BPM min" };
+        var bpmMaxBox = new TextBox { Text = subgenre.BpmMax?.ToString(CultureInfo.InvariantCulture) ?? string.Empty, Height = 32, Watermark = "BPM max" };
 
-        var choiceBox = new ComboBox
+        var editGrid = new Grid
         {
-            ItemsSource = _mappingChoices,
-            Tag = subgenre.Id,
-            Height = 30,
-            HorizontalAlignment = HorizontalAlignment.Stretch
+            ColumnDefinitions = new ColumnDefinitions("170,*,*,75,75,Auto"),
+            ColumnSpacing = 8
         };
-        var assignedGenreId = _mappingsBySubgenreId.TryGetValue(subgenre.Id, out var mapping)
-            ? mapping.GenreId
-            : (int?)null;
-        choiceBox.SelectedItem = _mappingChoices.Single(choice => choice.GenreId == assignedGenreId);
-        choiceBox.SelectionChanged += OnMappingSelectionChanged;
-        Grid.SetColumn(choiceBox, 1);
-        Grid.SetRow(choiceBox, 2);
-        choiceBox.VerticalAlignment = VerticalAlignment.Bottom;
-        grid.Children.Add(choiceBox);
+        Grid.SetColumn(descriptionBox, 1);
+        Grid.SetColumn(hintBox, 2);
+        Grid.SetColumn(bpmMinBox, 3);
+        Grid.SetColumn(bpmMaxBox, 4);
+        var save = new Button { Content = "Save", Padding = new Avalonia.Thickness(10, 4), FontSize = 10 };
+        Grid.SetColumn(save, 5);
+        editGrid.Children.Add(nameBox);
+        editGrid.Children.Add(descriptionBox);
+        editGrid.Children.Add(hintBox);
+        editGrid.Children.Add(bpmMinBox);
+        editGrid.Children.Add(bpmMaxBox);
+        editGrid.Children.Add(save);
+        panel.Children.Add(editGrid);
 
         var details = new List<string>();
-        if (!string.IsNullOrWhiteSpace(subgenre.ClassificationHint))
-            details.Add($"Classify when: {subgenre.ClassificationHint}");
         if (_distinctionsBySubgenreId.TryGetValue(subgenre.Id, out var distinctions))
             details.Add("Distinguish from: " + string.Join(" · ", distinctions.Select(item =>
                 $"{item.ModelGenreName} → {item.ModelSubgenreName} — {item.Difference}")));
@@ -203,11 +178,33 @@ public partial class SettingsOverlay : UserControl
                 TextWrapping = TextWrapping.Wrap,
                 Margin = new Avalonia.Thickness(0, 1, 0, 0)
             };
-            Grid.SetRow(detailsText, 2);
-            grid.Children.Add(detailsText);
+            panel.Children.Add(detailsText);
         }
 
-        row.Child = grid;
+        save.Click += (_, _) =>
+        {
+            if (string.IsNullOrWhiteSpace(nameBox.Text))
+            {
+                ToastRequested?.Invoke("Genre name is required.");
+                return;
+            }
+            if (!TryParseNullableInt(bpmMinBox.Text, out var bpmMin) || !TryParseNullableInt(bpmMaxBox.Text, out var bpmMax))
+            {
+                ToastRequested?.Invoke("BPM values must be whole numbers.");
+                return;
+            }
+            MusicLibraryService.Current.UpdateModelSubgenre(
+                subgenre.Id,
+                nameBox.Text,
+                descriptionBox.Text,
+                hintBox.Text,
+                bpmMin,
+                bpmMax);
+            ToastRequested?.Invoke("Genre updated.");
+            ReloadGenreVocabulary();
+        };
+
+        row.Child = panel;
         return row;
     }
 
@@ -217,42 +214,68 @@ public partial class SettingsOverlay : UserControl
         : subgenre.BpmMax is not null ? $"Typical BPM · up to {subgenre.BpmMax}"
         : string.Empty;
 
-    private void OnMappingSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    private static bool TryParseNullableInt(string? text, out int? value)
     {
-        if (_isLoading || sender is not ComboBox { Tag: int modelSubgenreId, SelectedItem: MappingChoice choice })
-            return;
-
-        if (choice.GenreId is int genreId)
+        if (string.IsNullOrWhiteSpace(text))
         {
-            MusicLibraryService.Current.SetGenreMapping(genreId, modelSubgenreId);
-            var genreName = choice.Name;
-            _mappingsBySubgenreId[modelSubgenreId] = new GenreMapping(
-                0, genreId, genreName, modelSubgenreId, 0, string.Empty);
-            ToastRequested?.Invoke($"Mapped {SubgenreName(modelSubgenreId)} to {genreName}");
+            value = null;
+            return true;
         }
-        else
+        if (int.TryParse(text.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed)
+            || int.TryParse(text.Trim(), NumberStyles.Integer, CultureInfo.CurrentCulture, out parsed))
         {
-            MusicLibraryService.Current.RemoveGenreMapping(modelSubgenreId);
-            _mappingsBySubgenreId.Remove(modelSubgenreId);
-            ToastRequested?.Invoke($"Removed mapping for {SubgenreName(modelSubgenreId)}");
+            value = parsed;
+            return true;
         }
-
-        UpdateSummary();
-        LibraryMetadataChanged?.Invoke();
-        if (_mappingFilter != MappingFilter.All)
-            RebuildMappingRows();
+        value = null;
+        return false;
     }
 
-    private void OnMappingFilterClicked(object? sender, RoutedEventArgs e)
+    private void ReloadGenreVocabulary()
     {
-        if (sender is not ToggleButton { Tag: string value }) return;
-        SetMappingFilter(value switch
+        var selectedCategoryId = (ModelGenreBox.SelectedItem as ModelGenreChoice)?.Id;
+        _modelGenres = MusicLibraryService.Current.GetModelGenres();
+        _modelSubgenres = MusicLibraryService.Current.GetModelSubgenres();
+        _distinctionsBySubgenreId = MusicLibraryService.Current.GetModelSubgenreDistinctions()
+            .GroupBy(item => item.ModelSubgenreId)
+            .ToDictionary(group => group.Key, group => group.ToList());
+
+        ModelGenreBox.ItemsSource = new[] { new ModelGenreChoice(null, "All categories") }
+            .Concat(_modelGenres.Select(genre => new ModelGenreChoice(genre.Id, genre.Name)))
+            .ToList();
+        ModelGenreBox.SelectedItem = ((IEnumerable<ModelGenreChoice>)ModelGenreBox.ItemsSource!)
+            .FirstOrDefault(choice => choice.Id == selectedCategoryId)
+            ?? ((IEnumerable<ModelGenreChoice>)ModelGenreBox.ItemsSource!).First();
+        RebuildGenreVocabularyRows();
+        UpdateSummary();
+        LibraryMetadataChanged?.Invoke();
+    }
+
+    private void OnAddSubgenreClicked(object? sender, RoutedEventArgs e)
+    {
+        if ((ModelGenreBox.SelectedItem as ModelGenreChoice)?.Id is not int categoryId)
         {
-            "mapped" => MappingFilter.Mapped,
-            "unmapped" => MappingFilter.Unmapped,
-            _ => MappingFilter.All
-        });
-        RebuildMappingRows();
+            ToastRequested?.Invoke("Select a category before adding a subgenre.");
+            return;
+        }
+        var name = NewSubgenreBox.Text?.Trim();
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            ToastRequested?.Invoke("Subgenre name is required.");
+            return;
+        }
+
+        try
+        {
+            MusicLibraryService.Current.AddModelSubgenre(categoryId, name);
+            NewSubgenreBox.Text = string.Empty;
+            ToastRequested?.Invoke($"Added {name}.");
+            ReloadGenreVocabulary();
+        }
+        catch (Exception exception)
+        {
+            ToastRequested?.Invoke($"Could not add genre: {exception.Message}");
+        }
     }
 
     private void OnSettingsNavigationClicked(object? sender, RoutedEventArgs e)
@@ -262,28 +285,25 @@ public partial class SettingsOverlay : UserControl
         {
             "library" => SettingsPage.Library,
             "calibration" => SettingsPage.AnalysisCalibration,
-            "genres" => SettingsPage.Genres,
             "tags" => SettingsPage.Tags,
             "tag_rules" => SettingsPage.TagRules,
-            _ => SettingsPage.GenreMappings
+            _ => SettingsPage.GenreVocabulary
         });
     }
 
     private void SelectPage(SettingsPage page)
     {
         _selectedPage = page;
-        var isMappingsPage = page == SettingsPage.GenreMappings;
+        var isGenreVocabularyPage = page == SettingsPage.GenreVocabulary;
         var isLibraryPage = page == SettingsPage.Library;
-        GenreMappingsPage.IsVisible = isMappingsPage;
+        GenreVocabularyPage.IsVisible = isGenreVocabularyPage;
         LibraryPage.IsVisible = isLibraryPage;
         AnalysisCalibrationPage.IsVisible = page == SettingsPage.AnalysisCalibration;
-        GenresPage.IsVisible = page == SettingsPage.Genres;
         TagsPage.IsVisible = page == SettingsPage.Tags;
         TagRulesPage.IsVisible = page == SettingsPage.TagRules;
-        GenreMappingsNavButton.IsChecked = isMappingsPage;
+        GenreVocabularyNavButton.IsChecked = isGenreVocabularyPage;
         LibraryNavButton.IsChecked = isLibraryPage;
         AnalysisCalibrationNavButton.IsChecked = page == SettingsPage.AnalysisCalibration;
-        GenresNavButton.IsChecked = page == SettingsPage.Genres;
         TagsNavButton.IsChecked = page == SettingsPage.Tags;
         TagRulesNavButton.IsChecked = page == SettingsPage.TagRules;
 
@@ -291,76 +311,23 @@ public partial class SettingsOverlay : UserControl
         {
             SettingsPage.Library => "Library",
             SettingsPage.AnalysisCalibration => "Analysis calibration",
-            SettingsPage.Genres => "Your genres",
             SettingsPage.Tags => "Tags",
             SettingsPage.TagRules => "Tag rules",
-            _ => "Genre mappings"
+            _ => "Genres"
         };
-        PageDescriptionText.Text = isMappingsPage
-            ? "Connect model subgenres with your own genres. Unassigned labels remain visible as raw model output."
+        PageDescriptionText.Text = isGenreVocabularyPage
+            ? "Review the genre categories and subgenres used directly by the library."
             : isLibraryPage
                 ? "Where this installation keeps the local music library and its database."
-                : page == SettingsPage.Genres
-                    ? "Create and maintain the genres used by your library. Genres with existing tracks or mappings stay protected."
-                    : page == SettingsPage.Tags
-                        ? "Maintain your curated labels. Tags can describe mood, themes, situations or workflow states without turning them into genres."
-                        : page == SettingsPage.TagRules
-                            ? "Turn model signals into reviewable tag suggestions. Rules never assign tags automatically in this first version."
+                : page == SettingsPage.Tags
+                    ? "Maintain your curated labels. Tags can describe mood, themes, situations or workflow states without turning them into genres."
+                    : page == SettingsPage.TagRules
+                        ? "Turn model signals into reviewable tag suggestions. Rules never assign tags automatically in this first version."
                         : "Compare current system interpretations before turning them into filters.";
-        SummaryText.Text = isMappingsPage ? BuildSummaryText() : "";
+        SummaryText.Text = isGenreVocabularyPage ? BuildSummaryText() : "";
         if (page == SettingsPage.AnalysisCalibration) RebuildCalibrationRows();
-        if (page == SettingsPage.Genres) RebuildGenreRows();
         if (page == SettingsPage.Tags) ReloadTagManagement(SelectedTagCategoryId());
         if (page == SettingsPage.TagRules) ReloadTagRules();
-    }
-
-    private void RebuildGenreRows()
-    {
-        if (!IsInitialized) return;
-        GenreRows.Children.Clear();
-        foreach (var genre in MusicLibraryService.Current.GetGenres())
-        {
-            var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto") };
-            var nameBox = new TextBox { Text = genre.Name, Height = 32 };
-            var save = new Button { Content = "Save", Padding = new Avalonia.Thickness(10, 4), Margin = new Avalonia.Thickness(8, 0, 0, 0), FontSize = 10 };
-            var remove = new Button { Content = "Delete", Padding = new Avalonia.Thickness(10, 4), Margin = new Avalonia.Thickness(6, 0, 0, 0), FontSize = 10 };
-            save.Click += (_, _) =>
-            {
-                try
-                {
-                    MusicLibraryService.Current.RenameGenre(genre.Id, nameBox.Text ?? genre.Name);
-                    ToastRequested?.Invoke("Genre updated.");
-                    RebuildGenreRows();
-                    LibraryMetadataChanged?.Invoke();
-                }
-                catch (Exception exception) { ToastRequested?.Invoke($"Could not update genre: {exception.Message}"); }
-            };
-            remove.Click += (_, _) =>
-            {
-                var error = MusicLibraryService.Current.DeleteGenreIfUnused(genre.Id);
-                ToastRequested?.Invoke(error ?? "Genre deleted.");
-                RebuildGenreRows();
-                if (error is null) LibraryMetadataChanged?.Invoke();
-            };
-            Grid.SetColumn(save, 1); Grid.SetColumn(remove, 2);
-            row.Children.Add(nameBox); row.Children.Add(save); row.Children.Add(remove);
-            GenreRows.Children.Add(row);
-        }
-    }
-
-    private void OnAddGenreClicked(object? sender, RoutedEventArgs e)
-    {
-        var name = NewGenreBox.Text?.Trim() ?? string.Empty;
-        if (name.Length == 0) return;
-        try
-        {
-            MusicLibraryService.Current.AddGenre(name);
-            NewGenreBox.Text = string.Empty;
-            RebuildGenreRows();
-            ToastRequested?.Invoke("Genre added.");
-            LibraryMetadataChanged?.Invoke();
-        }
-        catch (Exception exception) { ToastRequested?.Invoke($"Could not add genre: {exception.Message}"); }
     }
 
     private void ReloadTagManagement(int? selectedCategoryId = null)
@@ -866,24 +833,9 @@ public partial class SettingsOverlay : UserControl
         }
     }
 
-    private void SetMappingFilter(MappingFilter filter)
-    {
-        _mappingFilter = filter;
-        AllFilterButton.IsChecked = filter == MappingFilter.All;
-        MappedFilterButton.IsChecked = filter == MappingFilter.Mapped;
-        UnmappedFilterButton.IsChecked = filter == MappingFilter.Unmapped;
-    }
-
-    private bool MatchesMappingFilter(ModelSubgenre subgenre) => _mappingFilter switch
-    {
-        MappingFilter.Mapped => _mappingsBySubgenreId.ContainsKey(subgenre.Id),
-        MappingFilter.Unmapped => !_mappingsBySubgenreId.ContainsKey(subgenre.Id),
-        _ => true
-    };
-
     private void UpdateSummary()
     {
-        if (_selectedPage != SettingsPage.GenreMappings) return;
+        if (_selectedPage != SettingsPage.GenreVocabulary) return;
         SummaryText.Text = BuildSummaryText();
     }
 
@@ -893,13 +845,9 @@ public partial class SettingsOverlay : UserControl
         var relevantSubgenres = selected?.Id is int modelGenreId
             ? _modelSubgenres.Where(subgenre => subgenre.ModelGenreId == modelGenreId).ToList()
             : _modelSubgenres;
-        var mappedCount = relevantSubgenres.Count(subgenre => _mappingsBySubgenreId.ContainsKey(subgenre.Id));
-        var scope = selected?.Id is null ? "All model genres" : selected!.Name;
-        return $"{scope}: {mappedCount} of {relevantSubgenres.Count} model subgenres mapped.";
+        var scope = selected?.Id is null ? "All categories" : selected!.Name;
+        return $"{scope}: {relevantSubgenres.Count} genres.";
     }
-
-    private string SubgenreName(int modelSubgenreId) => _modelSubgenres
-        .FirstOrDefault(subgenre => subgenre.Id == modelSubgenreId)?.Name ?? "model subgenre";
 
     private static IBrush CategoryBrush(string? color)
     {
@@ -923,11 +871,6 @@ public partial class SettingsOverlay : UserControl
     };
 
     private void OnCloseClicked(object? sender, RoutedEventArgs e) => IsVisible = false;
-
-    private sealed record MappingChoice(int? GenreId, string Name)
-    {
-        public override string ToString() => Name;
-    }
 
     private sealed record ModelGenreChoice(int? Id, string Name)
     {
@@ -959,7 +902,6 @@ public partial class SettingsOverlay : UserControl
         public override string ToString() => Name;
     }
 
-    private enum MappingFilter { All, Mapped, Unmapped }
     private sealed record CalibrationRow(MusicTrack Track, List<DerivedTrackAttribute> Attributes, IReadOnlyList<ExperimentalAnalysisModel> Signals)
     {
         public string Value(string key) => Attributes.FirstOrDefault(attribute => attribute.Key == key)?.EffectiveValue ?? "—";
@@ -967,5 +909,5 @@ public partial class SettingsOverlay : UserControl
             .OrderByDescending(item => item.value.Score).Take(3).Select(item => $"{item.Model}: {item.value.Label} {item.value.Score:0.##}"));
     }
 
-    private enum SettingsPage { GenreMappings, Library, AnalysisCalibration, Genres, Tags, TagRules }
+    private enum SettingsPage { GenreVocabulary, Library, AnalysisCalibration, Tags, TagRules }
 }

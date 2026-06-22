@@ -27,10 +27,7 @@ public class MusicLibraryService
     public List<int> GetTrackStyleIds(int trackId) => _db.GetTrackStyleIds(trackId);
 
     public Dictionary<int, List<int>> GetAllTrackGenreIds() => _db.GetAllTrackGenreIds();
-    public Dictionary<int, List<int>> GetAllTrackModelGenreIds() => _db.GetAllTrackModelGenreIds();
-    public Dictionary<int, List<int>> GetAllTrackManualGenreIds() => _db.GetAllTrackManualGenreIds();
     public List<int> GetTrackGenreIds(int trackId) => _db.GetTrackGenreIds(trackId);
-    public List<int> GetTrackManualGenreIds(int trackId) => _db.GetTrackManualGenreIds(trackId);
     public List<TrackModelGenre> GetTrackModelGenres(int trackId) => _db.GetTrackModelGenres(trackId);
     public void SetTrackModelGenreEnabled(int trackId, int genreId, bool isEnabled) => _db.SetTrackModelGenreEnabled(trackId, genreId, isEnabled);
     public void UpdateTrack(int id, string title, List<int> genreIds, int? ratingId, List<int> styleIds)
@@ -74,9 +71,6 @@ public class MusicLibraryService
 
     // --- Lookups ---
     public List<Genre> GetGenres() => _db.GetGenres();
-    public void AddGenre(string name) => _db.AddGenre(name);
-    public void RenameGenre(int id, string name) => _db.RenameGenre(id, name);
-    public string? DeleteGenreIfUnused(int id) => _db.DeleteGenreIfUnused(id);
     public List<TagCategory> GetTagCategories() => _db.GetTagCategories();
     public void AddTagCategory(string name) => _db.AddTagCategory(name);
     public void RenameTagCategory(int id, string name) => _db.RenameTagCategory(id, name);
@@ -110,6 +104,9 @@ public class MusicLibraryService
     public List<Rating> GetRatings() => _db.GetRatings();
     public List<ModelGenre> GetModelGenres() => _db.GetModelGenres();
     public List<ModelSubgenre> GetModelSubgenres(int? modelGenreId = null) => _db.GetModelSubgenres(modelGenreId);
+    public void AddModelSubgenre(int modelGenreId, string name) => _db.AddModelSubgenre(modelGenreId, name);
+    public void UpdateModelSubgenre(int id, string name, string? description, string? classificationHint, int? bpmMin, int? bpmMax) =>
+        _db.UpdateModelSubgenre(id, name, description, classificationHint, bpmMin, bpmMax);
     public List<ModelSubgenreDistinction> GetModelSubgenreDistinctions() => _db.GetModelSubgenreDistinctions();
     public List<StoredModelGenrePrediction> GetTrackGenrePredictions(int trackId) => _db.GetTrackGenrePredictions(trackId);
     public TrackAudioAnalysis? GetTrackAudioAnalysis(int trackId) => _db.GetTrackAudioAnalysis(trackId);
@@ -118,9 +115,6 @@ public class MusicLibraryService
     public List<DerivedTrackAttribute> GetTrackDerivedAttributes(int trackId) => _db.GetTrackDerivedAttributes(trackId);
     public void SetTrackDerivedAttributeOverride(int trackId, string key, string? value) =>
         _db.SetTrackDerivedAttributeOverride(trackId, key, value);
-    public List<GenreMapping> GetGenreMappings() => _db.GetGenreMappings();
-    public void SetGenreMapping(int genreId, int modelSubgenreId) => _db.SetGenreMapping(genreId, modelSubgenreId);
-    public void RemoveGenreMapping(int modelSubgenreId) => _db.RemoveGenreMapping(modelSubgenreId);
 
     public bool TrackExistsByCanonicalUrl(string canonicalUrl) => _db.TrackExists(canonicalUrl);
 

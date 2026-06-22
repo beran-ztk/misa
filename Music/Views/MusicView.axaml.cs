@@ -210,8 +210,6 @@ public partial class MusicView : UserControl
         _allTrackStyleIds = MusicLibraryService.Current.GetAllTrackStyleIds();
         _allTrackGenreIds = MusicLibraryService.Current.GetAllTrackGenreIds();
         _allTrackTagIds = MusicLibraryService.Current.GetAllTrackTagIds();
-        var systemGenreIds = MusicLibraryService.Current.GetAllTrackModelGenreIds();
-        var manualGenreIds = MusicLibraryService.Current.GetAllTrackManualGenreIds();
 
         var genreMap = Values.Genres.ToDictionary(g => g.Id, g => g.Name);
         var tagMap = Values.Tags.ToDictionary(t => t.Id);
@@ -223,15 +221,10 @@ public partial class MusicView : UserControl
         _allItems = tracks.Select(t =>
         {
             var genreIds = _allTrackGenreIds.GetValueOrDefault(t.Id, []);
-            var systemIds = systemGenreIds.GetValueOrDefault(t.Id, []);
-            var manualIds = manualGenreIds.GetValueOrDefault(t.Id, []);
             var tagIds = _allTrackTagIds.GetValueOrDefault(t.Id, []);
             var styleIds = _allTrackStyleIds.GetValueOrDefault(t.Id, []);
 
-            var genreStr = string.Join(", ", systemIds
-                .Select(id => genreMap.GetValueOrDefault(id, ""))
-                .Where(n => n.Length > 0).Order());
-            var manualGenreStr = string.Join(", ", manualIds
+            var genreStr = string.Join(", ", genreIds
                 .Select(id => genreMap.GetValueOrDefault(id, ""))
                 .Where(n => n.Length > 0).Order());
             var styleStr = string.Join(", ", styleIds
@@ -256,7 +249,7 @@ public partial class MusicView : UserControl
                 .Where(attribute => attribute.Key is "emotional_tone" or "energy_context" or "intensity" or "vocal_presence")
                 .Select(attribute => $"{ProfileAttributeName(attribute.Key)} {attribute.EffectiveValue}"));
             
-            return new TrackDisplayItem(t, genreStr, manualGenreStr, styleStr, durationText, ratingName, profileText, tagDisplays, t.ChannelName ?? "")
+            return new TrackDisplayItem(t, genreStr, styleStr, durationText, ratingName, profileText, tagDisplays, t.ChannelName ?? "")
             {
                 NeedsReview = t.NeedsReview
             };

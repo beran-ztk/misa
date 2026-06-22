@@ -8,8 +8,7 @@ public record TrackTagDisplay(string Name, string CategoryName, IBrush Foregroun
 
 public record TrackDisplayItem(
     MusicTrack Track,
-    string SystemGenreText,
-    string ManualGenreText,
+    string GenreText,
     string StyleText,
     string DurationText,
     string RatingText,
@@ -24,12 +23,6 @@ public record TrackDisplayItem(
     public string ChannelSeparatorText => string.IsNullOrWhiteSpace(ChannelText)
         ? string.Empty
         : "  ·  ";
-
-    public string ManualGenreDisplayText => string.IsNullOrWhiteSpace(ManualGenreText)
-        ? string.Empty
-        : string.IsNullOrWhiteSpace(SystemGenreText)
-            ? ManualGenreText
-            : $"  ·  {ManualGenreText}";
 
     public IBrush PlayingBackground => IsPlaying
         ? new SolidColorBrush(Color.FromArgb(48, 28, 132, 184))

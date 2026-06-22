@@ -326,11 +326,8 @@
                                     </Grid>
                                     <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
                                         <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="{Binding SystemGenreText}"
+                                            <TextBlock Text="{Binding GenreText}"
                                                        FontSize="11" Foreground="#65BCEB"
-                                                       TextTrimming="CharacterEllipsis"/>
-                                            <TextBlock Text="{Binding ManualGenreDisplayText}"
-                                                       FontSize="11" Opacity="0.66"
                                                        TextTrimming="CharacterEllipsis"/>
                                         </StackPanel>
                                         <TextBlock Grid.Column="1" Text="{Binding DurationText}"

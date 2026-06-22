@@ -16,16 +16,13 @@ namespace Music.Views;
 public partial class EditTrackOverlay : UserControl
 {
     private MusicTrack? _track;
-    private List<Genre> _genres = [];
     private List<Tag> _tags = [];
     private List<Rating> _ratings = [];
     private List<Style> _styles = [];
 
-    private readonly List<(Genre Genre, ToggleButton Btn)> _genreChips = [];
     private readonly List<(Tag Tag, ToggleButton Btn)> _tagChips = [];
     private readonly List<(Style Style, ToggleButton Btn)> _styleChips = [];
 
-    private Dictionary<int, List<int>> _allTrackGenreIds = [];
     private Dictionary<int, List<int>> _allTrackStyleIds = [];
     private HashSet<int> _modelGenreIds = [];
     private Dictionary<int, ModelSubgenre> _modelSubgenresById = [];
@@ -66,11 +63,9 @@ public partial class EditTrackOverlay : UserControl
 
     private void LoadLookups()
     {
-        _genres = MusicLibraryService.Current.GetGenres();
         _tags = MusicLibraryService.Current.GetTags();
         _ratings = MusicLibraryService.Current.GetRatings();
         _styles = MusicLibraryService.Current.GetStyles();
-        _allTrackGenreIds = MusicLibraryService.Current.GetAllTrackGenreIds();
         _allTrackStyleIds = MusicLibraryService.Current.GetAllTrackStyleIds();
         StylesSection.IsVisible = _styles.Count > 0;
 
@@ -91,13 +86,11 @@ public partial class EditTrackOverlay : UserControl
         RatingBox.SelectedIndex = ratingIndex;
         UpdateRatingVisual();
 
-        var selectedGenreIds = MusicLibraryService.Current.GetTrackManualGenreIds(track.Id).ToHashSet();
         var selectedTagIds = MusicLibraryService.Current.GetTrackTagIds(track.Id).ToHashSet();
         var selectedStyleIds = MusicLibraryService.Current.GetTrackStyleIds(track.Id).ToHashSet();
 
         ShowModelSelectedGenres(track);
         ShowDetectedGenres(track);
-        RebuildGenreChips(selectedGenreIds);
         RebuildTagChips(selectedTagIds);
         ShowTagSuggestions(track);
         RebuildStyleChips(selectedStyleIds);
@@ -122,83 +115,6 @@ public partial class EditTrackOverlay : UserControl
             ? $"{usage.ListenedSeconds / 60} min listened"
             : $"{usage.ListenedSeconds} sec listened";
         TrackUsageText.Text = $"Listening · {usage.PlayCount} plays · {listened} · {usage.SkipCount} skips";
-    }
-
-    private void RebuildGenreChips(IReadOnlySet<int> selectedGenreIds)
-    {
-        var sorted = _genres
-            .Where(genre => !_modelGenreIds.Contains(genre.Id))
-            .OrderByDescending(g => selectedGenreIds.Contains(g.Id))
-            .ThenBy(g => g.Name)
-            .ToList();
-
-        GenresPanel.Children.Clear();
-        _genreChips.Clear();
-
-        foreach (var genre in sorted)
-        {
-            var isSelected = selectedGenreIds.Contains(genre.Id);
-            var btn = CreateManualGenreButton(genre.Name, isSelected);
-            btn.IsCheckedChanged += (_, _) =>
-            {
-                ApplyManualGenreVisual(btn);
-                UpdateManualGenreSummary();
-                RebuildStyleChips();
-                UpdateSaveButton();
-            };
-
-            _genreChips.Add((genre, btn));
-            GenresPanel.Children.Add(btn);
-        }
-
-        UpdateManualGenreSummary();
-    }
-
-    private static ToggleButton CreateManualGenreButton(string name, bool isSelected)
-    {
-        var label = new TextBlock
-        {
-            Text = name,
-            FontSize = 12,
-            FontWeight = FontWeight.SemiBold,
-            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
-            TextTrimming = TextTrimming.CharacterEllipsis,
-            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center
-        };
-
-        var button = new ToggleButton
-        {
-            Content = label,
-            IsChecked = isSelected,
-            Width = 120,
-            Height = 31,
-            Margin = new Avalonia.Thickness(0, 0, 6, 6),
-            Padding = new Avalonia.Thickness(9, 3),
-            CornerRadius = new Avalonia.CornerRadius(3),
-            HorizontalContentAlignment = Avalonia.Layout.HorizontalAlignment.Center,
-            VerticalContentAlignment = Avalonia.Layout.VerticalAlignment.Center,
-            Tag = label
-        };
-        ApplyManualGenreVisual(button);
-        return button;
-    }
-
-    private static void ApplyManualGenreVisual(ToggleButton button)
-    {
-        var selected = button.IsChecked == true;
-        button.Background = new SolidColorBrush(Color.Parse(selected ? "#164968" : "#1A2026"));
-        button.BorderBrush = new SolidColorBrush(Color.Parse(selected ? "#45A7DC" : "#394653"));
-        button.BorderThickness = new Avalonia.Thickness(1);
-        if (button.Tag is TextBlock label)
-            label.Foreground = new SolidColorBrush(Color.Parse(selected ? "#E9F6FF" : "#D7E0E8"));
-    }
-
-    private void UpdateManualGenreSummary()
-    {
-        var selectedCount = _genreChips.Count(item => item.Btn.IsChecked == true);
-        ManualGenreSummaryText.Text = selectedCount == 0
-            ? "No manual genres"
-            : $"{selectedCount} selected";
     }
 
     private void RebuildTagChips(IReadOnlySet<int> selectedTagIds)
@@ -395,9 +311,7 @@ public partial class EditTrackOverlay : UserControl
 
     private void RebuildStyleChips(IReadOnlySet<int>? selectedStyleIds = null)
     {
-        var selectedGenreIds = SelectedGenreIds();
-        var styleCounts = MetadataCountService.StyleCountsForGenres(
-            _allTrackGenreIds, _allTrackStyleIds, selectedGenreIds);
+        var styleCounts = MetadataCountService.StyleCountsForGenres(new Dictionary<int, List<int>>(), _allTrackStyleIds, new HashSet<int>());
 
         selectedStyleIds ??= _styleChips
             .Where(c => c.Btn.IsChecked == true)
@@ -424,12 +338,6 @@ public partial class EditTrackOverlay : UserControl
             StylesPanel.Children.Add(btn);
         }
     }
-
-    private HashSet<int> SelectedGenreIds() =>
-        _genreChips
-            .Where(c => c.Btn.IsChecked == true)
-            .Select(c => c.Genre.Id)
-            .ToHashSet();
 
     private HashSet<int> SelectedTagIds() =>
         _tagChips
@@ -470,7 +378,6 @@ public partial class EditTrackOverlay : UserControl
         if (_track == null)
             return;
 
-        var genreIds = SelectedGenreIds().ToList();
         var styleIds = _styleChips
             .Where(c => c.Btn.IsChecked == true)
             .Select(c => c.Style.Id)
@@ -479,7 +386,7 @@ public partial class EditTrackOverlay : UserControl
         MusicLibraryService.Current.UpdateTrack(
             _track.Id,
             TitleBox.Text!.Trim(),
-            genreIds,
+            [],
             RatingBox.SelectedIndex >= 0 ? _ratings[RatingBox.SelectedIndex].Id : null,
             styleIds);
 
@@ -517,7 +424,6 @@ public partial class EditTrackOverlay : UserControl
         AnalysisBusyLayer.IsVisible = false;
         ShowModelSelectedGenres(track);
         ShowDetectedGenres(track);
-        RebuildGenreChips(SelectedGenreIds());
         ShowTagSuggestions(track);
         ShowAudioAnalysis(track);
         ShowSoundProfile(track);
@@ -913,17 +819,15 @@ public partial class EditTrackOverlay : UserControl
     private void ShowDetectedGenres(MusicTrack track)
     {
         LoadModelMetadata();
-        var mappedSubgenreIds = MusicLibraryService.Current.GetGenreMappings()
-            .Select(mapping => mapping.ModelSubgenreId).ToHashSet();
         var detected = MusicLibraryService.Current.GetTrackGenrePredictions(track.Id)
-            .Where(prediction => prediction.Score > .1 && !mappedSubgenreIds.Contains(prediction.ModelSubgenreId))
+            .Where(prediction => prediction.Score is > .05 and <= .1)
             .Take(6)
             .Select(prediction => $"{prediction.ModelGenreName} → {prediction.ModelSubgenreName}")
             .ToList();
         DetectedGenresSection.IsVisible = detected.Count > 0;
         DetectedGenresPanel.Children.Clear();
         foreach (var prediction in MusicLibraryService.Current.GetTrackGenrePredictions(track.Id)
-                     .Where(prediction => prediction.Score > .1 && !mappedSubgenreIds.Contains(prediction.ModelSubgenreId))
+                     .Where(prediction => prediction.Score is > .05 and <= .1)
                      .Take(6))
         {
             var container = new Border

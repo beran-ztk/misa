@@ -22,19 +22,6 @@
             <Setter Property="Foreground" Value="#FFFFFF"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
         </Style>
-        <Style Selector="ToggleButton.mapping-filter">
-            <Setter Property="Padding" Value="10,5"/>
-            <Setter Property="MinWidth" Value="66"/>
-            <Setter Property="FontSize" Value="11"/>
-            <Setter Property="Background" Value="#10151B"/>
-            <Setter Property="BorderBrush" Value="#3D4652"/>
-            <Setter Property="BorderThickness" Value="1"/>
-        </Style>
-        <Style Selector="ToggleButton.mapping-filter:checked">
-            <Setter Property="Background" Value="#176EA8"/>
-            <Setter Property="BorderBrush" Value="#32A7E6"/>
-            <Setter Property="Foreground" Value="White"/>
-        </Style>
     </UserControl.Styles>
 
     <Grid ColumnDefinitions="244,1,*" Background="#1B1D22">
@@ -49,14 +36,11 @@
                 <StackPanel Grid.Row="1" Margin="0,26,0,0" Spacing="6">
                     <TextBlock Text="CLASSIFICATION" FontSize="10" FontWeight="SemiBold"
                                Opacity="0.4" LetterSpacing="0.8" Margin="10,0,0,4"/>
-                    <ToggleButton x:Name="GenreMappingsNavButton" Classes="settings-nav"
-                                  Content="Genre mappings" Tag="mappings"
+                    <ToggleButton x:Name="GenreVocabularyNavButton" Classes="settings-nav"
+                                  Content="Genres" Tag="mappings"
                                   Click="OnSettingsNavigationClicked"/>
                     <ToggleButton x:Name="AnalysisCalibrationNavButton" Classes="settings-nav"
                                   Content="Analysis calibration" Tag="calibration"
-                                  Click="OnSettingsNavigationClicked"/>
-                    <ToggleButton x:Name="GenresNavButton" Classes="settings-nav"
-                                  Content="Your genres" Tag="genres"
                                   Click="OnSettingsNavigationClicked"/>
                     <ToggleButton x:Name="TagsNavButton" Classes="settings-nav"
                                   Content="Tags" Tag="tags"
@@ -95,33 +79,26 @@
 
             <Rectangle Grid.Row="1" Fill="#24272E"/>
 
-            <Grid x:Name="GenreMappingsPage" Grid.Row="2" RowDefinitions="Auto,*" Margin="30,22,30,0">
-                <Grid Grid.Row="0" ColumnDefinitions="*,170,Auto" Margin="0,0,0,12">
+            <Grid x:Name="GenreVocabularyPage" Grid.Row="2" RowDefinitions="Auto,Auto,*" Margin="30,22,30,0">
+                <Grid Grid.Row="0" ColumnDefinitions="*,190" Margin="0,0,0,12">
                     <TextBox x:Name="SearchBox" Grid.Column="0" Height="34"
-                             Watermark="Search model genres or subgenres…"/>
+                             Watermark="Search genres or descriptions…"/>
                     <ComboBox x:Name="ModelGenreBox" Grid.Column="1" Height="34"
                               Margin="10,0,0,0"/>
-                    <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="12,0,0,0"
-                                VerticalAlignment="Center" Spacing="0">
-                        <ToggleButton x:Name="AllFilterButton" Classes="mapping-filter"
-                                      Content="All" Tag="all" IsChecked="True"
-                                      CornerRadius="6,0,0,6" Click="OnMappingFilterClicked"/>
-                        <ToggleButton x:Name="MappedFilterButton" Classes="mapping-filter"
-                                      Content="Mapped" Tag="mapped"
-                                      CornerRadius="0" Click="OnMappingFilterClicked"/>
-                        <ToggleButton x:Name="UnmappedFilterButton" Classes="mapping-filter"
-                                      Content="Unmapped" Tag="unmapped"
-                                      CornerRadius="0,6,6,0" Click="OnMappingFilterClicked"/>
-                    </StackPanel>
                 </Grid>
 
-                <Grid Grid.Row="1" RowDefinitions="Auto,*">
-                    <Grid ColumnDefinitions="*,220" Margin="0,0,0,6">
-                        <TextBlock Text="MODEL CLASSIFICATION" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
-                        <TextBlock Grid.Column="1" Text="YOUR GENRE" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
+                <Grid Grid.Row="1" ColumnDefinitions="*,Auto" Margin="0,0,0,12">
+                    <TextBox x:Name="NewSubgenreBox" Height="34" Watermark="New subgenre in selected category…"/>
+                    <Button Grid.Column="1" Content="Add subgenre" Click="OnAddSubgenreClicked"
+                            Margin="10,0,0,0" Padding="12,5"/>
+                </Grid>
+
+                <Grid Grid.Row="2" RowDefinitions="Auto,*">
+                    <Grid ColumnDefinitions="*" Margin="0,0,0,6">
+                        <TextBlock Text="GENRE VOCABULARY" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
                     </Grid>
                     <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
-                        <StackPanel x:Name="MappingRows" Spacing="5" Margin="0,0,0,18"/>
+                        <StackPanel x:Name="GenreVocabularyRows" Spacing="5" Margin="0,0,0,18"/>
                     </ScrollViewer>
                 </Grid>
             </Grid>
@@ -153,16 +130,6 @@
                 </Grid>
                 <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
                     <StackPanel x:Name="CalibrationRows" Spacing="5" Margin="0,0,0,18"/>
-                </ScrollViewer>
-            </Grid>
-
-            <Grid x:Name="GenresPage" Grid.Row="2" IsVisible="False" RowDefinitions="Auto,*" Margin="30,22,30,0">
-                <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,12">
-                    <TextBox x:Name="NewGenreBox" Watermark="New genre name…" Height="34"/>
-                    <Button Grid.Column="1" Content="Add genre" Click="OnAddGenreClicked" Margin="10,0,0,0" Padding="12,5"/>
-                </Grid>
-                <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
-                    <StackPanel x:Name="GenreRows" Spacing="5" Margin="0,0,0,18"/>
                 </ScrollViewer>
             </Grid>
 
