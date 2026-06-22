@@ -4,7 +4,7 @@
 
     <Panel>
 
-        <Border Background="#17191D"
+        <Border Background="#C80B0D10"
                 ZIndex="20">
 
             <Grid RowDefinitions="Auto,1,*">
@@ -41,10 +41,10 @@
                         </Button>
                         <Button x:Name="SaveBtn"
                                 Click="OnSaveClicked"
-                                IsEnabled="False"
                                 ToolTip.Tip="Save changes"
                                 Width="34" Height="34" Padding="0"
-                                Background="Transparent" BorderThickness="0">
+                                Background="Transparent" BorderThickness="0"
+                                Opacity="0.85">
                             <Image Source="{SvgImage /Assets/save.svg}" Width="17" Height="17"/>
                         </Button>
                         <Button ToolTip.Tip="Close"
@@ -57,7 +57,7 @@
                     </StackPanel>
                 </Grid>
 
-                <Rectangle Grid.Row="1" Fill="#18808080" />
+                <Rectangle Grid.Row="1" Fill="#10808080" />
 
                 <ScrollViewer Grid.Row="2"
                               Padding="30,20"

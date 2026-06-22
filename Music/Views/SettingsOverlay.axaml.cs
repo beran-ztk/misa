@@ -31,6 +31,7 @@ public partial class SettingsOverlay : UserControl
     public event Action<string>? ToastRequested;
     public event Action<MusicTrack>? TrackCalibrationRequested;
     public event Action? LibraryMetadataChanged;
+    public event Action? ExportRequested;
 
     public SettingsOverlay()
     {
@@ -347,6 +348,7 @@ public partial class SettingsOverlay : UserControl
         SelectPage(value switch
         {
             "library" => SettingsPage.Library,
+            "export" => SettingsPage.Export,
             "calibration" => SettingsPage.AnalysisCalibration,
             "tags" => SettingsPage.Tags,
             "tag_rules" => SettingsPage.TagRules,
@@ -362,13 +364,16 @@ public partial class SettingsOverlay : UserControl
         _selectedPage = page;
         var isGenreVocabularyPage = page == SettingsPage.GenreVocabulary;
         var isLibraryPage = page == SettingsPage.Library;
+        var isExportPage = page == SettingsPage.Export;
         GenreVocabularyPage.IsVisible = isGenreVocabularyPage;
         LibraryPage.IsVisible = isLibraryPage;
+        ExportPage.IsVisible = isExportPage;
         AnalysisCalibrationPage.IsVisible = page == SettingsPage.AnalysisCalibration;
         TagsPage.IsVisible = page == SettingsPage.Tags;
         TagRulesPage.IsVisible = page == SettingsPage.TagRules;
         GenreVocabularyNavButton.IsChecked = isGenreVocabularyPage;
         LibraryNavButton.IsChecked = isLibraryPage;
+        ExportNavButton.IsChecked = isExportPage;
         AnalysisCalibrationNavButton.IsChecked = page == SettingsPage.AnalysisCalibration;
         TagsNavButton.IsChecked = page == SettingsPage.Tags;
         TagRulesNavButton.IsChecked = page == SettingsPage.TagRules;
@@ -376,6 +381,7 @@ public partial class SettingsOverlay : UserControl
         PageTitleText.Text = page switch
         {
             SettingsPage.Library => "Library",
+            SettingsPage.Export => "Export",
             SettingsPage.AnalysisCalibration => "Analysis calibration",
             SettingsPage.Tags => "Tags",
             SettingsPage.TagRules => "Tag rules",
@@ -385,6 +391,8 @@ public partial class SettingsOverlay : UserControl
             ? "Review the genre categories and subgenres used directly by the library."
             : isLibraryPage
                 ? "Where this installation keeps the local music library and its database."
+                : isExportPage
+                    ? "Export the current library into a portable folder."
                 : page == SettingsPage.Tags
                     ? "Maintain your curated labels. Tags can describe mood, themes, situations or workflow states without turning them into genres."
                     : page == SettingsPage.TagRules
@@ -396,6 +404,8 @@ public partial class SettingsOverlay : UserControl
         if (page == SettingsPage.Tags) ReloadTagManagement(SelectedTagCategoryId());
         if (page == SettingsPage.TagRules) ReloadTagRules();
     }
+
+    private void OnExportRequestedClicked(object? sender, RoutedEventArgs e) => ExportRequested?.Invoke();
 
     private void ReloadTagManagement(int? selectedCategoryId = null)
     {
@@ -989,5 +999,5 @@ public partial class SettingsOverlay : UserControl
             .OrderByDescending(item => item.value.Score).Take(3).Select(item => $"{item.Model}: {item.value.Label} {item.value.Score:0.##}"));
     }
 
-    private enum SettingsPage { GenreVocabulary, Library, AnalysisCalibration, Tags, TagRules }
+    private enum SettingsPage { GenreVocabulary, Library, Export, AnalysisCalibration, Tags, TagRules }
 }

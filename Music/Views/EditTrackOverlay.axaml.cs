@@ -362,7 +362,7 @@ public partial class EditTrackOverlay : UserControl
     {
         var canSave = _track != null && !string.IsNullOrWhiteSpace(TitleBox.Text);
         var hasUnsavedChanges = HasUnsavedChanges();
-        SaveBtn.IsEnabled = canSave && hasUnsavedChanges;
+        SaveBtn.IsEnabled = canSave;
         UnsavedChangesBadge.IsVisible = hasUnsavedChanges;
     }
 

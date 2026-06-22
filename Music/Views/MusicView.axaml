@@ -119,17 +119,6 @@
                            Width="17" Height="17"/>
                 </Button>
 
-                <Button x:Name="ExportBtn"
-                        Classes="icon"
-                        Click="OnExportClicked"
-                        Background="#10151B"
-                        BorderThickness="1"
-                        ToolTip.Tip="Export Android library"
-                        VerticalContentAlignment="Center">
-                    <Image Source="{SvgImage /Assets/export.svg}"
-                           Width="17" Height="17"/>
-                </Button>
-
                 <Button Classes="icon"
                         Click="OnSettingsClicked"
                         Background="#10151B"
@@ -195,6 +184,7 @@
                     <DockPanel>
                         <TextBlock x:Name="CrossfadeStatusText"
                                    DockPanel.Dock="Right"
+                                   IsVisible="False"
                                    FontSize="11" Opacity="0.4"
                                    VerticalAlignment="Center"/>
                         <StackPanel Orientation="Horizontal" Spacing="4"
@@ -314,8 +304,8 @@
                     <BlurEffect Radius="18"/>
                 </Image.Effect>
             </Image>
-            <Rectangle Fill="#9A07080A" IsHitTestVisible="False"/>
-            <Rectangle Fill="#26000000" IsHitTestVisible="False"/>
+            <Rectangle Fill="#6207080A" IsHitTestVisible="False"/>
+            <Rectangle Fill="#12000000" IsHitTestVisible="False"/>
 
             <ListBox x:Name="FileList"
                      DoubleTapped="OnListDoubleTapped"

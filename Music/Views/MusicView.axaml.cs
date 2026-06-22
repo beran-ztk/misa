@@ -95,7 +95,6 @@ public partial class MusicView : UserControl
         FileList.SelectionChanged += (_, _) =>
         {
             UpdateReviewButton();
-            UpdateIdleSelectedTrackArtwork();
         };
         PlayerBar.SizeChanged += (_, _) => UpdateSettingsLayout();
         PlayerBar.SizeChanged += (_, _) => UpdateEditorBounds();
@@ -118,6 +117,7 @@ public partial class MusicView : UserControl
         LoadFilterPresets();
         AddFilterGroup();
         RefreshTrackList();
+        StartFirstTrackPaused();
         SettingsOverlay.PreloadGenreVocabulary();
 
         AddTrackOverlay.TrackDownloaded += warning =>
@@ -147,6 +147,7 @@ public partial class MusicView : UserControl
         EditTrackOverlay.PreviewClosed += StopTrackPreview;
         SettingsOverlay.ToastRequested += ShowToast;
         SettingsOverlay.LibraryMetadataChanged += RefreshLibraryPresentation;
+        SettingsOverlay.ExportRequested += ExportPortableLibrary;
         SettingsOverlay.TrackCalibrationRequested += track =>
         {
             SettingsOverlay.IsVisible = false;
@@ -414,7 +415,6 @@ public partial class MusicView : UserControl
         UpdateFilterCounts();
         UpdateReviewFilterButton();
         UpdateReviewButton();
-        UpdateIdleSelectedTrackArtwork();
     }
 
     private void RestoreOrInitializeSelection(int? previousSelectedTrackId)
@@ -441,18 +441,8 @@ public partial class MusicView : UserControl
 
         if (FileList.SelectedIndex < 0 || FileList.SelectedIndex >= _filteredItems.Count)
             FileList.SelectedIndex = 0;
-    }
 
-    private void UpdateIdleSelectedTrackArtwork()
-    {
-        if (_engine.ActiveTrackId >= 0 || _isTrackPreviewActive)
-            return;
-
-        var index = FileList.SelectedIndex;
-        if (index >= 0 && index < _filteredItems.Count)
-            UpdatePlayerArtworkBackground(_filteredItems[index].Track);
-        else
-            ClearPlayerArtworkBackground();
+        FileList.ScrollIntoView(_filteredItems[FileList.SelectedIndex]);
     }
 
     private void UpdateFilterCounts()
@@ -817,7 +807,7 @@ public partial class MusicView : UserControl
         catch (OperationCanceledException) { }
     }
 
-    private async void OnExportClicked(object? sender, RoutedEventArgs e)
+    private async void ExportPortableLibrary()
     {
         var topLevel = TopLevel.GetTopLevel(this);
         if (topLevel == null) return;
@@ -997,7 +987,19 @@ public partial class MusicView : UserControl
     {
         var idx = FileList.SelectedIndex;
         if (idx < 0 || idx >= _filteredItems.Count) return;
+
         PlayTrackAt(idx, isCrossfade: false);
+    }
+
+    private void StartFirstTrackPaused()
+    {
+        if (_filteredItems.Count == 0)
+            return;
+
+        FileList.SelectedIndex = 0;
+        PlayTrackAt(0, isCrossfade: false);
+        _engine.Pause();
+        UpdateButtonStates();
     }
 
     private void PlayTrackAt(int filteredIndex, bool isCrossfade)
@@ -1306,7 +1308,6 @@ public partial class MusicView : UserControl
         var playedFraction = totalSeconds > 0 ? _engine.CurrentTime.TotalSeconds / totalSeconds : 1;
         FinishListeningSession(markSkipped: playedFraction < .8);
         _engine.Stop();
-        ClearPlayerArtworkBackground();
     }
 
     private void UpdatePlayerArtworkBackground(MusicTrack track)
@@ -1419,8 +1420,7 @@ public partial class MusicView : UserControl
 
     private void UpdateUpcomingBar()
     {
-        if (_engine.State == EngineState.Stopped
-            || _nextTrackIndex < 0 || _nextTrackIndex >= _filteredItems.Count)
+        if (_nextTrackIndex < 0 || _nextTrackIndex >= _filteredItems.Count)
         {
             UpcomingBar.IsVisible = false;
             return;
@@ -1428,20 +1428,7 @@ public partial class MusicView : UserControl
 
         UpcomingBar.IsVisible = true;
         UpcomingTrackText.Text = _filteredItems[_nextTrackIndex].Track.Title;
-
-        if (_engine.IsCrossfading)
-        {
-            CrossfadeStatusText.Text = "↗ crossfading";
-        }
-        else if (_engine.TotalTime.TotalSeconds > 0)
-        {
-            var remaining = (_engine.TotalTime - _engine.CurrentTime).TotalSeconds;
-            CrossfadeStatusText.Text = remaining > 0 ? $"xfade in {(int)remaining}s" : "";
-        }
-        else
-        {
-            CrossfadeStatusText.Text = "";
-        }
+        CrossfadeStatusText.Text = string.Empty;
     }
 
     // ─── Progress / seeking ───────────────────────────────────────────────────
