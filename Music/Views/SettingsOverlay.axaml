@@ -14,19 +14,19 @@
             <Setter Property="FontSize" Value="12"/>
         </Style>
         <Style Selector="ToggleButton.settings-nav:pointerover">
-            <Setter Property="Background" Value="#25282E"/>
+            <Setter Property="Background" Value="#5A25282E"/>
             <Setter Property="Foreground" Value="#EDF1F5"/>
         </Style>
         <Style Selector="ToggleButton.settings-nav:checked">
-            <Setter Property="Background" Value="#30333B"/>
+            <Setter Property="Background" Value="#8030333B"/>
             <Setter Property="Foreground" Value="#FFFFFF"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
         </Style>
     </UserControl.Styles>
 
-    <Grid ColumnDefinitions="244,1,*" Background="#1B1D22">
+    <Grid ColumnDefinitions="244,1,*" Background="#EA0B0D10">
         <!-- Settings navigation -->
-        <Border Grid.Column="0" Background="#15161A" Padding="16,20,16,16">
+        <Border Grid.Column="0" Background="#B0090B0E" Padding="16,20,16,16">
             <Grid RowDefinitions="Auto,Auto,*">
                 <StackPanel Spacing="3">
                     <TextBlock Text="Settings" FontSize="18" FontWeight="SemiBold"/>
@@ -65,7 +65,7 @@
             </Grid>
         </Border>
 
-        <Rectangle Grid.Column="1" Fill="#2A2D34"/>
+        <Rectangle Grid.Column="1" Fill="#1F808080"/>
 
         <!-- Settings content -->
         <Grid Grid.Column="2" RowDefinitions="Auto,1,*,Auto">
@@ -88,7 +88,7 @@
                 </Button>
             </Grid>
 
-            <Rectangle Grid.Row="1" Fill="#24272E"/>
+            <Rectangle Grid.Row="1" Fill="#18808080"/>
 
             <Grid x:Name="GenreVocabularyPage" Grid.Row="2" RowDefinitions="Auto,Auto,*" Margin="30,22,30,0">
                 <Grid Grid.Row="0" ColumnDefinitions="*,190" Margin="0,0,0,12">

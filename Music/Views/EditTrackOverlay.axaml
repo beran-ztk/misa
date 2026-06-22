@@ -3,8 +3,18 @@
              x:Class="Music.Views.EditTrackOverlay">
 
     <Panel>
+        <Panel.Styles>
+            <Style Selector="TextBox">
+                <Setter Property="Background" Value="#E6080A0D"/>
+                <Setter Property="BorderBrush" Value="#52606D"/>
+            </Style>
+            <Style Selector="ComboBox">
+                <Setter Property="Background" Value="#E6080A0D"/>
+                <Setter Property="BorderBrush" Value="#52606D"/>
+            </Style>
+        </Panel.Styles>
 
-        <Border Background="#C80B0D10"
+        <Border Background="#D80B0D10"
                 ZIndex="20">
 
             <Grid RowDefinitions="Auto,1,*">

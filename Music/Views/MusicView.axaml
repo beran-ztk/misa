@@ -37,7 +37,7 @@
         <Style Selector="ListBoxItem">
             <Setter Property="Padding" Value="10,6,10,6"/>
             <Setter Property="MinHeight" Value="66"/>
-            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="BorderBrush" Value="#26313A"/>
             <Setter Property="Background" Value="Transparent"/>
         </Style>
@@ -45,7 +45,16 @@
             <Setter Property="Background" Value="#22262C"/>
         </Style>
         <Style Selector="ListBoxItem:selected">
-            <Setter Property="Background" Value="#183A57"/>
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="ListBoxItem:selected:pointerover">
+            <Setter Property="Background" Value="#22262C"/>
+        </Style>
+        <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="ListBoxItem:selected:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#22262C"/>
         </Style>
     </UserControl.Styles>
 
@@ -69,7 +78,7 @@
 
         <!-- ── Toolbar ── -->
         <Border DockPanel.Dock="Top"
-                Background="#CC07080A"
+                Background="#8F07080A"
                 BorderBrush="#16212C"
                 BorderThickness="0,0,0,1"
                 Padding="20,12,16,10">
@@ -93,13 +102,9 @@
                         VerticalAlignment="Center">
 
                 <Button Click="OnImportClicked"
+                        Classes="icon"
                         ToolTip.Tip="Add Track"
-                        Width="34" Height="34"
-                        BorderThickness="1"
-                        Background="#10151B"
-                        Padding="0"
-                        HorizontalContentAlignment="Center"
-                        VerticalContentAlignment="Center">
+                        Opacity="0.86">
                     <Image Source="{SvgImage /Assets/download.svg}" Width="17" Height="17"/>
                 </Button>
 
@@ -111,8 +116,6 @@
                 <Button x:Name="ReviewFilterBtn"
                         Classes="icon"
                         Click="OnReviewFilterClicked"
-                        Background="#10151B"
-                        BorderThickness="1"
                         Opacity="0.35"
                         ToolTip.Tip="Show review marks">
                     <Image Source="{SvgImage /Assets/review.svg}"
@@ -121,8 +124,7 @@
 
                 <Button Classes="icon"
                         Click="OnSettingsClicked"
-                        Background="#10151B"
-                        BorderThickness="1"
+                        Opacity="0.86"
                         ToolTip.Tip="Settings">
                     <Image Source="{SvgImage /Assets/gear.svg}"
                            Width="17" Height="17"/>
@@ -131,10 +133,9 @@
                 <Button x:Name="FiltersToggleBtn"
                         Classes="icon"
                         Click="OnToggleFiltersClicked"
-                        Background="#10151B"
-                        BorderThickness="1"
                         ToolTip.Tip="Open filter panel"
-                        VerticalContentAlignment="Center">
+                        VerticalContentAlignment="Center"
+                        Opacity="0.86">
                     <Image Source="{SvgImage /Assets/filter.svg}"
                            Width="17" Height="17"/>
                 </Button>
@@ -155,7 +156,7 @@
                 DockPanel.Dock="Bottom"
                 Padding="0"
                 MaxHeight="132"
-                Background="#CC07080A"
+                Background="#B807080A"
                 ClipToBounds="True"
                 BorderThickness="0,1,0,0" BorderBrush="#202832">
             <Panel>
@@ -164,18 +165,18 @@
                        IsHitTestVisible="False"
                        Height="132"
                        VerticalAlignment="Stretch"
-                       Opacity="0.26"
+                       Opacity="0.18"
                        Stretch="UniformToFill"
                        RenderTransformOrigin="0.5,0.5">
                     <Image.RenderTransform>
                         <ScaleTransform ScaleX="1.06" ScaleY="1.06"/>
                     </Image.RenderTransform>
                     <Image.Effect>
-                        <BlurEffect Radius="14"/>
+                        <BlurEffect Radius="16"/>
                     </Image.Effect>
                 </Image>
-                <Rectangle Fill="#E607080A" IsHitTestVisible="False"/>
-                <Rectangle Fill="#30000000" IsHitTestVisible="False"/>
+                <Rectangle Fill="#B807080A" IsHitTestVisible="False"/>
+                <Rectangle Fill="#18000000" IsHitTestVisible="False"/>
                 <StackPanel Margin="16,10,16,14">
 
                 <Border x:Name="UpcomingBar"
@@ -304,8 +305,8 @@
                     <BlurEffect Radius="18"/>
                 </Image.Effect>
             </Image>
-            <Rectangle Fill="#6207080A" IsHitTestVisible="False"/>
-            <Rectangle Fill="#12000000" IsHitTestVisible="False"/>
+            <Rectangle Fill="#5607080A" IsHitTestVisible="False"/>
+            <Rectangle Fill="#0C000000" IsHitTestVisible="False"/>
 
             <ListBox x:Name="FileList"
                      DoubleTapped="OnListDoubleTapped"
@@ -314,94 +315,98 @@
                      Padding="4,4">
                 <ListBox.ItemTemplate>
                     <DataTemplate x:DataType="models:TrackDisplayItem">
-                        <Border Background="{Binding PlayingBackground}"
-                                CornerRadius="7"
-                                Padding="4,4">
-                            <Grid ColumnDefinitions="4,52,*">
+                        <Grid RowDefinitions="Auto,1">
+                            <Border Grid.Row="0"
+                                    Background="{Binding PlayingBackground}"
+                                    CornerRadius="7"
+                                    Padding="4,4">
+                                <Grid ColumnDefinitions="4,52,*">
 
-                                <Border Grid.Column="0"
-                                        Width="3" Height="38"
-                                        CornerRadius="2"
-                                        Background="{Binding PlayingAccent}"
-                                        VerticalAlignment="Center"/>
+                                    <Border Grid.Column="0"
+                                            Width="3" Height="38"
+                                            CornerRadius="2"
+                                            Background="{Binding PlayingAccent}"
+                                            VerticalAlignment="Center"/>
 
-                                <!-- Thumbnail -->
-                                <Border Grid.Column="1"
-                                        Width="40" Height="40"
-                                        CornerRadius="6" ClipToBounds="True"
-                                        Margin="8,0,12,0" VerticalAlignment="Center"
-                                        Background="#262B32">
-                                    <Image Source="{Binding Thumbnail}"
-                                           Stretch="UniformToFill"/>
-                                </Border>
+                                    <!-- Thumbnail -->
+                                    <Border Grid.Column="1"
+                                            Width="40" Height="40"
+                                            CornerRadius="6" ClipToBounds="True"
+                                            Margin="8,0,12,0" VerticalAlignment="Center"
+                                            Background="#262B32">
+                                        <Image Source="{Binding Thumbnail}"
+                                               Stretch="UniformToFill"/>
+                                    </Border>
 
-                                <!-- Compact metadata: identity, classification, then profile -->
-                                <Grid Grid.Column="2"
-                                      VerticalAlignment="Center"
-                                      RowDefinitions="Auto,Auto,Auto"
-                                      RowSpacing="2">
-                                    <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*">
-                                        <Border Background="{Binding RatingBackground}"
-                                                BorderBrush="{Binding RatingBorder}"
-                                                BorderThickness="1"
-                                                CornerRadius="4"
-                                                Height="18"
-                                                Padding="5,0"
-                                                VerticalAlignment="Center">
-                                            <TextBlock Text="{Binding RatingText}"
-                                                       FontSize="9.5"
-                                                       VerticalAlignment="Center"
-                                                       Foreground="#DCE6EF"/>
-                                        </Border>
-                                        <TextBlock Grid.Column="1" Text="  ·  " FontSize="10.5" Opacity="0.42" VerticalAlignment="Center"/>
-                                        <TextBlock Grid.Column="2" Text="{Binding ChannelText}"
-                                                   FontSize="10.5" Opacity="0.52"
-                                                   MaxWidth="190" TextTrimming="CharacterEllipsis"
-                                                   VerticalAlignment="Center"/>
-                                        <TextBlock Grid.Column="3" Text="{Binding ChannelSeparatorText}"
-                                                   FontSize="10.5" Opacity="0.42" VerticalAlignment="Center"/>
-                                        <TextBlock Grid.Column="4" Text="{Binding Track.Title}"
-                                               Foreground="{Binding TitleBrush}"
-                                               FontSize="13" FontWeight="SemiBold"
-                                               TextTrimming="CharacterEllipsis"/>
-                                    </Grid>
-                                    <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="{Binding ModelGenreText}"
-                                                       FontSize="11" Foreground="#65BCEB"
-                                                       MaxWidth="520"
-                                                       TextTrimming="CharacterEllipsis"/>
-                                            <TextBlock Text="{Binding GenreSeparatorText}"
-                                                       FontSize="11"
-                                                       Opacity="0.42"
+                                    <!-- Compact metadata: identity, classification, then profile -->
+                                    <Grid Grid.Column="2"
+                                          VerticalAlignment="Center"
+                                          RowDefinitions="Auto,Auto,Auto"
+                                          RowSpacing="2">
+                                        <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*">
+                                            <Border Background="{Binding RatingBackground}"
+                                                    BorderBrush="{Binding RatingBorder}"
+                                                    BorderThickness="1"
+                                                    CornerRadius="4"
+                                                    Height="18"
+                                                    Padding="5,0"
+                                                    VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding RatingText}"
+                                                           FontSize="9.5"
+                                                           VerticalAlignment="Center"
+                                                           Foreground="#DCE6EF"/>
+                                            </Border>
+                                            <TextBlock Grid.Column="1" Text="  ·  " FontSize="10.5" Opacity="0.42" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="2" Text="{Binding ChannelText}"
+                                                       FontSize="10.5" Opacity="0.52"
+                                                       MaxWidth="190" TextTrimming="CharacterEllipsis"
                                                        VerticalAlignment="Center"/>
-                                            <TextBlock Text="{Binding ManualGenreText}"
-                                                       FontSize="11"
-                                                       Foreground="#A9BAC8"
-                                                       Opacity="0.78"
+                                            <TextBlock Grid.Column="3" Text="{Binding ChannelSeparatorText}"
+                                                       FontSize="10.5" Opacity="0.42" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="4" Text="{Binding Track.Title}"
+                                                   Foreground="{Binding TitleBrush}"
+                                                   FontSize="13" FontWeight="SemiBold"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                        </Grid>
+                                        <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="{Binding ModelGenreText}"
+                                                           FontSize="11" Foreground="#65BCEB"
+                                                           MaxWidth="520"
+                                                           TextTrimming="CharacterEllipsis"/>
+                                                <TextBlock Text="{Binding GenreSeparatorText}"
+                                                           FontSize="11"
+                                                           Opacity="0.42"
+                                                           VerticalAlignment="Center"/>
+                                                <TextBlock Text="{Binding ManualGenreText}"
+                                                           FontSize="11"
+                                                           Foreground="#A9BAC8"
+                                                           Opacity="0.78"
+                                                           MaxWidth="360"
+                                                           TextTrimming="CharacterEllipsis"/>
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="1" Text="{Binding DurationText}"
+                                                       FontSize="10.5" Opacity="0.56"
+                                                       Margin="0,0,8,0"
+                                                       VerticalAlignment="Center"/>
+                                        </Grid>
+                                        <Grid Grid.Row="2" ColumnDefinitions="Auto,*">
+                                            <TextBlock Grid.Column="0"
+                                                       Text="{Binding ProfileText}"
+                                                       FontSize="10.5" Foreground="#A9BAC8" Opacity="0.62"
                                                        MaxWidth="360"
                                                        TextTrimming="CharacterEllipsis"/>
-                                        </StackPanel>
-                                        <TextBlock Grid.Column="1" Text="{Binding DurationText}"
-                                                   FontSize="10.5" Opacity="0.56"
-                                                   Margin="0,0,8,0"
-                                                   VerticalAlignment="Center"/>
+                                            <views:TrackTagSummaryControl Tags="{Binding TagDisplays}"
+                                                                          Grid.Column="1"
+                                                                          Margin="8,0,0,0"
+                                                                          HorizontalAlignment="Stretch"/>
+                                        </Grid>
                                     </Grid>
-                                    <Grid Grid.Row="2" ColumnDefinitions="Auto,*">
-                                        <TextBlock Grid.Column="0"
-                                                   Text="{Binding ProfileText}"
-                                                   FontSize="10.5" Foreground="#A9BAC8" Opacity="0.62"
-                                                   MaxWidth="360"
-                                                   TextTrimming="CharacterEllipsis"/>
-                                        <views:TrackTagSummaryControl Tags="{Binding TagDisplays}"
-                                                                      Grid.Column="1"
-                                                                      Margin="8,0,0,0"
-                                                                      HorizontalAlignment="Stretch"/>
-                                    </Grid>
-                                </Grid>
 
-                            </Grid>
-                        </Border>
+                                </Grid>
+                            </Border>
+                            <Rectangle Grid.Row="1" Height="1" Fill="#26313A" Margin="20,0"/>
+                        </Grid>
                     </DataTemplate>
                 </ListBox.ItemTemplate>
                 <ListBox.ContextMenu>
