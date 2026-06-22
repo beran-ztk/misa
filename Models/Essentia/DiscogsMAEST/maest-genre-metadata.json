@@ -387,7 +387,20 @@
     "classificationHint": "Use this when the piece sounds atonal or serial and avoids normal tonal center.",
     "bpmMin": null,
     "bpmMax": null,
-    "distinguishFrom": []
+    "distinguishFrom": [
+      {
+        "label": "Electronic---Experimental",
+        "difference": "Experimental emphasizes boundary-pushing method or intent; Abstract emphasizes unusual form, texture, or non-direct structure."
+      },
+      {
+        "label": "Electronic---Leftfield",
+        "difference": "Leftfield is unusual but can still be groove- or song-based; Abstract is more textural, fragmented, or non-functional."
+      },
+      {
+        "label": "Electronic---Ambient",
+        "difference": "Ambient focuses on atmosphere and space; Abstract may be less immersive and more conceptually or structurally unusual."
+      }
+    ]
   },
   {
     "label": "Electronic---Abstract",
@@ -1343,26 +1356,26 @@
     "label": "Electronic---Frenchcore",
     "genre": "Electronic",
     "subgenre": "Frenchcore",
-    "description": "Fast, aggressive hardcore electronic style with distorted kick drums, high tempo, energetic drive, and often melodic, rave-like or chaotic elements.",
-    "classificationHint": "Use this for very fast electronic tracks with hard distorted kicks, relentless energy, and a hardcore/rave feeling, especially around 180 BPM or higher.",
-    "bpmMin": 180,
+    "description": "Fast, aggressive hardcore techno style with rolling distorted kicks, very high tempo, rave pressure, and often melodic or chaotic breakdowns.",
+    "classificationHint": "Use this for fast hardcore tracks, usually around 170/180 BPM or higher, where rolling distorted kicks and frantic forward pressure dominate more than classic gabber roughness or hardstyle anthem structure.",
+    "bpmMin": 170,
     "bpmMax": 240,
     "distinguishFrom": [
       {
         "label": "Electronic---Hardcore",
-        "difference": "Hardcore is the broader parent style; Frenchcore is usually faster, more frantic, and more focused on rolling distorted kicks."
+        "difference": "Hardcore is the broader parent category; Frenchcore is a more specific, faster, rolling-kick-driven hardcore style."
+      },
+      {
+        "label": "Electronic---Gabber",
+        "difference": "Gabber is usually rougher, more classic distorted-kick hardcore; Frenchcore is often faster, more rolling, and more frantic."
       },
       {
         "label": "Electronic---Hardstyle",
-        "difference": "Hardstyle is usually slower, more structured, and more anthem-like; Frenchcore is faster, harder, and more chaotic."
+        "difference": "Hardstyle is usually slower and more anthem-structured, with pitched kick melodies and dramatic breaks; Frenchcore is faster and more hardcore-driven."
       },
       {
-        "label": "Electronic---Techno",
-        "difference": "Techno is usually more repetitive, minimal, and groove-based; Frenchcore is much faster and built around extreme hardcore kicks."
-      },
-      {
-        "label": "Electronic---Trance",
-        "difference": "Trance focuses on long melodic progression and atmosphere; Frenchcore may use melodies but is driven by fast distorted hardcore rhythm."
+        "label": "Electronic---Speedcore",
+        "difference": "Speedcore is more extreme in tempo and often less melodic; Frenchcore stays closer to hardcore rave structure even when very fast."
       }
     ]
   },
@@ -1405,6 +1418,10 @@
       {
         "label": "Electronic---Happy Hardcore",
         "difference": "Happy Hardcore is more euphoric and melodic; Gabber is rougher and more aggressive."
+      },
+      {
+        "label": "Electronic---Frenchcore",
+        "difference": "Frenchcore is usually faster and more rolling or melodic; Gabber is rougher, more classic Dutch hardcore, and more directly distorted-kick driven."
       }
     ]
   },
@@ -1592,22 +1609,22 @@
     "label": "Electronic---Halftime",
     "genre": "Electronic",
     "subgenre": "Halftime",
-    "description": "Bass music or drum-and-bass-related style where high tempo is felt through slower half-time drum placement.",
-    "classificationHint": "Use this when the tempo may be high but the groove lands with a slow, heavy, half-time feel.",
+    "description": "Bass music or drum-and-bass-adjacent style where high tempo is felt through slower, heavier half-time drum placement.",
+    "classificationHint": "Use this when the track may be measured around 80–90 BPM or 160–180 BPM, but the groove lands with a slow, heavy half-time feel rather than full-speed Drum n Bass energy.",
     "bpmMin": 80,
-    "bpmMax": 90,
+    "bpmMax": 180,
     "distinguishFrom": [
       {
         "label": "Electronic---Drum n Bass",
-        "difference": "Drum n Bass usually feels fast in the drums; Halftime feels slower and heavier despite similar tempo roots."
+        "difference": "Drum n Bass usually feels fast in the drum movement; Halftime uses related tempo space but places the drums to feel slower and heavier."
       },
       {
         "label": "Electronic---Dubstep",
-        "difference": "Dubstep is usually around 140 BPM; Halftime often comes from a DnB/bass-music context."
+        "difference": "Dubstep is usually centered around a 140 BPM half-time framework; Halftime is more DnB/bass-music adjacent."
       },
       {
         "label": "Hip Hop---Trap",
-        "difference": "Trap uses hip-hop 808 patterns and hi-hats; Halftime is more bass-music/DnB adjacent."
+        "difference": "Trap uses hip-hop 808 patterns, triplet hats, and rap-derived structure; Halftime is more bass-music or Drum n Bass adjacent."
       }
     ]
   },
@@ -1714,7 +1731,7 @@
     "description": "Techno with higher intensity, harder kicks, aggressive drive, and a dense peak-time feel.",
     "classificationHint": "Use this for forceful techno tracks that are harder and more relentless than standard techno but not hardcore.",
     "bpmMin": 135,
-    "bpmMax": 155,
+    "bpmMax": 165,
     "distinguishFrom": [
       {
         "label": "Electronic---Techno",
@@ -1777,6 +1794,10 @@
       {
         "label": "Electronic---Happy Hardcore",
         "difference": "Happy Hardcore is more cheerful and euphoric."
+      },
+      {
+        "label": "Electronic---Frenchcore",
+        "difference": "Frenchcore is a more specific hardcore style, usually faster, more rolling, and more frantic; Hardcore is the broader fallback label."
       }
     ]
   },
@@ -2723,6 +2744,10 @@
       {
         "label": "Electronic---Breakcore",
         "difference": "Breakcore often uses chopped breaks; Speedcore is more kick-driven."
+      },
+      {
+        "label": "Electronic---Frenchcore",
+        "difference": "Frenchcore can be very fast but usually stays closer to hardcore rave structure; Speedcore is defined by more extreme tempo and aggression."
       }
     ]
   },
