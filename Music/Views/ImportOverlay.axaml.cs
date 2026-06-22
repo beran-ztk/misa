@@ -17,6 +17,7 @@ public partial class ImportOverlay : UserControl
     private readonly List<PendingImportPreview> _pendingPreviews = [];
     private readonly List<CancellationTokenSource> _checkingTokens = [];
     private readonly DispatcherTimer _inputDebounceTimer = new() { Interval = TimeSpan.FromMilliseconds(650) };
+    private readonly DispatcherTimer _queueElapsedTimer = new() { Interval = TimeSpan.FromSeconds(1) };
 
     public event Action<int>? QueueSubmitted;
 
@@ -27,6 +28,13 @@ public partial class ImportOverlay : UserControl
         {
             _inputDebounceTimer.Stop();
             StartCheckingCurrentInput();
+        };
+        _queueElapsedTimer.Tick += (_, _) =>
+        {
+            if (IsVisible)
+                RefreshQueue();
+            else
+                _queueElapsedTimer.Stop();
         };
         InputUrlBox.TextChanged += (_, _) =>
         {
@@ -43,6 +51,7 @@ public partial class ImportOverlay : UserControl
         RebuildPendingPreviews();
         RefreshQueue();
         IsVisible = true;
+        UpdateQueueElapsedTimer();
         FocusFirstInput();
     }
 
@@ -53,6 +62,7 @@ public partial class ImportOverlay : UserControl
         EmptyQueueText.IsVisible = sources.Count == 0;
         foreach (var source in sources)
             QueueSources.Children.Add(CreateSourceCard(source));
+        UpdateQueueElapsedTimer(sources);
     }
 
     private void FocusFirstInput() => InputUrlBox.Focus();
@@ -121,7 +131,7 @@ public partial class ImportOverlay : UserControl
     {
         var card = new Border
         {
-            Background = new SolidColorBrush(Color.Parse("#151B22")), BorderBrush = new SolidColorBrush(Color.Parse("#2D3D4B")),
+            Background = new SolidColorBrush(Color.Parse("#C8151B22")), BorderBrush = new SolidColorBrush(Color.Parse("#2D3D4B")),
             BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(5), Padding = new Thickness(9, 7)
         };
         var panel = new StackPanel { Spacing = 4 };
@@ -143,7 +153,7 @@ public partial class ImportOverlay : UserControl
             : hasQueuedItems ? "#2E6D47" : "#5A6470";
         var card = new Border
         {
-            Background = new SolidColorBrush(Color.Parse("#151B22")),
+            Background = new SolidColorBrush(Color.Parse("#C8151B22")),
             BorderBrush = new SolidColorBrush(Color.Parse(borderColor)),
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(5),
@@ -233,13 +243,13 @@ public partial class ImportOverlay : UserControl
 
     private Control CreateSourceCard(ImportQueueSource source)
     {
-        var card = new Border { Background = new SolidColorBrush(Color.Parse("#151B22")), BorderBrush = new SolidColorBrush(Color.Parse("#2D3D4B")), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(5), Padding = new Thickness(10, 8) };
+        var card = new Border { Background = new SolidColorBrush(Color.Parse("#C8151B22")), BorderBrush = new SolidColorBrush(Color.Parse("#2D3D4B")), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(5), Padding = new Thickness(10, 8) };
         var panel = new StackPanel { Spacing = 5 };
         panel.Children.Add(new TextBlock { Text = ShortUrl(source.SourceUrl), FontSize = 11, Foreground = new SolidColorBrush(Color.Parse("#9FCBE4")), TextTrimming = TextTrimming.CharacterEllipsis });
         foreach (var item in source.Items)
         {
             var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto"), ColumnSpacing = 8 };
-            row.Children.Add(CreateItemRow(item.Title, item.Status, item.Detail ?? StatusLabel(item.Status)));
+            row.Children.Add(CreateItemRow(item.Title, item.Status, QueueItemDetail(item)));
             if (item.Status is ImportQueueStatus.Queued or ImportQueueStatus.Failed)
             {
                 var remove = new Button { Content = "Remove", FontSize = 9, Padding = new Thickness(6, 2), Opacity = 0.7 };
@@ -269,9 +279,50 @@ public partial class ImportOverlay : UserControl
     private void OnCloseClicked(object? sender, RoutedEventArgs e)
     {
         _inputDebounceTimer.Stop();
+        _queueElapsedTimer.Stop();
         foreach (var token in _checkingTokens.ToList())
             token.Cancel();
         IsVisible = false;
+    }
+
+    private void UpdateQueueElapsedTimer(IReadOnlyList<ImportQueueSource>? sources = null)
+    {
+        var hasActiveItem = sources?.Any(source => source.Items.Any(IsActiveQueueItem))
+                            ?? ImportQueueService.Current.GetSources().Any(source => source.Items.Any(IsActiveQueueItem));
+
+        if (IsVisible && hasActiveItem)
+            _queueElapsedTimer.Start();
+        else
+            _queueElapsedTimer.Stop();
+    }
+
+    private static bool IsActiveQueueItem(ImportQueueItem item) =>
+        item.Status is ImportQueueStatus.Downloading or ImportQueueStatus.Analyzing;
+
+    private static string QueueItemDetail(ImportQueueItem item)
+    {
+        if (!IsActiveQueueItem(item))
+            return item.Detail ?? StatusLabel(item.Status);
+
+        var phase = ImportQueueService.Current.GetActivePhase(item.Id);
+        var elapsed = phase is null ? "0:00" : FormatElapsed(DateTime.UtcNow - phase.StartedAtUtc);
+        var suffix = CleanPhaseDetail(item.Detail);
+        return string.IsNullOrWhiteSpace(suffix)
+            ? $"{StatusLabel(item.Status)} · {elapsed}"
+            : $"{StatusLabel(item.Status)} · {elapsed} · {suffix}";
+    }
+
+    private static string CleanPhaseDetail(string? detail)
+    {
+        if (string.IsNullOrWhiteSpace(detail))
+            return string.Empty;
+
+        var cleaned = detail
+            .Replace("Downloading audio…", "", StringComparison.OrdinalIgnoreCase)
+            .Replace("Analyzing track…", "", StringComparison.OrdinalIgnoreCase)
+            .Replace("Checking download details…", "", StringComparison.OrdinalIgnoreCase)
+            .Trim(' ', '·');
+        return cleaned;
     }
 
     private static string StatusLabel(ImportQueueStatus status) => status switch
@@ -296,6 +347,9 @@ public partial class ImportOverlay : UserControl
     private static string ShortUrl(string url) => url.Length > 78 ? url[..75] + "…" : url;
     private static string FormatBytes(long bytes) => bytes >= 1_000_000_000 ? $"{bytes / 1_000_000_000d:0.0} GB" : $"{bytes / 1_000_000d:0} MB";
     private static string FormatDuration(TimeSpan value) => value.TotalMinutes >= 1 ? $"{Math.Ceiling(value.TotalMinutes):0} min" : $"{Math.Max(1, Math.Round(value.TotalSeconds)):0} sec";
+    private static string FormatElapsed(TimeSpan value) => value.TotalHours >= 1
+        ? $"{(int)value.TotalHours}:{value.Minutes:00}:{value.Seconds:00}"
+        : $"{(int)value.TotalMinutes}:{value.Seconds:00}";
 
     private sealed class PendingImportPreview
     {

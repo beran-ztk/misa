@@ -41,6 +41,8 @@ public record ImportQueueItem(
     string? Detail,
     int? TrackId);
 
+public record ImportQueuePhase(int ItemId, ImportQueueStatus Status, DateTime StartedAtUtc);
+
 public record ImportQueueSource(
     string SourceUrl,
     IReadOnlyList<ImportQueueItem> Items);

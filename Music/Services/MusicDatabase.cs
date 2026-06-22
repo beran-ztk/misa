@@ -674,7 +674,13 @@ public class MusicDatabase
                                    status, detail, track_id
                             FROM import_queue_items
                             WHERE status IN ($queued, $downloading, $analyzing, $failed)
-                            ORDER BY batch_id DESC, created_at, id";
+                            ORDER BY CASE status
+                                         WHEN $downloading THEN 0
+                                         WHEN $analyzing THEN 0
+                                         WHEN $queued THEN 1
+                                         ELSE 2
+                                     END,
+                                     batch_id DESC, created_at, id";
         cmd.Parameters.AddWithValue("$queued", ImportQueueStatus.Queued.ToString());
         cmd.Parameters.AddWithValue("$downloading", ImportQueueStatus.Downloading.ToString());
         cmd.Parameters.AddWithValue("$analyzing", ImportQueueStatus.Analyzing.ToString());

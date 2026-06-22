@@ -1,9 +1,9 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="Music.Views.ImportOverlay"
-             Background="#121417">
+             Background="#D20D0F12">
     <Grid RowDefinitions="Auto,*">
-        <Border Grid.Row="0" Background="#171A1F" BorderBrush="#2A3440" BorderThickness="0,0,0,1" Padding="26,16">
+        <Border Grid.Row="0" Background="#C8171A1F" BorderBrush="#2A3440" BorderThickness="0,0,0,1" Padding="26,16">
             <Grid ColumnDefinitions="*,Auto">
                 <StackPanel Spacing="3">
                     <TextBlock Text="Import queue" FontSize="18" FontWeight="SemiBold"/>

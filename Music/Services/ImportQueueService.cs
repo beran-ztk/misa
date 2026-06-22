@@ -14,6 +14,8 @@ public sealed class ImportQueueService
 
     private readonly TrackDownloadService _downloader = new();
     private readonly object _workerGate = new();
+    private readonly object _phaseGate = new();
+    private readonly Dictionary<int, ImportQueuePhase> _activePhases = [];
     private Task? _workerTask;
 
     public event Action<ImportQueueItem>? ItemUpdated;
@@ -114,6 +116,11 @@ public sealed class ImportQueueService
     public ImportQueueSummary GetSummary() => MusicLibraryService.Current.GetImportQueueSummary();
     public IReadOnlyList<ImportQueueSource> GetSources() => MusicLibraryService.Current.GetImportQueueSources();
     public bool RemoveQueuedItem(int id) => MusicLibraryService.Current.RemoveQueuedImport(id);
+    public ImportQueuePhase? GetActivePhase(int itemId)
+    {
+        lock (_phaseGate)
+            return _activePhases.GetValueOrDefault(itemId);
+    }
 
     private void EnsureWorker()
     {
@@ -142,6 +149,7 @@ public sealed class ImportQueueService
             {
                 MusicLibraryService.Current.SetTrackNeedsReview(result.Track.Id, true);
                 MusicLibraryService.Current.DeleteImportQueueItem(item.Id);
+                ClearActivePhase(item.Id);
                 TrackImported?.Invoke(result.Track, result.Warning);
                 ItemUpdated?.Invoke(item with
                 {
@@ -157,7 +165,29 @@ public sealed class ImportQueueService
 
     private void Update(ImportQueueItem item, ImportQueueStatus status, string? detail, int? trackId = null)
     {
+        UpdateActivePhase(item.Id, status);
         MusicLibraryService.Current.UpdateImportQueueItem(item.Id, status, detail, trackId);
         ItemUpdated?.Invoke(item with { Status = status, Detail = detail, TrackId = trackId ?? item.TrackId });
+    }
+
+    private void UpdateActivePhase(int itemId, ImportQueueStatus status)
+    {
+        lock (_phaseGate)
+        {
+            if (status is not (ImportQueueStatus.Downloading or ImportQueueStatus.Analyzing))
+            {
+                _activePhases.Remove(itemId);
+                return;
+            }
+
+            if (!_activePhases.TryGetValue(itemId, out var phase) || phase.Status != status)
+                _activePhases[itemId] = new ImportQueuePhase(itemId, status, DateTime.UtcNow);
+        }
+    }
+
+    private void ClearActivePhase(int itemId)
+    {
+        lock (_phaseGate)
+            _activePhases.Remove(itemId);
     }
 }
