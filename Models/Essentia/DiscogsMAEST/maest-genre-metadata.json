@@ -1340,6 +1340,33 @@
     ]
   },
   {
+    "label": "Electronic---Frenchcore",
+    "genre": "Electronic",
+    "subgenre": "Frenchcore",
+    "description": "Fast, aggressive hardcore electronic style with distorted kick drums, high tempo, energetic drive, and often melodic, rave-like or chaotic elements.",
+    "classificationHint": "Use this for very fast electronic tracks with hard distorted kicks, relentless energy, and a hardcore/rave feeling, especially around 180 BPM or higher.",
+    "bpmMin": 180,
+    "bpmMax": 240,
+    "distinguishFrom": [
+      {
+        "label": "Electronic---Hardcore",
+        "difference": "Hardcore is the broader parent style; Frenchcore is usually faster, more frantic, and more focused on rolling distorted kicks."
+      },
+      {
+        "label": "Electronic---Hardstyle",
+        "difference": "Hardstyle is usually slower, more structured, and more anthem-like; Frenchcore is faster, harder, and more chaotic."
+      },
+      {
+        "label": "Electronic---Techno",
+        "difference": "Techno is usually more repetitive, minimal, and groove-based; Frenchcore is much faster and built around extreme hardcore kicks."
+      },
+      {
+        "label": "Electronic---Trance",
+        "difference": "Trance focuses on long melodic progression and atmosphere; Frenchcore may use melodies but is driven by fast distorted hardcore rhythm."
+      }
+    ]
+  },
+  {
     "label": "Electronic---Future Jazz",
     "genre": "Electronic",
     "subgenre": "Future Jazz",
