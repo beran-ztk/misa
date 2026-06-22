@@ -21,7 +21,14 @@ public partial class ImportOverlay : UserControl
     public ImportOverlay()
     {
         InitializeComponent();
-        AddInputRow();
+        InputUrlBox.TextChanged += (_, _) =>
+        {
+            if (_preview is null) return;
+            _preview = null;
+            PreviewPanel.IsVisible = false;
+            QueueBtn.IsEnabled = false;
+            StatusText.Text = string.Empty;
+        };
     }
 
     public void Open()
@@ -44,47 +51,13 @@ public partial class ImportOverlay : UserControl
             QueueSources.Children.Add(CreateSourceCard(source));
     }
 
-    private void AddInputRow(string? url = null)
+    private IEnumerable<string> GetInputUrls()
     {
-        var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), ColumnSpacing = 6 };
-        var input = new TextBox
-        {
-            Text = url ?? string.Empty,
-            Watermark = "Paste a YouTube video, playlist or mix link…",
-            FontSize = 11,
-            MinHeight = 34,
-            VerticalContentAlignment = Avalonia.Layout.VerticalAlignment.Center
-        };
-        row.Children.Add(input);
-        var remove = new Button
-        {
-            Content = "×", Padding = new Thickness(8, 2), FontSize = 16, Opacity = 0.65,
-            IsVisible = InputRows.Children.Count > 0
-        };
-        ToolTip.SetTip(remove, "Remove link");
-        remove.Click += (_, _) =>
-        {
-            InputRows.Children.Remove(row);
-            if (InputRows.Children.Count == 0) AddInputRow();
-        };
-        Grid.SetColumn(remove, 1);
-        row.Children.Add(remove);
-        InputRows.Children.Add(row);
+        var url = InputUrlBox.Text?.Trim();
+        return string.IsNullOrWhiteSpace(url) ? [] : [url];
     }
 
-    private IEnumerable<string> GetInputUrls() => InputRows.Children.OfType<Grid>()
-        .Select(row => row.Children.OfType<TextBox>().FirstOrDefault()?.Text?.Trim())
-        .Where(url => !string.IsNullOrWhiteSpace(url))
-        .Cast<string>();
-
-    private void FocusFirstInput() => InputRows.Children.OfType<Grid>()
-        .Select(row => row.Children.OfType<TextBox>().FirstOrDefault()).FirstOrDefault()?.Focus();
-
-    private void OnAddLinkClicked(object? sender, RoutedEventArgs e)
-    {
-        AddInputRow();
-        FocusFirstInput();
-    }
+    private void FocusFirstInput() => InputUrlBox.Focus();
 
     private async void OnPreviewClicked(object? sender, RoutedEventArgs e)
     {
@@ -203,6 +176,7 @@ public partial class ImportOverlay : UserControl
         _preview = null;
         PreviewPanel.IsVisible = false;
         QueueBtn.IsEnabled = false;
+        InputUrlBox.Text = string.Empty;
         StatusText.Text = string.Empty;
         RefreshQueue();
     }

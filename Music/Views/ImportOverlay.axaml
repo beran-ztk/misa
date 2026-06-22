@@ -22,9 +22,11 @@
                         <TextBlock Text="Videos, playlists and YouTube mixes are expanded before anything is queued."
                                    FontSize="11" Opacity="0.66" TextWrapping="Wrap"/>
                     </StackPanel>
-                    <StackPanel x:Name="InputRows" Spacing="7"/>
-                    <Button Content="＋ Add another link" Click="OnAddLinkClicked"
-                            HorizontalAlignment="Left" Background="Transparent" Padding="8,5" FontSize="11" Opacity="0.78"/>
+                    <TextBox x:Name="InputUrlBox"
+                             Watermark="Paste a YouTube video, playlist or mix link…"
+                             FontSize="11"
+                             MinHeight="34"
+                             VerticalContentAlignment="Center"/>
                     <StackPanel Orientation="Horizontal" Spacing="9" Margin="0,5,0,0">
                         <Button x:Name="PreviewBtn" Content="Check links" Click="OnPreviewClicked" Classes="accent"/>
                         <Button x:Name="QueueBtn" Content="Add to queue" Click="OnQueueClicked" IsEnabled="False"/>

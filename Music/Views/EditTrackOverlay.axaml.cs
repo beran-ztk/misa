@@ -777,7 +777,7 @@ public partial class EditTrackOverlay : UserControl
     {
         LoadModelMetadata();
         var detected = MusicLibraryService.Current.GetTrackGenrePredictions(track.Id)
-            .Where(prediction => prediction.Score is > .05 and <= .1)
+            .Where(prediction => prediction.Score is > .05 and <= .25)
             .Where(prediction => !_modelGenreIds.Contains(prediction.ModelSubgenreId))
             .Take(6)
             .ToList();

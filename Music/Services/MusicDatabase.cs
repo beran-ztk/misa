@@ -205,7 +205,7 @@ public class MusicDatabase
                 estimated_size_bytes  INTEGER NULL,
                 status                TEXT NOT NULL,
                 detail                TEXT NULL,
-                track_id              INTEGER NULL REFERENCES tracks(id),
+                track_id              INTEGER NULL REFERENCES tracks(id) ON DELETE SET NULL,
                 created_at            TEXT NOT NULL,
                 updated_at            TEXT NOT NULL
             );
@@ -611,7 +611,7 @@ public class MusicDatabase
                 estimated_size_bytes INTEGER NULL,
                 status TEXT NOT NULL,
                 detail TEXT NULL,
-                track_id INTEGER NULL REFERENCES tracks(id),
+                track_id INTEGER NULL REFERENCES tracks(id) ON DELETE SET NULL,
                 created_at TEXT NOT NULL,
                 updated_at TEXT NOT NULL
             );
@@ -1239,10 +1239,40 @@ public class MusicDatabase
     public void DeleteTrack(int id)
     {
         using var conn = Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = "DELETE FROM tracks WHERE id = $id";
-        cmd.Parameters.AddWithValue("$id", id);
-        cmd.ExecuteNonQuery();
+        using var tx = conn.BeginTransaction();
+
+        // Older import_queue_items tables were created without ON DELETE SET NULL.
+        // Detach queued/history rows explicitly so deleting a library track does not
+        // fail with a foreign-key constraint.
+        if (TableExists(conn, "import_queue_items"))
+        {
+            ExecuteInsert(conn, tx,
+                "UPDATE import_queue_items SET track_id = NULL WHERE track_id = $id",
+                ("$id", id));
+        }
+
+        if (TableExists(conn, "track_tag_suggestions"))
+            ExecuteInsert(conn, tx, "DELETE FROM track_tag_suggestions WHERE track_id = $id", ("$id", id));
+        if (TableExists(conn, "track_tags"))
+            ExecuteInsert(conn, tx, "DELETE FROM track_tags WHERE track_id = $id", ("$id", id));
+        if (TableExists(conn, "track_genres"))
+            ExecuteInsert(conn, tx, "DELETE FROM track_genres WHERE track_id = $id", ("$id", id));
+        if (TableExists(conn, "track_analysis"))
+        {
+            if (TableExists(conn, "track_genre_predictions"))
+                ExecuteInsert(conn, tx, @"DELETE FROM track_genre_predictions
+                    WHERE track_analysis_id IN (SELECT id FROM track_analysis WHERE track_id = $id)", ("$id", id));
+            if (TableExists(conn, "track_analysis_signals"))
+                ExecuteInsert(conn, tx, @"DELETE FROM track_analysis_signals
+                    WHERE track_analysis_id IN (SELECT id FROM track_analysis WHERE track_id = $id)", ("$id", id));
+            if (TableExists(conn, "track_derived_attributes"))
+                ExecuteInsert(conn, tx, @"DELETE FROM track_derived_attributes
+                    WHERE track_analysis_id IN (SELECT id FROM track_analysis WHERE track_id = $id)", ("$id", id));
+            ExecuteInsert(conn, tx, "DELETE FROM track_analysis WHERE track_id = $id", ("$id", id));
+        }
+
+        ExecuteInsert(conn, tx, "DELETE FROM tracks WHERE id = $id", ("$id", id));
+        tx.Commit();
     }
 
     public List<Genre> GetGenres()
@@ -1927,14 +1957,14 @@ public class MusicDatabase
             DELETE FROM track_genres WHERE ($trackId IS NULL OR track_id = $trackId)
             AND NOT EXISTS (
                 SELECT 1 FROM track_genre_predictions predictions JOIN track_analysis analysis ON analysis.id = predictions.track_analysis_id
-                WHERE analysis.track_id = track_genres.track_id AND predictions.model_subgenre_id = track_genres.genre_id AND predictions.score > 0.05)",
+                WHERE analysis.track_id = track_genres.track_id AND predictions.model_subgenre_id = track_genres.genre_id AND predictions.score > 0.25)",
             ("$trackId", trackId));
         ExecuteInsert(conn, tx, @"
             INSERT INTO track_genres (track_id, genre_id, assigned_at, is_enabled)
             SELECT DISTINCT analysis.track_id, predictions.model_subgenre_id, $assignedAt, 1
             FROM track_genre_predictions predictions
             JOIN track_analysis analysis ON analysis.id = predictions.track_analysis_id
-            WHERE predictions.score > 0.1 AND ($trackId IS NULL OR analysis.track_id = $trackId)
+            WHERE predictions.score > 0.25 AND ($trackId IS NULL OR analysis.track_id = $trackId)
             ON CONFLICT(track_id, genre_id) DO UPDATE SET assigned_at = excluded.assigned_at",
             ("$trackId", trackId), ("$assignedAt", DateTime.UtcNow.ToString("O")));
     }
