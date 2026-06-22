@@ -58,19 +58,19 @@
             <Setter Property="Background" Value="Transparent"/>
         </Style>
         <Style Selector="ListBoxItem:pointerover">
-            <Setter Property="Background" Value="#22262C"/>
+            <Setter Property="Background" Value="#8022262C"/>
         </Style>
         <Style Selector="ListBoxItem:selected">
             <Setter Property="Background" Value="Transparent"/>
         </Style>
         <Style Selector="ListBoxItem:selected:pointerover">
-            <Setter Property="Background" Value="#22262C"/>
+            <Setter Property="Background" Value="#8022262C"/>
         </Style>
         <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
             <Setter Property="Background" Value="Transparent"/>
         </Style>
         <Style Selector="ListBoxItem:selected:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="#22262C"/>
+            <Setter Property="Background" Value="#8022262C"/>
         </Style>
     </UserControl.Styles>
 
