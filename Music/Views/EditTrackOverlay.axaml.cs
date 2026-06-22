@@ -37,6 +37,14 @@ public partial class EditTrackOverlay : UserControl
     private readonly DispatcherTimer _analysisElapsedTimer = new() { Interval = TimeSpan.FromSeconds(1) };
     private DateTime _analysisStartedAt;
     private bool _isPlayingPreview;
+    private bool _loadingTrack;
+    private string _initialTitle = string.Empty;
+    private int? _initialRatingId;
+    private HashSet<int> _initialTagIds = [];
+    private HashSet<int> _initialStyleIds = [];
+    private HashSet<int> _initialEnabledModelGenreIds = [];
+    private HashSet<int> _pendingEnabledModelGenreIds = [];
+    private Dictionary<string, string?> _initialAttributeOverrides = [];
 
     public event Action? TrackSaved;
     public event Action<MusicTrack>? PreviewRequested;
@@ -78,6 +86,8 @@ public partial class EditTrackOverlay : UserControl
 
     private void Prefill(MusicTrack track)
     {
+        _loadingTrack = true;
+        UnsavedChangesLayer.IsVisible = false;
         _pendingAttributeOverrides.Clear();
         TitleBox.Text = track.Title;
         ChannelBox.Text = track.ChannelName ?? string.Empty;
@@ -92,6 +102,7 @@ public partial class EditTrackOverlay : UserControl
 
         var selectedTagIds = MusicLibraryService.Current.GetTrackTagIds(track.Id).ToHashSet();
         var selectedStyleIds = MusicLibraryService.Current.GetTrackStyleIds(track.Id).ToHashSet();
+        var selectedModelGenreIds = ResetModelGenreSelectionFromDatabase(track);
 
         ShowModelSelectedGenres(track);
         ShowDetectedGenres(track);
@@ -101,6 +112,8 @@ public partial class EditTrackOverlay : UserControl
         ShowAudioAnalysis(track);
         ShowSoundProfile(track);
         ShowUsageStats(track);
+        CaptureChangeSnapshot(track, selectedTagIds, selectedStyleIds, selectedModelGenreIds);
+        _loadingTrack = false;
         UpdateSaveButton();
     }
 
@@ -293,6 +306,8 @@ public partial class EditTrackOverlay : UserControl
                     track.Id, suggestion.TagId, suggestion.RuleGroupId);
                 RebuildTagChips(MusicLibraryService.Current.GetTrackTagIds(track.Id).ToHashSet());
                 ShowTagSuggestions(track);
+                _initialTagIds = MusicLibraryService.Current.GetTrackTagIds(track.Id).ToHashSet();
+                UpdateSaveButton();
                 TrackSaved?.Invoke();
             };
             reject.Click += (_, _) =>
@@ -349,9 +364,79 @@ public partial class EditTrackOverlay : UserControl
             .Select(c => c.Tag.Id)
             .ToHashSet();
 
+    private HashSet<int> SelectedStyleIds() =>
+        _styleChips
+            .Where(c => c.Btn.IsChecked == true)
+            .Select(c => c.Style.Id)
+            .ToHashSet();
+
+    private int? SelectedRatingId() =>
+        RatingBox.SelectedIndex >= 0 && RatingBox.SelectedIndex < _ratings.Count
+            ? _ratings[RatingBox.SelectedIndex].Id
+            : null;
+
+    private void CaptureChangeSnapshot(
+        MusicTrack track,
+        IReadOnlySet<int> selectedTagIds,
+        IReadOnlySet<int> selectedStyleIds,
+        IReadOnlySet<int> selectedModelGenreIds)
+    {
+        _initialTitle = track.Title;
+        _initialRatingId = track.RatingId;
+        _initialTagIds = selectedTagIds.ToHashSet();
+        _initialStyleIds = selectedStyleIds.ToHashSet();
+        _initialEnabledModelGenreIds = selectedModelGenreIds.ToHashSet();
+        _pendingEnabledModelGenreIds = selectedModelGenreIds.ToHashSet();
+        _initialAttributeOverrides = MusicLibraryService.Current.GetTrackDerivedAttributes(track.Id)
+            .ToDictionary(attribute => attribute.Key, attribute => attribute.ManualValue);
+    }
+
+    private HashSet<int> ResetModelGenreSelectionFromDatabase(MusicTrack track)
+    {
+        var selectedModelGenreIds = MusicLibraryService.Current.GetTrackModelGenres(track.Id)
+            .Where(assignment => assignment.IsEnabled)
+            .Select(assignment => assignment.GenreId)
+            .ToHashSet();
+        _initialEnabledModelGenreIds = selectedModelGenreIds.ToHashSet();
+        _pendingEnabledModelGenreIds = selectedModelGenreIds.ToHashSet();
+        return selectedModelGenreIds;
+    }
+
+    private bool HasUnsavedChanges()
+    {
+        if (_track is null || _loadingTrack)
+            return false;
+
+        if (!string.Equals(TitleBox.Text?.Trim() ?? string.Empty, _initialTitle, StringComparison.Ordinal))
+            return true;
+        if (SelectedRatingId() != _initialRatingId)
+            return true;
+        if (!SelectedTagIds().SetEquals(_initialTagIds))
+            return true;
+        if (!SelectedStyleIds().SetEquals(_initialStyleIds))
+            return true;
+        if (!_pendingEnabledModelGenreIds.SetEquals(_initialEnabledModelGenreIds))
+            return true;
+
+        foreach (var key in _initialAttributeOverrides.Keys.Concat(_pendingAttributeOverrides.Keys).Distinct())
+        {
+            _initialAttributeOverrides.TryGetValue(key, out var initialValue);
+            var currentValue = _pendingAttributeOverrides.TryGetValue(key, out var pendingValue)
+                ? pendingValue
+                : initialValue;
+            if (!string.Equals(currentValue, initialValue, StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+
+        return false;
+    }
+
     private void UpdateSaveButton()
     {
-        SaveBtn.IsEnabled = _track != null && !string.IsNullOrWhiteSpace(TitleBox.Text);
+        var canSave = _track != null && !string.IsNullOrWhiteSpace(TitleBox.Text);
+        var hasUnsavedChanges = HasUnsavedChanges();
+        SaveBtn.IsEnabled = canSave && hasUnsavedChanges;
+        UnsavedChangesBadge.IsVisible = hasUnsavedChanges;
     }
 
     private void UpdateRatingVisual()
@@ -379,28 +464,50 @@ public partial class EditTrackOverlay : UserControl
 
     private void OnSaveClicked(object? sender, RoutedEventArgs e)
     {
-        if (_track == null)
-            return;
+        if (SaveCurrentChanges(closeAfterSave: true))
+            TrackSaved?.Invoke();
+    }
 
-        var styleIds = _styleChips
-            .Where(c => c.Btn.IsChecked == true)
-            .Select(c => c.Style.Id)
-            .ToList();
+    private bool SaveCurrentChanges(bool closeAfterSave)
+    {
+        if (_track == null || string.IsNullOrWhiteSpace(TitleBox.Text))
+            return false;
+
+        var styleIds = SelectedStyleIds().ToList();
 
         MusicLibraryService.Current.UpdateTrack(
             _track.Id,
             TitleBox.Text!.Trim(),
             [],
-            RatingBox.SelectedIndex >= 0 ? _ratings[RatingBox.SelectedIndex].Id : null,
+            SelectedRatingId(),
             styleIds);
 
         MusicLibraryService.Current.SetTrackManualTags(_track.Id, SelectedTagIds());
 
+        foreach (var genreId in _initialEnabledModelGenreIds
+                     .Concat(_pendingEnabledModelGenreIds)
+                     .Distinct())
+        {
+            MusicLibraryService.Current.SetTrackModelGenreEnabled(
+                _track.Id,
+                genreId,
+                _pendingEnabledModelGenreIds.Contains(genreId));
+        }
+
         foreach (var overrideValue in _pendingAttributeOverrides)
             MusicLibraryService.Current.SetTrackDerivedAttributeOverride(_track.Id, overrideValue.Key, overrideValue.Value);
 
-        CloseOverlay();
-        TrackSaved?.Invoke();
+        _track = _track with
+        {
+            Title = TitleBox.Text!.Trim(),
+            RatingId = SelectedRatingId()
+        };
+        CaptureChangeSnapshot(_track, SelectedTagIds(), styleIds.ToHashSet(), _pendingEnabledModelGenreIds);
+        _pendingAttributeOverrides.Clear();
+        UpdateSaveButton();
+        if (closeAfterSave)
+            CloseOverlay(skipUnsavedCheck: true);
+        return true;
     }
 
     private void OnPreviewClicked(object? sender, RoutedEventArgs e)
@@ -426,6 +533,7 @@ public partial class EditTrackOverlay : UserControl
         var error = await MusicLibraryService.Current.AnalyzeTrackAsync(track);
         _analysisElapsedTimer.Stop();
         AnalysisBusyLayer.IsVisible = false;
+        ResetModelGenreSelectionFromDatabase(track);
         ShowModelSelectedGenres(track);
         ShowDetectedGenres(track);
         ShowTagSuggestions(track);
@@ -715,7 +823,7 @@ public partial class EditTrackOverlay : UserControl
     private void ShowModelSelectedGenres(MusicTrack track)
     {
         LoadModelMetadata();
-        var assignments = MusicLibraryService.Current.GetTrackModelGenres(track.Id);
+        var assignments = CurrentModelGenreAssignments(track);
         _modelGenreIds = assignments.Select(assignment => assignment.GenreId).ToHashSet();
         ModelSelectedGenresSection.IsVisible = _modelSubgenresById.Count > 0;
         ModelSelectedGenresPanel.Children.Clear();
@@ -762,11 +870,14 @@ public partial class EditTrackOverlay : UserControl
             ApplyModelGenreVisual(container, genreName, reason, enabled, confidenceBrush, isManualSelection);
             container.PointerPressed += (_, _) =>
             {
-                enabled = !enabled;
-                MusicLibraryService.Current.SetTrackModelGenreEnabled(track.Id, assignment.GenreId, enabled);
+                if (_pendingEnabledModelGenreIds.Contains(assignment.GenreId))
+                    _pendingEnabledModelGenreIds.Remove(assignment.GenreId);
+                else
+                    _pendingEnabledModelGenreIds.Add(assignment.GenreId);
                 ShowModelSelectedGenres(track);
                 ShowDetectedGenres(track);
                 RebuildModelGenreChoices();
+                UpdateSaveButton();
             };
             IEnumerable<int> tooltipIds = isManualSelection
                 ? new[] { assignment.GenreId }
@@ -777,6 +888,48 @@ public partial class EditTrackOverlay : UserControl
             ToolTip.SetTip(container, CreateModelMetadataTooltip(tooltipIds));
             ModelSelectedGenresPanel.Children.Add(container);
         }
+    }
+
+    private List<TrackModelGenre> CurrentModelGenreAssignments(MusicTrack track)
+    {
+        var predictions = MusicLibraryService.Current.GetTrackGenrePredictions(track.Id);
+        var predictionReasonsBySubgenreId = predictions
+            .GroupBy(prediction => prediction.ModelSubgenreId)
+            .ToDictionary(
+                group => group.Key,
+                group => (IReadOnlyList<ModelGenreReason>)group
+                    .Select(prediction => new ModelGenreReason(
+                        prediction.ModelGenreName,
+                        prediction.ModelSubgenreName,
+                        prediction.Score))
+                    .ToList());
+
+        var assignments = MusicLibraryService.Current.GetTrackModelGenres(track.Id)
+            .ToDictionary(assignment => assignment.GenreId);
+
+        foreach (var genreId in _pendingEnabledModelGenreIds)
+        {
+            if (assignments.ContainsKey(genreId) || !_modelSubgenresById.TryGetValue(genreId, out var subgenre))
+                continue;
+
+            assignments[genreId] = new TrackModelGenre(
+                genreId,
+                subgenre.Name,
+                true,
+                predictionReasonsBySubgenreId.GetValueOrDefault(genreId, []));
+        }
+
+        return assignments.Values
+            .Where(assignment => _initialEnabledModelGenreIds.Contains(assignment.GenreId)
+                                 || _pendingEnabledModelGenreIds.Contains(assignment.GenreId))
+            .Select(assignment => assignment with
+            {
+                IsEnabled = _pendingEnabledModelGenreIds.Contains(assignment.GenreId)
+            })
+            .OrderByDescending(assignment => assignment.IsEnabled)
+            .ThenByDescending(assignment => assignment.Reasons.Count == 0 ? 0 : assignment.Reasons.Max(reason => reason.Score))
+            .ThenBy(assignment => assignment.GenreName, StringComparer.OrdinalIgnoreCase)
+            .ToList();
     }
 
     private void ShowDetectedGenres(MusicTrack track)
@@ -826,10 +979,11 @@ public partial class EditTrackOverlay : UserControl
             container.Child = row;
             container.PointerPressed += (_, _) =>
             {
-                MusicLibraryService.Current.SetTrackModelGenreEnabled(track.Id, prediction.ModelSubgenreId, true);
+                _pendingEnabledModelGenreIds.Add(prediction.ModelSubgenreId);
                 ShowModelSelectedGenres(track);
                 ShowDetectedGenres(track);
                 RebuildModelGenreChoices();
+                UpdateSaveButton();
             };
             ToolTip.SetTip(container, CreateModelMetadataTooltip([prediction.ModelSubgenreId]));
             DetectedGenresPanel.Children.Add(container);
@@ -918,7 +1072,7 @@ public partial class EditTrackOverlay : UserControl
         button.Click += (_, _) =>
         {
             if (_track is null) return;
-            MusicLibraryService.Current.SetTrackModelGenreEnabled(_track.Id, subgenre.Id, true);
+            _pendingEnabledModelGenreIds.Add(subgenre.Id);
             ShowModelSelectedGenres(_track);
             ShowDetectedGenres(_track);
             RebuildModelGenreChoices();
@@ -1040,14 +1194,34 @@ public partial class EditTrackOverlay : UserControl
 
     private void OnCloseClicked(object? sender, RoutedEventArgs e) => CloseOverlay();
 
-    private void CloseOverlay()
+    private void OnKeepEditingClicked(object? sender, RoutedEventArgs e) =>
+        UnsavedChangesLayer.IsVisible = false;
+
+    private void OnDiscardChangesClicked(object? sender, RoutedEventArgs e) =>
+        CloseOverlay(skipUnsavedCheck: true);
+
+    private void OnSaveAndCloseClicked(object? sender, RoutedEventArgs e)
     {
+        if (SaveCurrentChanges(closeAfterSave: true))
+            TrackSaved?.Invoke();
+    }
+
+    private void CloseOverlay(bool skipUnsavedCheck = false)
+    {
+        if (!skipUnsavedCheck && HasUnsavedChanges())
+        {
+            UnsavedChangesLayer.IsVisible = true;
+            return;
+        }
+
         if (_isPlayingPreview)
         {
             _isPlayingPreview = false;
             PreviewClosed?.Invoke();
         }
         _analysisElapsedTimer.Stop();
+        UnsavedChangesLayer.IsVisible = false;
+        UnsavedChangesBadge.IsVisible = false;
         IsVisible = false;
         _track = null;
     }
