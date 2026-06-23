@@ -1965,9 +1965,9 @@ public partial class MusicView : UserControl
         var treble = SoftLimit(_visualTreble);
         var hasArtwork = AppArtworkBackground.IsVisible || PlayerArtworkBackground.IsVisible || ListArtworkBackground.IsVisible;
 
-        AppArtworkBackground.Opacity = AppArtworkBackground.IsVisible ? 0.16 + energy * 0.21 : 0;
-        PlayerArtworkBackground.Opacity = PlayerArtworkBackground.IsVisible ? 0.26 + energy * 0.29 : 0;
-        ListArtworkBackground.Opacity = ListArtworkBackground.IsVisible ? 0.20 + energy * 0.10 : 0;
+        AppArtworkBackground.Opacity = AppArtworkBackground.IsVisible ? 0.12 + energy * 0.19 : 0;
+        PlayerArtworkBackground.Opacity = PlayerArtworkBackground.IsVisible ? 0.20 + energy * 0.27 : 0;
+        ListArtworkBackground.Opacity = ListArtworkBackground.IsVisible ? 0.16 + energy * 0.09 : 0;
 
         SetScale(AppArtworkBackground, 1.08 + bass * 0.048);
         SetScale(PlayerArtworkBackground, 1.06 + bass * 0.038);
@@ -1980,16 +1980,16 @@ public partial class MusicView : UserControl
         var green = ToByte(154 + energy * 58 + treble * 68);
         var blue = ToByte(240 - bass * 48 + treble * 20);
         _appAtmosphereBrush.Color = hasArtwork
-            ? Color.FromArgb(ToByte(energy * 52 + treble * 22), red, green, blue)
+            ? Color.FromArgb(ToByte(energy * 42 + treble * 18), red, green, blue)
             : Colors.Transparent;
         _playerAtmosphereBrush.Color = hasArtwork
-            ? Color.FromArgb(ToByte(34 + energy * 92 + bass * 46), red, green, blue)
+            ? Color.FromArgb(ToByte(24 + energy * 82 + bass * 40), red, green, blue)
             : Colors.Transparent;
         _playerTopGlowBrush.Color = hasArtwork
-            ? Color.FromArgb(ToByte(70 + energy * 138 + treble * 68), red, green, blue)
+            ? Color.FromArgb(ToByte(54 + energy * 120 + treble * 58), red, green, blue)
             : Colors.Transparent;
         _playerBorderBrush.Color = hasArtwork
-            ? Color.FromArgb(ToByte(56 + energy * 104), red, green, blue)
+            ? Color.FromArgb(ToByte(44 + energy * 92), red, green, blue)
             : Color.Parse("#202832");
     }
 
