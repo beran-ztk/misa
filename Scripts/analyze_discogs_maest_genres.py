@@ -158,6 +158,8 @@ def main():
     parser.add_argument("--model-directory", type=Path, default=DEFAULT_MODEL_DIRECTORY)
     parser.add_argument("--experimental-only", action="store_true",
                         help="Run only the additional classification heads in a separate process")
+    parser.add_argument("--include-experimental", action="store_true",
+                        help="Include the additional classification heads in the regular analysis output")
     args = parser.parse_args()
 
     if not Path(args.track_path).exists():
@@ -184,6 +186,11 @@ def main():
     _, _, integrated_loudness, loudness_range = es.LoudnessEBUR128(sampleRate=loudness_sample_rate)(loudness_audio)
 
     genre_predictions, prediction_shape = analyze_maest(audio, args.model_directory, args.top)
+    experimental_predictions, experimental_errors = (
+        experimental_analysis(audio, args.model_directory.parent)
+        if args.include_experimental
+        else ([], [])
+    )
 
     print(json.dumps({
         "success": True,
@@ -194,7 +201,9 @@ def main():
         "bpm": float(bpm),
         "integratedLoudness": float(integrated_loudness),
         "loudnessRange": float(loudness_range),
-        "predictions": genre_predictions
+        "predictions": genre_predictions,
+        "experimentalPredictions": experimental_predictions,
+        "experimentalErrors": experimental_errors
     }, ensure_ascii=False, indent=2))
 
 
