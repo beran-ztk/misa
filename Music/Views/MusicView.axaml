@@ -121,6 +121,12 @@
                                FontSize="11"
                                Foreground="#78C7EE"
                                TextTrimming="CharacterEllipsis"/>
+                    <TextBlock x:Name="LibraryDirtyText"
+                               Text="Library changed"
+                               IsVisible="False"
+                               FontSize="11"
+                               Foreground="#E6BF55"
+                               TextTrimming="CharacterEllipsis"/>
                 </StackPanel>
 
             <StackPanel Grid.Column="1"
@@ -133,6 +139,15 @@
                         ToolTip.Tip="Add Track"
                         Opacity="0.86">
                     <Image Source="{SvgImage /Assets/download.svg}" Width="17" Height="17"/>
+                </Button>
+
+                <Button x:Name="RefreshLibraryButton"
+                        Click="OnRefreshLibraryClicked"
+                        Classes="icon"
+                        ToolTip.Tip="Refresh library"
+                        IsVisible="False"
+                        Opacity="0.86">
+                    <Image Source="{SvgImage /Assets/reload.svg}" Width="17" Height="17"/>
                 </Button>
 
                 <TextBox x:Name="SearchBox"

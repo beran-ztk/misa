@@ -22,6 +22,7 @@ public class MusicLibraryService
     // --- Tracks ---
 
     public List<MusicTrack> GetTracks() => _db.GetAllTracks();
+    public byte[]? GetTrackThumbnail(int trackId) => _db.GetTrackThumbnail(trackId);
     public List<MusicTrack> GetUnanalyzedTracks() => _db.GetUnanalyzedTracks();
     public MusicTrack? GetTrackById(int id) => GetTracks().FirstOrDefault(track => track.Id == id);
     public MusicTrack? GetTrackByCanonicalUrl(string canonicalUrl) =>
@@ -235,8 +236,9 @@ public class MusicLibraryService
         var duration = await _downloader.GetDurationAsync(filePath);
         var metadata = previewMetadata ?? await _downloader.GetMetadataAsync(canonicalUrl);
         var fileSizeBytes = new FileInfo(filePath).Length;
+        var thumbnail = ThumbnailService.ReadEmbeddedArtwork(filePath) ?? [];
         var trackId = _db.InsertTrack(canonicalUrl, metadata?.Title ?? _downloader.TitleFromFileName(fileName), fileName,
-            request.GenreIds, request.RatingId, request.StyleIds, duration, fileSizeBytes, (int)downloadStopwatch.ElapsedMilliseconds, metadata);
+            request.GenreIds, request.RatingId, request.StyleIds, duration, fileSizeBytes, (int)downloadStopwatch.ElapsedMilliseconds, metadata, thumbnail);
 
         BackgroundAnalysisService.Current.EnqueueTrack(trackId);
         return new DownloadResult(true);
@@ -273,8 +275,9 @@ public class MusicLibraryService
         var duration = await _downloader.GetDurationAsync(filePath);
         var metadata = previewMetadata ?? await _downloader.GetMetadataAsync(canonicalUrl);
         var fileSizeBytes = new FileInfo(filePath).Length;
+        var thumbnail = ThumbnailService.ReadEmbeddedArtwork(filePath) ?? [];
         var trackId = _db.InsertTrack(canonicalUrl, metadata?.Title ?? _downloader.TitleFromFileName(fileName), fileName,
-            [], null, [], duration, fileSizeBytes, (int)downloadStopwatch.ElapsedMilliseconds, metadata);
+            [], null, [], duration, fileSizeBytes, (int)downloadStopwatch.ElapsedMilliseconds, metadata, thumbnail);
         trackCreated?.Invoke(trackId);
         BackgroundAnalysisService.Current.EnqueueTrack(trackId);
 

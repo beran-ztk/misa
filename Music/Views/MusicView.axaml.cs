@@ -24,6 +24,7 @@ namespace Music.Views;
 public partial class MusicView : UserControl
 {
     private const string DefaultFilterPresetName = "Default";
+    private const int TrackListBatchSize = 50;
 
     // Engine
     private readonly PlaybackEngine _engine = new();
@@ -50,6 +51,7 @@ public partial class MusicView : UserControl
     private CancellationTokenSource? _thumbLoadCts;
     private CancellationTokenSource? _toastCts;
     private readonly Dictionary<int, Bitmap?> _playerArtworkCache = [];
+    private bool _libraryRefreshPending;
 
     // Crossfade state
     private int _lastKnownActiveId = -1;
@@ -70,6 +72,9 @@ public partial class MusicView : UserControl
     private Dictionary<int, List<int>> _allTrackGenreIds = [];
     private Dictionary<int, List<int>> _allTrackTagIds = [];
     private List<TrackDisplayItem> _filteredItems = [];
+    private List<TrackDisplayItem> _visibleItems = [];
+    private int _visibleTrackCount;
+    private bool _updatingVisibleSelection;
     private List<PortableFilterPreset> _filterPresets = [];
     private bool _updatingPresetUi;
     private bool _showReviewOnly;
@@ -126,6 +131,7 @@ public partial class MusicView : UserControl
         RatingFilter.SelectionChanged += (_, _) => ApplyFilter();
         FileList.SelectionChanged += (_, _) =>
         {
+            ExtendVisibleTracksIfLastSelected();
             UpdateReviewButton();
         };
         PlayerBar.SizeChanged += (_, _) => UpdateSettingsLayout();
@@ -164,7 +170,7 @@ public partial class MusicView : UserControl
         AddTrackOverlay.TrackDownloaded += warning =>
         {
             AddTrackOverlay.IsVisible = false;
-            RefreshTrackList();
+            MarkLibraryRefreshPending();
             ShowToast(warning ?? "Track downloaded; analysis queued");
         };
         AddTrackOverlay.CloseRequested += () => AddTrackOverlay.IsVisible = false;
@@ -180,18 +186,18 @@ public partial class MusicView : UserControl
         });
         ImportQueueService.Current.TrackImported += (track, warning) => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
         {
-            RefreshTrackList();
+            MarkLibraryRefreshPending();
             ShowToast(warning ?? $"Imported: {track.Title}");
         });
         BackgroundAnalysisService.Current.QueueChanged += () => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
         {
-            RefreshTrackList();
+            UpdateQueueStatus();
             if (ImportOverlay.IsVisible) ImportOverlay.RefreshQueue();
         });
         BackgroundAnalysisService.Current.TrackAnalysisFinished += (_, _) =>
             Avalonia.Threading.Dispatcher.UIThread.Post(() =>
             {
-                RefreshTrackList();
+                MarkLibraryRefreshPending();
                 if (ImportOverlay.IsVisible) ImportOverlay.RefreshQueue();
             });
         EditTrackOverlay.TrackSaved += RefreshTrackList;
@@ -225,7 +231,7 @@ public partial class MusicView : UserControl
             if (_filteredItems.Count == 0 || _engine.State != EngineState.Stopped)
                 return;
 
-            FileList.SelectedIndex = 0;
+            SetVisibleSelectedIndex(0);
             StartPlayback();
             _engine.Pause();
             UpdatePlaybackPositionUi();
@@ -248,6 +254,24 @@ public partial class MusicView : UserControl
         if (summary.Queued > 0) parts.Add($"{summary.Queued} queued");
         QueueStatusText.IsVisible = parts.Count > 0;
         QueueStatusText.Text = parts.Count > 0 ? $"Queue · {string.Join(" · ", parts)}" : string.Empty;
+    }
+
+    private void MarkLibraryRefreshPending()
+    {
+        _libraryRefreshPending = true;
+        UpdateLibraryRefreshState();
+    }
+
+    private void ClearLibraryRefreshPending()
+    {
+        _libraryRefreshPending = false;
+        UpdateLibraryRefreshState();
+    }
+
+    private void UpdateLibraryRefreshState()
+    {
+        LibraryDirtyText.IsVisible = _libraryRefreshPending;
+        RefreshLibraryButton.IsVisible = _libraryRefreshPending;
     }
 
     // ─── Track list ──────────────────────────────────────────────────────────
@@ -282,9 +306,7 @@ public partial class MusicView : UserControl
         _thumbLoadCts = new CancellationTokenSource();
 
         ClearPlayerArtworkBackground(disposeCache: true);
-
-        foreach (var item in _allItems)
-            item.Thumbnail?.Dispose();
+        var previousItems = _allItems.ToDictionary(item => item.Track.Id);
 
         var tracks = MusicLibraryService.Current.GetTracks();
         var unanalyzedTrackIds = MusicLibraryService.Current.GetUnanalyzedTracks()
@@ -301,13 +323,47 @@ public partial class MusicView : UserControl
         var ratingMap = Values.Ratings.ToDictionary(r => r.Id, r => r.Name);
         var styleMap = Values.Styles.ToDictionary(s => s.Id, s => s.Name);
 
-        _allItems = tracks.Select(t =>
+        var newItems = new List<TrackDisplayItem>();
+        foreach (var track in tracks)
         {
-            var genreIds = _allTrackGenreIds.GetValueOrDefault(t.Id, []);
-            var tagIds = _allTrackTagIds.GetValueOrDefault(t.Id, []);
-            var styleIds = _allTrackStyleIds.GetValueOrDefault(t.Id, []);
+            var needsAnalysis = unanalyzedTrackIds.Contains(track.Id);
+            if (previousItems.TryGetValue(track.Id, out var previous)
+                && string.Equals(previous.Track.UpdatedAt, track.UpdatedAt, StringComparison.Ordinal)
+                && previous.NeedsAnalysis == needsAnalysis)
+            {
+                previous.IsPlaying = previous.Track.Id == _engine.ActiveTrackId;
+                newItems.Add(previous);
+                continue;
+            }
 
-            var modelGenreAssignments = MusicLibraryService.Current.GetTrackModelGenres(t.Id)
+            var item = CreateTrackDisplayItem(track, needsAnalysis);
+            if (previous?.Thumbnail is not null)
+            {
+                item.Thumbnail = previous.Thumbnail;
+                previous.Thumbnail = null;
+            }
+            newItems.Add(item);
+        }
+
+        foreach (var previous in previousItems.Values)
+            if (!newItems.Contains(previous))
+                previous.Thumbnail?.Dispose();
+
+        _allItems = newItems;
+
+        ApplyFilter();
+        if (_engine.ActiveTrackId >= 0
+            && _allItems.FirstOrDefault(item => item.Track.Id == _engine.ActiveTrackId)?.Track is { } activeTrack)
+            UpdatePlayerArtworkBackground(activeTrack);
+        ClearLibraryRefreshPending();
+
+        TrackDisplayItem CreateTrackDisplayItem(MusicTrack track, bool needsAnalysis)
+        {
+            var genreIds = _allTrackGenreIds.GetValueOrDefault(track.Id, []);
+            var tagIds = _allTrackTagIds.GetValueOrDefault(track.Id, []);
+            var styleIds = _allTrackStyleIds.GetValueOrDefault(track.Id, []);
+
+            var modelGenreAssignments = MusicLibraryService.Current.GetTrackModelGenres(track.Id)
                 .Where(assignment => assignment.IsEnabled)
                 .ToList();
             var modelGenreStr = string.Join(", ", modelGenreAssignments
@@ -344,25 +400,20 @@ public partial class MusicView : UserControl
                     tag.CategoryName,
                     CategoryBrush(tag.CategoryColor)))
                 .ToList();
-            var ratingName = t.RatingId is int ratingId ? ratingMap.GetValueOrDefault(ratingId, "") : "Not rated";
-            var durationText = t.DurationSeconds.HasValue ? FormatDuration(t.DurationSeconds.Value) : "";
-            var attributes = MusicLibraryService.Current.GetTrackDerivedAttributes(t.Id);
+            var ratingName = track.RatingId is int ratingId ? ratingMap.GetValueOrDefault(ratingId, "") : "Not rated";
+            var durationText = track.DurationSeconds.HasValue ? FormatDuration(track.DurationSeconds.Value) : "";
+            var attributes = MusicLibraryService.Current.GetTrackDerivedAttributes(track.Id);
             var profileText = string.Join(" · ", attributes
                 .Where(attribute => attribute.Key is "emotional_tone" or "energy_context" or "intensity")
                 .Select(attribute => $"{attribute.EffectiveValue} {ProfileAttributeName(attribute.Key)}"));
-            
-            return new TrackDisplayItem(t, genreStr, modelGenreStr, manualGenreStr, styleStr, durationText, ratingName, profileText, tagDisplays, t.ChannelName ?? "")
-            {
-                NeedsReview = t.NeedsReview,
-                NeedsAnalysis = unanalyzedTrackIds.Contains(t.Id)
-            };
-        }).ToList();
 
-        ApplyFilter();
-        if (_engine.ActiveTrackId >= 0
-            && _allItems.FirstOrDefault(item => item.Track.Id == _engine.ActiveTrackId)?.Track is { } activeTrack)
-            UpdatePlayerArtworkBackground(activeTrack);
-        _ = LoadThumbnailsAsync(_thumbLoadCts.Token);
+            return new TrackDisplayItem(track, genreStr, modelGenreStr, manualGenreStr, styleStr, durationText, ratingName, profileText, tagDisplays, track.ChannelName ?? "")
+            {
+                NeedsReview = track.NeedsReview,
+                NeedsAnalysis = needsAnalysis,
+                IsPlaying = track.Id == _engine.ActiveTrackId
+            };
+        }
     }
 
     private static string ProfileAttributeName(string key) => key switch
@@ -412,7 +463,7 @@ public partial class MusicView : UserControl
 
     private async Task LoadThumbnailsAsync(CancellationToken ct)
     {
-        var items = _allItems.ToList();
+        var items = _visibleItems.ToList();
 
         Dictionary<int, byte[]?> artworkByTrackId;
         try
@@ -423,8 +474,7 @@ public partial class MusicView : UserControl
                 foreach (var item in items)
                 {
                     ct.ThrowIfCancellationRequested();
-                    var audioFilePath = Path.Combine(Values.TracksDirectory, item.Track.FileName);
-                    result[item.Track.Id] = ThumbnailService.ReadEmbeddedArtwork(audioFilePath);
+                    result[item.Track.Id] = MusicLibraryService.Current.GetTrackThumbnail(item.Track.Id);
                 }
                 return result;
             }, ct);
@@ -436,6 +486,9 @@ public partial class MusicView : UserControl
         bool any = false;
         foreach (var item in items)
         {
+            if (item.Thumbnail is not null)
+                continue;
+
             if (artworkByTrackId.TryGetValue(item.Track.Id, out var artwork) && artwork != null)
             {
                 try
@@ -450,11 +503,7 @@ public partial class MusicView : UserControl
 
         if (!any || ct.IsCancellationRequested) return;
 
-        // Re-assign ItemsSource to trigger a re-render with thumbnails
-        var sel = FileList.SelectedIndex;
-        FileList.ItemsSource = _filteredItems.ToList();
-        if (sel >= 0 && sel < _filteredItems.Count)
-            FileList.SelectedIndex = sel;
+        RefreshVisibleItemsSource((FileList.SelectedItem as TrackDisplayItem)?.Track.Id);
     }
 
     private void ApplyFilter()
@@ -496,20 +545,22 @@ public partial class MusicView : UserControl
 
         var selectedTrackId = (FileList.SelectedItem as TrackDisplayItem)?.Track.Id;
 
-        FileList.ItemsSource = _filteredItems;
+        ResetVisibleTrackWindow();
+        RefreshVisibleItemsSource(selectedTrackId);
         RestoreOrInitializeSelection(selectedTrackId);
         UpdatePlaylistSummary();
         RefreshNextTrackPreview();
         UpdateFilterCounts();
         UpdateReviewFilterButton();
         UpdateReviewButton();
+        RestartVisibleThumbnailLoad();
     }
 
     private void RestoreOrInitializeSelection(int? previousSelectedTrackId)
     {
         if (_filteredItems.Count == 0)
         {
-            FileList.SelectedIndex = -1;
+            SetVisibleSelectedIndex(-1);
             return;
         }
 
@@ -522,15 +573,89 @@ public partial class MusicView : UserControl
             var index = _filteredItems.FindIndex(item => item.Track.Id == id);
             if (index >= 0)
             {
-                FileList.SelectedIndex = index;
+                EnsureVisibleThrough(index);
+                SetVisibleSelectedIndex(index);
                 return;
             }
         }
 
-        if (FileList.SelectedIndex < 0 || FileList.SelectedIndex >= _filteredItems.Count)
-            FileList.SelectedIndex = 0;
+        if (FileList.SelectedIndex < 0 || FileList.SelectedIndex >= _visibleItems.Count)
+            SetVisibleSelectedIndex(0);
 
-        FileList.ScrollIntoView(_filteredItems[FileList.SelectedIndex]);
+        if (FileList.SelectedIndex >= 0 && FileList.SelectedIndex < _visibleItems.Count)
+            FileList.ScrollIntoView(_visibleItems[FileList.SelectedIndex]);
+    }
+
+    private void ResetVisibleTrackWindow()
+    {
+        _visibleTrackCount = Math.Min(TrackListBatchSize, _filteredItems.Count);
+    }
+
+    private void RefreshVisibleItemsSource(int? selectedTrackId = null)
+    {
+        selectedTrackId ??= (FileList.SelectedItem as TrackDisplayItem)?.Track.Id;
+        _visibleItems = _filteredItems.Take(_visibleTrackCount).ToList();
+
+        _updatingVisibleSelection = true;
+        try
+        {
+            FileList.ItemsSource = _visibleItems;
+            if (selectedTrackId is int id)
+            {
+                var visibleIndex = _visibleItems.FindIndex(item => item.Track.Id == id);
+                if (visibleIndex >= 0)
+                    FileList.SelectedIndex = visibleIndex;
+            }
+        }
+        finally
+        {
+            _updatingVisibleSelection = false;
+        }
+    }
+
+    private void EnsureVisibleThrough(int filteredIndex)
+    {
+        if (filteredIndex < 0 || filteredIndex < _visibleTrackCount)
+            return;
+
+        _visibleTrackCount = Math.Min(
+            _filteredItems.Count,
+            Math.Max(TrackListBatchSize, ((filteredIndex / TrackListBatchSize) + 1) * TrackListBatchSize));
+        RefreshVisibleItemsSource();
+        RestartVisibleThumbnailLoad();
+    }
+
+    private void ExtendVisibleTracksIfLastSelected()
+    {
+        if (_updatingVisibleSelection
+            || _visibleItems.Count == 0
+            || _visibleTrackCount >= _filteredItems.Count
+            || FileList.SelectedIndex != _visibleItems.Count - 1)
+            return;
+
+        _visibleTrackCount = Math.Min(_filteredItems.Count, _visibleTrackCount + TrackListBatchSize);
+        RefreshVisibleItemsSource();
+        RestartVisibleThumbnailLoad();
+    }
+
+    private void SetVisibleSelectedIndex(int index)
+    {
+        _updatingVisibleSelection = true;
+        try
+        {
+            FileList.SelectedIndex = index;
+        }
+        finally
+        {
+            _updatingVisibleSelection = false;
+        }
+    }
+
+    private void RestartVisibleThumbnailLoad()
+    {
+        _thumbLoadCts?.Cancel();
+        _thumbLoadCts = new CancellationTokenSource();
+        _ = LoadThumbnailsAsync(_thumbLoadCts.Token);
     }
 
     private void UpdateFilterCounts()
@@ -1334,6 +1459,13 @@ public partial class MusicView : UserControl
         ImportOverlay.Open();
     }
 
+    private void OnRefreshLibraryClicked(object? sender, RoutedEventArgs e)
+    {
+        RefreshTrackList();
+        if (ImportOverlay.IsVisible)
+            ImportOverlay.RefreshQueue();
+    }
+
     private void OnSettingsClicked(object? sender, RoutedEventArgs e)
     {
         UpdateSettingsLayout();
@@ -1493,7 +1625,7 @@ public partial class MusicView : UserControl
     {
         _shuffle = !_shuffle;
         ApplyFilter();
-        FileList.SelectedIndex = _filteredItems.Count > 0 ? 0 : -1;
+        SetVisibleSelectedIndex(_filteredItems.Count > 0 ? 0 : -1);
         ShuffleBtn.Opacity = _shuffle ? 1.0 : 0.35;
         ToolTip.SetTip(ShuffleBtn, _shuffle ? "Shuffle: On" : "Shuffle: Off");
         if (_filteredItems.Count > 0)
@@ -1581,7 +1713,8 @@ public partial class MusicView : UserControl
 
         BeginListeningSession(track.Id);
 
-        FileList.SelectedIndex = filteredIndex;
+        EnsureVisibleThrough(filteredIndex);
+        SetVisibleSelectedIndex(filteredIndex);
 
         NowPlayingText.Text = track.Title;
         UpdatePlayerArtworkBackground(track);
@@ -1624,7 +1757,11 @@ public partial class MusicView : UserControl
         _previewTrackId = track.Id;
         _isSeeking = false;
         var index = _filteredItems.FindIndex(item => item.Track.Id == track.Id);
-        if (index >= 0) FileList.SelectedIndex = index;
+        if (index >= 0)
+        {
+            EnsureVisibleThrough(index);
+            SetVisibleSelectedIndex(index);
+        }
         NowPlayingText.Text = $"Preview · {track.Title}";
         UpdatePlayerArtworkBackground(track);
         PlaybackInfoPanel.IsVisible = true;
@@ -1666,7 +1803,11 @@ public partial class MusicView : UserControl
         {
             ResumeListeningSession(restoredTrack.Id, _engine.CurrentTime);
             var index = _filteredItems.FindIndex(item => item.Track.Id == restoredTrack.Id);
-            if (index >= 0) FileList.SelectedIndex = index;
+            if (index >= 0)
+            {
+                EnsureVisibleThrough(index);
+                SetVisibleSelectedIndex(index);
+            }
             NowPlayingText.Text = restoredTrack.Title;
             UpdatePlayerArtworkBackground(restoredTrack);
             PlaybackInfoPanel.IsVisible = true;
@@ -1888,9 +2029,10 @@ public partial class MusicView : UserControl
     {
         try
         {
-            var audioFilePath = Path.Combine(Values.TracksDirectory, track.FileName);
-            var artwork = ThumbnailService.ReadEmbeddedArtwork(audioFilePath);
-            if (artwork is null)
+            var artwork = track.Thumbnail is { Length: > 0 } thumbnail
+                ? thumbnail
+                : MusicLibraryService.Current.GetTrackThumbnail(track.Id);
+            if (artwork is not { Length: > 0 })
                 return null;
 
             using var stream = new MemoryStream(artwork);
@@ -2137,19 +2279,20 @@ public partial class MusicView : UserControl
     {
         if (_filteredItems.Count == 0) return;
 
-        var selectedId = FileList.SelectedIndex >= 0 && FileList.SelectedIndex < _filteredItems.Count
-            ? _filteredItems[FileList.SelectedIndex].Track.Id : -1;
+        var selectedId = (FileList.SelectedItem as TrackDisplayItem)?.Track.Id ?? -1;
 
         foreach (var item in _filteredItems)
             item.IsPlaying = item.Track.Id == _engine.ActiveTrackId;
 
-        FileList.ItemsSource = _filteredItems.ToList();
-
-        if (selectedId >= 0)
+        var targetId = selectedId >= 0 ? selectedId : _engine.ActiveTrackId;
+        if (targetId >= 0)
         {
-            var idx = _filteredItems.FindIndex(i => i.Track.Id == selectedId);
-            if (idx >= 0) FileList.SelectedIndex = idx;
+            var idx = _filteredItems.FindIndex(i => i.Track.Id == targetId);
+            if (idx >= 0)
+                EnsureVisibleThrough(idx);
         }
+
+        RefreshVisibleItemsSource(selectedId >= 0 ? selectedId : null);
     }
 
     // ─── Formatting ───────────────────────────────────────────────────────────

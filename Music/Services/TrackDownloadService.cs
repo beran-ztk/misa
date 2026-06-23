@@ -13,7 +13,7 @@ namespace Music.Services;
 
 public class TrackDownloadService
 {
-    private const int GeneratedMixEntryLimit = 50;
+    private const int GeneratedMixEntryLimit = 150;
     public async Task<(bool Success, string ErrorOutput)> RunYtDlpAsync(string url)
     {
         Directory.CreateDirectory(Values.TracksDirectory);

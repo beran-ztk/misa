@@ -100,6 +100,7 @@ public class MusicDatabase
                 last_listened_at    TEXT NULL,
                 file_size_bytes     INTEGER NULL,
                 download_duration_ms INTEGER NULL,
+                thumbnail           BLOB NULL,
                 needs_reevaluation  INTEGER NOT NULL DEFAULT 0,
                 notes               TEXT NULL
             );
@@ -229,6 +230,7 @@ public class MusicDatabase
         EnsureColumn(conn, "tracks", "listened_seconds", "INTEGER NOT NULL DEFAULT 0");
         EnsureColumn(conn, "tracks", "file_size_bytes", "INTEGER NULL");
         EnsureColumn(conn, "tracks", "download_duration_ms", "INTEGER NULL");
+        EnsureColumn(conn, "tracks", "thumbnail", "BLOB NULL");
         EnsureColumn(conn, "track_analysis", "analysis_duration_ms", "INTEGER NULL");
         EnsureColumn(conn, "model_subgenres", "description", "TEXT NULL");
         EnsureColumn(conn, "model_subgenres", "classification_hint", "TEXT NULL");
@@ -848,7 +850,7 @@ public class MusicDatabase
 
     public int InsertTrack(string canonicalUrl, string title, string fileName,
         List<int> genreIds, int? ratingId, List<int> _, int? durationSeconds, long? fileSizeBytes,
-        int? downloadDurationMilliseconds, YouTubeTrackMetadata? metadata = null)
+        int? downloadDurationMilliseconds, YouTubeTrackMetadata? metadata = null, byte[]? thumbnail = null)
     {
         using var conn = Open();
         using var tx = conn.BeginTransaction();
@@ -866,8 +868,8 @@ public class MusicDatabase
         }
 
         var trackId = InsertAndGetId(conn, tx, @"
-            INSERT INTO tracks (canonical_url, title, file_name, channel_id, rating_id, uploaded_at, downloaded_at, updated_at, duration_seconds, file_size_bytes, download_duration_ms)
-            VALUES ($url, $title, $fileName, $channelId, $ratingId, $uploadedAt, $downloadedAt, $updatedAt, $duration, $fileSizeBytes, $downloadDurationMs)",
+            INSERT INTO tracks (canonical_url, title, file_name, channel_id, rating_id, uploaded_at, downloaded_at, updated_at, duration_seconds, file_size_bytes, download_duration_ms, thumbnail)
+            VALUES ($url, $title, $fileName, $channelId, $ratingId, $uploadedAt, $downloadedAt, $updatedAt, $duration, $fileSizeBytes, $downloadDurationMs, $thumbnail)",
             ("$url", canonicalUrl),
             ("$title", title),
             ("$fileName", fileName),
@@ -878,7 +880,8 @@ public class MusicDatabase
             ("$updatedAt", now),
             ("$duration", durationSeconds),
             ("$fileSizeBytes", fileSizeBytes),
-            ("$downloadDurationMs", downloadDurationMilliseconds));
+            ("$downloadDurationMs", downloadDurationMilliseconds),
+            ("$thumbnail", thumbnail));
 
         tx.Commit();
         return (int)trackId;
@@ -888,6 +891,7 @@ public class MusicDatabase
     {
         using var conn = Open();
         using var tx = conn.BeginTransaction();
+        var now = DateTime.UtcNow.ToString("O");
 
         ExecuteInsert(conn, tx, @"
             INSERT INTO track_analysis (track_id, analyzed_at, analyzer_name, bpm, integrated_loudness, loudness_range, analysis_duration_ms)
@@ -900,7 +904,7 @@ public class MusicDatabase
                 loudness_range = excluded.loudness_range,
                 analysis_duration_ms = excluded.analysis_duration_ms",
             ("$trackId", trackId),
-            ("$analyzedAt", DateTime.UtcNow.ToString("O")),
+            ("$analyzedAt", now),
             ("$analyzerName", analysis.AnalyzerName),
             ("$bpm", analysis.Bpm),
             ("$loudness", analysis.IntegratedLoudness),
@@ -947,6 +951,7 @@ public class MusicDatabase
         SaveDerivedAttributes(conn, tx, analysisId, DeriveAttributes(analysis.ExperimentalModels ?? []));
 
         RefreshModelGenres(conn, tx, trackId);
+        TouchTrack(conn, tx, trackId, now);
 
         tx.Commit();
     }
@@ -956,7 +961,8 @@ public class MusicDatabase
         using var conn = Open();
         using var cmd = conn.CreateCommand();
         cmd.CommandText = @"SELECT tracks.id, tracks.canonical_url, tracks.title, tracks.file_name, tracks.rating_id, tracks.downloaded_at,
-                                   tracks.duration_seconds, tracks.needs_reevaluation, channels.name, channels.source_url, tracks.uploaded_at
+                                   tracks.duration_seconds, tracks.needs_reevaluation, channels.name, channels.source_url, tracks.uploaded_at,
+                                   tracks.updated_at
                             FROM tracks LEFT JOIN channels ON channels.id = tracks.channel_id
                             ORDER BY tracks.downloaded_at DESC";
         using var reader = cmd.ExecuteReader();
@@ -974,9 +980,20 @@ public class MusicDatabase
                 reader.GetInt32(7) != 0,
                 reader.IsDBNull(8) ? null : reader.GetString(8),
                 reader.IsDBNull(9) ? null : reader.GetString(9),
-                reader.IsDBNull(10) ? null : reader.GetString(10)));
+                reader.IsDBNull(10) ? null : reader.GetString(10),
+                reader.GetString(11)));
         }
         return tracks;
+    }
+
+    public byte[]? GetTrackThumbnail(int trackId)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT thumbnail FROM tracks WHERE id = $trackId";
+        cmd.Parameters.AddWithValue("$trackId", trackId);
+        var value = cmd.ExecuteScalar();
+        return value is DBNull or null ? null : (byte[])value;
     }
 
     public List<MusicTrack> GetUnanalyzedTracks()
@@ -984,7 +1001,8 @@ public class MusicDatabase
         using var conn = Open();
         using var cmd = conn.CreateCommand();
         cmd.CommandText = @"SELECT tracks.id, tracks.canonical_url, tracks.title, tracks.file_name, tracks.rating_id, tracks.downloaded_at,
-                                   tracks.duration_seconds, tracks.needs_reevaluation, channels.name, channels.source_url, tracks.uploaded_at
+                                   tracks.duration_seconds, tracks.needs_reevaluation, channels.name, channels.source_url, tracks.uploaded_at,
+                                   tracks.updated_at
                             FROM tracks
                             LEFT JOIN channels ON channels.id = tracks.channel_id
                             LEFT JOIN track_analysis analysis ON analysis.track_id = tracks.id
@@ -1005,7 +1023,8 @@ public class MusicDatabase
                 reader.GetInt32(7) != 0,
                 reader.IsDBNull(8) ? null : reader.GetString(8),
                 reader.IsDBNull(9) ? null : reader.GetString(9),
-                reader.IsDBNull(10) ? null : reader.GetString(10)));
+                reader.IsDBNull(10) ? null : reader.GetString(10),
+                reader.GetString(11)));
         }
         return tracks;
     }
@@ -1057,14 +1076,17 @@ public class MusicDatabase
     public void SetTrackModelGenreEnabled(int trackId, int genreId, bool isEnabled)
     {
         using var conn = Open();
+        using var tx = conn.BeginTransaction();
         using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
+        var now = DateTime.UtcNow.ToString("O");
         if (isEnabled)
         {
             cmd.CommandText = @"
                 INSERT INTO track_genres (track_id, genre_id, assigned_at, is_enabled)
                 VALUES ($trackId, $genreId, $assignedAt, 1)
                 ON CONFLICT(track_id, genre_id) DO UPDATE SET is_enabled = 1, assigned_at = excluded.assigned_at";
-            cmd.Parameters.AddWithValue("$assignedAt", DateTime.UtcNow.ToString("O"));
+            cmd.Parameters.AddWithValue("$assignedAt", now);
         }
         else
         {
@@ -1073,6 +1095,8 @@ public class MusicDatabase
         cmd.Parameters.AddWithValue("$trackId", trackId);
         cmd.Parameters.AddWithValue("$genreId", genreId);
         cmd.ExecuteNonQuery();
+        TouchTrack(conn, tx, trackId, now);
+        tx.Commit();
     }
 
     // Styles are intentionally no longer part of the schema. These compatibility
@@ -1098,9 +1122,10 @@ public class MusicDatabase
     {
         using var conn = Open();
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = "UPDATE tracks SET needs_reevaluation = $needsReview WHERE id = $id";
+        cmd.CommandText = "UPDATE tracks SET needs_reevaluation = $needsReview, updated_at = $updatedAt WHERE id = $id";
         cmd.Parameters.AddWithValue("$id", id);
         cmd.Parameters.AddWithValue("$needsReview", needsReview ? 1 : 0);
+        cmd.Parameters.AddWithValue("$updatedAt", DateTime.UtcNow.ToString("O"));
         cmd.ExecuteNonQuery();
     }
 
@@ -1335,6 +1360,7 @@ public class MusicDatabase
                 ("$trackId", trackId), ("$tagId", tagId), ("$now", now));
         }
 
+        TouchTrack(conn, tx, trackId, now);
         tx.Commit();
     }
 
@@ -1616,7 +1642,9 @@ public class MusicDatabase
     public void SetTrackDerivedAttributeOverride(int trackId, string key, string? manualValue)
     {
         using var conn = Open();
+        using var tx = conn.BeginTransaction();
         using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
         cmd.CommandText = @"UPDATE track_derived_attributes SET manual_value = $manualValue
                             WHERE track_analysis_id = (SELECT id FROM track_analysis WHERE track_id = $trackId)
                             AND attribute_key = $key";
@@ -1624,6 +1652,8 @@ public class MusicDatabase
         cmd.Parameters.AddWithValue("$key", key);
         cmd.Parameters.AddWithValue("$manualValue", (object?)manualValue ?? DBNull.Value);
         cmd.ExecuteNonQuery();
+        TouchTrack(conn, tx, trackId, DateTime.UtcNow.ToString("O"));
+        tx.Commit();
     }
 
     private static void SaveDerivedAttributes(SqliteConnection conn, SqliteTransaction tx, long analysisId,
@@ -1637,6 +1667,10 @@ public class MusicDatabase
                     system_value = excluded.system_value, system_score = excluded.system_score",
                 ("$analysisId", analysisId), ("$key", attribute.Key), ("$value", attribute.Value), ("$score", attribute.Score));
     }
+
+    private static void TouchTrack(SqliteConnection conn, SqliteTransaction tx, int trackId, string updatedAt) =>
+        ExecuteInsert(conn, tx, "UPDATE tracks SET updated_at = $updatedAt WHERE id = $trackId",
+            ("$updatedAt", updatedAt), ("$trackId", trackId));
 
     private static List<(string Key, string Value, double Score)> DeriveAttributes(IReadOnlyList<ExperimentalAnalysisModel> models)
     {

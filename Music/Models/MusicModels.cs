@@ -5,7 +5,7 @@ namespace Music.Models;
 public record MusicTrack(
     int Id, string CanonicalUrl, string Title, string FileName,
     int? RatingId, string DownloadedAt, int? DurationSeconds, bool NeedsReview,
-    string? ChannelName, string? ChannelUrl, string? UploadedAt);
+    string? ChannelName, string? ChannelUrl, string? UploadedAt, string UpdatedAt, byte[]? Thumbnail = null);
 
 public record Genre(int Id, string Name);
 public record TagCategory(int Id, string Name, string? Color, int SortOrder);
