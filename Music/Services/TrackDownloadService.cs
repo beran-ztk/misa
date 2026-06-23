@@ -13,7 +13,6 @@ namespace Music.Services;
 
 public class TrackDownloadService
 {
-    private const int GeneratedMixEntryLimit = 150;
     public async Task<(bool Success, string ErrorOutput)> RunYtDlpAsync(string url)
     {
         Directory.CreateDirectory(Values.TracksDirectory);
@@ -104,50 +103,76 @@ public class TrackDownloadService
         catch { return null; }
     }
 
-    public async Task<IReadOnlyList<YouTubePlaylistEntry>> GetPlaylistEntriesAsync(string url, CancellationToken cancellationToken = default)
+    public async Task<(IReadOnlyList<YouTubePlaylistEntry> Entries, string? Error)> GetPlaylistEntriesAsync(
+        string url, CancellationToken cancellationToken = default)
     {
         try
         {
-            var arguments = new List<string> { "--js-runtimes", "node", "--flat-playlist", "--dump-json", "--no-warnings" };
-            var playlistUrl = PlaylistExtractionUrl(url);
-            // YouTube radio links carry start_radio=1. Limit only those generated radio queues;
-            // ordinary playlists can also appear beside a watch URL and should stay unbounded.
-            if (IsGeneratedMix(url))
+            string? lastError = null;
+            foreach (var extractionUrl in PlaylistExtractionUrls(url))
             {
-                arguments.Add("--playlist-end");
-                arguments.Add(GeneratedMixEntryLimit.ToString(CultureInfo.InvariantCulture));
-            }
-            else if (QueryValue(url, "list") is not null)
-            {
-                arguments.Add("--playlist-items");
-                arguments.Add("1:500");
-            }
-            arguments.Add(playlistUrl);
-            var result = await RunProcessAsync(
-                Path.Combine(Values.ToolsDirectory, "yt-dlp.exe"),
-                arguments.ToArray(),
-                cancellationToken);
-            if (result.ExitCode != 0) return [];
+                var result = await RunProcessAsync(
+                    Path.Combine(Values.ToolsDirectory, "yt-dlp.exe"),
+                    [
+                        "--js-runtimes", "node",
+                        "--ignore-errors",
+                        "--flat-playlist",
+                        "--dump-json",
+                        "--no-warnings",
+                        extractionUrl
+                    ],
+                    cancellationToken);
 
-            var entries = new List<YouTubePlaylistEntry>();
-            foreach (var line in result.Output.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
-            {
-                using var document = JsonDocument.Parse(line);
-                var root = document.RootElement;
-                if (!root.TryGetProperty("id", out var idValue) || idValue.ValueKind != JsonValueKind.String) continue;
-                var id = idValue.GetString();
-                if (string.IsNullOrWhiteSpace(id)) continue;
-                var canonicalUrl = YouTubeUrlNormalizer.GetCanonicalUrl(id);
-                var title = root.TryGetProperty("title", out var titleValue) && titleValue.ValueKind == JsonValueKind.String
-                    ? titleValue.GetString() ?? id
-                    : id;
-                var duration = DurationSeconds(root);
-                entries.Add(new YouTubePlaylistEntry(url, canonicalUrl, title, duration));
+                var entries = ParsePlaylistEntries(url, result.Output);
+                if (entries.Count > 0) return (entries, null);
+
+                lastError = CleanYtDlpError(result.Error);
             }
-            return entries;
+
+            return ([], lastError);
         }
         catch (OperationCanceledException) { throw; }
-        catch { return []; }
+        catch (Exception exception) { return ([], exception.Message); }
+    }
+
+    private static List<YouTubePlaylistEntry> ParsePlaylistEntries(string sourceUrl, string output)
+    {
+        var entries = new List<YouTubePlaylistEntry>();
+        foreach (var line in output.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            JsonDocument document;
+            try { document = JsonDocument.Parse(line); }
+            catch (JsonException) { continue; }
+            using (document)
+            {
+                var root = document.RootElement;
+                AddPlaylistEntry(sourceUrl, root, entries);
+                if (root.TryGetProperty("entries", out var childEntries) && childEntries.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var child in childEntries.EnumerateArray())
+                        AddPlaylistEntry(sourceUrl, child, entries);
+                }
+            }
+        }
+        return entries;
+    }
+
+    private static void AddPlaylistEntry(string sourceUrl, JsonElement root, List<YouTubePlaylistEntry> entries)
+    {
+        if (IsUnavailablePlaylistEntry(root)) return;
+
+        var id = StringValue(root, "id");
+        if (string.IsNullOrWhiteSpace(id) || id.Length != 11)
+            id = YouTubeUrlNormalizer.ExtractVideoId(StringValue(root, "url") ?? string.Empty);
+        if (string.IsNullOrWhiteSpace(id)) return;
+
+        var canonicalUrl = YouTubeUrlNormalizer.GetCanonicalUrl(id);
+        if (entries.Any(entry => entry.CanonicalUrl.Equals(canonicalUrl, StringComparison.OrdinalIgnoreCase)))
+            return;
+
+        var title = StringValue(root, "title") ?? id;
+        var duration = DurationSeconds(root);
+        entries.Add(new YouTubePlaylistEntry(sourceUrl, canonicalUrl, title, duration));
     }
 
     private static bool IsGeneratedMix(string url)
@@ -155,12 +180,42 @@ public class TrackDownloadService
         return QueryValue(url, "start_radio") == "1";
     }
 
-    private static string PlaylistExtractionUrl(string url)
+    private static bool IsUnavailablePlaylistEntry(JsonElement root)
+    {
+        var title = StringValue(root, "title");
+        var availability = StringValue(root, "availability");
+        var liveStatus = StringValue(root, "live_status");
+
+        return title is "[Deleted video]" or "[Private video]"
+               || availability is "private" or "premium_only" or "subscriber_only"
+               || liveStatus == "is_upcoming";
+    }
+
+    private static IEnumerable<string> PlaylistExtractionUrls(string url)
     {
         var listValue = QueryValue(url, "list");
-        return string.IsNullOrWhiteSpace(listValue) || IsGeneratedMix(url)
-            ? url
-            : $"https://www.youtube.com/playlist?list={Uri.EscapeDataString(listValue)}";
+        if (string.IsNullOrWhiteSpace(listValue) || IsGeneratedMix(url))
+        {
+            yield return url;
+            yield break;
+        }
+
+        var playlistUrl = $"https://www.youtube.com/playlist?list={Uri.EscapeDataString(listValue)}";
+        yield return playlistUrl;
+        if (!url.Equals(playlistUrl, StringComparison.OrdinalIgnoreCase))
+            yield return url;
+    }
+
+    private static string? CleanYtDlpError(string error)
+    {
+        var line = error.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .LastOrDefault(line => line.StartsWith("ERROR:", StringComparison.OrdinalIgnoreCase))
+            ?? error.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).LastOrDefault();
+
+        if (string.IsNullOrWhiteSpace(line)) return null;
+        return line.StartsWith("ERROR:", StringComparison.OrdinalIgnoreCase)
+            ? line["ERROR:".Length..].Trim()
+            : line.Trim();
     }
 
     private static string? QueryValue(string url, string key)
@@ -236,6 +291,11 @@ public class TrackDownloadService
     private static int? DurationSeconds(JsonElement root) => root.TryGetProperty("duration", out var value)
         && value.TryGetDouble(out var seconds) && seconds > 0
             ? (int)Math.Round(seconds)
+            : null;
+
+    private static string? StringValue(JsonElement root, string key) => root.TryGetProperty(key, out var value)
+        && value.ValueKind == JsonValueKind.String
+            ? value.GetString()
             : null;
 
     private static async Task<ProcessResult> RunProcessAsync(string fileName, params string[] args) =>

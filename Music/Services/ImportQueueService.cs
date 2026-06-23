@@ -45,7 +45,13 @@ public sealed class ImportQueueService
             using var sourceTimeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             sourceTimeout.CancelAfter(TimeSpan.FromSeconds(45));
             IReadOnlyList<YouTubePlaylistEntry> entries;
-            try { entries = await _downloader.GetPlaylistEntriesAsync(sourceUrl, sourceTimeout.Token); }
+            string? readError;
+            try
+            {
+                var result = await _downloader.GetPlaylistEntriesAsync(sourceUrl, sourceTimeout.Token);
+                entries = result.Entries;
+                readError = result.Error;
+            }
             catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
             {
                 unavailableCount++;
@@ -57,7 +63,7 @@ public sealed class ImportQueueService
             {
                 unavailableCount++;
                 previewItems.Add(new ImportPreviewItem(sourceUrl, sourceUrl, "Could not read this link", null, null,
-                    ImportQueueStatus.Failed, "Unavailable or unsupported playlist"));
+                    ImportQueueStatus.Failed, readError ?? "Unavailable or unsupported playlist"));
                 continue;
             }
 
