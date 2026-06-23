@@ -108,15 +108,15 @@ public class TrackDownloadService
         try
         {
             var arguments = new List<string> { "--js-runtimes", "node", "--flat-playlist", "--dump-json", "--no-warnings" };
-            // YouTube's RD_* links are generated radio queues. yt-dlp can follow hundreds of their
-            // recommendations although YouTube initially presents only the first small section.
-            // Keep that useful, stable first section and leave ordinary user playlists unbounded.
+            var playlistUrl = PlaylistExtractionUrl(url);
+            // YouTube radio links carry start_radio=1. Limit only those generated radio queues;
+            // ordinary playlists can also appear beside a watch URL and should stay unbounded.
             if (IsGeneratedMix(url))
             {
                 arguments.Add("--playlist-end");
                 arguments.Add(GeneratedMixEntryLimit.ToString(CultureInfo.InvariantCulture));
             }
-            arguments.Add(url);
+            arguments.Add(playlistUrl);
             var result = await RunProcessAsync(
                 Path.Combine(Values.ToolsDirectory, "yt-dlp.exe"),
                 arguments.ToArray(),
@@ -146,13 +146,30 @@ public class TrackDownloadService
 
     private static bool IsGeneratedMix(string url)
     {
-        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri)) return false;
-        var listValue = uri.Query.TrimStart('?').Split('&', StringSplitOptions.RemoveEmptyEntries)
-            .Select(part => part.Split('=', 2))
-            .Where(part => part.Length == 2 && part[0].Equals("list", StringComparison.OrdinalIgnoreCase))
-            .Select(part => Uri.UnescapeDataString(part[1]))
-            .FirstOrDefault();
-        return listValue?.StartsWith("RD", StringComparison.OrdinalIgnoreCase) == true;
+        return QueryValue(url, "start_radio") == "1";
+    }
+
+    private static string PlaylistExtractionUrl(string url)
+    {
+        var listValue = QueryValue(url, "list");
+        return string.IsNullOrWhiteSpace(listValue) || IsGeneratedMix(url)
+            ? url
+            : $"https://www.youtube.com/playlist?list={Uri.EscapeDataString(listValue)}";
+    }
+
+    private static string? QueryValue(string url, string key)
+    {
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri)) return null;
+        foreach (var part in uri.Query.TrimStart('?').Split('&', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var pieces = part.Split('=', 2);
+            if (pieces.Length != 2 || !pieces[0].Equals(key, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            return Uri.UnescapeDataString(pieces[1]);
+        }
+
+        return null;
     }
 
     public string? FindDownloadedFile(string videoId)
