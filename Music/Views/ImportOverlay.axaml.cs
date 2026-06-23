@@ -59,12 +59,15 @@ public partial class ImportOverlay : UserControl
     {
         QueueSources.Children.Clear();
         var sources = ImportQueueService.Current.GetSources();
+        var queueCount = sources.Sum(source => source.Items.Count);
+        QueueHeaderText.Text = queueCount > 0 ? $"CURRENT QUEUE ({queueCount})" : "CURRENT QUEUE";
         EmptyQueueText.IsVisible = sources.Count == 0;
         foreach (var source in sources)
             QueueSources.Children.Add(CreateSourceCard(source));
 
         AnalysisQueueRows.Children.Clear();
         var analysisItems = GetAnalysisQueueItems();
+        AnalysisQueueHeaderText.Text = analysisItems.Count > 0 ? $"ANALYSIS QUEUE ({analysisItems.Count})" : "ANALYSIS QUEUE";
         EmptyAnalysisQueueText.IsVisible = analysisItems.Count == 0;
         foreach (var item in analysisItems)
             AnalysisQueueRows.Children.Add(CreateAnalysisQueueRow(item));
