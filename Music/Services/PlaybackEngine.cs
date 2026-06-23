@@ -1,10 +1,13 @@
 using System;
 using Avalonia.Threading;
 using NAudio.Wave;
+using NAudio.Wave.SampleProviders;
 
 namespace Music.Services;
 
 public enum EngineState { Stopped, Playing, Paused }
+
+public record PlaybackAudioLevel(double Energy, double Bass, double Treble);
 
 public record PlaybackSlotSnapshot(
     string FilePath,
@@ -28,6 +31,7 @@ public sealed class PlaybackEngine : IDisposable
     {
         public readonly IWavePlayer Player;
         public readonly AudioFileReader Reader;   // owns CurrentTime, TotalTime, software Volume
+        public readonly AudioLevelSampleProvider Analyzer;
         public readonly string FilePath;
         public readonly int TrackId;
 
@@ -36,10 +40,17 @@ public sealed class PlaybackEngine : IDisposable
         public float FadeTarget;   // 0 = fade out fully, 1 = fade in to full
         public float FadeStep;     // per 100 ms tick, signed; 0 = steady
 
-        public AudioSlot(IWavePlayer player, AudioFileReader reader, string filePath, int trackId, float startTransition)
+        public AudioSlot(
+            IWavePlayer player,
+            AudioFileReader reader,
+            AudioLevelSampleProvider analyzer,
+            string filePath,
+            int trackId,
+            float startTransition)
         {
             Player = player;
             Reader = reader;
+            Analyzer = analyzer;
             FilePath = filePath;
             TrackId = trackId;
             TransitionVolume = startTransition;
@@ -58,10 +69,97 @@ public sealed class PlaybackEngine : IDisposable
         }
     }
 
+    private sealed class AudioLevelSampleProvider : ISampleProvider
+    {
+        private const int PublishWindowFrames = 2048;
+        private readonly ISampleProvider _source;
+        private readonly int _channels;
+        private readonly double _bassAlpha;
+        private readonly double _trebleLowPassAlpha;
+        private double _bassSample;
+        private double _trebleLowPassSample;
+        private double _energySum;
+        private double _bassSum;
+        private double _trebleSum;
+        private int _windowFrames;
+        private PlaybackAudioLevel _latestLevel = new(0, 0, 0);
+
+        public AudioLevelSampleProvider(ISampleProvider source)
+        {
+            _source = source;
+            WaveFormat = source.WaveFormat;
+            _channels = Math.Max(1, WaveFormat.Channels);
+            _bassAlpha = LowPassAlpha(180, WaveFormat.SampleRate);
+            _trebleLowPassAlpha = LowPassAlpha(2400, WaveFormat.SampleRate);
+        }
+
+        public WaveFormat WaveFormat { get; }
+        public PlaybackAudioLevel LatestLevel => _latestLevel;
+
+        public int Read(float[] buffer, int offset, int count)
+        {
+            var read = _source.Read(buffer, offset, count);
+            var end = offset + read;
+
+            for (var i = offset; i < end; i += _channels)
+            {
+                double mono = 0;
+                var channelEnd = Math.Min(i + _channels, end);
+                for (var channel = i; channel < channelEnd; channel++)
+                    mono += buffer[channel];
+                mono /= channelEnd - i;
+
+                _bassSample += _bassAlpha * (mono - _bassSample);
+                _trebleLowPassSample += _trebleLowPassAlpha * (mono - _trebleLowPassSample);
+                var trebleSample = mono - _trebleLowPassSample;
+
+                _energySum += mono * mono;
+                _bassSum += _bassSample * _bassSample;
+                _trebleSum += trebleSample * trebleSample;
+                _windowFrames++;
+
+                if (_windowFrames >= PublishWindowFrames)
+                    PublishWindow();
+            }
+
+            return read;
+        }
+
+        private void PublishWindow()
+        {
+            if (_windowFrames == 0)
+                return;
+
+            var energy = Math.Sqrt(_energySum / _windowFrames);
+            var bass = Math.Sqrt(_bassSum / _windowFrames);
+            var treble = Math.Sqrt(_trebleSum / _windowFrames);
+            _latestLevel = new PlaybackAudioLevel(
+                Normalize(energy, 3.5),
+                Normalize(bass, 7.0),
+                Normalize(treble, 5.0));
+
+            _energySum = 0;
+            _bassSum = 0;
+            _trebleSum = 0;
+            _windowFrames = 0;
+        }
+
+        private static double Normalize(double value, double gain) =>
+            Math.Clamp(value * gain, 0, 1);
+
+        private static double LowPassAlpha(double cutoffHz, int sampleRate)
+        {
+            var dt = 1.0 / sampleRate;
+            var rc = 1.0 / (2.0 * Math.PI * cutoffHz);
+            return dt / (rc + dt);
+        }
+    }
+
     // Raised on the UI thread (DispatcherTimer guarantees it).
     public event Action? TrackNaturallyEnded;
     public event Action? StateChanged;
     public event Action? ProgressUpdated;
+    public event Action<PlaybackAudioLevel>? AudioLevelUpdated;
 
     public EngineState State { get; private set; } = EngineState.Stopped;
     public int ActiveTrackId { get; private set; } = -1;
@@ -117,12 +215,13 @@ public sealed class PlaybackEngine : IDisposable
 
         // Create new primary slot.
         var reader = new AudioFileReader(filePath);
+        var analyzer = new AudioLevelSampleProvider(reader);
         var player = new WaveOutEvent();
         player.PlaybackStopped += OnPrimaryEnded;
-        player.Init(reader);
+        player.Init(new SampleToWaveProvider(analyzer));
 
         float startTransition = fadeInSeconds > 0f ? 0f : 1f;
-        _primary = new AudioSlot(player, reader, filePath, trackId, startTransition)
+        _primary = new AudioSlot(player, reader, analyzer, filePath, trackId, startTransition)
         {
             FadeTarget = 1f,
             FadeStep = fadeInSeconds > 0f ? 1f / (fadeInSeconds * 10f) : 0f,
@@ -220,11 +319,12 @@ public sealed class PlaybackEngine : IDisposable
     {
         var reader = new AudioFileReader(snapshot.FilePath);
         reader.CurrentTime = snapshot.Position <= reader.TotalTime ? snapshot.Position : reader.TotalTime;
+        var analyzer = new AudioLevelSampleProvider(reader);
         var player = new WaveOutEvent();
         if (isPrimary) player.PlaybackStopped += OnPrimaryEnded;
         else player.PlaybackStopped += OnSecondaryEnded;
-        player.Init(reader);
-        var slot = new AudioSlot(player, reader, snapshot.FilePath, snapshot.TrackId, snapshot.TransitionVolume)
+        player.Init(new SampleToWaveProvider(analyzer));
+        var slot = new AudioSlot(player, reader, analyzer, snapshot.FilePath, snapshot.TrackId, snapshot.TransitionVolume)
         {
             FadeTarget = snapshot.FadeTarget,
             FadeStep = snapshot.FadeStep
@@ -287,11 +387,14 @@ public sealed class PlaybackEngine : IDisposable
         }
 
         // Publish progress from the primary track.
-        if (_primary != null)
+        var primary = _primary;
+        if (primary != null)
         {
-            CurrentTime = _primary.Reader.CurrentTime;
-            TotalTime = _primary.Reader.TotalTime;
+            CurrentTime = primary.Reader.CurrentTime;
+            TotalTime = primary.Reader.TotalTime;
             ProgressUpdated?.Invoke();
+            if (_primary == primary)
+                AudioLevelUpdated?.Invoke(primary.Analyzer.LatestLevel);
         }
     }
 

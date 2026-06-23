@@ -29,7 +29,18 @@ public partial class MusicView : UserControl
     private readonly PlaybackEngine _engine = new();
     private readonly GlobalMediaKeyListener _globalMediaKeys = new();
     private readonly WindowsMediaSession _windowsMediaSession = new();
+    private readonly DispatcherTimer _atmosphereTimer = new() { Interval = TimeSpan.FromMilliseconds(33) };
+    private readonly SolidColorBrush _appAtmosphereBrush = new(Colors.Transparent);
+    private readonly SolidColorBrush _playerAtmosphereBrush = new(Colors.Transparent);
+    private readonly SolidColorBrush _playerTopGlowBrush = new(Colors.Transparent);
+    private readonly SolidColorBrush _playerBorderBrush = new(Color.Parse("#202832"));
     private bool _isSeeking;
+    private double _targetEnergy;
+    private double _targetBass;
+    private double _targetTreble;
+    private double _visualEnergy;
+    private double _visualBass;
+    private double _visualTreble;
 
     // Playback settings
     private bool _shuffle;
@@ -83,6 +94,8 @@ public partial class MusicView : UserControl
         _windowsMediaSession.Pressed += OnGlobalMediaKeyPressed;
         DetachedFromVisualTree += (_, _) =>
         {
+            _atmosphereTimer.Stop();
+            _engine.Dispose();
             _globalMediaKeys.Dispose();
             _windowsMediaSession.Dispose();
             ClearPlayerArtworkBackground(disposeCache: true);
@@ -92,6 +105,12 @@ public partial class MusicView : UserControl
         _engine.StateChanged += OnEngineStateChanged;
         _engine.TrackNaturallyEnded += OnTrackNaturallyEnded;
         _engine.ProgressUpdated += OnProgressUpdated;
+        _engine.AudioLevelUpdated += OnAudioLevelUpdated;
+        _atmosphereTimer.Tick += (_, _) => UpdateAudioReactiveAtmosphere();
+        AppAtmosphereTint.Fill = _appAtmosphereBrush;
+        PlayerAtmosphereTint.Background = _playerAtmosphereBrush;
+        PlayerTopGlow.Background = _playerTopGlowBrush;
+        PlayerBar.BorderBrush = _playerBorderBrush;
 
         // Seeking
         PlaybackSlider.AddHandler(PointerPressedEvent,
@@ -1647,6 +1666,11 @@ public partial class MusicView : UserControl
     {
         _windowsMediaSession.UpdateState(_engine.State);
         UpdateButtonStates();
+        if (_engine.State == EngineState.Playing)
+            StartAudioAtmosphereTimer();
+        else
+            FadeOutAudioAtmosphere();
+
         if (_engine.State == EngineState.Stopped)
         {
             _nextTrackIndex = -1;
@@ -1867,6 +1891,7 @@ public partial class MusicView : UserControl
         AppArtworkBackground.IsVisible = false;
         ListArtworkBackground.Source = null;
         ListArtworkBackground.IsVisible = false;
+        ResetAudioAtmosphere();
 
         if (!disposeCache)
             return;
@@ -1874,6 +1899,122 @@ public partial class MusicView : UserControl
         foreach (var artwork in _playerArtworkCache.Values)
             artwork?.Dispose();
         _playerArtworkCache.Clear();
+    }
+
+    // ─── Audio-reactive atmosphere ───────────────────────────────────────────
+
+    private void OnAudioLevelUpdated(PlaybackAudioLevel level)
+    {
+        if (_engine.State != EngineState.Playing)
+            return;
+
+        _targetEnergy = level.Energy;
+        _targetBass = level.Bass;
+        _targetTreble = level.Treble;
+        StartAudioAtmosphereTimer();
+    }
+
+    private void StartAudioAtmosphereTimer()
+    {
+        if (!_atmosphereTimer.IsEnabled)
+            _atmosphereTimer.Start();
+    }
+
+    private void FadeOutAudioAtmosphere()
+    {
+        _targetEnergy = 0;
+        _targetBass = 0;
+        _targetTreble = 0;
+        StartAudioAtmosphereTimer();
+    }
+
+    private void ResetAudioAtmosphere()
+    {
+        _targetEnergy = 0;
+        _targetBass = 0;
+        _targetTreble = 0;
+        _visualEnergy = 0;
+        _visualBass = 0;
+        _visualTreble = 0;
+        ApplyAudioAtmosphere();
+    }
+
+    private void UpdateAudioReactiveAtmosphere()
+    {
+        var easing = _engine.State == EngineState.Playing ? 0.16 : 0.10;
+        _visualEnergy = Approach(_visualEnergy, _targetEnergy, easing);
+        _visualBass = Approach(_visualBass, _targetBass, easing);
+        _visualTreble = Approach(_visualTreble, _targetTreble, easing);
+
+        ApplyAudioAtmosphere();
+
+        if (_engine.State == EngineState.Playing)
+            return;
+
+        if (_visualEnergy < 0.003 && _visualBass < 0.003 && _visualTreble < 0.003)
+        {
+            ResetAudioAtmosphere();
+            _atmosphereTimer.Stop();
+        }
+    }
+
+    private void ApplyAudioAtmosphere()
+    {
+        var energy = SoftLimit(_visualEnergy);
+        var bass = SoftLimit(_visualBass);
+        var treble = SoftLimit(_visualTreble);
+        var hasArtwork = AppArtworkBackground.IsVisible || PlayerArtworkBackground.IsVisible || ListArtworkBackground.IsVisible;
+
+        AppArtworkBackground.Opacity = AppArtworkBackground.IsVisible ? 0.16 + energy * 0.21 : 0;
+        PlayerArtworkBackground.Opacity = PlayerArtworkBackground.IsVisible ? 0.26 + energy * 0.29 : 0;
+        ListArtworkBackground.Opacity = ListArtworkBackground.IsVisible ? 0.20 + energy * 0.10 : 0;
+
+        SetScale(AppArtworkBackground, 1.08 + bass * 0.048);
+        SetScale(PlayerArtworkBackground, 1.06 + bass * 0.038);
+        SetScale(ListArtworkBackground, 1.06 + bass * 0.022);
+        SetBlur(AppArtworkBackground, 20 + energy * 8.0);
+        SetBlur(PlayerArtworkBackground, 60 + energy * 16.0 + treble * 6.5);
+        SetBlur(ListArtworkBackground, 20 + energy * 5.0);
+
+        var red = ToByte(30 + bass * 52 + treble * 88);
+        var green = ToByte(154 + energy * 58 + treble * 68);
+        var blue = ToByte(240 - bass * 48 + treble * 20);
+        _appAtmosphereBrush.Color = hasArtwork
+            ? Color.FromArgb(ToByte(energy * 52 + treble * 22), red, green, blue)
+            : Colors.Transparent;
+        _playerAtmosphereBrush.Color = hasArtwork
+            ? Color.FromArgb(ToByte(34 + energy * 92 + bass * 46), red, green, blue)
+            : Colors.Transparent;
+        _playerTopGlowBrush.Color = hasArtwork
+            ? Color.FromArgb(ToByte(70 + energy * 138 + treble * 68), red, green, blue)
+            : Colors.Transparent;
+        _playerBorderBrush.Color = hasArtwork
+            ? Color.FromArgb(ToByte(56 + energy * 104), red, green, blue)
+            : Color.Parse("#202832");
+    }
+
+    private static double Approach(double current, double target, double amount) =>
+        current + (target - current) * amount;
+
+    private static double SoftLimit(double value) =>
+        Math.Clamp(1 - Math.Exp(-Math.Max(0, value) * 1.45), 0, 1);
+
+    private static byte ToByte(double value) =>
+        (byte)Math.Clamp((int)Math.Round(value), 0, 255);
+
+    private static void SetScale(Image image, double scale)
+    {
+        if (image.RenderTransform is ScaleTransform transform)
+        {
+            transform.ScaleX = scale;
+            transform.ScaleY = scale;
+        }
+    }
+
+    private static void SetBlur(Image image, double radius)
+    {
+        if (image.Effect is BlurEffect blur)
+            blur.Radius = radius;
     }
 
     // ─── Listening telemetry ─────────────────────────────────────────────────

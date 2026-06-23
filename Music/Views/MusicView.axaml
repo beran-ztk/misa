@@ -97,6 +97,9 @@
             <BlurEffect Radius="20"/>
         </Image.Effect>
     </Image>
+    <Rectangle x:Name="AppAtmosphereTint"
+               Fill="#00000000"
+               IsHitTestVisible="False"/>
     <Rectangle Fill="#A0121417" IsHitTestVisible="False"/>
     <DockPanel LastChildFill="True">
 
@@ -194,7 +197,7 @@
                 Background="Transparent"
                 ClipToBounds="True"
                 CornerRadius="10,10,0,0"
-                BorderThickness="0,1,0,0" BorderBrush="#202832">
+                BorderThickness="3,2,3,0" BorderBrush="#50202832">
             <Panel>
                 <Image x:Name="PlayerArtworkBackground"
                        IsVisible="False"
@@ -211,9 +214,19 @@
                         <BlurEffect Radius="60"/>
                     </Image.Effect>
                 </Image>
-                <Rectangle Fill="#0007080A" IsHitTestVisible="False"/>
-                <Rectangle Fill="#00000000" IsHitTestVisible="False"/>
-                <Rectangle Fill="#00000000" IsHitTestVisible="False"/>
+                <Border x:Name="PlayerAtmosphereTint"
+                        Background="#00000000"
+                        CornerRadius="10,10,0,0"
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Stretch"
+                        IsHitTestVisible="False"/>
+                <Border x:Name="PlayerTopGlow"
+                        Height="0"
+                        CornerRadius="10,10,0,0"
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Top"
+                        Background="#00000000"
+                        IsHitTestVisible="False"/>
                 <StackPanel Margin="16,10,16,0">
 
                     <Border x:Name="UpcomingBar"
