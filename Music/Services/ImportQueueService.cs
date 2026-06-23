@@ -7,7 +7,7 @@ using Music.Models;
 
 namespace Music.Services;
 
-/// <summary>Persists import plans and processes one item at a time without blocking the UI.</summary>
+/// <summary>Persists import plans and downloads one item at a time without blocking the UI.</summary>
 public sealed class ImportQueueService
 {
     public static readonly ImportQueueService Current = new();
@@ -152,14 +152,11 @@ public sealed class ImportQueueService
             var result = await MusicLibraryService.Current.ImportFromYouTubeAsync(item.CanonicalUrl,
                 new Progress<string>(message =>
                 {
-                    var status = message.StartsWith("Analyzing", StringComparison.OrdinalIgnoreCase)
-                        ? ImportQueueStatus.Analyzing
-                        : ImportQueueStatus.Downloading;
-                    Update(currentItem, status, message);
+                    Update(currentItem, ImportQueueStatus.Downloading, message);
                 }),
                 trackId =>
                 {
-                    Update(currentItem, ImportQueueStatus.Analyzing, "Analyzing track…", trackId);
+                    Update(currentItem, ImportQueueStatus.Downloading, "Downloaded; queued for analysis", trackId);
                     currentItem = currentItem with { TrackId = trackId };
                 });
 
@@ -190,9 +187,8 @@ public sealed class ImportQueueService
             return;
         }
 
-        Update(item, ImportQueueStatus.Analyzing, "Resuming analysis…", track.Id);
-        var error = await MusicLibraryService.Current.AnalyzeTrackAsync(track);
-        CompleteImport(item, track, error is null ? null : $"Track downloaded, but analysis needs review: {error}");
+        BackgroundAnalysisService.Current.EnqueueTrack(track.Id);
+        CompleteImport(item, track, null);
     }
 
     private void CompleteImport(ImportQueueItem item, MusicTrack track, string? warning)

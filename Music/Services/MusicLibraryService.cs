@@ -22,6 +22,7 @@ public class MusicLibraryService
     // --- Tracks ---
 
     public List<MusicTrack> GetTracks() => _db.GetAllTracks();
+    public List<MusicTrack> GetUnanalyzedTracks() => _db.GetUnanalyzedTracks();
     public MusicTrack? GetTrackById(int id) => GetTracks().FirstOrDefault(track => track.Id == id);
     public MusicTrack? GetTrackByCanonicalUrl(string canonicalUrl) =>
         GetTracks().FirstOrDefault(track => string.Equals(track.CanonicalUrl, canonicalUrl, StringComparison.OrdinalIgnoreCase));
@@ -48,7 +49,8 @@ public class MusicLibraryService
     public void RequeueInterruptedImports()
     {
         foreach (var item in _db.GetInterruptedImportQueueItems())
-            CleanupInterruptedImport(item);
+            if (item.Status == ImportQueueStatus.Downloading)
+                CleanupInterruptedImport(item);
         _db.RequeueInterruptedImports();
     }
     public ImportQueueItem? GetNextQueuedImport() => _db.GetNextQueuedImport();
@@ -236,18 +238,8 @@ public class MusicLibraryService
         var trackId = _db.InsertTrack(canonicalUrl, metadata?.Title ?? _downloader.TitleFromFileName(fileName), fileName,
             request.GenreIds, request.RatingId, request.StyleIds, duration, fileSizeBytes, (int)downloadStopwatch.ElapsedMilliseconds, metadata);
 
-        progress?.Report(AnalysisProgressText(duration, fileSizeBytes));
-        var stopwatch = Stopwatch.StartNew();
-        var (analysis, analysisError) = await _analysis.AnalyzeAsync(filePath);
-        if (analysis is not null)
-        {
-            _db.SaveTrackAnalysis(trackId, analysis, (int)stopwatch.ElapsedMilliseconds);
-            CacheExperimentalAnalysis(trackId, analysis);
-            return new DownloadResult(true);
-        }
-
-        _db.SetTrackNeedsReview(trackId, true);
-        return new DownloadResult(true, Warning: $"Track downloaded, but analysis needs review: {analysisError}");
+        BackgroundAnalysisService.Current.EnqueueTrack(trackId);
+        return new DownloadResult(true);
     }
 
     public async Task<ImportResult> ImportFromYouTubeAsync(
@@ -284,21 +276,11 @@ public class MusicLibraryService
         var trackId = _db.InsertTrack(canonicalUrl, metadata?.Title ?? _downloader.TitleFromFileName(fileName), fileName,
             [], null, [], duration, fileSizeBytes, (int)downloadStopwatch.ElapsedMilliseconds, metadata);
         trackCreated?.Invoke(trackId);
-        progress?.Report(AnalysisProgressText(duration, fileSizeBytes));
-        var stopwatch = Stopwatch.StartNew();
-        var (analysis, analysisError) = await _analysis.AnalyzeAsync(filePath);
-        if (analysis is not null)
-        {
-            _db.SaveTrackAnalysis(trackId, analysis, (int)stopwatch.ElapsedMilliseconds);
-            CacheExperimentalAnalysis(trackId, analysis);
-        }
-        else
-            _db.SetTrackNeedsReview(trackId, true);
+        BackgroundAnalysisService.Current.EnqueueTrack(trackId);
 
         return new ImportResult(
             true,
-            GetTracks().Single(track => track.Id == trackId),
-            Warning: analysis is null ? $"Track downloaded, but analysis needs review: {analysisError}" : null);
+            GetTracks().Single(track => track.Id == trackId));
     }
 
     public async Task<string?> AnalyzeTrackAsync(MusicTrack track)

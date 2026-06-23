@@ -142,6 +142,7 @@ public partial class MusicView : UserControl
         try { MusicLibraryService.Current.Initialize(); }
         catch (Exception ex) { StatusText.Text = $"Database error: {ex.Message}"; StatusText.IsVisible = true; return; }
         ImportQueueService.Current.Initialize();
+        BackgroundAnalysisService.Current.Initialize();
         UpdateQueueStatus();
         UpdateImportBounds();
 
@@ -161,7 +162,7 @@ public partial class MusicView : UserControl
         {
             AddTrackOverlay.IsVisible = false;
             RefreshTrackList();
-            ShowToast(warning ?? "Track downloaded and analyzed");
+            ShowToast(warning ?? "Track downloaded; analysis queued");
         };
         AddTrackOverlay.CloseRequested += () => AddTrackOverlay.IsVisible = false;
         ImportOverlay.QueueSubmitted += count =>
@@ -179,6 +180,17 @@ public partial class MusicView : UserControl
             RefreshTrackList();
             ShowToast(warning ?? $"Imported: {track.Title}");
         });
+        BackgroundAnalysisService.Current.QueueChanged += () => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            RefreshTrackList();
+            if (ImportOverlay.IsVisible) ImportOverlay.RefreshQueue();
+        });
+        BackgroundAnalysisService.Current.TrackAnalysisFinished += (_, _) =>
+            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            {
+                RefreshTrackList();
+                if (ImportOverlay.IsVisible) ImportOverlay.RefreshQueue();
+            });
         EditTrackOverlay.TrackSaved += RefreshTrackList;
         EditTrackOverlay.PreviewRequested += StartTrackPreview;
         EditTrackOverlay.PreviewClosed += StopTrackPreview;
@@ -272,6 +284,9 @@ public partial class MusicView : UserControl
             item.Thumbnail?.Dispose();
 
         var tracks = MusicLibraryService.Current.GetTracks();
+        var unanalyzedTrackIds = MusicLibraryService.Current.GetUnanalyzedTracks()
+            .Select(track => track.Id)
+            .ToHashSet();
         _allTrackStyleIds = MusicLibraryService.Current.GetAllTrackStyleIds();
         _allTrackGenreIds = MusicLibraryService.Current.GetAllTrackGenreIds();
         _allTrackTagIds = MusicLibraryService.Current.GetAllTrackTagIds();
@@ -335,7 +350,8 @@ public partial class MusicView : UserControl
             
             return new TrackDisplayItem(t, genreStr, modelGenreStr, manualGenreStr, styleStr, durationText, ratingName, profileText, tagDisplays, t.ChannelName ?? "")
             {
-                NeedsReview = t.NeedsReview
+                NeedsReview = t.NeedsReview,
+                NeedsAnalysis = unanalyzedTrackIds.Contains(t.Id)
             };
         }).ToList();
 

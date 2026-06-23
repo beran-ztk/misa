@@ -62,7 +62,14 @@ public partial class ImportOverlay : UserControl
         EmptyQueueText.IsVisible = sources.Count == 0;
         foreach (var source in sources)
             QueueSources.Children.Add(CreateSourceCard(source));
-        UpdateQueueElapsedTimer(sources);
+
+        AnalysisQueueRows.Children.Clear();
+        var analysisItems = GetAnalysisQueueItems();
+        EmptyAnalysisQueueText.IsVisible = analysisItems.Count == 0;
+        foreach (var item in analysisItems)
+            AnalysisQueueRows.Children.Add(CreateAnalysisQueueRow(item));
+
+        UpdateQueueElapsedTimer(sources, analysisItems);
     }
 
     private void FocusFirstInput() => InputUrlBox.Focus();
@@ -285,12 +292,16 @@ public partial class ImportOverlay : UserControl
         IsVisible = false;
     }
 
-    private void UpdateQueueElapsedTimer(IReadOnlyList<ImportQueueSource>? sources = null)
+    private void UpdateQueueElapsedTimer(
+        IReadOnlyList<ImportQueueSource>? sources = null,
+        IReadOnlyList<AnalysisQueueItem>? analysisItems = null)
     {
         var hasActiveItem = sources?.Any(source => source.Items.Any(IsActiveQueueItem))
                             ?? ImportQueueService.Current.GetSources().Any(source => source.Items.Any(IsActiveQueueItem));
+        var hasActiveAnalysis = analysisItems?.Any(item => item.IsActive)
+                                ?? BackgroundAnalysisService.Current.GetSnapshot().ActiveTrackId is not null;
 
-        if (IsVisible && hasActiveItem)
+        if (IsVisible && (hasActiveItem || hasActiveAnalysis))
             _queueElapsedTimer.Start();
         else
             _queueElapsedTimer.Stop();
@@ -351,6 +362,46 @@ public partial class ImportOverlay : UserControl
         ? $"{(int)value.TotalHours}:{value.Minutes:00}:{value.Seconds:00}"
         : $"{(int)value.TotalMinutes}:{value.Seconds:00}";
 
+    private static IReadOnlyList<AnalysisQueueItem> GetAnalysisQueueItems()
+    {
+        var snapshot = BackgroundAnalysisService.Current.GetSnapshot();
+        var tracks = MusicLibraryService.Current.GetTracks()
+            .Where(track => track.Id == snapshot.ActiveTrackId || snapshot.PendingTrackIds.Contains(track.Id))
+            .ToDictionary(track => track.Id);
+
+        var items = new List<AnalysisQueueItem>();
+        if (snapshot.ActiveTrackId is int activeTrackId && tracks.TryGetValue(activeTrackId, out var activeTrack))
+            items.Add(new AnalysisQueueItem(activeTrack.Title, "analyzing", true));
+
+        items.AddRange(snapshot.PendingTrackIds
+            .Where(id => tracks.ContainsKey(id))
+            .Select(id => new AnalysisQueueItem(tracks[id].Title, "waiting", false)));
+        return items;
+    }
+
+    private static Control CreateAnalysisQueueRow(AnalysisQueueItem item)
+    {
+        var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), Margin = new Thickness(0, 1) };
+        row.Children.Add(new TextBlock
+        {
+            Text = item.Title,
+            FontSize = 10.5,
+            Foreground = new SolidColorBrush(Color.Parse(item.IsActive ? "#E87878" : "#D89A9A")),
+            TextTrimming = TextTrimming.CharacterEllipsis
+        });
+        var state = new TextBlock
+        {
+            Text = item.Status,
+            FontSize = 9.5,
+            Foreground = new SolidColorBrush(Color.Parse(item.IsActive ? "#E87878" : "#A97878")),
+            Margin = new Thickness(10, 0, 0, 0),
+            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
+        };
+        Grid.SetColumn(state, 1);
+        row.Children.Add(state);
+        return row;
+    }
+
     private sealed class PendingImportPreview
     {
         public PendingImportPreview(string sourceUrl)
@@ -363,4 +414,6 @@ public partial class ImportOverlay : UserControl
         public bool IsChecking { get; set; } = true;
         public string StatusText { get; set; } = "Reading link…";
     }
+
+    private sealed record AnalysisQueueItem(string Title, string Status, bool IsActive);
 }

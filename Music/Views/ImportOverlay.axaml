@@ -44,6 +44,13 @@
                     </StackPanel>
                     <TextBlock x:Name="EmptyQueueText" Text="Nothing is waiting yet." FontSize="12" Opacity="0.5" Margin="0,14,0,0"/>
                     <StackPanel x:Name="QueueSources" Spacing="10"/>
+                    <StackPanel Spacing="3" Margin="0,12,0,0">
+                        <TextBlock Text="ANALYSIS QUEUE" FontSize="10" FontWeight="SemiBold" LetterSpacing="1" Opacity="0.45"/>
+                        <TextBlock Text="Downloaded tracks waiting for model data."
+                                   FontSize="11" Opacity="0.66"/>
+                    </StackPanel>
+                    <TextBlock x:Name="EmptyAnalysisQueueText" Text="No analysis pending." FontSize="12" Opacity="0.5"/>
+                    <StackPanel x:Name="AnalysisQueueRows" Spacing="6"/>
                 </StackPanel>
             </Grid>
         </ScrollViewer>

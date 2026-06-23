@@ -20,6 +20,7 @@ public record TrackDisplayItem(
 {
     public bool IsPlaying { get; set; }
     public bool NeedsReview { get; set; }
+    public bool NeedsAnalysis { get; set; }
     public Bitmap? Thumbnail { get; set; }
 
     public string ChannelSeparatorText => string.IsNullOrWhiteSpace(ChannelText)
@@ -38,7 +39,9 @@ public record TrackDisplayItem(
         ? new SolidColorBrush(Color.FromRgb(39, 172, 231))
         : Brushes.Transparent;
 
-    public IBrush TitleBrush => NeedsReview
+    public IBrush TitleBrush => NeedsAnalysis
+        ? new SolidColorBrush(Color.FromRgb(238, 92, 92))
+        : NeedsReview
         ? new SolidColorBrush(Color.FromRgb(255, 210, 122))
         : IsPlaying
             ? new SolidColorBrush(Color.FromRgb(246, 251, 255))
