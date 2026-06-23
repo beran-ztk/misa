@@ -33,7 +33,7 @@ public partial class MusicView : UserControl
     private readonly SolidColorBrush _appAtmosphereBrush = new(Colors.Transparent);
     private readonly SolidColorBrush _playerAtmosphereBrush = new(Colors.Transparent);
     private readonly SolidColorBrush _playerTopGlowBrush = new(Colors.Transparent);
-    private readonly SolidColorBrush _playerBorderBrush = new(Color.Parse("#202832"));
+    private readonly SolidColorBrush _playerChromeEdgeBrush = new(Color.Parse("#30283A46"));
     private bool _isSeeking;
     private double _targetEnergy;
     private double _targetBass;
@@ -109,8 +109,8 @@ public partial class MusicView : UserControl
         _atmosphereTimer.Tick += (_, _) => UpdateAudioReactiveAtmosphere();
         AppAtmosphereTint.Fill = _appAtmosphereBrush;
         PlayerAtmosphereTint.Background = _playerAtmosphereBrush;
+        PlayerChromeEdge.Background = _playerChromeEdgeBrush;
         PlayerTopGlow.Background = _playerTopGlowBrush;
-        PlayerBar.BorderBrush = _playerBorderBrush;
 
         // Seeking
         PlaybackSlider.AddHandler(PointerPressedEvent,
@@ -1986,11 +1986,11 @@ public partial class MusicView : UserControl
             ? Color.FromArgb(ToByte(24 + energy * 82 + bass * 40), red, green, blue)
             : Colors.Transparent;
         _playerTopGlowBrush.Color = hasArtwork
-            ? Color.FromArgb(ToByte(54 + energy * 120 + treble * 58), red, green, blue)
+            ? Color.FromArgb(ToByte(42 + energy * 92 + treble * 42), red, green, blue)
             : Colors.Transparent;
-        _playerBorderBrush.Color = hasArtwork
-            ? Color.FromArgb(ToByte(44 + energy * 92), red, green, blue)
-            : Color.Parse("#202832");
+        _playerChromeEdgeBrush.Color = hasArtwork
+            ? Color.FromArgb(ToByte(28 + energy * 42), red, green, blue)
+            : Color.Parse("#30283A46");
     }
 
     private static double Approach(double current, double target, double amount) =>

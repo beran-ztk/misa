@@ -197,7 +197,7 @@
                 Background="Transparent"
                 ClipToBounds="True"
                 CornerRadius="10,10,0,0"
-                BorderThickness="3,2,3,0" BorderBrush="#50202832">
+                BorderThickness="0">
             <Panel>
                 <Image x:Name="PlayerArtworkBackground"
                        IsVisible="False"
@@ -214,11 +214,24 @@
                         <BlurEffect Radius="60"/>
                     </Image.Effect>
                 </Image>
+                <Border Background="#72070A0E"
+                        CornerRadius="10,10,0,0"
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Stretch"
+                        IsHitTestVisible="False"/>
                 <Border x:Name="PlayerAtmosphereTint"
                         Background="#00000000"
                         CornerRadius="10,10,0,0"
                         HorizontalAlignment="Stretch"
                         VerticalAlignment="Stretch"
+                        IsHitTestVisible="False"/>
+                <Border x:Name="PlayerChromeEdge"
+                        Height="1"
+                        Margin="10,0"
+                        CornerRadius="1"
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Top"
+                        Background="#30283A46"
                         IsHitTestVisible="False"/>
                 <Border x:Name="PlayerTopGlow"
                         Height="0"
