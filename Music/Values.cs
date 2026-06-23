@@ -20,6 +20,7 @@ public static class Values
     public static float Volume = 1f;
     public const int CrossfadeDurationSeconds = 10;
     public const int ManualFadeDurationSeconds = 2;
+    public const int MaxParallelDownloadWorkers = 5;
     
     public static List<Genre> Genres = [];
     public static List<Tag> Tags = [];

@@ -23,6 +23,7 @@ public class TrackDownloadService
             Path.Combine(Values.ToolsDirectory, "yt-dlp.exe"),
             "--js-runtimes", "node",
             "--no-playlist",
+            "-f", "bestaudio[ext=m4a]/bestaudio/best[height<=360]/18",
             "-x",
             "--audio-format", "m4a",
             "--embed-thumbnail",
@@ -115,6 +116,11 @@ public class TrackDownloadService
             {
                 arguments.Add("--playlist-end");
                 arguments.Add(GeneratedMixEntryLimit.ToString(CultureInfo.InvariantCulture));
+            }
+            else if (QueryValue(url, "list") is not null)
+            {
+                arguments.Add("--playlist-items");
+                arguments.Add("1:500");
             }
             arguments.Add(playlistUrl);
             var result = await RunProcessAsync(

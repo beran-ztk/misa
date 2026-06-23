@@ -14,7 +14,7 @@ public class MusicDatabase
 {
     private const string AssetBaseUri = "avares://Music/Assets/";
     private const string RemovedMoodThemeModelName = "mtg_" + "jamen" + "do_" + "mood" + "theme";
-    private readonly string _connectionString = $"Data Source={Values.DbPath}";
+    private readonly string _connectionString = $"Data Source={Values.DbPath};Default Timeout=30";
 
     private SqliteConnection Open()
     {
@@ -22,6 +22,8 @@ public class MusicDatabase
         conn.Open();
         using var cmd = conn.CreateCommand();
         cmd.CommandText = "PRAGMA foreign_keys = ON;";
+        cmd.ExecuteNonQuery();
+        cmd.CommandText = "PRAGMA busy_timeout = 30000;";
         cmd.ExecuteNonQuery();
         return conn;
     }

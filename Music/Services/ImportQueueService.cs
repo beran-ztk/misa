@@ -14,6 +14,7 @@ public sealed class ImportQueueService
 
     private readonly TrackDownloadService _downloader = new();
     private readonly object _workerGate = new();
+    private readonly object _claimGate = new();
     private readonly object _phaseGate = new();
     private readonly Dictionary<int, ImportQueuePhase> _activePhases = [];
     private Task? _workerTask;
@@ -133,21 +134,60 @@ public sealed class ImportQueueService
 
     private async Task ProcessQueueAsync()
     {
-        while (MusicLibraryService.Current.GetNextQueuedImport() is { } item)
+        try
         {
+            var workerCount = Math.Max(1, Values.MaxParallelDownloadWorkers);
+            var workers = Enumerable.Range(0, workerCount)
+                .Select(_ => ProcessQueueWorkerAsync())
+                .ToArray();
+            await Task.WhenAll(workers);
+        }
+        finally
+        {
+            lock (_workerGate)
+            {
+                _workerTask = null;
+                if (MusicLibraryService.Current.GetNextQueuedImport() is not null)
+                    _workerTask = Task.Run(ProcessQueueAsync);
+            }
+        }
+    }
+
+    private async Task ProcessQueueWorkerAsync()
+    {
+        while (ClaimNextQueuedImport() is { } item)
+            await ProcessQueueItemAsync(item);
+    }
+
+    private ImportQueueItem? ClaimNextQueuedImport()
+    {
+        lock (_claimGate)
+        {
+            var item = MusicLibraryService.Current.GetNextQueuedImport();
+            if (item is null)
+                return null;
+
             if (IsInterruptedRetry(item))
             {
                 MusicLibraryService.Current.CleanupInterruptedImport(item);
                 item = item with { TrackId = null };
             }
 
+            Update(item, ImportQueueStatus.Downloading, "Checking download details…");
+            return item with { Status = ImportQueueStatus.Downloading, Detail = "Checking download details…" };
+        }
+    }
+
+    private async Task ProcessQueueItemAsync(ImportQueueItem item)
+    {
+        try
+        {
             if (GetRecoverableTrack(item) is { } existingTrack)
             {
                 await CompleteRecoveredTrackAsync(item, existingTrack);
-                continue;
+                return;
             }
 
-            Update(item, ImportQueueStatus.Downloading, "Checking download details…");
             var currentItem = item;
             var result = await MusicLibraryService.Current.ImportFromYouTubeAsync(item.CanonicalUrl,
                 new Progress<string>(message =>
@@ -164,6 +204,11 @@ public sealed class ImportQueueService
                 CompleteImport(item, result.Track, result.Warning);
             else
                 Update(item, ImportQueueStatus.Failed, result.Error ?? "Import failed");
+        }
+        catch (Exception exception)
+        {
+            Update(item, ImportQueueStatus.Failed, $"Import failed: {exception.Message}");
+            ClearActivePhase(item.Id);
         }
     }
 
