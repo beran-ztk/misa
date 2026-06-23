@@ -99,6 +99,9 @@
                     <ToggleButton x:Name="LibraryNavButton" Classes="settings-nav"
                                   Content="Locations" Tag="library"
                                   Click="OnSettingsNavigationClicked"/>
+                    <ToggleButton x:Name="BackupNavButton" Classes="settings-nav"
+                                  Content="Backup" Tag="backup"
+                                  Click="OnSettingsNavigationClicked"/>
                     <ToggleButton x:Name="ExportNavButton" Classes="settings-nav"
                                   Content="Export" Tag="export"
                                   Click="OnSettingsNavigationClicked"/>
@@ -219,6 +222,32 @@
                             Padding="14,7"
                             Background="#26313A"
                             BorderBrush="#425365"/>
+                </StackPanel>
+            </ScrollViewer>
+
+            <ScrollViewer x:Name="BackupPage" Grid.Row="2" IsVisible="False" Margin="30,22,30,0"
+                          HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Spacing="22">
+                    <StackPanel Spacing="5">
+                        <TextBlock Text="Database backup" FontSize="15" FontWeight="SemiBold"/>
+                        <TextBlock Text="On startup, the app creates one database copy per day in each selected folder."
+                                   FontSize="11" Opacity="0.62" TextWrapping="Wrap"/>
+                    </StackPanel>
+
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                        <StackPanel Spacing="5">
+                            <TextBlock Text="BACKUP FOLDERS" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
+                            <TextBlock Text="Recommended: one folder on an external drive and one folder synced to cloud storage."
+                                       FontSize="11" Opacity="0.56" TextWrapping="Wrap"/>
+                        </StackPanel>
+                        <Button Grid.Column="1"
+                                Classes="settings-action"
+                                Content="Add folder"
+                                Click="OnAddBackupDirectoryClicked"
+                                VerticalAlignment="Top"/>
+                    </Grid>
+
+                    <StackPanel x:Name="BackupDirectoryRows" Spacing="8"/>
                 </StackPanel>
             </ScrollViewer>
 

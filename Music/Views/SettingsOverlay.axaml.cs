@@ -7,6 +7,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Platform.Storage;
 using Avalonia.Svg.Skia;
 using Music.Models;
 using Music.Services;
@@ -52,6 +53,7 @@ public partial class SettingsOverlay : UserControl
     {
         DatabasePathText.Text = Values.DbPath;
         TracksPathText.Text = Values.TracksDirectory;
+        RebuildBackupDirectoryRows();
         SelectPage(SettingsPage.Library);
         IsVisible = true;
     }
@@ -450,6 +452,7 @@ public partial class SettingsOverlay : UserControl
         SelectPage(value switch
         {
             "library" => SettingsPage.Library,
+            "backup" => SettingsPage.Backup,
             "export" => SettingsPage.Export,
             "calibration" => SettingsPage.AnalysisCalibration,
             "tags" => SettingsPage.Tags,
@@ -466,15 +469,18 @@ public partial class SettingsOverlay : UserControl
         _selectedPage = page;
         var isGenreVocabularyPage = page == SettingsPage.GenreVocabulary;
         var isLibraryPage = page == SettingsPage.Library;
+        var isBackupPage = page == SettingsPage.Backup;
         var isExportPage = page == SettingsPage.Export;
         GenreVocabularyPage.IsVisible = isGenreVocabularyPage;
         LibraryPage.IsVisible = isLibraryPage;
+        BackupPage.IsVisible = isBackupPage;
         ExportPage.IsVisible = isExportPage;
         AnalysisCalibrationPage.IsVisible = page == SettingsPage.AnalysisCalibration;
         TagsPage.IsVisible = page == SettingsPage.Tags;
         TagRulesPage.IsVisible = page == SettingsPage.TagRules;
         GenreVocabularyNavButton.IsChecked = isGenreVocabularyPage;
         LibraryNavButton.IsChecked = isLibraryPage;
+        BackupNavButton.IsChecked = isBackupPage;
         ExportNavButton.IsChecked = isExportPage;
         AnalysisCalibrationNavButton.IsChecked = page == SettingsPage.AnalysisCalibration;
         TagsNavButton.IsChecked = page == SettingsPage.Tags;
@@ -483,6 +489,7 @@ public partial class SettingsOverlay : UserControl
         PageTitleText.Text = page switch
         {
             SettingsPage.Library => "Library",
+            SettingsPage.Backup => "Backup",
             SettingsPage.Export => "Export",
             SettingsPage.AnalysisCalibration => "Analysis calibration",
             SettingsPage.Tags => "Tags",
@@ -493,21 +500,112 @@ public partial class SettingsOverlay : UserControl
             ? "Review the genre categories and subgenres used directly by the library."
             : isLibraryPage
                 ? "Where this installation keeps the local music library and its database."
-                : isExportPage
-                    ? "Export the current library into a portable folder."
-                : page == SettingsPage.Tags
-                    ? "Maintain your curated labels. Tags can describe mood, themes, situations or workflow states without turning them into genres."
-                    : page == SettingsPage.TagRules
-                        ? "Turn model signals into reviewable tag suggestions. Rules never assign tags automatically in this first version."
-                        : "Compare current system interpretations before turning them into filters.";
+                : isBackupPage
+                    ? "Keep daily database snapshots in your backup locations."
+                    : isExportPage
+                        ? "Export the current library into a portable folder."
+                    : page == SettingsPage.Tags
+                        ? "Maintain your curated labels. Tags can describe mood, themes, situations or workflow states without turning them into genres."
+                        : page == SettingsPage.TagRules
+                            ? "Turn model signals into reviewable tag suggestions. Rules never assign tags automatically in this first version."
+                            : "Compare current system interpretations before turning them into filters.";
         SummaryText.Text = isGenreVocabularyPage ? BuildSummaryText() : "";
         if (isGenreVocabularyPage) RebuildGenreVocabularyRows();
+        if (isBackupPage) RebuildBackupDirectoryRows();
         if (page == SettingsPage.AnalysisCalibration) RebuildCalibrationRows();
         if (page == SettingsPage.Tags) ReloadTagManagement(SelectedTagCategoryId());
         if (page == SettingsPage.TagRules) ReloadTagRules();
     }
 
     private void OnExportRequestedClicked(object? sender, RoutedEventArgs e) => ExportRequested?.Invoke();
+
+    private async void OnAddBackupDirectoryClicked(object? sender, RoutedEventArgs e)
+    {
+        var topLevel = TopLevel.GetTopLevel(this);
+        if (topLevel == null) return;
+
+        var folders = await topLevel.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+        {
+            Title = "Choose database backup folder",
+            AllowMultiple = false
+        });
+        if (folders.Count == 0) return;
+
+        try
+        {
+            DatabaseBackupService.Current.AddBackupDirectory(folders[0].Path.LocalPath);
+            var backupResult = DatabaseBackupService.Current.EnsureTodayBackups();
+            RebuildBackupDirectoryRows();
+            ToastRequested?.Invoke(backupResult.Errors.Count > 0
+                ? $"Backup folder added, but backup failed: {backupResult.Errors[0]}"
+                : backupResult.Created.Count > 0
+                    ? "Backup folder added; today's backup was created."
+                    : "Backup folder added.");
+        }
+        catch (Exception exception)
+        {
+            ToastRequested?.Invoke($"Could not add backup folder: {exception.Message}");
+        }
+    }
+
+    private void RebuildBackupDirectoryRows()
+    {
+        if (!IsInitialized) return;
+
+        BackupDirectoryRows.Children.Clear();
+        var directories = DatabaseBackupService.Current.GetBackupDirectories();
+        if (directories.Count == 0)
+        {
+            BackupDirectoryRows.Children.Add(new TextBlock
+            {
+                Text = "No backup folder selected yet.",
+                FontSize = 12,
+                Opacity = 0.55
+            });
+            return;
+        }
+
+        foreach (var directory in directories)
+            BackupDirectoryRows.Children.Add(CreateBackupDirectoryRow(directory));
+    }
+
+    private Control CreateBackupDirectoryRow(string directory)
+    {
+        var row = new Border
+        {
+            Background = new SolidColorBrush(Color.Parse("#D60E1217")),
+            BorderBrush = new SolidColorBrush(Color.Parse("#253542")),
+            BorderThickness = new Avalonia.Thickness(1),
+            CornerRadius = new Avalonia.CornerRadius(7),
+            Padding = new Avalonia.Thickness(12, 9)
+        };
+        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), ColumnSpacing = 12 };
+        grid.Children.Add(new TextBlock
+        {
+            Text = directory,
+            FontSize = 12,
+            TextWrapping = TextWrapping.Wrap,
+            VerticalAlignment = VerticalAlignment.Center
+        });
+
+        var removeButton = new Button
+        {
+            Content = "Remove",
+            Classes = { "settings-action" },
+            Padding = new Avalonia.Thickness(10, 5),
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        removeButton.Click += (_, _) =>
+        {
+            DatabaseBackupService.Current.RemoveBackupDirectory(directory);
+            RebuildBackupDirectoryRows();
+            ToastRequested?.Invoke("Backup folder removed.");
+        };
+        Grid.SetColumn(removeButton, 1);
+        grid.Children.Add(removeButton);
+        row.Child = grid;
+        return row;
+    }
 
     private void ReloadTagManagement(int? selectedCategoryId = null)
     {
@@ -1244,5 +1342,5 @@ public partial class SettingsOverlay : UserControl
             .OrderByDescending(item => item.value.Score).Take(3).Select(item => $"{item.Model}: {item.value.Label} {item.value.Score:0.##}"));
     }
 
-    private enum SettingsPage { GenreVocabulary, Library, Export, AnalysisCalibration, Tags, TagRules }
+    private enum SettingsPage { GenreVocabulary, Library, Backup, Export, AnalysisCalibration, Tags, TagRules }
 }

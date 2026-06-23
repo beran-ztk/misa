@@ -141,6 +141,9 @@ public partial class MusicView : UserControl
         
         try { MusicLibraryService.Current.Initialize(); }
         catch (Exception ex) { StatusText.Text = $"Database error: {ex.Message}"; StatusText.IsVisible = true; return; }
+        var backupResult = DatabaseBackupService.Current.EnsureTodayBackups();
+        if (backupResult.Errors.Count > 0)
+            ShowToast($"Database backup warning: {backupResult.Errors[0]}");
         ImportQueueService.Current.Initialize();
         BackgroundAnalysisService.Current.Initialize();
         UpdateQueueStatus();
