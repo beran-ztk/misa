@@ -53,6 +53,7 @@ public partial class SettingsOverlay : UserControl
     {
         DatabasePathText.Text = Values.DbPath;
         TracksPathText.Text = Values.TracksDirectory;
+        FirefoxCookiesToggle.IsChecked = Values.UseFirefoxCookiesForYtDlp;
         RebuildBackupDirectoryRows();
         SelectPage(SettingsPage.Library);
         IsVisible = true;
@@ -454,6 +455,7 @@ public partial class SettingsOverlay : UserControl
             "library" => SettingsPage.Library,
             "backup" => SettingsPage.Backup,
             "export" => SettingsPage.Export,
+            "runtime" => SettingsPage.Runtime,
             "calibration" => SettingsPage.AnalysisCalibration,
             "tags" => SettingsPage.Tags,
             "tag_rules" => SettingsPage.TagRules,
@@ -471,10 +473,12 @@ public partial class SettingsOverlay : UserControl
         var isLibraryPage = page == SettingsPage.Library;
         var isBackupPage = page == SettingsPage.Backup;
         var isExportPage = page == SettingsPage.Export;
+        var isRuntimePage = page == SettingsPage.Runtime;
         GenreVocabularyPage.IsVisible = isGenreVocabularyPage;
         LibraryPage.IsVisible = isLibraryPage;
         BackupPage.IsVisible = isBackupPage;
         ExportPage.IsVisible = isExportPage;
+        RuntimePage.IsVisible = isRuntimePage;
         AnalysisCalibrationPage.IsVisible = page == SettingsPage.AnalysisCalibration;
         TagsPage.IsVisible = page == SettingsPage.Tags;
         TagRulesPage.IsVisible = page == SettingsPage.TagRules;
@@ -482,6 +486,7 @@ public partial class SettingsOverlay : UserControl
         LibraryNavButton.IsChecked = isLibraryPage;
         BackupNavButton.IsChecked = isBackupPage;
         ExportNavButton.IsChecked = isExportPage;
+        RuntimeNavButton.IsChecked = isRuntimePage;
         AnalysisCalibrationNavButton.IsChecked = page == SettingsPage.AnalysisCalibration;
         TagsNavButton.IsChecked = page == SettingsPage.Tags;
         TagRulesNavButton.IsChecked = page == SettingsPage.TagRules;
@@ -491,6 +496,7 @@ public partial class SettingsOverlay : UserControl
             SettingsPage.Library => "Library",
             SettingsPage.Backup => "Backup",
             SettingsPage.Export => "Export",
+            SettingsPage.Runtime => "Runtime",
             SettingsPage.AnalysisCalibration => "Analysis calibration",
             SettingsPage.Tags => "Tags",
             SettingsPage.TagRules => "Tag rules",
@@ -504,11 +510,13 @@ public partial class SettingsOverlay : UserControl
                     ? "Keep daily database snapshots in your backup locations."
                     : isExportPage
                         ? "Export the current library into a portable folder."
-                    : page == SettingsPage.Tags
-                        ? "Maintain your curated labels. Tags can describe mood, themes, situations or workflow states without turning them into genres."
-                        : page == SettingsPage.TagRules
-                            ? "Turn model signals into reviewable tag suggestions. Rules never assign tags automatically in this first version."
-                            : "Compare current system interpretations before turning them into filters.";
+                        : isRuntimePage
+                            ? "Temporary switches for this app run."
+                            : page == SettingsPage.Tags
+                                ? "Maintain your curated labels. Tags can describe mood, themes, situations or workflow states without turning them into genres."
+                                : page == SettingsPage.TagRules
+                                    ? "Turn model signals into reviewable tag suggestions. Rules never assign tags automatically in this first version."
+                                    : "Compare current system interpretations before turning them into filters.";
         SummaryText.Text = isGenreVocabularyPage ? BuildSummaryText() : "";
         if (isGenreVocabularyPage) RebuildGenreVocabularyRows();
         if (isBackupPage) RebuildBackupDirectoryRows();
@@ -518,6 +526,14 @@ public partial class SettingsOverlay : UserControl
     }
 
     private void OnExportRequestedClicked(object? sender, RoutedEventArgs e) => ExportRequested?.Invoke();
+
+    private void OnFirefoxCookiesToggleChanged(object? sender, RoutedEventArgs e)
+    {
+        Values.UseFirefoxCookiesForYtDlp = FirefoxCookiesToggle.IsChecked == true;
+        ToastRequested?.Invoke(Values.UseFirefoxCookiesForYtDlp
+            ? "Firefox session enabled for yt-dlp."
+            : "Firefox session disabled for yt-dlp.");
+    }
 
     private async void OnAddBackupDirectoryClicked(object? sender, RoutedEventArgs e)
     {
@@ -1342,5 +1358,5 @@ public partial class SettingsOverlay : UserControl
             .OrderByDescending(item => item.value.Score).Take(3).Select(item => $"{item.Model}: {item.value.Label} {item.value.Score:0.##}"));
     }
 
-    private enum SettingsPage { GenreVocabulary, Library, Backup, Export, AnalysisCalibration, Tags, TagRules }
+    private enum SettingsPage { GenreVocabulary, Library, Backup, Export, Runtime, AnalysisCalibration, Tags, TagRules }
 }

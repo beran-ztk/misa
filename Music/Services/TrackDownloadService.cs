@@ -20,15 +20,16 @@ public class TrackDownloadService
 
         var result = await RunProcessAsync(
             Path.Combine(Values.ToolsDirectory, "yt-dlp.exe"),
-            "--js-runtimes", "node",
-            "--no-playlist",
-            "-f", "bestaudio[ext=m4a]/bestaudio/best[height<=360]/18",
-            "-x",
-            "--audio-format", "m4a",
-            "--embed-thumbnail",
-            "--ffmpeg-location", Values.ToolsDirectory,
-            "-o", outputTemplate,
-            url);
+            YtDlpArgs(
+                "--js-runtimes", "node",
+                "--no-playlist",
+                "-f", "bestaudio[ext=m4a]/bestaudio/best[height<=360]/18",
+                "-x",
+                "--audio-format", "m4a",
+                "--embed-thumbnail",
+                "--ffmpeg-location", Values.ToolsDirectory,
+                "-o", outputTemplate,
+                url));
 
         return (result.ExitCode == 0, result.Error);
     }
@@ -58,11 +59,12 @@ public class TrackDownloadService
         {
             var result = await RunProcessAsync(
                 Path.Combine(Values.ToolsDirectory, "yt-dlp.exe"),
-                "--js-runtimes", "node",
-                "--no-playlist",
-                "--print", "title",
-                "--skip-download",
-                url);
+                YtDlpArgs(
+                    "--js-runtimes", "node",
+                    "--no-playlist",
+                    "--print", "title",
+                    "--skip-download",
+                    url));
 
             var title = result.Output
                 .Split('\n')
@@ -83,7 +85,7 @@ public class TrackDownloadService
         {
             var result = await RunProcessAsync(
                 Path.Combine(Values.ToolsDirectory, "yt-dlp.exe"),
-                ["--js-runtimes", "node", "--no-playlist", "--skip-download", "--dump-single-json", url],
+                YtDlpArgs("--js-runtimes", "node", "--no-playlist", "--skip-download", "--dump-single-json", url),
                 cancellationToken);
             if (result.ExitCode != 0) return null;
 
@@ -113,14 +115,14 @@ public class TrackDownloadService
             {
                 var result = await RunProcessAsync(
                     Path.Combine(Values.ToolsDirectory, "yt-dlp.exe"),
-                    [
+                    YtDlpArgs(
                         "--js-runtimes", "node",
                         "--ignore-errors",
                         "--flat-playlist",
                         "--dump-json",
                         "--no-warnings",
                         extractionUrl
-                    ],
+                    ),
                     cancellationToken);
 
                 var entries = ParsePlaylistEntries(url, result.Output);
@@ -142,14 +144,14 @@ public class TrackDownloadService
         {
             var result = await RunProcessAsync(
                 Path.Combine(Values.ToolsDirectory, "yt-dlp.exe"),
-                [
+                YtDlpArgs(
                     "--js-runtimes", "node",
                     "--ignore-errors",
                     "--flat-playlist",
                     "--dump-single-json",
                     "--no-warnings",
                     NormalizeChannelVideosUrl(url)
-                ],
+                ),
                 cancellationToken);
 
             if (result.ExitCode != 0 && string.IsNullOrWhiteSpace(result.Output))
@@ -388,6 +390,14 @@ public class TrackDownloadService
         && value.ValueKind == JsonValueKind.String
             ? value.GetString()
             : null;
+
+    private static string[] YtDlpArgs(params string[] args)
+    {
+        if (!Values.UseFirefoxCookiesForYtDlp)
+            return args;
+
+        return ["--cookies-from-browser", "firefox", .. args];
+    }
 
     private static async Task<ProcessResult> RunProcessAsync(string fileName, params string[] args) =>
         await RunProcessAsync(fileName, args, CancellationToken.None);

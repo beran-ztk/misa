@@ -105,6 +105,9 @@
                     <ToggleButton x:Name="ExportNavButton" Classes="settings-nav"
                                   Content="Export" Tag="export"
                                   Click="OnSettingsNavigationClicked"/>
+                    <ToggleButton x:Name="RuntimeNavButton" Classes="settings-nav"
+                                  Content="Runtime" Tag="runtime"
+                                  Click="OnSettingsNavigationClicked"/>
                 </StackPanel>
             </Grid>
         </Border>
@@ -248,6 +251,40 @@
                     </Grid>
 
                     <StackPanel x:Name="BackupDirectoryRows" Spacing="8"/>
+                </StackPanel>
+            </ScrollViewer>
+
+            <ScrollViewer x:Name="RuntimePage" Grid.Row="2" IsVisible="False" Margin="30,22,30,0"
+                          HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Spacing="22">
+                    <StackPanel Spacing="5">
+                        <TextBlock Text="Runtime switches" FontSize="15" FontWeight="SemiBold"/>
+                        <TextBlock Text="Temporary switches for the current app session."
+                                   FontSize="11" Opacity="0.62" TextWrapping="Wrap"/>
+                    </StackPanel>
+                    <Border Background="#52080B0F"
+                            BorderBrush="#263542"
+                            BorderThickness="1"
+                            CornerRadius="7"
+                            Padding="12">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Firefox YouTube session"
+                                           FontSize="12.5"
+                                           FontWeight="SemiBold"/>
+                                <TextBlock Text="Pass --cookies-from-browser firefox to yt-dlp until the app is restarted."
+                                           FontSize="11"
+                                           Opacity="0.58"
+                                           TextWrapping="Wrap"/>
+                            </StackPanel>
+                            <CheckBox x:Name="FirefoxCookiesToggle"
+                                      Grid.Column="1"
+                                      Content="Enabled"
+                                      VerticalAlignment="Center"
+                                      Checked="OnFirefoxCookiesToggleChanged"
+                                      Unchecked="OnFirefoxCookiesToggleChanged"/>
+                        </Grid>
+                    </Border>
                 </StackPanel>
             </ScrollViewer>
 
