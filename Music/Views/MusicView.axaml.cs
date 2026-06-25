@@ -164,6 +164,7 @@ public partial class MusicView : UserControl
         else
             RebuildFilterConditionsPanel();
         RefreshTrackList();
+        _ = RefreshChannelsOnStartupAsync();
 
         SettingsOverlay.PreloadGenreVocabulary();
 
@@ -174,6 +175,8 @@ public partial class MusicView : UserControl
             ShowToast(warning ?? "Track downloaded; analysis queued");
         };
         AddTrackOverlay.CloseRequested += () => AddTrackOverlay.IsVisible = false;
+        ChannelOverlay.CloseRequested += () => ChannelOverlay.IsVisible = false;
+        ChannelOverlay.ToastRequested += ShowToast;
         ImportOverlay.QueueSubmitted += count =>
         {
             ShowToast($"{count} track{(count == 1 ? string.Empty : "s")} added to the import queue");
@@ -221,6 +224,22 @@ public partial class MusicView : UserControl
 
     private void UpdateImportBounds() =>
         ImportOverlay.Margin = new Thickness(0, 0, 0, PlayerBar.Bounds.Height);
+
+    private async Task RefreshChannelsOnStartupAsync()
+    {
+        try
+        {
+            var added = await MusicLibraryService.Current.RefreshSubscribedChannelsAsync();
+            if (added > 0)
+                ShowToast($"{added} new channel videos found");
+            if (ChannelOverlay.IsVisible)
+                ChannelOverlay.RefreshChannels();
+        }
+        catch
+        {
+            // Channel refresh is a convenience check; it should not block the music library.
+        }
+    }
 
     public void EnableSystemMediaControls()
     {
@@ -1457,6 +1476,12 @@ public partial class MusicView : UserControl
     private void OnImportClicked(object? sender, RoutedEventArgs e)
     {
         ImportOverlay.Open();
+    }
+
+    private void OnChannelsClicked(object? sender, RoutedEventArgs e)
+    {
+        ChannelOverlay.Margin = new Thickness(0, 0, 0, PlayerBar.Bounds.Height);
+        ChannelOverlay.Open();
     }
 
     private void OnRefreshLibraryClicked(object? sender, RoutedEventArgs e)

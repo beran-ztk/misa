@@ -58,7 +58,25 @@ public class MusicDatabase
                 name                TEXT NOT NULL,
                 source_channel_id   TEXT NULL UNIQUE,
                 source_url          TEXT NULL,
-                inform_new_songs    INTEGER NOT NULL DEFAULT 0
+                inform_new_songs    INTEGER NOT NULL DEFAULT 0,
+                subscribed          INTEGER NOT NULL DEFAULT 0,
+                created_at          TEXT NULL,
+                updated_at          TEXT NULL,
+                last_checked_at     TEXT NULL,
+                video_count         INTEGER NOT NULL DEFAULT 0
+            );
+
+            CREATE TABLE channel_videos (
+                id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+                channel_id          INTEGER NOT NULL REFERENCES channels(id) ON DELETE CASCADE,
+                video_id            TEXT NOT NULL UNIQUE,
+                canonical_url       TEXT NOT NULL UNIQUE,
+                title               TEXT NOT NULL,
+                duration_seconds    INTEGER NULL,
+                uploaded_at         TEXT NULL,
+                discovered_at       TEXT NOT NULL,
+                updated_at          TEXT NOT NULL,
+                is_checked          INTEGER NOT NULL DEFAULT 0
             );
 
             CREATE TABLE ratings (
@@ -214,6 +232,7 @@ public class MusicDatabase
             );
 
             CREATE INDEX ix_track_genres_genre_id ON track_genres(genre_id);
+            CREATE INDEX ix_channel_videos_channel_checked ON channel_videos(channel_id, is_checked, uploaded_at);
             CREATE INDEX ix_tags_category_id ON tags(category_id);
             CREATE INDEX ix_track_tags_tag_id ON track_tags(tag_id);
             CREATE INDEX ix_model_subgenres_model_genre_id ON model_subgenres(model_genre_id);
@@ -236,6 +255,7 @@ public class MusicDatabase
         EnsureColumn(conn, "model_subgenres", "classification_hint", "TEXT NULL");
         EnsureColumn(conn, "model_subgenres", "bpm_min", "INTEGER NULL");
         EnsureColumn(conn, "model_subgenres", "bpm_max", "INTEGER NULL");
+        EnsureChannelSubscriptionSchema(conn);
         CreateImportQueueSchema(conn);
         CreateModelMetadataSchema(conn);
         CreateTagSchema(conn);
@@ -399,6 +419,33 @@ public class MusicDatabase
                             WHERE description IS NOT NULL OR classification_hint IS NOT NULL
                                OR bpm_min IS NOT NULL OR bpm_max IS NOT NULL";
         return Convert.ToInt32(cmd.ExecuteScalar()) == 0;
+    }
+
+    private static void EnsureChannelSubscriptionSchema(SqliteConnection conn)
+    {
+        EnsureColumn(conn, "channels", "subscribed", "INTEGER NOT NULL DEFAULT 0");
+        EnsureColumn(conn, "channels", "created_at", "TEXT NULL");
+        EnsureColumn(conn, "channels", "updated_at", "TEXT NULL");
+        EnsureColumn(conn, "channels", "last_checked_at", "TEXT NULL");
+        EnsureColumn(conn, "channels", "video_count", "INTEGER NOT NULL DEFAULT 0");
+
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+            CREATE TABLE IF NOT EXISTS channel_videos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                channel_id INTEGER NOT NULL REFERENCES channels(id) ON DELETE CASCADE,
+                video_id TEXT NOT NULL UNIQUE,
+                canonical_url TEXT NOT NULL UNIQUE,
+                title TEXT NOT NULL,
+                duration_seconds INTEGER NULL,
+                uploaded_at TEXT NULL,
+                discovered_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                is_checked INTEGER NOT NULL DEFAULT 0
+            );
+            CREATE INDEX IF NOT EXISTS ix_channel_videos_channel_checked
+                ON channel_videos(channel_id, is_checked, uploaded_at);";
+        cmd.ExecuteNonQuery();
     }
 
     private static void CreateImportQueueSchema(SqliteConnection conn)
@@ -845,6 +892,207 @@ public class MusicDatabase
         using var cmd = conn.CreateCommand();
         cmd.CommandText = "SELECT COUNT(*) FROM tracks WHERE canonical_url = $url";
         cmd.Parameters.AddWithValue("$url", canonicalUrl);
+        return (long)cmd.ExecuteScalar()! > 0;
+    }
+
+    public ChannelRefreshResult SaveChannelSnapshot(YouTubeChannelSnapshot snapshot)
+    {
+        using var conn = Open();
+        using var tx = conn.BeginTransaction();
+        var now = DateTime.UtcNow.ToString("O");
+        var channelId = FindChannelId(conn, tx, snapshot.ChannelId, snapshot.SourceUrl);
+
+        if (channelId is null)
+        {
+            channelId = InsertAndGetId(conn, tx, @"
+                INSERT INTO channels
+                    (name, source_channel_id, source_url, subscribed, created_at, updated_at, last_checked_at, video_count)
+                VALUES
+                    ($name, $sourceChannelId, $sourceUrl, 1, $now, $now, $now, $videoCount)",
+                ("$name", snapshot.Name),
+                ("$sourceChannelId", snapshot.ChannelId),
+                ("$sourceUrl", snapshot.ChannelUrl ?? snapshot.SourceUrl),
+                ("$now", now),
+                ("$videoCount", snapshot.Videos.Count));
+        }
+        else
+        {
+            ExecuteInsert(conn, tx, @"
+                UPDATE channels
+                SET name = $name,
+                    source_channel_id = COALESCE($sourceChannelId, source_channel_id),
+                    source_url = COALESCE($sourceUrl, source_url),
+                    subscribed = 1,
+                    updated_at = $now,
+                    last_checked_at = $now,
+                    video_count = $videoCount
+                WHERE id = $id",
+                ("$id", channelId.Value),
+                ("$name", snapshot.Name),
+                ("$sourceChannelId", snapshot.ChannelId),
+                ("$sourceUrl", snapshot.ChannelUrl ?? snapshot.SourceUrl),
+                ("$now", now),
+                ("$videoCount", snapshot.Videos.Count));
+        }
+
+        var added = 0;
+        var updated = 0;
+        foreach (var video in snapshot.Videos)
+        {
+            var existed = ChannelVideoExists(conn, tx, video.CanonicalUrl);
+            ExecuteInsert(conn, tx, @"
+                INSERT INTO channel_videos
+                    (channel_id, video_id, canonical_url, title, duration_seconds, uploaded_at, discovered_at, updated_at, is_checked)
+                VALUES
+                    ($channelId, $videoId, $canonicalUrl, $title, $duration, $uploadedAt, $now, $now,
+                     CASE WHEN EXISTS (SELECT 1 FROM tracks WHERE tracks.canonical_url = $canonicalUrl) THEN 1 ELSE 0 END)
+                ON CONFLICT(canonical_url) DO UPDATE SET
+                    channel_id = excluded.channel_id,
+                    video_id = excluded.video_id,
+                    title = excluded.title,
+                    duration_seconds = excluded.duration_seconds,
+                    uploaded_at = excluded.uploaded_at,
+                    updated_at = excluded.updated_at,
+                    is_checked = CASE
+                        WHEN EXISTS (SELECT 1 FROM tracks WHERE tracks.canonical_url = excluded.canonical_url) THEN 1
+                        ELSE channel_videos.is_checked
+                    END",
+                ("$channelId", channelId.Value),
+                ("$videoId", video.VideoId),
+                ("$canonicalUrl", video.CanonicalUrl),
+                ("$title", video.Title),
+                ("$duration", video.DurationSeconds),
+                ("$uploadedAt", video.UploadedAt),
+                ("$now", now));
+            if (existed) updated++;
+            else added++;
+        }
+
+        MarkExistingChannelTracksChecked(conn, tx, channelId.Value);
+        tx.Commit();
+        return new ChannelRefreshResult(true, added, updated);
+    }
+
+    public List<ChannelSubscription> GetChannelSubscriptions()
+    {
+        using var conn = Open();
+        MarkExistingChannelTracksChecked(conn);
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+            SELECT channels.id, channels.name, channels.source_url, channels.source_channel_id,
+                   channels.last_checked_at, COALESCE(COUNT(channel_videos.id), 0),
+                   COALESCE(SUM(CASE WHEN channel_videos.is_checked = 0 THEN 1 ELSE 0 END), 0)
+            FROM channels
+            LEFT JOIN channel_videos ON channel_videos.channel_id = channels.id
+            WHERE channels.subscribed = 1
+            GROUP BY channels.id
+            ORDER BY channels.name COLLATE NOCASE";
+        using var reader = cmd.ExecuteReader();
+        var channels = new List<ChannelSubscription>();
+        while (reader.Read())
+            channels.Add(new ChannelSubscription(
+                reader.GetInt32(0),
+                reader.GetString(1),
+                reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
+                reader.IsDBNull(3) ? null : reader.GetString(3),
+                reader.IsDBNull(4) ? null : reader.GetString(4),
+                ReadInt32(reader, 5),
+                ReadInt32(reader, 6)));
+        return channels;
+    }
+
+    public List<ChannelVideo> GetChannelVideos(int channelId, bool uncheckedFirst = true)
+    {
+        using var conn = Open();
+        MarkExistingChannelTracksChecked(conn, channelId);
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = $@"
+            SELECT id, channel_id, video_id, canonical_url, title, duration_seconds, uploaded_at, discovered_at, is_checked
+            FROM channel_videos
+            WHERE channel_id = $channelId
+            ORDER BY {(uncheckedFirst ? "is_checked ASC," : string.Empty)}
+                     COALESCE(uploaded_at, discovered_at) ASC,
+                     id ASC";
+        cmd.Parameters.AddWithValue("$channelId", channelId);
+        using var reader = cmd.ExecuteReader();
+        var videos = new List<ChannelVideo>();
+        while (reader.Read())
+            videos.Add(new ChannelVideo(
+                reader.GetInt32(0),
+                reader.GetInt32(1),
+                reader.GetString(2),
+                reader.GetString(3),
+                reader.GetString(4),
+                reader.IsDBNull(5) ? null : reader.GetInt32(5),
+                reader.IsDBNull(6) ? null : reader.GetString(6),
+                reader.GetString(7),
+                ReadInt32(reader, 8) != 0));
+        return videos;
+    }
+
+    private static int ReadInt32(SqliteDataReader reader, int ordinal) =>
+        reader.IsDBNull(ordinal) ? 0 : Convert.ToInt32(reader.GetValue(ordinal));
+
+    private static void MarkExistingChannelTracksChecked(SqliteConnection conn, int? channelId = null)
+    {
+        ExecuteNonQuery(conn, @"
+            UPDATE channel_videos
+            SET is_checked = 1, updated_at = $now
+            WHERE is_checked = 0
+              AND ($channelId IS NULL OR channel_id = $channelId)
+              AND EXISTS (
+                  SELECT 1 FROM tracks
+                  WHERE tracks.canonical_url = channel_videos.canonical_url
+              )",
+            ("$channelId", channelId),
+            ("$now", DateTime.UtcNow.ToString("O")));
+    }
+
+    private static void MarkExistingChannelTracksChecked(SqliteConnection conn, SqliteTransaction tx, long channelId)
+    {
+        ExecuteInsert(conn, tx, @"
+            UPDATE channel_videos
+            SET is_checked = 1, updated_at = $now
+            WHERE is_checked = 0
+              AND channel_id = $channelId
+              AND EXISTS (
+                  SELECT 1 FROM tracks
+                  WHERE tracks.canonical_url = channel_videos.canonical_url
+              )",
+            ("$channelId", channelId),
+            ("$now", DateTime.UtcNow.ToString("O")));
+    }
+
+    public void SetChannelVideoChecked(int videoId, bool isChecked)
+    {
+        using var conn = Open();
+        ExecuteNonQuery(conn,
+            "UPDATE channel_videos SET is_checked = $isChecked, updated_at = $now WHERE id = $id",
+            ("$id", videoId),
+            ("$isChecked", isChecked ? 1 : 0),
+            ("$now", DateTime.UtcNow.ToString("O")));
+    }
+
+    private static long? FindChannelId(SqliteConnection conn, SqliteTransaction tx, string? sourceChannelId, string sourceUrl)
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
+        cmd.CommandText = @"
+            SELECT id FROM channels
+            WHERE ($sourceChannelId IS NOT NULL AND source_channel_id = $sourceChannelId)
+               OR ($sourceUrl IS NOT NULL AND source_url = $sourceUrl)
+            LIMIT 1";
+        cmd.Parameters.AddWithValue("$sourceChannelId", (object?)sourceChannelId ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("$sourceUrl", sourceUrl);
+        return cmd.ExecuteScalar() is long id ? id : null;
+    }
+
+    private static bool ChannelVideoExists(SqliteConnection conn, SqliteTransaction tx, string canonicalUrl)
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
+        cmd.CommandText = "SELECT COUNT(*) FROM channel_videos WHERE canonical_url = $canonicalUrl";
+        cmd.Parameters.AddWithValue("$canonicalUrl", canonicalUrl);
         return (long)cmd.ExecuteScalar()! > 0;
     }
 

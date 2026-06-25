@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Music.Core;
 using Music.Models;
@@ -159,6 +160,48 @@ public class MusicLibraryService
     public bool TrackExistsByCanonicalUrl(string canonicalUrl) => _db.TrackExists(canonicalUrl);
 
     public Task<string?> GetRemoteTitleAsync(string canonicalUrl) => _downloader.GetTitleAsync(canonicalUrl);
+
+    public List<ChannelSubscription> GetChannelSubscriptions() => _db.GetChannelSubscriptions();
+    public List<ChannelVideo> GetChannelVideos(int channelId) => _db.GetChannelVideos(channelId);
+    public void SetChannelVideoChecked(int videoId, bool isChecked) => _db.SetChannelVideoChecked(videoId, isChecked);
+
+    public async Task<ChannelRefreshResult> AddOrRefreshChannelAsync(
+        string rawUrl,
+        IProgress<string>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(rawUrl))
+            return new ChannelRefreshResult(false, 0, 0, "Channel URL is required.");
+
+        progress?.Report("Reading channel…");
+        var (snapshot, error) = await _downloader.GetChannelSnapshotAsync(rawUrl.Trim(), cancellationToken);
+        if (snapshot is null)
+            return new ChannelRefreshResult(false, 0, 0, error ?? "Could not read channel.");
+        if (snapshot.Videos.Count == 0)
+            return new ChannelRefreshResult(false, 0, 0, "Channel was read, but no videos were returned.");
+
+        progress?.Report($"Saving {snapshot.Videos.Count} videos…");
+        return _db.SaveChannelSnapshot(snapshot);
+    }
+
+    public async Task<ChannelRefreshResult> RefreshChannelAsync(
+        ChannelSubscription channel,
+        IProgress<string>? progress = null,
+        CancellationToken cancellationToken = default) =>
+        await AddOrRefreshChannelAsync(channel.SourceUrl, progress, cancellationToken);
+
+    public async Task<int> RefreshSubscribedChannelsAsync(CancellationToken cancellationToken = default)
+    {
+        var added = 0;
+        foreach (var channel in GetChannelSubscriptions())
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var result = await RefreshChannelAsync(channel, cancellationToken: cancellationToken);
+            if (result.Success)
+                added += result.AddedCount;
+        }
+        return added;
+    }
 
     public async Task ExportPortableLibraryAsync(string targetDirectory)
     {

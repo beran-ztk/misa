@@ -66,6 +66,37 @@ public record YouTubeTrackMetadata(
     string? UploadedAt,
     long? EstimatedAudioSizeBytes = null,
     int? DurationSeconds = null);
+public record YouTubeChannelSnapshot(
+    string SourceUrl,
+    string? ChannelId,
+    string Name,
+    string? ChannelUrl,
+    IReadOnlyList<YouTubeChannelVideoEntry> Videos);
+public record YouTubeChannelVideoEntry(
+    string VideoId,
+    string CanonicalUrl,
+    string Title,
+    int? DurationSeconds,
+    string? UploadedAt);
+public record ChannelSubscription(
+    int Id,
+    string Name,
+    string SourceUrl,
+    string? SourceChannelId,
+    string? LastCheckedAt,
+    int VideoCount,
+    int UncheckedCount);
+public record ChannelVideo(
+    int Id,
+    int ChannelId,
+    string VideoId,
+    string CanonicalUrl,
+    string Title,
+    int? DurationSeconds,
+    string? UploadedAt,
+    string DiscoveredAt,
+    bool IsChecked);
+public record ChannelRefreshResult(bool Success, int AddedCount, int UpdatedCount, string? Error = null);
 public record ModelGenre(int Id, string Name);
 public record ModelSubgenre(
     int Id,

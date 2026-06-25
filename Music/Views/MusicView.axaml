@@ -141,6 +141,13 @@
                     <Image Source="{SvgImage /Assets/download.svg}" Width="17" Height="17"/>
                 </Button>
 
+                <Button Click="OnChannelsClicked"
+                        Classes="icon"
+                        ToolTip.Tip="Channels"
+                        Opacity="0.86">
+                    <Image Source="{SvgImage /Assets/info.svg}" Width="17" Height="17"/>
+                </Button>
+
                 <Button x:Name="RefreshLibraryButton"
                         Click="OnRefreshLibraryClicked"
                         Classes="icon"
@@ -645,6 +652,8 @@
         </Panel>
 
     </DockPanel>
+
+    <views:ChannelOverlay x:Name="ChannelOverlay" IsVisible="False" ZIndex="65"/>
 
     <!-- Queue management is a workspace, not a small dialog. It deliberately stops above the player. -->
     <views:ImportOverlay x:Name="ImportOverlay" IsVisible="False" ZIndex="70"/>
