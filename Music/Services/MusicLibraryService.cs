@@ -26,6 +26,8 @@ public class MusicLibraryService
     public byte[]? GetTrackThumbnail(int trackId) => _db.GetTrackThumbnail(trackId);
     public List<MusicTrack> GetUnanalyzedTracks() => _db.GetUnanalyzedTracks();
     public MusicTrack? GetTrackById(int id) => _db.GetTrackById(id);
+    public bool ShouldAnalyzeTrack(int id) =>
+        GetTrackById(id) is { AnalysisDisabled: false } && GetTrackAudioAnalysis(id) is null;
     public MusicTrack? GetTrackByCanonicalUrl(string canonicalUrl) =>
         GetTracks().FirstOrDefault(track => string.Equals(track.CanonicalUrl, canonicalUrl, StringComparison.OrdinalIgnoreCase));
 
@@ -39,6 +41,7 @@ public class MusicLibraryService
     public void UpdateTrack(int id, string title, List<int> genreIds, int? ratingId, List<int> styleIds)
         => _db.UpdateTrack(id, title, genreIds, ratingId, styleIds);
     public void SetTrackNeedsReview(int id, bool needsReview) => _db.SetTrackNeedsReview(id, needsReview);
+    public void SetTrackAnalysisDisabled(int id, bool analysisDisabled) => _db.SetTrackAnalysisDisabled(id, analysisDisabled);
     public void RecordTrackPlaybackStarted(int trackId) => _db.RecordTrackPlaybackStarted(trackId);
     public void AddTrackListenedSeconds(int trackId, int seconds) => _db.AddTrackListenedSeconds(trackId, seconds);
     public void RecordTrackSkip(int trackId) => _db.RecordTrackSkip(trackId);
@@ -342,6 +345,7 @@ public class MusicLibraryService
         }
 
         _db.SetTrackNeedsReview(track.Id, true);
+        _db.SetTrackAnalysisDisabled(track.Id, true);
         return error ?? "Analysis failed.";
     }
 

@@ -1715,6 +1715,22 @@ public partial class MusicView : UserControl
         ToggleReview(_filteredItems[idx].Track);
     }
 
+    private void OnContextToggleAnalysisClicked(object? sender, RoutedEventArgs e)
+    {
+        var idx = GetSelectedFilteredIndex();
+        if (idx < 0 || idx >= _filteredItems.Count)
+            return;
+
+        var track = _filteredItems[idx].Track;
+        var analysisDisabled = !track.AnalysisDisabled;
+        MusicLibraryService.Current.SetTrackAnalysisDisabled(track.Id, analysisDisabled);
+        if (!analysisDisabled && MusicLibraryService.Current.GetTrackAudioAnalysis(track.Id) is null)
+            BackgroundAnalysisService.Current.EnqueueTrack(track.Id);
+
+        UpdateTrackInList(track.Id);
+        ShowToast(analysisDisabled ? "Automatic analysis disabled" : "Automatic analysis enabled");
+    }
+
     private async void OnContextDeleteClicked(object? sender, RoutedEventArgs e)
     {
         var idx = GetSelectedFilteredIndex();

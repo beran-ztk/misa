@@ -119,6 +119,7 @@ public class MusicDatabase
                 file_size_bytes     INTEGER NULL,
                 download_duration_ms INTEGER NULL,
                 thumbnail           BLOB NULL,
+                analysis_disabled   INTEGER NOT NULL DEFAULT 0,
                 needs_reevaluation  INTEGER NOT NULL DEFAULT 0,
                 notes               TEXT NULL
             );
@@ -250,6 +251,7 @@ public class MusicDatabase
         EnsureColumn(conn, "tracks", "file_size_bytes", "INTEGER NULL");
         EnsureColumn(conn, "tracks", "download_duration_ms", "INTEGER NULL");
         EnsureColumn(conn, "tracks", "thumbnail", "BLOB NULL");
+        EnsureColumn(conn, "tracks", "analysis_disabled", "INTEGER NOT NULL DEFAULT 0");
         EnsureColumn(conn, "track_analysis", "analysis_duration_ms", "INTEGER NULL");
         EnsureColumn(conn, "model_subgenres", "description", "TEXT NULL");
         EnsureColumn(conn, "model_subgenres", "classification_hint", "TEXT NULL");
@@ -1199,6 +1201,9 @@ public class MusicDatabase
         SaveDerivedAttributes(conn, tx, analysisId, DeriveAttributes(analysis.ExperimentalModels ?? []));
 
         RefreshModelGenres(conn, tx, trackId);
+        ExecuteInsert(conn, tx,
+            "UPDATE tracks SET analysis_disabled = 0 WHERE id = $trackId",
+            ("$trackId", trackId));
         TouchTrack(conn, tx, trackId, now);
 
         tx.Commit();
@@ -1210,7 +1215,7 @@ public class MusicDatabase
         using var cmd = conn.CreateCommand();
         cmd.CommandText = @"SELECT tracks.id, tracks.canonical_url, tracks.title, tracks.file_name, tracks.rating_id, tracks.downloaded_at,
                                    tracks.duration_seconds, tracks.needs_reevaluation, channels.name, channels.source_url, tracks.uploaded_at,
-                                   tracks.updated_at
+                                   tracks.updated_at, tracks.analysis_disabled
                             FROM tracks LEFT JOIN channels ON channels.id = tracks.channel_id
                             ORDER BY tracks.downloaded_at DESC";
         using var reader = cmd.ExecuteReader();
@@ -1229,7 +1234,8 @@ public class MusicDatabase
                 reader.IsDBNull(8) ? null : reader.GetString(8),
                 reader.IsDBNull(9) ? null : reader.GetString(9),
                 reader.IsDBNull(10) ? null : reader.GetString(10),
-                reader.GetString(11)));
+                reader.GetString(11),
+                reader.GetInt32(12) != 0));
         }
         return tracks;
     }
@@ -1240,7 +1246,7 @@ public class MusicDatabase
         using var cmd = conn.CreateCommand();
         cmd.CommandText = @"SELECT tracks.id, tracks.canonical_url, tracks.title, tracks.file_name, tracks.rating_id, tracks.downloaded_at,
                                    tracks.duration_seconds, tracks.needs_reevaluation, channels.name, channels.source_url, tracks.uploaded_at,
-                                   tracks.updated_at
+                                   tracks.updated_at, tracks.analysis_disabled
                             FROM tracks LEFT JOIN channels ON channels.id = tracks.channel_id
                             WHERE tracks.id = $trackId";
         cmd.Parameters.AddWithValue("$trackId", trackId);
@@ -1258,7 +1264,8 @@ public class MusicDatabase
                 reader.IsDBNull(8) ? null : reader.GetString(8),
                 reader.IsDBNull(9) ? null : reader.GetString(9),
                 reader.IsDBNull(10) ? null : reader.GetString(10),
-                reader.GetString(11))
+                reader.GetString(11),
+                reader.GetInt32(12) != 0)
             : null;
     }
 
@@ -1278,11 +1285,11 @@ public class MusicDatabase
         using var cmd = conn.CreateCommand();
         cmd.CommandText = @"SELECT tracks.id, tracks.canonical_url, tracks.title, tracks.file_name, tracks.rating_id, tracks.downloaded_at,
                                    tracks.duration_seconds, tracks.needs_reevaluation, channels.name, channels.source_url, tracks.uploaded_at,
-                                   tracks.updated_at
+                                   tracks.updated_at, tracks.analysis_disabled
                             FROM tracks
                             LEFT JOIN channels ON channels.id = tracks.channel_id
                             LEFT JOIN track_analysis analysis ON analysis.track_id = tracks.id
-                            WHERE analysis.id IS NULL
+                            WHERE analysis.id IS NULL AND tracks.analysis_disabled = 0
                             ORDER BY tracks.downloaded_at, tracks.id";
         using var reader = cmd.ExecuteReader();
         var tracks = new List<MusicTrack>();
@@ -1300,7 +1307,8 @@ public class MusicDatabase
                 reader.IsDBNull(8) ? null : reader.GetString(8),
                 reader.IsDBNull(9) ? null : reader.GetString(9),
                 reader.IsDBNull(10) ? null : reader.GetString(10),
-                reader.GetString(11)));
+                reader.GetString(11),
+                reader.GetInt32(12) != 0));
         }
         return tracks;
     }
@@ -1401,6 +1409,17 @@ public class MusicDatabase
         cmd.CommandText = "UPDATE tracks SET needs_reevaluation = $needsReview, updated_at = $updatedAt WHERE id = $id";
         cmd.Parameters.AddWithValue("$id", id);
         cmd.Parameters.AddWithValue("$needsReview", needsReview ? 1 : 0);
+        cmd.Parameters.AddWithValue("$updatedAt", DateTime.UtcNow.ToString("O"));
+        cmd.ExecuteNonQuery();
+    }
+
+    public void SetTrackAnalysisDisabled(int id, bool analysisDisabled)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "UPDATE tracks SET analysis_disabled = $analysisDisabled, updated_at = $updatedAt WHERE id = $id";
+        cmd.Parameters.AddWithValue("$id", id);
+        cmd.Parameters.AddWithValue("$analysisDisabled", analysisDisabled ? 1 : 0);
         cmd.Parameters.AddWithValue("$updatedAt", DateTime.UtcNow.ToString("O"));
         cmd.ExecuteNonQuery();
     }

@@ -507,6 +507,7 @@
                     <ContextMenu>
                         <MenuItem Header="Edit" Click="OnContextEditClicked"/>
                         <MenuItem Header="Toggle review mark" Click="OnContextToggleReviewClicked"/>
+                        <MenuItem Header="Toggle automatic analysis" Click="OnContextToggleAnalysisClicked"/>
                         <Separator/>
                         <MenuItem Header="Delete track (including file)" Click="OnContextDeleteClicked"/>
                     </ContextMenu>

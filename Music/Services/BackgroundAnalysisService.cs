@@ -31,6 +31,7 @@ public sealed class BackgroundAnalysisService
 
     public BackgroundAnalysisQueueSnapshot GetSnapshot()
     {
+        PruneIneligibleTracks();
         lock (_gate)
         {
             return new BackgroundAnalysisQueueSnapshot(
@@ -41,9 +42,13 @@ public sealed class BackgroundAnalysisService
 
     private void EnqueueTracks(IEnumerable<int> trackIds)
     {
+        var eligibleTrackIds = trackIds
+            .Where(MusicLibraryService.Current.ShouldAnalyzeTrack)
+            .ToList();
+
         lock (_gate)
         {
-            foreach (var trackId in trackIds)
+            foreach (var trackId in eligibleTrackIds)
             {
                 if (!_queuedTrackIds.Add(trackId))
                     continue;
@@ -53,6 +58,42 @@ public sealed class BackgroundAnalysisService
 
             if (_workerTask is not { IsCompleted: false } && _pendingTrackIds.Count > 0)
                 _workerTask = Task.Run(ProcessQueueAsync);
+        }
+
+        QueueChanged?.Invoke();
+    }
+
+    private void PruneIneligibleTracks()
+    {
+        List<int> pendingTrackIds;
+        lock (_gate)
+            pendingTrackIds = _pendingTrackIds.ToList();
+
+        if (pendingTrackIds.Count == 0)
+            return;
+
+        var eligibleTrackIds = pendingTrackIds
+            .Where(MusicLibraryService.Current.ShouldAnalyzeTrack)
+            .ToHashSet();
+        if (eligibleTrackIds.Count == pendingTrackIds.Count)
+            return;
+
+        lock (_gate)
+        {
+            var retainedTrackIds = _pendingTrackIds
+                .Where(eligibleTrackIds.Contains)
+                .ToList();
+
+            _pendingTrackIds.Clear();
+            _queuedTrackIds.Clear();
+            foreach (var trackId in retainedTrackIds)
+            {
+                _pendingTrackIds.Enqueue(trackId);
+                _queuedTrackIds.Add(trackId);
+            }
+
+            if (_activeTrackId is int activeTrackId)
+                _queuedTrackIds.Add(activeTrackId);
         }
 
         QueueChanged?.Invoke();
@@ -71,7 +112,9 @@ public sealed class BackgroundAnalysisService
                 {
                     SetActiveTrack(trackId);
                     track = MusicLibraryService.Current.GetTrackById(trackId);
-                    if (track is null || MusicLibraryService.Current.GetTrackAudioAnalysis(track.Id) is not null)
+                    if (track is null
+                        || track.AnalysisDisabled
+                        || MusicLibraryService.Current.GetTrackAudioAnalysis(track.Id) is not null)
                         continue;
 
                     error = await MusicLibraryService.Current.AnalyzeTrackAsync(track);
