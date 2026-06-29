@@ -77,7 +77,6 @@ public partial class MusicView : UserControl
     private List<TrackDisplayItem> _visibleItems = [];
     private int _visibleStartIndex;
     private int _visibleTrackCount;
-    private bool _updatingVisibleSelection;
     private bool _updatingScrollWindow;
     private ScrollViewer? _fileListScrollViewer;
     private List<PortableFilterPreset> _filterPresets = [];
@@ -136,10 +135,10 @@ public partial class MusicView : UserControl
         RatingFilter.SelectionChanged += (_, _) => ApplyFilter();
         FileList.SelectionChanged += (_, _) =>
         {
-            RecenterVisibleWindowOnSelection();
             UpdateReviewButton();
         };
-        FileList.AttachedToVisualTree += (_, _) => AttachFileListScrollViewer();
+        FileList.AttachedToVisualTree += (_, _) =>
+            Dispatcher.UIThread.Post(AttachFileListScrollViewer, DispatcherPriority.Loaded);
         PlayerBar.SizeChanged += (_, _) => UpdateSettingsLayout();
         PlayerBar.SizeChanged += (_, _) => UpdateEditorBounds();
         PlayerBar.SizeChanged += (_, _) => UpdateImportBounds();
@@ -689,20 +688,12 @@ public partial class MusicView : UserControl
             .Take(_visibleTrackCount)
             .ToList();
 
-        _updatingVisibleSelection = true;
-        try
+        FileList.ItemsSource = _visibleItems;
+        if (selectedTrackId is int id)
         {
-            FileList.ItemsSource = _visibleItems;
-            if (selectedTrackId is int id)
-            {
-                var visibleIndex = _visibleItems.FindIndex(item => item.Track.Id == id);
-                if (visibleIndex >= 0)
-                    FileList.SelectedIndex = visibleIndex;
-            }
-        }
-        finally
-        {
-            _updatingVisibleSelection = false;
+            var visibleIndex = _visibleItems.FindIndex(item => item.Track.Id == id);
+            if (visibleIndex >= 0)
+                FileList.SelectedIndex = visibleIndex;
         }
 
         DisposeThumbnailsOutsideVisibleWindow();
@@ -753,27 +744,37 @@ public partial class MusicView : UserControl
             || _filteredItems.Count <= TrackListWindowSize)
             return;
 
-        var centerVisibleIndex = (int)Math.Round(
-            (_fileListScrollViewer.Offset.Y + _fileListScrollViewer.Viewport.Height / 2)
-            / ApproximateTrackRowHeight);
-        centerVisibleIndex = Math.Clamp(centerVisibleIndex, 0, Math.Max(0, _visibleItems.Count - 1));
-        var centerFilteredIndex = Math.Clamp(_visibleStartIndex + centerVisibleIndex, 0, _filteredItems.Count - 1);
+        var offsetY = _fileListScrollViewer.Offset.Y;
+        var maxOffsetY = Math.Max(0, _fileListScrollViewer.Extent.Height - _fileListScrollViewer.Viewport.Height);
+        var nextStart = _visibleStartIndex;
+        var offsetAdjustment = 0.0;
 
-        var desiredStart = DesiredVisibleStartFor(centerFilteredIndex);
-        if (desiredStart == _visibleStartIndex)
+        if (offsetY >= maxOffsetY - ApproximateTrackRowHeight
+            && _visibleStartIndex + _visibleTrackCount < _filteredItems.Count)
+        {
+            var shift = Math.Min(TrackListWindowStep, _filteredItems.Count - (_visibleStartIndex + _visibleTrackCount));
+            nextStart += shift;
+            offsetAdjustment = -shift * ApproximateTrackRowHeight;
+        }
+        else if (offsetY <= ApproximateTrackRowHeight && _visibleStartIndex > 0)
+        {
+            var shift = Math.Min(TrackListWindowStep, _visibleStartIndex);
+            nextStart -= shift;
+            offsetAdjustment = shift * ApproximateTrackRowHeight;
+        }
+
+        if (nextStart == _visibleStartIndex)
             return;
 
         _updatingScrollWindow = true;
         try
         {
-            _visibleStartIndex = desiredStart;
+            var selectedTrackId = (FileList.SelectedItem as TrackDisplayItem)?.Track.Id;
+            _visibleStartIndex = nextStart;
             _visibleTrackCount = Math.Min(TrackListWindowSize, _filteredItems.Count - _visibleStartIndex);
-            RefreshVisibleItemsSource((FileList.SelectedItem as TrackDisplayItem)?.Track.Id);
+            RefreshVisibleItemsSource(selectedTrackId);
 
-            var adjustedOffsetY = Math.Max(
-                0,
-                (centerFilteredIndex - _visibleStartIndex) * ApproximateTrackRowHeight
-                - _fileListScrollViewer.Viewport.Height / 2);
+            var adjustedOffsetY = Math.Clamp(offsetY + offsetAdjustment, 0, Math.Max(0, _fileListScrollViewer.Extent.Height - _fileListScrollViewer.Viewport.Height));
             _fileListScrollViewer.Offset = _fileListScrollViewer.Offset.WithY(adjustedOffsetY);
         }
         finally
@@ -807,16 +808,6 @@ public partial class MusicView : UserControl
         return Math.Min(desiredStart, Math.Max(0, _filteredItems.Count - TrackListWindowSize));
     }
 
-    private void RecenterVisibleWindowOnSelection()
-    {
-        if (_updatingVisibleSelection || _visibleItems.Count == 0)
-            return;
-
-        var filteredIndex = GetSelectedFilteredIndex();
-        if (filteredIndex >= 0)
-            EnsureVisibleWindowAround(filteredIndex);
-    }
-
     private int GetSelectedFilteredIndex()
     {
         if (FileList.SelectedItem is not TrackDisplayItem selected)
@@ -827,18 +818,10 @@ public partial class MusicView : UserControl
 
     private void SetFilteredSelectedIndex(int filteredIndex)
     {
-        _updatingVisibleSelection = true;
-        try
-        {
-            FileList.SelectedIndex = filteredIndex >= _visibleStartIndex
-                                     && filteredIndex < _visibleStartIndex + _visibleItems.Count
-                ? filteredIndex - _visibleStartIndex
-                : -1;
-        }
-        finally
-        {
-            _updatingVisibleSelection = false;
-        }
+        FileList.SelectedIndex = filteredIndex >= _visibleStartIndex
+                                 && filteredIndex < _visibleStartIndex + _visibleItems.Count
+            ? filteredIndex - _visibleStartIndex
+            : -1;
     }
 
     private void RestartVisibleThumbnailLoad()
