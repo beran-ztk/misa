@@ -24,7 +24,9 @@ namespace Music.Views;
 public partial class MusicView : UserControl
 {
     private const string DefaultFilterPresetName = "Default";
-    private const int TrackListBatchSize = 50;
+    private const int TrackListWindowSize = 100;
+    private const int TrackListWindowStep = 25;
+    private const double ApproximateTrackRowHeight = 76.0;
 
     // Engine
     private readonly PlaybackEngine _engine = new();
@@ -73,8 +75,11 @@ public partial class MusicView : UserControl
     private Dictionary<int, List<int>> _allTrackTagIds = [];
     private List<TrackDisplayItem> _filteredItems = [];
     private List<TrackDisplayItem> _visibleItems = [];
+    private int _visibleStartIndex;
     private int _visibleTrackCount;
     private bool _updatingVisibleSelection;
+    private bool _updatingScrollWindow;
+    private ScrollViewer? _fileListScrollViewer;
     private List<PortableFilterPreset> _filterPresets = [];
     private bool _updatingPresetUi;
     private bool _showReviewOnly;
@@ -131,9 +136,10 @@ public partial class MusicView : UserControl
         RatingFilter.SelectionChanged += (_, _) => ApplyFilter();
         FileList.SelectionChanged += (_, _) =>
         {
-            ExtendVisibleTracksIfLastSelected();
+            RecenterVisibleWindowOnSelection();
             UpdateReviewButton();
         };
+        FileList.AttachedToVisualTree += (_, _) => AttachFileListScrollViewer();
         PlayerBar.SizeChanged += (_, _) => UpdateSettingsLayout();
         PlayerBar.SizeChanged += (_, _) => UpdateEditorBounds();
         PlayerBar.SizeChanged += (_, _) => UpdateImportBounds();
@@ -203,7 +209,7 @@ public partial class MusicView : UserControl
                 MarkLibraryRefreshPending();
                 if (ImportOverlay.IsVisible) ImportOverlay.RefreshQueue();
             });
-        EditTrackOverlay.TrackSaved += RefreshTrackList;
+        EditTrackOverlay.TrackSaved += UpdateTrackInList;
         EditTrackOverlay.PreviewRequested += StartTrackPreview;
         EditTrackOverlay.PreviewClosed += StopTrackPreview;
         SettingsOverlay.ToastRequested += ShowToast;
@@ -250,7 +256,8 @@ public partial class MusicView : UserControl
             if (_filteredItems.Count == 0 || _engine.State != EngineState.Stopped)
                 return;
 
-            SetVisibleSelectedIndex(0);
+            EnsureVisibleWindowAround(0);
+            SetFilteredSelectedIndex(0);
             StartPlayback();
             _engine.Pause();
             UpdatePlaybackPositionUi();
@@ -375,65 +382,131 @@ public partial class MusicView : UserControl
             && _allItems.FirstOrDefault(item => item.Track.Id == _engine.ActiveTrackId)?.Track is { } activeTrack)
             UpdatePlayerArtworkBackground(activeTrack);
         ClearLibraryRefreshPending();
-
-        TrackDisplayItem CreateTrackDisplayItem(MusicTrack track, bool needsAnalysis)
-        {
-            var genreIds = _allTrackGenreIds.GetValueOrDefault(track.Id, []);
-            var tagIds = _allTrackTagIds.GetValueOrDefault(track.Id, []);
-            var styleIds = _allTrackStyleIds.GetValueOrDefault(track.Id, []);
-
-            var modelGenreAssignments = MusicLibraryService.Current.GetTrackModelGenres(track.Id)
-                .Where(assignment => assignment.IsEnabled)
-                .ToList();
-            var modelGenreStr = string.Join(", ", modelGenreAssignments
-                .Where(assignment => assignment.Reasons.Count > 0)
-                .Select(assignment => ShortGenreName(assignment.GenreName))
-                .Where(name => name.Length > 0)
-                .Order());
-            var manualGenreStr = string.Join(", ", modelGenreAssignments
-                .Where(assignment => assignment.Reasons.Count == 0)
-                .Select(assignment => ShortGenreName(assignment.GenreName))
-                .Where(name => name.Length > 0)
-                .Order());
-            var genreStr = string.Join(", ", new[] { modelGenreStr, manualGenreStr }
-                .Where(text => !string.IsNullOrWhiteSpace(text)));
-            if (string.IsNullOrWhiteSpace(genreStr))
-            {
-                genreStr = string.Join(", ", genreIds
-                    .Select(id => genreMap.GetValueOrDefault(id, ""))
-                    .Select(ShortGenreName)
-                    .Where(n => n.Length > 0).Order());
-            }
-            var styleStr = string.Join(", ", styleIds
-                .Select(id => styleMap.GetValueOrDefault(id, ""))
-                .Where(n => n.Length > 0).Order());
-            var trackTags = tagIds
-                .Select(id => tagMap.GetValueOrDefault(id))
-                .Where(tag => tag is not null)
-                .Cast<Tag>()
-                .OrderBy(tag => tagOrder.GetValueOrDefault(tag.Id, int.MaxValue))
-                .ToList();
-            var tagDisplays = trackTags
-                .Select(tag => new TrackTagDisplay(
-                    tag.Name,
-                    tag.CategoryName,
-                    CategoryBrush(tag.CategoryColor)))
-                .ToList();
-            var ratingName = track.RatingId is int ratingId ? ratingMap.GetValueOrDefault(ratingId, "") : "Not rated";
-            var durationText = track.DurationSeconds.HasValue ? FormatDuration(track.DurationSeconds.Value) : "";
-            var attributes = MusicLibraryService.Current.GetTrackDerivedAttributes(track.Id);
-            var profileText = string.Join(" · ", attributes
-                .Where(attribute => attribute.Key is "emotional_tone" or "energy_context" or "intensity")
-                .Select(attribute => $"{attribute.EffectiveValue} {ProfileAttributeName(attribute.Key)}"));
-
-            return new TrackDisplayItem(track, genreStr, modelGenreStr, manualGenreStr, styleStr, durationText, ratingName, profileText, tagDisplays, track.ChannelName ?? "")
-            {
-                NeedsReview = track.NeedsReview,
-                NeedsAnalysis = needsAnalysis,
-                IsPlaying = track.Id == _engine.ActiveTrackId
-            };
-        }
     }
+
+    private TrackDisplayItem CreateTrackDisplayItem(MusicTrack track, bool needsAnalysis)
+    {
+        var genreIds = _allTrackGenreIds.GetValueOrDefault(track.Id, []);
+        var tagIds = _allTrackTagIds.GetValueOrDefault(track.Id, []);
+        var styleIds = _allTrackStyleIds.GetValueOrDefault(track.Id, []);
+
+        var genreMap = Values.Genres.ToDictionary(g => g.Id, g => g.Name);
+        var tagMap = Values.Tags.ToDictionary(t => t.Id);
+        var tagOrder = Values.Tags.Select((tag, index) => (tag.Id, index))
+            .ToDictionary(item => item.Id, item => item.index);
+        var ratingMap = Values.Ratings.ToDictionary(r => r.Id, r => r.Name);
+        var styleMap = Values.Styles.ToDictionary(s => s.Id, s => s.Name);
+
+        var modelGenreAssignments = MusicLibraryService.Current.GetTrackModelGenres(track.Id)
+            .Where(assignment => assignment.IsEnabled)
+            .ToList();
+        var modelGenreStr = string.Join(", ", modelGenreAssignments
+            .Where(assignment => assignment.Reasons.Count > 0)
+            .Select(assignment => ShortGenreName(assignment.GenreName))
+            .Where(name => name.Length > 0)
+            .Order());
+        var manualGenreStr = string.Join(", ", modelGenreAssignments
+            .Where(assignment => assignment.Reasons.Count == 0)
+            .Select(assignment => ShortGenreName(assignment.GenreName))
+            .Where(name => name.Length > 0)
+            .Order());
+        var genreStr = string.Join(", ", new[] { modelGenreStr, manualGenreStr }
+            .Where(text => !string.IsNullOrWhiteSpace(text)));
+        if (string.IsNullOrWhiteSpace(genreStr))
+        {
+            genreStr = string.Join(", ", genreIds
+                .Select(id => genreMap.GetValueOrDefault(id, ""))
+                .Select(ShortGenreName)
+                .Where(n => n.Length > 0).Order());
+        }
+        var styleStr = string.Join(", ", styleIds
+            .Select(id => styleMap.GetValueOrDefault(id, ""))
+            .Where(n => n.Length > 0).Order());
+        var trackTags = tagIds
+            .Select(id => tagMap.GetValueOrDefault(id))
+            .Where(tag => tag is not null)
+            .Cast<Tag>()
+            .OrderBy(tag => tagOrder.GetValueOrDefault(tag.Id, int.MaxValue))
+            .ToList();
+        var tagDisplays = trackTags
+            .Select(tag => new TrackTagDisplay(
+                tag.Name,
+                tag.CategoryName,
+                CategoryBrush(tag.CategoryColor)))
+            .ToList();
+        var ratingName = track.RatingId is int ratingId ? ratingMap.GetValueOrDefault(ratingId, "") : "Not rated";
+        var durationText = track.DurationSeconds.HasValue ? FormatDuration(track.DurationSeconds.Value) : "";
+        var attributes = MusicLibraryService.Current.GetTrackDerivedAttributes(track.Id);
+        var profileText = string.Join(" · ", attributes
+            .Where(attribute => attribute.Key is "emotional_tone" or "energy_context" or "intensity")
+            .Select(attribute => $"{attribute.EffectiveValue} {ProfileAttributeName(attribute.Key)}"));
+
+        return new TrackDisplayItem(track, genreStr, modelGenreStr, manualGenreStr, styleStr, durationText, ratingName, profileText, tagDisplays, track.ChannelName ?? "")
+        {
+            NeedsReview = track.NeedsReview,
+            NeedsAnalysis = needsAnalysis,
+            IsPlaying = track.Id == _engine.ActiveTrackId
+        };
+    }
+
+    private void UpdateTrackInList(int trackId)
+    {
+        var selectedTrackId = (FileList.SelectedItem as TrackDisplayItem)?.Track.Id;
+        var previous = _allItems.FirstOrDefault(item => item.Track.Id == trackId);
+        var updatedTrack = MusicLibraryService.Current.GetTrackById(trackId);
+        if (updatedTrack is null)
+        {
+            RefreshTrackList();
+            return;
+        }
+
+        _allTrackStyleIds[trackId] = MusicLibraryService.Current.GetTrackStyleIds(trackId);
+        _allTrackGenreIds[trackId] = MusicLibraryService.Current.GetTrackGenreIds(trackId);
+        _allTrackTagIds[trackId] = MusicLibraryService.Current.GetTrackTagIds(trackId);
+
+        var needsAnalysis = MusicLibraryService.Current.GetUnanalyzedTracks()
+            .Any(track => track.Id == trackId);
+        var updatedItem = CreateTrackDisplayItem(updatedTrack, needsAnalysis);
+        if (previous?.Thumbnail is not null)
+        {
+            updatedItem.Thumbnail = previous.Thumbnail;
+            previous.Thumbnail = null;
+        }
+
+        var allIndex = _allItems.FindIndex(item => item.Track.Id == trackId);
+        if (allIndex >= 0)
+            _allItems[allIndex] = updatedItem;
+        else
+            _allItems.Insert(0, updatedItem);
+
+        var filteredIndex = _filteredItems.FindIndex(item => item.Track.Id == trackId);
+        if (filteredIndex >= 0)
+            _filteredItems[filteredIndex] = updatedItem;
+
+        if (_engine.ActiveTrackId == trackId)
+        {
+            NowPlayingText.Text = updatedTrack.Title;
+            UpdatePlayerArtworkBackground(updatedTrack);
+        }
+
+        if (filteredIndex >= 0)
+            EnsureVisibleWindowAround(filteredIndex);
+
+        RefreshVisibleItemsSource(selectedTrackId);
+        UpdatePlaylistSummary();
+        RefreshNextTrackPreview();
+        UpdateReviewFilterButton();
+        UpdateReviewButton();
+        RestartVisibleThumbnailLoad();
+    }
+
+    private List<FilterGroup> CurrentFilterGroups() =>
+        _filterGroups
+            .Select(fg => new FilterGroup(
+                SelectedIds(fg.GenreCtrl.SelectedItems, Values.Genres, g => g.Name, g => g.Id),
+                new HashSet<int>(),
+                SelectedIds(fg.TagCtrl.SelectedItems, Values.Tags, TagFilterName, t => t.Id)))
+            .ToList();
 
     private static string ProfileAttributeName(string key) => key switch
     {
@@ -530,12 +603,7 @@ public partial class MusicView : UserControl
         var selRatingIds = SelectedIds(RatingFilter.SelectedItems, Values.Ratings, r => r.Name, r => r.Id);
         var itemById = _allItems.ToDictionary(i => i.Track.Id);
 
-        var groups = _filterGroups
-            .Select(fg => new FilterGroup(
-                SelectedIds(fg.GenreCtrl.SelectedItems, Values.Genres, g => g.Name, g => g.Id),
-                new HashSet<int>(),
-                SelectedIds(fg.TagCtrl.SelectedItems, Values.Tags, TagFilterName, t => t.Id)))
-            .ToList();
+        var groups = CurrentFilterGroups();
         
         var filtered = TrackFilter.Apply(
             _allItems.Select(i => i.Track),
@@ -579,7 +647,7 @@ public partial class MusicView : UserControl
     {
         if (_filteredItems.Count == 0)
         {
-            SetVisibleSelectedIndex(-1);
+            SetFilteredSelectedIndex(-1);
             return;
         }
 
@@ -592,14 +660,14 @@ public partial class MusicView : UserControl
             var index = _filteredItems.FindIndex(item => item.Track.Id == id);
             if (index >= 0)
             {
-                EnsureVisibleThrough(index);
-                SetVisibleSelectedIndex(index);
+                EnsureVisibleWindowAround(index);
+                SetFilteredSelectedIndex(index);
                 return;
             }
         }
 
         if (FileList.SelectedIndex < 0 || FileList.SelectedIndex >= _visibleItems.Count)
-            SetVisibleSelectedIndex(0);
+            SetFilteredSelectedIndex(0);
 
         if (FileList.SelectedIndex >= 0 && FileList.SelectedIndex < _visibleItems.Count)
             FileList.ScrollIntoView(_visibleItems[FileList.SelectedIndex]);
@@ -607,13 +675,19 @@ public partial class MusicView : UserControl
 
     private void ResetVisibleTrackWindow()
     {
-        _visibleTrackCount = Math.Min(TrackListBatchSize, _filteredItems.Count);
+        _visibleStartIndex = 0;
+        _visibleTrackCount = Math.Min(TrackListWindowSize, _filteredItems.Count);
     }
 
     private void RefreshVisibleItemsSource(int? selectedTrackId = null)
     {
         selectedTrackId ??= (FileList.SelectedItem as TrackDisplayItem)?.Track.Id;
-        _visibleItems = _filteredItems.Take(_visibleTrackCount).ToList();
+        _visibleStartIndex = Math.Clamp(_visibleStartIndex, 0, Math.Max(0, _filteredItems.Count - 1));
+        _visibleTrackCount = Math.Min(TrackListWindowSize, Math.Max(0, _filteredItems.Count - _visibleStartIndex));
+        _visibleItems = _filteredItems
+            .Skip(_visibleStartIndex)
+            .Take(_visibleTrackCount)
+            .ToList();
 
         _updatingVisibleSelection = true;
         try
@@ -630,39 +704,136 @@ public partial class MusicView : UserControl
         {
             _updatingVisibleSelection = false;
         }
+
+        DisposeThumbnailsOutsideVisibleWindow();
     }
 
-    private void EnsureVisibleThrough(int filteredIndex)
+    private void DisposeThumbnailsOutsideVisibleWindow()
     {
-        if (filteredIndex < 0 || filteredIndex < _visibleTrackCount)
+        var visibleTrackIds = _visibleItems
+            .Select(item => item.Track.Id)
+            .ToHashSet();
+
+        foreach (var item in _allItems)
+        {
+            if (visibleTrackIds.Contains(item.Track.Id) || item.Thumbnail is null)
+                continue;
+
+            item.Thumbnail.Dispose();
+            item.Thumbnail = null;
+        }
+    }
+
+    private void AttachFileListScrollViewer()
+    {
+        var scrollViewer = FileList.GetVisualDescendants()
+            .OfType<ScrollViewer>()
+            .FirstOrDefault();
+        if (scrollViewer is null || ReferenceEquals(scrollViewer, _fileListScrollViewer))
             return;
 
-        _visibleTrackCount = Math.Min(
-            _filteredItems.Count,
-            Math.Max(TrackListBatchSize, ((filteredIndex / TrackListBatchSize) + 1) * TrackListBatchSize));
-        RefreshVisibleItemsSource();
-        RestartVisibleThumbnailLoad();
+        if (_fileListScrollViewer is not null)
+            _fileListScrollViewer.PropertyChanged -= OnFileListScrollViewerPropertyChanged;
+
+        _fileListScrollViewer = scrollViewer;
+        _fileListScrollViewer.PropertyChanged += OnFileListScrollViewerPropertyChanged;
     }
 
-    private void ExtendVisibleTracksIfLastSelected()
+    private void OnFileListScrollViewerPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
     {
-        if (_updatingVisibleSelection
+        if (e.Property == ScrollViewer.OffsetProperty)
+            UpdateVisibleWindowFromScroll();
+    }
+
+    private void UpdateVisibleWindowFromScroll()
+    {
+        if (_updatingScrollWindow
+            || _fileListScrollViewer is null
             || _visibleItems.Count == 0
-            || _visibleTrackCount >= _filteredItems.Count
-            || FileList.SelectedIndex != _visibleItems.Count - 1)
+            || _filteredItems.Count <= TrackListWindowSize)
             return;
 
-        _visibleTrackCount = Math.Min(_filteredItems.Count, _visibleTrackCount + TrackListBatchSize);
+        var centerVisibleIndex = (int)Math.Round(
+            (_fileListScrollViewer.Offset.Y + _fileListScrollViewer.Viewport.Height / 2)
+            / ApproximateTrackRowHeight);
+        centerVisibleIndex = Math.Clamp(centerVisibleIndex, 0, Math.Max(0, _visibleItems.Count - 1));
+        var centerFilteredIndex = Math.Clamp(_visibleStartIndex + centerVisibleIndex, 0, _filteredItems.Count - 1);
+
+        var desiredStart = DesiredVisibleStartFor(centerFilteredIndex);
+        if (desiredStart == _visibleStartIndex)
+            return;
+
+        _updatingScrollWindow = true;
+        try
+        {
+            _visibleStartIndex = desiredStart;
+            _visibleTrackCount = Math.Min(TrackListWindowSize, _filteredItems.Count - _visibleStartIndex);
+            RefreshVisibleItemsSource((FileList.SelectedItem as TrackDisplayItem)?.Track.Id);
+
+            var adjustedOffsetY = Math.Max(
+                0,
+                (centerFilteredIndex - _visibleStartIndex) * ApproximateTrackRowHeight
+                - _fileListScrollViewer.Viewport.Height / 2);
+            _fileListScrollViewer.Offset = _fileListScrollViewer.Offset.WithY(adjustedOffsetY);
+        }
+        finally
+        {
+            _updatingScrollWindow = false;
+        }
+
+        RestartVisibleThumbnailLoad();
+    }
+
+    private void EnsureVisibleWindowAround(int filteredIndex)
+    {
+        if (filteredIndex < 0 || filteredIndex >= _filteredItems.Count)
+            return;
+
+        var desiredStart = DesiredVisibleStartFor(filteredIndex);
+
+        if (desiredStart == _visibleStartIndex && filteredIndex < _visibleStartIndex + _visibleTrackCount)
+            return;
+
+        _visibleStartIndex = desiredStart;
+        _visibleTrackCount = Math.Min(TrackListWindowSize, _filteredItems.Count - _visibleStartIndex);
         RefreshVisibleItemsSource();
         RestartVisibleThumbnailLoad();
     }
 
-    private void SetVisibleSelectedIndex(int index)
+    private int DesiredVisibleStartFor(int filteredIndex)
+    {
+        var desiredStart = Math.Max(0, filteredIndex - TrackListWindowSize / 2);
+        desiredStart = desiredStart / TrackListWindowStep * TrackListWindowStep;
+        return Math.Min(desiredStart, Math.Max(0, _filteredItems.Count - TrackListWindowSize));
+    }
+
+    private void RecenterVisibleWindowOnSelection()
+    {
+        if (_updatingVisibleSelection || _visibleItems.Count == 0)
+            return;
+
+        var filteredIndex = GetSelectedFilteredIndex();
+        if (filteredIndex >= 0)
+            EnsureVisibleWindowAround(filteredIndex);
+    }
+
+    private int GetSelectedFilteredIndex()
+    {
+        if (FileList.SelectedItem is not TrackDisplayItem selected)
+            return -1;
+
+        return _filteredItems.FindIndex(item => item.Track.Id == selected.Track.Id);
+    }
+
+    private void SetFilteredSelectedIndex(int filteredIndex)
     {
         _updatingVisibleSelection = true;
         try
         {
-            FileList.SelectedIndex = index;
+            FileList.SelectedIndex = filteredIndex >= _visibleStartIndex
+                                     && filteredIndex < _visibleStartIndex + _visibleItems.Count
+                ? filteredIndex - _visibleStartIndex
+                : -1;
         }
         finally
         {
@@ -1547,14 +1718,14 @@ public partial class MusicView : UserControl
 
     private void OnContextEditClicked(object? sender, RoutedEventArgs e)
     {
-        var idx = FileList.SelectedIndex;
+        var idx = GetSelectedFilteredIndex();
         if (idx < 0 || idx >= _filteredItems.Count) return;
         EditTrackOverlay.Open(_filteredItems[idx].Track);
     }
 
     private void OnContextToggleReviewClicked(object? sender, RoutedEventArgs e)
     {
-        var idx = FileList.SelectedIndex;
+        var idx = GetSelectedFilteredIndex();
         if (idx < 0 || idx >= _filteredItems.Count)
             return;
 
@@ -1563,7 +1734,7 @@ public partial class MusicView : UserControl
 
     private async void OnContextDeleteClicked(object? sender, RoutedEventArgs e)
     {
-        var idx = FileList.SelectedIndex;
+        var idx = GetSelectedFilteredIndex();
         if (idx < 0 || idx >= _filteredItems.Count)
             return;
 
@@ -1650,7 +1821,7 @@ public partial class MusicView : UserControl
     {
         _shuffle = !_shuffle;
         ApplyFilter();
-        SetVisibleSelectedIndex(_filteredItems.Count > 0 ? 0 : -1);
+        SetFilteredSelectedIndex(_filteredItems.Count > 0 ? 0 : -1);
         ShuffleBtn.Opacity = _shuffle ? 1.0 : 0.35;
         ToolTip.SetTip(ShuffleBtn, _shuffle ? "Shuffle: On" : "Shuffle: Off");
         if (_filteredItems.Count > 0)
@@ -1674,7 +1845,7 @@ public partial class MusicView : UserControl
         if (_engine.ActiveTrackId >= 0)
             return _allItems.FirstOrDefault(item => item.Track.Id == _engine.ActiveTrackId)?.Track;
 
-        var index = FileList.SelectedIndex;
+        var index = GetSelectedFilteredIndex();
         return index >= 0 && index < _filteredItems.Count
             ? _filteredItems[index].Track
             : null;
@@ -1684,7 +1855,7 @@ public partial class MusicView : UserControl
     {
         var needsReview = !track.NeedsReview;
         MusicLibraryService.Current.SetTrackNeedsReview(track.Id, needsReview);
-        RefreshTrackList();
+        UpdateTrackInList(track.Id);
         ShowToast(needsReview ? "Marked for review" : "Review mark removed");
     }
 
@@ -1698,7 +1869,7 @@ public partial class MusicView : UserControl
 
     private void StartPlayback()
     {
-        var idx = FileList.SelectedIndex;
+        var idx = GetSelectedFilteredIndex();
         if (idx < 0 || idx >= _filteredItems.Count) return;
 
         PlayTrackAt(idx, isCrossfade: false);
@@ -1738,8 +1909,8 @@ public partial class MusicView : UserControl
 
         BeginListeningSession(track.Id);
 
-        EnsureVisibleThrough(filteredIndex);
-        SetVisibleSelectedIndex(filteredIndex);
+        EnsureVisibleWindowAround(filteredIndex);
+        SetFilteredSelectedIndex(filteredIndex);
 
         NowPlayingText.Text = track.Title;
         UpdatePlayerArtworkBackground(track);
@@ -1784,8 +1955,8 @@ public partial class MusicView : UserControl
         var index = _filteredItems.FindIndex(item => item.Track.Id == track.Id);
         if (index >= 0)
         {
-            EnsureVisibleThrough(index);
-            SetVisibleSelectedIndex(index);
+            EnsureVisibleWindowAround(index);
+            SetFilteredSelectedIndex(index);
         }
         NowPlayingText.Text = $"Preview · {track.Title}";
         UpdatePlayerArtworkBackground(track);
@@ -1830,8 +2001,8 @@ public partial class MusicView : UserControl
             var index = _filteredItems.FindIndex(item => item.Track.Id == restoredTrack.Id);
             if (index >= 0)
             {
-                EnsureVisibleThrough(index);
-                SetVisibleSelectedIndex(index);
+                EnsureVisibleWindowAround(index);
+                SetFilteredSelectedIndex(index);
             }
             NowPlayingText.Text = restoredTrack.Title;
             UpdatePlayerArtworkBackground(restoredTrack);
@@ -1993,7 +2164,7 @@ public partial class MusicView : UserControl
         }
         else if (_engine.ActiveTrackId < 0)
         {
-            var selIdx = FileList.SelectedIndex;
+            var selIdx = GetSelectedFilteredIndex();
             nextLinearIdx = selIdx >= 0 && selIdx < _filteredItems.Count
                 ? selIdx + (isManual ? 0 : 1)
                 : 0;
@@ -2016,7 +2187,7 @@ public partial class MusicView : UserControl
         int prevIdx;
         if (currentIdx < 0)
         {
-            var selIdx = FileList.SelectedIndex;
+            var selIdx = GetSelectedFilteredIndex();
             if (selIdx <= 0) return;
             prevIdx = selIdx - 1;
         }
@@ -2314,7 +2485,7 @@ public partial class MusicView : UserControl
         {
             var idx = _filteredItems.FindIndex(i => i.Track.Id == targetId);
             if (idx >= 0)
-                EnsureVisibleThrough(idx);
+                EnsureVisibleWindowAround(idx);
         }
 
         RefreshVisibleItemsSource(selectedId >= 0 ? selectedId : null);

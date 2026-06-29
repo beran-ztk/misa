@@ -46,7 +46,7 @@ public partial class EditTrackOverlay : UserControl
     private HashSet<int> _pendingEnabledModelGenreIds = [];
     private Dictionary<string, string?> _initialAttributeOverrides = [];
 
-    public event Action? TrackSaved;
+    public event Action<int>? TrackSaved;
     public event Action<MusicTrack>? PreviewRequested;
     public event Action? PreviewClosed;
 
@@ -391,8 +391,9 @@ public partial class EditTrackOverlay : UserControl
 
     private void OnSaveClicked(object? sender, RoutedEventArgs e)
     {
+        var trackId = _track?.Id;
         if (SaveCurrentChanges(closeAfterSave: true))
-            TrackSaved?.Invoke();
+            TrackSaved?.Invoke(trackId!.Value);
     }
 
     private bool SaveCurrentChanges(bool closeAfterSave)
@@ -1128,8 +1129,9 @@ public partial class EditTrackOverlay : UserControl
 
     private void OnSaveAndCloseClicked(object? sender, RoutedEventArgs e)
     {
+        var trackId = _track?.Id;
         if (SaveCurrentChanges(closeAfterSave: true))
-            TrackSaved?.Invoke();
+            TrackSaved?.Invoke(trackId!.Value);
     }
 
     private void CloseOverlay(bool skipUnsavedCheck = false)

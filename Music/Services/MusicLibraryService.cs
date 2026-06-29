@@ -25,7 +25,7 @@ public class MusicLibraryService
     public List<MusicTrack> GetTracks() => _db.GetAllTracks();
     public byte[]? GetTrackThumbnail(int trackId) => _db.GetTrackThumbnail(trackId);
     public List<MusicTrack> GetUnanalyzedTracks() => _db.GetUnanalyzedTracks();
-    public MusicTrack? GetTrackById(int id) => GetTracks().FirstOrDefault(track => track.Id == id);
+    public MusicTrack? GetTrackById(int id) => _db.GetTrackById(id);
     public MusicTrack? GetTrackByCanonicalUrl(string canonicalUrl) =>
         GetTracks().FirstOrDefault(track => string.Equals(track.CanonicalUrl, canonicalUrl, StringComparison.OrdinalIgnoreCase));
 
