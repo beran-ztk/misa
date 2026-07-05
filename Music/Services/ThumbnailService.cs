@@ -7,6 +7,7 @@ namespace Music.Services;
 public static class ThumbnailService
 {
     public const int ThumbnailSize = 128;
+    public const int PlayerArtworkMaxSize = 768;
 
     public sealed record EmbeddedArtwork(byte[] Data, string Extension);
 
@@ -17,11 +18,19 @@ public static class ThumbnailService
     {
         var artwork = ReadEmbeddedArtwork(audioFilePath);
         return artwork is { Length: > 0 }
-            ? CreateThumbnail(artwork)
+            ? CreateSquareArtwork(artwork, ThumbnailSize, 82)
             : null;
     }
 
-    public static byte[]? CreateThumbnail(byte[] artwork)
+    public static byte[]? ReadEmbeddedPlayerArtwork(string audioFilePath)
+    {
+        var artwork = ReadEmbeddedArtwork(audioFilePath);
+        return artwork is { Length: > 0 }
+            ? CreateBoundedArtwork(artwork, PlayerArtworkMaxSize, 86)
+            : null;
+    }
+
+    public static byte[]? CreateSquareArtwork(byte[] artwork, int size, int quality)
     {
         try
         {
@@ -29,15 +38,15 @@ public static class ThumbnailService
             if (source is null || source.Width <= 0 || source.Height <= 0)
                 return null;
 
-            using var surface = SKSurface.Create(new SKImageInfo(ThumbnailSize, ThumbnailSize, SKColorType.Rgba8888, SKAlphaType.Premul));
+            using var surface = SKSurface.Create(new SKImageInfo(size, size, SKColorType.Rgba8888, SKAlphaType.Premul));
             var canvas = surface.Canvas;
             canvas.Clear(SKColors.Transparent);
 
-            var scale = Math.Max((float)ThumbnailSize / source.Width, (float)ThumbnailSize / source.Height);
+            var scale = Math.Max((float)size / source.Width, (float)size / source.Height);
             var width = source.Width * scale;
             var height = source.Height * scale;
-            var left = (ThumbnailSize - width) / 2f;
-            var top = (ThumbnailSize - height) / 2f;
+            var left = (size - width) / 2f;
+            var top = (size - height) / 2f;
             var destination = new SKRect(left, top, left + width, top + height);
 
             using var paint = new SKPaint
@@ -49,7 +58,41 @@ public static class ThumbnailService
             canvas.Flush();
 
             using var image = surface.Snapshot();
-            using var data = image.Encode(SKEncodedImageFormat.Jpeg, 82);
+            using var data = image.Encode(SKEncodedImageFormat.Jpeg, quality);
+            return data?.ToArray();
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    public static byte[]? CreateBoundedArtwork(byte[] artwork, int maxSize, int quality)
+    {
+        try
+        {
+            using var source = SKBitmap.Decode(artwork);
+            if (source is null || source.Width <= 0 || source.Height <= 0)
+                return null;
+
+            var scale = Math.Min(1f, (float)maxSize / Math.Max(source.Width, source.Height));
+            var width = Math.Max(1, (int)Math.Round(source.Width * scale));
+            var height = Math.Max(1, (int)Math.Round(source.Height * scale));
+
+            using var surface = SKSurface.Create(new SKImageInfo(width, height, SKColorType.Rgba8888, SKAlphaType.Premul));
+            var canvas = surface.Canvas;
+            canvas.Clear(SKColors.Transparent);
+
+            using var paint = new SKPaint
+            {
+                FilterQuality = SKFilterQuality.High,
+                IsAntialias = true
+            };
+            canvas.DrawBitmap(source, new SKRect(0, 0, width, height), paint);
+            canvas.Flush();
+
+            using var image = surface.Snapshot();
+            using var data = image.Encode(SKEncodedImageFormat.Jpeg, quality);
             return data?.ToArray();
         }
         catch

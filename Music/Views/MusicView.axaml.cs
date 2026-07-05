@@ -52,7 +52,8 @@ public partial class MusicView : UserControl
     private bool _filterPanelVisible;
     private CancellationTokenSource? _thumbLoadCts;
     private CancellationTokenSource? _toastCts;
-    private readonly Dictionary<int, Bitmap?> _playerArtworkCache = [];
+    private Bitmap? _playerArtwork;
+    private int _playerArtworkTrackId = -1;
     private bool _libraryRefreshPending;
 
     // Crossfade state
@@ -2206,12 +2207,22 @@ public partial class MusicView : UserControl
 
     private void UpdatePlayerArtworkBackground(MusicTrack track)
     {
-        if (!_playerArtworkCache.TryGetValue(track.Id, out var artwork))
+        if (_playerArtworkTrackId == track.Id)
         {
-            artwork = LoadPlayerArtwork(track);
-            _playerArtworkCache[track.Id] = artwork;
+            SetPlayerArtworkBackground(_playerArtwork);
+            return;
         }
 
+        var previousArtwork = _playerArtwork;
+        var artwork = LoadPlayerArtwork(track);
+        _playerArtwork = artwork;
+        _playerArtworkTrackId = track.Id;
+        SetPlayerArtworkBackground(artwork);
+        previousArtwork?.Dispose();
+    }
+
+    private void SetPlayerArtworkBackground(Bitmap? artwork)
+    {
         PlayerArtworkBackground.Source = artwork;
         PlayerArtworkBackground.IsVisible = artwork is not null;
         AppArtworkBackground.Source = artwork;
@@ -2225,7 +2236,7 @@ public partial class MusicView : UserControl
         try
         {
             var filePath = Path.Combine(Values.TracksDirectory, track.FileName);
-            var artwork = ThumbnailService.ReadEmbeddedArtwork(filePath);
+            var artwork = ThumbnailService.ReadEmbeddedPlayerArtwork(filePath);
             artwork ??= track.Thumbnail is { Length: > 0 } thumbnail
                 ? thumbnail
                 : MusicLibraryService.Current.GetTrackThumbnail(track.Id);
@@ -2251,12 +2262,9 @@ public partial class MusicView : UserControl
         ListArtworkBackground.IsVisible = false;
         ResetAudioAtmosphere();
 
-        if (!disposeCache)
-            return;
-
-        foreach (var artwork in _playerArtworkCache.Values)
-            artwork?.Dispose();
-        _playerArtworkCache.Clear();
+        _playerArtwork?.Dispose();
+        _playerArtwork = null;
+        _playerArtworkTrackId = -1;
     }
 
     // ─── Audio-reactive atmosphere ───────────────────────────────────────────
