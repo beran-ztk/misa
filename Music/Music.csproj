@@ -34,6 +34,7 @@
         </PackageReference>
         <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.5" />
         <PackageReference Include="NAudio" Version="2.2.1"/>
+        <PackageReference Include="SkiaSharp" Version="2.88.9" />
         <PackageReference Include="TagLibSharp" Version="2.3.0" />
     </ItemGroup>
 </Project>

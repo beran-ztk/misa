@@ -119,6 +119,7 @@ public class MusicDatabase
                 file_size_bytes     INTEGER NULL,
                 download_duration_ms INTEGER NULL,
                 thumbnail           BLOB NULL,
+                thumbnail_version   INTEGER NOT NULL DEFAULT 1,
                 analysis_disabled   INTEGER NOT NULL DEFAULT 0,
                 needs_reevaluation  INTEGER NOT NULL DEFAULT 0,
                 notes               TEXT NULL
@@ -251,6 +252,8 @@ public class MusicDatabase
         EnsureColumn(conn, "tracks", "file_size_bytes", "INTEGER NULL");
         EnsureColumn(conn, "tracks", "download_duration_ms", "INTEGER NULL");
         EnsureColumn(conn, "tracks", "thumbnail", "BLOB NULL");
+        EnsureColumn(conn, "tracks", "thumbnail_version", "INTEGER NOT NULL DEFAULT 0");
+        MigrateTrackThumbnailsToSmallBlobs(conn);
         EnsureColumn(conn, "tracks", "analysis_disabled", "INTEGER NOT NULL DEFAULT 0");
         EnsureColumn(conn, "track_analysis", "analysis_duration_ms", "INTEGER NULL");
         EnsureColumn(conn, "model_subgenres", "description", "TEXT NULL");
@@ -284,6 +287,43 @@ public class MusicDatabase
             ("$modelName", RemovedMoodThemeModelName));
 
         RebuildDerivedAttributes(conn);
+    }
+
+    private static void MigrateTrackThumbnailsToSmallBlobs(SqliteConnection conn)
+    {
+        if (!ColumnExists(conn, "tracks", "thumbnail_version"))
+            return;
+
+        var tracks = new List<(int Id, string FileName)>();
+        using (var cmd = conn.CreateCommand())
+        {
+            cmd.CommandText = "SELECT id, file_name FROM tracks WHERE thumbnail_version < 1";
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+                tracks.Add((reader.GetInt32(0), reader.GetString(1)));
+        }
+
+        if (tracks.Count == 0)
+            return;
+
+        using var tx = conn.BeginTransaction();
+        using var update = conn.CreateCommand();
+        update.Transaction = tx;
+        update.CommandText = "UPDATE tracks SET thumbnail = $thumbnail, thumbnail_version = 1 WHERE id = $id";
+        var thumbnailParameter = update.Parameters.Add("$thumbnail", SqliteType.Blob);
+        var idParameter = update.Parameters.Add("$id", SqliteType.Integer);
+
+        foreach (var track in tracks)
+        {
+            var filePath = Path.Combine(Values.TracksDirectory, track.FileName);
+            var thumbnail = ThumbnailService.ReadEmbeddedArtworkThumbnail(filePath);
+            thumbnailParameter.Value = thumbnail is { Length: > 0 } ? thumbnail : DBNull.Value;
+            idParameter.Value = track.Id;
+            update.ExecuteNonQuery();
+        }
+
+        tx.Commit();
+        ExecuteNonQuery(conn, "VACUUM");
     }
 
     private static void DropTagRuleSchema(SqliteConnection conn)
@@ -1118,8 +1158,8 @@ public class MusicDatabase
         }
 
         var trackId = InsertAndGetId(conn, tx, @"
-            INSERT INTO tracks (canonical_url, title, file_name, channel_id, rating_id, uploaded_at, downloaded_at, updated_at, duration_seconds, file_size_bytes, download_duration_ms, thumbnail)
-            VALUES ($url, $title, $fileName, $channelId, $ratingId, $uploadedAt, $downloadedAt, $updatedAt, $duration, $fileSizeBytes, $downloadDurationMs, $thumbnail)",
+            INSERT INTO tracks (canonical_url, title, file_name, channel_id, rating_id, uploaded_at, downloaded_at, updated_at, duration_seconds, file_size_bytes, download_duration_ms, thumbnail, thumbnail_version)
+            VALUES ($url, $title, $fileName, $channelId, $ratingId, $uploadedAt, $downloadedAt, $updatedAt, $duration, $fileSizeBytes, $downloadDurationMs, $thumbnail, 1)",
             ("$url", canonicalUrl),
             ("$title", title),
             ("$fileName", fileName),

@@ -282,7 +282,7 @@ public class MusicLibraryService
         var duration = await _downloader.GetDurationAsync(filePath);
         var metadata = previewMetadata ?? await _downloader.GetMetadataAsync(canonicalUrl);
         var fileSizeBytes = new FileInfo(filePath).Length;
-        var thumbnail = ThumbnailService.ReadEmbeddedArtwork(filePath) ?? [];
+        var thumbnail = ThumbnailService.ReadEmbeddedArtworkThumbnail(filePath) ?? [];
         var trackId = _db.InsertTrack(canonicalUrl, metadata?.Title ?? _downloader.TitleFromFileName(fileName), fileName,
             request.GenreIds, request.RatingId, request.StyleIds, duration, fileSizeBytes, (int)downloadStopwatch.ElapsedMilliseconds, metadata, thumbnail);
 
@@ -321,7 +321,7 @@ public class MusicLibraryService
         var duration = await _downloader.GetDurationAsync(filePath);
         var metadata = previewMetadata ?? await _downloader.GetMetadataAsync(canonicalUrl);
         var fileSizeBytes = new FileInfo(filePath).Length;
-        var thumbnail = ThumbnailService.ReadEmbeddedArtwork(filePath) ?? [];
+        var thumbnail = ThumbnailService.ReadEmbeddedArtworkThumbnail(filePath) ?? [];
         var trackId = _db.InsertTrack(canonicalUrl, metadata?.Title ?? _downloader.TitleFromFileName(fileName), fileName,
             [], null, [], duration, fileSizeBytes, (int)downloadStopwatch.ElapsedMilliseconds, metadata, thumbnail);
         trackCreated?.Invoke(trackId);

@@ -2224,7 +2224,9 @@ public partial class MusicView : UserControl
     {
         try
         {
-            var artwork = track.Thumbnail is { Length: > 0 } thumbnail
+            var filePath = Path.Combine(Values.TracksDirectory, track.FileName);
+            var artwork = ThumbnailService.ReadEmbeddedArtwork(filePath);
+            artwork ??= track.Thumbnail is { Length: > 0 } thumbnail
                 ? thumbnail
                 : MusicLibraryService.Current.GetTrackThumbnail(track.Id);
             if (artwork is not { Length: > 0 })
