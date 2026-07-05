@@ -11,7 +11,7 @@ namespace Music.Services;
 
 public sealed class TrackAnalysisService
 {
-    private const string ScriptFileName = "analyze_discogs_maest_genres.py";
+    private const string ScriptFileName = "analyze.py";
     private static readonly HashSet<string> ExcludedExperimentalModels = new(StringComparer.OrdinalIgnoreCase)
     {
         "mtg_" + "jamen" + "do_" + "mood" + "theme"
