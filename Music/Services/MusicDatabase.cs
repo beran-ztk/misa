@@ -953,7 +953,7 @@ public class MusicDatabase
                     video_id = excluded.video_id,
                     title = excluded.title,
                     duration_seconds = excluded.duration_seconds,
-                    uploaded_at = excluded.uploaded_at,
+                    uploaded_at = COALESCE(excluded.uploaded_at, channel_videos.uploaded_at),
                     updated_at = excluded.updated_at,
                     is_checked = CASE
                         WHEN EXISTS (SELECT 1 FROM tracks WHERE tracks.canonical_url = excluded.canonical_url) THEN 1
@@ -1013,8 +1013,8 @@ public class MusicDatabase
             FROM channel_videos
             WHERE channel_id = $channelId
             ORDER BY {(uncheckedFirst ? "is_checked ASC," : string.Empty)}
-                     COALESCE(uploaded_at, discovered_at) ASC,
-                     id ASC";
+                     COALESCE(uploaded_at, discovered_at) DESC,
+                     id DESC";
         cmd.Parameters.AddWithValue("$channelId", channelId);
         using var reader = cmd.ExecuteReader();
         var videos = new List<ChannelVideo>();
@@ -1030,6 +1030,15 @@ public class MusicDatabase
                 reader.GetString(7),
                 ReadInt32(reader, 8) != 0));
         return videos;
+    }
+
+    public bool DeleteChannel(int channelId)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "DELETE FROM channels WHERE id = $channelId";
+        cmd.Parameters.AddWithValue("$channelId", channelId);
+        return cmd.ExecuteNonQuery() > 0;
     }
 
     private static int ReadInt32(SqliteDataReader reader, int ordinal) =>

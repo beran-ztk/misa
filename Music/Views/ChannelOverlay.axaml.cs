@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -16,6 +17,7 @@ public partial class ChannelOverlay : UserControl
 {
     private CancellationTokenSource? _refreshCts;
     private List<ChannelSubscription> _channels = [];
+    private List<ChannelVideoDisplay> _currentVideos = [];
     private int _selectedChannelId = -1;
     private bool _loadingVideos;
 
@@ -90,6 +92,22 @@ public partial class ChannelOverlay : UserControl
             "Channel refreshed");
     }
 
+    private void OnDeleteSelectedClicked(object? sender, RoutedEventArgs e)
+    {
+        if (ChannelList.SelectedItem is not ChannelSubscription channel)
+            return;
+
+        if (!MusicLibraryService.Current.DeleteChannel(channel.Id))
+        {
+            ToastRequested?.Invoke("Channel could not be deleted");
+            return;
+        }
+
+        _selectedChannelId = -1;
+        RefreshChannels();
+        ToastRequested?.Invoke("Channel deleted");
+    }
+
     private async System.Threading.Tasks.Task RunRefreshAsync(
         Func<IProgress<string>, System.Threading.Tasks.Task<ChannelRefreshResult>> refresh,
         string successText)
@@ -138,9 +156,15 @@ public partial class ChannelOverlay : UserControl
             return;
         }
 
-        var videos = MusicLibraryService.Current.GetChannelVideos(_selectedChannelId)
+        _currentVideos = MusicLibraryService.Current.GetChannelVideos(_selectedChannelId)
             .Select(video => new ChannelVideoDisplay(video))
             .ToList();
+
+        var showChecked = ShowCheckedBox.IsChecked == true;
+        var videos = showChecked
+            ? _currentVideos
+            : _currentVideos.Where(video => !video.IsChecked).ToList();
+
         _loadingVideos = true;
         try
         {
@@ -150,8 +174,10 @@ public partial class ChannelOverlay : UserControl
         {
             _loadingVideos = false;
         }
-        var uncheckedCount = videos.Count(video => !video.IsChecked);
-        VideoSummaryText.Text = $"{videos.Count} videos · {uncheckedCount} unchecked";
+        var uncheckedCount = _currentVideos.Count(video => !video.IsChecked);
+        VideoSummaryText.Text = showChecked
+            ? $"{_currentVideos.Count} videos · {uncheckedCount} unchecked"
+            : $"{uncheckedCount} unchecked videos";
     }
 
     private void OnVideoCheckedChanged(object? sender, RoutedEventArgs e)
@@ -165,6 +191,15 @@ public partial class ChannelOverlay : UserControl
         MusicLibraryService.Current.SetChannelVideoChecked(item.Id, isChecked);
         item.IsChecked = isChecked;
         RefreshChannelSummaries();
+        RefreshVideos();
+    }
+
+    private void OnShowCheckedChanged(object? sender, RoutedEventArgs e)
+    {
+        if (_loadingVideos)
+            return;
+
+        RefreshVideos();
     }
 
     private async void OnCopyVideoUrlClicked(object? sender, RoutedEventArgs e)
@@ -227,6 +262,7 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
         CanonicalUrl = video.CanonicalUrl;
         Title = video.Title;
         DurationText = video.DurationSeconds is int seconds ? FormatDuration(seconds) : "";
+        PublishedText = FormatDate(video.UploadedAt);
         SetChecked(video.IsChecked);
     }
 
@@ -241,6 +277,7 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
         set => SetChecked(value);
     }
     public string DurationText { get; }
+    public string PublishedText { get; }
     public double Opacity
     {
         get => _opacity;
@@ -282,5 +319,15 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
         return time.TotalHours >= 1
             ? $"{(int)time.TotalHours}:{time.Minutes:D2}:{time.Seconds:D2}"
             : $"{time.Minutes:D2}:{time.Seconds:D2}";
+    }
+
+    private static string FormatDate(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return "";
+
+        return DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var date)
+            ? date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)
+            : value;
     }
 }

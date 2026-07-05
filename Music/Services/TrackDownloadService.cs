@@ -93,12 +93,8 @@ public class TrackDownloadService
             var root = document.RootElement;
             string? Value(string key) => root.TryGetProperty(key, out var value) && value.ValueKind == JsonValueKind.String
                 ? value.GetString() : null;
-            var uploadDate = Value("upload_date");
-            if (uploadDate?.Length == 8 && DateTime.TryParseExact(uploadDate, "yyyyMMdd", CultureInfo.InvariantCulture,
-                    DateTimeStyles.None, out var date))
-                uploadDate = date.ToString("yyyy-MM-dd");
             return new YouTubeTrackMetadata(
-                Value("title"), Value("channel_id"), Value("channel"), Value("channel_url"), uploadDate,
+                Value("title"), Value("channel_id"), Value("channel"), Value("channel_url"), PublishedDate(root),
                 EstimatedAudioSize(root), DurationSeconds(root));
         }
         catch (OperationCanceledException) { throw; }
@@ -241,7 +237,7 @@ public class TrackDownloadService
             canonicalUrl,
             StringValue(root, "title") ?? id,
             DurationSeconds(root),
-            NormalizeUploadDate(StringValue(root, "upload_date"))));
+            PublishedDate(root)));
     }
 
     private static bool IsGeneratedMix(string url)
@@ -300,12 +296,34 @@ public class TrackDownloadService
             : url;
     }
 
-    private static string? NormalizeUploadDate(string? value)
+    private static string? PublishedDate(JsonElement root)
+        => NormalizeDate(StringValue(root, "release_date"))
+           ?? NormalizeDate(StringValue(root, "upload_date"))
+           ?? DateFromTimestamp(root, "timestamp");
+
+    private static string? NormalizeDate(string? value)
     {
         if (value?.Length == 8 && DateTime.TryParseExact(value, "yyyyMMdd", CultureInfo.InvariantCulture,
                 DateTimeStyles.None, out var date))
             return date.ToString("yyyy-MM-dd");
         return value;
+    }
+
+    private static string? DateFromTimestamp(JsonElement root, string key)
+    {
+        if (!root.TryGetProperty(key, out var value)
+            || value.ValueKind != JsonValueKind.Number
+            || !value.TryGetInt64(out var timestamp))
+            return null;
+
+        try
+        {
+            return DateTimeOffset.FromUnixTimeSeconds(timestamp).UtcDateTime.ToString("yyyy-MM-dd");
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     private static string? QueryValue(string url, string key)

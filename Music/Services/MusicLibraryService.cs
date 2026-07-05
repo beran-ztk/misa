@@ -167,6 +167,7 @@ public class MusicLibraryService
     public List<ChannelSubscription> GetChannelSubscriptions() => _db.GetChannelSubscriptions();
     public List<ChannelVideo> GetChannelVideos(int channelId) => _db.GetChannelVideos(channelId);
     public void SetChannelVideoChecked(int videoId, bool isChecked) => _db.SetChannelVideoChecked(videoId, isChecked);
+    public bool DeleteChannel(int channelId) => _db.DeleteChannel(channelId);
 
     public async Task<ChannelRefreshResult> AddOrRefreshChannelAsync(
         string rawUrl,
