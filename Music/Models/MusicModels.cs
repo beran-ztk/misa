@@ -119,5 +119,11 @@ public record StoredModelGenrePrediction(
     int ModelSubgenreId,
     string ModelSubgenreName,
     double Score);
+public record ManualModelGenreUsage(
+    int ModelSubgenreId,
+    int ModelGenreId,
+    string ModelSubgenreName,
+    string ModelGenreName,
+    int UsageCount);
 public record ModelGenreReason(string ModelGenreName, string ModelSubgenreName, double Score);
 public record TrackModelGenre(int GenreId, string GenreName, bool IsEnabled, IReadOnlyList<ModelGenreReason> Reasons);

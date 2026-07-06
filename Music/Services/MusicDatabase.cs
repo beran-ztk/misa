@@ -1816,6 +1816,40 @@ public class MusicDatabase
         return distinctions;
     }
 
+    public List<ManualModelGenreUsage> GetTopManualModelGenres(int limit = 10)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+            SELECT model_subgenres.id, model_subgenres.model_genre_id, model_subgenres.name,
+                   model_genres.name, COUNT(*) AS usage_count
+            FROM track_genres
+            JOIN model_subgenres ON model_subgenres.id = track_genres.genre_id
+            JOIN model_genres ON model_genres.id = model_subgenres.model_genre_id
+            LEFT JOIN track_analysis analysis ON analysis.track_id = track_genres.track_id
+            LEFT JOIN track_genre_predictions predictions
+                ON predictions.track_analysis_id = analysis.id
+               AND predictions.model_subgenre_id = track_genres.genre_id
+            WHERE track_genres.is_enabled = 1
+              AND predictions.id IS NULL
+            GROUP BY model_subgenres.id, model_subgenres.model_genre_id, model_subgenres.name, model_genres.name
+            ORDER BY usage_count DESC, model_genres.name, model_subgenres.name
+            LIMIT $limit";
+        cmd.Parameters.AddWithValue("$limit", Math.Max(1, limit));
+        using var reader = cmd.ExecuteReader();
+        var usages = new List<ManualModelGenreUsage>();
+        while (reader.Read())
+        {
+            usages.Add(new ManualModelGenreUsage(
+                reader.GetInt32(0),
+                reader.GetInt32(1),
+                reader.GetString(2),
+                reader.GetString(3),
+                Convert.ToInt32(reader.GetInt64(4))));
+        }
+        return usages;
+    }
+
     public List<StoredModelGenrePrediction> GetTrackGenrePredictions(int trackId)
     {
         using var conn = Open();

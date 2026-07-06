@@ -144,6 +144,14 @@
                                                      Watermark="Search subgenre…"
                                                      TextChanged="OnModelGenreSearchChanged"/>
                                         </Grid>
+                                        <StackPanel x:Name="FrequentManualGenresSection" Spacing="5">
+                                            <TextBlock Text="Often added manually"
+                                                       FontSize="10.5"
+                                                       Opacity="0.55"/>
+                                            <WrapPanel x:Name="FrequentManualGenresPanel"
+                                                       Orientation="Horizontal"
+                                                       HorizontalAlignment="Center"/>
+                                        </StackPanel>
                                         <ScrollViewer MaxHeight="246"
                                                       HorizontalScrollBarVisibility="Disabled"
                                                       VerticalScrollBarVisibility="Auto">

@@ -951,6 +951,7 @@ public partial class EditTrackOverlay : UserControl
             .ToList();
 
         ModelGenreChoicesPanel.Children.Clear();
+        BuildFrequentManualGenreChoices();
         foreach (var subgenre in choices)
             ModelGenreChoicesPanel.Children.Add(CreateModelGenreChoiceButton(subgenre));
 
@@ -959,6 +960,68 @@ public partial class EditTrackOverlay : UserControl
             : $"{choices.Count} selectable"
               + (_modelGenreIds.Count > 0 ? $" · {_modelGenreIds.Count} active hidden" : string.Empty)
               + (_visibleDetectedModelGenreIds.Count > 0 ? $" · {_visibleDetectedModelGenreIds.Count} model detections shown above" : string.Empty);
+    }
+
+    private void BuildFrequentManualGenreChoices()
+    {
+        FrequentManualGenresPanel.Children.Clear();
+
+        var frequentGenres = MusicLibraryService.Current.GetTopManualModelGenres()
+            .Where(usage => !_modelGenreIds.Contains(usage.ModelSubgenreId))
+            .Where(usage => !_visibleDetectedModelGenreIds.Contains(usage.ModelSubgenreId))
+            .Where(usage => _modelSubgenresById.ContainsKey(usage.ModelSubgenreId))
+            .Take(8)
+            .ToList();
+
+        FrequentManualGenresSection.IsVisible = frequentGenres.Count > 0;
+        foreach (var usage in frequentGenres)
+            FrequentManualGenresPanel.Children.Add(CreateFrequentManualGenreButton(usage));
+    }
+
+    private Button CreateFrequentManualGenreButton(ManualModelGenreUsage usage)
+    {
+        var label = new StackPanel { Spacing = 1 };
+        label.Children.Add(new TextBlock
+        {
+            Text = usage.ModelSubgenreName,
+            FontSize = 10.5,
+            FontWeight = FontWeight.SemiBold,
+            TextTrimming = TextTrimming.CharacterEllipsis,
+            HorizontalAlignment = HorizontalAlignment.Center
+        });
+        label.Children.Add(new TextBlock
+        {
+            Text = $"{usage.ModelGenreName} · {usage.UsageCount}x",
+            FontSize = 9,
+            Opacity = 0.64,
+            TextTrimming = TextTrimming.CharacterEllipsis,
+            HorizontalAlignment = HorizontalAlignment.Center
+        });
+
+        var button = new Button
+        {
+            Content = label,
+            Width = 136,
+            Height = 42,
+            Margin = new Avalonia.Thickness(0, 0, 6, 6),
+            Padding = new Avalonia.Thickness(7, 3),
+            Background = new SolidColorBrush(Color.Parse("#1B222A")),
+            BorderBrush = new SolidColorBrush(Color.Parse("#596672")),
+            CornerRadius = new Avalonia.CornerRadius(3),
+            HorizontalContentAlignment = HorizontalAlignment.Center,
+            VerticalContentAlignment = VerticalAlignment.Center
+        };
+        ToolTip.SetTip(button, CreateModelMetadataTooltip([usage.ModelSubgenreId]));
+        button.Click += (_, _) =>
+        {
+            if (_track is null) return;
+            _pendingEnabledModelGenreIds.Add(usage.ModelSubgenreId);
+            ShowModelSelectedGenres(_track);
+            ShowDetectedGenres(_track);
+            RebuildModelGenreChoices();
+            UpdateSaveButton();
+        };
+        return button;
     }
 
     private Button CreateModelGenreChoiceButton(ModelSubgenre subgenre)
