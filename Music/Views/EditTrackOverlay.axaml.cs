@@ -944,8 +944,7 @@ public partial class EditTrackOverlay : UserControl
             .Where(subgenre => !_visibleDetectedModelGenreIds.Contains(subgenre.Id))
             .Where(subgenre => _modelGenreFilterId is null || subgenre.ModelGenreId == _modelGenreFilterId)
             .Where(subgenre => string.IsNullOrWhiteSpace(search)
-                || subgenre.Name.Contains(search, StringComparison.OrdinalIgnoreCase)
-                || _modelGenreNamesById.GetValueOrDefault(subgenre.ModelGenreId, "").Contains(search, StringComparison.OrdinalIgnoreCase))
+                || subgenre.Name.Contains(search, StringComparison.OrdinalIgnoreCase))
             .OrderBy(subgenre => _modelGenreNamesById.GetValueOrDefault(subgenre.ModelGenreId, ""), StringComparer.OrdinalIgnoreCase)
             .ThenBy(subgenre => subgenre.Name, StringComparer.OrdinalIgnoreCase)
             .ToList();
@@ -966,10 +965,13 @@ public partial class EditTrackOverlay : UserControl
     {
         FrequentManualGenresPanel.Children.Clear();
 
+        var search = _modelGenreSearchText.Trim();
         var frequentGenres = MusicLibraryService.Current.GetTopManualModelGenres()
             .Where(usage => !_modelGenreIds.Contains(usage.ModelSubgenreId))
             .Where(usage => !_visibleDetectedModelGenreIds.Contains(usage.ModelSubgenreId))
             .Where(usage => _modelSubgenresById.ContainsKey(usage.ModelSubgenreId))
+            .Where(usage => string.IsNullOrWhiteSpace(search)
+                || usage.ModelSubgenreName.Contains(search, StringComparison.OrdinalIgnoreCase))
             .Take(8)
             .ToList();
 
@@ -1161,20 +1163,23 @@ public partial class EditTrackOverlay : UserControl
         IBrush confidenceBrush,
         bool isManualSelection)
     {
-        var neutralBrush = new SolidColorBrush(Color.Parse("#B8C2CC"));
+        var manualEnabledBrush = new SolidColorBrush(Color.Parse("#BDEFFF"));
+        var manualDisabledBrush = new SolidColorBrush(Color.Parse("#89949F"));
         var disabledBrush = new SolidColorBrush(Color.Parse("#A3ABB5"));
+        container.BorderThickness = new Avalonia.Thickness(enabled && isManualSelection ? 2 : 1);
         container.Background = new SolidColorBrush(Color.Parse(enabled
-            ? isManualSelection ? "#1B222A" : "#153B54"
+            ? isManualSelection ? "#123D5C" : "#153B54"
             : "#23272D"));
         container.BorderBrush = enabled
-            ? isManualSelection ? new SolidColorBrush(Color.Parse("#46515D")) : confidenceBrush
+            ? isManualSelection ? new SolidColorBrush(Color.Parse("#36C4F1")) : confidenceBrush
             : new SolidColorBrush(Color.Parse("#3B414A"));
         genreName.Foreground = enabled
-            ? isManualSelection ? neutralBrush : confidenceBrush
-            : disabledBrush;
+            ? isManualSelection ? manualEnabledBrush : confidenceBrush
+            : isManualSelection ? manualDisabledBrush : disabledBrush;
         detail.Foreground = enabled
-            ? isManualSelection ? neutralBrush : confidenceBrush
-            : disabledBrush;
+            ? isManualSelection ? new SolidColorBrush(Color.Parse("#7FE3FF")) : confidenceBrush
+            : isManualSelection ? manualDisabledBrush : disabledBrush;
+        detail.Opacity = enabled || !isManualSelection ? 0.92 : 0.54;
     }
 
     private sealed record ModelGenreFilterChoice(int? Id, string Label)

@@ -1618,6 +1618,12 @@ public partial class MusicView : UserControl
             return;
 
         var track = _filteredItems[idx].Track;
+        if (_engine.ActiveTrackId == track.Id)
+        {
+            FinishListeningSession(markSkipped: false);
+            _engine.Stop();
+        }
+
         var error = await MusicLibraryService.Current.DeleteTrackAsync(track);
         if (error is not null)
         {
@@ -1625,8 +1631,42 @@ public partial class MusicView : UserControl
             return;
         }
 
-        RefreshTrackList();
+        RemoveTrackFromCurrentLists(track.Id);
         ShowToast("Track deleted");
+    }
+
+    private void RemoveTrackFromCurrentLists(int trackId)
+    {
+        var selectedId = (FileList.SelectedItem as TrackDisplayItem)?.Track.Id;
+        var deletedIndex = _filteredItems.FindIndex(item => item.Track.Id == trackId);
+
+        _allItems.RemoveAll(item => item.Track.Id == trackId);
+        _filteredItems.RemoveAll(item => item.Track.Id == trackId);
+        _visibleItems.RemoveAll(item => item.Track.Id == trackId);
+        _allTrackStyleIds.Remove(trackId);
+        _allTrackGenreIds.Remove(trackId);
+        _allTrackTagIds.Remove(trackId);
+
+        if (selectedId == trackId)
+            FileList.SelectedIndex = -1;
+
+        RefreshVisibleItemsSource(selectedId == trackId ? null : selectedId);
+
+        if (_filteredItems.Count == 0)
+        {
+            SetFilteredSelectedIndex(-1);
+        }
+        else if (selectedId == trackId)
+        {
+            SetFilteredSelectedIndex(Math.Clamp(deletedIndex, 0, _filteredItems.Count - 1));
+        }
+
+        UpdatePlaylistSummary();
+        RefreshNextTrackPreview();
+        UpdateFilterCounts();
+        UpdateReviewFilterButton();
+        UpdateReviewButton();
+        RestartVisibleThumbnailLoad();
     }
 
     // ─── Playback control ─────────────────────────────────────────────────────
