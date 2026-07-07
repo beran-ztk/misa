@@ -24,9 +24,6 @@ namespace Music.Views;
 public partial class MusicView : UserControl
 {
     private const string DefaultFilterPresetName = "Default";
-    private const int TrackListWindowSize = 100;
-    private const int TrackListWindowStep = 25;
-    private const double ApproximateTrackRowHeight = 76.0;
 
     // Engine
     private readonly PlaybackEngine _engine = new();
@@ -59,6 +56,7 @@ public partial class MusicView : UserControl
     // Crossfade state
     private int _lastKnownActiveId = -1;
     private bool _crossfadeTriggered;
+    private bool _restartQueueFromTopAfterCurrent;
     private int _nextTrackIndex = -1;
     private int _listeningTrackId = -1;
     private double _lastListeningPositionSeconds;
@@ -76,10 +74,6 @@ public partial class MusicView : UserControl
     private Dictionary<int, List<int>> _allTrackTagIds = [];
     private List<TrackDisplayItem> _filteredItems = [];
     private List<TrackDisplayItem> _visibleItems = [];
-    private int _visibleStartIndex;
-    private int _visibleTrackCount;
-    private bool _updatingScrollWindow;
-    private ScrollViewer? _fileListScrollViewer;
     private List<PortableFilterPreset> _filterPresets = [];
     private bool _updatingPresetUi;
     private bool _showReviewOnly;
@@ -138,8 +132,6 @@ public partial class MusicView : UserControl
         {
             UpdateReviewButton();
         };
-        FileList.AttachedToVisualTree += (_, _) =>
-            Dispatcher.UIThread.Post(AttachFileListScrollViewer, DispatcherPriority.Loaded);
         PlayerBar.SizeChanged += (_, _) => UpdateSettingsLayout();
         PlayerBar.SizeChanged += (_, _) => UpdateEditorBounds();
         PlayerBar.SizeChanged += (_, _) => UpdateImportBounds();
@@ -632,7 +624,6 @@ public partial class MusicView : UserControl
 
         var selectedTrackId = (FileList.SelectedItem as TrackDisplayItem)?.Track.Id;
 
-        ResetVisibleTrackWindow();
         RefreshVisibleItemsSource(selectedTrackId);
         RestoreOrInitializeSelection(selectedTrackId);
         UpdatePlaylistSummary();
@@ -673,117 +664,18 @@ public partial class MusicView : UserControl
             FileList.ScrollIntoView(_visibleItems[FileList.SelectedIndex]);
     }
 
-    private void ResetVisibleTrackWindow()
-    {
-        _visibleStartIndex = 0;
-        _visibleTrackCount = Math.Min(TrackListWindowSize, _filteredItems.Count);
-    }
-
     private void RefreshVisibleItemsSource(int? selectedTrackId = null)
     {
         selectedTrackId ??= (FileList.SelectedItem as TrackDisplayItem)?.Track.Id;
-        _visibleStartIndex = Math.Clamp(_visibleStartIndex, 0, Math.Max(0, _filteredItems.Count - 1));
-        _visibleTrackCount = Math.Min(TrackListWindowSize, Math.Max(0, _filteredItems.Count - _visibleStartIndex));
-        _visibleItems = _filteredItems
-            .Skip(_visibleStartIndex)
-            .Take(_visibleTrackCount)
-            .ToList();
+        _visibleItems = _filteredItems.ToList();
 
         FileList.ItemsSource = _visibleItems;
         if (selectedTrackId is int id)
         {
-            var visibleIndex = _visibleItems.FindIndex(item => item.Track.Id == id);
-            if (visibleIndex >= 0)
-                FileList.SelectedIndex = visibleIndex;
+            var index = _visibleItems.FindIndex(item => item.Track.Id == id);
+            if (index >= 0)
+                FileList.SelectedIndex = index;
         }
-
-        DisposeThumbnailsOutsideVisibleWindow();
-    }
-
-    private void DisposeThumbnailsOutsideVisibleWindow()
-    {
-        var visibleTrackIds = _visibleItems
-            .Select(item => item.Track.Id)
-            .ToHashSet();
-
-        foreach (var item in _allItems)
-        {
-            if (visibleTrackIds.Contains(item.Track.Id) || item.Thumbnail is null)
-                continue;
-
-            item.Thumbnail.Dispose();
-            item.Thumbnail = null;
-        }
-    }
-
-    private void AttachFileListScrollViewer()
-    {
-        var scrollViewer = FileList.GetVisualDescendants()
-            .OfType<ScrollViewer>()
-            .FirstOrDefault();
-        if (scrollViewer is null || ReferenceEquals(scrollViewer, _fileListScrollViewer))
-            return;
-
-        if (_fileListScrollViewer is not null)
-            _fileListScrollViewer.PropertyChanged -= OnFileListScrollViewerPropertyChanged;
-
-        _fileListScrollViewer = scrollViewer;
-        _fileListScrollViewer.PropertyChanged += OnFileListScrollViewerPropertyChanged;
-    }
-
-    private void OnFileListScrollViewerPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
-    {
-        if (e.Property == ScrollViewer.OffsetProperty)
-            UpdateVisibleWindowFromScroll();
-    }
-
-    private void UpdateVisibleWindowFromScroll()
-    {
-        if (_updatingScrollWindow
-            || _fileListScrollViewer is null
-            || _visibleItems.Count == 0
-            || _filteredItems.Count <= TrackListWindowSize)
-            return;
-
-        var offsetY = _fileListScrollViewer.Offset.Y;
-        var maxOffsetY = Math.Max(0, _fileListScrollViewer.Extent.Height - _fileListScrollViewer.Viewport.Height);
-        var nextStart = _visibleStartIndex;
-        var offsetAdjustment = 0.0;
-
-        if (offsetY >= maxOffsetY - ApproximateTrackRowHeight
-            && _visibleStartIndex + _visibleTrackCount < _filteredItems.Count)
-        {
-            var shift = Math.Min(TrackListWindowStep, _filteredItems.Count - (_visibleStartIndex + _visibleTrackCount));
-            nextStart += shift;
-            offsetAdjustment = -shift * ApproximateTrackRowHeight;
-        }
-        else if (offsetY <= ApproximateTrackRowHeight && _visibleStartIndex > 0)
-        {
-            var shift = Math.Min(TrackListWindowStep, _visibleStartIndex);
-            nextStart -= shift;
-            offsetAdjustment = shift * ApproximateTrackRowHeight;
-        }
-
-        if (nextStart == _visibleStartIndex)
-            return;
-
-        _updatingScrollWindow = true;
-        try
-        {
-            var selectedTrackId = (FileList.SelectedItem as TrackDisplayItem)?.Track.Id;
-            _visibleStartIndex = nextStart;
-            _visibleTrackCount = Math.Min(TrackListWindowSize, _filteredItems.Count - _visibleStartIndex);
-            RefreshVisibleItemsSource(selectedTrackId);
-
-            var adjustedOffsetY = Math.Clamp(offsetY + offsetAdjustment, 0, Math.Max(0, _fileListScrollViewer.Extent.Height - _fileListScrollViewer.Viewport.Height));
-            _fileListScrollViewer.Offset = _fileListScrollViewer.Offset.WithY(adjustedOffsetY);
-        }
-        finally
-        {
-            _updatingScrollWindow = false;
-        }
-
-        RestartVisibleThumbnailLoad();
     }
 
     private void EnsureVisibleWindowAround(int filteredIndex)
@@ -791,22 +683,8 @@ public partial class MusicView : UserControl
         if (filteredIndex < 0 || filteredIndex >= _filteredItems.Count)
             return;
 
-        var desiredStart = DesiredVisibleStartFor(filteredIndex);
-
-        if (desiredStart == _visibleStartIndex && filteredIndex < _visibleStartIndex + _visibleTrackCount)
-            return;
-
-        _visibleStartIndex = desiredStart;
-        _visibleTrackCount = Math.Min(TrackListWindowSize, _filteredItems.Count - _visibleStartIndex);
-        RefreshVisibleItemsSource();
-        RestartVisibleThumbnailLoad();
-    }
-
-    private int DesiredVisibleStartFor(int filteredIndex)
-    {
-        var desiredStart = Math.Max(0, filteredIndex - TrackListWindowSize / 2);
-        desiredStart = desiredStart / TrackListWindowStep * TrackListWindowStep;
-        return Math.Min(desiredStart, Math.Max(0, _filteredItems.Count - TrackListWindowSize));
+        if (filteredIndex < _visibleItems.Count)
+            FileList.ScrollIntoView(_visibleItems[filteredIndex]);
     }
 
     private int GetSelectedFilteredIndex()
@@ -819,9 +697,8 @@ public partial class MusicView : UserControl
 
     private void SetFilteredSelectedIndex(int filteredIndex)
     {
-        FileList.SelectedIndex = filteredIndex >= _visibleStartIndex
-                                 && filteredIndex < _visibleStartIndex + _visibleItems.Count
-            ? filteredIndex - _visibleStartIndex
+        FileList.SelectedIndex = filteredIndex >= 0 && filteredIndex < _visibleItems.Count
+            ? filteredIndex
             : -1;
     }
 
@@ -1348,8 +1225,7 @@ public partial class MusicView : UserControl
             var choices = Values.Genres
                 .Where(genre => selectedGroupName is null || string.Equals(GroupName(genre), selectedGroupName, StringComparison.OrdinalIgnoreCase))
                 .Where(genre => string.IsNullOrWhiteSpace(normalizedSearch)
-                                || SubgenreName(genre).Contains(normalizedSearch, StringComparison.OrdinalIgnoreCase)
-                                || GroupName(genre).Contains(normalizedSearch, StringComparison.OrdinalIgnoreCase))
+                                || SubgenreName(genre).Contains(normalizedSearch, StringComparison.OrdinalIgnoreCase))
                 .OrderByDescending(genre => selected.Contains(genre.Name))
                 .ThenBy(genre => GroupName(genre), StringComparer.OrdinalIgnoreCase)
                 .ThenBy(genre => SubgenreName(genre), StringComparer.OrdinalIgnoreCase)
@@ -1604,9 +1480,9 @@ public partial class MusicView : UserControl
             Margin = new Thickness(0, 0, 7, 7),
             Padding = new Thickness(8, 2),
             CornerRadius = new CornerRadius(3),
-            Background = new SolidColorBrush(Color.Parse(isSelected ? "#1A3140" : "#1A2026")),
+            Background = new SolidColorBrush(Color.Parse(isSelected ? "#0F79B8" : "#1A2026")),
             BorderBrush = isSelected ? accent : new SolidColorBrush(Color.Parse("#394653")),
-            BorderThickness = new Thickness(1),
+            BorderThickness = new Thickness(isSelected ? 2 : 1),
             HorizontalContentAlignment = HorizontalAlignment.Center,
             VerticalContentAlignment = VerticalAlignment.Center
         };
@@ -1822,10 +1698,13 @@ public partial class MusicView : UserControl
         _shuffle = !_shuffle;
         ApplyFilter();
         SetFilteredSelectedIndex(_filteredItems.Count > 0 ? 0 : -1);
+        if (_filteredItems.Count > 0)
+            FileList.ScrollIntoView(_filteredItems[0]);
+        _restartQueueFromTopAfterCurrent = _engine.ActiveTrackId >= 0;
+        _nextTrackIndex = GetQueueRestartIndex();
+        UpdateUpcomingBar();
         ShuffleBtn.Opacity = _shuffle ? 1.0 : 0.35;
         ToolTip.SetTip(ShuffleBtn, _shuffle ? "Shuffle: On" : "Shuffle: Off");
-        if (_filteredItems.Count > 0)
-            PlayTrackAt(0, isCrossfade: false);
     }
 
     private void OnReviewToggleClicked(object? sender, RoutedEventArgs e)
@@ -1881,6 +1760,7 @@ public partial class MusicView : UserControl
 
         var track = _filteredItems[filteredIndex].Track;
         var filePath = Path.Combine(Values.TracksDirectory, track.FileName);
+        _restartQueueFromTopAfterCurrent = false;
 
         if (_engine.ActiveTrackId >= 0 && _engine.ActiveTrackId != track.Id)
         {
@@ -2157,7 +2037,13 @@ public partial class MusicView : UserControl
         var currentIdx = GetCurrentPlayIndex();
 
         int nextLinearIdx;
-        if (currentIdx >= 0)
+        if (_restartQueueFromTopAfterCurrent)
+        {
+            _restartQueueFromTopAfterCurrent = false;
+            nextLinearIdx = GetQueueRestartIndex();
+            if (nextLinearIdx < 0) { FullStop(); return; }
+        }
+        else if (currentIdx >= 0)
         {
             nextLinearIdx = currentIdx + 1;
             if (nextLinearIdx >= _filteredItems.Count) { FullStop(); return; }
@@ -2176,6 +2062,18 @@ public partial class MusicView : UserControl
         }
 
         PlayTrackAt(nextLinearIdx, isCrossfade: false);
+    }
+
+    private int GetQueueRestartIndex()
+    {
+        if (_filteredItems.Count == 0)
+            return -1;
+
+        return _engine.ActiveTrackId >= 0
+               && _filteredItems[0].Track.Id == _engine.ActiveTrackId
+               && _filteredItems.Count > 1
+            ? 1
+            : 0;
     }
 
     private void NavigatePrevious()

@@ -339,7 +339,8 @@
                                    VerticalAlignment="Center"
                                    HorizontalAlignment="Center"
                                    TextTrimming="CharacterEllipsis"
-                                   Margin="12,0"/>
+                                   Margin="12,0,18,0"
+                                   Padding="0,0,4,0"/>
 
                         <StackPanel Grid.Column="2"
                                     Orientation="Horizontal" Spacing="4"
