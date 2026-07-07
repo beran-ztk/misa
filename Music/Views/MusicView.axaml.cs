@@ -29,6 +29,7 @@ public partial class MusicView : UserControl
     private readonly PlaybackEngine _engine = new();
     private readonly GlobalMediaKeyListener _globalMediaKeys = new();
     private readonly WindowsMediaSession _windowsMediaSession = new();
+    private readonly DiscordPresenceService _discordPresence = new();
     private readonly DispatcherTimer _atmosphereTimer = new() { Interval = TimeSpan.FromMilliseconds(33) };
     private readonly SolidColorBrush _appAtmosphereBrush = new(Colors.Transparent);
     private readonly SolidColorBrush _playerAtmosphereBrush = new(Colors.Transparent);
@@ -102,6 +103,7 @@ public partial class MusicView : UserControl
             _engine.Dispose();
             _globalMediaKeys.Dispose();
             _windowsMediaSession.Dispose();
+            _discordPresence.Dispose();
             ClearPlayerArtworkBackground(disposeCache: true);
         };
 
@@ -478,6 +480,7 @@ public partial class MusicView : UserControl
         if (_engine.ActiveTrackId == trackId)
         {
             NowPlayingText.Text = updatedTrack.Title;
+            UpdateDiscordPresence();
             UpdatePlayerArtworkBackground(updatedTrack);
         }
 
@@ -1793,6 +1796,7 @@ public partial class MusicView : UserControl
         SetFilteredSelectedIndex(filteredIndex);
 
         NowPlayingText.Text = track.Title;
+        UpdateDiscordPresence();
         UpdatePlayerArtworkBackground(track);
         PlaybackInfoPanel.IsVisible = true;
         _nextTrackIndex = PeekNextTrackIndex(filteredIndex);
@@ -1902,6 +1906,7 @@ public partial class MusicView : UserControl
     {
         _windowsMediaSession.UpdateState(_engine.State);
         UpdateButtonStates();
+        UpdateDiscordPresence();
         if (_engine.State == EngineState.Playing)
             StartAudioAtmosphereTimer();
         else
@@ -1914,6 +1919,7 @@ public partial class MusicView : UserControl
             _lastKnownActiveId = -1;
             if (!_isTrackPreviewActive)
                 ClearPlayerArtworkBackground();
+            _discordPresence.Clear();
             RefreshPlayingMarkers();
             UpdateUpcomingBar();
         }
@@ -2366,9 +2372,26 @@ public partial class MusicView : UserControl
         PlaybackTimeText.Text =
             $"{FormatDuration(_engine.CurrentTime)} / {FormatDuration(_engine.TotalTime)}";
         _isSeeking = false;
+        UpdateDiscordPresence();
     }
 
     // ─── UI helpers ───────────────────────────────────────────────────────────
+
+    private void UpdateDiscordPresence()
+    {
+        if (_engine.State == EngineState.Stopped)
+        {
+            _discordPresence.Clear();
+            return;
+        }
+
+        var item = _filteredItems.FirstOrDefault(item => item.Track.Id == _engine.ActiveTrackId)
+                   ?? _allItems.FirstOrDefault(item => item.Track.Id == _engine.ActiveTrackId);
+        if (item is null)
+            return;
+
+        _discordPresence.Update(item, _engine.State, _engine.CurrentTime, _engine.TotalTime);
+    }
 
     private void UpdateButtonStates()
     {
