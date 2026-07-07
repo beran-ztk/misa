@@ -752,27 +752,7 @@ public partial class MainView : UserControl
             .Select(track => track.DurationSeconds ?? 0)
             .Sum();
 
-        var summary = $"{_filteredTracks.Count} tracks · {FormatPlaylistDuration(totalSeconds)}";
-        var remaining = RemainingPlaylistDurationSeconds();
-        if (remaining > 0)
-            summary += $" · ends {DateTime.Now.AddSeconds(remaining):HH:mm}";
-
-        PlaylistSummaryText.Text = summary;
-    }
-
-    private int RemainingPlaylistDurationSeconds()
-    {
-        if (_currentIndex < 0 || _currentIndex >= _filteredTracks.Count)
-            return 0;
-
-        var currentRemaining = _audio.Duration.TotalSeconds > 0
-            ? Math.Max(0, (int)(_audio.Duration - _audio.Position).TotalSeconds)
-            : _filteredTracks[_currentIndex].DurationSeconds ?? 0;
-
-        return currentRemaining + _filteredTracks
-            .Skip(_currentIndex + 1)
-            .Select(track => track.DurationSeconds ?? 0)
-            .Sum();
+        PlaylistSummaryText.Text = $"{_filteredTracks.Count} tracks · {FormatPlaylistDuration(totalSeconds)}";
     }
 
     private static string FormatPlaylistDuration(int totalSeconds)
