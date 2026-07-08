@@ -29,7 +29,8 @@ public sealed class DiscordPresenceService : IDisposable
         var presence = new RichPresence
         {
             Type = ActivityType.Listening,
-            Details = Clip(item.Track.Title, 128),
+            StatusDisplay = StatusDisplayType.Details,
+            Details = Clip(PresenceTitle(item), 128),
             State = ClipOrNull(StateText(item), 128),
             Assets = new Assets
             {
@@ -112,9 +113,18 @@ public sealed class DiscordPresenceService : IDisposable
             ? item.ModelGenreText
             : !string.IsNullOrWhiteSpace(item.ManualGenreText)
                 ? item.ManualGenreText
-                : !string.IsNullOrWhiteSpace(item.ChannelText)
-                    ? item.ChannelText
-                    : null;
+                : null;
+    }
+
+    private static string PresenceTitle(TrackDisplayItem item)
+    {
+        var title = string.IsNullOrWhiteSpace(item.Track.Title)
+            ? "Unknown track"
+            : item.Track.Title.Trim();
+
+        return string.IsNullOrWhiteSpace(item.ChannelText)
+            ? title
+            : $"{item.ChannelText.Trim()} - {title}";
     }
 
     private static string Clip(string value, int maxLength)
