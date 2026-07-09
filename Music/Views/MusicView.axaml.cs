@@ -2015,28 +2015,7 @@ public partial class MusicView : UserControl
             .Select(item => item.Track.DurationSeconds ?? 0)
             .Sum();
 
-        var summary = $"{_filteredItems.Count} tracks · {FormatPlaylistDuration(totalSeconds)}";
-        var remaining = RemainingPlaylistDurationSeconds();
-        if (remaining > 0)
-            summary += $" · ends {DateTime.Now.AddSeconds(remaining):HH:mm}";
-
-        PlaylistSummaryText.Text = summary;
-    }
-
-    private int RemainingPlaylistDurationSeconds()
-    {
-        var currentIdx = GetCurrentPlayIndex();
-        if (currentIdx < 0 || currentIdx >= _filteredItems.Count)
-            return 0;
-
-        var currentRemaining = _engine.TotalTime.TotalSeconds > 0
-            ? Math.Max(0, (int)(_engine.TotalTime - _engine.CurrentTime).TotalSeconds)
-            : _filteredItems[currentIdx].Track.DurationSeconds ?? 0;
-
-        return currentRemaining + _filteredItems
-            .Skip(currentIdx + 1)
-            .Select(item => item.Track.DurationSeconds ?? 0)
-            .Sum();
+        PlaylistSummaryText.Text = $"{_filteredItems.Count} tracks · {FormatPlaylistDuration(totalSeconds)}";
     }
 
     private void NavigateNext(bool isManual)
