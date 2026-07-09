@@ -117,7 +117,7 @@ public static class PortableLibraryStore
     }
 }
 
-public sealed record PortableFilterGroup(List<string> Genres, List<string> Styles, List<string>? Tags = null);
+public sealed record PortableFilterGroup(List<string> Genres, List<string> Styles, List<string>? Tags = null, bool Negate = false);
 
 public static class PortableTrackFilter
 {
@@ -139,9 +139,14 @@ public static class PortableTrackFilter
         var activeGroups = filterGroups
             .Where(g => g.Genres.Count > 0 || g.Styles.Count > 0 || (g.Tags?.Count ?? 0) > 0)
             .ToList();
+        var includeGroups = activeGroups.Where(group => !group.Negate).ToList();
+        var excludeGroups = activeGroups.Where(group => group.Negate).ToList();
 
-        if (activeGroups.Count > 0)
-            query = query.Where(track => activeGroups.Any(group => MatchesGroup(track, group)));
+        if (includeGroups.Count > 0)
+            query = query.Where(track => includeGroups.Any(group => MatchesGroup(track, group)));
+
+        if (excludeGroups.Count > 0)
+            query = query.Where(track => !excludeGroups.Any(group => MatchesGroup(track, group)));
 
         return query
             .OrderBy(t => t.Title, StringComparer.OrdinalIgnoreCase)

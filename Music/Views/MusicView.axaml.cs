@@ -79,12 +79,14 @@ public partial class MusicView : UserControl
     private bool _showReviewOnly;
     private MultiSelectFilterControl? _conditionGenreCtrl;
     private MultiSelectFilterControl? _conditionTagCtrl;
+    private CheckBox? _conditionNegateBox;
     private FilterSection? _conditionGenreSection;
     private FilterSection? _conditionTagSection;
 
     private record FilterGroupControls(
         MultiSelectFilterControl GenreCtrl,
         MultiSelectFilterControl TagCtrl,
+        bool Negate,
         Action RefreshVisuals);
     private sealed record FilterSection(Control Control, Action Refresh);
     private readonly List<FilterGroupControls> _filterGroups = [];
@@ -498,7 +500,8 @@ public partial class MusicView : UserControl
             .Select(fg => new FilterGroup(
                 SelectedIds(fg.GenreCtrl.SelectedItems, Values.Genres, g => g.Name, g => g.Id),
                 new HashSet<int>(),
-                SelectedIds(fg.TagCtrl.SelectedItems, Values.Tags, TagFilterName, t => t.Id)))
+                SelectedIds(fg.TagCtrl.SelectedItems, Values.Tags, TagFilterName, t => t.Id),
+                fg.Negate))
             .ToList();
 
     private static string ProfileAttributeName(string key) => key switch
@@ -1057,7 +1060,8 @@ public partial class MusicView : UserControl
             .Select(group => new PortableFilterGroup(
                 SortedNames(group.GenreCtrl.SelectedItems),
                 new List<string>(),
-                SortedNames(group.TagCtrl.SelectedItems)))
+                SortedNames(group.TagCtrl.SelectedItems),
+                group.Negate))
             .Where(group => group.Genres.Count > 0 || (group.Tags?.Count ?? 0) > 0)
             .ToList();
 
@@ -1078,7 +1082,7 @@ public partial class MusicView : UserControl
             .ToList();
 
         foreach (var group in groups)
-            _filterGroups.Add(CreateFilterCondition(group.Genres, group.Tags ?? new List<string>()));
+            _filterGroups.Add(CreateFilterCondition(group.Genres, group.Tags ?? new List<string>(), group.Negate));
 
         RebuildFilterConditionsPanel();
         ClearConditionBuilder();
@@ -1136,11 +1140,19 @@ public partial class MusicView : UserControl
 
         _conditionTagCtrl = new MultiSelectFilterControl { Placeholder = "All tags" };
         _conditionTagCtrl.SetItems(TagFilterOptions());
+        _conditionNegateBox = new CheckBox
+        {
+            Content = "Exclude matches",
+            FontSize = 11,
+            Opacity = 0.74,
+            Margin = new Thickness(2, 0, 0, 0)
+        };
 
         _conditionGenreSection = CreateGenreFilterSection(_conditionGenreCtrl);
         _conditionTagSection = CreateTagFilterSection(_conditionTagCtrl);
 
         FilterBuilderPanel.Children.Clear();
+        FilterBuilderPanel.Children.Add(_conditionNegateBox);
         FilterBuilderPanel.Children.Add(_conditionGenreSection.Control);
         FilterBuilderPanel.Children.Add(_conditionTagSection.Control);
     }
@@ -1155,12 +1167,12 @@ public partial class MusicView : UserControl
         if (selectedGenres.Count == 0 && selectedTags.Count == 0)
             return;
 
-        _filterGroups.Add(CreateFilterCondition(selectedGenres, selectedTags));
+        _filterGroups.Add(CreateFilterCondition(selectedGenres, selectedTags, _conditionNegateBox?.IsChecked == true));
         RebuildFilterConditionsPanel();
         ClearConditionBuilder();
     }
 
-    private FilterGroupControls CreateFilterCondition(IEnumerable<string> genres, IEnumerable<string> tags)
+    private FilterGroupControls CreateFilterCondition(IEnumerable<string> genres, IEnumerable<string> tags, bool negate = false)
     {
         var genreCtrl = new MultiSelectFilterControl { Placeholder = "All genres" };
         genreCtrl.SetItems(GenreFilterOptions());
@@ -1170,13 +1182,15 @@ public partial class MusicView : UserControl
         tagCtrl.SetItems(TagFilterOptions());
         tagCtrl.SetSelectedItems(tags, notify: false);
 
-        return new FilterGroupControls(genreCtrl, tagCtrl, () => { });
+        return new FilterGroupControls(genreCtrl, tagCtrl, negate, () => { });
     }
 
     private void ClearConditionBuilder()
     {
         _conditionGenreCtrl?.SetSelectedItems(Array.Empty<string>(), notify: false);
         _conditionTagCtrl?.SetSelectedItems(Array.Empty<string>(), notify: false);
+        if (_conditionNegateBox is not null)
+            _conditionNegateBox.IsChecked = false;
         RefreshConditionBuilder();
     }
 
@@ -1222,7 +1236,6 @@ public partial class MusicView : UserControl
             chips.Children.Add(CreateConditionChip(name, "#65BCEB"));
         foreach (var selectedTag in selectedTags)
         {
-            var tag = Values.Tags.FirstOrDefault(item => string.Equals(TagFilterName(item), selectedTag, StringComparison.OrdinalIgnoreCase));
             chips.Children.Add(CreateConditionChip(DisplayTagFilterName(selectedTag), "#CFA7FF"));
         }
 
@@ -1238,22 +1251,44 @@ public partial class MusicView : UserControl
         };
         removeBtn.Click += (_, _) => RemoveFilterGroup(condition);
 
-        var header = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
+        var isNegated = condition.Negate;
+        var negateBox = new CheckBox
+        {
+            Content = "Exclude matches",
+            IsChecked = isNegated,
+            FontSize = 10.5,
+            Opacity = 0.72,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        negateBox.IsCheckedChanged += (_, _) =>
+        {
+            var conditionIndex = _filterGroups.IndexOf(condition);
+            if (conditionIndex < 0)
+                return;
+
+            _filterGroups[conditionIndex] = condition with { Negate = negateBox.IsChecked == true };
+            RebuildFilterConditionsPanel();
+            ApplyFilter();
+        };
+
+        var header = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto"), ColumnSpacing = 8 };
         header.Children.Add(new TextBlock
         {
-            Text = $"Condition {index + 1}",
+            Text = isNegated ? $"Exclude condition {index + 1}" : $"Condition {index + 1}",
             FontSize = 11.5,
             FontWeight = FontWeight.SemiBold,
             Opacity = 0.82,
             VerticalAlignment = VerticalAlignment.Center
         });
-        Grid.SetColumn(removeBtn, 1);
+        Grid.SetColumn(negateBox, 1);
+        header.Children.Add(negateBox);
+        Grid.SetColumn(removeBtn, 2);
         header.Children.Add(removeBtn);
 
         return new Border
         {
-            Background = new SolidColorBrush(Color.Parse("#78111820")),
-            BorderBrush = new SolidColorBrush(Color.Parse("#263442")),
+            Background = new SolidColorBrush(Color.Parse(isNegated ? "#6E211820" : "#78111820")),
+            BorderBrush = new SolidColorBrush(Color.Parse(isNegated ? "#70424B" : "#263442")),
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(7),
             Padding = new Thickness(11, 9),

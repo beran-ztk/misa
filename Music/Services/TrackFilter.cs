@@ -5,7 +5,7 @@ using Music.Models;
 
 namespace Music.Services;
 
-public record FilterGroup(IReadOnlySet<int> GenreIds, IReadOnlySet<int> StyleIds, IReadOnlySet<int> TagIds);
+public record FilterGroup(IReadOnlySet<int> GenreIds, IReadOnlySet<int> StyleIds, IReadOnlySet<int> TagIds, bool Negate = false);
 
 public static class TrackFilter
 {
@@ -28,14 +28,21 @@ public static class TrackFilter
         if (!string.IsNullOrEmpty(term))
             query = query.Where(t => t.Title.Contains(term, StringComparison.OrdinalIgnoreCase));
         
-        // Apply filter groups: OR between groups, AND within a group.
+        // Apply filter groups: OR between positive groups, AND within a group.
+        // Negated groups remove matching tracks after the positive groups are evaluated.
         // Empty groups (nothing selected in any dimension) are ignored.
         var activeGroups = filterGroups
             .Where(g => g.GenreIds.Count > 0 || g.StyleIds.Count > 0 || g.TagIds.Count > 0)
             .ToList();
+        var includeGroups = activeGroups.Where(group => !group.Negate).ToList();
+        var excludeGroups = activeGroups.Where(group => group.Negate).ToList();
 
-        if (activeGroups.Count > 0)
-            query = query.Where(track => activeGroups.Any(g =>
+        if (includeGroups.Count > 0)
+            query = query.Where(track => includeGroups.Any(g =>
+                MatchesGroup(track, g, trackGenreIds, trackStyleIds, trackTagIds)));
+
+        if (excludeGroups.Count > 0)
+            query = query.Where(track => !excludeGroups.Any(g =>
                 MatchesGroup(track, g, trackGenreIds, trackStyleIds, trackTagIds)));
 
         var sorted = query.OrderBy(t => t.Title, StringComparer.OrdinalIgnoreCase);
