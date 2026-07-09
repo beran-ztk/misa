@@ -35,6 +35,8 @@
             <Setter Property="Background" Value="#33404A"/>
         </Style>
         <Style Selector="Slider.playback">
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="MinHeight" Value="28"/>
             <Setter Property="Foreground" Value="#38A8F2"/>
             <Setter Property="Background" Value="#263542"/>
         </Style>
@@ -428,6 +430,7 @@
 
                             <Grid x:Name="PlaybackInfoPanel"
                                   ColumnDefinitions="*,Auto"
+                                  Height="28"
                                   IsVisible="False">
                                 <Border Grid.Column="0"
                                         ClipToBounds="False">
@@ -443,7 +446,8 @@
                                            VerticalAlignment="Center"/>
                             </Grid>
 
-                            <Grid ColumnDefinitions="Auto,*,Auto">
+                            <Grid ColumnDefinitions="Auto,*,Auto"
+                                  Height="42">
 
                                 <StackPanel Grid.Column="0"
                                             Orientation="Horizontal" Spacing="2"
@@ -494,6 +498,7 @@
                                                 Opacity="0.6"
                                                 Value="100"
                                                 Width="108"
+                                                Height="28"
                                                 VerticalAlignment="Center"/>
                                     </Border>
                                     <Button x:Name="ShuffleBtn"
