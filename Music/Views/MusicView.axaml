@@ -572,26 +572,33 @@
                                 Padding="16">
                             <StackPanel Spacing="18">
                                 <StackPanel Spacing="7">
-                                    <TextBlock Text="PRESETS"
-                                               FontSize="10" FontWeight="SemiBold"
-                                               Opacity="0.42" LetterSpacing="1"/>
-                                    <ComboBox x:Name="PresetBox"
-                                              SelectionChanged="OnPresetSelectionChanged"
-                                              HorizontalAlignment="Stretch"
-                                              Height="36"
-                                              Background="#0D151D"
-                                              BorderBrush="#414B5F"
-                                              BorderThickness="1"
-                                              CornerRadius="6"
-                                              Padding="9,5"/>
-                                    <TextBox x:Name="PresetNameBox"
-                                             Watermark="Preset name"
-                                             Height="34"
-                                             VerticalContentAlignment="Center"/>
-                                    <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                        <TextBlock Text="PRESETS"
+                                                   FontSize="10" FontWeight="SemiBold"
+                                                   Opacity="0.42" LetterSpacing="1"
+                                                   VerticalAlignment="Center"/>
+                                        <Button Grid.Column="1"
+                                                x:Name="AddPresetButton"
+                                                Content="+"
+                                                Click="OnAddPresetClicked"
+                                                Width="28"
+                                                Height="26"
+                                                Padding="0"
+                                                Background="#101923"
+                                                BorderBrush="#314B5F"
+                                                BorderThickness="1"
+                                                CornerRadius="6"
+                                                FontSize="14"
+                                                ToolTip.Tip="Create preset"/>
+                                    </Grid>
+                                    <StackPanel x:Name="PresetRows" Spacing="7"/>
+                                    <Grid x:Name="PresetActionsPanel"
+                                          ColumnDefinitions="*,Auto"
+                                          ColumnSpacing="8"
+                                          IsVisible="False">
                                         <Button Grid.Column="0"
-                                                Content="Save preset"
-                                                Click="OnSavePresetClicked"
+                                                Content="Update selected"
+                                                Click="OnUpdatePresetClicked"
                                                 Background="#12334A"
                                                 BorderBrush="#2D6E96"
                                                 BorderThickness="1"

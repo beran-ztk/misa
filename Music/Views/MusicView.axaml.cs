@@ -23,8 +23,6 @@ namespace Music.Views;
 
 public partial class MusicView : UserControl
 {
-    private const string DefaultFilterPresetName = "Default";
-
     // Engine
     private readonly PlaybackEngine _engine = new();
     private readonly GlobalMediaKeyListener _globalMediaKeys = new();
@@ -76,7 +74,8 @@ public partial class MusicView : UserControl
     private List<TrackDisplayItem> _filteredItems = [];
     private List<TrackDisplayItem> _visibleItems = [];
     private List<PortableFilterPreset> _filterPresets = [];
-    private bool _updatingPresetUi;
+    private string? _activeFilterPresetName;
+    private bool _isCreatingPreset;
     private bool _showReviewOnly;
     private MultiSelectFilterControl? _conditionGenreCtrl;
     private MultiSelectFilterControl? _conditionTagCtrl;
@@ -158,11 +157,7 @@ public partial class MusicView : UserControl
         LoadLookups();
         LoadFilterPresets();
         InitializeFilterConditionBuilder();
-        if (_filterPresets.FirstOrDefault(preset =>
-                string.Equals(preset.Name, DefaultFilterPresetName, StringComparison.OrdinalIgnoreCase)) is { } defaultPreset)
-            ApplyFilterPreset(defaultPreset);
-        else
-            RebuildFilterConditionsPanel();
+        RebuildFilterConditionsPanel();
         RefreshTrackList();
         _ = RefreshChannelsOnStartupAsync();
 
@@ -839,11 +834,9 @@ public partial class MusicView : UserControl
 
     private void OnClearFiltersClicked(object? sender, RoutedEventArgs e)
     {
-        _updatingPresetUi = true;
-        PresetBox.SelectedItem = DefaultFilterPresetName;
-        PresetNameBox.Text = DefaultFilterPresetName;
-        _updatingPresetUi = false;
-
+        _activeFilterPresetName = null;
+        _isCreatingPreset = false;
+        RebuildPresetRows();
         RatingFilter.SetItems(Values.Ratings.Select(r => r.Name));
         RatingFilter.Placeholder = "All ratings";
         _filterGroups.Clear();
@@ -856,106 +849,202 @@ public partial class MusicView : UserControl
     private void LoadFilterPresets()
     {
         _filterPresets = FilterPresetStore.Load();
-        if (_filterPresets.All(preset => !string.Equals(preset.Name, DefaultFilterPresetName, StringComparison.OrdinalIgnoreCase)))
+        _activeFilterPresetName = null;
+        RebuildPresetRows();
+    }
+
+    private void RebuildPresetRows()
+    {
+        PresetRows.Children.Clear();
+
+        if (_isCreatingPreset)
+            PresetRows.Children.Add(CreateNewPresetRow());
+
+        foreach (var preset in _filterPresets.OrderBy(preset => preset.Name, StringComparer.OrdinalIgnoreCase))
+            PresetRows.Children.Add(CreatePresetCard(preset));
+
+        PresetActionsPanel.IsVisible = _activeFilterPresetName is not null;
+        AddPresetButton.IsEnabled = !_isCreatingPreset;
+    }
+
+    private Control CreatePresetCard(PortableFilterPreset preset)
+    {
+        var isSelected = string.Equals(preset.Name, _activeFilterPresetName, StringComparison.OrdinalIgnoreCase);
+        var title = new TextBlock
         {
-            _filterPresets.Add(new PortableFilterPreset(
-                DefaultFilterPresetName,
-                new List<string>(),
-                new List<PortableFilterGroup>()));
-            FilterPresetStore.Save(_filterPresets);
-            _filterPresets = FilterPresetStore.Load();
-        }
+            Text = preset.Name,
+            FontWeight = FontWeight.SemiBold,
+            FontSize = 12,
+            TextTrimming = TextTrimming.CharacterEllipsis
+        };
+        var summary = new TextBlock
+        {
+            Text = PresetSummary(preset),
+            FontSize = 10,
+            Opacity = 0.55,
+            TextTrimming = TextTrimming.CharacterEllipsis
+        };
+        var content = new StackPanel { Spacing = 2 };
+        content.Children.Add(title);
+        content.Children.Add(summary);
 
-        PresetNameBox.Text = DefaultFilterPresetName;
-        RefreshPresetBox(DefaultFilterPresetName);
+        var card = new Button
+        {
+            Content = content,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            HorizontalContentAlignment = HorizontalAlignment.Stretch,
+            Background = Brush(isSelected ? "#172636" : "#0D151D"),
+            BorderBrush = Brush(isSelected ? "#4A8FBA" : "#31404F"),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(7),
+            Padding = new Thickness(10, 8),
+            Cursor = new Cursor(StandardCursorType.Hand)
+        };
+        card.Click += (_, _) => SelectFilterPreset(preset.Name);
+        return card;
     }
 
-    private void RefreshPresetBox(string? selectedName = null)
+    private Control CreateNewPresetRow()
     {
-        _updatingPresetUi = true;
+        var nameBox = new TextBox
+        {
+            Watermark = "Preset name",
+            Height = 34,
+            VerticalContentAlignment = VerticalAlignment.Center
+        };
+        nameBox.KeyDown += (_, e) =>
+        {
+            if (e.Key != Key.Enter)
+                return;
 
-        var names = _filterPresets
-            .Select(preset => preset.Name)
-            .Order(StringComparer.OrdinalIgnoreCase)
-            .ToList();
+            CommitNewPreset(nameBox.Text);
+            e.Handled = true;
+        };
 
-        PresetBox.ItemsSource = names;
-        var effectiveSelection = selectedName ?? DefaultFilterPresetName;
-        PresetBox.SelectedItem = names.Contains(effectiveSelection, StringComparer.OrdinalIgnoreCase)
-            ? names.First(name => string.Equals(name, effectiveSelection, StringComparison.OrdinalIgnoreCase))
-            : null;
+        var saveButton = new Button
+        {
+            Content = "Save",
+            Background = Brush("#12334A"),
+            BorderBrush = Brush("#2D6E96"),
+            BorderThickness = new Thickness(1),
+            Padding = new Thickness(10, 6),
+            FontSize = 11
+        };
+        saveButton.Click += (_, _) => CommitNewPreset(nameBox.Text);
 
-        _updatingPresetUi = false;
+        var cancelButton = new Button
+        {
+            Content = "Cancel",
+            Background = Brushes.Transparent,
+            BorderBrush = Brush("#314B5F"),
+            BorderThickness = new Thickness(1),
+            Padding = new Thickness(10, 6),
+            FontSize = 11,
+            Opacity = 0.75
+        };
+        cancelButton.Click += (_, _) =>
+        {
+            _isCreatingPreset = false;
+            RebuildPresetRows();
+        };
+
+        var actions = new Grid { ColumnDefinitions = new ColumnDefinitions("*,*"), ColumnSpacing = 8 };
+        actions.Children.Add(saveButton);
+        actions.Children.Add(cancelButton);
+        Grid.SetColumn(cancelButton, 1);
+
+        var panel = new StackPanel { Spacing = 8 };
+        panel.Children.Add(nameBox);
+        panel.Children.Add(actions);
+
+        var border = new Border
+        {
+            Background = Brush("#121E29"),
+            BorderBrush = Brush("#4A8FBA"),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(7),
+            Padding = new Thickness(10)
+        };
+        border.Child = panel;
+
+        Dispatcher.UIThread.Post(() => nameBox.Focus());
+        return border;
     }
 
-    private void OnPresetSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    private void OnAddPresetClicked(object? sender, RoutedEventArgs e)
     {
-        if (_updatingPresetUi || PresetBox.SelectedItem is not string presetName)
+        _isCreatingPreset = true;
+        RebuildPresetRows();
+    }
+
+    private void CommitNewPreset(string? rawName)
+    {
+        var name = rawName?.Trim();
+        if (string.IsNullOrWhiteSpace(name))
             return;
 
+        name = UniquePresetName(name);
+        var preset = new PortableFilterPreset(name, new List<string>(), new List<PortableFilterGroup>());
+        _filterPresets.Add(preset);
+
+        FilterPresetStore.Save(_filterPresets);
+        _filterPresets = FilterPresetStore.Load();
+        _activeFilterPresetName = preset.Name;
+        _isCreatingPreset = false;
+        RebuildPresetRows();
+        ApplyFilterPreset(preset);
+    }
+
+    private void SelectFilterPreset(string presetName)
+    {
         var preset = _filterPresets.FirstOrDefault(p =>
             string.Equals(p.Name, presetName, StringComparison.OrdinalIgnoreCase));
 
         if (preset is null)
             return;
 
-        PresetNameBox.Text = preset.Name;
+        _activeFilterPresetName = preset.Name;
+        _isCreatingPreset = false;
+        RebuildPresetRows();
         ApplyFilterPreset(preset);
     }
 
-    private void OnSavePresetClicked(object? sender, RoutedEventArgs e)
+    private void OnUpdatePresetClicked(object? sender, RoutedEventArgs e)
     {
-        var name = PresetNameBox.Text?.Trim();
-        if (string.IsNullOrWhiteSpace(name) && PresetBox.SelectedItem is string selectedName)
-            name = selectedName;
-
-        if (string.IsNullOrWhiteSpace(name))
+        if (_activeFilterPresetName is null)
             return;
 
-        var preset = CreatePreset(name);
+        var preset = CreatePreset(_activeFilterPresetName);
         var index = _filterPresets.FindIndex(existing =>
             string.Equals(existing.Name, preset.Name, StringComparison.OrdinalIgnoreCase));
 
-        if (index >= 0)
-            _filterPresets[index] = preset;
-        else
-            _filterPresets.Add(preset);
+        if (index < 0)
+            return;
 
+        _filterPresets[index] = preset;
         FilterPresetStore.Save(_filterPresets);
         _filterPresets = FilterPresetStore.Load();
-        PresetNameBox.Text = preset.Name;
-        RefreshPresetBox(preset.Name);
+        _activeFilterPresetName = preset.Name;
+        RebuildPresetRows();
     }
 
     private void OnDeletePresetClicked(object? sender, RoutedEventArgs e)
     {
-        var name = PresetBox.SelectedItem as string ?? PresetNameBox.Text?.Trim();
-        if (string.IsNullOrWhiteSpace(name))
+        if (_activeFilterPresetName is null)
             return;
 
-        if (string.Equals(name, DefaultFilterPresetName, StringComparison.OrdinalIgnoreCase))
-        {
-            var defaultPreset = new PortableFilterPreset(
-                DefaultFilterPresetName,
-                new List<string>(),
-                new List<PortableFilterGroup>());
-            var defaultIndex = _filterPresets.FindIndex(preset =>
-                string.Equals(preset.Name, DefaultFilterPresetName, StringComparison.OrdinalIgnoreCase));
-            if (defaultIndex >= 0) _filterPresets[defaultIndex] = defaultPreset;
-            else _filterPresets.Add(defaultPreset);
-        }
-        else
-        {
-            _filterPresets.RemoveAll(preset =>
-                string.Equals(preset.Name, name, StringComparison.OrdinalIgnoreCase));
-        }
+        _filterPresets.RemoveAll(preset =>
+            string.Equals(preset.Name, _activeFilterPresetName, StringComparison.OrdinalIgnoreCase));
 
         FilterPresetStore.Save(_filterPresets);
         _filterPresets = FilterPresetStore.Load();
-        PresetNameBox.Text = DefaultFilterPresetName;
-        RefreshPresetBox(DefaultFilterPresetName);
-        ApplyFilterPreset(_filterPresets.First(preset =>
-            string.Equals(preset.Name, DefaultFilterPresetName, StringComparison.OrdinalIgnoreCase)));
+        _activeFilterPresetName = null;
+        RebuildPresetRows();
+        RatingFilter.SetSelectedItems(Array.Empty<string>(), notify: false);
+        _filterGroups.Clear();
+        RebuildFilterConditionsPanel();
+        ClearConditionBuilder();
+        ApplyFilter();
     }
 
     private PortableFilterPreset CreatePreset(string name)
@@ -991,6 +1080,35 @@ public partial class MusicView : UserControl
         ClearConditionBuilder();
         ApplyFilter();
     }
+
+    private string UniquePresetName(string name)
+    {
+        if (_filterPresets.All(preset => !string.Equals(preset.Name, name, StringComparison.OrdinalIgnoreCase)))
+            return name;
+
+        var suffix = 2;
+        string candidate;
+        do
+        {
+            candidate = $"{name} {suffix++}";
+        }
+        while (_filterPresets.Any(preset => string.Equals(preset.Name, candidate, StringComparison.OrdinalIgnoreCase)));
+
+        return candidate;
+    }
+
+    private static string PresetSummary(PortableFilterPreset preset)
+    {
+        var parts = new List<string>();
+        if (preset.Ratings.Count > 0)
+            parts.Add($"{preset.Ratings.Count} rating{(preset.Ratings.Count == 1 ? "" : "s")}");
+        if (preset.Groups.Count > 0)
+            parts.Add($"{preset.Groups.Count} condition{(preset.Groups.Count == 1 ? "" : "s")}");
+
+        return parts.Count > 0 ? string.Join(" · ", parts) : "Empty preset";
+    }
+
+    private static IBrush Brush(string color) => new SolidColorBrush(Color.Parse(color));
 
     private static List<string> SortedNames(IEnumerable<string> names) =>
         names
