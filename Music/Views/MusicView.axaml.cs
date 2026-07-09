@@ -138,10 +138,14 @@ public partial class MusicView : UserControl
         PlayerBar.SizeChanged += (_, _) => UpdateImportBounds();
 
         // Volume
+        Values.Volume = AppSettingsStore.Load().Volume;
+        VolumeSlider.Value = Values.Volume * 100.0;
+        _engine.ApplyVolume(Values.Volume);
         VolumeSlider.ValueChanged += (_, _) =>
         {
             Values.Volume = (float)VolumeSlider.Value / 100.0f;
             _engine.ApplyVolume(Values.Volume);
+            AppSettingsStore.SaveVolume(Values.Volume);
         };
         
         try { MusicLibraryService.Current.Initialize(); }
@@ -1903,7 +1907,7 @@ public partial class MusicView : UserControl
         try
         {
             _isSeeking = false;
-            _engine.Play(filePath, track.Id, fadeOut, fadeIn);
+            _engine.Play(filePath, track.Id, fadeOut, fadeIn, LoudnessGainForTrack(track.Id));
         }
         catch (Exception ex)
         {
@@ -1927,6 +1931,12 @@ public partial class MusicView : UserControl
         RefreshPlayingMarkers();
     }
 
+    private static float LoudnessGainForTrack(int trackId)
+    {
+        var analysis = MusicLibraryService.Current.GetTrackAudioAnalysis(trackId);
+        return PlaybackEngine.CalculateLoudnessGain(analysis?.IntegratedLoudness, analysis?.LoudnessRange);
+    }
+
     // ─── Temporary track-information preview ─────────────────────────────────
 
     private void StartTrackPreview(MusicTrack track)
@@ -1948,7 +1958,7 @@ public partial class MusicView : UserControl
 
         try
         {
-            _engine.Play(filePath, track.Id, 0, 0);
+            _engine.Play(filePath, track.Id, 0, 0, LoudnessGainForTrack(track.Id));
         }
         catch (Exception exception)
         {

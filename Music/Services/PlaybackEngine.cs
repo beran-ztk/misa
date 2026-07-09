@@ -13,6 +13,7 @@ public record PlaybackSlotSnapshot(
     string FilePath,
     int TrackId,
     TimeSpan Position,
+    float LoudnessGain,
     float TransitionVolume,
     float FadeTarget,
     float FadeStep);
@@ -34,8 +35,9 @@ public sealed class PlaybackEngine : IDisposable
         public readonly AudioLevelSampleProvider Analyzer;
         public readonly string FilePath;
         public readonly int TrackId;
+        public readonly float LoudnessGain;
 
-        // 0..1 transition factor; Reader.Volume = user volume * TransitionVolume.
+        // 0..1 transition factor; Reader.Volume = user volume * loudness gain * TransitionVolume.
         public float TransitionVolume;
         public float FadeTarget;   // 0 = fade out fully, 1 = fade in to full
         public float FadeStep;     // per 100 ms tick, signed; 0 = steady
@@ -46,6 +48,7 @@ public sealed class PlaybackEngine : IDisposable
             AudioLevelSampleProvider analyzer,
             string filePath,
             int trackId,
+            float loudnessGain,
             float startTransition)
         {
             Player = player;
@@ -53,13 +56,14 @@ public sealed class PlaybackEngine : IDisposable
             Analyzer = analyzer;
             FilePath = filePath;
             TrackId = trackId;
+            LoudnessGain = loudnessGain;
             TransitionVolume = startTransition;
             FadeTarget = startTransition;
         }
 
-        // Set the effective output level: user volume * TransitionVolume.
+        // Set the effective output level: user volume * per-track loudness gain * transition fade.
         public void ApplySoftVolume(float masterVolume) =>
-            Reader.Volume = Math.Clamp(masterVolume * TransitionVolume, 0f, 1f);
+            Reader.Volume = Math.Clamp(masterVolume * LoudnessGain * TransitionVolume, 0f, 1.15f);
 
         public void Dispose()
         {
@@ -179,7 +183,7 @@ public sealed class PlaybackEngine : IDisposable
     // Begin playing filePath.
     // If a track is already playing it fades out over fadeOutSeconds (0 = immediate stop).
     // The new track fades in over fadeInSeconds (0 = starts at full user volume immediately).
-    public void Play(string filePath, int trackId, float fadeOutSeconds, float fadeInSeconds)
+    public void Play(string filePath, int trackId, float fadeOutSeconds, float fadeInSeconds, float loudnessGain = 1f)
     {
         if (_disposed) return;
 
@@ -221,7 +225,7 @@ public sealed class PlaybackEngine : IDisposable
         player.Init(new SampleToWaveProvider(analyzer));
 
         float startTransition = fadeInSeconds > 0f ? 0f : 1f;
-        _primary = new AudioSlot(player, reader, analyzer, filePath, trackId, startTransition)
+        _primary = new AudioSlot(player, reader, analyzer, filePath, trackId, loudnessGain, startTransition)
         {
             FadeTarget = 1f,
             FadeStep = fadeInSeconds > 0f ? 1f / (fadeInSeconds * 10f) : 0f,
@@ -313,7 +317,7 @@ public sealed class PlaybackEngine : IDisposable
     }
 
     private static PlaybackSlotSnapshot CaptureSlot(AudioSlot slot) => new(
-        slot.FilePath, slot.TrackId, slot.Reader.CurrentTime, slot.TransitionVolume, slot.FadeTarget, slot.FadeStep);
+        slot.FilePath, slot.TrackId, slot.Reader.CurrentTime, slot.LoudnessGain, slot.TransitionVolume, slot.FadeTarget, slot.FadeStep);
 
     private AudioSlot CreateSlot(PlaybackSlotSnapshot snapshot, bool isPrimary)
     {
@@ -324,7 +328,7 @@ public sealed class PlaybackEngine : IDisposable
         if (isPrimary) player.PlaybackStopped += OnPrimaryEnded;
         else player.PlaybackStopped += OnSecondaryEnded;
         player.Init(new SampleToWaveProvider(analyzer));
-        var slot = new AudioSlot(player, reader, analyzer, snapshot.FilePath, snapshot.TrackId, snapshot.TransitionVolume)
+        var slot = new AudioSlot(player, reader, analyzer, snapshot.FilePath, snapshot.TrackId, snapshot.LoudnessGain, snapshot.TransitionVolume)
         {
             FadeTarget = snapshot.FadeTarget,
             FadeStep = snapshot.FadeStep
@@ -361,6 +365,26 @@ public sealed class PlaybackEngine : IDisposable
         _masterVolume = Math.Clamp(masterVolume, 0f, 1f);
         _primary?.ApplySoftVolume(_masterVolume);
         _secondary?.ApplySoftVolume(_masterVolume);
+    }
+
+    public static float CalculateLoudnessGain(double? integratedLoudness, double? loudnessRange)
+    {
+        if (integratedLoudness is not double lufs || double.IsNaN(lufs) || double.IsInfinity(lufs))
+            return 1f;
+
+        const double targetLufs = -14.0;
+        var gainDb = targetLufs - lufs;
+
+        if (gainDb > 0 && loudnessRange is double range && !double.IsNaN(range) && !double.IsInfinity(range))
+        {
+            if (range >= 16)
+                gainDb *= 0.55;
+            else if (range >= 10)
+                gainDb *= 0.75;
+        }
+
+        gainDb = Math.Clamp(gainDb, -10.0, 6.0);
+        return (float)Math.Pow(10.0, gainDb / 20.0);
     }
 
     private void OnTick(object? sender, EventArgs e)
