@@ -13,6 +13,7 @@ public static class Values
     public static readonly string DbPath = Path.Combine(LocalDirectory, "music.db");
     public static readonly string FilterPresetsPath = Path.Combine(LocalDirectory, "filter-presets.json");
     public static readonly string BackupSettingsPath = Path.Combine(LocalDirectory, "backup-settings.json");
+    public static readonly string WindowPlacementPath = Path.Combine(LocalDirectory, "window-placement.json");
     public static readonly string ToolsDirectory = Path.Combine(SolutionDirectory, "Tools");
     public static readonly string ScriptsDirectory = Path.Combine(SolutionDirectory, "Scripts");
     public static readonly string ModelsDirectory = Path.Combine(SolutionDirectory, "Models");

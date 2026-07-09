@@ -1,17 +1,22 @@
 using System;
 using System.Runtime.InteropServices;
 using Avalonia.Controls;
+using Music.Services;
 
 namespace Music.Views;
 
 public partial class MainWindow : Window
 {
     private readonly MusicView _musicView = new();
+    private WindowBounds? _lastNormalBounds;
 
     public MainWindow()
     {
         InitializeComponent();
+        _lastNormalBounds = WindowPlacementStore.Apply(this)?.NormalBounds;
         ContentArea.Content = _musicView;
+        PositionChanged += (_, _) => CaptureNormalBounds();
+        SizeChanged += (_, _) => CaptureNormalBounds();
     }
 
     protected override void OnOpened(EventArgs e)
@@ -19,6 +24,19 @@ public partial class MainWindow : Window
         base.OnOpened(e);
         UseDarkWindowsTitleBar();
         _musicView.EnableSystemMediaControls();
+        CaptureNormalBounds();
+    }
+
+    protected override void OnClosing(WindowClosingEventArgs e)
+    {
+        WindowPlacementStore.Save(this, _lastNormalBounds);
+        base.OnClosing(e);
+    }
+
+    private void CaptureNormalBounds()
+    {
+        if (WindowState == WindowState.Normal)
+            _lastNormalBounds = WindowBounds.FromWindow(this);
     }
 
     private void UseDarkWindowsTitleBar()
