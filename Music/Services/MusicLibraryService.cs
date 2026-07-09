@@ -114,14 +114,9 @@ public class MusicLibraryService
 
     // --- Lookups ---
     public List<Genre> GetGenres() => _db.GetGenres();
-    public List<TagCategory> GetTagCategories() => _db.GetTagCategories();
-    public void AddTagCategory(string name) => _db.AddTagCategory(name);
-    public void RenameTagCategory(int id, string name) => _db.RenameTagCategory(id, name);
-    public void SetTagCategoryColor(int id, string? color) => _db.SetTagCategoryColor(id, color);
-    public string? DeleteTagCategoryIfUnused(int id) => _db.DeleteTagCategoryIfUnused(id);
     public List<Tag> GetTags() => _db.GetTags();
-    public void AddTag(int categoryId, string name, string? description) => _db.AddTag(categoryId, name, description);
-    public void RenameTag(int id, string name, string? description) => _db.RenameTag(id, name, description);
+    public void AddTag(string name) => _db.AddTag(name);
+    public void RenameTag(int id, string name) => _db.RenameTag(id, name);
     public string? DeleteTagIfUnused(int id) => _db.DeleteTagIfUnused(id);
     public Dictionary<int, List<int>> GetAllTrackTagIds() => _db.GetAllTrackTagIds();
     public List<int> GetTrackTagIds(int trackId) => _db.GetTrackTagIds(trackId);
@@ -218,7 +213,7 @@ public class MusicLibraryService
 
         var tracks = GetTracks();
         var genres = GetGenres().ToDictionary(g => g.Id, g => g.Name);
-        var tags = GetTags().ToDictionary(t => t.Id, t => $"{t.CategoryName}: {t.Name}");
+        var tags = GetTags().ToDictionary(t => t.Id, t => t.Name);
         var styles = GetStyles().ToDictionary(s => s.Id, s => s.Name);
         var ratings = GetRatings().ToDictionary(r => r.Id, r => r.Name);
         var trackGenreIds = GetAllTrackGenreIds();

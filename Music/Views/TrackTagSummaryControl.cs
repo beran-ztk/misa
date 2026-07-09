@@ -59,7 +59,6 @@ public sealed class TrackTagSummaryControl : Panel
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(0, 0, 8, 0)
             };
-            ToolTip.SetTip(label, tag.CategoryName);
             _tagLabels.Add(label);
             Children.Add(label);
         }

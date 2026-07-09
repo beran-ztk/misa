@@ -85,20 +85,9 @@ public class MusicDatabase
                 sort_order  INTEGER NOT NULL UNIQUE
             );
 
-            CREATE TABLE tag_categories (
-                id          INTEGER PRIMARY KEY AUTOINCREMENT,
-                key         TEXT NOT NULL UNIQUE,
-                name        TEXT NOT NULL UNIQUE,
-                color       TEXT NULL,
-                sort_order  INTEGER NOT NULL DEFAULT 0
-            );
-
             CREATE TABLE tags (
                 id           INTEGER PRIMARY KEY AUTOINCREMENT,
-                category_id  INTEGER NOT NULL REFERENCES tag_categories(id) ON DELETE CASCADE,
-                name         TEXT NOT NULL,
-                description  TEXT NULL,
-                UNIQUE (category_id, name)
+                name         TEXT NOT NULL UNIQUE
             );
 
             CREATE TABLE tracks (
@@ -135,11 +124,6 @@ public class MusicDatabase
             CREATE TABLE track_tags (
                 track_id     INTEGER NOT NULL REFERENCES tracks(id) ON DELETE CASCADE,
                 tag_id       INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
-                source       TEXT NOT NULL DEFAULT 'manual',
-                strength     REAL NULL CHECK (strength IS NULL OR (strength >= 0 AND strength <= 1)),
-                confidence   REAL NULL CHECK (confidence IS NULL OR (confidence >= 0 AND confidence <= 1)),
-                assigned_at  TEXT NOT NULL,
-                updated_at   TEXT NOT NULL,
                 PRIMARY KEY (track_id, tag_id)
             );
 
@@ -234,7 +218,6 @@ public class MusicDatabase
 
             CREATE INDEX ix_track_genres_genre_id ON track_genres(genre_id);
             CREATE INDEX ix_channel_videos_channel_checked ON channel_videos(channel_id, is_checked, uploaded_at);
-            CREATE INDEX ix_tags_category_id ON tags(category_id);
             CREATE INDEX ix_track_tags_tag_id ON track_tags(tag_id);
             CREATE INDEX ix_model_subgenres_model_genre_id ON model_subgenres(model_genre_id);
             CREATE INDEX ix_model_subgenre_distinctions_source ON model_subgenre_distinctions(model_subgenre_id);
@@ -302,31 +285,15 @@ public class MusicDatabase
     {
         using var cmd = conn.CreateCommand();
         cmd.CommandText = @"
-            CREATE TABLE IF NOT EXISTS tag_categories (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                key TEXT NOT NULL UNIQUE,
-                name TEXT NOT NULL UNIQUE,
-                color TEXT NULL,
-                sort_order INTEGER NOT NULL DEFAULT 0
-            );
             CREATE TABLE IF NOT EXISTS tags (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                category_id INTEGER NOT NULL REFERENCES tag_categories(id) ON DELETE CASCADE,
-                name TEXT NOT NULL,
-                description TEXT NULL,
-                UNIQUE (category_id, name)
+                name TEXT NOT NULL UNIQUE
             );
             CREATE TABLE IF NOT EXISTS track_tags (
                 track_id INTEGER NOT NULL REFERENCES tracks(id) ON DELETE CASCADE,
                 tag_id INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
-                source TEXT NOT NULL DEFAULT 'manual',
-                strength REAL NULL CHECK (strength IS NULL OR (strength >= 0 AND strength <= 1)),
-                confidence REAL NULL CHECK (confidence IS NULL OR (confidence >= 0 AND confidence <= 1)),
-                assigned_at TEXT NOT NULL,
-                updated_at TEXT NOT NULL,
                 PRIMARY KEY (track_id, tag_id)
             );
-            CREATE INDEX IF NOT EXISTS ix_tags_category_id ON tags(category_id);
             CREATE INDEX IF NOT EXISTS ix_track_tags_tag_id ON track_tags(tag_id);
             ";
         cmd.ExecuteNonQuery();
@@ -334,7 +301,7 @@ public class MusicDatabase
 
     private static void SimplifyTagSchemaIfNeeded(SqliteConnection conn)
     {
-        if (!ColumnExists(conn, "tags", "key"))
+        if (!TableExists(conn, "tags") || !ColumnExists(conn, "tags", "category_id"))
             return;
 
         using (var foreignKeyCommand = conn.CreateCommand())
@@ -359,34 +326,30 @@ public class MusicDatabase
             ExecuteInsert(conn, tx, @"
                 CREATE TABLE tags (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    category_id INTEGER NOT NULL REFERENCES tag_categories(id) ON DELETE CASCADE,
-                    name TEXT NOT NULL,
-                    description TEXT NULL,
-                    UNIQUE (category_id, name)
+                    name TEXT NOT NULL UNIQUE
                 )");
             ExecuteInsert(conn, tx, @"
-                INSERT INTO tags (id, category_id, name, description)
-                SELECT id, category_id, name, description FROM tags_legacy");
+                INSERT INTO tags (id, name)
+                SELECT MIN(id), name
+                FROM tags_legacy
+                GROUP BY name");
 
             ExecuteInsert(conn, tx, @"
                 CREATE TABLE track_tags (
                     track_id INTEGER NOT NULL REFERENCES tracks(id) ON DELETE CASCADE,
                     tag_id INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
-                    source TEXT NOT NULL DEFAULT 'manual',
-                    strength REAL NULL CHECK (strength IS NULL OR (strength >= 0 AND strength <= 1)),
-                    confidence REAL NULL CHECK (confidence IS NULL OR (confidence >= 0 AND confidence <= 1)),
-                    assigned_at TEXT NOT NULL,
-                    updated_at TEXT NOT NULL,
                     PRIMARY KEY (track_id, tag_id)
                 )");
             ExecuteInsert(conn, tx, @"
-                INSERT INTO track_tags (track_id, tag_id, source, strength, confidence, assigned_at, updated_at)
-                SELECT track_id, tag_id, source, strength, confidence, assigned_at, updated_at
-                FROM track_tags_legacy");
+                INSERT OR IGNORE INTO track_tags (track_id, tag_id)
+                SELECT legacy_links.track_id, tags.id
+                FROM track_tags_legacy legacy_links
+                JOIN tags_legacy legacy_tags ON legacy_tags.id = legacy_links.tag_id
+                JOIN tags ON tags.name = legacy_tags.name");
 
             ExecuteInsert(conn, tx, "DROP TABLE track_tags_legacy");
             ExecuteInsert(conn, tx, "DROP TABLE tags_legacy");
-            ExecuteInsert(conn, tx, "CREATE INDEX ix_tags_category_id ON tags(category_id)");
+            ExecuteInsert(conn, tx, "DROP TABLE IF EXISTS tag_categories");
             ExecuteInsert(conn, tx, "CREATE INDEX ix_track_tags_tag_id ON track_tags(tag_id)");
             tx.Commit();
         }
@@ -814,26 +777,13 @@ public class MusicDatabase
 
         foreach (var category in lookups.TagCategories)
         {
-            var key = string.IsNullOrWhiteSpace(category.Key) ? SlugKey(category.Name) : category.Key;
-            ExecuteInsert(conn, tx, @"
-                INSERT INTO tag_categories (key, name, color, sort_order)
-                VALUES ($key, $name, $color, $sortOrder)
-                ON CONFLICT(key) DO UPDATE SET
-                    name = excluded.name,
-                    color = excluded.color,
-                    sort_order = excluded.sort_order",
-                ("$key", key), ("$name", category.Name), ("$color", category.Color), ("$sortOrder", category.SortOrder));
-
-            var categoryId = SelectId(conn, tx, "SELECT id FROM tag_categories WHERE key = $key", ("$key", key));
             foreach (var tag in category.Tags)
             {
                 ExecuteInsert(conn, tx, @"
-                    INSERT INTO tags (category_id, name, description)
-                    VALUES ($categoryId, $name, $description)
-                    ON CONFLICT(category_id, name) DO UPDATE SET description = excluded.description",
-                    ("$categoryId", categoryId),
-                    ("$name", tag.Name),
-                    ("$description", string.IsNullOrWhiteSpace(tag.Description) ? DBNull.Value : tag.Description));
+                    INSERT INTO tags (name)
+                    VALUES ($name)
+                    ON CONFLICT(name) DO NOTHING",
+                    ("$name", tag.Name));
             }
         }
 
@@ -1481,101 +1431,30 @@ public class MusicDatabase
         return ReadLookupList(cmd, (id, name) => new Genre(id, name));
     }
 
-    public List<TagCategory> GetTagCategories()
-    {
-        using var conn = Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT id, name, color, sort_order FROM tag_categories ORDER BY sort_order, name";
-        using var reader = cmd.ExecuteReader();
-        var categories = new List<TagCategory>();
-        while (reader.Read())
-            categories.Add(new TagCategory(
-                reader.GetInt32(0),
-                reader.GetString(1),
-                reader.IsDBNull(2) ? null : reader.GetString(2),
-                reader.GetInt32(3)));
-        return categories;
-    }
-
-    public void AddTagCategory(string name)
-    {
-        using var conn = Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = @"INSERT INTO tag_categories (key, name, sort_order)
-                            VALUES ($key, $name, COALESCE((SELECT MAX(sort_order) + 10 FROM tag_categories), 10))";
-        cmd.Parameters.AddWithValue("$key", SlugKey(name));
-        cmd.Parameters.AddWithValue("$name", name.Trim());
-        cmd.ExecuteNonQuery();
-    }
-
-    public void RenameTagCategory(int id, string name)
-    {
-        using var conn = Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = "UPDATE tag_categories SET key = $key, name = $name WHERE id = $id";
-        cmd.Parameters.AddWithValue("$id", id);
-        cmd.Parameters.AddWithValue("$key", SlugKey(name));
-        cmd.Parameters.AddWithValue("$name", name.Trim());
-        cmd.ExecuteNonQuery();
-    }
-
-    public void SetTagCategoryColor(int id, string? color)
-    {
-        using var conn = Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = "UPDATE tag_categories SET color = $color WHERE id = $id";
-        cmd.Parameters.AddWithValue("$id", id);
-        cmd.Parameters.AddWithValue("$color", string.IsNullOrWhiteSpace(color) ? DBNull.Value : color.Trim());
-        cmd.ExecuteNonQuery();
-    }
-
-    public string? DeleteTagCategoryIfUnused(int id)
-    {
-        using var conn = Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT COUNT(*) FROM tags WHERE category_id = $id";
-        cmd.Parameters.AddWithValue("$id", id);
-        var tags = (long)cmd.ExecuteScalar()!;
-        if (tags > 0)
-            return $"Cannot delete: category still contains {tags} tag(s).";
-
-        cmd.CommandText = "DELETE FROM tag_categories WHERE id = $id";
-        cmd.ExecuteNonQuery();
-        return null;
-    }
-
     public List<Tag> GetTags()
     {
         using var conn = Open();
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = @"
-            SELECT tags.id, tags.category_id, categories.name, categories.color, tags.name, tags.description
-            FROM tags
-            JOIN tag_categories categories ON categories.id = tags.category_id
-            ORDER BY categories.sort_order, categories.name, tags.name";
+        cmd.CommandText = "SELECT id, name FROM tags ORDER BY name";
         return ReadTags(cmd);
     }
 
-    public void AddTag(int categoryId, string name, string? description)
+    public void AddTag(string name)
     {
         using var conn = Open();
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = @"INSERT INTO tags (category_id, name, description)
-                            VALUES ($categoryId, $name, $description)";
-        cmd.Parameters.AddWithValue("$categoryId", categoryId);
+        cmd.CommandText = "INSERT INTO tags (name) VALUES ($name)";
         cmd.Parameters.AddWithValue("$name", name.Trim());
-        cmd.Parameters.AddWithValue("$description", string.IsNullOrWhiteSpace(description) ? DBNull.Value : description.Trim());
         cmd.ExecuteNonQuery();
     }
 
-    public void RenameTag(int id, string name, string? description)
+    public void RenameTag(int id, string name)
     {
         using var conn = Open();
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = "UPDATE tags SET name = $name, description = $description WHERE id = $id";
+        cmd.CommandText = "UPDATE tags SET name = $name WHERE id = $id";
         cmd.Parameters.AddWithValue("$id", id);
         cmd.Parameters.AddWithValue("$name", name.Trim());
-        cmd.Parameters.AddWithValue("$description", string.IsNullOrWhiteSpace(description) ? DBNull.Value : description.Trim());
         cmd.ExecuteNonQuery();
     }
 
@@ -1622,23 +1501,16 @@ public class MusicDatabase
         using var conn = Open();
         using var cmd = conn.CreateCommand();
         cmd.CommandText = @"
-            SELECT tags.id, tags.category_id, categories.name, categories.color, tags.name, tags.description,
-                   track_tags.source, track_tags.strength, track_tags.confidence
+            SELECT tags.id, tags.name
             FROM track_tags
             JOIN tags ON tags.id = track_tags.tag_id
-            JOIN tag_categories categories ON categories.id = tags.category_id
             WHERE track_tags.track_id = $trackId
-            ORDER BY categories.sort_order, categories.name, tags.name";
+            ORDER BY tags.name";
         cmd.Parameters.AddWithValue("$trackId", trackId);
         using var reader = cmd.ExecuteReader();
         var tags = new List<TrackTag>();
         while (reader.Read())
-            tags.Add(new TrackTag(
-                reader.GetInt32(0), reader.GetInt32(1), reader.GetString(2),
-                reader.IsDBNull(3) ? null : reader.GetString(3), reader.GetString(4),
-                reader.IsDBNull(5) ? null : reader.GetString(5), reader.GetString(6),
-                reader.IsDBNull(7) ? null : reader.GetDouble(7),
-                reader.IsDBNull(8) ? null : reader.GetDouble(8)));
+            tags.Add(new TrackTag(reader.GetInt32(0), reader.GetString(1)));
         return tags;
     }
 
@@ -1648,20 +1520,16 @@ public class MusicDatabase
         using var tx = conn.BeginTransaction();
         var now = DateTime.UtcNow.ToString("O");
 
-        ExecuteInsert(conn, tx, "DELETE FROM track_tags WHERE track_id = $trackId AND source = 'manual'",
+        ExecuteInsert(conn, tx, "DELETE FROM track_tags WHERE track_id = $trackId",
             ("$trackId", trackId));
 
         foreach (var tagId in tagIds.Distinct())
         {
             ExecuteInsert(conn, tx, @"
-                INSERT INTO track_tags (track_id, tag_id, source, strength, confidence, assigned_at, updated_at)
-                VALUES ($trackId, $tagId, 'manual', 1, 1, $now, $now)
-                ON CONFLICT(track_id, tag_id) DO UPDATE SET
-                    source = 'manual',
-                    strength = excluded.strength,
-                    confidence = excluded.confidence,
-                    updated_at = excluded.updated_at",
-                ("$trackId", trackId), ("$tagId", tagId), ("$now", now));
+                INSERT INTO track_tags (track_id, tag_id)
+                VALUES ($trackId, $tagId)
+                ON CONFLICT(track_id, tag_id) DO NOTHING",
+                ("$trackId", trackId), ("$tagId", tagId));
         }
 
         TouchTrack(conn, tx, trackId, now);
@@ -2088,13 +1956,7 @@ public class MusicDatabase
         using var reader = cmd.ExecuteReader();
         var tags = new List<Tag>();
         while (reader.Read())
-            tags.Add(new Tag(
-                reader.GetInt32(0),
-                reader.GetInt32(1),
-                reader.GetString(2),
-                reader.IsDBNull(3) ? null : reader.GetString(3),
-                reader.GetString(4),
-                reader.IsDBNull(5) ? null : reader.GetString(5)));
+            tags.Add(new Tag(reader.GetInt32(0), reader.GetString(1)));
         return tags;
     }
 
@@ -2151,29 +2013,11 @@ public class MusicDatabase
         return (long)cmd.ExecuteScalar()!;
     }
 
-    private static long? FindTagId(SqliteConnection conn, SqliteTransaction tx, string categoryName, string tagName)
-    {
-        using var cmd = conn.CreateCommand();
-        cmd.Transaction = tx;
-        cmd.CommandText = @"
-            SELECT tags.id
-            FROM tags
-            JOIN tag_categories categories ON categories.id = tags.category_id
-            WHERE categories.name = $categoryName AND tags.name = $tagName";
-        cmd.Parameters.AddWithValue("$categoryName", categoryName);
-        cmd.Parameters.AddWithValue("$tagName", tagName);
-        return cmd.ExecuteScalar() is long id ? id : null;
-    }
-
     private static void AddParameters(SqliteCommand cmd, IEnumerable<(string Name, object? Value)> parameters)
     {
         foreach (var (name, value) in parameters)
             cmd.Parameters.AddWithValue(name, value ?? DBNull.Value);
     }
-
-    private static string SlugKey(string name) => string.Concat(name.Trim().ToLowerInvariant()
-        .Select(character => char.IsLetterOrDigit(character) ? character : '-'))
-        .Trim('-');
 
     private static T ReadAsset<T>(string fileName)
     {

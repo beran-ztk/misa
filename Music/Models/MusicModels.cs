@@ -9,24 +9,8 @@ public record MusicTrack(
     bool AnalysisDisabled = false, byte[]? Thumbnail = null);
 
 public record Genre(int Id, string Name);
-public record TagCategory(int Id, string Name, string? Color, int SortOrder);
-public record Tag(
-    int Id,
-    int CategoryId,
-    string CategoryName,
-    string? CategoryColor,
-    string Name,
-    string? Description);
-public record TrackTag(
-    int Id,
-    int CategoryId,
-    string CategoryName,
-    string? CategoryColor,
-    string Name,
-    string? Description,
-    string Source,
-    double? Strength,
-    double? Confidence);
+public record Tag(int Id, string Name);
+public record TrackTag(int Id, string Name);
 public record TagSignalSource(string ModelName, string SignalKey, string Description)
 {
     public string DisplayName => $"{ModelName} · {SignalKey}";
@@ -40,8 +24,6 @@ public record TagRuleGroup(
     int Id,
     int TagId,
     string TagName,
-    string CategoryName,
-    string? CategoryColor,
     TagRuleMatchMode MatchMode,
     bool Enabled,
     IReadOnlyList<TagRuleCondition> Conditions);
@@ -50,8 +32,6 @@ public record TrackTagSuggestion(
     int RuleGroupId,
     int TagId,
     string TagName,
-    string CategoryName,
-    string? CategoryColor,
     TagRuleMatchMode MatchMode,
     string ConditionSummary,
     double Score,

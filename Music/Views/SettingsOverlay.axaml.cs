@@ -19,12 +19,10 @@ public partial class SettingsOverlay : UserControl
     private List<ModelGenre> _modelGenres = [];
     private List<ModelSubgenre> _modelSubgenres = [];
     private Dictionary<int, List<ModelSubgenreDistinction>> _distinctionsBySubgenreId = [];
-    private List<TagCategory> _tagCategories = [];
     private List<Tag> _tags = [];
     private List<TagSignalSource> _tagSignalSources = [];
     private List<TagRuleGroup> _tagRuleGroups = [];
     private bool _isLoading;
-    private bool _updatingTagCategory;
     private bool _genreVocabularyLoaded;
     private readonly Dictionary<int, GenreVocabularyRowState> _genreVocabularyRowsById = [];
     private TextBlock? _emptyGenreVocabularyText;
@@ -521,7 +519,7 @@ public partial class SettingsOverlay : UserControl
         if (isGenreVocabularyPage) RebuildGenreVocabularyRows();
         if (isBackupPage) RebuildBackupDirectoryRows();
         if (page == SettingsPage.AnalysisCalibration) RebuildCalibrationRows();
-        if (page == SettingsPage.Tags) ReloadTagManagement(SelectedTagCategoryId());
+        if (page == SettingsPage.Tags) ReloadTagManagement();
         if (page == SettingsPage.TagRules) ReloadTagRules();
     }
 
@@ -623,31 +621,13 @@ public partial class SettingsOverlay : UserControl
         return row;
     }
 
-    private void ReloadTagManagement(int? selectedCategoryId = null)
+    private void ReloadTagManagement()
     {
         if (!IsInitialized) return;
-        _tagCategories = MusicLibraryService.Current.GetTagCategories();
         _tags = MusicLibraryService.Current.GetTags();
-
-        var choices = _tagCategories
-            .Select(category => new TagCategoryChoice(category.Id, category.Name))
-            .ToList();
-
-        _updatingTagCategory = true;
-        TagCategoryBox.ItemsSource = choices;
-        if (choices.Count == 0)
-        {
-            TagCategoryBox.SelectedIndex = -1;
-            RenameTagCategoryBox.Text = string.Empty;
-        }
-        else
-        {
-            TagCategoryBox.SelectedItem = choices.FirstOrDefault(choice => choice.Id == selectedCategoryId)
-                                          ?? choices[0];
-        }
-        _updatingTagCategory = false;
-
-        UpdateSelectedTagCategoryFields();
+        AddTagPanel.IsVisible = true;
+        AddTagTitleText.Text = "Add tag";
+        TagVocabularyHintText.Text = "Cards are compact; edit only when needed.";
         RebuildTagRows();
     }
 
@@ -659,7 +639,7 @@ public partial class SettingsOverlay : UserControl
         _tagRuleGroups = MusicLibraryService.Current.GetTagRuleGroups();
 
         TagRuleTagBox.ItemsSource = _tags
-            .Select(tag => new TagRuleTagChoice(tag.Id, tag.CategoryName, tag.Name, tag.CategoryColor))
+            .Select(tag => new TagRuleTagChoice(tag.Id, tag.Name))
             .ToList();
         TagRuleModelBox.ItemsSource = _tagSignalSources
             .Select(source => source.ModelName)
@@ -720,7 +700,7 @@ public partial class SettingsOverlay : UserControl
 
         foreach (var group in _tagRuleGroups)
         {
-            var accent = CategoryBrush(group.CategoryColor);
+            var accent = CategoryBrush(null);
             var card = new Border
             {
                 Background = new SolidColorBrush(Color.Parse("#111419")),
@@ -733,7 +713,7 @@ public partial class SettingsOverlay : UserControl
             var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("180,110,*,Auto,Auto"), ColumnSpacing = 10 };
             var tag = new TextBlock
             {
-                Text = $"{group.CategoryName} · {group.TagName}",
+                Text = group.TagName,
                 FontSize = 11,
                 FontWeight = FontWeight.SemiBold,
                 Foreground = accent,
@@ -951,54 +931,24 @@ public partial class SettingsOverlay : UserControl
         return parsed && double.IsFinite(threshold) && threshold >= 0;
     }
 
-    private int? SelectedTagCategoryId() => (TagCategoryBox.SelectedItem as TagCategoryChoice)?.Id;
-
-    private void OnTagCategorySelectionChanged(object? sender, SelectionChangedEventArgs e)
-    {
-        if (_updatingTagCategory) return;
-        UpdateSelectedTagCategoryFields();
-        RebuildTagRows();
-    }
-
-    private void UpdateSelectedTagCategoryFields()
-    {
-        var categoryId = SelectedTagCategoryId();
-        var category = _tagCategories.FirstOrDefault(item => item.Id == categoryId);
-        RenameTagCategoryBox.Text = category?.Name ?? string.Empty;
-        TagCategoryColorBox.Text = category?.Color ?? string.Empty;
-        AddTagPanel.IsVisible = category is not null;
-        AddTagTitleText.Text = category is null ? "Add tag" : $"Add tag to {category.Name}";
-        TagVocabularyHintText.Text = category is null
-            ? "Choose or create a category before adding tags."
-            : "Cards are compact; edit only when needed.";
-    }
-
     private void RebuildTagRows()
     {
         if (!IsInitialized) return;
         TagRows.Children.Clear();
-        var categoryId = SelectedTagCategoryId();
-        if (categoryId is null)
-        {
-            TagRows.Children.Add(new TextBlock { Text = "Create a tag category first.", Opacity = .52, Margin = new Avalonia.Thickness(0, 18, 0, 0) });
-            return;
-        }
-
         var tags = _tags
-            .Where(tag => tag.CategoryId == categoryId.Value)
             .OrderBy(tag => tag.Name, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
         foreach (var tag in tags)
         {
-            TagRows.Children.Add(CreateTagVocabularyRow(tag, categoryId.Value));
+            TagRows.Children.Add(CreateTagVocabularyRow(tag));
         }
 
         if (tags.Count == 0)
-            TagRows.Children.Add(new TextBlock { Text = "No tags in this category yet.", Opacity = .52, Margin = new Avalonia.Thickness(0, 18, 0, 0) });
+            TagRows.Children.Add(new TextBlock { Text = "No tags yet.", Opacity = .52, Margin = new Avalonia.Thickness(0, 18, 0, 0) });
     }
 
-    private Control CreateTagVocabularyRow(Tag tag, int selectedCategoryId)
+    private Control CreateTagVocabularyRow(Tag tag)
     {
         var row = new Border
         {
@@ -1014,7 +964,7 @@ public partial class SettingsOverlay : UserControl
 
         var header = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), ColumnSpacing = 10 };
         var titlePanel = new StackPanel { Spacing = 1 };
-        var accent = CategoryBrush(tag.CategoryColor);
+        var accent = CategoryBrush(null);
         var titleText = new TextBlock
         {
             Text = tag.Name,
@@ -1024,13 +974,6 @@ public partial class SettingsOverlay : UserControl
             TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis
         };
         titlePanel.Children.Add(titleText);
-        titlePanel.Children.Add(new TextBlock
-        {
-            Text = tag.CategoryName,
-            FontSize = 10,
-            Opacity = 0.55,
-            TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis
-        });
         header.Children.Add(titlePanel);
 
         var edit = new Button
@@ -1044,22 +987,16 @@ public partial class SettingsOverlay : UserControl
         header.Children.Add(edit);
         panel.Children.Add(header);
 
-        var descriptionText = CreateGenreBodyText(tag.Description, "No description yet.");
-        panel.Children.Add(descriptionText);
-
         edit.Click += (_, _) =>
         {
             if (editorPanel is null)
             {
                 editorPanel = CreateTagVocabularyEditor(
                     current,
-                    selectedCategoryId,
                     updated =>
                     {
                         current = updated;
                         titleText.Text = updated.Name;
-                        descriptionText.Text = BodyText(updated.Description, "No description yet.");
-                        descriptionText.Opacity = string.IsNullOrWhiteSpace(updated.Description) ? 0.45 : 0.76;
                     });
                 panel.Children.Add(editorPanel);
             }
@@ -1073,10 +1010,9 @@ public partial class SettingsOverlay : UserControl
         return row;
     }
 
-    private StackPanel CreateTagVocabularyEditor(Tag tag, int selectedCategoryId, Action<Tag> onSaved)
+    private StackPanel CreateTagVocabularyEditor(Tag tag, Action<Tag> onSaved)
     {
         var nameBox = CreateSettingsTextBox(tag.Name, "Tag name");
-        var descriptionBox = CreateSettingsTextBox(tag.Description ?? string.Empty, "Description / usage hint");
         var editor = new StackPanel
         {
             Spacing = 8,
@@ -1084,9 +1020,8 @@ public partial class SettingsOverlay : UserControl
             Margin = new Avalonia.Thickness(0, 4, 0, 0)
         };
 
-        var fields = new Grid { ColumnDefinitions = new ColumnDefinitions("190,*,Auto,Auto"), ColumnSpacing = 8 };
+        var fields = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto"), ColumnSpacing = 8 };
         fields.Children.Add(CreateLabeledField("Tag", nameBox));
-        fields.Children.Add(CreateLabeledField("Description", descriptionBox, 1));
         var save = new Button
         {
             Content = "Save",
@@ -1102,8 +1037,8 @@ public partial class SettingsOverlay : UserControl
             VerticalAlignment = VerticalAlignment.Bottom,
             Opacity = .7
         };
-        Grid.SetColumn(save, 2);
-        Grid.SetColumn(remove, 3);
+        Grid.SetColumn(save, 1);
+        Grid.SetColumn(remove, 2);
         fields.Children.Add(save);
         fields.Children.Add(remove);
         editor.Children.Add(fields);
@@ -1112,8 +1047,8 @@ public partial class SettingsOverlay : UserControl
         {
             try
             {
-                MusicLibraryService.Current.RenameTag(tag.Id, nameBox.Text ?? tag.Name, descriptionBox.Text);
-                var updated = tag with { Name = (nameBox.Text ?? tag.Name).Trim(), Description = descriptionBox.Text };
+                MusicLibraryService.Current.RenameTag(tag.Id, nameBox.Text ?? tag.Name);
+                var updated = tag with { Name = (nameBox.Text ?? tag.Name).Trim() };
                 var index = _tags.FindIndex(item => item.Id == tag.Id);
                 if (index >= 0) _tags[index] = updated;
                 onSaved(updated);
@@ -1127,71 +1062,11 @@ public partial class SettingsOverlay : UserControl
         {
             var error = MusicLibraryService.Current.DeleteTagIfUnused(tag.Id);
             ToastRequested?.Invoke(error ?? "Tag deleted.");
-            ReloadTagManagement(selectedCategoryId);
+            ReloadTagManagement();
             if (error is null) LibraryMetadataChanged?.Invoke();
         };
 
         return editor;
-    }
-
-    private void OnAddTagCategoryClicked(object? sender, RoutedEventArgs e)
-    {
-        var name = NewTagCategoryBox.Text?.Trim() ?? string.Empty;
-        if (name.Length == 0) return;
-        try
-        {
-            MusicLibraryService.Current.AddTagCategory(name);
-            NewTagCategoryBox.Text = string.Empty;
-            var createdCategoryId = MusicLibraryService.Current.GetTagCategories()
-                .FirstOrDefault(category => string.Equals(category.Name, name, StringComparison.OrdinalIgnoreCase))?.Id;
-            ReloadTagManagement(createdCategoryId);
-            ToastRequested?.Invoke("Tag category added.");
-            LibraryMetadataChanged?.Invoke();
-        }
-        catch (Exception exception) { ToastRequested?.Invoke($"Could not add tag category: {exception.Message}"); }
-    }
-
-    private void OnSaveTagCategoryClicked(object? sender, RoutedEventArgs e)
-    {
-        if (SelectedTagCategoryId() is not int categoryId) return;
-        var name = RenameTagCategoryBox.Text?.Trim() ?? string.Empty;
-        if (name.Length == 0) return;
-        try
-        {
-            MusicLibraryService.Current.RenameTagCategory(categoryId, name);
-            ReloadTagManagement(categoryId);
-            ToastRequested?.Invoke("Tag category updated.");
-            LibraryMetadataChanged?.Invoke();
-        }
-        catch (Exception exception) { ToastRequested?.Invoke($"Could not update tag category: {exception.Message}"); }
-    }
-
-    private void OnDeleteTagCategoryClicked(object? sender, RoutedEventArgs e)
-    {
-        if (SelectedTagCategoryId() is not int categoryId) return;
-        var error = MusicLibraryService.Current.DeleteTagCategoryIfUnused(categoryId);
-        ToastRequested?.Invoke(error ?? "Tag category deleted.");
-        ReloadTagManagement();
-        if (error is null) LibraryMetadataChanged?.Invoke();
-    }
-
-    private void OnSaveTagCategoryColorClicked(object? sender, RoutedEventArgs e)
-    {
-        if (SelectedTagCategoryId() is not int categoryId) return;
-        if (!TryNormalizeHexColor(TagCategoryColorBox.Text, out var color))
-        {
-            ToastRequested?.Invoke("Color must be a hex value like #65BCEB.");
-            return;
-        }
-
-        try
-        {
-            MusicLibraryService.Current.SetTagCategoryColor(categoryId, color);
-            ReloadTagManagement(categoryId);
-            ToastRequested?.Invoke("Tag category color updated.");
-            LibraryMetadataChanged?.Invoke();
-        }
-        catch (Exception exception) { ToastRequested?.Invoke($"Could not update tag color: {exception.Message}"); }
     }
 
     private static bool TryNormalizeHexColor(string? value, out string? color)
@@ -1215,15 +1090,13 @@ public partial class SettingsOverlay : UserControl
 
     private void OnAddTagClicked(object? sender, RoutedEventArgs e)
     {
-        if (SelectedTagCategoryId() is not int categoryId) return;
         var name = NewTagBox.Text?.Trim() ?? string.Empty;
         if (name.Length == 0) return;
         try
         {
-            MusicLibraryService.Current.AddTag(categoryId, name, NewTagDescriptionBox.Text);
+            MusicLibraryService.Current.AddTag(name);
             NewTagBox.Text = string.Empty;
-            NewTagDescriptionBox.Text = string.Empty;
-            ReloadTagManagement(categoryId);
+            ReloadTagManagement();
             ToastRequested?.Invoke("Tag added.");
             LibraryMetadataChanged?.Invoke();
         }
@@ -1326,14 +1199,9 @@ public partial class SettingsOverlay : UserControl
         public string ModelGenreName { get; }
     }
 
-    private sealed record TagCategoryChoice(int Id, string Name)
+    private sealed record TagRuleTagChoice(int Id, string Name)
     {
         public override string ToString() => Name;
-    }
-
-    private sealed record TagRuleTagChoice(int Id, string CategoryName, string Name, string? CategoryColor)
-    {
-        public override string ToString() => $"{CategoryName} · {Name}";
     }
 
     private sealed record TagRuleModelChoice(string ModelName)

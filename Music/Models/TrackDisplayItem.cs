@@ -4,7 +4,7 @@ using Avalonia.Media;
 
 namespace Music.Models;
 
-public record TrackTagDisplay(string Name, string CategoryName, IBrush Foreground);
+public record TrackTagDisplay(string Name, IBrush Foreground);
 
 public record TrackDisplayItem(
     MusicTrack Track,

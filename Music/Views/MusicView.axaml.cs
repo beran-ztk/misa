@@ -425,8 +425,7 @@ public partial class MusicView : UserControl
         var tagDisplays = trackTags
             .Select(tag => new TrackTagDisplay(
                 tag.Name,
-                tag.CategoryName,
-                CategoryBrush(tag.CategoryColor)))
+                CategoryBrush(null)))
             .ToList();
         var ratingName = track.RatingId is int ratingId ? ratingMap.GetValueOrDefault(ratingId, "") : "Not rated";
         var durationText = track.DurationSeconds.HasValue ? FormatDuration(track.DurationSeconds.Value) : "";
@@ -518,7 +517,7 @@ public partial class MusicView : UserControl
             : genreName;
     }
 
-    private static string TagFilterName(Tag tag) => $"{tag.CategoryName}: {tag.Name}";
+    private static string TagFilterName(Tag tag) => tag.Name;
 
     private static IEnumerable<MultiSelectFilterControl.FilterOption> GenreFilterOptions() =>
         Values.Genres.Select(genre =>
@@ -532,9 +531,7 @@ public partial class MusicView : UserControl
     private static IEnumerable<MultiSelectFilterControl.FilterOption> TagFilterOptions() =>
         Values.Tags.Select(tag => new MultiSelectFilterControl.FilterOption(
             TagFilterName(tag),
-            tag.Name,
-            tag.CategoryName,
-            tag.CategoryColor));
+            tag.Name));
 
     private static IBrush CategoryBrush(string? color)
     {
@@ -1104,7 +1101,7 @@ public partial class MusicView : UserControl
         foreach (var selectedTag in selectedTags)
         {
             var tag = Values.Tags.FirstOrDefault(item => string.Equals(TagFilterName(item), selectedTag, StringComparison.OrdinalIgnoreCase));
-            chips.Children.Add(CreateConditionChip(DisplayTagFilterName(selectedTag), tag?.CategoryColor ?? "#CFA7FF"));
+            chips.Children.Add(CreateConditionChip(DisplayTagFilterName(selectedTag), "#CFA7FF"));
         }
 
         var removeBtn = new Button
@@ -1174,10 +1171,7 @@ public partial class MusicView : UserControl
     }
 
     private static string DisplayTagFilterName(string tagName)
-    {
-        var parts = tagName.Split(':', 2, StringSplitOptions.TrimEntries);
-        return parts.Length == 2 ? parts[1] : tagName;
-    }
+        => tagName;
 
     private FilterSection CreateGenreFilterSection(MultiSelectFilterControl genreCtrl)
     {
@@ -1384,48 +1378,18 @@ public partial class MusicView : UserControl
             while (panel.Children.Count > 1)
                 panel.Children.RemoveAt(1);
 
-            foreach (var category in Values.Tags.GroupBy(tag => new { tag.CategoryId, tag.CategoryName, tag.CategoryColor }))
+            var chips = new WrapPanel { Orientation = Orientation.Horizontal };
+            foreach (var tag in Values.Tags
+                         .OrderByDescending(tag => tagCtrl.SelectedItems.Contains(TagFilterName(tag)))
+                         .ThenBy(tag => tag.Name, StringComparer.OrdinalIgnoreCase))
             {
-                var accent = SafeBrush(category.Key.CategoryColor, "#65BCEB");
-                var section = new StackPanel { Spacing = 5 };
-                var categoryHeader = new Grid { ColumnDefinitions = new ColumnDefinitions("3,Auto,*"), ColumnSpacing = 7 };
-                categoryHeader.Children.Add(new Border
-                {
-                    Background = accent,
-                    CornerRadius = new CornerRadius(2),
-                    Height = 13,
-                    VerticalAlignment = VerticalAlignment.Center
-                });
-                var title = new TextBlock
-                {
-                    Text = category.Key.CategoryName,
-                    FontSize = 10.5,
-                    FontWeight = FontWeight.SemiBold,
-                    Foreground = accent,
-                    VerticalAlignment = VerticalAlignment.Center
-                };
-                Grid.SetColumn(title, 1);
-                categoryHeader.Children.Add(title);
-                section.Children.Add(categoryHeader);
-
-                var chips = new WrapPanel { Orientation = Orientation.Horizontal };
-                foreach (var tag in category
-                             .OrderByDescending(tag => tagCtrl.SelectedItems.Contains(TagFilterName(tag)))
-                             .ThenBy(tag => tag.Name, StringComparer.OrdinalIgnoreCase))
-                {
-                    var selected = tagCtrl.SelectedItems.Contains(TagFilterName(tag));
-                    var button = CreateFilterChoiceButton(tag.Name, null, selected, category.Key.CategoryColor);
-                    ToolTip.SetTip(button, string.IsNullOrWhiteSpace(tag.Description)
-                        ? tag.CategoryName
-                        : $"{tag.CategoryName}\n{tag.Description}");
-                    button.Click += (_, _) => Toggle(tag);
-                    chips.Children.Add(button);
-                }
-
-                section.Children.Add(chips);
-                panel.Children.Add(section);
+                var selected = tagCtrl.SelectedItems.Contains(TagFilterName(tag));
+                var button = CreateFilterChoiceButton(tag.Name, null, selected, "#65BCEB");
+                button.Click += (_, _) => Toggle(tag);
+                chips.Children.Add(button);
             }
 
+            panel.Children.Add(chips);
             UpdateSummary();
         }
 
