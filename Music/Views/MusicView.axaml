@@ -237,7 +237,7 @@
                      DoubleTapped="OnListDoubleTapped"
                      Background="Transparent"
                      BorderThickness="0"
-                     Padding="4,4,4,140">
+                     Padding="4,4,4,126">
                 <ListBox.ItemTemplate>
                     <DataTemplate x:DataType="models:TrackDisplayItem">
                         <Grid RowDefinitions="Auto,Auto">
@@ -354,21 +354,21 @@
             <!-- ── Player bar ── -->
             <Border x:Name="PlayerBar"
                     ZIndex="30"
-                    Height="132"
+                    Height="118"
                     VerticalAlignment="Bottom"
                     Padding="0"
                     Background="Transparent"
                     ClipToBounds="False"
                     CornerRadius="10,10,0,0"
                     BorderThickness="0"
-                    BoxShadow="0 -16 42 6 #CC000000">
+                    BoxShadow="0 -6 16 2 #7A000000">
                 <Border CornerRadius="10,10,0,0"
                         ClipToBounds="True">
                     <Panel>
                         <Image x:Name="PlayerArtworkBackground"
                                IsVisible="False"
                                IsHitTestVisible="False"
-                               Height="132"
+                               Height="118"
                                VerticalAlignment="Stretch"
                                Opacity="0.14"
                                Stretch="UniformToFill"
@@ -380,7 +380,7 @@
                                 <BlurEffect Radius="60"/>
                             </Image.Effect>
                         </Image>
-                        <Border Background="#D0070A0E"
+                        <Border Background="#F2070A0E"
                                 CornerRadius="10,10,0,0"
                                 HorizontalAlignment="Stretch"
                                 VerticalAlignment="Stretch"
@@ -406,9 +406,12 @@
                                 VerticalAlignment="Top"
                                 Background="#00000000"
                                 IsHitTestVisible="False"/>
-                        <StackPanel Margin="16,10,16,0">
+                        <Grid Margin="16,8,16,10"
+                              RowDefinitions="22,28,*"
+                              RowSpacing="3">
 
                             <Border x:Name="UpcomingBar"
+                                    Grid.Row="0"
                                     IsVisible="False"
                                     Padding="4,0,4,0">
                                 <DockPanel>
@@ -429,6 +432,7 @@
                             </Border>
 
                             <Grid x:Name="PlaybackInfoPanel"
+                                  Grid.Row="1"
                                   ColumnDefinitions="*,Auto"
                                   Height="28"
                                   IsVisible="False">
@@ -437,6 +441,7 @@
                                     <Slider x:Name="PlaybackSlider"
                                             Classes="playback"
                                             Minimum="0" Maximum="100" Value="0"
+                                            Margin="0,-5,0,0"
                                             VerticalAlignment="Center"/>
                                 </Border>
                                 <TextBlock x:Name="PlaybackTimeText"
@@ -446,7 +451,8 @@
                                            VerticalAlignment="Center"/>
                             </Grid>
 
-                            <Grid ColumnDefinitions="Auto,*,Auto"
+                            <Grid Grid.Row="2"
+                                  ColumnDefinitions="Auto,*,Auto"
                                   Height="42">
 
                                 <StackPanel Grid.Column="0"
@@ -499,6 +505,7 @@
                                                 Value="100"
                                                 Width="108"
                                                 Height="28"
+                                                Margin="0,-5,0,0"
                                                 VerticalAlignment="Center"/>
                                     </Border>
                                     <Button x:Name="ShuffleBtn"
@@ -520,7 +527,7 @@
                                 </StackPanel>
 
                             </Grid>
-                        </StackPanel>
+                        </Grid>
                     </Panel>
                 </Border>
             </Border>
