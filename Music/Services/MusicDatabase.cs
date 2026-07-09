@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using Avalonia.Platform;
 using Microsoft.Data.Sqlite;
 using Music.Models;
@@ -245,40 +244,6 @@ public class MusicDatabase
         CreateModelMetadataSchema(conn);
         CreateTagSchema(conn);
         SimplifyTagSchemaIfNeeded(conn);
-        RemoveExcludedExperimentalModelData(conn);
-        RemoveCompletedImportQueueItems(conn);
-        DropTagRuleSchema(conn);
-        SeedDefaultLookups(conn);
-        if (ModelMetadataNeedsImport(conn))
-        {
-            using var tx = conn.BeginTransaction();
-            SynchronizeModelMetadata(conn, tx);
-            tx.Commit();
-        }
-    }
-
-    private static void RemoveExcludedExperimentalModelData(SqliteConnection conn)
-    {
-        if (!TableExists(conn, "track_analysis_signals"))
-            return;
-
-        ExecuteNonQuery(conn,
-            "DELETE FROM track_analysis_signals WHERE model_name = $modelName",
-            ("$modelName", RemovedMoodThemeModelName));
-
-        RebuildDerivedAttributes(conn);
-    }
-
-    private static void DropTagRuleSchema(SqliteConnection conn)
-    {
-        ExecuteNonQuery(conn, "DROP INDEX IF EXISTS ix_tag_rules_tag_id");
-        ExecuteNonQuery(conn, "DROP INDEX IF EXISTS ix_tag_rule_groups_tag_id");
-        ExecuteNonQuery(conn, "DROP INDEX IF EXISTS ix_tag_rule_conditions_group_id");
-        ExecuteNonQuery(conn, "DROP INDEX IF EXISTS ix_track_tag_suggestions_track_id");
-        ExecuteNonQuery(conn, "DROP TABLE IF EXISTS track_tag_suggestions");
-        ExecuteNonQuery(conn, "DROP TABLE IF EXISTS tag_rule_conditions");
-        ExecuteNonQuery(conn, "DROP TABLE IF EXISTS tag_rule_groups");
-        ExecuteNonQuery(conn, "DROP TABLE IF EXISTS tag_rules");
     }
 
     private static void CreateTagSchema(SqliteConnection conn)
@@ -377,15 +342,6 @@ public class MusicDatabase
         cmd.ExecuteNonQuery();
     }
 
-    private static bool ModelMetadataNeedsImport(SqliteConnection conn)
-    {
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = @"SELECT COUNT(*) FROM model_subgenres
-                            WHERE description IS NOT NULL OR classification_hint IS NOT NULL
-                               OR bpm_min IS NOT NULL OR bpm_max IS NOT NULL";
-        return Convert.ToInt32(cmd.ExecuteScalar()) == 0;
-    }
-
     private static void EnsureChannelSubscriptionSchema(SqliteConnection conn)
     {
         EnsureColumn(conn, "channels", "subscribed", "INTEGER NOT NULL DEFAULT 0");
@@ -436,14 +392,6 @@ public class MusicDatabase
             );
             CREATE INDEX IF NOT EXISTS ix_import_queue_status ON import_queue_items(status, created_at);";
         cmd.ExecuteNonQuery();
-    }
-
-    private static void RemoveCompletedImportQueueItems(SqliteConnection conn)
-    {
-        if (!TableExists(conn, "import_queue_items"))
-            return;
-        ExecuteNonQuery(conn, "DELETE FROM import_queue_items WHERE status = $status",
-            ("$status", ImportQueueStatus.ReadyForReview.ToString()));
     }
 
     private static void EnsureColumn(SqliteConnection conn, string table, string column, string definition)
@@ -759,34 +707,7 @@ public class MusicDatabase
                 ("$name", rating.Name), ("$sortOrder", rating.SortOrder));
         }
 
-        SeedDefaultLookups(conn, tx);
-
         SynchronizeModelMetadata(conn, tx);
-    }
-
-    private static void SeedDefaultLookups(SqliteConnection conn)
-    {
-        using var tx = conn.BeginTransaction();
-        SeedDefaultLookups(conn, tx);
-        tx.Commit();
-    }
-
-    private static void SeedDefaultLookups(SqliteConnection conn, SqliteTransaction tx)
-    {
-        var lookups = ReadAsset<LookupSeedDocument>("default-lookups.json");
-
-        foreach (var category in lookups.TagCategories)
-        {
-            foreach (var tag in category.Tags)
-            {
-                ExecuteInsert(conn, tx, @"
-                    INSERT INTO tags (name)
-                    VALUES ($name)
-                    ON CONFLICT(name) DO NOTHING",
-                    ("$name", tag.Name));
-            }
-        }
-
     }
 
     /// <summary>
@@ -2037,15 +1958,6 @@ public class MusicDatabase
 
     private sealed record RatingSeedDocument(List<RatingSeed> Ratings);
     private sealed record RatingSeed(string Name, int SortOrder);
-    private sealed record LookupSeedDocument(
-        [property: JsonPropertyName("tagCategories")] List<LookupTagCategorySeed> TagCategories);
-    private sealed record LookupTagCategorySeed(
-        string Key,
-        string Name,
-        string? Color,
-        [property: JsonPropertyName("sort_order")] int SortOrder,
-        List<LookupTagSeed> Tags);
-    private sealed record LookupTagSeed(string Name, string? Description);
     private sealed record ModelSubgenreMetadataSeed(
         string Label,
         string Genre,
