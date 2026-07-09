@@ -619,6 +619,46 @@
                                 <Rectangle Height="1" Fill="#25313D"/>
 
                                 <StackPanel Spacing="7">
+                                    <TextBlock Text="SORT"
+                                               FontSize="10" FontWeight="SemiBold"
+                                               Opacity="0.42" LetterSpacing="1"/>
+                                    <Border Background="#0F1C27"
+                                            BorderBrush="#2D6E96"
+                                            BorderThickness="1"
+                                            CornerRadius="7"
+                                            Padding="4">
+                                        <Grid ColumnDefinitions="*,1,36">
+                                            <ComboBox x:Name="SortByBox"
+                                                      Grid.Column="0"
+                                                      Height="30"
+                                                      FontSize="11"
+                                                      FontWeight="SemiBold"
+                                                      Foreground="#78C7EE"
+                                                      Background="Transparent"
+                                                      BorderThickness="0"
+                                                      Padding="8,3"
+                                                      SelectionChanged="OnSortChanged"/>
+                                            <Rectangle Grid.Column="1"
+                                                       Fill="#24475D"
+                                                       Margin="2,5"/>
+                                            <Button x:Name="SortDirectionButton"
+                                                    Grid.Column="2"
+                                                    Content="↑"
+                                                    Click="OnSortDirectionClicked"
+                                                    Background="Transparent"
+                                                    BorderThickness="0"
+                                                    Foreground="#78C7EE"
+                                                    FontSize="15"
+                                                    FontWeight="SemiBold"
+                                                    Padding="0"
+                                                    ToolTip.Tip="Toggle sort direction"/>
+                                        </Grid>
+                                    </Border>
+                                </StackPanel>
+
+                                <Rectangle Height="1" Fill="#25313D"/>
+
+                                <StackPanel Spacing="7">
                                     <TextBlock Text="RATING"
                                                FontSize="10" FontWeight="SemiBold"
                                                Opacity="0.42" LetterSpacing="1"/>

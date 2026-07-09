@@ -21,6 +21,9 @@ using Music.Services;
 
 namespace Music.Views;
 
+public enum LibrarySortBy { Name, Rating }
+public enum LibrarySortDirection { Ascending, Descending }
+
 public partial class MusicView : UserControl
 {
     // Engine
@@ -43,6 +46,9 @@ public partial class MusicView : UserControl
 
     // Playback settings
     private bool _shuffle;
+    private LibrarySortBy _sortBy = LibrarySortBy.Name;
+    private LibrarySortDirection _sortDirection = LibrarySortDirection.Ascending;
+    private bool _updatingSortControls;
 
     // UI state
     private bool _filterPanelVisible;
@@ -118,6 +124,7 @@ public partial class MusicView : UserControl
         PlayerAtmosphereTint.Background = _playerAtmosphereBrush;
         PlayerChromeEdge.Background = _playerChromeEdgeBrush;
         PlayerTopGlow.Background = _playerTopGlowBrush;
+        InitializeSortControls();
 
         // Seeking
         PlaybackSlider.AddHandler(PointerPressedEvent,
@@ -293,6 +300,40 @@ public partial class MusicView : UserControl
     {
         LibraryDirtyText.IsVisible = _libraryRefreshPending;
         RefreshLibraryButton.IsVisible = _libraryRefreshPending;
+    }
+
+    private void InitializeSortControls()
+    {
+        _updatingSortControls = true;
+        SortByBox.ItemsSource = new[] { "Name", "Rating" };
+        SortByBox.SelectedIndex = 0;
+        UpdateSortDirectionButton();
+        _updatingSortControls = false;
+    }
+
+    private void OnSortChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (_updatingSortControls)
+            return;
+
+        _sortBy = SortByBox.SelectedIndex == 1 ? LibrarySortBy.Rating : LibrarySortBy.Name;
+        ApplyFilter();
+    }
+
+    private void OnSortDirectionClicked(object? sender, RoutedEventArgs e)
+    {
+        _sortDirection = _sortDirection == LibrarySortDirection.Ascending
+            ? LibrarySortDirection.Descending
+            : LibrarySortDirection.Ascending;
+        UpdateSortDirectionButton();
+        ApplyFilter();
+    }
+
+    private void UpdateSortDirectionButton()
+    {
+        SortDirectionButton.Content = _sortDirection == LibrarySortDirection.Ascending ? "↑" : "↓";
+        ToolTip.SetTip(SortDirectionButton,
+            _sortDirection == LibrarySortDirection.Ascending ? "Ascending" : "Descending");
     }
 
     // ─── Track list ──────────────────────────────────────────────────────────
@@ -618,6 +659,8 @@ public partial class MusicView : UserControl
                 .Where(item => item.NeedsReview)
                 .ToList();
 
+        ApplyLibrarySort();
+
         if (_shuffle)
             ShuffleFilteredItems();
 
@@ -634,6 +677,32 @@ public partial class MusicView : UserControl
         UpdateReviewFilterButton();
         UpdateReviewButton();
         RestartVisibleThumbnailLoad();
+    }
+
+    private void ApplyLibrarySort()
+    {
+        var ratingSortById = Values.Ratings.ToDictionary(rating => rating.Id, rating => rating.SortOrder);
+        IOrderedEnumerable<TrackDisplayItem> sorted = _sortBy switch
+        {
+            LibrarySortBy.Rating when _sortDirection == LibrarySortDirection.Ascending =>
+                _filteredItems
+                    .OrderBy(item => item.Track.RatingId is int ratingId
+                        ? ratingSortById.GetValueOrDefault(ratingId, int.MaxValue)
+                        : int.MaxValue)
+                    .ThenBy(item => item.Track.Title, StringComparer.OrdinalIgnoreCase),
+            LibrarySortBy.Rating =>
+                _filteredItems
+                    .OrderByDescending(item => item.Track.RatingId is int ratingId
+                        ? ratingSortById.GetValueOrDefault(ratingId, int.MinValue)
+                        : int.MinValue)
+                    .ThenBy(item => item.Track.Title, StringComparer.OrdinalIgnoreCase),
+            LibrarySortBy.Name when _sortDirection == LibrarySortDirection.Descending =>
+                _filteredItems.OrderByDescending(item => item.Track.Title, StringComparer.OrdinalIgnoreCase),
+            _ =>
+                _filteredItems.OrderBy(item => item.Track.Title, StringComparer.OrdinalIgnoreCase)
+        };
+
+        _filteredItems = sorted.ToList();
     }
 
     private void RestoreOrInitializeSelection(int? previousSelectedTrackId)
