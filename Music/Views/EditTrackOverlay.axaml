@@ -104,6 +104,15 @@
 
                         <StackPanel Spacing="8" Margin="0,0,40,0">
                             <TextBlock Text="Library classification" FontSize="13" FontWeight="SemiBold" />
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Text="Tags" FontSize="11" Opacity="0.68" />
+                                <TextBlock x:Name="TagSummaryText" Grid.Column="1" FontSize="10.5" Opacity="0.5" />
+                            </Grid>
+                            <StackPanel x:Name="TagsPanel" Spacing="9" />
+                            <StackPanel x:Name="SuggestedTagsSection" Spacing="5" Margin="0,0,0,12" IsVisible="False">
+                                <TextBlock Text="Suggested tags" FontSize="11" Opacity="0.68" />
+                                <StackPanel x:Name="SuggestedTagsPanel" Spacing="4" />
+                            </StackPanel>
                             <StackPanel x:Name="ModelSelectedGenresSection" Spacing="7" Margin="0,0,0,18">
                                 <TextBlock Text="Active genres" FontSize="11" Opacity="0.68" />
                                 <StackPanel x:Name="ModelSelectedGenresPanel" Spacing="8" />
@@ -161,15 +170,6 @@
                                         </ScrollViewer>
                                     </StackPanel>
                                 </Border>
-                            </StackPanel>
-                            <Grid ColumnDefinitions="*,Auto" Margin="0,8,0,0">
-                                <TextBlock Text="Tags" FontSize="11" Opacity="0.68" />
-                                <TextBlock x:Name="TagSummaryText" Grid.Column="1" FontSize="10.5" Opacity="0.5" />
-                            </Grid>
-                            <StackPanel x:Name="TagsPanel" Spacing="9" />
-                            <StackPanel x:Name="SuggestedTagsSection" Spacing="5" Margin="0,8,0,0" IsVisible="False">
-                                <TextBlock Text="Suggested tags" FontSize="11" Opacity="0.68" />
-                                <StackPanel x:Name="SuggestedTagsPanel" Spacing="4" />
                             </StackPanel>
                         </StackPanel>
 
