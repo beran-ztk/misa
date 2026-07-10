@@ -847,7 +847,8 @@ public partial class EditTrackOverlay : UserControl
                 BorderBrush = new SolidColorBrush(Color.Parse("#2D3945")),
                 BorderThickness = new Avalonia.Thickness(1),
                 CornerRadius = new Avalonia.CornerRadius(5),
-                Padding = new Avalonia.Thickness(8, 5)
+                Padding = new Avalonia.Thickness(8, 5),
+                Margin = new Avalonia.Thickness(0, 0, 6, 6)
             };
             var row = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto") };
             var confidenceBrush = AnalysisColorScale.GenreConfidence(prediction.Score);

@@ -4,6 +4,13 @@
 
     <Panel>
         <Panel.Styles>
+            <Style Selector="Border.edit-section">
+                <Setter Property="Background" Value="#12181E"/>
+                <Setter Property="BorderBrush" Value="#26313A"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="CornerRadius" Value="7"/>
+                <Setter Property="Padding" Value="12"/>
+            </Style>
             <Style Selector="TextBox">
                 <Setter Property="Background" Value="#E6080A0D"/>
                 <Setter Property="BorderBrush" Value="#52606D"/>
@@ -119,7 +126,7 @@
                             </StackPanel>
                             <StackPanel x:Name="DetectedGenresSection" Spacing="5" Margin="0,0,0,10">
                                 <TextBlock Text="More model detections" FontSize="11" Opacity="0.68" />
-                                <StackPanel x:Name="DetectedGenresPanel" Spacing="3" />
+                                <UniformGrid x:Name="DetectedGenresPanel" Columns="2" />
                             </StackPanel>
                             <StackPanel x:Name="AddModelGenreSection" Margin="0,2,0,10">
                                 <Border Background="#10151A"
@@ -173,42 +180,46 @@
                             </StackPanel>
                         </StackPanel>
 
-                        <StackPanel x:Name="AudioAnalysisSection" Spacing="7" Margin="0,0,40,0">
-                            <TextBlock Text="Audio analysis"
-                                       FontSize="13" FontWeight="SemiBold" />
-                            <StackPanel Spacing="6">
-                                <Border Background="#161C22" BorderBrush="#2D3945" BorderThickness="1" CornerRadius="6" Padding="10,8">
-                                    <Grid ColumnDefinitions="Auto,*,Auto">
-                                        <TextBlock Text="Tempo" FontSize="11" FontWeight="SemiBold"/>
-                                        <TextBlock x:Name="BpmInsightText" Grid.Column="1" FontSize="10.5" Opacity="0.65" Margin="10,0,10,0" TextTrimming="CharacterEllipsis"/>
-                                        <TextBlock x:Name="BpmText" Grid.Column="2" FontSize="12" FontWeight="SemiBold"/>
-                                    </Grid>
-                                </Border>
-                                <Border Background="#161C22" BorderBrush="#2D3945" BorderThickness="1" CornerRadius="6" Padding="10,8">
-                                    <Grid ColumnDefinitions="Auto,*,Auto">
-                                        <TextBlock Text="Integrated loudness" FontSize="11" FontWeight="SemiBold"/>
-                                        <TextBlock x:Name="IntegratedLoudnessInsightText" Grid.Column="1" FontSize="10.5" Opacity="0.65" Margin="10,0,10,0" TextTrimming="CharacterEllipsis"/>
-                                        <TextBlock x:Name="IntegratedLoudnessText" Grid.Column="2" FontSize="12" FontWeight="SemiBold"/>
-                                    </Grid>
-                                </Border>
-                                <Border Background="#161C22" BorderBrush="#2D3945" BorderThickness="1" CornerRadius="6" Padding="10,8">
-                                    <Grid ColumnDefinitions="Auto,*,Auto">
-                                        <TextBlock Text="Loudness range" FontSize="11" FontWeight="SemiBold"/>
-                                        <TextBlock x:Name="LoudnessRangeInsightText" Grid.Column="1" FontSize="10.5" Opacity="0.65" Margin="10,0,10,0" TextTrimming="CharacterEllipsis"/>
-                                        <TextBlock x:Name="LoudnessRangeText" Grid.Column="2" FontSize="12" FontWeight="SemiBold"/>
-                                    </Grid>
-                                </Border>
+                        <Border x:Name="AudioAnalysisSection" Classes="edit-section" Margin="0,0,40,0">
+                            <StackPanel Spacing="7">
+                                <TextBlock Text="Audio analysis"
+                                           FontSize="13" FontWeight="SemiBold" />
+                                <StackPanel Spacing="6">
+                                    <Border Background="#161C22" BorderBrush="#2D3945" BorderThickness="1" CornerRadius="6" Padding="10,8">
+                                        <Grid ColumnDefinitions="Auto,*,Auto">
+                                            <TextBlock Text="Tempo" FontSize="11" FontWeight="SemiBold"/>
+                                            <TextBlock x:Name="BpmInsightText" Grid.Column="1" FontSize="10.5" Opacity="0.65" Margin="10,0,10,0" TextTrimming="CharacterEllipsis"/>
+                                            <TextBlock x:Name="BpmText" Grid.Column="2" FontSize="12" FontWeight="SemiBold"/>
+                                        </Grid>
+                                    </Border>
+                                    <Border Background="#161C22" BorderBrush="#2D3945" BorderThickness="1" CornerRadius="6" Padding="10,8">
+                                        <Grid ColumnDefinitions="Auto,*,Auto">
+                                            <TextBlock Text="Integrated loudness" FontSize="11" FontWeight="SemiBold"/>
+                                            <TextBlock x:Name="IntegratedLoudnessInsightText" Grid.Column="1" FontSize="10.5" Opacity="0.65" Margin="10,0,10,0" TextTrimming="CharacterEllipsis"/>
+                                            <TextBlock x:Name="IntegratedLoudnessText" Grid.Column="2" FontSize="12" FontWeight="SemiBold"/>
+                                        </Grid>
+                                    </Border>
+                                    <Border Background="#161C22" BorderBrush="#2D3945" BorderThickness="1" CornerRadius="6" Padding="10,8">
+                                        <Grid ColumnDefinitions="Auto,*,Auto">
+                                            <TextBlock Text="Loudness range" FontSize="11" FontWeight="SemiBold"/>
+                                            <TextBlock x:Name="LoudnessRangeInsightText" Grid.Column="1" FontSize="10.5" Opacity="0.65" Margin="10,0,10,0" TextTrimming="CharacterEllipsis"/>
+                                            <TextBlock x:Name="LoudnessRangeText" Grid.Column="2" FontSize="12" FontWeight="SemiBold"/>
+                                        </Grid>
+                                    </Border>
+                                </StackPanel>
                             </StackPanel>
-                        </StackPanel>
+                        </Border>
 
-                        <StackPanel x:Name="SoundProfileSection" Spacing="8" Margin="0,0,40,0">
-                            <StackPanel Spacing="2">
-                                <TextBlock Text="Sound profile" FontSize="13" FontWeight="SemiBold" />
-                                <TextBlock Text="Blue values are model suggestions. Choose a different value only to override one."
-                                           FontSize="10.5" Opacity="0.55" TextWrapping="Wrap" />
+                        <Border x:Name="SoundProfileSection" Classes="edit-section" Margin="0,0,40,0">
+                            <StackPanel Spacing="8">
+                                <StackPanel Spacing="2">
+                                    <TextBlock Text="Sound profile" FontSize="13" FontWeight="SemiBold" />
+                                    <TextBlock Text="Blue values are model suggestions. Choose a different value only to override one."
+                                               FontSize="10.5" Opacity="0.55" TextWrapping="Wrap" />
+                                </StackPanel>
+                                <StackPanel x:Name="SoundProfilePanel" Spacing="7" />
                             </StackPanel>
-                            <StackPanel x:Name="SoundProfilePanel" Spacing="7" />
-                        </StackPanel>
+                        </Border>
 
                         <Grid x:Name="StylesSection" ColumnDefinitions="Auto,*" Margin="0,0,40,0">
                             <Border Grid.Column="0"
