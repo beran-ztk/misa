@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -203,15 +204,30 @@ public class MusicLibraryService
         return added;
     }
 
-    public async Task ExportPortableLibraryAsync(string targetDirectory)
+    public async Task<string> ExportPortableLibraryAsync(string targetDirectory)
     {
         Directory.CreateDirectory(targetDirectory);
-        var targetTracksDirectory = Path.Combine(targetDirectory, "tracks");
-        var targetCoversDirectory = Path.Combine(targetDirectory, "covers");
+        var exportId = Guid.NewGuid().ToString("N");
+        var exportedAt = DateTime.UtcNow.ToString("O");
+        var tempDirectory = Path.Combine(targetDirectory, $".portable-export-{exportId}");
+        var targetTracksDirectory = Path.Combine(tempDirectory, "tracks");
+        var targetCoversDirectory = Path.Combine(tempDirectory, "covers");
         Directory.CreateDirectory(targetTracksDirectory);
         Directory.CreateDirectory(targetCoversDirectory);
 
         var tracks = GetTracks();
+        var lastExport = _db.GetLastPortableExport();
+        var lastCutoffDownloadedAt = lastExport?.CutoffDownloadedAt;
+        var newMediaTrackIds = tracks
+            .Where(track => string.IsNullOrWhiteSpace(lastCutoffDownloadedAt) ||
+                            string.CompareOrdinal(track.DownloadedAt, lastCutoffDownloadedAt) > 0)
+            .Select(track => track.Id)
+            .ToHashSet();
+        var cutoffDownloadedAt = tracks
+            .Select(track => track.DownloadedAt)
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .DefaultIfEmpty(lastCutoffDownloadedAt)
+            .Max(StringComparer.Ordinal);
         var genres = GetGenres().ToDictionary(g => g.Id, g => g.Name);
         var tags = GetTags().ToDictionary(t => t.Id, t => t.Name);
         var styles = GetStyles().ToDictionary(s => s.Id, s => s.Name);
@@ -222,29 +238,66 @@ public class MusicLibraryService
 
         var portableTracks = new List<PortableTrack>();
 
-        foreach (var track in tracks)
+        try
         {
-            var sourcePath = Path.Combine(Values.TracksDirectory, track.FileName);
-            if (File.Exists(sourcePath))
-                File.Copy(sourcePath, Path.Combine(targetTracksDirectory, track.FileName), overwrite: true);
+            foreach (var track in tracks)
+            {
+                var sourcePath = Path.Combine(Values.TracksDirectory, track.FileName);
+                if (newMediaTrackIds.Contains(track.Id) && File.Exists(sourcePath))
+                {
+                    File.Copy(sourcePath, Path.Combine(targetTracksDirectory, track.FileName), overwrite: true);
+                }
 
-            var coverFileName = ExportCover(sourcePath, targetCoversDirectory, track.FileName);
+                var coverFileName = ExportCover(sourcePath, targetCoversDirectory, track.FileName, newMediaTrackIds.Contains(track.Id));
+                var usage = GetTrackUsageStats(track.Id);
 
-            portableTracks.Add(new PortableTrack(
-                track.Title,
-                track.FileName,
-                track.DurationSeconds,
-                track.RatingId is int ratingId ? ratings.GetValueOrDefault(ratingId, "") : "Not rated",
-                NamesFor(trackGenreIds.GetValueOrDefault(track.Id, []), genres),
-                NamesFor(trackStyleIds.GetValueOrDefault(track.Id, []), styles),
-                coverFileName,
-                track.NeedsReview,
-                NamesFor(trackTagIds.GetValueOrDefault(track.Id, []), tags)));
+                portableTracks.Add(new PortableTrack(
+                    track.Title,
+                    track.FileName,
+                    track.DurationSeconds,
+                    track.RatingId is int ratingId ? ratings.GetValueOrDefault(ratingId, "") : "Not rated",
+                    NamesFor(trackGenreIds.GetValueOrDefault(track.Id, []), genres),
+                    NamesFor(trackStyleIds.GetValueOrDefault(track.Id, []), styles),
+                    coverFileName,
+                    track.NeedsReview,
+                    NamesFor(trackTagIds.GetValueOrDefault(track.Id, []), tags),
+                    track.DownloadedAt,
+                    track.ChannelName,
+                    track.ChannelUrl,
+                    track.UploadedAt,
+                    usage.PlayCount,
+                    usage.ListenedSeconds,
+                    usage.SkipCount,
+                    usage.LastListenedAt));
+            }
+
+            await PortableLibraryStore.SaveAsync(
+                tempDirectory,
+                new PortableMusicLibrary(
+                    portableTracks,
+                    FilterPresetStore.Load(),
+                    PortableMusicLibrary.CurrentSchemaVersion,
+                    exportId,
+                    exportedAt,
+                    "incremental"));
+
+            var archivePath = NextExportArchivePath(targetDirectory, exportedAt);
+            ZipFile.CreateFromDirectory(tempDirectory, archivePath, CompressionLevel.Fastest, includeBaseDirectory: false);
+            _db.RecordPortableExport(
+                exportId,
+                PortableMusicLibrary.CurrentSchemaVersion,
+                exportedAt,
+                tracks.Count,
+                newMediaTrackIds.Count,
+                cutoffDownloadedAt,
+                archivePath);
+            return archivePath;
         }
-
-        await PortableLibraryStore.SaveAsync(
-            targetDirectory,
-            new PortableMusicLibrary(portableTracks, FilterPresetStore.Load()));
+        finally
+        {
+            if (Directory.Exists(tempDirectory))
+                Directory.Delete(tempDirectory, recursive: true);
+        }
     }
 
     public async Task<DownloadResult> DownloadTrackAsync(DownloadRequest request, IProgress<string>? progress = null)
@@ -389,7 +442,7 @@ public class MusicLibraryService
             .Order(StringComparer.OrdinalIgnoreCase)
             .ToList();
 
-    private static string? ExportCover(string audioFilePath, string targetCoversDirectory, string trackFileName)
+    private static string? ExportCover(string audioFilePath, string targetCoversDirectory, string trackFileName, bool writeFile)
     {
         if (!File.Exists(audioFilePath))
             return null;
@@ -399,8 +452,21 @@ public class MusicLibraryService
             return null;
 
         var coverFileName = SafeFileName(Path.GetFileNameWithoutExtension(trackFileName)) + artwork.Extension;
-        File.WriteAllBytes(Path.Combine(targetCoversDirectory, coverFileName), artwork.Data);
+        if (writeFile)
+            File.WriteAllBytes(Path.Combine(targetCoversDirectory, coverFileName), artwork.Data);
         return coverFileName;
+    }
+
+    private static string NextExportArchivePath(string targetDirectory, string exportedAt)
+    {
+        var timestamp = DateTime.Parse(exportedAt, null, System.Globalization.DateTimeStyles.RoundtripKind)
+            .ToLocalTime()
+            .ToString("yyyyMMdd-HHmmss");
+        var archivePath = Path.Combine(targetDirectory, $"MusicLibrary-{timestamp}.zip");
+        if (!File.Exists(archivePath))
+            return archivePath;
+
+        return Path.Combine(targetDirectory, $"MusicLibrary-{timestamp}-{Guid.NewGuid():N}.zip");
     }
 
     private static string SafeFileName(string value)

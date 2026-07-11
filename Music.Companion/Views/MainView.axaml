@@ -231,6 +231,10 @@
                                                FontSize="10"
                                                Opacity="0.42"
                                                TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Text="{Binding TagText}"
+                                               FontSize="10"
+                                               Opacity="0.42"
+                                               TextTrimming="CharacterEllipsis"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="3"
                                             HorizontalAlignment="Right"

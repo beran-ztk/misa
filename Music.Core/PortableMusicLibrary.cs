@@ -5,8 +5,14 @@ namespace Music.Core;
 
 public sealed record PortableMusicLibrary(
     List<PortableTrack> Tracks,
-    List<PortableFilterPreset>? FilterPresets = null)
+    List<PortableFilterPreset>? FilterPresets = null,
+    int SchemaVersion = PortableMusicLibrary.CurrentSchemaVersion,
+    string? ExportId = null,
+    string? ExportedAt = null,
+    string MediaMode = "full")
 {
+    public const int CurrentSchemaVersion = 2;
+
     public static PortableMusicLibrary Empty { get; } = new([]);
 
     public IReadOnlyList<string> Ratings => Tracks
@@ -52,7 +58,15 @@ public sealed record PortableTrack(
     List<string> Styles,
     string? CoverFileName = null,
     bool NeedsReview = false,
-    List<string>? Tags = null)
+    List<string>? Tags = null,
+    string? DownloadedAt = null,
+    string? ChannelName = null,
+    string? ChannelUrl = null,
+    string? UploadedAt = null,
+    int PlayCount = 0,
+    int ListenedSeconds = 0,
+    int SkipCount = 0,
+    string? LastListenedAt = null)
 {
     public string GenreText => string.Join(", ", Genres);
     public string StyleText => string.Join(", ", Styles);

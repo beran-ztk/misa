@@ -1758,9 +1758,9 @@ public partial class MusicView : UserControl
 
         try
         {
-            await MusicLibraryService.Current.ExportPortableLibraryAsync(folders[0].Path.LocalPath);
-            StatusText.Text = "";
-            StatusText.IsVisible = false;
+            var archivePath = await MusicLibraryService.Current.ExportPortableLibraryAsync(folders[0].Path.LocalPath);
+            StatusText.Text = $"Exported Android library: {Path.GetFileName(archivePath)}";
+            StatusText.IsVisible = true;
         }
         catch (Exception ex)
         {

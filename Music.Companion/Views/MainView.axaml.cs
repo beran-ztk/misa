@@ -7,6 +7,7 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Music.Core;
+using System.IO.Compression;
 
 namespace Music.Companion.Views;
 
@@ -32,6 +33,8 @@ public partial class MainView : UserControl
     private record FilterGroupControls(
         MultiSelectFilterControl GenreFilter,
         MultiSelectFilterControl StyleFilter,
+        MultiSelectFilterControl TagFilter,
+        CheckBox NegateBox,
         StackPanel Container);
 
     private sealed record TrackRow(PortableTrack Track, Bitmap? Cover, bool IsCurrent, bool IsMarkedForReview)
@@ -43,6 +46,7 @@ public partial class MainView : UserControl
         public string Title => Track.Title;
         public string GenreText => Track.GenreText;
         public string StyleText => Track.StyleText;
+        public string TagText => Track.TagText;
         public string DurationText => Track.DurationText;
         public string Rating => Track.Rating;
         public IBrush CurrentBackground => IsCurrent ? CurrentBackgroundBrush : TransparentBrush;
@@ -121,7 +125,9 @@ public partial class MainView : UserControl
             _filterGroups
                 .Select(group => new PortableFilterGroup(
                     group.GenreFilter.SelectedItems.ToList(),
-                    group.StyleFilter.SelectedItems.ToList()))
+                    group.StyleFilter.SelectedItems.ToList(),
+                    group.TagFilter.SelectedItems.ToList(),
+                    group.NegateBox.IsChecked == true))
                 .ToList());
 
         if (_shuffle)
@@ -296,7 +302,7 @@ public partial class MainView : UserControl
         FilterGroupsPanel.Children.Clear();
 
         var groups = preset.Groups
-            .Where(group => group.Genres.Count > 0 || group.Styles.Count > 0)
+            .Where(group => group.Genres.Count > 0 || group.Styles.Count > 0 || (group.Tags?.Count ?? 0) > 0)
             .ToList();
 
         if (groups.Count == 0)
@@ -310,6 +316,8 @@ public partial class MainView : UserControl
                 var controls = AddFilterGroup();
                 controls.GenreFilter.SetSelectedItems(group.Genres, notify: false);
                 controls.StyleFilter.SetSelectedItems(group.Styles, notify: false);
+                controls.TagFilter.SetSelectedItems(group.Tags ?? [], notify: false);
+                controls.NegateBox.IsChecked = group.Negate;
             }
         }
 
@@ -339,8 +347,20 @@ public partial class MainView : UserControl
         styleFilter.SetItems(_loadedLibrary.Library.Styles);
         styleFilter.SelectionChanged += (_, _) => ApplyFilter();
 
+        var tagFilter = new MultiSelectFilterControl { Placeholder = "All tags" };
+        tagFilter.SetItems(_loadedLibrary.Library.Tags);
+        tagFilter.SelectionChanged += (_, _) => ApplyFilter();
+
+        var negateBox = new CheckBox
+        {
+            Content = "Exclude matches",
+            FontSize = 11,
+            Opacity = 0.72
+        };
+        negateBox.IsCheckedChanged += (_, _) => ApplyFilter();
+
         var container = new StackPanel { Spacing = 8, Margin = new Avalonia.Thickness(0, _filterGroups.Count == 0 ? 0 : 14, 0, 6) };
-        var controls = new FilterGroupControls(genreFilter, styleFilter, container);
+        var controls = new FilterGroupControls(genreFilter, styleFilter, tagFilter, negateBox, container);
         _filterGroups.Add(controls);
 
         if (_filterGroups.Count > 1)
@@ -377,8 +397,10 @@ public partial class MainView : UserControl
             container.Children.Add(header);
         }
 
+        container.Children.Add(negateBox);
         container.Children.Add(FilterSection("Genre", genreFilter));
         container.Children.Add(FilterSection("Style", styleFilter));
+        container.Children.Add(FilterSection("Tags", tagFilter));
         FilterGroupsPanel.Children.Add(container);
         return controls;
     }
@@ -415,9 +437,11 @@ public partial class MainView : UserControl
             var groupTracks = TracksMatchingSearchRatingAndGroup(group);
             var genreCounts = CountByName(groupTracks.SelectMany(track => track.Genres));
             var styleCounts = CountByName(groupTracks.SelectMany(track => track.Styles));
+            var tagCounts = CountByName(groupTracks.SelectMany(track => track.Tags ?? []));
 
             group.GenreFilter.UpdateCounts(genreCounts);
             group.StyleFilter.UpdateCounts(styleCounts);
+            group.TagFilter.UpdateCounts(tagCounts);
         }
     }
 
@@ -439,6 +463,10 @@ public partial class MainView : UserControl
         if (group.StyleFilter.SelectedItems.Count > 0)
             query = query.Where(track => group.StyleFilter.SelectedItems
                 .All(style => track.Styles.Contains(style, StringComparer.OrdinalIgnoreCase)));
+
+        if (group.TagFilter.SelectedItems.Count > 0)
+            query = query.Where(track => group.TagFilter.SelectedItems
+                .All(tag => (track.Tags ?? []).Contains(tag, StringComparer.OrdinalIgnoreCase)));
 
         return query.ToList();
     }
@@ -560,6 +588,18 @@ public partial class MainView : UserControl
             return;
         }
 
+        var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "Select exported MusicLibrary zip",
+            AllowMultiple = false
+        });
+
+        if (files.Count > 0)
+        {
+            await ImportLibraryArchiveAsync(files[0]);
+            return;
+        }
+
         var folders = await topLevel.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
         {
             Title = "Select exported MusicLibrary folder",
@@ -572,11 +612,50 @@ public partial class MainView : UserControl
         await ImportLibraryAsync(folders[0]);
     }
 
+    private async Task ImportLibraryArchiveAsync(IStorageFile selectedFile)
+    {
+        ImportButton.IsEnabled = false;
+        ReloadButton.IsEnabled = false;
+        StatusText.Text = "";
+
+        var targetDirectory = CompanionServices.LibraryStorage.LibraryDirectory;
+        var tempDirectory = targetDirectory + ".archive-import";
+
+        try
+        {
+            if (Directory.Exists(tempDirectory))
+                Directory.Delete(tempDirectory, true);
+
+            Directory.CreateDirectory(tempDirectory);
+            await using (var source = await selectedFile.OpenReadAsync())
+            using (var archive = new ZipArchive(source, ZipArchiveMode.Read))
+            {
+                foreach (var entry in archive.Entries)
+                    ExtractArchiveEntry(entry, tempDirectory);
+            }
+
+            await ImportLibraryDirectoryAsync(tempDirectory);
+        }
+        catch (Exception ex)
+        {
+            StatusText.Text = $"Import failed: {ex.Message}";
+        }
+        finally
+        {
+            if (Directory.Exists(tempDirectory))
+                Directory.Delete(tempDirectory, true);
+
+            ImportButton.IsEnabled = true;
+            ReloadButton.IsEnabled = true;
+        }
+    }
+
     private async Task ImportLibraryAsync(IStorageFolder selectedFolder)
     {
         ImportButton.IsEnabled = false;
         ReloadButton.IsEnabled = false;
         StatusText.Text = "";
+        var tempDirectory = CompanionServices.LibraryStorage.LibraryDirectory + ".import";
 
         try
         {
@@ -587,32 +666,13 @@ public partial class MainView : UserControl
                 return;
             }
 
-            var targetDirectory = CompanionServices.LibraryStorage.LibraryDirectory;
-            var tempDirectory = targetDirectory + ".import";
-
             if (Directory.Exists(tempDirectory))
                 Directory.Delete(tempDirectory, true);
 
             Directory.CreateDirectory(tempDirectory);
             await CopyFolderAsync(sourceFolder, tempDirectory);
 
-            if (!File.Exists(Path.Combine(tempDirectory, PortableLibraryStore.FileName)) ||
-                !Directory.Exists(Path.Combine(tempDirectory, "tracks")))
-            {
-                Directory.Delete(tempDirectory, true);
-                StatusText.Text = "Import folder must contain library.json and a tracks folder.";
-                return;
-            }
-
-            await PortableLibraryStore.LoadAsync(tempDirectory);
-
-            _audio.Stop();
-            if (Directory.Exists(targetDirectory))
-                Directory.Delete(targetDirectory, true);
-
-            Directory.Move(tempDirectory, targetDirectory);
-            await LoadLibraryAsync();
-            ShowToast($"Library imported · {_loadedLibrary.Library.Tracks.Count} tracks · {ImportedLibraryDuration()}");
+            await ImportLibraryDirectoryAsync(tempDirectory);
         }
         catch (Exception ex)
         {
@@ -620,9 +680,38 @@ public partial class MainView : UserControl
         }
         finally
         {
+            if (Directory.Exists(tempDirectory))
+                Directory.Delete(tempDirectory, true);
+
             ImportButton.IsEnabled = true;
             ReloadButton.IsEnabled = true;
         }
+    }
+
+    private async Task ImportLibraryDirectoryAsync(string sourceDirectory)
+    {
+        if (!File.Exists(Path.Combine(sourceDirectory, PortableLibraryStore.FileName)))
+        {
+            StatusText.Text = "Import must contain library.json.";
+            return;
+        }
+
+        await PortableLibraryStore.LoadAsync(sourceDirectory);
+
+        var targetDirectory = CompanionServices.LibraryStorage.LibraryDirectory;
+        Directory.CreateDirectory(targetDirectory);
+
+        _audio.Stop();
+        File.Copy(
+            Path.Combine(sourceDirectory, PortableLibraryStore.FileName),
+            Path.Combine(targetDirectory, PortableLibraryStore.FileName),
+            overwrite: true);
+
+        CopyDirectoryIfExists(Path.Combine(sourceDirectory, "tracks"), Path.Combine(targetDirectory, "tracks"));
+        CopyDirectoryIfExists(Path.Combine(sourceDirectory, "covers"), Path.Combine(targetDirectory, "covers"));
+
+        await LoadLibraryAsync();
+        ShowToast($"Library imported · {_loadedLibrary.Library.Tracks.Count} tracks · {ImportedLibraryDuration()}");
     }
 
     private static async Task<IStorageFolder?> FindLibraryFolderAsync(IStorageFolder selectedFolder)
@@ -666,8 +755,7 @@ public partial class MainView : UserControl
     }
 
     private static bool HasLibraryFiles(IReadOnlyList<IStorageItem> items) =>
-        items.OfType<IStorageFile>().Any(file => string.Equals(file.Name, PortableLibraryStore.FileName, StringComparison.OrdinalIgnoreCase)) &&
-        items.OfType<IStorageFolder>().Any(folder => string.Equals(folder.Name, "tracks", StringComparison.OrdinalIgnoreCase));
+        items.OfType<IStorageFile>().Any(file => string.Equals(file.Name, PortableLibraryStore.FileName, StringComparison.OrdinalIgnoreCase));
 
     private static async Task CopyFolderAsync(IStorageFolder sourceFolder, string targetDirectory)
     {
@@ -702,6 +790,51 @@ public partial class MainView : UserControl
             items.Add(item);
 
         return items;
+    }
+
+    private static void CopyDirectoryIfExists(string sourceDirectory, string targetDirectory)
+    {
+        if (!Directory.Exists(sourceDirectory))
+            return;
+
+        Directory.CreateDirectory(targetDirectory);
+        foreach (var sourceFile in Directory.EnumerateFiles(sourceDirectory, "*", SearchOption.AllDirectories))
+        {
+            var relativePath = Path.GetRelativePath(sourceDirectory, sourceFile);
+            var targetFile = Path.Combine(targetDirectory, relativePath);
+            var targetParent = Path.GetDirectoryName(targetFile);
+            if (!string.IsNullOrWhiteSpace(targetParent))
+                Directory.CreateDirectory(targetParent);
+
+            File.Copy(sourceFile, targetFile, overwrite: true);
+        }
+    }
+
+    private static void ExtractArchiveEntry(ZipArchiveEntry entry, string targetDirectory)
+    {
+        if (string.IsNullOrWhiteSpace(entry.FullName))
+            return;
+
+        var destinationPath = Path.GetFullPath(Path.Combine(targetDirectory, entry.FullName));
+        var targetRoot = Path.GetFullPath(targetDirectory);
+        var rootPrefix = targetRoot.EndsWith(Path.DirectorySeparatorChar)
+            ? targetRoot
+            : targetRoot + Path.DirectorySeparatorChar;
+        if (!destinationPath.StartsWith(rootPrefix, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("Archive contains an invalid path.");
+
+        if (entry.FullName.EndsWith("/", StringComparison.Ordinal) ||
+            entry.FullName.EndsWith("\\", StringComparison.Ordinal))
+        {
+            Directory.CreateDirectory(destinationPath);
+            return;
+        }
+
+        var parent = Path.GetDirectoryName(destinationPath);
+        if (!string.IsNullOrWhiteSpace(parent))
+            Directory.CreateDirectory(parent);
+
+        entry.ExtractToFile(destinationPath, overwrite: true);
     }
 
     private void OnProgressPressed(object? sender, PointerPressedEventArgs e)
