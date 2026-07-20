@@ -49,6 +49,7 @@ public partial class MusicView : UserControl
     private LibrarySortBy _sortBy = LibrarySortBy.Name;
     private LibrarySortDirection _sortDirection = LibrarySortDirection.Ascending;
     private bool _updatingSortControls;
+    private readonly Dictionary<int, double> _shufflePriorities = [];
 
     // UI state
     private bool _filterPanelVisible;
@@ -1935,6 +1936,7 @@ public partial class MusicView : UserControl
     private void OnShuffleToggleClicked(object? sender, RoutedEventArgs e)
     {
         _shuffle = !_shuffle;
+        _shufflePriorities.Clear();
         ApplyFilter();
         SetFilteredSelectedIndex(_filteredItems.Count > 0 ? 0 : -1);
         if (_filteredItems.Count > 0)
@@ -2656,11 +2658,33 @@ public partial class MusicView : UserControl
 
     private void ShuffleFilteredItems()
     {
-        for (var i = _filteredItems.Count - 1; i > 0; i--)
+        var startsNewSession = _shufflePriorities.Count == 0;
+        var missingTracks = _filteredItems
+            .Where(item => !_shufflePriorities.ContainsKey(item.Track.Id))
+            .Select(item => item.Track)
+            .ToList();
+
+        if (missingTracks.Count > 0)
         {
-            var j = _rng.Next(i + 1);
-            (_filteredItems[i], _filteredItems[j]) = (_filteredItems[j], _filteredItems[i]);
+            var usageByTrackId = MusicLibraryService.Current.GetAllTrackUsageStats();
+            var generatedPriorities = TrackShuffleService.CreatePriorities(
+                _filteredItems.Select(item => item.Track).ToList(),
+                usageByTrackId,
+                Values.Ratings,
+                _rng,
+                DateTimeOffset.UtcNow);
+
+            foreach (var track in missingTracks)
+                _shufflePriorities[track.Id] = generatedPriorities[track.Id];
         }
+
+        if (startsNewSession && _engine.ActiveTrackId >= 0
+                             && _shufflePriorities.ContainsKey(_engine.ActiveTrackId))
+            _shufflePriorities[_engine.ActiveTrackId] = double.NegativeInfinity;
+
+        _filteredItems = _filteredItems
+            .OrderBy(item => _shufflePriorities[item.Track.Id])
+            .ToList();
     }
 
     private static string FormatDuration(int seconds)

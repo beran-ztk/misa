@@ -47,6 +47,7 @@ public class MusicLibraryService
     public void AddTrackListenedSeconds(int trackId, int seconds) => _db.AddTrackListenedSeconds(trackId, seconds);
     public void RecordTrackSkip(int trackId) => _db.RecordTrackSkip(trackId);
     public TrackUsageStats GetTrackUsageStats(int trackId) => _db.GetTrackUsageStats(trackId);
+    public Dictionary<int, TrackUsageStats> GetAllTrackUsageStats() => _db.GetAllTrackUsageStats();
     public TimeSpan? EstimateAnalysisDuration(int? trackDurationSeconds, long? fileSizeBytes) =>
         _db.EstimateAnalysisDuration(trackDurationSeconds, fileSizeBytes);
     public TimeSpan? EstimateDownloadDuration(int? trackDurationSeconds, long? fileSizeBytes) =>

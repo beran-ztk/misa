@@ -498,6 +498,25 @@ public class MusicDatabase
             : new TrackUsageStats(0, 0, 0, null);
     }
 
+    public Dictionary<int, TrackUsageStats> GetAllTrackUsageStats()
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"SELECT id, listen_count, listened_seconds, skip_count, last_listened_at
+                            FROM tracks";
+        using var reader = cmd.ExecuteReader();
+        var result = new Dictionary<int, TrackUsageStats>();
+        while (reader.Read())
+        {
+            result[reader.GetInt32(0)] = new TrackUsageStats(
+                reader.GetInt32(1),
+                reader.GetInt32(2),
+                reader.GetInt32(3),
+                reader.IsDBNull(4) ? null : reader.GetString(4));
+        }
+        return result;
+    }
+
     public PortableExportRecord? GetLastPortableExport()
     {
         using var conn = Open();
