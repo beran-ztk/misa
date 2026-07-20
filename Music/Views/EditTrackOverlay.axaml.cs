@@ -42,6 +42,7 @@ public partial class EditTrackOverlay : UserControl
     private bool _isPublic;
     private bool _initialIsPublic;
     private string _initialTitle = string.Empty;
+    private bool _isEditingInformation;
     private int? _initialRatingId;
     private HashSet<int> _initialTagIds = [];
     private HashSet<int> _initialStyleIds = [];
@@ -93,11 +94,8 @@ public partial class EditTrackOverlay : UserControl
         UnsavedChangesLayer.IsVisible = false;
         _pendingAttributeOverrides.Clear();
         TitleBox.Text = track.Title;
-        ChannelBox.Text = track.ChannelName ?? string.Empty;
-        YouTubeUrlBox.Text = track.CanonicalUrl;
-        ChannelUrlBox.Text = track.ChannelUrl ?? string.Empty;
-        ChannelInfoRow.IsVisible = !string.IsNullOrWhiteSpace(track.ChannelName);
-        ChannelUrlRow.IsVisible = !string.IsNullOrWhiteSpace(track.ChannelUrl);
+        SetInformationEditing(false);
+        UpdateInformationDisplay(track);
         SetPublicSelection(track.IsPublic);
 
         var ratingIndex = _ratings.FindIndex(r => r.Id == track.RatingId);
@@ -129,13 +127,44 @@ public partial class EditTrackOverlay : UserControl
     private void ShowUsageStats(MusicTrack track)
     {
         var usage = MusicLibraryService.Current.GetTrackUsageStats(track.Id);
-        TrackUsageFooter.IsVisible = usage.PlayCount > 0 || usage.ListenedSeconds > 0 || usage.SkipCount > 0;
-        if (!TrackUsageFooter.IsVisible) return;
         var listened = usage.ListenedSeconds >= 60
             ? $"{usage.ListenedSeconds / 60} min listened"
             : $"{usage.ListenedSeconds} sec listened";
-        TrackUsageText.Text = $"Listening · {usage.PlayCount} plays · {listened} · {usage.SkipCount} skips";
+        TrackUsageText.Text = $"{usage.PlayCount} plays  ·  {listened}  ·  {usage.SkipCount} skips";
     }
+
+    private void OnEditInformationClicked(object? sender, RoutedEventArgs e)
+    {
+        if (_isEditingInformation && _track is not null)
+            UpdateInformationDisplay(_track);
+        SetInformationEditing(!_isEditingInformation);
+    }
+
+    private void SetInformationEditing(bool isEditing)
+    {
+        _isEditingInformation = isEditing;
+        TitleBox.IsVisible = isEditing;
+        TitleDisplayText.IsVisible = !isEditing;
+        EditInformationButton.Background = isEditing ? Brush("#173C54") : Brushes.Transparent;
+        ToolTip.SetTip(EditInformationButton, isEditing ? "Finish editing title" : "Edit title");
+        if (isEditing)
+            TitleBox.Focus();
+    }
+
+    private void UpdateInformationDisplay(MusicTrack track)
+    {
+        TitleDisplayText.Text = DisplayValue(TitleBox.Text);
+        ChannelDisplayText.Text = DisplayValue(track.ChannelName);
+        YouTubeUrlDisplayText.Text = DisplayValue(track.CanonicalUrl);
+        ChannelUrlDisplayText.Text = DisplayValue(track.ChannelUrl);
+        ToolTip.SetTip(TitleDisplayText, TitleBox.Text);
+        ToolTip.SetTip(ChannelDisplayText, track.ChannelName);
+        ToolTip.SetTip(YouTubeUrlDisplayText, track.CanonicalUrl);
+        ToolTip.SetTip(ChannelUrlDisplayText, track.ChannelUrl);
+    }
+
+    private static string DisplayValue(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? "—" : value.Trim();
 
     private void RebuildTagChips(IReadOnlySet<int> selectedTagIds)
     {
@@ -347,9 +376,9 @@ public partial class EditTrackOverlay : UserControl
         var name = RatingBox.SelectedIndex >= 0 && RatingBox.SelectedIndex < _ratings.Count
             ? _ratings[RatingBox.SelectedIndex].Name
             : "Not rated";
-        var (background, border, foreground) = RatingColors(name);
-        RatingBox.Background = background;
-        RatingBox.BorderBrush = border;
+        var (_, _, foreground) = RatingColors(name);
+        RatingBox.Background = Brush("#161C22");
+        RatingBox.BorderBrush = Brush("#3B4955");
         RatingBox.Foreground = foreground;
     }
 
@@ -480,6 +509,7 @@ public partial class EditTrackOverlay : UserControl
     {
         var analysis = MusicLibraryService.Current.GetTrackAudioAnalysis(track.Id);
         AudioAnalysisSection.IsVisible = analysis is not null;
+        AnalysisCharacterSection.IsVisible = AudioAnalysisSection.IsVisible || SoundProfileSection.IsVisible;
         if (analysis is null) return;
 
         BpmText.Text = analysis.Bpm is double bpm ? $"{bpm:0.#} BPM" : "—";
@@ -499,15 +529,18 @@ public partial class EditTrackOverlay : UserControl
             ? AnalysisColorScale.LoudnessRange(detectedRange)
             : Brushes.White;
 
-        BpmInsightText.Text = analysis.Bpm is double detectedBpm
+        var tempoInsight = analysis.Bpm is double detectedBpm
             ? GetTempoInsight(detectedBpm)
             : "Tempo could not be determined.";
-        IntegratedLoudnessInsightText.Text = analysis.IntegratedLoudness is double detectedLoudness
+        var loudnessInsight = analysis.IntegratedLoudness is double detectedLoudness
             ? GetIntegratedLoudnessInsight(detectedLoudness)
             : "Average loudness could not be determined.";
-        LoudnessRangeInsightText.Text = analysis.LoudnessRange is double loudnessRange
+        var dynamicsInsight = analysis.LoudnessRange is double loudnessRange
             ? GetLoudnessRangeInsight(loudnessRange)
             : "Loudness variation could not be determined.";
+        ToolTip.SetTip(BpmMetricCard, tempoInsight);
+        ToolTip.SetTip(LoudnessMetricCard, loudnessInsight);
+        ToolTip.SetTip(DynamicsMetricCard, dynamicsInsight);
     }
 
     private void ShowSoundProfile(MusicTrack track)
@@ -515,7 +548,11 @@ public partial class EditTrackOverlay : UserControl
         var models = MusicLibraryService.Current.GetExperimentalAnalysis(track.Id);
         var derived = MusicLibraryService.Current.GetTrackDerivedAttributes(track.Id);
         SoundProfileSection.IsVisible = models.Count > 0 || derived.Count > 0;
-        SoundProfilePanel.Children.Clear();
+        AnalysisCharacterSection.IsVisible = AudioAnalysisSection.IsVisible || SoundProfileSection.IsVisible;
+        SoundProfileLeftPanel.Children.Clear();
+        SoundProfileRightPanel.Children.Clear();
+        MirexCharacterPanel.Children.Clear();
+        MoodSignalsPanel.Children.Clear();
         if (!SoundProfileSection.IsVisible) return;
 
         _buildingSoundProfile = true;
@@ -543,7 +580,7 @@ public partial class EditTrackOverlay : UserControl
             var value = new TextBlock { Text = score.Value.ToString("0.##"), FontSize = 10.5, Foreground = brush, FontWeight = Avalonia.Media.FontWeight.SemiBold, HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right };
             Grid.SetColumn(bar, 1); Grid.SetColumn(value, 2);
             row.Children.Add(title); row.Children.Add(bar); row.Children.Add(value);
-            SoundProfilePanel.Children.Add(row);
+            MoodSignalsPanel.Children.Add(row);
         }
 
         void AddDerivedAttribute(DerivedTrackAttribute attribute)
@@ -556,8 +593,8 @@ public partial class EditTrackOverlay : UserControl
 
             var row = new Grid
             {
-                ColumnDefinitions = new ColumnDefinitions("112,*"),
-                Margin = new Avalonia.Thickness(0, 0, 0, 2)
+                ColumnDefinitions = new ColumnDefinitions("72,*"),
+                HorizontalAlignment = HorizontalAlignment.Stretch
             };
             var label = new TextBlock
             {
@@ -603,7 +640,10 @@ public partial class EditTrackOverlay : UserControl
             Grid.SetColumn(choiceBorder, 1);
             row.Children.Add(label);
             row.Children.Add(choiceBorder);
-            SoundProfilePanel.Children.Add(row);
+            var targetPanel = attribute.Key is "energy_context" or "vocal_presence"
+                ? SoundProfileRightPanel
+                : SoundProfileLeftPanel;
+            targetPanel.Children.Add(row);
         }
 
         static Button CreateProfileChoice(string value, bool isSystem, bool isSelected, bool isMiddle, bool isFirst, bool isLast)
@@ -612,7 +652,7 @@ public partial class EditTrackOverlay : UserControl
             {
                 Content = value,
                 FontSize = 10.5,
-                Width = 96,
+                Width = 84,
                 Padding = new Avalonia.Thickness(9, 4),
                 Margin = new Avalonia.Thickness(0),
                 CornerRadius = new Avalonia.CornerRadius(
@@ -640,23 +680,7 @@ public partial class EditTrackOverlay : UserControl
                 .OrderByDescending(value => value.Score).ToList() ?? [];
             if (values.Count == 0) return;
 
-            var card = new Border
-            {
-                Background = new SolidColorBrush(Color.Parse("#161C22")),
-                BorderBrush = new SolidColorBrush(Color.Parse("#2D3945")),
-                BorderThickness = new Avalonia.Thickness(1),
-                CornerRadius = new Avalonia.CornerRadius(6),
-                Padding = new Avalonia.Thickness(10, 8),
-                Margin = new Avalonia.Thickness(0, 1, 0, 2)
-            };
             var panel = new StackPanel { Spacing = 4 };
-            panel.Children.Add(new TextBlock
-            {
-                Text = "Emotional character · MIREX mood clusters",
-                FontSize = 10.5,
-                FontWeight = FontWeight.SemiBold,
-                Foreground = new SolidColorBrush(Color.Parse("#9BD8F8"))
-            });
             foreach (var value in values)
             {
                 var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,40") };
@@ -676,8 +700,7 @@ public partial class EditTrackOverlay : UserControl
                 row.Children.Add(score);
                 panel.Children.Add(row);
             }
-            card.Child = panel;
-            SoundProfilePanel.Children.Add(card);
+            MirexCharacterPanel.Children.Add(panel);
         }
     }
 
@@ -766,30 +789,28 @@ public partial class EditTrackOverlay : UserControl
             {
                 BorderThickness = new Avalonia.Thickness(1),
                 CornerRadius = new Avalonia.CornerRadius(6),
-                Padding = new Avalonia.Thickness(9, 7),
-                Margin = new Avalonia.Thickness(0, 0, 0, 3)
+                Padding = new Avalonia.Thickness(9, 5),
+                Margin = new Avalonia.Thickness(0, 0, 6, 6),
+                Cursor = new Cursor(StandardCursorType.Hand)
             };
-            var row = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*"), ColumnSpacing = 10 };
+            var row = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,Auto"), ColumnSpacing = 7 };
             var genreName = new TextBlock
             {
                 Text = assignment.GenreName,
                 FontSize = 12,
                 FontWeight = Avalonia.Media.FontWeight.SemiBold,
                 VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
-                Margin = new Avalonia.Thickness(2, 0, 0, 0)
+                Margin = new Avalonia.Thickness(1, 0, 0, 0)
             };
             var strongestReason = assignment.Reasons
                 .OrderByDescending(reason => reason.Score)
                 .FirstOrDefault();
             var reason = new TextBlock
             {
-                Text = isManualSelection
-                    ? "Added manually"
-                    : $"{strongestReason!.ModelGenreName} · model confidence {strongestReason.Score:0.###}",
+                Text = isManualSelection ? "Manual" : $"{strongestReason!.Score:P0}",
                 FontSize = 10.5,
                 Foreground = confidenceBrush,
                 VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
-                TextWrapping = TextWrapping.Wrap,
                 Opacity = isManualSelection ? 0.72 : 0.92
             };
             Grid.SetColumn(reason, 1);
