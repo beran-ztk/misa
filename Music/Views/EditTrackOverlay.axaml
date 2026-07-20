@@ -225,27 +225,28 @@
                                         BorderThickness="1"
                                         CornerRadius="5"
                                         Padding="10">
-                                    <StackPanel Spacing="9">
-                                        <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8">
+                                    <StackPanel Spacing="10">
+                                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
                                             <TextBlock Text="Add genre"
-                                                       FontSize="11"
-                                                       Opacity="0.68"
+                                                       FontSize="11.5"
+                                                       FontWeight="SemiBold"
                                                        VerticalAlignment="Center" />
                                             <TextBlock x:Name="ModelGenreChoiceSummaryText"
                                                        Grid.Column="1"
                                                        FontSize="10.5"
                                                        Opacity="0.48"
                                                        VerticalAlignment="Center"
-                                                       TextTrimming="CharacterEllipsis"/>
+                                                       TextAlignment="Right"
+                                                       TextTrimming="CharacterEllipsis" />
+                                        </Grid>
+                                        <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
                                             <ComboBox x:Name="ModelGenreCategoryFilterBox"
-                                                      Grid.Column="2"
-                                                      Width="220"
+                                                      Grid.Column="0"
                                                       Height="30"
                                                       FontSize="11"
                                                       SelectionChanged="OnModelGenreFilterChanged"/>
                                             <TextBox x:Name="ModelGenreSearchBox"
-                                                     Grid.Column="3"
-                                                     Width="300"
+                                                     Grid.Column="1"
                                                      Height="30"
                                                      FontSize="11"
                                                      Watermark="Search subgenre…"
@@ -255,16 +256,12 @@
                                             <TextBlock Text="Often added manually"
                                                        FontSize="10.5"
                                                        Opacity="0.55"/>
-                                            <WrapPanel x:Name="FrequentManualGenresPanel"
-                                                       Orientation="Horizontal"
-                                                       HorizontalAlignment="Center"/>
+                                            <UniformGrid x:Name="FrequentManualGenresPanel" Columns="4" />
                                         </StackPanel>
                                         <ScrollViewer MaxHeight="246"
                                                       HorizontalScrollBarVisibility="Disabled"
                                                       VerticalScrollBarVisibility="Auto">
-                                            <WrapPanel x:Name="ModelGenreChoicesPanel"
-                                                       Orientation="Horizontal"
-                                                       HorizontalAlignment="Center"/>
+                                            <UniformGrid x:Name="ModelGenreChoicesPanel" Columns="3" />
                                         </ScrollViewer>
                                     </StackPanel>
                                 </Border>
@@ -303,18 +300,17 @@
                                 </Grid>
 
                                 <StackPanel x:Name="SoundProfileSection" Spacing="7">
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <TextBlock Text="Sound profile" FontSize="11" FontWeight="SemiBold" />
-                                        <TextBlock Grid.Column="1" Text="Blue = model suggestion" FontSize="10" Opacity="0.48" />
-                                    </Grid>
+                                    <TextBlock Text="Sound profile" FontSize="11" FontWeight="SemiBold" />
                                     <Grid ColumnDefinitions="*,*" ColumnSpacing="20">
                                         <StackPanel x:Name="SoundProfileLeftPanel" Grid.Column="0" Spacing="6" />
                                         <StackPanel x:Name="SoundProfileRightPanel" Grid.Column="1" Spacing="6" />
                                     </Grid>
                                 </StackPanel>
 
+                                <Rectangle Height="1" Fill="#26313A" />
+
                                 <StackPanel Spacing="5" Margin="0,2,0,2">
-                                    <TextBlock Text="Emotional character · MIREX" FontSize="10.5" FontWeight="SemiBold" Foreground="#9BD8F8" />
+                                    <TextBlock Text="Emotional character" FontSize="10.5" FontWeight="SemiBold" />
                                     <StackPanel x:Name="MirexCharacterPanel" Spacing="3" />
                                 </StackPanel>
 

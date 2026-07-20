@@ -1007,35 +1007,50 @@ public partial class EditTrackOverlay : UserControl
 
     private Button CreateFrequentManualGenreButton(ManualModelGenreUsage usage)
     {
-        var label = new StackPanel { Spacing = 1 };
-        label.Children.Add(new TextBlock
+        var text = new StackPanel { Spacing = 1, VerticalAlignment = VerticalAlignment.Center };
+        text.Children.Add(new TextBlock
         {
             Text = usage.ModelSubgenreName,
             FontSize = 10.5,
             FontWeight = FontWeight.SemiBold,
-            TextTrimming = TextTrimming.CharacterEllipsis,
-            HorizontalAlignment = HorizontalAlignment.Center
+            TextTrimming = TextTrimming.CharacterEllipsis
         });
-        label.Children.Add(new TextBlock
+        text.Children.Add(new TextBlock
         {
-            Text = $"{usage.ModelGenreName} · {usage.UsageCount}x",
+            Text = usage.ModelGenreName,
             FontSize = 9,
             Opacity = 0.64,
-            TextTrimming = TextTrimming.CharacterEllipsis,
-            HorizontalAlignment = HorizontalAlignment.Center
+            TextTrimming = TextTrimming.CharacterEllipsis
         });
+        var content = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), ColumnSpacing = 6 };
+        content.Children.Add(text);
+        var count = new Border
+        {
+            Background = new SolidColorBrush(Color.Parse("#17384B")),
+            CornerRadius = new Avalonia.CornerRadius(8),
+            Padding = new Avalonia.Thickness(6, 2),
+            VerticalAlignment = VerticalAlignment.Center,
+            Child = new TextBlock
+            {
+                Text = $"{usage.UsageCount}×",
+                FontSize = 9,
+                Foreground = new SolidColorBrush(Color.Parse("#8FD8F7"))
+            }
+        };
+        Grid.SetColumn(count, 1);
+        content.Children.Add(count);
 
         var button = new Button
         {
-            Content = label,
-            Width = 136,
-            Height = 42,
+            Content = content,
+            Height = 44,
             Margin = new Avalonia.Thickness(0, 0, 6, 6),
-            Padding = new Avalonia.Thickness(7, 3),
+            Padding = new Avalonia.Thickness(9, 4),
             Background = new SolidColorBrush(Color.Parse("#1B222A")),
-            BorderBrush = new SolidColorBrush(Color.Parse("#596672")),
-            CornerRadius = new Avalonia.CornerRadius(3),
-            HorizontalContentAlignment = HorizontalAlignment.Center,
+            BorderBrush = new SolidColorBrush(Color.Parse("#455664")),
+            CornerRadius = new Avalonia.CornerRadius(5),
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            HorizontalContentAlignment = HorizontalAlignment.Stretch,
             VerticalContentAlignment = VerticalAlignment.Center
         };
         ToolTip.SetTip(button, CreateModelMetadataTooltip([usage.ModelSubgenreId]));
@@ -1054,35 +1069,45 @@ public partial class EditTrackOverlay : UserControl
     private Button CreateModelGenreChoiceButton(ModelSubgenre subgenre)
     {
         var genreName = _modelGenreNamesById.GetValueOrDefault(subgenre.ModelGenreId, "Genre");
-        var label = new StackPanel { Spacing = 1 };
-        label.Children.Add(new TextBlock
+        var text = new StackPanel { Spacing = 1, VerticalAlignment = VerticalAlignment.Center };
+        text.Children.Add(new TextBlock
         {
             Text = subgenre.Name,
             FontSize = 10.5,
             FontWeight = FontWeight.SemiBold,
-            TextTrimming = TextTrimming.CharacterEllipsis,
-            HorizontalAlignment = HorizontalAlignment.Center
+            TextTrimming = TextTrimming.CharacterEllipsis
         });
-        label.Children.Add(new TextBlock
+        text.Children.Add(new TextBlock
         {
             Text = genreName,
             FontSize = 9,
             Opacity = 0.58,
-            TextTrimming = TextTrimming.CharacterEllipsis,
-            HorizontalAlignment = HorizontalAlignment.Center
+            TextTrimming = TextTrimming.CharacterEllipsis
         });
+        var content = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), ColumnSpacing = 8 };
+        content.Children.Add(text);
+        var add = new TextBlock
+        {
+            Text = "+",
+            FontSize = 16,
+            Foreground = new SolidColorBrush(Color.Parse("#74C8EE")),
+            VerticalAlignment = VerticalAlignment.Center,
+            Opacity = 0.8
+        };
+        Grid.SetColumn(add, 1);
+        content.Children.Add(add);
 
         var button = new Button
         {
-            Content = label,
-            Width = 136,
+            Content = content,
             Height = 42,
             Margin = new Avalonia.Thickness(0, 0, 6, 6),
-            Padding = new Avalonia.Thickness(7, 3),
+            Padding = new Avalonia.Thickness(9, 3),
             Background = new SolidColorBrush(Color.Parse("#161C22")),
-            BorderBrush = new SolidColorBrush(Color.Parse("#394653")),
-            CornerRadius = new Avalonia.CornerRadius(3),
-            HorizontalContentAlignment = HorizontalAlignment.Center,
+            BorderBrush = new SolidColorBrush(Color.Parse("#344451")),
+            CornerRadius = new Avalonia.CornerRadius(5),
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            HorizontalContentAlignment = HorizontalAlignment.Stretch,
             VerticalContentAlignment = VerticalAlignment.Center
         };
         ToolTip.SetTip(button, CreateModelMetadataTooltip([subgenre.Id]));
