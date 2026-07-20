@@ -213,23 +213,9 @@
                    IsVisible="False"
                    Height="0"/>
 
-        <!-- ══════════════════════════════════════════════════════
-             Track list + filter drawer overlay (Panel fills remaining space)
-             ══════════════════════════════════════════════════════ -->
-        <Panel>
-            <Image x:Name="ListArtworkBackground"
-                   IsVisible="False"
-                   IsHitTestVisible="False"
-                   Opacity="0.2"
-                   Stretch="UniformToFill"
-                   RenderTransformOrigin="0.5,0.5">
-                <Image.RenderTransform>
-                    <ScaleTransform ScaleX="1.06" ScaleY="1.06"/>
-                </Image.RenderTransform>
-                <Image.Effect>
-                    <BlurEffect Radius="20"/>
-                </Image.Effect>
-            </Image>
+        <!-- Library and player occupy separate rows over one continuous artwork background. -->
+        <Grid RowDefinitions="*,Auto">
+            <Panel Grid.Row="0">
             <Rectangle Fill="#4207080A" IsHitTestVisible="False"/>
             <Rectangle Fill="#08000000" IsHitTestVisible="False"/>
 
@@ -237,7 +223,7 @@
                      DoubleTapped="OnListDoubleTapped"
                      Background="Transparent"
                      BorderThickness="0"
-                     Padding="4,4,4,126">
+                     Padding="4">
                 <ListBox.ItemTemplate>
                     <DataTemplate x:DataType="models:TrackDisplayItem">
                         <Grid RowDefinitions="Auto,Auto">
@@ -358,12 +344,13 @@
                     </ContextMenu>
                 </ListBox.ContextMenu>
             </ListBox>
+            </Panel>
 
             <!-- ── Player bar ── -->
             <Border x:Name="PlayerBar"
+                    Grid.Row="1"
                     ZIndex="30"
                     Height="118"
-                    VerticalAlignment="Bottom"
                     Padding="0"
                     Background="Transparent"
                     ClipToBounds="False"
@@ -378,17 +365,17 @@
                                IsHitTestVisible="False"
                                Height="118"
                                VerticalAlignment="Stretch"
-                               Opacity="0.14"
-                               Stretch="UniformToFill"
+                               Opacity="0.42"
+                               Stretch="Fill"
                                RenderTransformOrigin="0.5,0.5">
                             <Image.RenderTransform>
-                                <ScaleTransform ScaleX="1.06" ScaleY="1.06"/>
+                                <ScaleTransform ScaleX="1.04" ScaleY="1.04"/>
                             </Image.RenderTransform>
                             <Image.Effect>
-                                <BlurEffect Radius="60"/>
+                                <BlurEffect Radius="22"/>
                             </Image.Effect>
                         </Image>
-                        <Border Background="#F2070A0E"
+                        <Border Background="#98070A0E"
                                 CornerRadius="10,10,0,0"
                                 HorizontalAlignment="Stretch"
                                 VerticalAlignment="Stretch"
@@ -542,6 +529,7 @@
 
             <!-- ── Filter workspace overlay ── -->
             <Border x:Name="FilterDrawer"
+                    Grid.Row="0"
                     ZIndex="40"
                     IsVisible="False"
                     Background="#D20D0F12"
@@ -731,9 +719,9 @@
                 </Grid>
             </Border>
 
-            <views:AddTrackOverlay x:Name="AddTrackOverlay" IsVisible="False"/>
+            <views:AddTrackOverlay x:Name="AddTrackOverlay" Grid.Row="0" IsVisible="False"/>
 
-        </Panel>
+        </Grid>
 
     </DockPanel>
 

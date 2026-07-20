@@ -2354,8 +2354,6 @@ public partial class MusicView : UserControl
         PlayerArtworkBackground.IsVisible = artwork is not null;
         AppArtworkBackground.Source = artwork;
         AppArtworkBackground.IsVisible = artwork is not null;
-        ListArtworkBackground.Source = artwork;
-        ListArtworkBackground.IsVisible = artwork is not null;
     }
 
     private static Bitmap? LoadPlayerArtwork(MusicTrack track)
@@ -2385,8 +2383,6 @@ public partial class MusicView : UserControl
         PlayerArtworkBackground.IsVisible = false;
         AppArtworkBackground.Source = null;
         AppArtworkBackground.IsVisible = false;
-        ListArtworkBackground.Source = null;
-        ListArtworkBackground.IsVisible = false;
         ResetAudioAtmosphere();
 
         _playerArtwork?.Dispose();
@@ -2456,18 +2452,15 @@ public partial class MusicView : UserControl
         var energy = SoftLimit(_visualEnergy);
         var bass = SoftLimit(_visualBass);
         var treble = SoftLimit(_visualTreble);
-        var hasArtwork = AppArtworkBackground.IsVisible || PlayerArtworkBackground.IsVisible || ListArtworkBackground.IsVisible;
+        var hasArtwork = AppArtworkBackground.IsVisible || PlayerArtworkBackground.IsVisible;
 
         AppArtworkBackground.Opacity = AppArtworkBackground.IsVisible ? 0.12 + energy * 0.19 : 0;
-        PlayerArtworkBackground.Opacity = PlayerArtworkBackground.IsVisible ? 0.20 + energy * 0.27 : 0;
-        ListArtworkBackground.Opacity = ListArtworkBackground.IsVisible ? 0.16 + energy * 0.09 : 0;
+        PlayerArtworkBackground.Opacity = PlayerArtworkBackground.IsVisible ? 0.42 + energy * 0.14 : 0;
 
         SetScale(AppArtworkBackground, 1.08 + bass * 0.048);
-        SetScale(PlayerArtworkBackground, 1.06 + bass * 0.038);
-        SetScale(ListArtworkBackground, 1.06 + bass * 0.022);
+        SetScale(PlayerArtworkBackground, 1.02 + bass * 0.022);
         SetBlur(AppArtworkBackground, 20 + energy * 8.0);
-        SetBlur(PlayerArtworkBackground, 60 + energy * 16.0 + treble * 6.5);
-        SetBlur(ListArtworkBackground, 20 + energy * 5.0);
+        SetBlur(PlayerArtworkBackground, 22 + energy * 7.0 + treble * 3.0);
 
         var red = ToByte(30 + bass * 52 + treble * 88);
         var green = ToByte(154 + energy * 58 + treble * 68);
@@ -2476,13 +2469,13 @@ public partial class MusicView : UserControl
             ? Color.FromArgb(ToByte(energy * 42 + treble * 18), red, green, blue)
             : Colors.Transparent;
         _playerAtmosphereBrush.Color = hasArtwork
-            ? Color.FromArgb(ToByte(24 + energy * 82 + bass * 40), red, green, blue)
+            ? Color.FromArgb(ToByte(8 + energy * 24 + bass * 10), red, green, blue)
             : Colors.Transparent;
         _playerTopGlowBrush.Color = hasArtwork
-            ? Color.FromArgb(ToByte(42 + energy * 92 + treble * 42), red, green, blue)
+            ? Color.FromArgb(ToByte(28 + energy * 60 + treble * 24), red, green, blue)
             : Colors.Transparent;
         _playerChromeEdgeBrush.Color = hasArtwork
-            ? Color.FromArgb(ToByte(28 + energy * 42), red, green, blue)
+            ? Color.FromArgb(ToByte(20 + energy * 30), red, green, blue)
             : Color.Parse("#30283A46");
     }
 
