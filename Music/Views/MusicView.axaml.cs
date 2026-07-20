@@ -473,12 +473,8 @@ public partial class MusicView : UserControl
             .ToList();
         var ratingName = track.RatingId is int ratingId ? ratingMap.GetValueOrDefault(ratingId, "") : "Not rated";
         var durationText = track.DurationSeconds.HasValue ? FormatDuration(track.DurationSeconds.Value) : "";
-        var attributes = MusicLibraryService.Current.GetTrackDerivedAttributes(track.Id);
-        var profileText = string.Join(" · ", attributes
-            .Where(attribute => attribute.Key is "emotional_tone" or "energy_context" or "intensity")
-            .Select(attribute => $"{attribute.EffectiveValue} {ProfileAttributeName(attribute.Key)}"));
 
-        return new TrackDisplayItem(track, genreStr, modelGenreStr, manualGenreStr, styleStr, durationText, ratingName, profileText, tagDisplays, track.ChannelName ?? "")
+        return new TrackDisplayItem(track, genreStr, modelGenreStr, manualGenreStr, styleStr, durationText, ratingName, tagDisplays, track.ChannelName ?? "")
         {
             NeedsReview = track.NeedsReview,
             NeedsAnalysis = needsAnalysis,
@@ -546,13 +542,6 @@ public partial class MusicView : UserControl
                 SelectedIds(fg.TagCtrl.SelectedItems, Values.Tags, TagFilterName, t => t.Id),
                 fg.Negate))
             .ToList();
-
-    private static string ProfileAttributeName(string key) => key switch
-    {
-        "emotional_tone" => "Tone",
-        "energy_context" => "Energy",
-        _ => char.ToUpperInvariant(key[0]) + key[1..]
-    };
 
     private static string ShortGenreName(string genreName)
     {

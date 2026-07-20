@@ -14,7 +14,6 @@ public record TrackDisplayItem(
     string StyleText,
     string DurationText,
     string RatingText,
-    string ProfileText,
     IReadOnlyList<TrackTagDisplay> TagDisplays,
     string ChannelText)
 {
@@ -24,6 +23,8 @@ public record TrackDisplayItem(
     public Bitmap? Thumbnail { get; set; }
 
     public string ChannelSeparatorText => string.IsNullOrWhiteSpace(ChannelText)
+                                                  || (string.IsNullOrWhiteSpace(ModelGenreText)
+                                                      && string.IsNullOrWhiteSpace(ManualGenreText))
         ? string.Empty
         : "  ·  ";
 

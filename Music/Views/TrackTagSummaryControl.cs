@@ -17,13 +17,15 @@ public sealed class TrackTagSummaryControl : Panel
     public static readonly StyledProperty<IReadOnlyList<TrackTagDisplay>?> TagsProperty =
         AvaloniaProperty.Register<TrackTagSummaryControl, IReadOnlyList<TrackTagDisplay>?>(nameof(Tags));
 
-    private readonly List<TextBlock> _tagLabels = [];
+    private readonly List<Border> _tagChips = [];
     private readonly TextBlock _moreLabel = new()
     {
-        FontSize = 10.5,
-        Opacity = .5,
+        FontSize = 9.5,
+        FontWeight = FontWeight.SemiBold,
+        Foreground = new SolidColorBrush(Color.Parse("#AFC8D6")),
         VerticalAlignment = VerticalAlignment.Center
     };
+    private readonly Border _moreChip;
 
     public IReadOnlyList<TrackTagDisplay>? Tags
     {
@@ -40,13 +42,14 @@ public sealed class TrackTagSummaryControl : Panel
     {
         ClipToBounds = true;
         VerticalAlignment = VerticalAlignment.Center;
-        Children.Add(_moreLabel);
+        _moreChip = CreateChip(_moreLabel);
+        Children.Add(_moreChip);
     }
 
     private void Rebuild()
     {
         Children.Clear();
-        _tagLabels.Clear();
+        _tagChips.Clear();
 
         foreach (var tag in Tags ?? [])
         {
@@ -54,26 +57,39 @@ public sealed class TrackTagSummaryControl : Panel
             {
                 Text = tag.Name,
                 Foreground = tag.Foreground,
-                FontSize = 10.5,
+                FontSize = 9.5,
                 FontWeight = FontWeight.SemiBold,
-                VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(0, 0, 8, 0)
+                VerticalAlignment = VerticalAlignment.Center
             };
-            _tagLabels.Add(label);
-            Children.Add(label);
+            var chip = CreateChip(label);
+            _tagChips.Add(chip);
+            Children.Add(chip);
         }
 
-        Children.Add(_moreLabel);
+        Children.Add(_moreChip);
         InvalidateMeasure();
         InvalidateArrange();
     }
+
+    private static Border CreateChip(Control content) => new()
+    {
+        Height = 18,
+        Padding = new Thickness(6, 0),
+        Margin = new Thickness(0, 0, 6, 0),
+        CornerRadius = new CornerRadius(8),
+        Background = new SolidColorBrush(Color.Parse("#182A34")),
+        BorderBrush = new SolidColorBrush(Color.Parse("#355565")),
+        BorderThickness = new Thickness(1),
+        VerticalAlignment = VerticalAlignment.Center,
+        Child = content
+    };
 
     protected override Size MeasureOverride(Size availableSize)
     {
         foreach (var child in Children)
             child.Measure(new Size(double.PositiveInfinity, availableSize.Height));
 
-        return new Size(0, _tagLabels.Count == 0 ? 0 : _tagLabels.Max(label => label.DesiredSize.Height));
+        return new Size(0, _tagChips.Count == 0 ? 0 : _tagChips.Max(chip => chip.DesiredSize.Height));
     }
 
     protected override Size ArrangeOverride(Size finalSize)
@@ -81,7 +97,7 @@ public sealed class TrackTagSummaryControl : Panel
         var tags = Tags ?? [];
         if (tags.Count == 0)
         {
-            _moreLabel.IsVisible = false;
+            _moreChip.IsVisible = false;
             return finalSize;
         }
 
@@ -90,25 +106,27 @@ public sealed class TrackTagSummaryControl : Panel
             count--;
 
         if (count == 0 && !Fits(0, tags.Count, finalSize.Width))
-            _moreLabel.IsVisible = false;
+            _moreChip.IsVisible = false;
         else
-            _moreLabel.IsVisible = count < tags.Count;
+            _moreChip.IsVisible = count < tags.Count;
 
         var x = 0d;
-        for (var index = 0; index < _tagLabels.Count; index++)
+        for (var index = 0; index < _tagChips.Count; index++)
         {
-            var label = _tagLabels[index];
-            label.IsVisible = index < count;
-            if (!label.IsVisible) continue;
-            label.Arrange(new Rect(x, 0, label.DesiredSize.Width, finalSize.Height));
-            x += label.DesiredSize.Width;
+            var chip = _tagChips[index];
+            chip.IsVisible = index < count;
+            if (!chip.IsVisible) continue;
+            var y = Math.Max(0, (finalSize.Height - chip.DesiredSize.Height) / 2);
+            chip.Arrange(new Rect(x, y, chip.DesiredSize.Width, chip.DesiredSize.Height));
+            x += chip.DesiredSize.Width;
         }
 
-        if (_moreLabel.IsVisible)
+        if (_moreChip.IsVisible)
         {
             _moreLabel.Text = $"+{tags.Count - count}";
-            _moreLabel.Measure(new Size(double.PositiveInfinity, finalSize.Height));
-            _moreLabel.Arrange(new Rect(x, 0, _moreLabel.DesiredSize.Width, finalSize.Height));
+            _moreChip.Measure(new Size(double.PositiveInfinity, finalSize.Height));
+            var y = Math.Max(0, (finalSize.Height - _moreChip.DesiredSize.Height) / 2);
+            _moreChip.Arrange(new Rect(x, y, _moreChip.DesiredSize.Width, _moreChip.DesiredSize.Height));
         }
 
         return finalSize;
@@ -116,12 +134,12 @@ public sealed class TrackTagSummaryControl : Panel
 
     private bool Fits(int shownTagCount, int hiddenTagCount, double availableWidth)
     {
-        var width = _tagLabels.Take(shownTagCount).Sum(label => label.DesiredSize.Width);
+        var width = _tagChips.Take(shownTagCount).Sum(chip => chip.DesiredSize.Width);
         if (hiddenTagCount <= 0)
             return width <= availableWidth;
 
         _moreLabel.Text = $"+{hiddenTagCount}";
-        _moreLabel.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-        return width + _moreLabel.DesiredSize.Width <= availableWidth;
+        _moreChip.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        return width + _moreChip.DesiredSize.Width <= availableWidth;
     }
 }
