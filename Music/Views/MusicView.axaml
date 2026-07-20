@@ -273,7 +273,7 @@
                                           VerticalAlignment="Center"
                                           RowDefinitions="Auto,Auto,Auto"
                                           RowSpacing="2">
-                                        <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*">
+                                        <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,*">
                                             <Border Background="{Binding RatingBackground}"
                                                     BorderBrush="{Binding RatingBorder}"
                                                     BorderThickness="1"
@@ -293,7 +293,14 @@
                                                        VerticalAlignment="Center"/>
                                             <TextBlock Grid.Column="3" Text="{Binding ChannelSeparatorText}"
                                                        FontSize="10.5" Opacity="0.42" VerticalAlignment="Center"/>
-                                            <TextBlock Grid.Column="4" Text="{Binding Track.Title}"
+                                            <Image Grid.Column="4"
+                                                   Source="{SvgImage /Assets/public.svg}"
+                                                   IsVisible="{Binding Track.IsPublic}"
+                                                   Width="13" Height="13"
+                                                   Margin="0,0,6,0"
+                                                   Opacity="0.9"
+                                                   ToolTip.Tip="Public track"/>
+                                            <TextBlock Grid.Column="5" Text="{Binding Track.Title}"
                                                    Foreground="{Binding TitleBrush}"
                                                    FontSize="13" FontWeight="SemiBold"
                                                    TextTrimming="CharacterEllipsis"/>
@@ -664,6 +671,16 @@
                                                Opacity="0.42" LetterSpacing="1"/>
                                     <views:MultiSelectFilterControl x:Name="RatingFilter"
                                                                     Placeholder="All ratings"/>
+                                </StackPanel>
+
+                                <Rectangle Height="1" Fill="#25313D"/>
+
+                                <StackPanel Spacing="7">
+                                    <TextBlock Text="VISIBILITY"
+                                               FontSize="10" FontWeight="SemiBold"
+                                               Opacity="0.42" LetterSpacing="1"/>
+                                    <views:MultiSelectFilterControl x:Name="VisibilityFilter"
+                                                                    Placeholder="All visibility"/>
                                 </StackPanel>
 
                                 <Rectangle Height="1" Fill="#25313D"/>

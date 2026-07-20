@@ -39,8 +39,8 @@ public class MusicLibraryService
     public List<int> GetTrackGenreIds(int trackId) => _db.GetTrackGenreIds(trackId);
     public List<TrackModelGenre> GetTrackModelGenres(int trackId) => _db.GetTrackModelGenres(trackId);
     public void SetTrackModelGenreEnabled(int trackId, int genreId, bool isEnabled) => _db.SetTrackModelGenreEnabled(trackId, genreId, isEnabled);
-    public void UpdateTrack(int id, string title, List<int> genreIds, int? ratingId, List<int> styleIds)
-        => _db.UpdateTrack(id, title, genreIds, ratingId, styleIds);
+    public void UpdateTrack(int id, string title, List<int> genreIds, int? ratingId, List<int> styleIds, bool isPublic)
+        => _db.UpdateTrack(id, title, genreIds, ratingId, styleIds, isPublic);
     public void SetTrackNeedsReview(int id, bool needsReview) => _db.SetTrackNeedsReview(id, needsReview);
     public void SetTrackAnalysisDisabled(int id, bool analysisDisabled) => _db.SetTrackAnalysisDisabled(id, analysisDisabled);
     public void RecordTrackPlaybackStarted(int trackId) => _db.RecordTrackPlaybackStarted(trackId);

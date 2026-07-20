@@ -15,6 +15,7 @@ public static class TrackFilter
         IReadOnlyDictionary<int, List<int>> trackStyleIds,
         IReadOnlyDictionary<int, List<int>> trackTagIds,
         IReadOnlySet<int> ratingFilter,
+        IReadOnlySet<bool> visibilityFilter,
         IReadOnlyList<FilterGroup> filterGroups,
         string? searchText)
     {
@@ -22,6 +23,9 @@ public static class TrackFilter
 
         if (ratingFilter.Count > 0)
             query = query.Where(t => t.RatingId is int ratingId && ratingFilter.Contains(ratingId));
+
+        if (visibilityFilter.Count > 0)
+            query = query.Where(t => visibilityFilter.Contains(t.IsPublic));
         
 
         var term = searchText?.Trim();

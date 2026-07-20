@@ -81,6 +81,61 @@
                               HorizontalScrollBarVisibility="Disabled">
                     <StackPanel Spacing="22" Margin="0,0,0,20">
 
+                        <Border Width="188"
+                                Height="34"
+                                HorizontalAlignment="Center"
+                                Background="#0D1217"
+                                BorderBrush="#344654"
+                                BorderThickness="1"
+                                CornerRadius="7"
+                                Padding="2">
+                            <Grid ColumnDefinitions="91,91" ClipToBounds="True">
+                                <Border x:Name="VisibilitySelectionIndicator"
+                                        Grid.ColumnSpan="2"
+                                        Width="91"
+                                        HorizontalAlignment="Left"
+                                        Background="#1A4A64"
+                                        BorderBrush="#3989B3"
+                                        BorderThickness="1"
+                                        CornerRadius="5"
+                                        IsHitTestVisible="False">
+                                    <Border.RenderTransform>
+                                        <TranslateTransform>
+                                            <TranslateTransform.Transitions>
+                                                <Transitions>
+                                                    <DoubleTransition Property="X" Duration="0:0:0.16"/>
+                                                </Transitions>
+                                            </TranslateTransform.Transitions>
+                                        </TranslateTransform>
+                                    </Border.RenderTransform>
+                                </Border>
+                                <Button x:Name="PublicVisibilityButton"
+                                        Grid.Column="0"
+                                        Click="OnPublicVisibilityClicked"
+                                        Background="Transparent"
+                                        BorderThickness="0"
+                                        Padding="0"
+                                        HorizontalContentAlignment="Center">
+                                    <TextBlock x:Name="PublicVisibilityText"
+                                               Text="Public"
+                                               FontSize="11"
+                                               FontWeight="SemiBold"/>
+                                </Button>
+                                <Button x:Name="PrivateVisibilityButton"
+                                        Grid.Column="1"
+                                        Click="OnPrivateVisibilityClicked"
+                                        Background="Transparent"
+                                        BorderThickness="0"
+                                        Padding="0"
+                                        HorizontalContentAlignment="Center">
+                                    <TextBlock x:Name="PrivateVisibilityText"
+                                               Text="Private"
+                                               FontSize="11"
+                                               FontWeight="SemiBold"/>
+                                </Button>
+                            </Grid>
+                        </Border>
+
                         <StackPanel Spacing="8">
                             <TextBlock Text="Information" FontSize="13" FontWeight="SemiBold" />
                             

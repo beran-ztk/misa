@@ -138,6 +138,8 @@ public partial class MusicView : UserControl
             UpdateSearchVisibility();
         };
         RatingFilter.SelectionChanged += (_, _) => ApplyFilter();
+        VisibilityFilter.SetItems(["Public", "Private"]);
+        VisibilityFilter.SelectionChanged += (_, _) => ApplyFilter();
         FileList.SelectionChanged += (_, _) =>
         {
             UpdateReviewButton();
@@ -636,6 +638,7 @@ public partial class MusicView : UserControl
     private void ApplyFilter()
     {
         var selRatingIds = SelectedIds(RatingFilter.SelectedItems, Values.Ratings, r => r.Name, r => r.Id);
+        var selVisibility = SelectedVisibility();
         var itemById = _allItems.ToDictionary(i => i.Track.Id);
 
         var groups = CurrentFilterGroups();
@@ -646,6 +649,7 @@ public partial class MusicView : UserControl
             _allTrackStyleIds,
             _allTrackTagIds,
             selRatingIds,
+            selVisibility,
             groups,
             SearchBox.Text);
 
@@ -814,6 +818,10 @@ public partial class MusicView : UserControl
         if (selectedRatingIds.Count > 0)
             query = query.Where(track => track.RatingId is int ratingId && selectedRatingIds.Contains(ratingId));
 
+        var selectedVisibility = SelectedVisibility();
+        if (selectedVisibility.Count > 0)
+            query = query.Where(track => selectedVisibility.Contains(track.IsPublic));
+
         if (selectedGenreIds.Count > 0)
             query = query.Where(track => TrackHasAllTags(track.Id, _allTrackGenreIds, selectedGenreIds));
 
@@ -838,6 +846,14 @@ public partial class MusicView : UserControl
     {
         if (selected.Count == 0) return [];
         return source.Where(item => selected.Contains(nameOf(item))).Select(idOf).ToHashSet();
+    }
+
+    private HashSet<bool> SelectedVisibility()
+    {
+        var selected = new HashSet<bool>();
+        if (VisibilityFilter.SelectedItems.Contains("Public")) selected.Add(true);
+        if (VisibilityFilter.SelectedItems.Contains("Private")) selected.Add(false);
+        return selected;
     }
 
     // ─── Toolbar / filter panel ───────────────────────────────────────────────
@@ -915,6 +931,7 @@ public partial class MusicView : UserControl
         RebuildPresetRows();
         RatingFilter.SetItems(Values.Ratings.Select(r => r.Name));
         RatingFilter.Placeholder = "All ratings";
+        VisibilityFilter.SetSelectedItems([], notify: false);
         _filterGroups.Clear();
         RebuildFilterConditionsPanel();
         ClearConditionBuilder();

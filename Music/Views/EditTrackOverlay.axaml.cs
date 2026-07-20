@@ -38,6 +38,8 @@ public partial class EditTrackOverlay : UserControl
     private DateTime _analysisStartedAt;
     private bool _isPlayingPreview;
     private bool _loadingTrack;
+    private bool _isPublic;
+    private bool _initialIsPublic;
     private string _initialTitle = string.Empty;
     private int? _initialRatingId;
     private HashSet<int> _initialTagIds = [];
@@ -95,6 +97,7 @@ public partial class EditTrackOverlay : UserControl
         ChannelUrlBox.Text = track.ChannelUrl ?? string.Empty;
         ChannelInfoRow.IsVisible = !string.IsNullOrWhiteSpace(track.ChannelName);
         ChannelUrlRow.IsVisible = !string.IsNullOrWhiteSpace(track.ChannelUrl);
+        SetPublicSelection(track.IsPublic);
 
         var ratingIndex = _ratings.FindIndex(r => r.Id == track.RatingId);
         RatingBox.SelectedIndex = ratingIndex;
@@ -279,6 +282,7 @@ public partial class EditTrackOverlay : UserControl
     {
         _initialTitle = track.Title;
         _initialRatingId = track.RatingId;
+        _initialIsPublic = track.IsPublic;
         _initialTagIds = selectedTagIds.ToHashSet();
         _initialStyleIds = selectedStyleIds.ToHashSet();
         _initialEnabledModelGenreIds = selectedModelGenreIds.ToHashSet();
@@ -306,6 +310,8 @@ public partial class EditTrackOverlay : UserControl
         if (!string.Equals(TitleBox.Text?.Trim() ?? string.Empty, _initialTitle, StringComparison.Ordinal))
             return true;
         if (SelectedRatingId() != _initialRatingId)
+            return true;
+        if (_isPublic != _initialIsPublic)
             return true;
         if (!SelectedTagIds().SetEquals(_initialTagIds))
             return true;
@@ -358,6 +364,22 @@ public partial class EditTrackOverlay : UserControl
 
     private static IBrush Brush(string color) => new SolidColorBrush(Color.Parse(color));
 
+    private void OnPublicVisibilityClicked(object? sender, RoutedEventArgs e) => SetPublicSelection(true);
+
+    private void OnPrivateVisibilityClicked(object? sender, RoutedEventArgs e) => SetPublicSelection(false);
+
+    private void SetPublicSelection(bool isPublic)
+    {
+        _isPublic = isPublic;
+        if (VisibilitySelectionIndicator.RenderTransform is TranslateTransform indicatorTransform)
+            indicatorTransform.X = isPublic ? 0 : 91;
+        PublicVisibilityText.Foreground = Brush(isPublic ? "#DFF5FF" : "#7E8B96");
+        PrivateVisibilityText.Foreground = Brush(isPublic ? "#7E8B96" : "#DFF5FF");
+        PublicVisibilityButton.IsHitTestVisible = !isPublic;
+        PrivateVisibilityButton.IsHitTestVisible = isPublic;
+        UpdateSaveButton();
+    }
+
     private void OnSaveClicked(object? sender, RoutedEventArgs e)
     {
         var trackId = _track?.Id;
@@ -377,7 +399,8 @@ public partial class EditTrackOverlay : UserControl
             TitleBox.Text!.Trim(),
             [],
             SelectedRatingId(),
-            styleIds);
+            styleIds,
+            _isPublic);
 
         MusicLibraryService.Current.SetTrackManualTags(_track.Id, SelectedTagIds());
 
@@ -397,7 +420,8 @@ public partial class EditTrackOverlay : UserControl
         _track = _track with
         {
             Title = TitleBox.Text!.Trim(),
-            RatingId = SelectedRatingId()
+            RatingId = SelectedRatingId(),
+            IsPublic = _isPublic
         };
         CaptureChangeSnapshot(_track, SelectedTagIds(), styleIds.ToHashSet(), _pendingEnabledModelGenreIds);
         _pendingAttributeOverrides.Clear();

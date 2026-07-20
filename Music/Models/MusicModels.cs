@@ -6,7 +6,7 @@ public record MusicTrack(
     int Id, string CanonicalUrl, string Title, string FileName,
     int? RatingId, string DownloadedAt, int? DurationSeconds, bool NeedsReview,
     string? ChannelName, string? ChannelUrl, string? UploadedAt, string UpdatedAt,
-    bool AnalysisDisabled = false, byte[]? Thumbnail = null);
+    bool AnalysisDisabled = false, bool IsPublic = false, byte[]? Thumbnail = null);
 
 public record Genre(int Id, string Name);
 public record Tag(int Id, string Name);

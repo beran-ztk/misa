@@ -108,6 +108,7 @@ public class MusicDatabase
                 download_duration_ms INTEGER NULL,
                 thumbnail           BLOB NULL,
                 analysis_disabled   INTEGER NOT NULL DEFAULT 0,
+                is_public           INTEGER NOT NULL DEFAULT 0,
                 needs_reevaluation  INTEGER NOT NULL DEFAULT 0,
                 notes               TEXT NULL
             );
@@ -244,6 +245,7 @@ public class MusicDatabase
         EnsureColumn(conn, "tracks", "download_duration_ms", "INTEGER NULL");
         EnsureColumn(conn, "tracks", "thumbnail", "BLOB NULL");
         EnsureColumn(conn, "tracks", "analysis_disabled", "INTEGER NOT NULL DEFAULT 0");
+        EnsureColumn(conn, "tracks", "is_public", "INTEGER NOT NULL DEFAULT 0");
         EnsureColumn(conn, "track_analysis", "analysis_duration_ms", "INTEGER NULL");
         EnsureColumn(conn, "model_subgenres", "description", "TEXT NULL");
         EnsureColumn(conn, "model_subgenres", "classification_hint", "TEXT NULL");
@@ -1172,7 +1174,7 @@ public class MusicDatabase
         using var cmd = conn.CreateCommand();
         cmd.CommandText = @"SELECT tracks.id, tracks.canonical_url, tracks.title, tracks.file_name, tracks.rating_id, tracks.downloaded_at,
                                    tracks.duration_seconds, tracks.needs_reevaluation, channels.name, channels.source_url, tracks.uploaded_at,
-                                   tracks.updated_at, tracks.analysis_disabled
+                                   tracks.updated_at, tracks.analysis_disabled, tracks.is_public
                             FROM tracks LEFT JOIN channels ON channels.id = tracks.channel_id
                             ORDER BY tracks.downloaded_at DESC";
         using var reader = cmd.ExecuteReader();
@@ -1192,7 +1194,8 @@ public class MusicDatabase
                 reader.IsDBNull(9) ? null : reader.GetString(9),
                 reader.IsDBNull(10) ? null : reader.GetString(10),
                 reader.GetString(11),
-                reader.GetInt32(12) != 0));
+                reader.GetInt32(12) != 0,
+                reader.GetInt32(13) != 0));
         }
         return tracks;
     }
@@ -1203,7 +1206,7 @@ public class MusicDatabase
         using var cmd = conn.CreateCommand();
         cmd.CommandText = @"SELECT tracks.id, tracks.canonical_url, tracks.title, tracks.file_name, tracks.rating_id, tracks.downloaded_at,
                                    tracks.duration_seconds, tracks.needs_reevaluation, channels.name, channels.source_url, tracks.uploaded_at,
-                                   tracks.updated_at, tracks.analysis_disabled
+                                   tracks.updated_at, tracks.analysis_disabled, tracks.is_public
                             FROM tracks LEFT JOIN channels ON channels.id = tracks.channel_id
                             WHERE tracks.id = $trackId";
         cmd.Parameters.AddWithValue("$trackId", trackId);
@@ -1222,7 +1225,8 @@ public class MusicDatabase
                 reader.IsDBNull(9) ? null : reader.GetString(9),
                 reader.IsDBNull(10) ? null : reader.GetString(10),
                 reader.GetString(11),
-                reader.GetInt32(12) != 0)
+                reader.GetInt32(12) != 0,
+                reader.GetInt32(13) != 0)
             : null;
     }
 
@@ -1242,7 +1246,7 @@ public class MusicDatabase
         using var cmd = conn.CreateCommand();
         cmd.CommandText = @"SELECT tracks.id, tracks.canonical_url, tracks.title, tracks.file_name, tracks.rating_id, tracks.downloaded_at,
                                    tracks.duration_seconds, tracks.needs_reevaluation, channels.name, channels.source_url, tracks.uploaded_at,
-                                   tracks.updated_at, tracks.analysis_disabled
+                                   tracks.updated_at, tracks.analysis_disabled, tracks.is_public
                             FROM tracks
                             LEFT JOIN channels ON channels.id = tracks.channel_id
                             LEFT JOIN track_analysis analysis ON analysis.track_id = tracks.id
@@ -1265,7 +1269,8 @@ public class MusicDatabase
                 reader.IsDBNull(9) ? null : reader.GetString(9),
                 reader.IsDBNull(10) ? null : reader.GetString(10),
                 reader.GetString(11),
-                reader.GetInt32(12) != 0));
+                reader.GetInt32(12) != 0,
+                reader.GetInt32(13) != 0));
         }
         return tracks;
     }
@@ -1346,15 +1351,15 @@ public class MusicDatabase
     public List<int> GetTrackStyleIds(int trackId) => [];
     public List<Style> GetStyles() => [];
 
-    public void UpdateTrack(int id, string title, List<int> genreIds, int? ratingId, List<int> _)
+    public void UpdateTrack(int id, string title, List<int> genreIds, int? ratingId, List<int> _, bool isPublic)
     {
         using var conn = Open();
         using var tx = conn.BeginTransaction();
         var now = DateTime.UtcNow.ToString("O");
 
         ExecuteInsert(conn, tx,
-            "UPDATE tracks SET title = $title, rating_id = $ratingId, updated_at = $updatedAt, needs_reevaluation = 0 WHERE id = $id",
-            ("$id", id), ("$title", title), ("$ratingId", ratingId), ("$updatedAt", now));
+            "UPDATE tracks SET title = $title, rating_id = $ratingId, is_public = $isPublic, updated_at = $updatedAt, needs_reevaluation = 0 WHERE id = $id",
+            ("$id", id), ("$title", title), ("$ratingId", ratingId), ("$isPublic", isPublic ? 1 : 0), ("$updatedAt", now));
 
         tx.Commit();
     }
