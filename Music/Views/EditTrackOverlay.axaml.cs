@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
@@ -364,19 +365,28 @@ public partial class EditTrackOverlay : UserControl
 
     private static IBrush Brush(string color) => new SolidColorBrush(Color.Parse(color));
 
-    private void OnPublicVisibilityClicked(object? sender, RoutedEventArgs e) => SetPublicSelection(true);
+    private void OnPublicVisibilityPressed(object? sender, PointerPressedEventArgs e)
+    {
+        SetPublicSelection(true);
+        e.Handled = true;
+    }
 
-    private void OnPrivateVisibilityClicked(object? sender, RoutedEventArgs e) => SetPublicSelection(false);
+    private void OnPrivateVisibilityPressed(object? sender, PointerPressedEventArgs e)
+    {
+        SetPublicSelection(false);
+        e.Handled = true;
+    }
 
     private void SetPublicSelection(bool isPublic)
     {
         _isPublic = isPublic;
         if (VisibilitySelectionIndicator.RenderTransform is TranslateTransform indicatorTransform)
-            indicatorTransform.X = isPublic ? 0 : 91;
-        PublicVisibilityText.Foreground = Brush(isPublic ? "#DFF5FF" : "#7E8B96");
-        PrivateVisibilityText.Foreground = Brush(isPublic ? "#7E8B96" : "#DFF5FF");
-        PublicVisibilityButton.IsHitTestVisible = !isPublic;
-        PrivateVisibilityButton.IsHitTestVisible = isPublic;
+            indicatorTransform.X = isPublic ? 0 : 93;
+        VisibilitySelectionIndicator.CornerRadius = isPublic
+            ? new CornerRadius(6, 0, 0, 6)
+            : new CornerRadius(0, 6, 6, 0);
+        PublicVisibilityText.Foreground = Brush(isPublic ? "#FFFFFF" : "#B8C5CE");
+        PrivateVisibilityText.Foreground = Brush(isPublic ? "#B8C5CE" : "#FFFFFF");
         UpdateSaveButton();
     }
 
