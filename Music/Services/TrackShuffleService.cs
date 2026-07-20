@@ -7,8 +7,8 @@ namespace Music.Services;
 
 public static class TrackShuffleService
 {
-    private const double MinimumWeight = 0.55;
-    private const double MaximumWeight = 2.20;
+    private const double MinimumWeight = 0.50;
+    private const double MaximumWeight = 3.50;
 
     public static Dictionary<int, double> CreatePriorities(
         IReadOnlyList<MusicTrack> tracks,
@@ -68,9 +68,9 @@ public static class TrackShuffleService
     {
         <= 1 => 0.65d,
         2 => 0.92d,
-        3 => 1.12d,
-        4 => 1.30d,
-        _ => 1.55d
+        3 => 1.30d,
+        4 => 1.90d,
+        _ => 2.50d
     };
 
     private static double RecencyFactor(string? lastListenedAt, DateTimeOffset now)

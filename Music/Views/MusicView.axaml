@@ -89,7 +89,7 @@
     <Image x:Name="AppArtworkBackground"
            IsVisible="False"
            IsHitTestVisible="False"
-           Opacity="0.12"
+           Opacity="0.22"
            Stretch="UniformToFill"
            RenderTransformOrigin="0.5,0.5">
         <Image.RenderTransform>
@@ -102,7 +102,7 @@
     <Rectangle x:Name="AppAtmosphereTint"
                Fill="#00000000"
                IsHitTestVisible="False"/>
-    <Rectangle Fill="#A0121417" IsHitTestVisible="False"/>
+    <Rectangle Fill="#74121417" IsHitTestVisible="False"/>
     <DockPanel LastChildFill="True">
 
         <!-- ── Toolbar ── -->
@@ -216,7 +216,7 @@
         <!-- Library and player occupy separate rows over one continuous artwork background. -->
         <Grid RowDefinitions="*,Auto">
             <Panel Grid.Row="0">
-            <Rectangle Fill="#4207080A" IsHitTestVisible="False"/>
+            <Rectangle Fill="#2807080A" IsHitTestVisible="False"/>
             <Rectangle Fill="#08000000" IsHitTestVisible="False"/>
 
             <ListBox x:Name="FileList"
@@ -365,17 +365,17 @@
                                IsHitTestVisible="False"
                                Height="118"
                                VerticalAlignment="Stretch"
-                               Opacity="0.42"
-                               Stretch="Fill"
+                               Opacity="0.52"
+                               Stretch="UniformToFill"
                                RenderTransformOrigin="0.5,0.5">
                             <Image.RenderTransform>
-                                <ScaleTransform ScaleX="1.04" ScaleY="1.04"/>
+                                <ScaleTransform ScaleX="1.10" ScaleY="1.10"/>
                             </Image.RenderTransform>
                             <Image.Effect>
-                                <BlurEffect Radius="22"/>
+                                <BlurEffect Radius="30"/>
                             </Image.Effect>
                         </Image>
-                        <Border Background="#98070A0E"
+                        <Border Background="#88070A0E"
                                 CornerRadius="10,10,0,0"
                                 HorizontalAlignment="Stretch"
                                 VerticalAlignment="Stretch"

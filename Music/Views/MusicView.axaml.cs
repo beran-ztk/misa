@@ -2452,15 +2452,18 @@ public partial class MusicView : UserControl
         var energy = SoftLimit(_visualEnergy);
         var bass = SoftLimit(_visualBass);
         var treble = SoftLimit(_visualTreble);
+        // Lift quiet passages (and low app-volume levels) without making the
+        // high end grow linearly into an overpowering background.
+        var visibilityEnergy = Math.Sqrt(energy);
         var hasArtwork = AppArtworkBackground.IsVisible || PlayerArtworkBackground.IsVisible;
 
-        AppArtworkBackground.Opacity = AppArtworkBackground.IsVisible ? 0.12 + energy * 0.19 : 0;
-        PlayerArtworkBackground.Opacity = PlayerArtworkBackground.IsVisible ? 0.42 + energy * 0.14 : 0;
+        AppArtworkBackground.Opacity = AppArtworkBackground.IsVisible ? 0.22 + visibilityEnergy * 0.24 : 0;
+        PlayerArtworkBackground.Opacity = PlayerArtworkBackground.IsVisible ? 0.52 + visibilityEnergy * 0.18 : 0;
 
         SetScale(AppArtworkBackground, 1.08 + bass * 0.048);
-        SetScale(PlayerArtworkBackground, 1.02 + bass * 0.022);
+        SetScale(PlayerArtworkBackground, 1.10 + bass * 0.035);
         SetBlur(AppArtworkBackground, 20 + energy * 8.0);
-        SetBlur(PlayerArtworkBackground, 22 + energy * 7.0 + treble * 3.0);
+        SetBlur(PlayerArtworkBackground, 30 + energy * 6.0 + treble * 4.0);
 
         var red = ToByte(30 + bass * 52 + treble * 88);
         var green = ToByte(154 + energy * 58 + treble * 68);
