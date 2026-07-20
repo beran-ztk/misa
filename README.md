@@ -10,6 +10,4 @@ The app is built around everyday library work: listening, searching, filtering, 
 
 ![Library view](Docs/images/library.png)
 
-![Track editor - classification](Docs/images/edit-classification.png)
-
-![Track editor - analysis](Docs/images/edit-analysis.png)
+![Track editor](Docs/images/edit.png)
