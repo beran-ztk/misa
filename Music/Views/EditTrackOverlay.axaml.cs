@@ -835,7 +835,8 @@ public partial class EditTrackOverlay : UserControl
                 .FirstOrDefault();
             var reason = new TextBlock
             {
-                Text = isManualSelection ? "Manual" : $"{strongestReason!.Score:P0}",
+                Text = isManualSelection ? string.Empty : $"{strongestReason!.Score:P0}",
+                IsVisible = !isManualSelection,
                 FontSize = 10.5,
                 Foreground = confidenceBrush,
                 VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
@@ -1244,7 +1245,7 @@ public partial class EditTrackOverlay : UserControl
         var manualEnabledBrush = new SolidColorBrush(Color.Parse("#BDEFFF"));
         var manualDisabledBrush = new SolidColorBrush(Color.Parse("#89949F"));
         var disabledBrush = new SolidColorBrush(Color.Parse("#A3ABB5"));
-        container.BorderThickness = new Avalonia.Thickness(enabled && isManualSelection ? 2 : 1);
+        container.BorderThickness = new Avalonia.Thickness(1);
         container.Background = new SolidColorBrush(Color.Parse(enabled
             ? isManualSelection ? "#123D5C" : "#153B54"
             : "#23272D"));
