@@ -86,7 +86,7 @@ public partial class MusicView : UserControl
     private bool _showReviewOnly;
     private MultiSelectFilterControl? _conditionGenreCtrl;
     private MultiSelectFilterControl? _conditionTagCtrl;
-    private CheckBox? _conditionNegateBox;
+    private bool _conditionNegate;
     private FilterSection? _conditionGenreSection;
     private FilterSection? _conditionTagSection;
 
@@ -1216,21 +1216,14 @@ public partial class MusicView : UserControl
 
         _conditionTagCtrl = new MultiSelectFilterControl { Placeholder = "All tags" };
         _conditionTagCtrl.SetItems(TagFilterOptions());
-        _conditionNegateBox = new CheckBox
-        {
-            Content = "Exclude matches",
-            FontSize = 11,
-            Opacity = 0.74,
-            Margin = new Thickness(2, 0, 0, 0)
-        };
 
         _conditionGenreSection = CreateGenreFilterSection(_conditionGenreCtrl);
         _conditionTagSection = CreateTagFilterSection(_conditionTagCtrl);
 
         FilterBuilderPanel.Children.Clear();
-        FilterBuilderPanel.Children.Add(_conditionNegateBox);
         FilterBuilderPanel.Children.Add(_conditionGenreSection.Control);
         FilterBuilderPanel.Children.Add(_conditionTagSection.Control);
+        SetConditionMode(exclude: false);
     }
 
     private void AddConditionFromBuilder()
@@ -1243,7 +1236,7 @@ public partial class MusicView : UserControl
         if (selectedGenres.Count == 0 && selectedTags.Count == 0)
             return;
 
-        _filterGroups.Add(CreateFilterCondition(selectedGenres, selectedTags, _conditionNegateBox?.IsChecked == true));
+        _filterGroups.Add(CreateFilterCondition(selectedGenres, selectedTags, _conditionNegate));
         RebuildFilterConditionsPanel();
         ClearConditionBuilder();
     }
@@ -1265,9 +1258,37 @@ public partial class MusicView : UserControl
     {
         _conditionGenreCtrl?.SetSelectedItems(Array.Empty<string>(), notify: false);
         _conditionTagCtrl?.SetSelectedItems(Array.Empty<string>(), notify: false);
-        if (_conditionNegateBox is not null)
-            _conditionNegateBox.IsChecked = false;
+        SetConditionMode(exclude: false);
         RefreshConditionBuilder();
+    }
+
+    private void OnIncludeConditionPressed(object? sender, PointerPressedEventArgs e)
+    {
+        SetConditionMode(exclude: false);
+        e.Handled = true;
+    }
+
+    private void OnExcludeConditionPressed(object? sender, PointerPressedEventArgs e)
+    {
+        SetConditionMode(exclude: true);
+        e.Handled = true;
+    }
+
+    private void SetConditionMode(bool exclude)
+    {
+        _conditionNegate = exclude;
+        if (ConditionModeIndicator.RenderTransform is TranslateTransform transform)
+            transform.X = exclude ? 81 : 0;
+        ConditionModeIndicator.Background = new SolidColorBrush(Color.Parse(exclude ? "#8A303A" : "#176486"));
+        ConditionModeIndicator.CornerRadius = exclude
+            ? new CornerRadius(0, 5, 5, 0)
+            : new CornerRadius(5, 0, 0, 5);
+        IncludeConditionText.Foreground = Brush(exclude ? "#AEBAC3" : "#FFFFFF");
+        ExcludeConditionText.Foreground = Brush(exclude ? "#FFFFFF" : "#C8A8AC");
+        ConditionModeHint.Text = exclude
+            ? "Matching tracks will be excluded."
+            : "Matching tracks will be included.";
+        ConditionModeHint.Foreground = Brush(exclude ? "#D88B92" : "#8CCFEB");
     }
 
     private void RefreshConditionBuilder()
@@ -1328,21 +1349,27 @@ public partial class MusicView : UserControl
         removeBtn.Click += (_, _) => RemoveFilterGroup(condition);
 
         var isNegated = condition.Negate;
-        var negateBox = new CheckBox
+        var modeButton = new Button
         {
-            Content = "Exclude matches",
-            IsChecked = isNegated,
+            Content = isNegated ? "Exclude" : "Include",
             FontSize = 10.5,
-            Opacity = 0.72,
+            FontWeight = FontWeight.SemiBold,
+            Padding = new Thickness(10, 4),
+            Background = Brush(isNegated ? "#52252B" : "#15364A"),
+            BorderBrush = Brush(isNegated ? "#A34D57" : "#327899"),
+            Foreground = Brush(isNegated ? "#F0A7AE" : "#9ADCF7"),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(5),
             VerticalAlignment = VerticalAlignment.Center
         };
-        negateBox.IsCheckedChanged += (_, _) =>
+        ToolTip.SetTip(modeButton, isNegated ? "Switch to include" : "Switch to exclude");
+        modeButton.Click += (_, _) =>
         {
             var conditionIndex = _filterGroups.IndexOf(condition);
             if (conditionIndex < 0)
                 return;
 
-            _filterGroups[conditionIndex] = condition with { Negate = negateBox.IsChecked == true };
+            _filterGroups[conditionIndex] = condition with { Negate = !condition.Negate };
             RebuildFilterConditionsPanel();
             ApplyFilter();
         };
@@ -1350,14 +1377,14 @@ public partial class MusicView : UserControl
         var header = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto"), ColumnSpacing = 8 };
         header.Children.Add(new TextBlock
         {
-            Text = isNegated ? $"Exclude condition {index + 1}" : $"Condition {index + 1}",
+            Text = $"Condition {index + 1}",
             FontSize = 11.5,
             FontWeight = FontWeight.SemiBold,
             Opacity = 0.82,
             VerticalAlignment = VerticalAlignment.Center
         });
-        Grid.SetColumn(negateBox, 1);
-        header.Children.Add(negateBox);
+        Grid.SetColumn(modeButton, 1);
+        header.Children.Add(modeButton);
         Grid.SetColumn(removeBtn, 2);
         header.Children.Add(removeBtn);
 
@@ -1410,7 +1437,12 @@ public partial class MusicView : UserControl
     {
         string? selectedGroupName = null;
         var searchText = string.Empty;
-        var choicesPanel = new WrapPanel { Orientation = Orientation.Horizontal };
+        var choicesPanel = new UniformGrid
+        {
+            Columns = 3,
+            ColumnSpacing = 7,
+            RowSpacing = 7
+        };
         var summary = new TextBlock
         {
             FontSize = 10.5,
@@ -1430,7 +1462,6 @@ public partial class MusicView : UserControl
         var searchBox = new TextBox
         {
             Watermark = "Search subgenre…",
-            MinWidth = 180,
             Height = 34,
             VerticalContentAlignment = VerticalAlignment.Center
         };
@@ -1465,7 +1496,7 @@ public partial class MusicView : UserControl
             foreach (var genre in choices)
             {
                 var isSelected = selected.Contains(genre.Name);
-                var button = CreateFilterChoiceButton(SubgenreName(genre), GroupName(genre), isSelected, null);
+                var button = CreateGenreFilterChoiceButton(SubgenreName(genre), GroupName(genre), isSelected);
                 button.Click += (_, _) =>
                 {
                     var next = genreCtrl.SelectedItems.ToHashSet(StringComparer.OrdinalIgnoreCase);
@@ -1522,20 +1553,25 @@ public partial class MusicView : UserControl
         UpdateGenreSummary();
         FillChoices();
 
-        var header = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,220,*,Auto"), ColumnSpacing = 10 };
-        header.Children.Add(new TextBlock
+        var titleRow = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
+        titleRow.Children.Add(new TextBlock
         {
             Text = "Genres",
             FontSize = 12,
             FontWeight = FontWeight.SemiBold,
             VerticalAlignment = VerticalAlignment.Center
         });
-        Grid.SetColumn(categoryBox, 1);
-        header.Children.Add(categoryBox);
-        Grid.SetColumn(searchBox, 2);
-        header.Children.Add(searchBox);
-        Grid.SetColumn(summary, 3);
-        header.Children.Add(summary);
+        Grid.SetColumn(summary, 1);
+        titleRow.Children.Add(summary);
+
+        var controlsRow = new Grid
+        {
+            ColumnDefinitions = new ColumnDefinitions("*,*"),
+            ColumnSpacing = 8
+        };
+        controlsRow.Children.Add(categoryBox);
+        Grid.SetColumn(searchBox, 1);
+        controlsRow.Children.Add(searchBox);
 
         var border = new Border
         {
@@ -1549,7 +1585,8 @@ public partial class MusicView : UserControl
                 Spacing = 10,
                 Children =
                 {
-                    header,
+                    titleRow,
+                    controlsRow,
                     new ScrollViewer
                     {
                         MaxHeight = 205,
@@ -1611,13 +1648,18 @@ public partial class MusicView : UserControl
             while (panel.Children.Count > 1)
                 panel.Children.RemoveAt(1);
 
-            var chips = new WrapPanel { Orientation = Orientation.Horizontal };
+            var chips = new UniformGrid
+            {
+                Columns = 3,
+                ColumnSpacing = 7,
+                RowSpacing = 7
+            };
             foreach (var tag in Values.Tags
                          .OrderByDescending(tag => tagCtrl.SelectedItems.Contains(TagFilterName(tag)))
                          .ThenBy(tag => tag.Name, StringComparer.OrdinalIgnoreCase))
             {
                 var selected = tagCtrl.SelectedItems.Contains(TagFilterName(tag));
-                var button = CreateFilterChoiceButton(tag.Name, null, selected, "#65BCEB");
+                var button = CreateTagFilterChoiceButton(tag.Name, selected);
                 button.Click += (_, _) => Toggle(tag);
                 chips.Children.Add(button);
             }
@@ -1640,50 +1682,99 @@ public partial class MusicView : UserControl
         return new FilterSection(border, RebuildTags);
     }
 
-    private static Button CreateFilterChoiceButton(string title, string? subtitle, bool isSelected, string? accentColor)
+    private static Button CreateGenreFilterChoiceButton(string title, string group, bool isSelected)
     {
-        var accent = SafeBrush(accentColor, "#65BCEB");
-        var titleText = new TextBlock
+        var accent = Brush("#65BCEB");
+        var text = new StackPanel
+        {
+            Spacing = 1,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Center,
+            Children =
+            {
+                new TextBlock
+                {
+                    Text = title,
+                    FontSize = 10.5,
+                    FontWeight = FontWeight.SemiBold,
+                    Foreground = isSelected ? accent : Brush("#E8F1F7"),
+                    TextTrimming = TextTrimming.CharacterEllipsis
+                },
+                new TextBlock
+                {
+                    Text = group,
+                    FontSize = 9,
+                    Foreground = Brush("#93A5B3"),
+                    Opacity = 0.72,
+                    TextTrimming = TextTrimming.CharacterEllipsis
+                }
+            }
+        };
+
+        var content = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), ColumnSpacing = 6 };
+        content.Children.Add(text);
+        var state = new TextBlock
+        {
+            Text = isSelected ? "✓" : "+",
+            FontSize = isSelected ? 12 : 14,
+            FontWeight = FontWeight.SemiBold,
+            Foreground = isSelected ? accent : Brush("#748896"),
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        Grid.SetColumn(state, 1);
+        content.Children.Add(state);
+
+        return new Button
+        {
+            Content = content,
+            Height = 43,
+            Padding = new Thickness(9, 4),
+            CornerRadius = new CornerRadius(5),
+            Background = Brush(isSelected ? "#153F55" : "#151E25"),
+            BorderBrush = isSelected ? Brush("#2788B1") : Brush("#344652"),
+            BorderThickness = new Thickness(1),
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            HorizontalContentAlignment = HorizontalAlignment.Stretch,
+            VerticalContentAlignment = VerticalAlignment.Center
+        };
+    }
+
+    private static Button CreateTagFilterChoiceButton(string title, bool isSelected)
+    {
+        var content = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), ColumnSpacing = 5 };
+        content.Children.Add(new TextBlock
         {
             Text = title,
-            FontSize = 11,
+            FontSize = 10.5,
             FontWeight = FontWeight.SemiBold,
-            Foreground = isSelected ? accent : new SolidColorBrush(Color.Parse("#E8F1F7")),
-            TextAlignment = TextAlignment.Center,
-            TextTrimming = TextTrimming.CharacterEllipsis
-        };
-        var content = new StackPanel
+            Foreground = isSelected ? Brush("#E8D2FF") : Brush("#DFE8EE"),
+            TextTrimming = TextTrimming.CharacterEllipsis,
+            VerticalAlignment = VerticalAlignment.Center
+        });
+        if (isSelected)
         {
-            Spacing = 0,
-            HorizontalAlignment = HorizontalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Center,
-            Children = { titleText }
-        };
-        if (!string.IsNullOrWhiteSpace(subtitle))
-        {
-            content.Children.Add(new TextBlock
+            var check = new TextBlock
             {
-                Text = subtitle,
-                FontSize = 9,
-                Opacity = 0.62,
-                Foreground = new SolidColorBrush(Color.Parse("#A9BAC8")),
-                TextAlignment = TextAlignment.Center,
-                TextTrimming = TextTrimming.CharacterEllipsis
-            });
+                Text = "✓",
+                FontSize = 11,
+                Foreground = Brush("#D3A6FF"),
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            Grid.SetColumn(check, 1);
+            content.Children.Add(check);
         }
 
         return new Button
         {
             Content = content,
-            Width = 136,
-            Height = string.IsNullOrWhiteSpace(subtitle) ? 29 : 42,
-            Margin = new Thickness(0, 0, 7, 7),
-            Padding = new Thickness(8, 2),
-            CornerRadius = new CornerRadius(3),
-            Background = new SolidColorBrush(Color.Parse(isSelected ? "#0F79B8" : "#1A2026")),
-            BorderBrush = isSelected ? accent : new SolidColorBrush(Color.Parse("#394653")),
-            BorderThickness = new Thickness(isSelected ? 2 : 1),
-            HorizontalContentAlignment = HorizontalAlignment.Center,
+            Height = 34,
+            Padding = new Thickness(9, 3),
+            CornerRadius = new CornerRadius(5),
+            Background = Brush(isSelected ? "#412B52" : "#151E25"),
+            BorderBrush = Brush(isSelected ? "#9B6EBD" : "#344652"),
+            BorderThickness = new Thickness(1),
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            HorizontalContentAlignment = HorizontalAlignment.Stretch,
             VerticalContentAlignment = VerticalAlignment.Center
         };
     }

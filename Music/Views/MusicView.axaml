@@ -586,17 +586,20 @@
                                                    VerticalAlignment="Center"/>
                                         <Button Grid.Column="1"
                                                 x:Name="AddPresetButton"
-                                                Content="+"
                                                 Click="OnAddPresetClicked"
                                                 Width="28"
-                                                Height="26"
+                                                Height="28"
                                                 Padding="0"
                                                 Background="#101923"
                                                 BorderBrush="#314B5F"
                                                 BorderThickness="1"
                                                 CornerRadius="6"
-                                                FontSize="14"
-                                                ToolTip.Tip="Create preset"/>
+                                                HorizontalContentAlignment="Center"
+                                                VerticalContentAlignment="Center"
+                                                ToolTip.Tip="Create preset">
+                                            <TextBlock Text="+" FontSize="17" Margin="0,-2,0,0"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Button>
                                     </Grid>
                                     <StackPanel x:Name="PresetRows" Spacing="7"/>
                                     <Grid x:Name="PresetActionsPanel"
@@ -703,22 +706,74 @@
                                 CornerRadius="10"
                                 Padding="18">
                             <DockPanel LastChildFill="True">
-                                <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="0,0,0,14">
+                                <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="0,0,0,12">
                                     <StackPanel Spacing="3">
                                         <TextBlock Text="Filter conditions" FontSize="14" FontWeight="SemiBold"/>
-                                        <TextBlock Text="Select genres and tags, then add them as one OR condition."
+                                        <TextBlock Text="Combine selected genres and tags into one condition."
                                                    FontSize="11" Opacity="0.56"/>
                                     </StackPanel>
                                     <Button Grid.Column="1"
-                                            Content="＋ Add condition"
                                             Click="OnAddFilterGroupClicked"
                                             Background="#0D151D"
                                             BorderBrush="#314B5F"
                                             BorderThickness="1"
-                                            Padding="11,7"
-                                            FontSize="11"
+                                            Width="32" Height="30"
+                                            Padding="0"
+                                            HorizontalContentAlignment="Center"
+                                            VerticalContentAlignment="Center"
                                             HorizontalAlignment="Right"
-                                            VerticalAlignment="Top"/>
+                                            VerticalAlignment="Top"
+                                            ToolTip.Tip="Add condition">
+                                        <TextBlock Text="+" FontSize="18" Margin="0,-2,0,0"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Button>
+                                </Grid>
+
+                                <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*" ColumnSpacing="12" Margin="0,0,0,12">
+                                    <Border Width="164" Height="32"
+                                            Background="#111A21"
+                                            BorderBrush="#435868"
+                                            BorderThickness="1"
+                                            CornerRadius="6"
+                                            ClipToBounds="True">
+                                        <Grid ColumnDefinitions="81,81">
+                                            <Border x:Name="ConditionModeIndicator"
+                                                    Grid.ColumnSpan="2"
+                                                    Width="81"
+                                                    HorizontalAlignment="Left"
+                                                    Background="#176486"
+                                                    CornerRadius="5"
+                                                    IsHitTestVisible="False">
+                                                <Border.RenderTransform>
+                                                    <TranslateTransform>
+                                                        <TranslateTransform.Transitions>
+                                                            <Transitions>
+                                                                <DoubleTransition Property="X" Duration="0:0:0.16"/>
+                                                            </Transitions>
+                                                        </TranslateTransform.Transitions>
+                                                    </TranslateTransform>
+                                                </Border.RenderTransform>
+                                            </Border>
+                                            <Border Grid.Column="0" Background="Transparent" Cursor="Hand"
+                                                    PointerPressed="OnIncludeConditionPressed">
+                                                <TextBlock x:Name="IncludeConditionText" Text="Include"
+                                                           FontSize="11" FontWeight="SemiBold"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                            <Border Grid.Column="1" Background="Transparent" Cursor="Hand"
+                                                    PointerPressed="OnExcludeConditionPressed">
+                                                <TextBlock x:Name="ExcludeConditionText" Text="Exclude"
+                                                           FontSize="11" FontWeight="SemiBold"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+                                    <TextBlock x:Name="ConditionModeHint"
+                                               Grid.Column="1"
+                                               Text="Matching tracks will be included."
+                                               FontSize="10.5"
+                                               Opacity="0.55"
+                                               VerticalAlignment="Center"/>
                                 </Grid>
 
                                 <ScrollViewer HorizontalScrollBarVisibility="Disabled">
