@@ -268,9 +268,8 @@
                                     <!-- Two-line hierarchy: track identity, then source and classification. -->
                                     <Grid Grid.Column="2"
                                           VerticalAlignment="Center"
-                                          ColumnDefinitions="*,48"
                                           RowDefinitions="Auto,Auto"
-                                          ColumnSpacing="24"
+                                          Margin="0,0,78,0"
                                           RowSpacing="4">
                                         <Grid Grid.Row="0" Grid.Column="0" ColumnDefinitions="Auto,Auto,*">
                                             <Border Background="{Binding RatingBackground}"
@@ -328,19 +327,18 @@
                                                                           Margin="12,0,8,0"
                                                                           HorizontalAlignment="Stretch"/>
                                         </Grid>
-                                        <TextBlock Grid.Row="0"
-                                                   Grid.RowSpan="2"
-                                                   Grid.Column="1"
-                                                   Text="{Binding DurationText}"
-                                                   FontSize="10.5"
-                                                   Opacity="0.62"
-                                                   Width="48"
-                                                   HorizontalAlignment="Center"
-                                                   TextAlignment="Center"
-                                                   VerticalAlignment="Center"/>
                                     </Grid>
 
                                 </Grid>
+                                <TextBlock Text="{Binding DurationText}"
+                                           FontSize="10.5"
+                                           Opacity="0.62"
+                                           Width="48"
+                                           Margin="0,0,15,0"
+                                           HorizontalAlignment="Right"
+                                           TextAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           IsHitTestVisible="False"/>
                                 </Panel>
                             </Border>
                             <Rectangle Grid.Row="1" Height="1" Fill="#222D36" Margin="18,3,18,3"/>
