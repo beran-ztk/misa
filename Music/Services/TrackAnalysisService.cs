@@ -1,102 +1,198 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using Music.Models;
 
 namespace Music.Services;
 
-public sealed class TrackAnalysisService
+public sealed class TrackAnalysisService : IDisposable
 {
-    private const string ScriptFileName = "analyze.py";
+    private static readonly TimeSpan DefaultAnalysisTimeout = TimeSpan.FromMinutes(5);
+    private static readonly TimeSpan DefaultHealthTimeout = TimeSpan.FromSeconds(10);
+    private static readonly HashSet<string> SupportedExtensions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ".mp3", ".m4a", ".wav", ".flac"
+    };
     private static readonly HashSet<string> ExcludedExperimentalModels = new(StringComparer.OrdinalIgnoreCase)
     {
         "mtg_" + "jamen" + "do_" + "mood" + "theme"
     };
-    private const string ModelDirectoryInContainer = "/models/Essentia/DiscogsMAEST";
-    private const string ScriptsDirectoryInContainer = "/scripts";
-    private const string TracksDirectoryInContainer = "/tracks";
-
-    public async Task<(TrackAnalysisResult? Result, string? Error)> AnalyzeAsync(string audioFilePath)
+    private static readonly JsonSerializerOptions JsonOptions = new()
     {
-        var scriptPath = Path.Combine(Values.ScriptsDirectory, ScriptFileName);
-        if (!File.Exists(scriptPath))
-            return (null, $"Analysis script not found: {scriptPath}");
+        PropertyNameCaseInsensitive = true
+    };
 
-        var modelDirectory = Path.Combine(Values.ModelsDirectory, "Essentia", "DiscogsMAEST");
-        if (!Directory.Exists(modelDirectory))
-            return (null, $"Analysis model directory not found: {modelDirectory}");
+    private readonly HttpClient _httpClient;
+    private readonly Func<string?> _serverUrlProvider;
+    private readonly TimeSpan _analysisTimeout;
+    private readonly TimeSpan _healthTimeout;
+    private readonly bool _ownsHttpClient;
 
-        if (!File.Exists(audioFilePath))
-            return (null, $"Downloaded audio file not found: {audioFilePath}");
+    public TrackAnalysisService(
+        HttpClient? httpClient = null,
+        Func<string?>? serverUrlProvider = null,
+        TimeSpan? analysisTimeout = null,
+        TimeSpan? healthTimeout = null)
+    {
+        _httpClient = httpClient ?? new HttpClient();
+        _serverUrlProvider = serverUrlProvider ?? (() => AppSettingsStore.Load().MusicAnalysisServerUrl);
+        _analysisTimeout = analysisTimeout ?? DefaultAnalysisTimeout;
+        _healthTimeout = healthTimeout ?? DefaultHealthTimeout;
+        _ownsHttpClient = httpClient is null;
 
-        var containerTrackPath = $"{TracksDirectoryInContainer}/{Path.GetFileName(audioFilePath)}";
-        var result = await RunDockerAsync(
-            "run", "--rm",
-            "-v", $"{Values.ScriptsDirectory}:{ScriptsDirectoryInContainer}:ro",
-            "-v", $"{Values.ModelsDirectory}:/models:ro",
-            "-v", $"{Values.TracksDirectory}:{TracksDirectoryInContainer}:ro",
-            Values.AnalysisDockerImage,
-            "python3", $"{ScriptsDirectoryInContainer}/{ScriptFileName}", containerTrackPath,
-            "--model-directory", ModelDirectoryInContainer,
-            "--top", "20",
-            "--include-experimental");
+        // Cancellation is controlled explicitly so user cancellation and timeout can be distinguished.
+        if (_ownsHttpClient)
+            _httpClient.Timeout = Timeout.InfiniteTimeSpan;
+    }
 
-        if (result.ExitCode != 0)
-            return (null, ExtractError(result.Output, result.Error));
+    public async Task<bool> CheckHealthAsync(CancellationToken cancellationToken = default)
+    {
+        var endpoint = BuildEndpoint("health");
+        using var timeout = new CancellationTokenSource(_healthTimeout);
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeout.Token);
 
         try
         {
-            var output = JsonSerializer.Deserialize<ScriptOutput>(result.Output,
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            if (output is null)
-                return (null, "Analysis did not return JSON output.");
-            if (!output.Success)
-                return (null, output.Error ?? "Analysis failed without an error message.");
+            using var response = await _httpClient.GetAsync(endpoint, linked.Token);
+            if (!response.IsSuccessStatusCode)
+                throw ServerError(response);
 
-            var predictions = (output.Predictions ?? [])
-                .Select(prediction => TryCreatePrediction(prediction.Label, prediction.Score))
-                .Where(prediction => prediction is not null)
-                .Cast<TrackGenrePrediction>()
-                .ToList();
-            if (predictions.Count == 0)
-                return (null, "Analysis completed but returned no valid genre predictions.");
-
-            return (new TrackAnalysisResult(
-                output.Model ?? "discogs-maest-30s-pw-519l-2",
-                predictions,
-                output.Bpm,
-                output.IntegratedLoudness,
-                output.LoudnessRange,
-                ParseExperimentalModels(output)), null);
+            await using var stream = await response.Content.ReadAsStreamAsync(linked.Token);
+            using var document = await JsonDocument.ParseAsync(stream, cancellationToken: linked.Token);
+            return HasHealthyStatus(document.RootElement);
+        }
+        catch (OperationCanceledException exception)
+        {
+            throw CancellationError(cancellationToken, exception);
+        }
+        catch (HttpRequestException exception)
+        {
+            throw new MusicAnalysisException(
+                MusicAnalysisErrorKind.ConnectionError,
+                "The analysis server could not be reached.", exception);
         }
         catch (JsonException exception)
         {
-            return (null, $"Could not parse analysis JSON: {exception.Message}");
+            throw new MusicAnalysisException(
+                MusicAnalysisErrorKind.InvalidResponse,
+                "The analysis server returned an invalid health response.", exception);
         }
     }
 
-    private static TrackGenrePrediction? TryCreatePrediction(string? label, double score)
+    public async Task<MusicAnalysisResult> AnalyzeTrackAsync(
+        string trackPath,
+        CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(label)) return null;
-        var separator = label.IndexOf("---", StringComparison.Ordinal);
-        if (separator <= 0 || separator == label.Length - 3) return null;
+        var file = ValidateTrackFile(trackPath);
+        var endpoint = BuildEndpoint("analyze");
+        using var timeout = new CancellationTokenSource(_analysisTimeout);
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeout.Token);
 
-        return new TrackGenrePrediction(
-            label[..separator],
-            label[(separator + 3)..],
-            score);
+        try
+        {
+            await using var stream = file.OpenRead();
+            using var form = new MultipartFormDataContent();
+            using var fileContent = new StreamContent(stream);
+            fileContent.Headers.ContentType = new MediaTypeHeaderValue(ContentTypeFor(file.Extension));
+            form.Add(fileContent, "file", file.Name);
+
+            using var response = await _httpClient.PostAsync(endpoint, form, linked.Token);
+            if (!response.IsSuccessStatusCode)
+                throw ServerError(response);
+
+            await using var responseStream = await response.Content.ReadAsStreamAsync(linked.Token);
+            using var document = await JsonDocument.ParseAsync(responseStream, cancellationToken: linked.Token);
+            if (!TryReadSuccess(document.RootElement, out var success))
+                throw new MusicAnalysisException(
+                    MusicAnalysisErrorKind.InvalidResponse,
+                    "The analysis server response is missing a valid success value.");
+
+            var result = document.RootElement.Deserialize<MusicAnalysisResult>(JsonOptions);
+            if (result is null)
+                throw new MusicAnalysisException(
+                    MusicAnalysisErrorKind.InvalidResponse,
+                    "The analysis server returned an empty response.");
+            result.PredictionShape ??= [];
+            result.Predictions ??= [];
+            result.ExperimentalPredictions ??= [];
+            result.ExperimentalErrors ??= [];
+            if (!success)
+                throw new MusicAnalysisException(
+                    MusicAnalysisErrorKind.ServerError,
+                    string.IsNullOrWhiteSpace(result.Error)
+                        ? "The analysis server reported that the analysis failed."
+                        : $"The analysis server reported an error: {result.Error}");
+
+            return result;
+        }
+        catch (MusicAnalysisException)
+        {
+            throw;
+        }
+        catch (OperationCanceledException exception)
+        {
+            throw CancellationError(cancellationToken, exception);
+        }
+        catch (HttpRequestException exception)
+        {
+            throw new MusicAnalysisException(
+                MusicAnalysisErrorKind.ConnectionError,
+                "The analysis server could not be reached.", exception);
+        }
+        catch (JsonException exception)
+        {
+            throw new MusicAnalysisException(
+                MusicAnalysisErrorKind.InvalidResponse,
+                "The analysis server returned invalid JSON.", exception);
+        }
+        catch (IOException exception)
+        {
+            throw new MusicAnalysisException(
+                MusicAnalysisErrorKind.FileError,
+                "The audio file could not be read.", exception);
+        }
+        catch (UnauthorizedAccessException exception)
+        {
+            throw new MusicAnalysisException(
+                MusicAnalysisErrorKind.FileError,
+                "The audio file cannot be accessed.", exception);
+        }
     }
 
-    private static List<ExperimentalAnalysisModel> ParseExperimentalModels(ScriptOutput? output)
+    public static bool TryNormalizeServerUrl(string? value, out string normalizedUrl)
     {
-        if (output is null || !output.Success)
-            return [];
+        normalizedUrl = string.Empty;
+        if (string.IsNullOrWhiteSpace(value)
+            || !Uri.TryCreate(value.Trim(), UriKind.Absolute, out var uri)
+            || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps)
+            || !string.IsNullOrEmpty(uri.UserInfo)
+            || !string.IsNullOrEmpty(uri.Query)
+            || !string.IsNullOrEmpty(uri.Fragment))
+            return false;
 
-        return (output.ExperimentalPredictions ?? [])
+        normalizedUrl = uri.GetLeftPart(UriPartial.Path).TrimEnd('/');
+        return normalizedUrl.Length > 0;
+    }
+
+    public static TrackAnalysisResult ToTrackAnalysisResult(MusicAnalysisResult result)
+    {
+        var predictions = result.Predictions
+            .Select(prediction => TryCreatePrediction(prediction.Label, prediction.Score))
+            .Where(prediction => prediction is not null)
+            .Cast<TrackGenrePrediction>()
+            .ToList();
+        if (predictions.Count == 0)
+            throw new MusicAnalysisException(
+                MusicAnalysisErrorKind.InvalidResponse,
+                "Analysis completed but returned no valid genre predictions.");
+
+        var experimentalModels = result.ExperimentalPredictions
             .Where(model => !string.IsNullOrWhiteSpace(model.Model))
             .Where(model => !ExcludedExperimentalModels.Contains(model.Model!))
             .Select(model => new ExperimentalAnalysisModel(
@@ -105,73 +201,121 @@ public sealed class TrackAnalysisService
                 model.Model!,
                 model.Type ?? "classifier",
                 model.Description ?? string.Empty,
-                (model.Values ?? [])
+                model.Values
                     .Where(value => !string.IsNullOrWhiteSpace(value.Label))
                     .Select(value => new ExperimentalAnalysisValue(value.Label!, value.Score))
                     .ToList()))
             .ToList();
+
+        return new TrackAnalysisResult(
+            result.Model ?? "unknown",
+            predictions,
+            result.Bpm,
+            result.IntegratedLoudness,
+            result.LoudnessRange,
+            experimentalModels);
     }
 
-    private static async Task<ProcessResult> RunDockerAsync(params string[] arguments)
+    public void Dispose()
     {
-        var startInfo = new ProcessStartInfo
-        {
-            FileName = "docker",
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
-        foreach (var argument in arguments)
-            startInfo.ArgumentList.Add(argument);
-
-        try
-        {
-            using var process = Process.Start(startInfo);
-            if (process is null)
-                return new ProcessResult(-1, string.Empty, "Could not start Docker.");
-
-            var outputTask = process.StandardOutput.ReadToEndAsync();
-            var errorTask = process.StandardError.ReadToEndAsync();
-            await process.WaitForExitAsync();
-            return new ProcessResult(process.ExitCode, await outputTask, await errorTask);
-        }
-        catch (Exception exception)
-        {
-            return new ProcessResult(-1, string.Empty, $"Could not start Docker: {exception.Message}");
-        }
+        if (_ownsHttpClient)
+            _httpClient.Dispose();
     }
 
-    private static string ExtractError(string output, string error)
+    private Uri BuildEndpoint(string relativePath)
+    {
+        if (!TryNormalizeServerUrl(_serverUrlProvider(), out var normalizedUrl))
+            throw new MusicAnalysisException(
+                MusicAnalysisErrorKind.ConnectionError,
+                "The analysis server address is missing or invalid.");
+
+        return new Uri($"{normalizedUrl}/{relativePath}", UriKind.Absolute);
+    }
+
+    private static FileInfo ValidateTrackFile(string trackPath)
     {
         try
         {
-            var scriptOutput = JsonSerializer.Deserialize<ScriptOutput>(output,
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            if (!string.IsNullOrWhiteSpace(scriptOutput?.Error)) return scriptOutput.Error;
-        }
-        catch (JsonException) { }
+            if (string.IsNullOrWhiteSpace(trackPath))
+                throw new MusicAnalysisException(MusicAnalysisErrorKind.FileError, "No audio file was selected.");
 
-        return string.IsNullOrWhiteSpace(error) ? "Docker analysis failed." : error.Trim();
+            var file = new FileInfo(trackPath);
+            if (!file.Exists)
+                throw new MusicAnalysisException(MusicAnalysisErrorKind.FileError, "The audio file does not exist.");
+            if (!SupportedExtensions.Contains(file.Extension))
+                throw new MusicAnalysisException(
+                    MusicAnalysisErrorKind.FileError,
+                    $"The audio format '{file.Extension}' is not supported.");
+            return file;
+        }
+        catch (MusicAnalysisException)
+        {
+            throw;
+        }
+        catch (Exception exception) when (exception is ArgumentException or NotSupportedException or PathTooLongException)
+        {
+            throw new MusicAnalysisException(MusicAnalysisErrorKind.FileError, "The audio file path is invalid.", exception);
+        }
     }
 
-    private sealed record ScriptOutput(
-        bool Success,
-        string? Error,
-        string? Model,
-        List<ScriptPrediction>? Predictions,
-        double? Bpm,
-        double? IntegratedLoudness,
-        double? LoudnessRange,
-        List<ScriptExperimentalModel>? ExperimentalPredictions);
-    private sealed record ScriptPrediction(string? Label, double Score);
-    private sealed record ScriptExperimentalModel(
-        string? Family,
-        string? Category,
-        string? Model,
-        string? Type,
-        string? Description,
-        List<ScriptExperimentalValue>? Values);
-    private sealed record ScriptExperimentalValue(string? Label, double Score);
-    private sealed record ProcessResult(int ExitCode, string Output, string Error);
+    private static TrackGenrePrediction? TryCreatePrediction(string? label, double score)
+    {
+        if (string.IsNullOrWhiteSpace(label)) return null;
+        var separator = label.IndexOf("---", StringComparison.Ordinal);
+        if (separator <= 0 || separator == label.Length - 3) return null;
+        return new TrackGenrePrediction(label[..separator], label[(separator + 3)..], score);
+    }
+
+    private static bool TryReadSuccess(JsonElement root, out bool success)
+    {
+        success = false;
+        if (root.ValueKind != JsonValueKind.Object)
+            return false;
+
+        foreach (var property in root.EnumerateObject())
+        {
+            if (!string.Equals(property.Name, "success", StringComparison.OrdinalIgnoreCase)
+                || property.Value.ValueKind is not (JsonValueKind.True or JsonValueKind.False))
+                continue;
+
+            success = property.Value.GetBoolean();
+            return true;
+        }
+
+        return false;
+    }
+
+    private static bool HasHealthyStatus(JsonElement root)
+    {
+        if (root.ValueKind != JsonValueKind.Object)
+            return false;
+
+        foreach (var property in root.EnumerateObject())
+        {
+            if (string.Equals(property.Name, "status", StringComparison.OrdinalIgnoreCase)
+                && property.Value.ValueKind == JsonValueKind.String)
+                return string.Equals(property.Value.GetString(), "ok", StringComparison.OrdinalIgnoreCase);
+        }
+
+        return false;
+    }
+
+    private static string ContentTypeFor(string extension) => extension.ToLowerInvariant() switch
+    {
+        ".mp3" => "audio/mpeg",
+        ".m4a" => "audio/mp4",
+        ".wav" => "audio/wav",
+        ".flac" => "audio/flac",
+        _ => "application/octet-stream"
+    };
+
+    private static MusicAnalysisException ServerError(HttpResponseMessage response) =>
+        new(MusicAnalysisErrorKind.ServerError,
+            $"The analysis server returned HTTP {(int)response.StatusCode} ({response.ReasonPhrase ?? "error"}).");
+
+    private static MusicAnalysisException CancellationError(
+        CancellationToken userCancellationToken,
+        OperationCanceledException exception) => userCancellationToken.IsCancellationRequested
+        ? new MusicAnalysisException(MusicAnalysisErrorKind.Cancelled, "The analysis was cancelled.", exception)
+        : new MusicAnalysisException(MusicAnalysisErrorKind.Timeout, "The analysis server request timed out.", exception);
 }

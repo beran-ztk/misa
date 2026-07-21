@@ -568,7 +568,7 @@ public partial class ImportOverlay : UserControl
 
     private static Control CreateAnalysisQueueRow(AnalysisQueueItem item)
     {
-        var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), Margin = new Thickness(0, 1) };
+        var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto"), ColumnSpacing = 8, Margin = new Thickness(0, 1) };
         row.Children.Add(new TextBlock
         {
             Text = item.Title,
@@ -586,6 +586,19 @@ public partial class ImportOverlay : UserControl
         };
         Grid.SetColumn(state, 1);
         row.Children.Add(state);
+        if (item.IsActive)
+        {
+            var cancel = new Button
+            {
+                Content = "Cancel",
+                FontSize = 9,
+                Padding = new Thickness(6, 2),
+                Opacity = 0.78
+            };
+            cancel.Click += (_, _) => BackgroundAnalysisService.Current.CancelActiveAnalysis();
+            Grid.SetColumn(cancel, 2);
+            row.Children.Add(cancel);
+        }
         return row;
     }
 

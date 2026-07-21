@@ -383,21 +383,27 @@ public class MusicLibraryService
             GetTracks().Single(track => track.Id == trackId));
     }
 
-    public async Task<string?> AnalyzeTrackAsync(MusicTrack track)
+    public async Task<string?> AnalyzeTrackAsync(MusicTrack track, CancellationToken cancellationToken = default)
     {
         var filePath = Path.Combine(Values.TracksDirectory, track.FileName);
         var stopwatch = Stopwatch.StartNew();
-        var (analysis, error) = await _analysis.AnalyzeAsync(filePath);
-        if (analysis is not null)
+        try
         {
+            var response = await _analysis.AnalyzeTrackAsync(filePath, cancellationToken);
+            var analysis = TrackAnalysisService.ToTrackAnalysisResult(response);
             _db.SaveTrackAnalysis(track.Id, analysis, (int)stopwatch.ElapsedMilliseconds);
             CacheExperimentalAnalysis(track.Id, analysis);
             return null;
         }
-
-        _db.SetTrackNeedsReview(track.Id, true);
-        _db.SetTrackAnalysisDisabled(track.Id, true);
-        return error ?? "Analysis failed.";
+        catch (MusicAnalysisException exception)
+        {
+            if (exception.Kind is MusicAnalysisErrorKind.FileError or MusicAnalysisErrorKind.InvalidResponse)
+            {
+                _db.SetTrackNeedsReview(track.Id, true);
+                _db.SetTrackAnalysisDisabled(track.Id, true);
+            }
+            return exception.Message;
+        }
     }
 
     private void CacheExperimentalAnalysis(int trackId, TrackAnalysisResult analysis) =>

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Threading;
 using Music.Models;
 
 namespace Music.Services;
@@ -15,6 +16,7 @@ public sealed class BackgroundAnalysisService
     private readonly HashSet<int> _queuedTrackIds = [];
     private Task? _workerTask;
     private int? _activeTrackId;
+    private CancellationTokenSource? _activeAnalysisCancellation;
 
     public event Action<MusicTrack, string?>? TrackAnalysisFinished;
     public event Action? QueueChanged;
@@ -37,6 +39,24 @@ public sealed class BackgroundAnalysisService
             return new BackgroundAnalysisQueueSnapshot(
                 _activeTrackId,
                 _pendingTrackIds.ToList());
+        }
+    }
+
+    public bool CancelActiveAnalysis()
+    {
+        lock (_gate)
+        {
+            if (_activeAnalysisCancellation is null)
+                return false;
+            try
+            {
+                _activeAnalysisCancellation.Cancel();
+                return true;
+            }
+            catch (ObjectDisposedException)
+            {
+                return false;
+            }
         }
     }
 
@@ -111,13 +131,16 @@ public sealed class BackgroundAnalysisService
                 try
                 {
                     SetActiveTrack(trackId);
+                    using var cancellation = new CancellationTokenSource();
+                    lock (_gate)
+                        _activeAnalysisCancellation = cancellation;
                     track = MusicLibraryService.Current.GetTrackById(trackId);
                     if (track is null
                         || track.AnalysisDisabled
                         || MusicLibraryService.Current.GetTrackAudioAnalysis(track.Id) is not null)
                         continue;
 
-                    error = await MusicLibraryService.Current.AnalyzeTrackAsync(track);
+                    error = await MusicLibraryService.Current.AnalyzeTrackAsync(track, cancellation.Token);
                 }
                 catch (Exception exception)
                 {
@@ -130,6 +153,7 @@ public sealed class BackgroundAnalysisService
                         _queuedTrackIds.Remove(trackId);
                         if (_activeTrackId == trackId)
                             _activeTrackId = null;
+                        _activeAnalysisCancellation = null;
                     }
                     QueueChanged?.Invoke();
                 }

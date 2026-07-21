@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
@@ -51,6 +52,8 @@ public partial class SettingsOverlay : UserControl
     {
         DatabasePathText.Text = Values.DbPath;
         TracksPathText.Text = Values.TracksDirectory;
+        MusicAnalysisServerUrlBox.Text = AppSettingsStore.Load().MusicAnalysisServerUrl;
+        AnalysisServerStatusText.IsVisible = false;
         FirefoxCookiesToggle.IsChecked = Values.UseFirefoxCookiesForYtDlp;
         RebuildBackupDirectoryRows();
         SelectPage(SettingsPage.Library);
@@ -451,6 +454,7 @@ public partial class SettingsOverlay : UserControl
         SelectPage(value switch
         {
             "library" => SettingsPage.Library,
+            "analysis_server" => SettingsPage.AnalysisServer,
             "backup" => SettingsPage.Backup,
             "export" => SettingsPage.Export,
             "runtime" => SettingsPage.Runtime,
@@ -469,11 +473,13 @@ public partial class SettingsOverlay : UserControl
         _selectedPage = page;
         var isGenreVocabularyPage = page == SettingsPage.GenreVocabulary;
         var isLibraryPage = page == SettingsPage.Library;
+        var isAnalysisServerPage = page == SettingsPage.AnalysisServer;
         var isBackupPage = page == SettingsPage.Backup;
         var isExportPage = page == SettingsPage.Export;
         var isRuntimePage = page == SettingsPage.Runtime;
         GenreVocabularyPage.IsVisible = isGenreVocabularyPage;
         LibraryPage.IsVisible = isLibraryPage;
+        AnalysisServerPage.IsVisible = isAnalysisServerPage;
         BackupPage.IsVisible = isBackupPage;
         ExportPage.IsVisible = isExportPage;
         RuntimePage.IsVisible = isRuntimePage;
@@ -482,6 +488,7 @@ public partial class SettingsOverlay : UserControl
         TagRulesPage.IsVisible = page == SettingsPage.TagRules;
         GenreVocabularyNavButton.IsChecked = isGenreVocabularyPage;
         LibraryNavButton.IsChecked = isLibraryPage;
+        AnalysisServerNavButton.IsChecked = isAnalysisServerPage;
         BackupNavButton.IsChecked = isBackupPage;
         ExportNavButton.IsChecked = isExportPage;
         RuntimeNavButton.IsChecked = isRuntimePage;
@@ -492,6 +499,7 @@ public partial class SettingsOverlay : UserControl
         PageTitleText.Text = page switch
         {
             SettingsPage.Library => "Library",
+            SettingsPage.AnalysisServer => "Analysis server",
             SettingsPage.Backup => "Backup",
             SettingsPage.Export => "Export",
             SettingsPage.Runtime => "Runtime",
@@ -504,6 +512,8 @@ public partial class SettingsOverlay : UserControl
             ? "Review the genre categories and subgenres used directly by the library."
             : isLibraryPage
                 ? "Where this installation keeps the local music library and its database."
+                : isAnalysisServerPage
+                    ? "Configure and verify the service used for track analysis."
                 : isBackupPage
                     ? "Keep daily database snapshots in your backup locations."
                     : isExportPage
@@ -524,6 +534,68 @@ public partial class SettingsOverlay : UserControl
     }
 
     private void OnExportRequestedClicked(object? sender, RoutedEventArgs e) => ExportRequested?.Invoke();
+
+    private void OnSaveAnalysisServerClicked(object? sender, RoutedEventArgs e)
+    {
+        if (!TrackAnalysisService.TryNormalizeServerUrl(MusicAnalysisServerUrlBox.Text, out var serverUrl))
+        {
+            ShowAnalysisServerStatus("Invalid address", isSuccess: false);
+            return;
+        }
+
+        AppSettingsStore.SaveMusicAnalysisServerUrl(serverUrl);
+        MusicAnalysisServerUrlBox.Text = serverUrl;
+        ShowAnalysisServerStatus("Address saved", isSuccess: true);
+        ToastRequested?.Invoke("Analysis server address saved.");
+    }
+
+    private async void OnTestAnalysisServerClicked(object? sender, RoutedEventArgs e)
+    {
+        if (!TrackAnalysisService.TryNormalizeServerUrl(MusicAnalysisServerUrlBox.Text, out var serverUrl))
+        {
+            ShowAnalysisServerStatus("Invalid address", isSuccess: false);
+            return;
+        }
+
+        TestAnalysisServerButton.IsEnabled = false;
+        ShowAnalysisServerStatus("Testing connection…", isSuccess: null);
+        try
+        {
+            using var service = new TrackAnalysisService(serverUrlProvider: () => serverUrl);
+            var isHealthy = await service.CheckHealthAsync();
+            ShowAnalysisServerStatus(
+                isHealthy ? "Connection successful" : "Server returned an unhealthy status",
+                isHealthy);
+        }
+        catch (MusicAnalysisException exception)
+        {
+            var message = exception.Kind switch
+            {
+                MusicAnalysisErrorKind.Timeout => "Request timed out",
+                MusicAnalysisErrorKind.ConnectionError => "Server not reachable",
+                MusicAnalysisErrorKind.ServerError => exception.Message,
+                MusicAnalysisErrorKind.InvalidResponse => "Server returned an invalid response",
+                _ => exception.Message
+            };
+            ShowAnalysisServerStatus(message, isSuccess: false);
+        }
+        finally
+        {
+            TestAnalysisServerButton.IsEnabled = true;
+        }
+    }
+
+    private void ShowAnalysisServerStatus(string message, bool? isSuccess)
+    {
+        AnalysisServerStatusText.Text = message;
+        AnalysisServerStatusText.Foreground = new SolidColorBrush(Color.Parse(isSuccess switch
+        {
+            true => "#73D59B",
+            false => "#E87878",
+            _ => "#9FCBE4"
+        }));
+        AnalysisServerStatusText.IsVisible = true;
+    }
 
     private void OnFirefoxCookiesToggleChanged(object? sender, RoutedEventArgs e)
     {
@@ -1226,5 +1298,5 @@ public partial class SettingsOverlay : UserControl
             .OrderByDescending(item => item.value.Score).Take(3).Select(item => $"{item.Model}: {item.value.Label} {item.value.Score:0.##}"));
     }
 
-    private enum SettingsPage { GenreVocabulary, Library, Backup, Export, Runtime, AnalysisCalibration, Tags, TagRules }
+    private enum SettingsPage { GenreVocabulary, Library, AnalysisServer, Backup, Export, Runtime, AnalysisCalibration, Tags, TagRules }
 }

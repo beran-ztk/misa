@@ -39,6 +39,13 @@ public static class AppSettingsStore
         Save(settings);
     }
 
+    public static void SaveMusicAnalysisServerUrl(string serverUrl)
+    {
+        var settings = Load();
+        settings.MusicAnalysisServerUrl = serverUrl;
+        Save(settings);
+    }
+
     private static void Save(AppSettings settings)
     {
         var directory = Path.GetDirectoryName(Values.AppSettingsPath);
@@ -53,4 +60,5 @@ public static class AppSettingsStore
 public sealed class AppSettings
 {
     public float Volume { get; set; } = 1f;
+    public string MusicAnalysisServerUrl { get; set; } = string.Empty;
 }

@@ -208,11 +208,16 @@ public partial class MusicView : UserControl
             UpdateQueueStatus();
             if (ImportOverlay.IsVisible) ImportOverlay.RefreshQueue();
         });
-        BackgroundAnalysisService.Current.TrackAnalysisFinished += (_, _) =>
+        BackgroundAnalysisService.Current.TrackAnalysisFinished += (track, error) =>
             Avalonia.Threading.Dispatcher.UIThread.Post(() =>
             {
                 MarkLibraryRefreshPending();
                 if (ImportOverlay.IsVisible) ImportOverlay.RefreshQueue();
+                ShowToast(error is null
+                    ? $"Analysis completed: {track.Title}"
+                    : error.Contains("cancelled", StringComparison.OrdinalIgnoreCase)
+                        ? $"Analysis cancelled: {track.Title}"
+                        : $"Analysis failed for {track.Title}: {error}");
             });
         EditTrackOverlay.TrackSaved += UpdateTrackInList;
         EditTrackOverlay.PreviewRequested += StartTrackPreview;
@@ -283,6 +288,9 @@ public partial class MusicView : UserControl
         if (summary.Downloading > 0) parts.Add("downloading");
         if (summary.Analyzing > 0) parts.Add("analyzing");
         if (summary.Queued > 0) parts.Add($"{summary.Queued} queued");
+        var analysis = BackgroundAnalysisService.Current.GetSnapshot();
+        if (analysis.ActiveTrackId is not null) parts.Add("analyzing track");
+        if (analysis.PendingTrackIds.Count > 0) parts.Add($"{analysis.PendingTrackIds.Count} analysis queued");
         QueueStatusText.IsVisible = parts.Count > 0;
         QueueStatusText.Text = parts.Count > 0 ? $"Queue · {string.Join(" · ", parts)}" : string.Empty;
     }
