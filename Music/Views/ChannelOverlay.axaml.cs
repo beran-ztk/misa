@@ -22,6 +22,11 @@ public partial class ChannelOverlay : UserControl
     private bool _loadingVideos;
     private bool _showAllVideos;
     private bool _processingPastedUrl;
+    private bool _refreshingChannelStates;
+    private readonly Avalonia.Threading.DispatcherTimer _channelStateRefreshTimer = new()
+    {
+        Interval = TimeSpan.FromMilliseconds(750)
+    };
 
     public event Action? CloseRequested;
     public event Action<string>? ToastRequested;
@@ -32,6 +37,11 @@ public partial class ChannelOverlay : UserControl
     public ChannelOverlay()
     {
         InitializeComponent();
+        _channelStateRefreshTimer.Tick += (_, _) =>
+        {
+            _channelStateRefreshTimer.Stop();
+            RefreshChannelStates();
+        };
         SetVideoFilter(showAll: false);
     }
 
@@ -49,6 +59,11 @@ public partial class ChannelOverlay : UserControl
         var summary = ChannelDownloadService.Current.GetSummary();
         StatusText.Text += $" · Ready {summary.Ready} · Failed {summary.Failed} · " +
                            $"Queued {summary.Queued} · Downloading {summary.Downloading} · Skipped {summary.Skipped}";
+        if (IsVisible)
+        {
+            _channelStateRefreshTimer.Stop();
+            _channelStateRefreshTimer.Start();
+        }
     }
 
     public void OnDownloadFinished(int videoId, MusicTrack? track, string? error)
@@ -169,6 +184,8 @@ public partial class ChannelOverlay : UserControl
 
     private void OnChannelSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
+        if (_refreshingChannelStates)
+            return;
         _selectedChannelId = (ChannelList.SelectedItem as ChannelSubscription)?.Id ?? -1;
         SelectedChannelText.Text = (ChannelList.SelectedItem as ChannelSubscription)?.Name ?? "Channels";
         ChannelSidebar.IsVisible = false;
@@ -348,6 +365,28 @@ public partial class ChannelOverlay : UserControl
         StatusText.Text = _channels.Count == 0
             ? "Add a YouTube channel URL to start tracking videos."
             : $"{_channels.Count} channels · {uncheckedCount} unchecked videos";
+    }
+
+    private void RefreshChannelStates()
+    {
+        if (!IsVisible)
+            return;
+
+        var selectedId = _selectedChannelId;
+        var sidebarVisible = ChannelSidebar.IsVisible;
+        _refreshingChannelStates = true;
+        try
+        {
+            _channels = MusicLibraryService.Current.GetChannelSubscriptions();
+            ChannelList.ItemsSource = _channels;
+            ChannelList.SelectedItem = _channels.FirstOrDefault(channel => channel.Id == selectedId)
+                                       ?? _channels.FirstOrDefault();
+        }
+        finally
+        {
+            _refreshingChannelStates = false;
+            ChannelSidebar.IsVisible = sidebarVisible;
+        }
     }
 
     private void UpdateVideoSummary()

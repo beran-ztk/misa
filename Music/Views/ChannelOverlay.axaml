@@ -155,13 +155,15 @@
                                 <DataTemplate x:DataType="models:ChannelSubscription">
                                     <Grid RowDefinitions="Auto,1">
                                         <Border Padding="9,8" CornerRadius="6">
-                                            <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto">
+                                            <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto">
                                                 <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
                                                 <TextBlock Grid.Row="1" FontSize="10.5" Opacity="0.58"
                                                            Text="{Binding UncheckedCount, StringFormat='{}{0} pending'}"/>
-                                                <CheckBox Grid.Row="2" Content="Auto-download" IsChecked="{Binding AutoDownload, Mode=OneWay}"
+                                                <TextBlock Grid.Row="2" FontSize="10.5" Opacity="0.72" Margin="0,2,0,0"
+                                                           Text="{Binding DownloadStateText}" TextWrapping="Wrap"/>
+                                                <CheckBox Grid.Row="3" Content="Auto-download" IsChecked="{Binding AutoDownload, Mode=OneWay}"
                                                           Click="OnAutoDownloadClicked" FontSize="10.5" Margin="0,5,0,0"/>
-                                                <Button Grid.Column="1" Grid.RowSpan="3" Classes="channel-icon" Click="OnDeleteChannelClicked"
+                                                <Button Grid.Column="1" Grid.RowSpan="4" Classes="channel-icon" Click="OnDeleteChannelClicked"
                                                         ToolTip.Tip="Delete channel" Opacity="0.58" VerticalAlignment="Center">
                                                     <Image Source="{SvgImage /Assets/trash.svg}" Width="15" Height="15"/>
                                                 </Button>

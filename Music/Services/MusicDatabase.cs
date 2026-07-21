@@ -977,7 +977,11 @@ public class MusicDatabase
                    COALESCE(SUM(CASE WHEN channel_videos.is_checked = 0 THEN 1 ELSE 0 END), 0),
                    channels.auto_download,
                    COALESCE(SUM(CASE WHEN channel_videos.download_status = 'Queued' THEN 1 ELSE 0 END), 0),
-                   COALESCE(SUM(CASE WHEN channel_videos.download_status = 'Ready' THEN 1 ELSE 0 END), 0)
+                   COALESCE(SUM(CASE WHEN channel_videos.download_status = 'Ready' THEN 1 ELSE 0 END), 0),
+                   COALESCE(SUM(CASE WHEN channel_videos.download_status = 'Downloading' THEN 1 ELSE 0 END), 0),
+                   COALESCE(SUM(CASE WHEN channel_videos.download_status = 'Failed' THEN 1 ELSE 0 END), 0),
+                   COALESCE(SUM(CASE WHEN channel_videos.download_status = 'Skipped' THEN 1 ELSE 0 END), 0),
+                   COALESCE(SUM(CASE WHEN channel_videos.download_status = 'NotQueued' THEN 1 ELSE 0 END), 0)
             FROM channels
             LEFT JOIN channel_videos ON channel_videos.channel_id = channels.id
             WHERE channels.subscribed = 1
@@ -996,7 +1000,11 @@ public class MusicDatabase
                 ReadInt32(reader, 6),
                 ReadInt32(reader, 7) != 0,
                 ReadInt32(reader, 8),
-                ReadInt32(reader, 9)));
+                ReadInt32(reader, 9),
+                ReadInt32(reader, 10),
+                ReadInt32(reader, 11),
+                ReadInt32(reader, 12),
+                ReadInt32(reader, 13)));
         return channels;
     }
 

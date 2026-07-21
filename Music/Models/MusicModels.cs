@@ -78,7 +78,22 @@ public record ChannelSubscription(
     int UncheckedCount,
     bool AutoDownload,
     int QueuedDownloadCount,
-    int ReadyDownloadCount);
+    int ReadyDownloadCount,
+    int DownloadingCount,
+    int FailedDownloadCount,
+    int SkippedDownloadCount,
+    int NotQueuedDownloadCount)
+{
+    public string DownloadStateText => UncheckedCount == 0
+        ? $"✓ All reviewed · {ReadyDownloadCount} ready"
+        : DownloadingCount > 0 || QueuedDownloadCount > 0
+            ? $"↓ Downloading · {ReadyDownloadCount} ready · {DownloadingCount} active · {QueuedDownloadCount} queued"
+            : FailedDownloadCount > 0
+                ? $"! Download stopped · {ReadyDownloadCount} ready · {FailedDownloadCount} failed"
+                : NotQueuedDownloadCount > 0
+                    ? $"○ Auto-download off · {NotQueuedDownloadCount} not downloaded"
+                    : $"✓ Downloads complete · {ReadyDownloadCount} ready · {SkippedDownloadCount} skipped";
+}
 public enum ChannelDownloadStatus { NotQueued, Queued, Downloading, Ready, Failed, Skipped }
 public record ChannelVideo(
     int Id,
