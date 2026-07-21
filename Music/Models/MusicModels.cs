@@ -77,7 +77,6 @@ public record ChannelSubscription(
     int VideoCount,
     int UncheckedCount,
     bool AutoDownload,
-    int MaxDownloadDurationMinutes,
     int QueuedDownloadCount,
     int ReadyDownloadCount);
 public enum ChannelDownloadStatus { NotQueued, Queued, Downloading, Ready, Failed, Skipped }
@@ -95,7 +94,7 @@ public record ChannelVideo(
     string? DownloadError,
     int DownloadAttempts,
     int? TrackId);
-public record ChannelDownloadSummary(int Queued, int Downloading, int Ready, int Failed);
+public record ChannelDownloadSummary(int Queued, int Downloading, int Ready, int Failed, int Skipped);
 public record ChannelRefreshResult(bool Success, int AddedCount, int UpdatedCount, string? Error = null);
 public record ModelGenre(int Id, string Name);
 public record ModelSubgenre(

@@ -59,9 +59,16 @@
             <Grid Grid.Row="1">
                 <Border Background="#A80B0D10" BorderBrush="#263442" BorderThickness="1" CornerRadius="8" Padding="10">
                     <DockPanel LastChildFill="True">
-                        <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="12" Margin="4,0,4,10">
-                            <TextBlock x:Name="VideoSummaryText" FontSize="11" Opacity="0.62" VerticalAlignment="Center"/>
-                            <Border Grid.Column="1" Width="146" Height="30" Background="#111A21" BorderBrush="#435868"
+                        <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="12" Margin="4,0,4,10">
+                            <TextBlock x:Name="VideoSummaryText" FontSize="11" Opacity="0.62"
+                                       TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
+                                <TextBlock Text="Max duration" FontSize="10.5" Opacity="0.68" VerticalAlignment="Center"/>
+                                <TextBox x:Name="GlobalMaxDurationBox" Width="44" Height="28" Padding="5,2" FontSize="10.5"
+                                         LostFocus="OnGlobalMaxDurationLostFocus"/>
+                                <TextBlock Text="min" FontSize="10.5" Opacity="0.68" VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <Border Grid.Column="2" Width="146" Height="30" Background="#111A21" BorderBrush="#435868"
                                     BorderThickness="1" CornerRadius="6" ClipToBounds="True">
                                 <Grid ColumnDefinitions="72,72">
                                     <Border x:Name="VideoFilterSelectionIndicator" Grid.ColumnSpan="2" Width="72"
@@ -84,7 +91,7 @@
                                     </Border>
                                 </Grid>
                             </Border>
-                            <Button Grid.Column="2" Classes="channel-icon" Click="OnRefreshSelectedClicked"
+                            <Button Grid.Column="3" Classes="channel-icon" Click="OnRefreshSelectedClicked"
                                     ToolTip.Tip="Refresh selected channel" Opacity="0.68">
                                 <Image Source="{SvgImage /Assets/reload.svg}" Width="16" Height="16"/>
                             </Button>
@@ -94,8 +101,13 @@
                                 <DataTemplate x:DataType="views:ChannelVideoDisplay">
                                     <Border Background="{Binding Background}" Opacity="{Binding Opacity}" CornerRadius="6" Padding="8,6" Margin="0,1">
                                         <Grid ColumnDefinitions="*,110,Auto,Auto,Auto,Auto" ColumnSpacing="7">
-                                            <TextBlock Text="{Binding Title}" TextDecorations="{Binding TextDecorations}" FontSize="12.5"
-                                                       TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                                            <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Title}" TextDecorations="{Binding TextDecorations}" FontSize="12.5"
+                                                           TextTrimming="CharacterEllipsis"/>
+                                                <TextBlock Text="{Binding DownloadErrorSummary}" IsVisible="{Binding HasDownloadError}"
+                                                           ToolTip.Tip="{Binding DownloadErrorDetails}" FontSize="10.5"
+                                                           Foreground="#E87878" Opacity="0.86" TextWrapping="Wrap" MaxHeight="34"/>
+                                            </StackPanel>
                                             <TextBlock Grid.Column="1" Text="{Binding StatusText}" FontSize="10.5" Opacity="0.62"
                                                        TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
                                             <Button Grid.Column="2" Classes="channel-icon" Click="OnVideoPlayClicked" IsEnabled="{Binding CanPlay}"
@@ -143,20 +155,13 @@
                                 <DataTemplate x:DataType="models:ChannelSubscription">
                                     <Grid RowDefinitions="Auto,1">
                                         <Border Padding="9,8" CornerRadius="6">
-                                            <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto">
+                                            <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto">
                                                 <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
                                                 <TextBlock Grid.Row="1" FontSize="10.5" Opacity="0.58"
                                                            Text="{Binding UncheckedCount, StringFormat='{}{0} pending'}"/>
                                                 <CheckBox Grid.Row="2" Content="Auto-download" IsChecked="{Binding AutoDownload, Mode=OneWay}"
                                                           Click="OnAutoDownloadClicked" FontSize="10.5" Margin="0,5,0,0"/>
-                                                <StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="5" Margin="0,5,0,0">
-                                                    <TextBlock Text="Max" FontSize="10.5" Opacity="0.7" VerticalAlignment="Center"/>
-                                                    <TextBox Width="42" Height="25" Padding="5,2" FontSize="10.5"
-                                                             Text="{Binding MaxDownloadDurationMinutes, Mode=OneWay}"
-                                                             LostFocus="OnMaxDurationLostFocus"/>
-                                                    <TextBlock Text="min" FontSize="10.5" Opacity="0.7" VerticalAlignment="Center"/>
-                                                </StackPanel>
-                                                <Button Grid.Column="1" Grid.RowSpan="4" Classes="channel-icon" Click="OnDeleteChannelClicked"
+                                                <Button Grid.Column="1" Grid.RowSpan="3" Classes="channel-icon" Click="OnDeleteChannelClicked"
                                                         ToolTip.Tip="Delete channel" Opacity="0.58" VerticalAlignment="Center">
                                                     <Image Source="{SvgImage /Assets/trash.svg}" Width="15" Height="15"/>
                                                 </Button>

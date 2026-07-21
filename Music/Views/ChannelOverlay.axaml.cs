@@ -39,6 +39,7 @@ public partial class ChannelOverlay : UserControl
     {
         IsVisible = true;
         ChannelSidebar.IsVisible = false;
+        GlobalMaxDurationBox.Text = MusicLibraryService.Current.GetChannelMaxDownloadDurationMinutes().ToString();
         RefreshChannels();
     }
 
@@ -46,14 +47,15 @@ public partial class ChannelOverlay : UserControl
     {
         UpdateStatus();
         var summary = ChannelDownloadService.Current.GetSummary();
-        if (summary.Downloading > 0 || summary.Queued > 0)
-            StatusText.Text += $" · {summary.Downloading} downloading · {summary.Queued} queued";
+        StatusText.Text += $" · Ready {summary.Ready} · Failed {summary.Failed} · " +
+                           $"Queued {summary.Queued} · Downloading {summary.Downloading} · Skipped {summary.Skipped}";
     }
 
     public void OnDownloadFinished(int videoId, MusicTrack? track, string? error)
     {
         var item = _currentVideos.FirstOrDefault(video => video.Id == videoId);
         item?.SetDownloadResult(track?.Id, error);
+        UpdateVideoSummary();
         UpdateDownloadSummary();
     }
 
@@ -63,7 +65,7 @@ public partial class ChannelOverlay : UserControl
         _channels = MusicLibraryService.Current.GetChannelSubscriptions();
         ChannelList.ItemsSource = _channels;
         ChannelList.SelectedItem = _channels.FirstOrDefault(channel => channel.Id == previousId) ?? _channels.FirstOrDefault();
-        UpdateStatus();
+        UpdateDownloadSummary();
         RefreshVideos();
     }
 
@@ -161,7 +163,7 @@ public partial class ChannelOverlay : UserControl
         }
         finally
         {
-            UpdateStatus();
+            UpdateDownloadSummary();
         }
     }
 
@@ -200,10 +202,7 @@ public partial class ChannelOverlay : UserControl
         {
             _loadingVideos = false;
         }
-        var uncheckedCount = _currentVideos.Count(video => !video.IsChecked);
-        VideoSummaryText.Text = _showAllVideos
-            ? $"{_currentVideos.Count} videos · {uncheckedCount} unchecked"
-            : $"{uncheckedCount} unchecked videos";
+        UpdateVideoSummary();
     }
 
     private void OnVideoCheckClicked(object? sender, RoutedEventArgs e)
@@ -263,23 +262,24 @@ public partial class ChannelOverlay : UserControl
         ChannelSidebar.IsVisible = true;
     }
 
-    private void OnMaxDurationLostFocus(object? sender, RoutedEventArgs e)
+    private void OnGlobalMaxDurationLostFocus(object? sender, RoutedEventArgs e)
     {
-        if (sender is not TextBox textBox || textBox.DataContext is not ChannelSubscription channel)
+        if (sender is not TextBox textBox)
             return;
 
         if (!int.TryParse(textBox.Text, out var minutes) || minutes < 1)
         {
-            textBox.Text = channel.MaxDownloadDurationMinutes.ToString();
+            textBox.Text = MusicLibraryService.Current.GetChannelMaxDownloadDurationMinutes().ToString();
             ToastRequested?.Invoke("Enter a duration of at least 1 minute");
             return;
         }
 
         minutes = Math.Clamp(minutes, 1, 24 * 60);
-        MusicLibraryService.Current.SetChannelMaxDownloadDuration(channel.Id, minutes);
-        RefreshChannels();
-        ChannelSidebar.IsVisible = true;
-        ToastRequested?.Invoke($"Download limit set to {minutes} min");
+        MusicLibraryService.Current.SetGlobalChannelMaxDownloadDuration(minutes);
+        textBox.Text = minutes.ToString();
+        RefreshVideos();
+        UpdateDownloadSummary();
+        ToastRequested?.Invoke($"Global download limit set to {minutes} min");
     }
 
     private void OnSidebarToggleClicked(object? sender, RoutedEventArgs e) =>
@@ -332,13 +332,8 @@ public partial class ChannelOverlay : UserControl
         _channels = MusicLibraryService.Current.GetChannelSubscriptions();
         ChannelList.ItemsSource = _channels;
         ChannelList.SelectedItem = _channels.FirstOrDefault(channel => channel.Id == selectedId);
-        UpdateStatus();
-        if (selectedId >= 0)
-        {
-            var uncheckedCount = _channels.FirstOrDefault(channel => channel.Id == selectedId)?.UncheckedCount ?? 0;
-            var totalCount = _channels.FirstOrDefault(channel => channel.Id == selectedId)?.VideoCount ?? 0;
-            VideoSummaryText.Text = $"{totalCount} videos · {uncheckedCount} unchecked";
-        }
+        UpdateDownloadSummary();
+        if (selectedId >= 0) UpdateVideoSummary();
     }
 
     private void OnCloseClicked(object? sender, RoutedEventArgs e)
@@ -353,6 +348,24 @@ public partial class ChannelOverlay : UserControl
         StatusText.Text = _channels.Count == 0
             ? "Add a YouTube channel URL to start tracking videos."
             : $"{_channels.Count} channels · {uncheckedCount} unchecked videos";
+    }
+
+    private void UpdateVideoSummary()
+    {
+        if (_selectedChannelId < 0)
+        {
+            VideoSummaryText.Text = "No channel selected";
+            return;
+        }
+
+        var uncheckedCount = _currentVideos.Count(video => !video.IsChecked);
+        var ready = _currentVideos.Count(video => video.DownloadStatus == ChannelDownloadStatus.Ready);
+        var failed = _currentVideos.Count(video => video.DownloadStatus == ChannelDownloadStatus.Failed);
+        var queued = _currentVideos.Count(video => video.DownloadStatus == ChannelDownloadStatus.Queued);
+        var downloading = _currentVideos.Count(video => video.DownloadStatus == ChannelDownloadStatus.Downloading);
+        var skipped = _currentVideos.Count(video => video.DownloadStatus == ChannelDownloadStatus.Skipped);
+        VideoSummaryText.Text = $"{_currentVideos.Count} tracks · Ready {ready} · Failed {failed} · " +
+                                $"Queued {queued} · Downloading {downloading} · Skipped {skipped} · {uncheckedCount} unchecked";
     }
 
 }
@@ -371,6 +384,10 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
     private bool _canPlay;
     private bool _canReview;
     private double _actionOpacity;
+    private ChannelDownloadStatus _downloadStatus;
+    private string _downloadErrorSummary = string.Empty;
+    private string _downloadErrorDetails = string.Empty;
+    private bool _hasDownloadError;
 
     public ChannelVideoDisplay(ChannelVideo video)
     {
@@ -418,6 +435,26 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
     {
         get => _actionOpacity;
         private set => SetField(ref _actionOpacity, value);
+    }
+    public ChannelDownloadStatus DownloadStatus
+    {
+        get => _downloadStatus;
+        private set => SetField(ref _downloadStatus, value);
+    }
+    public string DownloadErrorSummary
+    {
+        get => _downloadErrorSummary;
+        private set => SetField(ref _downloadErrorSummary, value);
+    }
+    public string DownloadErrorDetails
+    {
+        get => _downloadErrorDetails;
+        private set => SetField(ref _downloadErrorDetails, value);
+    }
+    public bool HasDownloadError
+    {
+        get => _hasDownloadError;
+        private set => SetField(ref _hasDownloadError, value);
     }
     public double Opacity
     {
@@ -474,6 +511,7 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
 
     private void SetDownloadState(ChannelDownloadStatus status, string? error)
     {
+        DownloadStatus = status;
         StatusText = status switch
         {
             ChannelDownloadStatus.Ready => "Ready",
@@ -483,9 +521,22 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
             ChannelDownloadStatus.Skipped => "Skipped · duration filter",
             _ => "Auto-download off"
         };
+        SetDownloadError(status == ChannelDownloadStatus.Failed ? error : null);
         CanPlay = TrackId is not null;
         CanReview = !IsChecked && TrackId is not null;
         ActionOpacity = TrackId is not null && !IsChecked ? 0.78 : 0.3;
+    }
+
+    private void SetDownloadError(string? error)
+    {
+        var details = error?.Trim() ?? string.Empty;
+        DownloadErrorDetails = details.Length > 4000 ? details[..4000] + "…" : details;
+        var lines = details.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var summary = lines.LastOrDefault(line => line.Contains("ERROR", StringComparison.OrdinalIgnoreCase))
+                      ?? lines.LastOrDefault()
+                      ?? string.Empty;
+        DownloadErrorSummary = summary.Length > 260 ? summary[..260] + "…" : summary;
+        HasDownloadError = DownloadErrorSummary.Length > 0;
     }
 
     private void SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)

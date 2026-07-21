@@ -18,8 +18,13 @@ public class MusicLibraryService
     private readonly TrackDownloadService _downloader = new();
     private readonly TrackAnalysisService _analysis = new();
     private readonly Dictionary<int, IReadOnlyList<ExperimentalAnalysisModel>> _experimentalAnalysis = [];
+    private int _channelMaxDownloadDurationMinutes = 12;
 
-    public void Initialize() => _db.Initialize();
+    public void Initialize()
+    {
+        _channelMaxDownloadDurationMinutes = AppSettingsStore.Load().ChannelDownloadMaxDurationMinutes;
+        _db.Initialize();
+    }
 
     // --- Tracks ---
 
@@ -166,16 +171,23 @@ public class MusicLibraryService
     public List<ChannelVideo> GetChannelVideos(int channelId) => _db.GetChannelVideos(channelId);
     public void SetChannelAutoDownload(int channelId, bool enabled)
     {
-        _db.SetChannelAutoDownload(channelId, enabled);
+        _db.SetChannelAutoDownload(
+            channelId,
+            enabled,
+            _channelMaxDownloadDurationMinutes);
         ChannelDownloadService.Current.NotifyQueueChanged();
     }
-    public void SetChannelMaxDownloadDuration(int channelId, int maxDurationMinutes)
+    public int GetChannelMaxDownloadDurationMinutes() => _channelMaxDownloadDurationMinutes;
+    public void SetGlobalChannelMaxDownloadDuration(int maxDurationMinutes)
     {
-        _db.SetChannelMaxDownloadDuration(channelId, maxDurationMinutes);
+        maxDurationMinutes = Math.Clamp(maxDurationMinutes, 1, 24 * 60);
+        _channelMaxDownloadDurationMinutes = maxDurationMinutes;
+        AppSettingsStore.SaveChannelDownloadMaxDurationMinutes(maxDurationMinutes);
+        _db.SetGlobalChannelMaxDownloadDuration(maxDurationMinutes);
         ChannelDownloadService.Current.NotifyQueueChanged();
     }
-    public void RecoverChannelDownloads() => _db.RecoverChannelDownloads();
-    public ChannelVideo? ClaimNextChannelDownload() => _db.ClaimNextChannelDownload();
+    public void RecoverChannelDownloads() => _db.RecoverChannelDownloads(_channelMaxDownloadDurationMinutes);
+    public ChannelVideo? ClaimNextChannelDownload() => _db.ClaimNextChannelDownload(_channelMaxDownloadDurationMinutes);
     public void CompleteChannelDownload(int videoId, bool success, string? error) =>
         _db.CompleteChannelDownload(videoId, success, error);
     public ChannelDownloadSummary GetChannelDownloadSummary() => _db.GetChannelDownloadSummary();

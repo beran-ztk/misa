@@ -63,8 +63,7 @@ public class MusicDatabase
                 updated_at          TEXT NULL,
                 last_checked_at     TEXT NULL,
                 video_count         INTEGER NOT NULL DEFAULT 0,
-                auto_download       INTEGER NOT NULL DEFAULT 1,
-                max_download_duration_seconds INTEGER NOT NULL DEFAULT 720
+                auto_download       INTEGER NOT NULL DEFAULT 1
             );
 
             CREATE TABLE channel_videos (
@@ -385,7 +384,6 @@ public class MusicDatabase
         EnsureColumn(conn, "channels", "last_checked_at", "TEXT NULL");
         EnsureColumn(conn, "channels", "video_count", "INTEGER NOT NULL DEFAULT 0");
         EnsureColumn(conn, "channels", "auto_download", "INTEGER NOT NULL DEFAULT 1");
-        EnsureColumn(conn, "channels", "max_download_duration_seconds", "INTEGER NOT NULL DEFAULT 720");
 
         using var cmd = conn.CreateCommand();
         cmd.CommandText = @"
@@ -884,6 +882,7 @@ public class MusicDatabase
         using var conn = Open();
         using var tx = conn.BeginTransaction();
         var now = DateTime.UtcNow.ToString("O");
+        var maxDurationSeconds = AppSettingsStore.Load().ChannelDownloadMaxDurationMinutes * 60;
         var channelId = FindChannelId(conn, tx, snapshot.ChannelId, snapshot.SourceUrl);
 
         if (channelId is null)
@@ -932,8 +931,7 @@ public class MusicDatabase
                     ($channelId, $videoId, $canonicalUrl, $title, $duration, $uploadedAt, $now, $now, 0,
                      CASE
                          WHEN EXISTS (SELECT 1 FROM tracks WHERE tracks.canonical_url = $canonicalUrl) THEN 'Ready'
-                         WHEN $duration IS NOT NULL AND $duration >
-                              (SELECT max_download_duration_seconds FROM channels WHERE id = $channelId) THEN 'Skipped'
+                         WHEN $duration IS NOT NULL AND $duration > $maxDuration THEN 'Skipped'
                          WHEN EXISTS (SELECT 1 FROM channels WHERE id = $channelId AND auto_download = 1) THEN 'Queued'
                          ELSE 'NotQueued'
                      END)
@@ -947,8 +945,7 @@ public class MusicDatabase
                     download_status = CASE
                         WHEN EXISTS (SELECT 1 FROM tracks WHERE tracks.canonical_url = excluded.canonical_url) THEN 'Ready'
                         WHEN channel_videos.is_checked = 0 AND excluded.duration_seconds IS NOT NULL
-                             AND excluded.duration_seconds > (SELECT max_download_duration_seconds FROM channels
-                                                              WHERE id = excluded.channel_id) THEN 'Skipped'
+                             AND excluded.duration_seconds > $maxDuration THEN 'Skipped'
                         WHEN channel_videos.download_status IN ('NotQueued', 'Skipped')
                              AND EXISTS (SELECT 1 FROM channels WHERE id = excluded.channel_id AND auto_download = 1)
                              AND channel_videos.is_checked = 0 THEN 'Queued'
@@ -959,6 +956,7 @@ public class MusicDatabase
                 ("$canonicalUrl", video.CanonicalUrl),
                 ("$title", video.Title),
                 ("$duration", video.DurationSeconds),
+                ("$maxDuration", maxDurationSeconds),
                 ("$uploadedAt", video.UploadedAt),
                 ("$now", now));
             if (existed) updated++;
@@ -978,7 +976,6 @@ public class MusicDatabase
                    channels.last_checked_at, COALESCE(COUNT(channel_videos.id), 0),
                    COALESCE(SUM(CASE WHEN channel_videos.is_checked = 0 THEN 1 ELSE 0 END), 0),
                    channels.auto_download,
-                   CAST(channels.max_download_duration_seconds / 60 AS INTEGER),
                    COALESCE(SUM(CASE WHEN channel_videos.download_status = 'Queued' THEN 1 ELSE 0 END), 0),
                    COALESCE(SUM(CASE WHEN channel_videos.download_status = 'Ready' THEN 1 ELSE 0 END), 0)
             FROM channels
@@ -999,8 +996,7 @@ public class MusicDatabase
                 ReadInt32(reader, 6),
                 ReadInt32(reader, 7) != 0,
                 ReadInt32(reader, 8),
-                ReadInt32(reader, 9),
-                ReadInt32(reader, 10)));
+                ReadInt32(reader, 9)));
         return channels;
     }
 
@@ -1026,7 +1022,7 @@ public class MusicDatabase
         return videos;
     }
 
-    public void SetChannelAutoDownload(int channelId, bool enabled)
+    public void SetChannelAutoDownload(int channelId, bool enabled, int maxDurationMinutes)
     {
         using var conn = Open();
         using var tx = conn.BeginTransaction();
@@ -1037,8 +1033,7 @@ public class MusicDatabase
         ExecuteInsert(conn, tx, @"
             UPDATE channel_videos
             SET download_status = CASE
-                    WHEN duration_seconds IS NOT NULL AND duration_seconds >
-                         (SELECT max_download_duration_seconds FROM channels WHERE id = $id) THEN 'Skipped'
+                    WHEN duration_seconds IS NOT NULL AND duration_seconds > $maxDuration THEN 'Skipped'
                     WHEN $enabled = 1 THEN 'Queued'
                     ELSE 'NotQueued'
                 END,
@@ -1048,39 +1043,36 @@ public class MusicDatabase
             WHERE channel_id = $id AND is_checked = 0
               AND download_status IN ('Queued', 'Failed', 'NotQueued', 'Skipped')
               AND NOT EXISTS (SELECT 1 FROM tracks WHERE tracks.canonical_url = channel_videos.canonical_url)",
-            ("$id", channelId), ("$enabled", enabled ? 1 : 0), ("$now", now));
+            ("$id", channelId), ("$enabled", enabled ? 1 : 0),
+            ("$maxDuration", Math.Clamp(maxDurationMinutes, 1, 24 * 60) * 60), ("$now", now));
         tx.Commit();
     }
 
-    public void SetChannelMaxDownloadDuration(int channelId, int maxDurationMinutes)
+    public void SetGlobalChannelMaxDownloadDuration(int maxDurationMinutes)
     {
         var maxDurationSeconds = Math.Clamp(maxDurationMinutes, 1, 24 * 60) * 60;
         using var conn = Open();
         using var tx = conn.BeginTransaction();
         var now = DateTime.UtcNow.ToString("O");
         ExecuteInsert(conn, tx, @"
-            UPDATE channels
-            SET max_download_duration_seconds = $maxDuration, updated_at = $now
-            WHERE id = $id",
-            ("$id", channelId), ("$maxDuration", maxDurationSeconds), ("$now", now));
-        ExecuteInsert(conn, tx, @"
             UPDATE channel_videos
             SET download_status = CASE
                     WHEN duration_seconds IS NOT NULL AND duration_seconds > $maxDuration THEN 'Skipped'
-                    WHEN EXISTS (SELECT 1 FROM channels WHERE id = $id AND auto_download = 1) THEN 'Queued'
+                    WHEN EXISTS (SELECT 1 FROM channels
+                                 WHERE channels.id = channel_videos.channel_id AND auto_download = 1) THEN 'Queued'
                     ELSE 'NotQueued'
                 END,
                 download_error = NULL,
                 download_attempts = 0,
                 updated_at = $now
-            WHERE channel_id = $id AND is_checked = 0
+            WHERE is_checked = 0
               AND download_status IN ('Queued', 'Failed', 'NotQueued', 'Skipped')
               AND NOT EXISTS (SELECT 1 FROM tracks WHERE tracks.canonical_url = channel_videos.canonical_url)",
-            ("$id", channelId), ("$maxDuration", maxDurationSeconds), ("$now", now));
+            ("$maxDuration", maxDurationSeconds), ("$now", now));
         tx.Commit();
     }
 
-    public void RecoverChannelDownloads()
+    public void RecoverChannelDownloads(int maxDurationMinutes)
     {
         using var conn = Open();
         ExecuteNonQuery(conn, @"
@@ -1094,21 +1086,30 @@ public class MusicDatabase
             UPDATE channel_videos
             SET download_status = 'Skipped', download_error = NULL, updated_at = $now
             WHERE is_checked = 0 AND duration_seconds IS NOT NULL
-              AND duration_seconds > (SELECT max_download_duration_seconds FROM channels
-                                      WHERE channels.id = channel_videos.channel_id)
+              AND duration_seconds > $maxDuration
+              AND NOT EXISTS (SELECT 1 FROM tracks WHERE tracks.canonical_url = channel_videos.canonical_url);
+            UPDATE channel_videos
+            SET download_status = 'Queued', download_error = NULL, updated_at = $now
+            WHERE download_status = 'Skipped' AND is_checked = 0
+              AND (duration_seconds IS NULL OR duration_seconds <= $maxDuration)
+              AND EXISTS (SELECT 1 FROM channels
+                          WHERE channels.id = channel_videos.channel_id AND auto_download = 1)
               AND NOT EXISTS (SELECT 1 FROM tracks WHERE tracks.canonical_url = channel_videos.canonical_url);
             UPDATE channel_videos
             SET download_status = 'Queued', download_error = NULL, updated_at = $now
             WHERE download_status = 'Downloading' AND is_checked = 0
+              AND (duration_seconds IS NULL OR duration_seconds <= $maxDuration)
               AND EXISTS (SELECT 1 FROM channels WHERE channels.id = channel_videos.channel_id AND auto_download = 1);
             UPDATE channel_videos
             SET download_status = 'Queued', download_error = NULL, updated_at = $now
             WHERE download_status = 'Failed' AND download_attempts < 3 AND is_checked = 0
+              AND (duration_seconds IS NULL OR duration_seconds <= $maxDuration)
               AND EXISTS (SELECT 1 FROM channels WHERE channels.id = channel_videos.channel_id AND auto_download = 1);",
+            ("$maxDuration", Math.Clamp(maxDurationMinutes, 1, 24 * 60) * 60),
             ("$now", DateTime.UtcNow.ToString("O")));
     }
 
-    public ChannelVideo? ClaimNextChannelDownload()
+    public ChannelVideo? ClaimNextChannelDownload(int maxDurationMinutes)
     {
         using var conn = Open();
         using var tx = conn.BeginTransaction();
@@ -1123,8 +1124,9 @@ public class MusicDatabase
             LEFT JOIN tracks ON tracks.canonical_url = videos.canonical_url
             WHERE videos.download_status = 'Queued' AND videos.is_checked = 0 AND channels.auto_download = 1
               AND (videos.duration_seconds IS NULL
-                   OR videos.duration_seconds <= channels.max_download_duration_seconds)
+                   OR videos.duration_seconds <= $maxDuration)
             ORDER BY videos.discovered_at, videos.id LIMIT 1";
+        select.Parameters.AddWithValue("$maxDuration", Math.Clamp(maxDurationMinutes, 1, 24 * 60) * 60);
         using var reader = select.ExecuteReader();
         if (!reader.Read())
         {
@@ -1179,7 +1181,8 @@ public class MusicDatabase
             counts.GetValueOrDefault("Queued"),
             counts.GetValueOrDefault("Downloading"),
             counts.GetValueOrDefault("Ready"),
-            counts.GetValueOrDefault("Failed"));
+            counts.GetValueOrDefault("Failed"),
+            counts.GetValueOrDefault("Skipped"));
     }
 
     private static ChannelVideo ReadChannelVideo(SqliteDataReader reader) => new(

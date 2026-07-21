@@ -24,6 +24,8 @@ public static class AppSettingsStore
             var json = File.ReadAllText(Values.AppSettingsPath);
             var settings = JsonSerializer.Deserialize<AppSettings>(json, JsonOptions) ?? new AppSettings();
             settings.Volume = Math.Clamp(settings.Volume, 0f, 1f);
+            settings.ChannelDownloadMaxDurationMinutes = Math.Clamp(
+                settings.ChannelDownloadMaxDurationMinutes, 1, 24 * 60);
             return settings;
         }
         catch
@@ -46,6 +48,13 @@ public static class AppSettingsStore
         Save(settings);
     }
 
+    public static void SaveChannelDownloadMaxDurationMinutes(int minutes)
+    {
+        var settings = Load();
+        settings.ChannelDownloadMaxDurationMinutes = Math.Clamp(minutes, 1, 24 * 60);
+        Save(settings);
+    }
+
     private static void Save(AppSettings settings)
     {
         var directory = Path.GetDirectoryName(Values.AppSettingsPath);
@@ -61,4 +70,5 @@ public sealed class AppSettings
 {
     public float Volume { get; set; } = 1f;
     public string MusicAnalysisServerUrl { get; set; } = string.Empty;
+    public int ChannelDownloadMaxDurationMinutes { get; set; } = 12;
 }
