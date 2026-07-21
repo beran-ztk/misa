@@ -53,6 +53,7 @@ public partial class EditTrackOverlay : UserControl
     public event Action<int>? TrackSaved;
     public event Action<MusicTrack>? PreviewRequested;
     public event Action? PreviewClosed;
+    public event Action<string>? ToastRequested;
 
     public EditTrackOverlay()
     {
@@ -157,6 +158,8 @@ public partial class EditTrackOverlay : UserControl
         ChannelDisplayText.Text = DisplayValue(track.ChannelName);
         YouTubeUrlDisplayText.Text = DisplayValue(track.CanonicalUrl);
         ChannelUrlDisplayText.Text = DisplayValue(track.ChannelUrl);
+        CopyYouTubeUrlButton.IsEnabled = !string.IsNullOrWhiteSpace(track.CanonicalUrl);
+        CopyChannelUrlButton.IsEnabled = !string.IsNullOrWhiteSpace(track.ChannelUrl);
         ToolTip.SetTip(TitleDisplayText, TitleBox.Text);
         ToolTip.SetTip(ChannelDisplayText, track.ChannelName);
         ToolTip.SetTip(YouTubeUrlDisplayText, track.CanonicalUrl);
@@ -165,6 +168,31 @@ public partial class EditTrackOverlay : UserControl
 
     private static string DisplayValue(string? value) =>
         string.IsNullOrWhiteSpace(value) ? "—" : value.Trim();
+
+    private async void OnCopyYouTubeUrlClicked(object? sender, RoutedEventArgs e) =>
+        await CopyUrlAsync(_track?.CanonicalUrl, "YouTube URL");
+
+    private async void OnCopyChannelUrlClicked(object? sender, RoutedEventArgs e) =>
+        await CopyUrlAsync(_track?.ChannelUrl, "Channel URL");
+
+    private async System.Threading.Tasks.Task CopyUrlAsync(string? url, string label)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+        {
+            ToastRequested?.Invoke($"No {label.ToLowerInvariant()} available");
+            return;
+        }
+
+        var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
+        if (clipboard is null)
+        {
+            ToastRequested?.Invoke("Clipboard is not available");
+            return;
+        }
+
+        await clipboard.SetTextAsync(url.Trim());
+        ToastRequested?.Invoke($"{label} copied");
+    }
 
     private void RebuildTagChips(IReadOnlySet<int> selectedTagIds)
     {

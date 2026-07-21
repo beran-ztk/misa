@@ -178,23 +178,33 @@
                                     </Button>
                                 </Grid>
 
-                                <Grid ColumnDefinitions="104,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="5">
+                                <Grid ColumnDefinitions="104,*,Auto" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="5" ColumnSpacing="6">
                                     <TextBlock Grid.Row="0" Text="Title" FontSize="10.5" Opacity="0.58" VerticalAlignment="Center" />
-                                    <TextBlock x:Name="TitleDisplayText" Grid.Row="0" Grid.Column="1" FontSize="12.5" FontWeight="SemiBold"
+                                    <TextBlock x:Name="TitleDisplayText" Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" FontSize="12.5" FontWeight="SemiBold"
                                                VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-                                    <TextBox x:Name="TitleBox" Grid.Row="0" Grid.Column="1" IsVisible="False" MinHeight="28" />
+                                    <TextBox x:Name="TitleBox" Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" IsVisible="False" MinHeight="28" />
 
                                     <TextBlock Grid.Row="1" Text="Channel" FontSize="10.5" Opacity="0.58" VerticalAlignment="Center" />
-                                    <TextBlock x:Name="ChannelDisplayText" Grid.Row="1" Grid.Column="1" FontSize="11.5"
+                                    <TextBlock x:Name="ChannelDisplayText" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" FontSize="11.5"
                                                VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
 
                                     <TextBlock Grid.Row="2" Text="YouTube URL" FontSize="10.5" Opacity="0.58" VerticalAlignment="Center" />
                                     <TextBlock x:Name="YouTubeUrlDisplayText" Grid.Row="2" Grid.Column="1" FontSize="10.5" Foreground="#8DCDEC"
                                                VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                    <Button x:Name="CopyYouTubeUrlButton" Grid.Row="2" Grid.Column="2"
+                                            Click="OnCopyYouTubeUrlClicked" ToolTip.Tip="Copy YouTube URL"
+                                            Width="26" Height="24" Padding="0" Background="Transparent" BorderThickness="0" Opacity="0.76">
+                                        <Image Source="{SvgImage /Assets/copy.svg}" Width="13" Height="13" />
+                                    </Button>
 
                                     <TextBlock Grid.Row="3" Text="Channel URL" FontSize="10.5" Opacity="0.58" VerticalAlignment="Center" />
                                     <TextBlock x:Name="ChannelUrlDisplayText" Grid.Row="3" Grid.Column="1" FontSize="10.5" Foreground="#8DCDEC"
                                                VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                    <Button x:Name="CopyChannelUrlButton" Grid.Row="3" Grid.Column="2"
+                                            Click="OnCopyChannelUrlClicked" ToolTip.Tip="Copy channel URL"
+                                            Width="26" Height="24" Padding="0" Background="Transparent" BorderThickness="0" Opacity="0.76">
+                                        <Image Source="{SvgImage /Assets/copy.svg}" Width="13" Height="13" />
+                                    </Button>
                                 </Grid>
                             </StackPanel>
                         </Border>

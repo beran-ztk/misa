@@ -222,6 +222,7 @@ public partial class MusicView : UserControl
         EditTrackOverlay.TrackSaved += UpdateTrackInList;
         EditTrackOverlay.PreviewRequested += StartTrackPreview;
         EditTrackOverlay.PreviewClosed += StopTrackPreview;
+        EditTrackOverlay.ToastRequested += ShowToast;
         SettingsOverlay.ToastRequested += ShowToast;
         SettingsOverlay.LibraryMetadataChanged += RefreshLibraryPresentation;
         SettingsOverlay.ExportRequested += ExportPortableLibrary;
