@@ -167,6 +167,7 @@ public partial class MusicView : UserControl
             ShowToast($"Database backup warning: {backupResult.Errors[0]}");
         ImportQueueService.Current.Initialize();
         BackgroundAnalysisService.Current.Initialize();
+        ChannelDownloadService.Current.Initialize();
         UpdateQueueStatus();
         UpdateImportBounds();
 
@@ -186,8 +187,19 @@ public partial class MusicView : UserControl
             ShowToast(warning ?? "Track downloaded; analysis queued");
         };
         AddTrackOverlay.CloseRequested += () => AddTrackOverlay.IsVisible = false;
-        ChannelOverlay.CloseRequested += () => ChannelOverlay.IsVisible = false;
+        ChannelOverlay.CloseRequested += () =>
+        {
+            StopTrackPreview();
+            ChannelOverlay.IsVisible = false;
+        };
         ChannelOverlay.ToastRequested += ShowToast;
+        ChannelOverlay.PreviewRequested += StartTrackPreview;
+        ChannelOverlay.PreviewClosed += StopTrackPreview;
+        ChannelOverlay.TrackChanged += trackId =>
+        {
+            UpdateTrackInList(trackId);
+            UpdateQueueStatus();
+        };
         ImportOverlay.QueueSubmitted += count =>
         {
             ShowToast($"{count} track{(count == 1 ? string.Empty : "s")} added to the import queue");
@@ -218,6 +230,21 @@ public partial class MusicView : UserControl
                     : error.Contains("cancelled", StringComparison.OrdinalIgnoreCase)
                         ? $"Analysis cancelled: {track.Title}"
                         : $"Analysis failed for {track.Title}: {error}");
+            });
+        ChannelDownloadService.Current.QueueChanged += () => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            UpdateQueueStatus();
+            if (ChannelOverlay.IsVisible) ChannelOverlay.UpdateDownloadSummary();
+        });
+        ChannelDownloadService.Current.DownloadFinished += (video, track, error) =>
+            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            {
+                UpdateQueueStatus();
+                ChannelOverlay.OnDownloadFinished(video.Id, track, error);
+                if (track is not null)
+                {
+                    MarkLibraryRefreshPending();
+                }
             });
         EditTrackOverlay.TrackSaved += UpdateTrackInList;
         EditTrackOverlay.PreviewRequested += StartTrackPreview;
@@ -295,6 +322,11 @@ public partial class MusicView : UserControl
             parts.Add($"{analysis.PendingTrackIds.Count} analysis waiting for server setup");
         else if (analysis.PendingTrackIds.Count > 0)
             parts.Add($"{analysis.PendingTrackIds.Count} analysis queued");
+        var channelDownloads = ChannelDownloadService.Current.GetSummary();
+        if (channelDownloads.Downloading > 0)
+            parts.Add($"{channelDownloads.Downloading} channel downloads");
+        if (channelDownloads.Queued > 0)
+            parts.Add($"{channelDownloads.Queued} channel downloads queued");
         QueueStatusText.IsVisible = parts.Count > 0;
         QueueStatusText.Text = parts.Count > 0 ? $"Queue · {string.Join(" · ", parts)}" : string.Empty;
     }
@@ -386,9 +418,7 @@ public partial class MusicView : UserControl
         var previousItems = _allItems.ToDictionary(item => item.Track.Id);
 
         var tracks = MusicLibraryService.Current.GetTracks();
-        var unanalyzedTrackIds = MusicLibraryService.Current.GetUnanalyzedTracks()
-            .Select(track => track.Id)
-            .ToHashSet();
+        var unanalyzedTrackIds = MusicLibraryService.Current.GetTrackIdsMissingAnalysis();
         _allTrackStyleIds = MusicLibraryService.Current.GetAllTrackStyleIds();
         _allTrackGenreIds = MusicLibraryService.Current.GetAllTrackGenreIds();
         _allTrackTagIds = MusicLibraryService.Current.GetAllTrackTagIds();
@@ -510,8 +540,7 @@ public partial class MusicView : UserControl
         _allTrackGenreIds[trackId] = MusicLibraryService.Current.GetTrackGenreIds(trackId);
         _allTrackTagIds[trackId] = MusicLibraryService.Current.GetTrackTagIds(trackId);
 
-        var needsAnalysis = MusicLibraryService.Current.GetUnanalyzedTracks()
-            .Any(track => track.Id == trackId);
+        var needsAnalysis = MusicLibraryService.Current.GetTrackAudioAnalysis(trackId) is null;
         var updatedItem = CreateTrackDisplayItem(updatedTrack, needsAnalysis);
         if (previous?.Thumbnail is not null)
         {
@@ -654,6 +683,11 @@ public partial class MusicView : UserControl
             selVisibility,
             groups,
             SearchBox.Text);
+
+        if (selRatingIds.Count == 0
+            && Values.Ratings.FirstOrDefault(rating =>
+                string.Equals(rating.Name, "Skip", StringComparison.OrdinalIgnoreCase))?.Id is int skipRatingId)
+            filtered = filtered.Where(track => track.RatingId != skipRatingId).ToList();
 
         _filteredItems = filtered
             .Where(t => itemById.ContainsKey(t.Id))

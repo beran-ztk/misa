@@ -164,8 +164,53 @@ public class MusicLibraryService
 
     public List<ChannelSubscription> GetChannelSubscriptions() => _db.GetChannelSubscriptions();
     public List<ChannelVideo> GetChannelVideos(int channelId) => _db.GetChannelVideos(channelId);
-    public void SetChannelVideoChecked(int videoId, bool isChecked) => _db.SetChannelVideoChecked(videoId, isChecked);
+    public void SetChannelAutoDownload(int channelId, bool enabled)
+    {
+        _db.SetChannelAutoDownload(channelId, enabled);
+        ChannelDownloadService.Current.NotifyQueueChanged();
+    }
+    public void RecoverChannelDownloads() => _db.RecoverChannelDownloads();
+    public ChannelVideo? ClaimNextChannelDownload() => _db.ClaimNextChannelDownload();
+    public void CompleteChannelDownload(int videoId, bool success, string? error) =>
+        _db.CompleteChannelDownload(videoId, success, error);
+    public ChannelDownloadSummary GetChannelDownloadSummary() => _db.GetChannelDownloadSummary();
     public bool DeleteChannel(int channelId) => _db.DeleteChannel(channelId);
+
+    public async Task<(MusicTrack? Track, string? Error)> PreloadChannelVideoAsync(ChannelVideo video)
+    {
+        var stopwatch = Stopwatch.StartNew();
+        var download = await _downloader.DownloadChannelTrackAsync(video.CanonicalUrl, video.VideoId);
+        if (!download.Success || download.FilePath is null)
+            return (null, string.IsNullOrWhiteSpace(download.ErrorOutput)
+                ? "Channel audio download failed."
+                : download.ErrorOutput.Trim());
+
+        var duration = video.DurationSeconds ?? await _downloader.GetDurationAsync(download.FilePath);
+        var trackId = _db.InsertPreloadedChannelTrack(
+            video,
+            Path.GetFileName(download.FilePath),
+            duration,
+            new FileInfo(download.FilePath).Length,
+            (int)stopwatch.ElapsedMilliseconds);
+        return (GetTrackById(trackId), null);
+    }
+
+    public MusicTrack? ConfirmChannelVideo(int videoId)
+    {
+        var trackId = _db.CompleteChannelVideoReview(videoId, skip: false);
+        if (trackId is not int id)
+            return null;
+        BackgroundAnalysisService.Current.EnqueueTrack(id);
+        return GetTrackById(id);
+    }
+
+    public MusicTrack? SkipChannelVideo(int videoId)
+    {
+        var trackId = _db.CompleteChannelVideoReview(videoId, skip: true);
+        return trackId is int id ? GetTrackById(id) : null;
+    }
+
+    public HashSet<int> GetTrackIdsMissingAnalysis() => _db.GetTrackIdsMissingAnalysis();
 
     public async Task<ChannelRefreshResult> AddOrRefreshChannelAsync(
         string rawUrl,
@@ -183,7 +228,9 @@ public class MusicLibraryService
             return new ChannelRefreshResult(false, 0, 0, "Channel was read, but no videos were returned.");
 
         progress?.Report($"Saving {snapshot.Videos.Count} videos…");
-        return _db.SaveChannelSnapshot(snapshot);
+        var result = _db.SaveChannelSnapshot(snapshot);
+        ChannelDownloadService.Current.NotifyQueueChanged();
+        return result;
     }
 
     public async Task<ChannelRefreshResult> RefreshChannelAsync(

@@ -34,6 +34,32 @@ public class TrackDownloadService
         return (result.ExitCode == 0, result.Error);
     }
 
+    public async Task<(bool Success, string ErrorOutput, string? FilePath)> DownloadChannelTrackAsync(
+        string url,
+        string videoId,
+        CancellationToken cancellationToken = default)
+    {
+        Directory.CreateDirectory(Values.TracksDirectory);
+        var outputTemplate = Path.Combine(Values.TracksDirectory, $"channel-{videoId}.%(ext)s");
+        var result = await RunProcessAsync(
+            Path.Combine(Values.ToolsDirectory, "yt-dlp.exe"),
+            YtDlpArgs(
+                "--js-runtimes", "node",
+                "--no-playlist",
+                "-f", "bestaudio[ext=m4a]/bestaudio/best[height<=360]/18",
+                "-x",
+                "--audio-format", "m4a",
+                "--embed-thumbnail",
+                "--ffmpeg-location", Values.ToolsDirectory,
+                "-o", outputTemplate,
+                url),
+            cancellationToken);
+
+        var filePath = Path.Combine(Values.TracksDirectory, $"channel-{videoId}.m4a");
+        return (result.ExitCode == 0 && File.Exists(filePath), result.Error,
+            File.Exists(filePath) ? filePath : null);
+    }
+
     public async Task<int?> GetDurationAsync(string filePath)
     {
         try

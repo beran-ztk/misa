@@ -25,6 +25,9 @@ public partial class ChannelOverlay : UserControl
 
     public event Action? CloseRequested;
     public event Action<string>? ToastRequested;
+    public event Action<MusicTrack>? PreviewRequested;
+    public event Action? PreviewClosed;
+    public event Action<int>? TrackChanged;
 
     public ChannelOverlay()
     {
@@ -35,7 +38,23 @@ public partial class ChannelOverlay : UserControl
     public void Open()
     {
         IsVisible = true;
+        ChannelSidebar.IsVisible = false;
         RefreshChannels();
+    }
+
+    public void UpdateDownloadSummary()
+    {
+        UpdateStatus();
+        var summary = ChannelDownloadService.Current.GetSummary();
+        if (summary.Downloading > 0 || summary.Queued > 0)
+            StatusText.Text += $" · {summary.Downloading} downloading · {summary.Queued} queued";
+    }
+
+    public void OnDownloadFinished(int videoId, MusicTrack? track, string? error)
+    {
+        var item = _currentVideos.FirstOrDefault(video => video.Id == videoId);
+        item?.SetDownloadResult(track?.Id, error);
+        UpdateDownloadSummary();
     }
 
     public void RefreshChannels()
@@ -149,6 +168,9 @@ public partial class ChannelOverlay : UserControl
     private void OnChannelSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         _selectedChannelId = (ChannelList.SelectedItem as ChannelSubscription)?.Id ?? -1;
+        SelectedChannelText.Text = (ChannelList.SelectedItem as ChannelSubscription)?.Name ?? "Channels";
+        ChannelSidebar.IsVisible = false;
+        PreviewClosed?.Invoke();
         RefreshVideos();
     }
 
@@ -188,15 +210,60 @@ public partial class ChannelOverlay : UserControl
     {
         if (sender is not Button button || button.DataContext is not ChannelVideoDisplay item)
             return;
-        if (_loadingVideos)
+        if (_loadingVideos || !item.CanReview)
             return;
 
-        var isChecked = !item.IsChecked;
-        MusicLibraryService.Current.SetChannelVideoChecked(item.Id, isChecked);
-        item.IsChecked = isChecked;
+        var track = MusicLibraryService.Current.ConfirmChannelVideo(item.Id);
+        if (track is null)
+        {
+            ToastRequested?.Invoke("Audio is not downloaded yet");
+            return;
+        }
+        item.IsChecked = true;
+        TrackChanged?.Invoke(track.Id);
         RefreshChannelSummaries();
         RefreshVideos();
+        ToastRequested?.Invoke("Accepted · analysis queued");
     }
+
+    private void OnVideoSkipClicked(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Button button || button.DataContext is not ChannelVideoDisplay item || !item.CanReview)
+            return;
+
+        var track = MusicLibraryService.Current.SkipChannelVideo(item.Id);
+        if (track is null)
+        {
+            ToastRequested?.Invoke("Audio is not downloaded yet");
+            return;
+        }
+        item.IsChecked = true;
+        PreviewClosed?.Invoke();
+        TrackChanged?.Invoke(track.Id);
+        RefreshChannelSummaries();
+        RefreshVideos();
+        ToastRequested?.Invoke("Skipped · audio kept");
+    }
+
+    private void OnVideoPlayClicked(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Button button || button.DataContext is not ChannelVideoDisplay item
+            || item.TrackId is not int trackId || MusicLibraryService.Current.GetTrackById(trackId) is not { } track)
+            return;
+        PreviewRequested?.Invoke(track);
+    }
+
+    private void OnAutoDownloadClicked(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not CheckBox checkBox || checkBox.DataContext is not ChannelSubscription channel)
+            return;
+        e.Handled = true;
+        MusicLibraryService.Current.SetChannelAutoDownload(channel.Id, checkBox.IsChecked == true);
+        RefreshChannels();
+    }
+
+    private void OnSidebarToggleClicked(object? sender, RoutedEventArgs e) =>
+        ChannelSidebar.IsVisible = !ChannelSidebar.IsVisible;
 
     private void OnPendingFilterPressed(object? sender, PointerPressedEventArgs e)
     {
@@ -279,6 +346,11 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
     private IBrush _checkBackground = Brushes.Transparent;
     private IBrush _checkBorder = new SolidColorBrush(Color.Parse("#40515E"));
     private TextDecorationCollection? _textDecorations;
+    private int? _trackId;
+    private string _statusText = string.Empty;
+    private bool _canPlay;
+    private bool _canReview;
+    private double _actionOpacity;
 
     public ChannelVideoDisplay(ChannelVideo video)
     {
@@ -286,6 +358,8 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
         CanonicalUrl = video.CanonicalUrl;
         Title = video.Title;
         DurationText = video.DurationSeconds is int seconds ? FormatDuration(seconds) : "";
+        _trackId = video.TrackId;
+        SetDownloadState(video.DownloadStatus, video.DownloadError);
         SetChecked(video.IsChecked);
     }
 
@@ -300,6 +374,31 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
         set => SetChecked(value);
     }
     public string DurationText { get; }
+    public int? TrackId
+    {
+        get => _trackId;
+        private set => SetField(ref _trackId, value);
+    }
+    public string StatusText
+    {
+        get => _statusText;
+        private set => SetField(ref _statusText, value);
+    }
+    public bool CanPlay
+    {
+        get => _canPlay;
+        private set => SetField(ref _canPlay, value);
+    }
+    public bool CanReview
+    {
+        get => _canReview;
+        private set => SetField(ref _canReview, value);
+    }
+    public double ActionOpacity
+    {
+        get => _actionOpacity;
+        private set => SetField(ref _actionOpacity, value);
+    }
     public double Opacity
     {
         get => _opacity;
@@ -342,6 +441,30 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
         CheckBorder = new SolidColorBrush(Color.Parse(value ? "#4AA9D1" : "#40515E"));
         CheckOpacity = value ? 1 : 0.58;
         TextDecorations = value ? Avalonia.Media.TextDecorations.Strikethrough : null;
+        CanReview = !value && TrackId is not null;
+        ActionOpacity = TrackId is not null && !value ? 0.78 : 0.3;
+    }
+
+    public void SetDownloadResult(int? trackId, string? error)
+    {
+        TrackId = trackId;
+        SetDownloadState(trackId is not null ? ChannelDownloadStatus.Ready : ChannelDownloadStatus.Failed, error);
+        SetChecked(IsChecked);
+    }
+
+    private void SetDownloadState(ChannelDownloadStatus status, string? error)
+    {
+        StatusText = status switch
+        {
+            ChannelDownloadStatus.Ready => "Ready",
+            ChannelDownloadStatus.Downloading => "Downloading…",
+            ChannelDownloadStatus.Queued => "Queued",
+            ChannelDownloadStatus.Failed => string.IsNullOrWhiteSpace(error) ? "Download failed" : "Failed",
+            _ => "Auto-download off"
+        };
+        CanPlay = TrackId is not null;
+        CanReview = !IsChecked && TrackId is not null;
+        ActionOpacity = TrackId is not null && !IsChecked ? 0.78 : 0.3;
     }
 
     private void SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)

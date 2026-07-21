@@ -62,7 +62,8 @@ public class MusicDatabase
                 created_at          TEXT NULL,
                 updated_at          TEXT NULL,
                 last_checked_at     TEXT NULL,
-                video_count         INTEGER NOT NULL DEFAULT 0
+                video_count         INTEGER NOT NULL DEFAULT 0,
+                auto_download       INTEGER NOT NULL DEFAULT 1
             );
 
             CREATE TABLE channel_videos (
@@ -75,7 +76,10 @@ public class MusicDatabase
                 uploaded_at         TEXT NULL,
                 discovered_at       TEXT NOT NULL,
                 updated_at          TEXT NOT NULL,
-                is_checked          INTEGER NOT NULL DEFAULT 0
+                is_checked          INTEGER NOT NULL DEFAULT 0,
+                download_status     TEXT NOT NULL DEFAULT 'Queued',
+                download_error      TEXT NULL,
+                download_attempts   INTEGER NOT NULL DEFAULT 0
             );
 
             CREATE TABLE ratings (
@@ -379,6 +383,7 @@ public class MusicDatabase
         EnsureColumn(conn, "channels", "updated_at", "TEXT NULL");
         EnsureColumn(conn, "channels", "last_checked_at", "TEXT NULL");
         EnsureColumn(conn, "channels", "video_count", "INTEGER NOT NULL DEFAULT 0");
+        EnsureColumn(conn, "channels", "auto_download", "INTEGER NOT NULL DEFAULT 1");
 
         using var cmd = conn.CreateCommand();
         cmd.CommandText = @"
@@ -392,11 +397,17 @@ public class MusicDatabase
                 uploaded_at TEXT NULL,
                 discovered_at TEXT NOT NULL,
                 updated_at TEXT NOT NULL,
-                is_checked INTEGER NOT NULL DEFAULT 0
+                is_checked INTEGER NOT NULL DEFAULT 0,
+                download_status TEXT NOT NULL DEFAULT 'Queued',
+                download_error TEXT NULL,
+                download_attempts INTEGER NOT NULL DEFAULT 0
             );
             CREATE INDEX IF NOT EXISTS ix_channel_videos_channel_checked
                 ON channel_videos(channel_id, is_checked, uploaded_at);";
         cmd.ExecuteNonQuery();
+        EnsureColumn(conn, "channel_videos", "download_status", "TEXT NOT NULL DEFAULT 'Queued'");
+        EnsureColumn(conn, "channel_videos", "download_error", "TEXT NULL");
+        EnsureColumn(conn, "channel_videos", "download_attempts", "INTEGER NOT NULL DEFAULT 0");
     }
 
     private static void CreateImportQueueSchema(SqliteConnection conn)
@@ -877,9 +888,9 @@ public class MusicDatabase
         {
             channelId = InsertAndGetId(conn, tx, @"
                 INSERT INTO channels
-                    (name, source_channel_id, source_url, subscribed, created_at, updated_at, last_checked_at, video_count)
+                    (name, source_channel_id, source_url, subscribed, auto_download, created_at, updated_at, last_checked_at, video_count)
                 VALUES
-                    ($name, $sourceChannelId, $sourceUrl, 1, $now, $now, $now, $videoCount)",
+                    ($name, $sourceChannelId, $sourceUrl, 1, 1, $now, $now, $now, $videoCount)",
                 ("$name", snapshot.Name),
                 ("$sourceChannelId", snapshot.ChannelId),
                 ("$sourceUrl", snapshot.ChannelUrl ?? snapshot.SourceUrl),
@@ -913,10 +924,15 @@ public class MusicDatabase
             var existed = ChannelVideoExists(conn, tx, video.CanonicalUrl);
             ExecuteInsert(conn, tx, @"
                 INSERT INTO channel_videos
-                    (channel_id, video_id, canonical_url, title, duration_seconds, uploaded_at, discovered_at, updated_at, is_checked)
+                    (channel_id, video_id, canonical_url, title, duration_seconds, uploaded_at, discovered_at, updated_at,
+                     is_checked, download_status)
                 VALUES
-                    ($channelId, $videoId, $canonicalUrl, $title, $duration, $uploadedAt, $now, $now,
-                     CASE WHEN EXISTS (SELECT 1 FROM tracks WHERE tracks.canonical_url = $canonicalUrl) THEN 1 ELSE 0 END)
+                    ($channelId, $videoId, $canonicalUrl, $title, $duration, $uploadedAt, $now, $now, 0,
+                     CASE
+                         WHEN EXISTS (SELECT 1 FROM tracks WHERE tracks.canonical_url = $canonicalUrl) THEN 'Ready'
+                         WHEN EXISTS (SELECT 1 FROM channels WHERE id = $channelId AND auto_download = 1) THEN 'Queued'
+                         ELSE 'NotQueued'
+                     END)
                 ON CONFLICT(canonical_url) DO UPDATE SET
                     channel_id = excluded.channel_id,
                     video_id = excluded.video_id,
@@ -924,9 +940,12 @@ public class MusicDatabase
                     duration_seconds = excluded.duration_seconds,
                     uploaded_at = COALESCE(excluded.uploaded_at, channel_videos.uploaded_at),
                     updated_at = excluded.updated_at,
-                    is_checked = CASE
-                        WHEN EXISTS (SELECT 1 FROM tracks WHERE tracks.canonical_url = excluded.canonical_url) THEN 1
-                        ELSE channel_videos.is_checked
+                    download_status = CASE
+                        WHEN EXISTS (SELECT 1 FROM tracks WHERE tracks.canonical_url = excluded.canonical_url) THEN 'Ready'
+                        WHEN channel_videos.download_status = 'NotQueued'
+                             AND EXISTS (SELECT 1 FROM channels WHERE id = excluded.channel_id AND auto_download = 1)
+                             AND channel_videos.is_checked = 0 THEN 'Queued'
+                        ELSE channel_videos.download_status
                     END",
                 ("$channelId", channelId.Value),
                 ("$videoId", video.VideoId),
@@ -939,7 +958,6 @@ public class MusicDatabase
             else added++;
         }
 
-        MarkExistingChannelTracksChecked(conn, tx, channelId.Value);
         tx.Commit();
         return new ChannelRefreshResult(true, added, updated);
     }
@@ -947,12 +965,14 @@ public class MusicDatabase
     public List<ChannelSubscription> GetChannelSubscriptions()
     {
         using var conn = Open();
-        MarkExistingChannelTracksChecked(conn);
         using var cmd = conn.CreateCommand();
         cmd.CommandText = @"
             SELECT channels.id, channels.name, channels.source_url, channels.source_channel_id,
                    channels.last_checked_at, COALESCE(COUNT(channel_videos.id), 0),
-                   COALESCE(SUM(CASE WHEN channel_videos.is_checked = 0 THEN 1 ELSE 0 END), 0)
+                   COALESCE(SUM(CASE WHEN channel_videos.is_checked = 0 THEN 1 ELSE 0 END), 0),
+                   channels.auto_download,
+                   COALESCE(SUM(CASE WHEN channel_videos.download_status = 'Queued' THEN 1 ELSE 0 END), 0),
+                   COALESCE(SUM(CASE WHEN channel_videos.download_status = 'Ready' THEN 1 ELSE 0 END), 0)
             FROM channels
             LEFT JOIN channel_videos ON channel_videos.channel_id = channels.id
             WHERE channels.subscribed = 1
@@ -968,19 +988,24 @@ public class MusicDatabase
                 reader.IsDBNull(3) ? null : reader.GetString(3),
                 reader.IsDBNull(4) ? null : reader.GetString(4),
                 ReadInt32(reader, 5),
-                ReadInt32(reader, 6)));
+                ReadInt32(reader, 6),
+                ReadInt32(reader, 7) != 0,
+                ReadInt32(reader, 8),
+                ReadInt32(reader, 9)));
         return channels;
     }
 
     public List<ChannelVideo> GetChannelVideos(int channelId, bool uncheckedFirst = true)
     {
         using var conn = Open();
-        MarkExistingChannelTracksChecked(conn, channelId);
         using var cmd = conn.CreateCommand();
         cmd.CommandText = $@"
-            SELECT id, channel_id, video_id, canonical_url, title, duration_seconds, uploaded_at, discovered_at, is_checked
-            FROM channel_videos
-            WHERE channel_id = $channelId
+            SELECT videos.id, videos.channel_id, videos.video_id, videos.canonical_url, videos.title,
+                   videos.duration_seconds, videos.uploaded_at, videos.discovered_at, videos.is_checked,
+                   videos.download_status, videos.download_error, videos.download_attempts, tracks.id
+            FROM channel_videos videos
+            LEFT JOIN tracks ON tracks.canonical_url = videos.canonical_url
+            WHERE videos.channel_id = $channelId
             ORDER BY {(uncheckedFirst ? "is_checked ASC," : string.Empty)}
                      COALESCE(uploaded_at, discovered_at) DESC,
                      id DESC";
@@ -988,18 +1013,136 @@ public class MusicDatabase
         using var reader = cmd.ExecuteReader();
         var videos = new List<ChannelVideo>();
         while (reader.Read())
-            videos.Add(new ChannelVideo(
-                reader.GetInt32(0),
-                reader.GetInt32(1),
-                reader.GetString(2),
-                reader.GetString(3),
-                reader.GetString(4),
-                reader.IsDBNull(5) ? null : reader.GetInt32(5),
-                reader.IsDBNull(6) ? null : reader.GetString(6),
-                reader.GetString(7),
-                ReadInt32(reader, 8) != 0));
+            videos.Add(ReadChannelVideo(reader));
         return videos;
     }
+
+    public void SetChannelAutoDownload(int channelId, bool enabled)
+    {
+        using var conn = Open();
+        using var tx = conn.BeginTransaction();
+        var now = DateTime.UtcNow.ToString("O");
+        ExecuteInsert(conn, tx,
+            "UPDATE channels SET auto_download = $enabled, updated_at = $now WHERE id = $id",
+            ("$id", channelId), ("$enabled", enabled ? 1 : 0), ("$now", now));
+        ExecuteInsert(conn, tx, @"
+            UPDATE channel_videos
+            SET download_status = CASE WHEN $enabled = 1 THEN 'Queued' ELSE 'NotQueued' END,
+                download_error = NULL,
+                download_attempts = CASE WHEN $enabled = 1 THEN 0 ELSE download_attempts END,
+                updated_at = $now
+            WHERE channel_id = $id AND is_checked = 0
+              AND download_status IN ('Queued', 'Failed', 'NotQueued')
+              AND NOT EXISTS (SELECT 1 FROM tracks WHERE tracks.canonical_url = channel_videos.canonical_url)",
+            ("$id", channelId), ("$enabled", enabled ? 1 : 0), ("$now", now));
+        tx.Commit();
+    }
+
+    public void RecoverChannelDownloads()
+    {
+        using var conn = Open();
+        ExecuteNonQuery(conn, @"
+            UPDATE channel_videos
+            SET download_status = 'Ready', download_error = NULL, updated_at = $now
+            WHERE EXISTS (SELECT 1 FROM tracks WHERE tracks.canonical_url = channel_videos.canonical_url);
+            UPDATE channel_videos
+            SET download_status = 'NotQueued', download_error = NULL, updated_at = $now
+            WHERE is_checked = 1
+              AND NOT EXISTS (SELECT 1 FROM tracks WHERE tracks.canonical_url = channel_videos.canonical_url);
+            UPDATE channel_videos
+            SET download_status = 'Queued', download_error = NULL, updated_at = $now
+            WHERE download_status = 'Downloading' AND is_checked = 0
+              AND EXISTS (SELECT 1 FROM channels WHERE channels.id = channel_videos.channel_id AND auto_download = 1);
+            UPDATE channel_videos
+            SET download_status = 'Queued', download_error = NULL, updated_at = $now
+            WHERE download_status = 'Failed' AND download_attempts < 3 AND is_checked = 0
+              AND EXISTS (SELECT 1 FROM channels WHERE channels.id = channel_videos.channel_id AND auto_download = 1);",
+            ("$now", DateTime.UtcNow.ToString("O")));
+    }
+
+    public ChannelVideo? ClaimNextChannelDownload()
+    {
+        using var conn = Open();
+        using var tx = conn.BeginTransaction();
+        using var select = conn.CreateCommand();
+        select.Transaction = tx;
+        select.CommandText = @"
+            SELECT videos.id, videos.channel_id, videos.video_id, videos.canonical_url, videos.title,
+                   videos.duration_seconds, videos.uploaded_at, videos.discovered_at, videos.is_checked,
+                   videos.download_status, videos.download_error, videos.download_attempts, tracks.id
+            FROM channel_videos videos
+            JOIN channels ON channels.id = videos.channel_id
+            LEFT JOIN tracks ON tracks.canonical_url = videos.canonical_url
+            WHERE videos.download_status = 'Queued' AND videos.is_checked = 0 AND channels.auto_download = 1
+            ORDER BY videos.discovered_at, videos.id LIMIT 1";
+        using var reader = select.ExecuteReader();
+        if (!reader.Read())
+        {
+            tx.Commit();
+            return null;
+        }
+
+        var video = ReadChannelVideo(reader);
+        reader.Close();
+        ExecuteInsert(conn, tx, @"
+            UPDATE channel_videos
+            SET download_status = 'Downloading', download_error = NULL,
+                download_attempts = download_attempts + 1, updated_at = $now
+            WHERE id = $id",
+            ("$id", video.Id), ("$now", DateTime.UtcNow.ToString("O")));
+        tx.Commit();
+        return video with
+        {
+            DownloadStatus = ChannelDownloadStatus.Downloading,
+            DownloadAttempts = video.DownloadAttempts + 1
+        };
+    }
+
+    public void CompleteChannelDownload(int videoId, bool success, string? error)
+    {
+        using var conn = Open();
+        ExecuteNonQuery(conn, @"
+            UPDATE channel_videos
+            SET download_status = CASE
+                    WHEN $success = 1 THEN 'Ready'
+                    WHEN download_attempts < 3 AND is_checked = 0
+                         AND EXISTS (SELECT 1 FROM channels
+                                     WHERE channels.id = channel_videos.channel_id AND auto_download = 1)
+                        THEN 'Queued'
+                    ELSE 'Failed'
+                END,
+                download_error = $error, updated_at = $now
+            WHERE id = $id",
+            ("$id", videoId), ("$success", success ? 1 : 0), ("$error", error),
+            ("$now", DateTime.UtcNow.ToString("O")));
+    }
+
+    public ChannelDownloadSummary GetChannelDownloadSummary()
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT download_status, COUNT(*) FROM channel_videos GROUP BY download_status";
+        using var reader = cmd.ExecuteReader();
+        var counts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        while (reader.Read()) counts[reader.GetString(0)] = ReadInt32(reader, 1);
+        return new ChannelDownloadSummary(
+            counts.GetValueOrDefault("Queued"),
+            counts.GetValueOrDefault("Downloading"),
+            counts.GetValueOrDefault("Ready"),
+            counts.GetValueOrDefault("Failed"));
+    }
+
+    private static ChannelVideo ReadChannelVideo(SqliteDataReader reader) => new(
+        reader.GetInt32(0), reader.GetInt32(1), reader.GetString(2), reader.GetString(3), reader.GetString(4),
+        reader.IsDBNull(5) ? null : reader.GetInt32(5),
+        reader.IsDBNull(6) ? null : reader.GetString(6),
+        reader.GetString(7), ReadInt32(reader, 8) != 0,
+        Enum.TryParse<ChannelDownloadStatus>(reader.GetString(9), true, out var status)
+            ? status
+            : ChannelDownloadStatus.NotQueued,
+        reader.IsDBNull(10) ? null : reader.GetString(10),
+        ReadInt32(reader, 11),
+        reader.IsDBNull(12) ? null : reader.GetInt32(12));
 
     public bool DeleteChannel(int channelId)
     {
@@ -1012,46 +1155,6 @@ public class MusicDatabase
 
     private static int ReadInt32(SqliteDataReader reader, int ordinal) =>
         reader.IsDBNull(ordinal) ? 0 : Convert.ToInt32(reader.GetValue(ordinal));
-
-    private static void MarkExistingChannelTracksChecked(SqliteConnection conn, int? channelId = null)
-    {
-        ExecuteNonQuery(conn, @"
-            UPDATE channel_videos
-            SET is_checked = 1, updated_at = $now
-            WHERE is_checked = 0
-              AND ($channelId IS NULL OR channel_id = $channelId)
-              AND EXISTS (
-                  SELECT 1 FROM tracks
-                  WHERE tracks.canonical_url = channel_videos.canonical_url
-              )",
-            ("$channelId", channelId),
-            ("$now", DateTime.UtcNow.ToString("O")));
-    }
-
-    private static void MarkExistingChannelTracksChecked(SqliteConnection conn, SqliteTransaction tx, long channelId)
-    {
-        ExecuteInsert(conn, tx, @"
-            UPDATE channel_videos
-            SET is_checked = 1, updated_at = $now
-            WHERE is_checked = 0
-              AND channel_id = $channelId
-              AND EXISTS (
-                  SELECT 1 FROM tracks
-                  WHERE tracks.canonical_url = channel_videos.canonical_url
-              )",
-            ("$channelId", channelId),
-            ("$now", DateTime.UtcNow.ToString("O")));
-    }
-
-    public void SetChannelVideoChecked(int videoId, bool isChecked)
-    {
-        using var conn = Open();
-        ExecuteNonQuery(conn,
-            "UPDATE channel_videos SET is_checked = $isChecked, updated_at = $now WHERE id = $id",
-            ("$id", videoId),
-            ("$isChecked", isChecked ? 1 : 0),
-            ("$now", DateTime.UtcNow.ToString("O")));
-    }
 
     private static long? FindChannelId(SqliteConnection conn, SqliteTransaction tx, string? sourceChannelId, string sourceUrl)
     {
@@ -1113,6 +1216,109 @@ public class MusicDatabase
 
         tx.Commit();
         return (int)trackId;
+    }
+
+    public int InsertPreloadedChannelTrack(
+        ChannelVideo video,
+        string fileName,
+        int? durationSeconds,
+        long fileSizeBytes,
+        int downloadDurationMilliseconds)
+    {
+        using var conn = Open();
+        using var tx = conn.BeginTransaction();
+        using (var existing = conn.CreateCommand())
+        {
+            existing.Transaction = tx;
+            existing.CommandText = "SELECT id FROM tracks WHERE canonical_url = $url";
+            existing.Parameters.AddWithValue("$url", video.CanonicalUrl);
+            if (existing.ExecuteScalar() is long existingId)
+            {
+                tx.Commit();
+                return (int)existingId;
+            }
+        }
+
+        var now = DateTime.UtcNow.ToString("O");
+        var trackId = InsertAndGetId(conn, tx, @"
+            INSERT INTO tracks
+                (canonical_url, title, file_name, channel_id, rating_id, uploaded_at, downloaded_at, updated_at,
+                 duration_seconds, file_size_bytes, download_duration_ms, thumbnail, analysis_disabled, needs_reevaluation)
+            VALUES
+                ($url, $title, $fileName, $channelId, NULL, $uploadedAt, $now, $now,
+                 $duration, $fileSize, $downloadDuration, NULL, 1, 1)",
+            ("$url", video.CanonicalUrl),
+            ("$title", video.Title),
+            ("$fileName", fileName),
+            ("$channelId", video.ChannelId),
+            ("$uploadedAt", video.UploadedAt),
+            ("$now", now),
+            ("$duration", durationSeconds),
+            ("$fileSize", fileSizeBytes),
+            ("$downloadDuration", downloadDurationMilliseconds));
+        tx.Commit();
+        return (int)trackId;
+    }
+
+    public int? CompleteChannelVideoReview(int videoId, bool skip)
+    {
+        using var conn = Open();
+        using var tx = conn.BeginTransaction();
+        long? trackId;
+        using (var find = conn.CreateCommand())
+        {
+            find.Transaction = tx;
+            find.CommandText = @"
+                SELECT tracks.id
+                FROM channel_videos videos
+                JOIN tracks ON tracks.canonical_url = videos.canonical_url
+                WHERE videos.id = $videoId";
+            find.Parameters.AddWithValue("$videoId", videoId);
+            trackId = find.ExecuteScalar() as long?;
+        }
+        if (trackId is null)
+        {
+            tx.Commit();
+            return null;
+        }
+
+        ExecuteInsert(conn, tx,
+            "UPDATE channel_videos SET is_checked = 1, updated_at = $now WHERE id = $videoId",
+            ("$videoId", videoId), ("$now", DateTime.UtcNow.ToString("O")));
+        if (skip)
+        {
+            ExecuteInsert(conn, tx, @"
+                UPDATE tracks
+                SET rating_id = (SELECT id FROM ratings WHERE name = 'Skip'),
+                    analysis_disabled = 1, needs_reevaluation = 0, updated_at = $now
+                WHERE id = $trackId",
+                ("$trackId", trackId.Value), ("$now", DateTime.UtcNow.ToString("O")));
+        }
+        else
+        {
+            ExecuteInsert(conn, tx, @"
+                UPDATE tracks
+                SET analysis_disabled = 0, needs_reevaluation = 1, updated_at = $now
+                WHERE id = $trackId",
+                ("$trackId", trackId.Value), ("$now", DateTime.UtcNow.ToString("O")));
+        }
+
+        tx.Commit();
+        return (int)trackId.Value;
+    }
+
+    public HashSet<int> GetTrackIdsMissingAnalysis()
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+            SELECT tracks.id FROM tracks
+            LEFT JOIN track_analysis analysis ON analysis.track_id = tracks.id
+            WHERE analysis.id IS NULL";
+        using var reader = cmd.ExecuteReader();
+        var ids = new HashSet<int>();
+        while (reader.Read()) ids.Add(reader.GetInt32(0));
+        return ids;
     }
 
     public void SaveTrackAnalysis(int trackId, TrackAnalysisResult analysis, int? analysisDurationMilliseconds = null)
