@@ -169,6 +169,11 @@ public class MusicLibraryService
         _db.SetChannelAutoDownload(channelId, enabled);
         ChannelDownloadService.Current.NotifyQueueChanged();
     }
+    public void SetChannelMaxDownloadDuration(int channelId, int maxDurationMinutes)
+    {
+        _db.SetChannelMaxDownloadDuration(channelId, maxDurationMinutes);
+        ChannelDownloadService.Current.NotifyQueueChanged();
+    }
     public void RecoverChannelDownloads() => _db.RecoverChannelDownloads();
     public ChannelVideo? ClaimNextChannelDownload() => _db.ClaimNextChannelDownload();
     public void CompleteChannelDownload(int videoId, bool success, string? error) =>

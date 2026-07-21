@@ -260,6 +260,26 @@ public partial class ChannelOverlay : UserControl
         e.Handled = true;
         MusicLibraryService.Current.SetChannelAutoDownload(channel.Id, checkBox.IsChecked == true);
         RefreshChannels();
+        ChannelSidebar.IsVisible = true;
+    }
+
+    private void OnMaxDurationLostFocus(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not TextBox textBox || textBox.DataContext is not ChannelSubscription channel)
+            return;
+
+        if (!int.TryParse(textBox.Text, out var minutes) || minutes < 1)
+        {
+            textBox.Text = channel.MaxDownloadDurationMinutes.ToString();
+            ToastRequested?.Invoke("Enter a duration of at least 1 minute");
+            return;
+        }
+
+        minutes = Math.Clamp(minutes, 1, 24 * 60);
+        MusicLibraryService.Current.SetChannelMaxDownloadDuration(channel.Id, minutes);
+        RefreshChannels();
+        ChannelSidebar.IsVisible = true;
+        ToastRequested?.Invoke($"Download limit set to {minutes} min");
     }
 
     private void OnSidebarToggleClicked(object? sender, RoutedEventArgs e) =>
@@ -460,6 +480,7 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
             ChannelDownloadStatus.Downloading => "Downloading…",
             ChannelDownloadStatus.Queued => "Queued",
             ChannelDownloadStatus.Failed => string.IsNullOrWhiteSpace(error) ? "Download failed" : "Failed",
+            ChannelDownloadStatus.Skipped => "Skipped · duration filter",
             _ => "Auto-download off"
         };
         CanPlay = TrackId is not null;

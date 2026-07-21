@@ -77,9 +77,10 @@ public record ChannelSubscription(
     int VideoCount,
     int UncheckedCount,
     bool AutoDownload,
+    int MaxDownloadDurationMinutes,
     int QueuedDownloadCount,
     int ReadyDownloadCount);
-public enum ChannelDownloadStatus { NotQueued, Queued, Downloading, Ready, Failed }
+public enum ChannelDownloadStatus { NotQueued, Queued, Downloading, Ready, Failed, Skipped }
 public record ChannelVideo(
     int Id,
     int ChannelId,
