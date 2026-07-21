@@ -544,6 +544,7 @@ public partial class SettingsOverlay : UserControl
         }
 
         AppSettingsStore.SaveMusicAnalysisServerUrl(serverUrl);
+        BackgroundAnalysisService.Current.NotifyServerConfigurationChanged();
         MusicAnalysisServerUrlBox.Text = serverUrl;
         ShowAnalysisServerStatus("Address saved", isSuccess: true);
         ToastRequested?.Invoke("Analysis server address saved.");
@@ -563,8 +564,14 @@ public partial class SettingsOverlay : UserControl
         {
             using var service = new TrackAnalysisService(serverUrlProvider: () => serverUrl);
             var isHealthy = await service.CheckHealthAsync();
+            if (isHealthy)
+            {
+                AppSettingsStore.SaveMusicAnalysisServerUrl(serverUrl);
+                MusicAnalysisServerUrlBox.Text = serverUrl;
+                BackgroundAnalysisService.Current.NotifyServerConfigurationChanged();
+            }
             ShowAnalysisServerStatus(
-                isHealthy ? "Connection successful" : "Server returned an unhealthy status",
+                isHealthy ? "Connection successful; address saved" : "Server returned an unhealthy status",
                 isHealthy);
         }
         catch (MusicAnalysisException exception)

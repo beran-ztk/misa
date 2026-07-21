@@ -562,7 +562,10 @@ public partial class ImportOverlay : UserControl
 
         items.AddRange(snapshot.PendingTrackIds
             .Where(id => tracks.ContainsKey(id))
-            .Select(id => new AnalysisQueueItem(tracks[id].Title, "waiting", false)));
+            .Select(id => new AnalysisQueueItem(
+                tracks[id].Title,
+                snapshot.IsWaitingForServerConfiguration ? "waiting for server setup" : "waiting",
+                false)));
         return items;
     }
 

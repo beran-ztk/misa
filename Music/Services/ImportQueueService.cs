@@ -230,16 +230,17 @@ public sealed class ImportQueueService
     private static bool IsInterruptedRetry(ImportQueueItem item) =>
         item.Detail?.StartsWith("Interrupted", StringComparison.OrdinalIgnoreCase) == true;
 
-    private async Task CompleteRecoveredTrackAsync(ImportQueueItem item, MusicTrack track)
+    private Task CompleteRecoveredTrackAsync(ImportQueueItem item, MusicTrack track)
     {
         if (MusicLibraryService.Current.GetTrackAudioAnalysis(track.Id) is not null)
         {
             CompleteImport(item, track, null);
-            return;
+            return Task.CompletedTask;
         }
 
         BackgroundAnalysisService.Current.EnqueueTrack(track.Id);
         CompleteImport(item, track, null);
+        return Task.CompletedTask;
     }
 
     private void CompleteImport(ImportQueueItem item, MusicTrack track, string? warning)

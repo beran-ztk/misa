@@ -290,7 +290,10 @@ public partial class MusicView : UserControl
         if (summary.Queued > 0) parts.Add($"{summary.Queued} queued");
         var analysis = BackgroundAnalysisService.Current.GetSnapshot();
         if (analysis.ActiveTrackId is not null) parts.Add("analyzing track");
-        if (analysis.PendingTrackIds.Count > 0) parts.Add($"{analysis.PendingTrackIds.Count} analysis queued");
+        if (analysis.IsWaitingForServerConfiguration)
+            parts.Add($"{analysis.PendingTrackIds.Count} analysis waiting for server setup");
+        else if (analysis.PendingTrackIds.Count > 0)
+            parts.Add($"{analysis.PendingTrackIds.Count} analysis queued");
         QueueStatusText.IsVisible = parts.Count > 0;
         QueueStatusText.Text = parts.Count > 0 ? $"Queue · {string.Join(" · ", parts)}" : string.Empty;
     }

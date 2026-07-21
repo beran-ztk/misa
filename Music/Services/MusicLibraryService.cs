@@ -383,7 +383,9 @@ public class MusicLibraryService
             GetTracks().Single(track => track.Id == trackId));
     }
 
-    public async Task<string?> AnalyzeTrackAsync(MusicTrack track, CancellationToken cancellationToken = default)
+    public async Task<(string? Error, bool Retryable)> AnalyzeTrackAsync(
+        MusicTrack track,
+        CancellationToken cancellationToken = default)
     {
         var filePath = Path.Combine(Values.TracksDirectory, track.FileName);
         var stopwatch = Stopwatch.StartNew();
@@ -393,7 +395,7 @@ public class MusicLibraryService
             var analysis = TrackAnalysisService.ToTrackAnalysisResult(response);
             _db.SaveTrackAnalysis(track.Id, analysis, (int)stopwatch.ElapsedMilliseconds);
             CacheExperimentalAnalysis(track.Id, analysis);
-            return null;
+            return (null, false);
         }
         catch (MusicAnalysisException exception)
         {
@@ -402,7 +404,8 @@ public class MusicLibraryService
                 _db.SetTrackNeedsReview(track.Id, true);
                 _db.SetTrackAnalysisDisabled(track.Id, true);
             }
-            return exception.Message;
+            return (exception.Message,
+                exception.Kind is MusicAnalysisErrorKind.ConnectionError or MusicAnalysisErrorKind.Timeout);
         }
     }
 

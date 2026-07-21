@@ -17,6 +17,7 @@ public sealed class BackgroundAnalysisService
     private Task? _workerTask;
     private int? _activeTrackId;
     private CancellationTokenSource? _activeAnalysisCancellation;
+    private bool _pausedForTransientFailure;
 
     public event Action<MusicTrack, string?>? TrackAnalysisFinished;
     public event Action? QueueChanged;
@@ -38,8 +39,19 @@ public sealed class BackgroundAnalysisService
         {
             return new BackgroundAnalysisQueueSnapshot(
                 _activeTrackId,
-                _pendingTrackIds.ToList());
+                _pendingTrackIds.ToList(),
+                _pendingTrackIds.Count > 0 && !HasValidServerConfiguration());
         }
+    }
+
+    public void NotifyServerConfigurationChanged()
+    {
+        lock (_gate)
+        {
+            _pausedForTransientFailure = false;
+            StartWorkerIfPossible();
+        }
+        QueueChanged?.Invoke();
     }
 
     public bool CancelActiveAnalysis()
@@ -76,8 +88,7 @@ public sealed class BackgroundAnalysisService
                 _pendingTrackIds.Enqueue(trackId);
             }
 
-            if (_workerTask is not { IsCompleted: false } && _pendingTrackIds.Count > 0)
-                _workerTask = Task.Run(ProcessQueueAsync);
+            StartWorkerIfPossible();
         }
 
         QueueChanged?.Invoke();
@@ -127,6 +138,7 @@ public sealed class BackgroundAnalysisService
             {
                 MusicTrack? track = null;
                 string? error = null;
+                var retryable = false;
 
                 try
                 {
@@ -140,7 +152,9 @@ public sealed class BackgroundAnalysisService
                         || MusicLibraryService.Current.GetTrackAudioAnalysis(track.Id) is not null)
                         continue;
 
-                    error = await MusicLibraryService.Current.AnalyzeTrackAsync(track, cancellation.Token);
+                    var outcome = await MusicLibraryService.Current.AnalyzeTrackAsync(track, cancellation.Token);
+                    error = outcome.Error;
+                    retryable = outcome.Retryable;
                 }
                 catch (Exception exception)
                 {
@@ -150,7 +164,15 @@ public sealed class BackgroundAnalysisService
                 {
                     lock (_gate)
                     {
-                        _queuedTrackIds.Remove(trackId);
+                        if (retryable)
+                        {
+                            _pendingTrackIds.Enqueue(trackId);
+                            _pausedForTransientFailure = true;
+                        }
+                        else
+                        {
+                            _queuedTrackIds.Remove(trackId);
+                        }
                         if (_activeTrackId == trackId)
                             _activeTrackId = null;
                         _activeAnalysisCancellation = null;
@@ -166,9 +188,8 @@ public sealed class BackgroundAnalysisService
         {
             lock (_gate)
             {
-                _workerTask = _pendingTrackIds.Count > 0
-                    ? Task.Run(ProcessQueueAsync)
-                    : null;
+                _workerTask = null;
+                StartWorkerIfPossible();
             }
         }
     }
@@ -177,7 +198,9 @@ public sealed class BackgroundAnalysisService
     {
         lock (_gate)
         {
-            if (_pendingTrackIds.Count == 0)
+            if (_pendingTrackIds.Count == 0
+                || _pausedForTransientFailure
+                || !HasValidServerConfiguration())
             {
                 trackId = -1;
                 return false;
@@ -194,6 +217,23 @@ public sealed class BackgroundAnalysisService
             _activeTrackId = trackId;
         QueueChanged?.Invoke();
     }
+
+    private void StartWorkerIfPossible()
+    {
+        if (_workerTask is not { IsCompleted: false }
+            && _pendingTrackIds.Count > 0
+            && !_pausedForTransientFailure
+            && HasValidServerConfiguration())
+            _workerTask = Task.Run(ProcessQueueAsync);
+    }
+
+    private static bool HasValidServerConfiguration() =>
+        TrackAnalysisService.TryNormalizeServerUrl(
+            AppSettingsStore.Load().MusicAnalysisServerUrl,
+            out _);
 }
 
-public sealed record BackgroundAnalysisQueueSnapshot(int? ActiveTrackId, IReadOnlyList<int> PendingTrackIds);
+public sealed record BackgroundAnalysisQueueSnapshot(
+    int? ActiveTrackId,
+    IReadOnlyList<int> PendingTrackIds,
+    bool IsWaitingForServerConfiguration);
