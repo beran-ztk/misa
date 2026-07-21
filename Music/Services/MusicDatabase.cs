@@ -1015,9 +1015,9 @@ public class MusicDatabase
             FROM channel_videos videos
             LEFT JOIN tracks ON tracks.canonical_url = videos.canonical_url
             WHERE videos.channel_id = $channelId
-            ORDER BY {(uncheckedFirst ? "is_checked ASC," : string.Empty)}
-                     COALESCE(uploaded_at, discovered_at) DESC,
-                     id DESC";
+            ORDER BY {(uncheckedFirst ? "videos.is_checked ASC," : string.Empty)}
+                     COALESCE(videos.uploaded_at, videos.discovered_at) DESC,
+                     videos.id DESC";
         cmd.Parameters.AddWithValue("$channelId", channelId);
         using var reader = cmd.ExecuteReader();
         var videos = new List<ChannelVideo>();
