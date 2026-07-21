@@ -27,6 +27,18 @@
         <Style Selector="ListBox.video-list ListBoxItem:selected /template/ ContentPresenter">
             <Setter Property="Background" Value="Transparent"/>
         </Style>
+        <Style Selector="Button.channel-icon">
+            <Setter Property="Width" Value="30"/>
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="Button.channel-icon:pointerover">
+            <Setter Property="Background" Value="#24313B"/>
+        </Style>
     </UserControl.Styles>
 
     <Border Background="#EA0B0D10"
@@ -42,40 +54,20 @@
                                Opacity="0.62"/>
                 </StackPanel>
                 <Button Grid.Column="1"
-                        Content="Close"
+                        Classes="channel-icon"
                         Click="OnCloseClicked"
-                        Background="Transparent"
-                        BorderBrush="#314B5F"
-                        BorderThickness="1"
-                        Padding="12,6"
-                        FontSize="11"
-                        Opacity="0.78"/>
+                        ToolTip.Tip="Close"
+                        Opacity="0.72">
+                    <Image Source="{SvgImage /Assets/close.svg}" Width="16" Height="16"/>
+                </Button>
             </Grid>
 
             <Grid Grid.Row="1" RowDefinitions="Auto,*" RowSpacing="16">
-                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
-                    <TextBox x:Name="UrlBox"
-                             Watermark="YouTube channel URL"
-                             Height="36"
-                             VerticalContentAlignment="Center"/>
-                    <Button Grid.Column="1"
-                            Content="Add"
-                            Click="OnAddClicked"
-                            Background="#12334A"
-                            BorderBrush="#2D6E96"
-                            BorderThickness="1"
-                            Padding="16,7"
-                            FontSize="11"/>
-                    <Button Grid.Column="2"
-                            Content="Refresh"
-                            Click="OnRefreshClicked"
-                            Background="Transparent"
-                            BorderBrush="#314B5F"
-                            BorderThickness="1"
-                            Padding="16,7"
-                            FontSize="11"
-                            Opacity="0.78"/>
-                </Grid>
+                <TextBox x:Name="UrlBox"
+                         Watermark="Paste YouTube channel URL"
+                         Height="36"
+                         TextChanged="OnUrlTextChanged"
+                         VerticalContentAlignment="Center"/>
 
                 <Grid Grid.Row="1" ColumnDefinitions="290,*" ColumnSpacing="18">
                     <Border Background="#A80B0D10"
@@ -90,18 +82,30 @@
                                  BorderThickness="0">
                             <ListBox.ItemTemplate>
                                 <DataTemplate x:DataType="models:ChannelSubscription">
-                                    <Border Padding="10,8" CornerRadius="6">
-                                        <Grid RowDefinitions="Auto,Auto">
-                                            <TextBlock Text="{Binding Name}"
-                                                       FontSize="13"
-                                                       FontWeight="SemiBold"
-                                                       TextTrimming="CharacterEllipsis"/>
-                                            <TextBlock Grid.Row="1"
-                                                       FontSize="10.5"
-                                                       Opacity="0.58"
-                                                       Text="{Binding UncheckedCount, StringFormat='{}{0} unchecked'}"/>
-                                        </Grid>
-                                    </Border>
+                                    <Grid RowDefinitions="Auto,1">
+                                        <Border Grid.Row="0" Padding="10,8" CornerRadius="6">
+                                            <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
+                                                <TextBlock Text="{Binding Name}"
+                                                           FontSize="13"
+                                                           FontWeight="SemiBold"
+                                                           TextTrimming="CharacterEllipsis"/>
+                                                <TextBlock Grid.Row="1"
+                                                           FontSize="10.5"
+                                                           Opacity="0.58"
+                                                           Text="{Binding UncheckedCount, StringFormat='{}{0} pending'}"/>
+                                                <Button Grid.Column="1"
+                                                        Grid.RowSpan="2"
+                                                        Classes="channel-icon"
+                                                        Click="OnDeleteChannelClicked"
+                                                        ToolTip.Tip="Delete channel"
+                                                        Opacity="0.58"
+                                                        VerticalAlignment="Center">
+                                                    <Image Source="{SvgImage /Assets/trash.svg}" Width="15" Height="15"/>
+                                                </Button>
+                                            </Grid>
+                                        </Border>
+                                        <Rectangle Grid.Row="1" Height="1" Fill="#263442" Margin="8,0"/>
+                                    </Grid>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
@@ -114,36 +118,57 @@
                             CornerRadius="8"
                             Padding="10">
                         <DockPanel LastChildFill="True">
-                            <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="12" Margin="4,0,4,8">
+                            <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto,*" ColumnSpacing="12" Margin="4,0,4,10">
                                 <TextBlock x:Name="VideoSummaryText"
                                            FontSize="11"
                                            Opacity="0.62"
                                            VerticalAlignment="Center"/>
-                                <CheckBox x:Name="ShowCheckedBox"
-                                          Grid.Column="1"
-                                          Content="Show checked"
-                                          Checked="OnShowCheckedChanged"
-                                          Unchecked="OnShowCheckedChanged"
-                                          FontSize="11"
-                                          VerticalAlignment="Center"/>
+                                <Border Grid.Column="1"
+                                        Width="146"
+                                        Height="30"
+                                        Background="#111A21"
+                                        BorderBrush="#435868"
+                                        BorderThickness="1"
+                                        CornerRadius="6"
+                                        ClipToBounds="True">
+                                    <Grid ColumnDefinitions="72,72">
+                                        <Border x:Name="VideoFilterSelectionIndicator"
+                                                Grid.ColumnSpan="2"
+                                                Width="72"
+                                                HorizontalAlignment="Left"
+                                                Background="#176486"
+                                                CornerRadius="5"
+                                                IsHitTestVisible="False">
+                                            <Border.RenderTransform>
+                                                <TranslateTransform>
+                                                    <TranslateTransform.Transitions>
+                                                        <Transitions>
+                                                            <DoubleTransition Property="X" Duration="0:0:0.16"/>
+                                                        </Transitions>
+                                                    </TranslateTransform.Transitions>
+                                                </TranslateTransform>
+                                            </Border.RenderTransform>
+                                        </Border>
+                                        <Border Grid.Column="0" Background="Transparent" Cursor="Hand"
+                                                PointerPressed="OnPendingFilterPressed">
+                                            <TextBlock x:Name="PendingFilterText" Text="Pending" FontSize="11" FontWeight="SemiBold"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <Border Grid.Column="1" Background="Transparent" Cursor="Hand"
+                                                PointerPressed="OnAllFilterPressed">
+                                            <TextBlock x:Name="AllFilterText" Text="All" FontSize="11" FontWeight="SemiBold"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                    </Grid>
+                                </Border>
                                 <Button Grid.Column="2"
-                                        Content="Delete channel"
-                                        Click="OnDeleteSelectedClicked"
-                                        Background="Transparent"
-                                        BorderBrush="#7A3A42"
-                                        BorderThickness="1"
-                                        Padding="10,5"
-                                        FontSize="11"
-                                        Opacity="0.82"/>
-                                <Button Grid.Column="3"
-                                        Content="Refresh selected"
+                                        Classes="channel-icon"
                                         Click="OnRefreshSelectedClicked"
-                                        Background="Transparent"
-                                        BorderBrush="#314B5F"
-                                        BorderThickness="1"
-                                        Padding="10,5"
-                                        FontSize="11"
-                                        Opacity="0.74"/>
+                                        ToolTip.Tip="Refresh selected channel"
+                                        HorizontalAlignment="Right"
+                                        Opacity="0.68">
+                                    <Image Source="{SvgImage /Assets/reload.svg}" Width="16" Height="16"/>
+                                </Button>
                             </Grid>
                             <ListBox x:Name="VideoList"
                                      Classes="video-list"
@@ -156,37 +181,36 @@
                                                 CornerRadius="6"
                                                 Padding="8,6"
                                                 Margin="0,1">
-                                            <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto" ColumnSpacing="10">
-                                                <CheckBox IsChecked="{Binding IsChecked}"
-                                                          Checked="OnVideoCheckedChanged"
-                                                          Unchecked="OnVideoCheckedChanged"
-                                                          VerticalAlignment="Center"/>
-                                                <TextBlock Grid.Column="1"
+                                            <Grid ColumnDefinitions="*,Auto,Auto,58" ColumnSpacing="8">
+                                                <TextBlock Grid.Column="0"
                                                            Text="{Binding Title}"
                                                            TextDecorations="{Binding TextDecorations}"
                                                            FontSize="12.5"
                                                            TextTrimming="CharacterEllipsis"
                                                            VerticalAlignment="Center"/>
-                                                <TextBlock Grid.Column="2"
-                                                           Text="{Binding PublishedText}"
-                                                           FontSize="10.5"
-                                                           Opacity="0.62"
-                                                           VerticalAlignment="Center"/>
+                                                <Button Grid.Column="1"
+                                                        Classes="channel-icon"
+                                                        Click="OnVideoCheckClicked"
+                                                        ToolTip.Tip="Mark as handled"
+                                                        Background="{Binding CheckBackground}"
+                                                        BorderBrush="{Binding CheckBorder}"
+                                                        BorderThickness="1"
+                                                        Opacity="{Binding CheckOpacity}">
+                                                    <Image Source="{SvgImage /Assets/check.svg}" Width="15" Height="15"/>
+                                                </Button>
+                                                <Button Grid.Column="2"
+                                                        Classes="channel-icon"
+                                                        Click="OnCopyVideoUrlClicked"
+                                                        ToolTip.Tip="Copy video URL"
+                                                        Opacity="0.72">
+                                                    <Image Source="{SvgImage /Assets/copy.svg}" Width="15" Height="15"/>
+                                                </Button>
                                                 <TextBlock Grid.Column="3"
                                                            Text="{Binding DurationText}"
                                                            FontSize="10.5"
                                                            Opacity="0.62"
-                                                           VerticalAlignment="Center"/>
-                                                <Button Grid.Column="4"
-                                                        Content="Copy URL"
-                                                        Click="OnCopyVideoUrlClicked"
-                                                        Background="Transparent"
-                                                        BorderBrush="#314B5F"
-                                                        BorderThickness="1"
-                                                        Padding="8,4"
-                                                        FontSize="10.5"
-                                                        Opacity="0.78"
-                                                        VerticalAlignment="Center"/>
+                                                           TextAlignment="Right"
+                                                           VerticalAlignment="Center" />
                                             </Grid>
                                         </Border>
                                     </DataTemplate>

@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Music.Models;
@@ -20,6 +20,8 @@ public partial class ChannelOverlay : UserControl
     private List<ChannelVideoDisplay> _currentVideos = [];
     private int _selectedChannelId = -1;
     private bool _loadingVideos;
+    private bool _showAllVideos;
+    private bool _processingPastedUrl;
 
     public event Action? CloseRequested;
     public event Action<string>? ToastRequested;
@@ -27,6 +29,7 @@ public partial class ChannelOverlay : UserControl
     public ChannelOverlay()
     {
         InitializeComponent();
+        SetVideoFilter(showAll: false);
     }
 
     public void Open()
@@ -45,41 +48,40 @@ public partial class ChannelOverlay : UserControl
         RefreshVideos();
     }
 
-    private async void OnAddClicked(object? sender, RoutedEventArgs e)
+    private async void OnUrlTextChanged(object? sender, TextChangedEventArgs e)
     {
-        var url = UrlBox.Text?.Trim();
-        if (string.IsNullOrWhiteSpace(url))
-        {
-            ToastRequested?.Invoke("Channel URL is required");
+        if (_processingPastedUrl)
             return;
-        }
 
-        await RunRefreshAsync(
-            progress => MusicLibraryService.Current.AddOrRefreshChannelAsync(url, progress, _refreshCts!.Token),
-            "Channel added");
-        UrlBox.Text = string.Empty;
-    }
+        var url = UrlBox.Text?.Trim();
+        if (!LooksLikeYouTubeUrl(url))
+            return;
 
-    private async void OnRefreshClicked(object? sender, RoutedEventArgs e)
-    {
-        _refreshCts?.Cancel();
-        _refreshCts = new CancellationTokenSource();
-        StatusText.Text = "Refreshing channels...";
+        _processingPastedUrl = true;
+        UrlBox.IsEnabled = false;
         try
         {
-            var added = await MusicLibraryService.Current.RefreshSubscribedChannelsAsync(_refreshCts.Token);
-            RefreshChannels();
-            ToastRequested?.Invoke(added > 0 ? $"{added} new channel videos found" : "Channels are up to date");
-        }
-        catch (OperationCanceledException) { }
-        catch (Exception exception)
-        {
-            ToastRequested?.Invoke($"Channel refresh failed: {exception.Message}");
+            await RunRefreshAsync(
+                progress => MusicLibraryService.Current.AddOrRefreshChannelAsync(url!, progress, _refreshCts!.Token),
+                "Channel added");
+            UrlBox.Text = string.Empty;
         }
         finally
         {
-            UpdateStatus();
+            UrlBox.IsEnabled = true;
+            _processingPastedUrl = false;
         }
+    }
+
+    private static bool LooksLikeYouTubeUrl(string? text)
+    {
+        if (!Uri.TryCreate(text, UriKind.Absolute, out var uri))
+            return false;
+
+        var host = uri.Host.TrimStart('.');
+        return (host.Equals("youtube.com", StringComparison.OrdinalIgnoreCase)
+                || host.EndsWith(".youtube.com", StringComparison.OrdinalIgnoreCase))
+               && uri.AbsolutePath.Length > 1;
     }
 
     private async void OnRefreshSelectedClicked(object? sender, RoutedEventArgs e)
@@ -92,10 +94,12 @@ public partial class ChannelOverlay : UserControl
             "Channel refreshed");
     }
 
-    private void OnDeleteSelectedClicked(object? sender, RoutedEventArgs e)
+    private void OnDeleteChannelClicked(object? sender, RoutedEventArgs e)
     {
-        if (ChannelList.SelectedItem is not ChannelSubscription channel)
+        if (sender is not Button button || button.DataContext is not ChannelSubscription channel)
             return;
+
+        e.Handled = true;
 
         if (!MusicLibraryService.Current.DeleteChannel(channel.Id))
         {
@@ -103,7 +107,8 @@ public partial class ChannelOverlay : UserControl
             return;
         }
 
-        _selectedChannelId = -1;
+        if (_selectedChannelId == channel.Id)
+            _selectedChannelId = -1;
         RefreshChannels();
         ToastRequested?.Invoke("Channel deleted");
     }
@@ -160,8 +165,7 @@ public partial class ChannelOverlay : UserControl
             .Select(video => new ChannelVideoDisplay(video))
             .ToList();
 
-        var showChecked = ShowCheckedBox.IsChecked == true;
-        var videos = showChecked
+        var videos = _showAllVideos
             ? _currentVideos
             : _currentVideos.Where(video => !video.IsChecked).ToList();
 
@@ -175,30 +179,47 @@ public partial class ChannelOverlay : UserControl
             _loadingVideos = false;
         }
         var uncheckedCount = _currentVideos.Count(video => !video.IsChecked);
-        VideoSummaryText.Text = showChecked
+        VideoSummaryText.Text = _showAllVideos
             ? $"{_currentVideos.Count} videos · {uncheckedCount} unchecked"
             : $"{uncheckedCount} unchecked videos";
     }
 
-    private void OnVideoCheckedChanged(object? sender, RoutedEventArgs e)
+    private void OnVideoCheckClicked(object? sender, RoutedEventArgs e)
     {
-        if (sender is not CheckBox checkBox || checkBox.DataContext is not ChannelVideoDisplay item)
+        if (sender is not Button button || button.DataContext is not ChannelVideoDisplay item)
             return;
         if (_loadingVideos)
             return;
 
-        var isChecked = checkBox.IsChecked == true;
+        var isChecked = !item.IsChecked;
         MusicLibraryService.Current.SetChannelVideoChecked(item.Id, isChecked);
         item.IsChecked = isChecked;
         RefreshChannelSummaries();
         RefreshVideos();
     }
 
-    private void OnShowCheckedChanged(object? sender, RoutedEventArgs e)
+    private void OnPendingFilterPressed(object? sender, PointerPressedEventArgs e)
     {
-        if (_loadingVideos)
-            return;
+        SetVideoFilter(showAll: false);
+        e.Handled = true;
+    }
 
+    private void OnAllFilterPressed(object? sender, PointerPressedEventArgs e)
+    {
+        SetVideoFilter(showAll: true);
+        e.Handled = true;
+    }
+
+    private void SetVideoFilter(bool showAll)
+    {
+        _showAllVideos = showAll;
+        if (VideoFilterSelectionIndicator.RenderTransform is TranslateTransform transform)
+            transform.X = showAll ? 72 : 0;
+        VideoFilterSelectionIndicator.CornerRadius = showAll
+            ? new Avalonia.CornerRadius(0, 5, 5, 0)
+            : new Avalonia.CornerRadius(5, 0, 0, 5);
+        PendingFilterText.Foreground = new SolidColorBrush(Color.Parse(showAll ? "#B8C5CE" : "#FFFFFF"));
+        AllFilterText.Foreground = new SolidColorBrush(Color.Parse(showAll ? "#FFFFFF" : "#B8C5CE"));
         RefreshVideos();
     }
 
@@ -253,7 +274,10 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
 {
     private bool _isChecked;
     private double _opacity;
+    private double _checkOpacity;
     private IBrush _background = Brushes.Transparent;
+    private IBrush _checkBackground = Brushes.Transparent;
+    private IBrush _checkBorder = new SolidColorBrush(Color.Parse("#40515E"));
     private TextDecorationCollection? _textDecorations;
 
     public ChannelVideoDisplay(ChannelVideo video)
@@ -262,7 +286,6 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
         CanonicalUrl = video.CanonicalUrl;
         Title = video.Title;
         DurationText = video.DurationSeconds is int seconds ? FormatDuration(seconds) : "";
-        PublishedText = FormatDate(video.UploadedAt);
         SetChecked(video.IsChecked);
     }
 
@@ -277,7 +300,6 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
         set => SetChecked(value);
     }
     public string DurationText { get; }
-    public string PublishedText { get; }
     public double Opacity
     {
         get => _opacity;
@@ -287,6 +309,21 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
     {
         get => _background;
         private set => SetField(ref _background, value);
+    }
+    public double CheckOpacity
+    {
+        get => _checkOpacity;
+        private set => SetField(ref _checkOpacity, value);
+    }
+    public IBrush CheckBackground
+    {
+        get => _checkBackground;
+        private set => SetField(ref _checkBackground, value);
+    }
+    public IBrush CheckBorder
+    {
+        get => _checkBorder;
+        private set => SetField(ref _checkBorder, value);
     }
     public TextDecorationCollection? TextDecorations
     {
@@ -301,6 +338,9 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
         Background = value
             ? new SolidColorBrush(Color.Parse("#22192027"))
             : new SolidColorBrush(Color.Parse("#10203422"));
+        CheckBackground = new SolidColorBrush(Color.Parse(value ? "#176486" : "#131A20"));
+        CheckBorder = new SolidColorBrush(Color.Parse(value ? "#4AA9D1" : "#40515E"));
+        CheckOpacity = value ? 1 : 0.58;
         TextDecorations = value ? Avalonia.Media.TextDecorations.Strikethrough : null;
     }
 
@@ -321,13 +361,4 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
             : $"{time.Minutes:D2}:{time.Seconds:D2}";
     }
 
-    private static string FormatDate(string? value)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-            return "";
-
-        return DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var date)
-            ? date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)
-            : value;
-    }
 }
