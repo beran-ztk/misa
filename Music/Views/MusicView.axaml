@@ -55,9 +55,14 @@
         <Style Selector="ListBoxItem">
             <Setter Property="Padding" Value="10,0"/>
             <Setter Property="MinHeight" Value="58"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="BorderBrush" Value="#26313A"/>
             <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="ListBoxItem /template/ ContentPresenter">
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
         </Style>
         <Style Selector="ListBoxItem:pointerover">
             <Setter Property="Background" Value="Transparent"/>
@@ -223,10 +228,16 @@
                      DoubleTapped="OnListDoubleTapped"
                      Background="Transparent"
                      BorderThickness="0"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                      Padding="4">
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <VirtualizingStackPanel HorizontalAlignment="Stretch"/>
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
                 <ListBox.ItemTemplate>
                     <DataTemplate x:DataType="models:TrackDisplayItem">
-                        <Grid RowDefinitions="Auto,Auto">
+                        <Grid RowDefinitions="Auto,Auto" HorizontalAlignment="Stretch">
                             <Border Grid.Row="0"
                                     Classes="track-card"
                                     CornerRadius="7"
@@ -257,10 +268,11 @@
                                     <!-- Two-line hierarchy: track identity, then source and classification. -->
                                     <Grid Grid.Column="2"
                                           VerticalAlignment="Center"
-                                          ColumnDefinitions="*,Auto"
+                                          ColumnDefinitions="*,48"
                                           RowDefinitions="Auto,Auto"
+                                          ColumnSpacing="24"
                                           RowSpacing="4">
-                                        <Grid Grid.Column="0" ColumnDefinitions="Auto,Auto,*">
+                                        <Grid Grid.Row="0" Grid.Column="0" ColumnDefinitions="Auto,Auto,*">
                                             <Border Background="{Binding RatingBackground}"
                                                     BorderBrush="{Binding RatingBorder}"
                                                     BorderThickness="1"
@@ -316,14 +328,15 @@
                                                                           Margin="12,0,8,0"
                                                                           HorizontalAlignment="Stretch"/>
                                         </Grid>
-                                        <TextBlock Grid.RowSpan="2"
+                                        <TextBlock Grid.Row="0"
+                                                   Grid.RowSpan="2"
                                                    Grid.Column="1"
                                                    Text="{Binding DurationText}"
                                                    FontSize="10.5"
                                                    Opacity="0.62"
-                                                   Margin="15,0,15,0"
-                                                   MinWidth="42"
-                                                   TextAlignment="Right"
+                                                   Width="48"
+                                                   HorizontalAlignment="Center"
+                                                   TextAlignment="Center"
                                                    VerticalAlignment="Center"/>
                                     </Grid>
 
