@@ -39,11 +39,11 @@
             <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
         <Style Selector="Button.toolbarIcon">
-            <Setter Property="Width" Value="40"/>
-            <Setter Property="Height" Value="38"/>
+            <Setter Property="Width" Value="36"/>
+            <Setter Property="Height" Value="34"/>
             <Setter Property="Padding" Value="0"/>
-            <Setter Property="Background" Value="{DynamicResource Mobile.Brush.Surface}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource Mobile.Brush.BorderSubtle}"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="HorizontalContentAlignment" Value="Center"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
@@ -116,19 +116,19 @@
         </Border>
 
         <Border Grid.Row="0"
-                Background="#B8211E17"
+                Background="#0C1B1914"
                 BorderBrush="{DynamicResource Mobile.Brush.BorderSubtle}"
                 BorderThickness="0,0,0,1"
-                Padding="16,10,14,9">
-            <StackPanel Spacing="3">
+                Padding="14,6,12,6">
+            <StackPanel>
                 <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto,Auto" ColumnSpacing="5">
-                    <Border Width="3" Height="22"
+                    <Border Width="3" Height="18"
                             CornerRadius="2"
                             Background="{DynamicResource Mobile.Brush.AccentStrong}"
                             VerticalAlignment="Center"/>
                     <StackPanel Grid.Column="1" Spacing="1" VerticalAlignment="Center">
                         <TextBlock Text="LIBRARY"
-                                   FontSize="15"
+                                   FontSize="14"
                                    FontWeight="SemiBold"
                                    LetterSpacing="1.1"/>
                         <TextBlock x:Name="PlaylistSummaryText"
@@ -163,10 +163,6 @@
                              Margin="0,0,1,0"
                              VerticalContentAlignment="Center"/>
                 </Grid>
-                <TextBlock x:Name="StatusText"
-                           FontSize="10.5"
-                           Foreground="{DynamicResource Mobile.Brush.Warning}"
-                           TextWrapping="Wrap"/>
             </StackPanel>
         </Border>
 
@@ -248,6 +244,19 @@
                 </ListBox.ItemTemplate>
             </ListBox>
 
+            <TextBlock x:Name="StatusText"
+                       ZIndex="24"
+                       IsVisible="False"
+                       Margin="14,8"
+                       Padding="9,5"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Top"
+                       MaxWidth="760"
+                       Background="#D8262119"
+                       Foreground="{DynamicResource Mobile.Brush.Warning}"
+                       FontSize="10.5"
+                       TextWrapping="Wrap"/>
+
             <Border x:Name="FilterDrawer"
                     IsVisible="False"
                     HorizontalAlignment="Right"
@@ -323,7 +332,6 @@
         </Panel>
 
         <Border Grid.Row="2"
-                Height="124"
                 Background="#B823211B"
                 BorderBrush="{DynamicResource Mobile.Brush.BorderStrong}"
                 BorderThickness="0,1,0,0"
@@ -332,12 +340,14 @@
                 BoxShadow="0 -7 20 0 #70000000">
             <Panel>
                 <Image x:Name="PlayerArtworkPreviousBackground"
+                       MaxHeight="150"
                        Stretch="UniformToFill" IsHitTestVisible="False"
                        IsVisible="False" Opacity="0">
                     <Image.Effect><BlurEffect Radius="12"/></Image.Effect>
                     <Image.RenderTransform><ScaleTransform ScaleX="1.1" ScaleY="1.1"/></Image.RenderTransform>
                 </Image>
                 <Image x:Name="PlayerArtworkBackground"
+                       MaxHeight="150"
                        Stretch="UniformToFill" IsHitTestVisible="False"
                        IsVisible="False" Opacity="0">
                     <Image.Effect><BlurEffect Radius="10"/></Image.Effect>
@@ -354,7 +364,7 @@
                     </Border.Background>
                 </Border>
 
-                <Grid RowDefinitions="Auto,22,34" RowSpacing="4" Margin="14,6,14,6">
+                <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="4" Margin="14,8,14,10">
                     <Grid ColumnDefinitions="46,*" ColumnSpacing="9">
                         <Border Width="42" Height="42" CornerRadius="7" ClipToBounds="True"
                                 Background="{DynamicResource Mobile.Brush.Surface}"
@@ -378,7 +388,7 @@
                     </Grid>
 
                     <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                        <Slider x:Name="ProgressSlider" Minimum="0" Maximum="100" Value="0" Height="22"/>
+                        <Slider x:Name="ProgressSlider" Minimum="0" Maximum="100" Value="0"/>
                         <TextBlock x:Name="TimeText" Grid.Column="1"
                                    Text="00:00 / 00:00" FontSize="9.5"
                                    Foreground="{DynamicResource Mobile.Brush.TextMuted}"

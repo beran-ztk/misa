@@ -126,14 +126,14 @@ public partial class MainView : UserControl
         {
             ClearThumbnailCache();
             _loadedLibrary = await PortableLibraryStore.LoadAsync(CompanionServices.LibraryStorage.LibraryDirectory);
-            StatusText.Text = "";
+            SetStatus();
         }
         catch (Exception ex)
         {
             _loadedLibrary = new LoadedMusicLibrary(
                 CompanionServices.LibraryStorage.LibraryDirectory,
                 PortableMusicLibrary.Empty);
-            StatusText.Text = $"Could not load library: {ex.Message}";
+            SetStatus($"Could not load library: {ex.Message}");
         }
 
         PopulateFilters();
@@ -228,7 +228,7 @@ public partial class MainView : UserControl
         var path = _loadedLibrary.TrackPath(track);
         if (!File.Exists(path))
         {
-            StatusText.Text = $"Missing file: {path}";
+            SetStatus($"Missing file: {path}");
             return;
         }
 
@@ -246,11 +246,11 @@ public partial class MainView : UserControl
             UpdatePlayPauseIcon();
             UpdateReviewButton();
             UpdateMediaControls();
-            StatusText.Text = "";
+            SetStatus();
         }
         catch (Exception ex)
         {
-            StatusText.Text = $"Could not play {track.Title}: {ex.Message}";
+            SetStatus($"Could not play {track.Title}: {ex.Message}");
             ShowToast("This track could not be played");
         }
     }
@@ -931,7 +931,7 @@ public partial class MainView : UserControl
         var topLevel = TopLevel.GetTopLevel(this);
         if (topLevel?.StorageProvider.CanPickFolder != true)
         {
-            StatusText.Text = "Folder import is not available on this device.";
+            SetStatus("Folder import is not available on this device.");
             return;
         }
 
@@ -962,7 +962,7 @@ public partial class MainView : UserControl
     private async Task ImportLibraryArchiveAsync(IStorageFile selectedFile)
     {
         ImportButton.IsEnabled = false;
-        StatusText.Text = "";
+        SetStatus();
 
         var targetDirectory = CompanionServices.LibraryStorage.LibraryDirectory;
         var tempDirectory = targetDirectory + ".archive-import";
@@ -984,7 +984,7 @@ public partial class MainView : UserControl
         }
         catch (Exception ex)
         {
-            StatusText.Text = $"Import failed: {ex.Message}";
+            SetStatus($"Import failed: {ex.Message}");
         }
         finally
         {
@@ -998,7 +998,7 @@ public partial class MainView : UserControl
     private async Task ImportLibraryAsync(IStorageFolder selectedFolder)
     {
         ImportButton.IsEnabled = false;
-        StatusText.Text = "";
+        SetStatus();
         var tempDirectory = CompanionServices.LibraryStorage.LibraryDirectory + ".import";
 
         try
@@ -1006,7 +1006,7 @@ public partial class MainView : UserControl
             var sourceFolder = await FindLibraryFolderAsync(selectedFolder);
             if (sourceFolder is null)
             {
-                StatusText.Text = "Import folder must contain library.json and a tracks folder.";
+                SetStatus("Import folder must contain library.json and a tracks folder.");
                 return;
             }
 
@@ -1020,7 +1020,7 @@ public partial class MainView : UserControl
         }
         catch (Exception ex)
         {
-            StatusText.Text = $"Import failed: {ex.Message}";
+            SetStatus($"Import failed: {ex.Message}");
         }
         finally
         {
@@ -1035,7 +1035,7 @@ public partial class MainView : UserControl
     {
         if (!File.Exists(Path.Combine(sourceDirectory, PortableLibraryStore.FileName)))
         {
-            StatusText.Text = "Import must contain library.json.";
+            SetStatus("Import must contain library.json.");
             return;
         }
 
@@ -1237,6 +1237,12 @@ public partial class MainView : UserControl
         return time.TotalHours >= 1
             ? $"{(int)time.TotalHours}:{time.Minutes:D2}h"
             : $"{time.Minutes}:{time.Seconds:D2}m";
+    }
+
+    private void SetStatus(string? message = null)
+    {
+        StatusText.Text = message ?? string.Empty;
+        StatusText.IsVisible = !string.IsNullOrWhiteSpace(message);
     }
 
     private void ShuffleFilteredTracks()
