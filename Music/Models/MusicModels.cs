@@ -38,6 +38,10 @@ public record TrackTagSuggestion(
     string State);
 public record Style(int Id, string Name);
 public record Rating(int Id, string Name, int SortOrder);
+public static class RatingNames
+{
+    public const string Avoid = "Avoid";
+}
 public record TrackUsageStats(int PlayCount, int ListenedSeconds, int SkipCount, string? LastListenedAt);
 public record PortableExportRecord(
     int Id,

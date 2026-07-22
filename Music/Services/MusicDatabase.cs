@@ -255,12 +255,23 @@ public class MusicDatabase
         EnsureColumn(conn, "model_subgenres", "classification_hint", "TEXT NULL");
         EnsureColumn(conn, "model_subgenres", "bpm_min", "INTEGER NULL");
         EnsureColumn(conn, "model_subgenres", "bpm_max", "INTEGER NULL");
+        RenameLegacySkipRating(conn);
         EnsureChannelSubscriptionSchema(conn);
         CreateImportQueueSchema(conn);
         CreateModelMetadataSchema(conn);
         CreateTagSchema(conn);
         SimplifyTagSchemaIfNeeded(conn);
         CreatePortableExportSchema(conn);
+    }
+
+    private static void RenameLegacySkipRating(SqliteConnection conn)
+    {
+        ExecuteNonQuery(conn, @"
+            UPDATE ratings
+            SET name = $avoid
+            WHERE name = 'Skip'
+              AND NOT EXISTS (SELECT 1 FROM ratings WHERE name = $avoid)",
+            ("$avoid", RatingNames.Avoid));
     }
 
     private static void CreatePortableExportSchema(SqliteConnection conn)
@@ -1350,10 +1361,11 @@ public class MusicDatabase
         {
             ExecuteInsert(conn, tx, @"
                 UPDATE tracks
-                SET rating_id = (SELECT id FROM ratings WHERE name = 'Skip'),
+                SET rating_id = (SELECT id FROM ratings WHERE name = $avoidRating),
                     analysis_disabled = 1, needs_reevaluation = 0, updated_at = $now
                 WHERE id = $trackId",
-                ("$trackId", trackId.Value), ("$now", DateTime.UtcNow.ToString("O")));
+                ("$trackId", trackId.Value), ("$avoidRating", RatingNames.Avoid),
+                ("$now", DateTime.UtcNow.ToString("O")));
         }
         else
         {

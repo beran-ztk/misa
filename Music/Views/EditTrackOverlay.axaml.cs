@@ -416,7 +416,7 @@ public partial class EditTrackOverlay : UserControl
         "Great" => (Brush("#183827"), Brush("#4EC27A"), Brush("#B7F2CC")),
         "Good" => (Brush("#17354B"), Brush("#4DA5DD"), Brush("#BCE7FF")),
         "Okay" => (Brush("#2C3440"), Brush("#8795A7"), Brush("#DAE1E9")),
-        "Skip" => (Brush("#402326"), Brush("#DD6A70"), Brush("#FFC1C4")),
+        RatingNames.Avoid => (Brush("#402326"), Brush("#DD6A70"), Brush("#FFC1C4")),
         _ => (Brush("#20252B"), Brush("#4C5967"), Brush("#BBC5CE"))
     };
 

@@ -696,8 +696,8 @@ public partial class MusicView : UserControl
 
         if (selRatingIds.Count == 0
             && Values.Ratings.FirstOrDefault(rating =>
-                string.Equals(rating.Name, "Skip", StringComparison.OrdinalIgnoreCase))?.Id is int skipRatingId)
-            filtered = filtered.Where(track => track.RatingId != skipRatingId).ToList();
+                string.Equals(rating.Name, RatingNames.Avoid, StringComparison.OrdinalIgnoreCase))?.Id is int avoidRatingId)
+            filtered = filtered.Where(track => track.RatingId != avoidRatingId).ToList();
 
         _filteredItems = filtered
             .Where(t => itemById.ContainsKey(t.Id))
@@ -1225,7 +1225,7 @@ public partial class MusicView : UserControl
     {
         RatingFilter.SetSelectedItems(
             Values.Ratings
-                .Where(rating => !string.Equals(rating.Name, "Skip", StringComparison.OrdinalIgnoreCase))
+                .Where(rating => !string.Equals(rating.Name, RatingNames.Avoid, StringComparison.OrdinalIgnoreCase))
                 .Select(rating => rating.Name),
             notify: false);
     }
