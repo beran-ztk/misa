@@ -39,11 +39,14 @@ public partial class MusicView : UserControl
     private readonly GradientStop _appAmbientSecondaryStop;
     private readonly GradientStop _playerAmbientPrimaryStop;
     private readonly GradientStop _playerAmbientSecondaryStop;
+    private static readonly TimeSpan ArtworkTransitionDuration = TimeSpan.FromSeconds(7);
     private static readonly AmbientPalette DefaultAmbientPalette = new(
         Color.Parse("#5865B8"),
         Color.Parse("#8051AE"));
     private Color _ambientPrimary = DefaultAmbientPalette.Primary;
     private Color _ambientSecondary = DefaultAmbientPalette.Secondary;
+    private Color _ambientStartPrimary = DefaultAmbientPalette.Primary;
+    private Color _ambientStartSecondary = DefaultAmbientPalette.Secondary;
     private Color _targetAmbientPrimary = DefaultAmbientPalette.Primary;
     private Color _targetAmbientSecondary = DefaultAmbientPalette.Secondary;
     private bool _hasArtworkPalette;
@@ -67,7 +70,10 @@ public partial class MusicView : UserControl
     private CancellationTokenSource? _thumbLoadCts;
     private CancellationTokenSource? _toastCts;
     private Bitmap? _playerArtwork;
+    private Bitmap? _previousPlayerArtwork;
     private int _playerArtworkTrackId = -1;
+    private DateTimeOffset _artworkTransitionStartedAt;
+    private double _artworkTransitionProgress = 1;
     private bool _libraryRefreshPending;
 
     // Crossfade state
@@ -2620,14 +2626,39 @@ public partial class MusicView : UserControl
             return;
         }
 
-        var previousArtwork = _playerArtwork;
+        PrepareOutgoingArtwork();
         var loadedArtwork = LoadPlayerArtwork(track);
         var artwork = loadedArtwork.Artwork;
         _playerArtwork = loadedArtwork.Artwork;
         _playerArtworkTrackId = track.Id;
+        BeginArtworkTransition(_previousPlayerArtwork is not null);
         SetAmbientPalette(loadedArtwork.Palette, artwork is not null);
         SetPlayerArtworkBackground(artwork);
-        previousArtwork?.Dispose();
+    }
+
+    private void PrepareOutgoingArtwork()
+    {
+        var keepPreviousLayer = _previousPlayerArtwork is not null
+                                && (_playerArtwork is null
+                                    || IsArtworkTransitionActive
+                                    && SmoothStep(_artworkTransitionProgress) < 0.5);
+        if (keepPreviousLayer)
+        {
+            _playerArtwork?.Dispose();
+            _playerArtwork = null;
+            return;
+        }
+
+        _previousPlayerArtwork?.Dispose();
+        _previousPlayerArtwork = _playerArtwork;
+        _playerArtwork = null;
+    }
+
+    private void BeginArtworkTransition(bool hasOutgoingArtwork)
+    {
+        _artworkTransitionProgress = hasOutgoingArtwork ? 0 : 1;
+        _artworkTransitionStartedAt = DateTimeOffset.UtcNow;
+        StartAudioAtmosphereTimer();
     }
 
     private void SetPlayerArtworkBackground(Bitmap? artwork)
@@ -2636,6 +2667,10 @@ public partial class MusicView : UserControl
         PlayerArtworkBackground.IsVisible = artwork is not null;
         AppArtworkBackground.Source = artwork;
         AppArtworkBackground.IsVisible = artwork is not null;
+        PlayerArtworkPreviousBackground.Source = _previousPlayerArtwork;
+        PlayerArtworkPreviousBackground.IsVisible = _previousPlayerArtwork is not null;
+        AppArtworkPreviousBackground.Source = _previousPlayerArtwork;
+        AppArtworkPreviousBackground.IsVisible = _previousPlayerArtwork is not null;
     }
 
     private static LoadedPlayerArtwork LoadPlayerArtwork(MusicTrack track)
@@ -2667,16 +2702,25 @@ public partial class MusicView : UserControl
         PlayerArtworkBackground.IsVisible = false;
         AppArtworkBackground.Source = null;
         AppArtworkBackground.IsVisible = false;
+        PlayerArtworkPreviousBackground.Source = null;
+        PlayerArtworkPreviousBackground.IsVisible = false;
+        AppArtworkPreviousBackground.Source = null;
+        AppArtworkPreviousBackground.IsVisible = false;
+        _artworkTransitionProgress = 1;
         SetAmbientPalette(DefaultAmbientPalette, hasArtwork: false);
         ResetAudioAtmosphere();
 
         _playerArtwork?.Dispose();
+        _previousPlayerArtwork?.Dispose();
         _playerArtwork = null;
+        _previousPlayerArtwork = null;
         _playerArtworkTrackId = -1;
     }
 
     private void SetAmbientPalette(AmbientPalette palette, bool hasArtwork)
     {
+        _ambientStartPrimary = _ambientPrimary;
+        _ambientStartSecondary = _ambientSecondary;
         _targetAmbientPrimary = palette.Primary;
         _targetAmbientSecondary = palette.Secondary;
         _hasArtworkPalette = hasArtwork;
@@ -2823,6 +2867,7 @@ public partial class MusicView : UserControl
 
     private void UpdateAudioReactiveAtmosphere()
     {
+        UpdateArtworkTransition();
         var easing = _engine.State == EngineState.Playing ? 0.16 : 0.10;
         _visualEnergy = Approach(_visualEnergy, _targetEnergy, easing);
         _visualBass = Approach(_visualBass, _targetBass, easing);
@@ -2836,6 +2881,7 @@ public partial class MusicView : UserControl
         if (_visualEnergy < 0.003
             && _visualBass < 0.003
             && _visualTreble < 0.003
+            && !IsArtworkTransitionActive
             && AmbientPaletteSettled())
         {
             ResetAudioAtmosphere();
@@ -2851,18 +2897,33 @@ public partial class MusicView : UserControl
         // Lift quiet passages (and low app-volume levels) without making the
         // high end grow linearly into an overpowering background.
         var visibilityEnergy = Math.Sqrt(energy);
-        var hasArtwork = AppArtworkBackground.IsVisible || PlayerArtworkBackground.IsVisible;
+        var hasArtwork = AppArtworkBackground.IsVisible
+                         || PlayerArtworkBackground.IsVisible
+                         || AppArtworkPreviousBackground.IsVisible
+                         || PlayerArtworkPreviousBackground.IsVisible;
+        var transition = IsArtworkTransitionActive
+            ? SmoothStep(_artworkTransitionProgress)
+            : 1;
+        _ambientPrimary = MixColor(_ambientStartPrimary, _targetAmbientPrimary, transition);
+        _ambientSecondary = MixColor(_ambientStartSecondary, _targetAmbientSecondary, transition);
 
-        _ambientPrimary = ApproachColor(_ambientPrimary, _targetAmbientPrimary, 0.075);
-        _ambientSecondary = ApproachColor(_ambientSecondary, _targetAmbientSecondary, 0.075);
+        var incomingMix = IsArtworkTransitionActive ? Math.Sin(transition * Math.PI / 2) : 1;
+        var outgoingMix = IsArtworkTransitionActive ? Math.Cos(transition * Math.PI / 2) : 0;
+        var appOpacity = 0.25 + visibilityEnergy * 0.21;
+        var playerOpacity = 0.55 + visibilityEnergy * 0.15;
+        AppArtworkBackground.Opacity = AppArtworkBackground.IsVisible ? appOpacity * incomingMix : 0;
+        PlayerArtworkBackground.Opacity = PlayerArtworkBackground.IsVisible ? playerOpacity * incomingMix : 0;
+        AppArtworkPreviousBackground.Opacity = AppArtworkPreviousBackground.IsVisible ? appOpacity * outgoingMix : 0;
+        PlayerArtworkPreviousBackground.Opacity = PlayerArtworkPreviousBackground.IsVisible ? playerOpacity * outgoingMix : 0;
 
-        AppArtworkBackground.Opacity = AppArtworkBackground.IsVisible ? 0.25 + visibilityEnergy * 0.21 : 0;
-        PlayerArtworkBackground.Opacity = PlayerArtworkBackground.IsVisible ? 0.55 + visibilityEnergy * 0.15 : 0;
-
-        SetScale(AppArtworkBackground, 1.08 + bass * 0.048);
-        SetScale(PlayerArtworkBackground, 1.10 + bass * 0.035);
-        SetBlur(AppArtworkBackground, 20 + energy * 8.0);
-        SetBlur(PlayerArtworkBackground, 30 + energy * 6.0 + treble * 4.0);
+        SetScale(AppArtworkBackground, 1.12 - transition * 0.04 + bass * 0.048);
+        SetScale(PlayerArtworkBackground, 1.14 - transition * 0.04 + bass * 0.035);
+        SetScale(AppArtworkPreviousBackground, 1.08 - transition * 0.025 + bass * 0.025);
+        SetScale(PlayerArtworkPreviousBackground, 1.10 - transition * 0.025 + bass * 0.02);
+        SetBlur(AppArtworkBackground, 28 - transition * 8 + energy * 8.0);
+        SetBlur(PlayerArtworkBackground, 40 - transition * 10 + energy * 6.0 + treble * 4.0);
+        SetBlur(AppArtworkPreviousBackground, 20 + transition * 12 + energy * 5.0);
+        SetBlur(PlayerArtworkPreviousBackground, 30 + transition * 14 + energy * 4.0);
 
         var primary = MixColor(_ambientPrimary, Colors.White, energy * 0.08 + treble * 0.05);
         var secondary = MixColor(_ambientSecondary, Colors.White, energy * 0.05);
@@ -2886,15 +2947,39 @@ public partial class MusicView : UserControl
     private static double Approach(double current, double target, double amount) =>
         current + (target - current) * amount;
 
+    private bool IsArtworkTransitionActive =>
+        _previousPlayerArtwork is not null && _artworkTransitionProgress < 1;
+
+    private void UpdateArtworkTransition()
+    {
+        if (!IsArtworkTransitionActive)
+            return;
+
+        _artworkTransitionProgress = Math.Clamp(
+            (DateTimeOffset.UtcNow - _artworkTransitionStartedAt).TotalMilliseconds
+            / ArtworkTransitionDuration.TotalMilliseconds,
+            0,
+            1);
+        if (_artworkTransitionProgress < 1)
+            return;
+
+        PlayerArtworkPreviousBackground.Source = null;
+        PlayerArtworkPreviousBackground.IsVisible = false;
+        AppArtworkPreviousBackground.Source = null;
+        AppArtworkPreviousBackground.IsVisible = false;
+        _previousPlayerArtwork?.Dispose();
+        _previousPlayerArtwork = null;
+    }
+
+    private static double SmoothStep(double progress)
+    {
+        progress = Math.Clamp(progress, 0, 1);
+        return progress * progress * (3 - 2 * progress);
+    }
+
     private bool AmbientPaletteSettled() =>
         ColorDistance(_ambientPrimary, _targetAmbientPrimary) < 2
         && ColorDistance(_ambientSecondary, _targetAmbientSecondary) < 2;
-
-    private static Color ApproachColor(Color current, Color target, double amount) =>
-        Color.FromRgb(
-            ToByte(Approach(current.R, target.R, amount)),
-            ToByte(Approach(current.G, target.G, amount)),
-            ToByte(Approach(current.B, target.B, amount)));
 
     private static Color MixColor(Color from, Color to, double amount)
     {

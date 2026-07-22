@@ -91,6 +91,19 @@
     </UserControl.Styles>
 
     <Panel>
+    <Image x:Name="AppArtworkPreviousBackground"
+           IsVisible="False"
+           IsHitTestVisible="False"
+           Opacity="0"
+           Stretch="UniformToFill"
+           RenderTransformOrigin="0.5,0.5">
+        <Image.RenderTransform>
+            <ScaleTransform ScaleX="1.08" ScaleY="1.08"/>
+        </Image.RenderTransform>
+        <Image.Effect>
+            <BlurEffect Radius="20"/>
+        </Image.Effect>
+    </Image>
     <Image x:Name="AppArtworkBackground"
            IsVisible="False"
            IsHitTestVisible="False"
@@ -404,6 +417,21 @@
                 <Border CornerRadius="10,10,0,0"
                         ClipToBounds="True">
                     <Panel>
+                        <Image x:Name="PlayerArtworkPreviousBackground"
+                               IsVisible="False"
+                               IsHitTestVisible="False"
+                               Height="118"
+                               VerticalAlignment="Stretch"
+                               Opacity="0"
+                               Stretch="UniformToFill"
+                               RenderTransformOrigin="0.5,0.5">
+                            <Image.RenderTransform>
+                                <ScaleTransform ScaleX="1.10" ScaleY="1.10"/>
+                            </Image.RenderTransform>
+                            <Image.Effect>
+                                <BlurEffect Radius="30"/>
+                            </Image.Effect>
+                        </Image>
                         <Image x:Name="PlayerArtworkBackground"
                                IsVisible="False"
                                IsHitTestVisible="False"
