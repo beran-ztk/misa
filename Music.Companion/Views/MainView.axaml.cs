@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -17,6 +18,7 @@ public partial class MainView : UserControl
     private readonly ICompanionAudioPlayer _audio = CompanionServices.AudioPlayer;
     private readonly DispatcherTimer _timer;
     private readonly DispatcherTimer _artworkTimer;
+    private bool _systemBarsConfigured;
 
     private LoadedMusicLibrary _loadedLibrary = new("", PortableMusicLibrary.Empty);
 
@@ -124,6 +126,8 @@ public partial class MainView : UserControl
     {
         InitializeComponent();
 
+        AttachedToVisualTree += (_, _) => ConfigureSystemBars();
+
         SearchBox.TextChanged += (_, _) =>
         {
             SearchButton.Opacity = SearchBox.IsVisible || !string.IsNullOrWhiteSpace(SearchBox.Text) ? 1 : 0.72;
@@ -145,6 +149,26 @@ public partial class MainView : UserControl
         _artworkTimer.Tick += (_, _) => UpdateArtworkTransition();
 
         _ = LoadLibraryAsync();
+    }
+
+    private void ConfigureSystemBars()
+    {
+        var insetsManager = TopLevel.GetTopLevel(this)?.InsetsManager;
+        if (insetsManager is null || _systemBarsConfigured)
+            return;
+
+        _systemBarsConfigured = true;
+        insetsManager.DisplayEdgeToEdgePreference = true;
+        insetsManager.SystemBarColor = Colors.Transparent;
+
+        ApplySafeArea(insetsManager.SafeAreaPadding);
+        insetsManager.SafeAreaChanged += (_, args) => ApplySafeArea(args.SafeAreaPadding);
+    }
+
+    private void ApplySafeArea(Thickness safeArea)
+    {
+        HeaderBar.Padding = new Thickness(14, 6 + safeArea.Top, 12, 6);
+        PlayerContent.Margin = new Thickness(12, 5, 12, 6 + safeArea.Bottom);
     }
 
     private async Task LoadLibraryAsync()

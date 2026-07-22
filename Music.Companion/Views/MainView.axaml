@@ -1,7 +1,8 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:views="clr-namespace:Music.Companion.Views"
-             x:Class="Music.Companion.Views.MainView">
+             x:Class="Music.Companion.Views.MainView"
+             TopLevel.AutoSafeAreaPadding="False">
 
     <UserControl.Styles>
         <Style Selector="TextBlock">
@@ -115,7 +116,8 @@
             </Border.Background>
         </Border>
 
-        <Border Grid.Row="0"
+        <Border x:Name="HeaderBar"
+                Grid.Row="0"
                 Background="#0C1B1914"
                 BorderBrush="{DynamicResource Mobile.Brush.BorderSubtle}"
                 BorderThickness="0,0,0,1"
@@ -371,7 +373,8 @@
                     </Border.Background>
                 </Border>
 
-                <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="1" Margin="12,5,12,6">
+                <Grid x:Name="PlayerContent"
+                      RowDefinitions="Auto,Auto,Auto" RowSpacing="1" Margin="12,5,12,13">
                     <Grid ColumnDefinitions="42,*" ColumnSpacing="8">
                         <Border Width="38" Height="38" CornerRadius="6" ClipToBounds="True"
                                 Background="{DynamicResource Mobile.Brush.Surface}"
