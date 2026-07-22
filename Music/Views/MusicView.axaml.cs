@@ -74,6 +74,10 @@ public partial class MusicView : UserControl
     private int _playerArtworkTrackId = -1;
     private DateTimeOffset _artworkTransitionStartedAt;
     private double _artworkTransitionProgress = 1;
+    private double _outgoingAppScale = 1.08;
+    private double _outgoingPlayerScale = 1.10;
+    private double _outgoingAppBlur = 20;
+    private double _outgoingPlayerBlur = 30;
     private bool _libraryRefreshPending;
 
     // Crossfade state
@@ -2623,6 +2627,7 @@ public partial class MusicView : UserControl
         if (_playerArtworkTrackId == track.Id)
         {
             SetPlayerArtworkBackground(_playerArtwork);
+            ApplyAudioAtmosphere();
             return;
         }
 
@@ -2634,24 +2639,41 @@ public partial class MusicView : UserControl
         BeginArtworkTransition(_previousPlayerArtwork is not null);
         SetAmbientPalette(loadedArtwork.Palette, artwork is not null);
         SetPlayerArtworkBackground(artwork);
+        ApplyAudioAtmosphere();
     }
 
     private void PrepareOutgoingArtwork()
     {
-        var keepPreviousLayer = _previousPlayerArtwork is not null
-                                && (_playerArtwork is null
-                                    || IsArtworkTransitionActive
-                                    && SmoothStep(_artworkTransitionProgress) < 0.5);
-        if (keepPreviousLayer)
-        {
-            _playerArtwork?.Dispose();
-            _playerArtwork = null;
-            return;
-        }
+        _outgoingAppScale = GetScale(AppArtworkBackground, 1.08);
+        _outgoingPlayerScale = GetScale(PlayerArtworkBackground, 1.10);
+        _outgoingAppBlur = GetBlur(AppArtworkBackground, 20);
+        _outgoingPlayerBlur = GetBlur(PlayerArtworkBackground, 30);
 
+        PlayerArtworkPreviousBackground.Source = null;
+        AppArtworkPreviousBackground.Source = null;
         _previousPlayerArtwork?.Dispose();
+
+        // The active artwork always becomes the sole faded layer. This is
+        // intentionally independent of how far the previous transition got:
+        // fast track changes must never bring an older faded cover back.
         _previousPlayerArtwork = _playerArtwork;
         _playerArtwork = null;
+
+        PlayerArtworkPreviousBackground.Source = _previousPlayerArtwork;
+        PlayerArtworkPreviousBackground.IsVisible = _previousPlayerArtwork is not null;
+        PlayerArtworkPreviousBackground.Opacity = PlayerArtworkBackground.Opacity;
+        AppArtworkPreviousBackground.Source = _previousPlayerArtwork;
+        AppArtworkPreviousBackground.IsVisible = _previousPlayerArtwork is not null;
+        AppArtworkPreviousBackground.Opacity = AppArtworkBackground.Opacity;
+
+        // Hide and clear active before assigning the next bitmap. Otherwise
+        // Avalonia can render the new source once with the previous opacity.
+        PlayerArtworkBackground.Opacity = 0;
+        AppArtworkBackground.Opacity = 0;
+        PlayerArtworkBackground.Source = null;
+        PlayerArtworkBackground.IsVisible = false;
+        AppArtworkBackground.Source = null;
+        AppArtworkBackground.IsVisible = false;
     }
 
     private void BeginArtworkTransition(bool hasOutgoingArtwork)
@@ -2663,6 +2685,8 @@ public partial class MusicView : UserControl
 
     private void SetPlayerArtworkBackground(Bitmap? artwork)
     {
+        PlayerArtworkBackground.Opacity = 0;
+        AppArtworkBackground.Opacity = 0;
         PlayerArtworkBackground.Source = artwork;
         PlayerArtworkBackground.IsVisible = artwork is not null;
         AppArtworkBackground.Source = artwork;
@@ -2916,14 +2940,14 @@ public partial class MusicView : UserControl
         AppArtworkPreviousBackground.Opacity = AppArtworkPreviousBackground.IsVisible ? appOpacity * outgoingMix : 0;
         PlayerArtworkPreviousBackground.Opacity = PlayerArtworkPreviousBackground.IsVisible ? playerOpacity * outgoingMix : 0;
 
-        SetScale(AppArtworkBackground, 1.12 - transition * 0.04 + bass * 0.048);
-        SetScale(PlayerArtworkBackground, 1.14 - transition * 0.04 + bass * 0.035);
-        SetScale(AppArtworkPreviousBackground, 1.08 - transition * 0.025 + bass * 0.025);
-        SetScale(PlayerArtworkPreviousBackground, 1.10 - transition * 0.025 + bass * 0.02);
+        SetScale(AppArtworkBackground, 1.12 - transition * 0.04 + bass * 0.048 * transition);
+        SetScale(PlayerArtworkBackground, 1.14 - transition * 0.04 + bass * 0.035 * transition);
+        SetScale(AppArtworkPreviousBackground, Approach(_outgoingAppScale, 1.055, transition));
+        SetScale(PlayerArtworkPreviousBackground, Approach(_outgoingPlayerScale, 1.075, transition));
         SetBlur(AppArtworkBackground, 28 - transition * 8 + energy * 8.0);
         SetBlur(PlayerArtworkBackground, 40 - transition * 10 + energy * 6.0 + treble * 4.0);
-        SetBlur(AppArtworkPreviousBackground, 20 + transition * 12 + energy * 5.0);
-        SetBlur(PlayerArtworkPreviousBackground, 30 + transition * 14 + energy * 4.0);
+        SetBlur(AppArtworkPreviousBackground, Approach(_outgoingAppBlur, 34, transition));
+        SetBlur(PlayerArtworkPreviousBackground, Approach(_outgoingPlayerBlur, 46, transition));
 
         var primary = MixColor(_ambientPrimary, Colors.White, energy * 0.08 + treble * 0.05);
         var secondary = MixColor(_ambientSecondary, Colors.White, energy * 0.05);
@@ -3013,11 +3037,21 @@ public partial class MusicView : UserControl
         }
     }
 
+    private static double GetScale(Image image, double fallback) =>
+        image.RenderTransform is ScaleTransform transform
+            ? transform.ScaleX
+            : fallback;
+
     private static void SetBlur(Image image, double radius)
     {
         if (image.Effect is BlurEffect blur)
             blur.Radius = radius;
     }
+
+    private static double GetBlur(Image image, double fallback) =>
+        image.Effect is BlurEffect blur
+            ? blur.Radius
+            : fallback;
 
     // ─── Listening telemetry ─────────────────────────────────────────────────
 
