@@ -115,7 +115,7 @@
                 Background="#5210120F"
                 BorderBrush="#343A30"
                 BorderThickness="0,0,0,1"
-                Padding="20,12,40,10">
+                Padding="20,12,16,10">
             <Grid ColumnDefinitions="*,Auto">
                 <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
                     <Border Width="2"
@@ -134,7 +134,7 @@
                                FontSize="11"
                                Foreground="#A9AD98"
                                Opacity="0.72"
-                               Margin="0,1,0,0"
+                               Margin="0,-2,0,0"
                                VerticalAlignment="Center"
                                TextTrimming="CharacterEllipsis"/>
                     <TextBlock x:Name="QueueStatusText"
@@ -290,7 +290,7 @@
                                                     BorderBrush="{Binding RatingBorder}"
                                                     BorderThickness="1"
                                                     CornerRadius="4"
-                                                    Width="58"
+                                                    Width="52"
                                                     Height="18"
                                                     Padding="4,0"
                                                     Margin="0,0,8,0"
