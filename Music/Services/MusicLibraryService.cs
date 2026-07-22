@@ -320,7 +320,7 @@ public class MusicLibraryService
                     track.Title,
                     track.FileName,
                     track.DurationSeconds,
-                    track.RatingId is int ratingId ? ratings.GetValueOrDefault(ratingId, "") : "Not rated",
+                    track.RatingId is int ratingId ? ratings.GetValueOrDefault(ratingId, "") : "None",
                     NamesFor(trackGenreIds.GetValueOrDefault(track.Id, []), genres),
                     NamesFor(trackStyleIds.GetValueOrDefault(track.Id, []), styles),
                     coverFileName,

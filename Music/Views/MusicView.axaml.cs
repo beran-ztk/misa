@@ -323,11 +323,6 @@ public partial class MusicView : UserControl
             parts.Add($"{analysis.PendingTrackIds.Count} analysis waiting for server setup");
         else if (analysis.PendingTrackIds.Count > 0)
             parts.Add($"{analysis.PendingTrackIds.Count} analysis queued");
-        var channelDownloads = ChannelDownloadService.Current.GetSummary();
-        if (channelDownloads.Downloading > 0)
-            parts.Add($"{channelDownloads.Downloading} channel downloads");
-        if (channelDownloads.Queued > 0)
-            parts.Add($"{channelDownloads.Queued} channel downloads queued");
         QueueStatusText.IsVisible = parts.Count > 0;
         QueueStatusText.Text = parts.Count > 0 ? $"Queue · {string.Join(" · ", parts)}" : string.Empty;
     }
@@ -524,7 +519,7 @@ public partial class MusicView : UserControl
                 tag.Name,
                 CategoryBrush(null)))
             .ToList();
-        var ratingName = track.RatingId is int ratingId ? ratingMap.GetValueOrDefault(ratingId, "") : "Not rated";
+        var ratingName = track.RatingId is int ratingId ? ratingMap.GetValueOrDefault(ratingId, "") : "None";
         var durationText = track.DurationSeconds.HasValue ? FormatDuration(track.DurationSeconds.Value) : "";
 
         return new TrackDisplayItem(track, genreStr, modelGenreStr, manualGenreStr, styleStr, durationText, ratingName, tagDisplays, track.ChannelName ?? "")
@@ -981,6 +976,9 @@ public partial class MusicView : UserControl
     private void UpdateSearchVisibility()
     {
         var hasSearch = !string.IsNullOrWhiteSpace(SearchBox.Text);
+        if (SearchToggleBtn.IsKeyboardFocusWithin)
+            return;
+
         if (!SearchBox.IsKeyboardFocusWithin && !hasSearch)
             SearchBox.IsVisible = false;
         SearchToggleBtn.Opacity = SearchBox.IsVisible || hasSearch ? 1.0 : 0.86;

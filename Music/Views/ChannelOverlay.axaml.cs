@@ -23,7 +23,6 @@ public partial class ChannelOverlay : UserControl
     private bool _showAllVideos;
     private bool _processingPastedUrl;
     private bool _refreshingChannelStates;
-    private bool _updatingMaxDuration;
     private readonly Avalonia.Threading.DispatcherTimer _channelStateRefreshTimer = new()
     {
         Interval = TimeSpan.FromMilliseconds(750)
@@ -38,8 +37,6 @@ public partial class ChannelOverlay : UserControl
     public ChannelOverlay()
     {
         InitializeComponent();
-        GlobalMaxDurationBox.Minimum = AppSettingsStore.ChannelDownloadMinDurationMinutes;
-        GlobalMaxDurationBox.Maximum = AppSettingsStore.ChannelDownloadMaxDurationMinutes;
         _channelStateRefreshTimer.Tick += (_, _) =>
         {
             _channelStateRefreshTimer.Stop();
@@ -52,9 +49,7 @@ public partial class ChannelOverlay : UserControl
     {
         IsVisible = true;
         ChannelSidebar.IsVisible = false;
-        _updatingMaxDuration = true;
-        GlobalMaxDurationBox.Value = MusicLibraryService.Current.GetChannelMaxDownloadDurationMinutes();
-        _updatingMaxDuration = false;
+        GlobalMaxDurationBox.Text = MusicLibraryService.Current.GetChannelMaxDownloadDurationMinutes().ToString();
         RefreshChannels();
     }
 
@@ -276,24 +271,32 @@ public partial class ChannelOverlay : UserControl
 
     private void OnAutoDownloadClicked(object? sender, RoutedEventArgs e)
     {
-        if (sender is not CheckBox checkBox || checkBox.DataContext is not ChannelSubscription channel)
+        if (sender is not Button button || button.DataContext is not ChannelSubscription channel)
             return;
         e.Handled = true;
-        MusicLibraryService.Current.SetChannelAutoDownload(channel.Id, checkBox.IsChecked == true);
+        MusicLibraryService.Current.SetChannelAutoDownload(channel.Id, !channel.AutoDownload);
         RefreshChannels();
         ChannelSidebar.IsVisible = true;
     }
 
-    private void OnGlobalMaxDurationChanged(object? sender, NumericUpDownValueChangedEventArgs e)
+    private void OnGlobalMaxDurationLostFocus(object? sender, RoutedEventArgs e)
     {
-        if (_updatingMaxDuration || sender is not NumericUpDown numericUpDown || numericUpDown.Value is not { } value)
+        if (sender is not TextBox textBox)
             return;
 
-        var minutes = Math.Clamp(
-            decimal.ToInt32(decimal.Round(value)),
+        if (!int.TryParse(textBox.Text, out var minutes))
+        {
+            textBox.Text = MusicLibraryService.Current.GetChannelMaxDownloadDurationMinutes().ToString();
+            ToastRequested?.Invoke("Enter a duration between 1 and 180 minutes");
+            return;
+        }
+
+        minutes = Math.Clamp(
+            minutes,
             AppSettingsStore.ChannelDownloadMinDurationMinutes,
             AppSettingsStore.ChannelDownloadMaxDurationMinutes);
         MusicLibraryService.Current.SetGlobalChannelMaxDownloadDuration(minutes);
+        textBox.Text = minutes.ToString();
         RefreshVideos();
         UpdateDownloadSummary();
         ToastRequested?.Invoke($"Global download limit set to {minutes} min");

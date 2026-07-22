@@ -64,14 +64,13 @@
                                        TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
                             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
                                 <TextBlock Text="Max duration" FontSize="10.5" Opacity="0.68" VerticalAlignment="Center"/>
-                                <NumericUpDown x:Name="GlobalMaxDurationBox"
-                                               Classes="theme-input"
-                                               Width="72" Height="30"
-                                               Padding="7,2"
-                                               FontSize="10.5"
-                                               Increment="1"
-                                               FormatString="0"
-                                               ValueChanged="OnGlobalMaxDurationChanged"/>
+                                <TextBox x:Name="GlobalMaxDurationBox"
+                                         Classes="theme-input"
+                                         Width="48" Height="30"
+                                         Padding="7,2"
+                                         FontSize="10.5"
+                                         VerticalContentAlignment="Center"
+                                         LostFocus="OnGlobalMaxDurationLostFocus"/>
                                 <TextBlock Text="min" FontSize="10.5" Opacity="0.68" VerticalAlignment="Center"/>
                             </StackPanel>
                             <Border Grid.Column="2" Width="146" Height="30" Background="{DynamicResource Theme.Brush.Surface}" BorderBrush="{DynamicResource Theme.Brush.BorderStrong}"
@@ -171,13 +170,14 @@
                                                            Text="{Binding UncheckedCount, StringFormat='{}{0} pending'}"/>
                                                 <TextBlock Grid.Row="2" Grid.ColumnSpan="2" FontSize="10.5" Opacity="0.72" Margin="0,3,0,0"
                                                            Text="{Binding DownloadStateText}" TextWrapping="Wrap"/>
-                                                <CheckBox Grid.Row="3"
-                                                          Classes="theme-check"
-                                                          Content="Auto-download"
-                                                          IsChecked="{Binding AutoDownload, Mode=OneWay}"
-                                                          Click="OnAutoDownloadClicked"
-                                                          FontSize="10.5"
-                                                          Margin="0,7,0,0"/>
+                                                <Button Grid.Row="3"
+                                                        Classes="auto-toggle"
+                                                        Classes.active="{Binding AutoDownload}"
+                                                        Content="Auto"
+                                                        Click="OnAutoDownloadClicked"
+                                                        HorizontalAlignment="Left"
+                                                        Margin="0,7,0,0"
+                                                        ToolTip.Tip="Toggle automatic downloads"/>
                                                 <Button Grid.Column="1" Grid.Row="3" Classes="channel-icon" Click="OnDeleteChannelClicked"
                                                         ToolTip.Tip="Delete channel" Opacity="0.58" HorizontalAlignment="Right" Margin="0,4,0,0">
                                                     <Image Source="{SvgImage /Assets/trash.svg}" Width="15" Height="15"/>

@@ -403,7 +403,7 @@ public partial class EditTrackOverlay : UserControl
     {
         var name = RatingBox.SelectedIndex >= 0 && RatingBox.SelectedIndex < _ratings.Count
             ? _ratings[RatingBox.SelectedIndex].Name
-            : "Not rated";
+            : "None";
         var (_, _, foreground) = RatingColors(name);
         RatingBox.Background = Brush("#161C22");
         RatingBox.BorderBrush = Brush("#3B4955");

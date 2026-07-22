@@ -25,25 +25,26 @@
             <Setter Property="Background" Value="{DynamicResource Theme.Brush.SurfaceRaised}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource Theme.Brush.Accent}"/>
         </Style>
-        <Style Selector="NumericUpDown.theme-input">
+        <Style Selector="Button.auto-toggle">
+            <Setter Property="Padding" Value="10,4"/>
             <Setter Property="Background" Value="{DynamicResource Theme.Brush.Surface}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource Theme.Brush.BorderStrong}"/>
-            <Setter Property="Foreground" Value="{DynamicResource Theme.Brush.TextPrimary}"/>
-            <Setter Property="CornerRadius" Value="{DynamicResource Theme.Corner.Control}"/>
+            <Setter Property="Foreground" Value="{DynamicResource Theme.Brush.TextMuted}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="{DynamicResource Theme.Corner.Small}"/>
+            <Setter Property="FontSize" Value="10.5"/>
         </Style>
-        <Style Selector="NumericUpDown.theme-input:focus-within">
-            <Setter Property="Background" Value="{DynamicResource Theme.Brush.SurfaceRaised}"/>
+        <Style Selector="Button.auto-toggle:pointerover">
+            <Setter Property="Background" Value="{DynamicResource Theme.Brush.SurfaceHover}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource Theme.Brush.Accent}"/>
         </Style>
-        <Style Selector="CheckBox.theme-check">
-            <Setter Property="Background" Value="{DynamicResource Theme.Brush.Surface}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource Theme.Brush.BorderStrong}"/>
-            <Setter Property="Foreground" Value="{DynamicResource Theme.Brush.TextSecondary}"/>
-        </Style>
-        <Style Selector="CheckBox.theme-check:checked">
-            <Setter Property="Background" Value="{DynamicResource Theme.Brush.Accent}"/>
+        <Style Selector="Button.auto-toggle.active">
+            <Setter Property="Background" Value="{DynamicResource Theme.Brush.AccentSurface}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource Theme.Brush.Accent}"/>
-            <Setter Property="Foreground" Value="{DynamicResource Theme.Brush.TextPrimary}"/>
+            <Setter Property="Foreground" Value="{DynamicResource Theme.Brush.TextStrong}"/>
+        </Style>
+        <Style Selector="Button.auto-toggle.active:pointerover">
+            <Setter Property="Background" Value="{DynamicResource Theme.Brush.SurfaceSelected}"/>
         </Style>
         <Style Selector="ToggleButton.metadata-chip">
             <Setter Property="Padding" Value="11,6"/>
