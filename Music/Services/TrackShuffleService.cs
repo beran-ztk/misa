@@ -67,8 +67,8 @@ public static class TrackShuffleService
     private static double RatingFactor(int sortOrder) => sortOrder switch
     {
         <= 1 => 0.65d,
-        2 => 0.92d,
-        3 => 1.30d,
+        2 => 0.95d,
+        3 => 1.35d,
         4 => 1.90d,
         _ => 2.50d
     };
