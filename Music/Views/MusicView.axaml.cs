@@ -694,6 +694,16 @@ public partial class MusicView : UserControl
             .Select(t => itemById[t.Id])
             .ToList();
 
+        if (ExcludeNeedsReviewCheckBox.IsChecked == true)
+            _filteredItems = _filteredItems
+                .Where(item => !item.NeedsReview)
+                .ToList();
+
+        if (ExcludeNeedsAnalysisCheckBox.IsChecked == true)
+            _filteredItems = _filteredItems
+                .Where(item => !item.NeedsAnalysis)
+                .ToList();
+
         if (_showReviewOnly)
             _filteredItems = _filteredItems
                 .Where(item => item.NeedsReview)
@@ -858,6 +868,24 @@ public partial class MusicView : UserControl
         if (selectedVisibility.Count > 0)
             query = query.Where(track => selectedVisibility.Contains(track.IsPublic));
 
+        if (ExcludeNeedsReviewCheckBox.IsChecked == true)
+        {
+            var reviewTrackIds = _allItems
+                .Where(item => item.NeedsReview)
+                .Select(item => item.Track.Id)
+                .ToHashSet();
+            query = query.Where(track => !reviewTrackIds.Contains(track.Id));
+        }
+
+        if (ExcludeNeedsAnalysisCheckBox.IsChecked == true)
+        {
+            var unanalyzedTrackIds = _allItems
+                .Where(item => item.NeedsAnalysis)
+                .Select(item => item.Track.Id)
+                .ToHashSet();
+            query = query.Where(track => !unanalyzedTrackIds.Contains(track.Id));
+        }
+
         if (selectedGenreIds.Count > 0)
             query = query.Where(track => TrackHasAllTags(track.Id, _allTrackGenreIds, selectedGenreIds));
 
@@ -891,6 +919,8 @@ public partial class MusicView : UserControl
         if (VisibilityFilter.SelectedItems.Contains("Private")) selected.Add(false);
         return selected;
     }
+
+    private void OnCompletionFilterChanged(object? sender, RoutedEventArgs e) => ApplyFilter();
 
     // ─── Toolbar / filter panel ───────────────────────────────────────────────
 
@@ -968,6 +998,8 @@ public partial class MusicView : UserControl
         RatingFilter.SetItems(Values.Ratings.Select(r => r.Name));
         RatingFilter.Placeholder = "All ratings";
         VisibilityFilter.SetSelectedItems([], notify: false);
+        ExcludeNeedsReviewCheckBox.IsChecked = false;
+        ExcludeNeedsAnalysisCheckBox.IsChecked = false;
         _filterGroups.Clear();
         RebuildFilterConditionsPanel();
         ClearConditionBuilder();
@@ -1170,6 +1202,8 @@ public partial class MusicView : UserControl
         _activeFilterPresetName = null;
         RebuildPresetRows();
         RatingFilter.SetSelectedItems(Array.Empty<string>(), notify: false);
+        ExcludeNeedsReviewCheckBox.IsChecked = false;
+        ExcludeNeedsAnalysisCheckBox.IsChecked = false;
         _filterGroups.Clear();
         RebuildFilterConditionsPanel();
         ClearConditionBuilder();
@@ -1190,12 +1224,16 @@ public partial class MusicView : UserControl
         return new PortableFilterPreset(
             name,
             SortedNames(RatingFilter.SelectedItems),
-            groups);
+            groups,
+            ExcludeNeedsReviewCheckBox.IsChecked == true,
+            ExcludeNeedsAnalysisCheckBox.IsChecked == true);
     }
 
     private void ApplyFilterPreset(PortableFilterPreset preset)
     {
         RatingFilter.SetSelectedItems(preset.Ratings, notify: false);
+        ExcludeNeedsReviewCheckBox.IsChecked = preset.ExcludeNeedsReview;
+        ExcludeNeedsAnalysisCheckBox.IsChecked = preset.ExcludeNeedsAnalysis;
 
         _filterGroups.Clear();
 
@@ -1234,6 +1272,10 @@ public partial class MusicView : UserControl
             parts.Add($"{preset.Ratings.Count} rating{(preset.Ratings.Count == 1 ? "" : "s")}");
         if (preset.Groups.Count > 0)
             parts.Add($"{preset.Groups.Count} condition{(preset.Groups.Count == 1 ? "" : "s")}");
+        if (preset.ExcludeNeedsReview)
+            parts.Add("no review tracks");
+        if (preset.ExcludeNeedsAnalysis)
+            parts.Add("analyzed only");
 
         return parts.Count > 0 ? string.Join(" · ", parts) : "Empty preset";
     }

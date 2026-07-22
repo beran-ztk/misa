@@ -115,7 +115,7 @@
                 Background="#5210120F"
                 BorderBrush="#343A30"
                 BorderThickness="0,0,0,1"
-                Padding="20,12,16,10">
+                Padding="20,12,26,10">
             <Grid ColumnDefinitions="*,Auto">
                 <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
                     <Border Width="2"
@@ -134,6 +134,8 @@
                                FontSize="11"
                                Foreground="#A9AD98"
                                Opacity="0.72"
+                               Margin="0,3,0,0"
+                               VerticalAlignment="Center"
                                TextTrimming="CharacterEllipsis"/>
                     <TextBlock x:Name="QueueStatusText"
                                IsVisible="False"
@@ -697,6 +699,42 @@
                                                Opacity="0.42" LetterSpacing="1"/>
                                     <views:MultiSelectFilterControl x:Name="VisibilityFilter"
                                                                     Placeholder="All visibility"/>
+                                </StackPanel>
+
+                                <Rectangle Height="1" Fill="#25313D"/>
+
+                                <StackPanel Spacing="8">
+                                    <TextBlock Text="COMPLETION"
+                                               FontSize="10" FontWeight="SemiBold"
+                                               Opacity="0.42" LetterSpacing="1"/>
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                        <CheckBox x:Name="ExcludeNeedsReviewCheckBox"
+                                                  Content="Hide tracks needing review"
+                                                  FontSize="11"
+                                                  Checked="OnCompletionFilterChanged"
+                                                  Unchecked="OnCompletionFilterChanged"/>
+                                        <TextBlock Grid.Column="1"
+                                                   Text="YELLOW"
+                                                   FontFamily="Consolas"
+                                                   FontSize="9"
+                                                   Foreground="#FFD27A"
+                                                   Opacity="0.78"
+                                                   VerticalAlignment="Center"/>
+                                    </Grid>
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                        <CheckBox x:Name="ExcludeNeedsAnalysisCheckBox"
+                                                  Content="Hide unanalyzed tracks"
+                                                  FontSize="11"
+                                                  Checked="OnCompletionFilterChanged"
+                                                  Unchecked="OnCompletionFilterChanged"/>
+                                        <TextBlock Grid.Column="1"
+                                                   Text="RED"
+                                                   FontFamily="Consolas"
+                                                   FontSize="9"
+                                                   Foreground="#EE5C5C"
+                                                   Opacity="0.82"
+                                                   VerticalAlignment="Center"/>
+                                    </Grid>
                                 </StackPanel>
 
                                 <Rectangle Height="1" Fill="#25313D"/>

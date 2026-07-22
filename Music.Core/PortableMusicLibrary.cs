@@ -47,7 +47,9 @@ public sealed record PortableMusicLibrary(
 public sealed record PortableFilterPreset(
     string Name,
     List<string> Ratings,
-    List<PortableFilterGroup> Groups);
+    List<PortableFilterGroup> Groups,
+    bool ExcludeNeedsReview = false,
+    bool ExcludeNeedsAnalysis = false);
 
 public sealed record PortableTrack(
     string Title,
