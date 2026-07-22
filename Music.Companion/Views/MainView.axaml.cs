@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
@@ -19,6 +20,8 @@ public partial class MainView : UserControl
     private readonly DispatcherTimer _timer;
     private readonly DispatcherTimer _artworkTimer;
     private bool _systemBarsConfigured;
+    private double _safeAreaTop;
+    private double _safeAreaBottom;
 
     private LoadedMusicLibrary _loadedLibrary = new("", PortableMusicLibrary.Empty);
 
@@ -127,6 +130,8 @@ public partial class MainView : UserControl
         InitializeComponent();
 
         AttachedToVisualTree += (_, _) => ConfigureSystemBars();
+        if (Application.Current?.ApplicationLifetime is IActivatableLifetime activatableLifetime)
+            activatableLifetime.Activated += (_, _) => Dispatcher.UIThread.Post(ConfigureSystemBars);
 
         SearchBox.TextChanged += (_, _) =>
         {
@@ -155,21 +160,32 @@ public partial class MainView : UserControl
     private void ConfigureSystemBars()
     {
         var insetsManager = TopLevel.GetTopLevel(this)?.InsetsManager;
-        if (insetsManager is null || _systemBarsConfigured)
+        if (insetsManager is null)
             return;
 
-        _systemBarsConfigured = true;
         insetsManager.DisplayEdgeToEdgePreference = true;
         insetsManager.SystemBarColor = Colors.Transparent;
-
         ApplySafeArea(insetsManager.SafeAreaPadding);
-        insetsManager.SafeAreaChanged += (_, args) => ApplySafeArea(args.SafeAreaPadding);
+
+        if (!_systemBarsConfigured)
+        {
+            _systemBarsConfigured = true;
+            insetsManager.SafeAreaChanged += (_, args) => ApplySafeArea(args.SafeAreaPadding);
+        }
     }
 
     private void ApplySafeArea(Thickness safeArea)
     {
-        HeaderBar.Padding = new Thickness(14, 6 + safeArea.Top, 12, 6);
-        PlayerContent.Margin = new Thickness(12, 5, 12, 6 + safeArea.Bottom);
+        // Android can briefly report zero insets while system-bar colors are
+        // changing. Keep the last real values so content does not jump behind
+        // the status or gesture bar during artwork and activity transitions.
+        if (safeArea.Top > 0)
+            _safeAreaTop = safeArea.Top;
+        if (safeArea.Bottom > 0)
+            _safeAreaBottom = safeArea.Bottom;
+
+        HeaderBar.Padding = new Thickness(14, 6 + _safeAreaTop, 12, 6);
+        PlayerContent.Margin = new Thickness(12, 5, 12, 6 + _safeAreaBottom);
     }
 
     private async Task LoadLibraryAsync()
@@ -1009,6 +1025,7 @@ public partial class MainView : UserControl
             Title = "Select exported MusicLibrary zip",
             AllowMultiple = false
         });
+        ConfigureSystemBars();
 
         if (files.Count > 0)
         {
@@ -1021,6 +1038,7 @@ public partial class MainView : UserControl
             Title = "Select exported MusicLibrary folder",
             AllowMultiple = false
         });
+        ConfigureSystemBars();
 
         if (folders.Count == 0)
             return;
