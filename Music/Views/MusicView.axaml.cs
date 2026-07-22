@@ -35,7 +35,7 @@ public partial class MusicView : UserControl
     private readonly SolidColorBrush _appAtmosphereBrush = new(Colors.Transparent);
     private readonly SolidColorBrush _playerAtmosphereBrush = new(Colors.Transparent);
     private readonly SolidColorBrush _playerTopGlowBrush = new(Colors.Transparent);
-    private readonly SolidColorBrush _playerChromeEdgeBrush = new(Color.Parse("#30283A46"));
+    private readonly SolidColorBrush _playerChromeEdgeBrush = new(Color.Parse("#40505A45"));
     private bool _isSeeking;
     private double _targetEnergy;
     private double _targetBass;
@@ -2602,9 +2602,9 @@ public partial class MusicView : UserControl
         SetBlur(AppArtworkBackground, 20 + energy * 8.0);
         SetBlur(PlayerArtworkBackground, 30 + energy * 6.0 + treble * 4.0);
 
-        var red = ToByte(30 + bass * 52 + treble * 88);
-        var green = ToByte(154 + energy * 58 + treble * 68);
-        var blue = ToByte(240 - bass * 48 + treble * 20);
+        var red = ToByte(142 + bass * 42 + treble * 38);
+        var green = ToByte(164 + energy * 44 + treble * 34);
+        var blue = ToByte(110 - bass * 20 + treble * 28);
         _appAtmosphereBrush.Color = hasArtwork
             ? Color.FromArgb(ToByte(energy * 42 + treble * 18), red, green, blue)
             : Colors.Transparent;
@@ -2616,7 +2616,7 @@ public partial class MusicView : UserControl
             : Colors.Transparent;
         _playerChromeEdgeBrush.Color = hasArtwork
             ? Color.FromArgb(ToByte(20 + energy * 30), red, green, blue)
-            : Color.Parse("#30283A46");
+            : Color.Parse("#40505A45");
     }
 
     private static double Approach(double current, double target, double amount) =>

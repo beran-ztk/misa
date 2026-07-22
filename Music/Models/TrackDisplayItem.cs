@@ -33,11 +33,11 @@ public record TrackDisplayItem(
         : "  ·  ";
 
     public IBrush PlayingBackground => IsPlaying
-        ? new SolidColorBrush(Color.FromArgb(48, 28, 132, 184))
+        ? new SolidColorBrush(Color.FromArgb(42, 150, 177, 96))
         : Brushes.Transparent;
 
     public IBrush PlayingAccent => IsPlaying
-        ? new SolidColorBrush(Color.FromRgb(39, 172, 231))
+        ? new SolidColorBrush(Color.FromRgb(183, 240, 0))
         : Brushes.Transparent;
 
     public IBrush TitleBrush => NeedsAnalysis
@@ -45,8 +45,8 @@ public record TrackDisplayItem(
         : NeedsReview
         ? new SolidColorBrush(Color.FromRgb(255, 210, 122))
         : IsPlaying
-            ? new SolidColorBrush(Color.FromRgb(246, 251, 255))
-        : new SolidColorBrush(Color.FromRgb(238, 241, 245));
+            ? new SolidColorBrush(Color.FromRgb(247, 246, 236))
+        : new SolidColorBrush(Color.FromRgb(240, 239, 229));
 
     public IBrush RatingBackground => RatingText switch
     {
