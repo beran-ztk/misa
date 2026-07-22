@@ -128,10 +128,12 @@
                             VerticalAlignment="Center"/>
                     <StackPanel Grid.Column="1" Spacing="1" VerticalAlignment="Center">
                         <TextBlock Text="LIBRARY"
+                                   FontFamily="Consolas, monospace"
                                    FontSize="14"
                                    FontWeight="SemiBold"
                                    LetterSpacing="1.1"/>
                         <TextBlock x:Name="PlaylistSummaryText"
+                                   FontFamily="Consolas, monospace"
                                    FontSize="10.5"
                                    Foreground="{DynamicResource Mobile.Brush.TextMuted}"
                                    Opacity="0.78"
@@ -198,12 +200,14 @@
                                             <Border Width="52"
                                                     CornerRadius="4"
                                                     Padding="5,2"
-                                                    Background="{DynamicResource Mobile.Brush.SurfaceRaised}"
-                                                    BorderBrush="{DynamicResource Mobile.Brush.BorderSubtle}"
+                                                    Background="{Binding RatingBackground}"
+                                                    BorderBrush="{Binding RatingBorder}"
                                                     BorderThickness="1"
                                                     VerticalAlignment="Center">
                                                 <TextBlock Text="{Binding Rating}"
+                                                           FontFamily="Consolas, monospace"
                                                            FontSize="9.5"
+                                                           Foreground="{Binding RatingForeground}"
                                                            TextAlignment="Center"/>
                                             </Border>
                                             <TextBlock Grid.Column="1"
@@ -228,6 +232,7 @@
                                     <TextBlock Grid.Column="3"
                                                Text="{Binding DurationText}"
                                                Margin="5,0,1,0"
+                                               FontFamily="Consolas, monospace"
                                                FontSize="10.5"
                                                Foreground="{DynamicResource Mobile.Brush.TextMuted}"
                                                VerticalAlignment="Center"
@@ -333,27 +338,29 @@
 
         <Border Grid.Row="2"
                 Background="#B823211B"
-                BorderBrush="{DynamicResource Mobile.Brush.BorderStrong}"
-                BorderThickness="0,1,0,0"
+                BorderThickness="0"
                 CornerRadius="12,12,0,0"
                 ClipToBounds="True"
                 BoxShadow="0 -7 20 0 #70000000">
             <Panel>
                 <Image x:Name="PlayerArtworkPreviousBackground"
-                       MaxHeight="150"
+                       MaxHeight="132"
                        Stretch="UniformToFill" IsHitTestVisible="False"
                        IsVisible="False" Opacity="0">
-                    <Image.Effect><BlurEffect Radius="12"/></Image.Effect>
-                    <Image.RenderTransform><ScaleTransform ScaleX="1.1" ScaleY="1.1"/></Image.RenderTransform>
+                    <Image.Effect><BlurEffect Radius="24"/></Image.Effect>
+                    <Image.RenderTransform><ScaleTransform ScaleX="1.14" ScaleY="1.14"/></Image.RenderTransform>
                 </Image>
                 <Image x:Name="PlayerArtworkBackground"
-                       MaxHeight="150"
+                       MaxHeight="132"
                        Stretch="UniformToFill" IsHitTestVisible="False"
                        IsVisible="False" Opacity="0">
-                    <Image.Effect><BlurEffect Radius="10"/></Image.Effect>
-                    <Image.RenderTransform><ScaleTransform ScaleX="1.08" ScaleY="1.08"/></Image.RenderTransform>
+                    <Image.Effect><BlurEffect Radius="24"/></Image.Effect>
+                    <Image.RenderTransform><ScaleTransform ScaleX="1.14" ScaleY="1.14"/></Image.RenderTransform>
                 </Image>
-                <Border IsHitTestVisible="False" Background="#A91B1914"/>
+                <Border IsHitTestVisible="False"
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Stretch"
+                        Background="#A91B1914"/>
                 <Border x:Name="PlayerAtmosphereTint" IsHitTestVisible="False">
                     <Border.Background>
                         <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
@@ -364,9 +371,9 @@
                     </Border.Background>
                 </Border>
 
-                <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="4" Margin="14,8,14,10">
-                    <Grid ColumnDefinitions="46,*" ColumnSpacing="9">
-                        <Border Width="42" Height="42" CornerRadius="7" ClipToBounds="True"
+                <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="1" Margin="12,5,12,6">
+                    <Grid ColumnDefinitions="42,*" ColumnSpacing="8">
+                        <Border Width="38" Height="38" CornerRadius="6" ClipToBounds="True"
                                 Background="{DynamicResource Mobile.Brush.Surface}"
                                 BorderBrush="{DynamicResource Mobile.Brush.Border}"
                                 BorderThickness="1">
@@ -391,18 +398,19 @@
                         <Slider x:Name="ProgressSlider" Minimum="0" Maximum="100" Value="0"/>
                         <TextBlock x:Name="TimeText" Grid.Column="1"
                                    Text="00:00 / 00:00" FontSize="9.5"
+                                   FontFamily="Consolas, monospace"
                                    Foreground="{DynamicResource Mobile.Brush.TextMuted}"
                                    VerticalAlignment="Center"/>
                     </Grid>
 
                     <Grid Grid.Row="2" ColumnDefinitions="Auto,Auto,Auto,*,Auto,Auto" ColumnSpacing="1">
                     <Button x:Name="PreviousButton" Grid.Column="0" Classes="icon"
-                            Width="36" Height="34"
+                            Width="34" Height="30"
                             Click="OnPreviousClicked" ToolTip.Tip="Previous">
                         <Image Source="{SvgImage /Assets/skip-back.svg}" Width="18" Height="18"/>
                     </Button>
                     <Button x:Name="PlayPauseButton" Grid.Column="1" Classes="primaryPlayer"
-                            Width="36" Height="34"
+                            Width="34" Height="30"
                             Click="OnPlayPauseClicked" ToolTip.Tip="Play / Pause">
                         <Grid Width="18" Height="18">
                             <Image x:Name="PlayIcon" Source="{SvgImage /Assets/play.svg}"/>
@@ -410,17 +418,17 @@
                         </Grid>
                     </Button>
                     <Button x:Name="NextButton" Grid.Column="2" Classes="icon"
-                            Width="36" Height="34"
+                            Width="34" Height="30"
                             Click="OnNextClicked" ToolTip.Tip="Next">
                         <Image Source="{SvgImage /Assets/skip-forward.svg}" Width="18" Height="18"/>
                     </Button>
                     <Button x:Name="ShuffleButton" Grid.Column="4" Classes="icon"
-                            Width="36" Height="34"
+                            Width="34" Height="30"
                             Opacity="0.45" Click="OnShuffleClicked" ToolTip.Tip="Shuffle">
                         <Image Source="{SvgImage /Assets/shuffle.svg}" Width="17" Height="17"/>
                     </Button>
                     <Button x:Name="ReviewButton" Grid.Column="5" Classes="icon"
-                            Width="36" Height="34"
+                            Width="34" Height="30"
                             Opacity="0.45" Click="OnReviewClicked" ToolTip.Tip="Mark for review">
                         <Image Source="{SvgImage /Assets/review.svg}" Width="17" Height="17"/>
                     </Button>
