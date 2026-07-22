@@ -11,7 +11,7 @@ public sealed record PortableMusicLibrary(
     string? ExportedAt = null,
     string MediaMode = "full")
 {
-    public const int CurrentSchemaVersion = 2;
+    public const int CurrentSchemaVersion = 3;
 
     public static PortableMusicLibrary Empty { get; } = new([]);
 
@@ -68,7 +68,9 @@ public sealed record PortableTrack(
     int PlayCount = 0,
     int ListenedSeconds = 0,
     int SkipCount = 0,
-    string? LastListenedAt = null)
+    string? LastListenedAt = null,
+    byte[]? Thumbnail = null,
+    bool IsPublic = false)
 {
     public string GenreText => string.Join(", ", Genres);
     public string StyleText => string.Join(", ", Styles);
@@ -119,10 +121,13 @@ public static class PortableLibraryStore
             return new LoadedMusicLibrary(rootDirectory, PortableMusicLibrary.Empty);
 
         await using var stream = File.OpenRead(path);
-        var library = await JsonSerializer.DeserializeAsync<PortableMusicLibrary>(stream, JsonOptions)
-                      ?? PortableMusicLibrary.Empty;
+        var library = await LoadAsync(stream);
         return new LoadedMusicLibrary(rootDirectory, library);
     }
+
+    public static async Task<PortableMusicLibrary> LoadAsync(Stream stream) =>
+        await JsonSerializer.DeserializeAsync<PortableMusicLibrary>(stream, JsonOptions)
+        ?? PortableMusicLibrary.Empty;
 
     public static async Task SaveAsync(string rootDirectory, PortableMusicLibrary library)
     {

@@ -280,18 +280,24 @@ public class MusicLibraryService
         Directory.CreateDirectory(targetTracksDirectory);
         Directory.CreateDirectory(targetCoversDirectory);
 
-        var tracks = GetTracks();
+        var allTracks = GetTracks();
+        var analyzedTrackIds = _db.GetAnalyzedTrackIds();
+        var tracks = allTracks
+            .Where(track => analyzedTrackIds.Contains(track.Id))
+            .ToList();
         var lastExport = _db.GetLastPortableExport();
-        var lastCutoffDownloadedAt = lastExport?.CutoffDownloadedAt;
+        var previousLibrary = await LoadPreviousPortableExportAsync(lastExport);
+        var previousTracksByFileName = (previousLibrary?.Tracks ?? [])
+            .GroupBy(track => track.FileName, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
         var newMediaTrackIds = tracks
-            .Where(track => string.IsNullOrWhiteSpace(lastCutoffDownloadedAt) ||
-                            string.CompareOrdinal(track.DownloadedAt, lastCutoffDownloadedAt) > 0)
+            .Where(track => IsNewPortableMedia(track, lastExport, previousLibrary, previousTracksByFileName))
             .Select(track => track.Id)
             .ToHashSet();
-        var cutoffDownloadedAt = tracks
+        var cutoffDownloadedAt = allTracks
             .Select(track => track.DownloadedAt)
             .Where(value => !string.IsNullOrWhiteSpace(value))
-            .DefaultIfEmpty(lastCutoffDownloadedAt)
+            .DefaultIfEmpty(lastExport?.CutoffDownloadedAt)
             .Max(StringComparer.Ordinal);
         var genres = GetGenres().ToDictionary(g => g.Id, g => g.Name);
         var tags = GetTags().ToDictionary(t => t.Id, t => t.Name);
@@ -313,7 +319,13 @@ public class MusicLibraryService
                     File.Copy(sourcePath, Path.Combine(targetTracksDirectory, track.FileName), overwrite: true);
                 }
 
-                var coverFileName = ExportCover(sourcePath, targetCoversDirectory, track.FileName, newMediaTrackIds.Contains(track.Id));
+                var isNewMediaTrack = newMediaTrackIds.Contains(track.Id);
+                var coverFileName = isNewMediaTrack
+                    ? ExportCover(sourcePath, targetCoversDirectory, track.FileName)
+                    : previousTracksByFileName.GetValueOrDefault(track.FileName)?.CoverFileName;
+                var thumbnail = _db.GetTrackThumbnail(track.Id);
+                if (thumbnail is not { Length: > 0 } && File.Exists(sourcePath))
+                    thumbnail = ThumbnailService.ReadEmbeddedArtworkThumbnail(sourcePath);
                 var usage = GetTrackUsageStats(track.Id);
 
                 portableTracks.Add(new PortableTrack(
@@ -333,7 +345,9 @@ public class MusicLibraryService
                     usage.PlayCount,
                     usage.ListenedSeconds,
                     usage.SkipCount,
-                    usage.LastListenedAt));
+                    usage.LastListenedAt,
+                    thumbnail,
+                    track.IsPublic));
             }
 
             await PortableLibraryStore.SaveAsync(
@@ -516,7 +530,51 @@ public class MusicLibraryService
             .Order(StringComparer.OrdinalIgnoreCase)
             .ToList();
 
-    private static string? ExportCover(string audioFilePath, string targetCoversDirectory, string trackFileName, bool writeFile)
+    private static async Task<PortableMusicLibrary?> LoadPreviousPortableExportAsync(PortableExportRecord? previousExport)
+    {
+        if (string.IsNullOrWhiteSpace(previousExport?.ArchivePath) || !File.Exists(previousExport.ArchivePath))
+            return null;
+
+        try
+        {
+            using var archive = ZipFile.OpenRead(previousExport.ArchivePath);
+            var manifest = archive.Entries.FirstOrDefault(entry =>
+                string.Equals(entry.FullName.Replace('\\', '/'), PortableLibraryStore.FileName, StringComparison.OrdinalIgnoreCase));
+            if (manifest is null)
+                return null;
+
+            await using var stream = manifest.Open();
+            return await PortableLibraryStore.LoadAsync(stream);
+        }
+        catch
+        {
+            // If the previous archive was moved or damaged, a complete export is safer than
+            // producing a manifest whose newly eligible tracks have no accompanying media.
+            return null;
+        }
+    }
+
+    private static bool IsNewPortableMedia(
+        MusicTrack track,
+        PortableExportRecord? previousExport,
+        PortableMusicLibrary? previousLibrary,
+        IReadOnlyDictionary<string, PortableTrack> previousTracksByFileName)
+    {
+        if (previousLibrary is not null)
+            return !previousTracksByFileName.ContainsKey(track.FileName);
+
+        if (previousExport is null)
+            return true;
+
+        // Older installations may no longer have the recorded archive at its original path.
+        // Analysis touches UpdatedAt, so a previously excluded track becomes exportable here
+        // even when it was downloaded before the legacy cutoff.
+        return string.IsNullOrWhiteSpace(previousExport.CutoffDownloadedAt)
+               || string.CompareOrdinal(track.DownloadedAt, previousExport.CutoffDownloadedAt) > 0
+               || string.CompareOrdinal(track.UpdatedAt, previousExport.ExportedAt) > 0;
+    }
+
+    private static string? ExportCover(string audioFilePath, string targetCoversDirectory, string trackFileName)
     {
         if (!File.Exists(audioFilePath))
             return null;
@@ -526,8 +584,7 @@ public class MusicLibraryService
             return null;
 
         var coverFileName = SafeFileName(Path.GetFileNameWithoutExtension(trackFileName)) + artwork.Extension;
-        if (writeFile)
-            File.WriteAllBytes(Path.Combine(targetCoversDirectory, coverFileName), artwork.Data);
+        File.WriteAllBytes(Path.Combine(targetCoversDirectory, coverFileName), artwork.Data);
         return coverFileName;
     }
 

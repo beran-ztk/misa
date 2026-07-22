@@ -1538,6 +1538,18 @@ public class MusicDatabase
         return value is DBNull or null ? null : (byte[])value;
     }
 
+    public HashSet<int> GetAnalyzedTrackIds()
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT track_id FROM track_analysis";
+        using var reader = cmd.ExecuteReader();
+        var result = new HashSet<int>();
+        while (reader.Read())
+            result.Add(reader.GetInt32(0));
+        return result;
+    }
+
     public List<MusicTrack> GetUnanalyzedTracks()
     {
         using var conn = Open();
