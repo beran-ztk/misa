@@ -928,7 +928,7 @@ public partial class EditTrackOverlay : UserControl
             var container = new Border
             {
                 Background = new SolidColorBrush(Color.Parse("#161C22")),
-                BorderBrush = new SolidColorBrush(Color.Parse("#4B473B")),
+                BorderBrush = ThemeResources.Brush("Theme.Brush.BorderSubtle"),
                 BorderThickness = new Avalonia.Thickness(1),
                 CornerRadius = new Avalonia.CornerRadius(5),
                 Padding = new Avalonia.Thickness(8, 5),

@@ -3,38 +3,46 @@
              x:Class="Music.App"
              RequestedThemeVariant="Dark">
              <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
+
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="avares://Music/Styles/Theme.axaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
   
     <Application.Styles>
         <FluentTheme />
         <Style Selector="ToggleButton.metadata-chip">
             <Setter Property="Padding" Value="11,6"/>
             <Setter Property="Margin" Value="0,0,7,7"/>
-            <Setter Property="CornerRadius" Value="14"/>
+            <Setter Property="CornerRadius" Value="{DynamicResource Theme.Corner.Pill}"/>
             <Setter Property="Background" Value="#2A2821"/>
-            <Setter Property="BorderBrush" Value="#554F41"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Theme.Brush.Border}"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Foreground" Value="#F0EFE5"/>
+            <Setter Property="Foreground" Value="{DynamicResource Theme.Brush.TextPrimary}"/>
         </Style>
         <Style Selector="ToggleButton.metadata-chip:pointerover">
-            <Setter Property="Background" Value="#39352B"/>
+            <Setter Property="Background" Value="{DynamicResource Theme.Brush.SurfaceHover}"/>
             <Setter Property="BorderBrush" Value="#6A6250"/>
         </Style>
         <Style Selector="ToggleButton.metadata-chip:checked">
             <Setter Property="Background" Value="#4B513D"/>
-            <Setter Property="BorderBrush" Value="#AFC58C"/>
-            <Setter Property="Foreground" Value="#F7F3E8"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Theme.Brush.Accent}"/>
+            <Setter Property="Foreground" Value="{DynamicResource Theme.Brush.TextStrong}"/>
         </Style>
         <Style Selector="Button.more-button">
             <Setter Property="Padding" Value="12,6"/>
             <Setter Property="FontSize" Value="11"/>
             <Setter Property="CornerRadius" Value="12"/>
-            <Setter Property="Background" Value="#211F19"/>
-            <Setter Property="BorderBrush" Value="#615A49"/>
+            <Setter Property="Background" Value="{DynamicResource Theme.Brush.Surface}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Theme.Brush.BorderStrong}"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Foreground" Value="#C7D2AD"/>
+            <Setter Property="Foreground" Value="{DynamicResource Theme.Brush.TextSecondary}"/>
         </Style>
         <Style Selector="Button.more-button:pointerover">
-            <Setter Property="Background" Value="#39352B"/>
+            <Setter Property="Background" Value="{DynamicResource Theme.Brush.SurfaceHover}"/>
             <Setter Property="BorderBrush" Value="#7B725C"/>
         </Style>
     </Application.Styles>

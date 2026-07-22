@@ -64,8 +64,8 @@ public partial class MultiSelectFilterControl : UserControl
         var flyout = (Flyout)ToggleBtn.Flyout!;
         _flyoutContent = new Border
         {
-            Background = new SolidColorBrush(Color.FromRgb(16, 27, 37)),
-            BorderBrush = new SolidColorBrush(Color.FromRgb(80, 87, 109)),
+            Background = ThemeResources.Brush("Theme.Brush.Surface"),
+            BorderBrush = ThemeResources.Brush("Theme.Brush.BorderStrong"),
             BorderThickness = new Thickness(1,0,1,1),
             CornerRadius = new CornerRadius(0,0,6,6),
             Padding = new Thickness(10, 8),
@@ -112,7 +112,7 @@ public partial class MultiSelectFilterControl : UserControl
             var nameText = new TextBlock
             {
                 Text = item.DisplayName,
-                Foreground = new SolidColorBrush(Color.FromRgb(236, 243, 249)),
+                Foreground = ThemeResources.Brush("Theme.Brush.TextPrimary"),
                 FontWeight = FontWeight.Medium,
                 VerticalAlignment = VerticalAlignment.Center,
                 TextTrimming = TextTrimming.CharacterEllipsis,
@@ -121,7 +121,7 @@ public partial class MultiSelectFilterControl : UserControl
 
             var countText = new TextBlock
             {
-                Foreground = new SolidColorBrush(Color.FromRgb(192, 214, 229)),
+                Foreground = ThemeResources.Brush("Theme.Brush.TextSecondary"),
                 FontSize = 11,
                 FontWeight = FontWeight.Medium,
                 HorizontalAlignment = HorizontalAlignment.Center,
@@ -134,8 +134,8 @@ public partial class MultiSelectFilterControl : UserControl
                 Padding = new Thickness(7, 1),
                 Margin = new Thickness(0,0,12,0),
                 CornerRadius = new CornerRadius(9),
-                Background = new SolidColorBrush(Color.FromArgb(90, 61, 91, 111)),
-                BorderBrush = new SolidColorBrush(Color.FromArgb(80, 120, 154, 176)),
+                Background = ThemeResources.Brush("Theme.Brush.SurfaceSelected"),
+                BorderBrush = ThemeResources.Brush("Theme.Brush.BorderSubtle"),
                 BorderThickness = new Thickness(1),
                 Child = countText,
                 VerticalAlignment = VerticalAlignment.Center
@@ -233,8 +233,11 @@ public partial class MultiSelectFilterControl : UserControl
 
     private static IBrush ToBrush(string? color)
     {
-        try { return new SolidColorBrush(Color.Parse(string.IsNullOrWhiteSpace(color) ? "#A7AFB9" : color)); }
-        catch { return new SolidColorBrush(Color.Parse("#A7AFB9")); }
+        if (string.IsNullOrWhiteSpace(color))
+            return ThemeResources.Brush("Theme.Brush.TextMuted");
+
+        try { return new SolidColorBrush(Color.Parse(color)); }
+        catch { return ThemeResources.Brush("Theme.Brush.TextMuted"); }
     }
 
     private void UpdateText()

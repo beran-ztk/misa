@@ -6,9 +6,9 @@
 
     <UserControl.Styles>
         <Style Selector="Button">
-            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="CornerRadius" Value="{DynamicResource Theme.Corner.Control}"/>
             <Setter Property="BorderBrush" Value="#41483B"/>
-            <Setter Property="Foreground" Value="#F0EFE5"/>
+            <Setter Property="Foreground" Value="{DynamicResource Theme.Brush.TextPrimary}"/>
         </Style>
         <Style Selector="Button:pointerover">
             <Setter Property="Background" Value="#252A21"/>
@@ -24,27 +24,27 @@
             <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
         <Style Selector="TextBox">
-            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="CornerRadius" Value="{DynamicResource Theme.Corner.Control}"/>
             <Setter Property="BorderBrush" Value="#41483B"/>
             <Setter Property="Background" Value="#10120F"/>
-            <Setter Property="Foreground" Value="#F0EFE5"/>
+            <Setter Property="Foreground" Value="{DynamicResource Theme.Brush.TextPrimary}"/>
         </Style>
         <Style Selector="Slider">
             <Setter Property="MinHeight" Value="24"/>
-            <Setter Property="Foreground" Value="#AFC58C"/>
+            <Setter Property="Foreground" Value="{DynamicResource Theme.Brush.Accent}"/>
             <Setter Property="Background" Value="#343A30"/>
         </Style>
         <Style Selector="Slider.playback">
             <Setter Property="Height" Value="28"/>
             <Setter Property="MinHeight" Value="28"/>
-            <Setter Property="Foreground" Value="#B6D58A"/>
+            <Setter Property="Foreground" Value="{DynamicResource Theme.Brush.AccentStrong}"/>
             <Setter Property="Background" Value="#30362C"/>
         </Style>
         <Style Selector="Slider.playback /template/ Thumb">
             <Setter Property="Width" Value="9"/>
             <Setter Property="Height" Value="9"/>
-            <Setter Property="Background" Value="#F0EFE5"/>
-            <Setter Property="BorderBrush" Value="#B6D58A"/>
+            <Setter Property="Background" Value="{DynamicResource Theme.Brush.TextPrimary}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Theme.Brush.AccentStrong}"/>
             <Setter Property="BorderThickness" Value="1"/>
         </Style>
         <Style Selector="Slider.playback:pointerover /template/ Thumb">
@@ -126,7 +126,7 @@
                                FontFamily="Consolas"
                                FontSize="11"
                                FontWeight="SemiBold"
-                               Foreground="#F0EFE5"
+                               Foreground="{DynamicResource Theme.Brush.TextPrimary}"
                                LetterSpacing="1.2"
                                VerticalAlignment="Center"/>
                     <TextBlock x:Name="PlaylistSummaryText"
@@ -521,7 +521,7 @@
                                 <TextBlock Grid.Column="1"
                                            x:Name="NowPlayingText"
                                            Text=""
-                                           Foreground="#F0EFE5"
+                                           Foreground="{DynamicResource Theme.Brush.TextPrimary}"
                                            Opacity="0.82"
                                            VerticalAlignment="Center"
                                            HorizontalAlignment="Center"
@@ -574,7 +574,7 @@
                     IsVisible="False"
                     Background="#D21B1914"
                     BorderThickness="0,1,0,0"
-                    BorderBrush="#554F41">
+                    BorderBrush="{DynamicResource Theme.Brush.Border}">
                 <Grid RowDefinitions="Auto,*" Margin="30,22,30,26">
                     <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto" Margin="0,0,0,18">
                         <StackPanel Spacing="3">
@@ -586,7 +586,7 @@
                                 Content="Clear"
                                 Click="OnClearFiltersClicked"
                                 Background="Transparent"
-                                BorderBrush="#615A49"
+                                BorderBrush="{DynamicResource Theme.Brush.BorderStrong}"
                                 BorderThickness="1"
                                 Padding="12,6"
                                 Margin="0,0,10,0"
@@ -602,7 +602,7 @@
 
                     <Grid Grid.Row="1" ColumnDefinitions="280,*" ColumnSpacing="24">
                         <Border Background="#B824211A"
-                                BorderBrush="#4B473B"
+                                BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
                                 BorderThickness="1"
                                 CornerRadius="10"
                                 Padding="16">
@@ -619,8 +619,8 @@
                                                 Width="28"
                                                 Height="28"
                                                 Padding="0"
-                                                Background="#211F19"
-                                                BorderBrush="#615A49"
+                                                Background="{DynamicResource Theme.Brush.Surface}"
+                                                BorderBrush="{DynamicResource Theme.Brush.BorderStrong}"
                                                 BorderThickness="1"
                                                 CornerRadius="6"
                                                 HorizontalContentAlignment="Center"
@@ -638,8 +638,8 @@
                                         <Button Grid.Column="0"
                                                 Content="Update selected"
                                                 Click="OnUpdatePresetClicked"
-                                                Background="#12334A"
-                                                BorderBrush="#2D6E96"
+                                                Background="{DynamicResource Theme.Brush.InfoSurface}"
+                                                BorderBrush="{DynamicResource Theme.Brush.InfoBorder}"
                                                 BorderThickness="1"
                                                 Padding="10,6"
                                                 FontSize="11"/>
@@ -647,7 +647,7 @@
                                                 Content="Delete"
                                                 Click="OnDeletePresetClicked"
                                                 Background="Transparent"
-                                                BorderBrush="#615A49"
+                                                BorderBrush="{DynamicResource Theme.Brush.BorderStrong}"
                                                 BorderThickness="1"
                                                 Padding="10,6"
                                                 FontSize="11"
@@ -655,14 +655,14 @@
                                     </Grid>
                                 </StackPanel>
 
-                                <Rectangle Height="1" Fill="#484438"/>
+                                <Rectangle Height="1" Fill="{DynamicResource Theme.Brush.Divider}"/>
 
                                 <StackPanel Spacing="7">
                                     <TextBlock Text="SORT"
                                                FontSize="10" FontWeight="SemiBold"
                                                Opacity="0.42" LetterSpacing="1"/>
                                     <Border Background="#0F1C27"
-                                            BorderBrush="#2D6E96"
+                                            BorderBrush="{DynamicResource Theme.Brush.InfoBorder}"
                                             BorderThickness="1"
                                             CornerRadius="7"
                                             Padding="4">
@@ -672,13 +672,13 @@
                                                       Height="30"
                                                       FontSize="11"
                                                       FontWeight="SemiBold"
-                                                      Foreground="#78C7EE"
+                                                      Foreground="{DynamicResource Theme.Brush.InfoText}"
                                                       Background="Transparent"
                                                       BorderThickness="0"
                                                       Padding="8,3"
                                                       SelectionChanged="OnSortChanged"/>
                                             <Rectangle Grid.Column="1"
-                                                       Fill="#24475D"
+                                                       Fill="{DynamicResource Theme.Brush.InfoSurface}"
                                                        Margin="2,5"/>
                                             <Button x:Name="SortDirectionButton"
                                                     Grid.Column="2"
@@ -686,7 +686,7 @@
                                                     Click="OnSortDirectionClicked"
                                                     Background="Transparent"
                                                     BorderThickness="0"
-                                                    Foreground="#78C7EE"
+                                                    Foreground="{DynamicResource Theme.Brush.InfoText}"
                                                     FontSize="15"
                                                     FontWeight="SemiBold"
                                                     Padding="0"
@@ -695,7 +695,7 @@
                                     </Border>
                                 </StackPanel>
 
-                                <Rectangle Height="1" Fill="#484438"/>
+                                <Rectangle Height="1" Fill="{DynamicResource Theme.Brush.Divider}"/>
 
                                 <StackPanel Spacing="7">
                                     <TextBlock Text="RATING"
@@ -705,7 +705,7 @@
                                                                     Placeholder="All ratings"/>
                                 </StackPanel>
 
-                                <Rectangle Height="1" Fill="#484438"/>
+                                <Rectangle Height="1" Fill="{DynamicResource Theme.Brush.Divider}"/>
 
                                 <StackPanel Spacing="7">
                                     <TextBlock Text="VISIBILITY"
@@ -715,7 +715,7 @@
                                                                     Placeholder="All visibility"/>
                                 </StackPanel>
 
-                                <Rectangle Height="1" Fill="#484438"/>
+                                <Rectangle Height="1" Fill="{DynamicResource Theme.Brush.Divider}"/>
 
                                 <StackPanel Spacing="8">
                                     <TextBlock Text="COMPLETION"
@@ -732,7 +732,7 @@
                                                    Text="YELLOW"
                                                    FontFamily="Consolas"
                                                    FontSize="9"
-                                                   Foreground="#FFD27A"
+                                                   Foreground="{DynamicResource Theme.Brush.Warning}"
                                                    Opacity="0.78"
                                                    VerticalAlignment="Center"/>
                                     </Grid>
@@ -747,13 +747,13 @@
                                                    Text="RED"
                                                    FontFamily="Consolas"
                                                    FontSize="9"
-                                                   Foreground="#EE5C5C"
+                                                   Foreground="{DynamicResource Theme.Brush.Danger}"
                                                    Opacity="0.82"
                                                    VerticalAlignment="Center"/>
                                     </Grid>
                                 </StackPanel>
 
-                                <Rectangle Height="1" Fill="#484438"/>
+                                <Rectangle Height="1" Fill="{DynamicResource Theme.Brush.Divider}"/>
 
                                 <StackPanel Spacing="7">
                                     <TextBlock Text="CONDITIONS"
@@ -768,7 +768,7 @@
 
                         <Border Grid.Column="1"
                                 Background="#A80B0D10"
-                                BorderBrush="#4B473B"
+                                BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
                                 BorderThickness="1"
                                 CornerRadius="10"
                                 Padding="18">
@@ -781,8 +781,8 @@
                                     </StackPanel>
                                     <Button Grid.Column="1"
                                             Click="OnAddFilterGroupClicked"
-                                            Background="#211F19"
-                                            BorderBrush="#615A49"
+                                            Background="{DynamicResource Theme.Brush.Surface}"
+                                            BorderBrush="{DynamicResource Theme.Brush.BorderStrong}"
                                             BorderThickness="1"
                                             Width="32" Height="30"
                                             Padding="0"
@@ -798,8 +798,8 @@
 
                                 <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*" ColumnSpacing="12" Margin="0,0,0,12">
                                     <Border Width="164" Height="32"
-                                            Background="#211F19"
-                                            BorderBrush="#615A49"
+                                            Background="{DynamicResource Theme.Brush.Surface}"
+                                            BorderBrush="{DynamicResource Theme.Brush.BorderStrong}"
                                             BorderThickness="1"
                                             CornerRadius="6"
                                             ClipToBounds="True">
@@ -808,7 +808,7 @@
                                                     Grid.ColumnSpan="2"
                                                     Width="81"
                                                     HorizontalAlignment="Left"
-                                                    Background="#6F7D59"
+                                                    Background="{DynamicResource Theme.Brush.Success}"
                                                     CornerRadius="5"
                                                     IsHitTestVisible="False">
                                                 <Border.RenderTransform>
@@ -875,7 +875,7 @@
             VerticalAlignment="Top"
             Margin="0,104,0,0"
             Background="#E6101821"
-            BorderBrush="#615A49"
+            BorderBrush="{DynamicResource Theme.Brush.BorderStrong}"
             BorderThickness="1"
             CornerRadius="8"
             Padding="14,9"

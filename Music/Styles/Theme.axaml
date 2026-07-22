@@ -1,0 +1,43 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- Base canvas and layered surfaces -->
+    <SolidColorBrush x:Key="Theme.Brush.Background">#1B1914</SolidColorBrush>
+    <SolidColorBrush x:Key="Theme.Brush.Overlay">#E81B1914</SolidColorBrush>
+    <SolidColorBrush x:Key="Theme.Brush.Navigation">#B0211E17</SolidColorBrush>
+    <SolidColorBrush x:Key="Theme.Brush.Surface">#211F19</SolidColorBrush>
+    <SolidColorBrush x:Key="Theme.Brush.SurfaceRaised">#2A261D</SolidColorBrush>
+    <SolidColorBrush x:Key="Theme.Brush.SurfaceTranslucent">#A82A261D</SolidColorBrush>
+    <SolidColorBrush x:Key="Theme.Brush.SurfaceHover">#39352B</SolidColorBrush>
+    <SolidColorBrush x:Key="Theme.Brush.SurfaceSelected">#4A4638</SolidColorBrush>
+    <SolidColorBrush x:Key="Theme.Brush.Input">#7A171611</SolidColorBrush>
+
+    <!-- Borders and separators -->
+    <SolidColorBrush x:Key="Theme.Brush.BorderSubtle">#4B473B</SolidColorBrush>
+    <SolidColorBrush x:Key="Theme.Brush.Border">#554F41</SolidColorBrush>
+    <SolidColorBrush x:Key="Theme.Brush.BorderStrong">#615A49</SolidColorBrush>
+    <SolidColorBrush x:Key="Theme.Brush.Divider">#484438</SolidColorBrush>
+
+    <!-- Typography -->
+    <SolidColorBrush x:Key="Theme.Brush.TextPrimary">#F0EFE5</SolidColorBrush>
+    <SolidColorBrush x:Key="Theme.Brush.TextStrong">#F7F3E8</SolidColorBrush>
+    <SolidColorBrush x:Key="Theme.Brush.TextSecondary">#C7D2AD</SolidColorBrush>
+    <SolidColorBrush x:Key="Theme.Brush.TextMuted">#BDB7A3</SolidColorBrush>
+
+    <!-- Semantic colors -->
+    <SolidColorBrush x:Key="Theme.Brush.Accent">#AFC58C</SolidColorBrush>
+    <SolidColorBrush x:Key="Theme.Brush.AccentStrong">#B6D58A</SolidColorBrush>
+    <SolidColorBrush x:Key="Theme.Brush.Success">#6F7D59</SolidColorBrush>
+    <SolidColorBrush x:Key="Theme.Brush.Warning">#FFD27A</SolidColorBrush>
+    <SolidColorBrush x:Key="Theme.Brush.Danger">#EE5C5C</SolidColorBrush>
+
+    <!-- Temporary semantic home for the remaining blue information treatment. -->
+    <SolidColorBrush x:Key="Theme.Brush.InfoSurface">#12334A</SolidColorBrush>
+    <SolidColorBrush x:Key="Theme.Brush.InfoBorder">#2D6E96</SolidColorBrush>
+    <SolidColorBrush x:Key="Theme.Brush.InfoText">#78C7EE</SolidColorBrush>
+
+    <!-- Shared geometry -->
+    <CornerRadius x:Key="Theme.Corner.Small">5</CornerRadius>
+    <CornerRadius x:Key="Theme.Corner.Control">6</CornerRadius>
+    <CornerRadius x:Key="Theme.Corner.Card">8</CornerRadius>
+    <CornerRadius x:Key="Theme.Corner.Pill">14</CornerRadius>
+</ResourceDictionary>

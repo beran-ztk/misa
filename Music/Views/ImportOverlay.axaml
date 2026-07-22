@@ -3,7 +3,7 @@
              x:Class="Music.Views.ImportOverlay"
              Background="#D21B1914">
     <Grid RowDefinitions="Auto,*">
-        <Border Grid.Row="0" Background="#C82A261D" BorderBrush="#554F41" BorderThickness="0,0,0,1" Padding="26,16">
+        <Border Grid.Row="0" Background="#C82A261D" BorderBrush="{DynamicResource Theme.Brush.Border}" BorderThickness="0,0,0,1" Padding="26,16">
             <Grid ColumnDefinitions="*,Auto">
                 <StackPanel Spacing="3">
                     <TextBlock Text="Import queue" FontSize="18" FontWeight="SemiBold"/>

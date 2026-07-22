@@ -1096,8 +1096,8 @@ public partial class MusicView : UserControl
         var saveButton = new Button
         {
             Content = "Save",
-            Background = Brush("#12334A"),
-            BorderBrush = Brush("#2D6E96"),
+            Background = ThemeResources.Brush("Theme.Brush.InfoSurface"),
+            BorderBrush = ThemeResources.Brush("Theme.Brush.InfoBorder"),
             BorderThickness = new Thickness(1),
             Padding = new Thickness(10, 6),
             FontSize = 11
@@ -1108,7 +1108,7 @@ public partial class MusicView : UserControl
         {
             Content = "Cancel",
             Background = Brushes.Transparent,
-            BorderBrush = Brush("#615A49"),
+            BorderBrush = ThemeResources.Brush("Theme.Brush.BorderStrong"),
             BorderThickness = new Thickness(1),
             Padding = new Thickness(10, 6),
             FontSize = 11,
@@ -1387,7 +1387,9 @@ public partial class MusicView : UserControl
         _conditionNegate = exclude;
         if (ConditionModeIndicator.RenderTransform is TranslateTransform transform)
             transform.X = exclude ? 81 : 0;
-        ConditionModeIndicator.Background = new SolidColorBrush(Color.Parse(exclude ? "#8A303A" : "#6F7D59"));
+        ConditionModeIndicator.Background = exclude
+            ? new SolidColorBrush(Color.Parse("#8A303A"))
+            : ThemeResources.Brush("Theme.Brush.Success");
         ConditionModeIndicator.CornerRadius = exclude
             ? new CornerRadius(0, 5, 5, 0)
             : new CornerRadius(5, 0, 0, 5);
@@ -1451,7 +1453,7 @@ public partial class MusicView : UserControl
             FontSize = 10.5,
             Opacity = 0.68,
             Background = new SolidColorBrush(Colors.Transparent),
-            BorderBrush = new SolidColorBrush(Color.Parse("#615A49")),
+            BorderBrush = ThemeResources.Brush("Theme.Brush.BorderStrong"),
             BorderThickness = new Thickness(1)
         };
         removeBtn.Click += (_, _) => RemoveFilterGroup(condition);
@@ -1561,7 +1563,7 @@ public partial class MusicView : UserControl
         var categoryBox = new ComboBox
         {
             Height = 34,
-            Background = new SolidColorBrush(Color.Parse("#211F19")),
+            Background = ThemeResources.Brush("Theme.Brush.Surface"),
             BorderBrush = new SolidColorBrush(Color.Parse("#414B5F")),
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(6),
@@ -1792,7 +1794,7 @@ public partial class MusicView : UserControl
 
     private static Button CreateGenreFilterChoiceButton(string title, string group, bool isSelected)
     {
-        var accent = Brush("#C7D2AD");
+        var accent = ThemeResources.Brush("Theme.Brush.TextSecondary");
         var text = new StackPanel
         {
             Spacing = 1,
