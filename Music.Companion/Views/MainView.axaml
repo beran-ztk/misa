@@ -304,6 +304,10 @@
                                 <TextBlock Text="RATING" FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource Mobile.Brush.TextMuted}"/>
                                 <views:MultiSelectFilterControl x:Name="RatingFilter" Placeholder="All except Avoid"/>
                             </StackPanel>
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="VISIBILITY" FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource Mobile.Brush.TextMuted}"/>
+                                <views:MultiSelectFilterControl x:Name="VisibilityFilter" Placeholder="Public and private"/>
+                            </StackPanel>
                             <StackPanel Spacing="7">
                                 <TextBlock Text="CONDITIONS" FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource Mobile.Brush.TextMuted}"/>
                                 <StackPanel x:Name="FilterGroupsPanel" Spacing="0"/>

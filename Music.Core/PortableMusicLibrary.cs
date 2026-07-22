@@ -9,18 +9,40 @@ public sealed record PortableMusicLibrary(
     int SchemaVersion = PortableMusicLibrary.CurrentSchemaVersion,
     string? ExportId = null,
     string? ExportedAt = null,
-    string MediaMode = "full")
+    string MediaMode = "full",
+    List<PortableRating>? RatingDefinitions = null)
 {
-    public const int CurrentSchemaVersion = 3;
+    public const int CurrentSchemaVersion = 4;
 
     public static PortableMusicLibrary Empty { get; } = new([]);
 
-    public IReadOnlyList<string> Ratings => Tracks
-        .Select(t => t.Rating)
-        .Where(v => !string.IsNullOrWhiteSpace(v))
-        .Distinct(StringComparer.OrdinalIgnoreCase)
-        .Order(StringComparer.OrdinalIgnoreCase)
-        .ToList();
+    public IReadOnlyList<string> Ratings
+    {
+        get
+        {
+            var exportedOrder = (RatingDefinitions ?? [])
+                .GroupBy(rating => rating.Name, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(group => group.Key, group => group.First().SortOrder, StringComparer.OrdinalIgnoreCase);
+            var fallbackOrder = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["Avoid"] = 1,
+                ["Okay"] = 2,
+                ["Good"] = 3,
+                ["Great"] = 4,
+                ["Favorite"] = 5
+            };
+
+            return Tracks
+                .Select(track => track.Rating)
+                .Where(rating => !string.IsNullOrWhiteSpace(rating))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(rating => exportedOrder.GetValueOrDefault(
+                    rating,
+                    fallbackOrder.GetValueOrDefault(rating, int.MaxValue)))
+                .ThenBy(rating => rating, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+    }
 
     public IReadOnlyList<string> Genres => Tracks
         .SelectMany(t => t.Genres)
@@ -43,6 +65,8 @@ public sealed record PortableMusicLibrary(
         .Order(StringComparer.OrdinalIgnoreCase)
         .ToList();
 }
+
+public sealed record PortableRating(string Name, int SortOrder);
 
 public sealed record PortableFilterPreset(
     string Name,

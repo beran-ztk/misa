@@ -188,6 +188,8 @@ public partial class MultiSelectFilterControl : UserControl
     {
         _label.Text = _selected.Count == 0
             ? Placeholder
-            : string.Join(", ", _selected.Order(StringComparer.OrdinalIgnoreCase));
+            : string.Join(", ", _items
+                .Where(item => _selected.Contains(item.Name))
+                .Select(item => item.Name));
     }
 }

@@ -134,6 +134,7 @@ public partial class MainView : UserControl
             ApplyFilter();
         };
         RatingFilter.SelectionChanged += (_, _) => ApplyFilter();
+        VisibilityFilter.SelectionChanged += (_, _) => ApplyFilter();
 
         ProgressSlider.AddHandler(PointerPressedEvent, OnProgressPressed, RoutingStrategies.Tunnel);
         ProgressSlider.AddHandler(PointerReleasedEvent, OnProgressReleased, RoutingStrategies.Tunnel);
@@ -197,6 +198,7 @@ public partial class MainView : UserControl
     {
         PopulatePresets();
         ApplyDefaultRatingFilter();
+        ApplyDefaultVisibilityFilter();
         RebuildFilterGroups();
     }
 
@@ -207,6 +209,13 @@ public partial class MainView : UserControl
         RatingFilter.SetSelectedItems(
             ratings.Where(rating => !string.Equals(rating, "Avoid", StringComparison.OrdinalIgnoreCase)),
             notify: false);
+    }
+
+    private void ApplyDefaultVisibilityFilter()
+    {
+        string[] visibilityOptions = ["Public", "Private"];
+        VisibilityFilter.SetItems(visibilityOptions);
+        VisibilityFilter.SetSelectedItems(visibilityOptions, notify: false);
     }
 
     private void PopulatePresets()
@@ -243,6 +252,11 @@ public partial class MainView : UserControl
         if (_showReviewOnly)
             _filteredTracks = _filteredTracks
                 .Where(track => track.NeedsReview)
+                .ToList();
+
+        if (VisibilityFilter.SelectedItems.Count > 0)
+            _filteredTracks = _filteredTracks
+                .Where(track => VisibilityFilter.SelectedItems.Contains(track.IsPublic ? "Public" : "Private"))
                 .ToList();
 
         _currentIndex = string.IsNullOrWhiteSpace(_currentTrackFileName)
@@ -416,6 +430,7 @@ public partial class MainView : UserControl
         _updatingPresetUi = false;
 
         ApplyDefaultRatingFilter();
+        ApplyDefaultVisibilityFilter();
         RebuildFilterGroups();
         _showReviewOnly = false;
         SetReviewOnlyFilterVisual(false);
@@ -597,6 +612,9 @@ public partial class MainView : UserControl
 
         if (RatingFilter.SelectedItems.Count > 0)
             query = query.Where(track => RatingFilter.SelectedItems.Contains(track.Rating));
+
+        if (VisibilityFilter.SelectedItems.Count > 0)
+            query = query.Where(track => VisibilityFilter.SelectedItems.Contains(track.IsPublic ? "Public" : "Private"));
 
         if (group.GenreFilter.SelectedItems.Count > 0)
             query = query.Where(track => group.GenreFilter.SelectedItems

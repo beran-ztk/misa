@@ -304,7 +304,8 @@ public class MusicLibraryService
         var genres = GetGenres().ToDictionary(g => g.Id, g => g.Name);
         var tags = GetTags().ToDictionary(t => t.Id, t => t.Name);
         var styles = GetStyles().ToDictionary(s => s.Id, s => s.Name);
-        var ratings = GetRatings().ToDictionary(r => r.Id, r => r.Name);
+        var ratingDefinitions = GetRatings();
+        var ratings = ratingDefinitions.ToDictionary(r => r.Id, r => r.Name);
         var trackGenreIds = GetAllTrackGenreIds();
         var trackTagIds = GetAllTrackTagIds();
         var trackStyleIds = GetAllTrackStyleIds();
@@ -360,7 +361,10 @@ public class MusicLibraryService
                     PortableMusicLibrary.CurrentSchemaVersion,
                     exportId,
                     exportedAt,
-                    "incremental"));
+                    "incremental",
+                    ratingDefinitions
+                        .Select(rating => new PortableRating(rating.Name, rating.SortOrder))
+                        .ToList()));
 
             var archivePath = NextExportArchivePath(targetDirectory, exportedAt);
             ZipFile.CreateFromDirectory(tempDirectory, archivePath, CompressionLevel.Fastest, includeBaseDirectory: false);
