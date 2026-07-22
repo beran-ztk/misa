@@ -6,9 +6,15 @@
     <UserControl.Styles>
         <Style Selector="ListBox.channel-list ListBoxItem">
             <Setter Property="Padding" Value="0"/>
+            <Setter Property="Margin" Value="0,0,0,7"/>
             <Setter Property="MinHeight" Value="0"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="ClipToBounds" Value="True"/>
+        </Style>
+        <Style Selector="ListBox.channel-list ListBoxItem /template/ ContentPresenter">
+            <Setter Property="CornerRadius" Value="{DynamicResource Theme.Corner.Control}"/>
+            <Setter Property="ClipToBounds" Value="True"/>
         </Style>
         <Style Selector="ListBox.channel-list ListBoxItem:pointerover /template/ ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource Theme.Brush.SurfaceHover}"/>
@@ -158,8 +164,7 @@
                                  Background="Transparent" BorderThickness="0">
                             <ListBox.ItemTemplate>
                                 <DataTemplate x:DataType="models:ChannelSubscription">
-                                    <Border Margin="0,0,0,7"
-                                            Padding="11,9"
+                                    <Border Padding="11,9"
                                             Background="{DynamicResource Theme.Brush.SurfaceTranslucent}"
                                             BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
                                             BorderThickness="1"
