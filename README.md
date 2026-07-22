@@ -11,3 +11,7 @@ The app is built around everyday library work: listening, searching, filtering, 
 ![Library view](Docs/images/library.png)
 
 ![Track editor](Docs/images/edit.png)
+
+![Channel-Manager](Docs/images/channels.png)
+
+![Filter](Docs/images/filter.png)
