@@ -549,9 +549,12 @@
                                             Opacity="0.86"
                                             ToolTip.Tip="Track actions">
                                         <TextBlock Text="⋮"
-                                                   FontSize="23"
+                                                   Width="17"
+                                                   Height="17"
+                                                   FontSize="19"
                                                    FontWeight="SemiBold"
-                                                   Margin="0,-3,0,0"
+                                                   Margin="0,-2,0,0"
+                                                   TextAlignment="Center"
                                                    HorizontalAlignment="Center"
                                                    VerticalAlignment="Center"/>
                                         <Button.Flyout>
