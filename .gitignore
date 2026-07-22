@@ -13,3 +13,5 @@ Assets/
 /Tools/
 /Models/**/*.pb
 /Scripts/__pycache__/
+/AnalysisServer/.env
+/AnalysisServer/*.tar

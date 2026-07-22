@@ -156,25 +156,12 @@ def main():
     parser.add_argument("track_path", help="Path to the audio file inside the container")
     parser.add_argument("--top", type=int, default=20, help="Number of MAEST genre predictions to return")
     parser.add_argument("--model-directory", type=Path, default=DEFAULT_MODEL_DIRECTORY)
-    parser.add_argument("--experimental-only", action="store_true",
-                        help="Run only the additional classification heads in a separate process")
-    parser.add_argument("--include-experimental", action="store_true",
-                        help="Include the additional classification heads in the regular analysis output")
     args = parser.parse_args()
 
     if not Path(args.track_path).exists():
         error(f"Track file not found: {args.track_path}")
 
     audio = es.MonoLoader(filename=args.track_path, sampleRate=16000, resampleQuality=4)()
-    if args.experimental_only:
-        experimental_predictions, experimental_errors = experimental_analysis(audio, args.model_directory.parent)
-        print(json.dumps({
-            "success": True,
-            "experimentalPredictions": experimental_predictions,
-            "experimentalErrors": experimental_errors
-        }, ensure_ascii=False, indent=2))
-        return
-
     if not (args.model_directory / MAEST_MODEL_FILE).exists():
         error(f"MAEST model file not found: {args.model_directory / MAEST_MODEL_FILE}")
     if not (args.model_directory / MAEST_METADATA_FILE).exists():
@@ -186,10 +173,9 @@ def main():
     _, _, integrated_loudness, loudness_range = es.LoudnessEBUR128(sampleRate=loudness_sample_rate)(loudness_audio)
 
     genre_predictions, prediction_shape = analyze_maest(audio, args.model_directory, args.top)
-    experimental_predictions, experimental_errors = (
-        experimental_analysis(audio, args.model_directory.parent)
-        if args.include_experimental
-        else ([], [])
+    experimental_predictions, experimental_errors = experimental_analysis(
+        audio,
+        args.model_directory.parent,
     )
 
     print(json.dumps({
