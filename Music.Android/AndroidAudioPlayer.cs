@@ -1,4 +1,5 @@
 using Android.Media;
+using Android.OS;
 using Music.Companion;
 
 namespace Music.Android;
@@ -17,11 +18,30 @@ public sealed class AndroidAudioPlayer : ICompanionAudioPlayer, IDisposable
     {
         Stop();
 
-        _player = new MediaPlayer();
-        _player.SetDataSource(filePath);
-        _player.Completion += OnPlaybackCompleted;
-        _player.Prepare();
-        _player.Start();
+        var player = new MediaPlayer();
+        try
+        {
+            // Passing the raw path string makes MediaPlayer interpret some
+            // leading Unicode and URI-reserved characters as a remote source.
+            // A file descriptor addresses the already resolved local file and
+            // is independent of its display name.
+            using var descriptor = ParcelFileDescriptor.Open(
+                new Java.IO.File(filePath),
+                ParcelFileMode.ReadOnly)
+                ?? throw new IOException($"Could not open audio file '{filePath}'.");
+            player.SetDataSource(descriptor.FileDescriptor);
+            player.Completion += OnPlaybackCompleted;
+            player.Prepare();
+            player.Start();
+            _player = player;
+        }
+        catch
+        {
+            player.Completion -= OnPlaybackCompleted;
+            player.Release();
+            player.Dispose();
+            throw;
+        }
 
         return Task.CompletedTask;
     }

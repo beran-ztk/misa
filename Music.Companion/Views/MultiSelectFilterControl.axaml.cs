@@ -46,10 +46,10 @@ public partial class MultiSelectFilterControl : UserControl
         var flyout = (Flyout)ToggleBtn.Flyout!;
         _flyoutContent = new Border
         {
-            Background = new SolidColorBrush(Color.FromRgb(16, 27, 37)),
-            BorderBrush = new SolidColorBrush(Color.FromRgb(80, 87, 109)),
-            BorderThickness = new Thickness(1, 0, 1, 1),
-            CornerRadius = new CornerRadius(0, 0, 6, 6),
+            Background = CompanionTheme.Brush("Mobile.Brush.SurfaceRaised"),
+            BorderBrush = CompanionTheme.Brush("Mobile.Brush.BorderStrong"),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(7),
             Padding = new Thickness(10, 8),
             Child = new ScrollViewer { MaxHeight = 280, MinWidth = 220, Content = _itemsPanel }
         };
@@ -88,7 +88,7 @@ public partial class MultiSelectFilterControl : UserControl
             var nameText = new TextBlock
             {
                 Text = name,
-                Foreground = new SolidColorBrush(Color.FromRgb(236, 243, 249)),
+                Foreground = CompanionTheme.Brush("Mobile.Brush.TextPrimary"),
                 FontWeight = FontWeight.Medium,
                 VerticalAlignment = VerticalAlignment.Center,
                 TextTrimming = TextTrimming.CharacterEllipsis,
@@ -97,7 +97,7 @@ public partial class MultiSelectFilterControl : UserControl
 
             var countText = new TextBlock
             {
-                Foreground = new SolidColorBrush(Color.FromRgb(192, 214, 229)),
+                Foreground = CompanionTheme.Brush("Mobile.Brush.TextSecondary"),
                 FontSize = 11,
                 FontWeight = FontWeight.Medium,
                 HorizontalAlignment = HorizontalAlignment.Center,
@@ -110,8 +110,8 @@ public partial class MultiSelectFilterControl : UserControl
                 Padding = new Thickness(7, 1),
                 Margin = new Thickness(0, 0, 12, 0),
                 CornerRadius = new CornerRadius(9),
-                Background = new SolidColorBrush(Color.FromArgb(90, 61, 91, 111)),
-                BorderBrush = new SolidColorBrush(Color.FromArgb(80, 120, 154, 176)),
+                Background = CompanionTheme.Brush("Mobile.Brush.AccentSurface"),
+                BorderBrush = CompanionTheme.Brush("Mobile.Brush.Border"),
                 BorderThickness = new Thickness(1),
                 Child = countText,
                 VerticalAlignment = VerticalAlignment.Center

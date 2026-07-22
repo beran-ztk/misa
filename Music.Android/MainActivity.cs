@@ -20,7 +20,8 @@ public class MainActivity : AvaloniaMainActivity<App>
         CompanionServices.LibraryStorage = new AndroidLibraryStorage();
         CompanionServices.MediaControls = new AndroidMediaControls(this);
 
-        return base.CustomizeAppBuilder(builder)
-            .WithInterFont();
+        // Keep Android's system font fallback enabled so emoji and uncommon
+        // Unicode symbols can be resolved by the platform font collection.
+        return base.CustomizeAppBuilder(builder);
     }
 }

@@ -1,0 +1,32 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <SolidColorBrush x:Key="Mobile.Brush.Background">#1B1914</SolidColorBrush>
+    <SolidColorBrush x:Key="Mobile.Brush.Navigation">#F0211E17</SolidColorBrush>
+    <SolidColorBrush x:Key="Mobile.Brush.Surface">#211F19</SolidColorBrush>
+    <SolidColorBrush x:Key="Mobile.Brush.SurfaceRaised">#2A261D</SolidColorBrush>
+    <SolidColorBrush x:Key="Mobile.Brush.SurfaceHover">#39352B</SolidColorBrush>
+    <SolidColorBrush x:Key="Mobile.Brush.SurfaceSelected">#4A4638</SolidColorBrush>
+    <SolidColorBrush x:Key="Mobile.Brush.AccentSurface">#4B513D</SolidColorBrush>
+    <SolidColorBrush x:Key="Mobile.Brush.Input">#B8171611</SolidColorBrush>
+
+    <SolidColorBrush x:Key="Mobile.Brush.BorderSubtle">#4B473B</SolidColorBrush>
+    <SolidColorBrush x:Key="Mobile.Brush.Border">#554F41</SolidColorBrush>
+    <SolidColorBrush x:Key="Mobile.Brush.BorderStrong">#615A49</SolidColorBrush>
+    <SolidColorBrush x:Key="Mobile.Brush.Divider">#484438</SolidColorBrush>
+
+    <SolidColorBrush x:Key="Mobile.Brush.TextPrimary">#F0EFE5</SolidColorBrush>
+    <SolidColorBrush x:Key="Mobile.Brush.TextStrong">#F7F3E8</SolidColorBrush>
+    <SolidColorBrush x:Key="Mobile.Brush.TextSecondary">#C7D2AD</SolidColorBrush>
+    <SolidColorBrush x:Key="Mobile.Brush.TextMuted">#BDB7A3</SolidColorBrush>
+
+    <SolidColorBrush x:Key="Mobile.Brush.Accent">#AFC58C</SolidColorBrush>
+    <SolidColorBrush x:Key="Mobile.Brush.AccentStrong">#B6D58A</SolidColorBrush>
+    <SolidColorBrush x:Key="Mobile.Brush.Warning">#FFD27A</SolidColorBrush>
+    <SolidColorBrush x:Key="Mobile.Brush.Danger">#EE5C5C</SolidColorBrush>
+    <SolidColorBrush x:Key="Mobile.Brush.DangerSurface">#52252B</SolidColorBrush>
+
+    <CornerRadius x:Key="Mobile.Corner.Small">5</CornerRadius>
+    <CornerRadius x:Key="Mobile.Corner.Control">7</CornerRadius>
+    <CornerRadius x:Key="Mobile.Corner.Card">10</CornerRadius>
+    <CornerRadius x:Key="Mobile.Corner.Pill">16</CornerRadius>
+</ResourceDictionary>

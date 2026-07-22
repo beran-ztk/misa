@@ -4,10 +4,11 @@
     <Button x:Name="ToggleBtn"
             HorizontalAlignment="Stretch"
             HorizontalContentAlignment="Stretch"
-            Background="#0D151D"
-            BorderBrush="#414B5F"
+            Background="{DynamicResource Mobile.Brush.Input}"
+            BorderBrush="{DynamicResource Mobile.Brush.BorderStrong}"
+            Foreground="{DynamicResource Mobile.Brush.TextPrimary}"
             BorderThickness="1"
-            CornerRadius="6,6,0,0"
+            CornerRadius="7"
             Margin="0"
             Padding="10,7">
         <Button.Flyout>
@@ -17,7 +18,7 @@
                         <Setter Property="Padding" Value="0"/>
                         <Setter Property="Background" Value="Transparent"/>
                         <Setter Property="BorderThickness" Value="0"/>
-                        <Setter Property="CornerRadius" Value="6"/>
+                        <Setter Property="CornerRadius" Value="7"/>
                     </ControlTheme>
                 </Flyout.FlyoutPresenterTheme>
             </Flyout>

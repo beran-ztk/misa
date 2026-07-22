@@ -4,21 +4,34 @@
              x:Class="Music.Companion.Views.MainView">
 
     <UserControl.Styles>
+        <Style Selector="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource Mobile.Brush.TextPrimary}"/>
+        </Style>
         <Style Selector="TextBox">
-            <Setter Property="Background" Value="#0B0D10"/>
-            <Setter Property="BorderBrush" Value="#33414F"/>
-            <Setter Property="Foreground" Value="#F4F7FA"/>
-            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Background" Value="{DynamicResource Mobile.Brush.Input}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Mobile.Brush.BorderStrong}"/>
+            <Setter Property="Foreground" Value="{DynamicResource Mobile.Brush.TextPrimary}"/>
+            <Setter Property="CornerRadius" Value="{DynamicResource Mobile.Corner.Control}"/>
+            <Setter Property="Padding" Value="12,5"/>
+        </Style>
+        <Style Selector="ComboBox">
+            <Setter Property="Background" Value="{DynamicResource Mobile.Brush.Input}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Mobile.Brush.BorderStrong}"/>
+            <Setter Property="Foreground" Value="{DynamicResource Mobile.Brush.TextPrimary}"/>
+            <Setter Property="CornerRadius" Value="{DynamicResource Mobile.Corner.Control}"/>
         </Style>
         <Style Selector="Button">
-            <Setter Property="Background" Value="#111821"/>
-            <Setter Property="BorderBrush" Value="#33414F"/>
-            <Setter Property="Foreground" Value="#F4F7FA"/>
-            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Background" Value="{DynamicResource Mobile.Brush.SurfaceRaised}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Mobile.Brush.Border}"/>
+            <Setter Property="Foreground" Value="{DynamicResource Mobile.Brush.TextPrimary}"/>
+            <Setter Property="CornerRadius" Value="{DynamicResource Mobile.Corner.Control}"/>
+        </Style>
+        <Style Selector="Button:pointerover">
+            <Setter Property="Background" Value="{DynamicResource Mobile.Brush.SurfaceHover}"/>
         </Style>
         <Style Selector="Button.icon">
             <Setter Property="Width" Value="42"/>
-            <Setter Property="Height" Value="38"/>
+            <Setter Property="Height" Value="40"/>
             <Setter Property="Padding" Value="0"/>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
@@ -26,243 +39,167 @@
             <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
         <Style Selector="Button.toolbarIcon">
-            <Setter Property="Width" Value="42"/>
+            <Setter Property="Width" Value="40"/>
             <Setter Property="Height" Value="38"/>
             <Setter Property="Padding" Value="0"/>
+            <Setter Property="Background" Value="{DynamicResource Mobile.Brush.Surface}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Mobile.Brush.BorderSubtle}"/>
             <Setter Property="HorizontalContentAlignment" Value="Center"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
-        <Style Selector="ListBoxItem">
-            <Setter Property="Padding" Value="12,8"/>
-            <Setter Property="MinHeight" Value="64"/>
-            <Setter Property="BorderThickness" Value="0,0,0,1"/>
-            <Setter Property="BorderBrush" Value="#26313A"/>
+        <Style Selector="Button.primaryPlayer">
+            <Setter Property="Width" Value="48"/>
+            <Setter Property="Height" Value="44"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Background" Value="{DynamicResource Mobile.Brush.AccentSurface}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Mobile.Brush.Accent}"/>
+            <Setter Property="CornerRadius" Value="22"/>
         </Style>
-        <Style Selector="ListBoxItem:selected">
-            <Setter Property="Background" Value="#183A57"/>
+        <Style Selector="ListBoxItem">
+            <Setter Property="Padding" Value="5,3"/>
+            <Setter Property="Margin" Value="0"/>
+            <Setter Property="MinHeight" Value="72"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+        <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
         </Style>
         <Style Selector="Slider">
-            <Setter Property="Foreground" Value="#1E9AF0"/>
-            <Setter Property="Background" Value="#33404A"/>
+            <Setter Property="Foreground" Value="{DynamicResource Mobile.Brush.Accent}"/>
+            <Setter Property="Background" Value="{DynamicResource Mobile.Brush.Divider}"/>
+        </Style>
+        <Style Selector="CheckBox">
+            <Setter Property="Foreground" Value="{DynamicResource Mobile.Brush.TextPrimary}"/>
         </Style>
     </UserControl.Styles>
 
-    <DockPanel Background="#121417">
+    <Grid RowDefinitions="Auto,*,Auto"
+          Background="{DynamicResource Mobile.Brush.Background}">
 
-        <Border DockPanel.Dock="Top"
-                Background="#080A0D"
-                BorderBrush="#182432"
+        <Border Grid.Row="0"
+                Background="{DynamicResource Mobile.Brush.Navigation}"
+                BorderBrush="{DynamicResource Mobile.Brush.BorderSubtle}"
                 BorderThickness="0,0,0,1"
-                Padding="14,12,14,10">
-            <StackPanel Spacing="9">
-                <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="8">
-                    <TextBlock Text="Music"
-                               FontSize="20"
-                               FontWeight="SemiBold"
-                               VerticalAlignment="Center"/>
-                    <Button Grid.Column="1"
-                            x:Name="ImportButton"
-                            Classes="toolbarIcon"
-                            Click="OnImportClicked"
-                            ToolTip.Tip="Import">
-                        <Image Source="{SvgImage /Assets/import.svg}"
-                               Width="19" Height="19"/>
+                Padding="16,14,14,12">
+            <StackPanel Spacing="10">
+                <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto" ColumnSpacing="7">
+                    <Border Width="3" Height="22"
+                            CornerRadius="2"
+                            Background="{DynamicResource Mobile.Brush.AccentStrong}"
+                            VerticalAlignment="Center"/>
+                    <StackPanel Grid.Column="1" Spacing="1" VerticalAlignment="Center">
+                        <TextBlock Text="LIBRARY"
+                                   FontSize="15"
+                                   FontWeight="SemiBold"
+                                   LetterSpacing="1.1"/>
+                        <TextBlock x:Name="PlaylistSummaryText"
+                                   FontSize="10.5"
+                                   Foreground="{DynamicResource Mobile.Brush.TextMuted}"
+                                   Opacity="0.78"
+                                   TextTrimming="CharacterEllipsis"/>
+                    </StackPanel>
+                    <Button Grid.Column="2" x:Name="ImportButton" Classes="toolbarIcon"
+                            Click="OnImportClicked" ToolTip.Tip="Import library">
+                        <Image Source="{SvgImage /Assets/import.svg}" Width="17" Height="17"/>
                     </Button>
-                    <Button Grid.Column="2"
-                            x:Name="ReviewFilterButton"
-                            Classes="toolbarIcon"
-                            Click="OnReviewFilterClicked"
-                            Opacity="0.45"
-                            ToolTip.Tip="Show reviews">
-                        <Image Source="{SvgImage /Assets/review.svg}"
-                               Width="19" Height="19"/>
+                    <Button Grid.Column="3" x:Name="ReviewFilterButton" Classes="toolbarIcon"
+                            Click="OnReviewFilterClicked" Opacity="0.5" ToolTip.Tip="Reviews">
+                        <Image Source="{SvgImage /Assets/review.svg}" Width="17" Height="17"/>
                     </Button>
-                    <Button Grid.Column="3"
-                            x:Name="ReloadButton"
-                            Classes="toolbarIcon"
-                            Click="OnReloadClicked"
-                            ToolTip.Tip="Reload">
-                        <Image Source="{SvgImage /Assets/reload.svg}"
-                               Width="19" Height="19"/>
+                    <Button Grid.Column="4" x:Name="ReloadButton" Classes="toolbarIcon"
+                            Click="OnReloadClicked" ToolTip.Tip="Reload library">
+                        <Image Source="{SvgImage /Assets/reload.svg}" Width="17" Height="17"/>
                     </Button>
                 </Grid>
+
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
                     <TextBox x:Name="SearchBox"
-                             Watermark="Search..."
-                             Height="38"
+                             Watermark="Search tracks"
+                             Height="40"
                              VerticalContentAlignment="Center"/>
-                    <Button Grid.Column="1"
-                            x:Name="FilterButton"
-                            Classes="toolbarIcon"
-                            Click="OnToggleFiltersClicked"
-                            ToolTip.Tip="Filters">
-                        <Image Source="{SvgImage /Assets/filter.svg}"
-                               Width="19" Height="19"/>
+                    <Button Grid.Column="1" x:Name="FilterButton" Classes="toolbarIcon"
+                            Width="44" Height="40"
+                            Click="OnToggleFiltersClicked" ToolTip.Tip="Filters">
+                        <Image Source="{SvgImage /Assets/filter.svg}" Width="18" Height="18"/>
                     </Button>
                 </Grid>
-                <TextBlock x:Name="PlaylistSummaryText"
-                           FontSize="11"
-                           Opacity="0.58"
-                           TextTrimming="CharacterEllipsis"/>
                 <TextBlock x:Name="StatusText"
-                           IsVisible="False"/>
+                           FontSize="10.5"
+                           Foreground="{DynamicResource Mobile.Brush.Warning}"
+                           TextWrapping="Wrap"/>
             </StackPanel>
         </Border>
 
-        <Border DockPanel.Dock="Bottom"
-                Background="#07080A"
-                BorderBrush="#202832"
-                BorderThickness="0,1,0,0"
-                Padding="14,8,14,12">
-            <StackPanel Spacing="7">
-                <TextBlock x:Name="NowPlayingText"
-                           Text=""
-                           HorizontalAlignment="Center"
-                           FontStyle="Italic"
-                           Opacity="0.75"
-                           TextTrimming="CharacterEllipsis"/>
-                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                    <Slider x:Name="ProgressSlider"
-                            Grid.Column="0"
-                            Minimum="0"
-                            Maximum="100"
-                            Value="0"/>
-                    <TextBlock x:Name="TimeText"
-                               Grid.Column="1"
-                               Text="00:00 / 00:00"
-                               FontSize="11"
-                               Opacity="0.62"
-                               VerticalAlignment="Center"/>
-                </Grid>
-                <Grid ColumnDefinitions="Auto,*,Auto,Auto">
-                    <StackPanel Orientation="Horizontal"
-                                Spacing="0"
-                                VerticalAlignment="Center">
-                        <Button x:Name="PreviousButton"
-                                Classes="icon"
-                                Click="OnPreviousClicked"
-                                ToolTip.Tip="Previous">
-                            <Image Source="{SvgImage /Assets/skip-back.svg}"
-                                   Width="19" Height="19"/>
-                        </Button>
-                        <Button x:Name="PlayPauseButton"
-                                Classes="icon"
-                                Click="OnPlayPauseClicked"
-                                ToolTip.Tip="Play / Pause">
-                            <Grid Width="19" Height="19">
-                                <Image x:Name="PlayIcon"
-                                       Source="{SvgImage /Assets/play.svg}"/>
-                                <Image x:Name="PauseIcon"
-                                       Source="{SvgImage /Assets/pause.svg}"
-                                       IsVisible="False"/>
-                            </Grid>
-                        </Button>
-                        <Button x:Name="NextButton"
-                                Classes="icon"
-                                Click="OnNextClicked"
-                                ToolTip.Tip="Next">
-                            <Image Source="{SvgImage /Assets/skip-forward.svg}"
-                                   Width="19" Height="19"/>
-                        </Button>
-                    </StackPanel>
-                    <Button x:Name="ReviewButton"
-                            Grid.Column="2"
-                            HorizontalAlignment="Right"
-                            Classes="icon"
-                            Opacity="0.45"
-                            Click="OnReviewClicked"
-                            ToolTip.Tip="Mark for review">
-                        <Image Source="{SvgImage /Assets/review.svg}"
-                               Width="18" Height="18"/>
-                    </Button>
-                    <Button x:Name="ShuffleButton"
-                            Grid.Column="3"
-                            HorizontalAlignment="Right"
-                            Classes="icon"
-                            Opacity="0.45"
-                            Click="OnShuffleClicked"
-                            ToolTip.Tip="Shuffle">
-                        <Image Source="{SvgImage /Assets/shuffle.svg}"
-                               Width="18" Height="18"/>
-                    </Button>
-                </Grid>
-            </StackPanel>
-        </Border>
-
-        <Panel>
+        <Panel Grid.Row="1">
+            <Rectangle Fill="#482A261D" IsHitTestVisible="False"/>
             <ListBox x:Name="TrackList"
-                     Background="#17191D"
+                     Margin="7,5"
+                     Background="Transparent"
                      BorderThickness="0"
-                     DoubleTapped="OnTrackDoubleTapped">
+                     Tapped="OnTrackTapped">
                 <ListBox.ItemTemplate>
                     <DataTemplate>
                         <Border Background="{Binding CurrentBackground}"
-                                CornerRadius="8"
-                                Padding="6,5">
-                            <Grid ColumnDefinitions="4,44,*,Auto">
-                                <Border Grid.Column="0"
-                                        Width="3"
-                                        Height="34"
+                                BorderBrush="{Binding CurrentBorder}"
+                                BorderThickness="1"
+                                CornerRadius="{DynamicResource Mobile.Corner.Card}"
+                                Padding="8,7">
+                            <Grid ColumnDefinitions="3,50,*,Auto" ColumnSpacing="9">
+                                <Border Width="3" Height="40"
                                         CornerRadius="2"
                                         Background="{Binding CurrentAccent}"
                                         VerticalAlignment="Center"/>
                                 <Border Grid.Column="1"
-                                        Width="36" Height="36"
-                                        CornerRadius="6"
+                                        Width="46" Height="46"
+                                        CornerRadius="7"
                                         ClipToBounds="True"
-                                        Background="#262B32"
-                                        VerticalAlignment="Center"
-                                        Margin="7,0,10,0">
-                                    <Image Source="{Binding Cover}"
-                                           Stretch="UniformToFill"/>
+                                        Background="{DynamicResource Mobile.Brush.SurfaceRaised}"
+                                        BorderBrush="{DynamicResource Mobile.Brush.BorderSubtle}"
+                                        BorderThickness="1"
+                                        VerticalAlignment="Center">
+                                    <Image Source="{Binding Cover}" Stretch="UniformToFill"/>
                                 </Border>
-                                <StackPanel Grid.Column="2"
-                                            Spacing="2"
-                                            VerticalAlignment="Center">
+                                <StackPanel Grid.Column="2" Spacing="3" VerticalAlignment="Center">
                                     <TextBlock Text="{Binding Title}"
-                                               FontSize="14"
+                                               FontSize="13.5"
                                                FontWeight="SemiBold"
+                                               Foreground="{DynamicResource Mobile.Brush.TextStrong}"
                                                TextTrimming="CharacterEllipsis"/>
-                                    <TextBlock Text="{Binding GenreText}"
-                                               FontSize="11"
-                                               Opacity="0.62"
-                                               TextTrimming="CharacterEllipsis"/>
-                                    <TextBlock Text="{Binding StyleText}"
-                                               FontSize="10"
-                                               Opacity="0.42"
+                                    <TextBlock Text="{Binding MetadataText}"
+                                               FontSize="10.5"
+                                               Foreground="{DynamicResource Mobile.Brush.TextSecondary}"
+                                               Opacity="0.78"
                                                TextTrimming="CharacterEllipsis"/>
                                     <TextBlock Text="{Binding TagText}"
-                                               FontSize="10"
-                                               Opacity="0.42"
+                                               FontSize="9.5"
+                                               Foreground="{DynamicResource Mobile.Brush.Accent}"
+                                               Opacity="0.82"
                                                TextTrimming="CharacterEllipsis"/>
                                 </StackPanel>
-                                <StackPanel Grid.Column="3"
+                                <StackPanel Grid.Column="3" Spacing="5"
+                                            Margin="8,0,0,0"
                                             HorizontalAlignment="Right"
-                                            VerticalAlignment="Center"
-                                            Spacing="4"
-                                            Margin="16,0,0,0">
+                                            VerticalAlignment="Center">
                                     <TextBlock Text="{Binding DurationText}"
-                                               FontSize="11"
-                                               Opacity="0.58"
+                                               FontSize="10"
+                                               Foreground="{DynamicResource Mobile.Brush.TextMuted}"
                                                HorizontalAlignment="Right"/>
-                                    <Border CornerRadius="5"
-                                            Padding="7,2"
-                                            Background="#26313A"
-                                            BorderBrush="#3D4B59"
+                                    <Border CornerRadius="{DynamicResource Mobile.Corner.Small}"
+                                            Padding="6,2"
+                                            Background="{DynamicResource Mobile.Brush.SurfaceRaised}"
+                                            BorderBrush="{DynamicResource Mobile.Brush.Border}"
                                             BorderThickness="1">
-                                        <TextBlock Text="{Binding Rating}"
-                                                   FontSize="10"/>
+                                        <TextBlock Text="{Binding Rating}" FontSize="9.5"/>
                                     </Border>
                                     <Border IsVisible="{Binding IsMarkedForReview}"
-                                            CornerRadius="5"
-                                            Padding="7,2"
-                                            Background="#302615"
-                                            BorderBrush="#7B5D2A"
+                                            CornerRadius="{DynamicResource Mobile.Corner.Small}"
+                                            Padding="6,2"
+                                            Background="#443A2D18"
+                                            BorderBrush="#8A6C2D"
                                             BorderThickness="1"
                                             HorizontalAlignment="Right">
-                                        <TextBlock Text="Review"
-                                                   FontSize="10"
-                                                   Foreground="#FFD27A"/>
+                                        <TextBlock Text="Review" FontSize="9" Foreground="{DynamicResource Mobile.Brush.Warning}"/>
                                     </Border>
                                 </StackPanel>
                             </Grid>
@@ -274,85 +211,59 @@
             <Border x:Name="FilterDrawer"
                     IsVisible="False"
                     HorizontalAlignment="Right"
-                    Width="330"
-                    Background="#101216"
-                    BorderBrush="#2B3642"
+                    Width="340"
+                    MaxWidth="340"
+                    Background="{DynamicResource Mobile.Brush.Navigation}"
+                    BorderBrush="{DynamicResource Mobile.Brush.BorderStrong}"
                     BorderThickness="1,0,0,0"
-                    BoxShadow="-10 0 34 0 #77000000">
+                    BoxShadow="-12 0 34 0 #88000000">
                 <Grid RowDefinitions="Auto,*,Auto">
-                    <Grid Grid.Row="0"
-                          ColumnDefinitions="*,Auto,Auto"
-                          Margin="16,13,10,13">
-                        <TextBlock Text="Filters"
-                                   FontSize="16"
-                                   FontWeight="SemiBold"
-                                   VerticalAlignment="Center"/>
-                        <Button Grid.Column="1"
-                                Content="Clear"
-                                Click="OnClearFiltersClicked"
-                                Padding="8,4"
-                                FontSize="12"
-                                Opacity="0.65"
-                                Background="Transparent"/>
-                        <Button Grid.Column="2"
-                                Click="OnToggleFiltersClicked"
-                                ToolTip.Tip="Close"
-                                Padding="8,4"
-                                FontSize="12"
-                                Opacity="0.55"
-                                Background="Transparent">
-                            <TextBlock Text="x"/>
+                    <Grid ColumnDefinitions="*,Auto,Auto" Margin="16,14,10,12">
+                        <StackPanel Spacing="1">
+                            <TextBlock Text="FILTERS" FontSize="14" FontWeight="SemiBold" LetterSpacing="0.8"/>
+                            <TextBlock Text="Refine the current library" FontSize="10" Foreground="{DynamicResource Mobile.Brush.TextMuted}"/>
+                        </StackPanel>
+                        <Button Grid.Column="1" Content="Reset" Click="OnClearFiltersClicked"
+                                Padding="9,5" FontSize="11" Background="Transparent" BorderThickness="0"/>
+                        <Button Grid.Column="2" Click="OnToggleFiltersClicked" ToolTip.Tip="Close"
+                                Width="34" Height="32" Padding="0" Background="Transparent" BorderThickness="0">
+                            <Image Source="{SvgImage /Assets/close.svg}" Width="13" Height="13"/>
                         </Button>
                     </Grid>
 
-                    <ScrollViewer Grid.Row="1"
-                                  Padding="16,12,16,12">
-                        <StackPanel Spacing="18">
-                            <StackPanel Spacing="7">
-                                <TextBlock Text="PRESETS"
-                                           FontSize="10"
-                                           FontWeight="SemiBold"
-                                           Opacity="0.45"/>
-                                <ComboBox x:Name="PresetBox"
-                                          SelectionChanged="OnPresetSelectionChanged"
-                                          HorizontalAlignment="Stretch"
-                                          Height="36"
-                                          Background="#0D151D"
-                                          BorderBrush="#414B5F"
-                                          BorderThickness="1"
-                                          CornerRadius="6"
-                                          Padding="8,4"/>
+                    <ScrollViewer Grid.Row="1" Padding="16,8,16,16">
+                        <StackPanel Spacing="17">
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="PRESET" FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource Mobile.Brush.TextMuted}"/>
+                                <ComboBox x:Name="PresetBox" SelectionChanged="OnPresetSelectionChanged"
+                                          Height="38" Padding="9,4"/>
                             </StackPanel>
-
                             <StackPanel Spacing="7">
-                                <TextBlock Text="RATING"
-                                           FontSize="10"
-                                           FontWeight="SemiBold"
-                                           Opacity="0.45"/>
-                                <views:MultiSelectFilterControl x:Name="RatingFilter"
-                                                                Placeholder="All ratings"/>
+                                <TextBlock Text="COMPLETION" FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource Mobile.Brush.TextMuted}"/>
+                                <CheckBox x:Name="ReviewOnlyFilterBox"
+                                          Content="Needs review only"
+                                          IsCheckedChanged="OnReviewOnlyFilterChanged"/>
                             </StackPanel>
-
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="RATING" FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource Mobile.Brush.TextMuted}"/>
+                                <views:MultiSelectFilterControl x:Name="RatingFilter" Placeholder="All except Avoid"/>
+                            </StackPanel>
                             <StackPanel Spacing="7">
-                                <TextBlock Text="GROUPS"
-                                           FontSize="10"
-                                           FontWeight="SemiBold"
-                                           Opacity="0.45"/>
-                                <StackPanel x:Name="FilterGroupsPanel"
-                                            Spacing="0"/>
+                                <TextBlock Text="CONDITIONS" FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource Mobile.Brush.TextMuted}"/>
+                                <StackPanel x:Name="FilterGroupsPanel" Spacing="0"/>
                             </StackPanel>
-                            <Border Height="60"/>
+                            <Border Height="28"/>
                         </StackPanel>
                     </ScrollViewer>
 
                     <Border Grid.Row="2"
                             BorderThickness="0,1,0,0"
-                            BorderBrush="#26313A"
-                            Padding="16,10,16,12">
-                        <Button Content="+ Add group"
+                            BorderBrush="{DynamicResource Mobile.Brush.BorderSubtle}"
+                            Padding="16,10,16,13">
+                        <Button Content="+ Add condition group"
                                 Click="OnAddFilterGroupClicked"
-                                Padding="10,6"
-                                HorizontalAlignment="Left"/>
+                                Padding="11,7"
+                                HorizontalAlignment="Stretch"/>
                     </Border>
                 </Grid>
             </Border>
@@ -362,17 +273,79 @@
                     HorizontalAlignment="Center"
                     VerticalAlignment="Bottom"
                     Margin="18"
-                    Background="#E6111820"
-                    BorderBrush="#365166"
+                    Background="#F02A261D"
+                    BorderBrush="{DynamicResource Mobile.Brush.BorderStrong}"
                     BorderThickness="1"
                     CornerRadius="9"
                     Padding="14,9">
-                <TextBlock x:Name="ToastText"
-                           FontSize="12"
-                           FontWeight="SemiBold"
-                           Foreground="#F3F7FA"/>
+                <TextBlock x:Name="ToastText" FontSize="11.5" FontWeight="SemiBold"/>
             </Border>
         </Panel>
 
-    </DockPanel>
+        <Border Grid.Row="2"
+                Background="{DynamicResource Mobile.Brush.SurfaceRaised}"
+                BorderBrush="{DynamicResource Mobile.Brush.BorderStrong}"
+                BorderThickness="0,1,0,0"
+                CornerRadius="12,12,0,0"
+                Padding="14,9,14,12"
+                BoxShadow="0 -7 20 0 #70000000">
+            <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="5">
+                <Grid ColumnDefinitions="48,*,Auto,Auto" ColumnSpacing="9">
+                    <Border Width="44" Height="44" CornerRadius="8" ClipToBounds="True"
+                            Background="{DynamicResource Mobile.Brush.Surface}"
+                            BorderBrush="{DynamicResource Mobile.Brush.Border}"
+                            BorderThickness="1">
+                        <Image x:Name="NowPlayingCover" Stretch="UniformToFill"/>
+                    </Border>
+                    <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                        <TextBlock x:Name="NowPlayingText"
+                                   Text="Nothing playing"
+                                   FontSize="12.5"
+                                   FontWeight="SemiBold"
+                                   TextTrimming="CharacterEllipsis"/>
+                        <TextBlock x:Name="NowPlayingMetaText"
+                                   Text="Choose a track"
+                                   FontSize="9.5"
+                                   Foreground="{DynamicResource Mobile.Brush.TextSecondary}"
+                                   Opacity="0.75"
+                                   TextTrimming="CharacterEllipsis"/>
+                    </StackPanel>
+                    <Button x:Name="ReviewButton" Grid.Column="2" Classes="icon"
+                            Opacity="0.45" Click="OnReviewClicked" ToolTip.Tip="Mark for review">
+                        <Image Source="{SvgImage /Assets/review.svg}" Width="17" Height="17"/>
+                    </Button>
+                    <Button x:Name="ShuffleButton" Grid.Column="3" Classes="icon"
+                            Opacity="0.45" Click="OnShuffleClicked" ToolTip.Tip="Shuffle">
+                        <Image Source="{SvgImage /Assets/shuffle.svg}" Width="17" Height="17"/>
+                    </Button>
+                </Grid>
+
+                <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                    <Slider x:Name="ProgressSlider" Minimum="0" Maximum="100" Value="0"/>
+                    <TextBlock x:Name="TimeText" Grid.Column="1"
+                               Text="00:00 / 00:00" FontSize="9.5"
+                               Foreground="{DynamicResource Mobile.Brush.TextMuted}"
+                               VerticalAlignment="Center"/>
+                </Grid>
+
+                <Grid Grid.Row="2" ColumnDefinitions="*,Auto,Auto,Auto,*" ColumnSpacing="2">
+                    <Button x:Name="PreviousButton" Grid.Column="1" Classes="icon"
+                            Click="OnPreviousClicked" ToolTip.Tip="Previous">
+                        <Image Source="{SvgImage /Assets/skip-back.svg}" Width="18" Height="18"/>
+                    </Button>
+                    <Button x:Name="PlayPauseButton" Grid.Column="2" Classes="primaryPlayer"
+                            Click="OnPlayPauseClicked" ToolTip.Tip="Play / Pause">
+                        <Grid Width="19" Height="19">
+                            <Image x:Name="PlayIcon" Source="{SvgImage /Assets/play.svg}"/>
+                            <Image x:Name="PauseIcon" Source="{SvgImage /Assets/pause.svg}" IsVisible="False"/>
+                        </Grid>
+                    </Button>
+                    <Button x:Name="NextButton" Grid.Column="3" Classes="icon"
+                            Click="OnNextClicked" ToolTip.Tip="Next">
+                        <Image Source="{SvgImage /Assets/skip-forward.svg}" Width="18" Height="18"/>
+                    </Button>
+                </Grid>
+            </Grid>
+        </Border>
+    </Grid>
 </UserControl>

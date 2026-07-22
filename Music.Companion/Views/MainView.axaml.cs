@@ -23,9 +23,11 @@ public partial class MainView : UserControl
     private readonly Dictionary<string, Bitmap?> _coverCache = new(StringComparer.OrdinalIgnoreCase);
     private readonly Random _rng = new();
     private int _currentIndex = -1;
+    private string? _currentTrackFileName;
     private bool _isSeeking;
     private bool _shuffle;
     private bool _showReviewOnly;
+    private bool _updatingReviewFilterUi;
     private bool _updatingPresetUi;
     private DateTime _lastMediaUpdate = DateTime.MinValue;
     private CancellationTokenSource? _toastCts;
@@ -39,18 +41,28 @@ public partial class MainView : UserControl
 
     private sealed record TrackRow(PortableTrack Track, Bitmap? Cover, bool IsCurrent, bool IsMarkedForReview)
     {
-        private static readonly IBrush CurrentBackgroundBrush = new SolidColorBrush(Color.FromArgb(78, 17, 121, 184));
-        private static readonly IBrush CurrentAccentBrush = new SolidColorBrush(Color.FromRgb(31, 154, 240));
         private static readonly IBrush TransparentBrush = Brushes.Transparent;
 
         public string Title => Track.Title;
-        public string GenreText => Track.GenreText;
-        public string StyleText => Track.StyleText;
-        public string TagText => Track.TagText;
+        public string MetadataText => string.Join(" · ", new[]
+            {
+                Track.ChannelName,
+                Track.GenreText,
+                Track.StyleText
+            }
+            .Where(value => !string.IsNullOrWhiteSpace(value)));
+        public string TagText => string.Join("  ", (Track.Tags ?? []).Select(tag => $"# {tag}"));
         public string DurationText => Track.DurationText;
-        public string Rating => Track.Rating;
-        public IBrush CurrentBackground => IsCurrent ? CurrentBackgroundBrush : TransparentBrush;
-        public IBrush CurrentAccent => IsCurrent ? CurrentAccentBrush : TransparentBrush;
+        public string Rating => string.IsNullOrWhiteSpace(Track.Rating) ? "None" : Track.Rating;
+        public IBrush CurrentBackground => IsCurrent
+            ? CompanionTheme.Brush("Mobile.Brush.SurfaceSelected")
+            : CompanionTheme.Brush("Mobile.Brush.Surface");
+        public IBrush CurrentBorder => CompanionTheme.Brush(IsCurrent
+            ? "Mobile.Brush.Accent"
+            : "Mobile.Brush.BorderSubtle");
+        public IBrush CurrentAccent => IsCurrent
+            ? CompanionTheme.Brush("Mobile.Brush.AccentStrong")
+            : TransparentBrush;
     }
 
     public MainView()
@@ -98,8 +110,17 @@ public partial class MainView : UserControl
     private void PopulateFilters()
     {
         PopulatePresets();
-        RatingFilter.SetItems(_loadedLibrary.Library.Ratings);
+        ApplyDefaultRatingFilter();
         RebuildFilterGroups();
+    }
+
+    private void ApplyDefaultRatingFilter()
+    {
+        var ratings = _loadedLibrary.Library.Ratings;
+        RatingFilter.SetItems(ratings);
+        RatingFilter.SetSelectedItems(
+            ratings.Where(rating => !string.Equals(rating, "Avoid", StringComparison.OrdinalIgnoreCase)),
+            notify: false);
     }
 
     private void PopulatePresets()
@@ -138,8 +159,12 @@ public partial class MainView : UserControl
                 .Where(track => track.NeedsReview)
                 .ToList();
 
-        if (_currentIndex >= _filteredTracks.Count)
-            _currentIndex = -1;
+        _currentIndex = string.IsNullOrWhiteSpace(_currentTrackFileName)
+            ? -1
+            : _filteredTracks.FindIndex(track => string.Equals(
+                track.FileName,
+                _currentTrackFileName,
+                StringComparison.OrdinalIgnoreCase));
 
         RefreshTrackRows();
         UpdatePlaylistSummary();
@@ -176,14 +201,32 @@ public partial class MainView : UserControl
             return;
         }
 
-        _currentIndex = index;
-        RefreshTrackRows(scrollToCurrent: true);
-        NowPlayingText.Text = track.Title;
-        await _audio.PlayAsync(path);
-        UpdatePlayPauseIcon();
-        UpdateReviewButton();
-        UpdateMediaControls();
-        StatusText.Text = "";
+        try
+        {
+            await _audio.PlayAsync(path);
+            _currentTrackFileName = track.FileName;
+            _currentIndex = index;
+            RefreshTrackRows(scrollToCurrent: true);
+            NowPlayingText.Text = track.Title;
+            var playerMetadata = string.Join(" · ", new[] { track.ChannelName, track.GenreText }
+                .Where(value => !string.IsNullOrWhiteSpace(value)));
+            NowPlayingMetaText.Text = string.IsNullOrWhiteSpace(playerMetadata) ? "Local track" : playerMetadata;
+            NowPlayingCover.Source = LoadCover(track);
+            UpdatePlayPauseIcon();
+            UpdateReviewButton();
+            UpdateMediaControls();
+            StatusText.Text = "";
+        }
+        catch (Exception ex)
+        {
+            StatusText.Text = $"Could not play {track.Title}: {ex.Message}";
+            ShowToast("This track could not be played");
+        }
+    }
+
+    private async void OnTrackTapped(object? sender, TappedEventArgs e)
+    {
+        await PlayTrackAtAsync(TrackList.SelectedIndex);
     }
 
     private async void OnTrackDoubleTapped(object? sender, RoutedEventArgs e)
@@ -198,7 +241,7 @@ public partial class MainView : UserControl
 
     private async Task TogglePlaybackAsync()
     {
-        if (_currentIndex < 0)
+        if (CurrentTrack is null)
         {
             var index = TrackList.SelectedIndex >= 0 ? TrackList.SelectedIndex : 0;
             await PlayTrackAtAsync(index);
@@ -247,7 +290,10 @@ public partial class MainView : UserControl
         {
             _audio.Stop();
             _currentIndex = -1;
-            NowPlayingText.Text = "";
+            _currentTrackFileName = null;
+            NowPlayingText.Text = "Nothing playing";
+            NowPlayingMetaText.Text = "Choose a track";
+            NowPlayingCover.Source = null;
             RefreshTrackRows();
             UpdatePlayPauseIcon();
             UpdateReviewButton();
@@ -274,9 +320,10 @@ public partial class MainView : UserControl
         PresetBox.SelectedIndex = -1;
         _updatingPresetUi = false;
 
-        RatingFilter.SetItems(_loadedLibrary.Library.Ratings);
+        ApplyDefaultRatingFilter();
         RebuildFilterGroups();
         _showReviewOnly = false;
+        SetReviewOnlyFilterVisual(false);
         ApplyFilter();
     }
 
@@ -522,13 +569,13 @@ public partial class MainView : UserControl
 
     private async void OnReviewClicked(object? sender, RoutedEventArgs e)
     {
-        if (_currentIndex < 0 || _currentIndex >= _filteredTracks.Count)
+        var track = CurrentTrack;
+        if (track is null)
         {
             ShowToast("No active track");
             return;
         }
 
-        var track = _filteredTracks[_currentIndex];
         await SetTrackReviewAsync(track.FileName, !track.NeedsReview);
         ShowToast(track.NeedsReview ? "Review mark removed" : "Marked for review");
         ApplyFilter();
@@ -555,9 +602,7 @@ public partial class MainView : UserControl
 
     private void UpdateReviewButton()
     {
-        var isMarked = _currentIndex >= 0 &&
-                       _currentIndex < _filteredTracks.Count &&
-                       _filteredTracks[_currentIndex].NeedsReview;
+        var isMarked = CurrentTrack?.NeedsReview == true;
 
         ReviewButton.Opacity = isMarked ? 1.0 : 0.45;
         ToolTip.SetTip(ReviewButton, isMarked ? "Remove review mark" : "Mark for review");
@@ -566,8 +611,26 @@ public partial class MainView : UserControl
     private void OnReviewFilterClicked(object? sender, RoutedEventArgs e)
     {
         _showReviewOnly = !_showReviewOnly;
+        SetReviewOnlyFilterVisual(_showReviewOnly);
         ApplyFilter();
         UpdateReviewFilterButton();
+    }
+
+    private void OnReviewOnlyFilterChanged(object? sender, RoutedEventArgs e)
+    {
+        if (_updatingReviewFilterUi)
+            return;
+
+        _showReviewOnly = ReviewOnlyFilterBox.IsChecked == true;
+        ApplyFilter();
+        UpdateReviewFilterButton();
+    }
+
+    private void SetReviewOnlyFilterVisual(bool value)
+    {
+        _updatingReviewFilterUi = true;
+        ReviewOnlyFilterBox.IsChecked = value;
+        _updatingReviewFilterUi = false;
     }
 
     private void UpdateReviewFilterButton()
@@ -866,7 +929,7 @@ public partial class MainView : UserControl
             ProgressSlider.Value = _audio.Position.TotalSeconds / _audio.Duration.TotalSeconds * 100.0;
 
         TimeText.Text = $"{Format(_audio.Position)} / {Format(_audio.Duration)}";
-        if (_currentIndex >= 0)
+        if (CurrentTrack is not null)
         {
             UpdatePlayPauseIcon();
             if (_audio.IsPlaying && DateTime.UtcNow - _lastMediaUpdate > TimeSpan.FromSeconds(4))
@@ -913,13 +976,13 @@ public partial class MainView : UserControl
 
     private void UpdateMediaControls()
     {
-        if (_currentIndex < 0 || _currentIndex >= _filteredTracks.Count)
+        var track = CurrentTrack;
+        if (track is null)
         {
             CompanionServices.MediaControls.Stop();
             return;
         }
 
-        var track = _filteredTracks[_currentIndex];
         CompanionServices.MediaControls.Update(
             track.Title,
             _loadedLibrary.CoverPath(track),
@@ -928,6 +991,13 @@ public partial class MainView : UserControl
             _audio.Duration);
         _lastMediaUpdate = DateTime.UtcNow;
     }
+
+    private PortableTrack? CurrentTrack => string.IsNullOrWhiteSpace(_currentTrackFileName)
+        ? null
+        : _loadedLibrary.Library.Tracks.FirstOrDefault(track => string.Equals(
+            track.FileName,
+            _currentTrackFileName,
+            StringComparison.OrdinalIgnoreCase));
 
     private void OnMediaCommandRequested(MediaControlCommand command)
     {
