@@ -148,7 +148,9 @@ public partial class EditTrackOverlay : UserControl
         _isEditingInformation = isEditing;
         TitleBox.IsVisible = isEditing;
         TitleDisplayText.IsVisible = !isEditing;
-        EditInformationButton.Background = isEditing ? Brush("#173C54") : Brushes.Transparent;
+        EditInformationButton.Background = isEditing
+            ? ThemeResources.Brush("Theme.Brush.AccentSurface")
+            : Brushes.Transparent;
         ToolTip.SetTip(EditInformationButton, isEditing ? "Finish editing title" : "Edit title");
         if (isEditing)
             TitleBox.Focus();
@@ -248,6 +250,7 @@ public partial class EditTrackOverlay : UserControl
             VerticalContentAlignment = Avalonia.Layout.VerticalAlignment.Center,
             Tag = label
         };
+        button.Classes.Add("edit-chip");
         ApplyTagVisual(button, tag);
         return button;
     }
@@ -255,22 +258,19 @@ public partial class EditTrackOverlay : UserControl
     private static void ApplyTagVisual(ToggleButton button, Tag tag)
     {
         var selected = button.IsChecked == true;
-        var accent = SafeBrush(null, "#C7D2AD");
-        button.Background = new SolidColorBrush(Color.Parse(selected ? "#1A3140" : "#1A2026"));
-        button.BorderBrush = selected ? accent : new SolidColorBrush(Color.Parse("#394653"));
+        button.Background = ThemeResources.Brush(selected
+            ? "Theme.Brush.AccentSurface"
+            : "Theme.Brush.Surface");
+        button.BorderBrush = ThemeResources.Brush(selected
+            ? "Theme.Brush.Accent"
+            : "Theme.Brush.BorderSubtle");
         button.BorderThickness = new Avalonia.Thickness(1);
         if (button.Tag is TextBlock label)
         {
-            label.Foreground = selected
-                ? accent
-                : new SolidColorBrush(Color.Parse("#D7E0E8"));
+            label.Foreground = ThemeResources.Brush(selected
+                ? "Theme.Brush.TextStrong"
+                : "Theme.Brush.TextPrimary");
         }
-    }
-
-    private static IBrush SafeBrush(string? color, string fallback)
-    {
-        try { return new SolidColorBrush(Color.Parse(string.IsNullOrWhiteSpace(color) ? fallback : color)); }
-        catch { return new SolidColorBrush(Color.Parse(fallback)); }
     }
 
     private void UpdateTagSummary()
@@ -406,23 +406,20 @@ public partial class EditTrackOverlay : UserControl
         var name = RatingBox.SelectedIndex >= 0 && RatingBox.SelectedIndex < _ratings.Count
             ? _ratings[RatingBox.SelectedIndex].Name
             : "None";
-        var (_, _, foreground) = RatingColors(name);
-        RatingBox.Background = Brush("#161C22");
-        RatingBox.BorderBrush = Brush("#3B4955");
-        RatingBox.Foreground = foreground;
+        RatingBox.Background = ThemeResources.Brush("Theme.Brush.Input");
+        RatingBox.BorderBrush = ThemeResources.Brush("Theme.Brush.BorderStrong");
+        RatingBox.Foreground = RatingForeground(name);
     }
 
-    private static (IBrush Background, IBrush Border, IBrush Foreground) RatingColors(string name) => name switch
+    private static IBrush RatingForeground(string name) => name switch
     {
-        "Favorite" => (Brush("#3B341C"), Brush("#E7BE4B"), Brush("#FFE39A")),
-        "Great" => (Brush("#183827"), Brush("#4EC27A"), Brush("#B7F2CC")),
-        "Good" => (Brush("#17354B"), Brush("#4DA5DD"), Brush("#BCE7FF")),
-        "Okay" => (Brush("#2C3440"), Brush("#8795A7"), Brush("#DAE1E9")),
-        RatingNames.Avoid => (Brush("#402326"), Brush("#DD6A70"), Brush("#FFC1C4")),
-        _ => (Brush("#20252B"), Brush("#4C5967"), Brush("#BBC5CE"))
+        "Favorite" => ThemeResources.Brush("Theme.Brush.Warning"),
+        "Great" => ThemeResources.Brush("Theme.Brush.AccentStrong"),
+        "Good" => ThemeResources.Brush("Theme.Brush.TextPrimary"),
+        "Okay" => ThemeResources.Brush("Theme.Brush.TextSecondary"),
+        RatingNames.Avoid => ThemeResources.Brush("Theme.Brush.DangerText"),
+        _ => ThemeResources.Brush("Theme.Brush.TextMuted")
     };
-
-    private static IBrush Brush(string color) => new SolidColorBrush(Color.Parse(color));
 
     private void OnPublicVisibilityPressed(object? sender, PointerPressedEventArgs e)
     {
@@ -444,8 +441,12 @@ public partial class EditTrackOverlay : UserControl
         VisibilitySelectionIndicator.CornerRadius = isPublic
             ? new CornerRadius(6, 0, 0, 6)
             : new CornerRadius(0, 6, 6, 0);
-        PublicVisibilityText.Foreground = Brush(isPublic ? "#FFFFFF" : "#B8C5CE");
-        PrivateVisibilityText.Foreground = Brush(isPublic ? "#B8C5CE" : "#FFFFFF");
+        PublicVisibilityText.Foreground = ThemeResources.Brush(isPublic
+            ? "Theme.Brush.TextStrong"
+            : "Theme.Brush.TextMuted");
+        PrivateVisibilityText.Foreground = ThemeResources.Brush(isPublic
+            ? "Theme.Brush.TextMuted"
+            : "Theme.Brush.TextStrong");
         UpdateSaveButton();
     }
 
@@ -637,7 +638,7 @@ public partial class EditTrackOverlay : UserControl
             var choices = new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal };
             var choiceBorder = new Border
             {
-                BorderBrush = new SolidColorBrush(Color.Parse("#3B4550")),
+                BorderBrush = ThemeResources.Brush("Theme.Brush.BorderStrong"),
                 BorderThickness = new Avalonia.Thickness(1),
                 CornerRadius = new Avalonia.CornerRadius(5),
                 HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left,
@@ -690,14 +691,23 @@ public partial class EditTrackOverlay : UserControl
                     isLast ? 4 : 0,
                     isLast ? 4 : 0,
                     isFirst ? 4 : 0),
-                Background = new SolidColorBrush(Color.Parse(isSelected
-                    ? (isSystem ? "#164968" : "#35414D")
-                    : "#1E242A")),
+                Background = ThemeResources.Brush(isSelected
+                    ? isSystem
+                        ? "Theme.Brush.AccentSurface"
+                        : "Theme.Brush.SurfaceSelected"
+                    : "Theme.Brush.Surface"),
                 HorizontalContentAlignment = HorizontalAlignment.Center,
-                BorderBrush = new SolidColorBrush(Color.Parse("#53606C")),
+                BorderBrush = ThemeResources.Brush(isSelected
+                    ? "Theme.Brush.Accent"
+                    : "Theme.Brush.BorderSubtle"),
                 BorderThickness = isMiddle ? new Avalonia.Thickness(1, 0) : new Avalonia.Thickness(0),
-                Foreground = new SolidColorBrush(Color.Parse(isSystem ? "#9BD8F8" : "#D8E0E8"))
+                Foreground = ThemeResources.Brush(isSelected
+                    ? "Theme.Brush.TextStrong"
+                    : isSystem
+                        ? "Theme.Brush.TextSecondary"
+                        : "Theme.Brush.TextPrimary")
             };
+            button.Classes.Add("profile-choice");
             ToolTip.SetTip(button, isSystem
                 ? "Model suggestion. Click to use this value again."
                 : "Manual override. Click to save this value instead of the model suggestion.");
@@ -929,7 +939,7 @@ public partial class EditTrackOverlay : UserControl
         {
             var container = new Border
             {
-                Background = new SolidColorBrush(Color.Parse("#161C22")),
+                Background = ThemeResources.Brush("Theme.Brush.Surface"),
                 BorderBrush = ThemeResources.Brush("Theme.Brush.BorderSubtle"),
                 BorderThickness = new Avalonia.Thickness(1),
                 CornerRadius = new Avalonia.CornerRadius(5),
@@ -1057,7 +1067,7 @@ public partial class EditTrackOverlay : UserControl
         content.Children.Add(text);
         var count = new Border
         {
-            Background = new SolidColorBrush(Color.Parse("#17384B")),
+            Background = ThemeResources.Brush("Theme.Brush.AccentSurface"),
             CornerRadius = new Avalonia.CornerRadius(8),
             Padding = new Avalonia.Thickness(6, 2),
             VerticalAlignment = VerticalAlignment.Center,
@@ -1065,7 +1075,7 @@ public partial class EditTrackOverlay : UserControl
             {
                 Text = $"{usage.UsageCount}×",
                 FontSize = 9,
-                Foreground = new SolidColorBrush(Color.Parse("#8FD8F7"))
+                Foreground = ThemeResources.Brush("Theme.Brush.TextSecondary")
             }
         };
         Grid.SetColumn(count, 1);
@@ -1077,13 +1087,14 @@ public partial class EditTrackOverlay : UserControl
             Height = 44,
             Margin = new Avalonia.Thickness(0, 0, 6, 6),
             Padding = new Avalonia.Thickness(9, 4),
-            Background = new SolidColorBrush(Color.Parse("#1B222A")),
-            BorderBrush = new SolidColorBrush(Color.Parse("#455664")),
+            Background = ThemeResources.Brush("Theme.Brush.SurfaceRaised"),
+            BorderBrush = ThemeResources.Brush("Theme.Brush.Border"),
             CornerRadius = new Avalonia.CornerRadius(5),
             HorizontalAlignment = HorizontalAlignment.Stretch,
             HorizontalContentAlignment = HorizontalAlignment.Stretch,
             VerticalContentAlignment = VerticalAlignment.Center
         };
+        button.Classes.Add("edit-choice");
         ToolTip.SetTip(button, CreateModelMetadataTooltip([usage.ModelSubgenreId]));
         button.Click += (_, _) =>
         {
@@ -1121,7 +1132,7 @@ public partial class EditTrackOverlay : UserControl
         {
             Text = "+",
             FontSize = 16,
-            Foreground = new SolidColorBrush(Color.Parse("#74C8EE")),
+            Foreground = ThemeResources.Brush("Theme.Brush.Accent"),
             VerticalAlignment = VerticalAlignment.Center,
             Opacity = 0.8
         };
@@ -1134,13 +1145,14 @@ public partial class EditTrackOverlay : UserControl
             Height = 42,
             Margin = new Avalonia.Thickness(0, 0, 6, 6),
             Padding = new Avalonia.Thickness(9, 3),
-            Background = new SolidColorBrush(Color.Parse("#161C22")),
-            BorderBrush = new SolidColorBrush(Color.Parse("#344451")),
+            Background = ThemeResources.Brush("Theme.Brush.Surface"),
+            BorderBrush = ThemeResources.Brush("Theme.Brush.BorderSubtle"),
             CornerRadius = new Avalonia.CornerRadius(5),
             HorizontalAlignment = HorizontalAlignment.Stretch,
             HorizontalContentAlignment = HorizontalAlignment.Stretch,
             VerticalContentAlignment = VerticalAlignment.Center
         };
+        button.Classes.Add("edit-choice");
         ToolTip.SetTip(button, CreateModelMetadataTooltip([subgenre.Id]));
         button.Click += (_, _) =>
         {
@@ -1196,7 +1208,7 @@ public partial class EditTrackOverlay : UserControl
                 Text = $"{genreName} → {subgenre.Name}",
                 FontSize = 12,
                 FontWeight = FontWeight.SemiBold,
-                Foreground = new SolidColorBrush(Color.Parse("#9FD7F2"))
+                Foreground = ThemeResources.Brush("Theme.Brush.TextSecondary")
             });
             if (!string.IsNullOrWhiteSpace(subgenre.Description))
                 panel.Children.Add(new TextBlock { Text = subgenre.Description, FontSize = 11, TextWrapping = TextWrapping.Wrap });
@@ -1204,7 +1216,7 @@ public partial class EditTrackOverlay : UserControl
                 panel.Children.Add(new TextBlock
                 {
                     Text = $"Classify when: {subgenre.ClassificationHint}", FontSize = 10.5,
-                    Foreground = new SolidColorBrush(Color.Parse("#8CC9E9")), TextWrapping = TextWrapping.Wrap
+                    Foreground = ThemeResources.Brush("Theme.Brush.Accent"), TextWrapping = TextWrapping.Wrap
                 });
             if (subgenre.BpmMin is not null || subgenre.BpmMax is not null)
                 panel.Children.Add(new TextBlock
@@ -1227,7 +1239,8 @@ public partial class EditTrackOverlay : UserControl
         }
         return new Border
         {
-            Background = new SolidColorBrush(Color.Parse("#1B222A")), BorderBrush = new SolidColorBrush(Color.Parse("#4A667A")),
+            Background = ThemeResources.Brush("Theme.Brush.SurfaceRaised"),
+            BorderBrush = ThemeResources.Brush("Theme.Brush.BorderStrong"),
             BorderThickness = new Avalonia.Thickness(1), CornerRadius = new Avalonia.CornerRadius(6),
             // Tooltips opened near the left analysis column only have roughly 320 px of safe popup space.
             // Keep the content narrower than that space so text wraps instead of being clipped on both sides.
@@ -1244,22 +1257,21 @@ public partial class EditTrackOverlay : UserControl
         IBrush confidenceBrush,
         bool isManualSelection)
     {
-        var manualEnabledBrush = new SolidColorBrush(Color.Parse("#BDEFFF"));
-        var manualDisabledBrush = new SolidColorBrush(Color.Parse("#89949F"));
-        var disabledBrush = new SolidColorBrush(Color.Parse("#A3ABB5"));
+        var enabledTextBrush = ThemeResources.Brush("Theme.Brush.TextStrong");
+        var disabledBrush = ThemeResources.Brush("Theme.Brush.TextMuted");
         container.BorderThickness = new Avalonia.Thickness(1);
-        container.Background = new SolidColorBrush(Color.Parse(enabled
-            ? isManualSelection ? "#123D5C" : "#153B54"
-            : "#23272D"));
+        container.Background = ThemeResources.Brush(enabled
+            ? "Theme.Brush.AccentSurface"
+            : "Theme.Brush.Surface");
         container.BorderBrush = enabled
-            ? isManualSelection ? new SolidColorBrush(Color.Parse("#36C4F1")) : confidenceBrush
-            : new SolidColorBrush(Color.Parse("#3B414A"));
+            ? isManualSelection ? ThemeResources.Brush("Theme.Brush.Accent") : confidenceBrush
+            : ThemeResources.Brush("Theme.Brush.BorderSubtle");
         genreName.Foreground = enabled
-            ? isManualSelection ? manualEnabledBrush : confidenceBrush
-            : isManualSelection ? manualDisabledBrush : disabledBrush;
+            ? isManualSelection ? enabledTextBrush : confidenceBrush
+            : disabledBrush;
         detail.Foreground = enabled
-            ? isManualSelection ? new SolidColorBrush(Color.Parse("#7FE3FF")) : confidenceBrush
-            : isManualSelection ? manualDisabledBrush : disabledBrush;
+            ? isManualSelection ? ThemeResources.Brush("Theme.Brush.TextSecondary") : confidenceBrush
+            : disabledBrush;
         detail.Opacity = enabled || !isManualSelection ? 0.92 : 0.54;
     }
 

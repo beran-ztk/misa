@@ -19,6 +19,21 @@
                 <Setter Property="Background" Value="#E6171611"/>
                 <Setter Property="BorderBrush" Value="{DynamicResource Theme.Brush.BorderStrong}"/>
             </Style>
+            <Style Selector="ToggleButton.edit-chip:pointerover">
+                <Setter Property="Background" Value="{DynamicResource Theme.Brush.SurfaceHover}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource Theme.Brush.Accent}"/>
+            </Style>
+            <Style Selector="ToggleButton.edit-chip:checked:pointerover">
+                <Setter Property="Background" Value="{DynamicResource Theme.Brush.SurfaceSelected}"/>
+            </Style>
+            <Style Selector="Button.edit-choice:pointerover">
+                <Setter Property="Background" Value="{DynamicResource Theme.Brush.SurfaceHover}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource Theme.Brush.Accent}"/>
+            </Style>
+            <Style Selector="Button.profile-choice:pointerover">
+                <Setter Property="Background" Value="{DynamicResource Theme.Brush.SurfaceHover}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource Theme.Brush.Accent}"/>
+            </Style>
         </Panel.Styles>
 
         <Border Background="#D81B1914"
