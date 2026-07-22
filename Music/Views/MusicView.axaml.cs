@@ -2065,6 +2065,13 @@ public partial class MusicView : UserControl
                 return;
         }
 
+        if (EditTrackOverlay.IsVisible)
+        {
+            EditTrackOverlay.RequestClose();
+            e.Handled = true;
+            return;
+        }
+
         if (_engine.ActiveTrackId < 0)
             return;
 

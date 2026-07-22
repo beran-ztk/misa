@@ -47,15 +47,17 @@
             <Setter Property="Background" Value="{DynamicResource Theme.Brush.SurfaceSelected}"/>
         </Style>
         <Style Selector="FlyoutPresenter.player-actions">
+            <Setter Property="Width" Value="44"/>
+            <Setter Property="MinWidth" Value="44"/>
             <Setter Property="Background" Value="{DynamicResource Theme.Brush.Surface}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource Theme.Brush.BorderStrong}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="CornerRadius" Value="{DynamicResource Theme.Corner.Control}"/>
-            <Setter Property="Padding" Value="5"/>
+            <Setter Property="Padding" Value="3"/>
         </Style>
         <Style Selector="Button.player-action">
             <Setter Property="Width" Value="36"/>
-            <Setter Property="Height" Value="34"/>
+            <Setter Property="Height" Value="32"/>
             <Setter Property="Padding" Value="0"/>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>

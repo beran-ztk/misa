@@ -73,20 +73,12 @@ public partial class EditTrackOverlay : UserControl
         _isPlayingPreview = false;
         LoadLookups();
         Prefill(track);
-        EditorSurface.Opacity = 0;
-        var editorTranslate = EditorSurface.RenderTransform as TranslateTransform;
-        if (editorTranslate is not null)
-            editorTranslate.Y = 24;
         IsVisible = true;
-        Dispatcher.UIThread.Post(() =>
-        {
-            EditorSurface.Opacity = 1;
-            if (editorTranslate is not null)
-                editorTranslate.Y = 0;
-        }, DispatcherPriority.Background);
         if (analyzeAfterOpening)
             _ = AnalyzeImportedTrackAsync(track);
     }
+
+    public void RequestClose() => CloseOverlay();
 
     private void LoadLookups()
     {
