@@ -724,6 +724,7 @@
                                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
                                         <CheckBox x:Name="ExcludeNeedsReviewCheckBox"
                                                   Content="Hide tracks needing review"
+                                                  IsChecked="True"
                                                   FontSize="11"
                                                   Checked="OnCompletionFilterChanged"
                                                   Unchecked="OnCompletionFilterChanged"/>
@@ -738,6 +739,7 @@
                                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
                                         <CheckBox x:Name="ExcludeNeedsAnalysisCheckBox"
                                                   Content="Hide unanalyzed tracks"
+                                                  IsChecked="True"
                                                   FontSize="11"
                                                   Checked="OnCompletionFilterChanged"
                                                   Unchecked="OnCompletionFilterChanged"/>

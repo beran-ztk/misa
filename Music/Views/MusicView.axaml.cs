@@ -84,6 +84,7 @@ public partial class MusicView : UserControl
     private string? _activeFilterPresetName;
     private bool _isCreatingPreset;
     private bool _showReviewOnly;
+    private bool _ratingFilterInitialized;
     private MultiSelectFilterControl? _conditionGenreCtrl;
     private MultiSelectFilterControl? _conditionTagCtrl;
     private bool _conditionNegate;
@@ -387,12 +388,21 @@ public partial class MusicView : UserControl
 
     private void LoadLookups()
     {
+        var selectedRatings = RatingFilter.SelectedItems.ToList();
+
         Values.Genres = MusicLibraryService.Current.GetGenres();
         Values.Tags = MusicLibraryService.Current.GetTags();
         Values.Styles = MusicLibraryService.Current.GetStyles();
         Values.Ratings = MusicLibraryService.Current.GetRatings();
 
         RatingFilter.SetItems(Values.Ratings.Select(r => r.Name));
+        if (_ratingFilterInitialized)
+            RatingFilter.SetSelectedItems(selectedRatings, notify: false);
+        else
+        {
+            SelectDefaultRatings();
+            _ratingFilterInitialized = true;
+        }
 
         if (_conditionGenreCtrl is not null && _conditionTagCtrl is not null)
         {
@@ -996,10 +1006,11 @@ public partial class MusicView : UserControl
         _isCreatingPreset = false;
         RebuildPresetRows();
         RatingFilter.SetItems(Values.Ratings.Select(r => r.Name));
+        SelectDefaultRatings();
         RatingFilter.Placeholder = "All ratings";
         VisibilityFilter.SetSelectedItems([], notify: false);
-        ExcludeNeedsReviewCheckBox.IsChecked = false;
-        ExcludeNeedsAnalysisCheckBox.IsChecked = false;
+        ExcludeNeedsReviewCheckBox.IsChecked = true;
+        ExcludeNeedsAnalysisCheckBox.IsChecked = true;
         _filterGroups.Clear();
         RebuildFilterConditionsPanel();
         ClearConditionBuilder();
@@ -1208,6 +1219,15 @@ public partial class MusicView : UserControl
         RebuildFilterConditionsPanel();
         ClearConditionBuilder();
         ApplyFilter();
+    }
+
+    private void SelectDefaultRatings()
+    {
+        RatingFilter.SetSelectedItems(
+            Values.Ratings
+                .Where(rating => !string.Equals(rating.Name, "Skip", StringComparison.OrdinalIgnoreCase))
+                .Select(rating => rating.Name),
+            notify: false);
     }
 
     private PortableFilterPreset CreatePreset(string name)
