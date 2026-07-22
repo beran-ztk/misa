@@ -35,7 +35,7 @@ public partial class MusicView : UserControl
     private readonly SolidColorBrush _appAtmosphereBrush = new(Colors.Transparent);
     private readonly SolidColorBrush _playerAtmosphereBrush = new(Colors.Transparent);
     private readonly SolidColorBrush _playerTopGlowBrush = new(Colors.Transparent);
-    private readonly SolidColorBrush _playerChromeEdgeBrush = new(Color.Parse("#40505A45"));
+    private readonly SolidColorBrush _playerChromeEdgeBrush = new(Color.Parse("#4A756B54"));
     private bool _isSeeking;
     private double _targetEnergy;
     private double _targetBass;
@@ -2636,8 +2636,8 @@ public partial class MusicView : UserControl
         var visibilityEnergy = Math.Sqrt(energy);
         var hasArtwork = AppArtworkBackground.IsVisible || PlayerArtworkBackground.IsVisible;
 
-        AppArtworkBackground.Opacity = AppArtworkBackground.IsVisible ? 0.22 + visibilityEnergy * 0.24 : 0;
-        PlayerArtworkBackground.Opacity = PlayerArtworkBackground.IsVisible ? 0.52 + visibilityEnergy * 0.18 : 0;
+        AppArtworkBackground.Opacity = AppArtworkBackground.IsVisible ? 0.25 + visibilityEnergy * 0.21 : 0;
+        PlayerArtworkBackground.Opacity = PlayerArtworkBackground.IsVisible ? 0.55 + visibilityEnergy * 0.15 : 0;
 
         SetScale(AppArtworkBackground, 1.08 + bass * 0.048);
         SetScale(PlayerArtworkBackground, 1.10 + bass * 0.035);
@@ -2648,17 +2648,17 @@ public partial class MusicView : UserControl
         var green = ToByte(160 + energy * 28 + treble * 22);
         var blue = ToByte(128 - bass * 10 + treble * 16);
         _appAtmosphereBrush.Color = hasArtwork
-            ? Color.FromArgb(ToByte(energy * 42 + treble * 18), red, green, blue)
+            ? Color.FromArgb(ToByte(10 + energy * 36 + treble * 16), red, green, blue)
             : Colors.Transparent;
         _playerAtmosphereBrush.Color = hasArtwork
-            ? Color.FromArgb(ToByte(8 + energy * 24 + bass * 10), red, green, blue)
+            ? Color.FromArgb(ToByte(16 + energy * 22 + bass * 9), red, green, blue)
             : Colors.Transparent;
         _playerTopGlowBrush.Color = hasArtwork
             ? Color.FromArgb(ToByte(28 + energy * 60 + treble * 24), red, green, blue)
             : Colors.Transparent;
         _playerChromeEdgeBrush.Color = hasArtwork
             ? Color.FromArgb(ToByte(20 + energy * 30), red, green, blue)
-            : Color.Parse("#40505A45");
+            : Color.Parse("#4A756B54");
     }
 
     private static double Approach(double current, double target, double amount) =>

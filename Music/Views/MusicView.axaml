@@ -107,13 +107,13 @@
     <Rectangle x:Name="AppAtmosphereTint"
                Fill="#00000000"
                IsHitTestVisible="False"/>
-    <Rectangle Fill="#7A10120F" IsHitTestVisible="False"/>
+    <Rectangle Fill="#5C2A261C" IsHitTestVisible="False"/>
     <DockPanel LastChildFill="True">
 
         <!-- ── Toolbar ── -->
         <Border DockPanel.Dock="Top"
-                Background="#5210120F"
-                BorderBrush="#49453A"
+                Background="#6E2A241A"
+                BorderBrush="#5B5444"
                 BorderThickness="0,0,0,1"
                 Padding="20,12,16,10">
             <Grid ColumnDefinitions="*,Auto">
@@ -236,8 +236,8 @@
         <!-- Library and player occupy separate rows over one continuous artwork background. -->
         <Grid RowDefinitions="*,Auto">
             <Panel Grid.Row="0">
-            <Rectangle Fill="#38130F0B" IsHitTestVisible="False"/>
-            <Rectangle Fill="#08000000" IsHitTestVisible="False"/>
+            <Rectangle Fill="#3C302A20" IsHitTestVisible="False"/>
+            <Rectangle Fill="#06000000" IsHitTestVisible="False"/>
 
             <ListBox x:Name="FileList"
                      DoubleTapped="OnListDoubleTapped"
@@ -411,7 +411,7 @@
                                 <BlurEffect Radius="30"/>
                             </Image.Effect>
                         </Image>
-                        <Border Background="#9810120F"
+                        <Border Background="#8E2A241A"
                                 CornerRadius="10,10,0,0"
                                 HorizontalAlignment="Stretch"
                                 VerticalAlignment="Stretch"
@@ -428,7 +428,7 @@
                                 CornerRadius="1"
                                 HorizontalAlignment="Stretch"
                                 VerticalAlignment="Top"
-                                Background="#40505A45"
+                                Background="#4A756B54"
                                 IsHitTestVisible="False"/>
                         <Border x:Name="PlayerTopGlow"
                                 Height="0"
