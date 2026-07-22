@@ -2,7 +2,21 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="Music.Views.EditTrackOverlay">
 
-    <Panel>
+    <Panel x:Name="EditorSurface" Opacity="0">
+        <Panel.Transitions>
+            <Transitions>
+                <DoubleTransition Property="Opacity" Duration="0:0:0.18"/>
+            </Transitions>
+        </Panel.Transitions>
+        <Panel.RenderTransform>
+            <TranslateTransform Y="24">
+                <TranslateTransform.Transitions>
+                    <Transitions>
+                        <DoubleTransition Property="Y" Duration="0:0:0.18"/>
+                    </Transitions>
+                </TranslateTransform.Transitions>
+            </TranslateTransform>
+        </Panel.RenderTransform>
         <Panel.Styles>
             <Style Selector="Border.edit-section">
                 <Setter Property="Background" Value="#242119"/>

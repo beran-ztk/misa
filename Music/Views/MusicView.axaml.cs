@@ -2011,45 +2011,79 @@ public partial class MusicView : UserControl
         }
     }
 
-    private void OnContextEditClicked(object? sender, RoutedEventArgs e)
+    private void OnPlayerActionEditClicked(object? sender, RoutedEventArgs e)
     {
-        var idx = GetSelectedFilteredIndex();
-        if (idx < 0 || idx >= _filteredItems.Count) return;
-        EditTrackOverlay.Open(_filteredItems[idx].Track);
+        ClosePlayerActionsMenu();
+        var track = ActiveOrSelectedTrack();
+        if (track is null)
+        {
+            ShowToast("No track selected");
+            return;
+        }
+
+        OpenTrackEditor(track);
     }
 
-    private void OnContextToggleReviewClicked(object? sender, RoutedEventArgs e)
+    private void OnPlayerActionReviewClicked(object? sender, RoutedEventArgs e)
     {
-        var idx = GetSelectedFilteredIndex();
-        if (idx < 0 || idx >= _filteredItems.Count)
+        ClosePlayerActionsMenu();
+        var track = ActiveOrSelectedTrack();
+        if (track is null)
+        {
+            ShowToast("No track selected");
             return;
+        }
 
-        ToggleReview(_filteredItems[idx].Track);
+        ToggleReview(track);
     }
 
-    private void OnContextToggleAnalysisClicked(object? sender, RoutedEventArgs e)
+    private async void OnPlayerActionDeleteClicked(object? sender, RoutedEventArgs e)
     {
-        var idx = GetSelectedFilteredIndex();
-        if (idx < 0 || idx >= _filteredItems.Count)
+        ClosePlayerActionsMenu();
+        var track = ActiveOrSelectedTrack();
+        if (track is null)
+        {
+            ShowToast("No track selected");
             return;
+        }
 
-        var track = _filteredItems[idx].Track;
-        var analysisDisabled = !track.AnalysisDisabled;
-        MusicLibraryService.Current.SetTrackAnalysisDisabled(track.Id, analysisDisabled);
-        if (!analysisDisabled && MusicLibraryService.Current.GetTrackAudioAnalysis(track.Id) is null)
-            BackgroundAnalysisService.Current.EnqueueTrack(track.Id);
-
-        UpdateTrackInList(track.Id);
-        ShowToast(analysisDisabled ? "Automatic analysis disabled" : "Automatic analysis enabled");
+        await DeleteTrackAsync(track);
     }
 
-    private async void OnContextDeleteClicked(object? sender, RoutedEventArgs e)
+    private void ClosePlayerActionsMenu() => PlayerActionsButton.Flyout?.Hide();
+
+    private void OnPlayerBarPointerPressed(object? sender, PointerPressedEventArgs e)
     {
-        var idx = GetSelectedFilteredIndex();
-        if (idx < 0 || idx >= _filteredItems.Count)
+        if (!e.GetCurrentPoint(PlayerBar).Properties.IsLeftButtonPressed)
             return;
 
-        var track = _filteredItems[idx].Track;
+        for (var visual = e.Source as Visual;
+             visual is not null && visual != PlayerBar;
+             visual = visual.GetVisualParent())
+        {
+            if (visual is Button or Slider)
+                return;
+        }
+
+        if (_engine.ActiveTrackId < 0)
+            return;
+
+        var track = _allItems.FirstOrDefault(item => item.Track.Id == _engine.ActiveTrackId)?.Track;
+        if (track is null)
+            return;
+
+        OpenTrackEditor(track);
+        e.Handled = true;
+    }
+
+    private void OpenTrackEditor(MusicTrack track)
+    {
+        UpdateEditorBounds();
+        EditTrackOverlay.Open(track);
+    }
+
+    private async Task DeleteTrackAsync(MusicTrack track)
+    {
         if (_engine.ActiveTrackId == track.Id)
         {
             FinishListeningSession(markSkipped: false);
@@ -2183,18 +2217,6 @@ public partial class MusicView : UserControl
         ToolTip.SetTip(ShuffleBtn, _shuffle ? "Shuffle: On" : "Shuffle: Off");
     }
 
-    private void OnReviewToggleClicked(object? sender, RoutedEventArgs e)
-    {
-        var track = ActiveOrSelectedTrack();
-        if (track is null)
-        {
-            ShowToast("No track selected");
-            return;
-        }
-
-        ToggleReview(track);
-    }
-
     private MusicTrack? ActiveOrSelectedTrack()
     {
         if (_engine.ActiveTrackId >= 0)
@@ -2218,8 +2240,9 @@ public partial class MusicView : UserControl
     {
         var track = ActiveOrSelectedTrack();
         var isMarked = track?.NeedsReview == true;
-        ReviewBtn.Opacity = isMarked ? 1.0 : 0.35;
-        ToolTip.SetTip(ReviewBtn, isMarked ? "Remove review mark" : "Mark for review");
+        PlayerActionsButton.IsEnabled = track is not null;
+        PlayerActionsReviewButton.Opacity = isMarked ? 1.0 : 0.42;
+        ToolTip.SetTip(PlayerActionsReviewButton, isMarked ? "Remove review mark" : "Mark for review");
     }
 
     private void StartPlayback()
