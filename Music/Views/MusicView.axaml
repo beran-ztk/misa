@@ -113,7 +113,7 @@
         <!-- ── Toolbar ── -->
         <Border DockPanel.Dock="Top"
                 Background="#5210120F"
-                BorderBrush="#343A30"
+                BorderBrush="#49453A"
                 BorderThickness="0,0,0,1"
                 Padding="20,12,16,10">
             <Grid ColumnDefinitions="*,Auto">
@@ -133,8 +133,8 @@
                                Text=""
                                FontFamily="Consolas"
                                FontSize="11"
-                               Foreground="#A9AD98"
-                               Opacity="0.72"
+                               Foreground="#C8C1A9"
+                               Opacity="0.82"
                                VerticalAlignment="Center"
                                TextTrimming="CharacterEllipsis"/>
                     <TextBlock x:Name="QueueStatusText"
@@ -236,7 +236,7 @@
         <!-- Library and player occupy separate rows over one continuous artwork background. -->
         <Grid RowDefinitions="*,Auto">
             <Panel Grid.Row="0">
-            <Rectangle Fill="#3210120F" IsHitTestVisible="False"/>
+            <Rectangle Fill="#38130F0B" IsHitTestVisible="False"/>
             <Rectangle Fill="#08000000" IsHitTestVisible="False"/>
 
             <ListBox x:Name="FileList"
@@ -276,7 +276,7 @@
                                             CornerRadius="6" ClipToBounds="True"
                                             Margin="8,0,12,0" VerticalAlignment="Center"
                                             Background="#292C25"
-                                            BorderBrush="#414B3B"
+                                            BorderBrush="#514D40"
                                             BorderThickness="1">
                                         <Image Source="{Binding Thumbnail}"
                                                Stretch="UniformToFill"/>
@@ -294,17 +294,18 @@
                                                     BorderThickness="1"
                                                     CornerRadius="3"
                                                     Width="55"
-                                                    Height="18"
+                                                    Height="19"
                                                     Padding="4,0"
                                                     Margin="0,0,8,0"
                                                     VerticalAlignment="Center">
                                                 <TextBlock Text="{Binding RatingText}"
                                                            FontFamily="Consolas"
                                                            FontSize="9.5"
+                                                           LineHeight="18"
                                                            HorizontalAlignment="Stretch"
                                                            TextAlignment="Center"
                                                            VerticalAlignment="Center"
-                                                           Margin="0,-1,0,0"
+                                                           Margin="0,1,0,0"
                                                            Foreground="{Binding RatingForeground}"/>
                                             </Border>
                                             <Image Grid.Column="1"
@@ -330,7 +331,7 @@
                                                        VerticalAlignment="Center"/>
                                             <StackPanel Grid.Column="2" Orientation="Horizontal" MaxWidth="610">
                                                 <TextBlock Text="{Binding ModelGenreText}"
-                                                           FontSize="11" Foreground="#B7C6A0"
+                                                           FontSize="11" Foreground="#D4CFB4"
                                                            MaxWidth="390"
                                                            TextTrimming="CharacterEllipsis"/>
                                                 <TextBlock Text="{Binding GenreSeparatorText}"
@@ -355,7 +356,7 @@
                                 <TextBlock Text="{Binding DurationText}"
                                            FontFamily="Consolas"
                                            FontSize="10.5"
-                                           Foreground="#BDD0AC"
+                                           Foreground="#D7D0B8"
                                            Opacity="0.88"
                                            Width="48"
                                            Margin="0,0,15,0"
@@ -365,7 +366,7 @@
                                            IsHitTestVisible="False"/>
                                 </Panel>
                             </Border>
-                            <Rectangle Grid.Row="1" Height="1" Fill="#343930" Margin="18,3,18,3"/>
+                            <Rectangle Grid.Row="1" Height="1" Fill="#3C3930" Margin="18,3,18,3"/>
                         </Grid>
                     </DataTemplate>
                 </ListBox.ItemTemplate>

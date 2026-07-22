@@ -33,7 +33,7 @@ public record TrackDisplayItem(
         : "  ·  ";
 
     public IBrush PlayingBackground => IsPlaying
-        ? new SolidColorBrush(Color.FromArgb(42, 150, 177, 96))
+        ? new SolidColorBrush(Color.FromArgb(40, 188, 174, 127))
         : Brushes.Transparent;
 
     public IBrush PlayingAccent => IsPlaying

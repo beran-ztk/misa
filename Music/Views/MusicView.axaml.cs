@@ -2644,9 +2644,9 @@ public partial class MusicView : UserControl
         SetBlur(AppArtworkBackground, 20 + energy * 8.0);
         SetBlur(PlayerArtworkBackground, 30 + energy * 6.0 + treble * 4.0);
 
-        var red = ToByte(142 + bass * 42 + treble * 38);
-        var green = ToByte(164 + energy * 44 + treble * 34);
-        var blue = ToByte(110 - bass * 20 + treble * 28);
+        var red = ToByte(170 + bass * 30 + treble * 24);
+        var green = ToByte(160 + energy * 28 + treble * 22);
+        var blue = ToByte(128 - bass * 10 + treble * 16);
         _appAtmosphereBrush.Color = hasArtwork
             ? Color.FromArgb(ToByte(energy * 42 + treble * 18), red, green, blue)
             : Colors.Transparent;
