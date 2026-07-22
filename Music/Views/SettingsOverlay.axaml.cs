@@ -183,7 +183,7 @@ public partial class SettingsOverlay : UserControl
         {
             Text = BpmText(subgenre),
             FontSize = 10.5,
-            Foreground = new SolidColorBrush(Color.Parse("#9FCBE4")),
+            Foreground = new SolidColorBrush(Color.Parse("#C7D2AD")),
             Opacity = 0.86,
             HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Center
         };
@@ -638,7 +638,7 @@ public partial class SettingsOverlay : UserControl
         {
             true => "#73D59B",
             false => "#E87878",
-            _ => "#9FCBE4"
+            _ => "#C7D2AD"
         }));
         AnalysisServerStatusText.IsVisible = true;
     }
@@ -821,8 +821,8 @@ public partial class SettingsOverlay : UserControl
             var accent = CategoryBrush(null);
             var card = new Border
             {
-                Background = new SolidColorBrush(Color.Parse("#111419")),
-                BorderBrush = new SolidColorBrush(Color.Parse("#26313A")),
+                Background = new SolidColorBrush(Color.Parse("#211F19")),
+                BorderBrush = new SolidColorBrush(Color.Parse("#4B473B")),
                 BorderThickness = new Avalonia.Thickness(1),
                 CornerRadius = new Avalonia.CornerRadius(5),
                 Padding = new Avalonia.Thickness(10, 8)
@@ -1243,7 +1243,7 @@ public partial class SettingsOverlay : UserControl
 
     private Control CreateCalibrationRow(CalibrationRow row)
     {
-        var button = new Button { Background = new SolidColorBrush(Color.Parse("#111419")), BorderBrush = new SolidColorBrush(Color.Parse("#26313A")), BorderThickness = new Avalonia.Thickness(1), Padding = new Avalonia.Thickness(11, 9), HorizontalContentAlignment = HorizontalAlignment.Stretch };
+        var button = new Button { Background = new SolidColorBrush(Color.Parse("#211F19")), BorderBrush = new SolidColorBrush(Color.Parse("#4B473B")), BorderThickness = new Avalonia.Thickness(1), Padding = new Avalonia.Thickness(11, 9), HorizontalContentAlignment = HorizontalAlignment.Stretch };
         var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("2*,100,100,100,2*") };
         grid.Children.Add(new TextBlock { Text = row.Track.Title, FontSize = 12, TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis, VerticalAlignment = VerticalAlignment.Center });
         AddCell(row.Value("emotional_tone"), 1); AddCell(row.Value("energy_context"), 2); AddCell(row.Value("intensity"), 3);
@@ -1278,8 +1278,8 @@ public partial class SettingsOverlay : UserControl
 
     private static IBrush CategoryBrush(string? color)
     {
-        try { return new SolidColorBrush(Color.Parse(string.IsNullOrWhiteSpace(color) ? "#65BCEB" : color)); }
-        catch { return new SolidColorBrush(Color.Parse("#65BCEB")); }
+        try { return new SolidColorBrush(Color.Parse(string.IsNullOrWhiteSpace(color) ? "#C7D2AD" : color)); }
+        catch { return new SolidColorBrush(Color.Parse("#C7D2AD")); }
     }
 
     private static string TagRuleModelDisplayName(string modelName) => modelName switch

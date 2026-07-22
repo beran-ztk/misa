@@ -305,8 +305,11 @@
                                                            HorizontalAlignment="Stretch"
                                                            TextAlignment="Center"
                                                            VerticalAlignment="Center"
-                                                           Margin="0,1,0,0"
-                                                           Foreground="{Binding RatingForeground}"/>
+                                                           Foreground="{Binding RatingForeground}">
+                                                    <TextBlock.RenderTransform>
+                                                        <TranslateTransform Y="2"/>
+                                                    </TextBlock.RenderTransform>
+                                                </TextBlock>
                                             </Border>
                                             <Image Grid.Column="1"
                                                    Source="{SvgImage /Assets/public.svg}"
@@ -569,9 +572,9 @@
                     Grid.Row="0"
                     ZIndex="40"
                     IsVisible="False"
-                    Background="#D20D0F12"
+                    Background="#D21B1914"
                     BorderThickness="0,1,0,0"
-                    BorderBrush="#25313D">
+                    BorderBrush="#554F41">
                 <Grid RowDefinitions="Auto,*" Margin="30,22,30,26">
                     <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto" Margin="0,0,0,18">
                         <StackPanel Spacing="3">
@@ -583,7 +586,7 @@
                                 Content="Clear"
                                 Click="OnClearFiltersClicked"
                                 Background="Transparent"
-                                BorderBrush="#314B5F"
+                                BorderBrush="#615A49"
                                 BorderThickness="1"
                                 Padding="12,6"
                                 Margin="0,0,10,0"
@@ -598,8 +601,8 @@
                     </Grid>
 
                     <Grid Grid.Row="1" ColumnDefinitions="280,*" ColumnSpacing="24">
-                        <Border Background="#B80B0D10"
-                                BorderBrush="#263442"
+                        <Border Background="#B824211A"
+                                BorderBrush="#4B473B"
                                 BorderThickness="1"
                                 CornerRadius="10"
                                 Padding="16">
@@ -616,8 +619,8 @@
                                                 Width="28"
                                                 Height="28"
                                                 Padding="0"
-                                                Background="#101923"
-                                                BorderBrush="#314B5F"
+                                                Background="#211F19"
+                                                BorderBrush="#615A49"
                                                 BorderThickness="1"
                                                 CornerRadius="6"
                                                 HorizontalContentAlignment="Center"
@@ -644,7 +647,7 @@
                                                 Content="Delete"
                                                 Click="OnDeletePresetClicked"
                                                 Background="Transparent"
-                                                BorderBrush="#314B5F"
+                                                BorderBrush="#615A49"
                                                 BorderThickness="1"
                                                 Padding="10,6"
                                                 FontSize="11"
@@ -652,7 +655,7 @@
                                     </Grid>
                                 </StackPanel>
 
-                                <Rectangle Height="1" Fill="#25313D"/>
+                                <Rectangle Height="1" Fill="#484438"/>
 
                                 <StackPanel Spacing="7">
                                     <TextBlock Text="SORT"
@@ -692,7 +695,7 @@
                                     </Border>
                                 </StackPanel>
 
-                                <Rectangle Height="1" Fill="#25313D"/>
+                                <Rectangle Height="1" Fill="#484438"/>
 
                                 <StackPanel Spacing="7">
                                     <TextBlock Text="RATING"
@@ -702,7 +705,7 @@
                                                                     Placeholder="All ratings"/>
                                 </StackPanel>
 
-                                <Rectangle Height="1" Fill="#25313D"/>
+                                <Rectangle Height="1" Fill="#484438"/>
 
                                 <StackPanel Spacing="7">
                                     <TextBlock Text="VISIBILITY"
@@ -712,7 +715,7 @@
                                                                     Placeholder="All visibility"/>
                                 </StackPanel>
 
-                                <Rectangle Height="1" Fill="#25313D"/>
+                                <Rectangle Height="1" Fill="#484438"/>
 
                                 <StackPanel Spacing="8">
                                     <TextBlock Text="COMPLETION"
@@ -748,7 +751,7 @@
                                     </Grid>
                                 </StackPanel>
 
-                                <Rectangle Height="1" Fill="#25313D"/>
+                                <Rectangle Height="1" Fill="#484438"/>
 
                                 <StackPanel Spacing="7">
                                     <TextBlock Text="CONDITIONS"
@@ -763,7 +766,7 @@
 
                         <Border Grid.Column="1"
                                 Background="#A80B0D10"
-                                BorderBrush="#263442"
+                                BorderBrush="#4B473B"
                                 BorderThickness="1"
                                 CornerRadius="10"
                                 Padding="18">
@@ -776,8 +779,8 @@
                                     </StackPanel>
                                     <Button Grid.Column="1"
                                             Click="OnAddFilterGroupClicked"
-                                            Background="#0D151D"
-                                            BorderBrush="#314B5F"
+                                            Background="#211F19"
+                                            BorderBrush="#615A49"
                                             BorderThickness="1"
                                             Width="32" Height="30"
                                             Padding="0"
@@ -793,8 +796,8 @@
 
                                 <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*" ColumnSpacing="12" Margin="0,0,0,12">
                                     <Border Width="164" Height="32"
-                                            Background="#111A21"
-                                            BorderBrush="#435868"
+                                            Background="#211F19"
+                                            BorderBrush="#615A49"
                                             BorderThickness="1"
                                             CornerRadius="6"
                                             ClipToBounds="True">
@@ -803,7 +806,7 @@
                                                     Grid.ColumnSpan="2"
                                                     Width="81"
                                                     HorizontalAlignment="Left"
-                                                    Background="#176486"
+                                                    Background="#6F7D59"
                                                     CornerRadius="5"
                                                     IsHitTestVisible="False">
                                                 <Border.RenderTransform>
@@ -870,7 +873,7 @@
             VerticalAlignment="Top"
             Margin="0,104,0,0"
             Background="#E6101821"
-            BorderBrush="#314B5F"
+            BorderBrush="#615A49"
             BorderThickness="1"
             CornerRadius="8"
             Padding="14,9"

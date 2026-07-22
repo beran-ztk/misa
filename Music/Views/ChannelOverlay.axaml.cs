@@ -416,7 +416,7 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
     private double _checkOpacity;
     private IBrush _background = Brushes.Transparent;
     private IBrush _checkBackground = Brushes.Transparent;
-    private IBrush _checkBorder = new SolidColorBrush(Color.Parse("#40515E"));
+    private IBrush _checkBorder = new SolidColorBrush(Color.Parse("#5B5546"));
     private TextDecorationCollection? _textDecorations;
     private int? _trackId;
     private string _statusText = string.Empty;
@@ -533,8 +533,8 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
         Background = value
             ? new SolidColorBrush(Color.Parse("#22192027"))
             : new SolidColorBrush(Color.Parse("#10203422"));
-        CheckBackground = new SolidColorBrush(Color.Parse(value ? "#176486" : "#131A20"));
-        CheckBorder = new SolidColorBrush(Color.Parse(value ? "#4AA9D1" : "#40515E"));
+        CheckBackground = new SolidColorBrush(Color.Parse(value ? "#6F7D59" : "#211F19"));
+        CheckBorder = new SolidColorBrush(Color.Parse(value ? "#AFC58C" : "#5B5546"));
         CheckOpacity = value ? 1 : 0.58;
         TextDecorations = value ? Avalonia.Media.TextDecorations.Strikethrough : null;
         CanReview = !value && TrackId is not null;

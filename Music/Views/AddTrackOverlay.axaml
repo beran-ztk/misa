@@ -13,9 +13,9 @@
                 MaxWidth="880" MinWidth="360"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Stretch"
-                Background="#1E1E1E"
+                Background="#F21F1D17"
                 BorderThickness="1"
-                BorderBrush="DarkCyan"
+                BorderBrush="#615A49"
                 CornerRadius="8"
                 BoxShadow="0 8 40 4 #80000000">
 
@@ -157,8 +157,8 @@
                 <Border Width="300"
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
-                        Background="#101821"
-                        BorderBrush="#314B5F"
+                        Background="#211F19"
+                        BorderBrush="#615A49"
                         BorderThickness="1"
                         CornerRadius="8"
                         Padding="22,18"
@@ -171,8 +171,8 @@
                                    HorizontalAlignment="Center"/>
                         <ProgressBar IsIndeterminate="True"
                                      Height="5"
-                                     Foreground="#1E9AF0"
-                                     Background="#26313A"/>
+                                     Foreground="#AFC58C"
+                                     Background="#3B392F"/>
                         <TextBlock x:Name="BusyDetailText"
                                    Text=""
                                    FontSize="11"

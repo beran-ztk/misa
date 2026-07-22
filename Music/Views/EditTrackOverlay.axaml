@@ -5,23 +5,23 @@
     <Panel>
         <Panel.Styles>
             <Style Selector="Border.edit-section">
-                <Setter Property="Background" Value="#12181E"/>
-                <Setter Property="BorderBrush" Value="#26313A"/>
+                <Setter Property="Background" Value="#242119"/>
+                <Setter Property="BorderBrush" Value="#4B473B"/>
                 <Setter Property="BorderThickness" Value="1"/>
                 <Setter Property="CornerRadius" Value="7"/>
                 <Setter Property="Padding" Value="12"/>
             </Style>
             <Style Selector="TextBox">
-                <Setter Property="Background" Value="#E6080A0D"/>
-                <Setter Property="BorderBrush" Value="#52606D"/>
+                <Setter Property="Background" Value="#E6171611"/>
+                <Setter Property="BorderBrush" Value="#615A49"/>
             </Style>
             <Style Selector="ComboBox">
-                <Setter Property="Background" Value="#E6080A0D"/>
-                <Setter Property="BorderBrush" Value="#52606D"/>
+                <Setter Property="Background" Value="#E6171611"/>
+                <Setter Property="BorderBrush" Value="#615A49"/>
             </Style>
         </Panel.Styles>
 
-        <Border Background="#D80B0D10"
+        <Border Background="#D81B1914"
                 ZIndex="20">
 
             <Grid RowDefinitions="Auto,1,*">
@@ -84,8 +84,8 @@
                         <Border Width="188"
                                 Height="36"
                                 HorizontalAlignment="Center"
-                                Background="#111A21"
-                                BorderBrush="#435868"
+                                Background="#211F19"
+                                BorderBrush="#615A49"
                                 BorderThickness="1"
                                 CornerRadius="7"
                                 Padding="0"
@@ -95,7 +95,7 @@
                                         Grid.ColumnSpan="2"
                                         Width="93"
                                         HorizontalAlignment="Left"
-                                        Background="#176486"
+                                        Background="#6F7D59"
                                         BorderThickness="0"
                                         CornerRadius="6,0,0,6"
                                         IsHitTestVisible="False">
@@ -152,7 +152,7 @@
                                           CornerRadius="5"
                                           Padding="10,3"
                                           BorderThickness="1" />
-                                <Rectangle Grid.Column="2" Width="1" Fill="#2D3945" />
+                                <Rectangle Grid.Column="2" Width="1" Fill="#4B473B" />
                                 <TextBlock x:Name="TrackUsageText"
                                            Grid.Column="3"
                                            FontSize="11"
@@ -189,7 +189,7 @@
                                                VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
 
                                     <TextBlock Grid.Row="2" Text="YouTube URL" FontSize="10.5" Opacity="0.58" VerticalAlignment="Center" />
-                                    <TextBlock x:Name="YouTubeUrlDisplayText" Grid.Row="2" Grid.Column="1" FontSize="10.5" Foreground="#8DCDEC"
+                                    <TextBlock x:Name="YouTubeUrlDisplayText" Grid.Row="2" Grid.Column="1" FontSize="10.5" Foreground="#C7D2AD"
                                                VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
                                     <Button x:Name="CopyYouTubeUrlButton" Grid.Row="2" Grid.Column="2"
                                             Click="OnCopyYouTubeUrlClicked" ToolTip.Tip="Copy YouTube URL"
@@ -198,7 +198,7 @@
                                     </Button>
 
                                     <TextBlock Grid.Row="3" Text="Channel URL" FontSize="10.5" Opacity="0.58" VerticalAlignment="Center" />
-                                    <TextBlock x:Name="ChannelUrlDisplayText" Grid.Row="3" Grid.Column="1" FontSize="10.5" Foreground="#8DCDEC"
+                                    <TextBlock x:Name="ChannelUrlDisplayText" Grid.Row="3" Grid.Column="1" FontSize="10.5" Foreground="#C7D2AD"
                                                VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
                                     <Button x:Name="CopyChannelUrlButton" Grid.Row="3" Grid.Column="2"
                                             Click="OnCopyChannelUrlClicked" ToolTip.Tip="Copy channel URL"
@@ -230,8 +230,8 @@
                                 <UniformGrid x:Name="DetectedGenresPanel" Columns="2" />
                             </StackPanel>
                             <StackPanel x:Name="AddModelGenreSection" Margin="0,2,0,4">
-                                <Border Background="#10151A"
-                                        BorderBrush="#2D3945"
+                                <Border Background="#211F19"
+                                        BorderBrush="#4B473B"
                                         BorderThickness="1"
                                         CornerRadius="5"
                                         Padding="10">
@@ -289,19 +289,19 @@
                                 <TextBlock Text="Audio &amp; character" FontSize="13" FontWeight="SemiBold" />
 
                                 <Grid x:Name="AudioAnalysisSection" ColumnDefinitions="*,*,*" ColumnSpacing="8">
-                                    <Border x:Name="BpmMetricCard" Grid.Column="0" Background="#161C22" CornerRadius="5" Padding="10,7">
+                                    <Border x:Name="BpmMetricCard" Grid.Column="0" Background="#2A271F" CornerRadius="5" Padding="10,7">
                                         <Grid ColumnDefinitions="*,Auto">
                                             <TextBlock Text="Tempo" FontSize="10.5" Opacity="0.62" />
                                             <TextBlock x:Name="BpmText" Grid.Column="1" FontSize="12" FontWeight="SemiBold" />
                                         </Grid>
                                     </Border>
-                                    <Border x:Name="LoudnessMetricCard" Grid.Column="1" Background="#161C22" CornerRadius="5" Padding="10,7">
+                                    <Border x:Name="LoudnessMetricCard" Grid.Column="1" Background="#2A271F" CornerRadius="5" Padding="10,7">
                                         <Grid ColumnDefinitions="*,Auto">
                                             <TextBlock Text="Loudness" FontSize="10.5" Opacity="0.62" />
                                             <TextBlock x:Name="IntegratedLoudnessText" Grid.Column="1" FontSize="12" FontWeight="SemiBold" />
                                         </Grid>
                                     </Border>
-                                    <Border x:Name="DynamicsMetricCard" Grid.Column="2" Background="#161C22" CornerRadius="5" Padding="10,7">
+                                    <Border x:Name="DynamicsMetricCard" Grid.Column="2" Background="#2A271F" CornerRadius="5" Padding="10,7">
                                         <Grid ColumnDefinitions="*,Auto">
                                             <TextBlock Text="Dynamics" FontSize="10.5" Opacity="0.62" />
                                             <TextBlock x:Name="LoudnessRangeText" Grid.Column="1" FontSize="12" FontWeight="SemiBold" />
@@ -317,14 +317,14 @@
                                     </Grid>
                                 </StackPanel>
 
-                                <Rectangle Height="1" Fill="#26313A" />
+                                <Rectangle Height="1" Fill="#4B473B" />
 
                                 <StackPanel Spacing="5" Margin="0,2,0,2">
                                     <TextBlock Text="Emotional character" FontSize="10.5" FontWeight="SemiBold" />
                                     <StackPanel x:Name="MirexCharacterPanel" Spacing="3" />
                                 </StackPanel>
 
-                                <Rectangle Height="1" Fill="#26313A" />
+                                <Rectangle Height="1" Fill="#4B473B" />
 
                                 <StackPanel Spacing="6">
                                     <TextBlock Text="Mood signals" FontSize="10.5" FontWeight="SemiBold" />
@@ -342,13 +342,13 @@
                         IsVisible="False"
                         Background="#C0181A1D">
                     <Border Width="300" HorizontalAlignment="Center" VerticalAlignment="Center"
-                            Background="#101A27" BorderBrush="#36779F" BorderThickness="1" CornerRadius="9" Padding="24,20">
+                            Background="#242119" BorderBrush="#71805A" BorderThickness="1" CornerRadius="9" Padding="24,20">
                         <StackPanel Spacing="12">
                             <Grid ColumnDefinitions="*,Auto">
                                 <TextBlock Text="Analyzing track…" FontSize="15" FontWeight="SemiBold" TextAlignment="Center"/>
-                                <TextBlock x:Name="AnalysisElapsedText" Grid.Column="1" Text="0:00" FontSize="13" FontWeight="SemiBold" Foreground="#65BCEB"/>
+                                <TextBlock x:Name="AnalysisElapsedText" Grid.Column="1" Text="0:00" FontSize="13" FontWeight="SemiBold" Foreground="#C7D2AD"/>
                             </Grid>
-                            <ProgressBar IsIndeterminate="True" Height="5" Foreground="#1E9AF0" Background="#26313A"/>
+                            <ProgressBar IsIndeterminate="True" Height="5" Foreground="#AFC58C" Background="#3B392F"/>
                             <TextBlock x:Name="AnalysisEstimateText" FontSize="10.5" Opacity="0.62" TextAlignment="Center" TextWrapping="Wrap" />
                             <TextBlock Text="Elapsed time" FontSize="10" Opacity="0.48" HorizontalAlignment="Right" Margin="0,-7,0,0"/>
                         </StackPanel>
@@ -358,12 +358,12 @@
                 <Border x:Name="UnsavedChangesLayer"
                         Grid.RowSpan="3"
                         IsVisible="False"
-                        Background="#CC0B0D10">
+                        Background="#CC1B1914">
                     <Border Width="360"
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center"
-                            Background="#151B22"
-                            BorderBrush="#4A5A68"
+                            Background="#242119"
+                            BorderBrush="#615A49"
                             BorderThickness="1"
                             CornerRadius="9"
                             Padding="22,18">

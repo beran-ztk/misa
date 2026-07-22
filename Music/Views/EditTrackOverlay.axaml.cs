@@ -253,7 +253,7 @@ public partial class EditTrackOverlay : UserControl
     private static void ApplyTagVisual(ToggleButton button, Tag tag)
     {
         var selected = button.IsChecked == true;
-        var accent = SafeBrush(null, "#65BCEB");
+        var accent = SafeBrush(null, "#C7D2AD");
         button.Background = new SolidColorBrush(Color.Parse(selected ? "#1A3140" : "#1A2026"));
         button.BorderBrush = selected ? accent : new SolidColorBrush(Color.Parse("#394653"));
         button.BorderThickness = new Avalonia.Thickness(1);
@@ -928,7 +928,7 @@ public partial class EditTrackOverlay : UserControl
             var container = new Border
             {
                 Background = new SolidColorBrush(Color.Parse("#161C22")),
-                BorderBrush = new SolidColorBrush(Color.Parse("#2D3945")),
+                BorderBrush = new SolidColorBrush(Color.Parse("#4B473B")),
                 BorderThickness = new Avalonia.Thickness(1),
                 CornerRadius = new Avalonia.CornerRadius(5),
                 Padding = new Avalonia.Thickness(8, 5),

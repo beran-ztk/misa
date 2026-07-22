@@ -10,32 +10,32 @@
             <Setter Property="Padding" Value="11,6"/>
             <Setter Property="Margin" Value="0,0,7,7"/>
             <Setter Property="CornerRadius" Value="14"/>
-            <Setter Property="Background" Value="#252B31"/>
-            <Setter Property="BorderBrush" Value="#37424D"/>
+            <Setter Property="Background" Value="#2A2821"/>
+            <Setter Property="BorderBrush" Value="#554F41"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Foreground" Value="#F2F5F8"/>
+            <Setter Property="Foreground" Value="#F0EFE5"/>
         </Style>
         <Style Selector="ToggleButton.metadata-chip:pointerover">
-            <Setter Property="Background" Value="#303944"/>
-            <Setter Property="BorderBrush" Value="#4A5A68"/>
+            <Setter Property="Background" Value="#39352B"/>
+            <Setter Property="BorderBrush" Value="#6A6250"/>
         </Style>
         <Style Selector="ToggleButton.metadata-chip:checked">
-            <Setter Property="Background" Value="#176EA8"/>
-            <Setter Property="BorderBrush" Value="#32A7E6"/>
-            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="Background" Value="#4B513D"/>
+            <Setter Property="BorderBrush" Value="#AFC58C"/>
+            <Setter Property="Foreground" Value="#F7F3E8"/>
         </Style>
         <Style Selector="Button.more-button">
             <Setter Property="Padding" Value="12,6"/>
             <Setter Property="FontSize" Value="11"/>
             <Setter Property="CornerRadius" Value="12"/>
-            <Setter Property="Background" Value="#101923"/>
-            <Setter Property="BorderBrush" Value="#2B5877"/>
+            <Setter Property="Background" Value="#211F19"/>
+            <Setter Property="BorderBrush" Value="#615A49"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Foreground" Value="#BFE8FF"/>
+            <Setter Property="Foreground" Value="#C7D2AD"/>
         </Style>
         <Style Selector="Button.more-button:pointerover">
-            <Setter Property="Background" Value="#152638"/>
-            <Setter Property="BorderBrush" Value="#3C82AD"/>
+            <Setter Property="Background" Value="#39352B"/>
+            <Setter Property="BorderBrush" Value="#7B725C"/>
         </Style>
     </Application.Styles>
 </Application>

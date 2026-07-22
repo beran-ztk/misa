@@ -1054,7 +1054,7 @@ public partial class MusicView : UserControl
             Content = content,
             HorizontalAlignment = HorizontalAlignment.Stretch,
             HorizontalContentAlignment = HorizontalAlignment.Stretch,
-            Background = Brush(isSelected ? "#172636" : "#0D151D"),
+            Background = Brush(isSelected ? "#3B3A2D" : "#211F19"),
             BorderBrush = Brush(isSelected ? "#4A8FBA" : "#31404F"),
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(7),
@@ -1097,7 +1097,7 @@ public partial class MusicView : UserControl
         {
             Content = "Cancel",
             Background = Brushes.Transparent,
-            BorderBrush = Brush("#314B5F"),
+            BorderBrush = Brush("#615A49"),
             BorderThickness = new Thickness(1),
             Padding = new Thickness(10, 6),
             FontSize = 11,
@@ -1367,7 +1367,7 @@ public partial class MusicView : UserControl
         _conditionNegate = exclude;
         if (ConditionModeIndicator.RenderTransform is TranslateTransform transform)
             transform.X = exclude ? 81 : 0;
-        ConditionModeIndicator.Background = new SolidColorBrush(Color.Parse(exclude ? "#8A303A" : "#176486"));
+        ConditionModeIndicator.Background = new SolidColorBrush(Color.Parse(exclude ? "#8A303A" : "#6F7D59"));
         ConditionModeIndicator.CornerRadius = exclude
             ? new CornerRadius(0, 5, 5, 0)
             : new CornerRadius(5, 0, 0, 5);
@@ -1418,7 +1418,7 @@ public partial class MusicView : UserControl
 
         var chips = new WrapPanel { Orientation = Orientation.Horizontal };
         foreach (var name in genreNames)
-            chips.Children.Add(CreateConditionChip(name, "#65BCEB"));
+            chips.Children.Add(CreateConditionChip(name, "#C7D2AD"));
         foreach (var selectedTag in selectedTags)
         {
             chips.Children.Add(CreateConditionChip(DisplayTagFilterName(selectedTag), "#CFA7FF"));
@@ -1431,7 +1431,7 @@ public partial class MusicView : UserControl
             FontSize = 10.5,
             Opacity = 0.68,
             Background = new SolidColorBrush(Colors.Transparent),
-            BorderBrush = new SolidColorBrush(Color.Parse("#314B5F")),
+            BorderBrush = new SolidColorBrush(Color.Parse("#615A49")),
             BorderThickness = new Thickness(1)
         };
         removeBtn.Click += (_, _) => RemoveFilterGroup(condition);
@@ -1479,7 +1479,7 @@ public partial class MusicView : UserControl
         return new Border
         {
             Background = new SolidColorBrush(Color.Parse(isNegated ? "#6E211820" : "#78111820")),
-            BorderBrush = new SolidColorBrush(Color.Parse(isNegated ? "#70424B" : "#263442")),
+            BorderBrush = new SolidColorBrush(Color.Parse(isNegated ? "#70424B" : "#4B473B")),
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(7),
             Padding = new Thickness(11, 9),
@@ -1493,7 +1493,7 @@ public partial class MusicView : UserControl
 
     private static Border CreateConditionChip(string text, string? accentColor)
     {
-        var accent = SafeBrush(accentColor, "#65BCEB");
+        var accent = SafeBrush(accentColor, "#C7D2AD");
         return new Border
         {
             Background = new SolidColorBrush(Color.Parse("#1A2026")),
@@ -1541,7 +1541,7 @@ public partial class MusicView : UserControl
         var categoryBox = new ComboBox
         {
             Height = 34,
-            Background = new SolidColorBrush(Color.Parse("#0D151D")),
+            Background = new SolidColorBrush(Color.Parse("#211F19")),
             BorderBrush = new SolidColorBrush(Color.Parse("#414B5F")),
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(6),
@@ -1772,7 +1772,7 @@ public partial class MusicView : UserControl
 
     private static Button CreateGenreFilterChoiceButton(string title, string group, bool isSelected)
     {
-        var accent = Brush("#65BCEB");
+        var accent = Brush("#C7D2AD");
         var text = new StackPanel
         {
             Spacing = 1,

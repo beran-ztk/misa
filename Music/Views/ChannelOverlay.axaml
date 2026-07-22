@@ -11,10 +11,10 @@
             <Setter Property="Background" Value="Transparent"/>
         </Style>
         <Style Selector="ListBox.channel-list ListBoxItem:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="#182A37"/>
+            <Setter Property="Background" Value="#352F24"/>
         </Style>
         <Style Selector="ListBox.channel-list ListBoxItem:selected /template/ ContentPresenter">
-            <Setter Property="Background" Value="#1F4258"/>
+            <Setter Property="Background" Value="#4A4638"/>
         </Style>
         <Style Selector="ListBox.video-list ListBoxItem">
             <Setter Property="Padding" Value="0"/>
@@ -37,11 +37,11 @@
             <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
         <Style Selector="Button.channel-icon:pointerover">
-            <Setter Property="Background" Value="#24313B"/>
+            <Setter Property="Background" Value="#39352B"/>
         </Style>
     </UserControl.Styles>
 
-    <Border Background="#EA0B0D10" BorderBrush="#25313D" BorderThickness="0,1,0,0">
+    <Border Background="#E81B1914" BorderBrush="#554F41" BorderThickness="0,1,0,0">
         <Grid RowDefinitions="Auto,*" Margin="22,18,22,22">
             <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12" Margin="0,0,0,14">
                 <Button Classes="channel-icon" Click="OnSidebarToggleClicked" ToolTip.Tip="Channels">
@@ -57,7 +57,7 @@
             </Grid>
 
             <Grid Grid.Row="1">
-                <Border Background="#A80B0D10" BorderBrush="#263442" BorderThickness="1" CornerRadius="8" Padding="10">
+                <Border Background="#A82A261D" BorderBrush="#4B473B" BorderThickness="1" CornerRadius="8" Padding="10">
                     <DockPanel LastChildFill="True">
                         <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="12" Margin="4,0,4,10">
                             <TextBlock x:Name="VideoSummaryText" FontSize="11" Opacity="0.62"
@@ -68,11 +68,11 @@
                                          LostFocus="OnGlobalMaxDurationLostFocus"/>
                                 <TextBlock Text="min" FontSize="10.5" Opacity="0.68" VerticalAlignment="Center"/>
                             </StackPanel>
-                            <Border Grid.Column="2" Width="146" Height="30" Background="#111A21" BorderBrush="#435868"
+                            <Border Grid.Column="2" Width="146" Height="30" Background="#211F19" BorderBrush="#615A49"
                                     BorderThickness="1" CornerRadius="6" ClipToBounds="True">
                                 <Grid ColumnDefinitions="72,72">
                                     <Border x:Name="VideoFilterSelectionIndicator" Grid.ColumnSpan="2" Width="72"
-                                            HorizontalAlignment="Left" Background="#176486" CornerRadius="5" IsHitTestVisible="False">
+                                            HorizontalAlignment="Left" Background="#6F7D59" CornerRadius="5" IsHitTestVisible="False">
                                         <Border.RenderTransform>
                                             <TranslateTransform>
                                                 <TranslateTransform.Transitions>
@@ -138,7 +138,7 @@
                 </Border>
 
                 <Border x:Name="ChannelSidebar" Width="310" HorizontalAlignment="Left" IsVisible="False"
-                        Background="#FA10151A" BorderBrush="#40515E" BorderThickness="1" CornerRadius="8" Padding="12"
+                        Background="#FA211F19" BorderBrush="#5B5546" BorderThickness="1" CornerRadius="8" Padding="12"
                         BoxShadow="4 0 18 0 #90000000">
                     <Grid RowDefinitions="Auto,Auto,*" RowSpacing="10">
                         <Grid ColumnDefinitions="*,Auto">
@@ -169,7 +169,7 @@
                                                 </Button>
                                             </Grid>
                                         </Border>
-                                        <Rectangle Grid.Row="1" Height="1" Fill="#263442" Margin="8,0"/>
+                                        <Rectangle Grid.Row="1" Height="1" Fill="#4B473B" Margin="8,0"/>
                                     </Grid>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>

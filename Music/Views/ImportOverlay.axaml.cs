@@ -165,7 +165,7 @@ public partial class ImportOverlay : UserControl
             BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(5), Padding = new Thickness(9, 7)
         };
         var panel = new StackPanel { Spacing = 4 };
-        panel.Children.Add(new TextBlock { Text = ShortUrl(sourceUrl), FontSize = 10, Foreground = new SolidColorBrush(Color.Parse("#9FCBE4")), TextTrimming = TextTrimming.CharacterEllipsis });
+        panel.Children.Add(new TextBlock { Text = ShortUrl(sourceUrl), FontSize = 10, Foreground = new SolidColorBrush(Color.Parse("#C7D2AD")), TextTrimming = TextTrimming.CharacterEllipsis });
         foreach (var item in items)
             panel.Children.Add(CreatePreviewItemRow(pending, item, refreshPreview));
         card.Child = panel;
@@ -244,7 +244,7 @@ public partial class ImportOverlay : UserControl
         {
             Text = ShortUrl(pending.SourceUrl),
             FontSize = 10.5,
-            Foreground = new SolidColorBrush(Color.Parse("#9FCBE4")),
+            Foreground = new SolidColorBrush(Color.Parse("#C7D2AD")),
             TextTrimming = TextTrimming.CharacterEllipsis,
             VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
         });
@@ -301,8 +301,8 @@ public partial class ImportOverlay : UserControl
                 {
                     IsIndeterminate = true,
                     Height = 4,
-                    Foreground = new SolidColorBrush(Color.Parse("#1E9AF0")),
-                    Background = new SolidColorBrush(Color.Parse("#26313A"))
+                    Foreground = new SolidColorBrush(Color.Parse("#AFC58C")),
+                    Background = new SolidColorBrush(Color.Parse("#3B392F"))
                 };
                 panel.Children.Add(progress);
             }
@@ -397,7 +397,7 @@ public partial class ImportOverlay : UserControl
     {
         var card = new Border { Background = new SolidColorBrush(Color.Parse("#C8151B22")), BorderBrush = new SolidColorBrush(Color.Parse("#2D3D4B")), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(5), Padding = new Thickness(10, 8) };
         var panel = new StackPanel { Spacing = 5 };
-        panel.Children.Add(new TextBlock { Text = ShortUrl(source.SourceUrl), FontSize = 11, Foreground = new SolidColorBrush(Color.Parse("#9FCBE4")), TextTrimming = TextTrimming.CharacterEllipsis });
+        panel.Children.Add(new TextBlock { Text = ShortUrl(source.SourceUrl), FontSize = 11, Foreground = new SolidColorBrush(Color.Parse("#C7D2AD")), TextTrimming = TextTrimming.CharacterEllipsis });
         foreach (var item in source.Items)
         {
             var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto"), ColumnSpacing = 8 };
@@ -530,7 +530,7 @@ public partial class ImportOverlay : UserControl
         ImportQueueStatus.Downloading or ImportQueueStatus.Analyzing => "#5BBEED",
         ImportQueueStatus.ReadyForReview => "#E6BF55",
         ImportQueueStatus.Failed => "#E87878",
-        ImportQueueStatus.Queued => "#9FCBE4",
+        ImportQueueStatus.Queued => "#C7D2AD",
         _ => "#8996A3"
     };
 
