@@ -55,6 +55,7 @@
                                        FontSize="13" FontWeight="SemiBold" />
                             <Grid>
                                 <TextBox x:Name="UrlBox"
+                                         Classes="theme-input"
                                          MinWidth="0"
                                          Padding="10,6,34,6"
                                          HorizontalAlignment="Stretch"

@@ -975,7 +975,8 @@ public partial class MusicView : UserControl
         }
     }
 
-    private void OnSearchBoxLostFocus(object? sender, RoutedEventArgs e) => UpdateSearchVisibility();
+    private void OnSearchBoxLostFocus(object? sender, RoutedEventArgs e) =>
+        Dispatcher.UIThread.Post(UpdateSearchVisibility, DispatcherPriority.Background);
 
     private void UpdateSearchVisibility()
     {
@@ -1065,8 +1066,12 @@ public partial class MusicView : UserControl
             Content = content,
             HorizontalAlignment = HorizontalAlignment.Stretch,
             HorizontalContentAlignment = HorizontalAlignment.Stretch,
-            Background = Brush(isSelected ? "#3B3A2D" : "#211F19"),
-            BorderBrush = Brush(isSelected ? "#4A8FBA" : "#31404F"),
+            Background = ThemeResources.Brush(isSelected
+                ? "Theme.Brush.AccentSurface"
+                : "Theme.Brush.Surface"),
+            BorderBrush = ThemeResources.Brush(isSelected
+                ? "Theme.Brush.Accent"
+                : "Theme.Brush.BorderSubtle"),
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(7),
             Padding = new Thickness(10, 8),
@@ -1084,6 +1089,7 @@ public partial class MusicView : UserControl
             Height = 34,
             VerticalContentAlignment = VerticalAlignment.Center
         };
+        nameBox.Classes.Add("theme-input");
         nameBox.KeyDown += (_, e) =>
         {
             if (e.Key != Key.Enter)
@@ -1096,8 +1102,8 @@ public partial class MusicView : UserControl
         var saveButton = new Button
         {
             Content = "Save",
-            Background = ThemeResources.Brush("Theme.Brush.InfoSurface"),
-            BorderBrush = ThemeResources.Brush("Theme.Brush.InfoBorder"),
+            Background = ThemeResources.Brush("Theme.Brush.AccentSurface"),
+            BorderBrush = ThemeResources.Brush("Theme.Brush.Accent"),
             BorderThickness = new Thickness(1),
             Padding = new Thickness(10, 6),
             FontSize = 11
@@ -1131,8 +1137,8 @@ public partial class MusicView : UserControl
 
         var border = new Border
         {
-            Background = Brush("#121E29"),
-            BorderBrush = Brush("#4A8FBA"),
+            Background = ThemeResources.Brush("Theme.Brush.SurfaceTranslucent"),
+            BorderBrush = ThemeResources.Brush("Theme.Brush.BorderSubtle"),
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(7),
             Padding = new Thickness(10)
@@ -1388,17 +1394,23 @@ public partial class MusicView : UserControl
         if (ConditionModeIndicator.RenderTransform is TranslateTransform transform)
             transform.X = exclude ? 81 : 0;
         ConditionModeIndicator.Background = exclude
-            ? new SolidColorBrush(Color.Parse("#8A303A"))
+            ? ThemeResources.Brush("Theme.Brush.DangerSurface")
             : ThemeResources.Brush("Theme.Brush.Success");
         ConditionModeIndicator.CornerRadius = exclude
             ? new CornerRadius(0, 5, 5, 0)
             : new CornerRadius(5, 0, 0, 5);
-        IncludeConditionText.Foreground = Brush(exclude ? "#AEBAC3" : "#FFFFFF");
-        ExcludeConditionText.Foreground = Brush(exclude ? "#FFFFFF" : "#C8A8AC");
+        IncludeConditionText.Foreground = ThemeResources.Brush(exclude
+            ? "Theme.Brush.TextMuted"
+            : "Theme.Brush.TextStrong");
+        ExcludeConditionText.Foreground = ThemeResources.Brush(exclude
+            ? "Theme.Brush.TextStrong"
+            : "Theme.Brush.TextMuted");
         ConditionModeHint.Text = exclude
             ? "Matching tracks will be excluded."
             : "Matching tracks will be included.";
-        ConditionModeHint.Foreground = Brush(exclude ? "#D88B92" : "#8CCFEB");
+        ConditionModeHint.Foreground = ThemeResources.Brush(exclude
+            ? "Theme.Brush.DangerText"
+            : "Theme.Brush.TextSecondary");
     }
 
     private void RefreshConditionBuilder()
@@ -1440,10 +1452,12 @@ public partial class MusicView : UserControl
 
         var chips = new WrapPanel { Orientation = Orientation.Horizontal };
         foreach (var name in genreNames)
-            chips.Children.Add(CreateConditionChip(name, "#C7D2AD"));
+            chips.Children.Add(CreateConditionChip(name, ThemeResources.Brush("Theme.Brush.TextSecondary")));
         foreach (var selectedTag in selectedTags)
         {
-            chips.Children.Add(CreateConditionChip(DisplayTagFilterName(selectedTag), "#CFA7FF"));
+            chips.Children.Add(CreateConditionChip(
+                DisplayTagFilterName(selectedTag),
+                ThemeResources.Brush("Theme.Brush.Accent")));
         }
 
         var removeBtn = new Button
@@ -1465,9 +1479,15 @@ public partial class MusicView : UserControl
             FontSize = 10.5,
             FontWeight = FontWeight.SemiBold,
             Padding = new Thickness(10, 4),
-            Background = Brush(isNegated ? "#52252B" : "#15364A"),
-            BorderBrush = Brush(isNegated ? "#A34D57" : "#327899"),
-            Foreground = Brush(isNegated ? "#F0A7AE" : "#9ADCF7"),
+            Background = ThemeResources.Brush(isNegated
+                ? "Theme.Brush.DangerSurface"
+                : "Theme.Brush.AccentSurface"),
+            BorderBrush = ThemeResources.Brush(isNegated
+                ? "Theme.Brush.DangerBorder"
+                : "Theme.Brush.Accent"),
+            Foreground = ThemeResources.Brush(isNegated
+                ? "Theme.Brush.DangerText"
+                : "Theme.Brush.TextStrong"),
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(5),
             VerticalAlignment = VerticalAlignment.Center
@@ -1500,8 +1520,10 @@ public partial class MusicView : UserControl
 
         return new Border
         {
-            Background = new SolidColorBrush(Color.Parse(isNegated ? "#6E211820" : "#78111820")),
-            BorderBrush = new SolidColorBrush(Color.Parse(isNegated ? "#70424B" : "#4B473B")),
+            Background = ThemeResources.Brush("Theme.Brush.SurfaceTranslucent"),
+            BorderBrush = ThemeResources.Brush(isNegated
+                ? "Theme.Brush.DangerBorder"
+                : "Theme.Brush.BorderSubtle"),
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(7),
             Padding = new Thickness(11, 9),
@@ -1513,12 +1535,11 @@ public partial class MusicView : UserControl
         };
     }
 
-    private static Border CreateConditionChip(string text, string? accentColor)
+    private static Border CreateConditionChip(string text, IBrush accent)
     {
-        var accent = SafeBrush(accentColor, "#C7D2AD");
         return new Border
         {
-            Background = new SolidColorBrush(Color.Parse("#1A2026")),
+            Background = ThemeResources.Brush("Theme.Brush.Surface"),
             BorderBrush = accent,
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(4),
@@ -1564,7 +1585,7 @@ public partial class MusicView : UserControl
         {
             Height = 34,
             Background = ThemeResources.Brush("Theme.Brush.Surface"),
-            BorderBrush = new SolidColorBrush(Color.Parse("#414B5F")),
+            BorderBrush = ThemeResources.Brush("Theme.Brush.BorderStrong"),
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(6),
             Padding = new Thickness(9, 4)
@@ -1575,6 +1596,7 @@ public partial class MusicView : UserControl
             Height = 34,
             VerticalContentAlignment = VerticalAlignment.Center
         };
+        searchBox.Classes.Add("theme-input");
 
         string GroupName(Genre genre)
         {
@@ -1685,8 +1707,8 @@ public partial class MusicView : UserControl
 
         var border = new Border
         {
-            Background = new SolidColorBrush(Color.Parse("#68121A22")),
-            BorderBrush = new SolidColorBrush(Color.Parse("#2A3A46")),
+            Background = ThemeResources.Brush("Theme.Brush.SurfaceTranslucent"),
+            BorderBrush = ThemeResources.Brush("Theme.Brush.BorderSubtle"),
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(7),
             Padding = new Thickness(11, 10),
@@ -1782,8 +1804,8 @@ public partial class MusicView : UserControl
 
         var border = new Border
         {
-            Background = new SolidColorBrush(Color.Parse("#68121A22")),
-            BorderBrush = new SolidColorBrush(Color.Parse("#2A3A46")),
+            Background = ThemeResources.Brush("Theme.Brush.SurfaceTranslucent"),
+            BorderBrush = ThemeResources.Brush("Theme.Brush.BorderSubtle"),
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(7),
             Padding = new Thickness(11, 10),
@@ -1807,14 +1829,16 @@ public partial class MusicView : UserControl
                     Text = title,
                     FontSize = 10.5,
                     FontWeight = FontWeight.SemiBold,
-                    Foreground = isSelected ? accent : Brush("#E8F1F7"),
+                    Foreground = isSelected
+                        ? accent
+                        : ThemeResources.Brush("Theme.Brush.TextPrimary"),
                     TextTrimming = TextTrimming.CharacterEllipsis
                 },
                 new TextBlock
                 {
                     Text = group,
                     FontSize = 9,
-                    Foreground = Brush("#93A5B3"),
+                    Foreground = ThemeResources.Brush("Theme.Brush.TextMuted"),
                     Opacity = 0.72,
                     TextTrimming = TextTrimming.CharacterEllipsis
                 }
@@ -1828,7 +1852,9 @@ public partial class MusicView : UserControl
             Text = isSelected ? "✓" : "+",
             FontSize = isSelected ? 12 : 14,
             FontWeight = FontWeight.SemiBold,
-            Foreground = isSelected ? accent : Brush("#748896"),
+            Foreground = isSelected
+                ? accent
+                : ThemeResources.Brush("Theme.Brush.TextMuted"),
             VerticalAlignment = VerticalAlignment.Center
         };
         Grid.SetColumn(state, 1);
@@ -1840,8 +1866,12 @@ public partial class MusicView : UserControl
             Height = 43,
             Padding = new Thickness(9, 4),
             CornerRadius = new CornerRadius(5),
-            Background = Brush(isSelected ? "#153F55" : "#151E25"),
-            BorderBrush = isSelected ? Brush("#2788B1") : Brush("#344652"),
+            Background = ThemeResources.Brush(isSelected
+                ? "Theme.Brush.AccentSurface"
+                : "Theme.Brush.Surface"),
+            BorderBrush = ThemeResources.Brush(isSelected
+                ? "Theme.Brush.Accent"
+                : "Theme.Brush.BorderSubtle"),
             BorderThickness = new Thickness(1),
             HorizontalAlignment = HorizontalAlignment.Stretch,
             HorizontalContentAlignment = HorizontalAlignment.Stretch,
@@ -1857,7 +1887,9 @@ public partial class MusicView : UserControl
             Text = title,
             FontSize = 10.5,
             FontWeight = FontWeight.SemiBold,
-            Foreground = isSelected ? Brush("#E8D2FF") : Brush("#DFE8EE"),
+            Foreground = ThemeResources.Brush(isSelected
+                ? "Theme.Brush.TextStrong"
+                : "Theme.Brush.TextPrimary"),
             TextTrimming = TextTrimming.CharacterEllipsis,
             VerticalAlignment = VerticalAlignment.Center
         });
@@ -1867,7 +1899,7 @@ public partial class MusicView : UserControl
             {
                 Text = "✓",
                 FontSize = 11,
-                Foreground = Brush("#D3A6FF"),
+                Foreground = ThemeResources.Brush("Theme.Brush.Accent"),
                 VerticalAlignment = VerticalAlignment.Center
             };
             Grid.SetColumn(check, 1);
@@ -1880,8 +1912,12 @@ public partial class MusicView : UserControl
             Height = 34,
             Padding = new Thickness(9, 3),
             CornerRadius = new CornerRadius(5),
-            Background = Brush(isSelected ? "#412B52" : "#151E25"),
-            BorderBrush = Brush(isSelected ? "#9B6EBD" : "#344652"),
+            Background = ThemeResources.Brush(isSelected
+                ? "Theme.Brush.AccentSurface"
+                : "Theme.Brush.Surface"),
+            BorderBrush = ThemeResources.Brush(isSelected
+                ? "Theme.Brush.Accent"
+                : "Theme.Brush.BorderSubtle"),
             BorderThickness = new Thickness(1),
             HorizontalAlignment = HorizontalAlignment.Stretch,
             HorizontalContentAlignment = HorizontalAlignment.Stretch,

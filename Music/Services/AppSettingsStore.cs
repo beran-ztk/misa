@@ -7,6 +7,9 @@ namespace Music.Services;
 
 public static class AppSettingsStore
 {
+    public const int ChannelDownloadMinDurationMinutes = 1;
+    public const int ChannelDownloadMaxDurationMinutes = 180;
+
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -25,7 +28,9 @@ public static class AppSettingsStore
             var settings = JsonSerializer.Deserialize<AppSettings>(json, JsonOptions) ?? new AppSettings();
             settings.Volume = Math.Clamp(settings.Volume, 0f, 1f);
             settings.ChannelDownloadMaxDurationMinutes = Math.Clamp(
-                settings.ChannelDownloadMaxDurationMinutes, 1, 24 * 60);
+                settings.ChannelDownloadMaxDurationMinutes,
+                ChannelDownloadMinDurationMinutes,
+                ChannelDownloadMaxDurationMinutes);
             return settings;
         }
         catch
@@ -51,7 +56,10 @@ public static class AppSettingsStore
     public static void SaveChannelDownloadMaxDurationMinutes(int minutes)
     {
         var settings = Load();
-        settings.ChannelDownloadMaxDurationMinutes = Math.Clamp(minutes, 1, 24 * 60);
+        settings.ChannelDownloadMaxDurationMinutes = Math.Clamp(
+            minutes,
+            ChannelDownloadMinDurationMinutes,
+            ChannelDownloadMaxDurationMinutes);
         Save(settings);
     }
 

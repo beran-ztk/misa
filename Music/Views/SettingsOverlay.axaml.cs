@@ -150,8 +150,8 @@ public partial class SettingsOverlay : UserControl
     {
         var row = new Border
         {
-            Background = new SolidColorBrush(Color.Parse("#D60E1217")),
-            BorderBrush = new SolidColorBrush(Color.Parse("#253542")),
+            Background = ThemeResources.Brush("Theme.Brush.SurfaceTranslucent"),
+            BorderBrush = ThemeResources.Brush("Theme.Brush.BorderSubtle"),
             BorderThickness = new Avalonia.Thickness(1),
             CornerRadius = new Avalonia.CornerRadius(7),
             Padding = new Avalonia.Thickness(12, 9)
@@ -167,7 +167,7 @@ public partial class SettingsOverlay : UserControl
             Text = subgenre.Name,
             FontSize = 12.5,
             FontWeight = FontWeight.SemiBold,
-            Foreground = new SolidColorBrush(Color.Parse("#E8F0F6")),
+            Foreground = ThemeResources.Brush("Theme.Brush.TextPrimary"),
             TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis
         };
         titlePanel.Children.Add(titleText);
@@ -202,7 +202,7 @@ public partial class SettingsOverlay : UserControl
 
         var descriptionText = CreateGenreBodyText(subgenre.Description, "No description yet.");
         panel.Children.Add(descriptionText);
-        var hintText = CreateGenreBodyText(subgenre.ClassificationHint, "No classification hint yet.", "#8FB6D1");
+        var hintText = CreateGenreBodyText(subgenre.ClassificationHint, "No classification hint yet.");
         panel.Children.Add(hintText);
 
         if (_distinctionsBySubgenreId.TryGetValue(subgenre.Id, out var distinctions) && distinctions.Count > 0)
@@ -217,7 +217,7 @@ public partial class SettingsOverlay : UserControl
                 Text = "Distinguish from",
                 FontSize = 9.7,
                 FontWeight = FontWeight.SemiBold,
-                Foreground = new SolidColorBrush(Color.Parse("#80C9E8")),
+                Foreground = ThemeResources.Brush("Theme.Brush.Accent"),
                 Opacity = 0.72
             });
             foreach (var item in distinctions)
@@ -226,7 +226,7 @@ public partial class SettingsOverlay : UserControl
                 {
                     Text = $"{item.ModelSubgenreName} ({item.ModelGenreName}) — {item.Difference}",
                     FontSize = 10,
-                    Foreground = new SolidColorBrush(Color.Parse("#B6D8E9")),
+                    Foreground = ThemeResources.Brush("Theme.Brush.TextSecondary"),
                     Opacity = 0.78,
                     TextWrapping = TextWrapping.Wrap
                 });
@@ -346,14 +346,14 @@ public partial class SettingsOverlay : UserControl
         HorizontalAlignment = HorizontalAlignment.Center
     };
 
-    private static TextBlock CreateGenreBodyText(string? value, string fallback, string color = "#D9E4EC")
+    private static TextBlock CreateGenreBodyText(string? value, string fallback)
     {
         var hasValue = !string.IsNullOrWhiteSpace(value);
         return new TextBlock
         {
             Text = BodyText(value, fallback),
             FontSize = 10.7,
-            Foreground = new SolidColorBrush(Color.Parse(color)),
+            Foreground = ThemeResources.Brush("Theme.Brush.TextSecondary"),
             Opacity = hasValue ? 0.76 : 0.45,
             TextWrapping = TextWrapping.Wrap
         };
@@ -705,8 +705,8 @@ public partial class SettingsOverlay : UserControl
     {
         var row = new Border
         {
-            Background = new SolidColorBrush(Color.Parse("#D60E1217")),
-            BorderBrush = new SolidColorBrush(Color.Parse("#253542")),
+            Background = ThemeResources.Brush("Theme.Brush.SurfaceTranslucent"),
+            BorderBrush = ThemeResources.Brush("Theme.Brush.BorderSubtle"),
             BorderThickness = new Avalonia.Thickness(1),
             CornerRadius = new Avalonia.CornerRadius(7),
             Padding = new Avalonia.Thickness(12, 9)
@@ -1070,8 +1070,8 @@ public partial class SettingsOverlay : UserControl
     {
         var row = new Border
         {
-            Background = new SolidColorBrush(Color.Parse("#D60E1217")),
-            BorderBrush = new SolidColorBrush(Color.Parse("#253542")),
+            Background = ThemeResources.Brush("Theme.Brush.SurfaceTranslucent"),
+            BorderBrush = ThemeResources.Brush("Theme.Brush.BorderSubtle"),
             BorderThickness = new Avalonia.Thickness(1),
             CornerRadius = new Avalonia.CornerRadius(7),
             Padding = new Avalonia.Thickness(12, 9)

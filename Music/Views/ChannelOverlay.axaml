@@ -11,10 +11,10 @@
             <Setter Property="Background" Value="Transparent"/>
         </Style>
         <Style Selector="ListBox.channel-list ListBoxItem:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="#352F24"/>
+            <Setter Property="Background" Value="{DynamicResource Theme.Brush.SurfaceHover}"/>
         </Style>
         <Style Selector="ListBox.channel-list ListBoxItem:selected /template/ ContentPresenter">
-            <Setter Property="Background" Value="#4A4638"/>
+            <Setter Property="Background" Value="{DynamicResource Theme.Brush.SurfaceSelected}"/>
         </Style>
         <Style Selector="ListBox.video-list ListBoxItem">
             <Setter Property="Padding" Value="0"/>
@@ -64,8 +64,14 @@
                                        TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
                             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
                                 <TextBlock Text="Max duration" FontSize="10.5" Opacity="0.68" VerticalAlignment="Center"/>
-                                <TextBox x:Name="GlobalMaxDurationBox" Width="44" Height="28" Padding="5,2" FontSize="10.5"
-                                         LostFocus="OnGlobalMaxDurationLostFocus"/>
+                                <NumericUpDown x:Name="GlobalMaxDurationBox"
+                                               Classes="theme-input"
+                                               Width="72" Height="30"
+                                               Padding="7,2"
+                                               FontSize="10.5"
+                                               Increment="1"
+                                               FormatString="0"
+                                               ValueChanged="OnGlobalMaxDurationChanged"/>
                                 <TextBlock Text="min" FontSize="10.5" Opacity="0.68" VerticalAlignment="Center"/>
                             </StackPanel>
                             <Border Grid.Column="2" Width="146" Height="30" Background="{DynamicResource Theme.Brush.Surface}" BorderBrush="{DynamicResource Theme.Brush.BorderStrong}"
@@ -138,7 +144,7 @@
                 </Border>
 
                 <Border x:Name="ChannelSidebar" Width="310" HorizontalAlignment="Left" IsVisible="False"
-                        Background="#FA211F19" BorderBrush="#5B5546" BorderThickness="1" CornerRadius="8" Padding="12"
+                        Background="{DynamicResource Theme.Brush.Surface}" BorderBrush="{DynamicResource Theme.Brush.Border}" BorderThickness="1" CornerRadius="{DynamicResource Theme.Corner.Card}" Padding="12"
                         BoxShadow="4 0 18 0 #90000000">
                     <Grid RowDefinitions="Auto,Auto,*" RowSpacing="10">
                         <Grid ColumnDefinitions="*,Auto">
@@ -147,30 +153,37 @@
                                 <Image Source="{SvgImage /Assets/close.svg}" Width="14" Height="14"/>
                             </Button>
                         </Grid>
-                        <TextBox Grid.Row="1" x:Name="UrlBox" Watermark="Paste YouTube channel URL" Height="36"
+                        <TextBox Grid.Row="1" x:Name="UrlBox" Classes="theme-input" Watermark="Paste YouTube channel URL" Height="36"
                                  TextChanged="OnUrlTextChanged" VerticalContentAlignment="Center"/>
                         <ListBox Grid.Row="2" x:Name="ChannelList" Classes="channel-list" SelectionChanged="OnChannelSelectionChanged"
                                  Background="Transparent" BorderThickness="0">
                             <ListBox.ItemTemplate>
                                 <DataTemplate x:DataType="models:ChannelSubscription">
-                                    <Grid RowDefinitions="Auto,1">
-                                        <Border Padding="9,8" CornerRadius="6">
+                                    <Border Margin="0,0,0,7"
+                                            Padding="11,9"
+                                            Background="{DynamicResource Theme.Brush.SurfaceTranslucent}"
+                                            BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
+                                            BorderThickness="1"
+                                            CornerRadius="{DynamicResource Theme.Corner.Control}">
                                             <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto">
                                                 <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
                                                 <TextBlock Grid.Row="1" FontSize="10.5" Opacity="0.58"
                                                            Text="{Binding UncheckedCount, StringFormat='{}{0} pending'}"/>
-                                                <TextBlock Grid.Row="2" FontSize="10.5" Opacity="0.72" Margin="0,2,0,0"
+                                                <TextBlock Grid.Row="2" Grid.ColumnSpan="2" FontSize="10.5" Opacity="0.72" Margin="0,3,0,0"
                                                            Text="{Binding DownloadStateText}" TextWrapping="Wrap"/>
-                                                <CheckBox Grid.Row="3" Content="Auto-download" IsChecked="{Binding AutoDownload, Mode=OneWay}"
-                                                          Click="OnAutoDownloadClicked" FontSize="10.5" Margin="0,5,0,0"/>
-                                                <Button Grid.Column="1" Grid.RowSpan="4" Classes="channel-icon" Click="OnDeleteChannelClicked"
-                                                        ToolTip.Tip="Delete channel" Opacity="0.58" VerticalAlignment="Center">
+                                                <CheckBox Grid.Row="3"
+                                                          Classes="theme-check"
+                                                          Content="Auto-download"
+                                                          IsChecked="{Binding AutoDownload, Mode=OneWay}"
+                                                          Click="OnAutoDownloadClicked"
+                                                          FontSize="10.5"
+                                                          Margin="0,7,0,0"/>
+                                                <Button Grid.Column="1" Grid.Row="3" Classes="channel-icon" Click="OnDeleteChannelClicked"
+                                                        ToolTip.Tip="Delete channel" Opacity="0.58" HorizontalAlignment="Right" Margin="0,4,0,0">
                                                     <Image Source="{SvgImage /Assets/trash.svg}" Width="15" Height="15"/>
                                                 </Button>
                                             </Grid>
                                         </Border>
-                                        <Rectangle Grid.Row="1" Height="1" Fill="{DynamicResource Theme.Brush.BorderSubtle}" Margin="8,0"/>
-                                    </Grid>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>

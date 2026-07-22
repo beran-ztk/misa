@@ -180,6 +180,7 @@
                 </Button>
 
                 <TextBox x:Name="SearchBox"
+                         Classes="theme-input"
                          Watermark="Search…"
                          IsVisible="False"
                          Width="230" Height="34"
@@ -572,7 +573,7 @@
                     Grid.Row="0"
                     ZIndex="40"
                     IsVisible="False"
-                    Background="#D21B1914"
+                    Background="{DynamicResource Theme.Brush.Overlay}"
                     BorderThickness="0,1,0,0"
                     BorderBrush="{DynamicResource Theme.Brush.Border}">
                 <Grid RowDefinitions="Auto,*" Margin="30,22,30,26">
@@ -601,7 +602,7 @@
                     </Grid>
 
                     <Grid Grid.Row="1" ColumnDefinitions="280,*" ColumnSpacing="24">
-                        <Border Background="#B824211A"
+                        <Border Background="{DynamicResource Theme.Brush.SurfaceTranslucent}"
                                 BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
                                 BorderThickness="1"
                                 CornerRadius="10"
@@ -638,8 +639,8 @@
                                         <Button Grid.Column="0"
                                                 Content="Update selected"
                                                 Click="OnUpdatePresetClicked"
-                                                Background="{DynamicResource Theme.Brush.InfoSurface}"
-                                                BorderBrush="{DynamicResource Theme.Brush.InfoBorder}"
+                                                Background="{DynamicResource Theme.Brush.AccentSurface}"
+                                                BorderBrush="{DynamicResource Theme.Brush.Accent}"
                                                 BorderThickness="1"
                                                 Padding="10,6"
                                                 FontSize="11"/>
@@ -661,8 +662,8 @@
                                     <TextBlock Text="SORT"
                                                FontSize="10" FontWeight="SemiBold"
                                                Opacity="0.42" LetterSpacing="1"/>
-                                    <Border Background="#0F1C27"
-                                            BorderBrush="{DynamicResource Theme.Brush.InfoBorder}"
+                                    <Border Background="{DynamicResource Theme.Brush.Surface}"
+                                            BorderBrush="{DynamicResource Theme.Brush.BorderStrong}"
                                             BorderThickness="1"
                                             CornerRadius="7"
                                             Padding="4">
@@ -672,13 +673,13 @@
                                                       Height="30"
                                                       FontSize="11"
                                                       FontWeight="SemiBold"
-                                                      Foreground="{DynamicResource Theme.Brush.InfoText}"
+                                                      Foreground="{DynamicResource Theme.Brush.TextSecondary}"
                                                       Background="Transparent"
                                                       BorderThickness="0"
                                                       Padding="8,3"
                                                       SelectionChanged="OnSortChanged"/>
                                             <Rectangle Grid.Column="1"
-                                                       Fill="{DynamicResource Theme.Brush.InfoSurface}"
+                                                       Fill="{DynamicResource Theme.Brush.BorderSubtle}"
                                                        Margin="2,5"/>
                                             <Button x:Name="SortDirectionButton"
                                                     Grid.Column="2"
@@ -686,7 +687,7 @@
                                                     Click="OnSortDirectionClicked"
                                                     Background="Transparent"
                                                     BorderThickness="0"
-                                                    Foreground="{DynamicResource Theme.Brush.InfoText}"
+                                                    Foreground="{DynamicResource Theme.Brush.Accent}"
                                                     FontSize="15"
                                                     FontWeight="SemiBold"
                                                     Padding="0"
@@ -767,7 +768,7 @@
                         </Border>
 
                         <Border Grid.Column="1"
-                                Background="#A80B0D10"
+                                Background="{DynamicResource Theme.Brush.SurfaceTranslucent}"
                                 BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
                                 BorderThickness="1"
                                 CornerRadius="10"

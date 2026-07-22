@@ -23,6 +23,7 @@ public partial class ChannelOverlay : UserControl
     private bool _showAllVideos;
     private bool _processingPastedUrl;
     private bool _refreshingChannelStates;
+    private bool _updatingMaxDuration;
     private readonly Avalonia.Threading.DispatcherTimer _channelStateRefreshTimer = new()
     {
         Interval = TimeSpan.FromMilliseconds(750)
@@ -37,6 +38,8 @@ public partial class ChannelOverlay : UserControl
     public ChannelOverlay()
     {
         InitializeComponent();
+        GlobalMaxDurationBox.Minimum = AppSettingsStore.ChannelDownloadMinDurationMinutes;
+        GlobalMaxDurationBox.Maximum = AppSettingsStore.ChannelDownloadMaxDurationMinutes;
         _channelStateRefreshTimer.Tick += (_, _) =>
         {
             _channelStateRefreshTimer.Stop();
@@ -49,7 +52,9 @@ public partial class ChannelOverlay : UserControl
     {
         IsVisible = true;
         ChannelSidebar.IsVisible = false;
-        GlobalMaxDurationBox.Text = MusicLibraryService.Current.GetChannelMaxDownloadDurationMinutes().ToString();
+        _updatingMaxDuration = true;
+        GlobalMaxDurationBox.Value = MusicLibraryService.Current.GetChannelMaxDownloadDurationMinutes();
+        _updatingMaxDuration = false;
         RefreshChannels();
     }
 
@@ -279,21 +284,16 @@ public partial class ChannelOverlay : UserControl
         ChannelSidebar.IsVisible = true;
     }
 
-    private void OnGlobalMaxDurationLostFocus(object? sender, RoutedEventArgs e)
+    private void OnGlobalMaxDurationChanged(object? sender, NumericUpDownValueChangedEventArgs e)
     {
-        if (sender is not TextBox textBox)
+        if (_updatingMaxDuration || sender is not NumericUpDown numericUpDown || numericUpDown.Value is not { } value)
             return;
 
-        if (!int.TryParse(textBox.Text, out var minutes) || minutes < 1)
-        {
-            textBox.Text = MusicLibraryService.Current.GetChannelMaxDownloadDurationMinutes().ToString();
-            ToastRequested?.Invoke("Enter a duration of at least 1 minute");
-            return;
-        }
-
-        minutes = Math.Clamp(minutes, 1, 24 * 60);
+        var minutes = Math.Clamp(
+            decimal.ToInt32(decimal.Round(value)),
+            AppSettingsStore.ChannelDownloadMinDurationMinutes,
+            AppSettingsStore.ChannelDownloadMaxDurationMinutes);
         MusicLibraryService.Current.SetGlobalChannelMaxDownloadDuration(minutes);
-        textBox.Text = minutes.ToString();
         RefreshVideos();
         UpdateDownloadSummary();
         ToastRequested?.Invoke($"Global download limit set to {minutes} min");
