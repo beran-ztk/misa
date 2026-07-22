@@ -1380,6 +1380,22 @@ public class MusicDatabase
         return (int)trackId.Value;
     }
 
+    public bool DismissChannelVideo(int videoId)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+            UPDATE channel_videos
+            SET is_checked = 1,
+                download_status = 'NotQueued',
+                download_error = NULL,
+                updated_at = $now
+            WHERE id = $videoId AND is_checked = 0";
+        cmd.Parameters.AddWithValue("$videoId", videoId);
+        cmd.Parameters.AddWithValue("$now", DateTime.UtcNow.ToString("O"));
+        return cmd.ExecuteNonQuery() > 0;
+    }
+
     public HashSet<int> GetTrackIdsMissingAnalysis()
     {
         using var conn = Open();

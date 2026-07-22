@@ -2388,6 +2388,7 @@ public partial class MusicView : UserControl
 
     private void StopTrackPreview()
     {
+        ChannelOverlay.ClearActivePreview();
         if (!_isTrackPreviewActive) return;
 
         var snapshot = _previewPlaybackSnapshot;
@@ -2463,6 +2464,7 @@ public partial class MusicView : UserControl
     {
         if (_isTrackPreviewActive)
         {
+            ChannelOverlay.ClearActivePreview();
             _nextTrackIndex = -1;
             UpdateUpcomingBar();
             return;

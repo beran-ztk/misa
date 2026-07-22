@@ -227,6 +227,8 @@ public class MusicLibraryService
         return trackId is int id ? GetTrackById(id) : null;
     }
 
+    public bool DismissChannelVideo(int videoId) => _db.DismissChannelVideo(videoId);
+
     public HashSet<int> GetTrackIdsMissingAnalysis() => _db.GetTrackIdsMissingAnalysis();
 
     public async Task<ChannelRefreshResult> AddOrRefreshChannelAsync(
@@ -567,11 +569,9 @@ public class MusicLibraryService
             return true;
 
         // Older installations may no longer have the recorded archive at its original path.
-        // Analysis touches UpdatedAt, so a previously excluded track becomes exportable here
-        // even when it was downloaded before the legacy cutoff.
+        // UpdatedAt is metadata-only and must never cause the media file to be exported again.
         return string.IsNullOrWhiteSpace(previousExport.CutoffDownloadedAt)
-               || string.CompareOrdinal(track.DownloadedAt, previousExport.CutoffDownloadedAt) > 0
-               || string.CompareOrdinal(track.UpdatedAt, previousExport.ExportedAt) > 0;
+               || string.CompareOrdinal(track.DownloadedAt, previousExport.CutoffDownloadedAt) > 0;
     }
 
     private static string? ExportCover(string audioFilePath, string targetCoversDirectory, string trackFileName)

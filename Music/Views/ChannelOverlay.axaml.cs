@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -23,6 +24,7 @@ public partial class ChannelOverlay : UserControl
     private bool _showAllVideos;
     private bool _processingPastedUrl;
     private bool _refreshingChannelStates;
+    private int? _activePreviewTrackId;
     private readonly Avalonia.Threading.DispatcherTimer _channelStateRefreshTimer = new()
     {
         Interval = TimeSpan.FromMilliseconds(750)
@@ -205,6 +207,7 @@ public partial class ChannelOverlay : UserControl
         _currentVideos = MusicLibraryService.Current.GetChannelVideos(_selectedChannelId)
             .Select(video => new ChannelVideoDisplay(video))
             .ToList();
+        ApplyActivePreviewMarker();
 
         var videos = _showAllVideos
             ? _currentVideos
@@ -244,8 +247,23 @@ public partial class ChannelOverlay : UserControl
 
     private void OnVideoSkipClicked(object? sender, RoutedEventArgs e)
     {
-        if (sender is not Button button || button.DataContext is not ChannelVideoDisplay item || !item.CanReview)
+        if (sender is not Button button || button.DataContext is not ChannelVideoDisplay item || !item.CanDismiss)
             return;
+
+        if (item.TrackId is null)
+        {
+            if (!MusicLibraryService.Current.DismissChannelVideo(item.Id))
+            {
+                ToastRequested?.Invoke("Video could not be removed from pending");
+                return;
+            }
+
+            item.IsChecked = true;
+            RefreshChannelSummaries();
+            RefreshVideos();
+            ToastRequested?.Invoke("Removed from pending");
+            return;
+        }
 
         var track = MusicLibraryService.Current.SkipChannelVideo(item.Id);
         if (track is null)
@@ -266,7 +284,21 @@ public partial class ChannelOverlay : UserControl
         if (sender is not Button button || button.DataContext is not ChannelVideoDisplay item
             || item.TrackId is not int trackId || MusicLibraryService.Current.GetTrackById(trackId) is not { } track)
             return;
+        _activePreviewTrackId = track.Id;
+        ApplyActivePreviewMarker();
         PreviewRequested?.Invoke(track);
+    }
+
+    public void ClearActivePreview()
+    {
+        _activePreviewTrackId = null;
+        ApplyActivePreviewMarker();
+    }
+
+    private void ApplyActivePreviewMarker()
+    {
+        foreach (var video in _currentVideos)
+            video.IsActive = _activePreviewTrackId is int trackId && video.TrackId == trackId;
     }
 
     private void OnAutoDownloadClicked(object? sender, RoutedEventArgs e)
@@ -359,6 +391,7 @@ public partial class ChannelOverlay : UserControl
     private void OnCloseClicked(object? sender, RoutedEventArgs e)
     {
         _refreshCts?.Cancel();
+        ClearActivePreview();
         CloseRequested?.Invoke();
     }
 
@@ -430,6 +463,11 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
     private string _downloadErrorSummary = string.Empty;
     private string _downloadErrorDetails = string.Empty;
     private bool _hasDownloadError;
+    private bool _isActive;
+    private bool _canDismiss;
+    private string _dismissToolTip = "Skip (keep audio)";
+    private IBrush _borderBrush = Brushes.Transparent;
+    private Thickness _borderThickness;
 
     public ChannelVideoDisplay(ChannelVideo video)
     {
@@ -473,6 +511,27 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
         get => _canReview;
         private set => SetField(ref _canReview, value);
     }
+    public bool CanDismiss
+    {
+        get => _canDismiss;
+        private set => SetField(ref _canDismiss, value);
+    }
+    public string DismissToolTip
+    {
+        get => _dismissToolTip;
+        private set => SetField(ref _dismissToolTip, value);
+    }
+    public bool IsActive
+    {
+        get => _isActive;
+        set
+        {
+            if (_isActive == value)
+                return;
+            SetField(ref _isActive, value);
+            UpdateVisualState();
+        }
+    }
     public double ActionOpacity
     {
         get => _actionOpacity;
@@ -508,6 +567,16 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
         get => _background;
         private set => SetField(ref _background, value);
     }
+    public IBrush BorderBrush
+    {
+        get => _borderBrush;
+        private set => SetField(ref _borderBrush, value);
+    }
+    public Thickness BorderThickness
+    {
+        get => _borderThickness;
+        private set => SetField(ref _borderThickness, value);
+    }
     public double CheckOpacity
     {
         get => _checkOpacity;
@@ -532,16 +601,13 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
     private void SetChecked(bool value)
     {
         SetField(ref _isChecked, value, nameof(IsChecked));
-        Opacity = value ? 0.45 : 1;
-        Background = value
-            ? new SolidColorBrush(Color.Parse("#22192027"))
-            : new SolidColorBrush(Color.Parse("#10203422"));
         CheckBackground = ThemeResources.Brush(value ? "Theme.Brush.Success" : "Theme.Brush.Surface");
         CheckBorder = ThemeResources.Brush(value ? "Theme.Brush.Accent" : "Theme.Brush.Border");
         CheckOpacity = value ? 1 : 0.58;
         TextDecorations = value ? Avalonia.Media.TextDecorations.Strikethrough : null;
         CanReview = !value && TrackId is not null;
-        ActionOpacity = TrackId is not null && !value ? 0.78 : 0.3;
+        UpdateActions();
+        UpdateVisualState();
     }
 
     public void SetDownloadResult(int? trackId, string? error)
@@ -566,7 +632,26 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
         SetDownloadError(status == ChannelDownloadStatus.Failed ? error : null);
         CanPlay = TrackId is not null;
         CanReview = !IsChecked && TrackId is not null;
-        ActionOpacity = TrackId is not null && !IsChecked ? 0.78 : 0.3;
+        UpdateActions();
+    }
+
+    private void UpdateActions()
+    {
+        CanDismiss = !IsChecked && (TrackId is not null || DownloadStatus == ChannelDownloadStatus.Skipped);
+        DismissToolTip = TrackId is null ? "Remove from pending" : "Skip (keep audio)";
+        ActionOpacity = !IsChecked && (TrackId is not null || CanDismiss) ? 0.78 : 0.3;
+    }
+
+    private void UpdateVisualState()
+    {
+        Opacity = IsActive ? 1 : IsChecked ? 0.45 : 1;
+        Background = IsActive
+            ? ThemeResources.Brush("Theme.Brush.SurfaceSelected")
+            : IsChecked
+                ? new SolidColorBrush(Color.Parse("#22192027"))
+                : new SolidColorBrush(Color.Parse("#10203422"));
+        BorderBrush = IsActive ? ThemeResources.Brush("Theme.Brush.Accent") : Brushes.Transparent;
+        BorderThickness = IsActive ? new Thickness(1) : new Thickness(0);
     }
 
     private void SetDownloadError(string? error)
