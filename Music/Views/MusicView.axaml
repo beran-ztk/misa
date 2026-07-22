@@ -105,8 +105,15 @@
         </Image.Effect>
     </Image>
     <Rectangle x:Name="AppAtmosphereTint"
-               Fill="#00000000"
-               IsHitTestVisible="False"/>
+               IsHitTestVisible="False">
+        <Rectangle.Fill>
+            <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                <GradientStop Color="#24545FAF" Offset="0"/>
+                <GradientStop Color="#14734FA8" Offset="0.42"/>
+                <GradientStop Color="#00000000" Offset="0.82"/>
+            </LinearGradientBrush>
+        </Rectangle.Fill>
+    </Rectangle>
     <Rectangle Fill="#5C2A261C" IsHitTestVisible="False"/>
     <DockPanel LastChildFill="True">
 
@@ -418,11 +425,18 @@
                                 VerticalAlignment="Stretch"
                                 IsHitTestVisible="False"/>
                         <Border x:Name="PlayerAtmosphereTint"
-                                Background="#00000000"
                                 CornerRadius="10,10,0,0"
                                 HorizontalAlignment="Stretch"
                                 VerticalAlignment="Stretch"
-                                IsHitTestVisible="False"/>
+                                IsHitTestVisible="False">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0%,50%" EndPoint="100%,50%">
+                                    <GradientStop Color="#30545FAF" Offset="0"/>
+                                    <GradientStop Color="#24734FA8" Offset="0.58"/>
+                                    <GradientStop Color="#08000000" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
+                        </Border>
                         <Border x:Name="PlayerChromeEdge"
                                 Height="1"
                                 Margin="10,0"

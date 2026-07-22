@@ -18,6 +18,7 @@ using Avalonia.VisualTree;
 using Music.Core;
 using Music.Models;
 using Music.Services;
+using SkiaSharp;
 
 namespace Music.Views;
 
@@ -32,10 +33,20 @@ public partial class MusicView : UserControl
     private readonly WindowsMediaSession _windowsMediaSession = new();
     private readonly DiscordPresenceService _discordPresence = new();
     private readonly DispatcherTimer _atmosphereTimer = new() { Interval = TimeSpan.FromMilliseconds(33) };
-    private readonly SolidColorBrush _appAtmosphereBrush = new(Colors.Transparent);
-    private readonly SolidColorBrush _playerAtmosphereBrush = new(Colors.Transparent);
     private readonly SolidColorBrush _playerTopGlowBrush = new(Colors.Transparent);
     private readonly SolidColorBrush _playerChromeEdgeBrush = new(Color.Parse("#4A756B54"));
+    private readonly GradientStop _appAmbientPrimaryStop;
+    private readonly GradientStop _appAmbientSecondaryStop;
+    private readonly GradientStop _playerAmbientPrimaryStop;
+    private readonly GradientStop _playerAmbientSecondaryStop;
+    private static readonly AmbientPalette DefaultAmbientPalette = new(
+        Color.Parse("#5865B8"),
+        Color.Parse("#8051AE"));
+    private Color _ambientPrimary = DefaultAmbientPalette.Primary;
+    private Color _ambientSecondary = DefaultAmbientPalette.Secondary;
+    private Color _targetAmbientPrimary = DefaultAmbientPalette.Primary;
+    private Color _targetAmbientSecondary = DefaultAmbientPalette.Secondary;
+    private bool _hasArtworkPalette;
     private bool _isSeeking;
     private double _targetEnergy;
     private double _targetBass;
@@ -102,6 +113,12 @@ public partial class MusicView : UserControl
     public MusicView()
     {
         InitializeComponent();
+        var appAmbientGradient = (LinearGradientBrush)AppAtmosphereTint.Fill!;
+        _appAmbientPrimaryStop = appAmbientGradient.GradientStops[0];
+        _appAmbientSecondaryStop = appAmbientGradient.GradientStops[1];
+        var playerAmbientGradient = (LinearGradientBrush)PlayerAtmosphereTint.Background!;
+        _playerAmbientPrimaryStop = playerAmbientGradient.GradientStops[0];
+        _playerAmbientSecondaryStop = playerAmbientGradient.GradientStops[1];
         AddHandler(KeyDownEvent, OnKeyDown, RoutingStrategies.Tunnel);
         _globalMediaKeys.Pressed += OnGlobalMediaKeyPressed;
         _globalMediaKeys.Start();
@@ -122,8 +139,6 @@ public partial class MusicView : UserControl
         _engine.ProgressUpdated += OnProgressUpdated;
         _engine.AudioLevelUpdated += OnAudioLevelUpdated;
         _atmosphereTimer.Tick += (_, _) => UpdateAudioReactiveAtmosphere();
-        AppAtmosphereTint.Fill = _appAtmosphereBrush;
-        PlayerAtmosphereTint.Background = _playerAtmosphereBrush;
         PlayerChromeEdge.Background = _playerChromeEdgeBrush;
         PlayerTopGlow.Background = _playerTopGlowBrush;
         InitializeSortControls();
@@ -2606,9 +2621,11 @@ public partial class MusicView : UserControl
         }
 
         var previousArtwork = _playerArtwork;
-        var artwork = LoadPlayerArtwork(track);
-        _playerArtwork = artwork;
+        var loadedArtwork = LoadPlayerArtwork(track);
+        var artwork = loadedArtwork.Artwork;
+        _playerArtwork = loadedArtwork.Artwork;
         _playerArtworkTrackId = track.Id;
+        SetAmbientPalette(loadedArtwork.Palette, artwork is not null);
         SetPlayerArtworkBackground(artwork);
         previousArtwork?.Dispose();
     }
@@ -2621,7 +2638,7 @@ public partial class MusicView : UserControl
         AppArtworkBackground.IsVisible = artwork is not null;
     }
 
-    private static Bitmap? LoadPlayerArtwork(MusicTrack track)
+    private static LoadedPlayerArtwork LoadPlayerArtwork(MusicTrack track)
     {
         try
         {
@@ -2631,14 +2648,16 @@ public partial class MusicView : UserControl
                 ? thumbnail
                 : MusicLibraryService.Current.GetTrackThumbnail(track.Id);
             if (artwork is not { Length: > 0 })
-                return null;
+                return new LoadedPlayerArtwork(null, DefaultAmbientPalette);
 
             using var stream = new MemoryStream(artwork);
-            return new Bitmap(stream);
+            return new LoadedPlayerArtwork(
+                new Bitmap(stream),
+                ExtractAmbientPalette(artwork));
         }
         catch
         {
-            return null;
+            return new LoadedPlayerArtwork(null, DefaultAmbientPalette);
         }
     }
 
@@ -2648,11 +2667,120 @@ public partial class MusicView : UserControl
         PlayerArtworkBackground.IsVisible = false;
         AppArtworkBackground.Source = null;
         AppArtworkBackground.IsVisible = false;
+        SetAmbientPalette(DefaultAmbientPalette, hasArtwork: false);
         ResetAudioAtmosphere();
 
         _playerArtwork?.Dispose();
         _playerArtwork = null;
         _playerArtworkTrackId = -1;
+    }
+
+    private void SetAmbientPalette(AmbientPalette palette, bool hasArtwork)
+    {
+        _targetAmbientPrimary = palette.Primary;
+        _targetAmbientSecondary = palette.Secondary;
+        _hasArtworkPalette = hasArtwork;
+        StartAudioAtmosphereTimer();
+    }
+
+    private static AmbientPalette ExtractAmbientPalette(byte[] artwork)
+    {
+        using var bitmap = SKBitmap.Decode(artwork);
+        if (bitmap is null || bitmap.Width == 0 || bitmap.Height == 0)
+            return DefaultAmbientPalette;
+
+        const int hueBinCount = 18;
+        var bins = new AmbientColorBin[hueBinCount];
+        for (var index = 0; index < bins.Length; index++)
+            bins[index] = new AmbientColorBin();
+
+        var step = Math.Max(1, (int)Math.Sqrt((bitmap.Width * bitmap.Height) / 5000d));
+        for (var y = step / 2; y < bitmap.Height; y += step)
+        {
+            for (var x = step / 2; x < bitmap.Width; x += step)
+            {
+                var pixel = bitmap.GetPixel(x, y);
+                if (pixel.Alpha < 160)
+                    continue;
+
+                pixel.ToHsl(out var hue, out var saturation, out var lightness);
+                if (saturation < 18 || lightness < 7 || lightness > 92)
+                    continue;
+
+                var midtoneWeight = 1 - Math.Abs((lightness / 100d) - 0.5) * 0.55;
+                var weight = (0.25 + saturation / 100d) * midtoneWeight;
+                var binIndex = Math.Clamp((int)(hue / (360d / hueBinCount)), 0, hueBinCount - 1);
+                bins[binIndex].Add(pixel, weight);
+            }
+        }
+
+        var primaryIndex = Array.FindIndex(bins, bin => ReferenceEquals(bin, bins.MaxBy(candidate => candidate.Weight)));
+        if (primaryIndex < 0 || bins[primaryIndex].Weight <= 0)
+            return DefaultAmbientPalette;
+
+        var secondaryCandidates = Enumerable.Range(0, bins.Length)
+            .Where(index => bins[index].Weight > 0 && HueBinDistance(index, primaryIndex, hueBinCount) >= 2)
+            .ToList();
+        var secondaryIndex = secondaryCandidates.Count > 0
+            ? secondaryCandidates.MaxBy(index => bins[index].Weight * (1 + HueBinDistance(index, primaryIndex, hueBinCount) * 0.08))
+            : primaryIndex;
+
+        var primary = NormalizeAmbientColor(bins[primaryIndex].AverageColor());
+        var secondary = secondaryIndex != primaryIndex && bins[secondaryIndex].Weight > 0
+            ? NormalizeAmbientColor(bins[secondaryIndex].AverageColor())
+            : RotateAmbientColor(primary, 46);
+        return new AmbientPalette(primary, secondary);
+    }
+
+    private static int HueBinDistance(int left, int right, int count)
+    {
+        var distance = Math.Abs(left - right);
+        return Math.Min(distance, count - distance);
+    }
+
+    private static Color NormalizeAmbientColor(SKColor color)
+    {
+        color.ToHsl(out var hue, out var saturation, out var lightness);
+        var normalized = SKColor.FromHsl(
+            hue,
+            Math.Clamp(saturation, 55, 82),
+            Math.Clamp(lightness, 40, 56));
+        return Color.FromRgb(normalized.Red, normalized.Green, normalized.Blue);
+    }
+
+    private static Color RotateAmbientColor(Color color, float degrees)
+    {
+        var source = new SKColor(color.R, color.G, color.B);
+        source.ToHsl(out var hue, out var saturation, out var lightness);
+        var rotated = SKColor.FromHsl((hue + degrees) % 360, saturation, lightness);
+        return Color.FromRgb(rotated.Red, rotated.Green, rotated.Blue);
+    }
+
+    private sealed record LoadedPlayerArtwork(Bitmap? Artwork, AmbientPalette Palette);
+    private sealed record AmbientPalette(Color Primary, Color Secondary);
+
+    private sealed class AmbientColorBin
+    {
+        private double _red;
+        private double _green;
+        private double _blue;
+
+        public double Weight { get; private set; }
+
+        public void Add(SKColor color, double weight)
+        {
+            _red += color.Red * weight;
+            _green += color.Green * weight;
+            _blue += color.Blue * weight;
+            Weight += weight;
+        }
+
+        public SKColor AverageColor() => Weight <= 0
+            ? SKColors.Transparent
+            : new SKColor(
+                ToByte(_red / Weight),
+                ToByte(_green / Weight),
+                ToByte(_blue / Weight));
     }
 
     // ─── Audio-reactive atmosphere ───────────────────────────────────────────
@@ -2705,7 +2833,10 @@ public partial class MusicView : UserControl
         if (_engine.State == EngineState.Playing)
             return;
 
-        if (_visualEnergy < 0.003 && _visualBass < 0.003 && _visualTreble < 0.003)
+        if (_visualEnergy < 0.003
+            && _visualBass < 0.003
+            && _visualTreble < 0.003
+            && AmbientPaletteSettled())
         {
             ResetAudioAtmosphere();
             _atmosphereTimer.Stop();
@@ -2722,6 +2853,9 @@ public partial class MusicView : UserControl
         var visibilityEnergy = Math.Sqrt(energy);
         var hasArtwork = AppArtworkBackground.IsVisible || PlayerArtworkBackground.IsVisible;
 
+        _ambientPrimary = ApproachColor(_ambientPrimary, _targetAmbientPrimary, 0.075);
+        _ambientSecondary = ApproachColor(_ambientSecondary, _targetAmbientSecondary, 0.075);
+
         AppArtworkBackground.Opacity = AppArtworkBackground.IsVisible ? 0.25 + visibilityEnergy * 0.21 : 0;
         PlayerArtworkBackground.Opacity = PlayerArtworkBackground.IsVisible ? 0.55 + visibilityEnergy * 0.15 : 0;
 
@@ -2730,25 +2864,54 @@ public partial class MusicView : UserControl
         SetBlur(AppArtworkBackground, 20 + energy * 8.0);
         SetBlur(PlayerArtworkBackground, 30 + energy * 6.0 + treble * 4.0);
 
-        var red = ToByte(170 + bass * 30 + treble * 24);
-        var green = ToByte(160 + energy * 28 + treble * 22);
-        var blue = ToByte(128 - bass * 10 + treble * 16);
-        _appAtmosphereBrush.Color = hasArtwork
-            ? Color.FromArgb(ToByte(10 + energy * 36 + treble * 16), red, green, blue)
-            : Colors.Transparent;
-        _playerAtmosphereBrush.Color = hasArtwork
-            ? Color.FromArgb(ToByte(16 + energy * 22 + bass * 9), red, green, blue)
-            : Colors.Transparent;
-        _playerTopGlowBrush.Color = hasArtwork
-            ? Color.FromArgb(ToByte(28 + energy * 60 + treble * 24), red, green, blue)
-            : Colors.Transparent;
-        _playerChromeEdgeBrush.Color = hasArtwork
-            ? Color.FromArgb(ToByte(20 + energy * 30), red, green, blue)
-            : Color.Parse("#4A756B54");
+        var primary = MixColor(_ambientPrimary, Colors.White, energy * 0.08 + treble * 0.05);
+        var secondary = MixColor(_ambientSecondary, Colors.White, energy * 0.05);
+        var artworkLift = hasArtwork && _hasArtworkPalette ? 1d : 0d;
+
+        _appAmbientPrimaryStop.Color = WithAlpha(primary,
+            28 + artworkLift * 20 + energy * 32 + treble * 12);
+        _appAmbientSecondaryStop.Color = WithAlpha(secondary,
+            16 + artworkLift * 16 + energy * 20);
+        _playerAmbientPrimaryStop.Color = WithAlpha(primary,
+            34 + artworkLift * 24 + energy * 34 + bass * 10);
+        _playerAmbientSecondaryStop.Color = WithAlpha(secondary,
+            24 + artworkLift * 20 + energy * 24 + treble * 8);
+        _playerTopGlowBrush.Color = WithAlpha(primary,
+            24 + artworkLift * 12 + energy * 60 + treble * 24);
+        _playerChromeEdgeBrush.Color = WithAlpha(
+            MixColor(primary, secondary, 0.35),
+            24 + artworkLift * 8 + energy * 30);
     }
 
     private static double Approach(double current, double target, double amount) =>
         current + (target - current) * amount;
+
+    private bool AmbientPaletteSettled() =>
+        ColorDistance(_ambientPrimary, _targetAmbientPrimary) < 2
+        && ColorDistance(_ambientSecondary, _targetAmbientSecondary) < 2;
+
+    private static Color ApproachColor(Color current, Color target, double amount) =>
+        Color.FromRgb(
+            ToByte(Approach(current.R, target.R, amount)),
+            ToByte(Approach(current.G, target.G, amount)),
+            ToByte(Approach(current.B, target.B, amount)));
+
+    private static Color MixColor(Color from, Color to, double amount)
+    {
+        amount = Math.Clamp(amount, 0, 1);
+        return Color.FromRgb(
+            ToByte(from.R + (to.R - from.R) * amount),
+            ToByte(from.G + (to.G - from.G) * amount),
+            ToByte(from.B + (to.B - from.B) * amount));
+    }
+
+    private static Color WithAlpha(Color color, double alpha) =>
+        Color.FromArgb(ToByte(alpha), color.R, color.G, color.B);
+
+    private static double ColorDistance(Color left, Color right) =>
+        Math.Abs(left.R - right.R)
+        + Math.Abs(left.G - right.G)
+        + Math.Abs(left.B - right.B);
 
     private static double SoftLimit(double value) =>
         Math.Clamp(1 - Math.Exp(-Math.Max(0, value) * 1.45), 0, 1);
