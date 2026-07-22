@@ -69,10 +69,25 @@
         <!-- Settings navigation -->
         <Border Grid.Column="0" Background="#B0090B0E" Padding="16,20,16,16">
             <Grid RowDefinitions="Auto,Auto,*">
-                <StackPanel Spacing="3">
-                    <TextBlock Text="Settings" FontSize="18" FontWeight="SemiBold"/>
-                    <TextBlock Text="Library setup" FontSize="11" Opacity="0.52"/>
-                </StackPanel>
+                <Grid ColumnDefinitions="34,*" ColumnSpacing="10">
+                    <Border Width="32"
+                            Height="32"
+                            Background="#1E84B8E8"
+                            BorderBrush="#568FC0DD"
+                            BorderThickness="1"
+                            CornerRadius="9">
+                        <TextBlock Text="M"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   Foreground="#BDE8FF"
+                                   FontSize="14"
+                                   FontWeight="Bold"/>
+                    </Border>
+                    <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                        <TextBlock Text="Music Settings" FontSize="17" FontWeight="SemiBold"/>
+                        <TextBlock Text="Library &amp; application" FontSize="10.5" Opacity="0.52"/>
+                    </StackPanel>
+                </Grid>
 
                 <StackPanel Grid.Row="1" Margin="0,26,0,0" Spacing="6">
                     <TextBlock Text="CLASSIFICATION" FontSize="10" FontWeight="SemiBold"
