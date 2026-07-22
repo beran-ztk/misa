@@ -611,8 +611,8 @@ public partial class MusicView : UserControl
 
     private static IBrush CategoryBrush(string? color)
     {
-        try { return new SolidColorBrush(Color.Parse(string.IsNullOrWhiteSpace(color) ? "#65BCEB" : color)); }
-        catch { return new SolidColorBrush(Color.Parse("#65BCEB")); }
+        try { return new SolidColorBrush(Color.Parse(string.IsNullOrWhiteSpace(color) ? "#C7E59F" : color)); }
+        catch { return new SolidColorBrush(Color.Parse("#C7E59F")); }
     }
 
     private static IBrush SafeBrush(string? color, string fallback)

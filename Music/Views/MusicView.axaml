@@ -285,7 +285,7 @@
                                           RowDefinitions="Auto,Auto"
                                           Margin="0,0,78,0"
                                           RowSpacing="4">
-                                        <Grid Grid.Row="0" Grid.Column="0" ColumnDefinitions="Auto,Auto,*">
+                                        <Grid Grid.Row="0" Grid.Column="0" ColumnDefinitions="Auto,*">
                                             <Border Background="{Binding RatingBackground}"
                                                     BorderBrush="{Binding RatingBorder}"
                                                     BorderThickness="1"
@@ -302,21 +302,19 @@
                                                            VerticalAlignment="Center"
                                                            Foreground="#EEEDE3"/>
                                             </Border>
-                                            <Border Grid.Column="1"
-                                                    Width="19"
-                                                    Background="Transparent">
-                                                <Image Source="{SvgImage /Assets/public.svg}"
-                                                       IsVisible="{Binding Track.IsPublic}"
-                                                       Width="13" Height="13"
-                                                       Margin="0,0,6,0"
-                                                       Opacity="0.9"
-                                                       ToolTip.Tip="Public track"/>
-                                            </Border>
-                                            <TextBlock Grid.Column="2" Text="{Binding Track.Title}"
+                                            <TextBlock Grid.Column="1" Text="{Binding Track.Title}"
                                                    Foreground="{Binding TitleBrush}"
                                                    FontSize="14" FontWeight="SemiBold"
                                                    VerticalAlignment="Center"
+                                                   Margin="0,0,22,0"
                                                    TextTrimming="CharacterEllipsis"/>
+                                            <Image Grid.Column="1"
+                                                   Source="{SvgImage /Assets/public.svg}"
+                                                   IsVisible="{Binding Track.IsPublic}"
+                                                   Width="13" Height="13"
+                                                   HorizontalAlignment="Right"
+                                                   Opacity="0.9"
+                                                   ToolTip.Tip="Public track"/>
                                         </Grid>
                                         <Grid Grid.Row="1" Grid.Column="0" ColumnDefinitions="Auto,Auto,Auto,*">
                                             <TextBlock Grid.Column="0" Text="{Binding ChannelText}"

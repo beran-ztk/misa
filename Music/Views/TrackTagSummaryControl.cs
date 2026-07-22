@@ -22,7 +22,7 @@ public sealed class TrackTagSummaryControl : Panel
     {
         FontSize = 9.5,
         FontWeight = FontWeight.SemiBold,
-        Foreground = new SolidColorBrush(Color.Parse("#AFC8D6")),
+        Foreground = new SolidColorBrush(Color.Parse("#C2D9A5")),
         VerticalAlignment = VerticalAlignment.Center
     };
     private readonly Border _moreChip;
@@ -77,8 +77,8 @@ public sealed class TrackTagSummaryControl : Panel
         Padding = new Thickness(6, 0),
         Margin = new Thickness(0, 0, 6, 0),
         CornerRadius = new CornerRadius(8),
-        Background = new SolidColorBrush(Color.Parse("#182A34")),
-        BorderBrush = new SolidColorBrush(Color.Parse("#355565")),
+        Background = new SolidColorBrush(Color.Parse("#202B1E")),
+        BorderBrush = new SolidColorBrush(Color.Parse("#536746")),
         BorderThickness = new Thickness(1),
         VerticalAlignment = VerticalAlignment.Center,
         Child = content
