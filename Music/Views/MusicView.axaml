@@ -290,22 +290,28 @@
                                                     BorderBrush="{Binding RatingBorder}"
                                                     BorderThickness="1"
                                                     CornerRadius="4"
+                                                    Width="58"
                                                     Height="18"
-                                                    Padding="5,0"
+                                                    Padding="4,0"
                                                     Margin="0,0,8,0"
                                                     VerticalAlignment="Center">
                                                 <TextBlock Text="{Binding RatingText}"
                                                            FontSize="9.5"
+                                                           HorizontalAlignment="Stretch"
+                                                           TextAlignment="Center"
                                                            VerticalAlignment="Center"
                                                            Foreground="#EEEDE3"/>
                                             </Border>
-                                            <Image Grid.Column="1"
-                                                   Source="{SvgImage /Assets/public.svg}"
-                                                   IsVisible="{Binding Track.IsPublic}"
-                                                   Width="13" Height="13"
-                                                   Margin="0,0,6,0"
-                                                   Opacity="0.9"
-                                                   ToolTip.Tip="Public track"/>
+                                            <Border Grid.Column="1"
+                                                    Width="19"
+                                                    Background="Transparent">
+                                                <Image Source="{SvgImage /Assets/public.svg}"
+                                                       IsVisible="{Binding Track.IsPublic}"
+                                                       Width="13" Height="13"
+                                                       Margin="0,0,6,0"
+                                                       Opacity="0.9"
+                                                       ToolTip.Tip="Public track"/>
+                                            </Border>
                                             <TextBlock Grid.Column="2" Text="{Binding Track.Title}"
                                                    Foreground="{Binding TitleBrush}"
                                                    FontSize="14" FontWeight="SemiBold"
