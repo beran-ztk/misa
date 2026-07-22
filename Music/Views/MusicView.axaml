@@ -352,7 +352,12 @@
                                             <views:TrackTagSummaryControl Tags="{Binding TagDisplays}"
                                                                           Grid.Column="3"
                                                                           Margin="12,0,8,0"
-                                                                          HorizontalAlignment="Stretch"/>
+                                                                          HorizontalAlignment="Stretch"
+                                                                          VerticalAlignment="Center">
+                                                <views:TrackTagSummaryControl.RenderTransform>
+                                                    <TranslateTransform Y="1"/>
+                                                </views:TrackTagSummaryControl.RenderTransform>
+                                            </views:TrackTagSummaryControl>
                                         </Grid>
                                     </Grid>
 
