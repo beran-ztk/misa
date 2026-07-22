@@ -50,21 +50,31 @@ public record TrackDisplayItem(
 
     public IBrush RatingBackground => RatingText switch
     {
-        "Favorite" => new SolidColorBrush(Color.FromArgb(42, 255, 202, 91)),
-        "Great" => new SolidColorBrush(Color.FromArgb(38, 72, 194, 120)),
-        "Good" => new SolidColorBrush(Color.FromArgb(36, 58, 151, 214)),
-        "Okay" => new SolidColorBrush(Color.FromArgb(32, 156, 166, 179)),
-        "Skip" => new SolidColorBrush(Color.FromArgb(35, 224, 92, 92)),
-        _ => new SolidColorBrush(Color.FromArgb(24, 156, 166, 179))
+        "Favorite" => new SolidColorBrush(Color.FromArgb(70, 132, 105, 36)),
+        "Great" => new SolidColorBrush(Color.FromArgb(68, 35, 105, 58)),
+        "Good" => new SolidColorBrush(Color.FromArgb(66, 31, 93, 82)),
+        "Okay" => new SolidColorBrush(Color.FromArgb(62, 83, 84, 64)),
+        "Skip" => new SolidColorBrush(Color.FromArgb(66, 124, 47, 40)),
+        _ => new SolidColorBrush(Color.FromArgb(60, 103, 76, 42))
     };
 
     public IBrush RatingBorder => RatingText switch
     {
-        "Favorite" => new SolidColorBrush(Color.FromArgb(105, 255, 202, 91)),
-        "Great" => new SolidColorBrush(Color.FromArgb(100, 72, 194, 120)),
-        "Good" => new SolidColorBrush(Color.FromArgb(95, 58, 151, 214)),
-        "Okay" => new SolidColorBrush(Color.FromArgb(80, 156, 166, 179)),
-        "Skip" => new SolidColorBrush(Color.FromArgb(95, 224, 92, 92)),
-        _ => new SolidColorBrush(Color.FromArgb(65, 156, 166, 179))
+        "Favorite" => new SolidColorBrush(Color.FromArgb(185, 219, 184, 85)),
+        "Great" => new SolidColorBrush(Color.FromArgb(175, 83, 176, 105)),
+        "Good" => new SolidColorBrush(Color.FromArgb(170, 76, 164, 139)),
+        "Okay" => new SolidColorBrush(Color.FromArgb(150, 139, 144, 108)),
+        "Skip" => new SolidColorBrush(Color.FromArgb(170, 201, 82, 68)),
+        _ => new SolidColorBrush(Color.FromArgb(160, 190, 139, 69))
+    };
+
+    public IBrush RatingForeground => RatingText switch
+    {
+        "Favorite" => new SolidColorBrush(Color.FromRgb(255, 230, 150)),
+        "Great" => new SolidColorBrush(Color.FromRgb(188, 242, 185)),
+        "Good" => new SolidColorBrush(Color.FromRgb(176, 232, 212)),
+        "Okay" => new SolidColorBrush(Color.FromRgb(226, 224, 194)),
+        "Skip" => new SolidColorBrush(Color.FromRgb(246, 175, 160)),
+        _ => new SolidColorBrush(Color.FromRgb(243, 203, 128))
     };
 }

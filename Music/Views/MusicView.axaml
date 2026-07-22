@@ -131,14 +131,15 @@
                                VerticalAlignment="Center"/>
                     <TextBlock x:Name="PlaylistSummaryText"
                                Text=""
+                               FontFamily="Consolas"
                                FontSize="11"
                                Foreground="#A9AD98"
                                Opacity="0.72"
-                               Margin="0,-2,0,0"
                                VerticalAlignment="Center"
                                TextTrimming="CharacterEllipsis"/>
                     <TextBlock x:Name="QueueStatusText"
                                IsVisible="False"
+                               FontFamily="Consolas"
                                FontSize="11"
                                Foreground="#BAC9A4"
                                TextTrimming="CharacterEllipsis"/>
@@ -274,7 +275,9 @@
                                             Width="42" Height="42"
                                             CornerRadius="6" ClipToBounds="True"
                                             Margin="8,0,12,0" VerticalAlignment="Center"
-                                            Background="#292C25">
+                                            Background="#292C25"
+                                            BorderBrush="#414B3B"
+                                            BorderThickness="1">
                                         <Image Source="{Binding Thumbnail}"
                                                Stretch="UniformToFill"/>
                                     </Border>
@@ -289,18 +292,19 @@
                                             <Border Background="{Binding RatingBackground}"
                                                     BorderBrush="{Binding RatingBorder}"
                                                     BorderThickness="1"
-                                                    CornerRadius="4"
+                                                    CornerRadius="3"
                                                     Width="52"
                                                     Height="18"
                                                     Padding="4,0"
                                                     Margin="0,0,8,0"
                                                     VerticalAlignment="Center">
                                                 <TextBlock Text="{Binding RatingText}"
+                                                           FontFamily="Consolas"
                                                            FontSize="9.5"
                                                            HorizontalAlignment="Stretch"
                                                            TextAlignment="Center"
                                                            VerticalAlignment="Center"
-                                                           Foreground="#EEEDE3"/>
+                                                           Foreground="{Binding RatingForeground}"/>
                                             </Border>
                                             <TextBlock Grid.Column="1" Text="{Binding Track.Title}"
                                                    Foreground="{Binding TitleBrush}"
@@ -349,8 +353,10 @@
 
                                 </Grid>
                                 <TextBlock Text="{Binding DurationText}"
+                                           FontFamily="Consolas"
                                            FontSize="10.5"
-                                           Opacity="0.62"
+                                           Foreground="#BDD0AC"
+                                           Opacity="0.88"
                                            Width="48"
                                            Margin="0,0,15,0"
                                            HorizontalAlignment="Right"
@@ -359,7 +365,7 @@
                                            IsHitTestVisible="False"/>
                                 </Panel>
                             </Border>
-                            <Rectangle Grid.Row="1" Height="1" Fill="#2D312A" Margin="18,3,18,3"/>
+                            <Rectangle Grid.Row="1" Height="1" Fill="#343930" Margin="18,3,18,3"/>
                         </Grid>
                     </DataTemplate>
                 </ListBox.ItemTemplate>
