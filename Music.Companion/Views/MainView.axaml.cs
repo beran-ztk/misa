@@ -7,6 +7,7 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Music.Core;
+using SkiaSharp;
 using System.IO.Compression;
 
 namespace Music.Companion.Views;
@@ -15,13 +16,30 @@ public partial class MainView : UserControl
 {
     private readonly ICompanionAudioPlayer _audio = CompanionServices.AudioPlayer;
     private readonly DispatcherTimer _timer;
+    private readonly DispatcherTimer _artworkTimer;
 
     private LoadedMusicLibrary _loadedLibrary = new("", PortableMusicLibrary.Empty);
 
     private List<PortableTrack> _filteredTracks = [];
     private readonly List<FilterGroupControls> _filterGroups = [];
-    private readonly Dictionary<string, Bitmap?> _coverCache = new(StringComparer.OrdinalIgnoreCase);
+    private const int ThumbnailCacheCapacity = 192;
+    private static readonly TimeSpan AutomaticArtworkTransitionDuration = TimeSpan.FromSeconds(6.5);
+    private static readonly TimeSpan ManualArtworkTransitionDuration = TimeSpan.FromSeconds(1.8);
+    private static readonly AmbientPalette DefaultAmbientPalette = new(
+        Color.FromRgb(91, 110, 72),
+        Color.FromRgb(74, 64, 105));
+
+    private readonly Dictionary<string, Bitmap?> _thumbnailCache = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Queue<string> _thumbnailCacheOrder = new();
     private readonly Random _rng = new();
+    private Bitmap? _activeArtwork;
+    private Bitmap? _fadedArtwork;
+    private string? _activeArtworkFileName;
+    private DateTimeOffset _artworkTransitionStartedAt;
+    private TimeSpan _artworkTransitionDuration = ManualArtworkTransitionDuration;
+    private double _artworkTransitionProgress = 1;
+    private AmbientPalette _activeAmbientPalette = DefaultAmbientPalette;
+    private AmbientPalette _fadedAmbientPalette = DefaultAmbientPalette;
     private int _currentIndex = -1;
     private string? _currentTrackFileName;
     private bool _isSeeking;
@@ -39,27 +57,37 @@ public partial class MainView : UserControl
         CheckBox NegateBox,
         StackPanel Container);
 
-    private sealed record TrackRow(PortableTrack Track, Bitmap? Cover, bool IsCurrent, bool IsMarkedForReview)
+    private sealed class TrackRow
     {
         private static readonly IBrush TransparentBrush = Brushes.Transparent;
+        private readonly MainView _owner;
+
+        public TrackRow(MainView owner, PortableTrack track, bool isCurrent)
+        {
+            _owner = owner;
+            Track = track;
+            IsCurrent = isCurrent;
+        }
+
+        public PortableTrack Track { get; }
+        public bool IsCurrent { get; }
+        public bool IsMarkedForReview => Track.NeedsReview;
+        public Bitmap? Cover => _owner.LoadThumbnail(Track);
 
         public string Title => Track.Title;
         public string MetadataText => string.Join(" · ", new[]
             {
                 Track.ChannelName,
                 Track.GenreText,
-                Track.StyleText
+                Track.StyleText,
+                string.Join("  ", (Track.Tags ?? []).Select(tag => $"# {tag}"))
             }
             .Where(value => !string.IsNullOrWhiteSpace(value)));
-        public string TagText => string.Join("  ", (Track.Tags ?? []).Select(tag => $"# {tag}"));
         public string DurationText => Track.DurationText;
         public string Rating => string.IsNullOrWhiteSpace(Track.Rating) ? "None" : Track.Rating;
         public IBrush CurrentBackground => IsCurrent
             ? CompanionTheme.Brush("Mobile.Brush.SurfaceSelected")
-            : CompanionTheme.Brush("Mobile.Brush.Surface");
-        public IBrush CurrentBorder => CompanionTheme.Brush(IsCurrent
-            ? "Mobile.Brush.Accent"
-            : "Mobile.Brush.BorderSubtle");
+            : TransparentBrush;
         public IBrush CurrentAccent => IsCurrent
             ? CompanionTheme.Brush("Mobile.Brush.AccentStrong")
             : TransparentBrush;
@@ -69,18 +97,25 @@ public partial class MainView : UserControl
     {
         InitializeComponent();
 
-        SearchBox.TextChanged += (_, _) => ApplyFilter();
+        SearchBox.TextChanged += (_, _) =>
+        {
+            SearchButton.Opacity = SearchBox.IsVisible || !string.IsNullOrWhiteSpace(SearchBox.Text) ? 1 : 0.72;
+            ApplyFilter();
+        };
         RatingFilter.SelectionChanged += (_, _) => ApplyFilter();
 
         ProgressSlider.AddHandler(PointerPressedEvent, OnProgressPressed, RoutingStrategies.Tunnel);
         ProgressSlider.AddHandler(PointerReleasedEvent, OnProgressReleased, RoutingStrategies.Tunnel);
 
-        _audio.PlaybackEnded += () => Dispatcher.UIThread.Post(PlayNext);
+        _audio.PlaybackEnded += () => Dispatcher.UIThread.Post(() => PlayNext(isAutomaticTransition: true));
         CompanionServices.MediaControls.CommandRequested += OnMediaCommandRequested;
         CompanionServices.MediaControls.SeekRequested += OnMediaSeekRequested;
         _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
         _timer.Tick += (_, _) => UpdatePlaybackUi();
         _timer.Start();
+
+        _artworkTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(33) };
+        _artworkTimer.Tick += (_, _) => UpdateArtworkTransition();
 
         _ = LoadLibraryAsync();
     }
@@ -89,7 +124,7 @@ public partial class MainView : UserControl
     {
         try
         {
-            ClearCoverCache();
+            ClearThumbnailCache();
             _loadedLibrary = await PortableLibraryStore.LoadAsync(CompanionServices.LibraryStorage.LibraryDirectory);
             StatusText.Text = "";
         }
@@ -174,11 +209,7 @@ public partial class MainView : UserControl
     private void RefreshTrackRows(bool scrollToCurrent = false)
     {
         var rows = _filteredTracks
-            .Select((track, index) => new TrackRow(
-                track,
-                LoadCover(track),
-                index == _currentIndex,
-                track.NeedsReview))
+            .Select((track, index) => new TrackRow(this, track, index == _currentIndex))
             .ToList();
 
         TrackList.ItemsSource = rows;
@@ -188,7 +219,7 @@ public partial class MainView : UserControl
             Dispatcher.UIThread.Post(() => TrackList.ScrollIntoView(rows[_currentIndex]));
     }
 
-    private async Task PlayTrackAtAsync(int index)
+    private async Task PlayTrackAtAsync(int index, bool isAutomaticTransition = false)
     {
         if (index < 0 || index >= _filteredTracks.Count)
             return;
@@ -211,7 +242,7 @@ public partial class MainView : UserControl
             var playerMetadata = string.Join(" · ", new[] { track.ChannelName, track.GenreText }
                 .Where(value => !string.IsNullOrWhiteSpace(value)));
             NowPlayingMetaText.Text = string.IsNullOrWhiteSpace(playerMetadata) ? "Local track" : playerMetadata;
-            NowPlayingCover.Source = LoadCover(track);
+            UpdateArtwork(track, isAutomaticTransition);
             UpdatePlayPauseIcon();
             UpdateReviewButton();
             UpdateMediaControls();
@@ -277,10 +308,10 @@ public partial class MainView : UserControl
 
     private void OnNextClicked(object? sender, RoutedEventArgs e)
     {
-        PlayNext();
+        PlayNext(isAutomaticTransition: false);
     }
 
-    private void PlayNext()
+    private void PlayNext(bool isAutomaticTransition = false)
     {
         if (_filteredTracks.Count == 0)
             return;
@@ -294,6 +325,7 @@ public partial class MainView : UserControl
             NowPlayingText.Text = "Nothing playing";
             NowPlayingMetaText.Text = "Choose a track";
             NowPlayingCover.Source = null;
+            ClearArtworkBackground();
             RefreshTrackRows();
             UpdatePlayPauseIcon();
             UpdateReviewButton();
@@ -301,12 +333,24 @@ public partial class MainView : UserControl
             return;
         }
 
-        _ = PlayTrackAtAsync(next);
+        _ = PlayTrackAtAsync(next, isAutomaticTransition);
     }
 
-    private void OnReloadClicked(object? sender, RoutedEventArgs e)
+    private void OnToggleSearchClicked(object? sender, RoutedEventArgs e)
     {
-        _ = LoadLibraryAsync();
+        SearchBox.IsVisible = !SearchBox.IsVisible;
+        SearchButton.Opacity = SearchBox.IsVisible || !string.IsNullOrWhiteSpace(SearchBox.Text) ? 1 : 0.72;
+        ToolTip.SetTip(SearchButton, SearchBox.IsVisible ? "Close search" : "Search");
+
+        if (SearchBox.IsVisible)
+        {
+            SearchBox.Focus();
+            SearchBox.SelectAll();
+        }
+        else
+        {
+            TrackList.Focus();
+        }
     }
 
     private void OnToggleFiltersClicked(object? sender, RoutedEventArgs e)
@@ -526,35 +570,275 @@ public partial class MainView : UserControl
         return counts;
     }
 
-    private Bitmap? LoadCover(PortableTrack track)
+    private Bitmap? LoadThumbnail(PortableTrack track)
     {
-        var path = _loadedLibrary.CoverPath(track);
-        if (path is null)
-            return null;
-
-        if (_coverCache.TryGetValue(path, out var cached))
+        var key = track.FileName;
+        if (_thumbnailCache.TryGetValue(key, out var cached))
             return cached;
 
+        Bitmap? bitmap = null;
         try
         {
-            var bitmap = new Bitmap(path);
-            _coverCache[path] = bitmap;
-            return bitmap;
+            if (track.Thumbnail is { Length: > 0 } thumbnail)
+            {
+                using var stream = new MemoryStream(thumbnail, writable: false);
+                bitmap = Bitmap.DecodeToWidth(stream, 96, BitmapInterpolationMode.MediumQuality);
+            }
+            else if (_loadedLibrary.CoverPath(track) is { } path)
+            {
+                using var stream = File.OpenRead(path);
+                bitmap = Bitmap.DecodeToWidth(stream, 96, BitmapInterpolationMode.MediumQuality);
+            }
         }
         catch
         {
-            _coverCache[path] = null;
-            return null;
+            bitmap = null;
+        }
+
+        AddThumbnailToCache(key, bitmap);
+        return bitmap;
+    }
+
+    private void AddThumbnailToCache(string key, Bitmap? bitmap)
+    {
+        while (_thumbnailCache.Count >= ThumbnailCacheCapacity && _thumbnailCacheOrder.TryDequeue(out var oldestKey))
+        {
+            if (_thumbnailCache.Remove(oldestKey, out var oldest))
+                oldest?.Dispose();
+        }
+
+        _thumbnailCache[key] = bitmap;
+        _thumbnailCacheOrder.Enqueue(key);
+    }
+
+    private void ClearThumbnailCache()
+    {
+        foreach (var cover in _thumbnailCache.Values)
+            cover?.Dispose();
+
+        _thumbnailCache.Clear();
+        _thumbnailCacheOrder.Clear();
+    }
+
+    private void UpdateArtwork(PortableTrack track, bool isAutomaticTransition)
+    {
+        if (string.Equals(_activeArtworkFileName, track.FileName, StringComparison.OrdinalIgnoreCase))
+        {
+            NowPlayingCover.Source = _activeArtwork;
+            return;
+        }
+
+        PrepareOutgoingArtwork();
+        var loaded = LoadArtwork(track);
+        _activeArtwork = loaded.Bitmap;
+        _activeArtworkFileName = track.FileName;
+        _activeAmbientPalette = loaded.Palette;
+
+        AppArtworkBackground.Source = _activeArtwork;
+        AppArtworkBackground.IsVisible = _activeArtwork is not null;
+        AppArtworkBackground.Opacity = 0;
+        PlayerArtworkBackground.Source = _activeArtwork;
+        PlayerArtworkBackground.IsVisible = _activeArtwork is not null;
+        PlayerArtworkBackground.Opacity = 0;
+        NowPlayingCover.Source = _activeArtwork;
+
+        _artworkTransitionDuration = isAutomaticTransition
+            ? AutomaticArtworkTransitionDuration
+            : ManualArtworkTransitionDuration;
+        _artworkTransitionProgress = _fadedArtwork is null ? 1 : 0;
+        _artworkTransitionStartedAt = DateTimeOffset.UtcNow;
+        ApplyArtworkTransitionFrame();
+
+        if (_fadedArtwork is not null)
+            _artworkTimer.Start();
+    }
+
+    private void PrepareOutgoingArtwork()
+    {
+        AppArtworkPreviousBackground.Source = null;
+        PlayerArtworkPreviousBackground.Source = null;
+        _fadedArtwork?.Dispose();
+
+        _fadedArtwork = _activeArtwork;
+        _activeArtwork = null;
+        _fadedAmbientPalette = _activeAmbientPalette;
+
+        AppArtworkPreviousBackground.Source = _fadedArtwork;
+        AppArtworkPreviousBackground.IsVisible = _fadedArtwork is not null;
+        AppArtworkPreviousBackground.Opacity = AppArtworkBackground.Opacity;
+        PlayerArtworkPreviousBackground.Source = _fadedArtwork;
+        PlayerArtworkPreviousBackground.IsVisible = _fadedArtwork is not null;
+        PlayerArtworkPreviousBackground.Opacity = PlayerArtworkBackground.Opacity;
+
+        AppArtworkBackground.Source = null;
+        AppArtworkBackground.IsVisible = false;
+        AppArtworkBackground.Opacity = 0;
+        PlayerArtworkBackground.Source = null;
+        PlayerArtworkBackground.IsVisible = false;
+        PlayerArtworkBackground.Opacity = 0;
+    }
+
+    private LoadedArtwork LoadArtwork(PortableTrack track)
+    {
+        try
+        {
+            Bitmap? bitmap = null;
+            if (_loadedLibrary.CoverPath(track) is { } coverPath)
+            {
+                using var coverStream = File.OpenRead(coverPath);
+                bitmap = Bitmap.DecodeToWidth(coverStream, 720, BitmapInterpolationMode.MediumQuality);
+            }
+            else if (track.Thumbnail is { Length: > 0 } thumbnail)
+            {
+                using var thumbnailStream = new MemoryStream(thumbnail, writable: false);
+                bitmap = Bitmap.DecodeToWidth(thumbnailStream, 480, BitmapInterpolationMode.MediumQuality);
+            }
+
+            return new LoadedArtwork(bitmap, ExtractAmbientPalette(track.Thumbnail));
+        }
+        catch
+        {
+            return new LoadedArtwork(null, ExtractAmbientPalette(track.Thumbnail));
         }
     }
 
-    private void ClearCoverCache()
+    private void UpdateArtworkTransition()
     {
-        foreach (var cover in _coverCache.Values)
-            cover?.Dispose();
+        if (_fadedArtwork is null)
+        {
+            _artworkTimer.Stop();
+            return;
+        }
 
-        _coverCache.Clear();
+        _artworkTransitionProgress = Math.Clamp(
+            (DateTimeOffset.UtcNow - _artworkTransitionStartedAt).TotalMilliseconds
+            / _artworkTransitionDuration.TotalMilliseconds,
+            0,
+            1);
+        ApplyArtworkTransitionFrame();
+
+        if (_artworkTransitionProgress < 1)
+            return;
+
+        AppArtworkPreviousBackground.Source = null;
+        AppArtworkPreviousBackground.IsVisible = false;
+        PlayerArtworkPreviousBackground.Source = null;
+        PlayerArtworkPreviousBackground.IsVisible = false;
+        _fadedArtwork.Dispose();
+        _fadedArtwork = null;
+        _artworkTimer.Stop();
     }
+
+    private void ApplyArtworkTransitionFrame()
+    {
+        var progress = SmoothStep(_artworkTransitionProgress);
+        var incoming = _fadedArtwork is null ? 1 : Math.Sin(progress * Math.PI / 2);
+        var outgoing = _fadedArtwork is null ? 0 : Math.Cos(progress * Math.PI / 2);
+
+        AppArtworkBackground.Opacity = AppArtworkBackground.IsVisible ? 0.46 * incoming : 0;
+        AppArtworkPreviousBackground.Opacity = AppArtworkPreviousBackground.IsVisible ? 0.46 * outgoing : 0;
+        PlayerArtworkBackground.Opacity = PlayerArtworkBackground.IsVisible ? 0.58 * incoming : 0;
+        PlayerArtworkPreviousBackground.Opacity = PlayerArtworkPreviousBackground.IsVisible ? 0.58 * outgoing : 0;
+
+        var palette = new AmbientPalette(
+            MixColor(_fadedAmbientPalette.Primary, _activeAmbientPalette.Primary, progress),
+            MixColor(_fadedAmbientPalette.Secondary, _activeAmbientPalette.Secondary, progress));
+        var appStops = ((LinearGradientBrush)AppAtmosphereTint.Background!).GradientStops;
+        var playerStops = ((LinearGradientBrush)PlayerAtmosphereTint.Background!).GradientStops;
+        appStops[0].Color = WithAlpha(palette.Primary, 72);
+        appStops[2].Color = WithAlpha(palette.Secondary, 56);
+        playerStops[0].Color = WithAlpha(palette.Primary, 112);
+        playerStops[2].Color = WithAlpha(palette.Secondary, 88);
+    }
+
+    private void ClearArtworkBackground()
+    {
+        _artworkTimer.Stop();
+        NowPlayingCover.Source = null;
+        AppArtworkBackground.Source = null;
+        AppArtworkBackground.IsVisible = false;
+        AppArtworkPreviousBackground.Source = null;
+        AppArtworkPreviousBackground.IsVisible = false;
+        PlayerArtworkBackground.Source = null;
+        PlayerArtworkBackground.IsVisible = false;
+        PlayerArtworkPreviousBackground.Source = null;
+        PlayerArtworkPreviousBackground.IsVisible = false;
+        _activeArtwork?.Dispose();
+        _fadedArtwork?.Dispose();
+        _activeArtwork = null;
+        _fadedArtwork = null;
+        _activeArtworkFileName = null;
+        _artworkTransitionProgress = 1;
+    }
+
+    private static AmbientPalette ExtractAmbientPalette(byte[]? thumbnail)
+    {
+        if (thumbnail is not { Length: > 0 })
+            return DefaultAmbientPalette;
+
+        try
+        {
+            using var bitmap = SKBitmap.Decode(thumbnail);
+            if (bitmap is null || bitmap.Width == 0 || bitmap.Height == 0)
+                return DefaultAmbientPalette;
+
+            double red = 0, green = 0, blue = 0, weightTotal = 0;
+            var step = Math.Max(1, Math.Min(bitmap.Width, bitmap.Height) / 24);
+            for (var y = step / 2; y < bitmap.Height; y += step)
+            for (var x = step / 2; x < bitmap.Width; x += step)
+            {
+                var color = bitmap.GetPixel(x, y);
+                color.ToHsl(out _, out var sampleSaturation, out var lightness);
+                if (color.Alpha < 150 || lightness < 8 || lightness > 90)
+                    continue;
+
+                var weight = 0.25 + sampleSaturation / 100d;
+                red += color.Red * weight;
+                green += color.Green * weight;
+                blue += color.Blue * weight;
+                weightTotal += weight;
+            }
+
+            if (weightTotal <= 0)
+                return DefaultAmbientPalette;
+
+            var average = new SKColor(
+                (byte)Math.Clamp(red / weightTotal, 0, 255),
+                (byte)Math.Clamp(green / weightTotal, 0, 255),
+                (byte)Math.Clamp(blue / weightTotal, 0, 255));
+            average.ToHsl(out var hue, out var averageSaturation, out _);
+            var primary = SKColor.FromHsl(hue, Math.Clamp(averageSaturation * 1.28f, 58, 84), 50);
+            var secondary = SKColor.FromHsl((hue + 48) % 360, Math.Clamp(averageSaturation * 1.12f, 48, 76), 43);
+            return new AmbientPalette(
+                Color.FromRgb(primary.Red, primary.Green, primary.Blue),
+                Color.FromRgb(secondary.Red, secondary.Green, secondary.Blue));
+        }
+        catch
+        {
+            return DefaultAmbientPalette;
+        }
+    }
+
+    private static double SmoothStep(double progress)
+    {
+        progress = Math.Clamp(progress, 0, 1);
+        return progress * progress * (3 - 2 * progress);
+    }
+
+    private static Color MixColor(Color from, Color to, double amount)
+    {
+        amount = Math.Clamp(amount, 0, 1);
+        return Color.FromRgb(
+            (byte)Math.Round(from.R + (to.R - from.R) * amount),
+            (byte)Math.Round(from.G + (to.G - from.G) * amount),
+            (byte)Math.Round(from.B + (to.B - from.B) * amount));
+    }
+
+    private static Color WithAlpha(Color color, byte alpha) =>
+        Color.FromArgb(alpha, color.R, color.G, color.B);
+
+    private sealed record LoadedArtwork(Bitmap? Bitmap, AmbientPalette Palette);
+    private sealed record AmbientPalette(Color Primary, Color Secondary);
 
     private async void OnShuffleClicked(object? sender, RoutedEventArgs e)
     {
@@ -678,7 +962,6 @@ public partial class MainView : UserControl
     private async Task ImportLibraryArchiveAsync(IStorageFile selectedFile)
     {
         ImportButton.IsEnabled = false;
-        ReloadButton.IsEnabled = false;
         StatusText.Text = "";
 
         var targetDirectory = CompanionServices.LibraryStorage.LibraryDirectory;
@@ -709,14 +992,12 @@ public partial class MainView : UserControl
                 Directory.Delete(tempDirectory, true);
 
             ImportButton.IsEnabled = true;
-            ReloadButton.IsEnabled = true;
         }
     }
 
     private async Task ImportLibraryAsync(IStorageFolder selectedFolder)
     {
         ImportButton.IsEnabled = false;
-        ReloadButton.IsEnabled = false;
         StatusText.Text = "";
         var tempDirectory = CompanionServices.LibraryStorage.LibraryDirectory + ".import";
 
@@ -747,7 +1028,6 @@ public partial class MainView : UserControl
                 Directory.Delete(tempDirectory, true);
 
             ImportButton.IsEnabled = true;
-            ReloadButton.IsEnabled = true;
         }
     }
 
