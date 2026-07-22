@@ -9,6 +9,7 @@ using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using Avalonia.Svg.Skia;
 using Music.Models;
 using Music.Services;
@@ -46,6 +47,8 @@ public partial class SettingsOverlay : UserControl
         CalibrationSortBox.ItemsSource = new[] { "Recently added", "Tone", "Energy", "Intensity" };
         CalibrationSortBox.SelectedIndex = 0;
         CalibrationSortBox.SelectionChanged += (_, _) => RebuildCalibrationRows();
+        AppUpdateService.Current.StateChanged += OnAppUpdateStateChanged;
+        RefreshUpdatePage(AppUpdateService.Current.State);
     }
 
     public void Open()
@@ -458,6 +461,7 @@ public partial class SettingsOverlay : UserControl
             "backup" => SettingsPage.Backup,
             "export" => SettingsPage.Export,
             "runtime" => SettingsPage.Runtime,
+            "updates" => SettingsPage.Updates,
             "calibration" => SettingsPage.AnalysisCalibration,
             "tags" => SettingsPage.Tags,
             "tag_rules" => SettingsPage.TagRules,
@@ -477,12 +481,14 @@ public partial class SettingsOverlay : UserControl
         var isBackupPage = page == SettingsPage.Backup;
         var isExportPage = page == SettingsPage.Export;
         var isRuntimePage = page == SettingsPage.Runtime;
+        var isUpdatesPage = page == SettingsPage.Updates;
         GenreVocabularyPage.IsVisible = isGenreVocabularyPage;
         LibraryPage.IsVisible = isLibraryPage;
         AnalysisServerPage.IsVisible = isAnalysisServerPage;
         BackupPage.IsVisible = isBackupPage;
         ExportPage.IsVisible = isExportPage;
         RuntimePage.IsVisible = isRuntimePage;
+        UpdatesPage.IsVisible = isUpdatesPage;
         AnalysisCalibrationPage.IsVisible = page == SettingsPage.AnalysisCalibration;
         TagsPage.IsVisible = page == SettingsPage.Tags;
         TagRulesPage.IsVisible = page == SettingsPage.TagRules;
@@ -492,6 +498,7 @@ public partial class SettingsOverlay : UserControl
         BackupNavButton.IsChecked = isBackupPage;
         ExportNavButton.IsChecked = isExportPage;
         RuntimeNavButton.IsChecked = isRuntimePage;
+        UpdatesNavButton.IsChecked = isUpdatesPage;
         AnalysisCalibrationNavButton.IsChecked = page == SettingsPage.AnalysisCalibration;
         TagsNavButton.IsChecked = page == SettingsPage.Tags;
         TagRulesNavButton.IsChecked = page == SettingsPage.TagRules;
@@ -503,6 +510,7 @@ public partial class SettingsOverlay : UserControl
             SettingsPage.Backup => "Backup",
             SettingsPage.Export => "Export",
             SettingsPage.Runtime => "Runtime",
+            SettingsPage.Updates => "Updates",
             SettingsPage.AnalysisCalibration => "Analysis calibration",
             SettingsPage.Tags => "Tags",
             SettingsPage.TagRules => "Tag rules",
@@ -520,6 +528,8 @@ public partial class SettingsOverlay : UserControl
                         ? "Export the current library into a portable folder."
                         : isRuntimePage
                             ? "Temporary switches for this app run."
+                            : isUpdatesPage
+                                ? "Check, download and install application releases from GitHub."
                             : page == SettingsPage.Tags
                                 ? "Maintain your curated labels. Tags can describe mood, themes, situations or workflow states without turning them into genres."
                                 : page == SettingsPage.TagRules
@@ -531,6 +541,35 @@ public partial class SettingsOverlay : UserControl
         if (page == SettingsPage.AnalysisCalibration) RebuildCalibrationRows();
         if (page == SettingsPage.Tags) ReloadTagManagement();
         if (page == SettingsPage.TagRules) ReloadTagRules();
+        if (isUpdatesPage) RefreshUpdatePage(AppUpdateService.Current.State);
+    }
+
+    private async void OnCheckForUpdatesClicked(object? sender, RoutedEventArgs e)
+        => await AppUpdateService.Current.CheckForUpdatesAsync(force: true);
+
+    private async void OnDownloadUpdateClicked(object? sender, RoutedEventArgs e)
+        => await AppUpdateService.Current.DownloadUpdateAsync();
+
+    private void OnInstallUpdateClicked(object? sender, RoutedEventArgs e)
+        => AppUpdateService.Current.ApplyUpdateAndRestart();
+
+    private void OnAppUpdateStateChanged(AppUpdateState state)
+        => Dispatcher.UIThread.Post(() => RefreshUpdatePage(state));
+
+    private void RefreshUpdatePage(AppUpdateState state)
+    {
+        InstalledVersionText.Text = state.CurrentVersion;
+        AvailableVersionText.Text = state.AvailableVersion is null
+            ? string.Empty
+            : $"Version {state.AvailableVersion} available";
+        UpdateStatusText.Text = state.Message;
+        UpdateProgressBar.Value = state.ProgressPercent;
+        UpdateProgressBar.IsVisible = state.Phase == AppUpdatePhase.Downloading;
+
+        var operationInProgress = state.Phase is AppUpdatePhase.Checking or AppUpdatePhase.Downloading;
+        CheckForUpdatesButton.IsEnabled = !operationInProgress && state.Phase != AppUpdatePhase.NotInstalled;
+        DownloadUpdateButton.IsVisible = state.Phase == AppUpdatePhase.UpdateAvailable;
+        InstallUpdateButton.IsVisible = state.Phase == AppUpdatePhase.ReadyToInstall;
     }
 
     private void OnExportRequestedClicked(object? sender, RoutedEventArgs e) => ExportRequested?.Invoke();
@@ -1305,5 +1344,5 @@ public partial class SettingsOverlay : UserControl
             .OrderByDescending(item => item.value.Score).Take(3).Select(item => $"{item.Model}: {item.value.Label} {item.value.Score:0.##}"));
     }
 
-    private enum SettingsPage { GenreVocabulary, Library, AnalysisServer, Backup, Export, Runtime, AnalysisCalibration, Tags, TagRules }
+    private enum SettingsPage { GenreVocabulary, Library, AnalysisServer, Backup, Export, Runtime, Updates, AnalysisCalibration, Tags, TagRules }
 }

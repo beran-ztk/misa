@@ -111,6 +111,9 @@
                     <ToggleButton x:Name="RuntimeNavButton" Classes="settings-nav"
                                   Content="Runtime" Tag="runtime"
                                   Click="OnSettingsNavigationClicked"/>
+                    <ToggleButton x:Name="UpdatesNavButton" Classes="settings-nav"
+                                  Content="Updates" Tag="updates"
+                                  Click="OnSettingsNavigationClicked"/>
                 </StackPanel>
             </Grid>
         </Border>
@@ -325,6 +328,64 @@
                                       Checked="OnFirefoxCookiesToggleChanged"
                                       Unchecked="OnFirefoxCookiesToggleChanged"/>
                         </Grid>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+
+            <ScrollViewer x:Name="UpdatesPage" Grid.Row="2" IsVisible="False" Margin="30,22,30,0"
+                          HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Spacing="22">
+                    <StackPanel Spacing="5">
+                        <TextBlock Text="Application updates" FontSize="15" FontWeight="SemiBold"/>
+                        <TextBlock Text="Music checks the public GitHub releases for newer versions."
+                                   FontSize="11" Opacity="0.62" TextWrapping="Wrap"/>
+                    </StackPanel>
+
+                    <Border Background="#52080B0F"
+                            BorderBrush="#263542"
+                            BorderThickness="1"
+                            CornerRadius="7"
+                            Padding="12">
+                        <StackPanel Spacing="12">
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                                <StackPanel Spacing="3">
+                                    <TextBlock Text="INSTALLED VERSION" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
+                                    <TextBlock x:Name="InstalledVersionText" FontSize="14" FontWeight="SemiBold"/>
+                                </StackPanel>
+                                <TextBlock x:Name="AvailableVersionText"
+                                           Grid.Column="1"
+                                           VerticalAlignment="Center"
+                                           FontSize="11"
+                                           Foreground="#9FCBE4"/>
+                            </Grid>
+
+                            <TextBlock x:Name="UpdateStatusText"
+                                       FontSize="11"
+                                       Opacity="0.72"
+                                       TextWrapping="Wrap"/>
+                            <ProgressBar x:Name="UpdateProgressBar"
+                                         IsVisible="False"
+                                         Height="5"
+                                         Minimum="0"
+                                         Maximum="100"/>
+
+                            <StackPanel Orientation="Horizontal" Spacing="9">
+                                <Button x:Name="CheckForUpdatesButton"
+                                        Classes="settings-action"
+                                        Content="Check for updates"
+                                        Click="OnCheckForUpdatesClicked"/>
+                                <Button x:Name="DownloadUpdateButton"
+                                        Classes="settings-action"
+                                        Content="Download update"
+                                        IsVisible="False"
+                                        Click="OnDownloadUpdateClicked"/>
+                                <Button x:Name="InstallUpdateButton"
+                                        Classes="settings-action"
+                                        Content="Restart and install"
+                                        IsVisible="False"
+                                        Click="OnInstallUpdateClicked"/>
+                            </StackPanel>
+                        </StackPanel>
                     </Border>
                 </StackPanel>
             </ScrollViewer>

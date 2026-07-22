@@ -1,0 +1,92 @@
+name: Release Music
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "9.0.x"
+
+      - name: Validate release version
+        id: version
+        shell: pwsh
+        run: |
+          $tagVersion = "${{ github.ref_name }}" -replace '^v', ''
+          [xml] $project = Get-Content "Music/Music.csproj"
+          $projectVersion = $project.Project.PropertyGroup.Version
+
+          if ([string]::IsNullOrWhiteSpace($projectVersion)) {
+            throw "Music.csproj does not define a Version."
+          }
+
+          if ($tagVersion -ne $projectVersion) {
+            throw "Tag version '$tagVersion' does not match Music.csproj version '$projectVersion'."
+          }
+
+          "version=$tagVersion" >> $env:GITHUB_OUTPUT
+
+      - name: Restore application
+        run: dotnet restore Music/Music.csproj -r win-x64
+
+      - name: Publish Windows x64 application
+        run: >-
+          dotnet publish Music/Music.csproj
+          -c Release
+          -r win-x64
+          --self-contained true
+          --no-restore
+          -o .release-publish
+          -p:Version=${{ steps.version.outputs.version }}
+          -p:PublishSingleFile=false
+
+      - name: Install Velopack CLI
+        run: dotnet tool install --global vpk --version 1.2.0
+
+      - name: Download previous release
+        continue-on-error: true
+        env:
+          VPK_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >-
+          vpk download github
+          --repoUrl https://github.com/${{ github.repository }}
+          --outputDir Releases
+
+      - name: Build installer and update packages
+        run: >-
+          vpk pack
+          --packId Beran.Music
+          --packTitle Music
+          --packAuthors beran-ztk
+          --packVersion ${{ steps.version.outputs.version }}
+          --packDir .release-publish
+          --mainExe Music.exe
+          --icon Music/Assets/headphones.ico
+          --outputDir Releases
+          --noPortable
+
+      - name: Publish GitHub release
+        env:
+          VPK_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >-
+          vpk upload github
+          --repoUrl https://github.com/${{ github.repository }}
+          --outputDir Releases
+          --publish
+          --releaseName "Music ${{ steps.version.outputs.version }}"
+          --tag ${{ github.ref_name }}

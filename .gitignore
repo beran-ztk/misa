@@ -8,6 +8,8 @@ Assets/
 
 # Local Codex verification builds. Never use the app's normal bin/ output for them.
 /.codex-build/
+/Releases/
+/.release-publish/
 
 # Local runtime dependencies kept beside the solution.
 /Tools/
