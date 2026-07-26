@@ -123,6 +123,8 @@ public sealed class MusicVideoService : IMusicVideoService
         var scale = Number(Math.Clamp(options.ImageScale, minimumScale, 3));
         var offsetX = Number(Math.Clamp(options.ImagePositionX, -1, 1));
         var offsetY = Number(Math.Clamp(options.ImagePositionY, -1, 1));
+        var backgroundBlur = Math.Clamp(options.BackgroundBlur, 0, 60);
+        var backgroundDim = Math.Clamp(options.BackgroundDim, 0, 0.7);
         var graph = new StringBuilder();
 
         switch (options.ImageMode)
@@ -137,7 +139,17 @@ public sealed class MusicVideoService : IMusicVideoService
             case MusicVideoImageMode.BlurredBackground:
                 graph.Append("[0:v]split=2[bgsource][fgsource];");
                 graph.Append($"[bgsource]scale={width}:{height}:force_original_aspect_ratio=increase,");
-                graph.Append($"crop={width}:{height},boxblur=24:2[background];");
+                graph.Append($"crop={width}:{height}:x='(iw-ow)/2':y='(ih-oh)/2'");
+                if (backgroundBlur > 0)
+                {
+                    var blurRadius = Number(backgroundBlur);
+                    var chromaRadius = Number(backgroundBlur / 2);
+                    graph.Append($",boxblur=luma_radius={blurRadius}:luma_power=2:");
+                    graph.Append($"chroma_radius={chromaRadius}:chroma_power=2");
+                }
+                if (backgroundDim > 0)
+                    graph.Append($",drawbox=x=0:y=0:w=iw:h=ih:color=black@{Number(backgroundDim)}:t=fill");
+                graph.Append("[background];");
                 graph.Append($"[fgsource]scale={width}*{scale}:{height}*{scale}:force_original_aspect_ratio=decrease[foreground];");
                 graph.Append($"[background][foreground]overlay=");
                 graph.Append($"x='(W-w)/2+{offsetX}*W/2':y='(H-h)/2+{offsetY}*H/2'[scene];");

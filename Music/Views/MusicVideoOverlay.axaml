@@ -126,9 +126,26 @@
                                 <Slider x:Name="AnimationStrengthSlider" Minimum="0" Maximum="1" Value="0.35"/>
                             </StackPanel>
 
+                            <StackPanel x:Name="BlurSettingsPanel" Spacing="9" IsVisible="False">
+                                <StackPanel Spacing="3">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Classes="section-label" Text="BLUR-STÄRKE"/>
+                                        <TextBlock x:Name="BackgroundBlurText" Grid.Column="1" FontSize="11" Opacity="0.65"/>
+                                    </Grid>
+                                    <Slider x:Name="BackgroundBlurSlider" Minimum="0" Maximum="60" Value="30"/>
+                                </StackPanel>
+                                <StackPanel Spacing="3">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Classes="section-label" Text="HINTERGRUND-ABDUNKLUNG"/>
+                                        <TextBlock x:Name="BackgroundDimText" Grid.Column="1" FontSize="11" Opacity="0.65"/>
+                                    </Grid>
+                                    <Slider x:Name="BackgroundDimSlider" Minimum="0" Maximum="0.7" Value="0.18"/>
+                                </StackPanel>
+                            </StackPanel>
+
                             <StackPanel Spacing="3">
                                 <Grid ColumnDefinitions="*,Auto">
-                                    <TextBlock Classes="section-label" Text="BILDSKALIERUNG"/>
+                                    <TextBlock x:Name="ImageScaleLabel" Classes="section-label" Text="BILDSKALIERUNG"/>
                                     <TextBlock x:Name="ImageScaleText" Grid.Column="1" FontSize="11" Opacity="0.65"/>
                                 </Grid>
                                 <Slider x:Name="ImageScaleSlider" Minimum="0.5" Maximum="2" Value="1"/>
@@ -181,12 +198,8 @@
                                     <Image x:Name="PreviewBackgroundImage"
                                            Stretch="UniformToFill"
                                            IsVisible="False"
-                                           Opacity="0.9">
-                                        <Image.Effect>
-                                            <BlurEffect Radius="20"/>
-                                        </Image.Effect>
-                                    </Image>
-                                    <Rectangle x:Name="PreviewDimmer" Fill="#18000000" IsVisible="False"/>
+                                           Opacity="1"/>
+                                    <Rectangle x:Name="PreviewDimmer" Fill="Transparent" IsVisible="False"/>
                                     <Image x:Name="PreviewImage"
                                            Stretch="Uniform"
                                            RenderTransformOrigin="0.5,0.5"/>

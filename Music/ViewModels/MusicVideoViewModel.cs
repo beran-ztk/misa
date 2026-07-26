@@ -24,6 +24,8 @@ public sealed class MusicVideoViewModel : INotifyPropertyChanged
     private MusicVideoAnimation _animation;
     private MusicVideoAnimationDirection _animationDirection = MusicVideoAnimationDirection.Right;
     private double _animationStrength = 0.35;
+    private double _backgroundBlur = 30;
+    private double _backgroundDim = 0.18;
     private double _imageScale = 1;
     private double _imagePositionX;
     private double _imagePositionY;
@@ -48,6 +50,8 @@ public sealed class MusicVideoViewModel : INotifyPropertyChanged
     public MusicVideoAnimation Animation { get => _animation; set => Set(ref _animation, value); }
     public MusicVideoAnimationDirection AnimationDirection { get => _animationDirection; set => Set(ref _animationDirection, value); }
     public double AnimationStrength { get => _animationStrength; set => Set(ref _animationStrength, value); }
+    public double BackgroundBlur { get => _backgroundBlur; set => Set(ref _backgroundBlur, Math.Clamp(value, 0, 60)); }
+    public double BackgroundDim { get => _backgroundDim; set => Set(ref _backgroundDim, Math.Clamp(value, 0, 0.7)); }
     public double ImageScale { get => _imageScale; set => Set(ref _imageScale, value); }
     public double ImagePositionX { get => _imagePositionX; set => Set(ref _imagePositionX, Math.Clamp(value, -1, 1)); }
     public double ImagePositionY { get => _imagePositionY; set => Set(ref _imagePositionY, Math.Clamp(value, -1, 1)); }
@@ -70,6 +74,8 @@ public sealed class MusicVideoViewModel : INotifyPropertyChanged
         Animation = Animation,
         AnimationDirection = AnimationDirection,
         AnimationStrength = AnimationStrength,
+        BackgroundBlur = BackgroundBlur,
+        BackgroundDim = BackgroundDim,
         ImageScale = ImageScale,
         ImagePositionX = ImagePositionX,
         ImagePositionY = ImagePositionY,

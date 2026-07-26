@@ -22,6 +22,7 @@ public partial class MusicVideoOverlay : UserControl
     private readonly MusicVideoViewModel _viewModel;
     private readonly ScaleTransform _previewImageScale = new();
     private readonly TranslateTransform _previewImageTranslate = new();
+    private readonly BlurEffect _previewBackgroundBlur = new();
     private Bitmap? _previewBitmap;
     private Point? _dragStart;
     private double _dragStartX;
@@ -40,6 +41,7 @@ public partial class MusicVideoOverlay : UserControl
         _viewModel = viewModel;
         InitializeComponent();
         DataContext = viewModel;
+        PreviewBackgroundImage.Effect = _previewBackgroundBlur;
         PreviewImage.RenderTransform = new TransformGroup
         {
             Children = { _previewImageScale, _previewImageTranslate }
@@ -94,6 +96,10 @@ public partial class MusicVideoOverlay : UserControl
         {
             if (ImageModeBox.SelectedItem is Choice<MusicVideoImageMode> choice)
                 _viewModel.ImageMode = choice.Value;
+            BlurSettingsPanel.IsVisible = _viewModel.ImageMode == MusicVideoImageMode.BlurredBackground;
+            ImageScaleLabel.Text = _viewModel.ImageMode == MusicVideoImageMode.BlurredBackground
+                ? "VORDERGRUNDBILD-GRÖSSE"
+                : "BILDSKALIERUNG";
             ImageScaleSlider.Minimum = _viewModel.ImageMode == MusicVideoImageMode.Crop ? 1 : 0.5;
             if (_viewModel.ImageMode == MusicVideoImageMode.Crop && ImageScaleSlider.Value < 1)
                 ImageScaleSlider.Value = 1;
@@ -114,6 +120,18 @@ public partial class MusicVideoOverlay : UserControl
         {
             _viewModel.AnimationStrength = AnimationStrengthSlider.Value;
             AnimationStrengthText.Text = $"{AnimationStrengthSlider.Value:P0}";
+        };
+        BackgroundBlurSlider.ValueChanged += (_, _) =>
+        {
+            _viewModel.BackgroundBlur = BackgroundBlurSlider.Value;
+            BackgroundBlurText.Text = $"{BackgroundBlurSlider.Value:0} px";
+            UpdatePreview();
+        };
+        BackgroundDimSlider.ValueChanged += (_, _) =>
+        {
+            _viewModel.BackgroundDim = BackgroundDimSlider.Value;
+            BackgroundDimText.Text = $"{BackgroundDimSlider.Value:P0}";
+            UpdatePreview();
         };
         ImageScaleSlider.ValueChanged += (_, _) =>
         {
@@ -153,6 +171,11 @@ public partial class MusicVideoOverlay : UserControl
             _viewModel.CancelExport();
             DisposePreviewBitmap();
         };
+        DirectionBox.IsEnabled = false;
+        AnimationStrengthText.Text = $"{AnimationStrengthSlider.Value:P0}";
+        BackgroundBlurText.Text = $"{BackgroundBlurSlider.Value:0} px";
+        BackgroundDimText.Text = $"{BackgroundDimSlider.Value:P0}";
+        ImageScaleText.Text = $"{ImageScaleSlider.Value:0.00}×";
         UpdateResolution();
         UpdatePreview();
     }
@@ -330,6 +353,13 @@ public partial class MusicVideoOverlay : UserControl
 
         PreviewBackgroundImage.IsVisible = _viewModel.ImageMode == MusicVideoImageMode.BlurredBackground;
         PreviewDimmer.IsVisible = PreviewBackgroundImage.IsVisible;
+        var outputHeight = Math.Max(1, _viewModel.Height);
+        _previewBackgroundBlur.Radius = _viewModel.BackgroundBlur * height / outputHeight;
+        PreviewDimmer.Fill = new SolidColorBrush(Color.FromArgb(
+            (byte)Math.Round(_viewModel.BackgroundDim * byte.MaxValue),
+            0,
+            0,
+            0));
         PreviewImage.Stretch = _viewModel.ImageMode == MusicVideoImageMode.Crop
             ? Stretch.UniformToFill
             : Stretch.Uniform;

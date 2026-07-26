@@ -36,6 +36,8 @@ public sealed record MusicVideoOptions
     public MusicVideoAnimation Animation { get; init; }
     public MusicVideoAnimationDirection AnimationDirection { get; init; } = MusicVideoAnimationDirection.Right;
     public double AnimationStrength { get; init; } = 0.35;
+    public double BackgroundBlur { get; init; } = 30;
+    public double BackgroundDim { get; init; } = 0.18;
     public double ImageScale { get; init; } = 1;
     public double ImagePositionX { get; init; }
     public double ImagePositionY { get; init; }
