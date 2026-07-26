@@ -1,0 +1,237 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Music.Views.MusicVideoOverlay">
+    <UserControl.Styles>
+        <Style Selector="TextBox.video-input">
+            <Setter Property="Background" Value="{DynamicResource Theme.Brush.Input}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Theme.Brush.BorderStrong}"/>
+            <Setter Property="CornerRadius" Value="{DynamicResource Theme.Corner.Control}"/>
+        </Style>
+        <Style Selector="ComboBox.video-input">
+            <Setter Property="Background" Value="{DynamicResource Theme.Brush.Input}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Theme.Brush.BorderStrong}"/>
+            <Setter Property="CornerRadius" Value="{DynamicResource Theme.Corner.Control}"/>
+        </Style>
+        <Style Selector="Button.video-action">
+            <Setter Property="Background" Value="{DynamicResource Theme.Brush.AccentSurface}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Theme.Brush.Accent}"/>
+            <Setter Property="Foreground" Value="{DynamicResource Theme.Brush.TextStrong}"/>
+            <Setter Property="Padding" Value="14,7"/>
+        </Style>
+        <Style Selector="TextBlock.section-label">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{DynamicResource Theme.Brush.TextSecondary}"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Panel>
+        <Border Background="#80000000"/>
+        <Border Margin="22,14"
+                MaxWidth="1180"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Stretch"
+                Background="#F51F1D17"
+                BorderBrush="{DynamicResource Theme.Brush.BorderStrong}"
+                BorderThickness="1"
+                CornerRadius="8"
+                BoxShadow="0 8 40 4 #80000000">
+            <Grid RowDefinitions="Auto,1,*,1,Auto">
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="22,14">
+                    <StackPanel>
+                        <TextBlock Text="Musikvideo erstellen" FontSize="18" FontWeight="SemiBold"/>
+                        <TextBlock Text="Bild, Text und Bewegung als YouTube-kompatibles MP4 exportieren"
+                                   FontSize="11" Opacity="0.58"/>
+                    </StackPanel>
+                    <Button Grid.Column="1" Content="✕" Click="OnCloseClicked"
+                            Padding="8,4" Opacity="0.6" VerticalAlignment="Center"/>
+                </Grid>
+                <Rectangle Grid.Row="1" Fill="{DynamicResource Theme.Brush.Divider}"/>
+
+                <ScrollViewer Grid.Row="2" HorizontalScrollBarVisibility="Auto">
+                    <Grid Margin="22,18" ColumnDefinitions="360,18,*" MinWidth="760">
+                        <StackPanel Grid.Column="0" Spacing="14">
+                            <StackPanel Spacing="5">
+                                <TextBlock Classes="section-label" Text="AUDIODATEI"/>
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBox x:Name="AudioPathBox" Classes="video-input"
+                                             Watermark="MP3, M4A, WAV oder FLAC"/>
+                                    <Button Grid.Column="1" Content="Auswählen …" Margin="7,0,0,0"
+                                            Click="OnChooseAudioClicked"/>
+                                </Grid>
+                            </StackPanel>
+
+                            <StackPanel Spacing="5">
+                                <TextBlock Classes="section-label" Text="BILD"/>
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBox x:Name="ImagePathBox" Classes="video-input"
+                                             Watermark="JPG, PNG, WebP oder BMP"/>
+                                    <Button Grid.Column="1" Content="Auswählen …" Margin="7,0,0,0"
+                                            Click="OnChooseImageClicked"/>
+                                </Grid>
+                            </StackPanel>
+
+                            <Grid ColumnDefinitions="*,10,*">
+                                <StackPanel Spacing="5">
+                                    <TextBlock Classes="section-label" Text="TITEL"/>
+                                    <TextBox x:Name="TitleBox" Classes="video-input" Watermark="Titel"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Spacing="5">
+                                    <TextBlock Classes="section-label" Text="UNTERTITEL (OPTIONAL)"/>
+                                    <TextBox x:Name="SubtitleBox" Classes="video-input" Watermark="Untertitel"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <StackPanel Spacing="5">
+                                <TextBlock Classes="section-label" Text="ZIELDATEI"/>
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBox x:Name="OutputPathBox" Classes="video-input"
+                                             Watermark="video.mp4"/>
+                                    <Button Grid.Column="1" Content="Auswählen …" Margin="7,0,0,0"
+                                            Click="OnChooseOutputClicked"/>
+                                </Grid>
+                            </StackPanel>
+
+                            <Grid ColumnDefinitions="*,8,*,16,*">
+                                <StackPanel Spacing="5">
+                                    <TextBlock Classes="section-label" Text="BREITE"/>
+                                    <TextBox x:Name="WidthBox" Classes="video-input" Text="1920"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Spacing="5">
+                                    <TextBlock Classes="section-label" Text="HÖHE"/>
+                                    <TextBox x:Name="HeightBox" Classes="video-input" Text="1080"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="4" Spacing="5">
+                                    <TextBlock Classes="section-label" Text="BILDDARSTELLUNG"/>
+                                    <ComboBox x:Name="ImageModeBox" Classes="video-input"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <Grid ColumnDefinitions="*,10,*">
+                                <StackPanel Spacing="5">
+                                    <TextBlock Classes="section-label" Text="ANIMATION"/>
+                                    <ComboBox x:Name="AnimationBox" Classes="video-input"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Spacing="5">
+                                    <TextBlock Classes="section-label" Text="RICHTUNG"/>
+                                    <ComboBox x:Name="DirectionBox" Classes="video-input"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <StackPanel Spacing="3">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBlock Classes="section-label" Text="ANIMATIONSSTÄRKE"/>
+                                    <TextBlock x:Name="AnimationStrengthText" Grid.Column="1" FontSize="11" Opacity="0.65"/>
+                                </Grid>
+                                <Slider x:Name="AnimationStrengthSlider" Minimum="0" Maximum="1" Value="0.35"/>
+                            </StackPanel>
+
+                            <StackPanel Spacing="3">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBlock Classes="section-label" Text="BILDSKALIERUNG"/>
+                                    <TextBlock x:Name="ImageScaleText" Grid.Column="1" FontSize="11" Opacity="0.65"/>
+                                </Grid>
+                                <Slider x:Name="ImageScaleSlider" Minimum="0.5" Maximum="2" Value="1"/>
+                            </StackPanel>
+
+                            <Grid ColumnDefinitions="*,10,*">
+                                <StackPanel Spacing="3">
+                                    <TextBlock Classes="section-label" Text="BILD X"/>
+                                    <Slider x:Name="ImageXSlider" Minimum="-1" Maximum="1"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Spacing="3">
+                                    <TextBlock Classes="section-label" Text="BILD Y"/>
+                                    <Slider x:Name="ImageYSlider" Minimum="-1" Maximum="1"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <Grid ColumnDefinitions="*,10,*">
+                                <StackPanel Spacing="3">
+                                    <TextBlock Classes="section-label" Text="TEXT X"/>
+                                    <Slider x:Name="TextXSlider" Minimum="0" Maximum="1" Value="0.5"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Spacing="3">
+                                    <TextBlock Classes="section-label" Text="TEXT Y"/>
+                                    <Slider x:Name="TextYSlider" Minimum="0" Maximum="1" Value="0.78"/>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2" Spacing="10">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <StackPanel>
+                                    <TextBlock Text="VORSCHAU" Classes="section-label"/>
+                                    <TextBlock Text="Element wählen und direkt in der Vorschau ziehen."
+                                               FontSize="11" Opacity="0.55"/>
+                                </StackPanel>
+                                <ComboBox x:Name="DragTargetBox" Grid.Column="1" Width="150" Classes="video-input"/>
+                            </Grid>
+
+                            <Border x:Name="PreviewSurface"
+                                    Background="Black"
+                                    BorderBrush="{DynamicResource Theme.Brush.BorderStrong}"
+                                    BorderThickness="1"
+                                    CornerRadius="5"
+                                    ClipToBounds="True"
+                                    MinWidth="360"
+                                    PointerPressed="OnPreviewPointerPressed"
+                                    PointerMoved="OnPreviewPointerMoved"
+                                    PointerReleased="OnPreviewPointerReleased">
+                                <Grid x:Name="PreviewAspect" Height="360">
+                                    <Image x:Name="PreviewBackgroundImage"
+                                           Stretch="UniformToFill"
+                                           IsVisible="False"
+                                           Opacity="0.9">
+                                        <Image.Effect>
+                                            <BlurEffect Radius="20"/>
+                                        </Image.Effect>
+                                    </Image>
+                                    <Rectangle x:Name="PreviewDimmer" Fill="#18000000" IsVisible="False"/>
+                                    <Image x:Name="PreviewImage"
+                                           Stretch="Uniform"
+                                           RenderTransformOrigin="0.5,0.5"/>
+                                    <Canvas x:Name="TextCanvas" IsHitTestVisible="False">
+                                        <StackPanel x:Name="PreviewTextPanel" Width="500" Spacing="3">
+                                            <TextBlock x:Name="PreviewTitle"
+                                                       FontSize="25" FontWeight="SemiBold"
+                                                       Foreground="White" TextAlignment="Center"
+                                                       TextWrapping="Wrap"/>
+                                            <TextBlock x:Name="PreviewSubtitle"
+                                                       FontSize="15" Foreground="#E8FFFFFF"
+                                                       TextAlignment="Center" TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                    </Canvas>
+                                </Grid>
+                            </Border>
+                            <TextBlock x:Name="PreviewResolutionText"
+                                       HorizontalAlignment="Right" FontSize="10.5" Opacity="0.5"/>
+                            <Border Background="{DynamicResource Theme.Brush.Surface}"
+                                    BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
+                                    BorderThickness="1" CornerRadius="6" Padding="12,9">
+                                <TextBlock Text="Export: H.264 · yuv420p · AAC 192 kbit/s · faststart · endet mit dem Audio"
+                                           FontSize="11" Opacity="0.66" TextWrapping="Wrap"/>
+                            </Border>
+                        </StackPanel>
+                    </Grid>
+                </ScrollViewer>
+
+                <Rectangle Grid.Row="3" Fill="{DynamicResource Theme.Brush.Divider}"/>
+                <Grid Grid.Row="4" ColumnDefinitions="*,Auto" Margin="22,11,22,15">
+                    <StackPanel VerticalAlignment="Center" Spacing="4" Margin="0,0,20,0">
+                        <TextBlock x:Name="StatusText" FontSize="11.5" TextWrapping="Wrap" Opacity="0.75"/>
+                        <ProgressBar x:Name="ExportProgress" Height="5" Minimum="0" Maximum="100"
+                                     IsVisible="False"
+                                     Foreground="{DynamicResource Theme.Brush.Accent}"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                        <Button x:Name="CancelExportButton" Content="Export abbrechen"
+                                IsVisible="False" Click="OnCancelExportClicked"/>
+                        <Button x:Name="ExportButton" Content="MP4 erstellen"
+                                Classes="video-action" Click="OnExportClicked"/>
+                        <Button x:Name="CloseButton" Content="Schließen" Click="OnCloseClicked"/>
+                    </StackPanel>
+                </Grid>
+            </Grid>
+        </Border>
+    </Panel>
+</UserControl>

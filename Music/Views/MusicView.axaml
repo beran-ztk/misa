@@ -190,6 +190,13 @@
                     <Image Source="{SvgImage /Assets/channels.svg}" Width="18" Height="18"/>
                 </Button>
 
+                <Button Click="OnMusicVideoClicked"
+                        Classes="icon"
+                        ToolTip.Tip="Musikvideo erstellen"
+                        Opacity="0.86">
+                    <Image Source="{SvgImage /Assets/export.svg}" Width="17" Height="17"/>
+                </Button>
+
                 <Button x:Name="RefreshLibraryButton"
                         Click="OnRefreshLibraryClicked"
                         Classes="icon"
@@ -936,6 +943,8 @@
     <views:EditTrackOverlay x:Name="EditTrackOverlay" IsVisible="False" ZIndex="80"/>
 
     <views:SettingsOverlay x:Name="SettingsOverlay" IsVisible="False" ZIndex="90"/>
+
+    <views:MusicVideoOverlay x:Name="MusicVideoOverlay" IsVisible="False" ZIndex="95"/>
 
     <Border x:Name="Toast"
             IsVisible="False"

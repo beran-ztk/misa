@@ -279,6 +279,8 @@ public partial class MusicView : UserControl
         SettingsOverlay.ToastRequested += ShowToast;
         SettingsOverlay.LibraryMetadataChanged += RefreshLibraryPresentation;
         SettingsOverlay.ExportRequested += ExportPortableLibrary;
+        MusicVideoOverlay.CloseRequested += () => MusicVideoOverlay.IsVisible = false;
+        MusicVideoOverlay.ToastRequested += ShowToast;
         SettingsOverlay.TrackCalibrationRequested += track =>
         {
             SettingsOverlay.IsVisible = false;
@@ -1973,6 +1975,12 @@ public partial class MusicView : UserControl
     {
         ChannelOverlay.Margin = new Thickness(0, 0, 0, PlayerBar.Bounds.Height);
         ChannelOverlay.Open();
+    }
+
+    private void OnMusicVideoClicked(object? sender, RoutedEventArgs e)
+    {
+        MusicVideoOverlay.Margin = new Thickness(0, 0, 0, PlayerBar.Bounds.Height);
+        MusicVideoOverlay.Open();
     }
 
     private void OnRefreshLibraryClicked(object? sender, RoutedEventArgs e)
