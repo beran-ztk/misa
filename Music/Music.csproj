@@ -1,15 +1,17 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
+        <_IsWindowsHost>$([MSBuild]::IsOSPlatform('Windows'))</_IsWindowsHost>
+        <_IsLinuxBuild Condition="'$(_IsWindowsHost)' != 'true' Or $([System.String]::Copy('$(RuntimeIdentifier)').StartsWith('linux-'))">true</_IsLinuxBuild>
         <OutputType>WinExe</OutputType>
         <TargetFramework>net9.0-windows10.0.19041.0</TargetFramework>
-        <TargetFramework Condition="$([System.String]::Copy('$(RuntimeIdentifier)').StartsWith('linux-'))">net9.0</TargetFramework>
-        <OutputType Condition="$([System.String]::Copy('$(RuntimeIdentifier)').StartsWith('linux-'))">Exe</OutputType>
+        <TargetFramework Condition="'$(_IsLinuxBuild)' == 'true'">net9.0</TargetFramework>
+        <OutputType Condition="'$(_IsLinuxBuild)' == 'true'">Exe</OutputType>
         <Nullable>enable</Nullable>
-        <BuiltInComInteropSupport Condition="!$([System.String]::Copy('$(RuntimeIdentifier)').StartsWith('linux-'))">true</BuiltInComInteropSupport>
-        <ApplicationManifest Condition="!$([System.String]::Copy('$(RuntimeIdentifier)').StartsWith('linux-'))">Assets\app.manifest</ApplicationManifest>
+        <BuiltInComInteropSupport Condition="'$(_IsLinuxBuild)' != 'true'">true</BuiltInComInteropSupport>
+        <ApplicationManifest Condition="'$(_IsLinuxBuild)' != 'true'">Assets\app.manifest</ApplicationManifest>
         <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
         <ApplicationIcon>Assets\headphones.ico</ApplicationIcon>
-        <Version>0.4.0</Version>
+        <Version>0.4.1</Version>
     </PropertyGroup>
 
     <ItemGroup>
@@ -39,13 +41,13 @@
         <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.5" />
         <PackageReference Include="NAudio"
                           Version="2.2.1"
-                          Condition="!$([System.String]::Copy('$(RuntimeIdentifier)').StartsWith('linux-'))"/>
+                          Condition="'$(_IsLinuxBuild)' != 'true'"/>
         <PackageReference Include="LibVLCSharp"
                           Version="3.10.0"
-                          Condition="$([System.String]::Copy('$(RuntimeIdentifier)').StartsWith('linux-'))"/>
+                          Condition="'$(_IsLinuxBuild)' == 'true'"/>
         <PackageReference Include="Tmds.DBus"
                           Version="0.94.2"
-                          Condition="$([System.String]::Copy('$(RuntimeIdentifier)').StartsWith('linux-'))"/>
+                          Condition="'$(_IsLinuxBuild)' == 'true'"/>
         <PackageReference Include="SkiaSharp" Version="2.88.9" />
         <PackageReference Include="TagLibSharp" Version="2.3.0" />
         <PackageReference Include="Velopack" Version="1.2.0" />
