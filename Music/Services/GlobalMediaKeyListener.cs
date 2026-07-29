@@ -5,7 +5,7 @@ using Avalonia.Threading;
 
 namespace Music.Services;
 
-public enum MediaShortcut { Previous, PlayPause, Next }
+public enum MediaShortcut { Previous, PlayPause, Next, Stop }
 
 /// <summary>Receives hardware media keys while another Windows application has focus.</summary>
 public sealed class GlobalMediaKeyListener : IDisposable

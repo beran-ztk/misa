@@ -9,7 +9,7 @@
         <ApplicationManifest Condition="!$([System.String]::Copy('$(RuntimeIdentifier)').StartsWith('linux-'))">Assets\app.manifest</ApplicationManifest>
         <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
         <ApplicationIcon>Assets\headphones.ico</ApplicationIcon>
-        <Version>0.3.0</Version>
+        <Version>0.4.0</Version>
     </PropertyGroup>
 
     <ItemGroup>
@@ -42,6 +42,9 @@
                           Condition="!$([System.String]::Copy('$(RuntimeIdentifier)').StartsWith('linux-'))"/>
         <PackageReference Include="LibVLCSharp"
                           Version="3.10.0"
+                          Condition="$([System.String]::Copy('$(RuntimeIdentifier)').StartsWith('linux-'))"/>
+        <PackageReference Include="Tmds.DBus"
+                          Version="0.94.2"
                           Condition="$([System.String]::Copy('$(RuntimeIdentifier)').StartsWith('linux-'))"/>
         <PackageReference Include="SkiaSharp" Version="2.88.9" />
         <PackageReference Include="TagLibSharp" Version="2.3.0" />

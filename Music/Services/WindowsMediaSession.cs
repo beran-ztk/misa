@@ -16,6 +16,16 @@ public sealed class WindowsMediaSession : IDisposable
     private SystemMediaTransportControls? _controls;
 
     public event Action<MediaShortcut>? Pressed;
+    public event Action<TimeSpan>? SeekRequested
+    {
+        add { }
+        remove { }
+    }
+    public event Action<TimeSpan>? PositionRequested
+    {
+        add { }
+        remove { }
+    }
 
     public bool Start()
     {
@@ -49,6 +59,26 @@ public sealed class WindowsMediaSession : IDisposable
         };
     }
 
+    public void UpdateMetadata(
+        int trackId,
+        string title,
+        string? artist,
+        TimeSpan position,
+        TimeSpan duration)
+    {
+        _ = trackId;
+        _ = title;
+        _ = artist;
+        _ = position;
+        _ = duration;
+    }
+
+    public void UpdatePosition(TimeSpan position, TimeSpan duration)
+    {
+        _ = position;
+        _ = duration;
+    }
+
     private void OnButtonPressed(SystemMediaTransportControls sender, SystemMediaTransportControlsButtonPressedEventArgs args)
     {
         var shortcut = args.Button switch
@@ -68,27 +98,6 @@ public sealed class WindowsMediaSession : IDisposable
         _controls.ButtonPressed -= OnButtonPressed;
         _controls.IsEnabled = false;
         _controls = null;
-    }
-}
-#else
-/// <summary>
-/// Linux media controls are provided by the MPRIS implementation in a later platform layer.
-/// Playback itself remains fully available when the desktop has no media-session integration.
-/// </summary>
-public sealed class WindowsMediaSession : IDisposable
-{
-    public event Action<MediaShortcut>? Pressed;
-
-    public bool Start()
-    {
-        _ = Pressed;
-        return false;
-    }
-
-    public void UpdateState(EngineState state) => _ = state;
-
-    public void Dispose()
-    {
     }
 }
 #endif

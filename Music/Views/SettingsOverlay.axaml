@@ -333,6 +333,37 @@
                         <TextBlock Text="Temporary switches for the current app session."
                                    FontSize="11" Opacity="0.62" TextWrapping="Wrap"/>
                     </StackPanel>
+                    <Border x:Name="LinuxDependenciesPanel"
+                            IsVisible="False"
+                            Background="#522A261D"
+                            BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
+                            BorderThickness="1"
+                            CornerRadius="7"
+                            Padding="12">
+                        <StackPanel Spacing="10">
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Linux dependencies"
+                                               FontSize="12.5"
+                                               FontWeight="SemiBold"/>
+                                    <TextBlock Text="The AppImage includes .NET. Playback and media tools are provided by the Linux system."
+                                               FontSize="11"
+                                               Opacity="0.58"
+                                               TextWrapping="Wrap"/>
+                                </StackPanel>
+                                <Button Grid.Column="1"
+                                        Classes="settings-action"
+                                        Content="Refresh"
+                                        Click="OnRefreshLinuxDependenciesClicked"
+                                        VerticalAlignment="Top"/>
+                            </Grid>
+                            <TextBlock x:Name="LinuxDependenciesText"
+                                       FontFamily="Consolas,monospace"
+                                       FontSize="11"
+                                       LineHeight="19"
+                                       TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Border>
                     <Border Background="#522A261D"
                             BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
                             BorderThickness="1"

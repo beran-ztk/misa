@@ -133,6 +133,8 @@ public partial class MusicView : UserControl
         _globalMediaKeys.Pressed += OnGlobalMediaKeyPressed;
         _globalMediaKeys.Start();
         _windowsMediaSession.Pressed += OnGlobalMediaKeyPressed;
+        _windowsMediaSession.SeekRequested += OnSystemSeekRequested;
+        _windowsMediaSession.PositionRequested += OnSystemPositionRequested;
         DetachedFromVisualTree += (_, _) =>
         {
             _atmosphereTimer.Stop();
@@ -2207,7 +2209,29 @@ public partial class MusicView : UserControl
             case MediaShortcut.Previous: NavigatePrevious(); break;
             case MediaShortcut.PlayPause: TogglePlayPause(); break;
             case MediaShortcut.Next: NavigateNext(isManual: true); break;
+            case MediaShortcut.Stop:
+                FinishListeningSession(markSkipped: false);
+                _engine.Stop();
+                break;
         }
+    }
+
+    private void OnSystemSeekRequested(TimeSpan offset)
+    {
+        if (_engine.State == EngineState.Stopped || _engine.TotalTime <= TimeSpan.Zero)
+            return;
+        var position = _engine.CurrentTime + offset;
+        OnSystemPositionRequested(position);
+    }
+
+    private void OnSystemPositionRequested(TimeSpan position)
+    {
+        if (_engine.State == EngineState.Stopped || _engine.TotalTime <= TimeSpan.Zero)
+            return;
+
+        var seconds = Math.Clamp(position.TotalSeconds, 0, _engine.TotalTime.TotalSeconds);
+        _engine.Seek(seconds / _engine.TotalTime.TotalSeconds);
+        UpdatePlaybackPositionUi();
     }
 
     private static bool IsTextEntry(object? source)
@@ -2448,6 +2472,7 @@ public partial class MusicView : UserControl
     private void OnEngineStateChanged()
     {
         _windowsMediaSession.UpdateState(_engine.State);
+        UpdateSystemMediaMetadata();
         UpdateButtonStates();
         UpdateDiscordPresence();
         if (_engine.State == EngineState.Playing)
@@ -2483,6 +2508,7 @@ public partial class MusicView : UserControl
 
     private void OnProgressUpdated()
     {
+        _windowsMediaSession.UpdatePosition(_engine.CurrentTime, _engine.TotalTime);
         RecordListeningProgress();
         if (_engine.ActiveTrackId != _lastKnownActiveId)
         {
@@ -3167,6 +3193,24 @@ public partial class MusicView : UserControl
             return;
 
         _discordPresence.Update(item, _engine.State, _engine.CurrentTime, _engine.TotalTime);
+    }
+
+    private void UpdateSystemMediaMetadata()
+    {
+        if (_engine.State == EngineState.Stopped)
+            return;
+
+        var item = _filteredItems.FirstOrDefault(item => item.Track.Id == _engine.ActiveTrackId)
+                   ?? _allItems.FirstOrDefault(item => item.Track.Id == _engine.ActiveTrackId);
+        if (item is null)
+            return;
+
+        _windowsMediaSession.UpdateMetadata(
+            item.Track.Id,
+            item.Track.Title,
+            item.ChannelText,
+            _engine.CurrentTime,
+            _engine.TotalTime);
     }
 
     private void UpdateButtonStates()

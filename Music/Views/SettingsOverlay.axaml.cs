@@ -61,9 +61,25 @@ public partial class SettingsOverlay : UserControl
         MusicAnalysisServerUrlBox.Text = AppSettingsStore.Load().MusicAnalysisServerUrl;
         AnalysisServerStatusText.IsVisible = false;
         FirefoxCookiesToggle.IsChecked = Values.UseFirefoxCookiesForYtDlp;
+        RefreshLinuxDependencies();
         RebuildBackupDirectoryRows();
         SelectPage(SettingsPage.Library);
         IsVisible = true;
+    }
+
+    private void OnRefreshLinuxDependenciesClicked(object? sender, RoutedEventArgs e) =>
+        RefreshLinuxDependencies();
+
+    private void RefreshLinuxDependencies()
+    {
+        LinuxDependenciesPanel.IsVisible = OperatingSystem.IsLinux();
+        if (!OperatingSystem.IsLinux())
+            return;
+
+        LinuxDependenciesText.Text = string.Join(
+            Environment.NewLine,
+            LinuxRuntimeDependencies.Inspect().Select(dependency =>
+                $"{(dependency.IsAvailable ? "OK" : "MISSING"),-7} {dependency.Name,-9} {dependency.Detail}"));
     }
 
     private async void OnChooseDatabaseDirectoryClicked(object? sender, RoutedEventArgs e)

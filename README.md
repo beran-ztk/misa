@@ -23,6 +23,8 @@ sudo pacman -S vlc ffmpeg yt-dlp nodejs
 
 Music first checks its bundled `Tools` directory and then the system `PATH`. Library paths are stored separately per operating system in `library-locations.json`, so Windows and Linux can point to the same tracks folder and SQLite database even when the shared drive has different mount paths.
 
+The Runtime page in Settings shows whether libVLC and every command-line dependency are available. Linux desktop media controls use MPRIS, and the playback visualizer derives its audio levels through FFmpeg without taking audio-device ownership away from libVLC.
+
 ## Screenshots
 
 ![Library view](Docs/images/library.png)
