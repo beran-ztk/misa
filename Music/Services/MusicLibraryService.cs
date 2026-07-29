@@ -22,6 +22,9 @@ public class MusicLibraryService
 
     public void Initialize()
     {
+        if (Values.LibraryLocationsLoadError is not null)
+            throw new InvalidOperationException(Values.LibraryLocationsLoadError);
+
         _channelMaxDownloadDurationMinutes = AppSettingsStore.Load().ChannelDownloadMaxDurationMinutes;
         _db.Initialize();
     }

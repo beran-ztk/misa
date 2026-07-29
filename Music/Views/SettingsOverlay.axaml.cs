@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Controls;
@@ -53,14 +54,70 @@ public partial class SettingsOverlay : UserControl
 
     public void Open()
     {
-        DatabasePathText.Text = Values.DbPath;
-        TracksPathText.Text = Values.TracksDirectory;
+        var locations = Values.GetConfiguredLibraryLocations();
+        DatabasePathBox.Text = locations.DatabasePath;
+        TracksPathBox.Text = locations.TracksDirectory;
+        LibraryLocationStatusText.IsVisible = false;
         MusicAnalysisServerUrlBox.Text = AppSettingsStore.Load().MusicAnalysisServerUrl;
         AnalysisServerStatusText.IsVisible = false;
         FirefoxCookiesToggle.IsChecked = Values.UseFirefoxCookiesForYtDlp;
         RebuildBackupDirectoryRows();
         SelectPage(SettingsPage.Library);
         IsVisible = true;
+    }
+
+    private async void OnChooseDatabaseDirectoryClicked(object? sender, RoutedEventArgs e)
+    {
+        var topLevel = TopLevel.GetTopLevel(this);
+        if (topLevel is null)
+            return;
+
+        var folders = await topLevel.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+        {
+            Title = "Choose database folder",
+            AllowMultiple = false
+        });
+        if (folders.Count == 0)
+            return;
+
+        var currentFileName = Path.GetFileName(DatabasePathBox.Text?.Trim());
+        DatabasePathBox.Text = Path.Combine(
+            folders[0].Path.LocalPath,
+            string.IsNullOrWhiteSpace(currentFileName) ? "music.db" : currentFileName);
+    }
+
+    private async void OnChooseTracksDirectoryClicked(object? sender, RoutedEventArgs e)
+    {
+        var topLevel = TopLevel.GetTopLevel(this);
+        if (topLevel is null)
+            return;
+
+        var folders = await topLevel.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+        {
+            Title = "Choose tracks folder",
+            AllowMultiple = false
+        });
+        if (folders.Count > 0)
+            TracksPathBox.Text = folders[0].Path.LocalPath;
+    }
+
+    private void OnSaveLibraryLocationsClicked(object? sender, RoutedEventArgs e)
+    {
+        try
+        {
+            Values.SaveLibraryLocations(
+                TracksPathBox.Text ?? string.Empty,
+                DatabasePathBox.Text ?? string.Empty);
+
+            LibraryLocationStatusText.Text = "Locations saved. Restart Music to use them.";
+            LibraryLocationStatusText.IsVisible = true;
+            ToastRequested?.Invoke("Library locations saved · restart Music to apply");
+        }
+        catch (Exception exception)
+        {
+            LibraryLocationStatusText.Text = $"Could not save locations: {exception.Message}";
+            LibraryLocationStatusText.IsVisible = true;
+        }
     }
 
     public void PreloadGenreVocabulary() => EnsureGenreVocabularyLoaded();
