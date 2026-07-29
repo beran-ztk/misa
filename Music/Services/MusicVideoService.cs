@@ -27,9 +27,8 @@ public sealed class MusicVideoService : IMusicVideoService
 
     public MusicVideoService(string? toolsDirectory = null)
     {
-        var directory = toolsDirectory ?? Values.ToolsDirectory;
-        _ffmpegPath = Path.Combine(directory, OperatingSystem.IsWindows() ? "ffmpeg.exe" : "ffmpeg");
-        _ffprobePath = Path.Combine(directory, OperatingSystem.IsWindows() ? "ffprobe.exe" : "ffprobe");
+        _ffmpegPath = ExternalToolLocator.Resolve("ffmpeg", toolsDirectory);
+        _ffprobePath = ExternalToolLocator.Resolve("ffprobe", toolsDirectory);
     }
 
     public async Task CreateAsync(

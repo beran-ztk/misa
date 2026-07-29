@@ -1,9 +1,12 @@
 using System;
+#if WINDOWS
 using Avalonia.Threading;
 using Windows.Media;
+#endif
 
 namespace Music.Services;
 
+#if WINDOWS
 /// <summary>
 /// Registers the player with Windows' media transport system. Hardware media keys are normally
 /// routed to the active system media session (for example Chrome), not as ordinary key presses.
@@ -67,3 +70,25 @@ public sealed class WindowsMediaSession : IDisposable
         _controls = null;
     }
 }
+#else
+/// <summary>
+/// Linux media controls are provided by the MPRIS implementation in a later platform layer.
+/// Playback itself remains fully available when the desktop has no media-session integration.
+/// </summary>
+public sealed class WindowsMediaSession : IDisposable
+{
+    public event Action<MediaShortcut>? Pressed;
+
+    public bool Start()
+    {
+        _ = Pressed;
+        return false;
+    }
+
+    public void UpdateState(EngineState state) => _ = state;
+
+    public void Dispose()
+    {
+    }
+}
+#endif

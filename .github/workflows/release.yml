@@ -90,3 +90,89 @@ jobs:
           --publish
           --releaseName "Music ${{ steps.version.outputs.version }}"
           --tag ${{ github.ref_name }}
+
+  release-linux:
+    needs: release-windows
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "9.0.x"
+
+      - name: Validate release version
+        id: version
+        shell: bash
+        run: |
+          tag_version="${GITHUB_REF_NAME#v}"
+          project_version="$(dotnet msbuild Music/Music.csproj -getProperty:Version -nologo)"
+
+          if [[ -z "$project_version" ]]; then
+            echo "Music.csproj does not define a Version." >&2
+            exit 1
+          fi
+
+          if [[ "$tag_version" != "$project_version" ]]; then
+            echo "Tag version '$tag_version' does not match Music.csproj version '$project_version'." >&2
+            exit 1
+          fi
+
+          echo "version=$tag_version" >> "$GITHUB_OUTPUT"
+
+      - name: Restore application
+        run: dotnet restore Music/Music.csproj -r linux-x64
+
+      - name: Publish Linux x64 application
+        run: >-
+          dotnet publish Music/Music.csproj
+          -c Release
+          -r linux-x64
+          --self-contained true
+          --no-restore
+          -o .release-publish-linux
+          -p:Version=${{ steps.version.outputs.version }}
+          -p:PublishSingleFile=false
+
+      - name: Install Velopack CLI
+        run: dotnet tool install --global vpk --version 1.2.0
+
+      - name: Download previous Linux release
+        continue-on-error: true
+        env:
+          VPK_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >-
+          vpk download github
+          --repoUrl https://github.com/${{ github.repository }}
+          --outputDir Releases-Linux
+          --channel linux
+
+      - name: Build Linux AppImage and update packages
+        run: >-
+          vpk pack
+          --packId Beran.Music
+          --packTitle Music
+          --packAuthors beran-ztk
+          --packVersion ${{ steps.version.outputs.version }}
+          --packDir .release-publish-linux
+          --mainExe Music
+          --icon Music/Assets/music.png
+          --outputDir Releases-Linux
+          --runtime linux-x64
+          --categories "Audio;Music"
+
+      - name: Add Linux assets to GitHub release
+        env:
+          VPK_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >-
+          vpk upload github
+          --repoUrl https://github.com/${{ github.repository }}
+          --outputDir Releases-Linux
+          --publish
+          --releaseName "Music ${{ steps.version.outputs.version }}"
+          --tag ${{ github.ref_name }}

@@ -2,9 +2,11 @@
     <PropertyGroup>
         <OutputType>WinExe</OutputType>
         <TargetFramework>net9.0-windows10.0.19041.0</TargetFramework>
+        <TargetFramework Condition="$([System.String]::Copy('$(RuntimeIdentifier)').StartsWith('linux-'))">net9.0</TargetFramework>
+        <OutputType Condition="$([System.String]::Copy('$(RuntimeIdentifier)').StartsWith('linux-'))">Exe</OutputType>
         <Nullable>enable</Nullable>
-        <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
-        <ApplicationManifest>Assets\app.manifest</ApplicationManifest>
+        <BuiltInComInteropSupport Condition="!$([System.String]::Copy('$(RuntimeIdentifier)').StartsWith('linux-'))">true</BuiltInComInteropSupport>
+        <ApplicationManifest Condition="!$([System.String]::Copy('$(RuntimeIdentifier)').StartsWith('linux-'))">Assets\app.manifest</ApplicationManifest>
         <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
         <ApplicationIcon>Assets\headphones.ico</ApplicationIcon>
         <Version>0.3.0</Version>
@@ -35,7 +37,12 @@
             <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
         </PackageReference>
         <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.5" />
-        <PackageReference Include="NAudio" Version="2.2.1"/>
+        <PackageReference Include="NAudio"
+                          Version="2.2.1"
+                          Condition="!$([System.String]::Copy('$(RuntimeIdentifier)').StartsWith('linux-'))"/>
+        <PackageReference Include="LibVLCSharp"
+                          Version="3.10.0"
+                          Condition="$([System.String]::Copy('$(RuntimeIdentifier)').StartsWith('linux-'))"/>
         <PackageReference Include="SkiaSharp" Version="2.88.9" />
         <PackageReference Include="TagLibSharp" Version="2.3.0" />
         <PackageReference Include="Velopack" Version="1.2.0" />

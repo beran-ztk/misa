@@ -19,15 +19,14 @@ public class TrackDownloadService
         var outputTemplate = Path.Combine(Values.TracksDirectory, "%(title)s [%(id)s].%(ext)s");
 
         var result = await RunProcessAsync(
-            Path.Combine(Values.ToolsDirectory, "yt-dlp.exe"),
-            YtDlpArgs(
+            ExternalToolLocator.Resolve("yt-dlp"),
+            YtDlpDownloadArgs(
                 "--js-runtimes", "node",
                 "--no-playlist",
                 "-f", "bestaudio[ext=m4a]/bestaudio/best[height<=360]/18",
                 "-x",
                 "--audio-format", "m4a",
                 "--embed-thumbnail",
-                "--ffmpeg-location", Values.ToolsDirectory,
                 "-o", outputTemplate,
                 url));
 
@@ -42,15 +41,14 @@ public class TrackDownloadService
         Directory.CreateDirectory(Values.TracksDirectory);
         var outputTemplate = Path.Combine(Values.TracksDirectory, $"channel-{videoId}.%(ext)s");
         var result = await RunProcessAsync(
-            Path.Combine(Values.ToolsDirectory, "yt-dlp.exe"),
-            YtDlpArgs(
+            ExternalToolLocator.Resolve("yt-dlp"),
+            YtDlpDownloadArgs(
                 "--js-runtimes", "node",
                 "--no-playlist",
                 "-f", "bestaudio[ext=m4a]/bestaudio/best[height<=360]/18",
                 "-x",
                 "--audio-format", "m4a",
                 "--embed-thumbnail",
-                "--ffmpeg-location", Values.ToolsDirectory,
                 "-o", outputTemplate,
                 url),
             cancellationToken);
@@ -65,7 +63,7 @@ public class TrackDownloadService
         try
         {
             var result = await RunProcessAsync(
-                Path.Combine(Values.ToolsDirectory, "ffprobe.exe"),
+                ExternalToolLocator.Resolve("ffprobe"),
                 "-v", "error",
                 "-show_entries", "format=duration",
                 "-of", "default=noprint_wrappers=1:nokey=1",
@@ -84,7 +82,7 @@ public class TrackDownloadService
         try
         {
             var result = await RunProcessAsync(
-                Path.Combine(Values.ToolsDirectory, "yt-dlp.exe"),
+                ExternalToolLocator.Resolve("yt-dlp"),
                 YtDlpArgs(
                     "--js-runtimes", "node",
                     "--no-playlist",
@@ -110,7 +108,7 @@ public class TrackDownloadService
         try
         {
             var result = await RunProcessAsync(
-                Path.Combine(Values.ToolsDirectory, "yt-dlp.exe"),
+                ExternalToolLocator.Resolve("yt-dlp"),
                 YtDlpArgs("--js-runtimes", "node", "--no-playlist", "--skip-download", "--dump-single-json", url),
                 cancellationToken);
             if (result.ExitCode != 0) return null;
@@ -136,7 +134,7 @@ public class TrackDownloadService
             foreach (var extractionUrl in PlaylistExtractionUrls(url))
             {
                 var result = await RunProcessAsync(
-                    Path.Combine(Values.ToolsDirectory, "yt-dlp.exe"),
+                    ExternalToolLocator.Resolve("yt-dlp"),
                     YtDlpArgs(
                         "--js-runtimes", "node",
                         "--ignore-errors",
@@ -165,7 +163,7 @@ public class TrackDownloadService
         try
         {
             var result = await RunProcessAsync(
-                Path.Combine(Values.ToolsDirectory, "yt-dlp.exe"),
+                ExternalToolLocator.Resolve("yt-dlp"),
                 YtDlpArgs(
                     "--js-runtimes", "node",
                     "--ignore-errors",
@@ -443,6 +441,14 @@ public class TrackDownloadService
         return ["--cookies-from-browser", "firefox", .. args];
     }
 
+    private static string[] YtDlpDownloadArgs(params string[] args)
+    {
+        if (!ExternalToolLocator.TryResolve("ffmpeg", out var ffmpegPath))
+            return YtDlpArgs(args);
+
+        return YtDlpArgs(["--ffmpeg-location", ffmpegPath, .. args]);
+    }
+
     private static async Task<ProcessResult> RunProcessAsync(string fileName, params string[] args) =>
         await RunProcessAsync(fileName, args, CancellationToken.None);
 
@@ -460,24 +466,35 @@ public class TrackDownloadService
         foreach (var arg in args)
             psi.ArgumentList.Add(arg);
 
-        using var process = Process.Start(psi);
-        if (process == null)
-            return new ProcessResult(-1, "", $"Could not start {Path.GetFileName(fileName)}.");
-
-        var outputTask = process.StandardOutput.ReadToEndAsync();
-        var errorTask = process.StandardError.ReadToEndAsync();
+        Process? process;
         try
         {
-            await process.WaitForExitAsync(cancellationToken);
+            process = Process.Start(psi);
         }
-        catch (OperationCanceledException)
+        catch (Exception exception)
         {
-            if (!process.HasExited) process.Kill(true);
-            await process.WaitForExitAsync();
-            throw;
+            return new ProcessResult(-1, "", $"Could not start {Path.GetFileName(fileName)}: {exception.Message}");
         }
 
-        return new ProcessResult(process.ExitCode, await outputTask, await errorTask);
+        if (process is null)
+            return new ProcessResult(-1, "", $"Could not start {Path.GetFileName(fileName)}.");
+        using (process)
+        {
+            var outputTask = process.StandardOutput.ReadToEndAsync();
+            var errorTask = process.StandardError.ReadToEndAsync();
+            try
+            {
+                await process.WaitForExitAsync(cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                if (!process.HasExited) process.Kill(true);
+                await process.WaitForExitAsync();
+                throw;
+            }
+
+            return new ProcessResult(process.ExitCode, await outputTask, await errorTask);
+        }
     }
 
     private record ProcessResult(int ExitCode, string Output, string Error);

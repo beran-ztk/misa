@@ -1,7 +1,9 @@
 using System;
 using Avalonia.Threading;
+#if WINDOWS
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
+#endif
 
 namespace Music.Services;
 
@@ -23,6 +25,7 @@ public record PlaybackEngineSnapshot(
     PlaybackSlotSnapshot Primary,
     PlaybackSlotSnapshot? Secondary);
 
+#if WINDOWS
 // Controls playback of up to two simultaneous tracks (primary + fading-out secondary).
 // Volume is controlled entirely in software via AudioFileReader.Volume (sample multiplication)
 // so each slot's volume is fully independent — no shared hardware/device volume is touched.
@@ -462,3 +465,4 @@ public sealed class PlaybackEngine : IDisposable
         _secondary = null;
     }
 }
+#endif
