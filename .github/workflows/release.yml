@@ -168,11 +168,10 @@ jobs:
 
       - name: Add Linux assets to GitHub release
         env:
-          VPK_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: >-
-          vpk upload github
-          --repoUrl https://github.com/${{ github.repository }}
-          --outputDir Releases-Linux
-          --publish
-          --releaseName "Music ${{ steps.version.outputs.version }}"
-          --tag ${{ github.ref_name }}
+          gh release upload "${{ github.ref_name }}"
+          "Releases-Linux/Beran.Music.AppImage"
+          "Releases-Linux/Beran.Music-${{ steps.version.outputs.version }}-linux-full.nupkg"
+          --repo "${{ github.repository }}"
+          --clobber
