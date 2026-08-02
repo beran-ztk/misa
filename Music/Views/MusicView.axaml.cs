@@ -60,6 +60,7 @@ public partial class MusicView : UserControl
 
     // Playback settings
     private bool _shuffle;
+    private string _loopStatus = "None";
     private LibrarySortBy _sortBy = LibrarySortBy.Name;
     private LibrarySortDirection _sortDirection = LibrarySortDirection.Ascending;
     private bool _updatingSortControls;
@@ -135,6 +136,10 @@ public partial class MusicView : UserControl
         _windowsMediaSession.Pressed += OnGlobalMediaKeyPressed;
         _windowsMediaSession.SeekRequested += OnSystemSeekRequested;
         _windowsMediaSession.PositionRequested += OnSystemPositionRequested;
+        _windowsMediaSession.VolumeRequested += OnSystemVolumeRequested;
+        _windowsMediaSession.ShuffleRequested += SetShuffle;
+        _windowsMediaSession.LoopStatusRequested += OnSystemLoopStatusRequested;
+        _windowsMediaSession.OpenUriRequested += OnSystemOpenUriRequested;
         DetachedFromVisualTree += (_, _) =>
         {
             _atmosphereTimer.Stop();
@@ -186,6 +191,7 @@ public partial class MusicView : UserControl
             Values.Volume = (float)VolumeSlider.Value / 100.0f;
             _engine.ApplyVolume(Values.Volume);
             AppSettingsStore.SaveVolume(Values.Volume);
+            _windowsMediaSession.UpdateVolume(Values.Volume);
         };
         
         try { MusicLibraryService.Current.Initialize(); }
@@ -319,6 +325,9 @@ public partial class MusicView : UserControl
     {
         _windowsMediaSession.Start();
         _windowsMediaSession.UpdateState(_engine.State);
+        _windowsMediaSession.UpdateVolume(Values.Volume);
+        _windowsMediaSession.UpdateShuffle(_shuffle);
+        _windowsMediaSession.UpdateLoopStatus(_loopStatus);
         Dispatcher.UIThread.Post(() =>
         {
             if (_filteredItems.Count == 0 || _engine.State != EngineState.Stopped)
@@ -2232,6 +2241,40 @@ public partial class MusicView : UserControl
         var seconds = Math.Clamp(position.TotalSeconds, 0, _engine.TotalTime.TotalSeconds);
         _engine.Seek(seconds / _engine.TotalTime.TotalSeconds);
         UpdatePlaybackPositionUi();
+        _windowsMediaSession.NotifySeeked(_engine.CurrentTime);
+    }
+
+    private void OnSystemVolumeRequested(double volume)
+    {
+        VolumeSlider.Value = Math.Clamp(volume, 0, 1) * 100;
+    }
+
+    private void OnSystemLoopStatusRequested(string status)
+    {
+        if (status is not ("None" or "Track" or "Playlist")) return;
+        _loopStatus = status;
+        _windowsMediaSession.UpdateLoopStatus(status);
+        RefreshNextTrackPreview();
+    }
+
+    private void OnSystemOpenUriRequested(Uri uri)
+    {
+        if (!uri.IsFile) return;
+
+        string requestedPath;
+        try { requestedPath = Path.GetFullPath(uri.LocalPath); }
+        catch { return; }
+
+        var index = _filteredItems.FindIndex(item =>
+        {
+            try
+            {
+                var trackPath = Path.GetFullPath(Path.Combine(Values.TracksDirectory, item.Track.FileName));
+                return string.Equals(trackPath, requestedPath, StringComparison.Ordinal);
+            }
+            catch { return false; }
+        });
+        if (index >= 0) PlayTrackAt(index, isCrossfade: false);
     }
 
     private static bool IsTextEntry(object? source)
@@ -2266,9 +2309,12 @@ public partial class MusicView : UserControl
         }
     }
 
-    private void OnShuffleToggleClicked(object? sender, RoutedEventArgs e)
+    private void OnShuffleToggleClicked(object? sender, RoutedEventArgs e) => SetShuffle(!_shuffle);
+
+    private void SetShuffle(bool shuffle)
     {
-        _shuffle = !_shuffle;
+        if (_shuffle == shuffle) return;
+        _shuffle = shuffle;
         _shufflePriorities.Clear();
         ApplyFilter();
         SetFilteredSelectedIndex(_filteredItems.Count > 0 ? 0 : -1);
@@ -2279,6 +2325,7 @@ public partial class MusicView : UserControl
         UpdateUpcomingBar();
         ShuffleBtn.Opacity = _shuffle ? 1.0 : 0.35;
         ToolTip.SetTip(ShuffleBtn, _shuffle ? "Shuffle: On" : "Shuffle: Off");
+        _windowsMediaSession.UpdateShuffle(_shuffle);
     }
 
     private MusicTrack? ActiveOrSelectedTrack()
@@ -2503,6 +2550,15 @@ public partial class MusicView : UserControl
             return;
         }
         FinishListeningSession(markSkipped: false);
+        if (_loopStatus == "Track")
+        {
+            var currentIndex = GetCurrentPlayIndex();
+            if (currentIndex >= 0)
+            {
+                PlayTrackAt(currentIndex, isCrossfade: false);
+                return;
+            }
+        }
         NavigateNext(isManual: false);
     }
 
@@ -2561,8 +2617,11 @@ public partial class MusicView : UserControl
     private int PeekNextTrackIndex(int currentFilteredIndex)
     {
         if (_filteredItems.Count == 0) return -1;
+        if (_loopStatus == "Track") return -1;
         int nextIdx = currentFilteredIndex + 1;
-        return nextIdx < _filteredItems.Count ? nextIdx : -1;
+        return nextIdx < _filteredItems.Count
+            ? nextIdx
+            : _loopStatus == "Playlist" ? 0 : -1;
     }
 
     private void RefreshNextTrackPreview()
@@ -2601,7 +2660,11 @@ public partial class MusicView : UserControl
         else if (currentIdx >= 0)
         {
             nextLinearIdx = currentIdx + 1;
-            if (nextLinearIdx >= _filteredItems.Count) { FullStop(); return; }
+            if (nextLinearIdx >= _filteredItems.Count)
+            {
+                if (_loopStatus == "Playlist") nextLinearIdx = 0;
+                else { FullStop(); return; }
+            }
         }
         else if (_engine.ActiveTrackId < 0)
         {
@@ -3174,6 +3237,7 @@ public partial class MusicView : UserControl
         PlaybackTimeText.Text =
             $"{FormatDuration(_engine.CurrentTime)} / {FormatDuration(_engine.TotalTime)}";
         _isSeeking = false;
+        _windowsMediaSession.NotifySeeked(_engine.CurrentTime);
         UpdateDiscordPresence();
     }
 
@@ -3205,12 +3269,19 @@ public partial class MusicView : UserControl
         if (item is null)
             return;
 
+        var filePath = Path.Combine(Values.TracksDirectory, item.Track.FileName);
+        var artworkUri = MprisArtworkCache.GetArtworkUri(item.Track, filePath);
+
         _windowsMediaSession.UpdateMetadata(
             item.Track.Id,
             item.Track.Title,
             item.ChannelText,
             _engine.CurrentTime,
-            _engine.TotalTime);
+            _engine.TotalTime,
+            filePath,
+            artworkUri,
+            canGoNext: PeekNextTrackIndex(GetCurrentPlayIndex()) >= 0,
+            canGoPrevious: GetCurrentPlayIndex() > 0);
     }
 
     private void UpdateButtonStates()

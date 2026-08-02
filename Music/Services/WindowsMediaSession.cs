@@ -26,6 +26,26 @@ public sealed class WindowsMediaSession : IDisposable
         add { }
         remove { }
     }
+    public event Action<double>? VolumeRequested
+    {
+        add { }
+        remove { }
+    }
+    public event Action<bool>? ShuffleRequested
+    {
+        add { }
+        remove { }
+    }
+    public event Action<string>? LoopStatusRequested
+    {
+        add { }
+        remove { }
+    }
+    public event Action<Uri>? OpenUriRequested
+    {
+        add { }
+        remove { }
+    }
 
     public bool Start()
     {
@@ -64,13 +84,21 @@ public sealed class WindowsMediaSession : IDisposable
         string title,
         string? artist,
         TimeSpan position,
-        TimeSpan duration)
+        TimeSpan duration,
+        string? filePath = null,
+        string? artworkUri = null,
+        bool canGoNext = true,
+        bool canGoPrevious = true)
     {
         _ = trackId;
         _ = title;
         _ = artist;
         _ = position;
         _ = duration;
+        _ = filePath;
+        _ = artworkUri;
+        _ = canGoNext;
+        _ = canGoPrevious;
     }
 
     public void UpdatePosition(TimeSpan position, TimeSpan duration)
@@ -78,6 +106,11 @@ public sealed class WindowsMediaSession : IDisposable
         _ = position;
         _ = duration;
     }
+
+    public void UpdateVolume(double volume) => _ = volume;
+    public void UpdateShuffle(bool shuffle) => _ = shuffle;
+    public void UpdateLoopStatus(string status) => _ = status;
+    public void NotifySeeked(TimeSpan position) => _ = position;
 
     private void OnButtonPressed(SystemMediaTransportControls sender, SystemMediaTransportControlsButtonPressedEventArgs args)
     {
