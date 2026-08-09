@@ -1634,54 +1634,46 @@ public partial class MusicView : UserControl
         foreach (var condition in conditions)
             rows.Children.Add(CreateConditionSetRow(condition, exclude));
 
-        var accent = ThemeResources.Brush(exclude
-            ? "Theme.Brush.DangerText"
-            : "Theme.Brush.Accent");
+        var accent = exclude
+            ? ThemeResources.Brush("Theme.Brush.DangerText")
+            : Brush("#78A9E6");
 
-        return new Border
+        return new StackPanel
         {
-            Background = ThemeResources.Brush("Theme.Brush.SurfaceTranslucent"),
-            BorderBrush = ThemeResources.Brush(exclude
-                ? "Theme.Brush.DangerBorder"
-                : "Theme.Brush.Accent"),
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(7),
-            Padding = new Thickness(10, 9),
-            Child = new StackPanel
+            Spacing = 8,
+            Children =
             {
-                Spacing = 8,
-                Children =
+                new TextBlock
                 {
-                    new TextBlock
-                    {
-                        Text = title,
-                        FontSize = 11.5,
-                        FontWeight = FontWeight.SemiBold,
-                        Foreground = accent
-                    },
-                    rows
-                }
+                    Text = title,
+                    FontSize = 11.5,
+                    FontWeight = FontWeight.SemiBold,
+                    Foreground = accent,
+                    Margin = new Thickness(2, 0, 0, 0)
+                },
+                rows
             }
         };
     }
 
     private Control CreateConditionSetRow(FilterGroupControls condition, bool exclude)
     {
-        var values = new WrapPanel
+        var names = condition.GenreCtrl.SelectedItems
+            .Select(DisplayGenreFilterName)
+            .Concat(condition.TagCtrl.SelectedItems.Select(DisplayTagFilterName))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Order(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        var values = new TextBlock
         {
-            Orientation = Orientation.Horizontal,
-            HorizontalAlignment = HorizontalAlignment.Stretch
+            Text = FormatConditionValues(names),
+            FontSize = 10.5,
+            FontWeight = FontWeight.SemiBold,
+            Foreground = ThemeResources.Brush("Theme.Brush.TextSecondary"),
+            TextWrapping = TextWrapping.Wrap,
+            VerticalAlignment = VerticalAlignment.Center
         };
-
-        foreach (var name in condition.GenreCtrl.SelectedItems
-                     .Select(DisplayGenreFilterName)
-                     .Order(StringComparer.OrdinalIgnoreCase))
-            values.Children.Add(CreateConditionValue(name, ThemeResources.Brush("Theme.Brush.TextSecondary")));
-
-        foreach (var selectedTag in condition.TagCtrl.SelectedItems.Order(StringComparer.OrdinalIgnoreCase))
-            values.Children.Add(CreateConditionValue(
-                DisplayTagFilterName(selectedTag),
-                ThemeResources.Brush(exclude ? "Theme.Brush.DangerText" : "Theme.Brush.Accent")));
 
         var removeBtn = new Button
         {
@@ -1695,7 +1687,7 @@ public partial class MusicView : UserControl
             BorderThickness = new Thickness(0),
             HorizontalContentAlignment = HorizontalAlignment.Center,
             VerticalContentAlignment = VerticalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Top
+            VerticalAlignment = VerticalAlignment.Center
         };
         ToolTip.SetTip(removeBtn, "Remove this condition set");
         removeBtn.Click += (_, _) => RemoveFilterGroup(condition);
@@ -1705,12 +1697,15 @@ public partial class MusicView : UserControl
             ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto"),
             ColumnSpacing = 7
         };
-        row.Children.Add(new TextBlock
+        row.Children.Add(new Border
         {
-            Text = "•",
-            FontSize = 16,
-            Foreground = ThemeResources.Brush(exclude ? "Theme.Brush.DangerText" : "Theme.Brush.Accent"),
-            Margin = new Thickness(0, 0, 0, 0)
+            Width = 5,
+            Height = 5,
+            CornerRadius = new CornerRadius(3),
+            Background = exclude
+                ? ThemeResources.Brush("Theme.Brush.DangerText")
+                : Brush("#78A9E6"),
+            VerticalAlignment = VerticalAlignment.Center
         });
         Grid.SetColumn(values, 1);
         row.Children.Add(values);
@@ -1719,29 +1714,21 @@ public partial class MusicView : UserControl
 
         return new Border
         {
-            Background = ThemeResources.Brush("Theme.Brush.Surface"),
+            Background = Brush("#12FFFFFF"),
             CornerRadius = new CornerRadius(5),
-            Padding = new Thickness(8, 6, 4, 2),
+            Padding = new Thickness(9, 5, 4, 5),
             Child = row
         };
     }
 
-    private static Border CreateConditionValue(string text, IBrush accent)
+    private static string FormatConditionValues(IReadOnlyList<string> values)
     {
-        return new Border
+        return values.Count switch
         {
-            Background = new SolidColorBrush(Colors.Transparent),
-            BorderBrush = ThemeResources.Brush("Theme.Brush.BorderSubtle"),
-            BorderThickness = new Thickness(0, 0, 0, 1),
-            Padding = new Thickness(2, 1),
-            Margin = new Thickness(0, 0, 8, 5),
-            Child = new TextBlock
-            {
-                Text = text,
-                FontSize = 10.5,
-                FontWeight = FontWeight.SemiBold,
-                Foreground = accent
-            }
+            0 => string.Empty,
+            1 => values[0],
+            2 => $"{values[0]} and {values[1]}",
+            _ => $"{string.Join(", ", values.Take(values.Count - 1))} and {values[^1]}"
         };
     }
 
