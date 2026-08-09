@@ -108,6 +108,7 @@ public partial class MusicView : UserControl
     private bool _isCreatingPreset;
     private bool _showReviewOnly;
     private bool _manualRatingFilter;
+    private string _visibilityFilterMode = "All";
     private readonly HashSet<string> _selectedRatingNames = new(StringComparer.OrdinalIgnoreCase);
     private MultiSelectFilterControl? _conditionGenreCtrl;
     private MultiSelectFilterControl? _conditionTagCtrl;
@@ -175,8 +176,7 @@ public partial class MusicView : UserControl
             ApplyFilter();
             UpdateSearchVisibility();
         };
-        VisibilityFilter.SetItems(["Public", "Private"]);
-        VisibilityFilter.SelectionChanged += (_, _) => ApplyFilter();
+        SetVisibilityFilterMode("All", applyFilter: false);
         FileList.SelectionChanged += (_, _) =>
         {
             UpdateReviewButton();
@@ -1063,10 +1063,48 @@ public partial class MusicView : UserControl
 
     private HashSet<bool> SelectedVisibility()
     {
-        var selected = new HashSet<bool>();
-        if (VisibilityFilter.SelectedItems.Contains("Public")) selected.Add(true);
-        if (VisibilityFilter.SelectedItems.Contains("Private")) selected.Add(false);
-        return selected;
+        return _visibilityFilterMode switch
+        {
+            "Public" => [true],
+            "Private" => [false],
+            _ => []
+        };
+    }
+
+    private void OnAllVisibilityPressed(object? sender, PointerPressedEventArgs e)
+    {
+        SetVisibilityFilterMode("All");
+        e.Handled = true;
+    }
+
+    private void OnPublicVisibilityPressed(object? sender, PointerPressedEventArgs e)
+    {
+        SetVisibilityFilterMode("Public");
+        e.Handled = true;
+    }
+
+    private void OnPrivateVisibilityPressed(object? sender, PointerPressedEventArgs e)
+    {
+        SetVisibilityFilterMode("Private");
+        e.Handled = true;
+    }
+
+    private void SetVisibilityFilterMode(string mode, bool applyFilter = true)
+    {
+        _visibilityFilterMode = mode is "Public" or "Private" ? mode : "All";
+        var index = _visibilityFilterMode switch { "Public" => 1, "Private" => 2, _ => 0 };
+
+        var transparent = new SolidColorBrush(Colors.Transparent);
+        AllVisibilityButton.Background = index == 0 ? ThemeResources.Brush("Theme.Brush.AccentSurface") : transparent;
+        PublicVisibilityButton.Background = index == 1 ? ThemeResources.Brush("Theme.Brush.AccentSurface") : transparent;
+        PrivateVisibilityButton.Background = index == 2 ? ThemeResources.Brush("Theme.Brush.AccentSurface") : transparent;
+
+        AllVisibilityText.Foreground = ThemeResources.Brush(index == 0 ? "Theme.Brush.TextStrong" : "Theme.Brush.TextMuted");
+        PublicVisibilityText.Foreground = ThemeResources.Brush(index == 1 ? "Theme.Brush.TextStrong" : "Theme.Brush.TextMuted");
+        PrivateVisibilityText.Foreground = ThemeResources.Brush(index == 2 ? "Theme.Brush.TextStrong" : "Theme.Brush.TextMuted");
+
+        if (applyFilter)
+            ApplyFilter();
     }
 
     private void OnCompletionFilterChanged(object? sender, RoutedEventArgs e) => ApplyFilter();
@@ -1149,7 +1187,7 @@ public partial class MusicView : UserControl
         _isCreatingPreset = false;
         RebuildPresetRows();
         SetRatingFilterMode(manual: false, applyFilter: false);
-        VisibilityFilter.SetSelectedItems([], notify: false);
+        SetVisibilityFilterMode("All", applyFilter: false);
         ExcludeNeedsReviewCheckBox.IsChecked = true;
         ExcludeNeedsAnalysisCheckBox.IsChecked = true;
         _filterGroups.Clear();
@@ -1359,6 +1397,7 @@ public partial class MusicView : UserControl
         _activeFilterPresetName = null;
         RebuildPresetRows();
         SetRatingFilterMode(manual: false, applyFilter: false);
+        SetVisibilityFilterMode("All", applyFilter: false);
         ExcludeNeedsReviewCheckBox.IsChecked = false;
         ExcludeNeedsAnalysisCheckBox.IsChecked = false;
         _filterGroups.Clear();
@@ -1384,7 +1423,8 @@ public partial class MusicView : UserControl
             groups,
             ExcludeNeedsReviewCheckBox.IsChecked == true,
             ExcludeNeedsAnalysisCheckBox.IsChecked == true,
-            _manualRatingFilter);
+            _manualRatingFilter,
+            _visibilityFilterMode);
     }
 
     private void ApplyFilterPreset(PortableFilterPreset preset)
@@ -1393,6 +1433,7 @@ public partial class MusicView : UserControl
             preset.ManualRatings || preset.Ratings.Count > 0,
             preset.Ratings,
             applyFilter: false);
+        SetVisibilityFilterMode(preset.Visibility, applyFilter: false);
         ExcludeNeedsReviewCheckBox.IsChecked = preset.ExcludeNeedsReview;
         ExcludeNeedsAnalysisCheckBox.IsChecked = preset.ExcludeNeedsAnalysis;
 
@@ -1435,6 +1476,8 @@ public partial class MusicView : UserControl
             parts.Add($"{preset.Ratings.Count} rating{(preset.Ratings.Count == 1 ? "" : "s")}");
         if (preset.Groups.Count > 0)
             parts.Add($"{preset.Groups.Count} condition{(preset.Groups.Count == 1 ? "" : "s")}");
+        if (!string.Equals(preset.Visibility, "All", StringComparison.OrdinalIgnoreCase))
+            parts.Add(preset.Visibility.ToLowerInvariant());
         if (preset.ExcludeNeedsReview)
             parts.Add("no review tracks");
         if (preset.ExcludeNeedsAnalysis)
@@ -1573,115 +1616,125 @@ public partial class MusicView : UserControl
             return;
         }
 
-        for (var i = 0; i < _filterGroups.Count; i++)
-            FilterGroupsPanel.Children.Add(CreateConditionCard(_filterGroups[i], i));
+        var included = _filterGroups.Where(condition => !condition.Negate).ToList();
+        var excluded = _filterGroups.Where(condition => condition.Negate).ToList();
+
+        if (included.Count > 0)
+            FilterGroupsPanel.Children.Add(CreateConditionSection("Include", included, exclude: false));
+        if (excluded.Count > 0)
+            FilterGroupsPanel.Children.Add(CreateConditionSection("Exclude", excluded, exclude: true));
     }
 
-    private Control CreateConditionCard(FilterGroupControls condition, int index)
+    private Control CreateConditionSection(
+        string title,
+        IReadOnlyList<FilterGroupControls> conditions,
+        bool exclude)
     {
-        var genreNames = condition.GenreCtrl.SelectedItems
-            .Select(DisplayGenreFilterName)
-            .Order(StringComparer.OrdinalIgnoreCase)
-            .ToList();
-        var selectedTags = condition.TagCtrl.SelectedItems
-            .Order(StringComparer.OrdinalIgnoreCase)
-            .ToList();
+        var rows = new StackPanel { Spacing = 6 };
+        foreach (var condition in conditions)
+            rows.Children.Add(CreateConditionSetRow(condition, exclude));
 
-        var chips = new WrapPanel { Orientation = Orientation.Horizontal };
-        foreach (var name in genreNames)
-            chips.Children.Add(CreateConditionChip(name, ThemeResources.Brush("Theme.Brush.TextSecondary")));
-        foreach (var selectedTag in selectedTags)
-        {
-            chips.Children.Add(CreateConditionChip(
-                DisplayTagFilterName(selectedTag),
-                ThemeResources.Brush("Theme.Brush.Accent")));
-        }
-
-        var removeBtn = new Button
-        {
-            Content = "Remove",
-            Padding = new Thickness(9, 4),
-            FontSize = 10.5,
-            Opacity = 0.68,
-            Background = new SolidColorBrush(Colors.Transparent),
-            BorderBrush = ThemeResources.Brush("Theme.Brush.BorderStrong"),
-            BorderThickness = new Thickness(1)
-        };
-        removeBtn.Click += (_, _) => RemoveFilterGroup(condition);
-
-        var isNegated = condition.Negate;
-        var modeButton = new Button
-        {
-            Content = isNegated ? "Exclude" : "Include",
-            FontSize = 10.5,
-            FontWeight = FontWeight.SemiBold,
-            Padding = new Thickness(10, 4),
-            Background = ThemeResources.Brush(isNegated
-                ? "Theme.Brush.DangerSurface"
-                : "Theme.Brush.AccentSurface"),
-            BorderBrush = ThemeResources.Brush(isNegated
-                ? "Theme.Brush.DangerBorder"
-                : "Theme.Brush.Accent"),
-            Foreground = ThemeResources.Brush(isNegated
-                ? "Theme.Brush.DangerText"
-                : "Theme.Brush.TextStrong"),
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(5),
-            VerticalAlignment = VerticalAlignment.Center
-        };
-        ToolTip.SetTip(modeButton, isNegated ? "Switch to include" : "Switch to exclude");
-        modeButton.Click += (_, _) =>
-        {
-            var conditionIndex = _filterGroups.IndexOf(condition);
-            if (conditionIndex < 0)
-                return;
-
-            _filterGroups[conditionIndex] = condition with { Negate = !condition.Negate };
-            RebuildFilterConditionsPanel();
-            ApplyFilter();
-        };
-
-        var header = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto"), ColumnSpacing = 8 };
-        header.Children.Add(new TextBlock
-        {
-            Text = $"Condition {index + 1}",
-            FontSize = 11.5,
-            FontWeight = FontWeight.SemiBold,
-            Opacity = 0.82,
-            VerticalAlignment = VerticalAlignment.Center
-        });
-        Grid.SetColumn(modeButton, 1);
-        header.Children.Add(modeButton);
-        Grid.SetColumn(removeBtn, 2);
-        header.Children.Add(removeBtn);
+        var accent = ThemeResources.Brush(exclude
+            ? "Theme.Brush.DangerText"
+            : "Theme.Brush.Accent");
 
         return new Border
         {
             Background = ThemeResources.Brush("Theme.Brush.SurfaceTranslucent"),
-            BorderBrush = ThemeResources.Brush(isNegated
+            BorderBrush = ThemeResources.Brush(exclude
                 ? "Theme.Brush.DangerBorder"
-                : "Theme.Brush.BorderSubtle"),
+                : "Theme.Brush.Accent"),
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(7),
-            Padding = new Thickness(11, 9),
+            Padding = new Thickness(10, 9),
             Child = new StackPanel
             {
                 Spacing = 8,
-                Children = { header, chips }
+                Children =
+                {
+                    new TextBlock
+                    {
+                        Text = title,
+                        FontSize = 11.5,
+                        FontWeight = FontWeight.SemiBold,
+                        Foreground = accent
+                    },
+                    rows
+                }
             }
         };
     }
 
-    private static Border CreateConditionChip(string text, IBrush accent)
+    private Control CreateConditionSetRow(FilterGroupControls condition, bool exclude)
     {
+        var values = new WrapPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Stretch
+        };
+
+        foreach (var name in condition.GenreCtrl.SelectedItems
+                     .Select(DisplayGenreFilterName)
+                     .Order(StringComparer.OrdinalIgnoreCase))
+            values.Children.Add(CreateConditionValue(name, ThemeResources.Brush("Theme.Brush.TextSecondary")));
+
+        foreach (var selectedTag in condition.TagCtrl.SelectedItems.Order(StringComparer.OrdinalIgnoreCase))
+            values.Children.Add(CreateConditionValue(
+                DisplayTagFilterName(selectedTag),
+                ThemeResources.Brush(exclude ? "Theme.Brush.DangerText" : "Theme.Brush.Accent")));
+
+        var removeBtn = new Button
+        {
+            Content = "×",
+            Width = 24,
+            Height = 24,
+            Padding = new Thickness(0),
+            FontSize = 15,
+            Opacity = 0.62,
+            Background = new SolidColorBrush(Colors.Transparent),
+            BorderThickness = new Thickness(0),
+            HorizontalContentAlignment = HorizontalAlignment.Center,
+            VerticalContentAlignment = VerticalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Top
+        };
+        ToolTip.SetTip(removeBtn, "Remove this condition set");
+        removeBtn.Click += (_, _) => RemoveFilterGroup(condition);
+
+        var row = new Grid
+        {
+            ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto"),
+            ColumnSpacing = 7
+        };
+        row.Children.Add(new TextBlock
+        {
+            Text = "•",
+            FontSize = 16,
+            Foreground = ThemeResources.Brush(exclude ? "Theme.Brush.DangerText" : "Theme.Brush.Accent"),
+            Margin = new Thickness(0, 0, 0, 0)
+        });
+        Grid.SetColumn(values, 1);
+        row.Children.Add(values);
+        Grid.SetColumn(removeBtn, 2);
+        row.Children.Add(removeBtn);
+
         return new Border
         {
             Background = ThemeResources.Brush("Theme.Brush.Surface"),
-            BorderBrush = accent,
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(4),
-            Padding = new Thickness(8, 3),
-            Margin = new Thickness(0, 0, 6, 6),
+            CornerRadius = new CornerRadius(5),
+            Padding = new Thickness(8, 6, 4, 2),
+            Child = row
+        };
+    }
+
+    private static Border CreateConditionValue(string text, IBrush accent)
+    {
+        return new Border
+        {
+            Background = new SolidColorBrush(Colors.Transparent),
+            BorderBrush = ThemeResources.Brush("Theme.Brush.BorderSubtle"),
+            BorderThickness = new Thickness(0, 0, 0, 1),
+            Padding = new Thickness(2, 1),
+            Margin = new Thickness(0, 0, 8, 5),
             Child = new TextBlock
             {
                 Text = text,

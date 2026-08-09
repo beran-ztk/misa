@@ -23,6 +23,31 @@
             <Setter Property="HorizontalContentAlignment" Value="Center"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
+        <Style Selector="ToggleButton.completion-filter">
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="Padding" Value="10,0"/>
+            <Setter Property="Background" Value="{DynamicResource Theme.Brush.Surface}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Theme.Brush.BorderStrong}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Opacity" Value="0.58"/>
+        </Style>
+        <Style Selector="ToggleButton.completion-filter:pointerover">
+            <Setter Property="Opacity" Value="0.86"/>
+        </Style>
+        <Style Selector="ToggleButton.completion-filter:checked">
+            <Setter Property="Opacity" Value="1"/>
+        </Style>
+        <Style Selector="ToggleButton.completion-filter.review:checked">
+            <Setter Property="Background" Value="#24FFD27A"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Theme.Brush.Warning}"/>
+        </Style>
+        <Style Selector="ToggleButton.completion-filter.analysis:checked">
+            <Setter Property="Background" Value="{DynamicResource Theme.Brush.DangerSurface}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Theme.Brush.DangerBorder}"/>
+        </Style>
         <Style Selector="TextBox">
             <Setter Property="CornerRadius" Value="{DynamicResource Theme.Corner.Control}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource Theme.Brush.Border}"/>
@@ -893,8 +918,41 @@
                                     <TextBlock Text="VISIBILITY"
                                                FontSize="10" FontWeight="SemiBold"
                                                Opacity="0.42" LetterSpacing="1"/>
-                                    <views:MultiSelectFilterControl x:Name="VisibilityFilter"
-                                                                    Placeholder="All visibility"/>
+                                    <Border Height="32"
+                                            Background="{DynamicResource Theme.Brush.Surface}"
+                                            BorderBrush="{DynamicResource Theme.Brush.BorderStrong}"
+                                            BorderThickness="1"
+                                            CornerRadius="6"
+                                            ClipToBounds="True">
+                                        <Grid ColumnDefinitions="*,*,*">
+                                            <Border x:Name="AllVisibilityButton"
+                                                    Grid.Column="0"
+                                                    Background="{DynamicResource Theme.Brush.AccentSurface}"
+                                                    CornerRadius="5,0,0,5"
+                                                    Cursor="Hand"
+                                                    PointerPressed="OnAllVisibilityPressed">
+                                                <TextBlock x:Name="AllVisibilityText" Text="All"
+                                                           FontSize="11" FontWeight="SemiBold"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                            <Border x:Name="PublicVisibilityButton"
+                                                    Grid.Column="1" Background="Transparent" Cursor="Hand"
+                                                    PointerPressed="OnPublicVisibilityPressed">
+                                                <TextBlock x:Name="PublicVisibilityText" Text="Public"
+                                                           FontSize="11" FontWeight="SemiBold"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                            <Border x:Name="PrivateVisibilityButton"
+                                                    Grid.Column="2" Background="Transparent"
+                                                    CornerRadius="0,5,5,0"
+                                                    Cursor="Hand"
+                                                    PointerPressed="OnPrivateVisibilityPressed">
+                                                <TextBlock x:Name="PrivateVisibilityText" Text="Private"
+                                                           FontSize="11" FontWeight="SemiBold"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
                                 </StackPanel>
 
                                 <Rectangle Height="1" Fill="{DynamicResource Theme.Brush.Divider}"/>
@@ -903,36 +961,38 @@
                                     <TextBlock Text="COMPLETION"
                                                FontSize="10" FontWeight="SemiBold"
                                                Opacity="0.42" LetterSpacing="1"/>
-                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                                        <CheckBox x:Name="ExcludeNeedsReviewCheckBox"
-                                                  Content="Hide tracks needing review"
+                                    <ToggleButton x:Name="ExcludeNeedsReviewCheckBox"
+                                                  Classes="completion-filter review"
                                                   IsChecked="True"
-                                                  FontSize="11"
                                                   Checked="OnCompletionFilterChanged"
-                                                  Unchecked="OnCompletionFilterChanged"/>
-                                        <TextBlock Grid.Column="1"
-                                                   Text="YELLOW"
-                                                   FontFamily="Consolas"
-                                                   FontSize="9"
-                                                   Foreground="{DynamicResource Theme.Brush.Warning}"
-                                                   Opacity="0.78"
-                                                   VerticalAlignment="Center"/>
-                                    </Grid>
-                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                                        <CheckBox x:Name="ExcludeNeedsAnalysisCheckBox"
-                                                  Content="Hide unanalyzed tracks"
+                                                  Unchecked="OnCompletionFilterChanged">
+                                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="9">
+                                            <Rectangle Width="3" Height="16" RadiusX="1.5" RadiusY="1.5"
+                                                       Fill="{DynamicResource Theme.Brush.Warning}"/>
+                                            <TextBlock Grid.Column="1" Text="Hide tracks needing review"
+                                                       FontSize="11" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="2" Text="YELLOW TITLE"
+                                                       FontFamily="Consolas" FontSize="9"
+                                                       Foreground="{DynamicResource Theme.Brush.Warning}"
+                                                       VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </ToggleButton>
+                                    <ToggleButton x:Name="ExcludeNeedsAnalysisCheckBox"
+                                                  Classes="completion-filter analysis"
                                                   IsChecked="True"
-                                                  FontSize="11"
                                                   Checked="OnCompletionFilterChanged"
-                                                  Unchecked="OnCompletionFilterChanged"/>
-                                        <TextBlock Grid.Column="1"
-                                                   Text="RED"
-                                                   FontFamily="Consolas"
-                                                   FontSize="9"
-                                                   Foreground="{DynamicResource Theme.Brush.Danger}"
-                                                   Opacity="0.82"
-                                                   VerticalAlignment="Center"/>
-                                    </Grid>
+                                                  Unchecked="OnCompletionFilterChanged">
+                                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="9">
+                                            <Rectangle Width="3" Height="16" RadiusX="1.5" RadiusY="1.5"
+                                                       Fill="{DynamicResource Theme.Brush.Danger}"/>
+                                            <TextBlock Grid.Column="1" Text="Hide unanalyzed tracks"
+                                                       FontSize="11" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="2" Text="RED TITLE"
+                                                       FontFamily="Consolas" FontSize="9"
+                                                       Foreground="{DynamicResource Theme.Brush.Danger}"
+                                                       VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </ToggleButton>
                                 </StackPanel>
 
                                 <Rectangle Height="1" Fill="{DynamicResource Theme.Brush.Divider}"/>

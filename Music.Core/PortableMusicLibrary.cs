@@ -74,7 +74,8 @@ public sealed record PortableFilterPreset(
     List<PortableFilterGroup> Groups,
     bool ExcludeNeedsReview = false,
     bool ExcludeNeedsAnalysis = false,
-    bool ManualRatings = false);
+    bool ManualRatings = false,
+    string Visibility = "All");
 
 public sealed record PortableTrack(
     string Title,
