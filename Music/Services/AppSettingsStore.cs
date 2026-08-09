@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -33,6 +34,8 @@ public static class AppSettingsStore
                 ChannelDownloadMinDurationMinutes,
                 ChannelDownloadMaxDurationMinutes);
             settings.Appearance = (settings.Appearance ?? new AppearanceSettings()).Clamp();
+            settings.PlayerSession ??= new PlayerSessionSettings();
+            settings.PlayerSession.QueueTrackIds ??= [];
             return settings;
         }
         catch
@@ -79,6 +82,13 @@ public static class AppSettingsStore
         Save(settings);
     }
 
+    public static void SavePlayerSession(PlayerSessionSettings playerSession)
+    {
+        var settings = Load();
+        settings.PlayerSession = playerSession;
+        Save(settings);
+    }
+
     private static void Save(AppSettings settings)
     {
         var directory = Path.GetDirectoryName(Values.AppSettingsPath);
@@ -97,4 +107,16 @@ public sealed class AppSettings
     public int ChannelDownloadMaxDurationMinutes { get; set; } = 12;
     public AppearanceSettings Appearance { get; set; } = new();
     public string LastSettingsPage { get; set; } = "library";
+    public PlayerSessionSettings PlayerSession { get; set; } = new();
+}
+
+public sealed class PlayerSessionSettings
+{
+    public string? ActiveFilterPresetName { get; set; }
+    public int? ActiveTrackId { get; set; }
+    public int? SelectedTrackId { get; set; }
+    public bool ShuffleEnabled { get; set; }
+    public string SortBy { get; set; } = "Name";
+    public string SortDirection { get; set; } = "Ascending";
+    public List<int> QueueTrackIds { get; set; } = [];
 }

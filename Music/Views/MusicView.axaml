@@ -795,28 +795,6 @@
                                         </Button>
                                     </Grid>
                                     <StackPanel x:Name="PresetRows" Spacing="7"/>
-                                    <Grid x:Name="PresetActionsPanel"
-                                          ColumnDefinitions="*,Auto"
-                                          ColumnSpacing="8"
-                                          IsVisible="False">
-                                        <Button Grid.Column="0"
-                                                Content="Update selected"
-                                                Click="OnUpdatePresetClicked"
-                                                Background="{DynamicResource Theme.Brush.AccentSurface}"
-                                                BorderBrush="{DynamicResource Theme.Brush.Accent}"
-                                                BorderThickness="1"
-                                                Padding="10,6"
-                                                FontSize="11"/>
-                                        <Button Grid.Column="1"
-                                                Content="Delete"
-                                                Click="OnDeletePresetClicked"
-                                                Background="Transparent"
-                                                BorderBrush="{DynamicResource Theme.Brush.BorderStrong}"
-                                                BorderThickness="1"
-                                                Padding="10,6"
-                                                FontSize="11"
-                                                Opacity="0.75"/>
-                                    </Grid>
                                 </StackPanel>
 
                                 <Rectangle Height="1" Fill="{DynamicResource Theme.Brush.Divider}"/>

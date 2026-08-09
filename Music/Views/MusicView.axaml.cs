@@ -109,6 +109,12 @@ public partial class MusicView : UserControl
     private bool _showReviewOnly;
     private bool _manualRatingFilter;
     private string _visibilityFilterMode = "All";
+    private PlayerSessionSettings _restoredPlayerSession = new();
+    private Dictionary<int, int>? _pendingRestoredQueueOrder;
+    private int? _pendingRestoredTrackId;
+    private bool _restoringPlayerSession = true;
+    private bool _suppressPresetAutoSave;
+    private bool _suppressSelectionSessionSave;
     private readonly HashSet<string> _selectedRatingNames = new(StringComparer.OrdinalIgnoreCase);
     private MultiSelectFilterControl? _conditionGenreCtrl;
     private MultiSelectFilterControl? _conditionTagCtrl;
@@ -133,7 +139,25 @@ public partial class MusicView : UserControl
         var playerAmbientGradient = (LinearGradientBrush)PlayerAtmosphereTint.Background!;
         _playerAmbientPrimaryStop = playerAmbientGradient.GradientStops[0];
         _playerAmbientSecondaryStop = playerAmbientGradient.GradientStops[1];
-        _appearanceSettings = AppSettingsStore.Load().Appearance.Clone().Clamp();
+        var appSettings = AppSettingsStore.Load();
+        _appearanceSettings = appSettings.Appearance.Clone().Clamp();
+        _restoredPlayerSession = appSettings.PlayerSession;
+        _sortBy = Enum.TryParse<LibrarySortBy>(_restoredPlayerSession.SortBy, true, out var restoredSortBy)
+            ? restoredSortBy
+            : LibrarySortBy.Name;
+        _sortDirection = Enum.TryParse<LibrarySortDirection>(_restoredPlayerSession.SortDirection, true, out var restoredDirection)
+            ? restoredDirection
+            : LibrarySortDirection.Ascending;
+        _shuffle = _restoredPlayerSession.ShuffleEnabled;
+        _pendingRestoredTrackId = _restoredPlayerSession.ActiveTrackId
+                                  ?? _restoredPlayerSession.SelectedTrackId;
+        _pendingRestoredQueueOrder = _restoredPlayerSession.QueueTrackIds
+            .Distinct()
+            .Select((trackId, index) => (trackId, index))
+            .ToDictionary(item => item.trackId, item => item.index);
+        if (_shuffle)
+            foreach (var item in _pendingRestoredQueueOrder)
+                _shufflePriorities[item.Key] = item.Value;
         ApplyAppearanceSettings(_appearanceSettings, refreshTrackRows: false);
         AddHandler(KeyDownEvent, OnKeyDown, RoutingStrategies.Tunnel);
         _globalMediaKeys.Pressed += OnGlobalMediaKeyPressed;
@@ -147,6 +171,7 @@ public partial class MusicView : UserControl
         _windowsMediaSession.OpenUriRequested += OnSystemOpenUriRequested;
         DetachedFromVisualTree += (_, _) =>
         {
+            PersistPlayerSession();
             _atmosphereTimer.Stop();
             _engine.Dispose();
             _globalMediaKeys.Dispose();
@@ -180,6 +205,8 @@ public partial class MusicView : UserControl
         FileList.SelectionChanged += (_, _) =>
         {
             UpdateReviewButton();
+            if (!_suppressSelectionSessionSave)
+                PersistPlayerSession();
         };
         PlayerBar.SizeChanged += (_, _) => UpdateSettingsLayout();
         PlayerBar.SizeChanged += (_, _) => UpdateEditorBounds();
@@ -208,10 +235,13 @@ public partial class MusicView : UserControl
         UpdateImportBounds();
 
         LoadLookups();
-        LoadFilterPresets();
         InitializeFilterConditionBuilder();
+        LoadFilterPresets();
         RebuildFilterConditionsPanel();
         RefreshTrackList();
+        _restoringPlayerSession = false;
+        UpdateShuffleButton();
+        PersistPlayerSession();
         _ = RefreshChannelsOnStartupAsync();
 
         SettingsOverlay.PreloadGenreVocabulary();
@@ -331,8 +361,11 @@ public partial class MusicView : UserControl
             if (_filteredItems.Count == 0 || _engine.State != EngineState.Stopped)
                 return;
 
-            EnsureVisibleWindowAround(0);
-            SetFilteredSelectedIndex(0);
+            var selectedIndex = GetSelectedFilteredIndex();
+            if (selectedIndex < 0)
+                selectedIndex = 0;
+            EnsureVisibleWindowAround(selectedIndex);
+            SetFilteredSelectedIndex(selectedIndex);
             StartPlayback();
             _engine.Pause();
             UpdatePlaybackPositionUi();
@@ -368,7 +401,7 @@ public partial class MusicView : UserControl
     {
         _updatingSortControls = true;
         SortByBox.ItemsSource = new[] { "Name", "Rating" };
-        SortByBox.SelectedIndex = 0;
+        SortByBox.SelectedIndex = _sortBy == LibrarySortBy.Rating ? 1 : 0;
         UpdateSortDirectionButton();
         _updatingSortControls = false;
     }
@@ -380,6 +413,7 @@ public partial class MusicView : UserControl
 
         _sortBy = SortByBox.SelectedIndex == 1 ? LibrarySortBy.Rating : LibrarySortBy.Name;
         ApplyFilter();
+        PersistPlayerSession();
     }
 
     private void OnSortDirectionClicked(object? sender, RoutedEventArgs e)
@@ -389,6 +423,7 @@ public partial class MusicView : UserControl
             : LibrarySortDirection.Ascending;
         UpdateSortDirectionButton();
         ApplyFilter();
+        PersistPlayerSession();
     }
 
     private void UpdateSortDirectionButton()
@@ -697,6 +732,20 @@ public partial class MusicView : UserControl
 
     private void ApplyFilter()
     {
+        var previousSuppression = _suppressSelectionSessionSave;
+        _suppressSelectionSessionSave = true;
+        try
+        {
+            ApplyFilterCore();
+        }
+        finally
+        {
+            _suppressSelectionSessionSave = previousSuppression;
+        }
+    }
+
+    private void ApplyFilterCore()
+    {
         var selRatingIds = SelectedRatingIds();
         var selVisibility = SelectedVisibility();
         var itemById = _allItems.ToDictionary(i => i.Track.Id);
@@ -740,6 +789,8 @@ public partial class MusicView : UserControl
 
         if (_shuffle)
             ShuffleFilteredItems();
+
+        RestoreSavedQueueOrder();
 
         foreach (var item in _filteredItems)
             item.IsPlaying = item.Track.Id == _engine.ActiveTrackId;
@@ -792,7 +843,7 @@ public partial class MusicView : UserControl
 
         var targetTrackId = _engine.ActiveTrackId >= 0
             ? _engine.ActiveTrackId
-            : previousSelectedTrackId;
+            : previousSelectedTrackId ?? _pendingRestoredTrackId;
 
         if (targetTrackId is int id)
         {
@@ -801,6 +852,7 @@ public partial class MusicView : UserControl
             {
                 EnsureVisibleWindowAround(index);
                 SetFilteredSelectedIndex(index);
+                _pendingRestoredTrackId = null;
                 return;
             }
         }
@@ -833,6 +885,49 @@ public partial class MusicView : UserControl
 
         if (filteredIndex < _visibleItems.Count)
             FileList.ScrollIntoView(_visibleItems[filteredIndex]);
+    }
+
+    private void RestoreSavedQueueOrder()
+    {
+        if (_pendingRestoredQueueOrder is null || _filteredItems.Count == 0)
+            return;
+
+        var fallbackOrder = _filteredItems
+            .Select((item, index) => (item.Track.Id, index))
+            .ToDictionary(item => item.Id, item => item.index);
+        var savedCount = _pendingRestoredQueueOrder.Count;
+
+        _filteredItems = _filteredItems
+            .OrderBy(item => _pendingRestoredQueueOrder.TryGetValue(item.Track.Id, out var savedIndex)
+                ? savedIndex
+                : savedCount + fallbackOrder[item.Track.Id])
+            .ToList();
+
+        if (_shuffle)
+        {
+            _shufflePriorities.Clear();
+            for (var index = 0; index < _filteredItems.Count; index++)
+                _shufflePriorities[_filteredItems[index].Track.Id] = index;
+        }
+
+        _pendingRestoredQueueOrder = null;
+    }
+
+    private void PersistPlayerSession()
+    {
+        if (_restoringPlayerSession)
+            return;
+
+        AppSettingsStore.SavePlayerSession(new PlayerSessionSettings
+        {
+            ActiveFilterPresetName = _activeFilterPresetName,
+            ActiveTrackId = _engine.ActiveTrackId >= 0 ? _engine.ActiveTrackId : null,
+            SelectedTrackId = (FileList.SelectedItem as TrackDisplayItem)?.Track.Id,
+            ShuffleEnabled = _shuffle,
+            SortBy = _sortBy.ToString(),
+            SortDirection = _sortDirection.ToString(),
+            QueueTrackIds = _filteredItems.Select(item => item.Track.Id).ToList()
+        });
     }
 
     private int GetSelectedFilteredIndex()
@@ -982,7 +1077,7 @@ public partial class MusicView : UserControl
 
         RefreshRatingFilterControls();
         if (applyFilter)
-            ApplyFilter();
+            ApplyFilterDefinitionChange();
     }
 
     private void RefreshRatingFilterControls()
@@ -1035,7 +1130,7 @@ public partial class MusicView : UserControl
                 if (!_selectedRatingNames.Add(rating.Name))
                     _selectedRatingNames.Remove(rating.Name);
                 RefreshRatingFilterControls();
-                ApplyFilter();
+                ApplyFilterDefinitionChange();
             };
             RatingButtonsPanel.Children.Add(button);
         }
@@ -1104,10 +1199,10 @@ public partial class MusicView : UserControl
         PrivateVisibilityText.Foreground = ThemeResources.Brush(index == 2 ? "Theme.Brush.TextStrong" : "Theme.Brush.TextMuted");
 
         if (applyFilter)
-            ApplyFilter();
+            ApplyFilterDefinitionChange();
     }
 
-    private void OnCompletionFilterChanged(object? sender, RoutedEventArgs e) => ApplyFilter();
+    private void OnCompletionFilterChanged(object? sender, RoutedEventArgs e) => ApplyFilterDefinitionChange();
 
     // ─── Toolbar / filter panel ───────────────────────────────────────────────
 
@@ -1195,13 +1290,23 @@ public partial class MusicView : UserControl
         ClearConditionBuilder();
         _showReviewOnly = false;
         ApplyFilter();
+        PersistPlayerSession();
     }
 
     private void LoadFilterPresets()
     {
         _filterPresets = FilterPresetStore.Load();
-        _activeFilterPresetName = null;
-        RebuildPresetRows();
+        var restoredPreset = _filterPresets.FirstOrDefault(preset =>
+            string.Equals(
+                preset.Name,
+                _restoredPlayerSession.ActiveFilterPresetName,
+                StringComparison.OrdinalIgnoreCase));
+
+        _activeFilterPresetName = restoredPreset?.Name;
+        if (restoredPreset is not null)
+            ApplyFilterPreset(restoredPreset);
+        else
+            RebuildPresetRows();
     }
 
     private void RebuildPresetRows()
@@ -1214,7 +1319,6 @@ public partial class MusicView : UserControl
         foreach (var preset in _filterPresets.OrderBy(preset => preset.Name, StringComparer.OrdinalIgnoreCase))
             PresetRows.Children.Add(CreatePresetCard(preset));
 
-        PresetActionsPanel.IsVisible = _activeFilterPresetName is not null;
         AddPresetButton.IsEnabled = !_isCreatingPreset;
     }
 
@@ -1235,7 +1339,7 @@ public partial class MusicView : UserControl
             Opacity = 0.55,
             TextTrimming = TextTrimming.CharacterEllipsis
         };
-        var content = new StackPanel { Spacing = 2 };
+        var content = new StackPanel { Spacing = 2, Margin = new Thickness(0, 0, 28, 0) };
         content.Children.Add(title);
         content.Children.Add(summary);
 
@@ -1256,7 +1360,30 @@ public partial class MusicView : UserControl
             Cursor = new Cursor(StandardCursorType.Hand)
         };
         card.Click += (_, _) => SelectFilterPreset(preset.Name);
-        return card;
+
+        var deleteButton = new Button
+        {
+            Content = "×",
+            Width = 26,
+            Height = 26,
+            Padding = new Thickness(0),
+            Margin = new Thickness(0, 0, 5, 0),
+            FontSize = 15,
+            Opacity = 0.58,
+            Background = Brushes.Transparent,
+            BorderThickness = new Thickness(0),
+            HorizontalAlignment = HorizontalAlignment.Right,
+            VerticalAlignment = VerticalAlignment.Center,
+            HorizontalContentAlignment = HorizontalAlignment.Center,
+            VerticalContentAlignment = VerticalAlignment.Center
+        };
+        ToolTip.SetTip(deleteButton, $"Delete {preset.Name}");
+        deleteButton.Click += (_, _) => DeleteFilterPreset(preset.Name);
+
+        var container = new Grid();
+        container.Children.Add(card);
+        container.Children.Add(deleteButton);
+        return container;
     }
 
     private Control CreateNewPresetRow()
@@ -1340,7 +1467,7 @@ public partial class MusicView : UserControl
             return;
 
         name = UniquePresetName(name);
-        var preset = new PortableFilterPreset(name, new List<string>(), new List<PortableFilterGroup>());
+        var preset = CreatePreset(name);
         _filterPresets.Add(preset);
 
         FilterPresetStore.Save(_filterPresets);
@@ -1348,7 +1475,7 @@ public partial class MusicView : UserControl
         _activeFilterPresetName = preset.Name;
         _isCreatingPreset = false;
         RebuildPresetRows();
-        ApplyFilterPreset(preset);
+        PersistPlayerSession();
     }
 
     private void SelectFilterPreset(string presetName)
@@ -1363,11 +1490,12 @@ public partial class MusicView : UserControl
         _isCreatingPreset = false;
         RebuildPresetRows();
         ApplyFilterPreset(preset);
+        PersistPlayerSession();
     }
 
-    private void OnUpdatePresetClicked(object? sender, RoutedEventArgs e)
+    private void SaveActivePresetFromCurrentFilters()
     {
-        if (_activeFilterPresetName is null)
+        if (_suppressPresetAutoSave || _activeFilterPresetName is null)
             return;
 
         var preset = CreatePreset(_activeFilterPresetName);
@@ -1382,18 +1510,38 @@ public partial class MusicView : UserControl
         _filterPresets = FilterPresetStore.Load();
         _activeFilterPresetName = preset.Name;
         RebuildPresetRows();
+        PersistPlayerSession();
     }
 
-    private void OnDeletePresetClicked(object? sender, RoutedEventArgs e)
+    private void ApplyFilterDefinitionChange()
     {
-        if (_activeFilterPresetName is null)
+        ApplyFilter();
+        if (_suppressPresetAutoSave)
             return;
+        SaveActivePresetFromCurrentFilters();
+        PersistPlayerSession();
+    }
+
+    private void DeleteFilterPreset(string presetName)
+    {
+        var wasSelected = string.Equals(
+            presetName,
+            _activeFilterPresetName,
+            StringComparison.OrdinalIgnoreCase);
 
         _filterPresets.RemoveAll(preset =>
-            string.Equals(preset.Name, _activeFilterPresetName, StringComparison.OrdinalIgnoreCase));
+            string.Equals(preset.Name, presetName, StringComparison.OrdinalIgnoreCase));
 
         FilterPresetStore.Save(_filterPresets);
         _filterPresets = FilterPresetStore.Load();
+
+        if (!wasSelected)
+        {
+            RebuildPresetRows();
+            PersistPlayerSession();
+            return;
+        }
+
         _activeFilterPresetName = null;
         RebuildPresetRows();
         SetRatingFilterMode(manual: false, applyFilter: false);
@@ -1404,6 +1552,7 @@ public partial class MusicView : UserControl
         RebuildFilterConditionsPanel();
         ClearConditionBuilder();
         ApplyFilter();
+        PersistPlayerSession();
     }
 
     private PortableFilterPreset CreatePreset(string name)
@@ -1429,25 +1578,35 @@ public partial class MusicView : UserControl
 
     private void ApplyFilterPreset(PortableFilterPreset preset)
     {
-        SetRatingFilterMode(
-            preset.ManualRatings || preset.Ratings.Count > 0,
-            preset.Ratings,
-            applyFilter: false);
-        SetVisibilityFilterMode(preset.Visibility, applyFilter: false);
-        ExcludeNeedsReviewCheckBox.IsChecked = preset.ExcludeNeedsReview;
-        ExcludeNeedsAnalysisCheckBox.IsChecked = preset.ExcludeNeedsAnalysis;
+        _suppressPresetAutoSave = true;
+        try
+        {
+            SetRatingFilterMode(
+                preset.ManualRatings || preset.Ratings.Count > 0,
+                preset.Ratings,
+                applyFilter: false);
+            SetVisibilityFilterMode(preset.Visibility, applyFilter: false);
+            ExcludeNeedsReviewCheckBox.IsChecked = preset.ExcludeNeedsReview;
+            ExcludeNeedsAnalysisCheckBox.IsChecked = preset.ExcludeNeedsAnalysis;
 
-        _filterGroups.Clear();
+            _filterGroups.Clear();
 
-        var groups = preset.Groups
-            .Where(group => group.Genres.Count > 0 || (group.Tags?.Count ?? 0) > 0)
-            .ToList();
+            var groups = preset.Groups
+                .Where(group => group.Genres.Count > 0 || (group.Tags?.Count ?? 0) > 0)
+                .ToList();
 
-        foreach (var group in groups)
-            _filterGroups.Add(CreateFilterCondition(group.Genres, group.Tags ?? new List<string>(), group.Negate));
+            foreach (var group in groups)
+                _filterGroups.Add(CreateFilterCondition(group.Genres, group.Tags ?? new List<string>(), group.Negate));
 
-        RebuildFilterConditionsPanel();
-        ClearConditionBuilder();
+            RebuildFilterConditionsPanel();
+            ClearConditionBuilder();
+        }
+        finally
+        {
+            _suppressPresetAutoSave = false;
+        }
+
+        RebuildPresetRows();
         ApplyFilter();
     }
 
@@ -1500,7 +1659,7 @@ public partial class MusicView : UserControl
     private void OnAddFilterGroupClicked(object? sender, RoutedEventArgs e)
     {
         AddConditionFromBuilder();
-        ApplyFilter();
+        ApplyFilterDefinitionChange();
     }
 
     private void InitializeFilterConditionBuilder()
@@ -2113,7 +2272,7 @@ public partial class MusicView : UserControl
         if (idx < 0) return;
         _filterGroups.RemoveAt(idx);
         RebuildFilterConditionsPanel();
-        ApplyFilter();
+        ApplyFilterDefinitionChange();
     }
 
     // ─── Dialogs ──────────────────────────────────────────────────────────────
@@ -2495,6 +2654,12 @@ public partial class MusicView : UserControl
         _restartQueueFromTopAfterCurrent = _engine.ActiveTrackId >= 0;
         _nextTrackIndex = GetQueueRestartIndex();
         UpdateUpcomingBar();
+        UpdateShuffleButton();
+        PersistPlayerSession();
+    }
+
+    private void UpdateShuffleButton()
+    {
         ShuffleBtn.Opacity = _shuffle ? 1.0 : 0.35;
         ToolTip.SetTip(ShuffleBtn, _shuffle ? "Shuffle: On" : "Shuffle: Off");
         _windowsMediaSession.UpdateShuffle(_shuffle);
@@ -2582,6 +2747,7 @@ public partial class MusicView : UserControl
         UpdateUpcomingBar();
         UpdateButtonStates();
         RefreshPlayingMarkers();
+        PersistPlayerSession();
     }
 
     private static float LoudnessGainForTrack(int trackId)
