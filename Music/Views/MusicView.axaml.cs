@@ -1947,14 +1947,15 @@ public partial class MusicView : UserControl
         var searchBox = new TextBox
         {
             Watermark = "Search",
-            Width = 65,
-            Height = 28,
+            Width = 180,
+            Height = 24,
+            MinHeight = 24,
+            MaxHeight = 24,
             IsVisible = false,
             HorizontalAlignment = HorizontalAlignment.Right,
             VerticalContentAlignment = VerticalAlignment.Center,
             Margin = new Thickness(4, 0)
         };
-        searchBox.Classes.Add("theme-input");
         searchBox.Classes.Add("compact-search");
 
         var searchButton = new Button
