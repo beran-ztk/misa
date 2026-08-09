@@ -549,7 +549,7 @@
                     CornerRadius="0,0,0,0"
                     BorderThickness="0"
                     PointerPressed="OnPlayerBarPointerPressed"
-                    BoxShadow="0 -6 18 2 #76000000">
+                    BoxShadow="0 -14 36 6 #CC000000">
                 <Border CornerRadius="0,0,0,0"
                         ClipToBounds="True">
                     <Panel>
