@@ -15,6 +15,13 @@ public sealed class AppearanceSettings
     public double AudioArtworkMotion { get; set; } = 150;
     public double AudioBlurReaction { get; set; } = 75;
     public double AudioColorReaction { get; set; } = 200;
+    public bool SpectrumVisualizerEnabled { get; set; } = true;
+    public double SpectrumVisualizerHeight { get; set; } = 140;
+    // Kept nullable for one load cycle so settings written by the first visualizer
+    // version can be migrated. The visualizer now renders without global opacity.
+    public double? SpectrumVisualizerOpacity { get; set; }
+    public double SpectrumVisualizerSensitivity { get; set; } = 100;
+    public double SpectrumVisualizerSmoothing { get; set; } = 65;
     public double LibraryBackdropStrength { get; set; } = 14.6;
     public double LibraryBackdropBlur { get; set; } = 0;
     public double TrackArtworkStrength { get; set; } = 35.25;
@@ -37,6 +44,11 @@ public sealed class AppearanceSettings
         AudioArtworkMotion = AudioArtworkMotion,
         AudioBlurReaction = AudioBlurReaction,
         AudioColorReaction = AudioColorReaction,
+        SpectrumVisualizerEnabled = SpectrumVisualizerEnabled,
+        SpectrumVisualizerHeight = SpectrumVisualizerHeight,
+        SpectrumVisualizerOpacity = SpectrumVisualizerOpacity,
+        SpectrumVisualizerSensitivity = SpectrumVisualizerSensitivity,
+        SpectrumVisualizerSmoothing = SpectrumVisualizerSmoothing,
         LibraryBackdropStrength = LibraryBackdropStrength,
         LibraryBackdropBlur = LibraryBackdropBlur,
         TrackArtworkStrength = TrackArtworkStrength,
@@ -60,6 +72,18 @@ public sealed class AppearanceSettings
         AudioArtworkMotion = Math.Clamp(AudioArtworkMotion, 0, 200);
         AudioBlurReaction = Math.Clamp(AudioBlurReaction, 0, 200);
         AudioColorReaction = Math.Clamp(AudioColorReaction, 0, 200);
+        if (SpectrumVisualizerOpacity is not null)
+        {
+            if (Math.Abs(SpectrumVisualizerHeight - 100) < 0.01
+                && SpectrumVisualizerOpacity <= 22.01)
+            {
+                SpectrumVisualizerHeight = 140;
+            }
+            SpectrumVisualizerOpacity = null;
+        }
+        SpectrumVisualizerHeight = Math.Clamp(SpectrumVisualizerHeight, 40, 220);
+        SpectrumVisualizerSensitivity = Math.Clamp(SpectrumVisualizerSensitivity, 25, 250);
+        SpectrumVisualizerSmoothing = Math.Clamp(SpectrumVisualizerSmoothing, 0, 95);
         LibraryBackdropStrength = Math.Clamp(LibraryBackdropStrength, 0, 60);
         LibraryBackdropBlur = Math.Clamp(LibraryBackdropBlur, 0, 50);
         TrackArtworkStrength = Math.Clamp(TrackArtworkStrength, 0, 50);
@@ -86,6 +110,9 @@ public sealed class AppearanceSettings
         AudioArtworkMotion = 55,
         AudioBlurReaction = 60,
         AudioColorReaction = 55,
+        SpectrumVisualizerHeight = 100,
+        SpectrumVisualizerSensitivity = 85,
+        SpectrumVisualizerSmoothing = 78,
         LibraryBackdropStrength = 16,
         LibraryBackdropBlur = 25,
         TrackArtworkStrength = 11,
@@ -109,6 +136,9 @@ public sealed class AppearanceSettings
         AudioArtworkMotion = 135,
         AudioBlurReaction = 125,
         AudioColorReaction = 135,
+        SpectrumVisualizerHeight = 180,
+        SpectrumVisualizerSensitivity = 125,
+        SpectrumVisualizerSmoothing = 48,
         LibraryBackdropStrength = 36,
         LibraryBackdropBlur = 17,
         TrackArtworkStrength = 28,

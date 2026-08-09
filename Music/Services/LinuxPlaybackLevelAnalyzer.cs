@@ -12,7 +12,7 @@ namespace Music.Services;
 // in charge of the device, FFmpeg builds a lightweight level timeline in parallel.
 internal static class LinuxPlaybackLevelAnalyzer
 {
-    private const int SampleRate = 12_000;
+    private const int SampleRate = 44_100;
     private const int FramesPerSecond = 30;
     private const int WindowSamples = SampleRate / FramesPerSecond;
     private static readonly PlaybackAudioLevel[] Empty = [];
@@ -42,10 +42,18 @@ internal static class LinuxPlaybackLevelAnalyzer
             0,
             levels.Length - 1);
         var level = levels[index];
+        var spectrum = new float[AudioSpectrumAnalyzer.BandCount];
+        if (level.Spectrum is not null)
+        {
+            var count = Math.Min(spectrum.Length, level.Spectrum.Count);
+            for (var band = 0; band < count; band++)
+                spectrum[band] = (float)Math.Clamp(level.Spectrum[band] * amplitude, 0, 1);
+        }
         return new PlaybackAudioLevel(
             Math.Clamp(level.Energy * amplitude, 0, 1),
             Math.Clamp(level.Bass * amplitude, 0, 1),
-            Math.Clamp(level.Treble * amplitude, 0, 1));
+            Math.Clamp(level.Treble * amplitude, 0, 1),
+            spectrum);
     }
 
     private static async Task<PlaybackAudioLevel[]> AnalyzeAsync(string filePath)
@@ -109,6 +117,7 @@ internal static class LinuxPlaybackLevelAnalyzer
         double bassSum = 0;
         double trebleSum = 0;
         var windowSamples = 0;
+        var spectrumAnalyzer = new AudioSpectrumAnalyzer(SampleRate);
 
         while (true)
         {
@@ -124,6 +133,8 @@ internal static class LinuxPlaybackLevelAnalyzer
                 if (!float.IsFinite(mono))
                     mono = 0;
 
+                spectrumAnalyzer.AddSample(mono);
+
                 bassSample += bassAlpha * (mono - bassSample);
                 trebleLowPassSample += trebleLowPassAlpha * (mono - trebleLowPassSample);
                 var trebleSample = mono - trebleLowPassSample;
@@ -135,7 +146,8 @@ internal static class LinuxPlaybackLevelAnalyzer
                 if (windowSamples < WindowSamples)
                     continue;
 
-                levels.Add(CreateLevel(energySum, bassSum, trebleSum, windowSamples));
+                levels.Add(CreateLevel(
+                    energySum, bassSum, trebleSum, windowSamples, spectrumAnalyzer.LatestSpectrum));
                 energySum = 0;
                 bassSum = 0;
                 trebleSum = 0;
@@ -148,7 +160,8 @@ internal static class LinuxPlaybackLevelAnalyzer
         }
 
         if (windowSamples > 0)
-            levels.Add(CreateLevel(energySum, bassSum, trebleSum, windowSamples));
+            levels.Add(CreateLevel(
+                energySum, bassSum, trebleSum, windowSamples, spectrumAnalyzer.LatestSpectrum));
         return levels.ToArray();
     }
 
@@ -156,11 +169,13 @@ internal static class LinuxPlaybackLevelAnalyzer
         double energySum,
         double bassSum,
         double trebleSum,
-        int samples) =>
+        int samples,
+        IReadOnlyList<float> spectrum) =>
         new(
             Normalize(Math.Sqrt(energySum / samples), 3.5),
             Normalize(Math.Sqrt(bassSum / samples), 7.0),
-            Normalize(Math.Sqrt(trebleSum / samples), 5.0));
+            Normalize(Math.Sqrt(trebleSum / samples), 5.0),
+            spectrum);
 
     private static double Normalize(double value, double gain) =>
         Math.Clamp(value * gain, 0, 1);

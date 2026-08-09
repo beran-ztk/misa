@@ -267,12 +267,18 @@
             <Rectangle Fill="#3C302A20" IsHitTestVisible="False"/>
             <Rectangle Fill="#06000000" IsHitTestVisible="False"/>
 
+            <views:AudioSpectrumControl x:Name="SpectrumVisualizer"
+                                        Height="140"
+                                        VerticalAlignment="Bottom"
+                                        HorizontalAlignment="Stretch"
+                                        IsHitTestVisible="False"/>
+
             <ListBox x:Name="FileList"
                      DoubleTapped="OnListDoubleTapped"
                      Background="Transparent"
                      BorderThickness="0"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                     Padding="0">
+                     Padding="0,8">
                 <ListBox.ItemsPanel>
                     <ItemsPanelTemplate>
                         <VirtualizingStackPanel HorizontalAlignment="Stretch"/>

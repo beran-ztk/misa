@@ -1421,9 +1421,13 @@ public partial class SettingsOverlay : UserControl
         _previewEnergy = energy;
         _previewBass = bass;
         _previewTreble = treble;
+        PreviewSpectrumVisualizer.Advance();
         if (IsVisible && AppearancePage.IsVisible)
             RefreshAppearancePreview();
     }
+
+    public void UpdateAppearancePreviewSpectrum(IReadOnlyList<float>? spectrum) =>
+        PreviewSpectrumVisualizer.SetSpectrum(spectrum);
 
     private void RefreshAppearancePreview()
     {
@@ -1436,6 +1440,13 @@ public partial class SettingsOverlay : UserControl
         var blurReaction = _appearanceSettings.AudioBlurReaction / 100d;
         var colorReaction = _appearanceSettings.AudioColorReaction / 100d;
         var atmosphere = _appearanceSettings.PlayerColorAtmosphere / 100d;
+
+        PreviewSpectrumVisualizer.IsVisible = _appearanceSettings.SpectrumVisualizerEnabled;
+        PreviewSpectrumVisualizer.Height = _appearanceSettings.SpectrumVisualizerHeight * 0.65;
+        PreviewSpectrumVisualizer.Opacity = 0.40;
+        PreviewSpectrumVisualizer.Sensitivity = _appearanceSettings.SpectrumVisualizerSensitivity / 100d;
+        PreviewSpectrumVisualizer.Smoothing = _appearanceSettings.SpectrumVisualizerSmoothing / 100d;
+        PreviewSpectrumVisualizer.SetColors(_previewPrimary, _previewSecondary);
 
         PreviewLibraryArtwork.Opacity = Math.Clamp(
             _appearanceSettings.LibraryBackdropStrength / 100d + visibilityEnergy * 0.21, 0, 1);
@@ -1589,6 +1600,18 @@ public partial class SettingsOverlay : UserControl
         AddAppearanceSlider(AudioAppearanceRows, "Color reaction", "How much audio energy brightens colors and glow.",
             0, 200, settings => settings.AudioColorReaction,
             (settings, value) => settings.AudioColorReaction = value, PercentValue);
+        AddAppearanceToggle(AudioAppearanceRows, "Frequency visualizer", "Show the live 20 Hz - 20 kHz spectrum behind the track list.",
+            settings => settings.SpectrumVisualizerEnabled,
+            (settings, value) => settings.SpectrumVisualizerEnabled = value);
+        AddAppearanceSlider(AudioAppearanceRows, "Visualizer height", "Maximum height of the spectrum above the player.",
+            40, 220, settings => settings.SpectrumVisualizerHeight,
+            (settings, value) => settings.SpectrumVisualizerHeight = value, PixelValue);
+        AddAppearanceSlider(AudioAppearanceRows, "Visualizer sensitivity", "Amplifies or reduces the displayed frequency levels.",
+            25, 250, settings => settings.SpectrumVisualizerSensitivity,
+            (settings, value) => settings.SpectrumVisualizerSensitivity = value, PercentValue);
+        AddAppearanceSlider(AudioAppearanceRows, "Visualizer smoothing", "Higher values make movement calmer and more fluid.",
+            0, 95, settings => settings.SpectrumVisualizerSmoothing,
+            (settings, value) => settings.SpectrumVisualizerSmoothing = value, PercentValue);
 
         AddAppearanceSlider(LibraryBackdropAppearanceRows, "Backdrop strength", "Visibility of the active cover behind the library.",
             0, 60, settings => settings.LibraryBackdropStrength,
@@ -1676,6 +1699,48 @@ public partial class SettingsOverlay : UserControl
             slider.Value = getter(settings);
             valueText.Text = formatter(slider.Value);
         });
+    }
+
+    private void AddAppearanceToggle(
+        StackPanel panel,
+        string title,
+        string description,
+        Func<AppearanceSettings, bool> getter,
+        Action<AppearanceSettings, bool> setter)
+    {
+        var toggle = new ToggleSwitch
+        {
+            OnContent = "On",
+            OffContent = "Off",
+            HorizontalAlignment = HorizontalAlignment.Right,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        void UpdateValue()
+        {
+            if (_synchronizingAppearanceControls)
+                return;
+            setter(_appearanceSettings, toggle.IsChecked == true);
+            NotifyAppearanceChanged();
+        }
+        toggle.IsCheckedChanged += (_, _) => UpdateValue();
+
+        var labels = new StackPanel { Spacing = 2 };
+        labels.Children.Add(new TextBlock { Text = title, FontSize = 11.5, FontWeight = FontWeight.SemiBold });
+        labels.Children.Add(new TextBlock
+        {
+            Text = description,
+            FontSize = 10,
+            Opacity = 0.5,
+            TextWrapping = TextWrapping.Wrap
+        });
+
+        var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), ColumnSpacing = 12 };
+        row.Children.Add(labels);
+        Grid.SetColumn(toggle, 1);
+        row.Children.Add(toggle);
+        panel.Children.Add(row);
+
+        _appearanceControlRefreshers.Add(settings => toggle.IsChecked = getter(settings));
     }
 
     private void RefreshAppearanceControls()

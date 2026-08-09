@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Avalonia.Threading;
 #if WINDOWS
 using NAudio.Wave;
@@ -9,7 +10,11 @@ namespace Music.Services;
 
 public enum EngineState { Stopped, Playing, Paused }
 
-public record PlaybackAudioLevel(double Energy, double Bass, double Treble);
+public record PlaybackAudioLevel(
+    double Energy,
+    double Bass,
+    double Treble,
+    IReadOnlyList<float>? Spectrum = null);
 
 public record PlaybackSlotSnapshot(
     string FilePath,
@@ -83,6 +88,7 @@ public sealed class PlaybackEngine : IDisposable
         private readonly int _channels;
         private readonly double _bassAlpha;
         private readonly double _trebleLowPassAlpha;
+        private readonly AudioSpectrumAnalyzer _spectrumAnalyzer;
         private double _bassSample;
         private double _trebleLowPassSample;
         private double _energySum;
@@ -98,6 +104,7 @@ public sealed class PlaybackEngine : IDisposable
             _channels = Math.Max(1, WaveFormat.Channels);
             _bassAlpha = LowPassAlpha(180, WaveFormat.SampleRate);
             _trebleLowPassAlpha = LowPassAlpha(2400, WaveFormat.SampleRate);
+            _spectrumAnalyzer = new AudioSpectrumAnalyzer(WaveFormat.SampleRate);
         }
 
         public WaveFormat WaveFormat { get; }
@@ -119,6 +126,7 @@ public sealed class PlaybackEngine : IDisposable
                 _bassSample += _bassAlpha * (mono - _bassSample);
                 _trebleLowPassSample += _trebleLowPassAlpha * (mono - _trebleLowPassSample);
                 var trebleSample = mono - _trebleLowPassSample;
+                _spectrumAnalyzer.AddSample(mono);
 
                 _energySum += mono * mono;
                 _bassSum += _bassSample * _bassSample;
@@ -143,7 +151,8 @@ public sealed class PlaybackEngine : IDisposable
             _latestLevel = new PlaybackAudioLevel(
                 Normalize(energy, 3.5),
                 Normalize(bass, 7.0),
-                Normalize(treble, 5.0));
+                Normalize(treble, 5.0),
+                _spectrumAnalyzer.LatestSpectrum);
 
             _energySum = 0;
             _bassSum = 0;

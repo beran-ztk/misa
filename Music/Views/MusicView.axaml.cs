@@ -2009,6 +2009,11 @@ public partial class MusicView : UserControl
         PlayerDarkeningOverlay.Background = new SolidColorBrush(Color.FromArgb(
             ToByte(_appearanceSettings.PlayerBackgroundDarkening / 100d * 255),
             0x2A, 0x24, 0x1A));
+        SpectrumVisualizer.IsVisible = _appearanceSettings.SpectrumVisualizerEnabled;
+        SpectrumVisualizer.Height = _appearanceSettings.SpectrumVisualizerHeight;
+        SpectrumVisualizer.Opacity = 0.40;
+        SpectrumVisualizer.Sensitivity = _appearanceSettings.SpectrumVisualizerSensitivity / 100d;
+        SpectrumVisualizer.Smoothing = _appearanceSettings.SpectrumVisualizerSmoothing / 100d;
 
         if (trackAppearanceChanged)
             foreach (var item in _allItems)
@@ -2982,6 +2987,8 @@ public partial class MusicView : UserControl
         _targetEnergy = level.Energy;
         _targetBass = level.Bass;
         _targetTreble = level.Treble;
+        SpectrumVisualizer.SetSpectrum(level.Spectrum);
+        SettingsOverlay.UpdateAppearancePreviewSpectrum(level.Spectrum);
         StartAudioAtmosphereTimer();
     }
 
@@ -2996,6 +3003,8 @@ public partial class MusicView : UserControl
         _targetEnergy = 0;
         _targetBass = 0;
         _targetTreble = 0;
+        SpectrumVisualizer.SetSpectrum(null);
+        SettingsOverlay.UpdateAppearancePreviewSpectrum(null);
         StartAudioAtmosphereTimer();
     }
 
@@ -3007,6 +3016,8 @@ public partial class MusicView : UserControl
         _visualEnergy = 0;
         _visualBass = 0;
         _visualTreble = 0;
+        SpectrumVisualizer.SetSpectrum(null);
+        SettingsOverlay.UpdateAppearancePreviewSpectrum(null);
         SettingsOverlay.UpdateAppearancePreviewAudio(0, 0, 0);
         ApplyAudioAtmosphere();
     }
@@ -3019,6 +3030,7 @@ public partial class MusicView : UserControl
         _visualEnergy = Approach(_visualEnergy, _targetEnergy, easing);
         _visualBass = Approach(_visualBass, _targetBass, easing);
         _visualTreble = Approach(_visualTreble, _targetTreble, easing);
+        SpectrumVisualizer.Advance();
         SettingsOverlay.UpdateAppearancePreviewAudio(_visualEnergy, _visualBass, _visualTreble);
 
         ApplyAudioAtmosphere();
@@ -3029,6 +3041,7 @@ public partial class MusicView : UserControl
         if (_visualEnergy < 0.003
             && _visualBass < 0.003
             && _visualTreble < 0.003
+            && SpectrumVisualizer.IsAtRest
             && !IsArtworkTransitionActive
             && AmbientPaletteSettled())
         {
@@ -3058,6 +3071,7 @@ public partial class MusicView : UserControl
             : 1;
         _ambientPrimary = MixColor(_ambientStartPrimary, _targetAmbientPrimary, transition);
         _ambientSecondary = MixColor(_ambientStartSecondary, _targetAmbientSecondary, transition);
+        SpectrumVisualizer.SetColors(_ambientPrimary, _ambientSecondary);
 
         var incomingMix = IsArtworkTransitionActive ? Math.Sin(transition * Math.PI / 2) : 1;
         var outgoingMix = IsArtworkTransitionActive ? Math.Cos(transition * Math.PI / 2) : 0;
