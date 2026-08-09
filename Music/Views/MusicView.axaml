@@ -88,15 +88,11 @@
         <Style Selector="Border.track-card:pointerover">
             <Setter Property="Background" Value="#32262B22"/>
         </Style>
-        <Style Selector="ListBoxItem:selected Border.track-card">
-            <Setter Property="Background" Value="#523C4432"/>
-            <Setter Property="BorderBrush" Value="#B8B7F000"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="BoxShadow" Value="0 0 12 0 #45B7F000"/>
+        <Style Selector="Border.selection-accent">
+            <Setter Property="Background" Value="Transparent"/>
         </Style>
-        <Style Selector="ListBoxItem:selected:pointerover Border.track-card">
-            <Setter Property="Background" Value="#62434C37"/>
-            <Setter Property="BorderBrush" Value="#D0C5F43A"/>
+        <Style Selector="ListBoxItem:selected Border.selection-accent">
+            <Setter Property="Background" Value="#D0B7F000"/>
         </Style>
     </UserControl.Styles>
 
@@ -317,6 +313,14 @@
                                         CornerRadius="7"
                                         IsHitTestVisible="False"/>
                                 <Grid ColumnDefinitions="4,52,*">
+
+                                    <Border Grid.Column="0"
+                                            Classes="selection-accent"
+                                            Width="2" Height="24"
+                                            CornerRadius="2"
+                                            Margin="0,8"
+                                            VerticalAlignment="Center"
+                                            IsHitTestVisible="False"/>
 
                                     <Border Grid.Column="0"
                                             Width="3" Height="34"
