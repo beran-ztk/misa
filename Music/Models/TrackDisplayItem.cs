@@ -21,6 +21,23 @@ public record TrackDisplayItem(
     public bool NeedsReview { get; set; }
     public bool NeedsAnalysis { get; set; }
     public Bitmap? Thumbnail { get; set; }
+    public Color ArtworkPrimaryTint { get; private set; } = Colors.Transparent;
+    public Color ArtworkSecondaryTint { get; private set; } = Colors.Transparent;
+    public IBrush ArtworkMetadataBrush { get; private set; } = new SolidColorBrush(Color.Parse("#D4CFB4"));
+    public IBrush ArtworkBorderBrush { get; private set; } = new SolidColorBrush(Color.Parse("#46514D40"));
+
+    public void SetArtworkPalette(Color primary, Color secondary)
+    {
+        ArtworkPrimaryTint = Color.FromArgb(34, primary.R, primary.G, primary.B);
+        ArtworkSecondaryTint = Color.FromArgb(20, secondary.R, secondary.G, secondary.B);
+        ArtworkMetadataBrush = new SolidColorBrush(Mix(primary, Color.Parse("#E2DDCA"), 0.58));
+        ArtworkBorderBrush = new SolidColorBrush(Color.FromArgb(105, primary.R, primary.G, primary.B));
+    }
+
+    private static Color Mix(Color from, Color to, double amount) => Color.FromRgb(
+        (byte)(from.R + (to.R - from.R) * amount),
+        (byte)(from.G + (to.G - from.G) * amount),
+        (byte)(from.B + (to.B - from.B) * amount));
 
     public string ChannelSeparatorText => string.IsNullOrWhiteSpace(ChannelText)
                                                   || (string.IsNullOrWhiteSpace(ModelGenreText)

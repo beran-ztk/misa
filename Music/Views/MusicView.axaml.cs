@@ -467,6 +467,7 @@ public partial class MusicView : UserControl
             if (previous?.Thumbnail is not null)
             {
                 item.Thumbnail = previous.Thumbnail;
+                item.SetArtworkPalette(previous.ArtworkPrimaryTint, previous.ArtworkSecondaryTint);
                 previous.Thumbnail = null;
             }
             newItems.Add(item);
@@ -565,6 +566,7 @@ public partial class MusicView : UserControl
         if (previous?.Thumbnail is not null)
         {
             updatedItem.Thumbnail = previous.Thumbnail;
+            updatedItem.SetArtworkPalette(previous.ArtworkPrimaryTint, previous.ArtworkSecondaryTint);
             previous.Thumbnail = null;
         }
 
@@ -645,16 +647,19 @@ public partial class MusicView : UserControl
     {
         var items = _visibleItems.ToList();
 
-        Dictionary<int, byte[]?> artworkByTrackId;
+        Dictionary<int, LoadedTrackThumbnail?> artworkByTrackId;
         try
         {
             artworkByTrackId = await Task.Run(() =>
             {
-                var result = new Dictionary<int, byte[]?>();
+                var result = new Dictionary<int, LoadedTrackThumbnail?>();
                 foreach (var item in items)
                 {
                     ct.ThrowIfCancellationRequested();
-                    result[item.Track.Id] = MusicLibraryService.Current.GetTrackThumbnail(item.Track.Id);
+                    var artwork = MusicLibraryService.Current.GetTrackThumbnail(item.Track.Id);
+                    result[item.Track.Id] = artwork is { Length: > 0 }
+                        ? new LoadedTrackThumbnail(artwork, ExtractAmbientPalette(artwork))
+                        : null;
                 }
                 return result;
             }, ct);
@@ -669,12 +674,13 @@ public partial class MusicView : UserControl
             if (item.Thumbnail is not null)
                 continue;
 
-            if (artworkByTrackId.TryGetValue(item.Track.Id, out var artwork) && artwork != null)
+            if (artworkByTrackId.TryGetValue(item.Track.Id, out var loaded) && loaded is not null)
             {
                 try
                 {
-                    using var stream = new MemoryStream(artwork);
+                    using var stream = new MemoryStream(loaded.Artwork);
                     item.Thumbnail = new Bitmap(stream);
+                    item.SetArtworkPalette(loaded.Palette.Primary, loaded.Palette.Secondary);
                     any = true;
                 }
                 catch { }
@@ -2901,6 +2907,7 @@ public partial class MusicView : UserControl
     }
 
     private sealed record LoadedPlayerArtwork(Bitmap? Artwork, AmbientPalette Palette);
+    private sealed record LoadedTrackThumbnail(byte[] Artwork, AmbientPalette Palette);
     private sealed record AmbientPalette(Color Primary, Color Secondary);
 
     private sealed class AmbientColorBin

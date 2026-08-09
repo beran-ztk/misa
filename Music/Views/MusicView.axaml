@@ -278,8 +278,31 @@
                             <Border Grid.Row="0"
                                     Classes="track-card"
                                     CornerRadius="7"
+                                    ClipToBounds="True"
                                     Padding="4,3">
                                 <Panel>
+                                <Border CornerRadius="7"
+                                        IsHitTestVisible="False">
+                                    <Border.Background>
+                                        <LinearGradientBrush StartPoint="0%,50%" EndPoint="62%,50%">
+                                            <GradientStop Color="{Binding ArtworkPrimaryTint}" Offset="0"/>
+                                            <GradientStop Color="{Binding ArtworkSecondaryTint}" Offset="0.3"/>
+                                            <GradientStop Color="#00000000" Offset="1"/>
+                                        </LinearGradientBrush>
+                                    </Border.Background>
+                                </Border>
+                                <Image Source="{Binding Thumbnail}"
+                                       Width="106" Height="68"
+                                       Margin="18,-10,0,-10"
+                                       HorizontalAlignment="Left"
+                                       VerticalAlignment="Center"
+                                       Stretch="UniformToFill"
+                                       Opacity="0.18"
+                                       IsHitTestVisible="False">
+                                    <Image.Effect>
+                                        <BlurEffect Radius="14"/>
+                                    </Image.Effect>
+                                </Image>
                                 <Border Background="{Binding PlayingBackground}"
                                         CornerRadius="7"
                                         IsHitTestVisible="False"/>
@@ -298,8 +321,9 @@
                                             CornerRadius="6" ClipToBounds="True"
                                             Margin="8,0,12,0" VerticalAlignment="Center"
                                             Background="#292C25"
-                                            BorderBrush="#514D40"
-                                            BorderThickness="1">
+                                            BorderBrush="{Binding ArtworkBorderBrush}"
+                                            BorderThickness="1"
+                                            BoxShadow="0 2 8 0 #65000000">
                                         <Image Source="{Binding Thumbnail}"
                                                Stretch="UniformToFill"/>
                                     </Border>
@@ -348,7 +372,8 @@
                                         </Grid>
                                         <Grid Grid.Row="1" Grid.Column="0" ColumnDefinitions="Auto,Auto,Auto,*">
                                             <TextBlock Grid.Column="0" Text="{Binding ChannelText}"
-                                                       FontSize="10.5" Opacity="0.5"
+                                                       FontSize="10.5" Opacity="0.62"
+                                                       Foreground="{Binding ArtworkMetadataBrush}"
                                                        MaxWidth="180" TextTrimming="CharacterEllipsis"
                                                        VerticalAlignment="Center"/>
                                             <TextBlock Grid.Column="1" Text="{Binding ChannelSeparatorText}"
@@ -356,7 +381,7 @@
                                                        VerticalAlignment="Center"/>
                                             <StackPanel Grid.Column="2" Orientation="Horizontal" MaxWidth="610">
                                                 <TextBlock Text="{Binding ModelGenreText}"
-                                                           FontSize="11" Foreground="#D4CFB4"
+                                                           FontSize="11" Foreground="{Binding ArtworkMetadataBrush}"
                                                            MaxWidth="390"
                                                            TextTrimming="CharacterEllipsis"/>
                                                 <TextBlock Text="{Binding GenreSeparatorText}"
