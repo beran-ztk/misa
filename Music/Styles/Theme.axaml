@@ -3,7 +3,7 @@
     <!-- Base canvas and layered surfaces -->
     <SolidColorBrush x:Key="Theme.Brush.Background">#141414</SolidColorBrush>
     <SolidColorBrush x:Key="Theme.Brush.Overlay">#E8141414</SolidColorBrush>
-    <SolidColorBrush x:Key="Theme.Brush.Navigation">#B0181818</SolidColorBrush>
+    <SolidColorBrush x:Key="Theme.Brush.Navigation">#50181818</SolidColorBrush>
     <SolidColorBrush x:Key="Theme.Brush.Surface">#181818</SolidColorBrush>
     <SolidColorBrush x:Key="Theme.Brush.SurfaceRaised">#1E1E1E</SolidColorBrush>
     <SolidColorBrush x:Key="Theme.Brush.SurfaceTranslucent">#A81E1E1E</SolidColorBrush>

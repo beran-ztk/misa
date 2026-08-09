@@ -107,7 +107,8 @@ public partial class MusicView : UserControl
     private string? _activeFilterPresetName;
     private bool _isCreatingPreset;
     private bool _showReviewOnly;
-    private bool _ratingFilterInitialized;
+    private bool _manualRatingFilter;
+    private readonly HashSet<string> _selectedRatingNames = new(StringComparer.OrdinalIgnoreCase);
     private MultiSelectFilterControl? _conditionGenreCtrl;
     private MultiSelectFilterControl? _conditionTagCtrl;
     private bool _conditionNegate;
@@ -174,7 +175,6 @@ public partial class MusicView : UserControl
             ApplyFilter();
             UpdateSearchVisibility();
         };
-        RatingFilter.SelectionChanged += (_, _) => ApplyFilter();
         VisibilityFilter.SetItems(["Public", "Private"]);
         VisibilityFilter.SelectionChanged += (_, _) => ApplyFilter();
         FileList.SelectionChanged += (_, _) =>
@@ -402,21 +402,18 @@ public partial class MusicView : UserControl
 
     private void LoadLookups()
     {
-        var selectedRatings = RatingFilter.SelectedItems.ToList();
+        var selectedRatings = _selectedRatingNames.ToList();
 
         Values.Genres = MusicLibraryService.Current.GetGenres();
         Values.Tags = MusicLibraryService.Current.GetTags();
         Values.Styles = MusicLibraryService.Current.GetStyles();
         Values.Ratings = MusicLibraryService.Current.GetRatings();
 
-        RatingFilter.SetItems(Values.Ratings.Select(r => r.Name));
-        if (_ratingFilterInitialized)
-            RatingFilter.SetSelectedItems(selectedRatings, notify: false);
-        else
-        {
-            SelectDefaultRatings();
-            _ratingFilterInitialized = true;
-        }
+        _selectedRatingNames.Clear();
+        foreach (var rating in Values.Ratings)
+            if (selectedRatings.Contains(rating.Name, StringComparer.OrdinalIgnoreCase))
+                _selectedRatingNames.Add(rating.Name);
+        RefreshRatingFilterControls();
 
         if (_conditionGenreCtrl is not null && _conditionTagCtrl is not null)
         {
@@ -700,7 +697,7 @@ public partial class MusicView : UserControl
 
     private void ApplyFilter()
     {
-        var selRatingIds = SelectedIds(RatingFilter.SelectedItems, Values.Ratings, r => r.Name, r => r.Id);
+        var selRatingIds = SelectedRatingIds();
         var selVisibility = SelectedVisibility();
         var itemById = _allItems.ToDictionary(i => i.Track.Id);
 
@@ -716,10 +713,8 @@ public partial class MusicView : UserControl
             groups,
             SearchBox.Text);
 
-        if (selRatingIds.Count == 0
-            && Values.Ratings.FirstOrDefault(rating =>
-                string.Equals(rating.Name, RatingNames.Avoid, StringComparison.OrdinalIgnoreCase))?.Id is int avoidRatingId)
-            filtered = filtered.Where(track => track.RatingId != avoidRatingId).ToList();
+        if (_manualRatingFilter && selRatingIds.Count == 0)
+            filtered.Clear();
 
         _filteredItems = filtered
             .Where(t => itemById.ContainsKey(t.Id))
@@ -885,13 +880,16 @@ public partial class MusicView : UserControl
     private List<MusicTrack> TracksMatchingSearchRatingAndGroup(FilterGroupControls group)
     {
         IEnumerable<MusicTrack> query = _allItems.Select(item => item.Track);
-        var selectedRatingIds = SelectedIds(RatingFilter.SelectedItems, Values.Ratings, r => r.Name, r => r.Id);
+        var selectedRatingIds = SelectedRatingIds();
         var selectedGenreIds = SelectedIds(group.GenreCtrl.SelectedItems, Values.Genres, g => g.Name, g => g.Id);
         var selectedTagIds = SelectedIds(group.TagCtrl.SelectedItems, Values.Tags, TagFilterName, t => t.Id);
         var term = SearchBox.Text?.Trim();
 
         if (!string.IsNullOrWhiteSpace(term))
             query = query.Where(track => track.Title.Contains(term, StringComparison.OrdinalIgnoreCase));
+
+        if (_manualRatingFilter && selectedRatingIds.Count == 0)
+            return [];
 
         if (selectedRatingIds.Count > 0)
             query = query.Where(track => track.RatingId is int ratingId && selectedRatingIds.Contains(ratingId));
@@ -943,6 +941,125 @@ public partial class MusicView : UserControl
         if (selected.Count == 0) return [];
         return source.Where(item => selected.Contains(nameOf(item))).Select(idOf).ToHashSet();
     }
+
+    private HashSet<int> SelectedRatingIds() =>
+        !_manualRatingFilter
+            ? []
+            : Values.Ratings
+                .Where(rating => _selectedRatingNames.Contains(rating.Name))
+                .Select(rating => rating.Id)
+                .ToHashSet();
+
+    private void OnAllRatingsPressed(object? sender, PointerPressedEventArgs e)
+    {
+        SetRatingFilterMode(manual: false);
+        e.Handled = true;
+    }
+
+    private void OnManualRatingsPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (!_manualRatingFilter)
+            SetRatingFilterMode(manual: true);
+        e.Handled = true;
+    }
+
+    private void SetRatingFilterMode(
+        bool manual,
+        IEnumerable<string>? selectedRatings = null,
+        bool applyFilter = true)
+    {
+        _manualRatingFilter = manual;
+        _selectedRatingNames.Clear();
+        if (manual && selectedRatings is not null)
+        {
+            var available = Values.Ratings
+                .Select(rating => rating.Name)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            foreach (var rating in selectedRatings)
+                if (available.Contains(rating))
+                    _selectedRatingNames.Add(rating);
+        }
+
+        RefreshRatingFilterControls();
+        if (applyFilter)
+            ApplyFilter();
+    }
+
+    private void RefreshRatingFilterControls()
+    {
+        RatingButtonsPanel.IsVisible = _manualRatingFilter;
+        if (RatingModeIndicator.RenderTransform is TranslateTransform transform)
+            transform.X = _manualRatingFilter ? 81 : 0;
+        RatingModeIndicator.CornerRadius = _manualRatingFilter
+            ? new CornerRadius(0, 5, 5, 0)
+            : new CornerRadius(5, 0, 0, 5);
+        AllRatingsText.Foreground = ThemeResources.Brush(_manualRatingFilter
+            ? "Theme.Brush.TextMuted"
+            : "Theme.Brush.TextStrong");
+        ManualRatingsText.Foreground = ThemeResources.Brush(_manualRatingFilter
+            ? "Theme.Brush.TextStrong"
+            : "Theme.Brush.TextMuted");
+
+        RatingButtonsPanel.Children.Clear();
+        if (!_manualRatingFilter)
+            return;
+
+        foreach (var rating in Values.Ratings.OrderBy(rating => rating.SortOrder))
+        {
+            var selected = _selectedRatingNames.Contains(rating.Name);
+            var accent = RatingAccentColor(rating.Name);
+            var button = new Button
+            {
+                Content = rating.Name,
+                Height = 31,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                HorizontalContentAlignment = HorizontalAlignment.Center,
+                FontSize = 11,
+                FontWeight = FontWeight.SemiBold,
+                Background = selected
+                    ? new SolidColorBrush(Color.FromArgb(76, accent.R, accent.G, accent.B))
+                    : ThemeResources.Brush("Theme.Brush.Surface"),
+                BorderBrush = selected
+                    ? new SolidColorBrush(Color.FromArgb(210, accent.R, accent.G, accent.B))
+                    : ThemeResources.Brush("Theme.Brush.BorderSubtle"),
+                Foreground = selected
+                    ? new SolidColorBrush(RatingForegroundColor(rating.Name))
+                    : ThemeResources.Brush("Theme.Brush.TextMuted"),
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(5),
+                Opacity = selected ? 1 : 0.62,
+                Cursor = new Cursor(StandardCursorType.Hand)
+            };
+            button.Click += (_, _) =>
+            {
+                if (!_selectedRatingNames.Add(rating.Name))
+                    _selectedRatingNames.Remove(rating.Name);
+                RefreshRatingFilterControls();
+                ApplyFilter();
+            };
+            RatingButtonsPanel.Children.Add(button);
+        }
+    }
+
+    private static Color RatingAccentColor(string ratingName) => ratingName switch
+    {
+        "Favorite" => Color.FromRgb(235, 194, 83),
+        "Great" => Color.FromRgb(83, 190, 108),
+        "Good" => Color.FromRgb(71, 177, 150),
+        "Okay" => Color.FromRgb(151, 156, 116),
+        RatingNames.Avoid => Color.FromRgb(211, 78, 65),
+        _ => Color.FromRgb(205, 148, 67)
+    };
+
+    private static Color RatingForegroundColor(string ratingName) => ratingName switch
+    {
+        "Favorite" => Color.FromRgb(255, 230, 150),
+        "Great" => Color.FromRgb(188, 242, 185),
+        "Good" => Color.FromRgb(176, 232, 212),
+        "Okay" => Color.FromRgb(226, 224, 194),
+        RatingNames.Avoid => Color.FromRgb(246, 175, 160),
+        _ => Color.FromRgb(243, 203, 128)
+    };
 
     private HashSet<bool> SelectedVisibility()
     {
@@ -1031,9 +1148,7 @@ public partial class MusicView : UserControl
         _activeFilterPresetName = null;
         _isCreatingPreset = false;
         RebuildPresetRows();
-        RatingFilter.SetItems(Values.Ratings.Select(r => r.Name));
-        SelectDefaultRatings();
-        RatingFilter.Placeholder = "All ratings";
+        SetRatingFilterMode(manual: false, applyFilter: false);
         VisibilityFilter.SetSelectedItems([], notify: false);
         ExcludeNeedsReviewCheckBox.IsChecked = true;
         ExcludeNeedsAnalysisCheckBox.IsChecked = true;
@@ -1243,22 +1358,13 @@ public partial class MusicView : UserControl
         _filterPresets = FilterPresetStore.Load();
         _activeFilterPresetName = null;
         RebuildPresetRows();
-        RatingFilter.SetSelectedItems(Array.Empty<string>(), notify: false);
+        SetRatingFilterMode(manual: false, applyFilter: false);
         ExcludeNeedsReviewCheckBox.IsChecked = false;
         ExcludeNeedsAnalysisCheckBox.IsChecked = false;
         _filterGroups.Clear();
         RebuildFilterConditionsPanel();
         ClearConditionBuilder();
         ApplyFilter();
-    }
-
-    private void SelectDefaultRatings()
-    {
-        RatingFilter.SetSelectedItems(
-            Values.Ratings
-                .Where(rating => !string.Equals(rating.Name, RatingNames.Avoid, StringComparison.OrdinalIgnoreCase))
-                .Select(rating => rating.Name),
-            notify: false);
     }
 
     private PortableFilterPreset CreatePreset(string name)
@@ -1274,15 +1380,19 @@ public partial class MusicView : UserControl
 
         return new PortableFilterPreset(
             name,
-            SortedNames(RatingFilter.SelectedItems),
+            _manualRatingFilter ? SortedNames(_selectedRatingNames) : [],
             groups,
             ExcludeNeedsReviewCheckBox.IsChecked == true,
-            ExcludeNeedsAnalysisCheckBox.IsChecked == true);
+            ExcludeNeedsAnalysisCheckBox.IsChecked == true,
+            _manualRatingFilter);
     }
 
     private void ApplyFilterPreset(PortableFilterPreset preset)
     {
-        RatingFilter.SetSelectedItems(preset.Ratings, notify: false);
+        SetRatingFilterMode(
+            preset.ManualRatings || preset.Ratings.Count > 0,
+            preset.Ratings,
+            applyFilter: false);
         ExcludeNeedsReviewCheckBox.IsChecked = preset.ExcludeNeedsReview;
         ExcludeNeedsAnalysisCheckBox.IsChecked = preset.ExcludeNeedsAnalysis;
 
@@ -1319,7 +1429,9 @@ public partial class MusicView : UserControl
     private static string PresetSummary(PortableFilterPreset preset)
     {
         var parts = new List<string>();
-        if (preset.Ratings.Count > 0)
+        if (preset.ManualRatings && preset.Ratings.Count == 0)
+            parts.Add("0 ratings");
+        else if (preset.Ratings.Count > 0)
             parts.Add($"{preset.Ratings.Count} rating{(preset.Ratings.Count == 1 ? "" : "s")}");
         if (preset.Groups.Count > 0)
             parts.Add($"{preset.Groups.Count} condition{(preset.Groups.Count == 1 ? "" : "s")}");
