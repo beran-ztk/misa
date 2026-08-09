@@ -169,32 +169,30 @@
 
     <Panel>
     <Rectangle Fill="{DynamicResource Theme.Brush.Background}" IsHitTestVisible="False"/>
-    <Image x:Name="AppArtworkPreviousBackground"
+    <views:FocusedArtworkImage x:Name="AppArtworkPreviousBackground"
            IsVisible="False"
            IsHitTestVisible="False"
            Opacity="0"
-           Stretch="UniformToFill"
            RenderTransformOrigin="0.5,0.5">
-        <Image.RenderTransform>
+        <views:FocusedArtworkImage.RenderTransform>
             <ScaleTransform ScaleX="1.08" ScaleY="1.08"/>
-        </Image.RenderTransform>
-        <Image.Effect>
+        </views:FocusedArtworkImage.RenderTransform>
+        <views:FocusedArtworkImage.Effect>
             <BlurEffect Radius="20"/>
-        </Image.Effect>
-    </Image>
-    <Image x:Name="AppArtworkBackground"
+        </views:FocusedArtworkImage.Effect>
+    </views:FocusedArtworkImage>
+    <views:FocusedArtworkImage x:Name="AppArtworkBackground"
            IsVisible="False"
            IsHitTestVisible="False"
            Opacity="0.22"
-           Stretch="UniformToFill"
            RenderTransformOrigin="0.5,0.5">
-        <Image.RenderTransform>
+        <views:FocusedArtworkImage.RenderTransform>
             <ScaleTransform ScaleX="1.08" ScaleY="1.08"/>
-        </Image.RenderTransform>
-        <Image.Effect>
+        </views:FocusedArtworkImage.RenderTransform>
+        <views:FocusedArtworkImage.Effect>
             <BlurEffect Radius="20"/>
-        </Image.Effect>
-    </Image>
+        </views:FocusedArtworkImage.Effect>
+    </views:FocusedArtworkImage>
     <Rectangle x:Name="AppAtmosphereTint"
                IsHitTestVisible="False">
         <Rectangle.Fill>
@@ -475,7 +473,7 @@
                                         <Grid Grid.Row="1" Grid.Column="0" ColumnDefinitions="Auto,Auto,Auto,*">
                                             <TextBlock Grid.Column="0" Text="{Binding ChannelText}"
                                                        FontSize="10.5" Opacity="0.62"
-                                                       Foreground="{Binding ArtworkMetadataBrush}"
+                                                       Foreground="{DynamicResource Theme.Brush.TextPrimary}"
                                                        MaxWidth="180" TextTrimming="CharacterEllipsis"
                                                        VerticalAlignment="Center"/>
                                             <TextBlock Grid.Column="1" Text="{Binding ChannelSeparatorText}"
@@ -746,23 +744,57 @@
                                         <Button.Flyout>
                                             <Flyout Placement="TopEdgeAlignedRight"
                                                     FlyoutPresenterClasses="player-actions">
-                                                <StackPanel Spacing="2">
-                                                    <Button Classes="player-action"
-                                                            Click="OnPlayerActionEditClicked"
-                                                            ToolTip.Tip="Edit track">
-                                                        <Image Source="{SvgImage /Assets/pencil-simple.svg}" Width="16" Height="16"/>
-                                                    </Button>
-                                                    <Button x:Name="PlayerActionsReviewButton"
-                                                            Classes="player-action"
-                                                            Click="OnPlayerActionReviewClicked"
-                                                            ToolTip.Tip="Mark for review">
-                                                        <Image Source="{SvgImage /Assets/review.svg}" Width="16" Height="16"/>
-                                                    </Button>
-                                                    <Button Classes="player-action"
-                                                            Click="OnPlayerActionDeleteClicked"
-                                                            ToolTip.Tip="Delete track">
-                                                        <Image Source="{SvgImage /Assets/trash.svg}" Width="16" Height="16"/>
-                                                    </Button>
+                                                <StackPanel Width="218" Spacing="7">
+                                                    <StackPanel Orientation="Horizontal"
+                                                                HorizontalAlignment="Right"
+                                                                Spacing="2">
+                                                        <Button Classes="player-action"
+                                                                Click="OnPlayerActionEditClicked"
+                                                                ToolTip.Tip="Edit track">
+                                                            <Image Source="{SvgImage /Assets/pencil-simple.svg}" Width="16" Height="16"/>
+                                                        </Button>
+                                                        <Button x:Name="PlayerActionsReviewButton"
+                                                                Classes="player-action"
+                                                                Click="OnPlayerActionReviewClicked"
+                                                                ToolTip.Tip="Mark for review">
+                                                            <Image Source="{SvgImage /Assets/review.svg}" Width="16" Height="16"/>
+                                                        </Button>
+                                                        <Button Classes="player-action"
+                                                                Click="OnPlayerActionDeleteClicked"
+                                                                ToolTip.Tip="Delete track">
+                                                            <Image Source="{SvgImage /Assets/trash.svg}" Width="16" Height="16"/>
+                                                        </Button>
+                                                    </StackPanel>
+                                                    <Border BorderThickness="0,1,0,0"
+                                                            BorderBrush="{DynamicResource Theme.Brush.Border}"
+                                                            Padding="5,8,5,4">
+                                                        <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto">
+                                                            <TextBlock Grid.Column="0"
+                                                                       Text="Backdrop focus"
+                                                                       FontSize="11"
+                                                                       Foreground="{DynamicResource Theme.Brush.TextSecondary}"
+                                                                       VerticalAlignment="Center"/>
+                                                            <Button Grid.Column="1"
+                                                                    Classes="bare-add"
+                                                                    Content="Center"
+                                                                    Padding="4,0"
+                                                                    FontSize="10"
+                                                                    Click="OnBackdropFocusResetClicked"
+                                                                    ToolTip.Tip="Center artwork"/>
+                                                            <Slider x:Name="BackdropFocusSlider"
+                                                                    Classes="playback"
+                                                                    Grid.Row="1"
+                                                                    Grid.ColumnSpan="2"
+                                                                    Height="28"
+                                                                    Minimum="0"
+                                                                    Maximum="100"
+                                                                    Value="50"
+                                                                    SmallChange="1"
+                                                                    LargeChange="10"
+                                                                    ValueChanged="OnBackdropFocusChanged"
+                                                                    ToolTip.Tip="Move the visible artwork area left or right"/>
+                                                        </Grid>
+                                                    </Border>
                                                 </StackPanel>
                                             </Flyout>
                                         </Button.Flyout>

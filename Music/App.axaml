@@ -47,8 +47,8 @@
             <Setter Property="Background" Value="{DynamicResource Theme.Brush.SurfaceSelected}"/>
         </Style>
         <Style Selector="FlyoutPresenter.player-actions">
-            <Setter Property="Width" Value="44"/>
-            <Setter Property="MinWidth" Value="44"/>
+            <Setter Property="Width" Value="230"/>
+            <Setter Property="MinWidth" Value="230"/>
             <Setter Property="Background" Value="{DynamicResource Theme.Brush.Surface}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource Theme.Brush.BorderStrong}"/>
             <Setter Property="BorderThickness" Value="1"/>

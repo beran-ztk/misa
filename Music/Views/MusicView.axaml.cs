@@ -33,6 +33,7 @@ public partial class MusicView : UserControl
     private readonly WindowsMediaSession _windowsMediaSession = new();
     private readonly DiscordPresenceService _discordPresence = new();
     private readonly DispatcherTimer _atmosphereTimer = new() { Interval = TimeSpan.FromMilliseconds(33) };
+    private readonly DispatcherTimer _backdropFocusSaveTimer = new() { Interval = TimeSpan.FromMilliseconds(350) };
     private readonly SolidColorBrush _playerTopGlowBrush = new(Colors.Transparent);
     private readonly SolidColorBrush _playerChromeEdgeBrush = new(Color.Parse("#4A756B54"));
     private readonly GradientStop _appAmbientPrimaryStop;
@@ -41,7 +42,7 @@ public partial class MusicView : UserControl
     private readonly GradientStop _filterAmbientSecondaryStop;
     private readonly GradientStop _playerAmbientPrimaryStop;
     private readonly GradientStop _playerAmbientSecondaryStop;
-    private static readonly TimeSpan ArtworkTransitionDuration = TimeSpan.FromSeconds(7);
+    private static readonly TimeSpan ArtworkTransitionDuration = TimeSpan.FromSeconds(5);
     private static readonly AmbientPalette DefaultAmbientPalette = new(
         Color.Parse("#5865B8"),
         Color.Parse("#8051AE"));
@@ -76,6 +77,9 @@ public partial class MusicView : UserControl
     private Bitmap? _playerArtwork;
     private Bitmap? _previousPlayerArtwork;
     private int _playerArtworkTrackId = -1;
+    private readonly Dictionary<int, double> _trackBackdropFocus = [];
+    private readonly HashSet<int> _pendingBackdropFocusTrackIds = [];
+    private bool _updatingBackdropFocusControl;
     private DateTimeOffset _artworkTransitionStartedAt;
     private double _artworkTransitionProgress = 1;
     private double _outgoingAppScale = 1.08;
@@ -145,6 +149,8 @@ public partial class MusicView : UserControl
         _playerAmbientPrimaryStop = playerAmbientGradient.GradientStops[0];
         _playerAmbientSecondaryStop = playerAmbientGradient.GradientStops[1];
         var appSettings = AppSettingsStore.Load();
+        foreach (var pair in appSettings.TrackBackdropFocus)
+            _trackBackdropFocus[pair.Key] = pair.Value;
         _appearanceSettings = appSettings.Appearance.Clone().Clamp();
         _restoredPlayerSession = appSettings.PlayerSession;
         _sortBy = Enum.TryParse<LibrarySortBy>(_restoredPlayerSession.SortBy, true, out var restoredSortBy)
@@ -177,6 +183,7 @@ public partial class MusicView : UserControl
         DetachedFromVisualTree += (_, _) =>
         {
             PersistPlayerSession();
+            FlushBackdropFocusSave();
             _atmosphereTimer.Stop();
             _engine.Dispose();
             _globalMediaKeys.Dispose();
@@ -191,6 +198,8 @@ public partial class MusicView : UserControl
         _engine.ProgressUpdated += OnProgressUpdated;
         _engine.AudioLevelUpdated += OnAudioLevelUpdated;
         _atmosphereTimer.Tick += (_, _) => UpdateAudioReactiveAtmosphere();
+        _backdropFocusSaveTimer.Tick += (_, _) => FlushBackdropFocusSave();
+        AppArtworkBackground.SizeChanged += (_, _) => UpdateBackdropFocusControl();
         PlayerChromeEdge.Background = _playerChromeEdgeBrush;
         PlayerTopGlow.Background = _playerTopGlowBrush;
         InitializeSortControls();
@@ -3116,6 +3125,7 @@ public partial class MusicView : UserControl
     {
         if (_playerArtworkTrackId == track.Id)
         {
+            ApplyBackdropFocus(track.Id);
             SetPlayerArtworkBackground(_playerArtwork);
             SettingsOverlay.UpdateAppearancePreviewArtwork(
                 _playerArtwork, _targetAmbientPrimary, _targetAmbientSecondary, track.Title);
@@ -3128,6 +3138,7 @@ public partial class MusicView : UserControl
         var artwork = loadedArtwork.Artwork;
         _playerArtwork = loadedArtwork.Artwork;
         _playerArtworkTrackId = track.Id;
+        ApplyBackdropFocus(track.Id);
         BeginArtworkTransition(_previousPlayerArtwork is not null);
         SetAmbientPalette(loadedArtwork.Palette, artwork is not null);
         SetPlayerArtworkBackground(artwork);
@@ -3157,6 +3168,7 @@ public partial class MusicView : UserControl
         PlayerArtworkPreviousBackground.IsVisible = _previousPlayerArtwork is not null;
         PlayerArtworkPreviousBackground.Opacity = PlayerArtworkBackground.Opacity;
         AppArtworkPreviousBackground.Source = _previousPlayerArtwork;
+        AppArtworkPreviousBackground.FocusX = AppArtworkBackground.FocusX;
         AppArtworkPreviousBackground.IsVisible = _previousPlayerArtwork is not null;
         AppArtworkPreviousBackground.Opacity = AppArtworkBackground.Opacity;
 
@@ -3189,6 +3201,56 @@ public partial class MusicView : UserControl
         PlayerArtworkPreviousBackground.IsVisible = _previousPlayerArtwork is not null;
         AppArtworkPreviousBackground.Source = _previousPlayerArtwork;
         AppArtworkPreviousBackground.IsVisible = _previousPlayerArtwork is not null;
+        UpdateBackdropFocusControl();
+    }
+
+    private void ApplyBackdropFocus(int trackId)
+    {
+        AppArtworkBackground.FocusX = _trackBackdropFocus.GetValueOrDefault(trackId, 0.5);
+        UpdateBackdropFocusControl();
+    }
+
+    private void UpdateBackdropFocusControl()
+    {
+        if (BackdropFocusSlider is null)
+            return;
+
+        _updatingBackdropFocusControl = true;
+        BackdropFocusSlider.Value = AppArtworkBackground.FocusX * 100;
+        BackdropFocusSlider.IsEnabled = _playerArtworkTrackId >= 0
+                                        && AppArtworkBackground.Source is not null
+                                        && AppArtworkBackground.IsHorizontallyCropped;
+        ToolTip.SetTip(BackdropFocusSlider, BackdropFocusSlider.IsEnabled
+            ? "Move the visible artwork area left or right"
+            : "The full artwork width is already visible");
+        _updatingBackdropFocusControl = false;
+    }
+
+    private void OnBackdropFocusChanged(object? sender, RangeBaseValueChangedEventArgs e)
+    {
+        if (_updatingBackdropFocusControl || _playerArtworkTrackId < 0)
+            return;
+
+        var focusX = Math.Clamp(e.NewValue / 100d, 0d, 1d);
+        AppArtworkBackground.FocusX = focusX;
+        _trackBackdropFocus[_playerArtworkTrackId] = focusX;
+        _pendingBackdropFocusTrackIds.Add(_playerArtworkTrackId);
+        _backdropFocusSaveTimer.Stop();
+        _backdropFocusSaveTimer.Start();
+    }
+
+    private void OnBackdropFocusResetClicked(object? sender, RoutedEventArgs e)
+    {
+        BackdropFocusSlider.Value = 50;
+    }
+
+    private void FlushBackdropFocusSave()
+    {
+        _backdropFocusSaveTimer.Stop();
+        foreach (var trackId in _pendingBackdropFocusTrackIds)
+            if (_trackBackdropFocus.TryGetValue(trackId, out var focusX))
+                AppSettingsStore.SaveTrackBackdropFocus(trackId, focusX);
+        _pendingBackdropFocusTrackIds.Clear();
     }
 
     private static LoadedPlayerArtwork LoadPlayerArtwork(MusicTrack track)
@@ -3235,6 +3297,7 @@ public partial class MusicView : UserControl
         _playerArtwork = null;
         _previousPlayerArtwork = null;
         _playerArtworkTrackId = -1;
+        UpdateBackdropFocusControl();
     }
 
     private void SetAmbientPalette(AmbientPalette palette, bool hasArtwork)
@@ -3552,7 +3615,7 @@ public partial class MusicView : UserControl
     private static byte ToByte(double value) =>
         (byte)Math.Clamp((int)Math.Round(value), 0, 255);
 
-    private static void SetScale(Image image, double scale)
+    private static void SetScale(Control image, double scale)
     {
         if (image.RenderTransform is ScaleTransform transform)
         {
@@ -3561,18 +3624,18 @@ public partial class MusicView : UserControl
         }
     }
 
-    private static double GetScale(Image image, double fallback) =>
+    private static double GetScale(Control image, double fallback) =>
         image.RenderTransform is ScaleTransform transform
             ? transform.ScaleX
             : fallback;
 
-    private static void SetBlur(Image image, double radius)
+    private static void SetBlur(Control image, double radius)
     {
         if (image.Effect is BlurEffect blur)
             blur.Radius = radius;
     }
 
-    private static double GetBlur(Image image, double fallback) =>
+    private static double GetBlur(Control image, double fallback) =>
         image.Effect is BlurEffect blur
             ? blur.Radius
             : fallback;

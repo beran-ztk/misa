@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Music.Models;
@@ -36,6 +37,10 @@ public static class AppSettingsStore
             settings.Appearance = (settings.Appearance ?? new AppearanceSettings()).Clamp();
             settings.PlayerSession ??= new PlayerSessionSettings();
             settings.PlayerSession.QueueTrackIds ??= [];
+            settings.TrackBackdropFocus = settings.TrackBackdropFocus?
+                .ToDictionary(
+                    pair => pair.Key,
+                    pair => Math.Clamp(pair.Value, 0d, 1d)) ?? [];
             return settings;
         }
         catch
@@ -89,6 +94,13 @@ public static class AppSettingsStore
         Save(settings);
     }
 
+    public static void SaveTrackBackdropFocus(int trackId, double focusX)
+    {
+        var settings = Load();
+        settings.TrackBackdropFocus[trackId] = Math.Clamp(focusX, 0d, 1d);
+        Save(settings);
+    }
+
     private static void Save(AppSettings settings)
     {
         var directory = Path.GetDirectoryName(Values.AppSettingsPath);
@@ -108,6 +120,7 @@ public sealed class AppSettings
     public AppearanceSettings Appearance { get; set; } = new();
     public string LastSettingsPage { get; set; } = "library";
     public PlayerSessionSettings PlayerSession { get; set; } = new();
+    public Dictionary<int, double> TrackBackdropFocus { get; set; } = [];
 }
 
 public sealed class PlayerSessionSettings
