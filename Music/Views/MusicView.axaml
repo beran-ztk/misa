@@ -738,23 +738,10 @@
                     BorderThickness="0,1,0,0"
                     BorderBrush="{DynamicResource Theme.Brush.Border}">
                 <Grid RowDefinitions="Auto,*" Margin="30,22,30,26">
-                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto" Margin="0,0,0,18">
-                        <StackPanel Spacing="3">
-                            <TextBlock Text="Filters" FontSize="20" FontWeight="SemiBold"/>
-                            <TextBlock Text="Build reusable presets from ratings, model genres and tags."
-                                       FontSize="11" Opacity="0.62"/>
-                        </StackPanel>
+                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,18">
+                        <TextBlock Text="Filters" FontSize="20" FontWeight="SemiBold"
+                                   VerticalAlignment="Center"/>
                         <Button Grid.Column="1"
-                                Content="Clear"
-                                Click="OnClearFiltersClicked"
-                                Background="Transparent"
-                                BorderBrush="{DynamicResource Theme.Brush.BorderStrong}"
-                                BorderThickness="1"
-                                Padding="12,6"
-                                Margin="0,0,10,0"
-                                FontSize="11"
-                                Opacity="0.72"/>
-                        <Button Grid.Column="2"
                                 Content="✕"
                                 Click="OnToggleFiltersClicked"
                                 Classes="icon"
@@ -762,20 +749,15 @@
                                 Opacity="0.7"/>
                     </Grid>
 
-                    <Grid Grid.Row="1" ColumnDefinitions="280,*" ColumnSpacing="24">
-                        <Border Background="{DynamicResource Theme.Brush.SurfaceTranslucent}"
-                                BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
-                                BorderThickness="1"
-                                CornerRadius="10"
-                                Padding="16">
-                            <ScrollViewer VerticalScrollBarVisibility="Auto"
-                                          HorizontalScrollBarVisibility="Disabled">
+                    <Grid Grid.Row="1" ColumnDefinitions="280,49,*">
+                        <ScrollViewer Grid.Column="0"
+                                      VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Disabled">
                             <StackPanel Spacing="18">
                                 <StackPanel Spacing="7">
                                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                                        <TextBlock Text="PRESETS"
-                                                   FontSize="10" FontWeight="SemiBold"
-                                                   Opacity="0.42" LetterSpacing="1"
+                                        <TextBlock Text="Presets"
+                                                   FontSize="14" FontWeight="SemiBold"
                                                    VerticalAlignment="Center"/>
                                         <Button Grid.Column="1"
                                                 x:Name="AddPresetButton"
@@ -840,22 +822,22 @@
                                 <Rectangle Height="1" Fill="{DynamicResource Theme.Brush.Divider}"/>
 
                                 <StackPanel Spacing="8">
-                                    <Grid ColumnDefinitions="*,164" ColumnSpacing="8">
+                                    <Grid ColumnDefinitions="*,140" ColumnSpacing="8">
                                         <TextBlock Text="RATING"
                                                    FontSize="10" FontWeight="SemiBold"
                                                    Opacity="0.42" LetterSpacing="1"
                                                    VerticalAlignment="Center"/>
                                         <Border Grid.Column="1"
-                                                Width="164" Height="30"
+                                                Width="140" Height="26"
                                                 Background="{DynamicResource Theme.Brush.Surface}"
                                                 BorderBrush="{DynamicResource Theme.Brush.BorderStrong}"
                                                 BorderThickness="1"
                                                 CornerRadius="6"
                                                 ClipToBounds="True">
-                                            <Grid ColumnDefinitions="81,81">
+                                            <Grid ColumnDefinitions="69,69">
                                                 <Border x:Name="RatingModeIndicator"
                                                         Grid.ColumnSpan="2"
-                                                        Width="81"
+                                                        Width="69"
                                                         HorizontalAlignment="Left"
                                                         Background="{DynamicResource Theme.Brush.AccentSurface}"
                                                         CornerRadius="5,0,0,5"
@@ -873,13 +855,13 @@
                                                 <Border Grid.Column="0" Background="Transparent" Cursor="Hand"
                                                         PointerPressed="OnAllRatingsPressed">
                                                     <TextBlock x:Name="AllRatingsText" Text="All"
-                                                               FontSize="11" FontWeight="SemiBold"
+                                                               FontSize="10" FontWeight="SemiBold"
                                                                HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                 </Border>
                                                 <Border Grid.Column="1" Background="Transparent" Cursor="Hand"
                                                         PointerPressed="OnManualRatingsPressed">
                                                     <TextBlock x:Name="ManualRatingsText" Text="Manual"
-                                                               FontSize="11" FontWeight="SemiBold"
+                                                               FontSize="10" FontWeight="SemiBold"
                                                                HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                 </Border>
                                             </Grid>
@@ -984,22 +966,17 @@
                                     <StackPanel x:Name="FilterGroupsPanel" Spacing="8"/>
                                 </StackPanel>
                             </StackPanel>
-                            </ScrollViewer>
-                        </Border>
+                        </ScrollViewer>
 
-                        <Border Grid.Column="1"
-                                Background="{DynamicResource Theme.Brush.SurfaceTranslucent}"
-                                BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
-                                BorderThickness="1"
-                                CornerRadius="10"
-                                Padding="18">
-                            <DockPanel LastChildFill="True">
+                        <Rectangle Grid.Column="1"
+                                   Width="1"
+                                   HorizontalAlignment="Center"
+                                   Fill="{DynamicResource Theme.Brush.Divider}"/>
+
+                        <DockPanel Grid.Column="2" LastChildFill="True">
                                 <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="0,0,0,12">
-                                    <StackPanel Spacing="3">
-                                        <TextBlock Text="Filter conditions" FontSize="14" FontWeight="SemiBold"/>
-                                        <TextBlock Text="Combine selected genres and tags into one condition."
-                                                   FontSize="11" Opacity="0.56"/>
-                                    </StackPanel>
+                                    <TextBlock Text="Conditions" FontSize="14" FontWeight="SemiBold"
+                                               VerticalAlignment="Center"/>
                                     <Button Grid.Column="1"
                                             Click="OnAddFilterGroupClicked"
                                             Background="{DynamicResource Theme.Brush.Surface}"
@@ -1017,7 +994,7 @@
                                     </Button>
                                 </Grid>
 
-                                <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*" ColumnSpacing="12" Margin="0,0,0,12">
+                                <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto" Margin="0,0,0,12">
                                     <Border Width="164" Height="32"
                                             Background="{DynamicResource Theme.Brush.Surface}"
                                             BorderBrush="{DynamicResource Theme.Brush.BorderStrong}"
@@ -1056,19 +1033,12 @@
                                             </Border>
                                         </Grid>
                                     </Border>
-                                    <TextBlock x:Name="ConditionModeHint"
-                                               Grid.Column="1"
-                                               Text="Matching tracks will be included."
-                                               FontSize="10.5"
-                                               Opacity="0.55"
-                                               VerticalAlignment="Center"/>
                                 </Grid>
 
                                 <ScrollViewer HorizontalScrollBarVisibility="Disabled">
                                     <StackPanel x:Name="FilterBuilderPanel" Spacing="12"/>
                                 </ScrollViewer>
-                            </DockPanel>
-                        </Border>
+                        </DockPanel>
                     </Grid>
                 </Grid>
             </Border>

@@ -1084,7 +1084,7 @@ public partial class MusicView : UserControl
     {
         RatingButtonsPanel.IsVisible = _manualRatingFilter;
         if (RatingModeIndicator.RenderTransform is TranslateTransform transform)
-            transform.X = _manualRatingFilter ? 81 : 0;
+            transform.X = _manualRatingFilter ? 69 : 0;
         RatingModeIndicator.CornerRadius = _manualRatingFilter
             ? new CornerRadius(0, 5, 5, 0)
             : new CornerRadius(5, 0, 0, 5);
@@ -1274,23 +1274,6 @@ public partial class MusicView : UserControl
         ToolTip.SetTip(ReviewFilterBtn, _showReviewOnly
             ? $"Review filter: On ({count})"
             : $"Reviews ({count})");
-    }
-
-    private void OnClearFiltersClicked(object? sender, RoutedEventArgs e)
-    {
-        _activeFilterPresetName = null;
-        _isCreatingPreset = false;
-        RebuildPresetRows();
-        SetRatingFilterMode(manual: false, applyFilter: false);
-        SetVisibilityFilterMode("All", applyFilter: false);
-        ExcludeNeedsReviewCheckBox.IsChecked = true;
-        ExcludeNeedsAnalysisCheckBox.IsChecked = true;
-        _filterGroups.Clear();
-        RebuildFilterConditionsPanel();
-        ClearConditionBuilder();
-        _showReviewOnly = false;
-        ApplyFilter();
-        PersistPlayerSession();
     }
 
     private void LoadFilterPresets()
@@ -1744,12 +1727,6 @@ public partial class MusicView : UserControl
         ExcludeConditionText.Foreground = ThemeResources.Brush(exclude
             ? "Theme.Brush.TextStrong"
             : "Theme.Brush.TextMuted");
-        ConditionModeHint.Text = exclude
-            ? "Matching tracks will be excluded."
-            : "Matching tracks will be included.";
-        ConditionModeHint.Foreground = ThemeResources.Brush(exclude
-            ? "Theme.Brush.DangerText"
-            : "Theme.Brush.TextSecondary");
     }
 
     private void RefreshConditionBuilder()
