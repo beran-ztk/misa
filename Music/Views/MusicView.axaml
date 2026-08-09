@@ -53,7 +53,7 @@
             <Setter Property="Background" Value="#FAF9EF"/>
         </Style>
         <Style Selector="ListBoxItem">
-            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Padding" Value="10,0"/>
             <Setter Property="MinHeight" Value="58"/>
             <Setter Property="HorizontalAlignment" Value="Stretch"/>
             <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
@@ -280,13 +280,14 @@
                 </ListBox.ItemsPanel>
                 <ListBox.ItemTemplate>
                     <DataTemplate x:DataType="models:TrackDisplayItem">
-                        <Grid HorizontalAlignment="Stretch">
-                            <Border Classes="track-card"
-                                    CornerRadius="0"
+                        <Grid RowDefinitions="Auto,Auto" HorizontalAlignment="Stretch">
+                            <Border Grid.Row="0"
+                                    Classes="track-card"
+                                    CornerRadius="4"
                                     ClipToBounds="True"
-                                    Padding="4,3">
+                                    Padding="0,0">
                                 <Panel>
-                                <Border CornerRadius="0"
+                                <Border CornerRadius="7"
                                         Background="{Binding ArtworkRowBackground}"
                                         IsHitTestVisible="False"/>
                                 <Image Source="{Binding Thumbnail}"
@@ -302,7 +303,7 @@
                                     </Image.Effect>
                                 </Image>
                                 <Border Background="{Binding PlayingBackground}"
-                                        CornerRadius="0"
+                                        CornerRadius="7"
                                         IsHitTestVisible="False"/>
                                 <Grid ColumnDefinitions="4,52,*">
 
@@ -442,6 +443,17 @@
                                            IsHitTestVisible="False"/>
                                 </Panel>
                             </Border>
+                            <Rectangle Grid.Row="1"
+                                       Height="1"
+                                       Margin="20,4">
+                                <Rectangle.Fill>
+                                    <LinearGradientBrush StartPoint="0%,50%"
+                                                         EndPoint="100%,50%">
+                                        <GradientStop Color="#003C3930" Offset="0"/>
+                                        <GradientStop Color="#FF3C3930" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Rectangle.Fill>
+                            </Rectangle>
                         </Grid>
                     </DataTemplate>
                 </ListBox.ItemTemplate>

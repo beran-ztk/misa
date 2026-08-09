@@ -20,7 +20,7 @@ public sealed class AppearanceSettings
     public double TrackArtworkStrength { get; set; } = 35.25;
     public double TrackArtworkBlur { get; set; } = 20.4;
     public double TrackColorWashStrength { get; set; } = 25.35;
-    public double TrackColorWashReach { get; set; } = 50.2;
+    public double TrackColorWashReach { get; set; } = 40;
     public double CoverHaloStrength { get; set; } = 60;
     public double CoverHaloBlur { get; set; } = 20;
 
