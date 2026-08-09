@@ -37,6 +37,8 @@ public partial class MusicView : UserControl
     private readonly SolidColorBrush _playerChromeEdgeBrush = new(Color.Parse("#4A756B54"));
     private readonly GradientStop _appAmbientPrimaryStop;
     private readonly GradientStop _appAmbientSecondaryStop;
+    private readonly GradientStop _filterAmbientPrimaryStop;
+    private readonly GradientStop _filterAmbientSecondaryStop;
     private readonly GradientStop _playerAmbientPrimaryStop;
     private readonly GradientStop _playerAmbientSecondaryStop;
     private static readonly TimeSpan ArtworkTransitionDuration = TimeSpan.FromSeconds(7);
@@ -136,6 +138,9 @@ public partial class MusicView : UserControl
         var appAmbientGradient = (LinearGradientBrush)AppAtmosphereTint.Fill!;
         _appAmbientPrimaryStop = appAmbientGradient.GradientStops[0];
         _appAmbientSecondaryStop = appAmbientGradient.GradientStops[1];
+        var filterAmbientGradient = (LinearGradientBrush)FilterAtmosphereTint.Fill!;
+        _filterAmbientPrimaryStop = filterAmbientGradient.GradientStops[0];
+        _filterAmbientSecondaryStop = filterAmbientGradient.GradientStops[1];
         var playerAmbientGradient = (LinearGradientBrush)PlayerAtmosphereTint.Background!;
         _playerAmbientPrimaryStop = playerAmbientGradient.GradientStops[0];
         _playerAmbientSecondaryStop = playerAmbientGradient.GradientStops[1];
@@ -202,6 +207,7 @@ public partial class MusicView : UserControl
             UpdateSearchVisibility();
         };
         SetVisibilityFilterMode("All", applyFilter: false);
+        RefreshCompletionFilterVisuals();
         FileList.SelectionChanged += (_, _) =>
         {
             UpdateReviewButton();
@@ -1202,7 +1208,26 @@ public partial class MusicView : UserControl
             ApplyFilterDefinitionChange();
     }
 
-    private void OnCompletionFilterChanged(object? sender, RoutedEventArgs e) => ApplyFilterDefinitionChange();
+    private void OnCompletionFilterChanged(object? sender, RoutedEventArgs e)
+    {
+        RefreshCompletionFilterVisuals();
+        ApplyFilterDefinitionChange();
+    }
+
+    private void RefreshCompletionFilterVisuals()
+    {
+        var reviewSelected = ExcludeNeedsReviewCheckBox.IsChecked == true;
+        ExcludeNeedsReviewCheckBox.Background = reviewSelected ? Brush("#18FFD27A") : Brushes.Transparent;
+        ExcludeNeedsReviewCheckBox.BorderBrush = reviewSelected
+            ? Brush("#78FFD27A")
+            : ThemeResources.Brush("Theme.Brush.BorderSubtle");
+
+        var analysisSelected = ExcludeNeedsAnalysisCheckBox.IsChecked == true;
+        ExcludeNeedsAnalysisCheckBox.Background = analysisSelected ? Brush("#18EE5C5C") : Brushes.Transparent;
+        ExcludeNeedsAnalysisCheckBox.BorderBrush = analysisSelected
+            ? Brush("#78EE5C5C")
+            : ThemeResources.Brush("Theme.Brush.BorderSubtle");
+    }
 
     // ─── Toolbar / filter panel ───────────────────────────────────────────────
 
@@ -1425,7 +1450,7 @@ public partial class MusicView : UserControl
 
         var border = new Border
         {
-            Background = ThemeResources.Brush("Theme.Brush.SurfaceTranslucent"),
+            Background = Brushes.Transparent,
             BorderBrush = ThemeResources.Brush("Theme.Brush.BorderSubtle"),
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(7),
@@ -2110,7 +2135,7 @@ public partial class MusicView : UserControl
 
         var border = new Border
         {
-            Background = ThemeResources.Brush("Theme.Brush.SurfaceTranslucent"),
+            Background = Brushes.Transparent,
             BorderBrush = ThemeResources.Brush("Theme.Brush.BorderSubtle"),
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(7),
@@ -2199,7 +2224,7 @@ public partial class MusicView : UserControl
 
         var border = new Border
         {
-            Background = ThemeResources.Brush("Theme.Brush.SurfaceTranslucent"),
+            Background = Brushes.Transparent,
             BorderBrush = ThemeResources.Brush("Theme.Brush.BorderSubtle"),
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(7),
@@ -2232,12 +2257,8 @@ public partial class MusicView : UserControl
             Height = 32,
             Padding = new Thickness(9, 4),
             CornerRadius = new CornerRadius(5),
-            Background = ThemeResources.Brush(isSelected
-                ? "Theme.Brush.AccentSurface"
-                : "Theme.Brush.Surface"),
-            BorderBrush = ThemeResources.Brush(isSelected
-                ? "Theme.Brush.Accent"
-                : "Theme.Brush.BorderSubtle"),
+            Background = isSelected ? Brush("#263E6591") : Brushes.Transparent,
+            BorderBrush = isSelected ? Brush("#7A78A9E6") : Brush("#36FFFFFF"),
             BorderThickness = new Thickness(1),
             HorizontalAlignment = HorizontalAlignment.Stretch,
             HorizontalContentAlignment = HorizontalAlignment.Center,
@@ -2280,12 +2301,8 @@ public partial class MusicView : UserControl
             Height = 34,
             Padding = new Thickness(9, 3),
             CornerRadius = new CornerRadius(5),
-            Background = ThemeResources.Brush(isSelected
-                ? "Theme.Brush.AccentSurface"
-                : "Theme.Brush.Surface"),
-            BorderBrush = ThemeResources.Brush(isSelected
-                ? "Theme.Brush.Accent"
-                : "Theme.Brush.BorderSubtle"),
+            Background = isSelected ? Brush("#263E6591") : Brushes.Transparent,
+            BorderBrush = isSelected ? Brush("#7A78A9E6") : Brush("#36FFFFFF"),
             BorderThickness = new Thickness(1),
             HorizontalAlignment = HorizontalAlignment.Stretch,
             HorizontalContentAlignment = HorizontalAlignment.Stretch,
@@ -3458,6 +3475,8 @@ public partial class MusicView : UserControl
             (28 + artworkLift * 20 + (energy * 32 + treble * 12) * colorReaction) * atmosphere);
         _appAmbientSecondaryStop.Color = WithAlpha(secondary,
             (16 + artworkLift * 16 + energy * 20 * colorReaction) * atmosphere);
+        _filterAmbientPrimaryStop.Color = WithAlpha(primary, 220);
+        _filterAmbientSecondaryStop.Color = WithAlpha(secondary, 150);
         _playerAmbientPrimaryStop.Color = WithAlpha(primary,
             (34 + artworkLift * 24 + (energy * 34 + bass * 10) * colorReaction) * atmosphere);
         _playerAmbientSecondaryStop.Color = WithAlpha(secondary,
