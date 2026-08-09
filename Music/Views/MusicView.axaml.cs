@@ -1912,7 +1912,8 @@ public partial class MusicView : UserControl
         {
             Columns = 2,
             ColumnSpacing = 7,
-            RowSpacing = 7
+            RowSpacing = 7,
+            Margin = new Thickness(0, 0, 0, 10)
         };
         var groupListPanel = new StackPanel { Spacing = 0 };
         var searchBox = new TextBox
@@ -2246,7 +2247,7 @@ public partial class MusicView : UserControl
 
     private static Button CreateTagFilterChoiceButton(string title, bool isSelected)
     {
-        var content = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), ColumnSpacing = 5 };
+        var content = new Grid();
         content.Children.Add(new TextBlock
         {
             Text = title,
@@ -2256,7 +2257,9 @@ public partial class MusicView : UserControl
                 ? "Theme.Brush.TextStrong"
                 : "Theme.Brush.TextPrimary"),
             TextTrimming = TextTrimming.CharacterEllipsis,
-            VerticalAlignment = VerticalAlignment.Center
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            TextAlignment = TextAlignment.Center
         });
         if (isSelected)
         {
@@ -2265,9 +2268,9 @@ public partial class MusicView : UserControl
                 Text = "✓",
                 FontSize = 11,
                 Foreground = ThemeResources.Brush("Theme.Brush.Accent"),
+                HorizontalAlignment = HorizontalAlignment.Right,
                 VerticalAlignment = VerticalAlignment.Center
             };
-            Grid.SetColumn(check, 1);
             content.Children.Add(check);
         }
 
