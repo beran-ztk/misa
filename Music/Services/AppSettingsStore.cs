@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Music.Models;
 
 namespace Music.Services;
 
@@ -31,6 +32,7 @@ public static class AppSettingsStore
                 settings.ChannelDownloadMaxDurationMinutes,
                 ChannelDownloadMinDurationMinutes,
                 ChannelDownloadMaxDurationMinutes);
+            settings.Appearance = (settings.Appearance ?? new AppearanceSettings()).Clamp();
             return settings;
         }
         catch
@@ -63,6 +65,13 @@ public static class AppSettingsStore
         Save(settings);
     }
 
+    public static void SaveAppearance(AppearanceSettings appearance)
+    {
+        var settings = Load();
+        settings.Appearance = appearance.Clone().Clamp();
+        Save(settings);
+    }
+
     private static void Save(AppSettings settings)
     {
         var directory = Path.GetDirectoryName(Values.AppSettingsPath);
@@ -79,4 +88,5 @@ public sealed class AppSettings
     public float Volume { get; set; } = 1f;
     public string MusicAnalysisServerUrl { get; set; } = string.Empty;
     public int ChannelDownloadMaxDurationMinutes { get; set; } = 12;
+    public AppearanceSettings Appearance { get; set; } = new();
 }

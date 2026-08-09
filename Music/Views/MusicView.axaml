@@ -288,25 +288,18 @@
                                     Padding="4,3">
                                 <Panel>
                                 <Border CornerRadius="7"
-                                        IsHitTestVisible="False">
-                                    <Border.Background>
-                                        <LinearGradientBrush StartPoint="0%,50%" EndPoint="88%,50%">
-                                            <GradientStop Color="{Binding ArtworkPrimaryTint}" Offset="0"/>
-                                            <GradientStop Color="{Binding ArtworkSecondaryTint}" Offset="0.42"/>
-                                            <GradientStop Color="#00000000" Offset="1"/>
-                                        </LinearGradientBrush>
-                                    </Border.Background>
-                                </Border>
+                                        Background="{Binding ArtworkRowBackground}"
+                                        IsHitTestVisible="False"/>
                                 <Image Source="{Binding Thumbnail}"
                                        Width="106" Height="68"
                                        Margin="18,-10,0,-10"
                                        HorizontalAlignment="Left"
                                        VerticalAlignment="Center"
                                        Stretch="UniformToFill"
-                                       Opacity="0.18"
+                                       Opacity="{Binding TrackArtworkOpacity}"
                                        IsHitTestVisible="False">
                                     <Image.Effect>
-                                        <BlurEffect Radius="14"/>
+                                        <BlurEffect Radius="{Binding TrackArtworkBlur}"/>
                                     </Image.Effect>
                                 </Image>
                                 <Border Background="{Binding PlayingBackground}"
@@ -338,10 +331,10 @@
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
                                                Stretch="UniformToFill"
-                                               Opacity="0.34"
+                                               Opacity="{Binding CoverHaloOpacity}"
                                                IsHitTestVisible="False">
                                             <Image.Effect>
-                                                <BlurEffect Radius="9"/>
+                                                <BlurEffect Radius="{Binding CoverHaloBlur}"/>
                                             </Image.Effect>
                                         </Image>
                                         <Border Width="42" Height="42"
@@ -502,7 +495,8 @@
                                 <BlurEffect Radius="30"/>
                             </Image.Effect>
                         </Image>
-                        <Border Background="#8E2A241A"
+                        <Border x:Name="PlayerDarkeningOverlay"
+                                Background="#8E2A241A"
                                 CornerRadius="0,0,0,0"
                                 HorizontalAlignment="Stretch"
                                 VerticalAlignment="Stretch"

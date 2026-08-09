@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using Avalonia;
 using Avalonia.Media.Imaging;
 using Avalonia.Media;
 
@@ -21,18 +23,61 @@ public record TrackDisplayItem(
     public bool NeedsReview { get; set; }
     public bool NeedsAnalysis { get; set; }
     public Bitmap? Thumbnail { get; set; }
-    public Color ArtworkPrimaryTint { get; private set; } = Colors.Transparent;
-    public Color ArtworkSecondaryTint { get; private set; } = Colors.Transparent;
+    public Color ArtworkPrimaryColor { get; private set; } = Colors.Transparent;
+    public Color ArtworkSecondaryColor { get; private set; } = Colors.Transparent;
+    public IBrush ArtworkRowBackground { get; private set; } = Brushes.Transparent;
     public IBrush ArtworkMetadataBrush { get; private set; } = new SolidColorBrush(Color.Parse("#D4CFB4"));
     public IBrush ArtworkBorderBrush { get; private set; } = new SolidColorBrush(Color.Parse("#46514D40"));
+    public double TrackArtworkOpacity { get; private set; } = 0.18;
+    public double TrackArtworkBlur { get; private set; } = 14;
+    public double CoverHaloOpacity { get; private set; } = 0.34;
+    public double CoverHaloBlur { get; private set; } = 9;
+
+    private AppearanceSettings _appearance = AppearanceSettings.Balanced();
 
     public void SetArtworkPalette(Color primary, Color secondary)
     {
-        ArtworkPrimaryTint = Color.FromArgb(34, primary.R, primary.G, primary.B);
-        ArtworkSecondaryTint = Color.FromArgb(20, secondary.R, secondary.G, secondary.B);
-        ArtworkMetadataBrush = new SolidColorBrush(Mix(primary, Color.Parse("#E2DDCA"), 0.58));
-        ArtworkBorderBrush = new SolidColorBrush(Color.FromArgb(68, primary.R, primary.G, primary.B));
+        ArtworkPrimaryColor = Color.FromRgb(primary.R, primary.G, primary.B);
+        ArtworkSecondaryColor = Color.FromRgb(secondary.R, secondary.G, secondary.B);
+        RebuildArtworkPresentation();
     }
+
+    public void ApplyAppearance(AppearanceSettings appearance)
+    {
+        _appearance = appearance;
+        TrackArtworkOpacity = _appearance.TrackArtworkStrength / 100d;
+        TrackArtworkBlur = _appearance.TrackArtworkBlur;
+        CoverHaloOpacity = _appearance.CoverHaloStrength / 100d;
+        CoverHaloBlur = _appearance.CoverHaloBlur;
+        RebuildArtworkPresentation();
+    }
+
+    private void RebuildArtworkPresentation()
+    {
+        if (ArtworkPrimaryColor.A == 0)
+        {
+            ArtworkRowBackground = Brushes.Transparent;
+            return;
+        }
+
+        var strength = _appearance.TrackColorWashStrength / 100d;
+        ArtworkRowBackground = new LinearGradientBrush
+        {
+            StartPoint = new RelativePoint(0, 0.5, RelativeUnit.Relative),
+            EndPoint = new RelativePoint(_appearance.TrackColorWashReach / 100d, 0.5, RelativeUnit.Relative),
+            GradientStops =
+            {
+                new GradientStop(WithOpacity(ArtworkPrimaryColor, strength), 0),
+                new GradientStop(WithOpacity(ArtworkSecondaryColor, strength * 0.6), 0.42),
+                new GradientStop(Colors.Transparent, 1)
+            }
+        };
+        ArtworkMetadataBrush = new SolidColorBrush(Mix(ArtworkPrimaryColor, Color.Parse("#E2DDCA"), 0.58));
+        ArtworkBorderBrush = new SolidColorBrush(Color.FromArgb(68, ArtworkPrimaryColor.R, ArtworkPrimaryColor.G, ArtworkPrimaryColor.B));
+    }
+
+    private static Color WithOpacity(Color color, double opacity) => Color.FromArgb(
+        (byte)Math.Clamp((int)Math.Round(opacity * 255), 0, 255), color.R, color.G, color.B);
 
     private static Color Mix(Color from, Color to, double amount) => Color.FromRgb(
         (byte)(from.R + (to.R - from.R) * amount),

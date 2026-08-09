@@ -57,6 +57,7 @@ public partial class MusicView : UserControl
     private double _visualEnergy;
     private double _visualBass;
     private double _visualTreble;
+    private AppearanceSettings _appearanceSettings = AppearanceSettings.Balanced();
 
     // Playback settings
     private bool _shuffle;
@@ -130,6 +131,8 @@ public partial class MusicView : UserControl
         var playerAmbientGradient = (LinearGradientBrush)PlayerAtmosphereTint.Background!;
         _playerAmbientPrimaryStop = playerAmbientGradient.GradientStops[0];
         _playerAmbientSecondaryStop = playerAmbientGradient.GradientStops[1];
+        _appearanceSettings = AppSettingsStore.Load().Appearance.Clone().Clamp();
+        ApplyAppearanceSettings(_appearanceSettings, refreshTrackRows: false);
         AddHandler(KeyDownEvent, OnKeyDown, RoutingStrategies.Tunnel);
         _globalMediaKeys.Pressed += OnGlobalMediaKeyPressed;
         _globalMediaKeys.Start();
@@ -279,6 +282,7 @@ public partial class MusicView : UserControl
         EditTrackOverlay.PreviewClosed += StopTrackPreview;
         EditTrackOverlay.ToastRequested += ShowToast;
         SettingsOverlay.ToastRequested += ShowToast;
+        SettingsOverlay.AppearanceChanged += settings => ApplyAppearanceSettings(settings, refreshTrackRows: true);
         SettingsOverlay.LibraryMetadataChanged += RefreshLibraryPresentation;
         SettingsOverlay.ExportRequested += ExportPortableLibrary;
         MusicVideoOverlay.CloseRequested += () => MusicVideoOverlay.IsVisible = false;
@@ -467,7 +471,7 @@ public partial class MusicView : UserControl
             if (previous?.Thumbnail is not null)
             {
                 item.Thumbnail = previous.Thumbnail;
-                item.SetArtworkPalette(previous.ArtworkPrimaryTint, previous.ArtworkSecondaryTint);
+                item.SetArtworkPalette(previous.ArtworkPrimaryColor, previous.ArtworkSecondaryColor);
                 previous.Thumbnail = null;
             }
             newItems.Add(item);
@@ -538,12 +542,14 @@ public partial class MusicView : UserControl
         var ratingName = track.RatingId is int ratingId ? ratingMap.GetValueOrDefault(ratingId, "") : "None";
         var durationText = track.DurationSeconds.HasValue ? FormatDuration(track.DurationSeconds.Value) : "";
 
-        return new TrackDisplayItem(track, genreStr, modelGenreStr, manualGenreStr, styleStr, durationText, ratingName, tagDisplays, track.ChannelName ?? "")
+        var item = new TrackDisplayItem(track, genreStr, modelGenreStr, manualGenreStr, styleStr, durationText, ratingName, tagDisplays, track.ChannelName ?? "")
         {
             NeedsReview = track.NeedsReview,
             NeedsAnalysis = needsAnalysis,
             IsPlaying = track.Id == _engine.ActiveTrackId
         };
+        item.ApplyAppearance(_appearanceSettings);
+        return item;
     }
 
     private void UpdateTrackInList(int trackId)
@@ -566,7 +572,7 @@ public partial class MusicView : UserControl
         if (previous?.Thumbnail is not null)
         {
             updatedItem.Thumbnail = previous.Thumbnail;
-            updatedItem.SetArtworkPalette(previous.ArtworkPrimaryTint, previous.ArtworkSecondaryTint);
+            updatedItem.SetArtworkPalette(previous.ArtworkPrimaryColor, previous.ArtworkSecondaryColor);
             previous.Thumbnail = null;
         }
 
@@ -1995,6 +2001,32 @@ public partial class MusicView : UserControl
         SettingsOverlay.Margin = new Thickness(0, 0, 0, PlayerBar.Bounds.Height);
     }
 
+    private void ApplyAppearanceSettings(AppearanceSettings settings, bool refreshTrackRows)
+    {
+        var updatedSettings = settings.Clone().Clamp();
+        var trackAppearanceChanged = TrackAppearanceChanged(_appearanceSettings, updatedSettings);
+        _appearanceSettings = updatedSettings;
+        PlayerDarkeningOverlay.Background = new SolidColorBrush(Color.FromArgb(
+            ToByte(_appearanceSettings.PlayerBackgroundDarkening / 100d * 255),
+            0x2A, 0x24, 0x1A));
+
+        if (trackAppearanceChanged)
+            foreach (var item in _allItems)
+                item.ApplyAppearance(_appearanceSettings);
+
+        ApplyAudioAtmosphere();
+        if (refreshTrackRows && trackAppearanceChanged && _allItems.Count > 0)
+            RefreshVisibleItemsSource((FileList.SelectedItem as TrackDisplayItem)?.Track.Id);
+    }
+
+    private static bool TrackAppearanceChanged(AppearanceSettings current, AppearanceSettings updated) =>
+        current.TrackArtworkStrength != updated.TrackArtworkStrength
+        || current.TrackArtworkBlur != updated.TrackArtworkBlur
+        || current.TrackColorWashStrength != updated.TrackColorWashStrength
+        || current.TrackColorWashReach != updated.TrackColorWashReach
+        || current.CoverHaloStrength != updated.CoverHaloStrength
+        || current.CoverHaloBlur != updated.CoverHaloBlur;
+
     private async void ShowToast(string message)
     {
         _toastCts?.Cancel();
@@ -2998,9 +3030,10 @@ public partial class MusicView : UserControl
 
     private void ApplyAudioAtmosphere()
     {
-        var energy = SoftLimit(_visualEnergy);
-        var bass = SoftLimit(_visualBass);
-        var treble = SoftLimit(_visualTreble);
+        var reaction = _appearanceSettings.PlayerAudioReaction / 100d;
+        var energy = SoftLimit(_visualEnergy) * reaction;
+        var bass = SoftLimit(_visualBass) * reaction;
+        var treble = SoftLimit(_visualTreble) * reaction;
         // Lift quiet passages (and low app-volume levels) without making the
         // high end grow linearly into an overpowering background.
         var visibilityEnergy = Math.Sqrt(energy);
@@ -3016,8 +3049,10 @@ public partial class MusicView : UserControl
 
         var incomingMix = IsArtworkTransitionActive ? Math.Sin(transition * Math.PI / 2) : 1;
         var outgoingMix = IsArtworkTransitionActive ? Math.Cos(transition * Math.PI / 2) : 0;
-        var appOpacity = 0.25 + visibilityEnergy * 0.21;
-        var playerOpacity = 0.55 + visibilityEnergy * 0.15;
+        var appOpacity = Math.Clamp(
+            _appearanceSettings.LibraryBackdropStrength / 100d + visibilityEnergy * 0.21, 0, 1);
+        var playerOpacity = Math.Clamp(
+            _appearanceSettings.PlayerArtworkStrength / 100d + visibilityEnergy * 0.15, 0, 1);
         AppArtworkBackground.Opacity = AppArtworkBackground.IsVisible ? appOpacity * incomingMix : 0;
         PlayerArtworkBackground.Opacity = PlayerArtworkBackground.IsVisible ? playerOpacity * incomingMix : 0;
         AppArtworkPreviousBackground.Opacity = AppArtworkPreviousBackground.IsVisible ? appOpacity * outgoingMix : 0;
@@ -3027,28 +3062,33 @@ public partial class MusicView : UserControl
         SetScale(PlayerArtworkBackground, 1.14 - transition * 0.04 + bass * 0.035 * transition);
         SetScale(AppArtworkPreviousBackground, Approach(_outgoingAppScale, 1.055, transition));
         SetScale(PlayerArtworkPreviousBackground, Approach(_outgoingPlayerScale, 1.075, transition));
-        SetBlur(AppArtworkBackground, 28 - transition * 8 + energy * 8.0);
-        SetBlur(PlayerArtworkBackground, 40 - transition * 10 + energy * 6.0 + treble * 4.0);
-        SetBlur(AppArtworkPreviousBackground, Approach(_outgoingAppBlur, 34, transition));
-        SetBlur(PlayerArtworkPreviousBackground, Approach(_outgoingPlayerBlur, 46, transition));
+        SetBlur(AppArtworkBackground,
+            _appearanceSettings.LibraryBackdropBlur + (1 - transition) * 8 + energy * 8.0);
+        SetBlur(PlayerArtworkBackground,
+            _appearanceSettings.PlayerArtworkBlur + (1 - transition) * 10 + energy * 6.0 + treble * 4.0);
+        SetBlur(AppArtworkPreviousBackground, Approach(
+            _outgoingAppBlur, _appearanceSettings.LibraryBackdropBlur + 14, transition));
+        SetBlur(PlayerArtworkPreviousBackground, Approach(
+            _outgoingPlayerBlur, _appearanceSettings.PlayerArtworkBlur + 16, transition));
 
         var primary = MixColor(_ambientPrimary, Colors.White, energy * 0.08 + treble * 0.05);
         var secondary = MixColor(_ambientSecondary, Colors.White, energy * 0.05);
         var artworkLift = hasArtwork && _hasArtworkPalette ? 1d : 0d;
 
+        var atmosphere = _appearanceSettings.PlayerColorAtmosphere / 100d;
         _appAmbientPrimaryStop.Color = WithAlpha(primary,
-            28 + artworkLift * 20 + energy * 32 + treble * 12);
+            (28 + artworkLift * 20 + energy * 32 + treble * 12) * atmosphere);
         _appAmbientSecondaryStop.Color = WithAlpha(secondary,
-            16 + artworkLift * 16 + energy * 20);
+            (16 + artworkLift * 16 + energy * 20) * atmosphere);
         _playerAmbientPrimaryStop.Color = WithAlpha(primary,
-            34 + artworkLift * 24 + energy * 34 + bass * 10);
+            (34 + artworkLift * 24 + energy * 34 + bass * 10) * atmosphere);
         _playerAmbientSecondaryStop.Color = WithAlpha(secondary,
-            24 + artworkLift * 20 + energy * 24 + treble * 8);
+            (24 + artworkLift * 20 + energy * 24 + treble * 8) * atmosphere);
         _playerTopGlowBrush.Color = WithAlpha(primary,
-            24 + artworkLift * 12 + energy * 60 + treble * 24);
+            (24 + artworkLift * 12 + energy * 60 + treble * 24) * atmosphere);
         _playerChromeEdgeBrush.Color = WithAlpha(
             MixColor(primary, secondary, 0.35),
-            24 + artworkLift * 8 + energy * 30);
+            (24 + artworkLift * 8 + energy * 30) * atmosphere);
     }
 
     private static double Approach(double current, double target, double amount) =>

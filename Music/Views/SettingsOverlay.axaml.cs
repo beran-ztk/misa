@@ -30,15 +30,23 @@ public partial class SettingsOverlay : UserControl
     private readonly Dictionary<int, GenreVocabularyRowState> _genreVocabularyRowsById = [];
     private TextBlock? _emptyGenreVocabularyText;
     private SettingsPage _selectedPage;
+    private readonly DispatcherTimer _appearanceSaveTimer = new() { Interval = TimeSpan.FromMilliseconds(350) };
+    private readonly List<Action<AppearanceSettings>> _appearanceControlRefreshers = [];
+    private AppearanceSettings _appearanceSettings = AppearanceSettings.Balanced();
+    private bool _synchronizingAppearanceControls;
+    private bool _appearanceSavePending;
 
     public event Action<string>? ToastRequested;
     public event Action<MusicTrack>? TrackCalibrationRequested;
     public event Action? LibraryMetadataChanged;
     public event Action? ExportRequested;
+    public event Action<AppearanceSettings>? AppearanceChanged;
 
     public SettingsOverlay()
     {
         InitializeComponent();
+        BuildAppearanceControls();
+        _appearanceSaveTimer.Tick += (_, _) => PersistPendingAppearance();
         SearchBox.TextChanged += (_, _) => RebuildGenreVocabularyRows();
         ModelGenreBox.SelectionChanged += (_, _) =>
         {
@@ -59,6 +67,8 @@ public partial class SettingsOverlay : UserControl
         TracksPathBox.Text = locations.TracksDirectory;
         LibraryLocationStatusText.IsVisible = false;
         MusicAnalysisServerUrlBox.Text = AppSettingsStore.Load().MusicAnalysisServerUrl;
+        _appearanceSettings = AppSettingsStore.Load().Appearance.Clone().Clamp();
+        RefreshAppearanceControls();
         AnalysisServerStatusText.IsVisible = false;
         FirefoxCookiesToggle.IsChecked = Values.UseFirefoxCookiesForYtDlp;
         RefreshLinuxDependencies();
@@ -531,6 +541,7 @@ public partial class SettingsOverlay : UserControl
         {
             "library" => SettingsPage.Library,
             "analysis_server" => SettingsPage.AnalysisServer,
+            "appearance" => SettingsPage.Appearance,
             "backup" => SettingsPage.Backup,
             "export" => SettingsPage.Export,
             "runtime" => SettingsPage.Runtime,
@@ -555,6 +566,7 @@ public partial class SettingsOverlay : UserControl
         var isExportPage = page == SettingsPage.Export;
         var isRuntimePage = page == SettingsPage.Runtime;
         var isUpdatesPage = page == SettingsPage.Updates;
+        var isAppearancePage = page == SettingsPage.Appearance;
         GenreVocabularyPage.IsVisible = isGenreVocabularyPage;
         LibraryPage.IsVisible = isLibraryPage;
         AnalysisServerPage.IsVisible = isAnalysisServerPage;
@@ -562,6 +574,7 @@ public partial class SettingsOverlay : UserControl
         ExportPage.IsVisible = isExportPage;
         RuntimePage.IsVisible = isRuntimePage;
         UpdatesPage.IsVisible = isUpdatesPage;
+        AppearancePage.IsVisible = isAppearancePage;
         AnalysisCalibrationPage.IsVisible = page == SettingsPage.AnalysisCalibration;
         TagsPage.IsVisible = page == SettingsPage.Tags;
         TagRulesPage.IsVisible = page == SettingsPage.TagRules;
@@ -572,6 +585,7 @@ public partial class SettingsOverlay : UserControl
         ExportNavButton.IsChecked = isExportPage;
         RuntimeNavButton.IsChecked = isRuntimePage;
         UpdatesNavButton.IsChecked = isUpdatesPage;
+        AppearanceNavButton.IsChecked = isAppearancePage;
         AnalysisCalibrationNavButton.IsChecked = page == SettingsPage.AnalysisCalibration;
         TagsNavButton.IsChecked = page == SettingsPage.Tags;
         TagRulesNavButton.IsChecked = page == SettingsPage.TagRules;
@@ -584,6 +598,7 @@ public partial class SettingsOverlay : UserControl
             SettingsPage.Export => "Export",
             SettingsPage.Runtime => "Runtime",
             SettingsPage.Updates => "Updates",
+            SettingsPage.Appearance => "Appearance",
             SettingsPage.AnalysisCalibration => "Analysis calibration",
             SettingsPage.Tags => "Tags",
             SettingsPage.TagRules => "Tag rules",
@@ -601,6 +616,8 @@ public partial class SettingsOverlay : UserControl
                         ? "Export the current library into a portable folder."
                         : isRuntimePage
                             ? "Temporary switches for this app run."
+                            : isAppearancePage
+                                ? "Tune artwork, blur, color and audio-reactive visuals. Changes are applied live."
                             : isUpdatesPage
                                 ? "Check, download and install application releases from GitHub."
                             : page == SettingsPage.Tags
@@ -1372,7 +1389,186 @@ public partial class SettingsOverlay : UserControl
         _ => modelName
     };
 
-    private void OnCloseClicked(object? sender, RoutedEventArgs e) => IsVisible = false;
+    private void BuildAppearanceControls()
+    {
+        AddAppearanceSlider(PlayerAppearanceRows, "Artwork strength", "Visibility of the cover behind the player.",
+            0, 100, settings => settings.PlayerArtworkStrength,
+            (settings, value) => settings.PlayerArtworkStrength = value, PercentValue);
+        AddAppearanceSlider(PlayerAppearanceRows, "Artwork blur", "Softness of the player background image.",
+            0, 50, settings => settings.PlayerArtworkBlur,
+            (settings, value) => settings.PlayerArtworkBlur = value, PixelValue);
+        AddAppearanceSlider(PlayerAppearanceRows, "Background darkening", "Dark overlay that keeps controls and text readable.",
+            0, 80, settings => settings.PlayerBackgroundDarkening,
+            (settings, value) => settings.PlayerBackgroundDarkening = value, PercentValue);
+        AddAppearanceSlider(PlayerAppearanceRows, "Color atmosphere", "Strength of colors extracted from the active cover.",
+            0, 100, settings => settings.PlayerColorAtmosphere,
+            (settings, value) => settings.PlayerColorAtmosphere = value, PercentValue);
+        AddAppearanceSlider(PlayerAppearanceRows, "Audio reaction", "How strongly music energy changes color, blur and movement.",
+            0, 100, settings => settings.PlayerAudioReaction,
+            (settings, value) => settings.PlayerAudioReaction = value, PercentValue);
+
+        AddAppearanceSlider(TrackAppearanceRows, "Color wash strength", "Intensity of each cover's color across its track row.",
+            0, 30, settings => settings.TrackColorWashStrength,
+            (settings, value) => settings.TrackColorWashStrength = value, PercentValue);
+        AddAppearanceSlider(TrackAppearanceRows, "Color wash reach", "How far the artwork color extends across the row.",
+            20, 100, settings => settings.TrackColorWashReach,
+            (settings, value) => settings.TrackColorWashReach = value, PercentValue);
+
+        AddAppearanceSlider(LibraryBackdropAppearanceRows, "Backdrop strength", "Visibility of the active cover behind the library.",
+            0, 60, settings => settings.LibraryBackdropStrength,
+            (settings, value) => settings.LibraryBackdropStrength = value, PercentValue);
+        AddAppearanceSlider(LibraryBackdropAppearanceRows, "Backdrop blur", "Softness of the active cover behind the library.",
+            0, 50, settings => settings.LibraryBackdropBlur,
+            (settings, value) => settings.LibraryBackdropBlur = value, PixelValue);
+
+        AddAppearanceSlider(AdvancedTrackAppearanceRows, "Row artwork strength", "Visibility of the blurred cover inside each row.",
+            0, 50, settings => settings.TrackArtworkStrength,
+            (settings, value) => settings.TrackArtworkStrength = value, PercentValue);
+        AddAppearanceSlider(AdvancedTrackAppearanceRows, "Row artwork blur", "Spread of the large cover image inside each row.",
+            0, 30, settings => settings.TrackArtworkBlur,
+            (settings, value) => settings.TrackArtworkBlur = value, PixelValue);
+        AddAppearanceSlider(AdvancedTrackAppearanceRows, "Cover halo strength", "Visibility of the small glow directly around each cover.",
+            0, 60, settings => settings.CoverHaloStrength,
+            (settings, value) => settings.CoverHaloStrength = value, PercentValue);
+        AddAppearanceSlider(AdvancedTrackAppearanceRows, "Cover halo blur", "Softness of the local glow around each cover.",
+            0, 20, settings => settings.CoverHaloBlur,
+            (settings, value) => settings.CoverHaloBlur = value, PixelValue);
+    }
+
+    private void AddAppearanceSlider(
+        StackPanel panel,
+        string title,
+        string description,
+        double minimum,
+        double maximum,
+        Func<AppearanceSettings, double> getter,
+        Action<AppearanceSettings, double> setter,
+        Func<double, string> formatter)
+    {
+        var valueText = new TextBlock
+        {
+            Width = 48,
+            FontFamily = new FontFamily("Consolas"),
+            FontSize = 10.5,
+            Opacity = 0.72,
+            TextAlignment = TextAlignment.Right,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        var slider = new Slider
+        {
+            Minimum = minimum,
+            Maximum = maximum,
+            TickFrequency = 1,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        ToolTip.SetTip(slider, "Double-click to restore this value to the Balanced preset.");
+        slider.ValueChanged += (_, _) =>
+        {
+            valueText.Text = formatter(slider.Value);
+            if (_synchronizingAppearanceControls)
+                return;
+
+            setter(_appearanceSettings, slider.Value);
+            NotifyAppearanceChanged();
+        };
+        slider.DoubleTapped += (_, _) => slider.Value = getter(AppearanceSettings.Balanced());
+
+        var labels = new StackPanel { Spacing = 2 };
+        labels.Children.Add(new TextBlock { Text = title, FontSize = 11.5, FontWeight = FontWeight.SemiBold });
+        labels.Children.Add(new TextBlock
+        {
+            Text = description,
+            FontSize = 10,
+            Opacity = 0.5,
+            TextWrapping = TextWrapping.Wrap
+        });
+
+        var row = new Grid
+        {
+            ColumnDefinitions = new ColumnDefinitions("*,220,52"),
+            ColumnSpacing = 12
+        };
+        row.Children.Add(labels);
+        Grid.SetColumn(slider, 1);
+        row.Children.Add(slider);
+        Grid.SetColumn(valueText, 2);
+        row.Children.Add(valueText);
+        panel.Children.Add(row);
+
+        _appearanceControlRefreshers.Add(settings =>
+        {
+            slider.Value = getter(settings);
+            valueText.Text = formatter(slider.Value);
+        });
+    }
+
+    private void RefreshAppearanceControls()
+    {
+        _synchronizingAppearanceControls = true;
+        try
+        {
+            foreach (var refresh in _appearanceControlRefreshers)
+                refresh(_appearanceSettings);
+        }
+        finally
+        {
+            _synchronizingAppearanceControls = false;
+        }
+    }
+
+    private void NotifyAppearanceChanged()
+    {
+        _appearanceSettings.Clamp();
+        AppearanceChanged?.Invoke(_appearanceSettings.Clone());
+        _appearanceSavePending = true;
+        _appearanceSaveTimer.Stop();
+        _appearanceSaveTimer.Start();
+    }
+
+    private void PersistPendingAppearance()
+    {
+        _appearanceSaveTimer.Stop();
+        if (!_appearanceSavePending)
+            return;
+
+        AppSettingsStore.SaveAppearance(_appearanceSettings);
+        _appearanceSavePending = false;
+    }
+
+    private void OnAppearancePresetClicked(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: string preset })
+            return;
+
+        _appearanceSettings = preset switch
+        {
+            "subtle" => AppearanceSettings.Subtle(),
+            "vibrant" => AppearanceSettings.Vibrant(),
+            _ => AppearanceSettings.Balanced()
+        };
+        RefreshAppearanceControls();
+        NotifyAppearanceChanged();
+        PersistPendingAppearance();
+        ToastRequested?.Invoke($"Appearance preset applied: {preset}.");
+    }
+
+    private void OnResetAppearanceClicked(object? sender, RoutedEventArgs e)
+    {
+        _appearanceSettings = AppearanceSettings.Balanced();
+        RefreshAppearanceControls();
+        NotifyAppearanceChanged();
+        PersistPendingAppearance();
+        ToastRequested?.Invoke("Appearance reset to defaults.");
+    }
+
+    private static string PercentValue(double value) => $"{value:0}%";
+    private static string PixelValue(double value) => $"{value:0} px";
+
+    private void OnCloseClicked(object? sender, RoutedEventArgs e)
+    {
+        PersistPendingAppearance();
+        IsVisible = false;
+    }
 
     private sealed record ModelGenreChoice(int? Id, string Name)
     {
@@ -1420,5 +1616,5 @@ public partial class SettingsOverlay : UserControl
             .OrderByDescending(item => item.value.Score).Take(3).Select(item => $"{item.Model}: {item.value.Label} {item.value.Score:0.##}"));
     }
 
-    private enum SettingsPage { GenreVocabulary, Library, AnalysisServer, Backup, Export, Runtime, Updates, AnalysisCalibration, Tags, TagRules }
+    private enum SettingsPage { GenreVocabulary, Library, AnalysisServer, Appearance, Backup, Export, Runtime, Updates, AnalysisCalibration, Tags, TagRules }
 }
