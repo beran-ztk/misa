@@ -1917,19 +1917,16 @@ public partial class MusicView : UserControl
         var groupListPanel = new StackPanel { Spacing = 0 };
         var searchBox = new TextBox
         {
-            Watermark = "Search subgenre…",
+            Watermark = "Search",
+            Width = 65,
             Height = 28,
             IsVisible = false,
+            HorizontalAlignment = HorizontalAlignment.Right,
             VerticalContentAlignment = VerticalAlignment.Center,
-            FontSize = 10.5,
-            Padding = new Thickness(8, 2),
-            Margin = new Thickness(12, 0, 4, 0),
-            Background = ThemeResources.Brush("Theme.Brush.Input"),
-            BorderBrush = ThemeResources.Brush("Theme.Brush.BorderSubtle"),
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(6)
+            Margin = new Thickness(4, 0)
         };
         searchBox.Classes.Add("theme-input");
+        searchBox.Classes.Add("compact-search");
 
         var searchButton = new Button
         {
@@ -1955,7 +1952,7 @@ public partial class MusicView : UserControl
         {
             VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
             HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
-            Margin = new Thickness(0, 0, 4, 0),
+            Padding = new Thickness(10, 6),
             Content = choicesPanel
         };
 
@@ -2138,7 +2135,7 @@ public partial class MusicView : UserControl
     {
         var panel = new StackPanel { Spacing = 9 };
 
-        var header = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto") };
+        var header = new Grid();
         header.Children.Add(new TextBlock
         {
             Text = "Tags",
@@ -2146,23 +2143,7 @@ public partial class MusicView : UserControl
             FontWeight = FontWeight.SemiBold,
             VerticalAlignment = VerticalAlignment.Center
         });
-        var summary = new TextBlock
-        {
-            FontSize = 10.5,
-            Opacity = 0.56,
-            VerticalAlignment = VerticalAlignment.Center,
-            HorizontalAlignment = HorizontalAlignment.Right
-        };
-        Grid.SetColumn(summary, 2);
-        header.Children.Add(summary);
         panel.Children.Add(header);
-
-        void UpdateSummary()
-        {
-            summary.Text = tagCtrl.SelectedItems.Count == 0
-                ? "No tags selected"
-                : $"{tagCtrl.SelectedItems.Count} selected";
-        }
 
         void Toggle(Tag tag)
         {
@@ -2179,24 +2160,38 @@ public partial class MusicView : UserControl
             while (panel.Children.Count > 1)
                 panel.Children.RemoveAt(1);
 
-            var chips = new UniformGrid
+            var tags = Values.Tags
+                .OrderBy(tag => tag.Name, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+            var rows = new StackPanel { Spacing = 7 };
+            var rowCount = Math.Max(1, (int)Math.Ceiling(tags.Count / 4d));
+            var tagIndex = 0;
+
+            for (var rowIndex = 0; rowIndex < rowCount && tagIndex < tags.Count; rowIndex++)
             {
-                Columns = 3,
-                ColumnSpacing = 7,
-                RowSpacing = 7
-            };
-            foreach (var tag in Values.Tags
-                         .OrderByDescending(tag => tagCtrl.SelectedItems.Contains(TagFilterName(tag)))
-                         .ThenBy(tag => tag.Name, StringComparer.OrdinalIgnoreCase))
-            {
-                var selected = tagCtrl.SelectedItems.Contains(TagFilterName(tag));
-                var button = CreateTagFilterChoiceButton(tag.Name, selected);
-                button.Click += (_, _) => Toggle(tag);
-                chips.Children.Add(button);
+                var remainingTags = tags.Count - tagIndex;
+                var remainingRows = rowCount - rowIndex;
+                var tagsInRow = (int)Math.Ceiling(remainingTags / (double)remainingRows);
+                var row = new Grid { ColumnSpacing = 7 };
+
+                for (var column = 0; column < tagsInRow; column++)
+                {
+                    var tag = tags[tagIndex++];
+                    row.ColumnDefinitions.Add(new ColumnDefinition
+                    {
+                        Width = new GridLength(Math.Max(6, tag.Name.Length + 4), GridUnitType.Star)
+                    });
+                    var selected = tagCtrl.SelectedItems.Contains(TagFilterName(tag));
+                    var button = CreateTagFilterChoiceButton(tag.Name, selected);
+                    button.Click += (_, _) => Toggle(tag);
+                    Grid.SetColumn(button, column);
+                    row.Children.Add(button);
+                }
+
+                rows.Children.Add(row);
             }
 
-            panel.Children.Add(chips);
-            UpdateSummary();
+            panel.Children.Add(rows);
         }
 
         RebuildTags();

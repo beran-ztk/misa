@@ -54,6 +54,25 @@
             <Setter Property="Background" Value="{DynamicResource Theme.Brush.Input}"/>
             <Setter Property="Foreground" Value="{DynamicResource Theme.Brush.TextPrimary}"/>
         </Style>
+        <Style Selector="TextBox.compact-search">
+            <Setter Property="Background" Value="#14FFFFFF"/>
+            <Setter Property="BorderBrush" Value="#2AFFFFFF"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="16"/>
+            <Setter Property="Padding" Value="10,3"/>
+            <Setter Property="FontSize" Value="10.5"/>
+            <Setter Property="Foreground" Value="{DynamicResource Theme.Brush.TextPrimary}"/>
+            <Setter Property="CaretBrush" Value="{DynamicResource Theme.Brush.TextPrimary}"/>
+            <Setter Property="SelectionBrush" Value="{DynamicResource Theme.Brush.AccentSurface}"/>
+        </Style>
+        <Style Selector="TextBox.compact-search:pointerover">
+            <Setter Property="Background" Value="#1CFFFFFF"/>
+            <Setter Property="BorderBrush" Value="#3AFFFFFF"/>
+        </Style>
+        <Style Selector="TextBox.compact-search:focus">
+            <Setter Property="Background" Value="#20FFFFFF"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Theme.Brush.Accent}"/>
+        </Style>
         <Style Selector="Slider">
             <Setter Property="MinHeight" Value="24"/>
             <Setter Property="Foreground" Value="{DynamicResource Theme.Brush.Accent}"/>
@@ -235,10 +254,10 @@
                 </Button>
 
                 <TextBox x:Name="SearchBox"
-                         Classes="theme-input"
+                         Classes="theme-input compact-search"
                          Watermark="Search…"
                          IsVisible="False"
-                         Width="230" Height="34"
+                         Width="230" Height="32"
                          VerticalContentAlignment="Center"
                          KeyDown="OnSearchBoxKeyDown"
                          LostFocus="OnSearchBoxLostFocus"/>
