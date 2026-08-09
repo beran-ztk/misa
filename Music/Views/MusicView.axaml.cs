@@ -3322,6 +3322,9 @@ public partial class MusicView : UserControl
             bins[index] = new AmbientColorBin();
 
         var step = Math.Max(1, (int)Math.Sqrt((bitmap.Width * bitmap.Height) / 5000d));
+        var opaqueSampleCount = 0;
+        var chromaticSampleCount = 0;
+        double sampledLightness = 0;
         for (var y = step / 2; y < bitmap.Height; y += step)
         {
             for (var x = step / 2; x < bitmap.Width; x += step)
@@ -3331,9 +3334,12 @@ public partial class MusicView : UserControl
                     continue;
 
                 pixel.ToHsl(out var hue, out var saturation, out var lightness);
+                opaqueSampleCount++;
+                sampledLightness += lightness;
                 if (saturation < 18 || lightness < 7 || lightness > 92)
                     continue;
 
+                chromaticSampleCount++;
                 var midtoneWeight = 1 - Math.Abs((lightness / 100d) - 0.5) * 0.55;
                 var weight = (0.25 + saturation / 100d) * midtoneWeight;
                 var binIndex = Math.Clamp((int)(hue / (360d / hueBinCount)), 0, hueBinCount - 1);
@@ -3341,9 +3347,20 @@ public partial class MusicView : UserControl
             }
         }
 
+        // A small warm accent must not define an otherwise white, black or
+        // grayscale cover. In that case the artwork's overall brightness is
+        // more representative than the strongest remaining hue.
+        var chromaticCoverage = opaqueSampleCount > 0
+            ? chromaticSampleCount / (double)opaqueSampleCount
+            : 0;
+        if (chromaticCoverage < 0.18)
+            return CreateNeutralAmbientPalette(opaqueSampleCount > 0
+                ? sampledLightness / opaqueSampleCount
+                : 50);
+
         var primaryIndex = Array.FindIndex(bins, bin => ReferenceEquals(bin, bins.MaxBy(candidate => candidate.Weight)));
         if (primaryIndex < 0 || bins[primaryIndex].Weight <= 0)
-            return DefaultAmbientPalette;
+            return CreateNeutralAmbientPalette(sampledLightness / Math.Max(1, opaqueSampleCount));
 
         var secondaryCandidates = Enumerable.Range(0, bins.Length)
             .Where(index => bins[index].Weight > 0 && HueBinDistance(index, primaryIndex, hueBinCount) >= 2)
@@ -3357,6 +3374,19 @@ public partial class MusicView : UserControl
             ? NormalizeAmbientColor(bins[secondaryIndex].AverageColor())
             : RotateAmbientColor(primary, 46);
         return new AmbientPalette(primary, secondary);
+    }
+
+    private static AmbientPalette CreateNeutralAmbientPalette(double artworkLightness)
+    {
+        // Bright neutral covers produce a light silver graph, while dark
+        // covers remain visible through a softer graphite-to-gray gradient.
+        var primaryLightness = Math.Clamp(54 + artworkLightness * 0.36, 58, 88);
+        var secondaryLightness = Math.Clamp(primaryLightness - 25, 36, 66);
+        var primary = SKColor.FromHsl(215, 5, (float)primaryLightness);
+        var secondary = SKColor.FromHsl(215, 8, (float)secondaryLightness);
+        return new AmbientPalette(
+            Color.FromRgb(primary.Red, primary.Green, primary.Blue),
+            Color.FromRgb(secondary.Red, secondary.Green, secondary.Blue));
     }
 
     private static int HueBinDistance(int left, int right, int count)
