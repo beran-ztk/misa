@@ -321,28 +321,107 @@
                         <TextBlock Text="TRACK LIST" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
                         <Border Background="#362E2A20" BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
                                 BorderThickness="1" CornerRadius="7" Padding="12">
-                            <StackPanel x:Name="TrackAppearanceRows" Spacing="12"/>
+                            <StackPanel Spacing="12">
+                                <StackPanel x:Name="TrackAppearanceRows" Spacing="12"/>
+                                <Rectangle Height="1" Fill="{DynamicResource Theme.Brush.Divider}" Margin="0,2"/>
+                                <StackPanel x:Name="TrackArtworkAppearanceRows" Spacing="12"/>
+                            </StackPanel>
                         </Border>
                     </StackPanel>
 
-                    <Expander Header="Advanced" IsExpanded="False">
-                        <StackPanel Spacing="14" Margin="0,10,0,0">
-                            <StackPanel Spacing="8">
-                                <TextBlock Text="LIBRARY BACKDROP" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
-                                <Border Background="#362E2A20" BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
-                                        BorderThickness="1" CornerRadius="7" Padding="12">
-                                    <StackPanel x:Name="LibraryBackdropAppearanceRows" Spacing="12"/>
-                                </Border>
-                            </StackPanel>
-                            <StackPanel Spacing="8">
-                                <TextBlock Text="TRACK ARTWORK" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
-                                <Border Background="#362E2A20" BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
-                                        BorderThickness="1" CornerRadius="7" Padding="12">
-                                    <StackPanel x:Name="AdvancedTrackAppearanceRows" Spacing="12"/>
-                                </Border>
-                            </StackPanel>
-                        </StackPanel>
-                    </Expander>
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="AUDIO REACTION" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
+                        <Border Background="#362E2A20" BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
+                                BorderThickness="1" CornerRadius="7" Padding="12">
+                            <StackPanel x:Name="AudioAppearanceRows" Spacing="12"/>
+                        </Border>
+                    </StackPanel>
+
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="LIBRARY BACKDROP" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
+                        <Border Background="#362E2A20" BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
+                                BorderThickness="1" CornerRadius="7" Padding="12">
+                            <StackPanel x:Name="LibraryBackdropAppearanceRows" Spacing="12"/>
+                        </Border>
+                    </StackPanel>
+
+                    <StackPanel Spacing="8">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="LIVE PREVIEW" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
+                            <TextBlock Grid.Column="1" Text="Reacts to current playback" FontSize="9.5" Opacity="0.42"/>
+                        </Grid>
+                        <Border Height="220"
+                                Background="#171812"
+                                BorderBrush="{DynamicResource Theme.Brush.BorderStrong}"
+                                BorderThickness="1"
+                                CornerRadius="8"
+                                ClipToBounds="True">
+                            <Panel>
+                                <Image x:Name="PreviewLibraryArtwork" Source="/Assets/headphones.png"
+                                       Stretch="UniformToFill" Opacity="0.25" RenderTransformOrigin="0.5,0.5">
+                                    <Image.RenderTransform><ScaleTransform ScaleX="1.08" ScaleY="1.08"/></Image.RenderTransform>
+                                    <Image.Effect><BlurEffect Radius="20"/></Image.Effect>
+                                </Image>
+                                <Border x:Name="PreviewLibraryAtmosphere" IsHitTestVisible="False"/>
+                                <Rectangle Fill="#66302A20" IsHitTestVisible="False"/>
+
+                                <Grid RowDefinitions="*,74">
+                                    <Border Margin="12,10,12,9" CornerRadius="7" ClipToBounds="True"
+                                            Background="#53211F19" BorderBrush="#3D4A4437" BorderThickness="1">
+                                        <Panel>
+                                            <Border x:Name="PreviewTrackWash"/>
+                                            <Image x:Name="PreviewTrackArtworkBlur" Source="/Assets/headphones.png"
+                                                   Width="126" Height="82" Margin="14,-10,0,-10"
+                                                   HorizontalAlignment="Left" Stretch="UniformToFill" Opacity="0.18">
+                                                <Image.Effect><BlurEffect Radius="14"/></Image.Effect>
+                                            </Image>
+                                            <Grid ColumnDefinitions="66,*" Margin="10,7">
+                                                <Panel Width="54" Height="54">
+                                                    <Image x:Name="PreviewCoverHalo" Source="/Assets/headphones.png"
+                                                           Width="52" Height="52" Stretch="UniformToFill" Opacity="0.34">
+                                                        <Image.Effect><BlurEffect Radius="9"/></Image.Effect>
+                                                    </Image>
+                                                    <Border Width="44" Height="44" CornerRadius="8" ClipToBounds="True"
+                                                            HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                            BorderBrush="#68545FAF" BorderThickness="0.75">
+                                                        <Image x:Name="PreviewCoverArtwork" Source="/Assets/headphones.png" Stretch="UniformToFill"/>
+                                                    </Border>
+                                                </Panel>
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="5">
+                                                    <TextBlock x:Name="PreviewTrackTitle" Text="Preview track"
+                                                               FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock Text="Channel  ·  Electronic, Ambient" FontSize="10.5"
+                                                               Foreground="#D4CFB4" Opacity="0.7"/>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Panel>
+                                    </Border>
+
+                                    <Border Grid.Row="1" Background="#7A201D17" BorderBrush="#4A756B54" BorderThickness="0,1,0,0">
+                                        <Panel>
+                                            <Image x:Name="PreviewPlayerArtwork" Source="/Assets/headphones.png"
+                                                   Stretch="UniformToFill" Opacity="0.55" RenderTransformOrigin="0.5,0.5">
+                                                <Image.RenderTransform><ScaleTransform ScaleX="1.10" ScaleY="1.10"/></Image.RenderTransform>
+                                                <Image.Effect><BlurEffect Radius="30"/></Image.Effect>
+                                            </Image>
+                                            <Border x:Name="PreviewPlayerDarkening" Background="#8E2A241A"/>
+                                            <Border x:Name="PreviewPlayerAtmosphere"/>
+                                            <Grid ColumnDefinitions="Auto,*,Auto" Margin="16,0" VerticalAlignment="Center">
+                                                <TextBlock Text="▶" FontSize="18" Foreground="#F5F2E8"/>
+                                                <TextBlock Grid.Column="1" Text="Live player preview" Margin="14,0"
+                                                           FontSize="12" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="3" VerticalAlignment="Center">
+                                                    <Border x:Name="PreviewAudioBar1" Width="3" Height="8" CornerRadius="2" Background="#B7F000"/>
+                                                    <Border x:Name="PreviewAudioBar2" Width="3" Height="15" CornerRadius="2" Background="#B7F000"/>
+                                                    <Border x:Name="PreviewAudioBar3" Width="3" Height="11" CornerRadius="2" Background="#B7F000"/>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Panel>
+                                    </Border>
+                                </Grid>
+                            </Panel>
+                        </Border>
+                    </StackPanel>
 
                     <Grid ColumnDefinitions="*,Auto">
                         <TextBlock Text="Changes are previewed immediately and saved automatically."

@@ -72,6 +72,13 @@ public static class AppSettingsStore
         Save(settings);
     }
 
+    public static void SaveLastSettingsPage(string page)
+    {
+        var settings = Load();
+        settings.LastSettingsPage = page;
+        Save(settings);
+    }
+
     private static void Save(AppSettings settings)
     {
         var directory = Path.GetDirectoryName(Values.AppSettingsPath);
@@ -89,4 +96,5 @@ public sealed class AppSettings
     public string MusicAnalysisServerUrl { get; set; } = string.Empty;
     public int ChannelDownloadMaxDurationMinutes { get; set; } = 12;
     public AppearanceSettings Appearance { get; set; } = new();
+    public string LastSettingsPage { get; set; } = "library";
 }

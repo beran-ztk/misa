@@ -4,11 +4,13 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Avalonia.Svg.Skia;
@@ -35,6 +37,11 @@ public partial class SettingsOverlay : UserControl
     private AppearanceSettings _appearanceSettings = AppearanceSettings.Balanced();
     private bool _synchronizingAppearanceControls;
     private bool _appearanceSavePending;
+    private Color _previewPrimary = Color.Parse("#5865B8");
+    private Color _previewSecondary = Color.Parse("#8051AE");
+    private double _previewEnergy;
+    private double _previewBass;
+    private double _previewTreble;
 
     public event Action<string>? ToastRequested;
     public event Action<MusicTrack>? TrackCalibrationRequested;
@@ -62,18 +69,20 @@ public partial class SettingsOverlay : UserControl
 
     public void Open()
     {
+        var appSettings = AppSettingsStore.Load();
         var locations = Values.GetConfiguredLibraryLocations();
         DatabasePathBox.Text = locations.DatabasePath;
         TracksPathBox.Text = locations.TracksDirectory;
         LibraryLocationStatusText.IsVisible = false;
-        MusicAnalysisServerUrlBox.Text = AppSettingsStore.Load().MusicAnalysisServerUrl;
-        _appearanceSettings = AppSettingsStore.Load().Appearance.Clone().Clamp();
+        MusicAnalysisServerUrlBox.Text = appSettings.MusicAnalysisServerUrl;
+        _appearanceSettings = appSettings.Appearance.Clone().Clamp();
         RefreshAppearanceControls();
+        RefreshAppearancePreview();
         AnalysisServerStatusText.IsVisible = false;
         FirefoxCookiesToggle.IsChecked = Values.UseFirefoxCookiesForYtDlp;
         RefreshLinuxDependencies();
         RebuildBackupDirectoryRows();
-        SelectPage(SettingsPage.Library);
+        SelectPage(ParseSettingsPage(appSettings.LastSettingsPage));
         IsVisible = true;
     }
 
@@ -537,7 +546,7 @@ public partial class SettingsOverlay : UserControl
     private void OnSettingsNavigationClicked(object? sender, RoutedEventArgs e)
     {
         if (sender is not ToggleButton { Tag: string value }) return;
-        SelectPage(value switch
+        var page = value switch
         {
             "library" => SettingsPage.Library,
             "analysis_server" => SettingsPage.AnalysisServer,
@@ -550,7 +559,9 @@ public partial class SettingsOverlay : UserControl
             "tags" => SettingsPage.Tags,
             "tag_rules" => SettingsPage.TagRules,
             _ => SettingsPage.GenreVocabulary
-        });
+        };
+        SelectPage(page);
+        AppSettingsStore.SaveLastSettingsPage(SettingsPageKey(page));
     }
 
     private void SelectPage(SettingsPage page)
@@ -1389,6 +1400,153 @@ public partial class SettingsOverlay : UserControl
         _ => modelName
     };
 
+    public void UpdateAppearancePreviewArtwork(Bitmap? artwork, Color primary, Color secondary, string title)
+    {
+        _previewPrimary = primary;
+        _previewSecondary = secondary;
+        PreviewTrackTitle.Text = string.IsNullOrWhiteSpace(title) ? "Preview track" : title;
+        if (artwork is not null)
+        {
+            PreviewLibraryArtwork.Source = artwork;
+            PreviewTrackArtworkBlur.Source = artwork;
+            PreviewCoverHalo.Source = artwork;
+            PreviewCoverArtwork.Source = artwork;
+            PreviewPlayerArtwork.Source = artwork;
+        }
+        RefreshAppearancePreview();
+    }
+
+    public void UpdateAppearancePreviewAudio(double energy, double bass, double treble)
+    {
+        _previewEnergy = energy;
+        _previewBass = bass;
+        _previewTreble = treble;
+        if (IsVisible && AppearancePage.IsVisible)
+            RefreshAppearancePreview();
+    }
+
+    private void RefreshAppearancePreview()
+    {
+        var reaction = _appearanceSettings.PlayerAudioReaction / 100d;
+        var energy = PreviewSoftLimit(_previewEnergy) * reaction;
+        var bass = PreviewSoftLimit(_previewBass * _appearanceSettings.AudioBassSensitivity / 100d) * reaction;
+        var treble = PreviewSoftLimit(_previewTreble * _appearanceSettings.AudioTrebleSensitivity / 100d) * reaction;
+        var visibilityEnergy = Math.Sqrt(energy);
+        var motion = _appearanceSettings.AudioArtworkMotion / 100d;
+        var blurReaction = _appearanceSettings.AudioBlurReaction / 100d;
+        var colorReaction = _appearanceSettings.AudioColorReaction / 100d;
+        var atmosphere = _appearanceSettings.PlayerColorAtmosphere / 100d;
+
+        PreviewLibraryArtwork.Opacity = Math.Clamp(
+            _appearanceSettings.LibraryBackdropStrength / 100d + visibilityEnergy * 0.21, 0, 1);
+        PreviewPlayerArtwork.Opacity = Math.Clamp(
+            _appearanceSettings.PlayerArtworkStrength / 100d + visibilityEnergy * 0.15, 0, 1);
+        SetPreviewBlur(PreviewLibraryArtwork,
+            _appearanceSettings.LibraryBackdropBlur + energy * 8 * blurReaction);
+        SetPreviewBlur(PreviewPlayerArtwork,
+            _appearanceSettings.PlayerArtworkBlur + (energy * 6 + treble * 4) * blurReaction);
+        SetPreviewScale(PreviewLibraryArtwork, 1.08 + bass * 0.048 * motion);
+        SetPreviewScale(PreviewPlayerArtwork, 1.10 + bass * 0.035 * motion);
+
+        PreviewTrackArtworkBlur.Opacity = _appearanceSettings.TrackArtworkStrength / 100d;
+        PreviewCoverHalo.Opacity = _appearanceSettings.CoverHaloStrength / 100d;
+        SetPreviewBlur(PreviewTrackArtworkBlur, _appearanceSettings.TrackArtworkBlur);
+        SetPreviewBlur(PreviewCoverHalo, _appearanceSettings.CoverHaloBlur);
+        PreviewTrackWash.Background = new LinearGradientBrush
+        {
+            StartPoint = new RelativePoint(0, 0.5, RelativeUnit.Relative),
+            EndPoint = new RelativePoint(_appearanceSettings.TrackColorWashReach / 100d, 0.5, RelativeUnit.Relative),
+            GradientStops =
+            {
+                new GradientStop(PreviewWithOpacity(_previewPrimary, _appearanceSettings.TrackColorWashStrength / 100d), 0),
+                new GradientStop(PreviewWithOpacity(_previewSecondary, _appearanceSettings.TrackColorWashStrength / 100d * 0.6), 0.42),
+                new GradientStop(Colors.Transparent, 1)
+            }
+        };
+
+        PreviewPlayerDarkening.Background = new SolidColorBrush(PreviewWithOpacity(
+            Color.Parse("#2A241A"), _appearanceSettings.PlayerBackgroundDarkening / 100d));
+        var liftedPrimary = PreviewMix(_previewPrimary, Colors.White,
+            (energy * 0.08 + treble * 0.05) * colorReaction);
+        var liftedSecondary = PreviewMix(_previewSecondary, Colors.White, energy * 0.05 * colorReaction);
+        PreviewPlayerAtmosphere.Background = PreviewAtmosphereBrush(
+            liftedPrimary, liftedSecondary, (0.18 + energy * 0.20 * colorReaction) * atmosphere);
+        PreviewLibraryAtmosphere.Background = PreviewAtmosphereBrush(
+            liftedPrimary, liftedSecondary, (0.12 + energy * 0.14 * colorReaction) * atmosphere);
+
+        PreviewAudioBar1.Height = 6 + bass * 12;
+        PreviewAudioBar2.Height = 8 + energy * 18;
+        PreviewAudioBar3.Height = 6 + treble * 14;
+    }
+
+    private static LinearGradientBrush PreviewAtmosphereBrush(Color primary, Color secondary, double opacity) => new()
+    {
+        StartPoint = new RelativePoint(0, 0.5, RelativeUnit.Relative),
+        EndPoint = new RelativePoint(1, 0.5, RelativeUnit.Relative),
+        GradientStops =
+        {
+            new GradientStop(PreviewWithOpacity(primary, opacity), 0),
+            new GradientStop(PreviewWithOpacity(secondary, opacity * 0.7), 0.6),
+            new GradientStop(Colors.Transparent, 1)
+        }
+    };
+
+    private static void SetPreviewBlur(Image image, double radius)
+    {
+        if (image.Effect is BlurEffect blur)
+            blur.Radius = radius;
+    }
+
+    private static void SetPreviewScale(Image image, double scale)
+    {
+        if (image.RenderTransform is ScaleTransform transform)
+        {
+            transform.ScaleX = scale;
+            transform.ScaleY = scale;
+        }
+    }
+
+    private static Color PreviewWithOpacity(Color color, double opacity) => Color.FromArgb(
+        (byte)Math.Clamp((int)Math.Round(opacity * 255), 0, 255), color.R, color.G, color.B);
+
+    private static Color PreviewMix(Color from, Color to, double amount)
+    {
+        amount = Math.Clamp(amount, 0, 1);
+        return Color.FromRgb(
+            (byte)Math.Round(from.R + (to.R - from.R) * amount),
+            (byte)Math.Round(from.G + (to.G - from.G) * amount),
+            (byte)Math.Round(from.B + (to.B - from.B) * amount));
+    }
+
+    private static double PreviewSoftLimit(double value) =>
+        Math.Clamp(1 - Math.Exp(-Math.Max(0, value) * 1.45), 0, 1);
+
+    private static SettingsPage ParseSettingsPage(string? value) => value switch
+    {
+        "appearance" => SettingsPage.Appearance,
+        "analysis_server" => SettingsPage.AnalysisServer,
+        "backup" => SettingsPage.Backup,
+        "export" => SettingsPage.Export,
+        "runtime" => SettingsPage.Runtime,
+        "updates" => SettingsPage.Updates,
+        "genres" => SettingsPage.GenreVocabulary,
+        "tags" => SettingsPage.Tags,
+        _ => SettingsPage.Library
+    };
+
+    private static string SettingsPageKey(SettingsPage page) => page switch
+    {
+        SettingsPage.Appearance => "appearance",
+        SettingsPage.AnalysisServer => "analysis_server",
+        SettingsPage.Backup => "backup",
+        SettingsPage.Export => "export",
+        SettingsPage.Runtime => "runtime",
+        SettingsPage.Updates => "updates",
+        SettingsPage.GenreVocabulary => "genres",
+        SettingsPage.Tags => "tags",
+        _ => "library"
+    };
+
     private void BuildAppearanceControls()
     {
         AddAppearanceSlider(PlayerAppearanceRows, "Artwork strength", "Visibility of the cover behind the player.",
@@ -1403,16 +1561,34 @@ public partial class SettingsOverlay : UserControl
         AddAppearanceSlider(PlayerAppearanceRows, "Color atmosphere", "Strength of colors extracted from the active cover.",
             0, 100, settings => settings.PlayerColorAtmosphere,
             (settings, value) => settings.PlayerColorAtmosphere = value, PercentValue);
-        AddAppearanceSlider(PlayerAppearanceRows, "Audio reaction", "How strongly music energy changes color, blur and movement.",
-            0, 100, settings => settings.PlayerAudioReaction,
-            (settings, value) => settings.PlayerAudioReaction = value, PercentValue);
-
         AddAppearanceSlider(TrackAppearanceRows, "Color wash strength", "Intensity of each cover's color across its track row.",
             0, 30, settings => settings.TrackColorWashStrength,
             (settings, value) => settings.TrackColorWashStrength = value, PercentValue);
         AddAppearanceSlider(TrackAppearanceRows, "Color wash reach", "How far the artwork color extends across the row.",
             20, 100, settings => settings.TrackColorWashReach,
             (settings, value) => settings.TrackColorWashReach = value, PercentValue);
+
+        AddAppearanceSlider(AudioAppearanceRows, "Overall intensity", "How strongly playback changes opacity, blur, color and movement.",
+            0, 100, settings => settings.PlayerAudioReaction,
+            (settings, value) => settings.PlayerAudioReaction = value, PercentValue);
+        AddAppearanceSlider(AudioAppearanceRows, "Response speed", "How quickly visuals follow changes in the music.",
+            0, 100, settings => settings.AudioResponseSpeed,
+            (settings, value) => settings.AudioResponseSpeed = value, PercentValue);
+        AddAppearanceSlider(AudioAppearanceRows, "Bass sensitivity", "How strongly low frequencies drive movement and glow.",
+            0, 200, settings => settings.AudioBassSensitivity,
+            (settings, value) => settings.AudioBassSensitivity = value, PercentValue);
+        AddAppearanceSlider(AudioAppearanceRows, "Treble sensitivity", "How strongly high frequencies affect blur and highlights.",
+            0, 200, settings => settings.AudioTrebleSensitivity,
+            (settings, value) => settings.AudioTrebleSensitivity = value, PercentValue);
+        AddAppearanceSlider(AudioAppearanceRows, "Artwork motion", "Amount of cover zoom driven by the bass.",
+            0, 200, settings => settings.AudioArtworkMotion,
+            (settings, value) => settings.AudioArtworkMotion = value, PercentValue);
+        AddAppearanceSlider(AudioAppearanceRows, "Blur reaction", "How much audio energy changes the background blur.",
+            0, 200, settings => settings.AudioBlurReaction,
+            (settings, value) => settings.AudioBlurReaction = value, PercentValue);
+        AddAppearanceSlider(AudioAppearanceRows, "Color reaction", "How much audio energy brightens colors and glow.",
+            0, 200, settings => settings.AudioColorReaction,
+            (settings, value) => settings.AudioColorReaction = value, PercentValue);
 
         AddAppearanceSlider(LibraryBackdropAppearanceRows, "Backdrop strength", "Visibility of the active cover behind the library.",
             0, 60, settings => settings.LibraryBackdropStrength,
@@ -1421,16 +1597,16 @@ public partial class SettingsOverlay : UserControl
             0, 50, settings => settings.LibraryBackdropBlur,
             (settings, value) => settings.LibraryBackdropBlur = value, PixelValue);
 
-        AddAppearanceSlider(AdvancedTrackAppearanceRows, "Row artwork strength", "Visibility of the blurred cover inside each row.",
+        AddAppearanceSlider(TrackArtworkAppearanceRows, "Row artwork strength", "Visibility of the blurred cover inside each row.",
             0, 50, settings => settings.TrackArtworkStrength,
             (settings, value) => settings.TrackArtworkStrength = value, PercentValue);
-        AddAppearanceSlider(AdvancedTrackAppearanceRows, "Row artwork blur", "Spread of the large cover image inside each row.",
+        AddAppearanceSlider(TrackArtworkAppearanceRows, "Row artwork blur", "Spread of the large cover image inside each row.",
             0, 30, settings => settings.TrackArtworkBlur,
             (settings, value) => settings.TrackArtworkBlur = value, PixelValue);
-        AddAppearanceSlider(AdvancedTrackAppearanceRows, "Cover halo strength", "Visibility of the small glow directly around each cover.",
+        AddAppearanceSlider(TrackArtworkAppearanceRows, "Cover halo strength", "Visibility of the small glow directly around each cover.",
             0, 60, settings => settings.CoverHaloStrength,
             (settings, value) => settings.CoverHaloStrength = value, PercentValue);
-        AddAppearanceSlider(AdvancedTrackAppearanceRows, "Cover halo blur", "Softness of the local glow around each cover.",
+        AddAppearanceSlider(TrackArtworkAppearanceRows, "Cover halo blur", "Softness of the local glow around each cover.",
             0, 20, settings => settings.CoverHaloBlur,
             (settings, value) => settings.CoverHaloBlur = value, PixelValue);
     }
@@ -1520,6 +1696,7 @@ public partial class SettingsOverlay : UserControl
     {
         _appearanceSettings.Clamp();
         AppearanceChanged?.Invoke(_appearanceSettings.Clone());
+        RefreshAppearancePreview();
         _appearanceSavePending = true;
         _appearanceSaveTimer.Stop();
         _appearanceSaveTimer.Start();

@@ -2741,6 +2741,8 @@ public partial class MusicView : UserControl
         if (_playerArtworkTrackId == track.Id)
         {
             SetPlayerArtworkBackground(_playerArtwork);
+            SettingsOverlay.UpdateAppearancePreviewArtwork(
+                _playerArtwork, _targetAmbientPrimary, _targetAmbientSecondary, track.Title);
             ApplyAudioAtmosphere();
             return;
         }
@@ -2753,6 +2755,8 @@ public partial class MusicView : UserControl
         BeginArtworkTransition(_previousPlayerArtwork is not null);
         SetAmbientPalette(loadedArtwork.Palette, artwork is not null);
         SetPlayerArtworkBackground(artwork);
+        SettingsOverlay.UpdateAppearancePreviewArtwork(
+            artwork, loadedArtwork.Palette.Primary, loadedArtwork.Palette.Secondary, track.Title);
         ApplyAudioAtmosphere();
     }
 
@@ -2836,6 +2840,8 @@ public partial class MusicView : UserControl
 
     private void ClearPlayerArtworkBackground(bool disposeCache = false)
     {
+        SettingsOverlay.UpdateAppearancePreviewArtwork(
+            null, DefaultAmbientPalette.Primary, DefaultAmbientPalette.Secondary, "Preview track");
         PlayerArtworkBackground.Source = null;
         PlayerArtworkBackground.IsVisible = false;
         AppArtworkBackground.Source = null;
@@ -3001,16 +3007,19 @@ public partial class MusicView : UserControl
         _visualEnergy = 0;
         _visualBass = 0;
         _visualTreble = 0;
+        SettingsOverlay.UpdateAppearancePreviewAudio(0, 0, 0);
         ApplyAudioAtmosphere();
     }
 
     private void UpdateAudioReactiveAtmosphere()
     {
         UpdateArtworkTransition();
-        var easing = _engine.State == EngineState.Playing ? 0.16 : 0.10;
+        var configuredEasing = 0.04 + _appearanceSettings.AudioResponseSpeed / 100d * 0.24;
+        var easing = _engine.State == EngineState.Playing ? configuredEasing : 0.10;
         _visualEnergy = Approach(_visualEnergy, _targetEnergy, easing);
         _visualBass = Approach(_visualBass, _targetBass, easing);
         _visualTreble = Approach(_visualTreble, _targetTreble, easing);
+        SettingsOverlay.UpdateAppearancePreviewAudio(_visualEnergy, _visualBass, _visualTreble);
 
         ApplyAudioAtmosphere();
 
@@ -3032,8 +3041,11 @@ public partial class MusicView : UserControl
     {
         var reaction = _appearanceSettings.PlayerAudioReaction / 100d;
         var energy = SoftLimit(_visualEnergy) * reaction;
-        var bass = SoftLimit(_visualBass) * reaction;
-        var treble = SoftLimit(_visualTreble) * reaction;
+        var bass = SoftLimit(_visualBass * _appearanceSettings.AudioBassSensitivity / 100d) * reaction;
+        var treble = SoftLimit(_visualTreble * _appearanceSettings.AudioTrebleSensitivity / 100d) * reaction;
+        var motionReaction = _appearanceSettings.AudioArtworkMotion / 100d;
+        var blurReaction = _appearanceSettings.AudioBlurReaction / 100d;
+        var colorReaction = _appearanceSettings.AudioColorReaction / 100d;
         // Lift quiet passages (and low app-volume levels) without making the
         // high end grow linearly into an overpowering background.
         var visibilityEnergy = Math.Sqrt(energy);
@@ -3058,37 +3070,39 @@ public partial class MusicView : UserControl
         AppArtworkPreviousBackground.Opacity = AppArtworkPreviousBackground.IsVisible ? appOpacity * outgoingMix : 0;
         PlayerArtworkPreviousBackground.Opacity = PlayerArtworkPreviousBackground.IsVisible ? playerOpacity * outgoingMix : 0;
 
-        SetScale(AppArtworkBackground, 1.12 - transition * 0.04 + bass * 0.048 * transition);
-        SetScale(PlayerArtworkBackground, 1.14 - transition * 0.04 + bass * 0.035 * transition);
+        SetScale(AppArtworkBackground, 1.12 - transition * 0.04 + bass * 0.048 * transition * motionReaction);
+        SetScale(PlayerArtworkBackground, 1.14 - transition * 0.04 + bass * 0.035 * transition * motionReaction);
         SetScale(AppArtworkPreviousBackground, Approach(_outgoingAppScale, 1.055, transition));
         SetScale(PlayerArtworkPreviousBackground, Approach(_outgoingPlayerScale, 1.075, transition));
         SetBlur(AppArtworkBackground,
-            _appearanceSettings.LibraryBackdropBlur + (1 - transition) * 8 + energy * 8.0);
+            _appearanceSettings.LibraryBackdropBlur + (1 - transition) * 8 + energy * 8.0 * blurReaction);
         SetBlur(PlayerArtworkBackground,
-            _appearanceSettings.PlayerArtworkBlur + (1 - transition) * 10 + energy * 6.0 + treble * 4.0);
+            _appearanceSettings.PlayerArtworkBlur + (1 - transition) * 10
+            + (energy * 6.0 + treble * 4.0) * blurReaction);
         SetBlur(AppArtworkPreviousBackground, Approach(
             _outgoingAppBlur, _appearanceSettings.LibraryBackdropBlur + 14, transition));
         SetBlur(PlayerArtworkPreviousBackground, Approach(
             _outgoingPlayerBlur, _appearanceSettings.PlayerArtworkBlur + 16, transition));
 
-        var primary = MixColor(_ambientPrimary, Colors.White, energy * 0.08 + treble * 0.05);
-        var secondary = MixColor(_ambientSecondary, Colors.White, energy * 0.05);
+        var primary = MixColor(_ambientPrimary, Colors.White,
+            (energy * 0.08 + treble * 0.05) * colorReaction);
+        var secondary = MixColor(_ambientSecondary, Colors.White, energy * 0.05 * colorReaction);
         var artworkLift = hasArtwork && _hasArtworkPalette ? 1d : 0d;
 
         var atmosphere = _appearanceSettings.PlayerColorAtmosphere / 100d;
         _appAmbientPrimaryStop.Color = WithAlpha(primary,
-            (28 + artworkLift * 20 + energy * 32 + treble * 12) * atmosphere);
+            (28 + artworkLift * 20 + (energy * 32 + treble * 12) * colorReaction) * atmosphere);
         _appAmbientSecondaryStop.Color = WithAlpha(secondary,
-            (16 + artworkLift * 16 + energy * 20) * atmosphere);
+            (16 + artworkLift * 16 + energy * 20 * colorReaction) * atmosphere);
         _playerAmbientPrimaryStop.Color = WithAlpha(primary,
-            (34 + artworkLift * 24 + energy * 34 + bass * 10) * atmosphere);
+            (34 + artworkLift * 24 + (energy * 34 + bass * 10) * colorReaction) * atmosphere);
         _playerAmbientSecondaryStop.Color = WithAlpha(secondary,
-            (24 + artworkLift * 20 + energy * 24 + treble * 8) * atmosphere);
+            (24 + artworkLift * 20 + (energy * 24 + treble * 8) * colorReaction) * atmosphere);
         _playerTopGlowBrush.Color = WithAlpha(primary,
-            (24 + artworkLift * 12 + energy * 60 + treble * 24) * atmosphere);
+            (24 + artworkLift * 12 + (energy * 60 + treble * 24) * colorReaction) * atmosphere);
         _playerChromeEdgeBrush.Color = WithAlpha(
             MixColor(primary, secondary, 0.35),
-            (24 + artworkLift * 8 + energy * 30) * atmosphere);
+            (24 + artworkLift * 8 + energy * 30 * colorReaction) * atmosphere);
     }
 
     private static double Approach(double current, double target, double amount) =>

@@ -232,14 +232,6 @@
                            Width="17" Height="17"/>
                 </Button>
 
-                <Button Classes="icon"
-                        Click="OnSettingsClicked"
-                        Opacity="0.86"
-                        ToolTip.Tip="Settings">
-                    <Image Source="{SvgImage /Assets/gear.svg}"
-                           Width="17" Height="17"/>
-                </Button>
-
                 <Button x:Name="FiltersToggleBtn"
                         Classes="icon"
                         Click="OnToggleFiltersClicked"
@@ -247,6 +239,14 @@
                         VerticalContentAlignment="Center"
                         Opacity="0.86">
                     <Image Source="{SvgImage /Assets/filter.svg}"
+                           Width="17" Height="17"/>
+                </Button>
+
+                <Button Classes="icon"
+                        Click="OnSettingsClicked"
+                        Opacity="0.86"
+                        ToolTip.Tip="Settings">
+                    <Image Source="{SvgImage /Assets/gear.svg}"
                            Width="17" Height="17"/>
                 </Button>
 
