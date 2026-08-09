@@ -1,12 +1,171 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="Music.Views.MainWindow"
-        Title=""
+        Title="Music"
         Icon="/Assets/headphones.png"
         Width="900" Height="1200"
         MinWidth="500" MinHeight="400"
-        SystemDecorations="Full">
+        CanResize="True"
+        ShowInTaskbar="True"
+        SystemDecorations="None"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaChromeHints="NoChrome"
+        ExtendClientAreaTitleBarHeightHint="-1"
+        Background="#0A0B0D"
+        KeyDown="OnWindowKeyDown">
 
-    <ContentControl x:Name="ContentArea"/>
+    <Window.Styles>
+        <Style Selector="Button.caption-button">
+            <Setter Property="Width" Value="46"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="CornerRadius" Value="0"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#E8E8E8"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="Button.caption-button:pointerover">
+            <Setter Property="Background" Value="#25FFFFFF"/>
+        </Style>
+        <Style Selector="Button.caption-button:pressed">
+            <Setter Property="Background" Value="#38FFFFFF"/>
+        </Style>
+        <Style Selector="Button.caption-button.close:pointerover">
+            <Setter Property="Background" Value="#D83B45"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+        <Style Selector="Button.caption-button.close:pressed">
+            <Setter Property="Background" Value="#B72D36"/>
+        </Style>
+    </Window.Styles>
 
+    <Grid RowDefinitions="36,*">
+        <Border x:Name="TitleBar"
+                Grid.Row="0"
+                Background="#F20E0B09"
+                BorderBrush="#463D34"
+                BorderThickness="0,0,0,1"
+                PointerPressed="OnTitleBarPointerPressed">
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Grid.Column="0"
+                            Orientation="Horizontal"
+                            Spacing="8"
+                            Margin="12,0,0,0"
+                            VerticalAlignment="Center"
+                            IsHitTestVisible="False">
+                    <Image Source="/Assets/headphones.png"
+                           Width="15" Height="15"
+                           Opacity="0.78"/>
+                    <TextBlock Text="MUSIC"
+                               FontFamily="Consolas"
+                               FontSize="10.5"
+                               FontWeight="SemiBold"
+                               LetterSpacing="1.2"
+                               Foreground="#D8D5CD"
+                               Opacity="0.82"
+                               VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1"
+                            Orientation="Horizontal"
+                            HorizontalAlignment="Right">
+                    <Button Classes="caption-button"
+                            Click="OnMinimizeClicked"
+                            ToolTip.Tip="Minimize">
+                        <Border Width="10" Height="1"
+                                Background="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                    </Button>
+                    <Button x:Name="MaximizeButton"
+                            Classes="caption-button"
+                            Click="OnMaximizeRestoreClicked"
+                            ToolTip.Tip="Maximize">
+                        <Panel Width="12" Height="12">
+                            <Border x:Name="MaximizeGlyph"
+                                    Width="10" Height="10"
+                                    BorderBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                    BorderThickness="1"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"/>
+                            <Panel x:Name="RestoreGlyph" IsVisible="False">
+                                <Border Width="8" Height="8"
+                                        Margin="0,0,0,0"
+                                        BorderBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                        BorderThickness="1"
+                                        HorizontalAlignment="Right"
+                                        VerticalAlignment="Top"/>
+                                <Border Width="8" Height="8"
+                                        Background="#0E0B09"
+                                        BorderBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                        BorderThickness="1"
+                                        HorizontalAlignment="Left"
+                                        VerticalAlignment="Bottom"/>
+                            </Panel>
+                        </Panel>
+                    </Button>
+                    <Button Classes="caption-button close"
+                            Click="OnCloseClicked"
+                            ToolTip.Tip="Close">
+                        <Image Source="{SvgImage /Assets/close.svg}"
+                               Width="18" Height="18"/>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <ContentControl x:Name="ContentArea" Grid.Row="1"/>
+
+        <Border x:Name="WindowFrame"
+                Grid.RowSpan="2"
+                ZIndex="190"
+                BorderBrush="#4A4036"
+                BorderThickness="1"
+                IsHitTestVisible="False"/>
+
+        <!-- Corners are declared after edges so their diagonal resize hit targets win. -->
+        <Panel x:Name="ResizeLayer" Grid.RowSpan="2" ZIndex="200">
+            <Border Width="6" Margin="0,10,0,10"
+                    HorizontalAlignment="Left"
+                    Background="#01000000"
+                    Cursor="SizeWestEast"
+                    PointerPressed="OnResizeWestPressed"/>
+            <Border Width="6" Margin="0,10,0,10"
+                    HorizontalAlignment="Right"
+                    Background="#01000000"
+                    Cursor="SizeWestEast"
+                    PointerPressed="OnResizeEastPressed"/>
+            <Border Height="6" Margin="10,0,10,0"
+                    VerticalAlignment="Top"
+                    Background="#01000000"
+                    Cursor="SizeNorthSouth"
+                    PointerPressed="OnResizeNorthPressed"/>
+            <Border Height="6" Margin="10,0,10,0"
+                    VerticalAlignment="Bottom"
+                    Background="#01000000"
+                    Cursor="SizeNorthSouth"
+                    PointerPressed="OnResizeSouthPressed"/>
+
+            <Border Width="10" Height="10"
+                    HorizontalAlignment="Left" VerticalAlignment="Top"
+                    Background="#01000000"
+                    Cursor="TopLeftCorner"
+                    PointerPressed="OnResizeNorthWestPressed"/>
+            <Border Width="10" Height="10"
+                    HorizontalAlignment="Right" VerticalAlignment="Top"
+                    Background="#01000000"
+                    Cursor="TopRightCorner"
+                    PointerPressed="OnResizeNorthEastPressed"/>
+            <Border Width="10" Height="10"
+                    HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                    Background="#01000000"
+                    Cursor="BottomLeftCorner"
+                    PointerPressed="OnResizeSouthWestPressed"/>
+            <Border Width="10" Height="10"
+                    HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                    Background="#01000000"
+                    Cursor="BottomRightCorner"
+                    PointerPressed="OnResizeSouthEastPressed"/>
+        </Panel>
+    </Grid>
 </Window>
