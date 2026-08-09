@@ -31,7 +31,7 @@ public record TrackDisplayItem(
         ArtworkPrimaryTint = Color.FromArgb(34, primary.R, primary.G, primary.B);
         ArtworkSecondaryTint = Color.FromArgb(20, secondary.R, secondary.G, secondary.B);
         ArtworkMetadataBrush = new SolidColorBrush(Mix(primary, Color.Parse("#E2DDCA"), 0.58));
-        ArtworkBorderBrush = new SolidColorBrush(Color.FromArgb(105, primary.R, primary.G, primary.B));
+        ArtworkBorderBrush = new SolidColorBrush(Color.FromArgb(68, primary.R, primary.G, primary.B));
     }
 
     private static Color Mix(Color from, Color to, double amount) => Color.FromRgb(

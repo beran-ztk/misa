@@ -88,6 +88,16 @@
         <Style Selector="Border.track-card:pointerover">
             <Setter Property="Background" Value="#32262B22"/>
         </Style>
+        <Style Selector="ListBoxItem:selected Border.track-card">
+            <Setter Property="Background" Value="#523C4432"/>
+            <Setter Property="BorderBrush" Value="#B8B7F000"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BoxShadow" Value="0 0 12 0 #45B7F000"/>
+        </Style>
+        <Style Selector="ListBoxItem:selected:pointerover Border.track-card">
+            <Setter Property="Background" Value="#62434C37"/>
+            <Setter Property="BorderBrush" Value="#D0C5F43A"/>
+        </Style>
     </UserControl.Styles>
 
     <Panel>
@@ -284,9 +294,9 @@
                                 <Border CornerRadius="7"
                                         IsHitTestVisible="False">
                                     <Border.Background>
-                                        <LinearGradientBrush StartPoint="0%,50%" EndPoint="62%,50%">
+                                        <LinearGradientBrush StartPoint="0%,50%" EndPoint="88%,50%">
                                             <GradientStop Color="{Binding ArtworkPrimaryTint}" Offset="0"/>
-                                            <GradientStop Color="{Binding ArtworkSecondaryTint}" Offset="0.3"/>
+                                            <GradientStop Color="{Binding ArtworkSecondaryTint}" Offset="0.42"/>
                                             <GradientStop Color="#00000000" Offset="1"/>
                                         </LinearGradientBrush>
                                     </Border.Background>
@@ -315,18 +325,33 @@
                                             Background="{Binding PlayingAccent}"
                                             VerticalAlignment="Center"/>
 
-                                    <!-- Thumbnail -->
-                                    <Border Grid.Column="1"
-                                            Width="42" Height="42"
-                                            CornerRadius="6" ClipToBounds="True"
-                                            Margin="8,0,12,0" VerticalAlignment="Center"
-                                            Background="#292C25"
-                                            BorderBrush="{Binding ArtworkBorderBrush}"
-                                            BorderThickness="1"
-                                            BoxShadow="0 2 8 0 #65000000">
+                                    <!-- The local halo lets the cover bleed softly into its immediate surroundings. -->
+                                    <Panel Grid.Column="1"
+                                           Width="52" Height="52"
+                                           VerticalAlignment="Center">
                                         <Image Source="{Binding Thumbnail}"
-                                               Stretch="UniformToFill"/>
-                                    </Border>
+                                               Width="50" Height="50"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"
+                                               Stretch="UniformToFill"
+                                               Opacity="0.34"
+                                               IsHitTestVisible="False">
+                                            <Image.Effect>
+                                                <BlurEffect Radius="9"/>
+                                            </Image.Effect>
+                                        </Image>
+                                        <Border Width="42" Height="42"
+                                                CornerRadius="8" ClipToBounds="True"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"
+                                                Background="#292C25"
+                                                BorderBrush="{Binding ArtworkBorderBrush}"
+                                                BorderThickness="0.75"
+                                                BoxShadow="0 2 8 0 #4D000000">
+                                            <Image Source="{Binding Thumbnail}"
+                                                   Stretch="UniformToFill"/>
+                                        </Border>
+                                    </Panel>
 
                                     <!-- Two-line hierarchy: track identity, then source and classification. -->
                                     <Grid Grid.Column="2"
