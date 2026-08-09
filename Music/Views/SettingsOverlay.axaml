@@ -16,11 +16,11 @@
             <Setter Property="FontSize" Value="12"/>
         </Style>
         <Style Selector="ToggleButton.settings-nav:pointerover">
-            <Setter Property="Background" Value="#5A39352B"/>
+            <Setter Property="Background" Value="{DynamicResource Theme.Brush.SurfaceHover}"/>
             <Setter Property="Foreground" Value="{DynamicResource Theme.Brush.TextPrimary}"/>
         </Style>
         <Style Selector="ToggleButton.settings-nav:checked">
-            <Setter Property="Background" Value="#804A4638"/>
+            <Setter Property="Background" Value="{DynamicResource Theme.Brush.SurfaceSelected}"/>
             <Setter Property="Foreground" Value="{DynamicResource Theme.Brush.TextStrong}"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
         </Style>
@@ -68,7 +68,7 @@
 
     <Grid ColumnDefinitions="244,1,*" Background="{DynamicResource Theme.Brush.Overlay}">
         <!-- Settings navigation -->
-        <Border Grid.Column="0" Background="#B0211E17" Padding="16,20,16,16">
+        <Border Grid.Column="0" Background="{DynamicResource Theme.Brush.Navigation}" Padding="16,20,16,16">
             <Grid RowDefinitions="Auto,Auto,*">
                 <StackPanel Grid.Row="0" Spacing="3">
                     <TextBlock Text="Settings" FontSize="18" FontWeight="SemiBold"/>
@@ -124,7 +124,7 @@
             </Grid>
         </Border>
 
-        <Rectangle Grid.Column="1" Fill="#1F808080"/>
+        <Rectangle Grid.Column="1" Fill="{DynamicResource Theme.Brush.Divider}"/>
 
         <!-- Settings content -->
         <Grid Grid.Column="2" RowDefinitions="Auto,1,*,Auto">
@@ -151,7 +151,7 @@
 
             <Grid x:Name="GenreVocabularyPage" Grid.Row="2" RowDefinitions="Auto,Auto,*" Margin="30,22,30,0">
                 <Border Grid.Row="0"
-                        Background="#522A261D"
+                        Background="{DynamicResource Theme.Brush.SurfaceTranslucent}"
                         BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
                         BorderThickness="1"
                         CornerRadius="7"
@@ -167,7 +167,7 @@
                 <Border x:Name="AddSubgenrePanel"
                         Grid.Row="1"
                         IsVisible="False"
-                        Background="#362E2A20"
+                        Background="{DynamicResource Theme.Brush.SurfaceTranslucent}"
                         BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
                         BorderThickness="1"
                         CornerRadius="7"
@@ -258,7 +258,7 @@
                         <TextBlock Text="Tracks are streamed to this server for genre, tempo and loudness analysis."
                                    FontSize="11" Opacity="0.62" TextWrapping="Wrap"/>
                     </StackPanel>
-                    <Border Background="#522A261D"
+                    <Border Background="{DynamicResource Theme.Brush.SurfaceTranslucent}"
                             BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
                             BorderThickness="1"
                             CornerRadius="7"
@@ -291,7 +291,7 @@
             <ScrollViewer x:Name="AppearancePage" Grid.Row="2" IsVisible="False" Margin="30,22,30,0"
                           HorizontalScrollBarVisibility="Disabled">
                 <StackPanel Spacing="18" Margin="0,0,0,24">
-                    <Border Background="#522A261D"
+                    <Border Background="{DynamicResource Theme.Brush.SurfaceTranslucent}"
                             BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
                             BorderThickness="1"
                             CornerRadius="7"
@@ -311,8 +311,17 @@
                     </Border>
 
                     <StackPanel Spacing="8">
+                        <TextBlock Text="INTERFACE THEME" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
+                        <Border Background="{DynamicResource Theme.Brush.SurfaceTranslucent}"
+                                BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
+                                BorderThickness="1" CornerRadius="7" Padding="12">
+                            <StackPanel x:Name="ThemeAppearanceRows" Spacing="12"/>
+                        </Border>
+                    </StackPanel>
+
+                    <StackPanel Spacing="8">
                         <TextBlock Text="PLAYER" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
-                        <Border Background="#362E2A20" BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
+                        <Border Background="{DynamicResource Theme.Brush.SurfaceTranslucent}" BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
                                 BorderThickness="1" CornerRadius="7" Padding="12">
                             <StackPanel x:Name="PlayerAppearanceRows" Spacing="12"/>
                         </Border>
@@ -320,7 +329,7 @@
 
                     <StackPanel Spacing="8">
                         <TextBlock Text="TRACK LIST" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
-                        <Border Background="#362E2A20" BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
+                        <Border Background="{DynamicResource Theme.Brush.SurfaceTranslucent}" BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
                                 BorderThickness="1" CornerRadius="7" Padding="12">
                             <StackPanel Spacing="12">
                                 <StackPanel x:Name="TrackAppearanceRows" Spacing="12"/>
@@ -332,7 +341,7 @@
 
                     <StackPanel Spacing="8">
                         <TextBlock Text="AUDIO REACTION" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
-                        <Border Background="#362E2A20" BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
+                        <Border Background="{DynamicResource Theme.Brush.SurfaceTranslucent}" BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
                                 BorderThickness="1" CornerRadius="7" Padding="12">
                             <StackPanel x:Name="AudioAppearanceRows" Spacing="12"/>
                         </Border>
@@ -340,7 +349,7 @@
 
                     <StackPanel Spacing="8">
                         <TextBlock Text="LIBRARY BACKDROP" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
-                        <Border Background="#362E2A20" BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
+                        <Border Background="{DynamicResource Theme.Brush.SurfaceTranslucent}" BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
                                 BorderThickness="1" CornerRadius="7" Padding="12">
                             <StackPanel x:Name="LibraryBackdropAppearanceRows" Spacing="12"/>
                         </Border>
@@ -352,7 +361,7 @@
                             <TextBlock Grid.Column="1" Text="Reacts to current playback" FontSize="9.5" Opacity="0.42"/>
                         </Grid>
                         <Border Height="220"
-                                Background="#171812"
+                                Background="{DynamicResource Theme.Brush.Background}"
                                 BorderBrush="{DynamicResource Theme.Brush.BorderStrong}"
                                 BorderThickness="1"
                                 CornerRadius="8"
@@ -364,7 +373,7 @@
                                     <Image.Effect><BlurEffect Radius="20"/></Image.Effect>
                                 </Image>
                                 <Border x:Name="PreviewLibraryAtmosphere" IsHitTestVisible="False"/>
-                                <Rectangle Fill="#66302A20" IsHitTestVisible="False"/>
+                                <Rectangle x:Name="PreviewInterfaceTint" Fill="#66302A20" IsHitTestVisible="False"/>
 
                                 <Grid RowDefinitions="*,74">
                                     <views:AudioSpectrumControl x:Name="PreviewSpectrumVisualizer"
@@ -404,7 +413,10 @@
                                         </Panel>
                                     </Border>
 
-                                    <Border Grid.Row="1" Background="#7A201D17" BorderBrush="#4A756B54" BorderThickness="0,1,0,0">
+                                    <Border Grid.Row="1"
+                                            Background="{DynamicResource Theme.Brush.Navigation}"
+                                            BorderBrush="{DynamicResource Theme.Brush.Border}"
+                                            BorderThickness="0,1,0,0">
                                         <Panel>
                                             <Image x:Name="PreviewPlayerArtwork" Source="/Assets/headphones.png"
                                                    Stretch="UniformToFill" Opacity="0.55" RenderTransformOrigin="0.5,0.5">
@@ -492,7 +504,7 @@
                     </StackPanel>
                     <Border x:Name="LinuxDependenciesPanel"
                             IsVisible="False"
-                            Background="#522A261D"
+                        Background="{DynamicResource Theme.Brush.SurfaceTranslucent}"
                             BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
                             BorderThickness="1"
                             CornerRadius="7"
@@ -521,7 +533,7 @@
                                        TextWrapping="Wrap"/>
                         </StackPanel>
                     </Border>
-                    <Border Background="#522A261D"
+                    <Border Background="{DynamicResource Theme.Brush.SurfaceTranslucent}"
                             BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
                             BorderThickness="1"
                             CornerRadius="7"
@@ -556,7 +568,7 @@
                                    FontSize="11" Opacity="0.62" TextWrapping="Wrap"/>
                     </StackPanel>
 
-                    <Border Background="#522A261D"
+                    <Border Background="{DynamicResource Theme.Brush.SurfaceTranslucent}"
                             BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
                             BorderThickness="1"
                             CornerRadius="7"
@@ -619,7 +631,7 @@
             <Grid x:Name="TagsPage" Grid.Row="2" IsVisible="False" RowDefinitions="Auto,*" Margin="30,22,30,0">
                 <Border x:Name="AddTagPanel"
                         Grid.Row="0"
-                        Background="#362E2A20"
+                        Background="{DynamicResource Theme.Brush.SurfaceTranslucent}"
                         BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
                         BorderThickness="1"
                         CornerRadius="7"

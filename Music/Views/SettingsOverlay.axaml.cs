@@ -1431,6 +1431,8 @@ public partial class SettingsOverlay : UserControl
 
     private void RefreshAppearancePreview()
     {
+        var interfacePalette = InterfaceThemeService.Apply(_appearanceSettings);
+        PreviewInterfaceTint.Fill = new SolidColorBrush(interfacePalette.TintLayer);
         var reaction = _appearanceSettings.PlayerAudioReaction / 100d;
         var energy = PreviewSoftLimit(_previewEnergy) * reaction;
         var bass = PreviewSoftLimit(_previewBass * _appearanceSettings.AudioBassSensitivity / 100d) * reaction;
@@ -1476,7 +1478,7 @@ public partial class SettingsOverlay : UserControl
         };
 
         PreviewPlayerDarkening.Background = new SolidColorBrush(PreviewWithOpacity(
-            Color.Parse("#2A241A"), _appearanceSettings.PlayerBackgroundDarkening / 100d));
+            interfacePalette.PlayerDarkening, _appearanceSettings.PlayerBackgroundDarkening / 100d));
         var liftedPrimary = PreviewMix(_previewPrimary, Colors.White,
             (energy * 0.08 + treble * 0.05) * colorReaction);
         var liftedSecondary = PreviewMix(_previewSecondary, Colors.White, energy * 0.05 * colorReaction);
@@ -1560,6 +1562,16 @@ public partial class SettingsOverlay : UserControl
 
     private void BuildAppearanceControls()
     {
+        AddAppearanceToggle(ThemeAppearanceRows, "Interface tint", "Color the app surfaces, toolbar and library veil with one shared tone.",
+            settings => settings.InterfaceTintEnabled,
+            (settings, value) => settings.InterfaceTintEnabled = value);
+        AddAppearanceColorPicker(ThemeAppearanceRows, "Tint color", "Base color used to derive surfaces, borders and interface accents.",
+            settings => settings.InterfaceTintColor,
+            (settings, value) => settings.InterfaceTintColor = value);
+        AddAppearanceSlider(ThemeAppearanceRows, "Tint intensity", "Blend between neutral charcoal and the selected color.",
+            0, 100, settings => settings.InterfaceTintStrength,
+            (settings, value) => settings.InterfaceTintStrength = value, PercentValue);
+
         AddAppearanceSlider(PlayerAppearanceRows, "Artwork strength", "Visibility of the cover behind the player.",
             0, 100, settings => settings.PlayerArtworkStrength,
             (settings, value) => settings.PlayerArtworkStrength = value, PercentValue);
@@ -1741,6 +1753,63 @@ public partial class SettingsOverlay : UserControl
         panel.Children.Add(row);
 
         _appearanceControlRefreshers.Add(settings => toggle.IsChecked = getter(settings));
+    }
+
+    private void AddAppearanceColorPicker(
+        StackPanel panel,
+        string title,
+        string description,
+        Func<AppearanceSettings, string> getter,
+        Action<AppearanceSettings, string> setter)
+    {
+        var picker = new ColorPicker
+        {
+            Width = 220,
+            Height = 34,
+            Content = "Choose color",
+            HorizontalAlignment = HorizontalAlignment.Right,
+            VerticalAlignment = VerticalAlignment.Center,
+            IsAlphaEnabled = false,
+            IsAlphaVisible = false
+        };
+        picker.ColorChanged += (_, args) =>
+        {
+            if (_synchronizingAppearanceControls)
+                return;
+            var color = args.NewColor;
+            var hex = $"#{color.R:X2}{color.G:X2}{color.B:X2}";
+            picker.Content = hex;
+            setter(_appearanceSettings, hex);
+            NotifyAppearanceChanged();
+        };
+
+        var labels = new StackPanel { Spacing = 2 };
+        labels.Children.Add(new TextBlock { Text = title, FontSize = 11.5, FontWeight = FontWeight.SemiBold });
+        labels.Children.Add(new TextBlock
+        {
+            Text = description,
+            FontSize = 10,
+            Opacity = 0.5,
+            TextWrapping = TextWrapping.Wrap
+        });
+
+        var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), ColumnSpacing = 12 };
+        row.Children.Add(labels);
+        Grid.SetColumn(picker, 1);
+        row.Children.Add(picker);
+        panel.Children.Add(row);
+
+        _appearanceControlRefreshers.Add(settings =>
+        {
+            var hex = getter(settings);
+            try { picker.Color = Color.Parse(hex); }
+            catch
+            {
+                hex = "#6E6748";
+                picker.Color = Color.Parse(hex);
+            }
+            picker.Content = hex;
+        });
     }
 
     private void RefreshAppearanceControls()

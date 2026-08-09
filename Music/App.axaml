@@ -14,6 +14,7 @@
   
     <Application.Styles>
         <FluentTheme />
+        <StyleInclude Source="avares://Avalonia.Controls.ColorPicker/Themes/Fluent/Fluent.xaml"/>
         <Style Selector="TextBox.theme-input">
             <Setter Property="Background" Value="{DynamicResource Theme.Brush.Surface}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource Theme.Brush.BorderStrong}"/>
@@ -72,17 +73,17 @@
             <Setter Property="Padding" Value="11,6"/>
             <Setter Property="Margin" Value="0,0,7,7"/>
             <Setter Property="CornerRadius" Value="{DynamicResource Theme.Corner.Pill}"/>
-            <Setter Property="Background" Value="#2A2821"/>
+            <Setter Property="Background" Value="{DynamicResource Theme.Brush.SurfaceRaised}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource Theme.Brush.Border}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Foreground" Value="{DynamicResource Theme.Brush.TextPrimary}"/>
         </Style>
         <Style Selector="ToggleButton.metadata-chip:pointerover">
             <Setter Property="Background" Value="{DynamicResource Theme.Brush.SurfaceHover}"/>
-            <Setter Property="BorderBrush" Value="#6A6250"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Theme.Brush.BorderStrong}"/>
         </Style>
         <Style Selector="ToggleButton.metadata-chip:checked">
-            <Setter Property="Background" Value="#4B513D"/>
+            <Setter Property="Background" Value="{DynamicResource Theme.Brush.AccentSurface}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource Theme.Brush.Accent}"/>
             <Setter Property="Foreground" Value="{DynamicResource Theme.Brush.TextStrong}"/>
         </Style>
@@ -97,7 +98,7 @@
         </Style>
         <Style Selector="Button.more-button:pointerover">
             <Setter Property="Background" Value="{DynamicResource Theme.Brush.SurfaceHover}"/>
-            <Setter Property="BorderBrush" Value="#7B725C"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Theme.Brush.BorderStrong}"/>
         </Style>
     </Application.Styles>
 </Application>

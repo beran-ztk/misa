@@ -4,6 +4,9 @@ namespace Music.Models;
 
 public sealed class AppearanceSettings
 {
+    public bool InterfaceTintEnabled { get; set; } = true;
+    public string InterfaceTintColor { get; set; } = "#6E6748";
+    public double InterfaceTintStrength { get; set; } = 100;
     public double PlayerArtworkStrength { get; set; } = 64.5;
     public double PlayerArtworkBlur { get; set; } = 50;
     public double PlayerBackgroundDarkening { get; set; } = 4.6;
@@ -33,6 +36,9 @@ public sealed class AppearanceSettings
 
     public AppearanceSettings Clone() => new()
     {
+        InterfaceTintEnabled = InterfaceTintEnabled,
+        InterfaceTintColor = InterfaceTintColor,
+        InterfaceTintStrength = InterfaceTintStrength,
         PlayerArtworkStrength = PlayerArtworkStrength,
         PlayerArtworkBlur = PlayerArtworkBlur,
         PlayerBackgroundDarkening = PlayerBackgroundDarkening,
@@ -61,6 +67,8 @@ public sealed class AppearanceSettings
 
     public AppearanceSettings Clamp()
     {
+        InterfaceTintColor = NormalizeColor(InterfaceTintColor);
+        InterfaceTintStrength = Math.Clamp(InterfaceTintStrength, 0, 100);
         PlayerArtworkStrength = Math.Clamp(PlayerArtworkStrength, 0, 100);
         PlayerArtworkBlur = Math.Clamp(PlayerArtworkBlur, 0, 50);
         PlayerBackgroundDarkening = Math.Clamp(PlayerBackgroundDarkening, 0, 80);
@@ -99,6 +107,7 @@ public sealed class AppearanceSettings
 
     public static AppearanceSettings Subtle() => new()
     {
+        InterfaceTintStrength = 62,
         PlayerArtworkStrength = 40,
         PlayerArtworkBlur = 34,
         PlayerBackgroundDarkening = 64,
@@ -125,6 +134,7 @@ public sealed class AppearanceSettings
 
     public static AppearanceSettings Vibrant() => new()
     {
+        InterfaceTintStrength = 100,
         PlayerArtworkStrength = 70,
         PlayerArtworkBlur = 24,
         PlayerBackgroundDarkening = 44,
@@ -148,4 +158,17 @@ public sealed class AppearanceSettings
         CoverHaloStrength = 48,
         CoverHaloBlur = 7
     };
+
+    private static string NormalizeColor(string? value)
+    {
+        var color = value?.Trim();
+        if (color is not null && color.StartsWith('#'))
+            color = color[1..];
+        if (color?.Length == 8)
+            color = color[2..];
+        return color?.Length == 6 && uint.TryParse(
+            color, System.Globalization.NumberStyles.HexNumber, null, out _)
+            ? $"#{color.ToUpperInvariant()}"
+            : "#6E6748";
+    }
 }

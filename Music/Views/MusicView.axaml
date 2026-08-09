@@ -7,12 +7,12 @@
     <UserControl.Styles>
         <Style Selector="Button">
             <Setter Property="CornerRadius" Value="{DynamicResource Theme.Corner.Control}"/>
-            <Setter Property="BorderBrush" Value="#41483B"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Theme.Brush.Border}"/>
             <Setter Property="Foreground" Value="{DynamicResource Theme.Brush.TextPrimary}"/>
         </Style>
         <Style Selector="Button:pointerover">
-            <Setter Property="Background" Value="#252A21"/>
-            <Setter Property="BorderBrush" Value="#66705B"/>
+            <Setter Property="Background" Value="{DynamicResource Theme.Brush.SurfaceHover}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Theme.Brush.Accent}"/>
         </Style>
         <Style Selector="Button.icon">
             <Setter Property="Width" Value="38"/>
@@ -25,20 +25,20 @@
         </Style>
         <Style Selector="TextBox">
             <Setter Property="CornerRadius" Value="{DynamicResource Theme.Corner.Control}"/>
-            <Setter Property="BorderBrush" Value="#41483B"/>
-            <Setter Property="Background" Value="#10120F"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Theme.Brush.Border}"/>
+            <Setter Property="Background" Value="{DynamicResource Theme.Brush.Input}"/>
             <Setter Property="Foreground" Value="{DynamicResource Theme.Brush.TextPrimary}"/>
         </Style>
         <Style Selector="Slider">
             <Setter Property="MinHeight" Value="24"/>
             <Setter Property="Foreground" Value="{DynamicResource Theme.Brush.Accent}"/>
-            <Setter Property="Background" Value="#343A30"/>
+            <Setter Property="Background" Value="{DynamicResource Theme.Brush.SurfaceHover}"/>
         </Style>
         <Style Selector="Slider.playback">
             <Setter Property="Height" Value="28"/>
             <Setter Property="MinHeight" Value="28"/>
             <Setter Property="Foreground" Value="{DynamicResource Theme.Brush.AccentStrong}"/>
-            <Setter Property="Background" Value="#30362C"/>
+            <Setter Property="Background" Value="{DynamicResource Theme.Brush.SurfaceHover}"/>
         </Style>
         <Style Selector="Slider.playback /template/ Thumb">
             <Setter Property="Width" Value="9"/>
@@ -97,6 +97,7 @@
     </UserControl.Styles>
 
     <Panel>
+    <Rectangle Fill="{DynamicResource Theme.Brush.Background}" IsHitTestVisible="False"/>
     <Image x:Name="AppArtworkPreviousBackground"
            IsVisible="False"
            IsHitTestVisible="False"
@@ -133,12 +134,12 @@
             </LinearGradientBrush>
         </Rectangle.Fill>
     </Rectangle>
-    <Rectangle Fill="#5C2A261C" IsHitTestVisible="False"/>
+    <Rectangle x:Name="AppInterfaceTint" Fill="#5C2A261C" IsHitTestVisible="False"/>
     <DockPanel LastChildFill="True">
 
         <!-- ── Toolbar ── -->
         <Border DockPanel.Dock="Top"
-                Background="#6E2A241A"
+                Background="{DynamicResource Theme.Brush.Navigation}"
                 BorderBrush="#5B5444"
                 BorderThickness="0,0,0,1"
                 Padding="20,12,16,10">
@@ -264,7 +265,7 @@
         <!-- Library and player occupy separate rows over one continuous artwork background. -->
         <Grid RowDefinitions="*,Auto">
             <Panel Grid.Row="0">
-            <Rectangle Fill="#3C302A20" IsHitTestVisible="False"/>
+            <Rectangle x:Name="LibraryInterfaceTint" Fill="#3C302A20" IsHitTestVisible="False"/>
             <Rectangle Fill="#06000000" IsHitTestVisible="False"/>
 
             <views:AudioSpectrumControl x:Name="SpectrumVisualizer"
