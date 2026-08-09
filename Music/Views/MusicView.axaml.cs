@@ -1338,6 +1338,9 @@ public partial class MusicView : UserControl
             Text = preset.Name,
             FontWeight = FontWeight.SemiBold,
             FontSize = 12,
+            Foreground = isSelected
+                ? Brush("#D7E7FF")
+                : ThemeResources.Brush("Theme.Brush.TextPrimary"),
             TextTrimming = TextTrimming.CharacterEllipsis
         };
         var summary = new TextBlock
@@ -1356,12 +1359,12 @@ public partial class MusicView : UserControl
             Content = content,
             HorizontalAlignment = HorizontalAlignment.Stretch,
             HorizontalContentAlignment = HorizontalAlignment.Stretch,
-            Background = ThemeResources.Brush(isSelected
-                ? "Theme.Brush.AccentSurface"
-                : "Theme.Brush.Surface"),
-            BorderBrush = ThemeResources.Brush(isSelected
-                ? "Theme.Brush.Accent"
-                : "Theme.Brush.BorderSubtle"),
+            Background = isSelected
+                ? Brush("#303E6591")
+                : ThemeResources.Brush("Theme.Brush.Surface"),
+            BorderBrush = isSelected
+                ? Brush("#A078A9E6")
+                : ThemeResources.Brush("Theme.Brush.BorderSubtle"),
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(7),
             Padding = new Thickness(10, 8),

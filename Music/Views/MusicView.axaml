@@ -1025,8 +1025,8 @@
                                 </Grid>
 
                                 <Border DockPanel.Dock="Top"
-                                        Background="#12FFFFFF"
-                                        BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
+                                        Background="#143E6591"
+                                        BorderBrush="#4678A9E6"
                                         BorderThickness="1"
                                         CornerRadius="7"
                                         Padding="11,9"
