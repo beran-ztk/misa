@@ -14,7 +14,6 @@
   
     <Application.Styles>
         <FluentTheme />
-        <StyleInclude Source="avares://Avalonia.Controls.ColorPicker/Themes/Fluent/Fluent.xaml"/>
         <Style Selector="TextBox.theme-input">
             <Setter Property="Background" Value="{DynamicResource Theme.Brush.Surface}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource Theme.Brush.BorderStrong}"/>

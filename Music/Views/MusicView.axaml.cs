@@ -2006,14 +2006,9 @@ public partial class MusicView : UserControl
         var updatedSettings = settings.Clone().Clamp();
         var trackAppearanceChanged = TrackAppearanceChanged(_appearanceSettings, updatedSettings);
         _appearanceSettings = updatedSettings;
-        var interfacePalette = InterfaceThemeService.Apply(_appearanceSettings);
-        AppInterfaceTint.Fill = new SolidColorBrush(interfacePalette.TintLayer);
-        LibraryInterfaceTint.Fill = new SolidColorBrush(interfacePalette.LibraryLayer);
         PlayerDarkeningOverlay.Background = new SolidColorBrush(Color.FromArgb(
             ToByte(_appearanceSettings.PlayerBackgroundDarkening / 100d * 255),
-            interfacePalette.PlayerDarkening.R,
-            interfacePalette.PlayerDarkening.G,
-            interfacePalette.PlayerDarkening.B));
+            0x24, 0x24, 0x24));
         SpectrumVisualizer.IsVisible = _appearanceSettings.SpectrumVisualizerEnabled;
         SpectrumVisualizer.Height = _appearanceSettings.SpectrumVisualizerHeight;
         SpectrumVisualizer.Opacity = 0.40;

@@ -64,6 +64,9 @@
             <Setter Property="HorizontalContentAlignment" Value="Center"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
+        <Style Selector="ScrollViewer">
+            <Setter Property="Padding" Value="0,0,14,0"></Setter>
+        </Style>
     </UserControl.Styles>
 
     <Grid ColumnDefinitions="244,1,*" Background="{DynamicResource Theme.Brush.Overlay}">
@@ -311,15 +314,6 @@
                     </Border>
 
                     <StackPanel Spacing="8">
-                        <TextBlock Text="INTERFACE THEME" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
-                        <Border Background="{DynamicResource Theme.Brush.SurfaceTranslucent}"
-                                BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
-                                BorderThickness="1" CornerRadius="7" Padding="12">
-                            <StackPanel x:Name="ThemeAppearanceRows" Spacing="12"/>
-                        </Border>
-                    </StackPanel>
-
-                    <StackPanel Spacing="8">
                         <TextBlock Text="PLAYER" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
                         <Border Background="{DynamicResource Theme.Brush.SurfaceTranslucent}" BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
                                 BorderThickness="1" CornerRadius="7" Padding="12">
@@ -373,7 +367,6 @@
                                     <Image.Effect><BlurEffect Radius="20"/></Image.Effect>
                                 </Image>
                                 <Border x:Name="PreviewLibraryAtmosphere" IsHitTestVisible="False"/>
-                                <Rectangle x:Name="PreviewInterfaceTint" Fill="#66302A20" IsHitTestVisible="False"/>
 
                                 <Grid RowDefinitions="*,74">
                                     <views:AudioSpectrumControl x:Name="PreviewSpectrumVisualizer"

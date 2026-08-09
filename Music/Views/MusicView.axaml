@@ -134,7 +134,6 @@
             </LinearGradientBrush>
         </Rectangle.Fill>
     </Rectangle>
-    <Rectangle x:Name="AppInterfaceTint" Fill="#5C2A261C" IsHitTestVisible="False"/>
     <DockPanel LastChildFill="True">
 
         <!-- ── Toolbar ── -->
@@ -265,8 +264,6 @@
         <!-- Library and player occupy separate rows over one continuous artwork background. -->
         <Grid RowDefinitions="*,Auto">
             <Panel Grid.Row="0">
-            <Rectangle x:Name="LibraryInterfaceTint" Fill="#3C302A20" IsHitTestVisible="False"/>
-            <Rectangle Fill="#06000000" IsHitTestVisible="False"/>
 
             <views:AudioSpectrumControl x:Name="SpectrumVisualizer"
                                         Height="140"
