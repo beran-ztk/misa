@@ -1910,33 +1910,40 @@ public partial class MusicView : UserControl
         var searchText = string.Empty;
         var choicesPanel = new UniformGrid
         {
-            Columns = 3,
+            Columns = 2,
             ColumnSpacing = 7,
             RowSpacing = 7
         };
-        var summary = new TextBlock
-        {
-            FontSize = 10.5,
-            Opacity = 0.56,
-            VerticalAlignment = VerticalAlignment.Center,
-            TextTrimming = TextTrimming.CharacterEllipsis
-        };
-        var categoryBox = new ComboBox
-        {
-            Height = 34,
-            Background = ThemeResources.Brush("Theme.Brush.Surface"),
-            BorderBrush = ThemeResources.Brush("Theme.Brush.BorderStrong"),
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(6),
-            Padding = new Thickness(9, 4)
-        };
+        var groupListPanel = new StackPanel { Spacing = 3 };
         var searchBox = new TextBox
         {
             Watermark = "Search subgenre…",
             Height = 34,
-            VerticalContentAlignment = VerticalAlignment.Center
+            IsVisible = false,
+            VerticalContentAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(0, 0, 0, 1)
         };
         searchBox.Classes.Add("theme-input");
+
+        var searchButton = new Button
+        {
+            Width = 28,
+            Height = 28,
+            Padding = new Thickness(6),
+            Background = Brushes.Transparent,
+            BorderThickness = new Thickness(0),
+            Opacity = 0.66,
+            HorizontalContentAlignment = HorizontalAlignment.Center,
+            VerticalContentAlignment = VerticalAlignment.Center,
+            Content = new PathIcon
+            {
+                Data = Geometry.Parse("M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"),
+                Width = 15,
+                Height = 15,
+                Foreground = ThemeResources.Brush("Theme.Brush.TextSecondary")
+            }
+        };
+        ToolTip.SetTip(searchButton, "Search subgenres");
 
         string GroupName(Genre genre)
         {
@@ -1958,11 +1965,11 @@ public partial class MusicView : UserControl
             var choices = Values.Genres
                 .Where(genre => selectedGroupName is null || string.Equals(GroupName(genre), selectedGroupName, StringComparison.OrdinalIgnoreCase))
                 .Where(genre => string.IsNullOrWhiteSpace(normalizedSearch)
-                                || SubgenreName(genre).Contains(normalizedSearch, StringComparison.OrdinalIgnoreCase))
+                                || SubgenreName(genre).Contains(normalizedSearch, StringComparison.OrdinalIgnoreCase)
+                                || GroupName(genre).Contains(normalizedSearch, StringComparison.OrdinalIgnoreCase))
                 .OrderByDescending(genre => selected.Contains(genre.Name))
                 .ThenBy(genre => GroupName(genre), StringComparer.OrdinalIgnoreCase)
                 .ThenBy(genre => SubgenreName(genre), StringComparer.OrdinalIgnoreCase)
-                .Take(72)
                 .ToList();
 
             foreach (var genre in choices)
@@ -1976,7 +1983,6 @@ public partial class MusicView : UserControl
                         next.Remove(genre.Name);
                     genreCtrl.SetSelectedItems(next);
                     FillChoices();
-                    UpdateGenreSummary();
                 };
                 choicesPanel.Children.Add(button);
             }
@@ -1993,28 +1999,61 @@ public partial class MusicView : UserControl
             }
         }
 
-        void UpdateGenreSummary()
+        void FillGroups()
         {
-            var selectedCount = genreCtrl.SelectedItems.Count;
-            summary.Text = selectedCount == 0
-                ? $"{Values.Genres.Count} selectable"
-                : $"{selectedCount} selected · {Values.Genres.Count - selectedCount} available";
+            groupListPanel.Children.Clear();
+            var groups = new[] { new GenreGroupChoice(null, "All") }
+                .Concat(Values.Genres
+                    .Select(GroupName)
+                    .Where(name => !string.IsNullOrWhiteSpace(name))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .Order(StringComparer.OrdinalIgnoreCase)
+                    .Select(name => new GenreGroupChoice(name, name)));
+
+            foreach (var group in groups)
+            {
+                var selected = string.Equals(
+                    group.GroupName,
+                    selectedGroupName,
+                    StringComparison.OrdinalIgnoreCase);
+                var text = new TextBlock
+                {
+                    Text = group.Label,
+                    FontSize = 10.5,
+                    FontWeight = selected ? FontWeight.SemiBold : FontWeight.Normal,
+                    Foreground = selected
+                        ? Brush("#78A9E6")
+                        : ThemeResources.Brush("Theme.Brush.TextSecondary"),
+                    Opacity = selected ? 1 : 0.72,
+                    TextWrapping = TextWrapping.Wrap,
+                    VerticalAlignment = VerticalAlignment.Center
+                };
+                var item = new Border
+                {
+                    Background = Brushes.Transparent,
+                    Padding = new Thickness(2, 4),
+                    Cursor = new Cursor(StandardCursorType.Hand),
+                    Child = text
+                };
+                item.PointerPressed += (_, e) =>
+                {
+                    selectedGroupName = group.GroupName;
+                    FillGroups();
+                    FillChoices();
+                    e.Handled = true;
+                };
+                groupListPanel.Children.Add(item);
+            }
         }
 
-        var groupChoices = new[] { new GenreGroupChoice(null, "All model groups") }
-            .Concat(Values.Genres
-                .Select(GroupName)
-                .Where(name => !string.IsNullOrWhiteSpace(name))
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .Order(StringComparer.OrdinalIgnoreCase)
-                .Select(name => new GenreGroupChoice(name, name)))
-            .ToList();
-        categoryBox.ItemsSource = groupChoices;
-        categoryBox.SelectedIndex = 0;
-        categoryBox.SelectionChanged += (_, _) =>
+        searchButton.Click += (_, _) =>
         {
-            selectedGroupName = (categoryBox.SelectedItem as GenreGroupChoice)?.GroupName;
-            FillChoices();
+            searchBox.IsVisible = !searchBox.IsVisible;
+            searchButton.Opacity = searchBox.IsVisible ? 1 : 0.66;
+            if (searchBox.IsVisible)
+                Dispatcher.UIThread.Post(() => searchBox.Focus());
+            else
+                searchBox.Text = string.Empty;
         };
         searchBox.TextChanged += (_, _) =>
         {
@@ -2022,7 +2061,7 @@ public partial class MusicView : UserControl
             FillChoices();
         };
 
-        UpdateGenreSummary();
+        FillGroups();
         FillChoices();
 
         var titleRow = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
@@ -2033,17 +2072,25 @@ public partial class MusicView : UserControl
             FontWeight = FontWeight.SemiBold,
             VerticalAlignment = VerticalAlignment.Center
         });
-        Grid.SetColumn(summary, 1);
-        titleRow.Children.Add(summary);
+        Grid.SetColumn(searchButton, 1);
+        titleRow.Children.Add(searchButton);
 
-        var controlsRow = new Grid
+        var browser = new Grid
         {
-            ColumnDefinitions = new ColumnDefinitions("*,*"),
-            ColumnSpacing = 8
+            ColumnDefinitions = new ColumnDefinitions("118,1,*")
         };
-        controlsRow.Children.Add(categoryBox);
-        Grid.SetColumn(searchBox, 1);
-        controlsRow.Children.Add(searchBox);
+        browser.Children.Add(groupListPanel);
+        var separator = new Border
+        {
+            Width = 1,
+            Background = ThemeResources.Brush("Theme.Brush.Divider"),
+            Margin = new Thickness(0, 1)
+        };
+        Grid.SetColumn(separator, 1);
+        browser.Children.Add(separator);
+        choicesPanel.Margin = new Thickness(12, 0, 0, 0);
+        Grid.SetColumn(choicesPanel, 2);
+        browser.Children.Add(choicesPanel);
 
         var border = new Border
         {
@@ -2058,19 +2105,14 @@ public partial class MusicView : UserControl
                 Children =
                 {
                     titleRow,
-                    controlsRow,
-                    new ScrollViewer
-                    {
-                        MaxHeight = 205,
-                        HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
-                        Content = choicesPanel
-                    }
+                    searchBox,
+                    browser
                 }
             }
         };
         return new FilterSection(border, () =>
         {
-            UpdateGenreSummary();
+            FillGroups();
             FillChoices();
         });
     }
