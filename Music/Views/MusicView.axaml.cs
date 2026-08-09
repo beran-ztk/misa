@@ -202,7 +202,6 @@ public partial class MusicView : UserControl
         ImportQueueService.Current.Initialize();
         BackgroundAnalysisService.Current.Initialize();
         ChannelDownloadService.Current.Initialize();
-        UpdateQueueStatus();
         UpdateImportBounds();
 
         LoadLookups();
@@ -232,16 +231,14 @@ public partial class MusicView : UserControl
         ChannelOverlay.TrackChanged += trackId =>
         {
             UpdateTrackInList(trackId);
-            UpdateQueueStatus();
         };
         ImportOverlay.QueueSubmitted += count =>
         {
             ShowToast($"{count} track{(count == 1 ? string.Empty : "s")} added to the import queue");
-            UpdateQueueStatus();
         };
+        ImportOverlay.ToastRequested += ShowToast;
         ImportQueueService.Current.ItemUpdated += _ => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
         {
-            UpdateQueueStatus();
             if (ImportOverlay.IsVisible) ImportOverlay.RefreshQueue();
         });
         ImportQueueService.Current.TrackImported += (track, warning) => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
@@ -251,7 +248,6 @@ public partial class MusicView : UserControl
         });
         BackgroundAnalysisService.Current.QueueChanged += () => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
         {
-            UpdateQueueStatus();
             if (ImportOverlay.IsVisible) ImportOverlay.RefreshQueue();
         });
         BackgroundAnalysisService.Current.TrackAnalysisFinished += (track, error) =>
@@ -267,13 +263,11 @@ public partial class MusicView : UserControl
             });
         ChannelDownloadService.Current.QueueChanged += () => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
         {
-            UpdateQueueStatus();
             if (ChannelOverlay.IsVisible) ChannelOverlay.UpdateDownloadSummary();
         });
         ChannelDownloadService.Current.DownloadFinished += (video, track, error) =>
             Avalonia.Threading.Dispatcher.UIThread.Post(() =>
             {
-                UpdateQueueStatus();
                 ChannelOverlay.OnDownloadFinished(video.Id, track, error);
                 if (track is not null)
                 {
@@ -346,23 +340,6 @@ public partial class MusicView : UserControl
     {
         LoadLookups();
         RefreshTrackList();
-    }
-
-    private void UpdateQueueStatus()
-    {
-        var summary = ImportQueueService.Current.GetSummary();
-        var parts = new List<string>();
-        if (summary.Downloading > 0) parts.Add("downloading");
-        if (summary.Analyzing > 0) parts.Add("analyzing");
-        if (summary.Queued > 0) parts.Add($"{summary.Queued} queued");
-        var analysis = BackgroundAnalysisService.Current.GetSnapshot();
-        if (analysis.ActiveTrackId is not null) parts.Add("analyzing track");
-        if (analysis.IsWaitingForServerConfiguration)
-            parts.Add($"{analysis.PendingTrackIds.Count} analysis waiting for server setup");
-        else if (analysis.PendingTrackIds.Count > 0)
-            parts.Add($"{analysis.PendingTrackIds.Count} analysis queued");
-        QueueStatusText.IsVisible = parts.Count > 0;
-        QueueStatusText.Text = parts.Count > 0 ? $"Queue · {string.Join(" · ", parts)}" : string.Empty;
     }
 
     private void MarkLibraryRefreshPending()

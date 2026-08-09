@@ -157,12 +157,6 @@
                                Opacity="0.82"
                                VerticalAlignment="Center"
                                TextTrimming="CharacterEllipsis"/>
-                    <TextBlock x:Name="QueueStatusText"
-                               IsVisible="False"
-                               FontFamily="Consolas"
-                               FontSize="11"
-                               Foreground="#BAC9A4"
-                               TextTrimming="CharacterEllipsis"/>
                     <TextBlock x:Name="LibraryDirtyText"
                                Text="Library changed"
                                IsVisible="False"

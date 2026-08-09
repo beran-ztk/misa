@@ -18,6 +18,8 @@ public sealed class BackgroundAnalysisService
     private int? _activeTrackId;
     private CancellationTokenSource? _activeAnalysisCancellation;
     private bool _pausedForTransientFailure;
+    private AnalysisServerConnectionState _serverConnectionState = AnalysisServerConnectionState.NotChecked;
+    private Task<bool>? _connectionCheckTask;
 
     public event Action<MusicTrack, string?>? TrackAnalysisFinished;
     public event Action? QueueChanged;
@@ -25,6 +27,7 @@ public sealed class BackgroundAnalysisService
     public void Initialize()
     {
         EnqueueTracks(MusicLibraryService.Current.GetUnanalyzedTracks().Select(track => track.Id));
+        _ = RetryServerConnectionAsync();
     }
 
     public void EnqueueTrack(int trackId)
@@ -40,18 +43,61 @@ public sealed class BackgroundAnalysisService
             return new BackgroundAnalysisQueueSnapshot(
                 _activeTrackId,
                 _pendingTrackIds.ToList(),
-                _pendingTrackIds.Count > 0 && !HasValidServerConfiguration());
+                _pendingTrackIds.Count > 0 && !HasValidServerConfiguration(),
+                _serverConnectionState);
         }
+    }
+
+    public Task<bool> RetryServerConnectionAsync()
+    {
+        Task<bool> checkTask;
+        lock (_gate)
+        {
+            if (_connectionCheckTask is { IsCompleted: false })
+                return _connectionCheckTask;
+
+            _serverConnectionState = AnalysisServerConnectionState.Checking;
+            checkTask = CheckServerConnectionAsync();
+            _connectionCheckTask = checkTask;
+        }
+
+        QueueChanged?.Invoke();
+        return checkTask;
+    }
+
+    private async Task<bool> CheckServerConnectionAsync()
+    {
+        var isReachable = false;
+        try
+        {
+            using var service = new TrackAnalysisService();
+            isReachable = await service.CheckHealthAsync();
+        }
+        catch (Exception)
+        {
+            // The UI presents one stable offline state; details remain available on the settings page.
+        }
+
+        lock (_gate)
+        {
+            _serverConnectionState = isReachable
+                ? AnalysisServerConnectionState.Reachable
+                : AnalysisServerConnectionState.Unreachable;
+            _connectionCheckTask = null;
+            if (isReachable)
+            {
+                _pausedForTransientFailure = false;
+                StartWorkerIfPossible();
+            }
+        }
+
+        QueueChanged?.Invoke();
+        return isReachable;
     }
 
     public void NotifyServerConfigurationChanged()
     {
-        lock (_gate)
-        {
-            _pausedForTransientFailure = false;
-            StartWorkerIfPossible();
-        }
-        QueueChanged?.Invoke();
+        _ = RetryServerConnectionAsync();
     }
 
     public bool CancelActiveAnalysis()
@@ -168,6 +214,7 @@ public sealed class BackgroundAnalysisService
                         {
                             _pendingTrackIds.Enqueue(trackId);
                             _pausedForTransientFailure = true;
+                            _serverConnectionState = AnalysisServerConnectionState.Unreachable;
                         }
                         else
                         {
@@ -200,7 +247,8 @@ public sealed class BackgroundAnalysisService
         {
             if (_pendingTrackIds.Count == 0
                 || _pausedForTransientFailure
-                || !HasValidServerConfiguration())
+                || !HasValidServerConfiguration()
+                || _serverConnectionState != AnalysisServerConnectionState.Reachable)
             {
                 trackId = -1;
                 return false;
@@ -223,7 +271,8 @@ public sealed class BackgroundAnalysisService
         if (_workerTask is not { IsCompleted: false }
             && _pendingTrackIds.Count > 0
             && !_pausedForTransientFailure
-            && HasValidServerConfiguration())
+            && HasValidServerConfiguration()
+            && _serverConnectionState == AnalysisServerConnectionState.Reachable)
             _workerTask = Task.Run(ProcessQueueAsync);
     }
 
@@ -236,4 +285,13 @@ public sealed class BackgroundAnalysisService
 public sealed record BackgroundAnalysisQueueSnapshot(
     int? ActiveTrackId,
     IReadOnlyList<int> PendingTrackIds,
-    bool IsWaitingForServerConfiguration);
+    bool IsWaitingForServerConfiguration,
+    AnalysisServerConnectionState ServerConnectionState);
+
+public enum AnalysisServerConnectionState
+{
+    NotChecked,
+    Checking,
+    Reachable,
+    Unreachable
+}

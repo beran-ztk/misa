@@ -20,6 +20,7 @@ public partial class ImportOverlay : UserControl
     private readonly DispatcherTimer _queueElapsedTimer = new() { Interval = TimeSpan.FromSeconds(1) };
 
     public event Action<int>? QueueSubmitted;
+    public event Action<string>? ToastRequested;
 
     public ImportOverlay()
     {
@@ -67,12 +68,30 @@ public partial class ImportOverlay : UserControl
 
         AnalysisQueueRows.Children.Clear();
         var analysisItems = GetAnalysisQueueItems();
+        var analysisSnapshot = BackgroundAnalysisService.Current.GetSnapshot();
         AnalysisQueueHeaderText.Text = analysisItems.Count > 0 ? $"ANALYSIS QUEUE ({analysisItems.Count})" : "ANALYSIS QUEUE";
+        var isCheckingServer = analysisSnapshot.ServerConnectionState == AnalysisServerConnectionState.Checking;
+        AnalysisServerUnavailablePanel.IsVisible = analysisSnapshot.ServerConnectionState is
+            AnalysisServerConnectionState.Checking or AnalysisServerConnectionState.Unreachable;
+        AnalysisServerUnavailableText.Text = isCheckingServer
+            ? "Testing server connection…"
+            : "Server currently unavailable.";
+        RetryAnalysisServerButton.IsEnabled = !isCheckingServer;
         EmptyAnalysisQueueText.IsVisible = analysisItems.Count == 0;
         foreach (var item in analysisItems)
             AnalysisQueueRows.Children.Add(CreateAnalysisQueueRow(item));
 
         UpdateQueueElapsedTimer(sources, analysisItems);
+    }
+
+    private async void OnRetryAnalysisServerClicked(object? sender, RoutedEventArgs e)
+    {
+        RetryAnalysisServerButton.IsEnabled = false;
+        var isReachable = await BackgroundAnalysisService.Current.RetryServerConnectionAsync();
+        RefreshQueue();
+        ToastRequested?.Invoke(isReachable
+            ? "Analysis server connected."
+            : "Analysis server is still unavailable.");
     }
 
     private void FocusFirstInput() => InputUrlBox.Focus();
@@ -564,7 +583,9 @@ public partial class ImportOverlay : UserControl
             .Where(id => tracks.ContainsKey(id))
             .Select(id => new AnalysisQueueItem(
                 tracks[id].Title,
-                snapshot.IsWaitingForServerConfiguration ? "waiting for server setup" : "waiting",
+                snapshot.ServerConnectionState == AnalysisServerConnectionState.Unreachable
+                    ? "waiting for server"
+                    : snapshot.IsWaitingForServerConfiguration ? "waiting for server setup" : "waiting",
                 false)));
         return items;
     }
