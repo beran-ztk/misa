@@ -30,8 +30,16 @@ public partial class MainWindow : Window
         InitializeComponent();
         _lastNormalBounds = WindowPlacementStore.Apply(this)?.NormalBounds;
         ContentArea.Content = _musicView;
-        PositionChanged += (_, _) => CaptureNormalBounds();
-        SizeChanged += (_, _) => CaptureNormalBounds();
+        PositionChanged += (_, _) =>
+        {
+            CaptureNormalBounds();
+            UpdateWindowFrameGeometry();
+        };
+        SizeChanged += (_, _) =>
+        {
+            CaptureNormalBounds();
+            UpdateWindowFrameGeometry();
+        };
         Activated += (_, _) => TitleBar.Opacity = 1;
         Deactivated += (_, _) => TitleBar.Opacity = 0.72;
         UpdateChromeState();
@@ -139,7 +147,28 @@ public partial class MainWindow : Window
         RestoreGlyph.IsVisible = isMaximized;
         ToolTip.SetTip(MaximizeButton, isMaximized ? "Restore" : "Maximize");
         ResizeLayer.IsHitTestVisible = !isMaximized && CanResize;
-        WindowFrame.BorderThickness = isMaximized ? new Thickness(0) : new Thickness(1);
+        UpdateWindowFrameGeometry();
+    }
+
+    private void UpdateWindowFrameGeometry()
+    {
+        var needsSquareCorners = WindowState != WindowState.Normal || IsVerticallySnapped();
+        WindowFrame.CornerRadius = new CornerRadius(needsSquareCorners ? 0 : 8);
+    }
+
+    private bool IsVerticallySnapped()
+    {
+        var screen = Screens.ScreenFromWindow(this);
+        if (screen is null || Bounds.Height <= 0)
+            return false;
+
+        var workArea = screen.WorkingArea;
+        var physicalHeight = (int)Math.Round(Bounds.Height * RenderScaling);
+        var tolerance = Math.Max(2, (int)Math.Ceiling(RenderScaling * 2));
+        var touchesTop = Math.Abs(Position.Y - workArea.Y) <= tolerance;
+        var touchesBottom = Math.Abs(
+            Position.Y + physicalHeight - (workArea.Y + workArea.Height)) <= tolerance;
+        return touchesTop && touchesBottom;
     }
 
     private void BeginNativeResize(WindowEdge edge, PointerPressedEventArgs e)
@@ -209,8 +238,8 @@ public partial class MainWindow : Window
         var enabled = 1;
         DwmSetWindowAttribute(handle.Value, 20, ref enabled, sizeof(int));
 
-        // DWMWA_COLOR_NONE: keep the native resize frame functional without
-        // allowing DWM to paint its light non-client border around our chrome.
+        // DWMWA_COLOR_NONE where supported. The visible frame is rendered by
+        // Avalonia so it also works on Windows versions without attribute 34.
         var borderColor = unchecked((int)0xFFFFFFFE);
         DwmSetWindowAttribute(handle.Value, 34, ref borderColor, sizeof(int));
 

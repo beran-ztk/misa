@@ -121,6 +121,7 @@
                 ZIndex="190"
                 BorderBrush="#4A4036"
                 BorderThickness="1"
+                CornerRadius="8"
                 IsHitTestVisible="False"/>
 
         <!-- Corners are declared after edges so their diagonal resize hit targets win. -->
