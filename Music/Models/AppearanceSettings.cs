@@ -4,25 +4,25 @@ namespace Music.Models;
 
 public sealed class AppearanceSettings
 {
-    public double PlayerArtworkStrength { get; set; } = 55;
-    public double PlayerArtworkBlur { get; set; } = 30;
-    public double PlayerBackgroundDarkening { get; set; } = 56;
-    public double PlayerColorAtmosphere { get; set; } = 100;
-    public double PlayerAudioReaction { get; set; } = 100;
-    public double AudioResponseSpeed { get; set; } = 50;
-    public double AudioBassSensitivity { get; set; } = 100;
-    public double AudioTrebleSensitivity { get; set; } = 100;
-    public double AudioArtworkMotion { get; set; } = 100;
-    public double AudioBlurReaction { get; set; } = 100;
-    public double AudioColorReaction { get; set; } = 100;
-    public double LibraryBackdropStrength { get; set; } = 25;
-    public double LibraryBackdropBlur { get; set; } = 20;
-    public double TrackArtworkStrength { get; set; } = 18;
-    public double TrackArtworkBlur { get; set; } = 14;
-    public double TrackColorWashStrength { get; set; } = 13;
-    public double TrackColorWashReach { get; set; } = 88;
-    public double CoverHaloStrength { get; set; } = 34;
-    public double CoverHaloBlur { get; set; } = 9;
+    public double PlayerArtworkStrength { get; set; } = 64.5;
+    public double PlayerArtworkBlur { get; set; } = 50;
+    public double PlayerBackgroundDarkening { get; set; } = 4.6;
+    public double PlayerColorAtmosphere { get; set; } = 19.5;
+    public double PlayerAudioReaction { get; set; } = 65;
+    public double AudioResponseSpeed { get; set; } = 100;
+    public double AudioBassSensitivity { get; set; } = 175;
+    public double AudioTrebleSensitivity { get; set; } = 125;
+    public double AudioArtworkMotion { get; set; } = 150;
+    public double AudioBlurReaction { get; set; } = 75;
+    public double AudioColorReaction { get; set; } = 200;
+    public double LibraryBackdropStrength { get; set; } = 14.6;
+    public double LibraryBackdropBlur { get; set; } = 0;
+    public double TrackArtworkStrength { get; set; } = 35.25;
+    public double TrackArtworkBlur { get; set; } = 20.4;
+    public double TrackColorWashStrength { get; set; } = 25.35;
+    public double TrackColorWashReach { get; set; } = 50.2;
+    public double CoverHaloStrength { get; set; } = 60;
+    public double CoverHaloBlur { get; set; } = 20;
 
     public AppearanceSettings Clone() => new()
     {
