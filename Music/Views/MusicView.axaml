@@ -974,66 +974,106 @@
                                    Fill="{DynamicResource Theme.Brush.Divider}"/>
 
                         <DockPanel Grid.Column="2" LastChildFill="True">
-                                <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="0,0,0,12">
+                                <Grid DockPanel.Dock="Top" Margin="0,0,0,10">
                                     <TextBlock Text="Conditions" FontSize="14" FontWeight="SemiBold"
                                                VerticalAlignment="Center"/>
-                                    <Button Grid.Column="1"
-                                            Click="OnAddFilterGroupClicked"
-                                            Background="{DynamicResource Theme.Brush.Surface}"
-                                            BorderBrush="{DynamicResource Theme.Brush.BorderStrong}"
-                                            BorderThickness="1"
-                                            Width="32" Height="30"
-                                            Padding="0"
-                                            HorizontalContentAlignment="Center"
-                                            VerticalContentAlignment="Center"
-                                            HorizontalAlignment="Right"
-                                            VerticalAlignment="Top"
-                                            ToolTip.Tip="Add condition">
-                                        <TextBlock Text="+" FontSize="18" Margin="0,-2,0,0"
-                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                    </Button>
                                 </Grid>
 
-                                <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto" Margin="0,0,0,12">
-                                    <Border Width="164" Height="32"
-                                            Background="{DynamicResource Theme.Brush.Surface}"
-                                            BorderBrush="{DynamicResource Theme.Brush.BorderStrong}"
-                                            BorderThickness="1"
-                                            CornerRadius="6"
-                                            ClipToBounds="True">
-                                        <Grid ColumnDefinitions="81,81">
-                                            <Border x:Name="ConditionModeIndicator"
-                                                    Grid.ColumnSpan="2"
-                                                    Width="81"
-                                                    HorizontalAlignment="Left"
-                                                    Background="{DynamicResource Theme.Brush.Success}"
-                                                    CornerRadius="5"
-                                                    IsHitTestVisible="False">
-                                                <Border.RenderTransform>
-                                                    <TranslateTransform>
-                                                        <TranslateTransform.Transitions>
-                                                            <Transitions>
-                                                                <DoubleTransition Property="X" Duration="0:0:0.16"/>
-                                                            </Transitions>
-                                                        </TranslateTransform.Transitions>
-                                                    </TranslateTransform>
-                                                </Border.RenderTransform>
+                                <Border DockPanel.Dock="Top"
+                                        Background="#12FFFFFF"
+                                        BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
+                                        BorderThickness="1"
+                                        CornerRadius="7"
+                                        Padding="11,9"
+                                        Margin="0,0,0,12">
+                                    <StackPanel Spacing="9">
+                                        <Grid ColumnDefinitions="*,Auto,*">
+                                            <TextBlock Text="Current set"
+                                                       FontSize="11.5"
+                                                       FontWeight="SemiBold"
+                                                       VerticalAlignment="Center"/>
+                                            <Border Grid.Column="1"
+                                                Width="120" Height="24"
+                                                HorizontalAlignment="Center"
+                                                Background="{DynamicResource Theme.Brush.Surface}"
+                                                BorderBrush="{DynamicResource Theme.Brush.BorderStrong}"
+                                                BorderThickness="1"
+                                                CornerRadius="6"
+                                                ClipToBounds="True">
+                                            <Grid ColumnDefinitions="59,59">
+                                                <Border x:Name="ConditionModeIndicator"
+                                                        Grid.ColumnSpan="2"
+                                                        Width="59"
+                                                        HorizontalAlignment="Left"
+                                                        Background="{DynamicResource Theme.Brush.Success}"
+                                                        CornerRadius="5"
+                                                        IsHitTestVisible="False">
+                                                    <Border.RenderTransform>
+                                                        <TranslateTransform>
+                                                            <TranslateTransform.Transitions>
+                                                                <Transitions>
+                                                                    <DoubleTransition Property="X" Duration="0:0:0.16"/>
+                                                                </Transitions>
+                                                            </TranslateTransform.Transitions>
+                                                        </TranslateTransform>
+                                                    </Border.RenderTransform>
+                                                </Border>
+                                                <Border Grid.Column="0" Background="Transparent" Cursor="Hand"
+                                                        PointerPressed="OnIncludeConditionPressed">
+                                                    <TextBlock x:Name="IncludeConditionText" Text="Include"
+                                                               FontSize="9.5" FontWeight="SemiBold"
+                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                                <Border Grid.Column="1" Background="Transparent" Cursor="Hand"
+                                                        PointerPressed="OnExcludeConditionPressed">
+                                                    <TextBlock x:Name="ExcludeConditionText" Text="Exclude"
+                                                               FontSize="9.5" FontWeight="SemiBold"
+                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                            </Grid>
                                             </Border>
-                                            <Border Grid.Column="0" Background="Transparent" Cursor="Hand"
-                                                    PointerPressed="OnIncludeConditionPressed">
-                                                <TextBlock x:Name="IncludeConditionText" Text="Include"
-                                                           FontSize="11" FontWeight="SemiBold"
-                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                            </Border>
-                                            <Border Grid.Column="1" Background="Transparent" Cursor="Hand"
-                                                    PointerPressed="OnExcludeConditionPressed">
-                                                <TextBlock x:Name="ExcludeConditionText" Text="Exclude"
-                                                           FontSize="11" FontWeight="SemiBold"
-                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                            </Border>
+                                            <Button x:Name="AddFilterGroupButton"
+                                                    Grid.Column="2"
+                                                    Click="OnAddFilterGroupClicked"
+                                                    Width="26" Height="24"
+                                                    Padding="0"
+                                                    HorizontalAlignment="Right"
+                                                    HorizontalContentAlignment="Center"
+                                                    VerticalContentAlignment="Center"
+                                                    Background="Transparent"
+                                                    BorderThickness="0"
+                                                    IsEnabled="False"
+                                                    ToolTip.Tip="Add set">
+                                                <TextBlock Text="+" FontSize="17" Margin="0,-2,0,0"
+                                                           HorizontalAlignment="Center"
+                                                           VerticalAlignment="Center"/>
+                                            </Button>
                                         </Grid>
-                                    </Border>
-                                </Grid>
+
+                                        <Rectangle Height="1" Fill="{DynamicResource Theme.Brush.Divider}"/>
+
+                                        <TextBlock x:Name="CurrentSetEmptyText"
+                                                   Text="Select genres or tags below."
+                                                   FontSize="10.5"
+                                                   Opacity="0.5"/>
+                                        <StackPanel x:Name="CurrentSetGenresRow" IsVisible="False" Spacing="2">
+                                            <TextBlock Text="GENRES" FontSize="9" FontWeight="SemiBold"
+                                                       Opacity="0.42" LetterSpacing="0.8"/>
+                                            <TextBlock x:Name="CurrentSetGenresText"
+                                                       FontSize="10.5"
+                                                       Foreground="{DynamicResource Theme.Brush.TextSecondary}"
+                                                       TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                        <StackPanel x:Name="CurrentSetTagsRow" IsVisible="False" Spacing="2">
+                                            <TextBlock Text="TAGS" FontSize="9" FontWeight="SemiBold"
+                                                       Opacity="0.42" LetterSpacing="0.8"/>
+                                            <TextBlock x:Name="CurrentSetTagsText"
+                                                       FontSize="10.5"
+                                                       Foreground="{DynamicResource Theme.Brush.TextSecondary}"
+                                                       TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
 
                                 <ScrollViewer HorizontalScrollBarVisibility="Disabled">
                                     <StackPanel x:Name="FilterBuilderPanel" Spacing="12"/>

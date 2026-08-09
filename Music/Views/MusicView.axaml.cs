@@ -1649,9 +1649,11 @@ public partial class MusicView : UserControl
     {
         _conditionGenreCtrl = new MultiSelectFilterControl { Placeholder = "All genres" };
         _conditionGenreCtrl.SetItems(GenreFilterOptions());
+        _conditionGenreCtrl.SelectionChanged += (_, _) => UpdateCurrentSetSummary();
 
         _conditionTagCtrl = new MultiSelectFilterControl { Placeholder = "All tags" };
         _conditionTagCtrl.SetItems(TagFilterOptions());
+        _conditionTagCtrl.SelectionChanged += (_, _) => UpdateCurrentSetSummary();
 
         _conditionGenreSection = CreateGenreFilterSection(_conditionGenreCtrl);
         _conditionTagSection = CreateTagFilterSection(_conditionTagCtrl);
@@ -1660,6 +1662,7 @@ public partial class MusicView : UserControl
         FilterBuilderPanel.Children.Add(_conditionGenreSection.Control);
         FilterBuilderPanel.Children.Add(_conditionTagSection.Control);
         SetConditionMode(exclude: false);
+        UpdateCurrentSetSummary();
     }
 
     private void AddConditionFromBuilder()
@@ -1714,7 +1717,7 @@ public partial class MusicView : UserControl
     {
         _conditionNegate = exclude;
         if (ConditionModeIndicator.RenderTransform is TranslateTransform transform)
-            transform.X = exclude ? 81 : 0;
+            transform.X = exclude ? 59 : 0;
         ConditionModeIndicator.Background = exclude
             ? ThemeResources.Brush("Theme.Brush.DangerSurface")
             : ThemeResources.Brush("Theme.Brush.Success");
@@ -1733,6 +1736,30 @@ public partial class MusicView : UserControl
     {
         _conditionGenreSection?.Refresh();
         _conditionTagSection?.Refresh();
+        UpdateCurrentSetSummary();
+    }
+
+    private void UpdateCurrentSetSummary()
+    {
+        var genres = _conditionGenreCtrl?.SelectedItems
+            .Select(DisplayGenreFilterName)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Order(StringComparer.OrdinalIgnoreCase)
+            .ToList() ?? [];
+        var tags = _conditionTagCtrl?.SelectedItems
+            .Select(DisplayTagFilterName)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Order(StringComparer.OrdinalIgnoreCase)
+            .ToList() ?? [];
+
+        CurrentSetGenresRow.IsVisible = genres.Count > 0;
+        CurrentSetTagsRow.IsVisible = tags.Count > 0;
+        CurrentSetGenresText.Text = FormatConditionValues(genres);
+        CurrentSetTagsText.Text = FormatConditionValues(tags);
+
+        var hasSelection = genres.Count > 0 || tags.Count > 0;
+        CurrentSetEmptyText.IsVisible = !hasSelection;
+        AddFilterGroupButton.IsEnabled = hasSelection;
     }
 
     private void RebuildFilterConditionsPanel()
