@@ -23,6 +23,16 @@
             <Setter Property="HorizontalContentAlignment" Value="Center"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
+        <Style Selector="Button.bare-add">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+        <Style Selector="Button.bare-add:pointerover">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource Theme.Brush.TextStrong}"/>
+        </Style>
         <Style Selector="ToggleButton.completion-filter">
             <Setter Property="Height" Value="34"/>
             <Setter Property="HorizontalAlignment" Value="Stretch"/>
@@ -780,14 +790,11 @@
                                                    VerticalAlignment="Center"/>
                                         <Button Grid.Column="1"
                                                 x:Name="AddPresetButton"
+                                                Classes="bare-add"
                                                 Click="OnAddPresetClicked"
                                                 Width="28"
                                                 Height="28"
                                                 Padding="0"
-                                                Background="{DynamicResource Theme.Brush.Surface}"
-                                                BorderBrush="{DynamicResource Theme.Brush.BorderStrong}"
-                                                BorderThickness="1"
-                                                CornerRadius="6"
                                                 HorizontalContentAlignment="Center"
                                                 VerticalContentAlignment="Center"
                                                 ToolTip.Tip="Create preset">
@@ -1053,14 +1060,13 @@
                                             </Border>
                                             <Button x:Name="AddFilterGroupButton"
                                                     Grid.Column="2"
+                                                    Classes="bare-add"
                                                     Click="OnAddFilterGroupClicked"
                                                     Width="26" Height="24"
                                                     Padding="0"
                                                     HorizontalAlignment="Right"
                                                     HorizontalContentAlignment="Center"
                                                     VerticalContentAlignment="Center"
-                                                    Background="Transparent"
-                                                    BorderThickness="0"
                                                     IsEnabled="False"
                                                     ToolTip.Tip="Add set">
                                                 <TextBlock Text="+" FontSize="17" Margin="0,-2,0,0"
