@@ -147,11 +147,11 @@
                     <Border Width="2"
                             Height="20"
                             CornerRadius="1"
-                            Background="#705733A0"/>
-                    <StackPanel Orientation="Horizontal" Margin="0,4,0,0" Spacing="12" VerticalAlignment="Center">
+                            Background="#5733A0"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,6,0,0" Spacing="12" VerticalAlignment="Center">
                         <TextBlock Text="LIBRARY"
                                    FontFamily="Consolas"
-                                   FontSize="12"
+                                   FontSize="11"
                                    FontWeight="SemiBold"
                                    Foreground="{DynamicResource Theme.Brush.TextPrimary}"
                                    LetterSpacing="1.2"
