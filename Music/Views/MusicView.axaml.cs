@@ -139,6 +139,7 @@ public partial class MusicView : UserControl
     public MusicView()
     {
         InitializeComponent();
+        MoveFilterDrawerToRootOverlay();
         var appAmbientGradient = (LinearGradientBrush)AppAtmosphereTint.Fill!;
         _appAmbientPrimaryStop = appAmbientGradient.GradientStops[0];
         _appAmbientSecondaryStop = appAmbientGradient.GradientStops[1];
@@ -1243,6 +1244,7 @@ public partial class MusicView : UserControl
     private void OnToggleFiltersClicked(object? sender, RoutedEventArgs e)
     {
         _filterPanelVisible = !_filterPanelVisible;
+        UpdateSettingsLayout();
         FilterDrawer.IsVisible = _filterPanelVisible;
         FiltersToggleBtn.Opacity = _filterPanelVisible ? 1.0 : 0.86;
     }
@@ -2371,7 +2373,18 @@ public partial class MusicView : UserControl
 
     private void UpdateSettingsLayout()
     {
-        SettingsOverlay.Margin = new Thickness(0, 0, 0, PlayerBar.Bounds.Height);
+        var playerClearance = new Thickness(0, 0, 0, PlayerBar.Bounds.Height);
+        SettingsOverlay.Margin = playerClearance;
+        FilterDrawer.Margin = playerClearance;
+    }
+
+    private void MoveFilterDrawerToRootOverlay()
+    {
+        if (FilterDrawer.Parent is not Panel currentParent)
+            return;
+
+        currentParent.Children.Remove(FilterDrawer);
+        RootSurface.Children.Add(FilterDrawer);
     }
 
     private void ApplyAppearanceSettings(AppearanceSettings settings, bool refreshTrackRows)

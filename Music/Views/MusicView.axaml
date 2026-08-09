@@ -167,7 +167,7 @@
         </Style>
     </UserControl.Styles>
 
-    <Panel>
+    <Panel x:Name="RootSurface">
     <Rectangle Fill="{DynamicResource Theme.Brush.Background}" IsHitTestVisible="False"/>
     <views:FocusedArtworkImage x:Name="AppArtworkPreviousBackground"
            IsVisible="False"
