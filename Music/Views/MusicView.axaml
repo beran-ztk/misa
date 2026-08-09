@@ -411,11 +411,11 @@
                     Padding="0"
                     Background="Transparent"
                     ClipToBounds="False"
-                    CornerRadius="10,10,0,0"
+                    CornerRadius="0,0,0,0"
                     BorderThickness="0"
                     PointerPressed="OnPlayerBarPointerPressed"
                     BoxShadow="0 -6 18 2 #76000000">
-                <Border CornerRadius="10,10,0,0"
+                <Border CornerRadius="0,0,0,0"
                         ClipToBounds="True">
                     <Panel>
                         <Image x:Name="PlayerArtworkPreviousBackground"
@@ -449,12 +449,12 @@
                             </Image.Effect>
                         </Image>
                         <Border Background="#8E2A241A"
-                                CornerRadius="10,10,0,0"
+                                CornerRadius="0,0,0,0"
                                 HorizontalAlignment="Stretch"
                                 VerticalAlignment="Stretch"
                                 IsHitTestVisible="False"/>
                         <Border x:Name="PlayerAtmosphereTint"
-                                CornerRadius="10,10,0,0"
+                                CornerRadius="0,0,0,0"
                                 HorizontalAlignment="Stretch"
                                 VerticalAlignment="Stretch"
                                 IsHitTestVisible="False">
@@ -476,7 +476,7 @@
                                 IsHitTestVisible="False"/>
                         <Border x:Name="PlayerTopGlow"
                                 Height="0"
-                                CornerRadius="10,10,0,0"
+                                CornerRadius="0,0,0,0"
                                 HorizontalAlignment="Stretch"
                                 VerticalAlignment="Top"
                                 Background="#00000000"
