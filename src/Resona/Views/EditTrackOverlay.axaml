@@ -85,10 +85,22 @@
         </Panel.Styles>
 
         <Border x:Name="EditorSurface"
-                Background="#EA1B1914"
+                Background="#F2121212"
                 ZIndex="20">
 
             <Grid RowDefinitions="Auto,1,Auto,1,*">
+                <Rectangle x:Name="EditorAtmosphereTint"
+                           Grid.RowSpan="5"
+                           Opacity="0.12"
+                           IsHitTestVisible="False">
+                    <Rectangle.Fill>
+                        <LinearGradientBrush StartPoint="100%,100%" EndPoint="15%,10%">
+                            <GradientStop Color="#D0545FAF" Offset="0"/>
+                            <GradientStop Color="#90734FA8" Offset="0.48"/>
+                            <GradientStop Color="#00000000" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
 
                 <Grid Grid.Row="0"
                       ColumnDefinitions="*,Auto"

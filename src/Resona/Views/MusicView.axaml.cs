@@ -3564,8 +3564,11 @@ public partial class MusicView : UserControl
             (28 + artworkLift * 20 + (energy * 32 + treble * 12) * colorReaction) * atmosphere);
         _appAmbientSecondaryStop.Color = WithAlpha(secondary,
             (16 + artworkLift * 16 + energy * 20 * colorReaction) * atmosphere);
-        _filterAmbientPrimaryStop.Color = WithAlpha(primary, 220);
-        _filterAmbientSecondaryStop.Color = WithAlpha(secondary, 150);
+        var overlayPrimary = WithAlpha(primary, 220);
+        var overlaySecondary = WithAlpha(secondary, 150);
+        _filterAmbientPrimaryStop.Color = overlayPrimary;
+        _filterAmbientSecondaryStop.Color = overlaySecondary;
+        EditTrackOverlay.SetAtmosphereColors(overlayPrimary, overlaySecondary);
         _playerAmbientPrimaryStop.Color = WithAlpha(primary,
             (34 + artworkLift * 24 + (energy * 34 + bass * 10) * colorReaction) * atmosphere);
         _playerAmbientSecondaryStop.Color = WithAlpha(secondary,

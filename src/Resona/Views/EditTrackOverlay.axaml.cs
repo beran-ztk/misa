@@ -89,6 +89,16 @@ public partial class EditTrackOverlay : UserControl
         _analysisElapsedTimer.Tick += (_, _) => UpdateAnalysisElapsedTime();
     }
 
+    public void SetAtmosphereColors(Color primary, Color secondary)
+    {
+        if (EditorAtmosphereTint.Fill is not LinearGradientBrush gradient
+            || gradient.GradientStops.Count < 2)
+            return;
+
+        gradient.GradientStops[0].Color = primary;
+        gradient.GradientStops[1].Color = secondary;
+    }
+
     public void Open(MusicTrack track, bool analyzeAfterOpening = false, double backdropFocus = 0.5)
     {
         var motionGeneration = ++_motionGeneration;
