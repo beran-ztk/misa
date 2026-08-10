@@ -348,7 +348,7 @@
                      Background="Transparent"
                      BorderThickness="0"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                     Padding="0,8">
+                     Padding="6,8">
                 <ListBox.ItemsPanel>
                     <ItemsPanelTemplate>
                         <VirtualizingStackPanel HorizontalAlignment="Stretch"/>
@@ -549,7 +549,7 @@
                     CornerRadius="0,0,0,0"
                     BorderThickness="0"
                     PointerPressed="OnPlayerBarPointerPressed"
-                    BoxShadow="0 -14 36 6 #CC000000">
+                    BoxShadow="0 -14 36 6 #CC000000, inset 0 10 20 4 #A0000000">
                 <Border CornerRadius="0,0,0,0"
                         ClipToBounds="True">
                     <Panel>
