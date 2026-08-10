@@ -7,11 +7,9 @@
     <Panel>
         <Panel.Styles>
             <Style Selector="Border.edit-section">
-                <Setter Property="Background" Value="#242119"/>
-                <Setter Property="BorderBrush" Value="{DynamicResource Theme.Brush.BorderSubtle}"/>
-                <Setter Property="BorderThickness" Value="1"/>
-                <Setter Property="CornerRadius" Value="7"/>
-                <Setter Property="Padding" Value="12"/>
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Padding" Value="12,8"/>
             </Style>
             <Style Selector="TextBox">
                 <Setter Property="Background" Value="#E6171611"/>
@@ -58,11 +56,12 @@
                 <Setter Property="BorderBrush" Value="{DynamicResource Theme.Brush.BorderStrong}"/>
             </Style>
             <Style Selector="ToggleButton.edit-chip:pointerover">
-                <Setter Property="Background" Value="{DynamicResource Theme.Brush.SurfaceHover}"/>
-                <Setter Property="BorderBrush" Value="{DynamicResource Theme.Brush.Accent}"/>
+                <Setter Property="Background" Value="#14FFFFFF"/>
+                <Setter Property="BorderBrush" Value="#68FFFFFF"/>
             </Style>
             <Style Selector="ToggleButton.edit-chip:checked:pointerover">
-                <Setter Property="Background" Value="{DynamicResource Theme.Brush.SurfaceSelected}"/>
+                <Setter Property="Background" Value="#2EFFFFFF"/>
+                <Setter Property="BorderBrush" Value="#A0FFFFFF"/>
             </Style>
             <Style Selector="Button.edit-choice:pointerover">
                 <Setter Property="Background" Value="{DynamicResource Theme.Brush.SurfaceHover}"/>
@@ -71,7 +70,7 @@
         </Panel.Styles>
 
         <Border x:Name="EditorSurface"
-                Background="#D81B1914"
+                Background="#EA1B1914"
                 ZIndex="20">
 
             <Grid RowDefinitions="Auto,1,*">
@@ -133,7 +132,7 @@
 
                         <Border Classes="edit-section">
                             <StackPanel Spacing="8">
-                                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10" Height="28">
                                     <TextBlock Text="Information" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" />
                                     <TextBlock x:Name="TrackUsageText"
                                                Grid.Column="1"
@@ -142,22 +141,22 @@
                                                VerticalAlignment="Center"
                                                HorizontalAlignment="Right"
                                                TextTrimming="CharacterEllipsis" />
-                                    <Button x:Name="EditInformationButton"
-                                            Grid.Column="2"
-                                            Click="OnEditInformationClicked"
-                                            ToolTip.Tip="Edit track information"
-                                            Width="30" Height="28" Padding="0"
-                                            Background="Transparent" BorderThickness="0"
-                                            Opacity="0.78">
-                                        <Image Source="{SvgImage /Assets/pencil-simple.svg}" Width="15" Height="15" />
-                                    </Button>
                                 </Grid>
 
-                                <Grid ColumnDefinitions="104,*,Auto" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="5" ColumnSpacing="6">
+                                <Grid ColumnDefinitions="104,*,30" RowDefinitions="30,30,30,30" ColumnSpacing="6">
                                     <TextBlock Grid.Row="0" Text="Title" FontSize="10.5" Opacity="0.58" VerticalAlignment="Center" />
-                                    <TextBlock x:Name="TitleDisplayText" Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" FontSize="12.5" FontWeight="SemiBold"
+                                    <TextBlock x:Name="TitleDisplayText" Grid.Row="0" Grid.Column="1" FontSize="12.5" FontWeight="SemiBold"
                                                VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-                                    <TextBox x:Name="TitleBox" Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" IsVisible="False" MinHeight="28" />
+                                    <TextBox x:Name="TitleBox" Grid.Row="0" Grid.Column="1" IsVisible="False" Height="28" />
+                                    <Button x:Name="EditInformationButton"
+                                            Grid.Row="0" Grid.Column="2"
+                                            Click="OnEditInformationClicked"
+                                            ToolTip.Tip="Edit track information"
+                                            Width="28" Height="28" Padding="0"
+                                            Background="Transparent" BorderThickness="0"
+                                            Opacity="0.78">
+                                        <Image Source="{SvgImage /Assets/pencil-simple.svg}" Width="14" Height="14" />
+                                    </Button>
 
                                     <TextBlock Grid.Row="1" Text="Channel" FontSize="10.5" Opacity="0.58" VerticalAlignment="Center" />
                                     <TextBlock x:Name="ChannelDisplayText" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" FontSize="11.5"
@@ -187,22 +186,22 @@
                                 <Grid ColumnDefinitions="104,*" RowDefinitions="Auto,Auto" RowSpacing="7">
                                     <TextBlock Text="Visibility" FontSize="10.5" Opacity="0.58" VerticalAlignment="Center" />
                                     <Border Grid.Column="1"
-                                            Width="188"
-                                            Height="32"
+                                            Width="148"
+                                            Height="26"
                                             HorizontalAlignment="Left"
-                                            Background="{DynamicResource Theme.Brush.Surface}"
-                                            BorderBrush="{DynamicResource Theme.Brush.BorderStrong}"
+                                            Background="Transparent"
+                                            BorderBrush="#42FFFFFF"
                                             BorderThickness="1"
-                                            CornerRadius="7"
+                                            CornerRadius="5"
                                             ClipToBounds="True">
-                                        <Grid ColumnDefinitions="93,93">
+                                        <Grid ColumnDefinitions="73,73">
                                             <Border x:Name="VisibilitySelectionIndicator"
                                                     Grid.ColumnSpan="2"
-                                                    Width="93"
+                                                    Width="73"
                                                     HorizontalAlignment="Left"
-                                                    Background="{DynamicResource Theme.Brush.Success}"
+                                                    Background="#34FFFFFF"
                                                     BorderThickness="0"
-                                                    CornerRadius="6,0,0,6"
+                                                    CornerRadius="4,0,0,4"
                                                     IsHitTestVisible="False">
                                                 <Border.RenderTransform>
                                                     <TranslateTransform>
@@ -238,23 +237,32 @@
                                     </Grid>
                                 </Grid>
 
-                                <Grid x:Name="AudioAnalysisSection" ColumnDefinitions="*,*,*" ColumnSpacing="8" Margin="0,3,0,0">
-                                    <Border x:Name="BpmMetricCard" Grid.Column="0" Background="#2A271F" CornerRadius="5" Padding="10,7">
-                                        <Grid ColumnDefinitions="*,Auto">
-                                            <TextBlock Text="Tempo" FontSize="10.5" Opacity="0.62" />
-                                            <TextBlock x:Name="BpmText" Grid.Column="1" FontSize="12" FontWeight="SemiBold" />
+                                <Grid x:Name="AudioAnalysisSection" RowDefinitions="Auto,Auto,Auto" RowSpacing="3" Margin="0,5,0,0">
+                                    <Border x:Name="BpmMetricCard" Background="Transparent" Padding="0,4">
+                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                                            <StackPanel Spacing="1">
+                                                <TextBlock Text="Tempo" FontSize="10.5" FontWeight="SemiBold" />
+                                                <TextBlock x:Name="BpmInsightText" FontSize="9.5" Opacity="0.56" TextWrapping="Wrap" />
+                                            </StackPanel>
+                                            <TextBlock x:Name="BpmText" Grid.Column="1" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" />
                                         </Grid>
                                     </Border>
-                                    <Border x:Name="LoudnessMetricCard" Grid.Column="1" Background="#2A271F" CornerRadius="5" Padding="10,7">
-                                        <Grid ColumnDefinitions="*,Auto">
-                                            <TextBlock Text="Loudness" FontSize="10.5" Opacity="0.62" />
-                                            <TextBlock x:Name="IntegratedLoudnessText" Grid.Column="1" FontSize="12" FontWeight="SemiBold" />
+                                    <Border x:Name="LoudnessMetricCard" Grid.Row="1" Background="Transparent" Padding="0,4">
+                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                                            <StackPanel Spacing="1">
+                                                <TextBlock Text="Loudness" FontSize="10.5" FontWeight="SemiBold" />
+                                                <TextBlock x:Name="LoudnessInsightText" FontSize="9.5" Opacity="0.56" TextWrapping="Wrap" />
+                                            </StackPanel>
+                                            <TextBlock x:Name="IntegratedLoudnessText" Grid.Column="1" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" />
                                         </Grid>
                                     </Border>
-                                    <Border x:Name="DynamicsMetricCard" Grid.Column="2" Background="#2A271F" CornerRadius="5" Padding="10,7">
-                                        <Grid ColumnDefinitions="*,Auto">
-                                            <TextBlock Text="Dynamics" FontSize="10.5" Opacity="0.62" />
-                                            <TextBlock x:Name="LoudnessRangeText" Grid.Column="1" FontSize="12" FontWeight="SemiBold" />
+                                    <Border x:Name="DynamicsMetricCard" Grid.Row="2" Background="Transparent" Padding="0,4">
+                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                                            <StackPanel Spacing="1">
+                                                <TextBlock Text="Dynamics" FontSize="10.5" FontWeight="SemiBold" />
+                                                <TextBlock x:Name="DynamicsInsightText" FontSize="9.5" Opacity="0.56" TextWrapping="Wrap" />
+                                            </StackPanel>
+                                            <TextBlock x:Name="LoudnessRangeText" Grid.Column="1" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" />
                                         </Grid>
                                     </Border>
                                 </Grid>
@@ -276,8 +284,8 @@
                                         <TextBlock Grid.Column="1" Text="Emotional character" FontSize="10.5" FontWeight="SemiBold"
                                                    VerticalAlignment="Center" />
                                     </Grid>
-                                    <StackPanel x:Name="MirexPrimaryPanel" Spacing="4" Margin="17,0,0,0" />
-                                    <StackPanel x:Name="MirexAdditionalPanel" IsVisible="False" Spacing="5" Margin="17,0,0,0" />
+                                    <StackPanel x:Name="MirexPrimaryPanel" Spacing="4" Margin="22,0,0,0" />
+                                    <StackPanel x:Name="MirexAdditionalPanel" IsVisible="False" Spacing="5" Margin="22,0,0,0" />
                                 </StackPanel>
                             </StackPanel>
                         </Border>
@@ -285,10 +293,7 @@
                         <Border Classes="edit-section">
                             <StackPanel Spacing="9">
                             <TextBlock Text="Classification" FontSize="13" FontWeight="SemiBold" />
-                            <Grid ColumnDefinitions="*,Auto">
-                                <TextBlock Text="Tags" FontSize="11" Opacity="0.68" />
-                                <TextBlock x:Name="TagSummaryText" Grid.Column="1" FontSize="10.5" Opacity="0.5" />
-                            </Grid>
+                            <TextBlock Text="Tags" FontSize="11" Opacity="0.68" />
                             <StackPanel x:Name="TagsPanel" Spacing="9" />
                             <StackPanel x:Name="SuggestedTagsSection" Spacing="5" Margin="0,0,0,12" IsVisible="False">
                                 <TextBlock Text="Suggested tags" FontSize="11" Opacity="0.68" />

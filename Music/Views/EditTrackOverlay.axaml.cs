@@ -276,7 +276,6 @@ public partial class EditTrackOverlay : UserControl
                 btn.IsCheckedChanged += (_, _) =>
                 {
                     ApplyTagVisual(btn);
-                    UpdateTagSummary();
                     UpdateSaveButton();
                 };
 
@@ -289,12 +288,10 @@ public partial class EditTrackOverlay : UserControl
         }
 
         TagsPanel.Children.Add(rows);
-        UpdateTagSummary();
     }
 
     private static ToggleButton CreateTagButton(Tag tag, bool isSelected)
     {
-        var content = new Grid();
         var label = new TextBlock
         {
             Text = tag.Name,
@@ -305,20 +302,10 @@ public partial class EditTrackOverlay : UserControl
             VerticalAlignment = VerticalAlignment.Center,
             TextAlignment = TextAlignment.Center
         };
-        content.Children.Add(label);
-        var check = new TextBlock
-        {
-            Text = "✓",
-            FontSize = 11,
-            Foreground = ThemeResources.Brush("Theme.Brush.Accent"),
-            HorizontalAlignment = HorizontalAlignment.Right,
-            VerticalAlignment = VerticalAlignment.Center
-        };
-        content.Children.Add(check);
 
         var button = new ToggleButton
         {
-            Content = content,
+            Content = label,
             IsChecked = isSelected,
             Height = 34,
             Padding = new Avalonia.Thickness(9, 3),
@@ -326,7 +313,7 @@ public partial class EditTrackOverlay : UserControl
             HorizontalAlignment = HorizontalAlignment.Stretch,
             HorizontalContentAlignment = HorizontalAlignment.Stretch,
             VerticalContentAlignment = VerticalAlignment.Center,
-            Tag = new TagButtonVisual(label, check)
+            Tag = label
         };
         button.Classes.Add("edit-chip");
         ApplyTagVisual(button);
@@ -337,27 +324,16 @@ public partial class EditTrackOverlay : UserControl
     {
         var selected = button.IsChecked == true;
         button.Background = selected
-            ? ThemeResources.Brush("Theme.Brush.AccentSurface")
+            ? new SolidColorBrush(Color.FromArgb(46, 255, 255, 255))
             : Brushes.Transparent;
-        button.BorderBrush = ThemeResources.Brush(selected
-            ? "Theme.Brush.Accent"
-            : "Theme.Brush.BorderSubtle");
+        button.BorderBrush = new SolidColorBrush(selected
+            ? Color.FromArgb(160, 255, 255, 255)
+            : Color.FromArgb(52, 255, 255, 255));
         button.BorderThickness = new Avalonia.Thickness(1);
-        if (button.Tag is TagButtonVisual visual)
-        {
-            visual.Label.Foreground = ThemeResources.Brush(selected
+        if (button.Tag is TextBlock label)
+            label.Foreground = ThemeResources.Brush(selected
                 ? "Theme.Brush.TextStrong"
                 : "Theme.Brush.TextPrimary");
-            visual.Check.IsVisible = selected;
-        }
-    }
-
-    private void UpdateTagSummary()
-    {
-        var selectedCount = _tagChips.Count(item => item.Btn.IsChecked == true);
-        TagSummaryText.Text = selectedCount == 0
-            ? "No tags"
-            : $"{selectedCount} selected";
     }
 
     private void ShowTagSuggestions(MusicTrack track)
@@ -476,7 +452,7 @@ public partial class EditTrackOverlay : UserControl
             var isFilled = selected is not null && visual.Rating.SortOrder <= selectedSortOrder;
             visual.Icon.Text = isFilled ? "★" : "☆";
             visual.Icon.Foreground = isFilled
-                ? selectedBrush
+                ? RatingForeground(visual.Rating.Name)
                 : ThemeResources.Brush("Theme.Brush.TextMuted");
             visual.Button.Opacity = isFilled ? 1 : 0.48;
         }
@@ -549,10 +525,10 @@ public partial class EditTrackOverlay : UserControl
     {
         _isPublic = isPublic;
         if (VisibilitySelectionIndicator.RenderTransform is TranslateTransform indicatorTransform)
-            indicatorTransform.X = isPublic ? 0 : 93;
+            indicatorTransform.X = isPublic ? 0 : 73;
         VisibilitySelectionIndicator.CornerRadius = isPublic
-            ? new CornerRadius(6, 0, 0, 6)
-            : new CornerRadius(0, 6, 6, 0);
+            ? new CornerRadius(4, 0, 0, 4)
+            : new CornerRadius(0, 4, 4, 0);
         PublicVisibilityText.Foreground = ThemeResources.Brush(isPublic
             ? "Theme.Brush.TextStrong"
             : "Theme.Brush.TextMuted");
@@ -671,6 +647,9 @@ public partial class EditTrackOverlay : UserControl
         var dynamicsInsight = analysis.LoudnessRange is double loudnessRange
             ? GetLoudnessRangeInsight(loudnessRange)
             : "Loudness variation could not be determined.";
+        BpmInsightText.Text = tempoInsight;
+        LoudnessInsightText.Text = loudnessInsight;
+        DynamicsInsightText.Text = dynamicsInsight;
         ToolTip.SetTip(BpmMetricCard, tempoInsight);
         ToolTip.SetTip(LoudnessMetricCard, loudnessInsight);
         ToolTip.SetTip(DynamicsMetricCard, dynamicsInsight);
@@ -1439,7 +1418,6 @@ public partial class EditTrackOverlay : UserControl
         };
     }
 
-    private sealed record TagButtonVisual(TextBlock Label, TextBlock Check);
 
     private void OnCloseClicked(object? sender, RoutedEventArgs e) => CloseOverlay();
 
