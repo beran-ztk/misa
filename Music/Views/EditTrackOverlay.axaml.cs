@@ -701,11 +701,12 @@ public partial class EditTrackOverlay : UserControl
                 Background = Brushes.Transparent,
                 BorderThickness = new Avalonia.Thickness(0),
                 Padding = new Avalonia.Thickness(0, 3),
-                Opacity = enabled ? 1 : 0.48,
-                Cursor = new Cursor(StandardCursorType.Hand)
+                Opacity = enabled ? 1 : 0.48
             };
             var content = new Grid
             {
+                ColumnDefinitions = new ColumnDefinitions("*,22"),
+                ColumnSpacing = 10,
                 RowDefinitions = new RowDefinitions(isManualSelection ? "Auto" : "Auto,Auto"),
                 RowSpacing = 6
             };
@@ -726,7 +727,7 @@ public partial class EditTrackOverlay : UserControl
             {
                 detail = new TextBlock
                 {
-                    Text = "Edit manually",
+                    Text = "no model detection",
                     FontSize = 10.5,
                     Foreground = ThemeResources.Brush("Theme.Brush.TextStrong"),
                     VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
@@ -760,17 +761,29 @@ public partial class EditTrackOverlay : UserControl
             Grid.SetColumn(detail, 1);
             row.Children.Add(detail);
             content.Children.Add(row);
-            container.Child = content;
-            container.PointerPressed += (_, _) =>
+            var remove = new TextBlock
             {
-                if (_pendingEnabledModelGenreIds.Contains(assignment.GenreId))
-                    _pendingEnabledModelGenreIds.Remove(assignment.GenreId);
-                else
-                    _pendingEnabledModelGenreIds.Add(assignment.GenreId);
+                Text = "×",
+                Width = 22,
+                FontSize = 16,
+                Foreground = ThemeResources.Brush("Theme.Brush.TextStrong"),
+                Opacity = 0.56,
+                TextAlignment = TextAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                Cursor = new Cursor(StandardCursorType.Hand)
+            };
+            Grid.SetColumn(remove, 1);
+            Grid.SetRowSpan(remove, isManualSelection ? 1 : 2);
+            content.Children.Add(remove);
+            container.Child = content;
+            remove.PointerPressed += (_, e) =>
+            {
+                _pendingEnabledModelGenreIds.Remove(assignment.GenreId);
                 ShowModelSelectedGenres(track);
                 ShowDetectedGenres(track);
                 RebuildModelGenreChoices();
                 UpdateSaveButton();
+                e.Handled = true;
             };
             IEnumerable<int> tooltipIds = isManualSelection
                 ? new[] { assignment.GenreId }
@@ -835,8 +848,8 @@ public partial class EditTrackOverlay : UserControl
             .ToList();
         _visibleDetectedModelGenreIds = detected.Select(prediction => prediction.ModelSubgenreId).ToHashSet();
         DetectedGenresSection.IsVisible = detected.Count > 0;
-        DetectedGenresCountText.Text = detected.Count.ToString();
-        DetectedGenresChevron.Text = _areDetectedGenresExpanded ? "⌄" : "›";
+        DetectedGenresCountText.Text = $"({detected.Count})";
+        ((RotateTransform)DetectedGenresChevron.RenderTransform!).Angle = _areDetectedGenresExpanded ? 90 : 0;
         DetectedGenresPanel.IsVisible = _areDetectedGenresExpanded;
         DetectedGenresPanel.Children.Clear();
         if (!_areDetectedGenresExpanded)
@@ -854,7 +867,13 @@ public partial class EditTrackOverlay : UserControl
                 Padding = new Avalonia.Thickness(0, 4),
                 Cursor = new Cursor(StandardCursorType.Hand)
             };
-            var content = new Grid { RowDefinitions = new RowDefinitions("Auto,Auto"), RowSpacing = 5 };
+            var content = new Grid
+            {
+                ColumnDefinitions = new ColumnDefinitions("*,20"),
+                ColumnSpacing = 9,
+                RowDefinitions = new RowDefinitions("Auto,Auto"),
+                RowSpacing = 5
+            };
             var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), ColumnSpacing = 10 };
             var confidenceBrush = AnalysisColorScale.GenreConfidence(prediction.Score);
             row.Children.Add(new TextBlock
@@ -875,6 +894,19 @@ public partial class EditTrackOverlay : UserControl
             Grid.SetColumn(score, 1);
             row.Children.Add(score);
             content.Children.Add(row);
+            var add = new TextBlock
+            {
+                Text = "+",
+                Width = 20,
+                FontSize = 16,
+                Foreground = ThemeResources.Brush("Theme.Brush.TextStrong"),
+                Opacity = 0.58,
+                TextAlignment = TextAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            Grid.SetColumn(add, 1);
+            Grid.SetRowSpan(add, 2);
+            content.Children.Add(add);
 
             var detail = new Grid { ColumnDefinitions = new ColumnDefinitions("110,*"), ColumnSpacing = 8 };
             detail.Children.Add(new TextBlock

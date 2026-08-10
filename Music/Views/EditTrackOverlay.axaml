@@ -246,11 +246,21 @@
                                       Margin="0,4"
                                       Cursor="Hand"
                                       PointerPressed="OnDetectedGenresHeaderPressed">
-                                    <TextBlock x:Name="DetectedGenresChevron"
-                                               Text="›"
-                                               FontSize="17"
-                                               Opacity="0.72"
-                                               VerticalAlignment="Center" />
+                                    <Border Width="14" Height="14" VerticalAlignment="Center">
+                                        <Path x:Name="DetectedGenresChevron"
+                                              Width="5"
+                                              Height="9"
+                                              HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              Data="M 0 0 L 4 4.5 L 0 9"
+                                              Stroke="{DynamicResource Theme.Brush.TextSecondary}"
+                                              StrokeThickness="1"
+                                              RenderTransformOrigin="50%,50%">
+                                            <Path.RenderTransform>
+                                                <RotateTransform />
+                                            </Path.RenderTransform>
+                                        </Path>
+                                    </Border>
                                     <TextBlock Grid.Column="1"
                                                Text="More model detections"
                                                FontSize="11"
@@ -259,7 +269,9 @@
                                     <TextBlock x:Name="DetectedGenresCountText"
                                                Grid.Column="2"
                                                FontSize="10.5"
-                                               Opacity="0.48"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource Theme.Brush.TextSecondary}"
+                                               Opacity="0.82"
                                                VerticalAlignment="Center" />
                                 </Grid>
                                 <StackPanel x:Name="DetectedGenresPanel"
