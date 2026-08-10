@@ -46,6 +46,16 @@ public partial class ImportOverlay : UserControl
         };
     }
 
+    public void SetAtmosphereColors(Color primary, Color secondary)
+    {
+        if (ImportAtmosphereTint.Fill is not LinearGradientBrush gradient
+            || gradient.GradientStops.Count < 2)
+            return;
+
+        gradient.GradientStops[0].Color = primary;
+        gradient.GradientStops[1].Color = secondary;
+    }
+
     public void Open()
     {
         StatusText.Text = string.Empty;
@@ -348,6 +358,7 @@ public partial class ImportOverlay : UserControl
                     MinHeight = 28,
                     VerticalContentAlignment = Avalonia.Layout.VerticalAlignment.Center
                 };
+                search.Classes.Add("compact-search");
                 controls.Children.Add(search);
                 var limit = new TextBox
                 {
@@ -357,6 +368,7 @@ public partial class ImportOverlay : UserControl
                     MinHeight = 28,
                     VerticalContentAlignment = Avalonia.Layout.VerticalAlignment.Center
                 };
+                limit.Classes.Add("compact-search");
                 Grid.SetColumn(limit, 1);
                 controls.Children.Add(limit);
                 panel.Children.Add(controls);

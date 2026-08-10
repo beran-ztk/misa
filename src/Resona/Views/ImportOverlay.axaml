@@ -1,15 +1,65 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="Resona.Views.ImportOverlay"
-             Background="#D21B1914">
+             Background="#F2121212">
+    <UserControl.Styles>
+        <Style Selector="TextBox.compact-search">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="#46FFFFFF"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="CornerRadius" Value="0"/>
+            <Setter Property="Padding" Value="4,0,4,1"/>
+            <Setter Property="Foreground" Value="{DynamicResource Theme.Brush.TextPrimary}"/>
+            <Setter Property="CaretBrush" Value="{DynamicResource Theme.Brush.TextPrimary}"/>
+            <Setter Property="SelectionBrush" Value="{DynamicResource Theme.Brush.AccentSurface}"/>
+        </Style>
+        <Style Selector="TextBox.compact-search:pointerover">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="#72FFFFFF"/>
+        </Style>
+        <Style Selector="TextBox.compact-search:focus">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="#B8FFFFFF"/>
+        </Style>
+        <Style Selector="TextBox.compact-search /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="#46FFFFFF"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="CornerRadius" Value="0"/>
+        </Style>
+        <Style Selector="TextBox.compact-search:pointerover /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="#72FFFFFF"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+        </Style>
+        <Style Selector="TextBox.compact-search:focus /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="#B8FFFFFF"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="CornerRadius" Value="0"/>
+        </Style>
+    </UserControl.Styles>
+
     <Grid RowDefinitions="Auto,*">
-        <Border Grid.Row="0" Background="#C82A261D" BorderBrush="{DynamicResource Theme.Brush.Border}" BorderThickness="0,0,0,1" Padding="26,16">
+        <Rectangle x:Name="ImportAtmosphereTint"
+                   Grid.RowSpan="2"
+                   Opacity="0.12"
+                   IsHitTestVisible="False">
+            <Rectangle.Fill>
+                <LinearGradientBrush StartPoint="100%,100%" EndPoint="15%,10%">
+                    <GradientStop Color="#D0545FAF" Offset="0"/>
+                    <GradientStop Color="#90734FA8" Offset="0.48"/>
+                    <GradientStop Color="#00000000" Offset="1"/>
+                </LinearGradientBrush>
+            </Rectangle.Fill>
+        </Rectangle>
+
+        <Border Grid.Row="0" Background="Transparent" BorderBrush="{DynamicResource Theme.Brush.Border}" BorderThickness="0,0,0,1" Padding="26,16">
             <Grid ColumnDefinitions="*,Auto">
-                <StackPanel Spacing="3">
-                    <TextBlock Text="Import queue" FontSize="18" FontWeight="SemiBold"/>
-                    <TextBlock Text="Build an import plan, then let downloads and analysis run in the background."
-                               FontSize="11" Opacity="0.62"/>
-                </StackPanel>
+                <TextBlock Text="Import queue"
+                           FontSize="18"
+                           FontWeight="SemiBold"
+                           VerticalAlignment="Center"/>
                 <Button Grid.Column="1" Content="✕" Click="OnCloseClicked" Classes="icon" ToolTip.Tip="Close queue" Opacity="0.7"/>
             </Grid>
         </Border>
@@ -17,15 +67,11 @@
         <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
             <Grid ColumnDefinitions="410,*" ColumnSpacing="28" Margin="26,22,26,32">
                 <StackPanel Spacing="12">
-                    <StackPanel Spacing="3">
-                        <TextBlock Text="ADD LINKS" FontSize="10" FontWeight="SemiBold" LetterSpacing="1" Opacity="0.45"/>
-                        <TextBlock Text="Videos, playlists and YouTube mixes are expanded before anything is queued."
-                                   FontSize="11" Opacity="0.66" TextWrapping="Wrap"/>
-                    </StackPanel>
+                    <TextBlock Text="ADD LINKS" FontSize="10" FontWeight="SemiBold" LetterSpacing="1" Opacity="0.45"/>
                     <TextBox x:Name="InputUrlBox"
+                             Classes="compact-search"
                              Watermark="Paste a YouTube video, playlist or mix link…"
-                             FontSize="11"
-                             MinHeight="34"
+                             Height="32"
                              VerticalContentAlignment="Center"/>
                     <TextBlock x:Name="StatusText" FontSize="11" Opacity="0.7" TextWrapping="Wrap"/>
                     <StackPanel Spacing="8" Margin="0,10,0,0">
@@ -37,18 +83,10 @@
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Spacing="12">
-                    <StackPanel Spacing="3">
-                        <TextBlock x:Name="QueueHeaderText" Text="CURRENT QUEUE" FontSize="10" FontWeight="SemiBold" LetterSpacing="1" Opacity="0.45"/>
-                        <TextBlock Text="Queued and failed imports can be removed. Finished tracks leave this list automatically."
-                                   FontSize="11" Opacity="0.66"/>
-                    </StackPanel>
-                    <TextBlock x:Name="EmptyQueueText" Text="Nothing is waiting yet." FontSize="12" Opacity="0.5" Margin="0,14,0,0"/>
+                    <TextBlock x:Name="QueueHeaderText" Text="CURRENT QUEUE" FontSize="10" FontWeight="SemiBold" LetterSpacing="1" Opacity="0.45"/>
+                    <TextBlock x:Name="EmptyQueueText" Text="Nothing is waiting yet." FontSize="12" Opacity="0.5"/>
                     <StackPanel x:Name="QueueSources" Spacing="10"/>
-                    <StackPanel Spacing="3" Margin="0,12,0,0">
-                        <TextBlock x:Name="AnalysisQueueHeaderText" Text="ANALYSIS QUEUE" FontSize="10" FontWeight="SemiBold" LetterSpacing="1" Opacity="0.45"/>
-                        <TextBlock Text="Downloaded tracks waiting for model data."
-                                   FontSize="11" Opacity="0.66"/>
-                    </StackPanel>
+                    <TextBlock x:Name="AnalysisQueueHeaderText" Text="ANALYSIS QUEUE" FontSize="10" FontWeight="SemiBold" LetterSpacing="1" Opacity="0.45" Margin="0,12,0,0"/>
                     <Border x:Name="AnalysisServerUnavailablePanel"
                             IsVisible="False"
                             Background="#341D1717"
