@@ -112,7 +112,7 @@ public class MusicDatabase
                 download_duration_ms INTEGER NULL,
                 thumbnail           BLOB NULL,
                 analysis_disabled   INTEGER NOT NULL DEFAULT 0,
-                is_public           INTEGER NOT NULL DEFAULT 0,
+                is_public           INTEGER NOT NULL DEFAULT 1,
                 needs_reevaluation  INTEGER NOT NULL DEFAULT 0,
                 notes               TEXT NULL
             );
@@ -239,7 +239,7 @@ public class MusicDatabase
         EnsureColumn(conn, "tracks", "download_duration_ms", "INTEGER NULL");
         EnsureColumn(conn, "tracks", "thumbnail", "BLOB NULL");
         EnsureColumn(conn, "tracks", "analysis_disabled", "INTEGER NOT NULL DEFAULT 0");
-        EnsureColumn(conn, "tracks", "is_public", "INTEGER NOT NULL DEFAULT 0");
+        EnsureColumn(conn, "tracks", "is_public", "INTEGER NOT NULL DEFAULT 1");
         EnsureColumn(conn, "track_analysis", "analysis_duration_ms", "INTEGER NULL");
         EnsureColumn(conn, "model_subgenres", "description", "TEXT NULL");
         EnsureColumn(conn, "model_subgenres", "classification_hint", "TEXT NULL");
@@ -1284,8 +1284,8 @@ public class MusicDatabase
         }
 
         var trackId = InsertAndGetId(conn, tx, @"
-            INSERT INTO tracks (canonical_url, title, file_name, channel_id, rating_id, uploaded_at, downloaded_at, updated_at, duration_seconds, file_size_bytes, download_duration_ms, thumbnail)
-            VALUES ($url, $title, $fileName, $channelId, $ratingId, $uploadedAt, $downloadedAt, $updatedAt, $duration, $fileSizeBytes, $downloadDurationMs, $thumbnail)",
+            INSERT INTO tracks (canonical_url, title, file_name, channel_id, rating_id, uploaded_at, downloaded_at, updated_at, duration_seconds, file_size_bytes, download_duration_ms, thumbnail, is_public)
+            VALUES ($url, $title, $fileName, $channelId, $ratingId, $uploadedAt, $downloadedAt, $updatedAt, $duration, $fileSizeBytes, $downloadDurationMs, $thumbnail, 1)",
             ("$url", canonicalUrl),
             ("$title", title),
             ("$fileName", fileName),
@@ -1328,10 +1328,10 @@ public class MusicDatabase
         var trackId = InsertAndGetId(conn, tx, @"
             INSERT INTO tracks
                 (canonical_url, title, file_name, channel_id, rating_id, uploaded_at, downloaded_at, updated_at,
-                 duration_seconds, file_size_bytes, download_duration_ms, thumbnail, analysis_disabled, needs_reevaluation)
+                 duration_seconds, file_size_bytes, download_duration_ms, thumbnail, analysis_disabled, needs_reevaluation, is_public)
             VALUES
                 ($url, $title, $fileName, $channelId, NULL, $uploadedAt, $now, $now,
-                 $duration, $fileSize, $downloadDuration, NULL, 1, 1)",
+                 $duration, $fileSize, $downloadDuration, NULL, 1, 1, 1)",
             ("$url", video.CanonicalUrl),
             ("$title", video.Title),
             ("$fileName", fileName),

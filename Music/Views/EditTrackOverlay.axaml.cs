@@ -21,6 +21,8 @@ namespace Music.Views;
 
 public partial class EditTrackOverlay : UserControl
 {
+    private sealed record RatingButtonVisual(Rating Rating, Button Button, TextBlock Icon);
+
     private static readonly TimeSpan OpenAnimationDuration = TimeSpan.FromMilliseconds(930);
     private static readonly IEasing SlideEasing = new SplineEasing(0.25, 0.1, 0.25, 1);
 
@@ -31,6 +33,7 @@ public partial class EditTrackOverlay : UserControl
 
     private readonly List<(Tag Tag, ToggleButton Btn)> _tagChips = [];
     private readonly List<(Style Style, ToggleButton Btn)> _styleChips = [];
+    private readonly List<RatingButtonVisual> _ratingButtons = [];
 
     private Dictionary<int, List<int>> _allTrackStyleIds = [];
     private HashSet<int> _modelGenreIds = [];
@@ -40,6 +43,7 @@ public partial class EditTrackOverlay : UserControl
     private bool _areDetectedGenresExpanded;
     private bool _areFrequentManualGenresExpanded;
     private bool _areAllGenresExpanded;
+    private bool _areEmotionalCharactersExpanded;
     private int? _modelGenreFilterId;
     private string _modelGenreSearchText = string.Empty;
     private readonly DispatcherTimer _analysisElapsedTimer = new() { Interval = TimeSpan.FromSeconds(1) };
@@ -52,6 +56,7 @@ public partial class EditTrackOverlay : UserControl
     private bool _isEditingInformation;
     private int _motionGeneration;
     private bool _isClosing;
+    private int? _selectedRatingId;
     private int? _initialRatingId;
     private HashSet<int> _initialTagIds = [];
     private HashSet<int> _initialStyleIds = [];
@@ -67,11 +72,6 @@ public partial class EditTrackOverlay : UserControl
     {
         InitializeComponent();
         TitleBox.TextChanged += (_, _) => UpdateSaveButton();
-        RatingBox.SelectionChanged += (_, _) =>
-        {
-            UpdateRatingVisual();
-            UpdateSaveButton();
-        };
         _analysisElapsedTimer.Tick += (_, _) => UpdateAnalysisElapsedTime();
     }
 
@@ -84,6 +84,7 @@ public partial class EditTrackOverlay : UserControl
         _areDetectedGenresExpanded = false;
         _areFrequentManualGenresExpanded = false;
         _areAllGenresExpanded = false;
+        _areEmotionalCharactersExpanded = false;
         LoadLookups();
         Prefill(track);
         IsVisible = true;
@@ -137,7 +138,7 @@ public partial class EditTrackOverlay : UserControl
         _allTrackStyleIds = MusicLibraryService.Current.GetAllTrackStyleIds();
         StylesSection.IsVisible = _styles.Count > 0;
 
-        RatingBox.ItemsSource = _ratings.Select(r => r.Name).ToList();
+        BuildRatingButtons();
     }
 
     private void Prefill(MusicTrack track)
@@ -149,8 +150,7 @@ public partial class EditTrackOverlay : UserControl
         UpdateInformationDisplay(track);
         SetPublicSelection(track.IsPublic);
 
-        var ratingIndex = _ratings.FindIndex(r => r.Id == track.RatingId);
-        RatingBox.SelectedIndex = ratingIndex;
+        _selectedRatingId = track.RatingId;
         UpdateRatingVisual();
 
         var selectedTagIds = MusicLibraryService.Current.GetTrackTagIds(track.Id).ToHashSet();
@@ -408,10 +408,7 @@ public partial class EditTrackOverlay : UserControl
             .Select(c => c.Style.Id)
             .ToHashSet();
 
-    private int? SelectedRatingId() =>
-        RatingBox.SelectedIndex >= 0 && RatingBox.SelectedIndex < _ratings.Count
-            ? _ratings[RatingBox.SelectedIndex].Id
-            : null;
+    private int? SelectedRatingId() => _selectedRatingId;
 
     private void CaptureChangeSnapshot(
         MusicTrack track,
@@ -470,12 +467,60 @@ public partial class EditTrackOverlay : UserControl
 
     private void UpdateRatingVisual()
     {
-        var name = RatingBox.SelectedIndex >= 0 && RatingBox.SelectedIndex < _ratings.Count
-            ? _ratings[RatingBox.SelectedIndex].Name
-            : "None";
-        RatingBox.Background = ThemeResources.Brush("Theme.Brush.Input");
-        RatingBox.BorderBrush = ThemeResources.Brush("Theme.Brush.BorderStrong");
-        RatingBox.Foreground = RatingForeground(name);
+        var selected = _ratings.FirstOrDefault(rating => rating.Id == _selectedRatingId);
+        var selectedSortOrder = selected?.SortOrder ?? int.MinValue;
+        var selectedBrush = RatingForeground(selected?.Name ?? "None");
+
+        foreach (var visual in _ratingButtons)
+        {
+            var isFilled = selected is not null && visual.Rating.SortOrder <= selectedSortOrder;
+            visual.Icon.Text = isFilled ? "★" : "☆";
+            visual.Icon.Foreground = isFilled
+                ? selectedBrush
+                : ThemeResources.Brush("Theme.Brush.TextMuted");
+            visual.Button.Opacity = isFilled ? 1 : 0.48;
+        }
+
+        RatingValueText.Text = selected?.Name ?? "No rating";
+        RatingValueText.Foreground = selectedBrush;
+    }
+
+    private void BuildRatingButtons()
+    {
+        RatingStarsPanel.Children.Clear();
+        _ratingButtons.Clear();
+
+        foreach (var rating in _ratings.OrderBy(item => item.SortOrder))
+        {
+            var icon = new TextBlock
+            {
+                Text = "☆",
+                FontSize = 20,
+                TextAlignment = TextAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            var button = new Button
+            {
+                Content = icon,
+                Width = 28,
+                Height = 28,
+                Padding = new Thickness(0),
+                Background = Brushes.Transparent,
+                BorderThickness = new Thickness(0),
+                Cursor = new Cursor(StandardCursorType.Hand)
+            };
+            button.Click += (_, _) =>
+            {
+                _selectedRatingId = rating.Id;
+                UpdateRatingVisual();
+                UpdateSaveButton();
+            };
+            ToolTip.SetTip(button, rating.Name);
+            _ratingButtons.Add(new RatingButtonVisual(rating, button, icon));
+            RatingStarsPanel.Children.Add(button);
+        }
+
+        UpdateRatingVisual();
     }
 
     private static IBrush RatingForeground(string name) => name switch
@@ -598,7 +643,6 @@ public partial class EditTrackOverlay : UserControl
     {
         var analysis = MusicLibraryService.Current.GetTrackAudioAnalysis(track.Id);
         AudioAnalysisSection.IsVisible = analysis is not null;
-        AnalysisCharacterSection.IsVisible = AudioAnalysisSection.IsVisible;
         if (analysis is null) return;
 
         BpmText.Text = analysis.Bpm is double bpm ? $"{bpm:0.#} BPM" : "—";
@@ -635,40 +679,80 @@ public partial class EditTrackOverlay : UserControl
     private void ShowExperimentalAnalysis(MusicTrack track)
     {
         var models = MusicLibraryService.Current.GetExperimentalAnalysis(track.Id);
-        AnalysisCharacterSection.IsVisible = AudioAnalysisSection.IsVisible || models.Count > 0;
-        MirexCharacterPanel.Children.Clear();
-        if (models.Count == 0) return;
+        var values = models.FirstOrDefault(model => model.Model == "moods mirex")?.Values
+            .OrderByDescending(value => value.Score)
+            .ToList() ?? [];
 
-        AddMirexCharacter(models);
+        EmotionalCharacterSection.IsVisible = values.Count > 0;
+        MirexPrimaryPanel.Children.Clear();
+        MirexAdditionalPanel.Children.Clear();
+        MirexAdditionalPanel.IsVisible = _areEmotionalCharactersExpanded;
+        if (EmotionalCharacterChevron.RenderTransform is RotateTransform chevronTransform)
+            chevronTransform.Angle = _areEmotionalCharactersExpanded ? 90 : 0;
 
-        void AddMirexCharacter(IReadOnlyList<ExperimentalAnalysisModel> analysisModels)
+        if (values.Count == 0)
+            return;
+
+        MirexPrimaryPanel.Children.Add(CreateMirexCharacterRow(values[0], isPrimary: true));
+        foreach (var value in values.Skip(1))
+            MirexAdditionalPanel.Children.Add(CreateMirexCharacterRow(value, isPrimary: false));
+    }
+
+    private static Control CreateMirexCharacterRow(ExperimentalAnalysisValue value, bool isPrimary)
+    {
+        var brush = AnalysisColorScale.MoodModel(value.Score);
+        var panel = new Grid
         {
-            var values = analysisModels.FirstOrDefault(model => model.Model == "moods mirex")?.Values
-                .OrderByDescending(value => value.Score).ToList() ?? [];
-            if (values.Count == 0) return;
+            RowDefinitions = new RowDefinitions("Auto,Auto"),
+            RowSpacing = 4
+        };
+        var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,40"), ColumnSpacing = 8 };
+        var label = new TextBlock
+        {
+            Text = value.Label,
+            FontSize = isPrimary ? 11 : 10.5,
+            FontWeight = isPrimary ? FontWeight.SemiBold : FontWeight.Normal,
+            Foreground = ThemeResources.Brush("Theme.Brush.TextStrong"),
+            TextWrapping = TextWrapping.Wrap
+        };
+        ToolTip.SetTip(label, MirexExplanation(value.Label));
+        row.Children.Add(label);
+        var score = new TextBlock
+        {
+            Text = value.Score.ToString("0.##"),
+            FontSize = 10.5,
+            FontWeight = FontWeight.SemiBold,
+            Foreground = brush,
+            HorizontalAlignment = HorizontalAlignment.Right
+        };
+        Grid.SetColumn(score, 1);
+        row.Children.Add(score);
+        panel.Children.Add(row);
 
-            var panel = new StackPanel { Spacing = 4 };
-            foreach (var value in values)
-            {
-                var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,40") };
-                var brush = AnalysisColorScale.MoodModel(value.Score);
-                var label = new TextBlock { Text = value.Label, FontSize = 10.5, Foreground = brush, TextWrapping = TextWrapping.Wrap };
-                ToolTip.SetTip(label, MirexExplanation(value.Label));
-                row.Children.Add(label);
-                var score = new TextBlock
-                {
-                    Text = value.Score.ToString("0.##"),
-                    FontSize = 10.5,
-                    FontWeight = FontWeight.SemiBold,
-                    Foreground = brush,
-                    HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right
-                };
-                Grid.SetColumn(score, 1);
-                row.Children.Add(score);
-                panel.Children.Add(row);
-            }
-            MirexCharacterPanel.Children.Add(panel);
-        }
+        var scoreBar = new ProgressBar
+        {
+            Minimum = 0,
+            Maximum = 1,
+            Value = value.Score,
+            Height = 4,
+            Foreground = brush,
+            Background = ThemeResources.Brush("Theme.Brush.Surface")
+        };
+        Grid.SetRow(scoreBar, 1);
+        panel.Children.Add(scoreBar);
+        return panel;
+    }
+
+    private void OnEmotionalCharacterHeaderPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (!EmotionalCharacterSection.IsVisible)
+            return;
+
+        _areEmotionalCharactersExpanded = !_areEmotionalCharactersExpanded;
+        MirexAdditionalPanel.IsVisible = _areEmotionalCharactersExpanded;
+        if (EmotionalCharacterChevron.RenderTransform is RotateTransform chevronTransform)
+            chevronTransform.Angle = _areEmotionalCharactersExpanded ? 90 : 0;
+        e.Handled = true;
     }
 
     private static string MirexExplanation(string label) => label switch
