@@ -38,6 +38,7 @@ public partial class EditTrackOverlay : UserControl
     private Dictionary<int, string> _modelGenreNamesById = [];
     private Dictionary<int, List<ModelSubgenreDistinction>> _distinctionsBySubgenreId = [];
     private HashSet<int> _visibleDetectedModelGenreIds = [];
+    private bool _areDetectedGenresExpanded;
     private int? _modelGenreFilterId;
     private string _modelGenreSearchText = string.Empty;
     private bool _buildingModelGenreChoices;
@@ -80,6 +81,7 @@ public partial class EditTrackOverlay : UserControl
         _isClosing = false;
         _track = track;
         _isPlayingPreview = false;
+        _areDetectedGenresExpanded = false;
         LoadLookups();
         Prefill(track);
         IsVisible = true;
@@ -694,30 +696,17 @@ public partial class EditTrackOverlay : UserControl
             var confidence = isManualSelection ? 0 : assignment.Reasons.Max(reason => reason.Score);
             var confidenceBrush = AnalysisColorScale.GenreConfidence(confidence);
             var enabled = assignment.IsEnabled;
-            var activeBrush = isManualSelection
-                ? ThemeResources.Brush("Theme.Brush.Accent")
-                : confidenceBrush;
-            var textBrush = enabled
-                ? isManualSelection
-                    ? ThemeResources.Brush("Theme.Brush.TextStrong")
-                    : confidenceBrush
-                : ThemeResources.Brush("Theme.Brush.TextMuted");
             var container = new Border
             {
-                Background = ThemeResources.Brush(enabled
-                    ? "Theme.Brush.AccentSurface"
-                    : "Theme.Brush.Surface"),
-                BorderBrush = enabled
-                    ? activeBrush
-                    : ThemeResources.Brush("Theme.Brush.BorderSubtle"),
-                BorderThickness = new Avalonia.Thickness(1),
-                CornerRadius = new Avalonia.CornerRadius(6),
-                Padding = new Avalonia.Thickness(10, 7),
+                Background = Brushes.Transparent,
+                BorderThickness = new Avalonia.Thickness(0),
+                Padding = new Avalonia.Thickness(0, 3),
+                Opacity = enabled ? 1 : 0.48,
                 Cursor = new Cursor(StandardCursorType.Hand)
             };
             var content = new Grid
             {
-                RowDefinitions = new RowDefinitions("Auto,Auto"),
+                RowDefinitions = new RowDefinitions(isManualSelection ? "Auto" : "Auto,Auto"),
                 RowSpacing = 6
             };
             var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), ColumnSpacing = 10 };
@@ -726,7 +715,7 @@ public partial class EditTrackOverlay : UserControl
                 Text = assignment.GenreName,
                 FontSize = 12,
                 FontWeight = Avalonia.Media.FontWeight.SemiBold,
-                Foreground = textBrush,
+                Foreground = ThemeResources.Brush("Theme.Brush.TextStrong"),
                 VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
                 TextTrimming = TextTrimming.CharacterEllipsis
             };
@@ -735,36 +724,14 @@ public partial class EditTrackOverlay : UserControl
             Control detail;
             if (isManualSelection)
             {
-                detail = new Border
+                detail = new TextBlock
                 {
-                    Background = ThemeResources.Brush("Theme.Brush.AccentSurface"),
-                    BorderBrush = enabled
-                        ? ThemeResources.Brush("Theme.Brush.Accent")
-                        : ThemeResources.Brush("Theme.Brush.BorderSubtle"),
-                    BorderThickness = new Avalonia.Thickness(1),
-                    CornerRadius = new Avalonia.CornerRadius(8),
-                    Padding = new Avalonia.Thickness(6, 2),
-                    Child = new TextBlock
-                    {
-                        Text = "MANUAL",
-                        FontSize = 8.5,
-                        FontWeight = FontWeight.SemiBold,
-                        Foreground = enabled
-                            ? ThemeResources.Brush("Theme.Brush.Accent")
-                            : ThemeResources.Brush("Theme.Brush.TextMuted")
-                    }
+                    Text = "Edit manually",
+                    FontSize = 10.5,
+                    Foreground = ThemeResources.Brush("Theme.Brush.TextStrong"),
+                    VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+                    Opacity = 0.58
                 };
-                var manualHint = new TextBlock
-                {
-                    Text = "Added manually",
-                    FontSize = 9.5,
-                    Foreground = enabled
-                        ? ThemeResources.Brush("Theme.Brush.TextSecondary")
-                        : ThemeResources.Brush("Theme.Brush.TextMuted"),
-                    Opacity = enabled ? 0.72 : 0.54
-                };
-                Grid.SetRow(manualHint, 1);
-                content.Children.Add(manualHint);
             }
             else
             {
@@ -773,9 +740,9 @@ public partial class EditTrackOverlay : UserControl
                     Text = $"{confidence:P0}",
                     FontSize = 10.5,
                     FontWeight = FontWeight.SemiBold,
-                    Foreground = textBrush,
+                    Foreground = confidenceBrush,
                     VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
-                    Opacity = enabled ? 0.94 : 0.54
+                    Opacity = 0.94
                 };
                 var confidenceBar = new ProgressBar
                 {
@@ -783,9 +750,7 @@ public partial class EditTrackOverlay : UserControl
                     Maximum = 1,
                     Value = confidence,
                     Height = 5,
-                    Foreground = enabled
-                        ? confidenceBrush
-                        : ThemeResources.Brush("Theme.Brush.TextMuted"),
+                    Foreground = confidenceBrush,
                     Background = ThemeResources.Brush("Theme.Brush.Surface")
                 };
                 Grid.SetRow(confidenceBar, 1);
@@ -848,14 +813,12 @@ public partial class EditTrackOverlay : UserControl
         }
 
         return assignments.Values
-            .Where(assignment => _initialEnabledModelGenreIds.Contains(assignment.GenreId)
-                                 || _pendingEnabledModelGenreIds.Contains(assignment.GenreId))
+            .Where(assignment => _pendingEnabledModelGenreIds.Contains(assignment.GenreId))
             .Select(assignment => assignment with
             {
-                IsEnabled = _pendingEnabledModelGenreIds.Contains(assignment.GenreId)
+                IsEnabled = true
             })
-            .OrderByDescending(assignment => assignment.IsEnabled)
-            .ThenByDescending(assignment => assignment.Reasons.Count == 0 ? 0 : assignment.Reasons.Max(reason => reason.Score))
+            .OrderByDescending(assignment => assignment.Reasons.Count == 0 ? 0 : assignment.Reasons.Max(reason => reason.Score))
             .ThenBy(assignment => assignment.GenreName, StringComparer.OrdinalIgnoreCase)
             .ToList();
     }
@@ -864,48 +827,78 @@ public partial class EditTrackOverlay : UserControl
     {
         LoadModelMetadata();
         var detected = MusicLibraryService.Current.GetTrackGenrePredictions(track.Id)
-            .Where(prediction => prediction.Score is > .05 and <= .25)
             .Where(prediction => !_modelGenreIds.Contains(prediction.ModelSubgenreId))
-            .Take(6)
+            .GroupBy(prediction => prediction.ModelSubgenreId)
+            .Select(group => group.OrderByDescending(prediction => prediction.Score).First())
+            .OrderByDescending(prediction => prediction.Score)
+            .ThenBy(prediction => prediction.ModelSubgenreName, StringComparer.OrdinalIgnoreCase)
             .ToList();
         _visibleDetectedModelGenreIds = detected.Select(prediction => prediction.ModelSubgenreId).ToHashSet();
         DetectedGenresSection.IsVisible = detected.Count > 0;
+        DetectedGenresCountText.Text = detected.Count.ToString();
+        DetectedGenresChevron.Text = _areDetectedGenresExpanded ? "⌄" : "›";
+        DetectedGenresPanel.IsVisible = _areDetectedGenresExpanded;
         DetectedGenresPanel.Children.Clear();
+        if (!_areDetectedGenresExpanded)
+        {
+            RebuildModelGenreChoices();
+            return;
+        }
+
         foreach (var prediction in detected)
         {
             var container = new Border
             {
-                Background = ThemeResources.Brush("Theme.Brush.Surface"),
-                BorderBrush = ThemeResources.Brush("Theme.Brush.BorderSubtle"),
-                BorderThickness = new Avalonia.Thickness(1),
-                CornerRadius = new Avalonia.CornerRadius(5),
-                Padding = new Avalonia.Thickness(8, 5),
-                Margin = new Avalonia.Thickness(0, 0, 6, 6)
+                Background = Brushes.Transparent,
+                BorderThickness = new Avalonia.Thickness(0),
+                Padding = new Avalonia.Thickness(0, 4),
+                Cursor = new Cursor(StandardCursorType.Hand)
             };
-            var row = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto") };
+            var content = new Grid { RowDefinitions = new RowDefinitions("Auto,Auto"), RowSpacing = 5 };
+            var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), ColumnSpacing = 10 };
             var confidenceBrush = AnalysisColorScale.GenreConfidence(prediction.Score);
             row.Children.Add(new TextBlock
             {
                 Text = prediction.ModelSubgenreName,
                 FontSize = 11,
                 FontWeight = FontWeight.SemiBold,
-                Foreground = confidenceBrush,
-                Margin = new Avalonia.Thickness(0, 0, 8, 0)
+                Foreground = ThemeResources.Brush("Theme.Brush.TextStrong"),
+                TextTrimming = TextTrimming.CharacterEllipsis
             });
-            var modelGenre = new TextBlock
+            var score = new TextBlock
+            {
+                Text = $"{prediction.Score:P0}",
+                FontSize = 10.5,
+                Foreground = confidenceBrush,
+                FontWeight = FontWeight.SemiBold
+            };
+            Grid.SetColumn(score, 1);
+            row.Children.Add(score);
+            content.Children.Add(row);
+
+            var detail = new Grid { ColumnDefinitions = new ColumnDefinitions("110,*"), ColumnSpacing = 8 };
+            detail.Children.Add(new TextBlock
             {
                 Text = prediction.ModelGenreName,
-                FontSize = 10.5,
-                Opacity = 0.62,
-                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+                FontSize = 9.5,
+                Opacity = 0.52,
                 TextTrimming = TextTrimming.CharacterEllipsis
+            });
+            var confidenceBar = new ProgressBar
+            {
+                Minimum = 0,
+                Maximum = 1,
+                Value = prediction.Score,
+                Height = 4,
+                Foreground = confidenceBrush,
+                Background = ThemeResources.Brush("Theme.Brush.Surface"),
+                VerticalAlignment = VerticalAlignment.Center
             };
-            Grid.SetColumn(modelGenre, 1);
-            row.Children.Add(modelGenre);
-            var score = new TextBlock { Text = prediction.Score.ToString("0.###"), FontSize = 10.5, Foreground = confidenceBrush, FontWeight = FontWeight.SemiBold };
-            Grid.SetColumn(score, 2);
-            row.Children.Add(score);
-            container.Child = row;
+            Grid.SetColumn(confidenceBar, 1);
+            detail.Children.Add(confidenceBar);
+            Grid.SetRow(detail, 1);
+            content.Children.Add(detail);
+            container.Child = content;
             container.PointerPressed += (_, _) =>
             {
                 _pendingEnabledModelGenreIds.Add(prediction.ModelSubgenreId);
@@ -918,6 +911,16 @@ public partial class EditTrackOverlay : UserControl
             DetectedGenresPanel.Children.Add(container);
         }
         RebuildModelGenreChoices();
+    }
+
+    private void OnDetectedGenresHeaderPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (_track is null)
+            return;
+
+        _areDetectedGenresExpanded = !_areDetectedGenresExpanded;
+        ShowDetectedGenres(_track);
+        e.Handled = true;
     }
 
     private void RebuildModelGenreChoices()
@@ -960,7 +963,7 @@ public partial class EditTrackOverlay : UserControl
             ? "No matching genres left."
             : $"{choices.Count} selectable"
               + (_modelGenreIds.Count > 0 ? $" · {_modelGenreIds.Count} active hidden" : string.Empty)
-              + (_visibleDetectedModelGenreIds.Count > 0 ? $" · {_visibleDetectedModelGenreIds.Count} model detections shown above" : string.Empty);
+              + (_visibleDetectedModelGenreIds.Count > 0 ? $" · {_visibleDetectedModelGenreIds.Count} available under detections" : string.Empty);
     }
 
     private void BuildFrequentManualGenreChoices()

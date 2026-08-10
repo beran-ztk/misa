@@ -239,9 +239,33 @@
                                 <TextBlock Text="Active genres" FontSize="11" Opacity="0.68" />
                                 <StackPanel x:Name="ModelSelectedGenresPanel" Spacing="6" />
                             </StackPanel>
-                            <StackPanel x:Name="DetectedGenresSection" Spacing="5" Margin="0,2,0,4">
-                                <TextBlock Text="More model detections" FontSize="11" Opacity="0.68" />
-                                <UniformGrid x:Name="DetectedGenresPanel" Columns="2" />
+                            <StackPanel x:Name="DetectedGenresSection" Spacing="6" Margin="0,3,0,5">
+                                <Grid x:Name="DetectedGenresHeader"
+                                      ColumnDefinitions="Auto,*,Auto"
+                                      ColumnSpacing="7"
+                                      Margin="0,4"
+                                      Cursor="Hand"
+                                      PointerPressed="OnDetectedGenresHeaderPressed">
+                                    <TextBlock x:Name="DetectedGenresChevron"
+                                               Text="›"
+                                               FontSize="17"
+                                               Opacity="0.72"
+                                               VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="1"
+                                               Text="More model detections"
+                                               FontSize="11"
+                                               Opacity="0.72"
+                                               VerticalAlignment="Center" />
+                                    <TextBlock x:Name="DetectedGenresCountText"
+                                               Grid.Column="2"
+                                               FontSize="10.5"
+                                               Opacity="0.48"
+                                               VerticalAlignment="Center" />
+                                </Grid>
+                                <StackPanel x:Name="DetectedGenresPanel"
+                                            IsVisible="False"
+                                            Spacing="4"
+                                            Margin="17,0,0,2" />
                             </StackPanel>
                             <StackPanel x:Name="AddModelGenreSection" Margin="0,2,0,4">
                                 <Border Background="{DynamicResource Theme.Brush.Surface}"
