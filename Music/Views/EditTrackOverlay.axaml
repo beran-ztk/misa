@@ -1,6 +1,8 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Class="Music.Views.EditTrackOverlay">
+             x:Class="Music.Views.EditTrackOverlay"
+             Background="Transparent"
+             ClipToBounds="True">
 
     <Panel>
         <Panel.Styles>
@@ -36,7 +38,8 @@
             </Style>
         </Panel.Styles>
 
-        <Border Background="#D81B1914"
+        <Border x:Name="EditorSurface"
+                Background="#D81B1914"
                 ZIndex="20">
 
             <Grid RowDefinitions="Auto,1,*">

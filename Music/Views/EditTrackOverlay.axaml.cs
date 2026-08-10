@@ -1,13 +1,17 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using Avalonia;
+using Avalonia.Animation.Easings;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Rendering.Composition;
+using Avalonia.Rendering.Composition.Animations;
 using Avalonia.Threading;
 using Music.Models;
 using Music.Services;
@@ -16,6 +20,9 @@ namespace Music.Views;
 
 public partial class EditTrackOverlay : UserControl
 {
+    private static readonly TimeSpan OpenAnimationDuration = TimeSpan.FromMilliseconds(930);
+    private static readonly IEasing SlideEasing = new SplineEasing(0.25, 0.1, 0.25, 1);
+
     private MusicTrack? _track;
     private List<Tag> _tags = [];
     private List<Rating> _ratings = [];
@@ -43,6 +50,7 @@ public partial class EditTrackOverlay : UserControl
     private bool _initialIsPublic;
     private string _initialTitle = string.Empty;
     private bool _isEditingInformation;
+    private int _openGeneration;
     private int? _initialRatingId;
     private HashSet<int> _initialTagIds = [];
     private HashSet<int> _initialStyleIds = [];
@@ -69,13 +77,44 @@ public partial class EditTrackOverlay : UserControl
 
     public void Open(MusicTrack track, bool analyzeAfterOpening = false)
     {
+        var openGeneration = ++_openGeneration;
         _track = track;
         _isPlayingPreview = false;
-        LoadLookups();
-        Prefill(track);
+        _loadingTrack = true;
         IsVisible = true;
-        if (analyzeAfterOpening)
-            _ = AnalyzeImportedTrackAsync(track);
+        StartOpenAnimation();
+
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (openGeneration != _openGeneration || !IsVisible)
+                return;
+
+            LoadLookups();
+            Prefill(track);
+            if (analyzeAfterOpening)
+                _ = AnalyzeImportedTrackAsync(track);
+        }, DispatcherPriority.Background);
+    }
+
+    private void StartOpenAnimation()
+    {
+        var visual = ElementComposition.GetElementVisual(EditorSurface);
+        if (visual is null)
+            return;
+
+        var parentHeight = (Parent as Control)?.Bounds.Height ?? 0;
+        var travel = Math.Max(Bounds.Height, parentHeight - Margin.Top - Margin.Bottom);
+        if (travel <= 1)
+            travel = 320;
+
+        visual.Offset = new Avalonia.Vector3D(0, travel, 0);
+
+        var animation = visual.Compositor.CreateVector3KeyFrameAnimation();
+        animation.Duration = OpenAnimationDuration;
+        animation.StopBehavior = AnimationStopBehavior.SetToFinalValue;
+        animation.InsertKeyFrame(0f, new Vector3(0, (float)travel, 0));
+        animation.InsertKeyFrame(1f, Vector3.Zero, SlideEasing);
+        visual.StartAnimation("Offset", animation);
     }
 
     public void RequestClose() => CloseOverlay();
@@ -1311,6 +1350,7 @@ public partial class EditTrackOverlay : UserControl
         _analysisElapsedTimer.Stop();
         UnsavedChangesLayer.IsVisible = false;
         UnsavedChangesBadge.IsVisible = false;
+        _openGeneration++;
         IsVisible = false;
         _track = null;
     }
