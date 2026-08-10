@@ -237,7 +237,7 @@
                             </StackPanel>
                             <StackPanel x:Name="ModelSelectedGenresSection" Spacing="7">
                                 <TextBlock Text="Active genres" FontSize="11" Opacity="0.68" />
-                                <WrapPanel x:Name="ModelSelectedGenresPanel" Orientation="Horizontal" />
+                                <StackPanel x:Name="ModelSelectedGenresPanel" Spacing="6" />
                             </StackPanel>
                             <StackPanel x:Name="DetectedGenresSection" Spacing="5" Margin="0,2,0,4">
                                 <TextBlock Text="More model detections" FontSize="11" Opacity="0.68" />
