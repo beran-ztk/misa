@@ -55,7 +55,7 @@ public partial class ChannelOverlay : UserControl
         IsVisible = true;
         HubView.IsVisible = true;
         DetailView.IsVisible = false;
-        GlobalMaxDurationBox.Text = MusicLibraryService.Current.GetChannelMaxDownloadDurationMinutes().ToString();
+        InboxView.IsVisible = false;
         RefreshChannels();
     }
 
@@ -88,6 +88,7 @@ public partial class ChannelOverlay : UserControl
     {
         _hubChannels = MusicLibraryService.Current.GetChannelHubItems();
         ApplyHubFilter();
+        RefreshInboxBadge();
 
         if (_selectedChannelId >= 0)
         {
@@ -179,6 +180,7 @@ public partial class ChannelOverlay : UserControl
             _videoFiltersByChannel.GetValueOrDefault(channel.Id, ChannelVideoFilter.New),
             refresh: false);
         HubView.IsVisible = false;
+        InboxView.IsVisible = false;
         DetailView.IsVisible = true;
         PreviewClosed?.Invoke();
         UpdateDetailHeader();
@@ -207,6 +209,7 @@ public partial class ChannelOverlay : UserControl
         DetailNotificationIcon.Text = channel.NotificationsEnabled ? "●" : "○";
         DetailNotificationButton.Opacity = channel.NotificationsEnabled ? 0.95 : 0.5;
         DetailAutoDownloadButton.Content = channel.AutoDownload ? "Auto-download on" : "Auto-download off";
+        ChannelMaxDurationBox.Text = channel.MaxDurationMinutes?.ToString() ?? string.Empty;
     }
 
     private void OnBackToHubClicked(object? sender, RoutedEventArgs e)
@@ -214,8 +217,79 @@ public partial class ChannelOverlay : UserControl
         ClearActivePreview();
         PreviewClosed?.Invoke();
         DetailView.IsVisible = false;
+        InboxView.IsVisible = false;
         HubView.IsVisible = true;
         ApplyHubFilter();
+    }
+
+    private void RefreshInboxBadge()
+    {
+        var unread = MusicLibraryService.Current.GetUnreadChannelNotificationCount();
+        InboxBadge.IsVisible = unread > 0;
+        InboxBadgeText.Text = unread > 99 ? "99+" : unread.ToString();
+        if (InboxView.IsVisible)
+            RefreshInbox();
+    }
+
+    private void RefreshInbox()
+    {
+        var notifications = MusicLibraryService.Current.GetChannelNotifications();
+        InboxItems.ItemsSource = notifications;
+        EmptyInboxText.IsVisible = notifications.Count == 0;
+        var unread = notifications.Count(notification => !notification.IsRead);
+        InboxSummaryText.Text = notifications.Count == 0
+            ? "No pending channel updates"
+            : $"{unread} unread · {notifications.Count} awaiting your review";
+    }
+
+    private void OnInboxClicked(object? sender, RoutedEventArgs e)
+    {
+        PreviewClosed?.Invoke();
+        HubView.IsVisible = false;
+        DetailView.IsVisible = false;
+        InboxView.IsVisible = true;
+        RefreshInbox();
+    }
+
+    private void OnBackFromInboxClicked(object? sender, RoutedEventArgs e)
+    {
+        InboxView.IsVisible = false;
+        DetailView.IsVisible = false;
+        HubView.IsVisible = true;
+        ApplyHubFilter();
+        RefreshInboxBadge();
+    }
+
+    private void OnOpenNotificationClicked(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Control { DataContext: ChannelNotification notification })
+            return;
+
+        MusicLibraryService.Current.MarkChannelNotificationRead(notification.Id);
+        var channel = _hubChannels.FirstOrDefault(item => item.Id == notification.ChannelId);
+        if (channel is null)
+        {
+            RefreshChannels();
+            channel = _hubChannels.FirstOrDefault(item => item.Id == notification.ChannelId);
+        }
+        if (channel is null)
+            return;
+
+        _videoSearchByChannel[channel.Id] = notification.Title;
+        _videoFiltersByChannel[channel.Id] = ChannelVideoFilter.All;
+        OpenChannelDetail(channel);
+        RefreshInboxBadge();
+        e.Handled = true;
+    }
+
+    private void OnArchiveNotificationClicked(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Control { DataContext: ChannelNotification notification })
+            return;
+        MusicLibraryService.Current.ArchiveChannelNotification(notification.Id);
+        RefreshInbox();
+        RefreshInboxBadge();
+        e.Handled = true;
     }
 
     private void OnFollowChannelClicked(object? sender, RoutedEventArgs e)
@@ -499,14 +573,22 @@ public partial class ChannelOverlay : UserControl
             video.IsActive = _activePreviewTrackId is int trackId && video.TrackId == trackId;
     }
 
-    private void OnGlobalMaxDurationLostFocus(object? sender, RoutedEventArgs e)
+    private void OnChannelMaxDurationLostFocus(object? sender, RoutedEventArgs e)
     {
-        if (sender is not TextBox textBox)
+        if (sender is not TextBox textBox || _selectedHubChannel is not { } channel)
             return;
 
+        if (string.IsNullOrWhiteSpace(textBox.Text))
+        {
+            MusicLibraryService.Current.SetChannelMaxDownloadDuration(channel.Id, null);
+            RefreshChannels();
+            UpdateDownloadSummary();
+            ToastRequested?.Invoke("Channel uses the global download limit");
+            return;
+        }
         if (!int.TryParse(textBox.Text, out var minutes))
         {
-            textBox.Text = MusicLibraryService.Current.GetChannelMaxDownloadDurationMinutes().ToString();
+            textBox.Text = channel.MaxDurationMinutes?.ToString() ?? string.Empty;
             ToastRequested?.Invoke("Enter a duration between 1 and 180 minutes");
             return;
         }
@@ -515,11 +597,11 @@ public partial class ChannelOverlay : UserControl
             minutes,
             AppSettingsStore.ChannelDownloadMinDurationMinutes,
             AppSettingsStore.ChannelDownloadMaxDurationMinutes);
-        MusicLibraryService.Current.SetGlobalChannelMaxDownloadDuration(minutes);
+        MusicLibraryService.Current.SetChannelMaxDownloadDuration(channel.Id, minutes);
         textBox.Text = minutes.ToString();
-        RefreshVideos();
+        RefreshChannels();
         UpdateDownloadSummary();
-        ToastRequested?.Invoke($"Global download limit set to {minutes} min");
+        ToastRequested?.Invoke($"Channel download limit set to {minutes} min");
     }
 
     private void OnVideoSearchChanged(object? sender, TextChangedEventArgs e)

@@ -187,6 +187,10 @@ public class MusicLibraryService
             _channelMaxDownloadDurationMinutes);
     public void SetChannelFollowed(int channelId, bool followed) => _db.SetChannelFollowed(channelId, followed);
     public void SetChannelNotifications(int channelId, bool enabled) => _db.SetChannelNotifications(channelId, enabled);
+    public List<ChannelNotification> GetChannelNotifications() => _db.GetChannelNotifications();
+    public int GetUnreadChannelNotificationCount() => _db.GetUnreadChannelNotificationCount();
+    public void MarkChannelNotificationRead(int notificationId) => _db.MarkChannelNotificationRead(notificationId);
+    public void ArchiveChannelNotification(int notificationId) => _db.ArchiveChannelNotification(notificationId);
     public void SetChannelAutoDownload(int channelId, bool enabled)
     {
         _db.SetChannelAutoDownload(
@@ -198,6 +202,11 @@ public class MusicLibraryService
         ChannelDownloadService.Current.NotifyQueueChanged();
     }
     public int GetChannelMaxDownloadDurationMinutes() => _channelMaxDownloadDurationMinutes;
+    public void SetChannelMaxDownloadDuration(int channelId, int? maxDurationMinutes)
+    {
+        _db.SetChannelMaxDownloadDuration(channelId, maxDurationMinutes, _channelMaxDownloadDurationMinutes);
+        ChannelDownloadService.Current.NotifyQueueChanged();
+    }
     public void SetGlobalChannelMaxDownloadDuration(int maxDurationMinutes)
     {
         maxDurationMinutes = Math.Clamp(maxDurationMinutes, 1, 24 * 60);

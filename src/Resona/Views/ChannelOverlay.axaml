@@ -242,6 +242,17 @@
                         <Button Classes="channel-icon" Click="OnAddChannelToggleClicked" ToolTip.Tip="Add channel">
                             <TextBlock Text="+" FontSize="20" Margin="0,-3,0,0"/>
                         </Button>
+                        <Button Classes="channel-icon" Click="OnInboxClicked" ToolTip.Tip="Channel inbox">
+                            <Grid>
+                                <TextBlock Text="◌" FontSize="19" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <Border x:Name="InboxBadge" IsVisible="False" Background="#D85D738D"
+                                        CornerRadius="7" MinWidth="14" Height="14" Padding="3,0"
+                                        HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-3,-5,0">
+                                    <TextBlock x:Name="InboxBadgeText" FontSize="8" FontWeight="SemiBold"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                            </Grid>
+                        </Button>
                         <Button Classes="channel-icon" Click="OnCloseClicked" ToolTip.Tip="Close" Opacity="0.72">
                             <Image Source="{SvgImage /Assets/close.svg}" Width="16" Height="16"/>
                         </Button>
@@ -388,10 +399,11 @@
                         <Button Grid.Column="4" x:Name="AllVideosFilterButton" Classes="video-filter" Content="All"
                                 Click="OnAllVideosFilterClicked"/>
                         <StackPanel Grid.Column="6" Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
-                            <TextBlock Text="Global max" FontSize="9.5" Opacity="0.52" VerticalAlignment="Center"/>
-                            <TextBox x:Name="GlobalMaxDurationBox" Classes="compact-search"
+                            <TextBlock Text="Channel max" FontSize="9.5" Opacity="0.52" VerticalAlignment="Center"/>
+                            <TextBox x:Name="ChannelMaxDurationBox" Classes="compact-search"
                                      Width="42" Height="26" FontSize="10" TextAlignment="Center"
-                                     VerticalContentAlignment="Center" LostFocus="OnGlobalMaxDurationLostFocus"/>
+                                     Watermark="global" VerticalContentAlignment="Center"
+                                     LostFocus="OnChannelMaxDurationLostFocus"/>
                             <TextBlock Text="min" FontSize="9.5" Opacity="0.52" VerticalAlignment="Center"/>
                         </StackPanel>
                         <Button Grid.Column="7" x:Name="DetailAutoDownloadButton" Classes="follow-action"
@@ -442,6 +454,56 @@
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>
+            </Grid>
+        </Grid>
+
+        <Grid x:Name="InboxView" IsVisible="False" RowDefinitions="Auto,*">
+            <Border Grid.Row="0" Background="Transparent"
+                    BorderBrush="{DynamicResource Theme.Brush.Border}" BorderThickness="0,0,0,1"
+                    Padding="22,13">
+                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                    <Button Classes="channel-icon" Click="OnBackFromInboxClicked" ToolTip.Tip="Back to channels">
+                        <TextBlock Text="‹" FontSize="23" Margin="0,-4,0,0"/>
+                    </Button>
+                    <StackPanel Grid.Column="1" Spacing="1" VerticalAlignment="Center">
+                        <TextBlock Text="Channel inbox" FontSize="17" FontWeight="SemiBold"/>
+                        <TextBlock x:Name="InboxSummaryText" FontSize="10.5" Opacity="0.56"/>
+                    </StackPanel>
+                    <Button Grid.Column="2" Classes="channel-icon" Click="OnCloseClicked" ToolTip.Tip="Close" Opacity="0.72">
+                        <Image Source="{SvgImage /Assets/close.svg}" Width="16" Height="16"/>
+                    </Button>
+                </Grid>
+            </Border>
+            <Grid Grid.Row="1" Margin="26,16,26,22">
+                <ListBox x:Name="InboxItems" Classes="channel-hub-list"
+                         Background="Transparent" BorderThickness="0">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="models:ChannelNotification">
+                            <Border Padding="11,9" Margin="0,0,0,2" CornerRadius="6"
+                                    Background="#0CFFFFFF">
+                                <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="11">
+                                    <Border Width="7" Height="7" CornerRadius="4" Background="#82B8E4"
+                                            IsVisible="{Binding !IsRead}" VerticalAlignment="Center"/>
+                                    <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding ChannelName}" FontSize="9.5" Opacity="0.5"/>
+                                        <TextBlock Text="{Binding Title}" FontSize="12.5" FontWeight="SemiBold"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Text="{Binding CreatedText}" FontSize="9.5" Opacity="0.42"/>
+                                    </StackPanel>
+                                    <Button Grid.Column="2" Classes="open-action" Content="Open"
+                                            Click="OnOpenNotificationClicked"/>
+                                    <Button Grid.Column="3" Classes="channel-icon" Click="OnArchiveNotificationClicked"
+                                            ToolTip.Tip="Remove from inbox" Opacity="0.65">
+                                        <Image Source="{SvgImage /Assets/close.svg}" Width="13" Height="13"/>
+                                    </Button>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+                <TextBlock x:Name="EmptyInboxText" Text="You're all caught up."
+                           IsVisible="False" FontSize="11.5" Opacity="0.5"
+                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
             </Grid>
         </Grid>
     </Grid>

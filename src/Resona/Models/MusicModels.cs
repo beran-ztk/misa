@@ -122,6 +122,8 @@ public sealed record ChannelHubItem(
     int KnownVideoCount,
     int UncheckedVideoCount,
     long? FollowerCount,
+    int? MaxDurationMinutes,
+    string? AutoDownloadFrom,
     IReadOnlyList<string> TopTracks)
 {
     public string Monogram
@@ -149,6 +151,9 @@ public sealed record ChannelHubItem(
     public string TopTracksText => string.Join("  ·  ", TopTracks);
     public string FollowActionText => IsFollowed ? "Following" : "+ Follow";
     public string AutomationText => AutoDownload ? "Auto-download on" : "Manual downloads";
+    public string DurationLimitText => MaxDurationMinutes is int minutes
+        ? $"{minutes} min channel limit"
+        : "Uses global duration limit";
     public string FollowerText => FollowerCount is long followers
         ? $"{FormatCompactNumber(followers)} YouTube followers"
         : string.Empty;
@@ -180,6 +185,32 @@ public sealed record ChannelHubItem(
         >= 1_000 => $"{value / 1_000d:0.#}K",
         _ => value.ToString()
     };
+}
+public sealed record ChannelNotification(
+    int Id,
+    int ChannelId,
+    int? ChannelVideoId,
+    string ChannelName,
+    string Title,
+    string CreatedAt,
+    bool IsRead,
+    string? CanonicalUrl)
+{
+    public string StateText => IsRead ? "Seen" : "New";
+    public string CreatedText
+    {
+        get
+        {
+            if (!System.DateTime.TryParse(CreatedAt, out var created)) return string.Empty;
+            var local = created.ToLocalTime();
+            var age = System.DateTime.Now - local;
+            if (age.TotalMinutes < 1) return "Just now";
+            if (age.TotalHours < 1) return $"{System.Math.Max(1, (int)age.TotalMinutes)} min ago";
+            if (age.TotalDays < 1) return $"{System.Math.Max(1, (int)age.TotalHours)} h ago";
+            if (age.TotalDays < 7) return $"{System.Math.Max(1, (int)age.TotalDays)} d ago";
+            return local.ToString("dd MMM yyyy");
+        }
+    }
 }
 public enum ChannelDownloadStatus { NotQueued, Queued, Downloading, Ready, Failed, Skipped }
 public enum ChannelMetadataStatus { Pending, Queued, Loading, Ready, Failed }
