@@ -99,9 +99,9 @@ public partial class EditTrackOverlay : UserControl
             PrepareContent(track, backdropFocus);
 
         PrepareOpeningWarmupPosition();
-        IsHitTestVisible = true;
+        IsHitTestVisible = false;
         IsVisible = true;
-        _ = StartOpeningAfterFirstFrameAsync(motionGeneration);
+        _ = OpenAfterInitialRenderAsync(motionGeneration);
         if (analyzeAfterOpening)
             _ = AnalyzeAfterOpeningAsync(track, motionGeneration);
     }
@@ -184,22 +184,45 @@ public partial class EditTrackOverlay : UserControl
 
     private void PrepareOpeningWarmupPosition()
     {
+        // Keep the complete subtree invisible while Avalonia realizes and renders it.
+        Opacity = 0;
+        EditorSurface.Opacity = 1;
+
         var visual = ElementComposition.GetElementVisual(EditorSurface);
         if (visual is null)
             return;
 
-        visual.Offset = new Avalonia.Vector3D(0, 0, 0);
-        EditorSurface.Opacity = 0.01;
+        visual.Offset = new Avalonia.Vector3D(0, EditorTravelDistance(), 0);
     }
 
-    private async Task StartOpeningAfterFirstFrameAsync(int motionGeneration)
+    private async Task OpenAfterInitialRenderAsync(int motionGeneration)
     {
-        await Task.Delay(OpeningRenderWarmup);
+        // Let visibility trigger a complete layout before obtaining the composition visual.
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Loaded);
         if (motionGeneration != _motionGeneration || !_isOpen || _isClosing)
             return;
 
-        StartSlideAnimation(opening: true);
-        EditorSurface.Opacity = 1;
+        var visual = ElementComposition.GetElementVisual(EditorSurface);
+        if (visual is null)
+        {
+            Opacity = 1;
+            IsHitTestVisible = true;
+            return;
+        }
+
+        visual.Offset = new Avalonia.Vector3D(0, EditorTravelDistance(), 0);
+        var initialRender = visual.Compositor.RequestCompositionBatchCommitAsync();
+        await initialRender.Rendered;
+
+        await Dispatcher.UIThread.InvokeAsync(() =>
+        {
+            if (motionGeneration != _motionGeneration || !_isOpen || _isClosing)
+                return;
+
+            StartSlideAnimation(opening: true);
+            Opacity = 1;
+            IsHitTestVisible = true;
+        }, DispatcherPriority.Render);
     }
 
     private async Task AnalyzeAfterOpeningAsync(MusicTrack track, int motionGeneration)
@@ -652,9 +675,6 @@ public partial class EditTrackOverlay : UserControl
 
         BackdropFocusChanged?.Invoke(_track.Id, Math.Clamp(e.NewValue / 100d, 0d, 1d));
     }
-
-    private void OnBackdropFocusResetClicked(object? sender, RoutedEventArgs e) =>
-        BackdropFocusSlider.Value = 50;
 
     private void AutoSaveChanges()
     {

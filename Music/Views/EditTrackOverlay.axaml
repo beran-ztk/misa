@@ -69,6 +69,17 @@
             </Style>
             <Style Selector="Button.rating-star:pointerover">
                 <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderBrush" Value="Transparent"/>
+                <Setter Property="BorderThickness" Value="0"/>
+            </Style>
+            <Style Selector="Button.rating-star:pressed">
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderBrush" Value="Transparent"/>
+                <Setter Property="BorderThickness" Value="0"/>
+            </Style>
+            <Style Selector="Button.rating-star:focus">
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderBrush" Value="Transparent"/>
                 <Setter Property="BorderThickness" Value="0"/>
             </Style>
         </Panel.Styles>
@@ -141,10 +152,10 @@
                                     Spacing="3"
                                     HorizontalAlignment="Center"
                                     VerticalAlignment="Center" />
-                        <StackPanel Grid.Column="2"
+                        <StackPanel Grid.Column="0"
                                     Orientation="Horizontal"
                                     Spacing="6"
-                                    HorizontalAlignment="Right"
+                                    HorizontalAlignment="Left"
                                     VerticalAlignment="Center">
                             <TextBlock Text="Backdrop focus"
                                        FontSize="9.5"
@@ -160,15 +171,10 @@
                                     Value="50"
                                     SmallChange="1"
                                     LargeChange="10"
+                                    Margin="0,-4,0,0"
+                                    VerticalAlignment="Center"
                                     ValueChanged="OnBackdropFocusChanged"
                                     ToolTip.Tip="Move the visible artwork area left or right" />
-                            <Button Content="Center"
-                                    Padding="4,0"
-                                    FontSize="9.5"
-                                    Background="Transparent"
-                                    BorderThickness="0"
-                                    Click="OnBackdropFocusResetClicked"
-                                    ToolTip.Tip="Center artwork" />
                         </StackPanel>
                     </Grid>
                 </Border>
