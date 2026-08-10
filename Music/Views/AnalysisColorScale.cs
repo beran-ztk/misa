@@ -4,13 +4,10 @@ using Avalonia.Media;
 namespace Music.Views;
 
 /// <summary>
-/// Shared semantic colors for analysis results. Mood scores use their full 0–1 range,
-/// while genre confidence reaches green much earlier because scores around .4 are already strong.
+/// Shared semantic colors for analysis results.
 /// </summary>
 public static class AnalysisColorScale
 {
-    public static IBrush Mood(double score) => RedToGreen(Clamp(score));
-
     // MIREX scores rarely reach 1.0; .6 already represents a strong match.
     public static IBrush MoodModel(double score) => RedToGreen(Clamp(score / .6));
 

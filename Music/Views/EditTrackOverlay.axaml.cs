@@ -607,30 +607,9 @@ public partial class EditTrackOverlay : UserControl
         var models = MusicLibraryService.Current.GetExperimentalAnalysis(track.Id);
         AnalysisCharacterSection.IsVisible = AudioAnalysisSection.IsVisible || models.Count > 0;
         MirexCharacterPanel.Children.Clear();
-        MoodSignalsPanel.Children.Clear();
         if (models.Count == 0) return;
 
         AddMirexCharacter(models);
-
-        AddSignal("Happy", "How strongly the model detects a happy mood.", Signal(models, "mood happy", "happy"));
-        AddSignal("Sad", "How strongly the model detects a sad or melancholy mood.", Signal(models, "mood sad", "sad"));
-        AddSignal("Relaxed", "How strongly the model detects a relaxed character.", Signal(models, "mood relaxed", "relaxed"));
-        AddSignal("Aggressive", "How strongly the model detects an aggressive character.", Signal(models, "mood aggressive", "aggressive"));
-        AddSignal("Party", "How strongly the model detects a party-oriented character.", Signal(models, "mood party", "party"));
-        AddSignal("Danceable", "How strongly the model classifies the track as danceable.", Signal(models, "danceability classifier", "danceable"));
-        void AddSignal(string name, string explanation, double? score)
-        {
-            if (score is null) return;
-            var row = new Grid { ColumnDefinitions = new ColumnDefinitions("82,*,40"), RowDefinitions = new RowDefinitions("Auto,Auto") };
-            var brush = AnalysisColorScale.Mood(score.Value);
-            var title = new TextBlock { Text = name, FontSize = 11, Foreground = brush };
-            ToolTip.SetTip(title, explanation);
-            var bar = new ProgressBar { Minimum = 0, Maximum = 1, Value = score.Value, Height = 6, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center, Foreground = brush };
-            var value = new TextBlock { Text = score.Value.ToString("0.##"), FontSize = 10.5, Foreground = brush, FontWeight = Avalonia.Media.FontWeight.SemiBold, HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right };
-            Grid.SetColumn(bar, 1); Grid.SetColumn(value, 2);
-            row.Children.Add(title); row.Children.Add(bar); row.Children.Add(value);
-            MoodSignalsPanel.Children.Add(row);
-        }
 
         void AddMirexCharacter(IReadOnlyList<ExperimentalAnalysisModel> analysisModels)
         {
@@ -676,9 +655,6 @@ public partial class EditTrackOverlay : UserControl
             "A tense, fiery, anxious or forceful emotional character.",
         _ => "A broad MIREX mood cluster derived from several descriptive terms."
     };
-
-    private static double? Signal(IReadOnlyList<ExperimentalAnalysisModel> models, string model, string label) =>
-        models.FirstOrDefault(item => item.Model == model)?.Values.FirstOrDefault(value => value.Label == label)?.Score;
 
     private static string GetTempoInsight(double bpm) => bpm switch
     {

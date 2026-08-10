@@ -327,13 +327,6 @@
                                     <TextBlock Text="Emotional character" FontSize="10.5" FontWeight="SemiBold" />
                                     <StackPanel x:Name="MirexCharacterPanel" Spacing="3" />
                                 </StackPanel>
-
-                                <Rectangle Height="1" Fill="{DynamicResource Theme.Brush.BorderSubtle}" />
-
-                                <StackPanel Spacing="6">
-                                    <TextBlock Text="Mood signals" FontSize="10.5" FontWeight="SemiBold" />
-                                    <StackPanel x:Name="MoodSignalsPanel" Spacing="5" />
-                                </StackPanel>
                             </StackPanel>
                         </Border>
 
