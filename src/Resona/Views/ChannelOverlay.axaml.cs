@@ -17,13 +17,13 @@ namespace Resona.Views;
 public partial class ChannelOverlay : UserControl
 {
     private CancellationTokenSource? _refreshCts;
-    private List<ChannelSubscription> _channels = [];
+    private List<ChannelHubItem> _hubChannels = [];
+    private ChannelHubItem? _selectedHubChannel;
     private List<ChannelVideoDisplay> _currentVideos = [];
     private int _selectedChannelId = -1;
     private bool _loadingVideos;
     private bool _showAllVideos;
     private bool _processingPastedUrl;
-    private bool _refreshingChannelStates;
     private int? _activePreviewTrackId;
     private readonly Avalonia.Threading.DispatcherTimer _channelStateRefreshTimer = new()
     {
@@ -50,17 +50,14 @@ public partial class ChannelOverlay : UserControl
     public void Open()
     {
         IsVisible = true;
-        ChannelSidebar.IsVisible = false;
+        HubView.IsVisible = true;
+        DetailView.IsVisible = false;
         GlobalMaxDurationBox.Text = MusicLibraryService.Current.GetChannelMaxDownloadDurationMinutes().ToString();
         RefreshChannels();
     }
 
     public void UpdateDownloadSummary()
     {
-        UpdateStatus();
-        var summary = ChannelDownloadService.Current.GetSummary();
-        StatusText.Text += $" · Ready {summary.Ready} · Failed {summary.Failed} · " +
-                           $"Queued {summary.Queued} · Downloading {summary.Downloading} · Skipped {summary.Skipped}";
         if (IsVisible)
         {
             _channelStateRefreshTimer.Stop();
@@ -78,12 +75,166 @@ public partial class ChannelOverlay : UserControl
 
     public void RefreshChannels()
     {
-        var previousId = _selectedChannelId;
-        _channels = MusicLibraryService.Current.GetChannelSubscriptions();
-        ChannelList.ItemsSource = _channels;
-        ChannelList.SelectedItem = _channels.FirstOrDefault(channel => channel.Id == previousId) ?? _channels.FirstOrDefault();
-        UpdateDownloadSummary();
+        _hubChannels = MusicLibraryService.Current.GetChannelHubItems();
+        ApplyHubFilter();
+
+        if (_selectedChannelId >= 0)
+        {
+            _selectedHubChannel = _hubChannels.FirstOrDefault(channel => channel.Id == _selectedChannelId);
+            if (DetailView.IsVisible && _selectedHubChannel is not null)
+            {
+                UpdateDetailHeader();
+                RefreshVideos();
+            }
+        }
+    }
+
+    public void SetAtmosphereColors(Color primary, Color secondary)
+    {
+        if (ChannelAtmosphereTint.Fill is not LinearGradientBrush gradient
+            || gradient.GradientStops.Count < 2)
+            return;
+
+        gradient.GradientStops[0].Color = primary;
+        gradient.GradientStops[1].Color = secondary;
+    }
+
+    private void ApplyHubFilter()
+    {
+        var search = ChannelSearchBox.Text?.Trim() ?? string.Empty;
+        IEnumerable<ChannelHubItem> matching = _hubChannels;
+        if (search.Length > 0)
+            matching = matching.Where(channel =>
+                channel.Name.Contains(search, StringComparison.OrdinalIgnoreCase)
+                || channel.TopTracks.Any(title => title.Contains(search, StringComparison.OrdinalIgnoreCase)));
+
+        var visible = matching.ToList();
+        var following = visible
+            .Where(channel => channel.IsFollowed)
+            .OrderByDescending(channel => channel.UncheckedVideoCount)
+            .ThenByDescending(channel => channel.RecommendationScore)
+            .ThenBy(channel => channel.Name, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        var suggested = visible
+            .Where(channel => !channel.IsFollowed && channel.LocalTrackCount > 0)
+            .OrderByDescending(channel => channel.RecommendationScore)
+            .ThenByDescending(channel => channel.LocalTrackCount)
+            .Take(6)
+            .ToList();
+        var all = visible
+            .OrderByDescending(channel => channel.IsFollowed)
+            .ThenBy(channel => channel.Name, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        FollowingItems.ItemsSource = following;
+        SuggestedItems.ItemsSource = suggested;
+        AllChannelItems.ItemsSource = all;
+        EmptyFollowingText.IsVisible = following.Count == 0;
+        SuggestedSection.IsVisible = suggested.Count > 0;
+        EmptySearchText.IsVisible = all.Count == 0 && search.Length > 0;
+        FollowingCountText.Text = following.Count.ToString();
+        AllChannelCountText.Text = all.Count.ToString();
+
+        var totalFollowing = _hubChannels.Count(channel => channel.IsFollowed);
+        var newVideos = _hubChannels.Where(channel => channel.IsFollowed).Sum(channel => channel.UncheckedVideoCount);
+        HubSummaryText.Text = $"{_hubChannels.Count} library channels · {totalFollowing} following" +
+                              (newVideos > 0 ? $" · {newVideos} new videos" : string.Empty);
+    }
+
+    private void OnChannelSearchChanged(object? sender, TextChangedEventArgs e) => ApplyHubFilter();
+
+    private void OnAddChannelToggleClicked(object? sender, RoutedEventArgs e)
+    {
+        AddChannelPanel.IsVisible = !AddChannelPanel.IsVisible;
+        if (AddChannelPanel.IsVisible)
+            UrlBox.Focus();
+    }
+
+    private void OnOpenChannelClicked(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Control { DataContext: ChannelHubItem channel })
+            return;
+
+        OpenChannelDetail(channel);
+        e.Handled = true;
+    }
+
+    private void OpenChannelDetail(ChannelHubItem channel)
+    {
+        _selectedHubChannel = channel;
+        _selectedChannelId = channel.Id;
+        HubView.IsVisible = false;
+        DetailView.IsVisible = true;
+        PreviewClosed?.Invoke();
+        UpdateDetailHeader();
         RefreshVideos();
+    }
+
+    private void UpdateDetailHeader()
+    {
+        if (_selectedHubChannel is not { } channel)
+            return;
+
+        SelectedChannelText.Text = channel.Name;
+        DetailMonogramText.Text = channel.Monogram;
+        DetailSubtitleText.Text = channel.HasNewVideos
+            ? $"{channel.TrackCountText} · {channel.NewVideoText}"
+            : $"{channel.TrackCountText} · no new videos";
+        DetailLibraryText.Text = channel.TrackCountText;
+        DetailRatingText.Text = channel.RatingText;
+        DetailActivityText.Text = channel.ActivityText;
+        DetailTopTracksText.Text = channel.HasTopTracks ? channel.TopTracksText : "No local tracks yet";
+        DetailFollowButton.Content = channel.IsFollowed ? "Following" : "+ Follow";
+        DetailNotificationIcon.Text = channel.NotificationsEnabled ? "●" : "○";
+        DetailNotificationButton.Opacity = channel.NotificationsEnabled ? 0.95 : 0.5;
+        DetailAutoDownloadButton.Content = channel.AutoDownload ? "Auto-download on" : "Auto-download off";
+    }
+
+    private void OnBackToHubClicked(object? sender, RoutedEventArgs e)
+    {
+        ClearActivePreview();
+        PreviewClosed?.Invoke();
+        DetailView.IsVisible = false;
+        HubView.IsVisible = true;
+        ApplyHubFilter();
+    }
+
+    private void OnFollowChannelClicked(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Control { DataContext: ChannelHubItem channel })
+            return;
+        MusicLibraryService.Current.SetChannelFollowed(channel.Id, !channel.IsFollowed);
+        RefreshChannels();
+        ToastRequested?.Invoke(channel.IsFollowed ? "Channel removed from Following" : "Channel followed");
+        e.Handled = true;
+    }
+
+    private void OnDetailFollowClicked(object? sender, RoutedEventArgs e)
+    {
+        if (_selectedHubChannel is not { } channel)
+            return;
+        MusicLibraryService.Current.SetChannelFollowed(channel.Id, !channel.IsFollowed);
+        RefreshChannels();
+        ToastRequested?.Invoke(channel.IsFollowed ? "Channel removed from Following" : "Channel followed");
+    }
+
+    private void OnDetailNotificationsClicked(object? sender, RoutedEventArgs e)
+    {
+        if (_selectedHubChannel is not { } channel)
+            return;
+        var enabled = !channel.NotificationsEnabled;
+        MusicLibraryService.Current.SetChannelNotifications(channel.Id, enabled);
+        RefreshChannels();
+        ToastRequested?.Invoke(enabled ? "Channel notifications enabled" : "Channel notifications disabled");
+    }
+
+    private void OnDetailAutoDownloadClicked(object? sender, RoutedEventArgs e)
+    {
+        if (_selectedHubChannel is not { } channel)
+            return;
+        MusicLibraryService.Current.SetChannelAutoDownload(channel.Id, !channel.AutoDownload);
+        RefreshChannels();
+        ToastRequested?.Invoke(channel.AutoDownload ? "Auto-download disabled" : "Auto-download enabled");
     }
 
     private async void OnUrlTextChanged(object? sender, TextChangedEventArgs e)
@@ -124,11 +275,14 @@ public partial class ChannelOverlay : UserControl
 
     private async void OnRefreshSelectedClicked(object? sender, RoutedEventArgs e)
     {
-        if (ChannelList.SelectedItem is not ChannelSubscription channel)
+        if (_selectedHubChannel is not { } channel || string.IsNullOrWhiteSpace(channel.SourceUrl))
             return;
 
         await RunRefreshAsync(
-            progress => MusicLibraryService.Current.RefreshChannelAsync(channel, progress, _refreshCts!.Token),
+            progress => MusicLibraryService.Current.AddOrRefreshChannelAsync(
+                channel.SourceUrl,
+                progress,
+                _refreshCts!.Token),
             "Channel refreshed");
     }
 
@@ -182,17 +336,6 @@ public partial class ChannelOverlay : UserControl
         {
             UpdateDownloadSummary();
         }
-    }
-
-    private void OnChannelSelectionChanged(object? sender, SelectionChangedEventArgs e)
-    {
-        if (_refreshingChannelStates)
-            return;
-        _selectedChannelId = (ChannelList.SelectedItem as ChannelSubscription)?.Id ?? -1;
-        SelectedChannelText.Text = (ChannelList.SelectedItem as ChannelSubscription)?.Name ?? "Channels";
-        ChannelSidebar.IsVisible = false;
-        PreviewClosed?.Invoke();
-        RefreshVideos();
     }
 
     private void RefreshVideos()
@@ -301,16 +444,6 @@ public partial class ChannelOverlay : UserControl
             video.IsActive = _activePreviewTrackId is int trackId && video.TrackId == trackId;
     }
 
-    private void OnAutoDownloadClicked(object? sender, RoutedEventArgs e)
-    {
-        if (sender is not Button button || button.DataContext is not ChannelSubscription channel)
-            return;
-        e.Handled = true;
-        MusicLibraryService.Current.SetChannelAutoDownload(channel.Id, !channel.AutoDownload);
-        RefreshChannels();
-        ChannelSidebar.IsVisible = true;
-    }
-
     private void OnGlobalMaxDurationLostFocus(object? sender, RoutedEventArgs e)
     {
         if (sender is not TextBox textBox)
@@ -333,9 +466,6 @@ public partial class ChannelOverlay : UserControl
         UpdateDownloadSummary();
         ToastRequested?.Invoke($"Global download limit set to {minutes} min");
     }
-
-    private void OnSidebarToggleClicked(object? sender, RoutedEventArgs e) =>
-        ChannelSidebar.IsVisible = !ChannelSidebar.IsVisible;
 
     private void OnPendingFilterPressed(object? sender, PointerPressedEventArgs e)
     {
@@ -380,12 +510,9 @@ public partial class ChannelOverlay : UserControl
 
     private void RefreshChannelSummaries()
     {
-        var selectedId = _selectedChannelId;
-        _channels = MusicLibraryService.Current.GetChannelSubscriptions();
-        ChannelList.ItemsSource = _channels;
-        ChannelList.SelectedItem = _channels.FirstOrDefault(channel => channel.Id == selectedId);
-        UpdateDownloadSummary();
-        if (selectedId >= 0) UpdateVideoSummary();
+        RefreshChannels();
+        if (_selectedChannelId >= 0)
+            UpdateVideoSummary();
     }
 
     private void OnCloseClicked(object? sender, RoutedEventArgs e)
@@ -397,32 +524,14 @@ public partial class ChannelOverlay : UserControl
 
     private void UpdateStatus()
     {
-        var uncheckedCount = _channels.Sum(channel => channel.UncheckedCount);
-        StatusText.Text = _channels.Count == 0
-            ? "Add a YouTube channel URL to start tracking videos."
-            : $"{_channels.Count} channels · {uncheckedCount} unchecked videos";
+        ApplyHubFilter();
     }
 
     private void RefreshChannelStates()
     {
         if (!IsVisible)
             return;
-
-        var selectedId = _selectedChannelId;
-        var sidebarVisible = ChannelSidebar.IsVisible;
-        _refreshingChannelStates = true;
-        try
-        {
-            _channels = MusicLibraryService.Current.GetChannelSubscriptions();
-            ChannelList.ItemsSource = _channels;
-            ChannelList.SelectedItem = _channels.FirstOrDefault(channel => channel.Id == selectedId)
-                                       ?? _channels.FirstOrDefault();
-        }
-        finally
-        {
-            _refreshingChannelStates = false;
-            ChannelSidebar.IsVisible = sidebarVisible;
-        }
+        RefreshChannels();
     }
 
     private void UpdateVideoSummary()

@@ -915,7 +915,7 @@ public class MusicDatabase
                 INSERT INTO channels
                     (name, source_channel_id, source_url, subscribed, auto_download, created_at, updated_at, last_checked_at, video_count)
                 VALUES
-                    ($name, $sourceChannelId, $sourceUrl, 1, 1, $now, $now, $now, $videoCount)",
+                    ($name, $sourceChannelId, $sourceUrl, 1, 0, $now, $now, $now, $videoCount)",
                 ("$name", snapshot.Name),
                 ("$sourceChannelId", snapshot.ChannelId),
                 ("$sourceUrl", snapshot.ChannelUrl ?? snapshot.SourceUrl),
@@ -929,6 +929,7 @@ public class MusicDatabase
                 SET name = $name,
                     source_channel_id = COALESCE($sourceChannelId, source_channel_id),
                     source_url = COALESCE($sourceUrl, source_url),
+                    auto_download = CASE WHEN subscribed = 0 THEN 0 ELSE auto_download END,
                     subscribed = 1,
                     updated_at = $now,
                     last_checked_at = $now,
@@ -1030,6 +1031,145 @@ public class MusicDatabase
                 ReadInt32(reader, 12),
                 ReadInt32(reader, 13)));
         return channels;
+    }
+
+    public List<ChannelHubItem> GetChannelHubItems()
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+            WITH track_stats AS (
+                SELECT tracks.channel_id,
+                       COUNT(*) AS track_count,
+                       SUM(CASE WHEN tracks.rating_id IS NOT NULL THEN 1 ELSE 0 END) AS rated_count,
+                       AVG(CASE WHEN tracks.rating_id IS NOT NULL THEN ratings.sort_order END) AS average_rating,
+                       SUM(CASE WHEN ratings.name = 'Favorite' THEN 1 ELSE 0 END) AS favorite_count,
+                       SUM(CASE WHEN ratings.sort_order >= 4 THEN 1 ELSE 0 END) AS great_count,
+                       SUM(tracks.listen_count) AS play_count,
+                       SUM(tracks.skip_count) AS skip_count,
+                       MAX(tracks.downloaded_at) AS last_downloaded_at
+                FROM tracks
+                LEFT JOIN ratings ON ratings.id = tracks.rating_id
+                WHERE tracks.channel_id IS NOT NULL
+                GROUP BY tracks.channel_id
+            ),
+            video_stats AS (
+                SELECT channel_id,
+                       COUNT(*) AS video_count,
+                       SUM(CASE WHEN is_checked = 0 THEN 1 ELSE 0 END) AS unchecked_count
+                FROM channel_videos
+                GROUP BY channel_id
+            )
+            SELECT channels.id,
+                   channels.name,
+                   COALESCE(channels.source_url, ''),
+                   channels.source_channel_id,
+                   channels.subscribed,
+                   channels.inform_new_songs,
+                   channels.auto_download,
+                   channels.last_checked_at,
+                   COALESCE(track_stats.track_count, 0),
+                   COALESCE(track_stats.rated_count, 0),
+                   track_stats.average_rating,
+                   COALESCE(track_stats.favorite_count, 0),
+                   COALESCE(track_stats.great_count, 0),
+                   COALESCE(track_stats.play_count, 0),
+                   COALESCE(track_stats.skip_count, 0),
+                   track_stats.last_downloaded_at,
+                   COALESCE(video_stats.video_count, 0),
+                   COALESCE(video_stats.unchecked_count, 0)
+            FROM channels
+            LEFT JOIN track_stats ON track_stats.channel_id = channels.id
+            LEFT JOIN video_stats ON video_stats.channel_id = channels.id
+            WHERE channels.subscribed = 1 OR COALESCE(track_stats.track_count, 0) > 0
+            ORDER BY channels.name COLLATE NOCASE";
+
+        using var reader = cmd.ExecuteReader();
+        var rows = new List<ChannelHubItem>();
+        while (reader.Read())
+            rows.Add(new ChannelHubItem(
+                reader.GetInt32(0),
+                reader.GetString(1),
+                reader.GetString(2),
+                reader.IsDBNull(3) ? null : reader.GetString(3),
+                ReadInt32(reader, 4) != 0,
+                ReadInt32(reader, 5) != 0,
+                ReadInt32(reader, 6) != 0,
+                reader.IsDBNull(7) ? null : reader.GetString(7),
+                ReadInt32(reader, 8),
+                ReadInt32(reader, 9),
+                reader.IsDBNull(10) ? null : reader.GetDouble(10),
+                ReadInt32(reader, 11),
+                ReadInt32(reader, 12),
+                ReadInt32(reader, 13),
+                ReadInt32(reader, 14),
+                reader.IsDBNull(15) ? null : reader.GetString(15),
+                ReadInt32(reader, 16),
+                ReadInt32(reader, 17),
+                []));
+        reader.Close();
+
+        using var tracks = conn.CreateCommand();
+        tracks.CommandText = @"
+            SELECT tracks.channel_id, tracks.title
+            FROM tracks
+            LEFT JOIN ratings ON ratings.id = tracks.rating_id
+            WHERE tracks.channel_id IS NOT NULL
+            ORDER BY tracks.channel_id,
+                     COALESCE(ratings.sort_order, 0) DESC,
+                     tracks.listen_count DESC,
+                     tracks.downloaded_at DESC";
+        using var trackReader = tracks.ExecuteReader();
+        var topTracks = new Dictionary<int, List<string>>();
+        while (trackReader.Read())
+        {
+            var channelId = trackReader.GetInt32(0);
+            if (!topTracks.TryGetValue(channelId, out var titles))
+                topTracks[channelId] = titles = [];
+            if (titles.Count < 3)
+                titles.Add(trackReader.GetString(1));
+        }
+
+        return rows
+            .Select(channel => channel with
+            {
+                TopTracks = topTracks.TryGetValue(channel.Id, out var titles) ? titles : []
+            })
+            .ToList();
+    }
+
+    public void SetChannelFollowed(int channelId, bool followed)
+    {
+        using var conn = Open();
+        using var tx = conn.BeginTransaction();
+        var now = DateTime.UtcNow.ToString("O");
+        ExecuteInsert(conn, tx, @"
+            UPDATE channels
+            SET subscribed = $followed,
+                auto_download = CASE
+                    WHEN $followed = 0 OR subscribed = 0 THEN 0
+                    ELSE auto_download
+                END,
+                updated_at = $now
+            WHERE id = $id",
+            ("$id", channelId), ("$followed", followed ? 1 : 0), ("$now", now));
+        if (!followed)
+            ExecuteInsert(conn, tx, @"
+                UPDATE channel_videos
+                SET download_status = 'NotQueued', download_error = NULL, updated_at = $now
+                WHERE channel_id = $id AND is_checked = 0
+                  AND download_status IN ('Queued', 'Failed', 'Skipped')
+                  AND NOT EXISTS (SELECT 1 FROM tracks WHERE tracks.canonical_url = channel_videos.canonical_url)",
+                ("$id", channelId), ("$now", now));
+        tx.Commit();
+    }
+
+    public void SetChannelNotifications(int channelId, bool enabled)
+    {
+        using var conn = Open();
+        ExecuteNonQuery(conn,
+            "UPDATE channels SET inform_new_songs = $enabled, updated_at = $now WHERE id = $id",
+            ("$id", channelId), ("$enabled", enabled ? 1 : 0), ("$now", DateTime.UtcNow.ToString("O")));
     }
 
     public List<ChannelVideo> GetChannelVideos(int channelId, bool uncheckedFirst = true)

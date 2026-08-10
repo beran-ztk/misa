@@ -98,6 +98,73 @@ public record ChannelSubscription(
                     ? $"○ Auto-download off · {NotQueuedDownloadCount} not downloaded"
                     : $"✓ Downloads complete · {ReadyDownloadCount} ready · {SkippedDownloadCount} skipped";
 }
+public sealed record ChannelHubItem(
+    int Id,
+    string Name,
+    string SourceUrl,
+    string? SourceChannelId,
+    bool IsFollowed,
+    bool NotificationsEnabled,
+    bool AutoDownload,
+    string? LastCheckedAt,
+    int LocalTrackCount,
+    int RatedTrackCount,
+    double? AverageRating,
+    int FavoriteCount,
+    int GreatOrBetterCount,
+    int PlayCount,
+    int SkipCount,
+    string? LastDownloadedAt,
+    int KnownVideoCount,
+    int UncheckedVideoCount,
+    IReadOnlyList<string> TopTracks)
+{
+    public string Monogram
+    {
+        get
+        {
+            var parts = Name.Split(' ', System.StringSplitOptions.RemoveEmptyEntries);
+            return parts.Length switch
+            {
+                0 => "?",
+                1 => parts[0][..System.Math.Min(2, parts[0].Length)].ToUpperInvariant(),
+                _ => string.Concat(parts[0][0], parts[1][0]).ToUpperInvariant()
+            };
+        }
+    }
+
+    public string TrackCountText => LocalTrackCount == 1 ? "1 track" : $"{LocalTrackCount} tracks";
+    public string RatingText => AverageRating is double average
+        ? $"{average:0.0} avg · {RatedTrackCount}/{LocalTrackCount} rated"
+        : "No ratings yet";
+    public string ActivityText => PlayCount == 0 ? "Not played yet" : $"{PlayCount} plays · {SkipCount} skips";
+    public string NewVideoText => UncheckedVideoCount == 1 ? "1 new video" : $"{UncheckedVideoCount} new videos";
+    public bool HasNewVideos => UncheckedVideoCount > 0;
+    public bool HasTopTracks => TopTracks.Count > 0;
+    public string TopTracksText => string.Join("  ·  ", TopTracks);
+    public string FollowActionText => IsFollowed ? "Following" : "+ Follow";
+    public string AutomationText => AutoDownload ? "Auto-download on" : "Manual downloads";
+
+    public double RecommendationScore
+    {
+        get
+        {
+            var quality = AverageRating is double average ? (average - 1d) / 4d : 0.45d;
+            var confidence = 1d - System.Math.Exp(-RatedTrackCount / 4d);
+            var depth = 1d - System.Math.Exp(-LocalTrackCount / 5d);
+            var engagement = PlayCount <= 0
+                ? 0d
+                : System.Math.Clamp(1d - SkipCount / (double)System.Math.Max(PlayCount, 1), 0d, 1d);
+            return quality * 0.45d + confidence * 0.2d + depth * 0.2d + engagement * 0.15d;
+        }
+    }
+
+    public string RecommendationReason => FavoriteCount > 0
+        ? FavoriteCount == 1 ? "1 favorite in your library" : $"{FavoriteCount} favorites in your library"
+        : GreatOrBetterCount > 0
+            ? GreatOrBetterCount == 1 ? "1 highly rated track" : $"{GreatOrBetterCount} highly rated tracks"
+            : LocalTrackCount == 1 ? "1 track in your library" : $"{LocalTrackCount} tracks in your library";
+}
 public enum ChannelDownloadStatus { NotQueued, Queued, Downloading, Ready, Failed, Skipped }
 public record ChannelVideo(
     int Id,

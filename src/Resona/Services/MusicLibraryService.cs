@@ -168,7 +168,10 @@ public class MusicLibraryService
     public Task<string?> GetRemoteTitleAsync(string canonicalUrl) => _downloader.GetTitleAsync(canonicalUrl);
 
     public List<ChannelSubscription> GetChannelSubscriptions() => _db.GetChannelSubscriptions();
+    public List<ChannelHubItem> GetChannelHubItems() => _db.GetChannelHubItems();
     public List<ChannelVideo> GetChannelVideos(int channelId) => _db.GetChannelVideos(channelId);
+    public void SetChannelFollowed(int channelId, bool followed) => _db.SetChannelFollowed(channelId, followed);
+    public void SetChannelNotifications(int channelId, bool enabled) => _db.SetChannelNotifications(channelId, enabled);
     public void SetChannelAutoDownload(int channelId, bool enabled)
     {
         _db.SetChannelAutoDownload(
