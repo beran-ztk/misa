@@ -80,7 +80,6 @@ public partial class MusicView : UserControl
     private readonly Dictionary<int, double> _trackBackdropFocus = [];
     private readonly HashSet<int> _pendingBackdropFocusTrackIds = [];
     private bool _isDeletingTrack;
-    private int _editorPrepareGeneration;
     private DateTimeOffset _artworkTransitionStartedAt;
     private double _artworkTransitionProgress = 1;
     private double _outgoingAppScale = 1.08;
@@ -309,7 +308,7 @@ public partial class MusicView : UserControl
                         ? $"Analysis cancelled: {track.Title}"
                         : $"Analysis failed for {track.Title}: {error}");
                 if (error is null && _engine.ActiveTrackId == track.Id)
-                    ScheduleTrackEditorPreparation(track, force: true);
+                    PrepareTrackEditor(track, force: true);
             });
         ChannelDownloadService.Current.QueueChanged += () => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
         {
@@ -330,7 +329,7 @@ public partial class MusicView : UserControl
         EditTrackOverlay.ToastRequested += ShowToast;
         EditTrackOverlay.BackdropFocusChanged += OnEditorBackdropFocusChanged;
         EditTrackOverlay.DeleteRequested += DeleteTrackFromEditorAsync;
-        EditTrackOverlay.Closed += ScheduleActiveTrackEditorPreparation;
+        EditTrackOverlay.Closed += PrepareActiveTrackEditor;
         SettingsOverlay.ToastRequested += ShowToast;
         SettingsOverlay.AppearanceChanged += settings => ApplyAppearanceSettings(settings, refreshTrackRows: true);
         SettingsOverlay.LibraryMetadataChanged += RefreshLibraryPresentation;
@@ -393,7 +392,7 @@ public partial class MusicView : UserControl
         EditTrackOverlay.InvalidateLookups();
         LoadLookups();
         RefreshTrackList();
-        ScheduleActiveTrackEditorPreparation();
+        PrepareActiveTrackEditor();
     }
 
     private void MarkLibraryRefreshPending()
@@ -2499,35 +2498,26 @@ public partial class MusicView : UserControl
             backdropFocus: _trackBackdropFocus.GetValueOrDefault(track.Id, 0.5));
     }
 
-    private void ScheduleActiveTrackEditorPreparation()
+    private void PrepareActiveTrackEditor()
     {
         if (_engine.ActiveTrackId < 0)
             return;
 
         var track = _allItems.FirstOrDefault(item => item.Track.Id == _engine.ActiveTrackId)?.Track;
         if (track is not null)
-            ScheduleTrackEditorPreparation(track);
+            PrepareTrackEditor(track);
     }
 
-    private void ScheduleTrackEditorPreparation(MusicTrack track, bool force = false)
+    private void PrepareTrackEditor(MusicTrack track, bool force = false)
     {
-        if (!force && EditTrackOverlay.IsPreparedFor(track.Id))
+        if (EditTrackOverlay.IsOpen || (!force && EditTrackOverlay.IsPreparedFor(track.Id)))
             return;
 
-        var generation = ++_editorPrepareGeneration;
         EditTrackOverlay.InvalidatePreparedTrack();
-        Dispatcher.UIThread.Post(() =>
-        {
-            if (generation != _editorPrepareGeneration
-                || EditTrackOverlay.IsOpen
-                || _engine.ActiveTrackId != track.Id)
-                return;
-
-            var currentTrack = _allItems.FirstOrDefault(item => item.Track.Id == track.Id)?.Track ?? track;
-            EditTrackOverlay.Prepare(
-                currentTrack,
-                _trackBackdropFocus.GetValueOrDefault(track.Id, 0.5));
-        }, DispatcherPriority.Background);
+        var currentTrack = _allItems.FirstOrDefault(item => item.Track.Id == track.Id)?.Track ?? track;
+        EditTrackOverlay.Prepare(
+            currentTrack,
+            _trackBackdropFocus.GetValueOrDefault(track.Id, 0.5));
     }
 
     private async Task<bool> DeleteTrackFromEditorAsync(MusicTrack track)
@@ -2839,7 +2829,7 @@ public partial class MusicView : UserControl
         UpdateButtonStates();
         RefreshPlayingMarkers();
         PersistPlayerSession();
-        ScheduleTrackEditorPreparation(track);
+        PrepareTrackEditor(track);
     }
 
     private static float LoudnessGainForTrack(int trackId)
