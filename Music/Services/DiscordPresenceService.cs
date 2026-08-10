@@ -7,7 +7,8 @@ namespace Music.Services;
 public sealed class DiscordPresenceService : IDisposable
 {
     private const string ClientId = "1524163394276425728";
-    private const string LargeImageKey = "music";
+    private const string LargeImageUrl =
+        "https://raw.githubusercontent.com/beran-ztk/music/master/Music/Assets/music.png";
     private static readonly TimeSpan ReconnectDelay = TimeSpan.FromSeconds(5);
 
     private DiscordRpcClient? _client;
@@ -34,7 +35,8 @@ public sealed class DiscordPresenceService : IDisposable
             State = ClipOrNull(StateText(item), 128),
             Assets = new Assets
             {
-                LargeImageKey = LargeImageKey
+                LargeImageKey = LargeImageUrl
+                // LargeImageText = "Music"
             }
         };
 
@@ -124,7 +126,7 @@ public sealed class DiscordPresenceService : IDisposable
 
         return string.IsNullOrWhiteSpace(item.ChannelText)
             ? title
-            : $"{item.ChannelText.Trim()} - {title}";
+            : $"{title} - {item.ChannelText.Trim()}";
     }
 
     private static string Clip(string value, int maxLength)
