@@ -6,7 +6,6 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Resona.Models;
@@ -16,13 +15,17 @@ namespace Resona.Views;
 
 public partial class ChannelOverlay : UserControl
 {
+    private enum ChannelVideoFilter { New, Ready, InLibrary, Issues, All }
+
     private CancellationTokenSource? _refreshCts;
     private List<ChannelHubItem> _hubChannels = [];
     private ChannelHubItem? _selectedHubChannel;
     private List<ChannelVideoDisplay> _currentVideos = [];
     private int _selectedChannelId = -1;
     private bool _loadingVideos;
-    private bool _showAllVideos;
+    private ChannelVideoFilter _videoFilter = ChannelVideoFilter.New;
+    private readonly Dictionary<int, ChannelVideoFilter> _videoFiltersByChannel = [];
+    private readonly Dictionary<int, string> _videoSearchByChannel = [];
     private bool _processingPastedUrl;
     private int? _activePreviewTrackId;
     private readonly Avalonia.Threading.DispatcherTimer _channelStateRefreshTimer = new()
@@ -44,7 +47,7 @@ public partial class ChannelOverlay : UserControl
             _channelStateRefreshTimer.Stop();
             RefreshChannelStates();
         };
-        SetVideoFilter(showAll: false);
+        SetVideoFilter(ChannelVideoFilter.New, refresh: false);
     }
 
     public void Open()
@@ -69,7 +72,7 @@ public partial class ChannelOverlay : UserControl
     {
         var item = _currentVideos.FirstOrDefault(video => video.Id == videoId);
         item?.SetDownloadResult(track?.Id, error);
-        UpdateVideoSummary();
+        ApplyVideoView();
         UpdateDownloadSummary();
     }
 
@@ -163,6 +166,10 @@ public partial class ChannelOverlay : UserControl
     {
         _selectedHubChannel = channel;
         _selectedChannelId = channel.Id;
+        VideoSearchBox.Text = _videoSearchByChannel.GetValueOrDefault(channel.Id, string.Empty);
+        SetVideoFilter(
+            _videoFiltersByChannel.GetValueOrDefault(channel.Id, ChannelVideoFilter.New),
+            refresh: false);
         HubView.IsVisible = false;
         DetailView.IsVisible = true;
         PreviewClosed?.Invoke();
@@ -352,20 +359,52 @@ public partial class ChannelOverlay : UserControl
             .ToList();
         ApplyActivePreviewMarker();
 
-        var videos = _showAllVideos
-            ? _currentVideos
-            : _currentVideos.Where(video => !video.IsChecked).ToList();
+        ApplyVideoView();
+    }
+
+    private void ApplyVideoView()
+    {
+        if (_selectedChannelId < 0)
+            return;
+
+        var newCount = _currentVideos.Count(video => !video.IsChecked);
+        var readyCount = _currentVideos.Count(video => !video.IsChecked && video.TrackId is not null);
+        var libraryCount = _currentVideos.Count(video => video.TrackId is not null);
+        var issueCount = _currentVideos.Count(video =>
+            video.DownloadStatus is ChannelDownloadStatus.Failed or ChannelDownloadStatus.Skipped);
+        NewVideosFilterButton.Content = $"New {newCount}";
+        ReadyVideosFilterButton.Content = $"Ready {readyCount}";
+        LibraryVideosFilterButton.Content = $"In library {libraryCount}";
+        IssueVideosFilterButton.Content = $"Issues {issueCount}";
+        AllVideosFilterButton.Content = $"All {_currentVideos.Count}";
+
+        var search = VideoSearchBox.Text?.Trim() ?? string.Empty;
+        IEnumerable<ChannelVideoDisplay> videos = _currentVideos;
+        if (search.Length > 0)
+            videos = videos.Where(video => video.Title.Contains(search, StringComparison.OrdinalIgnoreCase));
+
+        videos = _videoFilter switch
+        {
+            ChannelVideoFilter.New => videos.Where(video => !video.IsChecked),
+            ChannelVideoFilter.Ready => videos.Where(video => !video.IsChecked && video.TrackId is not null),
+            ChannelVideoFilter.InLibrary => videos.Where(video => video.TrackId is not null),
+            ChannelVideoFilter.Issues => videos.Where(video =>
+                video.DownloadStatus is ChannelDownloadStatus.Failed or ChannelDownloadStatus.Skipped),
+            _ => videos
+        };
+
+        var visible = videos.ToList();
 
         _loadingVideos = true;
         try
         {
-            VideoList.ItemsSource = videos;
+            VideoList.ItemsSource = visible;
         }
         finally
         {
             _loadingVideos = false;
         }
-        UpdateVideoSummary();
+        UpdateVideoSummary(visible.Count);
     }
 
     private void OnVideoCheckClicked(object? sender, RoutedEventArgs e)
@@ -467,29 +506,59 @@ public partial class ChannelOverlay : UserControl
         ToastRequested?.Invoke($"Global download limit set to {minutes} min");
     }
 
-    private void OnPendingFilterPressed(object? sender, PointerPressedEventArgs e)
+    private void OnVideoSearchChanged(object? sender, TextChangedEventArgs e)
     {
-        SetVideoFilter(showAll: false);
-        e.Handled = true;
+        if (_selectedChannelId < 0)
+            return;
+        _videoSearchByChannel[_selectedChannelId] = VideoSearchBox.Text ?? string.Empty;
+        ApplyVideoView();
     }
 
-    private void OnAllFilterPressed(object? sender, PointerPressedEventArgs e)
-    {
-        SetVideoFilter(showAll: true);
-        e.Handled = true;
-    }
+    private void OnNewVideosFilterClicked(object? sender, RoutedEventArgs e) =>
+        SetVideoFilter(ChannelVideoFilter.New);
 
-    private void SetVideoFilter(bool showAll)
+    private void OnReadyVideosFilterClicked(object? sender, RoutedEventArgs e) =>
+        SetVideoFilter(ChannelVideoFilter.Ready);
+
+    private void OnLibraryVideosFilterClicked(object? sender, RoutedEventArgs e) =>
+        SetVideoFilter(ChannelVideoFilter.InLibrary);
+
+    private void OnIssueVideosFilterClicked(object? sender, RoutedEventArgs e) =>
+        SetVideoFilter(ChannelVideoFilter.Issues);
+
+    private void OnAllVideosFilterClicked(object? sender, RoutedEventArgs e) =>
+        SetVideoFilter(ChannelVideoFilter.All);
+
+    private void SetVideoFilter(ChannelVideoFilter filter, bool refresh = true)
     {
-        _showAllVideos = showAll;
-        if (VideoFilterSelectionIndicator.RenderTransform is TranslateTransform transform)
-            transform.X = showAll ? 72 : 0;
-        VideoFilterSelectionIndicator.CornerRadius = showAll
-            ? new Avalonia.CornerRadius(0, 5, 5, 0)
-            : new Avalonia.CornerRadius(5, 0, 0, 5);
-        PendingFilterText.Foreground = new SolidColorBrush(Color.Parse(showAll ? "#B8C5CE" : "#FFFFFF"));
-        AllFilterText.Foreground = new SolidColorBrush(Color.Parse(showAll ? "#FFFFFF" : "#B8C5CE"));
-        RefreshVideos();
+        _videoFilter = filter;
+        if (_selectedChannelId >= 0)
+            _videoFiltersByChannel[_selectedChannelId] = filter;
+
+        var buttons = new Dictionary<ChannelVideoFilter, Button>
+        {
+            [ChannelVideoFilter.New] = NewVideosFilterButton,
+            [ChannelVideoFilter.Ready] = ReadyVideosFilterButton,
+            [ChannelVideoFilter.InLibrary] = LibraryVideosFilterButton,
+            [ChannelVideoFilter.Issues] = IssueVideosFilterButton,
+            [ChannelVideoFilter.All] = AllVideosFilterButton
+        };
+        foreach (var pair in buttons)
+        {
+            var selected = pair.Key == filter;
+            pair.Value.Background = selected
+                ? new SolidColorBrush(Color.Parse("#293E6591"))
+                : Brushes.Transparent;
+            pair.Value.BorderBrush = selected
+                ? new SolidColorBrush(Color.Parse("#6B83A9CA"))
+                : new SolidColorBrush(Color.Parse("#26FFFFFF"));
+            pair.Value.Foreground = ThemeResources.Brush(selected
+                ? "Theme.Brush.TextPrimary"
+                : "Theme.Brush.TextSecondary");
+        }
+
+        if (refresh)
+            ApplyVideoView();
     }
 
     private async void OnCopyVideoUrlClicked(object? sender, RoutedEventArgs e)
@@ -511,8 +580,6 @@ public partial class ChannelOverlay : UserControl
     private void RefreshChannelSummaries()
     {
         RefreshChannels();
-        if (_selectedChannelId >= 0)
-            UpdateVideoSummary();
     }
 
     private void OnCloseClicked(object? sender, RoutedEventArgs e)
@@ -534,7 +601,7 @@ public partial class ChannelOverlay : UserControl
         RefreshChannels();
     }
 
-    private void UpdateVideoSummary()
+    private void UpdateVideoSummary(int? visibleCount = null)
     {
         if (_selectedChannelId < 0)
         {
@@ -548,7 +615,8 @@ public partial class ChannelOverlay : UserControl
         var queued = _currentVideos.Count(video => video.DownloadStatus == ChannelDownloadStatus.Queued);
         var downloading = _currentVideos.Count(video => video.DownloadStatus == ChannelDownloadStatus.Downloading);
         var skipped = _currentVideos.Count(video => video.DownloadStatus == ChannelDownloadStatus.Skipped);
-        VideoSummaryText.Text = $"{_currentVideos.Count} tracks · Ready {ready} · Failed {failed} · " +
+        var shown = visibleCount ?? _currentVideos.Count;
+        VideoSummaryText.Text = $"{shown} shown · {_currentVideos.Count} total · Ready {ready} · Failed {failed} · " +
                                 $"Queued {queued} · Downloading {downloading} · Skipped {skipped} · {uncheckedCount} unchecked";
     }
 
@@ -584,6 +652,7 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
         CanonicalUrl = video.CanonicalUrl;
         Title = video.Title;
         DurationText = video.DurationSeconds is int seconds ? FormatDuration(seconds) : "";
+        UploadedText = FormatUploadDate(video.UploadedAt);
         _trackId = video.TrackId;
         SetDownloadState(video.DownloadStatus, video.DownloadError);
         SetChecked(video.IsChecked);
@@ -594,6 +663,8 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
     public int Id { get; }
     public string CanonicalUrl { get; }
     public string Title { get; }
+    public string UploadedText { get; }
+    public bool HasUploadDate => UploadedText.Length > 0;
     public bool IsChecked
     {
         get => _isChecked;
@@ -790,6 +861,19 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
         return time.TotalHours >= 1
             ? $"{(int)time.TotalHours}:{time.Minutes:D2}:{time.Seconds:D2}"
             : $"{time.Minutes:D2}:{time.Seconds:D2}";
+    }
+
+    private static string FormatUploadDate(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return string.Empty;
+        if (value.Length == 8
+            && DateTime.TryParseExact(value, "yyyyMMdd", null,
+                System.Globalization.DateTimeStyles.None, out var compactDate))
+            return compactDate.ToString("dd MMM yyyy");
+        return DateTime.TryParse(value, out var parsed)
+            ? parsed.ToString("dd MMM yyyy")
+            : value;
     }
 
 }

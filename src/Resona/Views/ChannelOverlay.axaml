@@ -10,7 +10,7 @@
                     MinHeight="158"
                     Margin="0,0,10,10"
                     Padding="14,12"
-                    Background="#101FFFFFFF"
+                    Background="#10FFFFFF"
                     BorderBrush="#28FFFFFF"
                     BorderThickness="1"
                     CornerRadius="8">
@@ -140,6 +140,20 @@
             <Setter Property="Background" Value="{DynamicResource Theme.Brush.SurfaceHover}"/>
             <Setter Property="Foreground" Value="{DynamicResource Theme.Brush.TextPrimary}"/>
         </Style>
+        <Style Selector="Button.video-filter">
+            <Setter Property="Padding" Value="9,4"/>
+            <Setter Property="MinHeight" Value="26"/>
+            <Setter Property="FontSize" Value="9.5"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="#26FFFFFF"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="5"/>
+            <Setter Property="Foreground" Value="{DynamicResource Theme.Brush.TextSecondary}"/>
+        </Style>
+        <Style Selector="Button.video-filter:pointerover">
+            <Setter Property="Background" Value="{DynamicResource Theme.Brush.SurfaceHover}"/>
+            <Setter Property="Foreground" Value="{DynamicResource Theme.Brush.TextPrimary}"/>
+        </Style>
         <Style Selector="TextBox.compact-search">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderBrush" Value="#46FFFFFF"/>
@@ -238,7 +252,7 @@
             <Grid Grid.Row="1" RowDefinitions="Auto,Auto,Auto,*"
                   Margin="26,16,26,22" RowSpacing="16">
                     <Border x:Name="AddChannelPanel" Grid.Row="0" IsVisible="False"
-                            Background="#101FFFFFFF" BorderBrush="#28FFFFFF" BorderThickness="1"
+                            Background="#10FFFFFF" BorderBrush="#28FFFFFF" BorderThickness="1"
                             CornerRadius="8" Padding="14,11">
                         <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
                             <TextBlock Text="ADD CHANNEL" FontSize="9.5" FontWeight="SemiBold"
@@ -352,42 +366,37 @@
                     </Grid>
                 </Border>
 
-                <Grid Grid.Row="1" ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="12">
-                    <TextBlock x:Name="VideoSummaryText" FontSize="10.5" Opacity="0.58"
-                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
-                        <TextBlock Text="Max duration" FontSize="10" Opacity="0.58" VerticalAlignment="Center"/>
-                        <TextBox x:Name="GlobalMaxDurationBox" Classes="compact-search"
-                                 Width="45" Height="26" FontSize="10" TextAlignment="Center"
-                                 VerticalContentAlignment="Center" LostFocus="OnGlobalMaxDurationLostFocus"/>
-                        <TextBlock Text="min" FontSize="10" Opacity="0.58" VerticalAlignment="Center"/>
-                    </StackPanel>
-                    <Border Grid.Column="2" Width="146" Height="28" Background="#0FFFFFFF"
-                            BorderBrush="#34FFFFFF" BorderThickness="1" CornerRadius="6" ClipToBounds="True">
-                        <Grid ColumnDefinitions="72,72">
-                            <Border x:Name="VideoFilterSelectionIndicator" Grid.ColumnSpan="2" Width="72"
-                                    HorizontalAlignment="Left" Background="{DynamicResource Theme.Brush.Success}"
-                                    CornerRadius="{DynamicResource Theme.Corner.Small}" IsHitTestVisible="False">
-                                <Border.RenderTransform>
-                                    <TranslateTransform>
-                                        <TranslateTransform.Transitions>
-                                            <Transitions><DoubleTransition Property="X" Duration="0:0:0.16"/></Transitions>
-                                        </TranslateTransform.Transitions>
-                                    </TranslateTransform>
-                                </Border.RenderTransform>
-                            </Border>
-                            <Border Background="Transparent" Cursor="Hand" PointerPressed="OnPendingFilterPressed">
-                                <TextBlock x:Name="PendingFilterText" Text="Pending" FontSize="10.5" FontWeight="SemiBold"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
-                            <Border Grid.Column="1" Background="Transparent" Cursor="Hand" PointerPressed="OnAllFilterPressed">
-                                <TextBlock x:Name="AllFilterText" Text="All" FontSize="10.5" FontWeight="SemiBold"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
-                        </Grid>
-                    </Border>
-                    <Button Grid.Column="3" x:Name="DetailAutoDownloadButton" Classes="follow-action"
-                            Click="OnDetailAutoDownloadClicked"/>
+                <Grid Grid.Row="1" RowDefinitions="Auto,Auto" RowSpacing="8">
+                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                        <TextBlock Text="VIDEOS" FontSize="9.5" FontWeight="SemiBold" LetterSpacing="0.9"
+                                   Opacity="0.48" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="1" x:Name="VideoSummaryText" FontSize="10.5" Opacity="0.58"
+                                   TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                        <TextBox Grid.Column="2" x:Name="VideoSearchBox" Classes="compact-search"
+                                 Width="210" Height="28" Watermark="Search videos…"
+                                 VerticalContentAlignment="Center" TextChanged="OnVideoSearchChanged"/>
+                    </Grid>
+                    <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,*,Auto,Auto" ColumnSpacing="6">
+                        <Button x:Name="NewVideosFilterButton" Classes="video-filter" Content="New"
+                                Click="OnNewVideosFilterClicked"/>
+                        <Button Grid.Column="1" x:Name="ReadyVideosFilterButton" Classes="video-filter" Content="Ready"
+                                Click="OnReadyVideosFilterClicked"/>
+                        <Button Grid.Column="2" x:Name="LibraryVideosFilterButton" Classes="video-filter" Content="In library"
+                                Click="OnLibraryVideosFilterClicked"/>
+                        <Button Grid.Column="3" x:Name="IssueVideosFilterButton" Classes="video-filter" Content="Issues"
+                                Click="OnIssueVideosFilterClicked"/>
+                        <Button Grid.Column="4" x:Name="AllVideosFilterButton" Classes="video-filter" Content="All"
+                                Click="OnAllVideosFilterClicked"/>
+                        <StackPanel Grid.Column="6" Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
+                            <TextBlock Text="Global max" FontSize="9.5" Opacity="0.52" VerticalAlignment="Center"/>
+                            <TextBox x:Name="GlobalMaxDurationBox" Classes="compact-search"
+                                     Width="42" Height="26" FontSize="10" TextAlignment="Center"
+                                     VerticalContentAlignment="Center" LostFocus="OnGlobalMaxDurationLostFocus"/>
+                            <TextBlock Text="min" FontSize="9.5" Opacity="0.52" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <Button Grid.Column="7" x:Name="DetailAutoDownloadButton" Classes="follow-action"
+                                Click="OnDetailAutoDownloadClicked"/>
+                    </Grid>
                 </Grid>
 
                 <ListBox Grid.Row="2" x:Name="VideoList" Classes="video-list"
@@ -401,6 +410,8 @@
                                     <StackPanel Spacing="2" VerticalAlignment="Center">
                                         <TextBlock Text="{Binding Title}" TextDecorations="{Binding TextDecorations}" FontSize="12.5"
                                                    TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Text="{Binding UploadedText}" FontSize="9.5" Opacity="0.44"
+                                                   IsVisible="{Binding HasUploadDate}"/>
                                         <TextBlock Text="{Binding DownloadErrorSummary}" IsVisible="{Binding HasDownloadError}"
                                                    ToolTip.Tip="{Binding DownloadErrorDetails}" FontSize="10.5"
                                                    Foreground="#E87878" Opacity="0.86" TextWrapping="Wrap" MaxHeight="34"/>
