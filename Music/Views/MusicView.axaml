@@ -363,9 +363,18 @@
                                     ClipToBounds="True"
                                     Padding="0,0">
                                 <Panel>
-                                <Border CornerRadius="7"
-                                        Background="{Binding ArtworkRowBackground}"
-                                        IsHitTestVisible="False"/>
+                                <views:TrackColorWashControl
+                                        PrimaryColor="{Binding ArtworkPrimaryColor}"
+                                        SecondaryColor="{Binding ArtworkSecondaryColor}"
+                                        Seed="{Binding Track.Id}"
+                                        Strength="{Binding TrackColorWashStrength}"
+                                        Reach="{Binding TrackColorWashReach}"
+                                        Margin="-8,0"
+                                        IsHitTestVisible="False">
+                                    <views:TrackColorWashControl.Effect>
+                                        <BlurEffect Radius="8"/>
+                                    </views:TrackColorWashControl.Effect>
+                                </views:TrackColorWashControl>
                                 <Image Source="{Binding Thumbnail}"
                                        Width="106" Height="68"
                                        Margin="18,-10,0,-10"

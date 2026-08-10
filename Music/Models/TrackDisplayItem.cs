@@ -32,6 +32,8 @@ public record TrackDisplayItem(
     public double TrackArtworkBlur { get; private set; } = 14;
     public double CoverHaloOpacity { get; private set; } = 0.34;
     public double CoverHaloBlur { get; private set; } = 9;
+    public double TrackColorWashStrength { get; private set; } = 0.2535;
+    public double TrackColorWashReach { get; private set; } = 40;
 
     private AppearanceSettings _appearance = AppearanceSettings.Balanced();
 
@@ -49,6 +51,8 @@ public record TrackDisplayItem(
         TrackArtworkBlur = _appearance.TrackArtworkBlur;
         CoverHaloOpacity = _appearance.CoverHaloStrength / 100d;
         CoverHaloBlur = _appearance.CoverHaloBlur;
+        TrackColorWashStrength = _appearance.TrackColorWashStrength / 100d;
+        TrackColorWashReach = _appearance.TrackColorWashReach;
         RebuildArtworkPresentation();
     }
 

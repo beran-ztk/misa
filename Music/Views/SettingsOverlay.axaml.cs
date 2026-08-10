@@ -1463,17 +1463,10 @@ public partial class SettingsOverlay : UserControl
         PreviewCoverHalo.Opacity = _appearanceSettings.CoverHaloStrength / 100d;
         SetPreviewBlur(PreviewTrackArtworkBlur, _appearanceSettings.TrackArtworkBlur);
         SetPreviewBlur(PreviewCoverHalo, _appearanceSettings.CoverHaloBlur);
-        PreviewTrackWash.Background = new LinearGradientBrush
-        {
-            StartPoint = new RelativePoint(0, 0.5, RelativeUnit.Relative),
-            EndPoint = new RelativePoint(_appearanceSettings.TrackColorWashReach / 100d, 0.5, RelativeUnit.Relative),
-            GradientStops =
-            {
-                new GradientStop(PreviewWithOpacity(_previewPrimary, _appearanceSettings.TrackColorWashStrength / 100d), 0),
-                new GradientStop(PreviewWithOpacity(_previewSecondary, _appearanceSettings.TrackColorWashStrength / 100d * 0.6), 0.42),
-                new GradientStop(Colors.Transparent, 1)
-            }
-        };
+        PreviewTrackWash.PrimaryColor = _previewPrimary;
+        PreviewTrackWash.SecondaryColor = _previewSecondary;
+        PreviewTrackWash.Strength = _appearanceSettings.TrackColorWashStrength / 100d;
+        PreviewTrackWash.Reach = _appearanceSettings.TrackColorWashReach;
 
         PreviewPlayerDarkening.Background = new SolidColorBrush(PreviewWithOpacity(
             Color.Parse("#242424"), _appearanceSettings.PlayerBackgroundDarkening / 100d));

@@ -378,7 +378,14 @@
                                     <Border Margin="12,10,12,9" CornerRadius="7" ClipToBounds="True"
                                             Background="#53211F19" BorderBrush="#3D4A4437" BorderThickness="1">
                                         <Panel>
-                                            <Border x:Name="PreviewTrackWash"/>
+                                            <views:TrackColorWashControl x:Name="PreviewTrackWash"
+                                                                         Seed="7319"
+                                                                         Margin="-8,0"
+                                                                         IsHitTestVisible="False">
+                                                <views:TrackColorWashControl.Effect>
+                                                    <BlurEffect Radius="8"/>
+                                                </views:TrackColorWashControl.Effect>
+                                            </views:TrackColorWashControl>
                                             <Image x:Name="PreviewTrackArtworkBlur" Source="/Assets/headphones.png"
                                                    Width="126" Height="82" Margin="14,-10,0,-10"
                                                    HorizontalAlignment="Left" Stretch="UniformToFill" Opacity="0.18">
