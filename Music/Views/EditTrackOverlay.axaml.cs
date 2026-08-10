@@ -39,6 +39,7 @@ public partial class EditTrackOverlay : UserControl
     private Dictionary<int, List<ModelSubgenreDistinction>> _distinctionsBySubgenreId = [];
     private HashSet<int> _visibleDetectedModelGenreIds = [];
     private bool _areDetectedGenresExpanded;
+    private bool _areFrequentManualGenresExpanded;
     private int? _modelGenreFilterId;
     private string _modelGenreSearchText = string.Empty;
     private bool _buildingModelGenreChoices;
@@ -82,6 +83,7 @@ public partial class EditTrackOverlay : UserControl
         _track = track;
         _isPlayingPreview = false;
         _areDetectedGenresExpanded = false;
+        _areFrequentManualGenresExpanded = false;
         LoadLookups();
         Prefill(track);
         IsVisible = true;
@@ -508,15 +510,10 @@ public partial class EditTrackOverlay : UserControl
 
         MusicLibraryService.Current.SetTrackManualTags(_track.Id, SelectedTagIds());
 
-        foreach (var genreId in _initialEnabledModelGenreIds
-                     .Concat(_pendingEnabledModelGenreIds)
-                     .Distinct())
-        {
-            MusicLibraryService.Current.SetTrackModelGenreEnabled(
-                _track.Id,
-                genreId,
-                _pendingEnabledModelGenreIds.Contains(genreId));
-        }
+        foreach (var genreId in _initialEnabledModelGenreIds.Except(_pendingEnabledModelGenreIds))
+            MusicLibraryService.Current.SetTrackModelGenreEnabled(_track.Id, genreId, false);
+        foreach (var genreId in _pendingEnabledModelGenreIds.Except(_initialEnabledModelGenreIds))
+            MusicLibraryService.Current.SetTrackModelGenreEnabled(_track.Id, genreId, true);
 
         _track = _track with
         {
@@ -692,7 +689,7 @@ public partial class EditTrackOverlay : UserControl
         ModelSelectedGenresPanel.Children.Clear();
         foreach (var assignment in assignments)
         {
-            var isManualSelection = assignment.Reasons.Count == 0;
+            var isManualSelection = assignment.IsManual;
             var confidence = isManualSelection ? 0 : assignment.Reasons.Max(reason => reason.Score);
             var confidenceBrush = AnalysisColorScale.GenreConfidence(confidence);
             var enabled = assignment.IsEnabled;
@@ -822,6 +819,7 @@ public partial class EditTrackOverlay : UserControl
                 genreId,
                 subgenre.Name,
                 true,
+                true,
                 predictionReasonsBySubgenreId.GetValueOrDefault(genreId, []));
         }
 
@@ -829,7 +827,8 @@ public partial class EditTrackOverlay : UserControl
             .Where(assignment => _pendingEnabledModelGenreIds.Contains(assignment.GenreId))
             .Select(assignment => assignment with
             {
-                IsEnabled = true
+                IsEnabled = true,
+                IsManual = assignment.IsManual || !_initialEnabledModelGenreIds.Contains(assignment.GenreId)
             })
             .OrderByDescending(assignment => assignment.Reasons.Count == 0 ? 0 : assignment.Reasons.Max(reason => reason.Score))
             .ThenBy(assignment => assignment.GenreName, StringComparer.OrdinalIgnoreCase)
@@ -955,6 +954,16 @@ public partial class EditTrackOverlay : UserControl
         e.Handled = true;
     }
 
+    private void OnFrequentManualGenresHeaderPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (_track is null)
+            return;
+
+        _areFrequentManualGenresExpanded = !_areFrequentManualGenresExpanded;
+        BuildFrequentManualGenreChoices();
+        e.Handled = true;
+    }
+
     private void RebuildModelGenreChoices()
     {
         if (_modelSubgenresById.Count == 0)
@@ -1001,73 +1010,139 @@ public partial class EditTrackOverlay : UserControl
     private void BuildFrequentManualGenreChoices()
     {
         FrequentManualGenresPanel.Children.Clear();
+        if (_track is null)
+        {
+            FrequentManualGenresSection.IsVisible = false;
+            return;
+        }
 
-        var search = _modelGenreSearchText.Trim();
-        var frequentGenres = MusicLibraryService.Current.GetTopManualModelGenres()
+        var frequentGenres = MusicLibraryService.Current
+            .GetTopManualModelGenres(Math.Max(8, _modelSubgenresById.Count))
             .Where(usage => !_modelGenreIds.Contains(usage.ModelSubgenreId))
-            .Where(usage => !_visibleDetectedModelGenreIds.Contains(usage.ModelSubgenreId))
             .Where(usage => _modelSubgenresById.ContainsKey(usage.ModelSubgenreId))
-            .Where(usage => string.IsNullOrWhiteSpace(search)
-                || usage.ModelSubgenreName.Contains(search, StringComparison.OrdinalIgnoreCase))
             .Take(8)
             .ToList();
 
         FrequentManualGenresSection.IsVisible = frequentGenres.Count > 0;
+        FrequentManualGenresCountText.Text = $"({frequentGenres.Count})";
+        ((RotateTransform)FrequentManualGenresChevron.RenderTransform!).Angle =
+            _areFrequentManualGenresExpanded ? 90 : 0;
+        FrequentManualGenresPanel.IsVisible = _areFrequentManualGenresExpanded;
+        if (!_areFrequentManualGenresExpanded)
+            return;
+
+        var predictionsByGenreId = MusicLibraryService.Current.GetTrackGenrePredictions(_track.Id)
+            .GroupBy(prediction => prediction.ModelSubgenreId)
+            .ToDictionary(
+                group => group.Key,
+                group => group.OrderByDescending(prediction => prediction.Score).First());
         foreach (var usage in frequentGenres)
-            FrequentManualGenresPanel.Children.Add(CreateFrequentManualGenreButton(usage));
+        {
+            predictionsByGenreId.TryGetValue(usage.ModelSubgenreId, out var prediction);
+            FrequentManualGenresPanel.Children.Add(CreateFrequentManualGenreChoice(usage, prediction));
+        }
     }
 
-    private Button CreateFrequentManualGenreButton(ManualModelGenreUsage usage)
+    private Control CreateFrequentManualGenreChoice(
+        ManualModelGenreUsage usage,
+        StoredModelGenrePrediction? prediction)
     {
-        var text = new StackPanel { Spacing = 1, VerticalAlignment = VerticalAlignment.Center };
-        text.Children.Add(new TextBlock
+        var confidenceBrush = prediction is null
+            ? ThemeResources.Brush("Theme.Brush.TextSecondary")
+            : AnalysisColorScale.GenreConfidence(prediction.Score);
+        var container = new Border
+        {
+            Background = Brushes.Transparent,
+            BorderThickness = new Avalonia.Thickness(0),
+            Padding = new Avalonia.Thickness(0, 4),
+            Cursor = new Cursor(StandardCursorType.Hand)
+        };
+        var content = new Grid
+        {
+            ColumnDefinitions = new ColumnDefinitions("*,20"),
+            ColumnSpacing = 9,
+            RowDefinitions = new RowDefinitions("Auto,Auto"),
+            RowSpacing = 5
+        };
+        var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), ColumnSpacing = 10 };
+        row.Children.Add(new TextBlock
         {
             Text = usage.ModelSubgenreName,
+            FontSize = 11,
+            FontWeight = FontWeight.SemiBold,
+            Foreground = ThemeResources.Brush("Theme.Brush.TextStrong"),
+            TextTrimming = TextTrimming.CharacterEllipsis
+        });
+        var metric = new TextBlock
+        {
+            Text = prediction is null ? $"{usage.UsageCount}×" : $"{prediction.Score:P0}",
             FontSize = 10.5,
             FontWeight = FontWeight.SemiBold,
-            TextTrimming = TextTrimming.CharacterEllipsis
-        });
-        text.Children.Add(new TextBlock
-        {
-            Text = usage.ModelGenreName,
-            FontSize = 9,
-            Opacity = 0.64,
-            TextTrimming = TextTrimming.CharacterEllipsis
-        });
-        var content = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), ColumnSpacing = 6 };
-        content.Children.Add(text);
-        var count = new Border
-        {
-            Background = ThemeResources.Brush("Theme.Brush.AccentSurface"),
-            CornerRadius = new Avalonia.CornerRadius(8),
-            Padding = new Avalonia.Thickness(6, 2),
-            VerticalAlignment = VerticalAlignment.Center,
-            Child = new TextBlock
-            {
-                Text = $"{usage.UsageCount}×",
-                FontSize = 9,
-                Foreground = ThemeResources.Brush("Theme.Brush.TextSecondary")
-            }
+            Foreground = confidenceBrush,
+            Opacity = prediction is null ? 0.68 : 1
         };
-        Grid.SetColumn(count, 1);
-        content.Children.Add(count);
+        Grid.SetColumn(metric, 1);
+        row.Children.Add(metric);
+        content.Children.Add(row);
 
-        var button = new Button
+        var add = new TextBlock
         {
-            Content = content,
-            Height = 44,
-            Margin = new Avalonia.Thickness(0, 0, 6, 6),
-            Padding = new Avalonia.Thickness(9, 4),
-            Background = ThemeResources.Brush("Theme.Brush.SurfaceRaised"),
-            BorderBrush = ThemeResources.Brush("Theme.Brush.Border"),
-            CornerRadius = new Avalonia.CornerRadius(5),
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-            HorizontalContentAlignment = HorizontalAlignment.Stretch,
-            VerticalContentAlignment = VerticalAlignment.Center
+            Text = "+",
+            Width = 20,
+            FontSize = 16,
+            Foreground = ThemeResources.Brush("Theme.Brush.TextStrong"),
+            Opacity = 0.58,
+            TextAlignment = TextAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center
         };
-        button.Classes.Add("edit-choice");
-        ToolTip.SetTip(button, CreateModelMetadataTooltip([usage.ModelSubgenreId]));
-        button.Click += (_, _) =>
+        Grid.SetColumn(add, 1);
+        Grid.SetRowSpan(add, 2);
+        content.Children.Add(add);
+
+        Control detail;
+        if (prediction is null)
+        {
+            detail = new TextBlock
+            {
+                Text = usage.ModelGenreName,
+                FontSize = 9.5,
+                Opacity = 0.52,
+                TextTrimming = TextTrimming.CharacterEllipsis
+            };
+        }
+        else
+        {
+            var detectedDetail = new Grid
+            {
+                ColumnDefinitions = new ColumnDefinitions("110,*"),
+                ColumnSpacing = 8
+            };
+            detectedDetail.Children.Add(new TextBlock
+            {
+                Text = usage.ModelGenreName,
+                FontSize = 9.5,
+                Opacity = 0.52,
+                TextTrimming = TextTrimming.CharacterEllipsis
+            });
+            var confidenceBar = new ProgressBar
+            {
+                Minimum = 0,
+                Maximum = 1,
+                Value = prediction.Score,
+                Height = 4,
+                Foreground = confidenceBrush,
+                Background = ThemeResources.Brush("Theme.Brush.Surface"),
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            Grid.SetColumn(confidenceBar, 1);
+            detectedDetail.Children.Add(confidenceBar);
+            detail = detectedDetail;
+        }
+
+        Grid.SetRow(detail, 1);
+        content.Children.Add(detail);
+        container.Child = content;
+        container.PointerPressed += (_, _) =>
         {
             if (_track is null) return;
             _pendingEnabledModelGenreIds.Add(usage.ModelSubgenreId);
@@ -1076,7 +1151,8 @@ public partial class EditTrackOverlay : UserControl
             RebuildModelGenreChoices();
             UpdateSaveButton();
         };
-        return button;
+        ToolTip.SetTip(container, CreateModelMetadataTooltip([usage.ModelSubgenreId]));
+        return container;
     }
 
     private Button CreateModelGenreChoiceButton(ModelSubgenre subgenre)

@@ -122,6 +122,7 @@ public class MusicDatabase
                 genre_id                 INTEGER NOT NULL REFERENCES model_subgenres(id),
                 assigned_at              TEXT NOT NULL,
                 is_enabled               INTEGER NOT NULL DEFAULT 1,
+                is_manual                INTEGER NOT NULL DEFAULT 0,
                 PRIMARY KEY (track_id, genre_id)
             );
 
@@ -244,6 +245,7 @@ public class MusicDatabase
         EnsureColumn(conn, "model_subgenres", "classification_hint", "TEXT NULL");
         EnsureColumn(conn, "model_subgenres", "bpm_min", "INTEGER NULL");
         EnsureColumn(conn, "model_subgenres", "bpm_max", "INTEGER NULL");
+        EnsureTrackGenreSourceSchema(conn);
         RenameLegacySkipRating(conn);
         EnsureChannelSubscriptionSchema(conn);
         CreateImportQueueSchema(conn);
@@ -251,6 +253,28 @@ public class MusicDatabase
         CreateTagSchema(conn);
         SimplifyTagSchemaIfNeeded(conn);
         CreatePortableExportSchema(conn);
+    }
+
+    private static void EnsureTrackGenreSourceSchema(SqliteConnection conn)
+    {
+        if (ColumnExists(conn, "track_genres", "is_manual"))
+            return;
+
+        using var tx = conn.BeginTransaction();
+        ExecuteInsert(conn, tx, "ALTER TABLE track_genres ADD COLUMN is_manual INTEGER NOT NULL DEFAULT 0");
+        ExecuteInsert(conn, tx, @"
+            UPDATE track_genres
+            SET is_manual = 1
+            WHERE NOT EXISTS (
+                SELECT 1
+                FROM track_analysis analysis
+                JOIN track_genre_predictions predictions
+                  ON predictions.track_analysis_id = analysis.id
+                WHERE analysis.track_id = track_genres.track_id
+                  AND predictions.model_subgenre_id = track_genres.genre_id
+                  AND predictions.score > 0.25
+            )");
+        tx.Commit();
     }
 
     private static void RenameLegacySkipRating(SqliteConnection conn)
@@ -1611,7 +1635,8 @@ public class MusicDatabase
     public List<TrackModelGenre> GetTrackModelGenres(int trackId)
     {
         using var conn = Open(); using var cmd = conn.CreateCommand();
-        cmd.CommandText = @"SELECT track_genres.genre_id, msg.name, track_genres.is_enabled, mg.name, msg.name, predictions.score
+        cmd.CommandText = @"SELECT track_genres.genre_id, msg.name, track_genres.is_enabled, track_genres.is_manual,
+                                   mg.name, msg.name, predictions.score
                             FROM track_genres
                             JOIN model_subgenres msg ON msg.id = track_genres.genre_id
                             JOIN model_genres mg ON mg.id = msg.model_genre_id
@@ -1621,15 +1646,17 @@ public class MusicDatabase
                             ORDER BY predictions.score IS NULL, predictions.score DESC, msg.name";
         cmd.Parameters.AddWithValue("$trackId", trackId);
         using var reader = cmd.ExecuteReader();
-        var groups = new Dictionary<int, (string Name, bool Enabled, List<ModelGenreReason> Reasons)>();
+        var groups = new Dictionary<int, (string Name, bool Enabled, bool Manual, List<ModelGenreReason> Reasons)>();
         while (reader.Read())
         {
             var id = reader.GetInt32(0);
-            if (!groups.TryGetValue(id, out var group)) groups[id] = group = (reader.GetString(1), reader.GetInt32(2) != 0, []);
-            if (!reader.IsDBNull(5))
-                group.Reasons.Add(new ModelGenreReason(reader.GetString(3), reader.GetString(4), reader.GetDouble(5)));
+            if (!groups.TryGetValue(id, out var group))
+                groups[id] = group = (reader.GetString(1), reader.GetInt32(2) != 0, reader.GetInt32(3) != 0, []);
+            if (!reader.IsDBNull(6))
+                group.Reasons.Add(new ModelGenreReason(reader.GetString(4), reader.GetString(5), reader.GetDouble(6)));
         }
-        return groups.Select(x => new TrackModelGenre(x.Key, x.Value.Name, x.Value.Enabled, x.Value.Reasons)).ToList();
+        return groups.Select(x => new TrackModelGenre(
+            x.Key, x.Value.Name, x.Value.Enabled, x.Value.Manual, x.Value.Reasons)).ToList();
     }
 
     public void SetTrackModelGenreEnabled(int trackId, int genreId, bool isEnabled)
@@ -1642,9 +1669,12 @@ public class MusicDatabase
         if (isEnabled)
         {
             cmd.CommandText = @"
-                INSERT INTO track_genres (track_id, genre_id, assigned_at, is_enabled)
-                VALUES ($trackId, $genreId, $assignedAt, 1)
-                ON CONFLICT(track_id, genre_id) DO UPDATE SET is_enabled = 1, assigned_at = excluded.assigned_at";
+                INSERT INTO track_genres (track_id, genre_id, assigned_at, is_enabled, is_manual)
+                VALUES ($trackId, $genreId, $assignedAt, 1, 1)
+                ON CONFLICT(track_id, genre_id) DO UPDATE SET
+                    is_enabled = 1,
+                    is_manual = 1,
+                    assigned_at = excluded.assigned_at";
             cmd.Parameters.AddWithValue("$assignedAt", now);
         }
         else
@@ -2010,12 +2040,8 @@ public class MusicDatabase
             FROM track_genres
             JOIN model_subgenres ON model_subgenres.id = track_genres.genre_id
             JOIN model_genres ON model_genres.id = model_subgenres.model_genre_id
-            LEFT JOIN track_analysis analysis ON analysis.track_id = track_genres.track_id
-            LEFT JOIN track_genre_predictions predictions
-                ON predictions.track_analysis_id = analysis.id
-               AND predictions.model_subgenre_id = track_genres.genre_id
             WHERE track_genres.is_enabled = 1
-              AND predictions.id IS NULL
+              AND track_genres.is_manual = 1
             GROUP BY model_subgenres.id, model_subgenres.model_genre_id, model_subgenres.name, model_genres.name
             ORDER BY usage_count DESC, model_genres.name, model_subgenres.name
             LIMIT $limit";
@@ -2113,13 +2139,14 @@ public class MusicDatabase
     {
         ExecuteInsert(conn, tx, @"
             DELETE FROM track_genres WHERE ($trackId IS NULL OR track_id = $trackId)
+            AND is_manual = 0
             AND NOT EXISTS (
                 SELECT 1 FROM track_genre_predictions predictions JOIN track_analysis analysis ON analysis.id = predictions.track_analysis_id
                 WHERE analysis.track_id = track_genres.track_id AND predictions.model_subgenre_id = track_genres.genre_id AND predictions.score > 0.25)",
             ("$trackId", trackId));
         ExecuteInsert(conn, tx, @"
-            INSERT INTO track_genres (track_id, genre_id, assigned_at, is_enabled)
-            SELECT DISTINCT analysis.track_id, predictions.model_subgenre_id, $assignedAt, 1
+            INSERT INTO track_genres (track_id, genre_id, assigned_at, is_enabled, is_manual)
+            SELECT DISTINCT analysis.track_id, predictions.model_subgenre_id, $assignedAt, 1, 0
             FROM track_genre_predictions predictions
             JOIN track_analysis analysis ON analysis.id = predictions.track_analysis_id
             WHERE predictions.score > 0.25 AND ($trackId IS NULL OR analysis.track_id = $trackId)

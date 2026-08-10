@@ -143,4 +143,9 @@ public record ManualModelGenreUsage(
     string ModelGenreName,
     int UsageCount);
 public record ModelGenreReason(string ModelGenreName, string ModelSubgenreName, double Score);
-public record TrackModelGenre(int GenreId, string GenreName, bool IsEnabled, IReadOnlyList<ModelGenreReason> Reasons);
+public record TrackModelGenre(
+    int GenreId,
+    string GenreName,
+    bool IsEnabled,
+    bool IsManual,
+    IReadOnlyList<ModelGenreReason> Reasons);

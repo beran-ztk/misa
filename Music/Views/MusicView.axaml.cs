@@ -550,12 +550,12 @@ public partial class MusicView : UserControl
             .Where(assignment => assignment.IsEnabled)
             .ToList();
         var modelGenreStr = string.Join(", ", modelGenreAssignments
-            .Where(assignment => assignment.Reasons.Count > 0)
+            .Where(assignment => !assignment.IsManual)
             .Select(assignment => ShortGenreName(assignment.GenreName))
             .Where(name => name.Length > 0)
             .Order());
         var manualGenreStr = string.Join(", ", modelGenreAssignments
-            .Where(assignment => assignment.Reasons.Count == 0)
+            .Where(assignment => assignment.IsManual)
             .Select(assignment => ShortGenreName(assignment.GenreName))
             .Where(name => name.Length > 0)
             .Order());
