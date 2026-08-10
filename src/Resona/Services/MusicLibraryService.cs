@@ -170,6 +170,21 @@ public class MusicLibraryService
     public List<ChannelSubscription> GetChannelSubscriptions() => _db.GetChannelSubscriptions();
     public List<ChannelHubItem> GetChannelHubItems() => _db.GetChannelHubItems();
     public List<ChannelVideo> GetChannelVideos(int channelId) => _db.GetChannelVideos(channelId);
+    public void RecoverChannelMetadataQueue() => _db.RecoverChannelMetadataQueue();
+    public int QueueChannelVideoMetadata(int channelId, int limit) => _db.QueueChannelVideoMetadata(channelId, limit);
+    public int QueueAutoDownloadMetadata(int limit) => _db.QueueAutoDownloadMetadata(limit);
+    public ChannelVideo? ClaimNextChannelVideoMetadata() => _db.ClaimNextChannelVideoMetadata();
+    public bool HasQueuedChannelVideoMetadata() => _db.HasQueuedChannelVideoMetadata();
+    public Task<YouTubeTrackMetadata?> GetChannelVideoMetadataAsync(
+        string canonicalUrl,
+        CancellationToken cancellationToken = default) =>
+        _downloader.GetMetadataAsync(canonicalUrl, cancellationToken);
+    public void CompleteChannelVideoMetadata(int videoId, YouTubeTrackMetadata? metadata, string? error) =>
+        _db.CompleteChannelVideoMetadata(
+            videoId,
+            metadata,
+            error,
+            _channelMaxDownloadDurationMinutes);
     public void SetChannelFollowed(int channelId, bool followed) => _db.SetChannelFollowed(channelId, followed);
     public void SetChannelNotifications(int channelId, bool enabled) => _db.SetChannelNotifications(channelId, enabled);
     public void SetChannelAutoDownload(int channelId, bool enabled)
@@ -178,6 +193,8 @@ public class MusicLibraryService
             channelId,
             enabled,
             _channelMaxDownloadDurationMinutes);
+        if (enabled)
+            ChannelMetadataService.Current.RequestChannel(channelId, 40);
         ChannelDownloadService.Current.NotifyQueueChanged();
     }
     public int GetChannelMaxDownloadDurationMinutes() => _channelMaxDownloadDurationMinutes;
@@ -251,6 +268,7 @@ public class MusicLibraryService
 
         progress?.Report($"Saving {snapshot.Videos.Count} videos…");
         var result = _db.SaveChannelSnapshot(snapshot);
+        ChannelMetadataService.Current.RequestAutoDownloadMetadata();
         ChannelDownloadService.Current.NotifyQueueChanged();
         return result;
     }

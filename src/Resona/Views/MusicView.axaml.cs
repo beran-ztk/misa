@@ -246,6 +246,7 @@ public partial class MusicView : UserControl
         ImportQueueService.Current.Initialize();
         BackgroundAnalysisService.Current.Initialize();
         ChannelDownloadService.Current.Initialize();
+        ChannelMetadataService.Current.Initialize();
         UpdateImportBounds();
 
         LoadLookups();
@@ -322,6 +323,12 @@ public partial class MusicView : UserControl
                 {
                     MarkLibraryRefreshPending();
                 }
+            });
+        ChannelMetadataService.Current.MetadataUpdated += (channelId, videoId) =>
+            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            {
+                if (ChannelOverlay.IsVisible)
+                    ChannelOverlay.OnMetadataUpdated(channelId, videoId);
             });
         EditTrackOverlay.TrackSaved += UpdateTrackInList;
         EditTrackOverlay.PreviewRequested += StartTrackPreview;

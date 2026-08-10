@@ -76,6 +76,14 @@ public partial class ChannelOverlay : UserControl
         UpdateDownloadSummary();
     }
 
+    public void OnMetadataUpdated(int channelId, int videoId)
+    {
+        if (_selectedChannelId != channelId || !DetailView.IsVisible)
+            return;
+        _channelStateRefreshTimer.Stop();
+        _channelStateRefreshTimer.Start();
+    }
+
     public void RefreshChannels()
     {
         _hubChannels = MusicLibraryService.Current.GetChannelHubItems();
@@ -175,6 +183,7 @@ public partial class ChannelOverlay : UserControl
         PreviewClosed?.Invoke();
         UpdateDetailHeader();
         RefreshVideos();
+        ChannelMetadataService.Current.RequestChannel(channel.Id, 20);
     }
 
     private void UpdateDetailHeader()
@@ -184,9 +193,12 @@ public partial class ChannelOverlay : UserControl
 
         SelectedChannelText.Text = channel.Name;
         DetailMonogramText.Text = channel.Monogram;
-        DetailSubtitleText.Text = channel.HasNewVideos
+        var localStatus = channel.HasNewVideos
             ? $"{channel.TrackCountText} · {channel.NewVideoText}"
             : $"{channel.TrackCountText} · no new videos";
+        DetailSubtitleText.Text = channel.FollowerText.Length > 0
+            ? $"{localStatus} · {channel.FollowerText}"
+            : localStatus;
         DetailLibraryText.Text = channel.TrackCountText;
         DetailRatingText.Text = channel.RatingText;
         DetailActivityText.Text = channel.ActivityText;
@@ -330,6 +342,8 @@ public partial class ChannelOverlay : UserControl
             }
 
             RefreshChannels();
+            if (DetailView.IsVisible && _selectedChannelId >= 0)
+                ChannelMetadataService.Current.RequestChannel(_selectedChannelId, 20);
             ToastRequested?.Invoke(result.AddedCount > 0
                 ? $"{successText}: {result.AddedCount} new videos"
                 : $"{successText}: no new videos");
@@ -371,7 +385,8 @@ public partial class ChannelOverlay : UserControl
         var readyCount = _currentVideos.Count(video => !video.IsChecked && video.TrackId is not null);
         var libraryCount = _currentVideos.Count(video => video.TrackId is not null);
         var issueCount = _currentVideos.Count(video =>
-            video.DownloadStatus is ChannelDownloadStatus.Failed or ChannelDownloadStatus.Skipped);
+            video.DownloadStatus is ChannelDownloadStatus.Failed or ChannelDownloadStatus.Skipped
+            || video.MetadataStatus == ChannelMetadataStatus.Failed);
         NewVideosFilterButton.Content = $"New {newCount}";
         ReadyVideosFilterButton.Content = $"Ready {readyCount}";
         LibraryVideosFilterButton.Content = $"In library {libraryCount}";
@@ -389,7 +404,8 @@ public partial class ChannelOverlay : UserControl
             ChannelVideoFilter.Ready => videos.Where(video => !video.IsChecked && video.TrackId is not null),
             ChannelVideoFilter.InLibrary => videos.Where(video => video.TrackId is not null),
             ChannelVideoFilter.Issues => videos.Where(video =>
-                video.DownloadStatus is ChannelDownloadStatus.Failed or ChannelDownloadStatus.Skipped),
+                video.DownloadStatus is ChannelDownloadStatus.Failed or ChannelDownloadStatus.Skipped
+                || video.MetadataStatus == ChannelMetadataStatus.Failed),
             _ => videos
         };
 
@@ -611,13 +627,16 @@ public partial class ChannelOverlay : UserControl
 
         var uncheckedCount = _currentVideos.Count(video => !video.IsChecked);
         var ready = _currentVideos.Count(video => video.DownloadStatus == ChannelDownloadStatus.Ready);
-        var failed = _currentVideos.Count(video => video.DownloadStatus == ChannelDownloadStatus.Failed);
         var queued = _currentVideos.Count(video => video.DownloadStatus == ChannelDownloadStatus.Queued);
         var downloading = _currentVideos.Count(video => video.DownloadStatus == ChannelDownloadStatus.Downloading);
-        var skipped = _currentVideos.Count(video => video.DownloadStatus == ChannelDownloadStatus.Skipped);
+        var enriched = _currentVideos.Count(video => video.MetadataStatus == ChannelMetadataStatus.Ready);
+        var active = queued + downloading;
+        var issues = _currentVideos.Count(video =>
+            video.DownloadStatus is ChannelDownloadStatus.Failed or ChannelDownloadStatus.Skipped
+            || video.MetadataStatus == ChannelMetadataStatus.Failed);
         var shown = visibleCount ?? _currentVideos.Count;
-        VideoSummaryText.Text = $"{shown} shown · {_currentVideos.Count} total · Ready {ready} · Failed {failed} · " +
-                                $"Queued {queued} · Downloading {downloading} · Skipped {skipped} · {uncheckedCount} unchecked";
+        VideoSummaryText.Text = $"{shown} shown · {_currentVideos.Count} total · {enriched} enriched · " +
+                                $"{uncheckedCount} new · {ready} downloaded · {active} active · {issues} issues";
     }
 
 }
@@ -653,6 +672,8 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
         Title = video.Title;
         DurationText = video.DurationSeconds is int seconds ? FormatDuration(seconds) : "";
         UploadedText = FormatUploadDate(video.UploadedAt);
+        MetadataSummaryText = BuildMetadataSummary(video, UploadedText);
+        MetadataStatus = video.MetadataStatus;
         _trackId = video.TrackId;
         SetDownloadState(video.DownloadStatus, video.DownloadError);
         SetChecked(video.IsChecked);
@@ -665,6 +686,9 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
     public string Title { get; }
     public string UploadedText { get; }
     public bool HasUploadDate => UploadedText.Length > 0;
+    public string MetadataSummaryText { get; }
+    public bool HasMetadataSummary => MetadataSummaryText.Length > 0;
+    public ChannelMetadataStatus MetadataStatus { get; }
     public bool IsChecked
     {
         get => _isChecked;
@@ -875,5 +899,29 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
             ? parsed.ToString("dd MMM yyyy")
             : value;
     }
+
+    private static string BuildMetadataSummary(ChannelVideo video, string uploadedText)
+    {
+        var parts = new List<string>();
+        if (uploadedText.Length > 0)
+            parts.Add(uploadedText);
+        if (video.ViewCount is long views)
+            parts.Add($"{FormatCompactNumber(views)} views");
+        if (video.LikeCount is long likes)
+            parts.Add($"{FormatCompactNumber(likes)} likes");
+        if (video.MetadataStatus is ChannelMetadataStatus.Queued or ChannelMetadataStatus.Loading)
+            parts.Add("loading metadata…");
+        else if (video.MetadataStatus == ChannelMetadataStatus.Failed)
+            parts.Add("metadata unavailable");
+        return string.Join(" · ", parts);
+    }
+
+    private static string FormatCompactNumber(long value) => value switch
+    {
+        >= 1_000_000_000 => $"{value / 1_000_000_000d:0.#}B",
+        >= 1_000_000 => $"{value / 1_000_000d:0.#}M",
+        >= 1_000 => $"{value / 1_000d:0.#}K",
+        _ => value.ToString()
+    };
 
 }

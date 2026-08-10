@@ -119,7 +119,9 @@ public class TrackDownloadService
                 ? value.GetString() : null;
             return new YouTubeTrackMetadata(
                 Value("title"), Value("channel_id"), Value("channel"), Value("channel_url"), PublishedDate(root),
-                EstimatedAudioSize(root), DurationSeconds(root));
+                EstimatedAudioSize(root), DurationSeconds(root),
+                IntegerValue(root, "view_count"), IntegerValue(root, "like_count"),
+                IntegerValue(root, "channel_follower_count"), ThumbnailUrl(root));
         }
         catch (OperationCanceledException) { throw; }
         catch { return null; }
@@ -432,6 +434,26 @@ public class TrackDownloadService
         && value.ValueKind == JsonValueKind.String
             ? value.GetString()
             : null;
+
+    private static long? IntegerValue(JsonElement root, string key) =>
+        root.TryGetProperty(key, out var value)
+        && value.ValueKind == JsonValueKind.Number
+        && value.TryGetInt64(out var number)
+            ? number
+            : null;
+
+    private static string? ThumbnailUrl(JsonElement root)
+    {
+        if (StringValue(root, "thumbnail") is { Length: > 0 } direct)
+            return direct;
+        if (!root.TryGetProperty("thumbnails", out var thumbnails)
+            || thumbnails.ValueKind != JsonValueKind.Array)
+            return null;
+        return thumbnails.EnumerateArray()
+            .Reverse()
+            .Select(item => StringValue(item, "url"))
+            .FirstOrDefault(url => !string.IsNullOrWhiteSpace(url));
+    }
 
     private static string[] YtDlpArgs(params string[] args)
     {

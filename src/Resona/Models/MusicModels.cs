@@ -59,7 +59,11 @@ public record YouTubeTrackMetadata(
     string? ChannelUrl,
     string? UploadedAt,
     long? EstimatedAudioSizeBytes = null,
-    int? DurationSeconds = null);
+    int? DurationSeconds = null,
+    long? ViewCount = null,
+    long? LikeCount = null,
+    long? ChannelFollowerCount = null,
+    string? ThumbnailUrl = null);
 public record YouTubeChannelSnapshot(
     string SourceUrl,
     string? ChannelId,
@@ -117,6 +121,7 @@ public sealed record ChannelHubItem(
     string? LastDownloadedAt,
     int KnownVideoCount,
     int UncheckedVideoCount,
+    long? FollowerCount,
     IReadOnlyList<string> TopTracks)
 {
     public string Monogram
@@ -144,6 +149,9 @@ public sealed record ChannelHubItem(
     public string TopTracksText => string.Join("  ·  ", TopTracks);
     public string FollowActionText => IsFollowed ? "Following" : "+ Follow";
     public string AutomationText => AutoDownload ? "Auto-download on" : "Manual downloads";
+    public string FollowerText => FollowerCount is long followers
+        ? $"{FormatCompactNumber(followers)} YouTube followers"
+        : string.Empty;
 
     public double RecommendationScore
     {
@@ -164,8 +172,17 @@ public sealed record ChannelHubItem(
         : GreatOrBetterCount > 0
             ? GreatOrBetterCount == 1 ? "1 highly rated track" : $"{GreatOrBetterCount} highly rated tracks"
             : LocalTrackCount == 1 ? "1 track in your library" : $"{LocalTrackCount} tracks in your library";
+
+    private static string FormatCompactNumber(long value) => value switch
+    {
+        >= 1_000_000_000 => $"{value / 1_000_000_000d:0.#}B",
+        >= 1_000_000 => $"{value / 1_000_000d:0.#}M",
+        >= 1_000 => $"{value / 1_000d:0.#}K",
+        _ => value.ToString()
+    };
 }
 public enum ChannelDownloadStatus { NotQueued, Queued, Downloading, Ready, Failed, Skipped }
+public enum ChannelMetadataStatus { Pending, Queued, Loading, Ready, Failed }
 public record ChannelVideo(
     int Id,
     int ChannelId,
@@ -179,7 +196,14 @@ public record ChannelVideo(
     ChannelDownloadStatus DownloadStatus,
     string? DownloadError,
     int DownloadAttempts,
-    int? TrackId);
+    int? TrackId,
+    ChannelMetadataStatus MetadataStatus = ChannelMetadataStatus.Pending,
+    string? MetadataUpdatedAt = null,
+    string? MetadataError = null,
+    int MetadataAttempts = 0,
+    long? ViewCount = null,
+    long? LikeCount = null,
+    string? ThumbnailUrl = null);
 public record ChannelDownloadSummary(int Queued, int Downloading, int Ready, int Failed, int Skipped);
 public record ChannelRefreshResult(bool Success, int AddedCount, int UpdatedCount, string? Error = null);
 public record ModelGenre(int Id, string Name);
