@@ -8,7 +8,7 @@ public sealed class DiscordPresenceService : IDisposable
 {
     private const string ClientId = "1524163394276425728";
     private const string LargeImageUrl =
-        "https://raw.githubusercontent.com/beran-ztk/music/master/Music/Assets/music.png";
+        "https://raw.githubusercontent.com/beran-ztk/music/master/Music/Assets/headphones.png";
     private static readonly TimeSpan ReconnectDelay = TimeSpan.FromSeconds(5);
 
     private DiscordRpcClient? _client;

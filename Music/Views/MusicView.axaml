@@ -558,7 +558,7 @@
                     CornerRadius="0,0,0,0"
                     BorderThickness="0"
                     PointerPressed="OnPlayerBarPointerPressed"
-                    BoxShadow="0 -14 36 6 #CC000000, inset 0 10 20 4 #A0000000">
+                    BoxShadow="0 -14 36 6 #C0000000">
                 <Border CornerRadius="0,0,0,0"
                         ClipToBounds="True">
                     <Panel>
@@ -608,6 +608,18 @@
                                     <GradientStop Color="#30545FAF" Offset="0"/>
                                     <GradientStop Color="#24734FA8" Offset="0.58"/>
                                     <GradientStop Color="#08000000" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
+                        </Border>
+                        <Border Height="14"
+                                HorizontalAlignment="Stretch"
+                                VerticalAlignment="Top"
+                                IsHitTestVisible="False">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="50%,0%" EndPoint="50%,100%">
+                                    <GradientStop Color="#70000000" Offset="0"/>
+                                    <GradientStop Color="#30000000" Offset="0.42"/>
+                                    <GradientStop Color="#00000000" Offset="1"/>
                                 </LinearGradientBrush>
                             </Border.Background>
                         </Border>
