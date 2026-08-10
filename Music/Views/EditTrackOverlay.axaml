@@ -67,36 +67,26 @@
                 <Setter Property="Background" Value="{DynamicResource Theme.Brush.SurfaceHover}"/>
                 <Setter Property="BorderBrush" Value="{DynamicResource Theme.Brush.Accent}"/>
             </Style>
+            <Style Selector="Button.rating-star:pointerover">
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderThickness" Value="0"/>
+            </Style>
         </Panel.Styles>
 
         <Border x:Name="EditorSurface"
                 Background="#EA1B1914"
                 ZIndex="20">
 
-            <Grid RowDefinitions="Auto,1,*">
+            <Grid RowDefinitions="Auto,1,Auto,1,*">
 
                 <Grid Grid.Row="0"
-                      ColumnDefinitions="*,Auto,Auto"
+                      ColumnDefinitions="*,Auto"
                       Margin="26,15,22,12">
                     <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="9">
                         <Image Source="{SvgImage /Assets/info.svg}" Width="18" Height="18" Opacity="0.76"/>
                         <TextBlock Text="Track information" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center"/>
                     </StackPanel>
-                    <Border x:Name="UnsavedChangesBadge"
-                            Grid.Column="1"
-                            IsVisible="False"
-                            Background="#2C2618"
-                            BorderBrush="#8A6C2D"
-                            BorderThickness="1"
-                            CornerRadius="5"
-                            Padding="8,4"
-                            Margin="0,0,10,0"
-                            VerticalAlignment="Center">
-                        <TextBlock Text="Unsaved changes"
-                                   FontSize="10.5"
-                                   Foreground="#FFD98A"/>
-                    </Border>
-                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4">
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
                         <Button x:Name="PreviewButton"
                                 Click="OnPreviewClicked"
                                 ToolTip.Tip="Play this track in the main player"
@@ -105,13 +95,15 @@
                                 Opacity="0.8">
                             <Image Source="{SvgImage /Assets/play.svg}" Width="16" Height="16"/>
                         </Button>
-                        <Button x:Name="SaveBtn"
-                                Click="OnSaveClicked"
-                                ToolTip.Tip="Save changes"
+                        <Button x:Name="VisibilityButton"
+                                Click="OnVisibilityClicked"
                                 Width="34" Height="34" Padding="0"
                                 Background="Transparent" BorderThickness="0"
-                                Opacity="0.85">
-                            <Image Source="{SvgImage /Assets/save.svg}" Width="17" Height="17"/>
+                                Opacity="0.8">
+                            <Grid>
+                                <Image x:Name="PublicVisibilityIcon" Source="{SvgImage /Assets/eye.svg}" Width="17" Height="17"/>
+                                <Image x:Name="PrivateVisibilityIcon" Source="{SvgImage /Assets/eye-slash.svg}" Width="17" Height="17" IsVisible="False"/>
+                            </Grid>
                         </Button>
                         <Button ToolTip.Tip="Close"
                                 Click="OnCloseClicked"
@@ -125,7 +117,17 @@
 
                 <Rectangle Grid.Row="1" Fill="#10808080" />
 
-                <ScrollViewer Grid.Row="2"
+                <Border Grid.Row="2" Height="56" Background="Transparent">
+                    <StackPanel x:Name="RatingStarsPanel"
+                                Orientation="Horizontal"
+                                Spacing="3"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center" />
+                </Border>
+
+                <Rectangle Grid.Row="3" Fill="#10808080" />
+
+                <ScrollViewer Grid.Row="4"
                               Padding="30,16"
                               HorizontalScrollBarVisibility="Disabled">
                     <StackPanel Spacing="14" Margin="0,0,0,20">
@@ -182,60 +184,6 @@
                                 </Grid>
 
                                 <Rectangle Height="1" Fill="{DynamicResource Theme.Brush.BorderSubtle}" Margin="0,3" />
-
-                                <Grid ColumnDefinitions="104,*" RowDefinitions="Auto,Auto" RowSpacing="7">
-                                    <TextBlock Text="Visibility" FontSize="10.5" Opacity="0.58" VerticalAlignment="Center" />
-                                    <Border Grid.Column="1"
-                                            Width="148"
-                                            Height="26"
-                                            HorizontalAlignment="Left"
-                                            Background="Transparent"
-                                            BorderBrush="#42FFFFFF"
-                                            BorderThickness="1"
-                                            CornerRadius="5"
-                                            ClipToBounds="True">
-                                        <Grid ColumnDefinitions="73,73">
-                                            <Border x:Name="VisibilitySelectionIndicator"
-                                                    Grid.ColumnSpan="2"
-                                                    Width="73"
-                                                    HorizontalAlignment="Left"
-                                                    Background="#34FFFFFF"
-                                                    BorderThickness="0"
-                                                    CornerRadius="4,0,0,4"
-                                                    IsHitTestVisible="False">
-                                                <Border.RenderTransform>
-                                                    <TranslateTransform>
-                                                        <TranslateTransform.Transitions>
-                                                            <Transitions>
-                                                                <DoubleTransition Property="X" Duration="0:0:0.16"/>
-                                                            </Transitions>
-                                                        </TranslateTransform.Transitions>
-                                                    </TranslateTransform>
-                                                </Border.RenderTransform>
-                                            </Border>
-                                            <Border Background="Transparent" Cursor="Hand"
-                                                    PointerPressed="OnPublicVisibilityPressed">
-                                                <TextBlock x:Name="PublicVisibilityText" Text="Public" FontSize="11.5" FontWeight="Bold"
-                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                            </Border>
-                                            <Border Grid.Column="1" Background="Transparent" Cursor="Hand"
-                                                    PointerPressed="OnPrivateVisibilityPressed">
-                                                <TextBlock x:Name="PrivateVisibilityText" Text="Private" FontSize="11.5" FontWeight="Bold"
-                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                            </Border>
-                                        </Grid>
-                                    </Border>
-
-                                    <TextBlock Grid.Row="1" Text="Rating" FontSize="10.5" Opacity="0.58" VerticalAlignment="Center" />
-                                    <Grid Grid.Row="1" Grid.Column="1" ColumnDefinitions="Auto,*" ColumnSpacing="10">
-                                        <StackPanel x:Name="RatingStarsPanel" Orientation="Horizontal" Spacing="1" />
-                                        <TextBlock x:Name="RatingValueText"
-                                                   Grid.Column="1"
-                                                   FontSize="11"
-                                                   FontWeight="SemiBold"
-                                                   VerticalAlignment="Center" />
-                                    </Grid>
-                                </Grid>
 
                                 <Grid x:Name="AudioAnalysisSection" RowDefinitions="Auto,Auto,Auto" RowSpacing="3" Margin="0,5,0,0">
                                     <Border x:Name="BpmMetricCard" Background="Transparent" Padding="0,4">
@@ -464,7 +412,7 @@
                 </ScrollViewer>
 
                 <Border x:Name="AnalysisBusyLayer"
-                        Grid.RowSpan="3"
+                        Grid.RowSpan="5"
                         IsVisible="False"
                         Background="#C0181A1D">
                     <Border Width="300" HorizontalAlignment="Center" VerticalAlignment="Center"
@@ -477,46 +425,6 @@
                             <ProgressBar IsIndeterminate="True" Height="5" Foreground="{DynamicResource Theme.Brush.Accent}" Background="#3B392F"/>
                             <TextBlock x:Name="AnalysisEstimateText" FontSize="10.5" Opacity="0.62" TextAlignment="Center" TextWrapping="Wrap" />
                             <TextBlock Text="Elapsed time" FontSize="10" Opacity="0.48" HorizontalAlignment="Right" Margin="0,-7,0,0"/>
-                        </StackPanel>
-                    </Border>
-                </Border>
-
-                <Border x:Name="UnsavedChangesLayer"
-                        Grid.RowSpan="3"
-                        IsVisible="False"
-                        Background="#CC1B1914">
-                    <Border Width="360"
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center"
-                            Background="#242119"
-                            BorderBrush="{DynamicResource Theme.Brush.BorderStrong}"
-                            BorderThickness="1"
-                            CornerRadius="9"
-                            Padding="22,18">
-                        <StackPanel Spacing="13">
-                            <StackPanel Spacing="4">
-                                <TextBlock Text="Unsaved changes"
-                                           FontSize="16"
-                                           FontWeight="SemiBold"/>
-                                <TextBlock Text="Save your changes before closing this track?"
-                                           FontSize="11"
-                                           Opacity="0.66"
-                                           TextWrapping="Wrap"/>
-                            </StackPanel>
-                            <StackPanel Orientation="Horizontal"
-                                        HorizontalAlignment="Right"
-                                        Spacing="8">
-                                <Button Content="Keep editing"
-                                        Padding="10,5"
-                                        Click="OnKeepEditingClicked"/>
-                                <Button Content="Discard"
-                                        Padding="10,5"
-                                        Click="OnDiscardChangesClicked"/>
-                                <Button Content="Save"
-                                        Classes="accent"
-                                        Padding="12,5"
-                                        Click="OnSaveAndCloseClicked"/>
-                            </StackPanel>
                         </StackPanel>
                     </Border>
                 </Border>

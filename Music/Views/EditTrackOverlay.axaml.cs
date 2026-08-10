@@ -23,7 +23,9 @@ public partial class EditTrackOverlay : UserControl
 {
     private sealed record RatingButtonVisual(Rating Rating, Button Button, TextBlock Icon);
 
-    private static readonly TimeSpan OpenAnimationDuration = TimeSpan.FromMilliseconds(930);
+    private static readonly TimeSpan OpenAnimationDuration = TimeSpan.FromMilliseconds(1180);
+    private static readonly TimeSpan CloseAnimationDuration = TimeSpan.FromMilliseconds(930);
+    private static readonly TimeSpan FirstFrameDelay = TimeSpan.FromMilliseconds(16);
     private static readonly IEasing SlideEasing = new SplineEasing(0.25, 0.1, 0.25, 1);
 
     private MusicTrack? _track;
@@ -40,6 +42,7 @@ public partial class EditTrackOverlay : UserControl
     private Dictionary<int, ModelSubgenre> _modelSubgenresById = [];
     private Dictionary<int, string> _modelGenreNamesById = [];
     private Dictionary<int, List<ModelSubgenreDistinction>> _distinctionsBySubgenreId = [];
+    private List<StoredModelGenrePrediction> _trackGenrePredictions = [];
     private bool _areDetectedGenresExpanded;
     private bool _areFrequentManualGenresExpanded;
     private bool _areAllGenresExpanded;
@@ -71,7 +74,7 @@ public partial class EditTrackOverlay : UserControl
     public EditTrackOverlay()
     {
         InitializeComponent();
-        TitleBox.TextChanged += (_, _) => UpdateSaveButton();
+        TitleBox.LostFocus += (_, _) => CommitTitleEdit();
         _analysisElapsedTimer.Tick += (_, _) => UpdateAnalysisElapsedTime();
     }
 
@@ -87,8 +90,9 @@ public partial class EditTrackOverlay : UserControl
         _areEmotionalCharactersExpanded = false;
         LoadLookups();
         Prefill(track);
+        PrepareOpeningPosition();
         IsVisible = true;
-        StartSlideAnimation(opening: true);
+        _ = StartOpeningAfterFirstFrameAsync(motionGeneration);
         if (analyzeAfterOpening)
             _ = AnalyzeAfterOpeningAsync(track, motionGeneration);
     }
@@ -106,7 +110,7 @@ public partial class EditTrackOverlay : UserControl
         visual.Offset = new Avalonia.Vector3D(start.X, start.Y, start.Z);
 
         var animation = visual.Compositor.CreateVector3KeyFrameAnimation();
-        animation.Duration = OpenAnimationDuration;
+        animation.Duration = opening ? OpenAnimationDuration : CloseAnimationDuration;
         animation.StopBehavior = AnimationStopBehavior.SetToFinalValue;
         animation.InsertKeyFrame(0f, start);
         animation.InsertKeyFrame(1f, end, SlideEasing);
@@ -117,13 +121,32 @@ public partial class EditTrackOverlay : UserControl
     private double EditorTravelDistance()
     {
         var parentHeight = (Parent as Control)?.Bounds.Height ?? 0;
-        var travel = Math.Max(Bounds.Height, parentHeight - Margin.Top - Margin.Bottom);
+        var topLevelHeight = TopLevel.GetTopLevel(this)?.ClientSize.Height ?? 0;
+        var travel = Math.Max(Bounds.Height, Math.Max(parentHeight, topLevelHeight) - Margin.Top - Margin.Bottom);
         return travel > 1 ? travel : 320;
+    }
+
+    private void PrepareOpeningPosition()
+    {
+        var visual = ElementComposition.GetElementVisual(EditorSurface);
+        if (visual is null)
+            return;
+
+        visual.Offset = new Avalonia.Vector3D(0, EditorTravelDistance(), 0);
+    }
+
+    private async Task StartOpeningAfterFirstFrameAsync(int motionGeneration)
+    {
+        await Task.Delay(FirstFrameDelay);
+        if (motionGeneration != _motionGeneration || !IsVisible || _isClosing)
+            return;
+
+        StartSlideAnimation(opening: true);
     }
 
     private async Task AnalyzeAfterOpeningAsync(MusicTrack track, int motionGeneration)
     {
-        await Task.Delay(OpenAnimationDuration);
+        await Task.Delay(OpenAnimationDuration + FirstFrameDelay);
         if (motionGeneration == _motionGeneration && IsVisible && !_isClosing)
             await AnalyzeImportedTrackAsync(track);
     }
@@ -144,7 +167,6 @@ public partial class EditTrackOverlay : UserControl
     private void Prefill(MusicTrack track)
     {
         _loadingTrack = true;
-        UnsavedChangesLayer.IsVisible = false;
         TitleBox.Text = track.Title;
         SetInformationEditing(false);
         UpdateInformationDisplay(track);
@@ -156,9 +178,12 @@ public partial class EditTrackOverlay : UserControl
         var selectedTagIds = MusicLibraryService.Current.GetTrackTagIds(track.Id).ToHashSet();
         var selectedStyleIds = MusicLibraryService.Current.GetTrackStyleIds(track.Id).ToHashSet();
         var selectedModelGenreIds = ResetModelGenreSelectionFromDatabase(track);
+        _trackGenrePredictions = MusicLibraryService.Current.GetTrackGenrePredictions(track.Id);
 
         ShowModelSelectedGenres(track);
         ShowDetectedGenres(track);
+        RebuildModelGenreChoices();
+        BuildFrequentManualGenreChoices();
         RebuildTagChips(selectedTagIds);
         RebuildStyleChips(selectedStyleIds);
         ShowAudioAnalysis(track);
@@ -166,7 +191,6 @@ public partial class EditTrackOverlay : UserControl
         ShowUsageStats(track);
         CaptureChangeSnapshot(track, selectedTagIds, selectedStyleIds, selectedModelGenreIds);
         _loadingTrack = false;
-        UpdateSaveButton();
     }
 
     public void RefreshUsageStats()
@@ -186,9 +210,20 @@ public partial class EditTrackOverlay : UserControl
 
     private void OnEditInformationClicked(object? sender, RoutedEventArgs e)
     {
-        if (_isEditingInformation && _track is not null)
-            UpdateInformationDisplay(_track);
+        if (_isEditingInformation)
+            CommitTitleEdit();
         SetInformationEditing(!_isEditingInformation);
+    }
+
+    private void CommitTitleEdit()
+    {
+        if (_track is null || _loadingTrack)
+            return;
+
+        if (string.IsNullOrWhiteSpace(TitleBox.Text))
+            TitleBox.Text = _track.Title;
+        AutoSaveChanges();
+        UpdateInformationDisplay(_track);
     }
 
     private void SetInformationEditing(bool isEditing)
@@ -276,7 +311,7 @@ public partial class EditTrackOverlay : UserControl
                 btn.IsCheckedChanged += (_, _) =>
                 {
                     ApplyTagVisual(btn);
-                    UpdateSaveButton();
+                    AutoSaveChanges();
                 };
 
                 _tagChips.Add((tag, btn));
@@ -366,7 +401,7 @@ public partial class EditTrackOverlay : UserControl
             var selected = selectedStyleIds.Contains(style.Id);
             var btn = MetadataChipFactory.Create(style.Name, count, selected);
             btn.Opacity = count > 0 || selected ? 1.0 : 0.48;
-            btn.IsCheckedChanged += (_, _) => UpdateSaveButton();
+            btn.IsCheckedChanged += (_, _) => AutoSaveChanges();
             _styleChips.Add((style, btn));
             StylesPanel.Children.Add(btn);
         }
@@ -412,53 +447,20 @@ public partial class EditTrackOverlay : UserControl
         return selectedModelGenreIds;
     }
 
-    private bool HasUnsavedChanges()
-    {
-        if (_track is null || _loadingTrack)
-            return false;
-
-        if (!string.Equals(TitleBox.Text?.Trim() ?? string.Empty, _initialTitle, StringComparison.Ordinal))
-            return true;
-        if (SelectedRatingId() != _initialRatingId)
-            return true;
-        if (_isPublic != _initialIsPublic)
-            return true;
-        if (!SelectedTagIds().SetEquals(_initialTagIds))
-            return true;
-        if (!SelectedStyleIds().SetEquals(_initialStyleIds))
-            return true;
-        if (!_pendingEnabledModelGenreIds.SetEquals(_initialEnabledModelGenreIds))
-            return true;
-
-        return false;
-    }
-
-    private void UpdateSaveButton()
-    {
-        var canSave = _track != null && !string.IsNullOrWhiteSpace(TitleBox.Text);
-        var hasUnsavedChanges = HasUnsavedChanges();
-        SaveBtn.IsEnabled = canSave;
-        UnsavedChangesBadge.IsVisible = hasUnsavedChanges;
-    }
-
     private void UpdateRatingVisual()
     {
         var selected = _ratings.FirstOrDefault(rating => rating.Id == _selectedRatingId);
         var selectedSortOrder = selected?.SortOrder ?? int.MinValue;
-        var selectedBrush = RatingForeground(selected?.Name ?? "None");
 
         foreach (var visual in _ratingButtons)
         {
             var isFilled = selected is not null && visual.Rating.SortOrder <= selectedSortOrder;
-            visual.Icon.Text = isFilled ? "★" : "☆";
+            visual.Icon.Text = "★";
             visual.Icon.Foreground = isFilled
-                ? RatingForeground(visual.Rating.Name)
-                : ThemeResources.Brush("Theme.Brush.TextMuted");
-            visual.Button.Opacity = isFilled ? 1 : 0.48;
+                ? new SolidColorBrush(Color.FromRgb(235, 194, 83))
+                : new SolidColorBrush(Color.FromArgb(76, 255, 255, 255));
+            visual.Button.Opacity = isFilled ? 1 : 0.72;
         }
-
-        RatingValueText.Text = selected?.Name ?? "No rating";
-        RatingValueText.Foreground = selectedBrush;
     }
 
     private void BuildRatingButtons()
@@ -470,26 +472,28 @@ public partial class EditTrackOverlay : UserControl
         {
             var icon = new TextBlock
             {
-                Text = "☆",
-                FontSize = 20,
+                Text = "★",
+                FontSize = 29,
+                FontFamily = new FontFamily("Segoe UI Symbol"),
                 TextAlignment = TextAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center
             };
             var button = new Button
             {
                 Content = icon,
-                Width = 28,
-                Height = 28,
+                Width = 40,
+                Height = 42,
                 Padding = new Thickness(0),
                 Background = Brushes.Transparent,
                 BorderThickness = new Thickness(0),
                 Cursor = new Cursor(StandardCursorType.Hand)
             };
+            button.Classes.Add("rating-star");
             button.Click += (_, _) =>
             {
-                _selectedRatingId = rating.Id;
+                _selectedRatingId = _selectedRatingId == rating.Id ? null : rating.Id;
                 UpdateRatingVisual();
-                UpdateSaveButton();
+                AutoSaveChanges();
             };
             ToolTip.SetTip(button, rating.Name);
             _ratingButtons.Add(new RatingButtonVisual(rating, button, icon));
@@ -499,85 +503,67 @@ public partial class EditTrackOverlay : UserControl
         UpdateRatingVisual();
     }
 
-    private static IBrush RatingForeground(string name) => name switch
+    private void OnVisibilityClicked(object? sender, RoutedEventArgs e)
     {
-        "Favorite" => ThemeResources.Brush("Theme.Brush.Warning"),
-        "Great" => ThemeResources.Brush("Theme.Brush.AccentStrong"),
-        "Good" => ThemeResources.Brush("Theme.Brush.TextPrimary"),
-        "Okay" => ThemeResources.Brush("Theme.Brush.TextSecondary"),
-        RatingNames.Avoid => ThemeResources.Brush("Theme.Brush.DangerText"),
-        _ => ThemeResources.Brush("Theme.Brush.TextMuted")
-    };
-
-    private void OnPublicVisibilityPressed(object? sender, PointerPressedEventArgs e)
-    {
-        SetPublicSelection(true);
-        e.Handled = true;
-    }
-
-    private void OnPrivateVisibilityPressed(object? sender, PointerPressedEventArgs e)
-    {
-        SetPublicSelection(false);
-        e.Handled = true;
+        SetPublicSelection(!_isPublic);
     }
 
     private void SetPublicSelection(bool isPublic)
     {
         _isPublic = isPublic;
-        if (VisibilitySelectionIndicator.RenderTransform is TranslateTransform indicatorTransform)
-            indicatorTransform.X = isPublic ? 0 : 73;
-        VisibilitySelectionIndicator.CornerRadius = isPublic
-            ? new CornerRadius(4, 0, 0, 4)
-            : new CornerRadius(0, 4, 4, 0);
-        PublicVisibilityText.Foreground = ThemeResources.Brush(isPublic
-            ? "Theme.Brush.TextStrong"
-            : "Theme.Brush.TextMuted");
-        PrivateVisibilityText.Foreground = ThemeResources.Brush(isPublic
-            ? "Theme.Brush.TextMuted"
-            : "Theme.Brush.TextStrong");
-        UpdateSaveButton();
+        PublicVisibilityIcon.IsVisible = isPublic;
+        PrivateVisibilityIcon.IsVisible = !isPublic;
+        ToolTip.SetTip(VisibilityButton, isPublic
+            ? "Public — click to make private"
+            : "Private — click to make public");
+        AutoSaveChanges();
     }
 
-    private void OnSaveClicked(object? sender, RoutedEventArgs e)
+    private void AutoSaveChanges()
     {
-        var trackId = _track?.Id;
-        if (SaveCurrentChanges(closeAfterSave: true))
-            TrackSaved?.Invoke(trackId!.Value);
-    }
+        if (_track is null || _loadingTrack || string.IsNullOrWhiteSpace(TitleBox.Text))
+            return;
 
-    private bool SaveCurrentChanges(bool closeAfterSave)
-    {
-        if (_track == null || string.IsNullOrWhiteSpace(TitleBox.Text))
-            return false;
-
+        var title = TitleBox.Text.Trim();
+        var tagIds = SelectedTagIds();
         var styleIds = SelectedStyleIds().ToList();
+        var coreChanged = !string.Equals(title, _initialTitle, StringComparison.Ordinal)
+            || SelectedRatingId() != _initialRatingId
+            || _isPublic != _initialIsPublic
+            || !styleIds.ToHashSet().SetEquals(_initialStyleIds);
+        var tagsChanged = !tagIds.SetEquals(_initialTagIds);
+        var disabledGenreIds = _initialEnabledModelGenreIds.Except(_pendingEnabledModelGenreIds).ToList();
+        var enabledGenreIds = _pendingEnabledModelGenreIds.Except(_initialEnabledModelGenreIds).ToList();
+        if (!coreChanged && !tagsChanged && disabledGenreIds.Count == 0 && enabledGenreIds.Count == 0)
+            return;
 
-        MusicLibraryService.Current.UpdateTrack(
-            _track.Id,
-            TitleBox.Text!.Trim(),
-            [],
-            SelectedRatingId(),
-            styleIds,
-            _isPublic);
+        if (coreChanged)
+        {
+            MusicLibraryService.Current.UpdateTrack(
+                _track.Id,
+                title,
+                [],
+                SelectedRatingId(),
+                styleIds,
+                _isPublic);
+        }
 
-        MusicLibraryService.Current.SetTrackManualTags(_track.Id, SelectedTagIds());
+        if (tagsChanged)
+            MusicLibraryService.Current.SetTrackManualTags(_track.Id, tagIds);
 
-        foreach (var genreId in _initialEnabledModelGenreIds.Except(_pendingEnabledModelGenreIds))
+        foreach (var genreId in disabledGenreIds)
             MusicLibraryService.Current.SetTrackModelGenreEnabled(_track.Id, genreId, false);
-        foreach (var genreId in _pendingEnabledModelGenreIds.Except(_initialEnabledModelGenreIds))
+        foreach (var genreId in enabledGenreIds)
             MusicLibraryService.Current.SetTrackModelGenreEnabled(_track.Id, genreId, true);
 
         _track = _track with
         {
-            Title = TitleBox.Text!.Trim(),
+            Title = title,
             RatingId = SelectedRatingId(),
             IsPublic = _isPublic
         };
-        CaptureChangeSnapshot(_track, SelectedTagIds(), styleIds.ToHashSet(), _pendingEnabledModelGenreIds);
-        UpdateSaveButton();
-        if (closeAfterSave)
-            CloseOverlay(skipUnsavedCheck: true);
-        return true;
+        CaptureChangeSnapshot(_track, tagIds, styleIds.ToHashSet(), _pendingEnabledModelGenreIds);
+        TrackSaved?.Invoke(_track.Id);
     }
 
     private void OnPreviewClicked(object? sender, RoutedEventArgs e)
@@ -599,16 +585,15 @@ public partial class EditTrackOverlay : UserControl
             ? "Building an estimate from completed analyses."
             : $"Typical time for similar tracks: about {FormatEstimate(estimate.Value)}";
         _analysisElapsedTimer.Start();
-        SaveBtn.IsEnabled = false;
         var error = await MusicLibraryService.Current.AnalyzeTrackAsync(track);
         _analysisElapsedTimer.Stop();
         AnalysisBusyLayer.IsVisible = false;
         ResetModelGenreSelectionFromDatabase(track);
+        _trackGenrePredictions = MusicLibraryService.Current.GetTrackGenrePredictions(track.Id);
         ShowModelSelectedGenres(track);
         ShowDetectedGenres(track);
         ShowAudioAnalysis(track);
         ShowExperimentalAnalysis(track);
-        UpdateSaveButton();
     }
 
     private static string FormatEstimate(TimeSpan duration) => duration.TotalMinutes >= 1
@@ -873,7 +858,7 @@ public partial class EditTrackOverlay : UserControl
                 ShowModelSelectedGenres(track);
                 ShowDetectedGenres(track);
                 RebuildModelGenreChoices();
-                UpdateSaveButton();
+                AutoSaveChanges();
                 e.Handled = true;
             };
             IEnumerable<int> tooltipIds = isManualSelection
@@ -889,8 +874,7 @@ public partial class EditTrackOverlay : UserControl
 
     private List<TrackModelGenre> CurrentModelGenreAssignments(MusicTrack track)
     {
-        var predictions = MusicLibraryService.Current.GetTrackGenrePredictions(track.Id);
-        var predictionReasonsBySubgenreId = predictions
+        var predictionReasonsBySubgenreId = _trackGenrePredictions
             .GroupBy(prediction => prediction.ModelSubgenreId)
             .ToDictionary(
                 group => group.Key,
@@ -932,7 +916,7 @@ public partial class EditTrackOverlay : UserControl
     private void ShowDetectedGenres(MusicTrack track)
     {
         LoadModelMetadata();
-        var detected = MusicLibraryService.Current.GetTrackGenrePredictions(track.Id)
+        var detected = _trackGenrePredictions
             .Where(prediction => !_modelGenreIds.Contains(prediction.ModelSubgenreId))
             .GroupBy(prediction => prediction.ModelSubgenreId)
             .Select(group => group.OrderByDescending(prediction => prediction.Score).First())
@@ -945,10 +929,7 @@ public partial class EditTrackOverlay : UserControl
         DetectedGenresPanel.IsVisible = _areDetectedGenresExpanded;
         DetectedGenresPanel.Children.Clear();
         if (!_areDetectedGenresExpanded)
-        {
-            RebuildModelGenreChoices();
             return;
-        }
 
         foreach (var prediction in detected)
         {
@@ -1029,12 +1010,11 @@ public partial class EditTrackOverlay : UserControl
                 ShowModelSelectedGenres(track);
                 ShowDetectedGenres(track);
                 RebuildModelGenreChoices();
-                UpdateSaveButton();
+                AutoSaveChanges();
             };
             ToolTip.SetTip(container, CreateModelMetadataTooltip([prediction.ModelSubgenreId]));
             DetectedGenresPanel.Children.Add(container);
         }
-        RebuildModelGenreChoices();
     }
 
     private void OnDetectedGenresHeaderPressed(object? sender, PointerPressedEventArgs e)
@@ -1066,13 +1046,10 @@ public partial class EditTrackOverlay : UserControl
         }
 
         AddModelGenreSection.IsVisible = true;
-        var availableGenres = _modelSubgenresById.Values
-            .Where(subgenre => !_modelGenreIds.Contains(subgenre.Id))
-            .ToList();
+        var availableGenres = _modelSubgenresById.Values.ToList();
         AllGenresCountText.Text = $"({availableGenres.Count})";
         ((RotateTransform)AllGenresChevron.RenderTransform!).Angle = _areAllGenresExpanded ? 90 : 0;
         AllGenresPanel.IsVisible = _areAllGenresExpanded;
-        BuildFrequentManualGenreChoices();
 
         ModelGenreGroupsPanel.Children.Clear();
         ModelGenreChoicesPanel.Children.Clear();
@@ -1156,6 +1133,16 @@ public partial class EditTrackOverlay : UserControl
             return;
         }
 
+        ((RotateTransform)FrequentManualGenresChevron.RenderTransform!).Angle =
+            _areFrequentManualGenresExpanded ? 90 : 0;
+        FrequentManualGenresPanel.IsVisible = _areFrequentManualGenresExpanded;
+        if (!_areFrequentManualGenresExpanded)
+        {
+            FrequentManualGenresSection.IsVisible = _modelSubgenresById.Count > 0;
+            FrequentManualGenresCountText.Text = "(8)";
+            return;
+        }
+
         var frequentGenres = MusicLibraryService.Current
             .GetTopManualModelGenres(Math.Max(8, _modelSubgenresById.Count))
             .Where(usage => !_modelGenreIds.Contains(usage.ModelSubgenreId))
@@ -1165,13 +1152,8 @@ public partial class EditTrackOverlay : UserControl
 
         FrequentManualGenresSection.IsVisible = frequentGenres.Count > 0;
         FrequentManualGenresCountText.Text = $"({frequentGenres.Count})";
-        ((RotateTransform)FrequentManualGenresChevron.RenderTransform!).Angle =
-            _areFrequentManualGenresExpanded ? 90 : 0;
-        FrequentManualGenresPanel.IsVisible = _areFrequentManualGenresExpanded;
-        if (!_areFrequentManualGenresExpanded)
-            return;
 
-        var predictionsByGenreId = MusicLibraryService.Current.GetTrackGenrePredictions(_track.Id)
+        var predictionsByGenreId = _trackGenrePredictions
             .GroupBy(prediction => prediction.ModelSubgenreId)
             .ToDictionary(
                 group => group.Key,
@@ -1289,7 +1271,7 @@ public partial class EditTrackOverlay : UserControl
             ShowModelSelectedGenres(_track);
             ShowDetectedGenres(_track);
             RebuildModelGenreChoices();
-            UpdateSaveButton();
+            AutoSaveChanges();
         };
         ToolTip.SetTip(container, CreateModelMetadataTooltip([usage.ModelSubgenreId]));
         return container;
@@ -1297,12 +1279,15 @@ public partial class EditTrackOverlay : UserControl
 
     private Button CreateModelGenreChoiceButton(ModelSubgenre subgenre)
     {
+        var selected = _pendingEnabledModelGenreIds.Contains(subgenre.Id);
         var text = new TextBlock
         {
             Text = subgenre.Name,
             FontSize = 10.5,
             FontWeight = FontWeight.SemiBold,
-            Foreground = ThemeResources.Brush("Theme.Brush.TextPrimary"),
+            Foreground = ThemeResources.Brush(selected
+                ? "Theme.Brush.TextStrong"
+                : "Theme.Brush.TextPrimary"),
             TextTrimming = TextTrimming.CharacterEllipsis,
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
@@ -1314,25 +1299,41 @@ public partial class EditTrackOverlay : UserControl
             Content = text,
             Height = 32,
             Padding = new Avalonia.Thickness(9, 4),
-            Background = Brushes.Transparent,
-            BorderBrush = ThemeResources.Brush("Theme.Brush.BorderSubtle"),
             CornerRadius = new Avalonia.CornerRadius(5),
             HorizontalAlignment = HorizontalAlignment.Stretch,
             HorizontalContentAlignment = HorizontalAlignment.Center,
             VerticalContentAlignment = VerticalAlignment.Center
         };
+        ApplyModelGenreChoiceVisual(button, text, selected);
         button.Classes.Add("edit-choice");
         ToolTip.SetTip(button, CreateModelMetadataTooltip([subgenre.Id]));
         button.Click += (_, _) =>
         {
             if (_track is null) return;
-            _pendingEnabledModelGenreIds.Add(subgenre.Id);
+            if (!_pendingEnabledModelGenreIds.Add(subgenre.Id))
+                _pendingEnabledModelGenreIds.Remove(subgenre.Id);
+            AutoSaveChanges();
+            ApplyModelGenreChoiceVisual(
+                button,
+                text,
+                _pendingEnabledModelGenreIds.Contains(subgenre.Id));
             ShowModelSelectedGenres(_track);
             ShowDetectedGenres(_track);
-            RebuildModelGenreChoices();
-            UpdateSaveButton();
         };
         return button;
+    }
+
+    private static void ApplyModelGenreChoiceVisual(Button button, TextBlock text, bool selected)
+    {
+        button.Background = selected
+            ? new SolidColorBrush(Color.FromArgb(46, 255, 255, 255))
+            : Brushes.Transparent;
+        button.BorderBrush = selected
+            ? new SolidColorBrush(Color.FromArgb(160, 255, 255, 255))
+            : ThemeResources.Brush("Theme.Brush.BorderSubtle");
+        text.Foreground = ThemeResources.Brush(selected
+            ? "Theme.Brush.TextStrong"
+            : "Theme.Brush.TextPrimary");
     }
 
     private void OnAllGenresHeaderPressed(object? sender, PointerPressedEventArgs e)
@@ -1353,6 +1354,9 @@ public partial class EditTrackOverlay : UserControl
 
     private void LoadModelMetadata()
     {
+        if (_modelSubgenresById.Count > 0)
+            return;
+
         var subgenres = MusicLibraryService.Current.GetModelSubgenres();
         _modelSubgenresById = subgenres.ToDictionary(item => item.Id);
         _modelGenreNamesById = MusicLibraryService.Current.GetModelGenres().ToDictionary(item => item.Id, item => item.Name);
@@ -1421,28 +1425,15 @@ public partial class EditTrackOverlay : UserControl
 
     private void OnCloseClicked(object? sender, RoutedEventArgs e) => CloseOverlay();
 
-    private void OnKeepEditingClicked(object? sender, RoutedEventArgs e) =>
-        UnsavedChangesLayer.IsVisible = false;
-
-    private void OnDiscardChangesClicked(object? sender, RoutedEventArgs e) =>
-        CloseOverlay(skipUnsavedCheck: true);
-
-    private void OnSaveAndCloseClicked(object? sender, RoutedEventArgs e)
-    {
-        var trackId = _track?.Id;
-        if (SaveCurrentChanges(closeAfterSave: true))
-            TrackSaved?.Invoke(trackId!.Value);
-    }
-
-    private void CloseOverlay(bool skipUnsavedCheck = false)
+    private void CloseOverlay()
     {
         if (_isClosing)
             return;
 
-        if (!skipUnsavedCheck && HasUnsavedChanges())
+        if (_isEditingInformation)
         {
-            UnsavedChangesLayer.IsVisible = true;
-            return;
+            CommitTitleEdit();
+            SetInformationEditing(false);
         }
 
         if (_isPlayingPreview)
@@ -1451,8 +1442,6 @@ public partial class EditTrackOverlay : UserControl
             PreviewClosed?.Invoke();
         }
         _analysisElapsedTimer.Stop();
-        UnsavedChangesLayer.IsVisible = false;
-        UnsavedChangesBadge.IsVisible = false;
         _isClosing = true;
         var motionGeneration = ++_motionGeneration;
         if (StartSlideAnimation(opening: false))
@@ -1463,7 +1452,7 @@ public partial class EditTrackOverlay : UserControl
 
     private async Task CompleteCloseAfterAnimationAsync(int motionGeneration)
     {
-        await Task.Delay(OpenAnimationDuration);
+        await Task.Delay(CloseAnimationDuration);
         CompleteClose(motionGeneration);
     }
 
