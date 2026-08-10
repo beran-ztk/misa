@@ -1,11 +1,12 @@
 **
-!AnalysisServer/
-!AnalysisServer/**
+!src/
+!src/AnalysisServer/
+!src/AnalysisServer/**
 !Scripts/
 !Scripts/analyze.py
 !Models/
 !Models/Essentia/
 !Models/Essentia/**
-AnalysisServer/.env
-AnalysisServer/*.tar
+src/AnalysisServer/.env
+src/AnalysisServer/*.tar
 Scripts/__pycache__/

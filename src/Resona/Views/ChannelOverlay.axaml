@@ -1,0 +1,202 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:models="clr-namespace:Resona.Models"
+             xmlns:views="clr-namespace:Resona.Views"
+             x:Class="Resona.Views.ChannelOverlay">
+    <UserControl.Styles>
+        <Style Selector="ListBox.channel-list ListBoxItem">
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Margin" Value="0,0,0,7"/>
+            <Setter Property="MinHeight" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="ClipToBounds" Value="True"/>
+        </Style>
+        <Style Selector="ListBox.channel-list ListBoxItem /template/ ContentPresenter">
+            <Setter Property="CornerRadius" Value="{DynamicResource Theme.Corner.Control}"/>
+            <Setter Property="ClipToBounds" Value="True"/>
+        </Style>
+        <Style Selector="ListBox.channel-list ListBoxItem:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource Theme.Brush.SurfaceHover}"/>
+        </Style>
+        <Style Selector="ListBox.channel-list ListBoxItem:selected /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource Theme.Brush.SurfaceSelected}"/>
+        </Style>
+        <Style Selector="ListBox.video-list ListBoxItem">
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="MinHeight" Value="0"/>
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="ListBox.video-list ListBoxItem:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="ListBox.video-list ListBoxItem:selected /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="Button.channel-icon">
+            <Setter Property="Width" Value="30"/>
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="Button.channel-icon:pointerover">
+            <Setter Property="Background" Value="{DynamicResource Theme.Brush.SurfaceHover}"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Border Background="{DynamicResource Theme.Brush.Overlay}" BorderBrush="{DynamicResource Theme.Brush.Border}" BorderThickness="0,1,0,0">
+        <Grid RowDefinitions="Auto,*" Margin="22,18,22,22">
+            <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12" Margin="0,0,0,14">
+                <Button Classes="channel-icon" Click="OnSidebarToggleClicked" ToolTip.Tip="Channels">
+                    <TextBlock Text="☰" FontSize="17"/>
+                </Button>
+                <StackPanel Grid.Column="1" Spacing="2">
+                    <TextBlock x:Name="SelectedChannelText" Text="Channels" FontSize="19" FontWeight="SemiBold"/>
+                    <TextBlock x:Name="StatusText" FontSize="11" Opacity="0.62"/>
+                </StackPanel>
+                <Button Grid.Column="2" Classes="channel-icon" Click="OnCloseClicked" ToolTip.Tip="Close" Opacity="0.72">
+                    <Image Source="{SvgImage /Assets/close.svg}" Width="16" Height="16"/>
+                </Button>
+            </Grid>
+
+            <Grid Grid.Row="1">
+                <Border Background="{DynamicResource Theme.Brush.SurfaceTranslucent}" BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}" BorderThickness="1" CornerRadius="{DynamicResource Theme.Corner.Card}" Padding="10">
+                    <DockPanel LastChildFill="True">
+                        <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="12" Margin="4,0,4,10">
+                            <TextBlock x:Name="VideoSummaryText" FontSize="11" Opacity="0.62"
+                                       TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
+                                <TextBlock Text="Max duration" FontSize="10.5" Opacity="0.68" VerticalAlignment="Center"/>
+                                <TextBox x:Name="GlobalMaxDurationBox"
+                                         Classes="theme-input"
+                                         Width="48" Height="30"
+                                         Padding="7,2"
+                                         FontSize="10.5"
+                                         VerticalContentAlignment="Center"
+                                         LostFocus="OnGlobalMaxDurationLostFocus"/>
+                                <TextBlock Text="min" FontSize="10.5" Opacity="0.68" VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <Border Grid.Column="2" Width="146" Height="30" Background="{DynamicResource Theme.Brush.Surface}" BorderBrush="{DynamicResource Theme.Brush.BorderStrong}"
+                                    BorderThickness="1" CornerRadius="6" ClipToBounds="True">
+                                <Grid ColumnDefinitions="72,72">
+                                    <Border x:Name="VideoFilterSelectionIndicator" Grid.ColumnSpan="2" Width="72"
+                                            HorizontalAlignment="Left" Background="{DynamicResource Theme.Brush.Success}" CornerRadius="{DynamicResource Theme.Corner.Small}" IsHitTestVisible="False">
+                                        <Border.RenderTransform>
+                                            <TranslateTransform>
+                                                <TranslateTransform.Transitions>
+                                                    <Transitions><DoubleTransition Property="X" Duration="0:0:0.16"/></Transitions>
+                                                </TranslateTransform.Transitions>
+                                            </TranslateTransform>
+                                        </Border.RenderTransform>
+                                    </Border>
+                                    <Border Grid.Column="0" Background="Transparent" Cursor="Hand" PointerPressed="OnPendingFilterPressed">
+                                        <TextBlock x:Name="PendingFilterText" Text="Pending" FontSize="11" FontWeight="SemiBold"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <Border Grid.Column="1" Background="Transparent" Cursor="Hand" PointerPressed="OnAllFilterPressed">
+                                        <TextBlock x:Name="AllFilterText" Text="All" FontSize="11" FontWeight="SemiBold"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                </Grid>
+                            </Border>
+                            <Button Grid.Column="3" Classes="channel-icon" Click="OnRefreshSelectedClicked"
+                                    ToolTip.Tip="Refresh selected channel" Opacity="0.68">
+                                <Image Source="{SvgImage /Assets/reload.svg}" Width="16" Height="16"/>
+                            </Button>
+                        </Grid>
+                        <ListBox x:Name="VideoList" Classes="video-list" Background="Transparent" BorderThickness="0">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate x:DataType="views:ChannelVideoDisplay">
+                                    <Border Background="{Binding Background}" Opacity="{Binding Opacity}"
+                                            BorderBrush="{Binding BorderBrush}" BorderThickness="{Binding BorderThickness}"
+                                            CornerRadius="6" Padding="8,6" Margin="0,1">
+                                        <Grid ColumnDefinitions="*,110,Auto,Auto,Auto,Auto" ColumnSpacing="7">
+                                            <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Title}" TextDecorations="{Binding TextDecorations}" FontSize="12.5"
+                                                           TextTrimming="CharacterEllipsis"/>
+                                                <TextBlock Text="{Binding DownloadErrorSummary}" IsVisible="{Binding HasDownloadError}"
+                                                           ToolTip.Tip="{Binding DownloadErrorDetails}" FontSize="10.5"
+                                                           Foreground="#E87878" Opacity="0.86" TextWrapping="Wrap" MaxHeight="34"/>
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="1" Text="{Binding StatusText}" FontSize="10.5" Opacity="0.62"
+                                                       TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                                            <Button Grid.Column="2" Classes="channel-icon" Click="OnVideoPlayClicked" IsEnabled="{Binding CanPlay}"
+                                                    ToolTip.Tip="Play downloaded audio" Opacity="{Binding ActionOpacity}">
+                                                <Image Source="{SvgImage /Assets/play.svg}" Width="14" Height="14"/>
+                                            </Button>
+                                            <Button Grid.Column="3" Classes="channel-icon" Click="OnVideoCheckClicked" IsEnabled="{Binding CanReview}"
+                                                    ToolTip.Tip="Accept and queue analysis" Opacity="{Binding ActionOpacity}">
+                                                <Image Source="{SvgImage /Assets/check.svg}" Width="15" Height="15"/>
+                                            </Button>
+                                            <Button Grid.Column="4" Classes="channel-icon" Click="OnVideoSkipClicked" IsEnabled="{Binding CanDismiss}"
+                                                    ToolTip.Tip="{Binding DismissToolTip}" Opacity="{Binding ActionOpacity}">
+                                                <Image Source="{SvgImage /Assets/close.svg}" Width="14" Height="14"/>
+                                            </Button>
+                                            <StackPanel Grid.Column="5" Orientation="Horizontal" Spacing="3" HorizontalAlignment="Right">
+                                                <Button Classes="channel-icon" Click="OnCopyVideoUrlClicked" ToolTip.Tip="Copy video URL" Opacity="0.65">
+                                                    <Image Source="{SvgImage /Assets/copy.svg}" Width="14" Height="14"/>
+                                                </Button>
+                                                <TextBlock Text="{Binding DurationText}" FontSize="10.5" Opacity="0.62"
+                                                           MinWidth="38" TextAlignment="Right" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </DockPanel>
+                </Border>
+
+                <Border x:Name="ChannelSidebar" Width="310" HorizontalAlignment="Left" IsVisible="False"
+                        Background="{DynamicResource Theme.Brush.Surface}" BorderBrush="{DynamicResource Theme.Brush.Border}" BorderThickness="1" CornerRadius="{DynamicResource Theme.Corner.Card}" Padding="12"
+                        BoxShadow="4 0 18 0 #90000000">
+                    <Grid RowDefinitions="Auto,Auto,*" RowSpacing="10">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="Manage channels" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                            <Button Grid.Column="1" Classes="channel-icon" Click="OnSidebarToggleClicked" ToolTip.Tip="Close sidebar">
+                                <Image Source="{SvgImage /Assets/close.svg}" Width="14" Height="14"/>
+                            </Button>
+                        </Grid>
+                        <TextBox Grid.Row="1" x:Name="UrlBox" Classes="theme-input" Watermark="Paste YouTube channel URL" Height="36"
+                                 TextChanged="OnUrlTextChanged" VerticalContentAlignment="Center"/>
+                        <ListBox Grid.Row="2" x:Name="ChannelList" Classes="channel-list" SelectionChanged="OnChannelSelectionChanged"
+                                 Background="Transparent" BorderThickness="0">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate x:DataType="models:ChannelSubscription">
+                                    <Border Padding="11,9"
+                                            Background="{DynamicResource Theme.Brush.SurfaceTranslucent}"
+                                            BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
+                                            BorderThickness="1"
+                                            CornerRadius="{DynamicResource Theme.Corner.Control}">
+                                            <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto">
+                                                <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                                <TextBlock Grid.Row="1" FontSize="10.5" Opacity="0.58"
+                                                           Text="{Binding UncheckedCount, StringFormat='{}{0} pending'}"/>
+                                                <TextBlock Grid.Row="2" Grid.ColumnSpan="2" FontSize="10.5" Opacity="0.72" Margin="0,3,0,0"
+                                                           Text="{Binding DownloadStateText}" TextWrapping="Wrap"/>
+                                                <Button Grid.Row="3"
+                                                        Classes="auto-toggle"
+                                                        Classes.active="{Binding AutoDownload}"
+                                                        Content="Auto"
+                                                        Click="OnAutoDownloadClicked"
+                                                        HorizontalAlignment="Left"
+                                                        Margin="0,7,0,0"
+                                                        ToolTip.Tip="Toggle automatic downloads"/>
+                                                <Button Grid.Column="1" Grid.Row="3" Classes="channel-icon" Click="OnDeleteChannelClicked"
+                                                        ToolTip.Tip="Delete channel" Opacity="0.58" HorizontalAlignment="Right" Margin="0,4,0,0">
+                                                    <Image Source="{SvgImage /Assets/trash.svg}" Width="15" Height="15"/>
+                                                </Button>
+                                            </Grid>
+                                        </Border>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>

@@ -1,0 +1,59 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <_IsWindowsHost>$([MSBuild]::IsOSPlatform('Windows'))</_IsWindowsHost>
+        <_IsLinuxBuild Condition="'$(_IsWindowsHost)' != 'true' Or $([System.String]::Copy('$(RuntimeIdentifier)').StartsWith('linux-'))">true</_IsLinuxBuild>
+        <OutputType>WinExe</OutputType>
+        <TargetFramework>net9.0-windows10.0.19041.0</TargetFramework>
+        <TargetFramework Condition="'$(_IsLinuxBuild)' == 'true'">net9.0</TargetFramework>
+        <OutputType Condition="'$(_IsLinuxBuild)' == 'true'">Exe</OutputType>
+        <Nullable>enable</Nullable>
+        <BuiltInComInteropSupport Condition="'$(_IsLinuxBuild)' != 'true'">true</BuiltInComInteropSupport>
+        <ApplicationManifest Condition="'$(_IsLinuxBuild)' != 'true'">Assets\app.manifest</ApplicationManifest>
+        <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+        <ApplicationIcon>Assets\headphones.ico</ApplicationIcon>
+        <AssemblyName>Resona</AssemblyName>
+        <RootNamespace>Resona</RootNamespace>
+        <Product>Resona</Product>
+        <Title>Resona</Title>
+        <Version>0.6.0</Version>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <AvaloniaResource Include="Assets\**"/>
+        <AvaloniaResource Include="..\..\Models\Essentia\DiscogsMAEST\discogs-maest-30s-pw-519l-2.json"
+                         Link="Assets\Models\discogs-maest-30s-pw-519l-2.json"/>
+        <AvaloniaResource Include="..\..\Models\Essentia\DiscogsMAEST\maest-genre-metadata.json"
+                         Link="Assets\Models\maest-genre-metadata.json"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Resona.Core\Resona.Core.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Avalonia" Version="11.3.6"/>
+        <PackageReference Include="Avalonia.Desktop" Version="11.3.6"/>
+        <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.6"/>
+        <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.6"/>
+        <PackageReference Include="DiscordRichPresence" Version="1.6.1.70"/>
+        <PackageReference Include="Svg.Controls.Skia.Avalonia" Version="11.3.6"/>
+        <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
+        <PackageReference Include="Avalonia.Diagnostics" Version="11.3.6">
+            <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
+            <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.5" />
+        <PackageReference Include="NAudio"
+                          Version="2.2.1"
+                          Condition="'$(_IsLinuxBuild)' != 'true'"/>
+        <PackageReference Include="LibVLCSharp"
+                          Version="3.10.0"
+                          Condition="'$(_IsLinuxBuild)' == 'true'"/>
+        <PackageReference Include="Tmds.DBus"
+                          Version="0.94.2"
+                          Condition="'$(_IsLinuxBuild)' == 'true'"/>
+        <PackageReference Include="SkiaSharp" Version="2.88.9" />
+        <PackageReference Include="TagLibSharp" Version="2.3.0" />
+        <PackageReference Include="Velopack" Version="1.2.0" />
+    </ItemGroup>
+</Project>

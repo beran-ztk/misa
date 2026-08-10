@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
+    <AssemblyName>Resona.Companion</AssemblyName>
+    <RootNamespace>Resona.Companion</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.3.6" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.6" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.6" />
+    <PackageReference Include="Svg.Controls.Skia.Avalonia" Version="11.3.6" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AvaloniaResource Include="..\Resona\Assets\*.svg">
+      <Link>Assets\%(Filename)%(Extension)</Link>
+    </AvaloniaResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Resona.Core\Resona.Core.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,680 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="clr-namespace:Resona.Views"
+             x:Class="Resona.Views.SettingsOverlay">
+
+    <UserControl.Styles>
+        <Style Selector="ToggleButton.settings-nav">
+            <Setter Property="Padding" Value="11,8"/>
+            <Setter Property="Margin" Value="0,1"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="{DynamicResource Theme.Corner.Small}"/>
+            <Setter Property="Foreground" Value="{DynamicResource Theme.Brush.TextMuted}"/>
+            <Setter Property="FontSize" Value="12"/>
+        </Style>
+        <Style Selector="ToggleButton.settings-nav:pointerover">
+            <Setter Property="Background" Value="{DynamicResource Theme.Brush.SurfaceHover}"/>
+            <Setter Property="Foreground" Value="{DynamicResource Theme.Brush.TextPrimary}"/>
+        </Style>
+        <Style Selector="ToggleButton.settings-nav:checked">
+            <Setter Property="Background" Value="{DynamicResource Theme.Brush.SurfaceSelected}"/>
+            <Setter Property="Foreground" Value="{DynamicResource Theme.Brush.TextStrong}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+        <Style Selector="TextBox.settings-input">
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="Background" Value="{DynamicResource Theme.Brush.Input}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Theme.Brush.Border}"/>
+            <Setter Property="CornerRadius" Value="{DynamicResource Theme.Corner.Small}"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="ComboBox.settings-input">
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="Background" Value="{DynamicResource Theme.Brush.Input}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Theme.Brush.Border}"/>
+            <Setter Property="CornerRadius" Value="{DynamicResource Theme.Corner.Small}"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="Button.settings-action">
+            <Setter Property="MinHeight" Value="31"/>
+            <Setter Property="Padding" Value="12,5"/>
+            <Setter Property="Background" Value="{DynamicResource Theme.Brush.SurfaceHover}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Theme.Brush.BorderStrong}"/>
+            <Setter Property="CornerRadius" Value="{DynamicResource Theme.Corner.Small}"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="Button.settings-ghost">
+            <Setter Property="Width" Value="30"/>
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Theme.Brush.Border}"/>
+            <Setter Property="CornerRadius" Value="{DynamicResource Theme.Corner.Small}"/>
+            <Setter Property="FontSize" Value="10.5"/>
+            <Setter Property="Opacity" Value="0.82"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="ScrollViewer">
+            <Setter Property="Padding" Value="0,0,14,0"></Setter>
+        </Style>
+    </UserControl.Styles>
+
+    <Grid ColumnDefinitions="244,1,*" Background="{DynamicResource Theme.Brush.Overlay}">
+        <!-- Settings navigation -->
+        <Border Grid.Column="0" Background="{DynamicResource Theme.Brush.Navigation}" Padding="16,20,16,16">
+            <Grid RowDefinitions="Auto,Auto,*">
+                <StackPanel Grid.Row="0" Spacing="3">
+                    <TextBlock Text="Settings" FontSize="18" FontWeight="SemiBold"/>
+                    <TextBlock Text="Library setup" FontSize="11" Opacity="0.52"/>
+                </StackPanel>
+
+                <StackPanel Grid.Row="1" Margin="0,26,0,0" Spacing="6">
+                    <TextBlock Text="CLASSIFICATION" FontSize="10" FontWeight="SemiBold"
+                               Opacity="0.4" LetterSpacing="0.8" Margin="10,0,0,4"/>
+                    <ToggleButton x:Name="GenreVocabularyNavButton" Classes="settings-nav"
+                                  Content="Genres" Tag="mappings"
+                                  Click="OnSettingsNavigationClicked"/>
+                    <ToggleButton x:Name="TagsNavButton" Classes="settings-nav"
+                                  Content="Tags" Tag="tags"
+                                  Click="OnSettingsNavigationClicked"/>
+                    <ToggleButton x:Name="TagRulesNavButton" Classes="settings-nav"
+                                  IsVisible="False"
+                                  Content="Tag rules" Tag="tag_rules"
+                                  Click="OnSettingsNavigationClicked"/>
+                </StackPanel>
+
+                <StackPanel Grid.Row="2" VerticalAlignment="Top" Margin="0,22,0,0" Spacing="6">
+                    <TextBlock Text="APPEARANCE" FontSize="10" FontWeight="SemiBold"
+                               Opacity="0.4" LetterSpacing="0.8" Margin="10,0,0,4"/>
+                    <ToggleButton x:Name="AppearanceNavButton" Classes="settings-nav"
+                                  Content="Player and tracks" Tag="appearance"
+                                  Click="OnSettingsNavigationClicked"/>
+                    <TextBlock Text="LIBRARY" FontSize="10" FontWeight="SemiBold"
+                               Opacity="0.4" LetterSpacing="0.8" Margin="10,14,0,4"/>
+                    <ToggleButton x:Name="LibraryNavButton" Classes="settings-nav"
+                                  Content="Locations" Tag="library"
+                                  Click="OnSettingsNavigationClicked"/>
+                    <ToggleButton x:Name="AnalysisServerNavButton" Classes="settings-nav"
+                                  Content="Analysis server" Tag="analysis_server"
+                                  Click="OnSettingsNavigationClicked"/>
+                    <ToggleButton x:Name="BackupNavButton" Classes="settings-nav"
+                                  Content="Backup" Tag="backup"
+                                  Click="OnSettingsNavigationClicked"/>
+                    <ToggleButton x:Name="ExportNavButton" Classes="settings-nav"
+                                  Content="Export" Tag="export"
+                                  Click="OnSettingsNavigationClicked"/>
+                    <ToggleButton x:Name="RuntimeNavButton" Classes="settings-nav"
+                                  Content="Runtime" Tag="runtime"
+                                  Click="OnSettingsNavigationClicked"/>
+                    <ToggleButton x:Name="UpdatesNavButton" Classes="settings-nav"
+                                  Content="Updates" Tag="updates"
+                                  Click="OnSettingsNavigationClicked"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Rectangle Grid.Column="1" Fill="{DynamicResource Theme.Brush.Divider}"/>
+
+        <!-- Settings content -->
+        <Grid Grid.Column="2" RowDefinitions="Auto,1,*,Auto">
+            <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="30,20,22,16">
+                <StackPanel Spacing="2">
+                    <TextBlock x:Name="PageTitleText" FontSize="18" FontWeight="SemiBold"/>
+                    <TextBlock x:Name="PageDescriptionText" FontSize="11" Opacity="0.58" TextWrapping="Wrap"/>
+                </StackPanel>
+                <Button Grid.Column="1"
+                        Click="OnCloseClicked"
+                        Width="34"
+                        Height="34"
+                        Padding="0"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Opacity="0.65"
+                        VerticalAlignment="Top"
+                        ToolTip.Tip="Close">
+                    <Image Source="{SvgImage /Assets/close.svg}" Width="16" Height="16"/>
+                </Button>
+            </Grid>
+
+            <Rectangle Grid.Row="1" Fill="#18808080"/>
+
+            <Grid x:Name="GenreVocabularyPage" Grid.Row="2" RowDefinitions="Auto,Auto,*" Margin="30,22,30,0">
+                <Border Grid.Row="0"
+                        Background="{DynamicResource Theme.Brush.SurfaceTranslucent}"
+                        BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
+                        BorderThickness="1"
+                        CornerRadius="7"
+                        Padding="12"
+                        Margin="0,0,0,12">
+                    <Grid ColumnDefinitions="*,210" ColumnSpacing="10">
+                        <TextBox x:Name="SearchBox" Classes="settings-input"
+                                 Watermark="Search subgenres…"/>
+                        <ComboBox x:Name="ModelGenreBox" Grid.Column="1" Classes="settings-input"/>
+                    </Grid>
+                </Border>
+
+                <Border x:Name="AddSubgenrePanel"
+                        Grid.Row="1"
+                        IsVisible="False"
+                        Background="{DynamicResource Theme.Brush.SurfaceTranslucent}"
+                        BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
+                        BorderThickness="1"
+                        CornerRadius="7"
+                        Padding="12"
+                        Margin="0,0,0,12">
+                    <Grid RowDefinitions="Auto,Auto" RowSpacing="8">
+                        <StackPanel Spacing="2">
+                            <TextBlock x:Name="AddSubgenreTitleText" Text="Add subgenre" FontSize="12" FontWeight="SemiBold"/>
+                            <TextBlock Text="Create a new subgenre in the selected model category."
+                                       FontSize="10.5" Opacity="0.56"/>
+                        </StackPanel>
+                        <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                            <TextBox x:Name="NewSubgenreBox" Classes="settings-input"
+                                     Watermark="New subgenre name…"/>
+                            <Button Grid.Column="1" Classes="settings-action"
+                                    Content="Add subgenre"
+                                    Click="OnAddSubgenreClicked"/>
+                        </Grid>
+                    </Grid>
+                </Border>
+
+                <Grid Grid.Row="2" RowDefinitions="Auto,*">
+                    <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,8">
+                        <TextBlock Text="GENRE VOCABULARY" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
+                        <TextBlock x:Name="GenreVocabularyHintText"
+                                   Grid.Column="1"
+                                   FontSize="10.5"
+                                   Opacity="0.5"
+                                   VerticalAlignment="Center"/>
+                    </Grid>
+                    <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel x:Name="GenreVocabularyRows" Spacing="8" Margin="0,0,0,18"/>
+                    </ScrollViewer>
+                </Grid>
+            </Grid>
+
+            <ScrollViewer x:Name="LibraryPage" Grid.Row="2" IsVisible="False" Margin="30,22,30,0"
+                          HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Spacing="22">
+                    <StackPanel Spacing="5">
+                        <TextBlock Text="Library locations" FontSize="15" FontWeight="SemiBold"/>
+                        <TextBlock Text="The database and downloaded tracks used by this installation. Changes take effect after restarting Resona."
+                                   FontSize="11" Opacity="0.62" TextWrapping="Wrap"/>
+                    </StackPanel>
+                    <StackPanel Spacing="5">
+                        <TextBlock Text="DATABASE" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="9">
+                            <TextBox x:Name="DatabasePathBox"
+                                     Classes="settings-input"
+                                     Watermark="Absolute path to music.db"/>
+                            <Button Grid.Column="1"
+                                    Classes="settings-action"
+                                    Content="Choose folder"
+                                    Click="OnChooseDatabaseDirectoryClicked"/>
+                        </Grid>
+                    </StackPanel>
+                    <StackPanel Spacing="5">
+                        <TextBlock Text="TRACKS FOLDER" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="9">
+                            <TextBox x:Name="TracksPathBox"
+                                     Classes="settings-input"
+                                     Watermark="Absolute path to the tracks folder"/>
+                            <Button Grid.Column="1"
+                                    Classes="settings-action"
+                                    Content="Choose folder"
+                                    Click="OnChooseTracksDirectoryClicked"/>
+                        </Grid>
+                    </StackPanel>
+                    <StackPanel Spacing="8">
+                        <Button Classes="settings-action"
+                                HorizontalAlignment="Left"
+                                Content="Save locations"
+                                Click="OnSaveLibraryLocationsClicked"/>
+                        <TextBlock x:Name="LibraryLocationStatusText"
+                                   IsVisible="False"
+                                   FontSize="10.5"
+                                   Opacity="0.68"
+                                   TextWrapping="Wrap"/>
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+
+            <ScrollViewer x:Name="AnalysisServerPage" Grid.Row="2" IsVisible="False" Margin="30,22,30,0"
+                          HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Spacing="22">
+                    <StackPanel Spacing="5">
+                        <TextBlock Text="Resona analysis server" FontSize="15" FontWeight="SemiBold"/>
+                        <TextBlock Text="Tracks are streamed to this server for genre, tempo and loudness analysis."
+                                   FontSize="11" Opacity="0.62" TextWrapping="Wrap"/>
+                    </StackPanel>
+                    <Border Background="{DynamicResource Theme.Brush.SurfaceTranslucent}"
+                            BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
+                            BorderThickness="1"
+                            CornerRadius="7"
+                            Padding="12">
+                        <StackPanel Spacing="10">
+                            <TextBlock Text="SERVER ADDRESS" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
+                            <TextBox x:Name="MusicAnalysisServerUrlBox"
+                                     Classes="settings-input"
+                                     Watermark="http://server:8000"/>
+                            <TextBlock Text="Use an absolute HTTP or HTTPS address. A trailing slash is optional."
+                                       FontSize="10.5" Opacity="0.56" TextWrapping="Wrap"/>
+                            <StackPanel Orientation="Horizontal" Spacing="9">
+                                <Button Classes="settings-action"
+                                        Content="Save"
+                                        Click="OnSaveAnalysisServerClicked"/>
+                                <Button x:Name="TestAnalysisServerButton"
+                                        Classes="settings-action"
+                                        Content="Test connection"
+                                        Click="OnTestAnalysisServerClicked"/>
+                            </StackPanel>
+                            <TextBlock x:Name="AnalysisServerStatusText"
+                                       IsVisible="False"
+                                       FontSize="11"
+                                       TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+
+            <ScrollViewer x:Name="AppearancePage" Grid.Row="2" IsVisible="False" Margin="30,22,30,0"
+                          HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Spacing="18" Margin="0,0,0,24">
+                    <Border Background="{DynamicResource Theme.Brush.SurfaceTranslucent}"
+                            BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
+                            BorderThickness="1"
+                            CornerRadius="7"
+                            Padding="12">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="14">
+                            <StackPanel Spacing="3">
+                                <TextBlock Text="Visual presets" FontSize="13" FontWeight="SemiBold"/>
+                                <TextBlock Text="Presets update every value below. Individual sliders can still be adjusted afterwards."
+                                           FontSize="10.5" Opacity="0.56" TextWrapping="Wrap"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="7" VerticalAlignment="Center">
+                                <Button Classes="settings-action" Content="Subtle" Tag="subtle" Click="OnAppearancePresetClicked"/>
+                                <Button Classes="settings-action" Content="Balanced" Tag="balanced" Click="OnAppearancePresetClicked"/>
+                                <Button Classes="settings-action" Content="Vibrant" Tag="vibrant" Click="OnAppearancePresetClicked"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="PLAYER" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
+                        <Border Background="{DynamicResource Theme.Brush.SurfaceTranslucent}" BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
+                                BorderThickness="1" CornerRadius="7" Padding="12">
+                            <StackPanel x:Name="PlayerAppearanceRows" Spacing="12"/>
+                        </Border>
+                    </StackPanel>
+
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="TRACK LIST" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
+                        <Border Background="{DynamicResource Theme.Brush.SurfaceTranslucent}" BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
+                                BorderThickness="1" CornerRadius="7" Padding="12">
+                            <StackPanel Spacing="12">
+                                <StackPanel x:Name="TrackAppearanceRows" Spacing="12"/>
+                                <Rectangle Height="1" Fill="{DynamicResource Theme.Brush.Divider}" Margin="0,2"/>
+                                <StackPanel x:Name="TrackArtworkAppearanceRows" Spacing="12"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="AUDIO REACTION" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
+                        <Border Background="{DynamicResource Theme.Brush.SurfaceTranslucent}" BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
+                                BorderThickness="1" CornerRadius="7" Padding="12">
+                            <StackPanel x:Name="AudioAppearanceRows" Spacing="12"/>
+                        </Border>
+                    </StackPanel>
+
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="LIBRARY BACKDROP" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
+                        <Border Background="{DynamicResource Theme.Brush.SurfaceTranslucent}" BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
+                                BorderThickness="1" CornerRadius="7" Padding="12">
+                            <StackPanel x:Name="LibraryBackdropAppearanceRows" Spacing="12"/>
+                        </Border>
+                    </StackPanel>
+
+                    <StackPanel Spacing="8">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="LIVE PREVIEW" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
+                            <TextBlock Grid.Column="1" Text="Reacts to current playback" FontSize="9.5" Opacity="0.42"/>
+                        </Grid>
+                        <Border Height="220"
+                                Background="{DynamicResource Theme.Brush.Background}"
+                                BorderBrush="{DynamicResource Theme.Brush.BorderStrong}"
+                                BorderThickness="1"
+                                CornerRadius="8"
+                                ClipToBounds="True">
+                            <Panel>
+                                <Image x:Name="PreviewLibraryArtwork" Source="/Assets/headphones.png"
+                                       Stretch="UniformToFill" Opacity="0.25" RenderTransformOrigin="0.5,0.5">
+                                    <Image.RenderTransform><ScaleTransform ScaleX="1.08" ScaleY="1.08"/></Image.RenderTransform>
+                                    <Image.Effect><BlurEffect Radius="20"/></Image.Effect>
+                                </Image>
+                                <Border x:Name="PreviewLibraryAtmosphere" IsHitTestVisible="False"/>
+
+                                <Grid RowDefinitions="*,74">
+                                    <views:AudioSpectrumControl x:Name="PreviewSpectrumVisualizer"
+                                                                Grid.Row="0"
+                                                                Height="91"
+                                                                VerticalAlignment="Bottom"
+                                                                HorizontalAlignment="Stretch"
+                                                                IsHitTestVisible="False"/>
+                                    <Border Margin="12,10,12,9" CornerRadius="7" ClipToBounds="True"
+                                            Background="#53211F19" BorderBrush="#3D4A4437" BorderThickness="1">
+                                        <Panel>
+                                            <views:TrackColorWashControl x:Name="PreviewTrackWash"
+                                                                         Seed="7319"
+                                                                         Margin="-8,0"
+                                                                         IsHitTestVisible="False">
+                                                <views:TrackColorWashControl.Effect>
+                                                    <BlurEffect Radius="8"/>
+                                                </views:TrackColorWashControl.Effect>
+                                            </views:TrackColorWashControl>
+                                            <Image x:Name="PreviewTrackArtworkBlur" Source="/Assets/headphones.png"
+                                                   Width="126" Height="82" Margin="14,-10,0,-10"
+                                                   HorizontalAlignment="Left" Stretch="UniformToFill" Opacity="0.18">
+                                                <Image.Effect><BlurEffect Radius="14"/></Image.Effect>
+                                            </Image>
+                                            <Grid ColumnDefinitions="66,*" Margin="10,7">
+                                                <Panel Width="54" Height="54">
+                                                    <Image x:Name="PreviewCoverHalo" Source="/Assets/headphones.png"
+                                                           Width="52" Height="52" Stretch="UniformToFill" Opacity="0.34">
+                                                        <Image.Effect><BlurEffect Radius="9"/></Image.Effect>
+                                                    </Image>
+                                                    <Border Width="44" Height="44" CornerRadius="8" ClipToBounds="True"
+                                                            HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                            BorderBrush="#68545FAF" BorderThickness="0.75">
+                                                        <Image x:Name="PreviewCoverArtwork" Source="/Assets/headphones.png" Stretch="UniformToFill"/>
+                                                    </Border>
+                                                </Panel>
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="5">
+                                                    <TextBlock x:Name="PreviewTrackTitle" Text="Preview track"
+                                                               FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock Text="Channel  ·  Electronic, Ambient" FontSize="10.5"
+                                                               Foreground="#D4CFB4" Opacity="0.7"/>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Panel>
+                                    </Border>
+
+                                    <Border Grid.Row="1"
+                                            Background="{DynamicResource Theme.Brush.Navigation}"
+                                            BorderBrush="{DynamicResource Theme.Brush.Border}"
+                                            BorderThickness="0,1,0,0">
+                                        <Panel>
+                                            <Image x:Name="PreviewPlayerArtwork" Source="/Assets/headphones.png"
+                                                   Stretch="UniformToFill" Opacity="0.55" RenderTransformOrigin="0.5,0.5">
+                                                <Image.RenderTransform><ScaleTransform ScaleX="1.10" ScaleY="1.10"/></Image.RenderTransform>
+                                                <Image.Effect><BlurEffect Radius="30"/></Image.Effect>
+                                            </Image>
+                                            <Border x:Name="PreviewPlayerDarkening" Background="#8E2A241A"/>
+                                            <Border x:Name="PreviewPlayerAtmosphere"/>
+                                            <Grid ColumnDefinitions="Auto,*,Auto" Margin="16,0" VerticalAlignment="Center">
+                                                <TextBlock Text="▶" FontSize="18" Foreground="#F5F2E8"/>
+                                                <TextBlock Grid.Column="1" Text="Live player preview" Margin="14,0"
+                                                           FontSize="12" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="3" VerticalAlignment="Center">
+                                                    <Border x:Name="PreviewAudioBar1" Width="3" Height="8" CornerRadius="2" Background="#B7F000"/>
+                                                    <Border x:Name="PreviewAudioBar2" Width="3" Height="15" CornerRadius="2" Background="#B7F000"/>
+                                                    <Border x:Name="PreviewAudioBar3" Width="3" Height="11" CornerRadius="2" Background="#B7F000"/>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Panel>
+                                    </Border>
+                                </Grid>
+                            </Panel>
+                        </Border>
+                    </StackPanel>
+
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Text="Changes are previewed immediately and saved automatically."
+                                   FontSize="10.5" Opacity="0.54" VerticalAlignment="Center"/>
+                        <Button Grid.Column="1" Classes="settings-action"
+                                Content="Reset to defaults" Click="OnResetAppearanceClicked"/>
+                    </Grid>
+                </StackPanel>
+            </ScrollViewer>
+
+            <ScrollViewer x:Name="ExportPage" Grid.Row="2" IsVisible="False" Margin="30,22,30,0"
+                          HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Spacing="22">
+                    <StackPanel Spacing="5">
+                        <TextBlock Text="Portable export" FontSize="15" FontWeight="SemiBold"/>
+                        <TextBlock Text="Create a portable copy of the current music library, including audio files, covers, and metadata for external devices."
+                                   FontSize="11" Opacity="0.62" TextWrapping="Wrap"/>
+                    </StackPanel>
+                    <Button Content="Export Android library"
+                            Click="OnExportRequestedClicked"
+                            HorizontalAlignment="Left"
+                            Padding="14,7"
+                            Background="{DynamicResource Theme.Brush.SurfaceHover}"
+                            BorderBrush="{DynamicResource Theme.Brush.BorderStrong}"/>
+                </StackPanel>
+            </ScrollViewer>
+
+            <ScrollViewer x:Name="BackupPage" Grid.Row="2" IsVisible="False" Margin="30,22,30,0"
+                          HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Spacing="22">
+                    <StackPanel Spacing="5">
+                        <TextBlock Text="Database backup" FontSize="15" FontWeight="SemiBold"/>
+                        <TextBlock Text="On startup, the app creates one database copy per day in each selected folder."
+                                   FontSize="11" Opacity="0.62" TextWrapping="Wrap"/>
+                    </StackPanel>
+
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                        <StackPanel Spacing="5">
+                            <TextBlock Text="BACKUP FOLDERS" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
+                            <TextBlock Text="Recommended: one folder on an external drive and one folder synced to cloud storage."
+                                       FontSize="11" Opacity="0.56" TextWrapping="Wrap"/>
+                        </StackPanel>
+                        <Button Grid.Column="1"
+                                Classes="settings-action"
+                                Content="Add folder"
+                                Click="OnAddBackupDirectoryClicked"
+                                VerticalAlignment="Top"/>
+                    </Grid>
+
+                    <StackPanel x:Name="BackupDirectoryRows" Spacing="8"/>
+                </StackPanel>
+            </ScrollViewer>
+
+            <ScrollViewer x:Name="RuntimePage" Grid.Row="2" IsVisible="False" Margin="30,22,30,0"
+                          HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Spacing="22">
+                    <StackPanel Spacing="5">
+                        <TextBlock Text="Runtime switches" FontSize="15" FontWeight="SemiBold"/>
+                        <TextBlock Text="Temporary switches for the current app session."
+                                   FontSize="11" Opacity="0.62" TextWrapping="Wrap"/>
+                    </StackPanel>
+                    <Border x:Name="LinuxDependenciesPanel"
+                            IsVisible="False"
+                        Background="{DynamicResource Theme.Brush.SurfaceTranslucent}"
+                            BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
+                            BorderThickness="1"
+                            CornerRadius="7"
+                            Padding="12">
+                        <StackPanel Spacing="10">
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Linux dependencies"
+                                               FontSize="12.5"
+                                               FontWeight="SemiBold"/>
+                                    <TextBlock Text="The AppImage includes .NET. Playback and media tools are provided by the Linux system."
+                                               FontSize="11"
+                                               Opacity="0.58"
+                                               TextWrapping="Wrap"/>
+                                </StackPanel>
+                                <Button Grid.Column="1"
+                                        Classes="settings-action"
+                                        Content="Refresh"
+                                        Click="OnRefreshLinuxDependenciesClicked"
+                                        VerticalAlignment="Top"/>
+                            </Grid>
+                            <TextBlock x:Name="LinuxDependenciesText"
+                                       FontFamily="Consolas,monospace"
+                                       FontSize="11"
+                                       LineHeight="19"
+                                       TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Border>
+                    <Border Background="{DynamicResource Theme.Brush.SurfaceTranslucent}"
+                            BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
+                            BorderThickness="1"
+                            CornerRadius="7"
+                            Padding="12">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Firefox YouTube session"
+                                           FontSize="12.5"
+                                           FontWeight="SemiBold"/>
+                                <TextBlock Text="Pass --cookies-from-browser firefox to yt-dlp until the app is restarted."
+                                           FontSize="11"
+                                           Opacity="0.58"
+                                           TextWrapping="Wrap"/>
+                            </StackPanel>
+                            <CheckBox x:Name="FirefoxCookiesToggle"
+                                      Grid.Column="1"
+                                      Content="Enabled"
+                                      VerticalAlignment="Center"
+                                      Checked="OnFirefoxCookiesToggleChanged"
+                                      Unchecked="OnFirefoxCookiesToggleChanged"/>
+                        </Grid>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+
+            <ScrollViewer x:Name="UpdatesPage" Grid.Row="2" IsVisible="False" Margin="30,22,30,0"
+                          HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Spacing="22">
+                    <StackPanel Spacing="5">
+                        <TextBlock Text="Application updates" FontSize="15" FontWeight="SemiBold"/>
+                        <TextBlock Text="Resona checks the public GitHub releases for newer versions."
+                                   FontSize="11" Opacity="0.62" TextWrapping="Wrap"/>
+                    </StackPanel>
+
+                    <Border Background="{DynamicResource Theme.Brush.SurfaceTranslucent}"
+                            BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
+                            BorderThickness="1"
+                            CornerRadius="7"
+                            Padding="12">
+                        <StackPanel Spacing="12">
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                                <StackPanel Spacing="3">
+                                    <TextBlock Text="INSTALLED VERSION" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
+                                    <TextBlock x:Name="InstalledVersionText" FontSize="14" FontWeight="SemiBold"/>
+                                </StackPanel>
+                                <TextBlock x:Name="AvailableVersionText"
+                                           Grid.Column="1"
+                                           VerticalAlignment="Center"
+                                           FontSize="11"
+                                           Foreground="{DynamicResource Theme.Brush.TextSecondary}"/>
+                            </Grid>
+
+                            <TextBlock x:Name="UpdateStatusText"
+                                       FontSize="11"
+                                       Opacity="0.72"
+                                       TextWrapping="Wrap"/>
+                            <ProgressBar x:Name="UpdateProgressBar"
+                                         IsVisible="False"
+                                         Height="5"
+                                         Minimum="0"
+                                         Maximum="100"/>
+
+                            <StackPanel Orientation="Horizontal" Spacing="9">
+                                <Button x:Name="CheckForUpdatesButton"
+                                        Classes="settings-action"
+                                        Content="Check for updates"
+                                        Click="OnCheckForUpdatesClicked"/>
+                                <Button x:Name="DownloadUpdateButton"
+                                        Classes="settings-action"
+                                        Content="Download update"
+                                        IsVisible="False"
+                                        Click="OnDownloadUpdateClicked"/>
+                                <Button x:Name="InstallUpdateButton"
+                                        Classes="settings-action"
+                                        Content="Restart and install"
+                                        IsVisible="False"
+                                        Click="OnInstallUpdateClicked"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+
+            <Grid x:Name="TagsPage" Grid.Row="2" IsVisible="False" RowDefinitions="Auto,*" Margin="30,22,30,0">
+                <Border x:Name="AddTagPanel"
+                        Grid.Row="0"
+                        Background="{DynamicResource Theme.Brush.SurfaceTranslucent}"
+                        BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
+                        BorderThickness="1"
+                        CornerRadius="7"
+                        Padding="12"
+                        Margin="0,0,0,12">
+                    <Grid RowDefinitions="Auto,Auto" RowSpacing="8">
+                        <Grid ColumnDefinitions="*" ColumnSpacing="8">
+                            <StackPanel Spacing="2">
+                                <TextBlock x:Name="AddTagTitleText" Text="Add tag" FontSize="12" FontWeight="SemiBold"/>
+                                <TextBlock Text="Create a reusable label for tracks."
+                                           FontSize="10.5" Opacity="0.56"/>
+                            </StackPanel>
+                        </Grid>
+                        <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                            <TextBox x:Name="NewTagBox" Classes="settings-input"
+                                     Watermark="New tag…"/>
+                            <Button Grid.Column="1" Classes="settings-action"
+                                    Content="Add tag"
+                                    Click="OnAddTagClicked"/>
+                        </Grid>
+                    </Grid>
+                </Border>
+
+                <Grid Grid.Row="1" RowDefinitions="Auto,*">
+                    <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,8">
+                        <TextBlock Text="TAGS" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
+                        <TextBlock x:Name="TagVocabularyHintText"
+                                   Grid.Column="1"
+                                   FontSize="10.5"
+                                   Opacity="0.5"
+                                   VerticalAlignment="Center"/>
+                    </Grid>
+                    <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel x:Name="TagRows" Spacing="8" Margin="0,0,0,18"/>
+                    </ScrollViewer>
+                </Grid>
+            </Grid>
+
+            <Grid x:Name="TagRulesPage" Grid.Row="2" IsVisible="False" RowDefinitions="Auto,*" Margin="30,22,30,0">
+                <Grid Grid.Row="0" ColumnDefinitions="170,88,165,*,86,Auto" ColumnSpacing="10" Margin="0,0,0,14">
+                    <ComboBox x:Name="TagRuleTagBox" Height="34"/>
+                    <ComboBox x:Name="TagRuleMatchModeBox" Grid.Column="1" Height="34"/>
+                    <ComboBox x:Name="TagRuleModelBox" Grid.Column="2" Height="34"
+                              SelectionChanged="OnTagRuleModelSelectionChanged"/>
+                    <ComboBox x:Name="TagRuleSignalBox" Grid.Column="3" Height="34"/>
+                    <TextBox x:Name="TagRuleThresholdBox" Grid.Column="4" Height="34"
+                             Text="0.30" Watermark="Score"/>
+                    <Button Grid.Column="5" Content="Create rule" Click="OnAddTagRuleClicked"
+                            Padding="12,5"/>
+                </Grid>
+                <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel x:Name="TagRuleRows" Spacing="5" Margin="0,0,0,18"/>
+                </ScrollViewer>
+            </Grid>
+
+            <Border Grid.Row="3" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource Theme.Brush.Divider}" Padding="30,10,30,13">
+                <TextBlock x:Name="SummaryText" VerticalAlignment="Center" FontSize="11" Opacity="0.65"/>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

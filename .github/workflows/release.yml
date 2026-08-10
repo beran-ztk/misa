@@ -1,4 +1,4 @@
-name: Release Music
+name: Release Resona
 
 on:
   push:
@@ -28,25 +28,25 @@ jobs:
         shell: pwsh
         run: |
           $tagVersion = "${{ github.ref_name }}" -replace '^v', ''
-          [xml] $project = Get-Content "Music/Music.csproj"
+          [xml] $project = Get-Content "src/Resona/Resona.csproj"
           $projectVersion = $project.Project.PropertyGroup.Version
 
           if ([string]::IsNullOrWhiteSpace($projectVersion)) {
-            throw "Music.csproj does not define a Version."
+            throw "Resona.csproj does not define a Version."
           }
 
           if ($tagVersion -ne $projectVersion) {
-            throw "Tag version '$tagVersion' does not match Music.csproj version '$projectVersion'."
+            throw "Tag version '$tagVersion' does not match Resona.csproj version '$projectVersion'."
           }
 
           "version=$tagVersion" >> $env:GITHUB_OUTPUT
 
       - name: Restore application
-        run: dotnet restore Music/Music.csproj -r win-x64
+        run: dotnet restore src/Resona/Resona.csproj -r win-x64
 
       - name: Publish Windows x64 application
         run: >-
-          dotnet publish Music/Music.csproj
+          dotnet publish src/Resona/Resona.csproj
           -c Release
           -r win-x64
           --self-contained true
@@ -71,12 +71,12 @@ jobs:
         run: >-
           vpk pack
           --packId Beran.Music
-          --packTitle Music
-          --packAuthors beran-ztk
+          --packTitle Resona
+          --packAuthors bezztk
           --packVersion ${{ steps.version.outputs.version }}
           --packDir .release-publish
-          --mainExe Music.exe
-          --icon Music/Assets/headphones.ico
+          --mainExe Resona.exe
+          --icon src/Resona/Assets/headphones.ico
           --outputDir Releases
           --noPortable
 
@@ -88,7 +88,7 @@ jobs:
           --repoUrl https://github.com/${{ github.repository }}
           --outputDir Releases
           --publish
-          --releaseName "Music ${{ steps.version.outputs.version }}"
+          --releaseName "Resona ${{ steps.version.outputs.version }}"
           --tag ${{ github.ref_name }}
 
   release-linux:
@@ -111,26 +111,26 @@ jobs:
         shell: bash
         run: |
           tag_version="${GITHUB_REF_NAME#v}"
-          project_version="$(dotnet msbuild Music/Music.csproj -getProperty:Version -nologo -p:RuntimeIdentifier=linux-x64)"
+          project_version="$(dotnet msbuild src/Resona/Resona.csproj -getProperty:Version -nologo -p:RuntimeIdentifier=linux-x64)"
 
           if [[ -z "$project_version" ]]; then
-            echo "Music.csproj does not define a Version." >&2
+            echo "Resona.csproj does not define a Version." >&2
             exit 1
           fi
 
           if [[ "$tag_version" != "$project_version" ]]; then
-            echo "Tag version '$tag_version' does not match Music.csproj version '$project_version'." >&2
+            echo "Tag version '$tag_version' does not match Resona.csproj version '$project_version'." >&2
             exit 1
           fi
 
           echo "version=$tag_version" >> "$GITHUB_OUTPUT"
 
       - name: Restore application
-        run: dotnet restore Music/Music.csproj -r linux-x64 -p:RuntimeIdentifier=linux-x64
+        run: dotnet restore src/Resona/Resona.csproj -r linux-x64 -p:RuntimeIdentifier=linux-x64
 
       - name: Publish Linux x64 application
         run: >-
-          dotnet publish Music/Music.csproj
+          dotnet publish src/Resona/Resona.csproj
           -c Release
           -r linux-x64
           --self-contained true
@@ -156,12 +156,12 @@ jobs:
         run: >-
           vpk pack
           --packId Beran.Music
-          --packTitle Music
-          --packAuthors beran-ztk
+          --packTitle Resona
+          --packAuthors bezztk
           --packVersion ${{ steps.version.outputs.version }}
           --packDir .release-publish-linux
-          --mainExe Music
-          --icon Music/Assets/music.png
+          --mainExe Resona
+          --icon src/Resona/Assets/music.png
           --outputDir Releases-Linux
           --runtime linux-x64
           --categories "Audio;Music"

@@ -1,12 +1,12 @@
-# Publishing Music
+# Publishing Resona
 
-The application version is maintained in `Music/Music.csproj`. A public release
+The application version is maintained in `src/Resona/Resona.csproj`. A public release
 is created only when a matching `v` tag is pushed.
 
 For example, to publish version `0.1.0`:
 
 ```powershell
-git add Music/Music.csproj
+git add src/Resona/Resona.csproj
 git commit -m "Prepare release 0.1.0"
 git tag v0.1.0
 git push misa HEAD

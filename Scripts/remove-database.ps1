@@ -1,10 +1,10 @@
-Get-Process Music -ErrorAction SilentlyContinue | Stop-Process -Force
+Get-Process Resona -ErrorAction SilentlyContinue | Stop-Process -Force
 Remove-Item "$env:LOCALAPPDATA\.private\music\music.db" -Force -ErrorAction SilentlyContinue
 
-$musicProcesses = Get-CimInstance Win32_Process |
-    Where-Object { $_.CommandLine -match '(?i)D:\\Code\\music\\Music.*Music\.dll|Music\\bin\\Debug.*Music\.dll' }
+$resonaProcesses = Get-CimInstance Win32_Process |
+    Where-Object { $_.CommandLine -match '(?i)src\\Resona.*Resona\.dll|Resona\\bin\\Debug.*Resona\.dll' }
 
-$musicProcesses | Select-Object ProcessId, Name, CommandLine
-$musicProcesses | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }
+$resonaProcesses | Select-Object ProcessId, Name, CommandLine
+$resonaProcesses | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }
 
 Remove-Item "$env:LOCALAPPDATA\.private\music\music.db" -Force
