@@ -8,8 +8,6 @@ namespace Music.Views;
 
 public sealed class TrackColorWashControl : Control
 {
-    private static readonly int SessionShapeSalt = Guid.NewGuid().GetHashCode();
-
     public static readonly StyledProperty<Color> PrimaryColorProperty =
         AvaloniaProperty.Register<TrackColorWashControl, Color>(nameof(PrimaryColor), Colors.Transparent);
 
@@ -145,7 +143,9 @@ public sealed class TrackColorWashControl : Control
         out Point gradientStart,
         out Point gradientEnd)
     {
-        var random = new ShapeRandom(unchecked(seed ^ SessionShapeSalt));
+        // The track seed is persisted with the track. Keeping it as the sole
+        // source makes the generated shape stable across application starts.
+        var random = new ShapeRandom(seed);
         var width = size.Width;
         var height = size.Height;
         var pattern = random.NextInt(6);
