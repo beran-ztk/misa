@@ -37,12 +37,11 @@ public partial class EditTrackOverlay : UserControl
     private Dictionary<int, ModelSubgenre> _modelSubgenresById = [];
     private Dictionary<int, string> _modelGenreNamesById = [];
     private Dictionary<int, List<ModelSubgenreDistinction>> _distinctionsBySubgenreId = [];
-    private HashSet<int> _visibleDetectedModelGenreIds = [];
     private bool _areDetectedGenresExpanded;
     private bool _areFrequentManualGenresExpanded;
+    private bool _areAllGenresExpanded;
     private int? _modelGenreFilterId;
     private string _modelGenreSearchText = string.Empty;
-    private bool _buildingModelGenreChoices;
     private readonly DispatcherTimer _analysisElapsedTimer = new() { Interval = TimeSpan.FromSeconds(1) };
     private DateTime _analysisStartedAt;
     private bool _isPlayingPreview;
@@ -84,6 +83,7 @@ public partial class EditTrackOverlay : UserControl
         _isPlayingPreview = false;
         _areDetectedGenresExpanded = false;
         _areFrequentManualGenresExpanded = false;
+        _areAllGenresExpanded = false;
         LoadLookups();
         Prefill(track);
         IsVisible = true;
@@ -845,7 +845,6 @@ public partial class EditTrackOverlay : UserControl
             .OrderByDescending(prediction => prediction.Score)
             .ThenBy(prediction => prediction.ModelSubgenreName, StringComparer.OrdinalIgnoreCase)
             .ToList();
-        _visibleDetectedModelGenreIds = detected.Select(prediction => prediction.ModelSubgenreId).ToHashSet();
         DetectedGenresSection.IsVisible = detected.Count > 0;
         DetectedGenresCountText.Text = $"({detected.Count})";
         ((RotateTransform)DetectedGenresChevron.RenderTransform!).Angle = _areDetectedGenresExpanded ? 90 : 0;
@@ -973,38 +972,84 @@ public partial class EditTrackOverlay : UserControl
         }
 
         AddModelGenreSection.IsVisible = true;
-        _buildingModelGenreChoices = true;
-        var categoryChoices = new[] { new ModelGenreFilterChoice(null, "All model groups") }
-            .Concat(_modelGenreNamesById
-                .OrderBy(item => item.Value, StringComparer.OrdinalIgnoreCase)
-                .Select(item => new ModelGenreFilterChoice(item.Key, item.Value)))
+        var availableGenres = _modelSubgenresById.Values
+            .Where(subgenre => !_modelGenreIds.Contains(subgenre.Id))
             .ToList();
-        ModelGenreCategoryFilterBox.ItemsSource = categoryChoices;
-        var selectedIndex = categoryChoices.FindIndex(choice => choice.Id == _modelGenreFilterId);
-        ModelGenreCategoryFilterBox.SelectedIndex = selectedIndex >= 0 ? selectedIndex : 0;
-        _buildingModelGenreChoices = false;
+        AllGenresCountText.Text = $"({availableGenres.Count})";
+        ((RotateTransform)AllGenresChevron.RenderTransform!).Angle = _areAllGenresExpanded ? 90 : 0;
+        AllGenresPanel.IsVisible = _areAllGenresExpanded;
+        BuildFrequentManualGenreChoices();
+
+        ModelGenreGroupsPanel.Children.Clear();
+        ModelGenreChoicesPanel.Children.Clear();
+        if (!_areAllGenresExpanded)
+            return;
+
+        var availableGroupIds = availableGenres
+            .Select(subgenre => subgenre.ModelGenreId)
+            .ToHashSet();
+        if (_modelGenreFilterId is int selectedGroupId && !availableGroupIds.Contains(selectedGroupId))
+            _modelGenreFilterId = null;
+
+        var groups = new[] { (Id: (int?)null, Name: "All") }
+            .Concat(_modelGenreNamesById
+                .Where(item => availableGroupIds.Contains(item.Key))
+                .OrderBy(item => item.Value, StringComparer.OrdinalIgnoreCase)
+                .Select(item => (Id: (int?)item.Key, Name: item.Value)));
+        foreach (var group in groups)
+        {
+            var selected = group.Id == _modelGenreFilterId;
+            var item = new Border
+            {
+                Height = 25,
+                Background = Brushes.Transparent,
+                Padding = new Avalonia.Thickness(2, 0),
+                Cursor = new Cursor(StandardCursorType.Hand),
+                Child = new TextBlock
+                {
+                    Text = group.Name,
+                    FontSize = 10.5,
+                    FontWeight = selected ? FontWeight.SemiBold : FontWeight.Normal,
+                    Foreground = selected
+                        ? ThemeResources.Brush("Theme.Brush.Accent")
+                        : ThemeResources.Brush("Theme.Brush.TextSecondary"),
+                    Opacity = selected ? 1 : 0.72,
+                    TextWrapping = TextWrapping.Wrap,
+                    VerticalAlignment = VerticalAlignment.Center
+                }
+            };
+            item.PointerPressed += (_, e) =>
+            {
+                _modelGenreFilterId = group.Id;
+                RebuildModelGenreChoices();
+                e.Handled = true;
+            };
+            ModelGenreGroupsPanel.Children.Add(item);
+        }
 
         var search = _modelGenreSearchText.Trim();
-        var choices = _modelSubgenresById.Values
-            .Where(subgenre => !_modelGenreIds.Contains(subgenre.Id))
-            .Where(subgenre => !_visibleDetectedModelGenreIds.Contains(subgenre.Id))
+        var choices = availableGenres
             .Where(subgenre => _modelGenreFilterId is null || subgenre.ModelGenreId == _modelGenreFilterId)
             .Where(subgenre => string.IsNullOrWhiteSpace(search)
-                || subgenre.Name.Contains(search, StringComparison.OrdinalIgnoreCase))
+                || subgenre.Name.Contains(search, StringComparison.OrdinalIgnoreCase)
+                || _modelGenreNamesById.GetValueOrDefault(subgenre.ModelGenreId, "")
+                    .Contains(search, StringComparison.OrdinalIgnoreCase))
             .OrderBy(subgenre => _modelGenreNamesById.GetValueOrDefault(subgenre.ModelGenreId, ""), StringComparer.OrdinalIgnoreCase)
             .ThenBy(subgenre => subgenre.Name, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
-        ModelGenreChoicesPanel.Children.Clear();
-        BuildFrequentManualGenreChoices();
         foreach (var subgenre in choices)
             ModelGenreChoicesPanel.Children.Add(CreateModelGenreChoiceButton(subgenre));
-
-        ModelGenreChoiceSummaryText.Text = choices.Count == 0
-            ? "No matching genres left."
-            : $"{choices.Count} selectable"
-              + (_modelGenreIds.Count > 0 ? $" · {_modelGenreIds.Count} active hidden" : string.Empty)
-              + (_visibleDetectedModelGenreIds.Count > 0 ? $" · {_visibleDetectedModelGenreIds.Count} available under detections" : string.Empty);
+        if (choices.Count == 0)
+        {
+            ModelGenreChoicesPanel.Children.Add(new TextBlock
+            {
+                Text = "No genres match this filter.",
+                FontSize = 11,
+                Opacity = 0.52,
+                Margin = new Avalonia.Thickness(0, 8, 0, 4)
+            });
+        }
     }
 
     private void BuildFrequentManualGenreChoices()
@@ -1157,46 +1202,28 @@ public partial class EditTrackOverlay : UserControl
 
     private Button CreateModelGenreChoiceButton(ModelSubgenre subgenre)
     {
-        var genreName = _modelGenreNamesById.GetValueOrDefault(subgenre.ModelGenreId, "Genre");
-        var text = new StackPanel { Spacing = 1, VerticalAlignment = VerticalAlignment.Center };
-        text.Children.Add(new TextBlock
+        var text = new TextBlock
         {
             Text = subgenre.Name,
             FontSize = 10.5,
             FontWeight = FontWeight.SemiBold,
-            TextTrimming = TextTrimming.CharacterEllipsis
-        });
-        text.Children.Add(new TextBlock
-        {
-            Text = genreName,
-            FontSize = 9,
-            Opacity = 0.58,
-            TextTrimming = TextTrimming.CharacterEllipsis
-        });
-        var content = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), ColumnSpacing = 8 };
-        content.Children.Add(text);
-        var add = new TextBlock
-        {
-            Text = "+",
-            FontSize = 16,
-            Foreground = ThemeResources.Brush("Theme.Brush.Accent"),
+            Foreground = ThemeResources.Brush("Theme.Brush.TextPrimary"),
+            TextTrimming = TextTrimming.CharacterEllipsis,
+            HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
-            Opacity = 0.8
+            TextAlignment = TextAlignment.Center
         };
-        Grid.SetColumn(add, 1);
-        content.Children.Add(add);
 
         var button = new Button
         {
-            Content = content,
-            Height = 42,
-            Margin = new Avalonia.Thickness(0, 0, 6, 6),
-            Padding = new Avalonia.Thickness(9, 3),
-            Background = ThemeResources.Brush("Theme.Brush.Surface"),
+            Content = text,
+            Height = 32,
+            Padding = new Avalonia.Thickness(9, 4),
+            Background = Brushes.Transparent,
             BorderBrush = ThemeResources.Brush("Theme.Brush.BorderSubtle"),
             CornerRadius = new Avalonia.CornerRadius(5),
             HorizontalAlignment = HorizontalAlignment.Stretch,
-            HorizontalContentAlignment = HorizontalAlignment.Stretch,
+            HorizontalContentAlignment = HorizontalAlignment.Center,
             VerticalContentAlignment = VerticalAlignment.Center
         };
         button.Classes.Add("edit-choice");
@@ -1213,14 +1240,14 @@ public partial class EditTrackOverlay : UserControl
         return button;
     }
 
-    private void OnModelGenreFilterChanged(object? sender, SelectionChangedEventArgs e)
+    private void OnAllGenresHeaderPressed(object? sender, PointerPressedEventArgs e)
     {
-        if (_buildingModelGenreChoices)
+        if (_track is null)
             return;
-        _modelGenreFilterId = ModelGenreCategoryFilterBox.SelectedItem is ModelGenreFilterChoice choice
-            ? choice.Id
-            : null;
+
+        _areAllGenresExpanded = !_areAllGenresExpanded;
         RebuildModelGenreChoices();
+        e.Handled = true;
     }
 
     private void OnModelGenreSearchChanged(object? sender, TextChangedEventArgs e)
@@ -1294,11 +1321,6 @@ public partial class EditTrackOverlay : UserControl
             Padding = new Avalonia.Thickness(12, 10), Width = 300, MaxWidth = 300,
             Child = new ScrollViewer { MaxHeight = 390, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled, Content = panel }
         };
-    }
-
-    private sealed record ModelGenreFilterChoice(int? Id, string Label)
-    {
-        public override string ToString() => Label;
     }
 
     private void OnCloseClicked(object? sender, RoutedEventArgs e) => CloseOverlay();
