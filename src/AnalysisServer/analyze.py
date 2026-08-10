@@ -10,7 +10,7 @@ import essentia.standard as es
 MAEST_MODEL_NAME = "discogs-maest-30s-pw-519l-2"
 MAEST_MODEL_FILE = "discogs-maest-30s-pw-519l-2.pb"
 MAEST_METADATA_FILE = "discogs-maest-30s-pw-519l-2.json"
-DEFAULT_MODEL_DIRECTORY = Path(__file__).resolve().parent.parent / "Models" / "Essentia" / "DiscogsMAEST"
+DEFAULT_MODEL_DIRECTORY = Path(__file__).resolve().parents[2] / "models" / "Essentia" / "DiscogsMAEST"
 EXCLUDED_HEAD_MODELS = {"mtg_" + "jamen" + "do_" + "mood" + "theme"}
 
 

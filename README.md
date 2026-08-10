@@ -12,10 +12,10 @@ Linux x64 releases are available as an AppImage. Playback uses the system `libvl
 
 ## Screenshots
 
-![Library view](Docs/images/library.png)
+![Library view](docs/images/library.png)
 
-![Track editor](Docs/images/edit.png)
+![Track editor](docs/images/edit.png)
 
-![Channel-Manager](Docs/images/channels.png)
+![Channel-Manager](docs/images/channels.png)
 
-![Filter](Docs/images/filter.png)
+![Filter](docs/images/filter.png)

@@ -28,9 +28,9 @@ public static class Values
     public static readonly string WindowPlacementPath = Path.Combine(LocalDirectory, "window-placement.json");
     public static readonly string AppSettingsPath = Path.Combine(LocalDirectory, "app-settings.json");
     public static readonly string LibraryLocationsPath = Path.Combine(LocalDirectory, "library-locations.json");
-    public static readonly string ToolsDirectory = Path.Combine(SolutionDirectory, "Tools");
+    public static readonly string ToolsDirectory = Path.Combine(SolutionDirectory, "tools");
     public static readonly string ScriptsDirectory = Path.Combine(SolutionDirectory, "Scripts");
-    public static readonly string ModelsDirectory = Path.Combine(SolutionDirectory, "Models");
+    public static readonly string ModelsDirectory = Path.Combine(SolutionDirectory, "models");
     public static readonly string TracksDirectory;
     public static readonly string DbPath;
     public static readonly string? LibraryLocationsLoadError;

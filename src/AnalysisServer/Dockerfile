@@ -29,8 +29,8 @@ RUN python -m pip install --no-cache-dir --upgrade pip \
 RUN useradd --create-home --uid 10001 analyzer
 
 COPY --chown=analyzer:analyzer src/AnalysisServer/api.py /app/api.py
-COPY --chown=analyzer:analyzer Scripts/analyze.py /app/Scripts/analyze.py
-COPY --chown=analyzer:analyzer Models/Essentia /app/Models/Essentia
+COPY --chown=analyzer:analyzer src/AnalysisServer/analyze.py /app/analyze.py
+COPY --chown=analyzer:analyzer models/Essentia /app/models/Essentia
 
 USER analyzer
 

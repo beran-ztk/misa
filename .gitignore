@@ -4,14 +4,8 @@ obj/
 riderModule.iml
 /_ReSharper.Caches/
 /.idea/
-/.agents/
-/.claude/
-/.codex/
-/.codex-dotnet/
-/.dotnet-home/
 *.sln.DotSettings.user
-Assets/
-!src/Resona/Assets/
+/assets/
 
 # Local Codex verification builds. Never use the app's normal bin/ output for them.
 /.codex-build/
@@ -21,15 +15,10 @@ Assets/
 /Releases-Linux/
 /.release-publish/
 /.release-publish-linux/
-/exports/
-/Music/
 
 # Local runtime dependencies kept beside the solution.
-/Tools/
-/Models/**/*.pb
-/Scripts/__pycache__/
-/AnalysisServer/__pycache__/
-/AnalysisServer/*.tar
+/tools/
+/models/**/*.pb
 /src/AnalysisServer/.env
 /src/AnalysisServer/*.tar
 /src/AnalysisServer/__pycache__/

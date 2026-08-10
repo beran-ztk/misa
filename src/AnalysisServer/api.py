@@ -10,8 +10,8 @@ from fastapi.responses import JSONResponse
 
 
 BASE_DIRECTORY = Path("/app")
-SCRIPT_PATH = BASE_DIRECTORY / "Scripts" / "analyze.py"
-MODEL_DIRECTORY = BASE_DIRECTORY / "Models" / "Essentia" / "DiscogsMAEST"
+SCRIPT_PATH = BASE_DIRECTORY / "analyze.py"
+MODEL_DIRECTORY = BASE_DIRECTORY / "models" / "Essentia" / "DiscogsMAEST"
 REQUIRED_MODEL_PATH = MODEL_DIRECTORY / "discogs-maest-30s-pw-519l-2.pb"
 SUPPORTED_EXTENSIONS = {".flac", ".m4a", ".mp3", ".wav"}
 UPLOAD_CHUNK_SIZE = 1024 * 1024
