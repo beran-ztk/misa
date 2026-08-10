@@ -61,6 +61,11 @@ public partial class EditTrackOverlay : UserControl
     private bool _isClosing;
     private bool _isDeletingTrack;
     private bool _updatingBackdropFocus;
+    private bool _isOpen;
+    private bool _lookupsLoaded;
+    private bool _preparedLayoutReady;
+    private int? _preparedTrackId;
+    private int _prepareGeneration;
     private int? _selectedRatingId;
     private int? _initialRatingId;
     private HashSet<int> _initialTagIds = [];
@@ -74,6 +79,10 @@ public partial class EditTrackOverlay : UserControl
     public event Action<string>? ToastRequested;
     public event Action<int, double>? BackdropFocusChanged;
     public event Func<MusicTrack, Task<bool>>? DeleteRequested;
+    public event Action? Closed;
+
+    public bool IsOpen => _isOpen;
+    public bool IsPreparedFor(int trackId) => _preparedTrackId == trackId && _track?.Id == trackId;
 
     public EditTrackOverlay()
     {
@@ -86,6 +95,66 @@ public partial class EditTrackOverlay : UserControl
     {
         var motionGeneration = ++_motionGeneration;
         _isClosing = false;
+        _isOpen = true;
+        var prepared = _preparedTrackId == track.Id && _track?.Id == track.Id;
+        if (!prepared)
+        {
+            PrepareContent(track, backdropFocus);
+            PrepareOpeningWarmupPosition();
+        }
+
+        IsHitTestVisible = true;
+        IsVisible = true;
+        if (prepared && _preparedLayoutReady)
+        {
+            StartSlideAnimation(opening: true);
+            EditorSurface.Opacity = 1;
+        }
+        else
+        {
+            _ = StartOpeningAfterFirstFrameAsync(motionGeneration);
+        }
+        if (analyzeAfterOpening)
+            _ = AnalyzeAfterOpeningAsync(track, motionGeneration);
+    }
+
+    public void Prepare(MusicTrack track, double backdropFocus = 0.5)
+    {
+        if (_isOpen || _isClosing)
+            return;
+
+        var prepareGeneration = ++_prepareGeneration;
+        PrepareContent(track, backdropFocus);
+        _preparedLayoutReady = false;
+        IsHitTestVisible = false;
+        IsVisible = true;
+        PositionPreparedContentOffscreen();
+        _ = MarkPreparedLayoutReadyAsync(track.Id, prepareGeneration);
+    }
+
+    public void InvalidatePreparedTrack()
+    {
+        if (_isOpen || _isClosing)
+            return;
+
+        ++_prepareGeneration;
+        _preparedTrackId = null;
+        _preparedLayoutReady = false;
+        _track = null;
+        IsVisible = false;
+    }
+
+    public void InvalidateLookups()
+    {
+        _lookupsLoaded = false;
+        _modelSubgenresById.Clear();
+        _modelGenreNamesById.Clear();
+        _distinctionsBySubgenreId.Clear();
+        InvalidatePreparedTrack();
+    }
+
+    private void PrepareContent(MusicTrack track, double backdropFocus)
+    {
         _track = track;
         _isPlayingPreview = false;
         _isDeletingTrack = false;
@@ -99,11 +168,7 @@ public partial class EditTrackOverlay : UserControl
         BackdropFocusSlider.Value = Math.Clamp(backdropFocus, 0d, 1d) * 100;
         _updatingBackdropFocus = false;
         Prefill(track);
-        PrepareOpeningPosition();
-        IsVisible = true;
-        _ = StartOpeningAfterFirstFrameAsync(motionGeneration);
-        if (analyzeAfterOpening)
-            _ = AnalyzeAfterOpeningAsync(track, motionGeneration);
+        _preparedTrackId = track.Id;
     }
 
     private bool StartSlideAnimation(bool opening)
@@ -135,7 +200,7 @@ public partial class EditTrackOverlay : UserControl
         return travel > 1 ? travel : 320;
     }
 
-    private void PrepareOpeningPosition()
+    private void PrepareOpeningWarmupPosition()
     {
         var visual = ElementComposition.GetElementVisual(EditorSurface);
         if (visual is null)
@@ -145,10 +210,28 @@ public partial class EditTrackOverlay : UserControl
         EditorSurface.Opacity = 0.01;
     }
 
+    private void PositionPreparedContentOffscreen()
+    {
+        var visual = ElementComposition.GetElementVisual(EditorSurface);
+        if (visual is not null)
+            visual.Offset = new Avalonia.Vector3D(0, EditorTravelDistance(), 0);
+        EditorSurface.Opacity = 0.01;
+    }
+
+    private async Task MarkPreparedLayoutReadyAsync(int trackId, int prepareGeneration)
+    {
+        await Task.Delay(OpeningRenderWarmup);
+        if (prepareGeneration == _prepareGeneration
+            && !_isOpen
+            && !_isClosing
+            && _preparedTrackId == trackId)
+            _preparedLayoutReady = true;
+    }
+
     private async Task StartOpeningAfterFirstFrameAsync(int motionGeneration)
     {
         await Task.Delay(OpeningRenderWarmup);
-        if (motionGeneration != _motionGeneration || !IsVisible || _isClosing)
+        if (motionGeneration != _motionGeneration || !_isOpen || _isClosing)
             return;
 
         StartSlideAnimation(opening: true);
@@ -158,7 +241,7 @@ public partial class EditTrackOverlay : UserControl
     private async Task AnalyzeAfterOpeningAsync(MusicTrack track, int motionGeneration)
     {
         await Task.Delay(OpenAnimationDuration + OpeningRenderWarmup);
-        if (motionGeneration == _motionGeneration && IsVisible && !_isClosing)
+        if (motionGeneration == _motionGeneration && _isOpen && !_isClosing)
             await AnalyzeImportedTrackAsync(track);
     }
 
@@ -166,6 +249,9 @@ public partial class EditTrackOverlay : UserControl
 
     private void LoadLookups()
     {
+        if (_lookupsLoaded)
+            return;
+
         _tags = MusicLibraryService.Current.GetTags();
         _ratings = MusicLibraryService.Current.GetRatings();
         _styles = MusicLibraryService.Current.GetStyles();
@@ -173,6 +259,7 @@ public partial class EditTrackOverlay : UserControl
         StylesSection.IsVisible = _styles.Count > 0;
 
         BuildRatingButtons();
+        _lookupsLoaded = true;
     }
 
     private void Prefill(MusicTrack track)
@@ -583,6 +670,8 @@ public partial class EditTrackOverlay : UserControl
             _isPlayingPreview = false;
             _isEditingInformation = false;
             _track = null;
+            _preparedTrackId = null;
+            _preparedLayoutReady = false;
             CloseOverlay();
         }
         catch (Exception exception)
@@ -1515,7 +1604,7 @@ public partial class EditTrackOverlay : UserControl
 
     private void CloseOverlay()
     {
-        if (_isClosing)
+        if (_isClosing || !_isOpen)
             return;
 
         if (_isEditingInformation)
@@ -1550,9 +1639,20 @@ public partial class EditTrackOverlay : UserControl
         if (motionGeneration != _motionGeneration || !_isClosing)
             return;
 
-        IsVisible = false;
-        _track = null;
+        _isOpen = false;
         _isClosing = false;
+        IsHitTestVisible = false;
+        if (_track is not null && _preparedTrackId == _track.Id)
+        {
+            IsVisible = true;
+            PositionPreparedContentOffscreen();
+            _preparedLayoutReady = true;
+        }
+        else
+        {
+            IsVisible = false;
+        }
+        Closed?.Invoke();
     }
 
     private void UpdateAnalysisElapsedTime()

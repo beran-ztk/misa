@@ -80,6 +80,7 @@ public partial class MusicView : UserControl
     private readonly Dictionary<int, double> _trackBackdropFocus = [];
     private readonly HashSet<int> _pendingBackdropFocusTrackIds = [];
     private bool _isDeletingTrack;
+    private int _editorPrepareGeneration;
     private DateTimeOffset _artworkTransitionStartedAt;
     private double _artworkTransitionProgress = 1;
     private double _outgoingAppScale = 1.08;
@@ -307,6 +308,8 @@ public partial class MusicView : UserControl
                     : error.Contains("cancelled", StringComparison.OrdinalIgnoreCase)
                         ? $"Analysis cancelled: {track.Title}"
                         : $"Analysis failed for {track.Title}: {error}");
+                if (error is null && _engine.ActiveTrackId == track.Id)
+                    ScheduleTrackEditorPreparation(track, force: true);
             });
         ChannelDownloadService.Current.QueueChanged += () => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
         {
@@ -327,6 +330,7 @@ public partial class MusicView : UserControl
         EditTrackOverlay.ToastRequested += ShowToast;
         EditTrackOverlay.BackdropFocusChanged += OnEditorBackdropFocusChanged;
         EditTrackOverlay.DeleteRequested += DeleteTrackFromEditorAsync;
+        EditTrackOverlay.Closed += ScheduleActiveTrackEditorPreparation;
         SettingsOverlay.ToastRequested += ShowToast;
         SettingsOverlay.AppearanceChanged += settings => ApplyAppearanceSettings(settings, refreshTrackRows: true);
         SettingsOverlay.LibraryMetadataChanged += RefreshLibraryPresentation;
@@ -386,8 +390,10 @@ public partial class MusicView : UserControl
 
     private void RefreshLibraryPresentation()
     {
+        EditTrackOverlay.InvalidateLookups();
         LoadLookups();
         RefreshTrackList();
+        ScheduleActiveTrackEditorPreparation();
     }
 
     private void MarkLibraryRefreshPending()
@@ -2467,7 +2473,7 @@ public partial class MusicView : UserControl
                 return;
         }
 
-        if (EditTrackOverlay.IsVisible)
+        if (EditTrackOverlay.IsOpen)
         {
             EditTrackOverlay.RequestClose();
             e.Handled = true;
@@ -2491,6 +2497,37 @@ public partial class MusicView : UserControl
         EditTrackOverlay.Open(
             track,
             backdropFocus: _trackBackdropFocus.GetValueOrDefault(track.Id, 0.5));
+    }
+
+    private void ScheduleActiveTrackEditorPreparation()
+    {
+        if (_engine.ActiveTrackId < 0)
+            return;
+
+        var track = _allItems.FirstOrDefault(item => item.Track.Id == _engine.ActiveTrackId)?.Track;
+        if (track is not null)
+            ScheduleTrackEditorPreparation(track);
+    }
+
+    private void ScheduleTrackEditorPreparation(MusicTrack track, bool force = false)
+    {
+        if (!force && EditTrackOverlay.IsPreparedFor(track.Id))
+            return;
+
+        var generation = ++_editorPrepareGeneration;
+        EditTrackOverlay.InvalidatePreparedTrack();
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (generation != _editorPrepareGeneration
+                || EditTrackOverlay.IsOpen
+                || _engine.ActiveTrackId != track.Id)
+                return;
+
+            var currentTrack = _allItems.FirstOrDefault(item => item.Track.Id == track.Id)?.Track ?? track;
+            EditTrackOverlay.Prepare(
+                currentTrack,
+                _trackBackdropFocus.GetValueOrDefault(track.Id, 0.5));
+        }, DispatcherPriority.Background);
     }
 
     private async Task<bool> DeleteTrackFromEditorAsync(MusicTrack track)
@@ -2802,6 +2839,7 @@ public partial class MusicView : UserControl
         UpdateButtonStates();
         RefreshPlayingMarkers();
         PersistPlayerSession();
+        ScheduleTrackEditorPreparation(track);
     }
 
     private static float LoudnessGainForTrack(int trackId)
