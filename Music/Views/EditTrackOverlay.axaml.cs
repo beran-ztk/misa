@@ -251,73 +251,104 @@ public partial class EditTrackOverlay : UserControl
         TagsPanel.Children.Clear();
         _tagChips.Clear();
 
-        var chips = new WrapPanel { Orientation = Avalonia.Layout.Orientation.Horizontal };
-        foreach (var tag in _tags
-                     .OrderByDescending(tag => selectedTagIds.Contains(tag.Id))
-                     .ThenBy(tag => tag.Name, StringComparer.OrdinalIgnoreCase))
-        {
-            var isSelected = selectedTagIds.Contains(tag.Id);
-            var btn = CreateTagButton(tag, isSelected);
-            btn.IsCheckedChanged += (_, _) =>
-            {
-                ApplyTagVisual(btn, tag);
-                UpdateTagSummary();
-                UpdateSaveButton();
-            };
+        var tags = _tags
+            .OrderBy(tag => tag.Name, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        var rows = new StackPanel { Spacing = 7 };
+        var rowCount = Math.Max(1, (int)Math.Ceiling(tags.Count / 4d));
+        var tagIndex = 0;
 
-            _tagChips.Add((tag, btn));
-            chips.Children.Add(btn);
+        for (var rowIndex = 0; rowIndex < rowCount && tagIndex < tags.Count; rowIndex++)
+        {
+            var remainingTags = tags.Count - tagIndex;
+            var remainingRows = rowCount - rowIndex;
+            var tagsInRow = (int)Math.Ceiling(remainingTags / (double)remainingRows);
+            var row = new Grid { ColumnSpacing = 7 };
+
+            for (var column = 0; column < tagsInRow; column++)
+            {
+                var tag = tags[tagIndex++];
+                row.ColumnDefinitions.Add(new ColumnDefinition
+                {
+                    Width = new GridLength(Math.Max(6, tag.Name.Length + 4), GridUnitType.Star)
+                });
+                var btn = CreateTagButton(tag, selectedTagIds.Contains(tag.Id));
+                btn.IsCheckedChanged += (_, _) =>
+                {
+                    ApplyTagVisual(btn);
+                    UpdateTagSummary();
+                    UpdateSaveButton();
+                };
+
+                _tagChips.Add((tag, btn));
+                Grid.SetColumn(btn, column);
+                row.Children.Add(btn);
+            }
+
+            rows.Children.Add(row);
         }
 
-        TagsPanel.Children.Add(chips);
+        TagsPanel.Children.Add(rows);
         UpdateTagSummary();
     }
 
     private static ToggleButton CreateTagButton(Tag tag, bool isSelected)
     {
+        var content = new Grid();
         var label = new TextBlock
         {
             Text = tag.Name,
-            FontSize = 11,
+            FontSize = 10.5,
             FontWeight = FontWeight.SemiBold,
-            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis,
-            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            TextAlignment = TextAlignment.Center
         };
+        content.Children.Add(label);
+        var check = new TextBlock
+        {
+            Text = "✓",
+            FontSize = 11,
+            Foreground = ThemeResources.Brush("Theme.Brush.Accent"),
+            HorizontalAlignment = HorizontalAlignment.Right,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        content.Children.Add(check);
 
         var button = new ToggleButton
         {
-            Content = label,
+            Content = content,
             IsChecked = isSelected,
-            Width = 120,
-            Height = 29,
-            Margin = new Avalonia.Thickness(0, 0, 6, 6),
-            Padding = new Avalonia.Thickness(8, 2),
-            CornerRadius = new Avalonia.CornerRadius(3),
-            HorizontalContentAlignment = Avalonia.Layout.HorizontalAlignment.Center,
-            VerticalContentAlignment = Avalonia.Layout.VerticalAlignment.Center,
-            Tag = label
+            Height = 34,
+            Padding = new Avalonia.Thickness(9, 3),
+            CornerRadius = new Avalonia.CornerRadius(5),
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            HorizontalContentAlignment = HorizontalAlignment.Stretch,
+            VerticalContentAlignment = VerticalAlignment.Center,
+            Tag = new TagButtonVisual(label, check)
         };
         button.Classes.Add("edit-chip");
-        ApplyTagVisual(button, tag);
+        ApplyTagVisual(button);
         return button;
     }
 
-    private static void ApplyTagVisual(ToggleButton button, Tag tag)
+    private static void ApplyTagVisual(ToggleButton button)
     {
         var selected = button.IsChecked == true;
-        button.Background = ThemeResources.Brush(selected
-            ? "Theme.Brush.AccentSurface"
-            : "Theme.Brush.Surface");
+        button.Background = selected
+            ? ThemeResources.Brush("Theme.Brush.AccentSurface")
+            : Brushes.Transparent;
         button.BorderBrush = ThemeResources.Brush(selected
             ? "Theme.Brush.Accent"
             : "Theme.Brush.BorderSubtle");
         button.BorderThickness = new Avalonia.Thickness(1);
-        if (button.Tag is TextBlock label)
+        if (button.Tag is TagButtonVisual visual)
         {
-            label.Foreground = ThemeResources.Brush(selected
+            visual.Label.Foreground = ThemeResources.Brush(selected
                 ? "Theme.Brush.TextStrong"
                 : "Theme.Brush.TextPrimary");
+            visual.Check.IsVisible = selected;
         }
     }
 
@@ -1323,6 +1354,8 @@ public partial class EditTrackOverlay : UserControl
             Child = new ScrollViewer { MaxHeight = 390, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled, Content = panel }
         };
     }
+
+    private sealed record TagButtonVisual(TextBlock Label, TextBlock Check);
 
     private void OnCloseClicked(object? sender, RoutedEventArgs e) => CloseOverlay();
 
