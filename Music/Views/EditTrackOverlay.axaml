@@ -105,6 +105,22 @@
                                 <Image x:Name="PrivateVisibilityIcon" Source="{SvgImage /Assets/eye-slash.svg}" Width="17" Height="17" IsVisible="False"/>
                             </Grid>
                         </Button>
+                        <Button x:Name="ReviewButton"
+                                Click="OnReviewClicked"
+                                ToolTip.Tip="Mark for review"
+                                Width="34" Height="34" Padding="0"
+                                Background="Transparent" BorderThickness="0"
+                                Opacity="0.45">
+                            <Image Source="{SvgImage /Assets/review.svg}" Width="17" Height="17"/>
+                        </Button>
+                        <Button x:Name="DeleteButton"
+                                Click="OnDeleteClicked"
+                                ToolTip.Tip="Delete track"
+                                Width="34" Height="34" Padding="0"
+                                Background="Transparent" BorderThickness="0"
+                                Opacity="0.68">
+                            <Image Source="{SvgImage /Assets/trash.svg}" Width="17" Height="17"/>
+                        </Button>
                         <Button ToolTip.Tip="Close"
                                 Click="OnCloseClicked"
                                 Width="34" Height="34" Padding="0"
@@ -118,11 +134,43 @@
                 <Rectangle Grid.Row="1" Fill="#10808080" />
 
                 <Border Grid.Row="2" Height="56" Background="Transparent">
-                    <StackPanel x:Name="RatingStarsPanel"
-                                Orientation="Horizontal"
-                                Spacing="3"
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Center" />
+                    <Grid ColumnDefinitions="*,Auto,*" Margin="22,0">
+                        <StackPanel x:Name="RatingStarsPanel"
+                                    Grid.Column="1"
+                                    Orientation="Horizontal"
+                                    Spacing="3"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center" />
+                        <StackPanel Grid.Column="2"
+                                    Orientation="Horizontal"
+                                    Spacing="6"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Center">
+                            <TextBlock Text="Backdrop focus"
+                                       FontSize="9.5"
+                                       Foreground="{DynamicResource Theme.Brush.TextSecondary}"
+                                       Opacity="0.62"
+                                       VerticalAlignment="Center" />
+                            <Slider x:Name="BackdropFocusSlider"
+                                    Classes="playback"
+                                    Width="94"
+                                    Height="28"
+                                    Minimum="0"
+                                    Maximum="100"
+                                    Value="50"
+                                    SmallChange="1"
+                                    LargeChange="10"
+                                    ValueChanged="OnBackdropFocusChanged"
+                                    ToolTip.Tip="Move the visible artwork area left or right" />
+                            <Button Content="Center"
+                                    Padding="4,0"
+                                    FontSize="9.5"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    Click="OnBackdropFocusResetClicked"
+                                    ToolTip.Tip="Center artwork" />
+                        </StackPanel>
+                    </Grid>
                 </Border>
 
                 <Rectangle Grid.Row="3" Fill="#10808080" />
@@ -258,7 +306,7 @@
                                 <StackPanel x:Name="SuggestedTagsPanel" Spacing="4" />
                             </StackPanel>
                             <StackPanel x:Name="ModelSelectedGenresSection" Spacing="7">
-                                <TextBlock Text="Active genres" FontSize="11" Opacity="0.68" />
+                                <TextBlock Text="Genres" FontSize="11" Opacity="0.68" />
                                 <StackPanel x:Name="ModelSelectedGenresPanel" Spacing="6" />
                             </StackPanel>
                             <StackPanel x:Name="DetectedGenresSection" Spacing="6" Margin="0,3,0,5">
@@ -299,7 +347,7 @@
                                 <StackPanel x:Name="DetectedGenresPanel"
                                             IsVisible="False"
                                             Spacing="4"
-                                            Margin="17,0,0,2" />
+                                            Margin="22,0,0,2" />
                             </StackPanel>
                             <StackPanel x:Name="FrequentManualGenresSection" Spacing="6" Margin="0,0,0,5">
                                 <Grid ColumnDefinitions="Auto,*,Auto"
@@ -338,7 +386,7 @@
                                 <StackPanel x:Name="FrequentManualGenresPanel"
                                             IsVisible="False"
                                             Spacing="4"
-                                            Margin="17,0,0,2" />
+                                            Margin="22,0,0,2" />
                             </StackPanel>
                             <StackPanel x:Name="AddModelGenreSection" Spacing="6" Margin="0,0,0,5">
                                 <Grid ColumnDefinitions="Auto,*,Auto"

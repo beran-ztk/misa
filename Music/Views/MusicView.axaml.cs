@@ -79,7 +79,7 @@ public partial class MusicView : UserControl
     private int _playerArtworkTrackId = -1;
     private readonly Dictionary<int, double> _trackBackdropFocus = [];
     private readonly HashSet<int> _pendingBackdropFocusTrackIds = [];
-    private bool _updatingBackdropFocusControl;
+    private bool _isDeletingTrack;
     private DateTimeOffset _artworkTransitionStartedAt;
     private double _artworkTransitionProgress = 1;
     private double _outgoingAppScale = 1.08;
@@ -200,7 +200,6 @@ public partial class MusicView : UserControl
         _engine.AudioLevelUpdated += OnAudioLevelUpdated;
         _atmosphereTimer.Tick += (_, _) => UpdateAudioReactiveAtmosphere();
         _backdropFocusSaveTimer.Tick += (_, _) => FlushBackdropFocusSave();
-        AppArtworkBackground.SizeChanged += (_, _) => UpdateBackdropFocusControl();
         PlayerChromeEdge.Background = _playerChromeEdgeBrush;
         PlayerTopGlow.Background = _playerTopGlowBrush;
         InitializeSortControls();
@@ -220,7 +219,6 @@ public partial class MusicView : UserControl
         RefreshCompletionFilterVisuals();
         FileList.SelectionChanged += (_, _) =>
         {
-            UpdateReviewButton();
             if (!_suppressSelectionSessionSave)
                 PersistPlayerSession();
         };
@@ -327,6 +325,8 @@ public partial class MusicView : UserControl
         EditTrackOverlay.PreviewRequested += StartTrackPreview;
         EditTrackOverlay.PreviewClosed += StopTrackPreview;
         EditTrackOverlay.ToastRequested += ShowToast;
+        EditTrackOverlay.BackdropFocusChanged += OnEditorBackdropFocusChanged;
+        EditTrackOverlay.DeleteRequested += DeleteTrackFromEditorAsync;
         SettingsOverlay.ToastRequested += ShowToast;
         SettingsOverlay.AppearanceChanged += settings => ApplyAppearanceSettings(settings, refreshTrackRows: true);
         SettingsOverlay.LibraryMetadataChanged += RefreshLibraryPresentation;
@@ -643,7 +643,6 @@ public partial class MusicView : UserControl
         UpdatePlaylistSummary();
         RefreshNextTrackPreview();
         UpdateReviewFilterButton();
-        UpdateReviewButton();
         RestartVisibleThumbnailLoad();
     }
 
@@ -814,7 +813,6 @@ public partial class MusicView : UserControl
         RefreshNextTrackPreview();
         UpdateFilterCounts();
         UpdateReviewFilterButton();
-        UpdateReviewButton();
         RestartVisibleThumbnailLoad();
     }
 
@@ -2456,47 +2454,6 @@ public partial class MusicView : UserControl
         }
     }
 
-    private void OnPlayerActionEditClicked(object? sender, RoutedEventArgs e)
-    {
-        ClosePlayerActionsMenu();
-        var track = ActiveOrSelectedTrack();
-        if (track is null)
-        {
-            ShowToast("No track selected");
-            return;
-        }
-
-        OpenTrackEditor(track);
-    }
-
-    private void OnPlayerActionReviewClicked(object? sender, RoutedEventArgs e)
-    {
-        ClosePlayerActionsMenu();
-        var track = ActiveOrSelectedTrack();
-        if (track is null)
-        {
-            ShowToast("No track selected");
-            return;
-        }
-
-        ToggleReview(track);
-    }
-
-    private async void OnPlayerActionDeleteClicked(object? sender, RoutedEventArgs e)
-    {
-        ClosePlayerActionsMenu();
-        var track = ActiveOrSelectedTrack();
-        if (track is null)
-        {
-            ShowToast("No track selected");
-            return;
-        }
-
-        await DeleteTrackAsync(track);
-    }
-
-    private void ClosePlayerActionsMenu() => PlayerActionsButton.Flyout?.Hide();
-
     private void OnPlayerBarPointerPressed(object? sender, PointerPressedEventArgs e)
     {
         if (!e.GetCurrentPoint(PlayerBar).Properties.IsLeftButtonPressed)
@@ -2531,26 +2488,82 @@ public partial class MusicView : UserControl
     private void OpenTrackEditor(MusicTrack track)
     {
         UpdateEditorBounds();
-        EditTrackOverlay.Open(track);
+        EditTrackOverlay.Open(
+            track,
+            backdropFocus: _trackBackdropFocus.GetValueOrDefault(track.Id, 0.5));
     }
 
-    private async Task DeleteTrackAsync(MusicTrack track)
+    private async Task<bool> DeleteTrackFromEditorAsync(MusicTrack track)
     {
-        if (_engine.ActiveTrackId == track.Id)
-        {
-            FinishListeningSession(markSkipped: false);
-            _engine.Stop();
-        }
+        if (_isDeletingTrack)
+            return false;
 
-        var error = await MusicLibraryService.Current.DeleteTrackAsync(track);
-        if (error is not null)
+        _isDeletingTrack = true;
+        var deleted = false;
+        try
         {
-            ShowToast(error);
-            return;
-        }
+            if (_engine.ActiveTrackId == track.Id || _previewTrackId == track.Id)
+            {
+                FinishListeningSession(markSkipped: false);
+                _previewPlaybackSnapshot = null;
+                _isTrackPreviewActive = false;
+                _previewTrackId = -1;
+                ChannelOverlay.ClearActivePreview();
+                _engine.Stop();
+                NowPlayingText.Text = string.Empty;
+                PlaybackInfoPanel.IsVisible = false;
+                _nextTrackIndex = -1;
+                ClearPlayerArtworkBackground();
+            }
 
-        RemoveTrackFromCurrentLists(track.Id);
-        ShowToast("Track deleted");
+            // Let Stop()/pointer routing finish before the backing file, database
+            // record and bound row are removed.
+            await Task.Yield();
+            var error = await MusicLibraryService.Current.DeleteTrackAsync(track);
+            if (error is not null)
+            {
+                ShowToast(error);
+                return false;
+            }
+
+            deleted = true;
+            _trackBackdropFocus.Remove(track.Id);
+            _pendingBackdropFocusTrackIds.Remove(track.Id);
+            try
+            {
+                RemoveTrackFromCurrentLists(track.Id);
+            }
+            catch (Exception presentationException)
+            {
+                // The track is already deleted. Recover the presentation from the
+                // database instead of letting a stale hover/selection crash the app.
+                try
+                {
+                    RefreshTrackList();
+                }
+                catch
+                {
+                    // The next regular refresh will repair the view.
+                }
+                ShowToast($"Track deleted; view refresh recovered from: {presentationException.Message}");
+                return true;
+            }
+
+            PersistPlayerSession();
+            ShowToast("Track deleted");
+            return true;
+        }
+        catch (Exception exception)
+        {
+            ShowToast(deleted
+                ? $"Track deleted, but cleanup failed: {exception.Message}"
+                : $"Could not delete track: {exception.Message}");
+            return deleted;
+        }
+        finally
+        {
+            _isDeletingTrack = false;
+        }
     }
 
     private void RemoveTrackFromCurrentLists(int trackId)
@@ -2583,7 +2596,6 @@ public partial class MusicView : UserControl
         RefreshNextTrackPreview();
         UpdateFilterCounts();
         UpdateReviewFilterButton();
-        UpdateReviewButton();
         RestartVisibleThumbnailLoad();
     }
 
@@ -2733,34 +2745,6 @@ public partial class MusicView : UserControl
         ShuffleBtn.Opacity = _shuffle ? 1.0 : 0.35;
         ToolTip.SetTip(ShuffleBtn, _shuffle ? "Shuffle: On" : "Shuffle: Off");
         _windowsMediaSession.UpdateShuffle(_shuffle);
-    }
-
-    private MusicTrack? ActiveOrSelectedTrack()
-    {
-        if (_engine.ActiveTrackId >= 0)
-            return _allItems.FirstOrDefault(item => item.Track.Id == _engine.ActiveTrackId)?.Track;
-
-        var index = GetSelectedFilteredIndex();
-        return index >= 0 && index < _filteredItems.Count
-            ? _filteredItems[index].Track
-            : null;
-    }
-
-    private void ToggleReview(MusicTrack track)
-    {
-        var needsReview = !track.NeedsReview;
-        MusicLibraryService.Current.SetTrackNeedsReview(track.Id, needsReview);
-        UpdateTrackInList(track.Id);
-        ShowToast(needsReview ? "Marked for review" : "Review mark removed");
-    }
-
-    private void UpdateReviewButton()
-    {
-        var track = ActiveOrSelectedTrack();
-        var isMarked = track?.NeedsReview == true;
-        PlayerActionsButton.IsEnabled = track is not null;
-        PlayerActionsReviewButton.Opacity = isMarked ? 1.0 : 0.42;
-        ToolTip.SetTip(PlayerActionsReviewButton, isMarked ? "Remove review mark" : "Mark for review");
     }
 
     private void StartPlayback()
@@ -3209,47 +3193,20 @@ public partial class MusicView : UserControl
         PlayerArtworkPreviousBackground.IsVisible = _previousPlayerArtwork is not null;
         AppArtworkPreviousBackground.Source = _previousPlayerArtwork;
         AppArtworkPreviousBackground.IsVisible = _previousPlayerArtwork is not null;
-        UpdateBackdropFocusControl();
     }
 
-    private void ApplyBackdropFocus(int trackId)
-    {
+    private void ApplyBackdropFocus(int trackId) =>
         AppArtworkBackground.FocusX = _trackBackdropFocus.GetValueOrDefault(trackId, 0.5);
-        UpdateBackdropFocusControl();
-    }
 
-    private void UpdateBackdropFocusControl()
+    private void OnEditorBackdropFocusChanged(int trackId, double focusX)
     {
-        if (BackdropFocusSlider is null)
-            return;
-
-        _updatingBackdropFocusControl = true;
-        BackdropFocusSlider.Value = AppArtworkBackground.FocusX * 100;
-        BackdropFocusSlider.IsEnabled = _playerArtworkTrackId >= 0
-                                        && AppArtworkBackground.Source is not null
-                                        && AppArtworkBackground.IsHorizontallyCropped;
-        ToolTip.SetTip(BackdropFocusSlider, BackdropFocusSlider.IsEnabled
-            ? "Move the visible artwork area left or right"
-            : "The full artwork width is already visible");
-        _updatingBackdropFocusControl = false;
-    }
-
-    private void OnBackdropFocusChanged(object? sender, RangeBaseValueChangedEventArgs e)
-    {
-        if (_updatingBackdropFocusControl || _playerArtworkTrackId < 0)
-            return;
-
-        var focusX = Math.Clamp(e.NewValue / 100d, 0d, 1d);
-        AppArtworkBackground.FocusX = focusX;
-        _trackBackdropFocus[_playerArtworkTrackId] = focusX;
-        _pendingBackdropFocusTrackIds.Add(_playerArtworkTrackId);
+        focusX = Math.Clamp(focusX, 0d, 1d);
+        _trackBackdropFocus[trackId] = focusX;
+        _pendingBackdropFocusTrackIds.Add(trackId);
+        if (_playerArtworkTrackId == trackId)
+            AppArtworkBackground.FocusX = focusX;
         _backdropFocusSaveTimer.Stop();
         _backdropFocusSaveTimer.Start();
-    }
-
-    private void OnBackdropFocusResetClicked(object? sender, RoutedEventArgs e)
-    {
-        BackdropFocusSlider.Value = 50;
     }
 
     private void FlushBackdropFocusSave()
@@ -3305,7 +3262,6 @@ public partial class MusicView : UserControl
         _playerArtwork = null;
         _previousPlayerArtwork = null;
         _playerArtworkTrackId = -1;
-        UpdateBackdropFocusControl();
     }
 
     private void SetAmbientPalette(AmbientPalette palette, bool hasArtwork)
@@ -3815,7 +3771,6 @@ public partial class MusicView : UserControl
         var isPlaying = _engine.State == EngineState.Playing;
         PlayIcon.IsVisible = !isPlaying;
         PauseIcon.IsVisible = isPlaying;
-        UpdateReviewButton();
     }
 
     private void RefreshPlayingMarkers()

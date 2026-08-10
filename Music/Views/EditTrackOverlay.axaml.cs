@@ -59,6 +59,8 @@ public partial class EditTrackOverlay : UserControl
     private bool _isEditingInformation;
     private int _motionGeneration;
     private bool _isClosing;
+    private bool _isDeletingTrack;
+    private bool _updatingBackdropFocus;
     private int? _selectedRatingId;
     private int? _initialRatingId;
     private HashSet<int> _initialTagIds = [];
@@ -70,6 +72,8 @@ public partial class EditTrackOverlay : UserControl
     public event Action<MusicTrack>? PreviewRequested;
     public event Action? PreviewClosed;
     public event Action<string>? ToastRequested;
+    public event Action<int, double>? BackdropFocusChanged;
+    public event Func<MusicTrack, Task<bool>>? DeleteRequested;
 
     public EditTrackOverlay()
     {
@@ -78,17 +82,22 @@ public partial class EditTrackOverlay : UserControl
         _analysisElapsedTimer.Tick += (_, _) => UpdateAnalysisElapsedTime();
     }
 
-    public void Open(MusicTrack track, bool analyzeAfterOpening = false)
+    public void Open(MusicTrack track, bool analyzeAfterOpening = false, double backdropFocus = 0.5)
     {
         var motionGeneration = ++_motionGeneration;
         _isClosing = false;
         _track = track;
         _isPlayingPreview = false;
+        _isDeletingTrack = false;
+        DeleteButton.IsEnabled = true;
         _areDetectedGenresExpanded = false;
         _areFrequentManualGenresExpanded = false;
         _areAllGenresExpanded = false;
         _areEmotionalCharactersExpanded = false;
         LoadLookups();
+        _updatingBackdropFocus = true;
+        BackdropFocusSlider.Value = Math.Clamp(backdropFocus, 0d, 1d) * 100;
+        _updatingBackdropFocus = false;
         Prefill(track);
         PrepareOpeningPosition();
         IsVisible = true;
@@ -173,6 +182,7 @@ public partial class EditTrackOverlay : UserControl
         SetInformationEditing(false);
         UpdateInformationDisplay(track);
         SetPublicSelection(track.IsPublic);
+        UpdateReviewVisual(track.NeedsReview);
 
         _selectedRatingId = track.RatingId;
         UpdateRatingVisual();
@@ -520,6 +530,79 @@ public partial class EditTrackOverlay : UserControl
             : "Private — click to make public");
         AutoSaveChanges();
     }
+
+    private void OnReviewClicked(object? sender, RoutedEventArgs e)
+    {
+        if (_track is null || _isDeletingTrack)
+            return;
+
+        try
+        {
+            var needsReview = !_track.NeedsReview;
+            MusicLibraryService.Current.SetTrackNeedsReview(_track.Id, needsReview);
+            _track = _track with { NeedsReview = needsReview };
+            UpdateReviewVisual(needsReview);
+            TrackSaved?.Invoke(_track.Id);
+            ToastRequested?.Invoke(needsReview ? "Marked for review" : "Review mark removed");
+        }
+        catch (Exception exception)
+        {
+            ToastRequested?.Invoke($"Could not update review mark: {exception.Message}");
+        }
+    }
+
+    private void UpdateReviewVisual(bool needsReview)
+    {
+        ReviewButton.Opacity = needsReview ? 1 : 0.45;
+        ReviewButton.Background = needsReview
+            ? new SolidColorBrush(Color.FromArgb(36, 255, 210, 122))
+            : Brushes.Transparent;
+        ToolTip.SetTip(ReviewButton, needsReview ? "Remove review mark" : "Mark for review");
+    }
+
+    private async void OnDeleteClicked(object? sender, RoutedEventArgs e)
+    {
+        if (_track is null || _isDeletingTrack || DeleteRequested is null)
+            return;
+
+        var track = _track;
+        _isDeletingTrack = true;
+        DeleteButton.IsEnabled = false;
+        try
+        {
+            // Continue after the routed click has completed so no hovered/clicked
+            // control is torn down while Avalonia is still dispatching its event.
+            await Task.Yield();
+            if (!await DeleteRequested.Invoke(track))
+            {
+                _isDeletingTrack = false;
+                DeleteButton.IsEnabled = true;
+                return;
+            }
+
+            _isPlayingPreview = false;
+            _isEditingInformation = false;
+            _track = null;
+            CloseOverlay();
+        }
+        catch (Exception exception)
+        {
+            _isDeletingTrack = false;
+            DeleteButton.IsEnabled = true;
+            ToastRequested?.Invoke($"Could not delete track: {exception.Message}");
+        }
+    }
+
+    private void OnBackdropFocusChanged(object? sender, RangeBaseValueChangedEventArgs e)
+    {
+        if (_updatingBackdropFocus || _track is null)
+            return;
+
+        BackdropFocusChanged?.Invoke(_track.Id, Math.Clamp(e.NewValue / 100d, 0d, 1d));
+    }
+
+    private void OnBackdropFocusResetClicked(object? sender, RoutedEventArgs e) =>
+        BackdropFocusSlider.Value = 50;
 
     private void AutoSaveChanges()
     {
