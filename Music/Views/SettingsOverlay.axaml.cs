@@ -44,7 +44,6 @@ public partial class SettingsOverlay : UserControl
     private double _previewTreble;
 
     public event Action<string>? ToastRequested;
-    public event Action<MusicTrack>? TrackCalibrationRequested;
     public event Action? LibraryMetadataChanged;
     public event Action? ExportRequested;
     public event Action<AppearanceSettings>? AppearanceChanged;
@@ -60,9 +59,6 @@ public partial class SettingsOverlay : UserControl
             RebuildGenreVocabularyRows();
             UpdateSummary();
         };
-        CalibrationSortBox.ItemsSource = new[] { "Recently added", "Tone", "Energy", "Intensity" };
-        CalibrationSortBox.SelectedIndex = 0;
-        CalibrationSortBox.SelectionChanged += (_, _) => RebuildCalibrationRows();
         AppUpdateService.Current.StateChanged += OnAppUpdateStateChanged;
         RefreshUpdatePage(AppUpdateService.Current.State);
     }
@@ -555,7 +551,6 @@ public partial class SettingsOverlay : UserControl
             "export" => SettingsPage.Export,
             "runtime" => SettingsPage.Runtime,
             "updates" => SettingsPage.Updates,
-            "calibration" => SettingsPage.AnalysisCalibration,
             "tags" => SettingsPage.Tags,
             "tag_rules" => SettingsPage.TagRules,
             _ => SettingsPage.GenreVocabulary
@@ -586,7 +581,6 @@ public partial class SettingsOverlay : UserControl
         RuntimePage.IsVisible = isRuntimePage;
         UpdatesPage.IsVisible = isUpdatesPage;
         AppearancePage.IsVisible = isAppearancePage;
-        AnalysisCalibrationPage.IsVisible = page == SettingsPage.AnalysisCalibration;
         TagsPage.IsVisible = page == SettingsPage.Tags;
         TagRulesPage.IsVisible = page == SettingsPage.TagRules;
         GenreVocabularyNavButton.IsChecked = isGenreVocabularyPage;
@@ -597,7 +591,6 @@ public partial class SettingsOverlay : UserControl
         RuntimeNavButton.IsChecked = isRuntimePage;
         UpdatesNavButton.IsChecked = isUpdatesPage;
         AppearanceNavButton.IsChecked = isAppearancePage;
-        AnalysisCalibrationNavButton.IsChecked = page == SettingsPage.AnalysisCalibration;
         TagsNavButton.IsChecked = page == SettingsPage.Tags;
         TagRulesNavButton.IsChecked = page == SettingsPage.TagRules;
 
@@ -610,7 +603,6 @@ public partial class SettingsOverlay : UserControl
             SettingsPage.Runtime => "Runtime",
             SettingsPage.Updates => "Updates",
             SettingsPage.Appearance => "Appearance",
-            SettingsPage.AnalysisCalibration => "Analysis calibration",
             SettingsPage.Tags => "Tags",
             SettingsPage.TagRules => "Tag rules",
             _ => "Genres"
@@ -639,7 +631,6 @@ public partial class SettingsOverlay : UserControl
         SummaryText.Text = isGenreVocabularyPage ? BuildSummaryText() : "";
         if (isGenreVocabularyPage) RebuildGenreVocabularyRows();
         if (isBackupPage) RebuildBackupDirectoryRows();
-        if (page == SettingsPage.AnalysisCalibration) RebuildCalibrationRows();
         if (page == SettingsPage.Tags) ReloadTagManagement();
         if (page == SettingsPage.TagRules) ReloadTagRules();
         if (isUpdatesPage) RefreshUpdatePage(AppUpdateService.Current.State);
@@ -1322,45 +1313,6 @@ public partial class SettingsOverlay : UserControl
         catch (Exception exception) { ToastRequested?.Invoke($"Could not add tag: {exception.Message}"); }
     }
 
-    private void RebuildCalibrationRows()
-    {
-        if (!IsInitialized) return;
-        CalibrationRows.Children.Clear();
-        var rows = MusicLibraryService.Current.GetTracks()
-            .Select(track => new CalibrationRow(track, MusicLibraryService.Current.GetTrackDerivedAttributes(track.Id),
-                MusicLibraryService.Current.GetExperimentalAnalysis(track.Id)))
-            .Where(row => row.Attributes.Count > 0)
-            .ToList();
-        rows = (CalibrationSortBox.SelectedItem as string) switch
-        {
-            "Tone" => rows.OrderBy(row => row.Value("emotional_tone")).ThenBy(row => row.Track.Title).ToList(),
-            "Energy" => rows.OrderBy(row => row.Value("energy_context")).ThenBy(row => row.Track.Title).ToList(),
-            "Intensity" => rows.OrderBy(row => row.Value("intensity")).ThenBy(row => row.Track.Title).ToList(),
-            _ => rows.OrderByDescending(row => row.Track.DownloadedAt).ToList()
-        };
-        foreach (var row in rows) CalibrationRows.Children.Add(CreateCalibrationRow(row));
-        if (rows.Count == 0) CalibrationRows.Children.Add(new TextBlock { Text = "No analyzed tracks are available yet.", Opacity = .52, Margin = new Avalonia.Thickness(0, 18, 0, 0) });
-    }
-
-    private Control CreateCalibrationRow(CalibrationRow row)
-    {
-        var button = new Button { Background = ThemeResources.Brush("Theme.Brush.Surface"), BorderBrush = ThemeResources.Brush("Theme.Brush.BorderSubtle"), BorderThickness = new Avalonia.Thickness(1), Padding = new Avalonia.Thickness(11, 9), HorizontalContentAlignment = HorizontalAlignment.Stretch };
-        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("2*,100,100,100,2*") };
-        grid.Children.Add(new TextBlock { Text = row.Track.Title, FontSize = 12, TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis, VerticalAlignment = VerticalAlignment.Center });
-        AddCell(row.Value("emotional_tone"), 1); AddCell(row.Value("energy_context"), 2); AddCell(row.Value("intensity"), 3);
-        var evidence = new TextBlock { Text = row.Evidence, FontSize = 10.5, Opacity = .64, TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis, VerticalAlignment = VerticalAlignment.Center };
-        Grid.SetColumn(evidence, 4); grid.Children.Add(evidence);
-        button.Content = grid;
-        button.Click += (_, _) => TrackCalibrationRequested?.Invoke(row.Track);
-        return button;
-
-        void AddCell(string value, int column)
-        {
-            var text = new TextBlock { Text = value, FontSize = 11, VerticalAlignment = VerticalAlignment.Center };
-            Grid.SetColumn(text, column); grid.Children.Add(text);
-        }
-    }
-
     private void UpdateSummary()
     {
         if (_selectedPage != SettingsPage.GenreVocabulary) return;
@@ -1845,12 +1797,5 @@ public partial class SettingsOverlay : UserControl
         public override string ToString() => Name;
     }
 
-    private sealed record CalibrationRow(MusicTrack Track, List<DerivedTrackAttribute> Attributes, IReadOnlyList<ExperimentalAnalysisModel> Signals)
-    {
-        public string Value(string key) => Attributes.FirstOrDefault(attribute => attribute.Key == key)?.EffectiveValue ?? "—";
-        public string Evidence => string.Join(" · ", Signals.SelectMany(model => model.Values.Select(value => (model.Model, value)))
-            .OrderByDescending(item => item.value.Score).Take(3).Select(item => $"{item.Model}: {item.value.Label} {item.value.Score:0.##}"));
-    }
-
-    private enum SettingsPage { GenreVocabulary, Library, AnalysisServer, Appearance, Backup, Export, Runtime, Updates, AnalysisCalibration, Tags, TagRules }
+    private enum SettingsPage { GenreVocabulary, Library, AnalysisServer, Appearance, Backup, Export, Runtime, Updates, Tags, TagRules }
 }

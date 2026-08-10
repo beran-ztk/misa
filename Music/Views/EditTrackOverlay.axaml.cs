@@ -41,8 +41,6 @@ public partial class EditTrackOverlay : UserControl
     private int? _modelGenreFilterId;
     private string _modelGenreSearchText = string.Empty;
     private bool _buildingModelGenreChoices;
-    private readonly Dictionary<string, string?> _pendingAttributeOverrides = [];
-    private bool _buildingSoundProfile;
     private readonly DispatcherTimer _analysisElapsedTimer = new() { Interval = TimeSpan.FromSeconds(1) };
     private DateTime _analysisStartedAt;
     private bool _isPlayingPreview;
@@ -58,7 +56,6 @@ public partial class EditTrackOverlay : UserControl
     private HashSet<int> _initialStyleIds = [];
     private HashSet<int> _initialEnabledModelGenreIds = [];
     private HashSet<int> _pendingEnabledModelGenreIds = [];
-    private Dictionary<string, string?> _initialAttributeOverrides = [];
 
     public event Action<int>? TrackSaved;
     public event Action<MusicTrack>? PreviewRequested;
@@ -143,7 +140,6 @@ public partial class EditTrackOverlay : UserControl
     {
         _loadingTrack = true;
         UnsavedChangesLayer.IsVisible = false;
-        _pendingAttributeOverrides.Clear();
         TitleBox.Text = track.Title;
         SetInformationEditing(false);
         UpdateInformationDisplay(track);
@@ -162,7 +158,7 @@ public partial class EditTrackOverlay : UserControl
         RebuildTagChips(selectedTagIds);
         RebuildStyleChips(selectedStyleIds);
         ShowAudioAnalysis(track);
-        ShowSoundProfile(track);
+        ShowExperimentalAnalysis(track);
         ShowUsageStats(track);
         CaptureChangeSnapshot(track, selectedTagIds, selectedStyleIds, selectedModelGenreIds);
         _loadingTrack = false;
@@ -395,8 +391,6 @@ public partial class EditTrackOverlay : UserControl
         _initialStyleIds = selectedStyleIds.ToHashSet();
         _initialEnabledModelGenreIds = selectedModelGenreIds.ToHashSet();
         _pendingEnabledModelGenreIds = selectedModelGenreIds.ToHashSet();
-        _initialAttributeOverrides = MusicLibraryService.Current.GetTrackDerivedAttributes(track.Id)
-            .ToDictionary(attribute => attribute.Key, attribute => attribute.ManualValue);
     }
 
     private HashSet<int> ResetModelGenreSelectionFromDatabase(MusicTrack track)
@@ -427,16 +421,6 @@ public partial class EditTrackOverlay : UserControl
             return true;
         if (!_pendingEnabledModelGenreIds.SetEquals(_initialEnabledModelGenreIds))
             return true;
-
-        foreach (var key in _initialAttributeOverrides.Keys.Concat(_pendingAttributeOverrides.Keys).Distinct())
-        {
-            _initialAttributeOverrides.TryGetValue(key, out var initialValue);
-            var currentValue = _pendingAttributeOverrides.TryGetValue(key, out var pendingValue)
-                ? pendingValue
-                : initialValue;
-            if (!string.Equals(currentValue, initialValue, StringComparison.OrdinalIgnoreCase))
-                return true;
-        }
 
         return false;
     }
@@ -532,9 +516,6 @@ public partial class EditTrackOverlay : UserControl
                 _pendingEnabledModelGenreIds.Contains(genreId));
         }
 
-        foreach (var overrideValue in _pendingAttributeOverrides)
-            MusicLibraryService.Current.SetTrackDerivedAttributeOverride(_track.Id, overrideValue.Key, overrideValue.Value);
-
         _track = _track with
         {
             Title = TitleBox.Text!.Trim(),
@@ -542,7 +523,6 @@ public partial class EditTrackOverlay : UserControl
             IsPublic = _isPublic
         };
         CaptureChangeSnapshot(_track, SelectedTagIds(), styleIds.ToHashSet(), _pendingEnabledModelGenreIds);
-        _pendingAttributeOverrides.Clear();
         UpdateSaveButton();
         if (closeAfterSave)
             CloseOverlay(skipUnsavedCheck: true);
@@ -576,7 +556,7 @@ public partial class EditTrackOverlay : UserControl
         ShowModelSelectedGenres(track);
         ShowDetectedGenres(track);
         ShowAudioAnalysis(track);
-        ShowSoundProfile(track);
+        ShowExperimentalAnalysis(track);
         UpdateSaveButton();
     }
 
@@ -588,7 +568,7 @@ public partial class EditTrackOverlay : UserControl
     {
         var analysis = MusicLibraryService.Current.GetTrackAudioAnalysis(track.Id);
         AudioAnalysisSection.IsVisible = analysis is not null;
-        AnalysisCharacterSection.IsVisible = AudioAnalysisSection.IsVisible || SoundProfileSection.IsVisible;
+        AnalysisCharacterSection.IsVisible = AudioAnalysisSection.IsVisible;
         if (analysis is null) return;
 
         BpmText.Text = analysis.Bpm is double bpm ? $"{bpm:0.#} BPM" : "—";
@@ -622,22 +602,13 @@ public partial class EditTrackOverlay : UserControl
         ToolTip.SetTip(DynamicsMetricCard, dynamicsInsight);
     }
 
-    private void ShowSoundProfile(MusicTrack track)
+    private void ShowExperimentalAnalysis(MusicTrack track)
     {
         var models = MusicLibraryService.Current.GetExperimentalAnalysis(track.Id);
-        var derived = MusicLibraryService.Current.GetTrackDerivedAttributes(track.Id);
-        SoundProfileSection.IsVisible = models.Count > 0 || derived.Count > 0;
-        AnalysisCharacterSection.IsVisible = AudioAnalysisSection.IsVisible || SoundProfileSection.IsVisible;
-        SoundProfileLeftPanel.Children.Clear();
-        SoundProfileRightPanel.Children.Clear();
+        AnalysisCharacterSection.IsVisible = AudioAnalysisSection.IsVisible || models.Count > 0;
         MirexCharacterPanel.Children.Clear();
         MoodSignalsPanel.Children.Clear();
-        if (!SoundProfileSection.IsVisible) return;
-
-        _buildingSoundProfile = true;
-        foreach (var attribute in derived)
-            AddDerivedAttribute(attribute);
-        _buildingSoundProfile = false;
+        if (models.Count == 0) return;
 
         AddMirexCharacter(models);
 
@@ -647,7 +618,6 @@ public partial class EditTrackOverlay : UserControl
         AddSignal("Aggressive", "How strongly the model detects an aggressive character.", Signal(models, "mood aggressive", "aggressive"));
         AddSignal("Party", "How strongly the model detects a party-oriented character.", Signal(models, "mood party", "party"));
         AddSignal("Danceable", "How strongly the model classifies the track as danceable.", Signal(models, "danceability classifier", "danceable"));
-        AddSignal("Vocal", "How strongly the model detects vocals rather than an instrumental track.", Signal(models, "voice/instrumental classifiers", "voice"));
         void AddSignal(string name, string explanation, double? score)
         {
             if (score is null) return;
@@ -660,106 +630,6 @@ public partial class EditTrackOverlay : UserControl
             Grid.SetColumn(bar, 1); Grid.SetColumn(value, 2);
             row.Children.Add(title); row.Children.Add(bar); row.Children.Add(value);
             MoodSignalsPanel.Children.Add(row);
-        }
-
-        void AddDerivedAttribute(DerivedTrackAttribute attribute)
-        {
-            var options = AttributeOptions(attribute.Key);
-            if (options.Length == 0) return;
-            var manualValue = _pendingAttributeOverrides.TryGetValue(attribute.Key, out var pendingValue)
-                ? pendingValue
-                : attribute.ManualValue;
-
-            var row = new Grid
-            {
-                ColumnDefinitions = new ColumnDefinitions("72,*"),
-                HorizontalAlignment = HorizontalAlignment.Stretch
-            };
-            var label = new TextBlock
-            {
-                Text = FormatAttributeName(attribute.Key),
-                FontSize = 11,
-                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
-            };
-            ToolTip.SetTip(label, AttributeExplanation(attribute.Key));
-
-            var choices = new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal };
-            var choiceBorder = new Border
-            {
-                BorderBrush = ThemeResources.Brush("Theme.Brush.BorderStrong"),
-                BorderThickness = new Avalonia.Thickness(1),
-                CornerRadius = new Avalonia.CornerRadius(5),
-                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left,
-                Child = choices
-            };
-
-            for (var index = 0; index < options.Length; index++)
-            {
-                var option = options[index];
-                var isSystem = string.Equals(option, attribute.SystemValue, StringComparison.OrdinalIgnoreCase);
-                var optionButton = CreateProfileChoice(
-                    option,
-                    isSystem,
-                    isSelected: isSystem ? manualValue is null : string.Equals(manualValue, option, StringComparison.OrdinalIgnoreCase),
-                    isMiddle: index > 0 && index < options.Length - 1,
-                    isFirst: index == 0,
-                    isLast: index == options.Length - 1);
-                optionButton.Click += (_, _) => SetOverride(isSystem ? null : option);
-                choices.Children.Add(optionButton);
-            }
-
-            void SetOverride(string? value)
-            {
-                if (_buildingSoundProfile) return;
-                _pendingAttributeOverrides[attribute.Key] = value;
-                ShowSoundProfile(track);
-                UpdateSaveButton();
-            }
-
-            Grid.SetColumn(choiceBorder, 1);
-            row.Children.Add(label);
-            row.Children.Add(choiceBorder);
-            var targetPanel = attribute.Key is "energy_context" or "vocal_presence"
-                ? SoundProfileRightPanel
-                : SoundProfileLeftPanel;
-            targetPanel.Children.Add(row);
-        }
-
-        static Button CreateProfileChoice(string value, bool isSystem, bool isSelected, bool isMiddle, bool isFirst, bool isLast)
-        {
-            var button = new Button
-            {
-                Content = value,
-                FontSize = 10.5,
-                Width = 84,
-                Padding = new Avalonia.Thickness(9, 4),
-                Margin = new Avalonia.Thickness(0),
-                CornerRadius = new Avalonia.CornerRadius(
-                    isFirst ? 4 : 0,
-                    isLast ? 4 : 0,
-                    isLast ? 4 : 0,
-                    isFirst ? 4 : 0),
-                Background = ThemeResources.Brush(isSelected
-                    ? isSystem
-                        ? "Theme.Brush.AccentSurface"
-                        : "Theme.Brush.SurfaceSelected"
-                    : "Theme.Brush.Surface"),
-                HorizontalContentAlignment = HorizontalAlignment.Center,
-                BorderBrush = ThemeResources.Brush(isSelected
-                    ? "Theme.Brush.Accent"
-                    : "Theme.Brush.BorderSubtle"),
-                BorderThickness = isMiddle ? new Avalonia.Thickness(1, 0) : new Avalonia.Thickness(0),
-                Foreground = ThemeResources.Brush(isSelected
-                    ? "Theme.Brush.TextStrong"
-                    : isSystem
-                        ? "Theme.Brush.TextSecondary"
-                        : "Theme.Brush.TextPrimary")
-            };
-            button.Classes.Add("profile-choice");
-            ToolTip.SetTip(button, isSystem
-                ? "Model suggestion. Click to use this value again."
-                : "Manual override. Click to save this value instead of the model suggestion.");
-            return button;
         }
 
         void AddMirexCharacter(IReadOnlyList<ExperimentalAnalysisModel> analysisModels)
@@ -792,24 +662,6 @@ public partial class EditTrackOverlay : UserControl
         }
     }
 
-    private static string[] AttributeOptions(string key) => key switch
-    {
-        "intensity" => ["Low", "Medium", "High"],
-        "emotional_tone" => ["Melancholic", "Neutral", "Positive"],
-        "energy_context" => ["Calm", "Driving", "Intense"],
-        "vocal_presence" => ["Instrumental", "Mixed", "Vocal"],
-        _ => []
-    };
-
-    private static string AttributeExplanation(string key) => key switch
-    {
-        "intensity" => "System suggestion based on several signals such as arousal, engagement and danceability.",
-        "emotional_tone" => "System suggestion based primarily on the valence model output.",
-        "energy_context" => "System suggestion based on the arousal model output.",
-        "vocal_presence" => "System suggestion based on the voice versus instrumental classifier.",
-        _ => "System-generated analysis attribute."
-    };
-
     private static string MirexExplanation(string label) => label switch
     {
         var text when text.StartsWith("literate", StringComparison.OrdinalIgnoreCase) =>
@@ -827,14 +679,6 @@ public partial class EditTrackOverlay : UserControl
 
     private static double? Signal(IReadOnlyList<ExperimentalAnalysisModel> models, string model, string label) =>
         models.FirstOrDefault(item => item.Model == model)?.Values.FirstOrDefault(value => value.Label == label)?.Score;
-
-    private static string FormatAttributeName(string key) => key switch
-    {
-        "emotional_tone" => "Tone",
-        "energy_context" => "Energy",
-        "vocal_presence" => "Vocals",
-        _ => char.ToUpperInvariant(key[0]) + key[1..]
-    };
 
     private static string GetTempoInsight(double bpm) => bpm switch
     {

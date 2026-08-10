@@ -32,10 +32,6 @@
                 <Setter Property="Background" Value="{DynamicResource Theme.Brush.SurfaceHover}"/>
                 <Setter Property="BorderBrush" Value="{DynamicResource Theme.Brush.Accent}"/>
             </Style>
-            <Style Selector="Button.profile-choice:pointerover">
-                <Setter Property="Background" Value="{DynamicResource Theme.Brush.SurfaceHover}"/>
-                <Setter Property="BorderBrush" Value="{DynamicResource Theme.Brush.Accent}"/>
-            </Style>
         </Panel.Styles>
 
         <Border x:Name="EditorSurface"
@@ -326,16 +322,6 @@
                                         </Grid>
                                     </Border>
                                 </Grid>
-
-                                <StackPanel x:Name="SoundProfileSection" Spacing="7">
-                                    <TextBlock Text="Sound profile" FontSize="11" FontWeight="SemiBold" />
-                                    <Grid ColumnDefinitions="*,*" ColumnSpacing="20">
-                                        <StackPanel x:Name="SoundProfileLeftPanel" Grid.Column="0" Spacing="6" />
-                                        <StackPanel x:Name="SoundProfileRightPanel" Grid.Column="1" Spacing="6" />
-                                    </Grid>
-                                </StackPanel>
-
-                                <Rectangle Height="1" Fill="{DynamicResource Theme.Brush.BorderSubtle}" />
 
                                 <StackPanel Spacing="5" Margin="0,2,0,2">
                                     <TextBlock Text="Emotional character" FontSize="10.5" FontWeight="SemiBold" />

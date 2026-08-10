@@ -162,9 +162,6 @@ public class MusicLibraryService
     public TrackAudioAnalysis? GetTrackAudioAnalysis(int trackId) => _db.GetTrackAudioAnalysis(trackId);
     public IReadOnlyList<ExperimentalAnalysisModel> GetExperimentalAnalysis(int trackId) =>
         _db.GetTrackAnalysisSignals(trackId);
-    public List<DerivedTrackAttribute> GetTrackDerivedAttributes(int trackId) => _db.GetTrackDerivedAttributes(trackId);
-    public void SetTrackDerivedAttributeOverride(int trackId, string key, string? value) =>
-        _db.SetTrackDerivedAttributeOverride(trackId, key, value);
 
     public bool TrackExistsByCanonicalUrl(string canonicalUrl) => _db.TrackExists(canonicalUrl);
 

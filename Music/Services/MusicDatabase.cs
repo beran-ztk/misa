@@ -189,16 +189,6 @@ public class MusicDatabase
                 UNIQUE (track_analysis_id, model_name, signal_key)
             );
 
-            CREATE TABLE track_derived_attributes (
-                id                 INTEGER PRIMARY KEY AUTOINCREMENT,
-                track_analysis_id  INTEGER NOT NULL REFERENCES track_analysis(id) ON DELETE CASCADE,
-                attribute_key      TEXT NOT NULL,
-                system_value       TEXT NOT NULL,
-                system_score       REAL NOT NULL,
-                manual_value       TEXT NULL,
-                UNIQUE (track_analysis_id, attribute_key)
-            );
-
             CREATE TABLE import_batches (
                 id          INTEGER PRIMARY KEY AUTOINCREMENT,
                 source_url  TEXT NOT NULL,
@@ -227,7 +217,6 @@ public class MusicDatabase
             CREATE INDEX ix_model_subgenre_distinctions_source ON model_subgenre_distinctions(model_subgenre_id);
             CREATE INDEX ix_track_genre_predictions_analysis_id ON track_genre_predictions(track_analysis_id);
             CREATE INDEX ix_track_analysis_signals_analysis_id ON track_analysis_signals(track_analysis_id);
-            CREATE INDEX ix_track_derived_attributes_analysis_id ON track_derived_attributes(track_analysis_id);
             CREATE TABLE portable_exports (
                 id                    INTEGER PRIMARY KEY AUTOINCREMENT,
                 export_id             TEXT NOT NULL UNIQUE,
@@ -1471,8 +1460,6 @@ public class MusicDatabase
                 ("$key", value.Label), ("$score", value.Score));
         }
 
-        SaveDerivedAttributes(conn, tx, analysisId, DeriveAttributes(analysis.ExperimentalModels ?? []));
-
         RefreshModelGenres(conn, tx, trackId);
         ExecuteInsert(conn, tx,
             "UPDATE tracks SET analysis_disabled = 0 WHERE id = $trackId",
@@ -2111,132 +2098,9 @@ public class MusicDatabase
             item.Key.Family, item.Key.Category, item.Key.Model, item.Key.Type, item.Key.Description, item.Value)).ToList();
     }
 
-    private static List<ExperimentalAnalysisModel> GetTrackAnalysisSignals(SqliteConnection conn, SqliteTransaction tx, long analysisId)
-    {
-        using var cmd = conn.CreateCommand();
-        cmd.Transaction = tx;
-        cmd.CommandText = @"
-            SELECT model_family, category, model_name, model_type, description, signal_key, score
-            FROM track_analysis_signals
-            WHERE track_analysis_id = $analysisId
-            ORDER BY model_family, category, model_name, score DESC";
-        cmd.Parameters.AddWithValue("$analysisId", analysisId);
-        using var reader = cmd.ExecuteReader();
-        var grouped = new Dictionary<(string Family, string Category, string Model, string Type, string Description), List<ExperimentalAnalysisValue>>();
-        while (reader.Read())
-        {
-            var key = (reader.GetString(0), reader.GetString(1), reader.GetString(2), reader.GetString(3), reader.GetString(4));
-            if (!grouped.TryGetValue(key, out var values)) grouped[key] = values = [];
-            values.Add(new ExperimentalAnalysisValue(reader.GetString(5), reader.GetDouble(6)));
-        }
-        return grouped.Select(item => new ExperimentalAnalysisModel(
-            item.Key.Family, item.Key.Category, item.Key.Model, item.Key.Type, item.Key.Description, item.Value)).ToList();
-    }
-
-    private static void RebuildDerivedAttributes(SqliteConnection conn)
-    {
-        if (!TableExists(conn, "track_analysis") || !TableExists(conn, "track_derived_attributes"))
-            return;
-
-        var analysisIds = new List<long>();
-        using (var cmd = conn.CreateCommand())
-        {
-            cmd.CommandText = "SELECT id FROM track_analysis";
-            using var reader = cmd.ExecuteReader();
-            while (reader.Read()) analysisIds.Add(reader.GetInt64(0));
-        }
-
-        using var tx = conn.BeginTransaction();
-        foreach (var analysisId in analysisIds)
-        {
-            ExecuteInsert(conn, tx,
-                "DELETE FROM track_derived_attributes WHERE track_analysis_id = $analysisId",
-                ("$analysisId", analysisId));
-            SaveDerivedAttributes(conn, tx, analysisId, DeriveAttributes(GetTrackAnalysisSignals(conn, tx, analysisId)));
-        }
-        tx.Commit();
-    }
-
-    public List<DerivedTrackAttribute> GetTrackDerivedAttributes(int trackId)
-    {
-        using var conn = Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = @"SELECT attribute_key, system_value, system_score, manual_value
-                            FROM track_derived_attributes attributes
-                            JOIN track_analysis analysis ON analysis.id = attributes.track_analysis_id
-                            WHERE analysis.track_id = $trackId ORDER BY attribute_key";
-        cmd.Parameters.AddWithValue("$trackId", trackId);
-        using var reader = cmd.ExecuteReader();
-        var result = new List<DerivedTrackAttribute>();
-        while (reader.Read()) result.Add(new DerivedTrackAttribute(
-            reader.GetString(0), reader.GetString(1), reader.GetDouble(2),
-            reader.IsDBNull(3) ? null : reader.GetString(3)));
-        return result;
-    }
-
-    public void SetTrackDerivedAttributeOverride(int trackId, string key, string? manualValue)
-    {
-        using var conn = Open();
-        using var tx = conn.BeginTransaction();
-        using var cmd = conn.CreateCommand();
-        cmd.Transaction = tx;
-        cmd.CommandText = @"UPDATE track_derived_attributes SET manual_value = $manualValue
-                            WHERE track_analysis_id = (SELECT id FROM track_analysis WHERE track_id = $trackId)
-                            AND attribute_key = $key";
-        cmd.Parameters.AddWithValue("$trackId", trackId);
-        cmd.Parameters.AddWithValue("$key", key);
-        cmd.Parameters.AddWithValue("$manualValue", (object?)manualValue ?? DBNull.Value);
-        cmd.ExecuteNonQuery();
-        TouchTrack(conn, tx, trackId, DateTime.UtcNow.ToString("O"));
-        tx.Commit();
-    }
-
-    private static void SaveDerivedAttributes(SqliteConnection conn, SqliteTransaction tx, long analysisId,
-        IEnumerable<(string Key, string Value, double Score)> attributes)
-    {
-        foreach (var attribute in attributes)
-            ExecuteInsert(conn, tx, @"INSERT INTO track_derived_attributes
-                (track_analysis_id, attribute_key, system_value, system_score)
-                VALUES ($analysisId, $key, $value, $score)
-                ON CONFLICT(track_analysis_id, attribute_key) DO UPDATE SET
-                    system_value = excluded.system_value, system_score = excluded.system_score",
-                ("$analysisId", analysisId), ("$key", attribute.Key), ("$value", attribute.Value), ("$score", attribute.Score));
-    }
-
     private static void TouchTrack(SqliteConnection conn, SqliteTransaction tx, int trackId, string updatedAt) =>
         ExecuteInsert(conn, tx, "UPDATE tracks SET updated_at = $updatedAt WHERE id = $trackId",
             ("$updatedAt", updatedAt), ("$trackId", trackId));
-
-    private static List<(string Key, string Value, double Score)> DeriveAttributes(IReadOnlyList<ExperimentalAnalysisModel> models)
-    {
-        double Signal(string model, string label) => models.FirstOrDefault(item => item.Model == model)?.Values
-            .FirstOrDefault(value => value.Label == label)?.Score ?? 0;
-        double SignalStartingWith(string model, string labelPrefix) => models.FirstOrDefault(item => item.Model == model)?.Values
-            .FirstOrDefault(value => value.Label.StartsWith(labelPrefix, StringComparison.OrdinalIgnoreCase))?.Score ?? 0;
-        var arousal = Math.Clamp((Signal("arousal_valence", "arousal") - 1d) / 8d, 0d, 1d);
-        var valence = Math.Clamp((Signal("arousal_valence", "valence") - 1d) / 8d, 0d, 1d);
-        var happy = Signal("mood happy", "happy");
-        var sad = Signal("mood sad", "sad");
-        var relaxed = Signal("mood relaxed", "relaxed");
-        var aggressive = Signal("mood aggressive", "aggressive");
-        var party = Signal("mood party", "party");
-        var engagement = Signal("engagement_regression", "engagement");
-        var danceable = Signal("danceability classifier", "danceable");
-        var mirexReflective = SignalStartingWith("moods mirex", "literate, poignant");
-        var melancholy = .65 * sad + .25 * mirexReflective + .10 * (1 - happy);
-        var positive = .75 * happy + .15 * valence + .10 * party;
-        var calm = .70 * relaxed + .20 * (1 - engagement) + .10 * (1 - arousal);
-        var active = .35 * engagement + .22 * party + .18 * aggressive + .15 * danceable + .10 * arousal;
-        var intense = .45 * aggressive + .30 * engagement + .15 * danceable + .10 * arousal;
-        var intensity = Math.Clamp(active * (1 - .55 * calm), 0, 1);
-        var vocal = Signal("voice/instrumental classifiers", "voice");
-        return [
-            ("intensity", intensity < .34 ? "Low" : intensity < .67 ? "Medium" : "High", intensity),
-            ("emotional_tone", melancholy >= .55 && melancholy > positive + .10 ? "Melancholic" : positive >= .55 && positive > melancholy + .10 ? "Positive" : "Neutral", Math.Max(melancholy, positive)),
-            ("energy_context", calm >= .55 && calm > active ? "Calm" : intense >= .65 && intense > calm ? "Intense" : "Driving", Math.Max(calm, Math.Max(active, intense))),
-            ("vocal_presence", vocal > .67 ? "Vocal" : vocal < .33 ? "Instrumental" : "Mixed", vocal)
-        ];
-    }
 
     private static void RefreshAllModelGenres(SqliteConnection conn)
     {

@@ -333,11 +333,6 @@ public partial class MusicView : UserControl
         SettingsOverlay.ExportRequested += ExportPortableLibrary;
         MusicVideoOverlay.CloseRequested += () => MusicVideoOverlay.IsVisible = false;
         MusicVideoOverlay.ToastRequested += ShowToast;
-        SettingsOverlay.TrackCalibrationRequested += track =>
-        {
-            SettingsOverlay.IsVisible = false;
-            EditTrackOverlay.Open(track);
-        };
     }
 
     private void UpdateEditorBounds()

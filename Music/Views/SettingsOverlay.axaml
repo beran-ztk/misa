@@ -84,10 +84,6 @@
                     <ToggleButton x:Name="GenreVocabularyNavButton" Classes="settings-nav"
                                   Content="Genres" Tag="mappings"
                                   Click="OnSettingsNavigationClicked"/>
-                    <ToggleButton x:Name="AnalysisCalibrationNavButton" Classes="settings-nav"
-                                  IsVisible="False"
-                                  Content="Analysis calibration" Tag="calibration"
-                                  Click="OnSettingsNavigationClicked"/>
                     <ToggleButton x:Name="TagsNavButton" Classes="settings-nav"
                                   Content="Tags" Tag="tags"
                                   Click="OnSettingsNavigationClicked"/>
@@ -616,17 +612,6 @@
                     </Border>
                 </StackPanel>
             </ScrollViewer>
-
-            <Grid x:Name="AnalysisCalibrationPage" Grid.Row="2" IsVisible="False" RowDefinitions="Auto,*" Margin="30,22,30,0">
-                <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,12">
-                    <TextBlock Text="Compare system interpretations with their strongest evidence. Click a row to review the track."
-                               FontSize="11" Opacity="0.62" VerticalAlignment="Center"/>
-                    <ComboBox x:Name="CalibrationSortBox" Grid.Column="1" Width="170" Height="32"/>
-                </Grid>
-                <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
-                    <StackPanel x:Name="CalibrationRows" Spacing="5" Margin="0,0,0,18"/>
-                </ScrollViewer>
-            </Grid>
 
             <Grid x:Name="TagsPage" Grid.Row="2" IsVisible="False" RowDefinitions="Auto,*" Margin="30,22,30,0">
                 <Border x:Name="AddTagPanel"
