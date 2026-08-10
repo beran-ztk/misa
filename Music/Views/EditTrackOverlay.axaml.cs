@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Animation.Easings;
 using Avalonia.Controls;
@@ -50,7 +51,8 @@ public partial class EditTrackOverlay : UserControl
     private bool _initialIsPublic;
     private string _initialTitle = string.Empty;
     private bool _isEditingInformation;
-    private int _openGeneration;
+    private int _motionGeneration;
+    private bool _isClosing;
     private int? _initialRatingId;
     private HashSet<int> _initialTagIds = [];
     private HashSet<int> _initialStyleIds = [];
@@ -77,44 +79,51 @@ public partial class EditTrackOverlay : UserControl
 
     public void Open(MusicTrack track, bool analyzeAfterOpening = false)
     {
-        var openGeneration = ++_openGeneration;
+        var motionGeneration = ++_motionGeneration;
+        _isClosing = false;
         _track = track;
         _isPlayingPreview = false;
-        _loadingTrack = true;
+        LoadLookups();
+        Prefill(track);
         IsVisible = true;
-        StartOpenAnimation();
-
-        Dispatcher.UIThread.Post(() =>
-        {
-            if (openGeneration != _openGeneration || !IsVisible)
-                return;
-
-            LoadLookups();
-            Prefill(track);
-            if (analyzeAfterOpening)
-                _ = AnalyzeImportedTrackAsync(track);
-        }, DispatcherPriority.Background);
+        StartSlideAnimation(opening: true);
+        if (analyzeAfterOpening)
+            _ = AnalyzeAfterOpeningAsync(track, motionGeneration);
     }
 
-    private void StartOpenAnimation()
+    private bool StartSlideAnimation(bool opening)
     {
         var visual = ElementComposition.GetElementVisual(EditorSurface);
         if (visual is null)
-            return;
+            return false;
 
-        var parentHeight = (Parent as Control)?.Bounds.Height ?? 0;
-        var travel = Math.Max(Bounds.Height, parentHeight - Margin.Top - Margin.Bottom);
-        if (travel <= 1)
-            travel = 320;
+        var travel = EditorTravelDistance();
+        var start = opening ? new Vector3(0, (float)travel, 0) : Vector3.Zero;
+        var end = opening ? Vector3.Zero : new Vector3(0, (float)travel, 0);
 
-        visual.Offset = new Avalonia.Vector3D(0, travel, 0);
+        visual.Offset = new Avalonia.Vector3D(start.X, start.Y, start.Z);
 
         var animation = visual.Compositor.CreateVector3KeyFrameAnimation();
         animation.Duration = OpenAnimationDuration;
         animation.StopBehavior = AnimationStopBehavior.SetToFinalValue;
-        animation.InsertKeyFrame(0f, new Vector3(0, (float)travel, 0));
-        animation.InsertKeyFrame(1f, Vector3.Zero, SlideEasing);
+        animation.InsertKeyFrame(0f, start);
+        animation.InsertKeyFrame(1f, end, SlideEasing);
         visual.StartAnimation("Offset", animation);
+        return true;
+    }
+
+    private double EditorTravelDistance()
+    {
+        var parentHeight = (Parent as Control)?.Bounds.Height ?? 0;
+        var travel = Math.Max(Bounds.Height, parentHeight - Margin.Top - Margin.Bottom);
+        return travel > 1 ? travel : 320;
+    }
+
+    private async Task AnalyzeAfterOpeningAsync(MusicTrack track, int motionGeneration)
+    {
+        await Task.Delay(OpenAnimationDuration);
+        if (motionGeneration == _motionGeneration && IsVisible && !_isClosing)
+            await AnalyzeImportedTrackAsync(track);
     }
 
     public void RequestClose() => CloseOverlay();
@@ -1336,6 +1345,9 @@ public partial class EditTrackOverlay : UserControl
 
     private void CloseOverlay(bool skipUnsavedCheck = false)
     {
+        if (_isClosing)
+            return;
+
         if (!skipUnsavedCheck && HasUnsavedChanges())
         {
             UnsavedChangesLayer.IsVisible = true;
@@ -1350,9 +1362,28 @@ public partial class EditTrackOverlay : UserControl
         _analysisElapsedTimer.Stop();
         UnsavedChangesLayer.IsVisible = false;
         UnsavedChangesBadge.IsVisible = false;
-        _openGeneration++;
+        _isClosing = true;
+        var motionGeneration = ++_motionGeneration;
+        if (StartSlideAnimation(opening: false))
+            _ = CompleteCloseAfterAnimationAsync(motionGeneration);
+        else
+            CompleteClose(motionGeneration);
+    }
+
+    private async Task CompleteCloseAfterAnimationAsync(int motionGeneration)
+    {
+        await Task.Delay(OpenAnimationDuration);
+        CompleteClose(motionGeneration);
+    }
+
+    private void CompleteClose(int motionGeneration)
+    {
+        if (motionGeneration != _motionGeneration || !_isClosing)
+            return;
+
         IsVisible = false;
         _track = null;
+        _isClosing = false;
     }
 
     private void UpdateAnalysisElapsedTime()
