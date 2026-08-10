@@ -1026,6 +1026,7 @@ public partial class EditTrackOverlay : UserControl
             };
             ModelGenreGroupsPanel.Children.Add(item);
         }
+        ModelGenreChoicesScroll.MaxHeight = Math.Max(25, ModelGenreGroupsPanel.Children.Count * 25);
 
         var search = _modelGenreSearchText.Trim();
         var choices = availableGenres

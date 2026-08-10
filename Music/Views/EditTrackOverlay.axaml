@@ -17,6 +17,42 @@
                 <Setter Property="Background" Value="#E6171611"/>
                 <Setter Property="BorderBrush" Value="{DynamicResource Theme.Brush.BorderStrong}"/>
             </Style>
+            <Style Selector="TextBox.compact-search">
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderBrush" Value="#46FFFFFF"/>
+                <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                <Setter Property="CornerRadius" Value="0"/>
+                <Setter Property="Padding" Value="4,0,4,1"/>
+                <Setter Property="FontSize" Value="10.5"/>
+                <Setter Property="Foreground" Value="{DynamicResource Theme.Brush.TextPrimary}"/>
+                <Setter Property="CaretBrush" Value="{DynamicResource Theme.Brush.TextPrimary}"/>
+                <Setter Property="SelectionBrush" Value="{DynamicResource Theme.Brush.AccentSurface}"/>
+            </Style>
+            <Style Selector="TextBox.compact-search:pointerover">
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderBrush" Value="#72FFFFFF"/>
+            </Style>
+            <Style Selector="TextBox.compact-search:focus">
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderBrush" Value="#B8FFFFFF"/>
+            </Style>
+            <Style Selector="TextBox.compact-search /template/ Border#PART_BorderElement">
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderBrush" Value="#46FFFFFF"/>
+                <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                <Setter Property="CornerRadius" Value="0"/>
+            </Style>
+            <Style Selector="TextBox.compact-search:pointerover /template/ Border#PART_BorderElement">
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderBrush" Value="#72FFFFFF"/>
+                <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            </Style>
+            <Style Selector="TextBox.compact-search:focus /template/ Border#PART_BorderElement">
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderBrush" Value="#B8FFFFFF"/>
+                <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                <Setter Property="CornerRadius" Value="0"/>
+            </Style>
             <Style Selector="ComboBox">
                 <Setter Property="Background" Value="#E6171611"/>
                 <Setter Property="BorderBrush" Value="{DynamicResource Theme.Brush.BorderStrong}"/>
@@ -357,22 +393,24 @@
                                             Spacing="10"
                                             Margin="17,0,0,3">
                                     <TextBox x:Name="ModelGenreSearchBox"
-                                             Height="28"
-                                             FontSize="11"
+                                             Classes="compact-search"
+                                             Width="280"
+                                             MaxWidth="300"
+                                             Height="24"
+                                             MinHeight="24"
+                                             MaxHeight="24"
+                                             HorizontalAlignment="Right"
+                                             VerticalContentAlignment="Center"
                                              Watermark="Search genres…"
                                              TextChanged="OnModelGenreSearchChanged" />
                                     <Grid ColumnDefinitions="118,13,*">
-                                        <ScrollViewer MaxHeight="270"
-                                                      HorizontalScrollBarVisibility="Disabled"
-                                                      VerticalScrollBarVisibility="Auto">
-                                            <StackPanel x:Name="ModelGenreGroupsPanel" />
-                                        </ScrollViewer>
+                                        <StackPanel x:Name="ModelGenreGroupsPanel" />
                                         <Border Grid.Column="1"
                                                 Width="1"
                                                 Background="{DynamicResource Theme.Brush.Divider}"
                                                 Margin="6,1" />
-                                        <ScrollViewer Grid.Column="2"
-                                                      MaxHeight="270"
+                                        <ScrollViewer x:Name="ModelGenreChoicesScroll"
+                                                      Grid.Column="2"
                                                       Padding="10,0,0,0"
                                                       HorizontalScrollBarVisibility="Disabled"
                                                       VerticalScrollBarVisibility="Auto">
