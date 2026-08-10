@@ -25,7 +25,7 @@ public partial class EditTrackOverlay : UserControl
 
     private static readonly TimeSpan OpenAnimationDuration = TimeSpan.FromMilliseconds(1180);
     private static readonly TimeSpan CloseAnimationDuration = TimeSpan.FromMilliseconds(930);
-    private static readonly TimeSpan FirstFrameDelay = TimeSpan.FromMilliseconds(16);
+    private static readonly TimeSpan OpeningRenderWarmup = TimeSpan.FromMilliseconds(55);
     private static readonly IEasing SlideEasing = new SplineEasing(0.25, 0.1, 0.25, 1);
 
     private MusicTrack? _track;
@@ -132,21 +132,23 @@ public partial class EditTrackOverlay : UserControl
         if (visual is null)
             return;
 
-        visual.Offset = new Avalonia.Vector3D(0, EditorTravelDistance(), 0);
+        visual.Offset = new Avalonia.Vector3D(0, 0, 0);
+        EditorSurface.Opacity = 0.01;
     }
 
     private async Task StartOpeningAfterFirstFrameAsync(int motionGeneration)
     {
-        await Task.Delay(FirstFrameDelay);
+        await Task.Delay(OpeningRenderWarmup);
         if (motionGeneration != _motionGeneration || !IsVisible || _isClosing)
             return;
 
         StartSlideAnimation(opening: true);
+        EditorSurface.Opacity = 1;
     }
 
     private async Task AnalyzeAfterOpeningAsync(MusicTrack track, int motionGeneration)
     {
-        await Task.Delay(OpenAnimationDuration + FirstFrameDelay);
+        await Task.Delay(OpenAnimationDuration + OpeningRenderWarmup);
         if (motionGeneration == _motionGeneration && IsVisible && !_isClosing)
             await AnalyzeImportedTrackAsync(track);
     }
@@ -651,6 +653,7 @@ public partial class EditTrackOverlay : UserControl
         MirexPrimaryPanel.Children.Clear();
         MirexAdditionalPanel.Children.Clear();
         MirexAdditionalPanel.IsVisible = _areEmotionalCharactersExpanded;
+        MirexSeeMoreText.IsVisible = values.Count > 1 && !_areEmotionalCharactersExpanded;
         if (EmotionalCharacterChevron.RenderTransform is RotateTransform chevronTransform)
             chevronTransform.Angle = _areEmotionalCharactersExpanded ? 90 : 0;
 
@@ -714,6 +717,8 @@ public partial class EditTrackOverlay : UserControl
 
         _areEmotionalCharactersExpanded = !_areEmotionalCharactersExpanded;
         MirexAdditionalPanel.IsVisible = _areEmotionalCharactersExpanded;
+        MirexSeeMoreText.IsVisible = MirexAdditionalPanel.Children.Count > 0
+            && !_areEmotionalCharactersExpanded;
         if (EmotionalCharacterChevron.RenderTransform is RotateTransform chevronTransform)
             chevronTransform.Angle = _areEmotionalCharactersExpanded ? 90 : 0;
         e.Handled = true;
@@ -1443,6 +1448,7 @@ public partial class EditTrackOverlay : UserControl
         }
         _analysisElapsedTimer.Stop();
         _isClosing = true;
+        EditorSurface.Opacity = 1;
         var motionGeneration = ++_motionGeneration;
         if (StartSlideAnimation(opening: false))
             _ = CompleteCloseAfterAnimationAsync(motionGeneration);

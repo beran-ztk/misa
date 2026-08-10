@@ -233,6 +233,16 @@
                                                    VerticalAlignment="Center" />
                                     </Grid>
                                     <StackPanel x:Name="MirexPrimaryPanel" Spacing="4" Margin="22,0,0,0" />
+                                    <TextBlock x:Name="MirexSeeMoreText"
+                                               Text="See more"
+                                               IsVisible="False"
+                                               Margin="22,0,0,0"
+                                               HorizontalAlignment="Right"
+                                               FontSize="10"
+                                               Foreground="{DynamicResource Theme.Brush.TextSecondary}"
+                                               Opacity="0.68"
+                                               Cursor="Hand"
+                                               PointerPressed="OnEmotionalCharacterHeaderPressed" />
                                     <StackPanel x:Name="MirexAdditionalPanel" IsVisible="False" Spacing="5" Margin="22,0,0,0" />
                                 </StackPanel>
                             </StackPanel>
