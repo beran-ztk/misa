@@ -1125,6 +1125,7 @@ public partial class MusicView : UserControl
                 Height = 31,
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 HorizontalContentAlignment = HorizontalAlignment.Center,
+                VerticalContentAlignment = VerticalAlignment.Center,
                 FontSize = 11,
                 FontWeight = FontWeight.SemiBold,
                 Background = selected
