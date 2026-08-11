@@ -248,9 +248,34 @@
                         Spacing="9"
                         VerticalAlignment="Center">
 
+                <TextBox x:Name="SearchBox"
+                         Classes="compact-search"
+                         Watermark="Search…"
+                         IsVisible="False"
+                         Width="230" Height="32"
+                         VerticalContentAlignment="Center"
+                         KeyDown="OnSearchBoxKeyDown"
+                         LostFocus="OnSearchBoxLostFocus"/>
+                <Button x:Name="SearchToggleBtn"
+                        Classes="icon"
+                        Click="OnSearchToggleClicked"
+                        ToolTip.Tip="Search"
+                        Opacity="0.86">
+                    <Image Source="{SvgImage /Assets/search.svg}" Width="17" Height="17"/>
+                </Button>
+                
+                <Button x:Name="RefreshLibraryButton"
+                        Click="OnRefreshLibraryClicked"
+                        Classes="icon"
+                        ToolTip.Tip="Refresh library"
+                        IsVisible="False"
+                        Opacity="0.86">
+                    <Image Source="{SvgImage /Assets/reload.svg}" Width="17" Height="17"/>
+                </Button>
+                
                 <Button Click="OnImportClicked"
                         Classes="icon"
-                        ToolTip.Tip="Add Track"
+                        ToolTip.Tip="Add Tracks"
                         Opacity="0.86">
                     <Image Source="{SvgImage /Assets/download.svg}" Width="17" Height="17"/>
                 </Button>
@@ -262,31 +287,7 @@
                     <Image Source="{SvgImage /Assets/channels.svg}" Width="18" Height="18"/>
                 </Button>
 
-                <Button x:Name="RefreshLibraryButton"
-                        Click="OnRefreshLibraryClicked"
-                        Classes="icon"
-                        ToolTip.Tip="Refresh library"
-                        IsVisible="False"
-                        Opacity="0.86">
-                    <Image Source="{SvgImage /Assets/reload.svg}" Width="17" Height="17"/>
-                </Button>
-
-                <TextBox x:Name="SearchBox"
-                         Classes="compact-search"
-                         Watermark="Search…"
-                         IsVisible="False"
-                         Width="230" Height="32"
-                         VerticalContentAlignment="Center"
-                         KeyDown="OnSearchBoxKeyDown"
-                         LostFocus="OnSearchBoxLostFocus"/>
-
-                <Button x:Name="SearchToggleBtn"
-                        Classes="icon"
-                        Click="OnSearchToggleClicked"
-                        ToolTip.Tip="Search"
-                        Opacity="0.86">
-                    <Image Source="{SvgImage /Assets/search.svg}" Width="17" Height="17"/>
-                </Button>
+                
 
                 <Button x:Name="FiltersToggleBtn"
                         Classes="icon"
