@@ -22,6 +22,7 @@ public record TrackDisplayItem(
     public bool IsPlaying { get; set; }
     public bool NeedsReview { get; set; }
     public bool NeedsAnalysis { get; set; }
+    public bool ShowDownloadedDate { get; set; }
     public Bitmap? Thumbnail { get; set; }
     public Color ArtworkPrimaryColor { get; private set; } = Colors.Transparent;
     public Color ArtworkSecondaryColor { get; private set; } = Colors.Transparent;
@@ -92,6 +93,16 @@ public record TrackDisplayItem(
                                                   || string.IsNullOrWhiteSpace(GenreText)
         ? string.Empty
         : "  ·  ";
+
+    public string DownloadedDateText
+    {
+        get
+        {
+            if (!DateTimeOffset.TryParse(Track.DownloadedAt, out var downloadedAt))
+                return string.Empty;
+            return downloadedAt.ToLocalTime().ToString("dd.MM.yyyy");
+        }
+    }
 
     public IBrush PlayingBackground => IsPlaying
         ? new SolidColorBrush(Color.FromArgb(20, 245, 245, 220))

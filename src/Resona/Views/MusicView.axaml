@@ -490,17 +490,27 @@
                                     </Grid>
 
                                 </Grid>
-                                <TextBlock Text="{Binding DurationText}"
-                                           FontFamily="Consolas"
-                                           FontSize="10.5"
-                                           Foreground="#D7D0B8"
-                                           Opacity="0.88"
-                                           Width="48"
-                                           Margin="0,0,15,0"
-                                           HorizontalAlignment="Right"
-                                           TextAlignment="Center"
-                                           VerticalAlignment="Center"
-                                           IsHitTestVisible="False"/>
+                                <StackPanel Width="76"
+                                            Margin="0,0,8,0"
+                                            Spacing="2"
+                                            HorizontalAlignment="Right"
+                                            VerticalAlignment="Center"
+                                            IsHitTestVisible="False">
+                                    <TextBlock Text="{Binding DownloadedDateText}"
+                                               IsVisible="{Binding ShowDownloadedDate}"
+                                               FontFamily="Consolas"
+                                               FontSize="9"
+                                               Foreground="{DynamicResource Theme.Brush.TextMuted}"
+                                               HorizontalAlignment="Center"
+                                               TextAlignment="Center"/>
+                                    <TextBlock Text="{Binding DurationText}"
+                                               FontFamily="Consolas"
+                                               FontSize="10.5"
+                                               Foreground="#D7D0B8"
+                                               Opacity="0.88"
+                                               HorizontalAlignment="Center"
+                                               TextAlignment="Center"/>
+                                </StackPanel>
                                 </Panel>
                             </Border>
                             <Rectangle Grid.Row="1"

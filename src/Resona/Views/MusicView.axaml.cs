@@ -26,7 +26,7 @@ using SkiaSharp;
 
 namespace Resona.Views;
 
-public enum LibrarySortBy { Name, Rating }
+public enum LibrarySortBy { Name, Rating, DownloadedAt }
 public enum LibrarySortDirection { Ascending, Descending }
 
 public partial class MusicView : UserControl
@@ -451,8 +451,13 @@ public partial class MusicView : UserControl
     private void InitializeSortControls()
     {
         _updatingSortControls = true;
-        SortByBox.ItemsSource = new[] { "Name", "Rating" };
-        SortByBox.SelectedIndex = _sortBy == LibrarySortBy.Rating ? 1 : 0;
+        SortByBox.ItemsSource = new[] { "Name", "Rating", "Downloaded at" };
+        SortByBox.SelectedIndex = _sortBy switch
+        {
+            LibrarySortBy.Rating => 1,
+            LibrarySortBy.DownloadedAt => 2,
+            _ => 0
+        };
         UpdateSortDirectionButton();
         _updatingSortControls = false;
     }
@@ -462,7 +467,19 @@ public partial class MusicView : UserControl
         if (_updatingSortControls)
             return;
 
-        _sortBy = SortByBox.SelectedIndex == 1 ? LibrarySortBy.Rating : LibrarySortBy.Name;
+        var nextSort = SortByBox.SelectedIndex switch
+        {
+            1 => LibrarySortBy.Rating,
+            2 => LibrarySortBy.DownloadedAt,
+            _ => LibrarySortBy.Name
+        };
+        if (nextSort == LibrarySortBy.DownloadedAt && _sortBy != LibrarySortBy.DownloadedAt)
+        {
+            _sortDirection = LibrarySortDirection.Descending;
+            UpdateSortDirectionButton();
+        }
+        _sortBy = nextSort;
+        PrepareExplicitSort();
         ApplyFilter();
         PersistPlayerSession();
     }
@@ -473,8 +490,22 @@ public partial class MusicView : UserControl
             ? LibrarySortDirection.Descending
             : LibrarySortDirection.Ascending;
         UpdateSortDirectionButton();
+        PrepareExplicitSort();
         ApplyFilter();
         PersistPlayerSession();
+    }
+
+    private void PrepareExplicitSort()
+    {
+        // A deliberate sort selection owns the queue order. Restored queue order
+        // and shuffle would otherwise immediately overwrite the sorted result.
+        _pendingRestoredQueueOrder = null;
+        if (!_shuffle)
+            return;
+
+        _shuffle = false;
+        _shufflePriorities.Clear();
+        UpdateShuffleButton();
     }
 
     private void UpdateSortDirectionButton()
@@ -861,6 +892,9 @@ public partial class MusicView : UserControl
 
     private void ApplyLibrarySort()
     {
+        foreach (var item in _filteredItems)
+            item.ShowDownloadedDate = _sortBy == LibrarySortBy.DownloadedAt;
+
         var ratingSortById = Values.Ratings.ToDictionary(rating => rating.Id, rating => rating.SortOrder);
         IOrderedEnumerable<TrackDisplayItem> sorted = _sortBy switch
         {
@@ -878,12 +912,25 @@ public partial class MusicView : UserControl
                     .ThenBy(item => item.Track.Title, StringComparer.OrdinalIgnoreCase),
             LibrarySortBy.Name when _sortDirection == LibrarySortDirection.Descending =>
                 _filteredItems.OrderByDescending(item => item.Track.Title, StringComparer.OrdinalIgnoreCase),
+            LibrarySortBy.DownloadedAt when _sortDirection == LibrarySortDirection.Ascending =>
+                _filteredItems
+                    .OrderBy(item => DownloadedAtSortValue(item.Track.DownloadedAt))
+                    .ThenBy(item => item.Track.Title, StringComparer.OrdinalIgnoreCase),
+            LibrarySortBy.DownloadedAt =>
+                _filteredItems
+                    .OrderByDescending(item => DownloadedAtSortValue(item.Track.DownloadedAt))
+                    .ThenBy(item => item.Track.Title, StringComparer.OrdinalIgnoreCase),
             _ =>
                 _filteredItems.OrderBy(item => item.Track.Title, StringComparer.OrdinalIgnoreCase)
         };
 
         _filteredItems = sorted.ToList();
     }
+
+    private static DateTimeOffset DownloadedAtSortValue(string downloadedAt) =>
+        DateTimeOffset.TryParse(downloadedAt, out var value)
+            ? value
+            : DateTimeOffset.MinValue;
 
     private void RestoreOrInitializeSelection(int? previousSelectedTrackId)
     {
