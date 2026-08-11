@@ -44,6 +44,7 @@ public partial class ChannelOverlay : UserControl
     private int? _activePreviewTrackId;
     private ChannelHubWorkStatus _channelWorkStatus = ChannelHubWorkStatus.Idle;
     private ChannelMetadataWorkStatus _metadataWorkStatus = ChannelMetadataWorkStatus.Idle;
+    private int _channelSortIndex;
     private readonly Avalonia.Threading.DispatcherTimer _channelStateRefreshTimer = new()
     {
         Interval = TimeSpan.FromMilliseconds(750)
@@ -315,15 +316,17 @@ public partial class ChannelOverlay : UserControl
             .ThenByDescending(channel => channel.LocalTrackCount)
             .Take(6)
             .ToList();
-        var all = (ChannelSortBox.SelectedIndex switch
+        var all = (_channelSortIndex switch
         {
             1 => visible.OrderByDescending(channel => channel.AverageRating.HasValue)
                 .ThenByDescending(channel => channel.AverageRating)
                 .ThenByDescending(channel => channel.RatedTrackCount),
             2 => visible.OrderByDescending(channel => channel.LocalTrackCount)
                 .ThenByDescending(channel => channel.RatedTrackCount),
-            3 => visible.OrderByDescending(channel => channel.LastDownloadedAt, StringComparer.Ordinal),
-            4 => visible.OrderByDescending(channel => channel.PlayCount)
+            3 => visible.OrderByDescending(channel => channel.KnownVideoCount)
+                .ThenByDescending(channel => channel.UncheckedVideoCount),
+            4 => visible.OrderByDescending(channel => channel.LastDownloadedAt, StringComparer.Ordinal),
+            5 => visible.OrderByDescending(channel => channel.PlayCount)
                 .ThenByDescending(channel => channel.LocalTrackCount),
             _ => visible.OrderBy(channel => channel.Name, StringComparer.OrdinalIgnoreCase)
         }).ThenBy(channel => channel.Name, StringComparer.OrdinalIgnoreCase).ToList();
@@ -359,10 +362,17 @@ public partial class ChannelOverlay : UserControl
             () => UpdateSearchVisibility(ChannelSearchBox, ChannelSearchToggleButton),
             DispatcherPriority.Background);
 
-    private void OnChannelSortChanged(object? sender, SelectionChangedEventArgs e)
+    private void OnChannelSortOptionClicked(object? sender, RoutedEventArgs e)
     {
-        if (_hubChannels.Count > 0)
-            ApplyHubFilter();
+        if (sender is not Button { Tag: string tag, Content: { } content }
+            || !int.TryParse(tag, out var index))
+            return;
+
+        _channelSortIndex = index;
+        ChannelSortText.Text = content.ToString() ?? "Name";
+        ChannelSortButton.Flyout?.Hide();
+        ApplyHubFilter();
+        e.Handled = true;
     }
 
     private void OnAddChannelToggleClicked(object? sender, RoutedEventArgs e)
@@ -874,6 +884,26 @@ public partial class ChannelOverlay : UserControl
         ToastRequested?.Invoke("Choose a rating to add this track to your library");
     }
 
+    private async void OnVideoRowTapped(object? sender, TappedEventArgs e)
+    {
+        if (sender is not Control { DataContext: ChannelVideoDisplay item }
+            || !item.CanOpenEditor
+            || item.TrackId is not int trackId)
+            return;
+        if (e.Source is Visual source
+            && (source is Button || source.GetVisualAncestors().OfType<Button>().Any()))
+            return;
+
+        var track = await Task.Run(() => MusicLibraryService.Current.GetTrackById(trackId));
+        if (track is null)
+            return;
+
+        EditRequested?.Invoke(track);
+        if (item.IsPendingRating)
+            ToastRequested?.Invoke("Choose a rating to add this track to your library");
+        e.Handled = true;
+    }
+
     private async void OnVideoDownloadClicked(object? sender, RoutedEventArgs e)
     {
         if (sender is not Button button || button.DataContext is not ChannelVideoDisplay item || !item.CanDownload)
@@ -1227,6 +1257,7 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
         && !IsChecked
         && (_libraryState is null or TrackLibraryState.PendingRating);
     public bool IsInLibrary => TrackId is not null && _libraryState == TrackLibraryState.Active;
+    public bool CanOpenEditor => IsInLibrary || IsPendingRating;
     public string StatusText
     {
         get => _statusText;
@@ -1407,6 +1438,8 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
         Opacity = IsInLibrary || IsActive ? 1 : IsChecked ? 0.45 : 1;
         TitleBrush = IsInLibrary
             ? new SolidColorBrush(Color.Parse("#8FD19E"))
+            : IsPendingRating
+                ? new SolidColorBrush(Color.Parse("#E6C65C"))
             : ThemeResources.Brush("Theme.Brush.TextPrimary");
         Background = IsActive
             ? ThemeResources.Brush("Theme.Brush.SurfaceSelected")
