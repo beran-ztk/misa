@@ -89,12 +89,7 @@ public record TrackDisplayItem(
         (byte)(from.B + (to.B - from.B) * amount));
 
     public string ChannelSeparatorText => string.IsNullOrWhiteSpace(ChannelText)
-                                                  || (string.IsNullOrWhiteSpace(ModelGenreText)
-                                                      && string.IsNullOrWhiteSpace(ManualGenreText))
-        ? string.Empty
-        : "  ·  ";
-
-    public string GenreSeparatorText => string.IsNullOrWhiteSpace(ModelGenreText) || string.IsNullOrWhiteSpace(ManualGenreText)
+                                                  || string.IsNullOrWhiteSpace(GenreText)
         ? string.Empty
         : "  ·  ";
 

@@ -581,15 +581,23 @@ public partial class MusicView : UserControl
             .Select(assignment => ShortGenreName(assignment.GenreName))
             .Where(name => name.Length > 0)
             .Order());
-        var genreStr = string.Join(", ", new[] { modelGenreStr, manualGenreStr }
-            .Where(text => !string.IsNullOrWhiteSpace(text)));
-        if (string.IsNullOrWhiteSpace(genreStr))
+        var activeGenreNames = modelGenreAssignments
+            .Select(assignment => ShortGenreName(assignment.GenreName))
+            .Where(name => name.Length > 0)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Order(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        if (activeGenreNames.Count == 0)
         {
-            genreStr = string.Join(", ", genreIds
+            activeGenreNames = genreIds
                 .Select(id => genreMap.GetValueOrDefault(id, ""))
                 .Select(ShortGenreName)
-                .Where(n => n.Length > 0).Order());
+                .Where(name => name.Length > 0)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Order(StringComparer.OrdinalIgnoreCase)
+                .ToList();
         }
+        var genreStr = FormatNaturalList(activeGenreNames);
         var styleStr = string.Join(", ", styleIds
             .Select(id => styleMap.GetValueOrDefault(id, ""))
             .Where(n => n.Length > 0).Order());
@@ -1885,8 +1893,8 @@ public partial class MusicView : UserControl
 
         CurrentSetGenresRow.IsVisible = genres.Count > 0;
         CurrentSetTagsRow.IsVisible = tags.Count > 0;
-        CurrentSetGenresText.Text = FormatConditionValues(genres);
-        CurrentSetTagsText.Text = FormatConditionValues(tags);
+        CurrentSetGenresText.Text = FormatNaturalList(genres);
+        CurrentSetTagsText.Text = FormatNaturalList(tags);
 
         var hasSelection = genres.Count > 0 || tags.Count > 0;
         CurrentSetEmptyText.IsVisible = !hasSelection;
@@ -1961,7 +1969,7 @@ public partial class MusicView : UserControl
 
         var values = new TextBlock
         {
-            Text = FormatConditionValues(names),
+            Text = FormatNaturalList(names),
             FontSize = 10.5,
             FontWeight = FontWeight.SemiBold,
             Foreground = ThemeResources.Brush("Theme.Brush.TextSecondary"),
@@ -2015,7 +2023,7 @@ public partial class MusicView : UserControl
         };
     }
 
-    private static string FormatConditionValues(IReadOnlyList<string> values)
+    private static string FormatNaturalList(IReadOnlyList<string> values)
     {
         return values.Count switch
         {
