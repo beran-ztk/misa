@@ -1707,7 +1707,10 @@ public class MusicDatabase
                     WHEN $success = 1 THEN 'Ready'
                     WHEN download_attempts < 3 AND is_checked = 0
                          AND EXISTS (SELECT 1 FROM channels
-                                     WHERE channels.id = channel_videos.channel_id AND auto_download = 1)
+                                     WHERE channels.id = channel_videos.channel_id
+                                       AND auto_download = 1
+                                       AND (auto_download_from IS NULL
+                                            OR channel_videos.discovered_at >= auto_download_from))
                         THEN 'Queued'
                     ELSE 'Failed'
                 END,

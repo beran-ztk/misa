@@ -344,7 +344,7 @@
                                 Click="OnDetailNotificationsClicked" ToolTip.Tip="Toggle channel notifications">
                             <TextBlock x:Name="DetailNotificationIcon" Text="○" FontSize="17"/>
                         </Button>
-                        <Button Classes="channel-icon" Click="OnRefreshSelectedClicked" ToolTip.Tip="Refresh channel">
+                        <Button x:Name="DetailRefreshButton" Classes="channel-icon" Click="OnRefreshSelectedClicked" ToolTip.Tip="Refresh channel">
                             <Image Source="{SvgImage /Assets/reload.svg}" Width="16" Height="16"/>
                         </Button>
                         <Button Classes="channel-icon" Click="OnCloseClicked" ToolTip.Tip="Close" Opacity="0.72">
@@ -377,13 +377,16 @@
                     </Grid>
                 </Border>
 
-                <Grid Grid.Row="1" RowDefinitions="Auto,Auto" RowSpacing="8">
-                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                <Grid Grid.Row="1" RowDefinitions="Auto,Auto,Auto" RowSpacing="8">
+                    <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="12">
                         <TextBlock Text="VIDEOS" FontSize="9.5" FontWeight="SemiBold" LetterSpacing="0.9"
                                    Opacity="0.48" VerticalAlignment="Center"/>
                         <TextBlock Grid.Column="1" x:Name="VideoSummaryText" FontSize="10.5" Opacity="0.58"
                                    TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
-                        <TextBox Grid.Column="2" x:Name="VideoSearchBox" Classes="compact-search"
+                        <TextBlock Grid.Column="2" x:Name="DetailRefreshStatusText" IsVisible="False"
+                                   FontSize="10" Foreground="#AFCDE6" VerticalAlignment="Center"
+                                   MaxWidth="220" TextTrimming="CharacterEllipsis"/>
+                        <TextBox Grid.Column="3" x:Name="VideoSearchBox" Classes="compact-search"
                                  Width="210" Height="28" Watermark="Search videos…"
                                  VerticalContentAlignment="Center" TextChanged="OnVideoSearchChanged"/>
                     </Grid>
@@ -409,6 +412,8 @@
                         <Button Grid.Column="7" x:Name="DetailAutoDownloadButton" Classes="follow-action"
                                 Click="OnDetailAutoDownloadClicked"/>
                     </Grid>
+                    <TextBlock Grid.Row="2" x:Name="AutomationHintText" HorizontalAlignment="Right"
+                               FontSize="9.5" Opacity="0.42"/>
                 </Grid>
 
                 <ListBox Grid.Row="2" x:Name="VideoList" Classes="video-list"
@@ -454,6 +459,13 @@
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>
+                <StackPanel Grid.Row="2" x:Name="EmptyVideoPanel" IsVisible="False"
+                            HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="5">
+                    <TextBlock x:Name="EmptyVideoTitleText" FontSize="12.5" FontWeight="SemiBold"
+                               HorizontalAlignment="Center"/>
+                    <TextBlock x:Name="EmptyVideoDescriptionText" FontSize="10.5" Opacity="0.48"
+                               HorizontalAlignment="Center"/>
+                </StackPanel>
             </Grid>
         </Grid>
 

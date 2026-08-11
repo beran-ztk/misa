@@ -22,6 +22,7 @@ public partial class ChannelOverlay : UserControl
     private ChannelHubItem? _selectedHubChannel;
     private List<ChannelVideoDisplay> _currentVideos = [];
     private int _selectedChannelId = -1;
+    private bool _detailOpenedFromInbox;
     private bool _loadingVideos;
     private ChannelVideoFilter _videoFilter = ChannelVideoFilter.New;
     private readonly Dictionary<int, ChannelVideoFilter> _videoFiltersByChannel = [];
@@ -56,6 +57,7 @@ public partial class ChannelOverlay : UserControl
         HubView.IsVisible = true;
         DetailView.IsVisible = false;
         InboxView.IsVisible = false;
+        _detailOpenedFromInbox = false;
         RefreshChannels();
     }
 
@@ -143,7 +145,10 @@ public partial class ChannelOverlay : UserControl
         AllChannelItems.ItemsSource = all;
         EmptyFollowingText.IsVisible = following.Count == 0;
         SuggestedSection.IsVisible = suggested.Count > 0;
-        EmptySearchText.IsVisible = all.Count == 0 && search.Length > 0;
+        EmptySearchText.IsVisible = all.Count == 0;
+        EmptySearchText.Text = search.Length > 0
+            ? "No channels match this search."
+            : "No library channels yet. Add a YouTube channel to get started.";
         FollowingCountText.Text = following.Count.ToString();
         AllChannelCountText.Text = all.Count.ToString();
 
@@ -171,10 +176,11 @@ public partial class ChannelOverlay : UserControl
         e.Handled = true;
     }
 
-    private void OpenChannelDetail(ChannelHubItem channel)
+    private void OpenChannelDetail(ChannelHubItem channel, bool fromInbox = false)
     {
         _selectedHubChannel = channel;
         _selectedChannelId = channel.Id;
+        _detailOpenedFromInbox = fromInbox;
         VideoSearchBox.Text = _videoSearchByChannel.GetValueOrDefault(channel.Id, string.Empty);
         SetVideoFilter(
             _videoFiltersByChannel.GetValueOrDefault(channel.Id, ChannelVideoFilter.New),
@@ -210,6 +216,14 @@ public partial class ChannelOverlay : UserControl
         DetailNotificationButton.Opacity = channel.NotificationsEnabled ? 0.95 : 0.5;
         DetailAutoDownloadButton.Content = channel.AutoDownload ? "Auto-download on" : "Auto-download off";
         ChannelMaxDurationBox.Text = channel.MaxDurationMinutes?.ToString() ?? string.Empty;
+        var effectiveLimit = channel.MaxDurationMinutes
+                             ?? MusicLibraryService.Current.GetChannelMaxDownloadDurationMinutes();
+        AutomationHintText.Text = channel.AutoDownload
+            ? $"Future uploads only · up to {effectiveLimit} min"
+            : $"Manual downloads · {effectiveLimit} min limit";
+        ToolTip.SetTip(DetailNotificationButton, channel.NotificationsEnabled
+            ? "Disable channel notifications"
+            : "Enable channel notifications");
     }
 
     private void OnBackToHubClicked(object? sender, RoutedEventArgs e)
@@ -217,9 +231,20 @@ public partial class ChannelOverlay : UserControl
         ClearActivePreview();
         PreviewClosed?.Invoke();
         DetailView.IsVisible = false;
-        InboxView.IsVisible = false;
-        HubView.IsVisible = true;
-        ApplyHubFilter();
+        if (_detailOpenedFromInbox)
+        {
+            HubView.IsVisible = false;
+            InboxView.IsVisible = true;
+            _detailOpenedFromInbox = false;
+            RefreshInbox();
+            RefreshInboxBadge();
+        }
+        else
+        {
+            InboxView.IsVisible = false;
+            HubView.IsVisible = true;
+            ApplyHubFilter();
+        }
     }
 
     private void RefreshInboxBadge()
@@ -277,7 +302,7 @@ public partial class ChannelOverlay : UserControl
 
         _videoSearchByChannel[channel.Id] = notification.Title;
         _videoFiltersByChannel[channel.Id] = ChannelVideoFilter.All;
-        OpenChannelDetail(channel);
+        OpenChannelDetail(channel, fromInbox: true);
         RefreshInboxBadge();
         e.Handled = true;
     }
@@ -403,8 +428,10 @@ public partial class ChannelOverlay : UserControl
         string successText)
     {
         _refreshCts?.Cancel();
-        _refreshCts = new CancellationTokenSource();
-        var progress = new Progress<string>(message => StatusText.Text = message);
+        var refreshCts = new CancellationTokenSource();
+        _refreshCts = refreshCts;
+        SetRefreshState(true, "Checking channel…");
+        var progress = new Progress<string>(message => SetRefreshState(true, message));
 
         try
         {
@@ -429,8 +456,23 @@ public partial class ChannelOverlay : UserControl
         }
         finally
         {
-            UpdateDownloadSummary();
+            if (ReferenceEquals(_refreshCts, refreshCts))
+            {
+                _refreshCts = null;
+                SetRefreshState(false);
+                UpdateDownloadSummary();
+            }
+            refreshCts.Dispose();
         }
+    }
+
+    private void SetRefreshState(bool active, string? message = null)
+    {
+        DetailRefreshButton.IsEnabled = !active;
+        DetailRefreshButton.Opacity = active ? 0.35 : 1;
+        DetailRefreshStatusText.IsVisible = active && DetailView.IsVisible;
+        DetailRefreshStatusText.Text = active ? message ?? "Refreshing…" : string.Empty;
+        StatusText.Text = active ? message ?? "Refreshing…" : string.Empty;
     }
 
     private void RefreshVideos()
@@ -494,7 +536,31 @@ public partial class ChannelOverlay : UserControl
         {
             _loadingVideos = false;
         }
+        UpdateEmptyVideoState(visible.Count, search);
         UpdateVideoSummary(visible.Count);
+    }
+
+    private void UpdateEmptyVideoState(int visibleCount, string search)
+    {
+        EmptyVideoPanel.IsVisible = visibleCount == 0;
+        if (visibleCount > 0)
+            return;
+
+        if (search.Length > 0)
+        {
+            EmptyVideoTitleText.Text = "No matching videos";
+            EmptyVideoDescriptionText.Text = "Try another title or clear the search.";
+            return;
+        }
+
+        (EmptyVideoTitleText.Text, EmptyVideoDescriptionText.Text) = _videoFilter switch
+        {
+            ChannelVideoFilter.New => ("No new videos", "Everything discovered for this channel has been reviewed."),
+            ChannelVideoFilter.Ready => ("Nothing ready yet", "Downloaded videos awaiting review will appear here."),
+            ChannelVideoFilter.InLibrary => ("No local tracks", "Downloaded channel tracks will appear here."),
+            ChannelVideoFilter.Issues => ("No issues", "Metadata and downloads are currently healthy."),
+            _ => ("No videos discovered", "Refresh the channel to retrieve its uploads.")
+        };
     }
 
     private void OnVideoCheckClicked(object? sender, RoutedEventArgs e)
