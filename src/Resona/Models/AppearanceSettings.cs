@@ -8,6 +8,8 @@ public sealed class AppearanceSettings
     public double PlayerArtworkBlur { get; set; } = 50;
     public double PlayerBackgroundDarkening { get; set; } = 4.6;
     public double PlayerColorAtmosphere { get; set; } = 19.5;
+    public double ArtworkFadeDuration { get; set; } = 5;
+    public double SongFadeDuration { get; set; } = 10;
     public double PlayerAudioReaction { get; set; } = 65;
     public double AudioResponseSpeed { get; set; } = 100;
     public double AudioBassSensitivity { get; set; } = 175;
@@ -17,9 +19,10 @@ public sealed class AppearanceSettings
     public double AudioColorReaction { get; set; } = 200;
     public bool SpectrumVisualizerEnabled { get; set; } = true;
     public double SpectrumVisualizerHeight { get; set; } = 140;
-    // Kept nullable for one load cycle so settings written by the first visualizer
-    // version can be migrated. The visualizer now renders without global opacity.
+    // Legacy field kept temporarily so settings written by the first visualizer
+    // version can be migrated. Visual strength now uses SpectrumVisualizerIntensity.
     public double? SpectrumVisualizerOpacity { get; set; }
+    public double SpectrumVisualizerIntensity { get; set; } = 40;
     public double SpectrumVisualizerSensitivity { get; set; } = 100;
     public double SpectrumVisualizerSmoothing { get; set; } = 65;
     public double LibraryBackdropStrength { get; set; } = 14.6;
@@ -37,6 +40,8 @@ public sealed class AppearanceSettings
         PlayerArtworkBlur = PlayerArtworkBlur,
         PlayerBackgroundDarkening = PlayerBackgroundDarkening,
         PlayerColorAtmosphere = PlayerColorAtmosphere,
+        ArtworkFadeDuration = ArtworkFadeDuration,
+        SongFadeDuration = SongFadeDuration,
         PlayerAudioReaction = PlayerAudioReaction,
         AudioResponseSpeed = AudioResponseSpeed,
         AudioBassSensitivity = AudioBassSensitivity,
@@ -47,6 +52,7 @@ public sealed class AppearanceSettings
         SpectrumVisualizerEnabled = SpectrumVisualizerEnabled,
         SpectrumVisualizerHeight = SpectrumVisualizerHeight,
         SpectrumVisualizerOpacity = SpectrumVisualizerOpacity,
+        SpectrumVisualizerIntensity = SpectrumVisualizerIntensity,
         SpectrumVisualizerSensitivity = SpectrumVisualizerSensitivity,
         SpectrumVisualizerSmoothing = SpectrumVisualizerSmoothing,
         LibraryBackdropStrength = LibraryBackdropStrength,
@@ -65,6 +71,8 @@ public sealed class AppearanceSettings
         PlayerArtworkBlur = Math.Clamp(PlayerArtworkBlur, 0, 50);
         PlayerBackgroundDarkening = Math.Clamp(PlayerBackgroundDarkening, 0, 80);
         PlayerColorAtmosphere = Math.Clamp(PlayerColorAtmosphere, 0, 100);
+        ArtworkFadeDuration = Math.Clamp(ArtworkFadeDuration, 0, 30);
+        SongFadeDuration = Math.Clamp(SongFadeDuration, 0, 30);
         PlayerAudioReaction = Math.Clamp(PlayerAudioReaction, 0, 100);
         AudioResponseSpeed = Math.Clamp(AudioResponseSpeed, 0, 100);
         AudioBassSensitivity = Math.Clamp(AudioBassSensitivity, 0, 200);
@@ -82,6 +90,7 @@ public sealed class AppearanceSettings
             SpectrumVisualizerOpacity = null;
         }
         SpectrumVisualizerHeight = Math.Clamp(SpectrumVisualizerHeight, 40, 220);
+        SpectrumVisualizerIntensity = Math.Clamp(SpectrumVisualizerIntensity, 0, 100);
         SpectrumVisualizerSensitivity = Math.Clamp(SpectrumVisualizerSensitivity, 25, 250);
         SpectrumVisualizerSmoothing = Math.Clamp(SpectrumVisualizerSmoothing, 0, 95);
         LibraryBackdropStrength = Math.Clamp(LibraryBackdropStrength, 0, 60);

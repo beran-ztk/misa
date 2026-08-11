@@ -1438,7 +1438,7 @@ public partial class SettingsOverlay : UserControl
 
         PreviewSpectrumVisualizer.IsVisible = _appearanceSettings.SpectrumVisualizerEnabled;
         PreviewSpectrumVisualizer.Height = _appearanceSettings.SpectrumVisualizerHeight * 0.65;
-        PreviewSpectrumVisualizer.Opacity = 0.40;
+        PreviewSpectrumVisualizer.Opacity = _appearanceSettings.SpectrumVisualizerIntensity / 100d;
         PreviewSpectrumVisualizer.Sensitivity = _appearanceSettings.SpectrumVisualizerSensitivity / 100d;
         PreviewSpectrumVisualizer.Smoothing = _appearanceSettings.SpectrumVisualizerSmoothing / 100d;
         PreviewSpectrumVisualizer.SetColors(_previewPrimary, _previewSecondary);
@@ -1562,6 +1562,12 @@ public partial class SettingsOverlay : UserControl
         AddAppearanceSlider(PlayerAppearanceRows, "Color atmosphere", "Strength of colors extracted from the active cover.",
             0, 100, settings => settings.PlayerColorAtmosphere,
             (settings, value) => settings.PlayerColorAtmosphere = value, PercentValue);
+        AddAppearanceSlider(PlayerAppearanceRows, "Artwork fade duration", "How long the cover transition takes when the active song changes. Set to 0 for an instant change.",
+            0, 30, settings => settings.ArtworkFadeDuration,
+            (settings, value) => settings.ArtworkFadeDuration = value, SecondsValue);
+        AddAppearanceSlider(PlayerAppearanceRows, "Song fade duration", "Crossfade duration when playback advances automatically. Set to 0 to disable crossfading.",
+            0, 30, settings => settings.SongFadeDuration,
+            (settings, value) => settings.SongFadeDuration = value, SecondsValue);
         AddAppearanceSlider(TrackAppearanceRows, "Color wash strength", "Intensity of each cover's color across its track row.",
             0, 30, settings => settings.TrackColorWashStrength,
             (settings, value) => settings.TrackColorWashStrength = value, PercentValue);
@@ -1596,6 +1602,9 @@ public partial class SettingsOverlay : UserControl
         AddAppearanceSlider(AudioAppearanceRows, "Visualizer height", "Maximum height of the spectrum above the player.",
             40, 220, settings => settings.SpectrumVisualizerHeight,
             (settings, value) => settings.SpectrumVisualizerHeight = value, PixelValue);
+        AddAppearanceSlider(AudioAppearanceRows, "Visualizer intensity", "Opacity and visible color strength of the frequency visualizer.",
+            0, 100, settings => settings.SpectrumVisualizerIntensity,
+            (settings, value) => settings.SpectrumVisualizerIntensity = value, PercentValue);
         AddAppearanceSlider(AudioAppearanceRows, "Visualizer sensitivity", "Amplifies or reduces the displayed frequency levels.",
             25, 250, settings => settings.SpectrumVisualizerSensitivity,
             (settings, value) => settings.SpectrumVisualizerSensitivity = value, PercentValue);
@@ -1796,6 +1805,7 @@ public partial class SettingsOverlay : UserControl
 
     private static string PercentValue(double value) => $"{value:0}%";
     private static string PixelValue(double value) => $"{value:0} px";
+    private static string SecondsValue(double value) => $"{value:0} s";
 
     private void OnCloseClicked(object? sender, RoutedEventArgs e)
     {

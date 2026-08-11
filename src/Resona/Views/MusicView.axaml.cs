@@ -46,7 +46,6 @@ public partial class MusicView : UserControl
     private readonly GradientStop _filterAmbientSecondaryStop;
     private readonly GradientStop _playerAmbientPrimaryStop;
     private readonly GradientStop _playerAmbientSecondaryStop;
-    private static readonly TimeSpan ArtworkTransitionDuration = TimeSpan.FromSeconds(5);
     private static readonly TimeSpan FilterOpenAnimationDuration = TimeSpan.FromMilliseconds(1180);
     private static readonly TimeSpan FilterCloseAnimationDuration = TimeSpan.FromMilliseconds(930);
     private static readonly IEasing FilterSlideEasing = new SplineEasing(0.25, 0.1, 0.25, 1);
@@ -2484,7 +2483,7 @@ public partial class MusicView : UserControl
             0x24, 0x24, 0x24));
         SpectrumVisualizer.IsVisible = _appearanceSettings.SpectrumVisualizerEnabled;
         SpectrumVisualizer.Height = _appearanceSettings.SpectrumVisualizerHeight;
-        SpectrumVisualizer.Opacity = 0.40;
+        SpectrumVisualizer.Opacity = _appearanceSettings.SpectrumVisualizerIntensity / 100d;
         SpectrumVisualizer.Sensitivity = _appearanceSettings.SpectrumVisualizerSensitivity / 100d;
         SpectrumVisualizer.Smoothing = _appearanceSettings.SpectrumVisualizerSmoothing / 100d;
 
@@ -2886,9 +2885,10 @@ public partial class MusicView : UserControl
         }
 
         bool wasPlaying = _engine.State != EngineState.Stopped;
-        float fadeOut = isCrossfade ? Values.CrossfadeDurationSeconds
+        var songFadeDuration = (float)_appearanceSettings.SongFadeDuration;
+        float fadeOut = isCrossfade ? songFadeDuration
                       : wasPlaying ? Values.ManualFadeDurationSeconds : 0f;
-        float fadeIn = isCrossfade ? Values.CrossfadeDurationSeconds
+        float fadeIn = isCrossfade ? songFadeDuration
                      : wasPlaying ? Values.ManualFadeDurationSeconds : 0f;
 
         try
@@ -3086,10 +3086,11 @@ public partial class MusicView : UserControl
         {
             var total = _engine.TotalTime.TotalSeconds;
             var current = _engine.CurrentTime.TotalSeconds;
-            if (total >= Values.CrossfadeDurationSeconds + 2.0 && current >= 1.0)
+            var songFadeDuration = _appearanceSettings.SongFadeDuration;
+            if (songFadeDuration > 0 && total >= songFadeDuration + 2.0 && current >= 1.0)
             {
                 var remaining = total - current;
-                if (remaining > 0 && remaining <= Values.CrossfadeDurationSeconds)
+                if (remaining > 0 && remaining <= songFadeDuration)
                 {
                     _crossfadeTriggered = true;
                     PlayTrackAt(_nextTrackIndex, isCrossfade: true);
@@ -3681,11 +3682,14 @@ public partial class MusicView : UserControl
         if (!IsArtworkTransitionActive)
             return;
 
-        _artworkTransitionProgress = Math.Clamp(
-            (DateTimeOffset.UtcNow - _artworkTransitionStartedAt).TotalMilliseconds
-            / ArtworkTransitionDuration.TotalMilliseconds,
-            0,
-            1);
+        var durationMilliseconds = _appearanceSettings.ArtworkFadeDuration * 1000d;
+        _artworkTransitionProgress = durationMilliseconds <= 0
+            ? 1
+            : Math.Clamp(
+                (DateTimeOffset.UtcNow - _artworkTransitionStartedAt).TotalMilliseconds
+                / durationMilliseconds,
+                0,
+                1);
         if (_artworkTransitionProgress < 1)
             return;
 

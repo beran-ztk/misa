@@ -37,7 +37,6 @@ public static class Values
     public const string AnalysisDockerImage = "essentia-tf-test";
 
     public static float Volume = 1f;
-    public const int CrossfadeDurationSeconds = 10;
     public const int ManualFadeDurationSeconds = 2;
     public const int MaxParallelDownloadWorkers = 10;
     public static bool UseFirefoxCookiesForYtDlp;
