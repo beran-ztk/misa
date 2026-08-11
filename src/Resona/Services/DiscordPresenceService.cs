@@ -17,19 +17,23 @@ public sealed class DiscordPresenceService : IDisposable
     private int _lastTrackId = -1;
     private string? _stateTextOverride;
     private string? _largeImageText;
+    private bool _enabled = true;
 
     public DiscordPresenceService() => ReloadSettings();
 
     public void ReloadSettings()
     {
         var settings = AppSettingsStore.Load();
+        _enabled = settings.DiscordRichPresenceEnabled;
         _stateTextOverride = string.IsNullOrEmpty(settings.DiscordStateText) ? null : settings.DiscordStateText;
         _largeImageText = string.IsNullOrEmpty(settings.DiscordLargeImageText) ? null : settings.DiscordLargeImageText;
+        if (!_enabled)
+            DisposeClient();
     }
 
     public void Update(TrackDisplayItem item, EngineState state, TimeSpan currentTime, TimeSpan totalTime)
     {
-        if (_disposed || state == EngineState.Stopped)
+        if (_disposed || !_enabled || state == EngineState.Stopped)
         {
             Clear();
             return;

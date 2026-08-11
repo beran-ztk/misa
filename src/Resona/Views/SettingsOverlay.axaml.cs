@@ -74,6 +74,8 @@ public partial class SettingsOverlay : UserControl
         LibraryLocationStatusText.IsVisible = false;
         MusicAnalysisServerUrlBox.Text = appSettings.MusicAnalysisServerUrl;
         _loadingDiscordPresenceSettings = true;
+        DiscordPresenceToggle.IsChecked = appSettings.DiscordRichPresenceEnabled;
+        UpdateDiscordPresenceToggleVisual();
         DiscordStateTextBox.Text = appSettings.DiscordStateText;
         DiscordLargeImageTextBox.Text = appSettings.DiscordLargeImageText;
         _loadingDiscordPresenceSettings = false;
@@ -163,10 +165,27 @@ public partial class SettingsOverlay : UserControl
             return;
 
         AppSettingsStore.SaveDiscordPresence(
+            DiscordPresenceToggle.IsChecked == true,
             DiscordStateTextBox.Text,
             DiscordLargeImageTextBox.Text);
         DiscordPresenceChanged?.Invoke();
     }
+
+    private void OnDiscordPresenceEnabledChanged(object? sender, RoutedEventArgs e)
+    {
+        if (_loadingDiscordPresenceSettings)
+            return;
+
+        AppSettingsStore.SaveDiscordPresence(
+            DiscordPresenceToggle.IsChecked == true,
+            DiscordStateTextBox.Text,
+            DiscordLargeImageTextBox.Text);
+        DiscordPresenceChanged?.Invoke();
+        UpdateDiscordPresenceToggleVisual();
+    }
+
+    private void UpdateDiscordPresenceToggleVisual() =>
+        DiscordPresenceStatusText.Text = DiscordPresenceToggle.IsChecked == true ? "Active" : "Disabled";
 
     public void PreloadGenreVocabulary() => EnsureGenreVocabularyLoaded();
 

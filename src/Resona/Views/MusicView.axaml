@@ -288,7 +288,12 @@
                     <Image Source="{SvgImage /Assets/channels.svg}" Width="18" Height="18"/>
                 </Button>
 
-                
+                <Button Classes="icon"
+                        Click="OnSettingsClicked"
+                        Opacity="0.86"
+                        ToolTip.Tip="Settings">
+                    <Image Source="{SvgImage /Assets/gear.svg}" Width="17" Height="17"/>
+                </Button>
 
                 <Button x:Name="FiltersToggleBtn"
                         Classes="icon"
@@ -725,14 +730,6 @@
                                             Opacity="0.35"
                                             ToolTip.Tip="Shuffle: Off">
                                         <Image Source="{SvgImage /Assets/shuffle.svg}"
-                                               Width="17" Height="17"/>
-                                    </Button>
-                                    <Button
-                                            Classes="icon"
-                                            Click="OnSettingsClicked"
-                                            Opacity="0.86"
-                                            ToolTip.Tip="Settings">
-                                        <Image Source="{SvgImage /Assets/gear.svg}"
                                                Width="17" Height="17"/>
                                     </Button>
                                 </StackPanel>

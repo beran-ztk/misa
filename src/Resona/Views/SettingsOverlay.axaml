@@ -64,6 +64,27 @@
             <Setter Property="HorizontalContentAlignment" Value="Center"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
+        <Style Selector="ToggleButton.discord-presence-toggle">
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="Padding" Value="12"/>
+            <Setter Property="Background" Value="#20C85353"/>
+            <Setter Property="BorderBrush" Value="#72DB6767"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="7"/>
+        </Style>
+        <Style Selector="ToggleButton.discord-presence-toggle:pointerover">
+            <Setter Property="Background" Value="#2EC85353"/>
+            <Setter Property="BorderBrush" Value="#91E27676"/>
+        </Style>
+        <Style Selector="ToggleButton.discord-presence-toggle:checked">
+            <Setter Property="Background" Value="#255A8FC8"/>
+            <Setter Property="BorderBrush" Value="#815F9FD9"/>
+        </Style>
+        <Style Selector="ToggleButton.discord-presence-toggle:checked:pointerover">
+            <Setter Property="Background" Value="#345A8FC8"/>
+            <Setter Property="BorderBrush" Value="#A46FADE3"/>
+        </Style>
         <Style Selector="ScrollViewer">
             <Setter Property="Padding" Value="0,0,14,0"></Setter>
         </Style>
@@ -295,6 +316,21 @@
             <ScrollViewer x:Name="DiscordPage" Grid.Row="2" IsVisible="False" Margin="30,22,30,0"
                           HorizontalScrollBarVisibility="Disabled">
                 <StackPanel Spacing="18" Margin="0,0,0,24">
+                    <ToggleButton x:Name="DiscordPresenceToggle"
+                                  Classes="discord-presence-toggle"
+                                  Checked="OnDiscordPresenceEnabledChanged"
+                                  Unchecked="OnDiscordPresenceEnabledChanged">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                            <StackPanel Spacing="3">
+                                <TextBlock Text="Discord Rich Presence" FontSize="12.5" FontWeight="SemiBold"/>
+                                <TextBlock Text="Show the current Resona track on your Discord profile."
+                                           FontSize="10.5" Opacity="0.56" TextWrapping="Wrap"/>
+                            </StackPanel>
+                            <TextBlock x:Name="DiscordPresenceStatusText" Grid.Column="1"
+                                       FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        </Grid>
+                    </ToggleButton>
+
                     <Border Background="{DynamicResource Theme.Brush.SurfaceTranslucent}"
                             BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
                             BorderThickness="1" CornerRadius="7" Padding="12">
