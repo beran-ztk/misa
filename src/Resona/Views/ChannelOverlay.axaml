@@ -7,7 +7,7 @@
     <UserControl.Resources>
         <DataTemplate x:Key="ChannelCardTemplate" x:DataType="models:ChannelHubItem">
             <Border Classes="channel-card" Width="308"
-                    MinHeight="158"
+                    MinHeight="140"
                     Margin="0,0,10,10"
                     Padding="14,12"
                     Background="#10FFFFFF"
@@ -16,7 +16,7 @@
                     CornerRadius="8"
                     Cursor="Hand"
                     Tapped="OnChannelCardTapped">
-                <Grid RowDefinitions="Auto,Auto,Auto,*,Auto" RowSpacing="8">
+                <Grid RowDefinitions="Auto,Auto,Auto,*" RowSpacing="8">
                     <Grid ColumnDefinitions="42,*,Auto" ColumnSpacing="10">
                         <Border Width="42" Height="42" CornerRadius="21"
                                 Background="#243E6591"
@@ -31,13 +31,18 @@
                         <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
                             <TextBlock Text="{Binding Name}" FontSize="13.5" FontWeight="SemiBold"
                                        TextTrimming="CharacterEllipsis" MaxWidth="185"/>
-                            <TextBlock Text="{Binding TrackCountText}" FontSize="10.5" Opacity="0.58"/>
+                            <StackPanel Orientation="Horizontal" Spacing="5">
+                                <TextBlock Text="{Binding TrackCountText}" FontSize="10.5" Opacity="0.58"/>
+                                <TextBlock Text="·" FontSize="10.5" Opacity="0.36"
+                                           IsVisible="{Binding HasNewVideos}"/>
+                                <TextBlock Text="{Binding NewVideoText}" FontSize="10.5" Opacity="0.58"
+                                           IsVisible="{Binding HasNewVideos}"/>
+                            </StackPanel>
                         </StackPanel>
-                        <Border Grid.Column="2" IsVisible="{Binding HasNewVideos}"
-                                Background="#263E6591" CornerRadius="10" Padding="7,3"
-                                VerticalAlignment="Top">
-                            <TextBlock Text="{Binding NewVideoText}" FontSize="9.5" Foreground="#B9D9F5"/>
-                        </Border>
+                        <Button Grid.Column="2" Classes="follow-toggle" Classes.following="{Binding IsFollowed}"
+                                Content="{Binding FollowGlyph}" Click="OnFollowChannelClicked"
+                                ToolTip.Tip="{Binding FollowToolTip}"
+                                HorizontalAlignment="Right" VerticalAlignment="Top"/>
                     </Grid>
                     <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="10">
                         <StackPanel Spacing="1">
@@ -56,13 +61,6 @@
                                IsVisible="{Binding HasTopTracks}"
                                FontSize="10" Opacity="0.58" TextWrapping="NoWrap"
                                LineHeight="15" MinHeight="45" MaxHeight="45"/>
-                    <Grid Grid.Row="4" ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                        <TextBlock Text="{Binding AutomationText}"
-                                   FontSize="9.5" Opacity="0.42" VerticalAlignment="Center"/>
-                        <Button Grid.Column="1" Classes="follow-toggle" Classes.following="{Binding IsFollowed}"
-                                Content="{Binding FollowGlyph}" Click="OnFollowChannelClicked"
-                                ToolTip.Tip="{Binding FollowToolTip}"/>
-                    </Grid>
                 </Grid>
             </Border>
         </DataTemplate>
@@ -583,32 +581,68 @@
                 </Border>
 
                 <Grid Grid.Row="1" RowDefinitions="Auto,Auto,Auto" RowSpacing="8">
-                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                    <Grid ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="8">
                         <TextBlock Text="VIDEOS" FontSize="9.5" FontWeight="SemiBold" LetterSpacing="0.9"
                                    Opacity="0.48" VerticalAlignment="Center"/>
-                        <TextBlock Grid.Column="1" x:Name="VideoSummaryText" IsVisible="False"/>
-                        <TextBlock Grid.Column="2" x:Name="DetailRefreshStatusText" IsVisible="False"
+                        <Button Grid.Column="1" Classes="channel-icon" Width="24" Height="24"
+                                Click="OnRetryMetadataIssuesClicked" ToolTip.Tip="Retry failed metadata for this channel">
+                            <Image Source="{SvgImage /Assets/reload.svg}" Width="12" Height="12"/>
+                        </Button>
+                        <TextBlock Grid.Column="2" x:Name="VideoSummaryText" IsVisible="False"/>
+                        <TextBlock Grid.Column="3" x:Name="DetailRefreshStatusText" IsVisible="False"
                                    FontSize="10" Foreground="#AFCDE6" VerticalAlignment="Center"
                                    MaxWidth="220" TextTrimming="CharacterEllipsis"/>
                     </Grid>
-                    <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,*,Auto" ColumnSpacing="6">
-                        <Button x:Name="NewVideosFilterButton" Classes="video-filter" Content="New"
-                                Click="OnNewVideosFilterClicked"/>
-                        <Button Grid.Column="1" x:Name="ReadyVideosFilterButton" Classes="video-filter" Content="Ready"
-                                Click="OnReadyVideosFilterClicked"/>
-                        <Button Grid.Column="2" x:Name="LibraryVideosFilterButton" Classes="video-filter" Content="In library"
-                                Click="OnLibraryVideosFilterClicked"/>
-                        <Button Grid.Column="3" x:Name="MetadataVideosFilterButton" Classes="video-filter" Content="Metadata"
-                                Click="OnMetadataVideosFilterClicked"/>
-                        <Button Grid.Column="4" x:Name="IssueVideosFilterButton" Classes="video-filter" Content="Issues"
-                                Click="OnIssueVideosFilterClicked"/>
-                        <Button Grid.Column="5" Classes="channel-icon" Width="26" Height="26"
-                                Click="OnRetryMetadataIssuesClicked" ToolTip.Tip="Retry failed metadata for this channel">
-                            <Image Source="{SvgImage /Assets/reload.svg}" Width="13" Height="13"/>
+                    <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,*,Auto" ColumnSpacing="6">
+                        <Button x:Name="AllVideosFilterButton" Classes="video-filter" Click="OnAllVideosFilterClicked">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <TextBlock Text="All"/>
+                                <Border Background="#18FFFFFF" CornerRadius="8" Padding="5,1">
+                                    <TextBlock x:Name="AllVideosCountText" FontSize="8.5" Opacity="0.72"/>
+                                </Border>
+                            </StackPanel>
                         </Button>
-                        <Button Grid.Column="6" x:Name="AllVideosFilterButton" Classes="video-filter" Content="All"
-                                Click="OnAllVideosFilterClicked"/>
-                        <StackPanel Grid.Column="8" Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
+                        <Button Grid.Column="1" x:Name="NewVideosFilterButton" Classes="video-filter" Click="OnNewVideosFilterClicked">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <TextBlock Text="New"/>
+                                <Border Background="#18FFFFFF" CornerRadius="8" Padding="5,1">
+                                    <TextBlock x:Name="NewVideosCountText" FontSize="8.5" Opacity="0.72"/>
+                                </Border>
+                            </StackPanel>
+                        </Button>
+                        <Button Grid.Column="2" x:Name="MetadataVideosFilterButton" Classes="video-filter" Click="OnMetadataVideosFilterClicked">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <TextBlock Text="Metadata"/>
+                                <Border Background="#18FFFFFF" CornerRadius="8" Padding="5,1">
+                                    <TextBlock x:Name="MetadataVideosCountText" FontSize="8.5" Opacity="0.72"/>
+                                </Border>
+                            </StackPanel>
+                        </Button>
+                        <Button Grid.Column="3" x:Name="ReadyVideosFilterButton" Classes="video-filter" Click="OnReadyVideosFilterClicked">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <TextBlock Text="Ready"/>
+                                <Border Background="#18FFFFFF" CornerRadius="8" Padding="5,1">
+                                    <TextBlock x:Name="ReadyVideosCountText" FontSize="8.5" Opacity="0.72"/>
+                                </Border>
+                            </StackPanel>
+                        </Button>
+                        <Button Grid.Column="4" x:Name="LibraryVideosFilterButton" Classes="video-filter" Click="OnLibraryVideosFilterClicked">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <TextBlock Text="In library"/>
+                                <Border Background="#18FFFFFF" CornerRadius="8" Padding="5,1">
+                                    <TextBlock x:Name="LibraryVideosCountText" FontSize="8.5" Opacity="0.72"/>
+                                </Border>
+                            </StackPanel>
+                        </Button>
+                        <Button Grid.Column="5" x:Name="IssueVideosFilterButton" Classes="video-filter" Click="OnIssueVideosFilterClicked">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <TextBlock Text="Issues"/>
+                                <Border Background="#18FFFFFF" CornerRadius="8" Padding="5,1">
+                                    <TextBlock x:Name="IssueVideosCountText" FontSize="8.5" Opacity="0.72"/>
+                                </Border>
+                            </StackPanel>
+                        </Button>
+                        <StackPanel Grid.Column="7" Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
                             <TextBlock Text="Channel max" FontSize="9.5" Opacity="0.52" VerticalAlignment="Center"/>
                             <TextBox x:Name="ChannelMaxDurationBox" Classes="compact-search"
                                      Width="42" Height="26" FontSize="10" TextAlignment="Center"

@@ -813,12 +813,12 @@ public partial class ChannelOverlay : UserControl
         var issueCount = _currentVideos.Count(video =>
             video.DownloadStatus is ChannelDownloadStatus.Failed or ChannelDownloadStatus.Skipped
             || video.MetadataStatus == ChannelMetadataStatus.Failed);
-        NewVideosFilterButton.Content = $"New {newCount}";
-        ReadyVideosFilterButton.Content = $"Ready {readyCount}";
-        LibraryVideosFilterButton.Content = $"In library {libraryCount}";
-        MetadataVideosFilterButton.Content = $"Metadata {missingMetadataCount}";
-        IssueVideosFilterButton.Content = $"Issues {issueCount}";
-        AllVideosFilterButton.Content = $"All {_currentVideos.Count}";
+        AllVideosCountText.Text = _currentVideos.Count.ToString("N0");
+        NewVideosCountText.Text = newCount.ToString("N0");
+        MetadataVideosCountText.Text = missingMetadataCount.ToString("N0");
+        ReadyVideosCountText.Text = readyCount.ToString("N0");
+        LibraryVideosCountText.Text = libraryCount.ToString("N0");
+        IssueVideosCountText.Text = issueCount.ToString("N0");
 
         var search = VideoSearchBox.Text?.Trim() ?? string.Empty;
         IEnumerable<ChannelVideoDisplay> videos = _currentVideos;

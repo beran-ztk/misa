@@ -246,8 +246,10 @@
                                                VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
                                     <Button x:Name="OpenChannelButton" Grid.Row="1" Grid.Column="2"
                                             Click="OnOpenChannelClicked" ToolTip.Tip="Open channel in Channel Hub"
-                                            Width="26" Height="24" Padding="0" Background="Transparent" BorderThickness="0" Opacity="0.76">
-                                        <TextBlock Text="›" FontSize="19" Margin="0,-2,0,0"/>
+                                            Width="26" Height="24" Padding="0" Background="Transparent" BorderThickness="0" Opacity="0.76"
+                                            HorizontalContentAlignment="Center" VerticalContentAlignment="Center">
+                                        <TextBlock Text="›" Width="24" FontSize="19" TextAlignment="Center"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-2,0,0"/>
                                     </Button>
 
                                     <TextBlock Grid.Row="2" Text="YouTube URL" FontSize="10.5" Opacity="0.58" VerticalAlignment="Center" />
