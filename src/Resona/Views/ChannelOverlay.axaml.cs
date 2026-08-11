@@ -142,10 +142,15 @@ public partial class ChannelOverlay : UserControl
     private void RefreshDeleteUnratedAction()
     {
         var count = MusicLibraryService.Current.CountUnratedTracks();
-        DeleteUnratedButton.IsEnabled = count > 0;
-        DeleteUnratedDescriptionText.Text = count == 1
-            ? "This permanently removes the local audio file and library data for 1 unrated track."
-            : $"This permanently removes the local audio files and library data for {count:N0} unrated tracks.";
+        DeleteUnratedButton.IsEnabled = true;
+        ConfirmDeleteUnratedButton.IsEnabled = count > 0;
+        ConfirmDeleteUnratedButton.Content = count > 0 ? "Delete tracks" : "Nothing to delete";
+        DeleteUnratedDescriptionText.Text = count switch
+        {
+            0 => "There are currently no unrated tracks to delete.",
+            1 => "This permanently removes the local audio file and library data for 1 unrated track.",
+            _ => $"This permanently removes the local audio files and library data for {count:N0} unrated tracks."
+        };
     }
 
     private void OnCancelDeleteUnratedClicked(object? sender, RoutedEventArgs e) =>
@@ -171,8 +176,7 @@ public partial class ChannelOverlay : UserControl
         }
         finally
         {
-            ConfirmDeleteUnratedButton.Content = "Delete tracks";
-            ConfirmDeleteUnratedButton.IsEnabled = true;
+            RefreshDeleteUnratedAction();
         }
     }
 
