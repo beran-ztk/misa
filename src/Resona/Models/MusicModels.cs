@@ -167,14 +167,42 @@ public sealed record ChannelHubItem(
     }
 
     public string TrackCountText => LocalTrackCount == 1 ? "1 track" : $"{LocalTrackCount} tracks";
+    public string LibrarySummaryText => LocalTrackCount == 1
+        ? RatedTrackCount == 1 ? "1 track · rated" : "1 track · unrated"
+        : $"{LocalTrackCount:N0} tracks · {RatedTrackCount:N0} rated";
+    public string LibraryDetailText
+    {
+        get
+        {
+            if (!System.DateTime.TryParse(LastDownloadedAt, out var downloadedAt))
+                return RecommendationReason;
+            return $"{RecommendationReason} · latest {downloadedAt.ToLocalTime():dd MMM yyyy}";
+        }
+    }
     public string RatingText => AverageRating is double average
         ? $"{average:0.0} avg · {RatedTrackCount} out of {LocalTrackCount} tracks rated"
         : "No ratings yet";
+    public string QualitySummaryText => AverageRating is double average
+        ? $"{average:0.0} average rating"
+        : "No ratings yet";
+    public string QualityDetailText => AverageRating is null
+        ? "No rated tracks"
+        : $"{FavoriteCount:N0} favorite{(FavoriteCount == 1 ? string.Empty : "s")} · {GreatOrBetterCount:N0} great+";
     public string ActivityText => PlayCount == 0 ? "Not played yet" : $"{PlayCount} plays · {SkipCount} skips";
+    public string ListeningSignalText => PlayCount <= 0
+        ? "No listening history"
+        : $"{System.Math.Clamp(SkipCount / (double)PlayCount * 100d, 0d, 100d):0}% skip rate";
+    public string VideoSummaryText => KnownVideoCount == 1 ? "1 known video" : $"{KnownVideoCount:N0} known videos";
+    public string VideoQueueText => UncheckedVideoCount == 0
+        ? "Nothing new"
+        : UncheckedVideoCount == 1 ? "1 new video" : $"{UncheckedVideoCount:N0} new videos";
     public string NewVideoText => UncheckedVideoCount == 1 ? "1 new video" : $"{UncheckedVideoCount} new videos";
     public bool HasNewVideos => UncheckedVideoCount > 0;
     public bool HasTopTracks => TopTracks.Count > 0;
     public string TopTracksText => string.Join("\n", TopTracks.Take(3));
+    public string TopTracksInlineText => TopTracks.Count == 0
+        ? "No local tracks yet"
+        : string.Join("  ·  ", TopTracks.Take(3));
     public string FollowActionText => IsFollowed ? "Following" : "Follow";
     public string AutomationText => AutoDownload ? "Auto-download on" : "Manual downloads";
     public string DurationLimitText => MaxDurationMinutes is int minutes
@@ -183,6 +211,19 @@ public sealed record ChannelHubItem(
     public string FollowerText => FollowerCount is long followers
         ? $"{FormatCompactNumber(followers)} YouTube followers"
         : string.Empty;
+    public string ChannelMetadataText
+    {
+        get
+        {
+            var followerText = FollowerText.Length > 0 ? FollowerText : "Follower count unavailable";
+            if (!System.DateTime.TryParse(LastCheckedAt, out var checkedAt))
+                return $"{followerText} · not checked yet";
+            return $"{followerText} · checked {checkedAt.ToLocalTime():dd MMM yyyy}";
+        }
+    }
+    public string AutomationSummaryText => AutoDownload
+        ? $"Auto-download on · {DurationLimitText}"
+        : $"Auto-download off · {DurationLimitText}";
 
     public double RecommendationScore
     {
