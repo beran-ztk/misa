@@ -251,6 +251,14 @@
                     <StackPanel Spacing="2" VerticalAlignment="Center">
                         <TextBlock Text="Channels" FontSize="19" FontWeight="SemiBold"/>
                         <TextBlock x:Name="HubSummaryText" FontSize="10.5" Opacity="0.56"/>
+                        <StackPanel x:Name="HubBackgroundStatusPanel" IsVisible="False" Spacing="2" Margin="0,5,0,0">
+                            <TextBlock x:Name="HubBackgroundOverallText" FontSize="10.5"
+                                       Foreground="#BCD9EF"/>
+                            <TextBlock x:Name="HubBackgroundCurrentText" FontSize="9.5" Opacity="0.52"
+                                       MaxWidth="430" TextTrimming="CharacterEllipsis"/>
+                            <ProgressBar x:Name="HubBackgroundProgress" Height="2" Width="260"
+                                         HorizontalAlignment="Left" Minimum="0" Maximum="1"/>
+                        </StackPanel>
                     </StackPanel>
                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                         <TextBox x:Name="ChannelSearchBox" Classes="compact-search"
@@ -410,6 +418,14 @@
                     <StackPanel Grid.Column="2" Spacing="1" VerticalAlignment="Center">
                         <TextBlock x:Name="SelectedChannelText" FontSize="17" FontWeight="SemiBold"/>
                         <TextBlock x:Name="DetailSubtitleText" FontSize="10.5" Opacity="0.56"/>
+                        <StackPanel x:Name="DetailBackgroundStatusPanel" IsVisible="False" Spacing="1" Margin="0,3,0,0">
+                            <TextBlock x:Name="DetailBackgroundOverallText" FontSize="10"
+                                       Foreground="#BCD9EF"/>
+                            <TextBlock x:Name="DetailBackgroundCurrentText" FontSize="9" Opacity="0.5"
+                                       MaxWidth="380" TextTrimming="CharacterEllipsis"/>
+                            <ProgressBar x:Name="DetailBackgroundProgress" Height="2" Width="230"
+                                         HorizontalAlignment="Left" Minimum="0" Maximum="1"/>
+                        </StackPanel>
                     </StackPanel>
                     <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
                         <Button x:Name="DetailFollowButton" Classes="follow-action" Click="OnDetailFollowClicked"/>

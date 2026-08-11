@@ -32,6 +32,7 @@ public class MusicDatabase
         if (File.Exists(Values.DbPath))
         {
             using var existingConnection = Open();
+            EnableConcurrentReads(existingConnection);
             ApplyMigrations(existingConnection);
             return;
         }
@@ -45,6 +46,15 @@ public class MusicDatabase
         CreateSchema(conn, tx);
         SeedDefaultMetadata(conn, tx);
         tx.Commit();
+    }
+
+    private static void EnableConcurrentReads(SqliteConnection connection)
+    {
+        using var command = connection.CreateCommand();
+        command.CommandText = "PRAGMA journal_mode = WAL;";
+        command.ExecuteScalar();
+        command.CommandText = "PRAGMA synchronous = NORMAL;";
+        command.ExecuteNonQuery();
     }
 
     private static void CreateSchema(SqliteConnection conn, SqliteTransaction tx)
@@ -769,6 +779,7 @@ public class MusicDatabase
         string archivePath)
     {
         using var conn = Open();
+        EnableConcurrentReads(conn);
         using var tx = conn.BeginTransaction();
         ExecuteInsert(conn, tx, @"
             INSERT INTO portable_exports

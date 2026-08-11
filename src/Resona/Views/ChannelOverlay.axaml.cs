@@ -31,7 +31,7 @@ public partial class ChannelOverlay : UserControl
     private int _selectedChannelId = -1;
     private bool _detailOpenedFromInbox;
     private bool _loadingVideos;
-    private ChannelVideoFilter _videoFilter = ChannelVideoFilter.New;
+    private ChannelVideoFilter _videoFilter = ChannelVideoFilter.All;
     private readonly Dictionary<int, ChannelVideoFilter> _videoFiltersByChannel = [];
     private readonly Dictionary<int, string> _videoSearchByChannel = [];
     private readonly ConcurrentDictionary<int, Bitmap> _channelArtworkCache = [];
@@ -62,7 +62,8 @@ public partial class ChannelOverlay : UserControl
             RefreshChannelStates();
         };
         ChannelHubBackgroundService.Current.SnapshotChanged += OnChannelSnapshotChanged;
-        SetVideoFilter(ChannelVideoFilter.New, refresh: false);
+        ChannelHubBackgroundService.Current.StatusChanged += OnBackgroundStatusChanged;
+        SetVideoFilter(ChannelVideoFilter.All, refresh: false);
     }
 
     public void Open()
@@ -72,6 +73,7 @@ public partial class ChannelOverlay : UserControl
         DetailView.IsVisible = false;
         InboxView.IsVisible = false;
         _detailOpenedFromInbox = false;
+        UpdateBackgroundStatus(ChannelHubBackgroundService.Current.Status);
         var snapshot = ChannelHubBackgroundService.Current.Snapshot;
         if (snapshot.Count > 0)
             OnChannelSnapshotChanged(snapshot);
@@ -130,6 +132,24 @@ public partial class ChannelOverlay : UserControl
         _ = PrepareChannelSnapshotAsync(snapshot, generation);
     }
 
+    private void OnBackgroundStatusChanged(ChannelHubWorkStatus status) =>
+        Dispatcher.UIThread.Post(() => UpdateBackgroundStatus(status));
+
+    private void UpdateBackgroundStatus(ChannelHubWorkStatus status)
+    {
+        HubBackgroundStatusPanel.IsVisible = status.IsActive;
+        DetailBackgroundStatusPanel.IsVisible = status.IsActive;
+        if (!status.IsActive)
+            return;
+
+        HubBackgroundOverallText.Text = status.OverallText;
+        HubBackgroundCurrentText.Text = status.CurrentText;
+        HubBackgroundProgress.Value = status.Progress;
+        DetailBackgroundOverallText.Text = status.OverallText;
+        DetailBackgroundCurrentText.Text = status.CurrentText;
+        DetailBackgroundProgress.Value = status.Progress;
+    }
+
     private async Task PrepareChannelSnapshotAsync(IReadOnlyList<ChannelHubItem> snapshot, int generation)
     {
         var prepared = await Task.Run(() =>
@@ -176,9 +196,16 @@ public partial class ChannelOverlay : UserControl
 
             if (_selectedChannelId < 0)
                 return;
+            var previousKnownVideoCount = _selectedHubChannel?.KnownVideoCount;
+            var previousLocalTrackCount = _selectedHubChannel?.LocalTrackCount;
             _selectedHubChannel = _hubChannels.FirstOrDefault(channel => channel.Id == _selectedChannelId);
             if (DetailView.IsVisible && _selectedHubChannel is not null)
+            {
                 UpdateDetailHeader();
+                if (previousKnownVideoCount != _selectedHubChannel.KnownVideoCount
+                    || previousLocalTrackCount != _selectedHubChannel.LocalTrackCount)
+                    RefreshVideos();
+            }
         });
     }
 
@@ -319,7 +346,7 @@ public partial class ChannelOverlay : UserControl
         _detailOpenedFromInbox = fromInbox;
         VideoSearchBox.Text = _videoSearchByChannel.GetValueOrDefault(channel.Id, string.Empty);
         SetVideoFilter(
-            _videoFiltersByChannel.GetValueOrDefault(channel.Id, ChannelVideoFilter.New),
+            _videoFiltersByChannel.GetValueOrDefault(channel.Id, ChannelVideoFilter.All),
             refresh: false);
         HubView.IsVisible = false;
         InboxView.IsVisible = false;
@@ -672,9 +699,24 @@ public partial class ChannelOverlay : UserControl
 
     private async Task LoadVideosAsync(int channelId, int generation)
     {
-        var videos = await Task.Run(() => MusicLibraryService.Current.GetChannelVideos(channelId)
-            .Select(video => new ChannelVideoDisplay(video))
-            .ToList());
+        List<ChannelVideoDisplay> videos;
+        try
+        {
+            videos = await Task.Run(() => MusicLibraryService.Current.GetChannelVideos(channelId)
+                .Select(video => new ChannelVideoDisplay(video))
+                .ToList());
+        }
+        catch (Exception exception)
+        {
+            if (generation == _videoLoadGeneration && channelId == _selectedChannelId)
+            {
+                VideoSummaryText.Text = "Could not load videos";
+                EmptyVideoPanel.IsVisible = true;
+                EmptyVideoTitleText.Text = "Videos temporarily unavailable";
+                EmptyVideoDescriptionText.Text = exception.Message;
+            }
+            return;
+        }
 
         if (generation != _videoLoadGeneration || channelId != _selectedChannelId)
             return;
@@ -970,6 +1012,8 @@ public partial class ChannelOverlay : UserControl
     {
         if (!IsVisible)
             return;
+        if (DetailView.IsVisible && _selectedChannelId >= 0)
+            RefreshVideos();
         RefreshChannels();
     }
 

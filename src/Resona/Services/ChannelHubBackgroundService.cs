@@ -7,6 +7,17 @@ using Resona.Models;
 
 namespace Resona.Services;
 
+public sealed record ChannelHubWorkStatus(
+    bool IsActive,
+    string OverallText,
+    string CurrentText,
+    int Current,
+    int Total)
+{
+    public double Progress => Total <= 0 ? 0 : Math.Clamp((double)(Current - 1) / Total, 0, 1);
+    public static ChannelHubWorkStatus Idle { get; } = new(false, string.Empty, string.Empty, 0, 0);
+}
+
 /// <summary>
 /// Owns Channel Hub cache refreshes and slow remote enrichment. Public methods
 /// only enqueue work; database, yt-dlp and image downloads never run on the UI
@@ -25,11 +36,15 @@ public sealed class ChannelHubBackgroundService
     private Task? _enrichmentWorker;
     private Task? _followedRefreshWorker;
     private int _refreshRequested;
+    private int _enrichmentTotal;
+    private int _enrichmentCompleted;
     private bool _initialized;
     private bool _startupFollowedRefreshQueued;
     private IReadOnlyList<ChannelHubItem> _snapshot = Array.Empty<ChannelHubItem>();
+    private ChannelHubWorkStatus _status = ChannelHubWorkStatus.Idle;
 
     public event Action<IReadOnlyList<ChannelHubItem>>? SnapshotChanged;
+    public event Action<ChannelHubWorkStatus>? StatusChanged;
 
     public IReadOnlyList<ChannelHubItem> Snapshot
     {
@@ -37,6 +52,15 @@ public sealed class ChannelHubBackgroundService
         {
             lock (_gate)
                 return _snapshot;
+        }
+    }
+
+    public ChannelHubWorkStatus Status
+    {
+        get
+        {
+            lock (_gate)
+                return _status;
         }
     }
 
@@ -75,6 +99,7 @@ public sealed class ChannelHubBackgroundService
             if (_attemptedEnrichments.Contains(channel.Id) || !_queuedEnrichments.Add(channel.Id))
                 return;
             _enrichmentQueue.Enqueue(channel);
+            _enrichmentTotal++;
             if (_enrichmentWorker is { IsCompleted: false })
                 return;
             _enrichmentWorker = Task.Run(ProcessEnrichmentQueueAsync);
@@ -121,8 +146,21 @@ public sealed class ChannelHubBackgroundService
 
     private void QueueMissingChannelData(IReadOnlyList<ChannelHubItem> channels)
     {
-        foreach (var channel in channels.Where(NeedsRemoteEnrichment))
-            RequestEnrichment(channel);
+        lock (_gate)
+        {
+            foreach (var channel in channels.Where(NeedsRemoteEnrichment))
+            {
+                if (string.IsNullOrWhiteSpace(channel.SourceUrl)
+                    || _attemptedEnrichments.Contains(channel.Id)
+                    || !_queuedEnrichments.Add(channel.Id))
+                    continue;
+                _enrichmentQueue.Enqueue(channel);
+                _enrichmentTotal++;
+            }
+
+            if (_enrichmentQueue.Count > 0 && _enrichmentWorker is not { IsCompleted: false })
+                _enrichmentWorker = Task.Run(ProcessEnrichmentQueueAsync);
+        }
     }
 
     private static bool NeedsRemoteEnrichment(ChannelHubItem channel) =>
@@ -136,13 +174,21 @@ public sealed class ChannelHubBackgroundService
         while (true)
         {
             ChannelHubItem channel;
+            int current;
+            int total;
             lock (_gate)
             {
                 if (_enrichmentQueue.Count == 0)
+                {
+                    _enrichmentTotal = 0;
+                    _enrichmentCompleted = 0;
                     return;
+                }
                 channel = _enrichmentQueue.Dequeue();
                 _queuedEnrichments.Remove(channel.Id);
                 _attemptedEnrichments.Add(channel.Id);
+                current = _enrichmentCompleted + 1;
+                total = _enrichmentTotal;
             }
 
             try
@@ -150,10 +196,23 @@ public sealed class ChannelHubBackgroundService
                 await _remoteGate.WaitAsync();
                 try
                 {
-                    await MusicLibraryService.Current.AddOrRefreshChannelAsync(channel.SourceUrl);
+                    PublishStatus(new ChannelHubWorkStatus(
+                        true,
+                        $"Loading channel data · {current} of {total}",
+                        $"Reading {channel.Name}",
+                        current,
+                        total));
+                    var progress = new CallbackProgress(message => PublishStatus(new ChannelHubWorkStatus(
+                        true,
+                        $"Loading channel data · {current} of {total}",
+                        $"{message.TrimEnd('…', '.')} · {channel.Name}",
+                        current,
+                        total)));
+                    await MusicLibraryService.Current.AddOrRefreshChannelAsync(channel.SourceUrl, progress);
                 }
                 finally
                 {
+                    PublishStatus(ChannelHubWorkStatus.Idle);
                     _remoteGate.Release();
                 }
                 RequestRefresh();
@@ -162,6 +221,11 @@ public sealed class ChannelHubBackgroundService
             {
                 // Remote enrichment is best-effort and retried next app session.
             }
+            finally
+            {
+                lock (_gate)
+                    _enrichmentCompleted++;
+            }
         }
     }
 
@@ -169,18 +233,34 @@ public sealed class ChannelHubBackgroundService
     {
         try
         {
-            var followed = MusicLibraryService.Current.GetChannelSubscriptions();
-            foreach (var channel in followed)
-            {
-                lock (_gate)
+            var followed = MusicLibraryService.Current.GetChannelSubscriptions()
+                .Where(channel =>
                 {
-                    if (_queuedEnrichments.Contains(channel.Id) || _attemptedEnrichments.Contains(channel.Id))
-                        continue;
-                }
+                    lock (_gate)
+                        return !_queuedEnrichments.Contains(channel.Id)
+                               && !_attemptedEnrichments.Contains(channel.Id);
+                })
+                .ToList();
+            for (var index = 0; index < followed.Count; index++)
+            {
+                var channel = followed[index];
                 await _remoteGate.WaitAsync();
                 try
                 {
-                    await MusicLibraryService.Current.RefreshChannelAsync(channel);
+                    var current = index + 1;
+                    PublishStatus(new ChannelHubWorkStatus(
+                        true,
+                        $"Refreshing followed channels · {current} of {followed.Count}",
+                        $"Reading uploads from {channel.Name}",
+                        current,
+                        followed.Count));
+                    var progress = new CallbackProgress(message => PublishStatus(new ChannelHubWorkStatus(
+                        true,
+                        $"Refreshing followed channels · {current} of {followed.Count}",
+                        $"{message.TrimEnd('…', '.')} · {channel.Name}",
+                        current,
+                        followed.Count)));
+                    await MusicLibraryService.Current.RefreshChannelAsync(channel, progress);
                 }
                 catch
                 {
@@ -188,6 +268,7 @@ public sealed class ChannelHubBackgroundService
                 }
                 finally
                 {
+                    PublishStatus(ChannelHubWorkStatus.Idle);
                     _remoteGate.Release();
                 }
                 RequestRefresh();
@@ -197,5 +278,24 @@ public sealed class ChannelHubBackgroundService
         {
             // Startup refresh is optional and must remain invisible to the UI.
         }
+    }
+
+    private void PublishStatus(ChannelHubWorkStatus status)
+    {
+        lock (_gate)
+            _status = status;
+        try
+        {
+            StatusChanged?.Invoke(status);
+        }
+        catch
+        {
+            // Progress presentation must never affect background work.
+        }
+    }
+
+    private sealed class CallbackProgress(Action<string> callback) : IProgress<string>
+    {
+        public void Report(string value) => callback(value);
     }
 }

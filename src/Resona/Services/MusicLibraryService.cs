@@ -339,10 +339,13 @@ public class MusicLibraryService
             return new ChannelRefreshResult(false, 0, 0, "Channel was read, but no videos were returned.");
 
         if (!string.IsNullOrWhiteSpace(snapshot.ThumbnailUrl))
+        {
+            progress?.Report("Downloading channel icon…");
             snapshot = snapshot with
             {
                 Thumbnail = await _downloader.DownloadImageAsync(snapshot.ThumbnailUrl, cancellationToken)
             };
+        }
 
         progress?.Report($"Saving {snapshot.Videos.Count} videos…");
         var result = await Task.Run(
