@@ -6,6 +6,7 @@ namespace Resona.Services;
 
 public sealed class ChannelMetadataService
 {
+    private const int BackgroundBatchSize = 32;
     public static readonly ChannelMetadataService Current = new();
 
     private readonly object _workerGate = new();
@@ -17,7 +18,7 @@ public sealed class ChannelMetadataService
     public void Initialize()
     {
         MusicLibraryService.Current.RecoverChannelMetadataQueue();
-        RequestAutoDownloadMetadata();
+        RequestFollowedChannels();
     }
 
     public void RequestChannel(int channelId, int limit = 20)
@@ -37,6 +38,13 @@ public sealed class ChannelMetadataService
     public void RequestAutoDownloadMetadata(int limit = 40)
     {
         MusicLibraryService.Current.QueueAutoDownloadMetadata(limit);
+        EnsureWorker();
+        QueueChanged?.Invoke();
+    }
+
+    public void RequestFollowedChannels(int limit = BackgroundBatchSize)
+    {
+        MusicLibraryService.Current.QueueFollowedChannelVideoMetadata(limit);
         EnsureWorker();
         QueueChanged?.Invoke();
     }
@@ -81,6 +89,10 @@ public sealed class ChannelMetadataService
         {
             lock (_workerGate)
                 _workerTask = null;
+            // Keep a small queue instead of scheduling thousands of rows at
+            // once. When one batch is exhausted, enqueue the next pending
+            // metadata entries from every followed channel.
+            MusicLibraryService.Current.QueueFollowedChannelVideoMetadata(BackgroundBatchSize);
             if (MusicLibraryService.Current.HasQueuedChannelVideoMetadata())
                 EnsureWorker();
             QueueChanged?.Invoke();

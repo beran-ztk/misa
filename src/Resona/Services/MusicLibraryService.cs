@@ -226,6 +226,7 @@ public class MusicLibraryService
     public int QueueChannelVideoMetadata(int channelId, int limit) => _db.QueueChannelVideoMetadata(channelId, limit);
     public bool QueueSpecificChannelVideoMetadata(int videoId) => _db.QueueSpecificChannelVideoMetadata(videoId);
     public int QueueAutoDownloadMetadata(int limit) => _db.QueueAutoDownloadMetadata(limit);
+    public int QueueFollowedChannelVideoMetadata(int limit) => _db.QueueFollowedChannelVideoMetadata(limit);
     public ChannelVideo? ClaimNextChannelVideoMetadata() => _db.ClaimNextChannelVideoMetadata();
     public bool HasQueuedChannelVideoMetadata() => _db.HasQueuedChannelVideoMetadata();
     public Task<YouTubeTrackMetadata?> GetChannelVideoMetadataAsync(
@@ -238,7 +239,12 @@ public class MusicLibraryService
             metadata,
             error,
             _channelMaxDownloadDurationMinutes);
-    public void SetChannelFollowed(int channelId, bool followed) => _db.SetChannelFollowed(channelId, followed);
+    public void SetChannelFollowed(int channelId, bool followed)
+    {
+        _db.SetChannelFollowed(channelId, followed);
+        if (followed)
+            ChannelMetadataService.Current.RequestFollowedChannels();
+    }
     public void MarkChannelBasicMetadataChecked(int channelId) => _db.MarkChannelBasicMetadataChecked(channelId);
     public List<ChannelNotification> GetChannelNotifications() => _db.GetChannelNotifications();
     public int GetUnreadChannelNotificationCount() => _db.GetUnreadChannelNotificationCount();
@@ -352,7 +358,7 @@ public class MusicLibraryService
         var result = await Task.Run(
             () => _db.SaveChannelSnapshot(snapshot),
             cancellationToken);
-        ChannelMetadataService.Current.RequestAutoDownloadMetadata();
+        ChannelMetadataService.Current.RequestFollowedChannels();
         ChannelDownloadService.Current.NotifyQueueChanged();
         return result;
     }

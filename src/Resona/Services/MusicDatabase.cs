@@ -1595,6 +1595,34 @@ public class MusicDatabase
         return cmd.ExecuteNonQuery();
     }
 
+    public int QueueFollowedChannelVideoMetadata(int limit)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+            UPDATE channel_videos
+            SET metadata_status = 'Queued', metadata_error = NULL, metadata_priority = 10
+            WHERE id IN (
+                SELECT videos.id
+                FROM channel_videos videos
+                JOIN channels ON channels.id = videos.channel_id
+                LEFT JOIN tracks ON tracks.canonical_url = videos.canonical_url
+                WHERE channels.subscribed = 1
+                  AND videos.metadata_status = 'Pending'
+                  AND (tracks.id IS NULL OR tracks.source_metadata_updated_at IS NULL)
+                ORDER BY videos.is_checked ASC,
+                         COALESCE(videos.uploaded_at, videos.discovered_at) DESC,
+                         videos.id DESC
+                LIMIT MAX(0, $limit - (
+                    SELECT COUNT(*)
+                    FROM channel_videos active
+                    WHERE active.metadata_status IN ('Queued', 'Loading')
+                ))
+            )";
+        cmd.Parameters.AddWithValue("$limit", Math.Clamp(limit, 1, 100));
+        return cmd.ExecuteNonQuery();
+    }
+
     public ChannelVideo? ClaimNextChannelVideoMetadata()
     {
         using var conn = Open();
