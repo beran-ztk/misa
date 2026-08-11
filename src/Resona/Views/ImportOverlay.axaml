@@ -40,6 +40,7 @@
         </Style>
     </UserControl.Styles>
 
+    <Border BorderBrush="#14FFFFFF" BorderThickness="0,0,0,1">
     <Grid RowDefinitions="Auto,*">
         <Rectangle x:Name="ImportAtmosphereTint"
                    Grid.RowSpan="2"
@@ -114,4 +115,5 @@
             </Grid>
         </ScrollViewer>
     </Grid>
+    </Border>
 </UserControl>

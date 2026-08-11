@@ -86,6 +86,8 @@
 
         <Border x:Name="EditorSurface"
                 Background="#F2121212"
+                BorderBrush="#14FFFFFF"
+                BorderThickness="0,0,0,1"
                 ZIndex="20">
 
             <Grid RowDefinitions="Auto,1,Auto,1,*">

@@ -750,8 +750,8 @@
                     ClipToBounds="True">
                 <Border x:Name="FilterSurface"
                         Background="#F2121212"
-                        BorderThickness="0,1,0,0"
-                        BorderBrush="{DynamicResource Theme.Brush.Border}">
+                        BorderThickness="0,0,0,1"
+                        BorderBrush="#14FFFFFF">
                 <Grid RowDefinitions="Auto,*" Margin="30,22,30,26">
                     <Rectangle x:Name="FilterAtmosphereTint"
                                Grid.RowSpan="2"

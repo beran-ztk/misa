@@ -215,6 +215,7 @@
         </Style>
     </UserControl.Styles>
 
+    <Border BorderBrush="#14FFFFFF" BorderThickness="0,0,0,1">
     <Grid>
         <Rectangle x:Name="ChannelAtmosphereTint" Opacity="0.12" IsHitTestVisible="False">
             <Rectangle.Fill>
@@ -519,4 +520,5 @@
             </Grid>
         </Grid>
     </Grid>
+    </Border>
 </UserControl>
