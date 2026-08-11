@@ -112,7 +112,6 @@ public partial class MusicView : UserControl
     private List<PortableFilterPreset> _filterPresets = [];
     private string? _activeFilterPresetName;
     private bool _isCreatingPreset;
-    private bool _showReviewOnly;
     private bool _manualRatingFilter;
     private string _visibilityFilterMode = "All";
     private PlayerSessionSettings _restoredPlayerSession = new();
@@ -341,8 +340,6 @@ public partial class MusicView : UserControl
         SettingsOverlay.AppearanceChanged += settings => ApplyAppearanceSettings(settings, refreshTrackRows: true);
         SettingsOverlay.LibraryMetadataChanged += RefreshLibraryPresentation;
         SettingsOverlay.ExportRequested += ExportPortableLibrary;
-        MusicVideoOverlay.CloseRequested += () => MusicVideoOverlay.IsVisible = false;
-        MusicVideoOverlay.ToastRequested += ShowToast;
     }
 
     private void UpdateEditorBounds()
@@ -654,7 +651,6 @@ public partial class MusicView : UserControl
         RefreshVisibleItemsSource(selectedTrackId);
         UpdatePlaylistSummary();
         RefreshNextTrackPreview();
-        UpdateReviewFilterButton();
         RestartVisibleThumbnailLoad();
     }
 
@@ -802,11 +798,6 @@ public partial class MusicView : UserControl
                 .Where(item => !item.NeedsAnalysis)
                 .ToList();
 
-        if (_showReviewOnly)
-            _filteredItems = _filteredItems
-                .Where(item => item.NeedsReview)
-                .ToList();
-
         ApplyLibrarySort();
 
         if (_shuffle)
@@ -824,7 +815,6 @@ public partial class MusicView : UserControl
         UpdatePlaylistSummary();
         RefreshNextTrackPreview();
         UpdateFilterCounts();
-        UpdateReviewFilterButton();
         RestartVisibleThumbnailLoad();
     }
 
@@ -1300,21 +1290,6 @@ public partial class MusicView : UserControl
         if (!SearchBox.IsKeyboardFocusWithin && !hasSearch)
             SearchBox.IsVisible = false;
         SearchToggleBtn.Opacity = SearchBox.IsVisible || hasSearch ? 1.0 : 0.86;
-    }
-
-    private void OnReviewFilterClicked(object? sender, RoutedEventArgs e)
-    {
-        _showReviewOnly = !_showReviewOnly;
-        ApplyFilter();
-    }
-
-    private void UpdateReviewFilterButton()
-    {
-        var count = _allItems.Count(item => item.NeedsReview);
-        ReviewFilterBtn.Opacity = _showReviewOnly ? 1.0 : 0.35;
-        ToolTip.SetTip(ReviewFilterBtn, _showReviewOnly
-            ? $"Review filter: On ({count})"
-            : $"Reviews ({count})");
     }
 
     private void LoadFilterPresets()
@@ -2357,12 +2332,6 @@ public partial class MusicView : UserControl
         ChannelOverlay.Open();
     }
 
-    private void OnMusicVideoClicked(object? sender, RoutedEventArgs e)
-    {
-        MusicVideoOverlay.Margin = new Thickness(0, 0, 0, PlayerBar.Bounds.Height);
-        MusicVideoOverlay.Open();
-    }
-
     private void OnRefreshLibraryClicked(object? sender, RoutedEventArgs e)
     {
         RefreshTrackList();
@@ -2629,7 +2598,6 @@ public partial class MusicView : UserControl
         UpdatePlaylistSummary();
         RefreshNextTrackPreview();
         UpdateFilterCounts();
-        UpdateReviewFilterButton();
         RestartVisibleThumbnailLoad();
     }
 
