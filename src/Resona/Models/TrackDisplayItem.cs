@@ -94,11 +94,11 @@ public record TrackDisplayItem(
         : "  ·  ";
 
     public IBrush PlayingBackground => IsPlaying
-        ? new SolidColorBrush(Color.FromArgb(40, 188, 174, 127))
+        ? new SolidColorBrush(Color.FromArgb(20, 245, 245, 220))
         : Brushes.Transparent;
 
     public IBrush PlayingAccent => IsPlaying
-        ? new SolidColorBrush(Color.FromRgb(183, 240, 0))
+        ? new SolidColorBrush(Color.FromRgb(245, 245, 220))
         : Brushes.Transparent;
 
     public IBrush TitleBrush => NeedsAnalysis
