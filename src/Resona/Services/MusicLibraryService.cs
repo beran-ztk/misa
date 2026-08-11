@@ -276,7 +276,9 @@ public class MusicLibraryService
             return new ChannelRefreshResult(false, 0, 0, "Channel was read, but no videos were returned.");
 
         progress?.Report($"Saving {snapshot.Videos.Count} videos…");
-        var result = _db.SaveChannelSnapshot(snapshot);
+        var result = await Task.Run(
+            () => _db.SaveChannelSnapshot(snapshot),
+            cancellationToken);
         ChannelMetadataService.Current.RequestAutoDownloadMetadata();
         ChannelDownloadService.Current.NotifyQueueChanged();
         return result;

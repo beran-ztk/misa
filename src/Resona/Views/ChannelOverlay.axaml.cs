@@ -18,6 +18,8 @@ public partial class ChannelOverlay : UserControl
     private enum ChannelVideoFilter { New, Ready, InLibrary, Issues, All }
 
     private CancellationTokenSource? _refreshCts;
+    private int? _refreshChannelId;
+    private string _refreshMessage = string.Empty;
     private List<ChannelHubItem> _hubChannels = [];
     private ChannelHubItem? _selectedHubChannel;
     private List<ChannelVideoDisplay> _currentVideos = [];
@@ -191,7 +193,16 @@ public partial class ChannelOverlay : UserControl
         PreviewClosed?.Invoke();
         UpdateDetailHeader();
         RefreshVideos();
-        ChannelMetadataService.Current.RequestChannel(channel.Id, 20);
+        if (channel.IsFollowed
+            && string.IsNullOrWhiteSpace(channel.LastCheckedAt)
+            && !string.IsNullOrWhiteSpace(channel.SourceUrl))
+        {
+            _ = RefreshChannelDiscoveryAsync(channel, "Channel loaded");
+        }
+        else
+        {
+            ChannelMetadataService.Current.RequestChannel(channel.Id, 20);
+        }
     }
 
     private void UpdateDetailHeader()
@@ -224,6 +235,7 @@ public partial class ChannelOverlay : UserControl
         ToolTip.SetTip(DetailNotificationButton, channel.NotificationsEnabled
             ? "Disable channel notifications"
             : "Enable channel notifications");
+        UpdateRefreshPresentation();
     }
 
     private void OnBackToHubClicked(object? sender, RoutedEventArgs e)
@@ -317,23 +329,29 @@ public partial class ChannelOverlay : UserControl
         e.Handled = true;
     }
 
-    private void OnFollowChannelClicked(object? sender, RoutedEventArgs e)
+    private async void OnFollowChannelClicked(object? sender, RoutedEventArgs e)
     {
         if (sender is not Control { DataContext: ChannelHubItem channel })
             return;
-        MusicLibraryService.Current.SetChannelFollowed(channel.Id, !channel.IsFollowed);
+        var followed = !channel.IsFollowed;
+        MusicLibraryService.Current.SetChannelFollowed(channel.Id, followed);
         RefreshChannels();
-        ToastRequested?.Invoke(channel.IsFollowed ? "Channel removed from Following" : "Channel followed");
+        ToastRequested?.Invoke(followed ? "Channel followed" : "Channel removed from Following");
         e.Handled = true;
+        if (followed && string.IsNullOrWhiteSpace(channel.LastCheckedAt))
+            await RefreshChannelDiscoveryAsync(channel, "Channel loaded");
     }
 
-    private void OnDetailFollowClicked(object? sender, RoutedEventArgs e)
+    private async void OnDetailFollowClicked(object? sender, RoutedEventArgs e)
     {
         if (_selectedHubChannel is not { } channel)
             return;
-        MusicLibraryService.Current.SetChannelFollowed(channel.Id, !channel.IsFollowed);
+        var followed = !channel.IsFollowed;
+        MusicLibraryService.Current.SetChannelFollowed(channel.Id, followed);
         RefreshChannels();
-        ToastRequested?.Invoke(channel.IsFollowed ? "Channel removed from Following" : "Channel followed");
+        ToastRequested?.Invoke(followed ? "Channel followed" : "Channel removed from Following");
+        if (followed && string.IsNullOrWhiteSpace(channel.LastCheckedAt))
+            await RefreshChannelDiscoveryAsync(channel, "Channel loaded");
     }
 
     private void OnDetailNotificationsClicked(object? sender, RoutedEventArgs e)
@@ -370,7 +388,8 @@ public partial class ChannelOverlay : UserControl
         {
             await RunRefreshAsync(
                 progress => MusicLibraryService.Current.AddOrRefreshChannelAsync(url!, progress, _refreshCts!.Token),
-                "Channel added");
+                "Channel added",
+                channelId: null);
             UrlBox.Text = string.Empty;
         }
         finally
@@ -401,7 +420,22 @@ public partial class ChannelOverlay : UserControl
                 channel.SourceUrl,
                 progress,
                 _refreshCts!.Token),
-            "Channel refreshed");
+            "Channel refreshed",
+            channel.Id);
+    }
+
+    private System.Threading.Tasks.Task RefreshChannelDiscoveryAsync(ChannelHubItem channel, string successText)
+    {
+        if (_refreshCts is not null || string.IsNullOrWhiteSpace(channel.SourceUrl))
+            return System.Threading.Tasks.Task.CompletedTask;
+
+        return RunRefreshAsync(
+            progress => MusicLibraryService.Current.AddOrRefreshChannelAsync(
+                channel.SourceUrl,
+                progress,
+                _refreshCts!.Token),
+            successText,
+            channel.Id);
     }
 
     private void OnDeleteChannelClicked(object? sender, RoutedEventArgs e)
@@ -425,13 +459,19 @@ public partial class ChannelOverlay : UserControl
 
     private async System.Threading.Tasks.Task RunRefreshAsync(
         Func<IProgress<string>, System.Threading.Tasks.Task<ChannelRefreshResult>> refresh,
-        string successText)
+        string successText,
+        int? channelId)
     {
-        _refreshCts?.Cancel();
+        if (_refreshCts is not null)
+        {
+            ToastRequested?.Invoke("Another channel refresh is already running");
+            return;
+        }
+
         var refreshCts = new CancellationTokenSource();
         _refreshCts = refreshCts;
-        SetRefreshState(true, "Checking channel…");
-        var progress = new Progress<string>(message => SetRefreshState(true, message));
+        SetRefreshState(true, "Checking channel…", channelId);
+        var progress = new Progress<string>(message => SetRefreshState(true, message, channelId));
 
         try
         {
@@ -443,8 +483,8 @@ public partial class ChannelOverlay : UserControl
             }
 
             RefreshChannels();
-            if (DetailView.IsVisible && _selectedChannelId >= 0)
-                ChannelMetadataService.Current.RequestChannel(_selectedChannelId, 20);
+            if (channelId is int refreshedChannelId)
+                ChannelMetadataService.Current.RequestChannel(refreshedChannelId, 20);
             ToastRequested?.Invoke(result.AddedCount > 0
                 ? $"{successText}: {result.AddedCount} new videos"
                 : $"{successText}: no new videos");
@@ -459,20 +499,40 @@ public partial class ChannelOverlay : UserControl
             if (ReferenceEquals(_refreshCts, refreshCts))
             {
                 _refreshCts = null;
-                SetRefreshState(false);
+                SetRefreshState(false, channelId: channelId);
                 UpdateDownloadSummary();
             }
             refreshCts.Dispose();
         }
     }
 
-    private void SetRefreshState(bool active, string? message = null)
+    private void SetRefreshState(bool active, string? message = null, int? channelId = null)
     {
+        _refreshChannelId = active ? channelId : null;
+        _refreshMessage = active ? message ?? "Refreshing…" : string.Empty;
+        UpdateRefreshPresentation();
+    }
+
+    private void UpdateRefreshPresentation()
+    {
+        var active = _refreshCts is not null;
+        var selectedChannelIsRefreshing = active
+                                          && (_refreshChannelId is null
+                                              || _refreshChannelId == _selectedChannelId);
         DetailRefreshButton.IsEnabled = !active;
         DetailRefreshButton.Opacity = active ? 0.35 : 1;
+        ToolTip.SetTip(DetailRefreshButton, active
+            ? selectedChannelIsRefreshing
+                ? _refreshMessage
+                : "Another channel refresh is currently running"
+            : "Refresh channel");
         DetailRefreshStatusText.IsVisible = active && DetailView.IsVisible;
-        DetailRefreshStatusText.Text = active ? message ?? "Refreshing…" : string.Empty;
-        StatusText.Text = active ? message ?? "Refreshing…" : string.Empty;
+        DetailRefreshStatusText.Text = !active
+            ? string.Empty
+            : selectedChannelIsRefreshing
+                ? _refreshMessage
+                : "Another channel is refreshing…";
+        StatusText.Text = active ? _refreshMessage : string.Empty;
     }
 
     private void RefreshVideos()
@@ -821,6 +881,8 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
         DurationText = video.DurationSeconds is int seconds ? FormatDuration(seconds) : "";
         UploadedText = FormatUploadDate(video.UploadedAt);
         MetadataSummaryText = BuildMetadataSummary(video, UploadedText);
+        MetadataErrorDetails = TrimErrorDetails(video.MetadataError);
+        MetadataErrorSummary = ErrorSummary(MetadataErrorDetails);
         MetadataStatus = video.MetadataStatus;
         _trackId = video.TrackId;
         SetDownloadState(video.DownloadStatus, video.DownloadError);
@@ -836,6 +898,9 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
     public bool HasUploadDate => UploadedText.Length > 0;
     public string MetadataSummaryText { get; }
     public bool HasMetadataSummary => MetadataSummaryText.Length > 0;
+    public string MetadataErrorSummary { get; }
+    public string MetadataErrorDetails { get; }
+    public bool HasMetadataError => MetadataErrorSummary.Length > 0;
     public ChannelMetadataStatus MetadataStatus { get; }
     public bool IsChecked
     {
@@ -957,6 +1022,8 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
         CheckBorder = ThemeResources.Brush(value ? "Theme.Brush.Accent" : "Theme.Brush.Border");
         CheckOpacity = value ? 1 : 0.58;
         TextDecorations = value ? Avalonia.Media.TextDecorations.Strikethrough : null;
+        if (value && TrackId is not null)
+            StatusText = "In library";
         CanReview = !value && TrackId is not null;
         UpdateActions();
         UpdateVisualState();
@@ -1008,14 +1075,24 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
 
     private void SetDownloadError(string? error)
     {
+        DownloadErrorDetails = TrimErrorDetails(error);
+        DownloadErrorSummary = ErrorSummary(DownloadErrorDetails);
+        HasDownloadError = DownloadErrorSummary.Length > 0;
+    }
+
+    private static string TrimErrorDetails(string? error)
+    {
         var details = error?.Trim() ?? string.Empty;
-        DownloadErrorDetails = details.Length > 4000 ? details[..4000] + "…" : details;
+        return details.Length > 4000 ? details[..4000] + "…" : details;
+    }
+
+    private static string ErrorSummary(string details)
+    {
         var lines = details.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         var summary = lines.LastOrDefault(line => line.Contains("ERROR", StringComparison.OrdinalIgnoreCase))
                       ?? lines.LastOrDefault()
                       ?? string.Empty;
-        DownloadErrorSummary = summary.Length > 260 ? summary[..260] + "…" : summary;
-        HasDownloadError = DownloadErrorSummary.Length > 0;
+        return summary.Length > 260 ? summary[..260] + "…" : summary;
     }
 
     private void SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
@@ -1059,8 +1136,6 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
             parts.Add($"{FormatCompactNumber(likes)} likes");
         if (video.MetadataStatus is ChannelMetadataStatus.Queued or ChannelMetadataStatus.Loading)
             parts.Add("loading metadata…");
-        else if (video.MetadataStatus == ChannelMetadataStatus.Failed)
-            parts.Add("metadata unavailable");
         return string.Join(" · ", parts);
     }
 

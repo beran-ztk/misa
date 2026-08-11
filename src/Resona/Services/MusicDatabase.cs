@@ -491,6 +491,72 @@ public class MusicDatabase
         EnsureColumn(conn, "channel_videos", "view_count", "INTEGER NULL");
         EnsureColumn(conn, "channel_videos", "like_count", "INTEGER NULL");
         EnsureColumn(conn, "channel_videos", "thumbnail_url", "TEXT NULL");
+        BackfillLibraryChannelVideos(conn);
+    }
+
+    private static void BackfillLibraryChannelVideos(SqliteConnection conn)
+    {
+        using var insert = conn.CreateCommand();
+        insert.CommandText = @"
+            INSERT OR IGNORE INTO channel_videos
+                (channel_id, video_id, canonical_url, title, duration_seconds, uploaded_at,
+                 discovered_at, updated_at, is_checked, download_status, metadata_status)
+            SELECT tracks.channel_id,
+                   'library-track-' || tracks.id,
+                   tracks.canonical_url,
+                   tracks.title,
+                   tracks.duration_seconds,
+                   tracks.uploaded_at,
+                   tracks.downloaded_at,
+                   tracks.updated_at,
+                   1,
+                   'Ready',
+                   'Pending'
+            FROM tracks
+            WHERE tracks.channel_id IS NOT NULL
+              AND tracks.canonical_url IS NOT NULL
+              AND TRIM(tracks.canonical_url) <> ''";
+        insert.ExecuteNonQuery();
+
+        using var resolveExisting = conn.CreateCommand();
+        resolveExisting.CommandText = @"
+            UPDATE channel_videos
+            SET is_checked = CASE
+                    WHEN video_id LIKE 'library-track-%'
+                         OR EXISTS (
+                             SELECT 1 FROM tracks
+                             WHERE tracks.canonical_url = channel_videos.canonical_url
+                               AND tracks.downloaded_at <= channel_videos.discovered_at)
+                        THEN 1
+                    ELSE is_checked
+                END,
+                download_status = 'Ready',
+                download_error = NULL,
+                metadata_status = CASE
+                    WHEN channel_videos.metadata_status = 'Ready' THEN 'Ready'
+                    ELSE 'Pending'
+                END,
+                metadata_error = NULL,
+                metadata_attempts = CASE
+                    WHEN channel_videos.metadata_status = 'Ready' THEN channel_videos.metadata_attempts
+                    ELSE 0
+                END,
+                metadata_priority = 0
+            WHERE EXISTS (
+                SELECT 1
+                FROM tracks
+                WHERE tracks.canonical_url = channel_videos.canonical_url)
+              AND ((is_checked <> 1
+                    AND (video_id LIKE 'library-track-%'
+                         OR EXISTS (
+                             SELECT 1 FROM tracks
+                             WHERE tracks.canonical_url = channel_videos.canonical_url
+                               AND tracks.downloaded_at <= channel_videos.discovered_at)))
+                   OR download_status <> 'Ready'
+                   OR metadata_status IN ('Failed', 'Queued', 'Loading')
+                   OR metadata_error IS NOT NULL
+                   OR metadata_priority <> 0)";
+        resolveExisting.ExecuteNonQuery();
     }
 
     private static void CreateImportQueueSchema(SqliteConnection conn)
@@ -995,7 +1061,6 @@ public class MusicDatabase
                     source_channel_id = COALESCE($sourceChannelId, source_channel_id),
                     source_url = COALESCE($sourceUrl, source_url),
                     auto_download = CASE WHEN subscribed = 0 THEN 0 ELSE auto_download END,
-                    subscribed = 1,
                     updated_at = $now,
                     last_checked_at = $now,
                     video_count = $videoCount
@@ -1033,6 +1098,18 @@ public class MusicDatabase
                     duration_seconds = excluded.duration_seconds,
                     uploaded_at = COALESCE(excluded.uploaded_at, channel_videos.uploaded_at),
                     updated_at = excluded.updated_at,
+                    metadata_status = CASE
+                        WHEN channel_videos.metadata_status = 'Failed' THEN 'Pending'
+                        ELSE channel_videos.metadata_status
+                    END,
+                    metadata_error = CASE
+                        WHEN channel_videos.metadata_status = 'Failed' THEN NULL
+                        ELSE channel_videos.metadata_error
+                    END,
+                    metadata_attempts = CASE
+                        WHEN channel_videos.metadata_status = 'Failed' THEN 0
+                        ELSE channel_videos.metadata_attempts
+                    END,
                     download_status = CASE
                         WHEN EXISTS (SELECT 1 FROM tracks WHERE tracks.canonical_url = excluded.canonical_url) THEN 'Ready'
                         WHEN channel_videos.is_checked = 0 AND excluded.duration_seconds IS NOT NULL
@@ -1355,13 +1432,18 @@ public class MusicDatabase
             UPDATE channel_videos
             SET metadata_status = 'Queued', metadata_error = NULL, metadata_priority = 100
             WHERE id IN (
-                SELECT id FROM channel_videos
-                WHERE channel_id = $channelId
-                  AND metadata_status IN ('Pending', 'Failed', 'Queued')
-                  AND metadata_attempts < 3
-                ORDER BY is_checked ASC,
-                         COALESCE(uploaded_at, discovered_at) DESC,
-                         id DESC
+                SELECT videos.id
+                FROM channel_videos videos
+                LEFT JOIN tracks ON tracks.canonical_url = videos.canonical_url
+                WHERE videos.channel_id = $channelId
+                  AND tracks.id IS NULL
+                  AND videos.metadata_status = 'Pending'
+                  AND NOT EXISTS (
+                      SELECT 1 FROM channel_videos active
+                      WHERE active.channel_id = $channelId
+                        AND active.metadata_status IN ('Queued', 'Loading'))
+                ORDER BY COALESCE(videos.uploaded_at, videos.discovered_at) DESC,
+                         videos.id DESC
                 LIMIT $limit
             )";
         cmd.Parameters.AddWithValue("$channelId", channelId);
@@ -1380,11 +1462,12 @@ public class MusicDatabase
                 SELECT videos.id
                 FROM channel_videos videos
                 JOIN channels ON channels.id = videos.channel_id
+                LEFT JOIN tracks ON tracks.canonical_url = videos.canonical_url
                 WHERE channels.subscribed = 1
                   AND channels.auto_download = 1
+                  AND tracks.id IS NULL
                   AND videos.is_checked = 0
-                  AND videos.metadata_status IN ('Pending', 'Failed')
-                  AND videos.metadata_attempts < 3
+                  AND videos.metadata_status = 'Pending'
                 ORDER BY COALESCE(videos.uploaded_at, videos.discovered_at) DESC,
                          videos.id DESC
                 LIMIT $limit
@@ -1827,8 +1910,38 @@ public class MusicDatabase
             ("$downloadDurationMs", downloadDurationMilliseconds),
             ("$thumbnail", thumbnail));
 
+        SynchronizeLibraryChannelVideo(conn, tx, trackId, now);
+
         tx.Commit();
         return (int)trackId;
+    }
+
+    private static void SynchronizeLibraryChannelVideo(
+        SqliteConnection conn,
+        SqliteTransaction tx,
+        long trackId,
+        string now)
+    {
+        ExecuteInsert(conn, tx, @"
+            INSERT INTO channel_videos
+                (channel_id, video_id, canonical_url, title, duration_seconds, uploaded_at,
+                 discovered_at, updated_at, is_checked, download_status, metadata_status)
+            SELECT channel_id, 'library-track-' || id, canonical_url, title, duration_seconds, uploaded_at,
+                   downloaded_at, $now, 1, 'Ready', 'Pending'
+            FROM tracks
+            WHERE id = $trackId AND channel_id IS NOT NULL
+              AND canonical_url IS NOT NULL AND TRIM(canonical_url) <> ''
+            ON CONFLICT(canonical_url) DO UPDATE SET
+                channel_id = excluded.channel_id,
+                title = excluded.title,
+                duration_seconds = COALESCE(channel_videos.duration_seconds, excluded.duration_seconds),
+                uploaded_at = COALESCE(channel_videos.uploaded_at, excluded.uploaded_at),
+                is_checked = 1,
+                download_status = 'Ready',
+                download_error = NULL,
+                metadata_error = NULL,
+                metadata_priority = 0",
+            ("$trackId", trackId), ("$now", now));
     }
 
     public int InsertPreloadedChannelTrack(

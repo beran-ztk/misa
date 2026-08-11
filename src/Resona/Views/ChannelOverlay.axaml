@@ -430,6 +430,9 @@
                                                    TextTrimming="CharacterEllipsis"/>
                                         <TextBlock Text="{Binding MetadataSummaryText}" FontSize="9.5" Opacity="0.44"
                                                    IsVisible="{Binding HasMetadataSummary}"/>
+                                        <TextBlock Text="{Binding MetadataErrorSummary}" IsVisible="{Binding HasMetadataError}"
+                                                   ToolTip.Tip="{Binding MetadataErrorDetails}" FontSize="10.5"
+                                                   Foreground="#E87878" Opacity="0.86" TextWrapping="Wrap" MaxHeight="34"/>
                                         <TextBlock Text="{Binding DownloadErrorSummary}" IsVisible="{Binding HasDownloadError}"
                                                    ToolTip.Tip="{Binding DownloadErrorDetails}" FontSize="10.5"
                                                    Foreground="#E87878" Opacity="0.86" TextWrapping="Wrap" MaxHeight="34"/>
