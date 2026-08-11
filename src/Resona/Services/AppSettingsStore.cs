@@ -87,6 +87,14 @@ public static class AppSettingsStore
         Save(settings);
     }
 
+    public static void SaveDiscordPresence(string? stateText, string? largeImageText)
+    {
+        var settings = Load();
+        settings.DiscordStateText = string.IsNullOrEmpty(stateText) ? null : stateText;
+        settings.DiscordLargeImageText = string.IsNullOrEmpty(largeImageText) ? null : largeImageText;
+        Save(settings);
+    }
+
     public static void SavePlayerSession(PlayerSessionSettings playerSession)
     {
         var settings = Load();
@@ -121,6 +129,8 @@ public sealed class AppSettings
     public string LastSettingsPage { get; set; } = "library";
     public PlayerSessionSettings PlayerSession { get; set; } = new();
     public Dictionary<int, double> TrackBackdropFocus { get; set; } = [];
+    public string? DiscordStateText { get; set; }
+    public string? DiscordLargeImageText { get; set; }
 }
 
 public sealed class PlayerSessionSettings

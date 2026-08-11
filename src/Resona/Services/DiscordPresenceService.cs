@@ -15,6 +15,17 @@ public sealed class DiscordPresenceService : IDisposable
     private DateTime _nextConnectAttemptUtc = DateTime.MinValue;
     private bool _disposed;
     private int _lastTrackId = -1;
+    private string? _stateTextOverride;
+    private string? _largeImageText;
+
+    public DiscordPresenceService() => ReloadSettings();
+
+    public void ReloadSettings()
+    {
+        var settings = AppSettingsStore.Load();
+        _stateTextOverride = string.IsNullOrEmpty(settings.DiscordStateText) ? null : settings.DiscordStateText;
+        _largeImageText = string.IsNullOrEmpty(settings.DiscordLargeImageText) ? null : settings.DiscordLargeImageText;
+    }
 
     public void Update(TrackDisplayItem item, EngineState state, TimeSpan currentTime, TimeSpan totalTime)
     {
@@ -32,11 +43,12 @@ public sealed class DiscordPresenceService : IDisposable
             Type = ActivityType.Listening,
             StatusDisplay = StatusDisplayType.Details,
             Details = Clip(PresenceTitle(item), 128),
-            State = ClipOrNull(StateText(item), 128),
+            State = ClipPreservingWhitespaceOrNull(_stateTextOverride ?? StateText(item), 128),
+
             Assets = new Assets
             {
                 LargeImageKey = TrackImageUrl(item.Track),
-                LargeImageText = Clip(item.Track.Title, 128)
+                LargeImageText = ClipPreservingWhitespaceOrNull(_largeImageText, 128)
             }
         };
 
@@ -143,12 +155,11 @@ public sealed class DiscordPresenceService : IDisposable
         return value.Length <= maxLength ? value : value[..maxLength];
     }
 
-    private static string? ClipOrNull(string? value, int maxLength)
+    private static string? ClipPreservingWhitespaceOrNull(string? value, int maxLength)
     {
-        if (string.IsNullOrWhiteSpace(value))
+        if (string.IsNullOrEmpty(value))
             return null;
 
-        value = value.Trim();
         return value.Length <= maxLength ? value : value[..maxLength];
     }
 

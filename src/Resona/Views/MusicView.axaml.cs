@@ -338,6 +338,11 @@ public partial class MusicView : UserControl
         EditTrackOverlay.Closed += PrepareActiveTrackEditor;
         SettingsOverlay.ToastRequested += ShowToast;
         SettingsOverlay.AppearanceChanged += settings => ApplyAppearanceSettings(settings, refreshTrackRows: true);
+        SettingsOverlay.DiscordPresenceChanged += () =>
+        {
+            _discordPresence.ReloadSettings();
+            UpdateDiscordPresence();
+        };
         SettingsOverlay.LibraryMetadataChanged += RefreshLibraryPresentation;
         SettingsOverlay.ExportRequested += ExportPortableLibrary;
     }

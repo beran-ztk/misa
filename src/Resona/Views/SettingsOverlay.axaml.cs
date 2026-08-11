@@ -42,11 +42,13 @@ public partial class SettingsOverlay : UserControl
     private double _previewEnergy;
     private double _previewBass;
     private double _previewTreble;
+    private bool _loadingDiscordPresenceSettings;
 
     public event Action<string>? ToastRequested;
     public event Action? LibraryMetadataChanged;
     public event Action? ExportRequested;
     public event Action<AppearanceSettings>? AppearanceChanged;
+    public event Action? DiscordPresenceChanged;
 
     public SettingsOverlay()
     {
@@ -71,6 +73,10 @@ public partial class SettingsOverlay : UserControl
         TracksPathBox.Text = locations.TracksDirectory;
         LibraryLocationStatusText.IsVisible = false;
         MusicAnalysisServerUrlBox.Text = appSettings.MusicAnalysisServerUrl;
+        _loadingDiscordPresenceSettings = true;
+        DiscordStateTextBox.Text = appSettings.DiscordStateText;
+        DiscordLargeImageTextBox.Text = appSettings.DiscordLargeImageText;
+        _loadingDiscordPresenceSettings = false;
         _appearanceSettings = appSettings.Appearance.Clone().Clamp();
         RefreshAppearanceControls();
         RefreshAppearancePreview();
@@ -149,6 +155,17 @@ public partial class SettingsOverlay : UserControl
             LibraryLocationStatusText.Text = $"Could not save locations: {exception.Message}";
             LibraryLocationStatusText.IsVisible = true;
         }
+    }
+
+    private void OnDiscordPresenceTextChanged(object? sender, TextChangedEventArgs e)
+    {
+        if (_loadingDiscordPresenceSettings)
+            return;
+
+        AppSettingsStore.SaveDiscordPresence(
+            DiscordStateTextBox.Text,
+            DiscordLargeImageTextBox.Text);
+        DiscordPresenceChanged?.Invoke();
     }
 
     public void PreloadGenreVocabulary() => EnsureGenreVocabularyLoaded();
@@ -551,6 +568,7 @@ public partial class SettingsOverlay : UserControl
             "export" => SettingsPage.Export,
             "runtime" => SettingsPage.Runtime,
             "updates" => SettingsPage.Updates,
+            "discord" => SettingsPage.Discord,
             "tags" => SettingsPage.Tags,
             "tag_rules" => SettingsPage.TagRules,
             _ => SettingsPage.GenreVocabulary
@@ -573,6 +591,7 @@ public partial class SettingsOverlay : UserControl
         var isRuntimePage = page == SettingsPage.Runtime;
         var isUpdatesPage = page == SettingsPage.Updates;
         var isAppearancePage = page == SettingsPage.Appearance;
+        var isDiscordPage = page == SettingsPage.Discord;
         GenreVocabularyPage.IsVisible = isGenreVocabularyPage;
         LibraryPage.IsVisible = isLibraryPage;
         AnalysisServerPage.IsVisible = isAnalysisServerPage;
@@ -581,6 +600,7 @@ public partial class SettingsOverlay : UserControl
         RuntimePage.IsVisible = isRuntimePage;
         UpdatesPage.IsVisible = isUpdatesPage;
         AppearancePage.IsVisible = isAppearancePage;
+        DiscordPage.IsVisible = isDiscordPage;
         TagsPage.IsVisible = page == SettingsPage.Tags;
         TagRulesPage.IsVisible = page == SettingsPage.TagRules;
         GenreVocabularyNavButton.IsChecked = isGenreVocabularyPage;
@@ -591,6 +611,7 @@ public partial class SettingsOverlay : UserControl
         RuntimeNavButton.IsChecked = isRuntimePage;
         UpdatesNavButton.IsChecked = isUpdatesPage;
         AppearanceNavButton.IsChecked = isAppearancePage;
+        DiscordNavButton.IsChecked = isDiscordPage;
         TagsNavButton.IsChecked = page == SettingsPage.Tags;
         TagRulesNavButton.IsChecked = page == SettingsPage.TagRules;
 
@@ -603,6 +624,7 @@ public partial class SettingsOverlay : UserControl
             SettingsPage.Runtime => "Runtime",
             SettingsPage.Updates => "Updates",
             SettingsPage.Appearance => "Appearance",
+            SettingsPage.Discord => "Discord presence",
             SettingsPage.Tags => "Tags",
             SettingsPage.TagRules => "Tag rules",
             _ => "Genres"
@@ -620,7 +642,9 @@ public partial class SettingsOverlay : UserControl
                         : isRuntimePage
                             ? "Temporary switches for this app run."
                             : isAppearancePage
-                                ? "Tune artwork, blur, color and audio-reactive visuals. Changes are applied live."
+                            ? "Tune artwork, blur, color and audio-reactive visuals. Changes are applied live."
+                            : isDiscordPage
+                                ? "Customize the text Discord displays while Resona is playing music."
                             : isUpdatesPage
                                 ? "Check, download and install application releases from GitHub."
                             : page == SettingsPage.Tags
@@ -1487,6 +1511,7 @@ public partial class SettingsOverlay : UserControl
         "updates" => SettingsPage.Updates,
         "genres" => SettingsPage.GenreVocabulary,
         "tags" => SettingsPage.Tags,
+        "discord" => SettingsPage.Discord,
         _ => SettingsPage.Library
     };
 
@@ -1500,6 +1525,7 @@ public partial class SettingsOverlay : UserControl
         SettingsPage.Updates => "updates",
         SettingsPage.GenreVocabulary => "genres",
         SettingsPage.Tags => "tags",
+        SettingsPage.Discord => "discord",
         _ => "library"
     };
 
@@ -1797,5 +1823,5 @@ public partial class SettingsOverlay : UserControl
         public override string ToString() => Name;
     }
 
-    private enum SettingsPage { GenreVocabulary, Library, AnalysisServer, Appearance, Backup, Export, Runtime, Updates, Tags, TagRules }
+    private enum SettingsPage { GenreVocabulary, Library, AnalysisServer, Appearance, Discord, Backup, Export, Runtime, Updates, Tags, TagRules }
 }

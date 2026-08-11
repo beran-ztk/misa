@@ -99,6 +99,11 @@
                     <ToggleButton x:Name="AppearanceNavButton" Classes="settings-nav"
                                   Content="Player and tracks" Tag="appearance"
                                   Click="OnSettingsNavigationClicked"/>
+                    <TextBlock Text="INTEGRATIONS" FontSize="10" FontWeight="SemiBold"
+                               Opacity="0.4" LetterSpacing="0.8" Margin="10,14,0,4"/>
+                    <ToggleButton x:Name="DiscordNavButton" Classes="settings-nav"
+                                  Content="Discord presence" Tag="discord"
+                                  Click="OnSettingsNavigationClicked"/>
                     <TextBlock Text="LIBRARY" FontSize="10" FontWeight="SemiBold"
                                Opacity="0.4" LetterSpacing="0.8" Margin="10,14,0,4"/>
                     <ToggleButton x:Name="LibraryNavButton" Classes="settings-nav"
@@ -284,6 +289,40 @@
                                        TextWrapping="Wrap"/>
                         </StackPanel>
                     </Border>
+                </StackPanel>
+            </ScrollViewer>
+
+            <ScrollViewer x:Name="DiscordPage" Grid.Row="2" IsVisible="False" Margin="30,22,30,0"
+                          HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Spacing="18" Margin="0,0,0,24">
+                    <Border Background="{DynamicResource Theme.Brush.SurfaceTranslucent}"
+                            BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
+                            BorderThickness="1" CornerRadius="7" Padding="12">
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="STATE" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
+                            <TextBox x:Name="DiscordStateTextBox" Classes="settings-input"
+                                     MaxLength="128" Watermark="Automatic · track genres"
+                                     TextChanged="OnDiscordPresenceTextChanged"/>
+                            <TextBlock Text="Default: the detected or manually assigned genres. Enter text to replace them."
+                                       FontSize="10.5" Opacity="0.56" TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Background="{DynamicResource Theme.Brush.SurfaceTranslucent}"
+                            BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
+                            BorderThickness="1" CornerRadius="7" Padding="12">
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="LARGE IMAGE TEXT" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
+                            <TextBox x:Name="DiscordLargeImageTextBox" Classes="settings-input"
+                                     MaxLength="128" Watermark="No text"
+                                     TextChanged="OnDiscordPresenceTextChanged"/>
+                            <TextBlock Text="Shown with the track artwork. Leave empty to send no image text. Unicode spacing is preserved."
+                                       FontSize="10.5" Opacity="0.56" TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Border>
+
+                    <TextBlock Text="Changes are saved automatically and applied to the current Discord activity."
+                               FontSize="10.5" Opacity="0.54"/>
                 </StackPanel>
             </ScrollViewer>
 
