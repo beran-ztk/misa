@@ -385,7 +385,8 @@ public partial class ChannelOverlay : UserControl
             ? $"{localStatus} · {channel.FollowerText}"
             : localStatus;
         DetailLibraryText.Text = channel.TrackCountText;
-        DetailRatingText.Text = channel.RatingText;
+        DetailRatingText.Text = channel.QualityCompactText;
+        ToolTip.SetTip(DetailRatingText, channel.RatingText);
         DetailActivityText.Text = channel.ActivityText;
         DetailTopTracksText.Text = channel.HasTopTracks ? channel.TopTracksText : "No local tracks yet";
         DetailFollowButton.Content = channel.IsFollowed ? "Following" : "Follow";
@@ -1028,17 +1029,14 @@ public partial class ChannelOverlay : UserControl
         }
 
         var uncheckedCount = _currentVideos.Count(video => !video.IsChecked);
-        var ready = _currentVideos.Count(video => video.DownloadStatus == ChannelDownloadStatus.Ready);
-        var queued = _currentVideos.Count(video => video.DownloadStatus == ChannelDownloadStatus.Queued);
-        var downloading = _currentVideos.Count(video => video.DownloadStatus == ChannelDownloadStatus.Downloading);
-        var enriched = _currentVideos.Count(video => video.MetadataStatus == ChannelMetadataStatus.Ready);
-        var active = queued + downloading;
+        var library = _currentVideos.Count(video => video.IsInLibrary);
         var issues = _currentVideos.Count(video =>
             video.DownloadStatus is ChannelDownloadStatus.Failed or ChannelDownloadStatus.Skipped
             || video.MetadataStatus == ChannelMetadataStatus.Failed);
         var shown = visibleCount ?? _currentVideos.Count;
-        VideoSummaryText.Text = $"{shown} shown · {_currentVideos.Count} total · {enriched} enriched · " +
-                                $"{uncheckedCount} new · {ready} downloaded · {active} active · {issues} issues";
+        var shownPrefix = shown == _currentVideos.Count ? string.Empty : $"{shown:N0} shown · ";
+        VideoSummaryText.Text = $"{shownPrefix}{_currentVideos.Count:N0} videos · {uncheckedCount:N0} new · " +
+                                $"{library:N0} in library · {issues:N0} issues";
     }
 
 }

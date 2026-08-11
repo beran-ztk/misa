@@ -43,7 +43,8 @@
                     <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="10">
                         <StackPanel Spacing="1">
                             <TextBlock Text="QUALITY" FontSize="8.5" LetterSpacing="0.8" Opacity="0.42"/>
-                            <TextBlock Text="{Binding RatingText}" FontSize="10.5"/>
+                            <TextBlock Text="{Binding QualitySummaryText}" FontSize="10.5"
+                                       TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding RatingText}"/>
                         </StackPanel>
                         <StackPanel Grid.Column="1" Spacing="1">
                             <TextBlock Text="ACTIVITY" FontSize="8.5" LetterSpacing="0.8" Opacity="0.42"/>
@@ -70,12 +71,13 @@
         </DataTemplate>
 
         <DataTemplate x:Key="ChannelRowTemplate" x:DataType="models:ChannelHubItem">
-            <Border MinHeight="70" Padding="12,9" Margin="0,0,0,5" CornerRadius="7"
+            <Border MinHeight="78" Padding="12,9" Margin="0,0,0,6" CornerRadius="8"
                     Background="#0EFFFFFF" BorderBrush="#22FFFFFF" BorderThickness="1">
-                <Grid ColumnDefinitions="38,1.75*,0.9*,1.15*,0.95*,0.9*,Auto" ColumnSpacing="13">
+                <Grid ColumnDefinitions="38,2*,0.85*,1.05*,0.9*,Auto"
+                      RowDefinitions="Auto,Auto" ColumnSpacing="13" RowSpacing="6">
                     <Border Width="36" Height="36" CornerRadius="18" Background="#213E6591"
                             BorderBrush="#356E91BA" BorderThickness="1" ClipToBounds="True"
-                            VerticalAlignment="Center">
+                            VerticalAlignment="Center" Grid.RowSpan="2">
                         <Grid>
                         <Image Source="{Binding Artwork}" Stretch="UniformToFill" IsVisible="{Binding HasArtwork}"/>
                         <TextBlock Text="{Binding Monogram}" IsVisible="{Binding ShowMonogram}" HorizontalAlignment="Center" VerticalAlignment="Center"
@@ -89,40 +91,24 @@
                                        TextTrimming="CharacterEllipsis"/>
                         </Button>
                         <TextBlock Text="{Binding ChannelMetadataText}" FontSize="9.5" Opacity="0.48"
-                                   TextTrimming="CharacterEllipsis"/>
-                        <TextBlock Text="{Binding TopTracksInlineText}" FontSize="9.5" Opacity="0.62"
-                                   Foreground="#B7C9D8" TextTrimming="CharacterEllipsis"
-                                   ToolTip.Tip="{Binding TopTracksText}"/>
+                                   TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding ChannelMetadataText}"/>
                     </StackPanel>
-                    <StackPanel Grid.Column="2" Spacing="3" VerticalAlignment="Center">
+                    <StackPanel Grid.Column="2" Spacing="2" VerticalAlignment="Center">
                         <TextBlock Text="LIBRARY" FontSize="8" LetterSpacing="0.75" Opacity="0.4"/>
                         <TextBlock Text="{Binding LibrarySummaryText}" FontSize="10" Opacity="0.76"
-                                   TextTrimming="CharacterEllipsis"/>
-                        <TextBlock Text="{Binding LibraryDetailText}" FontSize="9" Foreground="#9FC29A"
-                                   TextTrimming="CharacterEllipsis"/>
+                                   TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding LibraryDetailText}"/>
                     </StackPanel>
-                    <StackPanel Grid.Column="3" Spacing="3" VerticalAlignment="Center">
+                    <StackPanel Grid.Column="3" Spacing="2" VerticalAlignment="Center">
                         <TextBlock Text="QUALITY" FontSize="8" LetterSpacing="0.75" Opacity="0.4"/>
                         <TextBlock Text="{Binding QualitySummaryText}" FontSize="10" Opacity="0.8"
-                                   TextTrimming="CharacterEllipsis"/>
-                        <TextBlock Text="{Binding QualityDetailText}" FontSize="9" Opacity="0.43"
-                                   TextTrimming="CharacterEllipsis"/>
+                                   TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding RatingText}"/>
                     </StackPanel>
-                    <StackPanel Grid.Column="4" Spacing="3" VerticalAlignment="Center">
+                    <StackPanel Grid.Column="4" Spacing="2" VerticalAlignment="Center">
                         <TextBlock Text="VIDEOS" FontSize="8" LetterSpacing="0.75" Opacity="0.4"/>
                         <TextBlock Text="{Binding VideoSummaryText}" FontSize="10" Opacity="0.76"
-                                   TextTrimming="CharacterEllipsis"/>
-                        <TextBlock Text="{Binding VideoQueueText}" FontSize="9"
-                                   Foreground="#AFCFE8" TextTrimming="CharacterEllipsis"/>
+                                   TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding VideoQueueText}"/>
                     </StackPanel>
-                    <StackPanel Grid.Column="5" Spacing="3" VerticalAlignment="Center">
-                        <TextBlock Text="LISTENING" FontSize="8" LetterSpacing="0.75" Opacity="0.4"/>
-                        <TextBlock Text="{Binding ActivityText}" FontSize="10" Opacity="0.7"
-                                   TextTrimming="CharacterEllipsis"/>
-                        <TextBlock Text="{Binding ListeningSignalText}" FontSize="9" Opacity="0.43"
-                                   TextTrimming="CharacterEllipsis"/>
-                    </StackPanel>
-                    <StackPanel Grid.Column="6" Spacing="4" VerticalAlignment="Center" MinWidth="122">
+                    <StackPanel Grid.Column="5" Spacing="4" VerticalAlignment="Center" MinWidth="112">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="4">
                             <Button Classes="follow-action" Classes.following="{Binding IsFollowed}" Content="{Binding FollowActionText}"
                                     Click="OnFollowChannelClicked" VerticalAlignment="Center"/>
@@ -131,10 +117,22 @@
                                 <TextBlock Text="›" FontSize="19" Margin="0,-2,0,0"/>
                             </Button>
                         </StackPanel>
-                        <TextBlock Text="{Binding AutomationSummaryText}" FontSize="8.8" Opacity="0.44"
-                                   HorizontalAlignment="Right" TextAlignment="Right"
-                                   MaxWidth="150" TextTrimming="CharacterEllipsis"/>
                     </StackPanel>
+                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding TopTracksInlineText}"
+                               FontSize="9.5" Opacity="0.62" Foreground="#B7C9D8"
+                               TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding TopTracksText}"
+                               VerticalAlignment="Center"/>
+                    <StackPanel Grid.Row="1" Grid.Column="2" Grid.ColumnSpan="2"
+                                Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding ActivityText}" FontSize="9.5" Opacity="0.62"
+                                   TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Text="{Binding ListeningSignalText}" FontSize="9" Opacity="0.4"/>
+                    </StackPanel>
+                    <TextBlock Grid.Row="1" Grid.Column="4" Grid.ColumnSpan="2"
+                               Text="{Binding AutomationSummaryText}" FontSize="9" Opacity="0.44"
+                               HorizontalAlignment="Right" TextAlignment="Right"
+                               TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding AutomationSummaryText}"
+                               VerticalAlignment="Center"/>
                 </Grid>
             </Border>
         </DataTemplate>
@@ -480,7 +478,7 @@
             <Grid Grid.Row="1" RowDefinitions="Auto,Auto,*" Margin="22,16,22,22" RowSpacing="12">
                 <Border Background="#0CFFFFFF" BorderBrush="#24FFFFFF" BorderThickness="1"
                         CornerRadius="8" Padding="14,10">
-                    <Grid ColumnDefinitions="1.1*,1.1*,1.1*,1.4*" ColumnSpacing="20">
+                    <Grid ColumnDefinitions="0.85*,1.15*,1*,1.55*" ColumnSpacing="20">
                         <StackPanel Spacing="2">
                             <TextBlock Text="LIBRARY" FontSize="8.5" LetterSpacing="0.8" Opacity="0.42"/>
                             <TextBlock x:Name="DetailLibraryText" FontSize="11.5"/>
@@ -545,8 +543,8 @@
                         <DataTemplate x:DataType="views:ChannelVideoDisplay">
                             <Border Background="{Binding Background}" Opacity="{Binding Opacity}"
                                     BorderBrush="{Binding BorderBrush}" BorderThickness="{Binding BorderThickness}"
-                                    CornerRadius="6" Padding="8,6" Margin="0,1">
-                                <Grid ColumnDefinitions="*,110,Auto,Auto,Auto,Auto,Auto" ColumnSpacing="7">
+                                    CornerRadius="6" Padding="10,7" Margin="0,0,0,2">
+                                <Grid ColumnDefinitions="*,132,Auto,Auto,Auto,Auto,Auto" ColumnSpacing="8">
                                     <StackPanel Spacing="2" VerticalAlignment="Center">
                                         <TextBlock Text="{Binding Title}" TextDecorations="{Binding TextDecorations}" FontSize="12.5"
                                                    TextTrimming="CharacterEllipsis"/>
@@ -559,8 +557,9 @@
                                                    ToolTip.Tip="{Binding DownloadErrorDetails}" FontSize="10.5"
                                                    Foreground="#E87878" Opacity="0.86" TextWrapping="Wrap" MaxHeight="34"/>
                                     </StackPanel>
-                                    <TextBlock Grid.Column="1" Text="{Binding StatusText}" FontSize="10.5" Opacity="0.62"
-                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding StatusText}" FontSize="10" Opacity="0.62"
+                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                                               ToolTip.Tip="{Binding StatusText}"/>
                                     <Button Grid.Column="2" Classes="channel-icon" Click="OnVideoDownloadClicked"
                                             IsVisible="{Binding CanDownload}" ToolTip.Tip="Download this track">
                                         <Image Source="{SvgImage /Assets/download.svg}" Width="14" Height="14"/>

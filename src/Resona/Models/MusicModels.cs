@@ -185,6 +185,9 @@ public sealed record ChannelHubItem(
     public string QualitySummaryText => AverageRating is double average
         ? $"{average:0.0} average rating"
         : "No ratings yet";
+    public string QualityCompactText => AverageRating is double average
+        ? $"{average:0.0} avg · {RatedTrackCount:N0}/{LocalTrackCount:N0} rated"
+        : "No ratings yet";
     public string QualityDetailText => AverageRating is null
         ? "No rated tracks"
         : $"{FavoriteCount:N0} favorite{(FavoriteCount == 1 ? string.Empty : "s")} · {GreatOrBetterCount:N0} great+";
