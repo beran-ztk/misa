@@ -1739,11 +1739,19 @@ public class MusicDatabase
         return Convert.ToInt32(cmd.ExecuteScalar()) != 0;
     }
 
-    public int CountQueuedChannelVideoMetadata()
+    public int CountBackgroundChannelVideoMetadataWork()
     {
         using var conn = Open();
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT COUNT(*) FROM channel_videos WHERE metadata_status = 'Queued'";
+        cmd.CommandText = @"
+            SELECT COUNT(*)
+            FROM channel_videos
+            WHERE metadata_status IN ('Pending', 'Queued', 'Loading')
+               OR (metadata_status = 'Failed'
+                   AND metadata_updated_at < datetime('now', '-7 days'))
+               OR (metadata_status = 'Ready'
+                   AND (metadata_updated_at IS NULL
+                        OR metadata_updated_at < datetime('now', '-30 days')))";
         return Convert.ToInt32(cmd.ExecuteScalar());
     }
 

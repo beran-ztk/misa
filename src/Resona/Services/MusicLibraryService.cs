@@ -228,7 +228,7 @@ public class MusicLibraryService
     public bool QueueSpecificChannelVideoMetadata(int videoId) => _db.QueueSpecificChannelVideoMetadata(videoId);
     public int QueueAutoDownloadMetadata(int limit) => _db.QueueAutoDownloadMetadata(limit);
     public int QueueBackgroundChannelVideoMetadata(int limit) => _db.QueueBackgroundChannelVideoMetadata(limit);
-    public int CountQueuedChannelVideoMetadata() => _db.CountQueuedChannelVideoMetadata();
+    public int CountBackgroundChannelVideoMetadataWork() => _db.CountBackgroundChannelVideoMetadataWork();
     public ChannelVideo? ClaimNextChannelVideoMetadata() => _db.ClaimNextChannelVideoMetadata();
     public bool HasQueuedChannelVideoMetadata() => _db.HasQueuedChannelVideoMetadata();
     public Task<YouTubeTrackMetadata?> GetChannelVideoMetadataAsync(

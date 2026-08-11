@@ -582,7 +582,8 @@
                                     CornerRadius="6" Padding="10,7" Margin="0,0,0,2">
                                 <Grid ColumnDefinitions="*,132,Auto,Auto,Auto,Auto,Auto" ColumnSpacing="8">
                                     <StackPanel Spacing="2" VerticalAlignment="Center">
-                                        <TextBlock Text="{Binding Title}" TextDecorations="{Binding TextDecorations}" FontSize="12.5"
+                                        <TextBlock Text="{Binding Title}" TextDecorations="{Binding TextDecorations}"
+                                                   Foreground="{Binding TitleBrush}" FontSize="12.5"
                                                    TextTrimming="CharacterEllipsis"/>
                                         <TextBlock Text="{Binding MetadataSummaryText}" FontSize="9.5" Opacity="0.44"
                                                    IsVisible="{Binding HasMetadataSummary}"/>

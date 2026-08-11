@@ -105,8 +105,8 @@ public sealed class ChannelMetadataService
     {
         try
         {
-            var batchTotal = Math.Max(1, MusicLibraryService.Current.CountQueuedChannelVideoMetadata());
-            var batchCurrent = 0;
+            var total = Math.Max(1, MusicLibraryService.Current.CountBackgroundChannelVideoMetadataWork());
+            var current = 0;
 
             while (true)
             {
@@ -117,22 +117,20 @@ public sealed class ChannelMetadataService
                     if (queued <= 0)
                         break;
 
-                    batchTotal = queued;
-                    batchCurrent = 0;
                     continue;
                 }
 
-                batchCurrent++;
-                if (batchCurrent > batchTotal)
-                    batchTotal = batchCurrent;
+                current++;
+                if (current > total)
+                    total = current;
+                var channelName = video.ChannelName?.Trim() ?? string.Empty;
+                var title = video.Title.Trim();
                 PublishStatus(new ChannelMetadataWorkStatus(
                     true,
-                    $"Loading video metadata · {batchCurrent} of {batchTotal}",
-                    string.IsNullOrWhiteSpace(video.ChannelName)
-                        ? video.Title
-                        : $"{video.ChannelName} · {video.Title}",
-                    batchCurrent,
-                    batchTotal));
+                    $"Loading video metadata · {current:N0} of {total:N0}",
+                    channelName.Length == 0 ? title : $"{channelName} · {title}",
+                    current,
+                    total));
                 QueueChanged?.Invoke();
                 YouTubeTrackMetadata? metadata = null;
                 string? error = null;

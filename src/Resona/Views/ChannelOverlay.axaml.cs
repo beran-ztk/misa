@@ -1175,6 +1175,7 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
     private string _dismissToolTip = "Skip (keep audio)";
     private IBrush _borderBrush = Brushes.Transparent;
     private Thickness _borderThickness;
+    private IBrush _titleBrush = ThemeResources.Brush("Theme.Brush.TextPrimary");
 
     public ChannelVideoDisplay(ChannelVideo video)
     {
@@ -1187,6 +1188,7 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
         MetadataErrorDetails = TrimErrorDetails(video.MetadataError);
         MetadataErrorSummary = ErrorSummary(MetadataErrorDetails);
         MetadataStatus = video.MetadataStatus;
+        RatingName = video.RatingName?.Trim() ?? string.Empty;
         LibraryDetailsText = BuildLibraryDetails(video);
         _libraryState = video.LibraryState;
         _trackId = video.TrackId;
@@ -1207,6 +1209,7 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
     public string MetadataErrorDetails { get; }
     public bool HasMetadataError => MetadataErrorSummary.Length > 0;
     public ChannelMetadataStatus MetadataStatus { get; }
+    public string RatingName { get; }
     public string LibraryDetailsText { get; }
     public bool HasLibraryDetails => LibraryDetailsText.Length > 0;
     public bool IsChecked
@@ -1330,6 +1333,11 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
         get => _textDecorations;
         private set => SetField(ref _textDecorations, value);
     }
+    public IBrush TitleBrush
+    {
+        get => _titleBrush;
+        private set => SetField(ref _titleBrush, value);
+    }
 
     private void SetChecked(bool value)
     {
@@ -1337,7 +1345,7 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
         CheckBackground = ThemeResources.Brush(value ? "Theme.Brush.Success" : "Theme.Brush.Surface");
         CheckBorder = ThemeResources.Brush(value ? "Theme.Brush.Accent" : "Theme.Brush.Border");
         CheckOpacity = value ? 1 : 0.58;
-        TextDecorations = value ? Avalonia.Media.TextDecorations.Strikethrough : null;
+        TextDecorations = value && !IsInLibrary ? Avalonia.Media.TextDecorations.Strikethrough : null;
         UpdateState();
         UpdateVisualState();
     }
@@ -1368,7 +1376,9 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
             ? _libraryState switch
             {
                 TrackLibraryState.Rejected => "Rejected",
-                TrackLibraryState.Active => "In library",
+                TrackLibraryState.Active => RatingName.Length > 0
+                    ? $"In library · {RatingName}"
+                    : "In library",
                 _ => "Needs rating"
             }
             : DownloadStatus switch
@@ -1394,9 +1404,14 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
 
     private void UpdateVisualState()
     {
-        Opacity = IsActive ? 1 : IsChecked ? 0.45 : 1;
+        Opacity = IsInLibrary || IsActive ? 1 : IsChecked ? 0.45 : 1;
+        TitleBrush = IsInLibrary
+            ? new SolidColorBrush(Color.Parse("#8FD19E"))
+            : ThemeResources.Brush("Theme.Brush.TextPrimary");
         Background = IsActive
             ? ThemeResources.Brush("Theme.Brush.SurfaceSelected")
+            : IsInLibrary
+                ? new SolidColorBrush(Color.Parse("#142F6842"))
             : IsChecked
                 ? new SolidColorBrush(Color.Parse("#22192027"))
                 : new SolidColorBrush(Color.Parse("#10203422"));
@@ -1423,8 +1438,6 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
             return string.Empty;
 
         var parts = new List<string>();
-        if (!string.IsNullOrWhiteSpace(video.RatingName))
-            parts.Add(video.RatingName);
         parts.Add(video.ListenCount == 1 ? "1 play" : $"{video.ListenCount:N0} plays");
         if (video.SkipCount > 0)
             parts.Add(video.SkipCount == 1 ? "1 skip" : $"{video.SkipCount:N0} skips");
