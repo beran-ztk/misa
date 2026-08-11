@@ -40,6 +40,8 @@ public partial class ChannelOverlay : UserControl
     private int? _pendingOpenChannelId;
     private bool _processingPastedUrl;
     private int? _activePreviewTrackId;
+    private ChannelHubWorkStatus _channelWorkStatus = ChannelHubWorkStatus.Idle;
+    private ChannelMetadataWorkStatus _metadataWorkStatus = ChannelMetadataWorkStatus.Idle;
     private readonly Avalonia.Threading.DispatcherTimer _channelStateRefreshTimer = new()
     {
         Interval = TimeSpan.FromMilliseconds(750)
@@ -63,6 +65,7 @@ public partial class ChannelOverlay : UserControl
         };
         ChannelHubBackgroundService.Current.SnapshotChanged += OnChannelSnapshotChanged;
         ChannelHubBackgroundService.Current.StatusChanged += OnBackgroundStatusChanged;
+        ChannelMetadataService.Current.StatusChanged += OnMetadataStatusChanged;
         SetVideoFilter(ChannelVideoFilter.All, refresh: false);
     }
 
@@ -73,7 +76,9 @@ public partial class ChannelOverlay : UserControl
         DetailView.IsVisible = false;
         InboxView.IsVisible = false;
         _detailOpenedFromInbox = false;
-        UpdateBackgroundStatus(ChannelHubBackgroundService.Current.Status);
+        _channelWorkStatus = ChannelHubBackgroundService.Current.Status;
+        _metadataWorkStatus = ChannelMetadataService.Current.Status;
+        UpdateBackgroundStatus();
         var snapshot = ChannelHubBackgroundService.Current.Snapshot;
         if (snapshot.Count > 0)
             OnChannelSnapshotChanged(snapshot);
@@ -133,23 +138,45 @@ public partial class ChannelOverlay : UserControl
     }
 
     private void OnBackgroundStatusChanged(ChannelHubWorkStatus status) =>
-        Dispatcher.UIThread.Post(() => UpdateBackgroundStatus(status));
+        Dispatcher.UIThread.Post(() =>
+        {
+            _channelWorkStatus = status;
+            UpdateBackgroundStatus();
+        });
 
-    private void UpdateBackgroundStatus(ChannelHubWorkStatus status)
+    private void OnMetadataStatusChanged(ChannelMetadataWorkStatus status) =>
+        Dispatcher.UIThread.Post(() =>
+        {
+            _metadataWorkStatus = status;
+            UpdateBackgroundStatus();
+        });
+
+    private void UpdateBackgroundStatus()
     {
         // The service remains active for the complete batch, so changing the
         // text no longer removes and reinserts these panels between channels.
-        HubBackgroundStatusPanel.IsVisible = status.IsActive;
-        DetailBackgroundStatusPanel.IsVisible = status.IsActive;
-        if (!status.IsActive)
+        var isActive = _channelWorkStatus.IsActive || _metadataWorkStatus.IsActive;
+        HubBackgroundStatusPanel.IsVisible = isActive;
+        DetailBackgroundStatusPanel.IsVisible = isActive;
+        if (!isActive)
             return;
 
-        HubBackgroundOverallText.Text = status.OverallText;
-        HubBackgroundCurrentText.Text = status.CurrentText;
-        HubBackgroundProgress.Value = status.Progress;
-        DetailBackgroundOverallText.Text = status.OverallText;
-        DetailBackgroundCurrentText.Text = status.CurrentText;
-        DetailBackgroundProgress.Value = status.Progress;
+        var overallText = _channelWorkStatus.IsActive
+            ? _channelWorkStatus.OverallText
+            : _metadataWorkStatus.OverallText;
+        var currentText = _channelWorkStatus.IsActive
+            ? _channelWorkStatus.CurrentText
+            : _metadataWorkStatus.CurrentText;
+        var progress = _channelWorkStatus.IsActive
+            ? _channelWorkStatus.Progress
+            : _metadataWorkStatus.Progress;
+
+        HubBackgroundOverallText.Text = overallText;
+        HubBackgroundCurrentText.Text = currentText;
+        HubBackgroundProgress.Value = progress;
+        DetailBackgroundOverallText.Text = overallText;
+        DetailBackgroundCurrentText.Text = currentText;
+        DetailBackgroundProgress.Value = progress;
     }
 
     private async Task PrepareChannelSnapshotAsync(IReadOnlyList<ChannelHubItem> snapshot, int generation)

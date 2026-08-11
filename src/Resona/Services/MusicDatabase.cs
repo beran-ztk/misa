@@ -1734,6 +1734,14 @@ public class MusicDatabase
         return Convert.ToInt32(cmd.ExecuteScalar()) != 0;
     }
 
+    public int CountQueuedChannelVideoMetadata()
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT COUNT(*) FROM channel_videos WHERE metadata_status = 'Queued'";
+        return Convert.ToInt32(cmd.ExecuteScalar());
+    }
+
     public void CompleteChannelVideoMetadata(
         int videoId,
         YouTubeTrackMetadata? metadata,

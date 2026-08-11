@@ -5,6 +5,17 @@ using Resona.Models;
 
 namespace Resona.Services;
 
+public sealed record ChannelMetadataWorkStatus(
+    bool IsActive,
+    string OverallText,
+    string CurrentText,
+    int Current,
+    int Total)
+{
+    public double Progress => Total <= 0 ? 0 : Math.Clamp((double)Current / Total, 0, 1);
+    public static ChannelMetadataWorkStatus Idle { get; } = new(false, string.Empty, string.Empty, 0, 0);
+}
+
 public sealed class ChannelMetadataService
 {
     private const int BackgroundBatchSize = 5;
@@ -13,9 +24,20 @@ public sealed class ChannelMetadataService
     private readonly object _workerGate = new();
     private Task? _workerTask;
     private int _initialized;
+    private ChannelMetadataWorkStatus _status = ChannelMetadataWorkStatus.Idle;
 
     public event Action<int, int>? MetadataUpdated;
     public event Action? QueueChanged;
+    public event Action<ChannelMetadataWorkStatus>? StatusChanged;
+
+    public ChannelMetadataWorkStatus Status
+    {
+        get
+        {
+            lock (_workerGate)
+                return _status;
+        }
+    }
 
     public void Initialize()
     {
@@ -83,8 +105,32 @@ public sealed class ChannelMetadataService
     {
         try
         {
-            while (MusicLibraryService.Current.ClaimNextChannelVideoMetadata() is { } video)
+            var batchTotal = Math.Max(1, MusicLibraryService.Current.CountQueuedChannelVideoMetadata());
+            var batchCurrent = 0;
+
+            while (true)
             {
+                var video = MusicLibraryService.Current.ClaimNextChannelVideoMetadata();
+                if (video is null)
+                {
+                    var queued = MusicLibraryService.Current.QueueBackgroundChannelVideoMetadata(BackgroundBatchSize);
+                    if (queued <= 0)
+                        break;
+
+                    batchTotal = queued;
+                    batchCurrent = 0;
+                    continue;
+                }
+
+                batchCurrent++;
+                if (batchCurrent > batchTotal)
+                    batchTotal = batchCurrent;
+                PublishStatus(new ChannelMetadataWorkStatus(
+                    true,
+                    $"Loading video metadata · {batchCurrent} of {batchTotal}",
+                    video.Title,
+                    batchCurrent,
+                    batchTotal));
                 QueueChanged?.Invoke();
                 YouTubeTrackMetadata? metadata = null;
                 string? error = null;
@@ -109,13 +155,17 @@ public sealed class ChannelMetadataService
         {
             lock (_workerGate)
                 _workerTask = null;
-            // Keep a small queue instead of scheduling thousands of rows at
-            // once. When one batch is exhausted, enqueue the next prioritized
-            // entries across followed, library-relevant and remaining channels.
-            MusicLibraryService.Current.QueueBackgroundChannelVideoMetadata(BackgroundBatchSize);
+            PublishStatus(ChannelMetadataWorkStatus.Idle);
             if (MusicLibraryService.Current.HasQueuedChannelVideoMetadata())
                 EnsureWorker();
             QueueChanged?.Invoke();
         }
+    }
+
+    private void PublishStatus(ChannelMetadataWorkStatus status)
+    {
+        lock (_workerGate)
+            _status = status;
+        StatusChanged?.Invoke(status);
     }
 }
