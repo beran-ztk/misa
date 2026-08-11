@@ -2387,6 +2387,34 @@ public class MusicDatabase
         return tracks;
     }
 
+    public int CountUnratedTracks()
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"SELECT COUNT(*) FROM tracks
+                            WHERE rating_id IS NULL AND library_state <> 'Rejected'";
+        return Convert.ToInt32(cmd.ExecuteScalar());
+    }
+
+    public List<MusicTrack> GetUnratedTracks()
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"SELECT tracks.id, tracks.canonical_url, tracks.title, tracks.file_name, tracks.rating_id, tracks.downloaded_at,
+                                   tracks.duration_seconds, tracks.needs_reevaluation, channels.name, channels.source_url, tracks.uploaded_at,
+                                   tracks.updated_at, tracks.analysis_disabled, tracks.is_public, tracks.library_state,
+                                   tracks.source_video_id, tracks.view_count, tracks.like_count,
+                                   tracks.source_thumbnail_url, tracks.source_metadata_updated_at, channels.id
+                            FROM tracks LEFT JOIN channels ON channels.id = tracks.channel_id
+                            WHERE tracks.rating_id IS NULL AND tracks.library_state <> 'Rejected'
+                            ORDER BY tracks.downloaded_at DESC";
+        using var reader = cmd.ExecuteReader();
+        var tracks = new List<MusicTrack>();
+        while (reader.Read())
+            tracks.Add(ReadMusicTrack(reader));
+        return tracks;
+    }
+
     private static MusicTrack ReadMusicTrack(SqliteDataReader reader)
     {
         var libraryState = TrackLibraryState.Active;
@@ -2554,37 +2582,99 @@ public class MusicDatabase
     {
         using var conn = Open();
         using var tx = conn.BeginTransaction();
+        DeleteTrack(conn, tx, id);
+        tx.Commit();
+    }
+
+    public void DeleteTracks(IReadOnlyCollection<int> ids)
+    {
+        if (ids.Count == 0)
+            return;
+
+        using var conn = Open();
+        using var tx = conn.BeginTransaction();
+        var hasImportQueue = TableExists(conn, "import_queue_items");
+        var hasTrackTags = TableExists(conn, "track_tags");
+        var hasTrackGenres = TableExists(conn, "track_genres");
+        var hasTrackAnalysis = TableExists(conn, "track_analysis");
+        var hasGenrePredictions = hasTrackAnalysis && TableExists(conn, "track_genre_predictions");
+        var hasAnalysisSignals = hasTrackAnalysis && TableExists(conn, "track_analysis_signals");
+        var hasDerivedAttributes = hasTrackAnalysis && TableExists(conn, "track_derived_attributes");
+        foreach (var id in ids)
+        {
+            DeleteTrack(
+                conn,
+                tx,
+                id,
+                hasImportQueue,
+                hasTrackTags,
+                hasTrackGenres,
+                hasTrackAnalysis,
+                hasGenrePredictions,
+                hasAnalysisSignals,
+                hasDerivedAttributes);
+        }
+        tx.Commit();
+    }
+
+    private static void DeleteTrack(SqliteConnection conn, SqliteTransaction tx, int id)
+    {
+        var hasTrackAnalysis = TableExists(conn, "track_analysis");
+        DeleteTrack(
+            conn,
+            tx,
+            id,
+            TableExists(conn, "import_queue_items"),
+            TableExists(conn, "track_tags"),
+            TableExists(conn, "track_genres"),
+            hasTrackAnalysis,
+            hasTrackAnalysis && TableExists(conn, "track_genre_predictions"),
+            hasTrackAnalysis && TableExists(conn, "track_analysis_signals"),
+            hasTrackAnalysis && TableExists(conn, "track_derived_attributes"));
+    }
+
+    private static void DeleteTrack(
+        SqliteConnection conn,
+        SqliteTransaction tx,
+        int id,
+        bool hasImportQueue,
+        bool hasTrackTags,
+        bool hasTrackGenres,
+        bool hasTrackAnalysis,
+        bool hasGenrePredictions,
+        bool hasAnalysisSignals,
+        bool hasDerivedAttributes)
+    {
 
         // Older import_queue_items tables were created without ON DELETE SET NULL.
         // Detach queued/history rows explicitly so deleting a library track does not
         // fail with a foreign-key constraint.
-        if (TableExists(conn, "import_queue_items"))
+        if (hasImportQueue)
         {
             ExecuteInsert(conn, tx,
                 "UPDATE import_queue_items SET track_id = NULL WHERE track_id = $id",
                 ("$id", id));
         }
 
-        if (TableExists(conn, "track_tags"))
+        if (hasTrackTags)
             ExecuteInsert(conn, tx, "DELETE FROM track_tags WHERE track_id = $id", ("$id", id));
-        if (TableExists(conn, "track_genres"))
+        if (hasTrackGenres)
             ExecuteInsert(conn, tx, "DELETE FROM track_genres WHERE track_id = $id", ("$id", id));
-        if (TableExists(conn, "track_analysis"))
+        if (hasTrackAnalysis)
         {
-            if (TableExists(conn, "track_genre_predictions"))
+            if (hasGenrePredictions)
                 ExecuteInsert(conn, tx, @"DELETE FROM track_genre_predictions
                     WHERE track_analysis_id IN (SELECT id FROM track_analysis WHERE track_id = $id)", ("$id", id));
-            if (TableExists(conn, "track_analysis_signals"))
+            if (hasAnalysisSignals)
                 ExecuteInsert(conn, tx, @"DELETE FROM track_analysis_signals
                     WHERE track_analysis_id IN (SELECT id FROM track_analysis WHERE track_id = $id)", ("$id", id));
-            if (TableExists(conn, "track_derived_attributes"))
+            if (hasDerivedAttributes)
                 ExecuteInsert(conn, tx, @"DELETE FROM track_derived_attributes
                     WHERE track_analysis_id IN (SELECT id FROM track_analysis WHERE track_id = $id)", ("$id", id));
             ExecuteInsert(conn, tx, "DELETE FROM track_analysis WHERE track_id = $id", ("$id", id));
         }
 
         ExecuteInsert(conn, tx, "DELETE FROM tracks WHERE id = $id", ("$id", id));
-        tx.Commit();
     }
 
     public List<Genre> GetGenres()

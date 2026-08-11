@@ -32,6 +32,8 @@ public class MusicLibraryService
     // --- Tracks ---
 
     public List<MusicTrack> GetTracks() => _db.GetAllTracks();
+    public int CountUnratedTracks() => _db.CountUnratedTracks();
+    public List<MusicTrack> GetUnratedTracks() => _db.GetUnratedTracks();
     public byte[]? GetTrackThumbnail(int trackId) => _db.GetTrackThumbnail(trackId);
     public List<MusicTrack> GetUnanalyzedTracks() => _db.GetUnanalyzedTracks();
     public MusicTrack? GetTrackById(int id) => _db.GetTrackById(id);
@@ -132,6 +134,46 @@ public class MusicLibraryService
         }
     }
 
+    public async Task<BulkTrackDeleteResult> DeleteAllUnratedTracksAsync()
+    {
+        var tracks = GetUnratedTracks();
+        if (tracks.Count == 0)
+            return new BulkTrackDeleteResult(0, 0);
+
+        try
+        {
+            await Task.Run(() => _db.DeleteTracks(tracks.Select(track => track.Id).ToArray()));
+        }
+        catch (Exception exception)
+        {
+            return new BulkTrackDeleteResult(0, 0, exception.Message);
+        }
+
+        var failedFiles = await Task.Run(() =>
+        {
+            var failures = 0;
+            foreach (var track in tracks)
+            {
+                try
+                {
+                    var filePath = Path.Combine(Values.TracksDirectory, track.FileName);
+                    if (File.Exists(filePath))
+                        File.Delete(filePath);
+                }
+                catch
+                {
+                    failures++;
+                }
+            }
+            return failures;
+        });
+
+        foreach (var track in tracks)
+            _experimentalAnalysis.Remove(track.Id);
+
+        return new BulkTrackDeleteResult(tracks.Count, failedFiles);
+    }
+
     // --- Lookups ---
     public List<Genre> GetGenres() => _db.GetGenres();
     public List<Tag> GetTags() => _db.GetTags();
@@ -212,6 +254,7 @@ public class MusicLibraryService
             ChannelMetadataService.Current.RequestChannel(channelId, 40);
         ChannelDownloadService.Current.NotifyQueueChanged();
     }
+
     public int GetChannelMaxDownloadDurationMinutes() => _channelMaxDownloadDurationMinutes;
     public void SetChannelMaxDownloadDuration(int channelId, int? maxDurationMinutes)
     {

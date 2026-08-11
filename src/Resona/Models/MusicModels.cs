@@ -11,6 +11,8 @@ public enum TrackLibraryState
     Rejected
 }
 
+public sealed record BulkTrackDeleteResult(int Deleted, int FailedFiles, string? Error = null);
+
 public record MusicTrack(
     int Id, string CanonicalUrl, string Title, string FileName,
     int? RatingId, string DownloadedAt, int? DurationSeconds, bool NeedsReview,

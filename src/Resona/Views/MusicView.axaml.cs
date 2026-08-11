@@ -343,6 +343,7 @@ public partial class MusicView : UserControl
                 if (ChannelOverlay.IsVisible)
                     ChannelOverlay.OnMetadataUpdated(channelId, videoId);
             });
+        ChannelOverlay.DeleteUnratedRequested += DeleteAllUnratedTracksAsync;
         EditTrackOverlay.TrackSaved += trackId =>
         {
             UpdateTrackInList(trackId);
@@ -2720,6 +2721,51 @@ public partial class MusicView : UserControl
                 ? $"Track deleted, but cleanup failed: {exception.Message}"
                 : $"Could not delete track: {exception.Message}");
             return deleted;
+        }
+        finally
+        {
+            _isDeletingTrack = false;
+        }
+    }
+
+    private async Task<BulkTrackDeleteResult> DeleteAllUnratedTracksAsync()
+    {
+        if (_isDeletingTrack)
+            return new BulkTrackDeleteResult(0, 0, "Another track deletion is already running.");
+
+        _isDeletingTrack = true;
+        try
+        {
+            var unratedTracks = MusicLibraryService.Current.GetUnratedTracks();
+            var unratedIds = unratedTracks.Select(track => track.Id).ToHashSet();
+            if (unratedIds.Count == 0)
+                return new BulkTrackDeleteResult(0, 0);
+
+            if (unratedIds.Contains(_engine.ActiveTrackId) || unratedIds.Contains(_previewTrackId))
+            {
+                FinishListeningSession(markSkipped: false);
+                _previewPlaybackSnapshot = null;
+                _isTrackPreviewActive = false;
+                _previewTrackId = -1;
+                ChannelOverlay.ClearActivePreview();
+                _engine.Stop();
+                NowPlayingText.Text = string.Empty;
+                PlaybackInfoPanel.IsVisible = false;
+                _nextTrackIndex = -1;
+                ClearPlayerArtworkBackground();
+                await Task.Yield();
+            }
+
+            var result = await MusicLibraryService.Current.DeleteAllUnratedTracksAsync();
+            foreach (var trackId in unratedIds)
+            {
+                _trackBackdropFocus.Remove(trackId);
+                _pendingBackdropFocusTrackIds.Remove(trackId);
+            }
+
+            RefreshTrackList();
+            PersistPlayerSession();
+            return result;
         }
         finally
         {

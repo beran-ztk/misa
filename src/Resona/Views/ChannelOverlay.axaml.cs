@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
@@ -45,6 +46,7 @@ public partial class ChannelOverlay : UserControl
     public event Action? PreviewClosed;
     public event Action<int>? TrackChanged;
     public event Action<MusicTrack>? EditRequested;
+    public event Func<Task<BulkTrackDeleteResult>>? DeleteUnratedRequested;
 
     public ChannelOverlay()
     {
@@ -102,6 +104,7 @@ public partial class ChannelOverlay : UserControl
 
     public void RefreshChannels()
     {
+        RefreshDeleteUnratedAction();
         _hubChannels = MusicLibraryService.Current.GetChannelHubItems();
         foreach (var channel in _hubChannels)
         {
@@ -133,6 +136,43 @@ public partial class ChannelOverlay : UserControl
                 UpdateDetailHeader();
                 RefreshVideos();
             }
+        }
+    }
+
+    private void RefreshDeleteUnratedAction()
+    {
+        var count = MusicLibraryService.Current.CountUnratedTracks();
+        DeleteUnratedButton.IsEnabled = count > 0;
+        DeleteUnratedDescriptionText.Text = count == 1
+            ? "This permanently removes the local audio file and library data for 1 unrated track."
+            : $"This permanently removes the local audio files and library data for {count:N0} unrated tracks.";
+    }
+
+    private void OnCancelDeleteUnratedClicked(object? sender, RoutedEventArgs e) =>
+        DeleteUnratedButton.Flyout?.Hide();
+
+    private async void OnConfirmDeleteUnratedClicked(object? sender, RoutedEventArgs e)
+    {
+        if (DeleteUnratedRequested is null || !ConfirmDeleteUnratedButton.IsEnabled)
+            return;
+
+        ConfirmDeleteUnratedButton.IsEnabled = false;
+        ConfirmDeleteUnratedButton.Content = "Deleting…";
+        try
+        {
+            var result = await DeleteUnratedRequested.Invoke();
+            DeleteUnratedButton.Flyout?.Hide();
+            RefreshChannels();
+            ToastRequested?.Invoke(result.Error is not null
+                ? $"Could not delete unrated tracks: {result.Error}"
+                : result.FailedFiles == 0
+                    ? $"Deleted {result.Deleted:N0} unrated tracks"
+                    : $"Deleted {result.Deleted:N0} tracks; {result.FailedFiles:N0} audio files could not be removed");
+        }
+        finally
+        {
+            ConfirmDeleteUnratedButton.Content = "Delete tracks";
+            ConfirmDeleteUnratedButton.IsEnabled = true;
         }
     }
 

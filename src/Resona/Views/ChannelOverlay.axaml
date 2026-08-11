@@ -257,6 +257,50 @@
                         <Button Classes="channel-icon" Click="OnAddChannelToggleClicked" ToolTip.Tip="Add channel">
                             <TextBlock Text="+" FontSize="20" Margin="0,-3,0,0"/>
                         </Button>
+                        <Button x:Name="DeleteUnratedButton"
+                                Classes="channel-icon"
+                                ToolTip.Tip="Delete all unrated tracks">
+                            <Button.Flyout>
+                                <Flyout Placement="BottomEdgeAlignedRight">
+                                    <Border Width="310" Padding="14,12"
+                                            Background="#F51B1B1B"
+                                            BorderBrush="#3AFFFFFF"
+                                            BorderThickness="1"
+                                            CornerRadius="8">
+                                        <StackPanel Spacing="10">
+                                            <TextBlock Text="Delete all unrated tracks?"
+                                                       FontSize="12.5"
+                                                       FontWeight="SemiBold"/>
+                                            <TextBlock x:Name="DeleteUnratedDescriptionText"
+                                                       FontSize="10.5"
+                                                       Opacity="0.66"
+                                                       TextWrapping="Wrap"/>
+                                            <TextBlock Text="Rated tracks and followed channels will be kept. This cannot be undone."
+                                                       FontSize="10"
+                                                       Foreground="#D99B9B"
+                                                       TextWrapping="Wrap"/>
+                                            <StackPanel Orientation="Horizontal"
+                                                        HorizontalAlignment="Right"
+                                                        Spacing="8">
+                                                <Button Content="Cancel"
+                                                        Classes="open-action"
+                                                        Click="OnCancelDeleteUnratedClicked"/>
+                                                <Button x:Name="ConfirmDeleteUnratedButton"
+                                                        Content="Delete tracks"
+                                                        Padding="11,5"
+                                                        FontSize="10"
+                                                        Background="#3F9C4040"
+                                                        BorderBrush="#769C5050"
+                                                        BorderThickness="1"
+                                                        CornerRadius="5"
+                                                        Click="OnConfirmDeleteUnratedClicked"/>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Border>
+                                </Flyout>
+                            </Button.Flyout>
+                            <Image Source="{SvgImage /Assets/trash.svg}" Width="16" Height="16"/>
+                        </Button>
                         <Button Classes="channel-icon" Click="OnInboxClicked" ToolTip.Tip="Channel inbox">
                             <Grid>
                             <Image Source="{SvgImage /Assets/inbox.svg}" Width="17" Height="17"
