@@ -837,19 +837,19 @@
                                 <Rectangle Height="1" Fill="{DynamicResource Theme.Brush.Divider}"/>
 
                                 <StackPanel Spacing="8">
-                                    <Grid ColumnDefinitions="*,140" ColumnSpacing="8">
+                                    <Grid ColumnDefinitions="*,210" ColumnSpacing="8">
                                         <TextBlock Text="RATING"
                                                    FontSize="10" FontWeight="SemiBold"
                                                    Opacity="0.42" LetterSpacing="1"
                                                    VerticalAlignment="Center"/>
                                         <Border Grid.Column="1"
-                                                Width="140" Height="26"
+                                                Width="210" Height="26"
                                                 Background="{DynamicResource Theme.Brush.Surface}"
                                                 BorderBrush="{DynamicResource Theme.Brush.BorderStrong}"
                                                 BorderThickness="1"
                                                 CornerRadius="6"
                                                 ClipToBounds="True">
-                                            <Grid ColumnDefinitions="69,69">
+                                            <Grid ColumnDefinitions="69,69,69">
                                                 <Border x:Name="RatingModeIndicator"
                                                         Grid.ColumnSpan="2"
                                                         Width="69"
@@ -876,6 +876,12 @@
                                                 <Border Grid.Column="1" Background="Transparent" Cursor="Hand"
                                                         PointerPressed="OnManualRatingsPressed">
                                                     <TextBlock x:Name="ManualRatingsText" Text="Manual"
+                                                               FontSize="10" FontWeight="SemiBold"
+                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                                <Border Grid.Column="2" Background="Transparent" Cursor="Hand"
+                                                        PointerPressed="OnUnratedPressed">
+                                                    <TextBlock x:Name="UnratedText" Text="Unrated"
                                                                FontSize="10" FontWeight="SemiBold"
                                                                HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                 </Border>
@@ -942,15 +948,15 @@
                                     <TextBlock Text="COMPLETION"
                                                FontSize="10" FontWeight="SemiBold"
                                                Opacity="0.42" LetterSpacing="1"/>
-                                    <ToggleButton x:Name="ExcludeNeedsReviewCheckBox"
+                                    <ToggleButton x:Name="ShowNeedsReviewCheckBox"
                                                   Classes="completion-filter review"
-                                                  IsChecked="True"
+                                                  IsChecked="False"
                                                   Checked="OnCompletionFilterChanged"
                                                   Unchecked="OnCompletionFilterChanged">
                                         <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="9">
                                             <Rectangle Width="3" Height="16" RadiusX="1.5" RadiusY="1.5"
                                                        Fill="{DynamicResource Theme.Brush.Warning}"/>
-                                            <TextBlock Grid.Column="1" Text="Hide tracks needing review"
+                                            <TextBlock Grid.Column="1" Text="Show tracks needing review"
                                                        FontSize="11" VerticalAlignment="Center"/>
                                             <TextBlock Grid.Column="2" Text="YELLOW TITLE"
                                                        FontFamily="Consolas" FontSize="9"
@@ -958,15 +964,15 @@
                                                        VerticalAlignment="Center"/>
                                         </Grid>
                                     </ToggleButton>
-                                    <ToggleButton x:Name="ExcludeNeedsAnalysisCheckBox"
+                                    <ToggleButton x:Name="ShowNeedsAnalysisCheckBox"
                                                   Classes="completion-filter analysis"
-                                                  IsChecked="True"
+                                                  IsChecked="False"
                                                   Checked="OnCompletionFilterChanged"
                                                   Unchecked="OnCompletionFilterChanged">
                                         <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="9">
                                             <Rectangle Width="3" Height="16" RadiusX="1.5" RadiusY="1.5"
                                                        Fill="{DynamicResource Theme.Brush.Danger}"/>
-                                            <TextBlock Grid.Column="1" Text="Hide unanalyzed tracks"
+                                            <TextBlock Grid.Column="1" Text="Show unanalyzed tracks"
                                                        FontSize="11" VerticalAlignment="Center"/>
                                             <TextBlock Grid.Column="2" Text="RED TITLE"
                                                        FontFamily="Consolas" FontSize="9"
