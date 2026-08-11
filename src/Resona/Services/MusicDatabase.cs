@@ -260,6 +260,9 @@ public class MusicDatabase
 
             CREATE INDEX ix_track_genres_genre_id ON track_genres(genre_id);
             CREATE INDEX ix_channel_videos_channel_checked ON channel_videos(channel_id, is_checked, uploaded_at);
+            CREATE INDEX ix_channel_videos_metadata_queue
+                ON channel_videos(metadata_status, metadata_updated_at, id DESC);
+            CREATE INDEX ix_tracks_channel_state ON tracks(channel_id, library_state);
             CREATE INDEX ix_track_tags_tag_id ON track_tags(tag_id);
             CREATE INDEX ix_model_subgenres_model_genre_id ON model_subgenres(model_genre_id);
             CREATE INDEX ix_model_subgenre_distinctions_source ON model_subgenre_distinctions(model_subgenre_id);
@@ -1531,6 +1534,15 @@ public class MusicDatabase
             WHERE metadata_status IN ('Queued', 'Loading')");
     }
 
+    public void EnsureChannelMetadataQueueIndexes()
+    {
+        using var conn = Open();
+        ExecuteNonQuery(conn, @"CREATE INDEX IF NOT EXISTS ix_channel_videos_metadata_queue
+                                ON channel_videos(metadata_status, metadata_updated_at, id DESC)");
+        ExecuteNonQuery(conn, @"CREATE INDEX IF NOT EXISTS ix_tracks_channel_state
+                                ON tracks(channel_id, library_state)");
+    }
+
     public int QueueChannelVideoMetadata(int channelId, int limit)
     {
         using var conn = Open();
@@ -1595,32 +1607,79 @@ public class MusicDatabase
         return cmd.ExecuteNonQuery();
     }
 
-    public int QueueFollowedChannelVideoMetadata(int limit)
+    public int QueueBackgroundChannelVideoMetadata(int limit)
     {
+        limit = Math.Clamp(limit, 1, 10);
         using var conn = Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = @"
-            UPDATE channel_videos
-            SET metadata_status = 'Queued', metadata_error = NULL, metadata_priority = 10
-            WHERE id IN (
-                SELECT videos.id
-                FROM channel_videos videos
-                JOIN channels ON channels.id = videos.channel_id
-                LEFT JOIN tracks ON tracks.canonical_url = videos.canonical_url
-                WHERE channels.subscribed = 1
-                  AND videos.metadata_status = 'Pending'
-                  AND (tracks.id IS NULL OR tracks.source_metadata_updated_at IS NULL)
-                ORDER BY videos.is_checked ASC,
-                         COALESCE(videos.uploaded_at, videos.discovered_at) DESC,
-                         videos.id DESC
-                LIMIT MAX(0, $limit - (
-                    SELECT COUNT(*)
-                    FROM channel_videos active
-                    WHERE active.metadata_status IN ('Queued', 'Loading')
-                ))
-            )";
-        cmd.Parameters.AddWithValue("$limit", Math.Clamp(limit, 1, 100));
-        return cmd.ExecuteNonQuery();
+        using var tx = conn.BeginTransaction();
+        using var activeCommand = conn.CreateCommand();
+        activeCommand.Transaction = tx;
+        activeCommand.CommandText = @"SELECT COUNT(*) FROM channel_videos
+                                      WHERE metadata_status IN ('Queued', 'Loading')";
+        var remaining = Math.Max(0, limit - Convert.ToInt32(activeCommand.ExecuteScalar()));
+        if (remaining == 0)
+        {
+            tx.Commit();
+            return 0;
+        }
+
+        var queued = QueueMetadataTiers(conn, tx, "videos.metadata_status = 'Pending'", remaining);
+        remaining -= queued;
+        if (remaining > 0)
+        {
+            var failed = QueueMetadataTiers(conn, tx,
+                "videos.metadata_status = 'Failed' AND videos.metadata_updated_at < datetime('now', '-7 days')",
+                remaining);
+            queued += failed;
+            remaining -= failed;
+        }
+        if (remaining > 0)
+            queued += QueueMetadataTiers(conn, tx,
+                "videos.metadata_status = 'Ready' AND (videos.metadata_updated_at IS NULL OR videos.metadata_updated_at < datetime('now', '-30 days'))",
+                remaining);
+
+        tx.Commit();
+        return queued;
+    }
+
+    private static int QueueMetadataTiers(
+        SqliteConnection conn,
+        SqliteTransaction tx,
+        string candidateCondition,
+        int limit)
+    {
+        var queued = 0;
+        var tiers = new (int Priority, string Condition)[]
+        {
+            (10, "EXISTS (SELECT 1 FROM channels c WHERE c.id = videos.channel_id AND c.subscribed = 1)"),
+            (5, @"EXISTS (SELECT 1 FROM tracks t
+                          WHERE t.channel_id = videos.channel_id AND t.library_state = 'Active')"),
+            (1, "1 = 1")
+        };
+
+        foreach (var (priority, tierCondition) in tiers)
+        {
+            var remaining = limit - queued;
+            if (remaining <= 0)
+                break;
+            using var command = conn.CreateCommand();
+            command.Transaction = tx;
+            command.CommandText = $@"
+                UPDATE channel_videos
+                SET metadata_status = 'Queued', metadata_error = NULL, metadata_priority = $priority
+                WHERE id IN (
+                    SELECT videos.id
+                    FROM channel_videos videos
+                    WHERE {candidateCondition} AND {tierCondition}
+                    ORDER BY videos.id DESC
+                    LIMIT $limit
+                )";
+            command.Parameters.AddWithValue("$priority", priority);
+            command.Parameters.AddWithValue("$limit", remaining);
+            queued += command.ExecuteNonQuery();
+        }
+
+        return queued;
     }
 
     public ChannelVideo? ClaimNextChannelVideoMetadata()

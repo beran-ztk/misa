@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Resona.Models;
 
@@ -6,19 +7,38 @@ namespace Resona.Services;
 
 public sealed class ChannelMetadataService
 {
-    private const int BackgroundBatchSize = 32;
+    private const int BackgroundBatchSize = 5;
     public static readonly ChannelMetadataService Current = new();
 
     private readonly object _workerGate = new();
     private Task? _workerTask;
+    private int _initialized;
 
     public event Action<int, int>? MetadataUpdated;
     public event Action? QueueChanged;
 
     public void Initialize()
     {
-        MusicLibraryService.Current.RecoverChannelMetadataQueue();
-        RequestFollowedChannels();
+        if (Interlocked.Exchange(ref _initialized, 1) != 0)
+            return;
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                // Let the main window and library finish their first render
+                // before touching the metadata queue.
+                await Task.Delay(TimeSpan.FromSeconds(2));
+                MusicLibraryService.Current.EnsureChannelMetadataQueueIndexes();
+                MusicLibraryService.Current.RecoverChannelMetadataQueue();
+                RequestAllChannels();
+            }
+            catch
+            {
+                // Metadata preparation is optional startup work. A later
+                // channel refresh or explicit request starts it again.
+            }
+        });
     }
 
     public void RequestChannel(int channelId, int limit = 20)
@@ -42,9 +62,9 @@ public sealed class ChannelMetadataService
         QueueChanged?.Invoke();
     }
 
-    public void RequestFollowedChannels(int limit = BackgroundBatchSize)
+    public void RequestAllChannels(int limit = BackgroundBatchSize)
     {
-        MusicLibraryService.Current.QueueFollowedChannelVideoMetadata(limit);
+        MusicLibraryService.Current.QueueBackgroundChannelVideoMetadata(limit);
         EnsureWorker();
         QueueChanged?.Invoke();
     }
@@ -90,9 +110,9 @@ public sealed class ChannelMetadataService
             lock (_workerGate)
                 _workerTask = null;
             // Keep a small queue instead of scheduling thousands of rows at
-            // once. When one batch is exhausted, enqueue the next pending
-            // metadata entries from every followed channel.
-            MusicLibraryService.Current.QueueFollowedChannelVideoMetadata(BackgroundBatchSize);
+            // once. When one batch is exhausted, enqueue the next prioritized
+            // entries across followed, library-relevant and remaining channels.
+            MusicLibraryService.Current.QueueBackgroundChannelVideoMetadata(BackgroundBatchSize);
             if (MusicLibraryService.Current.HasQueuedChannelVideoMetadata())
                 EnsureWorker();
             QueueChanged?.Invoke();

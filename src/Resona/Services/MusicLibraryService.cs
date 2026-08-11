@@ -223,10 +223,11 @@ public class MusicLibraryService
     public List<ChannelHubItem> GetChannelHubItems() => _db.GetChannelHubItems();
     public List<ChannelVideo> GetChannelVideos(int channelId) => _db.GetChannelVideos(channelId);
     public void RecoverChannelMetadataQueue() => _db.RecoverChannelMetadataQueue();
+    public void EnsureChannelMetadataQueueIndexes() => _db.EnsureChannelMetadataQueueIndexes();
     public int QueueChannelVideoMetadata(int channelId, int limit) => _db.QueueChannelVideoMetadata(channelId, limit);
     public bool QueueSpecificChannelVideoMetadata(int videoId) => _db.QueueSpecificChannelVideoMetadata(videoId);
     public int QueueAutoDownloadMetadata(int limit) => _db.QueueAutoDownloadMetadata(limit);
-    public int QueueFollowedChannelVideoMetadata(int limit) => _db.QueueFollowedChannelVideoMetadata(limit);
+    public int QueueBackgroundChannelVideoMetadata(int limit) => _db.QueueBackgroundChannelVideoMetadata(limit);
     public ChannelVideo? ClaimNextChannelVideoMetadata() => _db.ClaimNextChannelVideoMetadata();
     public bool HasQueuedChannelVideoMetadata() => _db.HasQueuedChannelVideoMetadata();
     public Task<YouTubeTrackMetadata?> GetChannelVideoMetadataAsync(
@@ -243,7 +244,7 @@ public class MusicLibraryService
     {
         _db.SetChannelFollowed(channelId, followed);
         if (followed)
-            ChannelMetadataService.Current.RequestFollowedChannels();
+            ChannelMetadataService.Current.RequestAllChannels();
     }
     public void MarkChannelBasicMetadataChecked(int channelId) => _db.MarkChannelBasicMetadataChecked(channelId);
     public List<ChannelNotification> GetChannelNotifications() => _db.GetChannelNotifications();
@@ -358,7 +359,7 @@ public class MusicLibraryService
         var result = await Task.Run(
             () => _db.SaveChannelSnapshot(snapshot),
             cancellationToken);
-        ChannelMetadataService.Current.RequestFollowedChannels();
+        ChannelMetadataService.Current.RequestAllChannels();
         ChannelDownloadService.Current.NotifyQueueChanged();
         return result;
     }
