@@ -137,11 +137,18 @@ public class MusicDatabase
                 file_size_bytes     INTEGER NULL,
                 download_duration_ms INTEGER NULL,
                 thumbnail           BLOB NULL,
+                library_state       TEXT NOT NULL DEFAULT 'Active',
+                source_video_id     TEXT NULL,
+                view_count          INTEGER NULL,
+                like_count          INTEGER NULL,
+                source_thumbnail_url TEXT NULL,
+                source_metadata_updated_at TEXT NULL,
                 analysis_disabled   INTEGER NOT NULL DEFAULT 0,
                 is_public           INTEGER NOT NULL DEFAULT 1,
                 needs_reevaluation  INTEGER NOT NULL DEFAULT 0,
                 notes               TEXT NULL
             );
+            CREATE INDEX ix_tracks_library_state ON tracks(library_state, downloaded_at DESC);
 
             CREATE TABLE track_genres (
                 track_id                 INTEGER NOT NULL REFERENCES tracks(id) ON DELETE CASCADE,
@@ -264,6 +271,14 @@ public class MusicDatabase
         EnsureColumn(conn, "tracks", "file_size_bytes", "INTEGER NULL");
         EnsureColumn(conn, "tracks", "download_duration_ms", "INTEGER NULL");
         EnsureColumn(conn, "tracks", "thumbnail", "BLOB NULL");
+        EnsureColumn(conn, "tracks", "library_state", "TEXT NOT NULL DEFAULT 'Active'");
+        EnsureColumn(conn, "tracks", "source_video_id", "TEXT NULL");
+        EnsureColumn(conn, "tracks", "view_count", "INTEGER NULL");
+        EnsureColumn(conn, "tracks", "like_count", "INTEGER NULL");
+        EnsureColumn(conn, "tracks", "source_thumbnail_url", "TEXT NULL");
+        EnsureColumn(conn, "tracks", "source_metadata_updated_at", "TEXT NULL");
+        ExecuteNonQuery(conn,
+            "CREATE INDEX IF NOT EXISTS ix_tracks_library_state ON tracks(library_state, downloaded_at DESC)");
         EnsureColumn(conn, "tracks", "analysis_disabled", "INTEGER NOT NULL DEFAULT 0");
         EnsureColumn(conn, "tracks", "is_public", "INTEGER NOT NULL DEFAULT 1");
         EnsureColumn(conn, "track_analysis", "analysis_duration_ms", "INTEGER NULL");
@@ -1583,6 +1598,22 @@ public class MusicDatabase
             ("$thumbnailUrl", metadata.ThumbnailUrl),
             ("$maxDuration", Math.Clamp(maxDurationMinutes, 1, 24 * 60) * 60),
             ("$now", now));
+        ExecuteNonQuery(conn, @"
+            UPDATE tracks
+            SET title = COALESCE($title, title),
+                duration_seconds = COALESCE($duration, duration_seconds),
+                uploaded_at = COALESCE($uploadedAt, uploaded_at),
+                view_count = $viewCount,
+                like_count = $likeCount,
+                source_thumbnail_url = COALESCE($thumbnailUrl, source_thumbnail_url),
+                source_metadata_updated_at = $now,
+                updated_at = $now
+            WHERE canonical_url = (
+                SELECT canonical_url FROM channel_videos WHERE id = $id)",
+            ("$id", videoId), ("$title", metadata.Title),
+            ("$duration", metadata.DurationSeconds), ("$uploadedAt", metadata.UploadedAt),
+            ("$viewCount", metadata.ViewCount), ("$likeCount", metadata.LikeCount),
+            ("$thumbnailUrl", metadata.ThumbnailUrl), ("$now", now));
         if (metadata.ChannelFollowerCount is long followerCount)
             ExecuteNonQuery(conn, @"
                 UPDATE channels
@@ -1886,17 +1917,32 @@ public class MusicDatabase
         long? channelId = null;
         if (!string.IsNullOrWhiteSpace(metadata?.ChannelId))
         {
-            ExecuteInsert(conn, tx, @"INSERT INTO channels (name, source_channel_id, source_url)
-                VALUES ($name, $channelId, $channelUrl)
-                ON CONFLICT(source_channel_id) DO UPDATE SET name = excluded.name, source_url = excluded.source_url",
-                ("$name", metadata.ChannelName ?? "Unknown channel"), ("$channelId", metadata.ChannelId), ("$channelUrl", metadata.ChannelUrl));
+            ExecuteInsert(conn, tx, @"INSERT INTO channels
+                    (name, source_channel_id, source_url, follower_count, remote_metadata_updated_at)
+                VALUES ($name, $channelId, $channelUrl, $followerCount, $metadataUpdatedAt)
+                ON CONFLICT(source_channel_id) DO UPDATE SET
+                    name = excluded.name,
+                    source_url = COALESCE(excluded.source_url, channels.source_url),
+                    follower_count = COALESCE(excluded.follower_count, channels.follower_count),
+                    remote_metadata_updated_at = excluded.remote_metadata_updated_at",
+                ("$name", metadata.ChannelName ?? "Unknown channel"), ("$channelId", metadata.ChannelId),
+                ("$channelUrl", metadata.ChannelUrl), ("$followerCount", metadata.ChannelFollowerCount),
+                ("$metadataUpdatedAt", now));
             channelId = InsertAndGetId(conn, tx, "SELECT id FROM channels WHERE source_channel_id = $channelId",
                 ("$channelId", metadata.ChannelId));
         }
 
         var trackId = InsertAndGetId(conn, tx, @"
-            INSERT INTO tracks (canonical_url, title, file_name, channel_id, rating_id, uploaded_at, downloaded_at, updated_at, duration_seconds, file_size_bytes, download_duration_ms, thumbnail, is_public)
-            VALUES ($url, $title, $fileName, $channelId, $ratingId, $uploadedAt, $downloadedAt, $updatedAt, $duration, $fileSizeBytes, $downloadDurationMs, $thumbnail, 1)",
+            INSERT INTO tracks
+                (canonical_url, title, file_name, channel_id, rating_id, uploaded_at, downloaded_at, updated_at,
+                 duration_seconds, file_size_bytes, download_duration_ms, thumbnail, is_public, library_state,
+                 needs_reevaluation,
+                 source_video_id, view_count, like_count, source_thumbnail_url, source_metadata_updated_at)
+            VALUES
+                ($url, $title, $fileName, $channelId, $ratingId, $uploadedAt, $downloadedAt, $updatedAt,
+                 $duration, $fileSizeBytes, $downloadDurationMs, $thumbnail, 1, $libraryState,
+                 $needsReview,
+                 $videoId, $viewCount, $likeCount, $thumbnailUrl, $metadataUpdatedAt)",
             ("$url", canonicalUrl),
             ("$title", title),
             ("$fileName", fileName),
@@ -1908,7 +1954,14 @@ public class MusicDatabase
             ("$duration", durationSeconds),
             ("$fileSizeBytes", fileSizeBytes),
             ("$downloadDurationMs", downloadDurationMilliseconds),
-            ("$thumbnail", thumbnail));
+            ("$thumbnail", thumbnail),
+            ("$libraryState", ratingId is null ? "PendingRating" : "Active"),
+            ("$needsReview", ratingId is null ? 1 : 0),
+            ("$videoId", YouTubeUrlNormalizer.ExtractVideoId(canonicalUrl)),
+            ("$viewCount", metadata?.ViewCount),
+            ("$likeCount", metadata?.LikeCount),
+            ("$thumbnailUrl", metadata?.ThumbnailUrl),
+            ("$metadataUpdatedAt", metadata is null ? null : now));
 
         SynchronizeLibraryChannelVideo(conn, tx, trackId, now);
 
@@ -1925,9 +1978,12 @@ public class MusicDatabase
         ExecuteInsert(conn, tx, @"
             INSERT INTO channel_videos
                 (channel_id, video_id, canonical_url, title, duration_seconds, uploaded_at,
-                 discovered_at, updated_at, is_checked, download_status, metadata_status)
-            SELECT channel_id, 'library-track-' || id, canonical_url, title, duration_seconds, uploaded_at,
-                   downloaded_at, $now, 1, 'Ready', 'Pending'
+                 discovered_at, updated_at, is_checked, download_status, metadata_status,
+                 metadata_updated_at, view_count, like_count, thumbnail_url)
+            SELECT channel_id, COALESCE(source_video_id, 'library-track-' || id), canonical_url, title,
+                   duration_seconds, uploaded_at, downloaded_at, $now, 1, 'Ready',
+                   CASE WHEN source_metadata_updated_at IS NULL THEN 'Pending' ELSE 'Ready' END,
+                   source_metadata_updated_at, view_count, like_count, source_thumbnail_url
             FROM tracks
             WHERE id = $trackId AND channel_id IS NOT NULL
               AND canonical_url IS NOT NULL AND TRIM(canonical_url) <> ''
@@ -1936,6 +1992,14 @@ public class MusicDatabase
                 title = excluded.title,
                 duration_seconds = COALESCE(channel_videos.duration_seconds, excluded.duration_seconds),
                 uploaded_at = COALESCE(channel_videos.uploaded_at, excluded.uploaded_at),
+                metadata_status = CASE
+                    WHEN excluded.metadata_status = 'Ready' THEN 'Ready'
+                    ELSE channel_videos.metadata_status
+                END,
+                metadata_updated_at = COALESCE(excluded.metadata_updated_at, channel_videos.metadata_updated_at),
+                view_count = COALESCE(excluded.view_count, channel_videos.view_count),
+                like_count = COALESCE(excluded.like_count, channel_videos.like_count),
+                thumbnail_url = COALESCE(excluded.thumbnail_url, channel_videos.thumbnail_url),
                 is_checked = 1,
                 download_status = 'Ready',
                 download_error = NULL,
@@ -1949,7 +2013,8 @@ public class MusicDatabase
         string fileName,
         int? durationSeconds,
         long fileSizeBytes,
-        int downloadDurationMilliseconds)
+        int downloadDurationMilliseconds,
+        byte[]? thumbnail)
     {
         using var conn = Open();
         using var tx = conn.BeginTransaction();
@@ -1972,7 +2037,7 @@ public class MusicDatabase
                  duration_seconds, file_size_bytes, download_duration_ms, thumbnail, analysis_disabled, needs_reevaluation, is_public)
             VALUES
                 ($url, $title, $fileName, $channelId, NULL, $uploadedAt, $now, $now,
-                 $duration, $fileSize, $downloadDuration, NULL, 1, 1, 1)",
+                 $duration, $fileSize, $downloadDuration, $thumbnail, 0, 1, 1)",
             ("$url", video.CanonicalUrl),
             ("$title", video.Title),
             ("$fileName", fileName),
@@ -1981,7 +2046,18 @@ public class MusicDatabase
             ("$now", now),
             ("$duration", durationSeconds),
             ("$fileSize", fileSizeBytes),
-            ("$downloadDuration", downloadDurationMilliseconds));
+            ("$downloadDuration", downloadDurationMilliseconds),
+            ("$thumbnail", thumbnail));
+        ExecuteInsert(conn, tx, @"
+            UPDATE tracks
+            SET library_state = 'PendingRating', source_video_id = $sourceVideoId,
+                view_count = $viewCount, like_count = $likeCount,
+                source_thumbnail_url = $thumbnailUrl,
+                source_metadata_updated_at = $metadataUpdatedAt
+            WHERE id = $trackId",
+            ("$trackId", trackId), ("$sourceVideoId", video.VideoId),
+            ("$viewCount", video.ViewCount), ("$likeCount", video.LikeCount),
+            ("$thumbnailUrl", video.ThumbnailUrl), ("$metadataUpdatedAt", video.MetadataUpdatedAt));
         tx.Commit();
         return (int)trackId;
     }
@@ -2016,7 +2092,8 @@ public class MusicDatabase
             ExecuteInsert(conn, tx, @"
                 UPDATE tracks
                 SET rating_id = (SELECT id FROM ratings WHERE name = $avoidRating),
-                    analysis_disabled = 1, needs_reevaluation = 0, updated_at = $now
+                    library_state = 'Rejected', analysis_disabled = 1,
+                    needs_reevaluation = 0, updated_at = $now
                 WHERE id = $trackId",
                 ("$trackId", trackId.Value), ("$avoidRating", RatingNames.Avoid),
                 ("$now", DateTime.UtcNow.ToString("O")));
@@ -2025,7 +2102,8 @@ public class MusicDatabase
         {
             ExecuteInsert(conn, tx, @"
                 UPDATE tracks
-                SET analysis_disabled = 0, needs_reevaluation = 1, updated_at = $now
+                SET library_state = 'Active', analysis_disabled = 0,
+                    needs_reevaluation = 1, updated_at = $now
                 WHERE id = $trackId",
                 ("$trackId", trackId.Value), ("$now", DateTime.UtcNow.ToString("O")));
         }
@@ -2057,7 +2135,9 @@ public class MusicDatabase
         cmd.CommandText = @"
             SELECT tracks.id FROM tracks
             LEFT JOIN track_analysis analysis ON analysis.track_id = tracks.id
-            WHERE analysis.id IS NULL";
+            WHERE analysis.id IS NULL
+              AND tracks.analysis_disabled = 0
+              AND tracks.library_state = 'Active'";
         using var reader = cmd.ExecuteReader();
         var ids = new HashSet<int>();
         while (reader.Read()) ids.Add(reader.GetInt32(0));
@@ -2140,28 +2220,16 @@ public class MusicDatabase
         using var cmd = conn.CreateCommand();
         cmd.CommandText = @"SELECT tracks.id, tracks.canonical_url, tracks.title, tracks.file_name, tracks.rating_id, tracks.downloaded_at,
                                    tracks.duration_seconds, tracks.needs_reevaluation, channels.name, channels.source_url, tracks.uploaded_at,
-                                   tracks.updated_at, tracks.analysis_disabled, tracks.is_public
+                                   tracks.updated_at, tracks.analysis_disabled, tracks.is_public, tracks.library_state,
+                                   tracks.source_video_id, tracks.view_count, tracks.like_count,
+                                   tracks.source_thumbnail_url, tracks.source_metadata_updated_at
                             FROM tracks LEFT JOIN channels ON channels.id = tracks.channel_id
                             ORDER BY tracks.downloaded_at DESC";
         using var reader = cmd.ExecuteReader();
         var tracks = new List<MusicTrack>();
         while (reader.Read())
         {
-            tracks.Add(new MusicTrack(
-                reader.GetInt32(0),
-                reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
-                reader.GetString(2),
-                reader.GetString(3),
-                reader.IsDBNull(4) ? null : reader.GetInt32(4),
-                reader.GetString(5),
-                reader.IsDBNull(6) ? null : reader.GetInt32(6),
-                reader.GetInt32(7) != 0,
-                reader.IsDBNull(8) ? null : reader.GetString(8),
-                reader.IsDBNull(9) ? null : reader.GetString(9),
-                reader.IsDBNull(10) ? null : reader.GetString(10),
-                reader.GetString(11),
-                reader.GetInt32(12) != 0,
-                reader.GetInt32(13) != 0));
+            tracks.Add(ReadMusicTrack(reader));
         }
         return tracks;
     }
@@ -2172,28 +2240,14 @@ public class MusicDatabase
         using var cmd = conn.CreateCommand();
         cmd.CommandText = @"SELECT tracks.id, tracks.canonical_url, tracks.title, tracks.file_name, tracks.rating_id, tracks.downloaded_at,
                                    tracks.duration_seconds, tracks.needs_reevaluation, channels.name, channels.source_url, tracks.uploaded_at,
-                                   tracks.updated_at, tracks.analysis_disabled, tracks.is_public
+                                   tracks.updated_at, tracks.analysis_disabled, tracks.is_public, tracks.library_state,
+                                   tracks.source_video_id, tracks.view_count, tracks.like_count,
+                                   tracks.source_thumbnail_url, tracks.source_metadata_updated_at
                             FROM tracks LEFT JOIN channels ON channels.id = tracks.channel_id
                             WHERE tracks.id = $trackId";
         cmd.Parameters.AddWithValue("$trackId", trackId);
         using var reader = cmd.ExecuteReader();
-        return reader.Read()
-            ? new MusicTrack(
-                reader.GetInt32(0),
-                reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
-                reader.GetString(2),
-                reader.GetString(3),
-                reader.IsDBNull(4) ? null : reader.GetInt32(4),
-                reader.GetString(5),
-                reader.IsDBNull(6) ? null : reader.GetInt32(6),
-                reader.GetInt32(7) != 0,
-                reader.IsDBNull(8) ? null : reader.GetString(8),
-                reader.IsDBNull(9) ? null : reader.GetString(9),
-                reader.IsDBNull(10) ? null : reader.GetString(10),
-                reader.GetString(11),
-                reader.GetInt32(12) != 0,
-                reader.GetInt32(13) != 0)
-            : null;
+        return reader.Read() ? ReadMusicTrack(reader) : null;
     }
 
     public byte[]? GetTrackThumbnail(int trackId)
@@ -2224,33 +2278,54 @@ public class MusicDatabase
         using var cmd = conn.CreateCommand();
         cmd.CommandText = @"SELECT tracks.id, tracks.canonical_url, tracks.title, tracks.file_name, tracks.rating_id, tracks.downloaded_at,
                                    tracks.duration_seconds, tracks.needs_reevaluation, channels.name, channels.source_url, tracks.uploaded_at,
-                                   tracks.updated_at, tracks.analysis_disabled, tracks.is_public
+                                   tracks.updated_at, tracks.analysis_disabled, tracks.is_public, tracks.library_state,
+                                   tracks.source_video_id, tracks.view_count, tracks.like_count,
+                                   tracks.source_thumbnail_url, tracks.source_metadata_updated_at
                             FROM tracks
                             LEFT JOIN channels ON channels.id = tracks.channel_id
                             LEFT JOIN track_analysis analysis ON analysis.track_id = tracks.id
-                            WHERE analysis.id IS NULL AND tracks.analysis_disabled = 0
+                            WHERE analysis.id IS NULL
+                              AND tracks.analysis_disabled = 0
+                              AND tracks.library_state = 'Active'
                             ORDER BY tracks.downloaded_at, tracks.id";
         using var reader = cmd.ExecuteReader();
         var tracks = new List<MusicTrack>();
         while (reader.Read())
         {
-            tracks.Add(new MusicTrack(
-                reader.GetInt32(0),
-                reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
-                reader.GetString(2),
-                reader.GetString(3),
-                reader.IsDBNull(4) ? null : reader.GetInt32(4),
-                reader.GetString(5),
-                reader.IsDBNull(6) ? null : reader.GetInt32(6),
-                reader.GetInt32(7) != 0,
-                reader.IsDBNull(8) ? null : reader.GetString(8),
-                reader.IsDBNull(9) ? null : reader.GetString(9),
-                reader.IsDBNull(10) ? null : reader.GetString(10),
-                reader.GetString(11),
-                reader.GetInt32(12) != 0,
-                reader.GetInt32(13) != 0));
+            tracks.Add(ReadMusicTrack(reader));
         }
         return tracks;
+    }
+
+    private static MusicTrack ReadMusicTrack(SqliteDataReader reader)
+    {
+        var libraryState = TrackLibraryState.Active;
+        if (!reader.IsDBNull(14)
+            && Enum.TryParse<TrackLibraryState>(reader.GetString(14), ignoreCase: true, out var parsedState))
+            libraryState = parsedState;
+
+        return new MusicTrack(
+            reader.GetInt32(0),
+            reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
+            reader.GetString(2),
+            reader.GetString(3),
+            reader.IsDBNull(4) ? null : reader.GetInt32(4),
+            reader.GetString(5),
+            reader.IsDBNull(6) ? null : reader.GetInt32(6),
+            reader.GetInt32(7) != 0,
+            reader.IsDBNull(8) ? null : reader.GetString(8),
+            reader.IsDBNull(9) ? null : reader.GetString(9),
+            reader.IsDBNull(10) ? null : reader.GetString(10),
+            reader.GetString(11),
+            reader.GetInt32(12) != 0,
+            reader.GetInt32(13) != 0,
+            null,
+            libraryState,
+            reader.IsDBNull(15) ? null : reader.GetString(15),
+            reader.IsDBNull(16) ? null : reader.GetInt64(16),
+            reader.IsDBNull(17) ? null : reader.GetInt64(17),
+            reader.IsDBNull(18) ? null : reader.GetString(18),
+            reader.IsDBNull(19) ? null : reader.GetString(19));
     }
 
     public Dictionary<int, List<int>> GetAllTrackGenreIds()
@@ -2342,7 +2417,14 @@ public class MusicDatabase
         var now = DateTime.UtcNow.ToString("O");
 
         ExecuteInsert(conn, tx,
-            "UPDATE tracks SET title = $title, rating_id = $ratingId, is_public = $isPublic, updated_at = $updatedAt, needs_reevaluation = 0 WHERE id = $id",
+            @"UPDATE tracks
+              SET title = $title,
+                  rating_id = $ratingId,
+                  library_state = CASE WHEN $ratingId IS NULL THEN library_state ELSE 'Active' END,
+                  is_public = $isPublic,
+                  updated_at = $updatedAt,
+                  needs_reevaluation = 0
+              WHERE id = $id",
             ("$id", id), ("$title", title), ("$ratingId", ratingId), ("$isPublic", isPublic ? 1 : 0), ("$updatedAt", now));
 
         tx.Commit();

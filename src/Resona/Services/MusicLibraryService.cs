@@ -36,7 +36,8 @@ public class MusicLibraryService
     public List<MusicTrack> GetUnanalyzedTracks() => _db.GetUnanalyzedTracks();
     public MusicTrack? GetTrackById(int id) => _db.GetTrackById(id);
     public bool ShouldAnalyzeTrack(int id) =>
-        GetTrackById(id) is { AnalysisDisabled: false } && GetTrackAudioAnalysis(id) is null;
+        GetTrackById(id) is { AnalysisDisabled: false, LibraryState: TrackLibraryState.Active }
+        && GetTrackAudioAnalysis(id) is null;
     public MusicTrack? GetTrackByCanonicalUrl(string canonicalUrl) =>
         GetTracks().FirstOrDefault(track => string.Equals(track.CanonicalUrl, canonicalUrl, StringComparison.OrdinalIgnoreCase));
 
@@ -48,7 +49,11 @@ public class MusicLibraryService
     public List<TrackModelGenre> GetTrackModelGenres(int trackId) => _db.GetTrackModelGenres(trackId);
     public void SetTrackModelGenreEnabled(int trackId, int genreId, bool isEnabled) => _db.SetTrackModelGenreEnabled(trackId, genreId, isEnabled);
     public void UpdateTrack(int id, string title, List<int> genreIds, int? ratingId, List<int> styleIds, bool isPublic)
-        => _db.UpdateTrack(id, title, genreIds, ratingId, styleIds, isPublic);
+    {
+        _db.UpdateTrack(id, title, genreIds, ratingId, styleIds, isPublic);
+        if (ratingId is not null)
+            BackgroundAnalysisService.Current.EnqueueTrack(id);
+    }
     public void SetTrackNeedsReview(int id, bool needsReview) => _db.SetTrackNeedsReview(id, needsReview);
     public void SetTrackAnalysisDisabled(int id, bool analysisDisabled) => _db.SetTrackAnalysisDisabled(id, analysisDisabled);
     public void RecordTrackPlaybackStarted(int trackId) => _db.RecordTrackPlaybackStarted(trackId);
@@ -232,12 +237,14 @@ public class MusicLibraryService
                 : download.ErrorOutput.Trim());
 
         var duration = video.DurationSeconds ?? await _downloader.GetDurationAsync(download.FilePath);
+        var thumbnail = ThumbnailService.ReadEmbeddedArtworkThumbnail(download.FilePath);
         var trackId = _db.InsertPreloadedChannelTrack(
             video,
             Path.GetFileName(download.FilePath),
             duration,
             new FileInfo(download.FilePath).Length,
-            (int)stopwatch.ElapsedMilliseconds);
+            (int)stopwatch.ElapsedMilliseconds,
+            thumbnail);
         return (GetTrackById(trackId), null);
     }
 
@@ -453,7 +460,8 @@ public class MusicLibraryService
         var trackId = _db.InsertTrack(canonicalUrl, metadata?.Title ?? _downloader.TitleFromFileName(fileName), fileName,
             request.GenreIds, request.RatingId, request.StyleIds, duration, fileSizeBytes, (int)downloadStopwatch.ElapsedMilliseconds, metadata, thumbnail);
 
-        BackgroundAnalysisService.Current.EnqueueTrack(trackId);
+        if (request.RatingId is not null)
+            BackgroundAnalysisService.Current.EnqueueTrack(trackId);
         return new DownloadResult(true);
     }
 
@@ -492,8 +500,6 @@ public class MusicLibraryService
         var trackId = _db.InsertTrack(canonicalUrl, metadata?.Title ?? _downloader.TitleFromFileName(fileName), fileName,
             [], null, [], duration, fileSizeBytes, (int)downloadStopwatch.ElapsedMilliseconds, metadata, thumbnail);
         trackCreated?.Invoke(trackId);
-        BackgroundAnalysisService.Current.EnqueueTrack(trackId);
-
         return new ImportResult(
             true,
             GetTracks().Single(track => track.Id == trackId));

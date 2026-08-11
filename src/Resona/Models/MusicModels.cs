@@ -2,11 +2,24 @@ using System.Collections.Generic;
 
 namespace Resona.Models;
 
+public enum TrackLibraryState
+{
+    PendingRating,
+    Active,
+    Rejected
+}
+
 public record MusicTrack(
     int Id, string CanonicalUrl, string Title, string FileName,
     int? RatingId, string DownloadedAt, int? DurationSeconds, bool NeedsReview,
     string? ChannelName, string? ChannelUrl, string? UploadedAt, string UpdatedAt,
-    bool AnalysisDisabled = false, bool IsPublic = false, byte[]? Thumbnail = null);
+    bool AnalysisDisabled = false, bool IsPublic = false, byte[]? Thumbnail = null,
+    TrackLibraryState LibraryState = TrackLibraryState.Active,
+    string? SourceVideoId = null,
+    long? ViewCount = null,
+    long? LikeCount = null,
+    string? SourceThumbnailUrl = null,
+    string? SourceMetadataUpdatedAt = null);
 
 public record Genre(int Id, string Name);
 public record Tag(int Id, string Name);

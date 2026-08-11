@@ -727,6 +727,9 @@ public partial class EditTrackOverlay : UserControl
         {
             Title = title,
             RatingId = SelectedRatingId(),
+            LibraryState = SelectedRatingId() is null
+                ? _track.LibraryState
+                : TrackLibraryState.Active,
             IsPublic = _isPublic
         };
         CaptureChangeSnapshot(_track, tagIds, styleIds.ToHashSet(), _pendingEnabledModelGenreIds);
