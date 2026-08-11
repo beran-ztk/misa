@@ -745,9 +745,13 @@
                     Grid.Row="0"
                     ZIndex="40"
                     IsVisible="False"
-                    Background="#F2121212"
-                    BorderThickness="0,1,0,0"
-                    BorderBrush="{DynamicResource Theme.Brush.Border}">
+                    Background="Transparent"
+                    BorderThickness="0"
+                    ClipToBounds="True">
+                <Border x:Name="FilterSurface"
+                        Background="#F2121212"
+                        BorderThickness="0,1,0,0"
+                        BorderBrush="{DynamicResource Theme.Brush.Border}">
                 <Grid RowDefinitions="Auto,*" Margin="30,22,30,26">
                     <Rectangle x:Name="FilterAtmosphereTint"
                                Grid.RowSpan="2"
@@ -1107,6 +1111,7 @@
                         </DockPanel>
                     </Grid>
                 </Grid>
+                </Border>
             </Border>
 
             <views:AddTrackOverlay x:Name="AddTrackOverlay" Grid.Row="0" IsVisible="False"/>
