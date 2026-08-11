@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -8,6 +9,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using Resona.Models;
 using Resona.Services;
 
@@ -29,6 +31,7 @@ public partial class ChannelOverlay : UserControl
     private ChannelVideoFilter _videoFilter = ChannelVideoFilter.New;
     private readonly Dictionary<int, ChannelVideoFilter> _videoFiltersByChannel = [];
     private readonly Dictionary<int, string> _videoSearchByChannel = [];
+    private readonly Dictionary<int, Bitmap> _channelArtworkCache = [];
     private bool _processingPastedUrl;
     private int? _activePreviewTrackId;
     private readonly Avalonia.Threading.DispatcherTimer _channelStateRefreshTimer = new()
@@ -41,6 +44,7 @@ public partial class ChannelOverlay : UserControl
     public event Action<MusicTrack>? PreviewRequested;
     public event Action? PreviewClosed;
     public event Action<int>? TrackChanged;
+    public event Action<MusicTrack>? EditRequested;
 
     public ChannelOverlay()
     {
@@ -61,6 +65,14 @@ public partial class ChannelOverlay : UserControl
         InboxView.IsVisible = false;
         _detailOpenedFromInbox = false;
         RefreshChannels();
+    }
+
+    public void OpenChannel(int channelId)
+    {
+        Open();
+        var channel = _hubChannels.FirstOrDefault(item => item.Id == channelId);
+        if (channel is not null)
+            OpenChannelDetail(channel);
     }
 
     public void UpdateDownloadSummary()
@@ -91,6 +103,25 @@ public partial class ChannelOverlay : UserControl
     public void RefreshChannels()
     {
         _hubChannels = MusicLibraryService.Current.GetChannelHubItems();
+        foreach (var channel in _hubChannels)
+        {
+            if (channel.Thumbnail is not { Length: > 0 })
+                continue;
+            if (!_channelArtworkCache.TryGetValue(channel.Id, out var artwork))
+            {
+                try
+                {
+                    using var stream = new MemoryStream(channel.Thumbnail);
+                    artwork = new Bitmap(stream);
+                    _channelArtworkCache[channel.Id] = artwork;
+                }
+                catch
+                {
+                    continue;
+                }
+            }
+            channel.Artwork = artwork;
+        }
         ApplyHubFilter();
         RefreshInboxBadge();
 
@@ -137,10 +168,18 @@ public partial class ChannelOverlay : UserControl
             .ThenByDescending(channel => channel.LocalTrackCount)
             .Take(6)
             .ToList();
-        var all = visible
-            .OrderByDescending(channel => channel.IsFollowed)
-            .ThenBy(channel => channel.Name, StringComparer.OrdinalIgnoreCase)
-            .ToList();
+        var all = (ChannelSortBox.SelectedIndex switch
+        {
+            1 => visible.OrderByDescending(channel => channel.AverageRating.HasValue)
+                .ThenByDescending(channel => channel.AverageRating)
+                .ThenByDescending(channel => channel.RatedTrackCount),
+            2 => visible.OrderByDescending(channel => channel.LocalTrackCount)
+                .ThenByDescending(channel => channel.RatedTrackCount),
+            3 => visible.OrderByDescending(channel => channel.LastDownloadedAt, StringComparer.Ordinal),
+            4 => visible.OrderByDescending(channel => channel.PlayCount)
+                .ThenByDescending(channel => channel.LocalTrackCount),
+            _ => visible.OrderBy(channel => channel.Name, StringComparer.OrdinalIgnoreCase)
+        }).ThenBy(channel => channel.Name, StringComparer.OrdinalIgnoreCase).ToList();
 
         FollowingItems.ItemsSource = following;
         SuggestedItems.ItemsSource = suggested;
@@ -161,6 +200,12 @@ public partial class ChannelOverlay : UserControl
     }
 
     private void OnChannelSearchChanged(object? sender, TextChangedEventArgs e) => ApplyHubFilter();
+
+    private void OnChannelSortChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (_hubChannels.Count > 0)
+            ApplyHubFilter();
+    }
 
     private void OnAddChannelToggleClicked(object? sender, RoutedEventArgs e)
     {
@@ -212,6 +257,9 @@ public partial class ChannelOverlay : UserControl
 
         SelectedChannelText.Text = channel.Name;
         DetailMonogramText.Text = channel.Monogram;
+        DetailChannelArtwork.Source = channel.Artwork;
+        DetailChannelArtwork.IsVisible = channel.HasArtwork;
+        DetailMonogramText.IsVisible = channel.ShowMonogram;
         var localStatus = channel.HasNewVideos
             ? $"{channel.TrackCountText} · {channel.NewVideoText}"
             : $"{channel.TrackCountText} · no new videos";
@@ -222,7 +270,10 @@ public partial class ChannelOverlay : UserControl
         DetailRatingText.Text = channel.RatingText;
         DetailActivityText.Text = channel.ActivityText;
         DetailTopTracksText.Text = channel.HasTopTracks ? channel.TopTracksText : "No local tracks yet";
-        DetailFollowButton.Content = channel.IsFollowed ? "Following" : "+ Follow";
+        DetailFollowButton.Content = channel.IsFollowed ? "Following" : "Follow";
+        DetailFollowButton.Classes.Remove("following");
+        if (channel.IsFollowed)
+            DetailFollowButton.Classes.Add("following");
         DetailNotificationIcon.Text = channel.NotificationsEnabled ? "●" : "○";
         DetailNotificationButton.Opacity = channel.NotificationsEnabled ? 0.95 : 0.5;
         DetailAutoDownloadButton.Content = channel.AutoDownload ? "Auto-download on" : "Auto-download off";
@@ -558,8 +609,8 @@ public partial class ChannelOverlay : UserControl
             return;
 
         var newCount = _currentVideos.Count(video => !video.IsChecked);
-        var readyCount = _currentVideos.Count(video => !video.IsChecked && video.TrackId is not null);
-        var libraryCount = _currentVideos.Count(video => video.TrackId is not null);
+        var readyCount = _currentVideos.Count(video => video.IsPendingRating);
+        var libraryCount = _currentVideos.Count(video => video.IsInLibrary);
         var issueCount = _currentVideos.Count(video =>
             video.DownloadStatus is ChannelDownloadStatus.Failed or ChannelDownloadStatus.Skipped
             || video.MetadataStatus == ChannelMetadataStatus.Failed);
@@ -577,8 +628,8 @@ public partial class ChannelOverlay : UserControl
         videos = _videoFilter switch
         {
             ChannelVideoFilter.New => videos.Where(video => !video.IsChecked),
-            ChannelVideoFilter.Ready => videos.Where(video => !video.IsChecked && video.TrackId is not null),
-            ChannelVideoFilter.InLibrary => videos.Where(video => video.TrackId is not null),
+            ChannelVideoFilter.Ready => videos.Where(video => video.IsPendingRating),
+            ChannelVideoFilter.InLibrary => videos.Where(video => video.IsInLibrary),
             ChannelVideoFilter.Issues => videos.Where(video =>
                 video.DownloadStatus is ChannelDownloadStatus.Failed or ChannelDownloadStatus.Skipped
                 || video.MetadataStatus == ChannelMetadataStatus.Failed),
@@ -630,17 +681,32 @@ public partial class ChannelOverlay : UserControl
         if (_loadingVideos || !item.CanReview)
             return;
 
-        var track = MusicLibraryService.Current.ConfirmChannelVideo(item.Id);
+        var track = item.TrackId is int trackId
+            ? MusicLibraryService.Current.GetTrackById(trackId)
+            : null;
         if (track is null)
         {
             ToastRequested?.Invoke("Audio is not downloaded yet");
             return;
         }
-        item.IsChecked = true;
-        TrackChanged?.Invoke(track.Id);
-        RefreshChannelSummaries();
+        EditRequested?.Invoke(track);
+        ToastRequested?.Invoke("Choose a rating to add this track to your library");
+    }
+
+    private void OnVideoDownloadClicked(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Button button || button.DataContext is not ChannelVideoDisplay item || !item.CanDownload)
+            return;
+
+        if (!MusicLibraryService.Current.RequestChannelVideoDownload(item.Id))
+        {
+            ToastRequested?.Invoke("Track is already downloaded or queued");
+            return;
+        }
+
         RefreshVideos();
-        ToastRequested?.Invoke("Accepted · analysis queued");
+        UpdateDownloadSummary();
+        ToastRequested?.Invoke("Track queued for download");
     }
 
     private void OnVideoSkipClicked(object? sender, RoutedEventArgs e)
@@ -869,6 +935,8 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
     private bool _hasDownloadError;
     private bool _isActive;
     private bool _canDismiss;
+    private bool _canDownload;
+    private TrackLibraryState? _libraryState;
     private string _dismissToolTip = "Skip (keep audio)";
     private IBrush _borderBrush = Brushes.Transparent;
     private Thickness _borderThickness;
@@ -884,6 +952,7 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
         MetadataErrorDetails = TrimErrorDetails(video.MetadataError);
         MetadataErrorSummary = ErrorSummary(MetadataErrorDetails);
         MetadataStatus = video.MetadataStatus;
+        _libraryState = video.LibraryState;
         _trackId = video.TrackId;
         SetDownloadState(video.DownloadStatus, video.DownloadError);
         SetChecked(video.IsChecked);
@@ -913,6 +982,10 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
         get => _trackId;
         private set => SetField(ref _trackId, value);
     }
+    public bool IsPendingRating => TrackId is not null
+        && !IsChecked
+        && (_libraryState is null or TrackLibraryState.PendingRating);
+    public bool IsInLibrary => TrackId is not null && _libraryState == TrackLibraryState.Active;
     public string StatusText
     {
         get => _statusText;
@@ -932,6 +1005,11 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
     {
         get => _canDismiss;
         private set => SetField(ref _canDismiss, value);
+    }
+    public bool CanDownload
+    {
+        get => _canDownload;
+        private set => SetField(ref _canDownload, value);
     }
     public string DismissToolTip
     {
@@ -1022,16 +1100,15 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
         CheckBorder = ThemeResources.Brush(value ? "Theme.Brush.Accent" : "Theme.Brush.Border");
         CheckOpacity = value ? 1 : 0.58;
         TextDecorations = value ? Avalonia.Media.TextDecorations.Strikethrough : null;
-        if (value && TrackId is not null)
-            StatusText = "In library";
-        CanReview = !value && TrackId is not null;
-        UpdateActions();
+        UpdateState();
         UpdateVisualState();
     }
 
     public void SetDownloadResult(int? trackId, string? error)
     {
         TrackId = trackId;
+        if (trackId is not null)
+            _libraryState = TrackLibraryState.PendingRating;
         SetDownloadState(trackId is not null ? ChannelDownloadStatus.Ready : ChannelDownloadStatus.Failed, error);
         SetChecked(IsChecked);
     }
@@ -1039,26 +1116,42 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
     private void SetDownloadState(ChannelDownloadStatus status, string? error)
     {
         DownloadStatus = status;
-        StatusText = status switch
-        {
-            ChannelDownloadStatus.Ready => "Ready",
-            ChannelDownloadStatus.Downloading => "Downloading…",
-            ChannelDownloadStatus.Queued => "Queued",
-            ChannelDownloadStatus.Failed => string.IsNullOrWhiteSpace(error) ? "Download failed" : "Failed",
-            ChannelDownloadStatus.Skipped => "Skipped · duration filter",
-            _ => "Auto-download off"
-        };
         SetDownloadError(status == ChannelDownloadStatus.Failed ? error : null);
-        CanPlay = TrackId is not null;
-        CanReview = !IsChecked && TrackId is not null;
-        UpdateActions();
+        UpdateState();
     }
 
-    private void UpdateActions()
+    private void UpdateState()
     {
-        CanDismiss = !IsChecked && (TrackId is not null || DownloadStatus == ChannelDownloadStatus.Skipped);
-        DismissToolTip = TrackId is null ? "Remove from pending" : "Skip (keep audio)";
-        ActionOpacity = !IsChecked && (TrackId is not null || CanDismiss) ? 0.78 : 0.3;
+        var hasTrack = TrackId is not null;
+        var pendingRating = hasTrack && !IsChecked
+            && (_libraryState is null or TrackLibraryState.PendingRating);
+
+        StatusText = hasTrack
+            ? _libraryState switch
+            {
+                TrackLibraryState.Rejected => "Rejected",
+                TrackLibraryState.Active => "In library",
+                _ => "Needs rating"
+            }
+            : DownloadStatus switch
+            {
+                ChannelDownloadStatus.Downloading => "Downloading…",
+                ChannelDownloadStatus.Queued => "Queued",
+                ChannelDownloadStatus.Failed => "Download failed",
+                ChannelDownloadStatus.Skipped => "Not downloaded · duration limit",
+                _ when MetadataStatus is ChannelMetadataStatus.Queued or ChannelMetadataStatus.Loading => "Loading metadata…",
+                _ => "Remote"
+            };
+
+        CanDownload = !hasTrack && DownloadStatus is not ChannelDownloadStatus.Queued
+            and not ChannelDownloadStatus.Downloading
+            && MetadataStatus is not ChannelMetadataStatus.Queued
+                and not ChannelMetadataStatus.Loading;
+        CanPlay = hasTrack;
+        CanReview = pendingRating;
+        CanDismiss = pendingRating;
+        DismissToolTip = "Decline track (keep downloaded audio)";
+        ActionOpacity = CanDownload || CanPlay || CanReview || CanDismiss ? 0.82 : 0.35;
     }
 
     private void UpdateVisualState()

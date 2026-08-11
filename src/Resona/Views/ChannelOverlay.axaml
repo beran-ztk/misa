@@ -18,10 +18,13 @@
                     <Grid ColumnDefinitions="42,*,Auto" ColumnSpacing="10">
                         <Border Width="42" Height="42" CornerRadius="21"
                                 Background="#243E6591"
-                                BorderBrush="#486E91BA" BorderThickness="1">
-                            <TextBlock Text="{Binding Monogram}"
+                                BorderBrush="#486E91BA" BorderThickness="1" ClipToBounds="True">
+                            <Grid>
+                            <Image Source="{Binding Artwork}" Stretch="UniformToFill" IsVisible="{Binding HasArtwork}"/>
+                            <TextBlock Text="{Binding Monogram}" IsVisible="{Binding ShowMonogram}"
                                        HorizontalAlignment="Center" VerticalAlignment="Center"
                                        FontSize="12" FontWeight="SemiBold" Foreground="#DCEBFA"/>
+                            </Grid>
                         </Border>
                         <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
                             <Button Classes="channel-title" Click="OnOpenChannelClicked"
@@ -51,14 +54,16 @@
                                FontSize="10" Foreground="#AFC8A3"/>
                     <TextBlock Grid.Row="3" Text="{Binding TopTracksText}"
                                IsVisible="{Binding HasTopTracks}"
-                               FontSize="10" Opacity="0.58" TextWrapping="Wrap" MaxHeight="32"/>
+                               FontSize="10" Opacity="0.58" TextWrapping="NoWrap"
+                               LineHeight="15" MinHeight="45" MaxHeight="45"/>
                     <Grid Grid.Row="4" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
-                        <Button Classes="follow-action" Content="{Binding FollowActionText}"
+                        <Button Classes="follow-action" Classes.following="{Binding IsFollowed}" Content="{Binding FollowActionText}"
                                 Click="OnFollowChannelClicked"/>
                         <TextBlock Grid.Column="1" Text="{Binding AutomationText}"
                                    FontSize="9.5" Opacity="0.42" VerticalAlignment="Center"/>
-                        <Button Grid.Column="2" Classes="open-action" Content="Open"
-                                Click="OnOpenChannelClicked"/>
+                        <Button Grid.Column="2" Classes="channel-icon" Click="OnOpenChannelClicked" ToolTip.Tip="Open channel">
+                            <TextBlock Text="›" FontSize="19" Margin="0,-2,0,0"/>
+                        </Button>
                     </Grid>
                 </Grid>
             </Border>
@@ -68,9 +73,12 @@
             <Border Padding="10,8" Margin="0,0,0,2" CornerRadius="6"
                     Background="Transparent">
                 <Grid ColumnDefinitions="34,2.1*,0.7*,1.1*,1.1*,Auto,Auto" ColumnSpacing="11">
-                    <Border Width="32" Height="32" CornerRadius="16" Background="#1D3E6591">
-                        <TextBlock Text="{Binding Monogram}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                    <Border Width="32" Height="32" CornerRadius="16" Background="#1D3E6591" ClipToBounds="True">
+                        <Grid>
+                        <Image Source="{Binding Artwork}" Stretch="UniformToFill" IsVisible="{Binding HasArtwork}"/>
+                        <TextBlock Text="{Binding Monogram}" IsVisible="{Binding ShowMonogram}" HorizontalAlignment="Center" VerticalAlignment="Center"
                                    FontSize="9.5" FontWeight="SemiBold" Foreground="#CBE1F4"/>
+                        </Grid>
                     </Border>
                     <Button Grid.Column="1" Classes="channel-title" Click="OnOpenChannelClicked"
                             HorizontalAlignment="Stretch" HorizontalContentAlignment="Left">
@@ -83,7 +91,7 @@
                                Opacity="0.72" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
                     <TextBlock Grid.Column="4" Text="{Binding ActivityText}" FontSize="10.5"
                                Opacity="0.58" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
-                    <Button Grid.Column="5" Classes="follow-action" Content="{Binding FollowActionText}"
+                    <Button Grid.Column="5" Classes="follow-action" Classes.following="{Binding IsFollowed}" Content="{Binding FollowActionText}"
                             Click="OnFollowChannelClicked" VerticalAlignment="Center"/>
                     <Button Grid.Column="6" Classes="channel-icon" Click="OnOpenChannelClicked"
                             ToolTip.Tip="Open channel" VerticalAlignment="Center">
@@ -117,16 +125,22 @@
             <Setter Property="Foreground" Value="{DynamicResource Theme.Brush.Accent}"/>
         </Style>
         <Style Selector="Button.follow-action">
-            <Setter Property="Padding" Value="8,4"/>
-            <Setter Property="MinHeight" Value="25"/>
+            <Setter Property="Padding" Value="9,3"/>
+            <Setter Property="MinHeight" Value="24"/>
             <Setter Property="FontSize" Value="9.5"/>
-            <Setter Property="Background" Value="#173E6591"/>
-            <Setter Property="BorderBrush" Value="#3D6E91BA"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="#32FFFFFF"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="5"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Foreground" Value="{DynamicResource Theme.Brush.TextSecondary}"/>
         </Style>
         <Style Selector="Button.follow-action:pointerover">
             <Setter Property="Background" Value="#293E6591"/>
+        </Style>
+        <Style Selector="Button.follow-action.following">
+            <Setter Property="Background" Value="#343C7FC4"/>
+            <Setter Property="BorderBrush" Value="#805B9CDC"/>
+            <Setter Property="Foreground" Value="#E5F2FF"/>
         </Style>
         <Style Selector="Button.open-action">
             <Setter Property="Padding" Value="9,4"/>
@@ -245,7 +259,8 @@
                         </Button>
                         <Button Classes="channel-icon" Click="OnInboxClicked" ToolTip.Tip="Channel inbox">
                             <Grid>
-                                <TextBlock Text="◌" FontSize="19" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <Image Source="{SvgImage /Assets/inbox.svg}" Width="17" Height="17"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 <Border x:Name="InboxBadge" IsVisible="False" Background="#D85D738D"
                                         CornerRadius="7" MinWidth="14" Height="14" Padding="3,0"
                                         HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-3,-5,0">
@@ -308,9 +323,17 @@
                     </StackPanel>
 
                     <Grid Grid.Row="3" RowDefinitions="Auto,*" RowSpacing="7" MinHeight="150">
-                        <Grid ColumnDefinitions="*,Auto">
+                        <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
                             <TextBlock Text="ALL LIBRARY CHANNELS" FontSize="10" FontWeight="SemiBold" LetterSpacing="1" Opacity="0.52"/>
                             <TextBlock Grid.Column="1" x:Name="AllChannelCountText" FontSize="10" Opacity="0.42"/>
+                            <ComboBox Grid.Column="2" x:Name="ChannelSortBox" Width="132" Height="26"
+                                      SelectedIndex="0" SelectionChanged="OnChannelSortChanged">
+                                <ComboBoxItem Content="Name"/>
+                                <ComboBoxItem Content="Best rated"/>
+                                <ComboBoxItem Content="Most tracks"/>
+                                <ComboBoxItem Content="Recently added"/>
+                                <ComboBoxItem Content="Most played"/>
+                            </ComboBox>
                         </Grid>
                         <Border Grid.Row="1" BorderBrush="#24FFFFFF" BorderThickness="0,1,0,0">
                             <ListBox x:Name="AllChannelItems" Classes="channel-hub-list"
@@ -331,9 +354,12 @@
                     <Button Classes="channel-icon" Click="OnBackToHubClicked" ToolTip.Tip="Back to channels">
                         <TextBlock Text="‹" FontSize="23" Margin="0,-4,0,0"/>
                     </Button>
-                    <Border Grid.Column="1" Width="38" Height="38" CornerRadius="19" Background="#243E6591">
+                    <Border Grid.Column="1" Width="38" Height="38" CornerRadius="19" Background="#243E6591" ClipToBounds="True">
+                        <Grid>
+                        <Image x:Name="DetailChannelArtwork" Stretch="UniformToFill" IsVisible="False"/>
                         <TextBlock x:Name="DetailMonogramText" HorizontalAlignment="Center" VerticalAlignment="Center"
                                    FontSize="11" FontWeight="SemiBold" Foreground="#DCEBFA"/>
+                        </Grid>
                     </Border>
                     <StackPanel Grid.Column="2" Spacing="1" VerticalAlignment="Center">
                         <TextBlock x:Name="SelectedChannelText" FontSize="17" FontWeight="SemiBold"/>
@@ -424,7 +450,7 @@
                             <Border Background="{Binding Background}" Opacity="{Binding Opacity}"
                                     BorderBrush="{Binding BorderBrush}" BorderThickness="{Binding BorderThickness}"
                                     CornerRadius="6" Padding="8,6" Margin="0,1">
-                                <Grid ColumnDefinitions="*,110,Auto,Auto,Auto,Auto" ColumnSpacing="7">
+                                <Grid ColumnDefinitions="*,110,Auto,Auto,Auto,Auto,Auto" ColumnSpacing="7">
                                     <StackPanel Spacing="2" VerticalAlignment="Center">
                                         <TextBlock Text="{Binding Title}" TextDecorations="{Binding TextDecorations}" FontSize="12.5"
                                                    TextTrimming="CharacterEllipsis"/>
@@ -439,19 +465,23 @@
                                     </StackPanel>
                                     <TextBlock Grid.Column="1" Text="{Binding StatusText}" FontSize="10.5" Opacity="0.62"
                                                TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
-                                    <Button Grid.Column="2" Classes="channel-icon" Click="OnVideoPlayClicked" IsEnabled="{Binding CanPlay}"
+                                    <Button Grid.Column="2" Classes="channel-icon" Click="OnVideoDownloadClicked"
+                                            IsVisible="{Binding CanDownload}" ToolTip.Tip="Download this track">
+                                        <Image Source="{SvgImage /Assets/download.svg}" Width="14" Height="14"/>
+                                    </Button>
+                                    <Button Grid.Column="3" Classes="channel-icon" Click="OnVideoPlayClicked" IsVisible="{Binding CanPlay}"
                                             ToolTip.Tip="Play downloaded audio" Opacity="{Binding ActionOpacity}">
                                         <Image Source="{SvgImage /Assets/play.svg}" Width="14" Height="14"/>
                                     </Button>
-                                    <Button Grid.Column="3" Classes="channel-icon" Click="OnVideoCheckClicked" IsEnabled="{Binding CanReview}"
-                                            ToolTip.Tip="Accept and queue analysis" Opacity="{Binding ActionOpacity}">
+                                    <Button Grid.Column="4" Classes="channel-icon" Click="OnVideoCheckClicked" IsVisible="{Binding CanReview}"
+                                            ToolTip.Tip="Rate and add to library" Opacity="{Binding ActionOpacity}">
                                         <Image Source="{SvgImage /Assets/check.svg}" Width="15" Height="15"/>
                                     </Button>
-                                    <Button Grid.Column="4" Classes="channel-icon" Click="OnVideoSkipClicked" IsEnabled="{Binding CanDismiss}"
+                                    <Button Grid.Column="5" Classes="channel-icon" Click="OnVideoSkipClicked" IsVisible="{Binding CanDismiss}"
                                             ToolTip.Tip="{Binding DismissToolTip}" Opacity="{Binding ActionOpacity}">
                                         <Image Source="{SvgImage /Assets/close.svg}" Width="14" Height="14"/>
                                     </Button>
-                                    <StackPanel Grid.Column="5" Orientation="Horizontal" Spacing="3" HorizontalAlignment="Right">
+                                    <StackPanel Grid.Column="6" Orientation="Horizontal" Spacing="3" HorizontalAlignment="Right">
                                         <Button Classes="channel-icon" Click="OnCopyVideoUrlClicked" ToolTip.Tip="Copy video URL" Opacity="0.65">
                                             <Image Source="{SvgImage /Assets/copy.svg}" Width="14" Height="14"/>
                                         </Button>
@@ -506,8 +536,9 @@
                                                    TextTrimming="CharacterEllipsis"/>
                                         <TextBlock Text="{Binding CreatedText}" FontSize="9.5" Opacity="0.42"/>
                                     </StackPanel>
-                                    <Button Grid.Column="2" Classes="open-action" Content="Open"
-                                            Click="OnOpenNotificationClicked"/>
+                                    <Button Grid.Column="2" Classes="channel-icon" Click="OnOpenNotificationClicked" ToolTip.Tip="Open channel">
+                                        <TextBlock Text="›" FontSize="19" Margin="0,-2,0,0"/>
+                                    </Button>
                                     <Button Grid.Column="3" Classes="channel-icon" Click="OnArchiveNotificationClicked"
                                             ToolTip.Tip="Remove from inbox" Opacity="0.65">
                                         <Image Source="{SvgImage /Assets/close.svg}" Width="13" Height="13"/>

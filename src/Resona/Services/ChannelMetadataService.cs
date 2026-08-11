@@ -27,6 +27,13 @@ public sealed class ChannelMetadataService
         QueueChanged?.Invoke();
     }
 
+    public void RequestVideo(int videoId)
+    {
+        MusicLibraryService.Current.QueueSpecificChannelVideoMetadata(videoId);
+        EnsureWorker();
+        QueueChanged?.Invoke();
+    }
+
     public void RequestAutoDownloadMetadata(int limit = 40)
     {
         MusicLibraryService.Current.QueueAutoDownloadMetadata(limit);

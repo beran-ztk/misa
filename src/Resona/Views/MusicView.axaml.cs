@@ -288,6 +288,11 @@ public partial class MusicView : UserControl
         {
             UpdateTrackInList(trackId);
         };
+        ChannelOverlay.EditRequested += track =>
+        {
+            StopTrackPreview();
+            OpenTrackEditor(track);
+        };
         ImportOverlay.QueueSubmitted += count =>
         {
             ShowToast($"{count} track{(count == 1 ? string.Empty : "s")} added to the import queue");
@@ -338,10 +343,21 @@ public partial class MusicView : UserControl
                 if (ChannelOverlay.IsVisible)
                     ChannelOverlay.OnMetadataUpdated(channelId, videoId);
             });
-        EditTrackOverlay.TrackSaved += UpdateTrackInList;
+        EditTrackOverlay.TrackSaved += trackId =>
+        {
+            UpdateTrackInList(trackId);
+            if (ChannelOverlay.IsVisible)
+                ChannelOverlay.RefreshChannels();
+        };
         EditTrackOverlay.PreviewRequested += StartTrackPreview;
         EditTrackOverlay.PreviewClosed += StopTrackPreview;
         EditTrackOverlay.ToastRequested += ShowToast;
+        EditTrackOverlay.ChannelRequested += channelId =>
+        {
+            EditTrackOverlay.RequestClose();
+            ChannelOverlay.Margin = new Thickness(0, 0, 0, PlayerBar.Bounds.Height);
+            ChannelOverlay.OpenChannel(channelId);
+        };
         EditTrackOverlay.BackdropFocusChanged += OnEditorBackdropFocusChanged;
         EditTrackOverlay.DeleteRequested += DeleteTrackFromEditorAsync;
         EditTrackOverlay.Closed += PrepareActiveTrackEditor;

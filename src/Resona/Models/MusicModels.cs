@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.Linq;
+using Avalonia.Media.Imaging;
 
 namespace Resona.Models;
 
@@ -19,7 +21,8 @@ public record MusicTrack(
     long? ViewCount = null,
     long? LikeCount = null,
     string? SourceThumbnailUrl = null,
-    string? SourceMetadataUpdatedAt = null);
+    string? SourceMetadataUpdatedAt = null,
+    int? ChannelId = null);
 
 public record Genre(int Id, string Name);
 public record Tag(int Id, string Name);
@@ -82,7 +85,9 @@ public record YouTubeChannelSnapshot(
     string? ChannelId,
     string Name,
     string? ChannelUrl,
-    IReadOnlyList<YouTubeChannelVideoEntry> Videos);
+    IReadOnlyList<YouTubeChannelVideoEntry> Videos,
+    string? ThumbnailUrl = null,
+    byte[]? Thumbnail = null);
 public record YouTubeChannelVideoEntry(
     string VideoId,
     string CanonicalUrl,
@@ -137,8 +142,12 @@ public sealed record ChannelHubItem(
     long? FollowerCount,
     int? MaxDurationMinutes,
     string? AutoDownloadFrom,
-    IReadOnlyList<string> TopTracks)
+    IReadOnlyList<string> TopTracks,
+    byte[]? Thumbnail = null)
 {
+    public Bitmap? Artwork { get; set; }
+    public bool HasArtwork => Artwork is not null;
+    public bool ShowMonogram => Artwork is null;
     public string Monogram
     {
         get
@@ -155,14 +164,14 @@ public sealed record ChannelHubItem(
 
     public string TrackCountText => LocalTrackCount == 1 ? "1 track" : $"{LocalTrackCount} tracks";
     public string RatingText => AverageRating is double average
-        ? $"{average:0.0} avg · {RatedTrackCount}/{LocalTrackCount} rated"
+        ? $"{average:0.0} avg · {RatedTrackCount} out of {LocalTrackCount} tracks rated"
         : "No ratings yet";
     public string ActivityText => PlayCount == 0 ? "Not played yet" : $"{PlayCount} plays · {SkipCount} skips";
     public string NewVideoText => UncheckedVideoCount == 1 ? "1 new video" : $"{UncheckedVideoCount} new videos";
     public bool HasNewVideos => UncheckedVideoCount > 0;
     public bool HasTopTracks => TopTracks.Count > 0;
-    public string TopTracksText => string.Join("  ·  ", TopTracks);
-    public string FollowActionText => IsFollowed ? "Following" : "+ Follow";
+    public string TopTracksText => string.Join("\n", TopTracks.Take(3));
+    public string FollowActionText => IsFollowed ? "Following" : "Follow";
     public string AutomationText => AutoDownload ? "Auto-download on" : "Manual downloads";
     public string DurationLimitText => MaxDurationMinutes is int minutes
         ? $"{minutes} min channel limit"
@@ -247,7 +256,8 @@ public record ChannelVideo(
     int MetadataAttempts = 0,
     long? ViewCount = null,
     long? LikeCount = null,
-    string? ThumbnailUrl = null);
+    string? ThumbnailUrl = null,
+    TrackLibraryState? LibraryState = null);
 public record ChannelDownloadSummary(int Queued, int Downloading, int Ready, int Failed, int Skipped);
 public record ChannelRefreshResult(bool Success, int AddedCount, int UpdatedCount, string? Error = null);
 public record ModelGenre(int Id, string Name);

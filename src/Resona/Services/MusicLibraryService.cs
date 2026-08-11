@@ -55,7 +55,12 @@ public class MusicLibraryService
             BackgroundAnalysisService.Current.EnqueueTrack(id);
     }
     public void SetTrackNeedsReview(int id, bool needsReview) => _db.SetTrackNeedsReview(id, needsReview);
-    public void SetTrackAnalysisDisabled(int id, bool analysisDisabled) => _db.SetTrackAnalysisDisabled(id, analysisDisabled);
+    public void SetTrackAnalysisDisabled(int id, bool analysisDisabled)
+    {
+        _db.SetTrackAnalysisDisabled(id, analysisDisabled);
+        if (!analysisDisabled)
+            BackgroundAnalysisService.Current.EnqueueTrack(id);
+    }
     public void RecordTrackPlaybackStarted(int trackId) => _db.RecordTrackPlaybackStarted(trackId);
     public void AddTrackListenedSeconds(int trackId, int seconds) => _db.AddTrackListenedSeconds(trackId, seconds);
     public void RecordTrackSkip(int trackId) => _db.RecordTrackSkip(trackId);
@@ -177,6 +182,7 @@ public class MusicLibraryService
     public List<ChannelVideo> GetChannelVideos(int channelId) => _db.GetChannelVideos(channelId);
     public void RecoverChannelMetadataQueue() => _db.RecoverChannelMetadataQueue();
     public int QueueChannelVideoMetadata(int channelId, int limit) => _db.QueueChannelVideoMetadata(channelId, limit);
+    public bool QueueSpecificChannelVideoMetadata(int videoId) => _db.QueueSpecificChannelVideoMetadata(videoId);
     public int QueueAutoDownloadMetadata(int limit) => _db.QueueAutoDownloadMetadata(limit);
     public ChannelVideo? ClaimNextChannelVideoMetadata() => _db.ClaimNextChannelVideoMetadata();
     public bool HasQueuedChannelVideoMetadata() => _db.HasQueuedChannelVideoMetadata();
@@ -225,6 +231,14 @@ public class MusicLibraryService
     public void CompleteChannelDownload(int videoId, bool success, string? error) =>
         _db.CompleteChannelDownload(videoId, success, error);
     public ChannelDownloadSummary GetChannelDownloadSummary() => _db.GetChannelDownloadSummary();
+    public bool RequestChannelVideoDownload(int videoId)
+    {
+        if (!_db.RequestChannelVideoDownload(videoId))
+            return false;
+        ChannelMetadataService.Current.RequestVideo(videoId);
+        ChannelDownloadService.Current.NotifyQueueChanged();
+        return true;
+    }
     public bool DeleteChannel(int channelId) => _db.DeleteChannel(channelId);
 
     public async Task<(MusicTrack? Track, string? Error)> PreloadChannelVideoAsync(ChannelVideo video)
@@ -281,6 +295,12 @@ public class MusicLibraryService
             return new ChannelRefreshResult(false, 0, 0, error ?? "Could not read channel.");
         if (snapshot.Videos.Count == 0)
             return new ChannelRefreshResult(false, 0, 0, "Channel was read, but no videos were returned.");
+
+        if (!string.IsNullOrWhiteSpace(snapshot.ThumbnailUrl))
+            snapshot = snapshot with
+            {
+                Thumbnail = await _downloader.DownloadImageAsync(snapshot.ThumbnailUrl, cancellationToken)
+            };
 
         progress?.Report($"Saving {snapshot.Videos.Count} videos…");
         var result = await Task.Run(

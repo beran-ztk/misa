@@ -138,6 +138,14 @@
                                 Opacity="0.45">
                             <Image Source="{SvgImage /Assets/review.svg}" Width="17" Height="17"/>
                         </Button>
+                        <Button x:Name="AnalysisPolicyButton"
+                                Click="OnAnalysisPolicyClicked"
+                                ToolTip.Tip="Disable automatic analysis permanently"
+                                Width="34" Height="34" Padding="0"
+                                Background="Transparent" BorderThickness="0"
+                                Opacity="0.45">
+                            <Image Source="{SvgImage /Assets/pause.svg}" Width="16" Height="16"/>
+                        </Button>
                         <Button x:Name="DeleteButton"
                                 Click="OnDeleteClicked"
                                 ToolTip.Tip="Delete track"
@@ -213,7 +221,7 @@
                                                TextTrimming="CharacterEllipsis" />
                                 </Grid>
 
-                                <Grid ColumnDefinitions="104,*,30" RowDefinitions="30,30,30,30" ColumnSpacing="6">
+                                <Grid ColumnDefinitions="104,*,30" RowDefinitions="30,30,30,30,30,30,30" ColumnSpacing="6">
                                     <TextBlock Grid.Row="0" Text="Title" FontSize="10.5" Opacity="0.58" VerticalAlignment="Center" />
                                     <TextBlock x:Name="TitleDisplayText" Grid.Row="0" Grid.Column="1" FontSize="12.5" FontWeight="SemiBold"
                                                VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
@@ -229,8 +237,13 @@
                                     </Button>
 
                                     <TextBlock Grid.Row="1" Text="Channel" FontSize="10.5" Opacity="0.58" VerticalAlignment="Center" />
-                                    <TextBlock x:Name="ChannelDisplayText" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" FontSize="11.5"
+                                    <TextBlock x:Name="ChannelDisplayText" Grid.Row="1" Grid.Column="1" FontSize="11.5"
                                                VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                    <Button x:Name="OpenChannelButton" Grid.Row="1" Grid.Column="2"
+                                            Click="OnOpenChannelClicked" ToolTip.Tip="Open channel in Channel Hub"
+                                            Width="26" Height="24" Padding="0" Background="Transparent" BorderThickness="0" Opacity="0.76">
+                                        <TextBlock Text="›" FontSize="19" Margin="0,-2,0,0"/>
+                                    </Button>
 
                                     <TextBlock Grid.Row="2" Text="YouTube URL" FontSize="10.5" Opacity="0.58" VerticalAlignment="Center" />
                                     <TextBlock x:Name="YouTubeUrlDisplayText" Grid.Row="2" Grid.Column="1" FontSize="10.5" Foreground="{DynamicResource Theme.Brush.TextSecondary}"
@@ -249,6 +262,18 @@
                                             Width="26" Height="24" Padding="0" Background="Transparent" BorderThickness="0" Opacity="0.76">
                                         <Image Source="{SvgImage /Assets/copy.svg}" Width="13" Height="13" />
                                     </Button>
+
+                                    <TextBlock Grid.Row="4" Text="Uploaded" FontSize="10.5" Opacity="0.58" VerticalAlignment="Center" />
+                                    <TextBlock x:Name="UploadedDisplayText" Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="2"
+                                               FontSize="10.5" VerticalAlignment="Center" />
+
+                                    <TextBlock Grid.Row="5" Text="YouTube activity" FontSize="10.5" Opacity="0.58" VerticalAlignment="Center" />
+                                    <TextBlock x:Name="YouTubeActivityDisplayText" Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="2"
+                                               FontSize="10.5" VerticalAlignment="Center" />
+
+                                    <TextBlock Grid.Row="6" Text="Metadata updated" FontSize="10.5" Opacity="0.58" VerticalAlignment="Center" />
+                                    <TextBlock x:Name="MetadataUpdatedDisplayText" Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="2"
+                                               FontSize="10.5" Opacity="0.72" VerticalAlignment="Center" />
                                 </Grid>
 
                                 <Rectangle Height="1" Fill="{DynamicResource Theme.Brush.BorderSubtle}" Margin="0,3" />

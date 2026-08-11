@@ -72,6 +72,7 @@ public partial class EditTrackOverlay : UserControl
     private HashSet<int> _pendingEnabledModelGenreIds = [];
 
     public event Action<int>? TrackSaved;
+    public event Action<int>? ChannelRequested;
     public event Action<MusicTrack>? PreviewRequested;
     public event Action? PreviewClosed;
     public event Action<string>? ToastRequested;
@@ -267,6 +268,7 @@ public partial class EditTrackOverlay : UserControl
         UpdateInformationDisplay(track);
         SetPublicSelection(track.IsPublic);
         UpdateReviewVisual(track.NeedsReview);
+        UpdateAnalysisPolicyVisual(track.AnalysisDisabled);
 
         _selectedRatingId = track.RatingId;
         UpdateRatingVisual();
@@ -341,8 +343,14 @@ public partial class EditTrackOverlay : UserControl
         ChannelDisplayText.Text = DisplayValue(track.ChannelName);
         YouTubeUrlDisplayText.Text = DisplayValue(track.CanonicalUrl);
         ChannelUrlDisplayText.Text = DisplayValue(track.ChannelUrl);
+        UploadedDisplayText.Text = FormatMetadataDate(track.UploadedAt);
+        YouTubeActivityDisplayText.Text = track.ViewCount is null && track.LikeCount is null
+            ? "—"
+            : $"{FormatMetric(track.ViewCount)} views  ·  {FormatMetric(track.LikeCount)} likes";
+        MetadataUpdatedDisplayText.Text = FormatMetadataDate(track.SourceMetadataUpdatedAt, includeTime: true);
         CopyYouTubeUrlButton.IsEnabled = !string.IsNullOrWhiteSpace(track.CanonicalUrl);
         CopyChannelUrlButton.IsEnabled = !string.IsNullOrWhiteSpace(track.ChannelUrl);
+        OpenChannelButton.IsEnabled = track.ChannelId is not null;
         ToolTip.SetTip(TitleDisplayText, TitleBox.Text);
         ToolTip.SetTip(ChannelDisplayText, track.ChannelName);
         ToolTip.SetTip(YouTubeUrlDisplayText, track.CanonicalUrl);
@@ -351,6 +359,24 @@ public partial class EditTrackOverlay : UserControl
 
     private static string DisplayValue(string? value) =>
         string.IsNullOrWhiteSpace(value) ? "—" : value.Trim();
+
+    private static string FormatMetric(long? value) => value is long number
+        ? number.ToString("N0", System.Globalization.CultureInfo.CurrentCulture)
+        : "—";
+
+    private static string FormatMetadataDate(string? value, bool includeTime = false)
+    {
+        if (!DateTime.TryParse(value, out var parsed))
+            return "—";
+        var local = parsed.ToLocalTime();
+        return includeTime ? local.ToString("dd MMM yyyy · HH:mm") : local.ToString("dd MMM yyyy");
+    }
+
+    private void OnOpenChannelClicked(object? sender, RoutedEventArgs e)
+    {
+        if (_track?.ChannelId is int channelId)
+            ChannelRequested?.Invoke(channelId);
+    }
 
     private async void OnCopyYouTubeUrlClicked(object? sender, RoutedEventArgs e) =>
         await CopyUrlAsync(_track?.CanonicalUrl, "YouTube URL");
@@ -642,6 +668,32 @@ public partial class EditTrackOverlay : UserControl
             ? new SolidColorBrush(Color.FromArgb(36, 255, 210, 122))
             : Brushes.Transparent;
         ToolTip.SetTip(ReviewButton, needsReview ? "Remove review mark" : "Mark for review");
+    }
+
+    private void OnAnalysisPolicyClicked(object? sender, RoutedEventArgs e)
+    {
+        if (_track is null)
+            return;
+
+        var disabled = !_track.AnalysisDisabled;
+        MusicLibraryService.Current.SetTrackAnalysisDisabled(_track.Id, disabled);
+        _track = _track with { AnalysisDisabled = disabled };
+        UpdateAnalysisPolicyVisual(disabled);
+        TrackSaved?.Invoke(_track.Id);
+        ToastRequested?.Invoke(disabled
+            ? "Automatic analysis permanently disabled for this track"
+            : "Automatic analysis enabled for this track");
+    }
+
+    private void UpdateAnalysisPolicyVisual(bool disabled)
+    {
+        AnalysisPolicyButton.Opacity = disabled ? 1 : 0.45;
+        AnalysisPolicyButton.Background = disabled
+            ? new SolidColorBrush(Color.FromArgb(40, 238, 92, 92))
+            : Brushes.Transparent;
+        ToolTip.SetTip(AnalysisPolicyButton, disabled
+            ? "Allow automatic analysis"
+            : "Disable automatic analysis permanently");
     }
 
     private async void OnDeleteClicked(object? sender, RoutedEventArgs e)
