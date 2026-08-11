@@ -239,6 +239,7 @@ public class MusicLibraryService
             error,
             _channelMaxDownloadDurationMinutes);
     public void SetChannelFollowed(int channelId, bool followed) => _db.SetChannelFollowed(channelId, followed);
+    public void MarkChannelBasicMetadataChecked(int channelId) => _db.MarkChannelBasicMetadataChecked(channelId);
     public List<ChannelNotification> GetChannelNotifications() => _db.GetChannelNotifications();
     public int GetUnreadChannelNotificationCount() => _db.GetUnreadChannelNotificationCount();
     public void MarkChannelNotificationRead(int notificationId) => _db.MarkChannelNotificationRead(notificationId);

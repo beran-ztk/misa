@@ -699,12 +699,10 @@ public partial class ChannelOverlay : UserControl
 
     private async Task LoadVideosAsync(int channelId, int generation)
     {
-        List<ChannelVideoDisplay> videos;
+        List<ChannelVideo> rawVideos;
         try
         {
-            videos = await Task.Run(() => MusicLibraryService.Current.GetChannelVideos(channelId)
-                .Select(video => new ChannelVideoDisplay(video))
-                .ToList());
+            rawVideos = await Task.Run(() => MusicLibraryService.Current.GetChannelVideos(channelId));
         }
         catch (Exception exception)
         {
@@ -720,7 +718,9 @@ public partial class ChannelOverlay : UserControl
 
         if (generation != _videoLoadGeneration || channelId != _selectedChannelId)
             return;
-        _currentVideos = videos;
+        // ChannelVideoDisplay creates Avalonia brushes and therefore belongs on
+        // the UI thread. Only the database read runs in the background.
+        _currentVideos = rawVideos.Select(video => new ChannelVideoDisplay(video)).ToList();
         ApplyActivePreviewMarker();
         ApplyVideoView();
     }

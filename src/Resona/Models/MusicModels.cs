@@ -146,7 +146,8 @@ public sealed record ChannelHubItem(
     int? MaxDurationMinutes,
     string? AutoDownloadFrom,
     IReadOnlyList<string> TopTracks,
-    byte[]? Thumbnail = null)
+    byte[]? Thumbnail = null,
+    string? BasicMetadataCheckedAt = null)
 {
     public Bitmap? Artwork { get; set; }
     public bool HasArtwork => Artwork is not null;

@@ -164,10 +164,7 @@ public sealed class ChannelHubBackgroundService
     }
 
     private static bool NeedsRemoteEnrichment(ChannelHubItem channel) =>
-        channel.Thumbnail is not { Length: > 0 }
-        || channel.FollowerCount is null
-        || channel.SourceChannelId is null
-        || channel.LastCheckedAt is null;
+        channel.BasicMetadataCheckedAt is null;
 
     private async Task ProcessEnrichmentQueueAsync()
     {
@@ -223,6 +220,14 @@ public sealed class ChannelHubBackgroundService
             }
             finally
             {
+                try
+                {
+                    MusicLibraryService.Current.MarkChannelBasicMetadataChecked(channel.Id);
+                }
+                catch
+                {
+                    // A failed checkpoint is safe: the channel is retried next launch.
+                }
                 lock (_gate)
                     _enrichmentCompleted++;
             }

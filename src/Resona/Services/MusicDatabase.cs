@@ -78,6 +78,7 @@ public class MusicDatabase
                 thumbnail_url       TEXT NULL,
                 thumbnail           BLOB NULL,
                 remote_metadata_updated_at TEXT NULL,
+                basic_metadata_checked_at TEXT NULL,
                 max_duration_minutes INTEGER NULL,
                 auto_download_from  TEXT NULL
             );
@@ -466,6 +467,7 @@ public class MusicDatabase
         EnsureColumn(conn, "channels", "thumbnail_url", "TEXT NULL");
         EnsureColumn(conn, "channels", "thumbnail", "BLOB NULL");
         EnsureColumn(conn, "channels", "remote_metadata_updated_at", "TEXT NULL");
+        EnsureColumn(conn, "channels", "basic_metadata_checked_at", "TEXT NULL");
         EnsureColumn(conn, "channels", "max_duration_minutes", "INTEGER NULL");
         EnsureColumn(conn, "channels", "auto_download_from", "TEXT NULL");
 
@@ -535,6 +537,14 @@ public class MusicDatabase
             UPDATE channels
             SET inform_new_songs = subscribed
             WHERE inform_new_songs <> subscribed");
+        ExecuteNonQuery(conn, @"
+            UPDATE channels
+            SET basic_metadata_checked_at = COALESCE(remote_metadata_updated_at, last_checked_at)
+            WHERE basic_metadata_checked_at IS NULL
+              AND source_channel_id IS NOT NULL
+              AND thumbnail IS NOT NULL
+              AND length(thumbnail) > 0
+              AND (remote_metadata_updated_at IS NOT NULL OR last_checked_at IS NOT NULL)");
         BackfillLibraryChannelVideos(conn);
         BackfillTrackSourceMetadata(conn);
     }
@@ -1115,10 +1125,11 @@ public class MusicDatabase
             channelId = InsertAndGetId(conn, tx, @"
                 INSERT INTO channels
                     (name, source_channel_id, source_url, subscribed, auto_download, created_at, updated_at,
-                     last_checked_at, video_count, thumbnail_url, thumbnail, follower_count, remote_metadata_updated_at)
+                     last_checked_at, video_count, thumbnail_url, thumbnail, follower_count,
+                     remote_metadata_updated_at, basic_metadata_checked_at)
                 VALUES
                     ($name, $sourceChannelId, $sourceUrl, 1, 0, $now, $now, $now, $videoCount, $thumbnailUrl, $thumbnail,
-                     $followerCount, $now)",
+                     $followerCount, $now, $now)",
                 ("$name", snapshot.Name),
                 ("$sourceChannelId", snapshot.ChannelId),
                 ("$sourceUrl", snapshot.ChannelUrl ?? snapshot.SourceUrl),
@@ -1143,6 +1154,7 @@ public class MusicDatabase
                     , thumbnail = COALESCE($thumbnail, thumbnail)
                     , follower_count = COALESCE($followerCount, follower_count)
                     , remote_metadata_updated_at = $now
+                    , basic_metadata_checked_at = $now
                 WHERE id = $id",
                 ("$id", channelId.Value),
                 ("$name", snapshot.Name),
@@ -1328,7 +1340,8 @@ public class MusicDatabase
                    channels.follower_count,
                    channels.max_duration_minutes,
                    channels.auto_download_from,
-                   channels.thumbnail
+                   channels.thumbnail,
+                   channels.basic_metadata_checked_at
             FROM channels
             LEFT JOIN track_stats ON track_stats.channel_id = channels.id
             LEFT JOIN video_stats ON video_stats.channel_id = channels.id
@@ -1364,7 +1377,8 @@ public class MusicDatabase
                 reader.IsDBNull(19) ? null : reader.GetInt32(19),
                 reader.IsDBNull(20) ? null : reader.GetString(20),
                 [],
-                reader.IsDBNull(21) ? null : (byte[])reader.GetValue(21)));
+                reader.IsDBNull(21) ? null : (byte[])reader.GetValue(21),
+                reader.IsDBNull(22) ? null : reader.GetString(22)));
         reader.Close();
 
         using var tracks = conn.CreateCommand();
@@ -1422,6 +1436,16 @@ public class MusicDatabase
                   AND NOT EXISTS (SELECT 1 FROM tracks WHERE tracks.canonical_url = channel_videos.canonical_url)",
                 ("$id", channelId), ("$now", now));
         tx.Commit();
+    }
+
+    public void MarkChannelBasicMetadataChecked(int channelId)
+    {
+        using var conn = Open();
+        ExecuteNonQuery(conn, @"
+            UPDATE channels
+            SET basic_metadata_checked_at = $now, updated_at = $now
+            WHERE id = $id",
+            ("$id", channelId), ("$now", DateTime.UtcNow.ToString("O")));
     }
 
     public List<ChannelNotification> GetChannelNotifications()
