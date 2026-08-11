@@ -3404,7 +3404,7 @@ public partial class MusicView : UserControl
 
         PlayerArtworkPreviousBackground.Source = null;
         AppArtworkPreviousBackground.Source = null;
-        _previousPlayerArtwork?.Dispose();
+        RetirePlayerArtwork(_previousPlayerArtwork);
 
         // The active artwork always becomes the sole faded layer. This is
         // intentionally independent of how far the previous transition got:
@@ -3513,11 +3513,41 @@ public partial class MusicView : UserControl
         SetAmbientPalette(DefaultAmbientPalette, hasArtwork: false);
         ResetAudioAtmosphere();
 
-        _playerArtwork?.Dispose();
-        _previousPlayerArtwork?.Dispose();
+        var currentArtwork = _playerArtwork;
+        var previousArtwork = _previousPlayerArtwork;
         _playerArtwork = null;
         _previousPlayerArtwork = null;
         _playerArtworkTrackId = -1;
+
+        if (disposeCache)
+        {
+            currentArtwork?.Dispose();
+            previousArtwork?.Dispose();
+        }
+        else
+        {
+            RetirePlayerArtwork(currentArtwork);
+            RetirePlayerArtwork(previousArtwork);
+        }
+    }
+
+    private static async void RetirePlayerArtwork(Bitmap? artwork)
+    {
+        if (artwork is null)
+            return;
+
+        // Avalonia's compositor can still hold the previous Image.Source for a
+        // render frame after the controls were cleared. Disposing immediately
+        // makes Image.Render call Bitmap.Size on an already disposed object.
+        await Task.Delay(750);
+        try
+        {
+            artwork.Dispose();
+        }
+        catch
+        {
+            // The bitmap may already have been retired by application shutdown.
+        }
     }
 
     private void SetAmbientPalette(AmbientPalette palette, bool hasArtwork)
@@ -3836,7 +3866,7 @@ public partial class MusicView : UserControl
         PlayerArtworkPreviousBackground.IsVisible = false;
         AppArtworkPreviousBackground.Source = null;
         AppArtworkPreviousBackground.IsVisible = false;
-        _previousPlayerArtwork?.Dispose();
+        RetirePlayerArtwork(_previousPlayerArtwork);
         _previousPlayerArtwork = null;
     }
 

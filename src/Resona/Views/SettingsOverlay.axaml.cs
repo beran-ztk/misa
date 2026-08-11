@@ -1408,6 +1408,16 @@ public partial class SettingsOverlay : UserControl
             PreviewCoverArtwork.Source = artwork;
             PreviewPlayerArtwork.Source = artwork;
         }
+        else
+        {
+            // These controls share the player's Bitmap instance. Clear every
+            // reference before MusicView retires that bitmap.
+            PreviewLibraryArtwork.Source = null;
+            PreviewTrackArtworkBlur.Source = null;
+            PreviewCoverHalo.Source = null;
+            PreviewCoverArtwork.Source = null;
+            PreviewPlayerArtwork.Source = null;
+        }
         RefreshAppearancePreview();
     }
 
