@@ -22,7 +22,7 @@ namespace Resona.Views;
 
 public partial class ChannelOverlay : UserControl
 {
-    private enum ChannelVideoFilter { New, Ready, InLibrary, MissingMetadata, Issues, All }
+    private enum ChannelVideoFilter { New, Ready, InLibrary, Rejected, MissingMetadata, Issues, All }
 
     private CancellationTokenSource? _refreshCts;
     private int? _refreshChannelId;
@@ -809,6 +809,7 @@ public partial class ChannelOverlay : UserControl
         var newCount = _currentVideos.Count(video => !video.IsChecked);
         var readyCount = _currentVideos.Count(video => video.IsPendingRating);
         var libraryCount = _currentVideos.Count(video => video.IsInLibrary);
+        var rejectedCount = _currentVideos.Count(video => video.IsRejected);
         var missingMetadataCount = _currentVideos.Count(video => video.IsMissingMetadata);
         var issueCount = _currentVideos.Count(video =>
             video.DownloadStatus is ChannelDownloadStatus.Failed or ChannelDownloadStatus.Skipped
@@ -818,6 +819,7 @@ public partial class ChannelOverlay : UserControl
         MetadataVideosCountText.Text = missingMetadataCount.ToString("N0");
         ReadyVideosCountText.Text = readyCount.ToString("N0");
         LibraryVideosCountText.Text = libraryCount.ToString("N0");
+        RejectedVideosCountText.Text = rejectedCount.ToString("N0");
         IssueVideosCountText.Text = issueCount.ToString("N0");
 
         var search = VideoSearchBox.Text?.Trim() ?? string.Empty;
@@ -830,6 +832,7 @@ public partial class ChannelOverlay : UserControl
             ChannelVideoFilter.New => videos.Where(video => !video.IsChecked),
             ChannelVideoFilter.Ready => videos.Where(video => video.IsPendingRating),
             ChannelVideoFilter.InLibrary => videos.Where(video => video.IsInLibrary),
+            ChannelVideoFilter.Rejected => videos.Where(video => video.IsRejected),
             ChannelVideoFilter.MissingMetadata => videos.Where(video => video.IsMissingMetadata),
             ChannelVideoFilter.Issues => videos.Where(video =>
                 video.DownloadStatus is ChannelDownloadStatus.Failed or ChannelDownloadStatus.Skipped
@@ -870,6 +873,7 @@ public partial class ChannelOverlay : UserControl
             ChannelVideoFilter.New => ("No new videos", "Everything discovered for this channel has been reviewed."),
             ChannelVideoFilter.Ready => ("Nothing ready yet", "Downloaded videos awaiting review will appear here."),
             ChannelVideoFilter.InLibrary => ("No local tracks", "Downloaded channel tracks will appear here."),
+            ChannelVideoFilter.Rejected => ("No rejected tracks", "Declined tracks with retained audio will appear here."),
             ChannelVideoFilter.MissingMetadata => ("Metadata is complete", "No error-free videos are waiting for metadata."),
             ChannelVideoFilter.Issues => ("No issues", "Metadata and downloads are currently healthy."),
             _ => ("No videos discovered", "Refresh the channel to retrieve its uploads.")
@@ -1094,6 +1098,9 @@ public partial class ChannelOverlay : UserControl
     private void OnMetadataVideosFilterClicked(object? sender, RoutedEventArgs e) =>
         SetVideoFilter(ChannelVideoFilter.MissingMetadata);
 
+    private void OnRejectedVideosFilterClicked(object? sender, RoutedEventArgs e) =>
+        SetVideoFilter(ChannelVideoFilter.Rejected);
+
     private void OnIssueVideosFilterClicked(object? sender, RoutedEventArgs e) =>
         SetVideoFilter(ChannelVideoFilter.Issues);
 
@@ -1134,6 +1141,7 @@ public partial class ChannelOverlay : UserControl
             [ChannelVideoFilter.New] = NewVideosFilterButton,
             [ChannelVideoFilter.Ready] = ReadyVideosFilterButton,
             [ChannelVideoFilter.InLibrary] = LibraryVideosFilterButton,
+            [ChannelVideoFilter.Rejected] = RejectedVideosFilterButton,
             [ChannelVideoFilter.MissingMetadata] = MetadataVideosFilterButton,
             [ChannelVideoFilter.Issues] = IssueVideosFilterButton,
             [ChannelVideoFilter.All] = AllVideosFilterButton
@@ -1295,11 +1303,12 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
         && !IsChecked
         && (_libraryState is null or TrackLibraryState.PendingRating);
     public bool IsInLibrary => TrackId is not null && _libraryState == TrackLibraryState.Active;
+    public bool IsRejected => TrackId is not null && _libraryState == TrackLibraryState.Rejected;
     public bool IsMissingMetadata => !HasMetadataError
         && MetadataStatus is ChannelMetadataStatus.Pending
             or ChannelMetadataStatus.Queued
             or ChannelMetadataStatus.Loading;
-    public bool CanOpenEditor => IsInLibrary || IsPendingRating;
+    public bool CanOpenEditor => IsInLibrary || IsPendingRating || IsRejected;
     public string StatusText
     {
         get => _statusText;
@@ -1418,7 +1427,9 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
         CheckBackground = ThemeResources.Brush(value ? "Theme.Brush.Success" : "Theme.Brush.Surface");
         CheckBorder = ThemeResources.Brush(value ? "Theme.Brush.Accent" : "Theme.Brush.Border");
         CheckOpacity = value ? 1 : 0.58;
-        TextDecorations = value && !IsInLibrary ? Avalonia.Media.TextDecorations.Strikethrough : null;
+        TextDecorations = value && !IsInLibrary && !IsRejected
+            ? Avalonia.Media.TextDecorations.Strikethrough
+            : null;
         UpdateState();
         UpdateVisualState();
     }
@@ -1477,9 +1488,11 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
 
     private void UpdateVisualState()
     {
-        Opacity = IsInLibrary || IsActive ? 1 : IsChecked ? 0.45 : 1;
+        Opacity = IsInLibrary || IsRejected || IsActive ? 1 : IsChecked ? 0.45 : 1;
         TitleBrush = IsInLibrary
             ? new SolidColorBrush(Color.Parse("#8FD19E"))
+            : IsRejected
+                ? new SolidColorBrush(Color.Parse("#E87878"))
             : IsPendingRating
                 ? new SolidColorBrush(Color.Parse("#E6C65C"))
             : ThemeResources.Brush("Theme.Brush.TextPrimary");
@@ -1487,6 +1500,8 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
             ? ThemeResources.Brush("Theme.Brush.SurfaceSelected")
             : IsInLibrary
                 ? new SolidColorBrush(Color.Parse("#142F6842"))
+            : IsRejected
+                ? new SolidColorBrush(Color.Parse("#182F1F22"))
             : IsChecked
                 ? new SolidColorBrush(Color.Parse("#22192027"))
                 : new SolidColorBrush(Color.Parse("#10203422"));

@@ -593,7 +593,7 @@
                                    FontSize="10" Foreground="#AFCDE6" VerticalAlignment="Center"
                                    MaxWidth="220" TextTrimming="CharacterEllipsis"/>
                     </Grid>
-                    <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,*,Auto" ColumnSpacing="6">
+                    <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,*,Auto" ColumnSpacing="6">
                         <Button x:Name="AllVideosFilterButton" Classes="video-filter" Click="OnAllVideosFilterClicked">
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <TextBlock Text="All"/>
@@ -634,7 +634,15 @@
                                 </Border>
                             </StackPanel>
                         </Button>
-                        <Button Grid.Column="5" x:Name="IssueVideosFilterButton" Classes="video-filter" Click="OnIssueVideosFilterClicked">
+                        <Button Grid.Column="5" x:Name="RejectedVideosFilterButton" Classes="video-filter" Click="OnRejectedVideosFilterClicked">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <TextBlock Text="Rejected"/>
+                                <Border Background="#18FFFFFF" CornerRadius="8" Padding="5,1">
+                                    <TextBlock x:Name="RejectedVideosCountText" FontSize="8.5" Opacity="0.72"/>
+                                </Border>
+                            </StackPanel>
+                        </Button>
+                        <Button Grid.Column="6" x:Name="IssueVideosFilterButton" Classes="video-filter" Click="OnIssueVideosFilterClicked">
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <TextBlock Text="Issues"/>
                                 <Border Background="#18FFFFFF" CornerRadius="8" Padding="5,1">
@@ -642,7 +650,7 @@
                                 </Border>
                             </StackPanel>
                         </Button>
-                        <StackPanel Grid.Column="7" Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
+                        <StackPanel Grid.Column="8" Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
                             <TextBlock Text="Channel max" FontSize="9.5" Opacity="0.52" VerticalAlignment="Center"/>
                             <TextBox x:Name="ChannelMaxDurationBox" Classes="compact-search"
                                      Width="42" Height="26" FontSize="10" TextAlignment="Center"
