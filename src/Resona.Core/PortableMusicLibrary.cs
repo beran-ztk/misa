@@ -72,8 +72,8 @@ public sealed record PortableFilterPreset(
     string Name,
     List<string> Ratings,
     List<PortableFilterGroup> Groups,
-    bool ExcludeNeedsReview = false,
-    bool ExcludeNeedsAnalysis = false,
+    bool ShowNeedsReview = false,
+    bool ShowNeedsAnalysis = false,
     bool ManualRatings = false,
     string Visibility = "All",
     bool UnratedOnly = false);

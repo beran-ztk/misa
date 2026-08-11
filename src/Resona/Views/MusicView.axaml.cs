@@ -1710,8 +1710,8 @@ public partial class MusicView : UserControl
             name,
             _manualRatingFilter ? SortedNames(_selectedRatingNames) : [],
             groups,
-            ShowNeedsReviewCheckBox.IsChecked != true,
-            ShowNeedsAnalysisCheckBox.IsChecked != true,
+            ShowNeedsReviewCheckBox.IsChecked == true,
+            ShowNeedsAnalysisCheckBox.IsChecked == true,
             _manualRatingFilter,
             _visibilityFilterMode,
             _unratedOnly);
@@ -1728,8 +1728,8 @@ public partial class MusicView : UserControl
                 applyFilter: false,
                 unratedOnly: preset.UnratedOnly);
             SetVisibilityFilterMode(preset.Visibility, applyFilter: false);
-            ShowNeedsReviewCheckBox.IsChecked = !preset.ExcludeNeedsReview;
-            ShowNeedsAnalysisCheckBox.IsChecked = !preset.ExcludeNeedsAnalysis;
+            ShowNeedsReviewCheckBox.IsChecked = preset.ShowNeedsReview;
+            ShowNeedsAnalysisCheckBox.IsChecked = preset.ShowNeedsAnalysis;
 
             _filterGroups.Clear();
 
@@ -1781,10 +1781,10 @@ public partial class MusicView : UserControl
             parts.Add($"{preset.Groups.Count} condition{(preset.Groups.Count == 1 ? "" : "s")}");
         if (!string.Equals(preset.Visibility, "All", StringComparison.OrdinalIgnoreCase))
             parts.Add(preset.Visibility.ToLowerInvariant());
-        if (preset.ExcludeNeedsReview)
-            parts.Add("no review tracks");
-        if (preset.ExcludeNeedsAnalysis)
-            parts.Add("analyzed only");
+        if (preset.ShowNeedsReview)
+            parts.Add("shows review tracks");
+        if (preset.ShowNeedsAnalysis)
+            parts.Add("shows unanalyzed tracks");
 
         return parts.Count > 0 ? string.Join(" · ", parts) : "Empty preset";
     }
