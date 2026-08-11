@@ -9,10 +9,12 @@ using System.Threading;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using Resona.Models;
 using Resona.Services;
 
@@ -336,7 +338,7 @@ public partial class ChannelOverlay : UserControl
             ? "No channels match this search."
             : "No library channels yet. Add a YouTube channel to get started.";
         FollowingCountText.Text = following.Count.ToString();
-        AllChannelCountText.Text = all.Count.ToString();
+        AllChannelCountText.Text = $"{all.Count:N0} channels";
 
         var totalFollowing = _hubChannels.Count(channel => channel.IsFollowed);
         var newVideos = _hubChannels.Where(channel => channel.IsFollowed).Sum(channel => channel.UncheckedVideoCount);
@@ -345,6 +347,17 @@ public partial class ChannelOverlay : UserControl
     }
 
     private void OnChannelSearchChanged(object? sender, TextChangedEventArgs e) => ApplyHubFilter();
+
+    private void OnChannelSearchToggleClicked(object? sender, RoutedEventArgs e) =>
+        ToggleSearch(ChannelSearchBox, ChannelSearchToggleButton);
+
+    private void OnChannelSearchKeyDown(object? sender, KeyEventArgs e) =>
+        HandleSearchKeyDown(ChannelSearchBox, ChannelSearchToggleButton, e);
+
+    private void OnChannelSearchLostFocus(object? sender, RoutedEventArgs e) =>
+        Dispatcher.UIThread.Post(
+            () => UpdateSearchVisibility(ChannelSearchBox, ChannelSearchToggleButton),
+            DispatcherPriority.Background);
 
     private void OnChannelSortChanged(object? sender, SelectionChangedEventArgs e)
     {
@@ -368,12 +381,26 @@ public partial class ChannelOverlay : UserControl
         e.Handled = true;
     }
 
+    private void OnChannelCardTapped(object? sender, TappedEventArgs e)
+    {
+        if (sender is not Control { DataContext: ChannelHubItem channel })
+            return;
+        if (e.Source is Visual source
+            && (source is Button || source.GetVisualAncestors().OfType<Button>().Any()))
+            return;
+
+        OpenChannelDetail(channel);
+        e.Handled = true;
+    }
+
     private void OpenChannelDetail(ChannelHubItem channel, bool fromInbox = false)
     {
         _selectedHubChannel = channel;
         _selectedChannelId = channel.Id;
         _detailOpenedFromInbox = fromInbox;
         VideoSearchBox.Text = _videoSearchByChannel.GetValueOrDefault(channel.Id, string.Empty);
+        VideoSearchBox.IsVisible = !string.IsNullOrWhiteSpace(VideoSearchBox.Text);
+        VideoSearchToggleButton.Opacity = VideoSearchBox.IsVisible ? 1 : 0.86;
         SetVideoFilter(
             _videoFiltersByChannel.GetValueOrDefault(channel.Id, ChannelVideoFilter.All),
             refresh: false);
@@ -416,7 +443,8 @@ public partial class ChannelOverlay : UserControl
         ToolTip.SetTip(DetailRatingText, channel.RatingText);
         DetailActivityText.Text = channel.ActivityText;
         DetailTopTracksText.Text = channel.HasTopTracks ? channel.TopTracksText : "No local tracks yet";
-        DetailFollowButton.Content = channel.IsFollowed ? "Following" : "Follow";
+        DetailFollowButton.Content = channel.FollowGlyph;
+        ToolTip.SetTip(DetailFollowButton, channel.FollowToolTip);
         DetailFollowButton.Classes.Remove("following");
         if (channel.IsFollowed)
             DetailFollowButton.Classes.Add("following");
@@ -553,6 +581,7 @@ public partial class ChannelOverlay : UserControl
         ToastRequested?.Invoke(followed ? "Channel followed" : "Channel removed from Following");
         if (followed && string.IsNullOrWhiteSpace(channel.LastCheckedAt))
             ChannelHubBackgroundService.Current.RequestEnrichment(channel);
+        e.Handled = true;
     }
 
     private async void OnDetailAutoDownloadClicked(object? sender, RoutedEventArgs e)
@@ -959,6 +988,59 @@ public partial class ChannelOverlay : UserControl
         ApplyVideoView();
     }
 
+    private void OnVideoSearchToggleClicked(object? sender, RoutedEventArgs e) =>
+        ToggleSearch(VideoSearchBox, VideoSearchToggleButton);
+
+    private void OnVideoSearchKeyDown(object? sender, KeyEventArgs e) =>
+        HandleSearchKeyDown(VideoSearchBox, VideoSearchToggleButton, e);
+
+    private void OnVideoSearchLostFocus(object? sender, RoutedEventArgs e) =>
+        Dispatcher.UIThread.Post(
+            () => UpdateSearchVisibility(VideoSearchBox, VideoSearchToggleButton),
+            DispatcherPriority.Background);
+
+    private static void ToggleSearch(TextBox searchBox, Button toggleButton)
+    {
+        if (searchBox.IsVisible)
+        {
+            searchBox.Text = string.Empty;
+            searchBox.IsVisible = false;
+            toggleButton.Opacity = 0.86;
+            toggleButton.Focus();
+            return;
+        }
+
+        searchBox.IsVisible = true;
+        toggleButton.Opacity = 1;
+        Dispatcher.UIThread.Post(() => searchBox.Focus(), DispatcherPriority.Background);
+    }
+
+    private static void HandleSearchKeyDown(TextBox searchBox, Button toggleButton, KeyEventArgs e)
+    {
+        if (e.Key == Key.Escape)
+        {
+            searchBox.Text = string.Empty;
+            searchBox.IsVisible = false;
+            toggleButton.Focus();
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Enter)
+        {
+            toggleButton.Focus();
+            e.Handled = true;
+        }
+    }
+
+    private static void UpdateSearchVisibility(TextBox searchBox, Button toggleButton)
+    {
+        var hasSearch = !string.IsNullOrWhiteSpace(searchBox.Text);
+        if (toggleButton.IsKeyboardFocusWithin)
+            return;
+        if (!searchBox.IsKeyboardFocusWithin && !hasSearch)
+            searchBox.IsVisible = false;
+        toggleButton.Opacity = searchBox.IsVisible || hasSearch ? 1 : 0.86;
+    }
+
     private void OnNewVideosFilterClicked(object? sender, RoutedEventArgs e) =>
         SetVideoFilter(ChannelVideoFilter.New);
 
@@ -1105,6 +1187,7 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
         MetadataErrorDetails = TrimErrorDetails(video.MetadataError);
         MetadataErrorSummary = ErrorSummary(MetadataErrorDetails);
         MetadataStatus = video.MetadataStatus;
+        LibraryDetailsText = BuildLibraryDetails(video);
         _libraryState = video.LibraryState;
         _trackId = video.TrackId;
         SetDownloadState(video.DownloadStatus, video.DownloadError);
@@ -1124,6 +1207,8 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
     public string MetadataErrorDetails { get; }
     public bool HasMetadataError => MetadataErrorSummary.Length > 0;
     public ChannelMetadataStatus MetadataStatus { get; }
+    public string LibraryDetailsText { get; }
+    public bool HasLibraryDetails => LibraryDetailsText.Length > 0;
     public bool IsChecked
     {
         get => _isChecked;
@@ -1330,6 +1415,28 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
     {
         var details = error?.Trim() ?? string.Empty;
         return details.Length > 4000 ? details[..4000] + "…" : details;
+    }
+
+    private static string BuildLibraryDetails(ChannelVideo video)
+    {
+        if (video.TrackId is null || video.LibraryState != TrackLibraryState.Active)
+            return string.Empty;
+
+        var parts = new List<string>();
+        if (!string.IsNullOrWhiteSpace(video.RatingName))
+            parts.Add(video.RatingName);
+        parts.Add(video.ListenCount == 1 ? "1 play" : $"{video.ListenCount:N0} plays");
+        if (video.SkipCount > 0)
+            parts.Add(video.SkipCount == 1 ? "1 skip" : $"{video.SkipCount:N0} skips");
+        if (video.ListenedSeconds >= 60)
+        {
+            var listened = TimeSpan.FromSeconds(video.ListenedSeconds);
+            parts.Add(listened.TotalHours >= 1
+                ? $"{listened.TotalHours:0.#} h listened"
+                : $"{Math.Max(1, (int)listened.TotalMinutes)} min listened");
+        }
+
+        return string.Join(" · ", parts);
     }
 
     private static string ErrorSummary(string details)

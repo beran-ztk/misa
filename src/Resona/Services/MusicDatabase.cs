@@ -1510,9 +1510,13 @@ public class MusicDatabase
                    videos.download_status, videos.download_error, videos.download_attempts, tracks.id,
                    videos.metadata_status, videos.metadata_updated_at, videos.metadata_error,
                    videos.metadata_attempts, videos.view_count, videos.like_count, videos.thumbnail_url,
-                   tracks.library_state
+                   tracks.library_state, channels.name, ratings.name, ratings.sort_order,
+                   COALESCE(tracks.listen_count, 0), COALESCE(tracks.listened_seconds, 0),
+                   COALESCE(tracks.skip_count, 0)
             FROM channel_videos videos
+            JOIN channels ON channels.id = videos.channel_id
             LEFT JOIN tracks ON tracks.canonical_url = videos.canonical_url
+            LEFT JOIN ratings ON ratings.id = tracks.rating_id
             WHERE videos.channel_id = $channelId
             ORDER BY {(uncheckedFirst ? "videos.is_checked ASC," : string.Empty)}
                      COALESCE(videos.uploaded_at, videos.discovered_at) DESC,
@@ -1694,8 +1698,9 @@ public class MusicDatabase
                    videos.download_status, videos.download_error, videos.download_attempts, tracks.id,
                    videos.metadata_status, videos.metadata_updated_at, videos.metadata_error,
                    videos.metadata_attempts, videos.view_count, videos.like_count, videos.thumbnail_url,
-                   tracks.library_state
+                   tracks.library_state, channels.name, NULL, NULL, 0, 0, 0
             FROM channel_videos videos
+            JOIN channels ON channels.id = videos.channel_id
             LEFT JOIN tracks ON tracks.canonical_url = videos.canonical_url
             WHERE videos.metadata_status = 'Queued'
             ORDER BY videos.metadata_priority DESC,
@@ -1981,10 +1986,13 @@ public class MusicDatabase
                    videos.download_status, videos.download_error, videos.download_attempts, tracks.id,
                    videos.metadata_status, videos.metadata_updated_at, videos.metadata_error,
                    videos.metadata_attempts, videos.view_count, videos.like_count, videos.thumbnail_url,
-                   tracks.library_state
+                   tracks.library_state, channels.name, ratings.name, ratings.sort_order,
+                   COALESCE(tracks.listen_count, 0), COALESCE(tracks.listened_seconds, 0),
+                   COALESCE(tracks.skip_count, 0)
             FROM channel_videos videos
             JOIN channels ON channels.id = videos.channel_id
             LEFT JOIN tracks ON tracks.canonical_url = videos.canonical_url
+            LEFT JOIN ratings ON ratings.id = tracks.rating_id
             WHERE videos.download_status = 'Queued' AND videos.is_checked = 0
               AND videos.metadata_status = 'Ready'
               AND (videos.manual_download_requested = 1 OR (
@@ -2099,7 +2107,13 @@ public class MusicDatabase
         reader.FieldCount > 20 && !reader.IsDBNull(20)
             && Enum.TryParse<TrackLibraryState>(reader.GetString(20), true, out var libraryState)
                 ? libraryState
-                : null);
+                : null,
+        reader.FieldCount > 21 && !reader.IsDBNull(21) ? reader.GetString(21) : null,
+        reader.FieldCount > 22 && !reader.IsDBNull(22) ? reader.GetString(22) : null,
+        reader.FieldCount > 23 && !reader.IsDBNull(23) ? ReadInt32(reader, 23) : null,
+        reader.FieldCount > 24 ? ReadInt32(reader, 24) : 0,
+        reader.FieldCount > 25 ? ReadInt32(reader, 25) : 0,
+        reader.FieldCount > 26 ? ReadInt32(reader, 26) : 0);
 
     public bool DeleteChannel(int channelId)
     {

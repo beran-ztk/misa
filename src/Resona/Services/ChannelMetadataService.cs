@@ -128,7 +128,9 @@ public sealed class ChannelMetadataService
                 PublishStatus(new ChannelMetadataWorkStatus(
                     true,
                     $"Loading video metadata · {batchCurrent} of {batchTotal}",
-                    video.Title,
+                    string.IsNullOrWhiteSpace(video.ChannelName)
+                        ? video.Title
+                        : $"{video.ChannelName} · {video.Title}",
                     batchCurrent,
                     batchTotal));
                 QueueChanged?.Invoke();

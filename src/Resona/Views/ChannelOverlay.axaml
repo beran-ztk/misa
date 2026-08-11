@@ -6,14 +6,16 @@
              Background="#F2121212">
     <UserControl.Resources>
         <DataTemplate x:Key="ChannelCardTemplate" x:DataType="models:ChannelHubItem">
-            <Border Width="308"
+            <Border Classes="channel-card" Width="308"
                     MinHeight="158"
                     Margin="0,0,10,10"
                     Padding="14,12"
                     Background="#10FFFFFF"
                     BorderBrush="#28FFFFFF"
                     BorderThickness="1"
-                    CornerRadius="8">
+                    CornerRadius="8"
+                    Cursor="Hand"
+                    Tapped="OnChannelCardTapped">
                 <Grid RowDefinitions="Auto,Auto,Auto,*,Auto" RowSpacing="8">
                     <Grid ColumnDefinitions="42,*,Auto" ColumnSpacing="10">
                         <Border Width="42" Height="42" CornerRadius="21"
@@ -27,11 +29,8 @@
                             </Grid>
                         </Border>
                         <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                            <Button Classes="channel-title" Click="OnOpenChannelClicked"
-                                    HorizontalAlignment="Left" HorizontalContentAlignment="Left">
-                                <TextBlock Text="{Binding Name}" FontSize="13.5" FontWeight="SemiBold"
-                                           TextTrimming="CharacterEllipsis" MaxWidth="185"/>
-                            </Button>
+                            <TextBlock Text="{Binding Name}" FontSize="13.5" FontWeight="SemiBold"
+                                       TextTrimming="CharacterEllipsis" MaxWidth="185"/>
                             <TextBlock Text="{Binding TrackCountText}" FontSize="10.5" Opacity="0.58"/>
                         </StackPanel>
                         <Border Grid.Column="2" IsVisible="{Binding HasNewVideos}"
@@ -57,22 +56,21 @@
                                IsVisible="{Binding HasTopTracks}"
                                FontSize="10" Opacity="0.58" TextWrapping="NoWrap"
                                LineHeight="15" MinHeight="45" MaxHeight="45"/>
-                    <Grid Grid.Row="4" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
-                        <Button Classes="follow-action" Classes.following="{Binding IsFollowed}" Content="{Binding FollowActionText}"
-                                Click="OnFollowChannelClicked"/>
-                        <TextBlock Grid.Column="1" Text="{Binding AutomationText}"
+                    <Grid Grid.Row="4" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                        <TextBlock Text="{Binding AutomationText}"
                                    FontSize="9.5" Opacity="0.42" VerticalAlignment="Center"/>
-                        <Button Grid.Column="2" Classes="channel-icon" Click="OnOpenChannelClicked" ToolTip.Tip="Open channel">
-                            <TextBlock Text="›" FontSize="19" Margin="0,-2,0,0"/>
-                        </Button>
+                        <Button Grid.Column="1" Classes="follow-toggle" Classes.following="{Binding IsFollowed}"
+                                Content="{Binding FollowGlyph}" Click="OnFollowChannelClicked"
+                                ToolTip.Tip="{Binding FollowToolTip}"/>
                     </Grid>
                 </Grid>
             </Border>
         </DataTemplate>
 
         <DataTemplate x:Key="ChannelRowTemplate" x:DataType="models:ChannelHubItem">
-            <Border MinHeight="78" Padding="12,9" Margin="0,0,0,6" CornerRadius="8"
-                    Background="#0EFFFFFF" BorderBrush="#22FFFFFF" BorderThickness="1">
+            <Border Classes="channel-card" MinHeight="78" Padding="12,9" Margin="0,0,0,6" CornerRadius="8"
+                    Background="#0EFFFFFF" BorderBrush="#22FFFFFF" BorderThickness="1"
+                    Cursor="Hand" Tapped="OnChannelCardTapped">
                 <Grid ColumnDefinitions="38,2*,0.85*,1.05*,0.9*,Auto"
                       RowDefinitions="Auto,Auto" ColumnSpacing="13" RowSpacing="6">
                     <Border Width="36" Height="36" CornerRadius="18" Background="#213E6591"
@@ -85,11 +83,8 @@
                         </Grid>
                     </Border>
                     <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
-                        <Button Classes="channel-title" Click="OnOpenChannelClicked"
-                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Left">
-                            <TextBlock Text="{Binding Name}" FontSize="12.5" FontWeight="SemiBold"
-                                       TextTrimming="CharacterEllipsis"/>
-                        </Button>
+                        <TextBlock Text="{Binding Name}" FontSize="12.5" FontWeight="SemiBold"
+                                   TextTrimming="CharacterEllipsis"/>
                         <TextBlock Text="{Binding ChannelMetadataText}" FontSize="9.5" Opacity="0.48"
                                    TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding ChannelMetadataText}"/>
                     </StackPanel>
@@ -108,14 +103,11 @@
                         <TextBlock Text="{Binding VideoSummaryText}" FontSize="10" Opacity="0.76"
                                    TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding VideoQueueText}"/>
                     </StackPanel>
-                    <StackPanel Grid.Column="5" Spacing="4" VerticalAlignment="Center" MinWidth="112">
+                    <StackPanel Grid.Column="5" Spacing="4" VerticalAlignment="Center" MinWidth="36">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="4">
-                            <Button Classes="follow-action" Classes.following="{Binding IsFollowed}" Content="{Binding FollowActionText}"
-                                    Click="OnFollowChannelClicked" VerticalAlignment="Center"/>
-                            <Button Classes="channel-icon" Click="OnOpenChannelClicked"
-                                    ToolTip.Tip="Open channel" VerticalAlignment="Center">
-                                <TextBlock Text="›" FontSize="19" Margin="0,-2,0,0"/>
-                            </Button>
+                            <Button Classes="follow-toggle" Classes.following="{Binding IsFollowed}"
+                                    Content="{Binding FollowGlyph}" Click="OnFollowChannelClicked"
+                                    ToolTip.Tip="{Binding FollowToolTip}" VerticalAlignment="Center"/>
                         </StackPanel>
                     </StackPanel>
                     <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding TopTracksInlineText}"
@@ -178,6 +170,35 @@
             <Setter Property="Background" Value="#343C7FC4"/>
             <Setter Property="BorderBrush" Value="#805B9CDC"/>
             <Setter Property="Foreground" Value="#E5F2FF"/>
+        </Style>
+        <Style Selector="Button.follow-toggle">
+            <Setter Property="Width" Value="28"/>
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="FontSize" Value="18"/>
+            <Setter Property="FontWeight" Value="Light"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground" Value="#C9DFF2"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="Button.follow-toggle:pointerover">
+            <Setter Property="Background" Value="#18FFFFFF"/>
+        </Style>
+        <Style Selector="Button.follow-toggle.following">
+            <Setter Property="Foreground" Value="#D99B9B"/>
+        </Style>
+        <Style Selector="Border.channel-card:pointerover">
+            <Setter Property="Background" Value="#18FFFFFF"/>
+            <Setter Property="BorderBrush" Value="#3AFFFFFF"/>
+        </Style>
+        <Style Selector="Border.channel-sort">
+            <Setter Property="Background" Value="{DynamicResource Theme.Brush.Surface}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Theme.Brush.BorderStrong}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="3"/>
         </Style>
         <Style Selector="Button.open-action">
             <Setter Property="Padding" Value="9,4"/>
@@ -299,7 +320,13 @@
                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                         <TextBox x:Name="ChannelSearchBox" Classes="compact-search"
                                  Width="230" Height="32" Watermark="Search channels…"
-                                 VerticalContentAlignment="Center" TextChanged="OnChannelSearchChanged"/>
+                                 IsVisible="False" VerticalContentAlignment="Center"
+                                 TextChanged="OnChannelSearchChanged" KeyDown="OnChannelSearchKeyDown"
+                                 LostFocus="OnChannelSearchLostFocus"/>
+                        <Button x:Name="ChannelSearchToggleButton" Classes="channel-icon"
+                                Click="OnChannelSearchToggleClicked" ToolTip.Tip="Search channels" Opacity="0.86">
+                            <Image Source="{SvgImage /Assets/search.svg}" Width="17" Height="17"/>
+                        </Button>
                         <Button Classes="channel-icon" Click="OnAddChannelToggleClicked" ToolTip.Tip="Add channel">
                             <TextBlock Text="+" FontSize="20" Margin="0,-3,0,0"/>
                         </Button>
@@ -413,17 +440,21 @@
                     </StackPanel>
 
                     <Grid Grid.Row="3" RowDefinitions="Auto,*" RowSpacing="7" MinHeight="150">
-                        <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
-                            <TextBlock Text="ALL LIBRARY CHANNELS" FontSize="10" FontWeight="SemiBold" LetterSpacing="1" Opacity="0.52"/>
-                            <TextBlock Grid.Column="1" x:Name="AllChannelCountText" FontSize="10" Opacity="0.42"/>
-                            <ComboBox Grid.Column="2" x:Name="ChannelSortBox" Width="132" Height="26"
-                                      SelectedIndex="0" SelectionChanged="OnChannelSortChanged">
-                                <ComboBoxItem Content="Name"/>
-                                <ComboBoxItem Content="Best rated"/>
-                                <ComboBoxItem Content="Most tracks"/>
-                                <ComboBoxItem Content="Recently added"/>
-                                <ComboBoxItem Content="Most played"/>
-                            </ComboBox>
+                        <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="12">
+                            <TextBlock Text="ALL LIBRARY CHANNELS" FontSize="10" FontWeight="SemiBold" LetterSpacing="1" Opacity="0.52" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" x:Name="AllChannelCountText" FontSize="9.5" Opacity="0.42" VerticalAlignment="Center"/>
+                            <Border Grid.Column="2" Classes="channel-sort" Width="142" Height="29">
+                                <ComboBox x:Name="ChannelSortBox" Height="23" FontSize="10.5" FontWeight="SemiBold"
+                                          Foreground="{DynamicResource Theme.Brush.TextSecondary}"
+                                          Background="Transparent" BorderThickness="0" Padding="7,1"
+                                          SelectedIndex="0" SelectionChanged="OnChannelSortChanged">
+                                    <ComboBoxItem Content="Name"/>
+                                    <ComboBoxItem Content="Best rated"/>
+                                    <ComboBoxItem Content="Most tracks"/>
+                                    <ComboBoxItem Content="Recently added"/>
+                                    <ComboBoxItem Content="Most played"/>
+                                </ComboBox>
+                            </Border>
                         </Grid>
                         <Border Grid.Row="1" Padding="0,7,0,0">
                             <ListBox x:Name="AllChannelItems" Classes="channel-hub-list"
@@ -464,7 +495,15 @@
                         </StackPanel>
                     </StackPanel>
                     <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
-                        <Button x:Name="DetailFollowButton" Classes="follow-action" Click="OnDetailFollowClicked"/>
+                        <TextBox x:Name="VideoSearchBox" Classes="compact-search"
+                                 Width="210" Height="30" Watermark="Search videos…" IsVisible="False"
+                                 VerticalContentAlignment="Center" TextChanged="OnVideoSearchChanged"
+                                 KeyDown="OnVideoSearchKeyDown" LostFocus="OnVideoSearchLostFocus"/>
+                        <Button x:Name="VideoSearchToggleButton" Classes="channel-icon"
+                                Click="OnVideoSearchToggleClicked" ToolTip.Tip="Search videos" Opacity="0.86">
+                            <Image Source="{SvgImage /Assets/search.svg}" Width="17" Height="17"/>
+                        </Button>
+                        <Button x:Name="DetailFollowButton" Classes="follow-toggle" Click="OnDetailFollowClicked"/>
                         <Button x:Name="DetailRefreshButton" Classes="channel-icon" Click="OnRefreshSelectedClicked" ToolTip.Tip="Refresh channel">
                             <Image Source="{SvgImage /Assets/reload.svg}" Width="16" Height="16"/>
                         </Button>
@@ -499,7 +538,7 @@
                 </Border>
 
                 <Grid Grid.Row="1" RowDefinitions="Auto,Auto,Auto" RowSpacing="8">
-                    <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="12">
+                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
                         <TextBlock Text="VIDEOS" FontSize="9.5" FontWeight="SemiBold" LetterSpacing="0.9"
                                    Opacity="0.48" VerticalAlignment="Center"/>
                         <TextBlock Grid.Column="1" x:Name="VideoSummaryText" FontSize="10.5" Opacity="0.58"
@@ -507,9 +546,6 @@
                         <TextBlock Grid.Column="2" x:Name="DetailRefreshStatusText" IsVisible="False"
                                    FontSize="10" Foreground="#AFCDE6" VerticalAlignment="Center"
                                    MaxWidth="220" TextTrimming="CharacterEllipsis"/>
-                        <TextBox Grid.Column="3" x:Name="VideoSearchBox" Classes="compact-search"
-                                 Width="210" Height="28" Watermark="Search videos…"
-                                 VerticalContentAlignment="Center" TextChanged="OnVideoSearchChanged"/>
                     </Grid>
                     <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,*,Auto,Auto" ColumnSpacing="6">
                         <Button x:Name="NewVideosFilterButton" Classes="video-filter" Content="New"
@@ -557,9 +593,13 @@
                                                    ToolTip.Tip="{Binding DownloadErrorDetails}" FontSize="10.5"
                                                    Foreground="#E87878" Opacity="0.86" TextWrapping="Wrap" MaxHeight="34"/>
                                     </StackPanel>
-                                    <TextBlock Grid.Column="1" Text="{Binding StatusText}" FontSize="10" Opacity="0.62"
-                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
-                                               ToolTip.Tip="{Binding StatusText}"/>
+                                    <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding StatusText}" FontSize="10" Opacity="0.62"
+                                                   TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding StatusText}"/>
+                                        <TextBlock Text="{Binding LibraryDetailsText}" FontSize="9" Opacity="0.45"
+                                                   TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding LibraryDetailsText}"
+                                                   IsVisible="{Binding HasLibraryDetails}"/>
+                                    </StackPanel>
                                     <Button Grid.Column="2" Classes="channel-icon" Click="OnVideoDownloadClicked"
                                             IsVisible="{Binding CanDownload}" ToolTip.Tip="Download this track">
                                         <Image Source="{SvgImage /Assets/download.svg}" Width="14" Height="14"/>

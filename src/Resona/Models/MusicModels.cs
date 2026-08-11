@@ -207,6 +207,8 @@ public sealed record ChannelHubItem(
         ? "No local tracks yet"
         : string.Join("  ·  ", TopTracks.Take(3));
     public string FollowActionText => IsFollowed ? "Following" : "Follow";
+    public string FollowGlyph => IsFollowed ? "×" : "+";
+    public string FollowToolTip => IsFollowed ? "Unfollow channel" : "Follow channel";
     public string AutomationText => AutoDownload ? "Auto-download on" : "Manual downloads";
     public string DurationLimitText => MaxDurationMinutes is int minutes
         ? $"{minutes} min channel limit"
@@ -305,7 +307,13 @@ public record ChannelVideo(
     long? ViewCount = null,
     long? LikeCount = null,
     string? ThumbnailUrl = null,
-    TrackLibraryState? LibraryState = null);
+    TrackLibraryState? LibraryState = null,
+    string? ChannelName = null,
+    string? RatingName = null,
+    int? RatingSortOrder = null,
+    int ListenCount = 0,
+    int ListenedSeconds = 0,
+    int SkipCount = 0);
 public record ChannelDownloadSummary(int Queued, int Downloading, int Ready, int Failed, int Skipped);
 public record ChannelRefreshResult(bool Success, int AddedCount, int UpdatedCount, string? Error = null);
 public record ModelGenre(int Id, string Name);
