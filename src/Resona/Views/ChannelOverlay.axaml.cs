@@ -137,6 +137,8 @@ public partial class ChannelOverlay : UserControl
 
     private void UpdateBackgroundStatus(ChannelHubWorkStatus status)
     {
+        // The service remains active for the complete batch, so changing the
+        // text no longer removes and reinserts these panels between channels.
         HubBackgroundStatusPanel.IsVisible = status.IsActive;
         DetailBackgroundStatusPanel.IsVisible = status.IsActive;
         if (!status.IsActive)

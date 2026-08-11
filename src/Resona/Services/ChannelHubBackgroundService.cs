@@ -36,6 +36,7 @@ public sealed class ChannelHubBackgroundService
     private Task? _enrichmentWorker;
     private Task? _followedRefreshWorker;
     private int _refreshRequested;
+    private int _activeRemoteBatches;
     private int _enrichmentTotal;
     private int _enrichmentCompleted;
     private bool _initialized;
@@ -168,74 +169,82 @@ public sealed class ChannelHubBackgroundService
 
     private async Task ProcessEnrichmentQueueAsync()
     {
-        while (true)
+        Interlocked.Increment(ref _activeRemoteBatches);
+        try
         {
-            ChannelHubItem channel;
-            int current;
-            int total;
-            lock (_gate)
+            while (true)
             {
-                if (_enrichmentQueue.Count == 0)
+                ChannelHubItem channel;
+                int current;
+                int total;
+                lock (_gate)
                 {
-                    _enrichmentTotal = 0;
-                    _enrichmentCompleted = 0;
-                    return;
+                    if (_enrichmentQueue.Count == 0)
+                    {
+                        _enrichmentTotal = 0;
+                        _enrichmentCompleted = 0;
+                        return;
+                    }
+                    channel = _enrichmentQueue.Dequeue();
+                    _queuedEnrichments.Remove(channel.Id);
+                    _attemptedEnrichments.Add(channel.Id);
+                    current = _enrichmentCompleted + 1;
+                    total = _enrichmentTotal;
                 }
-                channel = _enrichmentQueue.Dequeue();
-                _queuedEnrichments.Remove(channel.Id);
-                _attemptedEnrichments.Add(channel.Id);
-                current = _enrichmentCompleted + 1;
-                total = _enrichmentTotal;
-            }
 
-            try
-            {
-                await _remoteGate.WaitAsync();
                 try
                 {
-                    PublishStatus(new ChannelHubWorkStatus(
-                        true,
-                        $"Loading channel data · {current} of {total}",
-                        $"Reading {channel.Name}",
-                        current,
-                        total));
-                    var progress = new CallbackProgress(message => PublishStatus(new ChannelHubWorkStatus(
-                        true,
-                        $"Loading channel data · {current} of {total}",
-                        $"{message.TrimEnd('…', '.')} · {channel.Name}",
-                        current,
-                        total)));
-                    await MusicLibraryService.Current.AddOrRefreshChannelAsync(channel.SourceUrl, progress);
-                }
-                finally
-                {
-                    PublishStatus(ChannelHubWorkStatus.Idle);
-                    _remoteGate.Release();
-                }
-                RequestRefresh();
-            }
-            catch
-            {
-                // Remote enrichment is best-effort and retried next app session.
-            }
-            finally
-            {
-                try
-                {
-                    MusicLibraryService.Current.MarkChannelBasicMetadataChecked(channel.Id);
+                    await _remoteGate.WaitAsync();
+                    try
+                    {
+                        PublishStatus(new ChannelHubWorkStatus(
+                            true,
+                            $"Loading channel data · {current} of {total}",
+                            $"Reading {channel.Name}",
+                            current,
+                            total));
+                        var progress = new CallbackProgress(message => PublishStatus(new ChannelHubWorkStatus(
+                            true,
+                            $"Loading channel data · {current} of {total}",
+                            $"{message.TrimEnd('…', '.')} · {channel.Name}",
+                            current,
+                            total)));
+                        await MusicLibraryService.Current.AddOrRefreshChannelAsync(channel.SourceUrl, progress);
+                    }
+                    finally
+                    {
+                        _remoteGate.Release();
+                    }
+                    RequestRefresh();
                 }
                 catch
                 {
-                    // A failed checkpoint is safe: the channel is retried next launch.
+                    // Remote enrichment is best-effort and retried manually if needed.
                 }
-                lock (_gate)
-                    _enrichmentCompleted++;
+                finally
+                {
+                    try
+                    {
+                        MusicLibraryService.Current.MarkChannelBasicMetadataChecked(channel.Id);
+                    }
+                    catch
+                    {
+                        // A failed checkpoint is safe: the channel is retried next launch.
+                    }
+                    lock (_gate)
+                        _enrichmentCompleted++;
+                }
             }
+        }
+        finally
+        {
+            EndRemoteBatch();
         }
     }
 
     private async Task RefreshFollowedChannelsAsync()
     {
+        Interlocked.Increment(ref _activeRemoteBatches);
         try
         {
             var followed = MusicLibraryService.Current.GetChannelSubscriptions()
@@ -273,7 +282,6 @@ public sealed class ChannelHubBackgroundService
                 }
                 finally
                 {
-                    PublishStatus(ChannelHubWorkStatus.Idle);
                     _remoteGate.Release();
                 }
                 RequestRefresh();
@@ -283,6 +291,16 @@ public sealed class ChannelHubBackgroundService
         {
             // Startup refresh is optional and must remain invisible to the UI.
         }
+        finally
+        {
+            EndRemoteBatch();
+        }
+    }
+
+    private void EndRemoteBatch()
+    {
+        if (Interlocked.Decrement(ref _activeRemoteBatches) == 0)
+            PublishStatus(ChannelHubWorkStatus.Idle);
     }
 
     private void PublishStatus(ChannelHubWorkStatus status)
