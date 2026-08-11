@@ -256,6 +256,7 @@
                          VerticalContentAlignment="Center"
                          KeyDown="OnSearchBoxKeyDown"
                          LostFocus="OnSearchBoxLostFocus"/>
+                
                 <Button x:Name="SearchToggleBtn"
                         Classes="icon"
                         Click="OnSearchToggleClicked"

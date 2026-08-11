@@ -7,7 +7,7 @@ namespace Resona.Services;
 public sealed class DiscordPresenceService : IDisposable
 {
     private const string ClientId = "1524163394276425728";
-    private const string LargeImageUrl =
+    private const string FallbackImageUrl =
         "https://raw.githubusercontent.com/bezztk/resona/master/src/Resona/Assets/headphones.png";
     private static readonly TimeSpan ReconnectDelay = TimeSpan.FromSeconds(5);
 
@@ -35,8 +35,8 @@ public sealed class DiscordPresenceService : IDisposable
             State = ClipOrNull(StateText(item), 128),
             Assets = new Assets
             {
-                LargeImageKey = LargeImageUrl
-                // LargeImageText = "Resona"
+                LargeImageKey = TrackImageUrl(item.Track),
+                LargeImageText = Clip(item.Track.Title, 128)
             }
         };
 
@@ -127,6 +127,14 @@ public sealed class DiscordPresenceService : IDisposable
         return string.IsNullOrWhiteSpace(item.ChannelText)
             ? title
             : $"{title} - {item.ChannelText.Trim()}";
+    }
+
+    private static string TrackImageUrl(MusicTrack track)
+    {
+        var videoId = YouTubeUrlNormalizer.ExtractVideoId(track.CanonicalUrl);
+        return string.IsNullOrWhiteSpace(videoId)
+            ? FallbackImageUrl
+            : $"https://i.ytimg.com/vi/{Uri.EscapeDataString(videoId)}/hqdefault.jpg";
     }
 
     private static string Clip(string value, int maxLength)
