@@ -413,10 +413,6 @@
                     </StackPanel>
                     <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
                         <Button x:Name="DetailFollowButton" Classes="follow-action" Click="OnDetailFollowClicked"/>
-                        <Button x:Name="DetailNotificationButton" Classes="channel-icon"
-                                Click="OnDetailNotificationsClicked" ToolTip.Tip="Toggle channel notifications">
-                            <TextBlock x:Name="DetailNotificationIcon" Text="○" FontSize="17"/>
-                        </Button>
                         <Button x:Name="DetailRefreshButton" Classes="channel-icon" Click="OnRefreshSelectedClicked" ToolTip.Tip="Refresh channel">
                             <Image Source="{SvgImage /Assets/reload.svg}" Width="16" Height="16"/>
                         </Button>

@@ -239,7 +239,6 @@ public class MusicLibraryService
             error,
             _channelMaxDownloadDurationMinutes);
     public void SetChannelFollowed(int channelId, bool followed) => _db.SetChannelFollowed(channelId, followed);
-    public void SetChannelNotifications(int channelId, bool enabled) => _db.SetChannelNotifications(channelId, enabled);
     public List<ChannelNotification> GetChannelNotifications() => _db.GetChannelNotifications();
     public int GetUnreadChannelNotificationCount() => _db.GetUnreadChannelNotificationCount();
     public void MarkChannelNotificationRead(int notificationId) => _db.MarkChannelNotificationRead(notificationId);
@@ -525,6 +524,7 @@ public class MusicLibraryService
 
         if (request.RatingId is not null)
             BackgroundAnalysisService.Current.EnqueueTrack(trackId);
+        ChannelHubBackgroundService.Current.RequestRefresh();
         return new DownloadResult(true);
     }
 
@@ -562,6 +562,7 @@ public class MusicLibraryService
         var thumbnail = ThumbnailService.ReadEmbeddedArtworkThumbnail(filePath) ?? [];
         var trackId = _db.InsertTrack(canonicalUrl, metadata?.Title ?? _downloader.TitleFromFileName(fileName), fileName,
             [], null, [], duration, fileSizeBytes, (int)downloadStopwatch.ElapsedMilliseconds, metadata, thumbnail);
+        ChannelHubBackgroundService.Current.RequestRefresh();
         trackCreated?.Invoke(trackId);
         return new ImportResult(
             true,

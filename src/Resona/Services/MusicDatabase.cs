@@ -63,7 +63,7 @@ public class MusicDatabase
                 updated_at          TEXT NULL,
                 last_checked_at     TEXT NULL,
                 video_count         INTEGER NOT NULL DEFAULT 0,
-                auto_download       INTEGER NOT NULL DEFAULT 1,
+                auto_download       INTEGER NOT NULL DEFAULT 0,
                 follower_count      INTEGER NULL,
                 thumbnail_url       TEXT NULL,
                 thumbnail           BLOB NULL,
@@ -451,7 +451,7 @@ public class MusicDatabase
         EnsureColumn(conn, "channels", "updated_at", "TEXT NULL");
         EnsureColumn(conn, "channels", "last_checked_at", "TEXT NULL");
         EnsureColumn(conn, "channels", "video_count", "INTEGER NOT NULL DEFAULT 0");
-        EnsureColumn(conn, "channels", "auto_download", "INTEGER NOT NULL DEFAULT 1");
+        EnsureColumn(conn, "channels", "auto_download", "INTEGER NOT NULL DEFAULT 0");
         EnsureColumn(conn, "channels", "follower_count", "INTEGER NULL");
         EnsureColumn(conn, "channels", "thumbnail_url", "TEXT NULL");
         EnsureColumn(conn, "channels", "thumbnail", "BLOB NULL");
@@ -512,6 +512,19 @@ public class MusicDatabase
         EnsureColumn(conn, "channel_videos", "view_count", "INTEGER NULL");
         EnsureColumn(conn, "channel_videos", "like_count", "INTEGER NULL");
         EnsureColumn(conn, "channel_videos", "thumbnail_url", "TEXT NULL");
+        // Library-discovered/recommended channels must never download on their
+        // own. Only an explicit Auto-download action on a followed channel may
+        // enable this flag.
+        ExecuteNonQuery(conn, @"
+            UPDATE channels
+            SET auto_download = 0, auto_download_from = NULL
+            WHERE subscribed = 0 AND auto_download <> 0");
+        // Follow is the single subscription switch. Keep legacy notification
+        // flags aligned with it so non-followed channels cannot notify.
+        ExecuteNonQuery(conn, @"
+            UPDATE channels
+            SET inform_new_songs = subscribed
+            WHERE inform_new_songs <> subscribed");
         BackfillLibraryChannelVideos(conn);
         BackfillTrackSourceMetadata(conn);
     }
@@ -1091,14 +1104,16 @@ public class MusicDatabase
             channelId = InsertAndGetId(conn, tx, @"
                 INSERT INTO channels
                     (name, source_channel_id, source_url, subscribed, auto_download, created_at, updated_at,
-                     last_checked_at, video_count, thumbnail_url, thumbnail)
+                     last_checked_at, video_count, thumbnail_url, thumbnail, follower_count, remote_metadata_updated_at)
                 VALUES
-                    ($name, $sourceChannelId, $sourceUrl, 1, 0, $now, $now, $now, $videoCount, $thumbnailUrl, $thumbnail)",
+                    ($name, $sourceChannelId, $sourceUrl, 1, 0, $now, $now, $now, $videoCount, $thumbnailUrl, $thumbnail,
+                     $followerCount, $now)",
                 ("$name", snapshot.Name),
                 ("$sourceChannelId", snapshot.ChannelId),
                 ("$sourceUrl", snapshot.ChannelUrl ?? snapshot.SourceUrl),
                 ("$thumbnailUrl", snapshot.ThumbnailUrl),
                 ("$thumbnail", snapshot.Thumbnail),
+                ("$followerCount", snapshot.FollowerCount),
                 ("$now", now),
                 ("$videoCount", snapshot.Videos.Count));
         }
@@ -1115,6 +1130,8 @@ public class MusicDatabase
                     video_count = $videoCount
                     , thumbnail_url = COALESCE($thumbnailUrl, thumbnail_url)
                     , thumbnail = COALESCE($thumbnail, thumbnail)
+                    , follower_count = COALESCE($followerCount, follower_count)
+                    , remote_metadata_updated_at = $now
                 WHERE id = $id",
                 ("$id", channelId.Value),
                 ("$name", snapshot.Name),
@@ -1122,6 +1139,7 @@ public class MusicDatabase
                 ("$sourceUrl", snapshot.ChannelUrl ?? snapshot.SourceUrl),
                 ("$thumbnailUrl", snapshot.ThumbnailUrl),
                 ("$thumbnail", snapshot.Thumbnail),
+                ("$followerCount", snapshot.FollowerCount),
                 ("$now", now),
                 ("$videoCount", snapshot.Videos.Count));
         }
@@ -1376,6 +1394,7 @@ public class MusicDatabase
         ExecuteInsert(conn, tx, @"
             UPDATE channels
             SET subscribed = $followed,
+                inform_new_songs = $followed,
                 auto_download = CASE
                     WHEN $followed = 0 OR subscribed = 0 THEN 0
                     ELSE auto_download
@@ -1392,14 +1411,6 @@ public class MusicDatabase
                   AND NOT EXISTS (SELECT 1 FROM tracks WHERE tracks.canonical_url = channel_videos.canonical_url)",
                 ("$id", channelId), ("$now", now));
         tx.Commit();
-    }
-
-    public void SetChannelNotifications(int channelId, bool enabled)
-    {
-        using var conn = Open();
-        ExecuteNonQuery(conn,
-            "UPDATE channels SET inform_new_songs = $enabled, updated_at = $now WHERE id = $id",
-            ("$id", channelId), ("$enabled", enabled ? 1 : 0), ("$now", DateTime.UtcNow.ToString("O")));
     }
 
     public List<ChannelNotification> GetChannelNotifications()
@@ -1694,7 +1705,7 @@ public class MusicDatabase
                 END,
                 auto_download = $enabled,
                 updated_at = $now
-            WHERE id = $id",
+            WHERE id = $id AND ($enabled = 0 OR subscribed = 1)",
             ("$id", channelId), ("$enabled", enabled ? 1 : 0), ("$now", now));
         ExecuteInsert(conn, tx, @"
             UPDATE channel_videos
@@ -2007,8 +2018,9 @@ public class MusicDatabase
         if (!string.IsNullOrWhiteSpace(metadata?.ChannelId))
         {
             ExecuteInsert(conn, tx, @"INSERT INTO channels
-                    (name, source_channel_id, source_url, follower_count, remote_metadata_updated_at)
-                VALUES ($name, $channelId, $channelUrl, $followerCount, $metadataUpdatedAt)
+                    (name, source_channel_id, source_url, subscribed, auto_download,
+                     follower_count, remote_metadata_updated_at)
+                VALUES ($name, $channelId, $channelUrl, 0, 0, $followerCount, $metadataUpdatedAt)
                 ON CONFLICT(source_channel_id) DO UPDATE SET
                     name = excluded.name,
                     source_url = COALESCE(excluded.source_url, channels.source_url),

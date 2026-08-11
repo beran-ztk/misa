@@ -202,7 +202,8 @@ public class TrackDownloadService
                 name,
                 channelUrl,
                 videos,
-                ThumbnailUrl(root)), null);
+                ThumbnailUrl(root),
+                FollowerCount: IntegerValue(root, "channel_follower_count")), null);
         }
         catch (OperationCanceledException) { throw; }
         catch (Exception exception) { return (null, exception.Message); }

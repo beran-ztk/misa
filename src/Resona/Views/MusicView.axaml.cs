@@ -255,6 +255,7 @@ public partial class MusicView : UserControl
         BackgroundAnalysisService.Current.Initialize();
         ChannelDownloadService.Current.Initialize();
         ChannelMetadataService.Current.Initialize();
+        ChannelHubBackgroundService.Current.Initialize();
         UpdateImportBounds();
 
         LoadLookups();
@@ -265,7 +266,6 @@ public partial class MusicView : UserControl
         _restoringPlayerSession = false;
         UpdateShuffleButton();
         PersistPlayerSession();
-        _ = RefreshChannelsOnStartupAsync();
 
         SettingsOverlay.PreloadGenreVocabulary();
 
@@ -381,22 +381,6 @@ public partial class MusicView : UserControl
 
     private void UpdateImportBounds() =>
         ImportOverlay.Margin = new Thickness(0, 0, 0, PlayerBar.Bounds.Height);
-
-    private async Task RefreshChannelsOnStartupAsync()
-    {
-        try
-        {
-            var added = await MusicLibraryService.Current.RefreshSubscribedChannelsAsync();
-            if (added > 0)
-                ShowToast($"{added} new channel videos found");
-            if (ChannelOverlay.IsVisible)
-                ChannelOverlay.RefreshChannels();
-        }
-        catch
-        {
-            // Channel refresh is a convenience check; it should not block the music library.
-        }
-    }
 
     public void EnableSystemMediaControls()
     {

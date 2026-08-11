@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
@@ -11,6 +12,7 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using Avalonia.Threading;
 using Resona.Models;
 using Resona.Services;
 
@@ -32,7 +34,10 @@ public partial class ChannelOverlay : UserControl
     private ChannelVideoFilter _videoFilter = ChannelVideoFilter.New;
     private readonly Dictionary<int, ChannelVideoFilter> _videoFiltersByChannel = [];
     private readonly Dictionary<int, string> _videoSearchByChannel = [];
-    private readonly Dictionary<int, Bitmap> _channelArtworkCache = [];
+    private readonly ConcurrentDictionary<int, Bitmap> _channelArtworkCache = [];
+    private int _channelSnapshotGeneration;
+    private int _videoLoadGeneration;
+    private int? _pendingOpenChannelId;
     private bool _processingPastedUrl;
     private int? _activePreviewTrackId;
     private readonly Avalonia.Threading.DispatcherTimer _channelStateRefreshTimer = new()
@@ -56,6 +61,7 @@ public partial class ChannelOverlay : UserControl
             _channelStateRefreshTimer.Stop();
             RefreshChannelStates();
         };
+        ChannelHubBackgroundService.Current.SnapshotChanged += OnChannelSnapshotChanged;
         SetVideoFilter(ChannelVideoFilter.New, refresh: false);
     }
 
@@ -66,15 +72,24 @@ public partial class ChannelOverlay : UserControl
         DetailView.IsVisible = false;
         InboxView.IsVisible = false;
         _detailOpenedFromInbox = false;
+        var snapshot = ChannelHubBackgroundService.Current.Snapshot;
+        if (snapshot.Count > 0)
+            OnChannelSnapshotChanged(snapshot);
+        else
+            HubSummaryText.Text = "Loading channels…";
         RefreshChannels();
     }
 
     public void OpenChannel(int channelId)
     {
+        _pendingOpenChannelId = channelId;
         Open();
         var channel = _hubChannels.FirstOrDefault(item => item.Id == channelId);
         if (channel is not null)
+        {
+            _pendingOpenChannelId = null;
             OpenChannelDetail(channel);
+        }
     }
 
     public void UpdateDownloadSummary()
@@ -105,43 +120,73 @@ public partial class ChannelOverlay : UserControl
     public void RefreshChannels()
     {
         RefreshDeleteUnratedAction();
-        _hubChannels = MusicLibraryService.Current.GetChannelHubItems();
-        foreach (var channel in _hubChannels)
-        {
-            if (channel.Thumbnail is not { Length: > 0 })
-                continue;
-            if (!_channelArtworkCache.TryGetValue(channel.Id, out var artwork))
-            {
-                try
-                {
-                    using var stream = new MemoryStream(channel.Thumbnail);
-                    artwork = new Bitmap(stream);
-                    _channelArtworkCache[channel.Id] = artwork;
-                }
-                catch
-                {
-                    continue;
-                }
-            }
-            channel.Artwork = artwork;
-        }
-        ApplyHubFilter();
+        ChannelHubBackgroundService.Current.RequestRefresh();
         RefreshInboxBadge();
-
-        if (_selectedChannelId >= 0)
-        {
-            _selectedHubChannel = _hubChannels.FirstOrDefault(channel => channel.Id == _selectedChannelId);
-            if (DetailView.IsVisible && _selectedHubChannel is not null)
-            {
-                UpdateDetailHeader();
-                RefreshVideos();
-            }
-        }
     }
 
-    private void RefreshDeleteUnratedAction()
+    private void OnChannelSnapshotChanged(IReadOnlyList<ChannelHubItem> snapshot)
     {
-        var count = MusicLibraryService.Current.CountUnratedTracks();
+        var generation = Interlocked.Increment(ref _channelSnapshotGeneration);
+        _ = PrepareChannelSnapshotAsync(snapshot, generation);
+    }
+
+    private async Task PrepareChannelSnapshotAsync(IReadOnlyList<ChannelHubItem> snapshot, int generation)
+    {
+        var prepared = await Task.Run(() =>
+        {
+            var channels = snapshot.ToList();
+            foreach (var channel in channels)
+            {
+                if (channel.Thumbnail is not { Length: > 0 })
+                    continue;
+                if (!_channelArtworkCache.TryGetValue(channel.Id, out var artwork))
+                {
+                    try
+                    {
+                        using var stream = new MemoryStream(channel.Thumbnail);
+                        var decoded = new Bitmap(stream);
+                        if (!_channelArtworkCache.TryAdd(channel.Id, decoded))
+                            decoded.Dispose();
+                        artwork = _channelArtworkCache.GetValueOrDefault(channel.Id);
+                    }
+                    catch
+                    {
+                        continue;
+                    }
+                }
+                channel.Artwork = artwork;
+            }
+            return channels;
+        });
+
+        await Dispatcher.UIThread.InvokeAsync(() =>
+        {
+            if (generation != _channelSnapshotGeneration)
+                return;
+
+            _hubChannels = prepared;
+            ApplyHubFilter();
+            if (_pendingOpenChannelId is int pendingId
+                && _hubChannels.FirstOrDefault(item => item.Id == pendingId) is { } pendingChannel)
+            {
+                _pendingOpenChannelId = null;
+                OpenChannelDetail(pendingChannel);
+                return;
+            }
+
+            if (_selectedChannelId < 0)
+                return;
+            _selectedHubChannel = _hubChannels.FirstOrDefault(channel => channel.Id == _selectedChannelId);
+            if (DetailView.IsVisible && _selectedHubChannel is not null)
+                UpdateDetailHeader();
+        });
+    }
+
+    private async void RefreshDeleteUnratedAction()
+    {
+        var count = await Task.Run(MusicLibraryService.Current.CountUnratedTracks);
+        if (!IsVisible)
+            return;
         DeleteUnratedButton.IsEnabled = true;
         ConfirmDeleteUnratedButton.IsEnabled = count > 0;
         ConfirmDeleteUnratedButton.Content = count > 0 ? "Delete tracks" : "Nothing to delete";
@@ -286,7 +331,7 @@ public partial class ChannelOverlay : UserControl
             && string.IsNullOrWhiteSpace(channel.LastCheckedAt)
             && !string.IsNullOrWhiteSpace(channel.SourceUrl))
         {
-            _ = RefreshChannelDiscoveryAsync(channel, "Channel loaded");
+            ChannelHubBackgroundService.Current.RequestEnrichment(channel);
         }
         else
         {
@@ -318,18 +363,17 @@ public partial class ChannelOverlay : UserControl
         DetailFollowButton.Classes.Remove("following");
         if (channel.IsFollowed)
             DetailFollowButton.Classes.Add("following");
-        DetailNotificationIcon.Text = channel.NotificationsEnabled ? "●" : "○";
-        DetailNotificationButton.Opacity = channel.NotificationsEnabled ? 0.95 : 0.5;
         DetailAutoDownloadButton.Content = channel.AutoDownload ? "Auto-download on" : "Auto-download off";
+        DetailAutoDownloadButton.IsEnabled = channel.IsFollowed;
+        DetailAutoDownloadButton.Opacity = channel.IsFollowed ? 1 : 0.4;
+        ToolTip.SetTip(DetailAutoDownloadButton,
+            channel.IsFollowed ? "Toggle automatic downloads" : "Follow this channel to enable auto-download");
         ChannelMaxDurationBox.Text = channel.MaxDurationMinutes?.ToString() ?? string.Empty;
         var effectiveLimit = channel.MaxDurationMinutes
                              ?? MusicLibraryService.Current.GetChannelMaxDownloadDurationMinutes();
         AutomationHintText.Text = channel.AutoDownload
             ? $"Future uploads only · up to {effectiveLimit} min"
             : $"Manual downloads · {effectiveLimit} min limit";
-        ToolTip.SetTip(DetailNotificationButton, channel.NotificationsEnabled
-            ? "Disable channel notifications"
-            : "Enable channel notifications");
         UpdateRefreshPresentation();
     }
 
@@ -354,18 +398,22 @@ public partial class ChannelOverlay : UserControl
         }
     }
 
-    private void RefreshInboxBadge()
+    private async void RefreshInboxBadge()
     {
-        var unread = MusicLibraryService.Current.GetUnreadChannelNotificationCount();
+        var unread = await Task.Run(MusicLibraryService.Current.GetUnreadChannelNotificationCount);
+        if (!IsVisible)
+            return;
         InboxBadge.IsVisible = unread > 0;
         InboxBadgeText.Text = unread > 99 ? "99+" : unread.ToString();
         if (InboxView.IsVisible)
             RefreshInbox();
     }
 
-    private void RefreshInbox()
+    private async void RefreshInbox()
     {
-        var notifications = MusicLibraryService.Current.GetChannelNotifications();
+        var notifications = await Task.Run(MusicLibraryService.Current.GetChannelNotifications);
+        if (!IsVisible || !InboxView.IsVisible)
+            return;
         InboxItems.ItemsSource = notifications;
         EmptyInboxText.IsVisible = notifications.Count == 0;
         var unread = notifications.Count(notification => !notification.IsRead);
@@ -397,15 +445,16 @@ public partial class ChannelOverlay : UserControl
         if (sender is not Control { DataContext: ChannelNotification notification })
             return;
 
-        MusicLibraryService.Current.MarkChannelNotificationRead(notification.Id);
+        _ = Task.Run(() => MusicLibraryService.Current.MarkChannelNotificationRead(notification.Id));
         var channel = _hubChannels.FirstOrDefault(item => item.Id == notification.ChannelId);
         if (channel is null)
         {
+            _pendingOpenChannelId = notification.ChannelId;
+            _videoSearchByChannel[notification.ChannelId] = notification.Title;
+            _videoFiltersByChannel[notification.ChannelId] = ChannelVideoFilter.All;
             RefreshChannels();
-            channel = _hubChannels.FirstOrDefault(item => item.Id == notification.ChannelId);
-        }
-        if (channel is null)
             return;
+        }
 
         _videoSearchByChannel[channel.Id] = notification.Title;
         _videoFiltersByChannel[channel.Id] = ChannelVideoFilter.All;
@@ -414,11 +463,11 @@ public partial class ChannelOverlay : UserControl
         e.Handled = true;
     }
 
-    private void OnArchiveNotificationClicked(object? sender, RoutedEventArgs e)
+    private async void OnArchiveNotificationClicked(object? sender, RoutedEventArgs e)
     {
         if (sender is not Control { DataContext: ChannelNotification notification })
             return;
-        MusicLibraryService.Current.ArchiveChannelNotification(notification.Id);
+        await Task.Run(() => MusicLibraryService.Current.ArchiveChannelNotification(notification.Id));
         RefreshInbox();
         RefreshInboxBadge();
         e.Handled = true;
@@ -429,12 +478,12 @@ public partial class ChannelOverlay : UserControl
         if (sender is not Control { DataContext: ChannelHubItem channel })
             return;
         var followed = !channel.IsFollowed;
-        MusicLibraryService.Current.SetChannelFollowed(channel.Id, followed);
+        await Task.Run(() => MusicLibraryService.Current.SetChannelFollowed(channel.Id, followed));
         RefreshChannels();
         ToastRequested?.Invoke(followed ? "Channel followed" : "Channel removed from Following");
         e.Handled = true;
         if (followed && string.IsNullOrWhiteSpace(channel.LastCheckedAt))
-            await RefreshChannelDiscoveryAsync(channel, "Channel loaded");
+            ChannelHubBackgroundService.Current.RequestEnrichment(channel);
     }
 
     private async void OnDetailFollowClicked(object? sender, RoutedEventArgs e)
@@ -442,28 +491,18 @@ public partial class ChannelOverlay : UserControl
         if (_selectedHubChannel is not { } channel)
             return;
         var followed = !channel.IsFollowed;
-        MusicLibraryService.Current.SetChannelFollowed(channel.Id, followed);
+        await Task.Run(() => MusicLibraryService.Current.SetChannelFollowed(channel.Id, followed));
         RefreshChannels();
         ToastRequested?.Invoke(followed ? "Channel followed" : "Channel removed from Following");
         if (followed && string.IsNullOrWhiteSpace(channel.LastCheckedAt))
-            await RefreshChannelDiscoveryAsync(channel, "Channel loaded");
+            ChannelHubBackgroundService.Current.RequestEnrichment(channel);
     }
 
-    private void OnDetailNotificationsClicked(object? sender, RoutedEventArgs e)
+    private async void OnDetailAutoDownloadClicked(object? sender, RoutedEventArgs e)
     {
-        if (_selectedHubChannel is not { } channel)
+        if (_selectedHubChannel is not { IsFollowed: true } channel)
             return;
-        var enabled = !channel.NotificationsEnabled;
-        MusicLibraryService.Current.SetChannelNotifications(channel.Id, enabled);
-        RefreshChannels();
-        ToastRequested?.Invoke(enabled ? "Channel notifications enabled" : "Channel notifications disabled");
-    }
-
-    private void OnDetailAutoDownloadClicked(object? sender, RoutedEventArgs e)
-    {
-        if (_selectedHubChannel is not { } channel)
-            return;
-        MusicLibraryService.Current.SetChannelAutoDownload(channel.Id, !channel.AutoDownload);
+        await Task.Run(() => MusicLibraryService.Current.SetChannelAutoDownload(channel.Id, !channel.AutoDownload));
         RefreshChannels();
         ToastRequested?.Invoke(channel.AutoDownload ? "Auto-download disabled" : "Auto-download enabled");
     }
@@ -519,28 +558,14 @@ public partial class ChannelOverlay : UserControl
             channel.Id);
     }
 
-    private System.Threading.Tasks.Task RefreshChannelDiscoveryAsync(ChannelHubItem channel, string successText)
-    {
-        if (_refreshCts is not null || string.IsNullOrWhiteSpace(channel.SourceUrl))
-            return System.Threading.Tasks.Task.CompletedTask;
-
-        return RunRefreshAsync(
-            progress => MusicLibraryService.Current.AddOrRefreshChannelAsync(
-                channel.SourceUrl,
-                progress,
-                _refreshCts!.Token),
-            successText,
-            channel.Id);
-    }
-
-    private void OnDeleteChannelClicked(object? sender, RoutedEventArgs e)
+    private async void OnDeleteChannelClicked(object? sender, RoutedEventArgs e)
     {
         if (sender is not Button button || button.DataContext is not ChannelSubscription channel)
             return;
 
         e.Handled = true;
 
-        if (!MusicLibraryService.Current.DeleteChannel(channel.Id))
+        if (!await Task.Run(() => MusicLibraryService.Current.DeleteChannel(channel.Id)))
         {
             ToastRequested?.Invoke("Channel could not be deleted");
             return;
@@ -639,11 +664,22 @@ public partial class ChannelOverlay : UserControl
             return;
         }
 
-        _currentVideos = MusicLibraryService.Current.GetChannelVideos(_selectedChannelId)
-            .Select(video => new ChannelVideoDisplay(video))
-            .ToList();
-        ApplyActivePreviewMarker();
+        var channelId = _selectedChannelId;
+        var generation = Interlocked.Increment(ref _videoLoadGeneration);
+        VideoSummaryText.Text = "Loading videos…";
+        _ = LoadVideosAsync(channelId, generation);
+    }
 
+    private async Task LoadVideosAsync(int channelId, int generation)
+    {
+        var videos = await Task.Run(() => MusicLibraryService.Current.GetChannelVideos(channelId)
+            .Select(video => new ChannelVideoDisplay(video))
+            .ToList());
+
+        if (generation != _videoLoadGeneration || channelId != _selectedChannelId)
+            return;
+        _currentVideos = videos;
+        ApplyActivePreviewMarker();
         ApplyVideoView();
     }
 
@@ -718,7 +754,7 @@ public partial class ChannelOverlay : UserControl
         };
     }
 
-    private void OnVideoCheckClicked(object? sender, RoutedEventArgs e)
+    private async void OnVideoCheckClicked(object? sender, RoutedEventArgs e)
     {
         if (sender is not Button button || button.DataContext is not ChannelVideoDisplay item)
             return;
@@ -726,7 +762,7 @@ public partial class ChannelOverlay : UserControl
             return;
 
         var track = item.TrackId is int trackId
-            ? MusicLibraryService.Current.GetTrackById(trackId)
+            ? await Task.Run(() => MusicLibraryService.Current.GetTrackById(trackId))
             : null;
         if (track is null)
         {
@@ -737,12 +773,12 @@ public partial class ChannelOverlay : UserControl
         ToastRequested?.Invoke("Choose a rating to add this track to your library");
     }
 
-    private void OnVideoDownloadClicked(object? sender, RoutedEventArgs e)
+    private async void OnVideoDownloadClicked(object? sender, RoutedEventArgs e)
     {
         if (sender is not Button button || button.DataContext is not ChannelVideoDisplay item || !item.CanDownload)
             return;
 
-        if (!MusicLibraryService.Current.RequestChannelVideoDownload(item.Id))
+        if (!await Task.Run(() => MusicLibraryService.Current.RequestChannelVideoDownload(item.Id)))
         {
             ToastRequested?.Invoke("Track is already downloaded or queued");
             return;
@@ -753,14 +789,14 @@ public partial class ChannelOverlay : UserControl
         ToastRequested?.Invoke("Track queued for download");
     }
 
-    private void OnVideoSkipClicked(object? sender, RoutedEventArgs e)
+    private async void OnVideoSkipClicked(object? sender, RoutedEventArgs e)
     {
         if (sender is not Button button || button.DataContext is not ChannelVideoDisplay item || !item.CanDismiss)
             return;
 
         if (item.TrackId is null)
         {
-            if (!MusicLibraryService.Current.DismissChannelVideo(item.Id))
+            if (!await Task.Run(() => MusicLibraryService.Current.DismissChannelVideo(item.Id)))
             {
                 ToastRequested?.Invoke("Video could not be removed from pending");
                 return;
@@ -773,7 +809,7 @@ public partial class ChannelOverlay : UserControl
             return;
         }
 
-        var track = MusicLibraryService.Current.SkipChannelVideo(item.Id);
+        var track = await Task.Run(() => MusicLibraryService.Current.SkipChannelVideo(item.Id));
         if (track is null)
         {
             ToastRequested?.Invoke("Audio is not downloaded yet");
@@ -787,10 +823,13 @@ public partial class ChannelOverlay : UserControl
         ToastRequested?.Invoke("Skipped · audio kept");
     }
 
-    private void OnVideoPlayClicked(object? sender, RoutedEventArgs e)
+    private async void OnVideoPlayClicked(object? sender, RoutedEventArgs e)
     {
         if (sender is not Button button || button.DataContext is not ChannelVideoDisplay item
-            || item.TrackId is not int trackId || MusicLibraryService.Current.GetTrackById(trackId) is not { } track)
+            || item.TrackId is not int trackId)
+            return;
+        var track = await Task.Run(() => MusicLibraryService.Current.GetTrackById(trackId));
+        if (track is null)
             return;
         _activePreviewTrackId = track.Id;
         ApplyActivePreviewMarker();
@@ -809,14 +848,14 @@ public partial class ChannelOverlay : UserControl
             video.IsActive = _activePreviewTrackId is int trackId && video.TrackId == trackId;
     }
 
-    private void OnChannelMaxDurationLostFocus(object? sender, RoutedEventArgs e)
+    private async void OnChannelMaxDurationLostFocus(object? sender, RoutedEventArgs e)
     {
         if (sender is not TextBox textBox || _selectedHubChannel is not { } channel)
             return;
 
         if (string.IsNullOrWhiteSpace(textBox.Text))
         {
-            MusicLibraryService.Current.SetChannelMaxDownloadDuration(channel.Id, null);
+            await Task.Run(() => MusicLibraryService.Current.SetChannelMaxDownloadDuration(channel.Id, null));
             RefreshChannels();
             UpdateDownloadSummary();
             ToastRequested?.Invoke("Channel uses the global download limit");
@@ -833,7 +872,7 @@ public partial class ChannelOverlay : UserControl
             minutes,
             AppSettingsStore.ChannelDownloadMinDurationMinutes,
             AppSettingsStore.ChannelDownloadMaxDurationMinutes);
-        MusicLibraryService.Current.SetChannelMaxDownloadDuration(channel.Id, minutes);
+        await Task.Run(() => MusicLibraryService.Current.SetChannelMaxDownloadDuration(channel.Id, minutes));
         textBox.Text = minutes.ToString();
         RefreshChannels();
         UpdateDownloadSummary();
@@ -918,7 +957,6 @@ public partial class ChannelOverlay : UserControl
 
     private void OnCloseClicked(object? sender, RoutedEventArgs e)
     {
-        _refreshCts?.Cancel();
         ClearActivePreview();
         CloseRequested?.Invoke();
     }

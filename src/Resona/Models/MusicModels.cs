@@ -89,7 +89,8 @@ public record YouTubeChannelSnapshot(
     string? ChannelUrl,
     IReadOnlyList<YouTubeChannelVideoEntry> Videos,
     string? ThumbnailUrl = null,
-    byte[]? Thumbnail = null);
+    byte[]? Thumbnail = null,
+    long? FollowerCount = null);
 public record YouTubeChannelVideoEntry(
     string VideoId,
     string CanonicalUrl,
