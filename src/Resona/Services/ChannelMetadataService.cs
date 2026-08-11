@@ -18,7 +18,7 @@ public sealed record ChannelMetadataWorkStatus(
 
 public sealed class ChannelMetadataService
 {
-    private const int BackgroundBatchSize = 5;
+    private const int BackgroundBatchSize = 1;
     public static readonly ChannelMetadataService Current = new();
 
     private readonly object _workerGate = new();
@@ -63,7 +63,7 @@ public sealed class ChannelMetadataService
         });
     }
 
-    public void RequestChannel(int channelId, int limit = 20)
+    public void RequestChannel(int channelId, int limit = 1)
     {
         MusicLibraryService.Current.QueueChannelVideoMetadata(channelId, limit);
         EnsureWorker();
@@ -77,7 +77,7 @@ public sealed class ChannelMetadataService
         QueueChanged?.Invoke();
     }
 
-    public void RequestAutoDownloadMetadata(int limit = 40)
+    public void RequestAutoDownloadMetadata(int limit = 1)
     {
         MusicLibraryService.Current.QueueAutoDownloadMetadata(limit);
         EnsureWorker();

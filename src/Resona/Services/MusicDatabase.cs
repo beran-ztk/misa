@@ -1431,6 +1431,7 @@ public class MusicDatabase
             WHERE id = $id",
             ("$id", channelId), ("$followed", followed ? 1 : 0), ("$now", now));
         if (!followed)
+        {
             ExecuteInsert(conn, tx, @"
                 UPDATE channel_videos
                 SET download_status = 'NotQueued', download_error = NULL, updated_at = $now
@@ -1438,6 +1439,12 @@ public class MusicDatabase
                   AND download_status IN ('Queued', 'Failed', 'Skipped')
                   AND NOT EXISTS (SELECT 1 FROM tracks WHERE tracks.canonical_url = channel_videos.canonical_url)",
                 ("$id", channelId), ("$now", now));
+            ExecuteInsert(conn, tx, @"
+                UPDATE channel_videos
+                SET metadata_status = 'Pending', metadata_error = NULL, metadata_priority = 0
+                WHERE channel_id = $id AND metadata_status = 'Queued'",
+                ("$id", channelId));
+        }
         tx.Commit();
     }
 
@@ -1559,6 +1566,8 @@ public class MusicDatabase
                 FROM channel_videos videos
                 LEFT JOIN tracks ON tracks.canonical_url = videos.canonical_url
                 WHERE videos.channel_id = $channelId
+                  AND EXISTS (SELECT 1 FROM channels
+                              WHERE channels.id = videos.channel_id AND channels.subscribed = 1)
                   AND (tracks.id IS NULL OR tracks.source_metadata_updated_at IS NULL)
                   AND videos.metadata_status = 'Pending'
                   AND NOT EXISTS (
@@ -1570,7 +1579,7 @@ public class MusicDatabase
                 LIMIT $limit
             )";
         cmd.Parameters.AddWithValue("$channelId", channelId);
-        cmd.Parameters.AddWithValue("$limit", Math.Clamp(limit, 1, 50));
+        cmd.Parameters.AddWithValue("$limit", 1);
         return cmd.ExecuteNonQuery();
     }
 
@@ -1581,7 +1590,9 @@ public class MusicDatabase
         cmd.CommandText = @"
             UPDATE channel_videos
             SET metadata_status = 'Queued', metadata_error = NULL, metadata_priority = 200
-            WHERE id = $videoId AND metadata_status IN ('Pending', 'Failed')";
+            WHERE id = $videoId AND metadata_status IN ('Pending', 'Failed')
+              AND EXISTS (SELECT 1 FROM channels
+                          WHERE channels.id = channel_videos.channel_id AND channels.subscribed = 1)";
         cmd.Parameters.AddWithValue("$videoId", videoId);
         return cmd.ExecuteNonQuery() > 0;
     }
@@ -1607,7 +1618,7 @@ public class MusicDatabase
                          videos.id DESC
                 LIMIT $limit
             )";
-        cmd.Parameters.AddWithValue("$limit", Math.Clamp(limit, 1, 100));
+        cmd.Parameters.AddWithValue("$limit", 1);
         return cmd.ExecuteNonQuery();
     }
 
@@ -1618,8 +1629,11 @@ public class MusicDatabase
         using var tx = conn.BeginTransaction();
         using var activeCommand = conn.CreateCommand();
         activeCommand.Transaction = tx;
-        activeCommand.CommandText = @"SELECT COUNT(*) FROM channel_videos
-                                      WHERE metadata_status IN ('Queued', 'Loading')";
+        activeCommand.CommandText = @"SELECT COUNT(*) FROM channel_videos videos
+                                      WHERE videos.metadata_status IN ('Queued', 'Loading')
+                                        AND EXISTS (SELECT 1 FROM channels
+                                                    WHERE channels.id = videos.channel_id
+                                                      AND channels.subscribed = 1)";
         var remaining = Math.Max(0, limit - Convert.ToInt32(activeCommand.ExecuteScalar()));
         if (remaining == 0)
         {
@@ -1627,19 +1641,23 @@ public class MusicDatabase
             return 0;
         }
 
-        var queued = QueueMetadataTiers(conn, tx, "videos.metadata_status = 'Pending'", remaining);
+        const string followed = @"EXISTS (SELECT 1 FROM channels followed_channel
+                                           WHERE followed_channel.id = videos.channel_id
+                                             AND followed_channel.subscribed = 1)";
+        var queued = QueueMetadataTiers(conn, tx,
+            $"videos.metadata_status = 'Pending' AND {followed}", remaining);
         remaining -= queued;
         if (remaining > 0)
         {
             var failed = QueueMetadataTiers(conn, tx,
-                "videos.metadata_status = 'Failed' AND videos.metadata_updated_at < datetime('now', '-7 days')",
+                $"videos.metadata_status = 'Failed' AND videos.metadata_updated_at < datetime('now', '-7 days') AND {followed}",
                 remaining);
             queued += failed;
             remaining -= failed;
         }
         if (remaining > 0)
             queued += QueueMetadataTiers(conn, tx,
-                "videos.metadata_status = 'Ready' AND (videos.metadata_updated_at IS NULL OR videos.metadata_updated_at < datetime('now', '-30 days'))",
+                $"videos.metadata_status = 'Ready' AND (videos.metadata_updated_at IS NULL OR videos.metadata_updated_at < datetime('now', '-30 days')) AND {followed}",
                 remaining);
 
         tx.Commit();
@@ -1702,7 +1720,7 @@ public class MusicDatabase
             FROM channel_videos videos
             JOIN channels ON channels.id = videos.channel_id
             LEFT JOIN tracks ON tracks.canonical_url = videos.canonical_url
-            WHERE videos.metadata_status = 'Queued'
+            WHERE videos.metadata_status = 'Queued' AND channels.subscribed = 1
             ORDER BY videos.metadata_priority DESC,
                      videos.is_checked ASC,
                      COALESCE(videos.uploaded_at, videos.discovered_at) DESC,
@@ -1735,7 +1753,10 @@ public class MusicDatabase
     {
         using var conn = Open();
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT EXISTS(SELECT 1 FROM channel_videos WHERE metadata_status = 'Queued')";
+        cmd.CommandText = @"SELECT EXISTS(
+                                SELECT 1 FROM channel_videos videos
+                                JOIN channels ON channels.id = videos.channel_id
+                                WHERE videos.metadata_status = 'Queued' AND channels.subscribed = 1)";
         return Convert.ToInt32(cmd.ExecuteScalar()) != 0;
     }
 
@@ -1745,14 +1766,28 @@ public class MusicDatabase
         using var cmd = conn.CreateCommand();
         cmd.CommandText = @"
             SELECT COUNT(*)
-            FROM channel_videos
-            WHERE metadata_status IN ('Pending', 'Queued', 'Loading')
-               OR (metadata_status = 'Failed'
-                   AND metadata_updated_at < datetime('now', '-7 days'))
-               OR (metadata_status = 'Ready'
-                   AND (metadata_updated_at IS NULL
-                        OR metadata_updated_at < datetime('now', '-30 days')))";
+            FROM channel_videos videos
+            JOIN channels ON channels.id = videos.channel_id
+            WHERE channels.subscribed = 1
+              AND (videos.metadata_status IN ('Pending', 'Queued', 'Loading')
+               OR (videos.metadata_status = 'Failed'
+                   AND videos.metadata_updated_at < datetime('now', '-7 days'))
+               OR (videos.metadata_status = 'Ready'
+                   AND (videos.metadata_updated_at IS NULL
+                        OR videos.metadata_updated_at < datetime('now', '-30 days'))))";
         return Convert.ToInt32(cmd.ExecuteScalar());
+    }
+
+    public int ResetChannelMetadataIssues(int channelId)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+            UPDATE channel_videos
+            SET metadata_status = 'Pending', metadata_error = NULL, metadata_priority = 0
+            WHERE channel_id = $channelId AND metadata_status = 'Failed'";
+        cmd.Parameters.AddWithValue("$channelId", channelId);
+        return cmd.ExecuteNonQuery();
     }
 
     public void CompleteChannelVideoMetadata(

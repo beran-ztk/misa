@@ -22,7 +22,7 @@ namespace Resona.Views;
 
 public partial class ChannelOverlay : UserControl
 {
-    private enum ChannelVideoFilter { New, Ready, InLibrary, Issues, All }
+    private enum ChannelVideoFilter { New, Ready, InLibrary, MissingMetadata, Issues, All }
 
     private CancellationTokenSource? _refreshCts;
     private int? _refreshChannelId;
@@ -428,7 +428,7 @@ public partial class ChannelOverlay : UserControl
         }
         else
         {
-            ChannelMetadataService.Current.RequestChannel(channel.Id, 20);
+            ChannelMetadataService.Current.RequestChannel(channel.Id, 1);
         }
     }
 
@@ -458,11 +458,15 @@ public partial class ChannelOverlay : UserControl
         DetailFollowButton.Classes.Remove("following");
         if (channel.IsFollowed)
             DetailFollowButton.Classes.Add("following");
-        DetailAutoDownloadButton.Content = channel.AutoDownload ? "Auto-download on" : "Auto-download off";
+        DetailAutoDownloadButton.Classes.Remove("active");
+        if (channel.AutoDownload)
+            DetailAutoDownloadButton.Classes.Add("active");
         DetailAutoDownloadButton.IsEnabled = channel.IsFollowed;
         DetailAutoDownloadButton.Opacity = channel.IsFollowed ? 1 : 0.4;
         ToolTip.SetTip(DetailAutoDownloadButton,
-            channel.IsFollowed ? "Toggle automatic downloads" : "Follow this channel to enable auto-download");
+            channel.IsFollowed
+                ? channel.AutoDownload ? "Disable automatic downloads" : "Enable automatic downloads"
+                : "Follow this channel to enable auto-download");
         ChannelMaxDurationBox.Text = channel.MaxDurationMinutes?.ToString() ?? string.Empty;
         var effectiveLimit = channel.MaxDurationMinutes
                              ?? MusicLibraryService.Current.GetChannelMaxDownloadDurationMinutes();
@@ -700,7 +704,10 @@ public partial class ChannelOverlay : UserControl
 
             RefreshChannels();
             if (channelId is int refreshedChannelId)
-                ChannelMetadataService.Current.RequestChannel(refreshedChannelId, 20);
+            {
+                await Task.Run(() => MusicLibraryService.Current.ResetChannelMetadataIssues(refreshedChannelId));
+                ChannelMetadataService.Current.RequestChannel(refreshedChannelId, 1);
+            }
             ToastRequested?.Invoke(result.AddedCount > 0
                 ? $"{successText}: {result.AddedCount} new videos"
                 : $"{successText}: no new videos");
@@ -802,12 +809,14 @@ public partial class ChannelOverlay : UserControl
         var newCount = _currentVideos.Count(video => !video.IsChecked);
         var readyCount = _currentVideos.Count(video => video.IsPendingRating);
         var libraryCount = _currentVideos.Count(video => video.IsInLibrary);
+        var missingMetadataCount = _currentVideos.Count(video => video.IsMissingMetadata);
         var issueCount = _currentVideos.Count(video =>
             video.DownloadStatus is ChannelDownloadStatus.Failed or ChannelDownloadStatus.Skipped
             || video.MetadataStatus == ChannelMetadataStatus.Failed);
         NewVideosFilterButton.Content = $"New {newCount}";
         ReadyVideosFilterButton.Content = $"Ready {readyCount}";
         LibraryVideosFilterButton.Content = $"In library {libraryCount}";
+        MetadataVideosFilterButton.Content = $"Metadata {missingMetadataCount}";
         IssueVideosFilterButton.Content = $"Issues {issueCount}";
         AllVideosFilterButton.Content = $"All {_currentVideos.Count}";
 
@@ -821,6 +830,7 @@ public partial class ChannelOverlay : UserControl
             ChannelVideoFilter.New => videos.Where(video => !video.IsChecked),
             ChannelVideoFilter.Ready => videos.Where(video => video.IsPendingRating),
             ChannelVideoFilter.InLibrary => videos.Where(video => video.IsInLibrary),
+            ChannelVideoFilter.MissingMetadata => videos.Where(video => video.IsMissingMetadata),
             ChannelVideoFilter.Issues => videos.Where(video =>
                 video.DownloadStatus is ChannelDownloadStatus.Failed or ChannelDownloadStatus.Skipped
                 || video.MetadataStatus == ChannelMetadataStatus.Failed),
@@ -860,6 +870,7 @@ public partial class ChannelOverlay : UserControl
             ChannelVideoFilter.New => ("No new videos", "Everything discovered for this channel has been reviewed."),
             ChannelVideoFilter.Ready => ("Nothing ready yet", "Downloaded videos awaiting review will appear here."),
             ChannelVideoFilter.InLibrary => ("No local tracks", "Downloaded channel tracks will appear here."),
+            ChannelVideoFilter.MissingMetadata => ("Metadata is complete", "No error-free videos are waiting for metadata."),
             ChannelVideoFilter.Issues => ("No issues", "Metadata and downloads are currently healthy."),
             _ => ("No videos discovered", "Refresh the channel to retrieve its uploads.")
         };
@@ -1080,11 +1091,37 @@ public partial class ChannelOverlay : UserControl
     private void OnLibraryVideosFilterClicked(object? sender, RoutedEventArgs e) =>
         SetVideoFilter(ChannelVideoFilter.InLibrary);
 
+    private void OnMetadataVideosFilterClicked(object? sender, RoutedEventArgs e) =>
+        SetVideoFilter(ChannelVideoFilter.MissingMetadata);
+
     private void OnIssueVideosFilterClicked(object? sender, RoutedEventArgs e) =>
         SetVideoFilter(ChannelVideoFilter.Issues);
 
     private void OnAllVideosFilterClicked(object? sender, RoutedEventArgs e) =>
         SetVideoFilter(ChannelVideoFilter.All);
+
+    private async void OnRetryMetadataIssuesClicked(object? sender, RoutedEventArgs e)
+    {
+        if (_selectedHubChannel is not { IsFollowed: true } channel)
+        {
+            ToastRequested?.Invoke("Follow this channel before loading metadata");
+            return;
+        }
+
+        var reset = await Task.Run(() => MusicLibraryService.Current.ResetChannelMetadataIssues(channel.Id));
+        if (reset == 0)
+        {
+            ToastRequested?.Invoke("No failed metadata to retry");
+            return;
+        }
+
+        ChannelMetadataService.Current.RequestChannel(channel.Id, 1);
+        RefreshVideos();
+        ToastRequested?.Invoke(reset == 1
+            ? "1 metadata issue queued for retry"
+            : $"{reset:N0} metadata issues reset");
+        e.Handled = true;
+    }
 
     private void SetVideoFilter(ChannelVideoFilter filter, bool refresh = true)
     {
@@ -1097,6 +1134,7 @@ public partial class ChannelOverlay : UserControl
             [ChannelVideoFilter.New] = NewVideosFilterButton,
             [ChannelVideoFilter.Ready] = ReadyVideosFilterButton,
             [ChannelVideoFilter.InLibrary] = LibraryVideosFilterButton,
+            [ChannelVideoFilter.MissingMetadata] = MetadataVideosFilterButton,
             [ChannelVideoFilter.Issues] = IssueVideosFilterButton,
             [ChannelVideoFilter.All] = AllVideosFilterButton
         };
@@ -1257,6 +1295,10 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
         && !IsChecked
         && (_libraryState is null or TrackLibraryState.PendingRating);
     public bool IsInLibrary => TrackId is not null && _libraryState == TrackLibraryState.Active;
+    public bool IsMissingMetadata => !HasMetadataError
+        && MetadataStatus is ChannelMetadataStatus.Pending
+            or ChannelMetadataStatus.Queued
+            or ChannelMetadataStatus.Loading;
     public bool CanOpenEditor => IsInLibrary || IsPendingRating;
     public string StatusText
     {

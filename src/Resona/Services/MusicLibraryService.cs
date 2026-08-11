@@ -231,6 +231,7 @@ public class MusicLibraryService
     public int CountBackgroundChannelVideoMetadataWork() => _db.CountBackgroundChannelVideoMetadataWork();
     public ChannelVideo? ClaimNextChannelVideoMetadata() => _db.ClaimNextChannelVideoMetadata();
     public bool HasQueuedChannelVideoMetadata() => _db.HasQueuedChannelVideoMetadata();
+    public int ResetChannelMetadataIssues(int channelId) => _db.ResetChannelMetadataIssues(channelId);
     public Task<YouTubeTrackMetadata?> GetChannelVideoMetadataAsync(
         string canonicalUrl,
         CancellationToken cancellationToken = default) =>
@@ -259,7 +260,7 @@ public class MusicLibraryService
             enabled,
             _channelMaxDownloadDurationMinutes);
         if (enabled)
-            ChannelMetadataService.Current.RequestChannel(channelId, 40);
+            ChannelMetadataService.Current.RequestChannel(channelId, 1);
         ChannelDownloadService.Current.NotifyQueueChanged();
     }
 
