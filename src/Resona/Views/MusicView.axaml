@@ -196,15 +196,34 @@
         </Style>
         <Style Selector="Button.queue-menu">
             <Setter Property="Opacity" Value="0"/>
-            <Setter Property="Background" Value="#B0121518"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
         </Style>
         <Style Selector="Border.track-card:pointerover Button.queue-menu">
             <Setter Property="Opacity" Value="0.82"/>
         </Style>
         <Style Selector="Button.queue-menu:pointerover">
             <Setter Property="Opacity" Value="1"/>
-            <Setter Property="Background" Value="#D42A3036"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+        </Style>
+        <Style Selector="Button.queue-menu:pressed">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+        </Style>
+        <Style Selector="Button.queue-menu /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+        </Style>
+        <Style Selector="Button.queue-menu:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+        </Style>
+        <Style Selector="Button.queue-menu:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
         </Style>
         <Style Selector="Border.selection-accent">
             <Setter Property="Background" Value="Transparent"/>
@@ -480,7 +499,6 @@
                                         IsHitTestVisible="False"/>
 
             <ListBox x:Name="FileList"
-                     DoubleTapped="OnListDoubleTapped"
                      Background="Transparent"
                      BorderThickness="0"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled"
@@ -496,6 +514,7 @@
                             <Border Grid.Row="0"
                                     Classes="track-card"
                                     IsVisible="{Binding IsStandardMode}"
+                                    Tapped="OnTrackCardTapped"
                                     CornerRadius="4"
                                     ClipToBounds="True"
                                     Padding="0,0">
@@ -680,6 +699,7 @@
                             <Border Grid.Row="0"
                                     Classes="track-card"
                                     IsVisible="{Binding IsQuickEditMode}"
+                                    Tapped="OnTrackCardTapped"
                                     CornerRadius="6"
                                     Padding="12,9"
                                     BorderBrush="{Binding ArtworkBorderBrush}"

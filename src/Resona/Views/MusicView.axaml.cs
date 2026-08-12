@@ -3506,7 +3506,24 @@ public partial class MusicView : UserControl
 
     // ─── Playback control ─────────────────────────────────────────────────────
 
-    private void OnListDoubleTapped(object? sender, TappedEventArgs e) => StartPlayback(resetQueue: true);
+    private void OnTrackCardTapped(object? sender, TappedEventArgs e)
+    {
+        if (sender is not Control { DataContext: TrackDisplayItem item } card)
+            return;
+
+        for (var visual = e.Source as Visual;
+             visual is not null && visual != card;
+             visual = visual.GetVisualParent())
+        {
+            if (visual is Button or Slider)
+                return;
+        }
+
+        FileList.SelectedItem = item;
+        OpenTrackEditor(item.Track);
+        e.Handled = true;
+    }
+
     private void OnPreviousClicked(object? sender, RoutedEventArgs e) => NavigatePrevious();
     private void OnNextClicked(object? sender, RoutedEventArgs e) => NavigateNext(isManual: true);
 
