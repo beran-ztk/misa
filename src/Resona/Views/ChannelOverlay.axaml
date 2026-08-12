@@ -6,7 +6,7 @@
              Background="#F2121212">
     <UserControl.Resources>
         <DataTemplate x:Key="ChannelCardTemplate" x:DataType="models:ChannelHubItem">
-            <Border Classes="channel-card" Width="308"
+            <Border Classes="channel-card" Width="370"
                     MinHeight="140"
                     Margin="0,0,10,10"
                     Padding="14,12"
@@ -30,7 +30,7 @@
                         </Border>
                         <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
                             <TextBlock Text="{Binding Name}" FontSize="13.5" FontWeight="SemiBold"
-                                       TextTrimming="CharacterEllipsis" MaxWidth="185"/>
+                                       TextTrimming="CharacterEllipsis" MaxWidth="245"/>
                             <StackPanel Orientation="Horizontal" Spacing="5">
                                 <TextBlock Text="{Binding TrackCountText}" FontSize="10.5" Opacity="0.58"/>
                                 <TextBlock Text="·" FontSize="10.5" Opacity="0.36"
@@ -39,7 +39,7 @@
                                            IsVisible="{Binding HasNewVideos}"/>
                             </StackPanel>
                             <TextBlock Text="{Binding AudienceText}" FontSize="9.5" Opacity="0.46"
-                                       TextTrimming="CharacterEllipsis" MaxWidth="190"
+                                       TextTrimming="CharacterEllipsis" MaxWidth="250"
                                        ToolTip.Tip="{Binding AudienceText}"/>
                         </StackPanel>
                         <Button Grid.Column="2" Classes="follow-toggle" Classes.following="{Binding IsFollowed}"

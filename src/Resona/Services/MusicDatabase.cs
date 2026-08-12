@@ -548,8 +548,42 @@ public class MusicDatabase
               AND thumbnail IS NOT NULL
               AND length(thumbnail) > 0
               AND (remote_metadata_updated_at IS NOT NULL OR last_checked_at IS NOT NULL)");
+        BackfillLibraryTrackChannels(conn);
         BackfillLibraryChannelVideos(conn);
         BackfillTrackSourceMetadata(conn);
+    }
+
+    private static void BackfillLibraryTrackChannels(SqliteConnection conn)
+    {
+        ExecuteNonQuery(conn, @"
+            INSERT INTO channels
+                (name, source_url, subscribed, inform_new_songs, auto_download, created_at, updated_at)
+            SELECT MIN(TRIM(tracks.channel_name)), TRIM(tracks.channel_url), 0, 0, 0,
+                   MIN(tracks.downloaded_at), MAX(tracks.updated_at)
+            FROM tracks
+            WHERE tracks.channel_id IS NULL
+              AND tracks.channel_url IS NOT NULL
+              AND TRIM(tracks.channel_url) <> ''
+              AND tracks.channel_name IS NOT NULL
+              AND TRIM(tracks.channel_name) <> ''
+              AND NOT EXISTS (
+                  SELECT 1 FROM channels
+                  WHERE TRIM(channels.source_url) = TRIM(tracks.channel_url))
+            GROUP BY TRIM(tracks.channel_url);
+
+            UPDATE tracks
+            SET channel_id = (
+                SELECT channels.id
+                FROM channels
+                WHERE TRIM(channels.source_url) = TRIM(tracks.channel_url)
+                ORDER BY channels.subscribed DESC, channels.id
+                LIMIT 1)
+            WHERE tracks.channel_id IS NULL
+              AND tracks.channel_url IS NOT NULL
+              AND TRIM(tracks.channel_url) <> ''
+              AND EXISTS (
+                  SELECT 1 FROM channels
+                  WHERE TRIM(channels.source_url) = TRIM(tracks.channel_url));");
     }
 
     private static void BackfillTrackSourceMetadata(SqliteConnection conn)
@@ -616,11 +650,13 @@ public class MusicDatabase
                 download_error = NULL,
                 metadata_status = CASE
                     WHEN channel_videos.metadata_status = 'Ready' THEN 'Ready'
+                    WHEN channel_videos.metadata_status = 'Failed'
+                         AND channel_videos.metadata_updated_at IS NOT NULL THEN 'Failed'
                     ELSE 'Pending'
                 END,
                 metadata_error = NULL,
                 metadata_attempts = CASE
-                    WHEN channel_videos.metadata_status = 'Ready' THEN channel_videos.metadata_attempts
+                    WHEN channel_videos.metadata_status IN ('Ready', 'Failed') THEN channel_videos.metadata_attempts
                     ELSE 0
                 END,
                 metadata_priority = 0
@@ -1633,10 +1669,12 @@ public class MusicDatabase
         using var activeCommand = conn.CreateCommand();
         activeCommand.Transaction = tx;
         activeCommand.CommandText = @"SELECT COUNT(*) FROM channel_videos videos
+                                      LEFT JOIN tracks ON tracks.canonical_url = videos.canonical_url
                                       WHERE videos.metadata_status IN ('Queued', 'Loading')
-                                        AND EXISTS (SELECT 1 FROM channels
-                                                    WHERE channels.id = videos.channel_id
-                                                      AND channels.subscribed = 1)";
+                                        AND (tracks.id IS NOT NULL OR EXISTS (
+                                            SELECT 1 FROM channels
+                                            WHERE channels.id = videos.channel_id
+                                              AND channels.subscribed = 1))";
         var remaining = Math.Max(0, limit - Convert.ToInt32(activeCommand.ExecuteScalar()));
         if (remaining == 0)
         {
@@ -1647,13 +1685,17 @@ public class MusicDatabase
         const string followed = @"EXISTS (SELECT 1 FROM channels followed_channel
                                            WHERE followed_channel.id = videos.channel_id
                                              AND followed_channel.subscribed = 1)";
+        const string missingLibraryMetadata = @"EXISTS (SELECT 1 FROM tracks library_track
+                                                WHERE library_track.canonical_url = videos.canonical_url
+                                                  AND library_track.source_metadata_updated_at IS NULL)";
+        var eligible = $"({followed} OR {missingLibraryMetadata})";
         var queued = QueueMetadataTiers(conn, tx,
-            $"videos.metadata_status = 'Pending' AND {followed}", remaining);
+            $"videos.metadata_status = 'Pending' AND {eligible}", remaining);
         remaining -= queued;
         if (remaining > 0)
         {
             var failed = QueueMetadataTiers(conn, tx,
-                $"videos.metadata_status = 'Failed' AND videos.metadata_updated_at < datetime('now', '-7 days') AND {followed}",
+                $"videos.metadata_status = 'Failed' AND videos.metadata_updated_at < datetime('now', '-7 days') AND {eligible}",
                 remaining);
             queued += failed;
             remaining -= failed;
@@ -1676,6 +1718,9 @@ public class MusicDatabase
         var queued = 0;
         var tiers = new (int Priority, string Condition)[]
         {
+            (20, @"EXISTS (SELECT 1 FROM tracks t
+                           WHERE t.canonical_url = videos.canonical_url
+                             AND t.source_metadata_updated_at IS NULL)"),
             (10, "EXISTS (SELECT 1 FROM channels c WHERE c.id = videos.channel_id AND c.subscribed = 1)"),
             (5, @"EXISTS (SELECT 1 FROM tracks t
                           WHERE t.channel_id = videos.channel_id AND t.library_state = 'Active')"),
@@ -1723,7 +1768,8 @@ public class MusicDatabase
             FROM channel_videos videos
             JOIN channels ON channels.id = videos.channel_id
             LEFT JOIN tracks ON tracks.canonical_url = videos.canonical_url
-            WHERE videos.metadata_status = 'Queued' AND channels.subscribed = 1
+            WHERE videos.metadata_status = 'Queued'
+              AND (channels.subscribed = 1 OR tracks.id IS NOT NULL)
             ORDER BY videos.metadata_priority DESC,
                      videos.is_checked ASC,
                      COALESCE(videos.uploaded_at, videos.discovered_at) DESC,
@@ -1759,7 +1805,9 @@ public class MusicDatabase
         cmd.CommandText = @"SELECT EXISTS(
                                 SELECT 1 FROM channel_videos videos
                                 JOIN channels ON channels.id = videos.channel_id
-                                WHERE videos.metadata_status = 'Queued' AND channels.subscribed = 1)";
+                                LEFT JOIN tracks ON tracks.canonical_url = videos.canonical_url
+                                WHERE videos.metadata_status = 'Queued'
+                                  AND (channels.subscribed = 1 OR tracks.id IS NOT NULL))";
         return Convert.ToInt32(cmd.ExecuteScalar()) != 0;
     }
 
@@ -1771,7 +1819,9 @@ public class MusicDatabase
             SELECT COUNT(*)
             FROM channel_videos videos
             JOIN channels ON channels.id = videos.channel_id
-            WHERE channels.subscribed = 1
+            LEFT JOIN tracks ON tracks.canonical_url = videos.canonical_url
+            WHERE (channels.subscribed = 1
+                   OR (tracks.id IS NOT NULL AND tracks.source_metadata_updated_at IS NULL))
               AND (videos.metadata_status IN ('Pending', 'Queued', 'Loading')
                OR (videos.metadata_status = 'Failed'
                    AND videos.metadata_updated_at < datetime('now', '-7 days'))

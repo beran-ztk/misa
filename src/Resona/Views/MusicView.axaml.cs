@@ -351,9 +351,11 @@ public partial class MusicView : UserControl
                     MarkLibraryRefreshPending();
                 }
             });
-        ChannelMetadataService.Current.MetadataUpdated += (channelId, videoId) =>
+        ChannelMetadataService.Current.MetadataUpdated += (channelId, videoId, trackId) =>
             Avalonia.Threading.Dispatcher.UIThread.Post(() =>
             {
+                if (trackId is int updatedTrackId)
+                    UpdateTrackInList(updatedTrackId);
                 if (ChannelOverlay.IsVisible)
                     ChannelOverlay.OnMetadataUpdated(channelId, videoId);
             });
@@ -670,10 +672,9 @@ public partial class MusicView : UserControl
             NeedsAnalysis = needsAnalysis,
             IsPlaying = track.Id == _engine.ActiveTrackId,
             IsQuickEditMode = _isQuickEditMode,
-            RatingChoices = Values.Ratings.OrderBy(rating => rating.SortOrder).ToList(),
-            SelectedRating = track.RatingId is int selectedRatingId
-                ? Values.Ratings.FirstOrDefault(rating => rating.Id == selectedRatingId)
-                : null
+            QuickRatingValue = track.RatingId is int selectedRatingId
+                ? Math.Clamp(Values.Ratings.FirstOrDefault(rating => rating.Id == selectedRatingId)?.SortOrder ?? 0, 0, 5)
+                : 0
         };
         if (_allTrackAudioAnalyses.TryGetValue(track.Id, out var audio))
         {
@@ -2744,16 +2745,24 @@ public partial class MusicView : UserControl
         RefreshVisibleItemsSource((FileList.SelectedItem as TrackDisplayItem)?.Track.Id);
     }
 
-    private void OnQuickRatingChanged(object? sender, SelectionChangedEventArgs e)
+    private void OnQuickStarRatingClicked(object? sender, RoutedEventArgs e)
     {
-        if (!_isQuickEditMode
-            || sender is not ComboBox { DataContext: TrackDisplayItem item, SelectedItem: Rating rating }
-            || item.Track.RatingId == rating.Id)
+        if (!_isQuickEditMode || sender is not Button { DataContext: TrackDisplayItem item, Tag: string tag })
+            return;
+
+        if (!int.TryParse(tag, out var stars))
+            return;
+        var rating = Values.Ratings
+            .OrderBy(candidate => Math.Abs(candidate.SortOrder - stars))
+            .ThenBy(candidate => candidate.SortOrder)
+            .FirstOrDefault();
+        if (rating is null || item.Track.RatingId == rating.Id)
             return;
 
         MusicLibraryService.Current.SetTrackRating(item.Track.Id, rating.Id);
         UpdateTrackInList(item.Track.Id);
         ShowToast($"Rated {item.Track.Title} as {rating.Name}");
+        e.Handled = true;
     }
 
     private async void OnQuickDeleteClicked(object? sender, RoutedEventArgs e)

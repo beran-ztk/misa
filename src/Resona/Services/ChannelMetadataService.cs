@@ -26,7 +26,7 @@ public sealed class ChannelMetadataService
     private int _initialized;
     private ChannelMetadataWorkStatus _status = ChannelMetadataWorkStatus.Idle;
 
-    public event Action<int, int>? MetadataUpdated;
+    public event Action<int, int, int?>? MetadataUpdated;
     public event Action? QueueChanged;
     public event Action<ChannelMetadataWorkStatus>? StatusChanged;
 
@@ -127,8 +127,12 @@ public sealed class ChannelMetadataService
                 var title = video.Title.Trim();
                 PublishStatus(new ChannelMetadataWorkStatus(
                     true,
-                    $"Loading video metadata · {current:N0} of {total:N0}",
-                    channelName.Length == 0 ? title : $"{channelName} · {title}",
+                    video.TrackId is not null
+                        ? $"Librarying track metadata · {current:N0} of {total:N0}"
+                        : $"Loading channel metadata · {current:N0} of {total:N0}",
+                    video.TrackId is not null
+                        ? channelName.Length == 0 ? $"Librarying · {title}" : $"Librarying · {channelName} · {title}"
+                        : channelName.Length == 0 ? title : $"{channelName} · {title}",
                     current,
                     total));
                 QueueChanged?.Invoke();
@@ -146,7 +150,7 @@ public sealed class ChannelMetadataService
                 }
 
                 MusicLibraryService.Current.CompleteChannelVideoMetadata(video.Id, metadata, error);
-                MetadataUpdated?.Invoke(video.ChannelId, video.Id);
+                MetadataUpdated?.Invoke(video.ChannelId, video.Id, video.TrackId);
                 ChannelDownloadService.Current.NotifyQueueChanged();
                 QueueChanged?.Invoke();
             }

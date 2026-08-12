@@ -264,6 +264,14 @@
                         Opacity="0.86">
                     <Image Source="{SvgImage /Assets/search.svg}" Width="17" Height="17"/>
                 </Button>
+
+                <Button x:Name="QuickEditToggleBtn"
+                        Classes="icon"
+                        Click="OnToggleQuickEditClicked"
+                        ToolTip.Tip="Quick edit tracks"
+                        Opacity="0.86">
+                    <Image Source="{SvgImage /Assets/pencil-simple.svg}" Width="17" Height="17"/>
+                </Button>
                 
                 <Button x:Name="RefreshLibraryButton"
                         Click="OnRefreshLibraryClicked"
@@ -303,14 +311,6 @@
                         Opacity="0.86">
                     <Image Source="{SvgImage /Assets/filter.svg}"
                            Width="17" Height="17"/>
-                </Button>
-
-                <Button x:Name="QuickEditToggleBtn"
-                        Classes="icon"
-                        Click="OnToggleQuickEditClicked"
-                        ToolTip.Tip="Quick edit tracks"
-                        Opacity="0.86">
-                    <Image Source="{SvgImage /Assets/pencil-simple.svg}" Width="17" Height="17"/>
                 </Button>
 
             </StackPanel>
@@ -540,17 +540,29 @@
                                         <TextBlock Text="{Binding ChannelText}" FontSize="9.5" Opacity="0.52"
                                                    TextTrimming="CharacterEllipsis"/>
                                     </StackPanel>
-                                    <ComboBox Grid.Column="2" ItemsSource="{Binding RatingChoices}"
-                                              SelectedItem="{Binding SelectedRating}"
-                                              SelectionChanged="OnQuickRatingChanged"
-                                              PlaceholderText="Choose rating"
-                                              Height="30" FontSize="10.5">
-                                        <ComboBox.ItemTemplate>
-                                            <DataTemplate x:DataType="models:Rating">
-                                                <TextBlock Text="{Binding Name}"/>
-                                            </DataTemplate>
-                                        </ComboBox.ItemTemplate>
-                                    </ComboBox>
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="1"
+                                                HorizontalAlignment="Right" VerticalAlignment="Center">
+                                        <Button Classes="icon" Tag="1" Click="OnQuickStarRatingClicked" ToolTip.Tip="1 star"
+                                                Width="28" Height="28" Padding="0">
+                                            <TextBlock Text="★" FontSize="17" Foreground="{Binding Star1Brush}"/>
+                                        </Button>
+                                        <Button Classes="icon" Tag="2" Click="OnQuickStarRatingClicked" ToolTip.Tip="2 stars"
+                                                Width="28" Height="28" Padding="0">
+                                            <TextBlock Text="★" FontSize="17" Foreground="{Binding Star2Brush}"/>
+                                        </Button>
+                                        <Button Classes="icon" Tag="3" Click="OnQuickStarRatingClicked" ToolTip.Tip="3 stars"
+                                                Width="28" Height="28" Padding="0">
+                                            <TextBlock Text="★" FontSize="17" Foreground="{Binding Star3Brush}"/>
+                                        </Button>
+                                        <Button Classes="icon" Tag="4" Click="OnQuickStarRatingClicked" ToolTip.Tip="4 stars"
+                                                Width="28" Height="28" Padding="0">
+                                            <TextBlock Text="★" FontSize="17" Foreground="{Binding Star4Brush}"/>
+                                        </Button>
+                                        <Button Classes="icon" Tag="5" Click="OnQuickStarRatingClicked" ToolTip.Tip="5 stars"
+                                                Width="28" Height="28" Padding="0">
+                                            <TextBlock Text="★" FontSize="17" Foreground="{Binding Star5Brush}"/>
+                                        </Button>
+                                    </StackPanel>
                                     <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="4">
                                         <Button Classes="icon" Click="OnQuickCopyUrlClicked" ToolTip.Tip="Copy YouTube URL"
                                                 Width="30" Height="30" Padding="6">

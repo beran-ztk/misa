@@ -25,8 +25,12 @@ public record TrackDisplayItem(
     public bool ShowDownloadedDate { get; set; }
     public bool IsQuickEditMode { get; set; }
     public bool IsStandardMode => !IsQuickEditMode;
-    public IReadOnlyList<Rating> RatingChoices { get; set; } = [];
-    public Rating? SelectedRating { get; set; }
+    public int QuickRatingValue { get; set; }
+    public IBrush Star1Brush => QuickStarBrush(1);
+    public IBrush Star2Brush => QuickStarBrush(2);
+    public IBrush Star3Brush => QuickStarBrush(3);
+    public IBrush Star4Brush => QuickStarBrush(4);
+    public IBrush Star5Brush => QuickStarBrush(5);
     public string TempoText { get; set; } = "Tempo —";
     public string LoudnessText { get; set; } = "Loudness —";
     public string DynamicsText { get; set; } = "Dynamics —";
@@ -132,6 +136,10 @@ public record TrackDisplayItem(
         >= 1_000 => $"{value.Value / 1_000d:0.#}K",
         _ => value.Value.ToString("N0")
     };
+
+    private IBrush QuickStarBrush(int star) => new SolidColorBrush(star <= QuickRatingValue
+        ? Color.Parse("#E8C45D")
+        : Color.Parse("#52606B"));
 
     public IBrush PlayingBackground => IsPlaying
         ? new SolidColorBrush(Color.FromArgb(20, 245, 245, 220))
