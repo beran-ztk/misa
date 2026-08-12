@@ -26,7 +26,7 @@ public sealed class ChannelMetadataService
     private int _initialized;
     private ChannelMetadataWorkStatus _status = ChannelMetadataWorkStatus.Idle;
 
-    public event Action<int, int, int?>? MetadataUpdated;
+    public event Action<int, int, MusicTrack?>? MetadataUpdated;
     public event Action? QueueChanged;
     public event Action<ChannelMetadataWorkStatus>? StatusChanged;
 
@@ -53,6 +53,7 @@ public sealed class ChannelMetadataService
                 await Task.Delay(TimeSpan.FromSeconds(2));
                 MusicLibraryService.Current.EnsureChannelMetadataQueueIndexes();
                 MusicLibraryService.Current.RecoverChannelMetadataQueue();
+                MusicLibraryService.Current.PrepareLibraryMetadataBackfill();
                 RequestAllChannels();
             }
             catch
@@ -150,7 +151,10 @@ public sealed class ChannelMetadataService
                 }
 
                 MusicLibraryService.Current.CompleteChannelVideoMetadata(video.Id, metadata, error);
-                MetadataUpdated?.Invoke(video.ChannelId, video.Id, video.TrackId);
+                var updatedTrack = video.TrackId is int trackId
+                    ? MusicLibraryService.Current.GetTrackById(trackId)
+                    : null;
+                MetadataUpdated?.Invoke(video.ChannelId, video.Id, updatedTrack);
                 ChannelDownloadService.Current.NotifyQueueChanged();
                 QueueChanged?.Invoke();
             }

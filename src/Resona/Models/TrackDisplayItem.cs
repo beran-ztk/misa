@@ -35,12 +35,10 @@ public record TrackDisplayItem(
     public string LoudnessText { get; set; } = "Loudness —";
     public string DynamicsText { get; set; } = "Dynamics —";
     public string EmotionalCharacterText { get; set; } = "Emotional character —";
+    public bool HasSourceActivity => Track.ViewCount is not null || Track.LikeCount is not null;
     public string SourceActivityText => Track.ViewCount is null && Track.LikeCount is null
-        ? "YouTube activity —"
+        ? string.Empty
         : $"{FormatCompact(Track.ViewCount)} views · {FormatCompact(Track.LikeCount)} likes";
-    public string WorkflowStateText => Track.RatingId is null
-        ? "Awaiting rating"
-        : NeedsAnalysis ? "Analysis pending" : NeedsReview ? "Needs review" : "Complete";
     public string UploadedDateText => DateTimeOffset.TryParse(Track.UploadedAt, out var uploadedAt)
         ? $"Uploaded {uploadedAt.ToLocalTime():dd.MM.yyyy}"
         : "Upload date —";

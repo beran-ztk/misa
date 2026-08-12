@@ -529,14 +529,23 @@
                                     Padding="12,9"
                                     BorderBrush="{Binding ArtworkBorderBrush}"
                                     BorderThickness="1">
-                                <Grid ColumnDefinitions="46,*,170,Auto" ColumnSpacing="11" RowDefinitions="Auto,Auto,Auto" RowSpacing="6">
-                                    <Border Grid.RowSpan="3" Width="42" Height="42" CornerRadius="7" ClipToBounds="True"
+                                <Grid ColumnDefinitions="46,*,170,Auto,68" ColumnSpacing="11"
+                                      RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="5">
+                                    <Border Grid.RowSpan="4" Width="42" Height="42" CornerRadius="7" ClipToBounds="True"
                                             Background="#292C25" VerticalAlignment="Center">
                                         <Image Source="{Binding Thumbnail}" Stretch="UniformToFill"/>
                                     </Border>
                                     <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
-                                        <TextBlock Text="{Binding Track.Title}" FontSize="13" FontWeight="SemiBold"
-                                                   TextTrimming="CharacterEllipsis"/>
+                                        <DockPanel LastChildFill="True">
+                                            <Image DockPanel.Dock="Left"
+                                                   Source="{SvgImage /Assets/public.svg}"
+                                                   IsVisible="{Binding Track.IsPublic}"
+                                                   Width="12" Height="12" Margin="0,0,6,0"
+                                                   Opacity="0.8" ToolTip.Tip="Public track"
+                                                   VerticalAlignment="Center"/>
+                                            <TextBlock Text="{Binding Track.Title}" FontSize="13"
+                                                       FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                        </DockPanel>
                                         <TextBlock Text="{Binding ChannelText}" FontSize="9.5" Opacity="0.52"
                                                    TextTrimming="CharacterEllipsis"/>
                                     </StackPanel>
@@ -573,25 +582,28 @@
                                             <Image Source="{SvgImage /Assets/trash.svg}" Width="14" Height="14"/>
                                         </Button>
                                     </StackPanel>
-                                    <WrapPanel Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3"
+                                    <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3"
+                                               Text="{Binding GenreText}" FontSize="9.5"
+                                               Foreground="{Binding ArtworkMetadataBrush}"
+                                               TextTrimming="CharacterEllipsis"/>
+                                    <WrapPanel Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3"
                                                Orientation="Horizontal" ItemSpacing="12">
-                                        <TextBlock Text="{Binding GenreText}" FontSize="9.5" Foreground="{Binding ArtworkMetadataBrush}"
-                                                   MaxWidth="260" TextTrimming="CharacterEllipsis"/>
                                         <TextBlock Text="{Binding TempoText}" FontSize="9.5" Opacity="0.64"/>
                                         <TextBlock Text="{Binding LoudnessText}" FontSize="9.5" Opacity="0.64"/>
                                         <TextBlock Text="{Binding DynamicsText}" FontSize="9.5" Opacity="0.64"/>
                                         <TextBlock Text="{Binding EmotionalCharacterText}" FontSize="9.5" Foreground="#AFC8A3"/>
-                                        <TextBlock Text="{Binding DurationText}" FontFamily="Consolas" FontSize="9.5" Opacity="0.64"/>
                                     </WrapPanel>
-                                    <WrapPanel Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3"
+                                    <WrapPanel Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="3"
                                                Orientation="Horizontal" ItemSpacing="12">
-                                        <TextBlock Text="{Binding WorkflowStateText}" FontSize="9" Foreground="#D8B66A"/>
-                                        <TextBlock Text="{Binding SourceActivityText}" FontSize="9" Opacity="0.5"/>
+                                        <TextBlock Text="{Binding SourceActivityText}" IsVisible="{Binding HasSourceActivity}"
+                                                   FontSize="9" Opacity="0.5"/>
                                         <TextBlock Text="{Binding UploadedDateText}" FontSize="9" Opacity="0.5"/>
                                         <TextBlock Text="{Binding DownloadedDetailText}" FontSize="9" Opacity="0.5"/>
-                                        <Image Source="{SvgImage /Assets/public.svg}" IsVisible="{Binding Track.IsPublic}"
-                                               Width="12" Height="12" Opacity="0.75" ToolTip.Tip="Public track"/>
                                     </WrapPanel>
+                                    <TextBlock Grid.Column="4" Grid.RowSpan="4" Text="{Binding DurationText}"
+                                               FontFamily="Consolas" FontSize="10.5" Opacity="0.72"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                                               TextAlignment="Center"/>
                                 </Grid>
                             </Border>
                             <Rectangle Grid.Row="1"

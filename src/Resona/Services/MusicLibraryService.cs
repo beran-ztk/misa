@@ -231,6 +231,7 @@ public class MusicLibraryService
     public List<ChannelHubItem> GetChannelHubItems() => _db.GetChannelHubItems();
     public List<ChannelVideo> GetChannelVideos(int channelId) => _db.GetChannelVideos(channelId);
     public void RecoverChannelMetadataQueue() => _db.RecoverChannelMetadataQueue();
+    public void PrepareLibraryMetadataBackfill() => _db.PrepareLibraryMetadataBackfill();
     public void EnsureChannelMetadataQueueIndexes() => _db.EnsureChannelMetadataQueueIndexes();
     public int QueueChannelVideoMetadata(int channelId, int limit) => _db.QueueChannelVideoMetadata(channelId, limit);
     public bool QueueSpecificChannelVideoMetadata(int videoId) => _db.QueueSpecificChannelVideoMetadata(videoId);

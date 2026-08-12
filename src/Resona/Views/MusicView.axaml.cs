@@ -265,11 +265,6 @@ public partial class MusicView : UserControl
         var backupResult = DatabaseBackupService.Current.EnsureTodayBackups();
         if (backupResult.Errors.Count > 0)
             ShowToast($"Database backup warning: {backupResult.Errors[0]}");
-        ImportQueueService.Current.Initialize();
-        BackgroundAnalysisService.Current.Initialize();
-        ChannelDownloadService.Current.Initialize();
-        ChannelMetadataService.Current.Initialize();
-        ChannelHubBackgroundService.Current.Initialize();
         UpdateImportBounds();
 
         LoadLookups();
@@ -277,6 +272,14 @@ public partial class MusicView : UserControl
         LoadFilterPresets();
         RebuildFilterConditionsPanel();
         RefreshTrackList();
+
+        // The first library read must win the startup race. Background workers
+        // are intentionally started only after the initial UI data is ready.
+        ImportQueueService.Current.Initialize();
+        BackgroundAnalysisService.Current.Initialize();
+        ChannelDownloadService.Current.Initialize();
+        ChannelMetadataService.Current.Initialize();
+        ChannelHubBackgroundService.Current.Initialize();
         _restoringPlayerSession = false;
         UpdateShuffleButton();
         PersistPlayerSession();
@@ -351,11 +354,11 @@ public partial class MusicView : UserControl
                     MarkLibraryRefreshPending();
                 }
             });
-        ChannelMetadataService.Current.MetadataUpdated += (channelId, videoId, trackId) =>
+        ChannelMetadataService.Current.MetadataUpdated += (channelId, videoId, updatedTrack) =>
             Avalonia.Threading.Dispatcher.UIThread.Post(() =>
             {
-                if (trackId is int updatedTrackId)
-                    UpdateTrackInList(updatedTrackId);
+                if (updatedTrack is not null)
+                    ApplyRemoteMetadataToTrackList(updatedTrack);
                 if (ChannelOverlay.IsVisible)
                     ChannelOverlay.OnMetadataUpdated(channelId, videoId);
             });
@@ -739,6 +742,47 @@ public partial class MusicView : UserControl
         UpdatePlaylistSummary();
         RefreshNextTrackPreview();
         RestartVisibleThumbnailLoad();
+    }
+
+    private void ApplyRemoteMetadataToTrackList(MusicTrack updatedTrack)
+    {
+        var previous = _allItems.FirstOrDefault(item => item.Track.Id == updatedTrack.Id);
+        if (previous is null)
+            return;
+
+        // Metadata backfill only changes source fields. Clone the presentation
+        // item so Avalonia sees new derived texts, without running any database
+        // queries on the UI thread for every completed YouTube request.
+        var updated = previous with { Track = updatedTrack };
+        ReplaceTrackDisplayItem(_allItems, previous, updated);
+        ReplaceTrackDisplayItem(_filteredItems, previous, updated);
+        ReplaceTrackDisplayItem(_visibleItems, previous, updated);
+
+        // The standard row does not display remote metadata. Avoid rebuilding
+        // the virtualized list during a large startup backfill; entering Quick
+        // Edit will bind the already-updated items.
+        if (!_isQuickEditMode)
+            return;
+
+        var selectedTrackId = (FileList.SelectedItem as TrackDisplayItem)?.Track.Id;
+        FileList.ItemsSource = null;
+        FileList.ItemsSource = _visibleItems;
+        if (selectedTrackId is int id)
+        {
+            var selectedIndex = _visibleItems.FindIndex(item => item.Track.Id == id);
+            if (selectedIndex >= 0)
+                FileList.SelectedIndex = selectedIndex;
+        }
+    }
+
+    private static void ReplaceTrackDisplayItem(
+        List<TrackDisplayItem> items,
+        TrackDisplayItem previous,
+        TrackDisplayItem updated)
+    {
+        var index = items.IndexOf(previous);
+        if (index >= 0)
+            items[index] = updated;
     }
 
     private List<FilterGroup> CurrentFilterGroups() =>

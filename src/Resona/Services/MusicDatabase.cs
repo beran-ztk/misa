@@ -548,6 +548,13 @@ public class MusicDatabase
               AND thumbnail IS NOT NULL
               AND length(thumbnail) > 0
               AND (remote_metadata_updated_at IS NOT NULL OR last_checked_at IS NOT NULL)");
+        BackfillLibraryChannelVideos(conn);
+        BackfillTrackSourceMetadata(conn);
+    }
+
+    public void PrepareLibraryMetadataBackfill()
+    {
+        using var conn = Open();
         BackfillLibraryTrackChannels(conn);
         BackfillLibraryChannelVideos(conn);
         BackfillTrackSourceMetadata(conn);
