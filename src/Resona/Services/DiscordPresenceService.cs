@@ -158,7 +158,7 @@ public sealed class DiscordPresenceService : IDisposable
         var videoId = YouTubeUrlNormalizer.ExtractVideoId(track.CanonicalUrl);
         return string.IsNullOrWhiteSpace(videoId)
             ? FallbackImageUrl
-            : $"https://i.ytimg.com/vi/{Uri.EscapeDataString(videoId)}/hqdefault.jpg";
+            : $"https://wsrv.nl/?url=i.ytimg.com/vi/{Uri.EscapeDataString(videoId)}/mqdefault.jpg&w=512&h=512&fit=cover&a=center&output=jpg&default=1";
     }
 
     private static string Clip(string value, int maxLength)
