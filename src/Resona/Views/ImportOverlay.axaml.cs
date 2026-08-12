@@ -71,7 +71,7 @@ public partial class ImportOverlay : UserControl
         QueueSources.Children.Clear();
         var sources = ImportQueueService.Current.GetSources();
         var queueCount = sources.Sum(source => source.Items.Count);
-        QueueHeaderText.Text = queueCount > 0 ? $"CURRENT QUEUE ({queueCount})" : "CURRENT QUEUE";
+        QueueHeaderText.Text = queueCount > 10 ? $"CURRENT QUEUE ({queueCount})" : "CURRENT QUEUE";
         EmptyQueueText.IsVisible = sources.Count == 0;
         foreach (var source in sources)
             QueueSources.Children.Add(CreateSourceCard(source));
@@ -175,36 +175,15 @@ public partial class ImportOverlay : UserControl
         var found = visibleItems is null || items.Count == total
             ? $"{total} found"
             : $"{items.Count} of {total} shown";
-        var includeEstimates = visibleItems is null || items.Count == preview.Items.Count;
-
         return $"{found} · {queued} new · {existing} already in library"
             + (duplicates > 0 ? $" · {duplicates} duplicates" : string.Empty)
-            + (unavailable > 0 ? $" · {unavailable} unavailable" : string.Empty)
-            + (includeEstimates && preview.TotalEstimatedSizeBytes is long size ? $"\nEstimated size: {FormatBytes(size)}" : string.Empty)
-            + (includeEstimates && preview.EstimatedDownloadTime is TimeSpan download ? $" · Download: {FormatDuration(download)}" : string.Empty)
-            + (includeEstimates && preview.EstimatedAnalysisTime is TimeSpan analysis ? $" · Analysis: {FormatDuration(analysis)}" : string.Empty);
+            + (unavailable > 0 ? $" · {unavailable} unavailable" : string.Empty);
     }
 
-    private Control CreatePreviewSourceCard(PendingImportPreview pending, string _,
-        IEnumerable<ImportPreviewItem> items, Action refreshPreview)
+    private static Control CreatePreviewItemRow(PendingImportPreview pending, ImportPreviewItem item,
+        Action refreshPreview)
     {
-        var panel = new StackPanel { Spacing = 3 };
-        foreach (var item in items)
-            panel.Children.Add(CreatePreviewItemRow(pending, item, refreshPreview));
-        return panel;
-    }
-
-    private static Control CreatePreviewItemRow(PendingImportPreview pending, ImportPreviewItem item, Action refreshPreview)
-    {
-        var row = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto"), ColumnSpacing = 8, Margin = new Thickness(0, 2) };
-        row.Children.Add(new TextBlock
-        {
-            Text = item.DurationSeconds is int seconds ? FormatTrackDuration(seconds) : "--:--",
-            FontSize = 10,
-            Foreground = new SolidColorBrush(Color.Parse("#798796")),
-            MinWidth = 34,
-            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
-        });
+        var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto"), ColumnSpacing = 8, Margin = new Thickness(0, 2) };
         var title = new TextBlock
         {
             Text = item.Title,
@@ -213,8 +192,16 @@ public partial class ImportOverlay : UserControl
             TextTrimming = TextTrimming.CharacterEllipsis,
             VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
         };
-        Grid.SetColumn(title, 1);
         row.Children.Add(title);
+        var state = new TextBlock
+        {
+            Text = PreviewItemState(item),
+            FontSize = 9.5,
+            Foreground = new SolidColorBrush(Color.Parse(PreviewItemStateColor(item))),
+            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
+        };
+        Grid.SetColumn(state, 1);
+        row.Children.Add(state);
         var remove = new Button
         {
             Content = "×",
@@ -244,6 +231,15 @@ public partial class ImportOverlay : UserControl
         };
         var panel = new StackPanel { Spacing = 5 };
         var header = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto"), ColumnSpacing = 7 };
+        var headerTitle = new TextBlock
+        {
+            Text = pending.IsChecking ? "Checking link…" : "Checked link",
+            FontSize = 10.5,
+            Foreground = ThemeResources.Brush("Theme.Brush.TextPrimary"),
+            TextTrimming = TextTrimming.CharacterEllipsis,
+            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
+        };
+        header.Children.Add(headerTitle);
         Button? queue = null;
         if (pending.Preview is { } preview)
         {
@@ -314,14 +310,28 @@ public partial class ImportOverlay : UserControl
         }
         else
         {
+            var info = new Grid
+            {
+                ColumnDefinitions = new ColumnDefinitions("Auto,*"),
+                ColumnSpacing = 8
+            };
             var status = new TextBlock
             {
-                Text = pending.StatusText,
-                FontSize = 11,
-                Foreground = new SolidColorBrush(Color.Parse("#AEE6B7")),
-                TextWrapping = TextWrapping.Wrap
+                FontSize = 10.5,
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
             };
-            panel.Children.Add(status);
+            info.Children.Add(status);
+            var estimates = new TextBlock
+            {
+                FontSize = 10.5,
+                Foreground = ThemeResources.Brush("Theme.Brush.TextSecondary"),
+                Opacity = 0.82,
+                TextTrimming = TextTrimming.CharacterEllipsis,
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
+            };
+            Grid.SetColumn(estimates, 1);
+            info.Children.Add(estimates);
+            panel.Children.Add(info);
 
             if (pending.Preview.Items.Count > 0)
             {
@@ -362,7 +372,15 @@ public partial class ImportOverlay : UserControl
                 {
                     var visibleItems = GetVisiblePreviewItems(pending);
                     var availableCount = GetAvailablePreviewItems(pending).Count;
-                    status.Text = PreviewStatus(pending.Preview, visibleItems, availableCount);
+                    var isSingle = visibleItems.Count == 1;
+                    headerTitle.Text = isSingle ? visibleItems[0].Title : $"{visibleItems.Count} checked tracks";
+                    status.Text = isSingle
+                        ? PreviewItemState(visibleItems[0])
+                        : PreviewStatus(pending.Preview, visibleItems, availableCount);
+                    status.Foreground = new SolidColorBrush(Color.Parse(isSingle
+                        ? PreviewItemStateColor(visibleItems[0])
+                        : visibleItems.Any(item => item.Status == ImportQueueStatus.Queued) ? "#82D99A" : "#E87878"));
+                    estimates.Text = PreviewEstimates(pending.Preview, visibleItems);
                     if (queue is not null)
                     {
                         var queueCount = visibleItems.Count(item => item.Status == ImportQueueStatus.Queued);
@@ -385,8 +403,11 @@ public partial class ImportOverlay : UserControl
                     }
                     else
                     {
-                        foreach (var source in visibleItems.GroupBy(item => item.SourceUrl, StringComparer.OrdinalIgnoreCase))
-                            rows.Children.Add(CreatePreviewSourceCard(pending, source.Key, source, RefreshPreview));
+                        if (!isSingle)
+                        {
+                            foreach (var item in visibleItems)
+                                rows.Children.Add(CreatePreviewItemRow(pending, item, RefreshPreview));
+                        }
                     }
                 }
 
@@ -413,15 +434,7 @@ public partial class ImportOverlay : UserControl
         var panel = new StackPanel { Spacing = 4 };
         foreach (var item in source.Items)
         {
-            var row = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto,Auto"), ColumnSpacing = 8, Margin = new Thickness(0, 2) };
-            row.Children.Add(new TextBlock
-            {
-                Text = item.DurationSeconds is int seconds ? FormatTrackDuration(seconds) : "--:--",
-                FontSize = 10,
-                Foreground = new SolidColorBrush(Color.Parse("#798796")),
-                MinWidth = 34,
-                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
-            });
+            var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto"), ColumnSpacing = 8, Margin = new Thickness(0, 2) };
             var title = new TextBlock
             {
                 Text = item.Title,
@@ -430,7 +443,6 @@ public partial class ImportOverlay : UserControl
                 TextTrimming = TextTrimming.CharacterEllipsis,
                 VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
             };
-            Grid.SetColumn(title, 1);
             row.Children.Add(title);
             var state = new TextBlock
             {
@@ -439,7 +451,7 @@ public partial class ImportOverlay : UserControl
                 Foreground = new SolidColorBrush(Color.Parse(StatusColor(item.Status))),
                 VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
             };
-            Grid.SetColumn(state, 2);
+            Grid.SetColumn(state, 1);
             row.Children.Add(state);
             if (item.Status is ImportQueueStatus.Queued or ImportQueueStatus.Failed)
             {
@@ -457,7 +469,7 @@ public partial class ImportOverlay : UserControl
                 {
                     if (ImportQueueService.Current.RemoveQueuedItem(item.Id)) RefreshQueue();
                 };
-                Grid.SetColumn(remove, 3);
+                Grid.SetColumn(remove, 2);
                 row.Children.Add(remove);
             }
             panel.Children.Add(row);
@@ -561,6 +573,37 @@ public partial class ImportOverlay : UserControl
         _ => "#8996A3"
     };
 
+    private static string PreviewItemState(ImportPreviewItem item) => item.Status switch
+    {
+        ImportQueueStatus.Queued => "Track is new",
+        ImportQueueStatus.Skipped when item.Detail?.Equals("Already in library", StringComparison.OrdinalIgnoreCase) == true
+            => "Track already exists",
+        ImportQueueStatus.Skipped => item.Detail ?? "Track skipped",
+        ImportQueueStatus.Failed => item.Detail ?? "Track unavailable",
+        _ => item.Detail ?? "Ready"
+    };
+
+    private static string PreviewItemStateColor(ImportPreviewItem item) => item.Status switch
+    {
+        ImportQueueStatus.Queued => "#82D99A",
+        ImportQueueStatus.Skipped or ImportQueueStatus.Failed => "#E87878",
+        _ => "#DDE8F0"
+    };
+
+    private static string PreviewEstimates(ImportPreview preview, IReadOnlyList<ImportPreviewItem> visibleItems)
+    {
+        if (visibleItems.Count == 0 || !visibleItems.Any(item => item.Status == ImportQueueStatus.Queued))
+            return string.Empty;
+
+        var includeAggregate = visibleItems.Count == preview.Items.Count;
+        return (includeAggregate && preview.EstimatedDownloadTime is TimeSpan download
+                ? $"Download {FormatDuration(download)}"
+                : string.Empty)
+            + (includeAggregate && preview.EstimatedAnalysisTime is TimeSpan analysis
+                ? $" · Analysis {FormatDuration(analysis)}"
+                : string.Empty);
+    }
+
     private static Avalonia.Svg.Skia.Svg CreateSvgIcon(string path, double size) => new(new Uri("avares://Resona/"))
     {
         Path = path,
@@ -571,15 +614,6 @@ public partial class ImportOverlay : UserControl
         VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
         HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center
     };
-
-    private static string FormatBytes(long bytes) => bytes >= 1_000_000_000 ? $"{bytes / 1_000_000_000d:0.0} GB" : $"{bytes / 1_000_000d:0} MB";
-    private static string FormatTrackDuration(int seconds)
-    {
-        var value = TimeSpan.FromSeconds(seconds);
-        return value.TotalHours >= 1
-            ? $"{(int)value.TotalHours}:{value.Minutes:00}:{value.Seconds:00}"
-            : $"{(int)value.TotalMinutes}:{value.Seconds:00}";
-    }
 
     private static string FormatDuration(TimeSpan value) => value.TotalMinutes >= 1 ? $"{Math.Ceiling(value.TotalMinutes):0} min" : $"{Math.Max(1, Math.Round(value.TotalSeconds)):0} sec";
     private static string FormatElapsed(TimeSpan value) => value.TotalHours >= 1
