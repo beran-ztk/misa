@@ -29,7 +29,8 @@ public sealed record PortableMusicLibrary(
                 ["Okay"] = 2,
                 ["Good"] = 3,
                 ["Great"] = 4,
-                ["Favorite"] = 5
+                ["Amazing"] = 5,
+                ["Timeless"] = 6
             };
 
             return Tracks
@@ -97,7 +98,8 @@ public sealed record PortableTrack(
     int SkipCount = 0,
     string? LastListenedAt = null,
     byte[]? Thumbnail = null,
-    bool IsPublic = false)
+    bool IsPublic = false,
+    string? LanguageCode = null)
 {
     public string GenreText => string.Join(", ", Genres);
     public string StyleText => string.Join(", ", Styles);
@@ -171,7 +173,8 @@ public sealed record PortableFilterGroup(
     List<string> Styles,
     List<string>? Tags = null,
     bool Negate = false,
-    List<PortableEmotionalCharacterFilter>? EmotionalCharacters = null);
+    List<PortableEmotionalCharacterFilter>? EmotionalCharacters = null,
+    List<string>? Languages = null);
 
 public static class PortableTrackFilter
 {
@@ -191,7 +194,7 @@ public static class PortableTrackFilter
             query = query.Where(t => ratings.Contains(t.Rating));
 
         var activeGroups = filterGroups
-            .Where(g => g.Genres.Count > 0 || g.Styles.Count > 0 || (g.Tags?.Count ?? 0) > 0)
+            .Where(g => g.Genres.Count > 0 || g.Styles.Count > 0 || (g.Tags?.Count ?? 0) > 0 || (g.Languages?.Count ?? 0) > 0)
             .ToList();
         var includeGroups = activeGroups.Where(group => !group.Negate).ToList();
         var excludeGroups = activeGroups.Where(group => group.Negate).ToList();
@@ -216,6 +219,11 @@ public static class PortableTrackFilter
             return false;
 
         if ((group.Tags?.Count ?? 0) > 0 && !group.Tags!.All(tag => (track.Tags ?? []).Contains(tag, StringComparer.OrdinalIgnoreCase)))
+            return false;
+
+        if ((group.Languages?.Count ?? 0) > 0
+            && (string.IsNullOrWhiteSpace(track.LanguageCode)
+                || !group.Languages!.Contains(track.LanguageCode, StringComparer.OrdinalIgnoreCase)))
             return false;
 
         return true;

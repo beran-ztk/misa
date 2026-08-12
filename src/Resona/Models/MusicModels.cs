@@ -24,7 +24,31 @@ public record MusicTrack(
     long? LikeCount = null,
     string? SourceThumbnailUrl = null,
     string? SourceMetadataUpdatedAt = null,
-    int? ChannelId = null);
+    int? ChannelId = null,
+    string? LanguageCode = null);
+
+public sealed record TrackLanguage(string Code, string Name);
+public static class TrackLanguageCatalog
+{
+    public static readonly IReadOnlyList<TrackLanguage> All =
+    [
+        new("zxx", "Instrumental"), new("mul", "Mixed / multilingual"),
+        new("en", "English"), new("de", "German"), new("es", "Spanish"),
+        new("pt-BR", "Portuguese (Brazil)"), new("fr", "French"), new("it", "Italian"),
+        new("nl", "Dutch"), new("ru", "Russian"), new("uk", "Ukrainian"),
+        new("pl", "Polish"), new("tr", "Turkish"), new("ar", "Arabic"),
+        new("fa", "Persian"), new("hi", "Hindi"), new("bn", "Bengali"),
+        new("zh", "Mandarin Chinese"), new("ja", "Japanese"), new("ko", "Korean"),
+        new("vi", "Vietnamese"), new("th", "Thai"), new("id", "Indonesian"),
+        new("sv", "Swedish"), new("no", "Norwegian"), new("fi", "Finnish"),
+        new("el", "Greek"), new("he", "Hebrew"), new("ro", "Romanian"),
+        new("cs", "Czech"), new("sr", "Serbian")
+    ];
+
+    public static string? Name(string? code) => All
+        .FirstOrDefault(language => string.Equals(language.Code, code, System.StringComparison.OrdinalIgnoreCase))
+        ?.Name;
+}
 
 public record Genre(int Id, string Name);
 public record Tag(int Id, string Name);
@@ -59,6 +83,8 @@ public record Rating(int Id, string Name, int SortOrder);
 public static class RatingNames
 {
     public const string Avoid = "Avoid";
+    public const string Amazing = "Amazing";
+    public const string Timeless = "Timeless";
 }
 public record TrackUsageStats(int PlayCount, int ListenedSeconds, int SkipCount, string? LastListenedAt);
 public record PortableExportRecord(
@@ -135,7 +161,7 @@ public sealed record ChannelHubItem(
     int LocalTrackCount,
     int RatedTrackCount,
     double? AverageRating,
-    int FavoriteCount,
+    int TimelessCount,
     int GreatOrBetterCount,
     int PlayCount,
     int SkipCount,
@@ -191,7 +217,7 @@ public sealed record ChannelHubItem(
         : "No ratings yet";
     public string QualityDetailText => AverageRating is null
         ? "No rated tracks"
-        : $"{FavoriteCount:N0} favorite{(FavoriteCount == 1 ? string.Empty : "s")} · {GreatOrBetterCount:N0} great+";
+        : $"{TimelessCount:N0} timeless · {GreatOrBetterCount:N0} great+";
     public string ActivityText => PlayCount == 0 ? "Not played yet" : $"{PlayCount} plays · {SkipCount} skips";
     public string ListeningSignalText => PlayCount <= 0
         ? "No listening history"
@@ -251,8 +277,8 @@ public sealed record ChannelHubItem(
         }
     }
 
-    public string RecommendationReason => FavoriteCount > 0
-        ? FavoriteCount == 1 ? "1 favorite in your library" : $"{FavoriteCount} favorites in your library"
+    public string RecommendationReason => TimelessCount > 0
+        ? TimelessCount == 1 ? "1 timeless track in your library" : $"{TimelessCount} timeless tracks in your library"
         : GreatOrBetterCount > 0
             ? GreatOrBetterCount == 1 ? "1 highly rated track" : $"{GreatOrBetterCount} highly rated tracks"
             : LocalTrackCount == 1 ? "1 track in your library" : $"{LocalTrackCount} tracks in your library";

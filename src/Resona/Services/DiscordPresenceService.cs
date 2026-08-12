@@ -142,7 +142,7 @@ public sealed class DiscordPresenceService : IDisposable
 
         return string.IsNullOrWhiteSpace(item.ChannelText)
             ? title
-            : $"{title} - {item.ChannelText.Trim()}";
+            : $"{title} by {item.ChannelText.Trim()}";
     }
 
     private static string TrackImageUrl(MusicTrack track)

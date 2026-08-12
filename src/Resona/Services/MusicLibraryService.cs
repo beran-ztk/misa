@@ -229,6 +229,7 @@ public class MusicLibraryService
     public List<int> GetTrackTagIds(int trackId) => _db.GetTrackTagIds(trackId);
     public List<TrackTag> GetTrackTags(int trackId) => _db.GetTrackTags(trackId);
     public void SetTrackManualTags(int trackId, IReadOnlyCollection<int> tagIds) => _db.SetTrackManualTags(trackId, tagIds);
+    public void SetTrackLanguage(int trackId, string? languageCode) => _db.SetTrackLanguage(trackId, languageCode);
     public List<TagSignalSource> GetTagSignalSources() => _db.GetTagSignalSources();
     public List<TagRuleGroup> GetTagRuleGroups() => _db.GetTagRuleGroups();
     public int CreateTagRuleGroup(int tagId, TagRuleMatchMode matchMode, string sourceType, string sourceKey, double threshold) =>
@@ -570,7 +571,8 @@ public class MusicLibraryService
                     usage.SkipCount,
                     usage.LastListenedAt,
                     thumbnail,
-                    track.IsPublic));
+                    track.IsPublic,
+                    track.LanguageCode));
             }
 
             await PortableLibraryStore.SaveAsync(

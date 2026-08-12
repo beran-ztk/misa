@@ -10,6 +10,7 @@ public record FilterGroup(
     IReadOnlySet<int> GenreIds,
     IReadOnlySet<int> StyleIds,
     IReadOnlySet<int> TagIds,
+    IReadOnlySet<string> LanguageCodes,
     IReadOnlyList<EmotionalCharacterRange> EmotionalCharacters,
     bool Negate = false);
 
@@ -43,7 +44,7 @@ public static class TrackFilter
         // Negated groups remove matching tracks after the positive groups are evaluated.
         // Empty groups (nothing selected in any dimension) are ignored.
         var activeGroups = filterGroups
-            .Where(g => g.GenreIds.Count > 0 || g.StyleIds.Count > 0 || g.TagIds.Count > 0 || g.EmotionalCharacters.Count > 0)
+            .Where(g => g.GenreIds.Count > 0 || g.StyleIds.Count > 0 || g.TagIds.Count > 0 || g.LanguageCodes.Count > 0 || g.EmotionalCharacters.Count > 0)
             .ToList();
         var includeGroups = activeGroups.Where(group => !group.Negate).ToList();
         var excludeGroups = activeGroups.Where(group => group.Negate).ToList();
@@ -90,6 +91,10 @@ public static class TrackFilter
             tTags ??= [];
             if (!group.TagIds.All(id => tTags.Contains(id))) return false;
         }
+
+        if (group.LanguageCodes.Count > 0
+            && (string.IsNullOrWhiteSpace(track.LanguageCode) || !group.LanguageCodes.Contains(track.LanguageCode)))
+            return false;
 
         if (group.EmotionalCharacters.Count > 0)
         {

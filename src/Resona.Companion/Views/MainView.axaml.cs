@@ -92,7 +92,8 @@ public partial class MainView : UserControl
         public string Rating => string.IsNullOrWhiteSpace(Track.Rating) ? "None" : Track.Rating;
         public IBrush RatingBackground => Rating switch
         {
-            "Favorite" => new SolidColorBrush(Color.FromArgb(70, 132, 105, 36)),
+            "Timeless" => new SolidColorBrush(Color.FromArgb(70, 132, 105, 36)),
+            "Amazing" => new SolidColorBrush(Color.FromArgb(70, 120, 79, 42)),
             "Great" => new SolidColorBrush(Color.FromArgb(68, 35, 105, 58)),
             "Good" => new SolidColorBrush(Color.FromArgb(66, 31, 93, 82)),
             "Okay" => new SolidColorBrush(Color.FromArgb(62, 83, 84, 64)),
@@ -101,7 +102,8 @@ public partial class MainView : UserControl
         };
         public IBrush RatingBorder => Rating switch
         {
-            "Favorite" => new SolidColorBrush(Color.FromArgb(185, 219, 184, 85)),
+            "Timeless" => new SolidColorBrush(Color.FromArgb(185, 219, 184, 85)),
+            "Amazing" => new SolidColorBrush(Color.FromArgb(180, 221, 144, 78)),
             "Great" => new SolidColorBrush(Color.FromArgb(175, 83, 176, 105)),
             "Good" => new SolidColorBrush(Color.FromArgb(170, 76, 164, 139)),
             "Okay" => new SolidColorBrush(Color.FromArgb(150, 139, 144, 108)),
@@ -110,7 +112,8 @@ public partial class MainView : UserControl
         };
         public IBrush RatingForeground => Rating switch
         {
-            "Favorite" => new SolidColorBrush(Color.FromRgb(255, 230, 150)),
+            "Timeless" => new SolidColorBrush(Color.FromRgb(255, 230, 150)),
+            "Amazing" => new SolidColorBrush(Color.FromRgb(247, 195, 132)),
             "Great" => new SolidColorBrush(Color.FromRgb(188, 242, 185)),
             "Good" => new SolidColorBrush(Color.FromRgb(176, 232, 212)),
             "Okay" => new SolidColorBrush(Color.FromRgb(226, 224, 194)),

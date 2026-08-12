@@ -168,7 +168,8 @@ public class MusicDatabase
                 analysis_disabled   INTEGER NOT NULL DEFAULT 0,
                 is_public           INTEGER NOT NULL DEFAULT 1,
                 needs_reevaluation  INTEGER NOT NULL DEFAULT 0,
-                notes               TEXT NULL
+                notes               TEXT NULL,
+                language_code       TEXT NULL
             );
             CREATE INDEX ix_tracks_library_state ON tracks(library_state, downloaded_at DESC);
 
@@ -305,6 +306,8 @@ public class MusicDatabase
         ExecuteNonQuery(conn,
             "CREATE INDEX IF NOT EXISTS ix_tracks_library_state ON tracks(library_state, downloaded_at DESC)");
         EnsureColumn(conn, "tracks", "analysis_disabled", "INTEGER NOT NULL DEFAULT 0");
+        EnsureColumn(conn, "tracks", "language_code", "TEXT NULL");
+        EnsureCurrentRatings(conn);
         EnsureColumn(conn, "tracks", "is_public", "INTEGER NOT NULL DEFAULT 1");
         EnsureColumn(conn, "tracks", "needs_reevaluation", "INTEGER NOT NULL DEFAULT 0");
         EnsureColumn(conn, "track_analysis", "analysis_duration_ms", "INTEGER NULL");
@@ -411,6 +414,36 @@ public class MusicDatabase
             WHERE name = 'Skip'
               AND NOT EXISTS (SELECT 1 FROM ratings WHERE name = $avoid)",
             ("$avoid", RatingNames.Avoid));
+    }
+
+    internal static void EnsureCurrentRatings(SqliteConnection conn)
+    {
+        using var tx = conn.BeginTransaction();
+        ExecuteInsert(conn, tx, @"
+            UPDATE tracks
+            SET rating_id = (SELECT id FROM ratings WHERE name = $timeless)
+            WHERE rating_id = (SELECT id FROM ratings WHERE name = 'Favorite')
+              AND EXISTS (SELECT 1 FROM ratings WHERE name = $timeless)",
+            ("$timeless", RatingNames.Timeless));
+        ExecuteInsert(conn, tx, @"
+            DELETE FROM ratings
+            WHERE name = 'Favorite'
+              AND EXISTS (SELECT 1 FROM ratings WHERE name = $timeless)",
+            ("$timeless", RatingNames.Timeless));
+        ExecuteInsert(conn, tx, @"
+            UPDATE ratings SET name = $timeless
+            WHERE name = 'Favorite'
+              AND NOT EXISTS (SELECT 1 FROM ratings WHERE name = $timeless)",
+            ("$timeless", RatingNames.Timeless));
+        ExecuteInsert(conn, tx, "UPDATE ratings SET sort_order = 1000 WHERE name = $timeless",
+            ("$timeless", RatingNames.Timeless));
+        ExecuteInsert(conn, tx, @"
+            INSERT INTO ratings (name, sort_order) VALUES ($amazing, 5)
+            ON CONFLICT(name) DO UPDATE SET sort_order = 5",
+            ("$amazing", RatingNames.Amazing));
+        ExecuteInsert(conn, tx, "UPDATE ratings SET sort_order = 6 WHERE name = $timeless",
+            ("$timeless", RatingNames.Timeless));
+        tx.Commit();
     }
 
     private static void CreatePortableExportSchema(SqliteConnection conn)
@@ -1569,7 +1602,7 @@ public class MusicDatabase
                        COUNT(*) AS track_count,
                        SUM(CASE WHEN tracks.rating_id IS NOT NULL THEN 1 ELSE 0 END) AS rated_count,
                        AVG(CASE WHEN tracks.rating_id IS NOT NULL THEN ratings.sort_order END) AS average_rating,
-                       SUM(CASE WHEN ratings.name = 'Favorite' THEN 1 ELSE 0 END) AS favorite_count,
+                       SUM(CASE WHEN ratings.name = 'Timeless' THEN 1 ELSE 0 END) AS timeless_count,
                        SUM(CASE WHEN ratings.sort_order >= 4 THEN 1 ELSE 0 END) AS great_count,
                        SUM(tracks.listen_count) AS play_count,
                        SUM(tracks.skip_count) AS skip_count,
@@ -1599,7 +1632,7 @@ public class MusicDatabase
                    COALESCE(track_stats.track_count, 0),
                    COALESCE(track_stats.rated_count, 0),
                    track_stats.average_rating,
-                   COALESCE(track_stats.favorite_count, 0),
+                   COALESCE(track_stats.timeless_count, 0),
                    COALESCE(track_stats.great_count, 0),
                    COALESCE(track_stats.play_count, 0),
                    COALESCE(track_stats.skip_count, 0),
@@ -2855,7 +2888,7 @@ public class MusicDatabase
                                    tracks.duration_seconds, tracks.needs_reevaluation, channels.name, channels.source_url, tracks.uploaded_at,
                                    tracks.updated_at, tracks.analysis_disabled, tracks.is_public, tracks.library_state,
                                    tracks.source_video_id, tracks.view_count, tracks.like_count,
-                                   tracks.source_thumbnail_url, tracks.source_metadata_updated_at, channels.id
+                                   tracks.source_thumbnail_url, tracks.source_metadata_updated_at, channels.id, tracks.language_code
                             FROM tracks LEFT JOIN channels ON channels.id = tracks.channel_id
                             WHERE ($includeRejected = 1 OR tracks.library_state <> 'Rejected')
                             ORDER BY tracks.downloaded_at DESC";
@@ -2877,7 +2910,7 @@ public class MusicDatabase
                                    tracks.duration_seconds, tracks.needs_reevaluation, channels.name, channels.source_url, tracks.uploaded_at,
                                    tracks.updated_at, tracks.analysis_disabled, tracks.is_public, tracks.library_state,
                                    tracks.source_video_id, tracks.view_count, tracks.like_count,
-                                   tracks.source_thumbnail_url, tracks.source_metadata_updated_at, channels.id
+                                   tracks.source_thumbnail_url, tracks.source_metadata_updated_at, channels.id, tracks.language_code
                             FROM tracks LEFT JOIN channels ON channels.id = tracks.channel_id
                             WHERE tracks.id = $trackId";
         cmd.Parameters.AddWithValue("$trackId", trackId);
@@ -2893,7 +2926,7 @@ public class MusicDatabase
                                    tracks.duration_seconds, tracks.needs_reevaluation, channels.name, channels.source_url, tracks.uploaded_at,
                                    tracks.updated_at, tracks.analysis_disabled, tracks.is_public, tracks.library_state,
                                    tracks.source_video_id, tracks.view_count, tracks.like_count,
-                                   tracks.source_thumbnail_url, tracks.source_metadata_updated_at, channels.id
+                                   tracks.source_thumbnail_url, tracks.source_metadata_updated_at, channels.id, tracks.language_code
                             FROM tracks LEFT JOIN channels ON channels.id = tracks.channel_id
                             WHERE tracks.canonical_url = $canonicalUrl";
         cmd.Parameters.AddWithValue("$canonicalUrl", canonicalUrl);
@@ -2931,7 +2964,7 @@ public class MusicDatabase
                                    tracks.duration_seconds, tracks.needs_reevaluation, channels.name, channels.source_url, tracks.uploaded_at,
                                    tracks.updated_at, tracks.analysis_disabled, tracks.is_public, tracks.library_state,
                                    tracks.source_video_id, tracks.view_count, tracks.like_count,
-                                   tracks.source_thumbnail_url, tracks.source_metadata_updated_at, channels.id
+                                   tracks.source_thumbnail_url, tracks.source_metadata_updated_at, channels.id, tracks.language_code
                             FROM tracks
                             LEFT JOIN channels ON channels.id = tracks.channel_id
                             LEFT JOIN track_analysis analysis ON analysis.track_id = tracks.id
@@ -2965,7 +2998,7 @@ public class MusicDatabase
                                    tracks.duration_seconds, tracks.needs_reevaluation, channels.name, channels.source_url, tracks.uploaded_at,
                                    tracks.updated_at, tracks.analysis_disabled, tracks.is_public, tracks.library_state,
                                    tracks.source_video_id, tracks.view_count, tracks.like_count,
-                                   tracks.source_thumbnail_url, tracks.source_metadata_updated_at, channels.id
+                                   tracks.source_thumbnail_url, tracks.source_metadata_updated_at, channels.id, tracks.language_code
                             FROM tracks LEFT JOIN channels ON channels.id = tracks.channel_id
                             WHERE tracks.rating_id IS NULL AND tracks.library_state <> 'Rejected'
                             ORDER BY tracks.downloaded_at DESC";
@@ -3005,7 +3038,20 @@ public class MusicDatabase
             reader.IsDBNull(17) ? null : reader.GetInt64(17),
             reader.IsDBNull(18) ? null : reader.GetString(18),
             reader.IsDBNull(19) ? null : reader.GetString(19),
-            reader.IsDBNull(20) ? null : reader.GetInt32(20));
+            reader.IsDBNull(20) ? null : reader.GetInt32(20),
+            reader.IsDBNull(21) ? null : reader.GetString(21));
+    }
+
+    public void SetTrackLanguage(int trackId, string? languageCode)
+    {
+        var normalized = string.IsNullOrWhiteSpace(languageCode) ? null : languageCode.Trim();
+        if (normalized is not null && !TrackLanguageCatalog.All.Any(language =>
+                string.Equals(language.Code, normalized, StringComparison.OrdinalIgnoreCase)))
+            throw new ArgumentException($"Unsupported track language '{languageCode}'.", nameof(languageCode));
+
+        using var conn = Open();
+        ExecuteNonQuery(conn, @"UPDATE tracks SET language_code = $languageCode, updated_at = $now WHERE id = $trackId",
+            ("$languageCode", normalized), ("$now", DateTime.UtcNow.ToString("O")), ("$trackId", trackId));
     }
 
     public Dictionary<int, List<int>> GetAllTrackGenreIds()

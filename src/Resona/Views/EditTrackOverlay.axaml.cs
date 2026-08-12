@@ -34,6 +34,7 @@ public partial class EditTrackOverlay : UserControl
     private List<Style> _styles = [];
 
     private readonly List<(Tag Tag, ToggleButton Btn)> _tagChips = [];
+    private readonly List<(TrackLanguage Language, ToggleButton Btn)> _languageChips = [];
     private readonly List<(Style Style, ToggleButton Btn)> _styleChips = [];
     private readonly List<RatingButtonVisual> _ratingButtons = [];
 
@@ -47,6 +48,8 @@ public partial class EditTrackOverlay : UserControl
     private bool _areFrequentManualGenresExpanded;
     private bool _areAllGenresExpanded;
     private bool _areEmotionalCharactersExpanded;
+    private bool _areLanguagesExpanded;
+    private bool _updatingLanguageSelection;
     private int? _modelGenreFilterId;
     private string _modelGenreSearchText = string.Empty;
     private readonly DispatcherTimer _analysisElapsedTimer = new() { Interval = TimeSpan.FromSeconds(1) };
@@ -66,6 +69,7 @@ public partial class EditTrackOverlay : UserControl
     private int? _preparedTrackId;
     private int? _selectedRatingId;
     private int? _initialRatingId;
+    private string? _initialLanguageCode;
     private HashSet<int> _initialTagIds = [];
     private HashSet<int> _initialStyleIds = [];
     private HashSet<int> _initialEnabledModelGenreIds = [];
@@ -156,6 +160,7 @@ public partial class EditTrackOverlay : UserControl
         _areFrequentManualGenresExpanded = false;
         _areAllGenresExpanded = false;
         _areEmotionalCharactersExpanded = false;
+        _areLanguagesExpanded = false;
         LoadLookups();
         _updatingBackdropFocus = true;
         BackdropFocusSlider.Value = Math.Clamp(backdropFocus, 0d, 1d) * 100;
@@ -283,6 +288,7 @@ public partial class EditTrackOverlay : UserControl
         RebuildModelGenreChoices();
         BuildFrequentManualGenreChoices();
         RebuildTagChips(selectedTagIds);
+        RebuildLanguageChips(track.LanguageCode);
         RebuildStyleChips(selectedStyleIds);
         ShowAudioAnalysis(track);
         ShowExperimentalAnalysis(track);
@@ -493,6 +499,103 @@ public partial class EditTrackOverlay : UserControl
                 : "Theme.Brush.TextPrimary");
     }
 
+    private void RebuildLanguageChips(string? selectedLanguageCode)
+    {
+        LanguagesPanel.Children.Clear();
+        _languageChips.Clear();
+
+        var languages = TrackLanguageCatalog.All
+            .OrderBy(language => language.Name, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        var rows = new StackPanel { Spacing = 7 };
+        var rowCount = Math.Max(1, (int)Math.Ceiling(languages.Count / 4d));
+        var languageIndex = 0;
+
+        for (var rowIndex = 0; rowIndex < rowCount && languageIndex < languages.Count; rowIndex++)
+        {
+            var remainingLanguages = languages.Count - languageIndex;
+            var remainingRows = rowCount - rowIndex;
+            var languagesInRow = (int)Math.Ceiling(remainingLanguages / (double)remainingRows);
+            var row = new Grid { ColumnSpacing = 7 };
+
+            for (var column = 0; column < languagesInRow; column++)
+            {
+                var language = languages[languageIndex++];
+                row.ColumnDefinitions.Add(new ColumnDefinition
+                {
+                    Width = new GridLength(Math.Max(6, language.Name.Length + 4), GridUnitType.Star)
+                });
+                var button = CreateClassificationButton(
+                    language.Name,
+                    string.Equals(language.Code, selectedLanguageCode, StringComparison.OrdinalIgnoreCase));
+                button.IsCheckedChanged += (_, _) => OnLanguageSelectionChanged(language, button);
+                _languageChips.Add((language, button));
+                Grid.SetColumn(button, column);
+                row.Children.Add(button);
+            }
+
+            rows.Children.Add(row);
+        }
+
+        LanguagesPanel.Children.Add(rows);
+        UpdateLanguageSummary();
+        SetLanguagesExpanded(false);
+    }
+
+    private static ToggleButton CreateClassificationButton(string name, bool isSelected) =>
+        CreateTagButton(new Tag(0, name), isSelected);
+
+    private void OnLanguageSelectionChanged(TrackLanguage language, ToggleButton button)
+    {
+        if (_updatingLanguageSelection)
+            return;
+
+        _updatingLanguageSelection = true;
+        try
+        {
+            if (button.IsChecked == true)
+                foreach (var chip in _languageChips)
+                    if (!string.Equals(chip.Language.Code, language.Code, StringComparison.OrdinalIgnoreCase))
+                    {
+                        chip.Btn.IsChecked = false;
+                        ApplyTagVisual(chip.Btn);
+                    }
+            ApplyTagVisual(button);
+        }
+        finally
+        {
+            _updatingLanguageSelection = false;
+        }
+
+        UpdateLanguageSummary();
+        AutoSaveChanges();
+    }
+
+    private string? SelectedLanguageCode() => _languageChips
+        .FirstOrDefault(chip => chip.Btn.IsChecked == true)
+        .Language?.Code;
+
+    private void OnLanguagesHeaderPressed(object? sender, PointerPressedEventArgs e)
+    {
+        SetLanguagesExpanded(!_areLanguagesExpanded);
+        e.Handled = true;
+    }
+
+    private void SetLanguagesExpanded(bool expanded)
+    {
+        _areLanguagesExpanded = expanded;
+        LanguagesPanel.IsVisible = expanded;
+        if (LanguagesChevron.RenderTransform is RotateTransform rotation)
+            rotation.Angle = expanded ? 90 : 0;
+    }
+
+    private void UpdateLanguageSummary()
+    {
+        LanguagesSummaryText.Text = _languageChips
+            .FirstOrDefault(chip => chip.Btn.IsChecked == true)
+            .Language?.Name ?? "Not set";
+    }
+
     private void ShowTagSuggestions(MusicTrack track)
     {
         SuggestedTagsSection.IsVisible = false;
@@ -551,6 +654,7 @@ public partial class EditTrackOverlay : UserControl
     {
         _initialTitle = track.Title;
         _initialRatingId = track.RatingId;
+        _initialLanguageCode = track.LanguageCode;
         _initialIsPublic = track.IsPublic;
         _initialTagIds = selectedTagIds.ToHashSet();
         _initialStyleIds = selectedStyleIds.ToHashSet();
@@ -746,14 +850,16 @@ public partial class EditTrackOverlay : UserControl
         var title = TitleBox.Text.Trim();
         var tagIds = SelectedTagIds();
         var styleIds = SelectedStyleIds().ToList();
+        var languageCode = SelectedLanguageCode();
         var coreChanged = !string.Equals(title, _initialTitle, StringComparison.Ordinal)
             || SelectedRatingId() != _initialRatingId
             || _isPublic != _initialIsPublic
             || !styleIds.ToHashSet().SetEquals(_initialStyleIds);
         var tagsChanged = !tagIds.SetEquals(_initialTagIds);
+        var languageChanged = !string.Equals(languageCode, _initialLanguageCode, StringComparison.OrdinalIgnoreCase);
         var disabledGenreIds = _initialEnabledModelGenreIds.Except(_pendingEnabledModelGenreIds).ToList();
         var enabledGenreIds = _pendingEnabledModelGenreIds.Except(_initialEnabledModelGenreIds).ToList();
-        if (!coreChanged && !tagsChanged && disabledGenreIds.Count == 0 && enabledGenreIds.Count == 0)
+        if (!coreChanged && !tagsChanged && !languageChanged && disabledGenreIds.Count == 0 && enabledGenreIds.Count == 0)
             return;
 
         if (coreChanged)
@@ -770,6 +876,9 @@ public partial class EditTrackOverlay : UserControl
         if (tagsChanged)
             MusicLibraryService.Current.SetTrackManualTags(_track.Id, tagIds);
 
+        if (languageChanged)
+            MusicLibraryService.Current.SetTrackLanguage(_track.Id, languageCode);
+
         foreach (var genreId in disabledGenreIds)
             MusicLibraryService.Current.SetTrackModelGenreEnabled(_track.Id, genreId, false);
         foreach (var genreId in enabledGenreIds)
@@ -782,7 +891,8 @@ public partial class EditTrackOverlay : UserControl
             LibraryState = SelectedRatingId() is null
                 ? _track.LibraryState
                 : TrackLibraryState.Active,
-            IsPublic = _isPublic
+            IsPublic = _isPublic,
+            LanguageCode = languageCode
         };
         CaptureChangeSnapshot(_track, tagIds, styleIds.ToHashSet(), _pendingEnabledModelGenreIds);
         TrackSaved?.Invoke(_track.Id);

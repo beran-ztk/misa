@@ -674,6 +674,10 @@
                                                 Width="28" Height="28" Padding="0">
                                             <TextBlock Text="★" FontSize="17" Foreground="{Binding Star5Brush}"/>
                                         </Button>
+                                        <Button Classes="icon" Tag="6" Click="OnQuickStarRatingClicked" ToolTip.Tip="6 stars"
+                                                Width="28" Height="28" Padding="0">
+                                            <TextBlock Text="★" FontSize="17" Foreground="{Binding Star6Brush}"/>
+                                        </Button>
                                         <Button Classes="icon" Click="OnQuickCopyUrlClicked" ToolTip.Tip="Copy YouTube URL"
                                                 Width="30" Height="30" Padding="6" Margin="4,0,0,0">
                                             <Image Source="{SvgImage /Assets/copy.svg}" Width="14" Height="14"/>
@@ -1267,7 +1271,7 @@
                                         <Rectangle Height="1" Fill="{DynamicResource Theme.Brush.Divider}"/>
 
                                         <TextBlock x:Name="CurrentSetEmptyText"
-                                                   Text="Select genres, tags or emotional character ranges below."
+                                                   Text="Select genres, tags, languages or emotional character ranges below."
                                                    FontSize="10.5"
                                                    Opacity="0.5"/>
                                         <StackPanel x:Name="CurrentSetGenresRow" IsVisible="False" Spacing="2">
@@ -1282,6 +1286,14 @@
                                             <TextBlock Text="TAGS" FontSize="9" FontWeight="SemiBold"
                                                        Opacity="0.42" LetterSpacing="0.8"/>
                                             <TextBlock x:Name="CurrentSetTagsText"
+                                                       FontSize="10.5"
+                                                       Foreground="{DynamicResource Theme.Brush.TextSecondary}"
+                                                       TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                        <StackPanel x:Name="CurrentSetLanguagesRow" IsVisible="False" Spacing="2">
+                                            <TextBlock Text="LANGUAGES" FontSize="9" FontWeight="SemiBold"
+                                                       Opacity="0.42" LetterSpacing="0.8"/>
+                                            <TextBlock x:Name="CurrentSetLanguagesText"
                                                        FontSize="10.5"
                                                        Foreground="{DynamicResource Theme.Brush.TextSecondary}"
                                                        TextWrapping="Wrap"/>

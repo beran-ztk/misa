@@ -31,6 +31,7 @@ public record TrackDisplayItem(
     public IBrush Star3Brush => QuickStarBrush(3);
     public IBrush Star4Brush => QuickStarBrush(4);
     public IBrush Star5Brush => QuickStarBrush(5);
+    public IBrush Star6Brush => QuickStarBrush(6);
     public string TempoText { get; set; } = "Tempo —";
     public string LoudnessText { get; set; } = "Loudness —";
     public string DynamicsText { get; set; } = "Dynamics —";
@@ -157,7 +158,8 @@ public record TrackDisplayItem(
 
     public IBrush RatingBackground => RatingText switch
     {
-        "Favorite" => new SolidColorBrush(Color.FromArgb(70, 132, 105, 36)),
+        RatingNames.Timeless => new SolidColorBrush(Color.FromArgb(70, 132, 105, 36)),
+        RatingNames.Amazing => new SolidColorBrush(Color.FromArgb(70, 120, 79, 42)),
         "Great" => new SolidColorBrush(Color.FromArgb(68, 35, 105, 58)),
         "Good" => new SolidColorBrush(Color.FromArgb(66, 31, 93, 82)),
         "Okay" => new SolidColorBrush(Color.FromArgb(62, 83, 84, 64)),
@@ -167,7 +169,8 @@ public record TrackDisplayItem(
 
     public IBrush RatingBorder => RatingText switch
     {
-        "Favorite" => new SolidColorBrush(Color.FromArgb(185, 219, 184, 85)),
+        RatingNames.Timeless => new SolidColorBrush(Color.FromArgb(185, 219, 184, 85)),
+        RatingNames.Amazing => new SolidColorBrush(Color.FromArgb(180, 221, 144, 78)),
         "Great" => new SolidColorBrush(Color.FromArgb(175, 83, 176, 105)),
         "Good" => new SolidColorBrush(Color.FromArgb(170, 76, 164, 139)),
         "Okay" => new SolidColorBrush(Color.FromArgb(150, 139, 144, 108)),
@@ -177,7 +180,8 @@ public record TrackDisplayItem(
 
     public IBrush RatingForeground => RatingText switch
     {
-        "Favorite" => new SolidColorBrush(Color.FromRgb(255, 230, 150)),
+        RatingNames.Timeless => new SolidColorBrush(Color.FromRgb(255, 230, 150)),
+        RatingNames.Amazing => new SolidColorBrush(Color.FromRgb(247, 195, 132)),
         "Great" => new SolidColorBrush(Color.FromRgb(188, 242, 185)),
         "Good" => new SolidColorBrush(Color.FromRgb(176, 232, 212)),
         "Okay" => new SolidColorBrush(Color.FromRgb(226, 224, 194)),
