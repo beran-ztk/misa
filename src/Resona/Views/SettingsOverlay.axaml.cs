@@ -581,6 +581,7 @@ public partial class SettingsOverlay : UserControl
         var page = value switch
         {
             "library" => SettingsPage.Library,
+            "health" => SettingsPage.Health,
             "analysis_server" => SettingsPage.AnalysisServer,
             "appearance" => SettingsPage.Appearance,
             "backup" => SettingsPage.Backup,
@@ -604,6 +605,7 @@ public partial class SettingsOverlay : UserControl
         _selectedPage = page;
         var isGenreVocabularyPage = page == SettingsPage.GenreVocabulary;
         var isLibraryPage = page == SettingsPage.Library;
+        var isHealthPage = page == SettingsPage.Health;
         var isAnalysisServerPage = page == SettingsPage.AnalysisServer;
         var isBackupPage = page == SettingsPage.Backup;
         var isExportPage = page == SettingsPage.Export;
@@ -613,6 +615,7 @@ public partial class SettingsOverlay : UserControl
         var isDiscordPage = page == SettingsPage.Discord;
         GenreVocabularyPage.IsVisible = isGenreVocabularyPage;
         LibraryPage.IsVisible = isLibraryPage;
+        HealthPage.IsVisible = isHealthPage;
         AnalysisServerPage.IsVisible = isAnalysisServerPage;
         BackupPage.IsVisible = isBackupPage;
         ExportPage.IsVisible = isExportPage;
@@ -624,6 +627,7 @@ public partial class SettingsOverlay : UserControl
         TagRulesPage.IsVisible = page == SettingsPage.TagRules;
         GenreVocabularyNavButton.IsChecked = isGenreVocabularyPage;
         LibraryNavButton.IsChecked = isLibraryPage;
+        HealthNavButton.IsChecked = isHealthPage;
         AnalysisServerNavButton.IsChecked = isAnalysisServerPage;
         BackupNavButton.IsChecked = isBackupPage;
         ExportNavButton.IsChecked = isExportPage;
@@ -637,6 +641,7 @@ public partial class SettingsOverlay : UserControl
         PageTitleText.Text = page switch
         {
             SettingsPage.Library => "Library",
+            SettingsPage.Health => "Health check",
             SettingsPage.AnalysisServer => "Analysis server",
             SettingsPage.Backup => "Backup",
             SettingsPage.Export => "Export",
@@ -652,6 +657,8 @@ public partial class SettingsOverlay : UserControl
             ? "Review the genre categories and subgenres used directly by the library."
             : isLibraryPage
                 ? "Where this installation keeps the local music library and its database."
+                : isHealthPage
+                    ? "Check database integrity, workflow consistency, channel mappings and local audio files."
                 : isAnalysisServerPage
                     ? "Configure and verify the service used for track analysis."
                 : isBackupPage
@@ -1421,6 +1428,133 @@ public partial class SettingsOverlay : UserControl
         RefreshAppearancePreview();
     }
 
+    private async void OnRunHealthCheckClicked(object? sender, RoutedEventArgs e)
+    {
+        if (!RunHealthCheckButton.IsEnabled)
+            return;
+
+        RunHealthCheckButton.IsEnabled = false;
+        RunHealthCheckButton.Content = "Checking…";
+        HealthResultPanel.IsVisible = true;
+        HealthStatusDot.Background = new SolidColorBrush(Color.Parse("#7895AE"));
+        HealthSummaryText.Text = "Checking database and files…";
+        HealthCountsText.Text = "This can take a moment for a large library.";
+        HealthLastRunText.Text = string.Empty;
+        HealthIssueRows.Children.Clear();
+        try
+        {
+            var report = await DatabaseHealthService.Current.CheckAsync();
+            RenderHealthReport(report);
+        }
+        catch (Exception exception)
+        {
+            WorkflowLog.Error("database-health", "Database health check failed.", exception);
+            HealthStatusDot.Background = new SolidColorBrush(Color.Parse("#E87878"));
+            HealthSummaryText.Text = "Health check could not finish";
+            HealthCountsText.Text = exception.Message;
+            HealthLastRunText.Text = DateTime.Now.ToString("g", CultureInfo.CurrentCulture);
+        }
+        finally
+        {
+            RunHealthCheckButton.IsEnabled = true;
+            RunHealthCheckButton.Content = "Run health check";
+        }
+    }
+
+    private void RenderHealthReport(DatabaseHealthReport report)
+    {
+        HealthIssueRows.Children.Clear();
+        var statusColor = report.ErrorCount > 0
+            ? "#E87878"
+            : report.WarningCount > 0 ? "#E6BF55" : "#79C994";
+        HealthStatusDot.Background = new SolidColorBrush(Color.Parse(statusColor));
+        HealthSummaryText.Text = report.IsHealthy
+            ? "No health issues found"
+            : $"{report.ErrorCount} error{(report.ErrorCount == 1 ? string.Empty : "s")} · "
+              + $"{report.WarningCount} warning{(report.WarningCount == 1 ? string.Empty : "s")}";
+        HealthCountsText.Text = $"{report.TrackCount:N0} database tracks · "
+                                + $"{report.ReferencedFileCount:N0} referenced filenames · "
+                                + $"{report.AudioFileCount:N0} audio files on disk";
+        HealthLastRunText.Text = $"Finished {report.FinishedAtUtc.ToLocalTime():g} · read-only";
+
+        foreach (var issue in report.Issues)
+            HealthIssueRows.Children.Add(CreateHealthIssueRow(issue));
+    }
+
+    private static Control CreateHealthIssueRow(DatabaseHealthIssue issue)
+    {
+        var color = issue.Severity switch
+        {
+            DatabaseHealthSeverity.Error => Color.Parse("#E87878"),
+            DatabaseHealthSeverity.Warning => Color.Parse("#E6BF55"),
+            _ => Color.Parse("#78AEE8")
+        };
+        var row = new Border
+        {
+            Background = new SolidColorBrush(Color.FromArgb(0x18, color.R, color.G, color.B)),
+            BorderBrush = new SolidColorBrush(Color.FromArgb(0x4A, color.R, color.G, color.B)),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(7),
+            Padding = new Thickness(11, 9)
+        };
+        var grid = new Grid
+        {
+            ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto"),
+            ColumnSpacing = 10
+        };
+        grid.Children.Add(new Border
+        {
+            Width = 7,
+            Height = 7,
+            CornerRadius = new CornerRadius(4),
+            Background = new SolidColorBrush(color),
+            VerticalAlignment = VerticalAlignment.Top,
+            Margin = new Thickness(0, 5, 0, 0)
+        });
+
+        var content = new StackPanel { Spacing = 3 };
+        content.Children.Add(new TextBlock
+        {
+            Text = issue.Title,
+            FontSize = 11.5,
+            FontWeight = FontWeight.SemiBold,
+            TextWrapping = TextWrapping.Wrap
+        });
+        content.Children.Add(new TextBlock
+        {
+            Text = $"{issue.Category} · {issue.Detail}",
+            FontSize = 10.5,
+            Opacity = 0.68,
+            TextWrapping = TextWrapping.Wrap
+        });
+        if (issue.Examples is { Count: > 0 })
+        {
+            content.Children.Add(new TextBlock
+            {
+                Text = string.Join(Environment.NewLine, issue.Examples),
+                FontSize = 9.5,
+                Foreground = new SolidColorBrush(Color.Parse("#9EABB7")),
+                TextWrapping = TextWrapping.Wrap,
+                MaxLines = 5
+            });
+        }
+        Grid.SetColumn(content, 1);
+        grid.Children.Add(content);
+
+        var count = new TextBlock
+        {
+            Text = issue.Count > 1 ? issue.Count.ToString("N0", CultureInfo.CurrentCulture) : string.Empty,
+            FontSize = 10,
+            FontWeight = FontWeight.SemiBold,
+            Foreground = new SolidColorBrush(color),
+            Margin = new Thickness(6, 1, 0, 0)
+        };
+        Grid.SetColumn(count, 2);
+        grid.Children.Add(count);
+        row.Child = grid;
+        return row;
+    }
+
     public void UpdateAppearancePreviewAudio(double energy, double bass, double treble)
     {
         _previewEnergy = energy;
@@ -1534,6 +1668,7 @@ public partial class SettingsOverlay : UserControl
     {
         "appearance" => SettingsPage.Appearance,
         "analysis_server" => SettingsPage.AnalysisServer,
+        "health" => SettingsPage.Health,
         "backup" => SettingsPage.Backup,
         "export" => SettingsPage.Export,
         "runtime" => SettingsPage.Runtime,
@@ -1548,6 +1683,7 @@ public partial class SettingsOverlay : UserControl
     {
         SettingsPage.Appearance => "appearance",
         SettingsPage.AnalysisServer => "analysis_server",
+        SettingsPage.Health => "health",
         SettingsPage.Backup => "backup",
         SettingsPage.Export => "export",
         SettingsPage.Runtime => "runtime",
@@ -1862,5 +1998,5 @@ public partial class SettingsOverlay : UserControl
         public override string ToString() => Name;
     }
 
-    private enum SettingsPage { GenreVocabulary, Library, AnalysisServer, Appearance, Discord, Backup, Export, Runtime, Updates, Tags, TagRules }
+    private enum SettingsPage { GenreVocabulary, Library, Health, AnalysisServer, Appearance, Discord, Backup, Export, Runtime, Updates, Tags, TagRules }
 }
