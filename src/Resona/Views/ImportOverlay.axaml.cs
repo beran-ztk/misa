@@ -183,7 +183,15 @@ public partial class ImportOverlay : UserControl
     private static Control CreatePreviewItemRow(PendingImportPreview pending, ImportPreviewItem item,
         Action refreshPreview)
     {
-        var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto"), ColumnSpacing = 8, Margin = new Thickness(0, 2) };
+        var row = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto,Auto"), ColumnSpacing = 8, Margin = new Thickness(0, 2) };
+        row.Children.Add(new TextBlock
+        {
+            Text = item.DurationSeconds is int seconds ? FormatTrackDuration(seconds) : "--:--",
+            FontSize = 9.5,
+            Foreground = new SolidColorBrush(Color.Parse("#798796")),
+            MinWidth = 34,
+            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
+        });
         var title = new TextBlock
         {
             Text = item.Title,
@@ -192,6 +200,7 @@ public partial class ImportOverlay : UserControl
             TextTrimming = TextTrimming.CharacterEllipsis,
             VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
         };
+        Grid.SetColumn(title, 1);
         row.Children.Add(title);
         var state = new TextBlock
         {
@@ -200,7 +209,7 @@ public partial class ImportOverlay : UserControl
             Foreground = new SolidColorBrush(Color.Parse(PreviewItemStateColor(item))),
             VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
         };
-        Grid.SetColumn(state, 1);
+        Grid.SetColumn(state, 2);
         row.Children.Add(state);
         var remove = new Button
         {
@@ -216,7 +225,7 @@ public partial class ImportOverlay : UserControl
             pending.RemovedCanonicalUrls.Add(item.CanonicalUrl);
             refreshPreview();
         };
-        Grid.SetColumn(remove, 2);
+        Grid.SetColumn(remove, 3);
         row.Children.Add(remove);
         return row;
     }
@@ -616,6 +625,14 @@ public partial class ImportOverlay : UserControl
     };
 
     private static string FormatDuration(TimeSpan value) => value.TotalMinutes >= 1 ? $"{Math.Ceiling(value.TotalMinutes):0} min" : $"{Math.Max(1, Math.Round(value.TotalSeconds)):0} sec";
+    private static string FormatTrackDuration(int seconds)
+    {
+        var value = TimeSpan.FromSeconds(seconds);
+        return value.TotalHours >= 1
+            ? $"{(int)value.TotalHours}:{value.Minutes:00}:{value.Seconds:00}"
+            : $"{(int)value.TotalMinutes}:{value.Seconds:00}";
+    }
+
     private static string FormatElapsed(TimeSpan value) => value.TotalHours >= 1
         ? $"{(int)value.TotalHours}:{value.Minutes:00}:{value.Seconds:00}"
         : $"{(int)value.TotalMinutes}:{value.Seconds:00}";
