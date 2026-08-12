@@ -309,6 +309,15 @@
                     <Image Source="{SvgImage /Assets/review.svg}" Width="18" Height="18"/>
                 </ToggleButton>
 
+                <ToggleButton x:Name="ShowDeclinedCheckBox"
+                              Classes="toolbar-icon"
+                              IsChecked="False"
+                              Checked="OnCompletionFilterChanged"
+                              Unchecked="OnCompletionFilterChanged"
+                              ToolTip.Tip="Show only declined tracks">
+                    <Image Source="{SvgImage /Assets/close.svg}" Width="16" Height="16"/>
+                </ToggleButton>
+
                 <Button x:Name="QuickEditToggleBtn"
                         Classes="icon"
                         Click="OnToggleQuickEditClicked"

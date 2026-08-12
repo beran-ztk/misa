@@ -33,6 +33,7 @@ public class MusicLibraryService
     // --- Tracks ---
 
     public List<MusicTrack> GetTracks() => _db.GetAllTracks();
+    public List<MusicTrack> GetTracksForLibraryView() => _db.GetAllTracks(includeRejected: true);
     public int CountUnratedTracks() => _db.CountUnratedTracks();
     public List<MusicTrack> GetUnratedTracks() => _db.GetUnratedTracks();
     public byte[]? GetTrackThumbnail(int trackId) => _db.GetTrackThumbnail(trackId);

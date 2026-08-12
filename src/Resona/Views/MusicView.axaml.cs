@@ -558,7 +558,7 @@ public partial class MusicView : UserControl
         ClearPlayerArtworkBackground(disposeCache: true);
         var previousItems = _allItems.ToDictionary(item => item.Track.Id);
 
-        var tracks = MusicLibraryService.Current.GetTracks();
+        var tracks = MusicLibraryService.Current.GetTracksForLibraryView();
         var unanalyzedTrackIds = MusicLibraryService.Current.GetTrackIdsMissingAnalysis();
         _allTrackStyleIds = MusicLibraryService.Current.GetAllTrackStyleIds();
         _allTrackGenreIds = MusicLibraryService.Current.GetAllTrackGenreIds();
@@ -902,7 +902,16 @@ public partial class MusicView : UserControl
         var itemById = _allItems.ToDictionary(i => i.Track.Id);
         List<MusicTrack> filtered;
 
-        if (ShowNeedsReviewCheckBox.IsChecked == true)
+        if (ShowDeclinedCheckBox.IsChecked == true)
+        {
+            // Declined mode is a global work view, independent of the user's
+            // musical filters. Turning it off restores those filters unchanged.
+            filtered = _allItems
+                .Where(item => item.Track.LibraryState == TrackLibraryState.Rejected)
+                .Select(item => item.Track)
+                .ToList();
+        }
+        else if (ShowNeedsReviewCheckBox.IsChecked == true)
         {
             // Review mode is an exclusive, temporary view. The user's configured
             // search, rating, visibility and metadata filters remain intact and
@@ -919,7 +928,9 @@ public partial class MusicView : UserControl
             var groups = CurrentFilterGroups();
 
             filtered = TrackFilter.Apply(
-                _allItems.Select(i => i.Track),
+                _allItems
+                    .Where(item => item.Track.LibraryState != TrackLibraryState.Rejected)
+                    .Select(item => item.Track),
                 _allTrackGenreIds,
                 _allTrackStyleIds,
                 _allTrackTagIds,
@@ -940,12 +951,14 @@ public partial class MusicView : UserControl
             .Select(t => itemById[t.Id])
             .ToList();
 
-        if (ShowNeedsReviewCheckBox.IsChecked != true && !_unratedOnly)
+        if (ShowDeclinedCheckBox.IsChecked != true
+            && ShowNeedsReviewCheckBox.IsChecked != true && !_unratedOnly)
             _filteredItems = _filteredItems
                 .Where(item => !item.NeedsReview)
                 .ToList();
 
-        if (ShowNeedsReviewCheckBox.IsChecked != true
+        if (ShowDeclinedCheckBox.IsChecked != true
+            && ShowNeedsReviewCheckBox.IsChecked != true
             && !_unratedOnly
             && ShowNeedsAnalysisCheckBox.IsChecked != true)
             _filteredItems = _filteredItems
@@ -1155,13 +1168,21 @@ public partial class MusicView : UserControl
 
     private List<MusicTrack> TracksMatchingSearchRatingAndGroup(FilterGroupControls group)
     {
+        if (ShowDeclinedCheckBox.IsChecked == true)
+            return _allItems
+                .Where(item => item.Track.LibraryState == TrackLibraryState.Rejected)
+                .Select(item => item.Track)
+                .ToList();
+
         if (ShowNeedsReviewCheckBox.IsChecked == true)
             return _allItems
                 .Where(item => item.NeedsReview)
                 .Select(item => item.Track)
                 .ToList();
 
-        IEnumerable<MusicTrack> query = _allItems.Select(item => item.Track);
+        IEnumerable<MusicTrack> query = _allItems
+            .Where(item => item.Track.LibraryState != TrackLibraryState.Rejected)
+            .Select(item => item.Track);
         var selectedRatingIds = SelectedRatingIds();
         var selectedGenreIds = SelectedIds(group.GenreCtrl.SelectedItems, Values.Genres, g => g.Name, g => g.Id);
         var selectedTagIds = SelectedIds(group.TagCtrl.SelectedItems, Values.Tags, TagFilterName, t => t.Id);
@@ -1415,6 +1436,11 @@ public partial class MusicView : UserControl
 
     private void OnCompletionFilterChanged(object? sender, RoutedEventArgs e)
     {
+        if (sender == ShowNeedsReviewCheckBox && ShowNeedsReviewCheckBox.IsChecked == true)
+            ShowDeclinedCheckBox.IsChecked = false;
+        else if (sender == ShowDeclinedCheckBox && ShowDeclinedCheckBox.IsChecked == true)
+            ShowNeedsReviewCheckBox.IsChecked = false;
+
         RefreshCompletionFilterVisuals();
         ApplyFilterDefinitionChange();
     }
@@ -1424,6 +1450,10 @@ public partial class MusicView : UserControl
         var reviewSelected = ShowNeedsReviewCheckBox.IsChecked == true;
         ShowNeedsReviewCheckBox.Background = reviewSelected ? Brush("#343E6591") : Brushes.Transparent;
         ShowNeedsReviewCheckBox.BorderBrush = Brushes.Transparent;
+
+        var declinedSelected = ShowDeclinedCheckBox.IsChecked == true;
+        ShowDeclinedCheckBox.Background = declinedSelected ? Brush("#2EEE5C5C") : Brushes.Transparent;
+        ShowDeclinedCheckBox.BorderBrush = Brushes.Transparent;
 
         var analysisSelected = ShowNeedsAnalysisCheckBox.IsChecked == true;
         ShowNeedsAnalysisCheckBox.Background = analysisSelected ? Brush("#18EE5C5C") : Brushes.Transparent;
@@ -1845,6 +1875,7 @@ public partial class MusicView : UserControl
         SetRatingFilterMode(manual: false, applyFilter: false);
         SetVisibilityFilterMode("All", applyFilter: false);
         ShowNeedsReviewCheckBox.IsChecked = false;
+        ShowDeclinedCheckBox.IsChecked = false;
         ShowNeedsAnalysisCheckBox.IsChecked = false;
         _filterGroups.Clear();
         RebuildFilterConditionsPanel();
@@ -1890,6 +1921,7 @@ public partial class MusicView : UserControl
                 applyFilter: false,
                 unratedOnly: preset.UnratedOnly);
             SetVisibilityFilterMode(preset.Visibility, applyFilter: false);
+            ShowDeclinedCheckBox.IsChecked = false;
             ShowNeedsReviewCheckBox.IsChecked = preset.ShowNeedsReview;
             ShowNeedsAnalysisCheckBox.IsChecked = preset.ShowNeedsAnalysis;
 

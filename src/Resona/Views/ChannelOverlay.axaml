@@ -695,14 +695,16 @@
                                                    TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding LibraryDetailsText}"
                                                    IsVisible="{Binding HasLibraryDetails}"/>
                                     </StackPanel>
-                                    <Button Grid.Column="2" Classes="channel-icon" Click="OnVideoDownloadClicked"
-                                            IsVisible="{Binding CanDownload}" ToolTip.Tip="Download this track">
-                                        <Image Source="{SvgImage /Assets/download.svg}" Width="14" Height="14"/>
-                                    </Button>
-                                    <Button Grid.Column="2" Classes="channel-icon" Click="OnVideoRetryIssueClicked"
-                                            IsVisible="{Binding CanRetryError}" ToolTip.Tip="{Binding RetryErrorToolTip}">
-                                        <Image Source="{SvgImage /Assets/reload.svg}" Width="14" Height="14"/>
-                                    </Button>
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="2">
+                                        <Button Classes="channel-icon" Click="OnVideoDownloadClicked"
+                                                IsVisible="{Binding CanDownload}" ToolTip.Tip="Download this track">
+                                            <Image Source="{SvgImage /Assets/download.svg}" Width="14" Height="14"/>
+                                        </Button>
+                                        <Button Classes="channel-icon" Click="OnVideoRetryIssueClicked"
+                                                IsVisible="{Binding CanRetryError}" ToolTip.Tip="{Binding RetryErrorToolTip}">
+                                            <Image Source="{SvgImage /Assets/reload.svg}" Width="14" Height="14"/>
+                                        </Button>
+                                    </StackPanel>
                                     <Button Grid.Column="3" Classes="channel-icon" Click="OnVideoPlayClicked" IsVisible="{Binding CanPlay}"
                                             ToolTip.Tip="Play downloaded audio" Opacity="{Binding ActionOpacity}">
                                         <Image Source="{SvgImage /Assets/play.svg}" Width="14" Height="14"/>

@@ -2383,7 +2383,7 @@ public class MusicDatabase
             LEFT JOIN tracks ON tracks.canonical_url = videos.canonical_url
             LEFT JOIN ratings ON ratings.id = tracks.rating_id
             WHERE videos.download_status = 'Queued' AND videos.is_checked = 0
-              AND videos.metadata_status = 'Ready'
+              AND (videos.metadata_status = 'Ready' OR videos.manual_download_requested = 1)
               AND (videos.manual_download_requested = 1 OR (
                    channels.auto_download = 1
                    AND (channels.auto_download_from IS NULL OR videos.discovered_at >= channels.auto_download_from)))
@@ -2445,7 +2445,7 @@ public class MusicDatabase
             UPDATE channel_videos
             SET manual_download_requested = 1,
                 is_checked = 0,
-                download_status = CASE WHEN metadata_status = 'Ready' THEN 'Queued' ELSE 'NotQueued' END,
+                download_status = 'Queued',
                 download_error = NULL,
                 download_attempts = 0,
                 updated_at = $now
@@ -2850,7 +2850,7 @@ public class MusicDatabase
         tx.Commit();
     }
 
-    public List<MusicTrack> GetAllTracks()
+    public List<MusicTrack> GetAllTracks(bool includeRejected = false)
     {
         using var conn = Open();
         using var cmd = conn.CreateCommand();
@@ -2860,8 +2860,9 @@ public class MusicDatabase
                                    tracks.source_video_id, tracks.view_count, tracks.like_count,
                                    tracks.source_thumbnail_url, tracks.source_metadata_updated_at, channels.id
                             FROM tracks LEFT JOIN channels ON channels.id = tracks.channel_id
-                            WHERE tracks.library_state <> 'Rejected'
+                            WHERE ($includeRejected = 1 OR tracks.library_state <> 'Rejected')
                             ORDER BY tracks.downloaded_at DESC";
+        cmd.Parameters.AddWithValue("$includeRejected", includeRejected ? 1 : 0);
         using var reader = cmd.ExecuteReader();
         var tracks = new List<MusicTrack>();
         while (reader.Read())

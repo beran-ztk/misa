@@ -1527,7 +1527,7 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
                 _ => "Remote"
             };
 
-        CanDownload = !CanRetryError
+        CanDownload = DownloadStatus != ChannelDownloadStatus.Failed
             && !hasTrack && DownloadStatus is not ChannelDownloadStatus.Queued
             and not ChannelDownloadStatus.Downloading
             && MetadataStatus is not ChannelMetadataStatus.Queued

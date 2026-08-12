@@ -159,6 +159,18 @@ public sealed class MusicDatabaseImportWorkflowTests : IDisposable
         Assert.Equal("Skipped", Scalar<string>("SELECT download_status FROM channel_videos WHERE id = $id", ("$id", videoId)));
     }
 
+    [Fact]
+    public void Manual_download_can_be_queued_when_metadata_failed()
+    {
+        var videoId = InsertChannelVideo("NotQueued", "Failed", null, "YouTube metadata unavailable", 0);
+
+        Assert.True(_database.RequestChannelVideoDownload(videoId));
+
+        Assert.Equal("Queued", Scalar<string>("SELECT download_status FROM channel_videos WHERE id = $id", ("$id", videoId)));
+        Assert.Equal(1L, Scalar<long>("SELECT manual_download_requested FROM channel_videos WHERE id = $id", ("$id", videoId)));
+        Assert.Equal("Failed", Scalar<string>("SELECT metadata_status FROM channel_videos WHERE id = $id", ("$id", videoId)));
+    }
+
     private int InsertQueueItem(string status, string suffix, string createdAt = "2026-01-01T00:00:00Z")
     {
         using var connection = Open();
@@ -259,6 +271,7 @@ public sealed class MusicDatabaseImportWorkflowTests : IDisposable
             CREATE TABLE channel_videos (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 canonical_url TEXT NOT NULL UNIQUE,
+                is_checked INTEGER NOT NULL DEFAULT 0,
                 download_status TEXT NOT NULL,
                 download_error TEXT NULL,
                 download_attempts INTEGER NOT NULL DEFAULT 0,
