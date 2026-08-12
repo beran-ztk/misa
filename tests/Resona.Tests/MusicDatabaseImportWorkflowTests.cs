@@ -188,6 +188,46 @@ public sealed class MusicDatabaseImportWorkflowTests : IDisposable
         Assert.Equal("Failed", Scalar<string>("SELECT metadata_status FROM channel_videos WHERE id = $id", ("$id", videoId)));
     }
 
+    [Fact]
+    public void Failed_channel_metadata_stays_terminal_across_recovery_and_channel_refresh()
+    {
+        using var connection = Open();
+        using var transaction = connection.BeginTransaction();
+        var channelId = Insert(connection, transaction, @"
+            INSERT INTO channels
+                (name, source_channel_id, source_url, subscribed, created_at, updated_at, last_checked_at)
+            VALUES ('Restricted channel', 'channel-1', 'https://youtube.test/channel-1', 1, $now, $now, $now)",
+            ("$now", "2026-01-01T00:00:00Z"));
+        var videoId = Insert(connection, transaction, @"
+            INSERT INTO channel_videos
+                (channel_id, video_id, canonical_url, title, discovered_at, updated_at,
+                 download_status, metadata_status, metadata_updated_at, metadata_error, metadata_attempts)
+            VALUES ($channelId, 'restricted-1', 'https://youtube.test/watch/restricted-1', 'Restricted track',
+                    $now, $now, 'NotQueued', 'Failed', $now, 'Sign in to confirm your age', 4)",
+            ("$channelId", channelId), ("$now", "2026-01-01T00:00:00Z"));
+        transaction.Commit();
+
+        _database.RecoverChannelMetadataQueue();
+        var refresh = _database.SaveChannelSnapshot(new YouTubeChannelSnapshot(
+            "https://youtube.test/channel-1",
+            "channel-1",
+            "Restricted channel",
+            "https://youtube.test/channel-1",
+            [new YouTubeChannelVideoEntry(
+                "restricted-1",
+                "https://youtube.test/watch/restricted-1",
+                "Restricted track",
+                180,
+                "2025-12-01")]));
+
+        Assert.True(refresh.Success);
+        Assert.Equal(0, _database.QueueBackgroundChannelVideoMetadata(10));
+        Assert.Equal(0, _database.CountBackgroundChannelVideoMetadataWork());
+        Assert.Equal("Failed", Scalar<string>("SELECT metadata_status FROM channel_videos WHERE id = $id", ("$id", videoId)));
+        Assert.Equal("Sign in to confirm your age", Scalar<string>("SELECT metadata_error FROM channel_videos WHERE id = $id", ("$id", videoId)));
+        Assert.Equal(4L, Scalar<long>("SELECT metadata_attempts FROM channel_videos WHERE id = $id", ("$id", videoId)));
+    }
+
     private int InsertQueueItem(string status, string suffix, string createdAt = "2026-01-01T00:00:00Z")
     {
         using var connection = Open();
@@ -254,6 +294,26 @@ public sealed class MusicDatabaseImportWorkflowTests : IDisposable
         using var command = connection.CreateCommand();
         command.CommandText = @"
             PRAGMA foreign_keys = ON;
+            CREATE TABLE channels (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                source_channel_id TEXT NULL UNIQUE,
+                source_url TEXT NULL,
+                inform_new_songs INTEGER NOT NULL DEFAULT 0,
+                subscribed INTEGER NOT NULL DEFAULT 0,
+                created_at TEXT NULL,
+                updated_at TEXT NULL,
+                last_checked_at TEXT NULL,
+                video_count INTEGER NOT NULL DEFAULT 0,
+                auto_download INTEGER NOT NULL DEFAULT 0,
+                follower_count INTEGER NULL,
+                thumbnail_url TEXT NULL,
+                thumbnail BLOB NULL,
+                remote_metadata_updated_at TEXT NULL,
+                basic_metadata_checked_at TEXT NULL,
+                max_duration_minutes INTEGER NULL,
+                auto_download_from TEXT NULL
+            );
             CREATE TABLE tracks (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 rating_id INTEGER NULL,
@@ -264,7 +324,9 @@ public sealed class MusicDatabaseImportWorkflowTests : IDisposable
                 updated_at TEXT NOT NULL,
                 library_state TEXT NOT NULL,
                 needs_reevaluation INTEGER NOT NULL,
-                analysis_disabled INTEGER NOT NULL DEFAULT 0
+                analysis_disabled INTEGER NOT NULL DEFAULT 0,
+                channel_id INTEGER NULL REFERENCES channels(id) ON DELETE SET NULL,
+                source_metadata_updated_at TEXT NULL
             );
             CREATE TABLE import_batches (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -287,17 +349,38 @@ public sealed class MusicDatabaseImportWorkflowTests : IDisposable
             );
             CREATE TABLE channel_videos (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+                channel_id INTEGER NULL REFERENCES channels(id) ON DELETE CASCADE,
+                video_id TEXT NULL UNIQUE,
                 canonical_url TEXT NOT NULL UNIQUE,
+                title TEXT NOT NULL DEFAULT '',
+                duration_seconds INTEGER NULL,
+                uploaded_at TEXT NULL,
+                discovered_at TEXT NOT NULL DEFAULT '',
                 is_checked INTEGER NOT NULL DEFAULT 0,
                 download_status TEXT NOT NULL,
                 download_error TEXT NULL,
                 download_attempts INTEGER NOT NULL DEFAULT 0,
                 manual_download_requested INTEGER NOT NULL DEFAULT 0,
-                metadata_status TEXT NOT NULL,
+                metadata_status TEXT NOT NULL DEFAULT 'Pending',
+                metadata_updated_at TEXT NULL,
                 metadata_error TEXT NULL,
                 metadata_attempts INTEGER NOT NULL DEFAULT 0,
                 metadata_priority INTEGER NOT NULL DEFAULT 0,
+                view_count INTEGER NULL,
+                like_count INTEGER NULL,
+                thumbnail_url TEXT NULL,
                 updated_at TEXT NOT NULL
+            );
+            CREATE TABLE channel_notifications (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                channel_id INTEGER NOT NULL REFERENCES channels(id) ON DELETE CASCADE,
+                channel_video_id INTEGER NULL REFERENCES channel_videos(id) ON DELETE CASCADE,
+                kind TEXT NOT NULL,
+                title TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                is_read INTEGER NOT NULL DEFAULT 0,
+                is_archived INTEGER NOT NULL DEFAULT 0,
+                UNIQUE(channel_video_id, kind)
             );";
         command.ExecuteNonQuery();
     }

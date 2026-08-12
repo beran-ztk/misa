@@ -26,6 +26,13 @@ the existing domain queues:
 - Channel metadata and downloads persist their state in `channel_videos`.
 - Channel subscriptions persist the data needed for a later refresh.
 
+Channel metadata `Failed` is terminal for automatic scheduling. Startup
+recovery, periodic backfill and automatic channel snapshots preserve the status,
+error and attempt count. Only an explicit per-video retry, the channel's retry-
+issues action, or a user-triggered channel refresh may reset it to pending. This
+keeps age-restricted and similarly inaccessible videos from creating permanent
+background traffic.
+
 This separation avoids persisting delegates or duplicating domain state. After a
 restart the domain queue recreates the execution job, while the scheduler again
 applies the global limit and priority rules.

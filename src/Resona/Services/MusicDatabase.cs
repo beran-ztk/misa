@@ -729,7 +729,10 @@ public class MusicDatabase
                          AND channel_videos.metadata_updated_at IS NOT NULL THEN 'Failed'
                     ELSE 'Pending'
                 END,
-                metadata_error = NULL,
+                metadata_error = CASE
+                    WHEN channel_videos.metadata_status = 'Failed' THEN channel_videos.metadata_error
+                    ELSE NULL
+                END,
                 metadata_attempts = CASE
                     WHEN channel_videos.metadata_status IN ('Ready', 'Failed') THEN channel_videos.metadata_attempts
                     ELSE 0
@@ -746,8 +749,8 @@ public class MusicDatabase
                              WHERE tracks.canonical_url = channel_videos.canonical_url
                                AND tracks.downloaded_at <= channel_videos.discovered_at)))
                    OR download_status <> 'Ready'
-                   OR metadata_status IN ('Failed', 'Queued', 'Loading')
-                   OR metadata_error IS NOT NULL
+                   OR metadata_status IN ('Queued', 'Loading')
+                   OR (metadata_status <> 'Failed' AND metadata_error IS NOT NULL)
                    OR metadata_priority <> 0)";
         resolveExisting.ExecuteNonQuery();
     }
@@ -1466,18 +1469,9 @@ public class MusicDatabase
                     duration_seconds = excluded.duration_seconds,
                     uploaded_at = COALESCE(excluded.uploaded_at, channel_videos.uploaded_at),
                     updated_at = excluded.updated_at,
-                    metadata_status = CASE
-                        WHEN channel_videos.metadata_status = 'Failed' THEN 'Pending'
-                        ELSE channel_videos.metadata_status
-                    END,
-                    metadata_error = CASE
-                        WHEN channel_videos.metadata_status = 'Failed' THEN NULL
-                        ELSE channel_videos.metadata_error
-                    END,
-                    metadata_attempts = CASE
-                        WHEN channel_videos.metadata_status = 'Failed' THEN 0
-                        ELSE channel_videos.metadata_attempts
-                    END,
+                    metadata_status = channel_videos.metadata_status,
+                    metadata_error = channel_videos.metadata_error,
+                    metadata_attempts = channel_videos.metadata_attempts,
                     download_status = CASE
                         WHEN EXISTS (SELECT 1 FROM tracks WHERE tracks.canonical_url = excluded.canonical_url) THEN 'Ready'
                         WHEN channel_videos.is_checked = 0 AND excluded.duration_seconds IS NOT NULL
@@ -1928,14 +1922,6 @@ public class MusicDatabase
             $"videos.metadata_status = 'Pending' AND {eligible}", remaining);
         remaining -= queued;
         if (remaining > 0)
-        {
-            var failed = QueueMetadataTiers(conn, tx,
-                $"videos.metadata_status = 'Failed' AND videos.metadata_updated_at < datetime('now', '-7 days') AND {eligible}",
-                remaining);
-            queued += failed;
-            remaining -= failed;
-        }
-        if (remaining > 0)
             queued += QueueMetadataTiers(conn, tx,
                 $"videos.metadata_status = 'Ready' AND (videos.metadata_updated_at IS NULL OR videos.metadata_updated_at < datetime('now', '-30 days')) AND {followed}",
                 remaining);
@@ -2058,8 +2044,6 @@ public class MusicDatabase
             WHERE (channels.subscribed = 1
                    OR (tracks.id IS NOT NULL AND tracks.source_metadata_updated_at IS NULL))
               AND (videos.metadata_status IN ('Pending', 'Queued', 'Loading')
-               OR (videos.metadata_status = 'Failed'
-                   AND videos.metadata_updated_at < datetime('now', '-7 days'))
                OR (videos.metadata_status = 'Ready'
                    AND (videos.metadata_updated_at IS NULL
                         OR videos.metadata_updated_at < datetime('now', '-30 days'))))";
@@ -2072,7 +2056,8 @@ public class MusicDatabase
         using var cmd = conn.CreateCommand();
         cmd.CommandText = @"
             UPDATE channel_videos
-            SET metadata_status = 'Pending', metadata_error = NULL, metadata_priority = 0
+            SET metadata_status = 'Pending', metadata_error = NULL,
+                metadata_attempts = 0, metadata_priority = 0
             WHERE channel_id = $channelId AND metadata_status = 'Failed'";
         cmd.Parameters.AddWithValue("$channelId", channelId);
         return cmd.ExecuteNonQuery();
@@ -2646,7 +2631,10 @@ public class MusicDatabase
                 is_checked = 1,
                 download_status = 'Ready',
                 download_error = NULL,
-                metadata_error = NULL,
+                metadata_error = CASE
+                    WHEN excluded.metadata_status = 'Ready' THEN NULL
+                    ELSE channel_videos.metadata_error
+                END,
                 metadata_priority = 0",
             ("$trackId", trackId), ("$now", now));
     }
