@@ -38,6 +38,7 @@ public partial class MusicView : UserControl
     private readonly GlobalMediaKeyListener _globalMediaKeys = new();
     private readonly WindowsMediaSession _windowsMediaSession = new();
     private readonly DiscordPresenceService _discordPresence = new();
+    private CancellationTokenSource? _pendingTrackClickCts;
     private readonly DispatcherTimer _atmosphereTimer = new() { Interval = TimeSpan.FromMilliseconds(33) };
     private readonly DispatcherTimer _backdropFocusSaveTimer = new() { Interval = TimeSpan.FromMilliseconds(350) };
     private readonly SolidColorBrush _playerTopGlowBrush = new(Colors.Transparent);
@@ -3506,22 +3507,61 @@ public partial class MusicView : UserControl
 
     // ─── Playback control ─────────────────────────────────────────────────────
 
-    private void OnTrackCardTapped(object? sender, TappedEventArgs e)
+    private async void OnTrackCardTapped(object? sender, TappedEventArgs e)
     {
         if (sender is not Control { DataContext: TrackDisplayItem item } card)
             return;
 
-        for (var visual = e.Source as Visual;
-             visual is not null && visual != card;
-             visual = visual.GetVisualParent())
-        {
-            if (visual is Button or Slider)
-                return;
-        }
+        if (IsInteractiveTrackCardSource(e.Source as Visual, card))
+            return;
 
         FileList.SelectedItem = item;
-        OpenTrackEditor(item.Track);
+        _pendingTrackClickCts?.Cancel();
+        var cancellation = new CancellationTokenSource();
+        _pendingTrackClickCts = cancellation;
+
+        var doubleTapTime = TopLevel.GetTopLevel(this)?.PlatformSettings?
+            .GetDoubleTapTime(PointerType.Mouse) ?? TimeSpan.FromMilliseconds(500);
+        try
+        {
+            await Task.Delay(doubleTapTime + TimeSpan.FromMilliseconds(25), cancellation.Token);
+            if (!cancellation.IsCancellationRequested)
+                OpenTrackEditor(item.Track);
+        }
+        catch (OperationCanceledException)
+        {
+            // A second click resolved the gesture as a double-click.
+        }
+        finally
+        {
+            if (ReferenceEquals(_pendingTrackClickCts, cancellation))
+                _pendingTrackClickCts = null;
+            cancellation.Dispose();
+        }
+    }
+
+    private void OnTrackCardDoubleTapped(object? sender, TappedEventArgs e)
+    {
+        if (sender is not Control { DataContext: TrackDisplayItem item } card
+            || IsInteractiveTrackCardSource(e.Source as Visual, card))
+            return;
+
+        _pendingTrackClickCts?.Cancel();
+        _pendingTrackClickCts = null;
+        FileList.SelectedItem = item;
+        StartPlayback(resetQueue: true);
         e.Handled = true;
+    }
+
+    private static bool IsInteractiveTrackCardSource(Visual? source, Visual card)
+    {
+        for (var visual = source;
+             visual is not null && visual != card;
+             visual = visual.GetVisualParent())
+            if (visual is Button or Slider)
+                return true;
+
+        return false;
     }
 
     private void OnPreviousClicked(object? sender, RoutedEventArgs e) => NavigatePrevious();

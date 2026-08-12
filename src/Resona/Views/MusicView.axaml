@@ -515,6 +515,7 @@
                                     Classes="track-card"
                                     IsVisible="{Binding IsStandardMode}"
                                     Tapped="OnTrackCardTapped"
+                                    DoubleTapped="OnTrackCardDoubleTapped"
                                     CornerRadius="4"
                                     ClipToBounds="True"
                                     Padding="0,0">
@@ -700,6 +701,7 @@
                                     Classes="track-card"
                                     IsVisible="{Binding IsQuickEditMode}"
                                     Tapped="OnTrackCardTapped"
+                                    DoubleTapped="OnTrackCardDoubleTapped"
                                     CornerRadius="6"
                                     Padding="12,9"
                                     BorderBrush="{Binding ArtworkBorderBrush}"
