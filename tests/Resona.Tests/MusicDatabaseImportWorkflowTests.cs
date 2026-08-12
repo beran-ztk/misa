@@ -83,6 +83,23 @@ public sealed class MusicDatabaseImportWorkflowTests : IDisposable
     }
 
     [Fact]
+    public void Disabling_analysis_preserves_review_and_library_state()
+    {
+        var pendingReviewId = InsertTrack(ratingId: null, state: "PendingRating", needsReview: 1);
+        var reviewedId = InsertTrack(ratingId: 4, state: "Active", needsReview: 0);
+
+        _database.SetTrackAnalysisDisabled(pendingReviewId, true);
+        _database.SetTrackAnalysisDisabled(reviewedId, true);
+
+        Assert.Equal(1L, Scalar<long>("SELECT analysis_disabled FROM tracks WHERE id = $id", ("$id", pendingReviewId)));
+        Assert.Equal("PendingRating", Scalar<string>("SELECT library_state FROM tracks WHERE id = $id", ("$id", pendingReviewId)));
+        Assert.Equal(1L, Scalar<long>("SELECT needs_reevaluation FROM tracks WHERE id = $id", ("$id", pendingReviewId)));
+        Assert.Equal(1L, Scalar<long>("SELECT analysis_disabled FROM tracks WHERE id = $id", ("$id", reviewedId)));
+        Assert.Equal("Active", Scalar<string>("SELECT library_state FROM tracks WHERE id = $id", ("$id", reviewedId)));
+        Assert.Equal(0L, Scalar<long>("SELECT needs_reevaluation FROM tracks WHERE id = $id", ("$id", reviewedId)));
+    }
+
+    [Fact]
     public void Production_guards_reject_invalid_track_states()
     {
         using var connection = Open();

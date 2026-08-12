@@ -657,11 +657,18 @@ public partial class ImportOverlay : UserControl
 
         var items = new List<AnalysisQueueItem>();
         if (snapshot.ActiveTrackId is int activeTrackId && tracks.TryGetValue(activeTrackId, out var activeTrack))
-            items.Add(new AnalysisQueueItem(activeTrack.Title, "analyzing", true));
+            items.Add(new AnalysisQueueItem(
+                activeTrack.Id,
+                activeTrack.DurationSeconds,
+                activeTrack.Title,
+                "analyzing",
+                true));
 
         items.AddRange(snapshot.PendingTrackIds
             .Where(id => tracks.ContainsKey(id))
             .Select(id => new AnalysisQueueItem(
+                tracks[id].Id,
+                tracks[id].DurationSeconds,
                 tracks[id].Title,
                 snapshot.ServerConnectionState == AnalysisServerConnectionState.Unreachable
                     ? "waiting for server"
@@ -670,16 +677,32 @@ public partial class ImportOverlay : UserControl
         return items;
     }
 
-    private static Control CreateAnalysisQueueRow(AnalysisQueueItem item)
+    private Control CreateAnalysisQueueRow(AnalysisQueueItem item)
     {
-        var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto"), ColumnSpacing = 8, Margin = new Thickness(0, 1) };
+        var row = new Grid
+        {
+            ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto,Auto"),
+            ColumnSpacing = 8,
+            Margin = new Thickness(0, 1)
+        };
         row.Children.Add(new TextBlock
+        {
+            Text = item.DurationSeconds is int seconds ? FormatTrackDuration(seconds) : "--:--",
+            FontSize = 9.5,
+            Foreground = new SolidColorBrush(Color.Parse("#798796")),
+            MinWidth = 34,
+            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
+        });
+        var title = new TextBlock
         {
             Text = item.Title,
             FontSize = 10.5,
             Foreground = new SolidColorBrush(Color.Parse(item.IsActive ? "#E87878" : "#D89A9A")),
-            TextTrimming = TextTrimming.CharacterEllipsis
-        });
+            TextTrimming = TextTrimming.CharacterEllipsis,
+            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
+        };
+        Grid.SetColumn(title, 1);
+        row.Children.Add(title);
         var state = new TextBlock
         {
             Text = item.Status,
@@ -688,21 +711,25 @@ public partial class ImportOverlay : UserControl
             Margin = new Thickness(10, 0, 0, 0),
             VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
         };
-        Grid.SetColumn(state, 1);
+        Grid.SetColumn(state, 2);
         row.Children.Add(state);
-        if (item.IsActive)
+        var remove = new Button
         {
-            var cancel = new Button
-            {
-                Content = "Cancel",
-                FontSize = 9,
-                Padding = new Thickness(6, 2),
-                Opacity = 0.78
-            };
-            cancel.Click += (_, _) => BackgroundAnalysisService.Current.CancelActiveAnalysis();
-            Grid.SetColumn(cancel, 2);
-            row.Children.Add(cancel);
-        }
+            Content = "×",
+            FontSize = 12,
+            Padding = new Thickness(5, 0),
+            Background = Brushes.Transparent,
+            BorderThickness = new Thickness(0),
+            Opacity = 0.62
+        };
+        ToolTip.SetTip(remove, "Remove from analysis queue");
+        remove.Click += (_, _) =>
+        {
+            BackgroundAnalysisService.Current.RemoveTrack(item.TrackId);
+            RefreshQueue();
+        };
+        Grid.SetColumn(remove, 3);
+        row.Children.Add(remove);
         return row;
     }
 
@@ -722,5 +749,10 @@ public partial class ImportOverlay : UserControl
         public HashSet<string> RemovedCanonicalUrls { get; } = new(StringComparer.OrdinalIgnoreCase);
     }
 
-    private sealed record AnalysisQueueItem(string Title, string Status, bool IsActive);
+    private sealed record AnalysisQueueItem(
+        int TrackId,
+        int? DurationSeconds,
+        string Title,
+        string Status,
+        bool IsActive);
 }

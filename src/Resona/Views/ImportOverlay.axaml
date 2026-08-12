@@ -103,10 +103,15 @@
                                        VerticalAlignment="Center"/>
                             <Button x:Name="RetryAnalysisServerButton"
                                     Grid.Column="1"
-                                    Content="Reconnect"
-                                    FontSize="10"
-                                    Padding="9,4"
-                                    Click="OnRetryAnalysisServerClicked"/>
+                                    Width="28"
+                                    Height="26"
+                                    Padding="0"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    Click="OnRetryAnalysisServerClicked"
+                                    ToolTip.Tip="Reconnect analysis server">
+                                <Image Source="{SvgImage /Assets/reload.svg}" Width="14" Height="14" Opacity="0.82"/>
+                            </Button>
                         </Grid>
                     </Border>
                     <TextBlock x:Name="EmptyAnalysisQueueText" Text="No analysis pending." FontSize="12" Opacity="0.5"/>

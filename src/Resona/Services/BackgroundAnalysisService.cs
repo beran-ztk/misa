@@ -14,6 +14,7 @@ public sealed class BackgroundAnalysisService
     private readonly object _gate = new();
     private readonly Queue<int> _pendingTrackIds = [];
     private readonly HashSet<int> _queuedTrackIds = [];
+    private readonly HashSet<int> _removedActiveTrackIds = [];
     private Task? _workerTask;
     private int? _activeTrackId;
     private CancellationTokenSource? _activeAnalysisCancellation;
@@ -119,6 +120,39 @@ public sealed class BackgroundAnalysisService
         }
     }
 
+    public bool RemoveTrack(int trackId)
+    {
+        // Persist first so this track cannot be re-added by startup recovery or
+        // another enqueue request racing with the in-memory removal.
+        MusicLibraryService.Current.SetTrackAnalysisDisabled(trackId, true);
+
+        var removed = false;
+        lock (_gate)
+        {
+            if (_pendingTrackIds.Contains(trackId))
+            {
+                var retainedTrackIds = _pendingTrackIds.Where(id => id != trackId).ToList();
+                _pendingTrackIds.Clear();
+                foreach (var retainedTrackId in retainedTrackIds)
+                    _pendingTrackIds.Enqueue(retainedTrackId);
+                _queuedTrackIds.Remove(trackId);
+                removed = true;
+            }
+
+            if (_activeTrackId == trackId)
+            {
+                removed = true;
+                _removedActiveTrackIds.Add(trackId);
+                try { _activeAnalysisCancellation?.Cancel(); }
+                catch (ObjectDisposedException) { }
+            }
+        }
+
+        if (removed)
+            RaiseQueueChanged();
+        return removed;
+    }
+
     private void EnqueueTracks(IEnumerable<int> trackIds)
     {
         var eligibleTrackIds = trackIds
@@ -186,6 +220,7 @@ public sealed class BackgroundAnalysisService
                 MusicTrack? track = null;
                 string? error = null;
                 var retryable = false;
+                var removedByUser = false;
 
                 try
                 {
@@ -210,9 +245,11 @@ public sealed class BackgroundAnalysisService
                 }
                 finally
                 {
+                    var shouldRetry = retryable && MusicLibraryService.Current.ShouldAnalyzeTrack(trackId);
                     lock (_gate)
                     {
-                        if (retryable)
+                        removedByUser = _removedActiveTrackIds.Remove(trackId);
+                        if (shouldRetry)
                         {
                             _pendingTrackIds.Enqueue(trackId);
                             _pausedForTransientFailure = true;
@@ -229,7 +266,7 @@ public sealed class BackgroundAnalysisService
                     RaiseQueueChanged();
                 }
 
-                if (track is not null)
+                if (track is not null && !removedByUser)
                 {
                     if (error is null)
                         WorkflowLog.Info("analysis", $"Completed track {track.Id}.");
