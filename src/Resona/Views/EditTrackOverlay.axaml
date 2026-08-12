@@ -316,7 +316,7 @@
                                 </Grid>
 
                                 <StackPanel x:Name="EmotionalCharacterSection" IsVisible="False" Spacing="6" Margin="0,3,0,0">
-                                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="7" Cursor="Hand"
+                                    <Grid ColumnDefinitions="Auto,Auto,*" ColumnSpacing="7" Cursor="Hand"
                                           PointerPressed="OnEmotionalCharacterHeaderPressed">
                                         <Border Width="14" Height="14" VerticalAlignment="Center">
                                             <Path x:Name="EmotionalCharacterChevron"
@@ -331,18 +331,18 @@
                                         </Border>
                                         <TextBlock Grid.Column="1" Text="Emotional character" FontSize="10.5" FontWeight="SemiBold"
                                                    VerticalAlignment="Center" />
+                                        <TextBlock x:Name="MirexSeeMoreText"
+                                                   Grid.Column="2"
+                                                   Text="See more"
+                                                   IsVisible="False"
+                                                   Margin="2,0,0,0"
+                                                   HorizontalAlignment="Left"
+                                                   VerticalAlignment="Center"
+                                                   FontSize="10"
+                                                   Foreground="{DynamicResource Theme.Brush.TextSecondary}"
+                                                   Opacity="0.68" />
                                     </Grid>
                                     <StackPanel x:Name="MirexPrimaryPanel" Spacing="4" Margin="22,0,0,0" />
-                                    <TextBlock x:Name="MirexSeeMoreText"
-                                               Text="See more"
-                                               IsVisible="False"
-                                               Margin="22,0,0,0"
-                                               HorizontalAlignment="Right"
-                                               FontSize="10"
-                                               Foreground="{DynamicResource Theme.Brush.TextSecondary}"
-                                               Opacity="0.68"
-                                               Cursor="Hand"
-                                               PointerPressed="OnEmotionalCharacterHeaderPressed" />
                                     <StackPanel x:Name="MirexAdditionalPanel" IsVisible="False" Spacing="5" Margin="22,0,0,0" />
                                 </StackPanel>
                             </StackPanel>
