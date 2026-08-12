@@ -13,7 +13,14 @@ public class MusicDatabase
 {
     private const string AssetBaseUri = "avares://Resona/Assets/";
     private const string RemovedMoodThemeModelName = "mtg_" + "jamen" + "do_" + "mood" + "theme";
-    private readonly string _connectionString = $"Data Source={Values.DbPath};Default Timeout=30";
+    private readonly string _databasePath;
+    private readonly string _connectionString;
+
+    public MusicDatabase(string? databasePath = null)
+    {
+        _databasePath = string.IsNullOrWhiteSpace(databasePath) ? Values.DbPath : databasePath;
+        _connectionString = $"Data Source={_databasePath};Default Timeout=30";
+    }
 
     private SqliteConnection Open()
     {
@@ -29,7 +36,7 @@ public class MusicDatabase
 
     public void Initialize()
     {
-        if (File.Exists(Values.DbPath))
+        if (File.Exists(_databasePath))
         {
             using var existingConnection = Open();
             EnableConcurrentReads(existingConnection);
@@ -37,7 +44,7 @@ public class MusicDatabase
             return;
         }
 
-        var directory = Path.GetDirectoryName(Values.DbPath);
+        var directory = Path.GetDirectoryName(_databasePath);
         if (!string.IsNullOrEmpty(directory))
             Directory.CreateDirectory(directory);
 
@@ -46,6 +53,7 @@ public class MusicDatabase
         CreateSchema(conn, tx);
         SeedDefaultMetadata(conn, tx);
         tx.Commit();
+        EnsureTrackWorkflowGuards(conn);
     }
 
     private static void EnableConcurrentReads(SqliteConnection connection)
@@ -298,6 +306,7 @@ public class MusicDatabase
             "CREATE INDEX IF NOT EXISTS ix_tracks_library_state ON tracks(library_state, downloaded_at DESC)");
         EnsureColumn(conn, "tracks", "analysis_disabled", "INTEGER NOT NULL DEFAULT 0");
         EnsureColumn(conn, "tracks", "is_public", "INTEGER NOT NULL DEFAULT 1");
+        EnsureColumn(conn, "tracks", "needs_reevaluation", "INTEGER NOT NULL DEFAULT 0");
         EnsureColumn(conn, "track_analysis", "analysis_duration_ms", "INTEGER NULL");
         EnsureColumn(conn, "model_subgenres", "description", "TEXT NULL");
         EnsureColumn(conn, "model_subgenres", "classification_hint", "TEXT NULL");
@@ -305,6 +314,9 @@ public class MusicDatabase
         EnsureColumn(conn, "model_subgenres", "bpm_max", "INTEGER NULL");
         EnsureTrackGenreSourceSchema(conn);
         RenameLegacySkipRating(conn);
+        DropTrackWorkflowGuards(conn);
+        NormalizeTrackWorkflowState(conn);
+        EnsureTrackWorkflowGuards(conn);
         EnsureChannelSubscriptionSchema(conn);
         CreateImportQueueSchema(conn);
         CreateModelMetadataSchema(conn);
@@ -312,6 +324,62 @@ public class MusicDatabase
         SimplifyTagSchemaIfNeeded(conn);
         CreatePortableExportSchema(conn);
     }
+
+    internal static void NormalizeTrackWorkflowState(SqliteConnection conn)
+    {
+        var now = DateTime.UtcNow.ToString("O");
+        ExecuteNonQuery(conn, @"
+            UPDATE tracks
+            SET library_state = 'PendingRating', needs_reevaluation = 1, updated_at = $now
+            WHERE rating_id IS NULL AND library_state <> 'Rejected';
+
+            UPDATE tracks
+            SET library_state = 'Active', updated_at = $now
+            WHERE rating_id IS NOT NULL AND library_state = 'PendingRating';
+
+            UPDATE tracks
+            SET needs_reevaluation = 0, analysis_disabled = 1, updated_at = $now
+            WHERE library_state = 'Rejected'
+              AND (needs_reevaluation <> 0 OR analysis_disabled <> 1);
+
+            UPDATE tracks
+            SET library_state = CASE WHEN rating_id IS NULL THEN 'PendingRating' ELSE 'Active' END,
+                needs_reevaluation = CASE WHEN rating_id IS NULL THEN 1 ELSE needs_reevaluation END,
+                updated_at = $now
+            WHERE library_state NOT IN ('PendingRating', 'Active', 'Rejected');",
+            ("$now", now));
+    }
+
+    internal static void EnsureTrackWorkflowGuards(SqliteConnection conn)
+    {
+        ExecuteNonQuery(conn, @"
+            CREATE TRIGGER IF NOT EXISTS trg_tracks_workflow_insert
+            BEFORE INSERT ON tracks
+            WHEN NOT (
+                (NEW.library_state = 'PendingRating' AND NEW.rating_id IS NULL AND NEW.needs_reevaluation = 1)
+                OR (NEW.library_state = 'Active' AND NEW.rating_id IS NOT NULL)
+                OR (NEW.library_state = 'Rejected' AND NEW.needs_reevaluation = 0 AND NEW.analysis_disabled = 1)
+            )
+            BEGIN
+                SELECT RAISE(ABORT, 'invalid track workflow state');
+            END;
+
+            CREATE TRIGGER IF NOT EXISTS trg_tracks_workflow_update
+            BEFORE UPDATE OF library_state, rating_id, needs_reevaluation, analysis_disabled ON tracks
+            WHEN NOT (
+                (NEW.library_state = 'PendingRating' AND NEW.rating_id IS NULL AND NEW.needs_reevaluation = 1)
+                OR (NEW.library_state = 'Active' AND NEW.rating_id IS NOT NULL)
+                OR (NEW.library_state = 'Rejected' AND NEW.needs_reevaluation = 0 AND NEW.analysis_disabled = 1)
+            )
+            BEGIN
+                SELECT RAISE(ABORT, 'invalid track workflow state');
+            END;");
+    }
+
+    private static void DropTrackWorkflowGuards(SqliteConnection conn) =>
+        ExecuteNonQuery(conn, @"
+            DROP TRIGGER IF EXISTS trg_tracks_workflow_insert;
+            DROP TRIGGER IF EXISTS trg_tracks_workflow_update;");
 
     private static void EnsureTrackGenreSourceSchema(SqliteConnection conn)
     {
@@ -943,6 +1011,11 @@ public class MusicDatabase
                 ("$status", ImportQueueStatus.Queued.ToString()), ("$detail", item.Detail),
                 ("$createdAt", now), ("$updatedAt", now));
         }
+        ExecuteInsert(conn, tx, @"DELETE FROM import_batches
+                                  WHERE NOT EXISTS (
+                                      SELECT 1 FROM import_queue_items
+                                      WHERE import_queue_items.batch_id = import_batches.id
+                                  )");
         tx.Commit();
         return (int)batchId;
     }
@@ -990,13 +1063,122 @@ public class MusicDatabase
         return reader.Read() ? ReadImportQueueItem(reader) : null;
     }
 
+    public ImportQueueItem? ClaimNextQueuedImport()
+    {
+        using var conn = Open();
+        using var tx = conn.BeginTransaction();
+        ImportQueueItem? item;
+        using (var select = conn.CreateCommand())
+        {
+            select.Transaction = tx;
+            select.CommandText = @"SELECT id, batch_id, source_url, canonical_url, title, duration_seconds,
+                                          estimated_size_bytes, status, detail, track_id
+                                   FROM import_queue_items
+                                   WHERE status = $queued
+                                   ORDER BY created_at, id
+                                   LIMIT 1";
+            select.Parameters.AddWithValue("$queued", ImportQueueStatus.Queued.ToString());
+            using var reader = select.ExecuteReader();
+            item = reader.Read() ? ReadImportQueueItem(reader) : null;
+        }
+
+        if (item is null)
+        {
+            tx.Commit();
+            return null;
+        }
+
+        using var claim = conn.CreateCommand();
+        claim.Transaction = tx;
+        claim.CommandText = @"UPDATE import_queue_items
+                              SET status = $downloading, detail = $detail, updated_at = $now
+                              WHERE id = $id AND status = $queued";
+        claim.Parameters.AddWithValue("$downloading", ImportQueueStatus.Downloading.ToString());
+        claim.Parameters.AddWithValue("$detail", "Checking download details…");
+        claim.Parameters.AddWithValue("$now", DateTime.UtcNow.ToString("O"));
+        claim.Parameters.AddWithValue("$id", item.Id);
+        claim.Parameters.AddWithValue("$queued", ImportQueueStatus.Queued.ToString());
+        var claimed = claim.ExecuteNonQuery() == 1;
+        tx.Commit();
+        return claimed
+            ? item with
+            {
+                Status = ImportQueueStatus.Downloading,
+                Detail = "Checking download details…"
+            }
+            : null;
+    }
+
     public void UpdateImportQueueItem(int id, ImportQueueStatus status, string? detail = null, int? trackId = null)
     {
         using var conn = Open();
-        ExecuteNonQuery(conn, @"UPDATE import_queue_items SET status = $status, detail = $detail,
-                                track_id = COALESCE($trackId, track_id), updated_at = $updatedAt WHERE id = $id",
+        using var tx = conn.BeginTransaction();
+        ImportQueueStatus currentStatus;
+        using (var current = conn.CreateCommand())
+        {
+            current.Transaction = tx;
+            current.CommandText = "SELECT status FROM import_queue_items WHERE id = $id";
+            current.Parameters.AddWithValue("$id", id);
+            var value = current.ExecuteScalar() as string
+                ?? throw new InvalidOperationException($"Import queue item {id} no longer exists.");
+            if (!Enum.TryParse(value, ignoreCase: true, out currentStatus))
+                throw new InvalidOperationException($"Import queue item {id} has unknown status '{value}'.");
+        }
+
+        if (!ImportQueueStateMachine.CanTransition(currentStatus, status))
+            throw new InvalidOperationException($"Invalid import transition {currentStatus} → {status} for item {id}.");
+
+        ExecuteInsert(conn, tx, @"UPDATE import_queue_items SET status = $status, detail = $detail,
+                                  track_id = COALESCE($trackId, track_id), updated_at = $updatedAt WHERE id = $id",
             ("$status", status.ToString()), ("$detail", detail), ("$trackId", trackId),
             ("$updatedAt", DateTime.UtcNow.ToString("O")), ("$id", id));
+        tx.Commit();
+    }
+
+    public void CompleteImportQueueItem(int itemId, int trackId)
+    {
+        using var conn = Open();
+        using var tx = conn.BeginTransaction();
+        var now = DateTime.UtcNow.ToString("O");
+
+        using (var track = conn.CreateCommand())
+        {
+            track.Transaction = tx;
+            track.CommandText = @"UPDATE tracks
+                                  SET library_state = CASE
+                                          WHEN rating_id IS NULL THEN 'PendingRating'
+                                          ELSE 'Active'
+                                      END,
+                                      needs_reevaluation = CASE
+                                          WHEN rating_id IS NULL THEN 1
+                                          ELSE needs_reevaluation
+                                      END,
+                                      updated_at = $now
+                                  WHERE id = $trackId";
+            track.Parameters.AddWithValue("$trackId", trackId);
+            track.Parameters.AddWithValue("$now", now);
+            if (track.ExecuteNonQuery() != 1)
+                throw new InvalidOperationException($"Cannot complete import {itemId}: track {trackId} does not exist.");
+        }
+
+        int batchId;
+        using (var queueItem = conn.CreateCommand())
+        {
+            queueItem.Transaction = tx;
+            queueItem.CommandText = "SELECT batch_id FROM import_queue_items WHERE id = $id";
+            queueItem.Parameters.AddWithValue("$id", itemId);
+            var value = queueItem.ExecuteScalar();
+            if (value is not long storedBatchId)
+                throw new InvalidOperationException($"Cannot complete import: queue item {itemId} does not exist.");
+            batchId = (int)storedBatchId;
+        }
+
+        ExecuteInsert(conn, tx, "DELETE FROM import_queue_items WHERE id = $id", ("$id", itemId));
+        ExecuteInsert(conn, tx, @"DELETE FROM import_batches
+                                  WHERE id = $batchId
+                                    AND NOT EXISTS (SELECT 1 FROM import_queue_items WHERE batch_id = $batchId)",
+            ("$batchId", batchId));
+        tx.Commit();
     }
 
     public ImportQueueSummary GetImportQueueSummary()
@@ -1062,18 +1244,64 @@ public class MusicDatabase
     public bool RemoveQueuedImport(int id)
     {
         using var conn = Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = "DELETE FROM import_queue_items WHERE id = $id AND status IN ($queued, $failed)";
-        cmd.Parameters.AddWithValue("$id", id);
-        cmd.Parameters.AddWithValue("$queued", ImportQueueStatus.Queued.ToString());
-        cmd.Parameters.AddWithValue("$failed", ImportQueueStatus.Failed.ToString());
-        return cmd.ExecuteNonQuery() > 0;
+        using var tx = conn.BeginTransaction();
+        var batchId = GetImportBatchId(
+            conn,
+            tx,
+            id,
+            "status IN ($queued, $failed)",
+            ("$queued", ImportQueueStatus.Queued.ToString()),
+            ("$failed", ImportQueueStatus.Failed.ToString()));
+        if (batchId is null)
+        {
+            tx.Commit();
+            return false;
+        }
+
+        DeleteImportQueueItem(conn, tx, id, batchId.Value);
+        tx.Commit();
+        return true;
     }
 
     public void DeleteImportQueueItem(int id)
     {
         using var conn = Open();
-        ExecuteNonQuery(conn, "DELETE FROM import_queue_items WHERE id = $id", ("$id", id));
+        using var tx = conn.BeginTransaction();
+        var batchId = GetImportBatchId(conn, tx, id, "1 = 1");
+        if (batchId is not null)
+            DeleteImportQueueItem(conn, tx, id, batchId.Value);
+        tx.Commit();
+    }
+
+    private static int? GetImportBatchId(
+        SqliteConnection conn,
+        SqliteTransaction tx,
+        int itemId,
+        string predicate,
+        params (string Name, object? Value)[] parameters)
+    {
+        using var command = conn.CreateCommand();
+        command.Transaction = tx;
+        command.CommandText = $"SELECT batch_id FROM import_queue_items WHERE id = $id AND {predicate}";
+        command.Parameters.AddWithValue("$id", itemId);
+        foreach (var (name, value) in parameters)
+            command.Parameters.AddWithValue(name, value ?? DBNull.Value);
+        return command.ExecuteScalar() is long batchId ? (int)batchId : null;
+    }
+
+    private static void DeleteImportQueueItem(
+        SqliteConnection conn,
+        SqliteTransaction tx,
+        int itemId,
+        int batchId)
+    {
+        ExecuteInsert(conn, tx, "DELETE FROM import_queue_items WHERE id = $id", ("$id", itemId));
+        ExecuteInsert(conn, tx, @"DELETE FROM import_batches
+                                  WHERE id = $batchId
+                                    AND NOT EXISTS (
+                                        SELECT 1 FROM import_queue_items WHERE batch_id = $batchId
+                                    )",
+            ("$batchId", batchId));
     }
 
     private static ImportQueueItem ReadImportQueueItem(SqliteDataReader reader) => new(
@@ -2382,10 +2610,11 @@ public class MusicDatabase
         var trackId = InsertAndGetId(conn, tx, @"
             INSERT INTO tracks
                 (canonical_url, title, file_name, channel_id, rating_id, uploaded_at, downloaded_at, updated_at,
-                 duration_seconds, file_size_bytes, download_duration_ms, thumbnail, analysis_disabled, needs_reevaluation, is_public)
+                 duration_seconds, file_size_bytes, download_duration_ms, thumbnail, analysis_disabled, needs_reevaluation,
+                 is_public, library_state)
             VALUES
                 ($url, $title, $fileName, $channelId, NULL, $uploadedAt, $now, $now,
-                 $duration, $fileSize, $downloadDuration, $thumbnail, 0, 1, 1)",
+                 $duration, $fileSize, $downloadDuration, $thumbnail, 0, 1, 1, 'PendingRating')",
             ("$url", video.CanonicalUrl),
             ("$title", video.Title),
             ("$fileName", fileName),
@@ -2450,7 +2679,8 @@ public class MusicDatabase
         {
             ExecuteInsert(conn, tx, @"
                 UPDATE tracks
-                SET library_state = 'Active', analysis_disabled = 0,
+                SET library_state = CASE WHEN rating_id IS NULL THEN 'PendingRating' ELSE 'Active' END,
+                    analysis_disabled = 0,
                     needs_reevaluation = 1, updated_at = $now
                 WHERE id = $trackId",
                 ("$trackId", trackId.Value), ("$now", DateTime.UtcNow.ToString("O")));
@@ -2485,7 +2715,7 @@ public class MusicDatabase
             LEFT JOIN track_analysis analysis ON analysis.track_id = tracks.id
             WHERE analysis.id IS NULL
               AND tracks.analysis_disabled = 0
-              AND tracks.library_state = 'Active'";
+              AND tracks.library_state <> 'Rejected'";
         using var reader = cmd.ExecuteReader();
         var ids = new HashSet<int>();
         while (reader.Read()) ids.Add(reader.GetInt32(0));
@@ -2599,6 +2829,22 @@ public class MusicDatabase
         return reader.Read() ? ReadMusicTrack(reader) : null;
     }
 
+    public MusicTrack? GetTrackByCanonicalUrl(string canonicalUrl)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"SELECT tracks.id, tracks.canonical_url, tracks.title, tracks.file_name, tracks.rating_id, tracks.downloaded_at,
+                                   tracks.duration_seconds, tracks.needs_reevaluation, channels.name, channels.source_url, tracks.uploaded_at,
+                                   tracks.updated_at, tracks.analysis_disabled, tracks.is_public, tracks.library_state,
+                                   tracks.source_video_id, tracks.view_count, tracks.like_count,
+                                   tracks.source_thumbnail_url, tracks.source_metadata_updated_at, channels.id
+                            FROM tracks LEFT JOIN channels ON channels.id = tracks.channel_id
+                            WHERE tracks.canonical_url = $canonicalUrl";
+        cmd.Parameters.AddWithValue("$canonicalUrl", canonicalUrl);
+        using var reader = cmd.ExecuteReader();
+        return reader.Read() ? ReadMusicTrack(reader) : null;
+    }
+
     public byte[]? GetTrackThumbnail(int trackId)
     {
         using var conn = Open();
@@ -2635,7 +2881,7 @@ public class MusicDatabase
                             LEFT JOIN track_analysis analysis ON analysis.track_id = tracks.id
                             WHERE analysis.id IS NULL
                               AND tracks.analysis_disabled = 0
-                              AND tracks.library_state = 'Active'
+                              AND tracks.library_state <> 'Rejected'
                             ORDER BY tracks.downloaded_at, tracks.id";
         using var reader = cmd.ExecuteReader();
         var tracks = new List<MusicTrack>();
@@ -2798,10 +3044,10 @@ public class MusicDatabase
             @"UPDATE tracks
               SET title = $title,
                   rating_id = $ratingId,
-                  library_state = CASE WHEN $ratingId IS NULL THEN library_state ELSE 'Active' END,
+                  library_state = CASE WHEN $ratingId IS NULL THEN 'PendingRating' ELSE 'Active' END,
                   is_public = $isPublic,
                   updated_at = $updatedAt,
-                  needs_reevaluation = 0
+                  needs_reevaluation = CASE WHEN $ratingId IS NULL THEN 1 ELSE 0 END
               WHERE id = $id",
             ("$id", id), ("$title", title), ("$ratingId", ratingId), ("$isPublic", isPublic ? 1 : 0), ("$updatedAt", now));
 
@@ -2819,7 +3065,14 @@ public class MusicDatabase
     {
         using var conn = Open();
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = "UPDATE tracks SET needs_reevaluation = $needsReview, updated_at = $updatedAt WHERE id = $id";
+        cmd.CommandText = @"UPDATE tracks
+                            SET needs_reevaluation = CASE
+                                    WHEN library_state = 'PendingRating' THEN 1
+                                    WHEN library_state = 'Rejected' THEN 0
+                                    ELSE $needsReview
+                                END,
+                                updated_at = $updatedAt
+                            WHERE id = $id";
         cmd.Parameters.AddWithValue("$id", id);
         cmd.Parameters.AddWithValue("$needsReview", needsReview ? 1 : 0);
         cmd.Parameters.AddWithValue("$updatedAt", DateTime.UtcNow.ToString("O"));
@@ -2830,7 +3083,13 @@ public class MusicDatabase
     {
         using var conn = Open();
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = "UPDATE tracks SET analysis_disabled = $analysisDisabled, updated_at = $updatedAt WHERE id = $id";
+        cmd.CommandText = @"UPDATE tracks
+                            SET analysis_disabled = CASE
+                                    WHEN library_state = 'Rejected' THEN 1
+                                    ELSE $analysisDisabled
+                                END,
+                                updated_at = $updatedAt
+                            WHERE id = $id";
         cmd.Parameters.AddWithValue("$id", id);
         cmd.Parameters.AddWithValue("$analysisDisabled", analysisDisabled ? 1 : 0);
         cmd.Parameters.AddWithValue("$updatedAt", DateTime.UtcNow.ToString("O"));
@@ -2985,6 +3244,19 @@ public class MusicDatabase
         cmd.CommandText = "INSERT INTO tags (name) VALUES ($name)";
         cmd.Parameters.AddWithValue("$name", name.Trim());
         cmd.ExecuteNonQuery();
+    }
+
+    public void MarkTrackAnalysisFailed(int id)
+    {
+        using var conn = Open();
+        using var tx = conn.BeginTransaction();
+        ExecuteInsert(conn, tx, @"UPDATE tracks
+                                  SET analysis_disabled = 1,
+                                      needs_reevaluation = 1,
+                                      updated_at = $now
+                                  WHERE id = $id AND library_state <> 'Rejected'",
+            ("$id", id), ("$now", DateTime.UtcNow.ToString("O")));
+        tx.Commit();
     }
 
     public void RenameTag(int id, string name)

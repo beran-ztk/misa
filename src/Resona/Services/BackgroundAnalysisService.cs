@@ -61,7 +61,7 @@ public sealed class BackgroundAnalysisService
             _connectionCheckTask = checkTask;
         }
 
-        QueueChanged?.Invoke();
+        RaiseQueueChanged();
         return checkTask;
     }
 
@@ -73,9 +73,10 @@ public sealed class BackgroundAnalysisService
             using var service = new TrackAnalysisService();
             isReachable = await service.CheckHealthAsync();
         }
-        catch (Exception)
+        catch (Exception exception)
         {
             // The UI presents one stable offline state; details remain available on the settings page.
+            WorkflowLog.Error("analysis", "Analysis server health check failed.", exception);
         }
 
         lock (_gate)
@@ -91,7 +92,7 @@ public sealed class BackgroundAnalysisService
             }
         }
 
-        QueueChanged?.Invoke();
+        RaiseQueueChanged();
         return isReachable;
     }
 
@@ -137,7 +138,7 @@ public sealed class BackgroundAnalysisService
             StartWorkerIfPossible();
         }
 
-        QueueChanged?.Invoke();
+        RaiseQueueChanged();
     }
 
     private void PruneIneligibleTracks()
@@ -173,7 +174,7 @@ public sealed class BackgroundAnalysisService
                 _queuedTrackIds.Add(activeTrackId);
         }
 
-        QueueChanged?.Invoke();
+        RaiseQueueChanged();
     }
 
     private async Task ProcessQueueAsync()
@@ -189,6 +190,7 @@ public sealed class BackgroundAnalysisService
                 try
                 {
                     SetActiveTrack(trackId);
+                    WorkflowLog.Info("analysis", $"Started track {trackId}.");
                     using var cancellation = new CancellationTokenSource();
                     lock (_gate)
                         _activeAnalysisCancellation = cancellation;
@@ -224,11 +226,17 @@ public sealed class BackgroundAnalysisService
                             _activeTrackId = null;
                         _activeAnalysisCancellation = null;
                     }
-                    QueueChanged?.Invoke();
+                    RaiseQueueChanged();
                 }
 
                 if (track is not null)
-                    TrackAnalysisFinished?.Invoke(track, error);
+                {
+                    if (error is null)
+                        WorkflowLog.Info("analysis", $"Completed track {track.Id}.");
+                    else
+                        WorkflowLog.Error("analysis", $"Track {track.Id} failed: {error}");
+                    RaiseTrackAnalysisFinished(track, error);
+                }
             }
         }
         finally
@@ -263,7 +271,7 @@ public sealed class BackgroundAnalysisService
     {
         lock (_gate)
             _activeTrackId = trackId;
-        QueueChanged?.Invoke();
+        RaiseQueueChanged();
     }
 
     private void StartWorkerIfPossible()
@@ -280,6 +288,28 @@ public sealed class BackgroundAnalysisService
         TrackAnalysisService.TryNormalizeServerUrl(
             AppSettingsStore.Load().MusicAnalysisServerUrl,
             out _);
+
+    private void RaiseQueueChanged()
+    {
+        if (QueueChanged is null)
+            return;
+        foreach (Action handler in QueueChanged.GetInvocationList())
+        {
+            try { handler(); }
+            catch (Exception exception) { WorkflowLog.Error("analysis", "QueueChanged observer failed.", exception); }
+        }
+    }
+
+    private void RaiseTrackAnalysisFinished(MusicTrack track, string? error)
+    {
+        if (TrackAnalysisFinished is null)
+            return;
+        foreach (Action<MusicTrack, string?> handler in TrackAnalysisFinished.GetInvocationList())
+        {
+            try { handler(track, error); }
+            catch (Exception exception) { WorkflowLog.Error("analysis", "TrackAnalysisFinished observer failed.", exception); }
+        }
+    }
 }
 
 public sealed record BackgroundAnalysisQueueSnapshot(

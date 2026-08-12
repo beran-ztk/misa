@@ -17,6 +17,7 @@ public class MusicLibraryService
     private readonly MusicDatabase _db = new();
     private readonly TrackDownloadService _downloader = new();
     private readonly TrackAnalysisService _analysis = new();
+    private readonly CanonicalUrlOperationCoordinator _trackOperations = new();
     private readonly Dictionary<int, IReadOnlyList<ExperimentalAnalysisModel>> _experimentalAnalysis = [];
     private int _channelMaxDownloadDurationMinutes = 12;
 
@@ -38,10 +39,13 @@ public class MusicLibraryService
     public List<MusicTrack> GetUnanalyzedTracks() => _db.GetUnanalyzedTracks();
     public MusicTrack? GetTrackById(int id) => _db.GetTrackById(id);
     public bool ShouldAnalyzeTrack(int id) =>
-        GetTrackById(id) is { AnalysisDisabled: false, LibraryState: TrackLibraryState.Active }
-        && GetTrackAudioAnalysis(id) is null;
+        GetTrackById(id) is { } track
+        && TrackWorkflowPolicy.ShouldAnalyze(
+            track.LibraryState,
+            track.AnalysisDisabled,
+            GetTrackAudioAnalysis(id) is not null);
     public MusicTrack? GetTrackByCanonicalUrl(string canonicalUrl) =>
-        GetTracks().FirstOrDefault(track => string.Equals(track.CanonicalUrl, canonicalUrl, StringComparison.OrdinalIgnoreCase));
+        _db.GetTrackByCanonicalUrl(canonicalUrl);
 
     public Dictionary<int, List<int>> GetAllTrackStyleIds() => _db.GetAllTrackStyleIds();
     public List<int> GetTrackStyleIds(int trackId) => _db.GetTrackStyleIds(trackId);
@@ -79,14 +83,45 @@ public class MusicLibraryService
     public TimeSpan? EstimateDownloadDuration(int? trackDurationSeconds, long? fileSizeBytes) =>
         _db.EstimateDownloadDuration(trackDurationSeconds, fileSizeBytes);
     public int CreateImportBatch(string sourceUrl, IReadOnlyList<ImportPreviewItem> items) => _db.CreateImportBatch(sourceUrl, items);
-    public void RequeueInterruptedImports()
+    public IReadOnlyList<MusicTrack> RecoverInterruptedImports()
     {
+        var recoveredTracks = new List<MusicTrack>();
         foreach (var item in _db.GetInterruptedImportQueueItems())
-            if (item.Status == ImportQueueStatus.Downloading)
+        {
+            var ownedTrack = item.TrackId is int trackId ? _db.GetTrackById(trackId) : null;
+            if (ownedTrack is not null)
+            {
+                if (TrackFileExists(ownedTrack))
+                {
+                    _db.CompleteImportQueueItem(item.Id, ownedTrack.Id);
+                    recoveredTracks.Add(_db.GetTrackById(ownedTrack.Id) ?? ownedTrack);
+                }
+                else
+                {
+                    WorkflowLog.Error("import", $"Owned track {ownedTrack.Id} has no media; cleaning queue item {item.Id} for retry.");
+                    CleanupInterruptedImport(item);
+                }
+                continue;
+            }
+
+            // A track with the same URL may have been committed by another flow after
+            // this queue item was created. It is not owned by this item and must never
+            // be deleted during recovery.
+            if (_db.GetTrackByCanonicalUrl(item.CanonicalUrl) is not null)
+            {
+                WorkflowLog.Info("import", $"Removed redundant queue item {item.Id}; its URL already belongs to another track.");
+                _db.DeleteImportQueueItem(item.Id);
+                continue;
+            }
+
+            if (item.Status is ImportQueueStatus.Downloading or ImportQueueStatus.Analyzing)
                 CleanupInterruptedImport(item);
+        }
         _db.RequeueInterruptedImports();
+        return recoveredTracks;
     }
     public ImportQueueItem? GetNextQueuedImport() => _db.GetNextQueuedImport();
+    public ImportQueueItem? ClaimNextQueuedImport() => _db.ClaimNextQueuedImport();
     public void UpdateImportQueueItem(int id, ImportQueueStatus status, string? detail = null, int? trackId = null) =>
         _db.UpdateImportQueueItem(id, status, detail, trackId);
     public ImportQueueSummary GetImportQueueSummary() => _db.GetImportQueueSummary();
@@ -94,6 +129,7 @@ public class MusicLibraryService
     public List<ImportQueueSource> GetImportQueueSources() => _db.GetImportQueueSources();
     public bool RemoveQueuedImport(int id) => _db.RemoveQueuedImport(id);
     public void DeleteImportQueueItem(int id) => _db.DeleteImportQueueItem(id);
+    public void CompleteImportQueueItem(int itemId, int trackId) => _db.CompleteImportQueueItem(itemId, trackId);
 
     public void CleanupInterruptedImport(ImportQueueItem item)
     {
@@ -101,11 +137,10 @@ public class MusicLibraryService
         if (!string.IsNullOrWhiteSpace(videoId))
             _downloader.DeleteDownloadArtifacts(videoId);
 
-        var track = item.TrackId is int trackId
-            ? GetTrackById(trackId)
-            : GetTrackByCanonicalUrl(item.CanonicalUrl);
-        if (track is null && item.TrackId is int)
-            track = GetTrackByCanonicalUrl(item.CanonicalUrl);
+        // Only a track id persisted on this queue item establishes ownership.
+        // Falling back to canonical URL can delete a legitimate track created by
+        // another worker or ChannelHub during the interrupted import.
+        var track = item.TrackId is int trackId ? GetTrackById(trackId) : null;
 
         if (track is null)
             return;
@@ -121,6 +156,9 @@ public class MusicLibraryService
         try { _db.DeleteTrack(track.Id); }
         catch { }
     }
+
+    private static bool TrackFileExists(MusicTrack track) =>
+        File.Exists(Path.Combine(Values.TracksDirectory, track.FileName));
 
     public Task<string?> DeleteTrackAsync(MusicTrack track)
     {
@@ -304,6 +342,10 @@ public class MusicLibraryService
 
     public async Task<(MusicTrack? Track, string? Error)> PreloadChannelVideoAsync(ChannelVideo video)
     {
+        using var operation = await _trackOperations.AcquireAsync(video.CanonicalUrl);
+        if (_db.GetTrackByCanonicalUrl(video.CanonicalUrl) is { } existingTrack)
+            return (existingTrack, null);
+
         var stopwatch = Stopwatch.StartNew();
         var download = await _downloader.DownloadChannelTrackAsync(video.CanonicalUrl, video.VideoId);
         if (!download.Success || download.FilePath is null)
@@ -519,35 +561,24 @@ public class MusicLibraryService
 
         var canonicalUrl = YouTubeUrlNormalizer.GetCanonicalUrl(videoId);
 
+        using var operation = await _trackOperations.AcquireAsync(canonicalUrl);
+
         if (_db.TrackExists(canonicalUrl))
             return new DownloadResult(false, "Track already exists.");
 
-        _downloader.DeleteDownloadArtifacts(videoId);
+        var result = await DownloadAndPersistYouTubeTrackAsync(
+            videoId,
+            canonicalUrl,
+            request.GenreIds,
+            request.RatingId,
+            request.StyleIds,
+            progress);
+        if (!result.Success || result.Track is null)
+            return new DownloadResult(false, result.Error, result.Warning);
 
-        progress?.Report("Checking audio details…");
-        var previewMetadata = await _downloader.GetMetadataAsync(canonicalUrl);
-        var downloadEstimate = EstimateDownloadDuration(previewMetadata?.DurationSeconds, previewMetadata?.EstimatedAudioSizeBytes);
-        var downloadStopwatch = Stopwatch.StartNew();
-        var (success, errorOutput) = await DownloadWithSingleRetryAsync(canonicalUrl, progress, downloadEstimate);
-        if (!success)
-            return new DownloadResult(false, $"Failed:\n{errorOutput}");
-
-        var filePath = _downloader.FindDownloadedFile(videoId);
-        if (filePath == null)
-            return new DownloadResult(false, "Download finished but file not found.");
-
-        var fileName = Path.GetFileName(filePath);
-        var duration = await _downloader.GetDurationAsync(filePath);
-        var metadata = previewMetadata ?? await _downloader.GetMetadataAsync(canonicalUrl);
-        var fileSizeBytes = new FileInfo(filePath).Length;
-        var thumbnail = ThumbnailService.ReadEmbeddedArtworkThumbnail(filePath) ?? [];
-        var trackId = _db.InsertTrack(canonicalUrl, metadata?.Title ?? _downloader.TitleFromFileName(fileName), fileName,
-            request.GenreIds, request.RatingId, request.StyleIds, duration, fileSizeBytes, (int)downloadStopwatch.ElapsedMilliseconds, metadata, thumbnail);
-
-        if (request.RatingId is not null)
-            BackgroundAnalysisService.Current.EnqueueTrack(trackId);
-        ChannelHubBackgroundService.Current.RequestRefresh();
-        return new DownloadResult(true);
+        if (ShouldAnalyzeTrack(result.Track.Id))
+            BackgroundAnalysisService.Current.EnqueueTrack(result.Track.Id);
+        return new DownloadResult(true, Warning: result.Warning);
     }
 
     public async Task<ImportResult> ImportFromYouTubeAsync(
@@ -560,14 +591,37 @@ public class MusicLibraryService
             return new ImportResult(false, Error: "Could not parse YouTube URL.");
 
         var canonicalUrl = YouTubeUrlNormalizer.GetCanonicalUrl(videoId);
+        using var operation = await _trackOperations.AcquireAsync(canonicalUrl);
         if (_db.TrackExists(canonicalUrl))
             return new ImportResult(false, Error: "Track already exists.");
 
+        var result = await DownloadAndPersistYouTubeTrackAsync(
+            videoId,
+            canonicalUrl,
+            [],
+            null,
+            [],
+            progress);
+        if (result.Success && result.Track is not null)
+            trackCreated?.Invoke(result.Track.Id);
+        return result;
+    }
+
+    private async Task<ImportResult> DownloadAndPersistYouTubeTrackAsync(
+        string videoId,
+        string canonicalUrl,
+        List<int> genreIds,
+        int? ratingId,
+        List<int> styleIds,
+        IProgress<string>? progress)
+    {
         _downloader.DeleteDownloadArtifacts(videoId);
 
         progress?.Report("Checking audio details…");
         var previewMetadata = await _downloader.GetMetadataAsync(canonicalUrl);
-        var downloadEstimate = EstimateDownloadDuration(previewMetadata?.DurationSeconds, previewMetadata?.EstimatedAudioSizeBytes);
+        var downloadEstimate = EstimateDownloadDuration(
+            previewMetadata?.DurationSeconds,
+            previewMetadata?.EstimatedAudioSizeBytes);
         var downloadStopwatch = Stopwatch.StartNew();
         var (success, errorOutput) = await DownloadWithSingleRetryAsync(canonicalUrl, progress, downloadEstimate);
         if (!success)
@@ -577,18 +631,45 @@ public class MusicLibraryService
         if (filePath is null)
             return new ImportResult(false, Error: "Download finished but file not found.");
 
-        var fileName = Path.GetFileName(filePath);
-        var duration = await _downloader.GetDurationAsync(filePath);
-        var metadata = previewMetadata ?? await _downloader.GetMetadataAsync(canonicalUrl);
-        var fileSizeBytes = new FileInfo(filePath).Length;
-        var thumbnail = ThumbnailService.ReadEmbeddedArtworkThumbnail(filePath) ?? [];
-        var trackId = _db.InsertTrack(canonicalUrl, metadata?.Title ?? _downloader.TitleFromFileName(fileName), fileName,
-            [], null, [], duration, fileSizeBytes, (int)downloadStopwatch.ElapsedMilliseconds, metadata, thumbnail);
-        ChannelHubBackgroundService.Current.RequestRefresh();
-        trackCreated?.Invoke(trackId);
-        return new ImportResult(
-            true,
-            GetTracks().Single(track => track.Id == trackId));
+        try
+        {
+            var fileName = Path.GetFileName(filePath);
+            var duration = await _downloader.GetDurationAsync(filePath);
+            var metadata = previewMetadata ?? await _downloader.GetMetadataAsync(canonicalUrl);
+            var fileSizeBytes = new FileInfo(filePath).Length;
+            var thumbnail = ThumbnailService.ReadEmbeddedArtworkThumbnail(filePath) ?? [];
+            var trackId = _db.InsertTrack(
+                canonicalUrl,
+                metadata?.Title ?? _downloader.TitleFromFileName(fileName),
+                fileName,
+                genreIds,
+                ratingId,
+                styleIds,
+                duration,
+                fileSizeBytes,
+                (int)downloadStopwatch.ElapsedMilliseconds,
+                metadata,
+                thumbnail);
+            var track = GetTrackById(trackId)
+                ?? throw new InvalidOperationException($"Track {trackId} was inserted but could not be reloaded.");
+            ChannelHubBackgroundService.Current.RequestRefresh();
+            WorkflowLog.Info("download", $"Persisted track {trackId} from a YouTube download.");
+            return new ImportResult(true, track);
+        }
+        catch (Exception exception)
+        {
+            WorkflowLog.Error("download", "Could not persist downloaded track.", exception);
+            try
+            {
+                File.Delete(filePath);
+            }
+            catch (Exception cleanupException)
+            {
+                WorkflowLog.Error("download", "Could not remove an unowned download after persistence failed.", cleanupException);
+            }
+
+            return new ImportResult(false, Error: "The audio was downloaded but could not be added to the library.");
+        }
     }
 
     public async Task<(string? Error, bool Retryable)> AnalyzeTrackAsync(
@@ -608,10 +689,7 @@ public class MusicLibraryService
         catch (MusicAnalysisException exception)
         {
             if (exception.Kind is MusicAnalysisErrorKind.FileError or MusicAnalysisErrorKind.InvalidResponse)
-            {
-                _db.SetTrackNeedsReview(track.Id, true);
-                _db.SetTrackAnalysisDisabled(track.Id, true);
-            }
+                _db.MarkTrackAnalysisFailed(track.Id);
             return (exception.Message,
                 exception.Kind is MusicAnalysisErrorKind.ConnectionError or MusicAnalysisErrorKind.Timeout);
         }

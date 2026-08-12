@@ -25,7 +25,7 @@ public sealed class ChannelDownloadService
     public void NotifyQueueChanged()
     {
         EnsureWorker();
-        QueueChanged?.Invoke();
+        RaiseQueueChanged();
     }
 
     public ChannelDownloadSummary GetSummary() => MusicLibraryService.Current.GetChannelDownloadSummary();
@@ -57,7 +57,7 @@ public sealed class ChannelDownloadService
                 if (MusicLibraryService.Current.GetChannelDownloadSummary().Queued > 0)
                     _workerTask = Task.Run(ProcessQueueAsync);
             }
-            QueueChanged?.Invoke();
+            RaiseQueueChanged();
         }
     }
 
@@ -65,7 +65,8 @@ public sealed class ChannelDownloadService
     {
         while (ClaimNext() is { } video)
         {
-            QueueChanged?.Invoke();
+            WorkflowLog.Info("channel-download", $"Claimed video {video.Id}, attempt {video.DownloadAttempts}.");
+            RaiseQueueChanged();
             MusicTrack? track = null;
             string? error = null;
             try
@@ -80,8 +81,45 @@ public sealed class ChannelDownloadService
             }
 
             MusicLibraryService.Current.CompleteChannelDownload(video.Id, track is not null, error);
-            DownloadFinished?.Invoke(video, track, error);
-            QueueChanged?.Invoke();
+            var shouldRetry = track is null && video.DownloadAttempts < 3;
+            if (track is null)
+            {
+                WorkflowLog.Error("channel-download", $"Video {video.Id} failed on attempt {video.DownloadAttempts}: {error}");
+            }
+            else
+            {
+                WorkflowLog.Info("channel-download", $"Video {video.Id} completed as track {track.Id}.");
+            }
+
+            RaiseDownloadFinished(video, track, error);
+            RaiseQueueChanged();
+            if (shouldRetry)
+                await Task.Delay(RetryDelay(video.DownloadAttempts));
+        }
+    }
+
+    private static TimeSpan RetryDelay(int attempt) =>
+        TimeSpan.FromSeconds(Math.Min(8, Math.Pow(2, Math.Max(0, attempt - 1))));
+
+    private void RaiseDownloadFinished(ChannelVideo video, MusicTrack? track, string? error)
+    {
+        if (DownloadFinished is null)
+            return;
+        foreach (Action<ChannelVideo, MusicTrack?, string?> handler in DownloadFinished.GetInvocationList())
+        {
+            try { handler(video, track, error); }
+            catch (Exception exception) { WorkflowLog.Error("channel-download", "DownloadFinished observer failed.", exception); }
+        }
+    }
+
+    private void RaiseQueueChanged()
+    {
+        if (QueueChanged is null)
+            return;
+        foreach (Action handler in QueueChanged.GetInvocationList())
+        {
+            try { handler(); }
+            catch (Exception exception) { WorkflowLog.Error("channel-download", "QueueChanged observer failed.", exception); }
         }
     }
 

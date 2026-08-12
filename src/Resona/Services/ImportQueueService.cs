@@ -14,7 +14,6 @@ public sealed class ImportQueueService
 
     private readonly TrackDownloadService _downloader = new();
     private readonly object _workerGate = new();
-    private readonly object _claimGate = new();
     private readonly object _phaseGate = new();
     private readonly Dictionary<int, ImportQueuePhase> _activePhases = [];
     private Task? _workerTask;
@@ -24,7 +23,11 @@ public sealed class ImportQueueService
 
     public void Initialize()
     {
-        MusicLibraryService.Current.RequeueInterruptedImports();
+        foreach (var track in MusicLibraryService.Current.RecoverInterruptedImports())
+        {
+            WorkflowLog.Info("import", $"Recovered completed import for track {track.Id}.");
+            BackgroundAnalysisService.Current.EnqueueTrack(track.Id);
+        }
         EnsureWorker();
     }
 
@@ -167,21 +170,13 @@ public sealed class ImportQueueService
 
     private ImportQueueItem? ClaimNextQueuedImport()
     {
-        lock (_claimGate)
-        {
-            var item = MusicLibraryService.Current.GetNextQueuedImport();
-            if (item is null)
-                return null;
+        var item = MusicLibraryService.Current.ClaimNextQueuedImport();
+        if (item is null)
+            return null;
 
-            if (IsInterruptedRetry(item))
-            {
-                MusicLibraryService.Current.CleanupInterruptedImport(item);
-                item = item with { TrackId = null };
-            }
-
-            Update(item, ImportQueueStatus.Downloading, "Checking download details…");
-            return item with { Status = ImportQueueStatus.Downloading, Detail = "Checking download details…" };
-        }
+        UpdateActivePhase(item.Id, item.Status);
+        RaiseItemUpdated(item);
+        return item;
     }
 
     private async Task ProcessQueueItemAsync(ImportQueueItem item)
@@ -190,16 +185,14 @@ public sealed class ImportQueueService
         {
             if (GetRecoverableTrack(item) is { } existingTrack)
             {
-                await CompleteRecoveredTrackAsync(item, existingTrack);
+                CompleteImport(item, existingTrack, null);
                 return;
             }
 
             var currentItem = item;
             var result = await MusicLibraryService.Current.ImportFromYouTubeAsync(item.CanonicalUrl,
-                new Progress<string>(message =>
-                {
-                    Update(currentItem, ImportQueueStatus.Downloading, message);
-                }),
+                new InlineProgress<string>(message =>
+                    Update(currentItem, ImportQueueStatus.Downloading, message)),
                 trackId =>
                 {
                     Update(currentItem, ImportQueueStatus.Downloading, "Downloaded; queued for analysis", trackId);
@@ -209,12 +202,11 @@ public sealed class ImportQueueService
             if (result.Success && result.Track is not null)
                 CompleteImport(item, result.Track, result.Warning);
             else
-                Update(item, ImportQueueStatus.Failed, result.Error ?? "Import failed");
+                Fail(item, result.Error ?? "Import failed");
         }
         catch (Exception exception)
         {
-            Update(item, ImportQueueStatus.Failed, $"Import failed: {exception.Message}");
-            ClearActivePhase(item.Id);
+            Fail(item, $"Import failed: {exception.Message}", exception);
         }
     }
 
@@ -227,29 +219,34 @@ public sealed class ImportQueueService
         return MusicLibraryService.Current.GetTrackByCanonicalUrl(item.CanonicalUrl);
     }
 
-    private static bool IsInterruptedRetry(ImportQueueItem item) =>
-        item.Detail?.StartsWith("Interrupted", StringComparison.OrdinalIgnoreCase) == true;
-
-    private Task CompleteRecoveredTrackAsync(ImportQueueItem item, MusicTrack track)
-    {
-        if (MusicLibraryService.Current.GetTrackAudioAnalysis(track.Id) is not null)
-        {
-            CompleteImport(item, track, null);
-            return Task.CompletedTask;
-        }
-
-        BackgroundAnalysisService.Current.EnqueueTrack(track.Id);
-        CompleteImport(item, track, null);
-        return Task.CompletedTask;
-    }
-
     private void CompleteImport(ImportQueueItem item, MusicTrack track, string? warning)
     {
-        MusicLibraryService.Current.SetTrackNeedsReview(track.Id, true);
-        MusicLibraryService.Current.DeleteImportQueueItem(item.Id);
+        MusicLibraryService.Current.CompleteImportQueueItem(item.Id, track.Id);
         ClearActivePhase(item.Id);
-        TrackImported?.Invoke(track, warning);
-        ItemUpdated?.Invoke(item with
+        WorkflowLog.Info("import", $"Completed queue item {item.Id} as track {track.Id}.");
+        try
+        {
+            BackgroundAnalysisService.Current.EnqueueTrack(track.Id);
+        }
+        catch (Exception exception)
+        {
+            // The durable import is complete. Analysis is rediscovered at the next
+            // startup, so a transient enqueue failure must not rewrite import state.
+            WorkflowLog.Error("import", $"Could not enqueue analysis for completed track {track.Id}.", exception);
+        }
+
+        MusicTrack completedTrack;
+        try
+        {
+            completedTrack = MusicLibraryService.Current.GetTrackById(track.Id) ?? track;
+        }
+        catch (Exception exception)
+        {
+            WorkflowLog.Error("import", $"Could not reload completed track {track.Id} for observers.", exception);
+            completedTrack = track;
+        }
+        RaiseTrackImported(completedTrack, warning);
+        RaiseItemUpdated(item with
         {
             Status = ImportQueueStatus.ReadyForReview,
             Detail = warning ?? "Ready for review",
@@ -261,7 +258,45 @@ public sealed class ImportQueueService
     {
         UpdateActivePhase(item.Id, status);
         MusicLibraryService.Current.UpdateImportQueueItem(item.Id, status, detail, trackId);
-        ItemUpdated?.Invoke(item with { Status = status, Detail = detail, TrackId = trackId ?? item.TrackId });
+        RaiseItemUpdated(item with { Status = status, Detail = detail, TrackId = trackId ?? item.TrackId });
+    }
+
+    private void Fail(ImportQueueItem item, string detail, Exception? exception = null)
+    {
+        WorkflowLog.Error("import", $"Queue item {item.Id} failed: {detail}", exception);
+        try
+        {
+            Update(item, ImportQueueStatus.Failed, detail);
+        }
+        catch (InvalidOperationException transitionError)
+        {
+            // Completion may already have atomically removed the queue item. An
+            // observer failure after that point must not resurrect the workflow.
+            WorkflowLog.Error("import", $"Could not persist failure for queue item {item.Id}.", transitionError);
+            ClearActivePhase(item.Id);
+        }
+    }
+
+    private void RaiseItemUpdated(ImportQueueItem item)
+    {
+        if (ItemUpdated is null)
+            return;
+        foreach (Action<ImportQueueItem> handler in ItemUpdated.GetInvocationList())
+        {
+            try { handler(item); }
+            catch (Exception exception) { WorkflowLog.Error("import", "ItemUpdated observer failed.", exception); }
+        }
+    }
+
+    private void RaiseTrackImported(MusicTrack track, string? warning)
+    {
+        if (TrackImported is null)
+            return;
+        foreach (Action<MusicTrack, string?> handler in TrackImported.GetInvocationList())
+        {
+            try { handler(track, warning); }
+            catch (Exception exception) { WorkflowLog.Error("import", "TrackImported observer failed.", exception); }
+        }
     }
 
     private void UpdateActivePhase(int itemId, ImportQueueStatus status)
@@ -283,5 +318,10 @@ public sealed class ImportQueueService
     {
         lock (_phaseGate)
             _activePhases.Remove(itemId);
+    }
+
+    private sealed class InlineProgress<T>(Action<T> report) : IProgress<T>
+    {
+        public void Report(T value) => report(value);
     }
 }

@@ -56,10 +56,11 @@ public sealed class ChannelMetadataService
                 MusicLibraryService.Current.PrepareLibraryMetadataBackfill();
                 RequestAllChannels();
             }
-            catch
+            catch (Exception exception)
             {
                 // Metadata preparation is optional startup work. A later
                 // channel refresh or explicit request starts it again.
+                WorkflowLog.Error("channel-metadata", "Startup preparation failed.", exception);
             }
         });
     }
@@ -68,28 +69,28 @@ public sealed class ChannelMetadataService
     {
         MusicLibraryService.Current.QueueChannelVideoMetadata(channelId, limit);
         EnsureWorker();
-        QueueChanged?.Invoke();
+        RaiseQueueChanged();
     }
 
     public void RequestVideo(int videoId)
     {
         MusicLibraryService.Current.QueueSpecificChannelVideoMetadata(videoId);
         EnsureWorker();
-        QueueChanged?.Invoke();
+        RaiseQueueChanged();
     }
 
     public void RequestAutoDownloadMetadata(int limit = 1)
     {
         MusicLibraryService.Current.QueueAutoDownloadMetadata(limit);
         EnsureWorker();
-        QueueChanged?.Invoke();
+        RaiseQueueChanged();
     }
 
     public void RequestAllChannels(int limit = BackgroundBatchSize)
     {
         MusicLibraryService.Current.QueueBackgroundChannelVideoMetadata(limit);
         EnsureWorker();
-        QueueChanged?.Invoke();
+        RaiseQueueChanged();
     }
 
     private void EnsureWorker()
@@ -136,7 +137,7 @@ public sealed class ChannelMetadataService
                         : channelName.Length == 0 ? title : $"{channelName} · {title}",
                     current,
                     total));
-                QueueChanged?.Invoke();
+                RaiseQueueChanged();
                 YouTubeTrackMetadata? metadata = null;
                 string? error = null;
                 try
@@ -151,12 +152,16 @@ public sealed class ChannelMetadataService
                 }
 
                 MusicLibraryService.Current.CompleteChannelVideoMetadata(video.Id, metadata, error);
+                if (metadata is null)
+                    WorkflowLog.Error("channel-metadata", $"Video {video.Id} metadata failed: {error}");
+                else
+                    WorkflowLog.Info("channel-metadata", $"Video {video.Id} metadata updated.");
                 var updatedTrack = video.TrackId is int trackId
                     ? MusicLibraryService.Current.GetTrackById(trackId)
                     : null;
-                MetadataUpdated?.Invoke(video.ChannelId, video.Id, updatedTrack);
+                RaiseMetadataUpdated(video.ChannelId, video.Id, updatedTrack);
                 ChannelDownloadService.Current.NotifyQueueChanged();
-                QueueChanged?.Invoke();
+                RaiseQueueChanged();
             }
         }
         finally
@@ -166,7 +171,7 @@ public sealed class ChannelMetadataService
             PublishStatus(ChannelMetadataWorkStatus.Idle);
             if (MusicLibraryService.Current.HasQueuedChannelVideoMetadata())
                 EnsureWorker();
-            QueueChanged?.Invoke();
+            RaiseQueueChanged();
         }
     }
 
@@ -174,6 +179,34 @@ public sealed class ChannelMetadataService
     {
         lock (_workerGate)
             _status = status;
-        StatusChanged?.Invoke(status);
+        if (StatusChanged is null)
+            return;
+        foreach (Action<ChannelMetadataWorkStatus> handler in StatusChanged.GetInvocationList())
+        {
+            try { handler(status); }
+            catch (Exception exception) { WorkflowLog.Error("channel-metadata", "StatusChanged observer failed.", exception); }
+        }
+    }
+
+    private void RaiseQueueChanged()
+    {
+        if (QueueChanged is null)
+            return;
+        foreach (Action handler in QueueChanged.GetInvocationList())
+        {
+            try { handler(); }
+            catch (Exception exception) { WorkflowLog.Error("channel-metadata", "QueueChanged observer failed.", exception); }
+        }
+    }
+
+    private void RaiseMetadataUpdated(int channelId, int videoId, MusicTrack? track)
+    {
+        if (MetadataUpdated is null)
+            return;
+        foreach (Action<int, int, MusicTrack?> handler in MetadataUpdated.GetInvocationList())
+        {
+            try { handler(channelId, videoId, track); }
+            catch (Exception exception) { WorkflowLog.Error("channel-metadata", "MetadataUpdated observer failed.", exception); }
+        }
     }
 }
