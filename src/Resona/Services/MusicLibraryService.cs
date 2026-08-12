@@ -695,7 +695,7 @@ public class MusicLibraryService
             $"Download track · {videoId}",
             jobSource,
             jobPriority);
-        var (success, errorOutput) = await DownloadWithSingleRetryAsync(
+        var (success, errorOutput) = await DownloadAudioAsync(
             canonicalUrl,
             progress,
             downloadEstimate,
@@ -792,7 +792,7 @@ public class MusicLibraryService
         ? $"{Math.Ceiling(duration.TotalMinutes):0} min"
         : $"{Math.Max(1, Math.Round(duration.TotalSeconds)):0} sec";
 
-    private async Task<(bool Success, string ErrorOutput)> DownloadWithSingleRetryAsync(
+    private async Task<(bool Success, string ErrorOutput)> DownloadAudioAsync(
         string canonicalUrl,
         IProgress<string>? progress,
         TimeSpan? estimate,
@@ -801,16 +801,7 @@ public class MusicLibraryService
         progress?.Report(estimate is null
             ? "Downloading audio…"
             : $"Downloading audio… usually about {FormatEstimate(estimate.Value)}");
-        var result = await _downloader.RunYtDlpAsync(canonicalUrl, jobOptions);
-        if (result.Success || !IsForbiddenResponse(result.ErrorOutput))
-            return result;
-
-        progress?.Report("Download was rejected (403). Retrying once…");
-        await Task.Delay(TimeSpan.FromMilliseconds(800));
-        progress?.Report("Retrying download…");
-        return await _downloader.RunYtDlpAsync(
-            canonicalUrl,
-            jobOptions with { Title = $"{jobOptions.Title} · retry" });
+        return await _downloader.RunYtDlpAsync(canonicalUrl, jobOptions);
     }
 
     private static BackgroundJobOptions YouTubeJob(
@@ -819,10 +810,6 @@ public class MusicLibraryService
         string source,
         BackgroundJobPriority priority) =>
         new(kind, title, source, priority);
-
-    private static bool IsForbiddenResponse(string output) =>
-        output.Contains("403", StringComparison.OrdinalIgnoreCase)
-        || output.Contains("forbidden", StringComparison.OrdinalIgnoreCase);
 
     private static List<string> NamesFor(IEnumerable<int> ids, IReadOnlyDictionary<int, string> names) =>
         ids.Select(id => names.GetValueOrDefault(id, ""))

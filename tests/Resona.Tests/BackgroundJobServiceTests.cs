@@ -7,6 +7,10 @@ namespace Resona.Tests;
 public sealed class BackgroundJobServiceTests
 {
     [Fact]
+    public void Production_global_limit_is_three() =>
+        Assert.Equal(3, BackgroundJobService.DefaultMaximumConcurrency);
+
+    [Fact]
     public async Task Never_runs_more_than_configured_global_limit()
     {
         using var service = new BackgroundJobService(3);
@@ -134,6 +138,7 @@ public sealed class BackgroundJobServiceTests
         var id = Assert.Single(service.GetSnapshot().Jobs).Id;
 
         Assert.True(service.Cancel(id));
+        Assert.False(service.Cancel(id));
         await Assert.ThrowsAnyAsync<OperationCanceledException>(async () => await job);
         Assert.Equal(BackgroundJobState.Canceled, Assert.Single(service.GetSnapshot().Jobs).State);
     }
@@ -172,6 +177,36 @@ public sealed class BackgroundJobServiceTests
         Assert.False(result.Success);
         Assert.Equal(BackgroundJobState.Failed, snapshot.State);
         Assert.Equal("unavailable", snapshot.Error);
+    }
+
+    [Fact]
+    public async Task Clearing_history_keeps_current_jobs()
+    {
+        using var service = new BackgroundJobService(1);
+        await service.RunAsync(Options("completed"), (_, _) => Task.FromResult(true));
+        await service.RunAsync(
+            Options("failed"),
+            (_, _) => Task.FromResult(false),
+            success => success ? null : "failed");
+
+        var blockerStarted = NewSignal();
+        var current = service.RunAsync(
+            Options("current"),
+            async (_, cancellationToken) =>
+            {
+                blockerStarted.TrySetResult();
+                await Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken);
+                return true;
+            });
+        await blockerStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+
+        Assert.Equal(2, service.ClearFinishedJobs());
+        var remaining = Assert.Single(service.GetSnapshot().Jobs);
+        Assert.Equal("current", remaining.Title);
+        Assert.Equal(BackgroundJobState.Running, remaining.State);
+
+        service.Cancel(remaining.Id);
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(async () => await current);
     }
 
     private static BackgroundJobOptions Options(

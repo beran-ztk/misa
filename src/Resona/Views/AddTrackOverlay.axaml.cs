@@ -300,7 +300,19 @@ public partial class AddTrackOverlay : UserControl
         };
 
         var progress = new Progress<string>(stage => BusyTitleText.Text = stage);
-        var result = await MusicLibraryService.Current.DownloadTrackAsync(request, progress);
+        DownloadResult result;
+        try
+        {
+            result = await MusicLibraryService.Current.DownloadTrackAsync(request, progress);
+        }
+        catch (OperationCanceledException)
+        {
+            SetBusy(false);
+            StatusText.Text = "Download canceled.";
+            UpdateDownloadButton();
+            CloseBtn.IsEnabled = true;
+            return;
+        }
 
         if (!result.Success)
         {

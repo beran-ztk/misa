@@ -62,11 +62,19 @@ public sealed class ImportQueueService
                 entries = result.Entries;
                 readError = result.Error;
             }
-            catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+            catch (OperationCanceledException) when (
+                sourceTimeout.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
             {
                 unavailableCount++;
                 previewItems.Add(new ImportPreviewItem(sourceUrl, sourceUrl, "This link took too long to read", null, null,
                     ImportQueueStatus.Failed, "Timed out after 45 seconds"));
+                continue;
+            }
+            catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+            {
+                unavailableCount++;
+                previewItems.Add(new ImportPreviewItem(sourceUrl, sourceUrl, "Reading this link was canceled", null, null,
+                    ImportQueueStatus.Failed, "Canceled from Activity Center"));
                 continue;
             }
             if (entries.Count == 0)
@@ -76,7 +84,6 @@ public sealed class ImportQueueService
                     ImportQueueStatus.Failed, readError ?? "Unavailable or unsupported playlist"));
                 continue;
             }
-
             foreach (var entry in entries)
             {
                 if (!seen.Add(entry.CanonicalUrl))

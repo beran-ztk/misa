@@ -177,15 +177,41 @@ public sealed class BackgroundJobService : IDisposable
         lock (_gate)
         {
             if (!_jobs.TryGetValue(jobId, out item)
+                || item.Cancellation.IsCancellationRequested
                 || item.State is BackgroundJobState.Completed
                     or BackgroundJobState.Failed
                     or BackgroundJobState.Canceled)
                 return false;
+
+            item.Detail = "Canceling…";
         }
 
         item.Cancellation.Cancel();
         SignalWorkAvailable();
+        PublishSnapshot();
         return true;
+    }
+
+    public int ClearFinishedJobs()
+    {
+        List<WorkItem> finished;
+        lock (_gate)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            finished = _jobs.Values
+                .Where(job => job.State is BackgroundJobState.Completed
+                    or BackgroundJobState.Failed
+                    or BackgroundJobState.Canceled)
+                .ToList();
+            foreach (var item in finished)
+                _jobs.Remove(item.Id);
+        }
+
+        foreach (var item in finished)
+            item.Dispose();
+        if (finished.Count > 0)
+            PublishSnapshot();
+        return finished.Count;
     }
 
     private async Task ProcessQueueAsync()

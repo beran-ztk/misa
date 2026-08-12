@@ -23,9 +23,8 @@ public class TrackDownloadService
         Directory.CreateDirectory(Values.TracksDirectory);
         var outputTemplate = Path.Combine(Values.TracksDirectory, "%(title)s [%(id)s].%(ext)s");
 
-        var result = await RunYouTubeProcessAsync(
-            jobOptions ?? DefaultJob(BackgroundJobKind.YouTubeDownload, "Download audio", url),
-            YtDlpDownloadArgs(
+        var options = jobOptions ?? DefaultJob(BackgroundJobKind.YouTubeDownload, "Download audio", url);
+        var args = YtDlpDownloadArgs(
                 "--js-runtimes", "node",
                 "--no-playlist",
                 "-f", "bestaudio[ext=m4a]/bestaudio/best[height<=360]/18",
@@ -33,7 +32,22 @@ public class TrackDownloadService
                 "--audio-format", "m4a",
                 "--embed-thumbnail",
                 "-o", outputTemplate,
-                url),
+                url);
+        var result = await BackgroundJobService.Current.RunAsync(
+            options,
+            async (context, token) =>
+            {
+                context.Report("Running yt-dlp…");
+                var attempt = await RunProcessAsync(ExternalToolLocator.Resolve("yt-dlp"), args, token);
+                if (attempt.ExitCode == 0 || !IsForbiddenResponse(attempt.Error))
+                    return attempt;
+
+                context.Report("Download rejected (403) · retrying once…");
+                await Task.Delay(TimeSpan.FromMilliseconds(800), token);
+                context.Report("Retrying yt-dlp…");
+                return await RunProcessAsync(ExternalToolLocator.Resolve("yt-dlp"), args, token);
+            },
+            result => result.ExitCode == 0 ? null : CleanYtDlpError(result.Error) ?? "yt-dlp failed",
             cancellationToken);
 
         return (result.ExitCode == 0, result.Error);
@@ -342,6 +356,10 @@ public class TrackDownloadService
             ? line["ERROR:".Length..].Trim()
             : line.Trim();
     }
+
+    private static bool IsForbiddenResponse(string output) =>
+        output.Contains("403", StringComparison.OrdinalIgnoreCase)
+        || output.Contains("forbidden", StringComparison.OrdinalIgnoreCase);
 
     private static string NormalizeChannelVideosUrl(string url)
     {

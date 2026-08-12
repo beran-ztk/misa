@@ -161,6 +161,9 @@ public partial class MusicView : UserControl
     public MusicView()
     {
         InitializeComponent();
+        ActivityCenter.CloseRequested += UpdateActivityCenterButtonVisual;
+        ActivityCenter.SummaryChanged += UpdateActivityCenterSummary;
+        UpdateActivityCenterSummary(ActivityCenter.CurrentSummary);
         MoveFilterDrawerToRootOverlay();
         var appAmbientGradient = (LinearGradientBrush)AppAtmosphereTint.Fill!;
         _appAmbientPrimaryStop = appAmbientGradient.GradientStops[0];
@@ -1474,6 +1477,7 @@ public partial class MusicView : UserControl
 
     private async void OpenFilterDrawer()
     {
+        CloseActivityCenter();
         var motionGeneration = ++_filterMotionGeneration;
         _filterPanelVisible = true;
         _filterPanelClosing = false;
@@ -2812,11 +2816,49 @@ public partial class MusicView : UserControl
 
     private void OnImportClicked(object? sender, RoutedEventArgs e)
     {
+        CloseActivityCenter();
         ImportOverlay.Open();
+    }
+
+    private void OnActivityCenterClicked(object? sender, RoutedEventArgs e)
+    {
+        if (ActivityCenter.IsVisible)
+            ActivityCenter.IsVisible = false;
+        else
+            ActivityCenter.Open();
+        UpdateActivityCenterButtonVisual();
+    }
+
+    private void UpdateActivityCenterSummary(ActivityCenterSummary summary)
+    {
+        ActivityBadge.IsVisible = summary.CurrentCount > 0 || summary.Failed > 0;
+        ActivityBadgeText.Text = summary.CurrentCount > 0
+            ? summary.CurrentCount > 99 ? "99+" : summary.CurrentCount.ToString(CultureInfo.InvariantCulture)
+            : "!";
+        ActivityBadge.Background = Brush(summary.Failed > 0 ? "#D75962" : "#587FA8");
+        ToolTip.SetTip(ActivityCenterToggleButton,
+            summary.CurrentCount > 0
+                ? $"Activity Center · {summary.CurrentCount} current"
+                : summary.Failed > 0 ? $"Activity Center · {summary.Failed} failed" : "Activity Center");
+    }
+
+    private void CloseActivityCenter()
+    {
+        ActivityCenter.IsVisible = false;
+        UpdateActivityCenterButtonVisual();
+    }
+
+    private void UpdateActivityCenterButtonVisual()
+    {
+        ActivityCenterToggleButton.Background = ActivityCenter.IsVisible
+            ? Brush("#343E6591")
+            : Brushes.Transparent;
+        ActivityCenterToggleButton.Opacity = ActivityCenter.IsVisible ? 1 : 0.86;
     }
 
     private void OnChannelsClicked(object? sender, RoutedEventArgs e)
     {
+        CloseActivityCenter();
         ChannelOverlay.Margin = new Thickness(0, 0, 0, PlayerBar.Bounds.Height);
         ChannelOverlay.Open();
     }
@@ -2882,6 +2924,7 @@ public partial class MusicView : UserControl
 
     private void OnSettingsClicked(object? sender, RoutedEventArgs e)
     {
+        CloseActivityCenter();
         UpdateSettingsLayout();
         SettingsOverlay.Open();
     }
@@ -3009,6 +3052,7 @@ public partial class MusicView : UserControl
 
     private void OpenTrackEditor(MusicTrack track)
     {
+        CloseActivityCenter();
         UpdateEditorBounds();
         EditTrackOverlay.Open(
             track,

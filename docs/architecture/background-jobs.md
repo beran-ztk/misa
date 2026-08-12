@@ -40,3 +40,16 @@ applies the global limit and priority rules.
 
 The Activity Center should consume `GetSnapshot()` and `SnapshotChanged`; it
 must not infer job state from individual view flags.
+
+## Activity Center
+
+The toolbar Activity Center is a session view over the scheduler snapshot. It
+shows the global `running / 3` YouTube limit, active and queued work, and the 30
+most recent finished jobs. Long errors are capped at two lines so actions remain
+reachable.
+
+The pause action only prevents new `Background` jobs from starting. Running,
+user-initiated and normal jobs continue. Cancel terminates the selected current
+execution and its `yt-dlp` process tree. Finished session history can be cleared
+without touching the durable import or Channel Hub records that own the actual
+workflow.
