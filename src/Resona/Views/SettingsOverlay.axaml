@@ -381,12 +381,10 @@
                             BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
                             BorderThickness="1" CornerRadius="7" Padding="12">
                         <StackPanel Spacing="8">
-                            <TextBlock Text="LARGE IMAGE TEXT" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
+                            <TextBlock Text="Note for Discord in 3rd Row under Channel-Name" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
                             <TextBox x:Name="DiscordLargeImageTextBox" Classes="settings-input"
-                                     MaxLength="128" Watermark="Automatic · track genres"
+                                     MaxLength="128" Watermark="Write whatever you want :|"
                                      TextChanged="OnDiscordPresenceTextChanged"/>
-                            <TextBlock Text="Default: the detected or manually assigned genres. Enter text to replace them. Unicode spacing is preserved."
-                                       FontSize="10.5" Opacity="0.56" TextWrapping="Wrap"/>
                         </StackPanel>
                     </Border>
 

@@ -52,7 +52,7 @@ public sealed class DiscordPresenceService : IDisposable
             Assets = new Assets
             {
                 LargeImageKey = TrackImageUrl(item.Track),
-                // LargeImageText = ClipPreservingWhitespaceOrNull(_largeImageText ?? GenreText(item), 128)
+                LargeImageText = ClipPreservingWhitespaceOrNull(_largeImageText, 128)
             }
         };
 
