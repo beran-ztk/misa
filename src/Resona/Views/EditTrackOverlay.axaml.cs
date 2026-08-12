@@ -896,7 +896,7 @@ public partial class EditTrackOverlay : UserControl
         var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,40"), ColumnSpacing = 8 };
         var label = new TextBlock
         {
-            Text = value.Label,
+            Text = EmotionalCharacterCatalog.Display(value.Label),
             FontSize = isPrimary ? 11 : 10.5,
             FontWeight = isPrimary ? FontWeight.SemiBold : FontWeight.Normal,
             Foreground = ThemeResources.Brush("Theme.Brush.TextStrong"),
@@ -906,7 +906,7 @@ public partial class EditTrackOverlay : UserControl
         row.Children.Add(label);
         var score = new TextBlock
         {
-            Text = value.Score.ToString("0.##"),
+            Text = $"{value.Score * 100d:0}%",
             FontSize = 10.5,
             FontWeight = FontWeight.SemiBold,
             Foreground = brush,

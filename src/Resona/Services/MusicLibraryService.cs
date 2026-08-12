@@ -56,6 +56,12 @@ public class MusicLibraryService
         if (ratingId is not null)
             BackgroundAnalysisService.Current.EnqueueTrack(id);
     }
+    public void SetTrackRating(int id, int ratingId)
+    {
+        _db.SetTrackRating(id, ratingId);
+        BackgroundAnalysisService.Current.EnqueueTrack(id);
+        ChannelHubBackgroundService.Current.RequestRefresh();
+    }
     public void SetTrackNeedsReview(int id, bool needsReview) => _db.SetTrackNeedsReview(id, needsReview);
     public void SetTrackAnalysisDisabled(int id, bool analysisDisabled)
     {
@@ -212,6 +218,8 @@ public class MusicLibraryService
     public List<ManualModelGenreUsage> GetTopManualModelGenres(int limit = 10) => _db.GetTopManualModelGenres(limit);
     public List<StoredModelGenrePrediction> GetTrackGenrePredictions(int trackId) => _db.GetTrackGenrePredictions(trackId);
     public TrackAudioAnalysis? GetTrackAudioAnalysis(int trackId) => _db.GetTrackAudioAnalysis(trackId);
+    public Dictionary<int, TrackAudioAnalysis> GetAllTrackAudioAnalyses() => _db.GetAllTrackAudioAnalyses();
+    public Dictionary<int, Dictionary<string, double>> GetAllMirexScores() => _db.GetAllMirexScores();
     public IReadOnlyList<ExperimentalAnalysisModel> GetExperimentalAnalysis(int trackId) =>
         _db.GetTrackAnalysisSignals(trackId);
 

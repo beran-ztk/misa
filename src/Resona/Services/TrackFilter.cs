@@ -5,7 +5,13 @@ using Resona.Models;
 
 namespace Resona.Services;
 
-public record FilterGroup(IReadOnlySet<int> GenreIds, IReadOnlySet<int> StyleIds, IReadOnlySet<int> TagIds, bool Negate = false);
+public record EmotionalCharacterRange(string SignalKey, double? MinimumPercent, double? MaximumPercent);
+public record FilterGroup(
+    IReadOnlySet<int> GenreIds,
+    IReadOnlySet<int> StyleIds,
+    IReadOnlySet<int> TagIds,
+    IReadOnlyList<EmotionalCharacterRange> EmotionalCharacters,
+    bool Negate = false);
 
 public static class TrackFilter
 {
@@ -14,6 +20,7 @@ public static class TrackFilter
         IReadOnlyDictionary<int, List<int>> trackGenreIds,
         IReadOnlyDictionary<int, List<int>> trackStyleIds,
         IReadOnlyDictionary<int, List<int>> trackTagIds,
+        IReadOnlyDictionary<int, Dictionary<string, double>> trackMirexScores,
         IReadOnlySet<int> ratingFilter,
         IReadOnlySet<bool> visibilityFilter,
         IReadOnlyList<FilterGroup> filterGroups,
@@ -36,18 +43,18 @@ public static class TrackFilter
         // Negated groups remove matching tracks after the positive groups are evaluated.
         // Empty groups (nothing selected in any dimension) are ignored.
         var activeGroups = filterGroups
-            .Where(g => g.GenreIds.Count > 0 || g.StyleIds.Count > 0 || g.TagIds.Count > 0)
+            .Where(g => g.GenreIds.Count > 0 || g.StyleIds.Count > 0 || g.TagIds.Count > 0 || g.EmotionalCharacters.Count > 0)
             .ToList();
         var includeGroups = activeGroups.Where(group => !group.Negate).ToList();
         var excludeGroups = activeGroups.Where(group => group.Negate).ToList();
 
         if (includeGroups.Count > 0)
             query = query.Where(track => includeGroups.Any(g =>
-                MatchesGroup(track, g, trackGenreIds, trackStyleIds, trackTagIds)));
+                MatchesGroup(track, g, trackGenreIds, trackStyleIds, trackTagIds, trackMirexScores)));
 
         if (excludeGroups.Count > 0)
             query = query.Where(track => !excludeGroups.Any(g =>
-                MatchesGroup(track, g, trackGenreIds, trackStyleIds, trackTagIds)));
+                MatchesGroup(track, g, trackGenreIds, trackStyleIds, trackTagIds, trackMirexScores)));
 
         var sorted = query.OrderBy(t => t.Title, StringComparer.OrdinalIgnoreCase);
 
@@ -60,7 +67,8 @@ public static class TrackFilter
         FilterGroup group,
         IReadOnlyDictionary<int, List<int>> trackGenreIds,
         IReadOnlyDictionary<int, List<int>> trackStyleIds,
-        IReadOnlyDictionary<int, List<int>> trackTagIds)
+        IReadOnlyDictionary<int, List<int>> trackTagIds,
+        IReadOnlyDictionary<int, Dictionary<string, double>> trackMirexScores)
     {
         if (group.GenreIds.Count > 0)
         {
@@ -81,6 +89,22 @@ public static class TrackFilter
             trackTagIds.TryGetValue(track.Id, out var tTags);
             tTags ??= [];
             if (!group.TagIds.All(id => tTags.Contains(id))) return false;
+        }
+
+        if (group.EmotionalCharacters.Count > 0)
+        {
+            if (!trackMirexScores.TryGetValue(track.Id, out var scores))
+                return false;
+            foreach (var range in group.EmotionalCharacters)
+            {
+                if (!scores.TryGetValue(range.SignalKey, out var score))
+                    return false;
+                var percent = score * 100d;
+                if (range.MinimumPercent is double minimum && percent < minimum)
+                    return false;
+                if (range.MaximumPercent is double maximum && percent > maximum)
+                    return false;
+            }
         }
 
         return true;

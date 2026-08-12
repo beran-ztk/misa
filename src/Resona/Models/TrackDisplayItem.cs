@@ -23,6 +23,23 @@ public record TrackDisplayItem(
     public bool NeedsReview { get; set; }
     public bool NeedsAnalysis { get; set; }
     public bool ShowDownloadedDate { get; set; }
+    public bool IsQuickEditMode { get; set; }
+    public bool IsStandardMode => !IsQuickEditMode;
+    public IReadOnlyList<Rating> RatingChoices { get; set; } = [];
+    public Rating? SelectedRating { get; set; }
+    public string TempoText { get; set; } = "Tempo —";
+    public string LoudnessText { get; set; } = "Loudness —";
+    public string DynamicsText { get; set; } = "Dynamics —";
+    public string EmotionalCharacterText { get; set; } = "Emotional character —";
+    public string SourceActivityText => Track.ViewCount is null && Track.LikeCount is null
+        ? "YouTube activity —"
+        : $"{FormatCompact(Track.ViewCount)} views · {FormatCompact(Track.LikeCount)} likes";
+    public string WorkflowStateText => Track.RatingId is null
+        ? "Awaiting rating"
+        : NeedsAnalysis ? "Analysis pending" : NeedsReview ? "Needs review" : "Complete";
+    public string UploadedDateText => DateTimeOffset.TryParse(Track.UploadedAt, out var uploadedAt)
+        ? $"Uploaded {uploadedAt.ToLocalTime():dd.MM.yyyy}"
+        : "Upload date —";
     public Bitmap? Thumbnail { get; set; }
     public Color ArtworkPrimaryColor { get; private set; } = Colors.Transparent;
     public Color ArtworkSecondaryColor { get; private set; } = Colors.Transparent;
@@ -103,6 +120,18 @@ public record TrackDisplayItem(
             return downloadedAt.ToLocalTime().ToString("dd.MM.yyyy");
         }
     }
+    public string DownloadedDetailText => DownloadedDateText.Length == 0
+        ? "Download date —"
+        : $"Downloaded {DownloadedDateText}";
+
+    private static string FormatCompact(long? value) => value switch
+    {
+        null => "—",
+        >= 1_000_000_000 => $"{value.Value / 1_000_000_000d:0.#}B",
+        >= 1_000_000 => $"{value.Value / 1_000_000d:0.#}M",
+        >= 1_000 => $"{value.Value / 1_000d:0.#}K",
+        _ => value.Value.ToString("N0")
+    };
 
     public IBrush PlayingBackground => IsPlaying
         ? new SolidColorBrush(Color.FromArgb(20, 245, 245, 220))

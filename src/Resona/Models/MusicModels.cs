@@ -143,6 +143,7 @@ public sealed record ChannelHubItem(
     int KnownVideoCount,
     int UncheckedVideoCount,
     long? FollowerCount,
+    long? TotalViewCount,
     int? MaxDurationMinutes,
     string? AutoDownloadFrom,
     IReadOnlyList<string> TopTracks,
@@ -166,7 +167,7 @@ public sealed record ChannelHubItem(
         }
     }
 
-    public string TrackCountText => LocalTrackCount == 1 ? "1 track" : $"{LocalTrackCount} tracks";
+    public string TrackCountText => LocalTrackCount == 1 ? "1 track in library" : $"{LocalTrackCount:N0} tracks in library";
     public string LibrarySummaryText => LocalTrackCount == 1
         ? RatedTrackCount == 1 ? "1 track · rated" : "1 track · unrated"
         : $"{LocalTrackCount:N0} tracks · {RatedTrackCount:N0} rated";
@@ -197,9 +198,9 @@ public sealed record ChannelHubItem(
         : $"{System.Math.Clamp(SkipCount / (double)PlayCount * 100d, 0d, 100d):0}% skip rate";
     public string VideoSummaryText => KnownVideoCount == 1 ? "1 known video" : $"{KnownVideoCount:N0} known videos";
     public string VideoQueueText => UncheckedVideoCount == 0
-        ? "Nothing new"
-        : UncheckedVideoCount == 1 ? "1 new video" : $"{UncheckedVideoCount:N0} new videos";
-    public string NewVideoText => UncheckedVideoCount == 1 ? "1 new video" : $"{UncheckedVideoCount} new videos";
+        ? "No tracks awaiting a decision"
+        : UncheckedVideoCount == 1 ? "1 track awaiting a decision" : $"{UncheckedVideoCount:N0} tracks awaiting a decision";
+    public string NewVideoText => UncheckedVideoCount == 1 ? "1 to review" : $"{UncheckedVideoCount:N0} to review";
     public bool HasNewVideos => UncheckedVideoCount > 0;
     public bool HasTopTracks => TopTracks.Count > 0;
     public string TopTracksText => string.Join("\n", TopTracks.Take(3));
@@ -214,13 +215,19 @@ public sealed record ChannelHubItem(
         ? $"{minutes} min channel limit"
         : "Uses global duration limit";
     public string FollowerText => FollowerCount is long followers
-        ? $"{FormatCompactNumber(followers)} YouTube followers"
+        ? $"{FormatCompactNumber(followers)} subscribers"
         : string.Empty;
+    public string TotalViewText => TotalViewCount is long views
+        ? $"{FormatCompactNumber(views)} views on known videos"
+        : "View count unavailable";
+    public string AudienceText => FollowerText.Length > 0
+        ? $"{FollowerText} · {TotalViewText}"
+        : $"Subscribers unavailable · {TotalViewText}";
     public string ChannelMetadataText
     {
         get
         {
-            var followerText = FollowerText.Length > 0 ? FollowerText : "Follower count unavailable";
+            var followerText = AudienceText;
             if (!System.DateTime.TryParse(LastCheckedAt, out var checkedAt))
                 return $"{followerText} · not checked yet";
             return $"{followerText} · checked {checkedAt.ToLocalTime():dd MMM yyyy}";

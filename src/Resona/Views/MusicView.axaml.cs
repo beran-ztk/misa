@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Numerics;
+using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia;
@@ -115,6 +116,8 @@ public partial class MusicView : UserControl
     private Dictionary<int, List<int>> _allTrackStyleIds = [];
     private Dictionary<int, List<int>> _allTrackGenreIds = [];
     private Dictionary<int, List<int>> _allTrackTagIds = [];
+    private Dictionary<int, TrackAudioAnalysis> _allTrackAudioAnalyses = [];
+    private Dictionary<int, Dictionary<string, double>> _allTrackMirexScores = [];
     private List<TrackDisplayItem> _filteredItems = [];
     private List<TrackDisplayItem> _visibleItems = [];
     private List<PortableFilterPreset> _filterPresets = [];
@@ -133,14 +136,25 @@ public partial class MusicView : UserControl
     private MultiSelectFilterControl? _conditionGenreCtrl;
     private MultiSelectFilterControl? _conditionTagCtrl;
     private bool _conditionNegate;
+    private bool _isQuickEditMode;
+    private readonly Dictionary<string, EmotionalRangeState> _conditionEmotionalCharacters =
+        EmotionalCharacterCatalog.All.ToDictionary(item => item.Adjectives, _ => new EmotionalRangeState(), StringComparer.OrdinalIgnoreCase);
     private FilterSection? _conditionGenreSection;
     private FilterSection? _conditionTagSection;
+    private FilterSection? _conditionEmotionalSection;
 
     private record FilterGroupControls(
         MultiSelectFilterControl GenreCtrl,
         MultiSelectFilterControl TagCtrl,
+        Dictionary<string, EmotionalRangeState> EmotionalCharacters,
         bool Negate,
         Action RefreshVisuals);
+    private sealed class EmotionalRangeState
+    {
+        public double? MinimumPercent { get; set; }
+        public double? MaximumPercent { get; set; }
+        public bool IsActive => MinimumPercent is not null || MaximumPercent is not null;
+    }
     private sealed record FilterSection(Control Control, Action Refresh);
     private readonly List<FilterGroupControls> _filterGroups = [];
 
@@ -544,6 +558,8 @@ public partial class MusicView : UserControl
         _allTrackStyleIds = MusicLibraryService.Current.GetAllTrackStyleIds();
         _allTrackGenreIds = MusicLibraryService.Current.GetAllTrackGenreIds();
         _allTrackTagIds = MusicLibraryService.Current.GetAllTrackTagIds();
+        _allTrackAudioAnalyses = MusicLibraryService.Current.GetAllTrackAudioAnalyses();
+        _allTrackMirexScores = MusicLibraryService.Current.GetAllMirexScores();
 
         var genreMap = Values.Genres.ToDictionary(g => g.Id, g => g.Name);
         var tagMap = Values.Tags.ToDictionary(t => t.Id);
@@ -652,8 +668,24 @@ public partial class MusicView : UserControl
         {
             NeedsReview = track.NeedsReview,
             NeedsAnalysis = needsAnalysis,
-            IsPlaying = track.Id == _engine.ActiveTrackId
+            IsPlaying = track.Id == _engine.ActiveTrackId,
+            IsQuickEditMode = _isQuickEditMode,
+            RatingChoices = Values.Ratings.OrderBy(rating => rating.SortOrder).ToList(),
+            SelectedRating = track.RatingId is int selectedRatingId
+                ? Values.Ratings.FirstOrDefault(rating => rating.Id == selectedRatingId)
+                : null
         };
+        if (_allTrackAudioAnalyses.TryGetValue(track.Id, out var audio))
+        {
+            item.TempoText = audio.Bpm is double bpm ? $"Tempo {bpm:0} BPM" : "Tempo —";
+            item.LoudnessText = audio.IntegratedLoudness is double loudness ? $"Loudness {loudness:0.0} LUFS" : "Loudness —";
+            item.DynamicsText = audio.LoudnessRange is double dynamics ? $"Dynamics {dynamics:0.0} LU" : "Dynamics —";
+        }
+        if (_allTrackMirexScores.TryGetValue(track.Id, out var mirex) && mirex.Count > 0)
+        {
+            var strongest = mirex.MaxBy(pair => pair.Value);
+            item.EmotionalCharacterText = $"{EmotionalCharacterCatalog.Name(strongest.Key)} {strongest.Value * 100d:0}%";
+        }
         item.ApplyAppearance(_appearanceSettings);
         return item;
     }
@@ -714,6 +746,10 @@ public partial class MusicView : UserControl
                 SelectedIds(fg.GenreCtrl.SelectedItems, Values.Genres, g => g.Name, g => g.Id),
                 new HashSet<int>(),
                 SelectedIds(fg.TagCtrl.SelectedItems, Values.Tags, TagFilterName, t => t.Id),
+                fg.EmotionalCharacters
+                    .Where(pair => pair.Value.IsActive)
+                    .Select(pair => new EmotionalCharacterRange(pair.Key, pair.Value.MinimumPercent, pair.Value.MaximumPercent))
+                    .ToList(),
                 fg.Negate))
             .ToList();
 
@@ -829,6 +865,7 @@ public partial class MusicView : UserControl
             _allTrackGenreIds,
             _allTrackStyleIds,
             _allTrackTagIds,
+            _allTrackMirexScores,
             selRatingIds,
             selVisibility,
             groups,
@@ -1100,6 +1137,14 @@ public partial class MusicView : UserControl
 
         if (selectedTagIds.Count > 0)
             query = query.Where(track => TrackHasAllTags(track.Id, _allTrackTagIds, selectedTagIds));
+
+        var emotionalRanges = group.EmotionalCharacters.Where(pair => pair.Value.IsActive).ToList();
+        if (emotionalRanges.Count > 0)
+            query = query.Where(track => emotionalRanges.All(range =>
+                _allTrackMirexScores.TryGetValue(track.Id, out var scores)
+                && scores.TryGetValue(range.Key, out var score)
+                && (range.Value.MinimumPercent is not double minimum || score * 100d >= minimum)
+                && (range.Value.MaximumPercent is not double maximum || score * 100d <= maximum)));
 
         return query.ToList();
     }
@@ -1750,8 +1795,12 @@ public partial class MusicView : UserControl
                 SortedNames(group.GenreCtrl.SelectedItems),
                 new List<string>(),
                 SortedNames(group.TagCtrl.SelectedItems),
-                group.Negate))
-            .Where(group => group.Genres.Count > 0 || (group.Tags?.Count ?? 0) > 0)
+                group.Negate,
+                group.EmotionalCharacters
+                    .Where(pair => pair.Value.IsActive)
+                    .Select(pair => new PortableEmotionalCharacterFilter(pair.Key, pair.Value.MinimumPercent, pair.Value.MaximumPercent))
+                    .ToList()))
+            .Where(group => group.Genres.Count > 0 || (group.Tags?.Count ?? 0) > 0 || (group.EmotionalCharacters?.Count ?? 0) > 0)
             .ToList();
 
         return new PortableFilterPreset(
@@ -1782,11 +1831,11 @@ public partial class MusicView : UserControl
             _filterGroups.Clear();
 
             var groups = preset.Groups
-                .Where(group => group.Genres.Count > 0 || (group.Tags?.Count ?? 0) > 0)
+                .Where(group => group.Genres.Count > 0 || (group.Tags?.Count ?? 0) > 0 || (group.EmotionalCharacters?.Count ?? 0) > 0)
                 .ToList();
 
             foreach (var group in groups)
-                _filterGroups.Add(CreateFilterCondition(group.Genres, group.Tags ?? new List<string>(), group.Negate));
+                _filterGroups.Add(CreateFilterCondition(group.Genres, group.Tags ?? new List<string>(), group.Negate, group.EmotionalCharacters));
 
             RebuildFilterConditionsPanel();
             ClearConditionBuilder();
@@ -1866,10 +1915,12 @@ public partial class MusicView : UserControl
 
         _conditionGenreSection = CreateGenreFilterSection(_conditionGenreCtrl);
         _conditionTagSection = CreateTagFilterSection(_conditionTagCtrl);
+        _conditionEmotionalSection = CreateEmotionalCharacterFilterSection(_conditionEmotionalCharacters);
 
         FilterBuilderPanel.Children.Clear();
         FilterBuilderPanel.Children.Add(_conditionGenreSection.Control);
         FilterBuilderPanel.Children.Add(_conditionTagSection.Control);
+        FilterBuilderPanel.Children.Add(_conditionEmotionalSection.Control);
         SetConditionMode(exclude: false);
         UpdateCurrentSetSummary();
     }
@@ -1881,15 +1932,21 @@ public partial class MusicView : UserControl
 
         var selectedGenres = SortedNames(_conditionGenreCtrl.SelectedItems);
         var selectedTags = SortedNames(_conditionTagCtrl.SelectedItems);
-        if (selectedGenres.Count == 0 && selectedTags.Count == 0)
+        if (selectedGenres.Count == 0 && selectedTags.Count == 0 && !_conditionEmotionalCharacters.Values.Any(value => value.IsActive))
             return;
 
-        _filterGroups.Add(CreateFilterCondition(selectedGenres, selectedTags, _conditionNegate));
+        _filterGroups.Add(CreateFilterCondition(selectedGenres, selectedTags, _conditionNegate, _conditionEmotionalCharacters
+            .Where(pair => pair.Value.IsActive)
+            .Select(pair => new PortableEmotionalCharacterFilter(pair.Key, pair.Value.MinimumPercent, pair.Value.MaximumPercent))));
         RebuildFilterConditionsPanel();
         ClearConditionBuilder();
     }
 
-    private FilterGroupControls CreateFilterCondition(IEnumerable<string> genres, IEnumerable<string> tags, bool negate = false)
+    private FilterGroupControls CreateFilterCondition(
+        IEnumerable<string> genres,
+        IEnumerable<string> tags,
+        bool negate = false,
+        IEnumerable<PortableEmotionalCharacterFilter>? emotionalCharacters = null)
     {
         var genreCtrl = new MultiSelectFilterControl { Placeholder = "All genres" };
         genreCtrl.SetItems(GenreFilterOptions());
@@ -1899,13 +1956,29 @@ public partial class MusicView : UserControl
         tagCtrl.SetItems(TagFilterOptions());
         tagCtrl.SetSelectedItems(tags, notify: false);
 
-        return new FilterGroupControls(genreCtrl, tagCtrl, negate, () => { });
+        var emotional = EmotionalCharacterCatalog.All.ToDictionary(
+            item => item.Adjectives,
+            _ => new EmotionalRangeState(),
+            StringComparer.OrdinalIgnoreCase);
+        foreach (var range in emotionalCharacters ?? [])
+            if (emotional.TryGetValue(range.SignalKey, out var state))
+            {
+                state.MinimumPercent = range.MinimumPercent;
+                state.MaximumPercent = range.MaximumPercent;
+            }
+
+        return new FilterGroupControls(genreCtrl, tagCtrl, emotional, negate, () => { });
     }
 
     private void ClearConditionBuilder()
     {
         _conditionGenreCtrl?.SetSelectedItems(Array.Empty<string>(), notify: false);
         _conditionTagCtrl?.SetSelectedItems(Array.Empty<string>(), notify: false);
+        foreach (var range in _conditionEmotionalCharacters.Values)
+        {
+            range.MinimumPercent = null;
+            range.MaximumPercent = null;
+        }
         SetConditionMode(exclude: false);
         RefreshConditionBuilder();
     }
@@ -1945,6 +2018,7 @@ public partial class MusicView : UserControl
     {
         _conditionGenreSection?.Refresh();
         _conditionTagSection?.Refresh();
+        _conditionEmotionalSection?.Refresh();
         UpdateCurrentSetSummary();
     }
 
@@ -1960,13 +2034,19 @@ public partial class MusicView : UserControl
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .Order(StringComparer.OrdinalIgnoreCase)
             .ToList() ?? [];
+        var emotional = _conditionEmotionalCharacters
+            .Where(pair => pair.Value.IsActive)
+            .Select(pair => EmotionalCharacterCatalog.Name(pair.Key))
+            .ToList();
 
         CurrentSetGenresRow.IsVisible = genres.Count > 0;
         CurrentSetTagsRow.IsVisible = tags.Count > 0;
+        CurrentSetEmotionalRow.IsVisible = emotional.Count > 0;
         CurrentSetGenresText.Text = FormatNaturalList(genres);
         CurrentSetTagsText.Text = FormatNaturalList(tags);
+        CurrentSetEmotionalText.Text = FormatNaturalList(emotional);
 
-        var hasSelection = genres.Count > 0 || tags.Count > 0;
+        var hasSelection = genres.Count > 0 || tags.Count > 0 || emotional.Count > 0;
         CurrentSetEmptyText.IsVisible = !hasSelection;
         AddFilterGroupButton.IsEnabled = hasSelection;
     }
@@ -2033,6 +2113,9 @@ public partial class MusicView : UserControl
         var names = condition.GenreCtrl.SelectedItems
             .Select(DisplayGenreFilterName)
             .Concat(condition.TagCtrl.SelectedItems.Select(DisplayTagFilterName))
+            .Concat(condition.EmotionalCharacters
+                .Where(pair => pair.Value.IsActive)
+                .Select(pair => FormatEmotionalRange(pair.Key, pair.Value)))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .Order(StringComparer.OrdinalIgnoreCase)
             .ToList();
@@ -2112,6 +2195,125 @@ public partial class MusicView : UserControl
 
     private static string DisplayTagFilterName(string tagName)
         => tagName;
+
+    private FilterSection CreateEmotionalCharacterFilterSection(Dictionary<string, EmotionalRangeState> ranges)
+    {
+        var rows = new StackPanel { Spacing = 7 };
+
+        void Rebuild()
+        {
+            rows.Children.Clear();
+            foreach (var definition in EmotionalCharacterCatalog.All)
+            {
+                var state = ranges[definition.Adjectives];
+                var minimum = CreatePercentageBox("Min", state.MinimumPercent);
+                var maximum = CreatePercentageBox("Max", state.MaximumPercent);
+
+                void UpdateState()
+                {
+                    state.MinimumPercent = ParsePercentage(minimum.Text);
+                    state.MaximumPercent = ParsePercentage(maximum.Text);
+                    UpdateCurrentSetSummary();
+                }
+
+                minimum.TextChanged += (_, _) => UpdateState();
+                maximum.TextChanged += (_, _) => UpdateState();
+
+                var label = new StackPanel
+                {
+                    Spacing = 1,
+                    Children =
+                    {
+                        new TextBlock { Text = definition.Name, FontSize = 10.5, FontWeight = FontWeight.SemiBold },
+                        new TextBlock
+                        {
+                            Text = definition.Adjectives,
+                            FontSize = 8.5,
+                            Opacity = 0.48,
+                            TextTrimming = TextTrimming.CharacterEllipsis
+                        }
+                    }
+                };
+                var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,68,12,68"), ColumnSpacing = 5 };
+                row.Children.Add(label);
+                Grid.SetColumn(minimum, 1);
+                row.Children.Add(minimum);
+                var separator = new TextBlock
+                {
+                    Text = "–",
+                    Opacity = 0.45,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center
+                };
+                Grid.SetColumn(separator, 2);
+                row.Children.Add(separator);
+                Grid.SetColumn(maximum, 3);
+                row.Children.Add(maximum);
+                rows.Children.Add(row);
+            }
+        }
+
+        Rebuild();
+        var border = new Border
+        {
+            Background = Brushes.Transparent,
+            BorderBrush = ThemeResources.Brush("Theme.Brush.BorderSubtle"),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(7),
+            Padding = new Thickness(11, 10),
+            Child = new StackPanel
+            {
+                Spacing = 9,
+                Children =
+                {
+                    new TextBlock { Text = "Emotional character (MIREX)", FontSize = 12, FontWeight = FontWeight.SemiBold },
+                    new TextBlock
+                    {
+                        Text = "Set a minimum, maximum or both. Values are percentages.",
+                        FontSize = 9.5,
+                        Opacity = 0.5
+                    },
+                    rows
+                }
+            }
+        };
+        return new FilterSection(border, Rebuild);
+    }
+
+    private static TextBox CreatePercentageBox(string watermark, double? value)
+    {
+        var box = new TextBox
+        {
+            Watermark = $"{watermark} %",
+            Text = value?.ToString("0.#", CultureInfo.CurrentCulture) ?? string.Empty,
+            Height = 27,
+            FontSize = 10,
+            VerticalContentAlignment = VerticalAlignment.Center,
+            HorizontalContentAlignment = HorizontalAlignment.Right
+        };
+        box.Classes.Add("compact-search");
+        return box;
+    }
+
+    private static double? ParsePercentage(string? text)
+    {
+        if (!double.TryParse(text, NumberStyles.Float, CultureInfo.CurrentCulture, out var value)
+            && !double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out value))
+            return null;
+        return Math.Clamp(value, 0d, 100d);
+    }
+
+    private static string FormatEmotionalRange(string signalKey, EmotionalRangeState state)
+    {
+        var name = EmotionalCharacterCatalog.Name(signalKey);
+        return (state.MinimumPercent, state.MaximumPercent) switch
+        {
+            (double minimum, double maximum) => $"{name} {minimum:0.#}–{maximum:0.#}%",
+            (double minimum, null) => $"{name} ≥ {minimum:0.#}%",
+            (null, double maximum) => $"{name} ≤ {maximum:0.#}%",
+            _ => name
+        };
+    }
 
     private FilterSection CreateGenreFilterSection(MultiSelectFilterControl genreCtrl)
     {
@@ -2527,6 +2729,50 @@ public partial class MusicView : UserControl
         RefreshTrackList();
         if (ImportOverlay.IsVisible)
             ImportOverlay.RefreshQueue();
+    }
+
+    private void OnToggleQuickEditClicked(object? sender, RoutedEventArgs e)
+    {
+        _isQuickEditMode = !_isQuickEditMode;
+        QuickEditToggleBtn.Opacity = _isQuickEditMode ? 1 : 0.86;
+        QuickEditToggleBtn.Background = _isQuickEditMode
+            ? Brush("#343E6591")
+            : Brushes.Transparent;
+        ToolTip.SetTip(QuickEditToggleBtn, _isQuickEditMode ? "Leave quick edit" : "Quick edit tracks");
+        foreach (var item in _allItems)
+            item.IsQuickEditMode = _isQuickEditMode;
+        RefreshVisibleItemsSource((FileList.SelectedItem as TrackDisplayItem)?.Track.Id);
+    }
+
+    private void OnQuickRatingChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (!_isQuickEditMode
+            || sender is not ComboBox { DataContext: TrackDisplayItem item, SelectedItem: Rating rating }
+            || item.Track.RatingId == rating.Id)
+            return;
+
+        MusicLibraryService.Current.SetTrackRating(item.Track.Id, rating.Id);
+        UpdateTrackInList(item.Track.Id);
+        ShowToast($"Rated {item.Track.Title} as {rating.Name}");
+    }
+
+    private async void OnQuickDeleteClicked(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Control { DataContext: TrackDisplayItem item })
+            await DeleteTrackFromEditorAsync(item.Track);
+        e.Handled = true;
+    }
+
+    private async void OnQuickCopyUrlClicked(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Control { DataContext: TrackDisplayItem item })
+            return;
+        var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
+        if (clipboard is null)
+            return;
+        await clipboard.SetTextAsync(item.Track.CanonicalUrl);
+        ShowToast("YouTube URL copied");
+        e.Handled = true;
     }
 
     private void OnSettingsClicked(object? sender, RoutedEventArgs e)

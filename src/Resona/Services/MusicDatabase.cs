@@ -1312,13 +1312,14 @@ public class MusicDatabase
                 FROM tracks
                 LEFT JOIN ratings ON ratings.id = tracks.rating_id
                 WHERE tracks.channel_id IS NOT NULL
-                  AND tracks.library_state = 'Active'
+                  AND tracks.library_state <> 'Rejected'
                 GROUP BY tracks.channel_id
             ),
             video_stats AS (
                 SELECT channel_id,
                        COUNT(*) AS video_count,
-                       SUM(CASE WHEN is_checked = 0 THEN 1 ELSE 0 END) AS unchecked_count
+                       SUM(CASE WHEN is_checked = 0 THEN 1 ELSE 0 END) AS unchecked_count,
+                       SUM(view_count) AS total_view_count
                 FROM channel_videos
                 GROUP BY channel_id
             )
@@ -1341,6 +1342,7 @@ public class MusicDatabase
                    COALESCE(video_stats.video_count, 0),
                    COALESCE(video_stats.unchecked_count, 0),
                    channels.follower_count,
+                   video_stats.total_view_count,
                    channels.max_duration_minutes,
                    channels.auto_download_from,
                    channels.thumbnail,
@@ -1377,11 +1379,12 @@ public class MusicDatabase
                 ReadInt32(reader, 16),
                 ReadInt32(reader, 17),
                 reader.IsDBNull(18) ? null : reader.GetInt64(18),
-                reader.IsDBNull(19) ? null : reader.GetInt32(19),
-                reader.IsDBNull(20) ? null : reader.GetString(20),
+                reader.IsDBNull(19) ? null : reader.GetInt64(19),
+                reader.IsDBNull(20) ? null : reader.GetInt32(20),
+                reader.IsDBNull(21) ? null : reader.GetString(21),
                 [],
-                reader.IsDBNull(21) ? null : (byte[])reader.GetValue(21),
-                reader.IsDBNull(22) ? null : reader.GetString(22)));
+                reader.IsDBNull(22) ? null : (byte[])reader.GetValue(22),
+                reader.IsDBNull(23) ? null : reader.GetString(23)));
         reader.Close();
 
         using var tracks = conn.CreateCommand();
@@ -2785,6 +2788,24 @@ public class MusicDatabase
         tx.Commit();
     }
 
+    public void SetTrackRating(int id, int ratingId)
+    {
+        using var conn = Open();
+        using var tx = conn.BeginTransaction();
+        var now = DateTime.UtcNow.ToString("O");
+        ExecuteInsert(conn, tx, @"
+            UPDATE tracks
+            SET rating_id = $ratingId, library_state = 'Active', needs_reevaluation = 0, updated_at = $now
+            WHERE id = $id",
+            ("$id", id), ("$ratingId", ratingId), ("$now", now));
+        ExecuteInsert(conn, tx, @"
+            UPDATE channel_videos
+            SET is_checked = 1, download_status = 'Ready', download_error = NULL, updated_at = $now
+            WHERE canonical_url = (SELECT canonical_url FROM tracks WHERE id = $id)",
+            ("$id", id), ("$now", now));
+        tx.Commit();
+    }
+
     public void DeleteTracks(IReadOnlyCollection<int> ids)
     {
         if (ids.Count == 0)
@@ -2844,6 +2865,11 @@ public class MusicDatabase
         bool hasAnalysisSignals,
         bool hasDerivedAttributes)
     {
+        ExecuteInsert(conn, tx, @"
+            UPDATE channel_videos
+            SET is_checked = 1, download_status = 'NotQueued', download_error = NULL, updated_at = $now
+            WHERE canonical_url = (SELECT canonical_url FROM tracks WHERE id = $id)",
+            ("$id", id), ("$now", DateTime.UtcNow.ToString("O")));
 
         // Older import_queue_items tables were created without ON DELETE SET NULL.
         // Detach queued/history rows explicitly so deleting a library track does not
@@ -3288,6 +3314,42 @@ public class MusicDatabase
         while (reader.Read())
             tags.Add(new Tag(reader.GetInt32(0), reader.GetString(1)));
         return tags;
+    }
+
+    public Dictionary<int, TrackAudioAnalysis> GetAllTrackAudioAnalyses()
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT track_id, bpm, integrated_loudness, loudness_range FROM track_analysis";
+        using var reader = cmd.ExecuteReader();
+        var results = new Dictionary<int, TrackAudioAnalysis>();
+        while (reader.Read())
+            results[reader.GetInt32(0)] = new TrackAudioAnalysis(
+                reader.IsDBNull(1) ? null : reader.GetDouble(1),
+                reader.IsDBNull(2) ? null : reader.GetDouble(2),
+                reader.IsDBNull(3) ? null : reader.GetDouble(3));
+        return results;
+    }
+
+    public Dictionary<int, Dictionary<string, double>> GetAllMirexScores()
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+            SELECT analysis.track_id, signals.signal_key, signals.score
+            FROM track_analysis_signals signals
+            JOIN track_analysis analysis ON analysis.id = signals.track_analysis_id
+            WHERE signals.model_name = 'moods mirex'";
+        using var reader = cmd.ExecuteReader();
+        var results = new Dictionary<int, Dictionary<string, double>>();
+        while (reader.Read())
+        {
+            var trackId = reader.GetInt32(0);
+            if (!results.TryGetValue(trackId, out var scores))
+                results[trackId] = scores = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
+            scores[reader.GetString(1)] = reader.GetDouble(2);
+        }
+        return results;
     }
 
     private static Dictionary<int, List<int>> ReadTrackIdMap(SqliteCommand cmd)

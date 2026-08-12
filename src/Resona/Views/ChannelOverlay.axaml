@@ -38,6 +38,9 @@
                                 <TextBlock Text="{Binding NewVideoText}" FontSize="10.5" Opacity="0.58"
                                            IsVisible="{Binding HasNewVideos}"/>
                             </StackPanel>
+                            <TextBlock Text="{Binding AudienceText}" FontSize="9.5" Opacity="0.46"
+                                       TextTrimming="CharacterEllipsis" MaxWidth="190"
+                                       ToolTip.Tip="{Binding AudienceText}"/>
                         </StackPanel>
                         <Button Grid.Column="2" Classes="follow-toggle" Classes.following="{Binding IsFollowed}"
                                 Content="{Binding FollowGlyph}" Click="OnFollowChannelClicked"

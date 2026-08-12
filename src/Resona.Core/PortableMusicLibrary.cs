@@ -165,7 +165,13 @@ public static class PortableLibraryStore
     }
 }
 
-public sealed record PortableFilterGroup(List<string> Genres, List<string> Styles, List<string>? Tags = null, bool Negate = false);
+public sealed record PortableEmotionalCharacterFilter(string SignalKey, double? MinimumPercent, double? MaximumPercent);
+public sealed record PortableFilterGroup(
+    List<string> Genres,
+    List<string> Styles,
+    List<string>? Tags = null,
+    bool Negate = false,
+    List<PortableEmotionalCharacterFilter>? EmotionalCharacters = null);
 
 public static class PortableTrackFilter
 {

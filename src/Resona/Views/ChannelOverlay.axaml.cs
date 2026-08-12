@@ -346,7 +346,7 @@ public partial class ChannelOverlay : UserControl
         var totalFollowing = _hubChannels.Count(channel => channel.IsFollowed);
         var newVideos = _hubChannels.Where(channel => channel.IsFollowed).Sum(channel => channel.UncheckedVideoCount);
         HubSummaryText.Text = $"{_hubChannels.Count} library channels · {totalFollowing} following" +
-                              (newVideos > 0 ? $" · {newVideos} new videos" : string.Empty);
+                              (newVideos > 0 ? $" · {newVideos} awaiting review" : string.Empty);
     }
 
     private void OnChannelSearchChanged(object? sender, TextChangedEventArgs e) => ApplyHubFilter();
@@ -444,10 +444,8 @@ public partial class ChannelOverlay : UserControl
         DetailMonogramText.IsVisible = channel.ShowMonogram;
         var localStatus = channel.HasNewVideos
             ? $"{channel.TrackCountText} · {channel.NewVideoText}"
-            : $"{channel.TrackCountText} · no new videos";
-        DetailSubtitleText.Text = channel.FollowerText.Length > 0
-            ? $"{localStatus} · {channel.FollowerText}"
-            : localStatus;
+            : $"{channel.TrackCountText} · no tracks awaiting a decision";
+        DetailSubtitleText.Text = $"{localStatus} · {channel.AudienceText}";
         DetailLibraryText.Text = channel.TrackCountText;
         DetailRatingText.Text = channel.QualityCompactText;
         ToolTip.SetTip(DetailRatingText, channel.RatingText);

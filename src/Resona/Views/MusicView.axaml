@@ -305,6 +305,14 @@
                            Width="17" Height="17"/>
                 </Button>
 
+                <Button x:Name="QuickEditToggleBtn"
+                        Classes="icon"
+                        Click="OnToggleQuickEditClicked"
+                        ToolTip.Tip="Quick edit tracks"
+                        Opacity="0.86">
+                    <Image Source="{SvgImage /Assets/pencil-simple.svg}" Width="17" Height="17"/>
+                </Button>
+
             </StackPanel>
             </Grid>
         </Border>
@@ -342,6 +350,7 @@
                         <Grid RowDefinitions="Auto,Auto" HorizontalAlignment="Stretch">
                             <Border Grid.Row="0"
                                     Classes="track-card"
+                                    IsVisible="{Binding IsStandardMode}"
                                     CornerRadius="4"
                                     ClipToBounds="True"
                                     Padding="0,0">
@@ -512,6 +521,66 @@
                                                TextAlignment="Center"/>
                                 </StackPanel>
                                 </Panel>
+                            </Border>
+                            <Border Grid.Row="0"
+                                    Classes="track-card"
+                                    IsVisible="{Binding IsQuickEditMode}"
+                                    CornerRadius="6"
+                                    Padding="12,9"
+                                    BorderBrush="{Binding ArtworkBorderBrush}"
+                                    BorderThickness="1">
+                                <Grid ColumnDefinitions="46,*,170,Auto" ColumnSpacing="11" RowDefinitions="Auto,Auto,Auto" RowSpacing="6">
+                                    <Border Grid.RowSpan="3" Width="42" Height="42" CornerRadius="7" ClipToBounds="True"
+                                            Background="#292C25" VerticalAlignment="Center">
+                                        <Image Source="{Binding Thumbnail}" Stretch="UniformToFill"/>
+                                    </Border>
+                                    <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Track.Title}" FontSize="13" FontWeight="SemiBold"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Text="{Binding ChannelText}" FontSize="9.5" Opacity="0.52"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                    </StackPanel>
+                                    <ComboBox Grid.Column="2" ItemsSource="{Binding RatingChoices}"
+                                              SelectedItem="{Binding SelectedRating}"
+                                              SelectionChanged="OnQuickRatingChanged"
+                                              PlaceholderText="Choose rating"
+                                              Height="30" FontSize="10.5">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate x:DataType="models:Rating">
+                                                <TextBlock Text="{Binding Name}"/>
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+                                    <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="4">
+                                        <Button Classes="icon" Click="OnQuickCopyUrlClicked" ToolTip.Tip="Copy YouTube URL"
+                                                Width="30" Height="30" Padding="6">
+                                            <Image Source="{SvgImage /Assets/copy.svg}" Width="14" Height="14"/>
+                                        </Button>
+                                        <Button Classes="icon" Click="OnQuickDeleteClicked" ToolTip.Tip="Delete track"
+                                                Width="30" Height="30" Padding="6">
+                                            <Image Source="{SvgImage /Assets/trash.svg}" Width="14" Height="14"/>
+                                        </Button>
+                                    </StackPanel>
+                                    <WrapPanel Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3"
+                                               Orientation="Horizontal" ItemSpacing="12">
+                                        <TextBlock Text="{Binding GenreText}" FontSize="9.5" Foreground="{Binding ArtworkMetadataBrush}"
+                                                   MaxWidth="260" TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Text="{Binding TempoText}" FontSize="9.5" Opacity="0.64"/>
+                                        <TextBlock Text="{Binding LoudnessText}" FontSize="9.5" Opacity="0.64"/>
+                                        <TextBlock Text="{Binding DynamicsText}" FontSize="9.5" Opacity="0.64"/>
+                                        <TextBlock Text="{Binding EmotionalCharacterText}" FontSize="9.5" Foreground="#AFC8A3"/>
+                                        <TextBlock Text="{Binding DurationText}" FontFamily="Consolas" FontSize="9.5" Opacity="0.64"/>
+                                    </WrapPanel>
+                                    <WrapPanel Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3"
+                                               Orientation="Horizontal" ItemSpacing="12">
+                                        <TextBlock Text="{Binding WorkflowStateText}" FontSize="9" Foreground="#D8B66A"/>
+                                        <TextBlock Text="{Binding SourceActivityText}" FontSize="9" Opacity="0.5"/>
+                                        <TextBlock Text="{Binding UploadedDateText}" FontSize="9" Opacity="0.5"/>
+                                        <TextBlock Text="{Binding DownloadedDetailText}" FontSize="9" Opacity="0.5"/>
+                                        <Image Source="{SvgImage /Assets/public.svg}" IsVisible="{Binding Track.IsPublic}"
+                                               Width="12" Height="12" Opacity="0.75" ToolTip.Tip="Public track"/>
+                                    </WrapPanel>
+                                </Grid>
                             </Border>
                             <Rectangle Grid.Row="1"
                                        Height="1"
@@ -1089,7 +1158,7 @@
                                         <Rectangle Height="1" Fill="{DynamicResource Theme.Brush.Divider}"/>
 
                                         <TextBlock x:Name="CurrentSetEmptyText"
-                                                   Text="Select genres or tags below."
+                                                   Text="Select genres, tags or emotional character ranges below."
                                                    FontSize="10.5"
                                                    Opacity="0.5"/>
                                         <StackPanel x:Name="CurrentSetGenresRow" IsVisible="False" Spacing="2">
@@ -1104,6 +1173,14 @@
                                             <TextBlock Text="TAGS" FontSize="9" FontWeight="SemiBold"
                                                        Opacity="0.42" LetterSpacing="0.8"/>
                                             <TextBlock x:Name="CurrentSetTagsText"
+                                                       FontSize="10.5"
+                                                       Foreground="{DynamicResource Theme.Brush.TextSecondary}"
+                                                       TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                        <StackPanel x:Name="CurrentSetEmotionalRow" IsVisible="False" Spacing="2">
+                                            <TextBlock Text="EMOTIONAL CHARACTER" FontSize="9" FontWeight="SemiBold"
+                                                       Opacity="0.42" LetterSpacing="0.8"/>
+                                            <TextBlock x:Name="CurrentSetEmotionalText"
                                                        FontSize="10.5"
                                                        Foreground="{DynamicResource Theme.Brush.TextSecondary}"
                                                        TextWrapping="Wrap"/>
