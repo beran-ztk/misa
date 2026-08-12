@@ -443,7 +443,15 @@ public partial class ImportOverlay : UserControl
         var panel = new StackPanel { Spacing = 4 };
         foreach (var item in source.Items)
         {
-            var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto"), ColumnSpacing = 8, Margin = new Thickness(0, 2) };
+            var isFailed = item.Status == ImportQueueStatus.Failed;
+            var row = new Grid
+            {
+                // Failed details can be arbitrarily long. Giving the detail a star
+                // column keeps the close action inside the visible queue width.
+                ColumnDefinitions = new ColumnDefinitions(isFailed ? "*,2*,Auto" : "*,Auto,Auto"),
+                ColumnSpacing = 8,
+                Margin = new Thickness(0, 2)
+            };
             var title = new TextBlock
             {
                 Text = item.Title,
@@ -458,7 +466,10 @@ public partial class ImportOverlay : UserControl
                 Text = QueueItemDetail(item),
                 FontSize = 9.5,
                 Foreground = new SolidColorBrush(Color.Parse(StatusColor(item.Status))),
-                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+                TextWrapping = isFailed ? TextWrapping.Wrap : TextWrapping.NoWrap,
+                TextTrimming = TextTrimming.CharacterEllipsis,
+                MaxLines = isFailed ? 2 : 1
             };
             Grid.SetColumn(state, 1);
             row.Children.Add(state);
