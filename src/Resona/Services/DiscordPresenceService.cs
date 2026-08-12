@@ -15,7 +15,6 @@ public sealed class DiscordPresenceService : IDisposable
     private DateTime _nextConnectAttemptUtc = DateTime.MinValue;
     private bool _disposed;
     private int _lastTrackId = -1;
-    private string? _stateTextOverride;
     private string? _largeImageText;
     private bool _enabled = true;
 
@@ -25,7 +24,6 @@ public sealed class DiscordPresenceService : IDisposable
     {
         var settings = AppSettingsStore.Load();
         _enabled = settings.DiscordRichPresenceEnabled;
-        _stateTextOverride = string.IsNullOrEmpty(settings.DiscordStateText) ? null : settings.DiscordStateText;
         _largeImageText = string.IsNullOrEmpty(settings.DiscordLargeImageText) ? null : settings.DiscordLargeImageText;
         if (!_enabled)
             DisposeClient();
@@ -47,12 +45,14 @@ public sealed class DiscordPresenceService : IDisposable
             Type = ActivityType.Listening,
             StatusDisplay = StatusDisplayType.Details,
             Details = Clip(PresenceTitle(item), 128),
-            State = ClipPreservingWhitespaceOrNull(_stateTextOverride ?? StateText(item), 128),
+            DetailsUrl = PresenceUrl(item.Track.CanonicalUrl),
+            State = ClipPreservingWhitespaceOrNull(ArtistText(item), 128),
+            StateUrl = PresenceUrl(item.Track.ChannelUrl),
 
             Assets = new Assets
             {
                 LargeImageKey = TrackImageUrl(item.Track),
-                LargeImageText = ClipPreservingWhitespaceOrNull(_largeImageText, 128)
+                // LargeImageText = ClipPreservingWhitespaceOrNull(_largeImageText ?? GenreText(item), 128)
             }
         };
 
@@ -125,7 +125,7 @@ public sealed class DiscordPresenceService : IDisposable
         }
     }
 
-    private static string? StateText(TrackDisplayItem item)
+    private static string? GenreText(TrackDisplayItem item)
     {
         return !string.IsNullOrWhiteSpace(item.ModelGenreText)
             ? item.ModelGenreText
@@ -134,15 +134,23 @@ public sealed class DiscordPresenceService : IDisposable
                 : null;
     }
 
-    private static string PresenceTitle(TrackDisplayItem item)
-    {
-        var title = string.IsNullOrWhiteSpace(item.Track.Title)
+    private static string? ArtistText(TrackDisplayItem item) =>
+        string.IsNullOrWhiteSpace(item.ChannelText) ? null : item.ChannelText.Trim();
+
+    private static string PresenceTitle(TrackDisplayItem item) =>
+        string.IsNullOrWhiteSpace(item.Track.Title)
             ? "Unknown track"
             : item.Track.Title.Trim();
 
-        return string.IsNullOrWhiteSpace(item.ChannelText)
-            ? title
-            : $"{title} by {item.ChannelText.Trim()}";
+    private static string? PresenceUrl(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)
+            || value.Length > 256
+            || !Uri.TryCreate(value.Trim(), UriKind.Absolute, out var uri)
+            || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+            return null;
+
+        return uri.AbsoluteUri;
     }
 
     private static string TrackImageUrl(MusicTrack track)

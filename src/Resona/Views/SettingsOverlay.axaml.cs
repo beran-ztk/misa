@@ -76,7 +76,6 @@ public partial class SettingsOverlay : UserControl
         _loadingDiscordPresenceSettings = true;
         DiscordPresenceToggle.IsChecked = appSettings.DiscordRichPresenceEnabled;
         UpdateDiscordPresenceToggleVisual();
-        DiscordStateTextBox.Text = appSettings.DiscordStateText;
         DiscordLargeImageTextBox.Text = appSettings.DiscordLargeImageText;
         _loadingDiscordPresenceSettings = false;
         _appearanceSettings = appSettings.Appearance.Clone().Clamp();
@@ -166,7 +165,7 @@ public partial class SettingsOverlay : UserControl
 
         AppSettingsStore.SaveDiscordPresence(
             DiscordPresenceToggle.IsChecked == true,
-            DiscordStateTextBox.Text,
+            null,
             DiscordLargeImageTextBox.Text);
         DiscordPresenceChanged?.Invoke();
     }
@@ -178,7 +177,7 @@ public partial class SettingsOverlay : UserControl
 
         AppSettingsStore.SaveDiscordPresence(
             DiscordPresenceToggle.IsChecked == true,
-            DiscordStateTextBox.Text,
+            null,
             DiscordLargeImageTextBox.Text);
         DiscordPresenceChanged?.Invoke();
         UpdateDiscordPresenceToggleVisual();
