@@ -2389,7 +2389,7 @@ public class MusicDatabase
                    AND (channels.auto_download_from IS NULL OR videos.discovered_at >= channels.auto_download_from)))
               AND (videos.manual_download_requested = 1 OR videos.duration_seconds IS NULL
                    OR videos.duration_seconds <= COALESCE(channels.max_duration_minutes * 60, $maxDuration))
-            ORDER BY videos.discovered_at, videos.id LIMIT 1";
+            ORDER BY videos.manual_download_requested DESC, videos.discovered_at, videos.id LIMIT 1";
         select.Parameters.AddWithValue("$maxDuration", Math.Clamp(maxDurationMinutes, 1, 24 * 60) * 60);
         using var reader = select.ExecuteReader();
         if (!reader.Read())
@@ -2412,6 +2412,15 @@ public class MusicDatabase
             DownloadStatus = ChannelDownloadStatus.Downloading,
             DownloadAttempts = video.DownloadAttempts + 1
         };
+    }
+
+    public bool IsChannelVideoManualDownloadRequested(int videoId)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT manual_download_requested FROM channel_videos WHERE id = $id";
+        cmd.Parameters.AddWithValue("$id", videoId);
+        return Convert.ToInt32(cmd.ExecuteScalar()) != 0;
     }
 
     public void CompleteChannelDownload(int videoId, bool success, string? error)

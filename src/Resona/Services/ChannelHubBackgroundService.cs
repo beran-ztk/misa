@@ -209,7 +209,11 @@ public sealed class ChannelHubBackgroundService
                             $"{message.TrimEnd('…', '.')} · {channel.Name}",
                             current,
                             total)));
-                        await MusicLibraryService.Current.AddOrRefreshChannelAsync(channel.SourceUrl, progress);
+                        await MusicLibraryService.Current.AddOrRefreshChannelAsync(
+                            channel.SourceUrl,
+                            progress,
+                            jobPriority: BackgroundJobPriority.Background,
+                            jobSource: "Channel background enrichment");
                     }
                     finally
                     {
@@ -274,7 +278,11 @@ public sealed class ChannelHubBackgroundService
                         $"{message.TrimEnd('…', '.')} · {channel.Name}",
                         current,
                         followed.Count)));
-                    await MusicLibraryService.Current.RefreshChannelAsync(channel, progress);
+                    await MusicLibraryService.Current.RefreshChannelAsync(
+                        channel,
+                        progress,
+                        jobPriority: BackgroundJobPriority.Background,
+                        jobSource: "Followed channel refresh");
                 }
                 catch
                 {

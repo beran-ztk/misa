@@ -264,7 +264,13 @@ public class MusicLibraryService
 
     public bool TrackExistsByCanonicalUrl(string canonicalUrl) => _db.TrackExists(canonicalUrl);
 
-    public Task<string?> GetRemoteTitleAsync(string canonicalUrl) => _downloader.GetTitleAsync(canonicalUrl);
+    public Task<string?> GetRemoteTitleAsync(string canonicalUrl) => _downloader.GetTitleAsync(
+        canonicalUrl,
+        YouTubeJob(
+            BackgroundJobKind.YouTubeMetadata,
+            "Read track title",
+            "Add track",
+            BackgroundJobPriority.UserInitiated));
 
     public List<ChannelSubscription> GetChannelSubscriptions() => _db.GetChannelSubscriptions();
     public List<ChannelHubItem> GetChannelHubItems() => _db.GetChannelHubItems();
@@ -292,7 +298,14 @@ public class MusicLibraryService
     public Task<YouTubeTrackMetadata?> GetChannelVideoMetadataAsync(
         string canonicalUrl,
         CancellationToken cancellationToken = default) =>
-        _downloader.GetMetadataAsync(canonicalUrl, cancellationToken);
+        _downloader.GetMetadataAsync(
+            canonicalUrl,
+            cancellationToken,
+            YouTubeJob(
+                BackgroundJobKind.YouTubeMetadata,
+                "Read channel video metadata",
+                "Channel metadata",
+                BackgroundJobPriority.Background));
     public void CompleteChannelVideoMetadata(int videoId, YouTubeTrackMetadata? metadata, string? error) =>
         _db.CompleteChannelVideoMetadata(
             videoId,
@@ -337,6 +350,8 @@ public class MusicLibraryService
     }
     public void RecoverChannelDownloads() => _db.RecoverChannelDownloads(_channelMaxDownloadDurationMinutes);
     public ChannelVideo? ClaimNextChannelDownload() => _db.ClaimNextChannelDownload(_channelMaxDownloadDurationMinutes);
+    public bool IsChannelVideoManualDownloadRequested(int videoId) =>
+        _db.IsChannelVideoManualDownloadRequested(videoId);
     public void CompleteChannelDownload(int videoId, bool success, string? error) =>
         _db.CompleteChannelDownload(videoId, success, error);
     public ChannelDownloadSummary GetChannelDownloadSummary() => _db.GetChannelDownloadSummary();
@@ -350,14 +365,24 @@ public class MusicLibraryService
     }
     public bool DeleteChannel(int channelId) => _db.DeleteChannel(channelId);
 
-    public async Task<(MusicTrack? Track, string? Error)> PreloadChannelVideoAsync(ChannelVideo video)
+    public async Task<(MusicTrack? Track, string? Error)> PreloadChannelVideoAsync(
+        ChannelVideo video,
+        BackgroundJobPriority jobPriority = BackgroundJobPriority.Background,
+        string jobSource = "Channel auto-download")
     {
         using var operation = await _trackOperations.AcquireAsync(video.CanonicalUrl);
         if (_db.GetTrackByCanonicalUrl(video.CanonicalUrl) is { } existingTrack)
             return (existingTrack, null);
 
         var stopwatch = Stopwatch.StartNew();
-        var download = await _downloader.DownloadChannelTrackAsync(video.CanonicalUrl, video.VideoId);
+        var download = await _downloader.DownloadChannelTrackAsync(
+            video.CanonicalUrl,
+            video.VideoId,
+            jobOptions: YouTubeJob(
+                BackgroundJobKind.YouTubeDownload,
+                $"Download channel track · {video.VideoId}",
+                jobSource,
+                jobPriority));
         if (!download.Success || download.FilePath is null)
             return (null, string.IsNullOrWhiteSpace(download.ErrorOutput)
                 ? "Channel audio download failed."
@@ -397,13 +422,22 @@ public class MusicLibraryService
     public async Task<ChannelRefreshResult> AddOrRefreshChannelAsync(
         string rawUrl,
         IProgress<string>? progress = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        BackgroundJobPriority jobPriority = BackgroundJobPriority.UserInitiated,
+        string jobSource = "Channel Hub")
     {
         if (string.IsNullOrWhiteSpace(rawUrl))
             return new ChannelRefreshResult(false, 0, 0, "Channel URL is required.");
 
         progress?.Report("Reading channel…");
-        var (snapshot, error) = await _downloader.GetChannelSnapshotAsync(rawUrl.Trim(), cancellationToken);
+        var (snapshot, error) = await _downloader.GetChannelSnapshotAsync(
+            rawUrl.Trim(),
+            cancellationToken,
+            YouTubeJob(
+                BackgroundJobKind.YouTubeChannelRefresh,
+                "Refresh channel",
+                jobSource,
+                jobPriority));
         if (snapshot is null)
             return new ChannelRefreshResult(false, 0, 0, error ?? "Could not read channel.");
         if (snapshot.Videos.Count == 0)
@@ -430,8 +464,15 @@ public class MusicLibraryService
     public async Task<ChannelRefreshResult> RefreshChannelAsync(
         ChannelSubscription channel,
         IProgress<string>? progress = null,
-        CancellationToken cancellationToken = default) =>
-        await AddOrRefreshChannelAsync(channel.SourceUrl, progress, cancellationToken);
+        CancellationToken cancellationToken = default,
+        BackgroundJobPriority jobPriority = BackgroundJobPriority.UserInitiated,
+        string jobSource = "Channel Hub") =>
+        await AddOrRefreshChannelAsync(
+            channel.SourceUrl,
+            progress,
+            cancellationToken,
+            jobPriority,
+            jobSource);
 
     public async Task<int> RefreshSubscribedChannelsAsync(CancellationToken cancellationToken = default)
     {
@@ -439,7 +480,11 @@ public class MusicLibraryService
         foreach (var channel in GetChannelSubscriptions())
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var result = await RefreshChannelAsync(channel, cancellationToken: cancellationToken);
+            var result = await RefreshChannelAsync(
+                channel,
+                cancellationToken: cancellationToken,
+                jobPriority: BackgroundJobPriority.Background,
+                jobSource: "Subscribed channel refresh");
             if (result.Success)
                 added += result.AddedCount;
         }
@@ -582,7 +627,9 @@ public class MusicLibraryService
             request.GenreIds,
             request.RatingId,
             request.StyleIds,
-            progress);
+            progress,
+            BackgroundJobPriority.UserInitiated,
+            "Add track");
         if (!result.Success || result.Track is null)
             return new DownloadResult(false, result.Error, result.Warning);
 
@@ -611,7 +658,9 @@ public class MusicLibraryService
             [],
             null,
             [],
-            progress);
+            progress,
+            BackgroundJobPriority.Normal,
+            "Import queue");
         if (result.Success && result.Track is not null)
             trackCreated?.Invoke(result.Track.Id);
         return result;
@@ -623,17 +672,34 @@ public class MusicLibraryService
         List<int> genreIds,
         int? ratingId,
         List<int> styleIds,
-        IProgress<string>? progress)
+        IProgress<string>? progress,
+        BackgroundJobPriority jobPriority,
+        string jobSource)
     {
         _downloader.DeleteDownloadArtifacts(videoId);
 
         progress?.Report("Checking audio details…");
-        var previewMetadata = await _downloader.GetMetadataAsync(canonicalUrl);
+        var previewMetadata = await _downloader.GetMetadataAsync(
+            canonicalUrl,
+            jobOptions: YouTubeJob(
+                BackgroundJobKind.YouTubeMetadata,
+                $"Read track metadata · {videoId}",
+                jobSource,
+                jobPriority));
         var downloadEstimate = EstimateDownloadDuration(
             previewMetadata?.DurationSeconds,
             previewMetadata?.EstimatedAudioSizeBytes);
         var downloadStopwatch = Stopwatch.StartNew();
-        var (success, errorOutput) = await DownloadWithSingleRetryAsync(canonicalUrl, progress, downloadEstimate);
+        var downloadJob = YouTubeJob(
+            BackgroundJobKind.YouTubeDownload,
+            $"Download track · {videoId}",
+            jobSource,
+            jobPriority);
+        var (success, errorOutput) = await DownloadWithSingleRetryAsync(
+            canonicalUrl,
+            progress,
+            downloadEstimate,
+            downloadJob);
         if (!success)
             return new ImportResult(false, Error: $"Download failed:\n{errorOutput}");
 
@@ -645,7 +711,13 @@ public class MusicLibraryService
         {
             var fileName = Path.GetFileName(filePath);
             var duration = await _downloader.GetDurationAsync(filePath);
-            var metadata = previewMetadata ?? await _downloader.GetMetadataAsync(canonicalUrl);
+            var metadata = previewMetadata ?? await _downloader.GetMetadataAsync(
+                canonicalUrl,
+                jobOptions: YouTubeJob(
+                    BackgroundJobKind.YouTubeMetadata,
+                    $"Read track metadata · {videoId}",
+                    jobSource,
+                    jobPriority));
             var fileSizeBytes = new FileInfo(filePath).Length;
             var thumbnail = ThumbnailService.ReadEmbeddedArtworkThumbnail(filePath) ?? [];
             var trackId = _db.InsertTrack(
@@ -723,20 +795,30 @@ public class MusicLibraryService
     private async Task<(bool Success, string ErrorOutput)> DownloadWithSingleRetryAsync(
         string canonicalUrl,
         IProgress<string>? progress,
-        TimeSpan? estimate = null)
+        TimeSpan? estimate,
+        BackgroundJobOptions jobOptions)
     {
         progress?.Report(estimate is null
             ? "Downloading audio…"
             : $"Downloading audio… usually about {FormatEstimate(estimate.Value)}");
-        var result = await _downloader.RunYtDlpAsync(canonicalUrl);
+        var result = await _downloader.RunYtDlpAsync(canonicalUrl, jobOptions);
         if (result.Success || !IsForbiddenResponse(result.ErrorOutput))
             return result;
 
         progress?.Report("Download was rejected (403). Retrying once…");
         await Task.Delay(TimeSpan.FromMilliseconds(800));
         progress?.Report("Retrying download…");
-        return await _downloader.RunYtDlpAsync(canonicalUrl);
+        return await _downloader.RunYtDlpAsync(
+            canonicalUrl,
+            jobOptions with { Title = $"{jobOptions.Title} · retry" });
     }
+
+    private static BackgroundJobOptions YouTubeJob(
+        BackgroundJobKind kind,
+        string title,
+        string source,
+        BackgroundJobPriority priority) =>
+        new(kind, title, source, priority);
 
     private static bool IsForbiddenResponse(string output) =>
         output.Contains("403", StringComparison.OrdinalIgnoreCase)

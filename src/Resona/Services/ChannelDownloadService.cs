@@ -71,7 +71,11 @@ public sealed class ChannelDownloadService
             string? error = null;
             try
             {
-                var result = await MusicLibraryService.Current.PreloadChannelVideoAsync(video);
+                var isManual = MusicLibraryService.Current.IsChannelVideoManualDownloadRequested(video.Id);
+                var result = await MusicLibraryService.Current.PreloadChannelVideoAsync(
+                    video,
+                    isManual ? BackgroundJobPriority.UserInitiated : BackgroundJobPriority.Background,
+                    isManual ? "Channel manual download" : "Channel auto-download");
                 track = result.Track;
                 error = result.Error;
             }

@@ -51,7 +51,14 @@ public sealed class ImportQueueService
             string? readError;
             try
             {
-                var result = await _downloader.GetPlaylistEntriesAsync(sourceUrl, sourceTimeout.Token);
+                var result = await _downloader.GetPlaylistEntriesAsync(
+                    sourceUrl,
+                    sourceTimeout.Token,
+                    new BackgroundJobOptions(
+                        BackgroundJobKind.YouTubePlaylist,
+                        "Read import links",
+                        "Import preview",
+                        BackgroundJobPriority.UserInitiated));
                 entries = result.Entries;
                 readError = result.Error;
             }

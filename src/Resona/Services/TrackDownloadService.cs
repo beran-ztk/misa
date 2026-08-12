@@ -15,13 +15,16 @@ namespace Resona.Services;
 public class TrackDownloadService
 {
     private static readonly HttpClient ImageClient = new() { Timeout = TimeSpan.FromSeconds(15) };
-    public async Task<(bool Success, string ErrorOutput)> RunYtDlpAsync(string url)
+    public async Task<(bool Success, string ErrorOutput)> RunYtDlpAsync(
+        string url,
+        BackgroundJobOptions? jobOptions = null,
+        CancellationToken cancellationToken = default)
     {
         Directory.CreateDirectory(Values.TracksDirectory);
         var outputTemplate = Path.Combine(Values.TracksDirectory, "%(title)s [%(id)s].%(ext)s");
 
-        var result = await RunProcessAsync(
-            ExternalToolLocator.Resolve("yt-dlp"),
+        var result = await RunYouTubeProcessAsync(
+            jobOptions ?? DefaultJob(BackgroundJobKind.YouTubeDownload, "Download audio", url),
             YtDlpDownloadArgs(
                 "--js-runtimes", "node",
                 "--no-playlist",
@@ -30,7 +33,8 @@ public class TrackDownloadService
                 "--audio-format", "m4a",
                 "--embed-thumbnail",
                 "-o", outputTemplate,
-                url));
+                url),
+            cancellationToken);
 
         return (result.ExitCode == 0, result.Error);
     }
@@ -38,12 +42,13 @@ public class TrackDownloadService
     public async Task<(bool Success, string ErrorOutput, string? FilePath)> DownloadChannelTrackAsync(
         string url,
         string videoId,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        BackgroundJobOptions? jobOptions = null)
     {
         Directory.CreateDirectory(Values.TracksDirectory);
         var outputTemplate = Path.Combine(Values.TracksDirectory, $"channel-{videoId}.%(ext)s");
-        var result = await RunProcessAsync(
-            ExternalToolLocator.Resolve("yt-dlp"),
+        var result = await RunYouTubeProcessAsync(
+            jobOptions ?? DefaultJob(BackgroundJobKind.YouTubeDownload, "Channel download", url),
             YtDlpDownloadArgs(
                 "--js-runtimes", "node",
                 "--no-playlist",
@@ -79,18 +84,22 @@ public class TrackDownloadService
         return null;
     }
 
-    public async Task<string?> GetTitleAsync(string url)
+    public async Task<string?> GetTitleAsync(
+        string url,
+        BackgroundJobOptions? jobOptions = null,
+        CancellationToken cancellationToken = default)
     {
         try
         {
-            var result = await RunProcessAsync(
-                ExternalToolLocator.Resolve("yt-dlp"),
+            var result = await RunYouTubeProcessAsync(
+                jobOptions ?? DefaultJob(BackgroundJobKind.YouTubeMetadata, "Read track title", url),
                 YtDlpArgs(
                     "--js-runtimes", "node",
                     "--no-playlist",
                     "--print", "title",
                     "--skip-download",
-                    url));
+                    url),
+                cancellationToken);
 
             var title = result.Output
                 .Split('\n')
@@ -99,18 +108,22 @@ public class TrackDownloadService
 
             return result.ExitCode == 0 ? title : null;
         }
+        catch (OperationCanceledException) { throw; }
         catch
         {
             return null;
         }
     }
 
-    public async Task<YouTubeTrackMetadata?> GetMetadataAsync(string url, CancellationToken cancellationToken = default)
+    public async Task<YouTubeTrackMetadata?> GetMetadataAsync(
+        string url,
+        CancellationToken cancellationToken = default,
+        BackgroundJobOptions? jobOptions = null)
     {
         try
         {
-            var result = await RunProcessAsync(
-                ExternalToolLocator.Resolve("yt-dlp"),
+            var result = await RunYouTubeProcessAsync(
+                jobOptions ?? DefaultJob(BackgroundJobKind.YouTubeMetadata, "Read track metadata", url),
                 YtDlpArgs("--js-runtimes", "node", "--no-playlist", "--skip-download", "--dump-single-json", url),
                 cancellationToken);
             if (result.ExitCode != 0) return null;
@@ -130,15 +143,17 @@ public class TrackDownloadService
     }
 
     public async Task<(IReadOnlyList<YouTubePlaylistEntry> Entries, string? Error)> GetPlaylistEntriesAsync(
-        string url, CancellationToken cancellationToken = default)
+        string url,
+        CancellationToken cancellationToken = default,
+        BackgroundJobOptions? jobOptions = null)
     {
         try
         {
             string? lastError = null;
             foreach (var extractionUrl in PlaylistExtractionUrls(url))
             {
-                var result = await RunProcessAsync(
-                    ExternalToolLocator.Resolve("yt-dlp"),
+                var result = await RunYouTubeProcessAsync(
+                    jobOptions ?? DefaultJob(BackgroundJobKind.YouTubePlaylist, "Read import links", url),
                     YtDlpArgs(
                         "--js-runtimes", "node",
                         "--ignore-errors",
@@ -162,12 +177,14 @@ public class TrackDownloadService
     }
 
     public async Task<(YouTubeChannelSnapshot? Snapshot, string? Error)> GetChannelSnapshotAsync(
-        string url, CancellationToken cancellationToken = default)
+        string url,
+        CancellationToken cancellationToken = default,
+        BackgroundJobOptions? jobOptions = null)
     {
         try
         {
-            var result = await RunProcessAsync(
-                ExternalToolLocator.Resolve("yt-dlp"),
+            var result = await RunYouTubeProcessAsync(
+                jobOptions ?? DefaultJob(BackgroundJobKind.YouTubeChannelRefresh, "Refresh channel", url),
                 YtDlpArgs(
                     "--js-runtimes", "node",
                     "--ignore-errors",
@@ -487,6 +504,29 @@ public class TrackDownloadService
 
         return YtDlpArgs(["--ffmpeg-location", ffmpegPath, .. args]);
     }
+
+    private static BackgroundJobOptions DefaultJob(
+        BackgroundJobKind kind,
+        string title,
+        string url) => new(
+        kind,
+        YouTubeUrlNormalizer.ExtractVideoId(url) is { } videoId ? $"{title} · {videoId}" : title,
+        "YouTube",
+        BackgroundJobPriority.Normal);
+
+    private static Task<ProcessResult> RunYouTubeProcessAsync(
+        BackgroundJobOptions options,
+        string[] args,
+        CancellationToken cancellationToken) =>
+        BackgroundJobService.Current.RunAsync(
+            options,
+            (context, token) =>
+            {
+                context.Report("Running yt-dlp…");
+                return RunProcessAsync(ExternalToolLocator.Resolve("yt-dlp"), args, token);
+            },
+            result => result.ExitCode == 0 ? null : CleanYtDlpError(result.Error) ?? "yt-dlp failed",
+            cancellationToken);
 
     private static async Task<ProcessResult> RunProcessAsync(string fileName, params string[] args) =>
         await RunProcessAsync(fileName, args, CancellationToken.None);
