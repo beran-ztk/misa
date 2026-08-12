@@ -279,6 +279,15 @@ public class MusicLibraryService
     public ChannelVideo? ClaimNextChannelVideoMetadata() => _db.ClaimNextChannelVideoMetadata();
     public bool HasQueuedChannelVideoMetadata() => _db.HasQueuedChannelVideoMetadata();
     public int ResetChannelMetadataIssues(int channelId) => _db.ResetChannelMetadataIssues(channelId);
+    public bool RetryChannelVideoIssue(int videoId)
+    {
+        if (!_db.RetryChannelVideoIssue(videoId))
+            return false;
+
+        ChannelMetadataService.Current.NotifyQueueChanged();
+        ChannelDownloadService.Current.NotifyQueueChanged();
+        return true;
+    }
     public Task<YouTubeTrackMetadata?> GetChannelVideoMetadataAsync(
         string canonicalUrl,
         CancellationToken cancellationToken = default) =>

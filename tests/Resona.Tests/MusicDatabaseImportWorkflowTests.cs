@@ -120,6 +120,45 @@ public sealed class MusicDatabaseImportWorkflowTests : IDisposable
         Assert.Equal(1L, Scalar<long>("SELECT analysis_disabled FROM tracks WHERE id = $id", ("$id", rejectedId)));
     }
 
+    [Fact]
+    public void Retrying_download_failure_requeues_only_that_video()
+    {
+        var failedId = InsertChannelVideo("Failed", "Ready", "network error", null, 3);
+        var skippedId = InsertChannelVideo("Skipped", "Ready", null, null, 0);
+
+        Assert.True(_database.RetryChannelVideoIssue(failedId));
+
+        Assert.Equal("Queued", Scalar<string>("SELECT download_status FROM channel_videos WHERE id = $id", ("$id", failedId)));
+        Assert.Equal(0L, Scalar<long>("SELECT download_attempts FROM channel_videos WHERE id = $id", ("$id", failedId)));
+        Assert.Equal(1L, Scalar<long>("SELECT manual_download_requested FROM channel_videos WHERE id = $id", ("$id", failedId)));
+        Assert.Equal(0L, Scalar<long>("SELECT COUNT(download_error) FROM channel_videos WHERE id = $id", ("$id", failedId)));
+        Assert.Equal("Skipped", Scalar<string>("SELECT download_status FROM channel_videos WHERE id = $id", ("$id", skippedId)));
+    }
+
+    [Fact]
+    public void Retrying_metadata_failure_preserves_duration_skip()
+    {
+        var videoId = InsertChannelVideo("Skipped", "Failed", null, "metadata error", 0);
+
+        Assert.True(_database.RetryChannelVideoIssue(videoId));
+
+        Assert.Equal("Queued", Scalar<string>("SELECT metadata_status FROM channel_videos WHERE id = $id", ("$id", videoId)));
+        Assert.Equal(200L, Scalar<long>("SELECT metadata_priority FROM channel_videos WHERE id = $id", ("$id", videoId)));
+        Assert.Equal(0L, Scalar<long>("SELECT metadata_attempts FROM channel_videos WHERE id = $id", ("$id", videoId)));
+        Assert.Equal(0L, Scalar<long>("SELECT COUNT(metadata_error) FROM channel_videos WHERE id = $id", ("$id", videoId)));
+        Assert.Equal("Skipped", Scalar<string>("SELECT download_status FROM channel_videos WHERE id = $id", ("$id", videoId)));
+    }
+
+    [Fact]
+    public void Duration_skip_without_real_error_cannot_be_retried_as_issue()
+    {
+        var videoId = InsertChannelVideo("Skipped", "Ready", null, null, 0);
+
+        Assert.False(_database.RetryChannelVideoIssue(videoId));
+
+        Assert.Equal("Skipped", Scalar<string>("SELECT download_status FROM channel_videos WHERE id = $id", ("$id", videoId)));
+    }
+
     private int InsertQueueItem(string status, string suffix, string createdAt = "2026-01-01T00:00:00Z")
     {
         using var connection = Open();
@@ -153,6 +192,33 @@ public sealed class MusicDatabaseImportWorkflowTests : IDisposable
         return Convert.ToInt32(command.ExecuteScalar());
     }
 
+    private int InsertChannelVideo(
+        string downloadStatus,
+        string metadataStatus,
+        string? downloadError,
+        string? metadataError,
+        int downloadAttempts)
+    {
+        using var connection = Open();
+        using var transaction = connection.BeginTransaction();
+        var suffix = Guid.NewGuid().ToString("N");
+        var id = Insert(connection, transaction, @"INSERT INTO channel_videos
+            (canonical_url, download_status, download_error, download_attempts,
+             manual_download_requested, metadata_status, metadata_error,
+             metadata_attempts, metadata_priority, updated_at)
+            VALUES ($url, $downloadStatus, $downloadError, $downloadAttempts,
+                    0, $metadataStatus, $metadataError, 4, 0, $now)",
+            ("$url", $"https://youtu.be/{suffix}"),
+            ("$downloadStatus", downloadStatus),
+            ("$downloadError", (object?)downloadError ?? DBNull.Value),
+            ("$downloadAttempts", downloadAttempts),
+            ("$metadataStatus", metadataStatus),
+            ("$metadataError", (object?)metadataError ?? DBNull.Value),
+            ("$now", DateTime.UtcNow.ToString("O")));
+        transaction.Commit();
+        return id;
+    }
+
     private void CreateMinimalSchema()
     {
         using var connection = Open();
@@ -162,6 +228,7 @@ public sealed class MusicDatabaseImportWorkflowTests : IDisposable
             CREATE TABLE tracks (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 rating_id INTEGER NULL,
+                canonical_url TEXT NULL UNIQUE,
                 title TEXT NOT NULL,
                 file_name TEXT NOT NULL UNIQUE,
                 downloaded_at TEXT NOT NULL,
@@ -187,6 +254,19 @@ public sealed class MusicDatabaseImportWorkflowTests : IDisposable
                 detail TEXT NULL,
                 track_id INTEGER NULL REFERENCES tracks(id) ON DELETE SET NULL,
                 created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            );
+            CREATE TABLE channel_videos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                canonical_url TEXT NOT NULL UNIQUE,
+                download_status TEXT NOT NULL,
+                download_error TEXT NULL,
+                download_attempts INTEGER NOT NULL DEFAULT 0,
+                manual_download_requested INTEGER NOT NULL DEFAULT 0,
+                metadata_status TEXT NOT NULL,
+                metadata_error TEXT NULL,
+                metadata_attempts INTEGER NOT NULL DEFAULT 0,
+                metadata_priority INTEGER NOT NULL DEFAULT 0,
                 updated_at TEXT NOT NULL
             );";
         command.ExecuteNonQuery();

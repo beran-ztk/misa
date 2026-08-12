@@ -93,6 +93,12 @@ public sealed class ChannelMetadataService
         RaiseQueueChanged();
     }
 
+    public void NotifyQueueChanged()
+    {
+        EnsureWorker();
+        RaiseQueueChanged();
+    }
+
     private void EnsureWorker()
     {
         lock (_workerGate)

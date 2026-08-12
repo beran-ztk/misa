@@ -933,6 +933,38 @@ public partial class ChannelOverlay : UserControl
         ToastRequested?.Invoke("Track queued for download");
     }
 
+    private async void OnVideoRetryIssueClicked(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Button button
+            || button.DataContext is not ChannelVideoDisplay item
+            || !item.CanRetryError)
+            return;
+
+        button.IsEnabled = false;
+        try
+        {
+            if (!await Task.Run(() => MusicLibraryService.Current.RetryChannelVideoIssue(item.Id)))
+            {
+                ToastRequested?.Invoke("This error is no longer active");
+                RefreshVideos();
+                return;
+            }
+
+            RefreshVideos();
+            UpdateDownloadSummary();
+            ToastRequested?.Invoke(item.RetryStartedText);
+        }
+        catch (Exception exception)
+        {
+            WorkflowLog.Error("channel-retry", $"Could not retry video {item.Id}.", exception);
+            ToastRequested?.Invoke("Could not retry this error");
+        }
+        finally
+        {
+            button.IsEnabled = true;
+        }
+    }
+
     private async void OnVideoSkipClicked(object? sender, RoutedEventArgs e)
     {
         if (sender is not Button button || button.DataContext is not ChannelVideoDisplay item || !item.CanDismiss)
@@ -1332,6 +1364,20 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
         get => _canDownload;
         private set => SetField(ref _canDownload, value);
     }
+    public bool CanRetryError => MetadataStatus == ChannelMetadataStatus.Failed
+        || DownloadStatus == ChannelDownloadStatus.Failed;
+    public string RetryErrorToolTip => MetadataStatus == ChannelMetadataStatus.Failed
+        && DownloadStatus == ChannelDownloadStatus.Failed
+            ? "Retry metadata and download"
+            : MetadataStatus == ChannelMetadataStatus.Failed
+                ? "Retry metadata"
+                : "Retry download";
+    public string RetryStartedText => MetadataStatus == ChannelMetadataStatus.Failed
+        && DownloadStatus == ChannelDownloadStatus.Failed
+            ? "Metadata and download queued again"
+            : MetadataStatus == ChannelMetadataStatus.Failed
+                ? "Metadata queued again"
+                : "Download queued again";
     public string DismissToolTip
     {
         get => _dismissToolTip;
@@ -1356,7 +1402,15 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
     public ChannelDownloadStatus DownloadStatus
     {
         get => _downloadStatus;
-        private set => SetField(ref _downloadStatus, value);
+        private set
+        {
+            if (_downloadStatus == value)
+                return;
+            SetField(ref _downloadStatus, value);
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CanRetryError)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(RetryErrorToolTip)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(RetryStartedText)));
+        }
     }
     public string DownloadErrorSummary
     {
@@ -1473,7 +1527,8 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
                 _ => "Remote"
             };
 
-        CanDownload = !hasTrack && DownloadStatus is not ChannelDownloadStatus.Queued
+        CanDownload = !CanRetryError
+            && !hasTrack && DownloadStatus is not ChannelDownloadStatus.Queued
             and not ChannelDownloadStatus.Downloading
             && MetadataStatus is not ChannelMetadataStatus.Queued
                 and not ChannelMetadataStatus.Loading;

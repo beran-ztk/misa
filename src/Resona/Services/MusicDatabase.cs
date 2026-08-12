@@ -2078,6 +2078,64 @@ public class MusicDatabase
         return cmd.ExecuteNonQuery();
     }
 
+    public bool RetryChannelVideoIssue(int videoId)
+    {
+        using var conn = Open();
+        using var tx = conn.BeginTransaction();
+        using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
+        cmd.CommandText = @"
+            UPDATE channel_videos
+            SET metadata_status = CASE
+                    WHEN metadata_status = 'Failed' THEN 'Queued'
+                    ELSE metadata_status
+                END,
+                metadata_error = CASE
+                    WHEN metadata_status = 'Failed' THEN NULL
+                    ELSE metadata_error
+                END,
+                metadata_priority = CASE
+                    WHEN metadata_status = 'Failed' THEN 200
+                    ELSE metadata_priority
+                END,
+                metadata_attempts = CASE
+                    WHEN metadata_status = 'Failed' THEN 0
+                    ELSE metadata_attempts
+                END,
+                download_status = CASE
+                    WHEN download_status <> 'Failed' THEN download_status
+                    WHEN EXISTS (
+                        SELECT 1 FROM tracks
+                        WHERE tracks.canonical_url = channel_videos.canonical_url
+                    ) THEN 'Ready'
+                    WHEN metadata_status = 'Ready' THEN 'Queued'
+                    ELSE 'NotQueued'
+                END,
+                download_error = CASE
+                    WHEN download_status = 'Failed' THEN NULL
+                    ELSE download_error
+                END,
+                download_attempts = CASE
+                    WHEN download_status = 'Failed' THEN 0
+                    ELSE download_attempts
+                END,
+                manual_download_requested = CASE
+                    WHEN download_status = 'Failed' AND NOT EXISTS (
+                        SELECT 1 FROM tracks
+                        WHERE tracks.canonical_url = channel_videos.canonical_url
+                    ) THEN 1
+                    ELSE manual_download_requested
+                END,
+                updated_at = $now
+            WHERE id = $videoId
+              AND (metadata_status = 'Failed' OR download_status = 'Failed')";
+        cmd.Parameters.AddWithValue("$videoId", videoId);
+        cmd.Parameters.AddWithValue("$now", DateTime.UtcNow.ToString("O"));
+        var changed = cmd.ExecuteNonQuery() == 1;
+        tx.Commit();
+        return changed;
+    }
+
     public void CompleteChannelVideoMetadata(
         int videoId,
         YouTubeTrackMetadata? metadata,
