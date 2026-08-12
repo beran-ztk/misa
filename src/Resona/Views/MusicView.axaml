@@ -27,7 +27,7 @@
             <Setter Property="Width" Value="38"/>
             <Setter Property="Height" Value="38"/>
             <Setter Property="Padding" Value="0"/>
-            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="BorderBrush" Value="Transparent"/>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="HorizontalContentAlignment" Value="Center"/>
@@ -37,13 +37,26 @@
         </Style>
         <Style Selector="ToggleButton.toolbar-icon:pointerover">
             <Setter Property="Background" Value="{DynamicResource Theme.Brush.SurfaceHover}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource Theme.Brush.Accent}"/>
             <Setter Property="Opacity" Value="1"/>
         </Style>
         <Style Selector="ToggleButton.toolbar-icon:checked">
-            <Setter Property="Background" Value="#24FFD27A"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource Theme.Brush.Warning}"/>
+            <Setter Property="Background" Value="#343E6591"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
             <Setter Property="Opacity" Value="1"/>
+        </Style>
+        <Style Selector="ToggleButton.toolbar-icon /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="{DynamicResource Theme.Corner.Control}"/>
+        </Style>
+        <Style Selector="ToggleButton.toolbar-icon:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource Theme.Brush.SurfaceHover}"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+        </Style>
+        <Style Selector="ToggleButton.toolbar-icon:checked /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#343E6591"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
         </Style>
         <Style Selector="Button.bare-add">
             <Setter Property="Background" Value="Transparent"/>
@@ -560,7 +573,7 @@
                                     Padding="12,9"
                                     BorderBrush="{Binding ArtworkBorderBrush}"
                                     BorderThickness="1">
-                                <Grid ColumnDefinitions="46,*,170,Auto,68" ColumnSpacing="11"
+                                <Grid ColumnDefinitions="46,*,Auto" ColumnSpacing="11"
                                       RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="5">
                                     <Border Grid.RowSpan="4" Width="42" Height="42" CornerRadius="7" ClipToBounds="True"
                                             Background="#292C25" VerticalAlignment="Center">
@@ -581,7 +594,7 @@
                                                    TextTrimming="CharacterEllipsis"/>
                                     </StackPanel>
                                     <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="1"
-                                                HorizontalAlignment="Right" VerticalAlignment="Center">
+                                                 HorizontalAlignment="Right" VerticalAlignment="Center">
                                         <Button Classes="icon" Tag="1" Click="OnQuickStarRatingClicked" ToolTip.Tip="1 star"
                                                 Width="28" Height="28" Padding="0">
                                             <TextBlock Text="★" FontSize="17" Foreground="{Binding Star1Brush}"/>
@@ -602,10 +615,8 @@
                                                 Width="28" Height="28" Padding="0">
                                             <TextBlock Text="★" FontSize="17" Foreground="{Binding Star5Brush}"/>
                                         </Button>
-                                    </StackPanel>
-                                    <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="4">
                                         <Button Classes="icon" Click="OnQuickCopyUrlClicked" ToolTip.Tip="Copy YouTube URL"
-                                                Width="30" Height="30" Padding="6">
+                                                Width="30" Height="30" Padding="6" Margin="4,0,0,0">
                                             <Image Source="{SvgImage /Assets/copy.svg}" Width="14" Height="14"/>
                                         </Button>
                                         <Button Classes="icon" Click="OnQuickDeleteClicked" ToolTip.Tip="Delete track"
@@ -613,28 +624,28 @@
                                             <Image Source="{SvgImage /Assets/trash.svg}" Width="14" Height="14"/>
                                         </Button>
                                     </StackPanel>
-                                    <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3"
+                                    <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
                                                Text="{Binding GenreText}" FontSize="9.5"
                                                Foreground="{Binding ArtworkMetadataBrush}"
                                                TextTrimming="CharacterEllipsis"/>
-                                    <WrapPanel Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3"
+                                    <WrapPanel Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2"
                                                Orientation="Horizontal" ItemSpacing="12">
                                         <TextBlock Text="{Binding TempoText}" FontSize="9.5" Opacity="0.64"/>
                                         <TextBlock Text="{Binding LoudnessText}" FontSize="9.5" Opacity="0.64"/>
                                         <TextBlock Text="{Binding DynamicsText}" FontSize="9.5" Opacity="0.64"/>
                                         <TextBlock Text="{Binding EmotionalCharacterText}" FontSize="9.5" Foreground="#AFC8A3"/>
                                     </WrapPanel>
-                                    <WrapPanel Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="3"
+                                    <WrapPanel Grid.Row="3" Grid.Column="1"
                                                Orientation="Horizontal" ItemSpacing="12">
                                         <TextBlock Text="{Binding SourceActivityText}" IsVisible="{Binding HasSourceActivity}"
                                                    FontSize="9" Opacity="0.5"/>
                                         <TextBlock Text="{Binding UploadedDateText}" FontSize="9" Opacity="0.5"/>
                                         <TextBlock Text="{Binding DownloadedDetailText}" FontSize="9" Opacity="0.5"/>
                                     </WrapPanel>
-                                    <TextBlock Grid.Column="4" Grid.RowSpan="4" Text="{Binding DurationText}"
+                                    <TextBlock Grid.Column="2" Grid.Row="3" Text="{Binding DurationText}"
                                                FontFamily="Consolas" FontSize="10.5" Opacity="0.72"
-                                               HorizontalAlignment="Center" VerticalAlignment="Center"
-                                               TextAlignment="Center"/>
+                                               HorizontalAlignment="Right" VerticalAlignment="Center"
+                                               TextAlignment="Right"/>
                                 </Grid>
                             </Border>
                             <Rectangle Grid.Row="1"

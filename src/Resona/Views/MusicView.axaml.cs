@@ -1422,10 +1422,8 @@ public partial class MusicView : UserControl
     private void RefreshCompletionFilterVisuals()
     {
         var reviewSelected = ShowNeedsReviewCheckBox.IsChecked == true;
-        ShowNeedsReviewCheckBox.Background = reviewSelected ? Brush("#18FFD27A") : Brushes.Transparent;
-        ShowNeedsReviewCheckBox.BorderBrush = reviewSelected
-            ? Brush("#78FFD27A")
-            : ThemeResources.Brush("Theme.Brush.BorderSubtle");
+        ShowNeedsReviewCheckBox.Background = reviewSelected ? Brush("#343E6591") : Brushes.Transparent;
+        ShowNeedsReviewCheckBox.BorderBrush = Brushes.Transparent;
 
         var analysisSelected = ShowNeedsAnalysisCheckBox.IsChecked == true;
         ShowNeedsAnalysisCheckBox.Background = analysisSelected ? Brush("#18EE5C5C") : Brushes.Transparent;
