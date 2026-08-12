@@ -139,6 +139,7 @@ public partial class MusicView : UserControl
     private MultiSelectFilterControl? _conditionLanguageCtrl;
     private bool _conditionNegate;
     private bool _isQuickEditMode;
+    private bool _updatingLibraryMode;
     private readonly Dictionary<string, EmotionalRangeState> _conditionEmotionalCharacters =
         EmotionalCharacterCatalog.All.ToDictionary(item => item.Adjectives, _ => new EmotionalRangeState(), StringComparer.OrdinalIgnoreCase);
     private FilterSection? _conditionGenreSection;
@@ -160,6 +161,13 @@ public partial class MusicView : UserControl
         public bool IsActive => MinimumPercent is not null || MaximumPercent is not null;
     }
     private sealed record FilterSection(Control Control, Action Refresh);
+    private enum LibraryMode
+    {
+        Library,
+        Review,
+        Declined,
+        QuickEdit
+    }
     private readonly List<FilterGroupControls> _filterGroups = [];
 
     public MusicView()
@@ -1516,10 +1524,25 @@ public partial class MusicView : UserControl
 
     private void OnCompletionFilterChanged(object? sender, RoutedEventArgs e)
     {
+        if (_updatingLibraryMode)
+            return;
+
         if (sender == ShowNeedsReviewCheckBox && ShowNeedsReviewCheckBox.IsChecked == true)
-            ShowDeclinedCheckBox.IsChecked = false;
+        {
+            SetLibraryMode(LibraryMode.Review);
+            return;
+        }
         else if (sender == ShowDeclinedCheckBox && ShowDeclinedCheckBox.IsChecked == true)
-            ShowNeedsReviewCheckBox.IsChecked = false;
+        {
+            SetLibraryMode(LibraryMode.Declined);
+            return;
+        }
+
+        if (ShowNeedsReviewCheckBox.IsChecked != true && ShowDeclinedCheckBox.IsChecked != true)
+        {
+            SetLibraryMode(LibraryMode.Library);
+            return;
+        }
 
         RefreshCompletionFilterVisuals();
         ApplyFilterDefinitionChange();
@@ -1540,6 +1563,85 @@ public partial class MusicView : UserControl
         ShowNeedsAnalysisCheckBox.BorderBrush = analysisSelected
             ? Brush("#78EE5C5C")
             : ThemeResources.Brush("Theme.Brush.BorderSubtle");
+
+        RefreshLibraryModeSelector();
+    }
+
+    private void OnLibraryModeOptionClicked(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: string modeName }
+            || !Enum.TryParse<LibraryMode>(modeName, ignoreCase: true, out var mode))
+            return;
+
+        SetLibraryMode(mode);
+        LibraryModeButton.Flyout?.Hide();
+        e.Handled = true;
+    }
+
+    private void SetLibraryMode(LibraryMode mode)
+    {
+        _updatingLibraryMode = true;
+        try
+        {
+            ShowNeedsReviewCheckBox.IsChecked = mode == LibraryMode.Review;
+            ShowDeclinedCheckBox.IsChecked = mode == LibraryMode.Declined;
+            SetQuickEditMode(mode == LibraryMode.QuickEdit);
+        }
+        finally
+        {
+            _updatingLibraryMode = false;
+        }
+
+        RefreshCompletionFilterVisuals();
+        ApplyFilterDefinitionChange();
+    }
+
+    private void SetQuickEditMode(bool enabled)
+    {
+        if (_isQuickEditMode == enabled)
+            return;
+
+        _isQuickEditMode = enabled;
+        foreach (var item in _allItems)
+            item.IsQuickEditMode = enabled;
+        RefreshVisibleItemsSource((FileList.SelectedItem as TrackDisplayItem)?.Track.Id);
+    }
+
+    private LibraryMode CurrentLibraryMode() =>
+        ShowNeedsReviewCheckBox.IsChecked == true
+            ? LibraryMode.Review
+            : ShowDeclinedCheckBox.IsChecked == true
+                ? LibraryMode.Declined
+                : _isQuickEditMode
+                    ? LibraryMode.QuickEdit
+                    : LibraryMode.Library;
+
+    private void RefreshLibraryModeSelector()
+    {
+        var mode = CurrentLibraryMode();
+        LibraryModeIcon.IsVisible = mode == LibraryMode.Library;
+        ReviewModeIcon.IsVisible = mode == LibraryMode.Review;
+        DeclinedModeIcon.IsVisible = mode == LibraryMode.Declined;
+        QuickEditModeIcon.IsVisible = mode == LibraryMode.QuickEdit;
+
+        LibraryModeOption.Background = Brushes.Transparent;
+        ReviewModeOption.Background = Brushes.Transparent;
+        DeclinedModeOption.Background = Brushes.Transparent;
+        QuickEditModeOption.Background = Brushes.Transparent;
+        LibraryModeOption.Opacity = mode == LibraryMode.Library ? 1 : 0.52;
+        ReviewModeOption.Opacity = mode == LibraryMode.Review ? 1 : 0.52;
+        DeclinedModeOption.Opacity = mode == LibraryMode.Declined ? 1 : 0.52;
+        QuickEditModeOption.Opacity = mode == LibraryMode.QuickEdit ? 1 : 0.52;
+
+        LibraryModeButton.Background = mode == LibraryMode.Library ? Brushes.Transparent : Brush("#343E6591");
+        LibraryModeButton.Opacity = mode == LibraryMode.Library ? 0.86 : 1;
+        ToolTip.SetTip(LibraryModeButton, mode switch
+        {
+            LibraryMode.Review => "Mode: Needs review",
+            LibraryMode.Declined => "Mode: Declined",
+            LibraryMode.QuickEdit => "Mode: Quick edit",
+            _ => "Mode: Library"
+        });
     }
 
     // ─── Toolbar / filter panel ───────────────────────────────────────────────
@@ -3046,15 +3148,7 @@ public partial class MusicView : UserControl
 
     private void OnToggleQuickEditClicked(object? sender, RoutedEventArgs e)
     {
-        _isQuickEditMode = !_isQuickEditMode;
-        QuickEditToggleBtn.Opacity = _isQuickEditMode ? 1 : 0.86;
-        QuickEditToggleBtn.Background = _isQuickEditMode
-            ? Brush("#343E6591")
-            : Brushes.Transparent;
-        ToolTip.SetTip(QuickEditToggleBtn, _isQuickEditMode ? "Leave quick edit" : "Quick edit tracks");
-        foreach (var item in _allItems)
-            item.IsQuickEditMode = _isQuickEditMode;
-        RefreshVisibleItemsSource((FileList.SelectedItem as TrackDisplayItem)?.Track.Id);
+        SetLibraryMode(_isQuickEditMode ? LibraryMode.Library : LibraryMode.QuickEdit);
     }
 
     private void OnQuickStarRatingClicked(object? sender, RoutedEventArgs e)

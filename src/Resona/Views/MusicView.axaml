@@ -312,30 +312,82 @@
                     <Image Source="{SvgImage /Assets/search.svg}" Width="17" Height="17"/>
                 </Button>
 
+                <!-- These controls remain the filter state source for presets and filtering,
+                     while the visible mode selector keeps the toolbar compact. -->
                 <ToggleButton x:Name="ShowNeedsReviewCheckBox"
-                              Classes="toolbar-icon"
+                              IsVisible="False"
                               IsChecked="False"
                               Checked="OnCompletionFilterChanged"
-                              Unchecked="OnCompletionFilterChanged"
-                              ToolTip.Tip="Show only tracks needing review">
-                    <Image Source="{SvgImage /Assets/review.svg}" Width="18" Height="18"/>
-                </ToggleButton>
-
+                              Unchecked="OnCompletionFilterChanged"/>
                 <ToggleButton x:Name="ShowDeclinedCheckBox"
-                              Classes="toolbar-icon"
+                              IsVisible="False"
                               IsChecked="False"
                               Checked="OnCompletionFilterChanged"
-                              Unchecked="OnCompletionFilterChanged"
-                              ToolTip.Tip="Show only declined tracks">
-                    <Image Source="{SvgImage /Assets/close.svg}" Width="16" Height="16"/>
-                </ToggleButton>
+                              Unchecked="OnCompletionFilterChanged"/>
 
-                <Button x:Name="QuickEditToggleBtn"
+                <Button x:Name="LibraryModeButton"
                         Classes="icon"
-                        Click="OnToggleQuickEditClicked"
-                        ToolTip.Tip="Quick edit tracks"
+                        ToolTip.Tip="Library mode"
                         Opacity="0.86">
-                    <Image Source="{SvgImage /Assets/pencil-simple.svg}" Width="17" Height="17"/>
+                    <Button.Flyout>
+                        <Flyout Placement="BottomEdgeAlignedLeft">
+                            <Flyout.FlyoutPresenterTheme>
+                                <ControlTheme TargetType="FlyoutPresenter">
+                                    <Setter Property="Padding" Value="0"/>
+                                    <Setter Property="Background" Value="Transparent"/>
+                                    <Setter Property="BorderThickness" Value="0"/>
+                                    <Setter Property="CornerRadius" Value="6"/>
+                                </ControlTheme>
+                            </Flyout.FlyoutPresenterTheme>
+                            <Border Width="44"
+                                    Padding="3"
+                                    Background="#F218191C"
+                                    BorderThickness="0"
+                                    CornerRadius="6">
+                                <StackPanel Spacing="1">
+                                    <Button x:Name="LibraryModeOption" Tag="Library"
+                                            Click="OnLibraryModeOptionClicked"
+                                            ToolTip.Tip="Library"
+                                            Background="Transparent" BorderThickness="0"
+                                            Width="38" Height="36" Padding="0">
+                                        <TextBlock Text="≡" FontSize="19" HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center" Margin="0,-4,0,0"/>
+                                    </Button>
+                                    <Button x:Name="ReviewModeOption" Tag="Review"
+                                            Click="OnLibraryModeOptionClicked"
+                                            ToolTip.Tip="Needs review"
+                                            Background="Transparent" BorderThickness="0"
+                                            Width="38" Height="36" Padding="0">
+                                        <Image Source="{SvgImage /Assets/review.svg}" Width="16" Height="16"/>
+                                    </Button>
+                                    <Button x:Name="DeclinedModeOption" Tag="Declined"
+                                            Click="OnLibraryModeOptionClicked"
+                                            ToolTip.Tip="Declined"
+                                            Background="Transparent" BorderThickness="0"
+                                            Width="38" Height="36" Padding="0">
+                                        <Image Source="{SvgImage /Assets/close.svg}" Width="14" Height="14"/>
+                                    </Button>
+                                    <Button x:Name="QuickEditModeOption" Tag="QuickEdit"
+                                            Click="OnLibraryModeOptionClicked"
+                                            ToolTip.Tip="Quick edit"
+                                            Background="Transparent" BorderThickness="0"
+                                            Width="38" Height="36" Padding="0">
+                                        <Image Source="{SvgImage /Assets/pencil-simple.svg}" Width="16" Height="16"/>
+                                    </Button>
+                                </StackPanel>
+                            </Border>
+                        </Flyout>
+                    </Button.Flyout>
+                    <Grid Width="20" Height="20">
+                        <TextBlock x:Name="LibraryModeIcon" Text="≡" FontSize="20"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-4,0,0"/>
+                        <Image x:Name="ReviewModeIcon" IsVisible="False"
+                               Source="{SvgImage /Assets/review.svg}" Width="18" Height="18"/>
+                        <Image x:Name="DeclinedModeIcon" IsVisible="False"
+                               Source="{SvgImage /Assets/close.svg}" Width="16" Height="16"/>
+                        <Image x:Name="QuickEditModeIcon" IsVisible="False"
+                               Source="{SvgImage /Assets/pencil-simple.svg}" Width="17" Height="17"/>
+                    </Grid>
                 </Button>
                 
                 <Button x:Name="RefreshLibraryButton"
