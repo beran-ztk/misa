@@ -68,6 +68,24 @@ public partial class MainWindow : Window
         base.OnClosing(e);
     }
 
+    public void ActivateFromSecondaryLaunch()
+    {
+        if (!IsVisible)
+            Show();
+        if (WindowState == WindowState.Minimized)
+            WindowState = WindowState.Normal;
+
+        Activate();
+        if (!OperatingSystem.IsWindows())
+            return;
+
+        var handle = TryGetPlatformHandle()?.Handle;
+        if (handle is null || handle == IntPtr.Zero)
+            return;
+        ShowWindow(handle.Value, 9); // SW_RESTORE
+        SetForegroundWindow(handle.Value);
+    }
+
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);
@@ -283,4 +301,12 @@ public partial class MainWindow : Window
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool PostMessage(IntPtr hwnd, uint message, IntPtr wParam, IntPtr lParam);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool ShowWindow(IntPtr hwnd, int command);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool SetForegroundWindow(IntPtr hwnd);
 }

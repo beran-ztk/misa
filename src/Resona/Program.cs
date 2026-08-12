@@ -2,6 +2,7 @@ using Avalonia;
 using System;
 
 using Velopack;
+using Resona.Services;
 
 namespace Resona;
 
@@ -17,6 +18,14 @@ sealed class Program
             .SetAutoApplyOnStartup(false)
             .Run();
 
+        using var singleInstance = SingleInstanceCoordinator.Start();
+        if (!singleInstance.IsPrimary)
+        {
+            singleInstance.NotifyPrimaryAsync().GetAwaiter().GetResult();
+            return;
+        }
+
+        App.SingleInstance = singleInstance;
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
     }
 
