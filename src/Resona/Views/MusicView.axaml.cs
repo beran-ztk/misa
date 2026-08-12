@@ -899,39 +899,55 @@ public partial class MusicView : UserControl
 
     private void ApplyFilterCore()
     {
-        var selRatingIds = SelectedRatingIds();
-        var selVisibility = SelectedVisibility();
         var itemById = _allItems.ToDictionary(i => i.Track.Id);
+        List<MusicTrack> filtered;
 
-        var groups = CurrentFilterGroups();
-        
-        var filtered = TrackFilter.Apply(
-            _allItems.Select(i => i.Track),
-            _allTrackGenreIds,
-            _allTrackStyleIds,
-            _allTrackTagIds,
-            _allTrackMirexScores,
-            selRatingIds,
-            selVisibility,
-            groups,
-            SearchBox.Text);
+        if (ShowNeedsReviewCheckBox.IsChecked == true)
+        {
+            // Review mode is an exclusive, temporary view. The user's configured
+            // search, rating, visibility and metadata filters remain intact and
+            // become active again when review mode is switched off.
+            filtered = _allItems
+                .Where(item => item.NeedsReview)
+                .Select(item => item.Track)
+                .ToList();
+        }
+        else
+        {
+            var selRatingIds = SelectedRatingIds();
+            var selVisibility = SelectedVisibility();
+            var groups = CurrentFilterGroups();
 
-        if (_unratedOnly)
-            filtered = filtered.Where(track => track.RatingId is null).ToList();
-        else if (_manualRatingFilter && selRatingIds.Count == 0)
-            filtered.Clear();
+            filtered = TrackFilter.Apply(
+                _allItems.Select(i => i.Track),
+                _allTrackGenreIds,
+                _allTrackStyleIds,
+                _allTrackTagIds,
+                _allTrackMirexScores,
+                selRatingIds,
+                selVisibility,
+                groups,
+                SearchBox.Text);
+
+            if (_unratedOnly)
+                filtered = filtered.Where(track => track.RatingId is null).ToList();
+            else if (_manualRatingFilter && selRatingIds.Count == 0)
+                filtered.Clear();
+        }
 
         _filteredItems = filtered
             .Where(t => itemById.ContainsKey(t.Id))
             .Select(t => itemById[t.Id])
             .ToList();
 
-        if (!_unratedOnly && ShowNeedsReviewCheckBox.IsChecked != true)
+        if (ShowNeedsReviewCheckBox.IsChecked != true && !_unratedOnly)
             _filteredItems = _filteredItems
                 .Where(item => !item.NeedsReview)
                 .ToList();
 
-        if (!_unratedOnly && ShowNeedsAnalysisCheckBox.IsChecked != true)
+        if (ShowNeedsReviewCheckBox.IsChecked != true
+            && !_unratedOnly
+            && ShowNeedsAnalysisCheckBox.IsChecked != true)
             _filteredItems = _filteredItems
                 .Where(item => !item.NeedsAnalysis)
                 .ToList();
@@ -1139,6 +1155,12 @@ public partial class MusicView : UserControl
 
     private List<MusicTrack> TracksMatchingSearchRatingAndGroup(FilterGroupControls group)
     {
+        if (ShowNeedsReviewCheckBox.IsChecked == true)
+            return _allItems
+                .Where(item => item.NeedsReview)
+                .Select(item => item.Track)
+                .ToList();
+
         IEnumerable<MusicTrack> query = _allItems.Select(item => item.Track);
         var selectedRatingIds = SelectedRatingIds();
         var selectedGenreIds = SelectedIds(group.GenreCtrl.SelectedItems, Values.Genres, g => g.Name, g => g.Id);

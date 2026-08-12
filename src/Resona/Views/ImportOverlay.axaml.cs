@@ -185,25 +185,18 @@ public partial class ImportOverlay : UserControl
             + (includeEstimates && preview.EstimatedAnalysisTime is TimeSpan analysis ? $" · Analysis: {FormatDuration(analysis)}" : string.Empty);
     }
 
-    private Control CreatePreviewSourceCard(PendingImportPreview pending, string sourceUrl,
+    private Control CreatePreviewSourceCard(PendingImportPreview pending, string _,
         IEnumerable<ImportPreviewItem> items, Action refreshPreview)
     {
-        var card = new Border
-        {
-            Background = new SolidColorBrush(Color.Parse("#C8151B22")), BorderBrush = new SolidColorBrush(Color.Parse("#2D3D4B")),
-            BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(5), Padding = new Thickness(9, 7)
-        };
-        var panel = new StackPanel { Spacing = 4 };
-        panel.Children.Add(new TextBlock { Text = ShortUrl(sourceUrl), FontSize = 10, Foreground = ThemeResources.Brush("Theme.Brush.TextSecondary"), TextTrimming = TextTrimming.CharacterEllipsis });
+        var panel = new StackPanel { Spacing = 3 };
         foreach (var item in items)
             panel.Children.Add(CreatePreviewItemRow(pending, item, refreshPreview));
-        card.Child = panel;
-        return card;
+        return panel;
     }
 
     private static Control CreatePreviewItemRow(PendingImportPreview pending, ImportPreviewItem item, Action refreshPreview)
     {
-        var row = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto,Auto"), ColumnSpacing = 7, Margin = new Thickness(0, 1) };
+        var row = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto"), ColumnSpacing = 8, Margin = new Thickness(0, 2) };
         row.Children.Add(new TextBlock
         {
             Text = item.DurationSeconds is int seconds ? FormatTrackDuration(seconds) : "--:--",
@@ -222,18 +215,6 @@ public partial class ImportOverlay : UserControl
         };
         Grid.SetColumn(title, 1);
         row.Children.Add(title);
-        var detail = item.Status == ImportQueueStatus.Queued
-            ? item.EstimatedSizeBytes is long size ? FormatBytes(size) : "new"
-            : item.Detail ?? "unavailable";
-        var state = new TextBlock
-        {
-            Text = detail,
-            FontSize = 9.5,
-            Foreground = new SolidColorBrush(Color.Parse(StatusColor(item.Status))),
-            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
-        };
-        Grid.SetColumn(state, 2);
-        row.Children.Add(state);
         var remove = new Button
         {
             Content = "×",
@@ -248,39 +229,34 @@ public partial class ImportOverlay : UserControl
             pending.RemovedCanonicalUrls.Add(item.CanonicalUrl);
             refreshPreview();
         };
-        Grid.SetColumn(remove, 3);
+        Grid.SetColumn(remove, 2);
         row.Children.Add(remove);
         return row;
     }
 
     private Control CreatePendingPreviewCard(PendingImportPreview pending)
     {
-        var hasQueuedItems = pending.Preview?.Items.Any(item => item.Status == ImportQueueStatus.Queued) == true;
-        var borderColor = pending.Preview is null
-            ? pending.IsChecking ? "#2D3D4B" : "#7A3434"
-            : hasQueuedItems ? "#2E6D47" : "#5A6470";
         var card = new Border
         {
-            Background = new SolidColorBrush(Color.Parse("#C8151B22")),
-            BorderBrush = new SolidColorBrush(Color.Parse(borderColor)),
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(5),
-            Padding = new Thickness(10, 8)
+            Background = Brushes.Transparent,
+            BorderThickness = new Thickness(0),
+            Padding = new Thickness(0, 2)
         };
-        var panel = new StackPanel { Spacing = 7 };
+        var panel = new StackPanel { Spacing = 5 };
         var header = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto"), ColumnSpacing = 7 };
-        header.Children.Add(new TextBlock
-        {
-            Text = ShortUrl(pending.SourceUrl),
-            FontSize = 10.5,
-            Foreground = ThemeResources.Brush("Theme.Brush.TextSecondary"),
-            TextTrimming = TextTrimming.CharacterEllipsis,
-            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
-        });
         Button? queue = null;
         if (pending.Preview is { } preview)
         {
-            queue = new Button { Content = "Queue →", FontSize = 10, Padding = new Thickness(8, 3) };
+            queue = new Button
+            {
+                Content = CreateSvgIcon("/Assets/download.svg", 14),
+                Width = 28,
+                Height = 26,
+                Padding = new Thickness(0),
+                Background = Brushes.Transparent,
+                BorderThickness = new Thickness(0)
+            };
+            ToolTip.SetTip(queue, "Add checked tracks to the download queue");
             queue.Click += (_, _) =>
             {
                 var visibleItems = GetVisiblePreviewItems(pending);
@@ -349,7 +325,13 @@ public partial class ImportOverlay : UserControl
 
             if (pending.Preview.Items.Count > 0)
             {
-                var controls = new Grid { ColumnDefinitions = new ColumnDefinitions("*,86"), ColumnSpacing = 7 };
+                var showLargeListControls = GetAvailablePreviewItems(pending).Count > 20;
+                var controls = new Grid
+                {
+                    ColumnDefinitions = new ColumnDefinitions("*,86"),
+                    ColumnSpacing = 7,
+                    IsVisible = showLargeListControls
+                };
                 var search = new TextBox
                 {
                     Text = pending.SearchText,
@@ -385,7 +367,9 @@ public partial class ImportOverlay : UserControl
                     {
                         var queueCount = visibleItems.Count(item => item.Status == ImportQueueStatus.Queued);
                         queue.IsVisible = queueCount > 0;
-                        queue.Content = queueCount == 1 ? "Queue 1" : $"Queue {queueCount}";
+                        ToolTip.SetTip(queue, queueCount == 1
+                            ? "Add track to the download queue"
+                            : $"Add {queueCount} tracks to the download queue");
                     }
 
                     rows.Children.Clear();
@@ -426,47 +410,59 @@ public partial class ImportOverlay : UserControl
 
     private Control CreateSourceCard(ImportQueueSource source)
     {
-        var card = new Border { Background = new SolidColorBrush(Color.Parse("#C8151B22")), BorderBrush = new SolidColorBrush(Color.Parse("#2D3D4B")), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(5), Padding = new Thickness(10, 8) };
-        var panel = new StackPanel { Spacing = 5 };
-        panel.Children.Add(new TextBlock { Text = ShortUrl(source.SourceUrl), FontSize = 11, Foreground = ThemeResources.Brush("Theme.Brush.TextSecondary"), TextTrimming = TextTrimming.CharacterEllipsis });
+        var panel = new StackPanel { Spacing = 4 };
         foreach (var item in source.Items)
         {
-            var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto"), ColumnSpacing = 8 };
-            row.Children.Add(CreateItemRow(item.Title, item.Status, QueueItemDetail(item), item.DurationSeconds));
+            var row = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto,Auto"), ColumnSpacing = 8, Margin = new Thickness(0, 2) };
+            row.Children.Add(new TextBlock
+            {
+                Text = item.DurationSeconds is int seconds ? FormatTrackDuration(seconds) : "--:--",
+                FontSize = 10,
+                Foreground = new SolidColorBrush(Color.Parse("#798796")),
+                MinWidth = 34,
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
+            });
+            var title = new TextBlock
+            {
+                Text = item.Title,
+                FontSize = 10.5,
+                Foreground = new SolidColorBrush(Color.Parse(item.Status is ImportQueueStatus.Queued or ImportQueueStatus.ReadyForReview ? "#DDE8F0" : "#8D9AA7")),
+                TextTrimming = TextTrimming.CharacterEllipsis,
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
+            };
+            Grid.SetColumn(title, 1);
+            row.Children.Add(title);
+            var state = new TextBlock
+            {
+                Text = QueueItemDetail(item),
+                FontSize = 9.5,
+                Foreground = new SolidColorBrush(Color.Parse(StatusColor(item.Status))),
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
+            };
+            Grid.SetColumn(state, 2);
+            row.Children.Add(state);
             if (item.Status is ImportQueueStatus.Queued or ImportQueueStatus.Failed)
             {
-                var remove = new Button { Content = "Remove", FontSize = 9, Padding = new Thickness(6, 2), Opacity = 0.7 };
+                var remove = new Button
+                {
+                    Content = "×",
+                    FontSize = 12,
+                    Padding = new Thickness(5, 0),
+                    Background = Brushes.Transparent,
+                    BorderThickness = new Thickness(0),
+                    Opacity = 0.62
+                };
+                ToolTip.SetTip(remove, "Remove from queue");
                 remove.Click += (_, _) =>
                 {
                     if (ImportQueueService.Current.RemoveQueuedItem(item.Id)) RefreshQueue();
                 };
-                Grid.SetColumn(remove, 2);
+                Grid.SetColumn(remove, 3);
                 row.Children.Add(remove);
             }
             panel.Children.Add(row);
         }
-        card.Child = panel;
-        return card;
-    }
-
-    private static Control CreateItemRow(string title, ImportQueueStatus status, string detail, int? durationSeconds = null)
-    {
-        var row = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto"), ColumnSpacing = 7, Margin = new Thickness(0, 1) };
-        row.Children.Add(new TextBlock
-        {
-            Text = durationSeconds is int seconds ? FormatTrackDuration(seconds) : "--:--",
-            FontSize = 10,
-            Foreground = new SolidColorBrush(Color.Parse("#798796")),
-            MinWidth = 34,
-            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
-        });
-        var titleBlock = new TextBlock { Text = title, FontSize = 10.5, Foreground = new SolidColorBrush(Color.Parse(status is ImportQueueStatus.Queued or ImportQueueStatus.ReadyForReview ? "#DDE8F0" : "#8D9AA7")), TextTrimming = TextTrimming.CharacterEllipsis };
-        Grid.SetColumn(titleBlock, 1);
-        row.Children.Add(titleBlock);
-        var state = new TextBlock { Text = detail, FontSize = 9.5, Foreground = new SolidColorBrush(Color.Parse(StatusColor(status))), Margin = new Thickness(10, 0, 0, 0), VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center };
-        Grid.SetColumn(state, 2);
-        row.Children.Add(state);
-        return row;
+        return panel;
     }
 
     private void OnCloseClicked(object? sender, RoutedEventArgs e)
@@ -529,8 +525,8 @@ public partial class ImportOverlay : UserControl
         var elapsed = phase is null ? "0:00" : FormatElapsed(DateTime.UtcNow - phase.StartedAtUtc);
         var suffix = CleanPhaseDetail(item.Detail);
         return string.IsNullOrWhiteSpace(suffix)
-            ? $"{StatusLabel(item.Status)} · {elapsed}"
-            : $"{StatusLabel(item.Status)} · {elapsed} · {suffix}";
+            ? elapsed
+            : $"{elapsed} · {suffix}";
     }
 
     private static string CleanPhaseDetail(string? detail)
@@ -565,7 +561,17 @@ public partial class ImportOverlay : UserControl
         _ => "#8996A3"
     };
 
-    private static string ShortUrl(string url) => url.Length > 78 ? url[..75] + "…" : url;
+    private static Avalonia.Svg.Skia.Svg CreateSvgIcon(string path, double size) => new(new Uri("avares://Resona/"))
+    {
+        Path = path,
+        Width = size,
+        Height = size,
+        Stretch = Stretch.Uniform,
+        Opacity = 0.82,
+        VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+        HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center
+    };
+
     private static string FormatBytes(long bytes) => bytes >= 1_000_000_000 ? $"{bytes / 1_000_000_000d:0.0} GB" : $"{bytes / 1_000_000d:0} MB";
     private static string FormatTrackDuration(int seconds)
     {
