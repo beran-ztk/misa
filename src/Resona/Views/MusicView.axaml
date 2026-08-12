@@ -524,7 +524,7 @@
                                     <Grid Grid.Column="2"
                                           VerticalAlignment="Center"
                                           RowDefinitions="Auto,Auto"
-                                          Margin="0,0,78,0"
+                                          Margin="0,0,120,0"
                                           RowSpacing="4">
                                         <Grid Grid.Row="0" Grid.Column="0" ColumnDefinitions="Auto,Auto,*">
                                             <Border Background="{Binding RatingBackground}"
@@ -593,7 +593,7 @@
 
                                 </Grid>
                                 <StackPanel Width="76"
-                                            Margin="0,0,38,0"
+                                            Margin="0,0,8,0"
                                             Spacing="2"
                                             HorizontalAlignment="Right"
                                             VerticalAlignment="Center"
@@ -616,12 +616,12 @@
                                 <Button Classes="icon queue-menu"
                                         IsVisible="{Binding IsStandardMode}"
                                         Width="28" Height="28"
-                                        Margin="0,0,8,0"
+                                        Margin="0,0,88,0"
                                         HorizontalAlignment="Right"
                                         VerticalAlignment="Center"
                                         Click="OnTrackPlaybackMenuClicked"
                                         ToolTip.Tip="Playback options">
-                                    <TextBlock Text="⋯" FontSize="18" Margin="0,-5,0,0"/>
+                                    <TextBlock Text="⋮" FontSize="18" Margin="0,-2,0,0"/>
                                 </Button>
                                 </Panel>
                             </Border>
