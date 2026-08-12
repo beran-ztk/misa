@@ -34,6 +34,7 @@ public partial class MusicView : UserControl
 {
     // Engine
     private readonly PlaybackEngine _engine = new();
+    private readonly PlaybackQueue _playbackQueue = new();
     private readonly GlobalMediaKeyListener _globalMediaKeys = new();
     private readonly WindowsMediaSession _windowsMediaSession = new();
     private readonly DiscordPresenceService _discordPresence = new();
@@ -100,7 +101,6 @@ public partial class MusicView : UserControl
     // Crossfade state
     private int _lastKnownActiveId = -1;
     private bool _crossfadeTriggered;
-    private bool _restartQueueFromTopAfterCurrent;
     private int _nextTrackIndex = -1;
     private int _listeningTrackId = -1;
     private double _lastListeningPositionSeconds;
@@ -120,6 +120,7 @@ public partial class MusicView : UserControl
     private Dictionary<int, Dictionary<string, double>> _allTrackMirexScores = [];
     private List<TrackDisplayItem> _filteredItems = [];
     private List<TrackDisplayItem> _visibleItems = [];
+    private List<int> _loadedPlaylistSourceTrackIds = [];
     private List<PortableFilterPreset> _filterPresets = [];
     private string? _activeFilterPresetName;
     private bool _isCreatingPreset;
@@ -275,6 +276,11 @@ public partial class MusicView : UserControl
         LoadFilterPresets();
         RebuildFilterConditionsPanel();
         RefreshTrackList();
+        RestorePlaybackQueueSession();
+        ApplyPlaybackQueueToLoadedPlaylist();
+        RefreshVisibleItemsSource(_pendingRestoredTrackId);
+        UpdatePlaylistSummary();
+        RefreshNextTrackPreview();
 
         // The first library read must win the startup race. Background workers
         // are intentionally started only after the initial UI data is ready.
@@ -487,6 +493,7 @@ public partial class MusicView : UserControl
         _sortBy = nextSort;
         PrepareExplicitSort();
         ApplyFilter();
+        ResetPlaybackQueueFromCurrentView();
         PersistPlayerSession();
     }
 
@@ -498,6 +505,7 @@ public partial class MusicView : UserControl
         UpdateSortDirectionButton();
         PrepareExplicitSort();
         ApplyFilter();
+        ResetPlaybackQueueFromCurrentView();
         PersistPlayerSession();
     }
 
@@ -975,6 +983,8 @@ public partial class MusicView : UserControl
 
         RestoreSavedQueueOrder();
 
+        SyncPlaybackQueueWithLoadedPlaylist();
+
         foreach (var item in _filteredItems)
             item.IsPlaying = item.Track.Id == _engine.ActiveTrackId;
 
@@ -1123,8 +1133,52 @@ public partial class MusicView : UserControl
             ShuffleEnabled = _shuffle,
             SortBy = _sortBy.ToString(),
             SortDirection = _sortDirection.ToString(),
-            QueueTrackIds = _filteredItems.Select(item => item.Track.Id).ToList()
+            QueueTrackIds = (_playbackQueue.IsInitialized
+                    ? _playbackQueue.TrackIds
+                    : _filteredItems.Select(item => item.Track.Id))
+                .ToList()
         });
+    }
+
+    private void RestorePlaybackQueueSession()
+    {
+        var savedTrackIds = _restoredPlayerSession.QueueTrackIds
+            .Where(trackId => _filteredItems.Any(item => item.Track.Id == trackId))
+            .Distinct()
+            .ToList();
+        if (savedTrackIds.Count == 0)
+            return;
+
+        var currentTrackId = _restoredPlayerSession.ActiveTrackId
+                             ?? _restoredPlayerSession.SelectedTrackId;
+        if (currentTrackId is not int current || !savedTrackIds.Contains(current))
+            current = savedTrackIds[0];
+        _playbackQueue.Reset(savedTrackIds, current);
+    }
+
+    private void SyncPlaybackQueueWithLoadedPlaylist()
+    {
+        var filteredTrackIds = _filteredItems.Select(item => item.Track.Id).ToList();
+        if (_loadedPlaylistSourceTrackIds.SequenceEqual(filteredTrackIds))
+        {
+            ApplyPlaybackQueueToLoadedPlaylist();
+            return;
+        }
+
+        _loadedPlaylistSourceTrackIds = filteredTrackIds;
+        if (filteredTrackIds.Count == 0)
+        {
+            if (_engine.ActiveTrackId >= 0)
+                _playbackQueue.Reset([], _engine.ActiveTrackId);
+            else
+                _playbackQueue.Clear();
+            return;
+        }
+
+        var currentTrackId = _engine.ActiveTrackId >= 0
+            ? _engine.ActiveTrackId
+            : filteredTrackIds[0];
+        _playbackQueue.Reset(filteredTrackIds, currentTrackId);
     }
 
     private int GetSelectedFilteredIndex()
@@ -3101,6 +3155,7 @@ public partial class MusicView : UserControl
                 NowPlayingText.Text = string.Empty;
                 PlaybackInfoPanel.IsVisible = false;
                 _nextTrackIndex = -1;
+                _playbackQueue.Clear();
                 ClearPlayerArtworkBackground();
             }
 
@@ -3178,6 +3233,7 @@ public partial class MusicView : UserControl
                 NowPlayingText.Text = string.Empty;
                 PlaybackInfoPanel.IsVisible = false;
                 _nextTrackIndex = -1;
+                _playbackQueue.Clear();
                 ClearPlayerArtworkBackground();
                 await Task.Yield();
             }
@@ -3210,6 +3266,9 @@ public partial class MusicView : UserControl
         _allTrackStyleIds.Remove(trackId);
         _allTrackGenreIds.Remove(trackId);
         _allTrackTagIds.Remove(trackId);
+        _playbackQueue.Retain(
+            _allItems.Select(item => item.Track.Id),
+            _engine.ActiveTrackId >= 0 ? _engine.ActiveTrackId : null);
 
         if (selectedId == trackId)
             FileList.SelectedIndex = -1;
@@ -3233,7 +3292,7 @@ public partial class MusicView : UserControl
 
     // ─── Playback control ─────────────────────────────────────────────────────
 
-    private void OnListDoubleTapped(object? sender, TappedEventArgs e) => StartPlayback();
+    private void OnListDoubleTapped(object? sender, TappedEventArgs e) => StartPlayback(resetQueue: true);
     private void OnPreviousClicked(object? sender, RoutedEventArgs e) => NavigatePrevious();
     private void OnNextClicked(object? sender, RoutedEventArgs e) => NavigateNext(isManual: true);
 
@@ -3319,7 +3378,7 @@ public partial class MusicView : UserControl
             }
             catch { return false; }
         });
-        if (index >= 0) PlayTrackAt(index, isCrossfade: false);
+        if (index >= 0) PlayTrackAt(index, isCrossfade: false, resetQueue: true);
     }
 
     private static bool IsTextEntry(object? source)
@@ -3365,11 +3424,41 @@ public partial class MusicView : UserControl
         SetFilteredSelectedIndex(_filteredItems.Count > 0 ? 0 : -1);
         if (_filteredItems.Count > 0)
             FileList.ScrollIntoView(_filteredItems[0]);
-        _restartQueueFromTopAfterCurrent = _engine.ActiveTrackId >= 0;
-        _nextTrackIndex = GetQueueRestartIndex();
+        ResetPlaybackQueueFromCurrentView(restartAfterCurrent: true);
+        RefreshNextTrackPreview();
         UpdateUpcomingBar();
         UpdateShuffleButton();
         PersistPlayerSession();
+    }
+
+    private void ResetPlaybackQueueFromCurrentView(bool restartAfterCurrent = false)
+    {
+        _loadedPlaylistSourceTrackIds = _filteredItems.Select(item => item.Track.Id).ToList();
+        if (_filteredItems.Count == 0)
+        {
+            _playbackQueue.Clear();
+            return;
+        }
+
+        if (_engine.ActiveTrackId >= 0)
+        {
+            if (restartAfterCurrent)
+                _playbackQueue.ResetUpcoming(
+                    _engine.ActiveTrackId,
+                    _filteredItems.Select(item => item.Track.Id));
+            else
+                _playbackQueue.Reset(
+                    _filteredItems.Select(item => item.Track.Id),
+                    _engine.ActiveTrackId);
+            return;
+        }
+
+        var selectedTrackId = (FileList.SelectedItem as TrackDisplayItem)?.Track.Id;
+        var current = selectedTrackId is int selected
+                      && _filteredItems.Any(item => item.Track.Id == selected)
+            ? selected
+            : _filteredItems[0].Track.Id;
+        _playbackQueue.Reset(_filteredItems.Select(item => item.Track.Id), current);
     }
 
     private void UpdateShuffleButton()
@@ -3379,21 +3468,29 @@ public partial class MusicView : UserControl
         _windowsMediaSession.UpdateShuffle(_shuffle);
     }
 
-    private void StartPlayback()
+    private void StartPlayback(bool resetQueue = false)
     {
         var idx = GetSelectedFilteredIndex();
         if (idx < 0 || idx >= _filteredItems.Count) return;
 
-        PlayTrackAt(idx, isCrossfade: false);
+        PlayTrackAt(
+            idx,
+            isCrossfade: false,
+            resetQueue: resetQueue
+                        || !_playbackQueue.IsInitialized
+                        || !_playbackQueue.TrackIds.Contains(_filteredItems[idx].Track.Id));
     }
 
-    private void PlayTrackAt(int filteredIndex, bool isCrossfade)
+    private void PlayTrackAt(int filteredIndex, bool isCrossfade, bool resetQueue = false)
     {
         if (filteredIndex < 0 || filteredIndex >= _filteredItems.Count) return;
 
-        var track = _filteredItems[filteredIndex].Track;
+        PlayTrack(_filteredItems[filteredIndex].Track, isCrossfade, resetQueue);
+    }
+
+    private void PlayTrack(MusicTrack track, bool isCrossfade, bool resetQueue = false)
+    {
         var filePath = Path.Combine(Values.TracksDirectory, track.FileName);
-        _restartQueueFromTopAfterCurrent = false;
 
         if (_engine.ActiveTrackId >= 0 && _engine.ActiveTrackId != track.Id)
         {
@@ -3421,10 +3518,19 @@ public partial class MusicView : UserControl
             return;
         }
 
+        if (resetQueue)
+            _playbackQueue.Reset(_filteredItems.Select(item => item.Track.Id), track.Id);
+        else if (!_playbackQueue.SetCurrent(track.Id))
+            _playbackQueue.Reset(_filteredItems.Select(item => item.Track.Id), track.Id);
+
         BeginListeningSession(track.Id);
 
-        EnsureVisibleWindowAround(filteredIndex);
-        SetFilteredSelectedIndex(filteredIndex);
+        var filteredIndex = _filteredItems.FindIndex(item => item.Track.Id == track.Id);
+        if (filteredIndex >= 0)
+        {
+            EnsureVisibleWindowAround(filteredIndex);
+            SetFilteredSelectedIndex(filteredIndex);
+        }
 
         NowPlayingText.Text = track.Title;
         UpdateDiscordPresence();
@@ -3531,7 +3637,7 @@ public partial class MusicView : UserControl
             NowPlayingText.Text = restoredTrack.Title;
             UpdatePlayerArtworkBackground(restoredTrack);
             PlaybackInfoPanel.IsVisible = true;
-            _nextTrackIndex = index >= 0 ? PeekNextTrackIndex(index) : -1;
+            _nextTrackIndex = PeekNextTrackIndex(index);
             _crossfadeTriggered = false;
         }
 
@@ -3611,7 +3717,7 @@ public partial class MusicView : UserControl
                 if (remaining > 0 && remaining <= songFadeDuration)
                 {
                     _crossfadeTriggered = true;
-                    PlayTrackAt(_nextTrackIndex, isCrossfade: true);
+                    PlayTrack(_allItems[_nextTrackIndex].Track, isCrossfade: true);
                     return;
                 }
             }
@@ -3643,19 +3749,27 @@ public partial class MusicView : UserControl
 
     private int PeekNextTrackIndex(int currentFilteredIndex)
     {
-        if (_filteredItems.Count == 0) return -1;
-        if (_loopStatus == "Track") return -1;
-        int nextIdx = currentFilteredIndex + 1;
-        return nextIdx < _filteredItems.Count
-            ? nextIdx
-            : _loopStatus == "Playlist" ? 0 : -1;
+        if (_allItems.Count == 0 || _loopStatus == "Track") return -1;
+        if (!_playbackQueue.IsInitialized && currentFilteredIndex >= 0)
+            _playbackQueue.Reset(
+                _filteredItems.Select(item => item.Track.Id),
+                _filteredItems[currentFilteredIndex].Track.Id);
+
+        return _playbackQueue.PeekNext(_loopStatus == "Playlist") is int nextTrackId
+            ? _allItems.FindIndex(item => item.Track.Id == nextTrackId)
+            : -1;
     }
 
     private void RefreshNextTrackPreview()
     {
         if (_engine.ActiveTrackId < 0) { _nextTrackIndex = -1; UpdateUpcomingBar(); return; }
         var currentIdx = GetCurrentPlayIndex();
-        if (currentIdx < 0) { _nextTrackIndex = -1; UpdateUpcomingBar(); return; }
+        if (!_playbackQueue.IsInitialized && currentIdx < 0)
+        {
+            _nextTrackIndex = -1;
+            UpdateUpcomingBar();
+            return;
+        }
         _nextTrackIndex = PeekNextTrackIndex(currentIdx);
         UpdateUpcomingBar();
         UpdatePlaylistSummary();
@@ -3675,50 +3789,39 @@ public partial class MusicView : UserControl
         if (_isTrackPreviewActive) return;
         if (_filteredItems.Count == 0) { FullStop(); return; }
 
-        var currentIdx = GetCurrentPlayIndex();
-
-        int nextLinearIdx;
-        if (_restartQueueFromTopAfterCurrent)
-        {
-            _restartQueueFromTopAfterCurrent = false;
-            nextLinearIdx = GetQueueRestartIndex();
-            if (nextLinearIdx < 0) { FullStop(); return; }
-        }
-        else if (currentIdx >= 0)
-        {
-            nextLinearIdx = currentIdx + 1;
-            if (nextLinearIdx >= _filteredItems.Count)
-            {
-                if (_loopStatus == "Playlist") nextLinearIdx = 0;
-                else { FullStop(); return; }
-            }
-        }
-        else if (_engine.ActiveTrackId < 0)
+        if (_engine.ActiveTrackId < 0)
         {
             var selIdx = GetSelectedFilteredIndex();
-            nextLinearIdx = selIdx >= 0 && selIdx < _filteredItems.Count
-                ? selIdx + (isManual ? 0 : 1)
-                : 0;
-            if (nextLinearIdx >= _filteredItems.Count) { FullStop(); return; }
+            var startIndex = selIdx >= 0 && selIdx < _filteredItems.Count ? selIdx : 0;
+            PlayTrackAt(startIndex, isCrossfade: false, resetQueue: true);
+            return;
         }
-        else
+
+        if (!_playbackQueue.IsInitialized)
         {
-            nextLinearIdx = 0;
+            var currentIndex = GetCurrentPlayIndex();
+            if (currentIndex < 0) { FullStop(); return; }
+            _playbackQueue.Reset(
+                _filteredItems.Select(item => item.Track.Id),
+                _filteredItems[currentIndex].Track.Id);
         }
 
-        PlayTrackAt(nextLinearIdx, isCrossfade: false);
-    }
+        var nextTrackId = _playbackQueue.PeekNext(_loopStatus == "Playlist");
+        if (nextTrackId is null) { FullStop(); return; }
+        var nextTrack = _allItems.FirstOrDefault(item => item.Track.Id == nextTrackId.Value)?.Track;
+        if (nextTrack is null)
+        {
+            _playbackQueue.Retain(
+                _allItems.Select(item => item.Track.Id),
+                _engine.ActiveTrackId);
+            nextTrackId = _playbackQueue.PeekNext(_loopStatus == "Playlist");
+            nextTrack = nextTrackId is int retainedId
+                ? _allItems.FirstOrDefault(item => item.Track.Id == retainedId)?.Track
+                : null;
+        }
+        if (nextTrack is null) { FullStop(); return; }
 
-    private int GetQueueRestartIndex()
-    {
-        if (_filteredItems.Count == 0)
-            return -1;
-
-        return _engine.ActiveTrackId >= 0
-               && _filteredItems[0].Track.Id == _engine.ActiveTrackId
-               && _filteredItems.Count > 1
-            ? 1
-            : 0;
+        PlayTrack(nextTrack, isCrossfade: false);
     }
 
     private void NavigatePrevious()
@@ -3726,18 +3829,20 @@ public partial class MusicView : UserControl
         if (_isTrackPreviewActive) return;
         if (_filteredItems.Count == 0) return;
 
-        var currentIdx = GetCurrentPlayIndex();
-        int prevIdx;
-        if (currentIdx < 0)
+        if (!_playbackQueue.IsInitialized)
         {
-            var selIdx = GetSelectedFilteredIndex();
-            if (selIdx <= 0) return;
-            prevIdx = selIdx - 1;
+            var currentIndex = GetCurrentPlayIndex();
+            if (currentIndex < 0) return;
+            _playbackQueue.Reset(
+                _filteredItems.Select(item => item.Track.Id),
+                _filteredItems[currentIndex].Track.Id);
         }
-        else if (currentIdx == 0) { return; }
-        else { prevIdx = currentIdx - 1; }
 
-        PlayTrackAt(prevIdx, isCrossfade: false);
+        var previousTrackId = _playbackQueue.PeekPrevious();
+        if (previousTrackId is null) return;
+        var previousTrack = _allItems.FirstOrDefault(item => item.Track.Id == previousTrackId.Value)?.Track;
+        if (previousTrack is not null)
+            PlayTrack(previousTrack, isCrossfade: false);
     }
 
     private void FullStop()
@@ -4364,16 +4469,96 @@ public partial class MusicView : UserControl
 
     // ─── Upcoming bar ─────────────────────────────────────────────────────────
 
+    private void OnTrackPlaybackMenuClicked(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { DataContext: TrackDisplayItem item } button)
+            return;
+
+        EnsureLoadedPlaylistQueue(item.Track.Id);
+        var trackId = item.Track.Id;
+        var index = _playbackQueue.TrackIds.ToList().IndexOf(trackId);
+        var currentIndex = _playbackQueue.CurrentTrackId is int currentTrackId
+            ? _playbackQueue.TrackIds.ToList().IndexOf(currentTrackId)
+            : -1;
+        var isCurrent = _playbackQueue.CurrentTrackId == trackId;
+        var menu = new ContextMenu
+        {
+            ItemsSource = new object[]
+            {
+                CreateTrackPlaybackMenuItem("Play next", !isCurrent && index != currentIndex + 1,
+                    () => ApplyTrackQueueMutation(() => _playbackQueue.MoveNext(trackId))),
+                CreateTrackPlaybackMenuItem("Move up", !isCurrent && index > 0 && index - 1 != currentIndex,
+                    () => ApplyTrackQueueMutation(() => _playbackQueue.Move(trackId, -1))),
+                CreateTrackPlaybackMenuItem("Move down", !isCurrent && index >= 0
+                    && index < _playbackQueue.TrackIds.Count - 1 && index + 1 != currentIndex,
+                    () => ApplyTrackQueueMutation(() => _playbackQueue.Move(trackId, 1))),
+                new Separator(),
+                CreateTrackPlaybackMenuItem("Remove from playback list", !isCurrent,
+                    () => ApplyTrackQueueMutation(() => _playbackQueue.Remove(trackId)))
+            }
+        };
+        button.ContextMenu = menu;
+        menu.Open(button);
+        e.Handled = true;
+    }
+
+    private void EnsureLoadedPlaylistQueue(int preferredTrackId)
+    {
+        if (_playbackQueue.IsInitialized && _playbackQueue.TrackIds.Contains(preferredTrackId))
+            return;
+
+        var trackIds = _filteredItems.Select(item => item.Track.Id).ToList();
+        if (trackIds.Count == 0)
+            return;
+        var currentTrackId = _engine.ActiveTrackId >= 0
+            ? _engine.ActiveTrackId
+            : preferredTrackId;
+        _playbackQueue.Reset(trackIds, currentTrackId);
+        _loadedPlaylistSourceTrackIds = trackIds;
+    }
+
+    private static MenuItem CreateTrackPlaybackMenuItem(string header, bool isEnabled, Action action)
+    {
+        var item = new MenuItem { Header = header, IsEnabled = isEnabled };
+        item.Click += (_, _) => action();
+        return item;
+    }
+
+    private void ApplyTrackQueueMutation(Func<bool> mutation)
+    {
+        if (!mutation())
+            return;
+
+        ApplyPlaybackQueueToLoadedPlaylist();
+        RefreshVisibleItemsSource((FileList.SelectedItem as TrackDisplayItem)?.Track.Id);
+        UpdatePlaylistSummary();
+        RefreshNextTrackPreview();
+        RestartVisibleThumbnailLoad();
+        PersistPlayerSession();
+    }
+
+    private void ApplyPlaybackQueueToLoadedPlaylist()
+    {
+        if (!_playbackQueue.IsInitialized || _filteredItems.Count == 0)
+            return;
+
+        var itemById = _filteredItems.ToDictionary(item => item.Track.Id);
+        _filteredItems = _playbackQueue.TrackIds
+            .Where(itemById.ContainsKey)
+            .Select(trackId => itemById[trackId])
+            .ToList();
+    }
+
     private void UpdateUpcomingBar()
     {
-        if (_nextTrackIndex < 0 || _nextTrackIndex >= _filteredItems.Count)
+        if (_nextTrackIndex < 0 || _nextTrackIndex >= _allItems.Count)
         {
             UpcomingBar.IsVisible = false;
             return;
         }
 
         UpcomingBar.IsVisible = true;
-        UpcomingTrackText.Text = _filteredItems[_nextTrackIndex].Track.Title;
+        UpcomingTrackText.Text = _allItems[_nextTrackIndex].Track.Title;
         CrossfadeStatusText.Text = string.Empty;
     }
 

@@ -194,6 +194,18 @@
         <Style Selector="Border.track-card:pointerover">
             <Setter Property="Background" Value="#32262B22"/>
         </Style>
+        <Style Selector="Button.queue-menu">
+            <Setter Property="Opacity" Value="0"/>
+            <Setter Property="Background" Value="#B0121518"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+        <Style Selector="Border.track-card:pointerover Button.queue-menu">
+            <Setter Property="Opacity" Value="0.82"/>
+        </Style>
+        <Style Selector="Button.queue-menu:pointerover">
+            <Setter Property="Opacity" Value="1"/>
+            <Setter Property="Background" Value="#D42A3036"/>
+        </Style>
         <Style Selector="Border.selection-accent">
             <Setter Property="Background" Value="Transparent"/>
         </Style>
@@ -581,7 +593,7 @@
 
                                 </Grid>
                                 <StackPanel Width="76"
-                                            Margin="0,0,8,0"
+                                            Margin="0,0,38,0"
                                             Spacing="2"
                                             HorizontalAlignment="Right"
                                             VerticalAlignment="Center"
@@ -601,6 +613,16 @@
                                                HorizontalAlignment="Center"
                                                TextAlignment="Center"/>
                                 </StackPanel>
+                                <Button Classes="icon queue-menu"
+                                        IsVisible="{Binding IsStandardMode}"
+                                        Width="28" Height="28"
+                                        Margin="0,0,8,0"
+                                        HorizontalAlignment="Right"
+                                        VerticalAlignment="Center"
+                                        Click="OnTrackPlaybackMenuClicked"
+                                        ToolTip.Tip="Playback options">
+                                    <TextBlock Text="⋯" FontSize="18" Margin="0,-5,0,0"/>
+                                </Button>
                                 </Panel>
                             </Border>
                             <Border Grid.Row="0"
