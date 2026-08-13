@@ -2,6 +2,7 @@ using System;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Net;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -102,6 +103,9 @@ public sealed class CloudLibrarySyncService
         request.Headers.Add("X-Resona-Device-Id", identity.DeviceId);
         request.Headers.Authorization = new AuthenticationHeaderValue("Device", identity.DeviceKey);
         using var response = await _httpClient.SendAsync(request, cancellationToken);
+        if (response.StatusCode == HttpStatusCode.RequestEntityTooLarge)
+            throw new InvalidOperationException(
+                "The public library snapshot exceeds the server upload limit. Increase the reverse proxy request-body limit.");
         response.EnsureSuccessStatusCode();
     }
 

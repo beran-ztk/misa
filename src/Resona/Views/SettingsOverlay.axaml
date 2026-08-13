@@ -317,11 +317,13 @@
                                    FontSize="10.5" Opacity="0.52" TextWrapping="Wrap"/>
                     </StackPanel>
 
-                    <StackPanel Orientation="Horizontal" Spacing="10">
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
                         <Button Classes="settings-action" Content="Save profile" Click="OnSaveProfileClicked"/>
-                        <TextBlock x:Name="ProfileStatusText" IsVisible="False" FontSize="10.5" Opacity="0.68"
-                                   VerticalAlignment="Center" TextWrapping="Wrap"/>
-                    </StackPanel>
+                        <TextBlock x:Name="ProfileStatusText" Grid.Column="1"
+                                   IsVisible="False" FontSize="10.5" Opacity="0.68"
+                                   VerticalAlignment="Center"
+                                   TextWrapping="Wrap"/>
+                    </Grid>
                 </StackPanel>
             </ScrollViewer>
 

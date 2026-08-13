@@ -11,11 +11,13 @@ var connectionString = builder.Configuration.GetConnectionString("Postgres")
     ?? throw new InvalidOperationException("ConnectionStrings:Postgres is required.");
 builder.Services.AddSingleton(_ => new NpgsqlDataSourceBuilder(connectionString).Build());
 builder.Services.AddSingleton<CloudSnapshotRepository>();
+builder.Services.AddSingleton<CloudPublicLibraryRepository>();
 
 var app = builder.Build();
 await CloudSchema.InitializeAsync(app.Services.GetRequiredService<NpgsqlDataSource>());
 
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
+app.MapPublicLibraryEndpoints();
 
 app.MapPut("/api/v1/library-snapshot", async (
     HttpRequest request,

@@ -60,6 +60,51 @@ public sealed class CloudServerContractTests
             context.Request.Headers, out _, out _));
     }
 
+    [Theory]
+    [InlineData(null, null, null, "", 0, PublicLibraryQuery.DefaultLimit)]
+    [InlineData("  trance  ", 25, 10, "trance", 25, 10)]
+    public void Public_library_query_normalizes_valid_parameters(
+        string? search,
+        int? offset,
+        int? limit,
+        string expectedSearch,
+        int expectedOffset,
+        int expectedLimit)
+    {
+        var success = PublicLibraryQuery.TryCreate(search, offset, limit, out var query, out var error);
+
+        Assert.True(success, error);
+        Assert.Equal(expectedSearch, query.Search);
+        Assert.Equal(expectedOffset, query.Offset);
+        Assert.Equal(expectedLimit, query.Limit);
+    }
+
+    [Theory]
+    [InlineData(-1, 10)]
+    [InlineData(0, 0)]
+    [InlineData(0, PublicLibraryQuery.MaximumLimit + 1)]
+    public void Public_library_query_rejects_invalid_pagination(int offset, int limit)
+    {
+        var success = PublicLibraryQuery.TryCreate(null, offset, limit, out _, out var error);
+
+        Assert.False(success);
+        Assert.False(string.IsNullOrWhiteSpace(error));
+    }
+
+    [Fact]
+    public void Public_library_query_rejects_overlong_search_text()
+    {
+        var success = PublicLibraryQuery.TryCreate(
+            new string('x', PublicLibraryQuery.MaximumSearchLength + 1),
+            null,
+            null,
+            out _,
+            out var error);
+
+        Assert.False(success);
+        Assert.Contains("Search", error);
+    }
+
     private static CloudLibrarySnapshot Snapshot() => new(
         1,
         new CloudPublicProfile(
