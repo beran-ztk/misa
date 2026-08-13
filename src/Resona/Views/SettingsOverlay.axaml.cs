@@ -43,12 +43,16 @@ public partial class SettingsOverlay : UserControl
     private double _previewBass;
     private double _previewTreble;
     private bool _loadingDiscordPresenceSettings;
+    private CloudIdentity? _cloudIdentity;
+    private byte[]? _pendingProfileImage;
+    private Bitmap? _profileAvatarBitmap;
 
     public event Action<string>? ToastRequested;
     public event Action? LibraryMetadataChanged;
     public event Action? ExportRequested;
     public event Action<AppearanceSettings>? AppearanceChanged;
     public event Action? DiscordPresenceChanged;
+    public event Action? CloudProfileChanged;
 
     public SettingsOverlay()
     {
@@ -61,6 +65,9 @@ public partial class SettingsOverlay : UserControl
             RebuildGenreVocabularyRows();
             UpdateSummary();
         };
+        ProfileUsernameBox.TextChanged += (_, _) => RefreshProfileAvatar();
+        ProfileBioBox.TextChanged += (_, _) =>
+            ProfileBioCountText.Text = $"{ProfileBioBox.Text?.Length ?? 0}/{CloudIdentityStore.MaximumBioLength}";
         AppUpdateService.Current.StateChanged += OnAppUpdateStateChanged;
         RefreshUpdatePage(AppUpdateService.Current.State);
     }
@@ -85,6 +92,7 @@ public partial class SettingsOverlay : UserControl
         FirefoxCookiesToggle.IsChecked = Values.UseFirefoxCookiesForYtDlp;
         RefreshLinuxDependencies();
         RebuildBackupDirectoryRows();
+        LoadCloudProfile();
         SelectPage(ParseSettingsPage(appSettings.LastSettingsPage));
         IsVisible = true;
     }
@@ -588,6 +596,7 @@ public partial class SettingsOverlay : UserControl
             "runtime" => SettingsPage.Runtime,
             "updates" => SettingsPage.Updates,
             "discord" => SettingsPage.Discord,
+            "profile" => SettingsPage.Profile,
             "tags" => SettingsPage.Tags,
             "tag_rules" => SettingsPage.TagRules,
             _ => SettingsPage.GenreVocabulary
@@ -612,6 +621,7 @@ public partial class SettingsOverlay : UserControl
         var isUpdatesPage = page == SettingsPage.Updates;
         var isAppearancePage = page == SettingsPage.Appearance;
         var isDiscordPage = page == SettingsPage.Discord;
+        var isProfilePage = page == SettingsPage.Profile;
         GenreVocabularyPage.IsVisible = isGenreVocabularyPage;
         LibraryPage.IsVisible = isLibraryPage;
         HealthPage.IsVisible = isHealthPage;
@@ -622,6 +632,7 @@ public partial class SettingsOverlay : UserControl
         UpdatesPage.IsVisible = isUpdatesPage;
         AppearancePage.IsVisible = isAppearancePage;
         DiscordPage.IsVisible = isDiscordPage;
+        ProfilePage.IsVisible = isProfilePage;
         TagsPage.IsVisible = page == SettingsPage.Tags;
         TagRulesPage.IsVisible = page == SettingsPage.TagRules;
         GenreVocabularyNavButton.IsChecked = isGenreVocabularyPage;
@@ -634,6 +645,7 @@ public partial class SettingsOverlay : UserControl
         UpdatesNavButton.IsChecked = isUpdatesPage;
         AppearanceNavButton.IsChecked = isAppearancePage;
         DiscordNavButton.IsChecked = isDiscordPage;
+        ProfileNavButton.IsChecked = isProfilePage;
         TagsNavButton.IsChecked = page == SettingsPage.Tags;
         TagRulesNavButton.IsChecked = page == SettingsPage.TagRules;
 
@@ -648,6 +660,7 @@ public partial class SettingsOverlay : UserControl
             SettingsPage.Updates => "Updates",
             SettingsPage.Appearance => "Appearance",
             SettingsPage.Discord => "Discord presence",
+            SettingsPage.Profile => "Profile",
             SettingsPage.Tags => "Tags",
             SettingsPage.TagRules => "Tag rules",
             _ => "Genres"
@@ -670,6 +683,8 @@ public partial class SettingsOverlay : UserControl
                             ? "Tune artwork, blur, color and audio-reactive visuals. Changes are applied live."
                             : isDiscordPage
                                 ? "Customize the text Discord displays while Resona is playing music."
+                            : isProfilePage
+                                ? "Create the local identity that will represent you when cloud synchronization is enabled."
                             : isUpdatesPage
                                 ? "Check, download and install application releases from GitHub."
                             : page == SettingsPage.Tags
@@ -683,6 +698,128 @@ public partial class SettingsOverlay : UserControl
         if (page == SettingsPage.Tags) ReloadTagManagement();
         if (page == SettingsPage.TagRules) ReloadTagRules();
         if (isUpdatesPage) RefreshUpdatePage(AppUpdateService.Current.State);
+    }
+
+    private void LoadCloudProfile()
+    {
+        try
+        {
+            _cloudIdentity = CloudIdentityStore.Current.GetOrCreate();
+            _pendingProfileImage = _cloudIdentity.ProfileImage?.ToArray();
+            ProfileUsernameBox.Text = _cloudIdentity.Username;
+            ProfileBioBox.Text = _cloudIdentity.Bio;
+            ProfileUserIdText.Text = _cloudIdentity.UserId;
+            ProfileBioCountText.Text = $"{_cloudIdentity.Bio.Length}/{CloudIdentityStore.MaximumBioLength}";
+            ProfileStatusText.IsVisible = false;
+            RefreshProfileAvatar();
+        }
+        catch (Exception exception)
+        {
+            ProfileStatusText.Text = $"Could not load profile: {exception.Message}";
+            ProfileStatusText.IsVisible = true;
+        }
+    }
+
+    private async void OnChooseProfileImageClicked(object? sender, RoutedEventArgs e)
+    {
+        var topLevel = TopLevel.GetTopLevel(this);
+        if (topLevel is null)
+            return;
+
+        var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "Choose profile picture",
+            AllowMultiple = false,
+            FileTypeFilter = [FilePickerFileTypes.ImageAll]
+        });
+        if (files.Count == 0)
+            return;
+
+        try
+        {
+            await using var input = await files[0].OpenReadAsync();
+            if (input.CanSeek && input.Length > 12 * 1024 * 1024)
+                throw new InvalidDataException("Profile picture must be smaller than 12 MB.");
+            using var buffer = new MemoryStream();
+            await input.CopyToAsync(buffer);
+            _pendingProfileImage = ThumbnailService.CreateSquareArtwork(buffer.ToArray(), 256, 88)
+                ?? throw new InvalidDataException("The selected image could not be decoded.");
+            RefreshProfileAvatar();
+            ProfileStatusText.Text = "Picture selected · save the profile to keep it.";
+            ProfileStatusText.IsVisible = true;
+        }
+        catch (Exception exception)
+        {
+            ProfileStatusText.Text = $"Could not use picture: {exception.Message}";
+            ProfileStatusText.IsVisible = true;
+        }
+    }
+
+    private void OnRemoveProfileImageClicked(object? sender, RoutedEventArgs e)
+    {
+        _pendingProfileImage = null;
+        RefreshProfileAvatar();
+        ProfileStatusText.Text = "Picture removed · save the profile to apply.";
+        ProfileStatusText.IsVisible = true;
+    }
+
+    private void RefreshProfileAvatar()
+    {
+        _profileAvatarBitmap?.Dispose();
+        _profileAvatarBitmap = null;
+        if (_pendingProfileImage is { Length: > 0 })
+        {
+            using var stream = new MemoryStream(_pendingProfileImage, writable: false);
+            _profileAvatarBitmap = new Bitmap(stream);
+        }
+
+        ProfileAvatarImage.Source = _profileAvatarBitmap;
+        ProfileAvatarImage.IsVisible = _profileAvatarBitmap is not null;
+        ProfileAvatarPlaceholderText.IsVisible = _profileAvatarBitmap is null;
+        var username = ProfileUsernameBox.Text?.Trim();
+        ProfileAvatarPlaceholderText.Text = string.IsNullOrWhiteSpace(username)
+            ? "?"
+            : username[..1].ToUpperInvariant();
+        RemoveProfileImageButton.IsVisible = _pendingProfileImage is { Length: > 0 };
+    }
+
+    private void OnSaveProfileClicked(object? sender, RoutedEventArgs e)
+    {
+        var username = ProfileUsernameBox.Text?.Trim() ?? string.Empty;
+        if (username.Length == 0)
+        {
+            ProfileStatusText.Text = "Choose a username before saving.";
+            ProfileStatusText.IsVisible = true;
+            return;
+        }
+
+        try
+        {
+            _cloudIdentity = CloudIdentityStore.Current.UpdateProfile(
+                username,
+                ProfileBioBox.Text,
+                _pendingProfileImage);
+            ProfileUsernameBox.Text = _cloudIdentity.Username;
+            ProfileBioBox.Text = _cloudIdentity.Bio;
+            ProfileStatusText.Text = "Profile saved locally.";
+            ProfileStatusText.IsVisible = true;
+            CloudProfileChanged?.Invoke();
+            ToastRequested?.Invoke("Cloud profile saved locally");
+        }
+        catch (Exception exception)
+        {
+            ProfileStatusText.Text = $"Could not save profile: {exception.Message}";
+            ProfileStatusText.IsVisible = true;
+        }
+    }
+
+    private async void OnCopyProfileUserIdClicked(object? sender, RoutedEventArgs e)
+    {
+        var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
+        if (clipboard is null || _cloudIdentity is null)
+            return;
+        await clipboard.SetTextAsync(_cloudIdentity.UserId);
+        ToastRequested?.Invoke("User ID copied");
     }
 
     private async void OnCheckForUpdatesClicked(object? sender, RoutedEventArgs e)
@@ -1675,6 +1812,7 @@ public partial class SettingsOverlay : UserControl
         "genres" => SettingsPage.GenreVocabulary,
         "tags" => SettingsPage.Tags,
         "discord" => SettingsPage.Discord,
+        "profile" => SettingsPage.Profile,
         _ => SettingsPage.Library
     };
 
@@ -1690,6 +1828,7 @@ public partial class SettingsOverlay : UserControl
         SettingsPage.GenreVocabulary => "genres",
         SettingsPage.Tags => "tags",
         SettingsPage.Discord => "discord",
+        SettingsPage.Profile => "profile",
         _ => "library"
     };
 
@@ -1997,5 +2136,5 @@ public partial class SettingsOverlay : UserControl
         public override string ToString() => Name;
     }
 
-    private enum SettingsPage { GenreVocabulary, Library, Health, AnalysisServer, Appearance, Discord, Backup, Export, Runtime, Updates, Tags, TagRules }
+    private enum SettingsPage { GenreVocabulary, Library, Health, AnalysisServer, Appearance, Discord, Profile, Backup, Export, Runtime, Updates, Tags, TagRules }
 }

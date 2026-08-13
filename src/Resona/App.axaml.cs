@@ -18,6 +18,15 @@ public partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
+        try
+        {
+            CloudIdentityStore.Current.GetOrCreate();
+        }
+        catch (System.Exception exception)
+        {
+            WorkflowLog.Error("cloud", "Could not initialize the local cloud identity.", exception);
+        }
+
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             var mainWindow = new MainWindow();
