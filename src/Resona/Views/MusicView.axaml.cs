@@ -301,6 +301,7 @@ public partial class MusicView : UserControl
         ChannelDownloadService.Current.Initialize();
         ChannelMetadataService.Current.Initialize();
         ChannelHubBackgroundService.Current.Initialize();
+        CloudLibrarySyncService.Current.Initialize();
         _restoringPlayerSession = false;
         UpdateShuffleButton();
         PersistPlayerSession();

@@ -305,6 +305,18 @@
                         </Grid>
                     </Border>
 
+                    <StackPanel Spacing="7">
+                        <TextBlock Text="CLOUD SERVER" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                            <TextBox x:Name="CloudServerUrlBox" Classes="settings-input"
+                                     Watermark="https://cloud.example.com"/>
+                            <Button Grid.Column="1" Classes="settings-action" Content="Synchronize now"
+                                    Click="OnSynchronizeCloudClicked"/>
+                        </Grid>
+                        <TextBlock Text="When configured, Resona replaces your complete public cloud library atomically at startup and on manual sync."
+                                   FontSize="10.5" Opacity="0.52" TextWrapping="Wrap"/>
+                    </StackPanel>
+
                     <StackPanel Orientation="Horizontal" Spacing="10">
                         <Button Classes="settings-action" Content="Save profile" Click="OnSaveProfileClicked"/>
                         <TextBlock x:Name="ProfileStatusText" IsVisible="False" FontSize="10.5" Opacity="0.68"

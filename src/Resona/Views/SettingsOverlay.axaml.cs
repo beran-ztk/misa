@@ -68,6 +68,8 @@ public partial class SettingsOverlay : UserControl
         ProfileUsernameBox.TextChanged += (_, _) => RefreshProfileAvatar();
         ProfileBioBox.TextChanged += (_, _) =>
             ProfileBioCountText.Text = $"{ProfileBioBox.Text?.Length ?? 0}/{CloudIdentityStore.MaximumBioLength}";
+        CloudLibrarySyncService.Current.StatusChanged += status =>
+            Dispatcher.UIThread.Post(() => RefreshCloudSyncStatus(status));
         AppUpdateService.Current.StateChanged += OnAppUpdateStateChanged;
         RefreshUpdatePage(AppUpdateService.Current.State);
     }
@@ -92,6 +94,7 @@ public partial class SettingsOverlay : UserControl
         FirefoxCookiesToggle.IsChecked = Values.UseFirefoxCookiesForYtDlp;
         RefreshLinuxDependencies();
         RebuildBackupDirectoryRows();
+        CloudServerUrlBox.Text = appSettings.CloudServerUrl;
         LoadCloudProfile();
         SelectPage(ParseSettingsPage(appSettings.LastSettingsPage));
         IsVisible = true;
@@ -820,6 +823,19 @@ public partial class SettingsOverlay : UserControl
             return;
         await clipboard.SetTextAsync(_cloudIdentity.UserId);
         ToastRequested?.Invoke("User ID copied");
+    }
+
+    private async void OnSynchronizeCloudClicked(object? sender, RoutedEventArgs e)
+    {
+        AppSettingsStore.SaveCloudServerUrl(CloudServerUrlBox.Text);
+        var status = await CloudLibrarySyncService.Current.SynchronizeAsync();
+        RefreshCloudSyncStatus(status);
+    }
+
+    private void RefreshCloudSyncStatus(CloudSyncStatus status)
+    {
+        ProfileStatusText.Text = status.Message;
+        ProfileStatusText.IsVisible = true;
     }
 
     private async void OnCheckForUpdatesClicked(object? sender, RoutedEventArgs e)

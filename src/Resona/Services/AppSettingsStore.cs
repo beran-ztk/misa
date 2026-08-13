@@ -96,6 +96,13 @@ public static class AppSettingsStore
         Save(settings);
     }
 
+    public static void SaveCloudServerUrl(string? serverUrl)
+    {
+        var settings = Load();
+        settings.CloudServerUrl = string.IsNullOrWhiteSpace(serverUrl) ? null : serverUrl.Trim();
+        Save(settings);
+    }
+
     public static void SavePlayerSession(PlayerSessionSettings playerSession)
     {
         var settings = Load();
@@ -133,6 +140,7 @@ public sealed class AppSettings
     public string? DiscordStateText { get; set; }
     public string? DiscordLargeImageText { get; set; }
     public bool DiscordRichPresenceEnabled { get; set; } = true;
+    public string? CloudServerUrl { get; set; }
 }
 
 public sealed class PlayerSessionSettings
