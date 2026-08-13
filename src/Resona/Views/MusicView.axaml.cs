@@ -126,7 +126,6 @@ public partial class MusicView : UserControl
     private string? _activeFilterPresetName;
     private bool _isCreatingPreset;
     private bool _manualRatingFilter;
-    private bool _unratedOnly;
     private string _visibilityFilterMode = "All";
     private PlayerSessionSettings _restoredPlayerSession = new();
     private Dictionary<int, int>? _pendingRestoredQueueOrder;
@@ -978,9 +977,7 @@ public partial class MusicView : UserControl
                 groups,
                 SearchBox.Text);
 
-            if (_unratedOnly)
-                filtered = filtered.Where(track => track.RatingId is null).ToList();
-            else if (_manualRatingFilter && selRatingIds.Count == 0)
+            if (_manualRatingFilter && selRatingIds.Count == 0)
                 filtered.Clear();
         }
 
@@ -990,17 +987,9 @@ public partial class MusicView : UserControl
             .ToList();
 
         if (ShowDeclinedCheckBox.IsChecked != true
-            && ShowNeedsReviewCheckBox.IsChecked != true && !_unratedOnly)
+            && ShowNeedsReviewCheckBox.IsChecked != true)
             _filteredItems = _filteredItems
                 .Where(item => !item.NeedsReview)
-                .ToList();
-
-        if (ShowDeclinedCheckBox.IsChecked != true
-            && ShowNeedsReviewCheckBox.IsChecked != true
-            && !_unratedOnly
-            && ShowNeedsAnalysisCheckBox.IsChecked != true)
-            _filteredItems = _filteredItems
-                .Where(item => !item.NeedsAnalysis)
                 .ToList();
 
         ApplyLibrarySort();
@@ -1278,9 +1267,7 @@ public partial class MusicView : UserControl
                 track.Title.Contains(term, StringComparison.OrdinalIgnoreCase)
                 || track.OriginalTitle.Contains(term, StringComparison.OrdinalIgnoreCase));
 
-        if (_unratedOnly)
-            query = query.Where(track => track.RatingId is null);
-        else if (_manualRatingFilter && selectedRatingIds.Count == 0)
+        if (_manualRatingFilter && selectedRatingIds.Count == 0)
             return [];
         else if (selectedRatingIds.Count > 0)
             query = query.Where(track => track.RatingId is int ratingId && selectedRatingIds.Contains(ratingId));
@@ -1289,22 +1276,13 @@ public partial class MusicView : UserControl
         if (selectedVisibility.Count > 0)
             query = query.Where(track => selectedVisibility.Contains(track.IsPublic));
 
-        if (!_unratedOnly && ShowNeedsReviewCheckBox.IsChecked != true)
+        if (ShowNeedsReviewCheckBox.IsChecked != true)
         {
             var reviewTrackIds = _allItems
                 .Where(item => item.NeedsReview)
                 .Select(item => item.Track.Id)
                 .ToHashSet();
             query = query.Where(track => !reviewTrackIds.Contains(track.Id));
-        }
-
-        if (!_unratedOnly && ShowNeedsAnalysisCheckBox.IsChecked != true)
-        {
-            var unanalyzedTrackIds = _allItems
-                .Where(item => item.NeedsAnalysis)
-                .Select(item => item.Track.Id)
-                .ToHashSet();
-            query = query.Where(track => !unanalyzedTrackIds.Contains(track.Id));
         }
 
         if (selectedGenreIds.Count > 0)
@@ -1365,21 +1343,12 @@ public partial class MusicView : UserControl
         e.Handled = true;
     }
 
-    private void OnUnratedPressed(object? sender, PointerPressedEventArgs e)
-    {
-        if (!_unratedOnly)
-            SetRatingFilterMode(manual: false, unratedOnly: true);
-        e.Handled = true;
-    }
-
     private void SetRatingFilterMode(
         bool manual,
         IEnumerable<string>? selectedRatings = null,
-        bool applyFilter = true,
-        bool unratedOnly = false)
+        bool applyFilter = true)
     {
-        _unratedOnly = unratedOnly;
-        _manualRatingFilter = manual && !unratedOnly;
+        _manualRatingFilter = manual;
         _selectedRatingNames.Clear();
         if (manual && selectedRatings is not null)
         {
@@ -1400,22 +1369,16 @@ public partial class MusicView : UserControl
     {
         RatingButtonsPanel.IsVisible = _manualRatingFilter;
         if (RatingModeIndicator.RenderTransform is TranslateTransform transform)
-            transform.X = _unratedOnly ? 138 : _manualRatingFilter ? 69 : 0;
-        RatingModeIndicator.CornerRadius = _unratedOnly
+            transform.X = _manualRatingFilter ? 69 : 0;
+        RatingModeIndicator.CornerRadius = _manualRatingFilter
             ? new CornerRadius(0, 5, 5, 0)
-            : _manualRatingFilter
-                ? new CornerRadius(0)
-                : new CornerRadius(5, 0, 0, 5);
-        AllRatingsText.Foreground = ThemeResources.Brush(_manualRatingFilter || _unratedOnly
+            : new CornerRadius(5, 0, 0, 5);
+        AllRatingsText.Foreground = ThemeResources.Brush(_manualRatingFilter
             ? "Theme.Brush.TextMuted"
             : "Theme.Brush.TextStrong");
         ManualRatingsText.Foreground = ThemeResources.Brush(_manualRatingFilter
             ? "Theme.Brush.TextStrong"
             : "Theme.Brush.TextMuted");
-        UnratedText.Foreground = ThemeResources.Brush(_unratedOnly
-            ? "Theme.Brush.TextStrong"
-            : "Theme.Brush.TextMuted");
-
         RatingButtonsPanel.Children.Clear();
         if (!_manualRatingFilter)
             return;
@@ -1561,12 +1524,6 @@ public partial class MusicView : UserControl
         var declinedSelected = ShowDeclinedCheckBox.IsChecked == true;
         ShowDeclinedCheckBox.Background = declinedSelected ? Brush("#2EEE5C5C") : Brushes.Transparent;
         ShowDeclinedCheckBox.BorderBrush = Brushes.Transparent;
-
-        var analysisSelected = ShowNeedsAnalysisCheckBox.IsChecked == true;
-        ShowNeedsAnalysisCheckBox.Background = analysisSelected ? Brush("#18EE5C5C") : Brushes.Transparent;
-        ShowNeedsAnalysisCheckBox.BorderBrush = analysisSelected
-            ? Brush("#78EE5C5C")
-            : ThemeResources.Brush("Theme.Brush.BorderSubtle");
 
         RefreshLibraryModeSelector();
     }
@@ -1834,7 +1791,9 @@ public partial class MusicView : UserControl
         if (_isCreatingPreset)
             PresetRows.Children.Add(CreateNewPresetRow());
 
-        foreach (var preset in _filterPresets.OrderBy(preset => preset.Name, StringComparer.OrdinalIgnoreCase))
+        foreach (var preset in _filterPresets
+                     .OrderBy(preset => string.Equals(preset.Name, "Default", StringComparison.OrdinalIgnoreCase) ? 0 : 1)
+                     .ThenBy(preset => preset.Name, StringComparer.OrdinalIgnoreCase))
             PresetRows.Children.Add(CreatePresetCard(preset));
 
         AddPresetButton.IsEnabled = !_isCreatingPreset;
@@ -2069,7 +2028,6 @@ public partial class MusicView : UserControl
         SetVisibilityFilterMode("All", applyFilter: false);
         ShowNeedsReviewCheckBox.IsChecked = false;
         ShowDeclinedCheckBox.IsChecked = false;
-        ShowNeedsAnalysisCheckBox.IsChecked = false;
         _filterGroups.Clear();
         RebuildFilterConditionsPanel();
         ClearConditionBuilder();
@@ -2098,10 +2056,10 @@ public partial class MusicView : UserControl
             _manualRatingFilter ? SortedNames(_selectedRatingNames) : [],
             groups,
             ShowNeedsReviewCheckBox.IsChecked == true,
-            ShowNeedsAnalysisCheckBox.IsChecked == true,
+            false,
             _manualRatingFilter,
             _visibilityFilterMode,
-            _unratedOnly);
+            false);
     }
 
     private void ApplyFilterPreset(PortableFilterPreset preset)
@@ -2112,12 +2070,10 @@ public partial class MusicView : UserControl
             SetRatingFilterMode(
                 preset.ManualRatings || preset.Ratings.Count > 0,
                 preset.Ratings,
-                applyFilter: false,
-                unratedOnly: preset.UnratedOnly);
+                applyFilter: false);
             SetVisibilityFilterMode(preset.Visibility, applyFilter: false);
             ShowDeclinedCheckBox.IsChecked = false;
             ShowNeedsReviewCheckBox.IsChecked = preset.ShowNeedsReview;
-            ShowNeedsAnalysisCheckBox.IsChecked = preset.ShowNeedsAnalysis;
 
             _filterGroups.Clear();
 
@@ -2159,9 +2115,7 @@ public partial class MusicView : UserControl
     private static string PresetSummary(PortableFilterPreset preset)
     {
         var parts = new List<string>();
-        if (preset.UnratedOnly)
-            parts.Add("unrated only");
-        else if (preset.ManualRatings && preset.Ratings.Count == 0)
+        if (preset.ManualRatings && preset.Ratings.Count == 0)
             parts.Add("0 ratings");
         else if (preset.Ratings.Count > 0)
             parts.Add($"{preset.Ratings.Count} rating{(preset.Ratings.Count == 1 ? "" : "s")}");
@@ -2171,9 +2125,6 @@ public partial class MusicView : UserControl
             parts.Add(preset.Visibility.ToLowerInvariant());
         if (preset.ShowNeedsReview)
             parts.Add("shows review tracks");
-        if (preset.ShowNeedsAnalysis)
-            parts.Add("shows unanalyzed tracks");
-
         return parts.Count > 0 ? string.Join(" · ", parts) : "Empty preset";
     }
 
@@ -2304,13 +2255,11 @@ public partial class MusicView : UserControl
     {
         _conditionNegate = exclude;
         if (ConditionModeIndicator.RenderTransform is TranslateTransform transform)
-            transform.X = exclude ? 59 : 0;
+            transform.X = exclude ? 52 : 0;
         ConditionModeIndicator.Background = exclude
             ? ThemeResources.Brush("Theme.Brush.DangerSurface")
             : ThemeResources.Brush("Theme.Brush.Success");
-        ConditionModeIndicator.CornerRadius = exclude
-            ? new CornerRadius(0, 5, 5, 0)
-            : new CornerRadius(5, 0, 0, 5);
+        ConditionModeIndicator.CornerRadius = new CornerRadius(1);
         IncludeConditionText.Foreground = ThemeResources.Brush(exclude
             ? "Theme.Brush.TextMuted"
             : "Theme.Brush.TextStrong");

@@ -36,6 +36,8 @@ public static class FilterPresetStore
                         .Distinct(StringComparer.OrdinalIgnoreCase)
                         .ToList()
                 })
+                .OrderBy(preset => string.Equals(preset.Name, "Default", StringComparison.OrdinalIgnoreCase) ? 0 : 1)
+                .ThenBy(preset => preset.Name, StringComparer.OrdinalIgnoreCase)
                 .ToList();
         }
         catch
@@ -52,7 +54,8 @@ public static class FilterPresetStore
 
         var sortedPresets = presets
             .Where(preset => !string.IsNullOrWhiteSpace(preset.Name))
-            .OrderBy(preset => preset.Name, StringComparer.OrdinalIgnoreCase)
+            .OrderBy(preset => string.Equals(preset.Name, "Default", StringComparison.OrdinalIgnoreCase) ? 0 : 1)
+            .ThenBy(preset => preset.Name, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
         using var stream = File.Create(Values.FilterPresetsPath);
