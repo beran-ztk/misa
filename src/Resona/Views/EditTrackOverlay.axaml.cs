@@ -1019,7 +1019,7 @@ public partial class EditTrackOverlay : UserControl
             Text = EmotionalCharacterCatalog.Display(value.Label),
             FontSize = isPrimary ? 11 : 10.5,
             FontWeight = isPrimary ? FontWeight.SemiBold : FontWeight.Normal,
-            Foreground = ThemeResources.Brush("Theme.Brush.TextStrong"),
+            Foreground = new SolidColorBrush(Color.Parse(EmotionalCharacterCatalog.Color(value.Label))),
             TextWrapping = TextWrapping.Wrap
         };
         ToolTip.SetTip(label, MirexExplanation(value.Label));

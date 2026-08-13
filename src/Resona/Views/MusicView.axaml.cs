@@ -2587,6 +2587,7 @@ public partial class MusicView : UserControl
                     Text = definition.Name,
                     FontSize = 10.5,
                     FontWeight = FontWeight.SemiBold,
+                    Foreground = Brush(definition.AccentColor),
                     VerticalAlignment = VerticalAlignment.Center
                 };
                 ToolTip.SetTip(name, definition.Adjectives);
