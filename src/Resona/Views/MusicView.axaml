@@ -361,7 +361,6 @@
                             <Border Width="44"
                                     Padding="3"
                                     Background="#F218191C"
-                                    BorderThickness="0"
                                     CornerRadius="6">
                                 <StackPanel Spacing="1">
                                     <Button x:Name="LibraryModeOption" Tag="Library"
@@ -377,7 +376,8 @@
                                             ToolTip.Tip="Needs review"
                                             Background="Transparent" BorderThickness="0"
                                             Width="38" Height="36" Padding="0">
-                                        <Image Source="{SvgImage /Assets/review.svg}" Width="16" Height="16"/>
+                                        <Image Source="{SvgImage /Assets/review.svg}" Width="16" Height="16"
+                                               Margin="3,0,0,0"/>
                                     </Button>
                                     <Button x:Name="DeclinedModeOption" Tag="Declined"
                                             Click="OnLibraryModeOptionClicked"
@@ -401,7 +401,8 @@
                         <TextBlock x:Name="LibraryModeIcon" Text="≡" FontSize="20"
                                    HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-4,0,0"/>
                         <Image x:Name="ReviewModeIcon" IsVisible="False"
-                               Source="{SvgImage /Assets/review.svg}" Width="18" Height="18"/>
+                               Source="{SvgImage /Assets/review.svg}" Width="18" Height="18"
+                               Margin="3,0,0,0"/>
                         <Image x:Name="DeclinedModeIcon" IsVisible="False"
                                Source="{SvgImage /Assets/close.svg}" Width="16" Height="16"/>
                         <Image x:Name="QuickEditModeIcon" IsVisible="False"
@@ -1383,7 +1384,8 @@
                                     </StackPanel>
                                 </Border>
 
-                                <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+                                <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                                              Padding="0,0,14,0">
                                     <StackPanel x:Name="FilterBuilderPanel" Spacing="12"/>
                                 </ScrollViewer>
                         </DockPanel>

@@ -359,8 +359,6 @@ public partial class EditTrackOverlay : UserControl
         CopyYouTubeUrlButton.IsEnabled = !string.IsNullOrWhiteSpace(track.CanonicalUrl);
         CopyChannelUrlButton.IsEnabled = !string.IsNullOrWhiteSpace(track.ChannelUrl);
         CopyOriginalTitleButton.IsEnabled = !string.IsNullOrWhiteSpace(originalTitle);
-        RestoreOriginalTitleButton.IsEnabled = !string.IsNullOrWhiteSpace(originalTitle)
-            && !string.Equals(TitleBox.Text?.Trim(), originalTitle, StringComparison.Ordinal);
         OpenChannelButton.IsEnabled = track.ChannelId is not null;
         ToolTip.SetTip(TitleDisplayText, TitleBox.Text);
         ToolTip.SetTip(OriginalTitleDisplayText, originalTitle);
@@ -398,22 +396,6 @@ public partial class EditTrackOverlay : UserControl
 
     private async void OnCopyOriginalTitleClicked(object? sender, RoutedEventArgs e) =>
         await CopyUrlAsync(_track is null ? null : OriginalTitle(_track), "Original title");
-
-    private void OnRestoreOriginalTitleClicked(object? sender, RoutedEventArgs e)
-    {
-        if (_track is null)
-            return;
-
-        var originalTitle = OriginalTitle(_track);
-        if (string.IsNullOrWhiteSpace(originalTitle)
-            || string.Equals(TitleBox.Text?.Trim(), originalTitle, StringComparison.Ordinal))
-            return;
-
-        TitleBox.Text = originalTitle;
-        AutoSaveChanges();
-        UpdateInformationDisplay(_track);
-        ToastRequested?.Invoke("Original title restored");
-    }
 
     private static string OriginalTitle(MusicTrack track) =>
         string.IsNullOrWhiteSpace(track.OriginalTitle) ? track.Title : track.OriginalTitle;

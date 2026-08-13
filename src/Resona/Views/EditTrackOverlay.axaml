@@ -245,17 +245,11 @@
                                     <TextBlock x:Name="OriginalTitleDisplayText" Grid.Row="1" Grid.Column="1" FontSize="10.5"
                                                Foreground="{DynamicResource Theme.Brush.TextSecondary}"
                                                VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-                                    <Button x:Name="CopyOriginalTitleButton" Grid.Row="1" Grid.Column="2"
+                                    <Button x:Name="CopyOriginalTitleButton" Grid.Row="1" Grid.Column="3"
                                             Click="OnCopyOriginalTitleClicked" ToolTip.Tip="Copy original title"
                                             Width="26" Height="24" Padding="0" Background="Transparent" BorderThickness="0" Opacity="0.76">
                                         <Image Source="{SvgImage /Assets/copy.svg}" Width="13" Height="13" />
                                     </Button>
-                                    <Button x:Name="RestoreOriginalTitleButton" Grid.Row="1" Grid.Column="3"
-                                            Click="OnRestoreOriginalTitleClicked" ToolTip.Tip="Use original title"
-                                            Width="26" Height="24" Padding="0" Background="Transparent" BorderThickness="0" Opacity="0.76">
-                                        <TextBlock Text="↺" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                    </Button>
-
                                     <TextBlock Grid.Row="2" Text="Channel" FontSize="10.5" Opacity="0.58" VerticalAlignment="Center" />
                                     <TextBlock x:Name="ChannelDisplayText" Grid.Row="2" Grid.Column="1" FontSize="11.5"
                                                VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />

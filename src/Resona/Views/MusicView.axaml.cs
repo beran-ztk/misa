@@ -1555,7 +1555,7 @@ public partial class MusicView : UserControl
     private void RefreshCompletionFilterVisuals()
     {
         var reviewSelected = ShowNeedsReviewCheckBox.IsChecked == true;
-        ShowNeedsReviewCheckBox.Background = reviewSelected ? Brush("#343E6591") : Brushes.Transparent;
+        ShowNeedsReviewCheckBox.Background = reviewSelected ? Brush("#24FFD27A") : Brushes.Transparent;
         ShowNeedsReviewCheckBox.BorderBrush = Brushes.Transparent;
 
         var declinedSelected = ShowDeclinedCheckBox.IsChecked == true;
@@ -1628,16 +1628,22 @@ public partial class MusicView : UserControl
         DeclinedModeIcon.IsVisible = mode == LibraryMode.Declined;
         QuickEditModeIcon.IsVisible = mode == LibraryMode.QuickEdit;
 
-        LibraryModeOption.Background = Brushes.Transparent;
-        ReviewModeOption.Background = Brushes.Transparent;
-        DeclinedModeOption.Background = Brushes.Transparent;
-        QuickEditModeOption.Background = Brushes.Transparent;
+        LibraryModeOption.Background = mode == LibraryMode.Library ? Brush("#18FFFFFF") : Brushes.Transparent;
+        ReviewModeOption.Background = mode == LibraryMode.Review ? Brush("#24FFD27A") : Brushes.Transparent;
+        DeclinedModeOption.Background = mode == LibraryMode.Declined ? Brush("#24EE5C5C") : Brushes.Transparent;
+        QuickEditModeOption.Background = mode == LibraryMode.QuickEdit ? Brush("#343E6591") : Brushes.Transparent;
         LibraryModeOption.Opacity = mode == LibraryMode.Library ? 1 : 0.52;
         ReviewModeOption.Opacity = mode == LibraryMode.Review ? 1 : 0.52;
         DeclinedModeOption.Opacity = mode == LibraryMode.Declined ? 1 : 0.52;
         QuickEditModeOption.Opacity = mode == LibraryMode.QuickEdit ? 1 : 0.52;
 
-        LibraryModeButton.Background = mode == LibraryMode.Library ? Brushes.Transparent : Brush("#343E6591");
+        LibraryModeButton.Background = mode switch
+        {
+            LibraryMode.Review => Brush("#24FFD27A"),
+            LibraryMode.Declined => Brush("#24EE5C5C"),
+            LibraryMode.QuickEdit => Brush("#343E6591"),
+            _ => Brushes.Transparent
+        };
         LibraryModeButton.Opacity = mode == LibraryMode.Library ? 0.86 : 1;
         ToolTip.SetTip(LibraryModeButton, mode switch
         {
@@ -2210,8 +2216,8 @@ public partial class MusicView : UserControl
         FilterBuilderPanel.Children.Clear();
         FilterBuilderPanel.Children.Add(_conditionGenreSection.Control);
         FilterBuilderPanel.Children.Add(_conditionTagSection.Control);
-        FilterBuilderPanel.Children.Add(_conditionLanguageSection.Control);
         FilterBuilderPanel.Children.Add(_conditionEmotionalSection.Control);
+        FilterBuilderPanel.Children.Add(_conditionLanguageSection.Control);
         SetConditionMode(exclude: false);
         UpdateCurrentSetSummary();
     }
@@ -2506,58 +2512,95 @@ public partial class MusicView : UserControl
 
     private FilterSection CreateEmotionalCharacterFilterSection(Dictionary<string, EmotionalRangeState> ranges)
     {
-        var rows = new StackPanel { Spacing = 7 };
+        var rows = new StackPanel { Spacing = 10 };
+
+        void NormalizeRanges()
+        {
+            var remainingMinimum = 100d;
+            foreach (var definition in EmotionalCharacterCatalog.All)
+            {
+                var state = ranges[definition.Adjectives];
+                var maximum = Math.Clamp(state.MaximumPercent ?? 100d, 0d, 100d);
+                var minimum = Math.Min(
+                    Math.Clamp(state.MinimumPercent ?? 0d, 0d, 100d),
+                    Math.Min(maximum, remainingMinimum));
+                state.MinimumPercent = minimum <= 0.001 ? null : minimum;
+                state.MaximumPercent = maximum >= 99.999 ? null : Math.Max(minimum, maximum);
+                remainingMinimum -= minimum;
+            }
+        }
 
         void Rebuild()
         {
+            NormalizeRanges();
             rows.Children.Clear();
             foreach (var definition in EmotionalCharacterCatalog.All)
             {
                 var state = ranges[definition.Adjectives];
-                var minimum = CreatePercentageBox("Min", state.MinimumPercent);
-                var maximum = CreatePercentageBox("Max", state.MaximumPercent);
-
-                void UpdateState()
+                var minimumText = new TextBlock
                 {
-                    state.MinimumPercent = ParsePercentage(minimum.Text);
-                    state.MaximumPercent = ParsePercentage(maximum.Text);
-                    UpdateCurrentSetSummary();
-                }
-
-                minimum.TextChanged += (_, _) => UpdateState();
-                maximum.TextChanged += (_, _) => UpdateState();
-
-                var label = new StackPanel
-                {
-                    Spacing = 1,
-                    Children =
-                    {
-                        new TextBlock { Text = definition.Name, FontSize = 10.5, FontWeight = FontWeight.SemiBold },
-                        new TextBlock
-                        {
-                            Text = definition.Adjectives,
-                            FontSize = 8.5,
-                            Opacity = 0.48,
-                            TextTrimming = TextTrimming.CharacterEllipsis
-                        }
-                    }
-                };
-                var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,68,12,68"), ColumnSpacing = 5 };
-                row.Children.Add(label);
-                Grid.SetColumn(minimum, 1);
-                row.Children.Add(minimum);
-                var separator = new TextBlock
-                {
-                    Text = "–",
-                    Opacity = 0.45,
-                    HorizontalAlignment = HorizontalAlignment.Center,
+                    FontSize = 9,
+                    Opacity = 0.58,
                     VerticalAlignment = VerticalAlignment.Center
                 };
-                Grid.SetColumn(separator, 2);
-                row.Children.Add(separator);
-                Grid.SetColumn(maximum, 3);
-                row.Children.Add(maximum);
-                rows.Children.Add(row);
+                var maximumText = new TextBlock
+                {
+                    FontSize = 9,
+                    Opacity = 0.58,
+                    VerticalAlignment = VerticalAlignment.Center
+                };
+                var slider = new RangeSliderControl();
+                slider.SetValues(state.MinimumPercent ?? 0d, state.MaximumPercent ?? 100d);
+
+                void UpdateLabels(double minimum, double maximum)
+                {
+                    minimumText.Text = $"Min {minimum:0.#}%";
+                    maximumText.Text = $"Max {maximum:0.#}%";
+                }
+
+                slider.ValuesChanged += (minimum, maximum) =>
+                {
+                    var otherMinimums = ranges
+                        .Where(pair => !string.Equals(pair.Key, definition.Adjectives, StringComparison.OrdinalIgnoreCase))
+                        .Sum(pair => pair.Value.MinimumPercent ?? 0d);
+                    var requestedMinimum = Math.Min(minimum, Math.Max(0d, 100d - otherMinimums));
+                    var allowedMinimum = Math.Floor(requestedMinimum * 10d) / 10d;
+                    var allowedMaximum = Math.Round(Math.Max(allowedMinimum, maximum), 1);
+                    if (Math.Abs(allowedMinimum - minimum) > 0.001
+                        || Math.Abs(allowedMaximum - maximum) > 0.001)
+                        slider.SetValues(allowedMinimum, allowedMaximum);
+
+                    state.MinimumPercent = allowedMinimum <= 0.001 ? null : allowedMinimum;
+                    state.MaximumPercent = allowedMaximum >= 99.999 ? null : allowedMaximum;
+                    UpdateLabels(allowedMinimum, allowedMaximum);
+                    UpdateCurrentSetSummary();
+                };
+                UpdateLabels(slider.LowerValue, slider.UpperValue);
+
+                var header = new Grid
+                {
+                    ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto"),
+                    ColumnSpacing = 12
+                };
+                var name = new TextBlock
+                {
+                    Text = definition.Name,
+                    FontSize = 10.5,
+                    FontWeight = FontWeight.SemiBold,
+                    VerticalAlignment = VerticalAlignment.Center
+                };
+                ToolTip.SetTip(name, definition.Adjectives);
+                header.Children.Add(name);
+                Grid.SetColumn(minimumText, 1);
+                header.Children.Add(minimumText);
+                Grid.SetColumn(maximumText, 2);
+                header.Children.Add(maximumText);
+
+                rows.Children.Add(new StackPanel
+                {
+                    Spacing = 2,
+                    Children = { header, slider }
+                });
             }
         }
 
@@ -2565,50 +2608,19 @@ public partial class MusicView : UserControl
         var border = new Border
         {
             Background = Brushes.Transparent,
-            BorderBrush = ThemeResources.Brush("Theme.Brush.BorderSubtle"),
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(7),
-            Padding = new Thickness(11, 10),
+            BorderThickness = new Thickness(0),
+            Padding = new Thickness(0),
             Child = new StackPanel
             {
                 Spacing = 9,
                 Children =
                 {
-                    new TextBlock { Text = "Emotional character (MIREX)", FontSize = 12, FontWeight = FontWeight.SemiBold },
-                    new TextBlock
-                    {
-                        Text = "Set a minimum, maximum or both. Values are percentages.",
-                        FontSize = 9.5,
-                        Opacity = 0.5
-                    },
+                    new TextBlock { Text = "Emotional character", FontSize = 12, FontWeight = FontWeight.SemiBold },
                     rows
                 }
             }
         };
         return new FilterSection(border, Rebuild);
-    }
-
-    private static TextBox CreatePercentageBox(string watermark, double? value)
-    {
-        var box = new TextBox
-        {
-            Watermark = $"{watermark} %",
-            Text = value?.ToString("0.#", CultureInfo.CurrentCulture) ?? string.Empty,
-            Height = 27,
-            FontSize = 10,
-            VerticalContentAlignment = VerticalAlignment.Center,
-            HorizontalContentAlignment = HorizontalAlignment.Right
-        };
-        box.Classes.Add("compact-search");
-        return box;
-    }
-
-    private static double? ParsePercentage(string? text)
-    {
-        if (!double.TryParse(text, NumberStyles.Float, CultureInfo.CurrentCulture, out var value)
-            && !double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out value))
-            return null;
-        return Math.Clamp(value, 0d, 100d);
     }
 
     private static string FormatEmotionalRange(string signalKey, EmotionalRangeState state)
@@ -2831,10 +2843,8 @@ public partial class MusicView : UserControl
         var border = new Border
         {
             Background = Brushes.Transparent,
-            BorderBrush = ThemeResources.Brush("Theme.Brush.BorderSubtle"),
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(7),
-            Padding = new Thickness(11, 10),
+            BorderThickness = new Thickness(0),
+            Padding = new Thickness(0),
             Child = new StackPanel
             {
                 Spacing = 10,
@@ -2920,10 +2930,8 @@ public partial class MusicView : UserControl
         var border = new Border
         {
             Background = Brushes.Transparent,
-            BorderBrush = ThemeResources.Brush("Theme.Brush.BorderSubtle"),
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(7),
-            Padding = new Thickness(11, 10),
+            BorderThickness = new Thickness(0),
+            Padding = new Thickness(0),
             Child = panel
         };
         return new FilterSection(border, RebuildTags);
@@ -2931,14 +2939,50 @@ public partial class MusicView : UserControl
 
     private FilterSection CreateLanguageFilterSection(MultiSelectFilterControl languageCtrl)
     {
-        var panel = new StackPanel { Spacing = 9 };
-        panel.Children.Add(new TextBlock
+        var expanded = false;
+        var contentPanel = new StackPanel { Spacing = 7, IsVisible = false };
+        var chevron = new TextBlock
+        {
+            Text = "›",
+            FontSize = 18,
+            Width = 14,
+            Margin = new Thickness(0, -2, 0, 0),
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            RenderTransformOrigin = RelativePoint.Center,
+            RenderTransform = new RotateTransform(0)
+        };
+        var selectedSummary = new TextBlock
+        {
+            FontSize = 9.5,
+            Opacity = 0.5,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        var headerGrid = new Grid
+        {
+            ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto"),
+            ColumnSpacing = 6
+        };
+        headerGrid.Children.Add(chevron);
+        var title = new TextBlock
         {
             Text = "Languages",
             FontSize = 12,
             FontWeight = FontWeight.SemiBold,
             VerticalAlignment = VerticalAlignment.Center
-        });
+        };
+        Grid.SetColumn(title, 1);
+        headerGrid.Children.Add(title);
+        Grid.SetColumn(selectedSummary, 2);
+        headerGrid.Children.Add(selectedSummary);
+        var header = new Border
+        {
+            Background = Brushes.Transparent,
+            Cursor = new Cursor(StandardCursorType.Hand),
+            Padding = new Thickness(0, 3),
+            Child = headerGrid
+        };
+        var panel = new StackPanel { Spacing = 7, Children = { header, contentPanel } };
 
         void Toggle(TrackLanguage language)
         {
@@ -2951,8 +2995,9 @@ public partial class MusicView : UserControl
 
         void RebuildLanguages()
         {
-            while (panel.Children.Count > 1)
-                panel.Children.RemoveAt(1);
+            contentPanel.Children.Clear();
+            var selectedCount = languageCtrl.SelectedItems.Count;
+            selectedSummary.Text = selectedCount == 0 ? string.Empty : $"{selectedCount} selected";
 
             var languages = TrackLanguageCatalog.All
                 .OrderBy(language => language.Name, StringComparer.OrdinalIgnoreCase)
@@ -2986,17 +3031,23 @@ public partial class MusicView : UserControl
                 rows.Children.Add(row);
             }
 
-            panel.Children.Add(rows);
+            contentPanel.Children.Add(rows);
         }
+
+        header.PointerPressed += (_, e) =>
+        {
+            expanded = !expanded;
+            contentPanel.IsVisible = expanded;
+            ((RotateTransform)chevron.RenderTransform!).Angle = expanded ? 90 : 0;
+            e.Handled = true;
+        };
 
         RebuildLanguages();
         var border = new Border
         {
             Background = Brushes.Transparent,
-            BorderBrush = ThemeResources.Brush("Theme.Brush.BorderSubtle"),
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(7),
-            Padding = new Thickness(11, 10),
+            BorderThickness = new Thickness(0),
+            Padding = new Thickness(0),
             Child = panel
         };
         return new FilterSection(border, RebuildLanguages);
