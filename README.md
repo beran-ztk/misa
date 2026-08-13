@@ -36,6 +36,12 @@ Combine ratings, genres, tags, languages, visibility, and emotional character ra
 
 ![Filter](docs/images/filter.png)
 
+### One URL, an entire playlist
+
+Paste a YouTube playlist, mix, or radio-playlist URL and Resona expands it into individual tracks before anything is downloaded. Review the full list, remove anything you do not want, and then send the selection into the normal import queue—all from a single link.
+
+![Importing a complete playlist from one URL](docs/images/playlist-import.png)
+
 ### Discover through channels
 
 Follow channels already connected to your library and keep an eye on new uploads.
