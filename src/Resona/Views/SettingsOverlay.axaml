@@ -430,8 +430,16 @@
                             <TextBlock Text="SERVER ADDRESS" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
                             <TextBox x:Name="MusicAnalysisServerUrlBox"
                                      Classes="settings-input"
-                                     Watermark="http://server:8000"/>
+                                     Watermark="https://analyzer.example.com"/>
                             <TextBlock Text="Use an absolute HTTP or HTTPS address. A trailing slash is optional."
+                                       FontSize="10.5" Opacity="0.56" TextWrapping="Wrap"/>
+                            <TextBlock Text="API KEY" Margin="0,5,0,0"
+                                       FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
+                            <TextBox x:Name="MusicAnalysisApiKeyBox"
+                                     Classes="settings-input"
+                                     PasswordChar="●"
+                                     Watermark="Optional access key"/>
+                            <TextBlock Text="Stored only in this device's local settings and sent through HTTPS."
                                        FontSize="10.5" Opacity="0.56" TextWrapping="Wrap"/>
                             <StackPanel Orientation="Horizontal" Spacing="9">
                                 <Button Classes="settings-action"

@@ -82,6 +82,7 @@ public partial class SettingsOverlay : UserControl
         TracksPathBox.Text = locations.TracksDirectory;
         LibraryLocationStatusText.IsVisible = false;
         MusicAnalysisServerUrlBox.Text = appSettings.MusicAnalysisServerUrl;
+        MusicAnalysisApiKeyBox.Text = appSettings.MusicAnalysisApiKey;
         _loadingDiscordPresenceSettings = true;
         DiscordPresenceToggle.IsChecked = appSettings.DiscordRichPresenceEnabled;
         UpdateDiscordPresenceToggleVisual();
@@ -876,11 +877,11 @@ public partial class SettingsOverlay : UserControl
             return;
         }
 
-        AppSettingsStore.SaveMusicAnalysisServerUrl(serverUrl);
+        AppSettingsStore.SaveMusicAnalysisServerConfiguration(serverUrl, MusicAnalysisApiKeyBox.Text);
         BackgroundAnalysisService.Current.NotifyServerConfigurationChanged();
         MusicAnalysisServerUrlBox.Text = serverUrl;
-        ShowAnalysisServerStatus("Address saved", isSuccess: true);
-        ToastRequested?.Invoke("Analysis server address saved.");
+        ShowAnalysisServerStatus("Configuration saved", isSuccess: true);
+        ToastRequested?.Invoke("Analysis server configuration saved.");
     }
 
     private async void OnTestAnalysisServerClicked(object? sender, RoutedEventArgs e)
@@ -895,11 +896,13 @@ public partial class SettingsOverlay : UserControl
         ShowAnalysisServerStatus("Testing connection…", isSuccess: null);
         try
         {
-            using var service = new TrackAnalysisService(serverUrlProvider: () => serverUrl);
+            using var service = new TrackAnalysisService(
+                serverUrlProvider: () => serverUrl,
+                apiKeyProvider: () => MusicAnalysisApiKeyBox.Text);
             var isHealthy = await service.CheckHealthAsync();
             if (isHealthy)
             {
-                AppSettingsStore.SaveMusicAnalysisServerUrl(serverUrl);
+                AppSettingsStore.SaveMusicAnalysisServerConfiguration(serverUrl, MusicAnalysisApiKeyBox.Text);
                 MusicAnalysisServerUrlBox.Text = serverUrl;
                 BackgroundAnalysisService.Current.NotifyServerConfigurationChanged();
             }

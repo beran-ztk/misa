@@ -56,10 +56,11 @@ public static class AppSettingsStore
         Save(settings);
     }
 
-    public static void SaveMusicAnalysisServerUrl(string serverUrl)
+    public static void SaveMusicAnalysisServerConfiguration(string serverUrl, string? apiKey)
     {
         var settings = Load();
         settings.MusicAnalysisServerUrl = serverUrl;
+        settings.MusicAnalysisApiKey = string.IsNullOrWhiteSpace(apiKey) ? null : apiKey.Trim();
         Save(settings);
     }
 
@@ -132,6 +133,7 @@ public sealed class AppSettings
 {
     public float Volume { get; set; } = 1f;
     public string MusicAnalysisServerUrl { get; set; } = string.Empty;
+    public string? MusicAnalysisApiKey { get; set; }
     public int ChannelDownloadMaxDurationMinutes { get; set; } = 12;
     public AppearanceSettings Appearance { get; set; } = new();
     public string LastSettingsPage { get; set; } = "library";

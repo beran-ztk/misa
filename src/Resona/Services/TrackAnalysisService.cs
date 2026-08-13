@@ -13,6 +13,7 @@ namespace Resona.Services;
 
 public sealed class TrackAnalysisService : IDisposable
 {
+    private const string ApiKeyHeaderName = "X-Api-Key";
     private static readonly TimeSpan DefaultAnalysisTimeout = TimeSpan.FromMinutes(5);
     private static readonly TimeSpan DefaultHealthTimeout = TimeSpan.FromSeconds(10);
     private static readonly HashSet<string> SupportedExtensions = new(StringComparer.OrdinalIgnoreCase)
@@ -30,6 +31,7 @@ public sealed class TrackAnalysisService : IDisposable
 
     private readonly HttpClient _httpClient;
     private readonly Func<string?> _serverUrlProvider;
+    private readonly Func<string?> _apiKeyProvider;
     private readonly TimeSpan _analysisTimeout;
     private readonly TimeSpan _healthTimeout;
     private readonly bool _ownsHttpClient;
@@ -37,11 +39,13 @@ public sealed class TrackAnalysisService : IDisposable
     public TrackAnalysisService(
         HttpClient? httpClient = null,
         Func<string?>? serverUrlProvider = null,
+        Func<string?>? apiKeyProvider = null,
         TimeSpan? analysisTimeout = null,
         TimeSpan? healthTimeout = null)
     {
         _httpClient = httpClient ?? new HttpClient();
         _serverUrlProvider = serverUrlProvider ?? (() => AppSettingsStore.Load().MusicAnalysisServerUrl);
+        _apiKeyProvider = apiKeyProvider ?? (() => AppSettingsStore.Load().MusicAnalysisApiKey);
         _analysisTimeout = analysisTimeout ?? DefaultAnalysisTimeout;
         _healthTimeout = healthTimeout ?? DefaultHealthTimeout;
         _ownsHttpClient = httpClient is null;
@@ -59,7 +63,9 @@ public sealed class TrackAnalysisService : IDisposable
 
         try
         {
-            using var response = await _httpClient.GetAsync(endpoint, linked.Token);
+            using var request = new HttpRequestMessage(HttpMethod.Get, endpoint);
+            AddApiKey(request);
+            using var response = await _httpClient.SendAsync(request, linked.Token);
             if (!response.IsSuccessStatusCode)
                 throw ServerError(response);
 
@@ -102,7 +108,9 @@ public sealed class TrackAnalysisService : IDisposable
             fileContent.Headers.ContentType = new MediaTypeHeaderValue(ContentTypeFor(file.Extension));
             form.Add(fileContent, "file", file.Name);
 
-            using var response = await _httpClient.PostAsync(endpoint, form, linked.Token);
+            using var request = new HttpRequestMessage(HttpMethod.Post, endpoint) { Content = form };
+            AddApiKey(request);
+            using var response = await _httpClient.SendAsync(request, linked.Token);
             if (!response.IsSuccessStatusCode)
                 throw ServerError(response);
 
@@ -230,6 +238,13 @@ public sealed class TrackAnalysisService : IDisposable
                 "The analysis server address is missing or invalid.");
 
         return new Uri($"{normalizedUrl}/{relativePath}", UriKind.Absolute);
+    }
+
+    private void AddApiKey(HttpRequestMessage request)
+    {
+        var apiKey = _apiKeyProvider()?.Trim();
+        if (!string.IsNullOrEmpty(apiKey))
+            request.Headers.TryAddWithoutValidation(ApiKeyHeaderName, apiKey);
     }
 
     private static FileInfo ValidateTrackFile(string trackPath)
