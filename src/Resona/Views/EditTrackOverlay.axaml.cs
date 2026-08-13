@@ -47,7 +47,6 @@ public partial class EditTrackOverlay : UserControl
     private bool _areDetectedGenresExpanded;
     private bool _areFrequentManualGenresExpanded;
     private bool _areAllGenresExpanded;
-    private bool _areEmotionalCharactersExpanded;
     private bool _areLanguagesExpanded;
     private bool _updatingLanguageSelection;
     private int? _modelGenreFilterId;
@@ -159,7 +158,6 @@ public partial class EditTrackOverlay : UserControl
         _areDetectedGenresExpanded = false;
         _areFrequentManualGenresExpanded = false;
         _areAllGenresExpanded = false;
-        _areEmotionalCharactersExpanded = false;
         _areLanguagesExpanded = false;
         LoadLookups();
         _updatingBackdropFocus = true;
@@ -990,22 +988,13 @@ public partial class EditTrackOverlay : UserControl
             .ToList() ?? [];
 
         EmotionalCharacterSection.IsVisible = values.Count > 0;
-        MirexPrimaryPanel.Children.Clear();
-        MirexAdditionalPanel.Children.Clear();
-        MirexAdditionalPanel.IsVisible = _areEmotionalCharactersExpanded;
-        MirexSeeMoreText.IsVisible = values.Count > 1 && !_areEmotionalCharactersExpanded;
-        if (EmotionalCharacterChevron.RenderTransform is RotateTransform chevronTransform)
-            chevronTransform.Angle = _areEmotionalCharactersExpanded ? 90 : 0;
+        EmotionalCharacterResultsPanel.Children.Clear();
 
-        if (values.Count == 0)
-            return;
-
-        MirexPrimaryPanel.Children.Add(CreateMirexCharacterRow(values[0], isPrimary: true));
-        foreach (var value in values.Skip(1))
-            MirexAdditionalPanel.Children.Add(CreateMirexCharacterRow(value, isPrimary: false));
+        foreach (var value in values)
+            EmotionalCharacterResultsPanel.Children.Add(CreateMirexCharacterRow(value));
     }
 
-    private static Control CreateMirexCharacterRow(ExperimentalAnalysisValue value, bool isPrimary)
+    private static Control CreateMirexCharacterRow(ExperimentalAnalysisValue value)
     {
         var brush = AnalysisColorScale.MoodModel(value.Score);
         var panel = new Grid
@@ -1017,8 +1006,8 @@ public partial class EditTrackOverlay : UserControl
         var label = new TextBlock
         {
             Text = EmotionalCharacterCatalog.Display(value.Label),
-            FontSize = isPrimary ? 11 : 10.5,
-            FontWeight = isPrimary ? FontWeight.SemiBold : FontWeight.Normal,
+            FontSize = 10.5,
+            FontWeight = FontWeight.SemiBold,
             Foreground = new SolidColorBrush(Color.Parse(EmotionalCharacterCatalog.Color(value.Label))),
             TextWrapping = TextWrapping.Wrap
         };
@@ -1048,20 +1037,6 @@ public partial class EditTrackOverlay : UserControl
         Grid.SetRow(scoreBar, 1);
         panel.Children.Add(scoreBar);
         return panel;
-    }
-
-    private void OnEmotionalCharacterHeaderPressed(object? sender, PointerPressedEventArgs e)
-    {
-        if (!EmotionalCharacterSection.IsVisible)
-            return;
-
-        _areEmotionalCharactersExpanded = !_areEmotionalCharactersExpanded;
-        MirexAdditionalPanel.IsVisible = _areEmotionalCharactersExpanded;
-        MirexSeeMoreText.IsVisible = MirexAdditionalPanel.Children.Count > 0
-            && !_areEmotionalCharactersExpanded;
-        if (EmotionalCharacterChevron.RenderTransform is RotateTransform chevronTransform)
-            chevronTransform.Angle = _areEmotionalCharactersExpanded ? 90 : 0;
-        e.Handled = true;
     }
 
     private static string MirexExplanation(string label) => label switch
@@ -1148,7 +1123,7 @@ public partial class EditTrackOverlay : UserControl
             {
                 detail = new TextBlock
                 {
-                    Text = "no model detection",
+                    Text = "manually added",
                     FontSize = 10.5,
                     Foreground = ThemeResources.Brush("Theme.Brush.TextStrong"),
                     VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
