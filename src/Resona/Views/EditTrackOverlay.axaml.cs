@@ -975,9 +975,12 @@ public partial class EditTrackOverlay : UserControl
         BpmInsightText.Text = tempoInsight;
         LoudnessInsightText.Text = loudnessInsight;
         DynamicsInsightText.Text = dynamicsInsight;
-        ToolTip.SetTip(BpmMetricCard, tempoInsight);
-        ToolTip.SetTip(LoudnessMetricCard, loudnessInsight);
-        ToolTip.SetTip(DynamicsMetricCard, dynamicsInsight);
+        ToolTip.SetTip(BpmMetricCard,
+            $"Tempo measures the track's speed in beats per minute.\n\n{tempoInsight}");
+        ToolTip.SetTip(LoudnessMetricCard,
+            $"Loudness describes the track's average perceived volume.\n\n{loudnessInsight}");
+        ToolTip.SetTip(DynamicsMetricCard,
+            $"Dynamics describe the contrast between quiet and loud passages.\n\n{dynamicsInsight}");
     }
 
     private void ShowExperimentalAnalysis(MusicTrack track)
