@@ -2579,8 +2579,8 @@ public partial class MusicView : UserControl
 
                 var header = new Grid
                 {
-                    ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto"),
-                    ColumnSpacing = 12
+                    ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto,Auto"),
+                    ColumnSpacing = 9
                 };
                 var name = new TextBlock
                 {
@@ -2591,9 +2591,20 @@ public partial class MusicView : UserControl
                 };
                 ToolTip.SetTip(name, definition.Adjectives);
                 header.Children.Add(name);
-                Grid.SetColumn(minimumText, 1);
+                var adjectives = new TextBlock
+                {
+                    Text = definition.Adjectives,
+                    FontSize = 8.8,
+                    Opacity = 0.46,
+                    TextTrimming = TextTrimming.CharacterEllipsis,
+                    VerticalAlignment = VerticalAlignment.Center
+                };
+                ToolTip.SetTip(adjectives, definition.Adjectives);
+                Grid.SetColumn(adjectives, 1);
+                header.Children.Add(adjectives);
+                Grid.SetColumn(minimumText, 2);
                 header.Children.Add(minimumText);
-                Grid.SetColumn(maximumText, 2);
+                Grid.SetColumn(maximumText, 3);
                 header.Children.Add(maximumText);
 
                 rows.Children.Add(new StackPanel
