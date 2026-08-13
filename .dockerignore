@@ -2,6 +2,10 @@
 !src/
 !src/AnalysisServer/
 !src/AnalysisServer/**
+!src/Resona.Cloud.Server/
+!src/Resona.Cloud.Server/**
+!src/Resona.Core/
+!src/Resona.Core/**
 !models/
 !models/Essentia/
 !models/Essentia/**
