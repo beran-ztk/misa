@@ -1,24 +1,20 @@
 services:
-  analysis:
+  analyzer:
     build:
       context: ../..
       dockerfile: src/AnalysisServer/Dockerfile
-    image: resona-analysis:gpu
+    image: resona-analysis
     restart: unless-stopped
+    init: true
     ports:
-      - "${MUSIC_ANALYSIS_PORT:-8000}:8000"
+      - "127.0.0.1:${RESONA_ANALYZER_PORT:-5081}:8000"
     environment:
+      ANALYZER_HOST: 0.0.0.0
+      ANALYZER_PORT: 8000
       ANALYSIS_TIMEOUT_SECONDS: "${ANALYSIS_TIMEOUT_SECONDS:-1800}"
       MAX_CONCURRENT_ANALYSES: "${MAX_CONCURRENT_ANALYSES:-1}"
       MAX_UPLOAD_BYTES: "${MAX_UPLOAD_BYTES:-1073741824}"
       MUSIC_API_KEY: "${MUSIC_API_KEY:-}"
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
     shm_size: "1gb"
     tmpfs:
       - /tmp:size=2g,mode=1777

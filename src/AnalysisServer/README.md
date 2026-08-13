@@ -1,57 +1,29 @@
 # Resona Analysis Server
 
-GPU-capable FastAPI service for the desktop application's `POST /analyze` request.
-The analyzer always returns the MAEST output and all available additional model
-outputs; no experimental command-line or query parameter is required.
+This FastAPI service accepts an audio file at `POST /analyze` and returns the analysis data consumed by the Resona desktop app. `GET /health` verifies that the script and every required model file are present.
 
-## Local build and smoke test
-
-Run these commands from the repository root:
+The complete production stack is started by `deploy/cloud/compose.yaml`. The standalone compose file in this directory is useful for testing only the analyzer:
 
 ```powershell
-docker build -f src/AnalysisServer/Dockerfile -t resona-analysis:gpu .
-docker run --rm -p 8000:8000 resona-analysis:gpu
+Copy-Item src\AnalysisServer\.env.example src\AnalysisServer\.env
+docker compose --env-file src\AnalysisServer\.env -f src\AnalysisServer\compose.yaml up -d --build
+Invoke-RestMethod http://127.0.0.1:5081/health
 ```
 
-The service can run without a GPU for a functional smoke test. Verify it with:
+For a direct local start with the Python dependencies installed:
 
 ```powershell
-Invoke-RestMethod http://localhost:8000/health
-curl.exe -X POST -F "file=@C:\path\track.m4a" http://localhost:8000/analyze
+$env:RESONA_MODELS_ROOT = "C:\path\to\music\models\Essentia"
+python api.py
 ```
 
-## GPU server
+Configuration is read from environment variables:
 
-The Linux host needs a working NVIDIA driver, Docker Engine, Docker Compose, and
-the NVIDIA Container Toolkit. Copy the repository or an exported image to the
-server. From `src/AnalysisServer`, create `.env` from `.env.example`, then run:
+- `ANALYZER_HOST` and `ANALYZER_PORT` (defaults: `0.0.0.0:8000`)
+- `MAX_CONCURRENT_ANALYSES` (default: `1`)
+- `ANALYSIS_TIMEOUT_SECONDS` (default: `1800`)
+- `MAX_UPLOAD_BYTES` (default: 1 GiB)
+- `RESONA_MODELS_ROOT` and `RESONA_TEMP_DIRECTORY`
+- optional `MUSIC_API_KEY`, expected as the `X-Api-Key` header
 
-```bash
-docker compose -f compose.yaml up -d --build
-docker compose -f compose.yaml ps
-curl http://127.0.0.1:8000/health
-```
-
-The Compose definition assigns every visible GPU to the container. Keep
-`MAX_CONCURRENT_ANALYSES=1` initially: additional simultaneous TensorFlow jobs
-can consume GPU memory without increasing throughput. Increase it only after a
-measured test on the target GPU.
-
-To transfer a prebuilt image instead of the source tree:
-
-```powershell
-docker save resona-analysis:gpu -o src\AnalysisServer\resona-analysis-gpu.tar
-```
-
-On the Linux server:
-
-```bash
-docker load -i resona-analysis-gpu.tar
-docker compose -f compose.yaml up -d --no-build
-```
-
-Port `8000` must be allowed by the server firewall or cloud firewall for the
-desktop computer. The optional `MUSIC_API_KEY` is intentionally empty because
-the current desktop client does not send `X-Api-Key`; do not expose the service
-widely on the public internet without adding authentication or restricting the
-source IP in the firewall.
+Only the models currently used by Resona are executed: Discogs MAEST for genres and MusicNN MIREX for emotional character. BPM and EBU R128 values are calculated directly with Essentia.

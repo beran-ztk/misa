@@ -3,198 +3,176 @@ import json
 import sys
 from pathlib import Path
 
-import numpy as np
 import essentia.standard as es
+import numpy as np
 
 
 MAEST_MODEL_NAME = "discogs-maest-30s-pw-519l-2"
-MAEST_MODEL_FILE = "discogs-maest-30s-pw-519l-2.pb"
-MAEST_METADATA_FILE = "discogs-maest-30s-pw-519l-2.json"
-DEFAULT_MODEL_DIRECTORY = Path(__file__).resolve().parents[2] / "models" / "Essentia" / "DiscogsMAEST"
-EXCLUDED_HEAD_MODELS = {"mtg_" + "jamen" + "do_" + "mood" + "theme"}
+MAEST_MODEL_FILE = f"{MAEST_MODEL_NAME}.pb"
+MAEST_METADATA_FILE = f"{MAEST_MODEL_NAME}.json"
+MUSICNN_MODEL_NAME = "msd-musicnn-1"
+MIREX_MODEL_FILE = "moods_mirex-msd-musicnn-1.pb"
+MIREX_METADATA_FILE = "moods_mirex-msd-musicnn-1.json"
+SCRIPT_DIRECTORY = Path(__file__).resolve().parent
+CONTAINER_MODELS_ROOT = SCRIPT_DIRECTORY / "models" / "Essentia"
+REPOSITORY_MODELS_ROOT = SCRIPT_DIRECTORY.parent.parent / "models" / "Essentia"
+DEFAULT_MODELS_ROOT = (
+    CONTAINER_MODELS_ROOT if CONTAINER_MODELS_ROOT.is_dir() else REPOSITORY_MODELS_ROOT
+)
 
 
-def error(message):
-    print(json.dumps({"success": False, "error": message}, ensure_ascii=False, indent=2))
-    sys.exit(1)
+def error(message: str) -> None:
+    print(json.dumps({"success": False, "error": message}, ensure_ascii=False))
+    raise SystemExit(1)
 
 
-def read_metadata(path):
+def read_metadata(path: Path) -> dict:
     with path.open("r", encoding="utf-8") as file:
         return json.load(file)
 
 
-def output_name(metadata, purpose):
-    for output in metadata.get("schema", {}).get("outputs", []):
-        if output.get("output_purpose") == purpose:
-            return output["name"]
-    raise ValueError(f"Model '{metadata.get('name', 'unknown')}' has no {purpose} output")
+def schema_name(metadata: dict, section: str, purpose: str | None = None) -> str:
+    entries = metadata.get("schema", {}).get(section, [])
+    if purpose is not None:
+        entries = [entry for entry in entries if entry.get("output_purpose") == purpose]
+    if not entries or not entries[0].get("name"):
+        model = metadata.get("name", "unknown")
+        description = purpose or section
+        raise ValueError(f"Model '{model}' has no {description} tensor")
+    return entries[0]["name"]
 
 
-def input_name(metadata):
-    inputs = metadata.get("schema", {}).get("inputs", [])
-    if not inputs:
-        raise ValueError(f"Model '{metadata.get('name', 'unknown')}' has no input specification")
-    return inputs[0]["name"]
-
-
-def aggregate(values, labels, model_name):
+def aggregate_predictions(values, labels: list[str], model_name: str) -> list[dict]:
     scores = np.asarray(values)
     if scores.size == 0:
         raise ValueError(f"Model '{model_name}' returned no predictions")
+
     scores = scores.reshape(-1, len(labels)).mean(axis=0)
     if scores.size != len(labels):
         raise ValueError(
             f"Model '{model_name}' returned {scores.size} scores for {len(labels)} labels"
         )
+
     return [
         {"label": label, "score": float(score)}
         for label, score in zip(labels, scores)
     ]
 
 
-def analyze_maest(audio, model_directory, top_count):
-    metadata = read_metadata(model_directory / MAEST_METADATA_FILE)
+def analyze_genres(audio, models_root: Path, top_count: int) -> tuple[list[dict], list[int], int]:
+    directory = models_root / "DiscogsMAEST"
+    metadata = read_metadata(directory / MAEST_METADATA_FILE)
     labels = metadata["classes"]
     predictions = es.TensorflowPredictMAEST(
-        graphFilename=str(model_directory / MAEST_MODEL_FILE),
-        output="PartitionedCall/Identity_13"
+        graphFilename=str(directory / MAEST_MODEL_FILE),
+        output=schema_name(metadata, "outputs", "predictions"),
     )(audio)
+
     scores = np.asarray(predictions).reshape(-1, len(labels)).mean(axis=0)
-    top_indices = scores.argsort()[-min(top_count, len(scores)):][::-1]
-    return [
+    top_indices = scores.argsort()[-min(top_count, len(scores)) :][::-1]
+    values = [
         {"label": labels[int(index)], "score": float(scores[int(index)])}
         for index in top_indices
-    ], list(np.asarray(predictions).shape)
-
-
-def run_effnet_embeddings(audio, extractor_directory):
-    metadata = read_metadata(extractor_directory / "discogs-effnet-bs64-1.json")
-    predictions = es.TensorflowPredictEffnetDiscogs(
-        graphFilename=str(extractor_directory / "discogs-effnet-bs64-1.pb"),
-        output=output_name(metadata, "embeddings")
-    )(audio)
-    return np.asarray(predictions)
-
-
-def run_musicnn_embeddings(audio, extractor_directory):
-    metadata = read_metadata(extractor_directory / "msd-musicnn-1.json")
-    predictions = es.TensorflowPredictMusiCNN(
-        graphFilename=str(extractor_directory / "msd-musicnn-1.pb"),
-        output=output_name(metadata, "embeddings")
-    )(audio)
-    return np.asarray(predictions)
-
-
-def discover_heads(heads_directory):
-    if not heads_directory.exists():
-        return []
-    heads = []
-    for metadata_path in sorted(heads_directory.rglob("*.json")):
-        model_path = metadata_path.with_suffix(".pb")
-        if not model_path.exists():
-            continue
-        metadata = read_metadata(metadata_path)
-        if metadata.get("name", metadata_path.stem) in EXCLUDED_HEAD_MODELS:
-            continue
-        category = metadata_path.parent.relative_to(heads_directory).as_posix().replace("/", " / ")
-        heads.append((category, metadata_path, model_path, metadata))
-    return heads
-
-
-def run_heads(embeddings, heads_directory, family):
-    results = []
-    errors = []
-    for category, metadata_path, model_path, metadata in discover_heads(heads_directory):
-        model_name = metadata.get("name", metadata_path.stem)
-        try:
-            predictions = es.TensorflowPredict2D(
-                graphFilename=str(model_path),
-                input=input_name(metadata),
-                output=output_name(metadata, "predictions"),
-                patchSize=1,
-                patchHopSize=1
-            )(embeddings)
-            results.append({
-                "family": family,
-                "category": category,
-                "model": model_name,
-                "type": metadata.get("type", "classifier"),
-                "description": metadata.get("description", ""),
-                "values": aggregate(predictions, metadata["classes"], model_name)
-            })
-        except Exception as exception:
-            errors.append({"family": family, "model": model_name, "error": str(exception)})
-    return results, errors
-
-
-def experimental_analysis(audio, essentia_directory):
-    results = []
-    errors = []
-    families = [
-        ("discogs-effnet", essentia_directory / "DiscogsEffnet", "Extractor", "Heads", run_effnet_embeddings),
-        ("msd-musicnn", essentia_directory / "MusicNN", "Extractor", "Heads", run_musicnn_embeddings),
     ]
-
-    for family, root, extractor_name, heads_name, extractor in families:
-        heads_directory = root / heads_name
-        if not heads_directory.exists():
-            continue
-        try:
-            embeddings = extractor(audio, root / extractor_name)
-            family_results, family_errors = run_heads(embeddings, heads_directory, family)
-            results.extend(family_results)
-            errors.extend(family_errors)
-        except Exception as exception:
-            errors.append({"family": family, "model": "extractor", "error": str(exception)})
-
-    return results, errors
+    return values, list(np.asarray(predictions).shape), len(labels)
 
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("track_path", help="Path to the audio file inside the container")
-    parser.add_argument("--top", type=int, default=20, help="Number of MAEST genre predictions to return")
-    parser.add_argument("--model-directory", type=Path, default=DEFAULT_MODEL_DIRECTORY)
-    args = parser.parse_args()
+def analyze_mirex(audio, models_root: Path) -> dict:
+    extractor_directory = models_root / "MusicNN" / "Extractor"
+    extractor_metadata = read_metadata(extractor_directory / f"{MUSICNN_MODEL_NAME}.json")
+    embeddings = es.TensorflowPredictMusiCNN(
+        graphFilename=str(extractor_directory / f"{MUSICNN_MODEL_NAME}.pb"),
+        output=schema_name(extractor_metadata, "outputs", "embeddings"),
+    )(audio)
 
-    if not Path(args.track_path).exists():
-        error(f"Track file not found: {args.track_path}")
+    head_directory = models_root / "MusicNN" / "Heads" / "Mood"
+    head_metadata = read_metadata(head_directory / MIREX_METADATA_FILE)
+    model_name = head_metadata.get("name", "moods mirex")
+    predictions = es.TensorflowPredict2D(
+        graphFilename=str(head_directory / MIREX_MODEL_FILE),
+        input=schema_name(head_metadata, "inputs"),
+        output=schema_name(head_metadata, "outputs", "predictions"),
+        patchSize=1,
+        patchHopSize=1,
+    )(embeddings)
 
-    audio = es.MonoLoader(filename=args.track_path, sampleRate=16000, resampleQuality=4)()
-    if not (args.model_directory / MAEST_MODEL_FILE).exists():
-        error(f"MAEST model file not found: {args.model_directory / MAEST_MODEL_FILE}")
-    if not (args.model_directory / MAEST_METADATA_FILE).exists():
-        error(f"MAEST metadata file not found: {args.model_directory / MAEST_METADATA_FILE}")
+    return {
+        "family": "msd-musicnn",
+        "category": "Mood",
+        "model": model_name,
+        "type": head_metadata.get("type", "multi-class classifier"),
+        "description": head_metadata.get("description", ""),
+        "values": aggregate_predictions(predictions, head_metadata["classes"], model_name),
+    }
 
-    bpm_audio = es.MonoLoader(filename=args.track_path, sampleRate=44100, resampleQuality=4)()
-    bpm, _, _, _, _ = es.RhythmExtractor2013(method="multifeature")(bpm_audio)
-    loudness_audio, loudness_sample_rate, _, *_ = es.AudioLoader(filename=args.track_path)()
-    _, _, integrated_loudness, loudness_range = es.LoudnessEBUR128(sampleRate=loudness_sample_rate)(loudness_audio)
 
-    genre_predictions, prediction_shape = analyze_maest(audio, args.model_directory, args.top)
-    experimental_predictions, experimental_errors = experimental_analysis(
-        audio,
-        args.model_directory.parent,
+def analyze_track(track_path: Path, models_root: Path, top_count: int) -> dict:
+    audio_16k = es.MonoLoader(
+        filename=str(track_path), sampleRate=16000, resampleQuality=4
+    )()
+    genre_predictions, prediction_shape, label_count = analyze_genres(
+        audio_16k, models_root, top_count
     )
 
-    print(json.dumps({
+    bpm_audio = es.MonoLoader(
+        filename=str(track_path), sampleRate=44100, resampleQuality=4
+    )()
+    bpm, _, _, _, _ = es.RhythmExtractor2013(method="multifeature")(bpm_audio)
+
+    loudness_audio, sample_rate, _, *_ = es.AudioLoader(filename=str(track_path))()
+    _, _, integrated_loudness, loudness_range = es.LoudnessEBUR128(
+        sampleRate=sample_rate
+    )(loudness_audio)
+
+    experimental_predictions = []
+    experimental_errors = []
+    try:
+        experimental_predictions.append(analyze_mirex(audio_16k, models_root))
+    except Exception as exception:
+        # Core analysis remains useful if only the optional emotional model fails.
+        experimental_errors.append(
+            {"family": "msd-musicnn", "model": "moods mirex", "error": str(exception)}
+        )
+
+    return {
         "success": True,
-        "trackPath": args.track_path,
+        "trackPath": str(track_path),
         "model": MAEST_MODEL_NAME,
         "predictionShape": prediction_shape,
-        "labelCount": len(read_metadata(args.model_directory / MAEST_METADATA_FILE)["classes"]),
+        "labelCount": label_count,
         "bpm": float(bpm),
         "integratedLoudness": float(integrated_loudness),
         "loudnessRange": float(loudness_range),
         "predictions": genre_predictions,
         "experimentalPredictions": experimental_predictions,
-        "experimentalErrors": experimental_errors
-    }, ensure_ascii=False, indent=2))
+        "experimentalErrors": experimental_errors,
+    }
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Analyze one audio track for Resona")
+    parser.add_argument("track_path", type=Path)
+    parser.add_argument("--top", type=int, default=20, help="Number of genre scores to return")
+    parser.add_argument("--models-root", type=Path, default=DEFAULT_MODELS_ROOT)
+    args = parser.parse_args()
+
+    if not args.track_path.is_file():
+        error(f"Track file not found: {args.track_path}")
+    if args.top < 1:
+        error("--top must be at least 1")
+
+    print(
+        json.dumps(
+            analyze_track(args.track_path, args.models_root, args.top),
+            ensure_ascii=False,
+        )
+    )
 
 
 if __name__ == "__main__":
     try:
         main()
+    except SystemExit:
+        raise
     except Exception as exception:
         error(f"Analysis failed: {exception}")

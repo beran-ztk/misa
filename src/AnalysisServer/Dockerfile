@@ -1,22 +1,11 @@
-FROM continuumio/miniconda3:24.7.1-0
-
-ARG ESSENTIA_VERSION=2.1b6.dev1389
+FROM python:3.10-slim-bookworm
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    TF_CPP_MIN_LOG_LEVEL=2 \
-    NVIDIA_VISIBLE_DEVICES=all \
-    NVIDIA_DRIVER_CAPABILITIES=compute,utility \
-    LD_LIBRARY_PATH=/opt/conda/lib
-
-RUN conda install --yes --channel conda-forge \
-        python=3.10 \
-        cudatoolkit=11.2 \
-        cudnn=8.1 \
-    && conda clean --all --yes
+    TF_CPP_MIN_LOG_LEVEL=2
 
 RUN apt-get update \
-    && apt-get install --yes --no-install-recommends ffmpeg libsndfile1 \
+    && apt-get install --yes --no-install-recommends ffmpeg libgomp1 libsndfile1 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -30,13 +19,15 @@ RUN useradd --create-home --uid 10001 analyzer
 
 COPY --chown=analyzer:analyzer src/AnalysisServer/api.py /app/api.py
 COPY --chown=analyzer:analyzer src/AnalysisServer/analyze.py /app/analyze.py
-COPY --chown=analyzer:analyzer models/Essentia /app/models/Essentia
+COPY --chown=analyzer:analyzer models/Essentia/DiscogsMAEST /app/models/Essentia/DiscogsMAEST
+COPY --chown=analyzer:analyzer models/Essentia/MusicNN/Extractor /app/models/Essentia/MusicNN/Extractor
+COPY --chown=analyzer:analyzer models/Essentia/MusicNN/Heads/Mood /app/models/Essentia/MusicNN/Heads/Mood
 
 USER analyzer
 
 EXPOSE 8000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3).read()"
+    CMD python -c "import os, urllib.request; port=os.environ.get('ANALYZER_PORT', '8000'); urllib.request.urlopen(f'http://127.0.0.1:{port}/health', timeout=3).read()"
 
-CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1", "--no-access-log"]
+CMD ["python", "api.py"]

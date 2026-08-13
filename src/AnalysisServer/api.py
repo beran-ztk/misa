@@ -1,37 +1,60 @@
 import asyncio
 import json
+import logging
 import os
+import secrets
 import sys
 import tempfile
 from pathlib import Path
 
+import uvicorn
 from fastapi import FastAPI, File, Header, HTTPException, UploadFile
 from fastapi.responses import JSONResponse
 
 
-BASE_DIRECTORY = Path("/app")
+BASE_DIRECTORY = Path(__file__).resolve().parent
 SCRIPT_PATH = BASE_DIRECTORY / "analyze.py"
-MODEL_DIRECTORY = BASE_DIRECTORY / "models" / "Essentia" / "DiscogsMAEST"
-REQUIRED_MODEL_PATH = MODEL_DIRECTORY / "discogs-maest-30s-pw-519l-2.pb"
+MODELS_ROOT = Path(
+    os.environ.get("RESONA_MODELS_ROOT", BASE_DIRECTORY / "models" / "Essentia")
+).resolve()
+TEMP_DIRECTORY = Path(os.environ.get("RESONA_TEMP_DIRECTORY", tempfile.gettempdir())).resolve()
 SUPPORTED_EXTENSIONS = {".flac", ".m4a", ".mp3", ".wav"}
 UPLOAD_CHUNK_SIZE = 1024 * 1024
 API_KEY = os.environ.get("MUSIC_API_KEY", "").strip()
 MAX_UPLOAD_BYTES = int(os.environ.get("MAX_UPLOAD_BYTES", str(1024 * 1024 * 1024)))
 ANALYSIS_TIMEOUT_SECONDS = int(os.environ.get("ANALYSIS_TIMEOUT_SECONDS", "1800"))
 MAX_CONCURRENT_ANALYSES = max(1, int(os.environ.get("MAX_CONCURRENT_ANALYSES", "1")))
+ANALYZER_HOST = os.environ.get("ANALYZER_HOST", "0.0.0.0")
+ANALYZER_PORT = int(os.environ.get("ANALYZER_PORT", "8000"))
 ANALYSIS_SLOTS = asyncio.Semaphore(MAX_CONCURRENT_ANALYSES)
+LOGGER = logging.getLogger("resona.analyzer")
+
+REQUIRED_FILES = (
+    SCRIPT_PATH,
+    MODELS_ROOT / "DiscogsMAEST" / "discogs-maest-30s-pw-519l-2.pb",
+    MODELS_ROOT / "DiscogsMAEST" / "discogs-maest-30s-pw-519l-2.json",
+    MODELS_ROOT / "MusicNN" / "Extractor" / "msd-musicnn-1.pb",
+    MODELS_ROOT / "MusicNN" / "Extractor" / "msd-musicnn-1.json",
+    MODELS_ROOT / "MusicNN" / "Heads" / "Mood" / "moods_mirex-msd-musicnn-1.pb",
+    MODELS_ROOT / "MusicNN" / "Heads" / "Mood" / "moods_mirex-msd-musicnn-1.json",
+)
 
 app = FastAPI(title="Resona Analysis API", docs_url=None, redoc_url=None)
 
 
 @app.get("/health")
-def health():
-    if not SCRIPT_PATH.is_file() or not REQUIRED_MODEL_PATH.is_file():
-        raise HTTPException(status_code=503, detail="Analyzer files are incomplete")
+def health() -> dict:
+    missing = [str(path.relative_to(BASE_DIRECTORY)) if path.is_relative_to(BASE_DIRECTORY) else str(path)
+               for path in REQUIRED_FILES if not path.is_file()]
+    if missing:
+        raise HTTPException(
+            status_code=503,
+            detail={"message": "Analyzer files are incomplete", "missing": missing},
+        )
 
     return {
         "status": "ok",
-        "service": "music-analysis",
+        "service": "resona-analysis",
         "maxConcurrentAnalyses": MAX_CONCURRENT_ANALYSES,
     }
 
@@ -41,16 +64,19 @@ async def analyze(
     file: UploadFile = File(...),
     x_api_key: str | None = Header(default=None),
 ):
-    if API_KEY and x_api_key != API_KEY:
+    if API_KEY and not secrets.compare_digest(x_api_key or "", API_KEY):
         raise HTTPException(status_code=401, detail="Invalid API key")
 
     suffix = Path(file.filename or "").suffix.lower()
     if suffix not in SUPPORTED_EXTENSIONS:
         raise HTTPException(status_code=415, detail="Unsupported audio format")
 
+    TEMP_DIRECTORY.mkdir(parents=True, exist_ok=True)
     temporary_path: Path | None = None
     try:
-        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix, dir="/tmp") as temporary_file:
+        with tempfile.NamedTemporaryFile(
+            delete=False, suffix=suffix, dir=TEMP_DIRECTORY
+        ) as temporary_file:
             temporary_path = Path(temporary_file.name)
             uploaded_bytes = 0
             while chunk := await file.read(UPLOAD_CHUNK_SIZE):
@@ -66,11 +92,11 @@ async def analyze(
             payload, return_code, stderr = await run_analyzer(temporary_path)
 
         if return_code != 0 or payload.get("success") is not True:
+            if stderr:
+                LOGGER.error("Analyzer process failed: %s", stderr[-4000:])
             error_payload = dict(payload)
             error_payload.setdefault("success", False)
             error_payload.setdefault("error", "Analysis failed")
-            if stderr:
-                error_payload["serverDetails"] = stderr[-4000:]
             return JSONResponse(status_code=500, content=error_payload)
 
         return payload
@@ -85,8 +111,8 @@ async def run_analyzer(track_path: Path) -> tuple[dict, int, str]:
         sys.executable,
         str(SCRIPT_PATH),
         str(track_path),
-        "--model-directory",
-        str(MODEL_DIRECTORY),
+        "--models-root",
+        str(MODELS_ROOT),
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
         cwd=BASE_DIRECTORY,
@@ -94,8 +120,7 @@ async def run_analyzer(track_path: Path) -> tuple[dict, int, str]:
 
     try:
         stdout, stderr = await asyncio.wait_for(
-            process.communicate(),
-            timeout=ANALYSIS_TIMEOUT_SECONDS,
+            process.communicate(), timeout=ANALYSIS_TIMEOUT_SECONDS
         )
     except TimeoutError:
         process.kill()
@@ -111,14 +136,15 @@ async def run_analyzer(track_path: Path) -> tuple[dict, int, str]:
     try:
         payload = json.loads(stdout_text)
     except json.JSONDecodeError:
-        raise HTTPException(
-            status_code=500,
-            detail={
-                "error": "Analyzer returned invalid JSON",
-                "stderr": stderr_text[-4000:],
-            },
-        )
+        if stderr_text:
+            LOGGER.error("Analyzer returned invalid JSON: %s", stderr_text[-4000:])
+        raise HTTPException(status_code=500, detail="Analyzer returned invalid JSON")
 
     if not isinstance(payload, dict):
         raise HTTPException(status_code=500, detail="Analyzer returned an invalid response")
     return payload, process.returncode or 0, stderr_text
+
+
+if __name__ == "__main__":
+    logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO").upper())
+    uvicorn.run(app, host=ANALYZER_HOST, port=ANALYZER_PORT, access_log=False)

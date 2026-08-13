@@ -28,5 +28,21 @@ services:
     ports:
       - "127.0.0.1:${RESONA_API_PORT:-5080}:8080"
 
+  analyzer:
+    build:
+      context: ../..
+      dockerfile: src/AnalysisServer/Dockerfile
+    restart: unless-stopped
+    init: true
+    environment:
+      ANALYZER_HOST: 0.0.0.0
+      ANALYZER_PORT: 8000
+      MAX_CONCURRENT_ANALYSES: ${MAX_CONCURRENT_ANALYSES:-1}
+      ANALYSIS_TIMEOUT_SECONDS: ${ANALYSIS_TIMEOUT_SECONDS:-1800}
+      MAX_UPLOAD_BYTES: ${MAX_UPLOAD_BYTES:-1073741824}
+      MUSIC_API_KEY: ${MUSIC_API_KEY:-}
+    ports:
+      - "127.0.0.1:${RESONA_ANALYZER_PORT:-5081}:8000"
+
 volumes:
   postgres-data:
