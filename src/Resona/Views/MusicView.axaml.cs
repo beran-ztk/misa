@@ -339,6 +339,7 @@ public partial class MusicView : UserControl
         ImportQueueService.Current.ItemUpdated += _ => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
         {
             if (ImportOverlay.IsVisible) ImportOverlay.RefreshQueue();
+            if (ChannelOverlay.IsVisible) ChannelOverlay.UpdateDownloadSummary();
         });
         ImportQueueService.Current.TrackImported += (track, warning) => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
         {

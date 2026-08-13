@@ -45,6 +45,11 @@ public partial class ChannelOverlay : UserControl
     private ChannelHubWorkStatus _channelWorkStatus = ChannelHubWorkStatus.Idle;
     private ChannelMetadataWorkStatus _metadataWorkStatus = ChannelMetadataWorkStatus.Idle;
     private int _channelSortIndex;
+    private CancellationTokenSource? _profileLoadCts;
+    private CancellationTokenSource? _profileImageLoadCts;
+    private List<CloudProfileDisplay> _cloudProfiles = [];
+    private CloudProfileDisplay? _selectedCloudProfile;
+    private List<CloudProfileTrackDisplay> _cloudProfileTracks = [];
     private readonly Avalonia.Threading.DispatcherTimer _channelStateRefreshTimer = new()
     {
         Interval = TimeSpan.FromMilliseconds(750)
@@ -76,6 +81,8 @@ public partial class ChannelOverlay : UserControl
     {
         IsVisible = true;
         HubView.IsVisible = true;
+        ProfileHubView.IsVisible = false;
+        ProfileDetailView.IsVisible = false;
         DetailView.IsVisible = false;
         InboxView.IsVisible = false;
         _detailOpenedFromInbox = false;
@@ -403,6 +410,307 @@ public partial class ChannelOverlay : UserControl
         e.Handled = true;
     }
 
+    private void OnProfilesTabClicked(object? sender, RoutedEventArgs e)
+    {
+        ShowProfileHub();
+        if (_cloudProfiles.Count == 0)
+            _ = LoadProfilesAsync();
+    }
+
+    private void OnChannelsTabClicked(object? sender, RoutedEventArgs e)
+    {
+        CancelProfileLoad();
+        CancelProfileImageLoad();
+        ProfileHubView.IsVisible = false;
+        ProfileDetailView.IsVisible = false;
+        DetailView.IsVisible = false;
+        InboxView.IsVisible = false;
+        HubView.IsVisible = true;
+        ApplyHubFilter();
+    }
+
+    private void ShowProfileHub()
+    {
+        PreviewClosed?.Invoke();
+        HubView.IsVisible = false;
+        DetailView.IsVisible = false;
+        InboxView.IsVisible = false;
+        ProfileDetailView.IsVisible = false;
+        ProfileHubView.IsVisible = true;
+        ApplyProfileFilter();
+    }
+
+    private async Task LoadProfilesAsync(bool force = false)
+    {
+        if (!force && _cloudProfiles.Count > 0)
+        {
+            ApplyProfileFilter();
+            return;
+        }
+
+        CancelProfileLoad();
+        CancelProfileImageLoad();
+        var cancellation = new CancellationTokenSource();
+        _profileLoadCts = cancellation;
+        ProfileHubSummaryText.Text = "Loading public profiles…";
+        ProfileHubEmptyPanel.IsVisible = true;
+        ProfileHubEmptyTitle.Text = "Loading profiles";
+        ProfileHubEmptyDescription.Text = "Reading public libraries from Resona Cloud…";
+        ProfileList.ItemsSource = null;
+
+        try
+        {
+            var profiles = await CloudPublicLibraryClient.Current.GetProfilesAsync(cancellation.Token);
+            if (cancellation.IsCancellationRequested || !ProfileHubView.IsVisible)
+                return;
+
+            foreach (var profile in _cloudProfiles)
+                profile.Dispose();
+            _cloudProfiles = profiles.Select(profile => new CloudProfileDisplay(profile)).ToList();
+            ProfileHubSummaryText.Text = _cloudProfiles.Count == 1
+                ? "1 public profile"
+                : $"{_cloudProfiles.Count:N0} public profiles";
+            ApplyProfileFilter();
+            _profileImageLoadCts = new CancellationTokenSource();
+            _ = LoadProfileImagesAsync(_cloudProfiles, _profileImageLoadCts.Token);
+        }
+        catch (OperationCanceledException) { }
+        catch (Exception exception)
+        {
+            if (cancellation.IsCancellationRequested)
+                return;
+            ProfileHubSummaryText.Text = "Cloud unavailable";
+            ProfileHubEmptyPanel.IsVisible = true;
+            ProfileHubEmptyTitle.Text = "Could not load profiles";
+            ProfileHubEmptyDescription.Text = exception.Message;
+        }
+    }
+
+    private async Task LoadProfileImagesAsync(
+        IReadOnlyList<CloudProfileDisplay> profiles,
+        CancellationToken cancellationToken)
+    {
+        foreach (var profile in profiles.Where(profile => profile.HasRemoteAvatar))
+        {
+            try
+            {
+                var image = await CloudPublicLibraryClient.Current.GetProfileImageAsync(
+                    profile.UserId, cancellationToken);
+                if (image is { Length: > 0 })
+                {
+                    profile.SetAvatar(image);
+                    if (ProfileDetailView.IsVisible && _selectedCloudProfile?.UserId == profile.UserId)
+                    {
+                        ProfileDetailAvatar.Source = profile.Avatar;
+                        ProfileDetailAvatar.IsVisible = profile.HasAvatar;
+                        ProfileDetailMonogram.IsVisible = profile.ShowMonogram;
+                    }
+                }
+            }
+            catch (OperationCanceledException) { return; }
+            catch { }
+        }
+    }
+
+    private void OnProfileSearchChanged(object? sender, TextChangedEventArgs e) => ApplyProfileFilter();
+
+    private void ApplyProfileFilter()
+    {
+        if (!ProfileHubView.IsVisible)
+            return;
+
+        var search = ProfileSearchBox.Text?.Trim() ?? string.Empty;
+        var visible = _cloudProfiles
+            .Where(profile => search.Length == 0
+                              || profile.Username.Contains(search, StringComparison.OrdinalIgnoreCase)
+                              || profile.BioText.Contains(search, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+        ProfileList.ItemsSource = visible;
+        ProfileHubEmptyPanel.IsVisible = visible.Count == 0;
+        ProfileHubEmptyTitle.Text = search.Length > 0 ? "No matching profiles" : "No public profiles";
+        ProfileHubEmptyDescription.Text = search.Length > 0
+            ? "Try another name or clear the search."
+            : "Profiles appear here after their first successful cloud synchronization.";
+    }
+
+    private void OnRefreshProfilesClicked(object? sender, RoutedEventArgs e) => _ = LoadProfilesAsync(force: true);
+
+    private void OnCloudProfileTapped(object? sender, TappedEventArgs e)
+    {
+        if (sender is not Control { DataContext: CloudProfileDisplay profile })
+            return;
+        OpenCloudProfile(profile);
+        e.Handled = true;
+    }
+
+    private void OpenCloudProfile(CloudProfileDisplay profile)
+    {
+        CancelProfileLoad();
+        _selectedCloudProfile = profile;
+        ProfileHubView.IsVisible = false;
+        ProfileDetailView.IsVisible = true;
+        HubView.IsVisible = false;
+        DetailView.IsVisible = false;
+        InboxView.IsVisible = false;
+        ProfileDetailName.Text = profile.Username;
+        ProfileDetailBio.Text = profile.BioText;
+        ProfileDetailAvatar.Source = profile.Avatar;
+        ProfileDetailAvatar.IsVisible = profile.HasAvatar;
+        ProfileDetailMonogram.Text = profile.Monogram;
+        ProfileDetailMonogram.IsVisible = profile.ShowMonogram;
+        ProfileTrackSearchBox.Text = string.Empty;
+        _ = LoadProfileTracksAsync(profile);
+    }
+
+    private async Task LoadProfileTracksAsync(CloudProfileDisplay profile)
+    {
+        CancelProfileLoad();
+        var cancellation = new CancellationTokenSource();
+        _profileLoadCts = cancellation;
+        ProfileTrackList.ItemsSource = null;
+        ProfileTrackSummaryText.Text = "Loading public tracks…";
+        ProfileTrackEmptyPanel.IsVisible = true;
+        ProfileTrackEmptyTitle.Text = "Loading tracks";
+        ProfileTrackEmptyDescription.Text = "Reading this profile's synchronized library…";
+
+        try
+        {
+            var tracks = await CloudPublicLibraryClient.Current.GetTracksAsync(profile.UserId, cancellation.Token);
+            if (cancellation.IsCancellationRequested
+                || !ProfileDetailView.IsVisible
+                || _selectedCloudProfile?.UserId != profile.UserId)
+                return;
+
+            _cloudProfileTracks = tracks.Select(track => new CloudProfileTrackDisplay(track)).ToList();
+            RefreshProfileTrackStates();
+            ApplyProfileTrackFilter();
+        }
+        catch (OperationCanceledException) { }
+        catch (Exception exception)
+        {
+            if (cancellation.IsCancellationRequested)
+                return;
+            ProfileTrackSummaryText.Text = "Cloud unavailable";
+            ProfileTrackEmptyPanel.IsVisible = true;
+            ProfileTrackEmptyTitle.Text = "Could not load tracks";
+            ProfileTrackEmptyDescription.Text = exception.Message;
+        }
+    }
+
+    private void RefreshProfileTrackStates()
+    {
+        if (_cloudProfileTracks.Count == 0)
+            return;
+
+        var localTracks = MusicLibraryService.Current.GetTracksForLibraryView();
+        var localByVideoId = localTracks
+            .Select(track => (Track: track, VideoId: string.IsNullOrWhiteSpace(track.SourceVideoId)
+                ? YouTubeUrlNormalizer.ExtractVideoId(track.CanonicalUrl)
+                : track.SourceVideoId))
+            .Where(item => !string.IsNullOrWhiteSpace(item.VideoId))
+            .GroupBy(item => item.VideoId!, StringComparer.Ordinal)
+            .ToDictionary(group => group.Key, group => group.Last().Track, StringComparer.Ordinal);
+        var activeUrls = MusicLibraryService.Current.GetActiveImportCanonicalUrls();
+
+        foreach (var item in _cloudProfileTracks)
+        {
+            localByVideoId.TryGetValue(item.SourceVideoId, out var localTrack);
+            item.UpdateLocalState(localTrack, activeUrls.Contains(item.CanonicalUrl));
+        }
+    }
+
+    private void OnProfileTrackSearchChanged(object? sender, TextChangedEventArgs e) => ApplyProfileTrackFilter();
+
+    private void ApplyProfileTrackFilter()
+    {
+        if (!ProfileDetailView.IsVisible)
+            return;
+
+        var search = ProfileTrackSearchBox.Text?.Trim() ?? string.Empty;
+        var visible = _cloudProfileTracks
+            .Where(track => search.Length == 0 || track.Matches(search))
+            .ToList();
+        ProfileTrackList.ItemsSource = visible;
+        ProfileTrackSummaryText.Text = search.Length == 0
+            ? $"{_cloudProfileTracks.Count:N0} public tracks"
+            : $"{visible.Count:N0} of {_cloudProfileTracks.Count:N0} tracks";
+        ProfileTrackEmptyPanel.IsVisible = visible.Count == 0;
+        ProfileTrackEmptyTitle.Text = search.Length > 0 ? "No matching tracks" : "No public tracks";
+        ProfileTrackEmptyDescription.Text = search.Length > 0
+            ? "Try another title, channel, genre or tag."
+            : "This profile has not synchronized any public tracks.";
+    }
+
+    private async void OnProfileTrackDownloadClicked(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { DataContext: CloudProfileTrackDisplay item } || !item.CanDownload)
+            return;
+
+        item.MarkPreparing();
+        try
+        {
+            var preview = await ImportQueueService.Current.PreviewAsync([item.CanonicalUrl]);
+            if (preview.Items.All(previewItem => previewItem.Status != ImportQueueStatus.Queued))
+            {
+                RefreshProfileTrackStates();
+                ApplyProfileTrackFilter();
+                ToastRequested?.Invoke(preview.Items.FirstOrDefault()?.Detail ?? "Track could not be queued");
+                return;
+            }
+
+            ImportQueueService.Current.Queue(preview);
+            item.MarkImporting();
+            ApplyProfileTrackFilter();
+            ToastRequested?.Invoke("Track added to the normal import queue");
+        }
+        catch (Exception exception)
+        {
+            RefreshProfileTrackStates();
+            ApplyProfileTrackFilter();
+            ToastRequested?.Invoke($"Could not queue track: {exception.Message}");
+        }
+    }
+
+    private async void OnProfileTrackReviewClicked(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { DataContext: CloudProfileTrackDisplay { CanReview: true, LocalTrackId: int trackId } })
+            return;
+        var track = await Task.Run(() => MusicLibraryService.Current.GetTrackById(trackId));
+        if (track is null)
+            return;
+        EditRequested?.Invoke(track);
+        ToastRequested?.Invoke("Choose a rating to accept this track or decline it");
+    }
+
+    private void OnRefreshProfileTracksClicked(object? sender, RoutedEventArgs e)
+    {
+        if (_selectedCloudProfile is { } profile)
+            _ = LoadProfileTracksAsync(profile);
+    }
+
+    private void OnBackToProfilesClicked(object? sender, RoutedEventArgs e)
+    {
+        CancelProfileLoad();
+        ProfileDetailView.IsVisible = false;
+        ProfileHubView.IsVisible = true;
+        _selectedCloudProfile = null;
+        ApplyProfileFilter();
+    }
+
+    private void CancelProfileLoad()
+    {
+        _profileLoadCts?.Cancel();
+        _profileLoadCts?.Dispose();
+        _profileLoadCts = null;
+    }
+
+    private void CancelProfileImageLoad()
+    {
+        _profileImageLoadCts?.Cancel();
+        _profileImageLoadCts?.Dispose();
+        _profileImageLoadCts = null;
+    }
+
     private void OpenChannelDetail(ChannelHubItem channel, bool fromInbox = false)
     {
         _selectedHubChannel = channel;
@@ -415,6 +723,8 @@ public partial class ChannelOverlay : UserControl
             _videoFiltersByChannel.GetValueOrDefault(channel.Id, ChannelVideoFilter.All),
             refresh: false);
         HubView.IsVisible = false;
+        ProfileHubView.IsVisible = false;
+        ProfileDetailView.IsVisible = false;
         InboxView.IsVisible = false;
         DetailView.IsVisible = true;
         PreviewClosed?.Invoke();
@@ -490,6 +800,8 @@ public partial class ChannelOverlay : UserControl
         else
         {
             InboxView.IsVisible = false;
+            ProfileHubView.IsVisible = false;
+            ProfileDetailView.IsVisible = false;
             HubView.IsVisible = true;
             ApplyHubFilter();
         }
@@ -523,6 +835,8 @@ public partial class ChannelOverlay : UserControl
     {
         PreviewClosed?.Invoke();
         HubView.IsVisible = false;
+        ProfileHubView.IsVisible = false;
+        ProfileDetailView.IsVisible = false;
         DetailView.IsVisible = false;
         InboxView.IsVisible = true;
         RefreshInbox();
@@ -532,6 +846,8 @@ public partial class ChannelOverlay : UserControl
     {
         InboxView.IsVisible = false;
         DetailView.IsVisible = false;
+        ProfileHubView.IsVisible = false;
+        ProfileDetailView.IsVisible = false;
         HubView.IsVisible = true;
         ApplyHubFilter();
         RefreshInboxBadge();
@@ -1217,6 +1533,8 @@ public partial class ChannelOverlay : UserControl
 
     private void OnCloseClicked(object? sender, RoutedEventArgs e)
     {
+        CancelProfileLoad();
+        CancelProfileImageLoad();
         ClearActivePreview();
         CloseRequested?.Invoke();
     }
@@ -1232,6 +1550,11 @@ public partial class ChannelOverlay : UserControl
             return;
         if (DetailView.IsVisible && _selectedChannelId >= 0)
             RefreshVideos();
+        if (ProfileDetailView.IsVisible)
+        {
+            RefreshProfileTrackStates();
+            ApplyProfileTrackFilter();
+        }
         RefreshChannels();
     }
 
@@ -1656,4 +1979,205 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
         _ => value.ToString()
     };
 
+}
+
+public sealed class CloudProfileDisplay : INotifyPropertyChanged, IDisposable
+{
+    private Bitmap? _avatar;
+
+    public CloudProfileDisplay(CloudPublicProfileSummary profile)
+    {
+        UserId = profile.UserId;
+        Username = profile.Username;
+        BioText = string.IsNullOrWhiteSpace(profile.Bio) ? "No bio provided" : profile.Bio;
+        HasRemoteAvatar = profile.HasProfileImage;
+        TrackCountText = profile.TrackCount.ToString("N0");
+        Monogram = string.IsNullOrWhiteSpace(profile.Username)
+            ? "?"
+            : profile.Username[..1].ToUpperInvariant();
+        SynchronizedText = DateTimeOffset.TryParse(profile.SynchronizedAt, out var synchronizedAt)
+            ? $"Synchronized {synchronizedAt.ToLocalTime():dd.MM.yyyy HH:mm}"
+            : "Not synchronized yet";
+    }
+
+    public string UserId { get; }
+    public string Username { get; }
+    public string BioText { get; }
+    public bool HasRemoteAvatar { get; }
+    public string TrackCountText { get; }
+    public string Monogram { get; }
+    public string SynchronizedText { get; }
+    public Bitmap? Avatar => _avatar;
+    public bool HasAvatar => _avatar is not null;
+    public bool ShowMonogram => _avatar is null;
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    public void SetAvatar(byte[] image)
+    {
+        using var stream = new MemoryStream(image, writable: false);
+        var avatar = new Bitmap(stream);
+        var previous = _avatar;
+        _avatar = avatar;
+        previous?.Dispose();
+        Notify(nameof(Avatar));
+        Notify(nameof(HasAvatar));
+        Notify(nameof(ShowMonogram));
+    }
+
+    public void Dispose()
+    {
+        _avatar?.Dispose();
+        _avatar = null;
+    }
+
+    private void Notify([CallerMemberName] string? propertyName = null) =>
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+}
+
+public sealed class CloudProfileTrackDisplay : INotifyPropertyChanged
+{
+    private string _localStatusText = "Available";
+    private IBrush _localStatusBrush = ThemeResources.Brush("Theme.Brush.TextSecondary");
+    private bool _canDownload = true;
+    private bool _canReview;
+    private int? _localTrackId;
+
+    public CloudProfileTrackDisplay(CloudPublicLibraryTrack track)
+    {
+        SourceVideoId = track.SourceVideoId;
+        CanonicalUrl = track.CanonicalUrl;
+        Title = track.Title;
+        OriginalTitle = track.OriginalTitle;
+        DurationText = FormatDuration(track.DurationSeconds);
+        ChannelText = string.IsNullOrWhiteSpace(track.ChannelName) ? "Unknown channel" : track.ChannelName;
+        OwnerRatingText = $"Their rating: {track.Rating ?? "None"}";
+        ClassificationText = BuildClassificationText(track);
+        AnalysisText = BuildAnalysisText(track);
+        _searchText = string.Join(' ', new[]
+        {
+            track.Title,
+            track.OriginalTitle,
+            track.ChannelName,
+            track.Rating,
+            track.LanguageCode,
+            string.Join(' ', track.Genres),
+            string.Join(' ', track.Tags),
+            string.Join(' ', track.EmotionalCharacter.Keys)
+        }.Where(value => !string.IsNullOrWhiteSpace(value)));
+    }
+
+    private readonly string _searchText;
+
+    public string SourceVideoId { get; }
+    public string CanonicalUrl { get; }
+    public string Title { get; }
+    public string OriginalTitle { get; }
+    public string DurationText { get; }
+    public string ChannelText { get; }
+    public string OwnerRatingText { get; }
+    public string ClassificationText { get; }
+    public string AnalysisText { get; }
+    public string LocalStatusText => _localStatusText;
+    public IBrush LocalStatusBrush => _localStatusBrush;
+    public bool CanDownload => _canDownload;
+    public bool CanReview => _canReview;
+    public int? LocalTrackId => _localTrackId;
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    public bool Matches(string search) =>
+        _searchText.Contains(search, StringComparison.OrdinalIgnoreCase);
+
+    public void UpdateLocalState(MusicTrack? localTrack, bool importing)
+    {
+        _localTrackId = localTrack?.Id;
+        if (localTrack is not null)
+        {
+            switch (localTrack.LibraryState)
+            {
+                case TrackLibraryState.PendingRating:
+                    SetState("Ready", "#E6B85C", canReview: true);
+                    break;
+                case TrackLibraryState.Active:
+                    SetState("Accepted", "#75D49A");
+                    break;
+                case TrackLibraryState.Rejected:
+                    SetState("Declined", "#E87878");
+                    break;
+                default:
+                    SetState("In library", "#75D49A");
+                    break;
+            }
+        }
+        else if (importing)
+        {
+            SetState("Importing…", "#79A9E8");
+        }
+        else
+        {
+            SetState("Available", "#B9C1CA", canDownload: true);
+        }
+    }
+
+    public void MarkPreparing() => SetState("Reading link…", "#79A9E8");
+    public void MarkImporting() => SetState("Importing…", "#79A9E8");
+
+    private void SetState(
+        string text,
+        string color,
+        bool canDownload = false,
+        bool canReview = false)
+    {
+        _localStatusText = text;
+        _localStatusBrush = new SolidColorBrush(Color.Parse(color));
+        _canDownload = canDownload;
+        _canReview = canReview;
+        Notify(nameof(LocalStatusText));
+        Notify(nameof(LocalStatusBrush));
+        Notify(nameof(CanDownload));
+        Notify(nameof(CanReview));
+        Notify(nameof(LocalTrackId));
+    }
+
+    private static string BuildClassificationText(CloudPublicLibraryTrack track)
+    {
+        var parts = new List<string>();
+        if (track.Genres.Count > 0)
+            parts.Add($"Genres: {string.Join(", ", track.Genres)}");
+        if (track.Tags.Count > 0)
+            parts.Add($"Tags: {string.Join(", ", track.Tags)}");
+        if (!string.IsNullOrWhiteSpace(track.LanguageCode))
+            parts.Add($"Language: {track.LanguageCode}");
+        return parts.Count == 0 ? "No shared classification" : string.Join(" · ", parts);
+    }
+
+    private static string BuildAnalysisText(CloudPublicLibraryTrack track)
+    {
+        var parts = new List<string>();
+        if (track.Analysis?.Bpm is double bpm)
+            parts.Add($"{bpm:0.#} BPM");
+        if (track.Analysis?.IntegratedLoudness is double loudness)
+            parts.Add($"{loudness:0.#} LUFS");
+        if (track.Analysis?.LoudnessRange is double dynamics)
+            parts.Add($"{dynamics:0.#} LU");
+        if (track.EmotionalCharacter.Count > 0)
+        {
+            parts.Add(string.Join(", ", track.EmotionalCharacter
+                .OrderByDescending(item => item.Value)
+                .Select(item => $"{item.Key} {item.Value * 100:0}%")));
+        }
+        return parts.Count == 0 ? "Not analyzed" : string.Join(" · ", parts);
+    }
+
+    private static string FormatDuration(int? durationSeconds)
+    {
+        if (durationSeconds is not int seconds || seconds < 0)
+            return "—";
+        var duration = TimeSpan.FromSeconds(seconds);
+        return duration.TotalHours >= 1 ? duration.ToString(@"h\:mm\:ss") : duration.ToString(@"m\:ss");
+    }
+
+    private void Notify([CallerMemberName] string? propertyName = null) =>
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 }

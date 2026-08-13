@@ -149,6 +149,25 @@
             <Setter Property="BorderBrush" Value="#805B9CDC"/>
             <Setter Property="BorderThickness" Value="1"/>
         </Style>
+        <Style Selector="Button.hub-tab">
+            <Setter Property="Padding" Value="0,2"/>
+            <Setter Property="Margin" Value="0,0,14,0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="CornerRadius" Value="0"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Opacity" Value="0.48"/>
+        </Style>
+        <Style Selector="Button.hub-tab:pointerover">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Opacity" Value="0.82"/>
+        </Style>
+        <Style Selector="Button.hub-tab.active">
+            <Setter Property="BorderBrush" Value="{DynamicResource Theme.Brush.TextPrimary}"/>
+            <Setter Property="Opacity" Value="1"/>
+        </Style>
         <Style Selector="Button.channel-title">
             <Setter Property="Padding" Value="0"/>
             <Setter Property="Background" Value="Transparent"/>
@@ -334,8 +353,11 @@
                     BorderBrush="{DynamicResource Theme.Brush.Border}" BorderThickness="0,0,0,1"
                     Padding="26,15">
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="18">
-                    <StackPanel Spacing="2" VerticalAlignment="Center">
-                        <TextBlock Text="Channels" FontSize="19" FontWeight="SemiBold"/>
+                    <StackPanel Spacing="4" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal">
+                            <Button Classes="hub-tab active" Content="Channels"/>
+                            <Button Classes="hub-tab" Content="Profiles" Click="OnProfilesTabClicked"/>
+                        </StackPanel>
                         <TextBlock x:Name="HubSummaryText" FontSize="10.5" Opacity="0.56"/>
                         <StackPanel x:Name="HubBackgroundStatusPanel" IsVisible="False" Spacing="2" Margin="0,5,0,0">
                             <TextBlock x:Name="HubBackgroundOverallText" FontSize="10.5"
@@ -505,6 +527,178 @@
                         <TextBlock x:Name="EmptySearchText" Text="No channels match this search."
                                    Grid.Row="1" IsVisible="False" FontSize="11" Opacity="0.5" Margin="0,10,0,0"/>
                     </Grid>
+            </Grid>
+        </Grid>
+
+        <Grid x:Name="ProfileHubView" IsVisible="False" RowDefinitions="Auto,*">
+            <Border Grid.Row="0" Background="Transparent"
+                    BorderBrush="{DynamicResource Theme.Brush.Border}" BorderThickness="0,0,0,1"
+                    Padding="26,15">
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="18">
+                    <StackPanel Spacing="4" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal">
+                            <Button Classes="hub-tab" Content="Channels" Click="OnChannelsTabClicked"/>
+                            <Button Classes="hub-tab active" Content="Profiles"/>
+                        </StackPanel>
+                        <TextBlock x:Name="ProfileHubSummaryText" Text="Loading public profiles…"
+                                   FontSize="10.5" Opacity="0.56"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                        <TextBox x:Name="ProfileSearchBox" Classes="compact-search"
+                                 Width="230" Height="32" Watermark="Search profiles…"
+                                 VerticalContentAlignment="Center" TextChanged="OnProfileSearchChanged"/>
+                        <Button Classes="channel-icon" Click="OnRefreshProfilesClicked" ToolTip.Tip="Refresh profiles">
+                            <Image Source="{SvgImage /Assets/reload.svg}" Width="16" Height="16"/>
+                        </Button>
+                        <Button Classes="channel-icon" Click="OnCloseClicked" ToolTip.Tip="Close" Opacity="0.72">
+                            <Image Source="{SvgImage /Assets/close.svg}" Width="16" Height="16"/>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <Grid Grid.Row="1" Margin="26,16,26,22">
+                <ListBox x:Name="ProfileList" Classes="channel-hub-list"
+                         Background="Transparent" BorderThickness="0">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="views:CloudProfileDisplay">
+                            <Border Classes="channel-card" Padding="13,11" Margin="0,0,0,7"
+                                    Background="#0EFFFFFF" BorderBrush="#22FFFFFF"
+                                    BorderThickness="1" CornerRadius="8" Cursor="Hand"
+                                    Tapped="OnCloudProfileTapped">
+                                <Grid ColumnDefinitions="46,*,Auto" ColumnSpacing="13">
+                                    <Border Width="42" Height="42" CornerRadius="21"
+                                            Background="#243E6591" ClipToBounds="True">
+                                        <Grid>
+                                            <Image Source="{Binding Avatar}" Stretch="UniformToFill"
+                                                   IsVisible="{Binding HasAvatar}"/>
+                                            <TextBlock Text="{Binding Monogram}" IsVisible="{Binding ShowMonogram}"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                       FontSize="12" FontWeight="SemiBold"/>
+                                        </Grid>
+                                    </Border>
+                                    <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Username}" FontSize="13.5" FontWeight="SemiBold"/>
+                                        <TextBlock Text="{Binding BioText}" FontSize="10.5" Opacity="0.58"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Text="{Binding SynchronizedText}" FontSize="9.5" Opacity="0.4"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right" Spacing="2">
+                                        <TextBlock Text="{Binding TrackCountText}" FontSize="11.5" FontWeight="SemiBold"
+                                                   HorizontalAlignment="Right"/>
+                                        <TextBlock Text="public tracks" FontSize="9" Opacity="0.42"
+                                                   HorizontalAlignment="Right"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+                <StackPanel x:Name="ProfileHubEmptyPanel" IsVisible="False"
+                            HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="5">
+                    <TextBlock x:Name="ProfileHubEmptyTitle" Text="No profiles found"
+                               FontSize="12.5" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                    <TextBlock x:Name="ProfileHubEmptyDescription" FontSize="10.5" Opacity="0.48"
+                               TextWrapping="Wrap" TextAlignment="Center" MaxWidth="460"/>
+                </StackPanel>
+            </Grid>
+        </Grid>
+
+        <Grid x:Name="ProfileDetailView" IsVisible="False" RowDefinitions="Auto,*">
+            <Border Grid.Row="0" Background="Transparent"
+                    BorderBrush="{DynamicResource Theme.Brush.Border}" BorderThickness="0,0,0,1"
+                    Padding="22,13">
+                <Grid ColumnDefinitions="Auto,46,*,Auto" ColumnSpacing="11">
+                    <Button Classes="channel-icon" Click="OnBackToProfilesClicked" ToolTip.Tip="Back to profiles">
+                        <TextBlock Text="‹" FontSize="23" Margin="0,-4,0,0"/>
+                    </Button>
+                    <Border Grid.Column="1" Width="42" Height="42" CornerRadius="21"
+                            Background="#243E6591" ClipToBounds="True">
+                        <Grid>
+                            <Image x:Name="ProfileDetailAvatar" Stretch="UniformToFill" IsVisible="False"/>
+                            <TextBlock x:Name="ProfileDetailMonogram" HorizontalAlignment="Center"
+                                       VerticalAlignment="Center" FontSize="12" FontWeight="SemiBold"/>
+                        </Grid>
+                    </Border>
+                    <StackPanel Grid.Column="2" Spacing="2" VerticalAlignment="Center">
+                        <TextBlock x:Name="ProfileDetailName" FontSize="17" FontWeight="SemiBold"/>
+                        <TextBlock x:Name="ProfileDetailBio" FontSize="10.5" Opacity="0.56"
+                                   TextTrimming="CharacterEllipsis"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                        <TextBox x:Name="ProfileTrackSearchBox" Classes="compact-search"
+                                 Width="230" Height="30" Watermark="Search tracks…"
+                                 VerticalContentAlignment="Center" TextChanged="OnProfileTrackSearchChanged"/>
+                        <Button Classes="channel-icon" Click="OnRefreshProfileTracksClicked" ToolTip.Tip="Refresh profile">
+                            <Image Source="{SvgImage /Assets/reload.svg}" Width="16" Height="16"/>
+                        </Button>
+                        <Button Classes="channel-icon" Click="OnCloseClicked" ToolTip.Tip="Close" Opacity="0.72">
+                            <Image Source="{SvgImage /Assets/close.svg}" Width="16" Height="16"/>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <Grid Grid.Row="1" RowDefinitions="Auto,*" Margin="22,15,22,22" RowSpacing="10">
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock x:Name="ProfileTrackSummaryText" FontSize="10.5" Opacity="0.56"/>
+                    <TextBlock Grid.Column="1" Text="Cloud data is shown as shared · downloads use your normal local pipeline"
+                               FontSize="9.5" Opacity="0.38"/>
+                </Grid>
+                <ListBox x:Name="ProfileTrackList" Grid.Row="1" Classes="video-list"
+                         Background="Transparent" BorderThickness="0">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="views:CloudProfileTrackDisplay">
+                            <Border Padding="8,7" Margin="0,0,0,2" Background="Transparent"
+                                    BorderBrush="#16FFFFFF" BorderThickness="0,0,0,1">
+                                <Grid ColumnDefinitions="45,*,150,95,Auto" ColumnSpacing="12">
+                                    <TextBlock Text="{Binding DurationText}" FontSize="10" Opacity="0.5"
+                                               VerticalAlignment="Center" TextAlignment="Right"/>
+                                    <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Title}" FontSize="12.5" FontWeight="SemiBold"
+                                                   TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding OriginalTitle}"/>
+                                        <TextBlock Text="{Binding ChannelText}" FontSize="9.5" Opacity="0.48"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Text="{Binding ClassificationText}" FontSize="9.5" Opacity="0.58"
+                                                   TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding ClassificationText}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="SHARED ANALYSIS" FontSize="8" LetterSpacing="0.7" Opacity="0.36"/>
+                                        <TextBlock Text="{Binding AnalysisText}" FontSize="9.5" Opacity="0.62"
+                                                   TextWrapping="Wrap" MaxHeight="34" ToolTip.Tip="{Binding AnalysisText}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="3" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding OwnerRatingText}" FontSize="10" FontWeight="SemiBold"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Text="{Binding LocalStatusText}" FontSize="9.5"
+                                                   Foreground="{Binding LocalStatusBrush}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="3">
+                                        <Button Classes="channel-icon"
+                                                Click="OnProfileTrackDownloadClicked"
+                                                IsVisible="{Binding CanDownload}"
+                                                ToolTip.Tip="Download through YouTube">
+                                            <Image Source="{SvgImage /Assets/download.svg}" Width="15" Height="15"/>
+                                        </Button>
+                                        <Button Classes="channel-icon"
+                                                Click="OnProfileTrackReviewClicked"
+                                                IsVisible="{Binding CanReview}"
+                                                ToolTip.Tip="Rate and accept or decline">
+                                            <Image Source="{SvgImage /Assets/check.svg}" Width="15" Height="15"/>
+                                        </Button>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+                <StackPanel x:Name="ProfileTrackEmptyPanel" Grid.Row="1" IsVisible="False"
+                            HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="5">
+                    <TextBlock x:Name="ProfileTrackEmptyTitle" Text="No public tracks"
+                               FontSize="12.5" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                    <TextBlock x:Name="ProfileTrackEmptyDescription" FontSize="10.5" Opacity="0.48"
+                               TextWrapping="Wrap" TextAlignment="Center" MaxWidth="460"/>
+                </StackPanel>
             </Grid>
         </Grid>
 
