@@ -86,6 +86,30 @@ public sealed class RatingAndLanguageTests : IDisposable
         Assert.Equal(["English", "Japanese"], result.Select(track => track.Title));
     }
 
+    [Fact]
+    public void Search_matches_editable_and_original_titles()
+    {
+        var tracks = new[]
+        {
+            Track(1, "My clean title", "en") with { OriginalTitle = "Uploader title (Official Video)" },
+            Track(2, "Another track", "en") with { OriginalTitle = "Unrelated source title" }
+        };
+
+        List<MusicTrack> Search(string term) => TrackFilter.Apply(
+            tracks,
+            new Dictionary<int, List<int>>(),
+            new Dictionary<int, List<int>>(),
+            new Dictionary<int, List<int>>(),
+            new Dictionary<int, Dictionary<string, double>>(),
+            new HashSet<int>(),
+            new HashSet<bool>(),
+            [],
+            term);
+
+        Assert.Equal([1], Search("clean").Select(track => track.Id));
+        Assert.Equal([1], Search("official video").Select(track => track.Id));
+    }
+
     private static MusicTrack Track(int id, string title, string? languageCode) => new(
         id, string.Empty, title, $"{id}.mp3", null, "2026-01-01T00:00:00Z", null,
         false, null, null, null, "2026-01-01T00:00:00Z", false, true,
@@ -111,6 +135,7 @@ public sealed class RatingAndLanguageTests : IDisposable
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 rating_id INTEGER NULL REFERENCES ratings(id),
                 title TEXT NOT NULL,
+                original_title TEXT NOT NULL DEFAULT '',
                 file_name TEXT NOT NULL UNIQUE,
                 downloaded_at TEXT NOT NULL,
                 updated_at TEXT NOT NULL,

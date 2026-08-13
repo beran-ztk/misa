@@ -1273,7 +1273,9 @@ public partial class MusicView : UserControl
         var term = SearchBox.Text?.Trim();
 
         if (!string.IsNullOrWhiteSpace(term))
-            query = query.Where(track => track.Title.Contains(term, StringComparison.OrdinalIgnoreCase));
+            query = query.Where(track =>
+                track.Title.Contains(term, StringComparison.OrdinalIgnoreCase)
+                || track.OriginalTitle.Contains(term, StringComparison.OrdinalIgnoreCase));
 
         if (_unratedOnly)
             query = query.Where(track => track.RatingId is null);

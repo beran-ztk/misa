@@ -25,7 +25,8 @@ public record MusicTrack(
     string? SourceThumbnailUrl = null,
     string? SourceMetadataUpdatedAt = null,
     int? ChannelId = null,
-    string? LanguageCode = null);
+    string? LanguageCode = null,
+    string OriginalTitle = "");
 
 public sealed record TrackLanguage(string Code, string Name);
 public static class TrackLanguageCatalog

@@ -319,6 +319,7 @@ public sealed class MusicDatabaseImportWorkflowTests : IDisposable
                 rating_id INTEGER NULL,
                 canonical_url TEXT NULL UNIQUE,
                 title TEXT NOT NULL,
+                original_title TEXT NOT NULL DEFAULT '',
                 file_name TEXT NOT NULL UNIQUE,
                 downloaded_at TEXT NOT NULL,
                 updated_at TEXT NOT NULL,

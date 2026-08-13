@@ -345,7 +345,9 @@ public partial class EditTrackOverlay : UserControl
 
     private void UpdateInformationDisplay(MusicTrack track)
     {
+        var originalTitle = OriginalTitle(track);
         TitleDisplayText.Text = DisplayValue(TitleBox.Text);
+        OriginalTitleDisplayText.Text = DisplayValue(originalTitle);
         ChannelDisplayText.Text = DisplayValue(track.ChannelName);
         YouTubeUrlDisplayText.Text = DisplayValue(track.CanonicalUrl);
         ChannelUrlDisplayText.Text = DisplayValue(track.ChannelUrl);
@@ -356,8 +358,12 @@ public partial class EditTrackOverlay : UserControl
         MetadataUpdatedDisplayText.Text = FormatMetadataDate(track.SourceMetadataUpdatedAt, includeTime: true);
         CopyYouTubeUrlButton.IsEnabled = !string.IsNullOrWhiteSpace(track.CanonicalUrl);
         CopyChannelUrlButton.IsEnabled = !string.IsNullOrWhiteSpace(track.ChannelUrl);
+        CopyOriginalTitleButton.IsEnabled = !string.IsNullOrWhiteSpace(originalTitle);
+        RestoreOriginalTitleButton.IsEnabled = !string.IsNullOrWhiteSpace(originalTitle)
+            && !string.Equals(TitleBox.Text?.Trim(), originalTitle, StringComparison.Ordinal);
         OpenChannelButton.IsEnabled = track.ChannelId is not null;
         ToolTip.SetTip(TitleDisplayText, TitleBox.Text);
+        ToolTip.SetTip(OriginalTitleDisplayText, originalTitle);
         ToolTip.SetTip(ChannelDisplayText, track.ChannelName);
         ToolTip.SetTip(YouTubeUrlDisplayText, track.CanonicalUrl);
         ToolTip.SetTip(ChannelUrlDisplayText, track.ChannelUrl);
@@ -389,6 +395,28 @@ public partial class EditTrackOverlay : UserControl
 
     private async void OnCopyChannelUrlClicked(object? sender, RoutedEventArgs e) =>
         await CopyUrlAsync(_track?.ChannelUrl, "Channel URL");
+
+    private async void OnCopyOriginalTitleClicked(object? sender, RoutedEventArgs e) =>
+        await CopyUrlAsync(_track is null ? null : OriginalTitle(_track), "Original title");
+
+    private void OnRestoreOriginalTitleClicked(object? sender, RoutedEventArgs e)
+    {
+        if (_track is null)
+            return;
+
+        var originalTitle = OriginalTitle(_track);
+        if (string.IsNullOrWhiteSpace(originalTitle)
+            || string.Equals(TitleBox.Text?.Trim(), originalTitle, StringComparison.Ordinal))
+            return;
+
+        TitleBox.Text = originalTitle;
+        AutoSaveChanges();
+        UpdateInformationDisplay(_track);
+        ToastRequested?.Invoke("Original title restored");
+    }
+
+    private static string OriginalTitle(MusicTrack track) =>
+        string.IsNullOrWhiteSpace(track.OriginalTitle) ? track.Title : track.OriginalTitle;
 
     private async System.Threading.Tasks.Task CopyUrlAsync(string? url, string label)
     {

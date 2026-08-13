@@ -147,6 +147,7 @@ public class MusicDatabase
                 rating_id           INTEGER NULL REFERENCES ratings(id),
                 canonical_url       TEXT NULL UNIQUE,
                 title               TEXT NOT NULL,
+                original_title      TEXT NOT NULL,
                 file_name           TEXT NOT NULL UNIQUE,
                 duration_seconds    INTEGER NULL,
                 uploaded_at         TEXT NULL,
@@ -2595,12 +2596,12 @@ public class MusicDatabase
 
         var trackId = InsertAndGetId(conn, tx, @"
             INSERT INTO tracks
-                (canonical_url, title, file_name, channel_id, rating_id, uploaded_at, downloaded_at, updated_at,
+                (canonical_url, title, original_title, file_name, channel_id, rating_id, uploaded_at, downloaded_at, updated_at,
                  duration_seconds, file_size_bytes, download_duration_ms, thumbnail, is_public, library_state,
                  needs_reevaluation,
                  source_video_id, view_count, like_count, source_thumbnail_url, source_metadata_updated_at)
             VALUES
-                ($url, $title, $fileName, $channelId, $ratingId, $uploadedAt, $downloadedAt, $updatedAt,
+                ($url, $title, $title, $fileName, $channelId, $ratingId, $uploadedAt, $downloadedAt, $updatedAt,
                  $duration, $fileSizeBytes, $downloadDurationMs, $thumbnail, 1, $libraryState,
                  $needsReview,
                  $videoId, $viewCount, $likeCount, $thumbnailUrl, $metadataUpdatedAt)",
@@ -2641,7 +2642,7 @@ public class MusicDatabase
                 (channel_id, video_id, canonical_url, title, duration_seconds, uploaded_at,
                  discovered_at, updated_at, is_checked, download_status, metadata_status,
                  metadata_updated_at, view_count, like_count, thumbnail_url)
-            SELECT channel_id, COALESCE(source_video_id, 'library-track-' || id), canonical_url, title,
+            SELECT channel_id, COALESCE(source_video_id, 'library-track-' || id), canonical_url, original_title,
                    duration_seconds, uploaded_at, downloaded_at, $now, 1, 'Ready',
                    CASE WHEN source_metadata_updated_at IS NULL THEN 'Pending' ELSE 'Ready' END,
                    source_metadata_updated_at, view_count, like_count, source_thumbnail_url
@@ -2697,11 +2698,11 @@ public class MusicDatabase
         var now = DateTime.UtcNow.ToString("O");
         var trackId = InsertAndGetId(conn, tx, @"
             INSERT INTO tracks
-                (canonical_url, title, file_name, channel_id, rating_id, uploaded_at, downloaded_at, updated_at,
+                (canonical_url, title, original_title, file_name, channel_id, rating_id, uploaded_at, downloaded_at, updated_at,
                  duration_seconds, file_size_bytes, download_duration_ms, thumbnail, analysis_disabled, needs_reevaluation,
                  is_public, library_state)
             VALUES
-                ($url, $title, $fileName, $channelId, NULL, $uploadedAt, $now, $now,
+                ($url, $title, $title, $fileName, $channelId, NULL, $uploadedAt, $now, $now,
                  $duration, $fileSize, $downloadDuration, $thumbnail, 0, 1, 1, 'PendingRating')",
             ("$url", video.CanonicalUrl),
             ("$title", video.Title),
@@ -2888,7 +2889,8 @@ public class MusicDatabase
                                    tracks.duration_seconds, tracks.needs_reevaluation, channels.name, channels.source_url, tracks.uploaded_at,
                                    tracks.updated_at, tracks.analysis_disabled, tracks.is_public, tracks.library_state,
                                    tracks.source_video_id, tracks.view_count, tracks.like_count,
-                                   tracks.source_thumbnail_url, tracks.source_metadata_updated_at, channels.id, tracks.language_code
+                                   tracks.source_thumbnail_url, tracks.source_metadata_updated_at, channels.id, tracks.language_code,
+                                   tracks.original_title
                             FROM tracks LEFT JOIN channels ON channels.id = tracks.channel_id
                             WHERE ($includeRejected = 1 OR tracks.library_state <> 'Rejected')
                             ORDER BY tracks.downloaded_at DESC";
@@ -2910,7 +2912,8 @@ public class MusicDatabase
                                    tracks.duration_seconds, tracks.needs_reevaluation, channels.name, channels.source_url, tracks.uploaded_at,
                                    tracks.updated_at, tracks.analysis_disabled, tracks.is_public, tracks.library_state,
                                    tracks.source_video_id, tracks.view_count, tracks.like_count,
-                                   tracks.source_thumbnail_url, tracks.source_metadata_updated_at, channels.id, tracks.language_code
+                                   tracks.source_thumbnail_url, tracks.source_metadata_updated_at, channels.id, tracks.language_code,
+                                   tracks.original_title
                             FROM tracks LEFT JOIN channels ON channels.id = tracks.channel_id
                             WHERE tracks.id = $trackId";
         cmd.Parameters.AddWithValue("$trackId", trackId);
@@ -2926,7 +2929,8 @@ public class MusicDatabase
                                    tracks.duration_seconds, tracks.needs_reevaluation, channels.name, channels.source_url, tracks.uploaded_at,
                                    tracks.updated_at, tracks.analysis_disabled, tracks.is_public, tracks.library_state,
                                    tracks.source_video_id, tracks.view_count, tracks.like_count,
-                                   tracks.source_thumbnail_url, tracks.source_metadata_updated_at, channels.id, tracks.language_code
+                                   tracks.source_thumbnail_url, tracks.source_metadata_updated_at, channels.id, tracks.language_code,
+                                   tracks.original_title
                             FROM tracks LEFT JOIN channels ON channels.id = tracks.channel_id
                             WHERE tracks.canonical_url = $canonicalUrl";
         cmd.Parameters.AddWithValue("$canonicalUrl", canonicalUrl);
@@ -2964,7 +2968,8 @@ public class MusicDatabase
                                    tracks.duration_seconds, tracks.needs_reevaluation, channels.name, channels.source_url, tracks.uploaded_at,
                                    tracks.updated_at, tracks.analysis_disabled, tracks.is_public, tracks.library_state,
                                    tracks.source_video_id, tracks.view_count, tracks.like_count,
-                                   tracks.source_thumbnail_url, tracks.source_metadata_updated_at, channels.id, tracks.language_code
+                                   tracks.source_thumbnail_url, tracks.source_metadata_updated_at, channels.id, tracks.language_code,
+                                   tracks.original_title
                             FROM tracks
                             LEFT JOIN channels ON channels.id = tracks.channel_id
                             LEFT JOIN track_analysis analysis ON analysis.track_id = tracks.id
@@ -2998,7 +3003,8 @@ public class MusicDatabase
                                    tracks.duration_seconds, tracks.needs_reevaluation, channels.name, channels.source_url, tracks.uploaded_at,
                                    tracks.updated_at, tracks.analysis_disabled, tracks.is_public, tracks.library_state,
                                    tracks.source_video_id, tracks.view_count, tracks.like_count,
-                                   tracks.source_thumbnail_url, tracks.source_metadata_updated_at, channels.id, tracks.language_code
+                                   tracks.source_thumbnail_url, tracks.source_metadata_updated_at, channels.id, tracks.language_code,
+                                   tracks.original_title
                             FROM tracks LEFT JOIN channels ON channels.id = tracks.channel_id
                             WHERE tracks.rating_id IS NULL AND tracks.library_state <> 'Rejected'
                             ORDER BY tracks.downloaded_at DESC";
@@ -3039,7 +3045,8 @@ public class MusicDatabase
             reader.IsDBNull(18) ? null : reader.GetString(18),
             reader.IsDBNull(19) ? null : reader.GetString(19),
             reader.IsDBNull(20) ? null : reader.GetInt32(20),
-            reader.IsDBNull(21) ? null : reader.GetString(21));
+            reader.IsDBNull(21) ? null : reader.GetString(21),
+            reader.GetString(22));
     }
 
     public void SetTrackLanguage(int trackId, string? languageCode)
