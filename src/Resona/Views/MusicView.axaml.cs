@@ -3616,7 +3616,8 @@ public partial class MusicView : UserControl
             return;
         }
 
-        MusicLibraryService.Current.SetTrackRatingBand(item.Track.Id, ratingBand);
+        RatingBand? nextRatingBand = item.Track.RatingBand == ratingBand ? null : ratingBand;
+        MusicLibraryService.Current.SetTrackRatingBand(item.Track.Id, nextRatingBand);
         UpdateTrackInList(item.Track.Id);
     }
 
