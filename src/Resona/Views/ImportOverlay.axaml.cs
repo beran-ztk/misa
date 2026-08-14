@@ -660,7 +660,7 @@ public partial class ImportOverlay : UserControl
             items.Add(new AnalysisQueueItem(
                 activeTrack.Id,
                 activeTrack.DurationSeconds,
-                activeTrack.Title,
+                activeTrack.DisplayTitle,
                 "analyzing",
                 true));
 
@@ -669,7 +669,7 @@ public partial class ImportOverlay : UserControl
             .Select(id => new AnalysisQueueItem(
                 tracks[id].Id,
                 tracks[id].DurationSeconds,
-                tracks[id].Title,
+                tracks[id].DisplayTitle,
                 snapshot.ServerConnectionState == AnalysisServerConnectionState.Unreachable
                     ? "waiting for server"
                     : snapshot.IsWaitingForServerConfiguration ? "waiting for server setup" : "waiting",

@@ -35,7 +35,7 @@ public static class TrackFilter
         var term = searchText?.Trim();
         if (!string.IsNullOrEmpty(term))
             query = query.Where(t =>
-                t.Title.Contains(term, StringComparison.OrdinalIgnoreCase)
+                t.DisplayTitle.Contains(term, StringComparison.OrdinalIgnoreCase)
                 || t.OriginalTitle.Contains(term, StringComparison.OrdinalIgnoreCase));
         
         // Apply filter groups: OR between positive groups, AND within a group.

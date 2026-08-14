@@ -148,6 +148,9 @@ public class MusicDatabase
                 canonical_url       TEXT NULL UNIQUE,
                 title               TEXT NOT NULL,
                 original_title      TEXT NOT NULL,
+                artist              TEXT NULL,
+                remix               TEXT NULL,
+                edits               TEXT NULL,
                 file_name           TEXT NOT NULL UNIQUE,
                 duration_seconds    INTEGER NULL,
                 uploaded_at         TEXT NULL,
@@ -308,6 +311,9 @@ public class MusicDatabase
             "CREATE INDEX IF NOT EXISTS ix_tracks_library_state ON tracks(library_state, downloaded_at DESC)");
         EnsureColumn(conn, "tracks", "analysis_disabled", "INTEGER NOT NULL DEFAULT 0");
         EnsureColumn(conn, "tracks", "language_code", "TEXT NULL");
+        EnsureColumn(conn, "tracks", "artist", "TEXT NULL");
+        EnsureColumn(conn, "tracks", "remix", "TEXT NULL");
+        EnsureColumn(conn, "tracks", "edits", "TEXT NULL");
         EnsureCurrentRatings(conn);
         EnsureColumn(conn, "tracks", "is_public", "INTEGER NOT NULL DEFAULT 1");
         EnsureColumn(conn, "tracks", "needs_reevaluation", "INTEGER NOT NULL DEFAULT 0");
@@ -2890,7 +2896,7 @@ public class MusicDatabase
                                    tracks.updated_at, tracks.analysis_disabled, tracks.is_public, tracks.library_state,
                                    tracks.source_video_id, tracks.view_count, tracks.like_count,
                                    tracks.source_thumbnail_url, tracks.source_metadata_updated_at, channels.id, tracks.language_code,
-                                   tracks.original_title
+                                   tracks.original_title, tracks.artist, tracks.remix, tracks.edits
                             FROM tracks LEFT JOIN channels ON channels.id = tracks.channel_id
                             WHERE ($includeRejected = 1 OR tracks.library_state <> 'Rejected')
                             ORDER BY tracks.downloaded_at DESC";
@@ -2913,7 +2919,7 @@ public class MusicDatabase
                                    tracks.updated_at, tracks.analysis_disabled, tracks.is_public, tracks.library_state,
                                    tracks.source_video_id, tracks.view_count, tracks.like_count,
                                    tracks.source_thumbnail_url, tracks.source_metadata_updated_at, channels.id, tracks.language_code,
-                                   tracks.original_title
+                                   tracks.original_title, tracks.artist, tracks.remix, tracks.edits
                             FROM tracks LEFT JOIN channels ON channels.id = tracks.channel_id
                             WHERE tracks.id = $trackId";
         cmd.Parameters.AddWithValue("$trackId", trackId);
@@ -2930,7 +2936,7 @@ public class MusicDatabase
                                    tracks.updated_at, tracks.analysis_disabled, tracks.is_public, tracks.library_state,
                                    tracks.source_video_id, tracks.view_count, tracks.like_count,
                                    tracks.source_thumbnail_url, tracks.source_metadata_updated_at, channels.id, tracks.language_code,
-                                   tracks.original_title
+                                   tracks.original_title, tracks.artist, tracks.remix, tracks.edits
                             FROM tracks LEFT JOIN channels ON channels.id = tracks.channel_id
                             WHERE tracks.canonical_url = $canonicalUrl";
         cmd.Parameters.AddWithValue("$canonicalUrl", canonicalUrl);
@@ -2969,7 +2975,7 @@ public class MusicDatabase
                                    tracks.updated_at, tracks.analysis_disabled, tracks.is_public, tracks.library_state,
                                    tracks.source_video_id, tracks.view_count, tracks.like_count,
                                    tracks.source_thumbnail_url, tracks.source_metadata_updated_at, channels.id, tracks.language_code,
-                                   tracks.original_title
+                                   tracks.original_title, tracks.artist, tracks.remix, tracks.edits
                             FROM tracks
                             LEFT JOIN channels ON channels.id = tracks.channel_id
                             LEFT JOIN track_analysis analysis ON analysis.track_id = tracks.id
@@ -3004,7 +3010,7 @@ public class MusicDatabase
                                    tracks.updated_at, tracks.analysis_disabled, tracks.is_public, tracks.library_state,
                                    tracks.source_video_id, tracks.view_count, tracks.like_count,
                                    tracks.source_thumbnail_url, tracks.source_metadata_updated_at, channels.id, tracks.language_code,
-                                   tracks.original_title
+                                   tracks.original_title, tracks.artist, tracks.remix, tracks.edits
                             FROM tracks LEFT JOIN channels ON channels.id = tracks.channel_id
                             WHERE tracks.rating_id IS NULL AND tracks.library_state <> 'Rejected'
                             ORDER BY tracks.downloaded_at DESC";
@@ -3046,7 +3052,10 @@ public class MusicDatabase
             reader.IsDBNull(19) ? null : reader.GetString(19),
             reader.IsDBNull(20) ? null : reader.GetInt32(20),
             reader.IsDBNull(21) ? null : reader.GetString(21),
-            reader.GetString(22));
+            reader.GetString(22),
+            reader.IsDBNull(23) ? null : reader.GetString(23),
+            reader.IsDBNull(24) ? null : reader.GetString(24),
+            reader.IsDBNull(25) ? null : reader.GetString(25));
     }
 
     public void SetTrackLanguage(int trackId, string? languageCode)
@@ -3143,7 +3152,16 @@ public class MusicDatabase
     public List<int> GetTrackStyleIds(int trackId) => [];
     public List<Style> GetStyles() => [];
 
-    public void UpdateTrack(int id, string title, List<int> genreIds, int? ratingId, List<int> _, bool isPublic)
+    public void UpdateTrack(
+        int id,
+        string title,
+        string? artist,
+        string? remix,
+        string? edits,
+        List<int> genreIds,
+        int? ratingId,
+        List<int> _,
+        bool isPublic)
     {
         using var conn = Open();
         using var tx = conn.BeginTransaction();
@@ -3152,13 +3170,17 @@ public class MusicDatabase
         ExecuteInsert(conn, tx,
             @"UPDATE tracks
               SET title = $title,
+                  artist = $artist,
+                  remix = $remix,
+                  edits = $edits,
                   rating_id = $ratingId,
                   library_state = CASE WHEN $ratingId IS NULL THEN 'PendingRating' ELSE 'Active' END,
                   is_public = $isPublic,
                   updated_at = $updatedAt,
                   needs_reevaluation = CASE WHEN $ratingId IS NULL THEN 1 ELSE 0 END
               WHERE id = $id",
-            ("$id", id), ("$title", title), ("$ratingId", ratingId), ("$isPublic", isPublic ? 1 : 0), ("$updatedAt", now));
+            ("$id", id), ("$title", title), ("$artist", artist), ("$remix", remix), ("$edits", edits),
+            ("$ratingId", ratingId), ("$isPublic", isPublic ? 1 : 0), ("$updatedAt", now));
 
         if (ratingId is not null)
             ExecuteInsert(conn, tx, @"

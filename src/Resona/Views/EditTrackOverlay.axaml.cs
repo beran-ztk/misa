@@ -58,6 +58,9 @@ public partial class EditTrackOverlay : UserControl
     private bool _isPublic;
     private bool _initialIsPublic;
     private string _initialTitle = string.Empty;
+    private string? _initialArtist;
+    private string? _initialRemix;
+    private string? _initialEdits;
     private bool _isEditingInformation;
     private int _motionGeneration;
     private bool _isClosing;
@@ -89,7 +92,10 @@ public partial class EditTrackOverlay : UserControl
     public EditTrackOverlay()
     {
         InitializeComponent();
-        TitleBox.LostFocus += (_, _) => CommitTitleEdit();
+        TitleBox.LostFocus += (_, _) => CommitInformationEdit();
+        ArtistBox.LostFocus += (_, _) => CommitInformationEdit();
+        RemixBox.LostFocus += (_, _) => CommitInformationEdit();
+        EditsBox.LostFocus += (_, _) => CommitInformationEdit();
         _analysisElapsedTimer.Tick += (_, _) => UpdateAnalysisElapsedTime();
     }
 
@@ -267,6 +273,9 @@ public partial class EditTrackOverlay : UserControl
     {
         _loadingTrack = true;
         TitleBox.Text = track.Title;
+        ArtistBox.Text = track.Artist;
+        RemixBox.Text = track.Remix;
+        EditsBox.Text = track.Edits;
         SetInformationEditing(false);
         UpdateInformationDisplay(track);
         SetPublicSelection(track.IsPublic);
@@ -313,11 +322,11 @@ public partial class EditTrackOverlay : UserControl
     private void OnEditInformationClicked(object? sender, RoutedEventArgs e)
     {
         if (_isEditingInformation)
-            CommitTitleEdit();
+            CommitInformationEdit();
         SetInformationEditing(!_isEditingInformation);
     }
 
-    private void CommitTitleEdit()
+    private void CommitInformationEdit()
     {
         if (_track is null || _loadingTrack)
             return;
@@ -332,11 +341,17 @@ public partial class EditTrackOverlay : UserControl
     {
         _isEditingInformation = isEditing;
         TitleBox.IsVisible = isEditing;
+        ArtistBox.IsVisible = isEditing;
+        RemixBox.IsVisible = isEditing;
+        EditsBox.IsVisible = isEditing;
         TitleDisplayText.IsVisible = !isEditing;
+        ArtistDisplayText.IsVisible = !isEditing;
+        RemixDisplayText.IsVisible = !isEditing;
+        EditsDisplayText.IsVisible = !isEditing;
         EditInformationButton.Background = isEditing
             ? ThemeResources.Brush("Theme.Brush.AccentSurface")
             : Brushes.Transparent;
-        ToolTip.SetTip(EditInformationButton, isEditing ? "Finish editing title" : "Edit title");
+        ToolTip.SetTip(EditInformationButton, isEditing ? "Finish editing information" : "Edit information");
         if (isEditing)
             TitleBox.Focus();
     }
@@ -344,7 +359,10 @@ public partial class EditTrackOverlay : UserControl
     private void UpdateInformationDisplay(MusicTrack track)
     {
         var originalTitle = OriginalTitle(track);
+        ArtistDisplayText.Text = DisplayValue(ArtistBox.Text);
         TitleDisplayText.Text = DisplayValue(TitleBox.Text);
+        RemixDisplayText.Text = DisplayValue(RemixBox.Text);
+        EditsDisplayText.Text = DisplayValue(EditsBox.Text);
         OriginalTitleDisplayText.Text = DisplayValue(originalTitle);
         ChannelDisplayText.Text = DisplayValue(track.ChannelName);
         YouTubeUrlDisplayText.Text = DisplayValue(track.CanonicalUrl);
@@ -359,6 +377,9 @@ public partial class EditTrackOverlay : UserControl
         CopyOriginalTitleButton.IsEnabled = !string.IsNullOrWhiteSpace(originalTitle);
         OpenChannelButton.IsEnabled = track.ChannelId is not null;
         ToolTip.SetTip(TitleDisplayText, TitleBox.Text);
+        ToolTip.SetTip(ArtistDisplayText, ArtistBox.Text);
+        ToolTip.SetTip(RemixDisplayText, RemixBox.Text);
+        ToolTip.SetTip(EditsDisplayText, EditsBox.Text);
         ToolTip.SetTip(OriginalTitleDisplayText, originalTitle);
         ToolTip.SetTip(ChannelDisplayText, track.ChannelName);
         ToolTip.SetTip(YouTubeUrlDisplayText, track.CanonicalUrl);
@@ -661,6 +682,9 @@ public partial class EditTrackOverlay : UserControl
         IReadOnlySet<int> selectedModelGenreIds)
     {
         _initialTitle = track.Title;
+        _initialArtist = NormalizeOptionalText(track.Artist);
+        _initialRemix = NormalizeOptionalText(track.Remix);
+        _initialEdits = NormalizeOptionalText(track.Edits);
         _initialRatingId = track.RatingId;
         _initialLanguageCode = track.LanguageCode;
         _initialIsPublic = track.IsPublic;
@@ -856,10 +880,16 @@ public partial class EditTrackOverlay : UserControl
             return;
 
         var title = TitleBox.Text.Trim();
+        var artist = NormalizeOptionalText(ArtistBox.Text);
+        var remix = NormalizeOptionalText(RemixBox.Text);
+        var edits = NormalizeOptionalText(EditsBox.Text);
         var tagIds = SelectedTagIds();
         var styleIds = SelectedStyleIds().ToList();
         var languageCode = SelectedLanguageCode();
         var coreChanged = !string.Equals(title, _initialTitle, StringComparison.Ordinal)
+            || !string.Equals(artist, _initialArtist, StringComparison.Ordinal)
+            || !string.Equals(remix, _initialRemix, StringComparison.Ordinal)
+            || !string.Equals(edits, _initialEdits, StringComparison.Ordinal)
             || SelectedRatingId() != _initialRatingId
             || _isPublic != _initialIsPublic
             || !styleIds.ToHashSet().SetEquals(_initialStyleIds);
@@ -875,6 +905,9 @@ public partial class EditTrackOverlay : UserControl
             MusicLibraryService.Current.UpdateTrack(
                 _track.Id,
                 title,
+                artist,
+                remix,
+                edits,
                 [],
                 SelectedRatingId(),
                 styleIds,
@@ -895,6 +928,9 @@ public partial class EditTrackOverlay : UserControl
         _track = _track with
         {
             Title = title,
+            Artist = artist,
+            Remix = remix,
+            Edits = edits,
             RatingId = SelectedRatingId(),
             LibraryState = SelectedRatingId() is null
                 ? _track.LibraryState
@@ -905,6 +941,9 @@ public partial class EditTrackOverlay : UserControl
         CaptureChangeSnapshot(_track, tagIds, styleIds.ToHashSet(), _pendingEnabledModelGenreIds);
         TrackSaved?.Invoke(_track.Id);
     }
+
+    private static string? NormalizeOptionalText(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
     private void OnPreviewClicked(object? sender, RoutedEventArgs e)
     {
@@ -1687,7 +1726,7 @@ public partial class EditTrackOverlay : UserControl
 
         if (_isEditingInformation)
         {
-            CommitTitleEdit();
+            CommitInformationEdit();
             SetInformationEditing(false);
         }
 

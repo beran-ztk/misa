@@ -55,9 +55,18 @@ public class MusicLibraryService
     public List<int> GetTrackGenreIds(int trackId) => _db.GetTrackGenreIds(trackId);
     public List<TrackModelGenre> GetTrackModelGenres(int trackId) => _db.GetTrackModelGenres(trackId);
     public void SetTrackModelGenreEnabled(int trackId, int genreId, bool isEnabled) => _db.SetTrackModelGenreEnabled(trackId, genreId, isEnabled);
-    public void UpdateTrack(int id, string title, List<int> genreIds, int? ratingId, List<int> styleIds, bool isPublic)
+    public void UpdateTrack(
+        int id,
+        string title,
+        string? artist,
+        string? remix,
+        string? edits,
+        List<int> genreIds,
+        int? ratingId,
+        List<int> styleIds,
+        bool isPublic)
     {
-        _db.UpdateTrack(id, title, genreIds, ratingId, styleIds, isPublic);
+        _db.UpdateTrack(id, title, artist, remix, edits, genreIds, ratingId, styleIds, isPublic);
         if (ratingId is not null)
             BackgroundAnalysisService.Current.EnqueueTrack(id);
     }

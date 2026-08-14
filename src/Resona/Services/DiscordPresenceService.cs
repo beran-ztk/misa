@@ -138,9 +138,9 @@ public sealed class DiscordPresenceService : IDisposable
         string.IsNullOrWhiteSpace(item.ChannelText) ? null : item.ChannelText.Trim();
 
     private static string PresenceTitle(TrackDisplayItem item) =>
-        string.IsNullOrWhiteSpace(item.Track.Title)
+        string.IsNullOrWhiteSpace(item.Track.DisplayTitle)
             ? "Unknown track"
-            : item.Track.Title.Trim();
+            : item.Track.DisplayTitle.Trim();
 
     private static string? PresenceUrl(string? value)
     {

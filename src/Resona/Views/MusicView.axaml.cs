@@ -773,7 +773,7 @@ public partial class MusicView : UserControl
 
         if (_engine.ActiveTrackId == trackId)
         {
-            NowPlayingText.Text = updatedTrack.Title;
+            NowPlayingText.Text = updatedTrack.DisplayTitle;
             UpdateDiscordPresence();
             UpdatePlayerArtworkBackground(updatedTrack);
         }
@@ -1266,7 +1266,7 @@ public partial class MusicView : UserControl
 
         if (!string.IsNullOrWhiteSpace(term))
             query = query.Where(track =>
-                track.Title.Contains(term, StringComparison.OrdinalIgnoreCase)
+                track.DisplayTitle.Contains(term, StringComparison.OrdinalIgnoreCase)
                 || track.OriginalTitle.Contains(term, StringComparison.OrdinalIgnoreCase));
 
         if (_manualRatingFilter && selectedRatingIds.Count == 0)
@@ -3332,7 +3332,7 @@ public partial class MusicView : UserControl
         _deleteTrackConfirmationCompletion = new TaskCompletionSource<bool>(
             TaskCreationOptions.RunContinuationsAsynchronously);
         DeleteTrackConfirmationText.Text =
-            $"\u201c{track.Title}\u201d will be removed from the library and its local file will be permanently deleted.";
+            $"\u201c{track.DisplayTitle}\u201d will be removed from the library and its local file will be permanently deleted.";
         DeleteTrackConfirmation.IsVisible = true;
         DeleteTrackConfirmation.Focus();
         CancelTrackDeleteButton.Focus();
@@ -3750,7 +3750,7 @@ public partial class MusicView : UserControl
             SetFilteredSelectedIndex(filteredIndex);
         }
 
-        NowPlayingText.Text = track.Title;
+        NowPlayingText.Text = track.DisplayTitle;
         UpdateDiscordPresence();
         UpdatePlayerArtworkBackground(track);
         PlaybackInfoPanel.IsVisible = true;
@@ -3805,7 +3805,7 @@ public partial class MusicView : UserControl
             EnsureVisibleWindowAround(index);
             SetFilteredSelectedIndex(index);
         }
-        NowPlayingText.Text = $"Preview · {track.Title}";
+        NowPlayingText.Text = $"Preview · {track.DisplayTitle}";
         UpdatePlayerArtworkBackground(track);
         PlaybackInfoPanel.IsVisible = true;
         _nextTrackIndex = -1;
@@ -3852,7 +3852,7 @@ public partial class MusicView : UserControl
                 EnsureVisibleWindowAround(index);
                 SetFilteredSelectedIndex(index);
             }
-            NowPlayingText.Text = restoredTrack.Title;
+            NowPlayingText.Text = restoredTrack.DisplayTitle;
             UpdatePlayerArtworkBackground(restoredTrack);
             PlaybackInfoPanel.IsVisible = true;
             _nextTrackIndex = PeekNextTrackIndex(index);
@@ -4801,7 +4801,7 @@ public partial class MusicView : UserControl
         }
 
         UpcomingBar.IsVisible = true;
-        UpcomingTrackText.Text = _allItems[_nextTrackIndex].Track.Title;
+        UpcomingTrackText.Text = _allItems[_nextTrackIndex].Track.DisplayTitle;
         CrossfadeStatusText.Text = string.Empty;
     }
 
@@ -4857,8 +4857,8 @@ public partial class MusicView : UserControl
 
         _windowsMediaSession.UpdateMetadata(
             item.Track.Id,
-            item.Track.Title,
-            item.ChannelText,
+            TrackTitleFormatter.Format(null, item.Track.Title, item.Track.Remix, item.Track.Edits),
+            string.IsNullOrWhiteSpace(item.Track.Artist) ? item.ChannelText : item.Track.Artist,
             _engine.CurrentTime,
             _engine.TotalTime,
             filePath,

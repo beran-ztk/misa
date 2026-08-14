@@ -590,7 +590,7 @@
                                               Grid.Column="1"
                                               ColumnDefinitions="Auto,*">
                                             <TextBlock Grid.Column="0"
-                                                       Text="{Binding Track.Title}"
+                                                       Text="{Binding Track.DisplayTitle}"
                                                        Foreground="{Binding TitleBrush}"
                                                        FontSize="14"
                                                        FontWeight="SemiBold"
