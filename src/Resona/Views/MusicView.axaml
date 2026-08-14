@@ -613,7 +613,8 @@
                                             </Grid.ColumnDefinitions>
                                             <TextBlock Grid.Column="0"
                                                        Text="{Binding ChannelText}"
-                                                       FontSize="10.5" Opacity="0.62"
+                                                       FontSize="11"
+                                                       Opacity="0.7"
                                                        Foreground="{DynamicResource Theme.Brush.TextPrimary}"
                                                        MaxWidth="180" TextTrimming="CharacterEllipsis"
                                                        VerticalAlignment="Center"/>

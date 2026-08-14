@@ -21,6 +21,7 @@ public sealed class TrackTagSummaryControl : Panel
     private readonly TextBlock _moreLabel = new()
     {
         FontSize = 9.5,
+        LineHeight = 18,
         FontWeight = FontWeight.SemiBold,
         Foreground = ThemeResources.Brush("Theme.Brush.TextMuted"),
         Opacity = 0.72,
@@ -42,6 +43,7 @@ public sealed class TrackTagSummaryControl : Panel
     public TrackTagSummaryControl()
     {
         ClipToBounds = true;
+        MinHeight = 18;
         VerticalAlignment = VerticalAlignment.Center;
         Children.Add(_moreLabel);
     }
@@ -59,6 +61,7 @@ public sealed class TrackTagSummaryControl : Panel
                 Text = $"# {tag.Name}",
                 Foreground = tag.Foreground,
                 FontSize = 9.5,
+                LineHeight = 18,
                 FontWeight = FontWeight.Medium,
                 Opacity = 0.82,
                 Margin = new Thickness(0, 0, 9, 0),
