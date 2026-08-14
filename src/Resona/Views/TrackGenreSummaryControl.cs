@@ -25,7 +25,7 @@ public sealed class TrackGenreSummaryControl : Panel
         FontSize = 10,
         FontWeight = FontWeight.SemiBold,
         Foreground = ThemeResources.Brush("Theme.Brush.TextPrimary"),
-        Opacity = 0.9,
+        Opacity = 0,
         Margin = new Thickness(5, 0, 0, 0),
         VerticalAlignment = VerticalAlignment.Center,
         Effect = CreateTextShadow()
@@ -53,7 +53,7 @@ public sealed class TrackGenreSummaryControl : Panel
         Children.Clear();
         _genreLabels.Clear();
         _separatorLabels.Clear();
-        _moreLabel.IsVisible = false;
+        _moreLabel.Opacity = 0;
 
         var genres = Genres ?? [];
         for (var index = 0; index < genres.Count; index++)
@@ -115,16 +115,15 @@ public sealed class TrackGenreSummaryControl : Panel
         var genres = Genres ?? [];
         if (genres.Count == 0)
         {
-            _moreLabel.IsVisible = false;
+            _moreLabel.Opacity = 0;
             return finalSize;
         }
 
         var count = genres.Count;
         var isTruncated = WidthFor(count) > finalSize.Width;
-        _moreLabel.IsVisible = isTruncated;
+        _moreLabel.Opacity = isTruncated ? 0.9 : 0;
         if (isTruncated)
         {
-            _moreLabel.Measure(new Size(double.PositiveInfinity, finalSize.Height));
             while (count > 0 && WidthFor(count) + _moreLabel.DesiredSize.Width > finalSize.Width)
                 count--;
         }
@@ -133,19 +132,21 @@ public sealed class TrackGenreSummaryControl : Panel
         for (var index = 0; index < _genreLabels.Count; index++)
         {
             var label = _genreLabels[index];
-            label.IsVisible = index < count;
+            var labelIsVisible = index < count;
+            label.Opacity = labelIsVisible ? 0.9 : 0;
             if (index > 0)
             {
                 var separator = _separatorLabels[index - 1];
-                separator.IsVisible = index < count;
-                if (separator.IsVisible)
+                var separatorIsVisible = index < count;
+                separator.Opacity = separatorIsVisible ? 0.9 : 0;
+                if (separatorIsVisible)
                 {
                     var separatorY = Math.Max(0, (finalSize.Height - separator.DesiredSize.Height) / 2);
                     separator.Arrange(new Rect(x, separatorY, separator.DesiredSize.Width, separator.DesiredSize.Height));
                     x += separator.DesiredSize.Width;
                 }
             }
-            if (!label.IsVisible)
+            if (!labelIsVisible)
                 continue;
 
             var y = Math.Max(0, (finalSize.Height - label.DesiredSize.Height) / 2);
@@ -153,7 +154,7 @@ public sealed class TrackGenreSummaryControl : Panel
             x += label.DesiredSize.Width;
         }
 
-        if (_moreLabel.IsVisible)
+        if (isTruncated)
         {
             var y = Math.Max(0, (finalSize.Height - _moreLabel.DesiredSize.Height) / 2);
             _moreLabel.Arrange(new Rect(x, y, _moreLabel.DesiredSize.Width, _moreLabel.DesiredSize.Height));
