@@ -514,7 +514,7 @@
                                       VerticalAlignment="Top">
 
                                     <Border Grid.Column="0"
-                                            Width="2" Height="{Binding PlayingAccentHeight}"
+                                            Width="2" Height="200"
                                             Background="{Binding PlayingAccent}"
                                             VerticalAlignment="Center"/>
 
@@ -592,7 +592,7 @@
                                           VerticalAlignment="Center"
                                           RowDefinitions="Auto,Auto"
                                           ColumnDefinitions="70,*"
-                                          Margin="0,0,88,0"
+                                          Margin="{Binding TrackContentMargin}"
                                           RowSpacing="4">
                                         <TextBlock Grid.RowSpan="2"
                                                    Grid.Column="0"
@@ -686,25 +686,45 @@
                                             HorizontalAlignment="Right"
                                             VerticalAlignment="Top"
                                             IsVisible="{Binding IsPlaying}">
-                                    <Button Width="27" Height="27" Padding="0"
-                                            Background="#18181715" BorderThickness="0"
-                                            CornerRadius="5"
-                                            FontFamily="Consolas" FontSize="14"
+                                    <Button Width="25" Height="25" Padding="0"
+                                            Background="Transparent" BorderThickness="0"
                                             HorizontalContentAlignment="Center"
                                             VerticalContentAlignment="Center"
-                                            Click="OnPlayingTrackRatingDownClicked"
-                                            ToolTip.Tip="Lower rating">↓</Button>
-                                    <Button Width="27" Height="27" Padding="0"
-                                            Background="#18181715" BorderThickness="0"
-                                            CornerRadius="5"
-                                            FontFamily="Consolas" FontSize="14"
+                                            Click="OnPlayingTrackBandLowClicked"
+                                            ToolTip.Tip="Set rating position to Low">
+                                        <Border Width="8" Height="14"
+                                                Background="#E85C5C"
+                                                RenderTransformOrigin="50%,50%">
+                                            <Border.OpacityMask>
+                                                <ImageBrush Source="avares://Resona/Assets/rating-band-arrow.png" Stretch="Uniform"/>
+                                            </Border.OpacityMask>
+                                            <Border.RenderTransform>
+                                                <RotateTransform Angle="180"/>
+                                            </Border.RenderTransform>
+                                        </Border>
+                                    </Button>
+                                    <Button Width="25" Height="25" Padding="0"
+                                            Background="Transparent" BorderThickness="0"
                                             HorizontalContentAlignment="Center"
                                             VerticalContentAlignment="Center"
-                                            Click="OnPlayingTrackRatingUpClicked"
-                                            ToolTip.Tip="Raise rating">↑</Button>
-                                    <Button Width="27" Height="27" Padding="0"
-                                            Background="#18181715" BorderThickness="0"
-                                            CornerRadius="5"
+                                            Click="OnPlayingTrackBandMidClicked"
+                                            ToolTip.Tip="Set rating position to Mid">
+                                        <Ellipse Width="6" Height="6" Fill="#F5F5EE"/>
+                                    </Button>
+                                    <Button Width="25" Height="25" Padding="0"
+                                            Background="Transparent" BorderThickness="0"
+                                            HorizontalContentAlignment="Center"
+                                            VerticalContentAlignment="Center"
+                                            Click="OnPlayingTrackBandHighClicked"
+                                            ToolTip.Tip="Set rating position to High">
+                                        <Border Width="8" Height="14" Background="#53D27C">
+                                            <Border.OpacityMask>
+                                                <ImageBrush Source="avares://Resona/Assets/rating-band-arrow.png" Stretch="Uniform"/>
+                                            </Border.OpacityMask>
+                                        </Border>
+                                    </Button>
+                                    <Button Width="25" Height="25" Padding="0"
+                                            Background="Transparent" BorderThickness="0"
                                             HorizontalContentAlignment="Center"
                                             VerticalContentAlignment="Center"
                                             Click="OnPlayingTrackDeleteClicked"
@@ -712,38 +732,21 @@
                                         <Image Source="{SvgImage /Assets/trash.svg}"
                                                Width="13" Height="13" Opacity="0.72"/>
                                     </Button>
+                                    <TextBlock Text="{Binding DurationText}"
+                                               Margin="8,0,2,0"
+                                               FontFamily="Consolas"
+                                               FontSize="10.5"
+                                               Foreground="#E2DAC0"
+                                               VerticalAlignment="Center"/>
                                 </StackPanel>
 
-                                <Grid Margin="144,56,94,8"
-                                      RowDefinitions="Auto,Auto"
-                                      RowSpacing="5"
-                                      VerticalAlignment="Bottom"
+                                <Grid Margin="144,51,12,7"
+                                      RowDefinitions="23,23"
+                                      RowSpacing="0"
+                                      VerticalAlignment="Stretch"
                                       IsVisible="{Binding IsPlaying}">
-                                    <Grid Grid.Row="0" ColumnDefinitions="Auto,Auto,*" ColumnSpacing="18">
-                                        <TextBlock Grid.Column="0"
-                                                   Text="{Binding PlayingAudioText}"
-                                                   IsVisible="{Binding HasPlayingAudio}"
-                                                   FontFamily="Consolas"
-                                                   FontSize="10"
-                                                   Foreground="#C9D7E6"
-                                                   VerticalAlignment="Center"/>
-                                        <TextBlock Grid.Column="1"
-                                                   Text="{Binding PlayingUsageText}"
-                                                   IsVisible="{Binding HasPlayingUsage}"
-                                                   FontSize="10"
-                                                   Foreground="{DynamicResource Theme.Brush.TextSecondary}"
-                                                   Opacity="0.82"
-                                                   VerticalAlignment="Center"/>
-                                        <TextBlock Grid.Column="2"
-                                                   Text="{Binding PlayingSourceText}"
-                                                   IsVisible="{Binding HasPlayingSource}"
-                                                   FontSize="9.5"
-                                                   Foreground="{DynamicResource Theme.Brush.TextMuted}"
-                                                   Opacity="0.72"
-                                                   HorizontalAlignment="Right"
-                                                   VerticalAlignment="Center"/>
-                                    </Grid>
-                                    <ItemsControl Grid.Row="1"
+                                    <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="16">
+                                    <ItemsControl
                                                   ItemsSource="{Binding PlayingMoodDisplays}"
                                                   IsVisible="{Binding HasPlayingMoods}">
                                         <ItemsControl.ItemsPanel>
@@ -760,16 +763,52 @@
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
-                                </Grid>
+                                        <TextBlock Text="{Binding PlayingAudioText}"
+                                                   IsVisible="{Binding HasPlayingAudio}"
+                                                   FontFamily="Consolas"
+                                                   FontSize="10"
+                                                   Foreground="#C9D7E6"
+                                                   VerticalAlignment="Center"/>
+                                    </StackPanel>
 
-                                <TextBlock Text="{Binding DurationText}"
-                                           IsVisible="{Binding IsPlaying}"
-                                           Margin="0,0,14,9"
-                                           FontFamily="Consolas"
-                                           FontSize="10.5"
-                                           Foreground="#E2DAC0"
-                                           HorizontalAlignment="Right"
-                                           VerticalAlignment="Bottom"/>
+                                    <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                        <TextBlock Grid.Column="0"
+                                                   Text="{Binding PlayingMetadataText}"
+                                                   IsVisible="{Binding HasPlayingMetadata}"
+                                                   FontSize="10"
+                                                   Foreground="{DynamicResource Theme.Brush.TextSecondary}"
+                                                   Opacity="0.78"
+                                                   TextWrapping="NoWrap"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   VerticalAlignment="Center"/>
+                                        <ItemsControl Grid.Column="1"
+                                                      ItemsSource="{Binding QuickRatingOptions}"
+                                                      HorizontalAlignment="Right">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <StackPanel Orientation="Horizontal" Spacing="1"/>
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate x:DataType="models:QuickRatingOption">
+                                                    <Button Width="19" Height="21" Padding="0"
+                                                            Background="Transparent" BorderThickness="0"
+                                                            HorizontalContentAlignment="Center"
+                                                            VerticalContentAlignment="Center"
+                                                            Click="OnPlayingTrackQuickRatingClicked"
+                                                            ToolTip.Tip="{Binding Name}">
+                                                        <TextBlock Text="★"
+                                                                   FontFamily="Segoe UI Symbol"
+                                                                   FontSize="16"
+                                                                   Foreground="{Binding Foreground}"
+                                                                   HorizontalAlignment="Center"
+                                                                   VerticalAlignment="Center"/>
+                                                    </Button>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </Grid>
+                                </Grid>
                                 </Panel>
                             </Border>
                             <Rectangle Grid.Row="1"

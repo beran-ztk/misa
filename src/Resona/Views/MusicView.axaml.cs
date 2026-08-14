@@ -739,6 +739,19 @@ public partial class MusicView : UserControl
                 $"{EmotionalCharacterCatalog.Name(entry.Key)} {entry.Value * 100d:0}%",
                 new SolidColorBrush(Color.Parse(EmotionalCharacterCatalog.Color(entry.Key)))))
             .ToList();
+        var selectedRatingSortOrder = track.RatingId is int selectedRatingId
+            ? Values.Ratings.FirstOrDefault(rating => rating.Id == selectedRatingId)?.SortOrder ?? int.MinValue
+            : int.MinValue;
+        var quickRatingOptions = Values.Ratings
+            .OrderBy(rating => rating.SortOrder)
+            .Select(rating => new QuickRatingOption(
+                track.Id,
+                rating.Id,
+                rating.Name,
+                rating.SortOrder <= selectedRatingSortOrder
+                    ? new SolidColorBrush(Color.FromRgb(235, 194, 83))
+                    : new SolidColorBrush(Color.FromArgb(68, 255, 255, 255))))
+            .ToList();
 
         var item = new TrackDisplayItem(track, genreStr, modelGenreStr, manualGenreStr, styleStr, durationText, ratingName, genreDisplays, tagDisplays, track.ChannelName ?? "")
         {
@@ -748,7 +761,8 @@ public partial class MusicView : UserControl
             PlayingAudioText = audioText,
             PlayingUsageText = usageText,
             PlayingSourceText = sourceText,
-            PlayingMoodDisplays = moodDisplays
+            PlayingMoodDisplays = moodDisplays,
+            QuickRatingOptions = quickRatingOptions
         };
         item.ApplyAppearance(_appearanceSettings);
         return item;
@@ -3582,42 +3596,39 @@ public partial class MusicView : UserControl
 
     private void OnPlayPauseClicked(object? sender, RoutedEventArgs e) => TogglePlayPause();
 
-    private void OnPlayingTrackRatingDownClicked(object? sender, RoutedEventArgs e)
-    {
-        if (sender is Control { DataContext: TrackDisplayItem item })
-            ChangeTrackRating(item, -1);
-        e.Handled = true;
-    }
+    private void OnPlayingTrackBandLowClicked(object? sender, RoutedEventArgs e) =>
+        SetPlayingTrackRatingBand(sender, RatingBand.Low, e);
 
-    private void OnPlayingTrackRatingUpClicked(object? sender, RoutedEventArgs e)
-    {
-        if (sender is Control { DataContext: TrackDisplayItem item })
-            ChangeTrackRating(item, 1);
-        e.Handled = true;
-    }
+    private void OnPlayingTrackBandMidClicked(object? sender, RoutedEventArgs e) =>
+        SetPlayingTrackRatingBand(sender, RatingBand.Mid, e);
 
-    private void ChangeTrackRating(TrackDisplayItem item, int direction)
+    private void OnPlayingTrackBandHighClicked(object? sender, RoutedEventArgs e) =>
+        SetPlayingTrackRatingBand(sender, RatingBand.High, e);
+
+    private void SetPlayingTrackRatingBand(object? sender, RatingBand ratingBand, RoutedEventArgs e)
     {
-        var ratings = Values.Ratings.OrderBy(rating => rating.SortOrder).ToList();
-        if (ratings.Count == 0)
+        e.Handled = true;
+        if (sender is not Control { DataContext: TrackDisplayItem item })
             return;
-
-        var currentIndex = item.Track.RatingId is int ratingId
-            ? ratings.FindIndex(rating => rating.Id == ratingId)
-            : -1;
-        var targetIndex = currentIndex < 0
-            ? direction > 0 ? 0 : -1
-            : currentIndex + direction;
-        if (targetIndex < 0 || targetIndex >= ratings.Count)
+        if (item.Track.RatingId is null)
         {
-            ShowToast(direction > 0 ? "Already at the highest rating" : "Already at the lowest rating");
+            ShowToast("Choose a rating before setting Low, Mid or High");
             return;
         }
 
-        var target = ratings[targetIndex];
-        MusicLibraryService.Current.SetTrackRating(item.Track.Id, target.Id);
+        MusicLibraryService.Current.SetTrackRatingBand(item.Track.Id, ratingBand);
         UpdateTrackInList(item.Track.Id);
-        ShowToast($"Rating changed to {target.Name}");
+    }
+
+    private void OnPlayingTrackQuickRatingClicked(object? sender, RoutedEventArgs e)
+    {
+        e.Handled = true;
+        if (sender is not Control { DataContext: QuickRatingOption option })
+            return;
+
+        MusicLibraryService.Current.SetTrackRating(option.TrackId, option.RatingId);
+        UpdateTrackInList(option.TrackId);
+        ShowToast($"Rating changed to {option.Name}");
     }
 
     private async void OnPlayingTrackDeleteClicked(object? sender, RoutedEventArgs e)
