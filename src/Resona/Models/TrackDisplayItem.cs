@@ -8,6 +8,40 @@ namespace Resona.Models;
 
 public record TrackTagDisplay(string Name, IBrush Foreground);
 
+public record TrackGenreDisplay(string Name, IBrush Foreground);
+
+public static class MainGenrePalette
+{
+    private static readonly IBrush Fallback = Create("#B5BDC7");
+
+    private static readonly IReadOnlyDictionary<string, IBrush> Brushes =
+        new Dictionary<string, IBrush>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Blues"] = Create("#6EA8FF"),
+            ["Brass & Military"] = Create("#D7A86E"),
+            ["Children's"] = Create("#FF9FD2"),
+            ["Classical"] = Create("#BFA3FF"),
+            ["Electronic"] = Create("#54D6FF"),
+            ["Folk, World, & Country"] = Create("#9DDB72"),
+            ["Funk / Soul"] = Create("#FFAA5C"),
+            ["Hip Hop"] = Create("#D58AFF"),
+            ["Jazz"] = Create("#53D6B6"),
+            ["Latin"] = Create("#FF955C"),
+            ["Non-Music"] = Create("#AEB7C2"),
+            ["Pop"] = Create("#FF7FB6"),
+            ["Reggae"] = Create("#B5E85B"),
+            ["Rock"] = Create("#FF826E"),
+            ["Stage & Screen"] = Create("#FFD166")
+        };
+
+    public static IBrush For(string? mainGenre) =>
+        !string.IsNullOrWhiteSpace(mainGenre) && Brushes.TryGetValue(mainGenre.Trim(), out var brush)
+            ? brush
+            : Fallback;
+
+    private static IBrush Create(string color) => new SolidColorBrush(Color.Parse(color));
+}
+
 public record TrackDisplayItem(
     MusicTrack Track,
     string GenreText,
@@ -16,6 +50,7 @@ public record TrackDisplayItem(
     string StyleText,
     string DurationText,
     string RatingText,
+    IReadOnlyList<TrackGenreDisplay> GenreDisplays,
     IReadOnlyList<TrackTagDisplay> TagDisplays,
     string ChannelText)
 {

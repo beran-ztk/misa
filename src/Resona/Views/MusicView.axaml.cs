@@ -120,6 +120,8 @@ public partial class MusicView : UserControl
     private Dictionary<int, List<int>> _allTrackTagIds = [];
     private Dictionary<int, TrackAudioAnalysis> _allTrackAudioAnalyses = [];
     private Dictionary<int, Dictionary<string, double>> _allTrackMirexScores = [];
+    private Dictionary<int, string> _mainGenreNamesBySubgenreId = [];
+    private Dictionary<string, string> _mainGenreNamesBySubgenreName = new(StringComparer.OrdinalIgnoreCase);
     private List<TrackDisplayItem> _filteredItems = [];
     private List<TrackDisplayItem> _visibleItems = [];
     private List<int> _loadedPlaylistSourceTrackIds = [];
@@ -589,6 +591,20 @@ public partial class MusicView : UserControl
         _allTrackAudioAnalyses = MusicLibraryService.Current.GetAllTrackAudioAnalyses();
         _allTrackMirexScores = MusicLibraryService.Current.GetAllMirexScores();
 
+        var mainGenreNamesById = MusicLibraryService.Current.GetModelGenres()
+            .ToDictionary(genre => genre.Id, genre => genre.Name);
+        var modelSubgenres = MusicLibraryService.Current.GetModelSubgenres();
+        _mainGenreNamesBySubgenreId = modelSubgenres
+            .Where(subgenre => mainGenreNamesById.ContainsKey(subgenre.ModelGenreId))
+            .ToDictionary(subgenre => subgenre.Id, subgenre => mainGenreNamesById[subgenre.ModelGenreId]);
+        _mainGenreNamesBySubgenreName = modelSubgenres
+            .Where(subgenre => mainGenreNamesById.ContainsKey(subgenre.ModelGenreId))
+            .GroupBy(subgenre => ShortGenreName(subgenre.Name), StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(
+                group => group.Key,
+                group => mainGenreNamesById[group.First().ModelGenreId],
+                StringComparer.OrdinalIgnoreCase);
+
         var genreMap = Values.Genres.ToDictionary(g => g.Id, g => g.Name);
         var tagMap = Values.Tags.ToDictionary(t => t.Id);
         var tagOrder = Values.Tags.Select((tag, index) => (tag.Id, index))
@@ -658,22 +674,38 @@ public partial class MusicView : UserControl
             .Select(assignment => ShortGenreName(assignment.GenreName))
             .Where(name => name.Length > 0)
             .Order());
-        var activeGenreNames = modelGenreAssignments
-            .Select(assignment => ShortGenreName(assignment.GenreName))
-            .Where(name => name.Length > 0)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .Order(StringComparer.OrdinalIgnoreCase)
+        var activeGenres = modelGenreAssignments
+            .Select(assignment => new
+            {
+                Name = ShortGenreName(assignment.GenreName),
+                MainGenre = _mainGenreNamesBySubgenreId.GetValueOrDefault(assignment.GenreId)
+            })
+            .Where(genre => genre.Name.Length > 0)
+            .GroupBy(genre => genre.Name, StringComparer.OrdinalIgnoreCase)
+            .Select(group => group.First())
+            .OrderBy(genre => genre.Name, StringComparer.OrdinalIgnoreCase)
             .ToList();
-        if (activeGenreNames.Count == 0)
+        if (activeGenres.Count == 0)
         {
-            activeGenreNames = genreIds
-                .Select(id => genreMap.GetValueOrDefault(id, ""))
-                .Select(ShortGenreName)
-                .Where(name => name.Length > 0)
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .Order(StringComparer.OrdinalIgnoreCase)
+            activeGenres = genreIds
+                .Select(id => new
+                {
+                    Name = ShortGenreName(genreMap.GetValueOrDefault(id, "")),
+                    MainGenre = _mainGenreNamesBySubgenreId.GetValueOrDefault(id)
+                })
+                .Where(genre => genre.Name.Length > 0)
+                .GroupBy(genre => genre.Name, StringComparer.OrdinalIgnoreCase)
+                .Select(group => group.First())
+                .OrderBy(genre => genre.Name, StringComparer.OrdinalIgnoreCase)
                 .ToList();
         }
+        var genreDisplays = activeGenres
+            .Select(genre => new TrackGenreDisplay(
+                genre.Name,
+                MainGenrePalette.For(genre.MainGenre
+                                     ?? _mainGenreNamesBySubgenreName.GetValueOrDefault(genre.Name))))
+            .ToList();
+        var activeGenreNames = genreDisplays.Select(genre => genre.Name).ToList();
         var genreStr = FormatNaturalList(activeGenreNames);
         var styleStr = string.Join(", ", styleIds
             .Select(id => styleMap.GetValueOrDefault(id, ""))
@@ -695,7 +727,7 @@ public partial class MusicView : UserControl
         var ratingName = track.RatingId is int ratingId ? ratingMap.GetValueOrDefault(ratingId, "") : "None";
         var durationText = track.DurationSeconds.HasValue ? FormatDuration(track.DurationSeconds.Value) : "";
 
-        var item = new TrackDisplayItem(track, genreStr, modelGenreStr, manualGenreStr, styleStr, durationText, ratingName, tagDisplays, track.ChannelName ?? "")
+        var item = new TrackDisplayItem(track, genreStr, modelGenreStr, manualGenreStr, styleStr, durationText, ratingName, genreDisplays, tagDisplays, track.ChannelName ?? "")
         {
             NeedsReview = track.NeedsReview,
             NeedsAnalysis = needsAnalysis,

@@ -573,7 +573,7 @@
                                                    FontSize="12"
                                                    FontWeight="SemiBold"
                                                    Margin="0,0"
-                                                   HorizontalAlignment="Stretch"
+                                                   HorizontalAlignment="Center"
                                                    TextAlignment="Center"
                                                    VerticalAlignment="Center"
                                                    Foreground="{Binding RatingForeground}">
@@ -606,12 +606,10 @@
                                             <TextBlock Grid.Column="1" Text="{Binding ChannelSeparatorText}"
                                                        FontSize="10.5" Opacity="0.38"
                                                        VerticalAlignment="Center"/>
-                                            <TextBlock Grid.Column="2"
-                                                       Text="{Binding GenreText}"
-                                                       FontSize="11"
-                                                       Foreground="{Binding ArtworkMetadataBrush}"
-                                                       MaxWidth="610"
-                                                       TextTrimming="CharacterEllipsis"/>
+                                            <views:TrackGenreSummaryControl Grid.Column="2"
+                                                                            Genres="{Binding GenreDisplays}"
+                                                                            MaxWidth="610"
+                                                                            VerticalAlignment="Center"/>
                                             <views:TrackTagSummaryControl Tags="{Binding TagDisplays}"
                                                                           Grid.Column="3"
                                                                           Margin="12,0,8,0"
