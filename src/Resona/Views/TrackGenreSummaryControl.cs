@@ -120,7 +120,7 @@ public sealed class TrackGenreSummaryControl : Panel
 
         if (_moreLabel.IsVisible)
         {
-            _moreLabel.Text = $"+{genres.Count - count}";
+            _moreLabel.Text = "...";
             _moreLabel.Measure(new Size(double.PositiveInfinity, finalSize.Height));
             var y = Math.Max(0, (finalSize.Height - _moreLabel.DesiredSize.Height) / 2);
             _moreLabel.Arrange(new Rect(x, y, _moreLabel.DesiredSize.Width, _moreLabel.DesiredSize.Height));
@@ -135,7 +135,7 @@ public sealed class TrackGenreSummaryControl : Panel
         if (hiddenGenreCount <= 0)
             return width <= availableWidth;
 
-        _moreLabel.Text = $"+{hiddenGenreCount}";
+        _moreLabel.Text = "...";
         _moreLabel.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
         return width + _moreLabel.DesiredSize.Width <= availableWidth;
     }

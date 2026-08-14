@@ -596,8 +596,13 @@
                                                    TextTrimming="CharacterEllipsis"/>
 
                                         <Grid Grid.Row="1"
-                                              Grid.Column="1"
-                                              ColumnDefinitions="Auto,Auto,Auto,*">
+                                              Grid.Column="1">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="3*" MaxWidth="440"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
                                             <TextBlock Grid.Column="0"
                                                        Text="{Binding ChannelText}"
                                                        FontSize="10.5" Opacity="0.62"
@@ -609,7 +614,7 @@
                                                        VerticalAlignment="Center"/>
                                             <views:TrackGenreSummaryControl Grid.Column="2"
                                                                             Genres="{Binding GenreDisplays}"
-                                                                            MaxWidth="610"
+                                                                            HorizontalAlignment="Stretch"
                                                                             VerticalAlignment="Center"/>
                                             <views:TrackTagSummaryControl Tags="{Binding TagDisplays}"
                                                                           Grid.Column="3"
