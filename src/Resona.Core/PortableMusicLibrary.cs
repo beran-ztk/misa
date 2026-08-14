@@ -173,7 +173,8 @@ public sealed record PortableFilterGroup(
     List<string>? Tags = null,
     bool Negate = false,
     List<PortableEmotionalCharacterFilter>? EmotionalCharacters = null,
-    List<string>? Languages = null);
+    List<string>? Languages = null,
+    List<string>? MainGenres = null);
 
 public static class PortableTrackFilter
 {
@@ -193,7 +194,7 @@ public static class PortableTrackFilter
             query = query.Where(t => ratings.Contains(t.Rating));
 
         var activeGroups = filterGroups
-            .Where(g => g.Genres.Count > 0 || g.Styles.Count > 0 || (g.Tags?.Count ?? 0) > 0 || (g.Languages?.Count ?? 0) > 0)
+            .Where(g => g.Genres.Count > 0 || (g.MainGenres?.Count ?? 0) > 0 || g.Styles.Count > 0 || (g.Tags?.Count ?? 0) > 0 || (g.Languages?.Count ?? 0) > 0)
             .ToList();
         var includeGroups = activeGroups.Where(group => !group.Negate).ToList();
         var excludeGroups = activeGroups.Where(group => group.Negate).ToList();
@@ -212,6 +213,11 @@ public static class PortableTrackFilter
     private static bool MatchesGroup(PortableTrack track, PortableFilterGroup group)
     {
         if (group.Genres.Count > 0 && !group.Genres.All(genre => track.Genres.Contains(genre, StringComparer.OrdinalIgnoreCase)))
+            return false;
+
+        if ((group.MainGenres?.Count ?? 0) > 0
+            && !track.Genres.Any(genre => group.MainGenres!.Any(mainGenre =>
+                genre.StartsWith($"{mainGenre} →", StringComparison.OrdinalIgnoreCase))))
             return false;
 
         if (group.Styles.Count > 0 && !group.Styles.All(style => track.Styles.Contains(style, StringComparer.OrdinalIgnoreCase)))

@@ -120,6 +120,41 @@ public sealed class RatingAndLanguageTests : IDisposable
     }
 
     [Fact]
+    public void Main_genre_filter_matches_any_subgenre_inside_the_main_genre()
+    {
+        var tracks = new[]
+        {
+            Track(1, "Techno track", "en"),
+            Track(2, "House track", "en"),
+            Track(3, "Rock track", "en")
+        };
+        var group = new FilterGroup(
+            new HashSet<int>(),
+            new HashSet<int>(),
+            new HashSet<int>(),
+            new HashSet<string>(),
+            [],
+            AnyGenreIds: new HashSet<int> { 10, 11 });
+
+        var result = TrackFilter.Apply(
+            tracks,
+            new Dictionary<int, List<int>>
+            {
+                [1] = [10],
+                [2] = [11],
+                [3] = [20]
+            },
+            new Dictionary<int, List<int>>(),
+            new Dictionary<int, List<int>>(),
+            new Dictionary<int, Dictionary<string, double>>(),
+            new HashSet<int>(),
+            [group],
+            null);
+
+        Assert.Equal(["House track", "Techno track"], result.Select(track => track.Title));
+    }
+
+    [Fact]
     public void Search_matches_editable_and_original_titles()
     {
         var tracks = new[]

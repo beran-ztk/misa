@@ -12,7 +12,8 @@ public record FilterGroup(
     IReadOnlySet<int> TagIds,
     IReadOnlySet<string> LanguageCodes,
     IReadOnlyList<EmotionalCharacterRange> EmotionalCharacters,
-    bool Negate = false);
+    bool Negate = false,
+    IReadOnlySet<int>? AnyGenreIds = null);
 
 public static class TrackFilter
 {
@@ -39,10 +40,11 @@ public static class TrackFilter
                 || t.OriginalTitle.Contains(term, StringComparison.OrdinalIgnoreCase));
         
         // Apply filter groups: OR between positive groups, AND within a group.
+        // Main genres are the deliberate exception: any mapped subgenre satisfies them.
         // Negated groups remove matching tracks after the positive groups are evaluated.
         // Empty groups (nothing selected in any dimension) are ignored.
         var activeGroups = filterGroups
-            .Where(g => g.GenreIds.Count > 0 || g.StyleIds.Count > 0 || g.TagIds.Count > 0 || g.LanguageCodes.Count > 0 || g.EmotionalCharacters.Count > 0)
+            .Where(g => g.GenreIds.Count > 0 || (g.AnyGenreIds?.Count ?? 0) > 0 || g.StyleIds.Count > 0 || g.TagIds.Count > 0 || g.LanguageCodes.Count > 0 || g.EmotionalCharacters.Count > 0)
             .ToList();
         var includeGroups = activeGroups.Where(group => !group.Negate).ToList();
         var excludeGroups = activeGroups.Where(group => group.Negate).ToList();
@@ -74,6 +76,13 @@ public static class TrackFilter
             trackGenreIds.TryGetValue(track.Id, out var tGenres);
             tGenres ??= [];
             if (!group.GenreIds.All(id => tGenres.Contains(id))) return false;
+        }
+
+        if ((group.AnyGenreIds?.Count ?? 0) > 0)
+        {
+            trackGenreIds.TryGetValue(track.Id, out var tGenres);
+            tGenres ??= [];
+            if (!group.AnyGenreIds!.Any(tGenres.Contains)) return false;
         }
 
         if (group.StyleIds.Count > 0)
