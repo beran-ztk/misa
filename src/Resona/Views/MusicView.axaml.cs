@@ -127,7 +127,6 @@ public partial class MusicView : UserControl
     private string? _activeFilterPresetName;
     private bool _isCreatingPreset;
     private bool _manualRatingFilter;
-    private string _visibilityFilterMode = "All";
     private PlayerSessionSettings _restoredPlayerSession = new();
     private Dictionary<int, int>? _pendingRestoredQueueOrder;
     private int? _pendingRestoredTrackId;
@@ -251,7 +250,6 @@ public partial class MusicView : UserControl
             ApplyFilter();
             UpdateSearchVisibility();
         };
-        SetVisibilityFilterMode("All", applyFilter: false);
         RefreshCompletionFilterVisuals();
         FileList.SelectionChanged += (_, _) =>
         {
@@ -921,7 +919,7 @@ public partial class MusicView : UserControl
         else if (ShowNeedsReviewCheckBox.IsChecked == true)
         {
             // Review mode is an exclusive, temporary view. The user's configured
-            // search, rating, visibility and metadata filters remain intact and
+            // search, rating and metadata filters remain intact and
             // become active again when review mode is switched off.
             filtered = _allItems
                 .Where(item => item.NeedsReview)
@@ -931,7 +929,6 @@ public partial class MusicView : UserControl
         else
         {
             var selRatingIds = SelectedRatingIds();
-            var selVisibility = SelectedVisibility();
             var groups = CurrentFilterGroups();
 
             filtered = TrackFilter.Apply(
@@ -943,7 +940,6 @@ public partial class MusicView : UserControl
                 _allTrackTagIds,
                 _allTrackMirexScores,
                 selRatingIds,
-                selVisibility,
                 groups,
                 SearchBox.Text);
 
@@ -1242,10 +1238,6 @@ public partial class MusicView : UserControl
         else if (selectedRatingIds.Count > 0)
             query = query.Where(track => track.RatingId is int ratingId && selectedRatingIds.Contains(ratingId));
 
-        var selectedVisibility = SelectedVisibility();
-        if (selectedVisibility.Count > 0)
-            query = query.Where(track => selectedVisibility.Contains(track.IsPublic));
-
         if (ShowNeedsReviewCheckBox.IsChecked != true)
         {
             var reviewTrackIds = _allItems
@@ -1412,52 +1404,6 @@ public partial class MusicView : UserControl
         RatingNames.Avoid => Color.FromRgb(246, 175, 160),
         _ => Color.FromRgb(243, 203, 128)
     };
-
-    private HashSet<bool> SelectedVisibility()
-    {
-        return _visibilityFilterMode switch
-        {
-            "Public" => [true],
-            "Private" => [false],
-            _ => []
-        };
-    }
-
-    private void OnAllVisibilityPressed(object? sender, PointerPressedEventArgs e)
-    {
-        SetVisibilityFilterMode("All");
-        e.Handled = true;
-    }
-
-    private void OnPublicVisibilityPressed(object? sender, PointerPressedEventArgs e)
-    {
-        SetVisibilityFilterMode("Public");
-        e.Handled = true;
-    }
-
-    private void OnPrivateVisibilityPressed(object? sender, PointerPressedEventArgs e)
-    {
-        SetVisibilityFilterMode("Private");
-        e.Handled = true;
-    }
-
-    private void SetVisibilityFilterMode(string mode, bool applyFilter = true)
-    {
-        _visibilityFilterMode = mode is "Public" or "Private" ? mode : "All";
-        var index = _visibilityFilterMode switch { "Public" => 1, "Private" => 2, _ => 0 };
-
-        var transparent = new SolidColorBrush(Colors.Transparent);
-        AllVisibilityButton.Background = index == 0 ? ThemeResources.Brush("Theme.Brush.AccentSurface") : transparent;
-        PublicVisibilityButton.Background = index == 1 ? ThemeResources.Brush("Theme.Brush.AccentSurface") : transparent;
-        PrivateVisibilityButton.Background = index == 2 ? ThemeResources.Brush("Theme.Brush.AccentSurface") : transparent;
-
-        AllVisibilityText.Foreground = ThemeResources.Brush(index == 0 ? "Theme.Brush.TextStrong" : "Theme.Brush.TextMuted");
-        PublicVisibilityText.Foreground = ThemeResources.Brush(index == 1 ? "Theme.Brush.TextStrong" : "Theme.Brush.TextMuted");
-        PrivateVisibilityText.Foreground = ThemeResources.Brush(index == 2 ? "Theme.Brush.TextStrong" : "Theme.Brush.TextMuted");
-
-        if (applyFilter)
-            ApplyFilterDefinitionChange();
-    }
 
     private void OnCompletionFilterChanged(object? sender, RoutedEventArgs e)
     {
@@ -1976,7 +1922,6 @@ public partial class MusicView : UserControl
         _activeFilterPresetName = null;
         RebuildPresetRows();
         SetRatingFilterMode(manual: false, applyFilter: false);
-        SetVisibilityFilterMode("All", applyFilter: false);
         ShowNeedsReviewCheckBox.IsChecked = false;
         ShowDeclinedCheckBox.IsChecked = false;
         _filterGroups.Clear();
@@ -2009,7 +1954,6 @@ public partial class MusicView : UserControl
             ShowNeedsReviewCheckBox.IsChecked == true,
             false,
             _manualRatingFilter,
-            _visibilityFilterMode,
             false);
     }
 
@@ -2022,7 +1966,6 @@ public partial class MusicView : UserControl
                 preset.ManualRatings || preset.Ratings.Count > 0,
                 preset.Ratings,
                 applyFilter: false);
-            SetVisibilityFilterMode(preset.Visibility, applyFilter: false);
             ShowDeclinedCheckBox.IsChecked = false;
             ShowNeedsReviewCheckBox.IsChecked = preset.ShowNeedsReview;
 
@@ -2072,8 +2015,6 @@ public partial class MusicView : UserControl
             parts.Add($"{preset.Ratings.Count} rating{(preset.Ratings.Count == 1 ? "" : "s")}");
         if (preset.Groups.Count > 0)
             parts.Add($"{preset.Groups.Count} condition{(preset.Groups.Count == 1 ? "" : "s")}");
-        if (!string.Equals(preset.Visibility, "All", StringComparison.OrdinalIgnoreCase))
-            parts.Add(preset.Visibility.ToLowerInvariant());
         if (preset.ShowNeedsReview)
             parts.Add("shows review tracks");
         return parts.Count > 0 ? string.Join(" · ", parts) : "Empty preset";
@@ -4735,7 +4676,7 @@ public partial class MusicView : UserControl
                     && index < _playbackQueue.TrackIds.Count - 1 && index + 1 != currentIndex,
                     () => ApplyTrackQueueMutation(() => _playbackQueue.Move(trackId, 1))),
                 new Separator(),
-                CreateTrackPlaybackMenuItem("Remove from playback list", "/Assets/close.svg", !isCurrent,
+                CreateTrackPlaybackMenuItem("Remove from queue", "/Assets/close.svg", !isCurrent,
                     () => ApplyTrackQueueMutation(() => _playbackQueue.Remove(trackId)))
             }
         };

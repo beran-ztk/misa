@@ -79,7 +79,6 @@ public sealed class RatingAndLanguageTests : IDisposable
             new Dictionary<int, List<int>>(),
             new Dictionary<int, Dictionary<string, double>>(),
             new HashSet<int>(),
-            new HashSet<bool>(),
             [group],
             null);
 
@@ -102,7 +101,6 @@ public sealed class RatingAndLanguageTests : IDisposable
             new Dictionary<int, List<int>>(),
             new Dictionary<int, Dictionary<string, double>>(),
             new HashSet<int>(),
-            new HashSet<bool>(),
             [],
             term);
 
