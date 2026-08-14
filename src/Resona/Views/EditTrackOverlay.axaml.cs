@@ -730,7 +730,7 @@ public partial class EditTrackOverlay : UserControl
     {
         var enabled = _selectedRatingId is not null;
         RatingBandPanel.IsEnabled = enabled;
-        RatingBandPanel.Opacity = enabled ? 0.92 : 0.3;
+        RatingBandPanel.Opacity = enabled ? 1 : 0.25;
 
         UpdateRatingBandButton(RatingBandLowButton, RatingBand.Low);
         UpdateRatingBandButton(RatingBandMidButton, RatingBand.Mid);
@@ -740,17 +740,17 @@ public partial class EditTrackOverlay : UserControl
     private void UpdateRatingBandButton(Button button, RatingBand band)
     {
         var selected = _selectedRatingBand == band;
-        button.Background = selected
-            ? new SolidColorBrush(Color.FromArgb(74, 235, 194, 83))
-            : Brushes.Transparent;
-        button.BorderBrush = selected
-            ? new SolidColorBrush(Color.FromArgb(190, 235, 194, 83))
-            : new SolidColorBrush(Color.FromArgb(42, 255, 255, 255));
-        button.BorderThickness = new Thickness(1);
-        button.CornerRadius = new CornerRadius(5);
+        button.Background = Brushes.Transparent;
+        button.BorderThickness = new Thickness(0);
         button.Foreground = selected
-            ? new SolidColorBrush(Color.FromRgb(255, 222, 126))
-            : new SolidColorBrush(Color.FromArgb(155, 255, 255, 255));
+            ? band switch
+            {
+                RatingBand.Low => new SolidColorBrush(Color.FromRgb(255, 67, 67)),
+                RatingBand.High => new SolidColorBrush(Color.FromRgb(48, 235, 105)),
+                _ => new SolidColorBrush(Color.FromRgb(245, 245, 238))
+            }
+            : new SolidColorBrush(Color.FromArgb(92, 255, 255, 255));
+        button.Opacity = selected ? 1 : 0.72;
         button.Cursor = new Cursor(StandardCursorType.Hand);
     }
 

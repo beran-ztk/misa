@@ -54,12 +54,16 @@ public record TrackDisplayItem(
     IReadOnlyList<TrackTagDisplay> TagDisplays,
     string ChannelText)
 {
-    public string RatingDisplayText => Track.RatingBand switch
+    public bool ShowRatingBandArrow => Track.RatingBand is Models.RatingBand.Low or Models.RatingBand.High;
+    public bool ShowRatingBandDot => Track.RatingBand == Models.RatingBand.Mid;
+    public double RatingBandArrowRotation => Track.RatingBand == Models.RatingBand.Low ? 180 : 0;
+
+    public IBrush RatingBandForeground => Track.RatingBand switch
     {
-        Models.RatingBand.Low => $"{RatingText} ↓",
-        Models.RatingBand.Mid => $"{RatingText} •",
-        Models.RatingBand.High => $"{RatingText} ↑",
-        _ => RatingText
+        Models.RatingBand.Low => new SolidColorBrush(Color.FromRgb(232, 92, 92)),
+        Models.RatingBand.Mid => new SolidColorBrush(Color.FromRgb(245, 245, 238)),
+        Models.RatingBand.High => new SolidColorBrush(Color.FromRgb(83, 210, 124)),
+        _ => Brushes.Transparent
     };
 
     public bool IsPlaying { get; set; }

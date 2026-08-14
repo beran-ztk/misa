@@ -20,7 +20,7 @@ public sealed class TrackTagSummaryControl : Panel
     private readonly List<TextBlock> _tagLabels = [];
     private readonly TextBlock _moreLabel = new()
     {
-        FontSize = 9.5,
+        FontSize = 10,
         LineHeight = 18,
         FontWeight = FontWeight.SemiBold,
         Foreground = ThemeResources.Brush("Theme.Brush.TextMuted"),
@@ -58,13 +58,13 @@ public sealed class TrackTagSummaryControl : Panel
         {
             var label = new TextBlock
             {
-                Text = $"# {tag.Name}",
+                Text = $"#{tag.Name}",
                 Foreground = tag.Foreground,
-                FontSize = 9.5,
+                FontSize = 10,
                 LineHeight = 18,
                 FontWeight = FontWeight.Medium,
                 Opacity = 0.82,
-                Margin = new Thickness(0, 0, 9, 0),
+                Margin = new Thickness(0, 0, 6, 0),
                 VerticalAlignment = VerticalAlignment.Center
             };
             _tagLabels.Add(label);
