@@ -1265,51 +1265,17 @@ public partial class EditTrackOverlay : UserControl
             };
             var content = new Grid
             {
-                ColumnDefinitions = new ColumnDefinitions("*,20"),
+                ColumnDefinitions = new ColumnDefinitions("*,110,42,20"),
                 ColumnSpacing = 9,
-                RowDefinitions = new RowDefinitions("Auto,Auto"),
-                RowSpacing = 5
+                VerticalAlignment = VerticalAlignment.Center
             };
-            var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), ColumnSpacing = 10 };
             var confidenceBrush = AnalysisColorScale.GenreConfidence(prediction.Score);
-            row.Children.Add(new TextBlock
+            content.Children.Add(new TextBlock
             {
                 Text = prediction.ModelSubgenreName,
                 FontSize = 11,
                 FontWeight = FontWeight.SemiBold,
                 Foreground = ThemeResources.Brush("Theme.Brush.TextStrong"),
-                TextTrimming = TextTrimming.CharacterEllipsis
-            });
-            var score = new TextBlock
-            {
-                Text = $"{prediction.Score:P0}",
-                FontSize = 10.5,
-                Foreground = confidenceBrush,
-                FontWeight = FontWeight.SemiBold
-            };
-            Grid.SetColumn(score, 1);
-            row.Children.Add(score);
-            content.Children.Add(row);
-            var add = new TextBlock
-            {
-                Text = "+",
-                Width = 20,
-                FontSize = 16,
-                Foreground = ThemeResources.Brush("Theme.Brush.TextStrong"),
-                Opacity = 0.58,
-                TextAlignment = TextAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center
-            };
-            Grid.SetColumn(add, 1);
-            Grid.SetRowSpan(add, 2);
-            content.Children.Add(add);
-
-            var detail = new Grid { ColumnDefinitions = new ColumnDefinitions("110,*"), ColumnSpacing = 8 };
-            detail.Children.Add(new TextBlock
-            {
-                Text = prediction.ModelGenreName,
-                FontSize = 9.5,
-                Opacity = 0.52,
                 TextTrimming = TextTrimming.CharacterEllipsis
             });
             var confidenceBar = new ProgressBar
@@ -1323,9 +1289,30 @@ public partial class EditTrackOverlay : UserControl
                 VerticalAlignment = VerticalAlignment.Center
             };
             Grid.SetColumn(confidenceBar, 1);
-            detail.Children.Add(confidenceBar);
-            Grid.SetRow(detail, 1);
-            content.Children.Add(detail);
+            content.Children.Add(confidenceBar);
+            var score = new TextBlock
+            {
+                Text = $"{prediction.Score:P0}",
+                FontSize = 10.5,
+                Foreground = confidenceBrush,
+                FontWeight = FontWeight.SemiBold,
+                TextAlignment = TextAlignment.Right,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            Grid.SetColumn(score, 2);
+            content.Children.Add(score);
+            var add = new TextBlock
+            {
+                Text = "+",
+                Width = 20,
+                FontSize = 16,
+                Foreground = ThemeResources.Brush("Theme.Brush.TextStrong"),
+                Opacity = 0.58,
+                TextAlignment = TextAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            Grid.SetColumn(add, 3);
+            content.Children.Add(add);
             container.Child = content;
             container.PointerPressed += (_, _) =>
             {
@@ -1404,9 +1391,9 @@ public partial class EditTrackOverlay : UserControl
                     Text = group.Name,
                     FontSize = 10.5,
                     FontWeight = selected ? FontWeight.SemiBold : FontWeight.Normal,
-                    Foreground = selected
-                        ? ThemeResources.Brush("Theme.Brush.Accent")
-                        : ThemeResources.Brush("Theme.Brush.TextSecondary"),
+                    Foreground = group.Id is null
+                        ? ThemeResources.Brush(selected ? "Theme.Brush.Accent" : "Theme.Brush.TextSecondary")
+                        : MainGenrePalette.For(group.Name),
                     Opacity = selected ? 1 : 0.72,
                     TextWrapping = TextWrapping.Wrap,
                     VerticalAlignment = VerticalAlignment.Center
@@ -1466,35 +1453,32 @@ public partial class EditTrackOverlay : UserControl
             return;
         }
 
-        var frequentGenres = MusicLibraryService.Current
+        var manualGenreUsages = MusicLibraryService.Current
             .GetTopManualModelGenres(Math.Max(8, _modelSubgenresById.Count))
             .Where(usage => !_modelGenreIds.Contains(usage.ModelSubgenreId))
             .Where(usage => _modelSubgenresById.ContainsKey(usage.ModelSubgenreId))
+            .ToList();
+        var frequentGenres = manualGenreUsages
             .Take(8)
             .ToList();
 
         FrequentManualGenresSection.IsVisible = frequentGenres.Count > 0;
         FrequentManualGenresCountText.Text = $"({frequentGenres.Count})";
+        if (frequentGenres.Count == 0)
+            return;
 
-        var predictionsByGenreId = _trackGenrePredictions
-            .GroupBy(prediction => prediction.ModelSubgenreId)
-            .ToDictionary(
-                group => group.Key,
-                group => group.OrderByDescending(prediction => prediction.Score).First());
+        var maximumUsageCount = Math.Max(1, manualGenreUsages.Max(usage => usage.UsageCount));
         foreach (var usage in frequentGenres)
-        {
-            predictionsByGenreId.TryGetValue(usage.ModelSubgenreId, out var prediction);
-            FrequentManualGenresPanel.Children.Add(CreateFrequentManualGenreChoice(usage, prediction));
-        }
+            FrequentManualGenresPanel.Children.Add(CreateFrequentManualGenreChoice(
+                usage,
+                (double)usage.UsageCount / maximumUsageCount));
     }
 
     private Control CreateFrequentManualGenreChoice(
         ManualModelGenreUsage usage,
-        StoredModelGenrePrediction? prediction)
+        double relativeFrequency)
     {
-        var confidenceBrush = prediction is null
-            ? ThemeResources.Brush("Theme.Brush.TextSecondary")
-            : AnalysisColorScale.GenreConfidence(prediction.Score);
+        var frequencyBrush = MainGenrePalette.For(usage.ModelGenreName);
         var container = new Border
         {
             Background = Brushes.Transparent,
@@ -1504,13 +1488,11 @@ public partial class EditTrackOverlay : UserControl
         };
         var content = new Grid
         {
-            ColumnDefinitions = new ColumnDefinitions("*,20"),
+            ColumnDefinitions = new ColumnDefinitions("*,110,42,20"),
             ColumnSpacing = 9,
-            RowDefinitions = new RowDefinitions("Auto,Auto"),
-            RowSpacing = 5
+            VerticalAlignment = VerticalAlignment.Center
         };
-        var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), ColumnSpacing = 10 };
-        row.Children.Add(new TextBlock
+        content.Children.Add(new TextBlock
         {
             Text = usage.ModelSubgenreName,
             FontSize = 11,
@@ -1518,17 +1500,29 @@ public partial class EditTrackOverlay : UserControl
             Foreground = ThemeResources.Brush("Theme.Brush.TextStrong"),
             TextTrimming = TextTrimming.CharacterEllipsis
         });
+        var frequencyBar = new ProgressBar
+        {
+            Minimum = 0,
+            Maximum = 1,
+            Value = relativeFrequency,
+            Height = 4,
+            Foreground = frequencyBrush,
+            Background = ThemeResources.Brush("Theme.Brush.Surface"),
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        Grid.SetColumn(frequencyBar, 1);
+        content.Children.Add(frequencyBar);
         var metric = new TextBlock
         {
-            Text = prediction is null ? $"{usage.UsageCount}×" : $"{prediction.Score:P0}",
+            Text = $"{relativeFrequency:P0}",
             FontSize = 10.5,
             FontWeight = FontWeight.SemiBold,
-            Foreground = confidenceBrush,
-            Opacity = prediction is null ? 0.68 : 1
+            Foreground = frequencyBrush,
+            TextAlignment = TextAlignment.Right,
+            VerticalAlignment = VerticalAlignment.Center
         };
-        Grid.SetColumn(metric, 1);
-        row.Children.Add(metric);
-        content.Children.Add(row);
+        Grid.SetColumn(metric, 2);
+        content.Children.Add(metric);
 
         var add = new TextBlock
         {
@@ -1540,52 +1534,8 @@ public partial class EditTrackOverlay : UserControl
             TextAlignment = TextAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center
         };
-        Grid.SetColumn(add, 1);
-        Grid.SetRowSpan(add, 2);
+        Grid.SetColumn(add, 3);
         content.Children.Add(add);
-
-        Control detail;
-        if (prediction is null)
-        {
-            detail = new TextBlock
-            {
-                Text = usage.ModelGenreName,
-                FontSize = 9.5,
-                Opacity = 0.52,
-                TextTrimming = TextTrimming.CharacterEllipsis
-            };
-        }
-        else
-        {
-            var detectedDetail = new Grid
-            {
-                ColumnDefinitions = new ColumnDefinitions("110,*"),
-                ColumnSpacing = 8
-            };
-            detectedDetail.Children.Add(new TextBlock
-            {
-                Text = usage.ModelGenreName,
-                FontSize = 9.5,
-                Opacity = 0.52,
-                TextTrimming = TextTrimming.CharacterEllipsis
-            });
-            var confidenceBar = new ProgressBar
-            {
-                Minimum = 0,
-                Maximum = 1,
-                Value = prediction.Score,
-                Height = 4,
-                Foreground = confidenceBrush,
-                Background = ThemeResources.Brush("Theme.Brush.Surface"),
-                VerticalAlignment = VerticalAlignment.Center
-            };
-            Grid.SetColumn(confidenceBar, 1);
-            detectedDetail.Children.Add(confidenceBar);
-            detail = detectedDetail;
-        }
-
-        Grid.SetRow(detail, 1);
-        content.Children.Add(detail);
         container.Child = content;
         container.PointerPressed += (_, _) =>
         {

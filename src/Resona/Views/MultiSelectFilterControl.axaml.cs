@@ -22,13 +22,13 @@ public partial class MultiSelectFilterControl : UserControl
         string Value,
         string DisplayName,
         string? GroupName = null,
-        string? GroupColor = null);
+        IBrush? GroupBrush = null);
 
     private sealed record FilterItem(
         string Name,
         string DisplayName,
         string GroupName,
-        string? GroupColor,
+        IBrush? GroupBrush,
         int GroupIndex,
         Control Row,
         CheckBox CheckBox,
@@ -87,12 +87,12 @@ public partial class MultiSelectFilterControl : UserControl
         _selected.Clear();
         _items.Clear();
         _itemsPanel.Children.Clear();
-        var groupIndexes = new Dictionary<(string Name, string? Color), int>();
+        var groupIndexes = new Dictionary<(string Name, IBrush? Brush), int>();
         foreach (var item in items)
         {
             var name = item.Value;
             var groupName = item.GroupName ?? string.Empty;
-            var groupKey = (groupName, item.GroupColor);
+            var groupKey = (groupName, item.GroupBrush);
             if (!groupIndexes.TryGetValue(groupKey, out var groupIndex))
                 groupIndexes[groupKey] = groupIndex = groupIndexes.Count;
             var cb = new CheckBox
@@ -162,7 +162,7 @@ public partial class MultiSelectFilterControl : UserControl
             row.Children.Add(nameText);
             row.Children.Add(countBadge);
 
-            _items.Add(new FilterItem(name, item.DisplayName, groupName, item.GroupColor, groupIndex, row, cb, countText, countBadge));
+            _items.Add(new FilterItem(name, item.DisplayName, groupName, item.GroupBrush, groupIndex, row, cb, countText, countBadge));
         }
         RebuildItemsPanel(_items);
         UpdateText();
@@ -219,7 +219,7 @@ public partial class MultiSelectFilterControl : UserControl
                     Text = first.GroupName.ToUpperInvariant(),
                     FontSize = 9.5,
                     FontWeight = FontWeight.SemiBold,
-                    Foreground = ToBrush(first.GroupColor),
+                    Foreground = first.GroupBrush ?? ThemeResources.Brush("Theme.Brush.TextMuted"),
                     Opacity = .88,
                     Margin = new Thickness(0, 7, 0, 2)
                 };
@@ -229,15 +229,6 @@ public partial class MultiSelectFilterControl : UserControl
             foreach (var item in group)
                 _itemsPanel.Children.Add(item.Row);
         }
-    }
-
-    private static IBrush ToBrush(string? color)
-    {
-        if (string.IsNullOrWhiteSpace(color))
-            return ThemeResources.Brush("Theme.Brush.TextMuted");
-
-        try { return new SolidColorBrush(Color.Parse(color)); }
-        catch { return ThemeResources.Brush("Theme.Brush.TextMuted"); }
     }
 
     private void UpdateText()

@@ -842,7 +842,11 @@ public partial class MusicView : UserControl
         {
             var parts = genre.Name.Split('→', 2, StringSplitOptions.TrimEntries);
             return parts.Length == 2
-                ? new MultiSelectFilterControl.FilterOption(genre.Name, parts[1], parts[0])
+                ? new MultiSelectFilterControl.FilterOption(
+                    genre.Name,
+                    parts[1],
+                    parts[0],
+                    MainGenrePalette.For(parts[0]))
                 : new MultiSelectFilterControl.FilterOption(genre.Name, genre.Name);
         });
 
