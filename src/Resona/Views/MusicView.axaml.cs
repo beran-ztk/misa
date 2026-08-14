@@ -3351,37 +3351,6 @@ public partial class MusicView : UserControl
         }
     }
 
-    private void OnPlayerBarPointerPressed(object? sender, PointerPressedEventArgs e)
-    {
-        if (!e.GetCurrentPoint(PlayerBar).Properties.IsLeftButtonPressed)
-            return;
-
-        for (var visual = e.Source as Visual;
-             visual is not null && visual != PlayerBar;
-             visual = visual.GetVisualParent())
-        {
-            if (visual is Button or Slider)
-                return;
-        }
-
-        if (EditTrackOverlay.IsOpen)
-        {
-            EditTrackOverlay.RequestClose();
-            e.Handled = true;
-            return;
-        }
-
-        if (_engine.ActiveTrackId < 0)
-            return;
-
-        var track = _allItems.FirstOrDefault(item => item.Track.Id == _engine.ActiveTrackId)?.Track;
-        if (track is null)
-            return;
-
-        OpenTrackEditor(track);
-        e.Handled = true;
-    }
-
     private void OpenTrackEditor(MusicTrack track)
     {
         CloseActivityCenter();

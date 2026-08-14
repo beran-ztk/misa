@@ -857,7 +857,6 @@
                     ClipToBounds="False"
                     CornerRadius="0,0,0,0"
                     BorderThickness="0"
-                    PointerPressed="OnPlayerBarPointerPressed"
                     BoxShadow="0 -14 36 6 #C0000000">
                 <Border CornerRadius="0,0,0,0"
                         ClipToBounds="True">
