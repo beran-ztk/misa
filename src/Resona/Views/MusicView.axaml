@@ -479,6 +479,7 @@
                                     DoubleTapped="OnTrackCardDoubleTapped"
                                     CornerRadius="12,4,4,12"
                                     ClipToBounds="True"
+                                    MinHeight="{Binding TrackCardHeight}"
                                     Padding="0,0">
                                 <Panel>
                                 <views:TrackColorWashControl
@@ -508,10 +509,12 @@
                                 <Border Background="{Binding PlayingBackground}"
                                         CornerRadius="7"
                                         IsHitTestVisible="False"/>
-                                <Grid ColumnDefinitions="2,20,52,*">
+                                <Grid ColumnDefinitions="2,20,52,*"
+                                      Height="58"
+                                      VerticalAlignment="Top">
 
                                     <Border Grid.Column="0"
-                                            Width="2" Height="60"
+                                            Width="2" Height="{Binding PlayingAccentHeight}"
                                             Background="{Binding PlayingAccent}"
                                             VerticalAlignment="Center"/>
 
@@ -594,7 +597,7 @@
                                         <TextBlock Grid.RowSpan="2"
                                                    Grid.Column="0"
                                                    Text="{Binding RatingText}"
-                                                   FontFamily="Consolas"
+                                                   FontFamily="Segoe Print"
                                                    FontSize="12"
                                                    LetterSpacing="0.2"
                                                    Margin="0,0,4,0"
@@ -659,6 +662,7 @@
                                             Spacing="2"
                                             HorizontalAlignment="Right"
                                             VerticalAlignment="Center"
+                                            IsVisible="{Binding ShowCompactDuration}"
                                             IsHitTestVisible="False">
                                     <TextBlock Text="{Binding DownloadedDateText}"
                                                IsVisible="{Binding ShowDownloadedDate}"
@@ -675,6 +679,97 @@
                                                HorizontalAlignment="Center"
                                                TextAlignment="Center"/>
                                 </StackPanel>
+
+                                <StackPanel Orientation="Horizontal"
+                                            Spacing="3"
+                                            Margin="0,6,10,0"
+                                            HorizontalAlignment="Right"
+                                            VerticalAlignment="Top"
+                                            IsVisible="{Binding IsPlaying}">
+                                    <Button Width="27" Height="27" Padding="0"
+                                            Background="#18181715" BorderThickness="0"
+                                            CornerRadius="5"
+                                            FontFamily="Consolas" FontSize="14"
+                                            HorizontalContentAlignment="Center"
+                                            VerticalContentAlignment="Center"
+                                            Click="OnPlayingTrackRatingDownClicked"
+                                            ToolTip.Tip="Lower rating">↓</Button>
+                                    <Button Width="27" Height="27" Padding="0"
+                                            Background="#18181715" BorderThickness="0"
+                                            CornerRadius="5"
+                                            FontFamily="Consolas" FontSize="14"
+                                            HorizontalContentAlignment="Center"
+                                            VerticalContentAlignment="Center"
+                                            Click="OnPlayingTrackRatingUpClicked"
+                                            ToolTip.Tip="Raise rating">↑</Button>
+                                    <Button Width="27" Height="27" Padding="0"
+                                            Background="#18181715" BorderThickness="0"
+                                            CornerRadius="5"
+                                            HorizontalContentAlignment="Center"
+                                            VerticalContentAlignment="Center"
+                                            Click="OnPlayingTrackDeleteClicked"
+                                            ToolTip.Tip="Delete track">
+                                        <Image Source="{SvgImage /Assets/trash.svg}"
+                                               Width="13" Height="13" Opacity="0.72"/>
+                                    </Button>
+                                </StackPanel>
+
+                                <Grid Margin="144,56,94,8"
+                                      RowDefinitions="Auto,Auto"
+                                      RowSpacing="5"
+                                      VerticalAlignment="Bottom"
+                                      IsVisible="{Binding IsPlaying}">
+                                    <Grid Grid.Row="0" ColumnDefinitions="Auto,Auto,*" ColumnSpacing="18">
+                                        <TextBlock Grid.Column="0"
+                                                   Text="{Binding PlayingAudioText}"
+                                                   IsVisible="{Binding HasPlayingAudio}"
+                                                   FontFamily="Consolas"
+                                                   FontSize="10"
+                                                   Foreground="#C9D7E6"
+                                                   VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding PlayingUsageText}"
+                                                   IsVisible="{Binding HasPlayingUsage}"
+                                                   FontSize="10"
+                                                   Foreground="{DynamicResource Theme.Brush.TextSecondary}"
+                                                   Opacity="0.82"
+                                                   VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="2"
+                                                   Text="{Binding PlayingSourceText}"
+                                                   IsVisible="{Binding HasPlayingSource}"
+                                                   FontSize="9.5"
+                                                   Foreground="{DynamicResource Theme.Brush.TextMuted}"
+                                                   Opacity="0.72"
+                                                   HorizontalAlignment="Right"
+                                                   VerticalAlignment="Center"/>
+                                    </Grid>
+                                    <ItemsControl Grid.Row="1"
+                                                  ItemsSource="{Binding PlayingMoodDisplays}"
+                                                  IsVisible="{Binding HasPlayingMoods}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel Orientation="Horizontal" Spacing="14"/>
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="models:TrackMoodDisplay">
+                                                <TextBlock Text="{Binding Text}"
+                                                           Foreground="{Binding Foreground}"
+                                                           FontSize="9.5"
+                                                           FontWeight="SemiBold"/>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </Grid>
+
+                                <TextBlock Text="{Binding DurationText}"
+                                           IsVisible="{Binding IsPlaying}"
+                                           Margin="0,0,14,9"
+                                           FontFamily="Consolas"
+                                           FontSize="10.5"
+                                           Foreground="#E2DAC0"
+                                           HorizontalAlignment="Right"
+                                           VerticalAlignment="Bottom"/>
                                 </Panel>
                             </Border>
                             <Rectangle Grid.Row="1"

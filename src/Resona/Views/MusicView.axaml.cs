@@ -120,6 +120,7 @@ public partial class MusicView : UserControl
     private Dictionary<int, List<int>> _allTrackTagIds = [];
     private Dictionary<int, TrackAudioAnalysis> _allTrackAudioAnalyses = [];
     private Dictionary<int, Dictionary<string, double>> _allTrackMirexScores = [];
+    private Dictionary<int, TrackUsageStats> _allTrackUsageStats = [];
     private Dictionary<int, string> _mainGenreNamesBySubgenreId = [];
     private Dictionary<string, string> _mainGenreNamesBySubgenreName = new(StringComparer.OrdinalIgnoreCase);
     private List<TrackDisplayItem> _filteredItems = [];
@@ -590,6 +591,7 @@ public partial class MusicView : UserControl
         _allTrackTagIds = MusicLibraryService.Current.GetAllTrackTagIds();
         _allTrackAudioAnalyses = MusicLibraryService.Current.GetAllTrackAudioAnalyses();
         _allTrackMirexScores = MusicLibraryService.Current.GetAllMirexScores();
+        _allTrackUsageStats = MusicLibraryService.Current.GetAllTrackUsageStats();
 
         var mainGenreNamesById = MusicLibraryService.Current.GetModelGenres()
             .ToDictionary(genre => genre.Id, genre => genre.Name);
@@ -727,15 +729,76 @@ public partial class MusicView : UserControl
         var ratingName = track.RatingId is int ratingId ? ratingMap.GetValueOrDefault(ratingId, "") : "None";
         var durationText = track.DurationSeconds.HasValue ? FormatDuration(track.DurationSeconds.Value) : "";
 
+        var audioText = FormatPlayingAudio(_allTrackAudioAnalyses.GetValueOrDefault(track.Id));
+        var usageText = FormatPlayingUsage(_allTrackUsageStats.GetValueOrDefault(track.Id));
+        var sourceText = FormatPlayingSource(track);
+        var moodDisplays = _allTrackMirexScores.GetValueOrDefault(track.Id, [])
+            .OrderByDescending(entry => entry.Value)
+            .Take(3)
+            .Select(entry => new TrackMoodDisplay(
+                $"{EmotionalCharacterCatalog.Name(entry.Key)} {entry.Value * 100d:0}%",
+                new SolidColorBrush(Color.Parse(EmotionalCharacterCatalog.Color(entry.Key)))))
+            .ToList();
+
         var item = new TrackDisplayItem(track, genreStr, modelGenreStr, manualGenreStr, styleStr, durationText, ratingName, genreDisplays, tagDisplays, track.ChannelName ?? "")
         {
             NeedsReview = track.NeedsReview,
             NeedsAnalysis = needsAnalysis,
-            IsPlaying = track.Id == _engine.ActiveTrackId
+            IsPlaying = track.Id == _engine.ActiveTrackId,
+            PlayingAudioText = audioText,
+            PlayingUsageText = usageText,
+            PlayingSourceText = sourceText,
+            PlayingMoodDisplays = moodDisplays
         };
         item.ApplyAppearance(_appearanceSettings);
         return item;
     }
+
+    private static string FormatPlayingAudio(TrackAudioAnalysis? analysis)
+    {
+        if (analysis is null)
+            return string.Empty;
+
+        var values = new List<string>();
+        if (analysis.Bpm is double bpm)
+            values.Add($"{bpm:0.#} BPM");
+        if (analysis.IntegratedLoudness is double loudness)
+            values.Add($"{loudness:0.#} LUFS");
+        if (analysis.LoudnessRange is double range)
+            values.Add($"{range:0.#} LU dynamics");
+        return string.Join("  ·  ", values);
+    }
+
+    private static string FormatPlayingUsage(TrackUsageStats? usage)
+    {
+        if (usage is null)
+            return string.Empty;
+
+        var listened = usage.ListenedSeconds >= 3600
+            ? $"{usage.ListenedSeconds / 3600d:0.#} h listened"
+            : usage.ListenedSeconds >= 60
+                ? $"{usage.ListenedSeconds / 60} min listened"
+                : $"{usage.ListenedSeconds} sec listened";
+        return $"{usage.PlayCount} plays  ·  {listened}  ·  {usage.SkipCount} skips";
+    }
+
+    private static string FormatPlayingSource(MusicTrack track)
+    {
+        var values = new List<string>();
+        if (track.ViewCount is long views)
+            values.Add($"{FormatCompactMetric(views)} views");
+        if (track.LikeCount is long likes)
+            values.Add($"{FormatCompactMetric(likes)} likes");
+        return string.Join("  ·  ", values);
+    }
+
+    private static string FormatCompactMetric(long value) => value switch
+    {
+        >= 1_000_000_000 => $"{value / 1_000_000_000d:0.#}B",
+        >= 1_000_000 => $"{value / 1_000_000d:0.#}M",
+        >= 1_000 => $"{value / 1_000d:0.#}K",
+        _ => value.ToString("N0")
+    };
 
     private void UpdateTrackInList(int trackId)
     {
@@ -3428,6 +3491,9 @@ public partial class MusicView : UserControl
         _allTrackStyleIds.Remove(trackId);
         _allTrackGenreIds.Remove(trackId);
         _allTrackTagIds.Remove(trackId);
+        _allTrackAudioAnalyses.Remove(trackId);
+        _allTrackMirexScores.Remove(trackId);
+        _allTrackUsageStats.Remove(trackId);
         _playbackQueue.Retain(
             _allItems.Select(item => item.Track.Id),
             _engine.ActiveTrackId >= 0 ? _engine.ActiveTrackId : null);
@@ -3515,6 +3581,51 @@ public partial class MusicView : UserControl
     private void OnNextClicked(object? sender, RoutedEventArgs e) => NavigateNext(isManual: true);
 
     private void OnPlayPauseClicked(object? sender, RoutedEventArgs e) => TogglePlayPause();
+
+    private void OnPlayingTrackRatingDownClicked(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Control { DataContext: TrackDisplayItem item })
+            ChangeTrackRating(item, -1);
+        e.Handled = true;
+    }
+
+    private void OnPlayingTrackRatingUpClicked(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Control { DataContext: TrackDisplayItem item })
+            ChangeTrackRating(item, 1);
+        e.Handled = true;
+    }
+
+    private void ChangeTrackRating(TrackDisplayItem item, int direction)
+    {
+        var ratings = Values.Ratings.OrderBy(rating => rating.SortOrder).ToList();
+        if (ratings.Count == 0)
+            return;
+
+        var currentIndex = item.Track.RatingId is int ratingId
+            ? ratings.FindIndex(rating => rating.Id == ratingId)
+            : -1;
+        var targetIndex = currentIndex < 0
+            ? direction > 0 ? 0 : -1
+            : currentIndex + direction;
+        if (targetIndex < 0 || targetIndex >= ratings.Count)
+        {
+            ShowToast(direction > 0 ? "Already at the highest rating" : "Already at the lowest rating");
+            return;
+        }
+
+        var target = ratings[targetIndex];
+        MusicLibraryService.Current.SetTrackRating(item.Track.Id, target.Id);
+        UpdateTrackInList(item.Track.Id);
+        ShowToast($"Rating changed to {target.Name}");
+    }
+
+    private async void OnPlayingTrackDeleteClicked(object? sender, RoutedEventArgs e)
+    {
+        e.Handled = true;
+        if (sender is Control { DataContext: TrackDisplayItem item })
+            await DeleteTrackFromEditorAsync(item.Track);
+    }
 
     private void OnKeyDown(object? sender, KeyEventArgs e)
     {

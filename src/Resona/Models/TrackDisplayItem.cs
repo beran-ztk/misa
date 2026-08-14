@@ -10,6 +10,8 @@ public record TrackTagDisplay(string Name, IBrush Foreground);
 
 public record TrackGenreDisplay(string Name, IBrush Foreground);
 
+public record TrackMoodDisplay(string Text, IBrush Foreground);
+
 public static class MainGenrePalette
 {
     private static readonly IBrush Fallback = Create("#B5BDC7");
@@ -67,6 +69,17 @@ public record TrackDisplayItem(
     };
 
     public bool IsPlaying { get; set; }
+    public double TrackCardHeight => IsPlaying ? 104 : 58;
+    public double PlayingAccentHeight => IsPlaying ? 104 : 60;
+    public bool ShowCompactDuration => !IsPlaying;
+    public string PlayingAudioText { get; init; } = string.Empty;
+    public string PlayingUsageText { get; init; } = string.Empty;
+    public string PlayingSourceText { get; init; } = string.Empty;
+    public IReadOnlyList<TrackMoodDisplay> PlayingMoodDisplays { get; init; } = [];
+    public bool HasPlayingAudio => PlayingAudioText.Length > 0;
+    public bool HasPlayingUsage => PlayingUsageText.Length > 0;
+    public bool HasPlayingSource => PlayingSourceText.Length > 0;
+    public bool HasPlayingMoods => PlayingMoodDisplays.Count > 0;
     public bool NeedsReview { get; set; }
     public bool NeedsAnalysis { get; set; }
     public bool ShowDownloadedDate { get; set; }
@@ -151,7 +164,7 @@ public record TrackDisplayItem(
         }
     }
     public IBrush PlayingBackground => IsPlaying
-        ? new SolidColorBrush(Color.FromArgb(20, 245, 245, 220))
+        ? new SolidColorBrush(Color.FromArgb(32, 245, 245, 220))
         : Brushes.Transparent;
 
     public IBrush PlayingAccent => IsPlaying
