@@ -21,7 +21,7 @@ public static class MainGenrePalette
             ["Brass & Military"] = Create("#D7A86E"),
             ["Children's"] = Create("#FF9FD2"),
             ["Classical"] = Create("#BFA3FF"),
-            ["Electronic"] = Create("#54D6FF"),
+            ["Electronic"] = Create("#86E0B0"),
             ["Folk, World, & Country"] = Create("#9DDB72"),
             ["Funk / Soul"] = Create("#FFAA5C"),
             ["Hip Hop"] = Create("#D58AFF"),

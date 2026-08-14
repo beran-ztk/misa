@@ -18,14 +18,17 @@ public sealed class TrackGenreSummaryControl : Panel
         AvaloniaProperty.Register<TrackGenreSummaryControl, IReadOnlyList<TrackGenreDisplay>?>(nameof(Genres));
 
     private readonly List<TextBlock> _genreLabels = [];
+    private readonly List<TextBlock> _separatorLabels = [];
     private readonly TextBlock _moreLabel = new()
     {
+        Text = "...",
         FontSize = 10,
         FontWeight = FontWeight.SemiBold,
-        Foreground = ThemeResources.Brush("Theme.Brush.TextMuted"),
-        Opacity = 0.75,
+        Foreground = ThemeResources.Brush("Theme.Brush.TextPrimary"),
+        Opacity = 0.9,
         Margin = new Thickness(5, 0, 0, 0),
-        VerticalAlignment = VerticalAlignment.Center
+        VerticalAlignment = VerticalAlignment.Center,
+        Effect = CreateTextShadow()
     };
 
     public IReadOnlyList<TrackGenreDisplay>? Genres
@@ -49,25 +52,38 @@ public sealed class TrackGenreSummaryControl : Panel
     {
         Children.Clear();
         _genreLabels.Clear();
+        _separatorLabels.Clear();
+        _moreLabel.IsVisible = false;
 
         var genres = Genres ?? [];
         for (var index = 0; index < genres.Count; index++)
         {
             var genre = genres[index];
-            var separator = index switch
+            if (index > 0)
             {
-                0 => string.Empty,
-                _ when index == genres.Count - 1 => " and ",
-                _ => ", "
-            };
+                var separator = new TextBlock
+                {
+                    Text = index == genres.Count - 1 ? " and " : ", ",
+                    Foreground = ThemeResources.Brush("Theme.Brush.TextPrimary"),
+                    FontSize = 11,
+                    FontWeight = FontWeight.Medium,
+                    Opacity = 0.9,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Effect = CreateTextShadow()
+                };
+                _separatorLabels.Add(separator);
+                Children.Add(separator);
+            }
+
             var label = new TextBlock
             {
-                Text = separator + genre.Name,
+                Text = genre.Name,
                 Foreground = genre.Foreground,
                 FontSize = 11,
                 FontWeight = FontWeight.Medium,
                 Opacity = 0.9,
-                VerticalAlignment = VerticalAlignment.Center
+                VerticalAlignment = VerticalAlignment.Center,
+                Effect = CreateTextShadow()
             };
             _genreLabels.Add(label);
             Children.Add(label);
@@ -83,8 +99,12 @@ public sealed class TrackGenreSummaryControl : Panel
         foreach (var child in Children)
             child.Measure(new Size(double.PositiveInfinity, availableSize.Height));
 
-        var desiredWidth = _genreLabels.Sum(label => label.DesiredSize.Width);
-        var desiredHeight = _genreLabels.Count == 0 ? 0 : _genreLabels.Max(label => label.DesiredSize.Height);
+        var desiredWidth = WidthFor(_genreLabels.Count);
+        var desiredHeight = Children
+            .Where(child => child != _moreLabel)
+            .Select(child => child.DesiredSize.Height)
+            .DefaultIfEmpty(0)
+            .Max();
         return new Size(
             double.IsInfinity(availableSize.Width) ? desiredWidth : Math.Min(desiredWidth, availableSize.Width),
             desiredHeight);
@@ -100,16 +120,31 @@ public sealed class TrackGenreSummaryControl : Panel
         }
 
         var count = genres.Count;
-        while (count > 0 && !Fits(count, genres.Count - count, finalSize.Width))
-            count--;
-
-        _moreLabel.IsVisible = count < genres.Count && Fits(count, genres.Count - count, finalSize.Width);
+        var isTruncated = WidthFor(count) > finalSize.Width;
+        _moreLabel.IsVisible = isTruncated;
+        if (isTruncated)
+        {
+            _moreLabel.Measure(new Size(double.PositiveInfinity, finalSize.Height));
+            while (count > 0 && WidthFor(count) + _moreLabel.DesiredSize.Width > finalSize.Width)
+                count--;
+        }
 
         var x = 0d;
         for (var index = 0; index < _genreLabels.Count; index++)
         {
             var label = _genreLabels[index];
             label.IsVisible = index < count;
+            if (index > 0)
+            {
+                var separator = _separatorLabels[index - 1];
+                separator.IsVisible = index < count;
+                if (separator.IsVisible)
+                {
+                    var separatorY = Math.Max(0, (finalSize.Height - separator.DesiredSize.Height) / 2);
+                    separator.Arrange(new Rect(x, separatorY, separator.DesiredSize.Width, separator.DesiredSize.Height));
+                    x += separator.DesiredSize.Width;
+                }
+            }
             if (!label.IsVisible)
                 continue;
 
@@ -120,8 +155,6 @@ public sealed class TrackGenreSummaryControl : Panel
 
         if (_moreLabel.IsVisible)
         {
-            _moreLabel.Text = "...";
-            _moreLabel.Measure(new Size(double.PositiveInfinity, finalSize.Height));
             var y = Math.Max(0, (finalSize.Height - _moreLabel.DesiredSize.Height) / 2);
             _moreLabel.Arrange(new Rect(x, y, _moreLabel.DesiredSize.Width, _moreLabel.DesiredSize.Height));
         }
@@ -129,14 +162,16 @@ public sealed class TrackGenreSummaryControl : Panel
         return finalSize;
     }
 
-    private bool Fits(int shownGenreCount, int hiddenGenreCount, double availableWidth)
-    {
-        var width = _genreLabels.Take(shownGenreCount).Sum(label => label.DesiredSize.Width);
-        if (hiddenGenreCount <= 0)
-            return width <= availableWidth;
+    private double WidthFor(int genreCount) =>
+        _genreLabels.Take(genreCount).Sum(label => label.DesiredSize.Width)
+        + _separatorLabels.Take(Math.Max(0, genreCount - 1)).Sum(label => label.DesiredSize.Width);
 
-        _moreLabel.Text = "...";
-        _moreLabel.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-        return width + _moreLabel.DesiredSize.Width <= availableWidth;
-    }
+    private static DropShadowEffect CreateTextShadow() => new()
+    {
+        OffsetX = 0,
+        OffsetY = 0,
+        BlurRadius = 1,
+        Color = Colors.Black,
+        Opacity = 0.9
+    };
 }
