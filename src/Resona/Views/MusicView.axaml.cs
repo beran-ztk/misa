@@ -1029,24 +1029,16 @@ public partial class MusicView : UserControl
                 .Select(item => item.Track)
                 .ToList();
         }
-        else if (ShowNeedsReviewCheckBox.IsChecked == true)
-        {
-            // Review mode is an exclusive, temporary view. The user's configured
-            // search, rating and metadata filters remain intact and
-            // become active again when review mode is switched off.
-            filtered = _allItems
-                .Where(item => item.NeedsReview)
-                .Select(item => item.Track)
-                .ToList();
-        }
         else
         {
             var selRatingIds = SelectedRatingIds();
             var groups = CurrentFilterGroups();
+            var reviewOnly = ShowNeedsReviewCheckBox.IsChecked == true;
 
             filtered = TrackFilter.Apply(
                 _allItems
-                    .Where(item => item.Track.LibraryState != TrackLibraryState.Rejected)
+                    .Where(item => item.Track.LibraryState != TrackLibraryState.Rejected
+                                   && (!reviewOnly || item.NeedsReview))
                     .Select(item => item.Track),
                 _allTrackGenreIds,
                 _allTrackStyleIds,
@@ -1326,14 +1318,10 @@ public partial class MusicView : UserControl
                 .Select(item => item.Track)
                 .ToList();
 
-        if (ShowNeedsReviewCheckBox.IsChecked == true)
-            return _allItems
-                .Where(item => item.NeedsReview)
-                .Select(item => item.Track)
-                .ToList();
-
+        var reviewOnly = ShowNeedsReviewCheckBox.IsChecked == true;
         IEnumerable<MusicTrack> query = _allItems
-            .Where(item => item.Track.LibraryState != TrackLibraryState.Rejected)
+            .Where(item => item.Track.LibraryState != TrackLibraryState.Rejected
+                           && (!reviewOnly || item.NeedsReview))
             .Select(item => item.Track);
         var selectedRatingIds = SelectedRatingIds();
         var selectedGenreIds = SelectedIds(group.GenreCtrl.SelectedItems, Values.Genres, g => g.Name, g => g.Id);
@@ -1544,9 +1532,17 @@ public partial class MusicView : UserControl
         ApplyFilterDefinitionChange();
     }
 
+    private void OnNeedsReviewFilterClicked(object? sender, RoutedEventArgs e)
+    {
+        SetLibraryMode(NeedsReviewFilterButton.IsChecked == true
+            ? LibraryMode.Review
+            : LibraryMode.Library);
+    }
+
     private void RefreshCompletionFilterVisuals()
     {
         var reviewSelected = ShowNeedsReviewCheckBox.IsChecked == true;
+        NeedsReviewFilterButton.IsChecked = reviewSelected;
         ShowNeedsReviewCheckBox.Background = reviewSelected ? Brush("#24FFD27A") : Brushes.Transparent;
         ShowNeedsReviewCheckBox.BorderBrush = Brushes.Transparent;
 
