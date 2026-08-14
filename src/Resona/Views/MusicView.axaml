@@ -1387,6 +1387,47 @@
 
     <views:SettingsOverlay x:Name="SettingsOverlay" IsVisible="False" ZIndex="90"/>
 
+    <Border x:Name="DeleteTrackConfirmation"
+            IsVisible="False"
+            ZIndex="95"
+            Background="#B8000000"
+            Focusable="True"
+            KeyDown="OnDeleteTrackConfirmationKeyDown">
+        <Border Width="410"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Background="{DynamicResource Theme.Brush.Surface}"
+                BorderBrush="{DynamicResource Theme.Brush.BorderStrong}"
+                BorderThickness="1"
+                CornerRadius="10"
+                Padding="22"
+                BoxShadow="0 14 38 4 #88000000">
+            <StackPanel Spacing="14">
+                <TextBlock Text="Delete track?"
+                           FontSize="17"
+                           FontWeight="SemiBold"/>
+                <TextBlock x:Name="DeleteTrackConfirmationText"
+                           FontSize="12"
+                           Foreground="{DynamicResource Theme.Brush.TextSecondary}"
+                           TextWrapping="Wrap"/>
+                <StackPanel Orientation="Horizontal"
+                            HorizontalAlignment="Right"
+                            Spacing="9"
+                            Margin="0,5,0,0">
+                    <Button x:Name="CancelTrackDeleteButton"
+                            Content="Cancel"
+                            MinWidth="88"
+                            Click="OnCancelTrackDeleteClicked"/>
+                    <Button Content="Delete"
+                            MinWidth="88"
+                            Background="{DynamicResource Theme.Brush.DangerSurface}"
+                            BorderBrush="{DynamicResource Theme.Brush.DangerBorder}"
+                            Click="OnConfirmTrackDeleteClicked"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+    </Border>
+
 
     <Border x:Name="Toast"
             IsVisible="False"

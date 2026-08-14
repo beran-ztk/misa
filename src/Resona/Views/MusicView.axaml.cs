@@ -63,6 +63,7 @@ public partial class MusicView : UserControl
     private Color _targetAmbientSecondary = DefaultAmbientPalette.Secondary;
     private bool _hasArtworkPalette;
     private bool _isSeeking;
+    private TaskCompletionSource<bool>? _deleteTrackConfirmationCompletion;
     private double _targetEnergy;
     private double _targetBass;
     private double _targetTreble;
@@ -3368,7 +3369,7 @@ public partial class MusicView : UserControl
 
     private async Task<bool> DeleteTrackFromEditorAsync(MusicTrack track)
     {
-        if (_isDeletingTrack)
+        if (_isDeletingTrack || !await ConfirmTrackDeletionAsync(track))
             return false;
 
         _isDeletingTrack = true;
@@ -3438,6 +3439,53 @@ public partial class MusicView : UserControl
         {
             _isDeletingTrack = false;
         }
+    }
+
+    private Task<bool> ConfirmTrackDeletionAsync(MusicTrack track)
+    {
+        if (_deleteTrackConfirmationCompletion is not null)
+            return Task.FromResult(false);
+
+        _deleteTrackConfirmationCompletion = new TaskCompletionSource<bool>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        DeleteTrackConfirmationText.Text =
+            $"\u201c{track.Title}\u201d will be removed from the library and its local file will be permanently deleted.";
+        DeleteTrackConfirmation.IsVisible = true;
+        DeleteTrackConfirmation.Focus();
+        CancelTrackDeleteButton.Focus();
+        return _deleteTrackConfirmationCompletion.Task;
+    }
+
+    private void OnCancelTrackDeleteClicked(object? sender, RoutedEventArgs e)
+    {
+        CompleteTrackDeleteConfirmation(false);
+        e.Handled = true;
+    }
+
+    private void OnConfirmTrackDeleteClicked(object? sender, RoutedEventArgs e)
+    {
+        CompleteTrackDeleteConfirmation(true);
+        e.Handled = true;
+    }
+
+    private void OnDeleteTrackConfirmationKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Escape)
+            return;
+
+        CompleteTrackDeleteConfirmation(false);
+        e.Handled = true;
+    }
+
+    private void CompleteTrackDeleteConfirmation(bool confirmed)
+    {
+        var completion = _deleteTrackConfirmationCompletion;
+        if (completion is null)
+            return;
+
+        _deleteTrackConfirmationCompletion = null;
+        DeleteTrackConfirmation.IsVisible = false;
+        completion.TrySetResult(confirmed);
     }
 
     private async Task<BulkTrackDeleteResult> DeleteAllUnratedTracksAsync()
