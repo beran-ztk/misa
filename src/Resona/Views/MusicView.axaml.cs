@@ -139,7 +139,6 @@ public partial class MusicView : UserControl
     private MultiSelectFilterControl? _conditionTagCtrl;
     private MultiSelectFilterControl? _conditionLanguageCtrl;
     private bool _conditionNegate;
-    private bool _isQuickEditMode;
     private bool _updatingLibraryMode;
     private readonly Dictionary<string, EmotionalRangeState> _conditionEmotionalCharacters =
         EmotionalCharacterCatalog.All.ToDictionary(item => item.Adjectives, _ => new EmotionalRangeState(), StringComparer.OrdinalIgnoreCase);
@@ -166,8 +165,7 @@ public partial class MusicView : UserControl
     {
         Library,
         Review,
-        Declined,
-        QuickEdit
+        Declined
     }
     private readonly List<FilterGroupControls> _filterGroups = [];
 
@@ -703,23 +701,8 @@ public partial class MusicView : UserControl
         {
             NeedsReview = track.NeedsReview,
             NeedsAnalysis = needsAnalysis,
-            IsPlaying = track.Id == _engine.ActiveTrackId,
-            IsQuickEditMode = _isQuickEditMode,
-            QuickRatingValue = track.RatingId is int selectedRatingId
-                ? Math.Clamp(Values.Ratings.FirstOrDefault(rating => rating.Id == selectedRatingId)?.SortOrder ?? 0, 0, 6)
-                : 0
+            IsPlaying = track.Id == _engine.ActiveTrackId
         };
-        if (_allTrackAudioAnalyses.TryGetValue(track.Id, out var audio))
-        {
-            item.TempoText = audio.Bpm is double bpm ? $"Tempo {bpm:0} BPM" : "Tempo —";
-            item.LoudnessText = audio.IntegratedLoudness is double loudness ? $"Loudness {loudness:0.0} LUFS" : "Loudness —";
-            item.DynamicsText = audio.LoudnessRange is double dynamics ? $"Dynamics {dynamics:0.0} LU" : "Dynamics —";
-        }
-        if (_allTrackMirexScores.TryGetValue(track.Id, out var mirex) && mirex.Count > 0)
-        {
-            var strongest = mirex.MaxBy(pair => pair.Value);
-            item.EmotionalCharacterText = $"{EmotionalCharacterCatalog.Name(strongest.Key)} {strongest.Value * 100d:0}%";
-        }
         item.ApplyAppearance(_appearanceSettings);
         return item;
     }
@@ -788,21 +771,6 @@ public partial class MusicView : UserControl
         ReplaceTrackDisplayItem(_filteredItems, previous, updated);
         ReplaceTrackDisplayItem(_visibleItems, previous, updated);
 
-        // The standard row does not display remote metadata. Avoid rebuilding
-        // the virtualized list during a large startup backfill; entering Quick
-        // Edit will bind the already-updated items.
-        if (!_isQuickEditMode)
-            return;
-
-        var selectedTrackId = (FileList.SelectedItem as TrackDisplayItem)?.Track.Id;
-        FileList.ItemsSource = null;
-        FileList.ItemsSource = _visibleItems;
-        if (selectedTrackId is int id)
-        {
-            var selectedIndex = _visibleItems.FindIndex(item => item.Track.Id == id);
-            if (selectedIndex >= 0)
-                FileList.SelectedIndex = selectedIndex;
-        }
     }
 
     private static void ReplaceTrackDisplayItem(
@@ -1548,7 +1516,6 @@ public partial class MusicView : UserControl
         {
             ShowNeedsReviewCheckBox.IsChecked = mode == LibraryMode.Review;
             ShowDeclinedCheckBox.IsChecked = mode == LibraryMode.Declined;
-            SetQuickEditMode(mode == LibraryMode.QuickEdit);
         }
         finally
         {
@@ -1559,25 +1526,12 @@ public partial class MusicView : UserControl
         ApplyFilterDefinitionChange();
     }
 
-    private void SetQuickEditMode(bool enabled)
-    {
-        if (_isQuickEditMode == enabled)
-            return;
-
-        _isQuickEditMode = enabled;
-        foreach (var item in _allItems)
-            item.IsQuickEditMode = enabled;
-        RefreshVisibleItemsSource((FileList.SelectedItem as TrackDisplayItem)?.Track.Id);
-    }
-
     private LibraryMode CurrentLibraryMode() =>
         ShowNeedsReviewCheckBox.IsChecked == true
             ? LibraryMode.Review
             : ShowDeclinedCheckBox.IsChecked == true
                 ? LibraryMode.Declined
-                : _isQuickEditMode
-                    ? LibraryMode.QuickEdit
-                    : LibraryMode.Library;
+                : LibraryMode.Library;
 
     private void RefreshLibraryModeSelector()
     {
@@ -1585,22 +1539,18 @@ public partial class MusicView : UserControl
         LibraryModeIcon.IsVisible = mode == LibraryMode.Library;
         ReviewModeIcon.IsVisible = mode == LibraryMode.Review;
         DeclinedModeIcon.IsVisible = mode == LibraryMode.Declined;
-        QuickEditModeIcon.IsVisible = mode == LibraryMode.QuickEdit;
 
         LibraryModeOption.Background = mode == LibraryMode.Library ? Brush("#18FFFFFF") : Brushes.Transparent;
         ReviewModeOption.Background = mode == LibraryMode.Review ? Brush("#24FFD27A") : Brushes.Transparent;
         DeclinedModeOption.Background = mode == LibraryMode.Declined ? Brush("#24EE5C5C") : Brushes.Transparent;
-        QuickEditModeOption.Background = mode == LibraryMode.QuickEdit ? Brush("#343E6591") : Brushes.Transparent;
         LibraryModeOption.Opacity = mode == LibraryMode.Library ? 1 : 0.52;
         ReviewModeOption.Opacity = mode == LibraryMode.Review ? 1 : 0.52;
         DeclinedModeOption.Opacity = mode == LibraryMode.Declined ? 1 : 0.52;
-        QuickEditModeOption.Opacity = mode == LibraryMode.QuickEdit ? 1 : 0.52;
 
         LibraryModeButton.Background = mode switch
         {
             LibraryMode.Review => Brush("#24FFD27A"),
             LibraryMode.Declined => Brush("#24EE5C5C"),
-            LibraryMode.QuickEdit => Brush("#343E6591"),
             _ => Brushes.Transparent
         };
         LibraryModeButton.Opacity = mode == LibraryMode.Library ? 0.86 : 1;
@@ -1608,7 +1558,6 @@ public partial class MusicView : UserControl
         {
             LibraryMode.Review => "Mode: Needs review",
             LibraryMode.Declined => "Mode: Declined",
-            LibraryMode.QuickEdit => "Mode: Quick edit",
             _ => "Mode: Library"
         });
     }
@@ -3162,50 +3111,6 @@ public partial class MusicView : UserControl
         RefreshTrackList();
         if (ImportOverlay.IsVisible)
             ImportOverlay.RefreshQueue();
-    }
-
-    private void OnToggleQuickEditClicked(object? sender, RoutedEventArgs e)
-    {
-        SetLibraryMode(_isQuickEditMode ? LibraryMode.Library : LibraryMode.QuickEdit);
-    }
-
-    private void OnQuickStarRatingClicked(object? sender, RoutedEventArgs e)
-    {
-        if (!_isQuickEditMode || sender is not Button { DataContext: TrackDisplayItem item, Tag: string tag })
-            return;
-
-        if (!int.TryParse(tag, out var stars))
-            return;
-        var rating = Values.Ratings
-            .OrderBy(candidate => Math.Abs(candidate.SortOrder - stars))
-            .ThenBy(candidate => candidate.SortOrder)
-            .FirstOrDefault();
-        if (rating is null || item.Track.RatingId == rating.Id)
-            return;
-
-        MusicLibraryService.Current.SetTrackRating(item.Track.Id, rating.Id);
-        UpdateTrackInList(item.Track.Id);
-        ShowToast($"Rated {item.Track.Title} as {rating.Name}");
-        e.Handled = true;
-    }
-
-    private async void OnQuickDeleteClicked(object? sender, RoutedEventArgs e)
-    {
-        if (sender is Control { DataContext: TrackDisplayItem item })
-            await DeleteTrackFromEditorAsync(item.Track);
-        e.Handled = true;
-    }
-
-    private async void OnQuickCopyUrlClicked(object? sender, RoutedEventArgs e)
-    {
-        if (sender is not Control { DataContext: TrackDisplayItem item })
-            return;
-        var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
-        if (clipboard is null)
-            return;
-        await clipboard.SetTextAsync(item.Track.CanonicalUrl);
-        ShowToast("YouTube URL copied");
-        e.Handled = true;
     }
 
     private void OnSettingsClicked(object? sender, RoutedEventArgs e)
