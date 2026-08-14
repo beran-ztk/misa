@@ -557,44 +557,41 @@
                                     <Grid Grid.Column="2"
                                           VerticalAlignment="Center"
                                           RowDefinitions="Auto,Auto"
+                                          ColumnDefinitions="66,*"
                                           Margin="0,0,88,0"
                                           RowSpacing="4">
-                                        <Grid Grid.Row="0"
-                                              Grid.Column="0"
-                                              ColumnDefinitions="66,*">
+                                        <TextBlock Grid.RowSpan="2"
+                                                   Grid.Column="0"
+                                                   Text="{Binding RatingText}"
+                                                   FontFamily="Consolas"
+                                                   FontSize="12"
+                                                   FontWeight="SemiBold"
+                                                   Margin="0,0,8,0"
+                                                   HorizontalAlignment="Stretch"
+                                                   TextAlignment="Center"
+                                                   VerticalAlignment="Center"
+                                                   Foreground="{Binding RatingForeground}">
+                                            <TextBlock.Effect>
+                                                <DropShadowEffect OffsetX="0"
+                                                                  OffsetY="0"
+                                                                  BlurRadius="1"
+                                                                  Color="Black"/>
+                                            </TextBlock.Effect>
+                                        </TextBlock>
 
-                                            <TextBlock Text="{Binding RatingText}"
-                                                       FontFamily="Consolas"
-                                                       FontSize="12"
-                                                       FontWeight="SemiBold"
-                                                       Margin="0,0,8,0"
-                                                       HorizontalAlignment="Stretch"
-                                                       TextAlignment="Center"
-                                                       VerticalAlignment="Center"
-                                                       Foreground="{Binding RatingForeground}">
+                                        <TextBlock Grid.Row="0"
+                                                   Grid.Column="1"
+                                                   Text="{Binding Track.Title}"
+                                                   Foreground="{Binding TitleBrush}"
+                                                   FontSize="14"
+                                                   FontWeight="SemiBold"
+                                                   VerticalAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis"/>
 
-                                                <TextBlock.Effect>
-                                                    <DropShadowEffect OffsetX="0"
-                                                                      OffsetY="0"
-                                                                      BlurRadius="1"
-                                                                      Color="Black"/>
-                                                </TextBlock.Effect>
-                                                <TextBlock.RenderTransform>
-                                                    <TranslateTransform Y="3"/>
-                                                </TextBlock.RenderTransform>
-                                            </TextBlock>
-
-                                            <TextBlock Grid.Column="1"
-                                                       Text="{Binding Track.Title}"
-                                                       Foreground="{Binding TitleBrush}"
-                                                       FontSize="14"
-                                                       FontWeight="SemiBold"
-                                                       VerticalAlignment="Center"
-                                                       TextTrimming="CharacterEllipsis"/>
-                                        </Grid>
-                                        <Grid Grid.Row="1" Grid.Column="0" ColumnDefinitions="Auto,Auto,Auto,*">
-                                            <TextBlock Grid.Column="0" 
-                                                       Margin="2,0,0,0"
+                                        <Grid Grid.Row="1"
+                                              Grid.Column="1"
+                                              ColumnDefinitions="Auto,Auto,Auto,*">
+                                            <TextBlock Grid.Column="0"
                                                        Text="{Binding ChannelText}"
                                                        FontSize="10.5" Opacity="0.62"
                                                        Foreground="{DynamicResource Theme.Brush.TextPrimary}"
