@@ -121,13 +121,13 @@ public record TrackDisplayItem(
 
     public IBrush RatingBackground => RatingText switch
     {
-        RatingNames.Timeless => new SolidColorBrush(Color.FromArgb(100, 156, 116, 28)),
-        RatingNames.Amazing  => new SolidColorBrush(Color.FromArgb(100, 154, 78, 30)),
-        "Great"              => new SolidColorBrush(Color.FromArgb(100, 28, 126, 60)),
-        "Good"               => new SolidColorBrush(Color.FromArgb(100, 20, 100, 140)),
-        "Okay"               => new SolidColorBrush(Color.FromArgb(100, 108, 111, 70)),
-        RatingNames.Avoid    => new SolidColorBrush(Color.FromArgb(100, 150, 43, 36)),
-        _                    => new SolidColorBrush(Color.FromArgb(100, 137, 91, 25))
+        RatingNames.Timeless => new SolidColorBrush(Color.FromArgb(255, 156, 116, 28)),
+        RatingNames.Amazing  => new SolidColorBrush(Color.FromArgb(255, 154, 78, 30)),
+        "Great"              => new SolidColorBrush(Color.FromArgb(255, 28, 126, 60)),
+        "Good"               => new SolidColorBrush(Color.FromArgb(255, 20, 100, 140)),
+        "Okay"               => new SolidColorBrush(Color.FromArgb(255, 108, 111, 70)),
+        RatingNames.Avoid    => new SolidColorBrush(Color.FromArgb(255, 150, 43, 36)),
+        _                    => new SolidColorBrush(Color.FromArgb(255, 137, 91, 25))
     };
 
     public IBrush RatingBorder => RatingText switch
@@ -143,12 +143,12 @@ public record TrackDisplayItem(
 
     public IBrush RatingForeground => RatingText switch
     {
-        RatingNames.Timeless => new SolidColorBrush(Color.FromRgb(255, 230, 150)),
-        RatingNames.Amazing => new SolidColorBrush(Color.FromRgb(247, 195, 132)),
-        "Great" => new SolidColorBrush(Color.FromRgb(188, 242, 185)),
-        "Good" => new SolidColorBrush(Color.FromRgb(176, 232, 212)),
-        "Okay" => new SolidColorBrush(Color.FromRgb(226, 224, 194)),
-        RatingNames.Avoid => new SolidColorBrush(Color.FromRgb(246, 175, 160)),
-        _ => new SolidColorBrush(Color.FromRgb(243, 203, 128))
+        RatingNames.Timeless => new SolidColorBrush(Color.FromArgb(255, 255, 215, 64)),
+        RatingNames.Amazing  => new SolidColorBrush(Color.FromArgb(255, 255, 132, 48)),
+        "Great"              => new SolidColorBrush(Color.FromArgb(255, 55, 224, 105)),
+        "Good"               => new SolidColorBrush(Color.FromArgb(255, 45, 190, 240)),
+        "Okay"               => new SolidColorBrush(Color.FromArgb(255, 210, 205, 95)),
+        RatingNames.Avoid    => new SolidColorBrush(Color.FromArgb(255, 255, 75, 75)),
+        _                    => new SolidColorBrush(Color.FromArgb(255, 190, 145, 75))
     };
 }

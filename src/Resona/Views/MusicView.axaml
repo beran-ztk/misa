@@ -559,43 +559,38 @@
                                           RowDefinitions="Auto,Auto"
                                           Margin="0,0,88,0"
                                           RowSpacing="4">
-                                        <Grid Grid.Row="0" Grid.Column="0" ColumnDefinitions="Auto,*">
-                                            <Border Background="{Binding RatingBackground}"
-                                                    BorderBrush="{Binding RatingBorder}"
-                                                    BorderThickness="1"
-                                                    CornerRadius="4"
-                                                    Opacity="0.8"
-                                                    Width="60"
-                                                    Height="18"
-                                                    Padding="4,0"
-                                                    Margin="0,0,8,0"
-                                                    VerticalAlignment="Center">
-                                                <TextBlock Text="{Binding RatingText}"
-                                                           FontFamily="Consolas"
-                                                           FontSize="9.5"
-                                                           LetterSpacing="0.5"
-                                                           LineHeight="18"
-                                                           HorizontalAlignment="Stretch"
-                                                           TextAlignment="Center"
-                                                           VerticalAlignment="Center"
-                                                           Foreground="Azure">
-                                                    <TextBlock.RenderTransform>
-                                                        <TranslateTransform Y="2"/>
-                                                    </TextBlock.RenderTransform>
-                                                </TextBlock>
-                                            </Border>
-                                            <!-- <Image Grid.Column="1" -->
-                                            <!--        Source="{SvgImage /Assets/public.svg}" -->
-                                            <!--        IsVisible="{Binding Track.IsPublic}" -->
-                                            <!--        Width="13" Height="13" -->
-                                            <!--        Margin="0,0,6,0" -->
-                                            <!--        Opacity="0.9" -->
-                                            <!--        ToolTip.Tip="Public track"/> -->
-                                            <TextBlock Grid.Column="1" Text="{Binding Track.Title}"
-                                                   Foreground="{Binding TitleBrush}"
-                                                   FontSize="14" FontWeight="SemiBold"
-                                                   VerticalAlignment="Center"
-                                                   TextTrimming="CharacterEllipsis"/>
+                                        <Grid Grid.Row="0"
+                                              Grid.Column="0"
+                                              ColumnDefinitions="66,*">
+
+                                            <TextBlock Text="{Binding RatingText}"
+                                                       FontFamily="Consolas"
+                                                       FontSize="12"
+                                                       FontWeight="SemiBold"
+                                                       Margin="0,0,8,0"
+                                                       HorizontalAlignment="Stretch"
+                                                       TextAlignment="Center"
+                                                       VerticalAlignment="Center"
+                                                       Foreground="{Binding RatingForeground}">
+
+                                                <TextBlock.Effect>
+                                                    <DropShadowEffect OffsetX="0"
+                                                                      OffsetY="0"
+                                                                      BlurRadius="1"
+                                                                      Color="Black"/>
+                                                </TextBlock.Effect>
+                                                <TextBlock.RenderTransform>
+                                                    <TranslateTransform Y="3"/>
+                                                </TextBlock.RenderTransform>
+                                            </TextBlock>
+
+                                            <TextBlock Grid.Column="1"
+                                                       Text="{Binding Track.Title}"
+                                                       Foreground="{Binding TitleBrush}"
+                                                       FontSize="14"
+                                                       FontWeight="SemiBold"
+                                                       VerticalAlignment="Center"
+                                                       TextTrimming="CharacterEllipsis"/>
                                         </Grid>
                                         <Grid Grid.Row="1" Grid.Column="0" ColumnDefinitions="Auto,Auto,Auto,*">
                                             <TextBlock Grid.Column="0" Text="{Binding ChannelText}"
