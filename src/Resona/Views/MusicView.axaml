@@ -194,37 +194,6 @@
         <Style Selector="Border.track-card:pointerover">
             <Setter Property="Background" Value="#32262B22"/>
         </Style>
-        <Style Selector="Button.queue-menu">
-            <Setter Property="Opacity" Value="0"/>
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderBrush" Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Cursor" Value="Hand"/>
-        </Style>
-        <Style Selector="Border.track-card:pointerover Button.queue-menu">
-            <Setter Property="Opacity" Value="0.82"/>
-        </Style>
-        <Style Selector="Button.queue-menu:pointerover">
-            <Setter Property="Opacity" Value="1"/>
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderBrush" Value="Transparent"/>
-        </Style>
-        <Style Selector="Button.queue-menu:pressed">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderBrush" Value="Transparent"/>
-        </Style>
-        <Style Selector="Button.queue-menu /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderBrush" Value="Transparent"/>
-        </Style>
-        <Style Selector="Button.queue-menu:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderBrush" Value="Transparent"/>
-        </Style>
-        <Style Selector="Button.queue-menu:pressed /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderBrush" Value="Transparent"/>
-        </Style>
         <Style Selector="Border.selection-accent">
             <Setter Property="Background" Value="Transparent"/>
         </Style>
@@ -505,6 +474,7 @@
                         <Grid RowDefinitions="Auto,Auto" HorizontalAlignment="Stretch">
                             <Border Grid.Row="0"
                                     Classes="track-card"
+                                    PointerPressed="OnTrackContextMenuPointerPressed"
                                     Tapped="OnTrackCardTapped"
                                     DoubleTapped="OnTrackCardDoubleTapped"
                                     CornerRadius="4"
@@ -587,7 +557,7 @@
                                     <Grid Grid.Column="2"
                                           VerticalAlignment="Center"
                                           RowDefinitions="Auto,Auto"
-                                          Margin="0,0,120,0"
+                                          Margin="0,0,88,0"
                                           RowSpacing="4">
                                         <Grid Grid.Row="0" Grid.Column="0" ColumnDefinitions="Auto,*">
                                             <Border Background="{Binding RatingBackground}"
@@ -676,15 +646,6 @@
                                                HorizontalAlignment="Center"
                                                TextAlignment="Center"/>
                                 </StackPanel>
-                                <Button Classes="icon queue-menu"
-                                        Width="28" Height="28"
-                                        Margin="0,0,0,0"
-                                        HorizontalAlignment="Right"
-                                        VerticalAlignment="Center"
-                                        Click="OnTrackPlaybackMenuClicked"
-                                        ToolTip.Tip="Playback options">
-                                    <TextBlock Text="⋮" FontSize="18" Margin="0,-2,0,0"/>
-                                </Button>
                                 </Panel>
                             </Border>
                             <Rectangle Grid.Row="1"

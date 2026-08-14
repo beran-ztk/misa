@@ -4650,9 +4650,10 @@ public partial class MusicView : UserControl
 
     // ─── Upcoming bar ─────────────────────────────────────────────────────────
 
-    private void OnTrackPlaybackMenuClicked(object? sender, RoutedEventArgs e)
+    private void OnTrackContextMenuPointerPressed(object? sender, PointerPressedEventArgs e)
     {
-        if (sender is not Button { DataContext: TrackDisplayItem item } button)
+        if (sender is not Border { DataContext: TrackDisplayItem item } trackCard
+            || !e.GetCurrentPoint(trackCard).Properties.IsRightButtonPressed)
             return;
 
         EnsureLoadedPlaylistQueue(item.Track.Id);
@@ -4664,6 +4665,7 @@ public partial class MusicView : UserControl
         var isCurrent = _playbackQueue.CurrentTrackId == trackId;
         var menu = new ContextMenu
         {
+            Placement = PlacementMode.Pointer,
             ItemsSource = new object[]
             {
                 CreateTrackPlaybackMenuItem("Play next", "/Assets/skip-forward.svg",
@@ -4680,8 +4682,8 @@ public partial class MusicView : UserControl
                     () => ApplyTrackQueueMutation(() => _playbackQueue.Remove(trackId)))
             }
         };
-        button.ContextMenu = menu;
-        menu.Open(button);
+        trackCard.ContextMenu = menu;
+        menu.Open(trackCard);
         e.Handled = true;
     }
 
