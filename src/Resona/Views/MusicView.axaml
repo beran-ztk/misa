@@ -615,10 +615,10 @@
                                             </TextBlock.Effect>
                                         </TextBlock>
 
-                                        <Grid Grid.Row="0"
-                                              Grid.Column="1"
-                                              ColumnDefinitions="*,Auto">
-                                            <TextBlock Grid.Column="0"
+                                        <views:TrackTitleTagPanel Grid.Row="0"
+                                                                  Grid.Column="1"
+                                                                  Gap="6">
+                                            <TextBlock
                                                        Text="{Binding Track.DisplayTitle}"
                                                        Foreground="{Binding TitleBrush}"
                                                        FontSize="14"
@@ -626,12 +626,11 @@
                                                        VerticalAlignment="Center"
                                                        TextTrimming="CharacterEllipsis"/>
                                             <views:TrackTagSummaryControl Tags="{Binding TagDisplays}"
-                                                                          Grid.Column="1"
                                                                           MaxWidth="220"
-                                                                          Margin="6,0,8,0"
+                                                                          Margin="0,0,8,0"
                                                                           HorizontalAlignment="Stretch"
                                                                           VerticalAlignment="Center"/>
-                                        </Grid>
+                                        </views:TrackTitleTagPanel>
 
                                         <Grid Grid.Row="1"
                                               Grid.Column="1">
