@@ -21,7 +21,7 @@ public sealed class TrackGenreSummaryControl : Panel
     private readonly List<TextBlock> _separatorLabels = [];
     private readonly TextBlock _moreLabel = new()
     {
-        Text = "...",
+        Text = "…",
         FontSize = 10,
         FontWeight = FontWeight.SemiBold,
         Foreground = ThemeResources.Brush("Theme.Brush.TextPrimary"),

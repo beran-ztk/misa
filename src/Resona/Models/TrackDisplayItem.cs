@@ -76,7 +76,7 @@ public record TrackDisplayItem(
     public bool ShowCompactDuration => !IsPlaying;
     public Thickness TrackContentMargin => IsPlaying
         ? new Thickness(0, 0, 176, 0)
-        : new Thickness(0, 0, 88, 0);
+        : new Thickness(0, 0, 100, 0);
     public string PlayingAudioText { get; init; } = string.Empty;
     public string PlayingUsageText { get; init; } = string.Empty;
     public string PlayingSourceText { get; init; } = string.Empty;
