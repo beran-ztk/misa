@@ -477,7 +477,7 @@
                                     PointerPressed="OnTrackContextMenuPointerPressed"
                                     Tapped="OnTrackCardTapped"
                                     DoubleTapped="OnTrackCardDoubleTapped"
-                                    CornerRadius="4"
+                                    CornerRadius="12,4,4,12"
                                     ClipToBounds="True"
                                     Padding="0,0">
                                 <Panel>
@@ -493,14 +493,14 @@
                                         <BlurEffect Radius="8"/>
                                     </views:TrackColorWashControl.Effect>
                                 </views:TrackColorWashControl>
-                                <Image Source="{Binding Thumbnail}"
-                                       Width="106" Height="68"
-                                       Margin="18,-10,0,-10"
-                                       HorizontalAlignment="Left"
-                                       VerticalAlignment="Center"
-                                       Stretch="UniformToFill"
-                                       Opacity="{Binding TrackArtworkOpacity}"
-                                       IsHitTestVisible="False">
+                                    <Image Source="{Binding Thumbnail}"
+                                           Width="106" Height="74"
+                                           Margin="28,-10,0,-10"
+                                           HorizontalAlignment="Left"
+                                           VerticalAlignment="Center"
+                                           Stretch="UniformToFill"
+                                           Opacity="{Binding TrackArtworkOpacity}"
+                                           IsHitTestVisible="False">
                                     <Image.Effect>
                                         <BlurEffect Radius="{Binding TrackArtworkBlur}"/>
                                     </Image.Effect>
@@ -508,7 +508,7 @@
                                 <Border Background="{Binding PlayingBackground}"
                                         CornerRadius="7"
                                         IsHitTestVisible="False"/>
-                                <Grid ColumnDefinitions="4,52,*">
+                                <Grid ColumnDefinitions="4,62,*">
 
                                     <Border Grid.Column="0"
                                             Classes="selection-accent"
@@ -527,7 +527,8 @@
 
                                     <!-- The local halo lets the cover bleed softly into its immediate surroundings. -->
                                     <Panel Grid.Column="1"
-                                           Width="52" Height="52"
+                                           Width="52" Height="58"
+                                           Margin="10,0,0,0"
                                            VerticalAlignment="Center">
                                         <Image Source="{Binding Thumbnail}"
                                                Width="50" Height="50"
@@ -571,7 +572,7 @@
                                                    FontFamily="Consolas"
                                                    FontSize="12"
                                                    FontWeight="SemiBold"
-                                                   Margin="0,0,8,0"
+                                                   Margin="0,0"
                                                    HorizontalAlignment="Stretch"
                                                    TextAlignment="Center"
                                                    VerticalAlignment="Center"
