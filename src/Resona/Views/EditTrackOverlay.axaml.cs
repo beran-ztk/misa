@@ -1265,8 +1265,8 @@ public partial class EditTrackOverlay : UserControl
             };
             var content = new Grid
             {
-                ColumnDefinitions = new ColumnDefinitions("*,110,42,20"),
-                ColumnSpacing = 9,
+                ColumnDefinitions = new ColumnDefinitions("180,*,48,20"),
+                ColumnSpacing = 12,
                 VerticalAlignment = VerticalAlignment.Center
             };
             var confidenceBrush = AnalysisColorScale.GenreConfidence(prediction.Score);
@@ -1488,8 +1488,8 @@ public partial class EditTrackOverlay : UserControl
         };
         var content = new Grid
         {
-            ColumnDefinitions = new ColumnDefinitions("*,110,42,20"),
-            ColumnSpacing = 9,
+            ColumnDefinitions = new ColumnDefinitions("180,*,48,20"),
+            ColumnSpacing = 12,
             VerticalAlignment = VerticalAlignment.Center
         };
         content.Children.Add(new TextBlock
