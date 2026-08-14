@@ -151,6 +151,7 @@ public class MusicDatabase
                 artist              TEXT NULL,
                 remix               TEXT NULL,
                 edits               TEXT NULL,
+                rating_band         TEXT NULL,
                 file_name           TEXT NOT NULL UNIQUE,
                 duration_seconds    INTEGER NULL,
                 uploaded_at         TEXT NULL,
@@ -314,6 +315,7 @@ public class MusicDatabase
         EnsureColumn(conn, "tracks", "artist", "TEXT NULL");
         EnsureColumn(conn, "tracks", "remix", "TEXT NULL");
         EnsureColumn(conn, "tracks", "edits", "TEXT NULL");
+        EnsureColumn(conn, "tracks", "rating_band", "TEXT NULL");
         EnsureCurrentRatings(conn);
         EnsureColumn(conn, "tracks", "is_public", "INTEGER NOT NULL DEFAULT 1");
         EnsureColumn(conn, "tracks", "needs_reevaluation", "INTEGER NOT NULL DEFAULT 0");
@@ -2763,7 +2765,11 @@ public class MusicDatabase
         {
             ExecuteInsert(conn, tx, @"
                 UPDATE tracks
-                SET rating_id = (SELECT id FROM ratings WHERE name = $avoidRating),
+                SET rating_band = CASE
+                        WHEN rating_id IS (SELECT id FROM ratings WHERE name = $avoidRating) THEN rating_band
+                        ELSE NULL
+                    END,
+                    rating_id = (SELECT id FROM ratings WHERE name = $avoidRating),
                     library_state = 'Rejected', analysis_disabled = 1,
                     needs_reevaluation = 0, updated_at = $now
                 WHERE id = $trackId",
@@ -2896,7 +2902,7 @@ public class MusicDatabase
                                    tracks.updated_at, tracks.analysis_disabled, tracks.is_public, tracks.library_state,
                                    tracks.source_video_id, tracks.view_count, tracks.like_count,
                                    tracks.source_thumbnail_url, tracks.source_metadata_updated_at, channels.id, tracks.language_code,
-                                   tracks.original_title, tracks.artist, tracks.remix, tracks.edits
+                                   tracks.original_title, tracks.artist, tracks.remix, tracks.edits, tracks.rating_band
                             FROM tracks LEFT JOIN channels ON channels.id = tracks.channel_id
                             WHERE ($includeRejected = 1 OR tracks.library_state <> 'Rejected')
                             ORDER BY tracks.downloaded_at DESC";
@@ -2919,7 +2925,7 @@ public class MusicDatabase
                                    tracks.updated_at, tracks.analysis_disabled, tracks.is_public, tracks.library_state,
                                    tracks.source_video_id, tracks.view_count, tracks.like_count,
                                    tracks.source_thumbnail_url, tracks.source_metadata_updated_at, channels.id, tracks.language_code,
-                                   tracks.original_title, tracks.artist, tracks.remix, tracks.edits
+                                   tracks.original_title, tracks.artist, tracks.remix, tracks.edits, tracks.rating_band
                             FROM tracks LEFT JOIN channels ON channels.id = tracks.channel_id
                             WHERE tracks.id = $trackId";
         cmd.Parameters.AddWithValue("$trackId", trackId);
@@ -2936,7 +2942,7 @@ public class MusicDatabase
                                    tracks.updated_at, tracks.analysis_disabled, tracks.is_public, tracks.library_state,
                                    tracks.source_video_id, tracks.view_count, tracks.like_count,
                                    tracks.source_thumbnail_url, tracks.source_metadata_updated_at, channels.id, tracks.language_code,
-                                   tracks.original_title, tracks.artist, tracks.remix, tracks.edits
+                                   tracks.original_title, tracks.artist, tracks.remix, tracks.edits, tracks.rating_band
                             FROM tracks LEFT JOIN channels ON channels.id = tracks.channel_id
                             WHERE tracks.canonical_url = $canonicalUrl";
         cmd.Parameters.AddWithValue("$canonicalUrl", canonicalUrl);
@@ -2975,7 +2981,7 @@ public class MusicDatabase
                                    tracks.updated_at, tracks.analysis_disabled, tracks.is_public, tracks.library_state,
                                    tracks.source_video_id, tracks.view_count, tracks.like_count,
                                    tracks.source_thumbnail_url, tracks.source_metadata_updated_at, channels.id, tracks.language_code,
-                                   tracks.original_title, tracks.artist, tracks.remix, tracks.edits
+                                   tracks.original_title, tracks.artist, tracks.remix, tracks.edits, tracks.rating_band
                             FROM tracks
                             LEFT JOIN channels ON channels.id = tracks.channel_id
                             LEFT JOIN track_analysis analysis ON analysis.track_id = tracks.id
@@ -3010,7 +3016,7 @@ public class MusicDatabase
                                    tracks.updated_at, tracks.analysis_disabled, tracks.is_public, tracks.library_state,
                                    tracks.source_video_id, tracks.view_count, tracks.like_count,
                                    tracks.source_thumbnail_url, tracks.source_metadata_updated_at, channels.id, tracks.language_code,
-                                   tracks.original_title, tracks.artist, tracks.remix, tracks.edits
+                                   tracks.original_title, tracks.artist, tracks.remix, tracks.edits, tracks.rating_band
                             FROM tracks LEFT JOIN channels ON channels.id = tracks.channel_id
                             WHERE tracks.rating_id IS NULL AND tracks.library_state <> 'Rejected'
                             ORDER BY tracks.downloaded_at DESC";
@@ -3027,6 +3033,11 @@ public class MusicDatabase
         if (!reader.IsDBNull(14)
             && Enum.TryParse<TrackLibraryState>(reader.GetString(14), ignoreCase: true, out var parsedState))
             libraryState = parsedState;
+
+        RatingBand? ratingBand = null;
+        if (!reader.IsDBNull(26)
+            && Enum.TryParse<RatingBand>(reader.GetString(26), ignoreCase: true, out var parsedBand))
+            ratingBand = parsedBand;
 
         return new MusicTrack(
             reader.GetInt32(0),
@@ -3055,7 +3066,8 @@ public class MusicDatabase
             reader.GetString(22),
             reader.IsDBNull(23) ? null : reader.GetString(23),
             reader.IsDBNull(24) ? null : reader.GetString(24),
-            reader.IsDBNull(25) ? null : reader.GetString(25));
+            reader.IsDBNull(25) ? null : reader.GetString(25),
+            ratingBand);
     }
 
     public void SetTrackLanguage(int trackId, string? languageCode)
@@ -3173,6 +3185,7 @@ public class MusicDatabase
                   artist = $artist,
                   remix = $remix,
                   edits = $edits,
+                  rating_band = CASE WHEN rating_id IS $ratingId THEN rating_band ELSE NULL END,
                   rating_id = $ratingId,
                   library_state = CASE WHEN $ratingId IS NULL THEN 'PendingRating' ELSE 'Active' END,
                   is_public = $isPublic,
@@ -3242,7 +3255,8 @@ public class MusicDatabase
         var now = DateTime.UtcNow.ToString("O");
         ExecuteInsert(conn, tx, @"
             UPDATE tracks
-            SET rating_id = $ratingId, library_state = 'Active', needs_reevaluation = 0, updated_at = $now
+            SET rating_band = CASE WHEN rating_id IS $ratingId THEN rating_band ELSE NULL END,
+                rating_id = $ratingId, library_state = 'Active', needs_reevaluation = 0, updated_at = $now
             WHERE id = $id",
             ("$id", id), ("$ratingId", ratingId), ("$now", now));
         ExecuteInsert(conn, tx, @"
@@ -3251,6 +3265,19 @@ public class MusicDatabase
             WHERE canonical_url = (SELECT canonical_url FROM tracks WHERE id = $id)",
             ("$id", id), ("$now", now));
         tx.Commit();
+    }
+
+    public void SetTrackRatingBand(int id, RatingBand? ratingBand)
+    {
+        using var conn = Open();
+        ExecuteNonQuery(conn, @"
+            UPDATE tracks
+            SET rating_band = CASE WHEN rating_id IS NULL THEN NULL ELSE $ratingBand END,
+                updated_at = $now
+            WHERE id = $id",
+            ("$id", id),
+            ("$ratingBand", ratingBand?.ToString()),
+            ("$now", DateTime.UtcNow.ToString("O")));
     }
 
     public void DeleteTracks(IReadOnlyCollection<int> ids)

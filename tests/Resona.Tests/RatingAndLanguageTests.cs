@@ -56,6 +56,40 @@ public sealed class RatingAndLanguageTests : IDisposable
     }
 
     [Fact]
+    public void Rating_band_is_preserved_for_the_same_rating_and_cleared_by_every_rating_change_path()
+    {
+        var database = new MusicDatabase(_databasePath);
+        var goodId = Scalar<int>("SELECT id FROM ratings WHERE name = 'Good'");
+        var greatId = Scalar<int>("SELECT id FROM ratings WHERE name = 'Great'");
+        var trackId = InsertTrack(goodId, "rating-band.mp3");
+
+        database.SetTrackRatingBand(trackId, RatingBand.High);
+        database.SetTrackRating(trackId, goodId);
+        Assert.Equal("High", Scalar<string>("SELECT rating_band FROM tracks WHERE id = $id", ("$id", trackId)));
+
+        database.UpdateTrack(trackId, "Track", null, null, null, [], greatId, [], true);
+        Assert.Equal(0L, Scalar<long>("SELECT COUNT(rating_band) FROM tracks WHERE id = $id", ("$id", trackId)));
+
+        database.SetTrackRatingBand(trackId, RatingBand.Low);
+        database.SetTrackRating(trackId, greatId);
+        Assert.Equal("Low", Scalar<string>("SELECT rating_band FROM tracks WHERE id = $id", ("$id", trackId)));
+
+        database.SetTrackRating(trackId, goodId);
+        Assert.Equal(0L, Scalar<long>("SELECT COUNT(rating_band) FROM tracks WHERE id = $id", ("$id", trackId)));
+    }
+
+    [Fact]
+    public void Rating_band_cannot_be_stored_without_a_rating()
+    {
+        var database = new MusicDatabase(_databasePath);
+        var trackId = InsertTrack(null, "unrated-band.mp3");
+
+        database.SetTrackRatingBand(trackId, RatingBand.Low);
+
+        Assert.Equal(0L, Scalar<long>("SELECT COUNT(rating_band) FROM tracks WHERE id = $id", ("$id", trackId)));
+    }
+
+    [Fact]
     public void Language_filter_matches_any_selected_language_inside_a_condition()
     {
         var tracks = new[]
@@ -132,12 +166,27 @@ public sealed class RatingAndLanguageTests : IDisposable
             CREATE TABLE tracks (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 rating_id INTEGER NULL REFERENCES ratings(id),
+                rating_band TEXT NULL,
+                canonical_url TEXT NULL,
                 title TEXT NOT NULL,
                 original_title TEXT NOT NULL DEFAULT '',
+                artist TEXT NULL,
+                remix TEXT NULL,
+                edits TEXT NULL,
                 file_name TEXT NOT NULL UNIQUE,
                 downloaded_at TEXT NOT NULL,
                 updated_at TEXT NOT NULL,
-                language_code TEXT NULL
+                language_code TEXT NULL,
+                library_state TEXT NOT NULL DEFAULT 'Active',
+                needs_reevaluation INTEGER NOT NULL DEFAULT 0,
+                is_public INTEGER NOT NULL DEFAULT 1
+            );
+            CREATE TABLE channel_videos (
+                canonical_url TEXT NOT NULL UNIQUE,
+                is_checked INTEGER NOT NULL DEFAULT 0,
+                download_status TEXT NOT NULL DEFAULT 'Queued',
+                download_error TEXT NULL,
+                updated_at TEXT NOT NULL
             );
             INSERT INTO ratings(name, sort_order) VALUES
                 ('Avoid', 1), ('Okay', 2), ('Good', 3), ('Great', 4), ('Favorite', 5);");

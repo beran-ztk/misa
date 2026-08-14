@@ -76,6 +76,7 @@ public class MusicLibraryService
         BackgroundAnalysisService.Current.EnqueueTrack(id);
         ChannelHubBackgroundService.Current.RequestRefresh();
     }
+    public void SetTrackRatingBand(int id, RatingBand? ratingBand) => _db.SetTrackRatingBand(id, ratingBand);
     public void SetTrackNeedsReview(int id, bool needsReview) => _db.SetTrackNeedsReview(id, needsReview);
     public void SetTrackAnalysisDisabled(int id, bool analysisDisabled)
     {

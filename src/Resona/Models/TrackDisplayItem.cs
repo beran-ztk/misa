@@ -54,6 +54,14 @@ public record TrackDisplayItem(
     IReadOnlyList<TrackTagDisplay> TagDisplays,
     string ChannelText)
 {
+    public string RatingDisplayText => Track.RatingBand switch
+    {
+        Models.RatingBand.Low => $"{RatingText} ↓",
+        Models.RatingBand.Mid => $"{RatingText} •",
+        Models.RatingBand.High => $"{RatingText} ↑",
+        _ => RatingText
+    };
+
     public bool IsPlaying { get; set; }
     public bool NeedsReview { get; set; }
     public bool NeedsAnalysis { get; set; }

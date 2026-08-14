@@ -12,6 +12,13 @@ public enum TrackLibraryState
     Rejected
 }
 
+public enum RatingBand
+{
+    Low,
+    Mid,
+    High
+}
+
 public sealed record BulkTrackDeleteResult(int Deleted, int FailedFiles, string? Error = null);
 
 public record MusicTrack(
@@ -30,7 +37,8 @@ public record MusicTrack(
     string OriginalTitle = "",
     string? Artist = null,
     string? Remix = null,
-    string? Edits = null)
+    string? Edits = null,
+    RatingBand? RatingBand = null)
 {
     public string DisplayTitle => TrackTitleFormatter.Format(Artist, Title, Remix, Edits);
 }
