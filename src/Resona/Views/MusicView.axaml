@@ -622,7 +622,6 @@
                                                        Foreground="{Binding TitleBrush}"
                                                        FontSize="14"
                                                        FontWeight="SemiBold"
-                                                       MaxWidth="520"
                                                        VerticalAlignment="Center"
                                                        TextTrimming="CharacterEllipsis"/>
                                             <views:TrackTagSummaryControl Tags="{Binding TagDisplays}"
