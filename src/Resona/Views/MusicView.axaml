@@ -540,16 +540,21 @@
                                                 <BlurEffect Radius="{Binding CoverHaloBlur}"/>
                                             </Image.Effect>
                                         </Image>
-                                        <Border Width="42" Height="42"
-                                                CornerRadius="8" ClipToBounds="True"
+                                        <Border Width="46" Height="46"
+                                                CornerRadius="9"
                                                 HorizontalAlignment="Center"
                                                 VerticalAlignment="Center"
-                                                Background="#292C25"
-                                                BorderBrush="{Binding ArtworkBorderBrush}"
-                                                BorderThickness="0.75"
-                                                BoxShadow="0 2 8 0 #4D000000">
-                                            <Image Source="{Binding Thumbnail}"
-                                                   Stretch="UniformToFill"/>
+                                                Background="#D0141512"
+                                                BorderBrush="{Binding ArtworkMetadataBrush}"
+                                                BorderThickness="0"
+                                                Padding="1"
+                                                BoxShadow="0 3 8 1 #88000000, 0 0 2 0 #52FFFFFF">
+                                            <Border CornerRadius="7"
+                                                    ClipToBounds="True"
+                                                    Background="#292C25">
+                                                <Image Source="{Binding Thumbnail}"
+                                                       Stretch="UniformToFill"/>
+                                            </Border>
                                         </Border>
                                     </Panel>
 
