@@ -1467,18 +1467,12 @@ public partial class EditTrackOverlay : UserControl
         if (frequentGenres.Count == 0)
             return;
 
-        var maximumUsageCount = Math.Max(1, manualGenreUsages.Max(usage => usage.UsageCount));
         foreach (var usage in frequentGenres)
-            FrequentManualGenresPanel.Children.Add(CreateFrequentManualGenreChoice(
-                usage,
-                (double)usage.UsageCount / maximumUsageCount));
+            FrequentManualGenresPanel.Children.Add(CreateFrequentManualGenreChoice(usage));
     }
 
-    private Control CreateFrequentManualGenreChoice(
-        ManualModelGenreUsage usage,
-        double relativeFrequency)
+    private Control CreateFrequentManualGenreChoice(ManualModelGenreUsage usage)
     {
-        var frequencyBrush = MainGenrePalette.For(usage.ModelGenreName);
         var container = new Border
         {
             Background = Brushes.Transparent,
@@ -1488,7 +1482,7 @@ public partial class EditTrackOverlay : UserControl
         };
         var content = new Grid
         {
-            ColumnDefinitions = new ColumnDefinitions("180,*,48,20"),
+            ColumnDefinitions = new ColumnDefinitions("*,48,20"),
             ColumnSpacing = 12,
             VerticalAlignment = VerticalAlignment.Center
         };
@@ -1500,28 +1494,16 @@ public partial class EditTrackOverlay : UserControl
             Foreground = ThemeResources.Brush("Theme.Brush.TextStrong"),
             TextTrimming = TextTrimming.CharacterEllipsis
         });
-        var frequencyBar = new ProgressBar
-        {
-            Minimum = 0,
-            Maximum = 1,
-            Value = relativeFrequency,
-            Height = 4,
-            Foreground = frequencyBrush,
-            Background = ThemeResources.Brush("Theme.Brush.Surface"),
-            VerticalAlignment = VerticalAlignment.Center
-        };
-        Grid.SetColumn(frequencyBar, 1);
-        content.Children.Add(frequencyBar);
         var metric = new TextBlock
         {
-            Text = $"{relativeFrequency:P0}",
+            Text = $"{usage.UsageCount}×",
             FontSize = 10.5,
             FontWeight = FontWeight.SemiBold,
-            Foreground = frequencyBrush,
+            Foreground = ThemeResources.Brush("Theme.Brush.TextSecondary"),
             TextAlignment = TextAlignment.Right,
             VerticalAlignment = VerticalAlignment.Center
         };
-        Grid.SetColumn(metric, 2);
+        Grid.SetColumn(metric, 1);
         content.Children.Add(metric);
 
         var add = new TextBlock
@@ -1534,7 +1516,7 @@ public partial class EditTrackOverlay : UserControl
             TextAlignment = TextAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center
         };
-        Grid.SetColumn(add, 3);
+        Grid.SetColumn(add, 2);
         content.Children.Add(add);
         container.Child = content;
         container.PointerPressed += (_, _) =>
