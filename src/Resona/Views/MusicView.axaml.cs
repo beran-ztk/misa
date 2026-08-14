@@ -2654,9 +2654,11 @@ public partial class MusicView : UserControl
                     Text = group.Label,
                     FontSize = 10.5,
                     FontWeight = selected ? FontWeight.SemiBold : FontWeight.Normal,
-                    Foreground = selected
-                        ? Brush("#78A9E6")
-                        : ThemeResources.Brush("Theme.Brush.TextSecondary"),
+                    Foreground = group.GroupName is null
+                        ? selected
+                            ? Brush("#78A9E6")
+                            : ThemeResources.Brush("Theme.Brush.TextSecondary")
+                        : MainGenrePalette.For(group.GroupName),
                     Opacity = selected ? 1 : 0.72,
                     TextWrapping = TextWrapping.Wrap,
                     VerticalAlignment = VerticalAlignment.Center
@@ -2944,14 +2946,13 @@ public partial class MusicView : UserControl
 
     private static Button CreateGenreFilterChoiceButton(string title, bool isSelected)
     {
-        var accent = ThemeResources.Brush("Theme.Brush.TextSecondary");
         var text = new TextBlock
         {
             Text = title,
             FontSize = 10.5,
             FontWeight = FontWeight.SemiBold,
             Foreground = isSelected
-                ? accent
+                ? ThemeResources.Brush("Theme.Brush.TextSecondary")
                 : ThemeResources.Brush("Theme.Brush.TextPrimary"),
             TextTrimming = TextTrimming.CharacterEllipsis,
             HorizontalAlignment = HorizontalAlignment.Center,

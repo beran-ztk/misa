@@ -112,7 +112,7 @@ public partial class MultiSelectFilterControl : UserControl
             var nameText = new TextBlock
             {
                 Text = item.DisplayName,
-                Foreground = item.GroupBrush ?? ThemeResources.Brush("Theme.Brush.TextPrimary"),
+                Foreground = ThemeResources.Brush("Theme.Brush.TextPrimary"),
                 FontWeight = FontWeight.Medium,
                 VerticalAlignment = VerticalAlignment.Center,
                 TextTrimming = TextTrimming.CharacterEllipsis,
