@@ -121,13 +121,13 @@ public record TrackDisplayItem(
 
     public IBrush RatingBackground => RatingText switch
     {
-        RatingNames.Timeless => new SolidColorBrush(Color.FromArgb(70, 132, 105, 36)),
-        RatingNames.Amazing => new SolidColorBrush(Color.FromArgb(70, 120, 79, 42)),
-        "Great" => new SolidColorBrush(Color.FromArgb(68, 35, 105, 58)),
-        "Good" => new SolidColorBrush(Color.FromArgb(66, 31, 93, 82)),
-        "Okay" => new SolidColorBrush(Color.FromArgb(62, 83, 84, 64)),
-        RatingNames.Avoid => new SolidColorBrush(Color.FromArgb(66, 124, 47, 40)),
-        _ => new SolidColorBrush(Color.FromArgb(60, 103, 76, 42))
+        RatingNames.Timeless => new SolidColorBrush(Color.FromArgb(100, 156, 116, 28)),
+        RatingNames.Amazing  => new SolidColorBrush(Color.FromArgb(100, 154, 78, 30)),
+        "Great"              => new SolidColorBrush(Color.FromArgb(100, 28, 126, 60)),
+        "Good"               => new SolidColorBrush(Color.FromArgb(100, 20, 100, 140)),
+        "Okay"               => new SolidColorBrush(Color.FromArgb(100, 108, 111, 70)),
+        RatingNames.Avoid    => new SolidColorBrush(Color.FromArgb(100, 150, 43, 36)),
+        _                    => new SolidColorBrush(Color.FromArgb(100, 137, 91, 25))
     };
 
     public IBrush RatingBorder => RatingText switch
