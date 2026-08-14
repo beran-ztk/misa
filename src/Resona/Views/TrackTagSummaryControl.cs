@@ -24,7 +24,7 @@ public sealed class TrackTagSummaryControl : Panel
         LineHeight = 18,
         FontWeight = FontWeight.SemiBold,
         Foreground = ThemeResources.Brush("Theme.Brush.TextMuted"),
-        Opacity = 0.72,
+        Opacity = 0,
         Margin = new Thickness(0, 0, 6, 0),
         VerticalAlignment = VerticalAlignment.Center
     };
@@ -52,7 +52,7 @@ public sealed class TrackTagSummaryControl : Panel
     {
         Children.Clear();
         _tagLabels.Clear();
-        _moreLabel.IsVisible = true;
+        _moreLabel.Opacity = 0;
 
         foreach (var tag in Tags ?? [])
         {
@@ -81,7 +81,10 @@ public sealed class TrackTagSummaryControl : Panel
         foreach (var child in Children)
             child.Measure(new Size(double.PositiveInfinity, availableSize.Height));
 
-        return new Size(0, _tagLabels.Count == 0 ? 0 : _tagLabels.Max(label => label.DesiredSize.Height));
+        var desiredWidth = _tagLabels.Sum(label => label.DesiredSize.Width);
+        return new Size(
+            double.IsInfinity(availableSize.Width) ? desiredWidth : Math.Min(desiredWidth, availableSize.Width),
+            _tagLabels.Count == 0 ? 0 : _tagLabels.Max(label => label.DesiredSize.Height));
     }
 
     protected override Size ArrangeOverride(Size finalSize)
@@ -89,7 +92,7 @@ public sealed class TrackTagSummaryControl : Panel
         var tags = Tags ?? [];
         if (tags.Count == 0)
         {
-            _moreLabel.IsVisible = false;
+            _moreLabel.Opacity = 0;
             return finalSize;
         }
 
@@ -98,22 +101,23 @@ public sealed class TrackTagSummaryControl : Panel
             count--;
 
         if (count == 0 && !Fits(0, tags.Count, finalSize.Width))
-            _moreLabel.IsVisible = false;
+            _moreLabel.Opacity = 0;
         else
-            _moreLabel.IsVisible = count < tags.Count;
+            _moreLabel.Opacity = count < tags.Count ? 0.72 : 0;
 
         var x = 0d;
         for (var index = 0; index < _tagLabels.Count; index++)
         {
             var label = _tagLabels[index];
-            label.IsVisible = index < count;
-            if (!label.IsVisible) continue;
+            var labelIsVisible = index < count;
+            label.Opacity = labelIsVisible ? 0.82 : 0;
+            if (!labelIsVisible) continue;
             var y = Math.Max(0, (finalSize.Height - label.DesiredSize.Height) / 2);
             label.Arrange(new Rect(x, y, label.DesiredSize.Width, label.DesiredSize.Height));
             x += label.DesiredSize.Width;
         }
 
-        if (_moreLabel.IsVisible)
+        if (count < tags.Count && _moreLabel.Opacity > 0)
         {
             _moreLabel.Text = $"+{tags.Count - count}";
             _moreLabel.Measure(new Size(double.PositiveInfinity, finalSize.Height));
