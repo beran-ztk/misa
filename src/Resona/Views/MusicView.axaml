@@ -614,14 +614,14 @@
                                                     </TextBlock.RenderTransform>
                                                 </TextBlock>
                                             </Border>
-                                            <Image Grid.Column="1"
-                                                   Source="{SvgImage /Assets/public.svg}"
-                                                   IsVisible="{Binding Track.IsPublic}"
-                                                   Width="13" Height="13"
-                                                   Margin="0,0,6,0"
-                                                   Opacity="0.9"
-                                                   ToolTip.Tip="Public track"/>
-                                            <TextBlock Grid.Column="2" Text="{Binding Track.Title}"
+                                            <!-- <Image Grid.Column="1" -->
+                                            <!--        Source="{SvgImage /Assets/public.svg}" -->
+                                            <!--        IsVisible="{Binding Track.IsPublic}" -->
+                                            <!--        Width="13" Height="13" -->
+                                            <!--        Margin="0,0,6,0" -->
+                                            <!--        Opacity="0.9" -->
+                                            <!--        ToolTip.Tip="Public track"/> -->
+                                            <TextBlock Grid.Column="1" Text="{Binding Track.Title}"
                                                    Foreground="{Binding TitleBrush}"
                                                    FontSize="14" FontWeight="SemiBold"
                                                    VerticalAlignment="Center"
