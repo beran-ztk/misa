@@ -290,6 +290,7 @@ public class MusicLibraryService
     public void PrepareLibraryMetadataBackfill() => _db.PrepareLibraryMetadataBackfill();
     public void EnsureChannelMetadataQueueIndexes() => _db.EnsureChannelMetadataQueueIndexes();
     public int QueueChannelVideoMetadata(int channelId, int limit) => _db.QueueChannelVideoMetadata(channelId, limit);
+    public int QueueAllChannelVideoMetadata(int channelId) => _db.QueueAllChannelVideoMetadata(channelId);
     public bool QueueSpecificChannelVideoMetadata(int videoId) => _db.QueueSpecificChannelVideoMetadata(videoId);
     public int QueueAutoDownloadMetadata(int limit) => _db.QueueAutoDownloadMetadata(limit);
     public int QueueBackgroundChannelVideoMetadata(int limit) => _db.QueueBackgroundChannelVideoMetadata(limit);

@@ -762,10 +762,9 @@
                                    FontSize="11" FontWeight="SemiBold" Foreground="#DCEBFA"/>
                         </Grid>
                     </Border>
-                    <StackPanel Grid.Column="2" Spacing="1" VerticalAlignment="Center">
-                        <TextBlock x:Name="SelectedChannelText" FontSize="17" FontWeight="SemiBold"/>
-                        <TextBlock x:Name="DetailSubtitleText" FontSize="10.5" Opacity="0.56"/>
-                    </StackPanel>
+                    <TextBlock Grid.Column="2" x:Name="SelectedChannelText"
+                               FontSize="17" FontWeight="SemiBold"
+                               VerticalAlignment="Center"/>
                     <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
                         <TextBox x:Name="VideoSearchBox" Classes="compact-search"
                                  Width="210" Height="30" Watermark="Search videos…" IsVisible="False"
@@ -795,8 +794,9 @@
                         CornerRadius="8" Padding="14,10">
                     <Grid ColumnDefinitions="0.85*,1.15*,1*,1.55*" ColumnSpacing="20">
                         <StackPanel Spacing="2">
-                            <TextBlock Text="LIBRARY" FontSize="8.5" LetterSpacing="0.8" Opacity="0.42"/>
-                            <TextBlock x:Name="DetailLibraryText" FontSize="11.5"/>
+                            <TextBlock Text="AUDIENCE" FontSize="8.5" LetterSpacing="0.8" Opacity="0.42"/>
+                            <TextBlock x:Name="DetailAudienceText" FontSize="11.5"
+                                       TextTrimming="CharacterEllipsis"/>
                         </StackPanel>
                         <StackPanel Grid.Column="1" Spacing="2">
                             <TextBlock Text="QUALITY" FontSize="8.5" LetterSpacing="0.8" Opacity="0.42"/>
@@ -813,61 +813,47 @@
                     </Grid>
                 </Border>
 
-                <Grid Grid.Row="1" RowDefinitions="Auto,Auto,Auto" RowSpacing="8">
+                <Grid Grid.Row="1" RowDefinitions="Auto,Auto" RowSpacing="8">
                     <Grid ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="8">
                         <TextBlock Text="VIDEOS" FontSize="9.5" FontWeight="SemiBold" LetterSpacing="0.9"
                                    Opacity="0.48" VerticalAlignment="Center"/>
-                        <Button Grid.Column="1" Classes="channel-icon" Width="24" Height="24"
-                                Click="OnRetryMetadataIssuesClicked" ToolTip.Tip="Retry failed metadata for this channel">
-                            <Image Source="{SvgImage /Assets/reload.svg}" Width="12" Height="12"/>
+                        <Button Grid.Column="1" x:Name="LoadVideoDetailsButton"
+                                Classes="video-filter" IsVisible="False"
+                                Click="OnLoadVideoDetailsClicked"
+                                ToolTip.Tip="Load upload date, views and likes for this channel">
+                            <TextBlock x:Name="LoadVideoDetailsText"/>
                         </Button>
                         <TextBlock Grid.Column="2" x:Name="VideoSummaryText" IsVisible="False"/>
                         <TextBlock Grid.Column="3" x:Name="DetailRefreshStatusText" IsVisible="False"
                                    FontSize="10" Foreground="#AFCDE6" VerticalAlignment="Center"
                                    MaxWidth="220" TextTrimming="CharacterEllipsis"/>
                     </Grid>
-                    <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,*,Auto" ColumnSpacing="6">
-                        <Button x:Name="AllVideosFilterButton" Classes="video-filter" Click="OnAllVideosFilterClicked">
+                    <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto" ColumnSpacing="6">
+                        <Button x:Name="AvailableVideosFilterButton" Classes="video-filter" Click="OnAvailableVideosFilterClicked">
                             <StackPanel Orientation="Horizontal" Spacing="6">
-                                <TextBlock Text="All"/>
+                                <TextBlock Text="Available"/>
                                 <Border Background="#18FFFFFF" CornerRadius="8" Padding="5,1">
-                                    <TextBlock x:Name="AllVideosCountText" FontSize="8.5" Opacity="0.72"/>
+                                    <TextBlock x:Name="AvailableVideosCountText" FontSize="8.5" Opacity="0.72"/>
                                 </Border>
                             </StackPanel>
                         </Button>
-                        <Button Grid.Column="1" x:Name="NewVideosFilterButton" Classes="video-filter" Click="OnNewVideosFilterClicked">
+                        <Button Grid.Column="1" x:Name="ReadyVideosFilterButton" Classes="video-filter" Click="OnReadyVideosFilterClicked">
                             <StackPanel Orientation="Horizontal" Spacing="6">
-                                <TextBlock Text="New"/>
-                                <Border Background="#18FFFFFF" CornerRadius="8" Padding="5,1">
-                                    <TextBlock x:Name="NewVideosCountText" FontSize="8.5" Opacity="0.72"/>
-                                </Border>
-                            </StackPanel>
-                        </Button>
-                        <Button Grid.Column="2" x:Name="MetadataVideosFilterButton" Classes="video-filter" Click="OnMetadataVideosFilterClicked">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                <TextBlock Text="Metadata"/>
-                                <Border Background="#18FFFFFF" CornerRadius="8" Padding="5,1">
-                                    <TextBlock x:Name="MetadataVideosCountText" FontSize="8.5" Opacity="0.72"/>
-                                </Border>
-                            </StackPanel>
-                        </Button>
-                        <Button Grid.Column="3" x:Name="ReadyVideosFilterButton" Classes="video-filter" Click="OnReadyVideosFilterClicked">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                <TextBlock Text="Ready"/>
+                                <TextBlock Text="Review"/>
                                 <Border Background="#18FFFFFF" CornerRadius="8" Padding="5,1">
                                     <TextBlock x:Name="ReadyVideosCountText" FontSize="8.5" Opacity="0.72"/>
                                 </Border>
                             </StackPanel>
                         </Button>
-                        <Button Grid.Column="4" x:Name="LibraryVideosFilterButton" Classes="video-filter" Click="OnLibraryVideosFilterClicked">
+                        <Button Grid.Column="2" x:Name="LibraryVideosFilterButton" Classes="video-filter" Click="OnLibraryVideosFilterClicked">
                             <StackPanel Orientation="Horizontal" Spacing="6">
-                                <TextBlock Text="In library"/>
+                                <TextBlock Text="Library"/>
                                 <Border Background="#18FFFFFF" CornerRadius="8" Padding="5,1">
                                     <TextBlock x:Name="LibraryVideosCountText" FontSize="8.5" Opacity="0.72"/>
                                 </Border>
                             </StackPanel>
                         </Button>
-                        <Button Grid.Column="5" x:Name="RejectedVideosFilterButton" Classes="video-filter" Click="OnRejectedVideosFilterClicked">
+                        <Button Grid.Column="3" x:Name="RejectedVideosFilterButton" Classes="video-filter" Click="OnRejectedVideosFilterClicked">
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <TextBlock Text="Rejected"/>
                                 <Border Background="#18FFFFFF" CornerRadius="8" Padding="5,1">
@@ -875,25 +861,17 @@
                                 </Border>
                             </StackPanel>
                         </Button>
-                        <Button Grid.Column="6" x:Name="IssueVideosFilterButton" Classes="video-filter" Click="OnIssueVideosFilterClicked">
+                        <Button Grid.Column="5" x:Name="IssueVideosFilterButton" Classes="video-filter"
+                                Foreground="{DynamicResource Theme.Brush.Warning}"
+                                Click="OnIssueVideosFilterClicked">
                             <StackPanel Orientation="Horizontal" Spacing="6">
-                                <TextBlock Text="Issues"/>
+                                <TextBlock Text="⚠ Issues"/>
                                 <Border Background="#18FFFFFF" CornerRadius="8" Padding="5,1">
                                     <TextBlock x:Name="IssueVideosCountText" FontSize="8.5" Opacity="0.72"/>
                                 </Border>
                             </StackPanel>
                         </Button>
-                        <StackPanel Grid.Column="8" Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
-                            <TextBlock Text="Channel max" FontSize="9.5" Opacity="0.52" VerticalAlignment="Center"/>
-                            <TextBox x:Name="ChannelMaxDurationBox" Classes="compact-search"
-                                     Width="42" Height="26" FontSize="10" TextAlignment="Center"
-                                     Watermark="global" VerticalContentAlignment="Center"
-                                     LostFocus="OnChannelMaxDurationLostFocus"/>
-                            <TextBlock Text="min" FontSize="9.5" Opacity="0.52" VerticalAlignment="Center"/>
-                        </StackPanel>
                     </Grid>
-                    <TextBlock Grid.Row="2" x:Name="AutomationHintText" HorizontalAlignment="Right"
-                               FontSize="9.5" Opacity="0.42"/>
                 </Grid>
 
                 <ListBox Grid.Row="2" x:Name="VideoList" Classes="video-list"
@@ -902,30 +880,13 @@
                         <DataTemplate x:DataType="views:ChannelVideoDisplay">
                             <Border Background="{Binding Background}" Opacity="{Binding Opacity}"
                                     BorderBrush="{Binding BorderBrush}" BorderThickness="{Binding BorderThickness}"
-                                    CornerRadius="6" Padding="10,7" Margin="0,0,0,2"
+                                    CornerRadius="6" Padding="10,8" Margin="0,0,0,3"
                                     Tapped="OnVideoRowTapped">
-                                <Grid ColumnDefinitions="*,132,Auto,Auto,Auto,Auto,Auto" ColumnSpacing="8">
-                                    <StackPanel Spacing="2" VerticalAlignment="Center">
-                                        <TextBlock Text="{Binding Title}" TextDecorations="{Binding TextDecorations}"
-                                                   Foreground="{Binding TitleBrush}" FontSize="12.5"
-                                                   TextTrimming="CharacterEllipsis"/>
-                                        <TextBlock Text="{Binding MetadataSummaryText}" FontSize="9.5" Opacity="0.44"
-                                                   IsVisible="{Binding HasMetadataSummary}"/>
-                                        <TextBlock Text="{Binding MetadataErrorSummary}" IsVisible="{Binding HasMetadataError}"
-                                                   ToolTip.Tip="{Binding MetadataErrorDetails}" FontSize="10.5"
-                                                   Foreground="#E87878" Opacity="0.86" TextWrapping="Wrap" MaxHeight="34"/>
-                                        <TextBlock Text="{Binding DownloadErrorSummary}" IsVisible="{Binding HasDownloadError}"
-                                                   ToolTip.Tip="{Binding DownloadErrorDetails}" FontSize="10.5"
-                                                   Foreground="#E87878" Opacity="0.86" TextWrapping="Wrap" MaxHeight="34"/>
-                                    </StackPanel>
-                                    <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
-                                        <TextBlock Text="{Binding StatusText}" FontSize="10" Opacity="0.62"
-                                                   TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding StatusText}"/>
-                                        <TextBlock Text="{Binding LibraryDetailsText}" FontSize="9" Opacity="0.45"
-                                                   TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding LibraryDetailsText}"
-                                                   IsVisible="{Binding HasLibraryDetails}"/>
-                                    </StackPanel>
-                                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="2">
+                                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="12" RowSpacing="3">
+                                    <TextBlock Text="{Binding Title}" TextDecorations="{Binding TextDecorations}"
+                                               Foreground="{Binding TitleBrush}" FontSize="12.5" FontWeight="SemiBold"
+                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
                                         <Button Classes="channel-icon" Click="OnVideoDownloadClicked"
                                                 IsVisible="{Binding CanDownload}" ToolTip.Tip="Download this track">
                                             <Image Source="{SvgImage /Assets/download.svg}" Width="14" Height="14"/>
@@ -934,25 +895,46 @@
                                                 IsVisible="{Binding CanRetryError}" ToolTip.Tip="{Binding RetryErrorToolTip}">
                                             <Image Source="{SvgImage /Assets/reload.svg}" Width="14" Height="14"/>
                                         </Button>
-                                    </StackPanel>
-                                    <Button Grid.Column="3" Classes="channel-icon" Click="OnVideoPlayClicked" IsVisible="{Binding CanPlay}"
+                                        <Button Classes="channel-icon" Click="OnVideoPlayClicked" IsVisible="{Binding CanPlay}"
                                             ToolTip.Tip="Play downloaded audio" Opacity="{Binding ActionOpacity}">
-                                        <Image Source="{SvgImage /Assets/play.svg}" Width="14" Height="14"/>
-                                    </Button>
-                                    <Button Grid.Column="4" Classes="channel-icon" Click="OnVideoCheckClicked" IsVisible="{Binding CanReview}"
+                                            <Image Source="{SvgImage /Assets/play.svg}" Width="14" Height="14"/>
+                                        </Button>
+                                        <Button Classes="channel-icon" Click="OnVideoCheckClicked" IsVisible="{Binding CanReview}"
                                             ToolTip.Tip="Rate and add to library" Opacity="{Binding ActionOpacity}">
-                                        <Image Source="{SvgImage /Assets/check.svg}" Width="15" Height="15"/>
-                                    </Button>
-                                    <Button Grid.Column="5" Classes="channel-icon" Click="OnVideoSkipClicked" IsVisible="{Binding CanDismiss}"
+                                            <Image Source="{SvgImage /Assets/check.svg}" Width="15" Height="15"/>
+                                        </Button>
+                                        <Button Classes="channel-icon" Click="OnVideoSkipClicked" IsVisible="{Binding CanDismiss}"
                                             ToolTip.Tip="{Binding DismissToolTip}" Opacity="{Binding ActionOpacity}">
-                                        <Image Source="{SvgImage /Assets/close.svg}" Width="14" Height="14"/>
-                                    </Button>
-                                    <StackPanel Grid.Column="6" Orientation="Horizontal" Spacing="3" HorizontalAlignment="Right">
+                                            <Image Source="{SvgImage /Assets/close.svg}" Width="14" Height="14"/>
+                                        </Button>
                                         <Button Classes="channel-icon" Click="OnCopyVideoUrlClicked" ToolTip.Tip="Copy video URL" Opacity="0.65">
                                             <Image Source="{SvgImage /Assets/copy.svg}" Width="14" Height="14"/>
                                         </Button>
                                         <TextBlock Text="{Binding DurationText}" FontSize="10.5" Opacity="0.62"
                                                    MinWidth="38" TextAlignment="Right" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                    <TextBlock Grid.Row="1" Text="{Binding MetadataSummaryText}" FontSize="9.5" Opacity="0.5"
+                                               IsVisible="{Binding HasMetadataSummary}" TextTrimming="CharacterEllipsis"/>
+                                    <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="8"
+                                                HorizontalAlignment="Right" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding StatusText}" FontSize="10" Opacity="0.68"
+                                                   IsVisible="{Binding HasStatusText}"
+                                                   TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding StatusText}"/>
+                                        <TextBlock Text="{Binding LibraryDetailsText}" FontSize="9" Opacity="0.48"
+                                                   TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding LibraryDetailsText}"
+                                                   IsVisible="{Binding HasLibraryDetails}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="2" Grid.ColumnSpan="2" Spacing="2">
+                                        <TextBlock Text="{Binding AutoDownloadLimitWarningText}"
+                                                   IsVisible="{Binding IsOverAutoDownloadLimit}"
+                                                   FontSize="10" Foreground="{DynamicResource Theme.Brush.Warning}"
+                                                   TextWrapping="Wrap"/>
+                                        <TextBlock Text="{Binding MetadataErrorSummary}" IsVisible="{Binding HasMetadataError}"
+                                                   ToolTip.Tip="{Binding MetadataErrorDetails}" FontSize="10.5"
+                                                   Foreground="#E87878" Opacity="0.86" TextWrapping="Wrap" MaxHeight="34"/>
+                                        <TextBlock Text="{Binding DownloadErrorSummary}" IsVisible="{Binding HasDownloadError}"
+                                                   ToolTip.Tip="{Binding DownloadErrorDetails}" FontSize="10.5"
+                                                   Foreground="#E87878" Opacity="0.86" TextWrapping="Wrap" MaxHeight="34"/>
                                     </StackPanel>
                                 </Grid>
                             </Border>

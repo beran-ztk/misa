@@ -228,6 +228,41 @@ public sealed class MusicDatabaseImportWorkflowTests : IDisposable
         Assert.Equal(4L, Scalar<long>("SELECT metadata_attempts FROM channel_videos WHERE id = $id", ("$id", videoId)));
     }
 
+    [Fact]
+    public void Explicit_video_details_can_be_loaded_for_an_unfollowed_channel()
+    {
+        using (var connection = Open())
+        using (var transaction = connection.BeginTransaction())
+        {
+            var channelId = Insert(connection, transaction, @"
+                INSERT INTO channels (name, subscribed, created_at, updated_at)
+                VALUES ('Unfollowed channel', 0, $now, $now)",
+                ("$now", "2026-01-01T00:00:00Z"));
+            for (var index = 1; index <= 2; index++)
+            {
+                Insert(connection, transaction, @"
+                    INSERT INTO channel_videos
+                        (channel_id, video_id, canonical_url, title, discovered_at, updated_at,
+                         download_status, metadata_status)
+                    VALUES ($channelId, $videoId, $url, $title, $now, $now, 'NotQueued', 'Pending')",
+                    ("$channelId", channelId),
+                    ("$videoId", $"video-{index}"),
+                    ("$url", $"https://youtube.test/watch/video-{index}"),
+                    ("$title", $"Video {index}"),
+                    ("$now", "2026-01-01T00:00:00Z"));
+            }
+            transaction.Commit();
+
+            Assert.Equal(2, _database.QueueAllChannelVideoMetadata(channelId));
+        }
+
+        Assert.True(_database.HasQueuedChannelVideoMetadata());
+        Assert.Equal(2, _database.CountBackgroundChannelVideoMetadataWork());
+        var claimed = _database.ClaimNextChannelVideoMetadata();
+        Assert.NotNull(claimed);
+        Assert.Equal(ChannelMetadataStatus.Loading, claimed.MetadataStatus);
+    }
+
     private int InsertQueueItem(string status, string suffix, string createdAt = "2026-01-01T00:00:00Z")
     {
         using var connection = Open();

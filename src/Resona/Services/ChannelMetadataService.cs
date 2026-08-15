@@ -72,6 +72,17 @@ public sealed class ChannelMetadataService
         RaiseQueueChanged();
     }
 
+    public int RequestChannelDetails(int channelId)
+    {
+        var queued = MusicLibraryService.Current.QueueAllChannelVideoMetadata(channelId);
+        if (queued <= 0)
+            return 0;
+
+        EnsureWorker();
+        RaiseQueueChanged();
+        return queued;
+    }
+
     public void RequestVideo(int videoId)
     {
         MusicLibraryService.Current.QueueSpecificChannelVideoMetadata(videoId);

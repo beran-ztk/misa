@@ -22,7 +22,7 @@ namespace Resona.Views;
 
 public partial class ChannelOverlay : UserControl
 {
-    private enum ChannelVideoFilter { New, Ready, InLibrary, Rejected, MissingMetadata, Issues, All }
+    private enum ChannelVideoFilter { Available, Review, InLibrary, Rejected, Issues }
 
     private CancellationTokenSource? _refreshCts;
     private int? _refreshChannelId;
@@ -33,7 +33,7 @@ public partial class ChannelOverlay : UserControl
     private int _selectedChannelId = -1;
     private bool _detailOpenedFromInbox;
     private bool _loadingVideos;
-    private ChannelVideoFilter _videoFilter = ChannelVideoFilter.All;
+    private ChannelVideoFilter _videoFilter = ChannelVideoFilter.Available;
     private readonly Dictionary<int, ChannelVideoFilter> _videoFiltersByChannel = [];
     private readonly Dictionary<int, string> _videoSearchByChannel = [];
     private readonly ConcurrentDictionary<int, Bitmap> _channelArtworkCache = [];
@@ -69,7 +69,7 @@ public partial class ChannelOverlay : UserControl
             RefreshChannelStates();
         };
         ChannelHubBackgroundService.Current.SnapshotChanged += OnChannelSnapshotChanged;
-        SetVideoFilter(ChannelVideoFilter.All, refresh: false);
+        SetVideoFilter(ChannelVideoFilter.Available, refresh: false);
     }
 
     public void Open()
@@ -640,7 +640,7 @@ public partial class ChannelOverlay : UserControl
         VideoSearchBox.IsVisible = !string.IsNullOrWhiteSpace(VideoSearchBox.Text);
         VideoSearchToggleButton.Opacity = VideoSearchBox.IsVisible ? 1 : 0.86;
         SetVideoFilter(
-            _videoFiltersByChannel.GetValueOrDefault(channel.Id, ChannelVideoFilter.All),
+            _videoFiltersByChannel.GetValueOrDefault(channel.Id, ChannelVideoFilter.Available),
             refresh: false);
         HubView.IsVisible = false;
         ProfileHubView.IsVisible = false;
@@ -656,7 +656,7 @@ public partial class ChannelOverlay : UserControl
         {
             ChannelHubBackgroundService.Current.RequestEnrichment(channel);
         }
-        else
+        else if (channel.IsFollowed)
         {
             ChannelMetadataService.Current.RequestChannel(channel.Id, 1);
         }
@@ -672,11 +672,8 @@ public partial class ChannelOverlay : UserControl
         DetailChannelArtwork.Source = channel.Artwork;
         DetailChannelArtwork.IsVisible = channel.HasArtwork;
         DetailMonogramText.IsVisible = channel.ShowMonogram;
-        var localStatus = channel.HasNewVideos
-            ? $"{channel.TrackCountText} · {channel.NewVideoText}"
-            : $"{channel.TrackCountText} · no tracks awaiting a decision";
-        DetailSubtitleText.Text = $"{localStatus} · {channel.AudienceText}";
-        DetailLibraryText.Text = channel.TrackCountText;
+        DetailAudienceText.Text = channel.AudienceText;
+        ToolTip.SetTip(DetailAudienceText, channel.AudienceText);
         DetailRatingText.Text = channel.QualityCompactText;
         ToolTip.SetTip(DetailRatingText, channel.RatingText);
         DetailActivityText.Text = channel.ActivityText;
@@ -695,12 +692,6 @@ public partial class ChannelOverlay : UserControl
             channel.IsFollowed
                 ? channel.AutoDownload ? "Disable automatic downloads" : "Enable automatic downloads"
                 : "Follow this channel to enable auto-download");
-        ChannelMaxDurationBox.Text = channel.MaxDurationMinutes?.ToString() ?? string.Empty;
-        var effectiveLimit = channel.MaxDurationMinutes
-                             ?? MusicLibraryService.Current.GetChannelMaxDownloadDurationMinutes();
-        AutomationHintText.Text = channel.AutoDownload
-            ? $"Future uploads only · up to {effectiveLimit} min"
-            : $"Manual downloads · {effectiveLimit} min limit";
         UpdateRefreshPresentation();
     }
 
@@ -784,13 +775,13 @@ public partial class ChannelOverlay : UserControl
         {
             _pendingOpenChannelId = notification.ChannelId;
             _videoSearchByChannel[notification.ChannelId] = notification.Title;
-            _videoFiltersByChannel[notification.ChannelId] = ChannelVideoFilter.All;
+            _videoFiltersByChannel[notification.ChannelId] = ChannelVideoFilter.Available;
             RefreshChannels();
             return;
         }
 
         _videoSearchByChannel[channel.Id] = notification.Title;
-        _videoFiltersByChannel[channel.Id] = ChannelVideoFilter.All;
+        _videoFiltersByChannel[channel.Id] = ChannelVideoFilter.Available;
         OpenChannelDetail(channel, fromInbox: true);
         RefreshInboxBadge();
         e.Handled = true;
@@ -1030,7 +1021,10 @@ public partial class ChannelOverlay : UserControl
             return;
         // ChannelVideoDisplay creates Avalonia brushes and therefore belongs on
         // the UI thread. Only the database read runs in the background.
-        _currentVideos = rawVideos.Select(video => new ChannelVideoDisplay(video)).ToList();
+        var autoDownloadLimit = MusicLibraryService.Current.GetChannelMaxDownloadDurationMinutes();
+        _currentVideos = rawVideos
+            .Select(video => new ChannelVideoDisplay(video, autoDownloadLimit))
+            .ToList();
         ApplyActivePreviewMarker();
         ApplyVideoView();
     }
@@ -1040,21 +1034,22 @@ public partial class ChannelOverlay : UserControl
         if (_selectedChannelId < 0)
             return;
 
-        var newCount = _currentVideos.Count(video => !video.IsChecked);
+        var availableCount = _currentVideos.Count(video => video.IsAvailable);
         var readyCount = _currentVideos.Count(video => video.IsPendingRating);
         var libraryCount = _currentVideos.Count(video => video.IsInLibrary);
         var rejectedCount = _currentVideos.Count(video => video.IsRejected);
         var missingMetadataCount = _currentVideos.Count(video => video.IsMissingMetadata);
-        var issueCount = _currentVideos.Count(video =>
-            video.DownloadStatus is ChannelDownloadStatus.Failed or ChannelDownloadStatus.Skipped
-            || video.MetadataStatus == ChannelMetadataStatus.Failed);
-        AllVideosCountText.Text = _currentVideos.Count.ToString("N0");
-        NewVideosCountText.Text = newCount.ToString("N0");
-        MetadataVideosCountText.Text = missingMetadataCount.ToString("N0");
+        var issueCount = _currentVideos.Count(video => video.HasIssue);
+        AvailableVideosCountText.Text = availableCount.ToString("N0");
         ReadyVideosCountText.Text = readyCount.ToString("N0");
         LibraryVideosCountText.Text = libraryCount.ToString("N0");
         RejectedVideosCountText.Text = rejectedCount.ToString("N0");
         IssueVideosCountText.Text = issueCount.ToString("N0");
+        IssueVideosFilterButton.IsVisible = issueCount > 0 || _videoFilter == ChannelVideoFilter.Issues;
+        LoadVideoDetailsButton.IsVisible = missingMetadataCount > 0;
+        LoadVideoDetailsText.Text = missingMetadataCount == 1
+            ? "Load video details · 1"
+            : $"Load video details · {missingMetadataCount:N0}";
 
         var search = VideoSearchBox.Text?.Trim() ?? string.Empty;
         IEnumerable<ChannelVideoDisplay> videos = _currentVideos;
@@ -1063,15 +1058,12 @@ public partial class ChannelOverlay : UserControl
 
         videos = _videoFilter switch
         {
-            ChannelVideoFilter.New => videos.Where(video => !video.IsChecked),
-            ChannelVideoFilter.Ready => videos.Where(video => video.IsPendingRating),
+            ChannelVideoFilter.Available => videos.Where(video => video.IsAvailable),
+            ChannelVideoFilter.Review => videos.Where(video => video.IsPendingRating),
             ChannelVideoFilter.InLibrary => videos.Where(video => video.IsInLibrary),
             ChannelVideoFilter.Rejected => videos.Where(video => video.IsRejected),
-            ChannelVideoFilter.MissingMetadata => videos.Where(video => video.IsMissingMetadata),
-            ChannelVideoFilter.Issues => videos.Where(video =>
-                video.DownloadStatus is ChannelDownloadStatus.Failed or ChannelDownloadStatus.Skipped
-                || video.MetadataStatus == ChannelMetadataStatus.Failed),
-            _ => videos
+            ChannelVideoFilter.Issues => videos.Where(video => video.HasIssue),
+            _ => videos.Where(video => video.IsAvailable)
         };
 
         var visible = videos.ToList();
@@ -1104,13 +1096,12 @@ public partial class ChannelOverlay : UserControl
 
         (EmptyVideoTitleText.Text, EmptyVideoDescriptionText.Text) = _videoFilter switch
         {
-            ChannelVideoFilter.New => ("No new videos", "Everything discovered for this channel has been reviewed."),
-            ChannelVideoFilter.Ready => ("Nothing ready yet", "Downloaded videos awaiting review will appear here."),
+            ChannelVideoFilter.Available => ("No available videos", "Every discovered video has already moved through the workflow."),
+            ChannelVideoFilter.Review => ("Nothing to review", "Downloaded videos awaiting a rating will appear here."),
             ChannelVideoFilter.InLibrary => ("No local tracks", "Downloaded channel tracks will appear here."),
             ChannelVideoFilter.Rejected => ("No rejected tracks", "Declined tracks with retained audio will appear here."),
-            ChannelVideoFilter.MissingMetadata => ("Metadata is complete", "No error-free videos are waiting for metadata."),
             ChannelVideoFilter.Issues => ("No issues", "Metadata and downloads are currently healthy."),
-            _ => ("No videos discovered", "Refresh the channel to retrieve its uploads.")
+            _ => ("No available videos", "Refresh the channel to retrieve its uploads.")
         };
     }
 
@@ -1260,37 +1251,6 @@ public partial class ChannelOverlay : UserControl
             video.IsActive = _activePreviewTrackId is int trackId && video.TrackId == trackId;
     }
 
-    private async void OnChannelMaxDurationLostFocus(object? sender, RoutedEventArgs e)
-    {
-        if (sender is not TextBox textBox || _selectedHubChannel is not { } channel)
-            return;
-
-        if (string.IsNullOrWhiteSpace(textBox.Text))
-        {
-            await Task.Run(() => MusicLibraryService.Current.SetChannelMaxDownloadDuration(channel.Id, null));
-            RefreshChannels();
-            UpdateDownloadSummary();
-            ToastRequested?.Invoke("Channel uses the global download limit");
-            return;
-        }
-        if (!int.TryParse(textBox.Text, out var minutes))
-        {
-            textBox.Text = channel.MaxDurationMinutes?.ToString() ?? string.Empty;
-            ToastRequested?.Invoke("Enter a duration between 1 and 180 minutes");
-            return;
-        }
-
-        minutes = Math.Clamp(
-            minutes,
-            AppSettingsStore.ChannelDownloadMinDurationMinutes,
-            AppSettingsStore.ChannelDownloadMaxDurationMinutes);
-        await Task.Run(() => MusicLibraryService.Current.SetChannelMaxDownloadDuration(channel.Id, minutes));
-        textBox.Text = minutes.ToString();
-        RefreshChannels();
-        UpdateDownloadSummary();
-        ToastRequested?.Invoke($"Channel download limit set to {minutes} min");
-    }
-
     private void OnVideoSearchChanged(object? sender, TextChangedEventArgs e)
     {
         if (_selectedChannelId < 0)
@@ -1352,17 +1312,14 @@ public partial class ChannelOverlay : UserControl
         toggleButton.Opacity = searchBox.IsVisible || hasSearch ? 1 : 0.86;
     }
 
-    private void OnNewVideosFilterClicked(object? sender, RoutedEventArgs e) =>
-        SetVideoFilter(ChannelVideoFilter.New);
+    private void OnAvailableVideosFilterClicked(object? sender, RoutedEventArgs e) =>
+        SetVideoFilter(ChannelVideoFilter.Available);
 
     private void OnReadyVideosFilterClicked(object? sender, RoutedEventArgs e) =>
-        SetVideoFilter(ChannelVideoFilter.Ready);
+        SetVideoFilter(ChannelVideoFilter.Review);
 
     private void OnLibraryVideosFilterClicked(object? sender, RoutedEventArgs e) =>
         SetVideoFilter(ChannelVideoFilter.InLibrary);
-
-    private void OnMetadataVideosFilterClicked(object? sender, RoutedEventArgs e) =>
-        SetVideoFilter(ChannelVideoFilter.MissingMetadata);
 
     private void OnRejectedVideosFilterClicked(object? sender, RoutedEventArgs e) =>
         SetVideoFilter(ChannelVideoFilter.Rejected);
@@ -1370,29 +1327,22 @@ public partial class ChannelOverlay : UserControl
     private void OnIssueVideosFilterClicked(object? sender, RoutedEventArgs e) =>
         SetVideoFilter(ChannelVideoFilter.Issues);
 
-    private void OnAllVideosFilterClicked(object? sender, RoutedEventArgs e) =>
-        SetVideoFilter(ChannelVideoFilter.All);
-
-    private async void OnRetryMetadataIssuesClicked(object? sender, RoutedEventArgs e)
+    private void OnLoadVideoDetailsClicked(object? sender, RoutedEventArgs e)
     {
-        if (_selectedHubChannel is not { IsFollowed: true } channel)
+        if (_selectedHubChannel is not { } channel)
+            return;
+
+        var queued = ChannelMetadataService.Current.RequestChannelDetails(channel.Id);
+        if (queued <= 0)
         {
-            ToastRequested?.Invoke("Follow this channel before loading metadata");
+            ToastRequested?.Invoke("Video details are already loaded or queued");
             return;
         }
 
-        var reset = await Task.Run(() => MusicLibraryService.Current.ResetChannelMetadataIssues(channel.Id));
-        if (reset == 0)
-        {
-            ToastRequested?.Invoke("No failed metadata to retry");
-            return;
-        }
-
-        ChannelMetadataService.Current.RequestChannel(channel.Id, 1);
         RefreshVideos();
-        ToastRequested?.Invoke(reset == 1
-            ? "1 metadata issue queued for retry"
-            : $"{reset:N0} metadata issues reset");
+        ToastRequested?.Invoke(queued == 1
+            ? "Loading details for 1 video"
+            : $"Loading details for {queued:N0} videos");
         e.Handled = true;
     }
 
@@ -1404,13 +1354,11 @@ public partial class ChannelOverlay : UserControl
 
         var buttons = new Dictionary<ChannelVideoFilter, Button>
         {
-            [ChannelVideoFilter.New] = NewVideosFilterButton,
-            [ChannelVideoFilter.Ready] = ReadyVideosFilterButton,
+            [ChannelVideoFilter.Available] = AvailableVideosFilterButton,
+            [ChannelVideoFilter.Review] = ReadyVideosFilterButton,
             [ChannelVideoFilter.InLibrary] = LibraryVideosFilterButton,
             [ChannelVideoFilter.Rejected] = RejectedVideosFilterButton,
-            [ChannelVideoFilter.MissingMetadata] = MetadataVideosFilterButton,
-            [ChannelVideoFilter.Issues] = IssueVideosFilterButton,
-            [ChannelVideoFilter.All] = AllVideosFilterButton
+            [ChannelVideoFilter.Issues] = IssueVideosFilterButton
         };
         foreach (var pair in buttons)
         {
@@ -1421,9 +1369,11 @@ public partial class ChannelOverlay : UserControl
             pair.Value.BorderBrush = selected
                 ? new SolidColorBrush(Color.Parse("#6B83A9CA"))
                 : new SolidColorBrush(Color.Parse("#26FFFFFF"));
-            pair.Value.Foreground = ThemeResources.Brush(selected
-                ? "Theme.Brush.TextPrimary"
-                : "Theme.Brush.TextSecondary");
+            pair.Value.Foreground = pair.Key == ChannelVideoFilter.Issues && !selected
+                ? ThemeResources.Brush("Theme.Brush.Warning")
+                : ThemeResources.Brush(selected
+                    ? "Theme.Brush.TextPrimary"
+                    : "Theme.Brush.TextSecondary");
         }
 
         if (refresh)
@@ -1486,14 +1436,12 @@ public partial class ChannelOverlay : UserControl
             return;
         }
 
-        var uncheckedCount = _currentVideos.Count(video => !video.IsChecked);
+        var availableCount = _currentVideos.Count(video => video.IsAvailable);
         var library = _currentVideos.Count(video => video.IsInLibrary);
-        var issues = _currentVideos.Count(video =>
-            video.DownloadStatus is ChannelDownloadStatus.Failed or ChannelDownloadStatus.Skipped
-            || video.MetadataStatus == ChannelMetadataStatus.Failed);
+        var issues = _currentVideos.Count(video => video.HasIssue);
         var shown = visibleCount ?? _currentVideos.Count;
         var shownPrefix = shown == _currentVideos.Count ? string.Empty : $"{shown:N0} shown · ";
-        VideoSummaryText.Text = $"{shownPrefix}{_currentVideos.Count:N0} videos · {uncheckedCount:N0} new · " +
+        VideoSummaryText.Text = $"{shownPrefix}{_currentVideos.Count:N0} videos · {availableCount:N0} available · " +
                                 $"{library:N0} in library · {issues:N0} issues";
     }
 
@@ -1526,7 +1474,7 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
     private Thickness _borderThickness;
     private IBrush _titleBrush = ThemeResources.Brush("Theme.Brush.TextPrimary");
 
-    public ChannelVideoDisplay(ChannelVideo video)
+    public ChannelVideoDisplay(ChannelVideo video, int autoDownloadLimitMinutes)
     {
         Id = video.Id;
         CanonicalUrl = video.CanonicalUrl;
@@ -1539,6 +1487,12 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
         MetadataStatus = video.MetadataStatus;
         RatingName = video.RatingName?.Trim() ?? string.Empty;
         LibraryDetailsText = BuildLibraryDetails(video);
+        IsOverAutoDownloadLimit = video.TrackId is null
+            && video.DurationSeconds is int durationSeconds
+            && durationSeconds > autoDownloadLimitMinutes * 60;
+        AutoDownloadLimitWarningText = IsOverAutoDownloadLimit
+            ? $"Excluded from auto-download · exceeds the {autoDownloadLimitMinutes} min limit"
+            : string.Empty;
         _libraryState = video.LibraryState;
         _trackId = video.TrackId;
         SetDownloadState(video.DownloadStatus, video.DownloadError);
@@ -1577,16 +1531,20 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
         && (_libraryState is null or TrackLibraryState.PendingRating);
     public bool IsInLibrary => TrackId is not null && _libraryState == TrackLibraryState.Active;
     public bool IsRejected => TrackId is not null && _libraryState == TrackLibraryState.Rejected;
+    public bool HasIssue => DownloadStatus == ChannelDownloadStatus.Failed
+        || MetadataStatus == ChannelMetadataStatus.Failed;
+    public bool IsAvailable => TrackId is null && !HasIssue;
     public bool IsMissingMetadata => !HasMetadataError
-        && MetadataStatus is ChannelMetadataStatus.Pending
-            or ChannelMetadataStatus.Queued
-            or ChannelMetadataStatus.Loading;
+        && MetadataStatus == ChannelMetadataStatus.Pending;
+    public bool IsOverAutoDownloadLimit { get; }
+    public string AutoDownloadLimitWarningText { get; }
     public bool CanOpenEditor => IsInLibrary || IsPendingRating || IsRejected;
     public string StatusText
     {
         get => _statusText;
         private set => SetField(ref _statusText, value);
     }
+    public bool HasStatusText => StatusText.Length > 0;
     public bool CanPlay
     {
         get => _canPlay;
@@ -1765,10 +1723,9 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
                 ChannelDownloadStatus.Downloading => "Downloading…",
                 ChannelDownloadStatus.Queued => "Queued",
                 ChannelDownloadStatus.Failed => "Download failed",
-                ChannelDownloadStatus.Skipped => "Not downloaded · duration limit",
-                _ when MetadataStatus is ChannelMetadataStatus.Queued or ChannelMetadataStatus.Loading => "Loading metadata…",
-                _ => "Remote"
+                _ => string.Empty
             };
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HasStatusText)));
 
         CanDownload = DownloadStatus != ChannelDownloadStatus.Failed
             && !hasTrack && DownloadStatus is not ChannelDownloadStatus.Queued
