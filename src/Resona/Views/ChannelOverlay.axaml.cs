@@ -23,6 +23,7 @@ namespace Resona.Views;
 public partial class ChannelOverlay : UserControl
 {
     private enum ChannelVideoFilter { Available, Review, InLibrary, Rejected, Issues }
+    private enum ProfileTrackFilter { Available, Review, InLibrary, Rejected }
 
     private CancellationTokenSource? _refreshCts;
     private int? _refreshChannelId;
@@ -48,6 +49,7 @@ public partial class ChannelOverlay : UserControl
     private List<CloudProfileDisplay> _cloudProfiles = [];
     private CloudProfileDisplay? _selectedCloudProfile;
     private List<CloudProfileTrackDisplay> _cloudProfileTracks = [];
+    private ProfileTrackFilter _profileTrackFilter = ProfileTrackFilter.Available;
     private readonly Avalonia.Threading.DispatcherTimer _channelStateRefreshTimer = new()
     {
         Interval = TimeSpan.FromMilliseconds(750)
@@ -482,12 +484,12 @@ public partial class ChannelOverlay : UserControl
         DetailView.IsVisible = false;
         InboxView.IsVisible = false;
         ProfileDetailName.Text = profile.Username;
-        ProfileDetailBio.Text = profile.BioText;
         ProfileDetailAvatar.Source = profile.Avatar;
         ProfileDetailAvatar.IsVisible = profile.HasAvatar;
         ProfileDetailMonogram.Text = profile.Monogram;
         ProfileDetailMonogram.IsVisible = profile.ShowMonogram;
         ProfileTrackSearchBox.Text = string.Empty;
+        SetProfileTrackFilter(ProfileTrackFilter.Available, refresh: false);
         _ = LoadProfileTracksAsync(profile);
     }
 
@@ -496,7 +498,12 @@ public partial class ChannelOverlay : UserControl
         CancelProfileLoad();
         var cancellation = new CancellationTokenSource();
         _profileLoadCts = cancellation;
+        _cloudProfileTracks = [];
         ProfileTrackList.ItemsSource = null;
+        ProfileAvailableCountText.Text = "0";
+        ProfileReviewCountText.Text = "0";
+        ProfileLibraryCountText.Text = "0";
+        ProfileRejectedCountText.Text = "0";
         ProfileTrackSummaryText.Text = "Loading public tracks…";
         ProfileTrackEmptyPanel.IsVisible = true;
         ProfileTrackEmptyTitle.Text = "Loading tracks";
@@ -539,12 +546,23 @@ public partial class ChannelOverlay : UserControl
             .Where(item => !string.IsNullOrWhiteSpace(item.VideoId))
             .GroupBy(item => item.VideoId!, StringComparer.Ordinal)
             .ToDictionary(group => group.Key, group => group.Last().Track, StringComparer.Ordinal);
+        var localByCanonicalUrl = localTracks
+            .Where(track => !string.IsNullOrWhiteSpace(track.CanonicalUrl))
+            .GroupBy(track => track.CanonicalUrl, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.Last(), StringComparer.OrdinalIgnoreCase);
+        var ratingNames = MusicLibraryService.Current.GetRatings()
+            .ToDictionary(rating => rating.Id, rating => rating.Name);
         var activeUrls = MusicLibraryService.Current.GetActiveImportCanonicalUrls();
 
         foreach (var item in _cloudProfileTracks)
         {
             localByVideoId.TryGetValue(item.SourceVideoId, out var localTrack);
-            item.UpdateLocalState(localTrack, activeUrls.Contains(item.CanonicalUrl));
+            if (localTrack is null)
+                localByCanonicalUrl.TryGetValue(item.CanonicalUrl, out localTrack);
+            var localRating = localTrack?.RatingId is int ratingId
+                ? ratingNames.GetValueOrDefault(ratingId)
+                : null;
+            item.UpdateLocalState(localTrack, activeUrls.Contains(item.CanonicalUrl), localRating);
         }
     }
 
@@ -555,19 +573,92 @@ public partial class ChannelOverlay : UserControl
         if (!ProfileDetailView.IsVisible)
             return;
 
+        var availableCount = _cloudProfileTracks.Count(track => track.IsAvailable);
+        var reviewCount = _cloudProfileTracks.Count(track => track.IsReview);
+        var libraryCount = _cloudProfileTracks.Count(track => track.IsInLibrary);
+        var rejectedCount = _cloudProfileTracks.Count(track => track.IsRejected);
+        ProfileAvailableCountText.Text = availableCount.ToString("N0");
+        ProfileReviewCountText.Text = reviewCount.ToString("N0");
+        ProfileLibraryCountText.Text = libraryCount.ToString("N0");
+        ProfileRejectedCountText.Text = rejectedCount.ToString("N0");
+
         var search = ProfileTrackSearchBox.Text?.Trim() ?? string.Empty;
-        var visible = _cloudProfileTracks
-            .Where(track => search.Length == 0 || track.Matches(search))
-            .ToList();
+        IEnumerable<CloudProfileTrackDisplay> tracks = _cloudProfileTracks;
+        if (search.Length > 0)
+            tracks = tracks.Where(track => track.Matches(search));
+        tracks = _profileTrackFilter switch
+        {
+            ProfileTrackFilter.Available => tracks.Where(track => track.IsAvailable),
+            ProfileTrackFilter.Review => tracks.Where(track => track.IsReview),
+            ProfileTrackFilter.InLibrary => tracks.Where(track => track.IsInLibrary),
+            ProfileTrackFilter.Rejected => tracks.Where(track => track.IsRejected),
+            _ => tracks.Where(track => track.IsAvailable)
+        };
+        var visible = tracks.ToList();
         ProfileTrackList.ItemsSource = visible;
-        ProfileTrackSummaryText.Text = search.Length == 0
-            ? $"{_cloudProfileTracks.Count:N0} public tracks"
-            : $"{visible.Count:N0} of {_cloudProfileTracks.Count:N0} tracks";
+        ProfileTrackSummaryText.Text = $"{_cloudProfileTracks.Count:N0} public tracks · {libraryCount:N0} in your library";
         ProfileTrackEmptyPanel.IsVisible = visible.Count == 0;
-        ProfileTrackEmptyTitle.Text = search.Length > 0 ? "No matching tracks" : "No public tracks";
-        ProfileTrackEmptyDescription.Text = search.Length > 0
-            ? "Try another title, channel, genre or tag."
-            : "This profile has not synchronized any public tracks.";
+        if (_cloudProfileTracks.Count == 0)
+        {
+            ProfileTrackEmptyTitle.Text = "No public tracks";
+            ProfileTrackEmptyDescription.Text = "This profile has not synchronized any public tracks.";
+            return;
+        }
+        if (search.Length > 0)
+        {
+            ProfileTrackEmptyTitle.Text = "No matching tracks";
+            ProfileTrackEmptyDescription.Text = "Try another title, channel, genre or tag.";
+            return;
+        }
+
+        (ProfileTrackEmptyTitle.Text, ProfileTrackEmptyDescription.Text) = _profileTrackFilter switch
+        {
+            ProfileTrackFilter.Available => ("No available tracks", "Every shared track is already part of your local workflow."),
+            ProfileTrackFilter.Review => ("Nothing to review", "Downloaded tracks awaiting your rating will appear here."),
+            ProfileTrackFilter.InLibrary => ("No shared tracks in your library", "Tracks you accept from this profile will appear here."),
+            ProfileTrackFilter.Rejected => ("No rejected tracks", "Tracks you decline from this profile will appear here."),
+            _ => ("No public tracks", "This profile has not synchronized any public tracks.")
+        };
+    }
+
+    private void OnProfileAvailableFilterClicked(object? sender, RoutedEventArgs e) =>
+        SetProfileTrackFilter(ProfileTrackFilter.Available);
+
+    private void OnProfileReviewFilterClicked(object? sender, RoutedEventArgs e) =>
+        SetProfileTrackFilter(ProfileTrackFilter.Review);
+
+    private void OnProfileLibraryFilterClicked(object? sender, RoutedEventArgs e) =>
+        SetProfileTrackFilter(ProfileTrackFilter.InLibrary);
+
+    private void OnProfileRejectedFilterClicked(object? sender, RoutedEventArgs e) =>
+        SetProfileTrackFilter(ProfileTrackFilter.Rejected);
+
+    private void SetProfileTrackFilter(ProfileTrackFilter filter, bool refresh = true)
+    {
+        _profileTrackFilter = filter;
+        var buttons = new Dictionary<ProfileTrackFilter, Button>
+        {
+            [ProfileTrackFilter.Available] = ProfileAvailableFilterButton,
+            [ProfileTrackFilter.Review] = ProfileReviewFilterButton,
+            [ProfileTrackFilter.InLibrary] = ProfileLibraryFilterButton,
+            [ProfileTrackFilter.Rejected] = ProfileRejectedFilterButton
+        };
+        foreach (var pair in buttons)
+        {
+            var selected = pair.Key == filter;
+            pair.Value.Background = selected
+                ? new SolidColorBrush(Color.Parse("#293E6591"))
+                : Brushes.Transparent;
+            pair.Value.BorderBrush = selected
+                ? new SolidColorBrush(Color.Parse("#6B83A9CA"))
+                : new SolidColorBrush(Color.Parse("#26FFFFFF"));
+            pair.Value.Foreground = ThemeResources.Brush(selected
+                ? "Theme.Brush.TextPrimary"
+                : "Theme.Brush.TextSecondary");
+        }
+
+        if (refresh)
+            ApplyProfileTrackFilter();
     }
 
     private async void OnProfileTrackDownloadClicked(object? sender, RoutedEventArgs e)
@@ -609,6 +700,31 @@ public partial class ChannelOverlay : UserControl
             return;
         EditRequested?.Invoke(track);
         ToastRequested?.Invoke("Choose a rating to accept this track or decline it");
+    }
+
+    private async void OnProfileTrackPlayClicked(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { DataContext: CloudProfileTrackDisplay { CanPlay: true, LocalTrackId: int trackId } })
+            return;
+        var track = await Task.Run(() => MusicLibraryService.Current.GetTrackById(trackId));
+        if (track is null)
+            return;
+        _activePreviewTrackId = track.Id;
+        PreviewRequested?.Invoke(track);
+    }
+
+    private async void OnProfileTrackTapped(object? sender, TappedEventArgs e)
+    {
+        if (sender is not Control { DataContext: CloudProfileTrackDisplay { CanOpenEditor: true, LocalTrackId: int trackId } })
+            return;
+        if (e.Source is Visual source
+            && (source is Button || source.GetVisualAncestors().OfType<Button>().Any()))
+            return;
+        var track = await Task.Run(() => MusicLibraryService.Current.GetTrackById(trackId));
+        if (track is null)
+            return;
+        EditRequested?.Invoke(track);
+        e.Handled = true;
     }
 
     private void OnRefreshProfileTracksClicked(object? sender, RoutedEventArgs e)
@@ -1923,11 +2039,14 @@ public sealed class CloudProfileDisplay : INotifyPropertyChanged, IDisposable
 
 public sealed class CloudProfileTrackDisplay : INotifyPropertyChanged
 {
+    private enum LocalProfileTrackState { Available, Review, InLibrary, Rejected }
+
     private string _localStatusText = "Available";
     private IBrush _localStatusBrush = ThemeResources.Brush("Theme.Brush.TextSecondary");
     private bool _canDownload = true;
     private bool _canReview;
     private int? _localTrackId;
+    private LocalProfileTrackState _state = LocalProfileTrackState.Available;
 
     public CloudProfileTrackDisplay(CloudPublicLibraryTrack track)
     {
@@ -1968,6 +2087,12 @@ public sealed class CloudProfileTrackDisplay : INotifyPropertyChanged
     public IBrush LocalStatusBrush => _localStatusBrush;
     public bool CanDownload => _canDownload;
     public bool CanReview => _canReview;
+    public bool CanPlay => _localTrackId is not null;
+    public bool CanOpenEditor => _localTrackId is not null;
+    public bool IsAvailable => _state == LocalProfileTrackState.Available;
+    public bool IsReview => _state == LocalProfileTrackState.Review;
+    public bool IsInLibrary => _state == LocalProfileTrackState.InLibrary;
+    public bool IsRejected => _state == LocalProfileTrackState.Rejected;
     public int? LocalTrackId => _localTrackId;
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -1975,7 +2100,7 @@ public sealed class CloudProfileTrackDisplay : INotifyPropertyChanged
     public bool Matches(string search) =>
         _searchText.Contains(search, StringComparison.OrdinalIgnoreCase);
 
-    public void UpdateLocalState(MusicTrack? localTrack, bool importing)
+    public void UpdateLocalState(MusicTrack? localTrack, bool importing, string? localRating = null)
     {
         _localTrackId = localTrack?.Id;
         if (localTrack is not null)
@@ -1983,25 +2108,33 @@ public sealed class CloudProfileTrackDisplay : INotifyPropertyChanged
             switch (localTrack.LibraryState)
             {
                 case TrackLibraryState.PendingRating:
+                    _state = LocalProfileTrackState.Review;
                     SetState("Ready", "#E6B85C", canReview: true);
                     break;
                 case TrackLibraryState.Active:
-                    SetState("Accepted", "#75D49A");
+                    _state = LocalProfileTrackState.InLibrary;
+                    SetState(string.IsNullOrWhiteSpace(localRating)
+                        ? "In library"
+                        : $"Your rating: {localRating}", "#75D49A");
                     break;
                 case TrackLibraryState.Rejected:
-                    SetState("Declined", "#E87878");
+                    _state = LocalProfileTrackState.Rejected;
+                    SetState("Rejected", "#E87878");
                     break;
                 default:
+                    _state = LocalProfileTrackState.InLibrary;
                     SetState("In library", "#75D49A");
                     break;
             }
         }
         else if (importing)
         {
+            _state = LocalProfileTrackState.Available;
             SetState("Importing…", "#79A9E8");
         }
         else
         {
+            _state = LocalProfileTrackState.Available;
             SetState("Available", "#B9C1CA", canDownload: true);
         }
     }
@@ -2023,6 +2156,12 @@ public sealed class CloudProfileTrackDisplay : INotifyPropertyChanged
         Notify(nameof(LocalStatusBrush));
         Notify(nameof(CanDownload));
         Notify(nameof(CanReview));
+        Notify(nameof(CanPlay));
+        Notify(nameof(CanOpenEditor));
+        Notify(nameof(IsAvailable));
+        Notify(nameof(IsReview));
+        Notify(nameof(IsInLibrary));
+        Notify(nameof(IsRejected));
         Notify(nameof(LocalTrackId));
     }
 
