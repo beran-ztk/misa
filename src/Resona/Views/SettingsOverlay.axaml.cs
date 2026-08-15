@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
@@ -25,6 +26,7 @@ public partial class SettingsOverlay : UserControl
     private List<ModelSubgenre> _modelSubgenres = [];
     private Dictionary<int, List<ModelSubgenreDistinction>> _distinctionsBySubgenreId = [];
     private List<Tag> _tags = [];
+    private Dictionary<int, int> _tagUsageCounts = [];
     private List<TagSignalSource> _tagSignalSources = [];
     private List<TagRuleGroup> _tagRuleGroups = [];
     private bool _isLoading;
@@ -231,9 +233,9 @@ public partial class SettingsOverlay : UserControl
             BorderBrush = ThemeResources.Brush("Theme.Brush.BorderSubtle"),
             BorderThickness = new Avalonia.Thickness(1),
             CornerRadius = new Avalonia.CornerRadius(7),
-            Padding = new Avalonia.Thickness(12, 9)
+            Padding = new Avalonia.Thickness(11, 8)
         };
-        var panel = new StackPanel { Spacing = 8 };
+        var panel = new StackPanel { Spacing = 5 };
         var current = subgenre;
         StackPanel? editorPanel = null;
 
@@ -279,7 +281,7 @@ public partial class SettingsOverlay : UserControl
 
         var descriptionText = CreateGenreBodyText(subgenre.Description, "No description yet.");
         panel.Children.Add(descriptionText);
-        var hintText = CreateGenreBodyText(subgenre.ClassificationHint, "No classification hint yet.");
+        var hintText = CreateGenreBodyText(subgenre.ClassificationHint, "No classification hint yet.", "Use when · ");
         panel.Children.Add(hintText);
 
         if (_distinctionsBySubgenreId.TryGetValue(subgenre.Id, out var distinctions) && distinctions.Count > 0)
@@ -323,7 +325,7 @@ public partial class SettingsOverlay : UserControl
                         titleText.Text = updated.Name;
                         descriptionText.Text = BodyText(updated.Description, "No description yet.");
                         descriptionText.Opacity = string.IsNullOrWhiteSpace(updated.Description) ? 0.45 : 0.76;
-                        hintText.Text = BodyText(updated.ClassificationHint, "No classification hint yet.");
+                        hintText.Text = "Use when · " + BodyText(updated.ClassificationHint, "No classification hint yet.");
                         hintText.Opacity = string.IsNullOrWhiteSpace(updated.ClassificationHint) ? 0.45 : 0.78;
                         bpm.Text = BpmText(updated);
                         if (_genreVocabularyRowsById.TryGetValue(updated.Id, out var state))
@@ -423,13 +425,13 @@ public partial class SettingsOverlay : UserControl
         HorizontalAlignment = HorizontalAlignment.Center
     };
 
-    private static TextBlock CreateGenreBodyText(string? value, string fallback)
+    private static TextBlock CreateGenreBodyText(string? value, string fallback, string prefix = "")
     {
         var hasValue = !string.IsNullOrWhiteSpace(value);
         return new TextBlock
         {
-            Text = BodyText(value, fallback),
-            FontSize = 10.7,
+            Text = prefix + BodyText(value, fallback),
+            FontSize = prefix.Length == 0 ? 10.5 : 10.2,
             Foreground = ThemeResources.Brush("Theme.Brush.TextSecondary"),
             Opacity = hasValue ? 0.76 : 0.45,
             TextWrapping = TextWrapping.Wrap
@@ -968,9 +970,14 @@ public partial class SettingsOverlay : UserControl
     {
         if (!IsInitialized) return;
         _tags = MusicLibraryService.Current.GetTags();
-        AddTagPanel.IsVisible = true;
-        AddTagTitleText.Text = "Add tag";
-        TagVocabularyHintText.Text = "Cards are compact; edit only when needed.";
+        _tagUsageCounts = MusicLibraryService.Current.GetAllTrackTagIds()
+            .Values
+            .SelectMany(tagIds => tagIds)
+            .GroupBy(tagId => tagId)
+            .ToDictionary(group => group.Key, group => group.Count());
+        CreateTagOverlay.IsVisible = false;
+        NewTagBox.Text = string.Empty;
+        TagVocabularyHintText.Text = _tags.Count == 1 ? "1 tag" : $"{_tags.Count} tags";
         RebuildTagRows();
     }
 
@@ -1298,39 +1305,48 @@ public partial class SettingsOverlay : UserControl
             Background = ThemeResources.Brush("Theme.Brush.SurfaceTranslucent"),
             BorderBrush = ThemeResources.Brush("Theme.Brush.BorderSubtle"),
             BorderThickness = new Avalonia.Thickness(1),
-            CornerRadius = new Avalonia.CornerRadius(7),
-            Padding = new Avalonia.Thickness(12, 9)
+            CornerRadius = new Avalonia.CornerRadius(7)
         };
-        var panel = new StackPanel { Spacing = 8 };
+        var panel = new StackPanel();
         var current = tag;
         StackPanel? editorPanel = null;
 
-        var header = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), ColumnSpacing = 10 };
-        var titlePanel = new StackPanel { Spacing = 1 };
-        var accent = CategoryBrush(null);
+        var header = new Button
+        {
+            Background = Brushes.Transparent,
+            BorderThickness = new Avalonia.Thickness(0),
+            Padding = new Avalonia.Thickness(12, 9),
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            HorizontalContentAlignment = HorizontalAlignment.Stretch
+        };
+        var headerContent = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,*") };
         var titleText = new TextBlock
         {
             Text = tag.Name,
-            FontSize = 12.5,
+            FontSize = 13.5,
             FontWeight = FontWeight.SemiBold,
-            Foreground = accent,
-            TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis
-        };
-        titlePanel.Children.Add(titleText);
-        header.Children.Add(titlePanel);
-
-        var edit = new Button
-        {
-            Content = CreateSvgIcon("/Assets/pencil-simple.svg", 14),
-            Classes = { "settings-ghost" },
+            Foreground = ThemeResources.Brush("Theme.Brush.TextPrimary"),
+            TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis,
+            HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center
         };
-        ToolTip.SetTip(edit, "Edit tag");
-        Grid.SetColumn(edit, 1);
-        header.Children.Add(edit);
+        Grid.SetColumn(titleText, 1);
+        headerContent.Children.Add(titleText);
+        var usageCount = _tagUsageCounts.GetValueOrDefault(tag.Id);
+        var usageText = new TextBlock
+        {
+            Text = usageCount == 1 ? "1 track" : $"{usageCount} tracks",
+            FontSize = 10,
+            Opacity = 0.5,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        Grid.SetColumn(usageText, 2);
+        headerContent.Children.Add(usageText);
+        header.Content = headerContent;
         panel.Children.Add(header);
 
-        edit.Click += (_, _) =>
+        header.Click += (_, _) =>
         {
             if (editorPanel is null)
             {
@@ -1345,8 +1361,9 @@ public partial class SettingsOverlay : UserControl
             }
 
             editorPanel.IsVisible = !editorPanel.IsVisible;
-            edit.Opacity = editorPanel.IsVisible ? 1 : 0.82;
-            ToolTip.SetTip(edit, editorPanel.IsVisible ? "Close editor" : "Edit tag");
+            row.Background = ThemeResources.Brush(editorPanel.IsVisible
+                ? "Theme.Brush.SurfaceSelected"
+                : "Theme.Brush.SurfaceTranslucent");
         };
 
         row.Child = panel;
@@ -1360,7 +1377,7 @@ public partial class SettingsOverlay : UserControl
         {
             Spacing = 8,
             IsVisible = false,
-            Margin = new Avalonia.Thickness(0, 4, 0, 0)
+            Margin = new Avalonia.Thickness(12, 0, 12, 12)
         };
 
         var fields = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto"), ColumnSpacing = 8 };
@@ -1434,7 +1451,11 @@ public partial class SettingsOverlay : UserControl
     private void OnAddTagClicked(object? sender, RoutedEventArgs e)
     {
         var name = NewTagBox.Text?.Trim() ?? string.Empty;
-        if (name.Length == 0) return;
+        if (name.Length == 0)
+        {
+            ToastRequested?.Invoke("Tag name is required.");
+            return;
+        }
         try
         {
             MusicLibraryService.Current.AddTag(name);
@@ -1444,6 +1465,33 @@ public partial class SettingsOverlay : UserControl
             LibraryMetadataChanged?.Invoke();
         }
         catch (Exception exception) { ToastRequested?.Invoke($"Could not add tag: {exception.Message}"); }
+    }
+
+    private void OnShowCreateTagClicked(object? sender, RoutedEventArgs e)
+    {
+        NewTagBox.Text = string.Empty;
+        CreateTagOverlay.IsVisible = true;
+        Dispatcher.UIThread.Post(() => NewTagBox.Focus());
+    }
+
+    private void OnCancelCreateTagClicked(object? sender, RoutedEventArgs e)
+    {
+        NewTagBox.Text = string.Empty;
+        CreateTagOverlay.IsVisible = false;
+    }
+
+    private void OnNewTagKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter)
+        {
+            e.Handled = true;
+            OnAddTagClicked(sender, new RoutedEventArgs());
+        }
+        else if (e.Key == Key.Escape)
+        {
+            e.Handled = true;
+            OnCancelCreateTagClicked(sender, new RoutedEventArgs());
+        }
     }
 
     private void UpdateSummary()

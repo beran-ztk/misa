@@ -207,19 +207,11 @@
             <Rectangle Grid.Row="1" Fill="#18808080"/>
 
             <Grid x:Name="GenreVocabularyPage" Grid.Row="2" RowDefinitions="Auto,Auto,*" Margin="30,22,30,0">
-                <Border Grid.Row="0"
-                        Background="{DynamicResource Theme.Brush.SurfaceTranslucent}"
-                        BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
-                        BorderThickness="1"
-                        CornerRadius="7"
-                        Padding="12"
-                        Margin="0,0,0,12">
-                    <Grid ColumnDefinitions="*,210" ColumnSpacing="10">
-                        <TextBox x:Name="SearchBox" Classes="settings-input"
-                                 Watermark="Search subgenres…"/>
-                        <ComboBox x:Name="ModelGenreBox" Grid.Column="1" Classes="settings-input"/>
-                    </Grid>
-                </Border>
+                <Grid Grid.Row="0" ColumnDefinitions="*,210" ColumnSpacing="10" Margin="0,0,0,14">
+                    <TextBox x:Name="SearchBox" Classes="settings-input"
+                             Watermark="Search genres…"/>
+                    <ComboBox x:Name="ModelGenreBox" Grid.Column="1" Classes="settings-input"/>
+                </Grid>
 
                 <Border x:Name="AddSubgenrePanel"
                         Grid.Row="1"
@@ -256,7 +248,7 @@
                                    VerticalAlignment="Center"/>
                     </Grid>
                     <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
-                        <StackPanel x:Name="GenreVocabularyRows" Spacing="8" Margin="0,0,0,18"/>
+                        <StackPanel x:Name="GenreVocabularyRows" Spacing="6" Margin="0,0,0,18"/>
                     </ScrollViewer>
                 </Grid>
             </Grid>
@@ -811,45 +803,52 @@
             </ScrollViewer>
 
             <Grid x:Name="TagsPage" Grid.Row="2" IsVisible="False" RowDefinitions="Auto,*" Margin="30,22,30,0">
-                <Border x:Name="AddTagPanel"
-                        Grid.Row="0"
-                        Background="{DynamicResource Theme.Brush.SurfaceTranslucent}"
-                        BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
-                        BorderThickness="1"
-                        CornerRadius="7"
-                        Padding="12"
-                        Margin="0,0,0,12">
-                    <Grid RowDefinitions="Auto,Auto" RowSpacing="8">
-                        <Grid ColumnDefinitions="*" ColumnSpacing="8">
-                            <StackPanel Spacing="2">
-                                <TextBlock x:Name="AddTagTitleText" Text="Add tag" FontSize="12" FontWeight="SemiBold"/>
-                                <TextBlock Text="Create a reusable label for tracks."
-                                           FontSize="10.5" Opacity="0.56"/>
-                            </StackPanel>
-                        </Grid>
-                        <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="10">
-                            <TextBox x:Name="NewTagBox" Classes="settings-input"
-                                     Watermark="New tag…"/>
-                            <Button Grid.Column="1" Classes="settings-action"
-                                    Content="Add tag"
-                                    Click="OnAddTagClicked"/>
-                        </Grid>
-                    </Grid>
-                </Border>
-
-                <Grid Grid.Row="1" RowDefinitions="Auto,*">
-                    <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,8">
-                        <TextBlock Text="TAGS" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
-                        <TextBlock x:Name="TagVocabularyHintText"
-                                   Grid.Column="1"
-                                   FontSize="10.5"
-                                   Opacity="0.5"
-                                   VerticalAlignment="Center"/>
-                    </Grid>
-                    <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
-                        <StackPanel x:Name="TagRows" Spacing="8" Margin="0,0,0,18"/>
-                    </ScrollViewer>
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,14">
+                    <TextBlock x:Name="TagVocabularyHintText"
+                               FontSize="10.5"
+                               Opacity="0.5"
+                               VerticalAlignment="Center"/>
+                    <Button Grid.Column="1" Classes="settings-action"
+                            Content="Create tag"
+                            Click="OnShowCreateTagClicked"/>
                 </Grid>
+
+                <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel x:Name="TagRows"
+                                Width="380"
+                                HorizontalAlignment="Center"
+                                Spacing="8"
+                                Margin="0,0,0,18"/>
+                </ScrollViewer>
+
+                <Border x:Name="CreateTagOverlay"
+                        Grid.RowSpan="2"
+                        ZIndex="10"
+                        IsVisible="False"
+                        Background="#99000000">
+                    <Border Width="340"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Background="{DynamicResource Theme.Brush.Surface}"
+                            BorderBrush="{DynamicResource Theme.Brush.BorderStrong}"
+                            BorderThickness="1"
+                            CornerRadius="7"
+                            Padding="16">
+                        <StackPanel Spacing="12">
+                            <TextBlock Text="Create tag" FontSize="14" FontWeight="SemiBold"
+                                       HorizontalAlignment="Center"/>
+                            <TextBox x:Name="NewTagBox" Classes="settings-input"
+                                     Watermark="Enter tag name"
+                                     KeyDown="OnNewTagKeyDown"/>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                                <Button Classes="settings-action" Content="Cancel"
+                                        Click="OnCancelCreateTagClicked"/>
+                                <Button Classes="settings-action" Content="Create"
+                                        Click="OnAddTagClicked"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </Border>
             </Grid>
 
             <Grid x:Name="TagRulesPage" Grid.Row="2" IsVisible="False" RowDefinitions="Auto,*" Margin="30,22,30,0">
