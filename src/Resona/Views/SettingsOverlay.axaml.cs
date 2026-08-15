@@ -83,6 +83,7 @@ public partial class SettingsOverlay : UserControl
         _appearanceSettings = appSettings.Appearance.Clone().Clamp();
         RefreshAppearanceControls();
         RefreshAppearancePreview();
+        CloudServerStatusText.IsVisible = false;
         AnalysisServerStatusText.IsVisible = false;
         FirefoxCookiesToggle.IsChecked = Values.UseFirefoxCookiesForYtDlp;
         RefreshLinuxDependencies();
@@ -430,6 +431,7 @@ public partial class SettingsOverlay : UserControl
             "updates" => SettingsPage.Updates,
             "discord" => SettingsPage.Discord,
             "profile" => SettingsPage.Profile,
+            "servers" => SettingsPage.Servers,
             "tags" => SettingsPage.Tags,
             "tag_rules" => SettingsPage.TagRules,
             _ => SettingsPage.GenreVocabulary
@@ -453,6 +455,7 @@ public partial class SettingsOverlay : UserControl
         var isAppearancePage = page == SettingsPage.Appearance;
         var isDiscordPage = page == SettingsPage.Discord;
         var isProfilePage = page == SettingsPage.Profile;
+        var isServersPage = page == SettingsPage.Servers;
         GenreVocabularyPage.IsVisible = isGenreVocabularyPage;
         HealthPage.IsVisible = isHealthPage;
         BackupPage.IsVisible = isBackupPage;
@@ -462,6 +465,7 @@ public partial class SettingsOverlay : UserControl
         AppearancePage.IsVisible = isAppearancePage;
         DiscordPage.IsVisible = isDiscordPage;
         ProfilePage.IsVisible = isProfilePage;
+        ServersPage.IsVisible = isServersPage;
         TagsPage.IsVisible = page == SettingsPage.Tags;
         TagRulesPage.IsVisible = page == SettingsPage.TagRules;
         GenreVocabularyNavButton.IsChecked = isGenreVocabularyPage;
@@ -473,6 +477,7 @@ public partial class SettingsOverlay : UserControl
         AppearanceNavButton.IsChecked = isAppearancePage;
         DiscordNavButton.IsChecked = isDiscordPage;
         ProfileNavButton.IsChecked = isProfilePage;
+        ServersNavButton.IsChecked = isServersPage;
         TagsNavButton.IsChecked = page == SettingsPage.Tags;
         TagRulesNavButton.IsChecked = page == SettingsPage.TagRules;
 
@@ -485,7 +490,8 @@ public partial class SettingsOverlay : UserControl
             SettingsPage.Updates => "Updates",
             SettingsPage.Appearance => "Appearance",
             SettingsPage.Discord => "Discord presence",
-            SettingsPage.Profile => "Profile & servers",
+            SettingsPage.Profile => "Profile",
+            SettingsPage.Servers => "Servers",
             SettingsPage.Tags => "Tags",
             SettingsPage.TagRules => "Tag rules",
             _ => "Genres"
@@ -505,7 +511,9 @@ public partial class SettingsOverlay : UserControl
                             : isDiscordPage
                                 ? "Customize the text Discord displays while Resona is playing music."
                             : isProfilePage
-                                ? "Manage your local profile, cloud synchronization and analysis services."
+                                ? "Manage the local identity shown through Resona cloud services."
+                            : isServersPage
+                                ? "Configure cloud synchronization and track analysis services."
                             : isUpdatesPage
                                 ? "Check, download and install application releases from GitHub."
                             : page == SettingsPage.Tags
@@ -687,8 +695,8 @@ public partial class SettingsOverlay : UserControl
 
     private void RefreshCloudSyncStatus(CloudSyncStatus status)
     {
-        ProfileStatusText.Text = status.Message;
-        ProfileStatusText.IsVisible = true;
+        CloudServerStatusText.Text = status.Message;
+        CloudServerStatusText.IsVisible = true;
     }
 
     private async void OnCheckForUpdatesClicked(object? sender, RoutedEventArgs e)
@@ -1729,7 +1737,7 @@ public partial class SettingsOverlay : UserControl
     private static SettingsPage ParseSettingsPage(string? value) => value switch
     {
         "appearance" => SettingsPage.Appearance,
-        "analysis_server" => SettingsPage.Profile,
+        "analysis_server" => SettingsPage.Servers,
         "health" => SettingsPage.Health,
         "backup" => SettingsPage.Backup,
         "export" => SettingsPage.Export,
@@ -1739,6 +1747,7 @@ public partial class SettingsOverlay : UserControl
         "tags" => SettingsPage.Tags,
         "discord" => SettingsPage.Discord,
         "profile" => SettingsPage.Profile,
+        "servers" => SettingsPage.Servers,
         _ => SettingsPage.GenreVocabulary
     };
 
@@ -1754,6 +1763,7 @@ public partial class SettingsOverlay : UserControl
         SettingsPage.Tags => "tags",
         SettingsPage.Discord => "discord",
         SettingsPage.Profile => "profile",
+        SettingsPage.Servers => "servers",
         _ => "genres"
     };
 
@@ -2042,5 +2052,5 @@ public partial class SettingsOverlay : UserControl
         public override string ToString() => Name;
     }
 
-    private enum SettingsPage { GenreVocabulary, Health, Appearance, Discord, Profile, Backup, Export, Runtime, Updates, Tags, TagRules }
+    private enum SettingsPage { GenreVocabulary, Health, Appearance, Discord, Profile, Servers, Backup, Export, Runtime, Updates, Tags, TagRules }
 }
