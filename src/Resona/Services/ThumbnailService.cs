@@ -8,6 +8,7 @@ public static class ThumbnailService
 {
     public const int ThumbnailSize = 128;
     public const int PlayerArtworkMaxSize = 768;
+    private const int ThumbnailJpegQuality = 82;
 
     public sealed record EmbeddedArtwork(byte[] Data, string Extension);
 
@@ -18,9 +19,12 @@ public static class ThumbnailService
     {
         var artwork = ReadEmbeddedArtwork(audioFilePath);
         return artwork is { Length: > 0 }
-            ? CreateSquareArtwork(artwork, ThumbnailSize, 82)
+            ? CreateSquareArtwork(artwork, ThumbnailSize, ThumbnailJpegQuality)
             : null;
     }
+
+    public static byte[]? CreateChannelThumbnail(byte[] artwork) =>
+        CreateSquareArtwork(artwork, ThumbnailSize, ThumbnailJpegQuality);
 
     public static byte[]? ReadEmbeddedPlayerArtwork(string audioFilePath)
     {

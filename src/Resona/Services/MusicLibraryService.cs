@@ -457,9 +457,12 @@ public class MusicLibraryService
         if (!string.IsNullOrWhiteSpace(snapshot.ThumbnailUrl))
         {
             progress?.Report("Downloading channel icon…");
+            var artwork = await _downloader.DownloadImageAsync(snapshot.ThumbnailUrl, cancellationToken);
             snapshot = snapshot with
             {
-                Thumbnail = await _downloader.DownloadImageAsync(snapshot.ThumbnailUrl, cancellationToken)
+                Thumbnail = artwork is { Length: > 0 }
+                    ? ThumbnailService.CreateChannelThumbnail(artwork)
+                    : null
             };
         }
 
