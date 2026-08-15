@@ -62,8 +62,6 @@ public partial class SettingsOverlay : UserControl
         _appearanceSaveTimer.Tick += (_, _) => PersistPendingAppearance();
         SearchBox.TextChanged += (_, _) => RebuildGenreVocabularyRows();
         ProfileUsernameBox.TextChanged += (_, _) => RefreshProfileAvatar();
-        ProfileBioBox.TextChanged += (_, _) =>
-            ProfileBioCountText.Text = $"{ProfileBioBox.Text?.Length ?? 0}/{CloudIdentityStore.MaximumBioLength}";
         CloudLibrarySyncService.Current.StatusChanged += status =>
             Dispatcher.UIThread.Post(() => RefreshCloudSyncStatus(status));
         AppUpdateService.Current.StateChanged += OnAppUpdateStateChanged;
@@ -536,9 +534,7 @@ public partial class SettingsOverlay : UserControl
             _cloudIdentity = CloudIdentityStore.Current.GetOrCreate();
             _pendingProfileImage = _cloudIdentity.ProfileImage?.ToArray();
             ProfileUsernameBox.Text = _cloudIdentity.Username;
-            ProfileBioBox.Text = _cloudIdentity.Bio;
             ProfileUserIdText.Text = _cloudIdentity.UserId;
-            ProfileBioCountText.Text = $"{_cloudIdentity.Bio.Length}/{CloudIdentityStore.MaximumBioLength}";
             ProfileStatusText.IsVisible = false;
             RefreshProfileAvatar();
         }
@@ -661,10 +657,9 @@ public partial class SettingsOverlay : UserControl
         {
             _cloudIdentity = CloudIdentityStore.Current.UpdateProfile(
                 username,
-                ProfileBioBox.Text,
+                _cloudIdentity?.Bio,
                 _pendingProfileImage);
             ProfileUsernameBox.Text = _cloudIdentity.Username;
-            ProfileBioBox.Text = _cloudIdentity.Bio;
             ProfileStatusText.Text = "Profile saved locally.";
             ProfileStatusText.IsVisible = true;
             CloudProfileChanged?.Invoke();
@@ -1878,7 +1873,8 @@ public partial class SettingsOverlay : UserControl
             TickFrequency = 1,
             VerticalAlignment = VerticalAlignment.Center
         };
-        ToolTip.SetTip(slider, "Double-click to restore this value to the Balanced preset.");
+        slider.Classes.Add("appearance-simple");
+        ToolTip.SetTip(slider, "Double-click to restore the default value.");
         slider.ValueChanged += (_, _) =>
         {
             valueText.Text = formatter(slider.Value);
@@ -1900,16 +1896,18 @@ public partial class SettingsOverlay : UserControl
             TextWrapping = TextWrapping.Wrap
         });
 
-        var row = new Grid
+        var controlRow = new Grid
         {
-            ColumnDefinitions = new ColumnDefinitions("*,220,52"),
-            ColumnSpacing = 12
+            ColumnDefinitions = new ColumnDefinitions("*,52"),
+            ColumnSpacing = 10
         };
+        controlRow.Children.Add(slider);
+        Grid.SetColumn(valueText, 1);
+        controlRow.Children.Add(valueText);
+
+        var row = new StackPanel { Spacing = 5 };
         row.Children.Add(labels);
-        Grid.SetColumn(slider, 1);
-        row.Children.Add(slider);
-        Grid.SetColumn(valueText, 2);
-        row.Children.Add(valueText);
+        row.Children.Add(controlRow);
         panel.Children.Add(row);
 
         _appearanceControlRefreshers.Add(settings =>
@@ -1994,23 +1992,6 @@ public partial class SettingsOverlay : UserControl
 
         AppSettingsStore.SaveAppearance(_appearanceSettings);
         _appearanceSavePending = false;
-    }
-
-    private void OnAppearancePresetClicked(object? sender, RoutedEventArgs e)
-    {
-        if (sender is not Button { Tag: string preset })
-            return;
-
-        _appearanceSettings = preset switch
-        {
-            "subtle" => AppearanceSettings.Subtle(),
-            "vibrant" => AppearanceSettings.Vibrant(),
-            _ => AppearanceSettings.Balanced()
-        };
-        RefreshAppearanceControls();
-        NotifyAppearanceChanged();
-        PersistPendingAppearance();
-        ToastRequested?.Invoke($"Appearance preset applied: {preset}.");
     }
 
     private void OnResetAppearanceClicked(object? sender, RoutedEventArgs e)

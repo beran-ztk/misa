@@ -100,6 +100,24 @@
             <Setter Property="HorizontalContentAlignment" Value="Center"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
+        <Style Selector="Slider.appearance-simple">
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="MinHeight" Value="28"/>
+            <Setter Property="Foreground" Value="{DynamicResource Theme.Brush.AccentStrong}"/>
+            <Setter Property="Background" Value="{DynamicResource Theme.Brush.SurfaceHover}"/>
+        </Style>
+        <Style Selector="Slider.appearance-simple /template/ Thumb">
+            <Setter Property="Width" Value="9"/>
+            <Setter Property="Height" Value="9"/>
+            <Setter Property="Background" Value="{DynamicResource Theme.Brush.TextPrimary}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Theme.Brush.AccentStrong}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+        <Style Selector="Slider.appearance-simple:pointerover /template/ Thumb">
+            <Setter Property="Width" Value="11"/>
+            <Setter Property="Height" Value="11"/>
+            <Setter Property="Background" Value="#FAF9EF"/>
+        </Style>
         <Style Selector="ToggleButton.discord-presence-toggle">
             <Setter Property="HorizontalAlignment" Value="Stretch"/>
             <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
@@ -362,17 +380,6 @@
                                 <TextBlock Text="Visible to other Resona users once cloud synchronization is enabled."
                                            FontSize="10.5" Opacity="0.52" TextWrapping="Wrap"/>
                             </StackPanel>
-                            <StackPanel Spacing="5">
-                                <Grid ColumnDefinitions="*,Auto">
-                                    <TextBlock Text="BIO" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
-                                    <TextBlock x:Name="ProfileBioCountText" Grid.Column="1" FontSize="10" Opacity="0.42"/>
-                                </Grid>
-                                <TextBox x:Name="ProfileBioBox"
-                                         Height="112" Padding="10,8"
-                                         AcceptsReturn="True" TextWrapping="Wrap"
-                                         MaxLength="500" Watermark="Tell others what kind of music you listen to…"
-                                         VerticalContentAlignment="Top"/>
-                            </StackPanel>
                         </StackPanel>
                     </Grid>
 
@@ -547,61 +554,35 @@
 
             <ScrollViewer x:Name="AppearancePage" Grid.Row="2" IsVisible="False" Margin="30,22,30,0"
                           HorizontalScrollBarVisibility="Disabled">
-                <StackPanel Spacing="18" Margin="0,0,0,24">
-                    <Border Background="{DynamicResource Theme.Brush.SurfaceTranslucent}"
-                            BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
-                            BorderThickness="1"
-                            CornerRadius="7"
-                            Padding="12">
-                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="14">
-                            <StackPanel Spacing="3">
-                                <TextBlock Text="Visual presets" FontSize="13" FontWeight="SemiBold"/>
-                                <TextBlock Text="Presets update every value below. Individual sliders can still be adjusted afterwards."
-                                           FontSize="10.5" Opacity="0.56" TextWrapping="Wrap"/>
-                            </StackPanel>
-                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="7" VerticalAlignment="Center">
-                                <Button Classes="settings-action" Content="Subtle" Tag="subtle" Click="OnAppearancePresetClicked"/>
-                                <Button Classes="settings-action" Content="Balanced" Tag="balanced" Click="OnAppearancePresetClicked"/>
-                                <Button Classes="settings-action" Content="Vibrant" Tag="vibrant" Click="OnAppearancePresetClicked"/>
-                            </StackPanel>
-                        </Grid>
-                    </Border>
-
-                    <StackPanel Spacing="8">
+                <StackPanel Spacing="20" Margin="0,0,0,24">
+                    <StackPanel Spacing="12">
                         <TextBlock Text="PLAYER" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
-                        <Border Background="{DynamicResource Theme.Brush.SurfaceTranslucent}" BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
-                                BorderThickness="1" CornerRadius="7" Padding="12">
-                            <StackPanel x:Name="PlayerAppearanceRows" Spacing="12"/>
-                        </Border>
+                        <StackPanel x:Name="PlayerAppearanceRows" Spacing="16"/>
                     </StackPanel>
 
-                    <StackPanel Spacing="8">
+                    <Rectangle Height="1" Fill="{DynamicResource Theme.Brush.Divider}"/>
+
+                    <StackPanel Spacing="12">
                         <TextBlock Text="TRACK LIST" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
-                        <Border Background="{DynamicResource Theme.Brush.SurfaceTranslucent}" BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
-                                BorderThickness="1" CornerRadius="7" Padding="12">
-                            <StackPanel Spacing="12">
-                                <StackPanel x:Name="TrackAppearanceRows" Spacing="12"/>
-                                <Rectangle Height="1" Fill="{DynamicResource Theme.Brush.Divider}" Margin="0,2"/>
-                                <StackPanel x:Name="TrackArtworkAppearanceRows" Spacing="12"/>
-                            </StackPanel>
-                        </Border>
+                        <StackPanel x:Name="TrackAppearanceRows" Spacing="16"/>
+                        <StackPanel x:Name="TrackArtworkAppearanceRows" Spacing="16"/>
                     </StackPanel>
 
-                    <StackPanel Spacing="8">
+                    <Rectangle Height="1" Fill="{DynamicResource Theme.Brush.Divider}"/>
+
+                    <StackPanel Spacing="12">
                         <TextBlock Text="AUDIO REACTION" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
-                        <Border Background="{DynamicResource Theme.Brush.SurfaceTranslucent}" BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
-                                BorderThickness="1" CornerRadius="7" Padding="12">
-                            <StackPanel x:Name="AudioAppearanceRows" Spacing="12"/>
-                        </Border>
+                        <StackPanel x:Name="AudioAppearanceRows" Spacing="16"/>
                     </StackPanel>
 
-                    <StackPanel Spacing="8">
+                    <Rectangle Height="1" Fill="{DynamicResource Theme.Brush.Divider}"/>
+
+                    <StackPanel Spacing="12">
                         <TextBlock Text="LIBRARY BACKDROP" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
-                        <Border Background="{DynamicResource Theme.Brush.SurfaceTranslucent}" BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
-                                BorderThickness="1" CornerRadius="7" Padding="12">
-                            <StackPanel x:Name="LibraryBackdropAppearanceRows" Spacing="12"/>
-                        </Border>
+                        <StackPanel x:Name="LibraryBackdropAppearanceRows" Spacing="16"/>
                     </StackPanel>
+
+                    <Rectangle Height="1" Fill="{DynamicResource Theme.Brush.Divider}"/>
 
                     <StackPanel Spacing="8">
                         <Grid ColumnDefinitions="*,Auto">
