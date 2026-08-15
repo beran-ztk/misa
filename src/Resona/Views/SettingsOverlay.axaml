@@ -206,51 +206,63 @@
 
             <Rectangle Grid.Row="1" Fill="#18808080"/>
 
-            <Grid x:Name="GenreVocabularyPage" Grid.Row="2" RowDefinitions="Auto,Auto,*" Margin="30,22,30,0">
-                <Grid Grid.Row="0" ColumnDefinitions="*,210" ColumnSpacing="10" Margin="0,0,0,14">
+            <Grid x:Name="GenreVocabularyPage" Grid.Row="2" RowDefinitions="Auto,*" Margin="30,22,30,0">
+                <Grid Grid.Row="0" ColumnDefinitions="*,34" ColumnSpacing="8" Margin="0,0,0,14">
                     <TextBox x:Name="SearchBox" Classes="settings-input"
                              Watermark="Search genres…"/>
-                    <ComboBox x:Name="ModelGenreBox" Grid.Column="1" Classes="settings-input"/>
+                    <Button Grid.Column="1"
+                            Width="34" Height="34" Padding="0"
+                            Background="Transparent" BorderThickness="0"
+                            FontSize="20" FontWeight="Light"
+                            Content="+"
+                            ToolTip.Tip="Create subgenre"
+                            Click="OnShowCreateSubgenreClicked"/>
                 </Grid>
 
-                <Border x:Name="AddSubgenrePanel"
-                        Grid.Row="1"
-                        IsVisible="False"
-                        Background="{DynamicResource Theme.Brush.SurfaceTranslucent}"
-                        BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
-                        BorderThickness="1"
-                        CornerRadius="7"
-                        Padding="12"
-                        Margin="0,0,0,12">
-                    <Grid RowDefinitions="Auto,Auto" RowSpacing="8">
-                        <StackPanel Spacing="2">
-                            <TextBlock x:Name="AddSubgenreTitleText" Text="Add subgenre" FontSize="12" FontWeight="SemiBold"/>
-                            <TextBlock Text="Create a new subgenre in the selected model category."
-                                       FontSize="10.5" Opacity="0.56"/>
-                        </StackPanel>
-                        <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="10">
-                            <TextBox x:Name="NewSubgenreBox" Classes="settings-input"
-                                     Watermark="New subgenre name…"/>
-                            <Button Grid.Column="1" Classes="settings-action"
-                                    Content="Add subgenre"
-                                    Click="OnAddSubgenreClicked"/>
-                        </Grid>
-                    </Grid>
-                </Border>
-
-                <Grid Grid.Row="2" RowDefinitions="Auto,*">
-                    <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,8">
-                        <TextBlock Text="GENRE VOCABULARY" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
-                        <TextBlock x:Name="GenreVocabularyHintText"
-                                   Grid.Column="1"
-                                   FontSize="10.5"
-                                   Opacity="0.5"
-                                   VerticalAlignment="Center"/>
-                    </Grid>
-                    <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
-                        <StackPanel x:Name="GenreVocabularyRows" Spacing="6" Margin="0,0,0,18"/>
+                <Grid Grid.Row="1" ColumnDefinitions="118,13,*">
+                    <ScrollViewer Padding="0" HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel x:Name="GenreGroupRows"/>
+                    </ScrollViewer>
+                    <Border Grid.Column="1" Width="1"
+                            Background="{DynamicResource Theme.Brush.Divider}"
+                            Margin="6,1"/>
+                    <ScrollViewer Grid.Column="2" Padding="10,0,0,0"
+                                  HorizontalScrollBarVisibility="Disabled">
+                        <UniformGrid x:Name="GenreVocabularyRows"
+                                     Columns="2"
+                                     ColumnSpacing="7"
+                                     RowSpacing="7"
+                                     Margin="0,0,0,18"/>
                     </ScrollViewer>
                 </Grid>
+
+                <Border x:Name="CreateSubgenreOverlay"
+                        Grid.RowSpan="2"
+                        ZIndex="10"
+                        IsVisible="False"
+                        Background="#99000000">
+                    <Border MinWidth="260" MaxWidth="340" Margin="24"
+                            HorizontalAlignment="Stretch" VerticalAlignment="Center"
+                            Background="{DynamicResource Theme.Brush.Surface}"
+                            BorderBrush="{DynamicResource Theme.Brush.BorderStrong}"
+                            BorderThickness="1" CornerRadius="7" Padding="16">
+                        <StackPanel Spacing="12">
+                            <TextBlock x:Name="CreateSubgenreTitleText"
+                                       Text="Create subgenre"
+                                       FontSize="14" FontWeight="SemiBold"
+                                       HorizontalAlignment="Center"/>
+                            <TextBox x:Name="NewSubgenreBox" Classes="settings-input"
+                                     Watermark="Enter subgenre name"
+                                     KeyDown="OnNewSubgenreKeyDown"/>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                                <Button Classes="settings-action" Content="Cancel"
+                                        Click="OnCancelCreateSubgenreClicked"/>
+                                <Button Classes="settings-action" Content="Create"
+                                        Click="OnAddSubgenreClicked"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </Border>
             </Grid>
 
             <ScrollViewer x:Name="ProfilePage" Grid.Row="2" IsVisible="False" Margin="30,22,30,0"

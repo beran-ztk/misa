@@ -31,8 +31,7 @@ public partial class SettingsOverlay : UserControl
     private List<TagRuleGroup> _tagRuleGroups = [];
     private bool _isLoading;
     private bool _genreVocabularyLoaded;
-    private readonly Dictionary<int, GenreVocabularyRowState> _genreVocabularyRowsById = [];
-    private TextBlock? _emptyGenreVocabularyText;
+    private int? _selectedModelGenreId;
     private SettingsPage _selectedPage;
     private readonly DispatcherTimer _appearanceSaveTimer = new() { Interval = TimeSpan.FromMilliseconds(350) };
     private readonly List<Action<AppearanceSettings>> _appearanceControlRefreshers = [];
@@ -62,11 +61,6 @@ public partial class SettingsOverlay : UserControl
         BuildAppearanceControls();
         _appearanceSaveTimer.Tick += (_, _) => PersistPendingAppearance();
         SearchBox.TextChanged += (_, _) => RebuildGenreVocabularyRows();
-        ModelGenreBox.SelectionChanged += (_, _) =>
-        {
-            RebuildGenreVocabularyRows();
-            UpdateSummary();
-        };
         ProfileUsernameBox.TextChanged += (_, _) => RefreshProfileAvatar();
         ProfileBioBox.TextChanged += (_, _) =>
             ProfileBioCountText.Text = $"{ProfileBioBox.Text?.Length ?? 0}/{CloudIdentityStore.MaximumBioLength}";
@@ -155,15 +149,12 @@ public partial class SettingsOverlay : UserControl
         _distinctionsBySubgenreId = MusicLibraryService.Current.GetModelSubgenreDistinctions()
             .GroupBy(item => item.ModelSubgenreId)
             .ToDictionary(group => group.Key, group => group.ToList());
-
-        ModelGenreBox.ItemsSource = new[] { new ModelGenreChoice(null, "All categories") }
-            .Concat(_modelGenres.Select(genre => new ModelGenreChoice(genre.Id, genre.Name)))
-            .ToList();
-        ModelGenreBox.SelectedIndex = 0;
+        _selectedModelGenreId = null;
         SearchBox.Text = string.Empty;
         _genreVocabularyLoaded = true;
         _isLoading = false;
-        BuildGenreVocabularyRowCache();
+        RebuildGenreGroupRows();
+        RebuildGenreVocabularyRows();
     }
 
     private void RebuildGenreVocabularyRows()
@@ -171,51 +162,71 @@ public partial class SettingsOverlay : UserControl
         if (_isLoading || !_genreVocabularyLoaded) return;
 
         var search = SearchBox.Text?.Trim() ?? string.Empty;
-        var selectedModelGenreId = (ModelGenreBox.SelectedItem as ModelGenreChoice)?.Id;
-        var selectedModelGenreName = (ModelGenreBox.SelectedItem as ModelGenreChoice)?.Name;
-        AddSubgenrePanel.IsVisible = selectedModelGenreId is not null;
-        AddSubgenreTitleText.Text = selectedModelGenreId is null
-            ? "Add subgenre"
-            : $"Add subgenre to {selectedModelGenreName}";
-        GenreVocabularyHintText.Text = selectedModelGenreId is null
-            ? "Choose a category to add new subgenres."
-            : "Cards are compact; edit only when needed.";
-        var visibleCount = 0;
-        foreach (var row in _genreVocabularyRowsById.Values)
-        {
-            var isVisible = (selectedModelGenreId is null || row.Subgenre.ModelGenreId == selectedModelGenreId)
-                            && MatchesSearch(row.Subgenre, row.ModelGenreName, search);
-            row.Control.IsVisible = isVisible;
-            if (isVisible) visibleCount++;
-        }
+        GenreVocabularyRows.Children.Clear();
+        var modelGenreNames = _modelGenres.ToDictionary(genre => genre.Id, genre => genre.Name);
+        var choices = _modelSubgenres
+            .Where(subgenre => _selectedModelGenreId is null || subgenre.ModelGenreId == _selectedModelGenreId)
+            .Where(subgenre => MatchesSearch(subgenre, modelGenreNames.GetValueOrDefault(subgenre.ModelGenreId, ""), search))
+            .OrderBy(subgenre => modelGenreNames.GetValueOrDefault(subgenre.ModelGenreId, ""), StringComparer.OrdinalIgnoreCase)
+            .ThenBy(subgenre => subgenre.Name, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        foreach (var subgenre in choices)
+            GenreVocabularyRows.Children.Add(CreateGenreVocabularyChoice(subgenre));
 
-        if (_emptyGenreVocabularyText is not null)
-            _emptyGenreVocabularyText.IsVisible = visibleCount == 0;
+        if (choices.Count == 0)
+            GenreVocabularyRows.Children.Add(new TextBlock
+            {
+                Text = "No genres match this filter.",
+                FontSize = 11,
+                Opacity = 0.52,
+                Margin = new Avalonia.Thickness(0, 8, 0, 4)
+            });
+        UpdateSummary();
     }
 
-    private void BuildGenreVocabularyRowCache()
+    private void RebuildGenreGroupRows()
     {
-        GenreVocabularyRows.Children.Clear();
-        _genreVocabularyRowsById.Clear();
-        var modelGenreNames = _modelGenres.ToDictionary(genre => genre.Id, genre => genre.Name);
-        foreach (var subgenre in _modelSubgenres
-                     .OrderBy(subgenre => modelGenreNames.GetValueOrDefault(subgenre.ModelGenreId, ""), StringComparer.OrdinalIgnoreCase)
-                     .ThenBy(subgenre => subgenre.Name, StringComparer.OrdinalIgnoreCase))
-        {
-            var row = CreateGenreVocabularyRow(subgenre, modelGenreNames[subgenre.ModelGenreId]);
-            _genreVocabularyRowsById[subgenre.Id] = row;
-            GenreVocabularyRows.Children.Add(row.Control);
-        }
+        GenreGroupRows.Children.Clear();
+        var availableGroupIds = _modelSubgenres.Select(item => item.ModelGenreId).ToHashSet();
+        if (_selectedModelGenreId is int selectedId && !availableGroupIds.Contains(selectedId))
+            _selectedModelGenreId = null;
 
-        _emptyGenreVocabularyText = new TextBlock
+        var groups = new[] { (Id: (int?)null, Name: "All") }
+            .Concat(_modelGenres
+                .Where(genre => availableGroupIds.Contains(genre.Id))
+                .OrderBy(genre => genre.Name, StringComparer.OrdinalIgnoreCase)
+                .Select(genre => (Id: (int?)genre.Id, genre.Name)));
+        foreach (var group in groups)
         {
-            Text = "No genres match the current filter.",
-            Opacity = 0.52,
-            Margin = new Avalonia.Thickness(0, 18, 0, 0),
-            IsVisible = false
-        };
-        GenreVocabularyRows.Children.Add(_emptyGenreVocabularyText);
-        RebuildGenreVocabularyRows();
+            var selected = group.Id == _selectedModelGenreId;
+            var item = new Border
+            {
+                Height = 28,
+                Background = Brushes.Transparent,
+                Padding = new Avalonia.Thickness(2, 0),
+                Cursor = new Cursor(StandardCursorType.Hand),
+                Child = new TextBlock
+                {
+                    Text = group.Name,
+                    FontSize = 10.5,
+                    FontWeight = selected ? FontWeight.SemiBold : FontWeight.Normal,
+                    Foreground = group.Id is null
+                        ? ThemeResources.Brush(selected ? "Theme.Brush.Accent" : "Theme.Brush.TextSecondary")
+                        : MainGenrePalette.For(group.Name),
+                    Opacity = selected ? 1 : 0.72,
+                    TextWrapping = TextWrapping.Wrap,
+                    VerticalAlignment = VerticalAlignment.Center
+                }
+            };
+            item.PointerPressed += (_, e) =>
+            {
+                _selectedModelGenreId = group.Id;
+                RebuildGenreGroupRows();
+                RebuildGenreVocabularyRows();
+                e.Handled = true;
+            };
+            GenreGroupRows.Children.Add(item);
+        }
     }
 
     private bool MatchesSearch(ModelSubgenre subgenre, string modelGenreName, string search)
@@ -225,179 +236,101 @@ public partial class SettingsOverlay : UserControl
                || subgenre.Name.Contains(search, StringComparison.OrdinalIgnoreCase);
     }
 
-    private GenreVocabularyRowState CreateGenreVocabularyRow(ModelSubgenre subgenre, string modelGenreName)
+    private Button CreateGenreVocabularyChoice(ModelSubgenre subgenre)
     {
-        var row = new Border
-        {
-            Background = ThemeResources.Brush("Theme.Brush.SurfaceTranslucent"),
-            BorderBrush = ThemeResources.Brush("Theme.Brush.BorderSubtle"),
-            BorderThickness = new Avalonia.Thickness(1),
-            CornerRadius = new Avalonia.CornerRadius(7),
-            Padding = new Avalonia.Thickness(11, 8)
-        };
-        var panel = new StackPanel { Spacing = 5 };
-        var current = subgenre;
-        StackPanel? editorPanel = null;
-
-        var header = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto"), ColumnSpacing = 10 };
-        var titlePanel = new StackPanel { Spacing = 1 };
-        var titleText = new TextBlock
+        var text = new TextBlock
         {
             Text = subgenre.Name,
-            FontSize = 12.5,
+            FontSize = 10.5,
             FontWeight = FontWeight.SemiBold,
             Foreground = ThemeResources.Brush("Theme.Brush.TextPrimary"),
-            TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis
+            TextTrimming = TextTrimming.CharacterEllipsis,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            TextAlignment = TextAlignment.Center
         };
-        titlePanel.Children.Add(titleText);
-        titlePanel.Children.Add(new TextBlock
+        var button = new Button
         {
-            Text = modelGenreName,
-            FontSize = 10,
-            Opacity = 0.55,
-            TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis
-        });
-        header.Children.Add(titlePanel);
-        var bpm = new TextBlock
-        {
-            Text = BpmText(subgenre),
-            FontSize = 10.5,
-            Foreground = ThemeResources.Brush("Theme.Brush.TextSecondary"),
-            Opacity = 0.86,
-            HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Center
+            Content = text,
+            Height = 32,
+            Padding = new Avalonia.Thickness(9, 4),
+            CornerRadius = new Avalonia.CornerRadius(5),
+            Background = Brushes.Transparent,
+            BorderBrush = ThemeResources.Brush("Theme.Brush.BorderSubtle"),
+            BorderThickness = new Avalonia.Thickness(1),
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            HorizontalContentAlignment = HorizontalAlignment.Center,
+            VerticalContentAlignment = VerticalAlignment.Center,
+            Focusable = false
         };
-        Grid.SetColumn(bpm, 1);
-        header.Children.Add(bpm);
-        var edit = new Button
-        {
-            Content = CreateSvgIcon("/Assets/pencil-simple.svg", 14),
-            Classes = { "settings-ghost" },
-            VerticalAlignment = VerticalAlignment.Center
-        };
-        ToolTip.SetTip(edit, "Edit genre");
-        Grid.SetColumn(edit, 2);
-        header.Children.Add(edit);
-        panel.Children.Add(header);
-
-        var descriptionText = CreateGenreBodyText(subgenre.Description, "No description yet.");
-        panel.Children.Add(descriptionText);
-        var hintText = CreateGenreBodyText(subgenre.ClassificationHint, "No classification hint yet.", "Use when · ");
-        panel.Children.Add(hintText);
-
-        if (_distinctionsBySubgenreId.TryGetValue(subgenre.Id, out var distinctions) && distinctions.Count > 0)
-        {
-            var distinctionPanel = new StackPanel
-            {
-                Spacing = 3,
-                Margin = new Avalonia.Thickness(0, 2, 0, 0)
-            };
-            distinctionPanel.Children.Add(new TextBlock
-            {
-                Text = "Distinguish from",
-                FontSize = 9.7,
-                FontWeight = FontWeight.SemiBold,
-                Foreground = ThemeResources.Brush("Theme.Brush.Accent"),
-                Opacity = 0.72
-            });
-            foreach (var item in distinctions)
-            {
-                distinctionPanel.Children.Add(new TextBlock
-                {
-                    Text = $"{item.ModelSubgenreName} ({item.ModelGenreName}) — {item.Difference}",
-                    FontSize = 10,
-                    Foreground = ThemeResources.Brush("Theme.Brush.TextSecondary"),
-                    Opacity = 0.78,
-                    TextWrapping = TextWrapping.Wrap
-                });
-            }
-            panel.Children.Add(distinctionPanel);
-        }
-
-        edit.Click += (_, _) =>
-        {
-            if (editorPanel is null)
-            {
-                editorPanel = CreateGenreVocabularyEditor(
-                    current,
-                    updated =>
-                    {
-                        current = updated;
-                        titleText.Text = updated.Name;
-                        descriptionText.Text = BodyText(updated.Description, "No description yet.");
-                        descriptionText.Opacity = string.IsNullOrWhiteSpace(updated.Description) ? 0.45 : 0.76;
-                        hintText.Text = "Use when · " + BodyText(updated.ClassificationHint, "No classification hint yet.");
-                        hintText.Opacity = string.IsNullOrWhiteSpace(updated.ClassificationHint) ? 0.45 : 0.78;
-                        bpm.Text = BpmText(updated);
-                        if (_genreVocabularyRowsById.TryGetValue(updated.Id, out var state))
-                            state.Subgenre = updated;
-                    });
-                panel.Children.Add(editorPanel);
-            }
-
-            editorPanel.IsVisible = !editorPanel.IsVisible;
-            edit.Opacity = editorPanel.IsVisible ? 1 : 0.82;
-            ToolTip.SetTip(edit, editorPanel.IsVisible ? "Close editor" : "Edit genre");
-        };
-
-        row.Child = panel;
-        return new GenreVocabularyRowState(row, subgenre, modelGenreName);
+        ToolTip.SetTip(button, CreateGenreMetadataTooltip(subgenre));
+        return button;
     }
 
-    private StackPanel CreateGenreVocabularyEditor(ModelSubgenre subgenre, Action<ModelSubgenre> onSaved)
+    private Control CreateGenreMetadataTooltip(ModelSubgenre subgenre)
     {
-        var nameBox = CreateSettingsTextBox(subgenre.Name, "Subgenre name");
-        var descriptionBox = CreateSettingsTextBox(subgenre.Description ?? string.Empty, "Short description");
-        var hintBox = CreateSettingsTextBox(subgenre.ClassificationHint ?? string.Empty, "Classification hint");
-        var bpmMinBox = CreateSettingsTextBox(subgenre.BpmMin?.ToString(CultureInfo.InvariantCulture) ?? string.Empty, "Min");
-        var bpmMaxBox = CreateSettingsTextBox(subgenre.BpmMax?.ToString(CultureInfo.InvariantCulture) ?? string.Empty, "Max");
-
-        var editor = new StackPanel
+        var genreName = _modelGenres.FirstOrDefault(item => item.Id == subgenre.ModelGenreId)?.Name ?? "Model genre";
+        var panel = new StackPanel { Spacing = 7 };
+        panel.Children.Add(new TextBlock
         {
-            Spacing = 8,
-            IsVisible = false,
-            Margin = new Avalonia.Thickness(0, 4, 0, 0)
-        };
-        var topFields = new Grid { ColumnDefinitions = new ColumnDefinitions("*,82,82,Auto"), ColumnSpacing = 8 };
-        topFields.Children.Add(CreateLabeledField("Subgenre", nameBox));
-        topFields.Children.Add(CreateLabeledField("BPM min", bpmMinBox, 1));
-        topFields.Children.Add(CreateLabeledField("BPM max", bpmMaxBox, 2));
-        var save = new Button
-        {
-            Content = "Save",
-            Classes = { "settings-action" },
-            VerticalAlignment = VerticalAlignment.Bottom
-        };
-        Grid.SetColumn(save, 3);
-        topFields.Children.Add(save);
-        editor.Children.Add(topFields);
-        editor.Children.Add(CreateLabeledField("Description", descriptionBox));
-        editor.Children.Add(CreateLabeledField("Classification hint", hintBox));
-
-        save.Click += (_, _) =>
-        {
-            if (string.IsNullOrWhiteSpace(nameBox.Text))
+            Text = $"{genreName} → {subgenre.Name}",
+            FontSize = 12,
+            FontWeight = FontWeight.SemiBold,
+            Foreground = ThemeResources.Brush("Theme.Brush.TextSecondary")
+        });
+        if (!string.IsNullOrWhiteSpace(subgenre.Description))
+            panel.Children.Add(new TextBlock { Text = subgenre.Description, FontSize = 11, TextWrapping = TextWrapping.Wrap });
+        if (!string.IsNullOrWhiteSpace(subgenre.ClassificationHint))
+            panel.Children.Add(new TextBlock
             {
-                ToastRequested?.Invoke("Genre name is required.");
-                return;
-            }
-            if (!TryParseNullableInt(bpmMinBox.Text, out var bpmMin) || !TryParseNullableInt(bpmMaxBox.Text, out var bpmMax))
+                Text = $"Classify when: {subgenre.ClassificationHint}",
+                FontSize = 10.5,
+                Foreground = ThemeResources.Brush("Theme.Brush.Accent"),
+                TextWrapping = TextWrapping.Wrap
+            });
+        if (subgenre.BpmMin is not null || subgenre.BpmMax is not null)
+            panel.Children.Add(new TextBlock
             {
-                ToastRequested?.Invoke("BPM values must be whole numbers.");
-                return;
+                Text = subgenre.BpmMin is not null && subgenre.BpmMax is not null
+                    ? $"Typical BPM: {subgenre.BpmMin}–{subgenre.BpmMax}"
+                    : $"Typical BPM: {(subgenre.BpmMin is not null ? $"from {subgenre.BpmMin}" : $"up to {subgenre.BpmMax}")}",
+                FontSize = 10.5,
+                Opacity = 0.78
+            });
+        if (_distinctionsBySubgenreId.TryGetValue(subgenre.Id, out var distinctions))
+        {
+            panel.Children.Add(new TextBlock
+            {
+                Text = "Distinguish from",
+                FontSize = 10.5,
+                FontWeight = FontWeight.SemiBold,
+                Opacity = 0.82
+            });
+            foreach (var distinction in distinctions)
+                panel.Children.Add(new TextBlock
+                {
+                    Text = $"{distinction.ModelGenreName} → {distinction.ModelSubgenreName}: {distinction.Difference}",
+                    FontSize = 10,
+                    Opacity = 0.76,
+                    TextWrapping = TextWrapping.Wrap
+                });
+        }
+        return new Border
+        {
+            Background = ThemeResources.Brush("Theme.Brush.SurfaceRaised"),
+            BorderBrush = ThemeResources.Brush("Theme.Brush.BorderStrong"),
+            BorderThickness = new Avalonia.Thickness(1),
+            CornerRadius = new Avalonia.CornerRadius(6),
+            Padding = new Avalonia.Thickness(12, 10),
+            Width = 300,
+            MaxWidth = 300,
+            Child = new ScrollViewer
+            {
+                MaxHeight = 390,
+                HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+                Content = panel
             }
-
-            MusicLibraryService.Current.UpdateModelSubgenre(subgenre.Id, nameBox.Text, descriptionBox.Text, hintBox.Text, bpmMin, bpmMax);
-            var updated = subgenre with { Name = nameBox.Text.Trim(), Description = descriptionBox.Text, ClassificationHint = hintBox.Text, BpmMin = bpmMin, BpmMax = bpmMax };
-            var index = _modelSubgenres.FindIndex(item => item.Id == subgenre.Id);
-            if (index >= 0) _modelSubgenres[index] = updated;
-            onSaved(updated);
-            ToastRequested?.Invoke("Genre updated.");
-            RebuildGenreVocabularyRows();
-            UpdateSummary();
-            LibraryMetadataChanged?.Invoke();
         };
-
-        return editor;
     }
 
     private static TextBox CreateSettingsTextBox(string text, string watermark)
@@ -425,22 +358,6 @@ public partial class SettingsOverlay : UserControl
         HorizontalAlignment = HorizontalAlignment.Center
     };
 
-    private static TextBlock CreateGenreBodyText(string? value, string fallback, string prefix = "")
-    {
-        var hasValue = !string.IsNullOrWhiteSpace(value);
-        return new TextBlock
-        {
-            Text = prefix + BodyText(value, fallback),
-            FontSize = prefix.Length == 0 ? 10.5 : 10.2,
-            Foreground = ThemeResources.Brush("Theme.Brush.TextSecondary"),
-            Opacity = hasValue ? 0.76 : 0.45,
-            TextWrapping = TextWrapping.Wrap
-        };
-    }
-
-    private static string BodyText(string? value, string fallback) =>
-        string.IsNullOrWhiteSpace(value) ? fallback : value.Trim();
-
     private static StackPanel CreateLabeledField(string label, Control field, int? gridColumn = null)
     {
         var panel = new StackPanel { Spacing = 3 };
@@ -457,32 +374,8 @@ public partial class SettingsOverlay : UserControl
         return panel;
     }
 
-    private static string BpmText(ModelSubgenre subgenre) => subgenre.BpmMin is not null && subgenre.BpmMax is not null
-        ? $"Typical BPM · {subgenre.BpmMin}–{subgenre.BpmMax}"
-        : subgenre.BpmMin is not null ? $"Typical BPM · from {subgenre.BpmMin}"
-        : subgenre.BpmMax is not null ? $"Typical BPM · up to {subgenre.BpmMax}"
-        : string.Empty;
-
-    private static bool TryParseNullableInt(string? text, out int? value)
-    {
-        if (string.IsNullOrWhiteSpace(text))
-        {
-            value = null;
-            return true;
-        }
-        if (int.TryParse(text.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed)
-            || int.TryParse(text.Trim(), NumberStyles.Integer, CultureInfo.CurrentCulture, out parsed))
-        {
-            value = parsed;
-            return true;
-        }
-        value = null;
-        return false;
-    }
-
     private void ReloadGenreVocabulary()
     {
-        var selectedCategoryId = (ModelGenreBox.SelectedItem as ModelGenreChoice)?.Id;
         _genreVocabularyLoaded = true;
         _isLoading = true;
         _modelGenres = MusicLibraryService.Current.GetModelGenres();
@@ -490,24 +383,18 @@ public partial class SettingsOverlay : UserControl
         _distinctionsBySubgenreId = MusicLibraryService.Current.GetModelSubgenreDistinctions()
             .GroupBy(item => item.ModelSubgenreId)
             .ToDictionary(group => group.Key, group => group.ToList());
-
-        ModelGenreBox.ItemsSource = new[] { new ModelGenreChoice(null, "All categories") }
-            .Concat(_modelGenres.Select(genre => new ModelGenreChoice(genre.Id, genre.Name)))
-            .ToList();
-        ModelGenreBox.SelectedItem = ((IEnumerable<ModelGenreChoice>)ModelGenreBox.ItemsSource!)
-            .FirstOrDefault(choice => choice.Id == selectedCategoryId)
-            ?? ((IEnumerable<ModelGenreChoice>)ModelGenreBox.ItemsSource!).First();
         _isLoading = false;
-        BuildGenreVocabularyRowCache();
-        UpdateSummary();
+        CreateSubgenreOverlay.IsVisible = false;
+        RebuildGenreGroupRows();
+        RebuildGenreVocabularyRows();
         LibraryMetadataChanged?.Invoke();
     }
 
     private void OnAddSubgenreClicked(object? sender, RoutedEventArgs e)
     {
-        if ((ModelGenreBox.SelectedItem as ModelGenreChoice)?.Id is not int categoryId)
+        if (_selectedModelGenreId is not int categoryId)
         {
-            ToastRequested?.Invoke("Select a category before adding a subgenre.");
+            ToastRequested?.Invoke("Select a main genre before creating a subgenre.");
             return;
         }
         var name = NewSubgenreBox.Text?.Trim();
@@ -651,6 +538,41 @@ public partial class SettingsOverlay : UserControl
         {
             ProfileStatusText.Text = $"Could not load profile: {exception.Message}";
             ProfileStatusText.IsVisible = true;
+        }
+    }
+
+    private void OnShowCreateSubgenreClicked(object? sender, RoutedEventArgs e)
+    {
+        if (_selectedModelGenreId is not int categoryId)
+        {
+            ToastRequested?.Invoke("Select a main genre before creating a subgenre.");
+            return;
+        }
+
+        var genreName = _modelGenres.FirstOrDefault(genre => genre.Id == categoryId)?.Name ?? "main genre";
+        CreateSubgenreTitleText.Text = $"Create subgenre in {genreName}";
+        NewSubgenreBox.Text = string.Empty;
+        CreateSubgenreOverlay.IsVisible = true;
+        Dispatcher.UIThread.Post(() => NewSubgenreBox.Focus());
+    }
+
+    private void OnCancelCreateSubgenreClicked(object? sender, RoutedEventArgs e)
+    {
+        NewSubgenreBox.Text = string.Empty;
+        CreateSubgenreOverlay.IsVisible = false;
+    }
+
+    private void OnNewSubgenreKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter)
+        {
+            e.Handled = true;
+            OnAddSubgenreClicked(sender, new RoutedEventArgs());
+        }
+        else if (e.Key == Key.Escape)
+        {
+            e.Handled = true;
+            OnCancelCreateSubgenreClicked(sender, new RoutedEventArgs());
         }
     }
 
@@ -1510,11 +1432,12 @@ public partial class SettingsOverlay : UserControl
 
     private string BuildSummaryText()
     {
-        var selected = ModelGenreBox.SelectedItem as ModelGenreChoice;
-        var relevantSubgenres = selected?.Id is int modelGenreId
+        var relevantSubgenres = _selectedModelGenreId is int modelGenreId
             ? _modelSubgenres.Where(subgenre => subgenre.ModelGenreId == modelGenreId).ToList()
             : _modelSubgenres;
-        var scope = selected?.Id is null ? "All categories" : selected!.Name;
+        var scope = _selectedModelGenreId is int selectedId
+            ? _modelGenres.FirstOrDefault(genre => genre.Id == selectedId)?.Name ?? "Selected genre"
+            : "All categories";
         return $"{scope}: {relevantSubgenres.Count} genres.";
     }
 
@@ -2097,25 +2020,6 @@ public partial class SettingsOverlay : UserControl
     {
         PersistPendingAppearance();
         IsVisible = false;
-    }
-
-    private sealed record ModelGenreChoice(int? Id, string Name)
-    {
-        public override string ToString() => Name;
-    }
-
-    private sealed class GenreVocabularyRowState
-    {
-        public GenreVocabularyRowState(Control control, ModelSubgenre subgenre, string modelGenreName)
-        {
-            Control = control;
-            Subgenre = subgenre;
-            ModelGenreName = modelGenreName;
-        }
-
-        public Control Control { get; }
-        public ModelSubgenre Subgenre { get; set; }
-        public string ModelGenreName { get; }
     }
 
     private sealed record TagRuleTagChoice(int Id, string Name)
