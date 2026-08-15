@@ -307,20 +307,6 @@ public sealed record ChannelHubItem(
         ? $"Auto-download on · {DurationLimitText}"
         : $"Auto-download off · {DurationLimitText}";
 
-    public double RecommendationScore
-    {
-        get
-        {
-            var quality = AverageRating is double average ? (average - 1d) / 4d : 0.45d;
-            var confidence = 1d - System.Math.Exp(-RatedTrackCount / 4d);
-            var depth = 1d - System.Math.Exp(-LocalTrackCount / 5d);
-            var engagement = PlayCount <= 0
-                ? 0d
-                : System.Math.Clamp(1d - SkipCount / (double)System.Math.Max(PlayCount, 1), 0d, 1d);
-            return quality * 0.45d + confidence * 0.2d + depth * 0.2d + engagement * 0.15d;
-        }
-    }
-
     public string RecommendationReason => TimelessCount > 0
         ? TimelessCount == 1 ? "1 timeless track in your library" : $"{TimelessCount} timeless tracks in your library"
         : GreatOrBetterCount > 0

@@ -61,7 +61,6 @@ public partial class ChannelOverlay : UserControl
     public event Action? PreviewClosed;
     public event Action<int>? TrackChanged;
     public event Action<MusicTrack>? EditRequested;
-    public event Func<Task<BulkTrackDeleteResult>>? DeleteUnratedRequested;
 
     public ChannelOverlay()
     {
@@ -92,8 +91,6 @@ public partial class ChannelOverlay : UserControl
         var snapshot = ChannelHubBackgroundService.Current.Snapshot;
         if (snapshot.Count > 0)
             OnChannelSnapshotChanged(snapshot);
-        else
-            HubSummaryText.Text = "Loading channels…";
         RefreshChannels();
     }
 
@@ -136,7 +133,6 @@ public partial class ChannelOverlay : UserControl
 
     public void RefreshChannels()
     {
-        RefreshDeleteUnratedAction();
         ChannelHubBackgroundService.Current.RequestRefresh();
         RefreshInboxBadge();
     }
@@ -248,49 +244,6 @@ public partial class ChannelOverlay : UserControl
         });
     }
 
-    private async void RefreshDeleteUnratedAction()
-    {
-        var count = await Task.Run(MusicLibraryService.Current.CountUnratedTracks);
-        if (!IsVisible)
-            return;
-        DeleteUnratedButton.IsEnabled = true;
-        ConfirmDeleteUnratedButton.IsEnabled = count > 0;
-        ConfirmDeleteUnratedButton.Content = count > 0 ? "Delete tracks" : "Nothing to delete";
-        DeleteUnratedDescriptionText.Text = count switch
-        {
-            0 => "There are currently no unrated tracks to delete.",
-            1 => "This permanently removes the local audio file and library data for 1 unrated track.",
-            _ => $"This permanently removes the local audio files and library data for {count:N0} unrated tracks."
-        };
-    }
-
-    private void OnCancelDeleteUnratedClicked(object? sender, RoutedEventArgs e) =>
-        DeleteUnratedButton.Flyout?.Hide();
-
-    private async void OnConfirmDeleteUnratedClicked(object? sender, RoutedEventArgs e)
-    {
-        if (DeleteUnratedRequested is null || !ConfirmDeleteUnratedButton.IsEnabled)
-            return;
-
-        ConfirmDeleteUnratedButton.IsEnabled = false;
-        ConfirmDeleteUnratedButton.Content = "Deleting…";
-        try
-        {
-            var result = await DeleteUnratedRequested.Invoke();
-            DeleteUnratedButton.Flyout?.Hide();
-            RefreshChannels();
-            ToastRequested?.Invoke(result.Error is not null
-                ? $"Could not delete unrated tracks: {result.Error}"
-                : result.FailedFiles == 0
-                    ? $"Deleted {result.Deleted:N0} unrated tracks"
-                    : $"Deleted {result.Deleted:N0} tracks; {result.FailedFiles:N0} audio files could not be removed");
-        }
-        finally
-        {
-            RefreshDeleteUnratedAction();
-        }
-    }
-
     public void SetAtmosphereColors(Color primary, Color secondary)
     {
         if (ChannelAtmosphereTint.Fill is not LinearGradientBrush gradient
@@ -314,14 +267,7 @@ public partial class ChannelOverlay : UserControl
         var following = visible
             .Where(channel => channel.IsFollowed)
             .OrderByDescending(channel => channel.UncheckedVideoCount)
-            .ThenByDescending(channel => channel.RecommendationScore)
             .ThenBy(channel => channel.Name, StringComparer.OrdinalIgnoreCase)
-            .ToList();
-        var suggested = visible
-            .Where(channel => !channel.IsFollowed && channel.LocalTrackCount > 0)
-            .OrderByDescending(channel => channel.RecommendationScore)
-            .ThenByDescending(channel => channel.LocalTrackCount)
-            .Take(6)
             .ToList();
         var all = (_channelSortIndex switch
         {
@@ -339,21 +285,18 @@ public partial class ChannelOverlay : UserControl
         }).ThenBy(channel => channel.Name, StringComparer.OrdinalIgnoreCase).ToList();
 
         FollowingItems.ItemsSource = following;
-        SuggestedItems.ItemsSource = suggested;
         AllChannelItems.ItemsSource = all;
         EmptyFollowingText.IsVisible = following.Count == 0;
-        SuggestedSection.IsVisible = suggested.Count > 0;
         EmptySearchText.IsVisible = all.Count == 0;
         EmptySearchText.Text = search.Length > 0
             ? "No channels match this search."
             : "No library channels yet. Add a YouTube channel to get started.";
-        FollowingCountText.Text = following.Count.ToString();
-        AllChannelCountText.Text = $"{all.Count:N0} channels";
-
         var totalFollowing = _hubChannels.Count(channel => channel.IsFollowed);
         var newVideos = _hubChannels.Where(channel => channel.IsFollowed).Sum(channel => channel.UncheckedVideoCount);
-        HubSummaryText.Text = $"{_hubChannels.Count} library channels · {totalFollowing} following" +
-                              (newVideos > 0 ? $" · {newVideos} awaiting review" : string.Empty);
+        FollowingHeadingText.Text = $"FOLLOWING ({totalFollowing:N0} followed · {newVideos:N0} tracks need review)";
+        AllChannelsHeadingText.Text = search.Length > 0
+            ? $"Showing {all.Count:N0} of {_hubChannels.Count:N0} channels in your library."
+            : $"You currently have {_hubChannels.Count:N0} channels in your library.";
     }
 
     private void OnChannelSearchChanged(object? sender, TextChangedEventArgs e) => ApplyHubFilter();
@@ -452,7 +395,6 @@ public partial class ChannelOverlay : UserControl
         CancelProfileImageLoad();
         var cancellation = new CancellationTokenSource();
         _profileLoadCts = cancellation;
-        ProfileHubSummaryText.Text = "Loading public profiles…";
         ProfileHubEmptyPanel.IsVisible = true;
         ProfileHubEmptyTitle.Text = "Loading profiles";
         ProfileHubEmptyDescription.Text = "Reading public libraries from Resona Cloud…";
@@ -467,9 +409,6 @@ public partial class ChannelOverlay : UserControl
             foreach (var profile in _cloudProfiles)
                 profile.Dispose();
             _cloudProfiles = profiles.Select(profile => new CloudProfileDisplay(profile)).ToList();
-            ProfileHubSummaryText.Text = _cloudProfiles.Count == 1
-                ? "1 public profile"
-                : $"{_cloudProfiles.Count:N0} public profiles";
             ApplyProfileFilter();
             _profileImageLoadCts = new CancellationTokenSource();
             _ = LoadProfileImagesAsync(_cloudProfiles, _profileImageLoadCts.Token);
@@ -479,7 +418,6 @@ public partial class ChannelOverlay : UserControl
         {
             if (cancellation.IsCancellationRequested)
                 return;
-            ProfileHubSummaryText.Text = "Cloud unavailable";
             ProfileHubEmptyPanel.IsVisible = true;
             ProfileHubEmptyTitle.Text = "Could not load profiles";
             ProfileHubEmptyDescription.Text = exception.Message;

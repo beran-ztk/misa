@@ -16,7 +16,7 @@
                     CornerRadius="8"
                     Cursor="Hand"
                     Tapped="OnChannelCardTapped">
-                <Grid RowDefinitions="Auto,Auto,Auto,*" RowSpacing="8">
+                <Grid RowDefinitions="Auto,Auto,*" RowSpacing="8">
                     <Grid ColumnDefinitions="42,*,Auto" ColumnSpacing="10">
                         <Border Width="42" Height="42" CornerRadius="21"
                                 Background="#243E6591"
@@ -58,9 +58,7 @@
                             <TextBlock Text="{Binding ActivityText}" FontSize="10.5"/>
                         </StackPanel>
                     </Grid>
-                    <TextBlock Grid.Row="2" Text="{Binding RecommendationReason}"
-                               FontSize="10" Foreground="#AFC8A3"/>
-                    <TextBlock Grid.Row="3" Text="{Binding TopTracksText}"
+                    <TextBlock Grid.Row="2" Text="{Binding TopTracksText}"
                                IsVisible="{Binding HasTopTracks}"
                                FontSize="10" Opacity="0.58" TextWrapping="NoWrap"
                                LineHeight="15" MinHeight="45" MaxHeight="45"/>
@@ -156,7 +154,7 @@
             <Setter Property="BorderThickness" Value="0,0,0,1"/>
             <Setter Property="BorderBrush" Value="Transparent"/>
             <Setter Property="CornerRadius" Value="0"/>
-            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontSize" Value="20"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Opacity" Value="0.48"/>
         </Style>
@@ -358,7 +356,6 @@
                             <Button Classes="hub-tab active" Content="Channels"/>
                             <Button Classes="hub-tab" Content="Profiles" Click="OnProfilesTabClicked"/>
                         </StackPanel>
-                        <TextBlock x:Name="HubSummaryText" FontSize="10.5" Opacity="0.56"/>
                         <StackPanel x:Name="HubBackgroundStatusPanel" IsVisible="False" Spacing="2" Margin="0,5,0,0">
                             <TextBlock x:Name="HubBackgroundOverallText" FontSize="10.5"
                                        Foreground="#BCD9EF"/>
@@ -382,50 +379,6 @@
                         <Button Classes="channel-icon" Click="OnAddChannelToggleClicked" ToolTip.Tip="Add channel">
                             <TextBlock Text="+" FontSize="20" Margin="0,-3,0,0"/>
                         </Button>
-                        <Button x:Name="DeleteUnratedButton"
-                                Classes="channel-icon"
-                                ToolTip.Tip="Delete all unrated tracks">
-                            <Button.Flyout>
-                                <Flyout Placement="BottomEdgeAlignedRight">
-                                    <Border Width="310" Padding="14,12"
-                                            Background="#F51B1B1B"
-                                            BorderBrush="#3AFFFFFF"
-                                            BorderThickness="1"
-                                            CornerRadius="8">
-                                        <StackPanel Spacing="10">
-                                            <TextBlock Text="Delete all unrated tracks?"
-                                                       FontSize="12.5"
-                                                       FontWeight="SemiBold"/>
-                                            <TextBlock x:Name="DeleteUnratedDescriptionText"
-                                                       FontSize="10.5"
-                                                       Opacity="0.66"
-                                                       TextWrapping="Wrap"/>
-                                            <TextBlock Text="Rated tracks and followed channels will be kept. This cannot be undone."
-                                                       FontSize="10"
-                                                       Foreground="#D99B9B"
-                                                       TextWrapping="Wrap"/>
-                                            <StackPanel Orientation="Horizontal"
-                                                        HorizontalAlignment="Right"
-                                                        Spacing="8">
-                                                <Button Content="Cancel"
-                                                        Classes="open-action"
-                                                        Click="OnCancelDeleteUnratedClicked"/>
-                                                <Button x:Name="ConfirmDeleteUnratedButton"
-                                                        Content="Delete tracks"
-                                                        Padding="11,5"
-                                                        FontSize="10"
-                                                        Background="#3F9C4040"
-                                                        BorderBrush="#769C5050"
-                                                        BorderThickness="1"
-                                                        CornerRadius="5"
-                                                        Click="OnConfirmDeleteUnratedClicked"/>
-                                            </StackPanel>
-                                        </StackPanel>
-                                    </Border>
-                                </Flyout>
-                            </Button.Flyout>
-                            <Image Source="{SvgImage /Assets/trash.svg}" Width="16" Height="16"/>
-                        </Button>
                         <Button Classes="channel-icon" Click="OnInboxClicked" ToolTip.Tip="Channel inbox">
                             <Grid>
                             <Image Source="{SvgImage /Assets/inbox.svg}" Width="17" Height="17"
@@ -445,7 +398,7 @@
                 </Grid>
             </Border>
 
-            <Grid Grid.Row="1" RowDefinitions="Auto,Auto,Auto,*"
+            <Grid Grid.Row="1" RowDefinitions="Auto,Auto,*"
                   Margin="26,16,26,22" RowSpacing="16">
                     <Border x:Name="AddChannelPanel" Grid.Row="0" IsVisible="False"
                             Background="#10FFFFFF" BorderBrush="#28FFFFFF" BorderThickness="1"
@@ -462,10 +415,8 @@
                     </Border>
 
                     <StackPanel x:Name="FollowingSection" Grid.Row="1" Spacing="8">
-                        <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock Text="FOLLOWING" FontSize="10" FontWeight="SemiBold" LetterSpacing="1" Opacity="0.52"/>
-                            <TextBlock Grid.Column="1" x:Name="FollowingCountText" FontSize="10" Opacity="0.42"/>
-                        </Grid>
+                        <TextBlock x:Name="FollowingHeadingText" Text="FOLLOWING"
+                                   FontSize="10" FontWeight="SemiBold" LetterSpacing="1" Opacity="0.52"/>
                         <TextBlock x:Name="EmptyFollowingText" Text="No followed channels yet. Add one or choose from your library below."
                                    FontSize="11" Opacity="0.48"/>
                         <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
@@ -477,23 +428,11 @@
                         </ScrollViewer>
                     </StackPanel>
 
-                    <StackPanel x:Name="SuggestedSection" Grid.Row="2" Spacing="8">
-                        <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock Text="SUGGESTED FOR YOU" FontSize="10" FontWeight="SemiBold" LetterSpacing="1" Opacity="0.52"/>
-                            <TextBlock Grid.Column="1" Text="Based on your library" FontSize="10" Opacity="0.38"/>
-                        </Grid>
-                        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-                            <ItemsControl x:Name="SuggestedItems" ItemTemplate="{StaticResource ChannelCardTemplate}">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                            </ItemsControl>
-                        </ScrollViewer>
-                    </StackPanel>
-
-                    <Grid Grid.Row="3" RowDefinitions="Auto,*" RowSpacing="7" MinHeight="150">
-                        <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="12">
-                            <TextBlock Text="ALL LIBRARY CHANNELS" FontSize="10" FontWeight="SemiBold" LetterSpacing="1" Opacity="0.52" VerticalAlignment="Center"/>
+                    <Grid Grid.Row="2" RowDefinitions="Auto,*" RowSpacing="7" MinHeight="150">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                            <TextBlock x:Name="AllChannelsHeadingText"
+                                       Text="You currently have 0 channels in your library."
+                                       FontSize="11" Opacity="0.58" VerticalAlignment="Center"/>
                             <Button Grid.Column="1" x:Name="ChannelSortButton" Classes="channel-sort">
                                 <Button.Flyout>
                                     <Flyout Placement="BottomEdgeAlignedRight">
@@ -517,7 +456,6 @@
                                                Margin="8,-3,0,0" VerticalAlignment="Center"/>
                                 </Grid>
                             </Button>
-                            <TextBlock Grid.Column="2" x:Name="AllChannelCountText" FontSize="9.5" Opacity="0.42" VerticalAlignment="Center"/>
                         </Grid>
                         <Border Grid.Row="1" Padding="0,7,0,0">
                             <ListBox x:Name="AllChannelItems" Classes="channel-hub-list"
@@ -535,13 +473,9 @@
                     BorderBrush="{DynamicResource Theme.Brush.Border}" BorderThickness="0,0,0,1"
                     Padding="26,15">
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="18">
-                    <StackPanel Spacing="4" VerticalAlignment="Center">
-                        <StackPanel Orientation="Horizontal">
-                            <Button Classes="hub-tab" Content="Channels" Click="OnChannelsTabClicked"/>
-                            <Button Classes="hub-tab active" Content="Profiles"/>
-                        </StackPanel>
-                        <TextBlock x:Name="ProfileHubSummaryText" Text="Loading public profiles…"
-                                   FontSize="10.5" Opacity="0.56"/>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Classes="hub-tab" Content="Channels" Click="OnChannelsTabClicked"/>
+                        <Button Classes="hub-tab active" Content="Profiles"/>
                     </StackPanel>
                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                         <TextBox x:Name="ProfileSearchBox" Classes="compact-search"
