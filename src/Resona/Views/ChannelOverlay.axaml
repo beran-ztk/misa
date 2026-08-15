@@ -67,11 +67,11 @@
         </DataTemplate>
 
         <DataTemplate x:Key="ChannelRowTemplate" x:DataType="models:ChannelHubItem">
-            <Border Classes="channel-card" MinHeight="66" Padding="13,10" Margin="0,0,0,7" CornerRadius="8"
+            <Border Classes="channel-card" MinHeight="82" Padding="14,12" Margin="0,0,0,7" CornerRadius="8"
                     Background="#0EFFFFFF" BorderBrush="#22FFFFFF" BorderThickness="1"
                     Cursor="Hand" Tapped="OnChannelCardTapped">
-                <Grid ColumnDefinitions="42,*,190,150,112" ColumnSpacing="14">
-                    <Border Width="40" Height="40" CornerRadius="20" Background="#213E6591"
+                <Grid ColumnDefinitions="46,*,220" ColumnSpacing="14">
+                    <Border Width="42" Height="42" CornerRadius="21" Background="#213E6591"
                             BorderBrush="#356E91BA" BorderThickness="1" ClipToBounds="True"
                             VerticalAlignment="Center">
                         <Grid>
@@ -84,31 +84,27 @@
                         <TextBlock Text="{Binding Name}" FontSize="13.5" FontWeight="SemiBold"
                                    Foreground="{DynamicResource Theme.Brush.TextPrimary}"
                                    TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Name}"/>
-                        <TextBlock Text="YouTube channel" FontSize="9.5" Opacity="0.4"/>
+                        <TextBlock Text="{Binding LibraryVideoSummaryText}" FontSize="10.5"
+                                   Foreground="#B7C9D8" Opacity="0.68"
+                                   TextTrimming="CharacterEllipsis"
+                                   ToolTip.Tip="{Binding LibraryVideoSummaryText}"/>
                     </StackPanel>
-                    <StackPanel Grid.Column="2" Spacing="3" VerticalAlignment="Center">
-                        <TextBlock Text="VIDEOS" FontSize="8.5" FontWeight="SemiBold"
-                                   LetterSpacing="0.8" Opacity="0.42"/>
-                        <TextBlock Text="{Binding LibraryVideoSummaryText}" FontSize="11.5"
-                                   FontWeight="SemiBold" Foreground="#D8E4EE"
-                                   TextTrimming="CharacterEllipsis"/>
-                    </StackPanel>
-                    <StackPanel Grid.Column="3" Spacing="3" VerticalAlignment="Center">
-                        <TextBlock Text="AVERAGE RATING" FontSize="8.5" FontWeight="SemiBold"
-                                   LetterSpacing="0.75" Opacity="0.42"/>
-                        <TextBlock Text="{Binding AverageRatingScaleText}" FontSize="11.5"
-                                   FontWeight="SemiBold" Foreground="#E4C36D"/>
+                    <StackPanel Grid.Column="2" Margin="0,0,12,4"
+                                Orientation="Horizontal" Spacing="18"
+                                VerticalAlignment="Bottom" HorizontalAlignment="Right">
                         <ProgressBar Minimum="0" Maximum="6" Value="{Binding AverageRatingScore}"
-                                     Width="112" Height="3" Margin="0,1,0,0"
-                                     HorizontalAlignment="Left"
+                                     Width="122" Height="3" VerticalAlignment="Center"
                                      Foreground="#DDBA5F" Background="#24FFFFFF"/>
+                        <TextBlock Text="{Binding AverageRatingScaleText}"
+                                   FontSize="11.5" FontWeight="SemiBold"
+                                   Foreground="#E4C36D" VerticalAlignment="Center"/>
                     </StackPanel>
-                    <Button Grid.Column="4"
-                            Classes="channel-subscribe"
-                            Classes.following="{Binding IsFollowed}"
-                            Content="{Binding SubscribeActionText}"
+                    <Button Grid.Column="2"
+                            Classes="channel-row-subscribe"
+                            Content="+"
+                            IsVisible="{Binding CanSubscribe}"
                             Click="OnFollowChannelClicked"
-                            ToolTip.Tip="{Binding SubscribeToolTip}"
+                            ToolTip.Tip="Subscribe to channel"
                             HorizontalAlignment="Right"
                             VerticalAlignment="Top"/>
                 </Grid>
@@ -199,36 +195,38 @@
         <Style Selector="Button.follow-toggle.following">
             <Setter Property="Foreground" Value="#D99B9B"/>
         </Style>
-        <Style Selector="Button.channel-subscribe">
-            <Setter Property="Width" Value="108"/>
-            <Setter Property="Height" Value="32"/>
-            <Setter Property="Padding" Value="10,0"/>
-            <Setter Property="Background" Value="#183E6591"/>
-            <Setter Property="BorderBrush" Value="#566F94B8"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="7"/>
+        <Style Selector="Button.channel-row-subscribe">
+            <Setter Property="Width" Value="28"/>
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Foreground" Value="#DCEBFA"/>
-            <Setter Property="FontSize" Value="10.5"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="20"/>
+            <Setter Property="FontWeight" Value="Light"/>
             <Setter Property="HorizontalContentAlignment" Value="Center"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
             <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Opacity" Value="0"/>
+            <Setter Property="IsHitTestVisible" Value="False"/>
         </Style>
-        <Style Selector="Button.channel-subscribe:pointerover">
-            <Setter Property="Background" Value="#303E6591"/>
-            <Setter Property="BorderBrush" Value="#8B80A9CF"/>
+        <Style Selector="Border.channel-card:pointerover Button.channel-row-subscribe">
+            <Setter Property="Opacity" Value="0.72"/>
+            <Setter Property="IsHitTestVisible" Value="True"/>
         </Style>
-        <Style Selector="Button.channel-subscribe.following">
-            <Setter Property="Background" Value="#173C7255"/>
-            <Setter Property="BorderBrush" Value="#577EB391"/>
-            <Setter Property="Foreground" Value="#CBE8D4"/>
+        <Style Selector="Border.channel-card:pointerover Button.channel-row-subscribe:pointerover">
+            <Setter Property="Opacity" Value="1"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
         </Style>
         <Style Selector="Border.channel-card:pointerover">
             <Setter Property="Background" Value="#18FFFFFF"/>
             <Setter Property="BorderBrush" Value="#3AFFFFFF"/>
         </Style>
         <Style Selector="Button.channel-sort">
-            <Setter Property="Width" Value="188"/>
+            <Setter Property="Width" Value="224"/>
             <Setter Property="Height" Value="38"/>
             <Setter Property="Padding" Value="12,0"/>
             <Setter Property="Background" Value="#0FFFFFFF"/>

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using Avalonia.Media.Imaging;
 
 namespace Resona.Models;
@@ -227,13 +228,10 @@ public sealed record ChannelHubItem(
     {
         get
         {
-            var parts = Name.Split(' ', System.StringSplitOptions.RemoveEmptyEntries);
-            return parts.Length switch
-            {
-                0 => "?",
-                1 => parts[0][..System.Math.Min(2, parts[0].Length)].ToUpperInvariant(),
-                _ => string.Concat(parts[0][0], parts[1][0]).ToUpperInvariant()
-            };
+            foreach (var character in Name.EnumerateRunes())
+                if (!Rune.IsWhiteSpace(character))
+                    return character.ToString().ToUpperInvariant();
+            return "?";
         }
     }
 
@@ -267,9 +265,11 @@ public sealed record ChannelHubItem(
         ? "No listening history"
         : $"{System.Math.Clamp(SkipCount / (double)PlayCount * 100d, 0d, 100d):0}% skip rate";
     public string VideoSummaryText => KnownVideoCount == 1 ? "1 known video" : $"{KnownVideoCount:N0} known videos";
-    public string LibraryVideoSummaryText => $"{LocalTrackCount:N0} in library · {KnownVideoCount:N0} known";
+    public string LibraryVideoSummaryText =>
+        $"{LocalTrackCount:N0} {(LocalTrackCount == 1 ? "track" : "tracks")} in library · " +
+        $"{KnownVideoCount:N0} {(KnownVideoCount == 1 ? "video" : "videos")} found on channel";
     public string AverageRatingScaleText => AverageRating is double average
-        ? $"{average:0.0} / 6.0"
+        ? $"{average.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)} / 6.0"
         : "— / 6.0";
     public double AverageRatingScore => System.Math.Clamp(AverageRating ?? 0d, 0d, 6d);
     public string VideoQueueText => UncheckedVideoCount == 0
@@ -285,8 +285,7 @@ public sealed record ChannelHubItem(
     public string FollowActionText => IsFollowed ? "Following" : "Follow";
     public string FollowGlyph => IsFollowed ? "×" : "+";
     public string FollowToolTip => IsFollowed ? "Unfollow channel" : "Follow channel";
-    public string SubscribeActionText => IsFollowed ? "Subscribed" : "+ Subscribe";
-    public string SubscribeToolTip => IsFollowed ? "Unsubscribe from channel" : "Subscribe to channel";
+    public bool CanSubscribe => !IsFollowed;
     public string AutomationText => AutoDownload ? "Auto-download on" : "Manual downloads";
     public string DurationLimitText => MaxDurationMinutes is int minutes
         ? $"{minutes} min channel limit"
