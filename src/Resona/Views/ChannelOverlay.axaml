@@ -738,6 +738,62 @@
                             </Border>
                         </StackPanel>
                     </Button>
+                    <Button Grid.Column="4" x:Name="ProfileTrackSortButton" Classes="channel-sort"
+                            HorizontalAlignment="Right">
+                        <Button.Flyout>
+                            <Flyout Placement="BottomEdgeAlignedRight">
+                                <Flyout.FlyoutPresenterTheme>
+                                    <ControlTheme TargetType="FlyoutPresenter">
+                                        <Setter Property="Padding" Value="0"/>
+                                        <Setter Property="Background" Value="Transparent"/>
+                                        <Setter Property="BorderThickness" Value="0"/>
+                                        <Setter Property="CornerRadius" Value="10"/>
+                                    </ControlTheme>
+                                </Flyout.FlyoutPresenterTheme>
+                                <Border Width="224" Padding="8" Background="#FC191A1D"
+                                        BorderBrush="#3EFFFFFF" BorderThickness="1" CornerRadius="10">
+                                    <StackPanel Spacing="2">
+                                        <TextBlock Text="SORT TRACKS BY" Margin="10,5,10,7"
+                                                   FontSize="9" FontWeight="SemiBold"
+                                                   LetterSpacing="0.8" Opacity="0.42"/>
+                                        <Button x:Name="ProfileTrackSortNameOption" Classes="sort-option selected"
+                                                Tag="0" Click="OnProfileTrackSortOptionClicked">
+                                            <Grid ColumnDefinitions="18,*" ColumnSpacing="8">
+                                                <Image x:Name="ProfileTrackSortNameCheck"
+                                                       Source="{SvgImage /Assets/check.svg}"
+                                                       Width="12" Height="12" Opacity="0.9"/>
+                                                <TextBlock Grid.Column="1" Text="Name" FontSize="11.5"
+                                                           FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                            </Grid>
+                                        </Button>
+                                        <Button x:Name="ProfileTrackSortRatingOption" Classes="sort-option"
+                                                Tag="1" Click="OnProfileTrackSortOptionClicked">
+                                            <Grid ColumnDefinitions="18,*" ColumnSpacing="8">
+                                                <Image x:Name="ProfileTrackSortRatingCheck"
+                                                       Source="{SvgImage /Assets/check.svg}"
+                                                       Width="12" Height="12" Opacity="0"/>
+                                                <TextBlock Grid.Column="1" Text="Best rated" FontSize="11.5"
+                                                           VerticalAlignment="Center"/>
+                                            </Grid>
+                                        </Button>
+                                    </StackPanel>
+                                </Border>
+                            </Flyout>
+                        </Button.Flyout>
+                        <Grid ColumnDefinitions="*,14" ColumnSpacing="10">
+                            <StackPanel Spacing="0" VerticalAlignment="Center">
+                                <TextBlock Text="SORT BY" FontSize="8" FontWeight="SemiBold"
+                                           LetterSpacing="0.65" Opacity="0.42"/>
+                                <TextBlock x:Name="ProfileTrackSortText" Text="Name" FontSize="11.5"
+                                           FontWeight="SemiBold" VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <Path Grid.Column="1" Width="10" Height="6"
+                                  HorizontalAlignment="Center" VerticalAlignment="Center"
+                                  Data="M 1 1 L 5 5 L 9 1"
+                                  Stroke="{DynamicResource Theme.Brush.TextSecondary}"
+                                  StrokeThickness="1.5" StrokeLineCap="Round"/>
+                        </Grid>
+                    </Button>
                 </Grid>
 
                 <ListBox x:Name="ProfileTrackList" Grid.Row="2" Classes="video-list"
@@ -779,18 +835,17 @@
                                                 VerticalAlignment="Center">
                                         <TextBlock Text="{Binding ChannelText}" FontSize="9.5" Opacity="0.5"
                                                    TextTrimming="CharacterEllipsis"/>
-                                        <TextBlock Text="{Binding OwnerRatingText}" FontSize="9.5" Opacity="0.72"
-                                                   FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
                                     </StackPanel>
                                     <TextBlock Grid.Row="1" Grid.Column="1"
                                                Text="{Binding LocalStatusText}" FontSize="9.5"
                                                Foreground="{Binding LocalStatusBrush}"
                                                HorizontalAlignment="Right" VerticalAlignment="Center"/>
-                                    <Grid Grid.Row="2" Grid.ColumnSpan="2" ColumnDefinitions="*,*" ColumnSpacing="16">
+                                    <Grid Grid.Row="2" Grid.ColumnSpan="2" ColumnDefinitions="*,Auto" ColumnSpacing="16">
                                         <TextBlock Text="{Binding ClassificationText}" FontSize="9.5" Opacity="0.5"
                                                    TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding ClassificationText}"/>
-                                        <TextBlock Grid.Column="1" Text="{Binding AnalysisText}" FontSize="9.5" Opacity="0.5"
-                                                   TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding AnalysisText}"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding OwnerRatingText}" FontSize="10.5"
+                                                   FontWeight="SemiBold" Opacity="0.9"
+                                                   HorizontalAlignment="Right" TextTrimming="CharacterEllipsis"/>
                                     </Grid>
                                 </Grid>
                             </Border>

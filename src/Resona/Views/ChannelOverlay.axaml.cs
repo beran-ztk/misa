@@ -50,6 +50,7 @@ public partial class ChannelOverlay : UserControl
     private CloudProfileDisplay? _selectedCloudProfile;
     private List<CloudProfileTrackDisplay> _cloudProfileTracks = [];
     private ProfileTrackFilter _profileTrackFilter = ProfileTrackFilter.Available;
+    private int _profileTrackSortIndex;
     private readonly Avalonia.Threading.DispatcherTimer _channelStateRefreshTimer = new()
     {
         Interval = TimeSpan.FromMilliseconds(750)
@@ -517,7 +518,18 @@ public partial class ChannelOverlay : UserControl
                 || _selectedCloudProfile?.UserId != profile.UserId)
                 return;
 
-            _cloudProfileTracks = tracks.Select(track => new CloudProfileTrackDisplay(track)).ToList();
+            var ratingSortOrders = MusicLibraryService.Current.GetRatings()
+                .ToDictionary(rating => rating.Name, rating => rating.SortOrder, StringComparer.OrdinalIgnoreCase);
+            _cloudProfileTracks = tracks
+                .Select(track =>
+                {
+                    var ownerRatingSortOrder = !string.IsNullOrWhiteSpace(track.Rating)
+                                               && ratingSortOrders.TryGetValue(track.Rating, out var sortOrder)
+                        ? sortOrder
+                        : (int?)null;
+                    return new CloudProfileTrackDisplay(track, ownerRatingSortOrder);
+                })
+                .ToList();
             RefreshProfileTrackStates();
             ApplyProfileTrackFilter();
         }
@@ -594,6 +606,11 @@ public partial class ChannelOverlay : UserControl
             ProfileTrackFilter.Rejected => tracks.Where(track => track.IsRejected),
             _ => tracks.Where(track => track.IsAvailable)
         };
+        tracks = _profileTrackSortIndex == 1
+            ? tracks.OrderByDescending(track => track.HasOwnerRating)
+                .ThenByDescending(track => track.OwnerRatingSortOrder)
+                .ThenBy(track => track.Title, StringComparer.OrdinalIgnoreCase)
+            : tracks.OrderBy(track => track.Title, StringComparer.OrdinalIgnoreCase);
         var visible = tracks.ToList();
         ProfileTrackList.ItemsSource = visible;
         ProfileTrackSummaryText.Text = $"{_cloudProfileTracks.Count:N0} public tracks · {libraryCount:N0} in your library";
@@ -659,6 +676,47 @@ public partial class ChannelOverlay : UserControl
 
         if (refresh)
             ApplyProfileTrackFilter();
+    }
+
+    private void OnProfileTrackSortOptionClicked(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: string tag }
+            || !int.TryParse(tag, out var index))
+            return;
+
+        _profileTrackSortIndex = index;
+        ProfileTrackSortText.Text = index == 1 ? "Best rated" : "Name";
+        RefreshProfileTrackSortOptions();
+        ProfileTrackSortButton.Flyout?.Hide();
+        ApplyProfileTrackFilter();
+        ProfileTrackList.SelectedItem = null;
+        Dispatcher.UIThread.Post(() =>
+        {
+            var scrollViewer = ProfileTrackList
+                .GetVisualDescendants()
+                .OfType<ScrollViewer>()
+                .FirstOrDefault();
+            if (scrollViewer is not null)
+                scrollViewer.Offset = new Vector(scrollViewer.Offset.X, 0);
+        }, DispatcherPriority.Background);
+        e.Handled = true;
+    }
+
+    private void RefreshProfileTrackSortOptions()
+    {
+        var options = new (Button Button, Image Check)[]
+        {
+            (ProfileTrackSortNameOption, ProfileTrackSortNameCheck),
+            (ProfileTrackSortRatingOption, ProfileTrackSortRatingCheck)
+        };
+        for (var index = 0; index < options.Length; index++)
+        {
+            var (button, check) = options[index];
+            button.Classes.Remove("selected");
+            if (index == _profileTrackSortIndex)
+                button.Classes.Add("selected");
+            check.Opacity = index == _profileTrackSortIndex ? 0.9 : 0;
+        }
     }
 
     private async void OnProfileTrackDownloadClicked(object? sender, RoutedEventArgs e)
@@ -2048,7 +2106,7 @@ public sealed class CloudProfileTrackDisplay : INotifyPropertyChanged
     private int? _localTrackId;
     private LocalProfileTrackState _state = LocalProfileTrackState.Available;
 
-    public CloudProfileTrackDisplay(CloudPublicLibraryTrack track)
+    public CloudProfileTrackDisplay(CloudPublicLibraryTrack track, int? ownerRatingSortOrder = null)
     {
         SourceVideoId = track.SourceVideoId;
         CanonicalUrl = track.CanonicalUrl;
@@ -2056,9 +2114,9 @@ public sealed class CloudProfileTrackDisplay : INotifyPropertyChanged
         OriginalTitle = track.OriginalTitle;
         DurationText = FormatDuration(track.DurationSeconds);
         ChannelText = string.IsNullOrWhiteSpace(track.ChannelName) ? "Unknown channel" : track.ChannelName;
-        OwnerRatingText = $"Their rating: {track.Rating ?? "None"}";
+        OwnerRatingText = $"Their rating: {track.Rating ?? "Not rated"}";
+        OwnerRatingSortOrder = ownerRatingSortOrder;
         ClassificationText = BuildClassificationText(track);
-        AnalysisText = BuildAnalysisText(track);
         _searchText = string.Join(' ', new[]
         {
             track.Title,
@@ -2081,8 +2139,9 @@ public sealed class CloudProfileTrackDisplay : INotifyPropertyChanged
     public string DurationText { get; }
     public string ChannelText { get; }
     public string OwnerRatingText { get; }
+    public int? OwnerRatingSortOrder { get; }
+    public bool HasOwnerRating => OwnerRatingSortOrder is not null;
     public string ClassificationText { get; }
-    public string AnalysisText { get; }
     public string LocalStatusText => _localStatusText;
     public IBrush LocalStatusBrush => _localStatusBrush;
     public bool CanDownload => _canDownload;
@@ -2175,24 +2234,6 @@ public sealed class CloudProfileTrackDisplay : INotifyPropertyChanged
         if (!string.IsNullOrWhiteSpace(track.LanguageCode))
             parts.Add($"Language: {track.LanguageCode}");
         return parts.Count == 0 ? "No shared classification" : string.Join(" · ", parts);
-    }
-
-    private static string BuildAnalysisText(CloudPublicLibraryTrack track)
-    {
-        var parts = new List<string>();
-        if (track.Analysis?.Bpm is double bpm)
-            parts.Add($"{bpm:0.#} BPM");
-        if (track.Analysis?.IntegratedLoudness is double loudness)
-            parts.Add($"{loudness:0.#} LUFS");
-        if (track.Analysis?.LoudnessRange is double dynamics)
-            parts.Add($"{dynamics:0.#} LU");
-        if (track.EmotionalCharacter.Count > 0)
-        {
-            parts.Add(string.Join(", ", track.EmotionalCharacter
-                .OrderByDescending(item => item.Value)
-                .Select(item => $"{item.Key} {item.Value * 100:0}%")));
-        }
-        return parts.Count == 0 ? "Not analyzed" : string.Join(" · ", parts);
     }
 
     private static string FormatDuration(int? durationSeconds)
