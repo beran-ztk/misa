@@ -126,7 +126,7 @@
         </Style>
         <Style Selector="Button.hub-tab">
             <Setter Property="Height" Value="34"/>
-            <Setter Property="Padding" Value="8,0"/>
+            <Setter Property="Padding" Value="0"/>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="BorderBrush" Value="Transparent"/>
@@ -149,9 +149,15 @@
             <Setter Property="Opacity" Value="0.94"/>
         </Style>
         <Style Selector="Button.hub-tab.active">
-            <Setter Property="Background" Value="#36516B8E"/>
+            <Setter Property="Background" Value="#34465A70"/>
             <Setter Property="Foreground" Value="{DynamicResource Theme.Brush.TextPrimary}"/>
             <Setter Property="Opacity" Value="1"/>
+        </Style>
+        <Style Selector="Button.hub-tab.first">
+            <Setter Property="CornerRadius" Value="7,0,0,7"/>
+        </Style>
+        <Style Selector="Button.hub-tab.last">
+            <Setter Property="CornerRadius" Value="0,7,7,0"/>
         </Style>
         <Style Selector="Button.channel-title">
             <Setter Property="Padding" Value="0"/>
@@ -415,13 +421,10 @@
                     Padding="26,15">
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="18">
                     <StackPanel Spacing="4" VerticalAlignment="Center">
-                        <Border Background="#12FFFFFF" BorderBrush="#18FFFFFF" BorderThickness="1"
-                                CornerRadius="9" Padding="2" Width="202" HorizontalAlignment="Left">
-                        <Grid ColumnDefinitions="*,*" ColumnSpacing="0">
-                            <Button Grid.Column="0" Classes="hub-tab active" Content="Channels"/>
-                            <Button Grid.Column="1" Classes="hub-tab" Content="Profiles" Click="OnProfilesTabClicked"/>
-                        </Grid>
-                        </Border>
+                        <StackPanel Orientation="Horizontal" Spacing="0" HorizontalAlignment="Left">
+                            <Button Classes="hub-tab first active" Width="102" Content="Channels"/>
+                            <Button Classes="hub-tab last" Width="102" Content="Profiles" Click="OnProfilesTabClicked"/>
+                        </StackPanel>
                     </StackPanel>
                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                         <TextBox x:Name="ChannelSearchBox" Classes="compact-search"
@@ -599,14 +602,11 @@
                     BorderBrush="{DynamicResource Theme.Brush.Border}" BorderThickness="0,0,0,1"
                     Padding="26,15">
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="18">
-                    <Border Background="#12FFFFFF" BorderBrush="#18FFFFFF" BorderThickness="1"
-                            CornerRadius="9" Padding="2" Width="202"
-                            HorizontalAlignment="Left" VerticalAlignment="Center">
-                    <Grid ColumnDefinitions="*,*" ColumnSpacing="0">
-                        <Button Grid.Column="0" Classes="hub-tab" Content="Channels" Click="OnChannelsTabClicked"/>
-                        <Button Grid.Column="1" Classes="hub-tab active" Content="Profiles"/>
-                    </Grid>
-                    </Border>
+                    <StackPanel Orientation="Horizontal" Spacing="0"
+                                HorizontalAlignment="Left" VerticalAlignment="Center">
+                        <Button Classes="hub-tab first" Width="102" Content="Channels" Click="OnChannelsTabClicked"/>
+                        <Button Classes="hub-tab last active" Width="102" Content="Profiles"/>
+                    </StackPanel>
                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                         <TextBox x:Name="ProfileSearchBox" Classes="compact-search"
                                  Width="230" Height="32" Watermark="Search profiles…"
