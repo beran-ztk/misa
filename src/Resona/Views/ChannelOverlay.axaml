@@ -6,62 +6,44 @@
              Background="#202020">
     <UserControl.Resources>
         <DataTemplate x:Key="ChannelCardTemplate" x:DataType="models:ChannelHubItem">
-            <Border Classes="channel-card" Width="370"
-                    MinHeight="140"
+            <Border Classes="channel-card" Width="330"
+                    MinHeight="72"
                     Margin="0,0,10,10"
-                    Padding="14,12"
+                    Padding="12,10"
                     Background="#10FFFFFF"
                     BorderBrush="#28FFFFFF"
                     BorderThickness="1"
                     CornerRadius="8"
                     Cursor="Hand"
                     Tapped="OnChannelCardTapped">
-                <Grid RowDefinitions="Auto,Auto,*" RowSpacing="8">
-                    <Grid ColumnDefinitions="42,*,Auto" ColumnSpacing="10">
-                        <Border Width="42" Height="42" CornerRadius="21"
-                                Background="#243E6591"
-                                BorderBrush="#486E91BA" BorderThickness="1" ClipToBounds="True">
-                            <Grid>
-                            <Image Source="{Binding Artwork}" Stretch="UniformToFill" IsVisible="{Binding HasArtwork}"/>
-                            <TextBlock Text="{Binding Monogram}" IsVisible="{Binding ShowMonogram}"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center"
-                                       FontSize="12" FontWeight="SemiBold" Foreground="#DCEBFA"/>
-                            </Grid>
-                        </Border>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                            <TextBlock Text="{Binding Name}" FontSize="13.5" FontWeight="SemiBold"
-                                       TextTrimming="CharacterEllipsis" MaxWidth="245"/>
-                            <StackPanel Orientation="Horizontal" Spacing="5">
-                                <TextBlock Text="{Binding TrackCountText}" FontSize="10.5" Opacity="0.58"/>
-                                <TextBlock Text="·" FontSize="10.5" Opacity="0.36"
-                                           IsVisible="{Binding HasNewVideos}"/>
-                                <TextBlock Text="{Binding NewVideoText}" FontSize="10.5" Opacity="0.58"
-                                           IsVisible="{Binding HasNewVideos}"/>
-                            </StackPanel>
-                            <TextBlock Text="{Binding AudienceText}" FontSize="9.5" Opacity="0.46"
-                                       TextTrimming="CharacterEllipsis" MaxWidth="250"
-                                       ToolTip.Tip="{Binding AudienceText}"/>
-                        </StackPanel>
-                        <Button Grid.Column="2" Classes="follow-toggle" Classes.following="{Binding IsFollowed}"
-                                Content="{Binding FollowGlyph}" Click="OnFollowChannelClicked"
-                                ToolTip.Tip="{Binding FollowToolTip}"
-                                HorizontalAlignment="Right" VerticalAlignment="Top"/>
-                    </Grid>
-                    <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="10">
-                        <StackPanel Spacing="1">
-                            <TextBlock Text="QUALITY" FontSize="8.5" LetterSpacing="0.8" Opacity="0.42"/>
-                            <TextBlock Text="{Binding QualitySummaryText}" FontSize="10.5"
-                                       TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding RatingText}"/>
-                        </StackPanel>
-                        <StackPanel Grid.Column="1" Spacing="1">
-                            <TextBlock Text="ACTIVITY" FontSize="8.5" LetterSpacing="0.8" Opacity="0.42"/>
-                            <TextBlock Text="{Binding ActivityText}" FontSize="10.5"/>
-                        </StackPanel>
-                    </Grid>
-                    <TextBlock Grid.Row="2" Text="{Binding TopTracksText}"
-                               IsVisible="{Binding HasTopTracks}"
-                               FontSize="10" Opacity="0.58" TextWrapping="NoWrap"
-                               LineHeight="15" MinHeight="45" MaxHeight="45"/>
+                <Grid ColumnDefinitions="42,*,Auto" RowDefinitions="Auto,Auto"
+                      ColumnSpacing="11" RowSpacing="4">
+                    <Border Width="42" Height="42" CornerRadius="21"
+                            Grid.RowSpan="2" VerticalAlignment="Center"
+                            Background="#243E6591"
+                            BorderBrush="#486E91BA" BorderThickness="1" ClipToBounds="True">
+                        <Grid>
+                        <Image Source="{Binding Artwork}" Stretch="UniformToFill" IsVisible="{Binding HasArtwork}"/>
+                        <TextBlock Text="{Binding Monogram}" IsVisible="{Binding ShowMonogram}"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   FontSize="12" FontWeight="SemiBold" Foreground="#DCEBFA"/>
+                        </Grid>
+                    </Border>
+                    <TextBlock Grid.Column="1" Text="{Binding Name}"
+                               FontSize="13.5" FontWeight="SemiBold"
+                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                    <TextBlock Grid.Row="1" Grid.Column="1"
+                               Text="{Binding FollowingWorkflowText}"
+                               FontSize="10.5" Opacity="0.58"
+                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                    <StackPanel Grid.Column="2" Grid.RowSpan="2"
+                                Spacing="3" VerticalAlignment="Center" HorizontalAlignment="Right">
+                        <TextBlock Text="AVERAGE RATING" FontSize="8" LetterSpacing="0.6"
+                                   Opacity="0.4" HorizontalAlignment="Right"/>
+                        <TextBlock Text="{Binding AverageRatingScaleText}"
+                                   FontSize="11.5" FontWeight="SemiBold"
+                                   HorizontalAlignment="Right"/>
+                    </StackPanel>
                 </Grid>
             </Border>
         </DataTemplate>
@@ -361,6 +343,7 @@
             <Setter Property="Padding" Value="0"/>
             <Setter Property="MinHeight" Value="0"/>
             <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
         </Style>
         <Style Selector="ListBox.video-list ListBoxItem:pointerover /template/ ContentPresenter">
             <Setter Property="Background" Value="Transparent"/>
@@ -844,32 +827,32 @@
                     </Grid>
                     <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto" ColumnSpacing="6">
                         <Button x:Name="AvailableVideosFilterButton" Classes="video-filter" Click="OnAvailableVideosFilterClicked">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                <TextBlock Text="Available"/>
+                            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                <TextBlock Text="Available" VerticalAlignment="Center"/>
                                 <Border Classes="video-count">
                                     <TextBlock x:Name="AvailableVideosCountText" Opacity="0.72"/>
                                 </Border>
                             </StackPanel>
                         </Button>
                         <Button Grid.Column="1" x:Name="ReadyVideosFilterButton" Classes="video-filter" Click="OnReadyVideosFilterClicked">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                <TextBlock Text="Review"/>
+                            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                <TextBlock Text="Review" VerticalAlignment="Center"/>
                                 <Border Classes="video-count">
                                     <TextBlock x:Name="ReadyVideosCountText" Opacity="0.72"/>
                                 </Border>
                             </StackPanel>
                         </Button>
                         <Button Grid.Column="2" x:Name="LibraryVideosFilterButton" Classes="video-filter" Click="OnLibraryVideosFilterClicked">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                <TextBlock Text="Library"/>
+                            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                <TextBlock Text="Library" VerticalAlignment="Center"/>
                                 <Border Classes="video-count">
                                     <TextBlock x:Name="LibraryVideosCountText" Opacity="0.72"/>
                                 </Border>
                             </StackPanel>
                         </Button>
                         <Button Grid.Column="3" x:Name="RejectedVideosFilterButton" Classes="video-filter" Click="OnRejectedVideosFilterClicked">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                <TextBlock Text="Rejected"/>
+                            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                <TextBlock Text="Rejected" VerticalAlignment="Center"/>
                                 <Border Classes="video-count">
                                     <TextBlock x:Name="RejectedVideosCountText" Opacity="0.72"/>
                                 </Border>
@@ -878,8 +861,8 @@
                         <Button Grid.Column="5" x:Name="IssueVideosFilterButton" Classes="video-filter"
                                 Foreground="{DynamicResource Theme.Brush.Warning}"
                                 Click="OnIssueVideosFilterClicked">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                <TextBlock Text="⚠ Issues"/>
+                            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                <TextBlock Text="⚠ Issues" VerticalAlignment="Center"/>
                                 <Border Classes="video-count">
                                     <TextBlock x:Name="IssueVideosCountText" Opacity="0.72"/>
                                 </Border>

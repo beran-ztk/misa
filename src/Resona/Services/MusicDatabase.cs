@@ -1620,12 +1620,21 @@ public class MusicDatabase
                 GROUP BY tracks.channel_id
             ),
             video_stats AS (
-                SELECT channel_id,
+                SELECT videos.channel_id,
                        COUNT(*) AS video_count,
-                       SUM(CASE WHEN is_checked = 0 THEN 1 ELSE 0 END) AS unchecked_count,
-                       SUM(view_count) AS total_view_count
-                FROM channel_videos
-                GROUP BY channel_id
+                       SUM(CASE WHEN videos.is_checked = 0 THEN 1 ELSE 0 END) AS unchecked_count,
+                       SUM(CASE WHEN tracks.id IS NULL
+                                     AND videos.download_status <> 'Failed'
+                                     AND videos.metadata_status <> 'Failed'
+                                THEN 1 ELSE 0 END) AS available_count,
+                       SUM(CASE WHEN tracks.id IS NOT NULL
+                                     AND tracks.library_state = 'PendingRating'
+                                     AND videos.is_checked = 0
+                                THEN 1 ELSE 0 END) AS review_count,
+                       SUM(videos.view_count) AS total_view_count
+                FROM channel_videos videos
+                LEFT JOIN tracks ON tracks.canonical_url = videos.canonical_url
+                GROUP BY videos.channel_id
             )
             SELECT channels.id,
                    channels.name,
@@ -1645,6 +1654,8 @@ public class MusicDatabase
                    track_stats.last_downloaded_at,
                    COALESCE(video_stats.video_count, 0),
                    COALESCE(video_stats.unchecked_count, 0),
+                   COALESCE(video_stats.available_count, 0),
+                   COALESCE(video_stats.review_count, 0),
                    channels.follower_count,
                    video_stats.total_view_count,
                    channels.max_duration_minutes,
@@ -1682,13 +1693,15 @@ public class MusicDatabase
                 reader.IsDBNull(15) ? null : reader.GetString(15),
                 ReadInt32(reader, 16),
                 ReadInt32(reader, 17),
-                reader.IsDBNull(18) ? null : reader.GetInt64(18),
-                reader.IsDBNull(19) ? null : reader.GetInt64(19),
-                reader.IsDBNull(20) ? null : reader.GetInt32(20),
-                reader.IsDBNull(21) ? null : reader.GetString(21),
+                ReadInt32(reader, 18),
+                ReadInt32(reader, 19),
+                reader.IsDBNull(20) ? null : reader.GetInt64(20),
+                reader.IsDBNull(21) ? null : reader.GetInt64(21),
+                reader.IsDBNull(22) ? null : reader.GetInt32(22),
+                reader.IsDBNull(23) ? null : reader.GetString(23),
                 [],
-                reader.IsDBNull(22) ? null : (byte[])reader.GetValue(22),
-                reader.IsDBNull(23) ? null : reader.GetString(23)));
+                reader.IsDBNull(24) ? null : (byte[])reader.GetValue(24),
+                reader.IsDBNull(25) ? null : reader.GetString(25)));
         reader.Close();
 
         using var tracks = conn.CreateCommand();

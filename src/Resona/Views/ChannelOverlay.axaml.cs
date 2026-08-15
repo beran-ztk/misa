@@ -217,7 +217,7 @@ public partial class ChannelOverlay : UserControl
         var visible = matching.ToList();
         var following = visible
             .Where(channel => channel.IsFollowed)
-            .OrderByDescending(channel => channel.UncheckedVideoCount)
+            .OrderByDescending(channel => channel.AvailableVideoCount + channel.ReviewVideoCount)
             .ThenBy(channel => channel.Name, StringComparer.OrdinalIgnoreCase)
             .ToList();
         var all = (_channelSortIndex switch
@@ -243,8 +243,7 @@ public partial class ChannelOverlay : UserControl
             ? "No channels match this search."
             : "No library channels yet. Add a YouTube channel to get started.";
         var totalFollowing = _hubChannels.Count(channel => channel.IsFollowed);
-        var newVideos = _hubChannels.Where(channel => channel.IsFollowed).Sum(channel => channel.UncheckedVideoCount);
-        FollowingHeadingText.Text = $"FOLLOWING ({totalFollowing:N0} followed · {newVideos:N0} tracks need review)";
+        FollowingHeadingText.Text = $"FOLLOWING ({totalFollowing:N0})";
         AllChannelsHeadingText.Text = search.Length > 0
             ? $"Showing {all.Count:N0} of {_hubChannels.Count:N0} channels in your library."
             : $"You currently have {_hubChannels.Count:N0} channels in your library.";
@@ -282,6 +281,16 @@ public partial class ChannelOverlay : UserControl
         RefreshChannelSortOptions();
         ChannelSortButton.Flyout?.Hide();
         ApplyHubFilter();
+        AllChannelItems.SelectedItem = null;
+        Dispatcher.UIThread.Post(() =>
+        {
+            var scrollViewer = AllChannelItems
+                .GetVisualDescendants()
+                .OfType<ScrollViewer>()
+                .FirstOrDefault();
+            if (scrollViewer is not null)
+                scrollViewer.Offset = new Vector(scrollViewer.Offset.X, 0);
+        }, DispatcherPriority.Background);
         e.Handled = true;
     }
 

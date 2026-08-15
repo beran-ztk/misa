@@ -214,6 +214,8 @@ public sealed record ChannelHubItem(
     string? LastDownloadedAt,
     int KnownVideoCount,
     int UncheckedVideoCount,
+    int AvailableVideoCount,
+    int ReviewVideoCount,
     long? FollowerCount,
     long? TotalViewCount,
     int? MaxDurationMinutes,
@@ -299,6 +301,8 @@ public sealed record ChannelHubItem(
         : UncheckedVideoCount == 1 ? "1 track awaiting a decision" : $"{UncheckedVideoCount:N0} tracks awaiting a decision";
     public string NewVideoText => UncheckedVideoCount == 1 ? "1 to review" : $"{UncheckedVideoCount:N0} to review";
     public bool HasNewVideos => UncheckedVideoCount > 0;
+    public string FollowingWorkflowText =>
+        $"{AvailableVideoCount:N0} available · {ReviewVideoCount:N0} to review";
     public bool HasTopTracks => TopTracks.Count > 0;
     public string TopTracksText => string.Join("\n", TopTracks.Take(3));
     public string TopTracksInlineText => TopTracks.Count == 0
