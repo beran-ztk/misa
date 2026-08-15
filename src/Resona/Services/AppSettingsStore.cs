@@ -131,8 +131,8 @@ public static class AppSettingsStore
 
 public sealed class AppSettings
 {
-    public float Volume { get; set; } = 1f;
-    public string MusicAnalysisServerUrl { get; set; } = string.Empty;
+    public float Volume { get; set; } = 0.53030306f;
+    public string MusicAnalysisServerUrl { get; set; } = "https://analyzer.resona-music.de";
     public string? MusicAnalysisApiKey { get; set; }
     public int ChannelDownloadMaxDurationMinutes { get; set; } = 12;
     public AppearanceSettings Appearance { get; set; } = new();
@@ -142,7 +142,7 @@ public sealed class AppSettings
     public string? DiscordStateText { get; set; }
     public string? DiscordLargeImageText { get; set; }
     public bool DiscordRichPresenceEnabled { get; set; } = true;
-    public string? CloudServerUrl { get; set; }
+    public string? CloudServerUrl { get; set; } = "https://api.resona-music.de";
 }
 
 public sealed class PlayerSessionSettings

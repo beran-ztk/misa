@@ -4,10 +4,10 @@ namespace Resona.Models;
 
 public sealed class AppearanceSettings
 {
-    public double PlayerArtworkStrength { get; set; } = 64.5;
-    public double PlayerArtworkBlur { get; set; } = 50;
-    public double PlayerBackgroundDarkening { get; set; } = 4.6;
-    public double PlayerColorAtmosphere { get; set; } = 19.5;
+    public double PlayerArtworkStrength { get; set; } = 24;
+    public double PlayerArtworkBlur { get; set; } = 24.5;
+    public double PlayerBackgroundDarkening { get; set; } = 13.2;
+    public double PlayerColorAtmosphere { get; set; } = 0;
     public double ArtworkFadeDuration { get; set; } = 5;
     public double SongFadeDuration { get; set; } = 10;
     public double PlayerAudioReaction { get; set; } = 65;
@@ -18,19 +18,19 @@ public sealed class AppearanceSettings
     public double AudioBlurReaction { get; set; } = 75;
     public double AudioColorReaction { get; set; } = 200;
     public bool SpectrumVisualizerEnabled { get; set; } = true;
-    public double SpectrumVisualizerHeight { get; set; } = 140;
+    public double SpectrumVisualizerHeight { get; set; } = 139.9;
     // Legacy field kept temporarily so settings written by the first visualizer
     // version can be migrated. Visual strength now uses SpectrumVisualizerIntensity.
     public double? SpectrumVisualizerOpacity { get; set; }
-    public double SpectrumVisualizerIntensity { get; set; } = 40;
-    public double SpectrumVisualizerSensitivity { get; set; } = 100;
-    public double SpectrumVisualizerSmoothing { get; set; } = 65;
-    public double LibraryBackdropStrength { get; set; } = 14.6;
-    public double LibraryBackdropBlur { get; set; } = 0;
-    public double TrackArtworkStrength { get; set; } = 35.25;
-    public double TrackArtworkBlur { get; set; } = 20.4;
-    public double TrackColorWashStrength { get; set; } = 25.35;
-    public double TrackColorWashReach { get; set; } = 40;
+    public double SpectrumVisualizerIntensity { get; set; } = 50;
+    public double SpectrumVisualizerSensitivity { get; set; } = 108.25;
+    public double SpectrumVisualizerSmoothing { get; set; } = 64.7;
+    public double LibraryBackdropStrength { get; set; } = 14.7;
+    public double LibraryBackdropBlur { get; set; } = 20.25;
+    public double TrackArtworkStrength { get; set; } = 30.25;
+    public double TrackArtworkBlur { get; set; } = 30;
+    public double TrackColorWashStrength { get; set; } = 30;
+    public double TrackColorWashReach { get; set; } = 44.8;
     public double CoverHaloStrength { get; set; } = 60;
     public double CoverHaloBlur { get; set; } = 20;
 
