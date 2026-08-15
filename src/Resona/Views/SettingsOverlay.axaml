@@ -380,24 +380,26 @@
                                 <TextBlock Text="Visible to other Resona users once cloud synchronization is enabled."
                                            FontSize="10.5" Opacity="0.52" TextWrapping="Wrap"/>
                             </StackPanel>
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="PUBLIC USER ID"
+                                           FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
+                                <Grid ColumnDefinitions="*,30" ColumnSpacing="5">
+                                    <TextBlock x:Name="ProfileUserIdText"
+                                               FontSize="10.5" FontFamily="Consolas"
+                                               Opacity="0.72"
+                                               VerticalAlignment="Center"
+                                               TextTrimming="CharacterEllipsis"/>
+                                    <Button Grid.Column="1"
+                                            Width="30" Height="30" Padding="0"
+                                            Background="Transparent" BorderThickness="0"
+                                            ToolTip.Tip="Copy user ID"
+                                            Click="OnCopyProfileUserIdClicked">
+                                        <Image Source="{SvgImage /Assets/copy.svg}" Width="13" Height="13"/>
+                                    </Button>
+                                </Grid>
+                            </StackPanel>
                         </StackPanel>
                     </Grid>
-
-                    <Border Background="{DynamicResource Theme.Brush.SurfaceTranslucent}"
-                            BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
-                            BorderThickness="1" CornerRadius="7" Padding="12">
-                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
-                            <StackPanel Spacing="3">
-                                <TextBlock Text="PUBLIC USER ID" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
-                                <TextBlock x:Name="ProfileUserIdText" FontSize="11" FontFamily="Consolas"
-                                           TextTrimming="CharacterEllipsis"/>
-                            </StackPanel>
-                            <Button Grid.Column="1" Classes="settings-ghost" ToolTip.Tip="Copy user ID"
-                                    Click="OnCopyProfileUserIdClicked">
-                                <Image Source="{SvgImage /Assets/copy.svg}" Width="13" Height="13"/>
-                            </Button>
-                        </Grid>
-                    </Border>
 
                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
                         <TextBlock x:Name="ProfileStatusText"
@@ -427,9 +429,8 @@
                                         VerticalContentAlignment="Center"
                                         ToolTip.Tip="Synchronize now"
                                         Click="OnSynchronizeCloudClicked">
-                                    <PathIcon Width="17" Height="17"
-                                              Foreground="{DynamicResource Theme.Brush.TextSecondary}"
-                                              Data="M19.35,10.04A7.49,7.49 0 0,0 5.26,8.05A6,6 0 0,0 6,20H19A5,5 0 0,0 19.35,10.04M13,12V16H16L12,20L8,16H11V12H13Z"/>
+                                    <Image Source="{SvgImage /Assets/cloud-arrow-down.svg}"
+                                           Width="17" Height="17" Opacity="0.78"/>
                                 </Button>
                             </Grid>
                             <TextBlock Text="Only metadata is synchronized. Audio files are not uploaded. This is not a backup, and tracks cannot be played from another device."
