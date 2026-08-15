@@ -68,6 +68,68 @@
             <Setter Property="BorderBrush" Value="Transparent"/>
             <Setter Property="Foreground" Value="{DynamicResource Theme.Brush.TextStrong}"/>
         </Style>
+        <Style Selector="Button.filter-sort">
+            <Setter Property="Height" Value="38"/>
+            <Setter Property="Padding" Value="12,0"/>
+            <Setter Property="Background" Value="#0FFFFFFF"/>
+            <Setter Property="BorderBrush" Value="#2EFFFFFF"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Foreground" Value="{DynamicResource Theme.Brush.TextSecondary}"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Button.filter-sort:pointerover">
+            <Setter Property="Background" Value="#18FFFFFF"/>
+            <Setter Property="BorderBrush" Value="#52FFFFFF"/>
+            <Setter Property="Foreground" Value="{DynamicResource Theme.Brush.TextPrimary}"/>
+        </Style>
+        <Style Selector="Button.filter-sort:pressed">
+            <Setter Property="Background" Value="#20FFFFFF"/>
+            <Setter Property="BorderBrush" Value="#725F86AD"/>
+        </Style>
+        <Style Selector="Button.filter-sort-direction">
+            <Setter Property="Width" Value="42"/>
+            <Setter Property="Height" Value="38"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Background" Value="#0FFFFFFF"/>
+            <Setter Property="BorderBrush" Value="#2EFFFFFF"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Foreground" Value="{DynamicResource Theme.Brush.TextSecondary}"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Button.filter-sort-direction:pointerover">
+            <Setter Property="Background" Value="#18FFFFFF"/>
+            <Setter Property="BorderBrush" Value="#52FFFFFF"/>
+            <Setter Property="Foreground" Value="{DynamicResource Theme.Brush.TextPrimary}"/>
+        </Style>
+        <Style Selector="Button.filter-sort-option">
+            <Setter Property="Width" Value="264"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Padding" Value="10,0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Foreground" Value="{DynamicResource Theme.Brush.TextSecondary}"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Button.filter-sort-option:pointerover">
+            <Setter Property="Background" Value="#16FFFFFF"/>
+            <Setter Property="Foreground" Value="{DynamicResource Theme.Brush.TextPrimary}"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+        </Style>
+        <Style Selector="Button.filter-sort-option.selected">
+            <Setter Property="Background" Value="#263E6591"/>
+            <Setter Property="Foreground" Value="#E7F1FB"/>
+        </Style>
         <Style Selector="ToggleButton.completion-filter">
             <Setter Property="Height" Value="34"/>
             <Setter Property="HorizontalAlignment" Value="Stretch"/>
@@ -1076,43 +1138,75 @@
 
                                 <Rectangle Height="1" Fill="{DynamicResource Theme.Brush.Divider}"/>
 
-                                <StackPanel Spacing="7">
-                                    <TextBlock Text="SORT"
-                                               FontSize="10" FontWeight="SemiBold"
-                                               Opacity="0.42" LetterSpacing="1"/>
-                                    <Border Background="{DynamicResource Theme.Brush.Surface}"
-                                            BorderBrush="{DynamicResource Theme.Brush.BorderStrong}"
-                                            BorderThickness="1"
-                                            CornerRadius="7"
-                                            Padding="4">
-                                        <Grid ColumnDefinitions="*,1,36">
-                                            <ComboBox x:Name="SortByBox"
-                                                      Grid.Column="0"
-                                                      Height="30"
-                                                      FontSize="11"
-                                                      FontWeight="SemiBold"
-                                                      Foreground="{DynamicResource Theme.Brush.TextSecondary}"
-                                                      Background="Transparent"
-                                                      BorderThickness="0"
-                                                      Padding="8,3"
-                                                      SelectionChanged="OnSortChanged"/>
-                                            <Rectangle Grid.Column="1"
-                                                       Fill="{DynamicResource Theme.Brush.BorderSubtle}"
-                                                       Margin="2,5"/>
-                                            <Button x:Name="SortDirectionButton"
-                                                    Grid.Column="2"
-                                                    Content="↑"
-                                                    Click="OnSortDirectionClicked"
-                                                    Background="Transparent"
-                                                    BorderThickness="0"
-                                                    Foreground="{DynamicResource Theme.Brush.Accent}"
-                                                    FontSize="15"
-                                                    FontWeight="SemiBold"
-                                                    Padding="0"
-                                                    ToolTip.Tip="Toggle sort direction"/>
+                                <Grid ColumnDefinitions="*,42" ColumnSpacing="7">
+                                    <Button x:Name="FilterSortButton" Classes="filter-sort">
+                                        <Button.Flyout>
+                                            <Flyout Placement="BottomEdgeAlignedLeft">
+                                                <Flyout.FlyoutPresenterTheme>
+                                                    <ControlTheme TargetType="FlyoutPresenter">
+                                                        <Setter Property="Padding" Value="0"/>
+                                                        <Setter Property="Background" Value="Transparent"/>
+                                                        <Setter Property="BorderThickness" Value="0"/>
+                                                        <Setter Property="CornerRadius" Value="10"/>
+                                                    </ControlTheme>
+                                                </Flyout.FlyoutPresenterTheme>
+                                                <Border Width="280" Padding="8" Background="#FC191A1D"
+                                                        BorderBrush="#3EFFFFFF" BorderThickness="1" CornerRadius="10">
+                                                    <StackPanel Spacing="2">
+                                                        <TextBlock Text="SORT TRACKS BY"
+                                                                   Margin="10,5,10,7"
+                                                                   FontSize="9" FontWeight="SemiBold"
+                                                                   LetterSpacing="0.8" Opacity="0.42"/>
+                                                        <Button x:Name="FilterSortNameOption" Classes="filter-sort-option selected"
+                                                                Tag="0" Click="OnFilterSortOptionClicked">
+                                                            <Grid ColumnDefinitions="18,*" ColumnSpacing="8">
+                                                                <Image x:Name="FilterSortNameCheck" Source="{SvgImage /Assets/check.svg}"
+                                                                       Width="12" Height="12" Opacity="0.9"/>
+                                                                <TextBlock Grid.Column="1" Text="Name" FontSize="11.5"
+                                                                           FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                                            </Grid>
+                                                        </Button>
+                                                        <Button x:Name="FilterSortRatingOption" Classes="filter-sort-option"
+                                                                Tag="1" Click="OnFilterSortOptionClicked">
+                                                            <Grid ColumnDefinitions="18,*" ColumnSpacing="8">
+                                                                <Image x:Name="FilterSortRatingCheck" Source="{SvgImage /Assets/check.svg}"
+                                                                       Width="12" Height="12" Opacity="0"/>
+                                                                <TextBlock Grid.Column="1" Text="Rating" FontSize="11.5" VerticalAlignment="Center"/>
+                                                            </Grid>
+                                                        </Button>
+                                                        <Button x:Name="FilterSortDownloadedOption" Classes="filter-sort-option"
+                                                                Tag="2" Click="OnFilterSortOptionClicked">
+                                                            <Grid ColumnDefinitions="18,*" ColumnSpacing="8">
+                                                                <Image x:Name="FilterSortDownloadedCheck" Source="{SvgImage /Assets/check.svg}"
+                                                                       Width="12" Height="12" Opacity="0"/>
+                                                                <TextBlock Grid.Column="1" Text="Downloaded at" FontSize="11.5" VerticalAlignment="Center"/>
+                                                            </Grid>
+                                                        </Button>
+                                                    </StackPanel>
+                                                </Border>
+                                            </Flyout>
+                                        </Button.Flyout>
+                                        <Grid ColumnDefinitions="*,14" ColumnSpacing="10">
+                                            <StackPanel Spacing="0" VerticalAlignment="Center">
+                                                <TextBlock Text="SORT BY" FontSize="8" FontWeight="SemiBold"
+                                                           LetterSpacing="0.65" Opacity="0.42"/>
+                                                <TextBlock x:Name="FilterSortText" Text="Name" FontSize="11.5"
+                                                           FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                            <Path Grid.Column="1" Width="10" Height="6"
+                                                  HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                  Data="M 1 1 L 5 5 L 9 1"
+                                                  Stroke="{DynamicResource Theme.Brush.TextSecondary}"
+                                                  StrokeThickness="1.5" StrokeLineCap="Round"/>
                                         </Grid>
-                                    </Border>
-                                </StackPanel>
+                                    </Button>
+                                    <Button x:Name="SortDirectionButton"
+                                            Grid.Column="1"
+                                            Classes="filter-sort-direction"
+                                            Content="↑"
+                                            Click="OnSortDirectionClicked"
+                                            ToolTip.Tip="Ascending"/>
+                                </Grid>
 
                                 <Rectangle Height="1" Fill="{DynamicResource Theme.Brush.Divider}"/>
 

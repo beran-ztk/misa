@@ -77,7 +77,6 @@ public partial class MusicView : UserControl
     private string _loopStatus = "None";
     private LibrarySortBy _sortBy = LibrarySortBy.Name;
     private LibrarySortDirection _sortDirection = LibrarySortDirection.Ascending;
-    private bool _updatingSortControls;
     private readonly Dictionary<int, double> _shufflePriorities = [];
 
     // UI state
@@ -478,24 +477,23 @@ public partial class MusicView : UserControl
 
     private void InitializeSortControls()
     {
-        _updatingSortControls = true;
-        SortByBox.ItemsSource = new[] { "Name", "Rating", "Downloaded at" };
-        SortByBox.SelectedIndex = _sortBy switch
+        var selectedIndex = _sortBy switch
         {
             LibrarySortBy.Rating => 1,
             LibrarySortBy.DownloadedAt => 2,
             _ => 0
         };
+        FilterSortText.Text = SortLabel(selectedIndex);
+        RefreshFilterSortOptions(selectedIndex);
         UpdateSortDirectionButton();
-        _updatingSortControls = false;
     }
 
-    private void OnSortChanged(object? sender, SelectionChangedEventArgs e)
+    private void OnFilterSortOptionClicked(object? sender, RoutedEventArgs e)
     {
-        if (_updatingSortControls)
+        if (sender is not Button { Tag: string tag } || !int.TryParse(tag, out var selectedIndex))
             return;
 
-        var nextSort = SortByBox.SelectedIndex switch
+        var nextSort = selectedIndex switch
         {
             1 => LibrarySortBy.Rating,
             2 => LibrarySortBy.DownloadedAt,
@@ -507,10 +505,40 @@ public partial class MusicView : UserControl
             UpdateSortDirectionButton();
         }
         _sortBy = nextSort;
+        FilterSortText.Text = SortLabel(selectedIndex);
+        RefreshFilterSortOptions(selectedIndex);
+        FilterSortButton.Flyout?.Hide();
         PrepareExplicitSort();
         ApplyFilter();
         ResetPlaybackQueueFromCurrentView();
         PersistPlayerSession();
+        e.Handled = true;
+    }
+
+    private static string SortLabel(int index) => index switch
+    {
+        1 => "Rating",
+        2 => "Downloaded at",
+        _ => "Name"
+    };
+
+    private void RefreshFilterSortOptions(int selectedIndex)
+    {
+        var options = new (Button Button, Image Check)[]
+        {
+            (FilterSortNameOption, FilterSortNameCheck),
+            (FilterSortRatingOption, FilterSortRatingCheck),
+            (FilterSortDownloadedOption, FilterSortDownloadedCheck)
+        };
+
+        for (var index = 0; index < options.Length; index++)
+        {
+            var (button, check) = options[index];
+            button.Classes.Remove("selected");
+            if (index == selectedIndex)
+                button.Classes.Add("selected");
+            check.Opacity = index == selectedIndex ? 0.9 : 0;
+        }
     }
 
     private void OnSortDirectionClicked(object? sender, RoutedEventArgs e)
