@@ -753,6 +753,23 @@
                                             Background="Transparent" BorderThickness="0"
                                             HorizontalContentAlignment="Center"
                                             VerticalContentAlignment="Center"
+                                            Click="OnPlayingTrackReviewClicked"
+                                            ToolTip.Tip="{Binding ReviewActionTooltip}">
+                                        <Grid Width="17" Height="17"
+                                              HorizontalAlignment="Center"
+                                              VerticalAlignment="Center">
+                                            <Image Source="{SvgImage /Assets/review.svg}"
+                                                   Width="16" Height="16" Opacity="0.62"
+                                                   IsVisible="{Binding IsNotMarkedForReview}"/>
+                                            <Image Source="{SvgImage /Assets/review-active.svg}"
+                                                   Width="16" Height="16"
+                                                   IsVisible="{Binding NeedsReview}"/>
+                                        </Grid>
+                                    </Button>
+                                    <Button Width="25" Height="25" Padding="0"
+                                            Background="Transparent" BorderThickness="0"
+                                            HorizontalContentAlignment="Center"
+                                            VerticalContentAlignment="Center"
                                             Click="OnPlayingTrackDeleteClicked"
                                             ToolTip.Tip="Delete track">
                                         <Image Source="{SvgImage /Assets/trash.svg}"

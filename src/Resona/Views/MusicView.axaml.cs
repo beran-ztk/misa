@@ -3852,6 +3852,18 @@ public partial class MusicView : UserControl
         ShowToast($"Rating changed to {option.Name}");
     }
 
+    private void OnPlayingTrackReviewClicked(object? sender, RoutedEventArgs e)
+    {
+        e.Handled = true;
+        if (sender is not Control { DataContext: TrackDisplayItem item })
+            return;
+
+        var needsReview = !item.Track.NeedsReview;
+        MusicLibraryService.Current.SetTrackNeedsReview(item.Track.Id, needsReview);
+        UpdateTrackInList(item.Track.Id);
+        ShowToast(needsReview ? "Marked for review" : "Review mark removed");
+    }
+
     private async void OnPlayingTrackDeleteClicked(object? sender, RoutedEventArgs e)
     {
         e.Handled = true;

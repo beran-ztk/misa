@@ -75,7 +75,7 @@ public record TrackDisplayItem(
     public double TrackCardHeight => IsPlaying ? 104 : 58;
     public bool ShowCompactDuration => !IsPlaying;
     public Thickness TrackContentMargin => IsPlaying
-        ? new Thickness(0, 4, 176, 0)
+        ? new Thickness(0, 4, 205, 0)
         : new Thickness(0, 4, 100, 0);
     public string PlayingAudioText { get; init; } = string.Empty;
     public string PlayingAnalysisStatusText { get; init; } = string.Empty;
@@ -92,6 +92,8 @@ public record TrackDisplayItem(
     public bool HasPlayingMetadata => PlayingMetadataText.Length > 0;
     public bool HasPlayingMoods => PlayingMoodDisplays.Count > 0;
     public bool NeedsReview { get; set; }
+    public bool IsNotMarkedForReview => !NeedsReview;
+    public string ReviewActionTooltip => NeedsReview ? "Remove review mark" : "Mark for review";
     public bool NeedsAnalysis { get; set; }
     public bool ShowDownloadedDate { get; set; }
     public Bitmap? Thumbnail { get; set; }
