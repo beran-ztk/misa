@@ -135,8 +135,24 @@
                                 ToolTip.Tip="Mark for review"
                                 Width="34" Height="34" Padding="0"
                                 Background="Transparent" BorderThickness="0"
-                                Opacity="0.45">
-                            <Image Source="{SvgImage /Assets/review.svg}" Width="17" Height="17"/>
+                                HorizontalContentAlignment="Center"
+                                VerticalContentAlignment="Center">
+                            <Grid Width="18" Height="18"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center"
+                                  Margin="1,0,0,0">
+                                <Image x:Name="ReviewInactiveIcon"
+                                       Source="{SvgImage /Assets/review.svg}"
+                                       Width="17" Height="17"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"/>
+                                <Image x:Name="ReviewActiveIcon"
+                                       Source="{SvgImage /Assets/review-active.svg}"
+                                       Width="17" Height="17"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       IsVisible="False"/>
+                            </Grid>
                         </Button>
                         <Button x:Name="AnalysisPolicyButton"
                                 Click="OnAnalysisPolicyClicked"
@@ -269,7 +285,8 @@
                                     <TextBlock Grid.Row="0" Text="Artist" FontSize="10.5" Opacity="0.58" VerticalAlignment="Center" />
                                     <TextBlock x:Name="ArtistDisplayText" Grid.Row="0" Grid.Column="1" FontSize="11.5" FontWeight="SemiBold"
                                                VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-                                    <TextBox x:Name="ArtistBox" Grid.Row="0" Grid.Column="1" IsVisible="False" Height="28" Watermark="Artist" />
+                                    <TextBox x:Name="ArtistBox" Grid.Row="0" Grid.Column="1" IsVisible="False"
+                                             Classes="compact-search" Height="26" Margin="0,2" Watermark="Artist" />
                                     <Button x:Name="EditInformationButton"
                                             Grid.Row="0" Grid.Column="3"
                                             Click="OnEditInformationClicked"
@@ -283,19 +300,22 @@
                                     <TextBlock Grid.Row="1" Text="Title" FontSize="10.5" Opacity="0.58" VerticalAlignment="Center" />
                                     <TextBlock x:Name="TitleDisplayText" Grid.Row="1" Grid.Column="1" FontSize="12.5" FontWeight="SemiBold"
                                                VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-                                    <TextBox x:Name="TitleBox" Grid.Row="1" Grid.Column="1" IsVisible="False" Height="28" Watermark="Title" />
+                                    <TextBox x:Name="TitleBox" Grid.Row="1" Grid.Column="1" IsVisible="False"
+                                             Classes="compact-search" Height="26" Margin="0,2" Watermark="Title" />
 
                                     <TextBlock Grid.Row="2" Text="Remix" FontSize="10.5" Opacity="0.58" VerticalAlignment="Center" />
                                     <TextBlock x:Name="RemixDisplayText" Grid.Row="2" Grid.Column="1" FontSize="10.5"
                                                Foreground="{DynamicResource Theme.Brush.TextSecondary}"
                                                VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-                                    <TextBox x:Name="RemixBox" Grid.Row="2" Grid.Column="1" IsVisible="False" Height="28" Watermark="Remix (without parentheses)" />
+                                    <TextBox x:Name="RemixBox" Grid.Row="2" Grid.Column="1" IsVisible="False"
+                                             Classes="compact-search" Height="26" Margin="0,2" Watermark="Remix (without parentheses)" />
 
                                     <TextBlock Grid.Row="3" Text="Edits" FontSize="10.5" Opacity="0.58" VerticalAlignment="Center" />
                                     <TextBlock x:Name="EditsDisplayText" Grid.Row="3" Grid.Column="1" FontSize="10.5"
                                                Foreground="{DynamicResource Theme.Brush.TextSecondary}"
                                                VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-                                    <TextBox x:Name="EditsBox" Grid.Row="3" Grid.Column="1" IsVisible="False" Height="28" Watermark="Nightcore, Sped Up, Reverb" />
+                                    <TextBox x:Name="EditsBox" Grid.Row="3" Grid.Column="1" IsVisible="False"
+                                             Classes="compact-search" Height="26" Margin="0,2" Watermark="Nightcore, Sped Up, Reverb" />
 
                                     <TextBlock Grid.Row="4" Text="Original title" FontSize="10.5" Opacity="0.58" VerticalAlignment="Center" />
                                     <TextBlock x:Name="OriginalTitleDisplayText" Grid.Row="4" Grid.Column="1" FontSize="10.5"

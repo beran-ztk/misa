@@ -851,10 +851,10 @@ public partial class EditTrackOverlay : UserControl
 
     private void UpdateReviewVisual(bool needsReview)
     {
-        ReviewButton.Opacity = needsReview ? 1 : 0.45;
-        ReviewButton.Background = needsReview
-            ? new SolidColorBrush(Color.FromArgb(36, 255, 210, 122))
-            : Brushes.Transparent;
+        ReviewButton.Opacity = needsReview ? 1 : 0.68;
+        ReviewButton.Background = Brushes.Transparent;
+        ReviewInactiveIcon.IsVisible = !needsReview;
+        ReviewActiveIcon.IsVisible = needsReview;
         ToolTip.SetTip(ReviewButton, needsReview ? "Remove review mark" : "Mark for review");
     }
 
@@ -875,6 +875,8 @@ public partial class EditTrackOverlay : UserControl
 
     private void UpdateAnalysisPolicyVisual(bool disabled)
     {
+        AnalysisPolicyButton.IsVisible = _track is not null
+            && MusicLibraryService.Current.GetTrackAudioAnalysis(_track.Id) is null;
         AnalysisPolicyButton.Opacity = disabled ? 1 : 0.45;
         AnalysisPolicyButton.Background = disabled
             ? new SolidColorBrush(Color.FromArgb(40, 238, 92, 92))
