@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Avalonia.Media;
 using Avalonia.Media.Imaging;
 
 namespace Resona.Models;
@@ -221,6 +222,16 @@ public sealed record ChannelHubItem(
     byte[]? Thumbnail = null,
     string? BasicMetadataCheckedAt = null)
 {
+    private static readonly IBrush[] RatingProgressBrushes =
+    [
+        new SolidColorBrush(Color.FromRgb(255, 75, 75)),
+        new SolidColorBrush(Color.FromRgb(210, 205, 95)),
+        new SolidColorBrush(Color.FromRgb(45, 190, 240)),
+        new SolidColorBrush(Color.FromRgb(55, 224, 105)),
+        new SolidColorBrush(Color.FromRgb(255, 132, 48)),
+        new SolidColorBrush(Color.FromRgb(255, 215, 64))
+    ];
+
     public Bitmap? Artwork { get; set; }
     public bool HasArtwork => Artwork is not null;
     public bool ShowMonogram => Artwork is null;
@@ -272,6 +283,17 @@ public sealed record ChannelHubItem(
         ? $"{average.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)} / 6.0"
         : "— / 6.0";
     public double AverageRatingScore => System.Math.Clamp(AverageRating ?? 0d, 0d, 6d);
+    public IBrush AverageRatingProgressBrush
+    {
+        get
+        {
+            var level = System.Math.Clamp(
+                (int)System.Math.Round(AverageRating ?? 0d, MidpointRounding.AwayFromZero),
+                1,
+                RatingProgressBrushes.Length);
+            return RatingProgressBrushes[level - 1];
+        }
+    }
     public string VideoQueueText => UncheckedVideoCount == 0
         ? "No tracks awaiting a decision"
         : UncheckedVideoCount == 1 ? "1 track awaiting a decision" : $"{UncheckedVideoCount:N0} tracks awaiting a decision";
