@@ -384,8 +384,6 @@
                                 <TextBlock Text="PUBLIC USER ID" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
                                 <TextBlock x:Name="ProfileUserIdText" FontSize="11" FontFamily="Consolas"
                                            TextTrimming="CharacterEllipsis"/>
-                                <TextBlock Text="Stable cloud identifier for this public profile. It is safe to share; the private device key stays local."
-                                           FontSize="10" Opacity="0.48" TextWrapping="Wrap"/>
                             </StackPanel>
                             <Button Grid.Column="1" Classes="settings-ghost" ToolTip.Tip="Copy user ID"
                                     Click="OnCopyProfileUserIdClicked">
@@ -409,12 +407,7 @@
                           HorizontalScrollBarVisibility="Disabled">
                 <StackPanel Spacing="26" Margin="0,0,0,24">
                     <StackPanel Spacing="12">
-                        <StackPanel Spacing="4">
-                            <TextBlock Text="CLOUD" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
-                            <TextBlock Text="Cloud synchronization" FontSize="15" FontWeight="SemiBold"/>
-                            <TextBlock Text="Publishes your profile and current library to the Resona cloud."
-                                       FontSize="11" Opacity="0.62" TextWrapping="Wrap"/>
-                        </StackPanel>
+                        <TextBlock Text="Cloud synchronization" FontSize="15" FontWeight="SemiBold"/>
                         <StackPanel Spacing="6">
                             <TextBlock Text="SERVER ADDRESS" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
                             <Grid ColumnDefinitions="*,34" ColumnSpacing="8">
@@ -432,8 +425,10 @@
                                               Data="M19.35,10.04A7.49,7.49 0 0,0 5.26,8.05A6,6 0 0,0 6,20H19A5,5 0 0,0 19.35,10.04M13,12V16H16L12,20L8,16H11V12H13Z"/>
                                 </Button>
                             </Grid>
-                            <TextBlock Text="Used for profile discovery and public library synchronization."
-                                       FontSize="10.5" Opacity="0.52" TextWrapping="Wrap"/>
+                            <TextBlock Text="Only metadata is synchronized. Audio files are not uploaded. This is not a backup, and tracks cannot be played from another device."
+                                       FontSize="10.5" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource Theme.Brush.DangerText}"
+                                       TextWrapping="Wrap"/>
                             <TextBlock x:Name="CloudServerStatusText"
                                        IsVisible="False" FontSize="10.5" Opacity="0.68"
                                        TextWrapping="Wrap"/>
@@ -443,19 +438,12 @@
                     <Rectangle Height="1" Fill="{DynamicResource Theme.Brush.Divider}"/>
 
                     <StackPanel Spacing="12">
-                        <StackPanel Spacing="4">
-                            <TextBlock Text="ANALYSIS" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
-                            <TextBlock Text="Analysis server" FontSize="15" FontWeight="SemiBold"/>
-                            <TextBlock Text="Analyzes new tracks for genre, tempo and loudness."
-                                       FontSize="11" Opacity="0.62" TextWrapping="Wrap"/>
-                        </StackPanel>
+                        <TextBlock Text="Analysis server" FontSize="15" FontWeight="SemiBold"/>
                         <StackPanel Spacing="6">
                             <TextBlock Text="SERVER ADDRESS" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
                             <TextBox x:Name="MusicAnalysisServerUrlBox"
                                      Classes="settings-input"
                                      Watermark="https://analyzer.example.com"/>
-                            <TextBlock Text="HTTP or HTTPS address of the analysis service."
-                                       FontSize="10.5" Opacity="0.52" TextWrapping="Wrap"/>
                         </StackPanel>
                         <StackPanel Spacing="6">
                             <TextBlock Text="API KEY" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
@@ -463,8 +451,6 @@
                                      Classes="settings-input"
                                      PasswordChar="●"
                                      Watermark="Optional access key"/>
-                            <TextBlock Text="Optional. Stored only on this device."
-                                       FontSize="10.5" Opacity="0.52" TextWrapping="Wrap"/>
                         </StackPanel>
                         <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="9">
                             <TextBlock x:Name="AnalysisServerStatusText"
