@@ -643,7 +643,8 @@
 
                                         <views:TrackTitleTagPanel Grid.Row="0"
                                                                   Grid.Column="1"
-                                                                  Gap="6">
+                                                                  Gap="6"
+                                                                  HorizontalAlignment="Stretch">
                                             <TextBlock
                                                        Text="{Binding Track.DisplayTitle}"
                                                        Foreground="{Binding TitleBrush}"
@@ -652,7 +653,6 @@
                                                        VerticalAlignment="Center"
                                                        TextTrimming="CharacterEllipsis"/>
                                             <views:TrackTagSummaryControl Tags="{Binding TagDisplays}"
-                                                                          MaxWidth="220"
                                                                           Margin="0,0,8,0"
                                                                           HorizontalAlignment="Stretch"
                                                                           VerticalAlignment="Center"/>
