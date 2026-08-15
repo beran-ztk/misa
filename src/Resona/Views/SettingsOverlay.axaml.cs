@@ -1384,19 +1384,27 @@ public partial class SettingsOverlay : UserControl
         fields.Children.Add(CreateLabeledField("Tag", nameBox));
         var save = new Button
         {
-            Content = "Save",
-            Classes = { "settings-action" },
+            Content = CreateSvgIcon("/Assets/save.svg", 15),
+            Width = 30,
+            Height = 30,
+            Padding = new Avalonia.Thickness(0),
+            Background = Brushes.Transparent,
+            BorderThickness = new Avalonia.Thickness(0),
             VerticalAlignment = VerticalAlignment.Bottom
         };
+        ToolTip.SetTip(save, "Save tag");
         var remove = new Button
         {
-            Content = "Delete",
-            Classes = { "settings-ghost" },
-            Width = double.NaN,
-            Padding = new Avalonia.Thickness(10, 4),
+            Content = CreateSvgIcon("/Assets/trash.svg", 15),
+            Width = 30,
+            Height = 30,
+            Padding = new Avalonia.Thickness(0),
+            Background = Brushes.Transparent,
+            BorderThickness = new Avalonia.Thickness(0),
             VerticalAlignment = VerticalAlignment.Bottom,
             Opacity = .7
         };
+        ToolTip.SetTip(remove, "Delete tag");
         Grid.SetColumn(save, 1);
         Grid.SetColumn(remove, 2);
         fields.Children.Add(save);

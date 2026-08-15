@@ -803,31 +803,38 @@
             </ScrollViewer>
 
             <Grid x:Name="TagsPage" Grid.Row="2" IsVisible="False" RowDefinitions="Auto,*" Margin="30,22,30,0">
-                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,14">
-                    <TextBlock x:Name="TagVocabularyHintText"
-                               FontSize="10.5"
-                               Opacity="0.5"
-                               VerticalAlignment="Center"/>
-                    <Button Grid.Column="1" Classes="settings-action"
-                            Content="Create tag"
-                            Click="OnShowCreateTagClicked"/>
-                </Grid>
+                <Grid Grid.RowSpan="2"
+                      RowDefinitions="Auto,*"
+                      MinWidth="280"
+                      MaxWidth="380"
+                      HorizontalAlignment="Stretch">
+                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,14">
+                        <TextBlock x:Name="TagVocabularyHintText"
+                                   FontSize="10.5"
+                                   Opacity="0.5"
+                                   VerticalAlignment="Center"/>
+                        <Button Grid.Column="1" Classes="settings-action"
+                                Content="Create tag"
+                                Click="OnShowCreateTagClicked"/>
+                    </Grid>
 
-                <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
-                    <StackPanel x:Name="TagRows"
-                                Width="380"
-                                HorizontalAlignment="Center"
-                                Spacing="8"
-                                Margin="0,0,0,18"/>
-                </ScrollViewer>
+                    <ScrollViewer Grid.Row="1" Padding="0" HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel x:Name="TagRows"
+                                    HorizontalAlignment="Stretch"
+                                    Spacing="8"
+                                    Margin="0,0,0,18"/>
+                    </ScrollViewer>
+                </Grid>
 
                 <Border x:Name="CreateTagOverlay"
                         Grid.RowSpan="2"
                         ZIndex="10"
                         IsVisible="False"
                         Background="#99000000">
-                    <Border Width="340"
-                            HorizontalAlignment="Center"
+                    <Border MinWidth="260"
+                            MaxWidth="340"
+                            Margin="24"
+                            HorizontalAlignment="Stretch"
                             VerticalAlignment="Center"
                             Background="{DynamicResource Theme.Brush.Surface}"
                             BorderBrush="{DynamicResource Theme.Brush.BorderStrong}"
