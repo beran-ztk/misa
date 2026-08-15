@@ -14,7 +14,7 @@ namespace Resona.Views;
 public partial class ActivityCenter : UserControl
 {
     private static readonly IBrush RunningBrush = Brush("#78AEE8");
-    private static readonly IBrush QueuedBrush = Brush("#9AA8B5");
+    private static readonly IBrush QueuedBrush = Brush("#A8A8AC");
     private static readonly IBrush CompletedBrush = Brush("#79C994");
     private static readonly IBrush FailedBrush = Brush("#E87878");
     private static readonly IBrush CanceledBrush = Brush("#8A929B");
@@ -130,9 +130,11 @@ public partial class ActivityCenter : UserControl
     {
         var row = new Border
         {
-            Background = job.State == BackgroundJobState.Failed ? Brush("#241E1517") : Brushes.Transparent,
-            CornerRadius = new CornerRadius(5),
-            Padding = new Thickness(7, 6)
+            Background = job.State == BackgroundJobState.Failed ? Brush("#241E1517") : Brush("#08FFFFFF"),
+            BorderBrush = job.State == BackgroundJobState.Failed ? Brush("#3AE87878") : Brush("#14FFFFFF"),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(7),
+            Padding = new Thickness(9, 7)
         };
         var grid = new Grid
         {
@@ -161,7 +163,7 @@ public partial class ActivityCenter : UserControl
         {
             Text = $"{job.Source} · {KindLabel(job.Kind)} · {TimeLabel(job)}",
             FontSize = 9,
-            Foreground = Brush("#8795A3"),
+            Foreground = Brush("#96969B"),
             TextTrimming = TextTrimming.CharacterEllipsis
         });
         var detail = Detail(job, serviceSnapshot);
@@ -171,7 +173,7 @@ public partial class ActivityCenter : UserControl
             {
                 Text = detail,
                 FontSize = 9.5,
-                Foreground = job.State == BackgroundJobState.Failed ? FailedBrush : Brush("#ABB6C0"),
+                Foreground = job.State == BackgroundJobState.Failed ? FailedBrush : Brush("#B8B8BC"),
                 TextWrapping = job.State == BackgroundJobState.Failed ? TextWrapping.Wrap : TextWrapping.NoWrap,
                 TextTrimming = TextTrimming.CharacterEllipsis,
                 MaxLines = job.State == BackgroundJobState.Failed ? 2 : 1
@@ -205,6 +207,7 @@ public partial class ActivityCenter : UserControl
                 Opacity = 0.62,
                 IsEnabled = !job.Detail.Equals("Canceling…", StringComparison.Ordinal)
             };
+            cancel.Classes.Add("activity-action");
             ToolTip.SetTip(cancel, "Cancel this execution");
             cancel.Click += (_, _) => BackgroundJobService.Current.Cancel(job.Id);
             Grid.SetColumn(cancel, 3);

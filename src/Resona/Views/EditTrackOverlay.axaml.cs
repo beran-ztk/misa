@@ -1189,8 +1189,8 @@ public partial class EditTrackOverlay : UserControl
         ModelSelectedGenresPanel.Children.Clear();
         foreach (var assignment in assignments)
         {
-            var isManualSelection = assignment.IsManual;
-            var confidence = isManualSelection ? 0 : assignment.Reasons.Max(reason => reason.Score);
+            var hasPrediction = assignment.Reasons.Count > 0;
+            var confidence = hasPrediction ? assignment.Reasons.Max(reason => reason.Score) : 0;
             var confidenceBrush = AnalysisColorScale.GenreConfidence(confidence);
             var enabled = assignment.IsEnabled;
             var container = new Border
@@ -1204,7 +1204,7 @@ public partial class EditTrackOverlay : UserControl
             {
                 ColumnDefinitions = new ColumnDefinitions("*,22"),
                 ColumnSpacing = 10,
-                RowDefinitions = new RowDefinitions(isManualSelection ? "Auto" : "Auto,Auto"),
+                RowDefinitions = new RowDefinitions(hasPrediction ? "Auto,Auto" : "Auto"),
                 RowSpacing = 6
             };
             var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), ColumnSpacing = 10 };
@@ -1220,7 +1220,7 @@ public partial class EditTrackOverlay : UserControl
             row.Children.Add(genreName);
 
             Control detail;
-            if (isManualSelection)
+            if (!hasPrediction)
             {
                 detail = new TextBlock
                 {
@@ -1270,7 +1270,7 @@ public partial class EditTrackOverlay : UserControl
                 Cursor = new Cursor(StandardCursorType.Hand)
             };
             Grid.SetColumn(remove, 1);
-            Grid.SetRowSpan(remove, isManualSelection ? 1 : 2);
+            Grid.SetRowSpan(remove, hasPrediction ? 2 : 1);
             content.Children.Add(remove);
             container.Child = content;
             remove.PointerPressed += (_, e) =>
@@ -1282,12 +1282,12 @@ public partial class EditTrackOverlay : UserControl
                 AutoSaveChanges();
                 e.Handled = true;
             };
-            IEnumerable<int> tooltipIds = isManualSelection
-                ? new[] { assignment.GenreId }
-                : assignment.Reasons
+            IEnumerable<int> tooltipIds = hasPrediction
+                ? assignment.Reasons
                     .Select(reason => FindModelSubgenreId(reason.ModelGenreName, reason.ModelSubgenreName))
                     .Where(id => id is not null)
-                    .Select(id => id!.Value);
+                    .Select(id => id!.Value)
+                : new[] { assignment.GenreId };
             ToolTip.SetTip(container, CreateModelMetadataTooltip(tooltipIds));
             ModelSelectedGenresPanel.Children.Add(container);
         }
@@ -1724,55 +1724,17 @@ public partial class EditTrackOverlay : UserControl
 
     private Control CreateModelMetadataTooltip(IEnumerable<int> subgenreIds)
     {
-        var panel = new StackPanel { Spacing = 7 };
-        foreach (var id in subgenreIds.Distinct())
-        {
-            if (!_modelSubgenresById.TryGetValue(id, out var subgenre)) continue;
-            var genreName = _modelGenreNamesById.GetValueOrDefault(subgenre.ModelGenreId, "Model genre");
-            panel.Children.Add(new TextBlock
+        var entries = subgenreIds
+            .Distinct()
+            .Where(_modelSubgenresById.ContainsKey)
+            .Select(id =>
             {
-                Text = $"{genreName} → {subgenre.Name}",
-                FontSize = 12,
-                FontWeight = FontWeight.SemiBold,
-                Foreground = ThemeResources.Brush("Theme.Brush.TextSecondary")
+                var subgenre = _modelSubgenresById[id];
+                var genreName = _modelGenreNamesById.GetValueOrDefault(subgenre.ModelGenreId, "Model genre");
+                var distinctions = _distinctionsBySubgenreId.GetValueOrDefault(subgenre.Id, []);
+                return new GenreMetadataTooltipEntry(subgenre, genreName, distinctions);
             });
-            if (!string.IsNullOrWhiteSpace(subgenre.Description))
-                panel.Children.Add(new TextBlock { Text = subgenre.Description, FontSize = 11, TextWrapping = TextWrapping.Wrap });
-            if (!string.IsNullOrWhiteSpace(subgenre.ClassificationHint))
-                panel.Children.Add(new TextBlock
-                {
-                    Text = $"Classify when: {subgenre.ClassificationHint}", FontSize = 10.5,
-                    Foreground = ThemeResources.Brush("Theme.Brush.Accent"), TextWrapping = TextWrapping.Wrap
-                });
-            if (subgenre.BpmMin is not null || subgenre.BpmMax is not null)
-                panel.Children.Add(new TextBlock
-                {
-                    Text = subgenre.BpmMin is not null && subgenre.BpmMax is not null
-                        ? $"Typical BPM: {subgenre.BpmMin}–{subgenre.BpmMax}"
-                        : $"Typical BPM: {(subgenre.BpmMin is not null ? $"from {subgenre.BpmMin}" : $"up to {subgenre.BpmMax}")}",
-                    FontSize = 10.5, Opacity = 0.78
-                });
-            if (_distinctionsBySubgenreId.TryGetValue(subgenre.Id, out var distinctions))
-            {
-                panel.Children.Add(new TextBlock { Text = "Distinguish from", FontSize = 10.5, FontWeight = FontWeight.SemiBold, Opacity = 0.82 });
-                foreach (var distinction in distinctions)
-                    panel.Children.Add(new TextBlock
-                    {
-                        Text = $"{distinction.ModelGenreName} → {distinction.ModelSubgenreName}: {distinction.Difference}",
-                        FontSize = 10, Opacity = 0.76, TextWrapping = TextWrapping.Wrap
-                    });
-            }
-        }
-        return new Border
-        {
-            Background = ThemeResources.Brush("Theme.Brush.SurfaceRaised"),
-            BorderBrush = ThemeResources.Brush("Theme.Brush.BorderStrong"),
-            BorderThickness = new Avalonia.Thickness(1), CornerRadius = new Avalonia.CornerRadius(6),
-            // Tooltips opened near the left analysis column only have roughly 320 px of safe popup space.
-            // Keep the content narrower than that space so text wraps instead of being clipped on both sides.
-            Padding = new Avalonia.Thickness(12, 10), Width = 300, MaxWidth = 300,
-            Child = new ScrollViewer { MaxHeight = 390, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled, Content = panel }
-        };
+        return GenreMetadataTooltipFactory.Create(entries);
     }
 
 
