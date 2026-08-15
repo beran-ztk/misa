@@ -399,7 +399,7 @@ public partial class MusicView : UserControl
         EditTrackOverlay.ChannelRequested += channelId =>
         {
             EditTrackOverlay.RequestClose();
-            ChannelOverlay.Margin = new Thickness(0, 0, 0, PlayerBar.Bounds.Height);
+            ChannelOverlay.Margin = new Thickness(0);
             ChannelOverlay.OpenChannel(channelId);
         };
         EditTrackOverlay.BackdropFocusChanged += OnEditorBackdropFocusChanged;
@@ -3390,7 +3390,7 @@ public partial class MusicView : UserControl
     private void OnChannelsClicked(object? sender, RoutedEventArgs e)
     {
         CloseActivityCenter();
-        ChannelOverlay.Margin = new Thickness(0, 0, 0, PlayerBar.Bounds.Height);
+        ChannelOverlay.Margin = new Thickness(0);
         ChannelOverlay.Open();
     }
 

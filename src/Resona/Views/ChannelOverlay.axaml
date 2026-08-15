@@ -3,7 +3,7 @@
              xmlns:models="clr-namespace:Resona.Models"
              xmlns:views="clr-namespace:Resona.Views"
              x:Class="Resona.Views.ChannelOverlay"
-             Background="#F2121212">
+             Background="#202020">
     <UserControl.Resources>
         <DataTemplate x:Key="ChannelCardTemplate" x:DataType="models:ChannelHubItem">
             <Border Classes="channel-card" Width="370"
@@ -389,7 +389,7 @@
         </Style>
     </UserControl.Styles>
 
-    <Border BorderBrush="#14FFFFFF" BorderThickness="0,0,0,1">
+    <Border Background="#202020" BorderBrush="#14FFFFFF" BorderThickness="0,0,0,1">
     <Grid>
         <Rectangle x:Name="ChannelAtmosphereTint" Opacity="0.12" IsHitTestVisible="False">
             <Rectangle.Fill>
