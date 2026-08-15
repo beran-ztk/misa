@@ -189,6 +189,8 @@ public partial class MusicView : UserControl
         _playerAmbientPrimaryStop = playerAmbientGradient.GradientStops[0];
         _playerAmbientSecondaryStop = playerAmbientGradient.GradientStops[1];
         var appSettings = AppSettingsStore.Load();
+        Values.UseYtDlpBrowserCookies = appSettings.UseYtDlpBrowserCookies;
+        Values.YtDlpCookiesBrowser = AppSettingsStore.NormalizeYtDlpCookiesBrowser(appSettings.YtDlpCookiesBrowser);
         foreach (var pair in appSettings.TrackBackdropFocus)
             _trackBackdropFocus[pair.Key] = pair.Value;
         _appearanceSettings = appSettings.Appearance.Clone().Clamp();

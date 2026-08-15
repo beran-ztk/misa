@@ -18,8 +18,29 @@ public sealed class AppSettingsDefaultsTests
         Assert.True(settings.DiscordRichPresenceEnabled);
         Assert.Null(settings.DiscordStateText);
         Assert.Null(settings.DiscordLargeImageText);
+        Assert.False(settings.UseYtDlpBrowserCookies);
+        Assert.Equal("firefox", settings.YtDlpCookiesBrowser);
         Assert.Empty(settings.PlayerSession.QueueTrackIds);
         Assert.Empty(settings.TrackBackdropFocus);
+    }
+
+    [Theory]
+    [InlineData("firefox")]
+    [InlineData("chrome")]
+    [InlineData("edge")]
+    [InlineData("brave")]
+    public void Supported_cookie_browsers_are_preserved(string browser)
+    {
+        Assert.Equal(browser, AppSettingsStore.NormalizeYtDlpCookiesBrowser(browser));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("unsupported")]
+    public void Invalid_cookie_browser_falls_back_to_firefox(string? browser)
+    {
+        Assert.Equal("firefox", AppSettingsStore.NormalizeYtDlpCookiesBrowser(browser));
     }
 
     [Fact]

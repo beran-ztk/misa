@@ -12,6 +12,10 @@ public static class AppSettingsStore
 {
     public const int ChannelDownloadMinDurationMinutes = 1;
     public const int ChannelDownloadMaxDurationMinutes = 180;
+    private static readonly HashSet<string> SupportedYtDlpCookieBrowsers = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "firefox", "chrome", "edge", "brave"
+    };
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -35,6 +39,7 @@ public static class AppSettingsStore
                 ChannelDownloadMinDurationMinutes,
                 ChannelDownloadMaxDurationMinutes);
             settings.Appearance = (settings.Appearance ?? new AppearanceSettings()).Clamp();
+            settings.YtDlpCookiesBrowser = NormalizeYtDlpCookiesBrowser(settings.YtDlpCookiesBrowser);
             settings.PlayerSession ??= new PlayerSessionSettings();
             settings.PlayerSession.QueueTrackIds ??= [];
             settings.TrackBackdropFocus = settings.TrackBackdropFocus?
@@ -104,6 +109,22 @@ public static class AppSettingsStore
         Save(settings);
     }
 
+    public static void SaveYtDlpBrowserCookies(bool enabled, string? browser)
+    {
+        var settings = Load();
+        settings.UseYtDlpBrowserCookies = enabled;
+        settings.YtDlpCookiesBrowser = NormalizeYtDlpCookiesBrowser(browser);
+        Save(settings);
+    }
+
+    public static string NormalizeYtDlpCookiesBrowser(string? browser)
+    {
+        var normalized = browser?.Trim().ToLowerInvariant();
+        return normalized is not null && SupportedYtDlpCookieBrowsers.Contains(normalized)
+            ? normalized
+            : "firefox";
+    }
+
     public static void SavePlayerSession(PlayerSessionSettings playerSession)
     {
         var settings = Load();
@@ -143,6 +164,8 @@ public sealed class AppSettings
     public string? DiscordLargeImageText { get; set; }
     public bool DiscordRichPresenceEnabled { get; set; } = true;
     public string? CloudServerUrl { get; set; } = "https://api.resona-music.de";
+    public bool UseYtDlpBrowserCookies { get; set; }
+    public string YtDlpCookiesBrowser { get; set; } = "firefox";
 }
 
 public sealed class PlayerSessionSettings

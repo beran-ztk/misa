@@ -42,7 +42,8 @@ public static class Values
     // Durable domain queues may prepare three items; the central job scheduler is
     // the final authority that enforces the same global yt-dlp concurrency limit.
     public const int MaxParallelDownloadWorkers = 3;
-    public static bool UseFirefoxCookiesForYtDlp;
+    public static bool UseYtDlpBrowserCookies;
+    public static string YtDlpCookiesBrowser = "firefox";
 
     public static List<Genre> Genres = [];
     public static List<Tag> Tags = [];

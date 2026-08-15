@@ -44,6 +44,7 @@ public partial class SettingsOverlay : UserControl
     private double _previewBass;
     private double _previewTreble;
     private bool _loadingDiscordPresenceSettings;
+    private bool _loadingBrowserCookieSettings;
     private bool _loadingProfile;
     private bool _profileSavePending;
     private readonly DispatcherTimer _profileSaveTimer = new() { Interval = TimeSpan.FromSeconds(2) };
@@ -97,7 +98,14 @@ public partial class SettingsOverlay : UserControl
         RefreshAppearancePreview();
         CloudServerStatusText.IsVisible = false;
         AnalysisServerStatusText.IsVisible = false;
-        FirefoxCookiesToggle.IsChecked = Values.UseFirefoxCookiesForYtDlp;
+        _loadingBrowserCookieSettings = true;
+        var cookiesBrowser = AppSettingsStore.NormalizeYtDlpCookiesBrowser(appSettings.YtDlpCookiesBrowser);
+        BrowserCookiesBrowserBox.SelectedItem = BrowserCookiesBrowserBox.Items
+            .OfType<ComboBoxItem>()
+            .First(item => string.Equals(item.Tag as string, cookiesBrowser, StringComparison.OrdinalIgnoreCase));
+        BrowserCookiesToggle.IsChecked = appSettings.UseYtDlpBrowserCookies;
+        _loadingBrowserCookieSettings = false;
+        ApplyBrowserCookieSettings(save: false);
         RefreshLinuxDependencies();
         RebuildBackupDirectoryRows();
         CloudServerUrlBox.Text = appSettings.CloudServerUrl;
@@ -845,12 +853,33 @@ public partial class SettingsOverlay : UserControl
         AnalysisServerStatusText.IsVisible = true;
     }
 
-    private void OnFirefoxCookiesToggleChanged(object? sender, RoutedEventArgs e)
+    private void OnBrowserCookiesSettingChanged(object? sender, RoutedEventArgs e)
     {
-        Values.UseFirefoxCookiesForYtDlp = FirefoxCookiesToggle.IsChecked == true;
-        ToastRequested?.Invoke(Values.UseFirefoxCookiesForYtDlp
-            ? "Firefox session enabled for yt-dlp."
-            : "Firefox session disabled for yt-dlp.");
+        if (!_loadingBrowserCookieSettings)
+            ApplyBrowserCookieSettings(save: true);
+    }
+
+    private void OnBrowserCookiesBrowserChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (!_loadingBrowserCookieSettings)
+            ApplyBrowserCookieSettings(save: true);
+    }
+
+    private void ApplyBrowserCookieSettings(bool save)
+    {
+        var selectedItem = BrowserCookiesBrowserBox.SelectedItem as ComboBoxItem;
+        var browser = AppSettingsStore.NormalizeYtDlpCookiesBrowser(selectedItem?.Tag as string);
+        var browserName = selectedItem?.Content?.ToString() ?? "Firefox";
+        var enabled = BrowserCookiesToggle.IsChecked == true;
+
+        Values.UseYtDlpBrowserCookies = enabled;
+        Values.YtDlpCookiesBrowser = browser;
+        BrowserCookiesWarningText.Text =
+            $"Uses your signed-in {browserName} YouTube session. This stops working if you sign out or the browser session expires.";
+        BrowserCookiesWarningText.IsVisible = enabled;
+
+        if (save)
+            AppSettingsStore.SaveYtDlpBrowserCookies(enabled, browser);
     }
 
     private async void OnAddBackupDirectoryClicked(object? sender, RoutedEventArgs e)

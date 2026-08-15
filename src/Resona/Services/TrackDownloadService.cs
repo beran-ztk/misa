@@ -509,10 +509,10 @@ public class TrackDownloadService
 
     private static string[] YtDlpArgs(params string[] args)
     {
-        if (!Values.UseFirefoxCookiesForYtDlp)
+        if (!Values.UseYtDlpBrowserCookies)
             return args;
 
-        return ["--cookies-from-browser", "firefox", .. args];
+        return ["--cookies-from-browser", Values.YtDlpCookiesBrowser, .. args];
     }
 
     private static string[] YtDlpDownloadArgs(params string[] args)
