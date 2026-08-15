@@ -267,6 +267,11 @@ public sealed record ChannelHubItem(
         ? "No listening history"
         : $"{System.Math.Clamp(SkipCount / (double)PlayCount * 100d, 0d, 100d):0}% skip rate";
     public string VideoSummaryText => KnownVideoCount == 1 ? "1 known video" : $"{KnownVideoCount:N0} known videos";
+    public string LibraryVideoSummaryText => $"{LocalTrackCount:N0} in library · {KnownVideoCount:N0} known";
+    public string AverageRatingScaleText => AverageRating is double average
+        ? $"{average:0.0} / 6.0"
+        : "— / 6.0";
+    public double AverageRatingScore => System.Math.Clamp(AverageRating ?? 0d, 0d, 6d);
     public string VideoQueueText => UncheckedVideoCount == 0
         ? "No tracks awaiting a decision"
         : UncheckedVideoCount == 1 ? "1 track awaiting a decision" : $"{UncheckedVideoCount:N0} tracks awaiting a decision";
@@ -280,6 +285,8 @@ public sealed record ChannelHubItem(
     public string FollowActionText => IsFollowed ? "Following" : "Follow";
     public string FollowGlyph => IsFollowed ? "×" : "+";
     public string FollowToolTip => IsFollowed ? "Unfollow channel" : "Follow channel";
+    public string SubscribeActionText => IsFollowed ? "Subscribed" : "+ Subscribe";
+    public string SubscribeToolTip => IsFollowed ? "Unsubscribe from channel" : "Subscribe to channel";
     public string AutomationText => AutoDownload ? "Auto-download on" : "Manual downloads";
     public string DurationLimitText => MaxDurationMinutes is int minutes
         ? $"{minutes} min channel limit"
