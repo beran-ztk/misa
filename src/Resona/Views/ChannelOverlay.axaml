@@ -67,11 +67,11 @@
         </DataTemplate>
 
         <DataTemplate x:Key="ChannelRowTemplate" x:DataType="models:ChannelHubItem">
-            <Border Classes="channel-card" MinHeight="64" Padding="13,9" Margin="0,0,0,7" CornerRadius="8"
+            <Border Classes="channel-card" MinHeight="60" Padding="13,8" Margin="0,0,0,7" CornerRadius="8"
                     Background="#0EFFFFFF" BorderBrush="#22FFFFFF" BorderThickness="1"
                     Cursor="Hand" Tapped="OnChannelCardTapped">
                 <Grid ColumnDefinitions="46,*,220" RowDefinitions="Auto,Auto"
-                      ColumnSpacing="14" RowSpacing="3">
+                      ColumnSpacing="14" RowSpacing="6">
                     <Border Width="42" Height="42" CornerRadius="21" Background="#213E6591"
                             BorderBrush="#356E91BA" BorderThickness="1" ClipToBounds="True"
                             Grid.RowSpan="2" VerticalAlignment="Center">
@@ -85,13 +85,13 @@
                                Text="{Binding Name}" FontSize="13.5" FontWeight="SemiBold"
                                Foreground="{DynamicResource Theme.Brush.TextPrimary}"
                                TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Name}"
-                               VerticalAlignment="Bottom"/>
+                               VerticalAlignment="Center"/>
                     <TextBlock Grid.Row="1" Grid.Column="1"
                                Text="{Binding LibraryVideoSummaryText}" FontSize="10.5"
                                Foreground="#B7C9D8" Opacity="0.68"
                                TextTrimming="CharacterEllipsis"
                                ToolTip.Tip="{Binding LibraryVideoSummaryText}"
-                               VerticalAlignment="Top"/>
+                               VerticalAlignment="Center"/>
                     <Grid Grid.Row="1" Grid.Column="2"
                           ColumnDefinitions="*,Auto" ColumnSpacing="14"
                           VerticalAlignment="Center">
@@ -103,6 +103,7 @@
                         <TextBlock Grid.Column="1" Text="{Binding AverageRatingScaleText}"
                                    MinWidth="58" FontSize="11.5" FontWeight="SemiBold"
                                    Foreground="{DynamicResource Theme.Brush.TextPrimary}"
+                                   TextAlignment="Right" HorizontalAlignment="Stretch"
                                    TextWrapping="NoWrap" VerticalAlignment="Center"/>
                     </Grid>
                     <Button Grid.Row="0" Grid.Column="2"
@@ -207,8 +208,8 @@
             <Setter Property="Foreground" Value="#D99B9B"/>
         </Style>
         <Style Selector="Button.channel-row-subscribe">
-            <Setter Property="Width" Value="28"/>
-            <Setter Property="Height" Value="28"/>
+            <Setter Property="Width" Value="24"/>
+            <Setter Property="Height" Value="24"/>
             <Setter Property="Padding" Value="0"/>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderBrush" Value="Transparent"/>
@@ -356,13 +357,35 @@
             <Setter Property="Padding" Value="0"/>
             <Setter Property="MinHeight" Value="0"/>
             <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
         </Style>
+        <Style Selector="ListBox.channel-hub-list ListBoxItem /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="8"/>
+        </Style>
         <Style Selector="ListBox.channel-hub-list ListBoxItem:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="#0CFFFFFF"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
         </Style>
         <Style Selector="ListBox.channel-hub-list ListBoxItem:selected /template/ ContentPresenter">
             <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+        <Style Selector="ListBox.channel-hub-list ListBoxItem:selected:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+        <Style Selector="ListBox.channel-hub-list ListBoxItem:focus /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
         </Style>
     </UserControl.Styles>
 
