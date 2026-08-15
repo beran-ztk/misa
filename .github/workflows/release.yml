@@ -70,7 +70,7 @@ jobs:
       - name: Build installer and update packages
         run: >-
           vpk pack
-          --packId Beran.Music
+          --packId Resona
           --packTitle Resona
           --packAuthors bezztk
           --packVersion ${{ steps.version.outputs.version }}
@@ -155,7 +155,7 @@ jobs:
       - name: Build Linux AppImage and update packages
         run: >-
           vpk pack
-          --packId Beran.Music
+          --packId Resona
           --packTitle Resona
           --packAuthors bezztk
           --packVersion ${{ steps.version.outputs.version }}
@@ -171,7 +171,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: >-
           gh release upload "${{ github.ref_name }}"
-          "Releases-Linux/Beran.Music.AppImage"
-          "Releases-Linux/Beran.Music-${{ steps.version.outputs.version }}-linux-full.nupkg"
+          "Releases-Linux/Resona.AppImage"
+          "Releases-Linux/Resona-${{ steps.version.outputs.version }}-linux-full.nupkg"
           --repo "${{ github.repository }}"
           --clobber

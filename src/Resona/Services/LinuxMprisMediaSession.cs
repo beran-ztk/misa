@@ -128,7 +128,7 @@ public sealed class WindowsMediaSession : IDisposable
         [Property(Access = PropertyAccess.Read)] public bool CanSetFullscreen = false;
         [Property(Access = PropertyAccess.Read)] public bool HasTrackList = false;
         [Property(Access = PropertyAccess.Read)] public string Identity = "Resona";
-        [Property(Access = PropertyAccess.Read)] public string DesktopEntry = "Beran.Music";
+        [Property(Access = PropertyAccess.Read)] public string DesktopEntry = "Resona";
         [Property(Access = PropertyAccess.Read)] public string[] SupportedUriSchemes = ["file"];
         [Property(Access = PropertyAccess.Read)] public string[] SupportedMimeTypes =
             ["audio/mpeg", "audio/mp4", "audio/flac", "audio/wav"];
