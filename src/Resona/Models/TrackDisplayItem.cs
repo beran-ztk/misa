@@ -78,6 +78,7 @@ public record TrackDisplayItem(
         ? new Thickness(0, 4, 176, 0)
         : new Thickness(0, 4, 100, 0);
     public string PlayingAudioText { get; init; } = string.Empty;
+    public string PlayingAnalysisStatusText { get; init; } = string.Empty;
     public string PlayingUsageText { get; init; } = string.Empty;
     public string PlayingSourceText { get; init; } = string.Empty;
     public string PlayingMetadataText => string.Join("  ·  ", new[] { PlayingUsageText, PlayingSourceText }
@@ -85,6 +86,7 @@ public record TrackDisplayItem(
     public IReadOnlyList<TrackMoodDisplay> PlayingMoodDisplays { get; init; } = [];
     public IReadOnlyList<QuickRatingOption> QuickRatingOptions { get; init; } = [];
     public bool HasPlayingAudio => PlayingAudioText.Length > 0;
+    public bool HasPlayingAnalysisStatus => PlayingAnalysisStatusText.Length > 0;
     public bool HasPlayingUsage => PlayingUsageText.Length > 0;
     public bool HasPlayingSource => PlayingSourceText.Length > 0;
     public bool HasPlayingMetadata => PlayingMetadataText.Length > 0;

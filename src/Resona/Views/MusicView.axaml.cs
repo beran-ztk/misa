@@ -765,6 +765,11 @@ public partial class MusicView : UserControl
         var durationText = track.DurationSeconds.HasValue ? FormatDuration(track.DurationSeconds.Value) : "";
 
         var audioText = FormatPlayingAudio(_allTrackAudioAnalyses.GetValueOrDefault(track.Id));
+        var analysisStatusText = needsAnalysis
+            ? "Not analyzed yet · audio and mood data are unavailable"
+            : track.AnalysisDisabled
+                ? "Analysis disabled · audio and mood data are unavailable"
+                : string.Empty;
         var usageText = FormatPlayingUsage(_allTrackUsageStats.GetValueOrDefault(track.Id));
         var sourceText = FormatPlayingSource(track);
         var moodDisplays = _allTrackMirexScores.GetValueOrDefault(track.Id, [])
@@ -794,6 +799,7 @@ public partial class MusicView : UserControl
             NeedsAnalysis = needsAnalysis,
             IsPlaying = track.Id == _engine.ActiveTrackId,
             PlayingAudioText = audioText,
+            PlayingAnalysisStatusText = analysisStatusText,
             PlayingUsageText = usageText,
             PlayingSourceText = sourceText,
             PlayingMoodDisplays = moodDisplays,

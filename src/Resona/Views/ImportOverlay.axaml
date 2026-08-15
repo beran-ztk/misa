@@ -57,7 +57,7 @@
 
         <Border Grid.Row="0" Background="Transparent" BorderBrush="{DynamicResource Theme.Brush.Border}" BorderThickness="0,0,0,1" Padding="26,16">
             <Grid ColumnDefinitions="*,Auto">
-                <TextBlock Text="Import queue"
+                <TextBlock Text="Import"
                            FontSize="18"
                            FontWeight="SemiBold"
                            VerticalAlignment="Center"/>
@@ -66,7 +66,7 @@
         </Border>
 
         <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
-            <Grid ColumnDefinitions="410,*" ColumnSpacing="28" Margin="26,22,26,32">
+            <Grid ColumnDefinitions="*,1,*" ColumnSpacing="22" Margin="26,22,26,32">
                 <StackPanel Spacing="12">
                     <TextBlock Text="ADD LINKS" FontSize="10" FontWeight="SemiBold" LetterSpacing="1" Opacity="0.45"/>
                     <TextBox x:Name="InputUrlBox"
@@ -83,7 +83,12 @@
                     </StackPanel>
                 </StackPanel>
 
-                <StackPanel Grid.Column="1" Spacing="12">
+                <Rectangle Grid.Column="1"
+                           Width="1"
+                           Fill="{DynamicResource Theme.Brush.Divider}"
+                           VerticalAlignment="Stretch"/>
+
+                <StackPanel Grid.Column="2" Spacing="12">
                     <TextBlock x:Name="QueueHeaderText" Text="CURRENT QUEUE" FontSize="10" FontWeight="SemiBold" LetterSpacing="1" Opacity="0.45"/>
                     <TextBlock x:Name="EmptyQueueText" Text="Nothing is waiting yet." FontSize="12" Opacity="0.5"/>
                     <StackPanel x:Name="QueueSources" Spacing="10"/>

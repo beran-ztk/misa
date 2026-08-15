@@ -125,22 +125,25 @@
             <Setter Property="BorderThickness" Value="1"/>
         </Style>
         <Style Selector="Button.hub-tab">
-            <Setter Property="Padding" Value="0,2"/>
-            <Setter Property="Margin" Value="0,0,14,0"/>
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="Padding" Value="14,0"/>
             <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="BorderBrush" Value="Transparent"/>
-            <Setter Property="CornerRadius" Value="0"/>
-            <Setter Property="FontSize" Value="20"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="FontSize" Value="13"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Opacity" Value="0.48"/>
+            <Setter Property="Opacity" Value="0.58"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
         <Style Selector="Button.hub-tab:pointerover">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Opacity" Value="0.82"/>
+            <Setter Property="Background" Value="#14FFFFFF"/>
+            <Setter Property="Opacity" Value="0.9"/>
         </Style>
         <Style Selector="Button.hub-tab.active">
-            <Setter Property="BorderBrush" Value="{DynamicResource Theme.Brush.TextPrimary}"/>
+            <Setter Property="Background" Value="#293E6591"/>
+            <Setter Property="Foreground" Value="{DynamicResource Theme.Brush.TextPrimary}"/>
             <Setter Property="Opacity" Value="1"/>
         </Style>
         <Style Selector="Button.channel-title">
@@ -405,10 +408,13 @@
                     Padding="26,15">
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="18">
                     <StackPanel Spacing="4" VerticalAlignment="Center">
-                        <StackPanel Orientation="Horizontal">
+                        <Border Background="#0FFFFFFF" CornerRadius="8" Padding="3"
+                                HorizontalAlignment="Left">
+                        <StackPanel Orientation="Horizontal" Spacing="2">
                             <Button Classes="hub-tab active" Content="Channels"/>
                             <Button Classes="hub-tab" Content="Profiles" Click="OnProfilesTabClicked"/>
                         </StackPanel>
+                        </Border>
                     </StackPanel>
                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                         <TextBox x:Name="ChannelSearchBox" Classes="compact-search"
@@ -421,7 +427,11 @@
                             <Image Source="{SvgImage /Assets/search.svg}" Width="17" Height="17"/>
                         </Button>
                         <Button Classes="channel-icon" Click="OnAddChannelToggleClicked" ToolTip.Tip="Add channel">
-                            <TextBlock Text="+" FontSize="20" Margin="0,-3,0,0"/>
+                            <Path Width="12" Height="12"
+                                  HorizontalAlignment="Center" VerticalAlignment="Center"
+                                  Data="M 6 1 L 6 11 M 1 6 L 11 6"
+                                  Stroke="{DynamicResource Theme.Brush.TextPrimary}"
+                                  StrokeThickness="1.5" StrokeLineCap="Round"/>
                         </Button>
                         <Button Classes="channel-icon" Click="OnInboxClicked" ToolTip.Tip="Channel inbox">
                             <Grid>
@@ -582,10 +592,13 @@
                     BorderBrush="{DynamicResource Theme.Brush.Border}" BorderThickness="0,0,0,1"
                     Padding="26,15">
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="18">
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Border Background="#0FFFFFFF" CornerRadius="8" Padding="3"
+                            HorizontalAlignment="Left" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" Spacing="2">
                         <Button Classes="hub-tab" Content="Channels" Click="OnChannelsTabClicked"/>
                         <Button Classes="hub-tab active" Content="Profiles"/>
                     </StackPanel>
+                    </Border>
                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                         <TextBox x:Name="ProfileSearchBox" Classes="compact-search"
                                  Width="230" Height="32" Watermark="Search profiles…"
