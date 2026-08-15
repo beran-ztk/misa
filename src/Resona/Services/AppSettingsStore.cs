@@ -136,7 +136,7 @@ public sealed class AppSettings
     public string? MusicAnalysisApiKey { get; set; }
     public int ChannelDownloadMaxDurationMinutes { get; set; } = 12;
     public AppearanceSettings Appearance { get; set; } = new();
-    public string LastSettingsPage { get; set; } = "library";
+    public string LastSettingsPage { get; set; } = "genres";
     public PlayerSessionSettings PlayerSession { get; set; } = new();
     public Dictionary<int, double> TrackBackdropFocus { get; set; } = [];
     public string? DiscordStateText { get; set; }

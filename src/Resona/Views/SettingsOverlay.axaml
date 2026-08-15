@@ -94,67 +94,90 @@
     <Grid ColumnDefinitions="244,1,*" Background="{DynamicResource Theme.Brush.Overlay}">
         <!-- Settings navigation -->
         <Border Grid.Column="0" Background="{DynamicResource Theme.Brush.Navigation}" Padding="16,20,16,16">
-            <Grid RowDefinitions="Auto,Auto,*">
+            <Grid RowDefinitions="Auto,*">
                 <StackPanel Grid.Row="0" Spacing="3">
                     <TextBlock Text="Settings" FontSize="18" FontWeight="SemiBold"/>
-                    <TextBlock Text="Library setup" FontSize="11" Opacity="0.52"/>
+                    <TextBlock Text="Resona preferences" FontSize="11" Opacity="0.52"/>
                 </StackPanel>
 
-                <StackPanel Grid.Row="1" Margin="0,26,0,0" Spacing="6">
-                    <TextBlock Text="CLASSIFICATION" FontSize="10" FontWeight="SemiBold"
-                               Opacity="0.4" LetterSpacing="0.8" Margin="10,0,0,4"/>
-                    <ToggleButton x:Name="GenreVocabularyNavButton" Classes="settings-nav"
-                                  Content="Genres" Tag="mappings"
-                                  Click="OnSettingsNavigationClicked"/>
-                    <ToggleButton x:Name="TagsNavButton" Classes="settings-nav"
-                                  Content="Tags" Tag="tags"
-                                  Click="OnSettingsNavigationClicked"/>
-                    <ToggleButton x:Name="TagRulesNavButton" Classes="settings-nav"
-                                  IsVisible="False"
-                                  Content="Tag rules" Tag="tag_rules"
-                                  Click="OnSettingsNavigationClicked"/>
-                </StackPanel>
+                <ScrollViewer Grid.Row="1" Margin="0,26,0,0" Padding="0"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel>
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="CLASSIFICATION" FontSize="10" FontWeight="SemiBold"
+                                       Opacity="0.4" LetterSpacing="0.8" Margin="10,0,0,4"/>
+                            <ToggleButton x:Name="GenreVocabularyNavButton" Classes="settings-nav"
+                                          Content="Genres" Tag="genres"
+                                          Click="OnSettingsNavigationClicked"/>
+                            <ToggleButton x:Name="TagsNavButton" Classes="settings-nav"
+                                          Content="Tags" Tag="tags"
+                                          Click="OnSettingsNavigationClicked"/>
+                            <ToggleButton x:Name="TagRulesNavButton" Classes="settings-nav"
+                                          IsVisible="False"
+                                          Content="Tag rules" Tag="tag_rules"
+                                          Click="OnSettingsNavigationClicked"/>
+                        </StackPanel>
 
-                <StackPanel Grid.Row="2" VerticalAlignment="Top" Margin="0,22,0,0" Spacing="6">
-                    <TextBlock Text="CLOUD" FontSize="10" FontWeight="SemiBold"
-                               Opacity="0.4" LetterSpacing="0.8" Margin="10,0,0,4"/>
-                    <ToggleButton x:Name="ProfileNavButton" Classes="settings-nav"
-                                  Content="Profile" Tag="profile"
-                                  Click="OnSettingsNavigationClicked"/>
-                    <TextBlock Text="APPEARANCE" FontSize="10" FontWeight="SemiBold"
-                               Opacity="0.4" LetterSpacing="0.8" Margin="10,14,0,4"/>
-                    <ToggleButton x:Name="AppearanceNavButton" Classes="settings-nav"
-                                  Content="Player and tracks" Tag="appearance"
-                                  Click="OnSettingsNavigationClicked"/>
-                    <TextBlock Text="INTEGRATIONS" FontSize="10" FontWeight="SemiBold"
-                               Opacity="0.4" LetterSpacing="0.8" Margin="10,14,0,4"/>
-                    <ToggleButton x:Name="DiscordNavButton" Classes="settings-nav"
-                                  Content="Discord presence" Tag="discord"
-                                  Click="OnSettingsNavigationClicked"/>
-                    <TextBlock Text="LIBRARY" FontSize="10" FontWeight="SemiBold"
-                               Opacity="0.4" LetterSpacing="0.8" Margin="10,14,0,4"/>
-                    <ToggleButton x:Name="LibraryNavButton" Classes="settings-nav"
-                                  Content="Locations" Tag="library"
-                                  Click="OnSettingsNavigationClicked"/>
-                    <ToggleButton x:Name="HealthNavButton" Classes="settings-nav"
-                                  Content="Health check" Tag="health"
-                                  Click="OnSettingsNavigationClicked"/>
-                    <ToggleButton x:Name="AnalysisServerNavButton" Classes="settings-nav"
-                                  Content="Analysis server" Tag="analysis_server"
-                                  Click="OnSettingsNavigationClicked"/>
-                    <ToggleButton x:Name="BackupNavButton" Classes="settings-nav"
-                                  Content="Backup" Tag="backup"
-                                  Click="OnSettingsNavigationClicked"/>
-                    <ToggleButton x:Name="ExportNavButton" Classes="settings-nav"
-                                  Content="Export" Tag="export"
-                                  Click="OnSettingsNavigationClicked"/>
-                    <ToggleButton x:Name="RuntimeNavButton" Classes="settings-nav"
-                                  Content="Runtime" Tag="runtime"
-                                  Click="OnSettingsNavigationClicked"/>
-                    <ToggleButton x:Name="UpdatesNavButton" Classes="settings-nav"
-                                  Content="Updates" Tag="updates"
-                                  Click="OnSettingsNavigationClicked"/>
-                </StackPanel>
+                        <Rectangle Height="1" Fill="{DynamicResource Theme.Brush.Divider}" Margin="4,14"/>
+
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="ACCOUNT &amp; SERVICES" FontSize="10" FontWeight="SemiBold"
+                                       Opacity="0.4" LetterSpacing="0.8" Margin="10,0,0,4"/>
+                            <ToggleButton x:Name="ProfileNavButton" Classes="settings-nav"
+                                          Content="Profile &amp; servers" Tag="profile"
+                                          Click="OnSettingsNavigationClicked"/>
+                        </StackPanel>
+
+                        <Rectangle Height="1" Fill="{DynamicResource Theme.Brush.Divider}" Margin="4,14"/>
+
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="APPEARANCE" FontSize="10" FontWeight="SemiBold"
+                                       Opacity="0.4" LetterSpacing="0.8" Margin="10,0,0,4"/>
+                            <ToggleButton x:Name="AppearanceNavButton" Classes="settings-nav"
+                                          Content="Player and tracks" Tag="appearance"
+                                          Click="OnSettingsNavigationClicked"/>
+                        </StackPanel>
+
+                        <Rectangle Height="1" Fill="{DynamicResource Theme.Brush.Divider}" Margin="4,14"/>
+
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="INTEGRATIONS" FontSize="10" FontWeight="SemiBold"
+                                       Opacity="0.4" LetterSpacing="0.8" Margin="10,0,0,4"/>
+                            <ToggleButton x:Name="DiscordNavButton" Classes="settings-nav"
+                                          Content="Discord presence" Tag="discord"
+                                          Click="OnSettingsNavigationClicked"/>
+                        </StackPanel>
+
+                        <Rectangle Height="1" Fill="{DynamicResource Theme.Brush.Divider}" Margin="4,14"/>
+
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="LIBRARY" FontSize="10" FontWeight="SemiBold"
+                                       Opacity="0.4" LetterSpacing="0.8" Margin="10,0,0,4"/>
+                            <ToggleButton x:Name="HealthNavButton" Classes="settings-nav"
+                                          Content="Health check" Tag="health"
+                                          Click="OnSettingsNavigationClicked"/>
+                            <ToggleButton x:Name="BackupNavButton" Classes="settings-nav"
+                                          Content="Backup" Tag="backup"
+                                          Click="OnSettingsNavigationClicked"/>
+                            <ToggleButton x:Name="ExportNavButton" Classes="settings-nav"
+                                          Content="Export" Tag="export"
+                                          Click="OnSettingsNavigationClicked"/>
+                        </StackPanel>
+
+                        <Rectangle Height="1" Fill="{DynamicResource Theme.Brush.Divider}" Margin="4,14"/>
+
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="SYSTEM" FontSize="10" FontWeight="SemiBold"
+                                       Opacity="0.4" LetterSpacing="0.8" Margin="10,0,0,4"/>
+                            <ToggleButton x:Name="RuntimeNavButton" Classes="settings-nav"
+                                          Content="Runtime" Tag="runtime"
+                                          Click="OnSettingsNavigationClicked"/>
+                            <ToggleButton x:Name="UpdatesNavButton" Classes="settings-nav"
+                                          Content="Updates" Tag="updates"
+                                          Click="OnSettingsNavigationClicked"/>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
             </Grid>
         </Border>
 
@@ -242,6 +265,7 @@
                           HorizontalScrollBarVisibility="Disabled">
                 <StackPanel Spacing="22" Margin="0,0,0,24">
                     <StackPanel Spacing="5">
+                        <TextBlock Text="PROFILE" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
                         <TextBlock Text="Local profile" FontSize="15" FontWeight="SemiBold"/>
                         <TextBlock Text="This identity belongs to this Resona installation. Nothing is uploaded until cloud synchronization is enabled later."
                                    FontSize="11" Opacity="0.62" TextWrapping="Wrap"/>
@@ -305,18 +329,6 @@
                         </Grid>
                     </Border>
 
-                    <StackPanel Spacing="7">
-                        <TextBlock Text="CLOUD SERVER" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
-                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
-                            <TextBox x:Name="CloudServerUrlBox" Classes="settings-input"
-                                     Watermark="https://cloud.example.com"/>
-                            <Button Grid.Column="1" Classes="settings-action" Content="Synchronize now"
-                                    Click="OnSynchronizeCloudClicked"/>
-                        </Grid>
-                        <TextBlock Text="When configured, Resona replaces your complete public cloud library atomically at startup and on manual sync."
-                                   FontSize="10.5" Opacity="0.52" TextWrapping="Wrap"/>
-                    </StackPanel>
-
                     <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
                         <Button Classes="settings-action" Content="Save profile" Click="OnSaveProfileClicked"/>
                         <TextBlock x:Name="ProfileStatusText" Grid.Column="1"
@@ -324,52 +336,74 @@
                                    VerticalAlignment="Center"
                                    TextWrapping="Wrap"/>
                     </Grid>
-                </StackPanel>
-            </ScrollViewer>
 
-            <ScrollViewer x:Name="LibraryPage" Grid.Row="2" IsVisible="False" Margin="30,22,30,0"
-                          HorizontalScrollBarVisibility="Disabled">
-                <StackPanel Spacing="22">
+                    <Rectangle Height="1" Fill="{DynamicResource Theme.Brush.Divider}"/>
+
                     <StackPanel Spacing="5">
-                        <TextBlock Text="Library locations" FontSize="15" FontWeight="SemiBold"/>
-                        <TextBlock Text="The database and downloaded tracks used by this installation. Changes take effect after restarting Resona."
+                        <TextBlock Text="CLOUD SERVICE" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
+                        <TextBlock Text="Cloud synchronization" FontSize="15" FontWeight="SemiBold"/>
+                        <TextBlock Text="Connect this installation to the Resona cloud service and publish the local library."
                                    FontSize="11" Opacity="0.62" TextWrapping="Wrap"/>
                     </StackPanel>
+                    <Border Background="{DynamicResource Theme.Brush.SurfaceTranslucent}"
+                            BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
+                            BorderThickness="1" CornerRadius="7" Padding="12">
+                        <StackPanel Spacing="7">
+                            <TextBlock Text="SERVER ADDRESS" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                                <TextBox x:Name="CloudServerUrlBox" Classes="settings-input"
+                                         Watermark="https://cloud.example.com"/>
+                                <Button Grid.Column="1" Classes="settings-action" Content="Synchronize now"
+                                        Click="OnSynchronizeCloudClicked"/>
+                            </Grid>
+                            <TextBlock Text="When configured, Resona replaces your complete public cloud library atomically at startup and on manual sync."
+                                       FontSize="10.5" Opacity="0.52" TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Rectangle Height="1" Fill="{DynamicResource Theme.Brush.Divider}"/>
+
                     <StackPanel Spacing="5">
-                        <TextBlock Text="DATABASE" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
-                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="9">
-                            <TextBox x:Name="DatabasePathBox"
+                        <TextBlock Text="ANALYSIS SERVICE" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
+                        <TextBlock Text="Resona analysis server" FontSize="15" FontWeight="SemiBold"/>
+                        <TextBlock Text="Tracks are streamed to this server for genre, tempo and loudness analysis."
+                                   FontSize="11" Opacity="0.62" TextWrapping="Wrap"/>
+                    </StackPanel>
+                    <Border Background="{DynamicResource Theme.Brush.SurfaceTranslucent}"
+                            BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
+                            BorderThickness="1"
+                            CornerRadius="7"
+                            Padding="12">
+                        <StackPanel Spacing="10">
+                            <TextBlock Text="SERVER ADDRESS" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
+                            <TextBox x:Name="MusicAnalysisServerUrlBox"
                                      Classes="settings-input"
-                                     Watermark="Absolute path to music.db"/>
-                            <Button Grid.Column="1"
-                                    Classes="settings-action"
-                                    Content="Choose folder"
-                                    Click="OnChooseDatabaseDirectoryClicked"/>
-                        </Grid>
-                    </StackPanel>
-                    <StackPanel Spacing="5">
-                        <TextBlock Text="TRACKS FOLDER" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
-                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="9">
-                            <TextBox x:Name="TracksPathBox"
+                                     Watermark="https://analyzer.example.com"/>
+                            <TextBlock Text="Use an absolute HTTP or HTTPS address. A trailing slash is optional."
+                                       FontSize="10.5" Opacity="0.56" TextWrapping="Wrap"/>
+                            <TextBlock Text="API KEY" Margin="0,5,0,0"
+                                       FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
+                            <TextBox x:Name="MusicAnalysisApiKeyBox"
                                      Classes="settings-input"
-                                     Watermark="Absolute path to the tracks folder"/>
-                            <Button Grid.Column="1"
-                                    Classes="settings-action"
-                                    Content="Choose folder"
-                                    Click="OnChooseTracksDirectoryClicked"/>
-                        </Grid>
-                    </StackPanel>
-                    <StackPanel Spacing="8">
-                        <Button Classes="settings-action"
-                                HorizontalAlignment="Left"
-                                Content="Save locations"
-                                Click="OnSaveLibraryLocationsClicked"/>
-                        <TextBlock x:Name="LibraryLocationStatusText"
-                                   IsVisible="False"
-                                   FontSize="10.5"
-                                   Opacity="0.68"
-                                   TextWrapping="Wrap"/>
-                    </StackPanel>
+                                     PasswordChar="●"
+                                     Watermark="Optional access key"/>
+                            <TextBlock Text="Stored only in this device's local settings and sent through HTTPS."
+                                       FontSize="10.5" Opacity="0.56" TextWrapping="Wrap"/>
+                            <StackPanel Orientation="Horizontal" Spacing="9">
+                                <Button Classes="settings-action"
+                                        Content="Save"
+                                        Click="OnSaveAnalysisServerClicked"/>
+                                <Button x:Name="TestAnalysisServerButton"
+                                        Classes="settings-action"
+                                        Content="Test connection"
+                                        Click="OnTestAnalysisServerClicked"/>
+                            </StackPanel>
+                            <TextBlock x:Name="AnalysisServerStatusText"
+                                       IsVisible="False"
+                                       FontSize="11"
+                                       TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
             </ScrollViewer>
 
@@ -415,51 +449,6 @@
                 </StackPanel>
             </ScrollViewer>
 
-            <ScrollViewer x:Name="AnalysisServerPage" Grid.Row="2" IsVisible="False" Margin="30,22,30,0"
-                          HorizontalScrollBarVisibility="Disabled">
-                <StackPanel Spacing="22">
-                    <StackPanel Spacing="5">
-                        <TextBlock Text="Resona analysis server" FontSize="15" FontWeight="SemiBold"/>
-                        <TextBlock Text="Tracks are streamed to this server for genre, tempo and loudness analysis."
-                                   FontSize="11" Opacity="0.62" TextWrapping="Wrap"/>
-                    </StackPanel>
-                    <Border Background="{DynamicResource Theme.Brush.SurfaceTranslucent}"
-                            BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
-                            BorderThickness="1"
-                            CornerRadius="7"
-                            Padding="12">
-                        <StackPanel Spacing="10">
-                            <TextBlock Text="SERVER ADDRESS" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
-                            <TextBox x:Name="MusicAnalysisServerUrlBox"
-                                     Classes="settings-input"
-                                     Watermark="https://analyzer.example.com"/>
-                            <TextBlock Text="Use an absolute HTTP or HTTPS address. A trailing slash is optional."
-                                       FontSize="10.5" Opacity="0.56" TextWrapping="Wrap"/>
-                            <TextBlock Text="API KEY" Margin="0,5,0,0"
-                                       FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
-                            <TextBox x:Name="MusicAnalysisApiKeyBox"
-                                     Classes="settings-input"
-                                     PasswordChar="●"
-                                     Watermark="Optional access key"/>
-                            <TextBlock Text="Stored only in this device's local settings and sent through HTTPS."
-                                       FontSize="10.5" Opacity="0.56" TextWrapping="Wrap"/>
-                            <StackPanel Orientation="Horizontal" Spacing="9">
-                                <Button Classes="settings-action"
-                                        Content="Save"
-                                        Click="OnSaveAnalysisServerClicked"/>
-                                <Button x:Name="TestAnalysisServerButton"
-                                        Classes="settings-action"
-                                        Content="Test connection"
-                                        Click="OnTestAnalysisServerClicked"/>
-                            </StackPanel>
-                            <TextBlock x:Name="AnalysisServerStatusText"
-                                       IsVisible="False"
-                                       FontSize="11"
-                                       TextWrapping="Wrap"/>
-                        </StackPanel>
-                    </Border>
-                </StackPanel>
-            </ScrollViewer>
 
             <ScrollViewer x:Name="DiscordPage" Grid.Row="2" IsVisible="False" Margin="30,22,30,0"
                           HorizontalScrollBarVisibility="Disabled">

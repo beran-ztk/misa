@@ -77,10 +77,6 @@ public partial class SettingsOverlay : UserControl
     public void Open()
     {
         var appSettings = AppSettingsStore.Load();
-        var locations = Values.GetConfiguredLibraryLocations();
-        DatabasePathBox.Text = locations.DatabasePath;
-        TracksPathBox.Text = locations.TracksDirectory;
-        LibraryLocationStatusText.IsVisible = false;
         MusicAnalysisServerUrlBox.Text = appSettings.MusicAnalysisServerUrl;
         MusicAnalysisApiKeyBox.Text = appSettings.MusicAnalysisApiKey;
         _loadingDiscordPresenceSettings = true;
@@ -114,60 +110,6 @@ public partial class SettingsOverlay : UserControl
             Environment.NewLine,
             LinuxRuntimeDependencies.Inspect().Select(dependency =>
                 $"{(dependency.IsAvailable ? "OK" : "MISSING"),-7} {dependency.Name,-9} {dependency.Detail}"));
-    }
-
-    private async void OnChooseDatabaseDirectoryClicked(object? sender, RoutedEventArgs e)
-    {
-        var topLevel = TopLevel.GetTopLevel(this);
-        if (topLevel is null)
-            return;
-
-        var folders = await topLevel.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
-        {
-            Title = "Choose database folder",
-            AllowMultiple = false
-        });
-        if (folders.Count == 0)
-            return;
-
-        var currentFileName = Path.GetFileName(DatabasePathBox.Text?.Trim());
-        DatabasePathBox.Text = Path.Combine(
-            folders[0].Path.LocalPath,
-            string.IsNullOrWhiteSpace(currentFileName) ? "music.db" : currentFileName);
-    }
-
-    private async void OnChooseTracksDirectoryClicked(object? sender, RoutedEventArgs e)
-    {
-        var topLevel = TopLevel.GetTopLevel(this);
-        if (topLevel is null)
-            return;
-
-        var folders = await topLevel.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
-        {
-            Title = "Choose tracks folder",
-            AllowMultiple = false
-        });
-        if (folders.Count > 0)
-            TracksPathBox.Text = folders[0].Path.LocalPath;
-    }
-
-    private void OnSaveLibraryLocationsClicked(object? sender, RoutedEventArgs e)
-    {
-        try
-        {
-            Values.SaveLibraryLocations(
-                TracksPathBox.Text ?? string.Empty,
-                DatabasePathBox.Text ?? string.Empty);
-
-            LibraryLocationStatusText.Text = "Locations saved. Restart Resona to use them.";
-            LibraryLocationStatusText.IsVisible = true;
-            ToastRequested?.Invoke("Library locations saved · restart Resona to apply");
-        }
-        catch (Exception exception)
-        {
-            LibraryLocationStatusText.Text = $"Could not save locations: {exception.Message}";
-            LibraryLocationStatusText.IsVisible = true;
-        }
     }
 
     private void OnDiscordPresenceTextChanged(object? sender, TextChangedEventArgs e)
@@ -591,9 +533,7 @@ public partial class SettingsOverlay : UserControl
         if (sender is not ToggleButton { Tag: string value }) return;
         var page = value switch
         {
-            "library" => SettingsPage.Library,
             "health" => SettingsPage.Health,
-            "analysis_server" => SettingsPage.AnalysisServer,
             "appearance" => SettingsPage.Appearance,
             "backup" => SettingsPage.Backup,
             "export" => SettingsPage.Export,
@@ -616,9 +556,7 @@ public partial class SettingsOverlay : UserControl
 
         _selectedPage = page;
         var isGenreVocabularyPage = page == SettingsPage.GenreVocabulary;
-        var isLibraryPage = page == SettingsPage.Library;
         var isHealthPage = page == SettingsPage.Health;
-        var isAnalysisServerPage = page == SettingsPage.AnalysisServer;
         var isBackupPage = page == SettingsPage.Backup;
         var isExportPage = page == SettingsPage.Export;
         var isRuntimePage = page == SettingsPage.Runtime;
@@ -627,9 +565,7 @@ public partial class SettingsOverlay : UserControl
         var isDiscordPage = page == SettingsPage.Discord;
         var isProfilePage = page == SettingsPage.Profile;
         GenreVocabularyPage.IsVisible = isGenreVocabularyPage;
-        LibraryPage.IsVisible = isLibraryPage;
         HealthPage.IsVisible = isHealthPage;
-        AnalysisServerPage.IsVisible = isAnalysisServerPage;
         BackupPage.IsVisible = isBackupPage;
         ExportPage.IsVisible = isExportPage;
         RuntimePage.IsVisible = isRuntimePage;
@@ -640,9 +576,7 @@ public partial class SettingsOverlay : UserControl
         TagsPage.IsVisible = page == SettingsPage.Tags;
         TagRulesPage.IsVisible = page == SettingsPage.TagRules;
         GenreVocabularyNavButton.IsChecked = isGenreVocabularyPage;
-        LibraryNavButton.IsChecked = isLibraryPage;
         HealthNavButton.IsChecked = isHealthPage;
-        AnalysisServerNavButton.IsChecked = isAnalysisServerPage;
         BackupNavButton.IsChecked = isBackupPage;
         ExportNavButton.IsChecked = isExportPage;
         RuntimeNavButton.IsChecked = isRuntimePage;
@@ -655,28 +589,22 @@ public partial class SettingsOverlay : UserControl
 
         PageTitleText.Text = page switch
         {
-            SettingsPage.Library => "Library",
             SettingsPage.Health => "Health check",
-            SettingsPage.AnalysisServer => "Analysis server",
             SettingsPage.Backup => "Backup",
             SettingsPage.Export => "Export",
             SettingsPage.Runtime => "Runtime",
             SettingsPage.Updates => "Updates",
             SettingsPage.Appearance => "Appearance",
             SettingsPage.Discord => "Discord presence",
-            SettingsPage.Profile => "Profile",
+            SettingsPage.Profile => "Profile & servers",
             SettingsPage.Tags => "Tags",
             SettingsPage.TagRules => "Tag rules",
             _ => "Genres"
         };
         PageDescriptionText.Text = isGenreVocabularyPage
             ? "Review the genre categories and subgenres used directly by the library."
-            : isLibraryPage
-                ? "Where this installation keeps the local music library and its database."
-                : isHealthPage
+            : isHealthPage
                     ? "Check database integrity, workflow consistency, channel mappings and local audio files."
-                : isAnalysisServerPage
-                    ? "Configure and verify the service used for track analysis."
                 : isBackupPage
                     ? "Keep daily database snapshots in your backup locations."
                     : isExportPage
@@ -688,7 +616,7 @@ public partial class SettingsOverlay : UserControl
                             : isDiscordPage
                                 ? "Customize the text Discord displays while Resona is playing music."
                             : isProfilePage
-                                ? "Create the local identity that will represent you when cloud synchronization is enabled."
+                                ? "Manage your local profile, cloud synchronization and analysis services."
                             : isUpdatesPage
                                 ? "Check, download and install application releases from GitHub."
                             : page == SettingsPage.Tags
@@ -1822,7 +1750,7 @@ public partial class SettingsOverlay : UserControl
     private static SettingsPage ParseSettingsPage(string? value) => value switch
     {
         "appearance" => SettingsPage.Appearance,
-        "analysis_server" => SettingsPage.AnalysisServer,
+        "analysis_server" => SettingsPage.Profile,
         "health" => SettingsPage.Health,
         "backup" => SettingsPage.Backup,
         "export" => SettingsPage.Export,
@@ -1832,13 +1760,12 @@ public partial class SettingsOverlay : UserControl
         "tags" => SettingsPage.Tags,
         "discord" => SettingsPage.Discord,
         "profile" => SettingsPage.Profile,
-        _ => SettingsPage.Library
+        _ => SettingsPage.GenreVocabulary
     };
 
     private static string SettingsPageKey(SettingsPage page) => page switch
     {
         SettingsPage.Appearance => "appearance",
-        SettingsPage.AnalysisServer => "analysis_server",
         SettingsPage.Health => "health",
         SettingsPage.Backup => "backup",
         SettingsPage.Export => "export",
@@ -1848,7 +1775,7 @@ public partial class SettingsOverlay : UserControl
         SettingsPage.Tags => "tags",
         SettingsPage.Discord => "discord",
         SettingsPage.Profile => "profile",
-        _ => "library"
+        _ => "genres"
     };
 
     private void BuildAppearanceControls()
@@ -2155,5 +2082,5 @@ public partial class SettingsOverlay : UserControl
         public override string ToString() => Name;
     }
 
-    private enum SettingsPage { GenreVocabulary, Library, Health, AnalysisServer, Appearance, Discord, Profile, Backup, Export, Runtime, Updates, Tags, TagRules }
+    private enum SettingsPage { GenreVocabulary, Health, Appearance, Discord, Profile, Backup, Export, Runtime, Updates, Tags, TagRules }
 }
