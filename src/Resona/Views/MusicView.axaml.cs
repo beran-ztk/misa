@@ -178,6 +178,8 @@ public partial class MusicView : UserControl
         ActivityCenter.CloseRequested += UpdateActivityCenterButtonVisual;
         ActivityCenter.SummaryChanged += UpdateActivityCenterSummary;
         UpdateActivityCenterSummary(ActivityCenter.CurrentSummary);
+        KnownIssuesPanel.CloseRequested += UpdateKnownIssuesButtonVisual;
+        UpdateKnownIssuesButtonVisual();
         MoveFilterDrawerToRootOverlay();
         var appAmbientGradient = (LinearGradientBrush)AppAtmosphereTint.Fill!;
         _appAmbientPrimaryStop = appAmbientGradient.GradientStops[0];
@@ -310,6 +312,7 @@ public partial class MusicView : UserControl
         PersistPlayerSession();
 
         SettingsOverlay.PreloadGenreVocabulary();
+        KnownIssuesPanel.LoadAtStartup();
 
         AddTrackOverlay.TrackDownloaded += warning =>
         {
@@ -3358,6 +3361,7 @@ public partial class MusicView : UserControl
     private void OnImportClicked(object? sender, RoutedEventArgs e)
     {
         CloseActivityCenter();
+        CloseKnownIssuesPanel();
         ImportOverlay.Open();
     }
 
@@ -3366,8 +3370,23 @@ public partial class MusicView : UserControl
         if (ActivityCenter.IsVisible)
             ActivityCenter.IsVisible = false;
         else
+        {
+            CloseKnownIssuesPanel();
             ActivityCenter.Open();
+        }
         UpdateActivityCenterButtonVisual();
+    }
+
+    private void OnKnownIssuesClicked(object? sender, RoutedEventArgs e)
+    {
+        if (KnownIssuesPanel.IsVisible)
+            KnownIssuesPanel.IsVisible = false;
+        else
+        {
+            CloseActivityCenter();
+            KnownIssuesPanel.Open();
+        }
+        UpdateKnownIssuesButtonVisual();
     }
 
     private void UpdateActivityCenterSummary(ActivityCenterSummary summary)
@@ -3397,9 +3416,24 @@ public partial class MusicView : UserControl
         ActivityCenterToggleButton.Opacity = ActivityCenter.IsVisible ? 1 : 0.86;
     }
 
+    private void CloseKnownIssuesPanel()
+    {
+        KnownIssuesPanel.IsVisible = false;
+        UpdateKnownIssuesButtonVisual();
+    }
+
+    private void UpdateKnownIssuesButtonVisual()
+    {
+        KnownIssuesToggleButton.Background = KnownIssuesPanel.IsVisible
+            ? Brush("#343E6591")
+            : Brushes.Transparent;
+        KnownIssuesToggleButton.Opacity = KnownIssuesPanel.IsVisible ? 1 : 0.86;
+    }
+
     private void OnChannelsClicked(object? sender, RoutedEventArgs e)
     {
         CloseActivityCenter();
+        CloseKnownIssuesPanel();
         UpdateChannelOverlayBounds();
         ChannelOverlay.Open();
     }
@@ -3414,6 +3448,7 @@ public partial class MusicView : UserControl
     private void OnSettingsClicked(object? sender, RoutedEventArgs e)
     {
         CloseActivityCenter();
+        CloseKnownIssuesPanel();
         UpdateSettingsLayout();
         SettingsOverlay.Open();
     }
@@ -3511,6 +3546,7 @@ public partial class MusicView : UserControl
     private void OpenTrackEditor(MusicTrack track)
     {
         CloseActivityCenter();
+        CloseKnownIssuesPanel();
         UpdateEditorBounds();
         EditTrackOverlay.Open(
             track,

@@ -439,6 +439,14 @@
                     </Grid>
                 </Button>
 
+                <Button x:Name="KnownIssuesToggleButton"
+                        Click="OnKnownIssuesClicked"
+                        Classes="icon"
+                        ToolTip.Tip="Known issues"
+                        Opacity="0.86">
+                    <Image Source="{SvgImage /Assets/bug-beetle.svg}" Width="17" Height="17"/>
+                </Button>
+
                 <Button Classes="icon"
                         Click="OnSettingsClicked"
                         Opacity="0.86"
@@ -1446,6 +1454,15 @@
                           HorizontalAlignment="Right"
                           VerticalAlignment="Top"
                           Margin="0,70,20,0"/>
+
+    <views:KnownIssuesPanel x:Name="KnownIssuesPanel"
+                            IsVisible="False"
+                            ZIndex="75"
+                            Width="430"
+                            MaxHeight="540"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Top"
+                            Margin="0,70,20,0"/>
 
     <!-- Covers the toolbar as well as the list while track details are open. -->
     <views:EditTrackOverlay x:Name="EditTrackOverlay" IsVisible="False" ZIndex="80"/>
