@@ -12,6 +12,9 @@ internal static class MprisArtworkCache
 
     public static string? GetArtworkUri(MusicTrack track, string audioFilePath)
     {
+        if (!OperatingSystem.IsLinux())
+            return null;
+
         try
         {
             var source = ThumbnailService.ReadEmbeddedArtwork(audioFilePath)
@@ -59,20 +62,12 @@ internal static class MprisArtworkCache
 
     private static string GetCacheDirectory()
     {
-        if (OperatingSystem.IsLinux())
-        {
-            var xdgCache = Environment.GetEnvironmentVariable("XDG_CACHE_HOME");
-            var cacheRoot = !string.IsNullOrWhiteSpace(xdgCache) && Path.IsPathFullyQualified(xdgCache)
-                ? xdgCache
-                : Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                    ".cache");
-            return Path.Combine(cacheRoot, "beran-music", "mpris-artwork");
-        }
-
-        return Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "BeranMusic",
-            "mpris-artwork");
+        var xdgCache = Environment.GetEnvironmentVariable("XDG_CACHE_HOME");
+        var cacheRoot = !string.IsNullOrWhiteSpace(xdgCache) && Path.IsPathFullyQualified(xdgCache)
+            ? xdgCache
+            : Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                ".cache");
+        return Path.Combine(cacheRoot, "resona", "mpris-artwork");
     }
 }
