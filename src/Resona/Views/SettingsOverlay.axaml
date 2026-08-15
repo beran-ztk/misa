@@ -100,6 +100,19 @@
             <Setter Property="HorizontalContentAlignment" Value="Center"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
+        <Style Selector="Button.profile-avatar">
+            <Setter Property="Width" Value="96"/>
+            <Setter Property="Height" Value="96"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="48"/>
+            <Setter Property="Opacity" Value="1"/>
+        </Style>
+        <Style Selector="Button.profile-avatar:pointerover">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Opacity" Value="0.82"/>
+        </Style>
         <Style Selector="Slider.appearance-simple">
             <Setter Property="Height" Value="28"/>
             <Setter Property="MinHeight" Value="28"/>
@@ -158,7 +171,7 @@
                     <StackPanel>
                         <StackPanel Spacing="6">
                             <ToggleButton x:Name="ProfileNavButton" Classes="settings-nav"
-                                          Content="Profile" Tag="profile"
+                                          Content="Account" Tag="profile"
                                           FontSize="13" FontWeight="SemiBold"
                                           Click="OnSettingsNavigationClicked"/>
                         </StackPanel>
@@ -324,50 +337,72 @@
                           HorizontalScrollBarVisibility="Disabled">
                 <StackPanel Spacing="22" Margin="0,0,0,24">
                     <StackPanel Spacing="5">
-                        <TextBlock Text="PROFILE" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
-                        <TextBlock Text="Local profile" FontSize="15" FontWeight="SemiBold"/>
+                        <TextBlock Text="ACCOUNT" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
+                        <TextBlock Text="Local account" FontSize="15" FontWeight="SemiBold"/>
                         <TextBlock Text="This identity belongs to this Resona installation. Nothing is uploaded until cloud synchronization is enabled later."
                                    FontSize="11" Opacity="0.62" TextWrapping="Wrap"/>
                     </StackPanel>
 
                     <Grid ColumnDefinitions="112,*" ColumnSpacing="22">
-                        <StackPanel Spacing="9" HorizontalAlignment="Center">
-                            <Grid Width="96" Height="96">
+                        <Button x:Name="ProfileAvatarButton"
+                                Classes="profile-avatar"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Top"
+                                ToolTip.Tip="Profile picture options">
+                            <Button.Flyout>
+                                <Flyout Placement="BottomEdgeAlignedLeft">
+                                    <Flyout.FlyoutPresenterTheme>
+                                        <ControlTheme TargetType="FlyoutPresenter">
+                                            <Setter Property="Padding" Value="4"/>
+                                            <Setter Property="Background" Value="#F21A1A1A"/>
+                                            <Setter Property="BorderBrush" Value="{DynamicResource Theme.Brush.BorderStrong}"/>
+                                            <Setter Property="BorderThickness" Value="1"/>
+                                            <Setter Property="CornerRadius" Value="6"/>
+                                        </ControlTheme>
+                                    </Flyout.FlyoutPresenterTheme>
+                                    <StackPanel Width="160" Spacing="2">
+                                        <Button Background="Transparent" BorderThickness="0"
+                                                HorizontalContentAlignment="Left"
+                                                Padding="10,7"
+                                                Click="OnChooseProfileImageClicked">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <Image Source="{SvgImage /Assets/pencil-simple.svg}" Width="13" Height="13"/>
+                                                <TextBlock Text="Change picture"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button x:Name="RemoveProfileImageMenuButton"
+                                                IsVisible="False"
+                                                Background="Transparent" BorderThickness="0"
+                                                HorizontalContentAlignment="Left"
+                                                Padding="10,7"
+                                                Click="OnRemoveProfileImageClicked">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <Image Source="{SvgImage /Assets/trash.svg}" Width="13" Height="13"/>
+                                                <TextBlock Text="Remove picture"
+                                                           Foreground="{DynamicResource Theme.Brush.DangerText}"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                </Flyout>
+                            </Button.Flyout>
+                            <Border Width="96" Height="96"
+                                    CornerRadius="48" ClipToBounds="True"
+                                    Background="{DynamicResource Theme.Brush.SurfaceSelected}"
+                                    BorderBrush="{DynamicResource Theme.Brush.BorderStrong}" BorderThickness="1">
                                 <Border CornerRadius="48" ClipToBounds="True"
-                                        Background="{DynamicResource Theme.Brush.SurfaceSelected}"
-                                        BorderBrush="{DynamicResource Theme.Brush.BorderStrong}" BorderThickness="1">
+                                        Background="Transparent">
                                     <Grid>
                                         <TextBlock x:Name="ProfileAvatarPlaceholderText"
                                                    Text="?" FontSize="31" FontWeight="SemiBold" Opacity="0.58"
                                                    HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                         <Image x:Name="ProfileAvatarImage" IsVisible="False" Stretch="UniformToFill"/>
+                                        <Border Background="#10000000"/>
                                     </Grid>
                                 </Border>
-                                <Button x:Name="RemoveProfileImageButton"
-                                        IsVisible="False"
-                                        Width="24" Height="24" Padding="0"
-                                        Margin="0,-2,-2,0"
-                                        HorizontalAlignment="Right" VerticalAlignment="Top"
-                                        Background="{DynamicResource Theme.Brush.SurfaceRaised}"
-                                        BorderBrush="{DynamicResource Theme.Brush.BorderStrong}"
-                                        BorderThickness="1" CornerRadius="12"
-                                        ToolTip.Tip="Remove picture"
-                                        Click="OnRemoveProfileImageClicked">
-                                    <Image Source="{SvgImage /Assets/close.svg}" Width="9" Height="9"/>
-                                </Button>
-                            </Grid>
-                            <Button Classes="settings-action" Content="Choose picture"
-                                    Click="OnChooseProfileImageClicked"/>
-                        </StackPanel>
+                            </Border>
+                        </Button>
 
                         <StackPanel Grid.Column="1" Spacing="14">
-                            <StackPanel Spacing="5">
-                                <TextBlock Text="USERNAME" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
-                                <TextBox x:Name="ProfileUsernameBox" Classes="settings-input"
-                                         MaxLength="40" Watermark="Choose a display name"/>
-                                <TextBlock Text="Visible to other Resona users once cloud synchronization is enabled."
-                                           FontSize="10.5" Opacity="0.52" TextWrapping="Wrap"/>
-                            </StackPanel>
                             <StackPanel Spacing="4">
                                 <TextBlock Text="PUBLIC USER ID"
                                            FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
@@ -386,26 +421,38 @@
                                     </Button>
                                 </Grid>
                             </StackPanel>
+                            <StackPanel Spacing="5">
+                                <TextBlock Text="USERNAME" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
+                                <Grid ColumnDefinitions="*,24" ColumnSpacing="8">
+                                    <TextBox x:Name="ProfileUsernameBox" Classes="settings-input"
+                                             MaxLength="40" Watermark="Choose a display name"/>
+                                    <Grid Grid.Column="1" Width="18" Height="18"
+                                          HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <Image x:Name="ProfileSaveLoadingIcon"
+                                               IsVisible="False"
+                                               Source="{SvgImage /Assets/reload.svg}"
+                                               Width="14" Height="14"
+                                               RenderTransformOrigin="50%,50%">
+                                            <Image.RenderTransform>
+                                                <RotateTransform/>
+                                            </Image.RenderTransform>
+                                        </Image>
+                                        <Image x:Name="ProfileSaveCheckIcon"
+                                               Source="{SvgImage /Assets/check-green.svg}"
+                                               Width="14" Height="14"/>
+                                    </Grid>
+                                </Grid>
+                                <TextBlock x:Name="ProfileStatusText"
+                                           IsVisible="False" FontSize="10.5"
+                                           Foreground="{DynamicResource Theme.Brush.DangerText}"
+                                           TextWrapping="Wrap"/>
+                            </StackPanel>
                         </StackPanel>
-                    </Grid>
-
-                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
-                        <TextBlock x:Name="ProfileStatusText"
-                                   IsVisible="False" FontSize="10.5" Opacity="0.68"
-                                   VerticalAlignment="Center"
-                                   TextWrapping="Wrap"/>
-                        <Button Grid.Column="1" Classes="settings-action"
-                                Content="Save profile" Click="OnSaveProfileClicked"/>
                     </Grid>
 
                     <Rectangle Height="1" Fill="{DynamicResource Theme.Brush.Divider}"/>
 
                     <StackPanel Spacing="18">
-                        <StackPanel Spacing="5">
-                            <TextBlock Text="Runtime" FontSize="15" FontWeight="SemiBold"/>
-                            <TextBlock Text="Temporary switches for the current app session."
-                                       FontSize="11" Opacity="0.62" TextWrapping="Wrap"/>
-                        </StackPanel>
                         <Border x:Name="LinuxDependenciesPanel"
                                 IsVisible="False"
                                 Background="{DynamicResource Theme.Brush.SurfaceTranslucent}"
@@ -437,29 +484,28 @@
                                            TextWrapping="Wrap"/>
                             </StackPanel>
                         </Border>
-                        <Border Background="{DynamicResource Theme.Brush.SurfaceTranslucent}"
-                                BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
-                                BorderThickness="1"
-                                CornerRadius="7"
-                                Padding="12">
-                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
-                                <StackPanel Spacing="4">
-                                    <TextBlock Text="Firefox YouTube session"
-                                               FontSize="12.5"
-                                               FontWeight="SemiBold"/>
-                                    <TextBlock Text="Pass --cookies-from-browser firefox to yt-dlp until the app is restarted."
-                                               FontSize="11"
-                                               Opacity="0.58"
-                                               TextWrapping="Wrap"/>
-                                </StackPanel>
-                                <CheckBox x:Name="FirefoxCookiesToggle"
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Firefox YouTube session"
+                                           FontSize="12.5"
+                                           FontWeight="SemiBold"/>
+                                <TextBlock Text="Pass --cookies-from-browser firefox to yt-dlp until the app is restarted."
+                                           FontSize="11"
+                                           Opacity="0.58"
+                                           TextWrapping="Wrap"/>
+                            </StackPanel>
+                            <ToggleSwitch x:Name="FirefoxCookiesToggle"
                                           Grid.Column="1"
-                                          Content="Enabled"
+                                          OnContent="On"
+                                          OffContent="Off"
                                           VerticalAlignment="Center"
                                           Checked="OnFirefoxCookiesToggleChanged"
                                           Unchecked="OnFirefoxCookiesToggleChanged"/>
-                            </Grid>
-                        </Border>
+                        </Grid>
+                        <TextBlock Text="Pass --cookies-from-browser firefox to yt-dlp until the app is restarted."
+                                   FontSize="11"
+                                   Opacity="0.58"
+                                   TextWrapping="Wrap"/>
                     </StackPanel>
                 </StackPanel>
             </ScrollViewer>

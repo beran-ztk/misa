@@ -44,6 +44,10 @@ public partial class SettingsOverlay : UserControl
     private double _previewBass;
     private double _previewTreble;
     private bool _loadingDiscordPresenceSettings;
+    private bool _loadingProfile;
+    private bool _profileSavePending;
+    private readonly DispatcherTimer _profileSaveTimer = new() { Interval = TimeSpan.FromSeconds(2) };
+    private readonly DispatcherTimer _profileSaveAnimationTimer = new() { Interval = TimeSpan.FromMilliseconds(45) };
     private CloudIdentity? _cloudIdentity;
     private byte[]? _pendingProfileImage;
     private Bitmap? _profileAvatarBitmap;
@@ -60,8 +64,18 @@ public partial class SettingsOverlay : UserControl
         InitializeComponent();
         BuildAppearanceControls();
         _appearanceSaveTimer.Tick += (_, _) => PersistPendingAppearance();
+        _profileSaveTimer.Tick += (_, _) => PersistPendingProfile();
+        _profileSaveAnimationTimer.Tick += (_, _) =>
+        {
+            var rotation = (RotateTransform)ProfileSaveLoadingIcon.RenderTransform!;
+            rotation.Angle = (rotation.Angle + 18) % 360;
+        };
         SearchBox.TextChanged += (_, _) => RebuildGenreVocabularyRows();
-        ProfileUsernameBox.TextChanged += (_, _) => RefreshProfileAvatar();
+        ProfileUsernameBox.TextChanged += (_, _) =>
+        {
+            RefreshProfileAvatar();
+            QueueProfileSave();
+        };
         CloudLibrarySyncService.Current.StatusChanged += status =>
             Dispatcher.UIThread.Post(() => RefreshCloudSyncStatus(status));
         AppUpdateService.Current.StateChanged += OnAppUpdateStateChanged;
@@ -482,7 +496,7 @@ public partial class SettingsOverlay : UserControl
             SettingsPage.Updates => "Updates",
             SettingsPage.Appearance => "Appearance",
             SettingsPage.Discord => "Discord presence",
-            SettingsPage.Profile => "Profile",
+            SettingsPage.Profile => "Account",
             SettingsPage.Servers => "Connections",
             SettingsPage.Tags => "Tags",
             SettingsPage.TagRules => "Tag rules",
@@ -525,15 +539,20 @@ public partial class SettingsOverlay : UserControl
         {
             _cloudIdentity = CloudIdentityStore.Current.GetOrCreate();
             _pendingProfileImage = _cloudIdentity.ProfileImage?.ToArray();
+            _loadingProfile = true;
             ProfileUsernameBox.Text = _cloudIdentity.Username;
+            _loadingProfile = false;
             ProfileUserIdText.Text = _cloudIdentity.UserId;
             ProfileStatusText.IsVisible = false;
             RefreshProfileAvatar();
+            ShowProfileSavedState();
         }
         catch (Exception exception)
         {
+            _loadingProfile = false;
             ProfileStatusText.Text = $"Could not load profile: {exception.Message}";
             ProfileStatusText.IsVisible = true;
+            ShowProfileSaveFailedState();
         }
     }
 
@@ -574,6 +593,7 @@ public partial class SettingsOverlay : UserControl
 
     private async void OnChooseProfileImageClicked(object? sender, RoutedEventArgs e)
     {
+        ProfileAvatarButton.Flyout?.Hide();
         var topLevel = TopLevel.GetTopLevel(this);
         if (topLevel is null)
             return;
@@ -597,8 +617,8 @@ public partial class SettingsOverlay : UserControl
             _pendingProfileImage = ThumbnailService.CreateSquareArtwork(buffer.ToArray(), 256, 88)
                 ?? throw new InvalidDataException("The selected image could not be decoded.");
             RefreshProfileAvatar();
-            ProfileStatusText.Text = "Picture selected · save the profile to keep it.";
-            ProfileStatusText.IsVisible = true;
+            ProfileAvatarButton.Flyout?.Hide();
+            PersistProfile();
         }
         catch (Exception exception)
         {
@@ -611,8 +631,8 @@ public partial class SettingsOverlay : UserControl
     {
         _pendingProfileImage = null;
         RefreshProfileAvatar();
-        ProfileStatusText.Text = "Picture removed · save the profile to apply.";
-        ProfileStatusText.IsVisible = true;
+        ProfileAvatarButton.Flyout?.Hide();
+        PersistProfile();
     }
 
     private void RefreshProfileAvatar()
@@ -632,18 +652,37 @@ public partial class SettingsOverlay : UserControl
         ProfileAvatarPlaceholderText.Text = string.IsNullOrWhiteSpace(username)
             ? "?"
             : username[..1].ToUpperInvariant();
-        RemoveProfileImageButton.IsVisible = _pendingProfileImage is { Length: > 0 };
+        RemoveProfileImageMenuButton.IsVisible = _pendingProfileImage is { Length: > 0 };
     }
 
-    private void OnSaveProfileClicked(object? sender, RoutedEventArgs e)
+    private void QueueProfileSave()
     {
-        var username = ProfileUsernameBox.Text?.Trim() ?? string.Empty;
-        if (username.Length == 0)
-        {
-            ProfileStatusText.Text = "Choose a username before saving.";
-            ProfileStatusText.IsVisible = true;
+        if (_loadingProfile)
             return;
-        }
+
+        _profileSavePending = true;
+        _profileSaveTimer.Stop();
+        _profileSaveTimer.Start();
+        ProfileStatusText.IsVisible = false;
+        ProfileSaveCheckIcon.IsVisible = false;
+        ProfileSaveLoadingIcon.IsVisible = true;
+        _profileSaveAnimationTimer.Start();
+    }
+
+    private void PersistPendingProfile()
+    {
+        _profileSaveTimer.Stop();
+        if (!_profileSavePending)
+            return;
+
+        PersistProfile();
+    }
+
+    private void PersistProfile()
+    {
+        _profileSaveTimer.Stop();
+        _profileSavePending = false;
+        var username = ProfileUsernameBox.Text?.Trim() ?? string.Empty;
 
         try
         {
@@ -651,17 +690,36 @@ public partial class SettingsOverlay : UserControl
                 username,
                 _cloudIdentity?.Bio,
                 _pendingProfileImage);
+            _loadingProfile = true;
             ProfileUsernameBox.Text = _cloudIdentity.Username;
-            ProfileStatusText.Text = "Profile saved locally.";
-            ProfileStatusText.IsVisible = true;
+            _loadingProfile = false;
+            ProfileStatusText.IsVisible = false;
+            ShowProfileSavedState();
             CloudProfileChanged?.Invoke();
-            ToastRequested?.Invoke("Cloud profile saved locally");
         }
         catch (Exception exception)
         {
+            _loadingProfile = false;
             ProfileStatusText.Text = $"Could not save profile: {exception.Message}";
             ProfileStatusText.IsVisible = true;
+            ShowProfileSaveFailedState();
         }
+    }
+
+    private void ShowProfileSavedState()
+    {
+        _profileSaveAnimationTimer.Stop();
+        ((RotateTransform)ProfileSaveLoadingIcon.RenderTransform!).Angle = 0;
+        ProfileSaveLoadingIcon.IsVisible = false;
+        ProfileSaveCheckIcon.IsVisible = true;
+    }
+
+    private void ShowProfileSaveFailedState()
+    {
+        _profileSaveAnimationTimer.Stop();
+        ((RotateTransform)ProfileSaveLoadingIcon.RenderTransform!).Angle = 0;
+        ProfileSaveLoadingIcon.IsVisible = false;
+        ProfileSaveCheckIcon.IsVisible = false;
     }
 
     private async void OnCopyProfileUserIdClicked(object? sender, RoutedEventArgs e)
@@ -1969,6 +2027,7 @@ public partial class SettingsOverlay : UserControl
     private void OnCloseClicked(object? sender, RoutedEventArgs e)
     {
         PersistPendingAppearance();
+        PersistPendingProfile();
         IsVisible = false;
     }
 
