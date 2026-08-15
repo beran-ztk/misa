@@ -314,15 +314,46 @@ public partial class ChannelOverlay : UserControl
 
     private void OnChannelSortOptionClicked(object? sender, RoutedEventArgs e)
     {
-        if (sender is not Button { Tag: string tag, Content: { } content }
+        if (sender is not Button { Tag: string tag }
             || !int.TryParse(tag, out var index))
             return;
 
         _channelSortIndex = index;
-        ChannelSortText.Text = content.ToString() ?? "Name";
+        ChannelSortText.Text = index switch
+        {
+            1 => "Best rated",
+            2 => "Most library tracks",
+            3 => "Most channel videos",
+            4 => "Recently added",
+            5 => "Most played",
+            _ => "Name"
+        };
+        RefreshChannelSortOptions();
         ChannelSortButton.Flyout?.Hide();
         ApplyHubFilter();
         e.Handled = true;
+    }
+
+    private void RefreshChannelSortOptions()
+    {
+        var options = new (Button Button, Image Check)[]
+        {
+            (ChannelSortNameOption, ChannelSortNameCheck),
+            (ChannelSortRatingOption, ChannelSortRatingCheck),
+            (ChannelSortLibraryOption, ChannelSortLibraryCheck),
+            (ChannelSortVideosOption, ChannelSortVideosCheck),
+            (ChannelSortRecentOption, ChannelSortRecentCheck),
+            (ChannelSortPlayedOption, ChannelSortPlayedCheck)
+        };
+
+        for (var index = 0; index < options.Length; index++)
+        {
+            var (button, check) = options[index];
+            button.Classes.Remove("selected");
+            if (index == _channelSortIndex)
+                button.Classes.Add("selected");
+            check.Opacity = index == _channelSortIndex ? 0.9 : 0;
+        }
     }
 
     private void OnAddChannelToggleClicked(object? sender, RoutedEventArgs e)

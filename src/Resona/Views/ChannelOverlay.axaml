@@ -217,34 +217,46 @@
             <Setter Property="BorderBrush" Value="#3AFFFFFF"/>
         </Style>
         <Style Selector="Button.channel-sort">
-            <Setter Property="Width" Value="164"/>
-            <Setter Property="Height" Value="29"/>
-            <Setter Property="Padding" Value="9,0"/>
-            <Setter Property="Background" Value="#12FFFFFF"/>
-            <Setter Property="BorderBrush" Value="#32FFFFFF"/>
+            <Setter Property="Width" Value="188"/>
+            <Setter Property="Height" Value="38"/>
+            <Setter Property="Padding" Value="12,0"/>
+            <Setter Property="Background" Value="#0FFFFFFF"/>
+            <Setter Property="BorderBrush" Value="#2EFFFFFF"/>
             <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Foreground" Value="{DynamicResource Theme.Brush.TextSecondary}"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Button.channel-sort:pointerover">
+            <Setter Property="Background" Value="#18FFFFFF"/>
+            <Setter Property="BorderBrush" Value="#52FFFFFF"/>
+            <Setter Property="Foreground" Value="{DynamicResource Theme.Brush.TextPrimary}"/>
+        </Style>
+        <Style Selector="Button.channel-sort:pressed">
+            <Setter Property="Background" Value="#20FFFFFF"/>
+            <Setter Property="BorderBrush" Value="#725F86AD"/>
+        </Style>
+        <Style Selector="Button.sort-option">
+            <Setter Property="Width" Value="208"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Padding" Value="10,0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="CornerRadius" Value="6"/>
             <Setter Property="Foreground" Value="{DynamicResource Theme.Brush.TextSecondary}"/>
             <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
-        </Style>
-        <Style Selector="Button.channel-sort:pointerover">
-            <Setter Property="Background" Value="#1CFFFFFF"/>
-            <Setter Property="BorderBrush" Value="#48FFFFFF"/>
-        </Style>
-        <Style Selector="Button.channel-sort:pressed">
-            <Setter Property="Background" Value="#24FFFFFF"/>
-        </Style>
-        <Style Selector="Button.sort-option">
-            <Setter Property="MinHeight" Value="28"/>
-            <Setter Property="Padding" Value="10,4"/>
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="FontSize" Value="10.5"/>
-            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="Cursor" Value="Hand"/>
         </Style>
         <Style Selector="Button.sort-option:pointerover">
-            <Setter Property="Background" Value="#18FFFFFF"/>
+            <Setter Property="Background" Value="#16FFFFFF"/>
+            <Setter Property="Foreground" Value="{DynamicResource Theme.Brush.TextPrimary}"/>
+        </Style>
+        <Style Selector="Button.sort-option.selected">
+            <Setter Property="Background" Value="#263E6591"/>
+            <Setter Property="Foreground" Value="#E7F1FB"/>
         </Style>
         <Style Selector="Button.open-action">
             <Setter Property="Padding" Value="9,4"/>
@@ -436,24 +448,86 @@
                             <Button Grid.Column="1" x:Name="ChannelSortButton" Classes="channel-sort">
                                 <Button.Flyout>
                                     <Flyout Placement="BottomEdgeAlignedRight">
-                                        <Border Width="180" Padding="4" Background="#FA1A1A1A"
-                                                BorderBrush="#3AFFFFFF" BorderThickness="1" CornerRadius="7">
-                                            <StackPanel>
-                                                <Button Classes="sort-option" Content="Name" Tag="0" Click="OnChannelSortOptionClicked"/>
-                                                <Button Classes="sort-option" Content="Best rated" Tag="1" Click="OnChannelSortOptionClicked"/>
-                                                <Button Classes="sort-option" Content="Most library tracks" Tag="2" Click="OnChannelSortOptionClicked"/>
-                                                <Button Classes="sort-option" Content="Most channel videos" Tag="3" Click="OnChannelSortOptionClicked"/>
-                                                <Button Classes="sort-option" Content="Recently added" Tag="4" Click="OnChannelSortOptionClicked"/>
-                                                <Button Classes="sort-option" Content="Most played" Tag="5" Click="OnChannelSortOptionClicked"/>
+                                        <Flyout.FlyoutPresenterTheme>
+                                            <ControlTheme TargetType="FlyoutPresenter">
+                                                <Setter Property="Padding" Value="0"/>
+                                                <Setter Property="Background" Value="Transparent"/>
+                                                <Setter Property="BorderThickness" Value="0"/>
+                                                <Setter Property="CornerRadius" Value="10"/>
+                                            </ControlTheme>
+                                        </Flyout.FlyoutPresenterTheme>
+                                        <Border Width="224" Padding="8" Background="#FC191A1D"
+                                                BorderBrush="#3EFFFFFF" BorderThickness="1" CornerRadius="10">
+                                            <StackPanel Spacing="2">
+                                                <TextBlock Text="SORT CHANNELS BY"
+                                                           Margin="10,5,10,7"
+                                                           FontSize="9" FontWeight="SemiBold"
+                                                           LetterSpacing="0.8" Opacity="0.42"/>
+                                                <Button x:Name="ChannelSortNameOption" Classes="sort-option selected"
+                                                        Tag="0" Click="OnChannelSortOptionClicked">
+                                                    <Grid ColumnDefinitions="18,*" ColumnSpacing="8">
+                                                        <Image x:Name="ChannelSortNameCheck" Source="{SvgImage /Assets/check.svg}"
+                                                               Width="12" Height="12" Opacity="0.9"/>
+                                                        <TextBlock Grid.Column="1" Text="Name" FontSize="11.5"
+                                                                   FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                                    </Grid>
+                                                </Button>
+                                                <Button x:Name="ChannelSortRatingOption" Classes="sort-option"
+                                                        Tag="1" Click="OnChannelSortOptionClicked">
+                                                    <Grid ColumnDefinitions="18,*" ColumnSpacing="8">
+                                                        <Image x:Name="ChannelSortRatingCheck" Source="{SvgImage /Assets/check.svg}"
+                                                               Width="12" Height="12" Opacity="0"/>
+                                                        <TextBlock Grid.Column="1" Text="Best rated" FontSize="11.5" VerticalAlignment="Center"/>
+                                                    </Grid>
+                                                </Button>
+                                                <Button x:Name="ChannelSortLibraryOption" Classes="sort-option"
+                                                        Tag="2" Click="OnChannelSortOptionClicked">
+                                                    <Grid ColumnDefinitions="18,*" ColumnSpacing="8">
+                                                        <Image x:Name="ChannelSortLibraryCheck" Source="{SvgImage /Assets/check.svg}"
+                                                               Width="12" Height="12" Opacity="0"/>
+                                                        <TextBlock Grid.Column="1" Text="Most library tracks" FontSize="11.5" VerticalAlignment="Center"/>
+                                                    </Grid>
+                                                </Button>
+                                                <Button x:Name="ChannelSortVideosOption" Classes="sort-option"
+                                                        Tag="3" Click="OnChannelSortOptionClicked">
+                                                    <Grid ColumnDefinitions="18,*" ColumnSpacing="8">
+                                                        <Image x:Name="ChannelSortVideosCheck" Source="{SvgImage /Assets/check.svg}"
+                                                               Width="12" Height="12" Opacity="0"/>
+                                                        <TextBlock Grid.Column="1" Text="Most channel videos" FontSize="11.5" VerticalAlignment="Center"/>
+                                                    </Grid>
+                                                </Button>
+                                                <Button x:Name="ChannelSortRecentOption" Classes="sort-option"
+                                                        Tag="4" Click="OnChannelSortOptionClicked">
+                                                    <Grid ColumnDefinitions="18,*" ColumnSpacing="8">
+                                                        <Image x:Name="ChannelSortRecentCheck" Source="{SvgImage /Assets/check.svg}"
+                                                               Width="12" Height="12" Opacity="0"/>
+                                                        <TextBlock Grid.Column="1" Text="Recently added" FontSize="11.5" VerticalAlignment="Center"/>
+                                                    </Grid>
+                                                </Button>
+                                                <Button x:Name="ChannelSortPlayedOption" Classes="sort-option"
+                                                        Tag="5" Click="OnChannelSortOptionClicked">
+                                                    <Grid ColumnDefinitions="18,*" ColumnSpacing="8">
+                                                        <Image x:Name="ChannelSortPlayedCheck" Source="{SvgImage /Assets/check.svg}"
+                                                               Width="12" Height="12" Opacity="0"/>
+                                                        <TextBlock Grid.Column="1" Text="Most played" FontSize="11.5" VerticalAlignment="Center"/>
+                                                    </Grid>
+                                                </Button>
                                             </StackPanel>
                                         </Border>
                                     </Flyout>
                                 </Button.Flyout>
-                                <Grid ColumnDefinitions="*,Auto">
-                                    <TextBlock x:Name="ChannelSortText" Text="Name" FontSize="10.5" FontWeight="SemiBold"
-                                               VerticalAlignment="Center"/>
-                                    <TextBlock Grid.Column="1" Text="⌄" FontSize="15" Opacity="0.62"
-                                               Margin="8,-3,0,0" VerticalAlignment="Center"/>
+                                <Grid ColumnDefinitions="*,14" ColumnSpacing="10">
+                                    <StackPanel Spacing="0" VerticalAlignment="Center">
+                                        <TextBlock Text="SORT BY" FontSize="8" FontWeight="SemiBold"
+                                                   LetterSpacing="0.65" Opacity="0.42"/>
+                                        <TextBlock x:Name="ChannelSortText" Text="Name" FontSize="11.5"
+                                                   FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                    <Path Grid.Column="1" Width="10" Height="6"
+                                          HorizontalAlignment="Center" VerticalAlignment="Center"
+                                          Data="M 1 1 L 5 5 L 9 1"
+                                          Stroke="{DynamicResource Theme.Brush.TextSecondary}"
+                                          StrokeThickness="1.5" StrokeLineCap="Round"/>
                                 </Grid>
                             </Button>
                         </Grid>
