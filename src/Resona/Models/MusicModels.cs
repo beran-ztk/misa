@@ -315,9 +315,15 @@ public sealed record ChannelHubItem(
     public string FollowerText => FollowerCount is long followers
         ? $"{FormatCompactNumber(followers)} subscribers"
         : string.Empty;
+    public string FollowerCountText => FollowerCount is long followers
+        ? FormatCompactNumber(followers)
+        : "—";
     public string TotalViewText => TotalViewCount is long views
         ? $"{FormatCompactNumber(views)} views on known videos"
         : "View count unavailable";
+    public string TotalViewCountText => TotalViewCount is long views
+        ? FormatCompactNumber(views)
+        : "—";
     public string AudienceText => FollowerText.Length > 0
         ? $"{FollowerText} · {TotalViewText}"
         : $"Subscribers unavailable · {TotalViewText}";

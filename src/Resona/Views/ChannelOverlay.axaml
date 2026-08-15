@@ -306,6 +306,21 @@
             <Setter Property="Background" Value="{DynamicResource Theme.Brush.SurfaceHover}"/>
             <Setter Property="Foreground" Value="{DynamicResource Theme.Brush.TextPrimary}"/>
         </Style>
+        <Style Selector="Border.video-count">
+            <Setter Property="MinWidth" Value="22"/>
+            <Setter Property="Height" Value="18"/>
+            <Setter Property="Padding" Value="5,0"/>
+            <Setter Property="CornerRadius" Value="9"/>
+            <Setter Property="Background" Value="#18FFFFFF"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="Border.video-count TextBlock">
+            <Setter Property="FontSize" Value="8.5"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="TextAlignment" Value="Center"/>
+        </Style>
         <Style Selector="TextBox.compact-search">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderBrush" Value="#46FFFFFF"/>
@@ -790,28 +805,27 @@
             </Border>
 
             <Grid Grid.Row="1" RowDefinitions="Auto,Auto,*" Margin="22,16,22,22" RowSpacing="12">
-                <Border Background="#0CFFFFFF" BorderBrush="#24FFFFFF" BorderThickness="1"
-                        CornerRadius="8" Padding="14,10">
-                    <Grid ColumnDefinitions="0.85*,1.15*,1*,1.55*" ColumnSpacing="20">
-                        <StackPanel Spacing="2">
-                            <TextBlock Text="AUDIENCE" FontSize="8.5" LetterSpacing="0.8" Opacity="0.42"/>
-                            <TextBlock x:Name="DetailAudienceText" FontSize="11.5"
-                                       TextTrimming="CharacterEllipsis"/>
-                        </StackPanel>
-                        <StackPanel Grid.Column="1" Spacing="2">
-                            <TextBlock Text="QUALITY" FontSize="8.5" LetterSpacing="0.8" Opacity="0.42"/>
-                            <TextBlock x:Name="DetailRatingText" FontSize="11.5"/>
-                        </StackPanel>
-                        <StackPanel Grid.Column="2" Spacing="2">
-                            <TextBlock Text="LISTENING" FontSize="8.5" LetterSpacing="0.8" Opacity="0.42"/>
-                            <TextBlock x:Name="DetailActivityText" FontSize="11.5"/>
-                        </StackPanel>
-                        <StackPanel Grid.Column="3" Spacing="2">
-                            <TextBlock Text="TOP IN YOUR LIBRARY" FontSize="8.5" LetterSpacing="0.8" Opacity="0.42"/>
-                            <TextBlock x:Name="DetailTopTracksText" FontSize="10.5" TextTrimming="CharacterEllipsis"/>
-                        </StackPanel>
-                    </Grid>
-                </Border>
+                <Grid Margin="8,2" ColumnDefinitions="*,1,*,1,*,1,*" ColumnSpacing="18">
+                    <StackPanel Spacing="3">
+                        <TextBlock Text="SUBSCRIBERS" FontSize="8.5" LetterSpacing="0.8" Opacity="0.42"/>
+                        <TextBlock x:Name="DetailSubscribersText" FontSize="12" FontWeight="SemiBold"/>
+                    </StackPanel>
+                    <Rectangle Grid.Column="1" Width="1" Fill="{DynamicResource Theme.Brush.Divider}"/>
+                    <StackPanel Grid.Column="2" Spacing="3">
+                        <TextBlock Text="CHANNEL VIEWS" FontSize="8.5" LetterSpacing="0.8" Opacity="0.42"/>
+                        <TextBlock x:Name="DetailViewsText" FontSize="12" FontWeight="SemiBold"/>
+                    </StackPanel>
+                    <Rectangle Grid.Column="3" Width="1" Fill="{DynamicResource Theme.Brush.Divider}"/>
+                    <StackPanel Grid.Column="4" Spacing="3">
+                        <TextBlock Text="PLAYS" FontSize="8.5" LetterSpacing="0.8" Opacity="0.42"/>
+                        <TextBlock x:Name="DetailPlayCountText" FontSize="12" FontWeight="SemiBold"/>
+                    </StackPanel>
+                    <Rectangle Grid.Column="5" Width="1" Fill="{DynamicResource Theme.Brush.Divider}"/>
+                    <StackPanel Grid.Column="6" Spacing="3">
+                        <TextBlock Text="YOUR AVERAGE RATING" FontSize="8.5" LetterSpacing="0.8" Opacity="0.42"/>
+                        <TextBlock x:Name="DetailAverageRatingText" FontSize="12" FontWeight="SemiBold"/>
+                    </StackPanel>
+                </Grid>
 
                 <Grid Grid.Row="1" RowDefinitions="Auto,Auto" RowSpacing="8">
                     <Grid ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="8">
@@ -832,32 +846,32 @@
                         <Button x:Name="AvailableVideosFilterButton" Classes="video-filter" Click="OnAvailableVideosFilterClicked">
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <TextBlock Text="Available"/>
-                                <Border Background="#18FFFFFF" CornerRadius="8" Padding="5,1">
-                                    <TextBlock x:Name="AvailableVideosCountText" FontSize="8.5" Opacity="0.72"/>
+                                <Border Classes="video-count">
+                                    <TextBlock x:Name="AvailableVideosCountText" Opacity="0.72"/>
                                 </Border>
                             </StackPanel>
                         </Button>
                         <Button Grid.Column="1" x:Name="ReadyVideosFilterButton" Classes="video-filter" Click="OnReadyVideosFilterClicked">
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <TextBlock Text="Review"/>
-                                <Border Background="#18FFFFFF" CornerRadius="8" Padding="5,1">
-                                    <TextBlock x:Name="ReadyVideosCountText" FontSize="8.5" Opacity="0.72"/>
+                                <Border Classes="video-count">
+                                    <TextBlock x:Name="ReadyVideosCountText" Opacity="0.72"/>
                                 </Border>
                             </StackPanel>
                         </Button>
                         <Button Grid.Column="2" x:Name="LibraryVideosFilterButton" Classes="video-filter" Click="OnLibraryVideosFilterClicked">
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <TextBlock Text="Library"/>
-                                <Border Background="#18FFFFFF" CornerRadius="8" Padding="5,1">
-                                    <TextBlock x:Name="LibraryVideosCountText" FontSize="8.5" Opacity="0.72"/>
+                                <Border Classes="video-count">
+                                    <TextBlock x:Name="LibraryVideosCountText" Opacity="0.72"/>
                                 </Border>
                             </StackPanel>
                         </Button>
                         <Button Grid.Column="3" x:Name="RejectedVideosFilterButton" Classes="video-filter" Click="OnRejectedVideosFilterClicked">
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <TextBlock Text="Rejected"/>
-                                <Border Background="#18FFFFFF" CornerRadius="8" Padding="5,1">
-                                    <TextBlock x:Name="RejectedVideosCountText" FontSize="8.5" Opacity="0.72"/>
+                                <Border Classes="video-count">
+                                    <TextBlock x:Name="RejectedVideosCountText" Opacity="0.72"/>
                                 </Border>
                             </StackPanel>
                         </Button>
@@ -866,8 +880,8 @@
                                 Click="OnIssueVideosFilterClicked">
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <TextBlock Text="⚠ Issues"/>
-                                <Border Background="#18FFFFFF" CornerRadius="8" Padding="5,1">
-                                    <TextBlock x:Name="IssueVideosCountText" FontSize="8.5" Opacity="0.72"/>
+                                <Border Classes="video-count">
+                                    <TextBlock x:Name="IssueVideosCountText" Opacity="0.72"/>
                                 </Border>
                             </StackPanel>
                         </Button>
@@ -875,7 +889,7 @@
                 </Grid>
 
                 <ListBox Grid.Row="2" x:Name="VideoList" Classes="video-list"
-                         Background="Transparent" BorderThickness="0">
+                         Background="Transparent" BorderThickness="0" Padding="0,0,14,0">
                     <ListBox.ItemTemplate>
                         <DataTemplate x:DataType="views:ChannelVideoDisplay">
                             <Border Background="{Binding Background}" Opacity="{Binding Opacity}"

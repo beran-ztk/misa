@@ -672,12 +672,11 @@ public partial class ChannelOverlay : UserControl
         DetailChannelArtwork.Source = channel.Artwork;
         DetailChannelArtwork.IsVisible = channel.HasArtwork;
         DetailMonogramText.IsVisible = channel.ShowMonogram;
-        DetailAudienceText.Text = channel.AudienceText;
-        ToolTip.SetTip(DetailAudienceText, channel.AudienceText);
-        DetailRatingText.Text = channel.QualityCompactText;
-        ToolTip.SetTip(DetailRatingText, channel.RatingText);
-        DetailActivityText.Text = channel.ActivityText;
-        DetailTopTracksText.Text = channel.HasTopTracks ? channel.TopTracksText : "No local tracks yet";
+        DetailSubscribersText.Text = channel.FollowerCountText;
+        DetailViewsText.Text = channel.TotalViewCountText;
+        DetailPlayCountText.Text = channel.PlayCount.ToString("N0");
+        DetailAverageRatingText.Text = channel.AverageRatingScaleText;
+        ToolTip.SetTip(DetailAverageRatingText, channel.RatingText);
         DetailFollowButton.Content = channel.FollowGlyph;
         ToolTip.SetTip(DetailFollowButton, channel.FollowToolTip);
         DetailFollowButton.Classes.Remove("following");
@@ -1531,8 +1530,9 @@ public sealed class ChannelVideoDisplay : INotifyPropertyChanged
         && (_libraryState is null or TrackLibraryState.PendingRating);
     public bool IsInLibrary => TrackId is not null && _libraryState == TrackLibraryState.Active;
     public bool IsRejected => TrackId is not null && _libraryState == TrackLibraryState.Rejected;
-    public bool HasIssue => DownloadStatus == ChannelDownloadStatus.Failed
-        || MetadataStatus == ChannelMetadataStatus.Failed;
+    public bool HasIssue => TrackId is null
+        && (DownloadStatus == ChannelDownloadStatus.Failed
+            || MetadataStatus == ChannelMetadataStatus.Failed);
     public bool IsAvailable => TrackId is null && !HasIssue;
     public bool IsMissingMetadata => !HasMetadataError
         && MetadataStatus == ChannelMetadataStatus.Pending;

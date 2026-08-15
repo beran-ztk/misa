@@ -265,6 +265,7 @@ public partial class MusicView : UserControl
         PlayerBar.SizeChanged += (_, _) => UpdateSettingsLayout();
         PlayerBar.SizeChanged += (_, _) => UpdateEditorBounds();
         PlayerBar.SizeChanged += (_, _) => UpdateImportBounds();
+        PlayerBar.SizeChanged += (_, _) => UpdateChannelOverlayBounds();
 
         // Volume
         Values.Volume = AppSettingsStore.Load().Volume;
@@ -399,7 +400,7 @@ public partial class MusicView : UserControl
         EditTrackOverlay.ChannelRequested += channelId =>
         {
             EditTrackOverlay.RequestClose();
-            ChannelOverlay.Margin = new Thickness(0);
+            UpdateChannelOverlayBounds();
             ChannelOverlay.OpenChannel(channelId);
         };
         EditTrackOverlay.BackdropFocusChanged += OnEditorBackdropFocusChanged;
@@ -424,6 +425,9 @@ public partial class MusicView : UserControl
 
     private void UpdateImportBounds() =>
         ImportOverlay.Margin = new Thickness(0, 0, 0, PlayerBar.Bounds.Height);
+
+    private void UpdateChannelOverlayBounds() =>
+        ChannelOverlay.Margin = new Thickness(0, 0, 0, PlayerBar.Bounds.Height);
 
     public void EnableSystemMediaControls()
     {
@@ -3390,7 +3394,7 @@ public partial class MusicView : UserControl
     private void OnChannelsClicked(object? sender, RoutedEventArgs e)
     {
         CloseActivityCenter();
-        ChannelOverlay.Margin = new Thickness(0);
+        UpdateChannelOverlayBounds();
         ChannelOverlay.Open();
     }
 
