@@ -1931,24 +1931,18 @@ public partial class MusicView : UserControl
             Foreground = isSelected
                 ? Brush("#D7E7FF")
                 : ThemeResources.Brush("Theme.Brush.TextPrimary"),
-            TextTrimming = TextTrimming.CharacterEllipsis
+            TextTrimming = TextTrimming.CharacterEllipsis,
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(0, 0, 30, 0)
         };
-        var summary = new TextBlock
-        {
-            Text = PresetSummary(preset),
-            FontSize = 10,
-            Opacity = 0.55,
-            TextTrimming = TextTrimming.CharacterEllipsis
-        };
-        var content = new StackPanel { Spacing = 2, Margin = new Thickness(0, 0, 28, 0) };
-        content.Children.Add(title);
-        content.Children.Add(summary);
 
         var card = new Button
         {
-            Content = content,
+            Content = title,
+            MinHeight = 50,
             HorizontalAlignment = HorizontalAlignment.Stretch,
             HorizontalContentAlignment = HorizontalAlignment.Stretch,
+            VerticalContentAlignment = VerticalAlignment.Center,
             Background = isSelected
                 ? Brush("#303E6591")
                 : ThemeResources.Brush("Theme.Brush.Surface"),
@@ -1964,13 +1958,11 @@ public partial class MusicView : UserControl
 
         var deleteButton = new Button
         {
-            Content = "×",
+            Content = CreateFilterSvgIcon("/Assets/trash.svg", 14),
             Width = 26,
             Height = 26,
             Padding = new Thickness(0),
             Margin = new Thickness(0, 0, 5, 0),
-            FontSize = 15,
-            Opacity = 0.58,
             Background = Brushes.Transparent,
             BorderThickness = new Thickness(0),
             HorizontalAlignment = HorizontalAlignment.Right,
@@ -1978,10 +1970,80 @@ public partial class MusicView : UserControl
             HorizontalContentAlignment = HorizontalAlignment.Center,
             VerticalContentAlignment = VerticalAlignment.Center
         };
+        deleteButton.Classes.Add("preset-delete");
         ToolTip.SetTip(deleteButton, $"Delete {preset.Name}");
-        deleteButton.Click += (_, _) => DeleteFilterPreset(preset.Name);
+
+        var cancelDeleteButton = new Button
+        {
+            Content = "Cancel",
+            Padding = new Thickness(10, 5),
+            Background = Brushes.Transparent,
+            BorderBrush = ThemeResources.Brush("Theme.Brush.BorderStrong"),
+            BorderThickness = new Thickness(1),
+            FontSize = 10.5
+        };
+        var confirmDeleteButton = new Button
+        {
+            Content = "Delete",
+            Padding = new Thickness(10, 5),
+            Background = ThemeResources.Brush("Theme.Brush.DangerSurface"),
+            BorderBrush = ThemeResources.Brush("Theme.Brush.DangerBorder"),
+            BorderThickness = new Thickness(1),
+            Foreground = ThemeResources.Brush("Theme.Brush.DangerText"),
+            FontSize = 10.5
+        };
+        var deleteActions = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            Spacing = 7,
+            Children = { cancelDeleteButton, confirmDeleteButton }
+        };
+        var deleteFlyout = new Flyout
+        {
+            Placement = PlacementMode.BottomEdgeAlignedRight,
+            Content = new Border
+            {
+                Width = 230,
+                Padding = new Thickness(13, 11),
+                Background = Brush("#FA1A1B1E"),
+                BorderBrush = Brush("#3EFFFFFF"),
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(8),
+                Child = new StackPanel
+                {
+                    Spacing = 9,
+                    Children =
+                    {
+                        new TextBlock
+                        {
+                            Text = $"Delete “{preset.Name}”?",
+                            FontSize = 12,
+                            FontWeight = FontWeight.SemiBold,
+                            TextWrapping = TextWrapping.Wrap
+                        },
+                        new TextBlock
+                        {
+                            Text = "This preset will be permanently removed.",
+                            FontSize = 10.5,
+                            Opacity = 0.58,
+                            TextWrapping = TextWrapping.Wrap
+                        },
+                        deleteActions
+                    }
+                }
+            }
+        };
+        deleteButton.Flyout = deleteFlyout;
+        cancelDeleteButton.Click += (_, _) => deleteFlyout.Hide();
+        confirmDeleteButton.Click += (_, _) =>
+        {
+            deleteFlyout.Hide();
+            DeleteFilterPreset(preset.Name);
+        };
 
         var container = new Grid();
+        container.Classes.Add("preset-card-container");
         container.Children.Add(card);
         container.Children.Add(deleteButton);
         return container;
@@ -2232,19 +2294,16 @@ public partial class MusicView : UserControl
         return candidate;
     }
 
-    private static string PresetSummary(PortableFilterPreset preset)
+    private static Avalonia.Svg.Skia.Svg CreateFilterSvgIcon(string path, double size) => new(new Uri("avares://Resona/"))
     {
-        var parts = new List<string>();
-        if (preset.ManualRatings && preset.Ratings.Count == 0)
-            parts.Add("0 ratings");
-        else if (preset.Ratings.Count > 0)
-            parts.Add($"{preset.Ratings.Count} rating{(preset.Ratings.Count == 1 ? "" : "s")}");
-        if (preset.Groups.Count > 0)
-            parts.Add($"{preset.Groups.Count} condition{(preset.Groups.Count == 1 ? "" : "s")}");
-        if (preset.ShowNeedsReview)
-            parts.Add("shows review tracks");
-        return parts.Count > 0 ? string.Join(" · ", parts) : "Empty preset";
-    }
+        Path = path,
+        Width = size,
+        Height = size,
+        Stretch = Stretch.Uniform,
+        Opacity = 0.82,
+        VerticalAlignment = VerticalAlignment.Center,
+        HorizontalAlignment = HorizontalAlignment.Center
+    };
 
     private static IBrush Brush(string color) => new SolidColorBrush(Color.Parse(color));
 
@@ -2506,7 +2565,7 @@ public partial class MusicView : UserControl
                 new TextBlock
                 {
                     Text = title,
-                    FontSize = 11.5,
+                    FontSize = 12.5,
                     FontWeight = FontWeight.SemiBold,
                     Foreground = accent,
                     Margin = new Thickness(2, 0, 0, 0)
@@ -2871,7 +2930,7 @@ public partial class MusicView : UserControl
                 var text = new TextBlock
                 {
                     Text = group.Label,
-                    FontSize = 10.5,
+                    FontSize = 11.5,
                     FontWeight = selected ? FontWeight.SemiBold : FontWeight.Normal,
                     Foreground = group.GroupName is null
                         ? selected
