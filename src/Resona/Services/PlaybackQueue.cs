@@ -127,6 +127,19 @@ public sealed class PlaybackQueue
         return _trackIds.Remove(trackId);
     }
 
+    public int? RemoveCurrentAndAdvance(bool loopPlaylist)
+    {
+        if (!IsInitialized)
+            return null;
+
+        var nextTrackId = PeekNext(loopPlaylist);
+        _trackIds.RemoveAt(_currentIndex);
+        _currentIndex = nextTrackId is int next
+            ? _trackIds.IndexOf(next)
+            : -1;
+        return _currentIndex >= 0 ? nextTrackId : null;
+    }
+
     public bool RemoveUpcoming(int trackId)
     {
         var index = _trackIds.IndexOf(trackId);

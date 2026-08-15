@@ -3391,6 +3391,12 @@ public partial class MusicView : UserControl
         var deleted = false;
         try
         {
+            var deletingActivePlayback = !_isTrackPreviewActive && _engine.ActiveTrackId == track.Id;
+            if (deletingActivePlayback && !_playbackQueue.IsInitialized)
+                _playbackQueue.Reset(
+                    _filteredItems.Select(item => item.Track.Id),
+                    track.Id);
+
             if (_engine.ActiveTrackId == track.Id || _previewTrackId == track.Id)
             {
                 FinishListeningSession(markSkipped: false);
@@ -3402,7 +3408,6 @@ public partial class MusicView : UserControl
                 NowPlayingText.Text = string.Empty;
                 PlaybackInfoPanel.IsVisible = false;
                 _nextTrackIndex = -1;
-                _playbackQueue.Clear();
                 ClearPlayerArtworkBackground();
             }
 
@@ -3417,6 +3422,16 @@ public partial class MusicView : UserControl
             }
 
             deleted = true;
+            MusicTrack? nextTrack = null;
+            if (deletingActivePlayback)
+            {
+                var nextTrackId = _playbackQueue.RemoveCurrentAndAdvance(
+                    loopPlaylist: _loopStatus == "Playlist");
+                nextTrack = nextTrackId is int nextId
+                    ? _allItems.FirstOrDefault(item => item.Track.Id == nextId)?.Track
+                    : null;
+            }
+
             _trackBackdropFocus.Remove(track.Id);
             _pendingBackdropFocusTrackIds.Remove(track.Id);
             try
@@ -3438,6 +3453,9 @@ public partial class MusicView : UserControl
                 ShowToast($"Track deleted; view refresh recovered from: {presentationException.Message}");
                 return true;
             }
+
+            if (nextTrack is not null)
+                PlayTrack(nextTrack, isCrossfade: false);
 
             PersistPlayerSession();
             ShowToast("Track deleted");

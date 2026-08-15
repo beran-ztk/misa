@@ -95,4 +95,33 @@ public sealed class PlaybackQueueTests
         Assert.Equal([2, 3, 5], queue.TrackIds);
         Assert.Equal(2, queue.CurrentTrackId);
     }
+
+    [Fact]
+    public void Removing_current_track_advances_to_existing_next_track()
+    {
+        var queue = new PlaybackQueue();
+        queue.Reset([1, 2, 4, 3], 2);
+
+        var nextTrackId = queue.RemoveCurrentAndAdvance(loopPlaylist: false);
+
+        Assert.Equal(4, nextTrackId);
+        Assert.Equal(4, queue.CurrentTrackId);
+        Assert.Equal([1, 4, 3], queue.TrackIds);
+        Assert.Equal([3], queue.UpcomingTrackIds);
+    }
+
+    [Fact]
+    public void Removing_last_current_track_only_wraps_when_playlist_loops()
+    {
+        var normalQueue = new PlaybackQueue();
+        normalQueue.Reset([1, 2, 3], 3);
+        Assert.Null(normalQueue.RemoveCurrentAndAdvance(loopPlaylist: false));
+        Assert.False(normalQueue.IsInitialized);
+
+        var loopingQueue = new PlaybackQueue();
+        loopingQueue.Reset([1, 2, 3], 3);
+        Assert.Equal(1, loopingQueue.RemoveCurrentAndAdvance(loopPlaylist: true));
+        Assert.Equal(1, loopingQueue.CurrentTrackId);
+        Assert.Equal([1, 2], loopingQueue.TrackIds);
+    }
 }
