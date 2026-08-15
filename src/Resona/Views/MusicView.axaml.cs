@@ -128,6 +128,7 @@ public partial class MusicView : UserControl
     private List<int> _loadedPlaylistSourceTrackIds = [];
     private List<PortableFilterPreset> _filterPresets = [];
     private string? _activeFilterPresetName;
+    private LibraryMode? _activeBuiltInView = LibraryMode.Library;
     private bool _isCreatingPreset;
     private bool _manualRatingFilter;
     private PlayerSessionSettings _restoredPlayerSession = new();
@@ -1073,7 +1074,8 @@ public partial class MusicView : UserControl
         if (ShowDeclinedCheckBox.IsChecked != true
             && ShowNeedsReviewCheckBox.IsChecked != true)
             _filteredItems = _filteredItems
-                .Where(item => !item.NeedsReview)
+                .Where(item => !item.NeedsReview
+                               && (_activeBuiltInView != LibraryMode.Library || item.Track.RatingId is not null))
                 .ToList();
 
         ApplyLibrarySort();
@@ -1562,17 +1564,9 @@ public partial class MusicView : UserControl
         ApplyFilterDefinitionChange();
     }
 
-    private void OnNeedsReviewFilterClicked(object? sender, RoutedEventArgs e)
-    {
-        SetLibraryMode(NeedsReviewFilterButton.IsChecked == true
-            ? LibraryMode.Review
-            : LibraryMode.Library);
-    }
-
     private void RefreshCompletionFilterVisuals()
     {
         var reviewSelected = ShowNeedsReviewCheckBox.IsChecked == true;
-        NeedsReviewFilterButton.IsChecked = reviewSelected;
         ShowNeedsReviewCheckBox.Background = reviewSelected ? Brush("#24FFD27A") : Brushes.Transparent;
         ShowNeedsReviewCheckBox.BorderBrush = Brushes.Transparent;
 
@@ -1580,18 +1574,6 @@ public partial class MusicView : UserControl
         ShowDeclinedCheckBox.Background = declinedSelected ? Brush("#2EEE5C5C") : Brushes.Transparent;
         ShowDeclinedCheckBox.BorderBrush = Brushes.Transparent;
 
-        RefreshLibraryModeSelector();
-    }
-
-    private void OnLibraryModeOptionClicked(object? sender, RoutedEventArgs e)
-    {
-        if (sender is not Button { Tag: string modeName }
-            || !Enum.TryParse<LibraryMode>(modeName, ignoreCase: true, out var mode))
-            return;
-
-        SetLibraryMode(mode);
-        LibraryModeButton.Flyout?.Hide();
-        e.Handled = true;
     }
 
     private void SetLibraryMode(LibraryMode mode)
@@ -1609,42 +1591,6 @@ public partial class MusicView : UserControl
 
         RefreshCompletionFilterVisuals();
         ApplyFilterDefinitionChange();
-    }
-
-    private LibraryMode CurrentLibraryMode() =>
-        ShowNeedsReviewCheckBox.IsChecked == true
-            ? LibraryMode.Review
-            : ShowDeclinedCheckBox.IsChecked == true
-                ? LibraryMode.Declined
-                : LibraryMode.Library;
-
-    private void RefreshLibraryModeSelector()
-    {
-        var mode = CurrentLibraryMode();
-        LibraryModeIcon.IsVisible = mode == LibraryMode.Library;
-        ReviewModeIcon.IsVisible = mode == LibraryMode.Review;
-        DeclinedModeIcon.IsVisible = mode == LibraryMode.Declined;
-
-        LibraryModeOption.Background = mode == LibraryMode.Library ? Brush("#18FFFFFF") : Brushes.Transparent;
-        ReviewModeOption.Background = mode == LibraryMode.Review ? Brush("#24FFD27A") : Brushes.Transparent;
-        DeclinedModeOption.Background = mode == LibraryMode.Declined ? Brush("#24EE5C5C") : Brushes.Transparent;
-        LibraryModeOption.Opacity = mode == LibraryMode.Library ? 1 : 0.52;
-        ReviewModeOption.Opacity = mode == LibraryMode.Review ? 1 : 0.52;
-        DeclinedModeOption.Opacity = mode == LibraryMode.Declined ? 1 : 0.52;
-
-        LibraryModeButton.Background = mode switch
-        {
-            LibraryMode.Review => Brush("#24FFD27A"),
-            LibraryMode.Declined => Brush("#24EE5C5C"),
-            _ => Brushes.Transparent
-        };
-        LibraryModeButton.Opacity = mode == LibraryMode.Library ? 0.86 : 1;
-        ToolTip.SetTip(LibraryModeButton, mode switch
-        {
-            LibraryMode.Review => "Mode: Needs review",
-            LibraryMode.Declined => "Mode: Declined",
-            _ => "Mode: Library"
-        });
     }
 
     // ─── Toolbar / filter panel ───────────────────────────────────────────────
@@ -1814,6 +1760,7 @@ public partial class MusicView : UserControl
                 StringComparison.OrdinalIgnoreCase));
 
         _activeFilterPresetName = restoredPreset?.Name;
+        _activeBuiltInView = restoredPreset is null ? LibraryMode.Library : null;
         if (restoredPreset is not null)
             ApplyFilterPreset(restoredPreset);
         else
@@ -1822,6 +1769,20 @@ public partial class MusicView : UserControl
 
     private void RebuildPresetRows()
     {
+        BuiltInPresetRows.Children.Clear();
+        BuiltInPresetRows.Children.Add(CreateBuiltInPresetCard(
+            LibraryMode.Library,
+            "Default",
+            "All rated tracks without review flags."));
+        BuiltInPresetRows.Children.Add(CreateBuiltInPresetCard(
+            LibraryMode.Review,
+            "Needs review",
+            "All tracks marked for review."));
+        BuiltInPresetRows.Children.Add(CreateBuiltInPresetCard(
+            LibraryMode.Declined,
+            "Declined",
+            "Declined channel downloads available for cleanup."));
+
         PresetRows.Children.Clear();
 
         if (_isCreatingPreset)
@@ -1832,7 +1793,104 @@ public partial class MusicView : UserControl
                      .ThenBy(preset => preset.Name, StringComparer.OrdinalIgnoreCase))
             PresetRows.Children.Add(CreatePresetCard(preset));
 
+        if (!_isCreatingPreset && _filterPresets.Count == 0)
+            PresetRows.Children.Add(new TextBlock
+            {
+                Text = "No custom presets created yet.",
+                FontSize = 10.5,
+                Opacity = 0.48,
+                Margin = new Thickness(2, 3, 0, 1),
+                TextWrapping = TextWrapping.Wrap
+            });
+
         AddPresetButton.IsEnabled = !_isCreatingPreset;
+    }
+
+    private Control CreateBuiltInPresetCard(LibraryMode mode, string title, string description)
+    {
+        var isSelected = _activeBuiltInView == mode;
+        var labels = new StackPanel { Spacing = 2, Margin = new Thickness(0, 0, 42, 0) };
+        labels.Children.Add(new TextBlock
+        {
+            Text = title,
+            FontWeight = FontWeight.SemiBold,
+            FontSize = 12,
+            Foreground = isSelected
+                ? ThemeResources.Brush("Theme.Brush.TextStrong")
+                : ThemeResources.Brush("Theme.Brush.TextPrimary")
+        });
+        labels.Children.Add(new TextBlock
+        {
+            Text = description,
+            FontSize = 10,
+            Opacity = 0.56,
+            TextWrapping = TextWrapping.Wrap
+        });
+
+        var content = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
+        content.Children.Add(labels);
+        var fixedLabel = new TextBlock
+        {
+            Text = "FIXED",
+            FontSize = 8.5,
+            FontWeight = FontWeight.SemiBold,
+            Opacity = 0.38,
+            LetterSpacing = 0.6,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        Grid.SetColumn(fixedLabel, 1);
+        content.Children.Add(fixedLabel);
+
+        var accent = mode switch
+        {
+            LibraryMode.Review => "#A8C69A55",
+            LibraryMode.Declined => "#A8A34D57",
+            _ => "#A85F7894"
+        };
+        var button = new Button
+        {
+            Content = content,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            HorizontalContentAlignment = HorizontalAlignment.Stretch,
+            Background = isSelected ? Brush("#2BFFFFFF") : Brushes.Transparent,
+            BorderBrush = isSelected ? Brush(accent) : ThemeResources.Brush("Theme.Brush.BorderSubtle"),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(7),
+            Padding = new Thickness(10, 8),
+            Cursor = new Cursor(StandardCursorType.Hand)
+        };
+        button.Click += (_, _) => SelectBuiltInView(mode);
+        return button;
+    }
+
+    private void SelectBuiltInView(LibraryMode mode)
+    {
+        _suppressPresetAutoSave = true;
+        try
+        {
+            _activeFilterPresetName = null;
+            _activeBuiltInView = mode;
+            _isCreatingPreset = false;
+            SearchBox.Text = string.Empty;
+            SetRatingFilterMode(manual: false, applyFilter: false);
+            _updatingLibraryMode = true;
+            ShowNeedsReviewCheckBox.IsChecked = mode == LibraryMode.Review;
+            ShowDeclinedCheckBox.IsChecked = mode == LibraryMode.Declined;
+            _updatingLibraryMode = false;
+            _filterGroups.Clear();
+            RebuildFilterConditionsPanel();
+            ClearConditionBuilder();
+            RefreshCompletionFilterVisuals();
+        }
+        finally
+        {
+            _updatingLibraryMode = false;
+            _suppressPresetAutoSave = false;
+        }
+
+        RebuildPresetRows();
+        ApplyFilter();
+        PersistPlayerSession();
     }
 
     private Control CreatePresetCard(PortableFilterPreset preset)
@@ -1989,6 +2047,7 @@ public partial class MusicView : UserControl
         FilterPresetStore.Save(_filterPresets);
         _filterPresets = FilterPresetStore.Load();
         _activeFilterPresetName = preset.Name;
+        _activeBuiltInView = null;
         _isCreatingPreset = false;
         RebuildPresetRows();
         PersistPlayerSession();
@@ -2003,6 +2062,7 @@ public partial class MusicView : UserControl
             return;
 
         _activeFilterPresetName = preset.Name;
+        _activeBuiltInView = null;
         _isCreatingPreset = false;
         RebuildPresetRows();
         ApplyFilterPreset(preset);
@@ -2031,6 +2091,11 @@ public partial class MusicView : UserControl
 
     private void ApplyFilterDefinitionChange()
     {
+        if (!_suppressPresetAutoSave && _activeBuiltInView is not null)
+        {
+            _activeBuiltInView = null;
+            RebuildPresetRows();
+        }
         ApplyFilter();
         if (_suppressPresetAutoSave)
             return;
@@ -2058,16 +2123,7 @@ public partial class MusicView : UserControl
             return;
         }
 
-        _activeFilterPresetName = null;
-        RebuildPresetRows();
-        SetRatingFilterMode(manual: false, applyFilter: false);
-        ShowNeedsReviewCheckBox.IsChecked = false;
-        ShowDeclinedCheckBox.IsChecked = false;
-        _filterGroups.Clear();
-        RebuildFilterConditionsPanel();
-        ClearConditionBuilder();
-        ApplyFilter();
-        PersistPlayerSession();
+        SelectBuiltInView(LibraryMode.Library);
     }
 
     private PortableFilterPreset CreatePreset(string name)
@@ -2132,7 +2188,10 @@ public partial class MusicView : UserControl
 
     private string UniquePresetName(string name)
     {
-        if (_filterPresets.All(preset => !string.Equals(preset.Name, name, StringComparison.OrdinalIgnoreCase)))
+        var reserved = string.Equals(name, "Default", StringComparison.OrdinalIgnoreCase)
+                       || string.Equals(name, "Needs review", StringComparison.OrdinalIgnoreCase)
+                       || string.Equals(name, "Declined", StringComparison.OrdinalIgnoreCase);
+        if (!reserved && _filterPresets.All(preset => !string.Equals(preset.Name, name, StringComparison.OrdinalIgnoreCase)))
             return name;
 
         var suffix = 2;
