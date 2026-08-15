@@ -3264,7 +3264,7 @@ public partial class MusicView : UserControl
     private void UpdateSettingsLayout()
     {
         var playerClearance = new Thickness(0, 0, 0, PlayerBar.Bounds.Height);
-        SettingsOverlay.Margin = playerClearance;
+        SettingsOverlay.Margin = new Thickness(0);
         FilterDrawer.Margin = playerClearance;
     }
 

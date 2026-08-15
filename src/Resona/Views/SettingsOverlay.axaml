@@ -145,18 +145,42 @@
     </UserControl.Styles>
 
     <Border BorderBrush="#14FFFFFF" BorderThickness="0,0,0,1">
-    <Grid ColumnDefinitions="244,1,*" Background="{DynamicResource Theme.Brush.Overlay}">
+    <Grid ColumnDefinitions="244,1,*" Background="#202020">
         <!-- Settings navigation -->
-        <Border Grid.Column="0" Background="{DynamicResource Theme.Brush.Navigation}" Padding="16,20,16,16">
+        <Border Grid.Column="0" Background="#171717" Padding="16,20,16,16">
             <Grid RowDefinitions="Auto,*">
-                <StackPanel Grid.Row="0" Spacing="3">
+                <StackPanel Grid.Row="0">
                     <TextBlock Text="Settings" FontSize="18" FontWeight="SemiBold"/>
-                    <TextBlock Text="Resona preferences" FontSize="11" Opacity="0.52"/>
                 </StackPanel>
 
                 <ScrollViewer Grid.Row="1" Margin="0,26,0,0" Padding="0"
                               HorizontalScrollBarVisibility="Disabled">
                     <StackPanel>
+                        <StackPanel Spacing="6">
+                            <ToggleButton x:Name="ProfileNavButton" Classes="settings-nav"
+                                          Content="Profile" Tag="profile"
+                                          FontSize="13" FontWeight="SemiBold"
+                                          Click="OnSettingsNavigationClicked"/>
+                        </StackPanel>
+
+                        <Rectangle Height="1" Fill="{DynamicResource Theme.Brush.Divider}" Margin="4,14"/>
+
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="EXPERIENCE" FontSize="10" FontWeight="SemiBold"
+                                       Opacity="0.4" LetterSpacing="0.8" Margin="10,0,0,4"/>
+                            <ToggleButton x:Name="AppearanceNavButton" Classes="settings-nav"
+                                          Content="Appearance" Tag="appearance"
+                                          Click="OnSettingsNavigationClicked"/>
+                            <ToggleButton x:Name="DiscordNavButton" Classes="settings-nav"
+                                          Content="Discord presence" Tag="discord"
+                                          Click="OnSettingsNavigationClicked"/>
+                            <ToggleButton x:Name="ServersNavButton" Classes="settings-nav"
+                                          Content="Connections" Tag="servers"
+                                          Click="OnSettingsNavigationClicked"/>
+                        </StackPanel>
+
+                        <Rectangle Height="1" Fill="{DynamicResource Theme.Brush.Divider}" Margin="4,14"/>
+
                         <StackPanel Spacing="6">
                             <TextBlock Text="CLASSIFICATION" FontSize="10" FontWeight="SemiBold"
                                        Opacity="0.4" LetterSpacing="0.8" Margin="10,0,0,4"/>
@@ -169,39 +193,6 @@
                             <ToggleButton x:Name="TagRulesNavButton" Classes="settings-nav"
                                           IsVisible="False"
                                           Content="Tag rules" Tag="tag_rules"
-                                          Click="OnSettingsNavigationClicked"/>
-                        </StackPanel>
-
-                        <Rectangle Height="1" Fill="{DynamicResource Theme.Brush.Divider}" Margin="4,14"/>
-
-                        <StackPanel Spacing="6">
-                            <TextBlock Text="ACCOUNT &amp; SERVICES" FontSize="10" FontWeight="SemiBold"
-                                       Opacity="0.4" LetterSpacing="0.8" Margin="10,0,0,4"/>
-                            <ToggleButton x:Name="ProfileNavButton" Classes="settings-nav"
-                                          Content="Profile" Tag="profile"
-                                          Click="OnSettingsNavigationClicked"/>
-                            <ToggleButton x:Name="ServersNavButton" Classes="settings-nav"
-                                          Content="Servers" Tag="servers"
-                                          Click="OnSettingsNavigationClicked"/>
-                        </StackPanel>
-
-                        <Rectangle Height="1" Fill="{DynamicResource Theme.Brush.Divider}" Margin="4,14"/>
-
-                        <StackPanel Spacing="6">
-                            <TextBlock Text="APPEARANCE" FontSize="10" FontWeight="SemiBold"
-                                       Opacity="0.4" LetterSpacing="0.8" Margin="10,0,0,4"/>
-                            <ToggleButton x:Name="AppearanceNavButton" Classes="settings-nav"
-                                          Content="Player and tracks" Tag="appearance"
-                                          Click="OnSettingsNavigationClicked"/>
-                        </StackPanel>
-
-                        <Rectangle Height="1" Fill="{DynamicResource Theme.Brush.Divider}" Margin="4,14"/>
-
-                        <StackPanel Spacing="6">
-                            <TextBlock Text="INTEGRATIONS" FontSize="10" FontWeight="SemiBold"
-                                       Opacity="0.4" LetterSpacing="0.8" Margin="10,0,0,4"/>
-                            <ToggleButton x:Name="DiscordNavButton" Classes="settings-nav"
-                                          Content="Discord presence" Tag="discord"
                                           Click="OnSettingsNavigationClicked"/>
                         </StackPanel>
 
@@ -226,9 +217,6 @@
                         <StackPanel Spacing="6">
                             <TextBlock Text="SYSTEM" FontSize="10" FontWeight="SemiBold"
                                        Opacity="0.4" LetterSpacing="0.8" Margin="10,0,0,4"/>
-                            <ToggleButton x:Name="RuntimeNavButton" Classes="settings-nav"
-                                          Content="Runtime" Tag="runtime"
-                                          Click="OnSettingsNavigationClicked"/>
                             <ToggleButton x:Name="UpdatesNavButton" Classes="settings-nav"
                                           Content="Updates" Tag="updates"
                                           Click="OnSettingsNavigationClicked"/>
@@ -409,6 +397,70 @@
                         <Button Grid.Column="1" Classes="settings-action"
                                 Content="Save profile" Click="OnSaveProfileClicked"/>
                     </Grid>
+
+                    <Rectangle Height="1" Fill="{DynamicResource Theme.Brush.Divider}"/>
+
+                    <StackPanel Spacing="18">
+                        <StackPanel Spacing="5">
+                            <TextBlock Text="Runtime" FontSize="15" FontWeight="SemiBold"/>
+                            <TextBlock Text="Temporary switches for the current app session."
+                                       FontSize="11" Opacity="0.62" TextWrapping="Wrap"/>
+                        </StackPanel>
+                        <Border x:Name="LinuxDependenciesPanel"
+                                IsVisible="False"
+                                Background="{DynamicResource Theme.Brush.SurfaceTranslucent}"
+                                BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
+                                BorderThickness="1"
+                                CornerRadius="7"
+                                Padding="12">
+                            <StackPanel Spacing="10">
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="Linux dependencies"
+                                                   FontSize="12.5"
+                                                   FontWeight="SemiBold"/>
+                                        <TextBlock Text="The AppImage includes .NET. Playback and media tools are provided by the Linux system."
+                                                   FontSize="11"
+                                                   Opacity="0.58"
+                                                   TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                    <Button Grid.Column="1"
+                                            Classes="settings-action"
+                                            Content="Refresh"
+                                            Click="OnRefreshLinuxDependenciesClicked"
+                                            VerticalAlignment="Top"/>
+                                </Grid>
+                                <TextBlock x:Name="LinuxDependenciesText"
+                                           FontFamily="Consolas,monospace"
+                                           FontSize="11"
+                                           LineHeight="19"
+                                           TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Background="{DynamicResource Theme.Brush.SurfaceTranslucent}"
+                                BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
+                                BorderThickness="1"
+                                CornerRadius="7"
+                                Padding="12">
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Firefox YouTube session"
+                                               FontSize="12.5"
+                                               FontWeight="SemiBold"/>
+                                    <TextBlock Text="Pass --cookies-from-browser firefox to yt-dlp until the app is restarted."
+                                               FontSize="11"
+                                               Opacity="0.58"
+                                               TextWrapping="Wrap"/>
+                                </StackPanel>
+                                <CheckBox x:Name="FirefoxCookiesToggle"
+                                          Grid.Column="1"
+                                          Content="Enabled"
+                                          VerticalAlignment="Center"
+                                          Checked="OnFirefoxCookiesToggleChanged"
+                                          Unchecked="OnFirefoxCookiesToggleChanged"/>
+                            </Grid>
+                        </Border>
+                    </StackPanel>
                 </StackPanel>
             </ScrollViewer>
 
@@ -727,71 +779,6 @@
                     </Grid>
 
                     <StackPanel x:Name="BackupDirectoryRows" Spacing="8"/>
-                </StackPanel>
-            </ScrollViewer>
-
-            <ScrollViewer x:Name="RuntimePage" Grid.Row="2" IsVisible="False" Margin="30,22,30,0"
-                          HorizontalScrollBarVisibility="Disabled">
-                <StackPanel Spacing="22">
-                    <StackPanel Spacing="5">
-                        <TextBlock Text="Runtime switches" FontSize="15" FontWeight="SemiBold"/>
-                        <TextBlock Text="Temporary switches for the current app session."
-                                   FontSize="11" Opacity="0.62" TextWrapping="Wrap"/>
-                    </StackPanel>
-                    <Border x:Name="LinuxDependenciesPanel"
-                            IsVisible="False"
-                        Background="{DynamicResource Theme.Brush.SurfaceTranslucent}"
-                            BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
-                            BorderThickness="1"
-                            CornerRadius="7"
-                            Padding="12">
-                        <StackPanel Spacing="10">
-                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
-                                <StackPanel Spacing="4">
-                                    <TextBlock Text="Linux dependencies"
-                                               FontSize="12.5"
-                                               FontWeight="SemiBold"/>
-                                    <TextBlock Text="The AppImage includes .NET. Playback and media tools are provided by the Linux system."
-                                               FontSize="11"
-                                               Opacity="0.58"
-                                               TextWrapping="Wrap"/>
-                                </StackPanel>
-                                <Button Grid.Column="1"
-                                        Classes="settings-action"
-                                        Content="Refresh"
-                                        Click="OnRefreshLinuxDependenciesClicked"
-                                        VerticalAlignment="Top"/>
-                            </Grid>
-                            <TextBlock x:Name="LinuxDependenciesText"
-                                       FontFamily="Consolas,monospace"
-                                       FontSize="11"
-                                       LineHeight="19"
-                                       TextWrapping="Wrap"/>
-                        </StackPanel>
-                    </Border>
-                    <Border Background="{DynamicResource Theme.Brush.SurfaceTranslucent}"
-                            BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}"
-                            BorderThickness="1"
-                            CornerRadius="7"
-                            Padding="12">
-                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
-                            <StackPanel Spacing="4">
-                                <TextBlock Text="Firefox YouTube session"
-                                           FontSize="12.5"
-                                           FontWeight="SemiBold"/>
-                                <TextBlock Text="Pass --cookies-from-browser firefox to yt-dlp until the app is restarted."
-                                           FontSize="11"
-                                           Opacity="0.58"
-                                           TextWrapping="Wrap"/>
-                            </StackPanel>
-                            <CheckBox x:Name="FirefoxCookiesToggle"
-                                      Grid.Column="1"
-                                      Content="Enabled"
-                                      VerticalAlignment="Center"
-                                      Checked="OnFirefoxCookiesToggleChanged"
-                                      Unchecked="OnFirefoxCookiesToggleChanged"/>
-                        </Grid>
-                    </Border>
                 </StackPanel>
             </ScrollViewer>
 

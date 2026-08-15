@@ -88,7 +88,7 @@ public partial class SettingsOverlay : UserControl
         RebuildBackupDirectoryRows();
         CloudServerUrlBox.Text = appSettings.CloudServerUrl;
         LoadCloudProfile();
-        SelectPage(ParseSettingsPage(appSettings.LastSettingsPage));
+        SelectPage(SettingsPage.Profile);
         IsVisible = true;
     }
 
@@ -425,7 +425,6 @@ public partial class SettingsOverlay : UserControl
             "appearance" => SettingsPage.Appearance,
             "backup" => SettingsPage.Backup,
             "export" => SettingsPage.Export,
-            "runtime" => SettingsPage.Runtime,
             "updates" => SettingsPage.Updates,
             "discord" => SettingsPage.Discord,
             "profile" => SettingsPage.Profile,
@@ -435,7 +434,6 @@ public partial class SettingsOverlay : UserControl
             _ => SettingsPage.GenreVocabulary
         };
         SelectPage(page);
-        AppSettingsStore.SaveLastSettingsPage(SettingsPageKey(page));
     }
 
     private void SelectPage(SettingsPage page)
@@ -448,7 +446,6 @@ public partial class SettingsOverlay : UserControl
         var isHealthPage = page == SettingsPage.Health;
         var isBackupPage = page == SettingsPage.Backup;
         var isExportPage = page == SettingsPage.Export;
-        var isRuntimePage = page == SettingsPage.Runtime;
         var isUpdatesPage = page == SettingsPage.Updates;
         var isAppearancePage = page == SettingsPage.Appearance;
         var isDiscordPage = page == SettingsPage.Discord;
@@ -458,7 +455,6 @@ public partial class SettingsOverlay : UserControl
         HealthPage.IsVisible = isHealthPage;
         BackupPage.IsVisible = isBackupPage;
         ExportPage.IsVisible = isExportPage;
-        RuntimePage.IsVisible = isRuntimePage;
         UpdatesPage.IsVisible = isUpdatesPage;
         AppearancePage.IsVisible = isAppearancePage;
         DiscordPage.IsVisible = isDiscordPage;
@@ -470,7 +466,6 @@ public partial class SettingsOverlay : UserControl
         HealthNavButton.IsChecked = isHealthPage;
         BackupNavButton.IsChecked = isBackupPage;
         ExportNavButton.IsChecked = isExportPage;
-        RuntimeNavButton.IsChecked = isRuntimePage;
         UpdatesNavButton.IsChecked = isUpdatesPage;
         AppearanceNavButton.IsChecked = isAppearancePage;
         DiscordNavButton.IsChecked = isDiscordPage;
@@ -484,12 +479,11 @@ public partial class SettingsOverlay : UserControl
             SettingsPage.Health => "Health check",
             SettingsPage.Backup => "Backup",
             SettingsPage.Export => "Export",
-            SettingsPage.Runtime => "Runtime",
             SettingsPage.Updates => "Updates",
             SettingsPage.Appearance => "Appearance",
             SettingsPage.Discord => "Discord presence",
             SettingsPage.Profile => "Profile",
-            SettingsPage.Servers => "Servers",
+            SettingsPage.Servers => "Connections",
             SettingsPage.Tags => "Tags",
             SettingsPage.TagRules => "Tag rules",
             _ => "Genres"
@@ -502,14 +496,12 @@ public partial class SettingsOverlay : UserControl
                     ? "Keep daily database snapshots in your backup locations."
                     : isExportPage
                         ? "Export the current library into a portable folder."
-                        : isRuntimePage
-                            ? "Temporary switches for this app run."
-                            : isAppearancePage
+                        : isAppearancePage
                             ? "Tune artwork, blur, color and audio-reactive visuals. Changes are applied live."
                             : isDiscordPage
                                 ? "Customize the text Discord displays while Resona is playing music."
                             : isProfilePage
-                                ? "Manage the local identity shown through Resona cloud services."
+                                ? "Manage your local identity and temporary session behavior."
                             : isServersPage
                                 ? "Configure cloud synchronization and track analysis services."
                             : isUpdatesPage
@@ -1729,39 +1721,6 @@ public partial class SettingsOverlay : UserControl
     private static double PreviewSoftLimit(double value) =>
         Math.Clamp(1 - Math.Exp(-Math.Max(0, value) * 1.45), 0, 1);
 
-    private static SettingsPage ParseSettingsPage(string? value) => value switch
-    {
-        "appearance" => SettingsPage.Appearance,
-        "analysis_server" => SettingsPage.Servers,
-        "health" => SettingsPage.Health,
-        "backup" => SettingsPage.Backup,
-        "export" => SettingsPage.Export,
-        "runtime" => SettingsPage.Runtime,
-        "updates" => SettingsPage.Updates,
-        "genres" => SettingsPage.GenreVocabulary,
-        "tags" => SettingsPage.Tags,
-        "discord" => SettingsPage.Discord,
-        "profile" => SettingsPage.Profile,
-        "servers" => SettingsPage.Servers,
-        _ => SettingsPage.GenreVocabulary
-    };
-
-    private static string SettingsPageKey(SettingsPage page) => page switch
-    {
-        SettingsPage.Appearance => "appearance",
-        SettingsPage.Health => "health",
-        SettingsPage.Backup => "backup",
-        SettingsPage.Export => "export",
-        SettingsPage.Runtime => "runtime",
-        SettingsPage.Updates => "updates",
-        SettingsPage.GenreVocabulary => "genres",
-        SettingsPage.Tags => "tags",
-        SettingsPage.Discord => "discord",
-        SettingsPage.Profile => "profile",
-        SettingsPage.Servers => "servers",
-        _ => "genres"
-    };
-
     private void BuildAppearanceControls()
     {
         AddAppearanceSlider(PlayerAppearanceRows, "Artwork strength", "Visibility of the cover behind the player.",
@@ -2033,5 +1992,5 @@ public partial class SettingsOverlay : UserControl
         public override string ToString() => Name;
     }
 
-    private enum SettingsPage { GenreVocabulary, Health, Appearance, Discord, Profile, Servers, Backup, Export, Runtime, Updates, Tags, TagRules }
+    private enum SettingsPage { GenreVocabulary, Health, Appearance, Discord, Profile, Servers, Backup, Export, Updates, Tags, TagRules }
 }
