@@ -67,7 +67,7 @@ jobs:
           --repoUrl https://github.com/${{ github.repository }}
           --outputDir Releases
 
-      - name: Build installer and update packages
+      - name: Build system installer and update packages
         run: >-
           vpk pack
           --packId Resona
@@ -78,7 +78,23 @@ jobs:
           --mainExe Resona.exe
           --icon src/Resona/Assets/headphones.ico
           --outputDir Releases
+          --msi
+          --instLocation PerMachine
           --noPortable
+
+      - name: Remove per-user installer from release assets
+        shell: pwsh
+        run: |
+          $assetsPath = "Releases/assets.win.json"
+          $assets = @(Get-Content $assetsPath -Raw | ConvertFrom-Json)
+          $systemAssets = @($assets | Where-Object Type -ne "Installer")
+          $json = ConvertTo-Json -InputObject $systemAssets -Compress
+          [System.IO.File]::WriteAllText($assetsPath, $json)
+
+          $setupPath = "Releases/Resona-win-Setup.exe"
+          if (Test-Path -LiteralPath $setupPath) {
+            Remove-Item -LiteralPath $setupPath
+          }
 
       - name: Publish GitHub release
         env:

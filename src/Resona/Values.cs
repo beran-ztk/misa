@@ -203,8 +203,7 @@ public static class Values
         if (OperatingSystem.IsWindows())
             return Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                ".private",
-                "music");
+                "Resona");
 
         return Path.Combine(
             AbsoluteEnvironmentPath("XDG_CONFIG_HOME")
