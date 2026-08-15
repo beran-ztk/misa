@@ -90,7 +90,6 @@ public partial class SettingsOverlay : UserControl
         MusicAnalysisApiKeyBox.Text = appSettings.MusicAnalysisApiKey;
         _loadingDiscordPresenceSettings = true;
         DiscordPresenceToggle.IsChecked = appSettings.DiscordRichPresenceEnabled;
-        UpdateDiscordPresenceToggleVisual();
         DiscordLargeImageTextBox.Text = appSettings.DiscordLargeImageText;
         _loadingDiscordPresenceSettings = false;
         _appearanceSettings = appSettings.Appearance.Clone().Clamp();
@@ -151,11 +150,7 @@ public partial class SettingsOverlay : UserControl
             null,
             DiscordLargeImageTextBox.Text);
         DiscordPresenceChanged?.Invoke();
-        UpdateDiscordPresenceToggleVisual();
     }
-
-    private void UpdateDiscordPresenceToggleVisual() =>
-        DiscordPresenceStatusText.Text = DiscordPresenceToggle.IsChecked == true ? "Active" : "Disabled";
 
     public void PreloadGenreVocabulary() => EnsureGenreVocabularyLoaded();
 
