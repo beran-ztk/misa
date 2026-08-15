@@ -406,9 +406,9 @@
 
                 <Button Click="OnChannelsClicked"
                         Classes="icon"
-                        ToolTip.Tip="Channels"
+                        ToolTip.Tip="Discovery"
                         Opacity="0.86">
-                    <Image Source="{SvgImage /Assets/channels.svg}" Width="18" Height="18"/>
+                    <Image Source="{SvgImage /Assets/globe.svg}" Width="18" Height="18"/>
                 </Button>
 
                 <Button x:Name="ActivityCenterToggleButton"

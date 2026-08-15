@@ -125,24 +125,31 @@
             <Setter Property="BorderThickness" Value="1"/>
         </Style>
         <Style Selector="Button.hub-tab">
-            <Setter Property="Height" Value="32"/>
-            <Setter Property="Padding" Value="14,0"/>
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="Padding" Value="8,0"/>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="BorderBrush" Value="Transparent"/>
-            <Setter Property="CornerRadius" Value="6"/>
-            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="CornerRadius" Value="7"/>
+            <Setter Property="FontSize" Value="12.5"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Opacity" Value="0.58"/>
+            <Setter Property="Opacity" Value="0.6"/>
             <Setter Property="HorizontalContentAlignment" Value="Center"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.16"/>
+                    <BrushTransition Property="Foreground" Duration="0:0:0.16"/>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.16"/>
+                </Transitions>
+            </Setter>
         </Style>
         <Style Selector="Button.hub-tab:pointerover">
-            <Setter Property="Background" Value="#14FFFFFF"/>
-            <Setter Property="Opacity" Value="0.9"/>
+            <Setter Property="Background" Value="#12FFFFFF"/>
+            <Setter Property="Opacity" Value="0.94"/>
         </Style>
         <Style Selector="Button.hub-tab.active">
-            <Setter Property="Background" Value="#293E6591"/>
+            <Setter Property="Background" Value="#36516B8E"/>
             <Setter Property="Foreground" Value="{DynamicResource Theme.Brush.TextPrimary}"/>
             <Setter Property="Opacity" Value="1"/>
         </Style>
@@ -408,12 +415,12 @@
                     Padding="26,15">
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="18">
                     <StackPanel Spacing="4" VerticalAlignment="Center">
-                        <Border Background="#0FFFFFFF" CornerRadius="8" Padding="3"
-                                HorizontalAlignment="Left">
-                        <StackPanel Orientation="Horizontal" Spacing="2">
-                            <Button Classes="hub-tab active" Content="Channels"/>
-                            <Button Classes="hub-tab" Content="Profiles" Click="OnProfilesTabClicked"/>
-                        </StackPanel>
+                        <Border Background="#12FFFFFF" BorderBrush="#18FFFFFF" BorderThickness="1"
+                                CornerRadius="9" Padding="2" Width="202" HorizontalAlignment="Left">
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="0">
+                            <Button Grid.Column="0" Classes="hub-tab active" Content="Channels"/>
+                            <Button Grid.Column="1" Classes="hub-tab" Content="Profiles" Click="OnProfilesTabClicked"/>
+                        </Grid>
                         </Border>
                     </StackPanel>
                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
@@ -592,12 +599,13 @@
                     BorderBrush="{DynamicResource Theme.Brush.Border}" BorderThickness="0,0,0,1"
                     Padding="26,15">
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="18">
-                    <Border Background="#0FFFFFFF" CornerRadius="8" Padding="3"
+                    <Border Background="#12FFFFFF" BorderBrush="#18FFFFFF" BorderThickness="1"
+                            CornerRadius="9" Padding="2" Width="202"
                             HorizontalAlignment="Left" VerticalAlignment="Center">
-                    <StackPanel Orientation="Horizontal" Spacing="2">
-                        <Button Classes="hub-tab" Content="Channels" Click="OnChannelsTabClicked"/>
-                        <Button Classes="hub-tab active" Content="Profiles"/>
-                    </StackPanel>
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="0">
+                        <Button Grid.Column="0" Classes="hub-tab" Content="Channels" Click="OnChannelsTabClicked"/>
+                        <Button Grid.Column="1" Classes="hub-tab active" Content="Profiles"/>
+                    </Grid>
                     </Border>
                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                         <TextBox x:Name="ProfileSearchBox" Classes="compact-search"
