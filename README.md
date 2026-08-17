@@ -22,7 +22,7 @@ Linux x64 releases are available as an AppImage. Playback uses the system `libvl
 
 Browse, play, rate, and manage the collection from the central library view.
 
-![Library view](docs/images/library.png)
+![Library view](docs/images/track-library.png)
 
 ### Make every track your own
 
