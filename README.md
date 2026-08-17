@@ -16,8 +16,6 @@ Linux x64 releases are available as an AppImage. Playback uses the system `libvl
 
 ## Screenshots
 
-> Resona is evolving quickly. A few details in these screenshots may differ from the current interface, and updated images are coming soon.
-
 ### Your library at a glance
 
 Browse, play, rate, and manage the collection from the central library view.
