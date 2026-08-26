@@ -4272,26 +4272,26 @@ public partial class MusicView : UserControl
             Placement = PlacementMode.Pointer,
             ItemsSource = new object[]
             {
-                CreateTrackMenuItem("Open track on YouTube", "/Assets/play.svg",
+                CreateTrackMenuItem("Open track on YouTube",
                     IsValidExternalUrl(item.Track.CanonicalUrl),
                     () => OpenExternalUrl(item.Track.CanonicalUrl)),
-                CreateTrackMenuItem("Open channel on YouTube", "/Assets/globe.svg",
+                CreateTrackMenuItem("Open channel on YouTube",
                     IsValidExternalUrl(item.Track.ChannelUrl),
                     () => OpenExternalUrl(item.Track.ChannelUrl)),
                 new Separator { Classes = { "track-context-separator" } },
-                CreateTrackMenuItem("Edit", "/Assets/pencil-simple.svg", true,
+                CreateTrackMenuItem("Edit", true,
                     () => OpenTrackEditor(item.Track)),
                 new Separator { Classes = { "track-context-separator" } },
-                CreateTrackMenuItem("Play next", "/Assets/skip-forward.svg",
+                CreateTrackMenuItem("Play next",
                     !isCurrent && index != currentIndex + 1,
                     () => ApplyTrackQueueMutation(() => _playbackQueue.MoveNext(trackId))),
-                CreateTrackMenuItem("Move up", "/Assets/queue-up.svg",
+                CreateTrackMenuItem("Move up",
                     !isCurrent && index > 0 && index - 1 != currentIndex,
                     () => ApplyTrackQueueMutation(() => _playbackQueue.Move(trackId, -1))),
-                CreateTrackMenuItem("Move down", "/Assets/queue-down.svg", !isCurrent && index >= 0
+                CreateTrackMenuItem("Move down", !isCurrent && index >= 0
                     && index < _playbackQueue.TrackIds.Count - 1 && index + 1 != currentIndex,
                     () => ApplyTrackQueueMutation(() => _playbackQueue.Move(trackId, 1))),
-                CreateTrackMenuItem("Remove from queue", "/Assets/close.svg", !isCurrent,
+                CreateTrackMenuItem("Remove from queue", !isCurrent,
                     () => ApplyTrackQueueMutation(() => _playbackQueue.Remove(trackId)))
             }
         };
@@ -4372,32 +4372,18 @@ public partial class MusicView : UserControl
 
     private static MenuItem CreateTrackMenuItem(
         string header,
-        string iconPath,
         bool isEnabled,
         Action action)
     {
         var item = new MenuItem
         {
             Header = header,
-            Icon = CreateTrackMenuIcon(iconPath),
             IsEnabled = isEnabled
         };
         item.Classes.Add("track-context-item");
         item.Click += (_, _) => action();
         return item;
     }
-
-    private static Avalonia.Svg.Skia.Svg CreateTrackMenuIcon(string path) =>
-        new(new Uri("avares://Resona/"))
-        {
-            Path = path,
-            Width = 14,
-            Height = 14,
-            Stretch = Stretch.Uniform,
-            Opacity = 0.8,
-            VerticalAlignment = VerticalAlignment.Center,
-            HorizontalAlignment = HorizontalAlignment.Center
-        };
 
     private void ApplyTrackQueueMutation(Func<bool> mutation)
     {

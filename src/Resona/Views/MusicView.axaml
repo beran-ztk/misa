@@ -291,7 +291,7 @@
             <Grid ColumnDefinitions="*,Auto">
                 <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
                     <Border Width="2"
-                            Height="20"
+                            Height="30"
                             CornerRadius="1"
                             Background="Beige"/>
                     <StackPanel Spacing="1" VerticalAlignment="Center">
@@ -829,15 +829,25 @@
                             </LinearGradientBrush>
                         </Rectangle.Fill>
                     </Rectangle>
-                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,18">
+                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Height="34" Margin="0,0,0,18">
                         <TextBlock Text="Filters" FontSize="20" FontWeight="SemiBold"
                                    VerticalAlignment="Center"/>
                         <Button Grid.Column="1"
-                                Content="✕"
                                 Click="OnToggleFiltersClicked"
                                 Classes="icon"
+                                Width="34"
+                                Height="34"
+                                Padding="0"
+                                VerticalAlignment="Center"
+                                HorizontalContentAlignment="Center"
+                                VerticalContentAlignment="Center"
                                 ToolTip.Tip="Close filters"
-                                Opacity="0.7"/>
+                                Opacity="0.7">
+                            <Image Source="{SvgImage /Assets/close.svg}"
+                                   Width="16" Height="16"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"/>
+                        </Button>
                     </Grid>
 
                     <Grid Grid.Row="1" ColumnDefinitions="280,49,*">

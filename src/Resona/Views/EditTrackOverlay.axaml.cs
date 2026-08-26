@@ -646,7 +646,7 @@ public partial class EditTrackOverlay : UserControl
         foreach (var visual in _ratingButtons)
         {
             var isFilled = selected is not null && visual.Rating.SortOrder <= selectedSortOrder;
-            visual.Icon.Text = "★";
+            visual.Icon.Text = "♪";
             visual.Icon.Foreground = isFilled
                 ? new SolidColorBrush(Color.FromRgb(235, 194, 83))
                 : new SolidColorBrush(Color.FromArgb(76, 255, 255, 255));
@@ -705,14 +705,15 @@ public partial class EditTrackOverlay : UserControl
         {
             var icon = new TextBlock
             {
-                Text = "★",
-                FontSize = 29,
+                Text = "♪",
+                FontSize = 27,
                 FontFamily = new FontFamily("Segoe UI Symbol"),
-                Height = 42,
-                LineHeight = 42,
+                Height = 34,
+                LineHeight = 34,
                 TextAlignment = TextAlignment.Center,
                 HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center
+                VerticalAlignment = VerticalAlignment.Center,
+                RenderTransform = new TranslateTransform { Y = -2 }
             };
             var button = new Button
             {
