@@ -2,12 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Numerics;
 using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia;
-using Avalonia.Animation.Easings;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
@@ -16,8 +14,6 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
-using Avalonia.Rendering.Composition;
-using Avalonia.Rendering.Composition.Animations;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Resona.Core;
@@ -39,9 +35,6 @@ public partial class MusicView : UserControl
     private readonly WindowsMediaSession _windowsMediaSession = new();
     private readonly DiscordPresenceService _discordPresence = new();
     private CancellationTokenSource? _pendingTrackClickCts;
-    private static readonly TimeSpan FilterOpenAnimationDuration = TimeSpan.FromMilliseconds(1180);
-    private static readonly TimeSpan FilterCloseAnimationDuration = TimeSpan.FromMilliseconds(930);
-    private static readonly IEasing FilterSlideEasing = new SplineEasing(0.25, 0.1, 0.25, 1);
     private static readonly AmbientPalette DefaultAmbientPalette = new(
         Color.Parse("#5865B8"),
         Color.Parse("#8051AE"));
@@ -58,8 +51,6 @@ public partial class MusicView : UserControl
 
     // UI state
     private bool _filterPanelVisible;
-    private bool _filterPanelClosing;
-    private int _filterMotionGeneration;
     private CancellationTokenSource? _thumbLoadCts;
     private CancellationTokenSource? _toastCts;
     private bool _isDeletingTrack;
@@ -1586,103 +1577,26 @@ public partial class MusicView : UserControl
             OpenFilterDrawer();
     }
 
-    private async void OpenFilterDrawer()
+    private void OpenFilterDrawer()
     {
         CloseActivityCenter();
-        var motionGeneration = ++_filterMotionGeneration;
         _filterPanelVisible = true;
-        _filterPanelClosing = false;
         UpdateSettingsLayout();
-        FilterDrawer.Opacity = 0;
-        FilterDrawer.IsHitTestVisible = false;
+        FilterDrawer.Opacity = 1;
         FilterDrawer.IsVisible = true;
+        FilterDrawer.IsHitTestVisible = true;
         FiltersToggleBtn.Opacity = 1;
-
-        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Loaded);
-        if (motionGeneration != _filterMotionGeneration || !_filterPanelVisible || _filterPanelClosing)
-            return;
-
-        var visual = ElementComposition.GetElementVisual(FilterSurface);
-        if (visual is null)
-        {
-            FilterDrawer.Opacity = 1;
-            FilterDrawer.IsHitTestVisible = true;
-            return;
-        }
-
-        visual.Offset = new Avalonia.Vector3D(FilterTravelDistance(), 0, 0);
-        var initialRender = visual.Compositor.RequestCompositionBatchCommitAsync();
-        await initialRender.Rendered;
-
-        await Dispatcher.UIThread.InvokeAsync(() =>
-        {
-            if (motionGeneration != _filterMotionGeneration || !_filterPanelVisible || _filterPanelClosing)
-                return;
-
-            StartFilterSlideAnimation(opening: true);
-            FilterDrawer.Opacity = 1;
-            FilterDrawer.IsHitTestVisible = true;
-        }, DispatcherPriority.Render);
     }
 
     private void CloseFilterDrawer()
     {
-        if (_filterPanelClosing || !_filterPanelVisible)
+        if (!_filterPanelVisible)
             return;
 
         _filterPanelVisible = false;
-        _filterPanelClosing = true;
         FilterDrawer.IsHitTestVisible = false;
-        FiltersToggleBtn.Opacity = 0.86;
-        var motionGeneration = ++_filterMotionGeneration;
-        if (StartFilterSlideAnimation(opening: false))
-            _ = CompleteFilterCloseAfterAnimationAsync(motionGeneration);
-        else
-            CompleteFilterClose(motionGeneration);
-    }
-
-    private bool StartFilterSlideAnimation(bool opening)
-    {
-        var visual = ElementComposition.GetElementVisual(FilterSurface);
-        if (visual is null)
-            return false;
-
-        var travel = (float)FilterTravelDistance();
-        var start = opening ? new Vector3(travel, 0, 0) : Vector3.Zero;
-        var end = opening ? Vector3.Zero : new Vector3(travel, 0, 0);
-        visual.Offset = new Avalonia.Vector3D(start.X, start.Y, start.Z);
-
-        var animation = visual.Compositor.CreateVector3KeyFrameAnimation();
-        animation.Duration = opening ? FilterOpenAnimationDuration : FilterCloseAnimationDuration;
-        animation.StopBehavior = AnimationStopBehavior.SetToFinalValue;
-        animation.InsertKeyFrame(0f, start);
-        animation.InsertKeyFrame(1f, end, FilterSlideEasing);
-        visual.StartAnimation("Offset", animation);
-        return true;
-    }
-
-    private double FilterTravelDistance()
-    {
-        var rootWidth = RootSurface.Bounds.Width;
-        var topLevelWidth = TopLevel.GetTopLevel(this)?.ClientSize.Width ?? 0;
-        var travel = Math.Max(FilterDrawer.Bounds.Width, Math.Max(rootWidth, topLevelWidth));
-        return travel > 1 ? travel : 480;
-    }
-
-    private async Task CompleteFilterCloseAfterAnimationAsync(int motionGeneration)
-    {
-        await Task.Delay(FilterCloseAnimationDuration);
-        CompleteFilterClose(motionGeneration);
-    }
-
-    private void CompleteFilterClose(int motionGeneration)
-    {
-        if (motionGeneration != _filterMotionGeneration || !_filterPanelClosing)
-            return;
-
-        _filterPanelClosing = false;
-        FilterDrawer.Opacity = 1;
         FilterDrawer.IsVisible = false;
+        FiltersToggleBtn.Opacity = 0.86;
     }
 
     private void OnSearchToggleClicked(object? sender, RoutedEventArgs e)

@@ -1,18 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
 using System.Threading.Tasks;
 using Avalonia;
-using Avalonia.Animation.Easings;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Avalonia.Rendering.Composition;
-using Avalonia.Rendering.Composition.Animations;
 using Avalonia.Threading;
 using Resona.Models;
 using Resona.Services;
@@ -22,11 +18,6 @@ namespace Resona.Views;
 public partial class EditTrackOverlay : UserControl
 {
     private sealed record RatingButtonVisual(Rating Rating, Button Button, TextBlock Icon);
-
-    private static readonly TimeSpan OpenAnimationDuration = TimeSpan.FromMilliseconds(1180);
-    private static readonly TimeSpan CloseAnimationDuration = TimeSpan.FromMilliseconds(930);
-    private static readonly TimeSpan OpeningRenderWarmup = TimeSpan.FromMilliseconds(55);
-    private static readonly IEasing SlideEasing = new SplineEasing(0.25, 0.1, 0.25, 1);
 
     private MusicTrack? _track;
     private List<Tag> _tags = [];
@@ -63,7 +54,6 @@ public partial class EditTrackOverlay : UserControl
     private string? _initialEdits;
     private bool _isEditingInformation;
     private int _motionGeneration;
-    private bool _isClosing;
     private bool _isDeletingTrack;
     private bool _isOpen;
     private bool _lookupsLoaded;
@@ -112,23 +102,22 @@ public partial class EditTrackOverlay : UserControl
     public void Open(MusicTrack track, bool analyzeAfterOpening = false)
     {
         var motionGeneration = ++_motionGeneration;
-        _isClosing = false;
         _isOpen = true;
         var prepared = _preparedTrackId == track.Id && _track?.Id == track.Id;
         if (!prepared)
             PrepareContent(track);
 
-        PrepareOpeningWarmupPosition();
-        IsHitTestVisible = false;
+        Opacity = 1;
+        EditorSurface.Opacity = 1;
         IsVisible = true;
-        _ = OpenAfterInitialRenderAsync(motionGeneration);
+        IsHitTestVisible = true;
         if (analyzeAfterOpening)
             _ = AnalyzeAfterOpeningAsync(track, motionGeneration);
     }
 
     public void Prepare(MusicTrack track)
     {
-        if (_isOpen || _isClosing)
+        if (_isOpen)
             return;
 
         PrepareContent(track);
@@ -138,7 +127,7 @@ public partial class EditTrackOverlay : UserControl
 
     public void InvalidatePreparedTrack()
     {
-        if (_isOpen || _isClosing)
+        if (_isOpen)
             return;
 
         _preparedTrackId = null;
@@ -170,82 +159,10 @@ public partial class EditTrackOverlay : UserControl
         _preparedTrackId = track.Id;
     }
 
-    private bool StartSlideAnimation(bool opening)
-    {
-        var visual = ElementComposition.GetElementVisual(EditorSurface);
-        if (visual is null)
-            return false;
-
-        var travel = EditorTravelDistance();
-        var start = opening ? new Vector3(0, (float)travel, 0) : Vector3.Zero;
-        var end = opening ? Vector3.Zero : new Vector3(0, (float)travel, 0);
-
-        visual.Offset = new Avalonia.Vector3D(start.X, start.Y, start.Z);
-
-        var animation = visual.Compositor.CreateVector3KeyFrameAnimation();
-        animation.Duration = opening ? OpenAnimationDuration : CloseAnimationDuration;
-        animation.StopBehavior = AnimationStopBehavior.SetToFinalValue;
-        animation.InsertKeyFrame(0f, start);
-        animation.InsertKeyFrame(1f, end, SlideEasing);
-        visual.StartAnimation("Offset", animation);
-        return true;
-    }
-
-    private double EditorTravelDistance()
-    {
-        var parentHeight = (Parent as Control)?.Bounds.Height ?? 0;
-        var topLevelHeight = TopLevel.GetTopLevel(this)?.ClientSize.Height ?? 0;
-        var travel = Math.Max(Bounds.Height, Math.Max(parentHeight, topLevelHeight) - Margin.Top - Margin.Bottom);
-        return travel > 1 ? travel : 320;
-    }
-
-    private void PrepareOpeningWarmupPosition()
-    {
-        // Keep the complete subtree invisible while Avalonia realizes and renders it.
-        Opacity = 0;
-        EditorSurface.Opacity = 1;
-
-        var visual = ElementComposition.GetElementVisual(EditorSurface);
-        if (visual is null)
-            return;
-
-        visual.Offset = new Avalonia.Vector3D(0, EditorTravelDistance(), 0);
-    }
-
-    private async Task OpenAfterInitialRenderAsync(int motionGeneration)
-    {
-        // Let visibility trigger a complete layout before obtaining the composition visual.
-        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Loaded);
-        if (motionGeneration != _motionGeneration || !_isOpen || _isClosing)
-            return;
-
-        var visual = ElementComposition.GetElementVisual(EditorSurface);
-        if (visual is null)
-        {
-            Opacity = 1;
-            IsHitTestVisible = true;
-            return;
-        }
-
-        visual.Offset = new Avalonia.Vector3D(0, EditorTravelDistance(), 0);
-        var initialRender = visual.Compositor.RequestCompositionBatchCommitAsync();
-        await initialRender.Rendered;
-
-        await Dispatcher.UIThread.InvokeAsync(() =>
-        {
-            if (motionGeneration != _motionGeneration || !_isOpen || _isClosing)
-                return;
-
-            StartSlideAnimation(opening: true);
-            Opacity = 1;
-            IsHitTestVisible = true;
-        }, DispatcherPriority.Render);
-    }
-
     private async Task AnalyzeAfterOpeningAsync(MusicTrack track, int motionGeneration)
     {
-        await Task.Delay(OpenAnimationDuration + OpeningRenderWarmup);
-        if (motionGeneration == _motionGeneration && _isOpen && !_isClosing)
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Loaded);
+        if (motionGeneration == _motionGeneration && _isOpen)
             await AnalyzeImportedTrackAsync(track);
     }
 
@@ -1729,7 +1646,7 @@ public partial class EditTrackOverlay : UserControl
 
     private void CloseOverlay()
     {
-        if (_isClosing || !_isOpen)
+        if (!_isOpen)
             return;
 
         if (_isEditingInformation)
@@ -1744,28 +1661,8 @@ public partial class EditTrackOverlay : UserControl
             PreviewClosed?.Invoke();
         }
         _analysisElapsedTimer.Stop();
-        _isClosing = true;
-        EditorSurface.Opacity = 1;
-        var motionGeneration = ++_motionGeneration;
-        if (StartSlideAnimation(opening: false))
-            _ = CompleteCloseAfterAnimationAsync(motionGeneration);
-        else
-            CompleteClose(motionGeneration);
-    }
-
-    private async Task CompleteCloseAfterAnimationAsync(int motionGeneration)
-    {
-        await Task.Delay(CloseAnimationDuration);
-        CompleteClose(motionGeneration);
-    }
-
-    private void CompleteClose(int motionGeneration)
-    {
-        if (motionGeneration != _motionGeneration || !_isClosing)
-            return;
-
+        ++_motionGeneration;
         _isOpen = false;
-        _isClosing = false;
         IsHitTestVisible = false;
         IsVisible = false;
         Closed?.Invoke();
