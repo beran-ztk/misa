@@ -604,6 +604,7 @@
                                         <views:TrackTitleTagPanel Grid.Row="0"
                                                                   Grid.Column="1"
                                                                   Gap="6"
+                                                                  Margin="{Binding TrackTitleActionsMargin}"
                                                                   HorizontalAlignment="Stretch">
                                             <TextBlock
                                                        Text="{Binding Track.DisplayTitle}"
@@ -668,7 +669,7 @@
 
                                 <StackPanel Orientation="Horizontal"
                                             Spacing="3"
-                                            Margin="0,6,10,0"
+                                            Margin="0,6,8,0"
                                             HorizontalAlignment="Right"
                                             VerticalAlignment="Top"
                                             IsVisible="{Binding IsPlaying}">
@@ -735,111 +736,50 @@
                                         <Image Source="{SvgImage /Assets/trash.svg}"
                                                Width="13" Height="13" Opacity="0.72"/>
                                     </Button>
-                                    <TextBlock Text="{Binding DurationText}"
-                                               Margin="8,0,2,0"
-                                               Width="42" Height="25"
-                                               LineHeight="25"
-                                               FontFamily="Consolas"
-                                               FontSize="10.5"
-                                               Foreground="#E2DAC0"
-                                               TextAlignment="Center"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"/>
+                                    <Border Width="76" Height="25"
+                                            Margin="8,0,0,0">
+                                        <TextBlock Text="{Binding DurationText}"
+                                                   LineHeight="25"
+                                                   FontFamily="Consolas"
+                                                   FontSize="10.5"
+                                                   Foreground="#E2DAC0"
+                                                   TextAlignment="Center"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"/>
+                                    </Border>
                                 </StackPanel>
 
-                                <Grid Margin="0,52,12,0"
-                                      ColumnDefinitions="2,20,52,70,*"
-                                      VerticalAlignment="Top"
-                                      IsVisible="{Binding IsPlaying}">
-                                    <Grid Grid.Column="4"
-                                          RowDefinitions="24,24"
-                                          RowSpacing="0"
-                                          Margin="4,0,0,0">
-                                        <Grid Grid.Row="0" ColumnDefinitions="Auto,*" ColumnSpacing="16">
-                                            <TextBlock Grid.ColumnSpan="2"
-                                                       Text="{Binding PlayingAnalysisStatusText}"
-                                                       IsVisible="{Binding HasPlayingAnalysisStatus}"
-                                                       Height="20" LineHeight="20"
-                                                       FontSize="10"
-                                                       Foreground="{DynamicResource Theme.Brush.Warning}"
-                                                       Opacity="0.9"
-                                                       TextTrimming="CharacterEllipsis"
-                                                       VerticalAlignment="Center"/>
-                                            <ItemsControl Grid.Column="0"
-                                                          Height="20"
-                                                          VerticalAlignment="Center"
-                                                          ItemsSource="{Binding PlayingMoodDisplays}"
-                                                          IsVisible="{Binding HasPlayingMoods}">
-                                                <ItemsControl.ItemsPanel>
-                                                    <ItemsPanelTemplate>
-                                                        <StackPanel Orientation="Horizontal" Spacing="14"/>
-                                                    </ItemsPanelTemplate>
-                                                </ItemsControl.ItemsPanel>
-                                                <ItemsControl.ItemTemplate>
-                                                    <DataTemplate x:DataType="models:TrackMoodDisplay">
-                                                        <TextBlock Text="{Binding Text}"
-                                                                   Height="20" LineHeight="20"
-                                                                   Foreground="{Binding Foreground}"
-                                                                   FontSize="9.5"
-                                                                   FontWeight="SemiBold"
-                                                                   VerticalAlignment="Center"/>
-                                                    </DataTemplate>
-                                                </ItemsControl.ItemTemplate>
-                                            </ItemsControl>
-                                            <TextBlock Grid.Column="1"
-                                                       Text="{Binding PlayingAudioText}"
-                                                       IsVisible="{Binding HasPlayingAudio}"
-                                                       Height="20" LineHeight="20"
-                                                       FontFamily="Consolas"
-                                                       FontSize="10"
-                                                       Foreground="#C9D7E6"
-                                                       VerticalAlignment="Center"/>
-                                        </Grid>
-
-                                        <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="12">
-                                            <TextBlock Grid.Column="0"
-                                                       Text="{Binding PlayingMetadataText}"
-                                                       IsVisible="{Binding HasPlayingMetadata}"
-                                                       Height="20" LineHeight="20"
-                                                       FontSize="10"
-                                                       Foreground="{DynamicResource Theme.Brush.TextSecondary}"
-                                                       Opacity="0.78"
-                                                       TextWrapping="NoWrap"
-                                                       TextTrimming="CharacterEllipsis"
-                                                       VerticalAlignment="Center"/>
-                                            <ItemsControl Grid.Column="1"
-                                                          Height="20"
-                                                          ItemsSource="{Binding QuickRatingOptions}"
-                                                          HorizontalAlignment="Right"
-                                                          VerticalAlignment="Center">
-                                                <ItemsControl.ItemsPanel>
-                                                    <ItemsPanelTemplate>
-                                                        <StackPanel Orientation="Horizontal" Spacing="1"/>
-                                                    </ItemsPanelTemplate>
-                                                </ItemsControl.ItemsPanel>
-                                                <ItemsControl.ItemTemplate>
-                                                    <DataTemplate x:DataType="models:QuickRatingOption">
-                                                        <Button Width="19" Height="20" Padding="0"
-                                                                Background="Transparent" BorderThickness="0"
-                                                                HorizontalContentAlignment="Center"
-                                                                VerticalContentAlignment="Center"
-                                                                Click="OnPlayingTrackQuickRatingClicked"
-                                                                ToolTip.Tip="{Binding Name}">
-                                                            <TextBlock Text="★"
-                                                                       Height="20" LineHeight="20"
-                                                                       FontFamily="Segoe UI Symbol"
-                                                                       FontSize="16"
-                                                                       Foreground="{Binding Foreground}"
-                                                                       TextAlignment="Center"
-                                                                       HorizontalAlignment="Center"
-                                                                       VerticalAlignment="Center"/>
-                                                        </Button>
-                                                    </DataTemplate>
-                                                </ItemsControl.ItemTemplate>
-                                            </ItemsControl>
-                                        </Grid>
-                                    </Grid>
-                                </Grid>
+                                <ItemsControl Height="20"
+                                              Margin="0,31,8,0"
+                                              ItemsSource="{Binding QuickRatingOptions}"
+                                              HorizontalAlignment="Right"
+                                              VerticalAlignment="Top"
+                                              IsVisible="{Binding IsPlaying}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Horizontal" Spacing="1"/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="models:QuickRatingOption">
+                                            <Button Width="19" Height="20" Padding="0"
+                                                    Background="Transparent" BorderThickness="0"
+                                                    HorizontalContentAlignment="Center"
+                                                    VerticalContentAlignment="Center"
+                                                    Click="OnPlayingTrackQuickRatingClicked"
+                                                    ToolTip.Tip="{Binding Name}">
+                                                <TextBlock Text="★"
+                                                           Height="20" LineHeight="20"
+                                                           FontFamily="Segoe UI Symbol"
+                                                           FontSize="16"
+                                                           Foreground="{Binding Foreground}"
+                                                           TextAlignment="Center"
+                                                           HorizontalAlignment="Center"
+                                                           VerticalAlignment="Center"/>
+                                            </Button>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
                                 </Panel>
                             </Border>
                             <Rectangle Grid.Row="1"

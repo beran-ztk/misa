@@ -11,8 +11,6 @@ public record TrackTagDisplay(string Name, IBrush Foreground);
 
 public record TrackGenreDisplay(string Name, IBrush Foreground);
 
-public record TrackMoodDisplay(string Text, IBrush Foreground);
-
 public record QuickRatingOption(int TrackId, int RatingId, string Name, IBrush Foreground);
 
 public static class MainGenrePalette
@@ -72,25 +70,15 @@ public record TrackDisplayItem(
     };
 
     public bool IsPlaying { get; set; }
-    public double TrackCardHeight => IsPlaying ? 104 : 58;
+    public double TrackCardHeight => 58;
     public bool ShowCompactDuration => !IsPlaying;
     public Thickness TrackContentMargin => IsPlaying
-        ? new Thickness(0, 4, 205, 0)
+        ? new Thickness(0, 4, 135, 0)
         : new Thickness(0, 4, 100, 0);
-    public string PlayingAudioText { get; init; } = string.Empty;
-    public string PlayingAnalysisStatusText { get; init; } = string.Empty;
-    public string PlayingUsageText { get; init; } = string.Empty;
-    public string PlayingSourceText { get; init; } = string.Empty;
-    public string PlayingMetadataText => string.Join("  ·  ", new[] { PlayingUsageText, PlayingSourceText }
-        .Where(value => value.Length > 0));
-    public IReadOnlyList<TrackMoodDisplay> PlayingMoodDisplays { get; init; } = [];
+    public Thickness TrackTitleActionsMargin => IsPlaying
+        ? new Thickness(0, 0, 100, 0)
+        : new Thickness(0);
     public IReadOnlyList<QuickRatingOption> QuickRatingOptions { get; init; } = [];
-    public bool HasPlayingAudio => PlayingAudioText.Length > 0;
-    public bool HasPlayingAnalysisStatus => PlayingAnalysisStatusText.Length > 0;
-    public bool HasPlayingUsage => PlayingUsageText.Length > 0;
-    public bool HasPlayingSource => PlayingSourceText.Length > 0;
-    public bool HasPlayingMetadata => PlayingMetadataText.Length > 0;
-    public bool HasPlayingMoods => PlayingMoodDisplays.Count > 0;
     public bool NeedsReview { get; set; }
     public bool IsNotMarkedForReview => !NeedsReview;
     public string ReviewActionTooltip => NeedsReview ? "Remove review mark" : "Mark for review";

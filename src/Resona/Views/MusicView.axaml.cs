@@ -706,21 +706,6 @@ public partial class MusicView : UserControl
         var ratingName = track.RatingId is int ratingId ? ratingMap.GetValueOrDefault(ratingId, "") : "None";
         var durationText = track.DurationSeconds.HasValue ? FormatDuration(track.DurationSeconds.Value) : "";
 
-        var audioText = FormatPlayingAudio(_allTrackAudioAnalyses.GetValueOrDefault(track.Id));
-        var analysisStatusText = needsAnalysis
-            ? "Not analyzed yet · audio and mood data are unavailable"
-            : track.AnalysisDisabled
-                ? "Analysis disabled · audio and mood data are unavailable"
-                : string.Empty;
-        var usageText = FormatPlayingUsage(_allTrackUsageStats.GetValueOrDefault(track.Id));
-        var sourceText = FormatPlayingSource(track);
-        var moodDisplays = _allTrackMirexScores.GetValueOrDefault(track.Id, [])
-            .OrderByDescending(entry => entry.Value)
-            .Take(3)
-            .Select(entry => new TrackMoodDisplay(
-                $"{EmotionalCharacterCatalog.Name(entry.Key)} {entry.Value * 100d:0}%",
-                new SolidColorBrush(Color.Parse(EmotionalCharacterCatalog.Color(entry.Key)))))
-            .ToList();
         var selectedRatingSortOrder = track.RatingId is int selectedRatingId
             ? Values.Ratings.FirstOrDefault(rating => rating.Id == selectedRatingId)?.SortOrder ?? int.MinValue
             : int.MinValue;
@@ -740,62 +725,11 @@ public partial class MusicView : UserControl
             NeedsReview = track.NeedsReview,
             NeedsAnalysis = needsAnalysis,
             IsPlaying = track.Id == _engine.ActiveTrackId,
-            PlayingAudioText = audioText,
-            PlayingAnalysisStatusText = analysisStatusText,
-            PlayingUsageText = usageText,
-            PlayingSourceText = sourceText,
-            PlayingMoodDisplays = moodDisplays,
             QuickRatingOptions = quickRatingOptions
         };
         item.ApplyAppearance(_appearanceSettings);
         return item;
     }
-
-    private static string FormatPlayingAudio(TrackAudioAnalysis? analysis)
-    {
-        if (analysis is null)
-            return string.Empty;
-
-        var values = new List<string>();
-        if (analysis.Bpm is double bpm)
-            values.Add($"{bpm:0.#} BPM");
-        if (analysis.IntegratedLoudness is double loudness)
-            values.Add($"{loudness:0.#} LUFS");
-        if (analysis.LoudnessRange is double range)
-            values.Add($"{range:0.#} LU dynamics");
-        return string.Join("  ·  ", values);
-    }
-
-    private static string FormatPlayingUsage(TrackUsageStats? usage)
-    {
-        if (usage is null)
-            return string.Empty;
-
-        var listened = usage.ListenedSeconds >= 3600
-            ? $"{usage.ListenedSeconds / 3600d:0.#} h listened"
-            : usage.ListenedSeconds >= 60
-                ? $"{usage.ListenedSeconds / 60} min listened"
-                : $"{usage.ListenedSeconds} sec listened";
-        return $"{usage.PlayCount} plays  ·  {listened}  ·  {usage.SkipCount} skips";
-    }
-
-    private static string FormatPlayingSource(MusicTrack track)
-    {
-        var values = new List<string>();
-        if (track.ViewCount is long views)
-            values.Add($"{FormatCompactMetric(views)} views");
-        if (track.LikeCount is long likes)
-            values.Add($"{FormatCompactMetric(likes)} likes");
-        return string.Join("  ·  ", values);
-    }
-
-    private static string FormatCompactMetric(long value) => value switch
-    {
-        >= 1_000_000_000 => $"{value / 1_000_000_000d:0.#}B",
-        >= 1_000_000 => $"{value / 1_000_000d:0.#}M",
-        >= 1_000 => $"{value / 1_000d:0.#}K",
-        _ => value.ToString("N0")
-    };
 
     private void UpdateTrackInList(int trackId)
     {
