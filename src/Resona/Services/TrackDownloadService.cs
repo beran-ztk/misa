@@ -161,30 +161,33 @@ public class TrackDownloadService
         CancellationToken cancellationToken = default,
         BackgroundJobOptions? jobOptions = null)
     {
+        var source = YouTubeUrlNormalizer.ParseImportSource(url);
+        if (source is null)
+            return ([], "Only individual YouTube videos and explicit playlists are supported. YouTube Radio and Mix links are not supported.");
+
         try
         {
-            string? lastError = null;
-            foreach (var extractionUrl in PlaylistExtractionUrls(url))
+            var arguments = new List<string>
             {
-                var result = await RunYouTubeProcessAsync(
-                    jobOptions ?? DefaultJob(BackgroundJobKind.YouTubePlaylist, "Read import links", url),
-                    YtDlpArgs(
-                        "--js-runtimes", "node",
-                        "--ignore-errors",
-                        "--flat-playlist",
-                        "--dump-json",
-                        "--no-warnings",
-                        extractionUrl
-                    ),
-                    cancellationToken);
+                "--js-runtimes", "node",
+                "--ignore-errors",
+                "--flat-playlist",
+                "--dump-json",
+                "--no-warnings"
+            };
+            if (source.Value.Kind == YouTubeImportSourceKind.SingleTrack)
+                arguments.Add("--no-playlist");
+            arguments.Add(source.Value.Url);
 
-                var entries = ParsePlaylistEntries(url, result.Output);
-                if (entries.Count > 0) return (entries, null);
+            var result = await RunYouTubeProcessAsync(
+                jobOptions ?? DefaultJob(BackgroundJobKind.YouTubePlaylist, "Read import links", source.Value.Url),
+                YtDlpArgs([.. arguments]),
+                cancellationToken);
 
-                lastError = CleanYtDlpError(result.Error);
-            }
-
-            return ([], lastError);
+            var entries = ParsePlaylistEntries(source.Value.Url, result.Output);
+            return entries.Count > 0
+                ? (entries, null)
+                : ([], CleanYtDlpError(result.Error));
         }
         catch (OperationCanceledException) { throw; }
         catch (Exception exception) { return ([], exception.Message); }
@@ -314,11 +317,6 @@ public class TrackDownloadService
             PublishedDate(root)));
     }
 
-    private static bool IsGeneratedMix(string url)
-    {
-        return QueryValue(url, "start_radio") == "1";
-    }
-
     private static bool IsUnavailablePlaylistEntry(JsonElement root)
     {
         var title = StringValue(root, "title");
@@ -328,21 +326,6 @@ public class TrackDownloadService
         return title is "[Deleted video]" or "[Private video]"
                || availability is "private" or "premium_only" or "subscriber_only"
                || liveStatus == "is_upcoming";
-    }
-
-    private static IEnumerable<string> PlaylistExtractionUrls(string url)
-    {
-        var listValue = QueryValue(url, "list");
-        if (string.IsNullOrWhiteSpace(listValue) || IsGeneratedMix(url))
-        {
-            yield return url;
-            yield break;
-        }
-
-        var playlistUrl = $"https://www.youtube.com/playlist?list={Uri.EscapeDataString(listValue)}";
-        yield return playlistUrl;
-        if (!url.Equals(playlistUrl, StringComparison.OrdinalIgnoreCase))
-            yield return url;
     }
 
     private static string? CleanYtDlpError(string error)
@@ -402,21 +385,6 @@ public class TrackDownloadService
         {
             return null;
         }
-    }
-
-    private static string? QueryValue(string url, string key)
-    {
-        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri)) return null;
-        foreach (var part in uri.Query.TrimStart('?').Split('&', StringSplitOptions.RemoveEmptyEntries))
-        {
-            var pieces = part.Split('=', 2);
-            if (pieces.Length != 2 || !pieces[0].Equals(key, StringComparison.OrdinalIgnoreCase))
-                continue;
-
-            return Uri.UnescapeDataString(pieces[1]);
-        }
-
-        return null;
     }
 
     public string? FindDownloadedFile(string videoId)

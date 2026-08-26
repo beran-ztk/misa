@@ -109,7 +109,7 @@ public sealed class ImportQueueService
                 }
 
                 // Flat playlist output already contains the title and usually the duration. Avoiding a full
-                // yt-dlp metadata request per candidate makes large playlists and generated mixes responsive.
+                // yt-dlp metadata request per candidate keeps large playlists responsive.
                 // Exact audio size and metadata are fetched later, only for the item currently downloading.
                 previewItems.Add(new ImportPreviewItem(entry.SourceUrl, entry.CanonicalUrl,
                     entry.Title, entry.DurationSeconds, null, ImportQueueStatus.Queued));
