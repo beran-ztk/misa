@@ -39,6 +39,8 @@ public partial class MusicView : UserControl
         Color.Parse("#8051AE"));
     private bool _isSeeking;
     private TaskCompletionSource<bool>? _deleteTrackConfirmationCompletion;
+    private ContextMenu? _activeTrackContextMenu;
+    private TopLevel? _contextMenuDismissRoot;
     private AppearanceSettings _appearanceSettings = AppearanceSettings.Balanced();
 
     // Playback settings
@@ -160,6 +162,7 @@ public partial class MusicView : UserControl
                 _shufflePriorities[item.Key] = item.Value;
         ApplyAppearanceSettings(_appearanceSettings, refreshTrackRows: false);
         AddHandler(KeyDownEvent, OnKeyDown, RoutingStrategies.Tunnel);
+        AttachedToVisualTree += (_, _) => AttachContextMenuDismissHandler();
         _globalMediaKeys.Pressed += OnGlobalMediaKeyPressed;
         _globalMediaKeys.Start();
         _windowsMediaSession.Pressed += OnGlobalMediaKeyPressed;
@@ -171,6 +174,8 @@ public partial class MusicView : UserControl
         _windowsMediaSession.OpenUriRequested += OnSystemOpenUriRequested;
         DetachedFromVisualTree += (_, _) =>
         {
+            DetachContextMenuDismissHandler();
+            CloseActiveTrackContextMenu();
             PersistPlayerSession();
             _engine.Dispose();
             _globalMediaKeys.Dispose();
@@ -4428,6 +4433,7 @@ public partial class MusicView : UserControl
             || !e.GetCurrentPoint(trackCard).Properties.IsRightButtonPressed)
             return;
 
+        CloseActiveTrackContextMenu();
         EnsureLoadedPlaylistQueue(item.Track.Id);
         var trackId = item.Track.Id;
         var index = _playbackQueue.TrackIds.ToList().IndexOf(trackId);
@@ -4456,9 +4462,45 @@ public partial class MusicView : UserControl
                     () => ApplyTrackQueueMutation(() => _playbackQueue.Remove(trackId)))
             }
         };
-        trackCard.ContextMenu = menu;
+        menu.Closed += (_, _) =>
+        {
+            if (ReferenceEquals(_activeTrackContextMenu, menu))
+                _activeTrackContextMenu = null;
+        };
+        _activeTrackContextMenu = menu;
         menu.Open(trackCard);
         e.Handled = true;
+    }
+
+    private void AttachContextMenuDismissHandler()
+    {
+        var topLevel = TopLevel.GetTopLevel(this);
+        if (ReferenceEquals(_contextMenuDismissRoot, topLevel))
+            return;
+
+        DetachContextMenuDismissHandler();
+        _contextMenuDismissRoot = topLevel;
+        _contextMenuDismissRoot?.AddHandler(
+            PointerPressedEvent,
+            OnApplicationPointerPressed,
+            RoutingStrategies.Tunnel,
+            handledEventsToo: true);
+    }
+
+    private void DetachContextMenuDismissHandler()
+    {
+        _contextMenuDismissRoot?.RemoveHandler(PointerPressedEvent, OnApplicationPointerPressed);
+        _contextMenuDismissRoot = null;
+    }
+
+    private void OnApplicationPointerPressed(object? sender, PointerPressedEventArgs e) =>
+        CloseActiveTrackContextMenu();
+
+    private void CloseActiveTrackContextMenu()
+    {
+        var menu = _activeTrackContextMenu;
+        _activeTrackContextMenu = null;
+        menu?.Close();
     }
 
     private void EnsureLoadedPlaylistQueue(int preferredTrackId)
