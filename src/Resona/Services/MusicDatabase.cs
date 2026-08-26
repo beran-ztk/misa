@@ -3007,6 +3007,12 @@ public class MusicDatabase
                             WHERE analysis.id IS NULL
                               AND tracks.analysis_disabled = 0
                               AND tracks.library_state <> 'Rejected'
+                              AND NOT EXISTS (
+                                  SELECT 1
+                                  FROM channel_videos videos
+                                  WHERE videos.canonical_url = tracks.canonical_url
+                                    AND videos.is_checked = 0
+                              )
                             ORDER BY tracks.downloaded_at, tracks.id";
         using var reader = cmd.ExecuteReader();
         var tracks = new List<MusicTrack>();
@@ -3015,6 +3021,22 @@ public class MusicDatabase
             tracks.Add(ReadMusicTrack(reader));
         }
         return tracks;
+    }
+
+    public bool IsTrackWaitingForChannelReview(int trackId)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+            SELECT EXISTS (
+                SELECT 1
+                FROM tracks
+                JOIN channel_videos videos ON videos.canonical_url = tracks.canonical_url
+                WHERE tracks.id = $trackId
+                  AND videos.is_checked = 0
+            )";
+        cmd.Parameters.AddWithValue("$trackId", trackId);
+        return Convert.ToInt32(cmd.ExecuteScalar()) == 1;
     }
 
     public int CountUnratedTracks()

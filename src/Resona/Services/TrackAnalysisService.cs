@@ -326,7 +326,8 @@ public sealed class TrackAnalysisService : IDisposable
 
     private static MusicAnalysisException ServerError(HttpResponseMessage response) =>
         new(MusicAnalysisErrorKind.ServerError,
-            $"The analysis server returned HTTP {(int)response.StatusCode} ({response.ReasonPhrase ?? "error"}).");
+            $"The analysis server returned HTTP {(int)response.StatusCode} ({response.ReasonPhrase ?? "error"}).",
+            statusCode: response.StatusCode);
 
     private static MusicAnalysisException CancellationError(
         CancellationToken userCancellationToken,

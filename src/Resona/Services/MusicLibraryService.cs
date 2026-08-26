@@ -44,7 +44,8 @@ public class MusicLibraryService
         && TrackWorkflowPolicy.ShouldAnalyze(
             track.LibraryState,
             track.AnalysisDisabled,
-            GetTrackAudioAnalysis(id) is not null);
+            GetTrackAudioAnalysis(id) is not null,
+            _db.IsTrackWaitingForChannelReview(id));
     public MusicTrack? GetTrackByCanonicalUrl(string canonicalUrl) =>
         _db.GetTrackByCanonicalUrl(canonicalUrl);
 
@@ -789,7 +790,10 @@ public class MusicLibraryService
             if (exception.Kind is MusicAnalysisErrorKind.FileError or MusicAnalysisErrorKind.InvalidResponse)
                 _db.MarkTrackAnalysisFailed(track.Id);
             return (exception.Message,
-                exception.Kind is MusicAnalysisErrorKind.ConnectionError or MusicAnalysisErrorKind.Timeout);
+                exception.Kind is MusicAnalysisErrorKind.ConnectionError or MusicAnalysisErrorKind.Timeout
+                || exception.Kind == MusicAnalysisErrorKind.ServerError
+                && exception.StatusCode is { } statusCode
+                && (int)statusCode >= 500);
         }
     }
 

@@ -15,6 +15,7 @@ public sealed class BackgroundAnalysisService
     private readonly Queue<int> _pendingTrackIds = [];
     private readonly HashSet<int> _queuedTrackIds = [];
     private readonly HashSet<int> _removedActiveTrackIds = [];
+    private readonly Dictionary<int, int> _trackFailureCounts = [];
     private Task? _workerTask;
     private int? _activeTrackId;
     private CancellationTokenSource? _activeAnalysisCancellation;
@@ -28,7 +29,7 @@ public sealed class BackgroundAnalysisService
     public void Initialize()
     {
         EnqueueTracks(MusicLibraryService.Current.GetUnanalyzedTracks().Select(track => track.Id));
-        _ = RetryServerConnectionAsync();
+        _ = BeginServerConnectionCheck(resetTrackFailureCounts: true);
     }
 
     public void EnqueueTrack(int trackId)
@@ -49,7 +50,10 @@ public sealed class BackgroundAnalysisService
         }
     }
 
-    public Task<bool> RetryServerConnectionAsync()
+    public Task<bool> RetryServerConnectionAsync() =>
+        BeginServerConnectionCheck(resetTrackFailureCounts: true);
+
+    private Task<bool> BeginServerConnectionCheck(bool resetTrackFailureCounts)
     {
         Task<bool> checkTask;
         lock (_gate)
@@ -57,8 +61,10 @@ public sealed class BackgroundAnalysisService
             if (_connectionCheckTask is { IsCompleted: false })
                 return _connectionCheckTask;
 
+            if (resetTrackFailureCounts)
+                _trackFailureCounts.Clear();
             _serverConnectionState = AnalysisServerConnectionState.Checking;
-            checkTask = CheckServerConnectionAsync();
+            checkTask = CheckServerConnectionWithRetriesAsync();
             _connectionCheckTask = checkTask;
         }
 
@@ -66,19 +72,26 @@ public sealed class BackgroundAnalysisService
         return checkTask;
     }
 
-    private async Task<bool> CheckServerConnectionAsync()
+    private async Task<bool> CheckServerConnectionWithRetriesAsync()
     {
-        var isReachable = false;
-        try
-        {
-            using var service = new TrackAnalysisService();
-            isReachable = await service.CheckHealthAsync();
-        }
-        catch (Exception exception)
-        {
-            // The UI presents one stable offline state; details remain available on the settings page.
-            WorkflowLog.Error("analysis", "Analysis server health check failed.", exception);
-        }
+        var isReachable = await AnalysisRetryPolicy.CheckConnectionAsync(
+            async attempt =>
+            {
+                try
+                {
+                    using var service = new TrackAnalysisService();
+                    return await service.CheckHealthAsync();
+                }
+                catch (Exception exception)
+                {
+                    WorkflowLog.Error(
+                        "analysis",
+                        $"Analysis server health check failed (attempt {attempt}/{AnalysisRetryPolicy.MaxAttempts}).",
+                        exception);
+                    return false;
+                }
+            },
+            attempt => Task.Delay(TimeSpan.FromSeconds(attempt)));
 
         lock (_gate)
         {
@@ -99,7 +112,7 @@ public sealed class BackgroundAnalysisService
 
     public void NotifyServerConfigurationChanged()
     {
-        _ = RetryServerConnectionAsync();
+        _ = BeginServerConnectionCheck(resetTrackFailureCounts: true);
     }
 
     public bool CancelActiveAnalysis()
@@ -136,6 +149,7 @@ public sealed class BackgroundAnalysisService
                 foreach (var retainedTrackId in retainedTrackIds)
                     _pendingTrackIds.Enqueue(retainedTrackId);
                 _queuedTrackIds.Remove(trackId);
+                _trackFailureCounts.Remove(trackId);
                 removed = true;
             }
 
@@ -221,6 +235,7 @@ public sealed class BackgroundAnalysisService
                 string? error = null;
                 var retryable = false;
                 var removedByUser = false;
+                var reconnectAfterFailure = false;
 
                 try
                 {
@@ -249,21 +264,27 @@ public sealed class BackgroundAnalysisService
                     lock (_gate)
                     {
                         removedByUser = _removedActiveTrackIds.Remove(trackId);
-                        if (shouldRetry)
+                        if (shouldRetry && !removedByUser)
                         {
+                            var failureCount = _trackFailureCounts.GetValueOrDefault(trackId) + 1;
+                            _trackFailureCounts[trackId] = failureCount;
                             _pendingTrackIds.Enqueue(trackId);
                             _pausedForTransientFailure = true;
                             _serverConnectionState = AnalysisServerConnectionState.Unreachable;
+                            reconnectAfterFailure = failureCount < AnalysisRetryPolicy.MaxAttempts;
                         }
                         else
                         {
                             _queuedTrackIds.Remove(trackId);
+                            _trackFailureCounts.Remove(trackId);
                         }
                         if (_activeTrackId == trackId)
                             _activeTrackId = null;
                         _activeAnalysisCancellation = null;
                     }
                     RaiseQueueChanged();
+                    if (reconnectAfterFailure)
+                        _ = BeginServerConnectionCheck(resetTrackFailureCounts: false);
                 }
 
                 if (track is not null && !removedByUser)

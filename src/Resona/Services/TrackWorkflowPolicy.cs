@@ -13,10 +13,12 @@ public static class TrackWorkflowPolicy
     public static bool ShouldAnalyze(
         TrackLibraryState libraryState,
         bool analysisDisabled,
-        bool hasAnalysis) =>
+        bool hasAnalysis,
+        bool isWaitingForChannelReview = false) =>
         libraryState != TrackLibraryState.Rejected
         && !analysisDisabled
-        && !hasAnalysis;
+        && !hasAnalysis
+        && !isWaitingForChannelReview;
 
     public static IReadOnlyList<string> Validate(
         TrackLibraryState libraryState,

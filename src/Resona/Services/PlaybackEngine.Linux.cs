@@ -233,26 +233,7 @@ public sealed class PlaybackEngine : IDisposable
     }
 
     public static float CalculateLoudnessGain(double? integratedLoudness, double? loudnessRange)
-    {
-        if (integratedLoudness is not double lufs || double.IsNaN(lufs) || double.IsInfinity(lufs))
-            return 1f;
-
-        const double targetLufs = -14.0;
-        var gainDb = targetLufs - lufs;
-
-        if (gainDb > 0 && loudnessRange is double range
-                       && !double.IsNaN(range)
-                       && !double.IsInfinity(range))
-        {
-            if (range >= 16)
-                gainDb *= 0.55;
-            else if (range >= 10)
-                gainDb *= 0.75;
-        }
-
-        gainDb = Math.Clamp(gainDb, -10.0, 6.0);
-        return (float)Math.Pow(10.0, gainDb / 20.0);
-    }
+        => LoudnessNormalizer.CalculateGain(integratedLoudness, loudnessRange);
 
     private AudioSlot CreateSlot(
         string filePath,

@@ -53,13 +53,27 @@ public sealed class TrackAnalysisServiceTests
         Assert.Null(handler.ApiKey);
     }
 
+    [Fact]
+    public async Task Server_error_preserves_http_status_code()
+    {
+        var handler = new CapturingHandler("{}", HttpStatusCode.InternalServerError);
+        using var service = CreateService(handler, null);
+
+        var exception = await Assert.ThrowsAsync<MusicAnalysisException>(() => service.CheckHealthAsync());
+
+        Assert.Equal(MusicAnalysisErrorKind.ServerError, exception.Kind);
+        Assert.Equal(HttpStatusCode.InternalServerError, exception.StatusCode);
+    }
+
     private static TrackAnalysisService CreateService(CapturingHandler handler, string? apiKey) =>
         new(
             new HttpClient(handler),
             serverUrlProvider: () => "https://analyzer.test",
             apiKeyProvider: () => apiKey);
 
-    private sealed class CapturingHandler(string responseBody) : HttpMessageHandler
+    private sealed class CapturingHandler(
+        string responseBody,
+        HttpStatusCode statusCode = HttpStatusCode.OK) : HttpMessageHandler
     {
         public HttpMethod? Method { get; private set; }
         public string? ApiKey { get; private set; }
@@ -72,7 +86,7 @@ public sealed class TrackAnalysisServiceTests
             ApiKey = request.Headers.TryGetValues("X-Api-Key", out var values)
                 ? values.Single()
                 : null;
-            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            return Task.FromResult(new HttpResponseMessage(statusCode)
             {
                 Content = new StringContent(responseBody)
             });

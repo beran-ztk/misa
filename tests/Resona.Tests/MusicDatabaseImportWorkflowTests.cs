@@ -100,6 +100,42 @@ public sealed class MusicDatabaseImportWorkflowTests : IDisposable
     }
 
     [Fact]
+    public void Unchecked_channel_video_blocks_analysis_until_review_is_complete()
+    {
+        var trackId = InsertTrack(ratingId: null, state: "PendingRating", needsReview: 1);
+        var canonicalUrl = $"https://youtu.be/{Guid.NewGuid():N}";
+        using (var connection = Open())
+        using (var transaction = connection.BeginTransaction())
+        {
+            using var updateTrack = connection.CreateCommand();
+            updateTrack.Transaction = transaction;
+            updateTrack.CommandText = "UPDATE tracks SET canonical_url = $url WHERE id = $id";
+            updateTrack.Parameters.AddWithValue("$url", canonicalUrl);
+            updateTrack.Parameters.AddWithValue("$id", trackId);
+            updateTrack.ExecuteNonQuery();
+
+            Insert(connection, transaction, @"
+                INSERT INTO channel_videos
+                    (canonical_url, is_checked, download_status, updated_at)
+                VALUES ($url, 0, 'Ready', $now)",
+                ("$url", canonicalUrl), ("$now", DateTime.UtcNow.ToString("O")));
+            transaction.Commit();
+        }
+
+        Assert.True(_database.IsTrackWaitingForChannelReview(trackId));
+
+        using (var connection = Open())
+        using (var command = connection.CreateCommand())
+        {
+            command.CommandText = "UPDATE channel_videos SET is_checked = 1 WHERE canonical_url = $url";
+            command.Parameters.AddWithValue("$url", canonicalUrl);
+            command.ExecuteNonQuery();
+        }
+
+        Assert.False(_database.IsTrackWaitingForChannelReview(trackId));
+    }
+
+    [Fact]
     public void Production_guards_reject_invalid_track_states()
     {
         using var connection = Open();
