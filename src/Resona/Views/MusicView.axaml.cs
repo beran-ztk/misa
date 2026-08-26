@@ -136,8 +136,6 @@ public partial class MusicView : UserControl
         ActivityCenter.CloseRequested += UpdateActivityCenterButtonVisual;
         ActivityCenter.SummaryChanged += UpdateActivityCenterSummary;
         UpdateActivityCenterSummary(ActivityCenter.CurrentSummary);
-        KnownIssuesPanel.CloseRequested += UpdateKnownIssuesButtonVisual;
-        UpdateKnownIssuesButtonVisual();
         MoveFilterDrawerToRootOverlay();
         var appSettings = AppSettingsStore.Load();
         Values.UseYtDlpBrowserCookies = appSettings.UseYtDlpBrowserCookies;
@@ -254,7 +252,6 @@ public partial class MusicView : UserControl
         PersistPlayerSession();
 
         SettingsOverlay.PreloadGenreVocabulary();
-        KnownIssuesPanel.LoadAtStartup();
 
         AddTrackOverlay.TrackDownloaded += warning =>
         {
@@ -3136,7 +3133,6 @@ public partial class MusicView : UserControl
     private void OnImportClicked(object? sender, RoutedEventArgs e)
     {
         CloseActivityCenter();
-        CloseKnownIssuesPanel();
         ImportOverlay.Open();
     }
 
@@ -3146,22 +3142,9 @@ public partial class MusicView : UserControl
             ActivityCenter.IsVisible = false;
         else
         {
-            CloseKnownIssuesPanel();
             ActivityCenter.Open();
         }
         UpdateActivityCenterButtonVisual();
-    }
-
-    private void OnKnownIssuesClicked(object? sender, RoutedEventArgs e)
-    {
-        if (KnownIssuesPanel.IsVisible)
-            KnownIssuesPanel.IsVisible = false;
-        else
-        {
-            CloseActivityCenter();
-            KnownIssuesPanel.Open();
-        }
-        UpdateKnownIssuesButtonVisual();
     }
 
     private void UpdateActivityCenterSummary(ActivityCenterSummary summary)
@@ -3191,24 +3174,9 @@ public partial class MusicView : UserControl
         ActivityCenterToggleButton.Opacity = ActivityCenter.IsVisible ? 1 : 0.86;
     }
 
-    private void CloseKnownIssuesPanel()
-    {
-        KnownIssuesPanel.IsVisible = false;
-        UpdateKnownIssuesButtonVisual();
-    }
-
-    private void UpdateKnownIssuesButtonVisual()
-    {
-        KnownIssuesToggleButton.Background = KnownIssuesPanel.IsVisible
-            ? Brush("#343E6591")
-            : Brushes.Transparent;
-        KnownIssuesToggleButton.Opacity = KnownIssuesPanel.IsVisible ? 1 : 0.86;
-    }
-
     private void OnChannelsClicked(object? sender, RoutedEventArgs e)
     {
         CloseActivityCenter();
-        CloseKnownIssuesPanel();
         UpdateChannelOverlayBounds();
         ChannelOverlay.Open();
     }
@@ -3223,7 +3191,6 @@ public partial class MusicView : UserControl
     private void OnSettingsClicked(object? sender, RoutedEventArgs e)
     {
         CloseActivityCenter();
-        CloseKnownIssuesPanel();
         UpdateSettingsLayout();
         SettingsOverlay.Open();
     }
@@ -3312,7 +3279,6 @@ public partial class MusicView : UserControl
     private void OpenTrackEditor(MusicTrack track)
     {
         CloseActivityCenter();
-        CloseKnownIssuesPanel();
         UpdateEditorBounds();
         EditTrackOverlay.Open(track);
     }
@@ -4302,12 +4268,13 @@ public partial class MusicView : UserControl
         var isCurrent = _playbackQueue.CurrentTrackId == trackId;
         var menu = new ContextMenu
         {
+            Classes = { "track-context" },
             Placement = PlacementMode.Pointer,
             ItemsSource = new object[]
             {
                 CreateTrackMenuItem("Edit", "/Assets/pencil-simple.svg", true,
                     () => OpenTrackEditor(item.Track)),
-                new Separator(),
+                new Separator { Classes = { "track-context-separator" } },
                 CreateTrackMenuItem("Play next", "/Assets/skip-forward.svg",
                     !isCurrent && index != currentIndex + 1,
                     () => ApplyTrackQueueMutation(() => _playbackQueue.MoveNext(trackId))),
@@ -4389,6 +4356,7 @@ public partial class MusicView : UserControl
             Icon = CreateTrackMenuIcon(iconPath),
             IsEnabled = isEnabled
         };
+        item.Classes.Add("track-context-item");
         item.Click += (_, _) => action();
         return item;
     }
@@ -4397,8 +4365,8 @@ public partial class MusicView : UserControl
         new(new Uri("avares://Resona/"))
         {
             Path = path,
-            Width = 15,
-            Height = 15,
+            Width = 14,
+            Height = 14,
             Stretch = Stretch.Uniform,
             Opacity = 0.8,
             VerticalAlignment = VerticalAlignment.Center,

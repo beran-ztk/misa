@@ -198,7 +198,6 @@
                                     HorizontalAlignment="Right"
                                     VerticalAlignment="Center">
                             <Button x:Name="RatingBandLowButton"
-                                    Content="↓"
                                     Width="28" Height="28" Padding="0"
                                     FontFamily="Consolas"
                                     FontSize="17" FontWeight="Bold"
@@ -206,9 +205,21 @@
                                     HorizontalContentAlignment="Center"
                                     VerticalContentAlignment="Center"
                                     Click="OnRatingBandLowClicked"
-                                    ToolTip.Tip="Low — near the lower edge of this rating" />
+                                    ToolTip.Tip="Low — near the lower edge of this rating">
+                                <Border Width="8" Height="14"
+                                        Background="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                        RenderTransformOrigin="50%,50%"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center">
+                                    <Border.OpacityMask>
+                                        <ImageBrush Source="avares://Resona/Assets/rating-band-arrow.png" Stretch="Uniform"/>
+                                    </Border.OpacityMask>
+                                    <Border.RenderTransform>
+                                        <RotateTransform Angle="180"/>
+                                    </Border.RenderTransform>
+                                </Border>
+                            </Button>
                             <Button x:Name="RatingBandMidButton"
-                                    Content="●"
                                     Width="28" Height="28" Padding="0"
                                     FontFamily="Consolas"
                                     FontSize="8" FontWeight="Bold"
@@ -216,9 +227,13 @@
                                     HorizontalContentAlignment="Center"
                                     VerticalContentAlignment="Center"
                                     Click="OnRatingBandMidClicked"
-                                    ToolTip.Tip="Mid — solidly within this rating" />
+                                    ToolTip.Tip="Mid — solidly within this rating">
+                                <Ellipse Width="6" Height="6"
+                                         Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                         HorizontalAlignment="Center"
+                                         VerticalAlignment="Center"/>
+                            </Button>
                             <Button x:Name="RatingBandHighButton"
-                                    Content="↑"
                                     Width="28" Height="28" Padding="0"
                                     FontFamily="Consolas"
                                     FontSize="17" FontWeight="Bold"
@@ -226,7 +241,16 @@
                                     HorizontalContentAlignment="Center"
                                     VerticalContentAlignment="Center"
                                     Click="OnRatingBandHighClicked"
-                                    ToolTip.Tip="High — near the upper edge of this rating" />
+                                    ToolTip.Tip="High — near the upper edge of this rating">
+                                <Border Width="8" Height="14"
+                                        Background="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center">
+                                    <Border.OpacityMask>
+                                        <ImageBrush Source="avares://Resona/Assets/rating-band-arrow.png" Stretch="Uniform"/>
+                                    </Border.OpacityMask>
+                                </Border>
+                            </Button>
                         </StackPanel>
                     </Grid>
                 </Border>

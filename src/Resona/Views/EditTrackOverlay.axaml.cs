@@ -708,7 +708,10 @@ public partial class EditTrackOverlay : UserControl
                 Text = "★",
                 FontSize = 29,
                 FontFamily = new FontFamily("Segoe UI Symbol"),
+                Height = 42,
+                LineHeight = 42,
                 TextAlignment = TextAlignment.Center,
+                HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center
             };
             var button = new Button
@@ -719,6 +722,8 @@ public partial class EditTrackOverlay : UserControl
                 Padding = new Thickness(0),
                 Background = Brushes.Transparent,
                 BorderThickness = new Thickness(0),
+                HorizontalContentAlignment = HorizontalAlignment.Center,
+                VerticalContentAlignment = VerticalAlignment.Center,
                 Cursor = new Cursor(StandardCursorType.Hand)
             };
             button.Classes.Add("rating-star");

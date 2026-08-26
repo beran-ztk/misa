@@ -14,6 +14,44 @@
   
     <Application.Styles>
         <FluentTheme />
+        <Style Selector="Button">
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="ToggleButton">
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Slider">
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="MenuItem">
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="ContextMenu.track-context">
+            <Setter Property="Width" Value="184"/>
+            <Setter Property="Background" Value="#FA19221F"/>
+            <Setter Property="BorderBrush" Value="#5A7E7665"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="3"/>
+        </Style>
+        <Style Selector="MenuItem.track-context-item">
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="MinHeight" Value="24"/>
+            <Setter Property="Padding" Value="7,1"/>
+            <Setter Property="Margin" Value="0"/>
+            <Setter Property="FontSize" Value="11.5"/>
+            <Setter Property="Foreground" Value="#F2EEE4"/>
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="MenuItem.track-context-item:pointerover">
+            <Setter Property="Background" Value="#42645B45"/>
+            <Setter Property="Foreground" Value="#FFFDF5"/>
+        </Style>
+        <Style Selector="Separator.track-context-separator">
+            <Setter Property="Height" Value="1"/>
+            <Setter Property="Margin" Value="6,2"/>
+            <Setter Property="Background" Value="#557E7665"/>
+        </Style>
         <Style Selector="ToolTip">
             <Setter Property="MaxWidth" Value="500"/>
             <Setter Property="Padding" Value="12,10"/>

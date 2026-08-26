@@ -5,6 +5,7 @@
 
     <UserControl.Styles>
         <Style Selector="ToggleButton.settings-nav">
+            <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Padding" Value="11,8"/>
             <Setter Property="Margin" Value="0,1"/>
             <Setter Property="HorizontalAlignment" Value="Stretch"/>
