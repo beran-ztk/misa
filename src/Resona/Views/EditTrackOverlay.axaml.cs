@@ -53,7 +53,7 @@ public partial class EditTrackOverlay : UserControl
     private string? _initialRemix;
     private string? _initialEdits;
     private bool _isEditingInformation;
-    private int _motionGeneration;
+    private int _openGeneration;
     private bool _isDeletingTrack;
     private bool _isOpen;
     private bool _lookupsLoaded;
@@ -101,18 +101,24 @@ public partial class EditTrackOverlay : UserControl
 
     public void Open(MusicTrack track, bool analyzeAfterOpening = false)
     {
-        var motionGeneration = ++_motionGeneration;
+        var openGeneration = ++_openGeneration;
         _isOpen = true;
-        var prepared = _preparedTrackId == track.Id && _track?.Id == track.Id;
-        if (!prepared)
-            PrepareContent(track);
-
         Opacity = 1;
         EditorSurface.Opacity = 1;
         IsVisible = true;
         IsHitTestVisible = true;
-        if (analyzeAfterOpening)
-            _ = AnalyzeAfterOpeningAsync(track, motionGeneration);
+
+        if (IsPreparedFor(track.Id))
+        {
+            if (analyzeAfterOpening)
+                _ = AnalyzeAfterOpeningAsync(track, openGeneration);
+            return;
+        }
+
+        _loadingTrack = true;
+        Dispatcher.UIThread.Post(
+            () => LoadTrackAfterOpening(track, analyzeAfterOpening, openGeneration),
+            DispatcherPriority.Background);
     }
 
     public void Prepare(MusicTrack track)
@@ -159,10 +165,20 @@ public partial class EditTrackOverlay : UserControl
         _preparedTrackId = track.Id;
     }
 
-    private async Task AnalyzeAfterOpeningAsync(MusicTrack track, int motionGeneration)
+    private void LoadTrackAfterOpening(MusicTrack track, bool analyzeAfterOpening, int openGeneration)
+    {
+        if (openGeneration != _openGeneration || !_isOpen)
+            return;
+
+        PrepareContent(track);
+        if (analyzeAfterOpening)
+            _ = AnalyzeImportedTrackAsync(track);
+    }
+
+    private async Task AnalyzeAfterOpeningAsync(MusicTrack track, int openGeneration)
     {
         await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Loaded);
-        if (motionGeneration == _motionGeneration && _isOpen)
+        if (openGeneration == _openGeneration && _isOpen)
             await AnalyzeImportedTrackAsync(track);
     }
 
@@ -1661,7 +1677,8 @@ public partial class EditTrackOverlay : UserControl
             PreviewClosed?.Invoke();
         }
         _analysisElapsedTimer.Stop();
-        ++_motionGeneration;
+        ++_openGeneration;
+        _loadingTrack = false;
         _isOpen = false;
         IsHitTestVisible = false;
         IsVisible = false;
