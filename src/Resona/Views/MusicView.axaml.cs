@@ -3603,7 +3603,6 @@ public partial class MusicView : UserControl
             return;
 
         FileList.SelectedItem = item;
-        OpenTrackEditor(item.Track);
     }
 
     private void OnTrackCardDoubleTapped(object? sender, TappedEventArgs e)
@@ -4441,17 +4440,19 @@ public partial class MusicView : UserControl
             Placement = PlacementMode.Pointer,
             ItemsSource = new object[]
             {
-                CreateTrackPlaybackMenuItem("Play next", "/Assets/skip-forward.svg",
+                CreateTrackMenuItem("Edit", "/Assets/pencil-simple.svg", true,
+                    () => OpenTrackEditor(item.Track)),
+                new Separator(),
+                CreateTrackMenuItem("Play next", "/Assets/skip-forward.svg",
                     !isCurrent && index != currentIndex + 1,
                     () => ApplyTrackQueueMutation(() => _playbackQueue.MoveNext(trackId))),
-                CreateTrackPlaybackMenuItem("Move up", "/Assets/queue-up.svg",
+                CreateTrackMenuItem("Move up", "/Assets/queue-up.svg",
                     !isCurrent && index > 0 && index - 1 != currentIndex,
                     () => ApplyTrackQueueMutation(() => _playbackQueue.Move(trackId, -1))),
-                CreateTrackPlaybackMenuItem("Move down", "/Assets/queue-down.svg", !isCurrent && index >= 0
+                CreateTrackMenuItem("Move down", "/Assets/queue-down.svg", !isCurrent && index >= 0
                     && index < _playbackQueue.TrackIds.Count - 1 && index + 1 != currentIndex,
                     () => ApplyTrackQueueMutation(() => _playbackQueue.Move(trackId, 1))),
-                new Separator(),
-                CreateTrackPlaybackMenuItem("Remove from queue", "/Assets/close.svg", !isCurrent,
+                CreateTrackMenuItem("Remove from queue", "/Assets/close.svg", !isCurrent,
                     () => ApplyTrackQueueMutation(() => _playbackQueue.Remove(trackId)))
             }
         };
@@ -4475,7 +4476,7 @@ public partial class MusicView : UserControl
         _loadedPlaylistSourceTrackIds = trackIds;
     }
 
-    private static MenuItem CreateTrackPlaybackMenuItem(
+    private static MenuItem CreateTrackMenuItem(
         string header,
         string iconPath,
         bool isEnabled,
@@ -4484,14 +4485,14 @@ public partial class MusicView : UserControl
         var item = new MenuItem
         {
             Header = header,
-            Icon = CreatePlaybackMenuIcon(iconPath),
+            Icon = CreateTrackMenuIcon(iconPath),
             IsEnabled = isEnabled
         };
         item.Click += (_, _) => action();
         return item;
     }
 
-    private static Avalonia.Svg.Skia.Svg CreatePlaybackMenuIcon(string path) =>
+    private static Avalonia.Svg.Skia.Svg CreateTrackMenuIcon(string path) =>
         new(new Uri("avares://Resona/"))
         {
             Path = path,
