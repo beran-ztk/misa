@@ -1123,17 +1123,15 @@ public partial class EditTrackOverlay : UserControl
             {
                 Background = Brushes.Transparent,
                 BorderThickness = new Avalonia.Thickness(0),
-                Padding = new Avalonia.Thickness(0, 3),
+                Padding = new Avalonia.Thickness(0, 4),
                 Opacity = enabled ? 1 : 0.48
             };
             var content = new Grid
             {
-                ColumnDefinitions = new ColumnDefinitions("*,22"),
-                ColumnSpacing = 10,
-                RowDefinitions = new RowDefinitions(hasPrediction ? "Auto,Auto" : "Auto"),
-                RowSpacing = 6
+                ColumnDefinitions = new ColumnDefinitions(hasPrediction ? "180,*,48,22" : "*,Auto,22"),
+                ColumnSpacing = hasPrediction ? 12 : 10,
+                VerticalAlignment = VerticalAlignment.Center
             };
-            var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), ColumnSpacing = 10 };
             var genreName = new TextBlock
             {
                 Text = assignment.GenreName,
@@ -1143,12 +1141,11 @@ public partial class EditTrackOverlay : UserControl
                 VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
                 TextTrimming = TextTrimming.CharacterEllipsis
             };
-            row.Children.Add(genreName);
+            content.Children.Add(genreName);
 
-            Control detail;
             if (!hasPrediction)
             {
-                detail = new TextBlock
+                var detail = new TextBlock
                 {
                     Text = "manually added",
                     FontSize = 10.5,
@@ -1156,47 +1153,58 @@ public partial class EditTrackOverlay : UserControl
                     VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
                     Opacity = 0.58
                 };
+                Grid.SetColumn(detail, 1);
+                content.Children.Add(detail);
             }
             else
             {
-                detail = new TextBlock
-                {
-                    Text = $"{confidence:P0}",
-                    FontSize = 10.5,
-                    FontWeight = FontWeight.SemiBold,
-                    Foreground = confidenceBrush,
-                    VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
-                    Opacity = 0.94
-                };
                 var confidenceBar = new ProgressBar
                 {
                     Minimum = 0,
                     Maximum = 1,
                     Value = confidence,
-                    Height = 5,
+                    Height = 4,
                     Foreground = confidenceBrush,
-                    Background = ThemeResources.Brush("Theme.Brush.Surface")
+                    Background = ThemeResources.Brush("Theme.Brush.Surface"),
+                    VerticalAlignment = VerticalAlignment.Center
                 };
-                Grid.SetRow(confidenceBar, 1);
+                Grid.SetColumn(confidenceBar, 1);
                 content.Children.Add(confidenceBar);
+
+                var detail = new TextBlock
+                {
+                    Text = $"{confidence:P0}",
+                    FontSize = 10.5,
+                    FontWeight = FontWeight.SemiBold,
+                    Foreground = confidenceBrush,
+                    TextAlignment = TextAlignment.Right,
+                    VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+                    Opacity = 0.94
+                };
+                Grid.SetColumn(detail, 2);
+                content.Children.Add(detail);
             }
 
-            Grid.SetColumn(detail, 1);
-            row.Children.Add(detail);
-            content.Children.Add(row);
-            var remove = new TextBlock
+            var remove = new Border
             {
-                Text = "×",
                 Width = 22,
-                FontSize = 16,
-                Foreground = ThemeResources.Brush("Theme.Brush.TextStrong"),
+                Height = 22,
+                Background = Brushes.Transparent,
                 Opacity = 0.56,
-                TextAlignment = TextAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
-                Cursor = new Cursor(StandardCursorType.Hand)
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Cursor = new Cursor(StandardCursorType.Hand),
+                Child = new Avalonia.Svg.Skia.Svg(new Uri("avares://Resona/"))
+                {
+                    Path = "/Assets/close.svg",
+                    Width = 10,
+                    Height = 10,
+                    Stretch = Stretch.Uniform,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center
+                }
             };
-            Grid.SetColumn(remove, 1);
-            Grid.SetRowSpan(remove, hasPrediction ? 2 : 1);
+            Grid.SetColumn(remove, hasPrediction ? 3 : 2);
             content.Children.Add(remove);
             container.Child = content;
             remove.PointerPressed += (_, e) =>
