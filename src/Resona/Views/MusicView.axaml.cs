@@ -39,37 +39,15 @@ public partial class MusicView : UserControl
     private readonly WindowsMediaSession _windowsMediaSession = new();
     private readonly DiscordPresenceService _discordPresence = new();
     private CancellationTokenSource? _pendingTrackClickCts;
-    private readonly DispatcherTimer _atmosphereTimer = new() { Interval = TimeSpan.FromMilliseconds(33) };
-    private readonly DispatcherTimer _backdropFocusSaveTimer = new() { Interval = TimeSpan.FromMilliseconds(350) };
-    private readonly SolidColorBrush _playerTopGlowBrush = new(Colors.Transparent);
-    private readonly SolidColorBrush _playerChromeEdgeBrush = new(Color.Parse("#4A756B54"));
-    private readonly GradientStop _appAmbientPrimaryStop;
-    private readonly GradientStop _appAmbientSecondaryStop;
-    private readonly GradientStop _filterAmbientPrimaryStop;
-    private readonly GradientStop _filterAmbientSecondaryStop;
-    private readonly GradientStop _playerAmbientPrimaryStop;
-    private readonly GradientStop _playerAmbientSecondaryStop;
+    private readonly DispatcherTimer _spectrumTimer = new() { Interval = TimeSpan.FromMilliseconds(33) };
     private static readonly TimeSpan FilterOpenAnimationDuration = TimeSpan.FromMilliseconds(1180);
     private static readonly TimeSpan FilterCloseAnimationDuration = TimeSpan.FromMilliseconds(930);
     private static readonly IEasing FilterSlideEasing = new SplineEasing(0.25, 0.1, 0.25, 1);
     private static readonly AmbientPalette DefaultAmbientPalette = new(
         Color.Parse("#5865B8"),
         Color.Parse("#8051AE"));
-    private Color _ambientPrimary = DefaultAmbientPalette.Primary;
-    private Color _ambientSecondary = DefaultAmbientPalette.Secondary;
-    private Color _ambientStartPrimary = DefaultAmbientPalette.Primary;
-    private Color _ambientStartSecondary = DefaultAmbientPalette.Secondary;
-    private Color _targetAmbientPrimary = DefaultAmbientPalette.Primary;
-    private Color _targetAmbientSecondary = DefaultAmbientPalette.Secondary;
-    private bool _hasArtworkPalette;
     private bool _isSeeking;
     private TaskCompletionSource<bool>? _deleteTrackConfirmationCompletion;
-    private double _targetEnergy;
-    private double _targetBass;
-    private double _targetTreble;
-    private double _visualEnergy;
-    private double _visualBass;
-    private double _visualTreble;
     private AppearanceSettings _appearanceSettings = AppearanceSettings.Balanced();
 
     // Playback settings
@@ -85,18 +63,7 @@ public partial class MusicView : UserControl
     private int _filterMotionGeneration;
     private CancellationTokenSource? _thumbLoadCts;
     private CancellationTokenSource? _toastCts;
-    private Bitmap? _playerArtwork;
-    private Bitmap? _previousPlayerArtwork;
-    private int _playerArtworkTrackId = -1;
-    private readonly Dictionary<int, double> _trackBackdropFocus = [];
-    private readonly HashSet<int> _pendingBackdropFocusTrackIds = [];
     private bool _isDeletingTrack;
-    private DateTimeOffset _artworkTransitionStartedAt;
-    private double _artworkTransitionProgress = 1;
-    private double _outgoingAppScale = 1.08;
-    private double _outgoingPlayerScale = 1.10;
-    private double _outgoingAppBlur = 20;
-    private double _outgoingPlayerBlur = 30;
     private bool _libraryRefreshPending;
 
     // Crossfade state
@@ -181,20 +148,9 @@ public partial class MusicView : UserControl
         KnownIssuesPanel.CloseRequested += UpdateKnownIssuesButtonVisual;
         UpdateKnownIssuesButtonVisual();
         MoveFilterDrawerToRootOverlay();
-        var appAmbientGradient = (LinearGradientBrush)AppAtmosphereTint.Fill!;
-        _appAmbientPrimaryStop = appAmbientGradient.GradientStops[0];
-        _appAmbientSecondaryStop = appAmbientGradient.GradientStops[1];
-        var filterAmbientGradient = (LinearGradientBrush)FilterAtmosphereTint.Fill!;
-        _filterAmbientPrimaryStop = filterAmbientGradient.GradientStops[0];
-        _filterAmbientSecondaryStop = filterAmbientGradient.GradientStops[1];
-        var playerAmbientGradient = (LinearGradientBrush)PlayerAtmosphereTint.Background!;
-        _playerAmbientPrimaryStop = playerAmbientGradient.GradientStops[0];
-        _playerAmbientSecondaryStop = playerAmbientGradient.GradientStops[1];
         var appSettings = AppSettingsStore.Load();
         Values.UseYtDlpBrowserCookies = appSettings.UseYtDlpBrowserCookies;
         Values.YtDlpCookiesBrowser = AppSettingsStore.NormalizeYtDlpCookiesBrowser(appSettings.YtDlpCookiesBrowser);
-        foreach (var pair in appSettings.TrackBackdropFocus)
-            _trackBackdropFocus[pair.Key] = pair.Value;
         _appearanceSettings = appSettings.Appearance.Clone().Clamp();
         _restoredPlayerSession = appSettings.PlayerSession;
         _sortBy = Enum.TryParse<LibrarySortBy>(_restoredPlayerSession.SortBy, true, out var restoredSortBy)
@@ -227,13 +183,11 @@ public partial class MusicView : UserControl
         DetachedFromVisualTree += (_, _) =>
         {
             PersistPlayerSession();
-            FlushBackdropFocusSave();
-            _atmosphereTimer.Stop();
+            _spectrumTimer.Stop();
             _engine.Dispose();
             _globalMediaKeys.Dispose();
             _windowsMediaSession.Dispose();
             _discordPresence.Dispose();
-            ClearPlayerArtworkBackground(disposeCache: true);
         };
 
         // Engine events
@@ -241,10 +195,7 @@ public partial class MusicView : UserControl
         _engine.TrackNaturallyEnded += OnTrackNaturallyEnded;
         _engine.ProgressUpdated += OnProgressUpdated;
         _engine.AudioLevelUpdated += OnAudioLevelUpdated;
-        _atmosphereTimer.Tick += (_, _) => UpdateAudioReactiveAtmosphere();
-        _backdropFocusSaveTimer.Tick += (_, _) => FlushBackdropFocusSave();
-        PlayerChromeEdge.Background = _playerChromeEdgeBrush;
-        PlayerTopGlow.Background = _playerTopGlowBrush;
+        _spectrumTimer.Tick += (_, _) => UpdateSpectrum();
         InitializeSortControls();
 
         // Seeking
@@ -406,7 +357,6 @@ public partial class MusicView : UserControl
             UpdateChannelOverlayBounds();
             ChannelOverlay.OpenChannel(channelId);
         };
-        EditTrackOverlay.BackdropFocusChanged += OnEditorBackdropFocusChanged;
         EditTrackOverlay.DeleteRequested += DeleteTrackFromEditorAsync;
         EditTrackOverlay.Closed += PrepareActiveTrackEditor;
         SettingsOverlay.ToastRequested += ShowToast;
@@ -619,7 +569,6 @@ public partial class MusicView : UserControl
         _thumbLoadCts?.Cancel();
         _thumbLoadCts = new CancellationTokenSource();
 
-        ClearPlayerArtworkBackground(disposeCache: true);
         var previousItems = _allItems.ToDictionary(item => item.Track.Id);
 
         var tracks = MusicLibraryService.Current.GetTracksForLibraryView();
@@ -684,7 +633,6 @@ public partial class MusicView : UserControl
         ApplyFilter();
         if (_engine.ActiveTrackId >= 0
             && _allItems.FirstOrDefault(item => item.Track.Id == _engine.ActiveTrackId)?.Track is { } activeTrack)
-            UpdatePlayerArtworkBackground(activeTrack);
         ClearLibraryRefreshPending();
     }
 
@@ -896,7 +844,6 @@ public partial class MusicView : UserControl
         {
             NowPlayingText.Text = updatedTrack.DisplayTitle;
             UpdateDiscordPresence();
-            UpdatePlayerArtworkBackground(updatedTrack);
         }
 
         if (filteredIndex >= 0)
@@ -3474,9 +3421,6 @@ public partial class MusicView : UserControl
         var updatedSettings = settings.Clone().Clamp();
         var trackAppearanceChanged = TrackAppearanceChanged(_appearanceSettings, updatedSettings);
         _appearanceSettings = updatedSettings;
-        PlayerDarkeningOverlay.Background = new SolidColorBrush(Color.FromArgb(
-            ToByte(_appearanceSettings.PlayerBackgroundDarkening / 100d * 255),
-            0x24, 0x24, 0x24));
         SpectrumVisualizer.IsVisible = _appearanceSettings.SpectrumVisualizerEnabled;
         SpectrumVisualizer.Height = _appearanceSettings.SpectrumVisualizerHeight;
         SpectrumVisualizer.Opacity = _appearanceSettings.SpectrumVisualizerIntensity / 100d;
@@ -3487,7 +3431,6 @@ public partial class MusicView : UserControl
             foreach (var item in _allItems)
                 item.ApplyAppearance(_appearanceSettings);
 
-        ApplyAudioAtmosphere();
         if (refreshTrackRows && trackAppearanceChanged && _allItems.Count > 0)
             RefreshVisibleItemsSource((FileList.SelectedItem as TrackDisplayItem)?.Track.Id);
     }
@@ -3548,9 +3491,7 @@ public partial class MusicView : UserControl
         CloseActivityCenter();
         CloseKnownIssuesPanel();
         UpdateEditorBounds();
-        EditTrackOverlay.Open(
-            track,
-            backdropFocus: _trackBackdropFocus.GetValueOrDefault(track.Id, 0.5));
+        EditTrackOverlay.Open(track);
     }
 
     private void PrepareActiveTrackEditor()
@@ -3570,9 +3511,7 @@ public partial class MusicView : UserControl
 
         EditTrackOverlay.InvalidatePreparedTrack();
         var currentTrack = _allItems.FirstOrDefault(item => item.Track.Id == track.Id)?.Track ?? track;
-        EditTrackOverlay.Prepare(
-            currentTrack,
-            _trackBackdropFocus.GetValueOrDefault(track.Id, 0.5));
+        EditTrackOverlay.Prepare(currentTrack);
     }
 
     private async Task<bool> DeleteTrackFromEditorAsync(MusicTrack track)
@@ -3601,7 +3540,6 @@ public partial class MusicView : UserControl
                 NowPlayingText.Text = string.Empty;
                 PlaybackInfoPanel.IsVisible = false;
                 _nextTrackIndex = -1;
-                ClearPlayerArtworkBackground();
             }
 
             // Let Stop()/pointer routing finish before the backing file, database
@@ -3625,8 +3563,6 @@ public partial class MusicView : UserControl
                     : null;
             }
 
-            _trackBackdropFocus.Remove(track.Id);
-            _pendingBackdropFocusTrackIds.Remove(track.Id);
             try
             {
                 RemoveTrackFromCurrentLists(track.Id);
@@ -4107,7 +4043,6 @@ public partial class MusicView : UserControl
 
         NowPlayingText.Text = track.DisplayTitle;
         UpdateDiscordPresence();
-        UpdatePlayerArtworkBackground(track);
         PlaybackInfoPanel.IsVisible = true;
         _nextTrackIndex = PeekNextTrackIndex(filteredIndex);
         UpdateUpcomingBar();
@@ -4161,7 +4096,6 @@ public partial class MusicView : UserControl
             SetFilteredSelectedIndex(index);
         }
         NowPlayingText.Text = $"Preview · {track.DisplayTitle}";
-        UpdatePlayerArtworkBackground(track);
         PlaybackInfoPanel.IsVisible = true;
         _nextTrackIndex = -1;
         _crossfadeTriggered = false;
@@ -4194,7 +4128,6 @@ public partial class MusicView : UserControl
         if (snapshot is null || _engine.ActiveTrackId < 0)
         {
             NowPlayingText.Text = string.Empty;
-            ClearPlayerArtworkBackground();
             PlaybackInfoPanel.IsVisible = false;
             _nextTrackIndex = -1;
         }
@@ -4208,7 +4141,6 @@ public partial class MusicView : UserControl
                 SetFilteredSelectedIndex(index);
             }
             NowPlayingText.Text = restoredTrack.DisplayTitle;
-            UpdatePlayerArtworkBackground(restoredTrack);
             PlaybackInfoPanel.IsVisible = true;
             _nextTrackIndex = PeekNextTrackIndex(index);
             _crossfadeTriggered = false;
@@ -4228,9 +4160,9 @@ public partial class MusicView : UserControl
         UpdateButtonStates();
         UpdateDiscordPresence();
         if (_engine.State == EngineState.Playing)
-            StartAudioAtmosphereTimer();
+            StartSpectrumTimer();
         else
-            FadeOutAudioAtmosphere();
+            FadeOutSpectrum();
 
         if (_engine.State == EngineState.Stopped)
         {
@@ -4238,7 +4170,6 @@ public partial class MusicView : UserControl
             _crossfadeTriggered = false;
             _lastKnownActiveId = -1;
             if (!_isTrackPreviewActive)
-                ClearPlayerArtworkBackground();
             _discordPresence.Clear();
             RefreshPlayingMarkers();
             UpdateUpcomingBar();
@@ -4426,197 +4357,6 @@ public partial class MusicView : UserControl
         _engine.Stop();
     }
 
-    private void UpdatePlayerArtworkBackground(MusicTrack track)
-    {
-        if (_playerArtworkTrackId == track.Id)
-        {
-            ApplyBackdropFocus(track.Id);
-            SetPlayerArtworkBackground(_playerArtwork);
-            SettingsOverlay.UpdateAppearancePreviewArtwork(
-                _playerArtwork, _targetAmbientPrimary, _targetAmbientSecondary, track.Title);
-            ApplyAudioAtmosphere();
-            return;
-        }
-
-        PrepareOutgoingArtwork();
-        var loadedArtwork = LoadPlayerArtwork(track);
-        var artwork = loadedArtwork.Artwork;
-        _playerArtwork = loadedArtwork.Artwork;
-        _playerArtworkTrackId = track.Id;
-        ApplyBackdropFocus(track.Id);
-        BeginArtworkTransition(_previousPlayerArtwork is not null);
-        SetAmbientPalette(loadedArtwork.Palette, artwork is not null);
-        SetPlayerArtworkBackground(artwork);
-        SettingsOverlay.UpdateAppearancePreviewArtwork(
-            artwork, loadedArtwork.Palette.Primary, loadedArtwork.Palette.Secondary, track.Title);
-        ApplyAudioAtmosphere();
-    }
-
-    private void PrepareOutgoingArtwork()
-    {
-        _outgoingAppScale = GetScale(AppArtworkBackground, 1.08);
-        _outgoingPlayerScale = GetScale(PlayerArtworkBackground, 1.10);
-        _outgoingAppBlur = GetBlur(AppArtworkBackground, 20);
-        _outgoingPlayerBlur = GetBlur(PlayerArtworkBackground, 30);
-
-        PlayerArtworkPreviousBackground.Source = null;
-        AppArtworkPreviousBackground.Source = null;
-        RetirePlayerArtwork(_previousPlayerArtwork);
-
-        // The active artwork always becomes the sole faded layer. This is
-        // intentionally independent of how far the previous transition got:
-        // fast track changes must never bring an older faded cover back.
-        _previousPlayerArtwork = _playerArtwork;
-        _playerArtwork = null;
-
-        PlayerArtworkPreviousBackground.Source = _previousPlayerArtwork;
-        PlayerArtworkPreviousBackground.IsVisible = _previousPlayerArtwork is not null;
-        PlayerArtworkPreviousBackground.Opacity = PlayerArtworkBackground.Opacity;
-        AppArtworkPreviousBackground.Source = _previousPlayerArtwork;
-        AppArtworkPreviousBackground.FocusX = AppArtworkBackground.FocusX;
-        AppArtworkPreviousBackground.IsVisible = _previousPlayerArtwork is not null;
-        AppArtworkPreviousBackground.Opacity = AppArtworkBackground.Opacity;
-
-        // Hide and clear active before assigning the next bitmap. Otherwise
-        // Avalonia can render the new source once with the previous opacity.
-        PlayerArtworkBackground.Opacity = 0;
-        AppArtworkBackground.Opacity = 0;
-        PlayerArtworkBackground.Source = null;
-        PlayerArtworkBackground.IsVisible = false;
-        AppArtworkBackground.Source = null;
-        AppArtworkBackground.IsVisible = false;
-    }
-
-    private void BeginArtworkTransition(bool hasOutgoingArtwork)
-    {
-        _artworkTransitionProgress = hasOutgoingArtwork ? 0 : 1;
-        _artworkTransitionStartedAt = DateTimeOffset.UtcNow;
-        StartAudioAtmosphereTimer();
-    }
-
-    private void SetPlayerArtworkBackground(Bitmap? artwork)
-    {
-        PlayerArtworkBackground.Opacity = 0;
-        AppArtworkBackground.Opacity = 0;
-        PlayerArtworkBackground.Source = artwork;
-        PlayerArtworkBackground.IsVisible = artwork is not null;
-        AppArtworkBackground.Source = artwork;
-        AppArtworkBackground.IsVisible = artwork is not null;
-        PlayerArtworkPreviousBackground.Source = _previousPlayerArtwork;
-        PlayerArtworkPreviousBackground.IsVisible = _previousPlayerArtwork is not null;
-        AppArtworkPreviousBackground.Source = _previousPlayerArtwork;
-        AppArtworkPreviousBackground.IsVisible = _previousPlayerArtwork is not null;
-    }
-
-    private void ApplyBackdropFocus(int trackId) =>
-        AppArtworkBackground.FocusX = _trackBackdropFocus.GetValueOrDefault(trackId, 0.5);
-
-    private void OnEditorBackdropFocusChanged(int trackId, double focusX)
-    {
-        focusX = Math.Clamp(focusX, 0d, 1d);
-        _trackBackdropFocus[trackId] = focusX;
-        _pendingBackdropFocusTrackIds.Add(trackId);
-        if (_playerArtworkTrackId == trackId)
-            AppArtworkBackground.FocusX = focusX;
-        _backdropFocusSaveTimer.Stop();
-        _backdropFocusSaveTimer.Start();
-    }
-
-    private void FlushBackdropFocusSave()
-    {
-        _backdropFocusSaveTimer.Stop();
-        foreach (var trackId in _pendingBackdropFocusTrackIds)
-            if (_trackBackdropFocus.TryGetValue(trackId, out var focusX))
-                AppSettingsStore.SaveTrackBackdropFocus(trackId, focusX);
-        _pendingBackdropFocusTrackIds.Clear();
-    }
-
-    private static LoadedPlayerArtwork LoadPlayerArtwork(MusicTrack track)
-    {
-        try
-        {
-            var filePath = Path.Combine(Values.TracksDirectory, track.FileName);
-            var artwork = ThumbnailService.ReadEmbeddedPlayerArtwork(filePath);
-            artwork ??= track.Thumbnail is { Length: > 0 } thumbnail
-                ? thumbnail
-                : MusicLibraryService.Current.GetTrackThumbnail(track.Id);
-            if (artwork is not { Length: > 0 })
-                return new LoadedPlayerArtwork(null, DefaultAmbientPalette);
-
-            using var stream = new MemoryStream(artwork);
-            return new LoadedPlayerArtwork(
-                new Bitmap(stream),
-                ExtractAmbientPalette(artwork));
-        }
-        catch
-        {
-            return new LoadedPlayerArtwork(null, DefaultAmbientPalette);
-        }
-    }
-
-    private void ClearPlayerArtworkBackground(bool disposeCache = false)
-    {
-        SettingsOverlay.UpdateAppearancePreviewArtwork(
-            null, DefaultAmbientPalette.Primary, DefaultAmbientPalette.Secondary, "Preview track");
-        PlayerArtworkBackground.Source = null;
-        PlayerArtworkBackground.IsVisible = false;
-        AppArtworkBackground.Source = null;
-        AppArtworkBackground.IsVisible = false;
-        PlayerArtworkPreviousBackground.Source = null;
-        PlayerArtworkPreviousBackground.IsVisible = false;
-        AppArtworkPreviousBackground.Source = null;
-        AppArtworkPreviousBackground.IsVisible = false;
-        _artworkTransitionProgress = 1;
-        SetAmbientPalette(DefaultAmbientPalette, hasArtwork: false);
-        ResetAudioAtmosphere();
-
-        var currentArtwork = _playerArtwork;
-        var previousArtwork = _previousPlayerArtwork;
-        _playerArtwork = null;
-        _previousPlayerArtwork = null;
-        _playerArtworkTrackId = -1;
-
-        if (disposeCache)
-        {
-            currentArtwork?.Dispose();
-            previousArtwork?.Dispose();
-        }
-        else
-        {
-            RetirePlayerArtwork(currentArtwork);
-            RetirePlayerArtwork(previousArtwork);
-        }
-    }
-
-    private static async void RetirePlayerArtwork(Bitmap? artwork)
-    {
-        if (artwork is null)
-            return;
-
-        // Avalonia's compositor can still hold the previous Image.Source for a
-        // render frame after the controls were cleared. Disposing immediately
-        // makes Image.Render call Bitmap.Size on an already disposed object.
-        await Task.Delay(750);
-        try
-        {
-            artwork.Dispose();
-        }
-        catch
-        {
-            // The bitmap may already have been retired by application shutdown.
-        }
-    }
-
-    private void SetAmbientPalette(AmbientPalette palette, bool hasArtwork)
-    {
-        _ambientStartPrimary = _ambientPrimary;
-        _ambientStartSecondary = _ambientSecondary;
-        _targetAmbientPrimary = palette.Primary;
-        _targetAmbientSecondary = palette.Secondary;
-        _hasArtworkPalette = hasArtwork;
-        StartAudioAtmosphereTimer();
-    }
-
     private static AmbientPalette ExtractAmbientPalette(byte[] artwork)
     {
         using var bitmap = SKBitmap.Decode(artwork);
@@ -4720,9 +4460,11 @@ public partial class MusicView : UserControl
         return Color.FromRgb(rotated.Red, rotated.Green, rotated.Blue);
     }
 
-    private sealed record LoadedPlayerArtwork(Bitmap? Artwork, AmbientPalette Palette);
     private sealed record LoadedTrackThumbnail(byte[] Artwork, AmbientPalette Palette);
     private sealed record AmbientPalette(Color Primary, Color Secondary);
+
+    private static byte ToByte(double value) =>
+        (byte)Math.Clamp((int)Math.Round(value), 0, 255);
 
     private sealed class AmbientColorBin
     {
@@ -4748,242 +4490,42 @@ public partial class MusicView : UserControl
                 ToByte(_blue / Weight));
     }
 
-    // ─── Audio-reactive atmosphere ───────────────────────────────────────────
+    // ─── Spectrum visualizer ─────────────────────────────────────────────────
 
     private void OnAudioLevelUpdated(PlaybackAudioLevel level)
     {
         if (_engine.State != EngineState.Playing)
             return;
 
-        _targetEnergy = level.Energy;
-        _targetBass = level.Bass;
-        _targetTreble = level.Treble;
         SpectrumVisualizer.SetSpectrum(level.Spectrum);
         SettingsOverlay.UpdateAppearancePreviewSpectrum(level.Spectrum);
-        StartAudioAtmosphereTimer();
+        StartSpectrumTimer();
     }
 
-    private void StartAudioAtmosphereTimer()
+    private void StartSpectrumTimer()
     {
-        if (!_atmosphereTimer.IsEnabled)
-            _atmosphereTimer.Start();
+        if (!_spectrumTimer.IsEnabled)
+            _spectrumTimer.Start();
     }
 
-    private void FadeOutAudioAtmosphere()
+    private void FadeOutSpectrum()
     {
-        _targetEnergy = 0;
-        _targetBass = 0;
-        _targetTreble = 0;
         SpectrumVisualizer.SetSpectrum(null);
         SettingsOverlay.UpdateAppearancePreviewSpectrum(null);
-        StartAudioAtmosphereTimer();
+        StartSpectrumTimer();
     }
 
-    private void ResetAudioAtmosphere()
+    private void UpdateSpectrum()
     {
-        _targetEnergy = 0;
-        _targetBass = 0;
-        _targetTreble = 0;
-        _visualEnergy = 0;
-        _visualBass = 0;
-        _visualTreble = 0;
-        SpectrumVisualizer.SetSpectrum(null);
-        SettingsOverlay.UpdateAppearancePreviewSpectrum(null);
-        SettingsOverlay.UpdateAppearancePreviewAudio(0, 0, 0);
-        ApplyAudioAtmosphere();
-    }
-
-    private void UpdateAudioReactiveAtmosphere()
-    {
-        UpdateArtworkTransition();
-        var configuredEasing = 0.04 + _appearanceSettings.AudioResponseSpeed / 100d * 0.24;
-        var easing = _engine.State == EngineState.Playing ? configuredEasing : 0.10;
-        _visualEnergy = Approach(_visualEnergy, _targetEnergy, easing);
-        _visualBass = Approach(_visualBass, _targetBass, easing);
-        _visualTreble = Approach(_visualTreble, _targetTreble, easing);
         SpectrumVisualizer.Advance();
-        SettingsOverlay.UpdateAppearancePreviewAudio(_visualEnergy, _visualBass, _visualTreble);
-
-        ApplyAudioAtmosphere();
+        SettingsOverlay.AdvanceAppearancePreviewSpectrum();
 
         if (_engine.State == EngineState.Playing)
             return;
 
-        if (_visualEnergy < 0.003
-            && _visualBass < 0.003
-            && _visualTreble < 0.003
-            && SpectrumVisualizer.IsAtRest
-            && !IsArtworkTransitionActive
-            && AmbientPaletteSettled())
-        {
-            ResetAudioAtmosphere();
-            _atmosphereTimer.Stop();
-        }
+        if (SpectrumVisualizer.IsAtRest)
+            _spectrumTimer.Stop();
     }
-
-    private void ApplyAudioAtmosphere()
-    {
-        var reaction = _appearanceSettings.PlayerAudioReaction / 100d;
-        var energy = SoftLimit(_visualEnergy) * reaction;
-        var bass = SoftLimit(_visualBass * _appearanceSettings.AudioBassSensitivity / 100d) * reaction;
-        var treble = SoftLimit(_visualTreble * _appearanceSettings.AudioTrebleSensitivity / 100d) * reaction;
-        var motionReaction = _appearanceSettings.AudioArtworkMotion / 100d;
-        var blurReaction = _appearanceSettings.AudioBlurReaction / 100d;
-        var colorReaction = _appearanceSettings.AudioColorReaction / 100d;
-        // Lift quiet passages (and low app-volume levels) without making the
-        // high end grow linearly into an overpowering background.
-        var visibilityEnergy = Math.Sqrt(energy);
-        var hasArtwork = AppArtworkBackground.IsVisible
-                         || PlayerArtworkBackground.IsVisible
-                         || AppArtworkPreviousBackground.IsVisible
-                         || PlayerArtworkPreviousBackground.IsVisible;
-        var transition = IsArtworkTransitionActive
-            ? SmoothStep(_artworkTransitionProgress)
-            : 1;
-        _ambientPrimary = MixColor(_ambientStartPrimary, _targetAmbientPrimary, transition);
-        _ambientSecondary = MixColor(_ambientStartSecondary, _targetAmbientSecondary, transition);
-        SpectrumVisualizer.SetColors(_ambientPrimary, _ambientSecondary);
-
-        var incomingMix = IsArtworkTransitionActive ? Math.Sin(transition * Math.PI / 2) : 1;
-        var outgoingMix = IsArtworkTransitionActive ? Math.Cos(transition * Math.PI / 2) : 0;
-        var appOpacity = Math.Clamp(
-            _appearanceSettings.LibraryBackdropStrength / 100d + visibilityEnergy * 0.21, 0, 1);
-        var playerOpacity = Math.Clamp(
-            _appearanceSettings.PlayerArtworkStrength / 100d + visibilityEnergy * 0.15, 0, 1);
-        AppArtworkBackground.Opacity = AppArtworkBackground.IsVisible ? appOpacity * incomingMix : 0;
-        PlayerArtworkBackground.Opacity = PlayerArtworkBackground.IsVisible ? playerOpacity * incomingMix : 0;
-        AppArtworkPreviousBackground.Opacity = AppArtworkPreviousBackground.IsVisible ? appOpacity * outgoingMix : 0;
-        PlayerArtworkPreviousBackground.Opacity = PlayerArtworkPreviousBackground.IsVisible ? playerOpacity * outgoingMix : 0;
-
-        SetScale(AppArtworkBackground, 1.12 - transition * 0.04 + bass * 0.048 * transition * motionReaction);
-        SetScale(PlayerArtworkBackground, 1.14 - transition * 0.04 + bass * 0.035 * transition * motionReaction);
-        SetScale(AppArtworkPreviousBackground, Approach(_outgoingAppScale, 1.055, transition));
-        SetScale(PlayerArtworkPreviousBackground, Approach(_outgoingPlayerScale, 1.075, transition));
-        SetBlur(AppArtworkBackground,
-            _appearanceSettings.LibraryBackdropBlur + (1 - transition) * 8 + energy * 8.0 * blurReaction);
-        SetBlur(PlayerArtworkBackground,
-            _appearanceSettings.PlayerArtworkBlur + (1 - transition) * 10
-            + (energy * 6.0 + treble * 4.0) * blurReaction);
-        SetBlur(AppArtworkPreviousBackground, Approach(
-            _outgoingAppBlur, _appearanceSettings.LibraryBackdropBlur + 14, transition));
-        SetBlur(PlayerArtworkPreviousBackground, Approach(
-            _outgoingPlayerBlur, _appearanceSettings.PlayerArtworkBlur + 16, transition));
-
-        var primary = MixColor(_ambientPrimary, Colors.White,
-            (energy * 0.08 + treble * 0.05) * colorReaction);
-        var secondary = MixColor(_ambientSecondary, Colors.White, energy * 0.05 * colorReaction);
-        var artworkLift = hasArtwork && _hasArtworkPalette ? 1d : 0d;
-
-        var atmosphere = _appearanceSettings.PlayerColorAtmosphere / 100d;
-        _appAmbientPrimaryStop.Color = WithAlpha(primary,
-            (28 + artworkLift * 20 + (energy * 32 + treble * 12) * colorReaction) * atmosphere);
-        _appAmbientSecondaryStop.Color = WithAlpha(secondary,
-            (16 + artworkLift * 16 + energy * 20 * colorReaction) * atmosphere);
-        var overlayPrimary = WithAlpha(primary, 220);
-        var overlaySecondary = WithAlpha(secondary, 150);
-        _filterAmbientPrimaryStop.Color = overlayPrimary;
-        _filterAmbientSecondaryStop.Color = overlaySecondary;
-        EditTrackOverlay.SetAtmosphereColors(overlayPrimary, overlaySecondary);
-        ImportOverlay.SetAtmosphereColors(overlayPrimary, overlaySecondary);
-        ChannelOverlay.SetAtmosphereColors(overlayPrimary, overlaySecondary);
-        _playerAmbientPrimaryStop.Color = WithAlpha(primary,
-            (34 + artworkLift * 24 + (energy * 34 + bass * 10) * colorReaction) * atmosphere);
-        _playerAmbientSecondaryStop.Color = WithAlpha(secondary,
-            (24 + artworkLift * 20 + (energy * 24 + treble * 8) * colorReaction) * atmosphere);
-        _playerTopGlowBrush.Color = WithAlpha(primary,
-            (24 + artworkLift * 12 + (energy * 60 + treble * 24) * colorReaction) * atmosphere);
-        _playerChromeEdgeBrush.Color = WithAlpha(
-            MixColor(primary, secondary, 0.35),
-            (24 + artworkLift * 8 + energy * 30 * colorReaction) * atmosphere);
-    }
-
-    private static double Approach(double current, double target, double amount) =>
-        current + (target - current) * amount;
-
-    private bool IsArtworkTransitionActive =>
-        _previousPlayerArtwork is not null && _artworkTransitionProgress < 1;
-
-    private void UpdateArtworkTransition()
-    {
-        if (!IsArtworkTransitionActive)
-            return;
-
-        var durationMilliseconds = _appearanceSettings.ArtworkFadeDuration * 1000d;
-        _artworkTransitionProgress = durationMilliseconds <= 0
-            ? 1
-            : Math.Clamp(
-                (DateTimeOffset.UtcNow - _artworkTransitionStartedAt).TotalMilliseconds
-                / durationMilliseconds,
-                0,
-                1);
-        if (_artworkTransitionProgress < 1)
-            return;
-
-        PlayerArtworkPreviousBackground.Source = null;
-        PlayerArtworkPreviousBackground.IsVisible = false;
-        AppArtworkPreviousBackground.Source = null;
-        AppArtworkPreviousBackground.IsVisible = false;
-        RetirePlayerArtwork(_previousPlayerArtwork);
-        _previousPlayerArtwork = null;
-    }
-
-    private static double SmoothStep(double progress)
-    {
-        progress = Math.Clamp(progress, 0, 1);
-        return progress * progress * (3 - 2 * progress);
-    }
-
-    private bool AmbientPaletteSettled() =>
-        ColorDistance(_ambientPrimary, _targetAmbientPrimary) < 2
-        && ColorDistance(_ambientSecondary, _targetAmbientSecondary) < 2;
-
-    private static Color MixColor(Color from, Color to, double amount)
-    {
-        amount = Math.Clamp(amount, 0, 1);
-        return Color.FromRgb(
-            ToByte(from.R + (to.R - from.R) * amount),
-            ToByte(from.G + (to.G - from.G) * amount),
-            ToByte(from.B + (to.B - from.B) * amount));
-    }
-
-    private static Color WithAlpha(Color color, double alpha) =>
-        Color.FromArgb(ToByte(alpha), color.R, color.G, color.B);
-
-    private static double ColorDistance(Color left, Color right) =>
-        Math.Abs(left.R - right.R)
-        + Math.Abs(left.G - right.G)
-        + Math.Abs(left.B - right.B);
-
-    private static double SoftLimit(double value) =>
-        Math.Clamp(1 - Math.Exp(-Math.Max(0, value) * 1.45), 0, 1);
-
-    private static byte ToByte(double value) =>
-        (byte)Math.Clamp((int)Math.Round(value), 0, 255);
-
-    private static void SetScale(Control image, double scale)
-    {
-        if (image.RenderTransform is ScaleTransform transform)
-        {
-            transform.ScaleX = scale;
-            transform.ScaleY = scale;
-        }
-    }
-
-    private static double GetScale(Control image, double fallback) =>
-        image.RenderTransform is ScaleTransform transform
-            ? transform.ScaleX
-            : fallback;
-
-    private static void SetBlur(Control image, double radius)
-    {
-        if (image.Effect is BlurEffect blur)
-            blur.Radius = radius;
-    }
-
-    private static double GetBlur(Control image, double fallback) =>
-        image.Effect is BlurEffect blur
-            ? blur.Radius
-            : fallback;
 
     // ─── Listening telemetry ─────────────────────────────────────────────────
 

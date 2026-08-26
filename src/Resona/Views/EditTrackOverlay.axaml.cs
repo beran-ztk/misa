@@ -65,7 +65,6 @@ public partial class EditTrackOverlay : UserControl
     private int _motionGeneration;
     private bool _isClosing;
     private bool _isDeletingTrack;
-    private bool _updatingBackdropFocus;
     private bool _isOpen;
     private bool _lookupsLoaded;
     private int? _preparedTrackId;
@@ -84,7 +83,6 @@ public partial class EditTrackOverlay : UserControl
     public event Action<MusicTrack>? PreviewRequested;
     public event Action? PreviewClosed;
     public event Action<string>? ToastRequested;
-    public event Action<int, double>? BackdropFocusChanged;
     public event Func<MusicTrack, Task<bool>>? DeleteRequested;
     public event Action? Closed;
 
@@ -111,14 +109,14 @@ public partial class EditTrackOverlay : UserControl
         gradient.GradientStops[1].Color = secondary;
     }
 
-    public void Open(MusicTrack track, bool analyzeAfterOpening = false, double backdropFocus = 0.5)
+    public void Open(MusicTrack track, bool analyzeAfterOpening = false)
     {
         var motionGeneration = ++_motionGeneration;
         _isClosing = false;
         _isOpen = true;
         var prepared = _preparedTrackId == track.Id && _track?.Id == track.Id;
         if (!prepared)
-            PrepareContent(track, backdropFocus);
+            PrepareContent(track);
 
         PrepareOpeningWarmupPosition();
         IsHitTestVisible = false;
@@ -128,12 +126,12 @@ public partial class EditTrackOverlay : UserControl
             _ = AnalyzeAfterOpeningAsync(track, motionGeneration);
     }
 
-    public void Prepare(MusicTrack track, double backdropFocus = 0.5)
+    public void Prepare(MusicTrack track)
     {
         if (_isOpen || _isClosing)
             return;
 
-        PrepareContent(track, backdropFocus);
+        PrepareContent(track);
         IsHitTestVisible = false;
         IsVisible = false;
     }
@@ -157,7 +155,7 @@ public partial class EditTrackOverlay : UserControl
         InvalidatePreparedTrack();
     }
 
-    private void PrepareContent(MusicTrack track, double backdropFocus)
+    private void PrepareContent(MusicTrack track)
     {
         _track = track;
         _isPlayingPreview = false;
@@ -168,9 +166,6 @@ public partial class EditTrackOverlay : UserControl
         _areAllGenresExpanded = false;
         _areLanguagesExpanded = false;
         LoadLookups();
-        _updatingBackdropFocus = true;
-        BackdropFocusSlider.Value = Math.Clamp(backdropFocus, 0d, 1d) * 100;
-        _updatingBackdropFocus = false;
         Prefill(track);
         _preparedTrackId = track.Id;
     }
@@ -918,14 +913,6 @@ public partial class EditTrackOverlay : UserControl
             DeleteButton.IsEnabled = true;
             ToastRequested?.Invoke($"Could not delete track: {exception.Message}");
         }
-    }
-
-    private void OnBackdropFocusChanged(object? sender, RangeBaseValueChangedEventArgs e)
-    {
-        if (_updatingBackdropFocus || _track is null)
-            return;
-
-        BackdropFocusChanged?.Invoke(_track.Id, Math.Clamp(e.NewValue / 100d, 0d, 1d));
     }
 
     private void AutoSaveChanges()

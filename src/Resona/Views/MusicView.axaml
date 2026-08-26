@@ -280,40 +280,6 @@
 
     <Panel x:Name="RootSurface">
     <Rectangle Fill="{DynamicResource Theme.Brush.Background}" IsHitTestVisible="False"/>
-    <views:FocusedArtworkImage x:Name="AppArtworkPreviousBackground"
-           IsVisible="False"
-           IsHitTestVisible="False"
-           Opacity="0"
-           RenderTransformOrigin="0.5,0.5">
-        <views:FocusedArtworkImage.RenderTransform>
-            <ScaleTransform ScaleX="1.08" ScaleY="1.08"/>
-        </views:FocusedArtworkImage.RenderTransform>
-        <views:FocusedArtworkImage.Effect>
-            <BlurEffect Radius="20"/>
-        </views:FocusedArtworkImage.Effect>
-    </views:FocusedArtworkImage>
-    <views:FocusedArtworkImage x:Name="AppArtworkBackground"
-           IsVisible="False"
-           IsHitTestVisible="False"
-           Opacity="0.22"
-           RenderTransformOrigin="0.5,0.5">
-        <views:FocusedArtworkImage.RenderTransform>
-            <ScaleTransform ScaleX="1.08" ScaleY="1.08"/>
-        </views:FocusedArtworkImage.RenderTransform>
-        <views:FocusedArtworkImage.Effect>
-            <BlurEffect Radius="20"/>
-        </views:FocusedArtworkImage.Effect>
-    </views:FocusedArtworkImage>
-    <Rectangle x:Name="AppAtmosphereTint"
-               IsHitTestVisible="False">
-        <Rectangle.Fill>
-            <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
-                <GradientStop Color="#24545FAF" Offset="0"/>
-                <GradientStop Color="#14734FA8" Offset="0.42"/>
-                <GradientStop Color="#00000000" Offset="0.82"/>
-            </LinearGradientBrush>
-        </Rectangle.Fill>
-    </Rectangle>
     <DockPanel LastChildFill="True">
 
         <!-- ── Toolbar ── -->
@@ -913,55 +879,6 @@
                 <Border CornerRadius="0,0,0,0"
                         ClipToBounds="True">
                     <Panel>
-                        <Image x:Name="PlayerArtworkPreviousBackground"
-                               IsVisible="False"
-                               IsHitTestVisible="False"
-                               Height="118"
-                               VerticalAlignment="Stretch"
-                               Opacity="0"
-                               Stretch="UniformToFill"
-                               RenderTransformOrigin="0.5,0.5">
-                            <Image.RenderTransform>
-                                <ScaleTransform ScaleX="1.10" ScaleY="1.10"/>
-                            </Image.RenderTransform>
-                            <Image.Effect>
-                                <BlurEffect Radius="30"/>
-                            </Image.Effect>
-                        </Image>
-                        <Image x:Name="PlayerArtworkBackground"
-                               IsVisible="False"
-                               IsHitTestVisible="False"
-                               Height="118"
-                               VerticalAlignment="Stretch"
-                               Opacity="0.52"
-                               Stretch="UniformToFill"
-                               RenderTransformOrigin="0.5,0.5">
-                            <Image.RenderTransform>
-                                <ScaleTransform ScaleX="1.10" ScaleY="1.10"/>
-                            </Image.RenderTransform>
-                            <Image.Effect>
-                                <BlurEffect Radius="30"/>
-                            </Image.Effect>
-                        </Image>
-                        <Border x:Name="PlayerDarkeningOverlay"
-                                Background="#8E2A241A"
-                                CornerRadius="0,0,0,0"
-                                HorizontalAlignment="Stretch"
-                                VerticalAlignment="Stretch"
-                                IsHitTestVisible="False"/>
-                        <Border x:Name="PlayerAtmosphereTint"
-                                CornerRadius="0,0,0,0"
-                                HorizontalAlignment="Stretch"
-                                VerticalAlignment="Stretch"
-                                IsHitTestVisible="False">
-                            <Border.Background>
-                                <LinearGradientBrush StartPoint="0%,50%" EndPoint="100%,50%">
-                                    <GradientStop Color="#30545FAF" Offset="0"/>
-                                    <GradientStop Color="#24734FA8" Offset="0.58"/>
-                                    <GradientStop Color="#08000000" Offset="1"/>
-                                </LinearGradientBrush>
-                            </Border.Background>
-                        </Border>
                         <Border Height="14"
                                 HorizontalAlignment="Stretch"
                                 VerticalAlignment="Top"

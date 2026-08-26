@@ -228,31 +228,6 @@
                                     Click="OnRatingBandHighClicked"
                                     ToolTip.Tip="High — near the upper edge of this rating" />
                         </StackPanel>
-                        <StackPanel Grid.Column="0"
-                                    Orientation="Horizontal"
-                                    Spacing="6"
-                                    Margin="20,0,0,0"
-                                    HorizontalAlignment="Left"
-                                    VerticalAlignment="Center">
-                            <TextBlock Text="Backdrop focus"
-                                       FontSize="9.5"
-                                       Foreground="{DynamicResource Theme.Brush.TextSecondary}"
-                                       Opacity="0.62"
-                                       VerticalAlignment="Center" />
-                            <Slider x:Name="BackdropFocusSlider"
-                                    Classes="playback"
-                                    Width="94"
-                                    Height="28"
-                                    Minimum="0"
-                                    Maximum="100"
-                                    Value="50"
-                                    SmallChange="1"
-                                    LargeChange="10"
-                                    Margin="0,-4,0,0"
-                                    VerticalAlignment="Center"
-                                    ValueChanged="OnBackdropFocusChanged"
-                                    ToolTip.Tip="Move the visible artwork area left or right" />
-                        </StackPanel>
                     </Grid>
                 </Border>
 

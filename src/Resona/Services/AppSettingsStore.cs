@@ -42,10 +42,6 @@ public static class AppSettingsStore
             settings.YtDlpCookiesBrowser = NormalizeYtDlpCookiesBrowser(settings.YtDlpCookiesBrowser);
             settings.PlayerSession ??= new PlayerSessionSettings();
             settings.PlayerSession.QueueTrackIds ??= [];
-            settings.TrackBackdropFocus = settings.TrackBackdropFocus?
-                .ToDictionary(
-                    pair => pair.Key,
-                    pair => Math.Clamp(pair.Value, 0d, 1d)) ?? [];
             return settings;
         }
         catch
@@ -132,13 +128,6 @@ public static class AppSettingsStore
         Save(settings);
     }
 
-    public static void SaveTrackBackdropFocus(int trackId, double focusX)
-    {
-        var settings = Load();
-        settings.TrackBackdropFocus[trackId] = Math.Clamp(focusX, 0d, 1d);
-        Save(settings);
-    }
-
     private static void Save(AppSettings settings)
     {
         var directory = Path.GetDirectoryName(Values.AppSettingsPath);
@@ -159,7 +148,6 @@ public sealed class AppSettings
     public AppearanceSettings Appearance { get; set; } = new();
     public string LastSettingsPage { get; set; } = "genres";
     public PlayerSessionSettings PlayerSession { get; set; } = new();
-    public Dictionary<int, double> TrackBackdropFocus { get; set; } = [];
     public string? DiscordStateText { get; set; }
     public string? DiscordLargeImageText { get; set; }
     public bool DiscordRichPresenceEnabled { get; set; } = true;
