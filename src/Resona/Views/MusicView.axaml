@@ -567,10 +567,10 @@
 
                                     <!-- Two-line hierarchy: track identity, then source and classification. -->
                                     <Grid Grid.Column="3"
-                                          Height="48"
-                                          VerticalAlignment="Top"
-                                          RowDefinitions="24,24"
-                                          Margin="0,4,100,0"
+                                          Height="42"
+                                          VerticalAlignment="Center"
+                                          RowDefinitions="21,21"
+                                          Margin="10,0,100,0"
                                           RowSpacing="0">
                                         <views:TrackTitleTagPanel Grid.Row="0"
                                                                   Gap="6"
@@ -614,7 +614,7 @@
                                 </Grid>
                                 <StackPanel Width="76"
                                             Margin="0,0,8,0"
-                                            Spacing="2"
+                                            Spacing="0"
                                             HorizontalAlignment="Right"
                                             VerticalAlignment="Center"
                                             IsHitTestVisible="False">
@@ -626,6 +626,8 @@
                                                HorizontalAlignment="Center"
                                                TextAlignment="Center"/>
                                     <TextBlock Text="{Binding DurationText}"
+                                               Height="21"
+                                               LineHeight="21"
                                                FontFamily="Consolas"
                                                FontSize="10.5"
                                                Foreground="#D7D0B8"
@@ -633,6 +635,8 @@
                                                HorizontalAlignment="Center"
                                                TextAlignment="Center"/>
                                     <TextBlock Text="{Binding RatingText}"
+                                               Height="21"
+                                               LineHeight="21"
                                                FontFamily="Segoe Print"
                                                FontSize="12"
                                                LetterSpacing="0.2"
