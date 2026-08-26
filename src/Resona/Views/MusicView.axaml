@@ -294,7 +294,7 @@
                             Height="20"
                             CornerRadius="1"
                             Background="Beige"/>
-                    <StackPanel Orientation="Horizontal" Margin="0,6,0,0" Spacing="12" VerticalAlignment="Center">
+                    <StackPanel Spacing="1" VerticalAlignment="Center">
                         <TextBlock Text="LIBRARY"
                                    FontFamily="Consolas"
                                    FontSize="11"
@@ -309,12 +309,6 @@
                                    Foreground="#C8C1A9"
                                    Opacity="0.82"
                                    VerticalAlignment="Center"
-                                   TextTrimming="CharacterEllipsis"/>
-                        <TextBlock x:Name="LibraryDirtyText"
-                                   Text="Library changed"
-                                   IsVisible="False"
-                                   FontSize="11"
-                                   Foreground="#E6BF55"
                                    TextTrimming="CharacterEllipsis"/>
                     </StackPanel>
                     

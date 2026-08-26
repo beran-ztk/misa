@@ -43,6 +43,23 @@ public record MusicTrack(
     RatingBand? RatingBand = null)
 {
     public string DisplayTitle => TrackTitleFormatter.Format(Artist, Title, Remix, Edits);
+    public string? DisplayChannelName => ChannelNameFormatter.Format(ChannelName);
+}
+
+public static class ChannelNameFormatter
+{
+    private const string TopicSuffix = " - Topic";
+
+    public static string? Format(string? channelName)
+    {
+        if (string.IsNullOrWhiteSpace(channelName))
+            return channelName;
+
+        var trimmed = channelName.Trim();
+        return trimmed.EndsWith(TopicSuffix, StringComparison.OrdinalIgnoreCase)
+            ? trimmed[..^TopicSuffix.Length].TrimEnd()
+            : trimmed;
+    }
 }
 
 public static class TrackTitleFormatter

@@ -296,7 +296,7 @@ public partial class EditTrackOverlay : UserControl
         RemixDisplayText.Text = DisplayValue(RemixBox.Text);
         EditsDisplayText.Text = DisplayValue(EditsBox.Text);
         OriginalTitleDisplayText.Text = DisplayValue(originalTitle);
-        ChannelDisplayText.Text = DisplayValue(track.ChannelName);
+        ChannelDisplayText.Text = DisplayValue(track.DisplayChannelName);
         YouTubeUrlDisplayText.Text = DisplayValue(track.CanonicalUrl);
         ChannelUrlDisplayText.Text = DisplayValue(track.ChannelUrl);
         UploadedDisplayText.Text = FormatMetadataDate(track.UploadedAt);
@@ -313,7 +313,7 @@ public partial class EditTrackOverlay : UserControl
         ToolTip.SetTip(RemixDisplayText, RemixBox.Text);
         ToolTip.SetTip(EditsDisplayText, EditsBox.Text);
         ToolTip.SetTip(OriginalTitleDisplayText, originalTitle);
-        ToolTip.SetTip(ChannelDisplayText, track.ChannelName);
+        ToolTip.SetTip(ChannelDisplayText, track.DisplayChannelName);
         ToolTip.SetTip(YouTubeUrlDisplayText, track.CanonicalUrl);
         ToolTip.SetTip(ChannelUrlDisplayText, track.ChannelUrl);
     }

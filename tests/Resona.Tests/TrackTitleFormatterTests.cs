@@ -51,3 +51,20 @@ public sealed class TrackTitleFormatterTests
         Assert.Single(Search("Sped Up"));
     }
 }
+
+public sealed class ChannelNameFormatterTests
+{
+    [Theory]
+    [InlineData("deadmau5 - Topic", "deadmau5")]
+    [InlineData("deadmau5 - topic", "deadmau5")]
+    [InlineData("  deadmau5 - Topic  ", "deadmau5")]
+    public void Topic_suffix_is_removed_from_display_names(string channelName, string expected) =>
+        Assert.Equal(expected, ChannelNameFormatter.Format(channelName));
+
+    [Theory]
+    [InlineData("Topic Records")]
+    [InlineData("deadmau5-Topic")]
+    [InlineData("deadmau5 - Topic Archive")]
+    public void Similar_names_without_the_exact_suffix_are_preserved(string channelName) =>
+        Assert.Equal(channelName, ChannelNameFormatter.Format(channelName));
+}

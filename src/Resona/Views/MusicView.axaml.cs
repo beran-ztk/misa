@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Globalization;
@@ -416,7 +417,6 @@ public partial class MusicView : UserControl
 
     private void UpdateLibraryRefreshState()
     {
-        LibraryDirtyText.IsVisible = _libraryRefreshPending;
         RefreshLibraryButton.IsVisible = _libraryRefreshPending;
     }
 
@@ -702,7 +702,7 @@ public partial class MusicView : UserControl
         var ratingName = track.RatingId is int ratingId ? ratingMap.GetValueOrDefault(ratingId, "") : "None";
         var durationText = track.DurationSeconds.HasValue ? FormatDuration(track.DurationSeconds.Value) : "";
 
-        var item = new TrackDisplayItem(track, genreStr, modelGenreStr, manualGenreStr, styleStr, durationText, ratingName, genreDisplays, tagDisplays, track.ChannelName ?? "")
+        var item = new TrackDisplayItem(track, genreStr, modelGenreStr, manualGenreStr, styleStr, durationText, ratingName, genreDisplays, tagDisplays, track.DisplayChannelName ?? "")
         {
             NeedsReview = track.NeedsReview,
             NeedsAnalysis = needsAnalysis
@@ -4272,6 +4272,13 @@ public partial class MusicView : UserControl
             Placement = PlacementMode.Pointer,
             ItemsSource = new object[]
             {
+                CreateTrackMenuItem("Open track on YouTube", "/Assets/play.svg",
+                    IsValidExternalUrl(item.Track.CanonicalUrl),
+                    () => OpenExternalUrl(item.Track.CanonicalUrl)),
+                CreateTrackMenuItem("Open channel on YouTube", "/Assets/globe.svg",
+                    IsValidExternalUrl(item.Track.ChannelUrl),
+                    () => OpenExternalUrl(item.Track.ChannelUrl)),
+                new Separator { Classes = { "track-context-separator" } },
                 CreateTrackMenuItem("Edit", "/Assets/pencil-simple.svg", true,
                     () => OpenTrackEditor(item.Track)),
                 new Separator { Classes = { "track-context-separator" } },
@@ -4296,6 +4303,25 @@ public partial class MusicView : UserControl
         _activeTrackContextMenu = menu;
         menu.Open(trackCard);
         e.Handled = true;
+    }
+
+    private static bool IsValidExternalUrl(string? url) =>
+        Uri.TryCreate(url, UriKind.Absolute, out var uri)
+        && (uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == Uri.UriSchemeHttp);
+
+    private void OpenExternalUrl(string? url)
+    {
+        if (!IsValidExternalUrl(url))
+            return;
+
+        try
+        {
+            Process.Start(new ProcessStartInfo(url!) { UseShellExecute = true });
+        }
+        catch (Exception ex)
+        {
+            ShowToast($"Could not open YouTube: {ex.Message}");
+        }
     }
 
     private void AttachContextMenuDismissHandler()

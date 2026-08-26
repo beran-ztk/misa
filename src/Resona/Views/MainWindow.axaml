@@ -58,15 +58,6 @@
                     <Image Source="/Assets/headphones.png"
                            Width="15" Height="15"
                            Opacity="0.78"/>
-                    <TextBlock Text="RESONA"
-                               FontFamily="Consolas"
-                               FontSize="10.5"
-                               FontWeight="SemiBold"
-                               LetterSpacing="1.2"
-                               Foreground="#D8D5CD"
-                               Opacity="0.82"
-                               Margin="0,4,0,0"
-                               VerticalAlignment="Center"/>
                 </StackPanel>
 
                 <StackPanel Grid.Column="1"
